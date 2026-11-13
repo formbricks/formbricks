@@ -3,6 +3,7 @@ import type { ComponentType } from "react";
 import { type TWorkflowNode, WORKFLOW_ACTIONS, WORKFLOW_TRIGGERS } from "@formbricks/workflows";
 import { WorkflowEmailActionForm } from "@/modules/ee/workflows/components/inspector/workflow-email-action-form";
 import { WorkflowTriggerForm } from "@/modules/ee/workflows/components/inspector/workflow-trigger-form";
+import { describeIfElseCondition } from "@/modules/ee/workflows/lib/if-else-summary";
 import type { TWorkflowNodeCategory, TWorkflowNodeIcon } from "@/modules/ee/workflows/state/editor";
 
 export type TWorkflowNodeRegistryKind =
@@ -66,7 +67,9 @@ const ifElseEntry: TWorkflowNodeRegistryEntry = {
   category: "flow",
   icon: "ifElse",
   title: (_node, t) => t("workspace.workflows.if_else"),
-  summary: (_node, t) => t("workspace.workflows.if_else_summary"),
+  summary: (node, t) =>
+    (node.type === "if_else" ? describeIfElseCondition(node.config.condition, t) : null) ??
+    t("workspace.workflows.if_else_summary"),
   ConfigForm: null,
 };
 
