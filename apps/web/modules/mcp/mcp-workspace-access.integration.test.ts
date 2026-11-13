@@ -51,8 +51,14 @@ import { getMcpGrant, lockMcpGrant, narrowMcpGrantAccess, writeMcpGrant } from "
 
 /** Set to make every SpiceDB relationship write fail, as during an outage; reads keep working. */
 const spicedbWrites = vi.hoisted(() => ({ failing: false }));
-/** Set to make every SpiceDB lookup fail, as during an outage. */
-const spicedbLookups = vi.hoisted(() => ({ failing: false }));
+/**
+ * Set `failing` to make every SpiceDB lookup fail, as during an outage. `beforeNext` runs once, inside the
+ * next lookup and before it answers, to interleave another request with the one looking up.
+ */
+const spicedbLookups = vi.hoisted(() => ({
+  failing: false,
+  beforeNext: null as (() => Promise<void>) | null,
+}));
 /** The signed-in user the internal grant routes read, as Authorized apps sends it. */
 const session = vi.hoisted(() => ({ userId: "" }));
 vi.mock("@/modules/auth/lib/session", () => ({
@@ -71,6 +77,9 @@ vi.mock("@/lib/authzed/client", async (importOriginal) => {
           return client.writeRelationships(...args);
         },
         lookupResources: async (...args: Parameters<typeof client.lookupResources>) => {
+          const beforeNext = spicedbLookups.beforeNext;
+          spicedbLookups.beforeNext = null;
+          if (beforeNext) await beforeNext();
           if (spicedbLookups.failing) throw new Error("SpiceDB is down");
           return client.lookupResources(...args);
         },
@@ -698,6 +707,54 @@ describe("organization & workspace access on MCP calls", () => {
       });
       // The wide tokens keep working: nothing narrowed the consent they were issued under.
       expect((await refresh(setup.clientId, wide.refresh_token)).status).toBe(200);
+    });
+
+    // Two tabs approve the same new client. Tab B's Allow lands while tab A's is checking its selection,
+    // then tab A's fails: putting back the consent tab A found must leave the consent tab B wrote.
+    test("a failed approval leaves another tab's approval of the same client as it was", async () => {
+      const clientId = await registerClient("two tabs");
+      const tabA = await authorize(setup.cookie, clientId, EVERYTHING);
+      const tabB = await authorize(setup.cookie, clientId, EVERYTHING);
+      expect(tabA.target.pathname).toBe("/account/authorize");
+      expect(tabB.target.pathname).toBe("/account/authorize");
+      let approvedB: Response | undefined;
+      spicedbLookups.beforeNext = async () => {
+        approvedB = await consent(setup.cookie, tabB.target, {
+          accept: true,
+          mcp_grant: { permissions: READ_ALL, access: "all" },
+        });
+        spicedbLookups.failing = true;
+      };
+
+      let failedA: Response;
+      try {
+        failedA = await consent(setup.cookie, tabA.target, {
+          accept: true,
+          scope: NARROW,
+          mcp_grant: {
+            permissions: { surveys: "read" },
+            access: "workspaces",
+            workspaceIds: [setup.inside.workspaceId],
+          },
+        });
+      } finally {
+        spicedbLookups.failing = false;
+        spicedbLookups.beforeNext = null;
+      }
+
+      expect(approvedB?.status).toBe(200);
+      expect(failedA.status).toBe(500);
+      const consents = await consentsOf(setup, clientId);
+      expect(consents).toHaveLength(1);
+      expect([...consents[0].scopes].sort((a, b) => a.localeCompare(b))).toEqual(sortedScopes(EVERYTHING));
+      expect(await getMcpGrant(setup.userId, clientId)).toMatchObject({
+        permissions: READ_ALL,
+        access: "all",
+      });
+      // Tab B's consent still skips the consent screen.
+      expect(
+        (await authorize(setup.cookie, clientId, EVERYTHING)).target.searchParams.get("code")
+      ).toBeTruthy();
     });
   });
 

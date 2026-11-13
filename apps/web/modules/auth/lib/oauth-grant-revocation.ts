@@ -777,27 +777,32 @@ export const snapshotConsentBeforeApprovalHandler = async (ctx: AuthHookContext)
 };
 
 /**
- * Puts the client's consent rows back as the snapshot read them, in the caller's transaction, which already
- * holds the client's grant lock: deletes a row the approval created (none in the snapshot) and writes the
- * snapshot's values back to the rows it holds. A row deleted since the snapshot (a revoke) stays deleted.
+ * Puts back, in the caller's transaction (which already holds the client's grant lock), the consent rows
+ * this approval wrote, as the snapshot read them: deletes a row it created (none in the snapshot) and writes
+ * the snapshot's values back to a row it updated. A row is this approval's write when `isOwnWrite` says so,
+ * the test {@link consentBound} uses: the scopes it approved, stamped in its second. Every other row is
+ * left alone, so an approval of the same client in another tab that landed since the snapshot keeps its
+ * consent, and a row deleted since the snapshot (a revoke) stays deleted.
  *
- * Compensation, not a rollback: a row another approval of the same client created between the snapshot and
- * here (two first approvals at once) is deleted too. That client then has a grant and no consent, which
- * the refresh check ends at its next refresh, and the consent screen shows again.
+ * Compensation, not a rollback: another approval of the same client that wrote the same scopes in the same
+ * second can't be told from this one, and its row is put back or deleted too. That approval keeps its
+ * grant but gets the snapshot's consent back, or none: the refresh check holds its tokens to the
+ * snapshot's scopes, or ends them at their next refresh and the consent screen shows again.
  */
 const restoreConsents = async (
   tx: Prisma.TransactionClient,
   userId: string,
   clientId: string,
-  previous: ReadonlyArray<TConsentSnapshotRow>
+  previous: ReadonlyArray<TConsentSnapshotRow>,
+  isOwnWrite: (consent: TConsentRow) => boolean
 ): Promise<void> => {
-  const current = await lockConsents(tx, userId, { clientId }, "update");
+  const written = (await lockConsents(tx, userId, { clientId }, "update")).filter(isOwnWrite);
   const previousById = new Map(previous.map((row) => [row.id, row]));
-  const created = current.filter(({ id }) => !previousById.has(id)).map(({ id }) => id);
+  const created = written.filter(({ id }) => !previousById.has(id)).map(({ id }) => id);
   if (created.length > 0) {
     await tx.oauthConsent.deleteMany({ where: { userId, clientId, id: { in: created } } });
   }
-  for (const { id } of current) {
+  for (const { id } of written) {
     const row = previousById.get(id);
     if (!row) continue;
     const { id: _id, ...values } = row;
@@ -833,7 +838,7 @@ const restoreConsentAfterFailedApproval = async (
   try {
     await prisma.$transaction(async (tx) => {
       await shareLockMcpGrant(tx, { userId, clientId });
-      await restoreConsents(tx, userId, clientId, previous);
+      await restoreConsents(tx, userId, clientId, previous, change.isLatestWrite);
     });
   } catch (error) {
     logger.error(
@@ -856,7 +861,9 @@ const refuseSelection = async (
     field,
   }: { userId: string; clientId: string; change: TConsentChange; field: "organizationIds" | "workspaceIds" }
 ): Promise<TSettledConsent> => {
-  if (change.previousConsents) await restoreConsents(tx, userId, clientId, change.previousConsents);
+  if (change.previousConsents) {
+    await restoreConsents(tx, userId, clientId, change.previousConsents, change.isLatestWrite);
+  }
   return { status: "selection_unavailable", field };
 };
 
