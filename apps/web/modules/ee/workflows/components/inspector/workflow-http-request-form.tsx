@@ -139,7 +139,7 @@ export const WorkflowHttpRequestForm = ({
             type="button"
             variant="ghost"
             size="sm"
-            className="h-7 px-2"
+            className="h-7 shrink-0 px-2"
             disabled={replaceMode === null}
             onClick={() =>
               replaceMode === "inline"
@@ -286,13 +286,15 @@ export const WorkflowHttpRequestForm = ({
           const isLocked = header.secret === true;
           return (
             <div key={index} className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
+              {/* Four controls share the 360px inspector: a narrower name and smaller icon buttons
+                  leave the value cell room for a stored secret's mask and its Replace button. */}
+              <div className="flex items-center gap-1.5">
                 <Input
                   value={header.name}
                   disabled={!isEditable}
                   placeholder={t("workspace.workflows.http_request_header_placeholder")}
                   aria-label={t("workspace.workflows.http_request_header_name")}
-                  className="w-2/5"
+                  className="w-[30%] shrink-0"
                   isInvalid={duplicateHeaders.has(index)}
                   onChange={(event) =>
                     setHeader(index, renameHeader(header, event.target.value, lockChosenRows.has(index)))
@@ -303,6 +305,7 @@ export const WorkflowHttpRequestForm = ({
                   type="button"
                   variant="ghost"
                   size="icon"
+                  className="size-8 shrink-0"
                   disabled={!isEditable}
                   aria-pressed={isLocked}
                   aria-label={
@@ -320,6 +323,7 @@ export const WorkflowHttpRequestForm = ({
                   type="button"
                   variant="ghost"
                   size="icon"
+                  className="size-8 shrink-0"
                   disabled={!isEditable}
                   aria-label={t("workspace.workflows.http_request_remove_row")}
                   onClick={() => {

@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import {
   type TWorkflowSendEmailActionNode,
   type TWorkflowSendEmailContentField,
+  WORKFLOW_SURVEY_LINK_TOKEN,
   WORKFLOW_TRIGGERS,
   getBlankSendEmailContentFields,
   getIncludeEmbeddedData,
@@ -30,6 +31,7 @@ import {
 } from "@/modules/ee/workflows/lib/email-recipient";
 import {
   appendSurveyLinkToken,
+  hasSurveyLinkToken,
   withSurveyLinkSurvey,
   withoutSurveyLink,
 } from "@/modules/ee/workflows/lib/email-survey-link";
@@ -349,6 +351,12 @@ export const WorkflowEmailActionForm = ({
           <WorkflowFieldError id="workflow-email-body-error">
             {t("workspace.workflows.email_body_required")}
           </WorkflowFieldError>
+        ) : null}
+        {/* The editor shows the survey link token as plain text (it has no chip for it), so say what it is. */}
+        {hasSurveyLinkToken(node.config.body) ? (
+          <p className="text-xs text-slate-500">
+            {t("workspace.workflows.email_survey_link_token_help", { token: WORKFLOW_SURVEY_LINK_TOKEN })}
+          </p>
         ) : null}
       </div>
 

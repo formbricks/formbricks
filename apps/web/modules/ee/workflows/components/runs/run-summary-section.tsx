@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { formatCallerIp } from "@/modules/ee/workflows/lib/caller-ip";
 import { getWorkflowRunStatusBadge } from "@/modules/ee/workflows/lib/display";
 import { type TWorkflowRunSummary } from "@/modules/ee/workflows/types";
 import { Badge } from "@/modules/ui/components/badge";
@@ -25,7 +26,11 @@ export const RunSummarySection = ({ run, locale }: Readonly<RunSummarySectionPro
   const { t } = useTranslation();
   const statusBadge = getWorkflowRunStatusBadge(run.status, t);
   // A Test run is started from the editor; a Webhook run by whoever called the Secret URL.
-  const caller = run.isDryRun ? t("workspace.workflows.run_caller_editor_test") : (run.callerIp ?? null);
+  // A run with no caller IP at all (a response run) shows no Caller; a stored one is shown compactly.
+  const callerIp = run.callerIp ? formatCallerIp(run.callerIp) : null;
+  const callerIpText =
+    callerIp?.kind === "unknown" ? t("workspace.workflows.run_caller_unknown") : (callerIp?.text ?? null);
+  const caller = run.isDryRun ? t("workspace.workflows.run_caller_editor_test") : callerIpText;
 
   return (
     <section className="flex flex-col gap-3">
