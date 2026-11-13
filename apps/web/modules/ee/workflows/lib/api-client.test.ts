@@ -69,7 +69,7 @@ describe("webhook, sample and test request calls", () => {
 
     expect(await listWorkflowSamples("wf1")).toEqual([{ source: "call", sample: {}, updatedAt: "x" }]);
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v3/workflows/wf1/samples",
+      "/api/internal/workflows/wf1/samples",
       expect.objectContaining({ method: "GET" })
     );
   });
@@ -80,7 +80,7 @@ describe("webhook, sample and test request calls", () => {
     await replaceWorkflowSecretHeader("wf1", "call", "Authorization", "Bearer new");
 
     expect(fetchMock).toHaveBeenCalledWith(
-      "/api/v3/workflows/wf1/steps/call/secret-headers/Authorization",
+      "/api/internal/workflows/wf1/steps/call/secret-headers/Authorization",
       expect.objectContaining({ method: "PUT", body: JSON.stringify({ value: "Bearer new" }) })
     );
   });

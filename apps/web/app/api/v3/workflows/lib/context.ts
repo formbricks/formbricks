@@ -31,10 +31,10 @@ import { buildRecordSecretHeaderChanges } from "./secret-audit";
  * authenticated request. The real Prisma client structurally satisfies the package's narrow
  * `WorkflowsDb` port, so no cast is needed; the package never imports `@formbricks/database`.
  */
-const service = createWorkflowsService({ prisma, webhookTokens: webhookTokenIssuer });
+export const workflowsService = createWorkflowsService({ prisma, webhookTokens: webhookTokenIssuer });
 
 /** Singleton handlers; they are stateless and only close over the injected service. */
-export const workflowsHandlers = createWorkflowsHandlers(service);
+export const workflowsHandlers = createWorkflowsHandlers(workflowsService);
 
 /**
  * Confirm a workflow trigger's referenced survey + ending cards exist in the workspace. Injected so

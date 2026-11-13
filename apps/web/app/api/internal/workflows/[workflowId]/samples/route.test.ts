@@ -42,7 +42,7 @@ const WORKFLOW_ID = "cm9zr4t2b000208l8h2m1aq3c";
 const WORKSPACE_ID = "cm9zr4mps000008l8btfy1vtz";
 
 const get = () =>
-  GET(new NextRequest(`http://localhost/api/v3/workflows/${WORKFLOW_ID}/samples`), {
+  GET(new NextRequest(`http://localhost/api/internal/workflows/${WORKFLOW_ID}/samples`), {
     params: Promise.resolve({ workflowId: WORKFLOW_ID }),
   } as never);
 
@@ -52,7 +52,7 @@ beforeEach(() => {
   mocks.applyRateLimit.mockResolvedValue(undefined);
   mocks.requireV3WorkspaceAccess.mockResolvedValue({ workspaceId: WORKSPACE_ID, organizationId: "org_1" });
   mocks.getIsWorkflowsEnabled.mockResolvedValue(true);
-  mocks.workflowFindUnique.mockResolvedValue({ id: WORKFLOW_ID, workspaceId: WORKSPACE_ID });
+  mocks.workflowFindUnique.mockResolvedValue({ id: WORKFLOW_ID, workspaceId: WORKSPACE_ID, status: "draft" });
   mocks.sampleFindMany.mockResolvedValue([
     {
       source: "call",
@@ -67,7 +67,7 @@ beforeEach(() => {
   ]);
 });
 
-describe("GET /api/v3/workflows/{workflowId}/samples", () => {
+describe("GET /api/internal/workflows/{workflowId}/samples", () => {
   test("returns each source's sample of this workflow", async () => {
     const response = await get();
 
@@ -88,6 +88,20 @@ describe("GET /api/v3/workflows/{workflowId}/samples", () => {
   test("refuses an unauthenticated caller", async () => {
     mocks.getSession.mockResolvedValue(null);
     mocks.authenticateRequest.mockResolvedValue(null);
+
+    expect((await get()).status).toBe(401);
+    expect(mocks.sampleFindMany).not.toHaveBeenCalled();
+  });
+
+  test("is session-only: an API key is refused with 401", async () => {
+    mocks.getSession.mockResolvedValue(null);
+    mocks.authenticateRequest.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: true } },
+      workspacePermissions: [{ workspaceId: WORKSPACE_ID, workspaceName: "W", permission: "write" }],
+    });
 
     expect((await get()).status).toBe(401);
     expect(mocks.sampleFindMany).not.toHaveBeenCalled();

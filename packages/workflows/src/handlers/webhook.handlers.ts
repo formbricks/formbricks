@@ -21,7 +21,13 @@ import { WEBHOOK_PAYLOAD_MAX_BYTES, WEBHOOK_PAYLOAD_MAX_DEPTH } from "../webhook
 import { checkWebhookPayloadShape } from "../webhook/payload";
 import { detectWebhookVariables } from "../webhook/variables";
 import type { WorkflowApiContext } from "./context";
-import { loadAndAuthorize, readJsonBody, recordAuditSafely, toAuditSnapshot } from "./shared";
+import {
+  assertNotArchived,
+  loadAndAuthorize,
+  readJsonBody,
+  recordAuditSafely,
+  toAuditSnapshot,
+} from "./shared";
 
 interface WebhookResourceArgs {
   ctx: WorkflowApiContext;
@@ -43,12 +49,6 @@ const NO_WEBHOOK_TRIGGER = "This workflow has no Webhook trigger.";
 const assertWebhookTrigger = (row: WorkflowRow): void => {
   if (row.definition.trigger?.triggerType !== WORKFLOW_TRIGGERS.WEBHOOK) {
     throw new WorkflowInvalidStateError(NO_WEBHOOK_TRIGGER);
-  }
-};
-
-const assertNotArchived = (row: WorkflowRow): void => {
-  if (row.status === "archived") {
-    throw new WorkflowInvalidStateError("Archived workflows are read-only; unarchive before editing.");
   }
 };
 

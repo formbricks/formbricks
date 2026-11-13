@@ -8,17 +8,18 @@ import {
   setWorkflowSecretHeaderId,
 } from "@formbricks/workflows";
 import {
-  WorkflowForbiddenError,
   WorkflowInvalidStateError,
+  assertNotArchived,
+  loadAndAuthorize,
   toProblemResponse,
 } from "@formbricks/workflows/server";
 import { noContentResponse, problemNotFound } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
+import { buildWorkflowApiContext, workflowsService } from "@/app/api/v3/workflows/lib/context";
 import { workflowSecretStore } from "@/modules/ee/workflows/lib/secret-headers/workflow-secret-store";
-import { buildWorkflowApiContext } from "./context";
 
 /**
- * `PUT /api/v3/workflows/{workflowId}/steps/{stepId}/secret-headers/{headerName}` (ENG-7179, ADR 0043):
+ * `PUT /api/internal/workflows/{workflowId}/steps/{stepId}/secret-headers/{headerName}` (ENG-7179, ADR 0043):
  * Replace on a secret header. The header is looked up by step and name (case-insensitive) in the draft
  * and in the latest version, which is what an enabled workflow runs. Every stored row they reference is
  * overwritten in place, so the enabled workflow sends the new value from its next run, without a new
@@ -46,28 +47,21 @@ export const replaceWorkflowSecretHeader = async ({
 }): Promise<Response> => {
   const ctx = buildWorkflowApiContext(authentication, requestId, instance, auditLog);
   try {
-    const workflow = await prisma.workflow.findUnique({
-      where: { id: params.workflowId },
-      select: {
-        id: true,
-        workspaceId: true,
-        status: true,
-        definition: true,
-        versions: { orderBy: { version: "desc" }, take: 1, select: { definition: true } },
-      },
+    // Unknown and foreign workflows answer alike (403), as every workflow operation does.
+    const workflow = await loadAndAuthorize(workflowsService, ctx, params.workflowId, "readWrite");
+    if (workflow instanceof Response) return workflow;
+    assertNotArchived(workflow);
+
+    const latestVersion = await prisma.workflowVersion.findFirst({
+      where: { workflowId: workflow.id, workspaceId: workflow.workspaceId },
+      orderBy: { version: "desc" },
+      select: { definition: true },
     });
-    // Unknown and foreign workflows answer alike, as every workflow operation does.
-    if (!workflow) throw new WorkflowForbiddenError();
-    const authorized = await ctx.authorize(workflow.workspaceId, "readWrite");
-    if (authorized instanceof Response) return authorized;
-    if (workflow.status === "archived") {
-      throw new WorkflowInvalidStateError("Archived workflows are read-only; unarchive before editing.");
-    }
 
     const draft: TWorkflowDefinition = workflow.definition;
     const inDraft = findWorkflowSecretHeader(draft, params.stepId, params.headerName);
     const inVersion = findWorkflowSecretHeader(
-      workflow.versions[0]?.definition ?? null,
+      latestVersion?.definition ?? null,
       params.stepId,
       params.headerName
     );

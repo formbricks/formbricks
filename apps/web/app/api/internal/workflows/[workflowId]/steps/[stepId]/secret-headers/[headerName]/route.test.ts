@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   getIsWorkflowsEnabled: vi.fn(),
   workflowFindUnique: vi.fn(),
   workflowUpdateMany: vi.fn(),
+  versionFindFirst: vi.fn(),
   queueAuditEvent: vi.fn(),
   logError: vi.fn(),
   logWarn: vi.fn(),
@@ -51,6 +52,7 @@ vi.mock("@formbricks/database", () => {
   return {
     prisma: {
       workflow: { findUnique: mocks.workflowFindUnique, updateMany: mocks.workflowUpdateMany },
+      workflowVersion: { findFirst: mocks.versionFindFirst },
       workflowSecret: {
         create: vi.fn(
           async ({ data }: { data: { workflowId: string; workspaceId: string; value: string } }) => {
@@ -132,7 +134,7 @@ const workflowRow = (overrides: Record<string, unknown> = {}) => ({
 const put = (headerName = "authorization", body: unknown = { value: NEW_VALUE }, stepId = "call") =>
   PUT(
     new NextRequest(
-      `http://localhost/api/v3/workflows/${WORKFLOW_ID}/steps/${stepId}/secret-headers/${headerName}`,
+      `http://localhost/api/internal/workflows/${WORKFLOW_ID}/steps/${stepId}/secret-headers/${headerName}`,
       { method: "PUT", body: JSON.stringify(body), headers: { "Content-Type": "application/json" } }
     ),
     { params: Promise.resolve({ workflowId: WORKFLOW_ID, stepId, headerName }) } as never
@@ -168,10 +170,15 @@ beforeEach(() => {
   mocks.requireV3WorkspaceAccess.mockResolvedValue({ workspaceId: WORKSPACE_ID, organizationId: "org_1" });
   mocks.getIsWorkflowsEnabled.mockResolvedValue(true);
   mocks.workflowFindUnique.mockResolvedValue(workflowRow());
+  // The latest version of whatever row the test set up.
+  mocks.versionFindFirst.mockImplementation(async () => {
+    const row = (await mocks.workflowFindUnique()) as { versions?: { definition: unknown }[] } | null;
+    return row?.versions?.[0] ?? null;
+  });
   mocks.workflowUpdateMany.mockResolvedValue({ count: 1 });
 });
 
-describe("PUT /api/v3/workflows/{workflowId}/steps/{stepId}/secret-headers/{headerName}", () => {
+describe("PUT /api/internal/workflows/{workflowId}/steps/{stepId}/secret-headers/{headerName}", () => {
   test("overwrites the enabled workflow's secret in place, so its next run sends the new value", async () => {
     const response = await put();
 
@@ -268,6 +275,20 @@ describe("PUT /api/v3/workflows/{workflowId}/steps/{stepId}/secret-headers/{head
 
     expect((await put()).status).toBe(401);
     expect(mocks.workflowFindUnique).not.toHaveBeenCalled();
+  });
+
+  test("is session-only: an API key is refused with 401 and stores nothing", async () => {
+    mocks.getSession.mockResolvedValue(null);
+    mocks.authenticateRequest.mockResolvedValue({
+      type: "apiKey",
+      apiKeyId: "key_1",
+      organizationId: "org_1",
+      organizationAccess: { accessControl: { read: true, write: true } },
+      workspacePermissions: [{ workspaceId: WORKSPACE_ID, workspaceName: "W", permission: "write" }],
+    });
+
+    expect((await put()).status).toBe(401);
+    expect(await valuesFor(enabledDefinition)).toEqual(new Map([["sec_1", "Bearer sk_live_old"]]));
   });
 
   test("refuses read-only access and stores nothing", async () => {

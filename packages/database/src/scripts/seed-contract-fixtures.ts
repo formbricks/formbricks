@@ -61,8 +61,6 @@ const CONTRACT_IDS = {
   WORKFLOW_WEBHOOK_REGENERATE: "clctworkflowwebhookrgn01",
   WORKFLOW_WEBHOOK_SAMPLE: "clctworkflowwebhooksmp01",
   WORKFLOW_TEST_RUN: "clctworkflowtestrun00001",
-  WORKFLOW_SECRET_HEADER: "clctworkflowsecrethdr001",
-  WORKFLOW_SECRET: "clctworkflowsecret000001",
   ACTION_CLASS_READ: "clctactionclassread00001",
   RESPONSE_READ: "clctresponseread00000001",
   RESPONSE_OUTCOME: "clctresponseoutcome00001",
@@ -496,49 +494,6 @@ async function seedWorkflow(
   await prisma.workflow.upsert({ where: { id }, update: fields, create: { id, ...fields } });
 }
 
-const SECRET_HEADER_STEP_ID = `${CONTRACT_IDS.WORKFLOW_SECRET_HEADER}call`;
-
-/**
- * Replace on a secret header (ENG-7179, ADR 0043): an enabled workflow whose HTTP request step has an
- * `Authorization` secret with a stored row. The row holds a placeholder, not ciphertext: the seed has no
- * `ENCRYPTION_KEY`, Replace only overwrites it, and nothing ever runs this fixture.
- */
-async function seedSecretHeaderWorkflow(): Promise<void> {
-  const id = CONTRACT_IDS.WORKFLOW_SECRET_HEADER;
-  await seedWorkflow(id, "Contract fixture — secret header", "enabled", "webhook");
-  const secret = { workflowId: id, workspaceId: SEED_IDS.WORKSPACE, value: "contract-fixture-placeholder" };
-  await prisma.workflowSecret.upsert({
-    where: { id: CONTRACT_IDS.WORKFLOW_SECRET },
-    update: secret,
-    create: { id: CONTRACT_IDS.WORKFLOW_SECRET, ...secret },
-  });
-
-  const triggerId = `${id}trigger`;
-  const definition: TWorkflowDefinition = {
-    schemaVersion: 1,
-    entryNodeId: triggerId,
-    trigger: { id: triggerId, type: "trigger", triggerType: "webhook", config: {} },
-    nodes: [
-      {
-        id: SECRET_HEADER_STEP_ID,
-        type: "action",
-        actionType: "http_request",
-        config: {
-          method: "POST",
-          url: "https://api.example.com/contract-fixture",
-          queryParameters: [],
-          headers: [{ name: "Authorization", secret: true, secretId: CONTRACT_IDS.WORKFLOW_SECRET }],
-          body: null,
-          responseMode: "wait",
-          continueOnError: false,
-        },
-      },
-    ],
-    edges: [{ id: `${id}edge`, source: triggerId, target: SECRET_HEADER_STEP_ID }],
-  };
-  await prisma.workflow.update({ where: { id }, data: { definition } });
-}
-
 /**
  * ENG-6596: a Feedback Dataset the seed workspace uses, with charts and dashboards on it, so the chart
  * and dashboard operations answer from real rows instead of their documented 403. The backfill the job
@@ -808,7 +763,6 @@ async function main(): Promise<void> {
     update: { sample: { order: { id: 1 } } },
     create: { ...testRunSample, workspaceId: SEED_IDS.WORKSPACE, sample: { order: { id: 1 } } },
   });
-  await seedSecretHeaderWorkflow();
 
   // An empty collection response satisfies the list schema without ever validating an item, so the
   // read fixtures below exist to put at least one row in front of every list endpoint.
@@ -993,15 +947,6 @@ async function main(): Promise<void> {
       regenerateWorkflowWebhookV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_WEBHOOK_REGENERATE } },
       setWorkflowSampleV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_WEBHOOK_SAMPLE } },
       createWorkflowTestRunV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_TEST_RUN } },
-      // Replace on a secret header (ADR 0043): an enabled workflow's real step and header, so the call
-      // gets past the documented 404 to its 204 (or, without a licence granting workflows, its 403).
-      replaceWorkflowSecretHeaderV3: {
-        path: {
-          workflowId: CONTRACT_IDS.WORKFLOW_SECRET_HEADER,
-          stepId: SECRET_HEADER_STEP_ID,
-          headerName: "Authorization",
-        },
-      },
       // The public Secret URL: the fixture's real token, so the call gets past the identical 404 to
       // its 202 (or, without a licence granting workflows, its documented 403).
       callWorkflowWebhookV3: {

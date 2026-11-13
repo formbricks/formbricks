@@ -15,6 +15,9 @@ export type { WebhookTokenIssuer } from "../services/ports";
 
 export { createWorkflowsHandlers } from "../handlers/workflows.handlers";
 export type { WorkflowsHandlers } from "../handlers/workflows.handlers";
+// For app-side operations outside the handlers (the internal samples and secret-header routes), so
+// they load, authorize and refuse archived workflows exactly as the handlers do.
+export { assertNotArchived, loadAndAuthorize } from "../handlers/shared";
 
 export type {
   WorkflowApiAccess,

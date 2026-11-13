@@ -1,5 +1,5 @@
-import { WorkflowForbiddenError, WorkflowInvalidInputError } from "../errors";
-import type { WorkflowRowWithLastRun } from "../services/ports";
+import { WorkflowForbiddenError, WorkflowInvalidInputError, WorkflowInvalidStateError } from "../errors";
+import type { WorkflowRow, WorkflowRowWithLastRun } from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
 import { redactWorkflowDefinitionPII } from "./audit-redaction";
 import type { WorkflowApiAccess, WorkflowApiContext } from "./context";
@@ -59,6 +59,13 @@ export const loadAndAuthorize = async (
   if (authorized instanceof Response) return authorized;
 
   return row;
+};
+
+/** Archived workflows are read-only: every write refuses them with 422 until they are unarchived. */
+export const assertNotArchived = (row: Pick<WorkflowRow, "status">): void => {
+  if (row.status === "archived") {
+    throw new WorkflowInvalidStateError("Archived workflows are read-only; unarchive before editing.");
+  }
 };
 
 /**

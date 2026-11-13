@@ -1,13 +1,13 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import type { TWorkflowIdInput, TWorkflowSampleList } from "@formbricks/workflows";
-import { WorkflowForbiddenError, toProblemResponse } from "@formbricks/workflows/server";
+import { loadAndAuthorize, toProblemResponse } from "@formbricks/workflows/server";
 import { successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { buildWorkflowApiContext } from "./context";
+import { buildWorkflowApiContext, workflowsService } from "@/app/api/v3/workflows/lib/context";
 
 /**
- * `GET /api/v3/workflows/{workflowId}/samples`: the samples a workflow keeps (ADR 0048), one per
+ * `GET /api/internal/workflows/{workflowId}/samples`: the samples a workflow keeps (ADR 0048), one per
  * source — the Webhook trigger's Sample payload and each HTTP request step's last Test request
  * response. Write access, like the Secret URL read: samples can hold customer data and API answers.
  * Archived workflows still answer, since reading changes nothing.
@@ -25,14 +25,8 @@ export const listWorkflowSamples = async ({
 }): Promise<Response> => {
   const ctx = buildWorkflowApiContext(authentication, requestId, instance);
   try {
-    const workflow = await prisma.workflow.findUnique({
-      where: { id: params.workflowId },
-      select: { id: true, workspaceId: true },
-    });
-    // Unknown and foreign workflows answer alike, as every workflow operation does.
-    if (!workflow) throw new WorkflowForbiddenError();
-    const authorized = await ctx.authorize(workflow.workspaceId, "readWrite");
-    if (authorized instanceof Response) return authorized;
+    const workflow = await loadAndAuthorize(workflowsService, ctx, params.workflowId, "readWrite");
+    if (workflow instanceof Response) return workflow;
 
     const rows = await prisma.workflowSample.findMany({
       where: { workflowId: workflow.id },

@@ -29,8 +29,6 @@ import type {
   TWorkflowRunResource,
   TWorkflowTestResult,
 } from "./resources";
-import { ZWorkflowSampleList } from "./samples";
-import { ZReplaceWorkflowSecretHeaderInput, ZWorkflowSecretHeaderParams } from "./secret-header";
 import {
   ZSendWorkflowTestRequestInput,
   ZWorkflowTestRequestParams,
@@ -133,11 +131,6 @@ export const WORKFLOW_API_OPERATIONS = {
     input: ZSetWorkflowSampleInput,
     output: ZWorkflowSampleResource,
   },
-  listWorkflowSamplesV3: {
-    params: ZWorkflowIdInput,
-    input: null,
-    output: ZWorkflowSampleList,
-  },
   callWorkflowWebhookV3: {
     params: ZWorkflowWebhookCallParams,
     input: ZWorkflowWebhookPayloadInput,
@@ -147,11 +140,6 @@ export const WORKFLOW_API_OPERATIONS = {
     params: ZWorkflowTestRequestParams,
     input: ZSendWorkflowTestRequestInput,
     output: ZWorkflowTestRequestResult,
-  },
-  replaceWorkflowSecretHeaderV3: {
-    params: ZWorkflowSecretHeaderParams,
-    input: ZReplaceWorkflowSecretHeaderInput,
-    output: null,
   },
   createWorkflowTestRunV3: {
     params: ZWorkflowIdInput,

@@ -53,7 +53,9 @@ Mark a header as secret for anything that grants access, such as `Authorization:
   run on, also on the enabled workflow: you don't need to disable it or enable it again, and no other draft
   change goes live with it. This makes rotating a leaked or expired key a single step. A typo breaks live runs
   right away, so use **Send test request** to check the new value. A header that had no value yet gets one in
-  the draft only; the enabled workflow uses it once you enable the draft.
+  the draft only; the enabled workflow uses it once you enable the draft. **Replace** is in the editor only:
+  through the API or MCP, send the new value in the workflow definition, which means disabling the workflow,
+  updating it and enabling it again.
 - **A secret value can't insert Variables.** It is sent exactly as you entered it, and can't contain line
   breaks.
 - **Duplicates don't copy secret values.** A duplicated workflow keeps the header names, and can't be enabled

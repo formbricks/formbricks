@@ -353,7 +353,7 @@ export async function listWorkflowSamples(
   workflowId: string,
   signal?: AbortSignal
 ): Promise<TWorkflowSampleList> {
-  const response = await fetch(`/api/v3/workflows/${workflowId}/samples`, {
+  const response = await fetch(`/api/internal/workflows/${workflowId}/samples`, {
     method: "GET",
     cache: "no-store",
     signal,
@@ -397,7 +397,7 @@ export async function replaceWorkflowSecretHeader(
   value: string
 ): Promise<void> {
   const response = await fetch(
-    `/api/v3/workflows/${workflowId}/steps/${encodeURIComponent(stepId)}/secret-headers/${encodeURIComponent(headerName)}`,
+    `/api/internal/workflows/${workflowId}/steps/${encodeURIComponent(stepId)}/secret-headers/${encodeURIComponent(headerName)}`,
     {
       method: "PUT",
       cache: "no-store",

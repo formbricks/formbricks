@@ -190,7 +190,7 @@ describe("workflow resources", () => {
 
 describe("operations map", () => {
   test("every operation defines an output or answers 204 No Content", () => {
-    const noContent = new Set(["deleteWorkflowV3", "replaceWorkflowSecretHeaderV3"]);
+    const noContent = new Set(["deleteWorkflowV3"]);
     for (const [operationId, operation] of Object.entries(WORKFLOW_API_OPERATIONS)) {
       if (noContent.has(operationId)) {
         expect(operation.output).toBeNull();
