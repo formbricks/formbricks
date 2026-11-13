@@ -27,6 +27,7 @@ import {
   useWorkflowWebhook,
   useWorkflowWebhookMutations,
 } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
+import { formatCallerIp } from "@/modules/ee/workflows/lib/caller-ip";
 import { formatRelativeDate } from "@/modules/ee/workflows/lib/format-date";
 import {
   type TVariableTypeLabel,
@@ -177,6 +178,14 @@ const useRelativeTime = () => {
     );
 };
 
+const useCallerIpLabel = () => {
+  const { t } = useTranslation();
+  return (ip: string | null): string => {
+    const display = formatCallerIp(ip);
+    return display.kind === "unknown" ? t("workspace.workflows.run_caller_unknown") : display.text;
+  };
+};
+
 const WebhookSecretUrlSection = ({
   workflowId,
   url,
@@ -192,6 +201,7 @@ const WebhookSecretUrlSection = ({
 }) => {
   const { t } = useTranslation();
   const relativeTime = useRelativeTime();
+  const callerIpLabel = useCallerIpLabel();
   const { regenerate } = useWorkflowWebhookMutations(workflowId);
   const [isRevealed, setIsRevealed] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -249,12 +259,13 @@ const WebhookSecretUrlSection = ({
         </Button>
       </div>
       <p className="text-xs text-slate-500">{t("workspace.workflows.webhook_secret_url_help")}</p>
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-xs text-slate-500">
+      {/* Wraps instead of overflowing the 360px inspector: the line may hold a long IPv6 network. */}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <p className="min-w-0 flex-1 basis-40 text-xs break-words text-slate-500">
           {lastCalledAt
             ? t("workspace.workflows.webhook_last_call", {
                 time: relativeTime(lastCalledAt),
-                ip: lastCallerIp ?? "—",
+                ip: callerIpLabel(lastCallerIp),
                 limits,
               })
             : t("workspace.workflows.webhook_never_called", { limits })}
@@ -263,6 +274,7 @@ const WebhookSecretUrlSection = ({
           type="button"
           variant="outline"
           size="sm"
+          className="shrink-0"
           disabled={!canRegenerate || regenerate.isPending}
           loading={regenerate.isPending}
           onClick={() => setIsConfirmOpen(true)}>
@@ -314,6 +326,7 @@ const WebhookSampleSection = ({
 }) => {
   const { t } = useTranslation();
   const relativeTime = useRelativeTime();
+  const callerIpLabel = useCallerIpLabel();
   const typeLabel = useTypeLabel();
   const pasteErrorMessage = usePasteErrorMessage();
   const { setSample } = useWorkflowWebhookMutations(workflowId);
@@ -414,7 +427,7 @@ const WebhookSampleSection = ({
                 {isFromLastCall
                   ? t("workspace.workflows.webhook_sample_received", {
                       time: relativeTime(sample.updatedAt),
-                      ip: lastCallerIp ?? "—",
+                      ip: callerIpLabel(lastCallerIp),
                     })
                   : t("workspace.workflows.webhook_sample_pasted", { time: relativeTime(sample.updatedAt) })}
               </AlertDescription>

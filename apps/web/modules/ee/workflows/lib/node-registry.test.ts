@@ -139,6 +139,20 @@ describe("getNodeRegistryEntry", () => {
     expect(getNodeRegistryEntry(toVariable).summary(toVariable, t)).toContain("@customer.email");
   });
 
+  test("send-email summary with a payload recipient and a survey link passes t() a string, not the recipient object", () => {
+    const toVariableWithLink: TWorkflowSendEmailActionNode = {
+      ...sendEmailNode,
+      config: {
+        ...sendEmailNode.config,
+        to: { type: "variable", ref: "payload.customer.email" },
+        surveyLink: { surveyId: "cmw3rc8lv004kj8okxqfkbyvj", embeddedData: [] },
+      },
+    };
+    expect(getNodeRegistryEntry(toVariableWithLink).summary(toVariableWithLink, t)).toBe(
+      'workspace.workflows.send_email_summary_with_link:{"to":"@customer.email"}'
+    );
+  });
+
   test("if-else summary says its first condition in words and how many more follow", () => {
     const node = {
       ...ifElseNode,

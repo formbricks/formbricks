@@ -24,3 +24,24 @@ export const hasCreativesLicense = async (
   expect(response.status(), `listing creatives to check the license: ${await response.text()}`).toBe(200);
   return true;
 };
+
+/**
+ * Whether the instance's Enterprise license includes Workflows, for the Workflows journey to decide
+ * before it starts.
+ *
+ * The probe is listing the workspace's workflows through API v3 with the session of the workspace's
+ * owner: every workflow route answers 403 when the organization lacks the `workflows` entitlement
+ * (`buildWorkflowApiContext`), and 200 when it has it. The owner can read the workspace, so a 403 can
+ * only mean the entitlement; anything else fails the journey.
+ */
+export const hasWorkflowsLicense = async (
+  request: APIRequestContext,
+  workspaceId: string
+): Promise<boolean> => {
+  const response = await request.get("/api/v3/workflows", { params: { workspaceId, limit: 1 } });
+
+  if (response.status() === 403) return false;
+
+  expect(response.status(), `listing workflows to check the license: ${await response.text()}`).toBe(200);
+  return true;
+};

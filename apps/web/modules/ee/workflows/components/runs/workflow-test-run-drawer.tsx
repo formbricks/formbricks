@@ -8,6 +8,7 @@ import { WEBHOOK_PAYLOAD_MAX_BYTES } from "@formbricks/workflows";
 import { useWorkflowRun } from "@/modules/ee/workflows/hooks/use-workflow-run";
 import type { TWorkflowTestRunFailure } from "@/modules/ee/workflows/hooks/use-workflow-test-run";
 import { getWorkflowApiErrorMessage } from "@/modules/ee/workflows/lib/api-error";
+import { TEST_RUN_DRAWER_ATTRIBUTE } from "@/modules/ee/workflows/lib/canvas-fit";
 import { workflowAtom, workflowDefinitionAtom } from "@/modules/ee/workflows/state/editor";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -83,6 +84,8 @@ export const WorkflowTestRunDrawer = ({
         if (!nextOpen) onClose();
       }}>
       <SheetContent
+        // The canvas measures this panel to fit the flow into the part the drawer leaves visible.
+        {...{ [TEST_RUN_DRAWER_ATTRIBUTE]: "" }}
         className="w-full overflow-y-auto border-l border-slate-200 bg-white px-5 shadow-xl sm:max-w-lg"
         // Non-modal: working on the canvas keeps the result open; Escape or the close button ends it.
         onInteractOutside={(event) => event.preventDefault()}>
