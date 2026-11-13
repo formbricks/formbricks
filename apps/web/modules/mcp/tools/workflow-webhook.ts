@@ -68,23 +68,25 @@ export function registerWorkflowWebhookTools(server: McpServer): void {
       description:
         "Replace a Webhook workflow's Sample payload (a JSON object up to 100 KB, 10 levels deep) and get back the Variables it offers. Replaces the previous sample.",
       inputSchema: ZMcpSetSamplePayloadInput,
+      audit: { action: "updated", targetType: "workflow", targetIdArg: "workflowId" },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
     },
     ["workflows:write"],
-    async (input: TMcpSetSamplePayloadInput, mcpCtx) => {
-      const authInfo = getMcpToolAuthInfo(mcpCtx);
-      const requestId = getMcpRequestId(authInfo);
-      const ctx = buildWorkflowApiContext(getMcpAuthentication(authInfo), requestId, MCP_API_ROUTE);
-      const response = await workflowsHandlers.setSample({
-        req: new Request(new URL(MCP_API_ROUTE, "https://mcp.internal"), {
-          method: "PUT",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify({ payload: input.payload }),
-        }),
-        ctx,
-        params: { workflowId: input.workflowId },
-      });
-      return await responseToMcpToolResult(response, requestId);
-    }
+    async (input: TMcpSetSamplePayloadInput, mcpCtx) =>
+      runMcpMutation(
+        mcpCtx,
+        { action: "updated", resource: "workflow" },
+        ({ authentication, requestId, auditLog }) =>
+          workflowsHandlers.setSample({
+            // The operation reads its body off a request; this one is never dispatched.
+            req: new Request(new URL(MCP_API_ROUTE, "https://mcp.internal"), {
+              method: "PUT",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ payload: input.payload }),
+            }),
+            ctx: buildWorkflowApiContext(authentication, requestId, MCP_API_ROUTE, auditLog ?? undefined),
+            params: { workflowId: input.workflowId },
+          })
+      )
   );
 }

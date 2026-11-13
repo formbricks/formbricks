@@ -167,6 +167,13 @@ export const createWebhookHandlers = (service: WorkflowsService): WebhookHandler
         checked.payload
       );
 
+      // Which sample changed, not its content: a payload can hold customer data.
+      await recordAuditSafely(ctx, {
+        targetId: loaded.id,
+        workspaceId: loaded.workspaceId,
+        newObject: { sample: WORKFLOW_SAMPLE_TRIGGER_SOURCE },
+      });
+
       return dataResponse(validateOutput(ZWorkflowSampleResource, toSampleResource(sample)), ctx.requestId);
     } catch (error) {
       return toProblemResponse(error, ctx);

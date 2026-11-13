@@ -108,6 +108,22 @@ describe("registerWorkflowWebhookTools", () => {
     expect(queueV3AuditLog).toHaveBeenCalled();
   });
 
+  test("set_sample_payload is a mutation: audited as updated on the workflow, success on 200", async () => {
+    const { tools } = createToolServer();
+    const auditLog = { status: "failure" } as any;
+    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+
+    await tools
+      .get("set_sample_payload")!
+      .handler({ workflowId: WORKFLOW_ID, payload: { order: 1 } }, { http: { authInfo } });
+
+    expect(vi.mocked(buildV3AuditLog).mock.calls[0].slice(1, 3)).toEqual(["updated", "workflow"]);
+    expect(auditLog.status).toBe("success");
+    expect(queueV3AuditLog).toHaveBeenCalledWith(auditLog, "req_tool", expect.anything());
+    // The operation records the target through the audit log it was given.
+    expect(vi.mocked(buildWorkflowApiContext).mock.calls[0][3]).toBe(auditLog);
+  });
+
   test("set_sample_payload hands the payload to the v3 operation as its body", async () => {
     const { tools } = createToolServer();
 

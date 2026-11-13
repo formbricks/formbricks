@@ -1467,7 +1467,7 @@ included.
 - `regenerate_webhook_url` — `{ "workflowId" }`. Replaces the URL; the old one answers 404 from the
   next call on. Audited as `webhookUrlRegenerated`.
 - `set_sample_payload` — `{ "workflowId", "payload" }`. Replaces the Sample payload (a JSON object up
-  to 100 KB, 10 levels deep) and returns its Variables.
+  to 100 KB, 10 levels deep) and returns its Variables. Audited as `updated` on the workflow, without the payload.
 
 Injection assessment: the Sample payload and Variable paths are caller-supplied text that reaches the
 agent's context. The tools return nothing beyond the one workflow the caller can already write, and

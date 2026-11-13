@@ -324,6 +324,20 @@ describe("setSample", () => {
     ]);
   });
 
+  test("records the write for the audit log with the workflow as target, never the payload", async () => {
+    service.setTriggerSample.mockResolvedValue(makeSample({ sample: { email: "ana@example.com" } }));
+
+    await handlers.setSample({
+      req: jsonRequest("PUT", { payload: { email: "ana@example.com" } }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
+
+    expect(recordAudit).toHaveBeenCalledTimes(1);
+    expect(recordAudit.mock.calls[0][0]).toMatchObject({ targetId: workflowId, workspaceId });
+    expect(JSON.stringify(recordAudit.mock.calls[0][0])).not.toContain("ana@example.com");
+  });
+
   test("answers 413 for a payload over 100 KB", async () => {
     const res = await handlers.setSample({
       req: jsonRequest("PUT", { payload: { text: "x".repeat(WEBHOOK_PAYLOAD_MAX_BYTES) } }),
