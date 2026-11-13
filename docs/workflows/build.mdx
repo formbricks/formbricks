@@ -4,9 +4,13 @@ description: "Choose and configure a workflow trigger and action, check the work
 icon: "rocket"
 ---
 
-Use the workflow builder to combine a trigger with the actions it should run. This guide uses the currently
-available **Response completed** trigger and **Send email** action as examples. The builder lists the options
-available in your Formbricks version. Changes to draft and disabled workflows are saved automatically.
+Use the workflow builder to combine a trigger with the steps it should run. This guide uses the **Response
+completed** trigger and the **Send email** action as examples. The builder lists the options available in your
+Formbricks version. Changes to draft and disabled workflows are saved automatically.
+
+To start a workflow from another system, see [Webhook trigger](/workflows/webhook-trigger). The steps a workflow
+can run each have their own page: [If/else](/workflows/if-else), [HTTP request](/workflows/http-request) and
+[Send email to an address from the payload](/workflows/email-payload-address).
 
 <Frame>
   <img
@@ -37,9 +41,10 @@ verification, or a hidden field.
   trigger card to open its configuration.
 </Step>
 
-  <Step title="Add an action">
-    Select the **+** below the trigger, then choose an action from the list, such as **Send email**. Select the
-    action card to open its configuration.
+  <Step title="Add steps">
+    Select the **+** below the trigger, then choose a step from the list: an action such as **Send email** or
+    **HTTP request**, or **If/else** under **Logic**. Select the step's card to open its configuration. A workflow
+    holds up to 25 steps.
   </Step>
 </Steps>
 
@@ -86,6 +91,12 @@ in [Recall Data](/surveys/general-features/recall).
 Turn on **Attach response data** to include the triggering survey response with the email. You can then also
 turn on **Include Embedded Data** and **Include hidden fields**.
 
+<Note>
+  In API v3 and MCP, **Include Embedded Data** is `includeEmbeddedData`. Its old name, `includeVariables`, is
+  deprecated: it is still accepted, stored and returned as written until Formbricks v7.0.0. Use one name or the
+  other in a step, not both.
+</Note>
+
 ## Check validity or enable
 
 The status button in the upper-left corner shows whether the editor's client-side checks consider the
@@ -99,6 +110,9 @@ exist.
   is available for draft, enabled, and disabled workflows, but not archived workflows, and it requires
   workspace write access.
 </Note>
+
+For a workflow with a Webhook trigger, a [Test run](/workflows/test-runs) goes further: it runs the draft with
+the Sample payload and shows what each step would do, without sending anything.
 
 You do not have to run the manual check before enabling. Open the status menu and select **Enable** when you
 are ready to start the workflow. An enabled workflow listens for its configured trigger. Its definition is

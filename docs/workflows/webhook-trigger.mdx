@@ -1,0 +1,150 @@
+---
+title: "Webhook trigger"
+description: "Start a workflow when another system sends JSON to its Webhook Secret URL."
+icon: "webhook"
+---
+
+The **Webhook** trigger starts a run each time another system sends a JSON object to the workflow's
+**Webhook Secret URL**. Use it for events that happen outside Formbricks: a support ticket closed in your
+helpdesk, an order shipped, a data layer or ETL tool that finds a new customer. The JSON it receives is the
+**payload**, and later steps can use any value in it as a [Variable](/workflows/variables).
+
+<Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
+
+{/* SCREENSHOT PLACEHOLDER: webhook-trigger-panel.webp. The Webhook trigger panel with the Webhook Secret
+URL (copy and Regenerate buttons), the last call, and the Sample payload. Save to
+/images/platform/workflows/webhook-trigger-panel.webp and replace this comment with a <Frame>. */}
+
+## Set up the trigger
+
+<Steps>
+  <Step title="Add the trigger">
+    In a new workflow, select **Add trigger** and choose **Webhook**. Formbricks creates the workflow's Webhook
+    Secret URL when the workflow is first saved.
+  </Step>
+
+  <Step title="Copy the Webhook Secret URL">
+    Open the trigger and copy the URL. Paste it into the system that should start runs, and set that system to
+    send a `POST` request with a JSON body.
+  </Step>
+
+  <Step title="Send a sample payload">
+    Send one real call while the workflow is still a draft, or paste an example payload into the trigger. Formbricks
+    keeps it as the workflow's **Sample payload**, so the `@` picker can offer its values as Variables and a
+    [Test run](/workflows/test-runs) can use it.
+  </Step>
+
+  <Step title="Add steps and enable">
+    Add the steps the run should take, then select **Enable**. From then on, every call starts a run.
+  </Step>
+</Steps>
+
+## The Webhook Secret URL is a credential
+
+The URL has the form `https://<your Formbricks domain>/api/v3/workflows/<workflowId>/webhook/<token>`. The token
+in it is the only thing that proves a caller may start runs: there is no separate API key or signature. Anyone
+who has the URL can start runs, so handle it like an API key or a password.
+
+- **Only people with write or manage access** to the workspace can see the URL. Read-only members see the
+  workflow, but not its URL.
+- **Formbricks never writes the token** to its logs, error reports or analytics.
+- **Keep it out of places others can read**, such as client-side code, shared documents or tickets.
+- **A duplicate gets a new URL.** Duplicating a workflow never copies its URL or its Sample payload.
+
+### Regenerate the URL
+
+If the URL may have leaked, open the trigger and select **Regenerate**. The old URL stops working at once and
+answers `404`, so update every system that calls it with the new one. You can regenerate the URL of a draft,
+enabled or disabled workflow without disabling it first. Each regeneration is recorded in the audit log.
+
+## Send a call
+
+Send a `POST` request with `Content-Type: application/json` and a JSON object as the body:
+
+```bash
+curl -X POST "https://formbricks.example.com/api/v3/workflows/<workflowId>/webhook/<token>" \
+  -H "Content-Type: application/json" \
+  -H "Idempotency-Key: ticket-48213-closed" \
+  -d '{"customer": {"email": "dana@example.com", "id": "CUST-48213"}, "channel": "phone"}'
+```
+
+The call must meet these rules:
+
+- **HTTPS only.** A call over plain HTTP answers `403`. Calls to `localhost` are the exception, for local testing.
+  Self-hosted instances behind a proxy need it to forward `X-Forwarded-Proto`; see
+  [Reverse proxy](/self-hosting/configuration/environment-variables#workflow-webhook-trigger-behind-a-reverse-proxy).
+- **A JSON object.** The body must be a JSON object, not an array or a single value, nested at most 10 levels
+  deep (the top-level object is level 1, and lists count as levels).
+- **At most 100 KB.** Larger payloads answer `413`.
+
+What happens next depends on the workflow's status:
+
+| Workflow status         | What a call does                                                                      |
+| ----------------------- | ------------------------------------------------------------------------------------- |
+| **Enabled**             | Starts a run and saves the payload as the Sample payload. Answers `202` with the run ID. |
+| **Draft** or **Disabled** | Saves the payload as the Sample payload and starts no run. Answers `202` with `runId: null`. |
+| **Archived**            | Answers `404`.                                                                        |
+
+A successful answer looks like this:
+
+```json
+{ "runId": "c3zq8a1b2c4d5e6f7g8h9i0j" }
+```
+
+The trigger panel also shows when the URL was last called and from which IP address.
+
+### Avoid duplicate runs with Idempotency-Key
+
+Many systems resend a call when they don't get an answer in time. To make sure a resent call doesn't start a
+second run, send an `Idempotency-Key` header with a value that is unique to the event, such as
+`ticket-48213-closed`.
+
+- The first call with a key starts a run and answers `202`.
+- Every later call to the same workflow with the same key starts nothing and answers `200` with the run the first
+  call started.
+- A key is 1 to 255 characters. An empty or longer key answers `400`.
+- Keys are only checked for enabled workflows, and a key used on one workflow doesn't affect another workflow.
+
+Calls without the header always start a new run.
+
+### Status codes
+
+Error answers use the [problem details](https://www.rfc-editor.org/rfc/rfc9457) format and never repeat the
+payload or the token.
+
+| Status | Meaning                                                                                                                              | What to do                                                                                     |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `202`  | Accepted. The body holds the new run's ID, or `null` when the workflow isn't enabled and only the Sample payload was saved.         | Nothing.                                                                                       |
+| `200`  | A call with the same `Idempotency-Key` already started a run. The body holds that run's ID.                                          | Nothing. No new run was started.                                                               |
+| `400`  | The body isn't a JSON object, is nested more than 10 levels, or the `Idempotency-Key` is empty or longer than 255 characters.        | Fix the request. Resending it unchanged fails again.                                           |
+| `403`  | The call didn't use HTTPS, or Workflows aren't part of the organization's plan.                                                      | Call the HTTPS URL. For the plan, contact your Formbricks administrator.                       |
+| `404`  | The URL is wrong, was regenerated, or belongs to a workflow that is archived, was deleted, or no longer has a Webhook trigger.        | Copy the current URL from the trigger.                                                         |
+| `413`  | The payload is larger than 100 KB.                                                                                                   | Send less data.                                                                                |
+| `415`  | The `Content-Type` isn't `application/json`.                                                                                         | Set `Content-Type: application/json`.                                                          |
+| `429`  | A [limit](#limits) was reached.                                                                                                      | Wait for the number of seconds in the `Retry-After` header, then resend with the same `Idempotency-Key`. |
+| `500`  | Something went wrong in Formbricks.                                                                                                  | Resend with the same `Idempotency-Key`.                                                        |
+
+## Limits
+
+| Limit                                            | Value                                                     |
+| ------------------------------------------------ | --------------------------------------------------------- |
+| Calls per minute to one workflow's URL           | 100                                                       |
+| Calls per minute across an organization's workflows | 300 (self-hosters: `WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE`) |
+| Runs one workflow's URL can start per day (UTC)  | 10,000 (self-hosters: `WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT`)  |
+| Payload size                                     | 100 KB                                                    |
+| Payload nesting                                  | 10 levels                                                 |
+| `Idempotency-Key` length                         | 255 characters                                            |
+
+Calls to a draft or disabled workflow count toward the per-minute limits but not the daily run limit. All limits
+are listed on [Limits](/workflows/limits).
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Use payload values" icon="at" href="/workflows/variables">
+    Insert values from the payload into conditions, requests and emails.
+  </Card>
+  <Card title="Test the workflow" icon="flask" href="/workflows/test-runs">
+    Run the draft with the Sample payload without sending anything.
+  </Card>
+</CardGroup>
