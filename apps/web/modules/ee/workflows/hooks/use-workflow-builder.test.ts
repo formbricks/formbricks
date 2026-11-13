@@ -68,7 +68,7 @@ vi.mock("@/modules/ee/workflows/lib/analytics", () => ({
 // schema order), never the input reference. The autosave dirty-tracking must stay immune to that —
 // see "a normalizing schema parse..." below.
 vi.mock("@formbricks/workflows", () => ({
-  ZWorkflowDefinition: {
+  ZWorkflowDefinitionInput: {
     safeParse: (value: unknown) => ({
       success: true,
       data: { schemaVersion: 1, ...(value as Record<string, unknown>) },

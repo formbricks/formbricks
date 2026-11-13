@@ -118,10 +118,14 @@ const LIST_OPERATORS = new Set<TWorkflowSurveyConditionOperator>([
 
 /** Most values a list operator compares against; a condition is authored, not a data dump. */
 const MAX_CONDITION_LIST_VALUES = 100;
-const MAX_CONDITION_TEXT_LENGTH = 1000;
+/**
+ * Longest text a condition compares against. A single text value is checked on save
+ * (`ZWorkflowDefinitionInput`), since stored drafts predate the cap; list values are new and capped here.
+ */
+export const MAX_CONDITION_TEXT_LENGTH = 1000;
 
 export const ZWorkflowConditionValue = z.union([
-  z.string().max(MAX_CONDITION_TEXT_LENGTH),
+  z.string(),
   z.number(),
   z.boolean(),
   z.null(),

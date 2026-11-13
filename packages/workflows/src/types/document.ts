@@ -7,6 +7,7 @@ import {
   WORKFLOW_TRIGGER_VARIABLE_SOURCES,
 } from "./executable-checks";
 import { WORKFLOW_LIMITS } from "./limits";
+import { validateWorkflowDefinitionSaveRules } from "./save-rules";
 import { getWorkflowStepType } from "./steps";
 import { ZWorkflowTriggerNode } from "./triggers";
 
@@ -196,8 +197,6 @@ const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.Refin
   }
 
   validateIfElseBranches(definition, ctx);
-
-  validateBranchesNeverJoin(definition, ctx);
   validateConditionOperatorNames(definition, ctx);
 };
 
@@ -224,35 +223,24 @@ const validateConditionOperatorNames = (definition: TWorkflowDefinitionBase, ctx
   }
 };
 
-/** Save-time limits (spec §10); the runner does not re-check them, so older stored definitions still run. */
-const validateSaveLimits = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
-  if (definition.nodes.length > WORKFLOW_LIMITS.maxSteps) {
-    ctx.addIssue({
-      code: "custom",
-      message: `A workflow can have at most ${WORKFLOW_LIMITS.maxSteps} steps`,
-      path: ["nodes"],
-    });
-  }
-
-  for (const [index, node] of definition.nodes.entries()) {
-    if (node.type !== "if_else") continue;
-    if (flattenWorkflowConditions(node.config.condition).length > WORKFLOW_LIMITS.maxConditionsPerIfElse) {
-      ctx.addIssue({
-        code: "custom",
-        message: `An if_else step can have at most ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions`,
-        path: ["nodes", index, "config", "condition"],
-      });
-    }
-  }
-};
-
-export const ZWorkflowDefinition = ZWorkflowDefinitionBase.superRefine((definition, ctx) => {
-  validateWorkflowGraph(definition, ctx);
-  validateSaveLimits(definition, ctx);
-}).describe(
-  `Persisted workflow definition with graph references validated. At most ${WORKFLOW_LIMITS.maxSteps} steps and ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions per if_else; branches never join.`
+/**
+ * A stored definition as read back: graph references checked, but none of the rules added after
+ * drafts could already be saved (save-time limits, the Variable path grammar, branches never join).
+ * Output schemas use this, so a definition saved before a rule still loads; writes use
+ * `ZWorkflowDefinitionInput`.
+ */
+export const ZWorkflowDefinition = ZWorkflowDefinitionBase.superRefine(validateWorkflowGraph).describe(
+  "Persisted workflow definition with graph references validated."
 );
 export type TWorkflowDefinition = z.infer<typeof ZWorkflowDefinition>;
+
+/** A definition being saved (create, patch, duplicate): the stored shape plus every save-time rule. */
+export const ZWorkflowDefinitionInput = ZWorkflowDefinition.superRefine((definition, ctx) => {
+  validateBranchesNeverJoin(definition, ctx);
+  validateWorkflowDefinitionSaveRules(definition, ctx);
+}).describe(
+  `Workflow definition with graph references validated. At most ${WORKFLOW_LIMITS.maxSteps} steps and ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions per if_else; branches never join; Variable paths start with payload., steps. or response.`
+);
 
 // Executable workflows are the enable-time subset: the trigger (and with it the entry point)
 // must exist, so the base's draft-only nullability is tightened back to required here.
@@ -424,8 +412,17 @@ const validateExecutableNodes = (
 export const ZWorkflowExecutableDefinition = ZWorkflowExecutableDefinitionBase.superRefine(
   (definition, ctx) => {
     validateWorkflowGraph(definition, ctx);
+    validateBranchesNeverJoin(definition, ctx);
     validateExecutableGraph(definition, ctx);
     validateExecutableNodes(definition, ctx);
   }
 ).describe("Workflow definition subset that the current runner can execute.");
 export type TWorkflowExecutableDefinition = z.infer<typeof ZWorkflowExecutableDefinition>;
+
+/**
+ * What enable (and a test of it) checks: executable, plus the save-time rules. The runner and the
+ * run resources use `ZWorkflowExecutableDefinition`, so a live version saved before a rule keeps running.
+ */
+export const ZWorkflowEnableDefinition = ZWorkflowExecutableDefinition.superRefine(
+  validateWorkflowDefinitionSaveRules
+);

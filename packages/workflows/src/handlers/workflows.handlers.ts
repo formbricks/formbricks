@@ -40,7 +40,8 @@ import type { WorkflowsService } from "../services/workflows.service";
 import {
   type TWorkflowDefinition,
   type TWorkflowExecutableDefinition,
-  ZWorkflowExecutableDefinition,
+  ZWorkflowDefinitionInput,
+  ZWorkflowEnableDefinition,
 } from "../types/document";
 import { WORKFLOW_TRIGGERS } from "../types/triggers/enum";
 import type {
@@ -464,6 +465,8 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       if (loaded instanceof Response) return loaded;
 
       const input = ZDuplicateWorkflowInput.parse(await readJsonBody(req, { allowEmpty: true }));
+      // The copy is a new save, so it meets the save-time rules a stored original may predate.
+      ZWorkflowDefinitionInput.parse(loaded.definition);
       // The copy is a new binding of the same survey, so it is refused like a new workflow would be.
       await assertTriggerSurveyAttachable(ctx, loaded.workspaceId, loaded.definition);
       // The copy keeps its secret headers' names but not their values (ADR 0043): sharing the rows
@@ -582,7 +585,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
 
       // safeParse (not parse): a non-executable definition is a 422 workflow_not_executable,
       // not the generic 400 a thrown ZodError would map to.
-      const executable = ZWorkflowExecutableDefinition.safeParse(loaded.definition);
+      const executable = ZWorkflowEnableDefinition.safeParse(loaded.definition);
       if (!executable.success) throw WorkflowNotExecutableError.fromZodError(executable.error);
 
       // Only a Response completed trigger references a survey; a Webhook trigger has nothing to resolve.
@@ -719,7 +722,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       const warnings: TWorkflowWarning[] = [];
 
       // safeParse + collect every issue, rather than throwing on the first (as enable does).
-      const executable = ZWorkflowExecutableDefinition.safeParse(loaded.definition);
+      const executable = ZWorkflowEnableDefinition.safeParse(loaded.definition);
       if (!executable.success) {
         for (const issue of executable.error.issues) {
           problems.push({

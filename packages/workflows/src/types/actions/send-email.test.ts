@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { ZWorkflowDefinition, ZWorkflowExecutableDefinition } from "../document";
+import { ZWorkflowDefinition, ZWorkflowDefinitionInput, ZWorkflowExecutableDefinition } from "../document";
 import {
   type TWorkflowSendEmailActionConfig,
   WORKFLOW_SURVEY_LINK_TOKEN,
@@ -44,10 +44,12 @@ describe("send_email recipient", () => {
     expect(parsed.to).toEqual(variableRecipient);
   });
 
-  test("refuses a Variable recipient whose path is not a Variable path", () => {
-    expect(
-      ZWorkflowSendEmailActionConfig.safeParse({ ...baseConfig, to: { type: "variable", ref: "q1" } }).success
-    ).toBe(false);
+  test("refuses saving a Variable recipient whose path is not a Variable path", () => {
+    const result = ZWorkflowDefinitionInput.safeParse(
+      definitionWith({ ...baseConfig, to: { type: "variable", ref: "q1" } })
+    );
+    expect(result.success).toBe(false);
+    expect(result.error?.issues[0]?.path).toEqual(["nodes", 0, "config", "to", "ref"]);
   });
 });
 

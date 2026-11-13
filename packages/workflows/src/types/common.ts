@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_WORKFLOW_VARIABLE_PATH_LENGTH, parseWorkflowVariablePath } from "../variables/paths";
+import { MAX_WORKFLOW_VARIABLE_PATH_LENGTH } from "../variables/paths";
 
 export const ZWorkflowStatus = z
   .enum(["draft", "enabled", "disabled", "archived"])
@@ -29,24 +29,27 @@ export const ZWorkflowNodeUi = z
   .describe("Builder-only UI metadata that does not affect workflow execution.");
 export type TWorkflowNodeUi = z.infer<typeof ZWorkflowNodeUi>;
 
+/** Longest fallback text a Variable reference may carry; checked on save (`ZWorkflowDefinitionInput`). */
+export const MAX_WORKFLOW_DATA_REF_FALLBACK_LENGTH = 1000;
+
+/**
+ * The path grammar and the fallback cap are checked on save and enable, not here: this schema also
+ * reads stored definitions, and a draft saved before the rule could hold any path.
+ */
 export const ZWorkflowDataRef = z
   .object({
     path: z
       .string()
       .min(1)
-      .max(MAX_WORKFLOW_VARIABLE_PATH_LENGTH)
-      .superRefine((path, ctx) => {
-        const parsed = parseWorkflowVariablePath(path);
-        if (!parsed.ok) ctx.addIssue({ code: "custom", message: parsed.error });
-      })
       .describe(
-        "Variable path in the run context: payload.<path>, steps.<stepId>.<path> or response.<questionId>. Segments __proto__, prototype and constructor are refused."
+        `Variable path in the run context: payload.<path>, steps.<stepId>.status, steps.<stepId>.body.<path> or response.<questionId>, at most ${MAX_WORKFLOW_VARIABLE_PATH_LENGTH} characters. Segments __proto__, prototype and constructor are refused.`
       ),
     fallback: z
       .string()
-      .max(1000)
       .optional()
-      .describe("Fallback string used when the referenced path is missing."),
+      .describe(
+        `Fallback string used when the referenced path is missing, at most ${MAX_WORKFLOW_DATA_REF_FALLBACK_LENGTH} characters.`
+      ),
   })
   .describe("Reference to a workflow Variable used by conditions or actions.");
 

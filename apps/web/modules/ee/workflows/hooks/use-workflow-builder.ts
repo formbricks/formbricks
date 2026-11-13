@@ -9,7 +9,7 @@ import {
   type TPatchWorkflowInput,
   type TWorkflowDefinition,
   type TWorkflowResource,
-  ZWorkflowDefinition,
+  ZWorkflowDefinitionInput,
 } from "@formbricks/workflows";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
@@ -92,7 +92,7 @@ const buildWorkflowPatch = (state: {
   // Only include the definition in the PATCH when the API will accept it. Sending it while the
   // workflow is enabled would return a 422; disable first.
   if (state.workflow.status !== "enabled") {
-    const parsedDefinition = ZWorkflowDefinition.safeParse(state.definition);
+    const parsedDefinition = ZWorkflowDefinitionInput.safeParse(state.definition);
     if (!parsedDefinition.success) {
       return { invalid: { code: "definition", detail: parsedDefinition.error.issues[0]?.message } };
     }

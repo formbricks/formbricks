@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { z } from "zod";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
@@ -478,6 +479,55 @@ describe("registerWorkflowTools", () => {
       params: { workflowId: WORKFLOW_ID },
     });
     expect(auditLog.status).toBe("success");
+  });
+});
+
+describe("save-time rules on MCP writes", () => {
+  const surveyId = "cm9zr4q7i000108l84gozfggr";
+  const email = (id: string) => ({
+    id,
+    type: "action",
+    actionType: "send_email",
+    config: {
+      from: "noreply@example.com",
+      to: "support@example.com",
+      replyTo: [],
+      subject: "Thanks",
+      body: "Thanks.",
+      attachResponseData: false,
+    },
+  });
+  // 26 steps: over the limit of 25, which a workflow saved before the limit may still hold.
+  const nodes = Array.from({ length: 26 }, (_, index) => email(`email-${index}`));
+  const overLimit = {
+    schemaVersion: 1,
+    trigger: {
+      id: "trigger",
+      type: "trigger",
+      triggerType: "response.completed",
+      config: { surveyId, endingCardIds: [] },
+    },
+    nodes,
+    edges: nodes.map((node, index) => ({
+      id: `edge-${index}`,
+      source: index === 0 ? "trigger" : `email-${index - 1}`,
+      target: node.id,
+    })),
+    entryNodeId: "trigger",
+  };
+
+  test("create_workflow and patch_workflow refuse a definition over a save-time limit", () => {
+    const { tools } = createToolServer();
+    const create = tools.get("create_workflow")!.config.inputSchema as z.ZodType;
+    const patch = tools.get("patch_workflow")!.config.inputSchema as z.ZodType;
+
+    const created = create.safeParse({ workspaceId: WORKSPACE_ID, name: "WF", definition: overLimit });
+    const patched = patch.safeParse({ workflowId: WORKFLOW_ID, data: { definition: overLimit } });
+
+    expect(created.success).toBe(false);
+    expect(JSON.stringify(created.error?.issues)).toMatch(/at most 25 steps/);
+    expect(patched.success).toBe(false);
+    expect(JSON.stringify(patched.error?.issues)).toMatch(/at most 25 steps/);
   });
 });
 

@@ -13,9 +13,12 @@ objects, but the object shapes live here.
 
 ## Core Ideas
 
-`ZWorkflowDefinition` is the persisted graph, validated on every save (graph references, branch handles,
-branches never joining, Variable paths, operator name sets, and the save-time limits in `limits.ts`).
-`ZWorkflowExecutableDefinition` is what the runner can execute. It uses the same object shape but is stricter:
+`ZWorkflowDefinition` is the persisted graph as read back (graph references, branch handles, operator name
+sets). Writes parse `ZWorkflowDefinitionInput`, which adds the rules added after drafts could already be saved:
+branches never joining, the Variable path grammar, and the save-time limits in `limits.ts`
+(`save-rules.ts`). Keeping those out of the read schema lets a definition saved before a rule still load.
+`ZWorkflowExecutableDefinition` is what the runner can execute; enable checks `ZWorkflowEnableDefinition`, which
+adds the save-time rules to it. It uses the same object shape but is stricter:
 every node must be reachable from the trigger, the graph must be acyclic, only an `if_else` has more than one
 next step, and each step type passes its check in `WORKFLOW_EXECUTABLE_NODE_CHECKS` (`executable-checks.ts`).
 A run walks the graph from the trigger (`execution/walk.ts`); Variables are dot paths (`variables/`).
@@ -76,8 +79,8 @@ workflow definition.
 
 Properties:
 
-- `path`: Dot path to a value in the run context.
-- `fallback`: Optional string to use if the path cannot be resolved.
+- `path`: Dot path to a value in the run context. Its grammar (`variables/paths.ts`) is checked on save.
+- `fallback`: Optional string to use if the path cannot be resolved; at most 1000 characters on save.
 
 Example:
 
@@ -200,11 +203,14 @@ Example:
 ### `ZWorkflowDefinition` / `TWorkflowDefinition`
 
 Persisted workflow definition with graph validation. It rejects duplicate node ids, invalid edge references,
-wrong `if_else` branch handles (at most one `then` and one `else`; an empty branch is allowed), a node with
-more than one incoming edge (branches never join), definitions where the trigger has more than one outgoing
-edge (a trigger-only draft with no nodes or edges is valid; only the executable definition requires the edge),
-a definition that mixes survey and legacy operator names, and the save-time limits (`WORKFLOW_LIMITS`: 25
-steps, 20 conditions per `if_else`).
+wrong `if_else` branch handles (at most one `then` and one `else`; an empty branch is allowed), definitions
+where the trigger has more than one outgoing edge (a trigger-only draft with no nodes or edges is valid; only
+the executable definition requires the edge), and a definition that mixes survey and legacy operator names.
+
+`ZWorkflowDefinitionInput`, used by create, patch and duplicate, also rejects a node with more than one
+incoming edge (branches never join), a Variable path outside the grammar, and the save-time limits
+(`WORKFLOW_LIMITS`: 25 steps, 20 conditions per `if_else`). Output schemas use `ZWorkflowDefinition`, so a
+stored definition that predates those rules still reads.
 
 It uses the same object shape as `ZWorkflowDefinitionBase`.
 

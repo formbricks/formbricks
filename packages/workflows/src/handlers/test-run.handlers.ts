@@ -9,7 +9,7 @@ import {
 } from "../errors";
 import { createdResponse } from "../responses";
 import type { WorkflowsService } from "../services/workflows.service";
-import { ZWorkflowExecutableDefinition } from "../types/document";
+import { ZWorkflowEnableDefinition } from "../types/document";
 import type { TWorkflowTriggerRunPayload } from "../types/runs";
 import { WORKFLOW_TRIGGERS } from "../types/triggers/enum";
 import type { TWorkflowWebhookPayload } from "../types/triggers/webhook";
@@ -65,7 +65,7 @@ export const createTestRunHandlers = (service: WorkflowsService): TestRunHandler
 
       const input = ZCreateWorkflowTestRunInput.parse(await readJsonBody(req, { allowEmpty: true }));
 
-      const executable = ZWorkflowExecutableDefinition.safeParse(loaded.definition);
+      const executable = ZWorkflowEnableDefinition.safeParse(loaded.definition);
       if (!executable.success) throw WorkflowNotExecutableError.fromZodError(executable.error);
 
       const payload = input.payload

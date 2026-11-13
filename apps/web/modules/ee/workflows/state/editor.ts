@@ -10,7 +10,7 @@ import {
   type TWorkflowTriggerType,
   WORKFLOW_LIMITS,
   WORKFLOW_TRIGGERS,
-  ZWorkflowExecutableDefinition,
+  ZWorkflowEnableDefinition,
   isResponseCompletedTrigger,
 } from "@formbricks/workflows";
 import { getAppendedStepPosition } from "@/modules/ee/workflows/lib/canvas-geometry";
@@ -346,7 +346,7 @@ const categorizeNodeIssue = (
   return null;
 };
 
-// Buckets one ZWorkflowExecutableDefinition issue by its path. Total: every issue maps to some
+// Buckets one ZWorkflowEnableDefinition issue by its path. Total: every issue maps to some
 // code (worst case the generic fallback), so a failed parse always yields at least one problem
 // and the problem list can never read "valid" while workflowValidityAtom says not executable.
 const categorizeDefinitionIssue = (
@@ -456,7 +456,7 @@ export const deriveWorkflowValidation = ({
     if (triggerSurveyProblem) problems.push(triggerSurveyProblem);
 
     // Secret headers are checked in the shape the server will store them in (see the helper).
-    const parsed = ZWorkflowExecutableDefinition.safeParse(withSecretIdsForCheck(definition));
+    const parsed = ZWorkflowEnableDefinition.safeParse(withSecretIdsForCheck(definition));
     isDefinitionExecutable = parsed.success;
     if (!parsed.success) {
       const isTriggerConnected = definition.edges.some((edge) => edge.source === definition.trigger?.id);
@@ -507,7 +507,7 @@ export const deriveTriggerEndingProblems = (
 };
 
 // Live validation, recomputed on every draft edit. Mirrors the server's enable/test checks
-// (ZWorkflowExecutableDefinition plus the survey binding) so the editor can flag an unready
+// (ZWorkflowEnableDefinition plus the survey binding) so the editor can flag an unready
 // workflow immediately instead of after a round-trip. Private: consumers read the slices below.
 const workflowValidationAtom = atom<TWorkflowValidation>((get) => {
   const state = get(workflowEditorAtom);

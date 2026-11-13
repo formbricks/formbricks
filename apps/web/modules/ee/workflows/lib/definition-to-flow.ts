@@ -61,7 +61,7 @@ const getWorkflowNodeIssue = (
     return { severity, label: t("workspace.workflows.node_needs_survey") };
   }
   if (node.type === "action" && node.actionType === "send_email" && !isWaitingForSurvey) {
-    // Same completeness rule ZWorkflowExecutableDefinition enforces server-side on enable/test,
+    // Same completeness rule ZWorkflowEnableDefinition enforces server-side on enable/test,
     // including its rich-text handling of the body (see isBlankWorkflowRichText).
     if (getBlankSendEmailContentFields(node.config).length > 0) {
       return { severity, label: t("workspace.workflows.node_needs_email_content") };

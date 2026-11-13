@@ -475,6 +475,93 @@ describe("duplicate", () => {
   });
 });
 
+describe("a stored definition that predates the save-time rules", () => {
+  // 26 steps (over the limit of 25) and an If/else whose path the Variable path rule refuses: both
+  // could be saved before the rules existed, so they must keep reading; writing them is refused.
+  const emailNode = definition.nodes[0];
+  const nodes = [
+    {
+      id: "check",
+      type: "if_else" as const,
+      config: {
+        condition: {
+          id: "g",
+          connector: "and" as const,
+          conditions: [{ id: "c1", left: { path: "data.q1" }, operator: "exists" as const }],
+        },
+      },
+    },
+    ...Array.from({ length: 25 }, (_, index) => ({ ...emailNode, id: `email-${index}` })),
+  ];
+  const edges = [
+    { id: "e-check", source: "trigger", target: "check" },
+    { id: "e-then", source: "check", target: "email-0", sourceHandle: "then" },
+    ...nodes.slice(2).map((node, index) => ({ id: `e-${index}`, source: `email-${index}`, target: node.id })),
+  ];
+  const stored = { ...definition, nodes, edges };
+  const emptyPost = (): Request =>
+    new Request("http://localhost/api/v3/workflows/x/duplicate", { method: "POST" });
+
+  test("reads with 200", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ definition: stored }));
+
+    const res = await handlers.get({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+  });
+
+  test("disables and archives with 200", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled", definition: stored }));
+    service.disableWorkflow.mockResolvedValue(makeRow({ status: "disabled", definition: stored }));
+    expect((await handlers.disable({ ctx: makeCtx(), params: { workflowId } })).status).toBe(200);
+
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "disabled", definition: stored }));
+    service.setStatus.mockResolvedValue(makeRow({ status: "archived", definition: stored }));
+    expect((await handlers.archive({ ctx: makeCtx(), params: { workflowId } })).status).toBe(200);
+  });
+
+  test("saving it is refused with 400", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ definition: stored }));
+
+    const res = await handlers.patch({
+      req: new Request("http://localhost/api/v3/workflows/x", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ definition: stored }),
+      }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
+
+    expect(res.status).toBe(400);
+    const body = await readJson<{ invalid_params: unknown }>(res);
+    expect(JSON.stringify(body.invalid_params)).toMatch(/at most 25 steps/);
+    expect(JSON.stringify(body.invalid_params)).toMatch(/payload\., steps\., response\./);
+    expect(service.updateWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("duplicating it is refused with 400", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ definition: stored }));
+
+    const res = await handlers.duplicate({ req: emptyPost(), ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(400);
+    expect(service.duplicateWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("enabling it is refused with 422 workflow_not_executable", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "disabled", definition: stored }));
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(422);
+    const body = await readJson<{ code: string; invalid_params: unknown }>(res);
+    expect(body.code).toBe("workflow_not_executable");
+    expect(JSON.stringify(body.invalid_params)).toMatch(/at most 25 steps/);
+    expect(service.enableWorkflow).not.toHaveBeenCalled();
+  });
+});
+
 describe("trigger survey attach-time guard (ENG-3283)", () => {
   const otherSurveyId = "cm9zr4q7i000108l84gozfggs";
   const restricted = { surveyExists: true, missingEndingCardIds: [], surveyNotWorkspaceVisible: true };

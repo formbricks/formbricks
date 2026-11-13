@@ -49,7 +49,7 @@ export const checkWorkflowVariableRef = (
   path: (string | number)[]
 ): void => {
   const parsed = parseWorkflowVariablePath(ref.path);
-  if (!parsed.ok) return; // The persisted schema already reported it.
+  if (!parsed.ok) return; // The save rules (`ZWorkflowEnableDefinition`) report it.
 
   if (!context.availableSources.has(parsed.source)) {
     context.addIssue(

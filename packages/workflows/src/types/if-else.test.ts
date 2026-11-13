@@ -4,6 +4,8 @@ import {
   WORKFLOW_LIMITS,
   ZWorkflowCondition,
   ZWorkflowDefinition,
+  ZWorkflowDefinitionInput,
+  ZWorkflowEnableDefinition,
   ZWorkflowExecutableDefinition,
   toSurveyConditionOperator,
 } from ".";
@@ -128,18 +130,34 @@ describe("If/else operators", () => {
 });
 
 describe("Variable paths in conditions", () => {
-  test("refuses a path without one of the three prefixes", () => {
+  test("refuses a path without one of the three prefixes on save", () => {
     const definition = branching([{ id: "c1", left: { path: "contact.plan" }, operator: "isSet" }]);
-    expect(issues(ZWorkflowDefinition.safeParse(definition)).join()).toMatch(
+    expect(issues(ZWorkflowDefinitionInput.safeParse(definition)).join()).toMatch(
       /payload\., steps\., response\./
     );
   });
 
-  test("refuses prototype segments", () => {
+  test("refuses prototype segments on save", () => {
     const definition = branching([
       { id: "c1", left: { path: "response.q1" }, operator: "equals", right: { path: "steps.x.__proto__" } },
     ]);
-    expect(ZWorkflowDefinition.safeParse(definition).success).toBe(false);
+    expect(ZWorkflowDefinitionInput.safeParse(definition).success).toBe(false);
+  });
+
+  test("refuses a path the rule rejects on enable", () => {
+    const definition = branching([{ id: "c1", left: { path: "contact.plan" }, operator: "isSet" }]);
+    expect(issues(ZWorkflowEnableDefinition.safeParse(definition)).join()).toMatch(
+      /payload\., steps\., response\./
+    );
+  });
+
+  test("still reads a stored If/else whose path predates the rule", () => {
+    // Drafts saved before the Variable path rule could hold any path; reading them must not fail.
+    const definition = branching([
+      { id: "c1", left: { path: "data.q1", fallback: "x".repeat(2000) }, operator: "isSet" },
+    ]);
+    expect(ZWorkflowDefinition.safeParse(definition).success).toBe(true);
+    expect(ZWorkflowDefinitionInput.safeParse(definition).success).toBe(false);
   });
 
   test("an executable If/else may only read steps that run before it", () => {
@@ -179,7 +197,12 @@ describe("graph shape", () => {
     definition.edges[2] = { id: "e3", source: "check", target: "then-email", sourceHandle: "else" };
     definition.nodes = definition.nodes.filter((node) => node.id !== "else-email");
 
-    expect(issues(ZWorkflowDefinition.safeParse(definition)).join()).toMatch(/more than one incoming/);
+    expect(issues(ZWorkflowDefinitionInput.safeParse(definition)).join()).toMatch(/more than one incoming/);
+    expect(issues(ZWorkflowExecutableDefinition.safeParse(definition)).join()).toMatch(
+      /more than one incoming/
+    );
+    // A draft stored before the rule (If/else drafts were savable before it) still reads.
+    expect(ZWorkflowDefinition.safeParse(definition).success).toBe(true);
   });
 
   test("an executable step other than If/else has at most one next step", () => {
@@ -195,6 +218,26 @@ describe("graph shape", () => {
 });
 
 describe("save-time limits", () => {
+  const overStepLimit = (): TWorkflowDefinitionBase => {
+    const definition = branching([{ id: "c1", left: { path: "response.q1" }, operator: "isSet" }]);
+    let previous = "then-email";
+    for (let index = 0; index < WORKFLOW_LIMITS.maxSteps - 2; index += 1) {
+      definition.nodes.push(email(`extra-${index}`));
+      definition.edges.push({ id: `extra-edge-${index}`, source: previous, target: `extra-${index}` });
+      previous = `extra-${index}`;
+    }
+    return definition;
+  };
+
+  test("a stored definition over a limit still reads and runs; saving or enabling it is refused", () => {
+    const definition = overStepLimit();
+
+    expect(ZWorkflowDefinition.safeParse(definition).success).toBe(true);
+    expect(ZWorkflowExecutableDefinition.safeParse(definition).success).toBe(true);
+    expect(issues(ZWorkflowDefinitionInput.safeParse(definition)).join()).toMatch(/at most 25 steps/);
+    expect(issues(ZWorkflowEnableDefinition.safeParse(definition)).join()).toMatch(/at most 25 steps/);
+  });
+
   test(`refuses more than ${WORKFLOW_LIMITS.maxSteps} steps`, () => {
     const definition = branching([{ id: "c1", left: { path: "response.q1" }, operator: "isSet" }]);
     let previous = "then-email";
@@ -205,10 +248,10 @@ describe("save-time limits", () => {
     }
 
     expect(definition.nodes).toHaveLength(WORKFLOW_LIMITS.maxSteps + 1);
-    expect(issues(ZWorkflowDefinition.safeParse(definition)).join()).toMatch(/at most 25 steps/);
+    expect(issues(ZWorkflowDefinitionInput.safeParse(definition)).join()).toMatch(/at most 25 steps/);
     definition.nodes.pop();
     definition.edges.pop();
-    expect(ZWorkflowDefinition.safeParse(definition).success).toBe(true);
+    expect(ZWorkflowDefinitionInput.safeParse(definition).success).toBe(true);
   });
 
   test(`refuses more than ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions in one If/else, nested ones included`, () => {
@@ -217,9 +260,12 @@ describe("save-time limits", () => {
       left: { path: "response.q1" },
       operator: "isSet",
     }));
-    expect(ZWorkflowDefinition.safeParse(branching(conditions)).success).toBe(true);
+    expect(ZWorkflowDefinitionInput.safeParse(branching(conditions)).success).toBe(true);
 
     const nested = [...conditions.slice(1), { id: "g", connector: "or", conditions: conditions.slice(0, 2) }];
-    expect(issues(ZWorkflowDefinition.safeParse(branching(nested))).join()).toMatch(/at most 20 conditions/);
+    expect(issues(ZWorkflowDefinitionInput.safeParse(branching(nested))).join()).toMatch(
+      /at most 20 conditions/
+    );
+    expect(ZWorkflowDefinition.safeParse(branching(nested)).success).toBe(true);
   });
 });
