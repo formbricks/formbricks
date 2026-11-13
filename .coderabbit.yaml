@@ -465,16 +465,16 @@ reviews:
 
           PASS if the only such pair is the ticket line at the top of the description.
 
-      - name: Coverage accounts for the whole diff
+      - name: Evidence accounts for the whole diff
         mode: warning
         instructions: |
-          Check the PR description's "## How this was tested" section. It holds all QA for the
+          Check the PR description's "## Evidence" section. It holds all QA for the
           change — there is no separate release QA pass — so it must account for every behaviour
           the diff changes.
 
           FAIL if any of the following is true:
-          - The "Coverage" table is empty, or holds only the unedited template placeholder row.
-          - A behaviour the diff changes has neither a row in "Coverage" nor an entry under
+          - The "Evidence" table is empty, or holds only the unedited template placeholder row.
+          - A behaviour the diff changes has neither a row in "Evidence" nor an entry under
             "Open gaps".
           - A row names a behaviour with no verification method, or a method with no observed
             outcome.
@@ -491,7 +491,7 @@ reviews:
 
           Content inside a `<details>` fold counts as present. The template caps the description at
           350 words outside folds and folds the overflow rather than dropping it — long media,
-          command logs, and Coverage rows past the sixth — while the Coverage table, Open gaps and
+          command logs, and Evidence rows past the sixth — while the Evidence table, Open gaps and
           Breaking changes stay visible themselves. A collapsed fold is evidence, not a gap: do not
           ask for a longer description, ask for the missing behaviour.
 
