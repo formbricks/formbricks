@@ -55,10 +55,13 @@ const workflowRunSelect = {
  */
 class WorkflowStepFailedError extends Error {
   readonly runData: TWorkflowRunData;
-  constructor(message: string, runData: TWorkflowRunData) {
+  /** `false` when another attempt can't fix the failure, so the run fails without a retry. */
+  readonly retryable: boolean;
+  constructor(message: string, runData: TWorkflowRunData, retryable = true) {
     super(message);
     this.name = "WorkflowStepFailedError";
     this.runData = runData;
+    this.retryable = retryable;
   }
 }
 
@@ -137,6 +140,12 @@ const isUniqueConstraintError = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   error.code === PrismaErrorType.UniqueConstraintViolation;
 
+/**
+ * A step's result as this attempt saw it: `retryable: false` marks a failure another attempt can't
+ * fix (ENG-7180), so the run fails now instead of going back to the queue. Never persisted.
+ */
+type StepRunResult = TWorkflowStepResult & { retryable?: false };
+
 /** Everything one step needs from the run it belongs to. */
 interface StepRunInput {
   node: TWorkflowStepNode;
@@ -158,8 +167,8 @@ interface StepRunInput {
  * `running` and will NOT re-send — that email is potentially lost rather than duplicated. This is the
  * accepted policy: never send the same step twice.
  */
-const executeOwnedStep = async (step: StepRunInput): Promise<TWorkflowStepResult> => {
-  const { status, error, output } = await step.executor.execute({
+const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
+  const { status, error, output, retryable } = await step.executor.execute({
     node: step.node,
     context: step.context,
     environment: step.environment,
@@ -181,6 +190,7 @@ const executeOwnedStep = async (step: StepRunInput): Promise<TWorkflowStepResult
     ...(error ? { error } : {}),
     startedAt: finishedAt.toISOString(),
     finishedAt: finishedAt.toISOString(),
+    ...(retryable === false ? { retryable } : {}),
   };
 };
 
@@ -197,7 +207,7 @@ const executeOwnedStep = async (step: StepRunInput): Promise<TWorkflowStepResult
 const claimAndRunStep = async (
   step: StepRunInput,
   existing: StepLogRow | null
-): Promise<TWorkflowStepResult | null> => {
+): Promise<StepRunResult | null> => {
   const startedAt = new Date();
 
   if (!existing) {
@@ -254,7 +264,7 @@ const STEP_BAIL = Symbol("workflow-step-bail");
 const runStep = async (
   step: StepRunInput,
   logContext: ReturnType<typeof getWorkflowRunLogContext>
-): Promise<TWorkflowStepResult | typeof STEP_BAIL> => {
+): Promise<StepRunResult | typeof STEP_BAIL> => {
   const existing: StepLogRow | null = await prisma.workflowRunLog.findFirst({
     where: { runId: step.runId, stepId: step.node.id },
     select: stepLogSelect,
@@ -314,7 +324,11 @@ const claimRun = async (
 
 type WalkOutcome =
   | { bail: true }
-  | { bail: false; stepResults: TWorkflowStepResult[]; failure: string | null };
+  | {
+      bail: false;
+      stepResults: TWorkflowStepResult[];
+      failure: { message: string; retryable: boolean } | null;
+    };
 
 /**
  * Walks the run's graph from the trigger (ADR 0047) under the per-step claim guard (`runStep`):
@@ -335,23 +349,24 @@ const walkRun = async (
 ): Promise<WalkOutcome> => {
   const context = createInitialRunContext(environment);
   const stepResults: TWorkflowStepResult[] = [];
-  let failure: string | null = null;
+  let failure: { message: string; retryable: boolean } | null = null;
   let bailed = false;
 
   await walkWorkflowSteps(definition, async (node, sequence) => {
     const executor = getWorkflowStepExecutor(node);
-    const result = await runStep(
+    const stepRun = await runStep(
       { node, stepType: getWorkflowStepType(node), executor, sequence, runId, context, environment, effects },
       logContext
     );
-    if (result === STEP_BAIL) {
+    if (stepRun === STEP_BAIL) {
       bailed = true;
       return { next: "stop" };
     }
 
+    const { retryable, ...result } = stepRun;
     stepResults.push(result);
     if (result.status === "failed") {
-      failure = result.error ?? "Workflow step failed";
+      failure = { message: result.error ?? "Workflow step failed", retryable: retryable !== false };
       return { next: "stop" };
     }
 
@@ -400,7 +415,7 @@ const executeClaimedRun = async (
   });
 
   if (outcome.failure) {
-    throw new WorkflowStepFailedError(outcome.failure, runData);
+    throw new WorkflowStepFailedError(outcome.failure.message, runData, outcome.failure.retryable);
   }
 
   // Status-guarded terminal write: only finalize a run that is still `running`. A 0-row result means
@@ -430,7 +445,9 @@ const handleRunError = async (
   logContext: ReturnType<typeof getWorkflowRunLogContext>
 ): Promise<void> => {
   const runData = error instanceof WorkflowStepFailedError ? error.runData : undefined;
-  const isFinalAttempt = context.attempt >= context.maxAttempts;
+  // A step failure another attempt can't fix (an invalid address, a spent cap) ends the run now.
+  const isFinalAttempt =
+    context.attempt >= context.maxAttempts || (error instanceof WorkflowStepFailedError && !error.retryable);
 
   if (!isFinalAttempt) {
     // Retryable: don't write a terminal status (would defeat the retry via the terminal-skip guard).

@@ -127,6 +127,14 @@ vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: mockCapturePostHogEvent,
 }));
 
+vi.mock("../survey-link-surveys", () => ({
+  getWorkflowSurveyLinkSurveys: vi.fn(async ({ surveyIds }: { surveyIds: string[] }) =>
+    surveyIds.map((surveyId) => ({ surveyId, status: "ok", acceptedEmbeddedDataKeys: ["call_id"] }))
+  ),
+}));
+
+vi.mock("@/lib/getPublicUrl", () => ({ getPublicDomain: () => "https://surveys.example.com" }));
+
 vi.mock("@formbricks/logger", () => {
   const mockLogger = {
     debug: vi.fn(),
@@ -1159,5 +1167,81 @@ describe("processWorkflowRunJob", () => {
       expect.objectContaining({ err: expect.any(Error) }),
       "Workflow run job failed after final attempt"
     );
+  });
+
+  describe("a Webhook run emailing a payload address (ENG-7180)", () => {
+    const linkSurveyId = "cm9zr4lnk000008l8btfy1vtz";
+    const webhookDefinition = {
+      schemaVersion: 1,
+      entryNodeId: "trigger",
+      trigger: { id: "trigger", type: "trigger", triggerType: "webhook", config: {} },
+      nodes: [
+        {
+          id: "send-email",
+          type: "action",
+          actionType: "send_email",
+          config: {
+            to: { type: "variable", ref: "payload.customer.email" },
+            from: "noreply@example.com",
+            replyTo: [],
+            subject: "How was your call?",
+            body: "<p>Tell us: #survey-link#</p>",
+            attachResponseData: false,
+            surveyLink: {
+              surveyId: linkSurveyId,
+              embeddedData: [{ key: "call_id", value: "#recall:payload.call.id/fallback:#" }],
+            },
+          },
+        },
+      ],
+      edges: [{ id: "trigger-send-email", source: "trigger", target: "send-email" }],
+    };
+    const webhookRun = (customer: Record<string, unknown>) => ({
+      ...baseRun,
+      triggerType: "webhook",
+      triggerPayload: {
+        type: "webhook",
+        workspaceId: data.workspaceId,
+        payload: { customer, call: { id: "K-771" } },
+        triggeredAt: "2026-11-13T12:01:00.000Z",
+      },
+      workflowVersion: { definition: webhookDefinition },
+      workflow: { definition: webhookDefinition, createdBy: "creator-1" },
+    });
+
+    test("emails the payload address a survey link whose Embedded Data comes from the payload", async () => {
+      mockWorkflowRunFindFirst.mockResolvedValue(webhookRun({ email: "lena@example.com" }));
+
+      await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
+
+      expect(mockGetResponse).not.toHaveBeenCalled();
+      expect(mockSendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: "lena@example.com",
+          rateLimit: expect.objectContaining({ workflowId: data.workflowId, externalRecipient: true }),
+        })
+      );
+      const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+      expect(completion.data.status).toBe("completed");
+      expect(completion.data.data.steps[0].output).toMatchObject({
+        recipient: "lena@example.com",
+        surveyLink: `https://surveys.example.com/s/${linkSurveyId}?call_id=K-771`,
+      });
+    });
+
+    test("an invalid payload address fails the run at once, with no retry left to the queue", async () => {
+      mockWorkflowRunFindFirst.mockResolvedValue(webhookRun({ email: "not-an-address" }));
+
+      // A non-final attempt: a retryable failure would rethrow so BullMQ retries.
+      await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
+
+      expect(mockSendEmail).not.toHaveBeenCalled();
+      const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+      expect(failure.data.status).toBe("failed");
+      expect(failure.data.data.steps[0]).toMatchObject({
+        status: "failed",
+        error: "Recipient payload.customer.email is not a valid email address",
+      });
+    });
   });
 });

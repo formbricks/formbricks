@@ -8,6 +8,7 @@ import {
   type TWorkflowSendEmailActionNode,
   type TWorkflowSendEmailContentField,
   getBlankSendEmailContentFields,
+  getIncludeEmbeddedData,
   getTriggerSurveyId,
 } from "@formbricks/workflows";
 import { WorkflowEmailRecipientField } from "@/modules/ee/workflows/components/inspector/workflow-email-recipient-field";
@@ -193,7 +194,8 @@ export const WorkflowEmailActionForm = ({
     <div className="flex flex-col gap-4">
       <WorkflowEmailRecipientField
         options={emailSendToOptions}
-        value={node.config.to}
+        // A Variable recipient (ENG-7180) has no option here yet; the Variable picker comes with ENG-7182.
+        value={typeof node.config.to === "string" ? node.config.to : ""}
         isEditable={isEditable}
         isInvalid={invalidFields.has("to")}
         onChange={(value) => updateConfig({ to: value })}
@@ -317,9 +319,12 @@ export const WorkflowEmailActionForm = ({
             </Label>
             <Switch
               id="workflow-email-include-variables"
-              checked={node.config.includeVariables ?? false}
+              checked={getIncludeEmbeddedData(node.config)}
               disabled={!isEditable}
-              onCheckedChange={(checked) => updateConfig({ includeVariables: checked })}
+              // Saved under the new name; the deprecated one is dropped so the two never mix (ADR 0050).
+              onCheckedChange={(checked) =>
+                updateConfig({ includeEmbeddedData: checked, includeVariables: undefined })
+              }
             />
           </div>
           <div className="flex items-start justify-between gap-3">
