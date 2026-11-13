@@ -775,6 +775,7 @@ describe("Tests for updateSurvey", () => {
       expect(prisma.segment.updateMany).toHaveBeenCalledWith({
         where: {
           id: OWN_PRIVATE_SEGMENT.id,
+          workspaceId: updateSurveyInput.workspaceId,
           isPrivate: true,
           surveys: { some: { id: updateSurveyInput.id }, every: { id: updateSurveyInput.id } },
         },
@@ -859,9 +860,8 @@ describe("Tests for updateSurvey", () => {
 
     test("links the survey to a shared segment that segment.surveys names it on", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
-      prisma.segment.findUnique
-        .mockResolvedValueOnce({ workspaceId: updateSurveyInput.workspaceId } as any)
-        .mockResolvedValueOnce({ isPrivate: false, filters: [] } as any);
+      prisma.segment.findUnique.mockResolvedValueOnce({ workspaceId: updateSurveyInput.workspaceId } as any);
+      prisma.segment.findFirst.mockResolvedValueOnce({ isPrivate: false, filters: [] } as any);
       prisma.survey.update.mockResolvedValue({ ...mockSurveyOutput, status: "draft" } as any);
 
       await updateSurveyInternal(
@@ -897,9 +897,8 @@ describe("Tests for updateSurvey", () => {
 
     test("refuses to link the survey to another survey's private segment", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
-      prisma.segment.findUnique
-        .mockResolvedValueOnce({ workspaceId: updateSurveyInput.workspaceId } as any)
-        .mockResolvedValueOnce({ isPrivate: true, filters: [] } as any);
+      prisma.segment.findUnique.mockResolvedValueOnce({ workspaceId: updateSurveyInput.workspaceId } as any);
+      prisma.segment.findFirst.mockResolvedValueOnce({ isPrivate: true, filters: [] } as any);
 
       await expect(
         updateSurveyInternal(
@@ -944,7 +943,12 @@ describe("Tests for updateSurvey", () => {
         select: { id: true },
       });
       expect(prisma.segment.deleteMany).toHaveBeenCalledWith({
-        where: { id: OWN_PRIVATE_SEGMENT.id, surveys: { none: {} } },
+        where: {
+          id: OWN_PRIVATE_SEGMENT.id,
+          workspaceId: updateSurveyInput.workspaceId,
+          isPrivate: true,
+          surveys: { none: {} },
+        },
       });
       expect(prisma.segment.delete).not.toHaveBeenCalled();
     });
@@ -3041,7 +3045,7 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
     } as any);
     prisma.segment.findUnique.mockResolvedValueOnce({ workspaceId: updateSurveyInput.workspaceId } as any);
     if (!ownSegment) {
-      prisma.segment.findUnique.mockResolvedValueOnce({ isPrivate: false, filters: storedFilters } as any);
+      prisma.segment.findFirst.mockResolvedValueOnce({ isPrivate: false, filters: storedFilters } as any);
     }
     prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
   };

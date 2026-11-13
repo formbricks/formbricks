@@ -1218,6 +1218,7 @@ const saveAppSurveySegment = async (
       written = await prisma.segment.updateMany({
         where: {
           id: segment.id,
+          workspaceId: survey.workspaceId,
           isPrivate: true,
           surveys: { some: { id: survey.id }, every: { id: survey.id } },
         },
@@ -1235,8 +1236,8 @@ const saveAppSurveySegment = async (
 
   if (segment.id === survey.segment?.id || !segment.surveys?.includes(survey.id)) return;
 
-  const target = await prisma.segment.findUnique({
-    where: { id: segment.id },
+  const target = await prisma.segment.findFirst({
+    where: { id: segment.id, workspaceId: survey.workspaceId },
     select: { isPrivate: true, filters: true },
   });
   if (!target) throw new ResourceNotFoundError("Segment", segment.id);
@@ -1262,7 +1263,9 @@ const saveAppSurveySegment = async (
  * ENG-6957: a survey that stops being an app survey leaves the segment it is stored with, whatever segment
  * the client sent. Its private segment is deleted with it, unless another survey still uses it.
  */
-const unlinkSurveySegment = async (survey: Pick<TSurvey, "id" | "segment">): Promise<void> => {
+const unlinkSurveySegment = async (
+  survey: Pick<TSurvey, "id" | "workspaceId" | "segment">
+): Promise<void> => {
   if (!survey.segment) return;
   await prisma.survey.update({
     where: { id: survey.id },
@@ -1270,7 +1273,15 @@ const unlinkSurveySegment = async (survey: Pick<TSurvey, "id" | "segment">): Pro
     select: { id: true },
   });
   if (survey.segment.isPrivate) {
-    await prisma.segment.deleteMany({ where: { id: survey.segment.id, surveys: { none: {} } } });
+    // `isPrivate` again: a segment made shared since the survey was read is kept.
+    await prisma.segment.deleteMany({
+      where: {
+        id: survey.segment.id,
+        workspaceId: survey.workspaceId,
+        isPrivate: true,
+        surveys: { none: {} },
+      },
+    });
   }
 };
 
