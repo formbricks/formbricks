@@ -632,29 +632,11 @@ export const revokeTokensBeyondConsentAfterHandler = async (ctx: AuthHookContext
 
   const ended = await settleChangedConsentWithRetry(userId, change, ids);
   if (!ended) return;
-  if (ended.status === "selection_unavailable") {
-    // Its transaction already put the consent back, when a snapshot named it.
-    if (!change.previousConsents) warnConsentNotRestored(ids);
-    const kind = ended.field === "organizationIds" ? "organizations" : "workspaces";
-    throw new APIError("UNPROCESSABLE_ENTITY", {
-      error: "invalid_request",
-      error_description: `Pick only ${kind} you have access to.`,
-      code: MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
-    });
-  }
+  if (ended.status === "selection_unavailable") return refuseUnavailableSelection(ended.field, change, ids);
 
   ids.clientId = ended.clientId;
   const { savedGrant, refreshTokensDeleted, accessTokensRevoked } = ended;
-  if (savedGrant) {
-    // The access Allow chose applies on the client's first call, not when the outbox delivers (ENG-7153).
-    await projectMcpGrants([savedGrant.after.id]);
-    await queueMcpGrantAudit({
-      action: savedGrant.before ? "updated" : "created",
-      actorUserId: userId,
-      before: savedGrant.before,
-      after: savedGrant.after,
-    });
-  }
+  if (savedGrant) await applySavedGrant(userId, savedGrant);
   if (refreshTokensDeleted + accessTokensRevoked === 0) return;
   logger.info(
     { ...ids, refreshTokensDeleted, accessTokensRevoked },
@@ -867,13 +849,47 @@ const refuseSelection = async (
   return { status: "selection_unavailable", field };
 };
 
+type TSavedMcpGrant = { before: TStoredMcpGrant | null; after: TStoredMcpGrant };
+
 type TSettledConsent =
   | { status: "selection_unavailable"; field: "organizationIds" | "workspaceIds" }
   | ({
       status: "settled";
       clientId: string;
-      savedGrant: { before: TStoredMcpGrant | null; after: TStoredMcpGrant } | null;
+      savedGrant: TSavedMcpGrant | null;
     } & TTokensBeyondConsent);
+
+/**
+ * Refuses an approval that picked an organization or workspace the user can't select, with a 422 the consent
+ * screen shows. Its transaction already put the consent back, when a snapshot named it.
+ */
+const refuseUnavailableSelection = (
+  field: "organizationIds" | "workspaceIds",
+  change: TConsentChange,
+  ids: { userId: string; clientId?: string }
+): never => {
+  if (!change.previousConsents) warnConsentNotRestored(ids);
+  const kind = field === "organizationIds" ? "organizations" : "workspaces";
+  throw new APIError("UNPROCESSABLE_ENTITY", {
+    error: "invalid_request",
+    error_description: `Pick only ${kind} you have access to.`,
+    code: MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
+  });
+};
+
+/**
+ * Projects a grant Allow saved, so it applies on the client's first call rather than when the outbox
+ * delivers (ENG-7153), and audits it.
+ */
+const applySavedGrant = async (userId: string, savedGrant: TSavedMcpGrant): Promise<void> => {
+  await projectMcpGrants([savedGrant.after.id]);
+  await queueMcpGrantAudit({
+    action: savedGrant.before ? "updated" : "created",
+    actorUserId: userId,
+    before: savedGrant.before,
+    after: savedGrant.after,
+  });
+};
 
 /**
  * The consent hook's transaction. The workspaces SpiceDB lets the user select are looked up first, before
