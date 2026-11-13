@@ -157,6 +157,17 @@ asyncModule(async () => {
         relationship: `one_to_many`,
         sql: `${CUBE}.tenant_id = ${AnswerFilter25}.tenant_id AND ${CUBE}.submission_id = ${AnswerFilter25}.submission_id`,
       },
+      // The record's own current topic: at most one row per record (see RecordTopic below).
+      RecordTopic: {
+        relationship: `one_to_one`,
+        sql: `${CUBE}.tenant_id = ${RecordTopic}.tenant_id AND ${CUBE}.id = ${RecordTopic}.feedback_record_id`,
+      },
+      // The current topics of the classified answers in the same response: one row per answer, so Cube
+      // counts each record once per topic, as it does for the AnswerFilter joins.
+      ResponseTopic: {
+        relationship: `one_to_many`,
+        sql: `${CUBE}.tenant_id = ${ResponseTopic}.tenant_id AND ${CUBE}.submission_id = ${ResponseTopic}.submission_id`,
+      },
     },
 
     measures: {
@@ -571,6 +582,34 @@ asyncModule(async () => {
         description: `Detected emotions as a comma-separated multi-label set from: joy, anger, sadness, fear, surprise, disgust. NULL when not enriched or no emotion was detected. Filter a single emotion with "contains".`,
       },
 
+      // ── Current taxonomy topics ───────────────────────────────────────────────
+      // Read from Hub's taxonomy_current_record_topics view (Hub migration 030) when the chart is
+      // queried, so renames, removals and a newly activated run show up with nothing to sync. NULL for
+      // records with no current topic, outliers included.
+      topic: {
+        sql: `${RecordTopic.topic}`,
+        type: `string`,
+        description: `Current level-1 topic of this record in the dataset's active taxonomy. Only classified open-text records have one; NULL otherwise.`,
+      },
+
+      subtopic: {
+        sql: `${RecordTopic.subtopic}`,
+        type: `string`,
+        description: `Current level-2 subtopic of this record, written "Topic › Subtopic". NULL when the record has no current topic.`,
+      },
+
+      responseTopic: {
+        sql: `${ResponseTopic.topic}`,
+        type: `string`,
+        description: `Current level-1 topics of the classified open-text answers in the same response. A response with answers in two topics counts once under each.`,
+      },
+
+      responseSubtopic: {
+        sql: `${ResponseTopic.subtopic}`,
+        type: `string`,
+        description: `Current level-2 subtopics of the classified open-text answers in the same response, written "Topic › Subtopic".`,
+      },
+
       collectedAt: {
         sql: `collected_at`,
         type: `time`,
@@ -771,6 +810,26 @@ for (let index = 1; index <= ANSWER_FILTER_ALIAS_COUNT; index += 1) {
       fieldGroupId: { sql: `field_group_id`, type: `string`, shown: false },
       valueId: { sql: `value_id`, type: `string`, shown: false },
       valueNumber: { sql: `value_number`, type: `number`, shown: false },
+    },
+  });
+}
+
+// Each record's current topic in its dataset's active directory taxonomy, from Hub's
+// taxonomy_current_record_topics view: at most one row per record. Outliers ("Uncategorized
+// Feedback") are left out, so they read as no topic. RecordTopic joins a record to its own row;
+// ResponseTopic joins it to the rows of every answer in its response. Only the FeedbackRecords topic
+// dimensions read these members, and queryRewrite refuses a caller naming one (cube.js), since the
+// tenant filter is only added for FeedbackRecords.
+const TOPIC_VIEW_SQL = `SELECT tenant_id, feedback_record_id, submission_id, topic_label, subtopic_label FROM taxonomy_current_record_topics WHERE NOT is_outlier`;
+
+for (const name of [`RecordTopic`, `ResponseTopic`]) {
+  cube(name, {
+    sql: TOPIC_VIEW_SQL,
+
+    dimensions: {
+      feedbackRecordId: { sql: `feedback_record_id`, type: `string`, primaryKey: true, shown: false },
+      topic: { sql: `topic_label`, type: `string`, shown: false },
+      subtopic: { sql: `topic_label || ' › ' || subtopic_label`, type: `string`, shown: false },
     },
   });
 }

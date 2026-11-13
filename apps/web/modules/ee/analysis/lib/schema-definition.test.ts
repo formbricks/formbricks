@@ -62,7 +62,8 @@ interface CubeDefinition {
 const evaluateCubeSchema = (path: string): CubeDefinition => {
   let captured: CubeDefinition | undefined;
   // The model is compiled per dataset inside `asyncModule` (ENG-6893) and joins the AnswerFilterN
-  // aliases (ENG-6894); it is evaluated here for a dataset without embedded-data keys.
+  // aliases (ENG-6894) and the taxonomy topic cubes (ENG-6989); it is evaluated here for a dataset
+  // without embedded-data keys.
   process.env.CUBEJS_API_SECRET = process.env.CUBEJS_API_SECRET || "cube-secret";
   const cubeConfig = createRequire(import.meta.url)(
     path.replace(/schema\/FeedbackRecords\.js$/, "cube.js")
@@ -80,6 +81,13 @@ const evaluateCubeSchema = (path: string): CubeDefinition => {
   };
   for (let index = 1; index <= cubeConfig.ANSWER_FILTER_ALIAS_COUNT; index += 1) {
     sandbox[`AnswerFilter${index}`] = `AF${index}`;
+  }
+  // `${RecordTopic}` in a join names the alias; `${RecordTopic.topic}` in a dimension names its member.
+  for (const [name, alias] of [
+    ["RecordTopic", "RT"],
+    ["ResponseTopic", "RST"],
+  ]) {
+    sandbox[name] = { toString: () => alias, topic: `${alias}.topic`, subtopic: `${alias}.subtopic` };
   }
   createContext(sandbox);
   runInContext(readFileSync(path, "utf8"), sandbox);
