@@ -340,6 +340,7 @@
               "workflows/webhook-trigger",
               "workflows/variables",
               "workflows/if-else",
+              "workflows/switch",
               "workflows/http-request",
               "workflows/email-payload-address",
               "workflows/test-runs",

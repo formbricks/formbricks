@@ -159,13 +159,15 @@ that is not listed here.
 
 **Step** — Anything after the trigger. Steps are grouped as Logic or Actions. _Avoid_: node (code and API only), block (a survey card), task.
 
-**Logic step** — A step that decides or shapes data inside the run and has no effect outside it, such as If/else. _Avoid_: condition node, decision.
+**Logic step** — A step that decides or shapes data inside the run and has no effect outside it, such as If/else or Switch. _Avoid_: condition node, decision.
 
 **Action** — A step with an effect outside the run, such as Send email or HTTP request. _Avoid_: task, connector.
 
 **If/else** — A logic step that sends a run down its Then branch when its conditions hold, and down its Else branch otherwise.
 
-**Branch** — One of the two ways out of an If/else, Then or Else. A run takes exactly one, and run detail shows the branch taken. _Avoid_: path, route, outcome (a response status).
+**Switch** — A logic step that compares one Variable against 2 to 10 named cases and sends a run down the branch of the first case that matches, or down its Default branch when none does. Matching on more than one Variable is an If/else. _Avoid_: router, case statement, multi-branch.
+
+**Branch** — One of the ways out of an If/else (Then or Else) or a Switch (one per case, plus Default). A run takes exactly one, and run detail shows the branch taken. _Avoid_: path, route, outcome (a response status).
 
 **HTTP request** — The action that calls an outside URL with a method, headers and body, and passes the response to later steps. _Avoid_: API call, web service task, webhook action, outgoing webhook.
 
