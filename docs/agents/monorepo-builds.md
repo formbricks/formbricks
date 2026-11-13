@@ -150,6 +150,10 @@ Start from the root `pnpm go` after a merge: it runs the migrations, the builds 
 preparation first. Restart a dev server that was already running: it keeps the Prisma client it
 loaded.
 
+Run the root `pnpm lint` before pushing a merge. Beyond ESLint it runs the repo-wide checks
+(`api:v3:check`, `catalog:check`, `workflow:check`, `local-refs:check`, `adr:check`), and two branches
+that each pass them can still clash once merged, for example by taking the same ADR number.
+
 ## Integration tests
 
 `*.integration.test.ts` files run against the real Postgres and Valkey, not the unit suite's mocks:
