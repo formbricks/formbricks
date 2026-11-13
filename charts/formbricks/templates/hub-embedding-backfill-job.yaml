@@ -70,7 +70,9 @@ spec:
                 name: {{ include "formbricks.hubSecretName" . }}
           env:
             {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "worker" true) | nindent 12 }}
+            {{- if .Values.hub.embeddingClient.enabled }}
             {{- include "formbricks.hubEmbeddingClientEnv" (dict "root" $ "worker" true) | nindent 12 }}
+            {{- end }}
             {{- range $key, $value := .Values.hub.env }}
             {{- if and (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) (not (and $.Values.hub.embeddingClient.enabled (include "formbricks.hubEmbeddingClientEnvManaged" (dict "root" $ "worker" true "key" $key)))) }}
             {{- include "formbricks.envVar" (dict "name" $key "value" $value "context" $) | nindent 12 }}

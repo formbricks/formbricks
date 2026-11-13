@@ -452,7 +452,8 @@ worker but omits the bundled TEI Deployments, StatefulSet, Services, PVC, HPAs, 
 For an independently managed OpenAI-compatible runtime or managed Vertex provider, use
 `hub.embeddingClient` instead of `hub.embeddings`. Set `provider`, `model`, and the provider-specific
 endpoint or project/location values. `apiBaseUrl` and `workerBaseUrl` can route search and background
-embedding to separate endpoints. API-key providers read a Kubernetes Secret through
+embedding to separate endpoints. When `workerBaseUrl` is empty, the worker uses `apiBaseUrl`, then
+`baseUrl`; the API uses `apiBaseUrl`, then `baseUrl`. API-key providers read a Kubernetes Secret through
 `auth.existingSecret`; Vertex uses Application Default Credentials. For example:
 
 ```yaml
@@ -474,6 +475,8 @@ and take precedence over `hub.env` and `hub.worker.env`. Copy existing tuning su
 `EMBEDDING_MAX_CONCURRENT`, `EMBEDDING_BATCH_SIZE`, input limits, and job deadlines into the
 corresponding `embeddingClient` values before switching modes. `responseModel` is optional; set it
 only when the provider reports a stable model name that Hub should validate exactly.
+`EMBEDDING_MAX_ATTEMPTS`, `EMBEDDING_HTTP_DISABLE_KEEP_ALIVES`, and `EMBEDDING_RECONCILE_*` have no
+`embeddingClient` fields; move explicit overrides to `hub.env` or `hub.worker.env` when switching.
 
 The worker performs a real provider preflight before consuming embedding queues. Its default timeout,
 refresh interval, last-success validity, and degraded-job snooze are 10, 60, 120, and 30 seconds.
@@ -481,9 +484,11 @@ refresh interval, last-success validity, and degraded-job snooze are 10, 60, 120
 values supplied by the Hub Secret. `hub.worker.embeddingReadiness.enabled` adds a local exec probe
 and writable marker volume; it requires a Hub release containing
 [formbricks/hub#161](https://github.com/formbricks/hub/pull/161). The chart's pinned Hub 0.14.3
-image supports that command; explicit 0.14.1 and 0.14.2 digests or tags are rejected.
+image supports that command; explicit 0.14.0 through 0.14.2 digests or tags are rejected.
 The marker path must be an absolute path below `/`,
 configured only through `hub.worker.embeddingReadiness.path`.
+When using a worker PDB with `minAvailable`, set `hub.worker.pdb.unhealthyPodEvictionPolicy: AlwaysAllow`
+so a provider outage does not block node drains on NotReady workers.
 
 For sustained background throughput, enable the worker-only TEI pool. Hub API and semantic-search
 queries continue to use the foreground service; only `hub-worker` receives the background URL and

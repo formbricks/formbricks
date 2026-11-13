@@ -1296,7 +1296,7 @@ hub:
 
     embeddingReadiness:
       # Enable only with a Hub release containing formbricks/hub#161. The pinned 0.14.3
-      # image supports the command; explicit 0.14.1 and 0.14.2 overrides are rejected.
+      # image supports the command; explicit 0.14.0 through 0.14.2 overrides are rejected.
       enabled: false
       path: /run/hub/embedding-ready
 
@@ -1361,6 +1361,8 @@ hub:
       annotations: {}
       minAvailable: 1
       # maxUnavailable: 1
+      # With embeddingReadiness enabled, a provider outage can make every worker NotReady.
+      # Set AlwaysAllow to permit node drains to evict those unhealthy workers.
       # unhealthyPodEvictionPolicy: AlwaysAllow
 
     nodeSelector: {}

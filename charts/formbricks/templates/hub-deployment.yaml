@@ -418,7 +418,9 @@ spec:
                   name: {{ include "formbricks.hubSecretName" . }}
                   key: HUB_API_KEY
             {{- include "formbricks.hubEmbeddingEnv" (dict "root" $ "env" .Values.hub.env) | nindent 12 }}
+            {{- if .Values.hub.embeddingClient.enabled }}
             {{- include "formbricks.hubEmbeddingClientEnv" (dict "root" $ "worker" false) | nindent 12 }}
+            {{- end }}
             {{- include "formbricks.taxonomyHubEnv" (dict "root" $ "env" .Values.hub.env) | nindent 12 }}
             {{- range $key, $value := .Values.hub.env }}
             {{- if and (not (and $.Values.hub.embeddings.enabled (include "formbricks.hubEmbeddingEnvManaged" (dict "key" $key)))) (not (and $.Values.hub.embeddingClient.enabled (include "formbricks.hubEmbeddingClientEnvManaged" (dict "root" $ "worker" false "key" $key)))) (not (and $.Values.taxonomy.enabled $.Values.taxonomy.autoConfigureHub (include "formbricks.taxonomyHubEnvManaged" (dict "key" $key)))) }}

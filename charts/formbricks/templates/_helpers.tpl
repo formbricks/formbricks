@@ -767,9 +767,17 @@ true
 {{- end -}}
 {{- $base := $cfg.baseUrl -}}
 {{- if .worker -}}
-{{- $base = default $base $cfg.workerBaseUrl -}}
+{{- $base = default (default $base $cfg.apiBaseUrl) $cfg.workerBaseUrl -}}
 {{- else -}}
 {{- $base = default $base $cfg.apiBaseUrl -}}
+{{- end -}}
+{{- range $name, $value := dict "baseUrl" $cfg.baseUrl "apiBaseUrl" $cfg.apiBaseUrl "workerBaseUrl" $cfg.workerBaseUrl -}}
+{{- if $value -}}
+{{- $parsed := urlParse $value -}}
+{{- if or (not (has $parsed.scheme (list "http" "https"))) (not $parsed.hostname) $parsed.query $parsed.fragment $parsed.userinfo -}}
+{{- fail (printf "hub.embeddingClient.%s must be an absolute http(s) URL without user info, query or fragment" $name) -}}
+{{- end -}}
+{{- end -}}
 {{- end -}}
 {{- if and (ne $provider "openai") $base -}}
 {{- fail "hub.embeddingClient base URL is supported only for openai" -}}
@@ -790,7 +798,7 @@ true
 - name: EMBEDDING_PROVIDER_API_KEY
   valueFrom:
     secretKeyRef:
-      name: {{ required "hub.embeddingClient.auth.existingSecret is required" $cfg.auth.existingSecret }}
+      name: {{ required "hub.embeddingClient.auth.existingSecret is required" $cfg.auth.existingSecret | quote }}
       key: {{ $cfg.auth.secretKey | quote }}
 {{- else }}
 - name: EMBEDDING_GOOGLE_CLOUD_PROJECT
@@ -814,6 +822,10 @@ true
   {{- if or (kindIs "invalid" $cfg.maxInputBytes) (and (kindIs "string" $cfg.maxInputBytes) (eq $cfg.maxInputBytes "")) }}
   {{- fail "hub.embeddingClient.maxInputBytes is required" }}
   {{- end }}
+  {{- $inputCap := toString $cfg.maxInputBytes }}
+  {{- if or (not (regexMatch "^(0|[1-9][0-9]*)$" $inputCap)) (and (ne $inputCap "0") (lt (int $inputCap) 4)) }}
+  {{- fail "hub.embeddingClient.maxInputBytes must be 0 or at least 4 bytes" }}
+  {{- end }}
   value: {{ $cfg.maxInputBytes | quote }}
 - name: EMBEDDING_NORMALIZE
   value: {{ $cfg.normalize | quote }}
@@ -825,7 +837,7 @@ true
 {{- $managed := list "EMBEDDING_PROVIDER" "EMBEDDING_MODEL" "EMBEDDING_MAX_INPUT_BYTES" "EMBEDDING_NORMALIZE" -}}
 {{- $base := $cfg.baseUrl -}}
 {{- if .worker -}}
-  {{- $base = default $base $cfg.workerBaseUrl -}}
+  {{- $base = default (default $base $cfg.apiBaseUrl) $cfg.workerBaseUrl -}}
   {{- $managed = concat $managed (list "EMBEDDING_MAX_CONCURRENT" "EMBEDDING_JOB_TIMEOUT_SECONDS" "EMBEDDING_BATCH_SIZE" "EMBEDDING_BATCH_MAX_WAIT_MS" "EMBEDDING_BATCH_MAX_IN_FLIGHT") -}}
 {{- else -}}
   {{- $base = default $base $cfg.apiBaseUrl -}}
