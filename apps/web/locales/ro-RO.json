@@ -6250,6 +6250,7 @@
       "run_condition_matched": "{condition} (îndeplinită)",
       "run_condition_not_matched": "{condition} (neîndeplinită)",
       "run_condition_unknown": "Condiția {number}",
+      "run_details_deleted": "{days, plural, one {Detaliile se șterg după {days} zi} few {Detaliile se șterg după {days} zile} other {Detaliile se șterg după {days} de zile}}",
       "run_email_recipient": "Destinatar",
       "run_email_subject": "Subiect",
       "run_email_survey_link": "Link către sondaj",

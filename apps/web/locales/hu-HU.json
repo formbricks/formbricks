@@ -6250,6 +6250,7 @@
       "run_condition_matched": "{condition} (teljesült)",
       "run_condition_not_matched": "{condition} (nem teljesült)",
       "run_condition_unknown": "{number}. feltétel",
+      "run_details_deleted": "{days, plural, one {A részletek {days} nap elteltével törlésre kerülnek} other {A részletek {days} nap elteltével törlésre kerülnek}}",
       "run_email_recipient": "Címzett",
       "run_email_subject": "Tárgy",
       "run_email_survey_link": "Felmérés hivatkozása",

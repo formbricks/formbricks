@@ -6250,6 +6250,7 @@
       "run_condition_matched": "{condition} (voldaan)",
       "run_condition_not_matched": "{condition} (niet voldaan)",
       "run_condition_unknown": "Voorwaarde {number}",
+      "run_details_deleted": "{days, plural, one {Details verwijderd na {days} dag} other {Details verwijderd na {days} dagen}}",
       "run_email_recipient": "Ontvanger",
       "run_email_subject": "Onderwerp",
       "run_email_survey_link": "Link naar de enquête",

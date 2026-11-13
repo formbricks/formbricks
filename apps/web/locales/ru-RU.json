@@ -6250,6 +6250,7 @@
       "run_condition_matched": "{condition} (выполнено)",
       "run_condition_not_matched": "{condition} (не выполнено)",
       "run_condition_unknown": "Условие {number}",
+      "run_details_deleted": "{days, plural, one {Подробности удаляются через {days} день} few {Подробности удаляются через {days} дня} many {Подробности удаляются через {days} дней} other {Подробности удаляются через {days} дня}}",
       "run_email_recipient": "Получатель",
       "run_email_subject": "Тема",
       "run_email_survey_link": "Ссылка на опрос",

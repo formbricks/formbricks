@@ -16,6 +16,8 @@ allOf:
       - callerIp
       - workflowVersionNumber
       - steps
+      - contentDeletedAt
+      - contentRetentionDays
     properties:
       triggerPayload:
         $ref: ./WorkflowTriggerPayload.yml
@@ -70,3 +72,22 @@ allOf:
         description: >-
           Run detail per step: the steps that ran, in order, then the steps on If/else branches
           the run did not take (`not_taken`).
+      contentDeletedAt:
+        type:
+          - string
+          - "null"
+        format: date-time
+        description: >-
+          When the run's content was deleted, `contentRetentionDays` after the run finished. From
+          then on the trigger payload keeps only its type, ids and trigger time (a Webhook payload
+          becomes `{}`), `data` is `{}`, every log's `input` and `output` are `{}`, errors and
+          `callerIp` are null and `steps` carry no `detail`. Status, timestamps, workflow and
+          version stay. Null while the content is kept.
+      contentRetentionDays:
+        type:
+          - integer
+          - "null"
+        minimum: 1
+        description: >-
+          The retention period in days that applied when the content was deleted, for "Details
+          deleted after N days". Null while the content is kept.

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { TWorkflowDefinition, TWorkflowRunResource, TWorkflowRunStep } from "@formbricks/workflows";
-import { type TRunDetailRow, toRunDetailRows } from "./run-detail-rows";
+import { type TRunDetailRow, getRunContentDeletedDays, toRunDetailRows } from "./run-detail-rows";
 
 const badgeOf = (row: TRunDetailRow) => (row.kind === "trigger" ? null : row.badge);
 
@@ -373,5 +373,35 @@ describe("toRunDetailRows", () => {
       null
     );
     expect(other).toMatchObject({ kind: "other", stepType: "future_step", badge: "skipped" });
+  });
+});
+
+describe("a run whose details were deleted", () => {
+  const deleted = buildRun({
+    triggerPayload: {
+      type: "webhook",
+      workspaceId: "ws",
+      payload: {},
+      triggeredAt: "2026-08-01T09:31:12.000Z",
+    },
+    steps: [step({ stepId: "email", status: "failed" })],
+    contentDeletedAt: "2026-11-01T09:31:12.000Z",
+    contentRetentionDays: 90,
+  });
+
+  test("shows only the trigger, without a payload, instead of its steps", () => {
+    expect(toRunDetailRows(deleted, definition)).toEqual([
+      { kind: "trigger", position: 1, stepId: null, triggerType: "webhook", payload: null },
+    ]);
+  });
+
+  test("says after how many days the details were deleted", () => {
+    expect(getRunContentDeletedDays(deleted)).toBe(90);
+  });
+
+  test("a run whose details are kept has no deletion notice", () => {
+    expect(
+      getRunContentDeletedDays(buildRun({ contentDeletedAt: null, contentRetentionDays: null }))
+    ).toBeNull();
   });
 });

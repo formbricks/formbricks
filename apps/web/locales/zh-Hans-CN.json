@@ -6250,6 +6250,7 @@
       "run_condition_matched": "{condition}(已匹配)",
       "run_condition_not_matched": "{condition}(未匹配)",
       "run_condition_unknown": "条件 {number}",
+      "run_details_deleted": "{days, plural, other {详情将在 {days} 天后删除}}",
       "run_email_recipient": "收件人",
       "run_email_subject": "主题",
       "run_email_survey_link": "调查问卷链接",

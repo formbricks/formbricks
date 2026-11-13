@@ -90,6 +90,17 @@ export const ZWorkflowRunResource = ZWorkflowRunSummary.extend({
     .describe(
       "Run detail per step: the steps that ran, in order, then the steps on If/else branches the run did not take (`not_taken`)."
     ),
+  contentDeletedAt: ZIsoDateTime.nullable().describe(
+    "When the run's content was deleted, `contentRetentionDays` after the run finished: the payload keeps only its type, ids and trigger time, data and step input/output are empty, errors and callerIp are null, steps carry no detail. Null while the content is kept."
+  ),
+  contentRetentionDays: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .describe(
+      'The retention period in days that applied when the content was deleted, for "Details deleted after N days". Null while the content is kept.'
+    ),
 }).describe("Full debug-oriented run shape returned by run detail and Test run creation.");
 export type TWorkflowRunResource = z.infer<typeof ZWorkflowRunResource>;
 

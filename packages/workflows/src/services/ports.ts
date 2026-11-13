@@ -227,6 +227,10 @@ export interface WorkflowRunWithLogsRow extends WorkflowRunRow {
   lastErrorAt: Date | null;
   /** The caller's IP for a run a Webhook Secret URL call started; null otherwise. */
   callerIp: string | null;
+  /** When the retention job deleted the run's content (ADR 0044); null while it is kept. */
+  contentDeletedAt: Date | null;
+  /** The retention period in days that applied when the content was deleted. */
+  contentRetentionDays: number | null;
   /** The version the run executed, for its number; null for a Test run. */
   workflowVersion: { version: number } | null;
   logs: WorkflowRunLogRow[];

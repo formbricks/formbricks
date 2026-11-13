@@ -81,6 +81,8 @@ const runResource: TWorkflowRunResource = {
   nextAttemptAt: null,
   lastErrorAt: null,
   callerIp: null,
+  contentDeletedAt: null,
+  contentRetentionDays: null,
   workflowVersionNumber: null,
   steps: [],
 };

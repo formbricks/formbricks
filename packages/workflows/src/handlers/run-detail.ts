@@ -103,10 +103,14 @@ const describeLog = (log: WorkflowRunLogRow): TWorkflowRunStepDetail | null => {
 
 const toIso = (date: Date | null): string | null => (date ? date.toISOString() : null);
 
-/** The run's steps in walk order, then the steps on branches it did not take. */
+/**
+ * The run's steps in walk order, then the steps on branches it did not take. `withDetail: false` (a run
+ * whose content was deleted) keeps each step's status and timing and leaves `detail` null.
+ */
 export const describeWorkflowRunSteps = (
   logs: WorkflowRunLogRow[],
-  notTaken: TWorkflowRunData["notTaken"]
+  notTaken: TWorkflowRunData["notTaken"],
+  { withDetail = true }: { withDetail?: boolean } = {}
 ): TWorkflowRunStep[] => [
   ...logs.map((log) => ({
     stepId: log.stepId,
@@ -115,7 +119,7 @@ export const describeWorkflowRunSteps = (
     error: log.error,
     startedAt: toIso(log.startedAt),
     finishedAt: toIso(log.finishedAt),
-    detail: describeLog(log),
+    detail: withDetail ? describeLog(log) : null,
   })),
   ...(notTaken ?? []).map((step) => ({
     stepId: step.stepId,

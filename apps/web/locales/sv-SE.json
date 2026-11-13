@@ -6250,6 +6250,7 @@
       "run_condition_matched": "{condition} (uppfylldes)",
       "run_condition_not_matched": "{condition} (uppfylldes inte)",
       "run_condition_unknown": "Villkor {number}",
+      "run_details_deleted": "{days, plural, one {Detaljerna raderas efter {days} dag} other {Detaljerna raderas efter {days} dagar}}",
       "run_email_recipient": "Mottagare",
       "run_email_subject": "Ämne",
       "run_email_survey_link": "Länk till enkäten",

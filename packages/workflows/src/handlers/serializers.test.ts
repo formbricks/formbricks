@@ -159,6 +159,8 @@ const detailRun: WorkflowRunWithLogsRow = {
   nextAttemptAt: null,
   lastErrorAt: null,
   callerIp: null,
+  contentDeletedAt: null,
+  contentRetentionDays: null,
   workflowVersion: null,
   logs: [logA],
 };
@@ -215,6 +217,27 @@ describe("run serializers", () => {
       ["send-email", "succeeded"],
       ["other", "not_taken"],
     ]);
+  });
+
+  test("a run whose content is kept says so with null deletion fields", () => {
+    const resource = toWorkflowRunResource(detailRun);
+
+    expect(resource.contentDeletedAt).toBeNull();
+    expect(resource.contentRetentionDays).toBeNull();
+  });
+
+  test("a run whose content was deleted says when and after how many days, and its steps carry no detail", () => {
+    const resource = toWorkflowRunResource({
+      ...detailRun,
+      contentDeletedAt: new Date("2026-09-11T10:00:00.000Z"),
+      contentRetentionDays: 90,
+      logs: [{ ...logA, stepType: "if_else", input: {}, output: {} }],
+    });
+
+    expect(resource.contentDeletedAt).toBe("2026-09-11T10:00:00.000Z");
+    expect(resource.contentRetentionDays).toBe(90);
+    // A cleared If/else log would otherwise read as "no branch, no conditions", which is not what happened.
+    expect(resource.steps).toEqual([expect.objectContaining({ stepId: "send-email", detail: null })]);
   });
 
   test("a Test run has no version number", () => {

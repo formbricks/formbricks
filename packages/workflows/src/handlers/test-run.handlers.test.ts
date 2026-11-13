@@ -84,6 +84,8 @@ const makeRunDetail = (payload: Record<string, unknown>): WorkflowRunWithLogsRow
   nextAttemptAt: null,
   lastErrorAt: null,
   callerIp: null,
+  contentDeletedAt: null,
+  contentRetentionDays: null,
   workflowVersion: null,
   logs: [
     {

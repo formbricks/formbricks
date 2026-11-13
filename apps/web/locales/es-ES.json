@@ -6250,6 +6250,7 @@
       "run_condition_matched": "{condition} (cumplida)",
       "run_condition_not_matched": "{condition} (no cumplida)",
       "run_condition_unknown": "Condición {number}",
+      "run_details_deleted": "{days, plural, one {Detalles eliminados tras {days} día} other {Detalles eliminados tras {days} días}}",
       "run_email_recipient": "Destinatario",
       "run_email_subject": "Asunto",
       "run_email_survey_link": "Enlace de la encuesta",

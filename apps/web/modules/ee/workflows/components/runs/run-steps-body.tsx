@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { toRunDetailRows } from "@/modules/ee/workflows/lib/run-detail-rows";
+import { getRunContentDeletedDays, toRunDetailRows } from "@/modules/ee/workflows/lib/run-detail-rows";
 import { type TWorkflowRunDetail } from "@/modules/ee/workflows/types";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { RunDetailSteps } from "./run-detail-steps";
@@ -47,7 +47,17 @@ export const RunStepsBody = ({
   }
 
   if (detail && rows) {
-    return <RunDetailSteps rows={rows} responseId={detail.responseId} />;
+    const deletedAfterDays = getRunContentDeletedDays(detail);
+    return (
+      <>
+        <RunDetailSteps rows={rows} responseId={detail.responseId} />
+        {deletedAfterDays === null ? null : (
+          <p className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            {t("workspace.workflows.run_details_deleted", { days: deletedAfterDays })}
+          </p>
+        )}
+      </>
+    );
   }
 
   return null;

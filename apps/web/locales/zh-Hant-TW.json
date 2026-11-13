@@ -6250,6 +6250,7 @@
       "run_condition_matched": "{condition}(符合)",
       "run_condition_not_matched": "{condition}(不符合)",
       "run_condition_unknown": "條件 {number}",
+      "run_details_deleted": "{days, plural, other {詳細資料將於 {days} 天後刪除}}",
       "run_email_recipient": "收件者",
       "run_email_subject": "主旨",
       "run_email_survey_link": "問卷連結",

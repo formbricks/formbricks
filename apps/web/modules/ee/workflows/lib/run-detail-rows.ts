@@ -235,16 +235,26 @@ const toStepRow = (
   }
 };
 
+/**
+ * The retention period after which a run's details were deleted (ADR 0044), for "Details deleted after
+ * N days"; null while they are kept.
+ */
+export const getRunContentDeletedDays = (run: TWorkflowRunResource): number | null =>
+  run.contentDeletedAt ? run.contentRetentionDays : null;
+
 export const toRunDetailRows = (
   run: TWorkflowRunResource,
   definition: TWorkflowDefinition | null
 ): TRunDetailRow[] => {
+  const contentDeleted = Boolean(run.contentDeletedAt);
   const trigger: TRunDetailTriggerRow = {
     kind: "trigger",
     position: 1,
     stepId: null,
     triggerType: run.triggerType,
-    payload: run.triggerPayload.type === "webhook" ? run.triggerPayload.payload : null,
+    payload: !contentDeleted && run.triggerPayload.type === "webhook" ? run.triggerPayload.payload : null,
   };
+  // A run whose details were deleted shows the notice instead of its steps.
+  if (contentDeleted) return [trigger];
   return [trigger, ...run.steps.map((step, index) => toStepRow(step, index + 2, run, definition))];
 };

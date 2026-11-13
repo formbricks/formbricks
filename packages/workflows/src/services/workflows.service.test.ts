@@ -122,6 +122,8 @@ const makeRunDetail = (overrides: Partial<WorkflowRunWithLogsRow> = {}): Workflo
   nextAttemptAt: null,
   lastErrorAt: null,
   callerIp: null,
+  contentDeletedAt: null,
+  contentRetentionDays: null,
   workflowVersion: null,
   logs: [],
   ...overrides,

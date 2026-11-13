@@ -75,7 +75,10 @@ export const toWorkflowRunResource = (run: WorkflowRunWithLogsRow): TWorkflowRun
   lastErrorAt: toIso(run.lastErrorAt),
   callerIp: run.callerIp,
   workflowVersionNumber: run.workflowVersion?.version ?? null,
-  steps: describeWorkflowRunSteps(run.logs, run.data.notTaken),
+  // A run whose content was deleted has empty step logs; reading them would describe what did not happen.
+  steps: describeWorkflowRunSteps(run.logs, run.data.notTaken, { withDetail: run.contentDeletedAt === null }),
+  contentDeletedAt: toIso(run.contentDeletedAt),
+  contentRetentionDays: run.contentRetentionDays,
 });
 
 export const toWorkflowListItem = (row: WorkflowRowWithLastRun): TWorkflowListItem => {

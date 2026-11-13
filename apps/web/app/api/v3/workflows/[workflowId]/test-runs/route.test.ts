@@ -191,6 +191,8 @@ vi.mock("@formbricks/database", () => ({
           nextAttemptAt: null,
           lastErrorAt: null,
           callerIp: null,
+          contentDeletedAt: null,
+          contentRetentionDays: null,
           startedAt: null,
           finishedAt: null,
         });

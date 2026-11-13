@@ -6250,6 +6250,7 @@
       "run_condition_matched": "{condition}(一致)",
       "run_condition_not_matched": "{condition}(不一致)",
       "run_condition_unknown": "条件 {number}",
+      "run_details_deleted": "{days, plural, other {詳細は{days}日後に削除されます}}",
       "run_email_recipient": "宛先",
       "run_email_subject": "件名",
       "run_email_survey_link": "アンケートのリンク",
