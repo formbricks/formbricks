@@ -559,7 +559,7 @@ services:
   vllm:
     restart: always
     profiles: ["qwen"]
-    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.32.0}
+    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.33.0}
     deploy:
       resources:
         reservations:
@@ -614,7 +614,7 @@ services:
   # "CUBEJS_API_SECRET is required to run Cube" when the secret is empty.
   cube:
     restart: always
-    image: ghcr.io/formbricks/cube:1.8.17-1
+    image: ghcr.io/formbricks/cube:1.8.20-1
     depends_on:
       hub-migrate:
         condition: service_completed_successfully
