@@ -16,6 +16,8 @@ const SURVEY_LIST_MAX_PAGES = 20;
 interface TWorkflowSurveyOption extends TOutboundSurvey {
   id: string;
   name: string;
+  /** Only a link survey can be sent as a Send email survey link (ENG-7180). */
+  type: "link" | "app" | "website" | "web";
 }
 
 interface TWorkflowSurveyEnding {
@@ -175,7 +177,12 @@ export const useWorkflowSurveyOptions = (workspaceId: string) => {
         });
         for (const survey of page.data) {
           // `visibility` lets the picker refuse a restricted survey (ENG-3395).
-          options.push({ id: survey.id, name: survey.name, visibility: survey.visibility });
+          options.push({
+            id: survey.id,
+            name: survey.name,
+            visibility: survey.visibility,
+            type: survey.type,
+          });
         }
         cursor = page.meta.nextCursor;
         pages += 1;

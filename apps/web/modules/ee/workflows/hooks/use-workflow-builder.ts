@@ -39,6 +39,7 @@ import {
   setWorkflowSaveErrorAtom,
   setWorkflowSavingAtom,
   setWorkflowTransitioningAtom,
+  settleSentSecretHeaderValuesAtom,
   workflowAtom,
   workflowDefinitionAtom,
   workflowDraftSignatureAtom,
@@ -137,6 +138,7 @@ export const useWorkflowBuilder = ({
   const hydrateEditor = useSetAtom(hydrateWorkflowEditorAtom);
   const setWorkflow = useSetAtom(setWorkflowAtom);
   const markDraftSaved = useSetAtom(markWorkflowDraftSavedAtom);
+  const settleSentSecretHeaderValues = useSetAtom(settleSentSecretHeaderValuesAtom);
   const isSaving = useAtomValue(isWorkflowSavingAtom);
   const isTransitioning = useAtomValue(isWorkflowTransitioningAtom);
   const setIsSaving = useSetAtom(setWorkflowSavingAtom);
@@ -273,6 +275,8 @@ export const useWorkflowBuilder = ({
           workflowDescription: trimmedDescription ?? "",
           definition: currentDefinition,
         });
+        // The secret header values just sent are stored now; never send them again (ADR 0043).
+        settleSentSecretHeaderValues(currentDefinition);
         // Re-run the server loaders so server-resolved props (e.g. the email authoring context,
         // which resolves the trigger's bound survey) catch up with the just-saved definition.
         // Client state (atoms, form drafts) survives a refresh.
@@ -299,7 +303,7 @@ export const useWorkflowBuilder = ({
         setIsSaving(false);
       }
     },
-    [store, setWorkflow, markDraftSaved, setIsSaving, setSaveError, router, t]
+    [store, setWorkflow, markDraftSaved, settleSentSecretHeaderValues, setIsSaving, setSaveError, router, t]
   );
 
   // Autosave: the page-level instance (loadOnMount) persists any dirty draft shortly after the

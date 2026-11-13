@@ -18,6 +18,7 @@ import { PanelLeftIcon, PanelRightOpenIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { useWorkflowWebhook } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import {
   WORKFLOW_ADD_BUTTON_EDGE_TYPE,
   WORKFLOW_BRANCH_EDGE_TYPE,
@@ -30,6 +31,8 @@ import {
   workflowDefinitionToFlowEdges,
   workflowDefinitionToFlowNodes,
 } from "@/modules/ee/workflows/lib/definition-to-flow";
+import { countUsableVariables } from "@/modules/ee/workflows/lib/webhook-trigger-panel";
+import { hasSavedWebhookTrigger } from "@/modules/ee/workflows/lib/workflow-samples";
 import {
   type TWorkflowNodeData,
   addWorkflowTriggerAtom,
@@ -38,6 +41,7 @@ import {
   isCanvasLockedAtom,
   isWorkflowInspectorCollapsedAtom,
   isWorkflowNodeConfigModalOpenAtom,
+  isWorkflowReadOnlyAtom,
   isWorkflowSnapToCanvasEnabledAtom,
   openWorkflowNodeConfigModalAtom,
   setWorkflowDefinitionAtom,
@@ -113,9 +117,26 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   // Unloaded state defaults to draft so a fresh page never flashes red before the workflow lands.
   const isDraft = workflow ? workflow.status === "draft" : true;
 
+  // A Webhook trigger's card says whether a sample arrived ("Sample received · 9 Variables"). Only
+  // members who can edit read the webhook; the others keep the card's general summary.
+  const isReadOnly = useAtomValue(isWorkflowReadOnlyAtom);
+  const webhook = useWorkflowWebhook({
+    workflowId: workflow?.id ?? null,
+    enabled: hasSavedWebhookTrigger(workflow) && !isReadOnly,
+  });
+  const webhookSample = definition?.trigger?.triggerType === "webhook" ? webhook.data?.sample : null;
+  const triggerSummary = webhookSample
+    ? t("workspace.workflows.webhook_trigger_summary_sample", {
+        count: countUsableVariables(webhookSample.variables),
+      })
+    : undefined;
+
   const derivedFlowNodes = useMemo(
-    () => (definition ? workflowDefinitionToFlowNodes(definition, t, { hasBoundSurvey, isDraft }) : []),
-    [definition, t, hasBoundSurvey, isDraft]
+    () =>
+      definition
+        ? workflowDefinitionToFlowNodes(definition, t, { hasBoundSurvey, isDraft, triggerSummary })
+        : [],
+    [definition, t, hasBoundSurvey, isDraft, triggerSummary]
   );
   const flowEdges = useMemo(
     () => (definition ? workflowDefinitionToFlowEdges(definition) : []),

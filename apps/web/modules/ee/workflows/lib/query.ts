@@ -23,6 +23,8 @@ export const workflowKeys = {
   detail: (workflowId: string) => [...workflowKeys.details(), workflowId] as const,
   /** The Webhook Secret URL and Sample payload; under the detail, so invalidating it refetches both. */
   webhook: (workflowId: string) => [...workflowKeys.detail(workflowId), "webhook"] as const,
+  /** Every sample of the workflow, HTTP request steps' Test request responses included. */
+  samples: (workflowId: string) => [...workflowKeys.detail(workflowId), "samples"] as const,
 };
 
 export function flattenWorkflowPages(data?: InfiniteData<TWorkflowListPage>): TWorkflowListItem[] {

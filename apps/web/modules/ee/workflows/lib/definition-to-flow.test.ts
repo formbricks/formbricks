@@ -99,6 +99,29 @@ describe("workflowDefinitionToFlowNodes / Edges", () => {
     expect(nodes[1].data.issue).toBeNull();
   });
 
+  test("a Webhook trigger has no survey to pick, so neither it nor its email waits for one", () => {
+    const def = buildDefinition();
+    def.trigger = { id: "trigger-1", type: "trigger", triggerType: "webhook", config: {} };
+    (def.nodes[0] as { config: { subject: string } }).config.subject = "";
+
+    const nodes = workflowDefinitionToFlowNodes(def, t, { hasBoundSurvey: false, isDraft: true });
+
+    expect(nodes[0].data.issue).toBeNull();
+    expect(nodes[1].data.issue).toEqual({
+      severity: "setup",
+      label: "workspace.workflows.node_needs_email_content",
+    });
+  });
+
+  test("shows the trigger summary the canvas worked out from the Webhook sample", () => {
+    const def = buildDefinition();
+    def.trigger = { id: "trigger-1", type: "trigger", triggerType: "webhook", config: {} };
+
+    const nodes = workflowDefinitionToFlowNodes(def, t, { triggerSummary: "Sample received · 9 Variables" });
+
+    expect(nodes[0].data.summary).toBe("Sample received · 9 Variables");
+  });
+
   test("flags an incomplete email node once the survey is bound, with error severity when live", () => {
     const def = buildDefinition();
     (def.nodes[0] as { config: { to: string } }).config.to = "";
@@ -218,9 +241,9 @@ describe("If/else on the canvas", () => {
     expect(branchNode?.data.emptyBranches).toEqual(["else"]);
   });
 
-  test("offers a + under the last step of a branch, and still only under a leaf trigger outside one", () => {
+  test("offers a + under the last step of the workflow or of a branch, never mid-chain", () => {
     const linear = workflowDefinitionToFlowNodes(buildDefinition(), t);
-    expect(linear.map((node) => node.data.canAppendStep)).toEqual([false, false]);
+    expect(linear.map((node) => node.data.canAppendStep)).toEqual([false, true]);
 
     const branched = workflowDefinitionToFlowNodes(branchDefinition(), t);
     const canAppendById = Object.fromEntries(branched.map((node) => [node.id, node.data.canAppendStep]));

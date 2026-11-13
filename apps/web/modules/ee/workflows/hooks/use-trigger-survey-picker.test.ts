@@ -40,9 +40,12 @@ describe("useWorkflowSurveyOptions", () => {
     expect(listSurveysMock).toHaveBeenLastCalledWith(expect.objectContaining({ cursor: "cursor-1" }));
   });
 
-  test("keeps each survey's visibility so the picker can refuse a restricted one", async () => {
+  test("keeps each survey's visibility and type, so pickers can refuse a restricted or non-link one", async () => {
     listSurveysMock.mockResolvedValueOnce(
-      page([{ id: "s1", name: "One", visibility: "restricted" } as { id: string; name: string }], null)
+      page(
+        [{ id: "s1", name: "One", visibility: "restricted", type: "link" } as { id: string; name: string }],
+        null
+      )
     );
 
     const { result } = renderHook(() => useWorkflowSurveyOptions("ws_1"), {
@@ -50,7 +53,9 @@ describe("useWorkflowSurveyOptions", () => {
     });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.options).toEqual([{ id: "s1", name: "One", visibility: "restricted" }]);
+    expect(result.current.options).toEqual([
+      { id: "s1", name: "One", visibility: "restricted", type: "link" },
+    ]);
   });
 
   test("truncates and warns when the cursor never exhausts", async () => {

@@ -1,43 +1,70 @@
 import type { TFunction } from "i18next";
-import type {
-  TWorkflowCondition,
-  TWorkflowConditionGroup,
-  TWorkflowConditionValue,
+import {
+  type TWorkflowCondition,
+  type TWorkflowConditionGroup,
+  type TWorkflowConditionValue,
+  toSurveyConditionOperator,
 } from "@formbricks/workflows";
 import { getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
 
 type TConditionWords = { variable: string; value?: string };
 
 // One key per operator so each language orders variable, verb and value its own way. Literal
-// `t()` calls keep every key visible to the translation scanner.
+// `t()` calls keep every key visible to the translation scanner. Legacy names (ADR 0050) read as the
+// survey operator they mean.
 const describeComparison = (
   operator: TWorkflowCondition["operator"],
   words: TConditionWords,
   t: TFunction
 ): string | null => {
-  switch (operator) {
+  switch (toSurveyConditionOperator(operator)) {
     case "equals":
       return t("workspace.workflows.if_else_operator_equals", words);
-    case "notEquals":
+    case "doesNotEqual":
       return t("workspace.workflows.if_else_operator_not_equals", words);
-    case "lessThan":
+    case "isLessThan":
       return t("workspace.workflows.if_else_operator_less_than", words);
-    case "lessEqual":
+    case "isLessThanOrEqual":
       return t("workspace.workflows.if_else_operator_less_equal", words);
-    case "greaterThan":
+    case "isGreaterThan":
       return t("workspace.workflows.if_else_operator_greater_than", words);
-    case "greaterEqual":
+    case "isGreaterThanOrEqual":
       return t("workspace.workflows.if_else_operator_greater_equal", words);
     case "contains":
       return t("workspace.workflows.if_else_operator_contains", words);
-    case "notContains":
+    case "doesNotContain":
       return t("workspace.workflows.if_else_operator_not_contains", words);
-    case "exists":
+    case "startsWith":
+      return t("workspace.workflows.if_else_operator_starts_with", words);
+    case "doesNotStartWith":
+      return t("workspace.workflows.if_else_operator_not_starts_with", words);
+    case "endsWith":
+      return t("workspace.workflows.if_else_operator_ends_with", words);
+    case "doesNotEndWith":
+      return t("workspace.workflows.if_else_operator_not_ends_with", words);
+    case "isBefore":
+      return t("workspace.workflows.if_else_operator_is_before", words);
+    case "isAfter":
+      return t("workspace.workflows.if_else_operator_is_after", words);
+    case "equalsOneOf":
+      return t("workspace.workflows.if_else_operator_equals_one_of", words);
+    case "includesAllOf":
+      return t("workspace.workflows.if_else_operator_includes_all_of", words);
+    case "includesOneOf":
+      return t("workspace.workflows.if_else_operator_includes_one_of", words);
+    case "doesNotIncludeAllOf":
+      return t("workspace.workflows.if_else_operator_not_includes_all_of", words);
+    case "doesNotIncludeOneOf":
+      return t("workspace.workflows.if_else_operator_not_includes_one_of", words);
+    case "isSet":
       return t("workspace.workflows.if_else_operator_exists", words);
-    case "notExists":
+    case "isNotSet":
       return t("workspace.workflows.if_else_operator_not_exists", words);
+    case "isEmpty":
+      return t("workspace.workflows.if_else_operator_is_empty", words);
+    case "isNotEmpty":
+      return t("workspace.workflows.if_else_operator_is_not_empty", words);
     default:
-      // Operators this summary doesn't know yet (ENG-7165 moves to survey operator names).
       return null;
   }
 };

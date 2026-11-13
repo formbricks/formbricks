@@ -5,10 +5,16 @@ import {
   WORKFLOW_ACTIONS,
   WORKFLOW_TRIGGERS,
   isResponseCompletedTrigger,
+  isVariableEmailRecipient,
 } from "@formbricks/workflows";
 import { WorkflowEmailActionForm } from "@/modules/ee/workflows/components/inspector/workflow-email-action-form";
+import { WorkflowHttpRequestForm } from "@/modules/ee/workflows/components/inspector/workflow-http-request-form";
+import { WorkflowIfElseForm } from "@/modules/ee/workflows/components/inspector/workflow-if-else-form";
 import { WorkflowTriggerForm } from "@/modules/ee/workflows/components/inspector/workflow-trigger-form";
+import { WorkflowWebhookTriggerForm } from "@/modules/ee/workflows/components/inspector/workflow-webhook-trigger-form";
+import { describeHttpRequestTarget } from "@/modules/ee/workflows/lib/http-request-panel";
 import { describeIfElseCondition } from "@/modules/ee/workflows/lib/if-else-summary";
+import { getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
 import type { TWorkflowNodeCategory, TWorkflowNodeIcon } from "@/modules/ee/workflows/state/editor";
 
 export type TWorkflowNodeRegistryKind =
@@ -60,9 +66,13 @@ const sendEmailActionEntry: TWorkflowNodeRegistryEntry = {
   title: (node, t) => node.label ?? t("workspace.workflows.send_email"),
   summary: (node, t) => {
     if (node.type !== "action" || node.actionType !== WORKFLOW_ACTIONS.SEND_EMAIL) return "";
-    return node.config.to
-      ? t("workspace.workflows.send_email_summary", { to: node.config.to })
-      : t("workspace.workflows.send_email_unconfigured");
+    const { to, surveyLink } = node.config;
+    // A Variable recipient reads as the picker shows it: "@customer.email".
+    const recipient = isVariableEmailRecipient(to) ? `@${getVariableDisplayName(to.ref)}` : to;
+    if (!recipient) return t("workspace.workflows.send_email_unconfigured");
+    return surveyLink
+      ? t("workspace.workflows.send_email_summary_with_link", { to: recipient })
+      : t("workspace.workflows.send_email_summary", { to: recipient });
   },
   ConfigForm: eraseForm(WorkflowEmailActionForm),
 };
@@ -71,34 +81,34 @@ const ifElseEntry: TWorkflowNodeRegistryEntry = {
   kind: "if_else",
   category: "flow",
   icon: "ifElse",
-  title: (_node, t) => t("workspace.workflows.if_else"),
+  title: (node, t) => node.label ?? t("workspace.workflows.if_else"),
   summary: (node, t) =>
     (node.type === "if_else" ? describeIfElseCondition(node.config.condition, t) : null) ??
     t("workspace.workflows.if_else_summary"),
-  ConfigForm: null,
+  ConfigForm: eraseForm(WorkflowIfElseForm),
 };
 
-// Minimal entry so a Webhook trigger renders; its panel (Secret URL, sample payload) is ENG-7182's.
+// The card says whether a sample arrived; the canvas passes that summary in once it knows (it needs
+// the server's sample), so this is the summary before that.
 const webhookTriggerEntry: TWorkflowNodeRegistryEntry = {
   kind: `trigger:${WORKFLOW_TRIGGERS.WEBHOOK}`,
   category: "trigger",
-  icon: "trigger",
-  title: (_node, t) => t("common.webhook"),
-  summary: () => "",
-  ConfigForm: null,
+  icon: "webhook",
+  title: (_node, t) => t("workspace.workflows.webhook_trigger"),
+  summary: (_node, t) => t("workspace.workflows.webhook_trigger_summary"),
+  ConfigForm: eraseForm(WorkflowWebhookTriggerForm),
 };
 
-// Minimal entry so an HTTP request step renders; its panel is ENG-7182's.
 const httpRequestActionEntry: TWorkflowNodeRegistryEntry = {
   kind: `action:${WORKFLOW_ACTIONS.HTTP_REQUEST}`,
   category: "action",
-  icon: "trigger",
+  icon: "http",
   title: (node, t) => node.label ?? t("workspace.workflows.http_request"),
-  summary: (node) =>
+  summary: (node, t) =>
     node.type === "action" && node.actionType === WORKFLOW_ACTIONS.HTTP_REQUEST
-      ? `${node.config.method} ${node.config.url}`.trim()
+      ? (describeHttpRequestTarget(node.config) ?? t("workspace.workflows.http_request_unconfigured"))
       : "",
-  ConfigForm: null,
+  ConfigForm: eraseForm(WorkflowHttpRequestForm),
 };
 
 const REGISTRY: Record<TWorkflowNodeRegistryKind, TWorkflowNodeRegistryEntry> = {
