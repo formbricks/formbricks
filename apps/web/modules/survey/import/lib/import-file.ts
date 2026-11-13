@@ -5,7 +5,7 @@ export const FORMBRICKS_FILE_INPUT_EXTENSION = ".json";
 
 /**
  * A survey's Excel export, or any other workbook. Without Formbricks AI only an Excel export is taken
- * (ENG-6809), which the dialog tells from its content before uploading (`isExcelExportFile`).
+ * (ENG-6809), which the dialog tells from its content before uploading (`getExcelExportFileKind`).
  */
 export const EXCEL_FILE_EXTENSION = ".xlsx";
 
@@ -68,7 +68,7 @@ export const checkSurveyImportFile = (
 
 /**
  * Whether the dialog must read the file before uploading it: without Formbricks AI, an Excel file goes up
- * only when it is laid out as an Excel export (`isExcelExportFile`), and is refused as needing AI otherwise.
+ * only when it is laid out as an Excel export (`getExcelExportFileKind`), and is refused as needing AI otherwise.
  */
 export const needsExcelExportCheck = (
   file: { name: string },

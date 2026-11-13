@@ -10,12 +10,12 @@ import { EXCEL_EXPORT_META_SHEET } from "@/modules/survey/excel-export/format";
 import { writeExcelExport } from "@/modules/survey/excel-export/write";
 import { openZipArchive } from "@/modules/survey/import/core/zip";
 import { EVERY_TEXT_SURVEY } from "@/modules/survey/lib/__fixtures__/every-text-survey";
-import { getExcelExportArchiveKind, getExcelExportFileKind, isExcelExportArchive } from "./excel-export-file";
+import { getExcelExportArchiveKind, getExcelExportFileKind } from "./excel-export-file";
 
 const t = createIcuTranslate("en-US");
 const exported = () =>
   writeExcelExport({ survey: EVERY_TEXT_SURVEY as unknown as TSurvey, t, locale: "en-US" });
-const isExport = (bytes: Uint8Array) => isExcelExportArchive(openZipArchive(bytes));
+const isExport = (bytes: Uint8Array) => getExcelExportArchiveKind(openZipArchive(bytes)) === "export";
 
 /** The export with its meta sheet's rows changed by `edit`, written the way another app might save it. */
 const editMeta = (
@@ -46,7 +46,7 @@ const setCell = (rows: string[][], row: number, column: number, text: string) =>
     index === row ? cells.map((cell, at) => (at === column ? text : cell)) : cells
   );
 
-describe("isExcelExportArchive", () => {
+describe("getExcelExportArchiveKind: this version's export", () => {
   test("tells an Excel export, as written and as re-saved with its texts edited", () => {
     expect(isExport(exported())).toBe(true);
     expect(isExport(editExcelExport(exported(), (rows) => rows.slice(0, 3)))).toBe(true);

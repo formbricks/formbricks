@@ -149,10 +149,6 @@ export const getExcelExportArchiveKind = (archive: TZipArchive): TExcelExportFil
   return hasKeyColumn ? "export" : "other";
 };
 
-/** Whether an opened archive is laid out as this version's Excel export. */
-export const isExcelExportArchive = (archive: TZipArchive): boolean =>
-  getExcelExportArchiveKind(archive) === "export";
-
 /** What an `.xlsx` the user picked is laid out as. Never throws: unreadable is any other workbook. */
 export const getExcelExportFileKind = async (file: Blob): Promise<TExcelExportFileKind> => {
   try {
