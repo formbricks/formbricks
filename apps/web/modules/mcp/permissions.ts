@@ -100,13 +100,15 @@ export type TMcpPermissionRequirement = {
  * so they declare that permission too and are refused without it. Chart reads return feedback records,
  * so they need Charts and Feedback records: Read (spec, user story 27). The consent screen shows these
  * as hints; the tool declarations stay what enforces them.
+ *
+ * Workflow runs has none: `get_workflow_run` declares Workflow runs: Read alone, so a client upgraded
+ * with `workflows:read` keeps it (spec story 40), and leaves out the run's respondent-derived fields for a
+ * grant without Responses: Read instead of refusing.
  */
 export const MCP_PERMISSION_DEPENDENCIES: Partial<
   Record<TMcpPermission, readonly TMcpPermissionRequirement[]>
 > = {
   charts: [{ permission: "feedbackRecords", level: "read" }],
-  // `get_workflow_run` returns the trigger payload and each step's input and output: respondents' answers.
-  workflowRuns: [{ permission: "responses", level: "read" }],
   // `list_contacts` returns each contact's attribute values; `list_segments`, filters naming literal ones.
   contacts: [{ permission: "contactAttributes", level: "read" }],
   segments: [{ permission: "contactAttributes", level: "read" }],

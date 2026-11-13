@@ -112,7 +112,7 @@ Supported scopes:
 | --- | --- |
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` |
 | `surveys:write` | `create_survey`, `generate_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` |
-| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run` (also `responses:read`), `test_workflow` |
+| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
@@ -1428,9 +1428,11 @@ Only `workspaceId` is required. Omit `filter.isDryRun` to return both real and d
 
 #### get_workflow_run
 
-Gets one workflow run with its ordered step logs. Read-only and idempotent. Declares Workflow runs: Read and
-Responses: Read, because the run carries its trigger payload, its data and each step's input and output, which
-include respondents' answers.
+Gets one workflow run with its ordered step logs. Read-only and idempotent. Declares Workflow runs: Read
+alone, so a client upgraded with `workflows:read` keeps it. The run's trigger payload, its data and each
+step's input and output carry respondents' answers: without Responses: Read (in the grant and in the token's
+scopes) they come back as `null`, and the rest of the run (status, timing, errors, step order) is returned
+as it is.
 
 ```json
 { "runId": "clrn1234567890123456789012" }

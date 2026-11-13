@@ -55,8 +55,9 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   list_workflows: ["workflows:read"],
   get_workflow: ["workflows:read"],
   list_workflow_runs: ["workflows:read"],
-  // Also responses:read since its run carries respondents' answers (the trigger payload and step I/O).
-  get_workflow_run: ["workflows:read", "responses:read"],
+  // workflows:read alone (spec story 40): without Responses: Read it leaves out the respondent-derived
+  // fields instead of refusing.
+  get_workflow_run: ["workflows:read"],
   test_workflow: ["workflows:read"],
   create_workflow: ["workflows:write"],
   patch_workflow: ["workflows:write"],
@@ -258,14 +259,9 @@ describe("MCP tool permissions", () => {
         { permission: "contactAttributes", level: "read" },
       ],
     ],
-    // A run carries the trigger payload, its data and each step's input and output: respondents' answers.
-    [
-      "get_workflow_run",
-      [
-        { permission: "workflowRuns", level: "read" },
-        { permission: "responses", level: "read" },
-      ],
-    ],
+    // Workflow runs: Read alone, so an upgraded `workflows:read` client keeps it (spec story 40); the
+    // respondent-derived fields are left out without Responses: Read (workflows.test.ts).
+    ["get_workflow_run", [{ permission: "workflowRuns", level: "read" }]],
   ])("%s declares the data it returns", { timeout: 120_000 }, async (name, expected) => {
     const tools = new Map((await loadRegistrations()).map(({ name, permissions }) => [name, permissions]));
     expect(tools.get(name)).toEqual(expected);

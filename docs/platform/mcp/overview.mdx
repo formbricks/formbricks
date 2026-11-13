@@ -44,7 +44,7 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 | --- | --- | --- |
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` | Read surveys, creatives and their counts, and surveys' custom CSS, and validate survey documents and CSS |
 | `surveys:write` | `create_survey`, `generate_survey`⁴, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` | Create, update, and delete surveys and creatives, and save a workspace's shared survey CSS — which additionally needs an organization owner or manager |
-| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run` (also `responses:read`), `test_workflow`¹ | Read workflows and their runs |
+| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`¹ | Read workflows and their runs |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, `unarchive_workflow` | Create, update, and delete workflows |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` | Read, count and search feedback records in a workspace's feedback dataset |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`², `delete_feedback_record`² | Create, correct and delete feedback records |
@@ -98,10 +98,11 @@ group of its category: Surveys, Creatives and Survey styling to `surveys`; Respo
 `responses`; Workflows and Workflow runs to `workflows`; Charts and Dashboards to `dashboards`; Feedback
 records and Feedback datasets to `feedbackRecords`; Contacts, Contact attributes, Segments and Action classes
 (the Audience category) to `audience`. Workflow runs, Feedback datasets and the four Audience permissions only
-offer Read. Some tools need a second permission because they return its data: `get_workflow_run` needs Responses: Read
-too (a run carries respondents' answers), and `list_contacts` and `list_segments` need Contact attributes: Read
-(contacts carry their attribute values, and segment filters name them). The consent screen shows these as
-hints.
+offer Read. Some tools need a second permission because they return its data: `list_contacts` and
+`list_segments` need Contact attributes: Read (contacts carry their attribute values, and segment filters name
+them). The consent screen shows these as hints. `get_workflow_run` needs only Workflow runs: Read, but leaves
+out a run's trigger payload, data and step inputs and outputs, which carry respondents' answers, unless the
+grant also gives Responses: Read.
 
 You can change a client's grant at any time with **Edit** under **Settings → Account → Authorized Apps**
 (see [Manage and revoke access](/platform/mcp/setup#manage-and-revoke-access)). The change applies from

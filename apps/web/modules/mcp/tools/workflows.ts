@@ -4,6 +4,7 @@ import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflo
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { type TMcpToolContext, getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
+import { mcpCallerHolds } from "./caller-permissions";
 import { registerMcpTool } from "./guard-permissions";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
@@ -129,6 +130,39 @@ async function runWorkflowMutation(
   );
 }
 
+const RESPONSES_READ = { permission: "responses", level: "read" } as const;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/**
+ * A `get_workflow_run` result without what is derived from respondents' answers: the trigger payload,
+ * the run's data, and each step's input and output, set to `null`. For a caller without Responses: Read,
+ * whom the run's other fields (status, timing, errors, step order) don't tell anything a response says.
+ * An error result passes through.
+ */
+export const withoutRespondentData = (result: CallToolResult): CallToolResult => {
+  const payload = result.structuredContent;
+  if (result.isError || !isRecord(payload) || !isRecord(payload.data)) return result;
+  const run = payload.data;
+  const redacted = {
+    ...payload,
+    data: {
+      ...run,
+      triggerPayload: null,
+      data: null,
+      logs: Array.isArray(run.logs)
+        ? run.logs.map((log: unknown) => (isRecord(log) ? { ...log, input: null, output: null } : log))
+        : run.logs,
+    },
+  };
+  return {
+    ...result,
+    structuredContent: redacted,
+    content: [{ type: "text", text: JSON.stringify(redacted) }],
+  };
+};
+
 export function registerWorkflowTools(server: McpServer): void {
   registerMcpTool(
     server,
@@ -218,7 +252,7 @@ export function registerWorkflowTools(server: McpServer): void {
     {
       title: "Get workflow run",
       description:
-        "Get one Formbricks workflow run with its ordered step logs using the v3 Workflows API contract.",
+        "Get one Formbricks workflow run with its ordered step logs using the v3 Workflows API contract. Without Responses: Read in the user's grant, triggerPayload, data and each log's input and output are null: they carry respondents' answers.",
       inputSchema: ZMcpGetWorkflowRunInput,
       annotations: {
         readOnlyHint: true,
@@ -227,18 +261,17 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    // A run carries the trigger payload, its data and each step's input and output: respondents' answers.
-    [
-      { permission: "workflowRuns", level: "read" },
-      { permission: "responses", level: "read" },
-    ],
+    // Workflow runs: Read alone, so a client upgraded with `workflows:read` keeps the tool (spec story
+    // 40). The fields that carry respondents' answers are left out without Responses: Read.
+    [{ permission: "workflowRuns", level: "read" }],
     async (input: TMcpGetWorkflowRunInput, mcpCtx) => {
       const authInfo = getMcpToolAuthInfo(mcpCtx);
       const requestId = getMcpRequestId(authInfo);
       const ctx = buildWorkflowApiContext(getMcpAuthentication(authInfo), requestId, MCP_API_ROUTE);
       const response = await workflowsHandlers.getRun({ ctx, params: { runId: input.runId } });
+      const result = await responseToMcpToolResult(response, requestId);
 
-      return await responseToMcpToolResult(response, requestId);
+      return mcpCallerHolds(authInfo, RESPONSES_READ) ? result : withoutRespondentData(result);
     }
   );
 

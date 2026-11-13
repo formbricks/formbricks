@@ -14,6 +14,7 @@ import {
   buildListWorkflowRunsSearchParams,
   buildListWorkflowsSearchParams,
   registerWorkflowTools,
+  withoutRespondentData,
 } from "./workflows";
 
 // The registered inputSchema is a Standard Schema; only these two members are read here.
@@ -257,17 +258,81 @@ describe("registerWorkflowTools", () => {
       successResponse({ id: RUN_ID }, { requestId: "req_tool" })
     );
 
-    // A run also needs responses:read: it carries respondents' answers.
-    await tools
-      .get("get_workflow_run")!
-      .handler(
-        { runId: RUN_ID },
-        { http: { authInfo: { ...authInfo, scopes: [...authInfo.scopes, "responses:read"] } } }
-      );
+    await tools.get("get_workflow_run")!.handler({ runId: RUN_ID }, { http: { authInfo } });
 
     expect(workflowsHandlers.getRun).toHaveBeenCalledWith({
       ctx: { __ctx: true },
       params: { runId: RUN_ID },
+    });
+  });
+
+  describe("get_workflow_run respondent-derived fields", () => {
+    const run = {
+      id: RUN_ID,
+      status: "succeeded",
+      triggerPayload: { responseId: "resp_1", answers: { q1: "my email is a@b.c" } },
+      data: { q1: "my email is a@b.c" },
+      logs: [
+        { id: "log_1", stepId: "s1", status: "succeeded", input: { q1: "secret" }, output: { sent: true } },
+      ],
+    };
+    const redacted = {
+      ...run,
+      triggerPayload: null,
+      data: null,
+      logs: [{ id: "log_1", stepId: "s1", status: "succeeded", input: null, output: null }],
+    };
+    const callWith = async (callerAuthInfo: unknown) => {
+      const { tools } = createToolServer();
+      vi.mocked(workflowsHandlers.getRun).mockResolvedValue(successResponse(run, { requestId: "req_tool" }));
+      return tools
+        .get("get_workflow_run")!
+        .handler({ runId: RUN_ID }, { http: { authInfo: callerAuthInfo } });
+    };
+    // An upgraded client: `workflows:read` and a grant at Workflow runs: Read, nothing of Responses.
+    const workflowsOnly = {
+      ...readOnlyAuthInfo,
+      extra: { ...readOnlyAuthInfo.extra, grant: { access: "all", permissions: { workflowRuns: "read" } } },
+    };
+
+    test("keeps the tool for a grant without Responses: Read, leaving those fields out", async () => {
+      const result = await callWith(workflowsOnly);
+
+      expect(result.isError).toBeUndefined();
+      expect(result.structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
+      expect(JSON.parse(result.content[0].text)).toEqual({ data: redacted, requestId: "req_tool" });
+    });
+
+    test("leaves them out when the grant gives Responses: Read but the token lacks responses:read", async () => {
+      const result = await callWith(readOnlyAuthInfo);
+
+      expect(result.structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
+    });
+
+    test("returns them whole when both the token and the grant give Responses: Read", async () => {
+      const result = await callWith({ ...readOnlyAuthInfo, scopes: ["workflows:read", "responses:read"] });
+
+      expect(result.structuredContent).toEqual({ data: run, requestId: "req_tool" });
+    });
+
+    test("returns them whole to an API key holding responses:read, which has no grant", async () => {
+      const result = await callWith({ ...authInfo, scopes: ["workflows:read", "responses:read"] });
+
+      expect(result.structuredContent).toEqual({ data: run, requestId: "req_tool" });
+    });
+
+    test("passes an error through untouched", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(workflowsHandlers.getRun).mockResolvedValue(
+        problemForbidden("req_tool", "You are not authorized to access this resource")
+      );
+
+      const result = await tools
+        .get("get_workflow_run")!
+        .handler({ runId: RUN_ID }, { http: { authInfo: workflowsOnly } });
+
+      expect(result.isError).toBe(true);
+      expect(result.structuredContent).toMatchObject({ error: { status: 403 } });
     });
   });
 
@@ -631,5 +696,26 @@ describe("create_workflow advertised input schema", () => {
     // validation failures — and so would have passed with strictness removed entirely.
     expect(schema.safeParse(VALID_CREATE_WORKFLOW_INPUT).success).toBe(true);
     expect(schema.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, bogus: 1 }).success).toBe(false);
+  });
+});
+
+describe("withoutRespondentData", () => {
+  const text = (payload: unknown) => ({
+    structuredContent: payload,
+    content: [{ type: "text" as const, text: "x" }],
+  });
+
+  test("leaves a result without a run object as it is", () => {
+    const empty = text({ requestId: "r" });
+    expect(withoutRespondentData(empty as never)).toBe(empty);
+    const listed = text({ data: [1, 2], requestId: "r" });
+    expect(withoutRespondentData(listed as never)).toBe(listed);
+  });
+
+  test("keeps logs it can't read as they are, and a queued run's missing logs", () => {
+    const result = withoutRespondentData(text({ data: { logs: ["odd"], data: { a: 1 } } }) as never);
+    expect(result.structuredContent).toEqual({ data: { logs: ["odd"], data: null, triggerPayload: null } });
+    const queued = withoutRespondentData(text({ data: { triggerPayload: { a: 1 } } }) as never);
+    expect(queued.structuredContent).toEqual({ data: { triggerPayload: null, data: null, logs: undefined } });
   });
 });
