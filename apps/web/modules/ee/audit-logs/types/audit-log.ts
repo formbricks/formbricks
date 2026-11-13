@@ -91,6 +91,8 @@ export const ZAuditAction = z.enum([
   "secretHeaderSet",
   "secretHeaderReplaced",
   "testRequestSent",
+  // ENG-7181: a Test run of a workflow's draft started (run id and outcome only, never the payload).
+  "testRunStarted",
   // ENG-7177: a workflow's Webhook Secret URL was replaced; the old URL stopped working.
   "webhookUrlRegenerated",
 ]);

@@ -76,6 +76,7 @@ const service = {
   revealWebhookToken: vi.fn<WorkflowsService["revealWebhookToken"]>(),
   getTriggerSample: vi.fn<WorkflowsService["getTriggerSample"]>(),
   setTriggerSample: vi.fn<WorkflowsService["setTriggerSample"]>(),
+  createTestRun: vi.fn<WorkflowsService["createTestRun"]>(),
 };
 const handlers = createWorkflowsHandlers(service);
 
@@ -1589,6 +1590,8 @@ const makeRunDetail = (overrides: Partial<WorkflowRunWithLogsRow> = {}): Workflo
   idempotencyKey: null,
   nextAttemptAt: null,
   lastErrorAt: null,
+  callerIp: null,
+  workflowVersion: null,
   logs: [
     {
       id: "cm9zr5log0000000000000000a",

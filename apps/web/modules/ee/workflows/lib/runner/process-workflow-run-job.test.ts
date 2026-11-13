@@ -954,6 +954,16 @@ describe("processWorkflowRunJob", () => {
     expect(mockCapturePostHogEvent).not.toHaveBeenCalled();
   });
 
+  test("does not report a Test run's failure: it is not a workflow failing in production", async () => {
+    mockWorkflowRunFindFirst.mockResolvedValue({ ...baseRun, isDryRun: true });
+    mockSendEmail.mockRejectedValue(new Error("SMTP provider rejected the message"));
+
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
+
+    expect(mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0].data.status).toBe("failed");
+    expect(mockCapturePostHogEvent).not.toHaveBeenCalled();
+  });
+
   describe("If/else", () => {
     const emailNode = (id: string, subject: string, body = "<p>Hi</p>") => ({
       id,
@@ -1032,6 +1042,16 @@ describe("processWorkflowRunJob", () => {
       expect(mockWorkflowRunLogCreate).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ stepId: "then-email", sequence: 2 }) })
       );
+    });
+
+    test("records the steps on the branch not taken, for run detail", async () => {
+      mockGetResponse.mockResolvedValue({ ...mockResponse, data: { ...mockResponse.data, score: 9 } });
+      runWith(branchingDefinition(scoreAbove8("isGreaterThan")));
+
+      await processWorkflowRunJob(data, baseContext);
+
+      const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+      expect(completion.data.data.notTaken).toEqual([{ stepId: "else-email", stepType: "send_email" }]);
     });
 
     test("takes the Else branch with the legacy operator names", async () => {
@@ -1307,7 +1327,7 @@ describe("HTTP request steps in a run (ENG-7179)", () => {
     mockGetSurvey.mockResolvedValue(mockSurvey);
     mockGetOrganizationByWorkspaceId.mockResolvedValue({ id: "org1", whitelabel: null });
     mockGetWorkspaceMemberEmails.mockResolvedValue(new Set());
-    effects.enqueueHttpRequestDelivery.mockResolvedValue(undefined);
+    effects.enqueueHttpRequestDelivery.mockResolvedValue({ handedOff: true });
   });
 
   test("a later step reads the whole response, even past what the run log keeps", async () => {

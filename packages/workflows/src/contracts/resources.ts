@@ -9,6 +9,7 @@ import {
 } from "../types/runs";
 import { ZWorkflowTriggerType } from "../types/triggers";
 import { ZIsoDateTime } from "./common";
+import { ZWorkflowRunStep } from "./run-detail";
 
 /**
  * API resource shapes returned by the v3 Workflows endpoints. These are the serializer outputs:
@@ -74,7 +75,22 @@ export const ZWorkflowRunResource = ZWorkflowRunSummary.extend({
   idempotencyKey: z.string().nullable().describe("Deduplication key for this run, unique per workflow."),
   nextAttemptAt: ZIsoDateTime.nullable(),
   lastErrorAt: ZIsoDateTime.nullable(),
-}).describe("Full debug-oriented run shape returned by run detail and dry-run creation.");
+  callerIp: z
+    .string()
+    .nullable()
+    .describe("The caller's IP for a run a Webhook Secret URL call started; null otherwise."),
+  workflowVersionNumber: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .describe("The number of the version the run executed; null for a Test run, which runs the draft."),
+  steps: z
+    .array(ZWorkflowRunStep)
+    .describe(
+      "Run detail per step: the steps that ran, in order, then the steps on If/else branches the run did not take (`not_taken`)."
+    ),
+}).describe("Full debug-oriented run shape returned by run detail and Test run creation.");
 export type TWorkflowRunResource = z.infer<typeof ZWorkflowRunResource>;
 
 /** Categories of problem a dry-run validation can surface, so callers (or agents) can branch on `code`. */

@@ -225,6 +225,10 @@ export interface WorkflowRunWithLogsRow extends WorkflowRunRow {
   idempotencyKey: string | null;
   nextAttemptAt: Date | null;
   lastErrorAt: Date | null;
+  /** The caller's IP for a run a Webhook Secret URL call started; null otherwise. */
+  callerIp: string | null;
+  /** The version the run executed, for its number; null for a Test run. */
+  workflowVersion: { version: number } | null;
   logs: WorkflowRunLogRow[];
 }
 
@@ -250,6 +254,7 @@ export interface WorkflowRunOrderByInput {
 /** Eager-load shape for a run's step logs, ordered by sequence; matches the Prisma `include`. */
 export interface WorkflowRunLogInclude {
   logs: { orderBy: { sequence: "asc" } };
+  workflowVersion: { select: { version: true } };
 }
 
 /**
@@ -274,6 +279,20 @@ export interface WorkflowRunDelegate {
     where: { id: string };
     include: WorkflowRunLogInclude;
   }) => Promise<WorkflowRunWithLogsRow | null>;
+  /** Saves a Test run: a queued dry run with no version (ENG-7181). */
+  create: (args: {
+    data: {
+      workflowId: string;
+      workspaceId: string;
+      workflowVersionId: null;
+      status: "queued";
+      triggerType: string;
+      isDryRun: true;
+      attempt: number;
+      triggerPayload: TWorkflowTriggerRunPayload;
+    };
+    select: { id: true };
+  }) => Promise<{ id: string }>;
 }
 
 /** A `WorkflowSample` row (ADR 0048): one per workflow and source, matching the Prisma schema. */

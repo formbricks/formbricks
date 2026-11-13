@@ -34,6 +34,7 @@ import {
   ZWorkflowTestRequestParams,
   ZWorkflowTestRequestResult,
 } from "./test-request";
+import { ZCreateWorkflowTestRunInput } from "./test-run";
 import {
   ZSetWorkflowSampleInput,
   ZWorkflowSampleResource,
@@ -139,6 +140,11 @@ export const WORKFLOW_API_OPERATIONS = {
     params: ZWorkflowTestRequestParams,
     input: ZSendWorkflowTestRequestInput,
     output: ZWorkflowTestRequestResult,
+  },
+  createWorkflowTestRunV3: {
+    params: ZWorkflowIdInput,
+    input: ZCreateWorkflowTestRunInput,
+    output: ZWorkflowRunResource,
   },
 } as const satisfies Record<
   string,

@@ -16,7 +16,9 @@ import type { WorkflowStepExecutor, WorkflowStepOutcome } from "./types";
  * Log row output: `mode`, `request` (secret values masked), and for a waited call the response's
  * `status`, `contentType`, `body` (≤64 KB, `bodyTruncated` when cut) and `attempts`. A "Don't wait"
  * row adds `delivery: "sending" | "sent" | "failed"` and keeps the whole rendered body until its job
- * has sent it. A failed call fails the step, and so the run, unless "Continue on error" is on.
+ * has sent it. In a Test run (fake effects, ADR 0049) nothing is sent: "Wait and use it" gets the
+ * step's last Test request response (`testSample: "used"`) or goes on with none (`"missing"`), and
+ * "Don't wait" ends at once with the request it would have sent. A failed call fails the step, and so the run, unless "Continue on error" is on.
  */
 export const httpRequestStepExecutor: WorkflowStepExecutor<"http_request"> = {
   hasEffects: true,
@@ -33,12 +35,21 @@ export const httpRequestStepExecutor: WorkflowStepExecutor<"http_request"> = {
     if (!built.ok) return { status: "failed", error: built.error, output: { mode: config.responseMode } };
 
     if (config.responseMode === "dont_wait") {
-      await effects.enqueueHttpRequestDelivery({
+      const { handedOff } = await effects.enqueueHttpRequestDelivery({
         workflowRunId: environment.runId,
         workflowId: environment.workflowId,
         workspaceId: environment.workspaceId,
         stepId: node.id,
       });
+      if (!handedOff) {
+        // A Test run: nothing will send it, so the step ends with the request it would have sent.
+        return {
+          status: "succeeded",
+          error: null,
+          output: { mode: "dont_wait", request: capRequestRecord(built.record) },
+          variables: {},
+        };
+      }
       return {
         status: "running",
         error: null,
@@ -47,8 +58,18 @@ export const httpRequestStepExecutor: WorkflowStepExecutor<"http_request"> = {
       };
     }
 
-    const result = await effects.sendHttpRequest(built.call);
+    const result = await effects.sendHttpRequest(built.call, { stepId: node.id });
     const request = capRequestRecord(built.record);
+    if (result.testSample === "missing") {
+      // A Test run of a step that has no Test request response yet: later steps see no response.
+      return {
+        status: "succeeded",
+        error: null,
+        output: { mode: "wait", request, testSample: "missing" },
+        variables: {},
+      };
+    }
+    const testSample = result.testSample ? { testSample: result.testSample } : {};
     if (!result.response) {
       const output = { mode: "wait", request, attempts: result.attempts };
       return config.continueOnError
@@ -57,7 +78,7 @@ export const httpRequestStepExecutor: WorkflowStepExecutor<"http_request"> = {
     }
 
     const { variables, record } = summarizeWorkflowHttpResponse(result.response);
-    const output = { mode: "wait", request, ...record, attempts: result.attempts };
+    const output = { mode: "wait", request, ...record, attempts: result.attempts, ...testSample };
     if (isWorkflowHttpErrorStatus(result.response.status) && !config.continueOnError) {
       return {
         status: "failed",

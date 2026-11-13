@@ -158,6 +158,8 @@ const detailRun: WorkflowRunWithLogsRow = {
   idempotencyKey: "idem-1",
   nextAttemptAt: null,
   lastErrorAt: null,
+  callerIp: null,
+  workflowVersion: null,
   logs: [logA],
 };
 
@@ -197,6 +199,29 @@ describe("run serializers", () => {
     expect(resource.logs).toHaveLength(1);
     expect(resource.logs[0]).toMatchObject({ id: logA.id, sequence: 0, status: "succeeded" });
     expect(resource.logs[0].startedAt).toBe("2026-06-12T10:00:30.000Z");
+  });
+
+  test("run resource carries the caller IP, the version number and run detail per step", () => {
+    const resource = toWorkflowRunResource({
+      ...detailRun,
+      callerIp: "203.0.113.7",
+      workflowVersion: { version: 3 },
+      data: { steps: [], notTaken: [{ stepId: "other", stepType: "send_email" }] },
+    });
+
+    expect(resource.callerIp).toBe("203.0.113.7");
+    expect(resource.workflowVersionNumber).toBe(3);
+    expect(resource.steps.map((step) => [step.stepId, step.status])).toEqual([
+      ["send-email", "succeeded"],
+      ["other", "not_taken"],
+    ]);
+  });
+
+  test("a Test run has no version number", () => {
+    const resource = toWorkflowRunResource({ ...detailRun, isDryRun: true, workflowVersionId: null });
+
+    expect(resource.isDryRun).toBe(true);
+    expect(resource.workflowVersionNumber).toBeNull();
   });
 
   test("serializes non-null nextAttemptAt / lastErrorAt as ISO strings", () => {

@@ -35,13 +35,16 @@ const assertDecisionFitsNode = (node: TWorkflowStepNode, decision: TWorkflowWalk
  * If/else picks which branch comes next. Branches never join and nothing fans out, so the walk is
  * a single path and `sequence` (1-based) is the step's position on it.
  *
+ * It also reports the steps on every branch an If/else did not take (`notTaken`, in graph order,
+ * nested branches included), so run detail can show them as "Not taken" (ENG-7170).
+ *
  * Pure apart from the visitor; it throws `WorkflowWalkError` on a graph the executable schema
  * should have refused (a cycle, fan-out), which the caller maps to a failed run.
  */
 export const walkWorkflowSteps = async (
   definition: TWorkflowExecutableDefinition,
   visit: (node: TWorkflowStepNode, sequence: number) => Promise<TWorkflowWalkDecision>
-): Promise<{ stopped: boolean }> => {
+): Promise<{ stopped: boolean; notTaken: TWorkflowStepNode[] }> => {
   const nodesById = new Map<string, TWorkflowStepNode>(definition.nodes.map((node) => [node.id, node]));
   const edgesBySource = new Map<string, TWorkflowExecutableDefinition["edges"]>();
   for (const edge of definition.edges) {
@@ -60,6 +63,24 @@ export const walkWorkflowSteps = async (
     return outgoing[0]?.target ?? null;
   };
 
+  const notTaken: TWorkflowStepNode[] = [];
+  /** Every step from `startId` on, depth-first along all connections; branches never join, so each once. */
+  const collectFrom = (startId: string | null, seen: Set<string>): void => {
+    if (startId === null || seen.has(startId)) return;
+    seen.add(startId);
+    const node = nodesById.get(startId);
+    if (!node) return;
+    notTaken.push(node);
+    const outgoing = [...(edgesBySource.get(startId) ?? [])].sort(
+      (a, b) =>
+        // Then before Else, so a nested If/else reads in the order the editor draws it.
+        (a.sourceHandle === "else" ? 1 : 0) - (b.sourceHandle === "else" ? 1 : 0)
+    );
+    for (const edge of outgoing) collectFrom(edge.target, seen);
+  };
+  const otherBranch = (branch: TWorkflowIfElseBranch): TWorkflowIfElseBranch =>
+    branch === "then" ? "else" : "then";
+
   const visited = new Set<string>();
   let nodeId = nextNodeId(definition.trigger.id);
   let sequence = 0;
@@ -74,11 +95,14 @@ export const walkWorkflowSteps = async (
     sequence += 1;
     const decision = await visit(node, sequence);
 
-    if (decision.next === "stop") return { stopped: true };
+    if (decision.next === "stop") return { stopped: true, notTaken };
     assertDecisionFitsNode(node, decision);
+    if (decision.next === "branch") {
+      collectFrom(nextNodeId(node.id, otherBranch(decision.branch)), new Set(visited));
+    }
 
     nodeId = nextNodeId(node.id, decision.next === "branch" ? decision.branch : undefined);
   }
 
-  return { stopped: false };
+  return { stopped: false, notTaken };
 };

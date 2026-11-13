@@ -14,8 +14,12 @@ import {
   ZCursorPaginationMeta,
   ZWorkflowListItem,
   ZWorkflowListPaginationMeta,
+  ZWorkflowRunHttpRequestDetail,
+  ZWorkflowRunIfElseDetail,
   ZWorkflowRunListItem,
   ZWorkflowRunResource,
+  ZWorkflowRunSendEmailDetail,
+  ZWorkflowRunStep,
   ZWorkflowRunSummary,
   ZWorkflowSampleResource,
   ZWorkflowSampleVariables,
@@ -148,6 +152,17 @@ describe("resource shapes", () => {
     const summaryKeys = schemaKeys(ZWorkflowRunSummary);
     const extensionKeys = yamlPropertyKeys(extension);
     expect([...summaryKeys, ...extensionKeys].sort()).toEqual(schemaKeys(ZWorkflowRunResource));
+  });
+
+  test.each([
+    ["WorkflowRunStep", ZWorkflowRunStep],
+    ["WorkflowRunIfElseDetail", ZWorkflowRunIfElseDetail],
+    ["WorkflowRunSendEmailDetail", ZWorkflowRunSendEmailDetail],
+    ["WorkflowRunHttpRequestDetail", ZWorkflowRunHttpRequestDetail],
+  ])("%s properties match the run detail contract, every one required", async (schemaName, zodSchema) => {
+    const yamlSchema = await loadYaml(`components/schemas/${schemaName}.yml`);
+    expect(yamlPropertyKeys(yamlSchema)).toEqual(schemaKeys(zodSchema));
+    expect([...((yamlSchema.required as string[] | undefined) ?? [])].sort()).toEqual(schemaKeys(zodSchema));
   });
 
   test("CursorPaginationMeta matches the contract shape", async () => {

@@ -183,6 +183,10 @@ export const buildWorkflowApiContext = (
   secrets: workflowSecretStore,
   recordSecretHeaderChanges: buildRecordSecretHeaderChanges(authentication, requestId, instance),
   verifySurveyLinkSurveys: getWorkflowSurveyLinkSurveys,
+  // Test runs (ENG-7181, ADR 0049): the real runner with fake effects, inside the request. Loaded on use,
+  // so the runner and the email renderer stay out of every other workflow route.
+  runTest: async (run) =>
+    (await import("@/modules/ee/workflows/lib/runner/run-test")).executeWorkflowTestRun(run),
   ...(auditLog ? { recordAudit: buildRecordAudit(auditLog, authentication, requestId) } : {}),
   // Product analytics (ENG-2851): always bound, unlike the audit sink, because it no-ops on its own
   // when POSTHOG_KEY is unset and there is no per-request switch to respect.

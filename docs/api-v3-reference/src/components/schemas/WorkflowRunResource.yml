@@ -1,11 +1,8 @@
-description: >
+description: >-
   Full run shape returned by `GET /api/v3/workflows/runs/{runId}` and
-
-  `POST /api/v3/workflows/{workflowId}/test`: the summary fields plus the
-  captured trigger
-
-  payload, per-step results, the persisted log trace, and retry/idempotency
-  metadata.
+  `POST /api/v3/workflows/{workflowId}/test-runs`: the summary fields plus the captured trigger
+  payload, per-step results, the persisted log trace, run detail per step (`steps`) and
+  retry/idempotency metadata.
 allOf:
   - $ref: ./WorkflowRunSummary.yml
   - type: object
@@ -16,6 +13,9 @@ allOf:
       - idempotencyKey
       - nextAttemptAt
       - lastErrorAt
+      - callerIp
+      - workflowVersionNumber
+      - steps
     properties:
       triggerPayload:
         $ref: ./WorkflowTriggerPayload.yml
@@ -49,3 +49,24 @@ allOf:
           - string
           - "null"
         format: date-time
+      callerIp:
+        type:
+          - string
+          - "null"
+        description: >-
+          The caller's IP for a run a Webhook Secret URL call started; null otherwise.
+      workflowVersionNumber:
+        type:
+          - integer
+          - "null"
+        minimum: 1
+        description: >-
+          The number of the version the run executed; null for a Test run, which runs the
+          draft.
+      steps:
+        type: array
+        items:
+          $ref: ./WorkflowRunStep.yml
+        description: >-
+          Run detail per step: the steps that ran, in order, then the steps on If/else branches
+          the run did not take (`not_taken`).

@@ -15,6 +15,7 @@ import type {
   WorkflowRunWithLogsRow,
 } from "../services/ports";
 import { WORKFLOW_TRIGGERS } from "../types/triggers/enum";
+import { describeWorkflowRunSteps } from "./run-detail";
 
 /**
  * Map Prisma rows to the public v3 resource shapes. Serializer output is validated against the
@@ -72,6 +73,9 @@ export const toWorkflowRunResource = (run: WorkflowRunWithLogsRow): TWorkflowRun
   idempotencyKey: run.idempotencyKey,
   nextAttemptAt: toIso(run.nextAttemptAt),
   lastErrorAt: toIso(run.lastErrorAt),
+  callerIp: run.callerIp,
+  workflowVersionNumber: run.workflowVersion?.version ?? null,
+  steps: describeWorkflowRunSteps(run.logs, run.data.notTaken),
 });
 
 export const toWorkflowListItem = (row: WorkflowRowWithLastRun): TWorkflowListItem => {

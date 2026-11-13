@@ -69,23 +69,26 @@ const run = (config?: Partial<TWorkflowHttpRequestActionConfig>) =>
 beforeEach(() => {
   vi.clearAllMocks();
   effects.sendHttpRequest.mockResolvedValue(answer(201, '{"id":"c_1","plan":{"name":"pro"}}'));
-  effects.enqueueHttpRequestDelivery.mockResolvedValue(undefined);
+  effects.enqueueHttpRequestDelivery.mockResolvedValue({ handedOff: true });
 });
 
 describe("httpRequestStepExecutor", () => {
   test("sends the rendered request: encoded query values, decrypted secrets, safe headers, typed JSON", async () => {
     await run();
 
-    expect(effects.sendHttpRequest).toHaveBeenCalledWith({
-      method: "POST",
-      url: "https://api.example.com/customers?source=fb&email=ana%2Bvip%40example.com",
-      headers: {
-        Authorization: `Bearer ${SECRET}`,
-        "X-Name": "AnaX-Evil: 1",
-        "content-type": "application/json",
+    expect(effects.sendHttpRequest).toHaveBeenCalledWith(
+      {
+        method: "POST",
+        url: "https://api.example.com/customers?source=fb&email=ana%2Bvip%40example.com",
+        headers: {
+          Authorization: `Bearer ${SECRET}`,
+          "X-Name": "AnaX-Evil: 1",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ tier: 3, note: "for Ana\r\nX-Evil: 1" }),
       },
-      body: JSON.stringify({ tier: 3, note: "for Ana\r\nX-Evil: 1" }),
-    });
+      { stepId: "call" }
+    );
   });
 
   test("later steps read the status and the parsed body; the log keeps the request with secrets masked", async () => {
@@ -178,6 +181,46 @@ describe("httpRequestStepExecutor", () => {
     });
     expect(outcome).toMatchObject({ status: "running", output: { mode: "dont_wait", delivery: "sending" } });
     expect(httpRequestStepExecutor.handedOff?.(outcome.output)).toBe(true);
+    expect(JSON.stringify(outcome)).not.toContain(SECRET);
+  });
+
+  test("in a Test run, uses the step's last Test request response and says so", async () => {
+    effects.sendHttpRequest.mockResolvedValue({ ...answer(200, '{"plan":"pro"}'), testSample: "used" });
+
+    const outcome = await run();
+
+    expect(outcome).toMatchObject({
+      status: "succeeded",
+      output: { mode: "wait", testSample: "used", status: 200, body: { plan: "pro" } },
+      variables: { status: 200, body: { plan: "pro" } },
+    });
+  });
+
+  test("in a Test run without a Test request response, goes on with no response, flagged", async () => {
+    effects.sendHttpRequest.mockResolvedValue({
+      response: null,
+      error: null,
+      attempts: 0,
+      testSample: "missing",
+    });
+
+    const outcome = await run();
+
+    expect(outcome.status).toBe("succeeded");
+    expect(outcome.output).toMatchObject({ mode: "wait", testSample: "missing" });
+    expect(outcome.output).not.toHaveProperty("status");
+    expect(outcome.variables).toEqual({});
+    expect(JSON.stringify(outcome)).not.toContain(SECRET);
+  });
+
+  test("Don't wait in a Test run hands nothing off: the step ends with the request it would send", async () => {
+    effects.enqueueHttpRequestDelivery.mockResolvedValue({ handedOff: false });
+
+    const outcome = await run({ responseMode: "dont_wait" });
+
+    expect(outcome.status).toBe("succeeded");
+    expect(outcome.output).toMatchObject({ mode: "dont_wait", request: { method: "POST" } });
+    expect(outcome.output).not.toHaveProperty("delivery");
     expect(JSON.stringify(outcome)).not.toContain(SECRET);
   });
 });

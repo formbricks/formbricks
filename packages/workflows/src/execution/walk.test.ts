@@ -81,7 +81,7 @@ describe("walkWorkflowSteps", () => {
     );
     expect(visited).toEqual(["before", "check", "a", "a2"]);
     expect(sequences).toEqual([1, 2, 3, 4]);
-    expect(result).toEqual({ stopped: false });
+    expect(result).toEqual({ stopped: false, notTaken: [expect.objectContaining({ id: "b" })] });
   });
 
   test("takes the Else branch and never visits the Then steps", async () => {
@@ -103,7 +103,40 @@ describe("walkWorkflowSteps", () => {
       id === "check" ? { next: "branch", branch: "else" } : { next: "continue" }
     );
     expect(visited).toEqual(["check"]);
-    expect(result).toEqual({ stopped: false });
+    expect(result).toEqual({ stopped: false, notTaken: [expect.objectContaining({ id: "a" })] });
+  });
+
+  test("reports every step on the branch not taken, nested branches included", async () => {
+    // trigger → check → then: a | else: inner → then: x → x2 | else: y
+    const nested = definition(
+      [
+        ifElseNode("check"),
+        sendEmailNode("a"),
+        ifElseNode("inner"),
+        sendEmailNode("x"),
+        sendEmailNode("x2"),
+        sendEmailNode("y"),
+      ],
+      [
+        { id: "e1", source: "trigger", target: "check" },
+        { id: "e2", source: "check", target: "a", sourceHandle: "then" },
+        { id: "e3", source: "check", target: "inner", sourceHandle: "else" },
+        { id: "e4", source: "inner", target: "x", sourceHandle: "then" },
+        { id: "e5", source: "x", target: "x2" },
+        { id: "e6", source: "inner", target: "y", sourceHandle: "else" },
+      ]
+    );
+
+    const thenTaken = await walk(nested, (id) =>
+      id === "check" ? { next: "branch", branch: "then" } : { next: "continue" }
+    );
+    expect(thenTaken.result.notTaken.map((node) => node.id)).toEqual(["inner", "x", "x2", "y"]);
+
+    const elseThenElse = await walk(nested, (id) =>
+      id === "check" || id === "inner" ? { next: "branch", branch: "else" } : { next: "continue" }
+    );
+    expect(elseThenElse.visited).toEqual(["check", "inner", "y"]);
+    expect(elseThenElse.result.notTaken.map((node) => node.id)).toEqual(["a", "x", "x2"]);
   });
 
   test("stops where the visitor says so", async () => {
@@ -111,7 +144,7 @@ describe("walkWorkflowSteps", () => {
       id === "before" ? { next: "stop" } : { next: "continue" }
     );
     expect(visited).toEqual(["before"]);
-    expect(result).toEqual({ stopped: true });
+    expect(result).toEqual({ stopped: true, notTaken: [] });
   });
 
   test("a trigger with no steps visits nothing", async () => {

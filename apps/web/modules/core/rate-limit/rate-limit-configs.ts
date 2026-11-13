@@ -68,6 +68,13 @@ export const rateLimitConfigs = {
       allowedPerInterval: 30,
       namespace: "api:v3:workflow-test-request",
     }, // 30 per minute per user or API key
+    // A Test run of a workflow's draft (ENG-7181): it sends nothing, but each one saves a run and walks
+    // the whole workflow inside the request, so a principal gets 30 a minute, REST and MCP together.
+    v3WorkflowTestRuns: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "api:v3:workflow-test-run",
+    }, // 30 per minute per user or API key
     v3SurveyGenerate: {
       interval: 60,
       allowedPerInterval: 10,

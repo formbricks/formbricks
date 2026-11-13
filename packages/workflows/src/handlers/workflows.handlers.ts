@@ -59,6 +59,7 @@ import {
 } from "./serializers";
 import { loadAndAuthorize, readJsonBody, recordAuditSafely, toAuditSnapshot } from "./shared";
 import { checkWorkflowSurveyLinks } from "./survey-link-checks";
+import { type TestRunHandlers, createTestRunHandlers } from "./test-run.handlers";
 import { type WebhookHandlers, createWebhookHandlers } from "./webhook.handlers";
 
 const ZWorkflowListPage = zWorkflowListPage(ZWorkflowListItem);
@@ -294,7 +295,7 @@ interface WorkflowRunResourceArgs {
   params: TWorkflowRunIdInput;
 }
 
-export interface WorkflowsHandlers extends WebhookHandlers {
+export interface WorkflowsHandlers extends WebhookHandlers, TestRunHandlers {
   list: (args: WorkflowRequestArgs) => Promise<Response>;
   create: (args: WorkflowRequestArgs) => Promise<Response>;
   get: (args: WorkflowResourceArgs) => Promise<Response>;
@@ -319,6 +320,7 @@ export interface WorkflowsHandlers extends WebhookHandlers {
  */
 export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHandlers => ({
   ...createWebhookHandlers(service),
+  ...createTestRunHandlers(service),
 
   async list({ req, ctx }) {
     try {

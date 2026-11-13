@@ -60,6 +60,7 @@ const CONTRACT_IDS = {
   WORKFLOW_WEBHOOK: "clctworkflowwebhook00001",
   WORKFLOW_WEBHOOK_REGENERATE: "clctworkflowwebhookrgn01",
   WORKFLOW_WEBHOOK_SAMPLE: "clctworkflowwebhooksmp01",
+  WORKFLOW_TEST_RUN: "clctworkflowtestrun00001",
   ACTION_CLASS_READ: "clctactionclassread00001",
   RESPONSE_READ: "clctresponseread00000001",
   RESPONSE_OUTCOME: "clctresponseoutcome00001",
@@ -753,6 +754,15 @@ async function main(): Promise<void> {
     "draft",
     "webhook"
   );
+  // Test run (ENG-7181): a Webhook draft with a Sample payload, so a call without a body gets past the
+  // documented "no test payload" 422 to its 201. The run sends nothing (fake effects).
+  await seedWorkflow(CONTRACT_IDS.WORKFLOW_TEST_RUN, "Contract fixture — test run", "draft", "webhook");
+  const testRunSample = { workflowId: CONTRACT_IDS.WORKFLOW_TEST_RUN, source: "trigger" };
+  await prisma.workflowSample.upsert({
+    where: { workflowId_source: testRunSample },
+    update: { sample: { order: { id: 1 } } },
+    create: { ...testRunSample, workspaceId: SEED_IDS.WORKSPACE, sample: { order: { id: 1 } } },
+  });
 
   // An empty collection response satisfies the list schema without ever validating an item, so the
   // read fixtures below exist to put at least one row in front of every list endpoint.
@@ -936,6 +946,7 @@ async function main(): Promise<void> {
       getWorkflowWebhookV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_WEBHOOK } },
       regenerateWorkflowWebhookV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_WEBHOOK_REGENERATE } },
       setWorkflowSampleV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_WEBHOOK_SAMPLE } },
+      createWorkflowTestRunV3: { path: { workflowId: CONTRACT_IDS.WORKFLOW_TEST_RUN } },
       // The public Secret URL: the fixture's real token, so the call gets past the identical 404 to
       // its 202 (or, without a licence granting workflows, its documented 403).
       callWorkflowWebhookV3: {

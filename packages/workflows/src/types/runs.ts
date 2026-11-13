@@ -39,10 +39,18 @@ export const ZWorkflowStepResult = z.object({
 });
 export type TWorkflowStepResult = z.infer<typeof ZWorkflowStepResult>;
 
+/** A step on an If/else branch the run did not take, shown as "Not taken" in run detail (ENG-7170). */
+export const ZWorkflowRunNotTakenStep = z.object({
+  stepId: z.string().min(1),
+  stepType: z.string().min(1),
+});
+export type TWorkflowRunNotTakenStep = z.infer<typeof ZWorkflowRunNotTakenStep>;
+
 export const ZWorkflowRunData = z
   .object({
     trigger: ZWorkflowTriggerRunPayload.optional(),
     steps: z.array(ZWorkflowStepResult).default([]),
+    notTaken: z.array(ZWorkflowRunNotTakenStep).optional(),
   })
   .catchall(z.unknown());
 export type TWorkflowRunData = z.infer<typeof ZWorkflowRunData>;

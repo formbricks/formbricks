@@ -19,6 +19,7 @@ import {
 } from "../handlers/runs-cursor";
 import type { TWorkflowStatus } from "../types/common";
 import type { TWorkflowDefinition, TWorkflowExecutableDefinition } from "../types/document";
+import type { TWorkflowTriggerRunPayload } from "../types/runs";
 import { type TWorkflowSampleData, WORKFLOW_SAMPLE_TRIGGER_SOURCE } from "../types/samples";
 import { WORKFLOW_TRIGGERS } from "../types/triggers/enum";
 import type {
@@ -132,7 +133,10 @@ export interface WorkflowListPage {
 }
 
 /** Eager-load shape for a run's step logs, ordered by sequence; mirrors the injected delegate. */
-const RUN_LOG_INCLUDE = { logs: { orderBy: { sequence: "asc" } } } as const;
+const RUN_LOG_INCLUDE = {
+  logs: { orderBy: { sequence: "asc" } },
+  workflowVersion: { select: { version: true } },
+} as const;
 
 /** Keyset page for newest-first run listing (`createdAt desc`, `id desc` tie-breaker). */
 const buildRunCursorWhere = (cursor: TWorkflowRunListCursor): WorkflowRunWhereInput => {
@@ -201,6 +205,11 @@ export interface WorkflowsService {
   revealWebhookToken: (row: WorkflowRow) => string | null;
   getTriggerSample: (workflowId: string) => Promise<WorkflowSampleRow | null>;
   setTriggerSample: (params: WorkflowScopedParams, sample: TWorkflowSampleData) => Promise<WorkflowSampleRow>;
+  /** Saves a Test run as a queued dry run with no version; the adapter then runs it (ENG-7181). */
+  createTestRun: (
+    params: WorkflowScopedParams,
+    triggerPayload: TWorkflowTriggerRunPayload
+  ) => Promise<{ id: string }>;
 }
 
 /** Token columns for a newly issued Webhook Secret URL token. */
@@ -444,6 +453,24 @@ export const createWorkflowsService = ({
       where: triggerSampleKey(workflowId),
       create: { workflowId, workspaceId, source: WORKFLOW_SAMPLE_TRIGGER_SOURCE, sample },
       update: { sample },
+    });
+  },
+
+  async createTestRun({ workflowId, workspaceId }, triggerPayload) {
+    // No version and never dispatched: the adapter runs it in the request. `isDryRun` keeps it out of
+    // billing, usage counts and the run reconcilers.
+    return prisma.workflowRun.create({
+      data: {
+        workflowId,
+        workspaceId,
+        workflowVersionId: null,
+        status: "queued",
+        triggerType: triggerPayload.type,
+        isDryRun: true,
+        attempt: 0,
+        triggerPayload,
+      },
+      select: { id: true },
     });
   },
 });

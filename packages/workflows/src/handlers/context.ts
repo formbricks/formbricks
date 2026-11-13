@@ -227,4 +227,11 @@ export interface WorkflowApiContext {
     changes: TWorkflowSecretHeaderChange[];
   }) => void | Promise<void>;
   recordAnalytics?: (detail: WorkflowAnalyticsDetail) => void | Promise<void>;
+  /**
+   * Runs a Test run already saved as a queued dry run, inside the request, with fake effects (ENG-7181,
+   * ADR 0049): the adapter walks the workflow's draft with the real runner and records "would send" /
+   * "would call" instead of sending. Resolves once the run is finished; a failed step fails the run,
+   * not the call.
+   */
+  runTest?: (run: { runId: string; workflowId: string; workspaceId: string }) => Promise<void>;
 }

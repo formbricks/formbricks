@@ -4,3 +4,5 @@ export * from "./operations";
 export * from "./resources";
 export * from "./webhook";
 export * from "./test-request";
+export * from "./run-detail";
+export * from "./test-run";

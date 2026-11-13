@@ -16,7 +16,7 @@ info:
 
     Creatives needs a self-hosted license that includes it; Formbricks Cloud does not offer it. With one, every operation is available. Without one, a workspace that still has creatives is in **wind-down**: its creatives are no longer shown on sites, and they can only be listed, read (stats included), paused (a PATCH that sets nothing but `status`, or **POST /api/v3/creatives/pause**), closed (the same PATCH) or deleted. A workspace with no creatives has no access at all. Anything not allowed answers **403** `creatives_not_entitled`.
 
-    **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, **GET /api/v3/workflows/runs/{runId}**, and for Webhook triggers **GET /api/v3/workflows/{workflowId}/webhook**, **POST /api/v3/workflows/{workflowId}/webhook/regenerate**, **PUT /api/v3/workflows/{workflowId}/sample**, for HTTP request steps **POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request**, and the public Webhook Secret URL **POST /api/v3/workflows/{workflowId}/webhook/{token}**, which takes no login: the token in its path is the credential.
+    **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, **GET /api/v3/workflows/runs/{runId}**, and for Webhook triggers **GET /api/v3/workflows/{workflowId}/webhook**, **POST /api/v3/workflows/{workflowId}/webhook/regenerate**, **PUT /api/v3/workflows/{workflowId}/sample**, for HTTP request steps **POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request**, Test runs **POST /api/v3/workflows/{workflowId}/test-runs**, and the public Webhook Secret URL **POST /api/v3/workflows/{workflowId}/webhook/{token}**, which takes no login: the token in its path is the credential.
 
     **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard, **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values, **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**; the embedded-data fields its filters can use, **GET /api/v3/dashboards/{dashboardId}/filter-fields**).
     - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
@@ -97,7 +97,7 @@ info:
     **Workflows Scope 1**
     Workflows are a follow-up extension of the existing v3 Survey API work. The Survey API establishes API-first survey authoring; Workflows build on that same v3 style to automate actions around survey responses through workspace-scoped JSON definitions. Scope 1 models the existing Follow-ups capability as workflows: one `response.completed` trigger with an optional `endingCardIds` filter, and `send_email` actions with Follow-up email field parity. The definition and run shapes mirror the shared Zod schemas in `packages/workflows` (ENG-1100), which are the implementation source of truth for this contract.
 
-    Workflows use `draft`, `enabled`, and `disabled` lifecycle states plus an `archived` soft-delete state. Status only changes through the lifecycle endpoints (`enable`, `disable`, `archive`, `unarchive`); it is not writable via `POST` or `PATCH`. Enabling validates that the definition is executable and snapshots an immutable workflow version; runs reference that snapshot via `workflowVersionId`. `POST .../test` is a dry run: it validates the definition and resolves the trigger's references synchronously, creating no run and sending no email, and returns `{ workflowId, ok, problems }` directly. Real runs execute asynchronously and are polled via `GET /api/v3/workflows/runs/{runId}`.
+    Workflows use `draft`, `enabled`, and `disabled` lifecycle states plus an `archived` soft-delete state. Status only changes through the lifecycle endpoints (`enable`, `disable`, `archive`, `unarchive`); it is not writable via `POST` or `PATCH`. Enabling validates that the definition is executable and snapshots an immutable workflow version; runs reference that snapshot via `workflowVersionId`. `POST .../test` is a dry run: it validates the definition and resolves the trigger's references synchronously, creating no run and sending no email, and returns `{ workflowId, ok, problems }` directly. `POST .../test-runs` is a Test run: it runs the draft at once with fake effects (nothing is sent or called), saves it as a dry run with no version, and returns the finished run. Real runs execute asynchronously and are polled via `GET /api/v3/workflows/runs/{runId}`.
 
     **Overview migration note**
     The v3-backed survey overview page intentionally removes actions that are not yet exposed by this contract: `Created by` filtering, `Duplicate`, `Copy...`, `Preview`, and `Copy link`.
@@ -4344,6 +4344,79 @@ paths:
           $ref: '#/components/responses/V3Forbidden'
         '404':
           description: The workflow has no HTTP request step with this id.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/workflows/{workflowId}/test-runs:
+    post:
+      operationId: createWorkflowTestRunV3
+      summary: Start a Test run of a workflow's draft
+      description: |
+        Runs the workflow's current draft at once, inside the request, with the same runner as a real run but with fake effects: Send email records whom it would send to, and an HTTP request records what it would call (secret header values masked) and sends nothing. In "Wait and use it" mode an HTTP request's output is that step's last Test request response; without one it is empty and flagged (`testSample: missing`), and the run goes on. If/else conditions are evaluated for real, so the answer shows the branch a real run would take.
+
+        The run is saved with `isDryRun: true` and no version, appears in the runs list (hide it with `filter[isDryRun][eq]=false`), and is never billed or counted as usage. A failed step fails the run, not the call: the answer is still **201** with the run's `status` and step detail. Recorded in the audit log as `testRunStarted` with the run id. `POST .../test`, the setup check that runs nothing, is unchanged.
+
+        The test payload is the body's `payload`, else the workflow's Sample payload. Only a Webhook trigger can be test-run. Requires **write** access and is limited to 30 Test runs per minute per user or API key (**429**). An archived workflow, one without a Webhook trigger, or one with no payload to test with answers **422** `invalid_workflow_state`; a draft that cannot run answers **422** `workflow_not_executable` with the fields to fix; a payload over 100 KB **413**.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      requestBody:
+        required: false
+        description: Send `{}` (or no body) to test with the workflow's Sample payload.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkflowTestRunRequest'
+      responses:
+        '201':
+          description: The finished Test run.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Location:
+              schema:
+                type: string
+              description: The run's address, `/api/v3/workflows/runs/{runId}`.
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowRunResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '413':
+          description: The test payload is over 100 KB.
           headers:
             X-Request-Id:
               schema:
@@ -14615,6 +14688,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/WorkflowRunStepResult'
+        notTaken:
+          type: array
+          description: The steps on If/else branches the run did not take, in graph order. Absent on runs without an If/else.
+          items:
+            type: object
+            required:
+              - stepId
+              - stepType
+            properties:
+              stepId:
+                type: string
+                minLength: 1
+              stepType:
+                type: string
+                minLength: 1
       additionalProperties: true
     WorkflowRunLog:
       type: object
@@ -14671,11 +14759,238 @@ components:
             - 'null'
           format: date-time
       additionalProperties: false
+    WorkflowRunIfElseDetail:
+      type: object
+      description: An If/else step's result. Run detail shows each condition as "(matched)" or "(not matched)".
+      required:
+        - kind
+        - branch
+        - conditions
+      properties:
+        kind:
+          type: string
+          enum:
+            - if_else
+        branch:
+          type:
+            - string
+            - 'null'
+          enum:
+            - then
+            - else
+            - null
+          description: The branch the run took; null until decided.
+        conditions:
+          type: array
+          description: Each condition, in order.
+          items:
+            type: object
+            required:
+              - id
+              - matched
+            properties:
+              id:
+                type: string
+              matched:
+                type: boolean
+            additionalProperties: false
+      additionalProperties: false
+    WorkflowRunSendEmailDetail:
+      type: object
+      description: 'A Send email step''s result. In a Test run (`isDryRun`) nothing was sent: the recipient is whom it would have gone to.'
+      required:
+        - kind
+        - recipient
+        - subject
+        - surveyLink
+      properties:
+        kind:
+          type: string
+          enum:
+            - send_email
+        recipient:
+          type:
+            - string
+            - 'null'
+          description: The address the email went (or would go) to. Null when none was resolved.
+        subject:
+          type:
+            - string
+            - 'null'
+        surveyLink:
+          type:
+            - string
+            - 'null'
+          description: The survey link the email carried, or null.
+      additionalProperties: false
+    WorkflowRunHttpRequestDetail:
+      type: object
+      description: 'An HTTP request step''s result, secret header values masked. In a Test run (`isDryRun`) nothing was called: the request is what would have been sent, and in Wait and use it the response is the step''s last Test request response (`testSample: used`), or none (`testSample: missing`).'
+      required:
+        - kind
+        - mode
+        - request
+        - response
+        - delivery
+        - testSample
+        - attempts
+        - error
+      properties:
+        kind:
+          type: string
+          enum:
+            - http_request
+        mode:
+          type:
+            - string
+            - 'null'
+          enum:
+            - wait
+            - dont_wait
+            - null
+          description: Wait and use it (`wait`) or Don't wait (`dont_wait`).
+        request:
+          type:
+            - object
+            - 'null'
+          description: The request, secret header values shown as `••••••`. Null when it could not be built.
+          required:
+            - method
+            - url
+            - headers
+          properties:
+            method:
+              type: string
+              enum:
+                - GET
+                - POST
+                - PUT
+                - PATCH
+                - DELETE
+            url:
+              type: string
+            headers:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - value
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+                additionalProperties: false
+            body:
+              type: string
+            bodyTruncated:
+              type: boolean
+          additionalProperties: false
+        response:
+          type:
+            - object
+            - 'null'
+          description: The answer, with at most 64 KB of body. Null when none came.
+          required:
+            - status
+            - contentType
+            - body
+          properties:
+            status:
+              type: integer
+            contentType:
+              type:
+                - string
+                - 'null'
+            body:
+              description: Parsed JSON when it fits in 64 KB, else up to 64 KB of text.
+            bodyTruncated:
+              type: boolean
+          additionalProperties: false
+        delivery:
+          type:
+            - string
+            - 'null'
+          enum:
+            - sending
+            - sent
+            - failed
+            - null
+          description: 'Don''t wait only: `sending` while its own job sends it, then `sent` or `failed`. A failed delivery never fails the run. Null for Wait and use it, and in a Test run.'
+        testSample:
+          type:
+            - string
+            - 'null'
+          enum:
+            - used
+            - missing
+            - null
+          description: 'Test runs only, Wait and use it: whether the step had a Test request response to use. With `missing`, later steps saw no response. Null outside Test runs.'
+        attempts:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+        error:
+          type:
+            - string
+            - 'null'
+          description: Why no answer came, when Continue on error let the run go on.
+      additionalProperties: false
+    WorkflowRunStep:
+      type: object
+      description: 'One step of a run as run detail shows it: the steps that ran, in order, then the steps on If/else branches the run did not take.'
+      required:
+        - stepId
+        - stepType
+        - status
+        - error
+        - startedAt
+        - finishedAt
+        - detail
+      properties:
+        stepId:
+          type: string
+          minLength: 1
+        stepType:
+          type: string
+          minLength: 1
+          description: '`if_else`, `send_email` or `http_request`.'
+        status:
+          type: string
+          enum:
+            - pending
+            - running
+            - succeeded
+            - failed
+            - skipped
+            - not_taken
+          description: The step's log status, or `not_taken` for a step on an If/else branch the run did not take. A Don't wait HTTP request stays `running` while it sends; its delivery is in `detail.delivery`.
+        error:
+          type:
+            - string
+            - 'null'
+        startedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        finishedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        detail:
+          description: What the step did, by step type (`kind`). Null for a step not taken and for a step type without detail.
+          oneOf:
+            - $ref: '#/components/schemas/WorkflowRunIfElseDetail'
+            - $ref: '#/components/schemas/WorkflowRunSendEmailDetail'
+            - $ref: '#/components/schemas/WorkflowRunHttpRequestDetail'
+            - type: 'null'
+      additionalProperties: false
     WorkflowRunResource:
-      description: |
-        Full run shape returned by `GET /api/v3/workflows/runs/{runId}` and
-        `POST /api/v3/workflows/{workflowId}/test`: the summary fields plus the captured trigger
-        payload, per-step results, the persisted log trace, and retry/idempotency metadata.
+      description: 'Full run shape returned by `GET /api/v3/workflows/runs/{runId}` and `POST /api/v3/workflows/{workflowId}/test-runs`: the summary fields plus the captured trigger payload, per-step results, the persisted log trace, run detail per step (`steps`) and retry/idempotency metadata.'
       allOf:
         - $ref: '#/components/schemas/WorkflowRunSummary'
         - type: object
@@ -14686,6 +15001,9 @@ components:
             - idempotencyKey
             - nextAttemptAt
             - lastErrorAt
+            - callerIp
+            - workflowVersionNumber
+            - steps
           properties:
             triggerPayload:
               $ref: '#/components/schemas/WorkflowTriggerPayload'
@@ -14712,6 +15030,22 @@ components:
                 - string
                 - 'null'
               format: date-time
+            callerIp:
+              type:
+                - string
+                - 'null'
+              description: The caller's IP for a run a Webhook Secret URL call started; null otherwise.
+            workflowVersionNumber:
+              type:
+                - integer
+                - 'null'
+              minimum: 1
+              description: The number of the version the run executed; null for a Test run, which runs the draft.
+            steps:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorkflowRunStep'
+              description: 'Run detail per step: the steps that ran, in order, then the steps on If/else branches the run did not take (`not_taken`).'
     PatchWorkflowRequest:
       type: object
       description: |
@@ -15028,6 +15362,15 @@ components:
             - string
             - 'null'
           description: Why the call got no answer, or null.
+    CreateWorkflowTestRunRequest:
+      type: object
+      description: Starts a Test run of the workflow's draft.
+      properties:
+        payload:
+          type: object
+          additionalProperties: true
+          description: 'The test payload: a JSON object of at most 100 KB once serialized, nested at most 10 levels (lists count as levels). Defaults to the workflow''s Sample payload.'
+      additionalProperties: false
     ChartDateRange:
       description: |-
         A date range on a time dimension: a named preset from the field catalog's `datePresets` (`last 7 days`, `this month`, …), `all-time` (no range), or a pair of ISO calendar dates `[from, to]`, both inclusive, `from` not after `to`. Every range is read in the organization's display time zone; a `timezone` cannot be supplied.

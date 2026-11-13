@@ -80,6 +80,9 @@ const runResource: TWorkflowRunResource = {
   idempotencyKey: null,
   nextAttemptAt: null,
   lastErrorAt: null,
+  callerIp: null,
+  workflowVersionNumber: null,
+  steps: [],
 };
 
 describe("workflow operation inputs", () => {

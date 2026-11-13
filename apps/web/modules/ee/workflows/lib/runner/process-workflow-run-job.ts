@@ -8,6 +8,7 @@ import {
   type TWorkflowExecutableDefinition,
   type TWorkflowRunContext,
   type TWorkflowRunData,
+  type TWorkflowRunNotTakenStep,
   type TWorkflowStepNode,
   type TWorkflowStepResult,
   type TWorkflowStepType,
@@ -44,6 +45,7 @@ const workflowRunSelect = {
   attempt: true,
   triggerType: true,
   triggerPayload: true,
+  isDryRun: true,
   workflowVersion: { select: { definition: true } },
   // `createdBy` carries the per-user email limit: the respondent who triggers a run is anonymous.
   workflow: { select: { definition: true, createdBy: true } },
@@ -350,6 +352,8 @@ type WalkOutcome =
   | {
       bail: false;
       stepResults: TWorkflowStepResult[];
+      /** Steps on If/else branches the run did not take, shown as "Not taken" in run detail. */
+      notTaken: TWorkflowRunNotTakenStep[];
       failure: { message: string; retryable: boolean } | null;
     };
 
@@ -375,7 +379,7 @@ const walkRun = async (
   let failure: { message: string; retryable: boolean } | null = null;
   let bailed = false;
 
-  await walkWorkflowSteps(definition, async (node, sequence) => {
+  const walked = await walkWorkflowSteps(definition, async (node, sequence) => {
     const executor = getWorkflowStepExecutor(node);
     const stepRun = await runStep(
       { node, stepType: getWorkflowStepType(node), executor, sequence, runId, context, environment, effects },
@@ -400,7 +404,9 @@ const walkRun = async (
     return result.status === "succeeded" && executor.decide ? executor.decide(output) : { next: "continue" };
   });
 
-  return bailed ? { bail: true } : { bail: false, stepResults, failure };
+  if (bailed) return { bail: true };
+  const notTaken = walked.notTaken.map((node) => ({ stepId: node.id, stepType: getWorkflowStepType(node) }));
+  return { bail: false, stepResults, notTaken, failure };
 };
 
 /** Walks the claimed run to completion, throwing `WorkflowStepFailedError` (with the trace) on a failed step. */
@@ -436,6 +442,7 @@ const executeClaimedRun = async (
   const runData: TWorkflowRunData = ZWorkflowRunData.parse({
     trigger: triggerPayload,
     steps: outcome.stepResults,
+    ...(outcome.notTaken.length > 0 ? { notTaken: outcome.notTaken } : {}),
   });
 
   if (outcome.failure) {
@@ -463,7 +470,7 @@ const executeClaimedRun = async (
  */
 const handleRunError = async (
   error: unknown,
-  run: { id: string; triggerType: string },
+  run: { id: string; triggerType: string; isDryRun: boolean },
   data: TWorkflowRunJobData,
   context: Parameters<JobHandler<TWorkflowRunJobData>>[1],
   logContext: ReturnType<typeof getWorkflowRunLogContext>
@@ -489,8 +496,9 @@ const handleRunError = async (
   logger.error({ ...logContext, err: error }, "Workflow run job failed after final attempt");
   // Only the delivery whose terminal write landed reports the failure. A losing concurrent delivery
   // (0 rows, or a persistence error) must neither duplicate the event nor report a failure over a run
-  // another delivery has already completed.
-  if (recorded) {
+  // another delivery has already completed. A Test run failing is the author testing, not a workflow
+  // failing in production, so it is not reported either.
+  if (recorded && !run.isDryRun) {
     await captureWorkflowRunFailed({
       runId: run.id,
       workflowId: data.workflowId,
