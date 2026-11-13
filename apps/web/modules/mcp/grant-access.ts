@@ -66,8 +66,11 @@ export const toMcpGrantAccessRequest = (
   selection: TMcpGrantAccessSelection
 ): { access: TMcpGrantAccess; organizationIds?: string[]; workspaceIds?: string[] } => selection;
 
-const sameIds = (a: readonly string[], b: readonly string[]): boolean =>
-  a.length === b.length && [...a].sort().join("\n") === [...b].sort().join("\n");
+const sameIds = (a: readonly string[], b: readonly string[]): boolean => {
+  const left = new Set(a);
+  const right = new Set(b);
+  return left.size === right.size && [...right].every((id) => left.has(id));
+};
 
 /** True when `selection` saves exactly what the grant already has, so Edit has nothing to save. */
 export const isSameMcpGrantAccess = (

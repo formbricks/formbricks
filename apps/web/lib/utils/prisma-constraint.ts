@@ -63,6 +63,8 @@ const UNIQUE_INDEX_COLUMNS: Readonly<Record<string, readonly string[]>> = {
     "surveyId",
     "elementId",
   ],
+  McpGrantOrganization_pkey: ["grantId", "organizationId"],
+  McpGrantWorkspace_pkey: ["grantId", "workspaceId"],
   Membership_pkey: ["userId", "organizationId"],
   OnlineUpgradeState_pkey: ["release"],
   OrganizationBilling_pkey: ["organization_id"],

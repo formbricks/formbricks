@@ -479,8 +479,10 @@ export const readWorkspaceSource = async (workspaceId: string): Promise<TAuthzed
   }
 
   if (organizationId !== null) {
-    expectedRelationships.push(...surveys.flatMap(expectedSurveyRelationships));
-    expectedRelationships.push(...mcpGrantSelections.map(toMcpGrantSelectionRelationship));
+    expectedRelationships.push(
+      ...surveys.flatMap(expectedSurveyRelationships),
+      ...mcpGrantSelections.map(toMcpGrantSelectionRelationship)
+    );
   }
 
   return {

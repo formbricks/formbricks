@@ -78,10 +78,7 @@ export const callMcpTool = async (
     })
   );
 
-  const body = (await response.json()) as { result?: TMcpToolCallOutcome["result"] } & Record<
-    string,
-    unknown
-  >;
+  const body = (await response.json()) as { result: TMcpToolCallOutcome["result"] } & Record<string, unknown>;
   if (body.result) return { status: response.status, result: body.result };
   return { status: response.status, problem: body as TMcpToolCallOutcome["problem"] };
 };

@@ -422,9 +422,7 @@
                   },
                   {
                     "group": "Upcoming changes",
-                    "pages": [
-                      "self-hosting/upgrade/versions/mcp-access"
-                    ]
+                    "pages": ["self-hosting/upgrade/versions/mcp-access"]
                   }
                 ]
               },
