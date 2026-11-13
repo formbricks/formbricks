@@ -2,6 +2,7 @@ import "server-only";
 import {
   buildWorkflowHttpCall,
   capRequestRecord,
+  collectSentSecretValues,
   isWorkflowHttpErrorStatus,
   summarizeWorkflowHttpResponse,
 } from "../../http-request/request";
@@ -18,7 +19,8 @@ import type { WorkflowStepExecutor, WorkflowStepOutcome } from "./types";
  * row adds `delivery: "sending" | "sent" | "failed"` and keeps the whole rendered body until its job
  * has sent it. In a Test run (fake effects, ADR 0049) nothing is sent: "Wait and use it" gets the
  * step's last Test request response (`testSample: "used"`) or goes on with none (`"missing"`), and
- * "Don't wait" ends at once with the request it would have sent. A failed call fails the step, and so the run, unless "Continue on error" is on.
+ * "Don't wait" ends at once with the request it would have sent. A failed call fails the step, and
+ * so the run, unless "Continue on error" is on.
  */
 export const httpRequestStepExecutor: WorkflowStepExecutor<"http_request"> = {
   hasEffects: true,
@@ -77,7 +79,10 @@ export const httpRequestStepExecutor: WorkflowStepExecutor<"http_request"> = {
         : { status: "failed", error: result.error, output };
     }
 
-    const { variables, record } = summarizeWorkflowHttpResponse(result.response);
+    const { variables, record } = summarizeWorkflowHttpResponse(
+      result.response,
+      collectSentSecretValues(built.call, built.record)
+    );
     const output = { mode: "wait", request, ...record, attempts: result.attempts, ...testSample };
     if (isWorkflowHttpErrorStatus(result.response.status) && !config.continueOnError) {
       return {

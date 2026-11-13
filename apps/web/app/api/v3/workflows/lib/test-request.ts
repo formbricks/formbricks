@@ -25,6 +25,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   buildWorkflowHttpCall,
   capRequestRecord,
+  collectSentSecretValues,
   summarizeWorkflowHttpResponse,
 } from "@/modules/ee/workflows/lib/http-request/request";
 import { sendWorkflowHttpRequest } from "@/modules/ee/workflows/lib/http-request/send-http-request";
@@ -178,7 +179,10 @@ export const sendWorkflowTestRequest = async ({
     if (!built.ok) throw new WorkflowInvalidInputError(built.error);
 
     const outcome = await sendWorkflowHttpRequest(built.call, { retries: 0 });
-    const response = outcome.response ? summarizeWorkflowHttpResponse(outcome.response).record : null;
+    const response = outcome.response
+      ? summarizeWorkflowHttpResponse(outcome.response, collectSentSecretValues(built.call, built.record))
+          .record
+      : null;
     if (response) {
       await prisma.workflowSample.upsert({
         where: { workflowId_source: { workflowId: workflow.id, source: params.stepId } },

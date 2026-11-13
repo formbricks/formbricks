@@ -10,6 +10,7 @@ import {
 import {
   type TWorkflowHttpRequestRecord,
   capRequestRecord,
+  collectSentSecretValues,
   isWorkflowHttpErrorStatus,
   summarizeWorkflowHttpResponse,
 } from "../http-request/request";
@@ -76,13 +77,17 @@ const rebuildCall = (
 };
 
 /** The step's final row: what run detail shows for a "Don't wait" call. The request body is capped now. */
-const finalOutput = (request: TWorkflowHttpRequestRecord, result: WorkflowHttpCallResult | null) => {
+const finalOutput = (
+  request: TWorkflowHttpRequestRecord,
+  result: WorkflowHttpCallResult | null,
+  sentSecretValues: readonly string[]
+) => {
   const delivered = result?.response && !isWorkflowHttpErrorStatus(result.response.status);
   return {
     mode: "dont_wait",
     delivery: delivered ? "sent" : "failed",
     request: capRequestRecord(request),
-    ...(result?.response ? summarizeWorkflowHttpResponse(result.response).record : {}),
+    ...(result?.response ? summarizeWorkflowHttpResponse(result.response, sentSecretValues).record : {}),
     ...(result ? { attempts: result.attempts } : {}),
   };
 };
@@ -147,11 +152,17 @@ export const createWorkflowHttpRequestDeliveryJobHandler =
     const finish = async (
       status: "succeeded" | "failed",
       error: string | null,
-      result: WorkflowHttpCallResult | null
+      result: WorkflowHttpCallResult | null,
+      sentSecretValues: readonly string[] = []
     ) => {
       const written = await prisma.workflowRunLog.updateMany({
         where: { runId: data.workflowRunId, stepId: data.stepId, status: "running" },
-        data: { status, error, output: finalOutput(request, result), finishedAt: new Date() },
+        data: {
+          status,
+          error,
+          output: finalOutput(request, result, sentSecretValues),
+          finishedAt: new Date(),
+        },
       });
       if (written.count === 0) logger.info(logContext, "Workflow HTTP request step was finalized elsewhere");
     };
@@ -177,7 +188,12 @@ export const createWorkflowHttpRequestDeliveryJobHandler =
 
     const result = await send(rebuilt.call);
     const error = failureMessage(result);
-    await finish(error ? "failed" : "succeeded", error, result);
+    await finish(
+      error ? "failed" : "succeeded",
+      error,
+      result,
+      collectSentSecretValues(rebuilt.call, request)
+    );
     if (error)
       logger.warn({ ...logContext, attempts: result.attempts }, "Workflow HTTP request delivery failed");
   };

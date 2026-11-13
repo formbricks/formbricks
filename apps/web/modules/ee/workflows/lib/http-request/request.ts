@@ -161,21 +161,49 @@ const parseBody = (response: WorkflowHttpResponse): unknown => {
  * in memory only); `record` is what run detail and samples keep (≤64 KB, parsed only when it fits).
  */
 export const summarizeWorkflowHttpResponse = (
-  response: WorkflowHttpResponse
+  response: WorkflowHttpResponse,
+  /** Secret header values this call sent; an endpoint that echoes them back gets them masked in `record`. */
+  secretValues: readonly string[] = []
 ): { variables: { status: number; body: unknown }; record: TWorkflowHttpResponseRecord } => {
-  const body = parseBody(response);
+  const variables = { status: response.status, body: parseBody(response) };
+  const logged = { ...response, bodyText: maskSecretValues(response.bodyText, secretValues) };
+  const body = parseBody(logged);
   const base = { status: response.status, contentType: response.contentType };
   if (typeof body !== "string") {
     const serialized = JSON.stringify(body);
     if (new TextEncoder().encode(serialized).length <= WORKFLOW_HTTP_LOGGED_BODY_BYTES) {
-      return { variables: { status: response.status, body }, record: { ...base, body } };
+      return { variables, record: { ...base, body } };
     }
   }
-  const { text, truncated } = capUtf8(response.bodyText, WORKFLOW_HTTP_LOGGED_BODY_BYTES);
+  const { text, truncated } = capUtf8(logged.bodyText, WORKFLOW_HTTP_LOGGED_BODY_BYTES);
   return {
-    variables: { status: response.status, body },
+    variables,
     record: { ...base, body: text, ...(truncated || response.truncated ? { bodyTruncated: true } : {}) },
   };
+};
+
+/** Shorter values are left alone: masking them would mangle ordinary text in the body. */
+const MIN_MASKED_SECRET_LENGTH = 4;
+
+const maskSecretValues = (text: string, secretValues: readonly string[]): string =>
+  [...secretValues]
+    .sort((a, b) => b.length - a.length)
+    .reduce((masked, secret) => masked.replaceAll(secret, WORKFLOW_SECRET_MASK), text);
+
+/**
+ * The secret header values a call sent: the headers its record shows masked. Run detail and samples
+ * are readable by people who may never see a secret (ADR 0043), so a response that echoes one back
+ * must not carry it into storage.
+ */
+export const collectSentSecretValues = (
+  call: WorkflowHttpCall,
+  record: TWorkflowHttpRequestRecord
+): string[] => {
+  const sent = new Map(Object.entries(call.headers).map(([name, value]) => [name.toLowerCase(), value]));
+  return record.headers
+    .filter((header) => header.value === WORKFLOW_SECRET_MASK)
+    .map((header) => sent.get(header.name.toLowerCase()))
+    .filter((value): value is string => value !== undefined && value.length >= MIN_MASKED_SECRET_LENGTH);
 };
 
 /** An answer the step counts as an error: 4xx and 5xx. A 3xx is the response, since redirects aren't followed. */
