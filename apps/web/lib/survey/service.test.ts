@@ -124,6 +124,8 @@ const draftSurveyWithOwnPrivateSegment = (
 
 beforeEach(() => {
   vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
+  // The own-private-segment write checks how many rows it updated (ENG-6957).
+  prisma.segment.updateMany.mockResolvedValue({ count: 1 });
   prisma.survey.count.mockResolvedValue(1);
   // createSurvey and updateSurveyInternal wrap their core writes in prisma.$transaction; run the
   // callback with the same mocked client so per-test prisma.survey/segment mocks still apply inside
@@ -774,7 +776,7 @@ describe("Tests for updateSurvey", () => {
         where: {
           id: OWN_PRIVATE_SEGMENT.id,
           isPrivate: true,
-          surveys: { every: { id: updateSurveyInput.id } },
+          surveys: { some: { id: updateSurveyInput.id }, every: { id: updateSurveyInput.id } },
         },
         data: { filters: [] },
       });
@@ -823,12 +825,8 @@ describe("Tests for updateSurvey", () => {
       expect(prisma.segment.findUnique).toHaveBeenCalledTimes(1); // the workspace guard only
     });
 
-    test("ignores a segment without an id on a survey that has none", async () => {
-      prisma.survey.findUnique.mockResolvedValueOnce({
-        ...mockSurveyOutput,
-        status: "draft",
-        segment: null,
-      } as any);
+    test("ignores a segment without an id, even one that names the survey", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
       prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
 
       await updateSurveyInternal(
@@ -843,6 +841,20 @@ describe("Tests for updateSurvey", () => {
 
       expect(prisma.segment.updateMany).not.toHaveBeenCalled();
       expect(prisma.segment.findUnique).not.toHaveBeenCalled();
+    });
+
+    test("refuses the save when the own segment changed since it was read", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
+      prisma.segment.findUnique.mockResolvedValueOnce({ workspaceId: updateSurveyInput.workspaceId } as any);
+      prisma.segment.updateMany.mockResolvedValueOnce({ count: 0 });
+
+      await expect(
+        updateSurveyInternal(
+          { ...updateSurveyInput, status: "draft", type: "app", segment: OWN_PRIVATE_SEGMENT } as any,
+          true
+        )
+      ).rejects.toThrow(InvalidInputError);
+      expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
     test("links the survey to a shared segment that segment.surveys names it on", async () => {
@@ -869,7 +881,15 @@ describe("Tests for updateSurvey", () => {
 
       expect(prisma.survey.update).toHaveBeenCalledWith({
         where: { id: updateSurveyInput.id },
-        data: { segment: { connect: { id: "clsharedsegment000000001", isPrivate: false } } },
+        data: {
+          segment: {
+            connect: {
+              id: "clsharedsegment000000001",
+              isPrivate: false,
+              workspaceId: updateSurveyInput.workspaceId,
+            },
+          },
+        },
         select: { id: true },
       });
       expect(prisma.segment.updateMany).not.toHaveBeenCalled();
@@ -2655,6 +2675,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
             connect: {
               id: mockNewSegmentId,
               isPrivate: false,
+              workspaceId: mockSurveyOutput.workspaceId,
             },
           },
         },

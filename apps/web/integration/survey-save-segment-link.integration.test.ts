@@ -341,4 +341,11 @@ describe("a survey save changes only its own survey's targeting (ENG-6957)", () 
     expect(await segmentIdOf(ids.R)).toBe(ids.segmentR);
     expect(await prisma.segment.findUnique({ where: { id: ids.segmentR } })).not.toBeNull();
   });
+
+  test("Load Segment can re-load the survey's own private segment, which it keeps", async () => {
+    await expect(loadNewSegmentInSurvey(ids.W, ids.segmentW)).resolves.toMatchObject({ id: ids.W });
+
+    expect(await segmentIdOf(ids.W)).toBe(ids.segmentW);
+    expect(await prisma.segment.findUnique({ where: { id: ids.segmentW } })).not.toBeNull();
+  });
 });

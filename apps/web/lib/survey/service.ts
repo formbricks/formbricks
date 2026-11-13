@@ -1210,17 +1210,25 @@ const saveAppSurveySegment = async (
       actor,
       segment.id
     );
+    let written: { count: number };
     try {
       // Only the filters: the title names the survey (`connectOrCreate` finds the segment by it), and a
       // segment is made shared through the segment endpoints. The `where` repeats the ownership check,
       // so a segment shared since the survey was read is left alone.
-      await prisma.segment.updateMany({
-        where: { id: segment.id, isPrivate: true, surveys: { every: { id: survey.id } } },
+      written = await prisma.segment.updateMany({
+        where: {
+          id: segment.id,
+          isPrivate: true,
+          surveys: { some: { id: survey.id }, every: { id: survey.id } },
+        },
         data: { filters: segment.filters },
       });
     } catch (error) {
       logger.error(loggableError(error), "Error updating survey");
       throw new Error("Error updating survey");
+    }
+    if (written.count === 0) {
+      throw new InvalidInputError("The survey's segment changed while saving. Reload and try again.");
     }
     return;
   }
@@ -1242,10 +1250,10 @@ const saveAppSurveySegment = async (
     actor,
     segment.id
   );
-  // `isPrivate: false` repeats the check in the write: a segment made private since it was read fails it.
+  // `isPrivate` and `workspaceId` repeat the checks in the write: a segment that no longer matches fails it.
   await prisma.survey.update({
     where: { id: survey.id },
-    data: { segment: { connect: { id: segment.id, isPrivate: false } } },
+    data: { segment: { connect: { id: segment.id, isPrivate: false, workspaceId: survey.workspaceId } } },
     select: { id: true },
   });
 };
@@ -1664,7 +1672,7 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
           connect:
             newSegment.id === currentSurveySegment?.id
               ? { id: newSegmentId }
-              : { id: newSegmentId, isPrivate: false },
+              : { id: newSegmentId, isPrivate: false, workspaceId: currentSurvey.workspaceId },
         },
       },
     });
