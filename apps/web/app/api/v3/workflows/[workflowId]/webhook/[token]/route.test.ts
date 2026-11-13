@@ -33,6 +33,7 @@ const { mocks, flags, logLines, sentryCalls, TooManyRequests } = vi.hoisted(() =
     TooManyRequests,
     mocks: {
       workflowFindUnique: vi.fn(),
+      txWorkflowFindUnique: vi.fn(),
       runFindUnique: vi.fn(),
       runCreate: vi.fn(),
       sampleUpsert: vi.fn(),
@@ -50,6 +51,7 @@ const { mocks, flags, logLines, sentryCalls, TooManyRequests } = vi.hoisted(() =
 
 vi.mock("@formbricks/database", () => {
   const tx = {
+    workflow: { findUnique: mocks.txWorkflowFindUnique },
     workflowSample: { upsert: mocks.sampleUpsert },
     workflowRun: { create: mocks.runCreate },
   };
@@ -158,6 +160,7 @@ beforeEach(() => {
   flags.allowPlainHttp = false;
   mocks.applyRateLimit.mockResolvedValue({ allowed: true });
   mocks.workflowFindUnique.mockResolvedValue(webhookWorkflow());
+  mocks.txWorkflowFindUnique.mockResolvedValue({ status: "enabled", versions: [{ id: VERSION_ID }] });
   mocks.runFindUnique.mockResolvedValue(null);
   mocks.runCreate.mockResolvedValue({ id: RUN_ID, createdAt: new Date("2026-11-13T10:00:00.000Z") });
   mocks.sampleUpsert.mockResolvedValue({});
@@ -236,6 +239,7 @@ describe("an enabled workflow", () => {
 describe.each(["draft", "disabled"])("a %s workflow", (status) => {
   test("answers 202 with no run and saves the sample", async () => {
     mocks.workflowFindUnique.mockResolvedValue(webhookWorkflow({ status }));
+    mocks.txWorkflowFindUnique.mockResolvedValue({ status, versions: [{ id: VERSION_ID }] });
 
     const response = await call();
 
@@ -245,6 +249,43 @@ describe.each(["draft", "disabled"])("a %s workflow", (status) => {
     expect(mocks.runCreate).not.toHaveBeenCalled();
     expect(mocks.dispatch).not.toHaveBeenCalled();
     expect(mocks.meter).not.toHaveBeenCalled();
+  });
+});
+
+describe("a status change while the call is in flight", () => {
+  test("a workflow disabled after the call was admitted starts no run", async () => {
+    mocks.txWorkflowFindUnique.mockResolvedValue({ status: "disabled", versions: [{ id: VERSION_ID }] });
+
+    const response = await call();
+
+    expect(response.status).toBe(202);
+    expect(await response.json()).toEqual({ runId: null });
+    expect(mocks.sampleUpsert).toHaveBeenCalled();
+    expect(mocks.runCreate).not.toHaveBeenCalled();
+    expect(mocks.meter).not.toHaveBeenCalled();
+  });
+
+  test("a workflow archived or deleted after the call was admitted answers 404 and saves nothing", async () => {
+    for (const row of [{ status: "archived", versions: [] }, null]) {
+      mocks.txWorkflowFindUnique.mockResolvedValueOnce(row);
+
+      const response = await call();
+
+      expect(response.status).toBe(404);
+    }
+    expect(mocks.sampleUpsert).not.toHaveBeenCalled();
+    expect(mocks.runCreate).not.toHaveBeenCalled();
+  });
+
+  test("the run is pinned to the live version read in the transaction", async () => {
+    const newerVersion = "cm9zr4ver000408l8abcdefgh";
+    mocks.txWorkflowFindUnique.mockResolvedValue({ status: "enabled", versions: [{ id: newerVersion }] });
+
+    await call();
+
+    expect(mocks.runCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ workflowVersionId: newerVersion }) })
+    );
   });
 });
 

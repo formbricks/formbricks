@@ -194,10 +194,15 @@ const findRunByIdempotencyKey = async (workflowId: string, idempotencyKey: strin
     select: { id: true },
   });
 
+/** Marks a workflow archived or deleted between admitting the call and saving it. */
+const GONE = Symbol("gone");
+
 /**
  * Saves the payload as the Sample and, for an enabled workflow, creates the queued run, in one
- * transaction. Returns the new run, null when no run starts, or the run an earlier call with the same
- * idempotency key started (a race lost on the unique key).
+ * transaction. The status and live version are read again inside it: the read that admitted the call
+ * may be stale by now (disabled, archived or re-enabled in between). Returns the new run, none when no
+ * run starts, gone when the workflow was archived or deleted meanwhile, or the run an earlier call
+ * with the same idempotency key started (a race lost on the unique key).
  */
 const saveCall = async (
   workflow: TLoadedWorkflow,
@@ -206,6 +211,7 @@ const saveCall = async (
 ): Promise<
   | { kind: "created"; run: { id: string; createdAt: Date } }
   | { kind: "none" }
+  | { kind: "gone" }
   | { kind: "existing"; runId: string }
 > => {
   const now = new Date();
@@ -218,6 +224,15 @@ const saveCall = async (
 
   try {
     const run = await prisma.$transaction(async (tx) => {
+      const current = await tx.workflow.findUnique({
+        where: { id: workflow.id },
+        select: {
+          status: true,
+          versions: { orderBy: { version: "desc" }, take: 1, select: { id: true } },
+        },
+      });
+      if (!current || current.status === "archived") return GONE;
+
       const callData = { sample: payload, lastCalledAt: now, lastCallerIp: callerIp };
       await tx.workflowSample.upsert({
         where: { workflowId_source: { workflowId: workflow.id, source: WORKFLOW_SAMPLE_TRIGGER_SOURCE } },
@@ -230,13 +245,13 @@ const saveCall = async (
         update: callData,
       });
 
-      if (workflow.status !== "enabled") return null;
+      if (current.status !== "enabled") return null;
 
       return tx.workflowRun.create({
         data: {
           workflowId: workflow.id,
           workspaceId: workflow.workspaceId,
-          workflowVersionId: workflow.versions[0]?.id ?? null,
+          workflowVersionId: current.versions[0]?.id ?? null,
           status: "queued",
           triggerType: WORKFLOW_TRIGGERS.WEBHOOK,
           isDryRun: false,
@@ -248,6 +263,7 @@ const saveCall = async (
         select: RUN_SELECT,
       });
     });
+    if (run === GONE) return { kind: "gone" };
     return run ? { kind: "created", run } : { kind: "none" };
   } catch (error) {
     if (!idempotencyKey || !isUniqueViolation(error)) throw error;
@@ -367,6 +383,7 @@ const handleCall = async (ctx: WebhookCallInput, log: TWebhookLog): Promise<Resp
     idempotencyKey,
     callerIp: clientIp === UNTRUSTED_CLIENT_IP ? null : clientIp,
   });
+  if (saved.kind === "gone") return problemNotFound(ctx.requestId, "Webhook", null, ctx.instance);
   if (saved.kind === "none") return callResult(null, 202);
   if (saved.kind === "existing") return callResult(saved.runId, 200);
 
