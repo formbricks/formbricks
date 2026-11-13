@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import { getMcpGrantPermissionsForScopes } from "./grant";
 import {
   applyMcpGrantPreset,
+  canEditMcpGrant,
   getInitialMcpGrantPermissions,
   getMcpCategoryLevel,
   getMcpGrantEditorCategories,
@@ -202,6 +203,20 @@ describe("isMcpGrantEmpty", () => {
   test("is true only when every permission is at No access", () => {
     expect(isMcpGrantEmpty({})).toBe(true);
     expect(isMcpGrantEmpty({ workflowRuns: "read" })).toBe(false);
+  });
+});
+
+describe("canEditMcpGrant", () => {
+  test("is true for a grant whose client's scopes ask for something", () => {
+    expect(canEditMcpGrant({ permissions: {}, cap: { surveys: "read" } })).toBe(true);
+  });
+
+  test("is false without a grant", () => {
+    expect(canEditMcpGrant({ permissions: null, cap: { surveys: "read" } })).toBe(false);
+  });
+
+  test("is false for a client capped at nothing, which Edit could give nothing", () => {
+    expect(canEditMcpGrant({ permissions: { surveys: "read" }, cap: {} })).toBe(false);
   });
 });
 

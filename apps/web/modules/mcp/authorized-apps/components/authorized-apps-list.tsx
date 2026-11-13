@@ -6,7 +6,7 @@ import type { TAuthorizedMcpClientResource } from "@/app/api/internal/mcp-grants
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { getHostFromUrl } from "@/modules/auth/lib/oauth-client-metadata";
-import { isMcpGrantEmpty } from "@/modules/mcp/grant-editor";
+import { canEditMcpGrant } from "@/modules/mcp/grant-editor";
 import { Button } from "@/modules/ui/components/button";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
@@ -98,8 +98,7 @@ export const AuthorizedAppsList = ({ locale }: Readonly<AuthorizedAppsListProps>
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    {/* A client capped at nothing (no consent, no `skipConsent`) has nothing Edit could give. */}
-                    {client.permissions && !isMcpGrantEmpty(client.cap) && (
+                    {canEditMcpGrant(client) && (
                       <Button
                         type="button"
                         variant="secondary"

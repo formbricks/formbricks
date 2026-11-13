@@ -148,6 +148,15 @@ export const isMcpGrantEmpty = (permissions: TMcpGrantPermissions): boolean =>
   Object.keys(permissions).length === 0;
 
 /**
+ * Whether Authorized apps offers Edit for a client: it needs a grant to edit, and a cap above nothing. A
+ * client capped at nothing (no consent, no `skipConsent`) has nothing Edit could give.
+ */
+export const canEditMcpGrant = (client: {
+  permissions: TMcpGrantPermissions | null;
+  cap: TMcpGrantPermissions;
+}): boolean => client.permissions !== null && !isMcpGrantEmpty(client.cap);
+
+/**
  * Per granted permission, what it needs beside itself and the grant doesn't give
  * ({@link MCP_PERMISSION_DEPENDENCIES}), for the hint next to it.
  */
