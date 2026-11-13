@@ -81,6 +81,7 @@ const authorizeAllow = vi.fn<WorkflowApiContext["authorize"]>();
 const verifyTriggerSurvey = vi.fn<WorkflowApiContext["verifyTriggerSurvey"]>();
 const verifyRecipientsAllowed = vi.fn<WorkflowApiContext["verifyRecipientsAllowed"]>();
 const listUnreadableSurveyIds = vi.fn<WorkflowApiContext["listUnreadableSurveyIds"]>();
+const verifySurveyLinkSurveys = vi.fn<WorkflowApiContext["verifySurveyLinkSurveys"]>();
 const logger: WorkflowsLogger = { warn: vi.fn(), error: vi.fn() };
 
 const authorized: AuthorizedWorkspace = { workspaceId, organizationId: "cm9zr5org00000000000000000" };
@@ -94,6 +95,7 @@ const makeCtx = (overrides: Partial<WorkflowApiContext> = {}): WorkflowApiContex
   verifyTriggerSurvey,
   verifyRecipientsAllowed,
   listUnreadableSurveyIds,
+  verifySurveyLinkSurveys,
   ...overrides,
 });
 
@@ -109,6 +111,7 @@ beforeEach(() => {
   verifyTriggerSurvey.mockResolvedValue({ surveyExists: true, missingEndingCardIds: [] });
   verifyRecipientsAllowed.mockResolvedValue({ disallowedEmails: [] });
   listUnreadableSurveyIds.mockResolvedValue([]);
+  verifySurveyLinkSurveys.mockResolvedValue([]);
 });
 
 describe("get", () => {
@@ -861,7 +864,7 @@ describe("testWorkflow", () => {
     expect(res.status).toBe(200);
     expect(verifyTriggerSurvey).toHaveBeenCalledWith({ workspaceId, surveyId, endingCardIds: [] });
     const body = await readJson<TestResultBody>(res);
-    expect(body.data).toEqual({ workflowId, ok: true, problems: [] });
+    expect(body.data).toEqual({ workflowId, ok: true, problems: [], warnings: [] });
   });
 
   test("authorizes at read — it is a dry run and the MCP tool is workflows:read scoped", async () => {
@@ -1058,6 +1061,105 @@ describe("testWorkflow", () => {
 
     expect(res.status).toBe(403);
     expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+  });
+});
+
+describe("survey link checks on enable and test (ENG-7180)", () => {
+  const linkSurveyId = "cm9zr4mps000008l8linksrvy";
+  const withSurveyLink = makeRow({
+    status: "draft",
+    definition: {
+      ...definition,
+      nodes: [
+        {
+          ...definition.nodes[0],
+          config: {
+            ...definition.nodes[0].config,
+            body: "<p>Tell us: #survey-link#</p>",
+            surveyLink: {
+              surveyId: linkSurveyId,
+              embeddedData: [
+                { key: "agent_id", value: "A-42" },
+                { key: "call_id", value: "K-771" },
+              ],
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  test("enable refuses a survey link to a survey that is not a link survey in the workspace", async () => {
+    service.getWorkflowById.mockResolvedValue(withSurveyLink);
+    verifySurveyLinkSurveys.mockResolvedValue([
+      { surveyId: linkSurveyId, status: "not_link", acceptedEmbeddedDataKeys: [] },
+    ]);
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(verifySurveyLinkSurveys).toHaveBeenCalledWith({ workspaceId, surveyIds: [linkSurveyId] });
+    expect(res.status).toBe(422);
+    const body = await readJson<{ code: string; invalid_params: { name: string }[] }>(res);
+    expect(body.code).toBe("workflow_not_executable");
+    expect(body.invalid_params.map((p) => p.name)).toContain("definition.nodes.0.config.surveyLink.surveyId");
+    expect(service.enableWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("enable succeeds and warns about Embedded Data keys the survey does not accept", async () => {
+    service.getWorkflowById.mockResolvedValue(withSurveyLink);
+    service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled" }));
+    verifySurveyLinkSurveys.mockResolvedValue([
+      { surveyId: linkSurveyId, status: "ok", acceptedEmbeddedDataKeys: ["Agent_ID"] },
+    ]);
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<{ meta?: { warnings: { code: string; field: string; message: string }[] } }>(
+      res
+    );
+    // Matched case-insensitively, as the link survey does; only call_id is undeclared.
+    const warnings = body.meta?.warnings ?? [];
+    expect(warnings.map(({ code, field }) => ({ code, field }))).toEqual([
+      {
+        code: "survey_link_key_not_accepted",
+        field: "definition.nodes.0.config.surveyLink.embeddedData.1.key",
+      },
+    ]);
+    expect(warnings[0]?.message).toContain("call_id");
+  });
+
+  test("test reports a missing link survey as a problem and undeclared keys as warnings", async () => {
+    service.getWorkflowById.mockResolvedValue(withSurveyLink);
+    verifySurveyLinkSurveys.mockResolvedValue([
+      { surveyId: linkSurveyId, status: "not_found", acceptedEmbeddedDataKeys: [] },
+    ]);
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    const body = await readJson<{
+      data: TestResultBody["data"] & { warnings: { code: string }[] };
+    }>(res);
+    expect(body.data.ok).toBe(false);
+    expect(body.data.problems.map((p) => p.code)).toContain("survey_link_survey_not_found");
+
+    verifySurveyLinkSurveys.mockResolvedValue([
+      { surveyId: linkSurveyId, status: "ok", acceptedEmbeddedDataKeys: ["agent_id"] },
+    ]);
+    const okBody = await readJson<{ data: TestResultBody["data"] & { warnings: { code: string }[] } }>(
+      await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } })
+    );
+    expect(okBody.data.ok).toBe(true);
+    expect(okBody.data.warnings.map((w) => w.code)).toEqual(["survey_link_key_not_accepted"]);
+  });
+
+  test("a workflow without a survey link never looks one up", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled" }));
+
+    await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(verifySurveyLinkSurveys).not.toHaveBeenCalled();
   });
 });
 

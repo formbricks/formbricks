@@ -147,6 +147,17 @@ describe("summarizeWorkflowDefinitionOptions", () => {
     ).toBe("element");
   });
 
+  test("reports a Variable recipient without its path, and Embedded Data under either name", () => {
+    const options = summarizeWorkflowDefinitionOptions({
+      trigger: null,
+      nodes: [
+        emailNode({ to: { type: "variable", ref: "payload.customer.email" }, includeEmbeddedData: true }),
+      ],
+    });
+    expect(options).toMatchObject({ emailRecipientKind: "variable", includeVariables: true });
+    expect(JSON.stringify(options)).not.toContain("payload.customer");
+  });
+
   test("yields nulls for a draft without a trigger or email action, and for unknown node types", () => {
     const nulls = {
       endingScope: null,

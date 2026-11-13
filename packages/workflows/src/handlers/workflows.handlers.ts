@@ -6,6 +6,7 @@ import {
   type TWorkflowIdInput,
   type TWorkflowRunIdInput,
   type TWorkflowTestProblem,
+  type TWorkflowWarning,
   ZCreateWorkflowInput,
   ZDuplicateWorkflowInput,
   ZPatchWorkflowInput,
@@ -50,6 +51,7 @@ import {
   toWorkflowRunListItem,
   toWorkflowRunResource,
 } from "./serializers";
+import { checkWorkflowSurveyLinks } from "./survey-link-checks";
 
 // Matches the v3 API's default request-body limit (apps/web `request-body.ts`) for consistency.
 const MAX_REQUEST_BODY_BYTES = 2 * 1024 * 1024;
@@ -179,7 +181,7 @@ const collectLiteralRecipientEmails = (definition: TWorkflowExecutableDefinition
     // config (which carries `to`); revisit this guard if another action type is added.
     if (node.type === "action") {
       const { to } = node.config;
-      if (isLiteralEmailRecipient(to)) {
+      if (typeof to === "string" && isLiteralEmailRecipient(to)) {
         emails.add(to);
       }
     }
@@ -196,6 +198,9 @@ const DISALLOWED_RECIPIENT_DETAIL = "A send_email recipient cannot access this w
 /** Per-recipient explanation, shared so enable's `invalid_params` and test's `problems` never diverge. */
 const disallowedRecipientMessage = (email: string): string =>
   `Recipient ${email} cannot access this workspace. A send_email action may only address someone with access to this workspace or a respondent field.`;
+
+/** Short 422 `detail` for a survey link that can't be built, so UI surfacing only `detail` names the cause. */
+const SURVEY_LINK_DETAIL = "A send_email survey link does not point to a link survey in this workspace.";
 
 const buildDisallowedRecipientParams = (disallowedEmails: string[]): WorkflowInvalidParam[] =>
   disallowedEmails.map((email) => ({
@@ -558,6 +563,16 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         }
       }
 
+      // Survey links (ENG-7180): a linked survey must be a link survey in this workspace; Embedded
+      // Data keys it doesn't accept only warn, since the link simply leaves them off.
+      const surveyLinks = await checkWorkflowSurveyLinks(executable.data, loaded.workspaceId, ctx);
+      if (surveyLinks.problems.length > 0) {
+        throw new WorkflowNotExecutableError(
+          surveyLinks.problems.map((problem) => ({ name: problem.field, reason: problem.message })),
+          SURVEY_LINK_DETAIL
+        );
+      }
+
       const updated = await service.enableWorkflow(
         { workflowId: params.workflowId, workspaceId: loaded.workspaceId },
         { definition: executable.data, publishedBy: ctx.userId }
@@ -574,7 +589,11 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
         toAnalyticsDetail("enabled", updated, { previousStatus: loaded.status })
       );
 
-      return dataResponse(validateOutput(ZWorkflowResource, toWorkflowResource(updated)), ctx.requestId);
+      return dataResponse(
+        validateOutput(ZWorkflowResource, toWorkflowResource(updated)),
+        ctx.requestId,
+        surveyLinks.warnings.length > 0 ? { warnings: surveyLinks.warnings } : undefined
+      );
     } catch (error) {
       return toProblemResponse(error, ctx);
     }
@@ -635,6 +654,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       }
 
       const problems: TWorkflowTestProblem[] = [];
+      const warnings: TWorkflowWarning[] = [];
 
       // safeParse + collect every issue, rather than throwing on the first (as enable does).
       const executable = ZWorkflowExecutableDefinition.safeParse(loaded.definition);
@@ -698,12 +718,17 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
             });
           }
         }
+
+        const surveyLinks = await checkWorkflowSurveyLinks(executable.data, loaded.workspaceId, ctx);
+        problems.push(...surveyLinks.problems);
+        warnings.push(...surveyLinks.warnings);
       }
 
       const result = validateOutput(ZWorkflowTestResult, {
         workflowId: params.workflowId,
         ok: problems.length === 0,
         problems,
+        warnings,
       });
 
       await recordAnalyticsSafely(ctx, toAnalyticsDetail("tested", loaded, { testOk: result.ok }));

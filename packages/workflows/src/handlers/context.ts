@@ -22,6 +22,14 @@ export interface TriggerSurveyCheck {
   surveyNotWorkspaceVisible?: boolean;
 }
 
+/** Result of checking a survey a `send_email` step links to. */
+export interface SurveyLinkSurveyCheck {
+  surveyId: string;
+  status: "ok" | "not_found" | "not_link";
+  /** Keys the survey's link takes as Embedded Data (its passed-in fields); empty unless `ok`. */
+  acceptedEmbeddedDataKeys: string[];
+}
+
 /**
  * Audit detail a mutating handler surfaces to the adapter after a successful service call.
  * Deliberately app-agnostic: the affected workflow id, its workspace id, plus before/after
@@ -155,6 +163,16 @@ export interface WorkflowApiContext {
     organizationId: string;
     surveyIds?: string[];
   }) => Promise<string[]>;
+  /**
+   * Injected lookup of the surveys `send_email` steps link to (ENG-7180), so the package stays
+   * survey-agnostic. One entry per requested id: `not_found` when the survey is not in this workspace,
+   * `not_link` when it is not a link survey, and the Embedded Data keys its link accepts (its
+   * passed-in fields) so enable and test can warn about keys the survey would drop.
+   */
+  verifySurveyLinkSurveys: (input: {
+    workspaceId: string;
+    surveyIds: string[];
+  }) => Promise<SurveyLinkSurveyCheck[]>;
   recordAudit?: (detail: WorkflowAuditDetail) => void | Promise<void>;
   recordAnalytics?: (detail: WorkflowAnalyticsDetail) => void | Promise<void>;
 }

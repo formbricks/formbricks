@@ -22,6 +22,7 @@ export type {
   WorkflowAnalyticsDetail,
   WorkflowAnalyticsOperation,
   WorkflowAuditDetail,
+  SurveyLinkSurveyCheck,
 } from "../handlers/context";
 
 export {

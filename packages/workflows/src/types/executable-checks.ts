@@ -1,6 +1,10 @@
 import { findWorkflowRecallTokens } from "../variables/insert";
 import { type TWorkflowVariableSource, parseWorkflowVariablePath } from "../variables/paths";
-import type { TWorkflowSendEmailActionNode } from "./actions/send-email";
+import {
+  type TWorkflowSendEmailActionNode,
+  WORKFLOW_SURVEY_LINK_TOKEN,
+  isVariableEmailRecipient,
+} from "./actions/send-email";
 import { type TWorkflowDataRef } from "./common";
 import { flattenWorkflowConditions } from "./conditions/base";
 import type { TWorkflowIfElseNode } from "./conditions/if-else";
@@ -63,6 +67,89 @@ export const checkWorkflowVariableRef = (
 const isDataRef = (value: unknown): value is TWorkflowDataRef =>
   typeof value === "object" && value !== null && !Array.isArray(value) && "path" in value;
 
+/** Checks every Variable-path recall token in a text field against what the step can see. */
+const checkTextVariables = (
+  text: string,
+  context: TWorkflowExecutableCheckContext,
+  path: (string | number)[]
+): void => {
+  for (const token of findWorkflowRecallTokens(text)) {
+    const parsed = parseWorkflowVariablePath(token.path);
+    if (parsed.ok) {
+      checkWorkflowVariableRef({ path: token.path }, context, path);
+    } else {
+      context.addIssue(parsed.error, path);
+    }
+  }
+};
+
+const RECALL_TOKEN_START = "#recall:";
+const countRecallTokens = (text: string): number => text.split(RECALL_TOKEN_START).length - 1;
+
+/**
+ * The fixed-body rule (ENG-7169): when a Variable picks the recipient, the caller picks who gets the
+ * email, so nothing the caller sends may decide what it says. Subject and body take no recall token
+ * at all (a Variable or a survey answer) and no response data is attached. Only the survey link's
+ * Embedded Data may carry Variables. Without it, a leaked Webhook Secret URL would let anyone send
+ * any text, links included, from the customer's sender domain.
+ */
+const checkFixedContent = (
+  node: TWorkflowSendEmailActionNode,
+  context: TWorkflowExecutableCheckContext
+): void => {
+  const { subject, body, attachResponseData } = node.config;
+  const reason = "the recipient comes from a Variable, so the email must be fixed";
+  if (body.includes(RECALL_TOKEN_START)) {
+    context.addIssue(`send_email node ${node.id} body may not insert Variables or answers: ${reason}`, [
+      "config",
+      "body",
+    ]);
+  }
+  if (subject.includes(RECALL_TOKEN_START)) {
+    context.addIssue(`send_email node ${node.id} subject may not insert Variables or answers: ${reason}`, [
+      "config",
+      "subject",
+    ]);
+  }
+  if (attachResponseData) {
+    context.addIssue(`send_email node ${node.id} may not set attachResponseData: ${reason}`, [
+      "config",
+      "attachResponseData",
+    ]);
+  }
+};
+
+const checkSurveyLink = (
+  node: TWorkflowSendEmailActionNode,
+  context: TWorkflowExecutableCheckContext
+): void => {
+  const { surveyLink, body } = node.config;
+  const placesLink = body.includes(WORKFLOW_SURVEY_LINK_TOKEN);
+  if (!surveyLink) {
+    if (placesLink) {
+      context.addIssue(
+        `send_email node ${node.id} places a survey link but has no surveyLink to build it from`,
+        ["config", "surveyLink"]
+      );
+    }
+    return;
+  }
+  if (!placesLink) {
+    context.addIssue(
+      `send_email node ${node.id} has a survey link but its body never places it: insert ${WORKFLOW_SURVEY_LINK_TOKEN}`,
+      ["config", "body"]
+    );
+  }
+  for (const [index, { value }] of surveyLink.embeddedData.entries()) {
+    const path = ["config", "surveyLink", "embeddedData", index, "value"];
+    checkTextVariables(value, context, path);
+    // Survey recall (a bare question id) is not expanded on a link, so it would go out as written.
+    if (countRecallTokens(value) > findWorkflowRecallTokens(value).length) {
+      context.addIssue("Embedded Data values may only insert Variables (payload., steps., response.)", path);
+    }
+  }
+};
+
 const checkSendEmail = (
   node: TWorkflowSendEmailActionNode,
   context: TWorkflowExecutableCheckContext
@@ -72,14 +159,14 @@ const checkSendEmail = (
   for (const field of getBlankSendEmailContentFields(node.config)) {
     context.addIssue(`send_email node ${node.id} is missing ${field}`, ["config", field]);
   }
-  for (const token of findWorkflowRecallTokens(node.config.body)) {
-    const parsed = parseWorkflowVariablePath(token.path);
-    if (parsed.ok) {
-      checkWorkflowVariableRef({ path: token.path }, context, ["config", "body"]);
-    } else {
-      context.addIssue(parsed.error, ["config", "body"]);
-    }
+  checkTextVariables(node.config.body, context, ["config", "body"]);
+
+  const { to } = node.config;
+  if (isVariableEmailRecipient(to)) {
+    checkWorkflowVariableRef({ path: to.ref }, context, ["config", "to"]);
+    checkFixedContent(node, context);
   }
+  checkSurveyLink(node, context);
 };
 
 const checkIfElse = (node: TWorkflowIfElseNode, context: TWorkflowExecutableCheckContext): void => {
