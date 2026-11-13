@@ -134,7 +134,7 @@ for:
 {
   "status": 403,
   "code": "forbidden",
-  "detail": "Not permitted: the user's connection of this MCP client does not include Contacts: Read, because its OAuth token lacks the scope audience:read. Ask the user to reconnect the client and give it this access."
+  "detail": "Not permitted: the user's grant to this MCP client can't include Contacts: Read, because its OAuth token lacks the scope audience:read. Ask the user to reconnect the client and give it this access."
 }
 ```
 
@@ -143,7 +143,7 @@ for:
 A grant also says **which organizations and workspaces** the client reaches. You choose it on the consent
 screen and in **Edit**:
 
-- **All access**: every organization and workspace you can reach, including organizations you join later.
+- **All access**: every organization and workspace you have access to, including organizations you join later.
 - **Only selected organizations**: every workspace in the organizations you pick, including workspaces
   created there later.
 - **Only selected workspaces**: only the workspaces you pick, across your organizations. A workspace created

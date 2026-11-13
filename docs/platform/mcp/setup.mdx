@@ -144,8 +144,11 @@ Every client you authorize appears under **Settings → Account → Authorized A
 (`/account/settings/authorized-apps`), showing the client name, its organization & workspace access
 (**All access**, **2 organizations**, **3 workspaces**, or **No workspaces** when everything it was
 limited to is gone), its access level per category (such as **Surveys · Write** or **Responses · Read**;
-**Custom** when the permissions in a category differ), and when it was connected and last changed. A client connected twice, for example from two machines, is
-listed twice, and each connection is edited and revoked on its own.
+**Custom** when the permissions in a category differ), and when it was connected and last changed. Only
+organizations and workspaces you can still select count: one you lost access to, or an organization where
+you are now only a billing member, isn't shown, and the next save removes it. A client connected twice, for
+example from two machines, is listed twice, and each is edited and revoked on its own. A first-party client that connects without a
+consent screen is listed too.
 
 Click **Edit** to change what a client may do. It opens the same editor as the consent screen, filled in
 with the client's current grant: choose **All access**, **Only selected organizations** or **Only selected
@@ -155,7 +158,8 @@ use **Read-only**, **Select all** or **Deselect all**. Levels above what the cli
 connected it can't be chosen; to give more, reconnect it so it asks again. **Save changes** applies from
 the client's next tool call, with the token it already holds, so there is no need to reconnect. Save stays
 disabled while every permission is at No access, or while a selection has nothing picked: to end a client's
-access, use Revoke.
+access, use Revoke. If a change that takes access away can't be applied right away, Save (and Allow on the
+consent screen) fails with an error and nothing changes; try again.
 
 Click **Revoke** to cut off a client's access: revoking deletes its grant, so its next call is
 refused, even with an access token it still holds. It will need to be re-authorized to connect again.

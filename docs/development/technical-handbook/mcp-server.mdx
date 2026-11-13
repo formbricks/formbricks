@@ -149,6 +149,26 @@ legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, and a tool
 it reads passes `{ byInput }`; both keep the tool on the same registration path rather than a hand-rolled
 gate.
 
+**How a grant change reaches SpiceDB** (ADR 0042, `modules/mcp/grant-store.ts`). A grant's organization &
+workspace access is enforced through SpiceDB relationships, so the order of each write decides what a client
+can do in between:
+
+- Narrowing a grant that stays — consent re-approval (`oauth-grant-revocation.ts`) or Authorized apps' Edit
+  (`authorized-clients.ts`) — locks the grant row (`lockMcpGrant`), resolves the chosen access by the shared
+  rule (`resolveMcpGrantSelection`), and deletes what it takes away from SpiceDB before it commits
+  (`narrowMcpGrantAccess`). All of that runs before any consent row is locked. If SpiceDB can't apply the
+  delete, the request fails and the grant is unchanged: Edit answers 500, and the consent screen shows an
+  error (`mcp_grant_not_saved`); a selection the user can't make answers 422
+  (`mcp_grant_selection_unavailable`) on both.
+- What a save adds is written after the commit, best-effort (`projectMcpGrants`).
+- Deleting a grant — Revoke, member removal, the switch to Dashboard viewer, the retention sweep, SSO
+  recovery — commits first. The missing row already makes `/api/mcp` answer 401, so the relationships are
+  removed after the commit, best-effort (`removeDeletedMcpGrants`, `finishRevokedMcpGrants`).
+- The outbox event the rows' triggers queued is the repair for every best-effort write. The reconciler
+  reads each grant `FOR SHARE` until its write is done, so it can't put back what a narrowing just removed.
+
+Every path that locks both a grant row and consent rows takes the grant first.
+
 **There are no exceptions, and tests are what keep it that way.** The feedback-record tools were one
 for a while — they gated inside their own handler factories and registered through
 `server.registerTool` directly, which meant every handler was checked but a _new_ tool added outside
