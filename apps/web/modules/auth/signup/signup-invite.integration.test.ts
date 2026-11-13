@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { POST as postSignup } from "@/app/api/internal/signups/route";
+import { postToPreLoginRoute, withoutEmailToken } from "@/integration/pre-login-routes";
 import { resetDb } from "@/integration/reset-db";
 import { createInviteToken } from "@/lib/jwt";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
-import { createUserAction } from "@/modules/auth/signup/actions";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
 import { sendInviteAcceptedEmail, sendVerificationLinkEmail } from "@/modules/email";
 
 /**
- * Invite sign-up at the ACTION boundary: the real `createUserAction` + real Better Auth + real
+ * Invite sign-up at the ROUTE boundary: the real `POST /api/internal/signups` + real Better Auth + real
  * Postgres, driven exactly the way the sign-up form drives it (name/email/password + inviteToken).
  *
  * The second test is the ENG-2091 regression: because Better Auth answers a duplicate email with a
@@ -48,6 +49,10 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/modules/ee/audit-logs/lib/handler")>();
   return { ...actual, queueAuditEventBackground: vi.fn(async () => undefined) };
 });
+
+/** The sign-up form's request, through the real `POST /api/internal/signups`. */
+const createSignup = (body: Record<string, unknown>) =>
+  postToPreLoginRoute(postSignup, "/api/internal/signups", body);
 
 const INVITED_EMAIL = "invitee@corporate-example.com";
 const PASSWORD = "Passw0rd!";
@@ -96,14 +101,14 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
   test("brand-new invitee: verification email sent, invite accepted", async () => {
     const { inviteToken, organizationId } = await seedInvite();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Invitee",
       email: INVITED_EMAIL,
       password: PASSWORD,
       inviteToken,
     });
 
-    expect(result?.data).toEqual({ success: true });
+    expect(result.data).toEqual({ success: true, emailToken: expect.any(String) });
     expect(sendVerificationLinkEmail).toHaveBeenCalledTimes(1);
 
     const user = await prisma.user.findUnique({ where: { email: INVITED_EMAIL }, select: { id: true } });
@@ -124,7 +129,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     });
     vi.clearAllMocks();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Someone Else",
       email: INVITED_EMAIL,
       password: "SomeOtherPassword1!",
@@ -136,7 +141,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     // routed this case to login, which turned the invite flow into an account-existence lookup. The
     // verification-requested screen it lands on says "if there is an account associated with …" and
     // carries an unconditional log-in link, so this visitor still has a way out.
-    expect(result?.data).toEqual({ success: true });
+    expect(result.data).toEqual({ success: true, emailToken: expect.any(String) });
     // No verification email is sent, because no account was created.
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
 
@@ -187,13 +192,13 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
           });
         }
         vi.mocked(sendVerificationLinkEmail).mockResolvedValue(mailerReturns);
-        const result = await createUserAction({
+        const result = await createSignup({
           name: "Invitee",
           email: INVITED_EMAIL,
           password: PASSWORD,
           inviteToken,
         });
-        return { data: result?.data, serverError: result?.serverError };
+        return withoutEmailToken(result);
       };
 
       expect(await signUp(true)).toEqual(await signUp(false));
@@ -208,7 +213,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     const attackerEmail = "attacker@other-example.com";
     vi.clearAllMocks();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Attacker",
       email: attackerEmail,
       password: "AttackerPassword1!",
@@ -217,8 +222,8 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
 
     // Rejected with the stable code the form maps to the generic invite copy — one code for
     // expired / revoked / wrong-address, so it can't be used to probe which invites exist.
-    expect(result?.data).toBeUndefined();
-    expect(result?.serverError).toContain("invite_token_invalid");
+    expect(result.data).toBeUndefined();
+    expect(result.error).toContain("invite_token_invalid");
 
     // Nothing was written: no account for the attacker, no membership, and the invite survives for
     // its real recipient.
@@ -236,15 +241,15 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     });
     vi.clearAllMocks();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Invitee",
       email: INVITED_EMAIL,
       password: PASSWORD,
       inviteToken,
     });
 
-    expect(result?.data).toBeUndefined();
-    expect(result?.serverError).toContain("invite_token_invalid");
+    expect(result.data).toBeUndefined();
+    expect(result.error).toContain("invite_token_invalid");
     expect(await prisma.user.count({ where: { email: INVITED_EMAIL } })).toBe(0);
     expect(await prisma.membership.count({ where: { organizationId } })).toBe(0);
   });
@@ -257,7 +262,7 @@ describe("plain sign-up (no invite) with an address that already exists", () => 
     });
     const orgsBefore = await prisma.organization.count();
 
-    const result = await createUserAction({
+    const result = await createSignup({
       name: "Attacker",
       email: "victim@corporate-example.com",
       password: "AttackerPassword1!",
@@ -266,7 +271,7 @@ describe("plain sign-up (no invite) with an address that already exists", () => 
     // No invite, so nothing is disclosed: the response is byte-identical to a real new sign-up, and
     // the user lands on the generic "confirm your email" screen (whose copy carries a generic
     // "already have an account? log in" line). This is the enumeration-safety boundary.
-    expect(result?.data).toEqual({ success: true });
+    expect(result.data).toEqual({ success: true, emailToken: expect.any(String) });
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
     // On Formbricks Cloud getIsMultiOrgEnabled() is true, so before the fix this branch created an
     // organization + owner membership on someone else's account, once per request.

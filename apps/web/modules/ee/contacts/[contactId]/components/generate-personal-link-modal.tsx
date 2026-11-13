@@ -5,7 +5,8 @@ import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { copyToClipboard } from "@/lib/utils/clipboard";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { createContactPersonalLink } from "@/modules/ee/contacts/lib/api-client";
 import { getTranslatedPersonalLinkError } from "@/modules/ee/contacts/lib/personal-link-errors";
 import { PublishedLinkSurvey } from "@/modules/ee/contacts/lib/surveys";
 import { Button } from "@/modules/ui/components/button";
@@ -27,7 +28,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { generatePersonalSurveyLinkAction } from "../actions";
 
 interface GeneratePersonalLinkModalProps {
   readonly open: boolean;
@@ -73,35 +73,33 @@ export const GeneratePersonalLinkModal = ({
       return;
     }
     setIsLoading(true);
-    const response = await generatePersonalSurveyLinkAction({
-      contactId,
-      surveyId: selectedSurveyId,
-    });
-
-    if (response?.data) {
-      const surveyUrl = response?.data?.surveyUrl;
-      if (!surveyUrl) {
-        toast.error(t("common.something_went_wrong_please_try_again"));
-        return;
-      }
-
-      setGeneratedUrl(surveyUrl);
-      const success = await copyToClipboard(surveyUrl);
-
-      if (success) {
-        toast.success(t("common.copied_to_clipboard"));
-      } else {
-        toast.error(
-          t("workspace.contacts.personal_link_generated_but_clipboard_failed", {
-            url: surveyUrl,
-          }) || `${t("workspace.contacts.personal_link_generated")}: ${surveyUrl}`,
-          { duration: 6000 }
-        );
-      }
-    } else {
-      const errorMessage = getTranslatedPersonalLinkError(getFormattedErrorMessage(response), t);
+    let surveyUrl: string;
+    try {
+      ({ surveyUrl } = await createContactPersonalLink(contactId, selectedSurveyId));
+    } catch (error) {
+      // A refusal the dialog translates carries its code as the message.
+      const errorMessage = getTranslatedPersonalLinkError(getV3ApiErrorMessage(error, ""), t);
       toast.error(errorMessage || t("common.something_went_wrong_please_try_again"));
       return;
+    }
+
+    if (!surveyUrl) {
+      toast.error(t("common.something_went_wrong_please_try_again"));
+      return;
+    }
+
+    setGeneratedUrl(surveyUrl);
+    const success = await copyToClipboard(surveyUrl);
+
+    if (success) {
+      toast.success(t("common.copied_to_clipboard"));
+    } else {
+      toast.error(
+        t("workspace.contacts.personal_link_generated_but_clipboard_failed", {
+          url: surveyUrl,
+        }) || `${t("workspace.contacts.personal_link_generated")}: ${surveyUrl}`,
+        { duration: 6000 }
+      );
     }
     setIsLoading(false);
   };

@@ -12,7 +12,12 @@ import {
 } from "@formbricks/types/errors";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { getUniqueConstraintFields, isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
 import { validateInputs } from "@/lib/utils/validate";
+import {
+  TeamAssignmentOutsideOrganizationError,
+  TeamNameTakenError,
+} from "@/modules/ee/teams/team-list/lib/errors";
 import {
   TOrganizationTeam,
   TOtherTeam,
@@ -21,6 +26,10 @@ import {
   TUserTeam,
   ZTeamSettingsFormSchema,
 } from "@/modules/ee/teams/team-list/types/team";
+
+/** The organization's team-name constraint refused a write: a concurrent create or rename won the name. */
+const isTeamNameTaken = (error: unknown): boolean =>
+  isUniqueConstraintError(error) && getUniqueConstraintFields(error).includes("name");
 
 export const getTeamsByOrganizationId = reactCache(
   async (organizationId: string): Promise<TOrganizationTeam[] | null> => {
@@ -182,7 +191,7 @@ export const createTeam = async (organizationId: string, name: string): Promise<
     });
 
     if (doesTeamExist) {
-      throw new InvalidInputError("Team name already exists");
+      throw new TeamNameTakenError();
     }
 
     if (name.length < 1) {
@@ -205,6 +214,8 @@ export const createTeam = async (organizationId: string, name: string): Promise<
 
     return team.id;
   } catch (error) {
+    // The check above reads before it writes, so a concurrent create of the same name gets here.
+    if (isTeamNameTaken(error)) throw new TeamNameTakenError();
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
@@ -337,7 +348,7 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
         },
       });
       if (orgUsersCount !== userIds.length) {
-        throw new Error("Some specified users do not belong to the organization's membership.");
+        throw new TeamAssignmentOutsideOrganizationError("members");
       }
     }
 
@@ -351,7 +362,7 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
         },
       });
       if (orgWorkspacesCount !== workspaceIds.length) {
-        throw new Error("Some specified workspaces do not belong to the organization.");
+        throw new TeamAssignmentOutsideOrganizationError("workspaces");
       }
     }
 
@@ -445,6 +456,7 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
 
     return true;
   } catch (error) {
+    if (isTeamNameTaken(error)) throw new TeamNameTakenError();
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }

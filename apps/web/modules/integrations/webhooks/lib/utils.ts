@@ -48,3 +48,10 @@ export const isDiscordWebhook = (urlString: string) => {
   const DISCORD_WEBHOOK_URL_PATTERN = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/;
   return DISCORD_WEBHOOK_URL_PATTERN.test(url.toString());
 };
+
+/** The URL field's border and fill for the last endpoint test: passed, failed, or not yet run. */
+export const getEndpointStatusClassName = (endpointAccessible: boolean | undefined): string => {
+  if (endpointAccessible === true) return "border-green-500 bg-green-50";
+  if (endpointAccessible === false) return "border-red-200 bg-red-50";
+  return "border-slate-200 bg-white";
+};

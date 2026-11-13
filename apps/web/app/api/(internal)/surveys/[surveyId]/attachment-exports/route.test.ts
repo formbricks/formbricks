@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
 
@@ -67,12 +68,12 @@ const row = {
   filterCriteria: null,
 };
 
-const post = (body: unknown = {}) =>
+const post = (body: unknown = {}, headers: Record<string, string> = SAME_ORIGIN_HEADERS) =>
   POST(
     new NextRequest(`http://localhost/api/surveys/${SURVEY_ID}/attachment-exports`, {
       method: "POST",
       body: JSON.stringify(body),
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...headers },
     }),
     { params: Promise.resolve({ surveyId: SURVEY_ID }) } as never
   );
@@ -121,6 +122,14 @@ describe("POST /api/surveys/{surveyId}/attachment-exports", () => {
       responseCount: 4,
     });
     expect(mocks.dispatch).toHaveBeenCalledWith(row);
+  });
+
+  test("refuses a cross-site session write before anything is recorded", async () => {
+    const response = await post({}, { "sec-fetch-site": "cross-site" });
+
+    expect(response.status).toBe(403);
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect(mocks.dispatch).not.toHaveBeenCalled();
   });
 
   test("returns the export already in flight instead of starting another", async () => {

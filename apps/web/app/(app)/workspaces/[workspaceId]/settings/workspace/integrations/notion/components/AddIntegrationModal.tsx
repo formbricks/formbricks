@@ -13,7 +13,6 @@ import {
   getComputedEmbeddedFields,
   getIngestedEmbeddedFields,
 } from "@formbricks/types/embedded-data-resolver";
-import { TIntegrationInput } from "@formbricks/types/integration";
 import {
   TIntegrationNotion,
   TIntegrationNotionConfigData,
@@ -22,7 +21,7 @@ import {
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
+import { saveIntegrationMappings } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import { integrationKeys } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/query";
 import {
   MappingRow,
@@ -30,8 +29,8 @@ import {
   createEmptyMapping,
 } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/notion/components/MappingRow";
 import NotionLogo from "@/images/notion.png";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   RestrictedSurveyHint,
@@ -105,14 +104,7 @@ export const AddIntegrationModal = ({
     [selectedSurvey]
   );
 
-  const notionIntegrationData: TIntegrationInput = {
-    type: "notion",
-    config: {
-      key: notionIntegration?.config?.key,
-      // A copy: the save and delete paths edit this array, and the original is the query cache's.
-      data: [...(notionIntegration.config?.data ?? [])],
-    },
-  };
+  const existingMappings = notionIntegration.config?.data ?? [];
 
   const hasMatchingId = notionIntegration.config.data.some((configData) => {
     if (!selectedDatabase) {
@@ -256,22 +248,15 @@ export const AddIntegrationModal = ({
       });
       integrationData.createdAt = new Date();
 
+      // Edit a copy: the page's own data stays as stored until the save succeeds and the query refetches.
+      const mappings = [...existingMappings];
       if (selectedIntegration) {
-        // update action
-        notionIntegrationData.config.data[selectedIntegration.index] = integrationData;
+        mappings[selectedIntegration.index] = integrationData;
       } else {
-        // create action
-        notionIntegrationData.config.data.push(integrationData);
+        mappings.push(integrationData);
       }
+      await saveIntegrationMappings(workspaceId, "notion", mappings);
 
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: notionIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -281,29 +266,22 @@ export const AddIntegrationModal = ({
       setOpen(false);
       void refetchIntegration();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsLinkingDatabase(false);
     }
   };
 
   const deleteLink = async () => {
-    notionIntegrationData.config.data.splice(selectedIntegration!.index, 1);
+    const mappings = existingMappings.filter((_, index) => index !== selectedIntegration!.index);
     try {
       setIsDeleting(true);
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: notionIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await saveIntegrationMappings(workspaceId, "notion", mappings);
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
       void refetchIntegration();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsDeleting(false);
     }

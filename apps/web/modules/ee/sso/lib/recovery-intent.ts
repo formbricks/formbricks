@@ -53,7 +53,7 @@ const INTENT_TTL_MS = VERIFICATION_LINK_TTL_SECONDS * 1000;
  * Ceiling on one intent's total life, however many times it is refreshed.
  *
  * The refresh exists so a resent link does not outlive the intent it needs (same pairing problem as the
- * sign-up intent cookie). But `resendVerificationEmailAction` is unauthenticated, so a plain sliding
+ * sign-up intent cookie). But `POST /api/internal/verification-emails` is unauthenticated, so a plain sliding
  * window would let anyone holding a state id keep a record alive forever. `createdAt` is written once
  * and never moved, so measuring from it caps the slide.
  *

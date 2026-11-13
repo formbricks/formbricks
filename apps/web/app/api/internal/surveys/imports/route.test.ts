@@ -1,7 +1,11 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { SURVEY_IMPORT_MAX_CREATE_BODY_BYTES } from "@/modules/survey/import/limits";
+import {
+  SURVEY_IMPORT_MAX_CREATE_BODY_BYTES,
+  SURVEY_IMPORT_MAX_DOCUMENT_ENTRIES,
+} from "@/modules/survey/import/limits";
 import { POST } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -37,7 +41,12 @@ const post = (body: unknown, headers: Record<string, string> = {}) =>
     new NextRequest(URL_PATH, {
       method: "POST",
       body: typeof body === "string" ? body : JSON.stringify(body),
-      headers: { "Content-Type": "application/json", "Idempotency-Key": '"key-1"', ...headers },
+      headers: {
+        ...SAME_ORIGIN_HEADERS,
+        "Content-Type": "application/json",
+        "Idempotency-Key": '"key-1"',
+        ...headers,
+      },
     }),
     {} as never
   );
@@ -58,6 +67,23 @@ describe("POST /api/internal/surveys/imports", () => {
       Response.json({ data: { id: "clsurvey0000000000000001" } }, { status: 201 })
     );
   });
+
+  test.each([["survey"], ["references"]])(
+    `takes a %s of ${SURVEY_IMPORT_MAX_DOCUMENT_ENTRIES} entries and answers 400 naming one with more`,
+    async (field) => {
+      const entries = (n: number) => Object.fromEntries(Array.from({ length: n }, (_, i) => [`k${i}`, 1]));
+
+      expect((await post({ ...bodyOf(), [field]: entries(SURVEY_IMPORT_MAX_DOCUMENT_ENTRIES) })).status).toBe(
+        201
+      );
+
+      mocks.createSurveyImport.mockClear();
+      const response = await post({ ...bodyOf(), [field]: entries(SURVEY_IMPORT_MAX_DOCUMENT_ENTRIES + 1) });
+      expect(response.status).toBe(400);
+      expect((await response.json()).invalid_params).toEqual([expect.objectContaining({ name: field })]);
+      expect(mocks.createSurveyImport).not.toHaveBeenCalled();
+    }
+  );
 
   test("hands the parsed body and the request to the operation, charged to the default v3 bucket", async () => {
     const response = await post(bodyOf());

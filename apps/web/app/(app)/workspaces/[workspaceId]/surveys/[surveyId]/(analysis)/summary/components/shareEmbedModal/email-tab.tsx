@@ -5,14 +5,15 @@ import { CopyIcon, SendIcon } from "lucide-react";
 import { type SyntheticEvent, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { AuthenticationError } from "@formbricks/types/errors";
 import { copyToClipboard } from "@/lib/utils/clipboard";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { CodeBlock } from "@/modules/ui/components/code-block";
 import { LoadingSpinner } from "@/modules/ui/components/loading-spinner";
 import { TabBar } from "@/modules/ui/components/tab-bar";
-import { getEmailHtmlAction, sendEmbedSurveyPreviewEmailAction } from "../../actions";
+import { useSurveyEmailEmbed } from "../../hooks/use-survey-email-embed";
+import { sendSurveyPreviewEmail } from "../../lib/api-client";
 
 interface EmailTabProps {
   readonly surveyId: string;
@@ -21,7 +22,10 @@ interface EmailTabProps {
 
 export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   const [activeTab, setActiveTab] = useState("preview");
-  const [emailHtmlPreview, setEmailHtmlPreview] = useState<string>("");
+  // Empty until the survey is rendered, which shows the spinner; a failed render shows an error to retry.
+  const emailEmbed = useSurveyEmailEmbed(surveyId);
+  const emailHtmlPreview = emailEmbed.data?.html ?? "";
+  const isEmailEmbedFailed = emailEmbed.isError && !emailEmbed.isFetching;
   const [previewFrameHeight, setPreviewFrameHeight] = useState(560);
   const { t } = useTranslation();
 
@@ -79,15 +83,6 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
   ];
 
   useEffect(() => {
-    const getData = async () => {
-      const emailHtml = await getEmailHtmlAction({ surveyId });
-      setEmailHtmlPreview(emailHtml?.data || "");
-    };
-
-    getData();
-  }, [surveyId]);
-
-  useEffect(() => {
     setPreviewFrameHeight(560);
   }, [emailPreviewDocument]);
 
@@ -108,20 +103,44 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
 
   const sendPreviewEmail = async () => {
     try {
-      const val = await sendEmbedSurveyPreviewEmailAction({ surveyId });
-      if (val?.data) {
+      const { emailSent } = await sendSurveyPreviewEmail(surveyId);
+      if (emailSent) {
         toast.success(t("workspace.surveys.share.send_email.email_sent"));
       } else {
-        const errorMessage = getFormattedErrorMessage(val);
-        toast.error(errorMessage);
+        toast.error(t("common.something_went_wrong_please_try_again"));
       }
-    } catch (err) {
-      if (err instanceof AuthenticationError) {
+    } catch (error) {
+      if (error instanceof V3ApiError && error.status === 401) {
         toast.error(t("common.not_authenticated"));
         return;
       }
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
+  };
+
+  const renderPreview = () => {
+    if (isEmailEmbedFailed) {
+      return (
+        <Alert variant="error" size="small" className="mt-2">
+          <AlertTitle>
+            {getV3ApiErrorMessage(emailEmbed.error, t("common.something_went_wrong_please_try_again"))}
+          </AlertTitle>
+          <AlertButton onClick={() => void emailEmbed.refetch()}>{t("common.retry")}</AlertButton>
+        </Alert>
+      );
+    }
+    if (!emailPreviewDocument) return <LoadingSpinner />;
+    return (
+      <iframe
+        className="mt-2 w-full rounded-md border-0 bg-white"
+        data-testid="survey-email-preview-frame"
+        onLoad={handlePreviewFrameLoad}
+        sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
+        srcDoc={emailPreviewDocument}
+        style={{ height: `${previewFrameHeight}px` }}
+        title={t("workspace.surveys.share.send_email.email_preview_tab")}
+      />
+    );
   };
 
   const renderTabContent = () => {
@@ -144,21 +163,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
                 {t("workspace.surveys.share.send_email.email_subject_label")} :{" "}
                 {t("workspace.surveys.share.send_email.formbricks_email_survey_preview")}
               </div>
-              <div data-testid="survey-email-preview-content">
-                {emailPreviewDocument ? (
-                  <iframe
-                    className="mt-2 w-full rounded-md border-0 bg-white"
-                    data-testid="survey-email-preview-frame"
-                    onLoad={handlePreviewFrameLoad}
-                    sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
-                    srcDoc={emailPreviewDocument}
-                    style={{ height: `${previewFrameHeight}px` }}
-                    title={t("workspace.surveys.share.send_email.email_preview_tab")}
-                  />
-                ) : (
-                  <LoadingSpinner />
-                )}
-              </div>
+              <div data-testid="survey-email-preview-content">{renderPreview()}</div>
             </div>
           </div>
           <Button

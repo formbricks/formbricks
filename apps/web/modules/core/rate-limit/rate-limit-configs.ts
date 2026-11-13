@@ -35,7 +35,6 @@ export const rateLimitConfigs = {
       namespace: "auth:verify:account",
       failClosed: true,
     }, // 3 per hour
-    emailToken: { interval: 3600, allowedPerInterval: 10, namespace: "auth:email-token", failClosed: true }, // 10 per hour — unauthenticated, tells the caller whether an email is registered
     // The SAML callback parses the posted XML before it can tell an IdP from a stranger (ENG-3973), so this caps
     // how often one IP can make it parse. Generous on purpose: every SAML sign-in at a company behind one NAT
     // address lands here, often in a burst at the start of the day. The markup budget is the real bound.
@@ -58,6 +57,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:v3:surveys:generate",
     }, // 10 per minute (AI survey generation)
+    internalAiTranslate: {
+      interval: 60,
+      allowedPerInterval: 20,
+      namespace: "api:internal:ai-translations",
+    }, // 20 per minute per user — one call per target language, each up to 8192 output tokens
     v3SurveyVisibility: {
       interval: 60,
       allowedPerInterval: 10,
@@ -105,6 +109,12 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:internal:retention-runs:export",
     }, // 10 per hour — each export streams an organisation's whole retention history (data retention)
+    internalHeicConversion: {
+      interval: 60,
+      allowedPerInterval: 20,
+      namespace: "api:internal:heic-conversions",
+    }, // 20 per minute per user, instead of v3 — each conversion decodes a whole photo in process; the
+    // dashboard converts one per HEIC file a user picks, so a person never comes near this
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
     clientEnvironment: {
       interval: 60,

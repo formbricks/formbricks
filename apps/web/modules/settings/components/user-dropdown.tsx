@@ -25,7 +25,6 @@ import {
 
 interface UserDropdownProps {
   user: TUser;
-  organizationId: string;
   isCollapsed?: boolean;
   isTextVisible?: boolean;
   className?: string;
@@ -41,7 +40,6 @@ interface UserDropdownProps {
 // strands billing-role users who get redirected straight into settings.
 export const UserDropdown = ({
   user,
-  organizationId,
   isCollapsed = false,
   isTextVisible = false,
   className,
@@ -49,7 +47,7 @@ export const UserDropdown = ({
 }: Readonly<UserDropdownProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
-  const { signOut: signOutWithAudit } = useSignOut({ id: user.id, email: user.email });
+  const { signOut } = useSignOut();
 
   const dropdownNavigation = [
     {
@@ -138,10 +136,7 @@ export const UserDropdown = ({
             // PUBLIC_URL is set, and Proxy 404s every non-survey route on the public one. An absolute
             // URL built from publicDomain sent people to a 404 instead of the login page.
             const loginUrl = "/auth/login";
-            const route = await signOutWithAudit({
-              reason: "user_initiated",
-              redirectUrl: loginUrl,
-              organizationId,
+            const route = await signOut({
               redirect: false,
               callbackUrl: loginUrl,
               clearWorkspaceId: true,

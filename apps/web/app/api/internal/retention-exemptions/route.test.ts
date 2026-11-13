@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { MAX_CURSOR_LENGTH } from "@/app/api/v3/lib/keyset-cursor";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { GET, POST } from "./route";
 
 // vitestSetup mocks `createHash`, which would give every cursor fingerprint the same value and let a
@@ -102,7 +104,7 @@ const post = (body: unknown) =>
   POST(
     new NextRequest("http://localhost/api/internal/retention-exemptions", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-request-id": "req_1" },
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json", "x-request-id": "req_1" },
       body: JSON.stringify(body),
     }),
     {} as never
@@ -126,6 +128,18 @@ describe("GET /api/internal/retention-exemptions", () => {
       async (_userId: string, _scope: unknown, rows: unknown[]) => rows
     );
     mocks.listPage.mockResolvedValue([row(EXEMPTION_B)]);
+  });
+
+  test(`answers 400 naming a cursor longer than ${MAX_CURSOR_LENGTH} characters, before decoding it`, async () => {
+    const response = await get(`organizationId=${ORG_ID}&cursor=${"a".repeat(MAX_CURSOR_LENGTH + 1)}`);
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).invalid_params).toEqual([
+      expect.objectContaining({
+        name: "cursor",
+        reason: `Too big: expected string to have <=${MAX_CURSOR_LENGTH} characters`,
+      }),
+    ]);
   });
 
   test("returns the active exemptions to anyone who can read the organisation, within their scope", async () => {

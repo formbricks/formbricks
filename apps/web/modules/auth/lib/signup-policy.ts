@@ -10,7 +10,7 @@ import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 /**
  * The instance's closed-sign-up policy, in ONE place (ENG-2293).
  *
- * The policy had been written out twice — in `createUserAction`'s `assertSignupPolicyAllows` and, once
+ * The policy had been written out twice — in the sign-up flow's `assertSignupPolicyAllows` and, once
  * this hole was found, again in the Better Auth hook. That duplication IS the bug class: ENG-2073 fixed
  * the action and left the framework-mounted route open, which is what ENG-2293 then had to close. Both
  * callers now share the predicate below, so a future change to the policy cannot land in one layer
@@ -20,7 +20,7 @@ import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 /**
  * Whether an UNINVITED sign-up is allowed by instance policy. Callers that can carry an invite must
  * check that themselves — a valid invite is an independent grant, and a call to Better Auth's sign-up
- * endpoint from outside `createUserAction` has no invite to present.
+ * endpoint from outside the sign-up route (`POST /api/internal/signups`) has no invite to present.
  *
  * Two legitimate ways to be allowed: public sign-up is genuinely open (Cloud / dev / E2E *and* the
  * license permits multiple organizations), or the instance is still fresh, which is the initial
@@ -86,7 +86,7 @@ export const signupDisabledError = (): APIError =>
  * identically and visibly, whatever the address. Same reasoning and the same slot as
  * `hibpBreachCheckBeforeHandler`, which sits here so a reset token isn't consumed before rejection.
  *
- * Action-routed sign-ups are exempt: `createUserAction` has already applied the full policy (including
+ * Action-routed sign-ups are exempt: the sign-up route (`POST /api/internal/signups`) has already applied the full policy (including
  * the invite exemption this hook cannot see) and marks the request scope before calling
  * `auth.api.signUpEmail`. The absence of that mark is what identifies a sign-up from anywhere else.
  *
@@ -95,7 +95,7 @@ export const signupDisabledError = (): APIError =>
  */
 export const signupPolicyBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
   if (ctx.path !== CREDENTIAL_SIGNUP_PATH) return;
-  // Already gated by createUserAction, which also honours a valid invite — do not re-decide it here.
+  // Already gated by the sign-up route, which also honours a valid invite — do not re-decide it here.
   if (isSignupDomainAllowed()) return;
 
   if (!(await isUninvitedSignupAllowed())) {

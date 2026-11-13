@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangleIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -8,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
 import { cn } from "@/lib/cn";
-import { updateSurveyAction } from "@/modules/survey/editor/actions";
+import { saveSurvey } from "@/modules/survey/editor/lib/api-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -33,7 +34,8 @@ interface CustomHtmlFormData {
 
 export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: Readonly<CustomHtmlTabProps>) => {
   const { t } = useTranslation();
-  const { survey } = useSurvey();
+  const router = useRouter();
+  const { survey, replaceSurvey } = useSurvey();
   const [isSaving, setIsSaving] = useState(false);
 
   const form = useForm<CustomHtmlFormData>({
@@ -64,12 +66,14 @@ export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: Readonly<C
       customHeadScriptsMode: data.customHeadScriptsMode,
     };
 
-    const result = await updateSurveyAction(updatedSurvey);
-
-    if (result?.data) {
+    try {
+      replaceSurvey(await saveSurvey(updatedSurvey));
       toast.success(t("workspace.surveys.share.custom_html.saved_successfully"));
       reset(data);
-    } else {
+      // The save route only marks the page for revalidation; the server action it replaced also
+      // re-rendered it, which is what refreshes the survey this tab and the others save from.
+      router.refresh();
+    } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
     }
 

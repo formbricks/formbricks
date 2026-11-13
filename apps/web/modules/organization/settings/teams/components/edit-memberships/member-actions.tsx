@@ -7,14 +7,14 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TMember } from "@formbricks/types/memberships";
 import { TOrganization } from "@formbricks/types/organizations";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import {
-  createInviteTokenAction,
-  deleteInviteAction,
-  deleteMembershipAction,
-  resendInviteAction,
-} from "@/modules/organization/settings/teams/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { ShareInviteModal } from "@/modules/organization/settings/teams/components/invite-member/share-invite-modal";
+import {
+  createInviteShareLink,
+  deleteInvite,
+  deleteMember,
+  resendInvite,
+} from "@/modules/organization/settings/teams/lib/api-client";
 import { TInvite } from "@/modules/organization/settings/teams/types/invites";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -49,28 +49,13 @@ export const MemberActions = ({
       setIsDeleting(true);
       if (!member && invite) {
         // This is an invite
-
-        const result = await deleteInviteAction({ inviteId: invite?.id });
-        if (result?.serverError) {
-          toast.error(getFormattedErrorMessage(result));
-          setIsDeleting(false);
-          return;
-        }
+        await deleteInvite(invite.id);
         toast.success(t("workspace.settings.general.invite_deleted_successfully"));
       }
 
       if (member && !invite) {
         // This is a member
-
-        const result = await deleteMembershipAction({
-          userId: member.userId,
-          organizationId: organization.id,
-        });
-        if (result?.serverError) {
-          toast.error(getFormattedErrorMessage(result));
-          setIsDeleting(false);
-          return;
-        }
+        await deleteMember({ userId: member.userId, organizationId: organization.id });
         toast.success(t("workspace.settings.general.member_deleted_successfully"));
       }
 
@@ -78,7 +63,7 @@ export const MemberActions = ({
       router.refresh();
     } catch (err) {
       setIsDeleting(false);
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      toast.error(getV3ApiErrorMessage(err, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -97,17 +82,12 @@ export const MemberActions = ({
   const handleShareInvite = async () => {
     try {
       if (!invite) return;
-      const createInviteTokenResponse = await createInviteTokenAction({ inviteId: invite.id });
-      if (createInviteTokenResponse?.data) {
-        setShareInviteToken(createInviteTokenResponse.data.inviteToken);
-        setShowShareInviteModal(true);
-        router.refresh();
-      } else {
-        const errorMessage = getFormattedErrorMessage(createInviteTokenResponse);
-        toast.error(errorMessage);
-      }
+      const { inviteToken } = await createInviteShareLink(invite.id);
+      setShareInviteToken(inviteToken);
+      setShowShareInviteModal(true);
+      router.refresh();
     } catch (err) {
-      toast.error(`${t("common.error")}: ${err instanceof Error ? err.message : "Unknown error occurred"}`);
+      toast.error(getV3ApiErrorMessage(err, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -115,19 +95,11 @@ export const MemberActions = ({
     try {
       if (!invite) return;
 
-      const resendInviteResponse = await resendInviteAction({
-        inviteId: invite.id,
-        organizationId: organization.id,
-      });
-      if (resendInviteResponse?.data) {
-        toast.success(t("workspace.settings.general.invitation_sent_once_more"));
-        router.refresh();
-      } else {
-        const errorMessage = getFormattedErrorMessage(resendInviteResponse);
-        toast.error(errorMessage);
-      }
+      await resendInvite({ inviteId: invite.id, organizationId: organization.id });
+      toast.success(t("workspace.settings.general.invitation_sent_once_more"));
+      router.refresh();
     } catch (err) {
-      toast.error(`${t("common.error")}: ${err instanceof Error ? err.message : "Unknown error occurred"}`);
+      toast.error(getV3ApiErrorMessage(err, t("common.something_went_wrong_please_try_again")));
     }
   };
 

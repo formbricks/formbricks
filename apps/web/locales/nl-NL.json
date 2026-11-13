@@ -43,6 +43,9 @@
       "reset_password_description": "U wordt uitgelogd om uw wachtwoord opnieuw in te stellen."
     },
     "invite": {
+      "accept_invitation": "Uitnodiging accepteren",
+      "already_a_member": "Je bent al lid",
+      "already_a_member_description": "Je maakt al deel uit van deze organisatie, dus de uitnodiging heeft niets veranderd.",
       "create_account": "Maak een account aan",
       "email_does_not_match": "Oeps! Verkeerde e-mail 🤦",
       "email_does_not_match_description": "Het e-mailadres in de uitnodiging komt niet overeen met dat van u.",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "De uitnodigingscode is niet gevonden of is al gebruikt.",
       "login": "Inloggen",
       "welcome_to_organization": "Je doet mee 🎉",
-      "welcome_to_organization_description": "Welkom bij de organisatie."
+      "welcome_to_organization_description": "Welkom bij de organisatie.",
+      "you_are_invited": "Je bent uitgenodigd 💌",
+      "you_are_invited_description": "Accepteer de uitnodiging om je bij de organisatie aan te sluiten."
     },
     "last_used": "Laatst gebruikt",
     "login": {
@@ -3792,7 +3797,6 @@
         "only_org_owner_can_perform_action": "Alleen organisatie-eigenaren hebben toegang tot deze instelling.",
         "organization_created_successfully": "Organisatie succesvol aangemaakt!",
         "organization_deleted_successfully": "Organisatie succesvol verwijderd.",
-        "organization_deletion_disabled": "Het verwijderen van organisaties is uitgeschakeld.",
         "organization_invite_link_ready": "De uitnodigingslink voor uw organisatie is gereed!",
         "organization_name": "Organisatienaam",
         "organization_name_description": "Geef uw organisatie een beschrijvende naam.",

@@ -10,8 +10,8 @@ import type { TBaseFilter, TSegment, TSegmentWithSurveyRefs } from "@formbricks/
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { cn } from "@/lib/cn";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { deleteSegmentAction, updateSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { deleteSegment, updateSegment } from "@/modules/ee/contacts/segments/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmDeleteSegmentModal } from "@/modules/ui/components/confirm-delete-segment-modal";
 import { Input } from "@/modules/ui/components/input";
@@ -75,28 +75,17 @@ export function SegmentSettings({
 
     try {
       setIsUpdatingSegment(true);
-      const data = await updateSegmentAction({
-        segmentId: segment.id,
-        data: {
-          title: segment.title,
-          description: segment.description ?? "",
-          isPrivate: segment.isPrivate,
-          filters: segment.filters,
-        },
+      await updateSegment(segment.id, {
+        title: segment.title,
+        description: segment.description ?? "",
+        isPrivate: segment.isPrivate,
+        filters: segment.filters,
       });
-
-      if (!data?.data) {
-        const errorMessage = getFormattedErrorMessage(data);
-
-        toast.error(errorMessage);
-        setIsUpdatingSegment(false);
-        return;
-      }
 
       setIsUpdatingSegment(false);
       toast.success("Segment updated successfully!");
-    } catch (err: any) {
-      toast.error(t("common.something_went_wrong_please_try_again"));
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       setIsUpdatingSegment(false);
       return;
     }
@@ -109,19 +98,13 @@ export function SegmentSettings({
   const handleDeleteSegment = async () => {
     try {
       setIsDeletingSegment(true);
-      const result = await deleteSegmentAction({ segmentId: segment.id });
-
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        setIsDeletingSegment(false);
-        return;
-      }
+      await deleteSegment(segment.id);
 
       setIsDeletingSegment(false);
       toast.success(t("workspace.segments.segment_deleted_successfully"));
       handleResetState();
-    } catch (err: any) {
-      toast.error(t("common.something_went_wrong_please_try_again"));
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
 
     setIsDeletingSegment(false);

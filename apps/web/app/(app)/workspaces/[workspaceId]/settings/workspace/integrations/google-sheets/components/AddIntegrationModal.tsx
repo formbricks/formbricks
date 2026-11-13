@@ -9,17 +9,18 @@ import { useTranslation } from "react-i18next";
 import {
   TIntegrationGoogleSheets,
   TIntegrationGoogleSheetsConfigData,
-  TIntegrationGoogleSheetsInput,
 } from "@formbricks/types/integration/google-sheet";
 import { TSurvey, TSurveyQuestionId } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
-import { createOrUpdateIntegrationAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/actions";
-import { getSpreadsheetNameByIdAction } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/actions";
 import {
   constructGoogleSheetsUrl,
   extractSpreadsheetIdFromUrl,
   isValidGoogleSheetsUrl,
 } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/google-sheets/lib/util";
+import {
+  getSpreadsheet,
+  saveIntegrationMappings,
+} from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/api-client";
 import { integrationKeys } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/query";
 import GoogleSheetLogo from "@/images/googleSheetsLogo.png";
 import {
@@ -27,8 +28,8 @@ import {
   GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES,
   GOOGLE_SHEET_INTEGRATION_INVALID_GRANT,
 } from "@/lib/googleSheet/constants";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { recallToHeadline } from "@/lib/utils/recall";
+import { V3ApiError, getV3ApiErrorMessage, getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import {
   RestrictedSurveyHint,
@@ -91,21 +92,12 @@ export const AddIntegrationModal = ({
   const [selectedSurvey, setSelectedSurvey] = useState<TSurvey | null>(null);
   const [spreadsheetUrl, setSpreadsheetUrl] = useState("");
   const [isDeleting, setIsDeleting] = useState<boolean>(false);
-  const existingIntegrationData = googleSheetIntegration?.config?.data;
+  const existingMappings = googleSheetIntegration?.config?.data ?? [];
   const [includeVariables, setIncludeVariables] = useState(false);
   const [includeHiddenFields, setIncludeHiddenFields] = useState(false);
   const [includeMetadata, setIncludeMetadata] = useState(false);
   const [includeCreatedAt, setIncludeCreatedAt] = useState(true);
   const [includeContactAttributes, setIncludeContactAttributes] = useState(false);
-  const googleSheetIntegrationData: TIntegrationGoogleSheetsInput = {
-    type: "googleSheets",
-    config: {
-      key: googleSheetIntegration?.config?.key,
-      email: googleSheetIntegration.config.email,
-      // A copy: the save and delete paths edit this array, and the original is the query cache's.
-      data: [...(existingIntegrationData ?? [])],
-    },
-  };
 
   const surveyElements = useMemo(
     () => (selectedSurvey ? getElementsFromBlocks(selectedSurvey.blocks) : []),
@@ -140,16 +132,22 @@ export const AddIntegrationModal = ({
     resetForm();
   }, [selectedIntegration, surveys]);
 
-  const showErrorMessageToast = (response: Awaited<ReturnType<typeof getSpreadsheetNameByIdAction>>) => {
-    const errorMessage = getFormattedErrorMessage(response);
-    if (errorMessage === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT) {
+  const showErrorMessageToast = (error: unknown) => {
+    // Google knows no spreadsheet by the id the pasted URL carries: a typo, or one since deleted.
+    if (error instanceof V3ApiError && error.status === 404) {
+      toast.error(t("workspace.integrations.google_sheets.enter_a_valid_spreadsheet_url_error"));
+      return;
+    }
+    const errorMessage = getV3ApiErrorReason(error, "");
+    // Disconnected in another tab, or the grant expired: either way the way out is to reconnect.
+    if (errorMessage === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT || errorMessage === "not_connected") {
       toast.error(t("workspace.integrations.google_sheets.token_expired_error"));
     } else if (errorMessage === GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_PERMISSION) {
       toast.error(t("workspace.integrations.google_sheets.spreadsheet_permission_error"));
     } else if (errorMessage === GOOGLE_SHEET_INTEGRATION_INSUFFICIENT_SCOPES) {
       toast.error(t("workspace.integrations.google_sheets.spreadsheet_scope_error"));
     } else {
-      toast.error(errorMessage);
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 
@@ -166,17 +164,14 @@ export const AddIntegrationModal = ({
       }
       setIsLinkingSheet(true);
       const spreadsheetId = extractSpreadsheetIdFromUrl(spreadsheetUrl);
-      const spreadsheetNameResponse = await getSpreadsheetNameByIdAction({
-        workspaceId,
-        spreadsheetId,
-      });
-
-      if (!spreadsheetNameResponse?.data) {
-        showErrorMessageToast(spreadsheetNameResponse);
+      let spreadsheetName: string;
+      try {
+        spreadsheetName = (await getSpreadsheet(workspaceId, spreadsheetId)).name;
+      } catch (error) {
+        showErrorMessageToast(error);
         return;
       }
 
-      const spreadsheetName = spreadsheetNameResponse.data;
       integrationData.spreadsheetId = spreadsheetId;
       integrationData.spreadsheetName = spreadsheetName;
       integrationData.surveyId = selectedSurvey.id;
@@ -192,21 +187,14 @@ export const AddIntegrationModal = ({
       integrationData.includeMetadata = includeMetadata;
       integrationData.includeCreatedAt = includeCreatedAt;
       integrationData.includeContactAttributes = includeContactAttributes;
+      // Edit a copy: the cached integration stays as stored until the save succeeds and the query refetches.
+      const mappings = [...existingMappings];
       if (selectedIntegration) {
-        // update action
-        googleSheetIntegrationData.config.data[selectedIntegration.index] = integrationData;
+        mappings[selectedIntegration.index] = integrationData;
       } else {
-        // create action
-        googleSheetIntegrationData.config.data.push(integrationData);
+        mappings.push(integrationData);
       }
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: googleSheetIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await saveIntegrationMappings(workspaceId, "googleSheets", mappings);
       if (selectedIntegration) {
         toast.success(t("workspace.integrations.integration_updated_successfully"));
       } else {
@@ -216,7 +204,7 @@ export const AddIntegrationModal = ({
       setOpen(false);
       void refetchIntegration();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsLinkingSheet(false);
     }
@@ -244,22 +232,15 @@ export const AddIntegrationModal = ({
   };
 
   const deleteLink = async () => {
-    googleSheetIntegrationData.config.data.splice(selectedIntegration!.index, 1);
+    const mappings = existingMappings.filter((_, index) => index !== selectedIntegration!.index);
     try {
       setIsDeleting(true);
-      const result = await createOrUpdateIntegrationAction({
-        workspaceId,
-        integrationData: googleSheetIntegrationData,
-      });
-      if (result?.serverError) {
-        toast.error(getFormattedErrorMessage(result));
-        return;
-      }
+      await saveIntegrationMappings(workspaceId, "googleSheets", mappings);
       toast.success(t("workspace.integrations.integration_removed_successfully"));
       setOpen(false);
       void refetchIntegration();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unknown error occurred");
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsDeleting(false);
     }

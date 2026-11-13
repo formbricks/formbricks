@@ -2,8 +2,7 @@ get:
   operationId: getCreativesV3
   summary: List creatives
   description: >
-    Returns a workspace's creatives, most recently updated first. Session cookie, `x-api-key`, or a
-    Bearer token, with read access to the workspace.
+    Returns a workspace's creatives, most recently updated first. `x-api-key` or a Bearer token, with read access to the workspace.
 
 
     **Archived creatives are left out** unless `filter[displayStatus][in]` asks for `archived`.

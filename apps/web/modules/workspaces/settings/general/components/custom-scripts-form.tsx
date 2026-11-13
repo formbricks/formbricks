@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -19,7 +19,7 @@ import {
   FormLabel,
   FormProvider,
 } from "@/modules/ui/components/form";
-import { updateWorkspaceAction } from "../../actions";
+import { patchWorkspaceSettings } from "../../lib/api-client";
 
 interface CustomScriptsFormProps {
   workspace: TWorkspace;
@@ -46,21 +46,13 @@ export const CustomScriptsForm: React.FC<CustomScriptsFormProps> = ({ workspace,
 
   const updateCustomScripts: SubmitHandler<TCustomScriptsFormValues> = async (data) => {
     try {
-      const updatedWorkspaceResponse = await updateWorkspaceAction({
-        workspaceId: workspace.id,
-        data: {
-          customHeadScripts: data.customHeadScripts || null,
-        },
+      const updated = await patchWorkspaceSettings(workspace.id, {
+        customHeadScripts: data.customHeadScripts || null,
       });
-      if (updatedWorkspaceResponse?.data) {
-        toast.success(t("workspace.general.custom_scripts_updated_successfully"));
-        form.reset({ customHeadScripts: updatedWorkspaceResponse.data.customHeadScripts ?? "" });
-      } else {
-        const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
-        toast.error(errorMessage);
-      }
-    } catch {
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      toast.success(t("workspace.general.custom_scripts_updated_successfully"));
+      form.reset({ customHeadScripts: updated.customHeadScripts ?? "" });
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 

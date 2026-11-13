@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import { cn } from "@/lib/cn";
 import { InputCombobox, TComboboxOption } from "@/modules/ui/components/input-combo-box";
-import { getDistinctAttributeValuesAction } from "../actions";
+import { useContactAttributeKeyValues } from "../hooks/use-segment-editor-options";
 
 interface AttributeValueInputProps {
   readonly attributeKeyId: string;
@@ -22,50 +22,11 @@ export const AttributeValueInput = ({
   className,
   valueError,
 }: AttributeValueInputProps) => {
-  const [options, setOptions] = useState<TComboboxOption[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  // Fetch on mount or when key params change
-  useEffect(() => {
-    // Don't fetch if we don't have a valid attributeKeyId
-    if (!attributeKeyId || attributeKeyId === "") {
-      return;
-    }
-
-    let isCancelled = false;
-
-    const fetchDistinctValues = async () => {
-      setLoading(true);
-      try {
-        const result = await getDistinctAttributeValuesAction({
-          attributeKeyId,
-        });
-
-        if (!isCancelled && result?.data) {
-          const comboboxOptions: TComboboxOption[] = result.data.map((val) => ({
-            label: val,
-            value: val,
-          }));
-
-          setOptions(comboboxOptions);
-        }
-      } catch (error) {
-        if (!isCancelled) {
-          console.error("Failed to fetch attribute values:", error);
-        }
-      } finally {
-        if (!isCancelled) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchDistinctValues();
-
-    return () => {
-      isCancelled = true;
-    };
-  }, [attributeKeyId]);
+  const { data: values, isLoading: loading } = useContactAttributeKeyValues(attributeKeyId);
+  const options: TComboboxOption[] = useMemo(
+    () => (values ?? []).map((val) => ({ label: val, value: val })),
+    [values]
+  );
 
   const emptyDropdownText = useMemo(() => {
     if (loading) return "Loading values...";

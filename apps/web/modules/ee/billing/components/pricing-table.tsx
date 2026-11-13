@@ -30,18 +30,21 @@ import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
-  changeBillingPlanAction,
-  createPlanCheckoutAction,
-  createTrialPaymentCheckoutAction,
-  finalizeSetupCheckoutUpgradeAction,
-  getUpgradeChargePreviewAction,
-  manageSubscriptionAction,
-  reportUpgradePaymentIssueAction,
-  retryStripeSetupAction,
-  undoPendingPlanChangeAction,
-  waitForBillingPaymentMethodAction,
-  waitForBillingPlanAction,
-} from "../actions";
+  changeBillingPlan,
+  createBillingPortalSession,
+  createPlanCheckoutSession,
+  createSetupCheckoutSession,
+  finalizeSetupCheckoutUpgrade,
+  getBillingErrorReason,
+  getUpgradeChargePreview,
+  isBillingTransportFailure,
+  newBillingIntentKey,
+  reportUpgradePaymentIssue,
+  retryStripeSetup as requestStripeSetupRetry,
+  undoPendingPlanChange,
+  waitForBillingPaymentMethod,
+  waitForBillingPlan,
+} from "../lib/api-client";
 import { isResponseOverageBilledAboveLimit } from "../lib/response-pricing-tiers";
 import { runSetupCheckoutUpgrade } from "../lib/setup-checkout-upgrade";
 import type {
@@ -164,19 +167,13 @@ const getPlanPeriodLabel = (
   return t("workspace.settings.billing.per_year");
 };
 
-const getPlanChangePayload = (
-  organizationId: string,
-  plan: TStandardPlan,
-  interval: TCloudBillingInterval
-) =>
+const getPlanChangePayload = (plan: TStandardPlan, interval: TCloudBillingInterval) =>
   plan === "hobby"
     ? {
-        organizationId,
         targetPlan: "hobby" as const,
         targetInterval: "monthly" as const,
       }
     : {
-        organizationId,
         targetPlan: plan,
         targetInterval: interval,
       };
@@ -489,15 +486,41 @@ export const PricingTable = ({
 
     // Abandoned/declined: persist the banner directly (webhook cancel fires late).
     if (outcome.paymentIntentId) {
-      await reportUpgradePaymentIssueAction({
+      // Best-effort, as before: a refusal leaves the banner to the webhook; only a lost request throws.
+      await reportUpgradePaymentIssue({
         organizationId,
         paymentIntentId: outcome.paymentIntentId,
+      }).catch((error: unknown) => {
+        if (isBillingTransportFailure(error)) throw error;
       });
     }
     return {
       applied: false,
       message: t("workspace.settings.billing.payment_authentication_failed"),
     };
+  };
+
+  // A plan wait whose refusal reads as "not applied yet", as the server action's did; only a request that
+  // got no answer throws.
+  const waitForBillingPlanSettled = (targetPlan: TStandardPlan) =>
+    waitForBillingPlan({ organizationId, targetPlan }).catch((error: unknown) => {
+      if (isBillingTransportFailure(error)) throw error;
+      return null;
+    });
+
+  // A plan change, or null once a refusal has been shown; only a request that got no answer throws.
+  const requestPlanChange = async (
+    plan: TStandardPlan,
+    interval: TCloudBillingInterval,
+    intentKey: string
+  ) => {
+    try {
+      return await changeBillingPlan({ ...getPlanChangePayload(plan, interval), organizationId, intentKey });
+    } catch (error) {
+      if (isBillingTransportFailure(error)) throw error;
+      toast.error(getActionErrorMessage(getBillingErrorReason(error), t));
+      return null;
+    }
   };
 
   // Show the success toast that the finalize path stashed before its full reload (see finish()).
@@ -542,7 +565,7 @@ export const PricingTable = ({
       const cardSyncToastId = toast.loading(t("common.saving"));
       void (async () => {
         try {
-          await waitForBillingPaymentMethodAction({ organizationId });
+          await waitForBillingPaymentMethod(organizationId);
         } catch (error) {
           // Best-effort: the reload below renders whatever has synced. Reported rather than left to
           // raise the global "check that it was saved and try again" notice right after checkout.
@@ -603,13 +626,13 @@ export const PricingTable = ({
       router.refresh();
     };
 
-    // Poll a Stripe force-sync until the plan reflects in our DB (waitForBillingPlanAction syncs +
-    // invalidates the cache each call). Doesn't depend on the async webhook.
+    // Poll a Stripe force-sync until the plan reflects in our DB (plan-waits syncs + invalidates the
+    // cache each call). Doesn't depend on the async webhook.
     const pollUntilPlanApplied = async (targetPlan: Exclude<TStandardPlan, "hobby">): Promise<boolean> => {
       const deadline = Date.now() + UPGRADE_SYNC_POLL_TIMEOUT_MS;
       for (;;) {
-        const waitResult = await waitForBillingPlanAction({ organizationId, targetPlan });
-        if (waitResult?.data?.plan === targetPlan) return true;
+        const waitResult = await waitForBillingPlanSettled(targetPlan);
+        if (waitResult?.plan === targetPlan) return true;
         if (Date.now() >= deadline) return false;
         await sleep(UPGRADE_SYNC_POLL_INTERVAL_MS);
       }
@@ -618,11 +641,13 @@ export const PricingTable = ({
     void runSetupCheckoutUpgrade({
       pendingPlan,
       finalize: async () => {
-        const response = await finalizeSetupCheckoutUpgradeAction({ organizationId, checkoutSessionId });
-        return {
-          data: response?.data,
-          serverError: response?.serverError ? getActionErrorMessage(response.serverError, t) : undefined,
-        };
+        try {
+          return { data: await finalizeSetupCheckoutUpgrade({ organizationId, checkoutSessionId }) };
+        } catch (error) {
+          // Only a request that got no answer is "unknown"; a refusal is a failed finalize, as before.
+          if (isBillingTransportFailure(error)) throw error;
+          return { serverError: getActionErrorMessage(getBillingErrorReason(error), t) };
+        }
       },
       confirm: settleUpgradeConfirmation,
       waitForPlan: pollUntilPlanApplied,
@@ -774,64 +799,45 @@ export const PricingTable = ({
   };
 
   const openBillingPortal = async () => {
-    const response = await manageSubscriptionAction({ organizationId });
-    if (response?.serverError) {
-      toast.error(getActionErrorMessage(response.serverError, t));
-      return;
+    try {
+      const { url } = await createBillingPortalSession(organizationId);
+      router.push(url);
+    } catch (error) {
+      toast.error(getActionErrorMessage(getBillingErrorReason(error), t));
     }
-    if (response?.data && typeof response.data === "string") {
-      router.push(response.data);
-      return;
-    }
-
-    toast.error(t("common.something_went_wrong_please_try_again"));
   };
 
   const openUpgradeCheckout = async (
     plan: Exclude<TStandardPlan, "hobby">,
-    interval: TCloudBillingInterval
+    interval: TCloudBillingInterval,
+    intentKey: string
   ) => {
     try {
       persistOrganizationId();
       persistUpgradeIntent(plan, interval);
-      const response = await createTrialPaymentCheckoutAction({
+      const { url } = await createSetupCheckoutSession({
         organizationId,
         targetPlan: plan,
         targetInterval: interval,
+        intentKey,
       });
-      if (response?.serverError) {
-        clearUpgradeIntent();
-        toast.error(getActionErrorMessage(response.serverError, t));
-        return;
-      }
-      if (response?.data && typeof response.data === "string") {
-        navigateToExternalUrl(response.data);
-        return;
-      }
-      clearUpgradeIntent();
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      navigateToExternalUrl(url);
     } catch (error) {
       clearUpgradeIntent();
-      console.error("Failed to create upgrade checkout session:", error);
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      if (isBillingTransportFailure(error)) {
+        console.error("Failed to create upgrade checkout session:", error);
+      }
+      toast.error(getActionErrorMessage(getBillingErrorReason(error), t));
     }
   };
 
   const retryStripeSetup = async () => {
     setIsRetryingStripeSetup(true);
     try {
-      const response = await retryStripeSetupAction({ organizationId: organization.id });
-      if (response?.serverError) {
-        toast.error(getActionErrorMessage(response.serverError, t));
-        return;
-      }
-      if (response?.data) {
-        router.refresh();
-        return;
-      }
-      toast.error(t("common.something_went_wrong_please_try_again"));
-    } catch {
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      await requestStripeSetupRetry(organization.id);
+      router.refresh();
+    } catch (error) {
+      toast.error(getActionErrorMessage(getBillingErrorReason(error), t));
     } finally {
       setIsRetryingStripeSetup(false);
     }
@@ -841,8 +847,10 @@ export const PricingTable = ({
     plan: Exclude<TStandardPlan, "hobby">,
     interval: TCloudBillingInterval
   ): Promise<void> => {
+    // One click, one intent: a retry of this request reuses its key, so Stripe hands back the same session.
+    const intentKey = newBillingIntentKey();
     if (existingSubscriptionId) {
-      await openUpgradeCheckout(plan, interval);
+      await openUpgradeCheckout(plan, interval, intentKey);
       return;
     }
 
@@ -852,22 +860,39 @@ export const PricingTable = ({
     }
 
     persistOrganizationId();
-    const response = await createPlanCheckoutAction({
-      organizationId,
-      targetPlan: plan,
-      targetInterval: interval,
-    });
-    if (response?.serverError) {
-      toast.error(getActionErrorMessage(response.serverError, t));
-      return;
+    try {
+      const { url } = await createPlanCheckoutSession({
+        organizationId,
+        targetPlan: plan,
+        targetInterval: interval,
+        intentKey,
+      });
+      navigateToExternalUrl(url);
+    } catch (error) {
+      toast.error(getActionErrorMessage(getBillingErrorReason(error), t));
     }
+  };
 
-    if (response?.data && typeof response.data === "string") {
-      navigateToExternalUrl(response.data);
-      return;
+  // Force-sync until the converted plan lands, then hand the success toast across a full reload —
+  // router.refresh() alone doesn't reliably refetch the billing snapshot, so "current plan" would keep
+  // showing the trial until a manual refresh. False when there is no window to reload.
+  const reloadOnceApplied = async (
+    plan: TStandardPlan,
+    churnSignal: ReturnType<typeof getHobbyDowngradeChurnSignal>
+  ): Promise<boolean> => {
+    await waitForBillingPlanSettled(plan);
+    if (globalThis.window === undefined) return false;
+    globalThis.window.sessionStorage.setItem(BILLING_UPGRADE_RESULT_KEY, JSON.stringify({ plan }));
+    if (churnSignal === "defer-until-reload") {
+      // formbricks.track() only queues the action; a call here would be lost or interrupted
+      // by the reload below. Persist a one-shot marker instead and let FormbricksProvider
+      // fire the code action once the SDK is set up again after reload. Scoped to the
+      // originating user so a logout/login in the same tab before it's consumed can't
+      // attribute the cancellation to whoever is signed in when it fires.
+      markChurnSurveyPending(globalThis.window.sessionStorage, userId);
     }
-
-    toast.error(t("common.something_went_wrong_please_try_again"));
+    globalThis.window.location.reload();
+    return true;
   };
 
   const handlePlanAction = async (plan: TStandardPlan, interval: TCloudBillingInterval) => {
@@ -879,6 +904,8 @@ export const PricingTable = ({
 
     const actionKey = `${plan}-${interval}`;
     setIsPlanActionPending(actionKey);
+    // One click, one intent: every Stripe write this change makes carries it.
+    const intentKey = newBillingIntentKey();
 
     try {
       if (!hasPaymentMethod && plan !== "hobby") {
@@ -896,65 +923,39 @@ export const PricingTable = ({
           pendingChange
         )
       ) {
-        const response = await changeBillingPlanAction(
-          getPlanChangePayload(organizationId, "hobby", "monthly")
-        );
-        if (response?.serverError) {
-          toast.error(getActionErrorMessage(response.serverError, t));
-          return;
-        }
+        const result = await requestPlanChange("hobby", "monthly", intentKey);
+        if (!result) return;
         void trackSubscriptionCancelled((event) => formbricks.track(event));
-        toast.success(getPlanChangeSuccessMessage(response?.data?.mode, t));
+        toast.success(getPlanChangeSuccessMessage(result.mode, t));
         router.refresh();
         return;
       }
 
-      const response = await changeBillingPlanAction(getPlanChangePayload(organizationId, plan, interval));
-      if (response?.serverError) {
-        toast.error(getActionErrorMessage(response.serverError, t));
+      const result = await requestPlanChange(plan, interval, intentKey);
+      if (!result) return;
+
+      const settled = await settleUpgradeConfirmation(result);
+      if (!settled.applied) {
+        if (settled.message) {
+          toast.error(settled.message);
+        }
+        router.refresh();
         return;
       }
 
-      if (response?.data) {
-        const settled = await settleUpgradeConfirmation(response.data);
-        if (!settled.applied) {
-          if (settled.message) {
-            toast.error(settled.message);
-          }
-          router.refresh();
-          return;
-        }
-
-        const churnSignal = getHobbyDowngradeChurnSignal(plan, response.data.mode);
-        if (churnSignal === "track-now") {
-          // Fire an in-app code action so a churn survey can be triggered from the dashboard
-          // right after the org drops to the free plan. No reload follows this path, so the SDK
-          // has time to deliver it.
-          void trackSubscriptionCancelled((event) => formbricks.track(event));
-        }
-
-        if (response.data.mode === "immediate") {
-          // Force-sync until the converted plan lands, then hand the success toast across a full
-          // reload — router.refresh() alone doesn't reliably refetch the billing snapshot, so "current
-          // plan" would keep showing the trial until a manual refresh.
-          await waitForBillingPlanAction({ organizationId, targetPlan: plan });
-          if (globalThis.window !== undefined) {
-            globalThis.window.sessionStorage.setItem(BILLING_UPGRADE_RESULT_KEY, JSON.stringify({ plan }));
-            if (churnSignal === "defer-until-reload") {
-              // formbricks.track() only queues the action; a call here would be lost or interrupted
-              // by the reload below. Persist a one-shot marker instead and let FormbricksProvider
-              // fire the code action once the SDK is set up again after reload. Scoped to the
-              // originating user so a logout/login in the same tab before it's consumed can't
-              // attribute the cancellation to whoever is signed in when it fires.
-              markChurnSurveyPending(globalThis.window.sessionStorage, userId);
-            }
-            globalThis.window.location.reload();
-            return;
-          }
-        }
+      const churnSignal = getHobbyDowngradeChurnSignal(plan, result.mode);
+      if (churnSignal === "track-now") {
+        // Fire an in-app code action so a churn survey can be triggered from the dashboard
+        // right after the org drops to the free plan. No reload follows this path, so the SDK
+        // has time to deliver it.
+        void trackSubscriptionCancelled((event) => formbricks.track(event));
       }
 
-      toast.success(getPlanChangeSuccessMessage(response?.data?.mode, t));
+      if (result.mode === "immediate" && (await reloadOnceApplied(plan, churnSignal))) {
+        return;
+      }
+
+      toast.success(getPlanChangeSuccessMessage(result.mode, t));
       router.refresh();
     } catch (error) {
       console.error("Failed to change billing plan:", error);
@@ -1009,14 +1010,14 @@ export const PricingTable = ({
     setUpgradePreview(null);
     setIsLoadingUpgradePreview(true);
     const requestId = ++previewRequestRef.current;
-    getUpgradeChargePreviewAction({
+    getUpgradeChargePreview({
       organizationId,
       targetPlan: plan,
       targetInterval: interval,
     })
-      .then((response) => {
+      .then((preview) => {
         if (previewRequestRef.current !== requestId) return;
-        setUpgradePreview(response?.data ?? null);
+        setUpgradePreview(preview);
       })
       .catch(() => {
         if (previewRequestRef.current !== requestId) return;
@@ -1086,21 +1087,14 @@ export const PricingTable = ({
   const undoPendingChange = async () => {
     setIsPlanActionPending("undo");
     try {
-      const response = await undoPendingPlanChangeAction({ organizationId });
-      if (response?.serverError) {
-        toast.error(getActionErrorMessage(response.serverError, t));
-        return;
-      }
-      if (response?.data) {
-        toast.success(t("workspace.settings.billing.pending_change_removed"));
-        router.refresh();
-        return;
-      }
-
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      await undoPendingPlanChange(organizationId);
+      toast.success(t("workspace.settings.billing.pending_change_removed"));
+      router.refresh();
     } catch (error) {
-      console.error("Failed to undo pending plan change:", error);
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      if (isBillingTransportFailure(error)) {
+        console.error("Failed to undo pending plan change:", error);
+      }
+      toast.error(getActionErrorMessage(getBillingErrorReason(error), t));
     } finally {
       setIsPlanActionPending(null);
     }

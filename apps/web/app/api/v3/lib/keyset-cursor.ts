@@ -48,7 +48,7 @@ import { InvalidInputError } from "@formbricks/types/errors";
 const CURSOR_VERSION = 1 as const;
 
 /** Bounds the token before it reaches `JSON.parse`. A real cursor is ~150 bytes. */
-const MAX_CURSOR_LENGTH = 512;
+export const MAX_CURSOR_LENGTH = 512;
 
 /** Enough to make a collision between two filter sets a non-event; this is a mismatch check, not a MAC. */
 const FINGERPRINT_LENGTH = 16;

@@ -43,6 +43,9 @@
       "reset_password_description": "Vous serez déconnecté pour réinitialiser votre mot de passe."
     },
     "invite": {
+      "accept_invitation": "Accepter l'invitation",
+      "already_a_member": "Tu es déjà membre",
+      "already_a_member_description": "Tu fais déjà partie de cette organisation, l'invitation n'a donc rien changé.",
       "create_account": "Créer un compte",
       "email_does_not_match": "Oups ! Mauvais email 🤦",
       "email_does_not_match_description": "L'email dans l'invitation ne correspond pas au vôtre.",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "Le code d'invitation ne peut pas être trouvé ou a déjà été utilisé.",
       "login": "Se connecter",
       "welcome_to_organization": "Vous êtes dedans 🎉",
-      "welcome_to_organization_description": "Bienvenue dans l'organisation."
+      "welcome_to_organization_description": "Bienvenue dans l'organisation.",
+      "you_are_invited": "Tu es invité(e) 💌",
+      "you_are_invited_description": "Accepte l'invitation pour rejoindre l'organisation."
     },
     "last_used": "Dernière utilisation",
     "login": {
@@ -3792,7 +3797,6 @@
         "only_org_owner_can_perform_action": "Seules les personnes ayant un rôle d'administrateur dans l'organisation peuvent accéder à ce paramètre.",
         "organization_created_successfully": "Organisation créée avec succès !",
         "organization_deleted_successfully": "Organisation supprimée avec succès.",
-        "organization_deletion_disabled": "La suppression des organisations est désactivée.",
         "organization_invite_link_ready": "Le lien d'invitation de votre organisation est prêt !",
         "organization_name": "Nom de l'organisation",
         "organization_name_description": "Attribuez un nom descriptif à votre organisation.",

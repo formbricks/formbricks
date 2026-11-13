@@ -5,9 +5,14 @@ export const ZRetentionPoliciesQuery = z.object({ organizationId: z.cuid2() }).s
 
 export type TRetentionPoliciesQuery = z.infer<typeof ZRetentionPoliciesQuery>;
 
-// Shapes only: whether a value is in range is a business rule (422), checked on the merged policy by
-// `getRetentionPolicyIssues`.
-const ZDays = z.number().int();
+/**
+ * Days a policy field may carry at all: 100 years, far past the business range. Shapes only below it:
+ * whether a value is in range is a business rule (422), checked on the merged policy by
+ * `getRetentionPolicyIssues`; this only keeps an absurd number from reaching it.
+ */
+export const RETENTION_DAYS_INPUT_MAX = 36_500;
+
+const ZDays = z.number().int().min(0).max(RETENTION_DAYS_INPUT_MAX);
 
 const ZPolicyFieldsPatch = z
   .object({

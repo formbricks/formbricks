@@ -7,13 +7,14 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TUserLocale } from "@formbricks/types/user";
-import { updateSingleUseLinksAction } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/actions";
 import { DisableLinkModal } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/disable-link-modal";
 import { DocumentationLinks } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/documentation-links";
+import { saveSingleUseSettings } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/api-client";
+import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
 import { ShareSurveyLink } from "@/modules/analysis/components/ShareSurveyLink";
 import { useSurveyLinkedCreatives } from "@/modules/ee/creatives/hooks/use-survey-linked-creatives";
 import { isDestinationSettingLocked, joinCreativeNames } from "@/modules/ee/creatives/lib/survey-side";
-import { generateSingleUseIdsAction } from "@/modules/survey/list/actions";
+import { generateSingleUseLinks } from "@/modules/survey/list/lib/api-client";
 import { AdvancedOptionToggle } from "@/modules/ui/components/advanced-option-toggle";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -38,6 +39,7 @@ export const AnonymousLinksTab = ({
 }: AnonymousLinksTabProps) => {
   const router = useRouter();
   const { t } = useTranslation();
+  const { replaceSurvey } = useSurvey();
 
   const [isMultiUseLink, setIsMultiUseLink] = useState(!survey.singleUse?.enabled);
   const [isSingleUseLink, setIsSingleUseLink] = useState(survey.singleUse?.enabled ?? false);
@@ -69,20 +71,15 @@ export const AnonymousLinksTab = ({
     isSingleUseEncryption: boolean
   ): Promise<void> => {
     try {
-      const updatedSurveyResponse = await updateSingleUseLinksAction({
+      const { enabled, isEncrypted, updatedAt } = await saveSingleUseSettings({
         surveyId: survey.id,
-        workspaceId: survey.workspaceId,
-        isSingleUse,
-        isSingleUseEncryption,
+        enabled: isSingleUse,
+        isEncrypted: isSingleUseEncryption,
       });
-
-      if (updatedSurveyResponse?.data) {
-        router.refresh();
-        return;
-      }
-
-      toast.error(t("common.something_went_wrong_please_try_again"));
-      resetState();
+      // A survey save from another tab sends the whole survey, these settings included, so it must carry them,
+      // exactly as the route stored them.
+      replaceSurvey({ ...survey, singleUse: { enabled, isEncrypted }, updatedAt });
+      router.refresh();
     } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
       resetState();
@@ -175,14 +172,13 @@ export const AnonymousLinksTab = ({
 
   const handleGenerateLinks = async (count: number) => {
     try {
-      const response = await generateSingleUseIdsAction({
+      const singleUseLinkParams = await generateSingleUseLinks({
         surveyId: survey.id,
         isEncrypted: singleUseEncryption,
         count,
       });
 
-      if (!!response?.data?.length) {
-        const singleUseLinkParams = response.data;
+      if (singleUseLinkParams.length) {
         const surveyLinks = singleUseLinkParams.map(({ suId, suToken }) => {
           const url = new URL(surveyUrl);
           url.searchParams.set("suId", suId);
@@ -224,14 +220,13 @@ export const AnonymousLinksTab = ({
     }
 
     try {
-      const response = await generateSingleUseIdsAction({
+      const [singleUseLinkParams] = await generateSingleUseLinks({
         surveyId: survey.id,
         isEncrypted: false,
         count: 1,
         singleUseId: trimmedCustomSingleUseId,
       });
 
-      const singleUseLinkParams = response?.data?.[0];
       if (!singleUseLinkParams) {
         toast.error(t("workspace.surveys.share.anonymous_links.generate_links_error"));
         return;

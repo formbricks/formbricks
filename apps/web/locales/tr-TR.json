@@ -43,6 +43,9 @@
       "reset_password_description": "Şifrenizi sıfırlamak için oturumunuz kapatılacak."
     },
     "invite": {
+      "accept_invitation": "Daveti kabul et",
+      "already_a_member": "Zaten üyesin",
+      "already_a_member_description": "Zaten bu kuruluşun bir parçasısın, bu yüzden davet herhangi bir şeyi değiştirmedi.",
       "create_account": "Hesap oluştur",
       "email_does_not_match": "Hay aksi! Yanlış email 🤦",
       "email_does_not_match_description": "Davetteki email adresinizle eşleşmiyor.",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "Davet kodu bulunamadı veya zaten kullanılmış.",
       "login": "Giriş yap",
       "welcome_to_organization": "İçeridesiniz 🎉",
-      "welcome_to_organization_description": "Organizasyona hoş geldiniz."
+      "welcome_to_organization_description": "Organizasyona hoş geldiniz.",
+      "you_are_invited": "Davetlisin 💌",
+      "you_are_invited_description": "Kuruluşa katılmak için daveti kabul et."
     },
     "last_used": "Son Kullanılan",
     "login": {
@@ -3792,7 +3797,6 @@
         "only_org_owner_can_perform_action": "Bu ayara yalnızca organizasyon sahipleri erişebilir.",
         "organization_created_successfully": "Organizasyon başarıyla oluşturuldu",
         "organization_deleted_successfully": "Organizasyon başarıyla silindi",
-        "organization_deletion_disabled": "Organizasyon silme işlemi devre dışı.",
         "organization_invite_link_ready": "Organizasyon davet bağlantınız hazır!",
         "organization_name": "Organizasyon Adı",
         "organization_name_description": "Organizasyonunuza açıklayıcı bir ad verin.",

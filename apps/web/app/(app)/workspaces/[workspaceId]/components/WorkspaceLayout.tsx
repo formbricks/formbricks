@@ -6,6 +6,7 @@ import { IS_DEVELOPMENT, IS_FORMBRICKS_CLOUD, IS_FORMBRICKS_SURVEYS_CONFIGURED }
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getTrialDaysRemaining } from "@/lib/trial-countdown";
 import { getTranslate } from "@/lingodotdev/server";
+import { ApiQueryClientProvider } from "@/modules/api/components/api-query-client-provider";
 import { TrialEndingWarningModal } from "@/modules/ee/billing/components/trial-ending-warning-modal";
 import { TrialResponseWarningModal } from "@/modules/ee/billing/components/trial-response-warning-modal";
 import { CreativesAccessProvider } from "@/modules/ee/creatives/components/creatives-access-provider";
@@ -140,38 +141,42 @@ export const WorkspaceLayout = async ({ layoutData, cookieStore, children }: Wor
           />
         )}
 
-        <div className="flex h-full">
-          <MainNavigation
-            organization={organization}
-            user={user}
-            workspace={{ id: workspace.id, name: workspace.name }}
-            isFormbricksCloud={IS_FORMBRICKS_CLOUD}
-            isDevelopment={IS_DEVELOPMENT}
-            membershipRole={membership.role}
-            organizationWorkspacesLimit={organizationWorkspacesLimit}
-            isLicenseActive={active}
-            isNoLicense={status === "no-license"}
-            isAccessControlAllowed={isAccessControlAllowed}
-            responseCount={responseCount}
-            isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
-            trialDaysRemaining={trialDaysRemaining}
-            isCreativesVisible={isCreativesVisible(creativesAccess)}
-          />
-          <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
-            <TopControlBar
-              currentOrganizationId={organization.id}
-              isMultiOrgEnabled={isMultiOrgEnabled}
-              organizationWorkspacesLimit={organizationWorkspacesLimit}
+        {/* The sidebar and the breadcrumbs read the switcher lists through the dashboard API, and share one
+            cache so opening one switcher after another costs a single request. */}
+        <ApiQueryClientProvider>
+          <div className="flex h-full">
+            <MainNavigation
+              organization={organization}
+              user={user}
+              workspace={{ id: workspace.id, name: workspace.name }}
               isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+              isDevelopment={IS_DEVELOPMENT}
+              membershipRole={membership.role}
+              organizationWorkspacesLimit={organizationWorkspacesLimit}
               isLicenseActive={active}
               isNoLicense={status === "no-license"}
-              isOwnerOrManager={isOwnerOrManager}
               isAccessControlAllowed={isAccessControlAllowed}
-              membershipRole={membership.role}
+              responseCount={responseCount}
+              isFormbricksSurveysConfigured={IS_FORMBRICKS_SURVEYS_CONFIGURED}
+              trialDaysRemaining={trialDaysRemaining}
+              isCreativesVisible={isCreativesVisible(creativesAccess)}
             />
-            <div className="flex-1 overflow-y-auto">{children}</div>
+            <div id="mainContent" className="flex flex-1 flex-col overflow-hidden bg-slate-50">
+              <TopControlBar
+                currentOrganizationId={organization.id}
+                isMultiOrgEnabled={isMultiOrgEnabled}
+                organizationWorkspacesLimit={organizationWorkspacesLimit}
+                isFormbricksCloud={IS_FORMBRICKS_CLOUD}
+                isLicenseActive={active}
+                isNoLicense={status === "no-license"}
+                isOwnerOrManager={isOwnerOrManager}
+                isAccessControlAllowed={isAccessControlAllowed}
+                membershipRole={membership.role}
+              />
+              <div className="flex-1 overflow-y-auto">{children}</div>
+            </div>
           </div>
-        </div>
+        </ApiQueryClientProvider>
       </div>
     </CreativesAccessProvider>
   );

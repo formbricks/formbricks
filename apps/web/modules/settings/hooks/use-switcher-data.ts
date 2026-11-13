@@ -1,107 +1,107 @@
 "use client";
 
+import { type QueryKey, type UseQueryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { logger } from "@formbricks/logger";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { organizationListQueryOptions } from "@/modules/organization/lib/organizations-query";
+import { workspaceListQueryOptions } from "@/modules/workspaces/lib/workspaces-query";
 
 export interface SwitcherItem {
   id: string;
   name: string;
 }
 
-interface SwitcherActionResult {
-  data?: SwitcherItem[];
-  serverError?: string;
-  validationErrors?: unknown;
-}
+/**
+ * How long a switcher list is served from the cache. The lists change rarely — a workspace created here
+ * invalidates its organization's lists, and a rename invalidates through `reloadKey` — and the sidebar,
+ * the breadcrumbs and the settings sidebar all read the same entry, so opening one after another costs
+ * one request, not one each.
+ */
+export const SWITCHER_STALE_TIME_MS = 5 * 60_000;
 
-// Shared loader for the organization / workspace switcher dropdowns. Centralizes the
-// "load once when the dropdown opens -> sort by name -> surface a load error" logic that was
-// otherwise copy-pasted across MainNavigation, the settings sidebar, the landing sidebar, and the
-// breadcrumbs. Each consumer keeps its own render markup and navigation target; only the data
-// concern is shared here.
-export const useSwitcherData = (
-  loader: () => Promise<SwitcherActionResult | undefined>,
-  // Already-translated fallback message shown when the action returns no usable error.
-  fallbackError: string,
-  // Optional hook for consumers that want to log/report load failures (e.g. Sentry).
-  onError?: (message: string) => void,
-  // Optional value that, when it changes, drops the cached list so the next open refetches. Pass the
-  // current item's name so a rename (followed by router.refresh) doesn't leave a stale list behind.
-  reloadKey?: string
-) => {
-  const [items, setItems] = useState<SwitcherItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  // True once a load attempt has completed (success or failure) — lets consumers distinguish the
-  // initial "never opened" state from "loaded, possibly empty".
-  const [hasLoaded, setHasLoaded] = useState(false);
-
-  // Synchronous guards to prevent duplicate fetches from rapid back-to-back calls
-  const isLoadingRef = useRef(false);
-  const hasDataRef = useRef(false);
-  const hasErrorRef = useRef(false);
-
-  // Hold the latest loader/onError in refs so callers can pass inline closures (e.g. ones that close
-  // over organizationId) without memoizing them and without churning `load`'s identity every render.
-  // The writes happen in an effect rather than during render: a ref written while rendering is
-  // mutation of state the renderer is allowed to retry or discard (ENG-2366). `load` only ever
-  // reads these from an async callback that runs after the dropdown opens, which is after the
-  // effect has committed the current values.
-  const loaderRef = useRef(loader);
-  const onErrorRef = useRef(onError);
-  useEffect(() => {
-    loaderRef.current = loader;
-    onErrorRef.current = onError;
-  }, [loader, onError]);
-
-  useEffect(() => {
-    hasDataRef.current = false;
-  }, [reloadKey]);
-
-  const load = useCallback(
-    async (force = false) => {
-      // Load once: skip if already populated, in flight, or currently showing an error (call retry()
-      // to clear and reload). `force` bypasses the guard for explicit retries.
-      if (!force && (hasDataRef.current || isLoadingRef.current || hasErrorRef.current)) return;
-      isLoadingRef.current = true;
-      hasErrorRef.current = false;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const result = await loaderRef.current();
-        if (result?.data) {
-          const sorted = [...result.data].sort((a, b) => a.name.localeCompare(b.name));
-          setItems(sorted);
-          hasDataRef.current = sorted.length > 0;
-        } else {
-          const message = (result ? getFormattedErrorMessage(result) : "") || fallbackError;
-          setError(message);
-          hasErrorRef.current = true;
-          onErrorRef.current?.(message);
-        }
-      } catch (err) {
-        // onError only receives the translated fallback message, so keep the raw error
-        // detail in the log — it is the only place the original failure survives.
-        logger.error(err, "Switcher data load failed");
-        const message = fallbackError;
-        setError(message);
-        hasErrorRef.current = true;
-        onErrorRef.current?.(message);
-      } finally {
-        isLoadingRef.current = false;
-        setIsLoading(false);
-        setHasLoaded(true);
-      }
-    },
-    [fallbackError]
-  );
-
-  const retry = useCallback(() => {
-    hasDataRef.current = false;
-    hasErrorRef.current = false;
-    void load(true);
-  }, [load]);
-
-  return { items, isLoading, error, hasLoaded, load, retry };
+type TSwitcherOptions = {
+  /** Already-translated message shown when the request fails without a message of its own. */
+  fallbackError: string;
+  /** For consumers that report load failures (e.g. to Sentry). Called once per failure. */
+  onError?: (message: string) => void;
+  /**
+   * A value that, when it changes, marks the cached list stale. Pass the current item's name, so a rename
+   * (followed by router.refresh) doesn't leave the old name in the list.
+   */
+  reloadKey?: string;
 };
+
+const sortByName = (items: SwitcherItem[]) => [...items].sort((a, b) => a.name.localeCompare(b.name));
+
+/**
+ * The shared loader behind the organization and workspace switchers: nothing is fetched until the dropdown
+ * first opens (`load`), the list comes back sorted by name, and a failure surfaces as a translated
+ * message with a `retry`. The data lives in the TanStack cache, so every switcher on the page shares it.
+ */
+const useSwitcherData = <TKey extends QueryKey>(
+  listQuery: UseQueryOptions<SwitcherItem[], Error, SwitcherItem[], TKey>,
+  { fallbackError, onError, reloadKey }: TSwitcherOptions
+) => {
+  const queryClient = useQueryClient();
+  const [isRequested, setIsRequested] = useState(false);
+  const { queryKey } = listQuery;
+  const query = useQuery({
+    ...listQuery,
+    enabled: isRequested,
+    staleTime: SWITCHER_STALE_TIME_MS,
+    select: sortByName,
+  });
+
+  // A retry with nothing cached puts the query back to pending, so the dropdown shows a spinner, not both.
+  const error = query.error ? getV3ApiErrorMessage(query.error, fallbackError) : null;
+
+  // The latest callback, message and key, held in a ref so callers can pass inline closures and fresh
+  // arrays without re-running the effects below on every render. Written in an effect, not during render:
+  // a ref written while rendering is state the renderer may discard (ENG-2366). Effects run in order, so
+  // the ones below always read this render's values.
+  const latest = useRef({ onError, fallbackError, queryKey });
+  useEffect(() => {
+    latest.current = { onError, fallbackError, queryKey };
+  });
+
+  useEffect(() => {
+    if (!query.error) return;
+    // The callback only gets the translated message, so the raw failure survives in the log alone.
+    logger.error(query.error, "Switcher data load failed");
+    latest.current.onError?.(getV3ApiErrorMessage(query.error, latest.current.fallbackError));
+  }, [query.error]);
+
+  const lastReloadKey = useRef(reloadKey);
+  useEffect(() => {
+    if (lastReloadKey.current === reloadKey) return;
+    lastReloadKey.current = reloadKey;
+    void queryClient.invalidateQueries({ queryKey: latest.current.queryKey });
+  }, [reloadKey, queryClient]);
+
+  const load = useCallback(() => setIsRequested(true), []);
+  const { refetch } = query;
+  const retry = useCallback(() => {
+    setIsRequested(true);
+    void refetch();
+  }, [refetch]);
+
+  return {
+    items: query.data ?? [],
+    // The first load, or a retry after a failure: pending with a request in flight.
+    isLoading: query.isLoading,
+    error,
+    // True once a load has completed, failed or not, so callers can tell "never opened" from "empty".
+    hasLoaded: query.isFetched,
+    load,
+    retry,
+  };
+};
+
+/** The caller's organizations, for the organization switcher. */
+export const useOrganizationSwitcherData = (options: TSwitcherOptions) =>
+  useSwitcherData(organizationListQueryOptions(), options);
+
+/** The caller's workspaces in the organization, for the workspace switcher. */
+export const useWorkspaceSwitcherData = (organizationId: string, options: TSwitcherOptions) =>
+  useSwitcherData(workspaceListQueryOptions(organizationId), options);

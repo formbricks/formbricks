@@ -11,15 +11,15 @@ import { useTranslation } from "react-i18next";
 import { PipelineTriggers, Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { copyToClipboard } from "@/lib/utils/clipboard";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { SurveySelect } from "@/modules/integrations/webhooks/components/survey-select";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
-import { validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
+import { getEndpointStatusClassName, validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { deleteWebhookAction, testEndpointAction, updateWebhookAction } from "../actions";
+import { deleteWebhook, testWebhookEndpoint, updateWebhook } from "../lib/api-client";
 import { TWebhookInput } from "../types/webhooks";
 
 interface WebhookSettingsTabProps {
@@ -79,22 +79,17 @@ export const WebhookSettingsTab = ({
         return false;
       }
       setHittingEndpoint(true);
-      const testEndpointActionResult = await testEndpointAction({
-        url: testEndpointInput,
-        webhookId: webhook.id,
+      await testWebhookEndpoint({
         workspaceId: webhook.workspaceId,
+        body: { url: testEndpointInput, webhookId: webhook.id },
       });
-      if (!testEndpointActionResult?.data?.success) {
-        const errorMessage = getFormattedErrorMessage(testEndpointActionResult);
-        throw new Error(errorMessage);
-      }
       setHittingEndpoint(false);
       if (sendSuccessToast) toast.success(t("workspace.integrations.webhooks.endpoint_pinged"));
       setEndpointAccessible(true);
       return true;
     } catch (err) {
       setHittingEndpoint(false);
-      const errMessage = err instanceof Error ? err.message : "Unknown error occurred";
+      const errMessage = getV3ApiErrorMessage(err, t("common.something_went_wrong_please_try_again"));
       toast.error(
         `${t("workspace.integrations.webhooks.endpoint_pinged_error")} \n ${errMessage.length < 250 ? errMessage : t("workspace.integrations.webhooks.please_check_console")}`,
         { className: errMessage.length < 250 ? "break-all" : "" }
@@ -149,16 +144,12 @@ export const WebhookSettingsTab = ({
       surveyIds: selectedSurveys,
     };
     setIsUpdatingWebhook(true);
-    const updateWebhookActionResult = await updateWebhookAction({
-      webhookId: webhook.id,
-      webhookInput: updatedData,
-    });
-    if (updateWebhookActionResult?.data) {
+    try {
+      await updateWebhook({ webhookId: webhook.id, body: updatedData });
       router.refresh();
       toast.success(t("workspace.integrations.webhooks.webhook_updated_successfully"));
-    } else {
-      const errorMessage = getFormattedErrorMessage(updateWebhookActionResult);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
     setIsUpdatingWebhook(false);
     setOpen(false);
@@ -198,13 +189,7 @@ export const WebhookSettingsTab = ({
                 isReadOnly || webhook.source !== "user"
                   ? "cursor-not-allowed bg-slate-100 text-slate-500"
                   : null,
-                endpointAccessible === true
-                  ? "border-green-500 bg-green-50"
-                  : endpointAccessible === false
-                    ? "border-red-200 bg-red-50"
-                    : endpointAccessible === undefined
-                      ? "border-slate-200 bg-white"
-                      : null
+                getEndpointStatusClassName(endpointAccessible)
               )}
               placeholder={t("workspace.integrations.webhooks.webhook_url_placeholder")}
             />
@@ -334,13 +319,12 @@ export const WebhookSettingsTab = ({
         text={t("workspace.integrations.webhooks.webhook_delete_confirmation")}
         onDelete={async () => {
           setOpen(false);
-          const deleteWebhookActionResult = await deleteWebhookAction({ id: webhook.id });
-          if (deleteWebhookActionResult?.data) {
+          try {
+            await deleteWebhook(webhook.id);
             router.refresh();
             toast.success(t("workspace.integrations.webhooks.webhook_deleted_successfully"));
-          } else {
-            const errorMessage = getFormattedErrorMessage(deleteWebhookActionResult);
-            toast.error(errorMessage);
+          } catch (error) {
+            toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
           }
         }}
       />

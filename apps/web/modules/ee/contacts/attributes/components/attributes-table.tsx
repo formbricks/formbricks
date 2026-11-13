@@ -7,7 +7,6 @@ import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TUserLocale } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { Checkbox } from "@/modules/ui/components/checkbox";
@@ -17,7 +16,7 @@ import { useTableColumnState } from "@/modules/ui/components/table-toolbar/hooks
 import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
 import { buildColumnSettings } from "@/modules/ui/components/table-toolbar/lib/column-settings";
 import { contactQueryKeys } from "../../lib/query-keys";
-import { deleteContactAttributeKeyAction } from "../actions";
+import { deleteAttributeKey } from "../lib/api-client";
 import {
   ATTRIBUTE_SORT_VALUES,
   DEFAULT_ATTRIBUTE_SORT,
@@ -147,9 +146,11 @@ export const AttributesTable = ({ isReadOnly, workspaceId, locale }: Readonly<At
   ];
 
   const deleteAttribute = async (attributeId: string) => {
-    const response = await deleteContactAttributeKeyAction({ id: attributeId });
-    if (!response?.data) {
-      throw new Error(getFormattedErrorMessage(response));
+    try {
+      await deleteAttributeKey(attributeId);
+    } catch (error) {
+      // The bulk delete toasts the error's message, so it carries the server's reason or a fallback.
+      throw new Error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
   };
 

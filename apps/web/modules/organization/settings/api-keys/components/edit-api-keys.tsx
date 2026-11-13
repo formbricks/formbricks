@@ -8,22 +8,22 @@ import { useTranslation } from "react-i18next";
 import { ApiKeyPermission } from "@formbricks/database/prisma-browser";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { TUserLocale } from "@formbricks/types/user";
+import type { TApiKeyResource } from "@/app/api/internal/api-keys/serializers";
 import { timeSince } from "@/lib/time";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { ViewPermissionModal } from "@/modules/organization/settings/api-keys/components/view-permission-modal";
 import {
   TApiKeyUpdateInput,
-  TApiKeyWithEnvironmentPermission,
   TOrganizationWorkspace,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { SettingsTable, type TSettingsTableColumn } from "@/modules/ui/components/settings-table";
-import { createApiKeyAction, deleteApiKeyAction, updateApiKeyAction } from "../actions";
+import { useApiKeys, useCreateApiKey, useDeleteApiKey, useUpdateApiKey } from "../hooks/use-api-keys";
 import { AddApiKeyModal } from "./add-api-key-modal";
 
 /** A stored key, plus the plaintext value the create response returns once and only once. */
-type TApiKeyRow = TApiKeyWithEnvironmentPermission & { actualKey?: string };
+type TApiKeyRow = TApiKeyResource & { actualKey?: string };
 
 const ApiKeyDisplay = ({ apiKey }: Readonly<{ apiKey: string }>) => {
   const { t } = useTranslation();
@@ -102,7 +102,7 @@ export const getApiKeyColumns = ({
     header: t("common.created_at"),
     headerClassName: "w-[20%]",
     skeletonWidth: "w-20",
-    cell: (apiKey) => timeSince(apiKey.createdAt.toString(), locale),
+    cell: (apiKey) => timeSince(apiKey.createdAt, locale),
   },
   {
     id: "actions",
@@ -132,7 +132,6 @@ export const getApiKeyColumns = ({
 
 interface EditAPIKeysProps {
   organizationId: string;
-  apiKeys: TApiKeyWithEnvironmentPermission[];
   locale: TUserLocale;
   workspaces: TOrganizationWorkspace[];
   isFormbricksCloud: boolean;
@@ -141,7 +140,6 @@ interface EditAPIKeysProps {
 
 export const EditAPIKeys = ({
   organizationId,
-  apiKeys,
   locale,
   workspaces,
   isFormbricksCloud,
@@ -150,12 +148,20 @@ export const EditAPIKeys = ({
   const { t } = useTranslation();
   const [isAddAPIKeyModalOpen, setIsAddAPIKeyModalOpen] = useState(false);
   const [isDeleteKeyModalOpen, setIsDeleteKeyModalOpen] = useState(false);
-  const [apiKeysLocal, setApiKeysLocal] = useState<TApiKeyRow[]>(apiKeys);
-  const [activeKey, setActiveKey] = useState<TApiKeyWithEnvironmentPermission | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [activeKey, setActiveKey] = useState<TApiKeyResource | null>(null);
   const [viewPermissionsOpen, setViewPermissionsOpen] = useState(false);
+  // The plaintext of keys minted in this visit, by id. Shown until the page is left; kept out of the query
+  // cache so it never outlives this view or reaches anything that reads the cache.
+  const [revealedKeys, setRevealedKeys] = useState<Record<string, string>>({});
 
-  const handleOpenDeleteKeyModal = (e: React.MouseEvent, apiKey: TApiKeyWithEnvironmentPermission) => {
+  const { data: apiKeys = [] } = useApiKeys(organizationId);
+  const createApiKey = useCreateApiKey(organizationId);
+  const updateApiKey = useUpdateApiKey(organizationId);
+  const deleteApiKey = useDeleteApiKey(organizationId);
+
+  const rows: TApiKeyRow[] = apiKeys.map((apiKey) => ({ ...apiKey, actualKey: revealedKeys[apiKey.id] }));
+
+  const handleOpenDeleteKeyModal = (e: React.MouseEvent, apiKey: TApiKeyResource) => {
     e.preventDefault();
     setActiveKey(apiKey);
     setIsDeleteKeyModalOpen(true);
@@ -163,18 +169,13 @@ export const EditAPIKeys = ({
 
   const handleDeleteKey = async () => {
     if (!activeKey) return;
-    setIsLoading(true);
-    const deleteApiKeyResponse = await deleteApiKeyAction({ id: activeKey.id });
-    if (deleteApiKeyResponse?.data) {
-      const updatedApiKeys = apiKeysLocal?.filter((apiKey) => apiKey.id !== activeKey.id) || [];
-      setApiKeysLocal(updatedApiKeys);
+    try {
+      await deleteApiKey.mutateAsync(activeKey.id);
       toast.success(t("workspace.api_keys.api_key_deleted"));
-      setIsDeleteKeyModalOpen(false);
-      setIsLoading(false);
-    } else {
+    } catch {
       toast.error(t("workspace.api_keys.unable_to_delete_api_key"));
+    } finally {
       setIsDeleteKeyModalOpen(false);
-      setIsLoading(false);
     }
   };
 
@@ -186,25 +187,16 @@ export const EditAPIKeys = ({
     }>;
     organizationAccess: TOrganizationAccess;
   }): Promise<void> => {
-    setIsLoading(true);
-    const createApiKeyResponse = await createApiKeyAction({
-      organizationId: organizationId,
-      apiKeyData: {
+    try {
+      const created = await createApiKey.mutateAsync({
         label: data.label,
         workspacePermissions: data.workspacePermissions,
         organizationAccess: data.organizationAccess,
-      },
-    });
-
-    if (createApiKeyResponse?.data) {
-      const updatedApiKeys = [...apiKeysLocal, createApiKeyResponse.data];
-      setApiKeysLocal(updatedApiKeys);
-      setIsLoading(false);
+      });
+      setRevealedKeys((revealed) => ({ ...revealed, [created.id]: created.apiKey }));
       toast.success(t("workspace.api_keys.api_key_created"));
-    } else {
-      setIsLoading(false);
-      const errorMessage = getFormattedErrorMessage(createApiKeyResponse);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
 
     setIsAddAPIKeyModalOpen(false);
@@ -213,30 +205,11 @@ export const EditAPIKeys = ({
   const handleUpdateAPIKey = async (data: TApiKeyUpdateInput) => {
     if (!activeKey) return;
 
-    const updateApiKeyResponse = await updateApiKeyAction({
-      apiKeyId: activeKey.id,
-      apiKeyData: data,
-    });
-
-    if (updateApiKeyResponse?.data) {
-      const updatedApiKeys =
-        apiKeysLocal?.map((apiKey) => {
-          if (apiKey.id === activeKey.id) {
-            return {
-              ...apiKey,
-              label: data.label,
-            };
-          }
-          return apiKey;
-        }) || [];
-
-      setApiKeysLocal(updatedApiKeys);
+    try {
+      await updateApiKey.mutateAsync({ apiKeyId: activeKey.id, body: { label: data.label } });
       toast.success(t("workspace.api_keys.api_key_updated"));
-      setIsLoading(false);
-    } else {
-      const errorMessage = getFormattedErrorMessage(updateApiKeyResponse);
-      toast.error(errorMessage);
-      setIsLoading(false);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
 
     setViewPermissionsOpen(false);
@@ -259,7 +232,7 @@ export const EditAPIKeys = ({
 
       <SettingsTable
         columns={getApiKeyColumns({ t, locale, onDelete: handleOpenDeleteKeyModal })}
-        rows={apiKeysLocal}
+        rows={rows}
         getRowId={(apiKey) => apiKey.id}
         emptyMessage={t("workspace.api_keys.no_api_keys_yet")}
         getRowProps={() => ({ "data-testid": "api-key-row" })}
@@ -276,7 +249,7 @@ export const EditAPIKeys = ({
         setOpen={setIsAddAPIKeyModalOpen}
         onSubmit={handleAddAPIKey}
         workspaces={workspaces}
-        isCreatingAPIKey={isLoading}
+        isCreatingAPIKey={createApiKey.isPending}
         isFormbricksCloud={isFormbricksCloud}
         canGrantOrganizationWriteAccess={canGrantOrganizationWriteAccess}
       />
@@ -287,7 +260,7 @@ export const EditAPIKeys = ({
           onSubmit={handleUpdateAPIKey}
           apiKey={activeKey}
           workspaces={workspaces}
-          isUpdating={isLoading}
+          isUpdating={updateApiKey.isPending}
         />
       )}
       <DeleteDialog
@@ -295,7 +268,7 @@ export const EditAPIKeys = ({
         setOpen={setIsDeleteKeyModalOpen}
         deleteWhat={t("workspace.api_keys.api_key")}
         onDelete={handleDeleteKey}
-        isDeleting={isLoading}
+        isDeleting={deleteApiKey.isPending}
         text={t("workspace.api_keys.delete_api_key_confirmation")}
       />
     </>

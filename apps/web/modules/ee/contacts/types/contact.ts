@@ -1,5 +1,11 @@
 import { z } from "zod";
 import { TContactAttributeKey, ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
+import {
+  CSV_IMPORT_MAX_COLUMNS,
+  CSV_IMPORT_MAX_KEY_LENGTH,
+  CSV_IMPORT_MAX_RECORDS,
+  CSV_IMPORT_MAX_VALUE_LENGTH,
+} from "../lib/csv-import-limits";
 
 export const ZContact = z.object({
   id: z.cuid2(),
@@ -38,69 +44,145 @@ export type TContact = z.infer<typeof ZContact>;
 export const ZContactCSVDuplicateAction = z.enum(["skip", "update", "overwrite"]);
 export type TContactCSVDuplicateAction = z.infer<typeof ZContactCSVDuplicateAction>;
 
-export const ZContactCSVUploadResponse = z
-  .array(z.record(z.string(), z.string()))
-  .max(10000, {
-    error: "Maximum 10000 records allowed at a time.",
-  })
-  .superRefine((data, ctx) => {
-    for (const record of data) {
-      if (!Object.keys(record).includes("email")) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Missing email field for one or more records",
-        });
-        return;
-      }
+/** The cell text a record or attribute map can carry: a string within `maxLength`, without NUL. */
+const textProblem = (value: unknown, maxLength: number, label: string): string | null => {
+  if (typeof value !== "string") return `${label} must be text`;
+  if (value.length > maxLength) return `${label} must be at most ${maxLength} characters`;
+  // Postgres can't store NUL in text, and would answer a 500.
+  if (value.includes("\u0000")) return `${label} must not contain NUL characters`;
+  return null;
+};
 
-      if (!record.email) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Email field is empty for one or more records",
-        });
-        return;
-      }
-    }
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
 
-    // check for duplicate emails
-    const emails = data.map((record) => record.email);
-    const emailSet = new Set(emails);
+/** The first entry of a record or attribute map past a limit, or `null` when every entry is within them. */
+const entriesProblem = (
+  value: Record<string, unknown>,
+  limits: { maxEntries: number; entriesLabel: string; maxValueLength: number; valueLabel: string }
+): string | null => {
+  const keys = Object.keys(value);
+  if (keys.length > limits.maxEntries) {
+    return `${limits.entriesLabel} may have at most ${limits.maxEntries} entries`;
+  }
+  for (const key of keys) {
+    const problem =
+      textProblem(key, CSV_IMPORT_MAX_KEY_LENGTH, "A column name") ??
+      textProblem(value[key], limits.maxValueLength, limits.valueLabel);
+    if (problem) return problem;
+  }
+  return null;
+};
 
-    if (emails.length !== emailSet.size) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Duplicate emails found in the records",
-      });
+/**
+ * The import's caps (`csv-import-limits.ts`), checked before the typed schema parses a single entry: a
+ * schema reports one issue per bad entry, which for 10,000 records of 160 cells is a million issues. This
+ * walk stops at the first problem and reports it once, naming the limit and the record.
+ */
+const csvRecordsWithinLimits = (records: unknown, ctx: z.RefinementCtx) => {
+  // Not an array: the typed schema refuses it with a single issue.
+  if (!Array.isArray(records)) return;
+  if (records.length > CSV_IMPORT_MAX_RECORDS) {
+    ctx.addIssue({ code: "custom", message: `Maximum ${CSV_IMPORT_MAX_RECORDS} records allowed at a time.` });
+    return;
+  }
+
+  for (const [index, record] of records.entries()) {
+    const problem = isPlainObject(record)
+      ? entriesProblem(record, {
+          maxEntries: CSV_IMPORT_MAX_COLUMNS,
+          entriesLabel: "A record",
+          maxValueLength: CSV_IMPORT_MAX_VALUE_LENGTH,
+          valueLabel: "A value",
+        })
+      : "A record must map column names to values";
+    if (problem) {
+      ctx.addIssue({ code: "custom", message: `${problem} (record ${index + 1})`, path: [index] });
       return;
     }
+  }
+};
 
-    // check for duplicate userIds if present
-    const userIds = data.map((record) => record.userId).filter(Boolean);
-    if (userIds?.length > 0) {
-      const userIdSet = new Set(userIds);
-      if (userIds.length !== userIdSet.size) {
+export const ZContactCSVUploadResponse = z
+  .unknown()
+  .superRefine(csvRecordsWithinLimits)
+  .pipe(
+    z.array(z.record(z.string(), z.string())).superRefine((data, ctx) => {
+      for (const record of data) {
+        if (!Object.keys(record).includes("email")) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Missing email field for one or more records",
+          });
+          return;
+        }
+
+        if (!record.email) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Email field is empty for one or more records",
+          });
+          return;
+        }
+      }
+
+      // check for duplicate emails
+      const emails = data.map((record) => record.email);
+      const emailSet = new Set(emails);
+
+      if (emails.length !== emailSet.size) {
         ctx.addIssue({
           code: "custom",
-          message: "Duplicate userIds found in the records",
+          message: "Duplicate emails found in the records",
         });
         return;
       }
-    }
-  });
+
+      // check for duplicate userIds if present
+      const userIds = data.map((record) => record.userId).filter(Boolean);
+      if (userIds?.length > 0) {
+        const userIdSet = new Set(userIds);
+        if (userIds.length !== userIdSet.size) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Duplicate userIds found in the records",
+          });
+          return;
+        }
+      }
+    })
+  );
 
 export type TContactCSVUploadResponse = z.infer<typeof ZContactCSVUploadResponse>;
 
-export const ZContactCSVAttributeMap = z.record(z.string(), z.string()).superRefine((attributeMap, ctx) => {
-  const values = Object.values(attributeMap);
+/** The column-to-attribute map's caps, checked before the typed schema as for the records. */
+const csvAttributeMapWithinLimits = (attributeMap: unknown, ctx: z.RefinementCtx) => {
+  if (!isPlainObject(attributeMap)) return;
+  const problem = entriesProblem(attributeMap, {
+    maxEntries: CSV_IMPORT_MAX_COLUMNS,
+    entriesLabel: "The attribute map",
+    maxValueLength: CSV_IMPORT_MAX_KEY_LENGTH,
+    valueLabel: "A mapped attribute",
+  });
+  if (problem) ctx.addIssue({ code: "custom", message: problem });
+};
 
-  if (new Set(values).size !== values.length) {
-    ctx.addIssue({
-      code: "custom",
-      message: "Attribute map contains duplicate values",
-    });
-    return;
-  }
-});
+export const ZContactCSVAttributeMap = z
+  .unknown()
+  .superRefine(csvAttributeMapWithinLimits)
+  .pipe(
+    z.record(z.string(), z.string()).superRefine((attributeMap, ctx) => {
+      const values = Object.values(attributeMap);
+
+      if (new Set(values).size !== values.length) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Attribute map contains duplicate values",
+        });
+        return;
+      }
+    })
+  );
 export type TContactCSVAttributeMap = z.infer<typeof ZContactCSVAttributeMap>;
 
 export const ZContactBulkUploadAttribute = z.object({

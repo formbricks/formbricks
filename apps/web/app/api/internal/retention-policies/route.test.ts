@@ -1,7 +1,9 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { RETENTION_POLICY_DEFAULTS } from "@/modules/ee/data-retention/lib/policy-rules";
 import { GET, PATCH } from "./route";
+import { RETENTION_DAYS_INPUT_MAX } from "./schemas";
 
 const mocks = vi.hoisted(() => ({
   can: vi.fn(),
@@ -63,7 +65,7 @@ const patch = (body: unknown, query = `organizationId=${ORG_ID}`) =>
   PATCH(
     new NextRequest(`http://localhost/api/internal/retention-policies?${query}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
     {} as never
@@ -207,6 +209,24 @@ describe("PATCH /api/internal/retention-policies", () => {
     expect((await patch(body)).status).toBe(400);
     expect(mocks.update).not.toHaveBeenCalled();
   });
+
+  test.each([["warnDays"], ["periodDays"]])(
+    `takes %s from 0 to ${RETENTION_DAYS_INPUT_MAX} to the business rules, and answers 400 naming it outside`,
+    async (field) => {
+      for (const days of [0, RETENTION_DAYS_INPUT_MAX]) {
+        expect((await patch({ members: { [field]: days } })).status).toBe(200);
+      }
+      mocks.update.mockClear();
+      for (const days of [-1, RETENTION_DAYS_INPUT_MAX + 1]) {
+        const response = await patch({ members: { [field]: days } });
+        expect(response.status).toBe(400);
+        expect((await response.json()).invalid_params).toEqual([
+          expect.objectContaining({ name: `members.${field}` }),
+        ]);
+      }
+      expect(mocks.update).not.toHaveBeenCalled();
+    }
+  );
 
   test("returns 401 without a session", async () => {
     mocks.getSession.mockResolvedValue(null);

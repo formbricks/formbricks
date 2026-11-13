@@ -16,6 +16,7 @@ import {
   setOrganizationPaymentAttemptError,
   switchOrganizationToCloudPlan,
   syncOrganizationBillingFromStripe,
+  syncOrganizationBillingFromStripeExclusively,
   undoPendingOrganizationPlanChange,
 } from "./organization-billing";
 
@@ -35,6 +36,7 @@ const mocks = vi.hoisted(() => ({
   cacheWithCacheNullable: vi.fn(),
   cacheDel: vi.fn(),
   cacheTryLock: vi.fn(),
+  cacheRunRedisOperation: vi.fn(),
   loggerWarn: vi.fn(),
   getCloudPlanFromProduct: vi.fn(),
   customersCreate: vi.fn(),
@@ -114,6 +116,7 @@ vi.mock("@/lib/cache", () => ({
     withCacheNullable: mocks.cacheWithCacheNullable,
     del: mocks.cacheDel,
     tryLock: mocks.cacheTryLock,
+    runRedisOperation: mocks.cacheRunRedisOperation,
   },
 }));
 
@@ -206,6 +209,7 @@ describe("organization-billing", () => {
     mocks.cacheWithCacheNullable.mockImplementation(async (fn: () => Promise<unknown>) => await fn());
     // Default: the read-through single-flight lock is acquired, so stale-sync tests exercise the sync.
     mocks.cacheTryLock.mockResolvedValue({ ok: true, data: true });
+    mocks.cacheRunRedisOperation.mockResolvedValue(1);
     mocks.getCloudPlanFromProduct.mockReturnValue("pro");
     mocks.subscriptionsList.mockResolvedValue({ data: [] });
     mocks.customersList.mockResolvedValue({ data: [] });
@@ -3268,8 +3272,30 @@ describe("organization-billing", () => {
     // Single-flight: no Stripe sync + no OrganizationBilling write happen in the loser.
     expect(mocks.subscriptionsList).not.toHaveBeenCalled();
     expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
-    // Lock is scoped to this org so it can't gate a different tenant's sync.
-    expect(mocks.cacheTryLock).toHaveBeenCalledWith("org:org_1:billing-sync-lock", "1", 30_000);
+    // Lock is scoped to this org so it can't gate a different tenant's sync; each holder writes its own token.
+    expect(mocks.cacheTryLock).toHaveBeenCalledWith(
+      "org:org_1:billing-sync-lock",
+      expect.any(String),
+      30_000
+    );
+    expect(mocks.cacheRunRedisOperation).not.toHaveBeenCalled();
+  });
+
+  test("getOrganizationBillingWithReadThroughSync gives the lock back once its sync settles", async () => {
+    mocks.cacheWithCacheNullable.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      stripe: { lastSyncedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() },
+    });
+    mocks.prismaOrganizationBillingFindUnique.mockResolvedValue({
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: { lastSyncedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() },
+    });
+    mocks.subscriptionsList.mockRejectedValue(new Error("stripe down"));
+
+    await getOrganizationBillingWithReadThroughSync("org_1");
+    await vi.waitFor(() => expect(mocks.cacheRunRedisOperation).toHaveBeenCalledTimes(1));
   });
 
   test("getOrganizationBillingWithReadThroughSync serves cached and skips sync when the lock backend is unavailable", async () => {
@@ -3307,6 +3333,8 @@ describe("organization-billing", () => {
       expect(result).toEqual(cachedBilling);
       // Deadline fired before any write, so the request returns without blocking or writing.
       expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+      // The sync still runs, so it still holds the lock.
+      expect(mocks.cacheRunRedisOperation).not.toHaveBeenCalled();
       expect(mocks.loggerWarn).toHaveBeenCalledWith(
         { error: expect.any(Error), organizationId: "org_1" },
         "Failed to refresh billing snapshot from Stripe"
@@ -3485,6 +3513,115 @@ describe("organization-billing", () => {
 
     expect(mocks.subscriptionsCancel).toHaveBeenCalledWith("sub_hobby", { prorate: false });
     expect(mocks.subscriptionsCreate).not.toHaveBeenCalled();
+  });
+
+  describe("syncOrganizationBillingFromStripeExclusively", () => {
+    const storedBilling = {
+      stripeCustomerId: "cus_1",
+      limits: { workspaces: 3, monthly: { responses: 1500 } },
+      usageCycleAnchor: new Date(),
+      stripe: { plan: "pro", lastSyncedAt: new Date(Date.now() - 6 * 60 * 1000).toISOString() },
+    };
+
+    beforeEach(() => {
+      mocks.prismaOrganizationBillingFindUnique.mockResolvedValue(storedBilling);
+    });
+
+    test("syncs holding the organization's billing lock, and gives it back", async () => {
+      await syncOrganizationBillingFromStripeExclusively("org_1");
+
+      expect(mocks.cacheTryLock).toHaveBeenCalledWith(
+        "org:org_1:billing-sync-lock",
+        expect.any(String),
+        30_000
+      );
+      expect(mocks.subscriptionsList).toHaveBeenCalled();
+      expect(mocks.cacheRunRedisOperation).toHaveBeenCalledTimes(1);
+    });
+
+    test("gives the lock back when the sync fails", async () => {
+      mocks.subscriptionsList.mockRejectedValue(new Error("stripe down"));
+
+      await expect(syncOrganizationBillingFromStripeExclusively("org_1")).rejects.toThrow("stripe down");
+      expect(mocks.cacheRunRedisOperation).toHaveBeenCalledTimes(1);
+    });
+
+    test("answers the stored snapshot without syncing while another holder has the lock", async () => {
+      mocks.cacheTryLock.mockResolvedValue({ ok: true, data: false });
+
+      const result = await syncOrganizationBillingFromStripeExclusively("org_1");
+
+      expect(result?.stripe?.plan).toBe("pro");
+      expect(mocks.subscriptionsList).not.toHaveBeenCalled();
+      expect(mocks.prismaOrganizationBillingUpdate).not.toHaveBeenCalled();
+      expect(mocks.cacheRunRedisOperation).not.toHaveBeenCalled();
+    });
+
+    test("syncs without the lock when Redis is unavailable", async () => {
+      mocks.cacheTryLock.mockResolvedValue({ ok: false, error: { code: "RedisConnectionError" } });
+
+      await syncOrganizationBillingFromStripeExclusively("org_1");
+
+      expect(mocks.subscriptionsList).toHaveBeenCalled();
+      expect(mocks.cacheRunRedisOperation).not.toHaveBeenCalled();
+    });
+
+    test("does nothing off Formbricks Cloud", async () => {
+      mocks.isCloud = false;
+
+      expect(await syncOrganizationBillingFromStripeExclusively("org_1")).toBeNull();
+      expect(mocks.cacheTryLock).not.toHaveBeenCalled();
+    });
+
+    describe("for the Stripe webhook (wait, then sync anyway)", () => {
+      const webhookOptions = {
+        event: { id: "evt_1", created: 1739923200 },
+        waitMs: 5_000,
+        whenBusy: "syncUnlocked" as const,
+      };
+
+      beforeEach(() => {
+        vi.useFakeTimers({ toFake: ["setTimeout", "Date"] });
+      });
+
+      afterEach(() => {
+        vi.useRealTimers();
+      });
+
+      test("waits for the lock, then syncs holding it and gives it back", async () => {
+        mocks.cacheTryLock
+          .mockResolvedValueOnce({ ok: true, data: false })
+          .mockResolvedValueOnce({ ok: true, data: true });
+
+        const sync = syncOrganizationBillingFromStripeExclusively("org_1", webhookOptions);
+        await vi.advanceTimersByTimeAsync(250);
+        await sync;
+
+        expect(mocks.cacheTryLock).toHaveBeenCalledTimes(2);
+        expect(mocks.subscriptionsList).toHaveBeenCalled();
+        expect(mocks.cacheRunRedisOperation).toHaveBeenCalledTimes(1);
+        expect(mocks.loggerWarn).not.toHaveBeenCalledWith(
+          expect.anything(),
+          "Organization billing lock still busy; syncing from Stripe without it"
+        );
+      });
+
+      test("syncs without the lock and logs at warn when it stays busy past the wait", async () => {
+        mocks.cacheTryLock.mockResolvedValue({ ok: true, data: false });
+
+        const sync = syncOrganizationBillingFromStripeExclusively("org_1", webhookOptions);
+        await vi.advanceTimersByTimeAsync(5_000);
+        await sync;
+
+        expect(mocks.subscriptionsList).toHaveBeenCalled();
+        expect(mocks.prismaOrganizationBillingUpdate).toHaveBeenCalled();
+        expect(mocks.cacheRunRedisOperation).not.toHaveBeenCalled();
+        expect(mocks.loggerWarn).toHaveBeenCalledWith(
+          { organizationId: "org_1", eventId: "evt_1", waitMs: 5_000 },
+          "Organization billing lock still busy; syncing from Stripe without it"
+        );
+      });
+    });
   });
 
   describe("addOptimisticBillingFeature", () => {
@@ -4792,6 +4929,84 @@ describe("organization-billing", () => {
 
       expect(mocks.subscriptionsUpdate).not.toHaveBeenCalled();
       expect(mocks.subscriptionSchedulesCreate).not.toHaveBeenCalled();
+    });
+
+    describe("an intent's idempotency key", () => {
+      const stripeOptions = (mock: { mock: { calls: unknown[][] } }, argIndex: number) =>
+        mock.mock.calls.map((call) => call[argIndex]);
+
+      test("goes with every write of an immediate upgrade, one key per step", async () => {
+        mockActiveSubscription("pro", { cancel_at_period_end: true });
+        mockCustomerTaxStatus("supported");
+
+        await switchOrganizationToCloudPlan({
+          organizationId: "org_1",
+          customerId: "cus_1",
+          targetPlan: "scale",
+          targetInterval: "monthly",
+          idempotencyKey: "intent-1",
+        });
+
+        const keys = stripeOptions(mocks.subscriptionsUpdate, 2).map(
+          (options) => (options as { idempotencyKey: string }).idempotencyKey
+        );
+        expect(keys).toEqual([
+          "intent-1:prepare-subscription",
+          "intent-1:subscription-items",
+          "intent-1:clear-cancel-at-period-end",
+        ]);
+      });
+
+      test("goes with the schedule writes of a scheduled downgrade", async () => {
+        mockActiveSubscription("scale");
+        mockCustomerTaxStatus("supported");
+
+        await switchOrganizationToCloudPlan({
+          organizationId: "org_1",
+          customerId: "cus_1",
+          targetPlan: "pro",
+          targetInterval: "monthly",
+          idempotencyKey: "intent-1",
+        });
+
+        expect(mocks.subscriptionSchedulesCreate).toHaveBeenCalledWith(
+          { from_subscription: "sub_1" },
+          { idempotencyKey: "intent-1:create-schedule" }
+        );
+        expect(mocks.subscriptionSchedulesUpdate).toHaveBeenCalledWith("sched_new", expect.any(Object), {
+          idempotencyKey: "intent-1:update-schedule",
+        });
+      });
+
+      test("leaves every write as it was without one", async () => {
+        mockActiveSubscription("pro", { cancel_at_period_end: true });
+        mockCustomerTaxStatus("supported");
+
+        await switchOrganizationToCloudPlan({
+          organizationId: "org_1",
+          customerId: "cus_1",
+          targetPlan: "scale",
+          targetInterval: "monthly",
+        });
+
+        expect(mocks.subscriptionsUpdate.mock.calls.every((call) => call.length === 2)).toBe(true);
+      });
+
+      test("goes with the paid-plan Checkout Session", async () => {
+        mocks.checkoutSessionsCreate.mockResolvedValue({ url: "https://checkout.stripe.test/session" });
+
+        await createPaidPlanCheckoutSession({
+          organizationId: "org_1",
+          customerId: "cus_1",
+          plan: "pro",
+          interval: "monthly",
+          idempotencyKey: "intent-1",
+        });
+
+        expect(mocks.checkoutSessionsCreate).toHaveBeenCalledWith(expect.any(Object), {
+          idempotencyKey: "intent-1:checkout-session",
+        });
+      });
     });
 
     test("the upgrade preview includes the tax the upgrade will charge", async () => {

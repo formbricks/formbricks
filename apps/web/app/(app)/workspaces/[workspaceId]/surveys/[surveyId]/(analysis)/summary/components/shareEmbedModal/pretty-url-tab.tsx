@@ -8,8 +8,8 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
 import { copyToClipboard } from "@/lib/utils/clipboard";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { removeSurveySlugAction, updateSurveySlugAction } from "@/modules/survey/slug/actions";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { removeSurveySlug, updateSurveySlug } from "@/modules/survey/slug/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import {
@@ -34,7 +34,7 @@ interface PrettyUrlFormData {
 export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabProps) => {
   const { t } = useTranslation();
   const router = useRouter();
-  const { survey } = useSurvey();
+  const { survey, replaceSurvey } = useSurvey();
   const [isEditing, setIsEditing] = useState(!survey.slug);
   const [showRemoveDialog, setShowRemoveDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,22 +66,14 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
 
     setIsSubmitting(true);
     try {
-      const result = await updateSurveySlugAction({
-        surveyId: survey.id,
-        slug: data.slug,
-      });
-
-      const errorMessage = getFormattedErrorMessage(result);
-      if (errorMessage) {
-        toast.error(errorMessage);
-      } else {
-        toast.success(t("workspace.surveys.share.pretty_url.save_success"));
-        router.refresh();
-        setIsEditing(false);
-      }
+      const { slug, updatedAt } = await updateSurveySlug(survey.id, data.slug);
+      // A survey save from another tab sends the whole survey, slug included, so it must carry this one.
+      replaceSurvey({ ...survey, slug, updatedAt });
+      toast.success(t("workspace.surveys.share.pretty_url.save_success"));
+      router.refresh();
+      setIsEditing(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("common.something_went_wrong_please_try_again");
-      toast.error(message);
+      toast.error(getV3ApiErrorMessage(err, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsSubmitting(false);
     }
@@ -99,21 +91,15 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
   const handleRemove = async () => {
     setIsSubmitting(true);
     try {
-      const result = await removeSurveySlugAction({ surveyId: survey.id });
-
-      const errorMessage = getFormattedErrorMessage(result);
-      if (errorMessage) {
-        toast.error(errorMessage);
-      } else {
-        setShowRemoveDialog(false);
-        reset({ slug: "" });
-        router.refresh();
-        setIsEditing(true);
-        toast.success(t("workspace.surveys.share.pretty_url.remove_success"));
-      }
+      const { slug, updatedAt } = await removeSurveySlug(survey.id);
+      replaceSurvey({ ...survey, slug, updatedAt });
+      setShowRemoveDialog(false);
+      reset({ slug: "" });
+      router.refresh();
+      setIsEditing(true);
+      toast.success(t("workspace.surveys.share.pretty_url.remove_success"));
     } catch (err) {
-      const message = err instanceof Error ? err.message : t("common.something_went_wrong_please_try_again");
-      toast.error(message);
+      toast.error(getV3ApiErrorMessage(err, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsSubmitting(false);
     }

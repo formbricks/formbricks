@@ -2,15 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { ZWorkspace } from "@formbricks/types/workspace";
-import { createWorkspaceAction } from "@/app/(app)/workspaces/[workspaceId]/actions";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { TOrganizationTeam } from "@/modules/ee/teams/team-list/types/team";
+import { WORKSPACE_NAME_MAX } from "@/app/api/internal/workspaces/schemas";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -31,10 +30,11 @@ import {
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
-import { getTeamsByOrganizationIdAction } from "@/modules/workspaces/settings/actions";
+import { useCreateWorkspace } from "./hooks/use-create-workspace";
+import { useOrganizationTeams } from "./hooks/use-organization-teams";
 
 const ZCreateWorkspaceForm = z.object({
-  name: ZWorkspace.shape.name,
+  name: ZWorkspace.shape.name.max(WORKSPACE_NAME_MAX),
   teamIds: z.array(z.string()).optional(),
 });
 
@@ -47,16 +47,24 @@ interface CreateWorkspaceModalProps {
   readonly isAccessControlAllowed: boolean;
 }
 
+/**
+ * Reads the organization's teams and creates the workspace through the dashboard API. It uses the query
+ * client of the shell it opens from (the workspace layout or the landing page), so a
+ * new workspace invalidates the switcher lists that shell shows.
+ */
 export const CreateWorkspaceModal = ({
   open,
   setOpen,
   organizationId,
   isAccessControlAllowed,
-}: CreateWorkspaceModalProps) => {
+}: Readonly<CreateWorkspaceModalProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
 
-  const [organizationTeams, setOrganizationTeams] = useState<TOrganizationTeam[]>([]);
+  // Teams are an enterprise feature: the list route refuses without the licence, so don't ask for it then.
+  const teamsQuery = useOrganizationTeams(organizationId, { enabled: open && isAccessControlAllowed });
+  const createWorkspaceMutation = useCreateWorkspace(organizationId);
+  const organizationTeams = teamsQuery.data ?? [];
 
   const form = useForm<TCreateWorkspaceForm>({
     resolver: zodResolver(ZCreateWorkspaceForm),
@@ -67,20 +75,10 @@ export const CreateWorkspaceModal = ({
   });
 
   useEffect(() => {
-    if (!open) return;
-
-    const fetchModalData = async () => {
-      const teamsResponse = await getTeamsByOrganizationIdAction({ organizationId });
-
-      if (teamsResponse?.data) {
-        setOrganizationTeams(teamsResponse.data);
-      } else {
-        const errorMessage = getFormattedErrorMessage(teamsResponse);
-        toast.error(errorMessage);
-      }
-    };
-    fetchModalData();
-  }, [open, organizationId]);
+    if (teamsQuery.error) {
+      toast.error(getV3ApiErrorMessage(teamsQuery.error, t("common.something_went_wrong_please_try_again")));
+    }
+  }, [teamsQuery.error, t]);
 
   const { isSubmitting } = form.formState;
 
@@ -90,25 +88,19 @@ export const CreateWorkspaceModal = ({
   }));
 
   const onSubmit = async (data: TCreateWorkspaceForm) => {
-    const createWorkspaceResponse = await createWorkspaceAction({
-      organizationId,
-      data: {
-        name: data.name,
-        teamIds: data.teamIds || [],
-      },
-    });
-
-    if (createWorkspaceResponse?.data) {
-      const workspace = createWorkspaceResponse.data;
-      toast.success(t("common.workspace_created_successfully"));
-      setOpen(false);
-      form.reset();
-      // Redirect to the new workspace's surveys page
-      router.push(`/workspaces/${workspace.id}/surveys`);
-    } else {
-      const errorMessage = getFormattedErrorMessage(createWorkspaceResponse);
-      toast.error(errorMessage);
+    let workspace: { id: string };
+    try {
+      workspace = await createWorkspaceMutation.mutateAsync({ name: data.name, teamIds: data.teamIds ?? [] });
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
+      return;
     }
+
+    toast.success(t("common.workspace_created_successfully"));
+    setOpen(false);
+    form.reset();
+    // Redirect to the new workspace's surveys page
+    router.push(`/workspaces/${workspace.id}/surveys`);
   };
 
   const handleClose = () => {

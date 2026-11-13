@@ -22,7 +22,7 @@ const closeTheInstance = (): void => {
   vi.mocked(getIsFreshInstance).mockResolvedValue(false);
 };
 
-// A sign-up that did not come through createUserAction (no action mark in the request scope).
+// A sign-up that did not come through the sign-up route (no action mark in the request scope).
 const unmarkedSignup = { path: "/sign-up/email" } as never;
 
 beforeEach(() => {
@@ -84,9 +84,9 @@ describe("signupPolicyBeforeHandler", () => {
     }
   });
 
-  // createUserAction applies the full policy — including the invite exemption this hook cannot see —
+  // the sign-up route applies the full policy — including the invite exemption this hook cannot see —
   // and marks the request scope. Re-deciding here would reject legitimately invited sign-ups.
-  test("exempts a sign-up routed through createUserAction", async () => {
+  test("exempts a sign-up made through the sign-up route", async () => {
     closeTheInstance();
     vi.mocked(isSignupDomainAllowed).mockReturnValue(true);
     await expect(signupPolicyBeforeHandler(unmarkedSignup)).resolves.toBeUndefined();

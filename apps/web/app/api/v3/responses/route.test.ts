@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { POST } from "./route";
 
 /**
@@ -31,7 +32,7 @@ const post = (body: unknown) =>
   POST(
     new NextRequest("http://localhost/api/v3/responses", {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { ...SAME_ORIGIN_HEADERS, "content-type": "application/json" },
       body: JSON.stringify(body),
     }),
     { params: Promise.resolve({}) } as never

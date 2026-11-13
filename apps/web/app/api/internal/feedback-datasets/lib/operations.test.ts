@@ -16,7 +16,7 @@ vi.mock("@/modules/hub/service", () => ({
 }));
 
 const datasetId = "clfd1234567890123456789012";
-const context = { organizationId: "org_1" };
+const context = { organizationId: "org_1", userId: "user_1" };
 const base = {
   authentication: null,
   datasetId,

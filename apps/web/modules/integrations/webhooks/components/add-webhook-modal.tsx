@@ -7,13 +7,18 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { PipelineTriggers, Webhook } from "@formbricks/database/prisma-browser";
+import { PipelineTriggers } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import type { TCreatedWebhookResource } from "@/app/api/internal/webhooks/serializers";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { SurveySelect } from "@/modules/integrations/webhooks/components/survey-select";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
 import { WebhookCreatedModal } from "@/modules/integrations/webhooks/components/webhook-created-modal";
-import { isDiscordWebhook, validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
+import {
+  getEndpointStatusClassName,
+  isDiscordWebhook,
+  validWebHookURL,
+} from "@/modules/integrations/webhooks/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -26,7 +31,7 @@ import {
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
-import { createWebhookAction, testEndpointAction } from "../actions";
+import { createWebhook, testWebhookEndpoint } from "../lib/api-client";
 import { TWebhookInput } from "../types/webhooks";
 
 interface AddWebhookModalProps {
@@ -61,7 +66,7 @@ export const AddWebhookModal = ({
   const [selectedSurveys, setSelectedSurveys] = useState<string[]>([]);
   const [selectedAllSurveys, setSelectedAllSurveys] = useState(false);
   const [creatingWebhook, setCreatingWebhook] = useState(false);
-  const [createdWebhook, setCreatedWebhook] = useState<Webhook | null>(null);
+  const [createdWebhook, setCreatedWebhook] = useState<TCreatedWebhookResource | null>(null);
   const [webhookSecret, setWebhookSecret] = useState<string | undefined>();
 
   const handleTestEndpoint = async (
@@ -74,26 +79,20 @@ export const AddWebhookModal = ({
         return { success: false };
       }
       setHittingEndpoint(true);
-      const testEndpointActionResult = await testEndpointAction({
-        url: testEndpointInput,
-        secret: webhookSecret,
+      const { secret } = await testWebhookEndpoint({
         workspaceId,
+        body: { url: testEndpointInput, secret: webhookSecret },
       });
-
-      if (!testEndpointActionResult?.data) {
-        const errorMessage = getFormattedErrorMessage(testEndpointActionResult);
-        throw new Error(errorMessage);
-      }
       setHittingEndpoint(false);
       if (sendSuccessToast) toast.success(t("workspace.integrations.webhooks.endpoint_pinged"));
       setEndpointAccessible(true);
-      if (testEndpointActionResult.data.secret) {
-        setWebhookSecret(testEndpointActionResult.data.secret);
+      if (secret) {
+        setWebhookSecret(secret);
       }
-      return testEndpointActionResult.data;
+      return { success: true, secret: secret ?? undefined };
     } catch (err) {
       setHittingEndpoint(false);
-      const errMessage = err instanceof Error ? err.message : "Unknown error occurred";
+      const errMessage = getV3ApiErrorMessage(err, t("common.something_went_wrong_please_try_again"));
       toast.error(
         `${t("workspace.integrations.webhooks.endpoint_pinged_error")} \n ${
           errMessage.length < 250 ? errMessage : t("workspace.integrations.webhooks.please_check_console")
@@ -149,21 +148,15 @@ export const AddWebhookModal = ({
           surveyIds: selectedSurveys,
         };
 
-        const createWebhookActionResult = await createWebhookAction({
+        const created = await createWebhook({
           workspaceId,
-          webhookInput: updatedData,
-          webhookSecret: testResult.secret,
+          body: { ...updatedData, secret: testResult.secret },
         });
-        if (createWebhookActionResult?.data) {
-          router.refresh();
-          setCreatedWebhook(createWebhookActionResult.data);
-          toast.success(t("workspace.integrations.webhooks.webhook_added_successfully"));
-        } else {
-          const errorMessage = getFormattedErrorMessage(createWebhookActionResult);
-          toast.error(errorMessage);
-        }
+        router.refresh();
+        setCreatedWebhook(created);
+        toast.success(t("workspace.integrations.webhooks.webhook_added_successfully"));
       } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Unknown error occurred");
+        toast.error(getV3ApiErrorMessage(e, t("common.something_went_wrong_please_try_again")));
       } finally {
         setCreatingWebhook(false);
       }
@@ -222,15 +215,7 @@ export const AddWebhookModal = ({
                   onChange={(e) => {
                     setTestEndpointInput(e.target.value);
                   }}
-                  className={clsx(
-                    endpointAccessible === true
-                      ? "border-green-500 bg-green-50"
-                      : endpointAccessible === false
-                        ? "border-red-200 bg-red-50"
-                        : endpointAccessible === undefined
-                          ? "border-slate-200 bg-white"
-                          : null
-                  )}
+                  className={clsx(getEndpointStatusClassName(endpointAccessible))}
                   placeholder={t("workspace.integrations.webhooks.webhook_url_placeholder")}
                 />
                 <Button

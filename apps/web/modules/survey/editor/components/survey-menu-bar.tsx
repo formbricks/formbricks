@@ -22,13 +22,11 @@ import {
 } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import type { TSurveyAccess } from "@/lib/survey/visibility/access";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { isDeepEqual } from "@/lib/utils/object";
-import { reportStaleServerActionError } from "@/lib/utils/stale-server-action";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import type { TCustomCssValidationStatus } from "@/modules/custom-css/components/lib/validation";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
-import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { createSegment } from "@/modules/ee/contacts/segments/lib/api-client";
 import { describeCodeIssueAtPath, describeLockRefusal } from "@/modules/survey/editor/lib/code-messages";
 import {
   getSurveyToAutosave,
@@ -57,7 +55,7 @@ import { Alert, AlertButton, AlertTitle } from "@/modules/ui/components/alert";
 import { AlertDialog } from "@/modules/ui/components/alert-dialog";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
-import { updateSurveyAction, updateSurveyDraftAction } from "../actions";
+import { saveSurvey, saveSurveyDraft } from "../lib/api-client";
 import { type TAutoSaveFailure } from "../lib/auto-save-badge";
 import { createSaveAttemptOrder } from "../lib/save-attempt-order";
 import { describeElementIssue, isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
@@ -105,6 +103,13 @@ interface SurveyMenuBarProps {
   isOpenedByCreative: boolean;
 }
 
+/**
+ * A save the server answered with a refusal, which carries the reason the toast shows. Anything else (the
+ * network, the timeout, a proxy's error page) never reached a reason and is logged.
+ */
+const isAnsweredRefusal = (error: unknown): error is V3ApiError =>
+  error instanceof V3ApiError && error.status !== 0;
+
 export const SurveyMenuBar = ({
   localSurvey,
   survey,
@@ -141,12 +146,12 @@ export const SurveyMenuBar = ({
   const [lastAutoSaved, setLastAutoSaved] = useState<Date | null>(null);
   // Set when an auto-save tick does not land -- the request failed, or the server refused it -- and
   // cleared by the next save that does. `retrying` while the tick keeps going (it re-sends the whole
-  // draft, so a retry cannot apply anything twice); `stopped` once a stale deployment has ended it.
-  // This only makes sure the indicator stops claiming the work is safe while it is not (ENG-2899).
+  // draft, so a retry cannot apply anything twice). This only makes sure the indicator stops claiming
+  // the work is safe while it is not (ENG-2899).
   const [autoSaveFailure, setAutoSaveFailure] = useState<TAutoSaveFailure | null>(null);
   // The indicator follows the newest save attempt to settle, by start order, not whichever response
-  // arrives last. Next.js happens to send server actions one at a time today, so they settle in start
-  // order anyway; see save-attempt-order.ts for why that is not relied on. One ordering per editor.
+  // arrives last. Saves are plain requests, so they can overlap and settle in any order; see
+  // save-attempt-order.ts. One ordering per editor.
   const [saveAttemptOrder] = useState(createSaveAttemptOrder);
   const isSuccessfullySavedRef = useRef(false);
   const isAutoSavingRef = useRef(false);
@@ -333,16 +338,22 @@ export const SurveyMenuBar = ({
     if (localSurvey.segment && localSurvey.type === "app" && localSurvey.segment?.id === "temp") {
       const { filters } = localSurvey.segment;
 
-      // create a new private segment
-      const newSegment = await createSegmentAction({
-        workspaceId: localSurvey.workspaceId,
-        filters,
-        isPrivate: true,
-        surveyId: localSurvey.id,
-        title: localSurvey.id,
-      });
+      // A segment needs at least one filter, so the create would only be refused: the save goes on
+      // without one, as it does on any refusal, and skips the doomed request.
+      if (filters.length === 0) return undefined;
 
-      return newSegment?.data;
+      // create a new private segment; the save goes on without one when it is refused, as before
+      try {
+        return await createSegment({
+          workspaceId: localSurvey.workspaceId,
+          filters,
+          isPrivate: true,
+          surveyId: localSurvey.id,
+          title: localSurvey.id,
+        });
+      } catch {
+        return undefined;
+      }
     }
   };
 
@@ -564,79 +575,61 @@ export const SurveyMenuBar = ({
       const attempt = saveAttemptOrder.begin();
 
       try {
-        const updatedSurveyResponse = await updateSurveyDraftAction({
+        const savedData = await saveSurveyDraft({
           ...currentSurvey,
           segment: currentSurvey.segment?.id === "temp" ? null : currentSurvey.segment,
         } as unknown as TSurveyDraft);
 
-        if (updatedSurveyResponse?.data) {
-          const savedData = updatedSurveyResponse.data;
+        // The server deletes a private segment when a survey switches from app to link, so the
+        // working copy has to take that back. Skipping it is not a cosmetic loss: the stale id
+        // goes back out on the next save, `assertSurveySegmentBelongsToWorkspace` throws
+        // `ResourceNotFoundError`, and the catch below swallows it — so this block never runs
+        // again and the editor cannot be saved or published until the page is reloaded.
+        //
+        // Through the updater rather than against `localSurveyRef` (ENG-3266), which is written in
+        // a passive effect and so still names the sent object for as long as it takes React to
+        // flush one — a window the response can land in, where the ref would overwrite whatever
+        // the author changed mid-flight. `current` is the state itself, so the spread carries
+        // those edits and replaces only the key the server owns.
+        //
+        // The one edit the spread could still lose is an edit to `segment` itself: `TargetingCard`
+        // writes it on every change and is mounted for app surveys, so an author refining their
+        // targeting while a tick is in flight would get `savedData.segment` — the segment as it
+        // was when the request went out — written back over the newer one. So the guard is on
+        // `segment` alone, against the value the working copy held when it was sent. Guarding on
+        // the survey's object identity instead settles the same race by abandoning the adoption
+        // after any unrelated keystroke, which is what left the editor unsaveable.
+        //
+        // `currentSurvey.segment` rather than what was serialized: a `temp` segment goes out as
+        // `null`, and comparing against the wire value would read that rewrite as an author edit
+        // and never adopt the real segment the server answers with.
+        //
+        // The Embedded Data keys need no such adoption: `hasUnsavedSurveyChanges` normalizes them
+        // on both sides, which settles the dirty check without re-rendering the editor at all.
+        setLocalSurvey((current) => {
+          if (!isDeepEqual(current.segment, currentSurvey.segment)) return current;
+          if (isDeepEqual(current.segment, savedData.segment)) return current;
+          return { ...current, segment: savedData.segment };
+        });
 
-          // The server deletes a private segment when a survey switches from app to link, so the
-          // working copy has to take that back. Skipping it is not a cosmetic loss: the stale id
-          // goes back out on the next save, `assertSurveySegmentBelongsToWorkspace` throws
-          // `ResourceNotFoundError`, and the catch below swallows it — so this block never runs
-          // again and the editor cannot be saved or published until the page is reloaded.
-          //
-          // Through the updater rather than against `localSurveyRef` (ENG-3266), which is written in
-          // a passive effect and so still names the sent object for as long as it takes React to
-          // flush one — a window the response can land in, where the ref would overwrite whatever
-          // the author changed mid-flight. `current` is the state itself, so the spread carries
-          // those edits and replaces only the key the server owns.
-          //
-          // The one edit the spread could still lose is an edit to `segment` itself: `TargetingCard`
-          // writes it on every change and is mounted for app surveys, so an author refining their
-          // targeting while a tick is in flight would get `savedData.segment` — the segment as it
-          // was when the request went out — written back over the newer one. So the guard is on
-          // `segment` alone, against the value the working copy held when it was sent. Guarding on
-          // the survey's object identity instead settles the same race by abandoning the adoption
-          // after any unrelated keystroke, which is what left the editor unsaveable.
-          //
-          // `currentSurvey.segment` rather than what was serialized: a `temp` segment goes out as
-          // `null`, and comparing against the wire value would read that rewrite as an author edit
-          // and never adopt the real segment the server answers with.
-          //
-          // The Embedded Data keys need no such adoption: `hasUnsavedSurveyChanges` normalizes them
-          // on both sides, which settles the dirty check without re-rendering the editor at all.
-          setLocalSurvey((current) => {
-            if (!isDeepEqual(current.segment, currentSurvey.segment)) return current;
-            if (isDeepEqual(current.segment, savedData.segment)) return current;
-            return { ...current, segment: savedData.segment };
-          });
-
-          // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.
-          // This keeps the UI stable while still tracking that changes have been saved.
-          // The comparison uses refs, so this prevents unnecessary re-saves.
-          surveyRef.current = { ...savedData };
-          lastSavedSurveyRef.current = structuredClone(savedData);
-          isSuccessfullySavedRef.current = true;
-          // The refs above follow what the server stored either way; the indicator only follows the
-          // newest attempt, so a tick that lands after a newer save failed does not say "saved".
-          if (saveAttemptOrder.settle(attempt)) {
-            setAutoSaveFailure(null);
-            setLastAutoSaved(new Date());
-          }
-        } else if (saveAttemptOrder.settle(attempt)) {
-          // The request reached the app and the save was refused (`serverError`, validation, a missing
-          // segment) -- just as unsaved as a failed request.
-          setAutoSaveFailure("retrying");
+        // Update surveyRef (not localSurvey state) to prevent re-renders during auto-save.
+        // This keeps the UI stable while still tracking that changes have been saved.
+        // The comparison uses refs, so this prevents unnecessary re-saves.
+        surveyRef.current = { ...savedData };
+        lastSavedSurveyRef.current = structuredClone(savedData);
+        isSuccessfullySavedRef.current = true;
+        // The refs above follow what the server stored either way; the indicator only follows the
+        // newest attempt, so a tick that lands after a newer save failed does not say "saved".
+        if (saveAttemptOrder.settle(attempt)) {
+          setAutoSaveFailure(null);
+          setLastAutoSaved(new Date());
         }
       } catch (e) {
-        // A stale bundle's action id is rejected by the new deployment: hand it to the reload
-        // prompt rather than failing this tick silently, and stop the interval -- nothing this
-        // bundle sends is accepted until the tab reloads, so retrying every 10s only burns
-        // requests behind a prompt that is already up.
-        if (reportStaleServerActionError(e)) {
-          clearInterval(intervalId);
-          // The edit this tick carried is not saved, and nothing will retry it: say so, without the
-          // "keeps trying" promise the retrying state makes.
-          setAutoSaveFailure("stopped");
-          return;
-        }
-        // Anything else means this tick's save did not land -- a load balancer error page, a dropped
-        // connection. Nothing reaches `unhandledrejection` from here, so the indicator is the only
-        // place the author can learn about it.
-        console.error(e);
+        // This tick's save did not land: the server refused it (validation, a missing segment) or no
+        // answer came back (a load balancer error page, a dropped connection, the timeout). Either is
+        // just as unsaved, and nothing reaches `unhandledrejection` from here, so the indicator is the
+        // only place the author can learn about it. The next tick sends the whole draft again.
+        if (!isAnsweredRefusal(e)) console.error(e);
         if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure("retrying");
       } finally {
         isAutoSavingRef.current = false;
@@ -646,12 +639,14 @@ export const SurveyMenuBar = ({
     return () => clearInterval(intervalId);
   }, [localSurvey.publishOn, localSurvey.status, saveAttemptOrder, setLocalSurvey]);
 
-  // The reload prompt already explains a stale-deployment failure, so don't also claim the save itself
-  // went wrong. Callers return `false` themselves: the save did not go through.
-  const reportSaveException = (e: unknown) => {
-    if (reportStaleServerActionError(e)) return;
-    console.error(e);
-    toast.error(t("workspace.surveys.edit.error_saving_changes"));
+  /**
+   * What a failed save says: the server's reason for a refusal, as the toast showed it before, or
+   * `fallback` for a save that got no answer, which is logged. Callers return `false` themselves: the
+   * save did not go through.
+   */
+  const describeSaveFailure = (error: unknown, fallback: string): string => {
+    if (!isAnsweredRefusal(error)) console.error(error);
+    return getV3ApiErrorMessage(error, fallback);
   };
 
   // ENG-6783: the server refused an edit to a locked field; say why, with its details.
@@ -680,30 +675,21 @@ export const SurveyMenuBar = ({
     try {
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
-      const updatedSurveyResponse = await updateSurveyDraftAction(
-        getDraftSurveyToPersist(localSurvey, segment)
-      );
+      const savedSurvey = await saveSurveyDraft(getDraftSurveyToPersist(localSurvey, segment));
 
       setIsSurveySaving(false);
-      if (updatedSurveyResponse?.data) {
-        setLocalSurvey(updatedSurveyResponse.data);
-        lastSavedSurveyRef.current = structuredClone(updatedSurveyResponse.data);
-        toast.success(t("workspace.surveys.edit.changes_saved"));
-        isSuccessfullySavedRef.current = true;
-        if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure(null);
-        router.refresh();
-      } else {
-        // Recorded so an older tick that lands afterwards cannot report this draft as saved.
-        saveAttemptOrder.settle(attempt);
-        const errorMessage = getFormattedErrorMessage(updatedSurveyResponse);
-        toast.error(errorMessage);
-        return false;
-      }
+      setLocalSurvey(savedSurvey);
+      lastSavedSurveyRef.current = structuredClone(savedSurvey);
+      toast.success(t("workspace.surveys.edit.changes_saved"));
+      isSuccessfullySavedRef.current = true;
+      if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure(null);
+      router.refresh();
       return true;
     } catch (e) {
       setIsSurveySaving(false);
+      // Recorded so an older tick that lands afterwards cannot report this draft as saved.
       saveAttemptOrder.settle(attempt);
-      reportSaveException(e);
+      toast.error(describeSaveFailure(e, t("workspace.surveys.edit.error_saving_changes")));
       return false;
     }
   };
@@ -744,32 +730,29 @@ export const SurveyMenuBar = ({
       attempt = saveAttemptOrder.begin();
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
-      const updatedSurveyResponse = await updateSurveyAction({ ...localSurvey, segment });
+      // isSecondPublish is a transient save flag, not part of the survey — strip it so it
+      // doesn't linger in editor state and get echoed back on the next update.
+      const { isSecondPublish: _isSecondPublish, ...updatedSurvey } = await saveSurvey({
+        ...localSurvey,
+        segment,
+      });
 
       setIsSurveySaving(false);
-      if (updatedSurveyResponse?.data) {
-        // isSecondPublish is a transient action flag, not part of the survey — strip it so it
-        // doesn't linger in editor state and get echoed back on the next update.
-        const { isSecondPublish: _isSecondPublish, ...updatedSurvey } = updatedSurveyResponse.data;
-        setLocalSurvey(updatedSurvey);
-        lastSavedSurveyRef.current = structuredClone(updatedSurvey);
-        toast.success(t("workspace.surveys.edit.changes_saved"));
-        // Set flag to prevent beforeunload warning while the route re-renders
-        isSuccessfullySavedRef.current = true;
-        if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure(null);
-        // No router.refresh(): `updateSurveyAction` revalidates the route, and its response already
-        // carries the re-rendered page. Refreshing too rendered the editor twice per save.
-      } else {
-        saveAttemptOrder.settle(attempt);
-        toastSaveRefusal(getFormattedErrorMessage(updatedSurveyResponse));
-        return false;
-      }
+      setLocalSurvey(updatedSurvey);
+      lastSavedSurveyRef.current = structuredClone(updatedSurvey);
+      toast.success(t("workspace.surveys.edit.changes_saved"));
+      // Set flag to prevent beforeunload warning while the route re-renders
+      isSuccessfullySavedRef.current = true;
+      if (saveAttemptOrder.settle(attempt)) setAutoSaveFailure(null);
+      // The route only marks the page for revalidation; unlike the server action it replaces, its
+      // answer carries no re-rendered page, so the editor asks for one.
+      router.refresh();
 
       return true;
     } catch (e) {
       setIsSurveySaving(false);
       if (attempt !== undefined) saveAttemptOrder.settle(attempt);
-      reportSaveException(e);
+      toastSaveRefusal(describeSaveFailure(e, t("workspace.surveys.edit.error_saving_changes")));
       return false;
     }
   };
@@ -823,19 +806,11 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      const publishResult = await updateSurveyAction({
+      const publishResult = await saveSurvey({
         ...localSurvey,
         status,
         segment,
       });
-
-      if (!publishResult?.data) {
-        const errorMessage = getFormattedErrorMessage(publishResult);
-        toast.error(errorMessage);
-        isSurveyPublishingRef.current = false;
-        setIsSurveyPublishing(false);
-        return;
-      }
 
       // Publishing stays "in progress" until the editor unmounts: the summary page can take a while to
       // render for a large survey, and resetting here re-enabled Activate mid-navigation, inviting a
@@ -843,8 +818,8 @@ export const SurveyMenuBar = ({
 
       // When the user publishes their second survey, fire an in-app code action so a
       // Formbricks survey can be triggered from the dashboard. The flag is computed
-      // server-side in updateSurveyAction, so there's no extra round-trip here.
-      if (publishResult.data.isSecondPublish) {
+      // server-side by the save, so there's no extra round-trip here.
+      if (publishResult.isSecondPublish) {
         formbricks.track("second_survey_published").catch(() => undefined);
       }
 
@@ -854,11 +829,7 @@ export const SurveyMenuBar = ({
     } catch (error) {
       isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
-      if (reportStaleServerActionError(error)) {
-        return;
-      }
-      console.error(error);
-      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
+      toast.error(describeSaveFailure(error, t("workspace.surveys.edit.error_publishing_survey")));
     }
   };
 
@@ -889,19 +860,11 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      const scheduleResult = await updateSurveyAction({
+      await saveSurvey({
         ...localSurvey,
         status,
         segment,
       });
-
-      if (!scheduleResult?.data) {
-        const errorMessage = getFormattedErrorMessage(scheduleResult);
-        toast.error(errorMessage);
-        isSurveyPublishingRef.current = false;
-        setIsSurveyPublishing(false);
-        return;
-      }
 
       // Stays in progress until the editor unmounts, as in handleSurveyPublish.
       isSuccessfullySavedRef.current = true;
@@ -909,11 +872,7 @@ export const SurveyMenuBar = ({
     } catch (error) {
       isSurveyPublishingRef.current = false;
       setIsSurveyPublishing(false);
-      if (reportStaleServerActionError(error)) {
-        return;
-      }
-      console.error(error);
-      toast.error(t("workspace.surveys.edit.error_publishing_survey"));
+      toast.error(describeSaveFailure(error, t("workspace.surveys.edit.error_publishing_survey")));
     }
   };
 

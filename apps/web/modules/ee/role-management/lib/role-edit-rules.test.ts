@@ -27,8 +27,9 @@ describe("isRoleEditDisabled", () => {
 
   /**
    * The regression guard for ENG-2616: an invite row carries `memberAccepted: undefined`. Its role is
-   * changed through `updateInviteAction`, which has no last-owner guard — no membership exists yet — so
-   * a single-owner organization must not disable a pending owner invite's dropdown.
+   * changed through `PATCH /api/internal/invites/{inviteId}`, which has no last-owner guard — no
+   * membership exists yet — so a single-owner organization must not disable a pending owner invite's
+   * dropdown.
    */
   test("leaves a pending owner invite enabled in a single-owner organization", () => {
     expect(

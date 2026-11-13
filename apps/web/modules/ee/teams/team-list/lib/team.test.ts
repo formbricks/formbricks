@@ -3,6 +3,10 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import {
+  TeamAssignmentOutsideOrganizationError,
+  TeamNameTakenError,
+} from "@/modules/ee/teams/team-list/lib/errors";
 import { TTeamSettingsFormSchema } from "@/modules/ee/teams/team-list/types/team";
 import {
   createTeam,
@@ -14,6 +18,25 @@ import {
   getUserTeams,
   updateTeamDetails,
 } from "./team";
+
+/** What `@prisma/adapter-pg` 7.10+ raises when `@@unique([organizationId, name])` refuses a write. */
+const teamNameP2002 = () =>
+  new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+    code: "P2002",
+    clientVersion: "7.10.0",
+    meta: {
+      modelName: "Team",
+      driverAdapterError: {
+        name: "DriverAdapterError",
+        cause: {
+          kind: "UniqueConstraintViolation",
+          originalCode: "23505",
+          constraint: { index: "Team_organizationId_name_key" },
+          table: "Team",
+        },
+      },
+    },
+  });
 
 const lockedMemberships = vi.hoisted(() => ({
   rows: [] as Array<{ role: string }>,
@@ -185,7 +208,7 @@ describe("createTeam", () => {
     expect(result).toBe("t1");
     expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({ teamIds: ["t1"] });
   });
-  test("throws InvalidInputError if team exists", async () => {
+  test("throws TeamNameTakenError if team exists", async () => {
     vi.mocked(prisma.team.findFirst).mockResolvedValueOnce({
       id: "t1",
       name: "Team 1",
@@ -193,7 +216,14 @@ describe("createTeam", () => {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    await expect(createTeam("org1", "Team 1")).rejects.toThrow(InvalidInputError);
+    await expect(createTeam("org1", "Team 1")).rejects.toThrow(TeamNameTakenError);
+  });
+  // The existence check reads before it writes: a concurrent create of the same name reaches the
+  // constraint instead, and must be the same refusal, not a DatabaseError.
+  test("throws TeamNameTakenError when the name constraint refuses the create", async () => {
+    vi.mocked(prisma.team.findFirst).mockResolvedValueOnce(null);
+    vi.mocked(prisma.team.create).mockRejectedValueOnce(teamNameP2002());
+    await expect(createTeam("org1", "Team 1")).rejects.toThrow(TeamNameTakenError);
   });
   test("throws InvalidInputError if name too short", async () => {
     vi.mocked(prisma.team.findFirst).mockResolvedValueOnce(null);
@@ -408,7 +438,9 @@ describe("updateTeamDetails", () => {
       workspaceTeams: [],
     } as any);
     vi.mocked(prisma.membership.count).mockResolvedValueOnce(0);
-    await expect(updateTeamDetails("t1", data)).rejects.toThrow();
+    await expect(updateTeamDetails("t1", data)).rejects.toThrow(
+      new TeamAssignmentOutsideOrganizationError("members")
+    );
   });
   test("throws error if workspace not in org", async () => {
     vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({
@@ -432,10 +464,25 @@ describe("updateTeamDetails", () => {
     await expect(
       updateTeamDetails("t1", {
         name: "x",
-        members: [],
+        members: data.members,
         workspaces: [{ workspaceId: "p1", permission: "manage" }],
       })
-    ).rejects.toThrow();
+    ).rejects.toThrow(new TeamAssignmentOutsideOrganizationError("workspaces"));
+  });
+  test("throws TeamNameTakenError when the rename hits another team's name", async () => {
+    vi.mocked(prisma.team.findUnique)
+      .mockResolvedValueOnce({
+        id: "t1",
+        organizationId: "org1",
+        name: "Team 1",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .mockResolvedValueOnce(mockTeamDetails);
+    vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+    vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
+    vi.mocked(prisma.team.update).mockRejectedValueOnce(teamNameP2002());
+    await expect(updateTeamDetails("t1", data)).rejects.toThrow(TeamNameTakenError);
   });
   test("throws DatabaseError on Prisma error", async () => {
     vi.mocked(prisma.team.findUnique).mockRejectedValueOnce(

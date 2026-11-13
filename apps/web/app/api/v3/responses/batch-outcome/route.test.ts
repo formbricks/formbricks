@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
@@ -36,11 +37,16 @@ const WORKSPACE_ID = "clsww11111111111111111111";
 const ID_A = "clrsaaaaaaaaaaaaaaaaaaaa";
 const ID_B = "clrsbbbbbbbbbbbbbbbbbbbb";
 
-const post = (body: unknown, query = `?workspaceId=${WORKSPACE_ID}`) =>
+// The dashboard's own browser request: a session write from anywhere else is refused (origin-check.ts).
+const post = (
+  body: unknown,
+  query = `?workspaceId=${WORKSPACE_ID}`,
+  origin: Record<string, string> = SAME_ORIGIN_HEADERS
+) =>
   POST(
     new NextRequest(`http://localhost/api/v3/responses/batch-outcome${query}`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", ...origin },
       body: JSON.stringify(body),
     }),
     {} as never
@@ -86,6 +92,15 @@ describe("POST /api/v3/responses/batch-outcome", () => {
     await post({ ids: [ID_A], outcome: "lowQuality" });
 
     expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3StateMutation, expect.anything());
+  });
+
+  test("refuses a cross-site session write before anything changes", async () => {
+    const response = await post({ ids: [ID_A], outcome: "lowQuality" }, undefined, {
+      "sec-fetch-site": "cross-site",
+    });
+
+    expect(response.status).toBe(403);
+    expect(mockBatchSetOutcome).not.toHaveBeenCalled();
   });
 
   test("rejects a batch with no workspaceId", async () => {

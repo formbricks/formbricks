@@ -9,11 +9,11 @@ import { TOrganization } from "@formbricks/types/organizations";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
 import { SettingsCard } from "@/app/(app)/workspaces/[workspaceId]/settings/components/SettingsCard";
 import { isExternalImageSrc } from "@/lib/image-hosts";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import {
-  removeOrganizationFaviconUrlAction,
-  updateOrganizationFaviconUrlAction,
-} from "@/modules/ee/whitelabel/favicon-customization/actions";
+  removeOrganizationFavicon,
+  updateOrganizationFavicon,
+} from "@/modules/ee/whitelabel/favicon-customization/lib/api-client";
 import { handleFileUpload } from "@/modules/storage/file-upload";
 import { showFileUploadErrorToast } from "@/modules/storage/file-upload-error";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -100,20 +100,11 @@ export const FaviconCustomizationSettings = ({
 
     setIsLoading(true);
     try {
-      const updateFaviconResponse = await updateOrganizationFaviconUrlAction({
-        organizationId: organization.id,
-        faviconUrl,
-      });
-
-      if (updateFaviconResponse?.data) {
-        toast.success(t("workspace.settings.domain.favicon_saved_successfully"));
-        router.refresh();
-      } else {
-        const errorMessage = getFormattedErrorMessage(updateFaviconResponse);
-        toast.error(errorMessage);
-      }
+      await updateOrganizationFavicon(organization.id, faviconUrl);
+      toast.success(t("workspace.settings.domain.favicon_saved_successfully"));
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("common.something_went_wrong"));
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong")));
     } finally {
       setIsLoading(false);
       setIsEditing(false);
@@ -130,19 +121,11 @@ export const FaviconCustomizationSettings = ({
 
     setIsLoading(true);
     try {
-      const removeFaviconResponse = await removeOrganizationFaviconUrlAction({
-        organizationId: organization.id,
-      });
-
-      if (removeFaviconResponse?.data) {
-        toast.success(t("workspace.settings.domain.favicon_removed_successfully"));
-        router.refresh();
-      } else {
-        const errorMessage = getFormattedErrorMessage(removeFaviconResponse);
-        toast.error(errorMessage);
-      }
+      await removeOrganizationFavicon(organization.id);
+      toast.success(t("workspace.settings.domain.favicon_removed_successfully"));
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("common.something_went_wrong"));
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong")));
     } finally {
       setIsLoading(false);
       setIsEditing(false);

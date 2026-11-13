@@ -43,6 +43,9 @@
       "reset_password_description": "您將被登出以重設您的密碼。"
     },
     "invite": {
+      "accept_invitation": "接受邀請",
+      "already_a_member": "你已經是成員了",
+      "already_a_member_description": "你已經是這個組織的成員，所以這次邀請沒有任何變更。",
       "create_account": "建立帳戶",
       "email_does_not_match": "哎呀！電子郵件不符 🤦",
       "email_does_not_match_description": "邀請中的電子郵件與您的不符。",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "找不到邀請碼或已使用過。",
       "login": "登入",
       "welcome_to_organization": "您已加入 🎉",
-      "welcome_to_organization_description": "歡迎加入組織。"
+      "welcome_to_organization_description": "歡迎加入組織。",
+      "you_are_invited": "你受邀囉 💌",
+      "you_are_invited_description": "接受邀請即可加入這個組織。"
     },
     "last_used": "上次使用",
     "login": {
@@ -3792,7 +3797,6 @@
         "only_org_owner_can_perform_action": "只有組織擁有者才能存取此設定。",
         "organization_created_successfully": "組織已成功建立！",
         "organization_deleted_successfully": "組織已成功刪除。",
-        "organization_deletion_disabled": "組織刪除已停用。",
         "organization_invite_link_ready": "您的組織邀請連結已準備就緒！",
         "organization_name": "組織名稱",
         "organization_name_description": "為您的組織提供描述性名稱。",

@@ -12,7 +12,7 @@ const mocks = vi.hoisted(() => ({
   applyPendingUpgradeFromSetupCheckout: vi.fn(),
   findOrganizationIdByStripeCustomerId: vi.fn(),
   reconcileCloudStripeSubscriptionsForOrganization: vi.fn(),
-  syncOrganizationBillingFromStripe: vi.fn(),
+  syncOrganizationBillingFromStripeExclusively: vi.fn(),
   setOrganizationPaymentAttemptError: vi.fn(),
   loggerError: vi.fn(),
   loggerWarn: vi.fn(),
@@ -35,9 +35,11 @@ vi.mock("@/modules/ee/billing/lib/organization-billing", () => ({
   applyPendingUpgradeFromSetupCheckout: mocks.applyPendingUpgradeFromSetupCheckout,
   findOrganizationIdByStripeCustomerId: mocks.findOrganizationIdByStripeCustomerId,
   reconcileCloudStripeSubscriptionsForOrganization: mocks.reconcileCloudStripeSubscriptionsForOrganization,
-  syncOrganizationBillingFromStripe: mocks.syncOrganizationBillingFromStripe,
+  syncOrganizationBillingFromStripeExclusively: mocks.syncOrganizationBillingFromStripeExclusively,
   setOrganizationPaymentAttemptError: mocks.setOrganizationPaymentAttemptError,
 }));
+
+vi.mock("@/modules/ee/billing/lib/billing-lock", () => ({ BILLING_WEBHOOK_SYNC_LOCK_WAIT_MS: 5_000 }));
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
@@ -77,7 +79,7 @@ describe("webhookHandler setup checkout upgrade", () => {
     mocks.subscriptionsUpdate.mockResolvedValue({});
     mocks.findOrganizationIdByStripeCustomerId.mockResolvedValue("org_1");
     mocks.reconcileCloudStripeSubscriptionsForOrganization.mockResolvedValue(undefined);
-    mocks.syncOrganizationBillingFromStripe.mockResolvedValue(undefined);
+    mocks.syncOrganizationBillingFromStripeExclusively.mockResolvedValue(undefined);
   });
 
   test("attaches the saved card as default but does not apply the upgrade", async () => {
@@ -96,8 +98,18 @@ describe("webhookHandler setup checkout upgrade", () => {
     expect(mocks.applyPendingUpgradeFromSetupCheckout).not.toHaveBeenCalled();
     // Snapshot sync still runs and no error is logged.
     expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
-    expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalled();
+    expect(mocks.syncOrganizationBillingFromStripeExclusively).toHaveBeenCalled();
     expect(mocks.loggerError).not.toHaveBeenCalled();
+  });
+
+  test("syncs under the organization's billing lock, waiting briefly and syncing anyway if it stays busy", async () => {
+    await webhookHandler("body", "sig");
+
+    expect(mocks.syncOrganizationBillingFromStripeExclusively).toHaveBeenCalledWith("org_1", {
+      event: { id: "evt_1", created: 1739923200 },
+      waitMs: 5_000,
+      whenBusy: "syncUnlocked",
+    });
   });
 
   test("still syncs when the subscription was already replaced (canceled) by the finalized upgrade", async () => {
@@ -114,7 +126,7 @@ describe("webhookHandler setup checkout upgrade", () => {
     expect(result.status).toBe(200);
     expect(mocks.loggerWarn).toHaveBeenCalled();
     expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
-    expect(mocks.syncOrganizationBillingFromStripe).toHaveBeenCalled();
+    expect(mocks.syncOrganizationBillingFromStripeExclusively).toHaveBeenCalled();
   });
 
   test("still 500s when attaching the card fails for another reason", async () => {
@@ -126,7 +138,7 @@ describe("webhookHandler setup checkout upgrade", () => {
   });
 
   test("still 500s when the snapshot sync fails (retryable)", async () => {
-    mocks.syncOrganizationBillingFromStripe.mockRejectedValue(new Error("transient"));
+    mocks.syncOrganizationBillingFromStripeExclusively.mockRejectedValue(new Error("transient"));
 
     const result = await webhookHandler("body", "sig");
 
@@ -167,7 +179,7 @@ describe("webhookHandler payment intent failures", () => {
       expect.objectContaining({ id: "evt_pi", created: 1739923200 })
     );
     // payment-intent events short-circuit before the full snapshot sync.
-    expect(mocks.syncOrganizationBillingFromStripe).not.toHaveBeenCalled();
+    expect(mocks.syncOrganizationBillingFromStripeExclusively).not.toHaveBeenCalled();
   });
 
   test("records a failed_invoice error when a payment is canceled for that reason", async () => {

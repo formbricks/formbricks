@@ -67,7 +67,7 @@ import {
   withoutVisibilityControls,
 } from "@/modules/survey/visibility/lib/state";
 import { PreviewSurvey } from "@/modules/ui/components/preview-survey";
-import { getWorkspaceLanguagesAction, refetchWorkspaceAction } from "../actions";
+import { getEditorWorkspace, getWorkspaceLanguages } from "../lib/api-client";
 
 // How long the preview trails the editor. Every preview render re-mounts the whole survey bundle, so
 // following each keystroke made typing lag on large surveys (ENG-991).
@@ -229,8 +229,8 @@ export const SurveyEditor = ({
     router.refresh();
   }, [router]);
 
-  // `isFollowUpsTabVisible` tracks the server `survey` prop, which a manual save refreshes
-  // (`updateSurveyAction` revalidates the route; the draft save calls `router.refresh()`). Deleting the last follow-up therefore hides the
+  // `isFollowUpsTabVisible` tracks the server `survey` prop, which a manual save refreshes (both the
+  // save and the draft save call `router.refresh()`). Deleting the last follow-up therefore hides the
   // tab while `activeView` — client state — still points at it, leaving an empty main pane with no
   // tab selected. Fall back to the elements view so the deletion flow cannot dead-end.
   useEffect(() => {
@@ -287,19 +287,21 @@ export const SurveyEditor = ({
   );
 
   const fetchLatestWorkspaceData = useCallback(async () => {
-    const [refetchWorkspaceResponse, refetchLanguagesResponse] = await Promise.all([
-      refetchWorkspaceAction({ workspaceId: localWorkspace.id }),
-      getWorkspaceLanguagesAction({ workspaceId: localWorkspace.id }),
+    // Settled rather than all-or-nothing: a refresh that fails keeps what the editor has, each half on
+    // its own, as it always did.
+    const [workspaceResult, languagesResult] = await Promise.allSettled([
+      getEditorWorkspace(localWorkspace.id),
+      getWorkspaceLanguages(localWorkspace.id),
     ]);
 
     // Kept by identity when nothing changed: a new object re-renders every block card and the preview.
-    const workspaceData = refetchWorkspaceResponse?.data;
-    if (workspaceData) {
+    if (workspaceResult.status === "fulfilled") {
+      const workspaceData = workspaceResult.value;
       setLocalWorkspace((current) => (isDeepEqual(current, workspaceData) ? current : workspaceData));
     }
 
-    const languagesData = refetchLanguagesResponse?.data;
-    if (languagesData) {
+    if (languagesResult.status === "fulfilled") {
+      const languagesData = languagesResult.value;
       setLocalWorkspaceLanguages((current) =>
         isDeepEqual(current, languagesData) ? current : languagesData
       );

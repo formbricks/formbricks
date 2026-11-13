@@ -10,8 +10,8 @@ import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type { TBaseFilter, TSegment } from "@formbricks/types/segment";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
-import { createSegmentAction } from "@/modules/ee/contacts/segments/actions";
+import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { createSegment } from "@/modules/ee/contacts/segments/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -82,25 +82,27 @@ export function CreateSegmentModal({
 
     try {
       setIsCreatingSegment(true);
-      const createSegmentResponse = await createSegmentAction({
-        title: segment.title,
-        description: segment.description ?? "",
-        isPrivate: segment.isPrivate,
-        filters: segment.filters,
-        workspaceId,
-        surveyId: "",
-      });
-
-      if (createSegmentResponse?.data) {
-        toast.success(t("workspace.segments.segment_saved_successfully"));
-        handleResetState();
-        router.refresh();
+      try {
+        await createSegment({
+          title: segment.title,
+          description: segment.description ?? "",
+          isPrivate: segment.isPrivate,
+          filters: segment.filters,
+          workspaceId,
+          surveyId: "",
+        });
+      } catch (error) {
+        // A refusal the server explains (filters that read a hidden survey, say) shows its reason.
+        if (!(error instanceof V3ApiError) || !error.detail) throw error;
+        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
         setIsCreatingSegment(false);
-      } else {
-        const errorMessage = getFormattedErrorMessage(createSegmentResponse);
-        toast.error(errorMessage);
-        setIsCreatingSegment(false);
+        return;
       }
+
+      toast.success(t("workspace.segments.segment_saved_successfully"));
+      handleResetState();
+      router.refresh();
+      setIsCreatingSegment(false);
     } catch (error_) {
       logger.error(error_ instanceof Error ? error_ : new Error(String(error_)), "Error creating segment");
       // parse the segment filters to check if they are valid

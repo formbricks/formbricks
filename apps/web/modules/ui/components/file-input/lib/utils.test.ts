@@ -1,7 +1,7 @@
 import { toast } from "react-hot-toast";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { TAllowedFileExtension } from "@formbricks/types/storage";
-import { convertHeicToJpegAction } from "./actions";
+import { jsonResponse } from "@/modules/api/lib/hook-test-utils";
 import { checkForYoutubePrivacyMode, getAllowedFiles } from "./utils";
 
 // Mock FileReader
@@ -31,13 +31,22 @@ vi.mock("react-hot-toast", () => ({
   },
 }));
 
-vi.mock("./actions", () => ({
-  convertHeicToJpegAction: vi.fn(),
-}));
+const CONVERSION_URL = "/api/internal/heic-conversions";
+const JPEG_BYTES = new TextEncoder().encode("converted jpeg");
+
+/** The conversion route answering with a JPEG of `bytes`, or with a problem response. */
+const answerConversion = (response: Response) => vi.mocked(fetch).mockResolvedValue(response);
+const convertedJpeg = (bytes: Uint8Array = JPEG_BYTES) =>
+  jsonResponse({ data: { image: Buffer.from(bytes).toString("base64"), contentType: "image/jpeg" } });
 
 describe("File Input Utils", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
   });
 
   describe("getAllowedFiles", () => {
@@ -76,19 +85,52 @@ describe("File Input Utils", () => {
       expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("File exceeds 0.1 MB size limit."));
     });
 
-    test("should convert HEIC files to JPEG", async () => {
+    test("should convert HEIC files to JPEG on the server", async () => {
       const heicFile = new File(["test"], "test.heic", { type: "image/heic" });
-      const mockConvertedFile = new File(["converted"], "test.jpg", { type: "image/jpeg" });
-
-      vi.mocked(convertHeicToJpegAction).mockResolvedValue({
-        data: mockConvertedFile,
-      });
+      answerConversion(convertedJpeg());
 
       const result = await getAllowedFiles([heicFile], ["heic", "jpg"], 5);
 
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe("test.jpg");
       expect(result[0].type).toBe("image/jpeg");
+      expect(new Uint8Array(await result[0].arrayBuffer())).toEqual(JPEG_BYTES);
+      const [url, init] = vi.mocked(fetch).mock.calls[0];
+      expect(url).toBe(CONVERSION_URL);
+      expect(init?.method).toBe("POST");
+      // The photo goes up base64-encoded, without its data-URL prefix ("test" is "dGVzdA==").
+      expect(JSON.parse(String(init?.body))).toEqual({ image: "dGVzdA==" });
+    });
+
+    test("names a converted upper-case .HEIC file .jpg", async () => {
+      answerConversion(convertedJpeg());
+
+      const [converted] = await getAllowedFiles([new File(["test"], "IMG_0001.HEIC")], ["heic"], 5);
+
+      expect(converted.name).toBe("IMG_0001.jpg");
+    });
+
+    test("lists a HEIC file the server can't convert as unsupported", async () => {
+      answerConversion(jsonResponse({ status: 422, detail: "The image is not a HEIC image." }, 422));
+
+      const result = await getAllowedFiles([new File(["test"], "broken.heic")], ["heic", "jpg"], 5);
+
+      expect(result).toEqual([]);
+      expect(toast.error).toHaveBeenCalledWith("Unsupported file type.");
+    });
+
+    test("refuses a HEIC file whose JPEG is over the size limit", async () => {
+      answerConversion(convertedJpeg(new Uint8Array(200_000)));
+
+      const result = await getAllowedFiles([new File(["test"], "large.heic")], ["heic", "jpg"], 0.1);
+
+      expect(result).toEqual([]);
+      expect(toast.error).toHaveBeenCalledWith("File exceeds 0.1 MB size limit.");
+    });
+
+    test("never sends a file that is not HEIC to the server", async () => {
+      await getAllowedFiles([new File(["test"], "photo.jpg", { type: "image/jpeg" })], ["jpg"], 5);
+      expect(fetch).not.toHaveBeenCalled();
     });
 
     test("returns empty array when no files are provided", async () => {

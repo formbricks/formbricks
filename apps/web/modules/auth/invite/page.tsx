@@ -5,18 +5,15 @@
    components and does not apply here. Scoped to the file because ESLint cannot tell a server
    component from a client one (ENG-2366). */
 import Link from "next/link";
-import { after } from "next/server";
 import { logger } from "@formbricks/logger";
 import { WEBAPP_URL } from "@/lib/constants";
 import { verifyInviteToken } from "@/lib/jwt";
-import { createMembership } from "@/lib/membership/service";
-import { getUser, updateUser } from "@/lib/user/service";
+import { getUser } from "@/lib/user/service";
 import { getTranslate } from "@/lingodotdev/server";
-import { deleteInvite, getInvite } from "@/modules/auth/invite/lib/invite";
-import { createTeamMembership } from "@/modules/auth/invite/lib/team";
+import { getInvite } from "@/modules/auth/invite/lib/invite";
 import { getSession } from "@/modules/auth/lib/session";
-import { sendInviteAcceptedEmail } from "@/modules/email";
 import { Button } from "@/modules/ui/components/button";
+import { AcceptInvitation } from "./components/accept-invitation";
 import { ContentLayout } from "./components/content-layout";
 
 interface InvitePageProps {
@@ -87,67 +84,8 @@ export const InvitePage = async (props: InvitePageProps) => {
       );
     }
 
-    const createMembershipAction = async () => {
-      "use server";
-
-      if (!session || !user) return;
-
-      await createMembership(invite.organizationId, session.user.id, {
-        accepted: true,
-        role: invite.role,
-      });
-      if (invite.teamIds) {
-        await createTeamMembership(
-          {
-            organizationId: invite.organizationId,
-            role: invite.role,
-            teamIds: invite.teamIds,
-          },
-          user.id
-        );
-      }
-      await deleteInvite(inviteId);
-      // Best-effort: the invite is already accepted, so a notice the SMTP server refuses must not stop the
-      // rest of the acceptance.
-      try {
-        await sendInviteAcceptedEmail(
-          invite.creator.name ?? "",
-          user?.name ?? "",
-          invite.creator.email,
-          invite.creator.locale,
-          user.id,
-          invite.organizationId
-        );
-      } catch (error) {
-        logger.error({ err: error }, "Failed to send invite accepted email");
-      }
-      await updateUser(session.user.id, {
-        notificationSettings: {
-          ...user.notificationSettings,
-          alert: user.notificationSettings.alert ?? {},
-          unsubscribedOrganizationIds: Array.from(
-            new Set([
-              ...(user.notificationSettings?.unsubscribedOrganizationIds || []),
-              invite.organizationId,
-            ])
-          ),
-        },
-      });
-    };
-
-    after(async () => {
-      await createMembershipAction();
-    });
-
-    return (
-      <ContentLayout
-        headline={t("auth.invite.welcome_to_organization")}
-        description={t("auth.invite.welcome_to_organization_description")}>
-        <Button asChild>
-          <Link href="/">{t("auth.invite.go_to_app")}</Link>
-        </Button>
-      </ContentLayout>
-    );
+    // Nothing is joined on a GET: the user accepts explicitly, and the route checks everything again.
+    return <AcceptInvitation token={searchParams.token} />;
   } catch (e) {
     logger.error(e, "Error in InvitePage");
     return (

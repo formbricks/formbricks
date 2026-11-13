@@ -49,7 +49,7 @@ info:
       Every widget change moves `updatedAt`.
 
 
-    Authenticate all management endpoints with **session cookie** or **`x-api-key`** (management key with access to the workspace).
+    Authenticate all management endpoints with **`x-api-key`** (management key with access to the workspace).
 
     **Spec location:** source of truth is the multi-file tree at `docs/api-v3-reference/src/` (root `openapi.yml` plus one file per path and component); `docs/api-v3-reference/openapi.yml` is the generated single-file bundle (alongside v2 at `docs/api-v2-reference/openapi.yml`).
 
@@ -57,7 +57,7 @@ info:
     `workspaceId` is the canonical container identifier for this API. It is a **required query parameter on collection read endpoints** (`GET /api/v3/surveys`, `GET /api/v3/action-classes`, `GET /api/v3/contact-attribute-keys`, `GET /api/v3/contacts`, `GET /api/v3/segments`) because those operate within a workspace. **`POST /api/v3/surveys` instead requires `workspaceId` in the request body**, not as a query parameter. Single-resource endpoints (`GET`/`PATCH`/`DELETE /api/v3/surveys/{surveyId}`) locate the resource by its globally-unique id and resolve the workspace from it, so they do **not** accept a `workspaceId` query parameter — sending one returns **400** with an `invalid_params` entry naming the key itself (`name: "workspaceId"`, `reason: "Unsupported field 'workspaceId'"`), rather than one naming the body.
 
     **Auth**
-    Authenticate with either a session cookie or **`x-api-key`**. In dual-auth mode, V3 checks the API key first when the header is present, otherwise it uses the session path. Unauthenticated callers get **401** before query validation.
+    Authenticate with **`x-api-key`** or a Bearer token. Operations also accept the Formbricks app's own sign-in session, which is how the app calls them; it is not supported for scripts or integrations. When an API key is present, V3 checks it first. Unauthenticated callers get **401** before query validation.
 
     **Pagination**
     Cursor-based pagination with **limit** + opaque **cursor** token. Responses return `meta.nextCursor`; pass that value back as `cursor` to fetch the next page. Survey, contact and segment list responses also include `meta.totalCount`, the total number of items matching the current filters across all pages (`null` when `includeTotalCount=false`). The contact-attribute-key and workflow lists report it only when asked with `includeTotalCount=true`. There is no `offset` in this contract.
@@ -147,7 +147,7 @@ paths:
         deleted while you page may be missed or skipped, so a full extraction should page with
         `sortBy=createdAt` and reconcile on a later run.
 
-        Session cookie, `x-api-key`, or a Bearer token.
+        `x-api-key` or a Bearer token.
       tags:
         - V3 Surveys
       parameters:
@@ -1359,7 +1359,7 @@ paths:
       operationId: deleteSurveyV3
       summary: Delete a survey
       description: |
-        Deletes a survey by id. Session cookie, `x-api-key`, or a Bearer token.
+        Deletes a survey by id. `x-api-key` or a Bearer token.
 
         Refused with **409** (`survey_has_linked_creatives`) while non-archived creatives open the survey; `details.creatives` names them. Archived creatives don't block the delete: they are unlinked with it, and each unlink is audited as an update of that creative.
       tags:
@@ -1409,7 +1409,7 @@ paths:
 
         Blocks are addressed by id, never by position, so a concurrent edit cannot silently redirect an operation onto a different block. An `update` replaces the target block entirely, the same whole-subtree rule `PATCH /api/v3/surveys/{surveyId}` uses, and the replacement must carry every language the survey has configured.
 
-        Pass `expectedUpdatedAt` (the `updatedAt` from your last read) to make the write conditional; see the **409** response. Session cookie or x-api-key.
+        Pass `expectedUpdatedAt` (the `updatedAt` from your last read) to make the write conditional; see the **409** response. `x-api-key` or a Bearer token.
       tags:
         - V3 Surveys
       parameters:
@@ -1561,7 +1561,7 @@ paths:
 
         Idempotent: the same `order` always yields the same survey, and an order that already matches performs no write at all, so `updatedAt` does not move and other callers' preconditions stay valid. A stale `expectedUpdatedAt` is still rejected with **409** on that path — the precondition is evaluated before the method, so a no-op outcome never reports success to a stale caller. Because the list must be a permutation, a dropped or duplicated block is rejected rather than silently applied — the failure mode that resending the whole `blocks` array cannot catch.
 
-        Pass `expectedUpdatedAt` (the `updatedAt` from your last read) to make the write conditional; see the **409** response. Session cookie or x-api-key.
+        Pass `expectedUpdatedAt` (the `updatedAt` from your last read) to make the write conditional; see the **409** response. `x-api-key` or a Bearer token.
       tags:
         - V3 Surveys
       parameters:
@@ -1669,7 +1669,7 @@ paths:
       operationId: archiveSurveyV3
       summary: Archive a survey
       description: |
-        Archives (soft-deletes) a survey by id. Archived surveys are hidden from the default list, stop collecting responses, and become read-only until restored — a subsequent `PATCH` returns **422**. Works on any survey, including legacy question-based surveys, so this endpoint returns a minimal lifecycle acknowledgement rather than the full survey resource. Session cookie, `x-api-key`, or a Bearer token.
+        Archives (soft-deletes) a survey by id. Archived surveys are hidden from the default list, stop collecting responses, and become read-only until restored — a subsequent `PATCH` returns **422**. Works on any survey, including legacy question-based surveys, so this endpoint returns a minimal lifecycle acknowledgement rather than the full survey resource. `x-api-key` or a Bearer token.
       tags:
         - V3 Surveys
       parameters:
@@ -1750,7 +1750,7 @@ paths:
       operationId: restoreSurveyV3
       summary: Restore a survey
       description: |
-        Restores a previously archived (soft-deleted) survey by id, clearing its archive marker so it reappears in the default list and becomes editable again. Works on any survey, including legacy question-based surveys, so this endpoint returns a minimal lifecycle acknowledgement rather than the full survey resource. Session cookie, `x-api-key`, or a Bearer token.
+        Restores a previously archived (soft-deleted) survey by id, clearing its archive marker so it reappears in the default list and becomes editable again. Works on any survey, including legacy question-based surveys, so this endpoint returns a minimal lifecycle acknowledgement rather than the full survey resource. `x-api-key` or a Bearer token.
       tags:
         - V3 Surveys
       parameters:
@@ -2092,7 +2092,7 @@ paths:
       operationId: getResponsesV3
       summary: List responses
       description: |
-        Returns responses for a workspace, newest first. Session cookie, `x-api-key`, or a Bearer token, with read access.
+        Returns responses for a workspace, newest first. `x-api-key` or a Bearer token, with read access.
 
         **Scoping.** `workspaceId` is required, as on every v3 collection read. Add `surveyId` to narrow to one survey — the common case, and the one the storage layer is indexed for (`(surveyId, createdAt)`). A workspace-wide list has to reach responses through their surveys and is correspondingly slower, so pass `surveyId` whenever you know it. `contactId` narrows to one respondent.
 
@@ -4000,7 +4000,7 @@ paths:
       summary: List charts
       description: |
         Lists a workspace's charts, newest first, page by page. Each chart embeds the dashboards that
-        hold it. Needs read access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+        hold it. Needs read access to the workspace. `x-api-key` or a Bearer token.
       tags:
         - V3 Charts
       parameters:
@@ -4136,8 +4136,7 @@ paths:
         Write chart queries against this list — the chart query validator refuses any field that is not
         in it, so the catalog cannot drift from what the API accepts.
 
-        Needs read access to the workspace and to the Feedback Dataset. Session cookie, `x-api-key`, or
-        a Bearer token.
+        Needs read access to the workspace and to the Feedback Dataset. `x-api-key` or a Bearer token.
       tags:
         - V3 Charts
       parameters:
@@ -5563,7 +5562,7 @@ paths:
       operationId: getCreativesV3
       summary: List creatives
       description: |
-        Returns a workspace's creatives, most recently updated first. Session cookie, `x-api-key`, or a Bearer token, with read access to the workspace.
+        Returns a workspace's creatives, most recently updated first. `x-api-key` or a Bearer token, with read access to the workspace.
 
         **Archived creatives are left out** unless `filter[displayStatus][in]` asks for `archived`. `filter[displayStatus][in]` filters on the derived `displayStatus`, so it matches what each row shows: a creative whose survey is paused matches `paused`, one whose schedule has ended matches `closed`. `surveyId` keeps the creatives that open that survey.
 
@@ -6476,7 +6475,7 @@ paths:
 
         An empty `data` array means the workspace has no action classes yet. Triggers are optional, so
         you can still create an app survey with `distribution.triggers: []` (or omit `distribution`
-        entirely) and attach triggers later via `PATCH` once an action class exists. Session cookie, `x-api-key`, or a Bearer token.
+        entirely) and attach triggers later via `PATCH` once an action class exists. `x-api-key` or a Bearer token.
       tags:
         - V3 Action Classes
       parameters:
@@ -6549,8 +6548,7 @@ paths:
       description: |
         Returns the contact attribute keys for a workspace. Use the returned `key` values as
         `targeting.filters[].root.contactAttributeKey` when targeting app surveys; `dataType` hints which
-        operators apply. Requires the Contacts entitlement (**403** without it). Session cookie,
-        `x-api-key`, or a Bearer token.
+        operators apply. Requires the Contacts entitlement (**403** without it). `x-api-key` or a Bearer token.
 
         Optional `search`, `filter[dataType][in]`, `filter[type][in]`, `sortBy` and `includeTotalCount`
         narrow, order and count the list on the server. Without them the endpoint behaves as before:
@@ -6680,7 +6678,7 @@ paths:
       summary: List contacts
       description: |
         Returns a workspace's contacts, filtered, searched, sorted and counted on the server. Requires the
-        Contacts entitlement (**403** without it). Session cookie, `x-api-key`, or a Bearer token.
+        Contacts entitlement (**403** without it). `x-api-key` or a Bearer token.
 
         **Attribute filters** use `filter[attribute.<key>][<operator>]=<value>`, where `<key>` is a
         `ContactAttributeKeyResource.key` of the workspace (an unknown key → **400**). The operators depend
@@ -6813,7 +6811,7 @@ paths:
         order and bounded by `limit` — for quick-filter value pickers. Not paginated: `meta.truncated` says
         whether more values match than were returned, so a picker can ask the user to narrow the search. Number and date attributes return
         their stored text `value`. Requires the Contacts entitlement (**403** without it). An unknown
-        `key` → **400**. Session cookie, `x-api-key`, or a Bearer token.
+        `key` → **400**. `x-api-key` or a Bearer token.
       tags:
         - V3 Contacts
       parameters:
@@ -6914,7 +6912,7 @@ paths:
         (survey-local targeting drafts) are never listed. A segment's survey references — including the
         `surveyIds` of its survey-interaction filters — only name surveys the caller may see. Requires the Contacts entitlement (**403** without it). The cursor is bound to
         `sortBy` and `filter[title][contains]`; changing either while paging → **400** naming `cursor`. Unknown query
-        parameters → **400**. Session cookie, `x-api-key`, or a Bearer token.
+        parameters → **400**. `x-api-key` or a Bearer token.
       tags:
         - V3 Segments
       parameters:
@@ -7237,7 +7235,7 @@ paths:
       operationId: getWorkspaceCustomCssV3
       summary: Read workspace custom CSS
       description: |
-        Returns the workspace's shared survey CSS as editable **source** (light and dark), the one recoverable previous revision, whether the stored CSS is being delivered to respondents (`status`), and whether this caller may change it (`canEdit`, `planAllowed`). Compiled output is never returned here. Requires read access to the workspace. Session cookie, `x-api-key`, or a Bearer token.
+        Returns the workspace's shared survey CSS as editable **source** (light and dark), the one recoverable previous revision, whether the stored CSS is being delivered to respondents (`status`), and whether this caller may change it (`canEdit`, `planAllowed`). Compiled output is never returned here. Requires read access to the workspace. `x-api-key` or a Bearer token.
       tags:
         - V3 Workspaces
       parameters:
@@ -8222,10 +8220,10 @@ components:
     sessionAuth:
       type: apiKey
       in: cookie
-      name: next-auth.session-token
+      name: formbricks.session_token
       description: |
-        NextAuth session JWT cookie. **Development:** often `next-auth.session-token`.
-        **Production (HTTPS):** often `__Secure-next-auth.session-token`. Send the cookie your browser receives after sign-in.
+        The Formbricks app's own sign-in session (`formbricks.session_token`, or `__Secure-formbricks.session_token` over HTTPS). It is how the Formbricks app calls this API, and it is not supported for scripts or integrations: use an API key.
+        Session-authenticated writes (`POST`, `PUT`, `PATCH`, `DELETE`) are accepted only from the Formbricks app itself (a same-origin browser request) and get a `403` otherwise.
     apiKeyAuth:
       type: apiKey
       in: header

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ZImportedDocument } from "@/app/api/internal/surveys/imports/lib/schemas";
 import { ZV3ExpectedUpdatedAt } from "@/app/api/v3/surveys/schemas";
 
 /**
@@ -8,8 +9,8 @@ import { ZV3ExpectedUpdatedAt } from "@/app/api/v3/surveys/schemas";
  * which name each field they refuse, so here they only have to be objects.
  */
 export const ZSurveyContentUpdateBody = z.strictObject({
-  survey: z.record(z.string(), z.unknown()),
-  references: z.record(z.string(), z.unknown()),
+  survey: ZImportedDocument,
+  references: ZImportedDocument,
   updatedAt: ZV3ExpectedUpdatedAt,
   triggers: z.enum(["file", "keep"]),
 });

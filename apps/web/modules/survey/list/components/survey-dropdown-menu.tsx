@@ -24,7 +24,6 @@ import { logger } from "@formbricks/logger";
 import type { TSurveyStatus } from "@formbricks/types/surveys/types";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
 import { cn } from "@/lib/cn";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { SurveyStatusChangeDialog } from "@/modules/ee/creatives/components/survey-side/survey-status-change-dialog";
 import {
@@ -35,9 +34,9 @@ import { getLinkedCreativesBlockers, joinCreativeNames } from "@/modules/ee/crea
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useExportSurvey } from "@/modules/survey/export/hooks/use-export-survey";
 import type { TSurveyExportFormat } from "@/modules/survey/export/lib/formats";
-import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
 import { CopySurveyModal } from "@/modules/survey/list/components/copy-survey-modal";
 import { RenameSurveyModal } from "@/modules/survey/list/components/rename-survey-modal";
+import { copySurvey } from "@/modules/survey/list/lib/api-client";
 import { getCustomCssCopyNotice } from "@/modules/survey/list/lib/custom-css-notice";
 import { surveyKeys } from "@/modules/survey/list/lib/query";
 import { TSurveyListItem } from "@/modules/survey/list/types/survey-overview";
@@ -256,21 +255,14 @@ export const SurveyDropDownMenu = ({
     setIsDuplicating(true);
     setIsDropDownOpen(false);
     try {
-      const response = await copySurveyToOtherWorkspaceAction({
-        surveyId: survey.id,
-        targetWorkspaceId: workspace.id,
-      });
-      if (response?.data) {
-        toast.success(t("workspace.surveys.survey_duplicated_successfully"));
-        const customCssNotice = getCustomCssCopyNotice(response.data, t);
-        if (customCssNotice) toast.error(customCssNotice, { duration: 8000 });
-        await queryClient.invalidateQueries({ queryKey: surveyKeys.lists() });
-        return;
-      }
-      toast.error(getFormattedErrorMessage(response));
+      const copy = await copySurvey({ surveyId: survey.id, targetWorkspaceId: workspace.id });
+      toast.success(t("workspace.surveys.survey_duplicated_successfully"));
+      const customCssNotice = getCustomCssCopyNotice(copy, t);
+      if (customCssNotice) toast.error(customCssNotice, { duration: 8000 });
+      await queryClient.invalidateQueries({ queryKey: surveyKeys.lists() });
     } catch (error) {
       logger.error(error);
-      toast.error(t("common.something_went_wrong_please_try_again"));
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     } finally {
       setIsDuplicating(false);
     }

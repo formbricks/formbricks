@@ -332,7 +332,7 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
     await runRecovery(user, await createRecoverySession(user.id));
 
     // The credential row survives with a null password — that row is what identifies them as a password
-    // user to `forgotPasswordAction` after `identityProvider` has moved on.
+    // user to `POST /api/internal/password-reset-requests` after `identityProvider` has moved on.
     const credential = await prisma.account.findFirstOrThrow({
       where: { userId: user.id, provider: "credential" },
     });

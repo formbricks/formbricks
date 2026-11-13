@@ -96,7 +96,7 @@ export const ContactSurveyPage = async (props: ContactSurveyPageProps) => {
     findMatchingLocale(),
     getAcceptedLanguages(),
     // The single-use link's own response, whoever gave it. Once finished, the link is "already answered"
-    // here as on /s, which is also what the PIN and verify-email actions answer for it (ENG-4041): the
+    // here as on /s, which is also what the PIN and verify-email routes answer for it (ENG-4041): the
     // client routes accept one response per single-use id, so the link is spent whichever contact opens it.
     singleUseId ? getResponseBySingleUseId(survey.id, singleUseId)() : Promise.resolve(null),
   ]);

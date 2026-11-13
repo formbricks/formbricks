@@ -152,7 +152,7 @@ type TReclaimOutcome = {
  *
  * - The password is NULLED, not the row deleted. Sign-in behaviour is identical either way
  *   (`!currentPassword` → the same 401 after the same dummy hash), but the surviving row is what marks
- *   this user as a credential user, which is what lets `forgotPasswordAction` still offer them a reset —
+ *   this user as a credential user, which is what lets the password-reset request (`POST /api/internal/password-reset-requests`) still offer them a reset —
  *   recovery flips `identityProvider` to the SSO provider and nothing ever flips it back, so deleting the
  *   row would lock them out of every password route with no self-service way back.
  * - The `where` is scoped by `userId`, NOT by `providerAccountId` / `issuer`, even though Better Auth's own
@@ -211,7 +211,7 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   // `TwoFactor` row goes, and the legacy `twoFactorEnabled`/`twoFactorSecret` nulls below (kept
   // deliberately, so the backfill shim cannot re-arm an attacker's factor) are exactly what stop it
   // being re-armed for a legitimate owner either. They can recover the password via
-  // `forgotPasswordAction`, and then hold a one-factor account where two were enrolled, without being
+  // the password-reset request, and then hold a one-factor account where two were enrolled, without being
   // told. Correct for a squatter, a silent downgrade for the owner.
   //
   // Left as-is on purpose: there is no signal here that separates the two populations, and weakening the

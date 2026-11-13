@@ -276,7 +276,7 @@ export const updateUser = async (
       (membership) => membership.organizationId === organizationId
     )?.role;
 
-    // Mirrors the last-owner guard in modules/ee/role-management/actions.ts: without it, this
+    // Mirrors the last-owner guard in app/api/internal/members/[userId]/lib/operations.ts: without it, this
     // route can demote an organization's only owner with no UI path back into it. Gated on
     // existingUser.isActive because getOrganizationOwnerCount only counts active owners — demoting
     // an already-inactive owner doesn't change that count, so guarding it would block a no-op change.

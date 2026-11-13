@@ -17,6 +17,7 @@ interface SSOOptionsProps {
   readonly oidcDisplayName?: string;
   readonly returnToUrl: string;
   readonly samlSsoEnabled: boolean;
+  readonly samlConnectionExists: boolean;
   readonly source: "signin" | "signup";
 }
 
@@ -28,6 +29,7 @@ export const SSOOptions = ({
   oidcDisplayName,
   returnToUrl,
   samlSsoEnabled,
+  samlConnectionExists,
   source,
 }: SSOOptionsProps) => {
   const { t } = useTranslation();
@@ -59,7 +61,12 @@ export const SSOOptions = ({
         />
       )}
       {samlSsoEnabled && (
-        <SamlButton returnToUrl={returnToUrl} lastUsed={lastLoggedInWith === "Saml"} source={source} />
+        <SamlButton
+          returnToUrl={returnToUrl}
+          lastUsed={lastLoggedInWith === "Saml"}
+          source={source}
+          connectionExists={samlConnectionExists}
+        />
       )}
     </div>
   );

@@ -1,10 +1,11 @@
 import Stripe from "stripe";
 import { logger } from "@formbricks/logger";
+import { BILLING_WEBHOOK_SYNC_LOCK_WAIT_MS } from "@/modules/ee/billing/lib/billing-lock";
 import {
   findOrganizationIdByStripeCustomerId,
   reconcileCloudStripeSubscriptionsForOrganization,
   setOrganizationPaymentAttemptError,
-  syncOrganizationBillingFromStripe,
+  syncOrganizationBillingFromStripeExclusively,
 } from "@/modules/ee/billing/lib/organization-billing";
 import { isCanceledSubscriptionUpdateError } from "@/modules/ee/billing/lib/subscription-currency";
 import { getStripeClient, getStripeWebhookSecret } from "./stripe-client";
@@ -28,7 +29,8 @@ const relevantEvents = new Set([
  * Setup-mode Checkout completed: save the provided card as the default on the customer
  * and subscription. We deliberately do NOT apply the upgrade here — the prorated charge
  * may need on-session 3D Secure, which a background webhook can't do; the billing page
- * drives the upgrade (via changeBillingPlanAction) after redirect.
+ * drives the upgrade (POST /api/internal/organizations/{organizationId}/billing/setup-checkout-upgrades)
+ * after redirect.
  */
 const handleSetupCheckoutCompleted = async (
   session: Stripe.Checkout.Session,
@@ -244,9 +246,13 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
     }
 
     await reconcileCloudStripeSubscriptionsForOrganization(organizationId);
-    await syncOrganizationBillingFromStripe(organizationId, {
-      id: event.id,
-      created: event.created,
+    // Under the organization's billing lock, so this event's snapshot can't land after a newer one a route
+    // wrote. A lock still busy after the short wait syncs anyway: the delivery must stay fast and never fail
+    // on the lock (Stripe retries any non-2xx).
+    await syncOrganizationBillingFromStripeExclusively(organizationId, {
+      event: { id: event.id, created: event.created },
+      waitMs: BILLING_WEBHOOK_SYNC_LOCK_WAIT_MS,
+      whenBusy: "syncUnlocked",
     });
   } catch (error) {
     logger.error({ error, eventId: event.id, eventType: event.type }, "Failed to process Stripe webhook");

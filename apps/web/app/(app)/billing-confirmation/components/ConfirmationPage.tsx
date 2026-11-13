@@ -3,7 +3,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { waitForBillingPlanAction } from "@/modules/ee/billing/actions";
+import { isBillingTransportFailure, waitForBillingPlan } from "@/modules/ee/billing/lib/api-client";
 import { Button } from "@/modules/ui/components/button";
 import { Confetti } from "@/modules/ui/components/confetti";
 
@@ -54,9 +54,10 @@ export const ConfirmationPage = () => {
     // long enough to meet a load balancer timeout) must not surface as "try again" under "Upgrade
     // successful" -- a customer who just paid could retry the upgrade -- so it is caught and reported
     // instead of reaching the global unexpected-response notice (ENG-2899).
-    void waitForBillingPlanAction({ organizationId, targetPlan: plan })
+    void waitForBillingPlan({ organizationId, targetPlan: plan })
       .catch((error: unknown) => {
-        Sentry.captureException(error);
+        // A refusal is the server's answer, as the action's was; only a request that got none is reported.
+        if (isBillingTransportFailure(error)) Sentry.captureException(error);
       })
       .finally(() => {
         if (!cancelled) {

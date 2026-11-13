@@ -43,6 +43,9 @@
       "reset_password_description": "你将会被登出以重置你的密码。"
     },
     "invite": {
+      "accept_invitation": "接受邀请",
+      "already_a_member": "你已经是成员啦",
+      "already_a_member_description": "你已经属于该组织,所以这次邀请没有任何变化。",
       "create_account": "创建一个帐户",
       "email_does_not_match": "糟糕！ 邮箱错误 🤦",
       "email_does_not_match_description": "邀请中的电子邮件与您的不匹配。",
@@ -55,7 +58,9 @@
       "invite_not_found_description": "邀请码无法找到或已被使用。",
       "login": "登录",
       "welcome_to_organization": "你 已 进入 🎉",
-      "welcome_to_organization_description": "欢迎 进入 组织"
+      "welcome_to_organization_description": "欢迎 进入 组织",
+      "you_are_invited": "你被邀请啦 💌",
+      "you_are_invited_description": "接受邀请即可加入该组织。"
     },
     "last_used": "最近使用",
     "login": {
@@ -3792,7 +3797,6 @@
         "only_org_owner_can_perform_action": "只有 组织 所有者 可以 访问 此 设置。",
         "organization_created_successfully": "组织 创建 成功",
         "organization_deleted_successfully": "组织 删除 成功",
-        "organization_deletion_disabled": "组织删除已禁用。",
         "organization_invite_link_ready": "您的组织邀请链接已准备好！",
         "organization_name": "组织 名称",
         "organization_name_description": "为您的组织 提供一个描述性的名称",

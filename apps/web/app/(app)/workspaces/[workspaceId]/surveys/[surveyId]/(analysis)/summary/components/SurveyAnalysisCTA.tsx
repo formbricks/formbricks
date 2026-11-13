@@ -15,17 +15,17 @@ import { SurveyStatusDropdown } from "@/app/(app)/workspaces/[workspaceId]/surve
 import { useSurvey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/context/survey-context";
 import { getAIUnavailableMessage } from "@/lib/ai/availability";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { useSingleUseId } from "@/modules/survey/hooks/useSingleUseId";
-import { copySurveyToOtherWorkspaceAction } from "@/modules/survey/list/actions";
+import { copySurvey } from "@/modules/survey/list/lib/api-client";
 import { getCustomCssCopyNotice } from "@/modules/survey/list/lib/custom-css-notice";
 import { AiGlyph, AiStatusLine } from "@/modules/ui/components/ai";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { IconBar } from "@/modules/ui/components/iconbar";
 import { useBeforeUnloadPrompt } from "@/modules/ui/hooks/use-before-unload-prompt";
-import { generateExampleResponsesAction, resetSurveyAction } from "../actions";
+import { generateExampleResponses, resetSurvey } from "../lib/api-client";
 
 interface SurveyAnalysisCTAProps {
   isReadOnly: boolean;
@@ -80,8 +80,8 @@ export const SurveyAnalysisCTA = ({
 
   const appSetupCompleted = survey.type === "app" && workspace.appSetupCompleted;
 
-  // The generation runs inside a server action that dies with the tab, so a reload mid-run throws
-  // away answers the user is waiting on and cannot cheaply ask for again.
+  // The generation is a long request tied to the tab, so a reload mid-run throws away the result the
+  // user is waiting on and cannot cheaply ask for again.
   useBeforeUnloadPrompt(() => isGeneratingExamples);
 
   useEffect(() => {
@@ -108,18 +108,14 @@ export const SurveyAnalysisCTA = ({
 
   const duplicateSurveyAndRoute = async (surveyId: string) => {
     setLoading(true);
-    const duplicatedSurveyResponse = await copySurveyToOtherWorkspaceAction({
-      surveyId: surveyId,
-      targetWorkspaceId: workspace.id,
-    });
-    if (duplicatedSurveyResponse?.data) {
+    try {
+      const copy = await copySurvey({ surveyId, targetWorkspaceId: workspace.id });
       toast.success(t("workspace.surveys.survey_duplicated_successfully"));
-      const customCssNotice = getCustomCssCopyNotice(duplicatedSurveyResponse.data, t);
+      const customCssNotice = getCustomCssCopyNotice(copy, t);
       if (customCssNotice) toast.error(customCssNotice, { duration: 8000 });
-      router.push(`/workspaces/${workspace?.id}/surveys/${duplicatedSurveyResponse.data.id}/edit`);
-    } else {
-      const errorMessage = getFormattedErrorMessage(duplicatedSurveyResponse);
-      toast.error(errorMessage);
+      router.push(`/workspaces/${workspace?.id}/surveys/${copy.id}/edit`);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
     setIsCautionDialogOpen(false);
     setLoading(false);
@@ -146,22 +142,18 @@ export const SurveyAnalysisCTA = ({
 
   const handleResetSurvey = async () => {
     setIsResetting(true);
-    const result = await resetSurveyAction({
-      surveyId: survey.id,
-      workspaceId: workspace.id,
-    });
-    if (result?.data) {
+    try {
+      const result = await resetSurvey(survey.id);
       toast.success(
         t("workspace.surveys.summary.survey_reset_successfully", {
-          responseCount: result.data.deletedResponsesCount,
-          displayCount: result.data.deletedDisplaysCount,
+          responseCount: result.deletedResponsesCount,
+          displayCount: result.deletedDisplaysCount,
         })
       );
       router.refresh();
       await refreshAnalysisData();
-    } else {
-      const errorMessage = getFormattedErrorMessage(result);
-      toast.error(errorMessage);
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
     setIsResetting(false);
     setIsResetModalOpen(false);
@@ -190,22 +182,19 @@ export const SurveyAnalysisCTA = ({
     // and the result would render without its check or cross.
     const resultToastOptions = { id: loadingToastId, icon: undefined };
     try {
-      const result = await generateExampleResponsesAction({ surveyId: survey.id });
-      if (result?.data) {
-        toast.success(
-          t("workspace.surveys.summary.example_responses_generated_successfully", {
-            count: result.data.createdCount,
-          }),
-          resultToastOptions
-        );
-        router.refresh();
-      } else {
-        const errorMessage = getFormattedErrorMessage(result);
-        toast.error(
-          errorMessage || t("workspace.surveys.summary.example_responses_generation_failed"),
-          resultToastOptions
-        );
-      }
+      const result = await generateExampleResponses(survey.id);
+      toast.success(
+        t("workspace.surveys.summary.example_responses_generated_successfully", {
+          count: result.createdCount,
+        }),
+        resultToastOptions
+      );
+      router.refresh();
+    } catch (error) {
+      toast.error(
+        getV3ApiErrorMessage(error, t("workspace.surveys.summary.example_responses_generation_failed")),
+        resultToastOptions
+      );
     } finally {
       setIsGeneratingExamples(false);
     }

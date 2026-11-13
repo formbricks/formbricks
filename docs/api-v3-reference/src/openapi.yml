@@ -101,8 +101,8 @@ info:
       Every widget change moves `updatedAt`.
 
 
-    Authenticate all management endpoints with **session cookie** or
-    **`x-api-key`** (management key with access to the workspace).
+    Authenticate all management endpoints with **`x-api-key`** (management key
+    with access to the workspace).
 
 
     **Spec location:** source of truth is the multi-file tree at
@@ -129,9 +129,10 @@ info:
 
     **Auth**
 
-    Authenticate with either a session cookie or **`x-api-key`**. In dual-auth
-    mode, V3 checks the API key first when the header is present, otherwise it
-    uses the session path. Unauthenticated callers get **401** before query
+    Authenticate with **`x-api-key`** or a Bearer token. Operations also accept
+    the Formbricks app's own sign-in session, which is how the app calls them;
+    it is not supported for scripts or integrations. When an API key is
+    present, V3 checks it first. Unauthenticated callers get **401** before query
     validation.
 
 
@@ -516,13 +517,16 @@ components:
     sessionAuth:
       type: apiKey
       in: cookie
-      name: next-auth.session-token
+      name: formbricks.session_token
       description: >
-        NextAuth session JWT cookie. **Development:** often
-        `next-auth.session-token`.
+        The Formbricks app's own sign-in session (`formbricks.session_token`,
+        or `__Secure-formbricks.session_token` over HTTPS). It is how the
+        Formbricks app calls this API, and it is not supported for scripts or
+        integrations: use an API key.
 
-        **Production (HTTPS):** often `__Secure-next-auth.session-token`. Send
-        the cookie your browser receives after sign-in.
+        Session-authenticated writes (`POST`, `PUT`, `PATCH`, `DELETE`) are
+        accepted only from the Formbricks app itself (a same-origin browser
+        request) and get a `403` otherwise.
     apiKeyAuth:
       type: apiKey
       in: header

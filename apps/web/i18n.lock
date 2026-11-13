@@ -31,6 +31,9 @@ checksums:
     auth/forgot-password/reset/success/text: 27380a18e2c15751a541bed797895713
     auth/forgot-password/reset_password: c21b33e73f096fd7b02171d399b36adf
     auth/forgot-password/reset_password_description: d5b9cfe064b5e1adb7c9af91f535e3be
+    auth/invite/accept_invitation: 2b5c46af9868f48be185fdd26c7b52a0
+    auth/invite/already_a_member: 330042b51818d0c19fd0fd7eb880eb35
+    auth/invite/already_a_member_description: 183f9b074e23951aa00a34d54c8862a7
     auth/invite/create_account: bc53a57281d2701563f94f3169518028
     auth/invite/email_does_not_match: 56f4253b158e3d5ab34e6d23e990a0de
     auth/invite/email_does_not_match_description: 8a33aad9e2c6cbc14c6caef46536a80c
@@ -44,6 +47,8 @@ checksums:
     auth/invite/login: 9fb886eff8d1d67d8bb79f5c3f78edde
     auth/invite/welcome_to_organization: 5dedd03b80d2a8d60fa906318dba2149
     auth/invite/welcome_to_organization_description: d3c912d4056cc4af9c08fb2a0919823a
+    auth/invite/you_are_invited: 072d613513cce39b14b26f9f8f305be0
+    auth/invite/you_are_invited_description: bbe2fce9f0d256aa11ad13a643d6920e
     auth/last_used: 9049bf77c57c92b7a5a760ba2a40128c
     auth/login/backup_code: 870711a6df11ae55366d018255b466cf
     auth/login/create_an_account: bc53a57281d2701563f94f3169518028
@@ -3663,7 +3668,6 @@ checksums:
     workspace/settings/general/only_org_owner_can_perform_action: 0244ff3c6de787935e592eac4c5e4f0b
     workspace/settings/general/organization_created_successfully: 1ce874980bdd7d5de8402c276fb97a57
     workspace/settings/general/organization_deleted_successfully: e51fd7ee9efda04a373450ea21b242db
-    workspace/settings/general/organization_deletion_disabled: 6fb0e71c218ed4ab3be175f1094feada
     workspace/settings/general/organization_invite_link_ready: e54b37c4ec2e5a9ea9f6bc6e5b512b0b
     workspace/settings/general/organization_name: 73c9b31c9032a22bd84a07881942bb04
     workspace/settings/general/organization_name_description: ff517b4749a332b94a26110d7c7e771f

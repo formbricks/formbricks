@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { POST as postSignup } from "@/app/api/internal/signups/route";
+import { postToPreLoginRoute, withoutEmailToken } from "@/integration/pre-login-routes";
 import { resetDb } from "@/integration/reset-db";
-import { createUserAction } from "@/modules/auth/signup/actions";
 import { sendVerificationLinkEmail } from "@/modules/email";
 
 /**
@@ -32,8 +33,12 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => {
   return { ...actual, queueAuditEventBackground: vi.fn(async () => undefined) };
 });
 
+/** The sign-up form's request, through the real `POST /api/internal/signups`. */
+const createSignup = (body: Record<string, unknown>) =>
+  postToPreLoginRoute(postSignup, "/api/internal/signups", body);
+
 const EMAIL = "newcomer@corporate-example.com";
-const signUp = () => createUserAction({ name: "Newcomer", email: EMAIL, password: "Passw0rd!" });
+const signUp = () => createSignup({ name: "Newcomer", email: EMAIL, password: "Passw0rd!" });
 
 /** The three mailer states the callback has to survive, including both silent-failure modes. */
 const MAILER_STATES = [
@@ -66,7 +71,7 @@ describe("verification email send failures during sign-up (real Postgres)", () =
     // Asserting success here pins the behaviour against a future Better Auth version that starts
     // propagating the throw instead of swallowing it — that would leave the account created but the
     // sign-up looking failed, driving the user to retry into a duplicate.
-    expect(result?.data).toEqual({ success: true });
+    expect(result.data).toEqual({ success: true, emailToken: expect.any(String) });
     expect(await prisma.user.count({ where: { email: EMAIL } })).toBe(1);
   });
 
@@ -80,7 +85,7 @@ describe("verification email send failures during sign-up (real Postgres)", () =
       vi.clearAllMocks();
       arrange();
       const result = await signUp();
-      responses.push({ data: result?.data, serverError: result?.serverError });
+      responses.push(withoutEmailToken(result));
     }
 
     for (const response of responses) {

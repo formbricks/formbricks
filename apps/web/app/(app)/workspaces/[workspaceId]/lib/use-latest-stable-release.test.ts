@@ -4,10 +4,10 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 
-const getLatestStableFbReleaseAction = vi.fn();
+const getLatestRelease = vi.fn();
 
-vi.mock("@/modules/workspaces/settings/(setup)/app-connection/actions", () => ({
-  getLatestStableFbReleaseAction: () => getLatestStableFbReleaseAction(),
+vi.mock("@/modules/workspaces/settings/(setup)/app-connection/lib/api-client", () => ({
+  getLatestRelease: (options: { signal?: AbortSignal }) => getLatestRelease(options),
 }));
 
 // Pin the running build's version so these assert the comparison rather than whatever
@@ -23,11 +23,11 @@ const SAME = "v1.2.3";
 
 describe("useLatestStableRelease", () => {
   beforeEach(() => {
-    getLatestStableFbReleaseAction.mockReset();
+    getLatestRelease.mockReset();
   });
 
   test("surfaces the tag when the released version is newer than the running build", async () => {
-    getLatestStableFbReleaseAction.mockResolvedValue({ data: NEWER });
+    getLatestRelease.mockResolvedValue(NEWER);
 
     const { result } = renderHook(() => useLatestStableRelease(true));
 
@@ -37,24 +37,24 @@ describe("useLatestStableRelease", () => {
   });
 
   test("stays empty when the released version is not newer", async () => {
-    getLatestStableFbReleaseAction.mockResolvedValue({ data: OLDER });
+    getLatestRelease.mockResolvedValue(OLDER);
 
     const { result } = renderHook(() => useLatestStableRelease(true));
 
     await waitFor(() => {
-      expect(getLatestStableFbReleaseAction).toHaveBeenCalled();
+      expect(getLatestRelease).toHaveBeenCalled();
     });
     // No update prompt for an instance that is already ahead of the latest release.
     expect(result.current).toBe("");
   });
 
   test("stays empty when the released version matches the running build", async () => {
-    getLatestStableFbReleaseAction.mockResolvedValue({ data: SAME });
+    getLatestRelease.mockResolvedValue(SAME);
 
     const { result } = renderHook(() => useLatestStableRelease(true));
 
     await waitFor(() => {
-      expect(getLatestStableFbReleaseAction).toHaveBeenCalled();
+      expect(getLatestRelease).toHaveBeenCalled();
     });
     expect(result.current).toBe("");
   });
@@ -63,29 +63,29 @@ describe("useLatestStableRelease", () => {
     const { result } = renderHook(() => useLatestStableRelease(false));
 
     // Nobody but an owner/manager is shown the prompt, so the request is not worth making.
-    expect(getLatestStableFbReleaseAction).not.toHaveBeenCalled();
+    expect(getLatestRelease).not.toHaveBeenCalled();
     expect(result.current).toBe("");
   });
 
-  test("stays empty when the action returns no tag", async () => {
-    getLatestStableFbReleaseAction.mockResolvedValue({ data: undefined });
+  test("stays empty when there is no tag to compare", async () => {
+    getLatestRelease.mockResolvedValue(null);
 
     const { result } = renderHook(() => useLatestStableRelease(true));
 
     await waitFor(() => {
-      expect(getLatestStableFbReleaseAction).toHaveBeenCalled();
+      expect(getLatestRelease).toHaveBeenCalled();
     });
     expect(result.current).toBe("");
   });
 
-  test("stays empty when the action itself returns nothing", async () => {
-    // The action returns undefined on a server-side failure; the hook must not read through it.
-    getLatestStableFbReleaseAction.mockResolvedValue(undefined);
+  test("stays empty when the check fails", async () => {
+    // A failed request must not surface as an error, or as a prompt.
+    getLatestRelease.mockRejectedValue(new Error("Service Unavailable"));
 
     const { result } = renderHook(() => useLatestStableRelease(true));
 
     await waitFor(() => {
-      expect(getLatestStableFbReleaseAction).toHaveBeenCalled();
+      expect(getLatestRelease).toHaveBeenCalled();
     });
     expect(result.current).toBe("");
   });
@@ -93,10 +93,8 @@ describe("useLatestStableRelease", () => {
   test("ignores a stale response that resolves after a newer one", async () => {
     // Role flips true -> false -> true, so two requests exist at once. The first is stale by the
     // time it lands; without the cleanup guard its result overwrites the newer one.
-    const resolvers: ((value: { data: string }) => void)[] = [];
-    getLatestStableFbReleaseAction.mockImplementation(
-      () => new Promise((resolve) => resolvers.push(resolve))
-    );
+    const resolvers: ((value: string) => void)[] = [];
+    getLatestRelease.mockImplementation(() => new Promise((resolve) => resolvers.push(resolve)));
 
     const { result, rerender } = renderHook(({ owner }) => useLatestStableRelease(owner), {
       initialProps: { owner: true },
@@ -112,31 +110,45 @@ describe("useLatestStableRelease", () => {
     });
 
     // Newest request answers first, then the abandoned one.
-    resolvers[1]({ data: NEWER });
+    resolvers[1](NEWER);
     await waitFor(() => {
       expect(result.current).toBe(NEWER);
     });
     // act() flushes the stale callback and any state update it triggers, so this asserts the
     // update did not happen rather than racing it.
     await act(async () => {
-      resolvers[0]({ data: "v5.0.0" });
+      resolvers[0]("v5.0.0");
     });
 
     expect(result.current).toBe(NEWER);
   });
 
+  test("aborts the request when the role changes", async () => {
+    getLatestRelease.mockImplementation(() => new Promise(() => {}));
+    const { rerender } = renderHook(({ owner }) => useLatestStableRelease(owner), {
+      initialProps: { owner: true },
+    });
+    await waitFor(() => {
+      expect(getLatestRelease).toHaveBeenCalledTimes(1);
+    });
+
+    rerender({ owner: false });
+
+    expect((getLatestRelease.mock.calls[0][0] as { signal: AbortSignal }).signal.aborted).toBe(true);
+  });
+
   test("checks once when the role does not change", async () => {
-    getLatestStableFbReleaseAction.mockResolvedValue({ data: NEWER });
+    getLatestRelease.mockResolvedValue(NEWER);
 
     const { rerender } = renderHook(() => useLatestStableRelease(true));
 
     await waitFor(() => {
-      expect(getLatestStableFbReleaseAction).toHaveBeenCalledTimes(1);
+      expect(getLatestRelease).toHaveBeenCalledTimes(1);
     });
 
     rerender();
     rerender();
 
-    expect(getLatestStableFbReleaseAction).toHaveBeenCalledTimes(1);
+    expect(getLatestRelease).toHaveBeenCalledTimes(1);
   });
 });

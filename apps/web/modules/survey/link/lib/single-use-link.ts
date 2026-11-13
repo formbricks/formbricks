@@ -184,7 +184,7 @@ export type TLinkSurveySingleUseAccess = { allowed: true; singleUseId?: string }
  * Whether a request to a public link-survey surface carries the single-use link the survey requires.
  *
  * The decision every such surface makes, in one place: the link page, the contact page, the page metadata,
- * and the PIN and verify-email actions. The PIN action once took no link at all and handed a single-use
+ * and the PIN and verify-email routes. The PIN check once took no link at all and handed a single-use
  * survey's definition to anyone with its id, while the page refused the same caller (ENG-4041). A surface
  * that answers "not allowed" must answer exactly as it does for a survey that does not exist.
  *

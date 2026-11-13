@@ -15,13 +15,13 @@ import {
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
 } from "@formbricks/types/errors";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage, getV3ApiErrorReason } from "@/modules/api/lib/v3-client";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
+import { createSignup } from "@/modules/auth/lib/pre-login-api-client";
 import {
   buildSignupWithoutVerificationSuccessPath,
   buildVerificationRequestedPath,
 } from "@/modules/auth/lib/verification-links";
-import { createUserAction } from "@/modules/auth/signup/actions";
 import { TermsPrivacyLinks } from "@/modules/auth/signup/components/terms-privacy-links";
 import { SSOOptions } from "@/modules/ee/sso/components/sso-options";
 import { Button } from "@/modules/ui/components/button";
@@ -29,7 +29,6 @@ import { Checkbox } from "@/modules/ui/components/checkbox";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 import { PasswordInput } from "@/modules/ui/components/password-input";
-import { createEmailTokenAction } from "../../../auth/actions";
 import { PasswordChecks } from "./password-checks";
 
 const ZSignupInput = z.object({
@@ -55,6 +54,8 @@ interface SignupFormProps {
   emailVerificationDisabled: boolean;
   isSsoEnabled: boolean;
   samlSsoEnabled: boolean;
+  /** Whether the instance's one SAML connection exists, looked up where the page renders. */
+  samlConnectionExists: boolean;
   isTurnstileConfigured: boolean;
   turnstileSiteKey?: string;
   isFormbricksCloud: boolean;
@@ -75,6 +76,7 @@ export const SignupForm = ({
   emailVerificationDisabled,
   isSsoEnabled,
   samlSsoEnabled,
+  samlConnectionExists,
   isTurnstileConfigured,
   turnstileSiteKey,
   isFormbricksCloud,
@@ -128,12 +130,14 @@ export const SignupForm = ({
   });
 
   /**
-   * Map a failed `createUserAction` to where the user should see it: the two field-level rejections go
-   * under the input that caused them, everything else is a toast. Each stable error code exists so the
-   * server can be specific without the message itself being an enumeration signal.
+   * Map a failed sign-up to where the user should see it: the two field-level rejections go under the
+   * input that caused them, everything else is a toast. Each stable error code (the problem's
+   * `details.reason`) exists so the server can be specific without the message itself being an
+   * enumeration signal.
    */
-  const surfaceSignupError = (errorMessage: string) => {
-    switch (errorMessage) {
+  const surfaceSignupError = (error: unknown) => {
+    const errorMessage = getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"));
+    switch (getV3ApiErrorReason(error, errorMessage)) {
       case SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE:
         form.setError("email", { type: "manual", message: t("auth.signup.company_email_required") });
         return;
@@ -173,31 +177,21 @@ export const SignupForm = ({
       };
       const normalizedEmail = data.email.toLowerCase();
 
-      const createUserResponse = await createUserAction({
-        name: data.name,
-        email: normalizedEmail,
-        password: data.password,
-        userLocale,
-        inviteToken: inviteToken ?? "",
-        turnstileToken,
-        subscribeToSecurityUpdates,
-        subscribeToProductUpdates,
-      });
-
-      if (!createUserResponse?.data) {
+      let token: string;
+      try {
+        ({ emailToken: token } = await createSignup({
+          name: data.name,
+          email: normalizedEmail,
+          password: data.password,
+          userLocale,
+          inviteToken: inviteToken ?? "",
+          turnstileToken,
+          subscribeToSecurityUpdates,
+          subscribeToProductUpdates,
+        }));
+      } catch (error) {
         resetTurnstileIfConfigured();
-        surfaceSignupError(getFormattedErrorMessage(createUserResponse));
-        return;
-      }
-
-      const emailTokenActionResponse = await createEmailTokenAction({ email: normalizedEmail });
-      const token = emailTokenActionResponse?.data;
-
-      if (!token) {
-        resetTurnstileIfConfigured();
-
-        const errorMessage = getFormattedErrorMessage(emailTokenActionResponse);
-        toast.error(errorMessage);
+        surfaceSignupError(error);
         return;
       }
 
@@ -389,6 +383,7 @@ export const SignupForm = ({
           oidcOAuthEnabled={oidcOAuthEnabled}
           oidcDisplayName={oidcDisplayName}
           samlSsoEnabled={samlSsoEnabled}
+          samlConnectionExists={samlConnectionExists}
           returnToUrl={returnToUrl}
           source="signup"
         />

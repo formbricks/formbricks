@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TWorkspace, ZWorkspace } from "@formbricks/types/workspace";
-import { getFormattedErrorMessage } from "@/lib/utils/error-message";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -18,7 +18,7 @@ import {
   FormProvider,
 } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
-import { updateWorkspaceAction } from "../../actions";
+import { patchWorkspaceSettings } from "../../lib/api-client";
 
 interface EditCooldownPeriodProps {
   workspace: TWorkspace;
@@ -43,16 +43,11 @@ export const EditCooldownPeriodForm: React.FC<EditCooldownPeriodProps> = ({ work
 
   const updateCooldownPeriod: SubmitHandler<TEditCooldownPeriodFormValues> = async (data) => {
     try {
-      const updatedWorkspaceResponse = await updateWorkspaceAction({ workspaceId: workspace.id, data });
-      if (updatedWorkspaceResponse?.data) {
-        toast.success(t("workspace.general.cooldown_period_updated_successfully"));
-        form.resetField("recontactDays", { defaultValue: updatedWorkspaceResponse.data.recontactDays });
-      } else {
-        const errorMessage = getFormattedErrorMessage(updatedWorkspaceResponse);
-        toast.error(errorMessage);
-      }
-    } catch (err) {
-      toast.error(`Error: ${err instanceof Error ? err.message : "Unknown error occurred"}`);
+      const updated = await patchWorkspaceSettings(workspace.id, data);
+      toast.success(t("workspace.general.cooldown_period_updated_successfully"));
+      form.resetField("recontactDays", { defaultValue: updated.recontactDays });
+    } catch (error) {
+      toast.error(getV3ApiErrorMessage(error, t("workspace.general.error_saving_workspace_information")));
     }
   };
 

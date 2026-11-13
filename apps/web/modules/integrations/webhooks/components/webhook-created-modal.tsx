@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { Webhook } from "@formbricks/database/prisma-browser";
 import { copyToClipboard } from "@/lib/utils/clipboard";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -22,7 +21,8 @@ import { Label } from "@/modules/ui/components/label";
 
 interface WebhookCreatedModalProps {
   readonly open: boolean;
-  readonly webhook: Webhook;
+  /** Only its signing secret is shown: this is the one time it is. */
+  readonly webhook: { readonly secret: string | null };
   readonly onClose: () => void;
 }
 
