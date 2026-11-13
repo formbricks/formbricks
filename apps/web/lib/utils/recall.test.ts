@@ -5,6 +5,7 @@ import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
 import {
   checkForEmptyFallBackValue,
+  createRecallTokenPattern,
   extractCompleteRecallIds,
   extractFallbackValue,
   extractId,
@@ -102,6 +103,19 @@ describe("recall utility functions", () => {
       const text = "Text #recall:id1 more text #recall:id2";
       const result = extractIds(text);
       expect(result).toEqual(["id1", "id2"]);
+    });
+  });
+
+  describe("createRecallTokenPattern", () => {
+    test("splits a text at its complete tokens, workflow Variable paths included", () => {
+      const text = "Hi #recall:q1/fallback:a# from #recall:payload.customer.tier/fallback:# #recall:open";
+      const pattern = createRecallTokenPattern();
+
+      expect(text.match(pattern)).toEqual([
+        "#recall:q1/fallback:a#",
+        "#recall:payload.customer.tier/fallback:#",
+      ]);
+      expect(text.split(pattern)).toEqual(["Hi ", " from ", " #recall:open"]);
     });
   });
 

@@ -13,7 +13,7 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import { type Dispatch, type SetStateAction, useEffect, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { FallbackInput } from "@/modules/survey/components/element-form-input/components/fallback-input";
@@ -28,6 +28,7 @@ import { LinkEditor } from "./link-editor";
 import { ListTabIndentationPlugin } from "./list-tab-indentation-plugin";
 import { RecallNode } from "./recall-node";
 import { RecallPlugin } from "./recall-plugin";
+import { type TEditorRecallSource, createSurveyRecallSource } from "./recall-source";
 import { ToolbarPlugin } from "./toolbar-plugin";
 
 /*
@@ -61,6 +62,12 @@ export type TextEditorProps = {
   readonly localSurvey?: TSurvey;
   readonly elementId?: string;
   readonly selectedLanguageCode?: string;
+  /**
+   * Where `@` recall gets its items, instead of `localSurvey` + `elementId` + `selectedLanguageCode`:
+   * a workflow step brings its Variable picker (ENG-7113). Keep its identity stable (memoize it), since
+   * the recall plugin re-registers its listeners when it changes.
+   */
+  readonly recallSource?: TEditorRecallSource;
   readonly fallbacks?: { [id: string]: string };
   readonly addFallback?: () => void;
   readonly autoFocus?: boolean;
@@ -119,6 +126,14 @@ export const Editor = (props: TextEditorProps) => {
   const [addFallbackFunction, setAddFallbackFunction] = useState<(() => void) | null>(null);
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
   const [showLinkEditor, setShowLinkEditor] = useState(false);
+  const { localSurvey, elementId, selectedLanguageCode, recallSource: givenRecallSource } = props;
+  const recallSource = useMemo(() => {
+    if (givenRecallSource) return givenRecallSource;
+    if (localSurvey && elementId && selectedLanguageCode) {
+      return createSurveyRecallSource(localSurvey, elementId, selectedLanguageCode);
+    }
+    return null;
+  }, [givenRecallSource, localSurvey, elementId, selectedLanguageCode]);
 
   return (
     <>
@@ -184,11 +199,9 @@ export const Editor = (props: TextEditorProps) => {
               {props.isExternalUrlsAllowed && <LinkPlugin />}
               {props.isExternalUrlsAllowed && <AutoLinkPlugin />}
               {props.autoFocus && <AutoFocusPlugin />}
-              {props.localSurvey && props.elementId && props.selectedLanguageCode && (
+              {recallSource && (
                 <RecallPlugin
-                  localSurvey={props.localSurvey}
-                  elementId={props.elementId}
-                  selectedLanguageCode={props.selectedLanguageCode}
+                  recallSource={recallSource}
                   recallItems={recallItems}
                   setRecallItems={setRecallItems}
                   fallbacks={fallbacks}
