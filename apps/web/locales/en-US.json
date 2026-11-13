@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "Could not enable the workflow: its trigger survey is restricted. Make the survey visible to its workspace first.",
       "enable_success": "Workflow enabled.",
       "expand_inspector": "Expand inspector",
+      "http_request": "HTTP request",
       "if_else": "If / Else",
       "if_else_operator_contains": "{variable} contains {value}",
       "if_else_operator_equals": "{variable} is {value}",

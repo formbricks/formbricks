@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "Não foi possível ativar o fluxo de trabalho: o inquérito de acionamento está restrito. Torna o inquérito visível para o respetivo espaço de trabalho primeiro.",
       "enable_success": "Fluxo de trabalho ativado.",
       "expand_inspector": "Expandir inspetor",
+      "http_request": "Pedido HTTP",
       "if_else": "Se / Senão",
       "if_else_operator_contains": "{variable} contém {value}",
       "if_else_operator_equals": "{variable} é {value}",

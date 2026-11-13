@@ -1,0 +1,58 @@
+get:
+  operationId: getWorkflowWebhookV3
+  summary: Get a workflow's Webhook Secret URL
+  description: >
+    Returns the Webhook Secret URL of a workflow with a Webhook trigger, when it
+    was last called and from which IP, and its Sample payload with the Variables
+    it offers.
+
+
+    The URL is a credential: anyone holding it can start runs. It is therefore
+    returned only to callers with **write** access to the workspace (`readWrite`
+    or `manage`); read-only callers get **403**. Do not log or share it; if it
+    leaks, call `POST /api/v3/workflows/{workflowId}/webhook/regenerate`.
+
+
+    A workflow whose trigger is not a Webhook trigger answers **422**
+    `invalid_workflow_state`.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkflowIdPath.yml
+  responses:
+    "200":
+      description: The Webhook Secret URL, last call and Sample payload.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkflowWebhookResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

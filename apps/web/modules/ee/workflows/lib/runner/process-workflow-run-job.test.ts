@@ -42,6 +42,8 @@ const {
 
 // Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
+// The live effects enqueue "Don't wait" HTTP calls (ENG-7179); no test here reaches the queue.
+vi.mock("@formbricks/jobs", () => ({ enqueueWorkflowHttpRequestDeliveryJob: vi.fn() }));
 vi.mock("@formbricks/database", () => ({
   prisma: {
     workflowRun: {

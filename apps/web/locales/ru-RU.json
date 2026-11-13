@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "Не удалось включить воркфлоу: его опрос-триггер имеет ограниченный доступ. Сначала сделайте опрос видимым для его рабочего пространства.",
       "enable_success": "Рабочий процесс включен.",
       "expand_inspector": "Развернуть инспектор",
+      "http_request": "HTTP-запрос",
       "if_else": "Если / Иначе",
       "if_else_operator_contains": "{variable} содержит {value}",
       "if_else_operator_equals": "{variable} равно {value}",

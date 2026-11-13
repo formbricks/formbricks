@@ -117,6 +117,7 @@ export const zProblem = z.object({
       "survey_not_workspace_visible",
       "too_many_requests",
       "unprocessable_content",
+      "unsupported_media_type",
       "visibility_blocked_by_connections",
       "visibility_change_not_allowed",
       "visibility_not_enabled",

@@ -7,7 +7,7 @@ vi.mock("@/lib/constants", () => ({
   get DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS() {
     return flags.allowInternal;
   },
-  get DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP() {
+  get ALLOW_WORKFLOW_PLAIN_HTTP() {
     return flags.allowPlainHttp;
   },
 }));
@@ -32,7 +32,7 @@ const response = (status: number, body = "", headers: Record<string, string> = {
 
 const stubFetch = (...responses: (Response | Error)[]) => {
   const queue = [...responses];
-  const fetchMock = vi.fn(async () => {
+  const fetchMock = vi.fn(async (_url: string, _init: RequestInit) => {
     const next = queue.shift();
     if (!next) throw new Error("unexpected fetch");
     if (next instanceof Error) throw next;
@@ -42,7 +42,7 @@ const stubFetch = (...responses: (Response | Error)[]) => {
   return fetchMock;
 };
 
-const sleep = vi.fn(async () => undefined);
+const sleep = vi.fn(async (_ms: number) => undefined);
 
 beforeEach(() => {
   flags.allowInternal = false;

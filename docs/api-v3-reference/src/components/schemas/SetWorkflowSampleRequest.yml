@@ -1,0 +1,12 @@
+type: object
+description: Replaces the workflow's Sample payload, e.g. with one pasted in the editor.
+required:
+  - payload
+properties:
+  payload:
+    type: object
+    additionalProperties: true
+    description: >-
+      A JSON object of at most 100 KB once serialized, nested at most 10
+      levels (lists count as levels).
+additionalProperties: false

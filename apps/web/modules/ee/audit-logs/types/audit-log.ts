@@ -91,6 +91,8 @@ export const ZAuditAction = z.enum([
   "secretHeaderSet",
   "secretHeaderReplaced",
   "testRequestSent",
+  // ENG-7177: a workflow's Webhook Secret URL was replaced; the old URL stopped working.
+  "webhookUrlRegenerated",
 ]);
 export const ZActor = z.enum(["user", "api", "system"]);
 export const ZAuditStatus = z.enum(["success", "failure"]);

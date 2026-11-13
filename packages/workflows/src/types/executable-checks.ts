@@ -18,6 +18,7 @@ export const WORKFLOW_TRIGGER_VARIABLE_SOURCES: Record<
   readonly TWorkflowVariableSource[]
 > = {
   "response.completed": ["response", "steps"],
+  webhook: ["payload", "steps"],
 };
 
 export interface TWorkflowExecutableCheckContext {

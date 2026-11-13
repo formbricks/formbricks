@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "Nem sikerült engedélyezni a munkafolyamatot: az indító felmérés korlátozott hozzáférésű. Először tegye láthatóvá a felmérést a munkaterülete számára.",
       "enable_success": "Munkafolyamat engedélyezve.",
       "expand_inspector": "Vizsgáló kinyitása",
+      "http_request": "HTTP-kérés",
       "if_else": "Ha / egyébként",
       "if_else_operator_contains": "{variable} tartalmazza: {value}",
       "if_else_operator_equals": "{variable} értéke {value}",

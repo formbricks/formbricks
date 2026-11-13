@@ -1,0 +1,128 @@
+post:
+  operationId: callWorkflowWebhookV3
+  summary: Call a Webhook Secret URL
+  description: >
+    Starts a run of a workflow with a Webhook trigger. This is the Webhook
+    Secret URL itself: it needs no login or API key, because the token in the
+    path is the credential. Send a JSON object as the body with
+    `Content-Type: application/json`. Use the URL exactly as returned, with no
+    trailing slash (a trailing slash answers a redirect some clients will not
+    follow on a POST).
+
+
+    - **202** `{"runId": "…"}`: the workflow is enabled and a run is queued.
+    The payload also becomes the workflow's Sample payload.
+
+    - **202** `{"runId": null}`: the workflow is a draft or disabled. The
+    payload is saved as the Sample payload; no run starts.
+
+    - **200** `{"runId": "…"}`: an `Idempotency-Key` this workflow has already
+    seen; nothing new starts and the earlier run's id is returned.
+
+    - **404**: the workflow is archived, does not exist, or the token is wrong
+    or was regenerated. The answer is identical in every case.
+
+    - **400** / **413** / **415**: the body is not a JSON object or is nested
+    more than 10 levels / is over 100 KB / is not `application/json`. Errors
+    never echo the payload.
+
+    - **429** with `Retry-After`: over 100 calls a minute for this workflow,
+    over the organization's calls per minute across its Webhook workflows
+    (default 300), or over the workflow's runs per day (default 10,000).
+
+    - **403**: the organization's plan no longer includes workflows, or the call
+    used plain HTTP where HTTPS is required.
+
+
+    Runs started here are billed like other workflow runs.
+  tags:
+    - V3 Workflows
+  parameters:
+    - in: path
+      name: workflowId
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      description: Workflow identifier.
+    - in: path
+      name: token
+      required: true
+      schema:
+        type: string
+        minLength: 1
+      description: The secret token of the Webhook Secret URL.
+    - in: header
+      name: Idempotency-Key
+      required: false
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 255
+      description: >-
+        Optional. A repeated key for the same workflow returns the run it
+        started (200) instead of starting another.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          additionalProperties: true
+          description: Any JSON object of at most 100 KB, nested at most 10 levels.
+        examples:
+          order:
+            value:
+              customer:
+                email: jane@example.com
+              order:
+                id: 1042
+  responses:
+    "200":
+      $ref: ../components/responses/WorkflowWebhookCallResponse.yml
+    "202":
+      $ref: ../components/responses/WorkflowWebhookCallResponse.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "404":
+      description: >-
+        Unknown workflow, archived workflow, or a wrong or regenerated token.
+        Identical in every case.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "413":
+      description: The body is over 100 KB.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "415":
+      description: The body is not `application/json`.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security: []

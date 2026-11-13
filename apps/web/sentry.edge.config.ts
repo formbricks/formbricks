@@ -5,6 +5,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { logger } from "@formbricks/logger";
 import { SENTRY_DSN, SENTRY_ENVIRONMENT, SENTRY_RELEASE } from "@/lib/constants";
+import { scrubWebhookTokens } from "@/lib/sentry/scrub-webhook-tokens";
 
 if (SENTRY_DSN) {
   logger.info("Sentry DSN found, enabling Sentry on the edge");
@@ -23,6 +24,10 @@ if (SENTRY_DSN) {
     // Disable telemetry and additional data collection
     sendDefaultPii: false,
     sendClientReports: false,
+
+    // A Webhook Secret URL's token is a credential (ADR 0041); Proxy sees the request path too.
+    beforeSend: (event) => scrubWebhookTokens(event),
+    beforeSendTransaction: (event) => scrubWebhookTokens(event),
   });
 } else {
   logger.warn("Sentry DSN not found, Sentry will be disabled on the edge");

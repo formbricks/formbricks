@@ -64,6 +64,7 @@ export type {
   WorkflowVersion,
   WorkflowRun,
   WorkflowRunLog,
+  WorkflowSample,
   Creative,
   CreativeTrigger,
   CreativeLanguage,

@@ -10,7 +10,7 @@ import {
 import { getV3AuthorizationActor, getV3SessionUserId, requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { ENCRYPTION_KEY } from "@/lib/constants";
+import { ENCRYPTION_KEY, WEBAPP_URL } from "@/lib/constants";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/survey/visibility/outbound";
 import { buildHiddenSurveyWhere } from "@/lib/survey/visibility/predicate";
@@ -19,6 +19,7 @@ import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { workflowSecretStore } from "@/modules/ee/workflows/lib/secrets/workflow-secret-store";
+import { webhookTokenIssuer } from "@/modules/ee/workflows/lib/webhook/token";
 import { buildRecordAnalytics } from "./analytics";
 import { buildRecordSecretHeaderChanges } from "./secret-audit";
 
@@ -29,7 +30,7 @@ import { buildRecordSecretHeaderChanges } from "./secret-audit";
  * authenticated request. The real Prisma client structurally satisfies the package's narrow
  * `WorkflowsDb` port, so no cast is needed; the package never imports `@formbricks/database`.
  */
-const service = createWorkflowsService({ prisma });
+const service = createWorkflowsService({ prisma, webhookTokens: webhookTokenIssuer });
 
 /** Singleton handlers; they are stateless and only close over the injected service. */
 export const workflowsHandlers = createWorkflowsHandlers(service);
@@ -149,6 +150,9 @@ export const buildWorkflowApiContext = (
   // HMAC key for redacting PII markers in audit snapshots; reuses the app's audit/encryption secret
   // so markers aren't offline-guessable. Injected as data to keep `@formbricks/workflows` agnostic.
   auditRedactionKey: ENCRYPTION_KEY,
+  // The Webhook Secret URL lives under `/api/v3`, which is served on the app's own URL (with
+  // PUBLIC_URL set, `/api/v3` stays admin-domain only), so it is built on WEBAPP_URL.
+  webhookBaseUrl: WEBAPP_URL,
   // Workspace access first, then the workflows entitlement (Cloud plan / self-hosted EE license)
   // for the resolved organization. Every v3 route handler and MCP tool authorizes through this
   // capability, so this is the single enforcement point for both surfaces; the returned problem

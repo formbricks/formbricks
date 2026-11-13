@@ -1,0 +1,81 @@
+put:
+  operationId: setWorkflowSampleV3
+  summary: Set a workflow's Sample payload
+  description: >
+    Replaces the Sample payload of a workflow with a Webhook trigger, e.g. with
+    one pasted in the editor, and returns it with the Variables it offers. A call
+    to the Webhook Secret URL replaces it too. The payload must be a JSON object
+    of at most 100 KB nested at most 10 levels: a larger one answers **413**
+    `payload_too_large`, a deeper one or a non-object **400**. Writing a sample
+    does not change the workflow's `updatedAt`.
+
+
+    Requires **write** access. A workflow whose trigger is not a Webhook
+    trigger, or an archived workflow, answers **422** `invalid_workflow_state`.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkflowIdPath.yml
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/SetWorkflowSampleRequest.yml
+        examples:
+          order:
+            value:
+              payload:
+                customer:
+                  email: jane@example.com
+                order:
+                  id: 1042
+                  total: 59.9
+  responses:
+    "200":
+      description: The stored Sample payload and its Variables.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkflowSampleResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "413":
+      description: The sample payload is over 100 KB.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

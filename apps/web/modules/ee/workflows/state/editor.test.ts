@@ -1,6 +1,10 @@
 import { createStore } from "jotai";
 import { describe, expect, test } from "vitest";
-import type { TWorkflowDefinition, TWorkflowResource } from "@formbricks/workflows";
+import {
+  type TWorkflowDefinition,
+  type TWorkflowResource,
+  getTriggerEndingCardIds,
+} from "@formbricks/workflows";
 import {
   addWorkflowTriggerAtom,
   appendSendEmailAfterNodeAtom,
@@ -503,7 +507,7 @@ describe("addWorkflowTriggerAtom", () => {
 
     const def = store.get(workflowDefinitionAtom)!;
     expect(def.trigger?.triggerType).toBe("response.completed");
-    expect(def.trigger?.config.endingCardIds).toEqual([]);
+    expect(getTriggerEndingCardIds(def.trigger)).toEqual([]);
     expect(def.entryNodeId).toBe(def.trigger?.id);
     expect(store.get(selectedWorkflowNodeIdAtom)).toBe(def.trigger?.id);
     expect(store.get(isWorkflowNodeConfigModalOpenAtom)).toBe(true);
@@ -770,7 +774,9 @@ describe("workflowValidityAtom", () => {
         ? {
             ...current,
             nodes: current.nodes.map((node) =>
-              node.type === "action" ? { ...node, config: { ...node.config, to: "" } } : node
+              node.type === "action" && node.actionType === "send_email"
+                ? { ...node, config: { ...node.config, to: "" } }
+                : node
             ),
           }
         : current

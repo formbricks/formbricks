@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "ワークフローを有効化できませんでした：トリガーとなるアンケートが制限されています。まずアンケートをワークスペースに公開してください。",
       "enable_success": "ワークフローを有効化しました。",
       "expand_inspector": "インスペクターを展開",
+      "http_request": "HTTPリクエスト",
       "if_else": "条件分岐",
       "if_else_operator_contains": "{variable}が{value}を含む",
       "if_else_operator_equals": "{variable}が{value}と等しい",

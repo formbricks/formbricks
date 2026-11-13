@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "Nu s-a putut activa fluxul de lucru: sondajul declanșator este restricționat. Mai întâi, fă sondajul vizibil pentru spațiul de lucru.",
       "enable_success": "Workflow activat.",
       "expand_inspector": "Extinde inspectorul",
+      "http_request": "Solicitare HTTP",
       "if_else": "Dacă / Altfel",
       "if_else_operator_contains": "{variable} conține {value}",
       "if_else_operator_equals": "{variable} este {value}",

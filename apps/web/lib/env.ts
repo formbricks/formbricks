@@ -611,7 +611,6 @@ const parsedEnv = createEnv({
     BREVO_LIST_ID: z.string().optional(),
     DATABASE_URL: z.url(),
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: z.enum(["1", "0"]).optional(),
-    DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP: z.enum(["1", "0"]).optional(),
     // Bounded so a misconfiguration cannot pin a background-worker slot for minutes.
     WEBHOOK_DELIVERY_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(30_000).optional(),
     DEBUG_SHOW_RESET_LINK: z.enum(["1", "0"]).optional(),
@@ -714,6 +713,11 @@ const parsedEnv = createEnv({
     IMPRINT_ADDRESS: z.string().optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     INVITE_RATE_LIMIT_PER_24_HOURS: z.coerce.number().int().min(1).optional().default(50),
+    // Workflows Webhook trigger (ENG-7177). The plain-HTTP switch is hard-ignored on Formbricks Cloud
+    // (see `ALLOW_WORKFLOW_PLAIN_HTTP` in constants.ts).
+    DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP: z.enum(["1", "0"]).optional(),
+    WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT: z.coerce.number().int().min(1).optional().default(10_000),
+    WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE: z.coerce.number().int().min(1).optional().default(300),
     PLAIN_APP_ID: z.string().optional(),
     PLAIN_CHAT_HMAC_SECRET: z.string().optional(),
     PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID: z.string().optional(),
@@ -879,7 +883,6 @@ const parsedEnv = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: process.env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS,
-    DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP: process.env.DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP,
     WEBHOOK_DELIVERY_TIMEOUT_MS: process.env.WEBHOOK_DELIVERY_TIMEOUT_MS,
     DEBUG: process.env.DEBUG,
     DEBUG_SHOW_RESET_LINK: process.env.DEBUG_SHOW_RESET_LINK,
@@ -952,6 +955,9 @@ const parsedEnv = createEnv({
     IMPRINT_ADDRESS: process.env.IMPRINT_ADDRESS,
     INVITE_DISABLED: process.env.INVITE_DISABLED,
     INVITE_RATE_LIMIT_PER_24_HOURS: process.env.INVITE_RATE_LIMIT_PER_24_HOURS,
+    DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP: process.env.DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP,
+    WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT: process.env.WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT,
+    WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE: process.env.WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE,
     PLAIN_APP_ID: process.env.PLAIN_APP_ID,
     PLAIN_CHAT_HMAC_SECRET: process.env.PLAIN_CHAT_HMAC_SECRET,
     PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID: process.env.PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID,

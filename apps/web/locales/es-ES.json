@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "No se pudo activar el flujo de trabajo: su encuesta desencadenante está restringida. Haz que la encuesta sea visible para su espacio de trabajo primero.",
       "enable_success": "Flujo de trabajo activado.",
       "expand_inspector": "Expandir inspector",
+      "http_request": "Solicitud HTTP",
       "if_else": "Si / Sino",
       "if_else_operator_contains": "{variable} contiene {value}",
       "if_else_operator_equals": "{variable} es {value}",

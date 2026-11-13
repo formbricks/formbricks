@@ -1,6 +1,11 @@
 import type { TFunction } from "i18next";
 import type { ComponentType } from "react";
-import { type TWorkflowNode, WORKFLOW_ACTIONS, WORKFLOW_TRIGGERS } from "@formbricks/workflows";
+import {
+  type TWorkflowNode,
+  WORKFLOW_ACTIONS,
+  WORKFLOW_TRIGGERS,
+  isResponseCompletedTrigger,
+} from "@formbricks/workflows";
 import { WorkflowEmailActionForm } from "@/modules/ee/workflows/components/inspector/workflow-email-action-form";
 import { WorkflowTriggerForm } from "@/modules/ee/workflows/components/inspector/workflow-trigger-form";
 import { describeIfElseCondition } from "@/modules/ee/workflows/lib/if-else-summary";
@@ -38,7 +43,7 @@ const responseCompletedTriggerEntry: TWorkflowNodeRegistryEntry = {
   icon: "trigger",
   title: (_node, t) => t("workspace.workflows.response_completed"),
   summary: (node, t) => {
-    if (node.type !== "trigger") return "";
+    if (node.type !== "trigger" || !isResponseCompletedTrigger(node)) return "";
     return node.config.endingCardIds.length > 0
       ? t("workspace.workflows.trigger_summary_ending_cards", {
           count: node.config.endingCardIds.length,
@@ -73,9 +78,34 @@ const ifElseEntry: TWorkflowNodeRegistryEntry = {
   ConfigForm: null,
 };
 
+// Minimal entry so a Webhook trigger renders; its panel (Secret URL, sample payload) is ENG-7182's.
+const webhookTriggerEntry: TWorkflowNodeRegistryEntry = {
+  kind: `trigger:${WORKFLOW_TRIGGERS.WEBHOOK}`,
+  category: "trigger",
+  icon: "trigger",
+  title: (_node, t) => t("common.webhook"),
+  summary: () => "",
+  ConfigForm: null,
+};
+
+// Minimal entry so an HTTP request step renders; its panel is ENG-7182's.
+const httpRequestActionEntry: TWorkflowNodeRegistryEntry = {
+  kind: `action:${WORKFLOW_ACTIONS.HTTP_REQUEST}`,
+  category: "action",
+  icon: "trigger",
+  title: (node, t) => node.label ?? t("workspace.workflows.http_request"),
+  summary: (node) =>
+    node.type === "action" && node.actionType === WORKFLOW_ACTIONS.HTTP_REQUEST
+      ? `${node.config.method} ${node.config.url}`.trim()
+      : "",
+  ConfigForm: null,
+};
+
 const REGISTRY: Record<TWorkflowNodeRegistryKind, TWorkflowNodeRegistryEntry> = {
   "trigger:response.completed": responseCompletedTriggerEntry,
+  "trigger:webhook": webhookTriggerEntry,
   "action:send_email": sendEmailActionEntry,
+  "action:http_request": httpRequestActionEntry,
   if_else: ifElseEntry,
 };
 

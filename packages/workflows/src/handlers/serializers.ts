@@ -14,6 +14,7 @@ import type {
   WorkflowRunRow,
   WorkflowRunWithLogsRow,
 } from "../services/ports";
+import { WORKFLOW_TRIGGERS } from "../types/triggers/enum";
 
 /**
  * Map Prisma rows to the public v3 resource shapes. Serializer output is validated against the
@@ -83,7 +84,7 @@ export const toWorkflowListItem = (row: WorkflowRowWithLastRun): TWorkflowListIt
     description: row.description,
     status: row.status,
     triggerType: trigger?.triggerType ?? null,
-    surveyId: trigger?.config.surveyId ?? null,
+    surveyId: trigger?.triggerType === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED ? trigger.config.surveyId : null,
     createdBy: row.createdBy,
     creator: row.creator ? { name: row.creator.name } : null,
     createdAt: row.createdAt.toISOString(),

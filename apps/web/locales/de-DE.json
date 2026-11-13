@@ -6087,6 +6087,7 @@
       "enable_failed_survey_restricted": "Der Workflow konnte nicht aktiviert werden: Die Trigger-Umfrage ist eingeschränkt. Mach die Umfrage zuerst für ihren Workspace sichtbar.",
       "enable_success": "Workflow aktiviert.",
       "expand_inspector": "Inspector ausklappen",
+      "http_request": "HTTP-Anfrage",
       "if_else": "Wenn / Sonst",
       "if_else_operator_contains": "{variable} enthält {value}",
       "if_else_operator_equals": "{variable} ist {value}",

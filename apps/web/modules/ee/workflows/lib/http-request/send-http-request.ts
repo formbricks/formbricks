@@ -2,7 +2,7 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TWorkflowHttpMethod } from "@formbricks/workflows";
-import { DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP } from "@/lib/constants";
+import { ALLOW_WORKFLOW_PLAIN_HTTP } from "@/lib/constants";
 import { createPinnedDispatcher, validateAndResolveWebhookUrl } from "@/lib/utils/validate-webhook-url";
 
 /** One outbound call, fully rendered: Variables inserted, secret header values decrypted. */
@@ -63,7 +63,7 @@ const assertAllowedScheme = (url: string): void => {
     throw new InvalidInputError("The HTTP request URL is not a valid URL");
   }
   if (protocol === "https:") return;
-  if (protocol === "http:" && DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP) return;
+  if (protocol === "http:" && ALLOW_WORKFLOW_PLAIN_HTTP) return;
   throw new InvalidInputError("The HTTP request URL must use HTTPS");
 };
 
