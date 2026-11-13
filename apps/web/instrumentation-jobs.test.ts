@@ -12,6 +12,7 @@ const mockRemoveUsageTelemetry = vi.fn();
 const mockUpsertUsageTelemetry = vi.fn();
 const mockRemoveWorkflowRunReconcile = vi.fn();
 const mockUpsertWorkflowRunReconcile = vi.fn();
+const mockUpsertWorkflowRunRetention = vi.fn();
 const mockRemoveWorkflowsUsageSnapshot = vi.fn();
 const mockUpsertWorkflowsUsageSnapshot = vi.fn();
 const mockUpsertAuthzedProjectionDelivery = vi.fn();
@@ -31,6 +32,7 @@ const mockProcessSurveyArchivePurgeJob = vi.fn();
 const mockProcessUsageTelemetryJob = vi.fn();
 const mockProcessWorkflowRunJob = vi.fn();
 const mockProcessWorkflowRunReconcileJob = vi.fn();
+const mockProcessWorkflowRunRetentionJob = vi.fn();
 const mockProcessWorkflowsUsageSnapshotJob = vi.fn();
 const mockProcessAuthzedProjectionDeliveryJob = vi.fn();
 const mockObserveAuthzedOutboxHealth = vi.fn();
@@ -55,6 +57,7 @@ vi.mock("@formbricks/jobs", () => ({
     responsePipeline: "response-pipeline.process",
     webhookDelivery: "webhook-delivery.process",
     workflowRun: "workflow-run.process",
+    workflowHttpRequestDelivery: "workflow-http-request.deliver",
   },
   recurringJobs: {
     attachmentExportReconcile: {
@@ -133,6 +136,12 @@ vi.mock("@formbricks/jobs", () => ({
       scope: "global",
       upsert: mockUpsertWorkflowRunReconcile,
     },
+    workflowRunRetention: {
+      name: "workflow-run.retention",
+      scheduleId: "workflow-run-retention",
+      scope: "global",
+      upsert: mockUpsertWorkflowRunRetention,
+    },
     workflowsUsageSnapshot: {
       name: "workflows-usage.snapshot",
       remove: mockRemoveWorkflowsUsageSnapshot,
@@ -186,6 +195,10 @@ vi.mock("@/modules/ee/workflows/lib/runner/process-workflow-run-job", () => ({
 
 vi.mock("@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job", () => ({
   processWorkflowRunReconcileJob: mockProcessWorkflowRunReconcileJob,
+}));
+
+vi.mock("@/modules/ee/workflows/lib/retention/process-workflow-run-retention-job", () => ({
+  processWorkflowRunRetentionJob: mockProcessWorkflowRunRetentionJob,
 }));
 
 vi.mock("@/modules/ee/workflows/lib/analytics/process-workflows-usage-snapshot-job", () => ({
@@ -339,10 +352,12 @@ describe("instrumentation-jobs", () => {
         "survey-scheduling.reconcile": expect.any(Function),
         "survey-archive-purge.process": expect.any(Function),
         "webhook-delivery.process": expect.any(Function),
+        "workflow-http-request.deliver": expect.any(Function),
         "workflow-run.process": expect.any(Function),
         "test-log.process": mockExistingOverride,
         "usage-telemetry.process": expect.any(Function),
         "workflow-run.reconcile": expect.any(Function),
+        "workflow-run.retention": expect.any(Function),
         "workflows-usage.snapshot": expect.any(Function),
       },
       redisUrl: "redis://localhost:6379",
@@ -603,6 +618,7 @@ describe("instrumentation-jobs", () => {
     const drain = RECURRING_JOB_REGISTRATIONS_BY_KEY.deletionCleanupDrain.job.upsert;
     const emailAudit = RECURRING_JOB_REGISTRATIONS_BY_KEY.emailAuditMaintenance.job.upsert;
     const creativeStats = RECURRING_JOB_REGISTRATIONS_BY_KEY.creativeStatsFlush.job.upsert;
+    const runRetention = RECURRING_JOB_REGISTRATIONS_BY_KEY.workflowRunRetention.job.upsert;
     const delivery = RECURRING_JOB_REGISTRATIONS_BY_KEY.authzedProjectionDelivery.job.upsert;
 
     await registerRecurringJobs();
@@ -611,6 +627,8 @@ describe("instrumentation-jobs", () => {
     expect(emailAudit).not.toHaveBeenCalled();
     // Replicas of the previous release have no handler for the creative counter flush.
     expect(creativeStats).not.toHaveBeenCalled();
+    // It deletes data, and replicas of the previous release have no handler for it.
+    expect(runRetention).not.toHaveBeenCalled();
     // Revocations must keep reaching SpiceDB throughout the upgrade, or every check fails closed.
     expect(delivery).toHaveBeenCalled();
 
@@ -620,6 +638,7 @@ describe("instrumentation-jobs", () => {
     expect(drain).toHaveBeenCalledOnce();
     expect(emailAudit).toHaveBeenCalledOnce();
     expect(creativeStats).toHaveBeenCalledOnce();
+    expect(runRetention).toHaveBeenCalledOnce();
   });
 
   slowTest(
@@ -656,6 +675,8 @@ describe("instrumentation-jobs", () => {
       const { WORKFLOWS_USAGE_SNAPSHOT_DAILY_CRON_PATTERN, WORKFLOWS_USAGE_SNAPSHOT_TIME_ZONE } =
         await import("@/modules/ee/workflows/lib/analytics/constants");
       const { DELETION_CLEANUP_DRAIN_INTERVAL_MS } = await import("@/modules/deletion-cleanup/lib/constants");
+      const { WORKFLOW_RUN_RETENTION_INTERVAL_MS } =
+        await import("@/modules/ee/workflows/lib/retention/constants");
       const { DATA_RETENTION_SWEEP_DAILY_CRON_PATTERN, DATA_RETENTION_SWEEP_TIME_ZONE } =
         await import("@/modules/ee/data-retention/sweep/constants");
 
@@ -724,6 +745,11 @@ describe("instrumentation-jobs", () => {
       expect(mockUpsertWorkflowRunReconcile).toHaveBeenCalledTimes(1);
       expect(mockUpsertWorkflowRunReconcile).toHaveBeenCalledWith({
         everyMs: WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
+        kind: "every",
+      });
+      expect(mockUpsertWorkflowRunRetention).toHaveBeenCalledOnce();
+      expect(mockUpsertWorkflowRunRetention).toHaveBeenCalledWith({
+        everyMs: WORKFLOW_RUN_RETENTION_INTERVAL_MS,
         kind: "every",
       });
       expect(mockUpsertWorkflowsUsageSnapshot).toHaveBeenCalledTimes(1);

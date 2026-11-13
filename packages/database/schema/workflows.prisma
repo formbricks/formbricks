@@ -68,36 +68,41 @@ model WorkflowVersion {
 }
 
 model WorkflowRun {
-  id                String            @id @default(cuid(2))
-  createdAt         DateTime          @default(now()) @map(name: "created_at")
-  updatedAt         DateTime          @updatedAt @map(name: "updated_at")
-  workflow          Workflow          @relation(fields: [workflowId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
-  workflowId        String
-  workspace         Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId       String
-  workflowVersion   WorkflowVersion?  @relation(fields: [workflowVersionId], references: [id], onDelete: SetNull)
-  workflowVersionId String?
-  response          Response?         @relation(fields: [responseId], references: [id], onDelete: Cascade)
-  responseId        String?
-  status            WorkflowRunStatus @default(queued)
-  triggerType       String
-  surveyId          String?
-  isDryRun          Boolean           @default(false)
-  idempotencyKey    String?
-  attempt           Int               @default(0)
-  nextAttemptAt     DateTime?
-  lastErrorAt       DateTime?
+  id                   String            @id @default(cuid(2))
+  createdAt            DateTime          @default(now()) @map(name: "created_at")
+  updatedAt            DateTime          @updatedAt @map(name: "updated_at")
+  workflow             Workflow          @relation(fields: [workflowId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  workflowId           String
+  workspace            Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId          String
+  workflowVersion      WorkflowVersion?  @relation(fields: [workflowVersionId], references: [id], onDelete: SetNull)
+  workflowVersionId    String?
+  response             Response?         @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  responseId           String?
+  status               WorkflowRunStatus @default(queued)
+  triggerType          String
+  surveyId             String?
+  isDryRun             Boolean           @default(false)
+  idempotencyKey       String?
+  attempt              Int               @default(0)
+  nextAttemptAt        DateTime?
+  lastErrorAt          DateTime?
   /// [WorkflowTriggerRunPayload]
-  triggerPayload    Json
+  triggerPayload       Json
   /// [WorkflowRunData]
-  data              Json              @default("{}")
-  error             String?
-  dispatchedAt      DateTime?
-  startedAt         DateTime?
-  finishedAt        DateTime?
-  logs              WorkflowRunLog[]
+  data                 Json              @default("{}")
+  error                String?
+  dispatchedAt         DateTime?
+  startedAt            DateTime?
+  finishedAt           DateTime?
+  logs                 WorkflowRunLog[]
   /// The caller's IP for a run started by a Webhook Secret URL call; shown in run detail.
-  callerIp          String?
+  callerIp             String?
+  /// When the run retention job cleared the run's content (ADR 0044): payload contents, run data, step
+  /// input, output and errors, the run error and the caller IP. Null while the content is kept.
+  contentDeletedAt     DateTime?
+  /// The retention period in days that applied when the content was cleared ("Details deleted after N days").
+  contentRetentionDays Int?
 
   @@unique([workflowId, idempotencyKey])
   @@index([workspaceId, createdAt])
@@ -106,6 +111,7 @@ model WorkflowRun {
   @@index([responseId])
   @@index([isDryRun])
   @@index([nextAttemptAt])
+  @@index([contentDeletedAt, finishedAt])
 }
 
 /// Per-call data kept beside a workflow (ADR 0048): one row per source, `trigger` for the Webhook

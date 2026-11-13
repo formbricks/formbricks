@@ -133,6 +133,9 @@ x-environment: &environment
     # Webhook Secret URL calls per minute across one organization's workflows
     # WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE: 300
 
+    # Days after a workflow run finished that its content is cleared (the run record stays)
+    # WORKFLOW_RUN_DATA_RETENTION_DAYS: 90
+
     # Set the below if you want to ship JS & CSS files from a complete URL instead of the current domain
     # ASSET_PREFIX_URL:
 

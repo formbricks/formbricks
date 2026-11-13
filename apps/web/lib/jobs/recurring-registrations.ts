@@ -36,6 +36,8 @@ import {
   WORKFLOWS_USAGE_SNAPSHOT_TIME_ZONE,
 } from "@/modules/ee/workflows/lib/analytics/constants";
 import { processWorkflowsUsageSnapshotJob } from "@/modules/ee/workflows/lib/analytics/process-workflows-usage-snapshot-job";
+import { WORKFLOW_RUN_RETENTION_INTERVAL_MS } from "@/modules/ee/workflows/lib/retention/constants";
+import { processWorkflowRunRetentionJob } from "@/modules/ee/workflows/lib/retention/process-workflow-run-retention-job";
 import { processWorkflowHttpRequestDeliveryJob } from "@/modules/ee/workflows/lib/runner/deliver-http-request-job";
 import { processWorkflowRunJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-job";
 import { processWorkflowRunReconcileJob } from "@/modules/ee/workflows/lib/runner/process-workflow-run-reconcile-job";
@@ -205,6 +207,17 @@ export const RECURRING_JOB_REGISTRATIONS_BY_KEY: Record<TRecurringJobKey, Recurr
     job: recurringJobs.workflowRunReconcile,
     schedule: {
       everyMs: WORKFLOW_RUN_RECONCILE_INTERVAL_MS,
+      kind: "every",
+    },
+  },
+  // ENG-7186: new in this release and it deletes data, so scheduled only once the release is activated
+  // (older replicas have no handler). Bounded per tick and idempotent, so an overlap is harmless.
+  workflowRunRetention: {
+    requiresReleaseActivation: true,
+    handler: processWorkflowRunRetentionJob,
+    job: recurringJobs.workflowRunRetention,
+    schedule: {
+      everyMs: WORKFLOW_RUN_RETENTION_INTERVAL_MS,
       kind: "every",
     },
   },

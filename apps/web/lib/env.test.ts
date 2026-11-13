@@ -240,6 +240,31 @@ describe("env", () => {
     }
   );
 
+  test("boots with the workflow run retention period unset and keeps run content for 90 days", async () => {
+    setTestEnv({ WORKFLOW_RUN_DATA_RETENTION_DAYS: undefined });
+
+    const { env } = await import("./env");
+
+    expect(env.WORKFLOW_RUN_DATA_RETENTION_DAYS).toBe(90);
+  });
+
+  test("reads a configured workflow run retention period", async () => {
+    setTestEnv({ WORKFLOW_RUN_DATA_RETENTION_DAYS: "30" });
+
+    const { env } = await import("./env");
+
+    expect(env.WORKFLOW_RUN_DATA_RETENTION_DAYS).toBe(30);
+  });
+
+  test.each(["0", "-1", "1.5", "ninety", "3651"])(
+    "rejects a workflow run retention period of %s",
+    async (days) => {
+      setTestEnv({ WORKFLOW_RUN_DATA_RETENTION_DAYS: days });
+
+      await expect(import("./env")).rejects.toThrow("WORKFLOW_RUN_DATA_RETENTION_DAYS");
+    }
+  );
+
   test("includes the failing field name and validation message in thrown errors", async () => {
     setTestEnv({
       ENCRYPTION_KEY: undefined,
