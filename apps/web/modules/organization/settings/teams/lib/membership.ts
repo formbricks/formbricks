@@ -15,7 +15,7 @@ import { isTransactionConflictError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
-import { countActiveOwners, runOwnerLockedTransaction, wouldRemoveLastActiveOwner } from "./owner-guard";
+import { LastActiveOwnerError, countActiveOwners, runOwnerGuardedTransaction } from "./owner-guard";
 
 export const getMembershipByOrganizationId = reactCache(
   async (organizationId: string, page?: number): Promise<TMember[]> => {
@@ -116,13 +116,9 @@ export const deleteMembership = async (
   validateInputs([userId, ZString], [organizationId, ZString]);
 
   try {
-    const deletedTeamMemberships = await runOwnerLockedTransaction(organizationId, async (tx) => {
-      // The last-owner guard is read under the owners' lock, in the same transaction as the delete, so two
-      // owners removed at once cannot both see "another owner is left" and leave the organization with none.
-      if (await wouldRemoveLastActiveOwner(tx, organizationId, userId)) {
-        throw new ValidationError("You cannot delete the last owner of the organization");
-      }
-
+    // The last-owner guard is read under the owners' lock, in the same transaction as the delete, so two
+    // owners removed at once cannot both see "another owner is left" and leave the organization with none.
+    const deletedTeamMemberships = await runOwnerGuardedTransaction(organizationId, userId, async (tx) => {
       const teamMemberships = await tx.teamUser.findMany({
         where: {
           userId,
@@ -180,6 +176,9 @@ export const deleteMembership = async (
 
     return deletedTeamMemberships;
   } catch (error) {
+    if (error instanceof LastActiveOwnerError) {
+      throw new ValidationError("You cannot delete the last owner of the organization");
+    }
     // A conflict that outlasted every retry may be the driver adapter's own error rather than P2034.
     if (error instanceof Prisma.PrismaClientKnownRequestError || isTransactionConflictError(error)) {
       throw new DatabaseError(error instanceof Error ? error.message : "Transaction conflict");

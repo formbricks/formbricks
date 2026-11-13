@@ -3,16 +3,21 @@ import { Prisma } from "@formbricks/database/prisma";
 import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 
 /**
- * The organization keeps at least one active owner. Every path that can demote, deactivate or remove a
- * member enforces it the same way, in the transaction that makes the change:
+ * The organization keeps at least one active owner. A path that can demote, deactivate or remove a member
+ * checks it in the transaction that makes the change, under a lock on the organization's owner
+ * memberships, taken before any user row. This module only exports the check together with that lock, so a
+ * caller cannot run the check without it:
  *
- * 1. `lockOrganizationOwners` first, before any user row;
- * 2. `wouldRemoveLastActiveOwner` for the member being changed;
- * 3. the write.
- *
- * The paths: the v2 users API (`updateUser`), removing a member (`deleteMembership`), the role change in the
- * member list (`updateMembershipAction`) and the data retention members sweep (`deactivateDueMember`).
+ * - `runOwnerGuardedTransaction` opens the transaction itself (the v2 users API, removing a member);
+ * - `lockOwnersAndCheckRemoval` is for a caller that opens its own (the data retention members sweep).
  */
+
+/** Thrown by `runOwnerGuardedTransaction` when the change would leave the organization with no active owner. */
+export class LastActiveOwnerError extends Error {
+  constructor() {
+    super("Cannot remove the last active owner of the organization");
+  }
+}
 
 /**
  * Owners whose account is active. A deactivated user can never sign in again (see modules/auth/lib/session.ts
@@ -28,15 +33,11 @@ export const countActiveOwners = (
 /**
  * Locks the organization's owner memberships until `tx` ends, in a fixed order. A second transaction that
  * takes it waits here, and at Read Committed its next statement then sees the first one's change, so two
- * of them cannot both pass the last-owner check. Serializable isolation alone does not give this: Postgres
- * only detects the clash between two Serializable transactions, and a Serializable transaction that waits
- * here still reads from the snapshot it took before waiting. Taken before the user row, in the same order
- * on every path, so they never deadlock with each other.
+ * of them cannot both pass the check. Serializable isolation alone does not give this: Postgres only
+ * detects the clash between two Serializable transactions, and a Serializable transaction that waits here
+ * still reads from the snapshot it took before waiting.
  */
-export const lockOrganizationOwners = async (
-  tx: Prisma.TransactionClient,
-  organizationId: string
-): Promise<void> => {
+const lockOrganizationOwners = async (tx: Prisma.TransactionClient, organizationId: string) => {
   await tx.$queryRaw`
     SELECT 1 FROM "Membership"
     WHERE "organizationId" = ${organizationId} AND "role" = 'owner'
@@ -46,16 +47,19 @@ export const lockOrganizationOwners = async (
 };
 
 /**
- * Whether taking `userId` out of the organization's active owners would leave it with none. Call it after
- * `lockOrganizationOwners`, so the member and the count are read after any other owner change has
- * committed. A member who is not an active owner (a non-owner, or an owner already deactivated) is not in
- * the count, so changing them never trips it.
+ * Takes the owners' lock, then says whether taking `userId` out of the organization's active owners would
+ * leave it with none. A member who is not an active owner (a non-owner, or an owner already deactivated)
+ * is not in the count, so changing them never trips it.
+ *
+ * Call it first in the transaction, before any user row is locked: every guarded path takes the owners
+ * first, so they never deadlock with each other.
  */
-export const wouldRemoveLastActiveOwner = async (
+export const lockOwnersAndCheckRemoval = async (
   tx: Prisma.TransactionClient,
   organizationId: string,
   userId: string
 ): Promise<boolean> => {
+  await lockOrganizationOwners(tx, organizationId);
   const target = await tx.membership.findUnique({
     where: { userId_organizationId: { organizationId, userId } },
     select: { role: true, user: { select: { isActive: true } } },
@@ -65,18 +69,22 @@ export const wouldRemoveLastActiveOwner = async (
 };
 
 /**
- * One transaction holding the organization's owner lock, run again when Postgres aborts it over a
- * deadlock (with a path that takes the user row first, such as account deletion). The retry and the
- * conflict check live in `prisma-error`, so a driver adapter's own conflict error is retried as well as
- * Prisma's P2034. Keep `transaction` idempotent: every attempt re-reads and re-writes from scratch.
+ * Runs `transaction`, first refusing with `LastActiveOwnerError` when it would take the last active owner
+ * out of the organization. Pass the member it may remove, or `null` when the change cannot remove an owner:
+ * then no lock is taken. Run again when Postgres aborts it over a deadlock (with a path that takes the user
+ * row first, such as account deletion), so keep `transaction` idempotent: every attempt re-reads and
+ * re-writes from scratch.
  */
-export const runOwnerLockedTransaction = <T>(
+export const runOwnerGuardedTransaction = <T>(
   organizationId: string,
+  removedUserId: string | null,
   transaction: (tx: Prisma.TransactionClient) => Promise<T>
 ): Promise<T> =>
   retryOnTransactionConflict(() =>
     prisma.$transaction(async (tx) => {
-      await lockOrganizationOwners(tx, organizationId);
+      if (removedUserId !== null && (await lockOwnersAndCheckRemoval(tx, organizationId, removedUserId))) {
+        throw new LastActiveOwnerError();
+      }
       return transaction(tx);
     })
   );

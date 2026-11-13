@@ -9,8 +9,7 @@ import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handl
 import { sendMemberRetentionNoticeEmail } from "@/modules/email";
 import {
   countActiveOwners,
-  lockOrganizationOwners,
-  wouldRemoveLastActiveOwner,
+  lockOwnersAndCheckRemoval,
 } from "@/modules/organization/settings/teams/lib/owner-guard";
 import { formatRetentionDate } from "../lib/display";
 import {
@@ -125,7 +124,9 @@ export const deactivateDueMember = async (
   noticeDueAtOrBefore: Date
 ): Promise<TDeactivation> =>
   runSweepTransaction(async (tx) => {
-    await lockOrganizationOwners(tx, context.policy.organizationId);
+    // Read first, with the owners locked, so it is taken before the user row; acted on below, once the
+    // member is known to be due.
+    const isLastActiveOwner = await lockOwnersAndCheckRemoval(tx, context.policy.organizationId, userId);
     await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
     await lockUnchangedRetentionPolicy(tx, context.policy);
     const [member] = await readCandidates(tx, context, { userId, noticeDueAtOrBefore });
@@ -133,7 +134,7 @@ export const deactivateDueMember = async (
       return null;
     }
     if (member.organizationCount > 1) return "otherOrganization";
-    if (await wouldRemoveLastActiveOwner(tx, context.policy.organizationId, userId)) return "lastOwner";
+    if (isLastActiveOwner) return "lastOwner";
 
     await tx.user.update({ where: { id: userId }, data: { isActive: false } });
     await recordRetentionRunActions(tx, context.runId, [

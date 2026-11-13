@@ -7,7 +7,6 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { lockUserActiveState, reactivateLockedUser } from "@/lib/user/reactivation";
 import { isUniqueConstraintError } from "@/lib/utils/prisma-constraint";
-import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 import { getUsersQuery } from "@/modules/api/v2/organizations/[organizationId]/users/lib/utils";
 import {
   TGetUsersFilter,
@@ -17,8 +16,8 @@ import {
 import { ApiErrorDetails, ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { ApiResponseWithMeta } from "@/modules/api/v2/types/api-success";
 import {
-  lockOrganizationOwners,
-  wouldRemoveLastActiveOwner,
+  LastActiveOwnerError,
+  runOwnerGuardedTransaction,
 } from "@/modules/organization/settings/teams/lib/owner-guard";
 
 export const getUsers = async (
@@ -175,17 +174,8 @@ export const createUser = async (
   }
 };
 
-// Thrown inside updateUser's transaction to carry the last-owner conflict out through the
-// generic catch block below without it being reported as an internal_server_error. `field` is the
-// input that would have removed the last active owner, so the 409 names what the caller sent.
-class LastOwnerConflictError extends Error {
-  constructor(readonly field: "role" | "isActive") {
-    super("Cannot remove the last owner of the organization");
-  }
-}
-
 // Thrown inside updateUser's transaction when the request would change an account-wide field of a
-// user who also belongs to another organization; carried out as a 409, like LastOwnerConflictError:
+// user who also belongs to another organization; carried out as a 409, like the last-owner conflict:
 // the same request succeeds for a user in this organization alone, so it conflicts with the user's
 // current state rather than being malformed.
 class AccountFieldsConflictError extends Error {
@@ -240,6 +230,27 @@ const lockAndCheckAccountFields = async (
   return { wasActive: account.isActive };
 };
 
+/** What `updateUser` returns for an error its transaction threw. */
+const toUpdateUserError = (error: unknown, demoting: boolean): ApiErrorResponseV2 => {
+  if (error instanceof LastActiveOwnerError) {
+    return {
+      type: "conflict",
+      // Names the input that would have removed the owner; a demotion wins when the same request also
+      // deactivates.
+      details: [
+        { field: demoting ? "role" : "isActive", issue: "Cannot remove the last owner of the organization" },
+      ],
+    };
+  }
+  if (error instanceof AccountFieldsConflictError) {
+    return { type: "conflict", details: error.details };
+  }
+  return {
+    type: "internal_server_error",
+    details: [{ field: "user", issue: error instanceof Error ? error.message : "Unknown error occurred" }],
+  };
+};
+
 export const updateUser = async (
   userInput: TUserInputPatch,
   organizationId: string
@@ -247,6 +258,11 @@ export const updateUser = async (
   const { name, email, role, teams, isActive } = userInput;
   let existingTeams: string[] = [];
   let newTeams: Awaited<ReturnType<typeof getExistingTeamsFromInput>>;
+  // Whether this request could take an active owner out of the organization: demoting them or
+  // deactivating them. Decided from the request alone; whether the user is an active owner is read
+  // inside the transaction, under the owners' lock (`runOwnerGuardedTransaction`).
+  const demoting = role !== undefined && role !== OrganizationRole.owner;
+  const mayRemoveOwner = demoting || isActive === false;
 
   try {
     // Restrict the lookup to a user with a membership in the authenticated organization,
@@ -280,12 +296,6 @@ export const updateUser = async (
         details: [{ field: "user", issue: "not found" }],
       });
     }
-
-    // Whether this request could take an active owner out of the organization: demoting them or
-    // deactivating them. Decided from the request alone; whether the user is an active owner is read
-    // inside the transaction, under the owners' lock (`wouldRemoveLastActiveOwner`).
-    const demoting = role !== undefined && role !== OrganizationRole.owner;
-    const mayRemoveOwner = demoting || isActive === false;
 
     // Capture the existing team names for the user (within the authenticated organization).
     existingTeams = existingUser.teamUsers.map((teamUser) => teamUser.team.name);
@@ -372,28 +382,22 @@ export const updateUser = async (
     if (mayRemoveOwner || touchesAccountFields) {
       // The last-owner check and the write must be one atomic unit: read then act in two separate
       // statements lets two callers removing different owners at once both read "more than one owner"
-      // and both writes land, leaving none. So the owners are locked first (`lockOrganizationOwners`,
-      // the lock the data retention members sweep takes too), and a second caller waits there and
-      // then counts what the first one committed. Run again on a deadlock, e.g. with an account being
-      // deleted, which takes the user row before its memberships.
+      // and both writes land, leaving none. `runOwnerGuardedTransaction` locks the owners first (the
+      // lock the data retention members sweep takes too) and checks under it, before the user row.
       //
       // A change to the account's own fields is decided under the user row's lock
       // (`lockAndCheckAccountFields`). A false→true change then goes through `reactivateLockedUser`,
       // like Reactivate in the member list, so the data retention members clock restarts and the old
       // notice is cleared. Without it the member would be deactivated again the next night, with no
       // warning.
-      updatedUser = await retryOnTransactionConflict(() =>
-        prisma.$transaction(async (tx) => {
-          // Owners first, then the user row: the order the data retention members sweep takes them in.
-          if (mayRemoveOwner) await lockOrganizationOwners(tx, organizationId);
+      updatedUser = await runOwnerGuardedTransaction(
+        organizationId,
+        mayRemoveOwner ? existingUser.id : null,
+        async (tx) => {
           const account = touchesAccountFields
             ? await lockAndCheckAccountFields(tx, existingUser.id, organizationId, { name, isActive })
             : null;
           const reactivating = isActive === true && account?.wasActive === false;
-          if (mayRemoveOwner && (await wouldRemoveLastActiveOwner(tx, organizationId, existingUser.id))) {
-            // A demotion is reported as such even when the same request also deactivates.
-            throw new LastOwnerConflictError(demoting ? "role" : "isActive");
-          }
 
           // Re-run against `tx` rather than reusing deleteTeamOps/createTeamOps below: those are
           // built against the root client, so awaiting them here would run them as separate
@@ -432,7 +436,7 @@ export const updateUser = async (
           });
           if (reactivating) await reactivateLockedUser(tx, existingUser.id);
           return user;
-        })
+        }
       );
     } else {
       // Update by id so the mutation is bound to the org-scoped lookup above. Email is
@@ -484,20 +488,7 @@ export const updateUser = async (
 
     return ok(returnedUser);
   } catch (error) {
-    if (error instanceof LastOwnerConflictError) {
-      return err({
-        type: "conflict",
-        details: [{ field: error.field, issue: error.message }],
-      });
-    }
-    if (error instanceof AccountFieldsConflictError) {
-      return err({ type: "conflict", details: error.details });
-    }
-
-    return err({
-      type: "internal_server_error",
-      details: [{ field: "user", issue: error instanceof Error ? error.message : "Unknown error occurred" }],
-    });
+    return err(toUpdateUserError(error, demoting));
   }
 };
 

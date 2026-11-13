@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { deleteMembership } from "@/modules/organization/settings/teams/lib/membership";
-import { lockOrganizationOwners } from "@/modules/organization/settings/teams/lib/owner-guard";
+import { lockOwnersAndCheckRemoval } from "@/modules/organization/settings/teams/lib/owner-guard";
 import type { TUserInput } from "../../types/users";
 import { createUser, updateUser } from "../users";
 
@@ -394,7 +394,7 @@ describe("updateUser deactivating an organization's owners vs real Postgres (ENG
     const releaseSignal = new Promise<void>((resolve) => (release = resolve));
     const sweeping = prisma.$transaction(
       async (tx) => {
-        await lockOrganizationOwners(tx, org.id);
+        await lockOwnersAndCheckRemoval(tx, org.id, users[0].id);
         await tx.user.update({ where: { id: users[0].id }, data: { isActive: false } });
         const [{ pid }] = await tx.$queryRaw<{ pid: number }[]>`SELECT pg_backend_pid() AS pid`;
         locked(pid);
