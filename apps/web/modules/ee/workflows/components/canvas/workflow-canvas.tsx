@@ -18,6 +18,7 @@ import { PanelLeftIcon, PanelRightOpenIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
 import {
   WORKFLOW_ADD_BUTTON_EDGE_TYPE,
   WORKFLOW_BRANCH_EDGE_TYPE,
@@ -30,6 +31,7 @@ import {
   workflowDefinitionToFlowEdges,
   workflowDefinitionToFlowNodes,
 } from "@/modules/ee/workflows/lib/definition-to-flow";
+import { isEdgeOffRunPath } from "@/modules/ee/workflows/lib/run-canvas-highlight";
 import {
   type TWorkflowNodeData,
   addWorkflowTriggerAtom,
@@ -117,10 +119,16 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     () => (definition ? workflowDefinitionToFlowNodes(definition, t, { hasBoundSurvey, isDraft }) : []),
     [definition, t, hasBoundSurvey, isDraft]
   );
-  const flowEdges = useMemo(
-    () => (definition ? workflowDefinitionToFlowEdges(definition) : []),
-    [definition]
-  );
+  // While a run is open in the run drawer, the canvas marks its path: the steps and edges off it
+  // are greyed (mock screen 7), and each If/else labels the branch it took (workflow-branch-node).
+  const runHighlight = useEditorRunHighlight();
+  const flowEdges = useMemo(() => {
+    const edges = definition ? workflowDefinitionToFlowEdges(definition) : [];
+    if (!runHighlight) return edges;
+    return edges.map((edge) =>
+      isEdgeOffRunPath(edge, runHighlight) ? { ...edge, style: { ...edge.style, opacity: 0.35 } } : edge
+    );
+  }, [definition, runHighlight]);
 
   // Keep ReactFlow's nodes in sync with the projected definition while preserving the user's
   // current selection — recomputing from scratch would lose it on every definition edit.
@@ -134,6 +142,15 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
       }));
     });
   }, [derivedFlowNodes, setFlowNodes]);
+
+  const displayedFlowNodes = useMemo(() => {
+    if (!runHighlight) return flowNodes;
+    return flowNodes.map((node) =>
+      runHighlight.notTakenStepIds.has(node.id)
+        ? { ...node, className: cn(node.className, "opacity-40") }
+        : node
+    );
+  }, [flowNodes, runHighlight]);
 
   const handleNodesChange: OnNodesChange<Node<TWorkflowNodeData>> = useCallback(
     (changes) => setFlowNodes((currentNodes) => applyNodeChanges(changes, currentNodes)),
@@ -231,7 +248,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         </div>
       ) : null}
       <ReactFlow
-        nodes={flowNodes}
+        nodes={displayedFlowNodes}
         edges={flowEdges}
         nodeTypes={NODE_TYPES}
         edgeTypes={EDGE_TYPES}

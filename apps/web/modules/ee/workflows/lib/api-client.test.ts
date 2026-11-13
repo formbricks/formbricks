@@ -9,6 +9,7 @@ import {
   buildWorkflowListSearchParams,
   buildWorkflowRunListSearchParams,
   createWorkflow,
+  createWorkflowTestRun,
   deleteWorkflow,
   disableWorkflow,
   duplicateWorkflow,
@@ -382,5 +383,30 @@ describe("workflow runs api-client requests", () => {
     );
 
     await expect(getWorkflowRun("run_x")).rejects.toBeInstanceOf(V3ApiError);
+  });
+
+  test("createWorkflowTestRun posts the test payload and unwraps the finished run", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      jsonResponse({ data: { id: "run_t", isDryRun: true } }, 201)
+    );
+
+    const result = await createWorkflowTestRun("wf_1", { payload: { channel: "call" } });
+
+    expect(result).toEqual({ id: "run_t", isDryRun: true });
+    const [url, init] = vi.mocked(global.fetch).mock.calls[0]!;
+    expect(url).toBe("/api/v3/workflows/wf_1/test-runs");
+    expect(init).toMatchObject({ method: "POST", cache: "no-store" });
+    expect(JSON.parse(String((init as RequestInit).body))).toEqual({ payload: { channel: "call" } });
+  });
+
+  test("createWorkflowTestRun keeps the problem code so a refusal can be explained", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      problemResponse(422, { status: 422, detail: "No test payload", code: "invalid_workflow_state" })
+    );
+
+    await expect(createWorkflowTestRun("wf_1", {})).rejects.toMatchObject({
+      status: 422,
+      code: "invalid_workflow_state",
+    });
   });
 });

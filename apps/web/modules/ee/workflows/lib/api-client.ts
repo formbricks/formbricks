@@ -1,5 +1,6 @@
 import type {
   TCreateWorkflowInput,
+  TCreateWorkflowTestRunInput,
   TPatchWorkflowInput,
   TWorkflowListItem,
   TWorkflowResource,
@@ -302,6 +303,30 @@ export async function getWorkflowRun(runId: string, signal?: AbortSignal): Promi
     method: "GET",
     cache: "no-store",
     signal,
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const body = (await response.json()) as { data: TWorkflowRunResource };
+  return body.data;
+}
+
+/**
+ * Runs the workflow's draft at once with fake effects (a Test run, ADR 0049) and answers with the
+ * finished run. Without `payload` the server uses the workflow's Sample payload.
+ */
+export async function createWorkflowTestRun(
+  workflowId: string,
+  input: TCreateWorkflowTestRunInput
+): Promise<TWorkflowRunResource> {
+  const response = await fetch(`/api/v3/workflows/${workflowId}/test-runs`, {
+    method: "POST",
+    cache: "no-store",
+    headers: JSON_HEADERS,
+    body: JSON.stringify(input),
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
   });
 
   if (!response.ok) {

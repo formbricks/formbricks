@@ -91,6 +91,9 @@ export const WorkflowRunsTable = ({
             {runs.map((run) => {
               const statusBadge = getWorkflowRunStatusBadge(run.status, t);
               const triggerLabel = getWorkflowTriggerTypeLabel(run.triggerType, t);
+              const testBadge = run.isDryRun ? (
+                <Badge text={t("workspace.workflows.run_test_badge")} type="gray" size="tiny" />
+              ) : null;
 
               return (
                 <TableRow
@@ -108,11 +111,19 @@ export const WorkflowRunsTable = ({
                   <TableCell className="min-w-0 px-4 py-2">
                     {showWorkflowColumn ? (
                       <>
-                        <p className="truncate text-sm font-medium text-slate-900">{run.workflowName}</p>
+                        <p className="flex min-w-0 items-center gap-2">
+                          <span className="truncate text-sm font-medium text-slate-900">
+                            {run.workflowName}
+                          </span>
+                          {testBadge}
+                        </p>
                         <p className="truncate text-sm text-slate-500">{triggerLabel}</p>
                       </>
                     ) : (
-                      <p className="truncate text-sm text-slate-700">{triggerLabel}</p>
+                      <p className="flex min-w-0 items-center gap-2">
+                        <span className="truncate text-sm text-slate-700">{triggerLabel}</span>
+                        {testBadge}
+                      </p>
                     )}
                   </TableCell>
                   <TableCell className="px-4 py-2">

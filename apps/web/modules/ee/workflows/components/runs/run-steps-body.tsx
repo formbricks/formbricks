@@ -1,21 +1,33 @@
 "use client";
 
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { toRunDetailRows } from "@/modules/ee/workflows/lib/run-detail-rows";
 import { type TWorkflowRunDetail } from "@/modules/ee/workflows/types";
 import { Skeleton } from "@/modules/ui/components/skeleton";
-import { WorkflowRunSteps } from "./workflow-run-steps";
+import { RunDetailSteps } from "./run-detail-steps";
 
 interface RunStepsBodyProps {
   isLoading: boolean;
   isError: boolean;
   error: unknown;
   detail?: TWorkflowRunDetail;
+  /** Names steps and conditions; null when the workflow could not be loaded. */
+  definition: TWorkflowDefinition | null;
 }
 
-// Step-logs section body: one early return per fetch state keeps this flat (no nested ternary).
-export const RunStepsBody = ({ isLoading, isError, error, detail }: Readonly<RunStepsBodyProps>) => {
+// Step list body: one early return per fetch state keeps this flat (no nested ternary).
+export const RunStepsBody = ({
+  isLoading,
+  isError,
+  error,
+  detail,
+  definition,
+}: Readonly<RunStepsBodyProps>) => {
   const { t } = useTranslation();
+  const rows = useMemo(() => (detail ? toRunDetailRows(detail, definition) : null), [detail, definition]);
 
   if (isLoading) {
     return (
@@ -34,8 +46,8 @@ export const RunStepsBody = ({ isLoading, isError, error, detail }: Readonly<Run
     );
   }
 
-  if (detail) {
-    return <WorkflowRunSteps logs={detail.logs} />;
+  if (detail && rows) {
+    return <RunDetailSteps rows={rows} responseId={detail.responseId} />;
   }
 
   return null;

@@ -76,3 +76,14 @@ export const describeIfElseCondition = (group: TWorkflowConditionGroup, t: TFunc
   if (condition === null || rest.length === 0) return condition;
   return t("workspace.workflows.if_else_summary_more", { condition, count: rest.length });
 };
+
+/** One condition in words ("channel is call"), as run detail lists them; null for an unknown operator. */
+export const describeWorkflowCondition = (condition: TWorkflowCondition, t: TFunction): string | null =>
+  describeComparison(
+    condition.operator,
+    {
+      variable: getVariableDisplayName(condition.left.path),
+      ...(condition.right === undefined ? {} : { value: toValueText(condition.right) }),
+    },
+    t
+  );

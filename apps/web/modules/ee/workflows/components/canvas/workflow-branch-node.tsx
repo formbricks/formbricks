@@ -6,6 +6,7 @@ import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowIfElseBranch } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
+import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
 import {
   WORKFLOW_CANVAS_BRANCH_FORK_HEIGHT,
   WORKFLOW_CANVAS_BRANCH_SPREAD,
@@ -42,6 +43,8 @@ export const WorkflowBranchNode = memo(
     const { t } = useTranslation();
     const appendSendEmail = useSetAtom(appendSendEmailAfterNodeAtom);
     const canMutate = useAtomValue(canMutateCanvasAtom);
+    // While a run is open in the run drawer: the branch it took, filled; the other one greyed.
+    const takenBranch = useEditorRunHighlight()?.takenBranchByStepId[id] ?? null;
     const legs: TBranchLeg[] = [
       {
         branch: "then",
@@ -75,11 +78,23 @@ export const WorkflowBranchNode = memo(
             {legs.map(({ branch, label, ariaLabel, addStepLabel, side }) => (
               <div
                 key={branch}
-                className={cn(FORK_LINE_CLASS_NAME, "bottom-0 w-0.5", side === "left" ? "left-0" : "right-0")}
+                className={cn(
+                  FORK_LINE_CLASS_NAME,
+                  "bottom-0 w-0.5",
+                  side === "left" ? "left-0" : "right-0",
+                  takenBranch !== null && takenBranch !== branch && "opacity-40"
+                )}
                 style={{ top: FORK_BAR_TOP_PX }}>
-                <span className="absolute top-2 left-1/2 z-10 inline-flex -translate-x-1/2 items-center rounded-full border border-slate-500 bg-white px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-slate-900">
+                <span
+                  className={cn(
+                    "absolute top-2 left-1/2 z-10 inline-flex -translate-x-1/2 items-center rounded-full border border-slate-500 bg-white px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-slate-900",
+                    takenBranch === branch && "border-slate-900 bg-slate-900 text-white"
+                  )}>
                   <span aria-hidden="true">{label}</span>
                   <span className="sr-only">{ariaLabel}</span>
+                  {takenBranch === branch ? (
+                    <span className="sr-only">{t("workspace.workflows.run_branch_taken_aria")}</span>
+                  ) : null}
                 </span>
                 <Handle id={branch} type="source" position={Position.Bottom} className={HANDLE_CLASS_NAMES} />
                 {canMutate && data.emptyBranches.includes(branch) && (

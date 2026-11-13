@@ -7,6 +7,7 @@ import {
   ChevronDownIcon,
   CirclePauseIcon,
   CirclePlayIcon,
+  PlayIcon,
   TrashIcon,
 } from "lucide-react";
 import { useRouter, useSelectedLayoutSegment } from "next/navigation";
@@ -14,8 +15,10 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { WorkflowTestRunDrawer } from "@/modules/ee/workflows/components/runs/workflow-test-run-drawer";
 import { WorkflowAutoSaveIndicator } from "@/modules/ee/workflows/components/workflow-auto-save-indicator";
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
+import { useWorkflowTestRun } from "@/modules/ee/workflows/hooks/use-workflow-test-run";
 import { summarizeValidationProblems, trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
 import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import { deleteWorkflow } from "@/modules/ee/workflows/lib/api-client";
@@ -53,6 +56,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const testRun = useWorkflowTestRun({ workflowId, isReadOnly });
 
   if (!workflow) return null;
   // Only the edit tab gets the lifecycle controls — the runs tab is read-only. An unresolved save
@@ -117,6 +121,25 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
           only — on the runs tab the pill above is carrying a save failure and nothing else. */}
       {isEditTab && (
         <>
+          {/* Secondary on purpose: the status menu stays the one primary control (ED8). A Test run
+              runs the draft with fake effects, so read-only members may not start one. */}
+          <Button
+            variant="secondary"
+            size="sm"
+            loading={testRun.isRunning}
+            disabled={isReadOnly || isDeleting || testRun.isRunning}
+            onClick={() => void testRun.startTestRun()}>
+            <PlayIcon />
+            {t("workspace.workflows.test_run")}
+          </Button>
+          <WorkflowTestRunDrawer
+            open={testRun.isDrawerOpen}
+            onClose={testRun.closeDrawer}
+            runId={testRun.runId}
+            isRunning={testRun.isRunning}
+            failure={testRun.failure}
+            error={testRun.error}
+          />
           <DropdownMenu onOpenChange={handleStatusMenuOpenChange}>
             {/* `disabled` must sit on the trigger, not only the child Button: Radix's open guard
                 reads the trigger's own prop, so a value passed solely to the Button leaves the menu
