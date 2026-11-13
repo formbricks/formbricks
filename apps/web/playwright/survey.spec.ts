@@ -1143,3 +1143,44 @@ test.describe("Overlapping file uploads", () => {
     });
   });
 });
+
+test.describe("Publishing a survey with problems", () => {
+  test("lists the problem, jumps to its field, and publishes once it is fixed", async ({ page, users }) => {
+    const user = await users.create();
+    await user.login();
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    await createSurveyFromScratch(page);
+
+    const headline = page.locator('[data-issue-field$=":headline"] .editor-input').first();
+    const summary = page.getByRole("region", { name: helper.EDITOR_PROBLEMS_NAME });
+    const goToFirstProblem = summary.getByRole("button", { name: "Go to first" });
+
+    await test.step("an emptied question headline stops the publish and is listed", async () => {
+      await expect(headline).toBeVisible();
+      await headline.fill("");
+      // The live preview re-renders after the edit, and may move focus to its own first control when it is
+      // done. Waiting for it to show the empty headline settles that before anything below is clicked, and
+      // the editor reads the survey as it was when the edit settled.
+      await expect(
+        page.getByTestId("fb__surveys__auto-close-wrapper-test").getByText("What would you like to know?")
+      ).toBeHidden();
+
+      await page.getByRole("button", { name: "Activate", exact: true }).click();
+      await expect(summary.getByRole("heading", { name: helper.EDITOR_PROBLEMS_NAME })).toBeFocused();
+      await expect(summary).toContainText("There is a problem");
+      await expect(goToFirstProblem).toBeVisible();
+    });
+
+    await test.step("the bar goes to the field", async () => {
+      await goToFirstProblem.click();
+      await expect(headline).toBeFocused();
+    });
+
+    await test.step("fixing it clears the problem and the survey publishes", async () => {
+      await helper.fillRichTextEditor(page, "Question*", "How was it?");
+      await expect(summary).toBeHidden();
+
+      await helper.publishSurvey(page);
+    });
+  });
+});

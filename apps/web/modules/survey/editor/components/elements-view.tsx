@@ -57,12 +57,6 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Alert, AlertButton, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import { useStableCallback } from "@/modules/ui/hooks/use-stable-callback";
-import {
-  isBlockLogicItemValid,
-  isEndingCardValid,
-  isWelcomeCardValid,
-  validateElement,
-} from "../lib/validation";
 
 // Module-level so the sensor descriptor keeps its identity: a fresh options object per render gives
 // DndContext new activators, which re-renders every useSortable consumer (each BlockCard) on every edit.
@@ -77,7 +71,6 @@ interface ElementsViewProps {
   setActiveElementId: (elementId: string | null) => void;
   workspace: TWorkspaceWithoutCustomCss;
   invalidElements: string[] | null;
-  setInvalidElements: React.Dispatch<SetStateAction<string[] | null>>;
   selectedLanguageCode: string;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
@@ -99,7 +92,6 @@ export const ElementsView = ({
   persistedSurvey,
   workspace,
   invalidElements,
-  setInvalidElements,
   selectedLanguageCode,
   isFormbricksCloud,
   isCxMode,
@@ -134,8 +126,6 @@ export const ElementsView = ({
       return acc;
     }, {});
   }, [elements]);
-
-  const surveyLanguages = localSurvey.languages;
 
   const updateElement = (elementIdx: number, updatedAttributes: any) => {
     // Get element ID from current elements array (for validation)
@@ -620,83 +610,6 @@ export const ElementsView = ({
 
     setLocalSurvey(result.data);
   };
-
-  // Validate survey when changes are made to languages or elements
-  // using set for O(1) lookup
-  useEffect(() => {
-    if (!invalidElements) return;
-
-    const currentInvalidSet = new Set(invalidElements);
-    let hasChanges = false;
-
-    // Live re-validation: clear errors as elements become valid (including
-    // drafts), but don't flag freshly added drafts — save/publish does that.
-    elements.forEach((element) => {
-      const isValid = validateElement(element, surveyLanguages);
-      if (isValid) {
-        if (currentInvalidSet.has(element.id)) {
-          currentInvalidSet.delete(element.id);
-          hasChanges = true;
-        }
-      } else if (!element.isDraft && !currentInvalidSet.has(element.id)) {
-        currentInvalidSet.add(element.id);
-        hasChanges = true;
-      }
-    });
-
-    // Check welcome card
-    if (localSurvey.welcomeCard.enabled && !isWelcomeCardValid(localSurvey.welcomeCard, surveyLanguages)) {
-      if (!currentInvalidSet.has("start")) {
-        currentInvalidSet.add("start");
-        hasChanges = true;
-      }
-    } else if (currentInvalidSet.has("start")) {
-      currentInvalidSet.delete("start");
-      hasChanges = true;
-    }
-
-    // Check thank you card
-    localSurvey.endings.forEach((ending) => {
-      if (!isEndingCardValid(ending, surveyLanguages)) {
-        if (!currentInvalidSet.has(ending.id)) {
-          currentInvalidSet.add(ending.id);
-          hasChanges = true;
-        }
-      } else if (currentInvalidSet.has(ending.id)) {
-        currentInvalidSet.delete(ending.id);
-        hasChanges = true;
-      }
-    });
-
-    // Live-clear conditional logic and block-name errors as they get fixed. We only clear
-    // here (never add) so freshly added, not-yet-filled-in rules aren't
-    // flagged prematurely — logic errors are added on save/publish instead.
-    localSurvey.blocks.forEach((block) => {
-      if (currentInvalidSet.has(block.id) && block.name.trim()) {
-        currentInvalidSet.delete(block.id);
-        hasChanges = true;
-      }
-
-      (block.logic ?? []).forEach((logicItem) => {
-        if (currentInvalidSet.has(logicItem.id) && isBlockLogicItemValid(logicItem)) {
-          currentInvalidSet.delete(logicItem.id);
-          hasChanges = true;
-        }
-      });
-    });
-
-    if (hasChanges) {
-      setInvalidElements(Array.from(currentInvalidSet));
-    }
-  }, [
-    elements,
-    surveyLanguages,
-    invalidElements,
-    setInvalidElements,
-    localSurvey.welcomeCard,
-    localSurvey.endings,
-    localSurvey.blocks,
-  ]);
 
   useEffect(() => {
     const elementWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
