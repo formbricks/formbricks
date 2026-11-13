@@ -209,6 +209,38 @@ describe("a Dashboard viewer's OAuth grant", () => {
     }
   });
 
+  test("two demotions to viewer of the same owner at once still end the wide grant", async () => {
+    // Different organizations, so different owner locks: only the user-row lock makes the second demotion's
+    // "only viewer memberships left?" check see the first.
+    const { cookie, userId } = await userWithRole("dashboard_viewer");
+    const demote = (organizationId: string) =>
+      runOwnerGuardedTransaction(organizationId, userId, async (tx) => {
+        await lockUserActiveState(tx, userId);
+        return updateMembership(userId, organizationId, { role: "dashboard_viewer" }, tx);
+      });
+    for (let round = 0; round < 5; round++) {
+      const organizations = await Promise.all(
+        [1, 2].map((n) => prisma.organization.create({ data: { name: `Owned ${round}-${n}` } }))
+      );
+      const otherOwner = await prisma.user.create({
+        data: { name: "Other owner", email: `co-owner-${round}@example.com` },
+      });
+      await prisma.membership.createMany({
+        data: organizations.flatMap(({ id }) => [
+          { userId, organizationId: id, role: "owner" as const, accepted: true },
+          { userId: otherOwner.id, organizationId: id, role: "owner" as const, accepted: true },
+        ]),
+      });
+      const tokens = await grant(cookie, clientId, EVERYTHING);
+      expect(scopesOf(tokens.scope)).toContain("surveys:read");
+
+      await Promise.all(organizations.map(({ id }) => demote(id)));
+
+      expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
+      expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
+    }
+  });
+
   test("a Member is unaffected", async () => {
     const { cookie } = await userWithRole("member");
 
