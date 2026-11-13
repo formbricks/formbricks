@@ -21,6 +21,7 @@ const mocks = vi.hoisted(() => ({
   getIsWorkflowsEnabled: vi.fn(),
   workflowFindUnique: vi.fn(),
   workflowUpdateMany: vi.fn(),
+  workflowFindFirst: vi.fn(),
   versionFindFirst: vi.fn(),
   queueAuditEvent: vi.fn(),
   logError: vi.fn(),
@@ -49,37 +50,41 @@ vi.mock("@formbricks/database", () => {
     row.workflowId === where.workflowId &&
     row.workspaceId === where.workspaceId &&
     (typeof where.id === "string" ? where.id === id : (where.id?.in.includes(id) ?? true));
-  return {
-    prisma: {
-      workflow: { findUnique: mocks.workflowFindUnique, updateMany: mocks.workflowUpdateMany },
-      workflowVersion: { findFirst: mocks.versionFindFirst },
-      workflowSecret: {
-        create: vi.fn(
-          async ({ data }: { data: { workflowId: string; workspaceId: string; value: string } }) => {
-            const id = `sec_new_${(mocks.secrets.size + 1).toString()}`;
-            mocks.secrets.set(id, data);
-            return { id };
+  const client = {
+    workflow: {
+      findUnique: mocks.workflowFindUnique,
+      findFirst: mocks.workflowFindFirst,
+      updateMany: mocks.workflowUpdateMany,
+    },
+    workflowVersion: { findFirst: mocks.versionFindFirst },
+    workflowSecret: {
+      create: vi.fn(
+        async ({ data }: { data: { workflowId: string; workspaceId: string; value: string } }) => {
+          const id = `sec_new_${(mocks.secrets.size + 1).toString()}`;
+          mocks.secrets.set(id, data);
+          return { id };
+        }
+      ),
+      updateMany: vi.fn(async ({ where, data }: { where: TWhere; data: { value: string } }) => {
+        let count = 0;
+        for (const [id, row] of mocks.secrets) {
+          if (matches(id, row, where)) {
+            mocks.secrets.set(id, { ...row, value: data.value });
+            count += 1;
           }
-        ),
-        updateMany: vi.fn(async ({ where, data }: { where: TWhere; data: { value: string } }) => {
-          let count = 0;
-          for (const [id, row] of mocks.secrets) {
-            if (matches(id, row, where)) {
-              mocks.secrets.set(id, { ...row, value: data.value });
-              count += 1;
-            }
-          }
-          return { count };
-        }),
-        findMany: vi.fn(async ({ where }: { where: TWhere }) =>
-          [...mocks.secrets]
-            .filter(([id, row]) => matches(id, row, where))
-            .map(([id, row]) => ({ id, value: row.value }))
-        ),
-      },
+        }
+        return { count };
+      }),
+      findMany: vi.fn(async ({ where }: { where: TWhere }) =>
+        [...mocks.secrets]
+          .filter(([id, row]) => matches(id, row, where))
+          .map(([id, row]) => ({ id, value: row.value }))
+      ),
     },
   };
+  return { prisma: { ...client, $transaction: vi.fn((fn: (tx: typeof client) => unknown) => fn(client)) } };
 });
+
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEvent: mocks.queueAuditEvent }));
 vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromWorkspaceId: vi.fn().mockResolvedValue("org_1"),
@@ -122,9 +127,12 @@ const enabledDefinition = definitionWith([
   { name: "X-Team", value: "growth" },
 ]);
 
+const READ_AT = new Date("2026-11-13T10:00:00.000Z");
+
 const workflowRow = (overrides: Record<string, unknown> = {}) => ({
   id: WORKFLOW_ID,
   workspaceId: WORKSPACE_ID,
+  updatedAt: READ_AT,
   status: "enabled",
   definition: enabledDefinition,
   versions: [{ definition: enabledDefinition }],
@@ -176,6 +184,7 @@ beforeEach(() => {
     return row?.versions?.[0] ?? null;
   });
   mocks.workflowUpdateMany.mockResolvedValue({ count: 1 });
+  mocks.workflowFindFirst.mockImplementation(async () => mocks.workflowFindUnique());
 });
 
 describe("PUT /api/internal/workflows/{workflowId}/steps/{stepId}/secret-headers/{headerName}", () => {
@@ -226,7 +235,13 @@ describe("PUT /api/internal/workflows/{workflowId}/steps/{stepId}/secret-headers
 
     const [newId] = [...mocks.secrets.keys()].filter((id) => id !== "sec_1");
     const update = mocks.workflowUpdateMany.mock.calls[0][0];
-    expect(update.where).toEqual({ id: WORKFLOW_ID, workspaceId: WORKSPACE_ID });
+    // Compare-and-set: only the draft that was read is overwritten.
+    expect(update.where).toEqual({
+      id: WORKFLOW_ID,
+      workspaceId: WORKSPACE_ID,
+      updatedAt: READ_AT,
+      status: { not: "archived" },
+    });
     expect(update.data.definition.nodes[0].config.headers).toEqual([
       { name: "X-Api-Key", secret: true, secretId: newId },
     ]);
@@ -264,6 +279,26 @@ describe("PUT /api/internal/workflows/{workflowId}/steps/{stepId}/secret-headers
 
   test("an archived workflow is read-only", async () => {
     mocks.workflowFindUnique.mockResolvedValue(workflowRow({ status: "archived" }));
+
+    expect((await put()).status).toBe(422);
+    expect(await valuesFor(enabledDefinition)).toEqual(new Map([["sec_1", "Bearer sk_live_old"]]));
+  });
+
+  test("answers 409 when the draft changed since it was read, and records nothing", async () => {
+    const draft = definitionWith([{ name: "X-Api-Key", secret: true }]);
+    mocks.workflowFindUnique.mockResolvedValue(
+      workflowRow({ status: "disabled", definition: draft, versions: [] })
+    );
+    mocks.workflowUpdateMany.mockResolvedValue({ count: 0 });
+
+    const response = await put("x-api-key");
+
+    expect(response.status).toBe(409);
+    expect(mocks.queueAuditEvent).not.toHaveBeenCalledWith(expect.objectContaining({ status: "success" }));
+  });
+
+  test("a workflow archived after it was read is refused inside the transaction, before any value is written", async () => {
+    mocks.workflowFindFirst.mockResolvedValue({ status: "archived", updatedAt: new Date() });
 
     expect((await put()).status).toBe(422);
     expect(await valuesFor(enabledDefinition)).toEqual(new Map([["sec_1", "Bearer sk_live_old"]]));

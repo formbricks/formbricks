@@ -8,6 +8,7 @@ import {
   setWorkflowSecretHeaderId,
 } from "@formbricks/workflows";
 import {
+  WorkflowConflictError,
   WorkflowInvalidStateError,
   assertNotArchived,
   loadAndAuthorize,
@@ -16,7 +17,7 @@ import {
 import { noContentResponse, problemNotFound } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { buildWorkflowApiContext, workflowsService } from "@/app/api/v3/workflows/lib/context";
-import { workflowSecretStore } from "@/modules/ee/workflows/lib/secret-headers/workflow-secret-store";
+import { createWorkflowSecretStore } from "@/modules/ee/workflows/lib/secret-headers/workflow-secret-store";
 
 /**
  * `PUT /api/internal/workflows/{workflowId}/steps/{stepId}/secret-headers/{headerName}` (ENG-7179, ADR 0043):
@@ -26,6 +27,10 @@ import { workflowSecretStore } from "@/modules/ee/workflows/lib/secret-headers/w
  * Enable and without publishing anything else from the draft. A header with no stored value yet gets a
  * new row that only the draft points at: versions are never rewritten, so an enabled version without
  * a value stays as it is until the draft is enabled.
+ *
+ * The writes run in one transaction that first checks the workflow is still not archived; the draft is
+ * overwritten only if it is still the one read (`updatedAt` compare-and-set), else 409 and nothing is
+ * stored, so a concurrent edit is never lost.
  *
  * Write access; archived workflows are read-only. Audited as `secretHeaderReplaced` (`secretHeaderSet`
  * for a first value) with the step and header name; the value reaches only the encrypted store.
@@ -73,31 +78,52 @@ export const replaceWorkflowSecretHeader = async ({
     const scope = { workflowId: workflow.id, workspaceId: workflow.workspaceId };
     // The draft and the enabled version normally share one row; both are overwritten if they don't.
     const storedIds = [...new Set([inDraft?.secretId, inVersion?.secretId].filter((id) => id !== undefined))];
-    let change: "replaced" | "set" = "replaced";
-    if (storedIds.length > 0) {
-      await Promise.all(
-        storedIds.map((secretId) => workflowSecretStore.replace({ ...scope, secretId, value: input.value }))
-      );
-      // A draft that re-added the header since Enable shares the enabled version's row again.
-      if (inDraft && !inDraft.secretId) {
-        await prisma.workflow.updateMany({
-          where: { id: workflow.id, workspaceId: workflow.workspaceId },
-          data: { definition: setWorkflowSecretHeaderId(draft, params.stepId, inDraft.name, storedIds[0]) },
-        });
-      }
-    } else if (inDraft) {
-      const { id } = await workflowSecretStore.create({ ...scope, value: input.value });
-      await prisma.workflow.updateMany({
-        where: { id: workflow.id, workspaceId: workflow.workspaceId },
-        data: { definition: setWorkflowSecretHeaderId(draft, params.stepId, inDraft.name, id) },
-      });
-      change = "set";
-    } else {
+    if (storedIds.length === 0 && !inDraft) {
       // Only reachable for a version enabled without a value, which Enable refuses.
       throw new WorkflowInvalidStateError(
         "This header has no stored value and is not in the draft; add it to the draft and enable it."
       );
     }
+    const change: "replaced" | "set" = storedIds.length > 0 ? "replaced" : "set";
+
+    await prisma.$transaction(async (tx) => {
+      const current = await tx.workflow.findFirst({
+        where: { id: scope.workflowId, workspaceId: scope.workspaceId },
+        select: { status: true },
+      });
+      if (!current) throw new WorkflowConflictError("The workflow no longer exists.");
+      assertNotArchived(current);
+
+      const store = createWorkflowSecretStore(tx);
+      /** Points the draft's header at `secretId`, only if the draft is still the one read. */
+      const pointDraftAt = async (headerName: string, secretId: string) => {
+        const { count } = await tx.workflow.updateMany({
+          where: {
+            id: scope.workflowId,
+            workspaceId: scope.workspaceId,
+            updatedAt: workflow.updatedAt,
+            status: { not: "archived" },
+          },
+          data: { definition: setWorkflowSecretHeaderId(draft, params.stepId, headerName, secretId) },
+        });
+        if (count === 0) {
+          throw new WorkflowConflictError(
+            "The workflow changed since it was loaded. Reload it and try again."
+          );
+        }
+      };
+
+      if (storedIds.length > 0) {
+        await Promise.all(
+          storedIds.map((secretId) => store.replace({ ...scope, secretId, value: input.value }))
+        );
+        // A draft that re-added the header since Enable shares the enabled version's row again.
+        if (inDraft && !inDraft.secretId) await pointDraftAt(inDraft.name, storedIds[0]);
+      } else if (inDraft) {
+        const { id } = await store.create({ ...scope, value: input.value });
+        await pointDraftAt(inDraft.name, id);
+      }
+    });
 
     if (auditLog && change === "set") auditLog.action = "secretHeaderSet";
     await ctx.recordAudit?.({
