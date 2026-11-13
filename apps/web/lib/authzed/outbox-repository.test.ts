@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { Prisma } from "@formbricks/database/prisma";
 import {
   AUTHZED_OUTBOX_HISTORY_DELETE_BATCH_SIZE,
   AUTHZED_OUTBOX_HISTORY_MAX_DELETE_BATCHES,
@@ -35,24 +36,16 @@ describe("AuthZed projection outbox repository", () => {
   beforeEach(() => vi.clearAllMocks());
   afterEach(() => vi.useRealTimers());
 
-  test("dead-letters an unknown target instead of leaving it leased forever", async () => {
-    vi.mocked(prisma.$queryRaw).mockResolvedValue([row("membership"), row("future_unknown_target")]);
+  test("claims only the target types this release knows, and dead-letters nothing itself", async () => {
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([row("membership")]);
 
     await expect(claimAuthzedOutboxEvents("lease-owner")).resolves.toEqual([row("membership")]);
-    expect(prisma.authzedProjectionOutbox.updateMany).toHaveBeenCalledWith({
-      where: {
-        id: { in: ["future_unknown_target-event"] },
-        leaseOwner: "lease-owner",
-        processedAt: null,
-      },
-      data: {
-        deadLetteredAt: expect.any(Date),
-        lastErrorCode: "authzed_projection_invalid_event",
-        leaseExpiresAt: null,
-        leasedAt: null,
-        leaseOwner: null,
-      },
-    });
+    // The known types are a bound parameter of the claim, so a newer release's type is never leased.
+    const bound = (vi.mocked(prisma.$queryRaw).mock.calls.at(-1) ?? [])
+      .slice(1)
+      .flatMap((value) => (value instanceof Prisma.Sql ? value.values : [value]));
+    expect(bound).toContainEqual(expect.arrayContaining(["mcp_grant", "membership", "survey"]));
+    expect(prisma.authzedProjectionOutbox.updateMany).not.toHaveBeenCalled();
   });
 
   test("marks only events owned by the active lease as delivered", async () => {
@@ -147,6 +140,7 @@ describe("AuthZed projection outbox repository", () => {
         pending: 11n,
         revocations_past_critical: 3n,
         revocations_past_warning: 5n,
+        unknown_type: 4n,
       },
     ]);
 
@@ -157,6 +151,7 @@ describe("AuthZed projection outbox repository", () => {
       pending: 11,
       revocationsPastCritical: 3,
       revocationsPastWarning: 5,
+      unknownType: 4,
     });
   });
 

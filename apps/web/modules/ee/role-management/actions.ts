@@ -123,11 +123,17 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
               throw new ValidationError("You cannot demote the last owner of the organization");
             }
 
-            return updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data, tx);
+            return updateMembership(
+              parsedInput.userId,
+              parsedInput.organizationId,
+              parsedInput.data,
+              ctx.user.id,
+              tx
+            );
           },
           { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
         )
-      : await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);
+      : await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data, ctx.user.id);
 
     ctx.auditLoggingCtx.newObject = result;
     return result;

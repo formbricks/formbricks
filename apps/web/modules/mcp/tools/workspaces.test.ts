@@ -3,7 +3,9 @@ import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { problemForbidden, successListResponse, successResponse } from "@/app/api/v3/lib/response";
 import { getV3WorkspaceCustomCss, patchV3WorkspaceCustomCss } from "@/app/api/v3/workspaces/lib/custom-css";
 import { listV3Workspaces } from "@/app/api/v3/workspaces/lib/operations";
+import { MCP_READ_SCOPES } from "@/modules/auth/lib/oauth-urls";
 import { ZMcpPatchWorkspaceCustomCssInput } from "./schemas";
+import { FULL_MCP_GRANT } from "./test-utils";
 import { ZMcpWorkspaceCustomCssOutput, registerWorkspaceTools } from "./workspaces";
 
 vi.mock("@/app/api/v3/workspaces/lib/operations", () => ({
@@ -33,7 +35,12 @@ const readAuthInfo = {
   token: "oauth:user_1:client_1",
   clientId: "client_1",
   scopes: ["surveys:read"],
-  extra: { formbricksAuthentication: oauthSession, requestId: "req_tool", authMethod: "oauth" },
+  extra: {
+    formbricksAuthentication: oauthSession,
+    requestId: "req_tool",
+    authMethod: "oauth",
+    grant: FULL_MCP_GRANT,
+  },
 };
 
 const writeOnlyAuthInfo = { ...readAuthInfo, scopes: ["surveys:write"] };
@@ -148,6 +155,44 @@ describe("registerWorkspaceTools", () => {
     expect(listV3Workspaces).toHaveBeenCalled();
     expect(result.isError).toBeUndefined();
   });
+
+  // list_workspaces declares one permission per scope family by hand. This walks every family's read
+  // scope, so a new family fails here until discovery declares a permission for it.
+  test.each([...MCP_READ_SCOPES])("allows a token holding only %s to discover workspaces", async (scope) => {
+    const { tools } = createToolServer();
+    vi.mocked(listV3Workspaces).mockResolvedValue(
+      successListResponse([], { nextCursor: null, totalCount: 0 }, { requestId: "req_tool" })
+    );
+
+    const result = await tools
+      .get("list_workspaces")!
+      .handler({}, { http: { authInfo: { ...readAuthInfo, scopes: [scope] } } });
+
+    expect(listV3Workspaces).toHaveBeenCalled();
+    expect(result.isError).toBeUndefined();
+  });
+
+  // ENG-7151: each Audience permission is a usable grant on its own (an agent given only Segments: Read
+  // still needs a workspaceId), so discovery lists all four, not one per family.
+  test.each(["contacts", "contactAttributes", "segments", "actionClasses"] as const)(
+    "allows a grant giving only %s: Read to discover workspaces",
+    async (permission) => {
+      const { tools } = createToolServer();
+      vi.mocked(listV3Workspaces).mockResolvedValue(
+        successListResponse([], { nextCursor: null, totalCount: 0 }, { requestId: "req_tool" })
+      );
+      const authInfo = {
+        ...readAuthInfo,
+        scopes: ["audience:read"],
+        extra: { ...readAuthInfo.extra, grant: { access: "all", permissions: { [permission]: "read" } } },
+      };
+
+      const result = await tools.get("list_workspaces")!.handler({}, { http: { authInfo } });
+
+      expect(listV3Workspaces).toHaveBeenCalled();
+      expect(result.isError).toBeUndefined();
+    }
+  );
 });
 
 describe("workspace custom CSS tools (ENG-3641)", () => {

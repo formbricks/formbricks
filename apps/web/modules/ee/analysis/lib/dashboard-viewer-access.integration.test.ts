@@ -654,7 +654,7 @@ describe("role changes are projected at once", () => {
       can({ type: "user", id: ids.demoted }, "workspace.read", { type: "workspace", id: fixture.workspaceId })
     ).resolves.toBe(true);
 
-    await updateMembership(ids.demoted, fixture.organizationId, { role: "dashboard_viewer" });
+    await updateMembership(ids.demoted, fixture.organizationId, { role: "dashboard_viewer" }, ids.demoted);
 
     await expect(
       can({ type: "user", id: ids.demoted }, "organization.read", {
@@ -678,7 +678,7 @@ describe("role changes are projected at once", () => {
   });
 
   test("a viewer changed back to Member gets the member relation back", async () => {
-    await updateMembership(ids.promoted, fixture.organizationId, { role: "member" });
+    await updateMembership(ids.promoted, fixture.organizationId, { role: "member" }, ids.promoted);
 
     await expect(
       can({ type: "user", id: ids.promoted }, "workspace.read", {

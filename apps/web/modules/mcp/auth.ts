@@ -16,7 +16,7 @@ import {
   problemUnauthorized,
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { withAuthorizationSurface } from "@/lib/authorization/context";
+import { type TAuthorizationMcpGrant, withAuthorizationSurface } from "@/lib/authorization/context";
 import { parseApiKeyV2 } from "@/lib/crypto";
 import { hasOnlyDashboardViewerRoles } from "@/lib/membership/dashboard-viewer";
 import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
@@ -36,6 +36,7 @@ import {
 } from "@/modules/auth/lib/oauth-urls";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { type TMcpGrant, parseMcpGrantPermissions } from "./grant";
 
 const QUERY_CREDENTIAL_PARAMS = new Set([
   "api_key",
@@ -121,8 +122,17 @@ export type TMcpAuthInfo = AuthInfo & {
      * trimmed to `dashboards:read`, and the dashboard-bound chart read accepts it on that scope alone.
      */
     dashboardViewerOnly?: boolean;
+    /**
+     * The connection's grant (ADR-0041), read with the user on every OAuth request. Every tool call is
+     * held to its permissions on top of the token's scopes, and every authorization decision to its
+     * organization & workspace access (ADR-0042). Absent on the API-key path, which has no grant.
+     */
+    grant?: TMcpRequestGrant;
   };
 };
+
+/** A request's grant: what the tool guard reads, and its id, the subject `can()` checks it as. */
+export type TMcpRequestGrant = TMcpGrant & { id: string };
 
 type TMcpAuthenticationResult =
   | {
@@ -285,20 +295,30 @@ function createOAuthMcpAuthInfo(payload: JWTPayload, requestId: string): TMcpAut
 }
 
 /**
- * What every OAuth request needs to know about its user, in one read: whether the user is active, and
- * whether every membership they hold is the Dashboard viewer role (`hasOnlyDashboardViewerRoles`).
+ * What every OAuth request needs to know about its user, in one read: whether the user is active, whether
+ * every membership they hold is the Dashboard viewer role (`hasOnlyDashboardViewerRoles`), and the grant
+ * the user gave this client (ADR-0041), `null` without one.
  */
 async function getOAuthUserStanding(
-  userId: string
-): Promise<{ isActive: boolean; isDashboardViewerOnly: boolean }> {
+  userId: string,
+  clientId: string
+): Promise<{ isActive: boolean; isDashboardViewerOnly: boolean; grant: TMcpRequestGrant | null }> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { isActive: true, memberships: { select: { role: true } } },
+    select: {
+      isActive: true,
+      memberships: { select: { role: true } },
+      mcpGrants: { where: { clientId }, select: { id: true, access: true, permissions: true } },
+    },
   });
+  const grant = user?.mcpGrants[0];
 
   return {
     isActive: user?.isActive === true,
     isDashboardViewerOnly: hasOnlyDashboardViewerRoles(user?.memberships ?? []),
+    grant: grant
+      ? { id: grant.id, access: grant.access, permissions: parseMcpGrantPermissions(grant.permissions) }
+      : null,
   };
 }
 
@@ -565,7 +585,7 @@ async function authenticateMcpOAuthBearer(
   }
 
   const sessionAuthentication = authInfo.extra.formbricksAuthentication as Session;
-  const standing = await getOAuthUserStanding(sessionAuthentication.user.id);
+  const standing = await getOAuthUserStanding(sessionAuthentication.user.id, authInfo.clientId);
   if (!standing.isActive) {
     return await rejectUnauthenticatedMcpRequest({
       requestId,
@@ -575,6 +595,24 @@ async function authenticateMcpOAuthBearer(
       logContext: { clientId: authInfo.clientId },
     });
   }
+
+  // ADR-0041: the grant is the connection's liveness check. Revoke deletes it with the consent, so a token
+  // minted before the revoke is refused here on its next call rather than living out its 15 minutes. A
+  // 401 like any dead token: the client refreshes, the refresh is refused for the same reason
+  // (`requireOAuthConsentOnRefreshAfterHandler`), and it goes back through the consent screen.
+  if (!standing.grant) {
+    return await rejectUnauthenticatedMcpRequest({
+      requestId,
+      instance,
+      log,
+      logMessage: "MCP OAuth connection has no grant",
+      logContext: { clientId: authInfo.clientId },
+    });
+  }
+
+  // Its organization & workspace access is enforced by `can()` for the whole request
+  // (`handleAuthenticatedMcpRequest`, ADR-0042).
+  authInfo.extra.grant = standing.grant;
 
   // ADR-0025: a Dashboard viewer's grant never reaches past `dashboards:read`, whatever the token
   // carries. Consent already narrows new grants; this bounds a token minted before the user became a
@@ -651,20 +689,49 @@ export function hasAnyMcpScope(authInfo: AuthInfo | undefined, allowedScopes: re
 }
 
 /**
- * The scopes are named in `detail`, not only in the `WWW-Authenticate` challenge, because the tool path
- * cannot carry a header: `guardMcpScopes` hands this Response to `responseToMcpToolResult`, which
- * serializes the JSON body into a JSON-RPC result and drops every header. Without them in the body a
- * client that is refused a tool call learns only "some scope is missing" and cannot re-authorize for the
- * right one. The challenge is still set for the transport-level 403, where the header does reach clients.
+ * The refusal for a tool whose permissions the token's scopes don't reach: the scopes cap the grant
+ * (ADR-0041), so this is the grant-style "Not permitted", naming the permissions (`needs`), and saying the
+ * client must be reconnected, since only a new consent gives the token more scopes. The scopes the token
+ * lacks are named in `detail` too, not only in the `WWW-Authenticate` challenge, because the tool path
+ * cannot carry a header: the guard hands this Response to `responseToMcpToolResult`, which serializes the
+ * JSON body into a JSON-RPC result and drops every header. The challenge (every scope the tool needs) is
+ * still set for the transport-level 403, where the header does reach clients.
  */
-export function createMcpInsufficientScopeResponse(requestId: string, scopes: string[]): Response {
+export function createMcpScopeNotPermittedResponse(
+  requestId: string,
+  {
+    needs,
+    missingScopes,
+    challengeScopes,
+    anyOf = false,
+  }: { needs: string; missingScopes: string[]; challengeScopes: string[]; anyOf?: boolean }
+): Response {
+  const scopes = missingScopes.join(" ");
+  let lacks = `lacks the scope ${scopes}`;
+  if (anyOf) lacks = `lacks every one of the scopes ${scopes}`;
+  else if (missingScopes.length > 1) lacks = `lacks the scopes ${scopes}`;
   return withInsufficientScopeChallenge(
     problemForbidden(
       requestId,
-      `OAuth token does not include the required MCP scope: ${scopes.join(" ")}`,
+      `Not permitted: the user's grant to this MCP client can't include ${needs}, because its OAuth token ${lacks}. Ask the user to reconnect the client and give it this access.`,
       "/api/mcp"
     ),
-    scopes
+    challengeScopes
+  );
+}
+
+/**
+ * The refusal for a tool the grant does not cover (ADR-0041). Unlike an insufficient scope, it carries no
+ * `WWW-Authenticate` challenge: re-authorizing for more scopes would not help, the user has to change the
+ * grant. `detail` names what the grant would have to give, so an agent can tell the user what to change.
+ * The `code` stays `forbidden`, from the published vocabulary; `detail` starting "Not permitted" is what
+ * tells it apart from a refusal by the user's own role.
+ */
+export function createMcpNotPermittedResponse(requestId: string, needs: string): Response {
+  return problemForbidden(
+    requestId,
+    `Not permitted: the user's grant to this MCP client does not give ${needs}. Ask the user to give the client this access.`,
+    "/api/mcp"
   );
 }
 
@@ -731,6 +798,21 @@ export async function authenticateMcpRequest(request: NextRequest): Promise<TMcp
   }
 }
 
+/**
+ * What `can()` holds the request to (ADR-0042): the grant, when it limits organization & workspace
+ * access. All access needs no second check, and an API key has no grant.
+ */
+const getAuthorizationMcpGrant = (authInfo: TMcpAuthInfo): TAuthorizationMcpGrant | undefined => {
+  const { grant, formbricksAuthentication } = authInfo.extra;
+  if (!grant || grant.access === "all") return undefined;
+  const userId =
+    formbricksAuthentication && "user" in formbricksAuthentication
+      ? formbricksAuthentication.user?.id
+      : undefined;
+  if (!userId) throw new Error("An MCP grant must belong to a signed-in user");
+  return { id: grant.id, userId };
+};
+
 export async function handleAuthenticatedMcpRequest(
   request: NextRequest,
   handler: (request: Request) => Promise<Response>
@@ -741,6 +823,8 @@ export async function handleAuthenticatedMcpRequest(
   }
 
   (request as Request & { auth?: AuthInfo }).auth = authResult.authInfo;
-  const response = await withAuthorizationSurface("mcp", () => handler(request));
+  const response = await withAuthorizationSurface("mcp", () => handler(request), {
+    mcpGrant: getAuthorizationMcpGrant(authResult.authInfo),
+  });
   return withMcpResponseHeaders(response, authResult.requestId);
 }

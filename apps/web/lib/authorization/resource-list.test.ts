@@ -3,7 +3,7 @@ import { getAuthzedClient } from "@/lib/authzed/client";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "@/lib/authzed/errors";
 import { assertAuthzedProjectionFreshness } from "@/lib/authzed/outbox-freshness";
 import { isSurveyVisibilityReady } from "@/lib/authzed/scope-readiness";
-import { getAuthorizationSurface, recordAuthorizationCheckIssued } from "./context";
+import { getAuthorizationSurface, getMcpGrantForActor, recordAuthorizationCheckIssued } from "./context";
 import { recordAuthorizationDecision } from "./metrics";
 import {
   filterReadableSurveyIds,
@@ -16,7 +16,9 @@ vi.mock("@/lib/authzed/client", () => ({ getAuthzedClient: vi.fn() }));
 vi.mock("@/lib/authzed/outbox-freshness", () => ({ assertAuthzedProjectionFreshness: vi.fn() }));
 vi.mock("./context", () => ({
   getAuthorizationSurface: vi.fn(() => "unscoped"),
+  getMcpGrantForActor: vi.fn(() => null),
   recordAuthorizationCheckIssued: vi.fn(),
+  recordMcpReachDenied: vi.fn(),
 }));
 vi.mock("./metrics", () => ({ recordAuthorizationDecision: vi.fn() }));
 
@@ -174,5 +176,53 @@ describe("on the previous release's AuthZed schema", () => {
     await expect(
       lookupAuthorizedWorkspaceIds({ type: "user", id: "viewer-missing-write" }, "write")
     ).rejects.toBeDefined();
+  });
+});
+
+describe("under an MCP grant that limits organization & workspace access (ENG-7153)", () => {
+  const user = { type: "user", id: "user-1" } as const;
+
+  test("lists only the workspaces the grant reaches, in two lookups", async () => {
+    vi.mocked(getMcpGrantForActor).mockReturnValue({ id: "grant-1", userId: "user-1" });
+    lookupResources.mockImplementation(async ({ subject }: { subject: { objectType: string } }) => ({
+      resourceIds: subject.objectType === "mcp_grant" ? ["ws-2", "ws-3"] : ["ws-1", "ws-2"],
+    }));
+
+    await expect(lookupAuthorizedWorkspaceIds(user)).resolves.toEqual(["ws-2"]);
+
+    expect(lookupResources).toHaveBeenCalledTimes(2);
+    expect(lookupResources).toHaveBeenCalledWith({
+      permission: "mcp_reach",
+      resourceType: "workspace",
+      subject: { objectId: "grant-1", objectType: "mcp_grant" },
+    });
+  });
+
+  test("lists nothing on a schema without mcp_reach, rather than everything", async () => {
+    vi.mocked(getMcpGrantForActor).mockReturnValue({ id: "grant-1", userId: "user-1" });
+    lookupResources.mockImplementation(async ({ subject }: { subject: { objectType: string } }) => {
+      if (subject.objectType === "mcp_grant") {
+        const details = "relation/permission `mcp_reach` not found under definition `workspace`";
+        throw new AuthzedError({
+          attempts: 1,
+          cause: Object.assign(new Error(`9 FAILED_PRECONDITION: ${details}`), { code: 9, details }),
+          code: AUTHZED_ERROR_CODES.FAILED_PRECONDITION,
+          grpcStatus: 9,
+          operation: "lookup_resources",
+          retryable: false,
+        });
+      }
+      return { resourceIds: ["ws-1"] };
+    });
+
+    await expect(lookupAuthorizedWorkspaceIds(user)).resolves.toEqual([]);
+  });
+
+  test("lists as before for anyone the grant doesn't hold", async () => {
+    vi.mocked(getMcpGrantForActor).mockReturnValue(null);
+    lookupResources.mockResolvedValue({ resourceIds: ["ws-1"] });
+
+    await expect(lookupAuthorizedWorkspaceIds(user)).resolves.toEqual(["ws-1"]);
+    expect(lookupResources).toHaveBeenCalledOnce();
   });
 });

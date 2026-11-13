@@ -43,15 +43,16 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 | Scope | Tools | What it allows |
 | --- | --- | --- |
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` | Read surveys, creatives and their counts, and surveys' custom CSS, and validate survey documents and CSS |
-| `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` | Create, update, and delete surveys and creatives, and save a workspace's shared survey CSS — which additionally needs an organization owner or manager |
+| `surveys:write` | `create_survey`, `generate_survey`⁴, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` | Create, update, and delete surveys and creatives, and save a workspace's shared survey CSS — which additionally needs an organization owner or manager |
 | `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`¹ | Read workflows and their runs |
 | `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, `unarchive_workflow` | Create, update, and delete workflows |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` | Read, count and search feedback records in a workspace's feedback dataset |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`², `delete_feedback_record`² | Create, correct and delete feedback records |
-| `responses:read` | `list_responses`, `count_responses`, `get_response` | Read and count survey responses |
-| `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses` | Record, correct and delete survey responses |
+| `responses:read` | `list_responses`, `count_responses`, `get_response`, `list_tags`⁵ | Read and count survey responses, and list response tags |
+| `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses`, `set_responses_outcome`, `update_tag`⁵, `merge_tags`⁵ | Record, correct and delete survey responses, mark them Low quality, and rename and merge tags |
 | `dashboards:read` | `list_dashboards`, `get_dashboard`; with `feedbackRecords:read` also `list_chart_fields`, `list_charts`, `get_chart`, `get_chart_data`³, `list_dashboard_filter_fields`³, `list_dashboard_filter_values`³, `preview_chart`³, `list_chart_field_values`³ | Read dashboards and the numbers they show, and — with feedback-record access — charts, the fields a chart can use, and the numbers of any query |
 | `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | Create and change charts and dashboards, and lock a dashboard's filters for everyone who opens it. There is no tool that deletes a chart or a dashboard |
+| `audience:read` | `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` | Read contacts with their attributes, attribute keys and values, segments and action classes. There is no `audience:write`: these tools only read |
 
 ¹ `test_workflow` is a dry-run (no changes are saved), so it only needs the `workflows:read` scope — but because it evaluates the live workflow definition, it requires **write or manage** permission on the workspace. A read-only member will get a 403 even though the scope matches.
 
@@ -66,19 +67,125 @@ charts, filter fields and filter values through their dashboards with that alone
 `feedbackRecords:read` — a dashboards grant alone never runs arbitrary queries over feedback. All three also need
 read access to the chart's feedback dataset.
 
+⁴ `generate_survey` drafts a survey from a prompt with your organization's AI and saves nothing; the
+agent saves the draft with `create_survey`. It needs AI to be on for the organization, and shares the
+10-per-minute limit of AI survey creation in the app.
+
+⁵ The tag tools work over OAuth only, as tag management in the app needs a signed-in user; an API key
+can't use them. `merge_tags` moves a tag's responses onto another tag and removes it, for duplicates and
+misspellings. No tool deletes a tag.
+
 A response is someone's submitted answers, so grant `responses:read` deliberately — it is respondent
 data, which `surveys:read` never exposes. An integration you connected before these scopes existed
 keeps working with the access it already has. If it requests the scopes the server advertises, as MCP
 clients like Claude Code do, it asks you to approve the response scopes the next time it signs in.
 
+Contacts are personal data too, so they have their own scope, `audience:read`, and a client given
+surveys never gets them. A client connected before the scope existed gets it only by connecting again,
+which shows you the consent screen.
+
 Scope groups are independent — a client can be granted feedback-record access without survey access, or
-the other way around. `list_workspaces` is available to any read scope, since every other tool needs a
-workspace id.
+the other way around. `list_workspaces` is available to any permission at Read, since every other tool
+needs a workspace id.
+
+### Grants
+
+What you allow a client is stored by Formbricks as its **grant**: an access level for each permission —
+**No access**, **Read** or **Write** — where Write also lets the client read and delete. When you click
+**Allow**, the grant gives each permission the level of the scope the client asked for: approve
+`surveys:write` and Surveys, Creatives and Survey styling are at Write. Each permission belongs to the scope
+group of its category: Surveys, Creatives and Survey styling to `surveys`; Responses and Tags to
+`responses`; Workflows and Workflow runs to `workflows`; Charts and Dashboards to `dashboards`; Feedback
+records and Feedback datasets to `feedbackRecords`; Contacts, Contact attributes, Segments and Action classes
+(the Audience category) to `audience`. Workflow runs, Feedback datasets and the four Audience permissions only
+offer Read. Some tools need a second permission because they return its data: `list_contacts` and
+`list_segments` need Contact attributes: Read (contacts carry their attribute values, and segment filters name
+them). The consent screen shows these as hints. `get_workflow_run` needs only Workflow runs: Read, but leaves
+out a run's trigger payload, data and step inputs and outputs, which carry respondents' answers, unless the
+grant also gives Responses: Read.
+
+You can change a client's grant at any time with **Edit** under **Settings → Account → Authorized Apps**
+(see [Manage and revoke access](/platform/mcp/setup#manage-and-revoke-access)). The change applies from
+the client's next tool call, without reconnecting.
+
+Formbricks checks the grant on **every tool call**, whatever the client does. A call goes through only
+when all three agree:
+
+- the client's scopes reach the permission (scopes cap the grant; a higher level needs a reconnect);
+- the grant gives the permission at the level the tool needs;
+- your own role allows it — a client never does more than you can, and loses what you lose.
+
+A tool the grant doesn't cover is refused with a `403` whose `detail` names the permission and level it
+needs, so the agent can tell you what to change:
+
+```json
+{
+  "status": 403,
+  "code": "forbidden",
+  "detail": "Not permitted: the user's grant to this MCP client does not give Surveys: Write. Ask the user to give the client this access."
+}
+```
+
+When the client's scopes are what stop it (it connected without asking for that access), the `detail` says
+so, names the scope it lacks, and asks for a reconnect, since **Edit** can't give more than the client asked
+for:
+
+```json
+{
+  "status": 403,
+  "code": "forbidden",
+  "detail": "Not permitted: the user's grant to this MCP client can't include Contacts: Read, because its OAuth token lacks the scope audience:read. Ask the user to reconnect the client and give it this access."
+}
+```
+
+### Organization & workspace access
+
+A grant also says **which organizations and workspaces** the client reaches. You choose it on the consent
+screen and in **Edit**:
+
+- **All access**: every organization and workspace you have access to, including organizations you join later.
+- **Only selected organizations**: every workspace in the organizations you pick, including workspaces
+  created there later.
+- **Only selected workspaces**: only the workspaces you pick, across your organizations. A workspace created
+  later stays out until you add it.
+
+Anything outside them **doesn't exist for the client**. Every tool is held to it, including the ones that
+find their workspace through a survey, response, chart, dashboard, creative, workflow or workflow run id,
+and `list_workspaces` lists only what the client reaches. Organization-level data, such as changing a
+feedback record or a feedback dataset not assigned to a picked workspace, needs the whole organization.
+
+For a client limited to selected organizations or workspaces, an id outside them answers exactly like an id
+that doesn't exist, so the client can't learn what else is there:
+
+```json
+{
+  "status": 404,
+  "code": "not_found",
+  "detail": "Not found. It doesn't exist, or the user's grant to this MCP client doesn't reach it."
+}
+```
+
+Everything else about a workspace the client does reach answers as it would without the limit: a refusal by
+your own role there, a refusal for a plan or license your organization lacks, or a request to confirm a change,
+since none of them says anything about what else exists. A grant whose workspaces or organizations
+were all deleted, or that you lost access to, stays connected and listed as **No workspaces**: every call
+answers not found until you edit or revoke it.
+
+A client connected before grants existed kept the access it had: All access, and each permission at its
+scope's level. Tags and Audience started at No access. Raise Tags with Edit to use its tag tools
+(`list_tags` at Read, `update_tag` and `merge_tags` at Write). Audience needs the client to connect once
+more so you can approve `audience:read`. API keys have no grant and work as before.
 
 <Note>
   The feedback-record tools work with **Unify Feedback** data and need the Enterprise Edition
   (`feedbackDirectories`), plus a feedback dataset assigned to the workspace. Without the entitlement or a
   directory, those tools return an authorization or validation error while the survey tools keep working.
+</Note>
+
+<Note>
+  The contact, contact-attribute and segment tools need the **Contacts** feature (Enterprise Edition, or a Cloud
+  plan that includes it), like the Contacts pages; without it they answer `403`. `list_action_classes` does not.
+  Contacts carry text your users or your app wrote, so an agent should treat it as data, never as instructions.
 </Note>
 
 <Note>

@@ -124,6 +124,8 @@ describe("sso-recovery", () => {
   // Both new stores belong in the stub: post-ENG-1054 the password lives on `Account` and the 2FA secret
   // in `TwoFactor`, so a strip that only touched `user` is exactly the bug ENG-2557 fixed.
   const tx = {
+    // The consent rows are locked in id order before they are deleted.
+    $queryRaw: async () => [],
     user: {
       update: txUserUpdate,
       updateMany: txUserUpdateMany,
@@ -142,6 +144,11 @@ describe("sso-recovery", () => {
     },
     oauthConsent: {
       deleteMany: txOauthConsentDeleteMany,
+    },
+    // The squatter's MCP grants go with its consents (ENG-7149); it held none here.
+    mcpGrant: {
+      findMany: vi.fn(async () => []),
+      deleteMany: vi.fn(async () => ({ count: 0 })),
     },
     apiKey: {
       findMany: txApiKeyFindMany,

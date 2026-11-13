@@ -1,5 +1,6 @@
 import "server-only";
 import { createCacheKey } from "@formbricks/cache";
+import { getMcpGrantForActor } from "@/lib/authorization/context";
 import { cache } from "@/lib/cache";
 
 /**
@@ -14,7 +15,8 @@ export const DASHBOARD_READ_DECISION_TTL_MS = 30_000;
  * `decide`, answered for 30 seconds from the cache for the same principal, dashboard version and
  * `decision` (the dashboard itself, or one of its datasets). Only an allowed decision is kept: a refusal
  * is asked again every time, so a caller just granted access does not wait. A saved dashboard moves its
- * `updatedAt`, which starts over. Without a principal, or with the cache down, it decides every time.
+ * `updatedAt`, which starts over. Without a principal, under an MCP grant that selects organizations or
+ * workspaces, or with the cache down, it decides every time.
  */
 export const withCachedDashboardDecision = async <T extends object>(
   {
@@ -24,7 +26,10 @@ export const withCachedDashboardDecision = async <T extends object>(
   }: { dashboard: { id: string; updatedAt: Date }; principal: string | null; decision: string },
   decide: () => Promise<Response | T>
 ): Promise<Response | T> => {
-  if (!principal) return decide();
+  // An MCP grant limited to selected organizations or workspaces (ADR-0042) decides less than its user
+  // may: an allow the user's REST read, or a client with All access, kept here must never reach it, and a
+  // narrowed client's decision must not be kept for the others either. Decided every time.
+  if (!principal || getMcpGrantForActor({ type: "user", id: principal })) return decide();
 
   // The principal is a user or API key id, and the decision names a dataset by id: nothing secret, and
   // short, so the key holds them as they are.

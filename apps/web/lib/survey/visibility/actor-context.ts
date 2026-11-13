@@ -3,6 +3,7 @@ import { cache as reactCache } from "react";
 import type { Prisma } from "@formbricks/database/prisma";
 import { can } from "@/lib/authorization";
 import type { TAuthorizationActor } from "@/lib/authorization";
+import { ignoringMcpReachDenials } from "@/lib/authorization/context";
 import { buildVisibleSurveyWhere } from "./predicate";
 
 /**
@@ -20,12 +21,16 @@ const resolveSurveyActorContextCached = reactCache(
     const enforced = true;
     if (actorType === "apiKey") return { enforced, kind: "apiKey" } as const;
 
+    // A probe that shapes the predicate, not access to what was asked for: under an MCP grant limited to
+    // workspaces it is denied on the organization, and that must not make the call's answer not found.
     const isOrganizationAdmin =
       enforced &&
-      (await can({ id: actorId, type: "user" }, "organization.manage", {
-        id: organizationId,
-        type: "organization",
-      }));
+      (await ignoringMcpReachDenials(() =>
+        can({ id: actorId, type: "user" }, "organization.manage", {
+          id: organizationId,
+          type: "organization",
+        })
+      ));
     return { enforced, isOrganizationAdmin, kind: "user", userId: actorId } as const;
   }
 );

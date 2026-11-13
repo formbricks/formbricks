@@ -18,6 +18,7 @@ const outbox = {
   pending: 0,
   revocationsPastCritical: 0,
   revocationsPastWarning: 0,
+  unknownType: 0,
 } as const;
 const counters = {
   failed: 0,

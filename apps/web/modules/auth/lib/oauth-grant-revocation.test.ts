@@ -4,10 +4,22 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import {
+  deleteMcpGrantRelationshipsBeforeCommit,
+  reconcileMcpGrantRelationships,
+  removeDeletedMcpGrantRelationships,
+} from "@/lib/authzed/mcp-grant";
+import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { resolveMcpGrantSelection } from "@/modules/mcp/access-options";
+import { MCP_GRANT_NOT_SAVED_CODE, MCP_GRANT_SELECTION_UNAVAILABLE_CODE } from "./mcp-grant-consent-errors";
+import {
+  finishRevokedMcpGrants,
   requireOAuthConsentOnRefreshAfterHandler,
+  revokeAllUserOAuthGrants,
+  revokeMcpClient,
   revokeOAuthConsentBeforeHandler,
   revokeOAuthConsentGrant,
   revokeTokensBeyondConsentAfterHandler,
+  snapshotConsentBeforeApprovalHandler,
 } from "./oauth-grant-revocation";
 
 /**
@@ -21,15 +33,32 @@ type TMockConsent = { id: string; clientId: string; scopes: string[]; updatedAt:
 const mocks = vi.hoisted(() => ({
   getSessionFromCtx: vi.fn(),
   getOAuthProviderState: vi.fn(),
+  verifyOAuthQueryParams: vi.fn(),
+  /** Better Auth's per-request state, which carries the consent snapshot from the before-hook. */
+  requestState: new Map<object, unknown>(),
   calls: [] as string[],
+  /** The order the locks and SpiceDB calls ran in. */
+  sequence: [] as string[],
   /** The consent rows the locking read returns. */
   consents: [] as TMockConsent[],
   /** Whether the presented token's grant holds a token beyond the consent. */
   grantBeyond: false,
+  /** The grant rows a lock on `McpGrant` finds; `tx.mcpGrant.findMany` returns what a delete reads. */
+  grantRows: [] as Record<string, unknown>[],
   tx: {
     oauthConsent: { findFirst: vi.fn(), deleteMany: vi.fn(), update: vi.fn() },
+    oauthClient: { findUnique: vi.fn() },
     oauthRefreshToken: { updateMany: vi.fn() },
     oauthAccessToken: { updateMany: vi.fn() },
+    mcpGrant: {
+      findUnique: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+      findMany: vi.fn(),
+      deleteMany: vi.fn(),
+      upsert: vi.fn(),
+    },
+    mcpGrantOrganization: { deleteMany: vi.fn(), createMany: vi.fn() },
+    mcpGrantWorkspace: { deleteMany: vi.fn(), createMany: vi.fn() },
     $queryRaw: vi.fn(),
     $executeRaw: vi.fn(),
   },
@@ -39,16 +68,53 @@ vi.mock("better-auth/api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("better-auth/api")>()),
   getSessionFromCtx: mocks.getSessionFromCtx,
 }));
-vi.mock("@better-auth/oauth-provider", () => ({ getOAuthProviderState: mocks.getOAuthProviderState }));
+vi.mock("@better-auth/oauth-provider", () => ({
+  getOAuthProviderState: mocks.getOAuthProviderState,
+  verifyOAuthQueryParams: mocks.verifyOAuthQueryParams,
+}));
+vi.mock("@better-auth/core/context", () => ({
+  defineRequestState: (init: () => unknown) => {
+    const ref = {};
+    return {
+      get: async () => (mocks.requestState.has(ref) ? mocks.requestState.get(ref) : init()),
+      set: async (value: unknown) => void mocks.requestState.set(ref, value),
+    };
+  },
+}));
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: vi.fn((run: (tx: typeof mocks.tx) => unknown) => run(mocks.tx)),
     oauthRefreshToken: { findUnique: vi.fn() },
-    oauthConsent: { findFirst: vi.fn() },
+    oauthConsent: { findFirst: vi.fn(), findMany: vi.fn() },
+    mcpGrant: { findUnique: vi.fn() },
+    // Where a grant's audit entries are filed (the user's organizations); none here.
+    membership: { findMany: async () => [] },
+    workspace: { findMany: async () => [] },
   },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 vi.mock("./mcp-oauth-provider-options", () => ({ MCP_OAUTH_REFRESH_TOKEN_PREFIX: "fbor_" }));
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventBackground: vi.fn() }));
+vi.mock("@/lib/authzed/mcp-grant", () => ({
+  deleteMcpGrantRelationshipsBeforeCommit: vi.fn(),
+  reconcileMcpGrantRelationships: vi.fn(),
+  removeDeletedMcpGrantRelationships: vi.fn(),
+}));
+vi.mock("@/modules/mcp/access-options", () => ({
+  resolveMcpGrantSelection: vi.fn(),
+  readMcpGrantReadableWorkspaceIds: vi.fn(async () => new Set()),
+}));
+
+/** A stored grant row with Only selected organizations, so its audit entries need no lookup. */
+const ORG_GRANT = {
+  id: "grant-1",
+  userId: "user-1",
+  clientId: "client-1",
+  access: "organizations",
+  permissions: {},
+  organizations: [{ organizationId: "org-1" }],
+  workspaces: [],
+};
 
 type TCtx = Parameters<typeof revokeOAuthConsentBeforeHandler>[0];
 const ctx = (path: string, body: unknown, returned?: unknown): TCtx =>
@@ -67,6 +133,9 @@ const expectApiError = async (promise: Promise<unknown>, status: string, error?:
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.calls.length = 0;
+  mocks.sequence.length = 0;
+  mocks.requestState.clear();
+  mocks.verifyOAuthQueryParams.mockResolvedValue(true);
   mocks.tx.oauthConsent.deleteMany.mockImplementation(async () => {
     mocks.calls.push("delete consent");
     return { count: 1 };
@@ -81,11 +150,33 @@ beforeEach(() => {
   });
   mocks.consents = [];
   mocks.grantBeyond = false;
+  mocks.grantRows = [];
+  mocks.tx.oauthClient.findUnique.mockImplementation(async () => ({
+    skipConsent: mocks.consents[0]?.skipConsent ?? false,
+  }));
+  mocks.tx.mcpGrant.findUniqueOrThrow.mockImplementation(async ({ where }: { where: { id: string } }) =>
+    mocks.grantRows.find((row) => row.id === where.id)
+  );
+  vi.mocked(deleteMcpGrantRelationshipsBeforeCommit).mockImplementation(async () => {
+    mocks.sequence.push("delete relationships");
+  });
+  // The connection has a grant (ENG-7149) unless a test says otherwise; saving one returns what it saved.
+  mocks.tx.mcpGrant.findUnique.mockResolvedValue({ id: "grant-1" });
+  mocks.tx.mcpGrant.findMany.mockResolvedValue([]);
+  mocks.tx.mcpGrant.deleteMany.mockImplementation(async () => {
+    mocks.calls.push("delete grant");
+    return { count: 1 };
+  });
+  mocks.tx.mcpGrant.upsert.mockImplementation(async ({ create }: { create: Record<string, unknown> }) => {
+    mocks.calls.push("save grant");
+    return { id: "grant-1", ...create };
+  });
   // Two raw reads steer a decision, the consent rows and the grant check; the token queries find nothing.
   mocks.tx.$queryRaw.mockImplementation(async (sql: TemplateStringsArray, ...values: unknown[]) => {
     const text = sql.join("?");
     // The consent read only finds the rows of the client or consent it was asked for.
     if (text.includes(`FROM "oauthConsent" c`)) {
+      mocks.sequence.push("lock consents");
       // By client id, or, for update-consent, through the client of the consent it names.
       const asked = flattenSqlValues(values);
       const named = mocks.consents.find((row) => asked.includes(row.id));
@@ -94,6 +185,10 @@ beforeEach(() => {
       return mocks.consents.filter((row) => row.clientId === clientId);
     }
     if (text.includes("EXISTS")) return [{ beyond: mocks.grantBeyond }];
+    if (text.includes(`FROM "McpGrant"`)) {
+      mocks.sequence.push(text.includes("FOR SHARE") ? "share grant" : "lock grant");
+      return mocks.grantRows.map(({ id }) => ({ id }));
+    }
     return [];
   });
   mocks.tx.$executeRaw.mockResolvedValue(0);
@@ -123,13 +218,22 @@ const consentRow = (id: string, scopes: string[], updatedAt: Date, skipConsent =
 const endedTokensBeyondConsent = (): boolean => mocks.tx.$executeRaw.mock.calls.length > 0;
 
 describe("revokeOAuthConsentGrant", () => {
-  test("deletes the client's consents before revoking its tokens, scoped to the user", async () => {
-    mocks.tx.oauthConsent.findFirst.mockResolvedValue({ clientId: "client-1" });
+  test("deletes the client's grant, then its consents, then revokes its tokens, scoped to the user", async () => {
+    vi.mocked(prisma.oauthConsent.findFirst).mockResolvedValue({ clientId: "client-1" } as never);
+    mocks.grantRows = [ORG_GRANT];
+    mocks.tx.mcpGrant.findMany.mockResolvedValue([ORG_GRANT]);
 
     const result = await revokeOAuthConsentGrant({ userId: "user-1", consentId: "consent-1" });
 
-    expect(result).toEqual({ consentsDeleted: 1, refreshTokensRevoked: 2, accessTokensRevoked: 0 });
-    expect(mocks.tx.oauthConsent.findFirst).toHaveBeenCalledWith(
+    expect(result).toEqual({
+      consentsDeleted: 1,
+      refreshTokensRevoked: 2,
+      accessTokensRevoked: 0,
+      grants: [
+        expect.objectContaining({ id: "grant-1", access: "organizations", organizationIds: ["org-1"] }),
+      ],
+    });
+    expect(prisma.oauthConsent.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "consent-1", userId: "user-1" } })
     );
     expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({
@@ -141,15 +245,63 @@ describe("revokeOAuthConsentGrant", () => {
         data: { revoked: expect.any(Date) },
       });
     }
-    // The delete takes the row locks a racing refresh's FOR SHARE read waits on, so it must come first.
-    expect(mocks.calls).toEqual(["delete consent", "revoke refresh tokens", "revoke access tokens"]);
+    // Grant first, the order every path that locks both takes; then the consent delete, which takes the
+    // row locks a racing refresh's FOR SHARE read waits on, before the tokens.
+    expect(mocks.calls).toEqual([
+      "delete grant",
+      "delete consent",
+      "revoke refresh tokens",
+      "revoke access tokens",
+    ]);
+    expect(mocks.sequence).toEqual(["lock grant", "lock consents"]);
+    // No SpiceDB call before the commit; the relationships go after it.
+    expect(deleteMcpGrantRelationshipsBeforeCommit).not.toHaveBeenCalled();
+    expect(removeDeletedMcpGrantRelationships).toHaveBeenCalledWith([
+      expect.objectContaining({ id: "grant-1" }),
+    ]);
+    expect(reconcileMcpGrantRelationships).not.toHaveBeenCalled();
   });
 
   test("returns null and writes nothing for a consent the user doesn't own", async () => {
-    mocks.tx.oauthConsent.findFirst.mockResolvedValue(null);
+    vi.mocked(prisma.oauthConsent.findFirst).mockResolvedValue(null);
 
     expect(await revokeOAuthConsentGrant({ userId: "user-1", consentId: "someone-elses" })).toBeNull();
     expect(mocks.calls).toEqual([]);
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+});
+
+describe("revokeMcpClient", () => {
+  test("revokes a skipConsent client, which has a grant and no consent", async () => {
+    mocks.grantRows = [ORG_GRANT];
+    mocks.tx.mcpGrant.findMany.mockResolvedValue([ORG_GRANT]);
+    mocks.tx.oauthConsent.deleteMany.mockResolvedValue({ count: 0 });
+
+    const result = await revokeMcpClient({ userId: "user-1", clientId: "client-1" });
+
+    expect(result).toMatchObject({
+      consentsDeleted: 0,
+      grants: [expect.objectContaining({ id: "grant-1" })],
+    });
+    expect(mocks.tx.oauthRefreshToken.updateMany).toHaveBeenCalled();
+    expect(removeDeletedMcpGrantRelationships).toHaveBeenCalledTimes(1);
+  });
+
+  test("returns null for a client the user has neither a grant nor a consent for", async () => {
+    mocks.tx.oauthConsent.deleteMany.mockResolvedValue({ count: 0 });
+
+    await expect(revokeMcpClient({ userId: "user-1", clientId: "someone-elses" })).resolves.toBeNull();
+    expect(removeDeletedMcpGrantRelationships).not.toHaveBeenCalled();
+  });
+
+  test("still answers once committed when removing the relationships fails", async () => {
+    mocks.grantRows = [ORG_GRANT];
+    mocks.tx.mcpGrant.findMany.mockResolvedValue([ORG_GRANT]);
+    vi.mocked(removeDeletedMcpGrantRelationships).mockRejectedValue(new Error("spicedb down"));
+
+    await expect(revokeMcpClient({ userId: "user-1", clientId: "client-1" })).resolves.toMatchObject({
+      grants: [expect.objectContaining({ id: "grant-1" })],
+    });
   });
 });
 
@@ -172,12 +324,12 @@ describe("revokeOAuthConsentBeforeHandler", () => {
     mocks.getSessionFromCtx.mockResolvedValue({ user: { id: "user-1" } });
 
     await expectApiError(revokeOAuthConsentBeforeHandler(ctx("/oauth2/delete-consent", body)), "NOT_FOUND");
-    expect(mocks.tx.oauthConsent.findFirst).not.toHaveBeenCalled();
+    expect(prisma.oauthConsent.findFirst).not.toHaveBeenCalled();
   });
 
   test("answers 404 when the consent isn't the caller's", async () => {
     mocks.getSessionFromCtx.mockResolvedValue({ user: { id: "user-1" } });
-    mocks.tx.oauthConsent.findFirst.mockResolvedValue(null);
+    vi.mocked(prisma.oauthConsent.findFirst).mockResolvedValue(null);
 
     await expectApiError(
       revokeOAuthConsentBeforeHandler(ctx("/oauth2/delete-consent", { id: "consent-1" })),
@@ -187,7 +339,7 @@ describe("revokeOAuthConsentBeforeHandler", () => {
 
   test("revokes and short-circuits the upstream endpoint", async () => {
     mocks.getSessionFromCtx.mockResolvedValue({ user: { id: "user-1" } });
-    mocks.tx.oauthConsent.findFirst.mockResolvedValue({ clientId: "client-1" });
+    vi.mocked(prisma.oauthConsent.findFirst).mockResolvedValue({ clientId: "client-1" } as never);
 
     expect(await revokeOAuthConsentBeforeHandler(ctx("/oauth2/delete-consent", { id: "consent-1" }))).toEqual(
       {
@@ -217,6 +369,21 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
       consentRow(`consent-${i}`, consentScopes, new Date(Date.UTC(2026, 9, 8, 10, 0, 59 - i)))
     );
   };
+
+  beforeEach(() => {
+    // The client has a grant unless a test says otherwise.
+    mocks.grantRows = [ORG_GRANT];
+  });
+
+  // The grant before the consent rows, the order every path that locks both takes (ADR-0041). `FOR
+  // SHARE`, so refreshes don't wait on each other, but a revoke or a save waits on them.
+  test("locks the grant FOR SHARE before it locks any consent row", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
+    consentWith(WIDE);
+
+    await expect(requireOAuthConsentOnRefreshAfterHandler(refreshCtx())).resolves.toBeUndefined();
+    expect(mocks.sequence).toEqual(["share grant", "lock consents"]);
+  });
 
   test.each([
     ["another path", ctx("/oauth2/consent", { grant_type: "refresh_token", refresh_token: "fbor_x" })],
@@ -368,6 +535,158 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
       requireOAuthConsentOnRefreshAfterHandler(refreshCtx(token)),
       "BAD_REQUEST",
       "invalid_grant"
+    );
+  });
+
+  test("ends a grantless client's consent and tokens, never locking the grant after them, and refuses", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
+    consentWith(WIDE);
+    mocks.grantRows = [];
+    mocks.tx.mcpGrant.findUnique.mockResolvedValue(null);
+
+    await expectApiError(
+      requireOAuthConsentOnRefreshAfterHandler(refreshCtx()),
+      "BAD_REQUEST",
+      "invalid_grant"
+    );
+    // Read again once the consent rows are locked, without a lock: no grant can appear while they're held.
+    expect(mocks.tx.mcpGrant.findUnique).toHaveBeenCalledTimes(1);
+    expect(mocks.sequence).toEqual(["share grant", "lock consents"]);
+    expect(mocks.calls).toEqual(["delete consent", "revoke refresh tokens", "revoke access tokens"]);
+    expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({
+      where: { userId: "user-1", clientId: "client-1" },
+    });
+    // There was no grant, so nothing to remove from SpiceDB or to audit.
+    expect(mocks.tx.mcpGrant.deleteMany).not.toHaveBeenCalled();
+    expect(removeDeletedMcpGrantRelationships).not.toHaveBeenCalled();
+    expect(queueAuditEventBackground).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "grant_missing", consentsDeleted: 1 }),
+      expect.any(String)
+    );
+  });
+
+  test("lets the refresh through when an approval saved the grant while the consent rows were locked", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
+    consentWith(WIDE);
+    mocks.grantRows = [];
+    mocks.tx.mcpGrant.findUnique.mockResolvedValue({ id: "grant-1" });
+
+    await expect(requireOAuthConsentOnRefreshAfterHandler(refreshCtx())).resolves.toBeUndefined();
+    expect(mocks.calls).toEqual([]);
+  });
+
+  test("treats a grantless refresh with no consent row left as a revoked consent", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
+    consentWith();
+    mocks.grantRows = [];
+
+    await expectApiError(
+      requireOAuthConsentOnRefreshAfterHandler(refreshCtx()),
+      "BAD_REQUEST",
+      "invalid_grant"
+    );
+    // No grant re-read and no consent delete: there is nothing to end but the tokens.
+    expect(mocks.tx.mcpGrant.findUnique).not.toHaveBeenCalled();
+    expect(mocks.calls).toEqual(["revoke refresh tokens", "revoke access tokens"]);
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ reason: "consent_revoked" }),
+      expect.any(String)
+    );
+  });
+});
+
+describe("revokeAllUserOAuthGrants", () => {
+  test("deletes grants, then consents, then revokes tokens, returning each grant ready to audit", async () => {
+    mocks.grantRows = [ORG_GRANT];
+    mocks.tx.mcpGrant.findMany.mockResolvedValue([ORG_GRANT]);
+
+    const result = await revokeAllUserOAuthGrants(mocks.tx as never, "user-1");
+
+    expect(mocks.calls).toEqual([
+      "delete grant",
+      "delete consent",
+      "revoke access tokens",
+      "revoke refresh tokens",
+    ]);
+    expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({ where: { userId: "user-1" } });
+    expect(result).toMatchObject({ consentsDeleted: 1, grantsDeleted: 1 });
+    expect(result.grantAudits).toEqual([
+      {
+        action: "deleted",
+        before: expect.objectContaining({ id: "grant-1", access: "organizations" }),
+        after: null,
+        organizationIds: ["org-1"],
+        workspaceOrganizationIds: {},
+      },
+    ]);
+    // SpiceDB and audits are the caller's job once it commits.
+    expect(deleteMcpGrantRelationshipsBeforeCommit).not.toHaveBeenCalled();
+    expect(removeDeletedMcpGrantRelationships).not.toHaveBeenCalled();
+    expect(queueAuditEventBackground).not.toHaveBeenCalled();
+  });
+});
+
+describe("finishRevokedMcpGrants", () => {
+  const record = {
+    action: "deleted" as const,
+    before: {
+      id: "grant-1",
+      userId: "user-1",
+      clientId: "client-1",
+      permissions: {},
+      access: "all" as const,
+    },
+    after: null,
+    organizationIds: ["org-1"],
+    workspaceOrganizationIds: {},
+  };
+
+  test("removes the grants' relationships and audits them by the system", async () => {
+    await finishRevokedMcpGrants([record]);
+
+    expect(removeDeletedMcpGrantRelationships).toHaveBeenCalledWith([record.before]);
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "system", organizationId: "org-1", action: "deleted" })
+    );
+  });
+
+  // A member removed or a role changed by an owner: the entries name the owner, not the system.
+  test("audits them by the user who caused them, when there is one", async () => {
+    await finishRevokedMcpGrants([record], { actorUserId: "owner-1" });
+
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "owner-1", userType: "user", organizationId: "org-1" })
+    );
+  });
+
+  test("leaves the relationships to the outbox for a caller that can't wait for the commit", async () => {
+    await finishRevokedMcpGrants([record], { removeRelationships: false });
+
+    expect(removeDeletedMcpGrantRelationships).not.toHaveBeenCalled();
+    expect(queueAuditEventBackground).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("revokeOAuthConsentBeforeHandler audit", () => {
+  test("audits each grant the revoke deleted, as the signed-in user", async () => {
+    mocks.getSessionFromCtx.mockResolvedValue({ user: { id: "user-1" } });
+    vi.mocked(prisma.oauthConsent.findFirst).mockResolvedValue({ clientId: "client-1" } as never);
+    mocks.grantRows = [ORG_GRANT];
+    mocks.tx.mcpGrant.findMany.mockResolvedValue([ORG_GRANT]);
+
+    await revokeOAuthConsentBeforeHandler(ctx("/oauth2/delete-consent", { id: "consent-1" }));
+
+    expect(queueAuditEventBackground).toHaveBeenCalledTimes(1);
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "deleted",
+        targetId: "grant-1",
+        organizationId: "org-1",
+        userId: "user-1",
+        userType: "user",
+        newObject: expect.objectContaining({ after: null }),
+      })
     );
   });
 });
@@ -626,7 +945,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
 
     expect(logger.error).not.toHaveBeenCalled();
     expect(logger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ err: expect.any(Error), userId: "user-1" }),
+      expect.objectContaining({ err: expect.objectContaining({ errName: "Error" }), userId: "user-1" }),
       expect.any(String)
     );
     expect(logger.info).toHaveBeenCalledWith(
@@ -635,13 +954,32 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     );
   });
 
-  test("logs a failure instead of failing an approval that is already committed", async () => {
+  test("fails an approval whose grant can't be saved, without logging the error's message", async () => {
+    mocks.tx.$executeRaw.mockRejectedValue(new Error("connection reset for answer 'secret'"));
+
+    const thrown = await revokeTokensBeyondConsentAfterHandler(approve()).catch((error: unknown) => error);
+
+    expect(thrown).toBeInstanceOf(APIError);
+    expect((thrown as APIError).statusCode).toBe(500);
+    expect((thrown as APIError).body).toMatchObject({ code: MCP_GRANT_NOT_SAVED_CODE });
+    expect(logger.error).toHaveBeenCalledWith(
+      { err: expect.objectContaining({ errName: "Error" }), userId: "user-1" },
+      expect.any(String)
+    );
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("secret");
+  });
+
+  test("logs a failed update-consent instead of failing it: it saves no grant", async () => {
     mocks.tx.$executeRaw.mockRejectedValue(new Error("connection reset"));
 
-    await expect(revokeTokensBeyondConsentAfterHandler(approve())).resolves.toBeUndefined();
+    await expect(
+      revokeTokensBeyondConsentAfterHandler(
+        ctx("/oauth2/update-consent", { id: "consent-1", update: { scopes: NARROW } }, { id: "consent-1" })
+      )
+    ).resolves.toBeUndefined();
     expect(logger.error).toHaveBeenCalledWith(
-      expect.objectContaining({ err: expect.any(Error), userId: "user-1" }),
-      expect.any(String)
+      expect.objectContaining({ err: expect.objectContaining({ errName: "Error" }), userId: "user-1" }),
+      expect.stringContaining("refresh check still applies")
     );
   });
 
@@ -650,5 +988,321 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
 
     await revokeTokensBeyondConsentAfterHandler(approve());
     expect(endedTokensBeyondConsent()).toBe(false);
+  });
+
+  describe("an approval that chooses organization & workspace access", () => {
+    const WORKSPACE_GRANT = {
+      ...ORG_GRANT,
+      access: "workspaces",
+      organizations: [],
+      workspaces: [{ workspaceId: "ws-1" }, { workspaceId: "ws-2" }],
+    };
+    const approveAccess = (access: Record<string, unknown>) =>
+      ctx(
+        "/oauth2/consent",
+        { accept: true, mcp_grant: { permissions: { surveys: "read" }, ...access } },
+        { redirect: true, url: "https://client/cb" }
+      );
+
+    beforeEach(() => {
+      mocks.grantRows = [WORKSPACE_GRANT];
+      vi.mocked(resolveMcpGrantSelection).mockReset();
+      mocks.tx.mcpGrant.upsert.mockResolvedValue({ ...WORKSPACE_GRANT, permissions: { surveys: "read" } });
+    });
+
+    test("locks the grant and narrows SpiceDB before it locks any consent row, then saves", async () => {
+      vi.mocked(resolveMcpGrantSelection).mockResolvedValue({
+        status: "ok",
+        access: { access: "workspaces", workspaceIds: ["ws-1"] },
+      });
+
+      await revokeTokensBeyondConsentAfterHandler(
+        approveAccess({ access: "workspaces", workspaceIds: ["ws-1"] })
+      );
+
+      expect(mocks.sequence).toEqual(["lock grant", "delete relationships", "lock consents"]);
+      expect(deleteMcpGrantRelationshipsBeforeCommit).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "grant-1", workspaceIds: ["ws-1", "ws-2"] }),
+        { access: "workspaces", workspaceIds: ["ws-1"] }
+      );
+      expect(mocks.tx.mcpGrantWorkspace.deleteMany).toHaveBeenCalledWith({
+        where: { grantId: "grant-1", workspaceId: { notIn: ["ws-1"] } },
+      });
+      // What the save adds is projected after the commit.
+      expect(reconcileMcpGrantRelationships).toHaveBeenCalledWith({ grantIds: ["grant-1"] });
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 15_000 });
+    });
+
+    test("refuses a selection the user can't make with a 422, and saves nothing", async () => {
+      vi.mocked(resolveMcpGrantSelection).mockResolvedValue({ status: "unavailable", field: "workspaceIds" });
+
+      const thrown = await revokeTokensBeyondConsentAfterHandler(
+        approveAccess({ access: "workspaces", workspaceIds: ["ws-foreign"] })
+      ).catch((error: unknown) => error);
+
+      expect((thrown as APIError).statusCode).toBe(422);
+      expect((thrown as APIError).body).toMatchObject({
+        error: "invalid_request",
+        error_description: "Pick only workspaces you have access to.",
+        code: MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
+      });
+      expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
+      expect(deleteMcpGrantRelationshipsBeforeCommit).not.toHaveBeenCalled();
+      expect(mocks.sequence).not.toContain("lock consents");
+    });
+
+    test("names organizations when the refused selection is of organizations", async () => {
+      vi.mocked(resolveMcpGrantSelection).mockResolvedValue({
+        status: "unavailable",
+        field: "organizationIds",
+      });
+
+      const thrown = await revokeTokensBeyondConsentAfterHandler(
+        approveAccess({ access: "organizations", organizationIds: ["org-foreign"] })
+      ).catch((error: unknown) => error);
+
+      expect((thrown as APIError).body).toMatchObject({
+        error_description: "Pick only organizations you have access to.",
+      });
+    });
+
+    test("fails the approval, changing nothing, when SpiceDB can't apply the narrowing, and repairs the grant", async () => {
+      vi.mocked(resolveMcpGrantSelection).mockResolvedValue({ status: "ok", access: { access: "all" } });
+      vi.mocked(deleteMcpGrantRelationshipsBeforeCommit).mockRejectedValue(new Error("spicedb down"));
+      vi.mocked(prisma.mcpGrant.findUnique).mockResolvedValue(WORKSPACE_GRANT as never);
+
+      const thrown = await revokeTokensBeyondConsentAfterHandler(approveAccess({ access: "all" })).catch(
+        (error: unknown) => error
+      );
+
+      expect((thrown as APIError).statusCode).toBe(500);
+      expect((thrown as APIError).body).toMatchObject({ code: MCP_GRANT_NOT_SAVED_CODE });
+      // Tried twice, never got as far as the consent rows or the grant write.
+      expect(deleteMcpGrantRelationshipsBeforeCommit).toHaveBeenCalledTimes(2);
+      expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
+      expect(mocks.sequence).not.toContain("lock consents");
+      // The grant is reconciled from its committed rows after each failed attempt.
+      expect(reconcileMcpGrantRelationships).toHaveBeenCalledWith({ grantIds: ["grant-1"] });
+    });
+
+    test("doesn't touch a skipConsent client's grant from a crafted approval", async () => {
+      mocks.tx.oauthClient.findUnique.mockResolvedValue({ skipConsent: true });
+
+      await revokeTokensBeyondConsentAfterHandler(approveAccess({ access: "all" }));
+
+      expect(mocks.sequence).toEqual([]);
+      expect(resolveMcpGrantSelection).not.toHaveBeenCalled();
+      expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
+    });
+
+    describe("a failed approval leaves the consent as it was", () => {
+      const WIDE_SCOPES = ["surveys:read", "responses:read", "offline_access"];
+      const RESOURCE = "https://formbricks.test/api/mcp";
+      const approvalBody = (access: Record<string, unknown>) => ({
+        accept: true,
+        oauth_query: oauthQuery,
+        mcp_grant: { permissions: { surveys: "read" }, ...access },
+      });
+      /** The before-hook's read, then the provider's write (`mocks.consents`), then the after-hook. */
+      const approveWith = async (
+        previous: Record<string, unknown>[],
+        access: Record<string, unknown>
+      ): Promise<unknown> => {
+        vi.mocked(prisma.oauthConsent.findMany).mockResolvedValue(previous as never);
+        await snapshotConsentBeforeApprovalHandler(ctx("/oauth2/consent", approvalBody(access)));
+        return revokeTokensBeyondConsentAfterHandler(
+          ctx("/oauth2/consent", approvalBody(access), { redirect: true, url: "https://client/cb" })
+        ).catch((error: unknown) => error);
+      };
+      const PREVIOUS = {
+        id: "consent-1",
+        scopes: WIDE_SCOPES,
+        resources: [RESOURCE],
+        requestedUserInfoClaims: [],
+        updatedAt: new Date("2026-10-01T00:00:00Z"),
+      };
+
+      beforeEach(() => {
+        // What the provider wrote before the after-hook ran: this approval's narrower scopes.
+        mocks.consents = [consentRow("consent-1", NARROW, thisSecond())];
+      });
+
+      test("snapshots the session user's consent rows for the signed query's client", async () => {
+        vi.mocked(prisma.oauthConsent.findMany).mockResolvedValue([] as never);
+
+        await snapshotConsentBeforeApprovalHandler(ctx("/oauth2/consent", approvalBody({ access: "all" })));
+
+        expect(mocks.verifyOAuthQueryParams).toHaveBeenCalledWith(oauthQuery, undefined);
+        expect(prisma.oauthConsent.findMany).toHaveBeenCalledWith({
+          where: { userId: "user-1", clientId: "client-1" },
+          select: { id: true, scopes: true, resources: true, requestedUserInfoClaims: true, updatedAt: true },
+        });
+      });
+
+      test.each([
+        ["another path", () => ctx("/oauth2/update-consent", approvalBody({ access: "all" }))],
+        ["a Deny", () => ctx("/oauth2/consent", { ...approvalBody({ access: "all" }), accept: false })],
+        ["a query without its signature", () => ctx("/oauth2/consent", { accept: true })],
+        [
+          "a query whose signature doesn't verify",
+          () => {
+            mocks.verifyOAuthQueryParams.mockResolvedValue(false);
+            return ctx("/oauth2/consent", approvalBody({ access: "all" }));
+          },
+        ],
+        [
+          "no session",
+          () => {
+            mocks.getSessionFromCtx.mockResolvedValue(null);
+            return ctx("/oauth2/consent", approvalBody({ access: "all" }));
+          },
+        ],
+      ])("snapshots nothing for %s", async (_case, hookCtx) => {
+        await snapshotConsentBeforeApprovalHandler(hookCtx());
+
+        expect(prisma.oauthConsent.findMany).not.toHaveBeenCalled();
+      });
+
+      test("a 422 deletes the consent a new client's approval created, under the grant's lock, in its transaction", async () => {
+        mocks.grantRows = [];
+        vi.mocked(resolveMcpGrantSelection).mockResolvedValue({
+          status: "unavailable",
+          field: "workspaceIds",
+        });
+
+        const thrown = await approveWith([], { access: "workspaces", workspaceIds: ["ws-foreign"] });
+
+        expect((thrown as APIError).statusCode).toBe(422);
+        expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({
+          where: { userId: "user-1", clientId: "client-1", id: { in: ["consent-1"] } },
+        });
+        expect(mocks.tx.oauthConsent.update).not.toHaveBeenCalled();
+        expect(mocks.sequence).toEqual(["lock grant", "lock consents"]);
+        expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+        expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
+      });
+
+      test("a 422 puts a re-approval's narrowed consent back to the scopes it had", async () => {
+        vi.mocked(resolveMcpGrantSelection).mockResolvedValue({
+          status: "unavailable",
+          field: "workspaceIds",
+        });
+
+        const thrown = await approveWith([PREVIOUS], { access: "workspaces", workspaceIds: ["ws-foreign"] });
+
+        expect((thrown as APIError).statusCode).toBe(422);
+        expect(mocks.tx.oauthConsent.update).toHaveBeenCalledWith({
+          where: { id: "consent-1" },
+          data: {
+            scopes: WIDE_SCOPES,
+            resources: [RESOURCE],
+            requestedUserInfoClaims: [],
+            updatedAt: PREVIOUS.updatedAt,
+          },
+        });
+        expect(mocks.tx.oauthConsent.deleteMany).not.toHaveBeenCalled();
+        // Nothing beyond the consent ended: the consent the tokens were issued under is back.
+        expect(endedTokensBeyondConsent()).toBe(false);
+      });
+
+      test("a 500 deletes the consent a new client's approval created, in a transaction of its own", async () => {
+        mocks.grantRows = [];
+        vi.mocked(resolveMcpGrantSelection).mockResolvedValue({ status: "ok", access: { access: "all" } });
+        mocks.tx.mcpGrant.upsert.mockRejectedValue(new Error("connection reset"));
+
+        const thrown = await approveWith([], { access: "all" });
+
+        expect((thrown as APIError).statusCode).toBe(500);
+        expect((thrown as APIError).body).toMatchObject({ code: MCP_GRANT_NOT_SAVED_CODE });
+        // Two attempts, then the compensation, which takes the grant's lock before the consent rows.
+        expect(prisma.$transaction).toHaveBeenCalledTimes(3);
+        expect(mocks.sequence.slice(-2)).toEqual(["share grant", "lock consents"]);
+        expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenLastCalledWith({
+          where: { userId: "user-1", clientId: "client-1", id: { in: ["consent-1"] } },
+        });
+      });
+
+      test("a 500 puts a narrowing re-approval's consent back when SpiceDB can't apply the narrowing", async () => {
+        vi.mocked(resolveMcpGrantSelection).mockResolvedValue({
+          status: "ok",
+          access: { access: "workspaces", workspaceIds: ["ws-1"] },
+        });
+        vi.mocked(deleteMcpGrantRelationshipsBeforeCommit).mockRejectedValue(new Error("spicedb down"));
+
+        const thrown = await approveWith([PREVIOUS], { access: "workspaces", workspaceIds: ["ws-1"] });
+
+        expect((thrown as APIError).statusCode).toBe(500);
+        expect(mocks.tx.oauthConsent.update).toHaveBeenCalledWith({
+          where: { id: "consent-1" },
+          data: expect.objectContaining({ scopes: WIDE_SCOPES, updatedAt: PREVIOUS.updatedAt }),
+        });
+        expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
+      });
+
+      test("restores the rows the snapshot holds, deletes those it doesn't, and recreates none", async () => {
+        vi.mocked(resolveMcpGrantSelection).mockResolvedValue({
+          status: "unavailable",
+          field: "workspaceIds",
+        });
+        mocks.consents = [
+          consentRow("consent-1", NARROW, thisSecond()),
+          consentRow("consent-gone", NARROW, thisSecond()),
+        ];
+
+        await approveWith([PREVIOUS, { ...PREVIOUS, id: "consent-deleted-since" }], { access: "all" });
+
+        // A row deleted since the snapshot isn't recreated; one created since is deleted.
+        expect(mocks.tx.oauthConsent.update).toHaveBeenCalledTimes(1);
+        expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({
+          where: { userId: "user-1", clientId: "client-1", id: { in: ["consent-gone"] } },
+        });
+      });
+
+      test("warns, and still fails the approval, when no snapshot names the client", async () => {
+        vi.mocked(resolveMcpGrantSelection).mockResolvedValue({ status: "ok", access: { access: "all" } });
+        mocks.tx.mcpGrant.upsert.mockRejectedValue(new Error("connection reset"));
+
+        const thrown = await revokeTokensBeyondConsentAfterHandler(approveAccess({ access: "all" })).catch(
+          (error: unknown) => error
+        );
+
+        expect((thrown as APIError).statusCode).toBe(500);
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.objectContaining({ userId: "user-1" }),
+          "OAuth approval failed but no snapshot of its consent was read; the consent stays as written"
+        );
+        expect(mocks.tx.oauthConsent.update).not.toHaveBeenCalled();
+      });
+
+      test("logs, and still fails the approval, when restoring the consent fails", async () => {
+        vi.mocked(resolveMcpGrantSelection).mockResolvedValue({ status: "ok", access: { access: "all" } });
+        mocks.tx.mcpGrant.upsert.mockRejectedValue(new Error("connection reset"));
+        mocks.tx.oauthConsent.update.mockRejectedValue(new Error("connection reset"));
+
+        const thrown = await approveWith([PREVIOUS], { access: "all" });
+
+        expect((thrown as APIError).statusCode).toBe(500);
+        expect(logger.error).toHaveBeenCalledWith(
+          expect.objectContaining({ userId: "user-1", clientId: "client-1" }),
+          "OAuth approval failed and restoring its consent failed too"
+        );
+      });
+    });
+
+    test("keeps going when reconciling the grant after a failure fails too", async () => {
+      vi.mocked(resolveMcpGrantSelection).mockResolvedValue({ status: "ok", access: { access: "all" } });
+      vi.mocked(deleteMcpGrantRelationshipsBeforeCommit).mockRejectedValue(new Error("spicedb down"));
+      vi.mocked(prisma.mcpGrant.findUnique).mockRejectedValue(new Error("db down"));
+
+      const thrown = await revokeTokensBeyondConsentAfterHandler(approveAccess({ access: "all" })).catch(
+        (error: unknown) => error
+      );
+
+      expect((thrown as APIError).statusCode).toBe(500);
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ userId: "user-1" }),
+        "Reconciling an MCP grant after a failed approval failed"
+      );
+    });
   });
 });

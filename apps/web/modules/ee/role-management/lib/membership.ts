@@ -10,18 +10,25 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { validateInputs } from "@/lib/utils/validate";
-import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
+import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
+import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-store";
 
+/**
+ * Sets a member's role. `actorUserId` is the user making the change: the actor of the audit entries of any
+ * MCP grant the change ends.
+ */
 export const updateMembership = async (
   userId: string,
   organizationId: string,
   data: TMembershipUpdateInput,
+  actorUserId: string,
   tx?: Prisma.TransactionClient
 ): Promise<TMembership> => {
   validateInputs([userId, ZString], [organizationId, ZString], [data, ZMembershipUpdateInput]);
   const client = tx ?? prisma;
   let affectedTeamIds: string[] = [];
   let membershipUpdated = false;
+  let revokedMcpGrantAudits: TMcpGrantAuditRecord[] = [];
 
   try {
     const membership = await client.membership.update({
@@ -62,7 +69,7 @@ export const updateMembership = async (
       // consents go and their refresh tokens are revoked, so the next authorization passes through a
       // consent that offers only dashboards:read, and no refresh mints a wider token.
       if (await isOnlyDashboardViewer(client, userId)) {
-        await revokeAllUserOAuthGrants(client, userId);
+        ({ grantAudits: revokedMcpGrantAudits } = await revokeAllUserOAuthGrants(client, userId));
       }
     }
 
@@ -99,6 +106,11 @@ export const updateMembership = async (
 
     throw error;
   } finally {
+    // Within a caller's transaction this runs before that transaction commits: the role update is the
+    // last write there, so only a failed commit could leave these entries recording grants that stayed.
+    // The grants' SpiceDB relationships are then left to the outbox event their delete queues, which is
+    // delivered only once it commits; removing them now could outlive a rollback.
+    await finishRevokedMcpGrants(revokedMcpGrantAudits, { removeRelationships: !tx, actorUserId });
     // A transaction-scoped call is projected by the durable PostgreSQL outbox only after the outer
     // transaction commits. Reading through the global client here could observe the pre-commit role
     // and would publish stale relationships.

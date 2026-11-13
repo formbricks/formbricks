@@ -22,6 +22,8 @@ vi.mock("@formbricks/database", () => ({
     apiKeyWorkspace: { findMany: vi.fn() },
     feedbackDirectory: { findMany: vi.fn() },
     feedbackDirectoryWorkspace: { findMany: vi.fn() },
+    mcpGrantOrganization: { findMany: vi.fn() },
+    mcpGrantWorkspace: { findMany: vi.fn() },
     membership: { findMany: vi.fn() },
     organization: { count: vi.fn(), findMany: vi.fn() },
     survey: { findMany: vi.fn() },
@@ -46,6 +48,8 @@ const setEmptySource = (): void => {
   vi.mocked(prisma.workspaceTeam.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.apiKeyWorkspace.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.survey.findMany).mockResolvedValue([] as never);
+  vi.mocked(prisma.mcpGrantOrganization.findMany).mockResolvedValue([] as never);
+  vi.mocked(prisma.mcpGrantWorkspace.findMany).mockResolvedValue([] as never);
 };
 
 beforeEach(() => {
@@ -172,6 +176,7 @@ describe("readOrganizationSource", () => {
       invalidApiKeyWorkspaceGrants: [],
       invalidFeedbackDirectoryAssignments: [],
       invalidWorkspaceTeamGrants: [],
+      mcpGrantSelections: [],
       memberships: [{ organizationId: ORGANIZATION_ID, userId: "user-1" }],
       teamIds: ["team-1"],
       teamMemberships: [{ teamId: "team-1", userId: "user-1" }],
@@ -300,6 +305,7 @@ describe("readOrganizationSource", () => {
       invalidApiKeyWorkspaceGrants: [],
       invalidFeedbackDirectoryAssignments: [],
       invalidWorkspaceTeamGrants: [],
+      mcpGrantSelections: [],
       organizationId: ORGANIZATION_ID,
       surveyIds: [],
       workspaceExists: true,
@@ -390,6 +396,7 @@ describe("readOrganizationSource", () => {
       invalidApiKeyWorkspaceGrants: [],
       invalidFeedbackDirectoryAssignments: [],
       invalidWorkspaceTeamGrants: [],
+      mcpGrantSelections: [],
       memberships: [],
       teamIds: [],
       teamMemberships: [],
@@ -695,5 +702,60 @@ describe("survey sources (ENG-3282)", () => {
         { kind: "survey", surveyId: "s-gone" },
       ])
     ).resolves.toEqual([{ kind: "survey", surveyId: "s-gone" }]);
+  });
+});
+
+describe("MCP grant selections (ENG-7153)", () => {
+  test("an organization's expected graph holds its grant selections, and only those of the matching mode", async () => {
+    vi.mocked(prisma.mcpGrantOrganization.findMany).mockResolvedValue([{ grantId: "grant-org" }] as never);
+    vi.mocked(prisma.mcpGrantWorkspace.findMany).mockResolvedValue([
+      { grantId: "grant-ws", workspaceId: "ws-1" },
+    ] as never);
+
+    const source = await readOrganizationSource(ORGANIZATION_ID);
+
+    expect(prisma.mcpGrantOrganization.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { organizationId: ORGANIZATION_ID, grant: { access: "organizations" } },
+      })
+    );
+    expect(prisma.mcpGrantWorkspace.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { workspace: { organizationId: ORGANIZATION_ID }, grant: { access: "workspaces" } },
+      })
+    );
+    expect(source.mcpGrantSelections).toEqual([
+      { grantId: "grant-org", resourceId: ORGANIZATION_ID, resourceType: "organization" },
+      { grantId: "grant-ws", resourceId: "ws-1", resourceType: "workspace" },
+    ]);
+    expect(source.expectedRelationships).toEqual(
+      expect.arrayContaining([
+        {
+          relation: "mcp_grant",
+          resource: { objectId: ORGANIZATION_ID, objectType: "organization" },
+          subject: { objectId: "grant-org", objectType: "mcp_grant" },
+        },
+        {
+          relation: "mcp_grant",
+          resource: { objectId: "ws-1", objectType: "workspace" },
+          subject: { objectId: "grant-ws", objectType: "mcp_grant" },
+        },
+      ])
+    );
+  });
+
+  test("a selection row whose grant no longer selects that kind is missing", async () => {
+    vi.mocked(prisma.mcpGrantWorkspace.findMany).mockResolvedValue([] as never);
+
+    const missing = await findMissingSourceRefs([
+      { grantId: "grant-1", kind: "mcpGrantSelection", resourceId: "ws-1", resourceType: "workspace" },
+    ]);
+
+    expect(prisma.mcpGrantWorkspace.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { grant: { access: "workspaces" }, OR: [{ grantId: "grant-1", workspaceId: "ws-1" }] },
+      })
+    );
+    expect(missing).toHaveLength(1);
   });
 });

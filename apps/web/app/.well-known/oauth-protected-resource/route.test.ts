@@ -57,6 +57,7 @@ describe("OAuth protected resource metadata", () => {
         // Advertised since ENG-6581, with the migrations that grant them to existing clients.
         "dashboards:read",
         "dashboards:write",
+        "audience:read",
         "offline_access",
       ],
       bearer_methods_supported: ["header"],

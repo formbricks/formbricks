@@ -5,7 +5,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, UnknownError, ValidationError } from "@formbricks/types/errors";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
-import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
+import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import {
   deleteMembership,
   getMembersByOrganizationId,
@@ -42,9 +42,14 @@ vi.mock("@/lib/authzed/organization-membership", () => ({
 vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
-vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({ revokeAllUserOAuthGrants: vi.fn() }));
+vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({
+  revokeAllUserOAuthGrants: vi.fn(),
+  finishRevokedMcpGrants: vi.fn(),
+}));
 
 const organizationId = "org-1";
+/** The owner who removes the member: the actor of the ended grants' audit entries. */
+const ACTOR_ID = "owner-1";
 const userId = "user-1";
 const teamId = "team-1";
 const mockMember = {
@@ -136,7 +141,7 @@ describe("deleteMembership", () => {
   });
   test("deletes membership and returns deleted team memberships", async () => {
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue([mockTeamMembership]);
-    const result = await deleteMembership(userId, organizationId);
+    const result = await deleteMembership(userId, organizationId, ACTOR_ID);
     expect(result[0].teamId).toBe(teamId);
     expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
       isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
@@ -156,7 +161,6 @@ describe("deleteMembership", () => {
           userId,
         },
       },
-      select: { role: true },
     });
     expect(reconcileOrganizationMembership).toHaveBeenCalledWith(organizationId, userId);
     expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
@@ -172,18 +176,28 @@ describe("deleteMembership", () => {
     "revokes the user's OAuth grants in the transaction only when %s (S13)",
     async (_label, removedRole, remainingRoles, revokes) => {
       vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.membership.delete).mockResolvedValue({
-        ...mockMembership,
+      vi.mocked(prisma.membership.findUnique).mockResolvedValue({
         role: removedRole,
+        user: { isActive: true },
       } as never);
       vi.mocked(prisma.membership.findMany).mockResolvedValue(
         remainingRoles.map((role) => ({ role })) as never
       );
+      vi.mocked(revokeAllUserOAuthGrants).mockResolvedValue({ grantAudits: [] } as never);
 
-      await deleteMembership(userId, organizationId);
+      await deleteMembership(userId, organizationId, ACTOR_ID);
 
       if (revokes) {
+        expect(finishRevokedMcpGrants).toHaveBeenCalledWith([], { actorUserId: ACTOR_ID });
+        expect(prisma.membership.findMany).toHaveBeenCalledWith({
+          where: { userId, organizationId: { not: organizationId } },
+          select: { role: true },
+        });
         expect(revokeAllUserOAuthGrants).toHaveBeenCalledWith(prisma, userId);
+        // Before the membership goes, so the grants' audit entries are filed under this organization too.
+        expect(vi.mocked(revokeAllUserOAuthGrants).mock.invocationCallOrder[0]).toBeLessThan(
+          vi.mocked(prisma.membership.delete).mock.invocationCallOrder[0]
+        );
       } else {
         expect(revokeAllUserOAuthGrants).not.toHaveBeenCalled();
       }
@@ -196,7 +210,7 @@ describe("deleteMembership", () => {
     try {
       vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
 
-      await deleteMembership(userId, organizationId);
+      await deleteMembership(userId, organizationId, ACTOR_ID);
 
       expect(prisma.invite.updateMany).toHaveBeenCalledWith({
         where: { organizationId, creatorId: userId, expiresAt: { gt: now } },
@@ -214,7 +228,7 @@ describe("deleteMembership", () => {
     vi.mocked(prisma.$transaction).mockRejectedValueOnce(transactionConflict);
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue([mockTeamMembership]);
 
-    await expect(deleteMembership(userId, organizationId)).resolves.toEqual([mockTeamMembership]);
+    await expect(deleteMembership(userId, organizationId, ACTOR_ID)).resolves.toEqual([mockTeamMembership]);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(2);
     expect(reconcileOrganizationMembership).toHaveBeenCalledTimes(1);
@@ -227,7 +241,7 @@ describe("deleteMembership", () => {
     });
     vi.mocked(prisma.$transaction).mockRejectedValue(transactionConflict);
 
-    await expect(deleteMembership(userId, organizationId)).rejects.toThrow(DatabaseError);
+    await expect(deleteMembership(userId, organizationId, ACTOR_ID)).rejects.toThrow(DatabaseError);
 
     expect(prisma.$transaction).toHaveBeenCalledTimes(3);
     expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
@@ -239,11 +253,11 @@ describe("deleteMembership", () => {
       clientVersion: "1.0.0",
     });
     vi.mocked(prisma.teamUser.findMany).mockRejectedValue(prismaError);
-    await expect(deleteMembership(userId, organizationId)).rejects.toThrow(DatabaseError);
+    await expect(deleteMembership(userId, organizationId, ACTOR_ID)).rejects.toThrow(DatabaseError);
   });
   test("throws original error on unknown error", async () => {
     vi.mocked(prisma.teamUser.findMany).mockRejectedValue({});
-    await expect(deleteMembership(userId, organizationId)).rejects.toThrowError();
+    await expect(deleteMembership(userId, organizationId, ACTOR_ID)).rejects.toThrowError();
   });
 
   // The last-owner guard used to be a cached count read in the action, before the delete's transaction,
@@ -266,7 +280,7 @@ describe("deleteMembership", () => {
         (transaction as (client: unknown) => unknown)(tx)
       );
 
-      await expect(deleteMembership(userId, organizationId)).rejects.toThrow(ValidationError);
+      await expect(deleteMembership(userId, organizationId, ACTOR_ID)).rejects.toThrow(ValidationError);
 
       expect(prisma.membership.count).not.toHaveBeenCalled();
       expect(tx.membership.delete).not.toHaveBeenCalled();
@@ -285,7 +299,7 @@ describe("deleteMembership", () => {
       vi.mocked(prisma.membership.count).mockResolvedValue(2);
       vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
 
-      await expect(deleteMembership(userId, organizationId)).resolves.toEqual([]);
+      await expect(deleteMembership(userId, organizationId, ACTOR_ID)).resolves.toEqual([]);
       expect(prisma.membership.delete).toHaveBeenCalled();
     });
 
@@ -294,7 +308,7 @@ describe("deleteMembership", () => {
       vi.mocked(prisma.membership.count).mockResolvedValue(1);
       vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
 
-      await expect(deleteMembership(userId, organizationId)).resolves.toEqual([]);
+      await expect(deleteMembership(userId, organizationId, ACTOR_ID)).resolves.toEqual([]);
       expect(prisma.membership.delete).toHaveBeenCalled();
     });
 
@@ -307,7 +321,7 @@ describe("deleteMembership", () => {
       vi.mocked(prisma.membership.count).mockRejectedValueOnce(conflict).mockResolvedValueOnce(2);
       vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
 
-      await expect(deleteMembership(userId, organizationId)).resolves.toEqual([]);
+      await expect(deleteMembership(userId, organizationId, ACTOR_ID)).resolves.toEqual([]);
       expect(prisma.$transaction).toHaveBeenCalledTimes(2);
     });
 
@@ -318,7 +332,7 @@ describe("deleteMembership", () => {
       } as never);
       vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
 
-      await deleteMembership(userId, organizationId);
+      await deleteMembership(userId, organizationId, ACTOR_ID);
       expect(prisma.membership.count).not.toHaveBeenCalled();
     });
   });

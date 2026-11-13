@@ -8,3 +8,9 @@ export const MCP_API_ROUTE = "/api/mcp" as const;
 // feedback records. Client config keys are user-chosen, so this is a display name only.
 export const MCP_SERVER_NAME = "formbricks-xm-suite" as const;
 export const MCP_SERVER_VERSION = "0.2.0" as const;
+
+/**
+ * The most MCP clients Authorized apps lists for one user. Far above real use (a handful of clients
+ * each), it bounds the read for an account that open client registration filled with clients.
+ */
+export const MAX_LISTED_AUTHORIZED_MCP_CLIENTS = 500;

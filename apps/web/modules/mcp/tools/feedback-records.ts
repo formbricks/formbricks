@@ -19,7 +19,7 @@ import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { type TMcpToolContext, getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
-import { registerScopedTool } from "./guard-scopes";
+import { registerMcpTool } from "./guard-permissions";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCountFeedbackRecordsInput,
@@ -44,16 +44,11 @@ import {
   ZMcpUpdateFeedbackRecordInput,
 } from "./schemas";
 
-// Typed as a non-empty tuple so `registerScopedTool` accepts them: its signature refuses `[]`, which
-// would gate on nothing.
-const FEEDBACK_RECORDS_READ_SCOPE: [string, ...string[]] = ["feedbackRecords:read"];
-const FEEDBACK_RECORDS_WRITE_SCOPE: [string, ...string[]] = ["feedbackRecords:write"];
-
 /**
  * Shared handler body for the read-only tools: resolve the request id, run the v3 operation, map its
  * Response to a tool result. Only `run` differs between them.
  *
- * No scope gate here any more — `registerScopedTool` applies it before this body runs (ENG-2119).
+ * No gate here any more — `registerMcpTool` applies it before this body runs (ENG-2119).
  */
 function readOnlyHandler<TInput>(
   run: (input: TInput, authentication: TV3Authentication, requestId: string) => Promise<Response>
@@ -72,7 +67,7 @@ function readOnlyHandler<TInput>(
  * operation, and the outcome (`success`, or an `eventId` on failure) by this wrapper. A throw still
  * queues the log, so a failed mutation is never silently unaudited.
  *
- * The write scope is no longer checked here; `registerScopedTool` gates it before this runs (ENG-2119).
+ * Write access is no longer checked here; `registerMcpTool` gates it before this runs (ENG-2119).
  */
 function writeHandler<TInput extends { workspaceId: string }>(
   action: "created" | "updated" | "deleted",
@@ -96,7 +91,7 @@ function writeHandler<TInput extends { workspaceId: string }>(
 }
 
 export function registerFeedbackRecordTools(server: McpServer): void {
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_feedback_datasets",
     {
@@ -111,7 +106,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    FEEDBACK_RECORDS_READ_SCOPE,
+    [{ permission: "feedbackDatasets", level: "read" }],
     readOnlyHandler<TMcpListFeedbackDatasetsInput>((input, authentication, requestId) =>
       listV3FeedbackDatasets({
         workspaceId: input.workspaceId,
@@ -122,7 +117,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_feedback_records",
     {
@@ -141,13 +136,13 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     // field by field: adding a filter to the schema can't silently fail to reach the operation. Safe
     // because the schema is `.strict()` (ENG-2256), so an undeclared key is rejected before this handler
     // runs rather than spread onward, and the operation allowlists what reaches the Hub regardless.
-    FEEDBACK_RECORDS_READ_SCOPE,
+    [{ permission: "feedbackRecords", level: "read" }],
     readOnlyHandler<TMcpListFeedbackRecordsInput>((input, authentication, requestId) =>
       listV3FeedbackRecords({ ...input, authentication, requestId, instance: MCP_API_ROUTE })
     )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "count_feedback_records",
     {
@@ -162,13 +157,13 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    FEEDBACK_RECORDS_READ_SCOPE,
+    [{ permission: "feedbackRecords", level: "read" }],
     readOnlyHandler<TMcpCountFeedbackRecordsInput>((input, authentication, requestId) =>
       countV3FeedbackRecords({ ...input, authentication, requestId, instance: MCP_API_ROUTE })
     )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_feedback_record",
     {
@@ -183,7 +178,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    FEEDBACK_RECORDS_READ_SCOPE,
+    [{ permission: "feedbackRecords", level: "read" }],
     readOnlyHandler<TMcpGetFeedbackRecordInput>((input, authentication, requestId) =>
       getV3FeedbackRecord({
         workspaceId: input.workspaceId,
@@ -196,7 +191,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "create_feedback_record",
     {
@@ -212,7 +207,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    FEEDBACK_RECORDS_WRITE_SCOPE,
+    [{ permission: "feedbackRecords", level: "write" }],
     writeHandler<TMcpCreateFeedbackRecordInput>("created", (input, authentication, requestId, auditLog) =>
       createV3FeedbackRecord({
         workspaceId: input.workspaceId,
@@ -226,7 +221,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "create_feedback_records",
     {
@@ -242,7 +237,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    FEEDBACK_RECORDS_WRITE_SCOPE,
+    [{ permission: "feedbackRecords", level: "write" }],
     async (input: TMcpCreateFeedbackRecordsInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
@@ -301,7 +296,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "update_feedback_record",
     {
@@ -319,7 +314,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    FEEDBACK_RECORDS_WRITE_SCOPE,
+    [{ permission: "feedbackRecords", level: "write" }],
     writeHandler<TMcpUpdateFeedbackRecordInput>("updated", (input, authentication, requestId, auditLog) =>
       updateV3FeedbackRecord({
         workspaceId: input.workspaceId,
@@ -334,7 +329,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "delete_feedback_record",
     {
@@ -350,7 +345,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    FEEDBACK_RECORDS_WRITE_SCOPE,
+    [{ permission: "feedbackRecords", level: "write" }],
     writeHandler<TMcpDeleteFeedbackRecordInput>("deleted", (input, authentication, requestId, auditLog) =>
       deleteV3FeedbackRecord({
         workspaceId: input.workspaceId,
@@ -364,7 +359,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "search_feedback_records",
     {
@@ -379,7 +374,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    FEEDBACK_RECORDS_READ_SCOPE,
+    [{ permission: "feedbackRecords", level: "read" }],
     readOnlyHandler<TMcpSearchFeedbackRecordsInput>((input, authentication, requestId) =>
       searchV3FeedbackRecords({
         workspaceId: input.workspaceId,
@@ -395,7 +390,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
     )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "find_similar_feedback_records",
     {
@@ -410,7 +405,7 @@ export function registerFeedbackRecordTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    FEEDBACK_RECORDS_READ_SCOPE,
+    [{ permission: "feedbackRecords", level: "read" }],
     readOnlyHandler<TMcpFindSimilarFeedbackRecordsInput>((input, authentication, requestId) =>
       findSimilarV3FeedbackRecords({
         workspaceId: input.workspaceId,

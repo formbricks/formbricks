@@ -10,6 +10,7 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import {
   batchDeleteV3Responses,
+  batchSetV3ResponsesOutcome,
   countV3ResponsesOperation,
   createV3ResponseFromRawInput,
   deleteV3Response,
@@ -22,7 +23,7 @@ import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import type { TMcpToolContext } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { type TMcpConfirmationState, mcpRequestStateCodec } from "../request-state";
-import { registerScopedTool } from "./guard-scopes";
+import { registerMcpTool } from "./guard-permissions";
 import {
   type TMcpBatchDeleteResponsesInput,
   type TMcpCountResponsesInput,
@@ -30,6 +31,7 @@ import {
   type TMcpDeleteResponseInput,
   type TMcpGetResponseInput,
   type TMcpListResponsesInput,
+  type TMcpSetResponsesOutcomeInput,
   type TMcpUpdateResponseInput,
   type TMcpValidateResponseInput,
   ZMcpBatchDeleteResponsesInput,
@@ -39,11 +41,13 @@ import {
   ZMcpGetResponseInput,
   ZMcpListResponsesInput,
   ZMcpResponseBatchDeleteOutput,
+  ZMcpResponseBatchOutcomeOutput,
   ZMcpResponseCountOutput,
   ZMcpResponseDeleteOutput,
   ZMcpResponseListOutput,
   ZMcpResponseOutput,
   ZMcpResponseValidationOutput,
+  ZMcpSetResponsesOutcomeInput,
   ZMcpUpdateResponseInput,
   ZMcpValidateResponseInput,
 } from "./response-schemas";
@@ -51,7 +55,8 @@ import { runMcpMutation } from "./run-mcp-mutation";
 import { READ_ANNOTATIONS, toolContext } from "./tool-context";
 
 /**
- * MCP tools over the v3 Responses API — one per documented operation, and no more.
+ * MCP tools over the v3 Responses API — one per documented operation, and no more. Tags have their own
+ * module (`tags.ts`), though they share the `responses` scope family.
  *
  * **The tool set mirrors the API deliberately.** Every tool here is one v3 operation, so what an
  * agent can do through MCP is exactly what an API key can do over HTTP, and the answer to "can the
@@ -59,7 +64,7 @@ import { READ_ANNOTATIONS, toolContext } from "./tool-context";
  * (an `add one tag` that reads, merges and patches, say) would be a second surface with its own
  * semantics to document, test and keep in step — and `update_response` already does that job.
  *
- * Every tool goes through `registerScopedTool`, so the `responses:read` / `responses:write` gate is
+ * Every tool goes through `registerMcpTool`, so the `responses:read` / `responses:write` gate is
  * structural rather than something a handler can forget, and every tool calls the operation rather
  * than the database — the operation owns tenancy, so a foreign id answers the same 403 here as it
  * does over HTTP. The MCP scope and the workspace permission are separate gates: `responses:write`
@@ -144,7 +149,7 @@ export const buildCountResponsesSearchParams = (input: TMcpCountResponsesInput):
   toSearchParams({ ...sharedFilterParams(input), precision: input.precision });
 
 export function registerResponseTools(server: McpServer): void {
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_responses",
     {
@@ -158,7 +163,7 @@ export function registerResponseTools(server: McpServer): void {
       outputSchema: ZMcpResponseListOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["responses:read"],
+    [{ permission: "responses", level: "read" }],
     async (input: TMcpListResponsesInput, ctx) => {
       const context = toolContext(ctx);
       const response = await listV3Responses({
@@ -170,7 +175,7 @@ export function registerResponseTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "count_responses",
     {
@@ -184,7 +189,7 @@ export function registerResponseTools(server: McpServer): void {
       outputSchema: ZMcpResponseCountOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["responses:read"],
+    [{ permission: "responses", level: "read" }],
     async (input: TMcpCountResponsesInput, ctx) => {
       const context = toolContext(ctx);
       const response = await countV3ResponsesOperation({
@@ -196,7 +201,7 @@ export function registerResponseTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_response",
     {
@@ -209,7 +214,7 @@ export function registerResponseTools(server: McpServer): void {
       outputSchema: ZMcpResponseOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["responses:read"],
+    [{ permission: "responses", level: "read" }],
     async (input: TMcpGetResponseInput, ctx) => {
       const context = toolContext(ctx);
       const response = await getV3Response({ responseId: input.responseId, ...context });
@@ -218,7 +223,7 @@ export function registerResponseTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "validate_response",
     {
@@ -238,7 +243,7 @@ export function registerResponseTools(server: McpServer): void {
     // write does and reports what it would do, so gating it at `read` would make it a cheaper probe
     // than the operation it describes. `validate_survey` gates at read because that one is a pure
     // function of its input; this one is not.
-    ["responses:write"],
+    [{ permission: "responses", level: "write" }],
     async (input: TMcpValidateResponseInput, ctx) => {
       const context = toolContext(ctx);
       const response = await validateV3ResponseFromRawInput({ body: input, ...context });
@@ -247,7 +252,7 @@ export function registerResponseTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "create_response",
     {
@@ -268,7 +273,7 @@ export function registerResponseTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["responses:write"],
+    [{ permission: "responses", level: "write" }],
     async (input: TMcpCreateResponseInput, ctx) =>
       runMcpMutation(
         ctx,
@@ -284,7 +289,7 @@ export function registerResponseTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "update_response",
     {
@@ -307,7 +312,7 @@ export function registerResponseTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["responses:write"],
+    [{ permission: "responses", level: "write" }],
     async (input: TMcpUpdateResponseInput, ctx) =>
       runMcpMutation(
         ctx,
@@ -316,6 +321,51 @@ export function registerResponseTools(server: McpServer): void {
           updateV3ResponseFromRawInput({
             responseId: input.responseId,
             body: input.data,
+            authentication,
+            requestId,
+            instance: MCP_API_ROUTE,
+            auditLog,
+          })
+      )
+  );
+
+  registerMcpTool(
+    server,
+    "set_responses_outcome",
+    {
+      title: "Mark responses Low quality",
+      description: [
+        "Mark up to 100 survey responses Low quality, or restore them with outcome: null, in one",
+        "transaction. Ids outside the workspace are ignored; `updated` counts the responses in scope.",
+        "Fires the response pipeline for each response that changed.",
+        FEEDBACK_RECORD_BOUNDARY_SHORT,
+      ].join(" "),
+      inputSchema: ZMcpSetResponsesOutcomeInput,
+      outputSchema: ZMcpResponseBatchOutcomeOutput,
+      audit: { action: "updated", targetType: "response" },
+      annotations: {
+        readOnlyHint: false,
+        // The previous outcome is one of two values and restoring it is the same call with the other,
+        // so nothing is lost. Repeating a call converges: `updated` counts responses already marked.
+        destructiveHint: false,
+        idempotentHint: true,
+        openWorldHint: true,
+      },
+    },
+    [{ permission: "responses", level: "write" }],
+    async (input: TMcpSetResponsesOutcomeInput, ctx) =>
+      runMcpMutation(
+        ctx,
+        {
+          action: "updated",
+          resource: "response",
+          logContext: { workspaceId: input.workspaceId, count: input.ids.length },
+        },
+        ({ authentication, requestId, auditLog }) =>
+          batchSetV3ResponsesOutcome({
+            workspaceId: input.workspaceId,
+            ids: input.ids,
+            outcome: input.outcome,
             authentication,
             requestId,
             instance: MCP_API_ROUTE,
@@ -449,7 +499,7 @@ async function askToConfirm(
  * converges rather than compounding.
  */
 function registerDeleteTools(server: McpServer): void {
-  registerScopedTool(
+  registerMcpTool(
     server,
     "delete_response",
     {
@@ -470,7 +520,7 @@ function registerDeleteTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["responses:write"],
+    [{ permission: "responses", level: "write" }],
     async (input: TMcpDeleteResponseInput, ctx) => {
       const decision = decideDelete("delete_response", input.responseId, input.confirm, ctx);
 
@@ -502,7 +552,7 @@ function registerDeleteTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "batch_delete_responses",
     {
@@ -524,7 +574,7 @@ function registerDeleteTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["responses:write"],
+    [{ permission: "responses", level: "write" }],
     async (input: TMcpBatchDeleteResponsesInput, ctx) => {
       const resourceKey = batchResourceKey(input.workspaceId, input.ids);
       const decision = decideDelete("batch_delete_responses", resourceKey, input.confirm, ctx);

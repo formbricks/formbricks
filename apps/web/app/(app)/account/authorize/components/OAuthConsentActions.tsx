@@ -4,16 +4,28 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { authClient } from "@/modules/auth/lib/auth-client";
+import { getConsentErrorMessage } from "@/modules/auth/lib/mcp-grant-consent-errors";
+import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
+import { toMcpGrantAccessRequest } from "@/modules/mcp/grant-access";
 import { Button } from "@/modules/ui/components/button";
 import { resolveConsentRedirectUrl } from "../lib/consent-redirect";
 
 interface OAuthConsentActionsProps {
   /** The scopes to grant when narrower than the request (a Dashboard viewer's); all of them otherwise. */
   readonly grantedScope?: string;
+  /** The levels the user chose in the permission matrix, sent with Allow as the connection's grant. */
+  readonly permissions: TMcpGrantPermissions;
+  /** The organization & workspace access chosen with it; `null` while nothing is picked (Allow is off). */
+  readonly access: TMcpGrantAccessSelection | null;
   readonly isAllowDisabled?: boolean;
 }
 
-export const OAuthConsentActions = ({ grantedScope, isAllowDisabled = false }: OAuthConsentActionsProps) => {
+export const OAuthConsentActions = ({
+  grantedScope,
+  permissions,
+  access,
+  isAllowDisabled = false,
+}: OAuthConsentActionsProps) => {
   const { t } = useTranslation();
   const [pendingAction, setPendingAction] = useState<"accept" | "deny" | null>(null);
 
@@ -22,11 +34,22 @@ export const OAuthConsentActions = ({ grantedScope, isAllowDisabled = false }: O
     setPendingAction(action);
 
     try {
-      const response = await authClient.oauth2.consent(
-        accept && grantedScope ? { accept, scope: grantedScope } : { accept }
-      );
+      // `$fetch` rather than `oauth2.consent`: the grant (`mcp_grant`) is our field beside the provider's
+      // body, read by the consent hooks (`mcp-grant-consent.ts`). The client plugin still adds the signed
+      // `oauth_query` to the body.
+      const response = await authClient.$fetch<unknown>("/oauth2/consent", {
+        method: "POST",
+        body: accept
+          ? {
+              accept,
+              ...(grantedScope ? { scope: grantedScope } : {}),
+              mcp_grant: { permissions, ...(access ? toMcpGrantAccessRequest(access) : {}) },
+            }
+          : { accept },
+      });
       if (response.error) {
-        toast.error(t("auth.oauth.consent_failed"));
+        // A refused Allow says why: a pick the user can no longer select, or a grant that couldn't be saved.
+        toast.error(getConsentErrorMessage(response.error, t));
         return;
       }
 

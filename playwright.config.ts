@@ -47,8 +47,9 @@ export default defineConfig({
     : [["html", { outputFolder: "playwright-report", open: "never" }]],
   /* Shared settings for all the workspaces below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: "http://localhost:3000",
+    /* Base URL to use in actions like `await page.goto('/')`. PLAYWRIGHT_BASE_URL points a local run at a
+       dev server on another port (the app's WEBAPP_URL must match it); CI leaves it unset. */
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: "on-first-retry",

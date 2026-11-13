@@ -1,0 +1,94 @@
+---
+title: "Unreleased: MCP access per organization and workspace"
+description: "What happens to MCP clients and to permission delivery while you roll out the release that adds organization and workspace access for MCP."
+icon: "plug"
+---
+
+**Applies to:** the first release after 6.2. This change is on `main` and not in 6.2 or any earlier patch.
+Check it if you upgrade with a rolling update, where containers of the previous version keep running while the
+new ones start.
+
+## What changes
+
+- Every MCP connection (one user and one MCP client) gets a **grant**: what the user allows that client to do,
+  and in which organizations and workspaces. A data migration gives every existing connection a grant with the
+  access it had, so existing clients keep working.
+- `/api/mcp` refuses a call whose connection has no grant, with `401`. The client's next token refresh then
+  ends the connection, and the user connects the client again.
+- The permission schema doesn't change. Grants that select organizations or workspaces are written to SpiceDB
+  through the AuthZed outbox, with the new outbox target type `mcp_grant`.
+
+## During a rolling upgrade
+
+Two things can happen while containers of the previous version still run. Both stop once every container runs
+the new version, and neither needs action unless you see it.
+
+### A client connected during the rollout gets 401
+
+The data migration gives a grant to every connection that exists when it runs. A container of the previous
+version doesn't know grants, so a user who approves an MCP client on that container after the migration gets a
+connection without one. That client's calls answer `401` until the user connects it again. Its next token
+refresh also fails, which sends it back to the consent screen on its own; Allow on a new container writes the
+grant.
+
+Ask anyone who connected an MCP client during the rollout and now sees `401` to connect it again.
+
+### A dead-lettered `mcp_grant` event blocks authorization
+
+The database migration adds the `mcp_grant` triggers while containers of the previous version may still be
+delivering outbox events. Those don't know the type and dead-letter its events on the spot instead of retrying.
+An event queued when a grant loses access is a revocation, and a dead-lettered revocation makes every enforced
+authorization check in the deployment fail closed until it is replayed. The scheduled audit replays dead
+letters only after six hours, so don't wait for it.
+
+Only grants that select organizations or workspaces queue events. Every grant the data migration creates has
+All access, so deleting a user, an MCP client or an organization during the rollout queues nothing for them.
+The risk is limited to grants made on a new container during the rollout with Only selected organizations or
+Only selected workspaces: editing or revoking one, or deleting a workspace or organization it selects.
+
+You recognise it by:
+
+- requests that should be allowed being denied across the deployment;
+- each Formbricks process logging an `authzed_projection_stale` error;
+- `formbricks-authzed outbox status` reporting dead letters.
+
+Once every container runs the new version, check what was dead-lettered:
+
+```sql
+SELECT "targetType", "lastErrorCode", COUNT(*) FROM "AuthzedProjectionOutbox"
+WHERE "deadLetteredAt" IS NOT NULL AND "processedAt" IS NULL GROUP BY 1, 2;
+```
+
+Expect `mcp_grant` rows with `authzed_projection_invalid_event`; investigate anything else before replaying,
+as described in [AuthZed operations](/self-hosting/configuration/authzed-operations). Then replay and deliver
+them, running each command in a container of the **new** version:
+
+```bash
+formbricks-authzed outbox replay
+formbricks-authzed outbox drain
+formbricks-authzed upgrade check
+```
+
+Expect `status: ready`. Run `replay` only after the rollout has finished, and never from the previous version's
+image: its `drain` dead-letters the replayed `mcp_grant` events again on the spot, yet prints
+`deadLettered: 0`, because it dead-letters an event of a type it doesn't know while claiming it, before it
+counts anything. Trust `upgrade check`
+or `outbox status` from the new image, not that count. `replay` resets every unresolved dead letter, which is
+why you check them first.
+
+From this release on, a container leaves an outbox event of a type it doesn't know pending for a newer
+container instead of dead-lettering it, so the next new type can't cause this.
+
+## If something goes wrong
+
+Going back to the previous version leaves the grant tables in place; that version doesn't read them, and MCP
+clients get the access their OAuth scopes give, as before. It doesn't know `mcp_grant` outbox events either, so
+it dead-letters them, and `replay` can't deliver them. They mean nothing to that version, so once the rollback
+has finished, delete them instead:
+
+```sql
+DELETE FROM "AuthzedProjectionOutbox" WHERE "targetType" = 'mcp_grant' AND "processedAt" IS NULL;
+```
+
+Then run `formbricks-authzed outbox status` and expect no dead letters. When you upgrade again, the permission
+preparation projects every grant's selection again.

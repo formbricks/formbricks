@@ -121,7 +121,7 @@ describe("a Dashboard viewer's OAuth grant", () => {
     const tokens = await grant(cookie, clientId, EVERYTHING);
     expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
-    await updateMembership(userId, organizationId, { role: "dashboard_viewer" });
+    await updateMembership(userId, organizationId, { role: "dashboard_viewer" }, userId);
 
     expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
     expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
@@ -140,7 +140,7 @@ describe("a Dashboard viewer's OAuth grant", () => {
     const tokens = await grant(cookie, clientId, EVERYTHING);
     expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
-    await deleteMembership(userId, organizationId);
+    await deleteMembership(userId, organizationId, userId);
 
     expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
     expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);

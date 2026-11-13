@@ -527,6 +527,28 @@ describe("owner invites", () => {
   });
 });
 
+describe("deleteMembershipAction", () => {
+  const organizationId = "org-1";
+  const ctx = { user: { id: "owner-1" }, auditLoggingCtx: {} };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.assertCan.mockResolvedValue(undefined);
+    mocks.can.mockResolvedValue(true);
+    mocks.getMembershipByUserIdOrganizationId.mockImplementation(async (userId: string) => ({
+      role: userId === "owner-1" ? "owner" : "member",
+    }));
+    vi.mocked(deleteMembership).mockResolvedValue([] as never);
+  });
+
+  // The ended MCP grants' audit entries name the owner who removed the member, not the system.
+  test("removes the member as the signed-in owner", async () => {
+    await deleteMembershipAction({ ctx, parsedInput: { userId: "member-1", organizationId } } as never);
+
+    expect(deleteMembership).toHaveBeenCalledWith("member-1", organizationId, "owner-1");
+  });
+});
+
 describe("leaveOrganizationAction", () => {
   const organizationId = "org-1";
   const ctx = { user: { id: "user-1" }, auditLoggingCtx: {} };
@@ -550,7 +572,8 @@ describe("leaveOrganizationAction", () => {
     await leave();
 
     expect(mocks.assertCan).not.toHaveBeenCalled();
-    expect(deleteMembership).toHaveBeenCalledWith("user-1", organizationId);
+    // The leaving user is the actor of the ended grants' audit entries.
+    expect(deleteMembership).toHaveBeenCalledWith("user-1", organizationId, "user-1");
   });
 
   test("refuses someone with no membership before spending the organization's rate limit", async () => {

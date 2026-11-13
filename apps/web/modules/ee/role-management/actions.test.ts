@@ -136,6 +136,7 @@ describe("updateMembershipAction", () => {
       targetUserId,
       organizationId,
       { role: "member" },
+      currentUserId,
       expect.anything()
     );
   });
