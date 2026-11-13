@@ -82,6 +82,39 @@ export interface WorkflowAnalyticsDetail {
 }
 
 /**
+ * Stores secret header values (ENG-7168, ADR 0043). Injected by the adapter, which owns the
+ * encryption key, so this package never handles key material. Every call is scoped to one workflow:
+ * `replace` and the deletes must never reach another workflow's rows.
+ */
+export interface WorkflowSecretStore {
+  /** Encrypts and stores a new value for the workflow; returns the new row's id. */
+  create: (input: { workflowId: string; workspaceId: string; value: string }) => Promise<{ id: string }>;
+  /** Overwrites a stored value in place, so every version that references it uses the new value. */
+  replace: (input: {
+    secretId: string;
+    workflowId: string;
+    workspaceId: string;
+    value: string;
+  }) => Promise<void>;
+  /**
+   * Deletes the workflow's secrets that neither `referencedSecretIds` (the draft being enabled) nor
+   * any of the workflow's versions reference. The adapter reads the versions.
+   */
+  deleteUnreferenced: (input: {
+    workflowId: string;
+    workspaceId: string;
+    referencedSecretIds: string[];
+  }) => Promise<void>;
+}
+
+/** One secret header a write stored: the header name only, never its value. */
+export interface TWorkflowSecretHeaderChange {
+  stepId: string;
+  headerName: string;
+  change: "set" | "replaced";
+}
+
+/**
  * Per-request context the Next.js adapter builds and passes to the framework-agnostic handlers.
  *
  * `authorize` is a capability bound by the adapter to the authenticated request (wrapping
@@ -156,5 +189,19 @@ export interface WorkflowApiContext {
     surveyIds?: string[];
   }) => Promise<string[]>;
   recordAudit?: (detail: WorkflowAuditDetail) => void | Promise<void>;
+  /**
+   * Where secret header values are stored. Required by any write that carries a secret value; a
+   * write that would otherwise have to persist one in the definition is refused instead.
+   */
+  secrets?: WorkflowSecretStore;
+  /**
+   * Audit sink for secret headers set or replaced by a write ("secret set" / "secret replaced"), with
+   * the header name only. Called once per write that changed any, after it succeeded.
+   */
+  recordSecretHeaderChanges?: (detail: {
+    workflowId: string;
+    workspaceId: string;
+    changes: TWorkflowSecretHeaderChange[];
+  }) => void | Promise<void>;
   recordAnalytics?: (detail: WorkflowAnalyticsDetail) => void | Promise<void>;
 }

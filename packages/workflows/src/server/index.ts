@@ -22,6 +22,8 @@ export type {
   WorkflowAnalyticsDetail,
   WorkflowAnalyticsOperation,
   WorkflowAuditDetail,
+  WorkflowSecretStore,
+  TWorkflowSecretHeaderChange,
 } from "../handlers/context";
 
 export {

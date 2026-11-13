@@ -1,5 +1,6 @@
 import { findWorkflowRecallTokens } from "../variables/insert";
 import { type TWorkflowVariableSource, parseWorkflowVariablePath } from "../variables/paths";
+import { checkHttpRequest } from "./actions/http-request-check";
 import type { TWorkflowSendEmailActionNode } from "./actions/send-email";
 import { type TWorkflowDataRef } from "./common";
 import { flattenWorkflowConditions } from "./conditions/base";
@@ -99,5 +100,6 @@ const checkIfElse = (node: TWorkflowIfElseNode, context: TWorkflowExecutableChec
 export const WORKFLOW_EXECUTABLE_NODE_CHECKS: { [T in TWorkflowStepType]: TWorkflowExecutableNodeCheck<T> } =
   {
     send_email: checkSendEmail,
+    http_request: checkHttpRequest,
     if_else: checkIfElse,
   };
