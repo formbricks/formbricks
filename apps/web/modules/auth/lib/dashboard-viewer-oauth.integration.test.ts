@@ -11,8 +11,10 @@ import {
   signIn,
 } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
+import { lockUserActiveState } from "@/lib/user/reactivation";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
 import { deleteMembership } from "@/modules/organization/settings/teams/lib/membership";
+import { runOwnerGuardedTransaction } from "@/modules/organization/settings/teams/lib/owner-guard";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
 
 /**
@@ -166,6 +168,41 @@ describe("a Dashboard viewer's OAuth grant", () => {
       expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
       await Promise.all([deleteMembership(userId, first.id), deleteMembership(userId, second.id)]);
+
+      expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
+      expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
+    }
+  });
+
+  test("a demotion to viewer racing a removal elsewhere still ends the wide grant", async () => {
+    // The member list's owner demotion (`demoteOwner` in role-management/actions.ts): the owners' lock,
+    // then the user's row, then the role change. Without the user-row lock, the demotion's "only viewer
+    // memberships left?" check can miss the removal committing at the same moment.
+    const { cookie, userId } = await userWithRole("dashboard_viewer");
+    for (let round = 0; round < 5; round++) {
+      const [removedFrom, demotedIn] = await Promise.all(
+        [1, 2].map((n) => prisma.organization.create({ data: { name: `Org ${round}-${n}` } }))
+      );
+      const otherOwner = await prisma.user.create({
+        data: { name: "Other owner", email: `other-owner-${round}@example.com` },
+      });
+      await prisma.membership.createMany({
+        data: [
+          { userId, organizationId: removedFrom.id, role: "member", accepted: true },
+          { userId, organizationId: demotedIn.id, role: "owner", accepted: true },
+          { userId: otherOwner.id, organizationId: demotedIn.id, role: "owner", accepted: true },
+        ],
+      });
+      const tokens = await grant(cookie, clientId, EVERYTHING);
+      expect(scopesOf(tokens.scope)).toContain("surveys:read");
+
+      await Promise.all([
+        deleteMembership(userId, removedFrom.id),
+        runOwnerGuardedTransaction(demotedIn.id, userId, async (tx) => {
+          await lockUserActiveState(tx, userId);
+          return updateMembership(userId, demotedIn.id, { role: "dashboard_viewer" }, tx);
+        }),
+      ]);
 
       expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
       expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);

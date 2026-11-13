@@ -14,6 +14,7 @@ const mocks = vi.hoisted(() => ({
   getOrganizationIdFromInviteId: vi.fn(),
   getInvite: vi.fn(),
   runOwnerGuardedTransaction: vi.fn(),
+  lockUserActiveState: vi.fn(),
   updateInvite: vi.fn(),
   updateMembership: vi.fn(),
 }));
@@ -75,6 +76,8 @@ vi.mock("@/modules/ee/role-management/lib/membership", () => ({
 vi.mock("@/modules/organization/settings/teams/lib/invite", () => ({
   getInvite: mocks.getInvite,
 }));
+
+vi.mock("@/lib/user/reactivation", () => ({ lockUserActiveState: mocks.lockUserActiveState }));
 
 vi.mock("@/modules/organization/settings/teams/lib/owner-guard", async (importOriginal) => ({
   // The real error class, so the action's `instanceof` check sees what the guard throws.
@@ -139,6 +142,11 @@ describe("updateMembershipAction", () => {
       organizationId,
       { role: "member" },
       { stand: "tx" }
+    );
+    // The user's row first, so a demotion to Dashboard viewer sees a concurrent removal elsewhere.
+    expect(mocks.lockUserActiveState).toHaveBeenCalledWith({ stand: "tx" }, targetUserId);
+    expect(mocks.lockUserActiveState.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.updateMembership.mock.invocationCallOrder[0]
     );
   });
 

@@ -7,6 +7,7 @@ import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
 import { assertCan } from "@/lib/authorization";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { assertUserManagementAllowed } from "@/lib/membership/user-management";
+import { lockUserActiveState } from "@/lib/user/reactivation";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -77,9 +78,13 @@ const demoteOwner = async (
   data: z.infer<typeof ZMembershipUpdateInput>
 ) => {
   try {
-    return await runOwnerGuardedTransaction(organizationId, userId, (tx) =>
-      updateMembership(userId, organizationId, data, tx)
-    );
+    return await runOwnerGuardedTransaction(organizationId, userId, async (tx) => {
+      // The user's row, as removing a member takes it: a demotion to Dashboard viewer decides whether only
+      // viewer memberships remain (and revokes the wider OAuth grants), and must see a removal from another
+      // organization that commits at the same moment.
+      await lockUserActiveState(tx, userId);
+      return updateMembership(userId, organizationId, data, tx);
+    });
   } catch (error) {
     if (error instanceof LastActiveOwnerError) {
       throw new ValidationError("You cannot demote the last owner of the organization");
