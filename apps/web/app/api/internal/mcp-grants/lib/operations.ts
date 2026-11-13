@@ -1,18 +1,29 @@
 import "server-only";
+import { logger } from "@formbricks/logger";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
   problemForbidden,
+  problemInternalError,
   problemUnauthorized,
   problemUnprocessableContent,
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
-import { MCP_GRANT_SELECTION_UNAVAILABLE_CODE } from "@/modules/auth/lib/mcp-grant-consent-errors";
+import { loggableError } from "@/lib/utils/loggable-error";
+import {
+  MCP_GRANT_NOT_SAVED_CODE,
+  MCP_GRANT_NOT_SAVED_DETAIL,
+  MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
+} from "@/modules/auth/lib/mcp-grant-consent-errors";
 import { revokeMcpClient } from "@/modules/auth/lib/oauth-grant-revocation";
 import { isDashboardViewerOnly } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { listMcpGrantAccessOptions } from "@/modules/mcp/access-options";
-import { editMcpGrant, listAuthorizedMcpClients } from "@/modules/mcp/authorized-clients";
+import {
+  type TEditMcpGrantResult,
+  editMcpGrant,
+  listAuthorizedMcpClients,
+} from "@/modules/mcp/authorized-clients";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
 import { queueMcpGrantAudit } from "@/modules/mcp/grant-store";
 import { serializeAuthorizedMcpClient, serializeMcpGrant } from "./serializers";
@@ -70,13 +81,16 @@ export async function updateMcpGrantOperation({
   // A refusal's entry: the grant store files a saved edit's entries under each organization it reaches.
   if (auditLog) auditLog.organizationId = UNKNOWN_DATA;
 
-  const result = await editMcpGrant({
-    userId,
-    clientId,
-    permissions,
-    access,
-    isDashboardViewer: await isDashboardViewerOnly(userId),
-  });
+  const isDashboardViewer = await isDashboardViewerOnly(userId);
+  let result: TEditMcpGrantResult;
+  try {
+    result = await editMcpGrant({ userId, clientId, permissions, access, isDashboardViewer });
+  } catch (error) {
+    // Nothing was saved: a narrowing SpiceDB couldn't apply (an outage), or a failed transaction. The
+    // consent screen's refusal and message for the same failure, rather than the wrapper's generic 500.
+    logger.error({ err: loggableError(error), userId, clientId }, "MCP grant edit couldn't be saved");
+    return problemInternalError(requestId, MCP_GRANT_NOT_SAVED_DETAIL, instance, MCP_GRANT_NOT_SAVED_CODE);
+  }
   switch (result.status) {
     case "not_found":
       return problemForbidden(requestId, undefined, instance);

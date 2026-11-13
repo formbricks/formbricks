@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { AuthzedError } from "@/lib/authzed/errors";
+import { MCP_GRANT_NOT_SAVED_CODE } from "@/modules/auth/lib/mcp-grant-consent-errors";
 import { DELETE, PATCH } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -168,6 +170,31 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     expect(body.invalid_params).toEqual([
       { name: "workspaceIds", reason: "Pick only workspaces you have access to" },
     ]);
+  });
+
+  // SpiceDB down during a narrowing (smoke): the same refusal and message the consent screen gives, not
+  // the wrapper's generic 500. Any other failure of the save answers the same: nothing was saved.
+  test.each([
+    [
+      "SpiceDB can't apply the narrowing",
+      new AuthzedError({ attempts: 3, code: "authzed_internal", operation: "write", retryable: false }),
+    ],
+    ["the save's transaction fails", new Error("transaction timed out")],
+  ])("answers 500 mcp_grant_not_saved when %s, and audits the failure", async (_case, failure) => {
+    mocks.editMcpGrant.mockRejectedValueOnce(failure);
+
+    const response = await edit({
+      permissions: { surveys: "read" },
+      access: "workspaces",
+      workspaceIds: ["clworkspace1111111111111"],
+    });
+
+    expect(response.status).toBe(500);
+    const body = await response.json();
+    expect(body.code).toBe(MCP_GRANT_NOT_SAVED_CODE);
+    expect(body.detail).toBe("The access you chose couldn't be saved, so nothing changed. Try again.");
+    expect(mocks.queueMcpGrantAudit).not.toHaveBeenCalled();
+    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ status: "failure" }));
   });
 
   test.each([
