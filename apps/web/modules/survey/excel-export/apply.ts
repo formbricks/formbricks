@@ -16,9 +16,8 @@ import type { TSurveyImportSheetRowSkipCause } from "@/modules/survey/import/typ
 import { type TSurveyText, walkSurveyTexts } from "@/modules/survey/lib/survey-texts";
 import { RECALL_LABELS_MAX, createLabelMatcher } from "./label-matcher";
 import type { TExcelExportAddableProperty, TExcelExportField, TExcelExportLabels } from "./labels";
-import { EXCEL_EXPORT_MAX_CELL_CHARS } from "./limits";
 import type { TExcelExportRead, TExcelExportRow } from "./read";
-import { toExportedCellText } from "./write";
+import { getExportedCell } from "./write";
 
 /**
  * Applying an edited Excel export to its survey (ENG-6809). Rows are matched to the survey by id:
@@ -94,19 +93,33 @@ const CHOICE_TYPES = new Set<TSurveyElementTypeEnum>([
   TSurveyElementTypeEnum.Ranking,
 ]);
 
+/** Why an edited text's `@Label`s can't be read back into the recalls they show; see `getRecallLabels`. */
+type TRecallLabelsRefusal = "too_many_recalls" | "ambiguous_recalls";
+
 /**
- * Each recall token the stored text holds, by the `@Label` the export showed it as; `null` past
- * `RECALL_LABELS_MAX` distinct labels, whose edit can't be read back without turning a recall into text.
+ * Each recall token the stored text holds, by the `@Label` the export showed it as; or why the cell can't
+ * be read back without turning a recall into another: past `RECALL_LABELS_MAX` distinct labels, or two
+ * different recalls shown as one label (one question recalled with two fallbacks, or two questions with
+ * one headline), which a cell can't tell apart.
  */
-const getRecallLabels = (stored: string, survey: TSurvey, textKey: string): Map<string, string> | null => {
+const getRecallLabels = (
+  stored: string,
+  survey: TSurvey,
+  textKey: string
+): { labels: Map<string, string> } | { refusal: TRecallLabelsRefusal } => {
   const labels = new Map<string, string>();
   for (const [token] of stored.matchAll(RECALL_TOKEN)) {
     const label = recallToHeadline({ default: token, [textKey]: token }, survey, false, textKey)[textKey];
-    if (!label || label === token || labels.has(label)) continue;
-    if (labels.size === RECALL_LABELS_MAX) return null;
+    if (!label || label === token) continue;
+    const known = labels.get(label);
+    if (known !== undefined) {
+      if (known !== token) return { refusal: "ambiguous_recalls" };
+      continue;
+    }
+    if (labels.size === RECALL_LABELS_MAX) return { refusal: "too_many_recalls" };
     labels.set(label, token);
   }
-  return labels;
+  return { labels };
 };
 
 /**
@@ -411,16 +424,16 @@ class ExcelExportApplication {
     cell: string,
     { text, value, textKey }: { text: TSurveyText; value: TI18nString; textKey: string }
   ): string | null {
-    const current = toExportedCellText({
+    const current = getExportedCell({
       text,
       textKey,
       survey: this.source,
       truncatedSuffix: this.context.truncatedSuffix,
     });
-    if (cell === current) return null;
+    if (cell === current.cell) return null;
     const params = { row, language: code };
     // A text cut to fit its cell cannot come back whole: the sheet holds only its start.
-    if (current.length >= EXCEL_EXPORT_MAX_CELL_CHARS) {
+    if (current.isCut) {
       this.issues.push({
         code: "sheet_text_not_imported",
         severity: "warning",
@@ -430,16 +443,19 @@ class ExcelExportApplication {
     }
 
     const stored = value[textKey] ?? "";
-    const recallLabels = getRecallLabels(stored, this.source, textKey);
-    if (!recallLabels) {
+    const recalls = getRecallLabels(stored, this.source, textKey);
+    if ("refusal" in recalls) {
       this.issues.push({
         code: "sheet_text_not_imported",
         severity: "warning",
-        params: { ...params, cause: "too_many_recalls", max: RECALL_LABELS_MAX },
+        params:
+          recalls.refusal === "too_many_recalls"
+            ? { ...params, cause: recalls.refusal, max: RECALL_LABELS_MAX }
+            : { ...params, cause: recalls.refusal },
       });
       return null;
     }
-    const next = this.toStoredText(row, cell, text.isRichText, recallLabels, stored);
+    const next = this.toStoredText(row, cell, text.isRichText, recalls.labels, stored);
     if (next === "" || next === stored) return null;
     if (text.isRichText && FORMATTING_TAG.test(stored)) {
       this.issues.push({ code: "sheet_formatting_dropped", severity: "warning", params });

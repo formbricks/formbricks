@@ -12,6 +12,7 @@ import { readExportBytes } from "./__fixtures__/read-export";
 import { createIcuTranslate } from "./__fixtures__/translate";
 import { type TExcelExportApplied, applyExcelExport } from "./apply";
 import { createExcelExportLabels } from "./labels";
+import { EXCEL_EXPORT_MAX_CELL_CHARS } from "./limits";
 import { writeExcelExport } from "./write";
 
 const t = createIcuTranslate("en-US");
@@ -179,6 +180,71 @@ describe("applyExcelExport: texts", () => {
     });
   });
 
+  test("turns an @Label back into its recall in a text of several paragraphs", async () => {
+    const survey = structuredClone(SURVEY);
+    const consent = survey.blocks[1].elements.find((element) => element.id === "consent") as unknown as {
+      headline: Record<string, string>;
+    };
+    consent.headline = { default: "<p>Thanks #recall:open/fallback:friend#</p><p>agree?</p>", de: "Danke" };
+
+    const applied = await importSheet(
+      (rows) => {
+        rows[rowOf(rows, "element.consent.headline")][EN] = "Thank you @What should we improve?\nagree?";
+        return rows;
+      },
+      { survey }
+    );
+
+    expect((elementOf(applied.survey, "consent").headline as Record<string, string>).default).toBe(
+      "<p>Thank you #recall:open/fallback:friend#</p><p>agree?</p>"
+    );
+  });
+
+  test("leaves out the edit of a text whose two recalls show the same @Label, rather than merge them", async () => {
+    const survey = structuredClone(SURVEY);
+    const consent = survey.blocks[1].elements.find((element) => element.id === "consent") as unknown as {
+      headline: Record<string, string>;
+    };
+    // The same question recalled with two fallbacks: both show as "@What should we improve?".
+    const stored = "#recall:open/fallback:a# or #recall:open/fallback:b#?";
+    consent.headline = { default: stored, de: "Danke" };
+
+    const applied = await importSheet(
+      (rows) => {
+        rows[rowOf(rows, "element.consent.headline")][EN] += " Agree?";
+        return rows;
+      },
+      { survey }
+    );
+
+    expect((elementOf(applied.survey, "consent").headline as Record<string, string>).default).toBe(stored);
+    expect(applied.issues).toContainEqual({
+      code: "sheet_text_not_imported",
+      severity: "warning",
+      params: { row: expect.any(Number), language: "en", cause: "ambiguous_recalls" },
+    });
+  });
+
+  test("reads back a recall a text holds twice, the same token both times", async () => {
+    const survey = structuredClone(SURVEY);
+    const consent = survey.blocks[1].elements.find((element) => element.id === "consent") as unknown as {
+      headline: Record<string, string>;
+    };
+    consent.headline = { default: "#recall:open/fallback:a# and #recall:open/fallback:a#", de: "Danke" };
+
+    const applied = await importSheet(
+      (rows) => {
+        rows[rowOf(rows, "element.consent.headline")][EN] += "!";
+        return rows;
+      },
+      { survey }
+    );
+
+    expect((elementOf(applied.survey, "consent").headline as Record<string, string>).default).toBe(
+      "#recall:open/fallback:a# and #recall:open/fallback:a#!"
+    );
+  });
+
   test("turns an @Label back into the recall it shows", async () => {
     const survey = structuredClone(SURVEY);
     const consent = survey.blocks[1].elements.find((element) => element.id === "consent") as unknown as {
@@ -295,6 +361,71 @@ describe("applyExcelExport: texts", () => {
       severity: "warning",
       params: expect.objectContaining({ language: "en", cause: "cut_on_export" }),
     });
+  });
+
+  test("leaves a text cut at an emoji as it is: the cut drops a unit more than the cell's limit", async () => {
+    const long = structuredClone(SURVEY);
+    const open = long.blocks[0].elements.find((element) => element.id === "open") as TSurveyElement & {
+      placeholder: Record<string, string>;
+    };
+    // The cut ends where the suffix starts; an emoji whose first half falls there is dropped whole.
+    const cutAt = EXCEL_EXPORT_MAX_CELL_CHARS - t("workspace.surveys.export.excel.truncated").length;
+    const whole = `${"x".repeat(cutAt - 1)}😀${"y".repeat(100)}`;
+    open.placeholder = { default: whole, de: "Schreib" };
+
+    const applied = await importSheet(
+      (rows) => {
+        expect(rows[rowOf(rows, "element.open.placeholder")][EN]).toHaveLength(
+          EXCEL_EXPORT_MAX_CELL_CHARS - 1
+        );
+        rows[rowOf(rows, "element.open.placeholder")][EN] = "Short again";
+        return rows;
+      },
+      { survey: long }
+    );
+
+    expect((elementOf(applied.survey, "open").placeholder as Record<string, string>).default).toBe(whole);
+    expect(applied.issues).toContainEqual({
+      code: "sheet_text_not_imported",
+      severity: "warning",
+      params: expect.objectContaining({ language: "en", cause: "cut_on_export" }),
+    });
+  });
+
+  test("writes the first column into the default text when the survey has no languages", async () => {
+    const plain = { ...structuredClone(SURVEY), languages: [] } as TSurvey;
+    const applied = await importSheet(
+      (rows) => {
+        rows[rowOf(rows, "element.open.placeholder")][EN] = "Write here";
+        return rows;
+      },
+      { survey: plain }
+    );
+
+    expect((elementOf(applied.survey, "open").placeholder as Record<string, string>).default).toBe(
+      "Write here"
+    );
+  });
+
+  test("writes the first column into the default text when the survey lost its languages after the export", async () => {
+    const plain = { ...structuredClone(SURVEY), languages: [] } as TSurvey;
+    const applied = await importSheet(
+      (rows) => {
+        rows[rowOf(rows, "element.open.placeholder")][EN] = "Write here";
+        return rows;
+      },
+      { survey: plain, bytes: exported(SURVEY) }
+    );
+
+    expect((elementOf(applied.survey, "open").placeholder as Record<string, string>).default).toBe(
+      "Write here"
+    );
+    expect(applied.issues).toContainEqual(
+      expect.objectContaining({
+        code: "sheet_language_skipped",
+        params: { code: "de", cause: "not_in_survey" },
+      })
+    );
   });
 
   test("refuses a sheet none of whose rows is a text of the survey", async () => {

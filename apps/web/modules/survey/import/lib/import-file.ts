@@ -30,6 +30,7 @@ const NO_AI_FILE_EXTENSIONS: readonly string[] = [FORMBRICKS_FILE_INPUT_EXTENSIO
 export type TSurveyImportFileError =
   | "file_wrong_extension"
   | "file_needs_ai"
+  | "file_earlier_excel_export"
   | "file_empty"
   | "file_too_large";
 

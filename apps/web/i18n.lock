@@ -4913,17 +4913,17 @@ checksums:
     workspace/surveys/filter/shown_target_row: 64e510d6d4add71b12df8c024044ccb8
     workspace/surveys/import/ai_note: 089234d4f86dcbd263b53ac2d156c2ce
     workspace/surveys/import/card_description: 7b34be32fc0d23b11cb3c3d583e7f9dd
-    workspace/surveys/import/card_description_json_only: 94898e1540229b75b1467f2d0dc46ef5
+    workspace/surveys/import/card_description_without_ai: 94898e1540229b75b1467f2d0dc46ef5
     workspace/surveys/import/card_title: 5418ac88c503972c1b745f7681a6bacc
     workspace/surveys/import/dialog_description: 5822226c3efd98c0487d542a9d20c568
-    workspace/surveys/import/dialog_description_json_only: b08d279a2507bb4201cb1010da508d1e
+    workspace/surveys/import/dialog_description_without_ai: b08d279a2507bb4201cb1010da508d1e
     workspace/surveys/import/dialog_title: b4f22597f58ec8b306483662e7f93674
     workspace/surveys/import/discard_draft_body: 5b819b1c928365b1210a5b705f96c21b
     workspace/surveys/import/discard_draft_title: e2d53fd47467d7a9f28d377d2bf0d255
     workspace/surveys/import/discard_import_body: 6bd5dc5ff8d8901cffbb95ece58fbd54
     workspace/surveys/import/discard_import_title: a350d911d364d17f8ed65052bf596e47
     workspace/surveys/import/dropzone_help: e63ccb85ecba91346a457eef5d81a65b
-    workspace/surveys/import/dropzone_help_json_only: 381edce051451f9bb0d0d35651b517a9
+    workspace/surveys/import/dropzone_help_without_ai: 381edce051451f9bb0d0d35651b517a9
     workspace/surveys/import/dropzone_primary: f5c2147cfaa3c7048d4f35bafcc62c24
     workspace/surveys/import/encodings/utf_16: ae9f3a8e33595dc9506b346599ec4781
     workspace/surveys/import/encodings/utf_8: 7816fd618244062e677e7ad23c0b3e43
@@ -4942,6 +4942,7 @@ checksums:
     workspace/surveys/import/errors/document_limits/text_size: 5148bb2e7e07619a9fb6d44b2b6c012a
     workspace/surveys/import/errors/document_limits/xml_depth: 19ebedff65594ac0e76903ca73eb8a42
     workspace/surveys/import/errors/document_limits/xml_elements: 95a3f5edc2ae161c41b932933a9beac1
+    workspace/surveys/import/errors/earlier_excel_export: b48062b99d1612cbb534e72ba8e4acf4
     workspace/surveys/import/errors/empty_file: 791199ebd60a85a47fceb1b3dfbb2b78
     workspace/surveys/import/errors/excel_export_other_survey: 08b10175f62a3fd073f301adf0d5b136
     workspace/surveys/import/errors/failed: 5d140c04828d85171d2ed0de040e9a79
@@ -5069,6 +5070,7 @@ checksums:
     workspace/surveys/import/issues/sheet_row_skipped_unknown_type: 7159d92ec0223321dd7e1137c5a88e2e
     workspace/surveys/import/issues/sheet_row_skipped_unsupported_type: b56ecec005ae7ce926500ef36aee087c
     workspace/surveys/import/issues/sheet_text_not_imported: 93c0b6bac5021b558d468bafae04ad13
+    workspace/surveys/import/issues/sheet_text_not_imported_ambiguous_recalls: 7d25e2d977e15871aa45c5b1575de0c4
     workspace/surveys/import/issues/sheet_text_not_imported_recalls: 2059b364ed9a7f6e58402521cbc8530a
     workspace/surveys/import/issues/sheets_skipped: b56e800fca92ac1b855827084387f5bb
     workspace/surveys/import/issues/table_as_matrix: 5974f2185c923dce8e5c7cf69da19817

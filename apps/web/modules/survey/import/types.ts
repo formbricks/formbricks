@@ -117,7 +117,8 @@ export type TSurveyImportStage = "reading" | "ai" | "assembling";
  * - `sheet_formatting_dropped` — an edited text that was formatted, stored as plain paragraphs
  * - `sheet_text_not_imported` — an edited text left as it is: the export had cut it to fit its cell
  *   (`params.cause: "cut_on_export"`), or it recalls more answers than an edit can be read back with
- *   (`too_many_recalls`, past `RECALL_LABELS_MAX`, which `params.max` carries)
+ *   (`too_many_recalls`, past `RECALL_LABELS_MAX`, which `params.max` carries), or two of its recalls
+ *   show as the same `@Label`, which the cell can't tell apart (`ambiguous_recalls`)
  * - `markup_escaped` — as above, for an edited cell
  *
  * An Update's own (ENG-6851), in `TSurveyImportMatch.issues`, for a matched survey that has responses:

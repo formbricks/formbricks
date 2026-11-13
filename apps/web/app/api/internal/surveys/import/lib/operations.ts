@@ -149,7 +149,8 @@ const openUploadOrRefuse = async (
  * charged the default v3 bucket, read the multipart body within its byte limit and then taken a
  * concurrency slot. Here the workspace is checked first, then the file's type is told from its content
  * in the upload's own thread (`openSurveyImportUpload`), and the file goes to its type's lane: a
- * Formbricks file, a Qualtrics export, or a questionnaire from Excel, CSV (ENG-6852) or Word (ENG-6853).
+ * Formbricks file, a survey's Excel export the user may update (ENG-6809), a Qualtrics export, or a
+ * questionnaire from Excel, CSV (ENG-6852) or Word (ENG-6853).
  *
  * Nothing is written: the dialog shows the draft for review and creates it through
  * `POST /api/internal/surveys/imports` (ENG-6850), a Formbricks file with its references, or updates a

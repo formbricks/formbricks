@@ -185,13 +185,13 @@ You can move columns: Formbricks finds them by their headers. A language column 
 
 To add a question, add a row with a new **Question ID**, a question type in **Type** (as the export names types, for example `Free text` or `Single-Select`), and its question in the default language's column. Rows under it add to it: `Choice 1`, `Choice 2` and so on for options, `Row 1` and `Column 1` for a matrix, and `Subheader`, `Placeholder`, `Lower label` or `Upper label` for those texts. A row whose Question ID is an existing question's adds an option or text to that question. Each new question goes in a block of its own after the question above it, with the editor's defaults for its type and no logic: check it in the editor. Picture selection and Cal.com questions can't be added from a sheet.
 
-Cells hold plain text. An edited text that had formatting, such as bold or a link, is stored without it, with a warning. A recall the text already had, shown as its `@` label, comes back as the recall; an `@` in a row you add stays as typed. An edit of a text that recalls more than 64 different answers is left out, with a warning: change that text in the editor.
+Cells hold plain text. An edited text that had formatting, such as bold or a link, is stored without it, with a warning. A recall the text already had, shown as its `@` label, comes back as the recall; an `@` in a row you add stays as typed. An edit of a text that recalls more than 64 different answers, or two different answers shown with the same `@` label, is left out, with a warning: change that text in the editor.
 
 The report counts the texts the sheet changes and lists every row it added or left out, with the reason. A sheet with no row from its survey is refused: export the survey again, and edit that file.
 
 **Create a new survey** saves a copy of this survey with the sheet's changes, as a new draft.
 
-An Excel export from Formbricks 6.2 can't update its survey: it doesn't say which column holds which language. It imports as any spreadsheet does, as a new survey through Formbricks AI; without AI, it's refused. Export the survey again to edit it in place.
+An Excel export from Formbricks 6.2 can't update its survey: it doesn't say which column holds which language. It imports as any spreadsheet does, as a new survey through Formbricks AI; without AI, the dialog says to export the survey again. Export the survey again to edit it in place.
 
 ## Import a document
 

@@ -215,6 +215,7 @@ describe("getSurveyImportErrorMessage for each refusal and stream error", () => 
     ["file_too_large", "file_too_large"],
     ["qsf_not_recognized", "not_a_qsf"],
     ["file_needs_ai", "needs_ai"],
+    ["file_earlier_excel_export", "earlier_excel_export"],
     ["file_type_unsupported", "file_type_unsupported"],
     ["survey_too_large", "survey_too_large"],
     ["formbricks_file_invalid", "formbricks_file_invalid"],

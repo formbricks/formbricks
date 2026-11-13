@@ -130,7 +130,7 @@ const ImportFilePicker = ({
         helpText={
           canReadWithAI
             ? t("workspace.surveys.import.dropzone_help")
-            : t("workspace.surveys.import.dropzone_help_json_only")
+            : t("workspace.surveys.import.dropzone_help_without_ai")
         }
         loadingText={t("workspace.surveys.import.reading_file")}
       />
@@ -349,8 +349,9 @@ export const ImportSurveyForm = ({
     onImportingChange?.(isImporting);
   }, [isImporting, onImportingChange]);
 
-  // Without Formbricks AI the dialog still imports Formbricks files (ENG-6850), so there is no alert in
-  // place of the drop zone: it offers .json only and leaves the AI note out. AI going off after the page
+  // Without Formbricks AI the dialog still imports Formbricks files (ENG-6850) and Excel exports
+  // (ENG-6809), so there is no alert in place of the drop zone: it offers .json and .xlsx and leaves the
+  // AI note out. AI going off after the page
   // loaded refuses the .qsf it was asked to read, with an error line like any other refusal.
   const canReadWithAI = isAIAvailable && !importer.aiUnavailableReason;
 

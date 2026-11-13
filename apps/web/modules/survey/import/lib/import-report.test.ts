@@ -341,6 +341,9 @@ describe("getSurveyImportIssueLine", () => {
         t
       )
     ).toBe('sheet_text_not_imported_recalls {"row":"7","language":"de","max":"64"}');
+    expect(line("ambiguous_recalls")).toBe(
+      'sheet_text_not_imported_ambiguous_recalls {"row":"7","language":"de"}'
+    );
   });
 
   test("still renders a line for a code this client does not know yet", () => {

@@ -10,7 +10,7 @@ import { EXCEL_EXPORT_META_SHEET } from "@/modules/survey/excel-export/format";
 import { writeExcelExport } from "@/modules/survey/excel-export/write";
 import { openZipArchive } from "@/modules/survey/import/core/zip";
 import { EVERY_TEXT_SURVEY } from "@/modules/survey/lib/__fixtures__/every-text-survey";
-import { isExcelExportArchive, isExcelExportFile } from "./excel-export-file";
+import { getExcelExportArchiveKind, getExcelExportFileKind, isExcelExportArchive } from "./excel-export-file";
 
 const t = createIcuTranslate("en-US");
 const exported = () =>
@@ -97,9 +97,48 @@ describe("isExcelExportArchive", () => {
   });
 });
 
-describe("isExcelExportFile", () => {
-  test("reads a picked file, and answers no for one that is not a workbook", async () => {
-    expect(await isExcelExportFile(new Blob([exported()]))).toBe(true);
-    expect(await isExcelExportFile(new Blob(["not a zip"]))).toBe(false);
+describe("getExcelExportArchiveKind", () => {
+  const META_62 = [
+    ["surveyId", "clsurvey0000000000000001"],
+    ["updatedAt", "2026-11-01T00:00:00.000Z"],
+    ["format", "1"],
+  ];
+  const kindOf = (bytes: Uint8Array) => getExcelExportArchiveKind(openZipArchive(bytes));
+
+  test("tells this version's export, an export 6.2 wrote, and any other workbook apart", () => {
+    expect(kindOf(exported())).toBe("export");
+    expect(kindOf(editMeta(exported(), () => META_62))).toBe("earlier_export");
+    // A sheet named like the meta sheet but laid out as neither.
+    expect(
+      kindOf(
+        editMeta(exported(), () => [
+          ["surveyId", "x"],
+          ["updatedAt", ""],
+          ["kind", "1"],
+        ])
+      )
+    ).toBe("other");
+    expect(kindOf(workbookOf({ Sheet1: [["Question", "Type"]] }))).toBe("other");
+  });
+});
+
+describe("getExcelExportFileKind", () => {
+  test("reads a picked file, and answers any other workbook for one that is not a workbook", async () => {
+    expect(await getExcelExportFileKind(new Blob([exported()]))).toBe("export");
+    expect(
+      await getExcelExportFileKind(
+        new Blob([
+          // A copy, on an ArrayBuffer: a Blob takes no view of a shared buffer.
+          new Uint8Array(
+            editMeta(exported(), () => [
+              ["surveyId", "s"],
+              ["updatedAt", ""],
+              ["format", "1"],
+            ])
+          ),
+        ])
+      )
+    ).toBe("earlier_export");
+    expect(await getExcelExportFileKind(new Blob(["not a zip"]))).toBe("other");
   });
 });

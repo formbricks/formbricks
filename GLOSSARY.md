@@ -131,11 +131,11 @@ that is not listed here.
 
 **Match** — The survey an import offers to update: the survey a Formbricks file or an Excel export was exported from, when it is in the current workspace, not archived, and one the importing user can edit. Only a match offers Update; anything else becomes a new survey.
 
-**Update** — Importing a matched Formbricks file over that survey's content. The survey keeps its ID, status, responses, settings and styling. An active survey is never updated. _Avoid_: re-import (which also covers creating a new survey), overwrite, import into existing.
+**Update** — Importing a matched Formbricks file or Excel export over that survey's content. The survey keeps its ID, status, responses, settings and styling. An active survey is never updated. _Avoid_: re-import (which also covers creating a new survey), overwrite, import into existing.
 
 **Reference** — Something a survey points at that lives outside it in its workspace: an action class a trigger uses, a contact attribute key in targeting, a shared hidden field or variable. A Formbricks file carries enough of each to find or recreate it in another workspace. Media is not a reference: the file keeps only a link to each image or video on the source instance (ENG-3401).
 
-**Document import** — Importing a Word, Excel or CSV questionnaire, read with AI. Texts come across word for word; the AI decides structure, types and logic only. _Avoid_: AI import (Qualtrics import also uses AI).
+**Document import** — Importing a Word, Excel or CSV questionnaire, read with AI. An Excel file is one when it is no Excel export of a survey the user may update. Texts come across word for word; the AI decides structure, types and logic only. _Avoid_: AI import (Qualtrics import also uses AI).
 
 **Qualtrics import** — Importing a Qualtrics export (`.qsf`), read with AI.
 

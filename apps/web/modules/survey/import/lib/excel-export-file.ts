@@ -1,6 +1,7 @@
 import { ZId } from "@formbricks/types/common";
 import {
   EXCEL_EXPORT_KEY_HEADER,
+  EXCEL_EXPORT_META_FORMAT,
   EXCEL_EXPORT_META_ROWS,
   EXCEL_EXPORT_META_SHEET,
   EXCEL_EXPORT_META_SURVEY_ID,
@@ -93,21 +94,32 @@ const readCells = (sheet: Document, sharedStrings: () => string[]): Map<string, 
   return cells;
 };
 
-/** Whether an opened archive is laid out as an Excel export. */
-export const isExcelExportArchive = (archive: TZipArchive): boolean => {
+/**
+ * What an `.xlsx` is to the import dialog: this version's Excel export, one an earlier version wrote
+ * (6.2's, format 1: a meta sheet of `surveyId`, `updatedAt`, `format` that maps no column, so it can't
+ * update its survey), or any other workbook.
+ */
+export type TExcelExportFileKind = "export" | "earlier_export" | "other";
+
+/** 6.2's meta sheet, format 1: the survey id in A1, the format in A3. */
+const isEarlierExportMeta = (cellAt: (row: number, column: number) => string): boolean =>
+  cellAt(0, 0) === EXCEL_EXPORT_META_SURVEY_ID && cellAt(2, 0) === EXCEL_EXPORT_META_FORMAT;
+
+/** What an opened archive is laid out as; see `TExcelExportFileKind`. */
+export const getExcelExportArchiveKind = (archive: TZipArchive): TExcelExportFileKind => {
   const workbookPart = readRelationships(archive, "").byType(OFFICE_DOCUMENT_TYPE);
   const workbook = workbookPart ? parseXml(archive, workbookPart) : null;
-  if (!workbookPart || !workbook) return false;
+  if (!workbookPart || !workbook) return "other";
 
   const sheets = elements(workbook, "sheet");
   const metaIndex = sheets.findIndex((sheet) => sheet.getAttribute("name") === EXCEL_EXPORT_META_SHEET);
   // The texts sheet comes first; the meta sheet after it.
-  if (metaIndex < 1) return false;
+  if (metaIndex < 1) return "other";
   const relationshipId = sheets[metaIndex].getAttributeNS(RELATIONSHIPS_NS, "id");
   const relationships = readRelationships(archive, workbookPart);
   const metaPart = relationshipId ? relationships.byId(relationshipId) : null;
   const meta = metaPart ? parseXml(archive, metaPart) : null;
-  if (!meta) return false;
+  if (!meta) return "other";
 
   let sharedStrings: string[] | null = null;
   const sharedStringsOf = () => {
@@ -120,24 +132,32 @@ export const isExcelExportArchive = (archive: TZipArchive): boolean => {
   const cells = readCells(meta, sharedStringsOf);
 
   const cellAt = (row: number, column: number) => cells.get(`${COLUMNS[column]}${row + 1}`) ?? "";
+  if (isEarlierExportMeta(cellAt)) return "earlier_export";
   const surveyIdRow = EXCEL_EXPORT_META_ROWS.indexOf(EXCEL_EXPORT_META_SURVEY_ID);
-  if (!isExcelExportMetaLayout(cellAt) || !ZId.safeParse(cellAt(surveyIdRow, 1).trim()).success) return false;
+  if (!isExcelExportMetaLayout(cellAt) || !ZId.safeParse(cellAt(surveyIdRow, 1).trim()).success) {
+    return "other";
+  }
 
   // The texts sheet's key column, as the server finds it: a row whose column A reads `key`.
   const textsId = sheets[0].getAttributeNS(RELATIONSHIPS_NS, "id");
   const textsPart = textsId ? relationships.byId(textsId) : null;
   const texts = textsPart ? parseXml(archive, textsPart) : null;
-  if (!texts) return false;
-  return [...readCells(texts, sharedStringsOf).entries()].some(
+  if (!texts) return "other";
+  const hasKeyColumn = [...readCells(texts, sharedStringsOf).entries()].some(
     ([reference, text]) => /^A\d+$/.test(reference) && text === EXCEL_EXPORT_KEY_HEADER
   );
+  return hasKeyColumn ? "export" : "other";
 };
 
-/** Whether an `.xlsx` the user picked is laid out as an Excel export. Never throws: unreadable is "no". */
-export const isExcelExportFile = async (file: Blob): Promise<boolean> => {
+/** Whether an opened archive is laid out as this version's Excel export. */
+export const isExcelExportArchive = (archive: TZipArchive): boolean =>
+  getExcelExportArchiveKind(archive) === "export";
+
+/** What an `.xlsx` the user picked is laid out as. Never throws: unreadable is any other workbook. */
+export const getExcelExportFileKind = async (file: Blob): Promise<TExcelExportFileKind> => {
   try {
-    return isExcelExportArchive(openZipArchive(new Uint8Array(await file.arrayBuffer())));
+    return getExcelExportArchiveKind(openZipArchive(new Uint8Array(await file.arrayBuffer())));
   } catch {
-    return false;
+    return "other";
   }
 };

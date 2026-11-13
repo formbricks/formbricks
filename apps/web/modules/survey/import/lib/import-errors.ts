@@ -231,6 +231,8 @@ export const getSurveyImportErrorMessage = (
       return t("workspace.surveys.import.errors.wrong_extension");
     case "file_needs_ai":
       return t("workspace.surveys.import.errors.needs_ai");
+    case "file_earlier_excel_export":
+      return t("workspace.surveys.import.errors.earlier_excel_export");
     case "file_type_unsupported":
       return t("workspace.surveys.import.errors.file_type_unsupported");
     case "survey_too_large":

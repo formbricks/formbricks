@@ -258,12 +258,17 @@ const ISSUE_MESSAGES: Record<
     }),
   sheet_text_not_imported: (issue, t) => {
     const params = { row: param(issue, "row"), language: param(issue, "language") };
-    return param(issue, "cause") === "too_many_recalls"
-      ? t("workspace.surveys.import.issues.sheet_text_not_imported_recalls", {
+    switch (param(issue, "cause")) {
+      case "too_many_recalls":
+        return t("workspace.surveys.import.issues.sheet_text_not_imported_recalls", {
           ...params,
           max: param(issue, "max"),
-        })
-      : t("workspace.surveys.import.issues.sheet_text_not_imported", params);
+        });
+      case "ambiguous_recalls":
+        return t("workspace.surveys.import.issues.sheet_text_not_imported_ambiguous_recalls", params);
+      default:
+        return t("workspace.surveys.import.issues.sheet_text_not_imported", params);
+    }
   },
 };
 

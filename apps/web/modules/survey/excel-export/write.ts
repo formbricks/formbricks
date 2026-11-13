@@ -10,7 +10,7 @@ import {
   hasDefaultText,
   walkSurveyTexts,
 } from "@/modules/survey/lib/survey-texts";
-import { fitCell, toReadableText, toXmlSafeText } from "./cell-text";
+import { fitCell, isCutToFitCell, toReadableText, toXmlSafeText } from "./cell-text";
 import {
   EXCEL_EXPORT_FORMAT,
   EXCEL_EXPORT_KEY_HEADER,
@@ -82,29 +82,34 @@ type TTypedTextCell = { t: "s"; v: string; z: "@" };
 const toCellText = (text: string, truncatedSuffix: string): string =>
   fitCell(toXmlSafeText(text), truncatedSuffix);
 
-/**
- * One stored text in one language as the export writes its cell: readable, then fitted to the cell. The
- * import computes the survey's current cells with it too, to tell what changed in Formbricks since the
- * export, so both read a text the same way.
- */
-export const toExportedCellText = ({
-  text,
-  textKey,
-  survey,
-  truncatedSuffix,
-}: {
+type TExportedCellInput = {
   text: TSurveyText;
   textKey: string;
   survey: TSurvey;
   truncatedSuffix: string;
-}): string => {
-  const stored = text.value?.[textKey] ?? "";
-  if (!stored) return "";
-  return toCellText(
-    toReadableText({ text: stored, isRichText: text.isRichText, survey, languageCode: textKey }),
-    truncatedSuffix
-  );
 };
+
+/**
+ * One stored text in one language as the export writes its cell, readable and fitted to the cell, and
+ * whether fitting it cut it. The import computes the survey's current cells with it too, to tell what
+ * changed in Formbricks since the export and which cells hold only a text's start.
+ */
+export const getExportedCell = ({
+  text,
+  textKey,
+  survey,
+  truncatedSuffix,
+}: TExportedCellInput): { cell: string; isCut: boolean } => {
+  const stored = text.value?.[textKey] ?? "";
+  if (!stored) return { cell: "", isCut: false };
+  const whole = toXmlSafeText(
+    toReadableText({ text: stored, isRichText: text.isRichText, survey, languageCode: textKey })
+  );
+  return { cell: fitCell(whole, truncatedSuffix), isCut: isCutToFitCell(whole) };
+};
+
+/** The cell `getExportedCell` writes. */
+export const toExportedCellText = (input: TExportedCellInput): string => getExportedCell(input).cell;
 
 const textCell = (text: string, truncatedSuffix: string): TTypedTextCell => ({
   t: "s",
