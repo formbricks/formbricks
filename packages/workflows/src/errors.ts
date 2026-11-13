@@ -158,7 +158,7 @@ const invalidParamsFromZodError = (error: ZodError): WorkflowInvalidParam[] =>
 
 /**
  * 422 when a workflow cannot be enabled because its definition is not executable — the graph fails
- * `ZWorkflowExecutableDefinition` (cycle, unreachable node, wrong trigger-edge count, if_else), or a
+ * `ZWorkflowExecutableDefinition` (cycle, unreachable node, wrong trigger-edge count, a step check), or a
  * referenced survey / ending card no longer exists. Carries field-level `invalidParams` so the
  * caller (or an agent) can repair the exact node/edge/reference.
  */

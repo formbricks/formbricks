@@ -18,9 +18,17 @@ export interface fallbacks {
   [id: string]: string;
 }
 
+/**
+ * A recall id: a survey element / Embedded Data id, or a workflow Variable path (ADR 0045) —
+ * `payload.…`, `steps.…` or `response.…`, dot-separated. Only those three prefixes take dots, so a
+ * survey token reads exactly as before. Mirrors `WORKFLOW_VARIABLE_PATH_PATTERN_SOURCE` in
+ * `@formbricks/workflows`, kept local so survey bundles don't pull in the workflows package.
+ */
+const RECALL_ID_SOURCE = String.raw`(?:payload|steps|response)(?:\.[A-Za-z0-9_-]+)+|[A-Za-z0-9_-]+`;
+
 // Extracts the ID of recall question from a string containing the "recall" pattern.
 export const extractId = (text: string): string | null => {
-  const pattern = /#recall:([A-Za-z0-9_-]+)/;
+  const pattern = new RegExp(`#recall:(${RECALL_ID_SOURCE})`);
   const match = text.match(pattern);
   if (match && match[1]) {
     return match[1];
@@ -36,7 +44,7 @@ const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 // token still names the element it points at. Callers that need the id of a token the rest of the
 // codebase will actually render want `extractCompleteRecallIds` instead.
 export const extractIds = (text: string): string[] => {
-  const pattern = /#recall:([A-Za-z0-9_-]+)/g;
+  const pattern = new RegExp(`#recall:(${RECALL_ID_SOURCE})`, "g");
   const matches = Array.from(text.matchAll(pattern));
   return matches.map((match) => match[1]).filter((id) => id !== null);
 };
@@ -52,7 +60,7 @@ export const extractIds = (text: string): string[] => {
  * the rendered text and re-entered its own effect without bound.
  */
 export const extractCompleteRecallIds = (text: string): string[] => {
-  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:[^#]*#/g;
+  const pattern = new RegExp(`#recall:(${RECALL_ID_SOURCE})/fallback:[^#]*#`, "g");
   return Array.from(text.matchAll(pattern), (match) => match[1]);
 };
 
@@ -74,15 +82,15 @@ export const extractFallbackValue = (text: string): string => {
 
 // Extracts the complete recall information (ID and fallback) from a headline string.
 export const extractRecallInfo = (headline: string, id?: string): string | null => {
-  const idPattern = id ? escapeRegExp(id) : "[A-Za-z0-9_-]+";
-  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:([^#]*)#`);
+  const idPattern = id ? escapeRegExp(id) : RECALL_ID_SOURCE;
+  const pattern = new RegExp(`#recall:(${idPattern})/fallback:([^#]*)#`);
   const match = headline.match(pattern);
   return match ? match[0] : null;
 };
 
 // Finds the recall information by a specific recall question ID within a text.
 export const findRecallInfoById = (text: string, id: string): string | null => {
-  const pattern = new RegExp(`#recall:${escapeRegExp(id)}\\/fallback:([^#]*)#`, "g");
+  const pattern = new RegExp(`#recall:${escapeRegExp(id)}/fallback:([^#]*)#`, "g");
   const match = text.match(pattern);
   return match ? match[0] : null;
 };
@@ -283,7 +291,7 @@ export const getRecallItems = (text: string, survey: TSurvey, languageCode: stri
 // Constructs a fallbacks object from a text containing multiple recall and fallback patterns.
 export const getFallbackValues = (text: string): fallbacks => {
   if (!text.includes("#recall:")) return {};
-  const pattern = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/g;
+  const pattern = new RegExp(`#recall:(${RECALL_ID_SOURCE})/fallback:([^#]*)#`, "g");
   let match;
   const fallbacks: fallbacks = {};
 

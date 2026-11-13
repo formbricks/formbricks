@@ -5,12 +5,14 @@ import { atom } from "jotai";
 import type { SetStateAction } from "react";
 import {
   type TWorkflowDefinition,
+  type TWorkflowIfElseBranch,
   type TWorkflowResource,
   type TWorkflowTriggerType,
   WORKFLOW_ACTIONS,
   WORKFLOW_TRIGGERS,
   ZWorkflowExecutableDefinition,
 } from "@formbricks/workflows";
+import { getAppendedStepPosition } from "@/modules/ee/workflows/lib/canvas-geometry";
 
 export type TWorkflowNodeCategory = "trigger" | "flow" | "action";
 export type TWorkflowNodeIcon = "trigger" | "ifElse" | "email";
@@ -32,7 +34,13 @@ export type TWorkflowNodeData = {
   nodeType: string;
   title: string;
   summary: string;
-  isLeaf: boolean;
+  /**
+   * Shows the inline `+` under the card: a trigger with no step yet, or the last step of an If/else
+   * branch. Other steps don't offer it while a workflow outside branches is capped at one action.
+   */
+  canAppendStep: boolean;
+  /** If/else only: the branches with no step yet, which end in their own `+` under the fork. */
+  emptyBranches: TWorkflowIfElseBranch[];
   issue: TWorkflowNodeIssue | null;
 };
 
@@ -776,32 +784,41 @@ const createDefaultSendEmailNode = (position: {
 });
 
 // Append a fresh send_email node after `sourceNodeId` (used when the source has no outgoing
-// edge yet — i.e. the user is starting the chain).
-export const appendSendEmailAfterNodeAtom = atom(null, (get, set, sourceNodeId: string) => {
-  set(
-    workflowEditorAtom,
-    produce(get(workflowEditorAtom), (draft) => {
-      const definition = draft.definition;
-      if (!definition) return;
+// edge yet — i.e. the user is starting the chain). With `branch`, the source is an If/else and the
+// step starts that branch.
+export const appendSendEmailAfterNodeAtom = atom(
+  null,
+  (get, set, sourceNodeId: string, branch?: TWorkflowIfElseBranch) => {
+    set(
+      workflowEditorAtom,
+      produce(get(workflowEditorAtom), (draft) => {
+        const definition = draft.definition;
+        if (!definition) return;
 
-      const sourcePosition =
-        definition.trigger?.id === sourceNodeId
-          ? definition.trigger.ui?.position
-          : definition.nodes.find((node) => node.id === sourceNodeId)?.ui?.position;
-      const newPosition = sourcePosition
-        ? { x: sourcePosition.x, y: sourcePosition.y + 120 }
-        : SEND_EMAIL_FALLBACK_POSITION;
+        const sourcePosition =
+          definition.trigger?.id === sourceNodeId
+            ? definition.trigger.ui?.position
+            : definition.nodes.find((node) => node.id === sourceNodeId)?.ui?.position;
+        const newPosition = sourcePosition
+          ? getAppendedStepPosition(sourcePosition, branch)
+          : SEND_EMAIL_FALLBACK_POSITION;
 
-      const newNode = createDefaultSendEmailNode(newPosition);
-      definition.nodes.push(newNode);
+        const newNode = createDefaultSendEmailNode(newPosition);
+        definition.nodes.push(newNode);
 
-      definition.edges.push({ id: createId(), source: sourceNodeId, target: newNode.id });
+        definition.edges.push({
+          id: createId(),
+          source: sourceNodeId,
+          target: newNode.id,
+          ...(branch ? { sourceHandle: branch } : {}),
+        });
 
-      draft.selectedNodeId = newNode.id;
-      draft.isNodeConfigModalOpen = true;
-    })
-  );
-});
+        draft.selectedNodeId = newNode.id;
+        draft.isNodeConfigModalOpen = true;
+      })
+    );
+  }
+);
 
 // Split an existing edge with a fresh send_email node positioned between its endpoints.
 export const insertSendEmailAfterEdgeAtom = atom(null, (get, set, edgeId: string) => {

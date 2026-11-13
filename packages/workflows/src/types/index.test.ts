@@ -223,7 +223,7 @@ describe("@formbricks/workflows", () => {
     );
   });
 
-  test("allows if_else in generic definitions but rejects it for executable definitions", () => {
+  test("runs if_else definitions: both generic and executable schemas accept them", () => {
     const definition = {
       ...createDefinition(),
       nodes: [
@@ -255,7 +255,7 @@ describe("@formbricks/workflows", () => {
                       id: "plan-match",
                       left: { path: "response.plan" },
                       operator: "equals" as const,
-                      right: { path: "contact.plan" },
+                      right: { path: "response.accountPlan" },
                     },
                   ],
                 },
@@ -285,7 +285,7 @@ describe("@formbricks/workflows", () => {
     };
 
     expect(() => ZWorkflowDefinition.parse(definition)).not.toThrow();
-    expect(() => ZWorkflowExecutableDefinition.parse(definition)).toThrow(/if_else nodes/);
+    expect(() => ZWorkflowExecutableDefinition.parse(definition)).not.toThrow();
   });
 
   test("rejects executable definitions with unreachable nodes", () => {

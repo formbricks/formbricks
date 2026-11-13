@@ -402,6 +402,27 @@ describe("appendSendEmailAfterNodeAtom", () => {
     const added = def.nodes[def.nodes.length - 1];
     expect(added.ui?.position).toEqual({ x: 220, y: 200 });
   });
+
+  test("appends on an If/else branch: the edge carries the branch and the step goes under its leg", () => {
+    const store = createStore();
+    store.set(setWorkflowDefinitionAtom, {
+      ...graphDefinition(),
+      nodes: [{ id: "if-1", type: "if_else", ui: { position: { x: 220, y: 200 } } }],
+      edges: [{ id: "e1", source: "trigger-1", target: "if-1" }],
+    } as unknown as TWorkflowDefinition);
+
+    store.set(appendSendEmailAfterNodeAtom, "if-1", "else");
+
+    const def = store.get(workflowDefinitionAtom)!;
+    const added = def.nodes[def.nodes.length - 1];
+    expect(def.edges).toContainEqual({
+      id: expect.any(String),
+      source: "if-1",
+      target: added.id,
+      sourceHandle: "else",
+    });
+    expect(added.ui?.position).toEqual({ x: 400, y: 400 });
+  });
 });
 
 describe("insertSendEmailAfterEdgeAtom", () => {
@@ -904,7 +925,7 @@ describe("workflowValidationProblemsAtom", () => {
     expect(store.get(workflowValidationProblemsAtom)).toEqual([{ code: "flow_invalid", field: "edges" }]);
   });
 
-  test("an if_else step yields step_not_executable plus one flow_invalid for its missing branches", () => {
+  test("an if_else step runs, and its empty branches are no problem (ENG-7176)", () => {
     const store = createStore();
     const ifElseNode = {
       id: "ifelse-1",
@@ -925,11 +946,8 @@ describe("workflowValidationProblemsAtom", () => {
       } as Partial<TWorkflowDefinition>)
     );
 
-    const problems = store.get(workflowValidationProblemsAtom);
-    expect(problems).toHaveLength(2);
-    expect(problems).toContainEqual({ code: "step_not_executable", field: "nodes.0.type" });
-    expect(problems).toContainEqual({ code: "flow_invalid", field: "edges" });
-    expect(store.get(workflowValidityAtom).isReady).toBe(false);
+    expect(store.get(workflowValidationProblemsAtom)).toEqual([]);
+    expect(store.get(workflowValidityAtom).isReady).toBe(true);
   });
 
   test("independent problems accumulate, so the count matches what the user must fix", () => {

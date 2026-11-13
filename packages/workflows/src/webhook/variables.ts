@@ -1,7 +1,8 @@
+import { REFUSED_WORKFLOW_PATH_SEGMENTS, WORKFLOW_PATH_SEGMENT_PATTERN_SOURCE } from "../variables/paths";
 import { WEBHOOK_VARIABLE_MAX_PATHS } from "./limits";
 
-/** Path segments refused everywhere a Variable path is read (ADR 0045). */
-const UNSAFE_PATH_SEGMENTS = new Set(["__proto__", "prototype", "constructor"]);
+/** A key a Variable path can address: the segment characters the path parser and recall tokens accept. */
+const REACHABLE_KEY = new RegExp(`^${WORKFLOW_PATH_SEGMENT_PATTERN_SOURCE}$`);
 
 export type TWebhookVariableValueType = "object" | "string" | "number" | "boolean" | "null";
 
@@ -35,8 +36,8 @@ const valueTypeOf = (value: unknown): TWebhookVariableValueType | null => {
 };
 
 const notSupportedReason = (key: string, value: unknown): TWebhookVariableNotSupportedReason | null => {
-  if (UNSAFE_PATH_SEGMENTS.has(key)) return "unsafe_segment";
-  if (key === "" || key.includes(".")) return "unreachable_key";
+  if (REFUSED_WORKFLOW_PATH_SEGMENTS.has(key)) return "unsafe_segment";
+  if (!REACHABLE_KEY.test(key)) return "unreachable_key";
   if (Array.isArray(value)) return "list";
   return null;
 };

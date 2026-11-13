@@ -13,10 +13,12 @@ objects, but the object shapes live here.
 
 ## Core Ideas
 
-`ZWorkflowDefinition` is the persisted graph. It can include builder-only concepts such as future conditional
-nodes. `ZWorkflowExecutableDefinition` is the subset the current workflow runner can execute. It uses the same
-object shape but is stricter: every node must be reachable from the trigger, the graph must be acyclic, and
-`if_else` nodes are rejected for now.
+`ZWorkflowDefinition` is the persisted graph, validated on every save (graph references, branch handles,
+branches never joining, Variable paths, operator name sets, and the save-time limits in `limits.ts`).
+`ZWorkflowExecutableDefinition` is what the runner can execute. It uses the same object shape but is stricter:
+every node must be reachable from the trigger, the graph must be acyclic, only an `if_else` has more than one
+next step, and each step type passes its check in `WORKFLOW_EXECUTABLE_NODE_CHECKS` (`executable-checks.ts`).
+A run walks the graph from the trigger (`execution/walk.ts`); Variables are dot paths (`variables/`).
 
 `config` means user-authored setup for a trigger or action. Runtime data does not belong in `config`; it
 belongs in trigger payloads, run data, or run logs.
@@ -198,8 +200,11 @@ Example:
 ### `ZWorkflowDefinition` / `TWorkflowDefinition`
 
 Persisted workflow definition with graph validation. It rejects duplicate node ids, invalid edge references,
-wrong `if_else` branch handles, and definitions where the trigger has more than one outgoing edge (a
-trigger-only draft with no nodes or edges is valid; only the executable definition requires the edge).
+wrong `if_else` branch handles (at most one `then` and one `else`; an empty branch is allowed), a node with
+more than one incoming edge (branches never join), definitions where the trigger has more than one outgoing
+edge (a trigger-only draft with no nodes or edges is valid; only the executable definition requires the edge),
+a definition that mixes survey and legacy operator names, and the save-time limits (`WORKFLOW_LIMITS`: 25
+steps, 20 conditions per `if_else`).
 
 It uses the same object shape as `ZWorkflowDefinitionBase`.
 
@@ -255,7 +260,10 @@ Rules:
 - The trigger must have exactly one outgoing edge.
 - Every child node must be reachable from the trigger.
 - The executable graph must not contain cycles.
-- `if_else` nodes are rejected in current executable definitions.
+- Only an `if_else` node may have more than one next step.
+- Each node passes its step type's check in `WORKFLOW_EXECUTABLE_NODE_CHECKS` (a `send_email` has content;
+  every Variable is readable where it is used: a source the trigger provides, and `steps.<id>` only for an
+  earlier step on the same branch).
 
 Example:
 
@@ -464,10 +472,14 @@ Properties:
 
 - `id`: Stable condition id.
 - `left`: `ZWorkflowDataRef` for the value being checked.
-- `operator`: Comparison operator. Current values are `equals`, `notEquals`, `lessThan`, `lessEqual`,
-  `greaterThan`, `greaterEqual`, `contains`, `notContains`, `exists`, and `notExists`.
-- `right`: Right-hand comparison value. Presence operators `exists` and `notExists` must omit it. All other
-  operators require it.
+- `operator`: A survey logic operator name (`WORKFLOW_SURVEY_CONDITION_OPERATORS`: `equals`,
+  `doesNotEqual`, `isGreaterThan`, `includesOneOf`, `isSet`, …), compared by the survey logic comparison
+  (ADR 0046). The v1 names (`notEquals`, `lessThan`, `lessEqual`, `greaterThan`, `greaterEqual`,
+  `notContains`, `exists`, `notExists`) are deprecated but accepted until v7.0.0 and stored as written; one
+  definition never mixes the two sets.
+- `right`: Right-hand comparison value: a fixed value, a list of texts (list operators only), or a
+  `ZWorkflowDataRef`. Presence operators (`isSet`, `isNotSet`, `isEmpty`, `isNotEmpty`, `exists`,
+  `notExists`) must omit it. All other operators require it.
 
 Example:
 
@@ -520,8 +532,9 @@ Example:
 
 ### `ZWorkflowIfElseNode` / `TWorkflowIfElseNode`
 
-Branching node for conditional logic. It is valid in generic workflow definitions, but not executable by the
-current workflow runner.
+Branching node for conditional logic. A run continues down its `then` edge when the condition group holds and
+down its `else` edge otherwise; a branch without an edge ends the run on that side. Its output (`branch`,
+`matched`, per-condition results) is readable as `steps.<id>.…`.
 
 Properties:
 

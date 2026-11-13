@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { ZWorkflowActionNode } from "./actions";
-import { ZWorkflowIfElseNode } from "./conditions";
-import { getBlankSendEmailContentFields } from "./content";
+import { ZWorkflowIfElseNode, flattenWorkflowConditions, getConditionOperatorNameSet } from "./conditions";
+import {
+  type TWorkflowExecutableCheckContext,
+  WORKFLOW_EXECUTABLE_NODE_CHECKS,
+  WORKFLOW_TRIGGER_VARIABLE_SOURCES,
+} from "./executable-checks";
+import { WORKFLOW_LIMITS } from "./limits";
+import { getWorkflowStepType } from "./steps";
 import { ZWorkflowTriggerNode } from "./triggers";
 
 export const WORKFLOW_SCHEMA_VERSION = 1;
@@ -48,38 +54,12 @@ export const ZWorkflowDefinitionBase = z
   .describe("Persisted workflow graph definition.");
 export type TWorkflowDefinitionBase = z.infer<typeof ZWorkflowDefinitionBase>;
 
-const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
-  const ids = new Set<string>();
-  const nodesById = new Map<string, TWorkflowNode>();
-  if (definition.trigger) {
-    ids.add(definition.trigger.id);
-    nodesById.set(definition.trigger.id, definition.trigger);
-  }
-
-  for (const node of definition.nodes) {
-    if (ids.has(node.id)) {
-      ctx.addIssue({
-        code: "custom",
-        message: `Duplicate workflow node id: ${node.id}`,
-        path: ["nodes"],
-      });
-      continue;
-    }
-
-    ids.add(node.id);
-    nodesById.set(node.id, node);
-  }
-
-  if (definition.entryNodeId !== (definition.trigger?.id ?? null)) {
-    ctx.addIssue({
-      code: "custom",
-      message: definition.trigger
-        ? "entryNodeId must reference the workflow trigger"
-        : "entryNodeId must be null while the workflow has no trigger",
-      path: ["entryNodeId"],
-    });
-  }
-
+const validateEdgeReferences = (
+  definition: TWorkflowDefinitionBase,
+  ids: ReadonlySet<string>,
+  nodesById: ReadonlyMap<string, TWorkflowNode>,
+  ctx: z.RefinementCtx
+): void => {
   for (const [index, edge] of definition.edges.entries()) {
     if (!ids.has(edge.source)) {
       ctx.addIssue({
@@ -118,6 +98,89 @@ const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.Refin
       });
     }
   }
+};
+
+/** Each If/else branch has at most one edge; a branch with none ends the run on that side. */
+const validateIfElseBranches = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
+  for (const node of definition.nodes) {
+    if (node.type !== "if_else") {
+      continue;
+    }
+
+    const outgoingEdges = definition.edges.filter((edge) => edge.source === node.id);
+    const thenEdges = outgoingEdges.filter((edge) => edge.sourceHandle === ZWorkflowIfElseBranch.enum.then);
+    const elseEdges = outgoingEdges.filter((edge) => edge.sourceHandle === ZWorkflowIfElseBranch.enum.else);
+
+    // An empty branch (no edge) is allowed: the run simply ends on that side.
+    if (thenEdges.length > 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: `if_else node ${node.id} can have at most one then edge`,
+        path: ["edges"],
+      });
+    }
+
+    if (elseEdges.length > 1) {
+      ctx.addIssue({
+        code: "custom",
+        message: `if_else node ${node.id} can have at most one else edge`,
+        path: ["edges"],
+      });
+    }
+  }
+};
+
+const validateBranchesNeverJoin = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
+  // Branches never join again (ADR 0047): with one way in per step, "which Variables exist here"
+  // has one answer.
+  const incomingCounts = new Map<string, number>();
+  for (const edge of definition.edges) {
+    incomingCounts.set(edge.target, (incomingCounts.get(edge.target) ?? 0) + 1);
+  }
+  for (const [nodeId, count] of incomingCounts) {
+    if (count > 1 && nodeId !== definition.trigger?.id) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Workflow node ${nodeId} has more than one incoming edge; branches never join`,
+        path: ["edges"],
+      });
+    }
+  }
+};
+
+const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
+  const ids = new Set<string>();
+  const nodesById = new Map<string, TWorkflowNode>();
+  if (definition.trigger) {
+    ids.add(definition.trigger.id);
+    nodesById.set(definition.trigger.id, definition.trigger);
+  }
+
+  for (const node of definition.nodes) {
+    if (ids.has(node.id)) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Duplicate workflow node id: ${node.id}`,
+        path: ["nodes"],
+      });
+      continue;
+    }
+
+    ids.add(node.id);
+    nodesById.set(node.id, node);
+  }
+
+  if (definition.entryNodeId !== (definition.trigger?.id ?? null)) {
+    ctx.addIssue({
+      code: "custom",
+      message: definition.trigger
+        ? "entryNodeId must reference the workflow trigger"
+        : "entryNodeId must be null while the workflow has no trigger",
+      path: ["entryNodeId"],
+    });
+  }
+
+  validateEdgeReferences(definition, ids, nodesById, ctx);
 
   // At most one so trigger-only drafts (no nodes/edges yet) stay persistable;
   // the executable definition requires exactly one.
@@ -132,35 +195,62 @@ const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.Refin
     });
   }
 
+  validateIfElseBranches(definition, ctx);
+
+  validateBranchesNeverJoin(definition, ctx);
+  validateConditionOperatorNames(definition, ctx);
+};
+
+/**
+ * One definition uses one operator name set (ADR 0050): the survey names or the deprecated legacy
+ * workflow names, never a mix. Names both sets share (equals, contains) fit either.
+ */
+const validateConditionOperatorNames = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
+  const sets = new Set<string>();
   for (const node of definition.nodes) {
-    if (node.type !== "if_else") {
-      continue;
+    if (node.type !== "if_else") continue;
+    for (const condition of flattenWorkflowConditions(node.config.condition)) {
+      const set = getConditionOperatorNameSet(condition.operator);
+      if (set !== "shared") sets.add(set);
     }
+  }
+  if (sets.size > 1) {
+    ctx.addIssue({
+      code: "custom",
+      message:
+        "The definition mixes survey operator names with the deprecated workflow operator names; use one set",
+      path: ["nodes"],
+    });
+  }
+};
 
-    const outgoingEdges = definition.edges.filter((edge) => edge.source === node.id);
-    const thenEdges = outgoingEdges.filter((edge) => edge.sourceHandle === ZWorkflowIfElseBranch.enum.then);
-    const elseEdges = outgoingEdges.filter((edge) => edge.sourceHandle === ZWorkflowIfElseBranch.enum.else);
+/** Save-time limits (spec §10); the runner does not re-check them, so older stored definitions still run. */
+const validateSaveLimits = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
+  if (definition.nodes.length > WORKFLOW_LIMITS.maxSteps) {
+    ctx.addIssue({
+      code: "custom",
+      message: `A workflow can have at most ${WORKFLOW_LIMITS.maxSteps} steps`,
+      path: ["nodes"],
+    });
+  }
 
-    if (thenEdges.length !== 1) {
+  for (const [index, node] of definition.nodes.entries()) {
+    if (node.type !== "if_else") continue;
+    if (flattenWorkflowConditions(node.config.condition).length > WORKFLOW_LIMITS.maxConditionsPerIfElse) {
       ctx.addIssue({
         code: "custom",
-        message: `if_else node ${node.id} must have exactly one then edge`,
-        path: ["edges"],
-      });
-    }
-
-    if (elseEdges.length !== 1) {
-      ctx.addIssue({
-        code: "custom",
-        message: `if_else node ${node.id} must have exactly one else edge`,
-        path: ["edges"],
+        message: `An if_else step can have at most ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions`,
+        path: ["nodes", index, "config", "condition"],
       });
     }
   }
 };
 
-export const ZWorkflowDefinition = ZWorkflowDefinitionBase.superRefine(validateWorkflowGraph).describe(
-  "Persisted workflow definition with graph references validated."
+export const ZWorkflowDefinition = ZWorkflowDefinitionBase.superRefine((definition, ctx) => {
+  validateWorkflowGraph(definition, ctx);
+  validateSaveLimits(definition, ctx);
+}).describe(
+  `Persisted workflow definition with graph references validated. At most ${WORKFLOW_LIMITS.maxSteps} steps and ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions per if_else; branches never join.`
 );
 export type TWorkflowDefinition = z.infer<typeof ZWorkflowDefinition>;
 
@@ -171,6 +261,23 @@ const ZWorkflowExecutableDefinitionBase = ZWorkflowDefinitionBase.extend({
   entryNodeId: z.string().min(1).describe("Workflow entry point. Must reference the trigger node."),
 });
 type TWorkflowExecutableDefinitionBase = z.infer<typeof ZWorkflowExecutableDefinitionBase>;
+
+/** No fan-out: only an if_else picks between two next steps; every other step has at most one. */
+const validateNoFanOut = (
+  outgoingEdgesBySource: ReadonlyMap<string, string[]>,
+  nodesById: ReadonlyMap<string, TWorkflowNode>,
+  ctx: z.RefinementCtx
+): void => {
+  for (const [sourceId, targets] of outgoingEdgesBySource) {
+    if (targets.length > 1 && nodesById.get(sourceId)?.type !== "if_else") {
+      ctx.addIssue({
+        code: "custom",
+        message: `Workflow node ${sourceId} can have only one next step`,
+        path: ["edges"],
+      });
+    }
+  }
+};
 
 const validateExecutableGraph = (
   definition: TWorkflowExecutableDefinitionBase,
@@ -200,6 +307,8 @@ const validateExecutableGraph = (
     outgoingTargets.push(edge.target);
     outgoingEdgesBySource.set(edge.source, outgoingTargets);
   }
+
+  validateNoFanOut(outgoingEdgesBySource, nodesById, ctx);
 
   const reachableNodeIds = new Set<string>();
   const nodesToVisit = [definition.trigger.id];
@@ -266,33 +375,57 @@ const validateExecutableGraph = (
   }
 };
 
+/**
+ * The ids of the steps on the one path from the trigger to each node (branches never join, so the
+ * path is unique). A step may read `steps.<id>` only for these.
+ */
+const getUpstreamStepIds = (definition: TWorkflowExecutableDefinitionBase): Map<string, Set<string>> => {
+  const childNodeIds = new Set(definition.nodes.map((node) => node.id));
+  const upstream = new Map<string, Set<string>>([[definition.trigger.id, new Set()]]);
+  const queue = [definition.trigger.id];
+
+  while (queue.length > 0) {
+    const nodeId = queue.shift() as string;
+    const before = upstream.get(nodeId) ?? new Set<string>();
+    const forChildren = childNodeIds.has(nodeId) ? new Set([...before, nodeId]) : before;
+    for (const edge of definition.edges) {
+      if (edge.source !== nodeId || upstream.has(edge.target)) continue;
+      upstream.set(edge.target, forChildren);
+      queue.push(edge.target);
+    }
+  }
+
+  return upstream;
+};
+
+/** Per-step-type checks (`WORKFLOW_EXECUTABLE_NODE_CHECKS`) run on every node. */
+const validateExecutableNodes = (
+  definition: TWorkflowExecutableDefinitionBase,
+  ctx: z.RefinementCtx
+): void => {
+  const upstream = getUpstreamStepIds(definition);
+  const availableSources = new Set(WORKFLOW_TRIGGER_VARIABLE_SOURCES[definition.trigger.triggerType]);
+
+  for (const [index, node] of definition.nodes.entries()) {
+    const context: TWorkflowExecutableCheckContext = {
+      upstreamStepIds: upstream.get(node.id) ?? new Set(),
+      availableSources,
+      addIssue: (message, path = []) =>
+        ctx.addIssue({ code: "custom", message, path: ["nodes", index, ...path] }),
+    };
+    const check = WORKFLOW_EXECUTABLE_NODE_CHECKS[getWorkflowStepType(node)] as (
+      node: TWorkflowChildNode,
+      context: TWorkflowExecutableCheckContext
+    ) => void;
+    check(node, context);
+  }
+};
+
 export const ZWorkflowExecutableDefinition = ZWorkflowExecutableDefinitionBase.superRefine(
   (definition, ctx) => {
     validateWorkflowGraph(definition, ctx);
     validateExecutableGraph(definition, ctx);
-
-    for (const [index, node] of definition.nodes.entries()) {
-      if (node.type === "if_else") {
-        ctx.addIssue({
-          code: "custom",
-          message: "if_else nodes are not executable in this version of workflows",
-          path: ["nodes", index, "type"],
-        });
-      }
-
-      // Draft configs may hold empty content (the persisted schema is permissive so authors can
-      // save work in progress), but an executable send_email must actually have something to send.
-      // send_email is the only action type today, so type === "action" is the whole check.
-      if (node.type === "action") {
-        for (const field of getBlankSendEmailContentFields(node.config)) {
-          ctx.addIssue({
-            code: "custom",
-            message: `send_email node ${node.id} is missing ${field}`,
-            path: ["nodes", index, "config", field],
-          });
-        }
-      }
-    }
+    validateExecutableNodes(definition, ctx);
   }
 ).describe("Workflow definition subset that the current runner can execute.");
 export type TWorkflowExecutableDefinition = z.infer<typeof ZWorkflowExecutableDefinition>;

@@ -94,4 +94,48 @@ describe("getNodeRegistryEntry", () => {
     expect(entry.summary(ifElseNode, t)).toBe("workspace.workflows.if_else_summary");
     expect(entry.ConfigForm).toBeNull();
   });
+
+  test("if-else summary says its first condition in words and how many more follow", () => {
+    const node = {
+      ...ifElseNode,
+      config: {
+        condition: {
+          id: "group-1",
+          connector: "and",
+          conditions: [
+            { id: "c1", left: { path: "payload.channel" }, operator: "equals", right: "call" },
+            {
+              id: "group-2",
+              connector: "or",
+              conditions: [
+                { id: "c2", left: { path: "payload.resolved" }, operator: "equals", right: false },
+                { id: "c3", left: { path: "payload.customer.tier" }, operator: "exists" },
+              ],
+            },
+          ],
+        },
+      },
+    } as TWorkflowIfElseNode;
+
+    expect(getNodeRegistryEntry(node).summary(node, t)).toBe(
+      'workspace.workflows.if_else_summary_more:{"condition":"workspace.workflows.if_else_operator_equals:{\\"variable\\":\\"channel\\",\\"value\\":\\"call\\"}","count":2}'
+    );
+  });
+
+  test("if-else summary for a single presence check has no count and no value", () => {
+    const node = {
+      ...ifElseNode,
+      config: {
+        condition: {
+          id: "group-1",
+          connector: "and",
+          conditions: [{ id: "c1", left: { path: "steps.http-1.status" }, operator: "notExists" }],
+        },
+      },
+    } as TWorkflowIfElseNode;
+
+    expect(getNodeRegistryEntry(node).summary(node, t)).toBe(
+      'workspace.workflows.if_else_operator_not_exists:{"variable":"steps.http-1.status"}'
+    );
+  });
 });

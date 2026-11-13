@@ -26,7 +26,7 @@ export const ZWorkflowSampleVariables = z
           reason: z
             .enum(["list", "unsafe_segment", "unreachable_key"])
             .describe(
-              "list: lists are not supported yet; unsafe_segment: __proto__, prototype or constructor; unreachable_key: an empty key or one containing a dot."
+              "list: lists are not supported yet; unsafe_segment: __proto__, prototype or constructor; unreachable_key: a key with characters other than letters, digits, - and _ (a dot or a space, say), which a Variable path cannot carry."
             ),
         })
       )

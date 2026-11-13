@@ -205,6 +205,49 @@ describe("create", () => {
     expect(service.createWorkflow).not.toHaveBeenCalled();
   });
 
+  test("refuses a definition over the step limit with 400, naming the limit", async () => {
+    const emailNode = definition.nodes[0];
+    const nodes = Array.from({ length: 26 }, (_, index) => ({ ...emailNode, id: `email-${index}` }));
+    const edges = nodes.map((node, index) => ({
+      id: `edge-${index}`,
+      source: index === 0 ? "trigger" : `email-${index - 1}`,
+      target: node.id,
+    }));
+
+    const res = await handlers.create({
+      req: postRequest({ workspaceId, name: "Too long", definition: { ...definition, nodes, edges } }),
+      ctx: makeCtx(),
+    });
+
+    expect(res.status).toBe(400);
+    const body = await readJson<{ invalid_params: { reason: string }[] }>(res);
+    expect(JSON.stringify(body.invalid_params)).toMatch(/at most 25 steps/);
+    expect(service.createWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("refuses an If/else over the condition limit with 400", async () => {
+    const conditions = Array.from({ length: 21 }, (_, index) => ({
+      id: `c${index}`,
+      left: { path: "response.q1" },
+      operator: "isSet",
+    }));
+    const overLimit = {
+      ...definition,
+      nodes: [
+        { id: "check", type: "if_else", config: { condition: { id: "g", connector: "and", conditions } } },
+      ],
+      edges: [{ id: "e1", source: "trigger", target: "check" }],
+    };
+
+    const res = await handlers.create({
+      req: postRequest({ workspaceId, name: "Too many conditions", definition: overLimit }),
+      ctx: makeCtx(),
+    });
+
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(await readJson(res))).toMatch(/at most 20 conditions/);
+  });
+
   test("returns the denial response without creating when access is missing", async () => {
     const ctx = makeCtx({ authorize: vi.fn().mockResolvedValue(deniedResponse()) });
 

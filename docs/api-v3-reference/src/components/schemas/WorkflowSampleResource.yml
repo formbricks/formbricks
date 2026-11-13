@@ -55,8 +55,9 @@ properties:
         description: >-
           Paths that cannot be used as Variables: `list` (lists are not
           supported yet), `unsafe_segment` (`__proto__`, `prototype` or
-          `constructor`) or `unreachable_key` (an empty key, or one containing
-          a dot).
+          `constructor`) or `unreachable_key` (a key with characters other
+          than letters, digits, `-` and `_`, such as a dot or a space, which a
+          Variable path cannot carry).
         items:
           type: object
           required:

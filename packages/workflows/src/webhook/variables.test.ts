@@ -33,7 +33,7 @@ describe("detectWebhookVariables", () => {
 
   test("refuses unsafe segments and keys a dot path cannot reach", () => {
     const payload = JSON.parse(
-      '{"__proto__":{"x":1},"constructor":1,"prototype":{},"a.b":1,"":2,"ok":"yes"}'
+      '{"__proto__":{"x":1},"constructor":1,"prototype":{},"a.b":1,"":2,"first name":3,"ok":"yes"}'
     ) as Record<string, unknown>;
 
     const result = detectWebhookVariables(payload);
@@ -45,6 +45,7 @@ describe("detectWebhookVariables", () => {
       { path: "payload.prototype", reason: "unsafe_segment" },
       { path: "payload.a.b", reason: "unreachable_key" },
       { path: "payload.", reason: "unreachable_key" },
+      { path: "payload.first name", reason: "unreachable_key" },
     ]);
   });
 

@@ -943,6 +943,141 @@ describe("processWorkflowRunJob", () => {
     expect(mockCapturePostHogEvent).not.toHaveBeenCalled();
   });
 
+  describe("If/else", () => {
+    const emailNode = (id: string, subject: string, body = "<p>Hi</p>") => ({
+      id,
+      type: "action",
+      actionType: "send_email",
+      config: {
+        to: "email",
+        from: "noreply@example.com",
+        replyTo: [],
+        subject,
+        body,
+        attachResponseData: false,
+      },
+    });
+
+    // trigger → check → then: then-email | else: else-email
+    const branchingDefinition = (condition: Record<string, unknown>, thenBody?: string) => ({
+      schemaVersion: 1,
+      entryNodeId: "trigger",
+      trigger: executableDefinition.trigger,
+      nodes: [
+        {
+          id: "check",
+          type: "if_else",
+          config: { condition: { id: "group", connector: "and", conditions: [condition] } },
+        },
+        emailNode("then-email", "Then", thenBody),
+        emailNode("else-email", "Else"),
+      ],
+      edges: [
+        { id: "e1", source: "trigger", target: "check" },
+        { id: "e2", source: "check", target: "then-email", sourceHandle: "then" },
+        { id: "e3", source: "check", target: "else-email", sourceHandle: "else" },
+      ],
+    });
+
+    const runWith = (definition: unknown) =>
+      mockWorkflowRunFindFirst.mockResolvedValue({
+        ...baseRun,
+        workflowVersion: { definition },
+        workflow: { createdBy: "creator-1", definition },
+      });
+
+    const scoreAbove8 = (operator: string) => ({
+      id: "c1",
+      left: { path: "response.score" },
+      operator,
+      right: 8,
+    });
+
+    test("takes the Then branch when the conditions hold, with survey operator names", async () => {
+      // A number sent as text compares as a number, as in survey logic.
+      mockGetResponse.mockResolvedValue({ ...mockResponse, data: { ...mockResponse.data, score: "9" } });
+      runWith(branchingDefinition(scoreAbove8("isGreaterThan")));
+
+      await processWorkflowRunJob(data, baseContext);
+
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][0].subject).toBe("Then");
+
+      const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+      expect(completion.data.status).toBe("completed");
+      expect(completion.data.data.steps.map((step: { stepId: string }) => step.stepId)).toEqual([
+        "check",
+        "then-email",
+      ]);
+      expect(completion.data.data.steps[0]).toMatchObject({
+        stepType: "if_else",
+        status: "succeeded",
+        output: { branch: "then", matched: true, conditions: [{ id: "c1", matched: true }] },
+      });
+      // The If/else is recorded like any step, so run detail and resume see it.
+      expect(mockWorkflowRunLogCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ stepId: "check", sequence: 1 }) })
+      );
+      expect(mockWorkflowRunLogCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ stepId: "then-email", sequence: 2 }) })
+      );
+    });
+
+    test("takes the Else branch with the legacy operator names", async () => {
+      mockGetResponse.mockResolvedValue({ ...mockResponse, data: { ...mockResponse.data, score: 5 } });
+      runWith(branchingDefinition(scoreAbove8("greaterThan")));
+
+      await processWorkflowRunJob(data, baseContext);
+
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][0].subject).toBe("Else");
+    });
+
+    test("a missing Variable is not set, so a presence check takes Else", async () => {
+      runWith(branchingDefinition({ id: "c1", left: { path: "response.nope" }, operator: "isSet" }));
+
+      await processWorkflowRunJob(data, baseContext);
+
+      expect(mockSendEmail.mock.calls[0][0].subject).toBe("Else");
+    });
+
+    test("resumes an If/else from its log instead of deciding again", async () => {
+      // The response changed since the first attempt took Else; the run must stay on Else.
+      mockGetResponse.mockResolvedValue({ ...mockResponse, data: { ...mockResponse.data, score: 9 } });
+      runWith(branchingDefinition(scoreAbove8("isGreaterThan")));
+      mockWorkflowRunLogFindFirst.mockImplementation(async ({ where }: { where: { stepId: string } }) =>
+        where.stepId === "check"
+          ? existingStepLog("succeeded", {
+              stepId: "check",
+              stepType: "if_else",
+              output: { branch: "else", matched: false, conditions: [] },
+            })
+          : null
+      );
+
+      await processWorkflowRunJob(data, baseContext);
+
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][0].subject).toBe("Else");
+    });
+
+    test("an email body can use a step's output and a response answer through Variable paths", async () => {
+      runWith(
+        branchingDefinition(
+          { id: "c1", left: { path: "response.email" }, operator: "isSet" },
+          "<p>#recall:steps.check.branch/fallback:x# #recall:response.name/fallback:there#</p>"
+        )
+      );
+
+      await processWorkflowRunJob(data, baseContext);
+
+      // Step outputs are inserted here; response answers go to survey recall as bare question ids.
+      expect(mockBuildHtml).toHaveBeenCalledWith(
+        expect.objectContaining({ body: "<p>then #recall:name/fallback:there#</p>" })
+      );
+    });
+  });
+
   test("marks the run failed for an invalid / non-executable definition (final attempt)", async () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
