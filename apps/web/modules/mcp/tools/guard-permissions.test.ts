@@ -133,7 +133,7 @@ describe("registerMcpTool", () => {
       // JSON-RPC payload with no headers, so the WWW-Authenticate challenge cannot tell it what to
       // re-authorize for.
       detail:
-        "Not permitted: the user's connection of this MCP client does not include Surveys: Write, because its OAuth token lacks the scope surveys:write. Ask the user to reconnect the client and give it this access.",
+        "Not permitted: the user's grant to this MCP client can't include Surveys: Write, because its OAuth token lacks the scope surveys:write. Ask the user to reconnect the client and give it this access.",
       requestId: "req_denied",
     });
   });
@@ -160,7 +160,7 @@ describe("registerMcpTool", () => {
     expect(result.isError).toBe(true);
     // Names what the token lacks, not what it already holds.
     expect((result.structuredContent as ScopeErrorContent).error.detail).toBe(
-      "Not permitted: the user's connection of this MCP client does not include Feedback records: Read, because its OAuth token lacks the scope feedbackRecords:read. Ask the user to reconnect the client and give it this access."
+      "Not permitted: the user's grant to this MCP client can't include Feedback records: Read, because its OAuth token lacks the scope feedbackRecords:read. Ask the user to reconnect the client and give it this access."
     );
   });
 
@@ -182,7 +182,7 @@ describe("registerMcpTool", () => {
       .handler({}, { http: { authInfo: authInfoWithScopes(["responses:read"]) } });
 
     expect((result.structuredContent as ScopeErrorContent).error.detail).toBe(
-      "Not permitted: the user's connection of this MCP client does not include Surveys: Read and Survey styling: Read, because its OAuth token lacks the scope surveys:read. Ask the user to reconnect the client and give it this access."
+      "Not permitted: the user's grant to this MCP client can't include Surveys: Read and Survey styling: Read, because its OAuth token lacks the scope surveys:read. Ask the user to reconnect the client and give it this access."
     );
   });
 
@@ -210,7 +210,7 @@ describe("registerMcpTool", () => {
     expect(handler).toHaveBeenCalledTimes(1);
     expect(refused.isError).toBe(true);
     expect((refused.structuredContent as ScopeErrorContent).error.detail).toBe(
-      "Not permitted: the user's connection of this MCP client does not include any of Surveys: Read, Dashboards: Read, because its OAuth token lacks every one of the scopes surveys:read dashboards:read. Ask the user to reconnect the client and give it this access."
+      "Not permitted: the user's grant to this MCP client can't include any of Surveys: Read, Dashboards: Read, because its OAuth token lacks every one of the scopes surveys:read dashboards:read. Ask the user to reconnect the client and give it this access."
     );
   });
 

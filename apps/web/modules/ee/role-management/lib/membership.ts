@@ -10,10 +10,7 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { validateInputs } from "@/lib/utils/validate";
-import {
-  queueRevokedMcpGrantAudits,
-  revokeAllUserOAuthGrants,
-} from "@/modules/auth/lib/oauth-grant-revocation";
+import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-store";
 
 export const updateMembership = async (
@@ -106,7 +103,9 @@ export const updateMembership = async (
   } finally {
     // Within a caller's transaction this runs before that transaction commits: the role update is the
     // last write there, so only a failed commit could leave these entries recording grants that stayed.
-    await queueRevokedMcpGrantAudits(revokedMcpGrantAudits);
+    // The grants' SpiceDB relationships are then left to the outbox event their delete queues, which is
+    // delivered only once it commits; removing them now could outlive a rollback.
+    await finishRevokedMcpGrants(revokedMcpGrantAudits, { removeRelationships: !tx });
     // A transaction-scoped call is projected by the durable PostgreSQL outbox only after the outer
     // transaction commits. Reading through the global client here could observe the pre-commit role
     // and would publish stale relationships.

@@ -1,4 +1,7 @@
-import type { TMcpConnectionList, TMcpGrantResource } from "@/app/api/internal/mcp-grants/lib/serializers";
+import type {
+  TAuthorizedMcpClientList,
+  TMcpGrantResource,
+} from "@/app/api/internal/mcp-grants/lib/serializers";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
 import { toMcpGrantAccessRequest } from "@/modules/mcp/grant-access";
@@ -18,8 +21,8 @@ async function request<T>(url: string, init: RequestInit): Promise<T> {
   return ((await response.json()) as { data: T }).data;
 }
 
-export async function getMcpConnections(signal?: AbortSignal): Promise<TMcpConnectionList> {
-  return request<TMcpConnectionList>(BASE_PATH, { method: "GET", signal });
+export async function getAuthorizedMcpClients(signal?: AbortSignal): Promise<TAuthorizedMcpClientList> {
+  return request<TAuthorizedMcpClientList>(BASE_PATH, { method: "GET", signal });
 }
 
 export async function updateMcpGrant(params: {
@@ -35,6 +38,14 @@ export async function updateMcpGrant(params: {
       permissions: params.permissions,
       ...(params.access ? toMcpGrantAccessRequest(params.access) : {}),
     }),
+    signal: AbortSignal.timeout(15_000),
+  });
+}
+
+/** Revoke: ends the user's grant to the MCP client, its consent and its tokens. */
+export async function revokeMcpGrant(clientId: string): Promise<void> {
+  await request<{ clientId: string }>(`${BASE_PATH}/${encodeURIComponent(clientId)}`, {
+    method: "DELETE",
     signal: AbortSignal.timeout(15_000),
   });
 }

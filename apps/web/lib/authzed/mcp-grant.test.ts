@@ -6,17 +6,18 @@ import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 import {
-  type TMcpGrantReach,
+  type TProjectedMcpGrant,
   deleteMcpGrantRelationshipsBeforeCommit,
   expectedMcpGrantRelationships,
   reconcileMcpGrantRelationships,
+  removeDeletedMcpGrantRelationships,
 } from "./mcp-grant";
 import { readAllRelationships } from "./relationship-reads";
 
 const clientMocks = { writeRelationships: vi.fn() };
 
 vi.mock("@formbricks/database", () => ({
-  prisma: { mcpGrant: { findMany: vi.fn() } },
+  prisma: { mcpGrant: { findMany: vi.fn() }, $queryRaw: vi.fn(), $transaction: vi.fn() },
 }));
 
 vi.mock("@formbricks/logger", () => ({
@@ -77,32 +78,32 @@ const schemaMissingMcpGrant = (): AuthzedError => {
   });
 };
 
-const reach = (overrides: Partial<TMcpGrantReach> = {}): TMcpGrantReach => ({
-  access: "workspaces",
+const workspaces = (...workspaceIds: string[]): TProjectedMcpGrant => ({
   id: GRANT_ID,
-  organizationIds: [],
-  workspaceIds: [],
-  ...overrides,
+  access: "workspaces",
+  workspaceIds,
 });
 
 describe("expectedMcpGrantRelationships", () => {
-  test("projects only the selection that matches the grant's access", () => {
-    const rows = { id: GRANT_ID, organizationIds: ["org-1"], workspaceIds: ["ws-1", "ws-2"] };
-
-    expect(expectedMcpGrantRelationships({ ...rows, access: "organizations" })).toEqual([
-      relationship("organization", "org-1"),
-    ]);
-    expect(expectedMcpGrantRelationships({ ...rows, access: "workspaces" })).toEqual([
+  test("projects the selection the grant's access names", () => {
+    expect(
+      expectedMcpGrantRelationships({ id: GRANT_ID, access: "organizations", organizationIds: ["org-1"] })
+    ).toEqual([relationship("organization", "org-1")]);
+    expect(expectedMcpGrantRelationships(workspaces("ws-1", "ws-2"))).toEqual([
       relationship("workspace", "ws-1"),
       relationship("workspace", "ws-2"),
     ]);
-    expect(expectedMcpGrantRelationships({ ...rows, access: "all" })).toEqual([]);
+    expect(expectedMcpGrantRelationships({ id: GRANT_ID, access: "all" })).toEqual([]);
   });
 });
 
 describe("reconcileMcpGrantRelationships", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // The reconciling pass's transaction runs on the same mock, so its reads are the ones asserted.
+    vi.mocked(prisma.$transaction).mockImplementation((async (callback: (tx: unknown) => unknown) =>
+      callback(prisma)) as never);
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([] as never);
     vi.mocked(isAuthzedEnabled).mockReturnValue(true);
     vi.mocked(getAuthzedClient).mockReturnValue(
       clientMocks as unknown as ReturnType<typeof getAuthzedClient>
@@ -155,6 +156,34 @@ describe("reconcileMcpGrantRelationships", () => {
     expect(readAllRelationships).toHaveBeenCalledTimes(2);
   });
 
+  // A narrowing holds its grant's row `FOR UPDATE` while it deletes from SpiceDB: a pass that read the
+  // grant before it must not write the old relationships back after it.
+  test("reads and writes each pass inside a transaction that holds the grants' rows FOR SHARE", async () => {
+    const order: string[] = [];
+    vi.mocked(prisma.$queryRaw).mockImplementation((async (strings: TemplateStringsArray) => {
+      order.push(strings.join("?").includes("FOR SHARE") ? "lock" : "other");
+      return [];
+    }) as never);
+    vi.mocked(prisma.mcpGrant.findMany).mockImplementation((async () => {
+      order.push("read");
+      return [grantRow({ workspaces: ["ws-1"] })];
+    }) as never);
+    clientMocks.writeRelationships.mockImplementation(async () => {
+      order.push("write");
+    });
+
+    await reconcileMcpGrantRelationships({ grantIds: ["grant-b", GRANT_ID] });
+
+    expect(order).toEqual(["lock", "read", "write", "lock", "read"]);
+    const [lock] = vi.mocked(prisma.$queryRaw).mock.calls[0] as unknown as [TemplateStringsArray, string[]];
+    expect(lock.join("?")).toMatch(/ORDER BY "id" FOR SHARE/);
+    expect(vi.mocked(prisma.$queryRaw).mock.calls[0][1]).toEqual([GRANT_ID, "grant-b"]);
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
+      maxWait: 10_000,
+      timeout: 30_000,
+    });
+  });
+
   test("deletes every observed relationship of a grant that no longer exists", async () => {
     vi.mocked(prisma.mcpGrant.findMany).mockResolvedValue([] as never);
     observe({ organization: [relationship("organization", "org-1")] });
@@ -168,7 +197,7 @@ describe("reconcileMcpGrantRelationships", () => {
     ]);
   });
 
-  test("deletes the old selection of a grant switched to All access", async () => {
+  test("deletes the old selection of a grant switched to All access, ignoring a stray row", async () => {
     vi.mocked(prisma.mcpGrant.findMany).mockResolvedValue([
       grantRow({ access: "all", workspaces: ["ws-stray-row"] }),
     ] as never);
@@ -271,36 +300,21 @@ describe("deleteMcpGrantRelationshipsBeforeCommit", () => {
   });
 
   test("deletes only what the narrowing drops, and never touches anything", async () => {
-    await deleteMcpGrantRelationshipsBeforeCommit([
-      {
-        before: reach({ workspaceIds: ["ws-keep", "ws-drop"] }),
-        after: reach({ workspaceIds: ["ws-keep", "ws-add"] }),
-      },
-    ]);
+    await deleteMcpGrantRelationshipsBeforeCommit(workspaces("ws-keep", "ws-drop"), {
+      access: "workspaces",
+      workspaceIds: ["ws-keep", "ws-add"],
+    });
 
     expect(writtenUpdates()).toEqual([
       { operation: "delete", relationship: relationship("workspace", "ws-drop") },
     ]);
   });
 
-  test("deletes the whole selection of a grant being deleted", async () => {
-    await deleteMcpGrantRelationshipsBeforeCommit([
-      { before: reach({ access: "organizations", organizationIds: ["org-1", "org-2"] }), after: null },
-    ]);
-
-    expect(writtenUpdates()).toEqual([
-      { operation: "delete", relationship: relationship("organization", "org-1") },
-      { operation: "delete", relationship: relationship("organization", "org-2") },
-    ]);
-  });
-
   test("deletes the old selection when the mode changes", async () => {
-    await deleteMcpGrantRelationshipsBeforeCommit([
-      {
-        before: reach({ access: "organizations", organizationIds: ["org-1"] }),
-        after: reach({ access: "workspaces", workspaceIds: ["ws-1"] }),
-      },
-    ]);
+    await deleteMcpGrantRelationshipsBeforeCommit(
+      { id: GRANT_ID, access: "organizations", organizationIds: ["org-1"] },
+      { access: "workspaces", workspaceIds: ["ws-1"] }
+    );
 
     expect(writtenUpdates()).toEqual([
       { operation: "delete", relationship: relationship("organization", "org-1") },
@@ -308,10 +322,17 @@ describe("deleteMcpGrantRelationshipsBeforeCommit", () => {
   });
 
   test("writes nothing for a widening or a grant that was All access", async () => {
-    await deleteMcpGrantRelationshipsBeforeCommit([
-      { before: reach({ workspaceIds: ["ws-1"] }), after: reach({ workspaceIds: ["ws-1", "ws-2"] }) },
-      { before: reach({ access: "all", id: "grant-b" }), after: null },
-    ]);
+    await deleteMcpGrantRelationshipsBeforeCommit(workspaces("ws-1"), {
+      access: "workspaces",
+      workspaceIds: ["ws-1", "ws-2"],
+    });
+    await deleteMcpGrantRelationshipsBeforeCommit(
+      { id: GRANT_ID, access: "all" },
+      {
+        access: "workspaces",
+        workspaceIds: ["ws-1"],
+      }
+    );
 
     expect(clientMocks.writeRelationships).not.toHaveBeenCalled();
   });
@@ -319,9 +340,7 @@ describe("deleteMcpGrantRelationshipsBeforeCommit", () => {
   test("does nothing with AuthZed off", async () => {
     vi.mocked(isAuthzedEnabled).mockReturnValue(false);
 
-    await deleteMcpGrantRelationshipsBeforeCommit([
-      { before: reach({ workspaceIds: ["ws-1"] }), after: null },
-    ]);
+    await deleteMcpGrantRelationshipsBeforeCommit(workspaces("ws-1"), { access: "all" });
 
     expect(getAuthzedClient).not.toHaveBeenCalled();
   });
@@ -335,16 +354,65 @@ describe("deleteMcpGrantRelationshipsBeforeCommit", () => {
     });
     clientMocks.writeRelationships.mockRejectedValue(outage);
 
-    await expect(
-      deleteMcpGrantRelationshipsBeforeCommit([{ before: reach({ workspaceIds: ["ws-1"] }), after: null }])
-    ).rejects.toBe(outage);
+    await expect(deleteMcpGrantRelationshipsBeforeCommit(workspaces("ws-1"), { access: "all" })).rejects.toBe(
+      outage
+    );
   });
 
   test("tolerates the previous release's schema, which never held these relationships", async () => {
     clientMocks.writeRelationships.mockRejectedValue(schemaMissingMcpGrant());
 
     await expect(
-      deleteMcpGrantRelationshipsBeforeCommit([{ before: reach({ workspaceIds: ["ws-1"] }), after: null }])
+      deleteMcpGrantRelationshipsBeforeCommit(workspaces("ws-1"), { access: "all" })
     ).resolves.toBeUndefined();
+  });
+});
+
+describe("removeDeletedMcpGrantRelationships", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(isAuthzedEnabled).mockReturnValue(true);
+    vi.mocked(getAuthzedClient).mockReturnValue(
+      clientMocks as unknown as ReturnType<typeof getAuthzedClient>
+    );
+    clientMocks.writeRelationships.mockResolvedValue(undefined);
+  });
+
+  test("deletes every relationship the deleted grants' access implied, in one write", async () => {
+    await expect(
+      removeDeletedMcpGrantRelationships([
+        { id: GRANT_ID, access: "organizations", organizationIds: ["org-1", "org-2"] },
+        { id: "grant-b", access: "all" },
+        { id: "grant-c", access: "workspaces", workspaceIds: ["ws-1"] },
+      ])
+    ).resolves.toEqual({ passes: 1, status: "projected" });
+
+    expect(clientMocks.writeRelationships).toHaveBeenCalledTimes(1);
+    expect(writtenUpdates()).toEqual([
+      { operation: "delete", relationship: relationship("organization", "org-1") },
+      { operation: "delete", relationship: relationship("organization", "org-2") },
+      { operation: "delete", relationship: relationship("workspace", "ws-1", "grant-c") },
+    ]);
+  });
+
+  test("reports a SpiceDB failure instead of throwing: the deleted rows already ended the access", async () => {
+    clientMocks.writeRelationships.mockRejectedValue(
+      new AuthzedError({
+        attempts: 3,
+        code: AUTHZED_ERROR_CODES.UNAVAILABLE,
+        operation: "write_relationships",
+        retryable: true,
+      })
+    );
+
+    await expect(
+      removeDeletedMcpGrantRelationships([{ id: GRANT_ID, access: "workspaces", workspaceIds: ["ws-1"] }])
+    ).resolves.toMatchObject({ status: "failed", code: AUTHZED_ERROR_CODES.UNAVAILABLE });
+  });
+
+  test("writes nothing for grants that selected nothing", async () => {
+    await removeDeletedMcpGrantRelationships([{ id: GRANT_ID, access: "all" }]);
+
+    expect(clientMocks.writeRelationships).not.toHaveBeenCalled();
   });
 });

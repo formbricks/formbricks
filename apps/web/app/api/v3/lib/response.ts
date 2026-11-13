@@ -115,6 +115,7 @@ export const INTERNAL_PROBLEM_CODES = [
   "idempotency_key_in_use",
   "idempotency_key_reused",
   "mcp_grant_beyond_scopes",
+  "mcp_grant_selection_unavailable",
   "member_in_other_organizations",
   "retention_exemption_exists",
   "retention_exemption_not_active",

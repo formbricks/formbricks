@@ -3,6 +3,7 @@ import {
   getMcpGrantAccessSummary,
   initialMcpGrantAccessDraft,
   isSameMcpGrantAccess,
+  limitMcpGrantAccessToOptions,
   toMcpGrantAccessRequest,
   toMcpGrantAccessSelection,
 } from "./grant-access";
@@ -99,5 +100,34 @@ describe("getMcpGrantAccessSummary", () => {
     [{ access: "organizations" as const, organizationIds: [] }, "auth.oauth.access.summary_none"],
   ])("summarizes %j", (grant, expected) => {
     expect(getMcpGrantAccessSummary(grant, t)).toBe(expected);
+  });
+});
+
+describe("limitMcpGrantAccessToOptions", () => {
+  const options = {
+    organizations: [{ id: "org-1", name: "One" }],
+    workspaces: [{ id: "ws-1", name: "WS", organizationId: "org-1", organizationName: "One" }],
+  };
+
+  test("drops what the picker no longer offers, keeping the order", () => {
+    expect(
+      limitMcpGrantAccessToOptions({ access: "workspaces", workspaceIds: ["ws-lost", "ws-1"] }, options)
+    ).toEqual({ access: "workspaces", workspaceIds: ["ws-1"] });
+    expect(
+      limitMcpGrantAccessToOptions(
+        { access: "organizations", organizationIds: ["org-1", "org-billing"] },
+        options
+      )
+    ).toEqual({ access: "organizations", organizationIds: ["org-1"] });
+  });
+
+  test("leaves All access alone, and may leave a selection empty", () => {
+    expect(limitMcpGrantAccessToOptions({ access: "all" }, options)).toEqual({ access: "all" });
+    expect(
+      limitMcpGrantAccessToOptions({ access: "workspaces", workspaceIds: ["ws-lost"] }, options)
+    ).toEqual({
+      access: "workspaces",
+      workspaceIds: [],
+    });
   });
 });

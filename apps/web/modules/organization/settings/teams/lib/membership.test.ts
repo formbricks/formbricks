@@ -44,7 +44,7 @@ vi.mock("@/lib/authzed/team-workspace", () => ({
 }));
 vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({
   revokeAllUserOAuthGrants: vi.fn(),
-  queueRevokedMcpGrantAudits: vi.fn(),
+  finishRevokedMcpGrants: vi.fn(),
 }));
 
 const organizationId = "org-1";
@@ -159,7 +159,6 @@ describe("deleteMembership", () => {
           userId,
         },
       },
-      select: { role: true },
     });
     expect(reconcileOrganizationMembership).toHaveBeenCalledWith(organizationId, userId);
     expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
@@ -175,9 +174,9 @@ describe("deleteMembership", () => {
     "revokes the user's OAuth grants in the transaction only when %s (S13)",
     async (_label, removedRole, remainingRoles, revokes) => {
       vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.membership.delete).mockResolvedValue({
-        ...mockMembership,
+      vi.mocked(prisma.membership.findUnique).mockResolvedValue({
         role: removedRole,
+        user: { isActive: true },
       } as never);
       vi.mocked(prisma.membership.findMany).mockResolvedValue(
         remainingRoles.map((role) => ({ role })) as never
@@ -187,7 +186,15 @@ describe("deleteMembership", () => {
       await deleteMembership(userId, organizationId);
 
       if (revokes) {
+        expect(prisma.membership.findMany).toHaveBeenCalledWith({
+          where: { userId, organizationId: { not: organizationId } },
+          select: { role: true },
+        });
         expect(revokeAllUserOAuthGrants).toHaveBeenCalledWith(prisma, userId);
+        // Before the membership goes, so the grants' audit entries are filed under this organization too.
+        expect(vi.mocked(revokeAllUserOAuthGrants).mock.invocationCallOrder[0]).toBeLessThan(
+          vi.mocked(prisma.membership.delete).mock.invocationCallOrder[0]
+        );
       } else {
         expect(revokeAllUserOAuthGrants).not.toHaveBeenCalled();
       }

@@ -19,14 +19,14 @@ import { createApiKey } from "@/modules/organization/settings/api-keys/lib/api-k
 // The data migration under test (auto-discovered by the migration runner at deploy).
 import { backfillMcpGrants } from "../../../../packages/database/migration/20261112120001_backfill_mcp_grants/migration";
 import type { TMcpGrantPermissions } from "./grant";
-import { getMcpGrant, saveMcpGrant } from "./grant-store";
+import { getMcpGrant, lockMcpGrant, writeMcpGrant } from "./grant-store";
 
 /**
  * ENG-7149 against the real Better Auth instance, Postgres and SpiceDB: every MCP connection has a grant,
  * and every tool call through `/api/mcp` is held to it. Tokens come from the real OAuth flow (DCR,
  * authorize, consent, code exchange) and every call goes through the route, as a client's would.
  *
- * A grant narrower than the client's scopes is set with `saveMcpGrant`, the store Authorized apps' Edit
+ * A grant narrower than the client's scopes is set with `writeMcpGrant`, the store Authorized apps' Edit
  * will write through (ENG-7152), since no screen sets one yet.
  */
 
@@ -114,9 +114,10 @@ const setUp = async (role: "owner" | "readOnlyMember" = "owner"): Promise<TSetup
 };
 
 const setGrant = (setup: TSetup, permissions: TMcpGrantPermissions) =>
-  prisma.$transaction((tx) =>
-    saveMcpGrant(tx, { userId: setup.userId, clientId: setup.clientId, permissions })
-  );
+  prisma.$transaction(async (tx) => {
+    const ids = { userId: setup.userId, clientId: setup.clientId };
+    return writeMcpGrant(tx, { ...ids, before: await lockMcpGrant(tx, ids), permissions });
+  });
 
 const listSurveys = (accessToken: string, setup: TSetup) =>
   callMcpTool({ accessToken }, "list_surveys", { workspaceId: setup.workspaceId });
@@ -416,5 +417,39 @@ describe("connections from before grants existed", () => {
     });
     expect(await getMcpGrant(setup.userId, setup.clientId)).toEqual(first);
     expect(await prisma.mcpGrant.count()).toBe(1);
+  }, 120_000);
+  test("a Dashboard viewer's wider consent becomes what the consent screen offers a viewer", async () => {
+    const setup = await setUp();
+    await grant(setup.cookie, setup.clientId, EVERYTHING);
+    await prisma.mcpGrant.deleteMany({ where: { userId: setup.userId } });
+    // Made a viewer after consenting, on an instance whose role change didn't end the consent.
+    await prisma.membership.update({
+      where: { userId_organizationId: { userId: setup.userId, organizationId: setup.organizationId } },
+      data: { role: "dashboard_viewer" },
+    });
+
+    await runBackfill();
+
+    expect((await getMcpGrant(setup.userId, setup.clientId))?.permissions).toEqual({
+      charts: "read",
+      dashboards: "read",
+    });
+  }, 120_000);
+
+  test("a user who is a viewer in one organization and a member in another keeps their scopes' levels", async () => {
+    const setup = await setUp();
+    await grant(setup.cookie, setup.clientId, "openid dashboards:read dashboards:write");
+    await prisma.mcpGrant.deleteMany({ where: { userId: setup.userId } });
+    const other = await prisma.organization.create({ data: { name: "Viewer org" } });
+    await prisma.membership.create({
+      data: { userId: setup.userId, organizationId: other.id, role: "dashboard_viewer", accepted: true },
+    });
+
+    await runBackfill();
+
+    expect((await getMcpGrant(setup.userId, setup.clientId))?.permissions).toEqual({
+      charts: "write",
+      dashboards: "write",
+    });
   }, 120_000);
 });

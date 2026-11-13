@@ -2,7 +2,7 @@
 
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import type { TMcpConnectionResource } from "@/app/api/internal/mcp-grants/lib/serializers";
+import type { TAuthorizedMcpClientResource } from "@/app/api/internal/mcp-grants/lib/serializers";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { McpGrantDraftFields } from "@/modules/mcp/components/mcp-grant-draft-fields";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
@@ -21,7 +21,7 @@ import {
 import { useUpdateMcpGrant } from "../hooks/use-update-mcp-grant";
 
 interface EditMcpGrantDialogProps {
-  connection: TMcpConnectionResource & {
+  client: TAuthorizedMcpClientResource & {
     permissions: TMcpGrantPermissions;
     access: TMcpGrantAccessSelection;
   };
@@ -34,12 +34,12 @@ interface EditMcpGrantDialogProps {
 
 /**
  * Authorized apps' Edit: the consent screen's organization & workspace access and permission matrix in a
- * dialog, opened with the connection's grant and capped by its scopes. Save applies from the client's
+ * dialog, opened with the client's grant and capped by its scopes. Save applies from the client's
  * next call; Cancel discards the changes. Mounted only while open, so each opening starts from the saved
  * grant.
  */
 export const EditMcpGrantDialog = ({
-  connection,
+  client,
   accessOptions,
   clientName,
   isDashboardViewer,
@@ -47,8 +47,8 @@ export const EditMcpGrantDialog = ({
 }: Readonly<EditMcpGrantDialogProps>) => {
   const { t } = useTranslation();
   const draft = useMcpGrantDraft(
-    { permissions: connection.permissions, access: initialMcpGrantAccessDraft(connection.access) },
-    { permissions: connection.permissions, access: connection.access }
+    { permissions: client.permissions, access: initialMcpGrantAccessDraft(client.access) },
+    { permissions: client.permissions, access: client.access }
   );
   const updateGrant = useUpdateMcpGrant();
 
@@ -59,7 +59,7 @@ export const EditMcpGrantDialog = ({
   const handleSave = () => {
     if (!draft.accessSelection) return;
     updateGrant.mutate(
-      { clientId: connection.clientId, permissions: draft.permissions, access: draft.accessSelection },
+      { clientId: client.clientId, permissions: draft.permissions, access: draft.accessSelection },
       {
         onSuccess: () => {
           toast.success(t("auth.oauth.grant_updated"));
@@ -79,10 +79,10 @@ export const EditMcpGrantDialog = ({
         </DialogHeader>
         <DialogBody className="space-y-6 overflow-y-auto px-1 py-4">
           <McpGrantDraftFields
-            id={`mcp-edit-${connection.consentId}`}
+            id={`mcp-edit-${client.clientId}`}
             draft={draft}
             accessOptions={accessOptions}
-            cap={connection.cap}
+            cap={client.cap}
             isDashboardViewer={isDashboardViewer}
             emptyHint={t("auth.oauth.edit_empty_grant_hint")}
             disabled={updateGrant.isPending}

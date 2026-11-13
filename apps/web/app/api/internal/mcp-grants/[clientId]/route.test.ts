@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { PATCH } from "./route";
+import { DELETE, PATCH } from "./route";
 
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   isDashboardViewerOnly: vi.fn(),
   editMcpGrant: vi.fn(),
+  revokeMcpClient: vi.fn(),
   queueMcpGrantAudit: vi.fn(),
   queueAuditEvent: vi.fn(),
 }));
@@ -14,7 +15,8 @@ vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
 vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
   isDashboardViewerOnly: mocks.isDashboardViewerOnly,
 }));
-vi.mock("@/modules/mcp/connections", () => ({ editMcpGrant: mocks.editMcpGrant }));
+vi.mock("@/modules/mcp/authorized-clients", () => ({ editMcpGrant: mocks.editMcpGrant }));
+vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({ revokeMcpClient: mocks.revokeMcpClient }));
 vi.mock("@/modules/mcp/grant-store", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/mcp/grant-store")>()),
   queueMcpGrantAudit: mocks.queueMcpGrantAudit,
@@ -151,7 +153,7 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
   });
 
   test("refuses with 422 an organization or workspace the user can't pick, rather than saving it as none", async () => {
-    mocks.editMcpGrant.mockResolvedValueOnce({ status: "selection_unreachable", field: "workspaceIds" });
+    mocks.editMcpGrant.mockResolvedValueOnce({ status: "selection_unavailable", field: "workspaceIds" });
 
     const response = await edit({
       permissions: { surveys: "read" },
@@ -161,9 +163,10 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
 
     expect(response.status).toBe(422);
     const body = await response.json();
-    expect(body.code).toBe("unprocessable_content");
+    expect(body.code).toBe("mcp_grant_selection_unavailable");
+    expect(body.detail).toBe("Pick only workspaces you have access to.");
     expect(body.invalid_params).toEqual([
-      { name: "workspaceIds", reason: "Pick only workspaces you can reach" },
+      { name: "workspaceIds", reason: "Pick only workspaces you have access to" },
     ]);
   });
 
@@ -185,5 +188,62 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
 
     expect((await edit({ permissions: { surveys: "read" } })).status).toBe(401);
     expect(mocks.editMcpGrant).not.toHaveBeenCalled();
+  });
+});
+
+const revoke = (clientId = CLIENT_ID) =>
+  DELETE(
+    new NextRequest(`http://localhost/api/internal/mcp-grants/${clientId}`, {
+      method: "DELETE",
+      headers: { "x-request-id": "req_1" },
+    }),
+    { params: Promise.resolve({ clientId }) } as never
+  );
+
+describe("DELETE /api/internal/mcp-grants/{clientId}", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
+    mocks.queueAuditEvent.mockResolvedValue(undefined);
+  });
+
+  test("revokes the session user's own client and audits each grant it ended, as the user", async () => {
+    const grant = stored({ surveys: "read" }, ["clws11111111111111111111"]);
+    mocks.revokeMcpClient.mockResolvedValue({
+      consentsDeleted: 0,
+      refreshTokensRevoked: 1,
+      accessTokensRevoked: 0,
+      grants: [grant],
+    });
+
+    const response = await revoke();
+
+    expect(response.status).toBe(200);
+    expect((await response.json()).data).toEqual({ clientId: CLIENT_ID });
+    expect(mocks.revokeMcpClient).toHaveBeenCalledWith({ userId: USER_ID, clientId: CLIENT_ID });
+    expect(mocks.queueMcpGrantAudit).toHaveBeenCalledWith({
+      action: "deleted",
+      actorUserId: USER_ID,
+      before: grant,
+      after: null,
+    });
+    // The grant store files the entries; the wrapper's own entry is skipped.
+    expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
+  });
+
+  test("answers 403 for a client the user has nothing for, like another user's", async () => {
+    mocks.revokeMcpClient.mockResolvedValue(null);
+
+    const response = await revoke("someone-elses-client");
+
+    expect(response.status).toBe(403);
+    expect(mocks.queueMcpGrantAudit).not.toHaveBeenCalled();
+  });
+
+  test("returns 401 without a session and revokes nothing", async () => {
+    mocks.getSession.mockResolvedValue(null);
+
+    expect((await revoke()).status).toBe(401);
+    expect(mocks.revokeMcpClient).not.toHaveBeenCalled();
   });
 });

@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { RevokeOAuthConsentButton } from "@/app/(app)/account/settings/authorized-apps/components/RevokeOAuthConsentButton";
-import type { TMcpConnectionResource } from "@/app/api/internal/mcp-grants/lib/serializers";
+import type { TAuthorizedMcpClientResource } from "@/app/api/internal/mcp-grants/lib/serializers";
 import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { getHostFromUrl } from "@/modules/auth/lib/oauth-client-metadata";
 import { Button } from "@/modules/ui/components/button";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
-import { useMcpConnections } from "../hooks/use-mcp-connections";
+import { useAuthorizedMcpClients } from "../hooks/use-authorized-mcp-clients";
 import { EditMcpGrantDialog } from "./edit-mcp-grant-dialog";
 import { McpGrantSummary } from "./mcp-grant-summary";
+import { RevokeMcpGrantButton } from "./revoke-mcp-grant-button";
 
 interface AuthorizedAppsListProps {
   locale: string;
@@ -20,11 +20,12 @@ interface AuthorizedAppsListProps {
 
 /**
  * Authorized apps' list (ENG-7152): every MCP client the user connected, each with its grant as one chip
- * per category, and Edit and Revoke. A client connected twice (two registrations) is two rows.
+ * per category, and Edit and Revoke. A client registered twice is two rows, and a client authorized
+ * without the consent screen (`skipConsent`) is listed like any other.
  */
 export const AuthorizedAppsList = ({ locale }: Readonly<AuthorizedAppsListProps>) => {
   const { t } = useTranslation();
-  const { data, isPending, isError, error, refetch } = useMcpConnections();
+  const { data, isPending, isError, error, refetch } = useAuthorizedMcpClients();
   const [editingClientId, setEditingClientId] = useState<string | null>(null);
 
   if (isPending) {
@@ -48,13 +49,13 @@ export const AuthorizedAppsList = ({ locale }: Readonly<AuthorizedAppsListProps>
     );
   }
 
-  if (data.connections.length === 0) {
+  if (data.clients.length === 0) {
     return <p className="text-sm text-slate-600">{t("auth.oauth.no_authorized_apps")}</p>;
   }
 
-  const clientNameOf = (connection: TMcpConnectionResource) =>
-    connection.clientName ?? t("auth.oauth.unknown_client");
-  const editing = data.connections.find((connection) => connection.clientId === editingClientId);
+  const clientNameOf = (client: TAuthorizedMcpClientResource) =>
+    client.clientName ?? t("auth.oauth.unknown_client");
+  const editing = data.clients.find((client) => client.clientId === editingClientId);
 
   return (
     <>
@@ -69,44 +70,44 @@ export const AuthorizedAppsList = ({ locale }: Readonly<AuthorizedAppsListProps>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {data.connections.map((connection) => {
-            const clientName = clientNameOf(connection);
+          {data.clients.map((client) => {
+            const clientName = clientNameOf(client);
             return (
-              <TableRow key={connection.clientId} className="hover:bg-slate-100">
+              <TableRow key={client.clientId} className="hover:bg-slate-100">
                 <TableCell>
                   <div className="space-y-1">
                     <p className="font-medium text-slate-900">{clientName}</p>
                     <p className="text-xs break-all text-slate-500">
-                      {getHostFromUrl(connection.clientUri) ?? connection.clientUri ?? connection.clientId}
+                      {getHostFromUrl(client.clientUri) ?? client.clientUri ?? client.clientId}
                     </p>
                   </div>
                 </TableCell>
                 <TableCell>
                   <McpGrantSummary
-                    permissions={connection.permissions ?? {}}
-                    access={connection.access}
+                    permissions={client.permissions ?? {}}
+                    access={client.access}
                     isDashboardViewer={data.isDashboardViewer}
                   />
                 </TableCell>
                 <TableCell className="text-slate-600">
-                  {formatDateTimeForDisplay(new Date(connection.connectedAt), locale)}
+                  {formatDateTimeForDisplay(new Date(client.connectedAt), locale)}
                 </TableCell>
                 <TableCell className="text-slate-600">
-                  {formatDateTimeForDisplay(new Date(connection.updatedAt), locale)}
+                  {formatDateTimeForDisplay(new Date(client.updatedAt), locale)}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
-                    {connection.permissions && (
+                    {client.permissions && (
                       <Button
                         type="button"
                         variant="secondary"
                         size="sm"
                         aria-label={t("auth.oauth.edit_access_title", { clientName })}
-                        onClick={() => setEditingClientId(connection.clientId)}>
+                        onClick={() => setEditingClientId(client.clientId)}>
                         {t("common.edit")}
                       </Button>
                     )}
-                    <RevokeOAuthConsentButton consentId={connection.consentId} />
+                    <RevokeMcpGrantButton clientId={client.clientId} clientName={clientName} />
                   </div>
                 </TableCell>
               </TableRow>
@@ -116,7 +117,7 @@ export const AuthorizedAppsList = ({ locale }: Readonly<AuthorizedAppsListProps>
       </Table>
       {editing?.permissions && editing.access && (
         <EditMcpGrantDialog
-          connection={{ ...editing, permissions: editing.permissions, access: editing.access }}
+          client={{ ...editing, permissions: editing.permissions, access: editing.access }}
           accessOptions={data.accessOptions}
           clientName={clientNameOf(editing)}
           isDashboardViewer={data.isDashboardViewer}

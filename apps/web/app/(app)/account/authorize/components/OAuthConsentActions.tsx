@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { authClient } from "@/modules/auth/lib/auth-client";
+import { getConsentErrorMessage } from "@/modules/auth/lib/mcp-grant-consent-errors";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
 import { toMcpGrantAccessRequest } from "@/modules/mcp/grant-access";
 import { Button } from "@/modules/ui/components/button";
@@ -47,7 +48,8 @@ export const OAuthConsentActions = ({
           : { accept },
       });
       if (response.error) {
-        toast.error(t("auth.oauth.consent_failed"));
+        // A refused Allow says why: a pick the user can no longer select, or a grant that couldn't be saved.
+        toast.error(getConsentErrorMessage(response.error, t));
         return;
       }
 

@@ -1,7 +1,7 @@
 /** Typed query-key factory. Never inline string keys: the mutation hooks invalidate these exact tuples. */
-const mcpConnectionCacheKeyBase = ["mcp-connections"] as const;
+const authorizedMcpClientCacheKeyBase = ["authorized-mcp-clients"] as const;
 
-export const mcpConnectionKeys = {
-  all: mcpConnectionCacheKeyBase,
-  list: () => [...mcpConnectionCacheKeyBase, "list"] as const,
+export const authorizedMcpClientKeys = {
+  all: authorizedMcpClientCacheKeyBase,
+  list: () => [...authorizedMcpClientCacheKeyBase, "list"] as const,
 };

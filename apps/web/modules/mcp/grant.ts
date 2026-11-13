@@ -27,6 +27,42 @@ export type TMcpGrantAccessSelection =
   | { access: "organizations"; organizationIds: string[] }
   | { access: "workspaces"; workspaceIds: string[] };
 
+/**
+ * The columns a grant's organization & workspace access is read from, for a Prisma `select` on `McpGrant`.
+ * Every reader of a stored grant's access selects these and maps them with
+ * {@link readMcpGrantAccessSelection}, so the rows are read and interpreted in one place.
+ */
+export const MCP_GRANT_ACCESS_SELECT = {
+  access: true,
+  organizations: { select: { organizationId: true }, orderBy: { organizationId: "asc" } },
+  workspaces: { select: { workspaceId: true }, orderBy: { workspaceId: "asc" } },
+} as const;
+
+/** A row as {@link MCP_GRANT_ACCESS_SELECT} reads it. */
+export type TMcpGrantAccessRow = {
+  access: TMcpGrantAccess;
+  organizations: ReadonlyArray<{ organizationId: string }>;
+  workspaces: ReadonlyArray<{ workspaceId: string }>;
+};
+
+/**
+ * A stored grant's organization & workspace access. Only the selection its mode reads: a stray row of the
+ * other kind reaches nothing (ADR-0042), so it is not projected, shown or audited either.
+ */
+export const readMcpGrantAccessSelection = (row: TMcpGrantAccessRow): TMcpGrantAccessSelection => {
+  switch (row.access) {
+    case "all":
+      return { access: "all" };
+    case "organizations":
+      return {
+        access: "organizations",
+        organizationIds: row.organizations.map(({ organizationId }) => organizationId),
+      };
+    case "workspaces":
+      return { access: "workspaces", workspaceIds: row.workspaces.map(({ workspaceId }) => workspaceId) };
+  }
+};
+
 /** The most organizations or workspaces one grant selects: far above a person's own memberships. */
 export const MAX_MCP_GRANT_SELECTIONS = 500;
 

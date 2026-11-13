@@ -28,7 +28,6 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 const workspaceId = "clxx1234567890123456789012";
-const otherWorkspaceId = "clyy1234567890123456789012";
 const organizationId = "clzz1234567890123456789012";
 const tagId = "cltt1234567890123456789012";
 const otherTagId = "cluu1234567890123456789012";

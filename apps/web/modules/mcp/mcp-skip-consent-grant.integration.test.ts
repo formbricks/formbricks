@@ -1,5 +1,8 @@
+import { NextRequest } from "next/server";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { DELETE as revokeGrant } from "@/app/api/internal/mcp-grants/[clientId]/route";
+import { GET as listGrants } from "@/app/api/internal/mcp-grants/route";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { callMcpTool, serveJwksFromAuthHandler, succeeded, toolText } from "@/integration/mcp-client";
 import { createUser, grant, refresh, registerClient, signIn } from "@/integration/oauth-flow";
@@ -13,6 +16,12 @@ import { getMcpGrant } from "./grant-store";
  * issued instead, by the migration's rule: All access, each permission at its scope family's level, and
  * Tags and Audience at No access. Driven through the real OAuth flow and `POST /api/mcp`.
  */
+
+/** The signed-in user the internal grant routes read, as Authorized apps sends it. */
+const session = vi.hoisted(() => ({ userId: "" }));
+vi.mock("@/modules/auth/lib/session", () => ({
+  getSession: vi.fn(async () => (session.userId ? { user: { id: session.userId } } : null)),
+}));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/audit-logs/lib/handler")>()),
@@ -114,5 +123,37 @@ describe("a skipConsent client", () => {
     const again = await refresh(setup.clientId, (refreshed.body as { refresh_token: string }).refresh_token);
     expect(again.status, JSON.stringify(again.body)).toBe(200);
     expect((await getMcpGrant(setup.userId, setup.clientId))?.permissions).toEqual({ surveys: "read" });
+  });
+
+  // Spec stories 29 and 38: Authorized apps lists it like any other client, and Revoke ends it.
+  test("is listed on Authorized apps, and Revoke ends its grant and its current token's access", async () => {
+    const { access_token, refresh_token } = await grant(setup.cookie, setup.clientId, EVERYTHING);
+    session.userId = setup.userId;
+
+    const listed = await listGrants(new NextRequest("http://localhost:3000/api/internal/mcp-grants"), {
+      params: Promise.resolve({}),
+    } as never);
+    const { data } = (await listed.json()) as { data: { clients: { clientId: string; access: unknown }[] } };
+    expect(data.clients).toEqual([
+      expect.objectContaining({ clientId: setup.clientId, access: { access: "all" } }),
+    ]);
+
+    const revoked = await revokeGrant(
+      new NextRequest(`http://localhost:3000/api/internal/mcp-grants/${setup.clientId}`, {
+        method: "DELETE",
+      }),
+      { params: Promise.resolve({ clientId: setup.clientId }) } as never
+    );
+    expect(revoked.status).toBe(200);
+
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+    // The access token is a JWT that can't be revoked, but without a grant its next call answers 401.
+    const after = await callMcpTool({ accessToken: access_token }, "list_surveys", {
+      workspaceId: setup.workspaceId,
+    });
+    expect(after.status).toBe(401);
+    // And the refresh token can't mint a new one, so the grant doesn't come back.
+    expect((await refresh(setup.clientId, refresh_token)).status).not.toBe(200);
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
   });
 });

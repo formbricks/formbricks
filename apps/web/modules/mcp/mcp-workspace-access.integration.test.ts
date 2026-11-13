@@ -1,5 +1,7 @@
+import { NextRequest } from "next/server";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { GET as listGrants } from "@/app/api/internal/mcp-grants/route";
 import { listV3DashboardFilterFields } from "@/app/api/v3/dashboards/lib/filter-fields-operations";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { sessionOf } from "@/integration/dashboards-fixture";
@@ -10,8 +12,9 @@ import {
   succeeded,
   toolText,
 } from "@/integration/mcp-client";
-import { createUser, grant, registerClient, signIn } from "@/integration/oauth-flow";
+import { authorize, consent, createUser, grant, registerClient, signIn } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
+import { reconcileMcpGrantRelationships } from "@/lib/authzed/mcp-grant";
 import { auth } from "@/modules/auth/lib/auth";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { DEFAULT_CREATIVE_STYLING } from "@/modules/ee/creatives/lib/creative";
@@ -20,9 +23,9 @@ import {
   getIsFeedbackDirectoriesEnabled,
   getIsWorkflowsEnabled,
 } from "@/modules/ee/license-check/lib/utils";
-import { editMcpGrant } from "./connections";
+import { editMcpGrant } from "./authorized-clients";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "./grant";
-import { getMcpGrant } from "./grant-store";
+import { getMcpGrant, lockMcpGrant, narrowMcpGrantAccess, writeMcpGrant } from "./grant-store";
 
 /**
  * ENG-7153 (ADR-0042) against the real Better Auth instance, Postgres and SpiceDB: a grant's organization
@@ -38,6 +41,11 @@ import { getMcpGrant } from "./grant-store";
 
 /** Set to make every SpiceDB relationship write fail, as during an outage; reads keep working. */
 const spicedbWrites = vi.hoisted(() => ({ failing: false }));
+/** The signed-in user the internal grant routes read, as Authorized apps sends it. */
+const session = vi.hoisted(() => ({ userId: "" }));
+vi.mock("@/modules/auth/lib/session", () => ({
+  getSession: vi.fn(async () => (session.userId ? { user: { id: session.userId } } : null)),
+}));
 vi.mock("@/lib/authzed/client", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/authzed/client")>();
   return {
@@ -467,24 +475,82 @@ describe("organization & workspace access on MCP calls", () => {
     expect(succeeded(after), toolText(after)).toBe(true);
   });
 
-  test("Revoke is refused, and the grant kept, when SpiceDB can't drop its reach", async () => {
+  // Revoke doesn't depend on SpiceDB: the deleted grant row is what ends the access.
+  test("Revoke goes through while SpiceDB is down, the next call answers 401, and the outbox cleans up", async () => {
     await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
-    const consent = await prisma.oauthConsent.findFirstOrThrow({
+    const consentRow = await prisma.oauthConsent.findFirstOrThrow({
       where: { userId: setup.userId, clientId: setup.clientId },
     });
     spicedbWrites.failing = true;
     try {
-      await expect(
-        auth.api.deleteOAuthConsent({
-          body: { id: consent.id },
-          headers: new Headers({ cookie: setup.cookie }),
-        })
-      ).rejects.toThrow();
+      await auth.api.deleteOAuthConsent({
+        body: { id: consentRow.id },
+        headers: new Headers({ cookie: setup.cookie }),
+      });
     } finally {
       spicedbWrites.failing = false;
     }
 
-    expect(await getMcpGrant(setup.userId, setup.clientId)).not.toBeNull();
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+    const after = await callMcpTool({ accessToken: setup.accessToken }, "list_workspaces", {});
+    expect(after.status).toBe(401);
+    // The delete queued the grant; the outbox removes what the post-commit removal couldn't.
+    await synchronizeAuthzedIntegrationFixture();
+  });
+
+  test("a consent re-approval narrowing the access fails, changing nothing, when SpiceDB can't drop it", async () => {
+    await setAccess(setup, {
+      access: "workspaces",
+      workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId],
+    });
+    const { target } = await authorize(setup.cookie, setup.clientId, EVERYTHING, { prompt: "consent" });
+    spicedbWrites.failing = true;
+    let response: Response;
+    try {
+      response = await consent(setup.cookie, target, {
+        accept: true,
+        mcp_grant: { permissions: READ_ALL, access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+      });
+    } finally {
+      spicedbWrites.failing = false;
+    }
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toMatchObject({ code: "mcp_grant_not_saved" });
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toMatchObject({
+      access: "workspaces",
+      workspaceIds: sorted(setup.inside.workspaceId, setup.outside.workspaceId),
+    });
+    const still = await callMcpTool({ accessToken: setup.accessToken }, "get_survey", {
+      surveyId: setup.outside.surveyId,
+    });
+    expect(succeeded(still), toolText(still)).toBe(true);
+  });
+
+  test("a crafted approval naming a workspace the user can't select is refused, and saves nothing", async () => {
+    await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
+    const stranger = await prisma.organization.create({ data: { name: "Stranger" } });
+    const foreign = await prisma.workspace.create({
+      data: { name: "Not mine", organizationId: stranger.id },
+    });
+    await synchronizeAuthzedIntegrationFixture();
+    const { target } = await authorize(setup.cookie, setup.clientId, EVERYTHING, { prompt: "consent" });
+
+    const response = await consent(setup.cookie, target, {
+      accept: true,
+      mcp_grant: { permissions: READ_ALL, access: "workspaces", workspaceIds: [foreign.id] },
+    });
+
+    expect(response.status).toBe(422);
+    expect(await response.json()).toMatchObject({
+      error: "invalid_request",
+      error_description: "Pick only workspaces you have access to.",
+      code: "mcp_grant_selection_unavailable",
+    });
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toMatchObject({
+      access: "workspaces",
+      workspaceIds: [setup.inside.workspaceId],
+    });
   });
 
   test("an edit widening the access applies on the next call with the same token", async () => {
@@ -754,7 +820,7 @@ describe("organization & workspace access on MCP calls", () => {
         isDashboardViewer: false,
       });
       expect(edited).toEqual({
-        status: "selection_unreachable",
+        status: "selection_unavailable",
         field: access.access === "organizations" ? "organizationIds" : "workspaceIds",
       });
     }
@@ -762,5 +828,153 @@ describe("organization & workspace access on MCP calls", () => {
       access: "workspaces",
       workspaceIds: [setup.inside.workspaceId],
     });
+  });
+
+  // Spec story 36: the grant's rows stay when the user loses access, but nothing shows or keeps them.
+  describe("after the user loses access to what the grant selects", () => {
+    const listed = async () => {
+      session.userId = setup.userId;
+      const response = await listGrants(new NextRequest("http://localhost:3000/api/internal/mcp-grants"), {
+        params: Promise.resolve({}),
+      } as never);
+      const { data } = (await response.json()) as {
+        data: { clients: { clientId: string; access: TMcpGrantAccessSelection }[] };
+      };
+      return data.clients.find(({ clientId }) => clientId === setup.clientId)?.access;
+    };
+
+    /** Acme membership becomes a member's whose team reads only "In": "Out" is lost. */
+    const loseOutside = async () => {
+      await prisma.membership.update({
+        where: { userId_organizationId: { userId: setup.userId, organizationId: setup.acmeId } },
+        data: { role: "member" },
+      });
+      const team = await prisma.team.create({ data: { name: "In only", organizationId: setup.acmeId } });
+      await prisma.teamUser.create({ data: { role: "contributor", teamId: team.id, userId: setup.userId } });
+      await prisma.workspaceTeam.create({
+        data: { permission: "read", teamId: team.id, workspaceId: setup.inside.workspaceId },
+      });
+      await synchronizeAuthzedIntegrationFixture();
+    };
+
+    test("a lost workspace isn't counted, Edit opens without it, and a save drops it without refusing", async () => {
+      await setAccess(setup, {
+        access: "workspaces",
+        workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId],
+      });
+      await loseOutside();
+
+      expect(await listed()).toEqual({ access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
+
+      // A permissions-only save, sending the selection Edit opened with.
+      const opened = await editMcpGrant({
+        userId: setup.userId,
+        clientId: setup.clientId,
+        permissions: { surveys: "read" },
+        access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+        isDashboardViewer: false,
+      });
+      expect(opened.status).toBe("saved");
+
+      // Resending the stored selection, lost id included, is no refusal either: the lost id is dropped.
+      await setAccess(setup, {
+        access: "workspaces",
+        workspaceIds: [setup.inside.workspaceId],
+      });
+      await prisma.mcpGrantWorkspace.create({
+        data: {
+          grantId: (await getMcpGrant(setup.userId, setup.clientId))!.id,
+          workspaceId: setup.outside.workspaceId,
+        },
+      });
+      const resent = await editMcpGrant({
+        userId: setup.userId,
+        clientId: setup.clientId,
+        permissions: READ_ALL,
+        access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId] },
+        isDashboardViewer: false,
+      });
+      expect(resent.status).toBe("saved");
+      expect(await getMcpGrant(setup.userId, setup.clientId)).toMatchObject({
+        workspaceIds: [setup.inside.workspaceId],
+      });
+    });
+
+    test("adding a workspace the user can no longer select is still refused", async () => {
+      await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
+      await loseOutside();
+
+      const edited = await editMcpGrant({
+        userId: setup.userId,
+        clientId: setup.clientId,
+        permissions: READ_ALL,
+        access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId] },
+        isDashboardViewer: false,
+      });
+
+      expect(edited).toEqual({ status: "selection_unavailable", field: "workspaceIds" });
+    });
+
+    test("an organization now held only as a billing member isn't counted, and a save drops it", async () => {
+      await setAccess(setup, { access: "organizations", organizationIds: [setup.acmeId, setup.globexId] });
+      await prisma.membership.update({
+        where: { userId_organizationId: { userId: setup.userId, organizationId: setup.globexId } },
+        data: { role: "billing" },
+      });
+      await synchronizeAuthzedIntegrationFixture();
+
+      expect(await listed()).toEqual({ access: "organizations", organizationIds: [setup.acmeId] });
+      const saved = await editMcpGrant({
+        userId: setup.userId,
+        clientId: setup.clientId,
+        permissions: READ_ALL,
+        access: { access: "organizations", organizationIds: [setup.acmeId, setup.globexId] },
+        isDashboardViewer: false,
+      });
+      expect(saved.status).toBe("saved");
+      expect(await getMcpGrant(setup.userId, setup.clientId)).toMatchObject({
+        organizationIds: [setup.acmeId],
+      });
+    });
+  });
+
+  // A narrowing holds its grant's row `FOR UPDATE` from its SpiceDB delete to its commit, and the
+  // reconciling projection reads grants `FOR SHARE`: a reconcile can't write the old access back.
+  test("a reconcile racing a narrowing waits for it, and leaves the narrowed access", async () => {
+    await setAccess(setup, {
+      access: "workspaces",
+      workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId],
+    });
+    let reconcileSettled = false;
+    let reconcile: Promise<unknown> = Promise.resolve();
+
+    await prisma.$transaction(
+      async (tx) => {
+        const ids = { userId: setup.userId, clientId: setup.clientId };
+        const before = await lockMcpGrant(tx, ids);
+        const narrowed = await narrowMcpGrantAccess(tx, {
+          userId: setup.userId,
+          before,
+          access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+        });
+        if (narrowed.status !== "ok") throw new Error("expected the narrowing to resolve");
+        // The old access is gone from SpiceDB; a reconcile now starts while the rows still say the old one.
+        reconcile = reconcileMcpGrantRelationships({ grantIds: [before!.id] }).then((result) => {
+          reconcileSettled = true;
+          return result;
+        });
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        expect(reconcileSettled).toBe(false);
+        await writeMcpGrant(tx, { ...ids, before, permissions: READ_ALL, access: narrowed.access });
+      },
+      { timeout: 15_000 }
+    );
+
+    await expect(reconcile).resolves.toMatchObject({ status: "projected" });
+    expectNotFound(
+      await callMcpTool({ accessToken: setup.accessToken }, "get_survey", {
+        surveyId: setup.outside.surveyId,
+      })
+    );
   });
 });

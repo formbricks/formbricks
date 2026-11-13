@@ -15,7 +15,7 @@ import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-ur
 import { grantAudienceScope } from "../../../../packages/database/migration/20261112130000_grant_audience_scope/migration";
 import { grantAudienceScopeToClients } from "../../../../packages/database/migration/20261112130001_grant_audience_scope_to_clients/migration";
 import type { TMcpGrantPermissions } from "./grant";
-import { getMcpGrant, saveMcpGrant } from "./grant-store";
+import { getMcpGrant, lockMcpGrant, writeMcpGrant } from "./grant-store";
 
 /**
  * ENG-7151 against the real Better Auth instance, Postgres and SpiceDB: the Audience tools through
@@ -121,9 +121,10 @@ const setUp = async (): Promise<TSetup> => {
 };
 
 const setGrant = (setup: TSetup, permissions: TMcpGrantPermissions) =>
-  prisma.$transaction((tx) =>
-    saveMcpGrant(tx, { userId: setup.userId, clientId: setup.clientId, permissions })
-  );
+  prisma.$transaction(async (tx) => {
+    const ids = { userId: setup.userId, clientId: setup.clientId };
+    return writeMcpGrant(tx, { ...ids, before: await lockMcpGrant(tx, ids), permissions });
+  });
 
 /** Every Audience tool, the arguments it is called with, and the permission the grant must give. */
 const TOOLS = [

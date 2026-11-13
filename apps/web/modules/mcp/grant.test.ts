@@ -4,6 +4,7 @@ import {
   getMcpGrantPermissionsForScopes,
   isMcpGrantWithinCap,
   parseRequestedMcpGrant,
+  readMcpGrantAccessSelection,
 } from "./grant";
 
 describe("capMcpGrantPermissions", () => {
@@ -108,5 +109,21 @@ describe("parseRequestedMcpGrant", () => {
     ["null", null],
   ])("refuses %s", (_case, value) => {
     expect(parseRequestedMcpGrant(value)).toBeNull();
+  });
+});
+
+describe("readMcpGrantAccessSelection", () => {
+  test("reads only the selection the grant's mode reads", () => {
+    const rows = { organizations: [{ organizationId: "org-1" }], workspaces: [{ workspaceId: "ws-1" }] };
+
+    expect(readMcpGrantAccessSelection({ ...rows, access: "all" })).toEqual({ access: "all" });
+    expect(readMcpGrantAccessSelection({ ...rows, access: "organizations" })).toEqual({
+      access: "organizations",
+      organizationIds: ["org-1"],
+    });
+    expect(readMcpGrantAccessSelection({ ...rows, access: "workspaces" })).toEqual({
+      access: "workspaces",
+      workspaceIds: ["ws-1"],
+    });
   });
 });

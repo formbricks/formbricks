@@ -713,7 +713,7 @@ export function createMcpScopeNotPermittedResponse(
   return withInsufficientScopeChallenge(
     problemForbidden(
       requestId,
-      `Not permitted: the user's connection of this MCP client does not include ${needs}, because its OAuth token ${lacks}. Ask the user to reconnect the client and give it this access.`,
+      `Not permitted: the user's grant to this MCP client can't include ${needs}, because its OAuth token ${lacks}. Ask the user to reconnect the client and give it this access.`,
       "/api/mcp"
     ),
     challengeScopes

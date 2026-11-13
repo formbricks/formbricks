@@ -3,35 +3,46 @@ import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import {
-  type TMcpGrantReach,
   deleteMcpGrantRelationshipsBeforeCommit,
   reconcileMcpGrantRelationships,
+  removeDeletedMcpGrantRelationships,
 } from "@/lib/authzed/mcp-grant";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { type TActor, UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { type TMcpGrantSelectionResolution, resolveMcpGrantSelection } from "./access-options";
 import {
-  type TMcpGrantAccess,
+  MCP_GRANT_ACCESS_SELECT,
+  type TMcpGrantAccessRow,
   type TMcpGrantAccessSelection,
   type TMcpGrantPermissions,
   parseMcpGrantPermissions,
+  readMcpGrantAccessSelection,
 } from "./grant";
 import { getMcpGrantSelectedIds } from "./grant-access";
 import { MCP_PERMISSIONS, type TMcpPermission } from "./permissions";
 
 /**
- * Where grants live (ADR-0041): one `McpGrant` row per MCP connection (user + client). Saving and
- * deleting take the caller's transaction, so a grant is written and removed together with the consent
- * it belongs to.
+ * Where grants live (ADR-0041): one `McpGrant` row per user and MCP client. Saving and deleting take the
+ * caller's transaction, so a grant is written and removed together with the consent it belongs to.
  *
  * The organization & workspace selections (`McpGrantOrganization`, `McpGrantWorkspace`) are written in the
  * same transaction. Their triggers queue the grant for the SpiceDB projection (`lib/authzed/mcp-grant.ts`,
  * ADR-0042), so the relationships follow the rows through the outbox, and a cascade from a deleted
- * workspace, organization or grant drops them too. The synchronous write is ordered so the safe direction
- * wins: what a save or a delete takes away leaves SpiceDB inside the transaction, before it commits, and
- * a failure fails the change; what a save adds is written once it has committed ({@link projectMcpGrants}),
- * best-effort, with the outbox event as the repair. Either way the change applies on the client's next
- * call rather than when the outbox delivers.
+ * workspace, organization or grant drops them too. On top of that, each change is applied to SpiceDB
+ * synchronously, ordered so the safe direction wins:
+ *
+ *  - Narrowing a grant that stays (consent re-approval, Edit) deletes what it takes away inside the
+ *    transaction, while it holds the grant's row `FOR UPDATE` and before it locks any consent row
+ *    ({@link narrowMcpGrantAccess}). A failure fails the change.
+ *  - What a save adds is written once it has committed ({@link projectMcpGrants}), best-effort.
+ *  - Deleting a grant needs no SpiceDB call to take effect: `/api/mcp` refuses a request whose user and
+ *    client have no grant row. The relationships are removed once the delete has committed
+ *    ({@link removeDeletedMcpGrants}), best-effort.
+ *
+ * The outbox event is the repair for both best-effort writes. Every path that locks a grant row and
+ * consent rows takes the grant first, so they wait on each other rather than deadlock.
  */
 
 /**
@@ -50,65 +61,25 @@ const GRANT_SELECT = {
   id: true,
   userId: true,
   clientId: true,
-  access: true,
   permissions: true,
-  organizations: { select: { organizationId: true }, orderBy: { organizationId: "asc" } },
-  workspaces: { select: { workspaceId: true }, orderBy: { workspaceId: "asc" } },
+  ...MCP_GRANT_ACCESS_SELECT,
 } as const;
 
 /** A row as `GRANT_SELECT` reads it. */
-type TGrantRow = {
-  id: string;
-  userId: string;
-  clientId: string;
-  access: TMcpGrantAccess;
-  permissions: unknown;
-  organizations: { organizationId: string }[];
-  workspaces: { workspaceId: string }[];
-};
+type TGrantRow = TMcpGrantAccessRow & { id: string; userId: string; clientId: string; permissions: unknown };
 
-/**
- * A grant row's organization & workspace access. Only the selection its mode reads: a stray row of the
- * other kind reaches nothing (ADR-0042), so it is not shown or audited either.
- */
-export const readMcpGrantAccess = (
-  row: Pick<TGrantRow, "access" | "organizations" | "workspaces">
-): TMcpGrantAccessSelection => {
-  switch (row.access) {
-    case "all":
-      return { access: "all" };
-    case "organizations":
-      return {
-        access: "organizations",
-        organizationIds: row.organizations.map(({ organizationId }) => organizationId),
-      };
-    case "workspaces":
-      return { access: "workspaces", workspaceIds: row.workspaces.map(({ workspaceId }) => workspaceId) };
-  }
-};
-
-const withAccess = (
-  grant: Pick<TStoredMcpGrant, "id" | "userId" | "clientId" | "permissions">,
-  access: TMcpGrantAccessSelection
+const toStoredGrant = (
+  row: TGrantRow,
+  access: TMcpGrantAccessSelection = readMcpGrantAccessSelection(row)
 ): TStoredMcpGrant => ({
-  id: grant.id,
-  userId: grant.userId,
-  clientId: grant.clientId,
-  permissions: grant.permissions,
+  id: row.id,
+  userId: row.userId,
+  clientId: row.clientId,
+  permissions: parseMcpGrantPermissions(row.permissions),
   ...access,
 });
 
-const toStoredGrant = (row: TGrantRow, access: TMcpGrantAccessSelection = readMcpGrantAccess(row)) =>
-  withAccess({ ...row, permissions: parseMcpGrantPermissions(row.permissions) }, access);
-
-/** What a stored grant's SpiceDB relationships follow from. */
-const toReach = (grant: TStoredMcpGrant): TMcpGrantReach => ({
-  id: grant.id,
-  access: grant.access,
-  ...getMcpGrantSelectedIds(grant),
-});
-
-/** The connection's grant, or `null` when it has none. */
+/** The user's grant to the MCP client, or `null` when it has none. */
 export const getMcpGrant = async (userId: string, clientId: string): Promise<TStoredMcpGrant | null> => {
   const row = await prisma.mcpGrant.findUnique({
     where: { userId_clientId: { userId, clientId } },
@@ -117,7 +88,7 @@ export const getMcpGrant = async (userId: string, clientId: string): Promise<TSt
   return row ? toStoredGrant(row) : null;
 };
 
-/** Whether the connection has a grant, read in the caller's transaction. */
+/** Whether the user has a grant to the MCP client, read in the caller's transaction. */
 export const hasMcpGrant = async (
   tx: Prisma.TransactionClient,
   { userId, clientId }: { userId: string; clientId: string }
@@ -128,38 +99,41 @@ export const hasMcpGrant = async (
   })) !== null;
 
 /**
- * The part of `selection` the user may pick: organizations they belong to, and workspaces of those
- * organizations. Anything else is dropped rather than stored. It would reach nothing anyway (`can()`
- * checks the user too), but a stored id must name something the user could have seen in the picker.
+ * Locks the user's grant to the MCP client `FOR UPDATE` and reads it; `null` when there is none. The first
+ * step of every save: it serializes the save with a revoke, another save, and the reconciling projection
+ * (which reads grants `FOR SHARE`). Take it before the consent rows.
  */
-const ownSelection = async (
+export const lockMcpGrant = async (
   tx: Prisma.TransactionClient,
-  userId: string,
-  selection: TMcpGrantAccessSelection
-): Promise<TMcpGrantAccessSelection> => {
-  switch (selection.access) {
-    case "all":
-      return selection;
-    case "organizations": {
-      const memberships = await tx.membership.findMany({
-        where: { userId, organizationId: { in: selection.organizationIds } },
-        select: { organizationId: true },
-        orderBy: { organizationId: "asc" },
-      });
-      return {
-        access: "organizations",
-        organizationIds: memberships.map(({ organizationId }) => organizationId),
-      };
-    }
-    case "workspaces": {
-      const workspaces = await tx.workspace.findMany({
-        where: { id: { in: selection.workspaceIds }, organization: { memberships: { some: { userId } } } },
-        select: { id: true },
-        orderBy: { id: "asc" },
-      });
-      return { access: "workspaces", workspaceIds: workspaces.map(({ id }) => id) };
-    }
-  }
+  { userId, clientId }: { userId: string; clientId: string }
+): Promise<TStoredMcpGrant | null> => {
+  const [locked] = await tx.$queryRaw<{ id: string }[]>`
+    SELECT "id" FROM "McpGrant" WHERE "userId" = ${userId} AND "clientId" = ${clientId} FOR UPDATE`;
+  if (!locked) return null;
+  return toStoredGrant(
+    await tx.mcpGrant.findUniqueOrThrow({ where: { id: locked.id }, select: GRANT_SELECT })
+  );
+};
+
+/**
+ * The second step of a save that names an organization & workspace access, after {@link lockMcpGrant}:
+ * resolves the access to save by the rule the consent screen and Edit share
+ * (`resolveMcpGrantSelection`), and deletes from SpiceDB what it takes away from the grant `before`, now,
+ * so the narrowing applies on the client's next call or the save fails. Makes SpiceDB calls: run it before
+ * locking any consent row. Writes nothing to PostgreSQL; {@link writeMcpGrant} does.
+ */
+export const narrowMcpGrantAccess = async (
+  tx: Prisma.TransactionClient,
+  {
+    userId,
+    before,
+    access,
+  }: { userId: string; before: TStoredMcpGrant | null; access: TMcpGrantAccessSelection }
+): Promise<TMcpGrantSelectionResolution> => {
+  const resolved = await resolveMcpGrantSelection(tx, userId, access, before);
+  if (resolved.status === "ok" && before)
+    await deleteMcpGrantRelationshipsBeforeCommit(before, resolved.access);
+  return resolved;
 };
 
 /**
@@ -194,52 +168,43 @@ const replaceSelection = async (
 };
 
 /**
- * Sets the connection's grant: `permissions`, and the organization & workspace access `access` names.
- * Without `access` an existing grant keeps the access it has and a new one gets All access, so a request
- * that says nothing about it never widens it. Returns the grant before (`null` when created) and after,
- * for the audit entry.
+ * The last step of a save: writes the grant's `permissions` and, when given, the organization & workspace
+ * access {@link narrowMcpGrantAccess} resolved. Without `access` an existing grant keeps the access it has
+ * and a new one gets All access, so a request that says nothing about it never widens it. `before` is what
+ * {@link lockMcpGrant} read. Returns the grant before (`null` when created) and after, for the audit entry.
  */
-export const saveMcpGrant = async (
+export const writeMcpGrant = async (
   tx: Prisma.TransactionClient,
   {
     userId,
     clientId,
+    before,
     permissions,
     access,
   }: {
     userId: string;
     clientId: string;
+    before: TStoredMcpGrant | null;
     permissions: TMcpGrantPermissions;
     access?: TMcpGrantAccessSelection;
   }
 ): Promise<{ before: TStoredMcpGrant | null; after: TStoredMcpGrant }> => {
-  const existing = await tx.mcpGrant.findUnique({
-    where: { userId_clientId: { userId, clientId } },
-    select: GRANT_SELECT,
-  });
-  const mode = access?.access ?? existing?.access ?? "all";
+  const mode = access?.access ?? before?.access ?? "all";
   const row = await tx.mcpGrant.upsert({
     where: { userId_clientId: { userId, clientId } },
     create: { userId, clientId, access: mode, permissions },
     // `access` only when it changes: the column's trigger queues a projection, and a no-op does not.
-    update: { permissions, ...(existing?.access === mode ? {} : { access: mode }) },
+    update: { permissions, ...(before?.access === mode ? {} : { access: mode }) },
     select: GRANT_SELECT,
   });
-  const before = existing ? toStoredGrant(existing) : null;
   if (!access) return { before, after: toStoredGrant(row) };
-
-  const selected = await ownSelection(tx, userId, access);
-  await replaceSelection(tx, row.id, selected);
-  const after = toStoredGrant(row, selected);
-  // What the grant no longer reaches leaves SpiceDB before this commits, or the save fails (ENG-7153).
-  if (before)
-    await deleteMcpGrantRelationshipsBeforeCommit([{ before: toReach(before), after: toReach(after) }]);
-  return { before, after };
+  await replaceSelection(tx, row.id, access);
+  return { before, after: toStoredGrant(row, access) };
 };
 
 /**
- * Gives the connection a grant with All access and `permissions`, unless it has one: a grant the user
- * already has, or narrowed, is never reset. Returns the grant when this created it, `null` otherwise.
+ * Gives the user's MCP client a grant with All access and `permissions`, unless it has one: a grant the
+ * user already has, or narrowed, is never reset. Returns the grant when this created it, `null` otherwise.
  * One insert that skips an existing (user, client) row, so two tokens issued at once create one grant.
  */
 export const createMcpGrantIfMissing = async ({
@@ -259,23 +224,41 @@ export const createMcpGrantIfMissing = async ({
 };
 
 /**
- * Deletes the user's grants: the one for `clientId`, or every one the user holds when it is omitted.
- * Returns what was deleted, for the audit entries.
+ * Deletes the user's grants: the one for `clientId`, or every one the user holds when it is omitted. The
+ * rows are locked `FOR UPDATE` in id order first, as every other multi-row path here takes them. Makes no
+ * SpiceDB call: the deleted row is what ends the client's access. Returns what was deleted, for the audit
+ * entries and for {@link removeDeletedMcpGrants} once the caller's transaction has committed.
  */
 export const deleteMcpGrants = async (
   tx: Prisma.TransactionClient,
   { userId, clientId }: { userId: string; clientId?: string }
 ): Promise<TStoredMcpGrant[]> => {
-  const where = { userId, ...(clientId ? { clientId } : {}) };
-  const rows = await tx.mcpGrant.findMany({ where, select: GRANT_SELECT, orderBy: { id: "asc" } });
-  if (rows.length === 0) return [];
-  await tx.mcpGrant.deleteMany({ where: { id: { in: rows.map((row) => row.id) } } });
-  const grants = rows.map((row) => toStoredGrant(row));
-  // A revoked grant's reach leaves SpiceDB before the delete commits, or the revoke fails (ENG-7153).
-  await deleteMcpGrantRelationshipsBeforeCommit(
-    grants.map((grant) => ({ before: toReach(grant), after: null }))
+  const locked = await tx.$queryRaw<{ id: string }[]>`
+    SELECT "id" FROM "McpGrant"
+    WHERE "userId" = ${userId} AND (${clientId ?? null}::text IS NULL OR "clientId" = ${clientId ?? null})
+    ORDER BY "id"
+    FOR UPDATE`;
+  if (locked.length === 0) return [];
+  const ids = locked.map(({ id }) => id);
+  const rows = await tx.mcpGrant.findMany({
+    where: { id: { in: ids } },
+    select: GRANT_SELECT,
+    orderBy: { id: "asc" },
+  });
+  await tx.mcpGrant.deleteMany({ where: { id: { in: ids } } });
+  return rows.map((row) => toStoredGrant(row));
+};
+
+/**
+ * Removes the SpiceDB relationships of grants {@link deleteMcpGrants} deleted. Call it once the deleting
+ * transaction has committed, never inside it. Best-effort and never throws: the deleted rows already end
+ * the clients' access, and the outbox event the delete queued is the repair.
+ */
+export const removeDeletedMcpGrants = async (grants: ReadonlyArray<TStoredMcpGrant>): Promise<void> => {
+  if (grants.length === 0) return;
+  await runPostCommitProjection("mcp_grant_post_commit_removal", () =>
+    removeDeletedMcpGrantRelationships(grants)
   );
-  return grants;
 };
 
 /**
@@ -318,12 +301,16 @@ export const getMcpGrantAuditSnapshot = (grant: TStoredMcpGrant) => ({
 
 type TMcpGrantAuditAction = "created" | "updated" | "deleted";
 
-/** One grant change, ready to audit: what changed and the organizations its entries are filed under. */
+/**
+ * One grant change, ready to audit: what changed, the organizations its entries are filed under, and the
+ * organization of each workspace it selects, so each entry carries only its own organization's part.
+ */
 export type TMcpGrantAuditRecord = {
   action: TMcpGrantAuditAction;
   before: TStoredMcpGrant | null;
   after: TStoredMcpGrant | null;
   organizationIds: string[];
+  workspaceOrganizationIds: Readonly<Record<string, string>>;
 };
 
 type TAuditReader = Pick<Prisma.TransactionClient, "membership" | "workspace">;
@@ -336,7 +323,7 @@ type TAuditReader = Pick<Prisma.TransactionClient, "membership" | "workspace">;
  */
 export const prepareMcpGrantAudits = async (
   db: TAuditReader,
-  changes: ReadonlyArray<Omit<TMcpGrantAuditRecord, "organizationIds">>
+  changes: ReadonlyArray<Omit<TMcpGrantAuditRecord, "organizationIds" | "workspaceOrganizationIds">>
 ): Promise<TMcpGrantAuditRecord[]> => {
   const grants = changes.flatMap(({ before, after }) => [before, after]).filter((grant) => grant !== null);
   const allAccessUserIds = [
@@ -370,12 +357,43 @@ export const prepareMcpGrantAudits = async (
         return grant.workspaceIds.flatMap((id) => organizationOf.get(id) ?? []);
     }
   };
-  return changes.map((change) => ({
-    ...change,
-    organizationIds: [
-      ...new Set([change.before, change.after].flatMap((grant) => (grant ? reached(grant) : []))),
-    ].sort((a, b) => a.localeCompare(b)),
-  }));
+  return changes.map((change) => {
+    const grants = [change.before, change.after].filter((grant) => grant !== null);
+    return {
+      ...change,
+      organizationIds: [...new Set(grants.flatMap(reached))].sort((a, b) => a.localeCompare(b)),
+      workspaceOrganizationIds: Object.fromEntries(
+        grants.flatMap((grant) =>
+          getMcpGrantSelectedIds(grant).workspaceIds.flatMap((id) => {
+            const organizationId = organizationOf.get(id);
+            return organizationId ? [[id, organizationId] as const] : [];
+          })
+        )
+      ),
+    };
+  });
+};
+
+/**
+ * The part of a grant's snapshot an entry filed under `organizationId` may carry: the selection's ids in
+ * that organization, never another one's, which the organization's owners have no business reading.
+ */
+const scopeToOrganization = (
+  grant: TStoredMcpGrant,
+  organizationId: string,
+  workspaceOrganizationIds: Readonly<Record<string, string>>
+): TStoredMcpGrant => {
+  switch (grant.access) {
+    case "all":
+      return grant;
+    case "organizations":
+      return { ...grant, organizationIds: grant.organizationIds.filter((id) => id === organizationId) };
+    case "workspaces":
+      return {
+        ...grant,
+        workspaceIds: grant.workspaceIds.filter((id) => workspaceOrganizationIds[id] === organizationId),
+      };
+  }
 };
 
 /**
@@ -389,14 +407,19 @@ export const queueMcpGrantAudits = async (
   actor: { userId: string; userType: TActor },
   records: ReadonlyArray<TMcpGrantAuditRecord>
 ): Promise<void> => {
-  for (const { action, before, after, organizationIds } of records) {
+  for (const { action, before, after, organizationIds, workspaceOrganizationIds } of records) {
     const grant = after ?? before;
     if (!grant) continue;
-    const snapshots = {
-      before: before ? getMcpGrantAuditSnapshot(before) : null,
-      after: after ? getMcpGrantAuditSnapshot(after) : null,
-    };
-    for (const organizationId of organizationIds.length > 0 ? organizationIds : [UNKNOWN_DATA]) {
+    // A grant that reaches no organization is filed once, without one, whole: its ids name nothing.
+    const filings = organizationIds.length > 0 ? organizationIds : [UNKNOWN_DATA];
+    for (const organizationId of filings) {
+      const snapshot = (stored: TStoredMcpGrant | null) => {
+        if (!stored) return null;
+        if (organizationId === UNKNOWN_DATA) return getMcpGrantAuditSnapshot(stored);
+        return getMcpGrantAuditSnapshot(
+          scopeToOrganization(stored, organizationId, workspaceOrganizationIds)
+        );
+      };
       try {
         await queueAuditEventBackground({
           action,
@@ -407,10 +430,13 @@ export const queueMcpGrantAudits = async (
           organizationId,
           status: "success",
           oldObject: null,
-          newObject: snapshots,
+          newObject: { before: snapshot(before), after: snapshot(after) },
         });
       } catch (error) {
-        logger.error({ error, grantId: grant.id, action }, "Failed to queue MCP grant audit event");
+        logger.error(
+          { err: loggableError(error), grantId: grant.id, action },
+          "Failed to queue MCP grant audit event"
+        );
       }
     }
   }
@@ -432,9 +458,19 @@ export const queueMcpGrantAudit = async ({
     const records = await prepareMcpGrantAudits(prisma, [{ action, before, after }]);
     await queueMcpGrantAudits({ userId: actorUserId, userType: "user" }, records);
   } catch (error) {
-    logger.error({ error, grantId: (after ?? before)?.id, action }, "Failed to queue MCP grant audit event");
+    logger.error(
+      { err: loggableError(error), grantId: (after ?? before)?.id, action },
+      "Failed to queue MCP grant audit event"
+    );
   }
 };
 
 /** The system actor of a grant ended as a consequence of something else (a role lost, an account switched off). */
 export const MCP_GRANT_SYSTEM_ACTOR = { userId: "system", userType: "system" } as const;
+
+/**
+ * How long a transaction that saves a grant may run: it resolves the chosen access, which lists the
+ * workspaces the user can read in SpiceDB, and deletes what a narrowing takes away there, before it
+ * commits. Above Prisma's 5-second default, which a SpiceDB retry alone can use up.
+ */
+export const MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS = 15_000;

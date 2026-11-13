@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
 import { updateMcpGrant } from "../lib/api-client";
-import { mcpConnectionKeys } from "../lib/query";
+import { authorizedMcpClientKeys } from "../lib/query";
 
 /**
  * Edit's Save: replaces a connection's permissions and, when given, its organization & workspace access,
@@ -17,6 +17,6 @@ export const useUpdateMcpGrant = () => {
       permissions: TMcpGrantPermissions;
       access?: TMcpGrantAccessSelection;
     }) => updateMcpGrant(variables),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: mcpConnectionKeys.list() }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: authorizedMcpClientKeys.list() }),
   });
 };

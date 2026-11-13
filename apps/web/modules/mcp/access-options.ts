@@ -1,7 +1,9 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
-import type { TMcpGrantAccessOptions } from "./grant-access";
+import type { TMcpGrantAccessSelection } from "./grant";
+import { type TMcpGrantAccessOptions, getMcpGrantSelectedIds } from "./grant-access";
 
 /**
  * What the organization & workspace access picker offers a user (ENG-7153), on the consent screen and in
@@ -50,4 +52,86 @@ export const listMcpGrantAccessOptions = async (userId: string): Promise<TMcpGra
           a.id.localeCompare(b.id)
       ),
   };
+};
+
+type TSelectionReader = {
+  membership: Pick<Prisma.TransactionClient["membership"], "findMany">;
+  workspace: Pick<Prisma.TransactionClient["workspace"], "findMany">;
+};
+
+/**
+ * The part of `selection` the picker would offer the user now, by {@link listMcpGrantAccessOptions}'s
+ * rule: organizations they belong to other than as a billing member, and workspaces SpiceDB lets them read
+ * in those organizations. Reads ids only, and only the ids `selection` names. Takes the caller's
+ * transaction, so a save checks what the user may pick in the transaction that saves it.
+ */
+export const keepOfferedMcpGrantSelection = async (
+  db: TSelectionReader,
+  userId: string,
+  selection: TMcpGrantAccessSelection
+): Promise<TMcpGrantAccessSelection> => {
+  switch (selection.access) {
+    case "all":
+      return selection;
+    case "organizations": {
+      const memberships = await db.membership.findMany({
+        where: { userId, role: { not: "billing" }, organizationId: { in: selection.organizationIds } },
+        select: { organizationId: true },
+      });
+      const offered = new Set(memberships.map(({ organizationId }) => organizationId));
+      return {
+        access: "organizations",
+        organizationIds: selection.organizationIds.filter((id) => offered.has(id)),
+      };
+    }
+    case "workspaces": {
+      const readable = new Set(
+        await lookupAuthorizedWorkspaceIds({ type: "user", id: userId }, "dashboard_read")
+      );
+      const candidates = selection.workspaceIds.filter((id) => readable.has(id));
+      const workspaces =
+        candidates.length === 0
+          ? []
+          : await db.workspace.findMany({
+              where: {
+                id: { in: candidates },
+                organization: { memberships: { some: { userId, role: { not: "billing" } } } },
+              },
+              select: { id: true },
+            });
+      const offered = new Set(workspaces.map(({ id }) => id));
+      return { access: "workspaces", workspaceIds: selection.workspaceIds.filter((id) => offered.has(id)) };
+    }
+  }
+};
+
+/** The outcome of {@link resolveMcpGrantSelection}: the selection to save, or the field to refuse. */
+export type TMcpGrantSelectionResolution =
+  | { status: "ok"; access: TMcpGrantAccessSelection }
+  | { status: "unavailable"; field: "organizationIds" | "workspaceIds" };
+
+/**
+ * The one rule for what a consent approval and Authorized apps' Edit may save as a grant's organization &
+ * workspace access (spec story 36). An id the request adds must be one the picker offers the user now
+ * ({@link keepOfferedMcpGrantSelection}), or the request is refused, naming the field. An id the grant
+ * already selects and the user has since lost (team access removed, organization now held only as a
+ * billing member) is dropped without a refusal: the picker no longer shows it, so the user could not have
+ * kept it on purpose, and keeping it would refuse even a permissions-only save.
+ *
+ * Makes SpiceDB calls for a workspace selection: call it before locking the consent rows.
+ */
+export const resolveMcpGrantSelection = async (
+  db: TSelectionReader,
+  userId: string,
+  requested: TMcpGrantAccessSelection,
+  stored: TMcpGrantAccessSelection | null
+): Promise<TMcpGrantSelectionResolution> => {
+  if (requested.access === "all") return { status: "ok", access: requested };
+  const field = requested.access === "organizations" ? "organizationIds" : "workspaceIds";
+  const offered = await keepOfferedMcpGrantSelection(db, userId, requested);
+  const kept = new Set(getMcpGrantSelectedIds(offered)[field]);
+  const already = new Set(stored ? getMcpGrantSelectedIds(stored)[field] : []);
+  const added = getMcpGrantSelectedIds(requested)[field].filter((id) => !already.has(id));
+  if (added.some((id) => !kept.has(id))) return { status: "unavailable", field };
+  return { status: "ok", access: offered };
 };

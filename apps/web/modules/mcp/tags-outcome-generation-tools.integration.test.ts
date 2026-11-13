@@ -13,7 +13,7 @@ import { resetDb } from "@/integration/reset-db";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { createApiKey } from "@/modules/organization/settings/api-keys/lib/api-key";
 import type { TMcpGrantPermissions } from "./grant";
-import { getMcpGrant, saveMcpGrant } from "./grant-store";
+import { getMcpGrant, lockMcpGrant, writeMcpGrant } from "./grant-store";
 
 /**
  * ENG-7122's tools through `POST /api/mcp`, as a client calls them: a token from the real OAuth flow, the
@@ -94,9 +94,10 @@ const setUp = async (): Promise<TSetup> => {
 };
 
 const setGrant = (setup: TSetup, permissions: TMcpGrantPermissions) =>
-  prisma.$transaction((tx) =>
-    saveMcpGrant(tx, { userId: setup.userId, clientId: setup.clientId, permissions })
-  );
+  prisma.$transaction(async (tx) => {
+    const ids = { userId: setup.userId, clientId: setup.clientId };
+    return writeMcpGrant(tx, { ...ids, before: await lockMcpGrant(tx, ids), permissions });
+  });
 
 const problemOf = (outcome: TMcpToolCallOutcome) =>
   (JSON.parse(toolText(outcome)) as { error: { status: number; code: string; detail: string } }).error;

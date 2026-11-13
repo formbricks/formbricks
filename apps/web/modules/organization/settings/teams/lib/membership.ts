@@ -10,13 +10,10 @@ import { reconcileOrganizationMembership } from "@/lib/authzed/organization-memb
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
-import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
+import { hasOnlyDashboardViewerRoles } from "@/lib/membership/dashboard-viewer";
 import { isTransactionConflictError, retryOnTransactionConflict } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
-import {
-  queueRevokedMcpGrantAudits,
-  revokeAllUserOAuthGrants,
-} from "@/modules/auth/lib/oauth-grant-revocation";
+import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
 import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-store";
 
@@ -161,6 +158,21 @@ export const deleteMembership = async (
         }
       }
 
+      // Someone left with only Dashboard viewer memberships keeps no OAuth grant from the wider role they
+      // are losing: consents go and refresh tokens are revoked, as when a role edit makes them a viewer
+      // (`updateMembership`), so the next consent offers only dashboards:read (ADR-0025). Decided and done
+      // before the membership goes, so each ended grant's audit entries are filed under this organization
+      // too: its grant reached it until now.
+      if (target && target.role !== "dashboard_viewer") {
+        const remaining = await tx.membership.findMany({
+          where: { userId, organizationId: { not: organizationId } },
+          select: { role: true },
+        });
+        if (hasOnlyDashboardViewerRoles(remaining)) {
+          ({ grantAudits: revokedMcpGrantAudits } = await revokeAllUserOAuthGrants(tx, userId));
+        }
+      }
+
       const teamMemberships = await tx.teamUser.findMany({
         where: {
           userId,
@@ -178,24 +190,14 @@ export const deleteMembership = async (
           },
         },
       });
-      const removed = await tx.membership.delete({
+      await tx.membership.delete({
         where: {
           userId_organizationId: {
             organizationId,
             userId,
           },
         },
-        select: { role: true },
       });
-
-      // Someone left with only Dashboard viewer memberships keeps no OAuth grant from the wider role they
-      // just lost: consents go and refresh tokens are revoked, as when a role edit makes them a viewer
-      // (`updateMembership`), so the next consent offers only dashboards:read (ADR-0025).
-      if (removed.role !== "dashboard_viewer") {
-        if (await isOnlyDashboardViewer(tx, userId)) {
-          ({ grantAudits: revokedMcpGrantAudits } = await revokeAllUserOAuthGrants(tx, userId));
-        }
-      }
 
       // A pending invite is only as trustworthy as the member who sent it, so once the creator is out
       // of the organization it must stop granting access. Expired rather than deleted: admins still see
@@ -209,7 +211,7 @@ export const deleteMembership = async (
       return teamMemberships;
     });
 
-    await queueRevokedMcpGrantAudits(revokedMcpGrantAudits);
+    await finishRevokedMcpGrants(revokedMcpGrantAudits);
     await reconcileOrganizationMembership(organizationId, userId);
     await runPostCommitProjection("organization_membership_team_cleanup", () =>
       reconcileTeamWorkspaceRelationships({

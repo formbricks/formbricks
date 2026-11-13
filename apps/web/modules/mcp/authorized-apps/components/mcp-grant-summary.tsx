@@ -9,13 +9,13 @@ import { getMcpCategoryLabel, getMcpCategoryLevelLabel } from "@/modules/mcp/gra
 
 interface McpGrantSummaryProps {
   permissions: TMcpGrantPermissions;
-  /** The grant's organization & workspace access; `null` for a connection without a grant. */
+  /** The grant's organization & workspace access; `null` for a client without a grant. */
   access: TMcpGrantAccessSelection | null;
   isDashboardViewer: boolean;
 }
 
 /**
- * A grant as Authorized apps lists a connection: its organization & workspace access ("All access",
+ * A grant as Authorized apps lists a client: its organization & workspace access ("All access",
  * "3 workspaces", "No workspaces"), then one chip per category, "Surveys · Write".
  */
 export const McpGrantSummary = ({

@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { APIError } from "better-auth/api";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { type TStoredMcpGrant, createMcpGrantIfMissing, queueMcpGrantAudit } from "@/modules/mcp/grant-store";
@@ -121,14 +122,35 @@ describe("grantSkipConsentClientAfterHandler", () => {
     expect(createMcpGrantIfMissing).not.toHaveBeenCalled();
   });
 
-  test("logs instead of failing an issuance that already happened", async () => {
-    const failure = new Error("db down");
-    vi.mocked(createMcpGrantIfMissing).mockRejectedValue(failure);
+  test("logs an unexpected failure as an error instead of failing an issuance that already happened", async () => {
+    vi.mocked(createMcpGrantIfMissing).mockRejectedValue(new Error("db down for user a@b.c"));
 
     await expect(grantSkipConsentClientAfterHandler(tokenCtx())).resolves.toBeUndefined();
     expect(logger.error).toHaveBeenCalledWith(
-      { err: failure, userId: "user-1", clientId: "client-1" },
+      { err: expect.objectContaining({ errName: "Error" }), userId: "user-1", clientId: "client-1" },
       "Saving the grant of a skipConsent MCP client failed"
     );
+    // Name and frames only: an error's message is never logged.
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("a@b.c");
+  });
+
+  test("logs a known Prisma error, such as the user deleted meanwhile, as a warning", async () => {
+    vi.mocked(createMcpGrantIfMissing).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Foreign key constraint violated", {
+        code: "P2003",
+        clientVersion: "test",
+      })
+    );
+
+    await expect(grantSkipConsentClientAfterHandler(tokenCtx())).resolves.toBeUndefined();
+    expect(logger.warn).toHaveBeenCalledWith(
+      {
+        err: expect.objectContaining({ errName: "PrismaClientKnownRequestError" }),
+        userId: "user-1",
+        clientId: "client-1",
+      },
+      "Saving the grant of a skipConsent MCP client failed"
+    );
+    expect(logger.error).not.toHaveBeenCalled();
   });
 });

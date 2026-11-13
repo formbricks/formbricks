@@ -6,19 +6,23 @@ import { logger } from "@formbricks/logger";
 import {
   deleteMcpGrantRelationshipsBeforeCommit,
   reconcileMcpGrantRelationships,
+  removeDeletedMcpGrantRelationships,
 } from "@/lib/authzed/mcp-grant";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { resolveMcpGrantSelection } from "./access-options";
 import {
   type TStoredMcpGrant,
   createMcpGrantIfMissing,
   deleteMcpGrants,
   getMcpGrant,
+  lockMcpGrant,
+  narrowMcpGrantAccess,
   prepareMcpGrantAudits,
   projectMcpGrants,
   queueMcpGrantAudit,
   queueMcpGrantAudits,
-  readMcpGrantAccess,
-  saveMcpGrant,
+  removeDeletedMcpGrants,
+  writeMcpGrant,
 } from "./grant-store";
 
 vi.mock("@formbricks/logger", () => ({
@@ -28,7 +32,10 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("@/lib/authzed/mcp-grant", () => ({
   deleteMcpGrantRelationshipsBeforeCommit: vi.fn(),
   reconcileMcpGrantRelationships: vi.fn(),
+  removeDeletedMcpGrantRelationships: vi.fn(),
 }));
+
+vi.mock("./access-options", () => ({ resolveMcpGrantSelection: vi.fn() }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   queueAuditEventBackground: vi.fn(),
@@ -67,22 +74,6 @@ const stored = (overrides: Partial<TStoredMcpGrant> = {}): TStoredMcpGrant =>
 
 const newTx = () => mockDeep<Prisma.TransactionClient>();
 
-describe("readMcpGrantAccess", () => {
-  test("reads only the selection the grant's mode reads", () => {
-    const rows = { organizations: [{ organizationId: "org-1" }], workspaces: [{ workspaceId: "ws-1" }] };
-
-    expect(readMcpGrantAccess({ ...rows, access: "all" })).toEqual({ access: "all" });
-    expect(readMcpGrantAccess({ ...rows, access: "organizations" })).toEqual({
-      access: "organizations",
-      organizationIds: ["org-1"],
-    });
-    expect(readMcpGrantAccess({ ...rows, access: "workspaces" })).toEqual({
-      access: "workspaces",
-      workspaceIds: ["ws-1"],
-    });
-  });
-});
-
 describe("getMcpGrant", () => {
   test("returns null for a connection without a grant", async () => {
     prisma.mcpGrant.findUnique.mockResolvedValue(null);
@@ -113,19 +104,113 @@ describe("getMcpGrant", () => {
   });
 });
 
-describe("saveMcpGrant", () => {
-  beforeEach(() => {
-    vi.mocked(deleteMcpGrantRelationshipsBeforeCommit).mockReset().mockResolvedValue(undefined);
+describe("lockMcpGrant", () => {
+  test("locks the grant row FOR UPDATE before reading it", async () => {
+    const tx = newTx();
+    tx.$queryRaw.mockResolvedValue([{ id: GRANT_ID }] as never);
+    tx.mcpGrant.findUniqueOrThrow.mockResolvedValue(
+      row({ access: "organizations", organizations: ["org-1"] }) as never
+    );
+
+    await expect(lockMcpGrant(tx, { userId: USER_ID, clientId: CLIENT_ID })).resolves.toEqual(
+      stored({ access: "organizations", organizationIds: ["org-1"] })
+    );
+    const [sql, ...values] = tx.$queryRaw.mock.calls[0] as unknown as [TemplateStringsArray, ...unknown[]];
+    expect(sql.join("?")).toMatch(/FOR UPDATE/);
+    expect(values).toEqual([USER_ID, CLIENT_ID]);
+    expect(tx.mcpGrant.findUniqueOrThrow).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: GRANT_ID } })
+    );
   });
 
+  test("returns null without a grant, and reads nothing else", async () => {
+    const tx = newTx();
+    tx.$queryRaw.mockResolvedValue([] as never);
+
+    await expect(lockMcpGrant(tx, { userId: USER_ID, clientId: CLIENT_ID })).resolves.toBeNull();
+    expect(tx.mcpGrant.findUniqueOrThrow).not.toHaveBeenCalled();
+  });
+});
+
+describe("narrowMcpGrantAccess", () => {
+  beforeEach(() => {
+    vi.mocked(deleteMcpGrantRelationshipsBeforeCommit).mockReset().mockResolvedValue(undefined);
+    vi.mocked(resolveMcpGrantSelection).mockReset();
+  });
+
+  test("deletes what the resolved access takes away before the save commits", async () => {
+    const tx = newTx();
+    const before = stored({ access: "workspaces", workspaceIds: ["ws-1", "ws-lost"] });
+    vi.mocked(resolveMcpGrantSelection).mockResolvedValue({
+      status: "ok",
+      access: { access: "workspaces", workspaceIds: ["ws-1"] },
+    });
+
+    await expect(
+      narrowMcpGrantAccess(tx, {
+        userId: USER_ID,
+        before,
+        access: { access: "workspaces", workspaceIds: ["ws-1", "ws-lost"] },
+      })
+    ).resolves.toEqual({ status: "ok", access: { access: "workspaces", workspaceIds: ["ws-1"] } });
+    expect(resolveMcpGrantSelection).toHaveBeenCalledWith(
+      tx,
+      USER_ID,
+      { access: "workspaces", workspaceIds: ["ws-1", "ws-lost"] },
+      before
+    );
+    expect(deleteMcpGrantRelationshipsBeforeCommit).toHaveBeenCalledWith(before, {
+      access: "workspaces",
+      workspaceIds: ["ws-1"],
+    });
+  });
+
+  test("touches SpiceDB for neither a refused selection nor a new grant", async () => {
+    const tx = newTx();
+    vi.mocked(resolveMcpGrantSelection).mockResolvedValueOnce({
+      status: "unavailable",
+      field: "workspaceIds",
+    });
+
+    await expect(
+      narrowMcpGrantAccess(tx, {
+        userId: USER_ID,
+        before: stored({ access: "workspaces", workspaceIds: ["ws-1"] }),
+        access: { access: "workspaces", workspaceIds: ["ws-foreign"] },
+      })
+    ).resolves.toEqual({ status: "unavailable", field: "workspaceIds" });
+
+    vi.mocked(resolveMcpGrantSelection).mockResolvedValueOnce({ status: "ok", access: { access: "all" } });
+    await narrowMcpGrantAccess(tx, { userId: USER_ID, before: null, access: { access: "all" } });
+
+    expect(deleteMcpGrantRelationshipsBeforeCommit).not.toHaveBeenCalled();
+  });
+
+  test("fails the save when SpiceDB can't drop what the narrowing takes away", async () => {
+    const tx = newTx();
+    vi.mocked(resolveMcpGrantSelection).mockResolvedValue({ status: "ok", access: { access: "all" } });
+    const outage = new Error("spicedb down");
+    vi.mocked(deleteMcpGrantRelationshipsBeforeCommit).mockRejectedValue(outage);
+
+    await expect(
+      narrowMcpGrantAccess(tx, {
+        userId: USER_ID,
+        before: stored({ access: "workspaces", workspaceIds: ["ws-1"] }),
+        access: { access: "all" },
+      })
+    ).rejects.toBe(outage);
+  });
+});
+
+describe("writeMcpGrant", () => {
   test("creates a new grant with All access when the request names no access", async () => {
     const tx = newTx();
-    tx.mcpGrant.findUnique.mockResolvedValue(null);
     tx.mcpGrant.upsert.mockResolvedValue(row() as never);
 
-    const result = await saveMcpGrant(tx, {
+    const result = await writeMcpGrant(tx, {
       userId: USER_ID,
       clientId: CLIENT_ID,
+      before: null,
       permissions: { surveys: "read" },
     });
 
@@ -136,26 +221,27 @@ describe("saveMcpGrant", () => {
       })
     );
     expect(tx.mcpGrantWorkspace.createMany).not.toHaveBeenCalled();
-    expect(deleteMcpGrantRelationshipsBeforeCommit).not.toHaveBeenCalled();
   });
 
   test("keeps an existing grant's access when the request names none, and doesn't rewrite the column", async () => {
     const tx = newTx();
-    const existing = row({ access: "workspaces", workspaces: ["ws-1"] });
-    tx.mcpGrant.findUnique.mockResolvedValue(existing as never);
-    tx.mcpGrant.upsert.mockResolvedValue({ ...existing, permissions: { surveys: "write" } } as never);
+    const before = stored({ access: "workspaces", workspaceIds: ["ws-1"] });
+    tx.mcpGrant.upsert.mockResolvedValue(
+      row({ access: "workspaces", workspaces: ["ws-1"], permissions: { surveys: "write" } }) as never
+    );
 
-    const { before, after } = await saveMcpGrant(tx, {
+    const result = await writeMcpGrant(tx, {
       userId: USER_ID,
       clientId: CLIENT_ID,
+      before,
       permissions: { surveys: "write" },
     });
 
     expect(tx.mcpGrant.upsert).toHaveBeenCalledWith(
       expect.objectContaining({ update: { permissions: { surveys: "write" } } })
     );
-    expect(before).toMatchObject({ access: "workspaces", workspaceIds: ["ws-1"] });
-    expect(after).toMatchObject({
+    expect(result.before).toBe(before);
+    expect(result.after).toMatchObject({
       access: "workspaces",
       workspaceIds: ["ws-1"],
       permissions: { surveys: "write" },
@@ -163,32 +249,20 @@ describe("saveMcpGrant", () => {
     expect(tx.mcpGrantWorkspace.deleteMany).not.toHaveBeenCalled();
   });
 
-  test("stores only the workspaces the user may pick and deletes the dropped reach before commit", async () => {
+  test("replaces the selection rows with the access given, and writes the mode only when it changes", async () => {
     const tx = newTx();
-    tx.mcpGrant.findUnique.mockResolvedValue(
-      row({ access: "organizations", organizations: ["org-1"] }) as never
-    );
     tx.mcpGrant.upsert.mockResolvedValue(row({ access: "workspaces" }) as never);
-    // "ws-foreign" belongs to an organization the user isn't a member of.
-    tx.workspace.findMany.mockResolvedValue([{ id: "ws-mine" }] as never);
 
-    const { before, after } = await saveMcpGrant(tx, {
+    const { after } = await writeMcpGrant(tx, {
       userId: USER_ID,
       clientId: CLIENT_ID,
+      before: stored({ access: "organizations", organizationIds: ["org-1"] }),
       permissions: { surveys: "read" },
-      access: { access: "workspaces", workspaceIds: ["ws-mine", "ws-foreign"] },
+      access: { access: "workspaces", workspaceIds: ["ws-mine"] },
     });
 
     expect(tx.mcpGrant.upsert).toHaveBeenCalledWith(
       expect.objectContaining({ update: { permissions: { surveys: "read" }, access: "workspaces" } })
-    );
-    expect(tx.workspace.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: {
-          id: { in: ["ws-mine", "ws-foreign"] },
-          organization: { memberships: { some: { userId: USER_ID } } },
-        },
-      })
     );
     // Every organization row goes (the other kind), every workspace row not picked goes.
     expect(tx.mcpGrantOrganization.deleteMany).toHaveBeenCalledWith({
@@ -203,51 +277,34 @@ describe("saveMcpGrant", () => {
     });
     expect(tx.mcpGrantOrganization.createMany).not.toHaveBeenCalled();
     expect(after).toMatchObject({ access: "workspaces", workspaceIds: ["ws-mine"] });
-    expect(deleteMcpGrantRelationshipsBeforeCommit).toHaveBeenCalledWith([
-      {
-        before: { id: GRANT_ID, access: "organizations", organizationIds: ["org-1"], workspaceIds: [] },
-        after: { id: GRANT_ID, access: "workspaces", organizationIds: [], workspaceIds: ["ws-mine"] },
-      },
-    ]);
-    expect(before).toMatchObject({ access: "organizations" });
   });
 
-  test("stores only organizations the user is a member of", async () => {
+  test("inserts the organizations of Only selected organizations", async () => {
     const tx = newTx();
-    tx.mcpGrant.findUnique.mockResolvedValue(null);
     tx.mcpGrant.upsert.mockResolvedValue(row({ access: "organizations" }) as never);
-    tx.membership.findMany.mockResolvedValue([{ organizationId: "org-mine" }] as never);
 
-    const { before, after } = await saveMcpGrant(tx, {
+    await writeMcpGrant(tx, {
       userId: USER_ID,
       clientId: CLIENT_ID,
+      before: null,
       permissions: {},
-      access: { access: "organizations", organizationIds: ["org-mine", "org-foreign"] },
+      access: { access: "organizations", organizationIds: ["org-mine"] },
     });
 
-    expect(tx.membership.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { userId: USER_ID, organizationId: { in: ["org-mine", "org-foreign"] } },
-      })
-    );
     expect(tx.mcpGrantOrganization.createMany).toHaveBeenCalledWith({
       data: [{ grantId: GRANT_ID, organizationId: "org-mine" }],
       skipDuplicates: true,
     });
-    expect(after).toMatchObject({ access: "organizations", organizationIds: ["org-mine"] });
-    expect(before).toBeNull();
-    // A new grant had no reach to take away.
-    expect(deleteMcpGrantRelationshipsBeforeCommit).not.toHaveBeenCalled();
   });
 
   test("a switch to All access clears both selections and inserts none", async () => {
     const tx = newTx();
-    tx.mcpGrant.findUnique.mockResolvedValue(row({ access: "workspaces", workspaces: ["ws-1"] }) as never);
     tx.mcpGrant.upsert.mockResolvedValue(row({ access: "all" }) as never);
 
-    await saveMcpGrant(tx, {
+    await writeMcpGrant(tx, {
       userId: USER_ID,
       clientId: CLIENT_ID,
+      before: stored({ access: "workspaces", workspaceIds: ["ws-1"] }),
       permissions: {},
       access: { access: "all" },
     });
@@ -257,30 +314,6 @@ describe("saveMcpGrant", () => {
     });
     expect(tx.mcpGrantWorkspace.createMany).not.toHaveBeenCalled();
     expect(tx.mcpGrantOrganization.createMany).not.toHaveBeenCalled();
-    expect(deleteMcpGrantRelationshipsBeforeCommit).toHaveBeenCalledWith([
-      {
-        before: expect.objectContaining({ access: "workspaces", workspaceIds: ["ws-1"] }),
-        after: expect.objectContaining({ access: "all", workspaceIds: [] }),
-      },
-    ]);
-  });
-
-  test("fails the save when SpiceDB can't drop the narrowed reach", async () => {
-    const tx = newTx();
-    tx.mcpGrant.findUnique.mockResolvedValue(row({ access: "workspaces", workspaces: ["ws-1"] }) as never);
-    tx.mcpGrant.upsert.mockResolvedValue(row({ access: "workspaces" }) as never);
-    tx.workspace.findMany.mockResolvedValue([] as never);
-    const outage = new Error("spicedb down");
-    vi.mocked(deleteMcpGrantRelationshipsBeforeCommit).mockRejectedValue(outage);
-
-    await expect(
-      saveMcpGrant(tx, {
-        userId: USER_ID,
-        clientId: CLIENT_ID,
-        permissions: {},
-        access: { access: "workspaces", workspaceIds: ["ws-gone"] },
-      })
-    ).rejects.toBe(outage);
   });
 });
 
@@ -309,39 +342,55 @@ describe("createMcpGrantIfMissing", () => {
 });
 
 describe("deleteMcpGrants", () => {
-  beforeEach(() => {
-    vi.mocked(deleteMcpGrantRelationshipsBeforeCommit).mockReset().mockResolvedValue(undefined);
-  });
-
-  test("deletes nothing and touches SpiceDB not at all when the user has no grant", async () => {
+  test("deletes nothing when the user has no grant", async () => {
     const tx = newTx();
-    tx.mcpGrant.findMany.mockResolvedValue([]);
+    tx.$queryRaw.mockResolvedValue([] as never);
 
     await expect(deleteMcpGrants(tx, { userId: USER_ID })).resolves.toEqual([]);
-    expect(tx.mcpGrant.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { userId: USER_ID } })
-    );
     expect(tx.mcpGrant.deleteMany).not.toHaveBeenCalled();
-    expect(deleteMcpGrantRelationshipsBeforeCommit).not.toHaveBeenCalled();
   });
 
-  test("deletes the client's grant and its whole reach", async () => {
+  test("locks the rows in id order, deletes them, and makes no SpiceDB call", async () => {
     const tx = newTx();
+    tx.$queryRaw.mockResolvedValue([{ id: GRANT_ID }] as never);
     tx.mcpGrant.findMany.mockResolvedValue([row({ access: "workspaces", workspaces: ["ws-1"] })] as never);
 
     const deleted = await deleteMcpGrants(tx, { userId: USER_ID, clientId: CLIENT_ID });
 
-    expect(tx.mcpGrant.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { userId: USER_ID, clientId: CLIENT_ID } })
-    );
+    const [sql, ...values] = tx.$queryRaw.mock.calls[0] as unknown as [TemplateStringsArray, ...unknown[]];
+    expect(sql.join("?")).toMatch(/ORDER BY "id"\s+FOR UPDATE/);
+    expect(values).toEqual([USER_ID, CLIENT_ID, CLIENT_ID]);
     expect(tx.mcpGrant.deleteMany).toHaveBeenCalledWith({ where: { id: { in: [GRANT_ID] } } });
     expect(deleted).toEqual([stored({ access: "workspaces", workspaceIds: ["ws-1"] })]);
-    expect(deleteMcpGrantRelationshipsBeforeCommit).toHaveBeenCalledWith([
-      {
-        before: { id: GRANT_ID, access: "workspaces", organizationIds: [], workspaceIds: ["ws-1"] },
-        after: null,
-      },
-    ]);
+    expect(deleteMcpGrantRelationshipsBeforeCommit).not.toHaveBeenCalled();
+  });
+
+  test("takes every grant of the user without a client", async () => {
+    const tx = newTx();
+    tx.$queryRaw.mockResolvedValue([] as never);
+
+    await deleteMcpGrants(tx, { userId: USER_ID });
+
+    expect((tx.$queryRaw.mock.calls[0] as unknown[]).slice(1)).toEqual([USER_ID, null, null]);
+  });
+});
+
+describe("removeDeletedMcpGrants", () => {
+  beforeEach(() => {
+    vi.mocked(removeDeletedMcpGrantRelationships).mockReset();
+  });
+
+  test("does nothing for no grants", async () => {
+    await removeDeletedMcpGrants([]);
+    expect(removeDeletedMcpGrantRelationships).not.toHaveBeenCalled();
+  });
+
+  test("removes the relationships after the commit, and never throws", async () => {
+    const grant = stored({ access: "workspaces", workspaceIds: ["ws-1"] });
+    vi.mocked(removeDeletedMcpGrantRelationships).mockRejectedValue(new Error("boom"));
+
+    await expect(removeDeletedMcpGrants([grant])).resolves.toBeUndefined();
+    expect(removeDeletedMcpGrantRelationships).toHaveBeenCalledWith([grant]);
   });
 });
 
@@ -389,6 +438,8 @@ describe("prepareMcpGrantAudits", () => {
       ["org-b", "org-c"],
       ["org-a", "org-b"],
     ]);
+    // An unknown (deleted) workspace has no organization to file it under.
+    expect(records[0].workspaceOrganizationIds).toEqual({ "ws-1": "org-c" });
   });
 
   test("reads nothing when no grant needs a lookup", async () => {
@@ -418,7 +469,13 @@ describe("queueMcpGrantAudits", () => {
     vi.mocked(queueAuditEventBackground).mockRejectedValueOnce(new Error("queue down"));
 
     await queueMcpGrantAudits({ userId: USER_ID, userType: "user" }, [
-      { action: "updated", before: stored(), after: stored(), organizationIds: ["org-a", "org-b"] },
+      {
+        action: "updated",
+        before: stored(),
+        after: stored(),
+        organizationIds: ["org-a", "org-b"],
+        workspaceOrganizationIds: {},
+      },
     ]);
 
     expect(vi.mocked(queueAuditEventBackground).mock.calls.map(([event]) => event.organizationId)).toEqual([
@@ -433,8 +490,14 @@ describe("queueMcpGrantAudits", () => {
 
   test("files a grant that reaches no organization without one, and skips an empty change", async () => {
     await queueMcpGrantAudits({ userId: USER_ID, userType: "user" }, [
-      { action: "deleted", before: stored(), after: null, organizationIds: [] },
-      { action: "deleted", before: null, after: null, organizationIds: ["org-a"] },
+      { action: "deleted", before: stored(), after: null, organizationIds: [], workspaceOrganizationIds: {} },
+      {
+        action: "deleted",
+        before: null,
+        after: null,
+        organizationIds: ["org-a"],
+        workspaceOrganizationIds: {},
+      },
     ]);
 
     expect(queueAuditEventBackground).toHaveBeenCalledTimes(1);
@@ -447,6 +510,53 @@ describe("queueMcpGrantAudits", () => {
         }),
       })
     );
+  });
+});
+
+describe("queueMcpGrantAudits, per organization", () => {
+  beforeEach(() => {
+    vi.mocked(queueAuditEventBackground).mockReset().mockResolvedValue(undefined);
+  });
+
+  const snapshotsFiledUnder = (organizationId: string) =>
+    vi
+      .mocked(queueAuditEventBackground)
+      .mock.calls.find(([event]) => event.organizationId === organizationId)?.[0].newObject as {
+      before: Record<string, unknown> | null;
+      after: Record<string, unknown> | null;
+    };
+
+  test("an entry carries only the workspaces of the organization it is filed under", async () => {
+    await queueMcpGrantAudits({ userId: USER_ID, userType: "system" }, [
+      {
+        action: "deleted",
+        before: stored({ access: "workspaces", workspaceIds: ["ws-a1", "ws-a2", "ws-b1"] }),
+        after: null,
+        organizationIds: ["org-a", "org-b"],
+        workspaceOrganizationIds: { "ws-a1": "org-a", "ws-a2": "org-a", "ws-b1": "org-b" },
+      },
+    ]);
+
+    expect(snapshotsFiledUnder("org-a").before).toMatchObject({ workspaceIds: ["ws-a1", "ws-a2"] });
+    expect(snapshotsFiledUnder("org-b").before).toMatchObject({ workspaceIds: ["ws-b1"] });
+  });
+
+  test("an entry carries only its own organization of Only selected organizations, before and after", async () => {
+    await queueMcpGrantAudits({ userId: USER_ID, userType: "user" }, [
+      {
+        action: "updated",
+        before: stored({ access: "organizations", organizationIds: ["org-a", "org-b"] }),
+        after: stored({ access: "all" }),
+        organizationIds: ["org-a", "org-b"],
+        workspaceOrganizationIds: {},
+      },
+    ]);
+
+    expect(snapshotsFiledUnder("org-a")).toMatchObject({
+      before: { organizationIds: ["org-a"] },
+      after: { access: "all" },
+    });
+    expect(snapshotsFiledUnder("org-b")).toMatchObject({ before: { organizationIds: ["org-b"] } });
   });
 });
 

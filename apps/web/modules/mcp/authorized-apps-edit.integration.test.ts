@@ -97,7 +97,7 @@ const setUp = async (): Promise<TSetup> => {
   };
 };
 
-const listConnections = async () => {
+const listClients = async () => {
   const response = await GET(new NextRequest("http://localhost:3000/api/internal/mcp-grants"), {
     params: Promise.resolve({}),
   } as never);
@@ -139,17 +139,17 @@ describe("Authorized apps' Edit", () => {
     setup = await setUp();
   }, 120_000);
 
-  test("lists each connection with its grant, one row per client connected", async () => {
+  test("lists each MCP client with its grant, one row per client connected", async () => {
     await grant(setup.cookie, setup.clientId, "openid surveys:write responses:read");
     const secondClientId = await registerClient("edit client");
     await grant(setup.cookie, secondClientId, "openid dashboards:read");
 
-    const { status, body } = await listConnections();
+    const { status, body } = await listClients();
 
     expect(status).toBe(200);
     expect(body.data.isDashboardViewer).toBe(false);
     const byClient = Object.fromEntries(
-      (body.data.connections as { clientId: string }[]).map((connection) => [connection.clientId, connection])
+      (body.data.clients as { clientId: string }[]).map((client) => [client.clientId, client])
     );
     expect(Object.keys(byClient).sort()).toEqual([setup.clientId, secondClientId].sort());
     expect(byClient[setup.clientId]).toMatchObject({
@@ -239,15 +239,15 @@ describe("Authorized apps' Edit", () => {
     });
     session.userId = other.id;
 
-    const listed = await listConnections();
+    const listed = await listClients();
     const edited = await editGrant(setup.clientId, { surveys: "read" });
 
-    expect(listed.body.data.connections).toEqual([]);
+    expect(listed.body.data.clients).toEqual([]);
     expect(edited.status).toBe(403);
     expect(await getMcpGrant(setup.userId, setup.clientId)).toEqual(before);
   });
 
-  test("a revoked connection can't be edited back to life", async () => {
+  test("a revoked client can't be edited back to life", async () => {
     await grant(setup.cookie, setup.clientId, EVERYTHING);
     const consent = await prisma.oauthConsent.findFirstOrThrow({
       where: { userId: setup.userId, clientId: setup.clientId },
@@ -259,6 +259,6 @@ describe("Authorized apps' Edit", () => {
 
     expect((await editGrant(setup.clientId, { surveys: "read" })).status).toBe(403);
     expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
-    expect((await listConnections()).body.data.connections).toEqual([]);
+    expect((await listClients()).body.data.clients).toEqual([]);
   });
 });

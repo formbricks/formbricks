@@ -35,6 +35,33 @@ export const getMcpGrantSelectedIds = (
   workspaceIds: selection.access === "workspaces" ? [...selection.workspaceIds] : [],
 });
 
+/**
+ * `selection` without what `options` no longer offers the user (spec story 36): a workspace they lost
+ * access to, or an organization they now hold only as a billing member. What Authorized apps counts and
+ * Edit and the consent screen open with, so neither shows an id the picker hides. The stored rows are
+ * left alone until the next save drops them (`resolveMcpGrantSelection`).
+ */
+export const limitMcpGrantAccessToOptions = (
+  selection: TMcpGrantAccessSelection,
+  options: TMcpGrantAccessOptions
+): TMcpGrantAccessSelection => {
+  switch (selection.access) {
+    case "all":
+      return selection;
+    case "organizations": {
+      const offered = new Set(options.organizations.map(({ id }) => id));
+      return {
+        access: "organizations",
+        organizationIds: selection.organizationIds.filter((id) => offered.has(id)),
+      };
+    }
+    case "workspaces": {
+      const offered = new Set(options.workspaces.map(({ id }) => id));
+      return { access: "workspaces", workspaceIds: selection.workspaceIds.filter((id) => offered.has(id)) };
+    }
+  }
+};
+
 /** What the editor opens with: the grant's own access, or All access for a client with none yet. */
 export const initialMcpGrantAccessDraft = (stored: TMcpGrantAccessSelection | null): TMcpGrantAccessDraft =>
   stored

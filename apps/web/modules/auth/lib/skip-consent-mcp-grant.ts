@@ -2,8 +2,10 @@ import "server-only";
 import { isAPIError } from "better-auth/api";
 import { decodeJwt } from "jose";
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
+import { loggableError } from "@/lib/utils/loggable-error";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { getUnconsentedMcpGrantPermissions } from "@/modules/mcp/grant";
 import { createMcpGrantIfMissing, queueMcpGrantAudit } from "@/modules/mcp/grant-store";
@@ -25,8 +27,8 @@ import { trimScopesForDashboardViewer } from "./dashboard-viewer-oauth-scopes";
  * At issuance rather than on the first MCP request: Revoke deletes the grant and revokes the refresh
  * tokens, so a token minted before it must not bring the grant back; only a new authorization does.
  *
- * Never throws: the tokens are issued. Without a grant the client's calls are refused, and its next token
- * tries again.
+ * Never throws: the tokens are issued (see the handler's `catch`). Without a grant the client's calls are
+ * refused, and its next token tries again.
  */
 
 const TOKEN_PATH = "/oauth2/token";
@@ -78,7 +80,18 @@ export const grantSkipConsentClientAfterHandler = async (ctx: AuthHookContext): 
     });
     if (!created) return;
     await queueMcpGrantAudit({ action: "created", actorUserId: userId, before: null, after: created });
-  } catch (err) {
-    logger.error({ err, userId, clientId }, "Saving the grant of a skipConsent MCP client failed");
+  } catch (error) {
+    // Never rethrown, on purpose: the provider has already issued the tokens, and for a refresh it has
+    // rotated the presented refresh token too. Failing here would replace the response with an error the
+    // client can't recover from: it would hold neither the new tokens nor a valid old one, and would have
+    // to authorize again. Swallowed, the client keeps its tokens, its MCP calls answer 401 while it has no
+    // grant, and its next token issuance tries again. A known Prisma error is the expected case (the user
+    // or the client deleted while the token was issued, a lost race on the unique key) and is a warning;
+    // anything else is a fault and is logged as an error.
+    const expected = error instanceof Prisma.PrismaClientKnownRequestError;
+    logger[expected ? "warn" : "error"](
+      { err: loggableError(error), userId, clientId },
+      "Saving the grant of a skipConsent MCP client failed"
+    );
   }
 };

@@ -84,7 +84,7 @@
     "oauth": {
       "access": {
         "all": "All access",
-        "all_hint": "Every organization and workspace you can reach, including ones you join later.",
+        "all_hint": "Every organization and workspace you have access to, including ones you join later.",
         "description": "Choose which organizations and workspaces the app can reach. Everything else doesn't exist for it.",
         "mode_label": "Organization & workspace access",
         "no_options": "You don't belong to any organization or workspace yet.",
@@ -114,6 +114,8 @@
       "client_uri": "Client URI",
       "connected_at": "Connected",
       "consent_failed": "OAuth consent failed. Please try again.",
+      "consent_grant_not_saved": "The access you chose couldn't be saved, so nothing changed. Try again.",
+      "consent_grant_selection_unavailable": "You no longer have access to some of the organizations or workspaces you picked. Reload the page and choose again.",
       "consent_revoked": "OAuth app access revoked.",
       "dashboard_viewer_no_dashboard_scope": "This app didn't ask to read dashboards, the only access a Dashboard viewer can give.",
       "dashboard_viewer_scope_description": "As a Dashboard viewer, you can only let this app read the dashboards you can see. It won't get any other access it asked for.",
@@ -183,6 +185,7 @@
       "permissions": "Permissions",
       "redirect_host": "Redirect host",
       "revoke": "Revoke",
+      "revoke_access_label": "Revoke {clientName}'s access",
       "revoke_confirmation": "Revoke this app’s access to your Formbricks account?",
       "unknown_client": "Unknown client"
     },

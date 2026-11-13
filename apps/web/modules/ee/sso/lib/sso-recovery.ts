@@ -7,10 +7,7 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createEmailToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
-import {
-  queueRevokedMcpGrantAudits,
-  revokeAllUserOAuthGrants,
-} from "@/modules/auth/lib/oauth-grant-revocation";
+import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import {
@@ -223,7 +220,7 @@ const reclaimUnverifiedLocalAuthIfNeeded = async ({
   // Left as-is on purpose: there is no signal here that separates the two populations, and weakening the
   // guard would reopen the takeover. What was missing was telling the user, and the completion path now
   // does — `sendSsoRecoveryFactorsRemovedEmail` names what was removed and links to re-enrolment
-  // (ENG-2633). The in-app re-enrolment prompt is still open on that ticket.
+  // (ENG-2633).
   if (user.emailVerified) {
     return null;
   }
@@ -324,8 +321,9 @@ const settleReclaimedCredentials = async (
       reconcileApiKeyRelationships({ apiKeyIds: reclaimed.revokedApiKeyIds })
     );
   }
-  // Each ended MCP grant gets its own entry under the organizations it reached, as any revoke does.
-  await queueRevokedMcpGrantAudits(reclaimed.revokedMcpGrantAudits);
+  // Each ended MCP grant loses its SpiceDB relationships, best-effort, and gets its own entry under the
+  // organizations it reached, as any revoke does.
+  await finishRevokedMcpGrants(reclaimed.revokedMcpGrantAudits);
   return sessionsRevoked;
 };
 

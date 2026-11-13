@@ -1,46 +1,51 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewer-oauth-scopes";
 import { readConsentedScopes } from "@/modules/auth/lib/oauth-grant-revocation";
-import { listMcpGrantAccessOptions } from "./access-options";
-import { MAX_LISTED_MCP_CONNECTIONS } from "./constants";
+import { MAX_LISTED_AUTHORIZED_MCP_CLIENTS } from "./constants";
 import {
+  MCP_GRANT_ACCESS_SELECT,
+  type TMcpGrantAccessRow,
   type TMcpGrantAccessSelection,
   type TMcpGrantPermissions,
   getMcpGrantPermissionsForScopes,
   isMcpGrantWithinCap,
   parseMcpGrantPermissions,
+  readMcpGrantAccessSelection,
 } from "./grant";
+import { type TMcpGrantAccessOptions, limitMcpGrantAccessToOptions } from "./grant-access";
 import {
+  MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS,
   type TStoredMcpGrant,
-  hasMcpGrant,
+  lockMcpGrant,
+  narrowMcpGrantAccess,
   projectMcpGrants,
-  readMcpGrantAccess,
-  saveMcpGrant,
+  writeMcpGrant,
 } from "./grant-store";
 
 /**
- * A user's MCP connections as Authorized apps shows and edits them (ENG-7152): one per MCP client the user
- * has consented to, with its grant. Reading and editing are always the session user's own: every query
- * here is keyed on `userId`, so another user's connection is indistinguishable from none.
+ * The MCP clients a user authorized, as Authorized apps shows and edits them (ENG-7152): each with its
+ * grant. Reading and editing are always the session user's own: every query here is keyed on `userId`,
+ * so another user's grant is indistinguishable from none.
  */
 
-/** One connection: the client, when it was connected and last changed, its grant and what caps it. */
-export type TMcpConnection = {
+/** One MCP client the user authorized: when it was authorized and last changed, its grant and its cap. */
+export type TAuthorizedMcpClient = {
   clientId: string;
   clientName: string | null;
   clientUri: string | null;
-  /** The consent Revoke deletes the connection through (the newest, when duplicates exist). */
-  consentId: string;
   connectedAt: Date;
   updatedAt: Date;
   /** `null` for a consent left without a grant, which `/api/mcp` refuses and the next refresh ends. */
   permissions: TMcpGrantPermissions | null;
   /**
    * The grant's organization & workspace access with what it selects (ENG-7153), `null` without a grant.
+   * Only what the access picker still offers the user (spec story 36): an organization or workspace they
+   * lost is not counted, nor opened in Edit.
    */
   access: TMcpGrantAccessSelection | null;
-  /** What the client's consented scopes ask for: Edit can't give more (ADR-0041). */
+  /** What the client's scopes ask for: Edit can't give more (ADR-0041). */
   cap: TMcpGrantPermissions;
 };
 
@@ -49,100 +54,140 @@ const capForScopes = (scopes: readonly string[], isDashboardViewer: boolean): TM
 
 const latest = (a: Date, b: Date): Date => (a.getTime() >= b.getTime() ? a : b);
 
+const CLIENT_SELECT = { select: { name: true, uri: true, scopes: true, skipConsent: true } } as const;
+
+const LISTED_GRANT_SELECT = {
+  clientId: true,
+  permissions: true,
+  createdAt: true,
+  updatedAt: true,
+  ...MCP_GRANT_ACCESS_SELECT,
+} as const;
+
 /**
- * The user's connections, most recently changed first. Two queries whatever the count: the consents with
- * their clients, then the grants. Duplicate consent rows of one client fold into one connection.
+ * The scopes that cap a client's grant: the consented ones, or, for a `skipConsent` client, which the
+ * provider authorizes without a consent, the scopes it is registered with.
  */
-export const listMcpConnections = async (
+const capScopes = (
+  client: { scopes: string[]; skipConsent: boolean | null },
+  consentedScopes: string[]
+): string[] => (client.skipConsent ? client.scopes : consentedScopes);
+
+/**
+ * The MCP clients the user authorized, most recently changed first: one per client with a consent, and one
+ * per `skipConsent` client with a grant, which never has a consent (spec stories 29 and 38). Three reads
+ * whatever the count: the consents with their clients, then, side by side, the grants of those clients and
+ * the grants of `skipConsent` clients. Duplicate consent rows of one client fold into one entry.
+ */
+export const listAuthorizedMcpClients = async (
   userId: string,
-  { isDashboardViewer }: { isDashboardViewer: boolean }
-): Promise<TMcpConnection[]> => {
-  const [consents, grants] = await Promise.all([
-    prisma.oauthConsent.findMany({
-      where: { userId },
-      select: {
-        id: true,
-        clientId: true,
-        scopes: true,
-        createdAt: true,
-        updatedAt: true,
-        client: { select: { name: true, uri: true } },
-      },
-      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
-      take: MAX_LISTED_MCP_CONNECTIONS,
-    }),
+  { isDashboardViewer, accessOptions }: { isDashboardViewer: boolean; accessOptions: TMcpGrantAccessOptions }
+): Promise<TAuthorizedMcpClient[]> => {
+  const consents = await prisma.oauthConsent.findMany({
+    where: { userId },
+    select: {
+      id: true,
+      clientId: true,
+      scopes: true,
+      createdAt: true,
+      updatedAt: true,
+      client: CLIENT_SELECT,
+    },
+    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+    take: MAX_LISTED_AUTHORIZED_MCP_CLIENTS,
+  });
+  const consentedClientIds = [...new Set(consents.map(({ clientId }) => clientId))];
+  const [consentedGrants, skipConsentGrants] = await Promise.all([
+    consentedClientIds.length === 0
+      ? []
+      : prisma.mcpGrant.findMany({
+          where: { userId, clientId: { in: consentedClientIds } },
+          select: LISTED_GRANT_SELECT,
+        }),
     prisma.mcpGrant.findMany({
-      where: { userId },
-      select: {
-        clientId: true,
-        permissions: true,
-        updatedAt: true,
-        access: true,
-        organizations: { select: { organizationId: true }, orderBy: { organizationId: "asc" } },
-        workspaces: { select: { workspaceId: true }, orderBy: { workspaceId: "asc" } },
-      },
-      take: MAX_LISTED_MCP_CONNECTIONS,
+      where: { userId, clientId: { notIn: consentedClientIds }, client: { skipConsent: true } },
+      select: { ...LISTED_GRANT_SELECT, client: CLIENT_SELECT },
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+      take: MAX_LISTED_AUTHORIZED_MCP_CLIENTS,
     }),
   ]);
-  const grantByClient = new Map(grants.map((grant) => [grant.clientId, grant]));
+  const grantByClient = new Map(consentedGrants.map((grant) => [grant.clientId, grant]));
+  const accessOf = (grant: TMcpGrantAccessRow) =>
+    limitMcpGrantAccessToOptions(readMcpGrantAccessSelection(grant), accessOptions);
 
-  const connections = new Map<string, TMcpConnection>();
+  const clients = new Map<string, TAuthorizedMcpClient>();
   for (const consent of consents) {
-    const existing = connections.get(consent.clientId);
+    const existing = clients.get(consent.clientId);
     if (existing) {
       // Rows come newest first, so the first one seen holds the consent's current scopes.
       if (consent.createdAt < existing.connectedAt) existing.connectedAt = consent.createdAt;
       continue;
     }
     const grant = grantByClient.get(consent.clientId);
-    connections.set(consent.clientId, {
+    clients.set(consent.clientId, {
       clientId: consent.clientId,
       clientName: consent.client.name,
       clientUri: consent.client.uri,
-      consentId: consent.id,
       connectedAt: consent.createdAt,
       updatedAt: grant ? latest(consent.updatedAt, grant.updatedAt) : consent.updatedAt,
       permissions: grant ? parseMcpGrantPermissions(grant.permissions) : null,
-      access: grant ? readMcpGrantAccess(grant) : null,
-      cap: capForScopes(consent.scopes, isDashboardViewer),
+      access: grant ? accessOf(grant) : null,
+      cap: capForScopes(capScopes(consent.client, consent.scopes), isDashboardViewer),
     });
   }
-  return [...connections.values()].sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
+  for (const grant of skipConsentGrants) {
+    clients.set(grant.clientId, {
+      clientId: grant.clientId,
+      clientName: grant.client.name,
+      clientUri: grant.client.uri,
+      connectedAt: grant.createdAt,
+      updatedAt: grant.updatedAt,
+      permissions: parseMcpGrantPermissions(grant.permissions),
+      access: accessOf(grant),
+      cap: capForScopes(grant.client.scopes, isDashboardViewer),
+    });
+  }
+  return [...clients.values()]
+    .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
+    .slice(0, MAX_LISTED_AUTHORIZED_MCP_CLIENTS);
 };
 
 export type TEditMcpGrantResult =
   | { status: "not_found" }
   | { status: "beyond_scopes" }
-  | { status: "selection_unreachable"; field: "organizationIds" | "workspaceIds" }
+  | { status: "selection_unavailable"; field: "organizationIds" | "workspaceIds" }
   | { status: "saved"; before: TStoredMcpGrant; after: TStoredMcpGrant };
 
 /**
- * The field of `access` naming an organization or workspace the picker wouldn't offer the user
- * (`listMcpGrantAccessOptions`), or `null` when it names none. Edit refuses such a selection rather than
- * dropping what it can't keep and saving the rest, which could silently leave a grant reaching nothing.
+ * The scopes that cap the user's grant to the client, read in the caller's transaction, or `null` when
+ * the client has neither a consent nor `skipConsent`. A consent is read `FOR SHARE`, so a revoke in flight
+ * is waited on rather than read around.
  */
-const findUnreachableSelection = async (
+const readCapScopes = async (
+  tx: Prisma.TransactionClient,
   userId: string,
-  access: TMcpGrantAccessSelection | undefined
-): Promise<"organizationIds" | "workspaceIds" | null> => {
-  if (!access || access.access === "all") return null;
-  const options = await listMcpGrantAccessOptions(userId);
-  if (access.access === "organizations") {
-    const offered = new Set(options.organizations.map(({ id }) => id));
-    return access.organizationIds.every((id) => offered.has(id)) ? null : "organizationIds";
-  }
-  const offered = new Set(options.workspaces.map(({ id }) => id));
-  return access.workspaceIds.every((id) => offered.has(id)) ? null : "workspaceIds";
+  clientId: string
+): Promise<string[] | null> => {
+  const client = await tx.oauthClient.findUnique({
+    where: { clientId },
+    select: { scopes: true, skipConsent: true },
+  });
+  if (!client) return null;
+  if (client.skipConsent) return client.scopes;
+  return readConsentedScopes(tx, userId, clientId);
 };
 
 /**
- * Sets the permissions of the user's grant to `clientId` (Authorized apps' Edit). Refused when the user
- * has no consent and grant for the client, when `permissions` go above what the consented scopes ask
- * for (and, for a Dashboard viewer, what a viewer may give), and when `access` selects an organization
- * or workspace the user couldn't pick. The consent rows are read `FOR SHARE`, so a
- * revoke in flight is waited on and the edit then finds nothing, rather than writing a grant back after
- * it. `/api/mcp` reads the grant on every call and the access is written to SpiceDB once the transaction
- * commits, so the change applies from the client's next call.
+ * Sets the user's grant to `clientId` (Authorized apps' Edit): its permissions and, when given, its
+ * organization & workspace access. Refused when the user has no grant (or no consent, for a client that
+ * needs one), when `permissions` go above what the client's scopes ask for (and, for a Dashboard viewer,
+ * what a viewer may give), and when `access` adds an organization or workspace the user can't select;
+ * one the grant already selected and the user has lost is dropped instead (`resolveMcpGrantSelection`).
+ *
+ * The grant row is locked first, then the consent read `FOR SHARE`; what a narrowing takes away is
+ * deleted from SpiceDB before the transaction commits, or the edit fails. `/api/mcp` reads the grant on
+ * every call and what the access adds is written to SpiceDB once the transaction commits, so the change
+ * applies from the client's next call.
  */
 export const editMcpGrant = async ({
   userId,
@@ -158,20 +203,36 @@ export const editMcpGrant = async ({
   access?: TMcpGrantAccessSelection;
   isDashboardViewer: boolean;
 }): Promise<TEditMcpGrantResult> => {
-  const unreachable = await findUnreachableSelection(userId, access);
-  if (unreachable) return { status: "selection_unreachable", field: unreachable };
-
-  const result = await prisma.$transaction(async (tx): Promise<TEditMcpGrantResult> => {
-    const scopes = await readConsentedScopes(tx, userId, clientId);
-    if (!scopes || !(await hasMcpGrant(tx, { userId, clientId }))) return { status: "not_found" };
-    if (!isMcpGrantWithinCap(permissions, capForScopes(scopes, isDashboardViewer))) {
-      return { status: "beyond_scopes" };
-    }
-    const { before, after } = await saveMcpGrant(tx, { userId, clientId, permissions, access });
-    // A grant is only deleted with its consent rows, which this transaction holds `FOR SHARE`.
-    if (!before) throw new Error("MCP grant disappeared while its consent was locked");
-    return { status: "saved", before, after };
-  });
-  if (result.status === "saved") await projectMcpGrants([result.after.id]);
-  return result;
+  let grantId: string | null = null;
+  try {
+    const result = await prisma.$transaction(
+      async (tx): Promise<TEditMcpGrantResult> => {
+        const before = await lockMcpGrant(tx, { userId, clientId });
+        if (!before) return { status: "not_found" };
+        grantId = before.id;
+        const scopes = await readCapScopes(tx, userId, clientId);
+        if (!scopes) return { status: "not_found" };
+        if (!isMcpGrantWithinCap(permissions, capForScopes(scopes, isDashboardViewer))) {
+          return { status: "beyond_scopes" };
+        }
+        let saved = access;
+        if (access) {
+          const resolved = await narrowMcpGrantAccess(tx, { userId, before, access });
+          if (resolved.status === "unavailable")
+            return { status: "selection_unavailable", field: resolved.field };
+          saved = resolved.access;
+        }
+        const written = await writeMcpGrant(tx, { userId, clientId, before, permissions, access: saved });
+        return { status: "saved", before, after: written.after };
+      },
+      { timeout: MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS }
+    );
+    if (result.status === "saved") await projectMcpGrants([result.after.id]);
+    return result;
+  } catch (error) {
+    // A narrowing may have deleted relationships in SpiceDB before the transaction failed: reconcile the
+    // grant from its committed rows, so it doesn't stay narrower than they say.
+    if (grantId) await projectMcpGrants([grantId]);
+    throw error;
+  }
 };

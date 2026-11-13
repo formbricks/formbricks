@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { mcpConnectionKeys } from "../lib/query";
+import { authorizedMcpClientKeys } from "../lib/query";
 import { useUpdateMcpGrant } from "./use-update-mcp-grant";
 
 const wrapper = (queryClient: QueryClient) => {
@@ -29,7 +29,7 @@ describe("useUpdateMcpGrant", () => {
     vi.unstubAllGlobals();
   });
 
-  test("saves through the grant route, then invalidates the connection list", async () => {
+  test("saves through the grant route, then invalidates the client list", async () => {
     vi.mocked(global.fetch).mockResolvedValue(
       new Response(JSON.stringify({ data: { clientId: "client/a", permissions: { surveys: "read" } } }), {
         status: 200,
@@ -49,7 +49,7 @@ describe("useUpdateMcpGrant", () => {
       method: "PATCH",
       body: JSON.stringify({ permissions: { surveys: "read" } }),
     });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: mcpConnectionKeys.list() });
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: authorizedMcpClientKeys.list() });
   });
 
   test("surfaces a refused save instead of reporting success", async () => {

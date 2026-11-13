@@ -13,7 +13,7 @@ import { getSession } from "@/modules/auth/lib/session";
 import { isDashboardViewerOnly } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { listMcpGrantAccessOptions } from "@/modules/mcp/access-options";
 import { getMcpGrantPermissionsForScopes } from "@/modules/mcp/grant";
-import { initialMcpGrantAccessDraft } from "@/modules/mcp/grant-access";
+import { initialMcpGrantAccessDraft, limitMcpGrantAccessToOptions } from "@/modules/mcp/grant-access";
 import { getInitialMcpGrantPermissions } from "@/modules/mcp/grant-editor";
 import { getMcpGrant } from "@/modules/mcp/grant-store";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
@@ -124,7 +124,10 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
     existing: existingGrant?.permissions ?? null,
     cap,
   });
-  const initialAccess = initialMcpGrantAccessDraft(existingGrant);
+  // Without what the user has since lost (spec story 36): the picker no longer offers it, and Allow drops it.
+  const initialAccess = initialMcpGrantAccessDraft(
+    existingGrant ? limitMcpGrantAccessToOptions(existingGrant, accessOptions) : null
+  );
   const identityAccess = [
     ...(requestedScopes.includes("profile") || requestedScopes.includes("email")
       ? [t("auth.oauth.grant.identity_name_and_email")]

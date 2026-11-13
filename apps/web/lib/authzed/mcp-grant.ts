@@ -1,8 +1,14 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import type { McpGrantAccess } from "@formbricks/database/prisma";
+import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { isRelationMissingFromSchema } from "@/lib/authorization/schema-drift";
+import {
+  MCP_GRANT_ACCESS_SELECT,
+  type TMcpGrantAccessSelection,
+  readMcpGrantAccessSelection,
+} from "@/modules/mcp/grant";
+import { getMcpGrantSelectedIds } from "@/modules/mcp/grant-access";
 import { type TAuthzedRelationship, type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
@@ -31,33 +37,34 @@ import { readAllRelationships } from "./relationship-reads";
 
 export type TMcpGrantProjectionTargets = Readonly<{ grantIds?: ReadonlyArray<string> }>;
 
-/** What a grant's relationships follow from: its id, its access and the selection that access reads. */
-export type TMcpGrantReach = Readonly<{
-  access: McpGrantAccess;
-  id: string;
-  organizationIds: ReadonlyArray<string>;
-  workspaceIds: ReadonlyArray<string>;
-}>;
+/** What a grant's relationships follow from: its id and its organization & workspace access. */
+export type TProjectedMcpGrant = Readonly<{ id: string } & TMcpGrantAccessSelection>;
 
-type TGrantSnapshot = ReadonlyArray<TMcpGrantReach>;
+type TGrantSnapshot = ReadonlyArray<TProjectedMcpGrant>;
 
-const readSnapshot = async (grantIds: ReadonlyArray<string>): Promise<TGrantSnapshot> => {
-  const grants = await prisma.mcpGrant.findMany({
+/** How long one reconciling pass may hold its grants' row locks, SpiceDB round trips included. */
+const MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS = 30_000;
+const MCP_GRANT_PROJECTION_TRANSACTION_MAX_WAIT_MS = 10_000;
+
+/**
+ * Reads the grants' access in the reconciling transaction, after locking their rows `FOR SHARE` in id
+ * order. A narrowing (consent re-approval, Edit) holds its grant's row `FOR UPDATE` from before it deletes
+ * relationships in SpiceDB until it commits, so a reconcile either finishes its write before the narrowing
+ * starts, or reads the narrowed rows once it has committed. Without the lock, a reconcile that read the
+ * grant before the narrowing could write the old relationships back after the narrowing deleted them.
+ */
+const readSnapshot = async (
+  tx: Prisma.TransactionClient,
+  grantIds: ReadonlyArray<string>
+): Promise<TGrantSnapshot> => {
+  await tx.$queryRaw`
+    SELECT "id" FROM "McpGrant" WHERE "id" = ANY(${[...grantIds]}::text[]) ORDER BY "id" FOR SHARE`;
+  const grants = await tx.mcpGrant.findMany({
     where: { id: { in: [...grantIds] } },
-    select: {
-      id: true,
-      access: true,
-      organizations: { select: { organizationId: true }, orderBy: { organizationId: "asc" } },
-      workspaces: { select: { workspaceId: true }, orderBy: { workspaceId: "asc" } },
-    },
+    select: { id: true, ...MCP_GRANT_ACCESS_SELECT },
     orderBy: { id: "asc" },
   });
-  return grants.map((grant) => ({
-    access: grant.access,
-    id: grant.id,
-    organizationIds: grant.organizations.map(({ organizationId }) => organizationId),
-    workspaceIds: grant.workspaces.map(({ workspaceId }) => workspaceId),
-  }));
+  return grants.map((grant) => ({ id: grant.id, ...readMcpGrantAccessSelection(grant) }));
 };
 
 const relationshipTo = (
@@ -71,20 +78,17 @@ const relationshipTo = (
 });
 
 /**
- * The relationships a grant's rows imply. Only the selection that matches the grant's mode counts: a row
- * left behind by a mode change (which the save path never leaves) grants nothing.
+ * The relationships a grant's access implies: one per organization of Only selected organizations, one per
+ * workspace of Only selected workspaces, none for All access.
  */
 export const expectedMcpGrantRelationships = (
-  grant: TGrantSnapshot[number]
+  grant: TProjectedMcpGrant
 ): ReadonlyArray<TAuthzedRelationship> => {
-  switch (grant.access) {
-    case "organizations":
-      return grant.organizationIds.map((id) => relationshipTo("organization", id, grant.id));
-    case "workspaces":
-      return grant.workspaceIds.map((id) => relationshipTo("workspace", id, grant.id));
-    case "all":
-      return [];
-  }
+  const { organizationIds, workspaceIds } = getMcpGrantSelectedIds(grant);
+  return [
+    ...organizationIds.map((id) => relationshipTo("organization", id, grant.id)),
+    ...workspaceIds.map((id) => relationshipTo("workspace", id, grant.id)),
+  ];
 };
 
 const relationshipKey = ({ resource }: TAuthzedRelationship): string =>
@@ -145,34 +149,47 @@ export const reconcileMcpGrantRelationships = async (
     if (grantIds.length === 0) return 0;
 
     for (let pass = 1; pass <= AUTHZED_MAX_RECONCILIATION_PASSES; pass++) {
-      const sourceSnapshot = await readSnapshot(grantIds);
-      try {
-        await writeSnapshot(grantIds, sourceSnapshot);
-      } catch (error) {
-        // The previous release's schema has no `mcp_grant`. Nothing can be projected yet, and nothing
-        // needs removing: `mcp_reach` is missing too, so a grant that selects reaches nothing (denied,
-        // never widened). Carry on rather than dead-letter the event; applying the schema runs the
-        // backfill, which projects every selection.
-        if (!isRelationMissingFromSchema(error, MCP_GRANT_RELATION)) throw error;
-        logger.warn(
-          { relation: MCP_GRANT_RELATION, grants: grantIds.length },
-          "AuthZed schema predates MCP grants; apply the release's schema to project their selections"
-        );
-        return pass;
-      }
-      if (snapshotsMatch(sourceSnapshot, await readSnapshot(grantIds))) return pass;
+      const outcome = await prisma.$transaction(
+        async (tx) => {
+          const sourceSnapshot = await readSnapshot(tx, grantIds);
+          try {
+            await writeSnapshot(grantIds, sourceSnapshot);
+          } catch (error) {
+            // The previous release's schema has no `mcp_grant`. Nothing can be projected yet, and nothing
+            // needs removing: `mcp_reach` is missing too, so a grant that selects reaches nothing (denied,
+            // never widened). Carry on rather than dead-letter the event; applying the schema runs the
+            // backfill, which projects every selection.
+            if (!isRelationMissingFromSchema(error, MCP_GRANT_RELATION)) throw error;
+            logger.warn(
+              { relation: MCP_GRANT_RELATION, grants: grantIds.length },
+              "AuthZed schema predates MCP grants; apply the release's schema to project their selections"
+            );
+            return "settled";
+          }
+          // The row locks fence every save, but not a cascade: deleting a selected workspace or
+          // organization drops its selection row without touching the grant's. Re-read before settling.
+          return snapshotsMatch(sourceSnapshot, await readSnapshot(tx, grantIds)) ? "settled" : "moved";
+        },
+        {
+          maxWait: MCP_GRANT_PROJECTION_TRANSACTION_MAX_WAIT_MS,
+          timeout: MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS,
+        }
+      );
+      if (outcome === "settled") return pass;
     }
 
     throw new AuthzedProjectionUnstableError();
   });
 
 /**
- * Deletes, now, the relationships `before` implies and `after` doesn't (`after` `null` for a grant being
- * deleted), for a caller about to commit that change (ENG-7153). Call it inside the transaction, before
- * it commits: a narrowing or a revoke then applies in SpiceDB first or not at all, and a failure throws,
- * which rolls the change back and fails the request rather than leaving the client its old reach until
- * the outbox delivers. Additions are never made here: they go after the commit, best-effort
- * (`projectMcpGrants`), with the outbox as the repair, so a widening never shows before it is saved.
+ * Deletes, now, the relationships a grant being narrowed loses: those `before` implies and `after` doesn't
+ * (ENG-7153). Only for narrowing a grant that stays (consent re-approval, Authorized apps' Edit), inside
+ * the transaction that holds the grant's row `FOR UPDATE`, before it commits: the narrowing then applies
+ * in SpiceDB first or not at all, and a failure throws, which rolls the change back and fails the request
+ * rather than leaving the client its old access until the outbox delivers. Additions are never made here:
+ * they go after the commit, best-effort (`projectMcpGrants`), with the outbox as the repair, so a widening
+ * never shows before it is saved. A deleted grant needs none of this: `/api/mcp` refuses a connection
+ * without a grant row, so {@link removeDeletedMcpGrantRelationships} cleans up after the commit.
  *
  * Nothing to do for a grant whose access is All access before (it holds no relationships), or with AuthZed
  * off. On the previous release's schema, which has no `mcp_grant` relation, nothing was ever projected.
@@ -180,21 +197,23 @@ export const reconcileMcpGrantRelationships = async (
  * reconciled: the safe direction.
  */
 export const deleteMcpGrantRelationshipsBeforeCommit = async (
-  changes: ReadonlyArray<Readonly<{ before: TMcpGrantReach; after: TMcpGrantReach | null }>>
+  before: TProjectedMcpGrant,
+  after: TMcpGrantAccessSelection
 ): Promise<void> => {
   if (!isAuthzedEnabled()) return;
-  const groups: TAuthzedRelationshipUpdate[][] = [];
-  for (const { before, after } of changes) {
-    const kept = new Set((after ? expectedMcpGrantRelationships(after) : []).map(relationshipKey));
-    for (const relationship of expectedMcpGrantRelationships(before)) {
-      if (!kept.has(relationshipKey(relationship))) groups.push([{ operation: "delete", relationship }]);
-    }
-  }
-  if (groups.length === 0) return;
+  const kept = new Set(expectedMcpGrantRelationships({ ...after, id: before.id }).map(relationshipKey));
+  await deleteRelationships(
+    expectedMcpGrantRelationships(before).filter((relationship) => !kept.has(relationshipKey(relationship)))
+  );
+};
 
+const deleteRelationships = async (relationships: ReadonlyArray<TAuthzedRelationship>): Promise<void> => {
+  if (relationships.length === 0) return;
   const client = getAuthzedClient();
   try {
-    for (const batch of packRelationshipUpdateGroups(groups)) {
+    for (const batch of packRelationshipUpdateGroups(
+      relationships.map((relationship) => [{ operation: "delete", relationship }])
+    )) {
       await client.writeRelationships(batch);
     }
   } catch (error) {
@@ -202,3 +221,18 @@ export const deleteMcpGrantRelationshipsBeforeCommit = async (
     throw error;
   }
 };
+
+/**
+ * Removes the relationships of grants whose rows a committed transaction deleted (revoke, member removal,
+ * the switch to Dashboard viewer, the retention sweep, SSO recovery). Call it after the commit: the deleted
+ * row already ends the client's access (`/api/mcp` answers 401 without a grant), so this is hygiene, and
+ * best-effort. The delete's outbox event (the grant row's trigger for a grant that selected, and its
+ * selection rows' cascade) is the repair. Never throws: failures come back as `{ status: "failed" }`.
+ */
+export const removeDeletedMcpGrantRelationships = (
+  grants: ReadonlyArray<TProjectedMcpGrant>
+): Promise<TAuthzedProjectionResult> =>
+  runBestEffortProjection("remove_deleted_mcp_grant_relationships", "mcp_grant", async () => {
+    await deleteRelationships(grants.flatMap(expectedMcpGrantRelationships));
+    return 1;
+  });

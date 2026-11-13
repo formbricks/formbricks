@@ -1,7 +1,11 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { lookupAuthorizedWorkspaceIds } from "@/lib/authorization/resource-list";
-import { listMcpGrantAccessOptions } from "./access-options";
+import {
+  keepOfferedMcpGrantSelection,
+  listMcpGrantAccessOptions,
+  resolveMcpGrantSelection,
+} from "./access-options";
 
 vi.mock("@/lib/authorization/resource-list", () => ({ lookupAuthorizedWorkspaceIds: vi.fn() }));
 
@@ -63,5 +67,127 @@ describe("listMcpGrantAccessOptions", () => {
       workspaces: [],
     });
     expect(prisma.workspace.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("keepOfferedMcpGrantSelection", () => {
+  beforeEach(() => {
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockReset();
+  });
+
+  test("keeps the organizations the user holds other than as a billing member, reading ids only", async () => {
+    prisma.membership.findMany.mockResolvedValue([{ organizationId: "org-1" }] as never);
+
+    await expect(
+      keepOfferedMcpGrantSelection(prisma, USER_ID, {
+        access: "organizations",
+        organizationIds: ["org-1", "org-billing", "org-foreign"],
+      })
+    ).resolves.toEqual({ access: "organizations", organizationIds: ["org-1"] });
+    expect(prisma.membership.findMany).toHaveBeenCalledWith({
+      where: {
+        userId: USER_ID,
+        role: { not: "billing" },
+        organizationId: { in: ["org-1", "org-billing", "org-foreign"] },
+      },
+      select: { organizationId: true },
+    });
+  });
+
+  test("keeps the workspaces SpiceDB lets the user read, in organizations they hold other than as billing", async () => {
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(["ws-1", "ws-billing-org", "ws-elsewhere"]);
+    prisma.workspace.findMany.mockResolvedValue([{ id: "ws-1" }] as never);
+
+    await expect(
+      keepOfferedMcpGrantSelection(prisma, USER_ID, {
+        access: "workspaces",
+        workspaceIds: ["ws-1", "ws-billing-org", "ws-unreadable"],
+      })
+    ).resolves.toEqual({ access: "workspaces", workspaceIds: ["ws-1"] });
+    expect(lookupAuthorizedWorkspaceIds).toHaveBeenCalledWith(
+      { type: "user", id: USER_ID },
+      "dashboard_read"
+    );
+    expect(prisma.workspace.findMany).toHaveBeenCalledWith({
+      where: {
+        id: { in: ["ws-1", "ws-billing-org"] },
+        organization: { memberships: { some: { userId: USER_ID, role: { not: "billing" } } } },
+      },
+      select: { id: true },
+    });
+  });
+
+  test("reads no workspace when SpiceDB lets the user read none of them, and nothing for All access", async () => {
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockResolvedValue(["ws-other"]);
+
+    await expect(
+      keepOfferedMcpGrantSelection(prisma, USER_ID, { access: "workspaces", workspaceIds: ["ws-1"] })
+    ).resolves.toEqual({ access: "workspaces", workspaceIds: [] });
+    await expect(keepOfferedMcpGrantSelection(prisma, USER_ID, { access: "all" })).resolves.toEqual({
+      access: "all",
+    });
+    expect(prisma.workspace.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("resolveMcpGrantSelection", () => {
+  beforeEach(() => {
+    vi.mocked(lookupAuthorizedWorkspaceIds).mockReset().mockResolvedValue(["ws-1", "ws-2"]);
+    prisma.workspace.findMany.mockResolvedValue([{ id: "ws-1" }, { id: "ws-2" }] as never);
+  });
+
+  test("saves a selection the user may make", async () => {
+    await expect(
+      resolveMcpGrantSelection(
+        prisma,
+        USER_ID,
+        { access: "workspaces", workspaceIds: ["ws-1", "ws-2"] },
+        null
+      )
+    ).resolves.toEqual({ status: "ok", access: { access: "workspaces", workspaceIds: ["ws-1", "ws-2"] } });
+  });
+
+  test("refuses an id the request adds that the user can't select, naming the field", async () => {
+    await expect(
+      resolveMcpGrantSelection(
+        prisma,
+        USER_ID,
+        { access: "workspaces", workspaceIds: ["ws-1", "ws-foreign"] },
+        { access: "workspaces", workspaceIds: ["ws-1"] }
+      )
+    ).resolves.toEqual({ status: "unavailable", field: "workspaceIds" });
+  });
+
+  // Spec story 36: a stored id the user has since lost goes without a refusal.
+  test("drops an id the grant already selected and the user lost, without refusing", async () => {
+    await expect(
+      resolveMcpGrantSelection(
+        prisma,
+        USER_ID,
+        { access: "workspaces", workspaceIds: ["ws-1", "ws-lost"] },
+        { access: "workspaces", workspaceIds: ["ws-1", "ws-lost"] }
+      )
+    ).resolves.toEqual({ status: "ok", access: { access: "workspaces", workspaceIds: ["ws-1"] } });
+  });
+
+  test("checks every id as added when the stored grant selects the other kind", async () => {
+    prisma.membership.findMany.mockResolvedValue([] as never);
+
+    await expect(
+      resolveMcpGrantSelection(
+        prisma,
+        USER_ID,
+        { access: "organizations", organizationIds: ["ws-lost"] },
+        { access: "workspaces", workspaceIds: ["ws-lost"] }
+      )
+    ).resolves.toEqual({ status: "unavailable", field: "organizationIds" });
+  });
+
+  test("saves All access without reading anything", async () => {
+    await expect(resolveMcpGrantSelection(prisma, USER_ID, { access: "all" }, null)).resolves.toEqual({
+      status: "ok",
+      access: { access: "all" },
+    });
+    expect(lookupAuthorizedWorkspaceIds).not.toHaveBeenCalled();
   });
 });

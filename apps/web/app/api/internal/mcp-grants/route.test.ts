@@ -5,7 +5,7 @@ import { GET } from "./route";
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   isDashboardViewerOnly: vi.fn(),
-  listMcpConnections: vi.fn(),
+  listAuthorizedMcpClients: vi.fn(),
   listMcpGrantAccessOptions: vi.fn(),
 }));
 
@@ -13,7 +13,9 @@ vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
 vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
   isDashboardViewerOnly: mocks.isDashboardViewerOnly,
 }));
-vi.mock("@/modules/mcp/connections", () => ({ listMcpConnections: mocks.listMcpConnections }));
+vi.mock("@/modules/mcp/authorized-clients", () => ({
+  listAuthorizedMcpClients: mocks.listAuthorizedMcpClients,
+}));
 vi.mock("@/modules/mcp/access-options", () => ({
   listMcpGrantAccessOptions: mocks.listMcpGrantAccessOptions,
 }));
@@ -42,12 +44,11 @@ describe("GET /api/internal/mcp-grants", () => {
     vi.clearAllMocks();
     mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
     mocks.isDashboardViewerOnly.mockResolvedValue(false);
-    mocks.listMcpConnections.mockResolvedValue([
+    mocks.listAuthorizedMcpClients.mockResolvedValue([
       {
         clientId: "client_a",
         clientName: "Claude",
         clientUri: "https://claude.ai",
-        consentId: "consent_a",
         connectedAt: new Date("2030-01-01T00:00:00.000Z"),
         updatedAt: new Date("2030-02-01T00:00:00.000Z"),
         permissions: { surveys: "read" },
@@ -58,21 +59,24 @@ describe("GET /api/internal/mcp-grants", () => {
     mocks.listMcpGrantAccessOptions.mockResolvedValue(ACCESS_OPTIONS);
   });
 
-  test("lists only the session user's connections, with each grant, the cap Edit is held to and what access it can pick", async () => {
+  test("lists only the session user's MCP clients, with each grant, the cap Edit is held to and what access it can pick", async () => {
     const response = await list();
 
     expect(response.status).toBe(200);
-    expect(mocks.listMcpConnections).toHaveBeenCalledWith(USER_ID, { isDashboardViewer: false });
+    // What the summary counts and Edit opens with is held to the options it lists (spec story 36).
+    expect(mocks.listAuthorizedMcpClients).toHaveBeenCalledWith(USER_ID, {
+      isDashboardViewer: false,
+      accessOptions: ACCESS_OPTIONS,
+    });
     expect(mocks.listMcpGrantAccessOptions).toHaveBeenCalledWith(USER_ID);
     expect((await response.json()).data).toEqual({
       isDashboardViewer: false,
       accessOptions: ACCESS_OPTIONS,
-      connections: [
+      clients: [
         {
           clientId: "client_a",
           clientName: "Claude",
           clientUri: "https://claude.ai",
-          consentId: "consent_a",
           connectedAt: "2030-01-01T00:00:00.000Z",
           updatedAt: "2030-02-01T00:00:00.000Z",
           permissions: { surveys: "read" },
@@ -83,12 +87,15 @@ describe("GET /api/internal/mcp-grants", () => {
     });
   });
 
-  test("caps a Dashboard viewer's connections at what a viewer may give", async () => {
+  test("caps a Dashboard viewer's MCP clients at what a viewer may give", async () => {
     mocks.isDashboardViewerOnly.mockResolvedValue(true);
 
     const response = await list();
 
-    expect(mocks.listMcpConnections).toHaveBeenCalledWith(USER_ID, { isDashboardViewer: true });
+    expect(mocks.listAuthorizedMcpClients).toHaveBeenCalledWith(USER_ID, {
+      isDashboardViewer: true,
+      accessOptions: ACCESS_OPTIONS,
+    });
     expect((await response.json()).data.isDashboardViewer).toBe(true);
   });
 
@@ -96,6 +103,6 @@ describe("GET /api/internal/mcp-grants", () => {
     mocks.getSession.mockResolvedValue(null);
 
     expect((await list()).status).toBe(401);
-    expect(mocks.listMcpConnections).not.toHaveBeenCalled();
+    expect(mocks.listAuthorizedMcpClients).not.toHaveBeenCalled();
   });
 });

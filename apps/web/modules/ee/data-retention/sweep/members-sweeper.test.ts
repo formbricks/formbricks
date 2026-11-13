@@ -30,7 +30,7 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), error: vi.fn() } }));
 vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({
   revokeAllUserOAuthGrants: vi.fn(),
-  queueRevokedMcpGrantAudits: vi.fn(),
+  finishRevokedMcpGrants: vi.fn(),
 }));
 vi.mock("@/modules/auth/lib/session-revocation", () => ({ revokeUserSessionsExcept: vi.fn() }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventWithoutRequest: vi.fn() }));
