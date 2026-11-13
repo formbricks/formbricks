@@ -110,6 +110,7 @@ model WorkflowRun {
   @@index([status, createdAt])
   @@index([responseId])
   @@index([isDryRun])
+  @@index([isDryRun, createdAt])
   @@index([nextAttemptAt])
   @@index([contentDeletedAt, finishedAt])
 }
