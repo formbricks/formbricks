@@ -19,8 +19,8 @@ properties:
     type: string
     minLength: 1
     description: >-
-      Builder handle identifier on the source node. Reserved for branch nodes
-      (`then`/`else`) in future scopes.
+      Builder handle identifier on the source node. `then` and `else` mark the
+      two branches of an `if_else` node and are refused on any other node.
   targetHandle:
     type: string
     minLength: 1

@@ -13613,6 +13613,153 @@ components:
         ui:
           $ref: '#/components/schemas/WorkflowNodeUi'
       additionalProperties: false
+    WorkflowDataRef:
+      type: object
+      description: 'Reference to a workflow Variable, mirroring `ZWorkflowDataRef`. The path is a dot path whose first segment says where the value comes from: `payload.<path>` (Webhook trigger payload), `steps.<stepId>.<path>` (an earlier step''s output) or `response.<questionId>` (a Response completed run''s answer). Any other prefix is refused with **400**, as are the segments `__proto__`, `prototype` and `constructor`. Segments may contain letters, digits, `_` and `-`. Payload and step-output paths that go into or end at a list resolve as missing.'
+      required:
+        - path
+      properties:
+        path:
+          type: string
+          minLength: 1
+          maxLength: 512
+          pattern: ^(payload|steps|response)(\.[A-Za-z0-9_-]+)+$
+          examples:
+            - response.nps
+            - steps.check-plan.branch
+        fallback:
+          type: string
+          maxLength: 1000
+          description: Used when the run has no value at the path.
+      additionalProperties: false
+    WorkflowConditionOperator:
+      description: 'If/else operator. New definitions use the survey logic operator names, compared exactly as survey logic compares them (a number sent as text compares as a number). The workflow operator names from v1 are deprecated: still accepted, stored and returned as written until v7.0.0, but one definition uses one name set, never a mix (**400**). `equals` and `contains` belong to both sets.'
+      oneOf:
+        - title: Survey operator
+          type: string
+          enum:
+            - equals
+            - doesNotEqual
+            - contains
+            - doesNotContain
+            - startsWith
+            - doesNotStartWith
+            - endsWith
+            - doesNotEndWith
+            - isGreaterThan
+            - isLessThan
+            - isGreaterThanOrEqual
+            - isLessThanOrEqual
+            - isBefore
+            - isAfter
+            - equalsOneOf
+            - includesAllOf
+            - includesOneOf
+            - doesNotIncludeAllOf
+            - doesNotIncludeOneOf
+            - isSet
+            - isNotSet
+            - isEmpty
+            - isNotEmpty
+        - title: Deprecated workflow operator
+          type: string
+          deprecated: true
+          description: 'Removed in v7.0.0. Each means a survey operator: `notEquals` → `doesNotEqual`, `lessThan` → `isLessThan`, `lessEqual` → `isLessThanOrEqual`, `greaterThan` → `isGreaterThan`, `greaterEqual` → `isGreaterThanOrEqual`, `notContains` → `doesNotContain`, `exists` → `isSet`, `notExists` → `isNotSet`.'
+          enum:
+            - notEquals
+            - lessThan
+            - lessEqual
+            - greaterThan
+            - greaterEqual
+            - notContains
+            - exists
+            - notExists
+    WorkflowCondition:
+      type: object
+      description: One If/else comparison, mirroring `ZWorkflowCondition`. `isSet`, `isNotSet`, `isEmpty` and `isNotEmpty` (and the deprecated `exists` / `notExists`) take no `right`; every other operator requires one. The list operators (`equalsOneOf`, `includesAllOf`, `includesOneOf`, `doesNotIncludeAllOf`, `doesNotIncludeOneOf`) take a list of texts or a Variable; no other operator takes a list.
+      required:
+        - id
+        - left
+        - operator
+      properties:
+        id:
+          type: string
+          minLength: 1
+        left:
+          $ref: '#/components/schemas/WorkflowDataRef'
+        operator:
+          $ref: '#/components/schemas/WorkflowConditionOperator'
+        right:
+          description: The value to compare against, or a Variable.
+          oneOf:
+            - type: string
+              maxLength: 1000
+            - type: number
+            - type: boolean
+            - type: 'null'
+            - type: array
+              minItems: 1
+              maxItems: 100
+              items:
+                type: string
+                maxLength: 1000
+            - $ref: '#/components/schemas/WorkflowDataRef'
+      additionalProperties: false
+    WorkflowConditionGroup:
+      type: object
+      description: Conditions joined by `and` (all must hold) or `or` (any must hold), nested to any depth, mirroring `ZWorkflowConditionGroup`. An If/else holds at most 20 conditions in all, nested ones included (**400** on save).
+      required:
+        - id
+        - connector
+        - conditions
+      properties:
+        id:
+          type: string
+          minLength: 1
+        connector:
+          type: string
+          enum:
+            - and
+            - or
+        conditions:
+          type: array
+          minItems: 1
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/WorkflowCondition'
+              - $ref: '#/components/schemas/WorkflowConditionGroup'
+      additionalProperties: false
+    WorkflowIfElseNode:
+      type: object
+      description: 'If/else logic step: a run continues down the edge whose `sourceHandle` is `then` when the condition group holds, and down the `else` edge otherwise. Each branch has at most one edge; a branch with none ends the run on that side. The step''s output (`branch`, `matched`, and each condition''s result) is a Variable later steps can read as `steps.<id>.branch`.'
+      required:
+        - id
+        - type
+        - config
+      properties:
+        id:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          enum:
+            - if_else
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Optional display label shown in the builder.
+        config:
+          type: object
+          required:
+            - condition
+          properties:
+            condition:
+              $ref: '#/components/schemas/WorkflowConditionGroup'
+          additionalProperties: false
+        ui:
+          $ref: '#/components/schemas/WorkflowNodeUi'
+      additionalProperties: false
     WorkflowEdge:
       type: object
       required:
@@ -13634,7 +13781,7 @@ components:
         sourceHandle:
           type: string
           minLength: 1
-          description: Builder handle identifier on the source node. Reserved for branch nodes (`then`/`else`) in future scopes.
+          description: Builder handle identifier on the source node. `then` and `else` mark the two branches of an `if_else` node and are refused on any other node.
         targetHandle:
           type: string
           minLength: 1
@@ -13643,17 +13790,11 @@ components:
     WorkflowDefinition:
       type: object
       description: |
-        Scope 1 workflow JSON document, mirroring `ZWorkflowDefinition` in `packages/workflows`. The
-        definition is the public source of truth for the builder and API clients. Scope 1
-        intentionally excludes user-authored if/else branches, webhook actions, schedules, delays,
-        loops, and AI/MCP-assisted creation; future node types extend `nodes` additively.
+        Workflow JSON document, mirroring `ZWorkflowDefinition` in `packages/workflows`. The definition is the public source of truth for the builder and API clients. A run walks it from the trigger along its edges; an `if_else` step picks its `then` or `else` edge. Future node types extend `nodes` additively.
 
-        Graph rules enforced on every write (**400** with `invalid_params` on violation):
-        node ids are unique across `trigger` and `nodes`; every edge references existing node ids;
-        the trigger has at most one outgoing edge; `entryNodeId` equals `trigger.id`. Trigger-only
-        drafts (no `nodes`, no `edges`) are valid persisted documents. Executability rules (exactly
-        one outgoing trigger edge, acyclic graph, every node reachable from the trigger) are
-        additionally enforced by `enable` and `test` with **422** `workflow_not_executable`.
+        Rules enforced on every write (**400** with `invalid_params` on violation): node ids are unique across `trigger` and `nodes`; every edge references existing node ids; the trigger has at most one outgoing edge; `entryNodeId` equals `trigger.id`; only `if_else` edges use the `then` / `else` handles, at most one each; no node has more than one incoming edge (branches never join); at most 25 steps (`nodes`) and 20 conditions per `if_else`; Variable paths start with `payload.`, `steps.` or `response.`; one definition uses either the survey operator names or the deprecated workflow operator names, never both. Trigger-only drafts (no `nodes`, no `edges`) are valid persisted documents.
+
+        Executability rules are additionally enforced by `enable` and `test` with **422** `workflow_not_executable`: exactly one outgoing trigger edge, an acyclic graph, every node reachable from the trigger, at most one next step for every non-`if_else` node, and every Variable readable where it is used (a source the trigger provides, and `steps.<id>` only for a step that runs earlier on the same branch).
       required:
         - trigger
         - entryNodeId
@@ -13669,9 +13810,12 @@ components:
         nodes:
           type: array
           default: []
+          maxItems: 25
           items:
-            $ref: '#/components/schemas/WorkflowSendEmailActionNode'
-          description: Child nodes of the graph. The trigger lives in `trigger`, not in this array. Scope 1 accepts `send_email` action nodes only. Optional on writes (defaults to empty for trigger-only drafts); always present in responses.
+            oneOf:
+              - $ref: '#/components/schemas/WorkflowSendEmailActionNode'
+              - $ref: '#/components/schemas/WorkflowIfElseNode'
+          description: Steps of the graph. The trigger lives in `trigger`, not in this array. Optional on writes (defaults to empty for trigger-only drafts); always present in responses.
         edges:
           type: array
           default: []
