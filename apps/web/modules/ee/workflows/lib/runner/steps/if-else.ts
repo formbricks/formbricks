@@ -27,7 +27,10 @@ const readRef = (ref: TWorkflowDataRef, context: TWorkflowRunContext): unknown =
  * element behind it, so no element context is passed and the plain value rules apply. Legacy
  * operator names are read as the survey operator they mean.
  */
-const evaluateCondition = (condition: TWorkflowCondition, context: TWorkflowRunContext): boolean => {
+export const evaluateWorkflowCondition = (
+  condition: TWorkflowCondition,
+  context: TWorkflowRunContext
+): boolean => {
   // Typed against the survey operator enum: a workflow operator that is not a survey operator fails to compile.
   const operator: TSurveyLogicConditionsOperator = toSurveyConditionOperator(condition.operator);
   const left = readRef(condition.left, context);
@@ -47,7 +50,7 @@ export const evaluateWorkflowConditionGroup = (
 ): TWorkflowConditionGroupResult => {
   const conditions: TWorkflowConditionGroupResult["conditions"] = [];
   const matched = evaluateConditionGroup<TWorkflowCondition>(group, (condition) => {
-    const result = evaluateCondition(condition, context);
+    const result = evaluateWorkflowCondition(condition, context);
     conditions.push({ id: condition.id, matched: result });
     return result;
   });

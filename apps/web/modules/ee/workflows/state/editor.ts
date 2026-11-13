@@ -5,7 +5,6 @@ import { atom } from "jotai";
 import type { SetStateAction } from "react";
 import {
   type TWorkflowDefinition,
-  type TWorkflowIfElseBranch,
   type TWorkflowResource,
   type TWorkflowTriggerType,
   WORKFLOW_LIMITS,
@@ -18,13 +17,15 @@ import { settleSentSecretValues, withSecretIdsForCheck } from "@/modules/ee/work
 import {
   type TAddableWorkflowStepType,
   createDefaultWorkflowStep,
-  removeIfElseWithBranches,
+  getBranchLeg,
+  isBranchingStep,
+  removeBranchingStepWithBranches,
 } from "@/modules/ee/workflows/lib/workflow-steps";
 
-export { countIfElseBranchSteps } from "@/modules/ee/workflows/lib/workflow-steps";
+export { countStepsOnBranches } from "@/modules/ee/workflows/lib/workflow-steps";
 
 export type TWorkflowNodeCategory = "trigger" | "flow" | "action";
-export type TWorkflowNodeIcon = "trigger" | "webhook" | "ifElse" | "email" | "http";
+export type TWorkflowNodeIcon = "trigger" | "webhook" | "ifElse" | "switch" | "email" | "http";
 
 export type TWorkflowNodeIssue = {
   /**
@@ -36,10 +37,21 @@ export type TWorkflowNodeIssue = {
   label: string;
 };
 
+/** One leg of a branching step's fork on the canvas. */
+export type TWorkflowCanvasBranch = {
+  /** The edges' `sourceHandle`: `then`/`else`, a Switch case id, or `default`. */
+  handle: string;
+  /** The plain label at the start of the leg (no icons, ED8). */
+  label: string;
+  ariaLabel: string;
+  /** The accessible name of the leg's `+` while the branch has no step. */
+  addStepLabel: string;
+};
+
 export type TWorkflowNodeData = {
   category: TWorkflowNodeCategory;
   icon: TWorkflowNodeIcon;
-  /** Concrete type for analytics (`response.completed`, `send_email`, `if_else`), never shown. */
+  /** Concrete type for analytics (`response.completed`, `send_email`, `if_else`, `switch`), never shown. */
   nodeType: string;
   title: string;
   summary: string;
@@ -48,8 +60,13 @@ export type TWorkflowNodeData = {
    * branch. Other steps don't offer it while a workflow outside branches is capped at one action.
    */
   canAppendStep: boolean;
-  /** If/else only: the branches with no step yet, which end in their own `+` under the fork. */
-  emptyBranches: TWorkflowIfElseBranch[];
+  /**
+   * If/else and Switch only: every branch, left to right, as its leg of the fork shows it (Then and
+   * Else, or each case and Default). Empty for any other step.
+   */
+  branches: TWorkflowCanvasBranch[];
+  /** The branches (handles) with no step yet, which end in their own `+` under the fork. */
+  emptyBranches: string[];
   issue: TWorkflowNodeIssue | null;
 };
 
@@ -742,11 +759,12 @@ export const toggleWorkflowInspectorAtom = atom(null, (get, set) => {
 });
 
 // Drop a node + its incident edges; bridge each incoming edge to each outgoing one so the
-// graph stays connected (preserving the incoming sourceHandle for if_else branches). An If/else goes
-// with its branches instead (spec §2): the canvas confirms that first. Refuses to delete the trigger.
+// graph stays connected (preserving the incoming sourceHandle for if_else branches). An If/else or a
+// Switch goes with its branches instead (spec §2): the canvas confirms that first. Refuses to delete
+// the trigger.
 export const deleteWorkflowNodeAtom = atom(null, (get, set, nodeId: string) => {
   const current = get(workflowEditorAtom).definition;
-  const isIfElse = current?.nodes.some((node) => node.id === nodeId && node.type === "if_else") ?? false;
+  const isBranching = isBranchingStep(current?.nodes.find((node) => node.id === nodeId));
   set(
     workflowEditorAtom,
     produce(get(workflowEditorAtom), (draft) => {
@@ -754,8 +772,8 @@ export const deleteWorkflowNodeAtom = atom(null, (get, set, nodeId: string) => {
       if (!definition || !current) return;
       if (definition.trigger?.id === nodeId) return;
 
-      if (isIfElse) {
-        const remaining = removeIfElseWithBranches(current, nodeId);
+      if (isBranching) {
+        const remaining = removeBranchingStepWithBranches(current, nodeId);
         const remainingIds = new Set(remaining.nodes.map((node) => node.id));
         definition.nodes = definition.nodes.filter((node) => remainingIds.has(node.id));
         definition.edges = definition.edges.filter((edge) =>
@@ -840,32 +858,34 @@ export const canAddWorkflowStepAtom = atom((get) => {
 export type TAppendWorkflowStepInput = {
   sourceNodeId: string;
   stepType: TAddableWorkflowStepType;
-  /** With a branch, the source is an If/else and the step starts that branch. */
-  branch?: TWorkflowIfElseBranch;
-  /** A new If/else's first condition compares this Variable. */
+  /** With a branch, the source is an If/else or a Switch and the step starts that branch. */
+  branch?: string;
+  /** A new If/else's first condition, or a new Switch, compares this Variable. */
   conditionPath?: string;
+  /** A new Switch case's name, translated by the caller. */
+  caseName?: (number: number) => string;
 };
 
 // Append a fresh step after `sourceNodeId` (the end of the chain or of a branch) and open it. Refused
 // at the step limit, which saving would refuse too.
 export const appendWorkflowStepAfterNodeAtom = atom(null, (get, set, input: TAppendWorkflowStepInput) => {
   if (!get(canAddWorkflowStepAtom)) return;
-  const { sourceNodeId, stepType, branch, conditionPath } = input;
+  const { sourceNodeId, stepType, branch, conditionPath, caseName } = input;
   set(
     workflowEditorAtom,
     produce(get(workflowEditorAtom), (draft) => {
       const definition = draft.definition;
       if (!definition) return;
 
+      const sourceNode = definition.nodes.find((node) => node.id === sourceNodeId);
       const sourcePosition =
-        definition.trigger?.id === sourceNodeId
-          ? definition.trigger.ui?.position
-          : definition.nodes.find((node) => node.id === sourceNodeId)?.ui?.position;
+        definition.trigger?.id === sourceNodeId ? definition.trigger.ui?.position : sourceNode?.ui?.position;
+      const leg = branch !== undefined && sourceNode ? getBranchLeg(sourceNode, branch) : null;
       const newPosition = sourcePosition
-        ? getAppendedStepPosition(sourcePosition, branch)
+        ? getAppendedStepPosition(sourcePosition, leg)
         : SEND_EMAIL_FALLBACK_POSITION;
 
-      const newNode = createDefaultWorkflowStep(stepType, newPosition, { conditionPath });
+      const newNode = createDefaultWorkflowStep(stepType, newPosition, { conditionPath, caseName });
       definition.nodes.push(newNode);
 
       definition.edges.push({
@@ -882,12 +902,9 @@ export const appendWorkflowStepAfterNodeAtom = atom(null, (get, set, input: TApp
 });
 
 // Append a fresh send_email node after `sourceNodeId`; kept for callers that only add emails.
-export const appendSendEmailAfterNodeAtom = atom(
-  null,
-  (_get, set, sourceNodeId: string, branch?: TWorkflowIfElseBranch) => {
-    set(appendWorkflowStepAfterNodeAtom, { sourceNodeId, stepType: "send_email", branch });
-  }
-);
+export const appendSendEmailAfterNodeAtom = atom(null, (_get, set, sourceNodeId: string, branch?: string) => {
+  set(appendWorkflowStepAfterNodeAtom, { sourceNodeId, stepType: "send_email", branch });
+});
 
 // Split an existing edge with a fresh send_email node positioned between its endpoints.
 export const insertSendEmailAfterEdgeAtom = atom(null, (get, set, edgeId: string) => {

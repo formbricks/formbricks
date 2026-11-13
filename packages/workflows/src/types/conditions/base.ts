@@ -147,6 +147,51 @@ export interface TWorkflowConditionGroup {
   conditions: (TWorkflowCondition | TWorkflowConditionGroup)[];
 }
 
+/**
+ * The operator/value rules every comparison follows, an If/else condition or a Switch case: presence
+ * operators take no value, every other operator needs one, and only list operators take a list.
+ */
+export const checkConditionOperands = (
+  comparison: { operator: TWorkflowConditionOperator; right?: TWorkflowConditionValue },
+  ctx: z.RefinementCtx
+): void => {
+  const operator = toSurveyConditionOperator(comparison.operator);
+  const isPresenceOperator = PRESENCE_OPERATORS.has(operator);
+
+  if (isPresenceOperator && comparison.right !== undefined) {
+    ctx.addIssue({
+      code: "custom",
+      message: `Operator ${comparison.operator} must not have a right-hand value`,
+      path: ["right"],
+    });
+  }
+
+  if (!isPresenceOperator && comparison.right === undefined) {
+    ctx.addIssue({
+      code: "custom",
+      message: `Operator ${comparison.operator} requires a right-hand value`,
+      path: ["right"],
+    });
+  }
+
+  const isList = Array.isArray(comparison.right);
+  const isRef = typeof comparison.right === "object" && comparison.right !== null && !isList;
+  if (LIST_OPERATORS.has(operator) && comparison.right !== undefined && !isList && !isRef) {
+    ctx.addIssue({
+      code: "custom",
+      message: `Operator ${comparison.operator} compares against a list of values or a Variable`,
+      path: ["right"],
+    });
+  }
+  if (!LIST_OPERATORS.has(operator) && isList) {
+    ctx.addIssue({
+      code: "custom",
+      message: `Operator ${comparison.operator} does not take a list of values`,
+      path: ["right"],
+    });
+  }
+};
+
 export const ZWorkflowCondition: z.ZodType<TWorkflowCondition> = z
   .object({
     id: z.string().min(1),
@@ -156,43 +201,7 @@ export const ZWorkflowCondition: z.ZodType<TWorkflowCondition> = z
       "Right-hand comparison value: a fixed value, a list of texts for list operators, or a Variable reference. Omit for presence operators."
     ),
   })
-  .superRefine((condition, ctx) => {
-    const operator = toSurveyConditionOperator(condition.operator);
-    const isPresenceOperator = PRESENCE_OPERATORS.has(operator);
-
-    if (isPresenceOperator && condition.right !== undefined) {
-      ctx.addIssue({
-        code: "custom",
-        message: `Operator ${condition.operator} must not have a right-hand value`,
-        path: ["right"],
-      });
-    }
-
-    if (!isPresenceOperator && condition.right === undefined) {
-      ctx.addIssue({
-        code: "custom",
-        message: `Operator ${condition.operator} requires a right-hand value`,
-        path: ["right"],
-      });
-    }
-
-    const isList = Array.isArray(condition.right);
-    const isRef = typeof condition.right === "object" && condition.right !== null && !isList;
-    if (LIST_OPERATORS.has(operator) && condition.right !== undefined && !isList && !isRef) {
-      ctx.addIssue({
-        code: "custom",
-        message: `Operator ${condition.operator} compares against a list of values or a Variable`,
-        path: ["right"],
-      });
-    }
-    if (!LIST_OPERATORS.has(operator) && isList) {
-      ctx.addIssue({
-        code: "custom",
-        message: `Operator ${condition.operator} does not take a list of values`,
-        path: ["right"],
-      });
-    }
-  });
+  .superRefine(checkConditionOperands);
 
 export const ZWorkflowConditionGroup: z.ZodType<TWorkflowConditionGroup> = z.lazy(() =>
   z.object({

@@ -12,6 +12,9 @@ export const WORKFLOW_LIMITS = {
   maxSteps: 25,
   /** Leaf conditions per If/else, nested groups included. */
   maxConditionsPerIfElse: 20,
+  /** Cases per Switch, its Default branch not counted (ENG-7157). */
+  minSwitchCases: 2,
+  maxSwitchCases: 10,
   maxHttpHeaders: 30,
   maxHttpUrlBytes: 2 * 1024,
   maxHttpBodyTemplateBytes: 100 * 1024,

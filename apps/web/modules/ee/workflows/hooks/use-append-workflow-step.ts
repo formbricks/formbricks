@@ -3,8 +3,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useSetAtom, useStore } from "jotai";
 import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
-  type TWorkflowIfElseBranch,
   type TWorkflowSampleList,
   type TWorkflowWebhookResource,
   isResponseCompletedTrigger,
@@ -25,19 +25,20 @@ import {
 } from "@/modules/ee/workflows/state/editor";
 
 /**
- * Adds a step after a step (or at the start of an If/else branch) from the canvas `+` menus. A new
- * If/else starts on the first Variable the step could use; that is read only when one is added, from
+ * Adds a step after a step (or at the start of an If/else or Switch branch) from the canvas `+`
+ * menus. A new If/else or Switch starts on the first Variable the step could use; that is read only when one is added, from
  * whatever samples are already cached, so no canvas card subscribes to them.
  */
 export const useAppendWorkflowStep = () => {
+  const { t } = useTranslation();
   const store = useStore();
   const queryClient = useQueryClient();
   const authoringContext = useWorkflowEmailAuthoringContext();
   const appendStep = useSetAtom(appendWorkflowStepAfterNodeAtom);
 
   return useCallback(
-    (sourceNodeId: string, stepType: TAddableWorkflowStepType, branch?: TWorkflowIfElseBranch) => {
-      if (stepType !== "if_else") {
+    (sourceNodeId: string, stepType: TAddableWorkflowStepType, branch?: string) => {
+      if (stepType !== "if_else" && stepType !== "switch") {
         appendStep({ sourceNodeId, stepType, branch });
         return;
       }
@@ -59,8 +60,9 @@ export const useAppendWorkflowStep = () => {
         stepType,
         branch,
         conditionPath: getDefaultConditionPath(groups, fallback),
+        caseName: (number) => t("workspace.workflows.switch_case_name_default", { number }),
       });
     },
-    [appendStep, authoringContext, queryClient, store]
+    [appendStep, authoringContext, queryClient, store, t]
   );
 };

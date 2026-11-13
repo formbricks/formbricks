@@ -3,6 +3,7 @@ import { getWorkflowStepType } from "@formbricks/workflows";
 import { httpRequestStepExecutor } from "./http-request";
 import { ifElseStepExecutor } from "./if-else";
 import { sendEmailStepExecutor } from "./send-email";
+import { switchStepExecutor } from "./switch";
 import type { WorkflowStepExecutor } from "./types";
 
 /**
@@ -13,6 +14,7 @@ export const WORKFLOW_STEP_EXECUTORS: { [T in TWorkflowStepType]: WorkflowStepEx
   send_email: sendEmailStepExecutor,
   http_request: httpRequestStepExecutor,
   if_else: ifElseStepExecutor,
+  switch: switchStepExecutor,
 };
 
 /** The executor for a node, typed loosely for the runner's generic step loop. */

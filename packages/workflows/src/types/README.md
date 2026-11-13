@@ -19,7 +19,7 @@ branches never joining, the Variable path grammar, and the save-time limits in `
 (`save-rules.ts`). Keeping those out of the read schema lets a definition saved before a rule still load.
 `ZWorkflowExecutableDefinition` is what the runner can execute; enable checks `ZWorkflowEnableDefinition`, which
 adds the save-time rules to it. It uses the same object shape but is stricter:
-every node must be reachable from the trigger, the graph must be acyclic, only an `if_else` has more than one
+every node must be reachable from the trigger, the graph must be acyclic, only an `if_else` or a `switch` has more than one
 next step, and each step type passes its check in `WORKFLOW_EXECUTABLE_NODE_CHECKS` (`executable-checks.ts`).
 A run walks the graph from the trigger (`execution/walk.ts`); Variables are dot paths (`variables/`).
 
@@ -99,7 +99,7 @@ condition-specific fields.
 Properties:
 
 - `id`: Stable node id inside the workflow definition. Edges use this value.
-- `type`: Node kind. Current values are `trigger`, `action`, and `if_else`.
+- `type`: Node kind. Current values are `trigger`, `action`, `if_else` and `switch`.
 - `label`: Optional human-readable node label.
 - `ui`: Optional builder-only metadata.
 
@@ -131,7 +131,8 @@ Properties:
 - `id`: Stable edge id inside the workflow definition.
 - `source`: Node id where the edge starts.
 - `target`: Node id where the edge ends.
-- `sourceHandle`: Optional source-side handle. `if_else` source edges must use `then` or `else`.
+- `sourceHandle`: Optional source-side handle. `if_else` source edges must use `then` or `else`; `switch` source
+  edges use one of its case ids or `default`.
 - `targetHandle`: Optional target-side handle, useful for builder UI and future node types.
 
 Example:
@@ -203,13 +204,14 @@ Example:
 ### `ZWorkflowDefinition` / `TWorkflowDefinition`
 
 Persisted workflow definition with graph validation. It rejects duplicate node ids, invalid edge references,
-wrong `if_else` branch handles (at most one `then` and one `else`; an empty branch is allowed), definitions
+wrong `if_else` or `switch` branch handles (at most one edge per branch; an empty branch is allowed), definitions
 where the trigger has more than one outgoing edge (a trigger-only draft with no nodes or edges is valid; only
 the executable definition requires the edge), and a definition that mixes survey and legacy operator names.
 
 `ZWorkflowDefinitionInput`, used by create, patch and duplicate, also rejects a node with more than one
 incoming edge (branches never join), a Variable path outside the grammar, and the save-time limits
-(`WORKFLOW_LIMITS`: 25 steps, 20 conditions per `if_else`). Output schemas use `ZWorkflowDefinition`, so a
+(`WORKFLOW_LIMITS`: 25 steps, 20 conditions per `if_else`, 2–10 cases per `switch` with unique ids other than
+`default`). Output schemas use `ZWorkflowDefinition`, so a
 stored definition that predates those rules still reads.
 
 It uses the same object shape as `ZWorkflowDefinitionBase`.
@@ -266,7 +268,7 @@ Rules:
 - The trigger must have exactly one outgoing edge.
 - Every child node must be reachable from the trigger.
 - The executable graph must not contain cycles.
-- Only an `if_else` node may have more than one next step.
+- Only an `if_else` or a `switch` node may have more than one next step.
 - Each node passes its step type's check in `WORKFLOW_EXECUTABLE_NODE_CHECKS` (a `send_email` has content;
   every Variable is readable where it is used: a source the trigger provides, and `steps.<id>` only for an
   earlier step on the same branch).
@@ -581,6 +583,41 @@ Example:
   "ui": {
     "collapsed": true
   }
+}
+```
+
+### `ZWorkflowSwitchNode` / `TWorkflowSwitchNode`
+
+Branching node that compares one Variable against several cases (ENG-7157). A run continues down the edge of the
+first case that matches, or down its `default` edge when none does; a branch without an edge ends the run there.
+Each case compares with the If/else operator and value rules (`toSwitchCaseCondition` turns a case into the
+condition it is). Its output (`branch` and the cases tried up to the match) is in the run log.
+
+Properties:
+
+- `id`, `type` (always `switch`), `label`, `ui`: as for every node.
+- `config.left`: `ZWorkflowDataRef`, the one Variable every case compares.
+- `config.cases`: `ZWorkflowSwitchCase[]` (`id`, `name`, `operator`, optional `right`), tried in order.
+
+Rules:
+
+- Saving needs 2–10 cases, unique case ids, no case id `default` and names of at most 50 characters. A blank
+  name saves; enabling refuses it.
+- Each outgoing edge uses a case id or `default` as `sourceHandle`, at most one per branch.
+
+Example:
+
+```json
+{
+  "config": {
+    "cases": [
+      { "id": "gold", "name": "Gold", "operator": "equals", "right": "gold" },
+      { "id": "silver", "name": "Silver", "operator": "equals", "right": "silver" }
+    ],
+    "left": { "path": "payload.customer.tier" }
+  },
+  "id": "route",
+  "type": "switch"
 }
 ```
 

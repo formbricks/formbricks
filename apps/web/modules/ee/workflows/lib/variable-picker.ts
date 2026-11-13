@@ -129,6 +129,7 @@ const getHttpRequestVariables: TWorkflowStepVariableProvider<"http_request">["ge
 export const WORKFLOW_STEP_VARIABLE_PROVIDERS: TWorkflowStepVariableProviders = {
   send_email: { getTypeLabel: (t) => t("workspace.workflows.send_email"), getVariables: noVariables },
   if_else: { getTypeLabel: (t) => t("workspace.workflows.if_else"), getVariables: noVariables },
+  switch: { getTypeLabel: (t) => t("workspace.workflows.switch"), getVariables: noVariables },
   http_request: {
     getTypeLabel: (t) => t("workspace.workflows.http_request"),
     getVariables: getHttpRequestVariables,

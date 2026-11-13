@@ -14,7 +14,7 @@ import {
   canMutateCanvasAtom,
   clearWorkflowNodeFieldFocusAtom,
   closeWorkflowNodeConfigModalAtom,
-  countIfElseBranchSteps,
+  countStepsOnBranches,
   deleteWorkflowNodeAtom,
   deriveTriggerEndingProblems,
   deriveWorkflowValidation,
@@ -1188,7 +1188,7 @@ describe("deleting an If/else", () => {
   });
 
   test("counts the steps on its branches for the confirmation", () => {
-    expect(countIfElseBranchSteps(branchedDefinition(), "if-1")).toBe(3);
-    expect(countIfElseBranchSteps(branchedDefinition(), "before")).toBe(0);
+    expect(countStepsOnBranches(branchedDefinition(), "if-1")).toBe(3);
+    expect(countStepsOnBranches(branchedDefinition(), "before")).toBe(0);
   });
 });

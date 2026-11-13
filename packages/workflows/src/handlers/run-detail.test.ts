@@ -57,6 +57,48 @@ describe("describeWorkflowRunSteps", () => {
     });
   });
 
+  test("shows the case a Switch took and each case it tried as matched or not matched", () => {
+    const [step] = describeWorkflowRunSteps(
+      [
+        log({
+          stepId: "route",
+          stepType: "switch",
+          output: {
+            branch: "silver",
+            cases: [
+              { id: "gold", matched: false },
+              { id: "silver", matched: true },
+            ],
+          },
+        }),
+      ],
+      undefined
+    );
+
+    expect(step.detail).toEqual({
+      kind: "switch",
+      branch: "silver",
+      cases: [
+        { id: "gold", matched: false },
+        { id: "silver", matched: true },
+      ],
+    });
+    expect(ZWorkflowRunStep.safeParse(step).success).toBe(true);
+  });
+
+  test("a Switch that took Default says so; an unreadable Switch log has no branch yet", () => {
+    const [byDefault, unreadable] = describeWorkflowRunSteps(
+      [
+        log({ stepId: "route", stepType: "switch", output: { branch: "default", cases: [] } }),
+        log({ stepId: "route2", stepType: "switch", status: "running", output: { branch: 42 } }),
+      ],
+      undefined
+    );
+
+    expect(byDefault.detail).toEqual({ kind: "switch", branch: "default", cases: [] });
+    expect(unreadable.detail).toEqual({ kind: "switch", branch: null, cases: [] });
+  });
+
   test("shows whom an email went to, its subject and the survey link", () => {
     const [step] = describeWorkflowRunSteps(
       [

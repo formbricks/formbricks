@@ -1,7 +1,7 @@
 "use client";
 
 import { useAtomValue } from "jotai";
-import { GitBranchIcon, GlobeIcon, type LucideIcon, MailIcon, PlusIcon } from "lucide-react";
+import { GitBranchIcon, GlobeIcon, type LucideIcon, MailIcon, PlusIcon, SplitIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { WORKFLOW_LIMITS } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
@@ -36,7 +36,7 @@ interface TStepOption {
   description: string;
 }
 
-// The round `+` at the end of the workflow or of an If/else branch. It opens a step picker grouped as
+// The round `+` at the end of the workflow or of an If/else or Switch branch. It opens a step picker grouped as
 // Logic and Actions (ENG-7121), so the user consciously chooses each step. At the step limit the `+`
 // stays visible but disabled, with the reason on hover.
 export const WorkflowAddStepMenu = ({
@@ -54,6 +54,13 @@ export const WorkflowAddStepMenu = ({
       icon: GitBranchIcon,
       label: t("workspace.workflows.if_else"),
       description: t("workspace.workflows.if_else_description"),
+    },
+    {
+      stepType: "switch",
+      category: "flow",
+      icon: SplitIcon,
+      label: t("workspace.workflows.switch"),
+      description: t("workspace.workflows.switch_description"),
     },
   ];
   const actions: TStepOption[] = [

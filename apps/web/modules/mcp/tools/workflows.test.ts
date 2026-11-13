@@ -679,6 +679,40 @@ describe("create_workflow advertised input schema", () => {
   });
 });
 
+describe("a Switch step through MCP (ENG-7157)", () => {
+  const routing = (caseCount: number) => {
+    const [emailNode] = VALID_CREATE_WORKFLOW_INPUT.definition.nodes;
+    const cases = Array.from({ length: caseCount }, (_, index) => ({
+      id: `case-${index}`,
+      name: `Case ${index + 1}`,
+      operator: "equals",
+      right: `tier-${index}`,
+    }));
+    return {
+      ...VALID_CREATE_WORKFLOW_INPUT.definition,
+      nodes: [
+        { id: "route", type: "switch", config: { left: { path: "response.tier" }, cases } },
+        { ...emailNode, id: "first-case-email" },
+      ],
+      edges: [
+        { id: "e1", source: VALID_CREATE_WORKFLOW_INPUT.definition.trigger.id, target: "route" },
+        { id: "e2", source: "route", target: "first-case-email", sourceHandle: "case-0" },
+      ],
+    };
+  };
+
+  test("create_workflow and patch_workflow take a Switch with 2 to 10 cases", () => {
+    const { tools } = createToolServer();
+    const create = tools.get("create_workflow")!.config.inputSchema as z.ZodType;
+    const patch = tools.get("patch_workflow")!.config.inputSchema as z.ZodType;
+
+    expect(create.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, definition: routing(10) }).success).toBe(true);
+    expect(patch.safeParse({ workflowId: WORKFLOW_ID, data: { definition: routing(2) } }).success).toBe(true);
+    const overLimit = create.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, definition: routing(11) });
+    expect(JSON.stringify(overLimit.error?.issues)).toMatch(/at most 10 cases/);
+  });
+});
+
 describe("create_workflow save-time limits (ENG-7176)", () => {
   test("refuses a definition with more than 25 steps before it reaches the handler", () => {
     const { tools } = createToolServer();

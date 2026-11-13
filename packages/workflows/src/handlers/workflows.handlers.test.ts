@@ -715,6 +715,102 @@ describe("archive / unarchive", () => {
   });
 });
 
+describe("a Switch step (ENG-7157)", () => {
+  const emailNode = definition.nodes[0];
+  const withSwitch = (cases: { id: string; name: string }[]) => ({
+    ...definition,
+    nodes: [
+      {
+        id: "route",
+        type: "switch" as const,
+        config: {
+          left: { path: "response.plan" },
+          cases: cases.map((switchCase) => ({
+            ...switchCase,
+            operator: "equals" as const,
+            right: switchCase.id,
+          })),
+        },
+      },
+      { ...emailNode, id: "gold-email" },
+      { ...emailNode, id: "default-email" },
+    ],
+    edges: [
+      { id: "e1", source: "trigger", target: "route" },
+      { id: "e2", source: "route", target: "gold-email", sourceHandle: "gold" },
+      { id: "e3", source: "route", target: "default-email", sourceHandle: "default" },
+    ],
+  });
+  const goldAndSilver = withSwitch([
+    { id: "gold", name: "Gold" },
+    { id: "silver", name: "Silver" },
+  ]);
+
+  test("is created with 201 and read back as written", async () => {
+    service.createWorkflow.mockResolvedValue(makeRow({ definition: goldAndSilver }));
+
+    const res = await handlers.create({
+      req: new Request("http://localhost/api/v3/workflows", {
+        method: "POST",
+        body: JSON.stringify({ workspaceId, name: "Route by plan", definition: goldAndSilver }),
+        headers: { "Content-Type": "application/json" },
+      }),
+      ctx: makeCtx(),
+    });
+
+    expect(res.status).toBe(201);
+    const body = await readJson<{ data: { definition: { nodes: { config: unknown }[] } } }>(res);
+    expect(body.data.definition.nodes[0].config).toEqual(goldAndSilver.nodes[0].config);
+  });
+
+  test("a change to more than 10 cases is refused with 400", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ definition: goldAndSilver }));
+    const elevenCases = withSwitch(
+      Array.from({ length: 11 }, (_, index) => ({
+        id: index === 0 ? "gold" : `case-${index}`,
+        name: `Case ${index}`,
+      }))
+    );
+
+    const res = await handlers.patch({
+      req: new Request(`http://localhost/api/v3/workflows/${workflowId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ definition: elevenCases }),
+        headers: { "Content-Type": "application/json" },
+      }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
+
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(await readJson(res))).toMatch(/at most 10 cases/);
+    expect(service.updateWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("is enabled with 200", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft", definition: goldAndSilver }));
+    service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled", definition: goldAndSilver }));
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+  });
+
+  test("enabling with an unnamed case is refused with 422 workflow_not_executable", async () => {
+    const unnamed = withSwitch([
+      { id: "gold", name: "Gold" },
+      { id: "silver", name: "" },
+    ]);
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft", definition: unnamed }));
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(422);
+    expect(JSON.stringify(await readJson(res))).toMatch(/workflow_not_executable/);
+    expect(service.enableWorkflow).not.toHaveBeenCalled();
+  });
+});
+
 describe("enable", () => {
   test("snapshots a version and returns 200 when enabling a draft", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));

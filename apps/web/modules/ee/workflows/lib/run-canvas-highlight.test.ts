@@ -44,6 +44,24 @@ describe("getRunCanvasHighlight", () => {
     expect([...(highlight?.notTakenStepIds ?? [])]).toEqual(["http", "after"]);
   });
 
+  test("records the case a Switch took, Default included, and greys its other branches", () => {
+    const highlight = getRunCanvasHighlight(
+      run([
+        step({
+          stepId: "route",
+          stepType: "switch",
+          detail: { kind: "switch", branch: "default", cases: [{ id: "gold", matched: false }] },
+        }),
+      ])
+    )!;
+
+    expect(highlight.takenBranchByStepId).toEqual({ route: "default" });
+    expect(isEdgeOffRunPath({ source: "route", sourceHandle: "gold", target: "g" }, highlight)).toBe(true);
+    expect(isEdgeOffRunPath({ source: "route", sourceHandle: "default", target: "d" }, highlight)).toBe(
+      false
+    );
+  });
+
   test("an If/else that has not decided yet takes no branch", () => {
     expect(getRunCanvasHighlight(run([ifElse("branch", null)]))?.takenBranchByStepId).toEqual({});
   });

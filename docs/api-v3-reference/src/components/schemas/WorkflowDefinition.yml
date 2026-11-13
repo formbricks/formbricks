@@ -2,15 +2,18 @@ type: object
 description: >
   Workflow JSON document, mirroring `ZWorkflowDefinition` in `packages/workflows`. The
   definition is the public source of truth for the builder and API clients. A run walks it from
-  the trigger along its edges; an `if_else` step picks its `then` or `else` edge. Future node types
+  the trigger along its edges; an `if_else` step picks its `then` or `else` edge, and a `switch`
+  step the edge of the first case that matches or its `default` edge. Future node types
   extend `nodes` additively.
 
 
   Rules enforced on every write (**400** with `invalid_params` on violation): node ids are unique
   across `trigger` and `nodes`; every edge references existing node ids; the trigger has at most
   one outgoing edge; `entryNodeId` equals `trigger.id`; only `if_else` edges use the `then` / `else`
-  handles, at most one each; no node has more than one incoming edge (branches never join);
-  at most 25 steps (`nodes`) and 20 conditions per `if_else`; Variable paths start with
+  handles, at most one each; `switch` edges use one of its case ids or `default`, at most one
+  each; no node has more than one incoming edge (branches never join);
+  at most 25 steps (`nodes`), 20 conditions per `if_else` and 2 to 10 cases per `switch`, with
+  unique case ids other than `default`; Variable paths start with
   `payload.`, `steps.` or `response.`; one definition uses either the survey operator names or
   the deprecated workflow operator names, never both. Trigger-only drafts (no `nodes`, no
   `edges`) are valid persisted documents.
@@ -18,7 +21,8 @@ description: >
 
   Executability rules are additionally enforced by `enable` and `test` with **422**
   `workflow_not_executable`: exactly one outgoing trigger edge, an acyclic graph, every node
-  reachable from the trigger, at most one next step for every non-`if_else` node, and every
+  reachable from the trigger, at most one next step for every node other than `if_else` and
+  `switch`, every `switch` case named, and every
   Variable readable where it is used (a source the trigger provides, and `steps.<id>` only for a
   step that runs earlier on the same branch).
 required:
@@ -49,6 +53,7 @@ properties:
         - $ref: ./WorkflowSendEmailActionNode.yml
         - $ref: ./WorkflowHttpRequestActionNode.yml
         - $ref: ./WorkflowIfElseNode.yml
+        - $ref: ./WorkflowSwitchNode.yml
     description: >-
       Steps of the graph. The trigger lives in `trigger`, not in this array.
       Optional on writes (defaults to empty for trigger-only drafts); always

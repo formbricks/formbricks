@@ -8,6 +8,11 @@ import {
   type TWorkflowConditionGroup,
   flattenWorkflowConditions,
 } from "./conditions/base";
+import {
+  MAX_SWITCH_CASE_NAME_LENGTH,
+  type TWorkflowSwitchNode,
+  WORKFLOW_SWITCH_DEFAULT_BRANCH,
+} from "./conditions/switch";
 import type { TWorkflowDefinitionBase } from "./document";
 import { WORKFLOW_LIMITS } from "./limits";
 
@@ -32,9 +37,7 @@ const checkDataRef = (ref: TWorkflowDataRef, path: TPath, ctx: z.RefinementCtx):
   }
 };
 
-const checkCondition = (condition: TWorkflowCondition, path: TPath, ctx: z.RefinementCtx): void => {
-  checkDataRef(condition.left, [...path, "left"], ctx);
-  const { right } = condition;
+const checkConditionValue = (right: TWorkflowCondition["right"], path: TPath, ctx: z.RefinementCtx): void => {
   if (isDataRef(right)) checkDataRef(right, [...path, "right"], ctx);
   if (typeof right === "string" && right.length > MAX_CONDITION_TEXT_LENGTH) {
     ctx.addIssue({
@@ -45,11 +48,73 @@ const checkCondition = (condition: TWorkflowCondition, path: TPath, ctx: z.Refin
   }
 };
 
+const checkCondition = (condition: TWorkflowCondition, path: TPath, ctx: z.RefinementCtx): void => {
+  checkDataRef(condition.left, [...path, "left"], ctx);
+  checkConditionValue(condition.right, path, ctx);
+};
+
 const checkConditionGroup = (group: TWorkflowConditionGroup, path: TPath, ctx: z.RefinementCtx): void => {
   for (const [index, item] of group.conditions.entries()) {
     const itemPath = [...path, "conditions", index];
     if ("conditions" in item) checkConditionGroup(item, itemPath, ctx);
     else checkCondition(item, itemPath, ctx);
+  }
+};
+
+const checkCaseCount = (count: number, path: TPath, ctx: z.RefinementCtx): void => {
+  if (count < WORKFLOW_LIMITS.minSwitchCases) {
+    ctx.addIssue({
+      code: "custom",
+      message: `A switch step needs at least ${WORKFLOW_LIMITS.minSwitchCases} cases`,
+      path,
+    });
+  }
+  if (count > WORKFLOW_LIMITS.maxSwitchCases) {
+    ctx.addIssue({
+      code: "custom",
+      message: `A switch step can have at most ${WORKFLOW_LIMITS.maxSwitchCases} cases`,
+      path,
+    });
+  }
+};
+
+/**
+ * A Switch has 2–10 cases with unique ids other than `default` (each id is a branch's handle), names
+ * within the cap, and the If/else Variable and value rules. A blank name may be saved while the
+ * author types; enabling refuses it (`WORKFLOW_EXECUTABLE_NODE_CHECKS`).
+ */
+const checkSwitch = (node: TWorkflowSwitchNode, path: TPath, ctx: z.RefinementCtx): void => {
+  const { cases, left } = node.config;
+  checkCaseCount(cases.length, [...path, "cases"], ctx);
+  checkDataRef(left, [...path, "left"], ctx);
+
+  const ids = new Set<string>();
+  for (const [index, switchCase] of cases.entries()) {
+    const casePath = [...path, "cases", index];
+    if (switchCase.id === WORKFLOW_SWITCH_DEFAULT_BRANCH) {
+      ctx.addIssue({
+        code: "custom",
+        message: `The case id ${WORKFLOW_SWITCH_DEFAULT_BRANCH} is reserved for the Default branch`,
+        path: [...casePath, "id"],
+      });
+    }
+    if (ids.has(switchCase.id)) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Duplicate case id: ${switchCase.id}`,
+        path: [...casePath, "id"],
+      });
+    }
+    ids.add(switchCase.id);
+    if (switchCase.name.length > MAX_SWITCH_CASE_NAME_LENGTH) {
+      ctx.addIssue({
+        code: "custom",
+        message: `A case name can be at most ${MAX_SWITCH_CASE_NAME_LENGTH} characters`,
+        path: [...casePath, "name"],
+      });
+    }
+    // The Variable is checked once above; a case adds only its value.
+    checkConditionValue(switchCase.right, casePath, ctx);
   }
 };
 
@@ -86,6 +151,10 @@ export const validateWorkflowDefinitionSaveRules = (
         });
       }
       checkConditionGroup(condition, [...nodePath, "condition"], ctx);
+      continue;
+    }
+    if (node.type === "switch") {
+      checkSwitch(node, nodePath, ctx);
       continue;
     }
     if (node.actionType === "send_email" && isVariableEmailRecipient(node.config.to)) {

@@ -183,6 +183,70 @@ describe("toRunDetailRows", () => {
     expect(notTaken).toMatchObject({ kind: "not_taken", branch: null, label: null });
   });
 
+  test("a Switch lists the cases it tried by name, then the case it took; steps elsewhere say their branch", () => {
+    const routing = {
+      ...definition,
+      nodes: [
+        {
+          id: "route",
+          type: "switch",
+          config: {
+            left: { path: "payload.tier" },
+            cases: [
+              { id: "gold", name: "Gold", operator: "equals", right: "gold" },
+              { id: "silver", name: " ", operator: "equals", right: "silver" },
+            ],
+          },
+        },
+        { id: "gold-email", type: "action", actionType: "send_email", config: {} },
+        { id: "default-email", type: "action", actionType: "send_email", config: {} },
+      ],
+      edges: [
+        { id: "e0", source: "trigger", target: "route" },
+        { id: "e1", source: "route", sourceHandle: "gold", target: "gold-email" },
+        { id: "e2", source: "route", sourceHandle: "default", target: "default-email" },
+      ],
+    } as unknown as TWorkflowDefinition;
+    const ranSwitch = (branch: string, cases: { id: string; matched: boolean }[]) =>
+      step({ stepId: "route", stepType: "switch", detail: { kind: "switch", branch, cases } });
+
+    const [, silver, , onDefault] = toRunDetailRows(
+      buildRun({
+        steps: [
+          ranSwitch("silver", [
+            { id: "gold", matched: false },
+            { id: "silver", matched: true },
+          ]),
+          step({ stepId: "gold-email", status: "not_taken" }),
+          step({ stepId: "default-email", status: "not_taken" }),
+        ],
+      }),
+      routing
+    );
+    expect(silver).toMatchObject({
+      kind: "switch",
+      taken: { isDefault: false, name: null, number: 2 },
+      cases: [
+        { id: "gold", matched: false, name: "Gold", number: 1 },
+        // A case without a name reads by its number.
+        { id: "silver", matched: true, name: null, number: 2 },
+      ],
+    });
+    expect(onDefault).toMatchObject({ kind: "not_taken", branch: null, switchBranch: { isDefault: true } });
+
+    const [, byDefault, onGold] = toRunDetailRows(
+      buildRun({
+        steps: [
+          ranSwitch("default", [{ id: "gold", matched: false }]),
+          step({ stepId: "gold-email", status: "not_taken" }),
+        ],
+      }),
+      routing
+    );
+    expect(byDefault).toMatchObject({ kind: "switch", taken: { isDefault: true } });
+    expect(onGold).toMatchObject({ switchBranch: { isDefault: false, name: "Gold", number: 1 } });
+  });
+
   test("a sent email shows its recipient, subject and survey link", () => {
     const [, email] = toRunDetailRows(
       buildRun({

@@ -300,6 +300,75 @@ describe("If/else on the canvas", () => {
   });
 });
 
+const switchNode = (id: string, caseNames: string[]) =>
+  ({
+    id,
+    type: "switch",
+    config: {
+      left: { path: "payload.customer.tier" },
+      cases: caseNames.map((name, index) => ({
+        id: `${id}-case-${index}`,
+        name,
+        operator: "equals",
+        right: name.toLowerCase(),
+      })),
+    },
+    ui: { position: { x: 0, y: 0 } },
+  }) as TWorkflowDefinition["nodes"][number];
+
+describe("Switch on the canvas", () => {
+  // trigger → route; Gold → email-g, the unnamed case and Default empty.
+  const routing = () =>
+    buildDefinition({
+      nodes: [switchNode("route", ["Gold", " "]), emailNode("email-g")],
+      edges: [
+        { id: "e-trigger", source: "trigger-1", target: "route" },
+        { id: "e-gold", source: "route", target: "email-g", sourceHandle: "route-case-0" },
+      ],
+    });
+
+  test("projects a Switch as a branch node with one labelled path per case and Default, in order", () => {
+    const route = workflowDefinitionToFlowNodes(routing(), t).find((node) => node.id === "route");
+
+    expect(route?.type).toBe(WORKFLOW_BRANCH_NODE_TYPE);
+    expect(route?.data.branches.map(({ handle, label }) => ({ handle, label }))).toEqual([
+      { handle: "route-case-0", label: "Gold" },
+      // A case without a name yet reads by its number.
+      { handle: "route-case-1", label: "workspace.workflows.switch_case_name_default" },
+      { handle: "default", label: "workspace.workflows.switch_default" },
+    ]);
+    expect(route?.data.emptyBranches).toEqual(["route-case-1", "default"]);
+    expect(route?.data.canAppendStep).toBe(false);
+  });
+
+  test("draws the edges out of a Switch as branch edges", () => {
+    expect(workflowDefinitionToFlowEdges(routing()).find((edge) => edge.id === "e-gold")).toMatchObject({
+      type: "branch",
+      sourceHandle: "route-case-0",
+    });
+  });
+
+  test("auto layout puts each case's branch in its own column, left to right, Default last", () => {
+    const def = buildDefinition({
+      nodes: [switchNode("route", ["Gold", "Silver"]), emailNode("email-d"), emailNode("email-g")],
+      edges: [
+        { id: "e1", source: "trigger-1", target: "route" },
+        { id: "e2", source: "route", target: "email-d", sourceHandle: "default" },
+        { id: "e3", source: "route", target: "email-g", sourceHandle: "route-case-0" },
+      ],
+    });
+
+    const next = reorganizeWorkflowDefinition(def);
+    const positions = Object.fromEntries(next.nodes.map((node) => [node.id, node.ui?.position]));
+    // Three columns centered under the Switch: Gold, Silver (empty), Default.
+    expect(positions).toEqual({
+      route: { x: 220, y: 200 },
+      "email-g": { x: -140, y: 400 },
+      "email-d": { x: 580, y: 400 },
+    });
+  });
+});
+
 describe("workflowDefinitionToFlowNodes fallback", () => {
   test("falls back to a derived position when ui.position is missing", () => {
     const base = buildDefinition();

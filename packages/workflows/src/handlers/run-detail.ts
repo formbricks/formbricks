@@ -12,7 +12,7 @@ import { ZWorkflowIfElseBranch } from "../types/document";
 import type { TWorkflowRunData } from "../types/runs";
 
 /**
- * Builds run detail per step (ENG-7181) from a run's log rows and the steps its If/else steps did
+ * Builds run detail per step (ENG-7181) from a run's log rows and the steps its If/else and Switch steps did
  * not take. Log `input`/`output` are free-form JSON written by the runner (and, for older runs, by
  * older runners), so every field is read with a tolerant parse: a shape this code doesn't know comes
  * back as null rather than failing the whole run read.
@@ -35,6 +35,12 @@ const describeIfElse = (output: Record<string, unknown>): TWorkflowRunStepDetail
     id,
     matched,
   })),
+});
+
+const describeSwitch = (output: Record<string, unknown>): TWorkflowRunStepDetail => ({
+  kind: "switch",
+  branch: readAs(ZString, output.branch),
+  cases: (readAs(ZConditionResults, output.cases) ?? []).map(({ id, matched }) => ({ id, matched })),
 });
 
 const describeSendEmail = (
@@ -92,6 +98,8 @@ const describeLog = (log: WorkflowRunLogRow): TWorkflowRunStepDetail | null => {
   switch (log.stepType) {
     case "if_else":
       return describeIfElse(output);
+    case "switch":
+      return describeSwitch(output);
     case "send_email":
       return describeSendEmail(input, output);
     case "http_request":

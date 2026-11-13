@@ -12,6 +12,8 @@ import type {
   TRunDetailRow,
   TRunDetailSendEmailRow,
   TRunDetailStepRow,
+  TRunDetailSwitchBranch,
+  TRunDetailSwitchRow,
 } from "@/modules/ee/workflows/lib/run-detail-rows";
 import { Badge } from "@/modules/ui/components/badge";
 import { CodeBlock } from "@/modules/ui/components/code-block";
@@ -50,6 +52,8 @@ const getStepTypeLabel = (stepType: string, t: TFunction): string => {
   switch (stepType) {
     case "if_else":
       return t("workspace.workflows.if_else");
+    case "switch":
+      return t("workspace.workflows.switch");
     case "send_email":
       return t("workspace.workflows.send_email");
     case "http_request":
@@ -61,6 +65,15 @@ const getStepTypeLabel = (stepType: string, t: TFunction): string => {
 
 const getBranchLabel = (branch: "then" | "else", t: TFunction): string =>
   branch === "then" ? t("workspace.workflows.branch_then") : t("workspace.workflows.branch_else");
+
+/** A Switch branch by its name: Default, the case's name, or "Case 2" for one without a name. */
+const getSwitchBranchLabel = (branch: TRunDetailSwitchBranch, t: TFunction): string => {
+  if (branch.isDefault) return t("workspace.workflows.switch_default");
+  if (branch.name) return branch.name;
+  return branch.number === null
+    ? t("workspace.workflows.run_case_unknown")
+    : t("workspace.workflows.switch_case_name_default", { number: branch.number });
+};
 
 const RowFrame = ({
   position,
@@ -132,6 +145,35 @@ const IfElseBody = ({ row }: { readonly row: TRunDetailIfElseRow }) => {
         </>
       ) : null}
     </p>
+  );
+};
+
+/** "Gold (not matched) · Silver (matched) → Silver": the cases tried, in words, then the case taken as a badge. */
+const SwitchBody = ({ row }: { readonly row: TRunDetailSwitchRow }) => {
+  const { t } = useTranslation();
+  if (row.cases.length === 0 && !row.taken) return null;
+  return (
+    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-slate-600">
+      {row.cases.length > 0 ? (
+        <span>
+          {row.cases
+            .map(({ matched, ...branch }) => {
+              const name = getSwitchBranchLabel({ ...branch, isDefault: false }, t);
+              return matched
+                ? t("workspace.workflows.run_condition_matched", { condition: name })
+                : t("workspace.workflows.run_condition_not_matched", { condition: name });
+            })
+            .join(" · ")}
+        </span>
+      ) : null}
+      {row.taken ? (
+        <>
+          <span aria-hidden="true">→</span>
+          <span className="sr-only">{t("workspace.workflows.run_switch_case_taken")}</span>
+          <Badge text={getSwitchBranchLabel(row.taken, t)} type="gray" size="tiny" />
+        </>
+      ) : null}
+    </div>
   );
 };
 
@@ -207,15 +249,20 @@ const StepRow = ({ row }: { readonly row: TRunDetailStepRow }) => {
   const badge = getBadge(row.badge, t);
 
   if (row.kind === "not_taken") {
+    let branchText: string | null = null;
+    if (row.branch) {
+      branchText =
+        row.branch === "then"
+          ? t("workspace.workflows.run_step_on_then_branch")
+          : t("workspace.workflows.run_step_on_else_branch");
+    } else if (row.switchBranch) {
+      branchText = t("workspace.workflows.run_step_on_branch", {
+        name: getSwitchBranchLabel(row.switchBranch, t),
+      });
+    }
     return (
       <RowFrame position={row.position} title={title} duration={null} badge={badge} isMuted>
-        {row.branch ? (
-          <p className="text-xs text-slate-500">
-            {row.branch === "then"
-              ? t("workspace.workflows.run_step_on_then_branch")
-              : t("workspace.workflows.run_step_on_else_branch")}
-          </p>
-        ) : null}
+        {branchText ? <p className="text-xs text-slate-500">{branchText}</p> : null}
       </RowFrame>
     );
   }
@@ -224,6 +271,7 @@ const StepRow = ({ row }: { readonly row: TRunDetailStepRow }) => {
     <RowFrame position={row.position} title={title} duration={row.duration} badge={badge}>
       {row.error ? <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{row.error}</p> : null}
       {row.kind === "if_else" ? <IfElseBody row={row} /> : null}
+      {row.kind === "switch" ? <SwitchBody row={row} /> : null}
       {row.kind === "send_email" ? <SendEmailBody row={row} /> : null}
       {row.kind === "http_request" ? <HttpRequestBody row={row} /> : null}
     </RowFrame>

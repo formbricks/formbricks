@@ -13,7 +13,7 @@ import { ZIsoDateTime } from "./common";
 export const ZWorkflowRunStepStatus = z
   .enum([...ZWorkflowRunLogStatus.options, "not_taken"])
   .describe(
-    "The step's log status, or `not_taken` for a step on an If/else branch the run did not take. A Don't wait HTTP request reports its delivery separately."
+    "The step's log status, or `not_taken` for a step on an If/else or Switch branch the run did not take. A Don't wait HTTP request reports its delivery separately."
   );
 export type TWorkflowRunStepStatus = z.infer<typeof ZWorkflowRunStepStatus>;
 
@@ -24,6 +24,21 @@ export const ZWorkflowRunIfElseDetail = z
     conditions: z
       .array(z.object({ id: z.string(), matched: z.boolean() }).strict())
       .describe("Each condition in order, matched or not matched."),
+  })
+  .strict();
+
+export const ZWorkflowRunSwitchDetail = z
+  .object({
+    kind: z.literal("switch"),
+    branch: z
+      .string()
+      .nullable()
+      .describe(
+        "The branch the run took: the id of the first case that matched, or `default`; null until decided."
+      ),
+    cases: z
+      .array(z.object({ id: z.string(), matched: z.boolean() }).strict())
+      .describe("The cases tried, in order, up to and including the one that matched."),
   })
   .strict();
 
@@ -90,6 +105,7 @@ export const ZWorkflowRunHttpRequestDetail = z
 
 export const ZWorkflowRunStepDetail = z.discriminatedUnion("kind", [
   ZWorkflowRunIfElseDetail,
+  ZWorkflowRunSwitchDetail,
   ZWorkflowRunSendEmailDetail,
   ZWorkflowRunHttpRequestDetail,
 ]);

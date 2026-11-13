@@ -1,6 +1,13 @@
 import { z } from "zod";
 import { ZWorkflowActionNode } from "./actions";
-import { ZWorkflowIfElseNode, flattenWorkflowConditions, getConditionOperatorNameSet } from "./conditions";
+import {
+  type TWorkflowConditionOperator,
+  WORKFLOW_SWITCH_DEFAULT_BRANCH,
+  ZWorkflowIfElseNode,
+  ZWorkflowSwitchNode,
+  flattenWorkflowConditions,
+  getConditionOperatorNameSet,
+} from "./conditions";
 import {
   type TWorkflowExecutableCheckContext,
   WORKFLOW_EXECUTABLE_NODE_CHECKS,
@@ -20,7 +27,7 @@ export const ZWorkflowSchemaVersion = z
   .default(WORKFLOW_SCHEMA_VERSION)
   .describe("Workflow definition schema version understood by this package.");
 
-export const ZWorkflowChildNode = z.union([ZWorkflowActionNode, ZWorkflowIfElseNode]);
+export const ZWorkflowChildNode = z.union([ZWorkflowActionNode, ZWorkflowIfElseNode, ZWorkflowSwitchNode]);
 export type TWorkflowChildNode = z.infer<typeof ZWorkflowChildNode>;
 
 export const ZWorkflowNode = z.union([ZWorkflowChildNode, ZWorkflowTriggerNode]);
@@ -33,7 +40,13 @@ export const ZWorkflowEdge = z.object({
   id: z.string().min(1),
   source: z.string().min(1),
   target: z.string().min(1),
-  sourceHandle: z.string().min(1).optional().describe("Use then or else for if_else source branches."),
+  sourceHandle: z
+    .string()
+    .min(1)
+    .optional()
+    .describe(
+      "Use then or else for if_else source branches, and a case id or default for switch source branches."
+    ),
   targetHandle: z.string().min(1).optional(),
 });
 export type TWorkflowEdge = z.infer<typeof ZWorkflowEdge>;
@@ -54,6 +67,28 @@ export const ZWorkflowDefinitionBase = z
   })
   .describe("Persisted workflow graph definition.");
 export type TWorkflowDefinitionBase = z.infer<typeof ZWorkflowDefinitionBase>;
+
+/**
+ * Why an edge's `sourceHandle` doesn't fit the step it leaves, or null: an If/else uses `then` or
+ * `else`, a Switch one of its case ids or `default`, and no other step uses `then` or `else`.
+ */
+const getSourceHandleProblem = (
+  sourceNode: TWorkflowNode | undefined,
+  sourceHandle: string | undefined
+): string | null => {
+  const isIfElseBranch =
+    sourceHandle === ZWorkflowIfElseBranch.enum.then || sourceHandle === ZWorkflowIfElseBranch.enum.else;
+  if (sourceNode?.type === "if_else") {
+    return isIfElseBranch ? null : "if_else edges must use then or else sourceHandle";
+  }
+  if (sourceNode?.type === "switch") {
+    const isSwitchBranch =
+      sourceHandle === WORKFLOW_SWITCH_DEFAULT_BRANCH ||
+      sourceNode.config.cases.some((switchCase) => switchCase.id === sourceHandle);
+    return isSwitchBranch ? null : "switch edges must use one of its case ids or default as sourceHandle";
+  }
+  return sourceNode && isIfElseBranch ? "Only if_else nodes can use then or else sourceHandle" : null;
+};
 
 const validateEdgeReferences = (
   definition: TWorkflowDefinitionBase,
@@ -78,25 +113,9 @@ const validateEdgeReferences = (
       });
     }
 
-    const sourceNode = nodesById.get(edge.source);
-    const isIfElseBranch =
-      edge.sourceHandle === ZWorkflowIfElseBranch.enum.then ||
-      edge.sourceHandle === ZWorkflowIfElseBranch.enum.else;
-
-    if (sourceNode?.type === "if_else" && !isIfElseBranch) {
-      ctx.addIssue({
-        code: "custom",
-        message: "if_else edges must use then or else sourceHandle",
-        path: ["edges", index, "sourceHandle"],
-      });
-    }
-
-    if (sourceNode && sourceNode.type !== "if_else" && isIfElseBranch) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Only if_else nodes can use then or else sourceHandle",
-        path: ["edges", index, "sourceHandle"],
-      });
+    const handleProblem = getSourceHandleProblem(nodesById.get(edge.source), edge.sourceHandle);
+    if (handleProblem) {
+      ctx.addIssue({ code: "custom", message: handleProblem, path: ["edges", index, "sourceHandle"] });
     }
   }
 };
@@ -127,6 +146,25 @@ const validateIfElseBranches = (definition: TWorkflowDefinitionBase, ctx: z.Refi
         message: `if_else node ${node.id} can have at most one else edge`,
         path: ["edges"],
       });
+    }
+  }
+};
+
+/** Each Switch branch (a case or Default) has at most one edge; a branch with none ends the run there. */
+const validateSwitchBranches = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
+  for (const node of definition.nodes) {
+    if (node.type !== "switch") continue;
+    const seen = new Set<string>();
+    for (const edge of definition.edges) {
+      if (edge.source !== node.id || edge.sourceHandle === undefined) continue;
+      if (seen.has(edge.sourceHandle)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `switch node ${node.id} can have at most one edge per branch (${edge.sourceHandle})`,
+          path: ["edges"],
+        });
+      }
+      seen.add(edge.sourceHandle);
     }
   }
 };
@@ -197,19 +235,28 @@ const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.Refin
   }
 
   validateIfElseBranches(definition, ctx);
+  validateSwitchBranches(definition, ctx);
   validateConditionOperatorNames(definition, ctx);
+};
+
+/** The operators a step compares with: an If/else's conditions, a Switch's cases, none otherwise. */
+const getComparisonOperators = (node: TWorkflowChildNode): TWorkflowConditionOperator[] => {
+  if (node.type === "if_else") {
+    return flattenWorkflowConditions(node.config.condition).map((condition) => condition.operator);
+  }
+  if (node.type === "switch") return node.config.cases.map((switchCase) => switchCase.operator);
+  return [];
 };
 
 /**
  * One definition uses one operator name set (ADR 0050): the survey names or the deprecated legacy
- * workflow names, never a mix. Names both sets share (equals, contains) fit either.
+ * workflow names, never a mix, across every If/else and Switch. Names both sets share (equals, contains) fit either.
  */
 const validateConditionOperatorNames = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
   const sets = new Set<string>();
   for (const node of definition.nodes) {
-    if (node.type !== "if_else") continue;
-    for (const condition of flattenWorkflowConditions(node.config.condition)) {
-      const set = getConditionOperatorNameSet(condition.operator);
+    for (const operator of getComparisonOperators(node)) {
+      const set = getConditionOperatorNameSet(operator);
       if (set !== "shared") sets.add(set);
     }
   }
@@ -239,7 +286,7 @@ export const ZWorkflowDefinitionInput = ZWorkflowDefinition.superRefine((definit
   validateBranchesNeverJoin(definition, ctx);
   validateWorkflowDefinitionSaveRules(definition, ctx);
 }).describe(
-  `Workflow definition with graph references validated. At most ${WORKFLOW_LIMITS.maxSteps} steps and ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions per if_else; branches never join; Variable paths start with payload., steps. or response.`
+  `Workflow definition with graph references validated. At most ${WORKFLOW_LIMITS.maxSteps} steps, ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions per if_else and ${WORKFLOW_LIMITS.minSwitchCases} to ${WORKFLOW_LIMITS.maxSwitchCases} cases per switch; branches never join; Variable paths start with payload., steps. or response.`
 );
 
 // Executable workflows are the enable-time subset: the trigger (and with it the entry point)
@@ -250,14 +297,15 @@ const ZWorkflowExecutableDefinitionBase = ZWorkflowDefinitionBase.extend({
 });
 type TWorkflowExecutableDefinitionBase = z.infer<typeof ZWorkflowExecutableDefinitionBase>;
 
-/** No fan-out: only an if_else picks between two next steps; every other step has at most one. */
+/** No fan-out: only an if_else or a switch picks between next steps; every other step has at most one. */
 const validateNoFanOut = (
   outgoingEdgesBySource: ReadonlyMap<string, string[]>,
   nodesById: ReadonlyMap<string, TWorkflowNode>,
   ctx: z.RefinementCtx
 ): void => {
   for (const [sourceId, targets] of outgoingEdgesBySource) {
-    if (targets.length > 1 && nodesById.get(sourceId)?.type !== "if_else") {
+    const type = nodesById.get(sourceId)?.type;
+    if (targets.length > 1 && type !== "if_else" && type !== "switch") {
       ctx.addIssue({
         code: "custom",
         message: `Workflow node ${sourceId} can have only one next step`,

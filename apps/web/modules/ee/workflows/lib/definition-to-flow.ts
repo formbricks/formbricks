@@ -2,8 +2,8 @@ import { type Edge, type Node, type SnapGrid } from "@xyflow/react";
 import type { TFunction } from "i18next";
 import {
   type TWorkflowDefinition,
-  type TWorkflowIfElseBranch,
   type TWorkflowNode,
+  WORKFLOW_SWITCH_DEFAULT_BRANCH,
   getBlankSendEmailContentFields,
   getWorkflowNodeConcreteType,
   isResponseCompletedTrigger,
@@ -14,7 +14,12 @@ import {
   WORKFLOW_CANVAS_START_POSITION,
 } from "@/modules/ee/workflows/lib/canvas-geometry";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
-import type { TWorkflowNodeData, TWorkflowNodeIssue } from "@/modules/ee/workflows/state/editor";
+import { getBranchHandles, isBranchingStep } from "@/modules/ee/workflows/lib/workflow-steps";
+import type {
+  TWorkflowCanvasBranch,
+  TWorkflowNodeData,
+  TWorkflowNodeIssue,
+} from "@/modules/ee/workflows/state/editor";
 
 export const WORKFLOW_CANVAS_NODE_TYPE = "workflowCanvasNode";
 export const WORKFLOW_BRANCH_NODE_TYPE = "workflowBranchNode";
@@ -22,8 +27,6 @@ export const WORKFLOW_ADD_BUTTON_EDGE_TYPE = "addButton";
 export const WORKFLOW_BRANCH_EDGE_TYPE = "branch";
 
 export const WORKFLOW_CANVAS_SNAP_GRID: SnapGrid = [20, 20];
-
-const IF_ELSE_BRANCHES: TWorkflowIfElseBranch[] = ["then", "else"];
 
 interface WorkflowFlowNodeOptions {
   /**
@@ -70,8 +73,47 @@ const getWorkflowNodeIssue = (
   return null;
 };
 
-const getIfElseNodeIds = (definition: TWorkflowDefinition) =>
-  new Set(definition.nodes.filter((node) => node.type === "if_else").map((node) => node.id));
+const getBranchingNodeIds = (definition: TWorkflowDefinition) =>
+  new Set(definition.nodes.filter(isBranchingStep).map((node) => node.id));
+
+/**
+ * The legs of a branching step's fork, left to right, each with its plain label (ED8: no icons): Then
+ * and Else, or each Switch case by its name ("Case 2" while it has none) and Default.
+ */
+export const getCanvasBranches = (node: TWorkflowNode, t: TFunction): TWorkflowCanvasBranch[] => {
+  if (node.type === "if_else") {
+    return [
+      {
+        handle: "then",
+        label: t("workspace.workflows.branch_then"),
+        ariaLabel: t("workspace.workflows.branch_then_aria"),
+        addStepLabel: t("workspace.workflows.add_step_to_then_branch"),
+      },
+      {
+        handle: "else",
+        label: t("workspace.workflows.branch_else"),
+        ariaLabel: t("workspace.workflows.branch_else_aria"),
+        addStepLabel: t("workspace.workflows.add_step_to_else_branch"),
+      },
+    ];
+  }
+  if (node.type !== "switch") return [];
+  const named = (handle: string, label: string): TWorkflowCanvasBranch => ({
+    handle,
+    label,
+    ariaLabel: t("workspace.workflows.switch_branch_aria", { name: label }),
+    addStepLabel: t("workspace.workflows.add_step_to_switch_branch", { name: label }),
+  });
+  return [
+    ...node.config.cases.map((switchCase, index) =>
+      named(
+        switchCase.id,
+        switchCase.name.trim() || t("workspace.workflows.switch_case_name_default", { number: index + 1 })
+      )
+    ),
+    named(WORKFLOW_SWITCH_DEFAULT_BRANCH, t("workspace.workflows.switch_default")),
+  ];
+};
 
 export const workflowDefinitionToFlowNodes = (
   definition: TWorkflowDefinition,
@@ -89,12 +131,12 @@ export const workflowDefinitionToFlowNodes = (
     const registryEntry = getNodeRegistryEntry(node);
     const fallbackPosition = { x: 120, y: 80 + index * 120 };
 
-    const isIfElse = node.type === "if_else";
+    const branchHandles = getBranchHandles(node);
     const isLeaf = !sourcesWithEdges.has(node.id);
 
     return {
       id: node.id,
-      type: isIfElse ? WORKFLOW_BRANCH_NODE_TYPE : WORKFLOW_CANVAS_NODE_TYPE,
+      type: branchHandles ? WORKFLOW_BRANCH_NODE_TYPE : WORKFLOW_CANVAS_NODE_TYPE,
       position: node.ui?.position ?? fallbackPosition,
       data: {
         category: registryEntry.category,
@@ -105,15 +147,14 @@ export const workflowDefinitionToFlowNodes = (
           node.type === "trigger" && options?.triggerSummary
             ? options.triggerSummary
             : registryEntry.summary(node, t),
-        // The end of the workflow or of a branch: a step with nothing after it. An If/else ends in
-        // its branches' own `+` instead.
-        canAppendStep: !isIfElse && isLeaf,
-        emptyBranches: isIfElse
-          ? IF_ELSE_BRANCHES.filter(
-              (branch) =>
-                !definition.edges.some((edge) => edge.source === node.id && edge.sourceHandle === branch)
-            )
-          : [],
+        // The end of the workflow or of a branch: a step with nothing after it. An If/else or a
+        // Switch ends in its branches' own `+` instead.
+        canAppendStep: !branchHandles && isLeaf,
+        branches: getCanvasBranches(node, t),
+        emptyBranches: (branchHandles ?? []).filter(
+          (branch) =>
+            !definition.edges.some((edge) => edge.source === node.id && edge.sourceHandle === branch)
+        ),
         issue: getWorkflowNodeIssue(node, t, resolvedOptions, isSurveyTrigger),
       },
     };
@@ -121,7 +162,7 @@ export const workflowDefinitionToFlowNodes = (
 };
 
 export const workflowDefinitionToFlowEdges = (definition: TWorkflowDefinition): Edge[] => {
-  const ifElseIds = getIfElseNodeIds(definition);
+  const branchingIds = getBranchingNodeIds(definition);
 
   return definition.edges.map((edge) => ({
     id: edge.id,
@@ -130,8 +171,8 @@ export const workflowDefinitionToFlowEdges = (definition: TWorkflowDefinition): 
     sourceHandle: edge.sourceHandle,
     targetHandle: edge.targetHandle,
     label: edge.sourceHandle,
-    // A branch edge starts at the end of its leg of the If/else fork, which carries the label.
-    type: ifElseIds.has(edge.source) ? WORKFLOW_BRANCH_EDGE_TYPE : WORKFLOW_ADD_BUTTON_EDGE_TYPE,
+    // A branch edge starts at the end of its leg of the fork, which carries the label.
+    type: branchingIds.has(edge.source) ? WORKFLOW_BRANCH_EDGE_TYPE : WORKFLOW_ADD_BUTTON_EDGE_TYPE,
   }));
 };
 
@@ -163,22 +204,21 @@ export const updateNodePosition = (
   };
 };
 
-// The children a step lays out below itself, left to right: an If/else's Then branch, then its
-// Else branch (null while that branch has no step); any other step's outgoing edges in order.
+// The children a step lays out below itself, left to right: an If/else's Then and Else branches, or
+// a Switch's cases and Default (null while a branch has no step); any other step's outgoing edges.
 const getLayoutChildren = (
   node: TWorkflowNode,
   definition: TWorkflowDefinition,
   nodesById: Map<string, TWorkflowNode>
 ): Array<string | null> => {
   const outgoing = definition.edges.filter((edge) => edge.source === node.id && nodesById.has(edge.target));
-  if (node.type !== "if_else") return outgoing.map((edge) => edge.target);
-  return IF_ELSE_BRANCHES.map(
-    (branch) => outgoing.find((edge) => edge.sourceHandle === branch)?.target ?? null
-  );
+  const branchHandles = getBranchHandles(node);
+  if (!branchHandles) return outgoing.map((edge) => edge.target);
+  return branchHandles.map((branch) => outgoing.find((edge) => edge.sourceHandle === branch)?.target ?? null);
 };
 
-// A tree layout from the trigger: each step sits centered over the columns its subtree needs, an
-// If/else puts its Then subtree left of its Else subtree, and an empty branch keeps one column for
+// A tree layout from the trigger: each step sits centered over the columns its subtree needs, a
+// branching step puts its branches' subtrees left to right, and an empty branch keeps one column for
 // its `+`. A linear workflow stays in one column, where the earlier row layout put it. Unreachable
 // steps (and every step of a trigger-less draft) each get their own row below, in original order.
 const layoutWorkflowNodes = (
@@ -219,7 +259,7 @@ const layoutWorkflowNodes = (
     lowestY = Math.max(lowestY, y);
 
     const childY =
-      y + (node.type === "if_else" ? WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT : WORKFLOW_CANVAS_NODE_SPACING.y);
+      y + (isBranchingStep(node) ? WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT : WORKFLOW_CANVAS_NODE_SPACING.y);
     let childLeft = left;
     for (const childId of getLayoutChildren(node, definition, nodesById)) {
       if (childId !== null) place(childId, childLeft, childY);

@@ -44,7 +44,9 @@ export const isListOperator = (operator: string): boolean => LIST_OPERATORS.has(
 const isGroup = (item: TWorkflowCondition | TWorkflowConditionGroup): item is TWorkflowConditionGroup =>
   "conditions" in item;
 
-const toGenericRight = (right: TWorkflowConditionValue | undefined): TGenericCondition["rightOperand"] => {
+export const toGenericRight = (
+  right: TWorkflowConditionValue | undefined
+): TGenericCondition["rightOperand"] => {
   if (right === undefined) return undefined;
   if (Array.isArray(right)) return { value: right, type: STATIC_OPERAND };
   if (right !== null && typeof right === "object") return { value: right.path, type: VARIABLE_OPERAND };
@@ -191,20 +193,30 @@ export const withSurveyOperatorNames = (group: TWorkflowConditionGroup): TWorkfl
     )
   );
 
+const withSurveyOperatorNamesInNode = <N extends TWorkflowDefinition["nodes"][number]>(node: N): N => {
+  if (node.type === "if_else") {
+    return { ...node, config: { ...node.config, condition: withSurveyOperatorNames(node.config.condition) } };
+  }
+  if (node.type === "switch") {
+    const cases = node.config.cases.map((switchCase) => ({
+      ...switchCase,
+      operator: toSurveyConditionOperator(switchCase.operator),
+    }));
+    return { ...node, config: { ...node.config, cases } };
+  }
+  return node;
+};
+
 /**
- * The definition with every If/else on survey operator names. Editing one If/else writes survey
- * names, and a definition may not mix the two name sets (ADR 0050), so a second If/else still on
+ * The definition with every If/else and Switch on survey operator names. Editing one writes survey
+ * names, and a definition may not mix the two name sets (ADR 0050), so another step still on
  * legacy names would make the draft unsavable; renaming them all together keeps it valid.
  */
 export const withSurveyOperatorNamesInDefinition = <D extends Pick<TWorkflowDefinition, "nodes">>(
   definition: D
 ): D => ({
   ...definition,
-  nodes: definition.nodes.map((node) =>
-    node.type === "if_else"
-      ? { ...node, config: { ...node.config, condition: withSurveyOperatorNames(node.config.condition) } }
-      : node
-  ),
+  nodes: definition.nodes.map(withSurveyOperatorNamesInNode),
 });
 
 /** Whether another condition fits (spec §10: 20 per If/else). */

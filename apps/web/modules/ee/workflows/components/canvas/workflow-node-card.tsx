@@ -6,6 +6,7 @@ import {
   GlobeIcon,
   type LucideIcon,
   MailIcon,
+  SplitIcon,
   TriangleAlertIcon,
   WebhookIcon,
   ZapIcon,
@@ -18,6 +19,7 @@ const NODE_ICONS: Record<TWorkflowNodeIcon, LucideIcon> = {
   trigger: ZapIcon,
   webhook: WebhookIcon,
   ifElse: GitBranchIcon,
+  switch: SplitIcon,
   email: MailIcon,
   http: GlobeIcon,
 };

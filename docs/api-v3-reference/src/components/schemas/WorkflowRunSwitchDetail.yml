@@ -1,0 +1,32 @@
+type: object
+description: >-
+  A Switch step's result: the branch it took and each case it tried, in order, up to and including
+  the one that matched. Cases after the match are not tried.
+required:
+  - kind
+  - branch
+  - cases
+properties:
+  kind:
+    type: string
+    enum:
+      - switch
+  branch:
+    type:
+      - string
+      - "null"
+    description: The id of the case the run took, or `default` when none matched; null until decided.
+  cases:
+    type: array
+    items:
+      type: object
+      required:
+        - id
+        - matched
+      properties:
+        id:
+          type: string
+        matched:
+          type: boolean
+      additionalProperties: false
+additionalProperties: false

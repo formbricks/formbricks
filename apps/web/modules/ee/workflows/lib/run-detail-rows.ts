@@ -5,19 +5,21 @@ import {
   type TWorkflowRunResource,
   type TWorkflowRunStep,
   type TWorkflowRunStepDetail,
+  type TWorkflowSwitchNode,
   type TWorkflowTriggerType,
+  WORKFLOW_SWITCH_DEFAULT_BRANCH,
   flattenWorkflowConditions,
 } from "@formbricks/workflows";
 import { formatStepDuration } from "@/modules/ee/workflows/lib/run-display";
 
 /**
  * Run detail as rows (ENG-7182, mock screens 7–9): the trigger first, then each step the run walked,
- * then the steps on If/else branches it did not take. Pure, so the drawer only renders: every
+ * then the steps on If/else and Switch branches it did not take. Pure, so the drawer only renders: every
  * decision (which badge, which branch a step sits on, which condition a result belongs to, how a
  * request reads) lives here.
  *
- * The definition supplies what the run does not record: step labels, condition texts and the
- * branch a step not taken sits on. It is the workflow's current one, so a run of an older version
+ * The definition supplies what the run does not record: step labels, condition texts, case names
+ * and the branch a step not taken sits on. It is the workflow's current one, so a run of an older version
  * may name a condition that is gone; that condition keeps its result without a text.
  */
 
@@ -63,6 +65,29 @@ export interface TRunDetailIfElseRow extends TRunDetailStepRowBase {
   conditions: TRunDetailConditionResult[];
 }
 
+/**
+ * A Switch branch as run detail names it: Default, or a case by its name. A case without a name reads
+ * by its 1-based number; `number` is null for a case the definition no longer has.
+ */
+export type TRunDetailSwitchBranch =
+  | { isDefault: true }
+  | { isDefault: false; name: string | null; number: number | null };
+
+export interface TRunDetailSwitchCaseResult {
+  id: string;
+  matched: boolean;
+  name: string | null;
+  number: number | null;
+}
+
+export interface TRunDetailSwitchRow extends TRunDetailStepRowBase {
+  kind: "switch";
+  /** The branch the run took, null until decided. */
+  taken: TRunDetailSwitchBranch | null;
+  /** The cases tried, in order, up to the one that matched. */
+  cases: TRunDetailSwitchCaseResult[];
+}
+
 export interface TRunDetailSendEmailRow extends TRunDetailStepRowBase {
   kind: "send_email";
   recipient: string | null;
@@ -83,8 +108,10 @@ export interface TRunDetailHttpRequestRow extends TRunDetailStepRowBase {
 
 export interface TRunDetailNotTakenRow extends TRunDetailStepRowBase {
   kind: "not_taken";
-  /** The If/else branch the step sits on, or null when the definition doesn't say. */
+  /** The If/else branch the step sits on, or null when it sits on a Switch branch or the definition doesn't say. */
   branch: TWorkflowIfElseBranch | null;
+  /** The Switch branch the step sits on, or null when it sits on an If/else branch or the definition doesn't say. */
+  switchBranch: TRunDetailSwitchBranch | null;
 }
 
 export interface TRunDetailOtherRow extends TRunDetailStepRowBase {
@@ -93,6 +120,7 @@ export interface TRunDetailOtherRow extends TRunDetailStepRowBase {
 
 export type TRunDetailStepRow =
   | TRunDetailIfElseRow
+  | TRunDetailSwitchRow
   | TRunDetailSendEmailRow
   | TRunDetailHttpRequestRow
   | TRunDetailNotTakenRow
@@ -135,23 +163,45 @@ const formatResponseBody = (body: unknown): string => {
   return JSON.stringify(body, null, 2);
 };
 
-/** The branch a step sits on: the handle of the nearest If/else edge above it. */
-const findBranchOfStep = (definition: TWorkflowDefinition, stepId: string): TWorkflowIfElseBranch | null => {
-  const ifElseIds = new Set(definition.nodes.filter((n) => n.type === "if_else").map((n) => n.id));
+const describeSwitchBranch = (node: TWorkflowSwitchNode, handle: string): TRunDetailSwitchBranch => {
+  if (handle === WORKFLOW_SWITCH_DEFAULT_BRANCH) return { isDefault: true };
+  const index = node.config.cases.findIndex((switchCase) => switchCase.id === handle);
+  if (index === -1) return { isDefault: false, name: null, number: null };
+  return { isDefault: false, name: node.config.cases[index].name.trim() || null, number: index + 1 };
+};
+
+/** The branch a step sits on: the handle of the nearest If/else or Switch edge above it. */
+const findBranchOfStep = (
+  definition: TWorkflowDefinition,
+  stepId: string
+): Pick<TRunDetailNotTakenRow, "branch" | "switchBranch"> => {
+  const none = { branch: null, switchBranch: null };
+  const nodesById = new Map(definition.nodes.map((node) => [node.id, node]));
   const visited = new Set<string>();
   let current = stepId;
   while (!visited.has(current)) {
     visited.add(current);
     const incoming = definition.edges.find((edge) => edge.target === current);
-    if (!incoming) return null;
-    if (ifElseIds.has(incoming.source)) {
-      return incoming.sourceHandle === "then" || incoming.sourceHandle === "else"
-        ? incoming.sourceHandle
-        : null;
+    if (!incoming) return none;
+    const source = nodesById.get(incoming.source);
+    if (source?.type === "if_else") {
+      const isIfElseBranch = incoming.sourceHandle === "then" || incoming.sourceHandle === "else";
+      return {
+        branch: isIfElseBranch ? (incoming.sourceHandle as TWorkflowIfElseBranch) : null,
+        switchBranch: null,
+      };
+    }
+    if (source?.type === "switch") {
+      return { branch: null, switchBranch: describeSwitchBranch(source, incoming.sourceHandle ?? "") };
     }
     current = incoming.source;
   }
-  return null;
+  return none;
+};
+
+const findSwitchOf = (definition: TWorkflowDefinition | null, stepId: string): TWorkflowSwitchNode | null => {
+  const node = definition?.nodes.find((n) => n.id === stepId);
+  return node?.type === "switch" ? node : null;
 };
 
 const findConditionsOf = (
@@ -183,7 +233,7 @@ const toStepRow = (
     return {
       ...base,
       kind: "not_taken",
-      branch: definition ? findBranchOfStep(definition, step.stepId) : null,
+      ...(definition ? findBranchOfStep(definition, step.stepId) : { branch: null, switchBranch: null }),
     };
   }
 
@@ -200,6 +250,23 @@ const toStepRow = (
           matched,
           condition: conditions.get(id) ?? null,
         })),
+      };
+    }
+    case "switch": {
+      const node = findSwitchOf(definition, step.stepId);
+      return {
+        ...base,
+        kind: "switch",
+        taken: node && detail.branch ? describeSwitchBranch(node, detail.branch) : null,
+        cases: detail.cases.map(({ id, matched }) => {
+          const named = node ? describeSwitchBranch(node, id) : null;
+          return {
+            id,
+            matched,
+            name: named && !named.isDefault ? named.name : null,
+            number: named && !named.isDefault ? named.number : null,
+          };
+        }),
       };
     }
     case "send_email":
@@ -227,11 +294,11 @@ const toStepRow = (
         httpError: detail.error,
       };
     default:
-      // An If/else whose log has no readable detail (still running, or an older runner) is still an
-      // If/else row, with no branch yet.
-      return step.stepType === "if_else"
-        ? { ...base, kind: "if_else", branch: null, conditions: [] }
-        : { ...base, kind: "other" };
+      // An If/else or Switch whose log has no readable detail (still running, or an older runner) is
+      // still its own row, with no branch yet.
+      if (step.stepType === "if_else") return { ...base, kind: "if_else", branch: null, conditions: [] };
+      if (step.stepType === "switch") return { ...base, kind: "switch", taken: null, cases: [] };
+      return { ...base, kind: "other" };
   }
 };
 

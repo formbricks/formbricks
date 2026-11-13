@@ -9,6 +9,7 @@ import {
 import { type TWorkflowDataRef } from "./common";
 import { flattenWorkflowConditions } from "./conditions/base";
 import type { TWorkflowIfElseNode } from "./conditions/if-else";
+import type { TWorkflowSwitchNode } from "./conditions/switch";
 import { getBlankSendEmailContentFields } from "./content";
 import type { TWorkflowStepNodeOfType, TWorkflowStepType } from "./steps";
 import type { TWorkflowTriggerType } from "./triggers/enum";
@@ -180,6 +181,18 @@ const checkIfElse = (node: TWorkflowIfElseNode, context: TWorkflowExecutableChec
   }
 };
 
+/** Every case is named (its branch's label) and every Variable is one this step can see. */
+const checkSwitch = (node: TWorkflowSwitchNode, context: TWorkflowExecutableCheckContext): void => {
+  checkWorkflowVariableRef(node.config.left, context, ["config", "left"]);
+  for (const [index, switchCase] of node.config.cases.entries()) {
+    const path = ["config", "cases", index];
+    if (switchCase.name.trim() === "") {
+      context.addIssue(`switch node ${node.id} case ${index + 1} needs a name`, [...path, "name"]);
+    }
+    if (isDataRef(switchCase.right)) checkWorkflowVariableRef(switchCase.right, context, [...path, "right"]);
+  }
+};
+
 /**
  * What a step of each type must satisfy to run, beyond the graph rules every definition shares.
  * Keyed by step type, so adding an action type (ENG-7179 `http_request`) fails to compile until it
@@ -190,4 +203,5 @@ export const WORKFLOW_EXECUTABLE_NODE_CHECKS: { [T in TWorkflowStepType]: TWorkf
     send_email: checkSendEmail,
     http_request: checkHttpRequest,
     if_else: checkIfElse,
+    switch: checkSwitch,
   };

@@ -1,0 +1,36 @@
+type: object
+description: >-
+  One case of a Switch, mirroring `ZWorkflowSwitchCase`: its branch's id and label, and how the
+  Switch's Variable is compared, with the If/else operator and value rules (see
+  `WorkflowCondition`).
+required:
+  - id
+  - name
+  - operator
+properties:
+  id:
+    type: string
+    minLength: 1
+    description: The case's branch; edges leaving by it use this as their `sourceHandle`. Never `default`.
+  name:
+    type: string
+    maxLength: 50
+    description: The branch's label on the canvas and in run detail. Required (non-blank) to enable.
+  operator:
+    $ref: ./WorkflowConditionOperator.yml
+  right:
+    description: The value to compare against, or a Variable. Omit for presence operators.
+    oneOf:
+      - type: string
+        maxLength: 1000
+      - type: number
+      - type: boolean
+      - type: "null"
+      - type: array
+        minItems: 1
+        maxItems: 100
+        items:
+          type: string
+          maxLength: 1000
+      - $ref: ./WorkflowDataRef.yml
+additionalProperties: false

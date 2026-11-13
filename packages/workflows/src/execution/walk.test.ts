@@ -186,3 +186,78 @@ describe("walkWorkflowSteps", () => {
     await expect(walk(fanOut, () => ({ next: "continue" }))).rejects.toThrow(/more than one/);
   });
 });
+
+const switchNode = (id: string, caseIds: string[]): TWorkflowExecutableDefinition["nodes"][number] => ({
+  id,
+  type: "switch",
+  config: {
+    left: { path: "response.plan" },
+    cases: caseIds.map((caseId) => ({ id: caseId, name: caseId, operator: "equals", right: caseId })),
+  },
+});
+
+/** trigger → route → gold: g → g2 | silver: s → check (then: t | else: —) | default: d */
+const routing = definition(
+  [
+    switchNode("route", ["gold", "silver"]),
+    sendEmailNode("g"),
+    sendEmailNode("g2"),
+    sendEmailNode("s"),
+    ifElseNode("check"),
+    sendEmailNode("t"),
+    sendEmailNode("d"),
+  ],
+  [
+    { id: "e1", source: "trigger", target: "route" },
+    // Stored out of order on purpose: not-taken steps still read in the order the canvas draws them.
+    { id: "e2", source: "route", target: "d", sourceHandle: "default" },
+    { id: "e3", source: "route", target: "s", sourceHandle: "silver" },
+    { id: "e4", source: "route", target: "g", sourceHandle: "gold" },
+    { id: "e5", source: "g", target: "g2" },
+    { id: "e6", source: "s", target: "check" },
+    { id: "e7", source: "check", target: "t", sourceHandle: "then" },
+  ]
+);
+
+describe("walkWorkflowSteps with a Switch", () => {
+  test("follows the case the Switch chose and reports every other branch as not taken, in case order", async () => {
+    const { visited, result } = await walk(routing, (id) => {
+      if (id === "route") return { next: "branch", branch: "silver" };
+      if (id === "check") return { next: "branch", branch: "else" };
+      return { next: "continue" };
+    });
+
+    expect(visited).toEqual(["route", "s", "check"]);
+    // The Switch's other branches first, then the nested If/else's Then step.
+    expect(result.notTaken.map((node) => node.id)).toEqual(["g", "g2", "d", "t"]);
+  });
+
+  test("Default is a branch like any case", async () => {
+    const { visited, result } = await walk(routing, (id) =>
+      id === "route" ? { next: "branch", branch: "default" } : { next: "continue" }
+    );
+
+    expect(visited).toEqual(["route", "d"]);
+    expect(result.notTaken.map((node) => node.id)).toEqual(["g", "g2", "s", "check", "t"]);
+  });
+
+  test("a case with no step ends the run", async () => {
+    const sparse = definition(
+      [switchNode("route", ["gold", "silver"]), sendEmailNode("g")],
+      [
+        { id: "e1", source: "trigger", target: "route" },
+        { id: "e2", source: "route", target: "g", sourceHandle: "gold" },
+      ]
+    );
+    const { visited, result } = await walk(sparse, (id) =>
+      id === "route" ? { next: "branch", branch: "silver" } : { next: "continue" }
+    );
+
+    expect(visited).toEqual(["route"]);
+    expect(result).toEqual({ stopped: false, notTaken: [expect.objectContaining({ id: "g" })] });
+  });
+
+  test("a Switch must choose a branch", async () => {
+    await expect(walk(routing, () => ({ next: "continue" }))).rejects.toThrow(/must choose a branch/);
+  });
+});

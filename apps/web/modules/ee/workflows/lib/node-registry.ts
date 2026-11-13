@@ -10,6 +10,7 @@ import {
 import { WorkflowEmailActionForm } from "@/modules/ee/workflows/components/inspector/workflow-email-action-form";
 import { WorkflowHttpRequestForm } from "@/modules/ee/workflows/components/inspector/workflow-http-request-form";
 import { WorkflowIfElseForm } from "@/modules/ee/workflows/components/inspector/workflow-if-else-form";
+import { WorkflowSwitchForm } from "@/modules/ee/workflows/components/inspector/workflow-switch-form";
 import { WorkflowTriggerForm } from "@/modules/ee/workflows/components/inspector/workflow-trigger-form";
 import { WorkflowWebhookTriggerForm } from "@/modules/ee/workflows/components/inspector/workflow-webhook-trigger-form";
 import { describeHttpRequestTarget } from "@/modules/ee/workflows/lib/http-request-panel";
@@ -20,7 +21,8 @@ import type { TWorkflowNodeCategory, TWorkflowNodeIcon } from "@/modules/ee/work
 export type TWorkflowNodeRegistryKind =
   | `trigger:${(typeof WORKFLOW_TRIGGERS)[keyof typeof WORKFLOW_TRIGGERS]}`
   | `action:${(typeof WORKFLOW_ACTIONS)[keyof typeof WORKFLOW_ACTIONS]}`
-  | "if_else";
+  | "if_else"
+  | "switch";
 
 export interface TWorkflowNodeFormProps<TNode extends TWorkflowNode> {
   node: TNode;
@@ -88,6 +90,22 @@ const ifElseEntry: TWorkflowNodeRegistryEntry = {
   ConfigForm: eraseForm(WorkflowIfElseForm),
 };
 
+// "customer.tier · 2 cases + Default" (mock screen 10).
+const switchEntry: TWorkflowNodeRegistryEntry = {
+  kind: "switch",
+  category: "flow",
+  icon: "switch",
+  title: (node, t) => node.label ?? t("workspace.workflows.switch"),
+  summary: (node, t) =>
+    node.type === "switch"
+      ? t("workspace.workflows.switch_summary", {
+          variable: getVariableDisplayName(node.config.left.path),
+          count: node.config.cases.length,
+        })
+      : "",
+  ConfigForm: eraseForm(WorkflowSwitchForm),
+};
+
 // The card says whether a sample arrived; the canvas passes that summary in once it knows (it needs
 // the server's sample), so this is the summary before that.
 const webhookTriggerEntry: TWorkflowNodeRegistryEntry = {
@@ -117,11 +135,12 @@ const REGISTRY: Record<TWorkflowNodeRegistryKind, TWorkflowNodeRegistryEntry> = 
   "action:send_email": sendEmailActionEntry,
   "action:http_request": httpRequestActionEntry,
   if_else: ifElseEntry,
+  switch: switchEntry,
 };
 
 export const getNodeRegistryKind = (node: TWorkflowNode): TWorkflowNodeRegistryKind => {
   if (node.type === "trigger") return `trigger:${node.triggerType}`;
-  if (node.type === "if_else") return "if_else";
+  if (node.type === "if_else" || node.type === "switch") return node.type;
   return `action:${node.actionType}`;
 };
 

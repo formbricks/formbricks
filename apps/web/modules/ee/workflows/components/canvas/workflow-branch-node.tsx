@@ -5,7 +5,6 @@ import { useAtomValue, useSetAtom, useStore } from "jotai";
 import { MoreVerticalIcon, Trash2Icon } from "lucide-react";
 import { memo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { TWorkflowIfElseBranch } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
 import { useAppendWorkflowStep } from "@/modules/ee/workflows/hooks/use-append-workflow-step";
 import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
@@ -18,7 +17,7 @@ import {
 import {
   type TWorkflowNodeData,
   canMutateCanvasAtom,
-  countIfElseBranchSteps,
+  countStepsOnBranches,
   deleteWorkflowNodeAtom,
   workflowDefinitionAtom,
 } from "@/modules/ee/workflows/state/editor";
@@ -39,18 +38,11 @@ const FORK_LINE_CLASS_NAME = "absolute bg-slate-500";
 // Where the stem meets the bar, from the top of the fork.
 const FORK_BAR_TOP_PX = 20;
 
-type TBranchLeg = {
-  branch: TWorkflowIfElseBranch;
-  label: string;
-  ariaLabel: string;
-  addStepLabel: string;
-  side: "left" | "right";
-};
-
 /**
- * An If/else step on the canvas (ENG-7111): the step card, and under it a fork into a Then branch
- * (left) and an Else branch (right), each labelled at its start. A branch's edge to its first step
- * leaves from the end of its leg; a branch with no step yet ends in its own `+` there instead.
+ * An If/else or Switch step on the canvas (ENG-7111, ENG-7157): the step card, and under it a fork
+ * into its branches, one column apart, each labelled at its start with a plain label (ED8: Then and
+ * Else, or each case's name and Default). A branch's edge to its first step leaves from the end of
+ * its leg; a branch with no step yet ends in its own `+` there instead.
  */
 export const WorkflowBranchNode = memo(
   ({ id, data, selected }: Readonly<NodeProps<Node<TWorkflowNodeData>>>) => {
@@ -61,25 +53,23 @@ export const WorkflowBranchNode = memo(
     const canMutate = useAtomValue(canMutateCanvasAtom);
     // While a run is open in the run drawer: the branch it took, filled; the other one greyed.
     const takenBranch = useEditorRunHighlight()?.takenBranchByStepId[id] ?? null;
-    // Deleting an If/else takes its branches with it (spec §2), so it asks first, saying how many
+    // Deleting an If/else or a Switch takes its branches with it (spec §2), so it asks first, saying how many
     // steps go too. Counted when the menu item is picked, not on every render of the card.
     const [deleteStepCount, setDeleteStepCount] = useState<number | null>(null);
-    const legs: TBranchLeg[] = [
-      {
-        branch: "then",
-        label: t("workspace.workflows.branch_then"),
-        ariaLabel: t("workspace.workflows.branch_then_aria"),
-        addStepLabel: t("workspace.workflows.add_step_to_then_branch"),
-        side: "left",
-      },
-      {
-        branch: "else",
-        label: t("workspace.workflows.branch_else"),
-        ariaLabel: t("workspace.workflows.branch_else_aria"),
-        addStepLabel: t("workspace.workflows.add_step_to_else_branch"),
-        side: "right",
-      },
-    ];
+    const legs = data.branches;
+    const isSwitch = data.nodeType === "switch";
+    // Inline literal t() calls so the translation-key scanner detects the keys.
+    const deleteTitle = isSwitch
+      ? t("workspace.workflows.delete_switch_title")
+      : t("workspace.workflows.delete_if_else_title");
+    let deleteBody = t("workspace.workflows.delete_if_else_body_empty");
+    if (isSwitch) {
+      deleteBody = deleteStepCount
+        ? t("workspace.workflows.delete_switch_body", { count: deleteStepCount })
+        : t("workspace.workflows.delete_switch_body_empty");
+    } else if (deleteStepCount) {
+      deleteBody = t("workspace.workflows.delete_if_else_body", { count: deleteStepCount });
+    }
 
     return (
       <div className="flex flex-col items-center">
@@ -105,7 +95,7 @@ export const WorkflowBranchNode = memo(
                     onClick={(event) => {
                       event.stopPropagation();
                       const definition = store.get(workflowDefinitionAtom);
-                      setDeleteStepCount(definition ? countIfElseBranchSteps(definition, id) : 0);
+                      setDeleteStepCount(definition ? countStepsOnBranches(definition, id) : 0);
                     }}>
                     <Trash2Icon className="size-4" />
                     {t("common.delete")}
@@ -124,12 +114,8 @@ export const WorkflowBranchNode = memo(
             setOpen={(open) => {
               if (!open) setDeleteStepCount(null);
             }}
-            title={t("workspace.workflows.delete_if_else_title")}
-            body={
-              deleteStepCount
-                ? t("workspace.workflows.delete_if_else_body", { count: deleteStepCount })
-                : t("workspace.workflows.delete_if_else_body_empty")
-            }
+            title={deleteTitle}
+            body={deleteBody}
             buttonText={t("common.delete")}
             buttonVariant="destructive"
             onConfirm={() => {
@@ -144,28 +130,29 @@ export const WorkflowBranchNode = memo(
           {/* Wider than the card on purpose: the legs sit one column apart, over the branches. */}
           <div
             className="absolute inset-y-0 left-1/2 -translate-x-1/2"
-            style={{ width: WORKFLOW_CANVAS_BRANCH_SPREAD + 2 }}>
+            style={{ width: WORKFLOW_CANVAS_BRANCH_SPREAD * (legs.length - 1) + 2 }}>
             <div
               className={cn(FORK_LINE_CLASS_NAME, "top-0 left-1/2 w-0.5 -translate-x-1/2")}
               style={{ height: FORK_BAR_TOP_PX }}
             />
             <div className={cn(FORK_LINE_CLASS_NAME, "inset-x-0 h-0.5")} style={{ top: FORK_BAR_TOP_PX }} />
-            {legs.map(({ branch, label, ariaLabel, addStepLabel, side }) => (
+            {legs.map(({ handle: branch, label, ariaLabel, addStepLabel }, index) => (
               <div
                 key={branch}
                 className={cn(
                   FORK_LINE_CLASS_NAME,
                   "bottom-0 w-0.5",
-                  side === "left" ? "left-0" : "right-0",
                   takenBranch !== null && takenBranch !== branch && "opacity-40"
                 )}
-                style={{ top: FORK_BAR_TOP_PX }}>
+                style={{ top: FORK_BAR_TOP_PX, left: index * WORKFLOW_CANVAS_BRANCH_SPREAD }}>
                 <span
                   className={cn(
-                    "absolute top-2 left-1/2 z-10 inline-flex -translate-x-1/2 items-center rounded-full border border-slate-500 bg-white px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-slate-900",
+                    "absolute top-2 left-1/2 z-10 inline-flex max-w-[18rem] -translate-x-1/2 items-center rounded-full border border-slate-500 bg-white px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-slate-900",
                     takenBranch === branch && "border-slate-900 bg-slate-900 text-white"
                   )}>
-                  <span aria-hidden="true">{label}</span>
+                  <span aria-hidden="true" className="truncate">
+                    {label}
+                  </span>
                   <span className="sr-only">{ariaLabel}</span>
                   {takenBranch === branch ? (
                     <span className="sr-only">{t("workspace.workflows.run_branch_taken_aria")}</span>
