@@ -569,3 +569,19 @@ describe("processWebhookDeliveryJob", () => {
     expect(logged).toContain("hooks.example.com");
   });
 });
+
+describe("buildWebhookDeliveryBody calBookingsByQuestionId", () => {
+  const booking = { status: "booked", startTime: "2026-11-05T10:00:00.000Z", title: "Intro call" };
+
+  test("adds what the Cal.com element reported beside the unchanged data", () => {
+    const body = JSON.parse(buildWebhookDeliveryBody({ ...data, calBookings: { cal1: booking } }));
+
+    expect(body.data.calBookingsByQuestionId).toEqual({ cal1: booking });
+  });
+
+  test("leaves the key out when the response holds no booking, so every other body is unchanged", () => {
+    const body = JSON.parse(buildWebhookDeliveryBody(data));
+
+    expect(body.data).not.toHaveProperty("calBookingsByQuestionId");
+  });
+});

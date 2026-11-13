@@ -10,6 +10,7 @@ import { type ApiErrorResult, handleApiError } from "@/app/lib/api/handle-api-er
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
+import { splitCalBookingsFromInput } from "@/lib/response/cal-bookings";
 import { applyIngestContractToResponseData } from "@/lib/response/ingest";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -254,6 +255,9 @@ export const putResponseHandler = async ({
   if (responseUpdateInput.data) {
     responseUpdateInput.data = ingestResult.data;
   }
+  // A Cal element's booking record moves out of `data`, which keeps the string "booked" (see
+  // `extractCalBookings`). On an update it is merged into what is stored, by Question ID.
+  splitCalBookingsFromInput(survey, responseUpdateInput);
 
   const validationResult = validateUpdateRequest(existingResponse, survey, responseUpdateInput, workspaceId);
   if (validationResult) {

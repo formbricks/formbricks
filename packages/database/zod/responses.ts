@@ -131,8 +131,8 @@ export const ZResponse = z.object({
   // Documenting it would advertise a field the API never returns; exposing it belongs to the release
   // that surfaces coercion failures in the UI.
   // `notShown` (ENG-6936) is left out for the same reason: v1/v2 payloads stay as they were, and the
-  // global omit keeps it off every read without a `select`.
-}) satisfies z.ZodType<Omit<Response, "ingestFlags" | "notShown">>;
+  // global omit keeps it off every read without a `select`. `calBookings` likewise.
+}) satisfies z.ZodType<Omit<Response, "ingestFlags" | "notShown" | "calBookings">>;
 
 ZResponse.meta({
   id: "response",

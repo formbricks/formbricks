@@ -12348,8 +12348,47 @@ components:
             rawValue:
               type: string
               description: The token as stored, verbatim — conventionally `booked`. Required, like the equivalent field on `consent` and `cta`, because `booked` is a derivation and this is the underlying value a client needs to rebuild the stored map.
+            booking:
+              type: object
+              required:
+                - status
+              additionalProperties: false
+              description: 'What Cal.com reported when the respondent booked. Present only when the response carries details, so a response recorded before they were kept, or by an older survey renderer, has none. The booking is reported by the respondent''s browser and is not verified: check `uid` with Cal.com before acting on it. Each field is present only when Cal.com sent it.'
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - booked
+                  description: Always `booked`. Cal.com's own state is in `bookingStatus`.
+                uid:
+                  type: string
+                  description: Cal.com's identifier for the booking.
+                title:
+                  type: string
+                  description: The booking's title, which Cal.com usually builds from the attendee names.
+                startTime:
+                  type: string
+                  description: When the meeting starts, as Cal.com reported it (ISO 8601).
+                endTime:
+                  type: string
+                  description: When the meeting ends, as Cal.com reported it (ISO 8601).
+                eventTypeId:
+                  type: string
+                  description: Cal.com's identifier for the event type, as a string.
+                bookingStatus:
+                  type: string
+                  description: Cal.com's own state of the booking, such as `ACCEPTED` or `PENDING`.
+                paymentRequired:
+                  type: string
+                  description: '`"true"` or `"false"`, as a string.'
+                isRecurring:
+                  type: string
+                  description: '`"true"` or `"false"`, as a string. A recurring booking holds its first occurrence.'
+                videoCallUrl:
+                  type: string
+                  description: The link to join the meeting.
       unevaluatedProperties: false
-      description: Scheduling answer for a `cal` element. Only the fact of the booking is recorded on the response; the meeting itself lives in the scheduling provider and is not proxied by this API.
+      description: Scheduling answer for a `cal` element. The answer itself is the fact of the booking; the details Cal.com reported at that moment are in `booking`. The meeting lives in the scheduling provider, so a later change there is not reflected.
     ResponseAnswerMatrix:
       allOf:
         - $ref: '#/components/schemas/ResponseAnswerBase'

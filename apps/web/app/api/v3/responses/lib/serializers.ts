@@ -120,7 +120,8 @@ export const createV3ResponseSerializer = (): TV3ResponseSerializer => {
     const answerResult = serializeAnswers(
       answerPlanFor(survey, lookupKey),
       (row.data ?? {}) as TResponseData,
-      (row.ttc ?? undefined) as TResponseTtc | undefined
+      (row.ttc ?? undefined) as TResponseTtc | undefined,
+      row.calBookings
     );
     const embeddedResult = serializeEmbeddedData(embeddedPlanFor(survey), asEmbeddedValueResponse(row));
 

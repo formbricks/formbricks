@@ -723,4 +723,56 @@ describe("putResponseHandler", () => {
       expect(persisted().data).toEqual({ plan: "gold" });
     });
   });
+
+  /**
+   * The booking details a Cal.com element reported arrive inside `data`; what is stored is the string
+   * "booked" in `data` and the record in `calBookings`, so every reader of `data` sees what it always saw.
+   */
+  describe("Cal.com booking details", () => {
+    const booking = { status: "booked", startTime: "2026-11-05T10:00:00.000Z", title: "Intro call" };
+
+    const surveyWithCal = () => ({
+      ...getBaseSurvey(),
+      blocks: [{ id: "block_1", elements: [{ id: "cal1", type: "cal" }, { id: "q1" }] }],
+    });
+
+    const putData = (data: Record<string, unknown>) => {
+      mocks.getValidatedResponseUpdateInput.mockResolvedValue({
+        responseUpdateInput: { ...getBaseResponseUpdateInput(), data },
+      });
+    };
+
+    const persistedInput = () => mocks.updateResponseWithQuotaEvaluation.mock.calls[0][0].responseInput;
+
+    test("stores the string 'booked' in data and moves the record to calBookings", async () => {
+      mocks.getSurvey.mockResolvedValue(surveyWithCal());
+      putData({ cal1: booking, q1: "answer" });
+
+      const result = await putResponseHandler(createHandlerParams());
+
+      expect(result.response.status).toBe(200);
+      expect(persistedInput().data).toEqual({ cal1: "booked", q1: "answer" });
+      expect(persistedInput().calBookings).toEqual({ cal1: booking });
+    });
+
+    test("a renderer that sends only the string leaves calBookings unset", async () => {
+      mocks.getSurvey.mockResolvedValue(surveyWithCal());
+      putData({ cal1: "booked" });
+
+      await putResponseHandler(createHandlerParams());
+
+      expect(persistedInput().data).toEqual({ cal1: "booked" });
+      expect(persistedInput()).not.toHaveProperty("calBookings");
+    });
+
+    test("a booking-shaped record under a question that is not a Cal element stays in data", async () => {
+      mocks.getSurvey.mockResolvedValue(surveyWithCal());
+      putData({ q1: booking });
+
+      await putResponseHandler(createHandlerParams());
+
+      expect(persistedInput().data).toEqual({ q1: booking });
+      expect(persistedInput()).not.toHaveProperty("calBookings");
+    });
+  });
 });

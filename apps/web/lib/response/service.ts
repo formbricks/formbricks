@@ -594,8 +594,8 @@ export const updateResponse = async (
       },
       // `ingestFlags` is read here and nowhere else: it is not part of `responseSelection`, so it
       // stays off every response this module returns rather than riding along into API payloads that
-      // never declared it.
-      select: { ...responseSelection, ingestFlags: true },
+      // never declared it. `calBookings` is read for the same reason: only to merge into.
+      select: { ...responseSelection, ingestFlags: true, calBookings: true },
     });
 
     if (!currentResponse) {
@@ -634,6 +634,11 @@ export const updateResponse = async (
             data: responseInput.data ?? {},
             flags: ingestFlags,
           });
+    // By Question ID, like `data`: a booking this payload carries replaces that question's stored one, and
+    // the other questions' bookings stay. Nothing in the payload leaves the column untouched.
+    const mergedCalBookings = responseInput.calBookings
+      ? { ...currentResponse.calBookings, ...responseInput.calBookings }
+      : undefined;
 
     const responsePrisma = await prismaClient.response.update({
       where: {
@@ -650,6 +655,7 @@ export const updateResponse = async (
         // Written whenever the contract ran, empty included — see `buildPrismaResponseData` for why
         // `null` has to stay reserved for "no ingest boundary has written this".
         ...(mergedIngestFlags !== undefined && { ingestFlags: mergedIngestFlags }),
+        ...(mergedCalBookings !== undefined && { calBookings: mergedCalBookings }),
       },
       select: responseSelection,
     });

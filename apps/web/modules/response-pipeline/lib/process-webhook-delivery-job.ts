@@ -25,8 +25,9 @@ import { type TWebhookDeliveryOutcome, recordWebhookDeliveryOutcome } from "./we
  * receivers and their signature checks must not notice the refactor, so the existing keys are pinned by a
  * parity test and a literal key-list test, and a new response column does not slip in unannounced. The
  * additions are `outcome` (ENG-6780), always present and `null` when unset, including for a job queued
- * before the column existed, and `dataByQuestionCode` (ENG-6784), absent only for a job queued before
- * `survey.questionCodes` existed.
+ * before the column existed, `dataByQuestionCode` (ENG-6784), absent only for a job queued before
+ * `survey.questionCodes` existed, and `calBookingsByQuestionId`, present only when the response holds a
+ * Cal.com booking.
  */
 export const buildWebhookDeliveryBody = (data: TWebhookDeliveryJobData): string => {
   const resolvedData = resolveStorageUrlsInObject(data.response.data);
@@ -40,6 +41,9 @@ export const buildWebhookDeliveryBody = (data: TWebhookDeliveryJobData): string 
       outcome: data.response.outcome ?? null,
       data: resolvedData,
       ...(questionCodes ? { dataByQuestionCode: buildDataByQuestionCode(resolvedData, questionCodes) } : {}),
+      // What a Cal.com element reported, beside the unchanged "booked" in `data` (see `extractCalBookings`).
+      // Absent unless the response holds a booking, so no other webhook body changes.
+      ...(data.calBookings ? { calBookingsByQuestionId: data.calBookings } : {}),
       survey: {
         title: data.survey.name,
         type: data.survey.type,
