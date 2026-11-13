@@ -86,6 +86,11 @@ export const ZAuditAction = z.enum([
   "deactivated",
   "reactivated",
   "revoked",
+  // Workflows Part 2 (ENG-7179): an HTTP request's secret header value stored or replaced (the header
+  // name only, never the value), and a "Send test request" call (host and status).
+  "secretHeaderSet",
+  "secretHeaderReplaced",
+  "testRequestSent",
 ]);
 export const ZActor = z.enum(["user", "api", "system"]);
 export const ZAuditStatus = z.enum(["success", "failure"]);

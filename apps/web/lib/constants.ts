@@ -2,6 +2,7 @@ import "server-only";
 import { TUserLocale } from "@formbricks/types/user";
 import { env } from "./env";
 import { isPlainChatConfigured } from "./plain-chat-config";
+import { isSelfHostedSwitchOn } from "./utils/self-hosted-switch";
 
 export { DEFAULT_BRAND_COLOR } from "./brand-color";
 
@@ -27,7 +28,16 @@ export const TERMS_URL = env.TERMS_URL;
 export const IMPRINT_URL = env.IMPRINT_URL;
 export const IMPRINT_ADDRESS = env.IMPRINT_ADDRESS;
 
-export const DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS = env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS === "1";
+// Both are ignored on Formbricks Cloud (hard guard, ENG-7179).
+export const DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS = isSelfHostedSwitchOn(
+  env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS,
+  { isCloud: IS_FORMBRICKS_CLOUD }
+);
+// Plain-HTTP workflow calls, both directions (ENG-7167). ENG-7177 wires the same variable; keep one.
+export const DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP = isSelfHostedSwitchOn(
+  env.DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP,
+  { isCloud: IS_FORMBRICKS_CLOUD }
+);
 export const WEBHOOK_DELIVERY_TIMEOUT_MS = env.WEBHOOK_DELIVERY_TIMEOUT_MS ?? 5_000;
 export const DEBUG_SHOW_RESET_LINK = !IS_PRODUCTION && env.DEBUG_SHOW_RESET_LINK === "1";
 export const PASSWORD_RESET_DISABLED = env.PASSWORD_RESET_DISABLED === "1";

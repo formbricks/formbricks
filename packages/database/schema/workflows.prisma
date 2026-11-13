@@ -36,6 +36,7 @@ model Workflow {
   definition  Json
   versions    WorkflowVersion[]
   runs        WorkflowRun[]
+  secrets     WorkflowSecret[]
 
   @@unique([id, workspaceId])
   @@index([workspaceId, status])
@@ -117,4 +118,22 @@ model WorkflowRunLog {
 
   @@unique([runId, stepId])
   @@index([runId, sequence])
+  @@index([status, startedAt])
+}
+
+/// Encrypted value of an HTTP request secret header (ENG-7168, ADR 0043). The definition and every version
+/// store only `{name, secret: true, secretId}`; Replace overwrites this row in place, so the enabled
+/// version uses the new value at once. Rows nothing references are deleted on Enable; all are deleted
+/// with the workflow.
+model WorkflowSecret {
+  id          String   @id @default(cuid(2))
+  createdAt   DateTime @default(now()) @map(name: "created_at")
+  updatedAt   DateTime @updatedAt @map(name: "updated_at")
+  workflow    Workflow @relation(fields: [workflowId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  workflowId  String
+  workspaceId String
+  /// `symmetricEncrypt` ciphertext (AES-256-GCM). Never logged, never returned.
+  value       String
+
+  @@index([workflowId, workspaceId])
 }

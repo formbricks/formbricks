@@ -12,8 +12,13 @@ import type { WorkflowRunEnvironment } from "../run-environment";
 export interface WorkflowStepOutcome {
   status: TWorkflowStepResult["status"];
   error: string | null;
-  /** Kept under the step's id in the run context, so later steps can read `steps.<id>.…`. */
+  /** Recorded on the step's log row; kept under the step's id in the run context unless `variables` is set. */
   output: Record<string, unknown>;
+  /**
+   * What later steps read as `steps.<id>.…` when it differs from what the log keeps: an HTTP response
+   * up to 1 MB lives here, in memory only, while the log keeps at most 64 KB of it (ENG-7168).
+   */
+  variables?: Record<string, unknown>;
 }
 
 export interface WorkflowStepExecution<T extends TWorkflowStepType> {
@@ -44,4 +49,14 @@ export interface WorkflowStepExecutor<T extends TWorkflowStepType> {
    * from the log) takes the same way it did the first time. Defaults to `continue`.
    */
   decide?: (output: Record<string, unknown>) => TWorkflowWalkDecision;
+  /**
+   * The Variables of a step resumed from its log row (a run retried after a crash). Defaults to the
+   * stored output.
+   */
+  variablesFromOutput?: (output: Record<string, unknown>) => Record<string, unknown>;
+  /**
+   * Whether this step handed its effect to a background job ("Don't wait" HTTP request). From then on
+   * the job owns the step's row: the runner never runs it again, and its outcome never fails the run.
+   */
+  handedOff?: (output: Record<string, unknown>) => boolean;
 }

@@ -18,7 +18,9 @@ import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { workflowSecretStore } from "@/modules/ee/workflows/lib/secrets/workflow-secret-store";
 import { buildRecordAnalytics } from "./analytics";
+import { buildRecordSecretHeaderChanges } from "./secret-audit";
 
 /**
  * Adapter glue between the Next.js v3 routes and the framework-agnostic `@formbricks/workflows`
@@ -171,6 +173,10 @@ export const buildWorkflowApiContext = (
   verifyTriggerSurvey,
   verifyRecipientsAllowed,
   listUnreadableSurveyIds: buildListUnreadableSurveyIds(authentication),
+  // Secret header values are stored encrypted beside the workflow (ENG-7179, ADR 0043); writes record
+  // "secret set / replaced" with the header name only.
+  secrets: workflowSecretStore,
+  recordSecretHeaderChanges: buildRecordSecretHeaderChanges(authentication, requestId, instance),
   ...(auditLog ? { recordAudit: buildRecordAudit(auditLog, authentication, requestId) } : {}),
   // Product analytics (ENG-2851): always bound, unlike the audit sink, because it no-ops on its own
   // when POSTHOG_KEY is unset and there is no per-request switch to respect.

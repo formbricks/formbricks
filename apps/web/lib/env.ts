@@ -611,6 +611,7 @@ const parsedEnv = createEnv({
     BREVO_LIST_ID: z.string().optional(),
     DATABASE_URL: z.url(),
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: z.enum(["1", "0"]).optional(),
+    DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP: z.enum(["1", "0"]).optional(),
     // Bounded so a misconfiguration cannot pin a background-worker slot for minutes.
     WEBHOOK_DELIVERY_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(30_000).optional(),
     DEBUG_SHOW_RESET_LINK: z.enum(["1", "0"]).optional(),
@@ -878,6 +879,7 @@ const parsedEnv = createEnv({
     CRON_SECRET: process.env.CRON_SECRET,
     DATABASE_URL: process.env.DATABASE_URL,
     DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS: process.env.DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS,
+    DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP: process.env.DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP,
     WEBHOOK_DELIVERY_TIMEOUT_MS: process.env.WEBHOOK_DELIVERY_TIMEOUT_MS,
     DEBUG: process.env.DEBUG,
     DEBUG_SHOW_RESET_LINK: process.env.DEBUG_SHOW_RESET_LINK,
