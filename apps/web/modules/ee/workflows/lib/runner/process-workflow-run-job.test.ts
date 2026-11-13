@@ -1092,20 +1092,33 @@ describe("processWorkflowRunJob", () => {
       expect(mockSendEmail.mock.calls[0][0].subject).toBe("Else");
     });
 
-    test("an email body can use a step's output and a response answer through Variable paths", async () => {
+    test("an email body can use a response answer through a Variable path", async () => {
       runWith(
         branchingDefinition(
           { id: "c1", left: { path: "response.email" }, operator: "isSet" },
-          "<p>#recall:steps.check.branch/fallback:x# #recall:response.name/fallback:there#</p>"
+          "<p>#recall:response.name/fallback:there#</p>"
         )
       );
 
       await processWorkflowRunJob(data, baseContext);
 
-      // Step outputs are inserted here; response answers go to survey recall as bare question ids.
+      // Response answers go to survey recall as bare question ids.
       expect(mockBuildHtml).toHaveBeenCalledWith(
-        expect.objectContaining({ body: "<p>then #recall:name/fallback:there#</p>" })
+        expect.objectContaining({ body: "<p>#recall:name/fallback:there#</p>" })
       );
+    });
+
+    test("an If/else's branch is not a Variable: a body reading it is not executable", async () => {
+      runWith(
+        branchingDefinition(
+          { id: "c1", left: { path: "response.email" }, operator: "isSet" },
+          "<p>#recall:steps.check.branch/fallback:x#</p>"
+        )
+      );
+
+      await processWorkflowRunJob(data, finalAttemptContext);
+
+      expect(mockSendEmail).not.toHaveBeenCalled();
     });
   });
 

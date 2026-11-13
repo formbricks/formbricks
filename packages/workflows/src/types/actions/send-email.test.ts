@@ -112,7 +112,7 @@ describe("survey link", () => {
         body: `<p>${WORKFLOW_SURVEY_LINK_TOKEN}</p>`,
         surveyLink: {
           surveyId: linkSurveyId,
-          embeddedData: [{ key: "agent_id", value: "#recall:steps.nope.id/fallback:#" }],
+          embeddedData: [{ key: "agent_id", value: "#recall:steps.nope.body.id/fallback:#" }],
         },
       }).join(" ")
     ).toMatch(/never runs before this step/);

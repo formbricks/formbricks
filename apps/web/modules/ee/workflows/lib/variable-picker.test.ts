@@ -341,14 +341,14 @@ describe("getWorkflowVariableRecallItems", () => {
   test("labels each complete Variable token in a text, from the picker or from its path", () => {
     const text =
       "<p>Hi #recall:payload.customer.tier/fallback:there# and #recall:payload.gone/fallback:# " +
-      "#recall:steps.lookup.tier/fallback:#, #recall:question1/fallback:x# #recall:payload.open</p>";
+      "#recall:steps.lookup.body.tier/fallback:#, #recall:question1/fallback:x# #recall:payload.open</p>";
 
     // `payload.gone` left the sample but still gets a chip; a bare id is a survey answer, not ours;
     // the unclosed token is not a token yet.
     expect(getWorkflowVariableRecallItems(text, groups)).toEqual([
       { id: "payload.customer.tier", label: "customer.tier", type: "variable" },
       { id: "payload.gone", label: "gone", type: "variable" },
-      { id: "steps.lookup.tier", label: "steps.lookup.tier", type: "variable" },
+      { id: "steps.lookup.body.tier", label: "steps.lookup.body.tier", type: "variable" },
     ]);
   });
 });

@@ -196,7 +196,7 @@ describe("http_request definition (running)", () => {
     expect(issues(ZWorkflowExecutableDefinition.safeParse(payloadInQuery)).join()).toMatch(/payload/);
 
     const laterStepInHeader = definition(
-      httpConfig({ headers: [{ name: "X-Id", value: "#recall:steps.email.messageId/fallback:#" }] }),
+      httpConfig({ headers: [{ name: "X-Id", value: "#recall:steps.email.status/fallback:#" }] }),
       [emailAfter("ok")]
     );
     expect(issues(ZWorkflowExecutableDefinition.safeParse(laterStepInHeader)).join()).toMatch(

@@ -2,10 +2,11 @@ type: object
 description: >-
   Reference to a workflow Variable, mirroring `ZWorkflowDataRef`. The path is a dot path whose
   first segment says where the value comes from: `payload.<path>` (Webhook trigger payload),
-  `steps.<stepId>.<path>` (an earlier step's output) or `response.<questionId>` (a Response
-  completed run's answer). Any other prefix is refused with **400**, as are the segments
-  `__proto__`, `prototype` and `constructor`. Segments may contain letters, digits, `_` and `-`.
-  Payload and step-output paths that go into or end at a list resolve as missing.
+  `steps.<stepId>.status` or `steps.<stepId>.body.<path>` (an earlier HTTP request's answer) or
+  `response.<questionId>` (a Response completed run's answer). Saving any other path is refused
+  with **400**, as are the segments `__proto__`, `prototype` and `constructor`. Segments may
+  contain letters, digits, `_` and `-`. Payload and step-output paths that go into or end at a
+  list resolve as missing. A workflow saved before these rules may still return an older path.
 required:
   - path
 properties:
@@ -16,7 +17,7 @@ properties:
     pattern: '^(payload|steps|response)(\.[A-Za-z0-9_-]+)+$'
     examples:
       - response.nps
-      - steps.check-plan.branch
+      - steps.get-plan.body.tier
   fallback:
     type: string
     maxLength: 1000

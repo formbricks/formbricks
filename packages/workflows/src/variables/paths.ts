@@ -30,6 +30,13 @@ export const MAX_WORKFLOW_VARIABLE_PATH_LENGTH = 512;
 
 const SEGMENT_PATTERN = new RegExp(`^${WORKFLOW_PATH_SEGMENT_PATTERN_SOURCE}$`);
 
+/**
+ * A step gives later steps only its `status` and its `body` (an HTTP request's answer, spec "Variables").
+ * Other output fields (an email's message id, an If/else's branch) are bookkeeping, not Variables.
+ */
+const isStepOutputPath = ([, field, ...rest]: readonly string[]): boolean =>
+  (field === "status" && rest.length === 0) || field === "body";
+
 export type TParsedWorkflowVariablePath =
   | { ok: true; source: TWorkflowVariableSource; segments: string[] }
   | { ok: false; error: string };
@@ -67,6 +74,13 @@ export const parseWorkflowVariablePath = (path: string): TParsedWorkflowVariable
 
   if (source === "response" && segments.length !== 1) {
     return { ok: false, error: "A response Variable names exactly one question: response.<questionId>" };
+  }
+
+  if (source === "steps" && !isStepOutputPath(segments)) {
+    return {
+      ok: false,
+      error: "A step Variable reads steps.<stepId>.status or steps.<stepId>.body.<path>",
+    };
   }
 
   return { ok: true, source, segments };

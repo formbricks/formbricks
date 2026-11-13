@@ -162,7 +162,7 @@ describe("Variable paths in conditions", () => {
 
   test("an executable If/else may only read steps that run before it", () => {
     const definition = branching([
-      { id: "c1", left: { path: "steps.then-email.messageId" }, operator: "isSet" },
+      { id: "c1", left: { path: "steps.then-email.status" }, operator: "isSet" },
     ]);
     expect(ZWorkflowDefinition.safeParse(definition).success).toBe(true);
     expect(issues(ZWorkflowExecutableDefinition.safeParse(definition)).join()).toMatch(/runs before/);

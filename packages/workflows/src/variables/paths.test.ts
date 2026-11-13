@@ -47,6 +47,16 @@ describe("parseWorkflowVariablePath", () => {
   test("a response path names exactly one question", () => {
     expect(parseWorkflowVariablePath("response.q1.sub")).toMatchObject({ ok: false });
   });
+
+  test("a step path reads only the step's status or its body", () => {
+    expect(parseWorkflowVariablePath("steps.http1.status")).toMatchObject({ ok: true });
+    expect(parseWorkflowVariablePath("steps.http1.body")).toMatchObject({ ok: true });
+    expect(parseWorkflowVariablePath("steps.http1.body.customer.tier")).toMatchObject({ ok: true });
+    expect(parseWorkflowVariablePath("steps.email1.messageId")).toMatchObject({ ok: false });
+    expect(parseWorkflowVariablePath("steps.check.branch")).toMatchObject({ ok: false });
+    expect(parseWorkflowVariablePath("steps.http1.status.code")).toMatchObject({ ok: false });
+    expect(parseWorkflowVariablePath("steps.http1")).toMatchObject({ ok: false });
+  });
 });
 
 describe("resolveWorkflowVariable", () => {
@@ -62,6 +72,13 @@ describe("resolveWorkflowVariable", () => {
     expect(resolveWorkflowVariable(context, "steps.http1.status")).toEqual({ found: true, value: 200 });
     expect(resolveWorkflowVariable(context, "steps.http1.body.id")).toEqual({ found: true, value: "abc" });
     expect(resolveWorkflowVariable(context, "response.nps")).toEqual({ found: true, value: 9 });
+  });
+
+  test("a step's other output fields are not Variables", () => {
+    expect(resolveWorkflowVariable(context, "steps.email1.messageId")).toEqual({
+      found: false,
+      reason: "invalid",
+    });
   });
 
   test("a survey list answer keeps its list", () => {
