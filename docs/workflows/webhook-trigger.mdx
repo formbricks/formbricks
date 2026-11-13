@@ -130,13 +130,15 @@ payload or the token.
 | ------------------------------------------------ | --------------------------------------------------------- |
 | Calls per minute to one workflow's URL           | 100                                                       |
 | Calls per minute across an organization's workflows | 300 (self-hosters: `WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE`) |
-| Runs one workflow's URL can start per day (UTC)  | 10,000 (self-hosters: `WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT`)  |
+| Calls per day (UTC) to one enabled workflow's URL | 10,000 (self-hosters: `WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT`)  |
 | Payload size                                     | 100 KB                                                    |
 | Payload nesting                                  | 10 levels                                                 |
 | `Idempotency-Key` length                         | 255 characters                                            |
 
-Calls to a draft or disabled workflow count toward the per-minute limits but not the daily run limit. All limits
-are listed on [Limits](/workflows/limits).
+The daily limit counts every call to an enabled workflow that gets past the plan check, not only the calls that
+start a run: a call refused afterwards for its size, content type or shape, and a call that repeats an
+`Idempotency-Key`, count too. Calls to a draft or disabled workflow count toward the per-minute limits but not
+the daily limit. All limits are listed on [Limits](/workflows/limits).
 
 ## Next steps
 

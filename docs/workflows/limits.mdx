@@ -29,13 +29,15 @@ Saving a workflow over one of these limits is refused. A workflow saved before a
 | --------------------------------------------------- | -------------------- | --------------------------------------- |
 | Calls per minute to one workflow's URL              | 100                  | —                                       |
 | Calls per minute across an organization's workflows | 300                  | `WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE` |
-| Runs one workflow's URL can start per day (UTC)     | 10,000               | `WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT`      |
+| Calls per day (UTC) to one enabled workflow's URL   | 10,000               | `WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT`      |
 | Payload size, also for a pasted Sample payload      | 100 KB               | —                                       |
 | Payload nesting                                     | 10 levels            | —                                       |
 | `Idempotency-Key` length                            | 255 characters       | —                                       |
 | Payload values the `@` picker lists                 | 500                  | —                                       |
 
-A call over a rate limit answers `429` with a `Retry-After` header. See
+The daily limit counts every call to an enabled workflow that passes the plan check, including calls then
+refused for size or content type and calls that repeat an `Idempotency-Key`. A call over a rate limit answers
+`429` with a `Retry-After` header. See
 [Status codes](/workflows/webhook-trigger#status-codes).
 
 ## HTTP request
