@@ -1,7 +1,7 @@
 # Glossary
 
-Domain terms the code and architecture reviews use. Add a term when a module is named after a concept
-that is not listed here.
+Domain terms the code and architecture reviews use. Only terms specific to Formbricks belong here: no general
+programming or UI concepts, and no implementation details.
 
 ## Tenancy
 
@@ -9,7 +9,9 @@ that is not listed here.
 
 ## Survey runtime
 
-**Block** — One card of a survey holding one or more elements. Logic rules and a `logicFallback` hang off a block.
+**Display** — One showing of a survey to a respondent, whether or not they answer it.
+
+**Block** — One card of a survey holding one or more elements. Logic rules and a fallback hang off a block.
 
 **Element** — One input inside a block, which the editor calls a question. Its `id` (the editor's "Question ID") is the key responses are stored under, so it never changes once a survey is published.
 
@@ -23,13 +25,9 @@ that is not listed here.
 
 **Signed** — A Signature element is signed when the tab the respondent is on holds a signature: a drawn stroke of minimum length on Draw, or a name containing at least one letter, number or symbol on Type. A bare tap, an empty name, or a name of only spaces or punctuation does not count, and the other tab's input is kept but does not count. Clearing makes it not signed again. Logic conditions read "is signed" / "is not signed".
 
-**Card pointer (`blockId`)** — The renderer's position in a survey: the `"start"` sentinel (welcome card), a block id while answering, an ending id once finished, or the `"end"` sentinel for a survey with no endings. Only a block id resolves against `survey.blocks`.
+**Ending** — A card shown when the survey finishes. A response records the ending it finished on.
 
-**Ending** — A card shown when the survey finishes. A response records the ending it finished on as `endingId`.
-
-**Block flow** — The decision of where a respondent goes after submitting a block: the block's logic rules (first jump wins), then `logicFallback`, then the next block in order. It also covers dropping a jump target that names a deleted block or ending, and the `finished` flag and `endingId` the persisted response reports. Lives in `packages/surveys/src/lib/block-flow.ts` (`advanceFromBlock`).
-
-**Advance** — Moving from the current block to the next card, as decided by block flow. Back navigation is separate: it follows `history`, not logic.
+**Block flow** — The decision of where a respondent goes after submitting a block: the block's logic rules (first jump wins), then the block's fallback, then the next block in order. A jump to a deleted block or ending is ignored. Going back does not follow block flow: it retraces the respondent's path.
 
 **Show-if** — A condition that decides whether a respondent sees a block, an element, a choice, or a matrix row or column. An item whose show-if fails is not shown, which is different from shown and skipped. _Avoid_: display logic, visibility rule, conditional display.
 
@@ -47,35 +45,31 @@ that is not listed here.
 
 ## Dashboards
 
+**Feedback Record** — One piece of feedback in the normalized store behind Unify Feedback, whatever source it came from.
+
 **Feedback Dataset** — The set of Feedback Records a chart reads from. A chart reads exactly one, fixed when the chart is created. _Avoid_: feedback directory, tenant (internal names only).
 
 **Chart** — One saved visualisation of one Feedback Dataset: a chart type, a query and display settings. It belongs to a workspace and can sit on any number of dashboards.
 
 **Chart query** — What a chart computes: its measures, dimensions, time dimensions, filters, order and limit over its Feedback Dataset's fields. Kept apart from the chart's display settings. _Avoid_: chart spec, definition (when only the query is meant).
 
-**Field** — A measure or dimension a chart query can use, named after its data source (`FeedbackRecords.npsScore`). The fields callers may use are the ones the field catalog lists. _Avoid_: member, column.
+**Field** — A measure or dimension a chart query can use, such as NPS score. The fields callers may use are the ones the field catalog lists. _Avoid_: member, column.
 
-**Field catalog** — The published list of fields a chart query may use, with each field's kind, type, label and filter options. It is the contract: a field not in the catalog is refused.
+**Field catalog** — The published list of fields a chart query may use, with each field's kind, type, label and filter options. A field not in the catalog is refused.
 
-**Date range** — The window of `collectedAt` a chart shows: a named preset (`last 7 days`), all time, or a pair of calendar dates, always read in the organization's display time zone. A date range given when reading a chart's data replaces the one saved on the chart.
+**Date range** — The window of collection dates a chart shows: a named preset (`last 7 days`), all time, or a pair of calendar dates, always read in the organization's display time zone. A date range given when reading a chart's data replaces the one saved on the chart.
 
 **Answer filter** — A chart filter rule on how the same submission answered another question in the chart's Feedback Dataset, such as "NPS where Delivery is Late". A submission that skipped that question never matches, not even an "is not" rule. _Avoid_: sibling filter, response-wide filter.
 
 **Dashboard** — A named grid of widgets in a workspace. Its charts can come from different Feedback Datasets.
 
-**Widget** — One chart's placement on one dashboard: its position and size on the dashboard's 12-column grid, and its order. A chart sits on a dashboard at most once; removing a widget keeps the chart. User-facing copy says "chart". _Avoid_: placement, tile, panel.
-
-**Layout** — The positions and sizes of a dashboard's widgets. Widgets may not overlap; gaps close upward when the dashboard is drawn.
+**Widget** — One chart's placement on one dashboard: its position, size and order. A chart sits on a dashboard at most once; removing a widget keeps the chart. User-facing copy says "chart". _Avoid_: placement, tile, panel.
 
 **Dashboard filter** — A filter on one field and operator that a dashboard's editors pin to the dashboard's top bar, shared by everyone who opens it. Each person picks or enters its value (their **filter pick**, kept in their own browser); the pick applies to every chart on the dashboard and only ever narrows what a chart's own saved filters let through, never widens it. A chart whose Feedback Dataset lacks the field shows no data and says it cannot be filtered by it. _Avoid_: global filter, slicer.
 
 **Dashboard viewer** — An organization role that can only read the dashboards of the workspaces its teams are granted, and pick values in their dashboard filters. It never sees surveys, responses, contacts or Feedback Records, and never runs a chart query of its own: only the saved charts on dashboards it can see. _Avoid_: viewer, read-only member (a Member on a read team still sees raw data).
 
-**In use** — A chart is in use while it sits on at least one dashboard. A chart in use cannot be deleted; the refusal names the dashboards holding it.
-
 ## Tables and filtering
-
-**Table toolbar** — The one control bar every list table shares: settings gear (sort, columns, show archived), search, the Filter button, filter chips, and the match count.
 
 **Filter property** — Something a table can be filtered by, such as Status, Source or one contact attribute. Each table publishes its own filter properties; a property not published there cannot be filtered on. _Avoid_: field (a chart-query term), filter attribute, filter key, column.
 
@@ -85,7 +79,7 @@ that is not listed here.
 
 **Filter chip** — The visible token for one active quick filter or one filter rule. A row has to match every chip; there is no OR between chips.
 
-**Match count** — How many rows match the active filters and search in total, not how many are loaded. Large counts may stop at a cap and read as "at least" (`10,000+`). _Avoid_: result count, loaded rows.
+**Match count** — How many rows match the active filters and search in total, not how many are loaded. Large counts may stop at a cap and read as "at least". _Avoid_: result count, loaded rows.
 
 ## Creatives
 
