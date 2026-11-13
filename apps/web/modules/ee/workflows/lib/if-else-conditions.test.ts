@@ -12,6 +12,7 @@ import {
   toVariableComboboxGroups,
   toggleConnectorInGroup,
   withSurveyOperatorNames,
+  withSurveyOperatorNamesInDefinition,
 } from "./if-else-conditions";
 
 const t = ((key: string) => key) as unknown as TFunction;
@@ -188,6 +189,31 @@ describe("group operations", () => {
     expect(renamed.conditions[1]).toMatchObject({ operator: "doesNotEqual" });
     expect((renamed.conditions[2] as TWorkflowConditionGroup).conditions[0]).toMatchObject({
       operator: "isSet",
+    });
+  });
+
+  test("renames every If/else in the definition, so editing one never leaves a mix of name sets", () => {
+    const legacyIfElse = {
+      id: "if_2",
+      type: "if_else" as const,
+      config: {
+        condition: {
+          id: "g9",
+          connector: "and" as const,
+          conditions: [{ ...channelIsCall, id: "c9", operator: "notEquals" as const }],
+        },
+      },
+    };
+    const edited = {
+      id: "if_1",
+      type: "if_else" as const,
+      config: { condition: withSurveyOperatorNames(group) },
+    };
+
+    const renamed = withSurveyOperatorNamesInDefinition({ nodes: [edited, legacyIfElse] });
+
+    expect(renamed.nodes[1]).toMatchObject({
+      config: { condition: { conditions: [{ operator: "doesNotEqual" }] } },
     });
   });
 

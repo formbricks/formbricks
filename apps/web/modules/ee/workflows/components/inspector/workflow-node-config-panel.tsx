@@ -7,6 +7,7 @@ import type { TWorkflowDefinition, TWorkflowNode, TWorkflowResource } from "@for
 import { getWorkflowNodeConcreteType } from "@formbricks/workflows";
 import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
 import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
+import { withSurveyOperatorNamesInDefinition } from "@/modules/ee/workflows/lib/if-else-conditions";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import {
   isWorkflowReadOnlyAtom,
@@ -112,9 +113,12 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
 
   const handleChange = (nextNode: TWorkflowNode) => {
     if (!isEditable) return;
-    setDefinition((currentDefinition) =>
-      currentDefinition ? replaceNode(currentDefinition, nextNode) : currentDefinition
-    );
+    setDefinition((currentDefinition) => {
+      if (!currentDefinition) return currentDefinition;
+      const next = replaceNode(currentDefinition, nextNode);
+      // The If/else panel writes survey operator names; keep the other If/else steps on the same set.
+      return nextNode.type === "if_else" ? withSurveyOperatorNamesInDefinition(next) : next;
+    });
   };
 
   return (
