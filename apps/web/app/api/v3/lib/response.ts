@@ -144,6 +144,7 @@ export const INVALID_PARAM_CODES = [
   "document_limit_exceeded",
   "duplicate_identifier",
   "duplicate_locale",
+  "excel_export_other_survey",
   "file_limit_exceeded",
   "file_type_unsupported",
   "file_unreadable",

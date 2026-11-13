@@ -9,10 +9,10 @@ import type { TV3SurveyResourceVisibility } from "@/app/api/v3/surveys/serialize
 import { getUserLocaleOrDefault } from "@/lib/user/locale";
 import { buildAttachmentContentDisposition, buildDownloadFileName } from "@/lib/utils/content-disposition";
 import { getTranslate } from "@/lingodotdev/server";
+import { EXCEL_EXPORT_FORMAT } from "@/modules/survey/excel-export/format";
 import {
   EXCEL_EXPORT_CONTENT_TYPE,
   EXCEL_EXPORT_EXTENSION,
-  EXCEL_EXPORT_FORMAT,
   writeExcelExport,
 } from "@/modules/survey/excel-export/write";
 import type { TSurveyExportFormat } from "@/modules/survey/export/lib/formats";
