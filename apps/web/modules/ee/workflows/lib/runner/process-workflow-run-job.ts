@@ -133,6 +133,27 @@ const resultFromLogRow = (log: StepLogRow, status: TWorkflowStepResult["status"]
   finishedAt: log.finishedAt?.toISOString() ?? new Date().toISOString(),
 });
 
+/**
+ * A step result plus what later steps read under its id, when that differs from the stored output
+ * (an HTTP response kept whole in memory, ENG-7179). `ZWorkflowRunData` drops `variables` when the
+ * run's `data.steps` is written, so it never reaches the database.
+ */
+type ExecutedStep = TWorkflowStepResult & { variables?: Record<string, unknown> };
+
+const toRecord = (value: unknown): Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : {};
+
+/** A step taken from its log row: its Variables rebuilt from the stored output (≤64 KB of a response). */
+const resumedStep = (
+  executor: WorkflowStepExecutor<TWorkflowStepType>,
+  result: TWorkflowStepResult
+): ExecutedStep =>
+  executor.variablesFromOutput
+    ? { ...result, variables: executor.variablesFromOutput(result.output ?? {}) }
+    : result;
+
 const isUniqueConstraintError = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   error.code === PrismaErrorType.UniqueConstraintViolation;
@@ -158,8 +179,8 @@ interface StepRunInput {
  * `running` and will NOT re-send — that email is potentially lost rather than duplicated. This is the
  * accepted policy: never send the same step twice.
  */
-const executeOwnedStep = async (step: StepRunInput): Promise<TWorkflowStepResult> => {
-  const { status, error, output } = await step.executor.execute({
+const executeOwnedStep = async (step: StepRunInput): Promise<ExecutedStep> => {
+  const { status, error, output, variables } = await step.executor.execute({
     node: step.node,
     context: step.context,
     environment: step.environment,
@@ -181,6 +202,7 @@ const executeOwnedStep = async (step: StepRunInput): Promise<TWorkflowStepResult
     ...(error ? { error } : {}),
     startedAt: finishedAt.toISOString(),
     finishedAt: finishedAt.toISOString(),
+    ...(variables ? { variables } : {}),
   };
 };
 
@@ -197,7 +219,7 @@ const executeOwnedStep = async (step: StepRunInput): Promise<TWorkflowStepResult
 const claimAndRunStep = async (
   step: StepRunInput,
   existing: StepLogRow | null
-): Promise<TWorkflowStepResult | null> => {
+): Promise<ExecutedStep | null> => {
   const startedAt = new Date();
 
   if (!existing) {
@@ -254,14 +276,20 @@ const STEP_BAIL = Symbol("workflow-step-bail");
 const runStep = async (
   step: StepRunInput,
   logContext: ReturnType<typeof getWorkflowRunLogContext>
-): Promise<TWorkflowStepResult | typeof STEP_BAIL> => {
+): Promise<ExecutedStep | typeof STEP_BAIL> => {
   const existing: StepLogRow | null = await prisma.workflowRunLog.findFirst({
     where: { runId: step.runId, stepId: step.node.id },
     select: stepLogSelect,
   });
 
   if (existing?.status === "succeeded") {
-    return resultFromLogRow(existing, "succeeded");
+    return resumedStep(step.executor, resultFromLogRow(existing, "succeeded"));
+  }
+
+  // A "Don't wait" call handed to its own job (ENG-7179): that job owns the row now. Never run it again,
+  // whatever state the job left it in; the walk just goes on.
+  if (existing && step.executor.handedOff?.(toRecord(existing.output))) {
+    return resumedStep(step.executor, resultFromLogRow(existing, existing.status));
   }
 
   if (existing?.status === "running" && step.executor.hasEffects) {
@@ -350,13 +378,14 @@ const walkRun = async (
     }
 
     stepResults.push(result);
-    if (result.status === "failed") {
+    const output = result.output ?? {};
+    // A handed-off step's final outcome belongs to its job and never fails the run.
+    if (result.status === "failed" && !executor.handedOff?.(output)) {
       failure = result.error ?? "Workflow step failed";
       return { next: "stop" };
     }
 
-    const output = result.output ?? {};
-    context.steps[node.id] = output;
+    context.steps[node.id] = result.variables ?? output;
     // A rate-limited (skipped) step has no result to branch on; only a succeeded one decides.
     return result.status === "succeeded" && executor.decide ? executor.decide(output) : { next: "continue" };
   });
