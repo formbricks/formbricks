@@ -121,9 +121,9 @@ describe("updateMembershipAction", () => {
   test("rejects demoting the last owner of the organization", async () => {
     mocks.runOwnerGuardedTransaction.mockRejectedValue(new LastActiveOwnerError());
 
-    await expect(callUpdateMembership("member")).rejects.toThrow(
-      new ValidationError("You cannot demote the last owner of the organization")
-    );
+    const rejection = callUpdateMembership("member");
+    await expect(rejection).rejects.toBeInstanceOf(ValidationError);
+    await expect(rejection).rejects.toThrow("You cannot demote the last owner of the organization");
     expect(mocks.updateMembership).not.toHaveBeenCalled();
   });
 
@@ -153,24 +153,25 @@ describe("updateMembershipAction", () => {
     expect(mocks.updateMembership).toHaveBeenCalledWith(targetUserId, organizationId, { role: "manager" });
   });
 
-  test("allows changing a non-owner's role", async () => {
-    mocks.getMembershipByUserIdOrganizationId.mockImplementation(async (userId: string) =>
-      membership(userId, userId === currentUserId ? "owner" : "member")
-    );
+  test("passes any other failure of the demotion through unchanged", async () => {
+    const failure = new Error("database down");
+    mocks.runOwnerGuardedTransaction.mockRejectedValue(failure);
 
-    await expect(callUpdateMembership("manager")).resolves.toMatchObject({ role: "manager" });
+    await expect(callUpdateMembership("member")).rejects.toBe(failure);
   });
 
-  test("allows keeping an owner's role unchanged", async () => {
+  test("allows keeping an owner's role unchanged, outside any transaction", async () => {
     await expect(callUpdateMembership("owner")).resolves.toMatchObject({ role: "owner" });
+    expect(mocks.runOwnerGuardedTransaction).not.toHaveBeenCalled();
   });
 
-  test("still rejects a manager demoting an owner before the owner count is read", async () => {
+  test("still rejects a manager demoting an owner before the owners are locked", async () => {
     mocks.getMembershipByUserIdOrganizationId.mockImplementation(async (userId: string) =>
       membership(userId, userId === currentUserId ? "manager" : "owner")
     );
 
     await expect(callUpdateMembership("member")).rejects.toThrow(OperationNotAllowedError);
+    expect(mocks.runOwnerGuardedTransaction).not.toHaveBeenCalled();
     expect(mocks.updateMembership).not.toHaveBeenCalled();
   });
 });

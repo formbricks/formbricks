@@ -6,7 +6,8 @@ import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
  * The organization keeps at least one active owner. A path that can demote, deactivate or remove a member
  * checks it in the transaction that makes the change, under a lock on the organization's owner
  * memberships, taken before any user row. This module only exports the check together with that lock, so a
- * caller cannot run the check without it:
+ * caller cannot run the check without it (`countActiveOwners` alone is for display decisions, never to
+ * guard a write):
  *
  * - `runOwnerGuardedTransaction` opens the transaction itself: the v2 users API, removing a member, and
  *   demoting an owner from the member list;
