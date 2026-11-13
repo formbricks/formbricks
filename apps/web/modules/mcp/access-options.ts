@@ -101,6 +101,9 @@ export const keepOfferedMcpGrantSelection = async (
       };
     }
     case "workspaces": {
+      // This in-transaction re-check sees an organization membership the user lost since
+      // `readableWorkspaceIds` was read, but not a lost team: only that SpiceDB lookup sees team access,
+      // and it ran before the transaction. The window between the two is milliseconds.
       const candidates = selection.workspaceIds.filter((id) => readableWorkspaceIds.has(id));
       const workspaces =
         candidates.length === 0

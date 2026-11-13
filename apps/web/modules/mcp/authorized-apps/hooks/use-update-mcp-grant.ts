@@ -6,7 +6,7 @@ import { updateMcpGrant } from "../lib/api-client";
 import { authorizedMcpClientKeys } from "../lib/query";
 
 /**
- * Edit's Save: replaces a connection's permissions and, when given, its organization & workspace access,
+ * Edit's Save: replaces an MCP client's permissions and, when given, its organization & workspace access,
  * then refreshes the list's summary, chips and dates.
  */
 export const useUpdateMcpGrant = () => {

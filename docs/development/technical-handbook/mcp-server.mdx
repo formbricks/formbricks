@@ -137,13 +137,13 @@ and a list that is empty or names a permission or level the registry does not of
 registration. A new tool inherits enforcement by construction — the gate refuses a token whose scopes
 don't reach a declared permission before the handler touches a v3 operation, with a 403 that names the
 permission, the missing scope and that the client must reconnect (and an `insufficient_scope` challenge). The same gate then holds an OAuth
-call to the connection's **grant** (ADR-0041): each declared permission must be at least the declared
+call to the MCP client's **grant** (ADR-0041): each declared permission must be at least the declared
 level in the grant, or the call is refused with a 403 whose detail starts "Not permitted" and names the
 permission and level. The grant is read with the user in `modules/mcp/auth.ts`, which refuses a
-connection without one (that is what makes Revoke immediate); API keys have no grant and are gated on
+client without one (that is what makes Revoke immediate); API keys have no grant and are gated on
 scopes alone. Allow on the consent screen saves the grant; a client registered with `skipConsent` never
 sees that screen, so the token endpoint's after-hook (`modules/auth/lib/skip-consent-mcp-grant.ts`) gives
-its connection one when it issues a token, by the migration's rule: All access, each permission at its
+the client one when it issues a token, by the migration's rule: All access, each permission at its
 scope family's level, Tags and Audience at No access. Tools that more than one permission
 legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, and a tool whose input decides what
 it reads passes `{ byInput }`; both keep the tool on the same registration path rather than a hand-rolled
@@ -397,7 +397,7 @@ curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
   first connect with `invalid_scope` and only succeeded on retry.
 </Note>
 
-The consent screen is served at `/account/authorize`; Allow saves the connection's grant at the levels
+The consent screen is served at `/account/authorize`; Allow saves the MCP client's grant at the levels
 the approved scopes give. Users can revoke approved MCP clients from `/account/settings/authorized-apps`,
 which deletes the consent and the grant together, so the client's next call is refused.
 
