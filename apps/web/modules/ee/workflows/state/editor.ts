@@ -8,14 +8,23 @@ import {
   type TWorkflowIfElseBranch,
   type TWorkflowResource,
   type TWorkflowTriggerType,
-  WORKFLOW_ACTIONS,
+  WORKFLOW_LIMITS,
   WORKFLOW_TRIGGERS,
   ZWorkflowExecutableDefinition,
+  isResponseCompletedTrigger,
 } from "@formbricks/workflows";
 import { getAppendedStepPosition } from "@/modules/ee/workflows/lib/canvas-geometry";
+import { settleSentSecretValues, withSecretIdsForCheck } from "@/modules/ee/workflows/lib/http-request-panel";
+import {
+  type TAddableWorkflowStepType,
+  createDefaultWorkflowStep,
+  removeIfElseWithBranches,
+} from "@/modules/ee/workflows/lib/workflow-steps";
+
+export { countIfElseBranchSteps } from "@/modules/ee/workflows/lib/workflow-steps";
 
 export type TWorkflowNodeCategory = "trigger" | "flow" | "action";
-export type TWorkflowNodeIcon = "trigger" | "ifElse" | "email";
+export type TWorkflowNodeIcon = "trigger" | "webhook" | "ifElse" | "email" | "http";
 
 export type TWorkflowNodeIssue = {
   /**
@@ -190,6 +199,26 @@ export const markWorkflowDraftSavedAtom = atom(null, (get, set, savedDraft: TWor
 
 export const workflowLastSavedAtAtom = atom((get) => get(workflowEditorAtom).lastSavedAt);
 
+// After a save, the secret header values it sent are stored server-side: keep them out of the draft
+// (and out of the saved snapshot, so this is no edit) or the next autosave would send them again.
+export const settleSentSecretHeaderValuesAtom = atom(null, (get, set, sent: TWorkflowDefinition) => {
+  const state = get(workflowEditorAtom);
+  const definition = state.definition ? settleSentSecretValues(state.definition, sent) : null;
+  const savedDefinition = state.lastSavedDraft?.definition
+    ? settleSentSecretValues(state.lastSavedDraft.definition, sent)
+    : null;
+  if (definition === state.definition && savedDefinition === (state.lastSavedDraft?.definition ?? null)) {
+    return;
+  }
+  set(
+    workflowEditorAtom,
+    produce(state, (draft) => {
+      draft.definition = definition;
+      if (draft.lastSavedDraft) draft.lastSavedDraft.definition = savedDefinition;
+    })
+  );
+});
+
 // True while the editable draft (name, description, definition) differs from what was last
 // persisted. Trimmed comparison so trailing whitespace the save flow strips anyway never counts.
 export const isWorkflowDirtyAtom = atom((get) => {
@@ -256,6 +285,7 @@ export type TWorkflowValidationProblemCode =
   | "flow_invalid"
   | "step_not_executable"
   | "step_incomplete"
+  | "step_needs_setup"
   | "definition_invalid";
 
 export type TWorkflowValidationProblem = {
@@ -286,16 +316,46 @@ export const workflowProblemFields = {
   },
 } as const;
 
+// The `nodes…` part of categorizeDefinitionIssue; null for a path it doesn't bucket.
+const categorizeNodeIssue = (
+  path: string[],
+  field: string,
+  definition: TWorkflowDefinition
+): TWorkflowValidationProblem | null => {
+  const third = path[2];
+  if (path.length === 1) {
+    // Unreachable or duplicated nodes — the graph shape is broken.
+    return { code: "flow_invalid", field };
+  }
+  if (third === "type") {
+    return { code: "step_not_executable", field };
+  }
+  if (third === "config") {
+    // Missing required content. Grouped per step, not per empty field, so the badge count matches
+    // what the user perceives as one unfinished step. The email step's message names its fields;
+    // any other step (an HTTP request without a URL, an If/else on a Variable it can't see) gets a
+    // general one.
+    const nodeIndex = Number(path[1]);
+    const node = definition.nodes[nodeIndex];
+    const isEmail = node?.type === "action" && node.actionType === "send_email";
+    return {
+      code: isEmail ? "step_incomplete" : "step_needs_setup",
+      field: workflowProblemFields.nodeConfig(nodeIndex),
+    };
+  }
+  return null;
+};
+
 // Buckets one ZWorkflowExecutableDefinition issue by its path. Total: every issue maps to some
 // code (worst case the generic fallback), so a failed parse always yields at least one problem
 // and the problem list can never read "valid" while workflowValidityAtom says not executable.
 const categorizeDefinitionIssue = (
   issuePath: ReadonlyArray<PropertyKey>,
-  context: { hasTrigger: boolean; isTriggerConnected: boolean }
+  context: { hasTrigger: boolean; isTriggerConnected: boolean; definition: TWorkflowDefinition }
 ): TWorkflowValidationProblem => {
   const path = issuePath.map(String);
   const field = path.join(".") || "definition";
-  const [root, , third] = path;
+  const [root] = path;
 
   if (root === "trigger" || root === "entryNodeId") {
     // Without a trigger both fields fail together; normalizing the field collapses them into a
@@ -320,19 +380,8 @@ const categorizeDefinitionIssue = (
   }
 
   if (root === "nodes") {
-    if (path.length === 1) {
-      // Unreachable or duplicated nodes — the graph shape is broken.
-      return { code: "flow_invalid", field };
-    }
-    if (third === "type") {
-      // if_else nodes persist fine but cannot run in this version of workflows.
-      return { code: "step_not_executable", field };
-    }
-    if (third === "config") {
-      // Missing required content (send_email to/subject/body). Grouped per step, not per empty
-      // field, so the badge count matches what the user perceives as one unfinished step.
-      return { code: "step_incomplete", field: workflowProblemFields.nodeConfig(Number(path[1])) };
-    }
+    const nodeProblem = categorizeNodeIssue(path, field, context.definition);
+    if (nodeProblem) return nodeProblem;
   }
 
   return { code: "definition_invalid", field };
@@ -398,19 +447,21 @@ export const deriveWorkflowValidation = ({
     const hasTrigger = definition.trigger !== null;
     // The survey binding is only meaningful once a trigger exists — for trigger-less drafts the
     // builder page reports it unbound, but `trigger_missing` already says everything.
+    // Only a Response completed trigger is bound to a survey; a Webhook trigger has none to pick.
     const triggerSurveyProblem = getTriggerSurveyProblem({
-      hasTrigger,
+      hasTrigger: isResponseCompletedTrigger(definition.trigger),
       hasBoundTriggerSurvey,
       isTriggerSurveyRestricted,
     });
     if (triggerSurveyProblem) problems.push(triggerSurveyProblem);
 
-    const parsed = ZWorkflowExecutableDefinition.safeParse(definition);
+    // Secret headers are checked in the shape the server will store them in (see the helper).
+    const parsed = ZWorkflowExecutableDefinition.safeParse(withSecretIdsForCheck(definition));
     isDefinitionExecutable = parsed.success;
     if (!parsed.success) {
       const isTriggerConnected = definition.edges.some((edge) => edge.source === definition.trigger?.id);
       for (const issue of parsed.error.issues) {
-        problems.push(categorizeDefinitionIssue(issue.path, { hasTrigger, isTriggerConnected }));
+        problems.push(categorizeDefinitionIssue(issue.path, { hasTrigger, isTriggerConnected, definition }));
       }
     }
   }
@@ -691,15 +742,31 @@ export const toggleWorkflowInspectorAtom = atom(null, (get, set) => {
 });
 
 // Drop a node + its incident edges; bridge each incoming edge to each outgoing one so the
-// graph stays connected (preserving the incoming sourceHandle for if_else branches). Refuses
-// to delete the trigger.
+// graph stays connected (preserving the incoming sourceHandle for if_else branches). An If/else goes
+// with its branches instead (spec §2): the canvas confirms that first. Refuses to delete the trigger.
 export const deleteWorkflowNodeAtom = atom(null, (get, set, nodeId: string) => {
+  const current = get(workflowEditorAtom).definition;
+  const isIfElse = current?.nodes.some((node) => node.id === nodeId && node.type === "if_else") ?? false;
   set(
     workflowEditorAtom,
     produce(get(workflowEditorAtom), (draft) => {
       const definition = draft.definition;
-      if (!definition) return;
+      if (!definition || !current) return;
       if (definition.trigger?.id === nodeId) return;
+
+      if (isIfElse) {
+        const remaining = removeIfElseWithBranches(current, nodeId);
+        const remainingIds = new Set(remaining.nodes.map((node) => node.id));
+        definition.nodes = definition.nodes.filter((node) => remainingIds.has(node.id));
+        definition.edges = definition.edges.filter((edge) =>
+          remaining.edges.some((kept) => kept.id === edge.id)
+        );
+        if (draft.selectedNodeId && !remainingIds.has(draft.selectedNodeId)) {
+          draft.selectedNodeId = definition.trigger?.id ?? null;
+          draft.isNodeConfigModalOpen = false;
+        }
+        return;
+      }
 
       const incoming = definition.edges.filter((edge) => edge.target === nodeId);
       const outgoing = definition.edges.filter((edge) => edge.source === nodeId);
@@ -726,29 +793,33 @@ export const deleteWorkflowNodeAtom = atom(null, (get, set, nodeId: string) => {
   );
 });
 
-// Seed the trigger on an empty draft canvas (the "Add trigger" picker). The placeholder
-// surveyId keeps the config schema-valid until the user binds a real survey; opening the
-// config panel right away walks them into doing exactly that.
+// Seed the trigger on an empty draft canvas (the "Add trigger" picker). A Response completed trigger
+// gets a placeholder surveyId that keeps the config schema-valid until the user binds a real survey;
+// a Webhook trigger has nothing to configure (its Secret URL is issued when the save lands). Opening
+// the config panel right away walks them into the next step either way.
 export const addWorkflowTriggerAtom = atom(null, (get, set, triggerType: TWorkflowTriggerType) => {
   set(
     workflowEditorAtom,
     produce(get(workflowEditorAtom), (draft) => {
       const definition = draft.definition;
       if (!definition || definition.trigger) return;
-      if (triggerType !== WORKFLOW_TRIGGERS.RESPONSE_COMPLETED) return;
 
       const triggerId = createId();
-      definition.trigger = {
-        id: triggerId,
-        type: "trigger",
-        triggerType,
-        config: {
-          surveyId: createId(),
-          endingCardIds: [],
-        },
-        // Matches WORKFLOW_CANVAS_START_POSITION in definition-to-flow (not imported to avoid a cycle).
-        ui: { position: { x: 220, y: 80 } },
-      };
+      // Matches WORKFLOW_CANVAS_START_POSITION in definition-to-flow (not imported to avoid a cycle).
+      const ui = { position: { x: 220, y: 80 } };
+      if (triggerType === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED) {
+        definition.trigger = {
+          id: triggerId,
+          type: "trigger",
+          triggerType,
+          config: { surveyId: createId(), endingCardIds: [] },
+          ui,
+        };
+      } else if (triggerType === WORKFLOW_TRIGGERS.WEBHOOK) {
+        definition.trigger = { id: triggerId, type: "trigger", triggerType, config: {}, ui };
+      } else {
+        return;
+      }
       definition.entryNodeId = triggerId;
 
       draft.selectedNodeId = triggerId;
@@ -760,63 +831,61 @@ export const addWorkflowTriggerAtom = atom(null, (get, set, triggerType: TWorkfl
 // Fallback canvas position when the reference node/edge carries no stored position.
 const SEND_EMAIL_FALLBACK_POSITION = { x: 220, y: 200 };
 
-// The default send_email node both insertion atoms create (append-after-node and split-edge).
-// The position is cloned so no two nodes ever share one mutable position object.
-const createDefaultSendEmailNode = (position: {
-  x: number;
-  y: number;
-}): TWorkflowDefinition["nodes"][number] => ({
-  id: createId(),
-  type: "action",
-  actionType: WORKFLOW_ACTIONS.SEND_EMAIL,
-  // No hardcoded label: the node title falls back to the translated
-  // `workspace.workflows.send_email` key (see node-registry). A label is only set when the
-  // user renames the node, so the default stays localized.
-  config: {
-    to: "",
-    from: "team@example.com",
-    replyTo: [],
-    subject: "",
-    body: "",
-    attachResponseData: false,
-  },
-  ui: { position: { ...position } },
+/** Whether one more step fits (spec §10: 25 per workflow); the add-step menu disables at the limit. */
+export const canAddWorkflowStepAtom = atom((get) => {
+  const definition = get(workflowEditorAtom).definition;
+  return definition !== null && definition.nodes.length < WORKFLOW_LIMITS.maxSteps;
 });
 
-// Append a fresh send_email node after `sourceNodeId` (used when the source has no outgoing
-// edge yet — i.e. the user is starting the chain). With `branch`, the source is an If/else and the
-// step starts that branch.
+export type TAppendWorkflowStepInput = {
+  sourceNodeId: string;
+  stepType: TAddableWorkflowStepType;
+  /** With a branch, the source is an If/else and the step starts that branch. */
+  branch?: TWorkflowIfElseBranch;
+  /** A new If/else's first condition compares this Variable. */
+  conditionPath?: string;
+};
+
+// Append a fresh step after `sourceNodeId` (the end of the chain or of a branch) and open it. Refused
+// at the step limit, which saving would refuse too.
+export const appendWorkflowStepAfterNodeAtom = atom(null, (get, set, input: TAppendWorkflowStepInput) => {
+  if (!get(canAddWorkflowStepAtom)) return;
+  const { sourceNodeId, stepType, branch, conditionPath } = input;
+  set(
+    workflowEditorAtom,
+    produce(get(workflowEditorAtom), (draft) => {
+      const definition = draft.definition;
+      if (!definition) return;
+
+      const sourcePosition =
+        definition.trigger?.id === sourceNodeId
+          ? definition.trigger.ui?.position
+          : definition.nodes.find((node) => node.id === sourceNodeId)?.ui?.position;
+      const newPosition = sourcePosition
+        ? getAppendedStepPosition(sourcePosition, branch)
+        : SEND_EMAIL_FALLBACK_POSITION;
+
+      const newNode = createDefaultWorkflowStep(stepType, newPosition, { conditionPath });
+      definition.nodes.push(newNode);
+
+      definition.edges.push({
+        id: createId(),
+        source: sourceNodeId,
+        target: newNode.id,
+        ...(branch ? { sourceHandle: branch } : {}),
+      });
+
+      draft.selectedNodeId = newNode.id;
+      draft.isNodeConfigModalOpen = true;
+    })
+  );
+});
+
+// Append a fresh send_email node after `sourceNodeId`; kept for callers that only add emails.
 export const appendSendEmailAfterNodeAtom = atom(
   null,
-  (get, set, sourceNodeId: string, branch?: TWorkflowIfElseBranch) => {
-    set(
-      workflowEditorAtom,
-      produce(get(workflowEditorAtom), (draft) => {
-        const definition = draft.definition;
-        if (!definition) return;
-
-        const sourcePosition =
-          definition.trigger?.id === sourceNodeId
-            ? definition.trigger.ui?.position
-            : definition.nodes.find((node) => node.id === sourceNodeId)?.ui?.position;
-        const newPosition = sourcePosition
-          ? getAppendedStepPosition(sourcePosition, branch)
-          : SEND_EMAIL_FALLBACK_POSITION;
-
-        const newNode = createDefaultSendEmailNode(newPosition);
-        definition.nodes.push(newNode);
-
-        definition.edges.push({
-          id: createId(),
-          source: sourceNodeId,
-          target: newNode.id,
-          ...(branch ? { sourceHandle: branch } : {}),
-        });
-
-        draft.selectedNodeId = newNode.id;
-        draft.isNodeConfigModalOpen = true;
-      })
-    );
+  (_get, set, sourceNodeId: string, branch?: TWorkflowIfElseBranch) => {
+    set(appendWorkflowStepAfterNodeAtom, { sourceNodeId, stepType: "send_email", branch });
   }
 );
 
@@ -845,7 +914,7 @@ export const insertSendEmailAfterEdgeAtom = atom(null, (get, set, edgeId: string
             }
           : SEND_EMAIL_FALLBACK_POSITION;
 
-      const newNode = createDefaultSendEmailNode(midpoint);
+      const newNode = createDefaultWorkflowStep("send_email", midpoint);
       definition.nodes.push(newNode);
 
       definition.edges.splice(

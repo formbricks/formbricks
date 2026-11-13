@@ -11,8 +11,10 @@ import {
   getBlankSendEmailContentFields,
   getIncludeEmbeddedData,
   getTriggerSurveyId,
+  isVariableEmailRecipient,
 } from "@formbricks/workflows";
 import { WorkflowEmailRecipientField } from "@/modules/ee/workflows/components/inspector/workflow-email-recipient-field";
+import { WorkflowEmailSurveyLinkSection } from "@/modules/ee/workflows/components/inspector/workflow-email-survey-link-section";
 import {
   WorkflowFieldError,
   WorkflowFieldLabel,
@@ -21,6 +23,16 @@ import { useWorkflowVariablePicker } from "@/modules/ee/workflows/components/var
 import { useWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
 import { useWorkflowNodeFieldFocus } from "@/modules/ee/workflows/hooks/use-workflow-node-field-focus";
 import { resolveBoundTriggerSurvey } from "@/modules/ee/workflows/lib/bound-survey";
+import {
+  fromRecipientSelectValue,
+  getRecipientVariableOptions,
+  toRecipientSelectValue,
+} from "@/modules/ee/workflows/lib/email-recipient";
+import {
+  appendSurveyLinkToken,
+  withSurveyLinkSurvey,
+  withoutSurveyLink,
+} from "@/modules/ee/workflows/lib/email-survey-link";
 import {
   getSendEmailBodyRecall,
   withWorkflowVariableItems,
@@ -31,6 +43,7 @@ import {
   type EmailSendToOption,
   buildEmailSendToOptions,
 } from "@/modules/survey/follow-ups/lib/email-send-to-options";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Editor } from "@/modules/ui/components/editor";
 import {
@@ -96,6 +109,8 @@ export const WorkflowEmailActionForm = ({
   const definition = useAtomValue(workflowDefinitionAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const [firstRender, setFirstRender] = useState(true);
+  // Bumped to re-seed the body editor after the form changes the body itself (the survey link).
+  const [bodyEditorKey, setBodyEditorKey] = useState(0);
 
   // Which required fields may show their error. A freshly added node stays clean until the user
   // has actually engaged with a field and left it empty (or arrived here from the problems
@@ -217,19 +232,35 @@ export const WorkflowEmailActionForm = ({
     );
   }
 
+  // The body only changes from outside the editor here; re-seed it so it shows the new text.
+  const replaceBody = (next: Partial<TWorkflowSendEmailActionNode["config"]>) => {
+    updateConfig(next);
+    setFirstRender(true);
+    setBodyEditorKey((key) => key + 1);
+  };
+  const isVariableRecipient = isVariableEmailRecipient(node.config.to);
+
   return (
     <div className="flex flex-col gap-4">
       <WorkflowEmailRecipientField
         options={emailSendToOptions}
-        // A Variable recipient (ENG-7180) has no option here yet; the Variable picker comes with ENG-7182.
-        value={typeof node.config.to === "string" ? node.config.to : ""}
+        // A Webhook workflow can also send to an address in the payload (ENG-7169).
+        variableOptions={
+          isWebhookTrigger ? getRecipientVariableOptions(variablePicker.groups, node.config.to) : []
+        }
+        value={toRecipientSelectValue(node.config.to)}
         isEditable={isEditable}
         isInvalid={invalidFields.has("to")}
-        onChange={(value) => updateConfig({ to: value })}
+        onChange={(value) => updateConfig({ to: fromRecipientSelectValue(value) })}
         // A picked recipient can't be un-picked, so closing the dropdown without choosing is this
         // control's only "touched while still empty" moment.
         onClose={() => markTouched("to")}
       />
+      {isVariableRecipient ? (
+        <Alert variant="info">
+          <AlertDescription>{t("workspace.workflows.email_variable_recipient_fixed_body")}</AlertDescription>
+        </Alert>
+      ) : null}
 
       {/* From (read-only) */}
       <div className="flex flex-col gap-2">
@@ -294,6 +325,7 @@ export const WorkflowEmailActionForm = ({
           {t("workspace.workflows.email_body_label")}
         </WorkflowFieldLabel>
         <Editor
+          key={bodyEditorKey}
           // The editor's contenteditable takes its accessible name from this label.
           id="workflow-email-body-label"
           disableLists
@@ -320,10 +352,23 @@ export const WorkflowEmailActionForm = ({
         ) : null}
       </div>
 
+      <WorkflowEmailSurveyLinkSection
+        config={node.config}
+        isEditable={isEditable}
+        onPickSurvey={(surveyId) => replaceBody(withSurveyLinkSurvey(node.config, surveyId))}
+        onRemove={() => replaceBody(withoutSurveyLink(node.config))}
+        onInsertLink={() => replaceBody({ body: appendSurveyLinkToken(node.config.body) })}
+        onChangeEmbeddedData={(embeddedData) =>
+          node.config.surveyLink && updateConfig({ surveyLink: { ...node.config.surveyLink, embeddedData } })
+        }
+        requestVariable={variablePicker.requestVariable}
+      />
+
       {/* A Webhook run has no response to attach. */}
       {isWebhookTrigger ? null : (
         <WorkflowEmailResponseDataFields node={node} isEditable={isEditable} updateConfig={updateConfig} />
       )}
+      {variablePicker.pickerElement}
     </div>
   );
 };
@@ -360,9 +405,14 @@ const WorkflowEmailResponseDataFields = ({
       {node.config.attachResponseData ? (
         <div className="flex flex-col gap-3 rounded-md border border-slate-200 p-3">
           <div className="flex items-start justify-between gap-3">
-            <Label htmlFor="workflow-email-include-variables" className="text-sm font-medium">
-              {t("workspace.workflows.email_include_variables_label")}
-            </Label>
+            <div className="flex flex-col">
+              <Label htmlFor="workflow-email-include-variables" className="text-sm font-medium">
+                {t("workspace.workflows.email_include_variables_label")}
+              </Label>
+              <p className="text-xs text-slate-500">
+                {t("workspace.workflows.email_include_embedded_data_description")}
+              </p>
+            </div>
             <Switch
               id="workflow-email-include-variables"
               checked={getIncludeEmbeddedData(node.config)}

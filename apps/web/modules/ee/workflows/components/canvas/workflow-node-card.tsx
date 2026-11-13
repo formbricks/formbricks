@@ -1,15 +1,25 @@
 "use client";
 
 import { Handle, Position } from "@xyflow/react";
-import { GitBranchIcon, type LucideIcon, MailIcon, TriangleAlertIcon, ZapIcon } from "lucide-react";
+import {
+  GitBranchIcon,
+  GlobeIcon,
+  type LucideIcon,
+  MailIcon,
+  TriangleAlertIcon,
+  WebhookIcon,
+  ZapIcon,
+} from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import type { TWorkflowNodeData, TWorkflowNodeIcon } from "@/modules/ee/workflows/state/editor";
 
 const NODE_ICONS: Record<TWorkflowNodeIcon, LucideIcon> = {
   trigger: ZapIcon,
+  webhook: WebhookIcon,
   ifElse: GitBranchIcon,
   email: MailIcon,
+  http: GlobeIcon,
 };
 
 // Shared with the add-trigger / add-action pickers so selector icons carry the same category

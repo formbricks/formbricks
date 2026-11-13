@@ -10,41 +10,10 @@ import type { TWorkflowRunListFilters } from "@/modules/ee/workflows/lib/api-cli
 
 /**
  * A Test run from the editor header (ED6, ADR 0049): which payload it sends, what stops it before it
- * starts, and how a refusal is explained. Pure so the hook and the drawer only wire it up.
+ * starts, and how a refusal is explained. Pure so the hook and the drawer only wire it up. The test
+ * payload itself is kept by the Webhook trigger panel (`readStoredTestPayload` in
+ * `webhook-trigger-panel.ts`).
  */
-
-// ---------------------------------------------------------------------------------------------------
-// The test payload the Webhook trigger panel keeps in this browser, per workflow.
-// TODO(ENG-7182 merge): the trigger panel (part A) owns this key and reader in
-// `lib/webhook-trigger-panel.ts`; import them from there once both parts are merged.
-// ---------------------------------------------------------------------------------------------------
-
-type TStorageReader = Pick<Storage, "getItem">;
-
-export const getTestPayloadStorageKey = (workflowId: string): string =>
-  `formbricks-workflow-test-payload:${workflowId}`;
-
-const getBrowserStorage = (): TStorageReader | null => {
-  try {
-    return typeof window === "undefined" ? null : window.localStorage;
-  } catch {
-    return null;
-  }
-};
-
-/** The edited test payload for this workflow, or null when there is none (or no storage). */
-export const readStoredTestPayload = (
-  workflowId: string,
-  storage: TStorageReader | null = getBrowserStorage()
-): string | null => {
-  try {
-    return storage?.getItem(getTestPayloadStorageKey(workflowId)) ?? null;
-  } catch {
-    return null;
-  }
-};
-
-// ---------------------------------------------------------------------------------------------------
 
 export type TTestRunInputResult =
   | { ok: true; input: TCreateWorkflowTestRunInput }

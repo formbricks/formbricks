@@ -6,6 +6,7 @@ import {
   type TWorkflowNode,
   getBlankSendEmailContentFields,
   getWorkflowNodeConcreteType,
+  isResponseCompletedTrigger,
 } from "@formbricks/workflows";
 import {
   WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT,
@@ -36,6 +37,11 @@ interface WorkflowFlowNodeOptions {
    * state, not an error. Live or previously-live workflows get "error" (red).
    */
   isDraft?: boolean;
+  /**
+   * The trigger card's summary when only the canvas can say it, e.g. a Webhook trigger's "Sample
+   * received · 9 Variables", which needs the sample from the server.
+   */
+  triggerSummary?: string;
 }
 
 // Client-side counterpart of the dry-run test's checks: flags nodes that can't run as configured.
@@ -44,14 +50,17 @@ interface WorkflowFlowNodeOptions {
 const getWorkflowNodeIssue = (
   node: TWorkflowNode,
   t: TFunction,
-  options: Required<WorkflowFlowNodeOptions>
+  options: Required<Omit<WorkflowFlowNodeOptions, "triggerSummary">>,
+  isSurveyTrigger: boolean
 ): TWorkflowNodeIssue | null => {
   const severity = options.isDraft ? "setup" : "error";
+  // Only a Response completed trigger waits for a survey; a Webhook workflow never does.
+  const isWaitingForSurvey = isSurveyTrigger && !options.hasBoundSurvey;
 
-  if (node.type === "trigger" && !options.hasBoundSurvey) {
+  if (node.type === "trigger" && isWaitingForSurvey) {
     return { severity, label: t("workspace.workflows.node_needs_survey") };
   }
-  if (node.type === "action" && node.actionType === "send_email" && options.hasBoundSurvey) {
+  if (node.type === "action" && node.actionType === "send_email" && !isWaitingForSurvey) {
     // Same completeness rule ZWorkflowExecutableDefinition enforces server-side on enable/test,
     // including its rich-text handling of the body (see isBlankWorkflowRichText).
     if (getBlankSendEmailContentFields(node.config).length > 0) {
@@ -64,31 +73,14 @@ const getWorkflowNodeIssue = (
 const getIfElseNodeIds = (definition: TWorkflowDefinition) =>
   new Set(definition.nodes.filter((node) => node.type === "if_else").map((node) => node.id));
 
-// Every step at or below the start of an If/else branch. The last step of a branch offers its own
-// `+`, which adds the next step on that branch only.
-const getStepIdsInsideBranches = (definition: TWorkflowDefinition): Set<string> => {
-  const ifElseIds = getIfElseNodeIds(definition);
-  const insideBranches = new Set<string>();
-  const queue = definition.edges.filter((edge) => ifElseIds.has(edge.source)).map((edge) => edge.target);
-  while (queue.length > 0) {
-    const nodeId = queue.shift()!;
-    if (insideBranches.has(nodeId)) continue;
-    insideBranches.add(nodeId);
-    for (const edge of definition.edges) {
-      if (edge.source === nodeId) queue.push(edge.target);
-    }
-  }
-  return insideBranches;
-};
-
 export const workflowDefinitionToFlowNodes = (
   definition: TWorkflowDefinition,
   t: TFunction,
   options?: WorkflowFlowNodeOptions
 ): Array<Node<TWorkflowNodeData>> => {
   const sourcesWithEdges = new Set(definition.edges.map((edge) => edge.source));
-  const stepIdsInsideBranches = getStepIdsInsideBranches(definition);
-  const resolvedOptions: Required<WorkflowFlowNodeOptions> = {
+  const isSurveyTrigger = isResponseCompletedTrigger(definition.trigger);
+  const resolvedOptions: Required<Omit<WorkflowFlowNodeOptions, "triggerSummary">> = {
     hasBoundSurvey: options?.hasBoundSurvey ?? true,
     isDraft: options?.isDraft ?? true,
   };
@@ -109,15 +101,20 @@ export const workflowDefinitionToFlowNodes = (
         icon: registryEntry.icon,
         nodeType: getWorkflowNodeConcreteType(node) ?? node.type,
         title: registryEntry.title(node, t),
-        summary: registryEntry.summary(node, t),
-        canAppendStep: !isIfElse && isLeaf && (node.type === "trigger" || stepIdsInsideBranches.has(node.id)),
+        summary:
+          node.type === "trigger" && options?.triggerSummary
+            ? options.triggerSummary
+            : registryEntry.summary(node, t),
+        // The end of the workflow or of a branch: a step with nothing after it. An If/else ends in
+        // its branches' own `+` instead.
+        canAppendStep: !isIfElse && isLeaf,
         emptyBranches: isIfElse
           ? IF_ELSE_BRANCHES.filter(
               (branch) =>
                 !definition.edges.some((edge) => edge.source === node.id && edge.sourceHandle === branch)
             )
           : [],
-        issue: getWorkflowNodeIssue(node, t, resolvedOptions),
+        issue: getWorkflowNodeIssue(node, t, resolvedOptions, isSurveyTrigger),
       },
     };
   });

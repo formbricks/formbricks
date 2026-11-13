@@ -12,8 +12,8 @@ import {
   buildTestRunInput,
   classifyTestRunError,
   getTestRunBlocker,
-  readStoredTestPayload,
 } from "@/modules/ee/workflows/lib/test-run";
+import { readStoredTestPayload } from "@/modules/ee/workflows/lib/webhook-trigger-panel";
 import {
   isWorkflowDirtyAtom,
   isWorkflowSavingAtom,

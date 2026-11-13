@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
+import { useWorkflowWebhook } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import {
   WORKFLOW_ADD_BUTTON_EDGE_TYPE,
   WORKFLOW_BRANCH_EDGE_TYPE,
@@ -32,6 +33,8 @@ import {
   workflowDefinitionToFlowNodes,
 } from "@/modules/ee/workflows/lib/definition-to-flow";
 import { isEdgeOffRunPath } from "@/modules/ee/workflows/lib/run-canvas-highlight";
+import { countUsableVariables } from "@/modules/ee/workflows/lib/webhook-trigger-panel";
+import { hasSavedWebhookTrigger } from "@/modules/ee/workflows/lib/workflow-samples";
 import {
   type TWorkflowNodeData,
   addWorkflowTriggerAtom,
@@ -40,6 +43,7 @@ import {
   isCanvasLockedAtom,
   isWorkflowInspectorCollapsedAtom,
   isWorkflowNodeConfigModalOpenAtom,
+  isWorkflowReadOnlyAtom,
   isWorkflowSnapToCanvasEnabledAtom,
   openWorkflowNodeConfigModalAtom,
   setWorkflowDefinitionAtom,
@@ -115,9 +119,26 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   // Unloaded state defaults to draft so a fresh page never flashes red before the workflow lands.
   const isDraft = workflow ? workflow.status === "draft" : true;
 
+  // A Webhook trigger's card says whether a sample arrived ("Sample received · 9 Variables"). Only
+  // members who can edit read the webhook; the others keep the card's general summary.
+  const isReadOnly = useAtomValue(isWorkflowReadOnlyAtom);
+  const webhook = useWorkflowWebhook({
+    workflowId: workflow?.id ?? null,
+    enabled: hasSavedWebhookTrigger(workflow) && !isReadOnly,
+  });
+  const webhookSample = definition?.trigger?.triggerType === "webhook" ? webhook.data?.sample : null;
+  const triggerSummary = webhookSample
+    ? t("workspace.workflows.webhook_trigger_summary_sample", {
+        count: countUsableVariables(webhookSample.variables),
+      })
+    : undefined;
+
   const derivedFlowNodes = useMemo(
-    () => (definition ? workflowDefinitionToFlowNodes(definition, t, { hasBoundSurvey, isDraft }) : []),
-    [definition, t, hasBoundSurvey, isDraft]
+    () =>
+      definition
+        ? workflowDefinitionToFlowNodes(definition, t, { hasBoundSurvey, isDraft, triggerSummary })
+        : [],
+    [definition, t, hasBoundSurvey, isDraft, triggerSummary]
   );
   // While a run is open in the run drawer, the canvas marks its path: the steps and edges off it
   // are greyed (mock screen 7), and each If/else labels the branch it took (workflow-branch-node).

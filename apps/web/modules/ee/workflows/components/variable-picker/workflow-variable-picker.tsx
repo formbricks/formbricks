@@ -42,7 +42,7 @@ interface WorkflowVariablePickerProps {
   excludedPaths?: readonly string[];
 }
 
-const getTypeHintLabel = (hint: TWorkflowVariableTypeHint, t: TFunction): string => {
+export const getTypeHintLabel = (hint: TWorkflowVariableTypeHint, t: TFunction): string => {
   switch (hint) {
     case "text":
       return t("workspace.workflows.variable_type_text");

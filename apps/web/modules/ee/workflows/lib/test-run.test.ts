@@ -1,35 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
-import {
-  buildTestRunInput,
-  classifyTestRunError,
-  getTestPayloadStorageKey,
-  getTestRunBlocker,
-  readStoredTestPayload,
-  withTestRunsHidden,
-} from "./test-run";
-
-const storageWith = (entries: Record<string, string>) => ({
-  getItem: (key: string) => entries[key] ?? null,
-});
-
-describe("readStoredTestPayload", () => {
-  test("reads the payload the trigger panel keeps for this workflow", () => {
-    const storage = storageWith({ [getTestPayloadStorageKey("wf_1")]: '{"a":1}' });
-    expect(readStoredTestPayload("wf_1", storage)).toBe('{"a":1}');
-    expect(readStoredTestPayload("wf_2", storage)).toBeNull();
-  });
-
-  test("is null when the browser refuses storage", () => {
-    const throwing = {
-      getItem: () => {
-        throw new Error("SecurityError");
-      },
-    };
-    expect(readStoredTestPayload("wf_1", throwing)).toBeNull();
-    expect(readStoredTestPayload("wf_1", null)).toBeNull();
-  });
-});
+import { buildTestRunInput, classifyTestRunError, getTestRunBlocker, withTestRunsHidden } from "./test-run";
 
 describe("buildTestRunInput", () => {
   test("sends the payload kept in this browser", () => {

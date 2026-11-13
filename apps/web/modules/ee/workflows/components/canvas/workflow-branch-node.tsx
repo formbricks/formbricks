@@ -1,21 +1,35 @@
 "use client";
 
 import { Handle, type Node, type NodeProps, Position } from "@xyflow/react";
-import { useAtomValue, useSetAtom } from "jotai";
-import { memo } from "react";
+import { useAtomValue, useSetAtom, useStore } from "jotai";
+import { MoreVerticalIcon, Trash2Icon } from "lucide-react";
+import { memo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowIfElseBranch } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
+import { useAppendWorkflowStep } from "@/modules/ee/workflows/hooks/use-append-workflow-step";
 import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
+import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
+import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import {
   WORKFLOW_CANVAS_BRANCH_FORK_HEIGHT,
   WORKFLOW_CANVAS_BRANCH_SPREAD,
 } from "@/modules/ee/workflows/lib/canvas-geometry";
 import {
   type TWorkflowNodeData,
-  appendSendEmailAfterNodeAtom,
   canMutateCanvasAtom,
+  countIfElseBranchSteps,
+  deleteWorkflowNodeAtom,
+  workflowDefinitionAtom,
 } from "@/modules/ee/workflows/state/editor";
+import { Button } from "@/modules/ui/components/button";
+import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import { WorkflowAddStepMenu } from "./workflow-add-step-menu";
 import { HANDLE_CLASS_NAMES, WorkflowNodeCard } from "./workflow-node-card";
 
@@ -41,10 +55,15 @@ type TBranchLeg = {
 export const WorkflowBranchNode = memo(
   ({ id, data, selected }: Readonly<NodeProps<Node<TWorkflowNodeData>>>) => {
     const { t } = useTranslation();
-    const appendSendEmail = useSetAtom(appendSendEmailAfterNodeAtom);
+    const appendStep = useAppendWorkflowStep();
+    const deleteNode = useSetAtom(deleteWorkflowNodeAtom);
+    const store = useStore();
     const canMutate = useAtomValue(canMutateCanvasAtom);
     // While a run is open in the run drawer: the branch it took, filled; the other one greyed.
     const takenBranch = useEditorRunHighlight()?.takenBranchByStepId[id] ?? null;
+    // Deleting an If/else takes its branches with it (spec §2), so it asks first, saying how many
+    // steps go too. Counted when the menu item is picked, not on every render of the card.
+    const [deleteStepCount, setDeleteStepCount] = useState<number | null>(null);
     const legs: TBranchLeg[] = [
       {
         branch: "then",
@@ -64,7 +83,63 @@ export const WorkflowBranchNode = memo(
 
     return (
       <div className="flex flex-col items-center">
-        <WorkflowNodeCard data={data} selected={selected} />
+        <WorkflowNodeCard
+          data={data}
+          selected={selected}
+          menu={
+            canMutate && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    aria-label={t("workspace.workflows.node_actions")}
+                    className="size-6"
+                    onClick={(event) => event.stopPropagation()}>
+                    <MoreVerticalIcon />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="motion-reduce:animate-none">
+                  <DropdownMenuItem
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      const definition = store.get(workflowDefinitionAtom);
+                      setDeleteStepCount(definition ? countIfElseBranchSteps(definition, id) : 0);
+                    }}>
+                    <Trash2Icon className="size-4" />
+                    {t("common.delete")}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )
+          }
+        />
+        {/* The dialog is portalled, but its clicks still bubble through React to this card, which would
+            open the step's panel; stop them here. */}
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
+        <div onClick={(event) => event.stopPropagation()}>
+          <ConfirmationModal
+            open={deleteStepCount !== null}
+            setOpen={(open) => {
+              if (!open) setDeleteStepCount(null);
+            }}
+            title={t("workspace.workflows.delete_if_else_title")}
+            body={
+              deleteStepCount
+                ? t("workspace.workflows.delete_if_else_body", { count: deleteStepCount })
+                : t("workspace.workflows.delete_if_else_body_empty")
+            }
+            buttonText={t("common.delete")}
+            buttonVariant="destructive"
+            onConfirm={() => {
+              trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.nodeDeleted, { node_type: data.nodeType });
+              deleteNode(id);
+              setDeleteStepCount(null);
+            }}
+            Icon={Trash2Icon}
+          />
+        </div>
         <div className="relative w-64" style={{ height: WORKFLOW_CANVAS_BRANCH_FORK_HEIGHT }}>
           {/* Wider than the card on purpose: the legs sit one column apart, over the branches. */}
           <div
@@ -102,7 +177,7 @@ export const WorkflowBranchNode = memo(
                     <WorkflowAddStepMenu
                       afterNodeType={data.nodeType}
                       ariaLabel={addStepLabel}
-                      onAddSendEmail={() => appendSendEmail(id, branch)}
+                      onAdd={(stepType) => appendStep(id, stepType, branch)}
                     />
                   </div>
                 )}

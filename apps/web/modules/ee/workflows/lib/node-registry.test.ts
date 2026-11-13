@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import type {
+  TWorkflowHttpRequestActionNode,
   TWorkflowIfElseNode,
   TWorkflowResponseCompletedTriggerNode,
   TWorkflowSendEmailActionNode,
@@ -92,7 +93,50 @@ describe("getNodeRegistryEntry", () => {
     expect(entry.icon).toBe("ifElse");
     expect(entry.title(ifElseNode, t)).toBe("workspace.workflows.if_else");
     expect(entry.summary(ifElseNode, t)).toBe("workspace.workflows.if_else_summary");
-    expect(entry.ConfigForm).toBeNull();
+    expect(entry.ConfigForm).not.toBeNull();
+  });
+
+  test("if-else card shows the step's own name when it has one", () => {
+    const named = { ...ifElseNode, label: "Enterprise customer?" };
+    expect(getNodeRegistryEntry(named).title(named, t)).toBe("Enterprise customer?");
+  });
+
+  test("webhook trigger entry has its own title, icon and panel", () => {
+    const webhookTrigger = { id: "t", type: "trigger", triggerType: "webhook", config: {} } as const;
+    const entry = getNodeRegistryEntry(webhookTrigger);
+    expect(entry.icon).toBe("webhook");
+    expect(entry.title(webhookTrigger, t)).toBe("workspace.workflows.webhook_trigger");
+    expect(entry.summary(webhookTrigger, t)).toBe("workspace.workflows.webhook_trigger_summary");
+    expect(entry.ConfigForm).not.toBeNull();
+  });
+
+  test("http-request summary says the method and target, or asks for a URL", () => {
+    const httpNode = {
+      id: "call",
+      type: "action",
+      actionType: "http_request",
+      config: {
+        method: "POST",
+        url: "https://dl.acme.example/interactions",
+        queryParameters: [],
+        headers: [],
+        responseMode: "wait",
+        continueOnError: false,
+      },
+    } satisfies TWorkflowHttpRequestActionNode as TWorkflowHttpRequestActionNode;
+    const entry = getNodeRegistryEntry(httpNode);
+    expect(entry.icon).toBe("http");
+    expect(entry.summary(httpNode, t)).toBe("POST dl.acme.example/interactions");
+    const blank = { ...httpNode, config: { ...httpNode.config, url: "" } };
+    expect(entry.summary(blank, t)).toBe("workspace.workflows.http_request_unconfigured");
+  });
+
+  test("send-email summary names a payload recipient the way the picker does", () => {
+    const toVariable = {
+      ...sendEmailNode,
+      config: { ...sendEmailNode.config, to: { type: "variable" as const, ref: "payload.customer.email" } },
+    };
+    expect(getNodeRegistryEntry(toVariable).summary(toVariable, t)).toContain("@customer.email");
   });
 
   test("if-else summary says its first condition in words and how many more follow", () => {

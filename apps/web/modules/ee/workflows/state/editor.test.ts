@@ -8,10 +8,13 @@ import {
 import {
   addWorkflowTriggerAtom,
   appendSendEmailAfterNodeAtom,
+  appendWorkflowStepAfterNodeAtom,
+  canAddWorkflowStepAtom,
   canEditWorkflowDefinitionAtom,
   canMutateCanvasAtom,
   clearWorkflowNodeFieldFocusAtom,
   closeWorkflowNodeConfigModalAtom,
+  countIfElseBranchSteps,
   deleteWorkflowNodeAtom,
   deriveTriggerEndingProblems,
   deriveWorkflowValidation,
@@ -1003,5 +1006,189 @@ describe("deriveTriggerEndingProblems", () => {
     expect(deriveTriggerEndingProblems(["end-1", "gone-1", "gone-2"], ["end-1"])).toEqual([
       { code: "trigger_ending_not_found", field: "trigger.config.endingCardIds" },
     ]);
+  });
+});
+
+describe("Webhook trigger (ENG-7182)", () => {
+  const emptyDefinition = () =>
+    ({
+      schemaVersion: 1,
+      trigger: null,
+      nodes: [],
+      edges: [],
+      entryNodeId: null,
+    }) as unknown as TWorkflowDefinition;
+
+  test("the trigger picker seeds a Webhook trigger with nothing to configure", () => {
+    const store = createStore();
+    store.set(setWorkflowDefinitionAtom, emptyDefinition());
+
+    store.set(addWorkflowTriggerAtom, "webhook");
+
+    const def = store.get(workflowDefinitionAtom)!;
+    expect(def.trigger).toMatchObject({ type: "trigger", triggerType: "webhook", config: {} });
+    expect(def.entryNodeId).toBe(def.trigger?.id);
+    expect(store.get(isWorkflowNodeConfigModalOpenAtom)).toBe(true);
+  });
+
+  test("a Webhook workflow has no survey to pick, so no survey problem", () => {
+    const { problems } = deriveWorkflowValidation({
+      workflowName: "Post-call survey",
+      definition: {
+        schemaVersion: 1,
+        trigger: { id: "t", type: "trigger", triggerType: "webhook", config: {} },
+        nodes: [],
+        edges: [],
+        entryNodeId: "t",
+      } as unknown as TWorkflowDefinition,
+      hasBoundTriggerSurvey: false,
+    });
+
+    expect(problems.map((problem) => problem.code)).not.toContain("trigger_survey_unbound");
+  });
+});
+
+describe("HTTP request readiness (ENG-7182)", () => {
+  const webhookWithHttp = (config: Record<string, unknown>) =>
+    ({
+      schemaVersion: 1,
+      trigger: { id: "t", type: "trigger", triggerType: "webhook", config: {} },
+      nodes: [
+        {
+          id: "call",
+          type: "action",
+          actionType: "http_request",
+          config: {
+            method: "POST",
+            url: "https://api.example.com",
+            queryParameters: [],
+            headers: [],
+            body: null,
+            responseMode: "wait",
+            continueOnError: false,
+            ...config,
+          },
+        },
+      ],
+      edges: [{ id: "e", source: "t", target: "call" }],
+      entryNodeId: "t",
+    }) as unknown as TWorkflowDefinition;
+
+  test("a stored secret header, read back without its id, is no problem", () => {
+    const { problems } = deriveWorkflowValidation({
+      workflowName: "n",
+      definition: webhookWithHttp({ headers: [{ name: "Authorization", secret: true, isSet: true }] }),
+      hasBoundTriggerSurvey: true,
+    });
+    expect(problems).toEqual([]);
+  });
+
+  test("an unfinished HTTP request is its own problem, not the email step's", () => {
+    const { problems } = deriveWorkflowValidation({
+      workflowName: "n",
+      definition: webhookWithHttp({ url: "" }),
+      hasBoundTriggerSurvey: true,
+    });
+    expect(problems).toEqual([{ code: "step_needs_setup", field: "nodes.0.config" }]);
+  });
+});
+
+describe("appendWorkflowStepAfterNodeAtom", () => {
+  test("adds an HTTP request step that waits for the answer and fails the run on error", () => {
+    const store = createStore();
+    store.set(setWorkflowDefinitionAtom, graphDefinition());
+
+    store.set(appendWorkflowStepAfterNodeAtom, { sourceNodeId: "n2", stepType: "http_request" });
+
+    const def = store.get(workflowDefinitionAtom)!;
+    const added = def.nodes[def.nodes.length - 1];
+    expect(added).toMatchObject({
+      type: "action",
+      actionType: "http_request",
+      config: { method: "POST", url: "", queryParameters: [], headers: [], responseMode: "wait" },
+    });
+    expect(def.edges).toContainEqual({ id: expect.any(String), source: "n2", target: added.id });
+    expect(store.get(selectedWorkflowNodeIdAtom)).toBe(added.id);
+  });
+
+  test("adds an If/else with one condition on the given Variable", () => {
+    const store = createStore();
+    store.set(setWorkflowDefinitionAtom, graphDefinition());
+
+    store.set(appendWorkflowStepAfterNodeAtom, {
+      sourceNodeId: "n2",
+      stepType: "if_else",
+      conditionPath: "payload.channel",
+    });
+
+    const added = store.get(workflowDefinitionAtom)!.nodes.at(-1)!;
+    expect(added).toMatchObject({
+      type: "if_else",
+      config: {
+        condition: {
+          connector: "and",
+          conditions: [{ left: { path: "payload.channel" }, operator: "isSet" }],
+        },
+      },
+    });
+  });
+
+  test("adds nothing once the workflow has 25 steps", () => {
+    const store = createStore();
+    const full = {
+      ...graphDefinition(),
+      nodes: Array.from({ length: 25 }, (_, index) => ({ id: `n${index}`, type: "action" })),
+    } as unknown as TWorkflowDefinition;
+    store.set(setWorkflowDefinitionAtom, full);
+    expect(store.get(canAddWorkflowStepAtom)).toBe(false);
+
+    store.set(appendWorkflowStepAfterNodeAtom, { sourceNodeId: "n24", stepType: "send_email" });
+
+    expect(store.get(workflowDefinitionAtom)?.nodes).toHaveLength(25);
+  });
+
+  test("a workflow under 25 steps can add one", () => {
+    const store = createStore();
+    store.set(setWorkflowDefinitionAtom, graphDefinition());
+    expect(store.get(canAddWorkflowStepAtom)).toBe(true);
+  });
+});
+
+describe("deleting an If/else", () => {
+  const branchedDefinition = () =>
+    ({
+      schemaVersion: 1,
+      entryNodeId: "trigger-1",
+      trigger: { id: "trigger-1", type: "trigger" },
+      nodes: [
+        { id: "before", type: "action" },
+        { id: "if-1", type: "if_else" },
+        { id: "then-1", type: "action" },
+        { id: "then-2", type: "action" },
+        { id: "else-1", type: "action" },
+      ],
+      edges: [
+        { id: "e0", source: "trigger-1", target: "before" },
+        { id: "e1", source: "before", target: "if-1" },
+        { id: "e2", source: "if-1", target: "then-1", sourceHandle: "then" },
+        { id: "e3", source: "then-1", target: "then-2" },
+        { id: "e4", source: "if-1", target: "else-1", sourceHandle: "else" },
+      ],
+    }) as unknown as TWorkflowDefinition;
+
+  test("removes its branches with it and leaves the step before it as the end", () => {
+    const store = createStore();
+    store.set(setWorkflowDefinitionAtom, branchedDefinition());
+
+    store.set(deleteWorkflowNodeAtom, "if-1");
+
+    const def = store.get(workflowDefinitionAtom)!;
+    expect(def.nodes.map((node) => node.id)).toEqual(["before"]);
+    expect(def.edges.map((edge) => edge.id)).toEqual(["e0"]);
+  });
+
+  test("counts the steps on its branches for the confirmation", () => {
+    expect(countIfElseBranchSteps(branchedDefinition(), "if-1")).toBe(3);
+    expect(countIfElseBranchSteps(branchedDefinition(), "before")).toBe(0);
   });
 });
