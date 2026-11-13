@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { formatCallerIp } from "@/modules/ee/workflows/lib/caller-ip";
 import { getWorkflowRunStatusBadge } from "@/modules/ee/workflows/lib/display";
 import { type TWorkflowRunSummary } from "@/modules/ee/workflows/types";
@@ -11,14 +12,16 @@ interface RunSummarySectionProps {
   locale: string;
 }
 
+const STARTED_AT_DISPLAY_OPTIONS: Intl.DateTimeFormatOptions = {
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+};
+
 const formatStartedAt = (iso: string, locale: string): string =>
-  new Date(iso).toLocaleString(locale, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+  formatDateTimeForDisplay(new Date(iso), locale, STARTED_AT_DISPLAY_OPTIONS);
 
 // Status, start, caller and run id (mock screens 7–9). Renders from the list row for an instant
 // paint, then from fetched detail (which adds the caller IP) once available.
