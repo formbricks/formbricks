@@ -19,6 +19,7 @@ import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { workflowSecretStore } from "@/modules/ee/workflows/lib/secrets/workflow-secret-store";
+import { getWorkflowSurveyLinkSurveys } from "@/modules/ee/workflows/lib/survey-link-surveys";
 import { webhookTokenIssuer } from "@/modules/ee/workflows/lib/webhook/token";
 import { buildRecordAnalytics } from "./analytics";
 import { buildRecordSecretHeaderChanges } from "./secret-audit";
@@ -181,6 +182,7 @@ export const buildWorkflowApiContext = (
   // "secret set / replaced" with the header name only.
   secrets: workflowSecretStore,
   recordSecretHeaderChanges: buildRecordSecretHeaderChanges(authentication, requestId, instance),
+  verifySurveyLinkSurveys: getWorkflowSurveyLinkSurveys,
   ...(auditLog ? { recordAudit: buildRecordAudit(auditLog, authentication, requestId) } : {}),
   // Product analytics (ENG-2851): always bound, unlike the audit sink, because it no-ops on its own
   // when POSTHOG_KEY is unset and there is no per-request switch to respect.

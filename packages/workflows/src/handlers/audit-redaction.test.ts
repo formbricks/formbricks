@@ -42,6 +42,23 @@ describe("redactWorkflowDefinitionPII", () => {
     expect(config.replyTo).toEqual([expect.stringMatching(MARKER)]);
   });
 
+  test("keeps a Variable recipient's path readable, since it names where the address comes from", () => {
+    const to = { type: "variable", ref: "payload.customer.email" };
+    expect(redactConfig([sendEmailNode({ to })]).to).toEqual(to);
+  });
+
+  test("masks survey link Embedded Data values but keeps the survey and keys", () => {
+    const config = redactConfig([
+      sendEmailNode({
+        surveyLink: { surveyId: "s_2", embeddedData: [{ key: "agent_id", value: "Ana Smith" }] },
+      }),
+    ]);
+    const link = config.surveyLink as { surveyId: string; embeddedData: { key: string; value: string }[] };
+    expect(link.surveyId).toBe("s_2");
+    expect(link.embeddedData[0].key).toBe("agent_id");
+    expect(link.embeddedData[0].value).toMatch(MARKER);
+  });
+
   test("leaves non-PII config fields intact so behavioral changes still diff", () => {
     const config = redactConfig([sendEmailNode()]);
 

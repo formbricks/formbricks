@@ -15,6 +15,8 @@ const environment = (overrides: Partial<WorkflowRunEnvironment> = {}): WorkflowR
   allowedRecipientEmails: new Set(),
   secretValues: new Map(),
   rateLimit: { actorUserId: null },
+  publicDomain: "https://app.example.com",
+  surveyLinkSurveys: new Map(),
   ...overrides,
 });
 

@@ -84,6 +84,8 @@ export const ZWorkflowTestProblemCode = z.enum([
   "ending_card_not_found",
   "survey_not_workspace_visible",
   "recipient_not_allowed",
+  "survey_link_survey_not_found",
+  "survey_link_survey_not_link",
 ]);
 export type TWorkflowTestProblemCode = z.infer<typeof ZWorkflowTestProblemCode>;
 
@@ -98,6 +100,22 @@ export const ZWorkflowTestProblem = z
   .describe("A single problem found while validating a workflow for a dry run.");
 export type TWorkflowTestProblem = z.infer<typeof ZWorkflowTestProblem>;
 
+export const ZWorkflowWarningCode = z.enum(["survey_link_key_not_accepted"]);
+export type TWorkflowWarningCode = z.infer<typeof ZWorkflowWarningCode>;
+
+export const ZWorkflowWarning = z
+  .object({
+    code: ZWorkflowWarningCode,
+    field: z
+      .string()
+      .describe("Dotted path to the field, e.g. definition.nodes.0.config.surveyLink.embeddedData.1.key."),
+    message: z.string().describe("Human-readable explanation."),
+  })
+  .describe(
+    "Something that does not stop the workflow from running but probably needs a look, such as an Embedded Data key the linked survey drops."
+  );
+export type TWorkflowWarning = z.infer<typeof ZWorkflowWarning>;
+
 export const ZWorkflowTestResult = z
   .object({
     workflowId: z.cuid2(),
@@ -109,6 +127,9 @@ export const ZWorkflowTestResult = z
     problems: z
       .array(ZWorkflowTestProblem)
       .describe("Every problem found, so all issues can be fixed at once. Empty when ok is true."),
+    warnings: z
+      .array(ZWorkflowWarning)
+      .describe("Things that will not stop the workflow from running but probably need a look."),
   })
   .describe(
     "Result of dry-running (testing) a workflow: whether it would execute and, if not, why not. No run is created and no side effects occur."

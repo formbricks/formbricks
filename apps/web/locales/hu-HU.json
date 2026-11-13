@@ -6070,7 +6070,7 @@
       "email_body_required": "Az üzenet hozzáadása a küldéshez.",
       "email_from_label": "Feladó",
       "email_include_hidden_fields_label": "Rejtett mezők felvétele",
-      "email_include_variables_label": "Változók felvétele",
+      "email_include_variables_label": "Beágyazott adatok csatolása",
       "email_needs_survey": "Először csatlakoztasson egy kérdőívet az aktiváló lépésben. A címzett és az üzenet beállításai a kérdőív válaszaiból érkeznek.",
       "email_reply_to_label": "Válasz",
       "email_set_up_trigger": "Aktiváló beállítása",

@@ -6070,7 +6070,7 @@
       "email_body_required": "新增要傳送的訊息。",
       "email_from_label": "寄件人",
       "email_include_hidden_fields_label": "包含隱藏欄位",
-      "email_include_variables_label": "包含變數",
+      "email_include_variables_label": "包含內嵌資料",
       "email_needs_survey": "請先在觸發步驟中連接問卷。收件人和訊息選項來自問卷的回答內容。",
       "email_reply_to_label": "回覆至",
       "email_set_up_trigger": "設定觸發條件",

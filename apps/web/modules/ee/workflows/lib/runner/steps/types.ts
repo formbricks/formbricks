@@ -19,6 +19,11 @@ export interface WorkflowStepOutcome {
    * up to 1 MB lives here, in memory only, while the log keeps at most 64 KB of it (ENG-7168).
    */
   variables?: Record<string, unknown>;
+  /**
+   * `false` for a failure another attempt can't fix (an invalid address, a spent per-workflow cap):
+   * the run fails at once instead of being retried. Failures are retryable by default.
+   */
+  retryable?: boolean;
 }
 
 export interface WorkflowStepExecution<T extends TWorkflowStepType> {

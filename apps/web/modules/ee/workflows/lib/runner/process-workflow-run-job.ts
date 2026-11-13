@@ -55,10 +55,13 @@ const workflowRunSelect = {
  */
 class WorkflowStepFailedError extends Error {
   readonly runData: TWorkflowRunData;
-  constructor(message: string, runData: TWorkflowRunData) {
+  /** `false` when another attempt can't fix the failure, so the run fails without a retry. */
+  readonly retryable: boolean;
+  constructor(message: string, runData: TWorkflowRunData, retryable = true) {
     super(message);
     this.name = "WorkflowStepFailedError";
     this.runData = runData;
+    this.retryable = retryable;
   }
 }
 
@@ -133,13 +136,6 @@ const resultFromLogRow = (log: StepLogRow, status: TWorkflowStepResult["status"]
   finishedAt: log.finishedAt?.toISOString() ?? new Date().toISOString(),
 });
 
-/**
- * A step result plus what later steps read under its id, when that differs from the stored output
- * (an HTTP response kept whole in memory, ENG-7179). `ZWorkflowRunData` drops `variables` when the
- * run's `data.steps` is written, so it never reaches the database.
- */
-type ExecutedStep = TWorkflowStepResult & { variables?: Record<string, unknown> };
-
 const toRecord = (value: unknown): Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -149,7 +145,7 @@ const toRecord = (value: unknown): Record<string, unknown> =>
 const resumedStep = (
   executor: WorkflowStepExecutor<TWorkflowStepType>,
   result: TWorkflowStepResult
-): ExecutedStep =>
+): StepRunResult =>
   executor.variablesFromOutput
     ? { ...result, variables: executor.variablesFromOutput(result.output ?? {}) }
     : result;
@@ -157,6 +153,14 @@ const resumedStep = (
 const isUniqueConstraintError = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   error.code === PrismaErrorType.UniqueConstraintViolation;
+
+/**
+ * A step's result as this attempt saw it: `retryable: false` marks a failure another attempt can't
+ * fix (ENG-7180), so the run fails now instead of going back to the queue. `variables` is what later
+ * steps read under its id when that differs from the stored output (an HTTP response kept whole in
+ * memory, ENG-7179). Neither is persisted: `ZWorkflowRunData` drops both from `data.steps`.
+ */
+type StepRunResult = TWorkflowStepResult & { retryable?: false; variables?: Record<string, unknown> };
 
 /** Everything one step needs from the run it belongs to. */
 interface StepRunInput {
@@ -179,8 +183,8 @@ interface StepRunInput {
  * `running` and will NOT re-send — that email is potentially lost rather than duplicated. This is the
  * accepted policy: never send the same step twice.
  */
-const executeOwnedStep = async (step: StepRunInput): Promise<ExecutedStep> => {
-  const { status, error, output, variables } = await step.executor.execute({
+const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
+  const { status, error, output, retryable, variables } = await step.executor.execute({
     node: step.node,
     context: step.context,
     environment: step.environment,
@@ -203,6 +207,7 @@ const executeOwnedStep = async (step: StepRunInput): Promise<ExecutedStep> => {
     startedAt: finishedAt.toISOString(),
     finishedAt: finishedAt.toISOString(),
     ...(variables ? { variables } : {}),
+    ...(retryable === false ? { retryable } : {}),
   };
 };
 
@@ -219,7 +224,7 @@ const executeOwnedStep = async (step: StepRunInput): Promise<ExecutedStep> => {
 const claimAndRunStep = async (
   step: StepRunInput,
   existing: StepLogRow | null
-): Promise<ExecutedStep | null> => {
+): Promise<StepRunResult | null> => {
   const startedAt = new Date();
 
   if (!existing) {
@@ -276,7 +281,7 @@ const STEP_BAIL = Symbol("workflow-step-bail");
 const runStep = async (
   step: StepRunInput,
   logContext: ReturnType<typeof getWorkflowRunLogContext>
-): Promise<ExecutedStep | typeof STEP_BAIL> => {
+): Promise<StepRunResult | typeof STEP_BAIL> => {
   const existing: StepLogRow | null = await prisma.workflowRunLog.findFirst({
     where: { runId: step.runId, stepId: step.node.id },
     select: stepLogSelect,
@@ -342,7 +347,11 @@ const claimRun = async (
 
 type WalkOutcome =
   | { bail: true }
-  | { bail: false; stepResults: TWorkflowStepResult[]; failure: string | null };
+  | {
+      bail: false;
+      stepResults: TWorkflowStepResult[];
+      failure: { message: string; retryable: boolean } | null;
+    };
 
 /**
  * Walks the run's graph from the trigger (ADR 0047) under the per-step claim guard (`runStep`):
@@ -363,25 +372,26 @@ const walkRun = async (
 ): Promise<WalkOutcome> => {
   const context = createInitialRunContext(environment);
   const stepResults: TWorkflowStepResult[] = [];
-  let failure: string | null = null;
+  let failure: { message: string; retryable: boolean } | null = null;
   let bailed = false;
 
   await walkWorkflowSteps(definition, async (node, sequence) => {
     const executor = getWorkflowStepExecutor(node);
-    const result = await runStep(
+    const stepRun = await runStep(
       { node, stepType: getWorkflowStepType(node), executor, sequence, runId, context, environment, effects },
       logContext
     );
-    if (result === STEP_BAIL) {
+    if (stepRun === STEP_BAIL) {
       bailed = true;
       return { next: "stop" };
     }
 
+    const { retryable, ...result } = stepRun;
     stepResults.push(result);
     const output = result.output ?? {};
     // A handed-off step's final outcome belongs to its job and never fails the run.
     if (result.status === "failed" && !executor.handedOff?.(output)) {
-      failure = result.error ?? "Workflow step failed";
+      failure = { message: result.error ?? "Workflow step failed", retryable: retryable !== false };
       return { next: "stop" };
     }
 
@@ -429,7 +439,7 @@ const executeClaimedRun = async (
   });
 
   if (outcome.failure) {
-    throw new WorkflowStepFailedError(outcome.failure, runData);
+    throw new WorkflowStepFailedError(outcome.failure.message, runData, outcome.failure.retryable);
   }
 
   // Status-guarded terminal write: only finalize a run that is still `running`. A 0-row result means
@@ -459,7 +469,9 @@ const handleRunError = async (
   logContext: ReturnType<typeof getWorkflowRunLogContext>
 ): Promise<void> => {
   const runData = error instanceof WorkflowStepFailedError ? error.runData : undefined;
-  const isFinalAttempt = context.attempt >= context.maxAttempts;
+  // A step failure another attempt can't fix (an invalid address, a spent cap) ends the run now.
+  const isFinalAttempt =
+    context.attempt >= context.maxAttempts || (error instanceof WorkflowStepFailedError && !error.retryable);
 
   if (!isFinalAttempt) {
     // Retryable: don't write a terminal status (would defeat the retry via the terminal-skip guard).

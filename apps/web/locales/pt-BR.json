@@ -6070,7 +6070,7 @@
       "email_body_required": "Adicione a mensagem para enviar.",
       "email_from_label": "De",
       "email_include_hidden_fields_label": "Incluir campos ocultos",
-      "email_include_variables_label": "Incluir variáveis",
+      "email_include_variables_label": "Incluir dados incorporados",
       "email_needs_survey": "Conecte uma pesquisa na etapa de gatilho primeiro. As opções de destinatário e mensagem vêm das respostas da pesquisa.",
       "email_reply_to_label": "Responder para",
       "email_set_up_trigger": "Configurar gatilho",

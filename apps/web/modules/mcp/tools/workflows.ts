@@ -248,8 +248,9 @@ export function registerWorkflowTools(server: McpServer): void {
       title: "Test workflow (dry-run)",
       description: [
         "Dry-run a Formbricks workflow using the v3 Workflows API contract:",
-        "validate its live definition would execute, resolve the trigger's survey + ending cards, and confirm every literal send_email recipient is an organization member.",
-        "No run is persisted and no side effects occur; the response reports { ok, problems }.",
+        "validate its live definition would execute, resolve the trigger's survey + ending cards, confirm every literal send_email recipient is an organization member,",
+        "and check every send_email survey link points to a link survey in the workspace.",
+        "No run is persisted and no side effects occur; the response reports { ok, problems, warnings }, where warnings (such as survey link Embedded Data keys the survey drops) never make ok false.",
       ].join(" "),
       annotations: {
         // Dry-run: validates the definition and resolves its trigger references. Nothing is

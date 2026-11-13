@@ -6070,7 +6070,7 @@
       "email_body_required": "Voeg het bericht toe om te verzenden.",
       "email_from_label": "Van",
       "email_include_hidden_fields_label": "Verborgen velden opnemen",
-      "email_include_variables_label": "Variabelen opnemen",
+      "email_include_variables_label": "Ingesloten gegevens opnemen",
       "email_needs_survey": "Koppel eerst een enquête in de triggerstap. De ontvanger- en berichtopties komen uit de antwoorden van de enquête.",
       "email_reply_to_label": "Beantwoorden aan",
       "email_set_up_trigger": "Trigger instellen",

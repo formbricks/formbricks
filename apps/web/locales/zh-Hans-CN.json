@@ -6070,7 +6070,7 @@
       "email_body_required": "添加要发送的消息。",
       "email_from_label": "发件人",
       "email_include_hidden_fields_label": "包含隐藏字段",
-      "email_include_variables_label": "包含变量",
+      "email_include_variables_label": "包含嵌入数据",
       "email_needs_survey": "请先在触发器步骤中连接一个调查问卷。收件人和消息选项将来自调查问卷的回答。",
       "email_reply_to_label": "回复至",
       "email_set_up_trigger": "设置触发器",

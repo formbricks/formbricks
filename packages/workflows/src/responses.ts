@@ -9,8 +9,11 @@ import { CACHE_CONTROL_NO_STORE, buildV3Headers } from "./http";
 
 const JSON_CONTENT_TYPE = "application/json";
 
-export const dataResponse = <T>(data: T, requestId: string): Response =>
-  Response.json({ data }, { status: 200, headers: buildV3Headers(JSON_CONTENT_TYPE, requestId) });
+export const dataResponse = <T>(data: T, requestId: string, meta?: Record<string, unknown>): Response =>
+  Response.json(meta ? { data, meta } : { data }, {
+    status: 200,
+    headers: buildV3Headers(JSON_CONTENT_TYPE, requestId),
+  });
 
 export const listResponse = <T>(data: T[], meta: TCursorPaginationMeta, requestId: string): Response =>
   Response.json({ data, meta }, { status: 200, headers: buildV3Headers(JSON_CONTENT_TYPE, requestId) });

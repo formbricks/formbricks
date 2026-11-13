@@ -193,7 +193,7 @@ post:
                       subject: Thanks for your feedback
                       body: We saw your feedback and will follow up soon.
                       attachResponseData: true
-                      includeVariables: true
+                      includeEmbeddedData: true
                       includeHiddenFields: false
                     ui:
                       position:

@@ -61,6 +61,21 @@ const redactHttpRequestConfig = (config: Record<string, unknown>, key?: string):
 };
 
 /**
+ * A survey link's Embedded Data values can be literal text (a name, an id), so they are masked like
+ * the subject; the survey id and the keys are configuration and stay readable.
+ */
+const redactSurveyLink = (surveyLink: unknown, key?: string): unknown => {
+  if (!isRecord(surveyLink) || !Array.isArray(surveyLink.embeddedData)) return surveyLink;
+  const embeddedData: unknown[] = surveyLink.embeddedData;
+  return {
+    ...surveyLink,
+    embeddedData: embeddedData.map((entry) =>
+      isRecord(entry) && "value" in entry ? { ...entry, value: redactField(entry.value, key) } : entry
+    ),
+  };
+};
+
+/**
  * Redact PII from a workflow definition's actions before the snapshot leaves this package for the
  * audit log. The shared `redactPII` keys off field NAMES (`email`, `token`, …) and does not match
  * the workflow definition's `to`/`from`/`replyTo`/`subject`/`body`, so without this the values
@@ -93,10 +108,13 @@ export const redactWorkflowDefinitionPII = (definition: unknown, key?: string): 
 
     const redactedConfig: Record<string, unknown> = { ...node.config };
     for (const field of SEND_EMAIL_PII_FIELDS) {
-      if (field in redactedConfig) {
+      // A Variable recipient (`{type: "variable", ref}`) holds a path, not an address: kept readable.
+      if (field in redactedConfig && !isRecord(redactedConfig[field])) {
         redactedConfig[field] = redactField(redactedConfig[field], key);
       }
     }
+    redactedConfig.surveyLink = redactSurveyLink(redactedConfig.surveyLink, key);
+    if (redactedConfig.surveyLink === undefined) delete redactedConfig.surveyLink;
     return { ...node, config: redactedConfig };
   });
 

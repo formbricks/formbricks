@@ -105,6 +105,7 @@ const makeCtx = (overrides: Partial<WorkflowApiContext> = {}): WorkflowApiContex
   verifyTriggerSurvey,
   verifyRecipientsAllowed: vi.fn().mockResolvedValue({ disallowedEmails: [] }),
   listUnreadableSurveyIds: vi.fn().mockResolvedValue([]),
+  verifySurveyLinkSurveys: vi.fn().mockResolvedValue([]),
   recordAudit,
   ...overrides,
 });

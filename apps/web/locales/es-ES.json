@@ -6070,7 +6070,7 @@
       "email_body_required": "Añade el mensaje que quieres enviar.",
       "email_from_label": "De",
       "email_include_hidden_fields_label": "Incluir campos ocultos",
-      "email_include_variables_label": "Incluir variables",
+      "email_include_variables_label": "Incluir datos incrustados",
       "email_needs_survey": "Primero conecta una encuesta en el paso del activador. Las opciones de destinatario y mensaje provienen de las respuestas de la encuesta.",
       "email_reply_to_label": "Responder a",
       "email_set_up_trigger": "Configurar activador",

@@ -8,6 +8,8 @@ import {
   collectWorkflowSecretIds,
   isLiteralEmailRecipient,
 } from "@formbricks/workflows";
+import type { SurveyLinkSurveyCheck } from "@formbricks/workflows/server";
+import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
@@ -16,6 +18,7 @@ import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { loadWorkflowSecretValues } from "@/modules/ee/workflows/lib/secrets/workflow-secret-store";
 import { resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
 import { recordSurveyOutboundSkipped } from "@/modules/response-pipeline/lib/outbound-visibility-metrics";
+import { getWorkflowSurveyLinkSurveys } from "../survey-link-surveys";
 
 /** Thrown when the run cannot be executed at all (definition, survey or response unusable). Fails the run. */
 export class WorkflowRunNotExecutableError extends Error {
@@ -57,6 +60,13 @@ export interface WorkflowRunEnvironment {
   secretValues: ReadonlyMap<string, string>;
   /** The organization and workflow owner the run's emails are rate-limited by (ENG-3823). */
   rateLimit: { organizationId?: string; actorUserId: string | null };
+  /** Where survey links point: `<public domain>/s/<surveyId>`. */
+  publicDomain: string;
+  /**
+   * The surveys `send_email` steps link to, by id, checked when the run starts (ENG-7180): a link
+   * survey in this workspace, and the Embedded Data keys its link takes. Empty when no step links one.
+   */
+  surveyLinkSurveys: Map<string, SurveyLinkSurveyCheck>;
 }
 
 /**
@@ -120,6 +130,26 @@ const hasLiteralEmailRecipient = (definition: TWorkflowExecutableDefinition): bo
       node.type === "action" && node.actionType === "send_email" && isLiteralEmailRecipient(node.config.to)
   );
 
+const getLinkedSurveyIds = (definition: TWorkflowExecutableDefinition): string[] => [
+  ...new Set(
+    definition.nodes.flatMap((node) => {
+      const config = node.type === "action" ? node.config : null;
+      return config && "surveyLink" in config && config.surveyLink ? [config.surveyLink.surveyId] : [];
+    })
+  ),
+];
+
+const loadSurveyLinkSurveys = async (
+  definition: TWorkflowExecutableDefinition,
+  workspaceId: string
+): Promise<Map<string, SurveyLinkSurveyCheck>> => {
+  const checks = await getWorkflowSurveyLinkSurveys({
+    workspaceId,
+    surveyIds: getLinkedSurveyIds(definition),
+  });
+  return new Map(checks.map((check) => [check.surveyId, check]));
+};
+
 /**
  * Loads everything a run's steps need, independent loads together (ADR 0047): the survey response
  * (Response completed only), the organization, then the member allowlist and the rate-limit actor.
@@ -141,9 +171,10 @@ export const loadWorkflowRunEnvironment = async ({
   definition: TWorkflowExecutableDefinition;
   actorUserId: string | null;
 }): Promise<WorkflowRunEnvironment> => {
-  const [surveyResponse, organization, secretValues] = await Promise.all([
+  const [surveyResponse, organization, surveyLinkSurveys, secretValues] = await Promise.all([
     loadTriggerSurveyResponse(trigger, workspaceId),
     getOrganizationByWorkspaceId(workspaceId),
+    loadSurveyLinkSurveys(definition, workspaceId),
     loadWorkflowSecretValues({ workflowId, workspaceId, secretIds: collectWorkflowSecretIds(definition) }),
   ]);
 
@@ -163,6 +194,8 @@ export const loadWorkflowRunEnvironment = async ({
     allowedRecipientEmails,
     secretValues,
     rateLimit: { organizationId: organization?.id, actorUserId: rateLimitActorUserId },
+    publicDomain: getPublicDomain(),
+    surveyLinkSurveys,
   };
 };
 

@@ -165,7 +165,9 @@ const HTML_ENTITIES: Record<string, string> = {
   '"': "&quot;",
   "'": "&#39;",
 };
-const escapeHtml = (value: string): string => value.replaceAll(/[&<>"']/g, (char) => HTML_ENTITIES[char]);
+/** Escapes text for HTML content or a double-quoted attribute value. */
+export const escapeWorkflowHtml = (value: string): string =>
+  value.replaceAll(/[&<>"']/g, (char) => HTML_ENTITIES[char]);
 
 /**
  * An email body: payload and step Variables go in HTML-escaped (data never becomes markup), and a
@@ -178,5 +180,5 @@ export const renderWorkflowEmailBody = (template: string, context: TWorkflowRunC
     if (source === "response") {
       return `${RECALL_PREFIX}${questionId}/fallback:${token.rawFallback}#`;
     }
-    return escapeHtml(tokenText(token, context));
+    return escapeWorkflowHtml(tokenText(token, context));
   });
