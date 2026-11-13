@@ -1,0 +1,23 @@
+type: object
+description: Trigger payload of a run started by a Webhook Secret URL call.
+required:
+  - type
+  - workspaceId
+  - payload
+  - triggeredAt
+properties:
+  type:
+    type: string
+    enum:
+      - webhook
+  workspaceId:
+    type: string
+    format: cuid2
+  payload:
+    type: object
+    additionalProperties: true
+    description: The JSON object the call delivered (the Payload).
+  triggeredAt:
+    type: string
+    format: date-time
+additionalProperties: false

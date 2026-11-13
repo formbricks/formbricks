@@ -5,6 +5,7 @@ import * as Sentry from "@sentry/nextjs";
 import { logger } from "@formbricks/logger";
 import { SENTRY_DSN, SENTRY_ENVIRONMENT, SENTRY_RELEASE } from "@/lib/constants";
 import { isScannerMultipartNoise } from "@/lib/sentry/scanner-noise";
+import { scrubWebhookTokens } from "@/lib/sentry/scrub-webhook-tokens";
 
 if (SENTRY_DSN) {
   logger.info("Sentry DSN found, enabling Sentry on the server");
@@ -44,7 +45,12 @@ if (SENTRY_DSN) {
         return null;
       }
 
-      return event;
+      // A Webhook Secret URL's token is a credential (ADR 0041); it never leaves in an event.
+      return scrubWebhookTokens(event);
+    },
+
+    beforeSendTransaction(event) {
+      return scrubWebhookTokens(event);
     },
   });
 } else {

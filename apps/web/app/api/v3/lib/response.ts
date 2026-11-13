@@ -82,6 +82,7 @@ export const V3_PROBLEM_CODES = [
   "survey_not_workspace_visible",
   "too_many_requests",
   "unprocessable_content",
+  "unsupported_media_type",
   "visibility_blocked_by_connections",
   "visibility_change_not_allowed",
   "visibility_not_enabled",
@@ -119,7 +120,6 @@ export const INTERNAL_PROBLEM_CODES = [
   "retention_exemption_not_active",
   "retention_export_too_large",
   "survey_active",
-  "unsupported_media_type",
 ] as const;
 
 export type InternalProblemCode = (typeof INTERNAL_PROBLEM_CODES)[number];

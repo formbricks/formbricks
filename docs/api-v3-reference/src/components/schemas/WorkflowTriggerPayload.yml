@@ -1,0 +1,7 @@
+description: |
+  Trigger payload snapshot captured when a run is created, mirroring
+  `ZWorkflowTriggerRunPayload`: a completed survey response, or the JSON object a
+  Webhook Secret URL call delivered. `type` says which.
+oneOf:
+  - $ref: ./WorkflowResponseCompletedTriggerPayload.yml
+  - $ref: ./WorkflowWebhookTriggerPayload.yml

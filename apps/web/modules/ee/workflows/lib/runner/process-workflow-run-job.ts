@@ -486,6 +486,11 @@ const loadRunEmailContext = async (
   steps: TWorkflowExecutableStep[],
   actorUserId: string | null
 ): Promise<RunEmailContext> => {
+  // Interim until the graph walker (ENG-7176) loads context per trigger type: this loader only knows
+  // survey responses, so a Webhook-started run fails here instead of reading fields it does not have.
+  if (triggerPayload.type !== "response.completed") {
+    throw new WorkflowRunNotExecutableError(`Trigger type ${triggerPayload.type} is not executable yet`);
+  }
   const [response, survey] = await Promise.all([
     getResponse(triggerPayload.responseId),
     getSurvey(triggerPayload.surveyId),

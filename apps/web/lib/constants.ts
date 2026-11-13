@@ -69,6 +69,12 @@ export const SIGNUP_ENABLED = IS_FORMBRICKS_CLOUD || IS_DEVELOPMENT || E2E_TESTI
 export const EMAIL_AUTH_ENABLED = env.EMAIL_AUTH_DISABLED !== "1";
 export const INVITE_DISABLED = env.INVITE_DISABLED === "1";
 export const INVITE_RATE_LIMIT_PER_24_HOURS = env.INVITE_RATE_LIMIT_PER_24_HOURS;
+// Workflows Webhook trigger (ENG-7167). Plain HTTP is a self-hosting escape hatch for fully private
+// networks; Formbricks Cloud ignores the switch, so HTTPS is always required there.
+export const ALLOW_WORKFLOW_PLAIN_HTTP =
+  !IS_FORMBRICKS_CLOUD && env.DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP === "1";
+export const WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT = env.WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT;
+export const WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE = env.WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE;
 export const EMAIL_RATE_LIMIT_MULTIPLIER = env.EMAIL_RATE_LIMIT_MULTIPLIER;
 
 export const SLACK_CLIENT_SECRET = env.SLACK_CLIENT_SECRET;

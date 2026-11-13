@@ -54,8 +54,13 @@ info:
     /api/v3/workflows/{workflowId}/disable**, **POST
     /api/v3/workflows/{workflowId}/archive**, **POST
     /api/v3/workflows/{workflowId}/unarchive**, **POST
-    /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and
-    **GET /api/v3/workflows/runs/{runId}**.
+    /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**,
+    **GET /api/v3/workflows/runs/{runId}**, and for Webhook triggers **GET
+    /api/v3/workflows/{workflowId}/webhook**, **POST
+    /api/v3/workflows/{workflowId}/webhook/regenerate**, **PUT
+    /api/v3/workflows/{workflowId}/sample**, and the public Webhook Secret URL
+    **POST /api/v3/workflows/{workflowId}/webhook/{token}**, which takes no
+    login: the token in its path is the credential.
 
 
     **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**;
@@ -441,6 +446,14 @@ paths:
     $ref: paths/api_v3_workflows_{workflowId}_unarchive.yml
   /api/v3/workflows/{workflowId}/test:
     $ref: paths/api_v3_workflows_{workflowId}_test.yml
+  /api/v3/workflows/{workflowId}/webhook:
+    $ref: paths/api_v3_workflows_{workflowId}_webhook.yml
+  /api/v3/workflows/{workflowId}/webhook/regenerate:
+    $ref: paths/api_v3_workflows_{workflowId}_webhook_regenerate.yml
+  /api/v3/workflows/{workflowId}/webhook/{token}:
+    $ref: paths/api_v3_workflows_{workflowId}_webhook_{token}.yml
+  /api/v3/workflows/{workflowId}/sample:
+    $ref: paths/api_v3_workflows_{workflowId}_sample.yml
   /api/v3/charts:
     $ref: paths/api_v3_charts.yml
   /api/v3/charts/fields:

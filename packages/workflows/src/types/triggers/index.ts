@@ -20,3 +20,18 @@ export const ZWorkflowTriggerNode = z.discriminatedUnion("triggerType", [
   ZWorkflowWebhookTriggerNode,
 ]);
 export type TWorkflowTriggerNode = z.infer<typeof ZWorkflowTriggerNode>;
+
+/** Narrows a trigger to Response completed, the only trigger type bound to a survey. */
+export const isResponseCompletedTrigger = (
+  trigger: TWorkflowTriggerNode | null | undefined
+): trigger is z.infer<typeof ZWorkflowResponseCompletedTriggerNode> =>
+  trigger?.triggerType === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED;
+
+/** The survey a trigger is bound to: a Response completed trigger's survey, otherwise null. */
+export const getTriggerSurveyId = (trigger: TWorkflowTriggerNode | null | undefined): string | null =>
+  isResponseCompletedTrigger(trigger) ? trigger.config.surveyId : null;
+
+/** The ending cards a Response completed trigger fires on; undefined for any other trigger. */
+export const getTriggerEndingCardIds = (
+  trigger: TWorkflowTriggerNode | null | undefined
+): string[] | undefined => (isResponseCompletedTrigger(trigger) ? trigger.config.endingCardIds : undefined);

@@ -43,7 +43,12 @@ properties:
       Definition schema version. Optional on writes (defaults to the current
       version); always present in responses.
   trigger:
-    $ref: ./WorkflowResponseCompletedTriggerNode.yml
+    oneOf:
+      - $ref: ./WorkflowResponseCompletedTriggerNode.yml
+      - $ref: ./WorkflowWebhookTriggerNode.yml
+    description: >-
+      The workflow's one trigger: Response completed (`response.completed`) or
+      a call to its Webhook Secret URL (`webhook`).
   nodes:
     type: array
     default: []
