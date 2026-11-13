@@ -5844,7 +5844,7 @@ checksums:
     workspace/workflows/email_body_required: ec8193d07de034ad764978b538d49d06
     workspace/workflows/email_from_label: 3d84daca8c92c8609deeab4b294b4afb
     workspace/workflows/email_include_hidden_fields_label: 8b72f10c43491126650c723819faa454
-    workspace/workflows/email_include_variables_label: 9710532ac5935c4540bf98bc292c1166
+    workspace/workflows/email_include_variables_label: 0b648c1972f7fbed137823fcde4bd632
     workspace/workflows/email_needs_survey: 3f1c21aa56fcafd73b7b5cec1e237bbd
     workspace/workflows/email_reply_to_label: e7f83bcc57c1e4248e6835477cd8e28a
     workspace/workflows/email_set_up_trigger: fbfe074697929bec889438a92497c8cb

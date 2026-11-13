@@ -6070,7 +6070,7 @@
       "email_body_required": "Добавьте текст сообщения.",
       "email_from_label": "От кого",
       "email_include_hidden_fields_label": "Включить скрытые поля",
-      "email_include_variables_label": "Включить переменные",
+      "email_include_variables_label": "Включить встроенные данные",
       "email_needs_survey": "Сначала подключи опрос на этапе триггера. Параметры получателя и сообщения берутся из ответов опроса.",
       "email_reply_to_label": "Ответить на",
       "email_set_up_trigger": "Настроить триггер",

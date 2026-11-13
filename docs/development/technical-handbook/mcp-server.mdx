@@ -1378,7 +1378,9 @@ Gets one workflow run with its ordered step logs. Read-only and idempotent.
 #### test_workflow
 
 Dry-runs a workflow: validates its live definition would execute and resolves the trigger's survey +
-ending cards. No run is persisted and no side effects occur; the result reports `{ ok, problems }`.
+ending cards, and checks that every `send_email` survey link points to a link survey in the workspace. No
+run is persisted and no side effects occur; the result reports `{ ok, problems, warnings }`. Warnings
+(such as survey link Embedded Data keys the survey doesn't accept) never make `ok` false.
 Annotated read-only (no world mutation). **Drafts are testable** — checking the setup before going
 live is the point of a dry run — so a workflow can be tested straight after `create_workflow`. Only
 **archived** workflows are rejected, with `422 invalid_workflow_state`, since they are soft-deleted.

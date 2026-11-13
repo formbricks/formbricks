@@ -6070,7 +6070,7 @@
       "email_body_required": "Adaugă mesajul de trimis.",
       "email_from_label": "De la",
       "email_include_hidden_fields_label": "Includeți câmpurile ascunse",
-      "email_include_variables_label": "Includeți variabilele",
+      "email_include_variables_label": "Include datele încorporate",
       "email_needs_survey": "Conectează mai întâi un sondaj în pasul de declanșare. Opțiunile pentru destinatar și mesaj provin din răspunsurile sondajului.",
       "email_reply_to_label": "Răspunde la",
       "email_set_up_trigger": "Configurează declanșatorul",

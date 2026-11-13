@@ -6070,7 +6070,7 @@
       "email_body_required": "Füge die zu sendende Nachricht hinzu.",
       "email_from_label": "Von",
       "email_include_hidden_fields_label": "Versteckte Felder einbeziehen",
-      "email_include_variables_label": "Variablen einbeziehen",
+      "email_include_variables_label": "Eingebettete Daten einschließen",
       "email_needs_survey": "Verknüpfe zuerst eine Umfrage im Trigger-Schritt. Die Optionen für Empfänger und Nachricht stammen aus den Antworten der Umfrage.",
       "email_reply_to_label": "Antwort an",
       "email_set_up_trigger": "Trigger einrichten",

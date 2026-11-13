@@ -6070,7 +6070,7 @@
       "email_body_required": "Lägg till meddelandet som ska skickas.",
       "email_from_label": "Från",
       "email_include_hidden_fields_label": "Inkludera dolda fält",
-      "email_include_variables_label": "Inkludera variabler",
+      "email_include_variables_label": "Inkludera inbäddad data",
       "email_needs_survey": "Koppla en enkät i utlösarsteget först. Mottagare och meddelandealternativ kommer från enkätens svar.",
       "email_reply_to_label": "Svara till",
       "email_set_up_trigger": "Konfigurera utlösare",

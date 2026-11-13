@@ -6070,7 +6070,7 @@
       "email_body_required": "Add the message to send.",
       "email_from_label": "From",
       "email_include_hidden_fields_label": "Include hidden fields",
-      "email_include_variables_label": "Include variables",
+      "email_include_variables_label": "Include Embedded Data",
       "email_needs_survey": "Connect a survey in the trigger step first. The recipient and message options come from the survey’s answers.",
       "email_reply_to_label": "Reply to",
       "email_set_up_trigger": "Set up trigger",
