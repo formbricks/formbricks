@@ -187,6 +187,22 @@ describe("fixed body for a Variable recipient", () => {
     ).toEqual([]);
   });
 
+  test("a Webhook workflow may email the payload address with a fixed body", () => {
+    const definition = {
+      ...definitionWith({
+        ...baseConfig,
+        to: { type: "variable", ref: "payload.customer.email" },
+        body: `<p>Thanks for calling. ${WORKFLOW_SURVEY_LINK_TOKEN}</p>`,
+        surveyLink: {
+          surveyId: linkSurveyId,
+          embeddedData: [{ key: "call_id", value: "#recall:payload.call.id/fallback:#" }],
+        },
+      }),
+      trigger: { id: "trigger", type: "trigger", triggerType: "webhook", config: {} },
+    };
+    expect(ZWorkflowExecutableDefinition.safeParse(definition).error?.issues).toBeUndefined();
+  });
+
   test("Enable checks the recipient Variable against the trigger's sources", () => {
     expect(
       executableIssues({ ...baseConfig, to: { type: "variable", ref: "payload.customer.email" } }).join(" ")
