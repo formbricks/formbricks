@@ -6196,6 +6196,7 @@
       "send_email_summary": "Enviar un correo a {to}.",
       "send_email_unconfigured": "Configura el destinatario del correo.",
       "test_run": "Ejecución de prueba",
+      "test_run_again": "Ejecutar de nuevo",
       "test_run_failed": "La ejecución de prueba ha fallado. Inténtalo de nuevo.",
       "test_run_failed_archived": "No se pueden probar los flujos de trabajo archivados. Desarchiva este primero.",
       "test_run_failed_invalid_payload": "La carga de prueba del panel del disparador Webhook no es un objeto JSON. Corrígela e inténtalo de nuevo.",

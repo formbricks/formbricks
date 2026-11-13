@@ -6196,6 +6196,7 @@
       "send_email_summary": "Enviar um e-mail para {to}.",
       "send_email_unconfigured": "Configure o destinatário do e-mail.",
       "test_run": "Execução de teste",
+      "test_run_again": "Executar novamente",
       "test_run_failed": "A execução de teste falhou. Tente novamente.",
       "test_run_failed_archived": "Não é possível testar fluxos de trabalho arquivados. Desarquive este primeiro.",
       "test_run_failed_invalid_payload": "O payload de teste no painel do gatilho de Webhook não é um objeto JSON. Corrija-o e tente novamente.",

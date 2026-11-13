@@ -6196,6 +6196,7 @@
       "send_email_summary": "Sende eine E-Mail an {to}.",
       "send_email_unconfigured": "Konfiguriere den E-Mail-Empfänger.",
       "test_run": "Testlauf",
+      "test_run_again": "Erneut ausführen",
       "test_run_failed": "Der Testlauf ist fehlgeschlagen. Versuch es noch einmal.",
       "test_run_failed_archived": "Archivierte Workflows können nicht getestet werden. Hebe zuerst die Archivierung dieses Workflows auf.",
       "test_run_failed_invalid_payload": "Die Test-Payload im Webhook-Trigger-Bereich ist kein JSON-Objekt. Korrigiere sie und versuch es dann noch einmal.",

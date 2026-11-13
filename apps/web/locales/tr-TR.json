@@ -6196,6 +6196,7 @@
       "send_email_summary": "{to} adresine e-posta gönder.",
       "send_email_unconfigured": "E-posta alıcısını yapılandır.",
       "test_run": "Test çalıştırması",
+      "test_run_again": "Tekrar çalıştır",
       "test_run_failed": "Test çalıştırması başarısız oldu. Tekrar dene.",
       "test_run_failed_archived": "Arşivlenmiş iş akışları test edilemez. Önce bu iş akışını arşivden çıkar.",
       "test_run_failed_invalid_payload": "Webhook tetikleyicisi panelindeki test verisi bir JSON nesnesi değil. Düzelt ve tekrar dene.",

@@ -43,7 +43,7 @@ export const RunSummarySection = ({ run, locale }: Readonly<RunSummarySectionPro
         {caller ? (
           <div>
             <dt className="text-xs text-slate-500">{t("workspace.workflows.run_caller")}</dt>
-            <dd className="font-mono text-xs text-slate-800">{caller}</dd>
+            <dd className="font-mono text-xs break-all text-slate-800">{caller}</dd>
           </div>
         ) : null}
         <div>

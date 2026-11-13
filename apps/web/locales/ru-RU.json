@@ -6196,6 +6196,7 @@
       "send_email_summary": "Отправить email на {to}.",
       "send_email_unconfigured": "Настрой получателя email.",
       "test_run": "Тестовый запуск",
+      "test_run_again": "Запустить снова",
       "test_run_failed": "Тестовый запуск не удался. Попробуй ещё раз.",
       "test_run_failed_archived": "Архивные рабочие процессы нельзя тестировать. Сначала верни этот процесс из архива.",
       "test_run_failed_invalid_payload": "Тестовые данные в панели триггера Webhook не являются JSON-объектом. Исправь их и попробуй снова.",

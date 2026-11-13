@@ -6196,6 +6196,7 @@
       "send_email_summary": "傳送電子郵件給 {to}。",
       "send_email_unconfigured": "設定電子郵件收件人。",
       "test_run": "測試執行",
+      "test_run_again": "再次執行",
       "test_run_failed": "測試執行失敗，請再試一次。",
       "test_run_failed_archived": "已封存的工作流程無法進行測試，請先取消封存。",
       "test_run_failed_invalid_payload": "Webhook 觸發器面板中的測試負載不是 JSON 物件，請修正後再試一次。",

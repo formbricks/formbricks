@@ -6196,6 +6196,7 @@
       "send_email_summary": "E-mail küldése a(z) {to} címre.",
       "send_email_unconfigured": "Az e-mail címzettjének beállítása.",
       "test_run": "Tesztfuttatás",
+      "test_run_again": "Futtassa le újra",
       "test_run_failed": "A tesztfuttatás sikertelen volt. Kérjük, próbálja újra.",
       "test_run_failed_archived": "Az archivált munkafolyamatok nem tesztelhetők. Kérjük, először vonja vissza ennek a munkafolyamatnak az archiválását.",
       "test_run_failed_invalid_payload": "A Webhook-eseményindító panelen megadott tesztadatcsomag nem JSON-objektum. Kérjük, javítsa ki, majd próbálja újra.",

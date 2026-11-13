@@ -6196,6 +6196,7 @@
       "send_email_summary": "Trimite un email către {to}.",
       "send_email_unconfigured": "Configurează destinatarul emailului.",
       "test_run": "Rulare de test",
+      "test_run_again": "Rulează din nou",
       "test_run_failed": "Rularea de test a eșuat. Încearcă din nou.",
       "test_run_failed_archived": "Fluxurile de lucru arhivate nu pot fi testate. Dezarhivează-l mai întâi pe acesta.",
       "test_run_failed_invalid_payload": "Payloadul de test din panoul declanșatorului Webhook nu este un obiect JSON. Corectează-l, apoi încearcă din nou.",

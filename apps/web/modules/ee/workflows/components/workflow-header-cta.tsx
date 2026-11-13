@@ -135,6 +135,7 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
           <WorkflowTestRunDrawer
             open={testRun.isDrawerOpen}
             onClose={testRun.closeDrawer}
+            onRunAgain={() => void testRun.startTestRun()}
             runId={testRun.runId}
             isRunning={testRun.isRunning}
             failure={testRun.failure}

@@ -1,13 +1,13 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { InfoIcon, SquareArrowOutUpRight } from "lucide-react";
+import { SquareArrowOutUpRight } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { getWorkflow } from "@/modules/ee/workflows/lib/api-client";
 import { workflowKeys } from "@/modules/ee/workflows/lib/query";
 import { type TWorkflowRunListItem } from "@/modules/ee/workflows/types";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Sheet, SheetContent } from "@/modules/ui/components/sheet";
 import { useWorkflowRun } from "../../hooks/use-workflow-run";
@@ -25,9 +25,8 @@ interface WorkflowRunDetailDrawerProps {
 export const TestRunNotice = () => {
   const { t } = useTranslation();
   return (
-    <Alert variant="info" size="small">
-      <InfoIcon />
-      <AlertDescription>{t("workspace.workflows.run_test_run_notice")}</AlertDescription>
+    <Alert variant="info" size="small" role="status">
+      <div>{t("workspace.workflows.run_test_run_notice")}</div>
     </Alert>
   );
 };

@@ -6196,6 +6196,7 @@
       "send_email_summary": "Verstuur een e-mail naar {to}.",
       "send_email_unconfigured": "Configureer de e-mailontvanger.",
       "test_run": "Testrun",
+      "test_run_again": "Opnieuw uitvoeren",
       "test_run_failed": "De testrun is mislukt. Probeer het opnieuw.",
       "test_run_failed_archived": "Gearchiveerde workflows kunnen niet worden getest. Haal deze eerst uit het archief.",
       "test_run_failed_invalid_payload": "De testpayload in het Webhook-triggerpaneel is geen JSON-object. Pas dit aan en probeer het daarna opnieuw.",

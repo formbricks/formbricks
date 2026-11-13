@@ -6196,6 +6196,7 @@
       "send_email_summary": "Skicka ett e-postmeddelande till {to}.",
       "send_email_unconfigured": "Konfigurera e-postmottagaren.",
       "test_run": "Testkörning",
+      "test_run_again": "Kör igen",
       "test_run_failed": "Testkörningen misslyckades. Försök igen.",
       "test_run_failed_archived": "Arkiverade arbetsflöden kan inte testas. Avarkivera det här först.",
       "test_run_failed_invalid_payload": "Testdatan i panelen för webhook-utlösaren är inte ett JSON-objekt. Åtgärda det och försök sedan igen.",

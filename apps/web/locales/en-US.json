@@ -6196,6 +6196,7 @@
       "send_email_summary": "Send an email to {to}.",
       "send_email_unconfigured": "Configure the email recipient.",
       "test_run": "Test run",
+      "test_run_again": "Run again",
       "test_run_failed": "The Test run failed. Try again.",
       "test_run_failed_archived": "Archived workflows can't be tested. Unarchive this one first.",
       "test_run_failed_invalid_payload": "The test payload in the Webhook trigger panel isn't a JSON object. Fix it, then try again.",

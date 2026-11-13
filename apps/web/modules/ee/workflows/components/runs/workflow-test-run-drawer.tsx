@@ -2,7 +2,7 @@
 
 import type { TFunction } from "i18next";
 import { useAtomValue } from "jotai";
-import { CircleAlertIcon } from "lucide-react";
+import { PlayIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { WEBHOOK_PAYLOAD_MAX_BYTES } from "@formbricks/workflows";
 import { useWorkflowRun } from "@/modules/ee/workflows/hooks/use-workflow-run";
@@ -10,6 +10,7 @@ import type { TWorkflowTestRunFailure } from "@/modules/ee/workflows/hooks/use-w
 import { getWorkflowApiErrorMessage } from "@/modules/ee/workflows/lib/api-error";
 import { workflowAtom, workflowDefinitionAtom } from "@/modules/ee/workflows/state/editor";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
 import { Sheet, SheetContent } from "@/modules/ui/components/sheet";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { RunDetailHeader } from "./run-detail-header";
@@ -46,6 +47,7 @@ const describeFailure = (failure: TWorkflowTestRunFailure, error: unknown, t: TF
 interface WorkflowTestRunDrawerProps {
   open: boolean;
   onClose: () => void;
+  onRunAgain: () => void;
   runId: string | null;
   isRunning: boolean;
   failure: TWorkflowTestRunFailure | null;
@@ -60,6 +62,7 @@ interface WorkflowTestRunDrawerProps {
 export const WorkflowTestRunDrawer = ({
   open,
   onClose,
+  onRunAgain,
   runId,
   isRunning,
   failure,
@@ -87,12 +90,22 @@ export const WorkflowTestRunDrawer = ({
           workflowName={workflow?.name ?? null}
           isDryRun
           triggerType={definition?.trigger?.triggerType ?? null}
-          versionNumber={null}
-        />
+          versionNumber={null}>
+          {/* The drawer covers the header's Test run button while open, so it offers its own. */}
+          <Button
+            variant="secondary"
+            size="sm"
+            className="mt-2 w-fit"
+            loading={isRunning}
+            disabled={isRunning}
+            onClick={onRunAgain}>
+            <PlayIcon />
+            {t("workspace.workflows.test_run_again")}
+          </Button>
+        </RunDetailHeader>
         <div className="space-y-4 py-4">
           {failure ? (
-            <Alert variant="error" size="small">
-              <CircleAlertIcon />
+            <Alert variant="error">
               <AlertTitle>{t("workspace.workflows.test_run_failed_title")}</AlertTitle>
               <AlertDescription>{describeFailure(failure, error, t)}</AlertDescription>
             </Alert>
