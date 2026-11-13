@@ -5947,6 +5947,21 @@ checksums:
     workspace/workflows/validation_problems_description: 3d86d4b78cd9444a4d0161e13c29523f
     workspace/workflows/validation_problems_title: dca6132844fcd065bc5ab7fd2dd3ca40
     workspace/workflows/validation_status_valid: 4a3ddc0ebe876ff26001201203348d2c
+    workspace/workflows/variable_group_payload: 50701a00fae155ea7a0358358b190671
+    workspace/workflows/variable_group_response: c7a9d88269d8ff117abcbc0d97f88b2c
+    workspace/workflows/variable_picker_label: 2e1e9db24e58d5d1114b506c1fbb0d02
+    workspace/workflows/variable_picker_list_not_supported: 0c1f1b386d66b0ec73ebdeeb96a8e1dd
+    workspace/workflows/variable_picker_no_results: 68c7e6a827b7273bf0a2f90ce729f0b2
+    workspace/workflows/variable_picker_no_sample: 4b5395e107f9e4b0c9bf7ba16b111779
+    workspace/workflows/variable_picker_open_trigger: 78be9829c01722c7f88a472255143136
+    workspace/workflows/variable_picker_search: f89f2254518f79b79ac208e29a33aa7e
+    workspace/workflows/variable_picker_truncated: 071594168a8df8a0e408463ac6f68d5d
+    workspace/workflows/variable_type_boolean: 4eb11fe48c5412a4968b065d4ad4f675
+    workspace/workflows/variable_type_empty: 4dfd6c45dc6f255c897495085e5ddd46
+    workspace/workflows/variable_type_list: 5d10624df053240c4c608fefb8df22ae
+    workspace/workflows/variable_type_number: bce5f14f4f0f190d9e23897b28b1a2e8
+    workspace/workflows/variable_type_object: 811182c8103bfdc38b5b2bee904ea48f
+    workspace/workflows/variable_type_text: 657ada753de2a4865fc55016aa9a035e
     workspace/workflows/zoom_in: 20244d74cc44e8606cbf4bb8b4e16e4b
     workspace/workflows/zoom_out: b723e467be28d8659338502c470821fd
     workspace/xm-templates/ces: e2ea309b2f7f13257967b966c2fda1e9

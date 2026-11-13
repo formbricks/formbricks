@@ -8,6 +8,7 @@ import type {
   TWorkflowRunStatus,
   TWorkflowSortBy,
   TWorkflowStatus,
+  TWorkflowWebhookResource,
 } from "@formbricks/workflows";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 
@@ -135,6 +136,28 @@ export async function getWorkflow(workflowId: string, signal?: AbortSignal): Pro
   });
 
   return readWorkflowResponse(response);
+}
+
+/**
+ * The workflow's Webhook Secret URL, last call and Sample payload (with the Variables it offers).
+ * Write access only: the URL is a credential (ADR 0041).
+ */
+export async function getWorkflowWebhook(
+  workflowId: string,
+  signal?: AbortSignal
+): Promise<TWorkflowWebhookResource> {
+  const response = await fetch(`/api/v3/workflows/${workflowId}/webhook`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const body = (await response.json()) as { data: TWorkflowWebhookResource };
+  return body.data;
 }
 
 export async function updateWorkflow(

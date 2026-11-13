@@ -64,6 +64,14 @@ export const extractCompleteRecallIds = (text: string): string[] => {
   return Array.from(text.matchAll(pattern), (match) => match[1]);
 };
 
+/**
+ * A fresh global pattern for complete `#recall:<id>/fallback:<x>#` tokens, workflow Variable paths
+ * included, with no capture groups so `split` returns only the text between tokens. Fresh because a
+ * global regex carries `lastIndex` between calls.
+ */
+export const createRecallTokenPattern = (): RegExp =>
+  new RegExp(`#recall:(?:${RECALL_ID_SOURCE})/fallback:[^#]*#`, "g");
+
 // Extracts the fallback value from a string containing the "fallback" pattern.
 // An index scan, not `/fallback:([^#]*)#/`: that pattern is O(N^2) on a long run of `fallback:`
 // with no `#` after it, because the engine rescans to the end from every occurrence. Identical
