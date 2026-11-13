@@ -106,6 +106,17 @@ describe("httpRequestStepExecutor", () => {
     expect(JSON.stringify(outcome)).not.toContain(SECRET);
   });
 
+  test("an endpoint that echoes the secret header back gets it masked in the log", async () => {
+    effects.sendHttpRequest.mockResolvedValue(
+      answer(200, JSON.stringify({ headers: { Authorization: `Bearer ${SECRET}` } }))
+    );
+
+    const outcome = await run();
+
+    expect(outcome.output.body).toEqual({ headers: { Authorization: "••••••" } });
+    expect(JSON.stringify(outcome.output)).not.toContain(SECRET);
+  });
+
   test("the log keeps at most 64 KB of the response; later steps still get all of it", async () => {
     const big = JSON.stringify({ items: "x".repeat(70 * 1024) });
     effects.sendHttpRequest.mockResolvedValue(answer(200, big));

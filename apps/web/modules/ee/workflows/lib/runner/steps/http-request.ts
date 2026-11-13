@@ -2,6 +2,7 @@ import "server-only";
 import {
   buildWorkflowHttpCall,
   capRequestRecord,
+  collectSentSecretValues,
   isWorkflowHttpErrorStatus,
   summarizeWorkflowHttpResponse,
 } from "../../http-request/request";
@@ -56,7 +57,10 @@ export const httpRequestStepExecutor: WorkflowStepExecutor<"http_request"> = {
         : { status: "failed", error: result.error, output };
     }
 
-    const { variables, record } = summarizeWorkflowHttpResponse(result.response);
+    const { variables, record } = summarizeWorkflowHttpResponse(
+      result.response,
+      collectSentSecretValues(built.call, built.record)
+    );
     const output = { mode: "wait", request, ...record, attempts: result.attempts };
     if (isWorkflowHttpErrorStatus(result.response.status) && !config.continueOnError) {
       return {
