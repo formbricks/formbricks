@@ -11,11 +11,8 @@ import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { addElementToBlock } from "@/modules/survey/editor/lib/blocks";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
-import {
-  getElementDefaults,
-  getGroupedElementTypes,
-  universalElementPresets,
-} from "@/modules/survey/lib/elements";
+import { getElementDefaults, universalElementPresets } from "@/modules/survey/lib/element-presets";
+import { getGroupedElementTypes } from "@/modules/survey/lib/elements";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
