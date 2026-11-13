@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { readConsentedScopes } from "@/modules/auth/lib/oauth-grant-revocation";
+import { readMcpGrantReadableWorkspaceIds } from "./access-options";
 import { editMcpGrant, listAuthorizedMcpClients } from "./authorized-clients";
 import type { TMcpGrantAccessOptions } from "./grant-access";
 import {
@@ -12,6 +13,7 @@ import {
 } from "./grant-store";
 
 vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({ readConsentedScopes: vi.fn() }));
+vi.mock("./access-options", () => ({ readMcpGrantReadableWorkspaceIds: vi.fn() }));
 vi.mock("./grant-store", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./grant-store")>()),
   lockMcpGrant: vi.fn(),
@@ -81,10 +83,10 @@ const stored = (overrides: Partial<TStoredMcpGrant> = {}): TStoredMcpGrant =>
     ...overrides,
   }) as TStoredMcpGrant;
 
-/** The grants of consented clients first, then those of `skipConsent` clients without a consent. */
-const grants = (consented: unknown[], skipConsent: unknown[] = []) => {
-  prisma.mcpGrant.findMany.mockImplementation((async (args: { where: { client?: unknown } }) =>
-    args.where.client ? skipConsent : consented) as never);
+/** The grants of consented clients first, then those of clients without a consent. */
+const grants = (consented: unknown[], unconsented: unknown[] = []) => {
+  prisma.mcpGrant.findMany.mockImplementation((async (args: { where: { clientId: object } }) =>
+    "notIn" in args.where.clientId ? unconsented : consented) as never);
 };
 
 describe("listAuthorizedMcpClients", () => {
@@ -114,7 +116,7 @@ describe("listAuthorizedMcpClients", () => {
     );
   });
 
-  test("reads only the grants of the listed clients, and of skipConsent clients, newest first", async () => {
+  test("reads the grants of the listed clients, and every other grant of the user, newest first", async () => {
     prisma.oauthConsent.findMany.mockResolvedValue([
       consent({ clientId: "client-a" }),
       consent({ id: "consent-b", clientId: "client-b" }),
@@ -127,11 +129,7 @@ describe("listAuthorizedMcpClients", () => {
     );
     expect(prisma.mcpGrant.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: {
-          userId: USER_ID,
-          clientId: { notIn: ["client-a", "client-b"] },
-          client: { skipConsent: true },
-        },
+        where: { userId: USER_ID, clientId: { notIn: ["client-a", "client-b"] } },
         orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
         take: 500,
       })
@@ -234,6 +232,36 @@ describe("listAuthorizedMcpClients", () => {
     expect(clients).toHaveLength(2);
   });
 
+  // A client switched off `skipConsent` after it was authorized keeps its grant and has no consent: it
+  // has to be listed, or Revoke can't reach it. Nothing caps it but a new approval, so Edit gives nothing.
+  test("lists a grant whose client has neither a consent nor skipConsent, capped at nothing", async () => {
+    prisma.oauthConsent.findMany.mockResolvedValue([] as never);
+    grants(
+      [],
+      [
+        {
+          ...grantRow({ clientId: "was-first-party", permissions: { surveys: "read" } }),
+          client: { name: "Was first party", uri: null, scopes: ["surveys:read"], skipConsent: false },
+        },
+      ]
+    );
+
+    const clients = await list();
+
+    expect(clients).toEqual([
+      {
+        clientId: "was-first-party",
+        clientName: "Was first party",
+        clientUri: null,
+        connectedAt: at("2026-01-01T00:00:00Z"),
+        updatedAt: at("2026-01-01T00:00:00Z"),
+        permissions: { surveys: "read" },
+        access: { access: "all" },
+        cap: {},
+      },
+    ]);
+  });
+
   test("caps a consented client that is skipConsent by its registered scopes", async () => {
     prisma.oauthConsent.findMany.mockResolvedValue([
       consent({
@@ -269,6 +297,9 @@ describe("editMcpGrant", () => {
     vi.mocked(narrowMcpGrantAccess).mockReset();
     vi.mocked(writeMcpGrant).mockReset();
     vi.mocked(projectMcpGrants).mockReset().mockResolvedValue(undefined);
+    vi.mocked(readMcpGrantReadableWorkspaceIds)
+      .mockReset()
+      .mockResolvedValue(new Set(["ws-1"]));
     tx.oauthClient.findUnique.mockReset().mockResolvedValue({ scopes: ["surveys:read"], skipConsent: false });
     prisma.$transaction.mockImplementation((async (callback: (client: unknown) => unknown) =>
       callback(tx)) as never);
@@ -299,7 +330,16 @@ describe("editMcpGrant", () => {
       userId: USER_ID,
       before,
       access: { access: "workspaces", workspaceIds: ["ws-1", "ws-lost"] },
+      readableWorkspaceIds: new Set(["ws-1"]),
     });
+    // SpiceDB is asked which workspaces the user can read before the grant row is locked, never under it.
+    expect(readMcpGrantReadableWorkspaceIds).toHaveBeenCalledWith(USER_ID, {
+      access: "workspaces",
+      workspaceIds: ["ws-1", "ws-lost"],
+    });
+    expect(vi.mocked(readMcpGrantReadableWorkspaceIds).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(prisma.$transaction).mock.invocationCallOrder[0]
+    );
     // The resolved access is saved, without what the user lost.
     expect(writeMcpGrant).toHaveBeenCalledWith(tx, {
       userId: USER_ID,

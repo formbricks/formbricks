@@ -60,15 +60,31 @@ type TSelectionReader = {
 };
 
 /**
+ * The SpiceDB half of {@link keepOfferedMcpGrantSelection}: the workspaces SpiceDB lets the user read
+ * (`dashboard_read`, as the picker offers them), when `selection` selects workspaces; empty otherwise,
+ * without a call. A save reads it BEFORE its transaction locks the grant row, so no SpiceDB lookup holds
+ * a row lock or a pooled connection. The transaction then checks the rest with PostgreSQL alone.
+ */
+export const readMcpGrantReadableWorkspaceIds = async (
+  userId: string,
+  selection: TMcpGrantAccessSelection | null | undefined
+): Promise<ReadonlySet<string>> =>
+  selection?.access === "workspaces"
+    ? new Set(await lookupAuthorizedWorkspaceIds({ type: "user", id: userId }, "dashboard_read"))
+    : new Set();
+
+/**
  * The part of `selection` the picker would offer the user now, by {@link listMcpGrantAccessOptions}'s
  * rule: organizations they belong to other than as a billing member, and workspaces SpiceDB lets them read
- * in those organizations. Reads ids only, and only the ids `selection` names. Takes the caller's
- * transaction, so a save checks what the user may pick in the transaction that saves it.
+ * (`readableWorkspaceIds`, from {@link readMcpGrantReadableWorkspaceIds}) in those organizations. Reads ids
+ * only, only the ids `selection` names, and only from PostgreSQL. Takes the caller's transaction, so a save
+ * checks the user's memberships in the transaction that saves it.
  */
 export const keepOfferedMcpGrantSelection = async (
   db: TSelectionReader,
   userId: string,
-  selection: TMcpGrantAccessSelection
+  selection: TMcpGrantAccessSelection,
+  readableWorkspaceIds: ReadonlySet<string>
 ): Promise<TMcpGrantAccessSelection> => {
   switch (selection.access) {
     case "all":
@@ -85,10 +101,7 @@ export const keepOfferedMcpGrantSelection = async (
       };
     }
     case "workspaces": {
-      const readable = new Set(
-        await lookupAuthorizedWorkspaceIds({ type: "user", id: userId }, "dashboard_read")
-      );
-      const candidates = selection.workspaceIds.filter((id) => readable.has(id));
+      const candidates = selection.workspaceIds.filter((id) => readableWorkspaceIds.has(id));
       const workspaces =
         candidates.length === 0
           ? []
@@ -118,17 +131,19 @@ export type TMcpGrantSelectionResolution =
  * billing member) is dropped without a refusal: the picker no longer shows it, so the user could not have
  * kept it on purpose, and keeping it would refuse even a permissions-only save.
  *
- * Makes SpiceDB calls for a workspace selection: call it before locking the consent rows.
+ * Reads PostgreSQL only: `readableWorkspaceIds` is {@link readMcpGrantReadableWorkspaceIds}'s answer for
+ * `requested`, read before the caller's transaction locked anything.
  */
 export const resolveMcpGrantSelection = async (
   db: TSelectionReader,
   userId: string,
   requested: TMcpGrantAccessSelection,
-  stored: TMcpGrantAccessSelection | null
+  stored: TMcpGrantAccessSelection | null,
+  readableWorkspaceIds: ReadonlySet<string>
 ): Promise<TMcpGrantSelectionResolution> => {
   if (requested.access === "all") return { status: "ok", access: requested };
   const field = requested.access === "organizations" ? "organizationIds" : "workspaceIds";
-  const offered = await keepOfferedMcpGrantSelection(db, userId, requested);
+  const offered = await keepOfferedMcpGrantSelection(db, userId, requested, readableWorkspaceIds);
   const kept = new Set(getMcpGrantSelectedIds(offered)[field]);
   const already = new Set(stored ? getMcpGrantSelectedIds(stored)[field] : []);
   const added = getMcpGrantSelectedIds(requested)[field].filter((id) => !already.has(id));

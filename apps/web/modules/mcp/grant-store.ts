@@ -35,7 +35,8 @@ import { MCP_PERMISSIONS, type TMcpPermission } from "./permissions";
  *
  *  - Narrowing a grant that stays (consent re-approval, Edit) deletes what it takes away inside the
  *    transaction, while it holds the grant's row `FOR UPDATE` and before it locks any consent row
- *    ({@link narrowMcpGrantAccess}). A failure fails the change.
+ *    ({@link narrowMcpGrantAccess}). A failure fails the change. The workspaces the user may select are
+ *    looked up in SpiceDB before the transaction, never while it holds a lock.
  *  - What a save adds is written once it has committed ({@link projectMcpGrants}), best-effort.
  *  - Deleting a grant needs no SpiceDB call to take effect: `/api/mcp` refuses a request whose user and
  *    client have no grant row. The relationships are removed once the delete has committed
@@ -88,7 +89,10 @@ export const getMcpGrant = async (userId: string, clientId: string): Promise<TSt
   return row ? toStoredGrant(row) : null;
 };
 
-/** Whether the user has a grant to the MCP client, read in the caller's transaction. */
+/**
+ * Whether the user has a grant to the MCP client, read in the caller's transaction without a lock. For a
+ * read after the caller already locked consent rows, where taking the grant's lock would invert the order.
+ */
 export const hasMcpGrant = async (
   tx: Prisma.TransactionClient,
   { userId, clientId }: { userId: string; clientId: string }
@@ -97,6 +101,20 @@ export const hasMcpGrant = async (
     where: { userId_clientId: { userId, clientId } },
     select: { id: true },
   })) !== null;
+
+/**
+ * Locks the user's grant to the MCP client `FOR SHARE`, and says whether it has one. For a path that must
+ * take the grant's lock before consent rows without changing the grant (the refresh check, restoring a
+ * consent after a failed approval): it waits on a save or revoke in flight, and they wait on it.
+ */
+export const shareLockMcpGrant = async (
+  tx: Prisma.TransactionClient,
+  { userId, clientId }: { userId: string; clientId: string }
+): Promise<boolean> => {
+  const rows = await tx.$queryRaw<{ id: string }[]>`
+    SELECT "id" FROM "McpGrant" WHERE "userId" = ${userId} AND "clientId" = ${clientId} FOR SHARE`;
+  return rows.length > 0;
+};
 
 /**
  * Locks the user's grant to the MCP client `FOR UPDATE` and reads it; `null` when there is none. The first
@@ -119,8 +137,10 @@ export const lockMcpGrant = async (
  * The second step of a save that names an organization & workspace access, after {@link lockMcpGrant}:
  * resolves the access to save by the rule the consent screen and Edit share
  * (`resolveMcpGrantSelection`), and deletes from SpiceDB what it takes away from the grant `before`, now,
- * so the narrowing applies on the client's next call or the save fails. Makes SpiceDB calls: run it before
- * locking any consent row. Writes nothing to PostgreSQL; {@link writeMcpGrant} does.
+ * so the narrowing applies on the client's next call or the save fails. `readableWorkspaceIds` is what
+ * `readMcpGrantReadableWorkspaceIds` read for `access` before the transaction began, so the only SpiceDB
+ * call here is that delete. Run it before locking any consent row. Writes nothing to PostgreSQL;
+ * {@link writeMcpGrant} does.
  */
 export const narrowMcpGrantAccess = async (
   tx: Prisma.TransactionClient,
@@ -128,9 +148,15 @@ export const narrowMcpGrantAccess = async (
     userId,
     before,
     access,
-  }: { userId: string; before: TStoredMcpGrant | null; access: TMcpGrantAccessSelection }
+    readableWorkspaceIds,
+  }: {
+    userId: string;
+    before: TStoredMcpGrant | null;
+    access: TMcpGrantAccessSelection;
+    readableWorkspaceIds: ReadonlySet<string>;
+  }
 ): Promise<TMcpGrantSelectionResolution> => {
-  const resolved = await resolveMcpGrantSelection(tx, userId, access, before);
+  const resolved = await resolveMcpGrantSelection(tx, userId, access, before, readableWorkspaceIds);
   if (resolved.status === "ok" && before)
     await deleteMcpGrantRelationshipsBeforeCommit(before, resolved.access);
   return resolved;
@@ -465,12 +491,11 @@ export const queueMcpGrantAudit = async ({
   }
 };
 
-/** The system actor of a grant ended as a consequence of something else (a role lost, an account switched off). */
+/** The actor of a grant ended by no user: an account switched off by the retention sweep, or recovered by SSO. */
 export const MCP_GRANT_SYSTEM_ACTOR = { userId: "system", userType: "system" } as const;
 
 /**
- * How long a transaction that saves a grant may run: it resolves the chosen access, which lists the
- * workspaces the user can read in SpiceDB, and deletes what a narrowing takes away there, before it
- * commits. Above Prisma's 5-second default, which a SpiceDB retry alone can use up.
+ * How long a transaction that saves a grant may run: it deletes what a narrowing takes away from SpiceDB
+ * before it commits. Above Prisma's 5-second default, which a SpiceDB retry alone can use up.
  */
 export const MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS = 15_000;

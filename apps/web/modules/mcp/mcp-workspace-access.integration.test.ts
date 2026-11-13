@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { PATCH as patchGrant } from "@/app/api/internal/mcp-grants/[clientId]/route";
 import { GET as listGrants } from "@/app/api/internal/mcp-grants/route";
 import { listV3DashboardFilterFields } from "@/app/api/v3/dashboards/lib/filter-fields-operations";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
@@ -12,7 +13,15 @@ import {
   succeeded,
   toolText,
 } from "@/integration/mcp-client";
-import { authorize, consent, createUser, grant, registerClient, signIn } from "@/integration/oauth-flow";
+import {
+  authorize,
+  consent,
+  createUser,
+  grant,
+  refresh,
+  registerClient,
+  signIn,
+} from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
 import { reconcileMcpGrantRelationships } from "@/lib/authzed/mcp-grant";
 import { auth } from "@/modules/auth/lib/auth";
@@ -23,6 +32,7 @@ import {
   getIsFeedbackDirectoriesEnabled,
   getIsWorkflowsEnabled,
 } from "@/modules/ee/license-check/lib/utils";
+import { readMcpGrantReadableWorkspaceIds } from "./access-options";
 import { editMcpGrant } from "./authorized-clients";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "./grant";
 import { getMcpGrant, lockMcpGrant, narrowMcpGrantAccess, writeMcpGrant } from "./grant-store";
@@ -41,6 +51,8 @@ import { getMcpGrant, lockMcpGrant, narrowMcpGrantAccess, writeMcpGrant } from "
 
 /** Set to make every SpiceDB relationship write fail, as during an outage; reads keep working. */
 const spicedbWrites = vi.hoisted(() => ({ failing: false }));
+/** Set to make every SpiceDB lookup fail, as during an outage. */
+const spicedbLookups = vi.hoisted(() => ({ failing: false }));
 /** The signed-in user the internal grant routes read, as Authorized apps sends it. */
 const session = vi.hoisted(() => ({ userId: "" }));
 vi.mock("@/modules/auth/lib/session", () => ({
@@ -57,6 +69,10 @@ vi.mock("@/lib/authzed/client", async (importOriginal) => {
         writeRelationships: async (...args: Parameters<typeof client.writeRelationships>) => {
           if (spicedbWrites.failing) throw new Error("SpiceDB is down");
           return client.writeRelationships(...args);
+        },
+        lookupResources: async (...args: Parameters<typeof client.lookupResources>) => {
+          if (spicedbLookups.failing) throw new Error("SpiceDB is down");
+          return client.lookupResources(...args);
         },
       };
     },
@@ -553,6 +569,138 @@ describe("organization & workspace access on MCP calls", () => {
     });
   });
 
+  // Smoke: Edit with SpiceDB down answered the wrapper's generic 500, which the toast showed as "An
+  // unexpected error occurred". It answers what the consent screen does for the same failure.
+  test("Edit answers mcp_grant_not_saved, changing nothing, when SpiceDB can't drop the reach", async () => {
+    await setAccess(setup, {
+      access: "workspaces",
+      workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId],
+    });
+    session.userId = setup.userId;
+    spicedbWrites.failing = true;
+    let response: Response;
+    try {
+      response = await patchGrant(
+        new NextRequest(`http://localhost/api/internal/mcp-grants/${setup.clientId}`, {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            permissions: READ_ALL,
+            access: "workspaces",
+            workspaceIds: [setup.inside.workspaceId],
+          }),
+        }),
+        { params: Promise.resolve({ clientId: setup.clientId }) } as never
+      );
+    } finally {
+      spicedbWrites.failing = false;
+      session.userId = "";
+    }
+
+    expect(response.status).toBe(500);
+    expect(await response.json()).toMatchObject({
+      code: "mcp_grant_not_saved",
+      detail: "The access you chose couldn't be saved, so nothing changed. Try again.",
+    });
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toMatchObject({
+      workspaceIds: sorted(setup.inside.workspaceId, setup.outside.workspaceId),
+    });
+  });
+
+  // A failed Allow changes nothing, the consent the provider wrote before the grant hook ran included.
+  // Each approval asks for fewer scopes than the consent it replaces, so a consent left as the provider
+  // wrote it shows: a new client would skip the consent screen with no grant, and a re-approval would
+  // leave a narrowed consent that the refresh check holds the earlier tokens to.
+  describe("a failed approval leaves the consent as it was", () => {
+    const NARROW = "offline_access surveys:read";
+    const consentsOf = (setup: TSetup, clientId: string) =>
+      prisma.oauthConsent.findMany({ where: { userId: setup.userId, clientId }, select: { scopes: true } });
+    const sortedScopes = (scopes: string) => scopes.split(" ").sort((a, b) => a.localeCompare(b));
+    const withSpiceDb = async <T>(down: { failing: boolean } | null, run: () => Promise<T>): Promise<T> => {
+      if (down) down.failing = true;
+      try {
+        return await run();
+      } finally {
+        if (down) down.failing = false;
+      }
+    };
+
+    test.each([
+      ["422, a workspace the user can't select", 422, null],
+      ["500, SpiceDB down while it checks the selection", 500, spicedbLookups],
+    ] as const)("for a new client: %s", async (_case, status, down) => {
+      const foreign = await prisma.workspace.create({
+        data: {
+          name: "Not mine",
+          organizationId: (await prisma.organization.create({ data: { name: "Stranger" } })).id,
+        },
+      });
+      await synchronizeAuthzedIntegrationFixture();
+      const clientId = await registerClient("new client");
+      const { target } = await authorize(setup.cookie, clientId, EVERYTHING);
+      expect(target.pathname).toBe("/account/authorize");
+
+      const response = await withSpiceDb(down, () =>
+        consent(setup.cookie, target, {
+          accept: true,
+          scope: NARROW,
+          mcp_grant: {
+            permissions: { surveys: "read" },
+            access: "workspaces",
+            workspaceIds: [status === 422 ? foreign.id : setup.inside.workspaceId],
+          },
+        })
+      );
+
+      expect(response.status).toBe(status);
+      expect(await consentsOf(setup, clientId)).toEqual([]);
+      expect(await getMcpGrant(setup.userId, clientId)).toBeNull();
+      // The next authorization asks again rather than issuing a code on a consent without a grant.
+      expect((await authorize(setup.cookie, clientId, NARROW)).target.pathname).toBe("/account/authorize");
+    });
+
+    test.each([
+      ["422, a workspace the user can't select", 422, null],
+      ["500, SpiceDB down while it drops the narrowed reach", 500, spicedbWrites],
+    ] as const)("for a re-approval with fewer scopes: %s", async (_case, status, down) => {
+      await setAccess(setup, {
+        access: "workspaces",
+        workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId],
+      });
+      // Tokens of the wide consent, which a narrowed one would end at their next refresh.
+      const wide = await grant(setup.cookie, setup.clientId, EVERYTHING);
+      const stranger = await prisma.organization.create({ data: { name: "Stranger" } });
+      const foreign = await prisma.workspace.create({
+        data: { name: "Not mine", organizationId: stranger.id },
+      });
+      await synchronizeAuthzedIntegrationFixture();
+      const { target } = await authorize(setup.cookie, setup.clientId, EVERYTHING, { prompt: "consent" });
+
+      const response = await withSpiceDb(down, () =>
+        consent(setup.cookie, target, {
+          accept: true,
+          scope: NARROW,
+          mcp_grant: {
+            permissions: { surveys: "read" },
+            access: "workspaces",
+            workspaceIds: status === 422 ? [foreign.id] : [setup.inside.workspaceId],
+          },
+        })
+      );
+
+      expect(response.status).toBe(status);
+      const consents = await consentsOf(setup, setup.clientId);
+      expect(consents).toHaveLength(1);
+      expect([...consents[0].scopes].sort((a, b) => a.localeCompare(b))).toEqual(sortedScopes(EVERYTHING));
+      expect(await getMcpGrant(setup.userId, setup.clientId)).toMatchObject({
+        permissions: READ_ALL,
+        workspaceIds: sorted(setup.inside.workspaceId, setup.outside.workspaceId),
+      });
+      // The wide tokens keep working: nothing narrowed the consent they were issued under.
+      expect((await refresh(setup.clientId, wide.refresh_token)).status).toBe(200);
+    });
+  });
+
   test("an edit widening the access applies on the next call with the same token", async () => {
     await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
     expectNotFound(
@@ -947,6 +1095,11 @@ describe("organization & workspace access on MCP calls", () => {
     });
     let reconcileSettled = false;
     let reconcile: Promise<unknown> = Promise.resolve();
+    const access: TMcpGrantAccessSelection = {
+      access: "workspaces",
+      workspaceIds: [setup.inside.workspaceId],
+    };
+    const readableWorkspaceIds = await readMcpGrantReadableWorkspaceIds(setup.userId, access);
 
     await prisma.$transaction(
       async (tx) => {
@@ -955,7 +1108,8 @@ describe("organization & workspace access on MCP calls", () => {
         const narrowed = await narrowMcpGrantAccess(tx, {
           userId: setup.userId,
           before,
-          access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+          access,
+          readableWorkspaceIds,
         });
         if (narrowed.status !== "ok") throw new Error("expected the narrowing to resolve");
         // The old access is gone from SpiceDB; a reconcile now starts while the rows still say the old one.

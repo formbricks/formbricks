@@ -22,6 +22,7 @@ import {
   queueMcpGrantAudit,
   queueMcpGrantAudits,
   removeDeletedMcpGrants,
+  shareLockMcpGrant,
   writeMcpGrant,
 } from "./grant-store";
 
@@ -104,6 +105,19 @@ describe("getMcpGrant", () => {
   });
 });
 
+describe("shareLockMcpGrant", () => {
+  test("locks the user's grant to the client FOR SHARE and says whether there is one", async () => {
+    const tx = newTx();
+    tx.$queryRaw.mockResolvedValueOnce([{ id: GRANT_ID }] as never).mockResolvedValueOnce([] as never);
+
+    await expect(shareLockMcpGrant(tx, { userId: USER_ID, clientId: CLIENT_ID })).resolves.toBe(true);
+    await expect(shareLockMcpGrant(tx, { userId: USER_ID, clientId: CLIENT_ID })).resolves.toBe(false);
+    const [sql, ...values] = tx.$queryRaw.mock.calls[0] as unknown as [TemplateStringsArray, ...unknown[]];
+    expect(sql.join("?")).toMatch(/FROM "McpGrant".*FOR SHARE/s);
+    expect(values).toEqual([USER_ID, CLIENT_ID]);
+  });
+});
+
 describe("lockMcpGrant", () => {
   test("locks the grant row FOR UPDATE before reading it", async () => {
     const tx = newTx();
@@ -151,13 +165,16 @@ describe("narrowMcpGrantAccess", () => {
         userId: USER_ID,
         before,
         access: { access: "workspaces", workspaceIds: ["ws-1", "ws-lost"] },
+        readableWorkspaceIds: new Set(["ws-1"]),
       })
     ).resolves.toEqual({ status: "ok", access: { access: "workspaces", workspaceIds: ["ws-1"] } });
+    // The workspaces SpiceDB lets the user read come from the caller, read before it took the lock.
     expect(resolveMcpGrantSelection).toHaveBeenCalledWith(
       tx,
       USER_ID,
       { access: "workspaces", workspaceIds: ["ws-1", "ws-lost"] },
-      before
+      before,
+      new Set(["ws-1"])
     );
     expect(deleteMcpGrantRelationshipsBeforeCommit).toHaveBeenCalledWith(before, {
       access: "workspaces",
@@ -177,11 +194,17 @@ describe("narrowMcpGrantAccess", () => {
         userId: USER_ID,
         before: stored({ access: "workspaces", workspaceIds: ["ws-1"] }),
         access: { access: "workspaces", workspaceIds: ["ws-foreign"] },
+        readableWorkspaceIds: new Set(),
       })
     ).resolves.toEqual({ status: "unavailable", field: "workspaceIds" });
 
     vi.mocked(resolveMcpGrantSelection).mockResolvedValueOnce({ status: "ok", access: { access: "all" } });
-    await narrowMcpGrantAccess(tx, { userId: USER_ID, before: null, access: { access: "all" } });
+    await narrowMcpGrantAccess(tx, {
+      userId: USER_ID,
+      before: null,
+      access: { access: "all" },
+      readableWorkspaceIds: new Set(),
+    });
 
     expect(deleteMcpGrantRelationshipsBeforeCommit).not.toHaveBeenCalled();
   });
@@ -197,6 +220,7 @@ describe("narrowMcpGrantAccess", () => {
         userId: USER_ID,
         before: stored({ access: "workspaces", workspaceIds: ["ws-1"] }),
         access: { access: "all" },
+        readableWorkspaceIds: new Set(),
       })
     ).rejects.toBe(outage);
   });

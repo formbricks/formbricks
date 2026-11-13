@@ -154,12 +154,18 @@ workspace access is enforced through SpiceDB relationships, so the order of each
 can do in between:
 
 - Narrowing a grant that stays — consent re-approval (`oauth-grant-revocation.ts`) or Authorized apps' Edit
-  (`authorized-clients.ts`) — locks the grant row (`lockMcpGrant`), resolves the chosen access by the shared
-  rule (`resolveMcpGrantSelection`), and deletes what it takes away from SpiceDB before it commits
+  (`authorized-clients.ts`) — first asks SpiceDB which workspaces the user can select
+  (`readMcpGrantReadableWorkspaceIds`), before its transaction takes any lock. Then it locks the grant row
+  (`lockMcpGrant`), resolves the chosen access by the shared rule (`resolveMcpGrantSelection`, which re-checks
+  the user's memberships from PostgreSQL), and deletes what it takes away from SpiceDB before it commits
   (`narrowMcpGrantAccess`). All of that runs before any consent row is locked. If SpiceDB can't apply the
-  delete, the request fails and the grant is unchanged: Edit answers 500, and the consent screen shows an
-  error (`mcp_grant_not_saved`); a selection the user can't make answers 422
+  delete, the request fails and the grant is unchanged: Edit answers 500 and the consent screen shows an
+  error, both `mcp_grant_not_saved`; a selection the user can't make answers 422
   (`mcp_grant_selection_unavailable`) on both.
+- A consent approval whose grant can't be saved changes nothing, the consent included. Better Auth writes the
+  consent before the hook that saves the grant runs, outside any transaction the hook can join, so a
+  before-hook snapshots the client's consent rows (`snapshotConsentBeforeApprovalHandler`) and a failed save
+  puts them back: in the grant's transaction for a 422, in a transaction of its own after a 500.
 - What a save adds is written after the commit, best-effort (`projectMcpGrants`).
 - Deleting a grant — Revoke, member removal, the switch to Dashboard viewer, the retention sweep, SSO
   recovery — commits first. The missing row already makes `/api/mcp` answer 401, so the relationships are
@@ -167,7 +173,9 @@ can do in between:
 - The outbox event the rows' triggers queued is the repair for every best-effort write. The reconciler
   reads each grant `FOR SHARE` until its write is done, so it can't put back what a narrowing just removed.
 
-Every path that locks both a grant row and consent rows takes the grant first.
+Every path that locks both a grant row and consent rows takes the grant first. Paths that only need the
+grant to hold still while they read the consent (the refresh check, restoring a consent after a failed
+approval) lock it `FOR SHARE` (`shareLockMcpGrant`).
 
 **There are no exceptions, and tests are what keep it that way.** The feedback-record tools were one
 for a while — they gated inside their own handler factories and registered through
@@ -1450,8 +1458,9 @@ Only `workspaceId` is required. Omit `filter.isDryRun` to return both real and d
 
 Gets one workflow run with its ordered step logs. Read-only and idempotent. Declares Workflow runs: Read
 alone, so a client upgraded with `workflows:read` keeps it. The run's trigger payload, its data and each
-step's input and output carry respondents' answers: without Responses: Read (in the grant and in the token's
-scopes) they come back as `null`, and the rest of the run (status, timing, errors, step order) is returned
+step's input and output carry respondents' answers, and the run's and each step's error text can quote them
+(an SMTP rejection names the address it was sent to): without Responses: Read (in the grant and in the
+token's scopes) they come back as `null`, and the rest of the run (status, timing, step order) is returned
 as it is.
 
 ```json

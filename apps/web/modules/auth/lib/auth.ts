@@ -42,7 +42,10 @@ import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-he
 import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-oauth-consent";
 import { requireValidMcpGrantOnConsentBeforeHandler } from "./mcp-grant-consent";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
-import { revokeOAuthConsentBeforeHandler } from "./oauth-grant-revocation";
+import {
+  revokeOAuthConsentBeforeHandler,
+  snapshotConsentBeforeApprovalHandler,
+} from "./oauth-grant-revocation";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
@@ -395,6 +398,10 @@ export const auth = betterAuth({
       // ENG-7150: an approval carrying the consent screen's grant must carry a valid one, refused before
       // the provider writes the consent. See mcp-grant-consent.ts.
       requireValidMcpGrantOnConsentBeforeHandler(ctx);
+      // ENG-7152: an Allow's consent rows as they are before the provider writes it, so an approval whose
+      // grant can't be saved puts them back and changes nothing. Ahead of the viewer trim, which returns
+      // early. See oauth-grant-revocation.ts.
+      await snapshotConsentBeforeApprovalHandler(ctx);
       // ADR-0025 / ENG-6889: a Dashboard viewer grants at most dashboards:read, whatever was requested.
       // Path-disjoint from the revocation below (consent and update-consent vs delete-consent).
       const viewerConsent = await restrictDashboardViewerConsentBeforeHandler(ctx);

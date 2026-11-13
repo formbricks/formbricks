@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewer-oauth-scopes";
 import { readConsentedScopes } from "@/modules/auth/lib/oauth-grant-revocation";
+import { readMcpGrantReadableWorkspaceIds } from "./access-options";
 import { MAX_LISTED_AUTHORIZED_MCP_CLIENTS } from "./constants";
 import {
   MCP_GRANT_ACCESS_SELECT,
@@ -75,9 +76,12 @@ const capScopes = (
 
 /**
  * The MCP clients the user authorized, most recently changed first: one per client with a consent, and one
- * per `skipConsent` client with a grant, which never has a consent (spec stories 29 and 38). Three reads
- * whatever the count: the consents with their clients, then, side by side, the grants of those clients and
- * the grants of `skipConsent` clients. Duplicate consent rows of one client fold into one entry.
+ * per other grant the user holds (spec stories 29 and 38), so Revoke reaches every grant. That is a
+ * `skipConsent` client, which never has a consent, capped by its registered scopes; or a client left with a
+ * grant and no consent (switched off `skipConsent` after it was authorized), capped at nothing until the
+ * user approves it again. Three reads whatever the count: the consents with their clients, then, side by
+ * side, the grants of those clients and the user's other grants. Duplicate consent rows of one client
+ * fold into one entry.
  */
 export const listAuthorizedMcpClients = async (
   userId: string,
@@ -97,7 +101,7 @@ export const listAuthorizedMcpClients = async (
     take: MAX_LISTED_AUTHORIZED_MCP_CLIENTS,
   });
   const consentedClientIds = [...new Set(consents.map(({ clientId }) => clientId))];
-  const [consentedGrants, skipConsentGrants] = await Promise.all([
+  const [consentedGrants, unconsentedGrants] = await Promise.all([
     consentedClientIds.length === 0
       ? []
       : prisma.mcpGrant.findMany({
@@ -105,7 +109,7 @@ export const listAuthorizedMcpClients = async (
           select: LISTED_GRANT_SELECT,
         }),
     prisma.mcpGrant.findMany({
-      where: { userId, clientId: { notIn: consentedClientIds }, client: { skipConsent: true } },
+      where: { userId, clientId: { notIn: consentedClientIds } },
       select: { ...LISTED_GRANT_SELECT, client: CLIENT_SELECT },
       orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
       take: MAX_LISTED_AUTHORIZED_MCP_CLIENTS,
@@ -135,7 +139,7 @@ export const listAuthorizedMcpClients = async (
       cap: capForScopes(capScopes(consent.client, consent.scopes), isDashboardViewer),
     });
   }
-  for (const grant of skipConsentGrants) {
+  for (const grant of unconsentedGrants) {
     clients.set(grant.clientId, {
       clientId: grant.clientId,
       clientName: grant.client.name,
@@ -144,7 +148,7 @@ export const listAuthorizedMcpClients = async (
       updatedAt: grant.updatedAt,
       permissions: parseMcpGrantPermissions(grant.permissions),
       access: accessOf(grant),
-      cap: capForScopes(grant.client.scopes, isDashboardViewer),
+      cap: capForScopes(capScopes(grant.client, []), isDashboardViewer),
     });
   }
   return [...clients.values()]
@@ -184,10 +188,12 @@ const readCapScopes = async (
  * what a viewer may give), and when `access` adds an organization or workspace the user can't select;
  * one the grant already selected and the user has lost is dropped instead (`resolveMcpGrantSelection`).
  *
- * The grant row is locked first, then the consent read `FOR SHARE`; what a narrowing takes away is
- * deleted from SpiceDB before the transaction commits, or the edit fails. `/api/mcp` reads the grant on
- * every call and what the access adds is written to SpiceDB once the transaction commits, so the change
- * applies from the client's next call.
+ * The workspaces SpiceDB lets the user select are looked up before the transaction, so no lookup runs
+ * under a row lock; the transaction re-checks the user's memberships from PostgreSQL. In it, the grant row
+ * is locked first, then the consent read `FOR SHARE`; what a narrowing takes away is deleted from SpiceDB
+ * before the transaction commits, or the edit fails. `/api/mcp` reads the grant on every call and what the
+ * access adds is written to SpiceDB once the transaction commits, so the change applies from the client's
+ * next call.
  */
 export const editMcpGrant = async ({
   userId,
@@ -205,6 +211,7 @@ export const editMcpGrant = async ({
 }): Promise<TEditMcpGrantResult> => {
   let grantId: string | null = null;
   try {
+    const readableWorkspaceIds = await readMcpGrantReadableWorkspaceIds(userId, access);
     const result = await prisma.$transaction(
       async (tx): Promise<TEditMcpGrantResult> => {
         const before = await lockMcpGrant(tx, { userId, clientId });
@@ -217,7 +224,7 @@ export const editMcpGrant = async ({
         }
         let saved = access;
         if (access) {
-          const resolved = await narrowMcpGrantAccess(tx, { userId, before, access });
+          const resolved = await narrowMcpGrantAccess(tx, { userId, before, access, readableWorkspaceIds });
           if (resolved.status === "unavailable")
             return { status: "selection_unavailable", field: resolved.field };
           saved = resolved.access;
