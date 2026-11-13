@@ -116,7 +116,7 @@
       "consent_failed": "OAuth onayı başarısız oldu. Lütfen tekrar dene.",
       "consent_grant_not_saved": "Seçtiğin erişim kaydedilemedi, bu yüzden hiçbir şey değişmedi. Tekrar dene.",
       "consent_grant_selection_unavailable": "Seçtiğin bazı organizasyonlara veya çalışma alanlarına artık erişimin yok. Sayfayı yenile ve tekrar seç.",
-      "consent_revoked": "OAuth uygulama erişimi iptal edildi.",
+      "consent_revoked": "MCP istemcisinin erişimi iptal edildi.",
       "dashboard_viewer_no_dashboard_scope": "Bu uygulama panoları okuma izni istemedi; oysa bir Pano görüntüleyici yalnızca bu erişimi verebilir.",
       "dashboard_viewer_scope_description": "Pano görüntüleyici olarak bu uygulamanın yalnızca görebildiğin panoları okumasına izin verebilirsin. Uygulama istediği diğer erişimlerin hiçbirini alamaz.",
       "dashboard_viewer_scope_title": "Yalnızca pano erişimi",

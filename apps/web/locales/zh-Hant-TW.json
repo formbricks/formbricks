@@ -116,7 +116,7 @@
       "consent_failed": "OAuth 同意失敗。請再試一次。",
       "consent_grant_not_saved": "無法儲存你選擇的存取權限，因此沒有任何變更。請再試一次。",
       "consent_grant_selection_unavailable": "你已無法存取所選的部分組織或工作區。請重新載入頁面後再選擇一次。",
-      "consent_revoked": "OAuth 應用程式存取權限已撤銷。",
+      "consent_revoked": "已撤銷 MCP 用戶端的存取權限。",
       "dashboard_viewer_no_dashboard_scope": "這個應用程式沒有要求讀取儀表板的權限，而這是「儀表板檢視者」唯一能授予的權限。",
       "dashboard_viewer_scope_description": "身為「儀表板檢視者」，你只能讓這個應用程式讀取你看得到的儀表板，它要求的其他權限都不會被授予。",
       "dashboard_viewer_scope_title": "僅限儀表板存取",

@@ -98,7 +98,7 @@ checksums:
     auth/oauth/consent_failed: d6c92762fac20817ff0ec8d9cbc0412c
     auth/oauth/consent_grant_not_saved: 4a3c97c9b5c610d58c650e89f7a2337f
     auth/oauth/consent_grant_selection_unavailable: eae08d5952ebedce496e34d5e30918f9
-    auth/oauth/consent_revoked: f1c243aaacd7c466b9986e484b93247b
+    auth/oauth/consent_revoked: 5d7e4ecca4f9cde2c920b85114e39e58
     auth/oauth/dashboard_viewer_no_dashboard_scope: 79ce3b9f2fc06850bc63405425e8d782
     auth/oauth/dashboard_viewer_scope_description: 485c4733b0af20534efd05854bd670b2
     auth/oauth/dashboard_viewer_scope_title: 409c50e64b51dad16a9f8728d654aa5a

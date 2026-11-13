@@ -116,7 +116,7 @@
       "consent_failed": "OAuth-godkännande misslyckades. Försök igen.",
       "consent_grant_not_saved": "Den åtkomst du valde kunde inte sparas, så ingenting har ändrats. Försök igen.",
       "consent_grant_selection_unavailable": "Du har inte längre åtkomst till några av de organisationer eller arbetsytor du valde. Ladda om sidan och välj igen.",
-      "consent_revoked": "OAuth-appåtkomst återkallad.",
+      "consent_revoked": "MCP-klientens åtkomst har återkallats.",
       "dashboard_viewer_no_dashboard_scope": "Den här appen bad inte om att få läsa dashboards, vilket är den enda åtkomst som en Dashboard-läsare kan ge.",
       "dashboard_viewer_scope_description": "Som Dashboard-läsare kan du bara ge den här appen tillåtelse att läsa de dashboards du kan se. Appen får ingen annan åtkomst som den har bett om.",
       "dashboard_viewer_scope_title": "Endast åtkomst till dashboards",

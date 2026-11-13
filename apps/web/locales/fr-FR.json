@@ -116,7 +116,7 @@
       "consent_failed": "Le consentement OAuth a échoué. Réessaye.",
       "consent_grant_not_saved": "L'accès que tu as choisi n'a pas pu être enregistré, donc rien n'a changé. Réessaie.",
       "consent_grant_selection_unavailable": "Tu n'as plus accès à certaines des organisations ou à certains des espaces de travail que tu as sélectionnés. Recharge la page et fais à nouveau ton choix.",
-      "consent_revoked": "Accès à l'application OAuth révoqué.",
+      "consent_revoked": "L'accès du client MCP a été révoqué.",
       "dashboard_viewer_no_dashboard_scope": "Cette application n'a pas demandé à lire les tableaux de bord, le seul accès qu'un lecteur de tableaux de bord peut accorder.",
       "dashboard_viewer_scope_description": "En tant que lecteur de tableaux de bord, tu peux uniquement autoriser cette application à lire les tableaux de bord que tu peux voir. Elle n'obtiendra aucun des autres accès demandés.",
       "dashboard_viewer_scope_title": "Accès aux tableaux de bord uniquement",

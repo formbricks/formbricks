@@ -116,7 +116,7 @@
       "consent_failed": "OAuth 授权失败。请重试。",
       "consent_grant_not_saved": "你选择的访问权限未能保存，因此没有任何更改。请重试。",
       "consent_grant_selection_unavailable": "你已无法访问所选的部分组织或工作区。请刷新页面后重新选择。",
-      "consent_revoked": "OAuth 应用访问权限已撤销。",
+      "consent_revoked": "MCP 客户端的访问权限已撤销。",
       "dashboard_viewer_no_dashboard_scope": "此应用没有请求读取仪表板的权限,而这是“仪表板查看者”唯一能授予的权限。",
       "dashboard_viewer_scope_description": "作为仪表板查看者,你只能允许此应用读取你可以查看的仪表板,无法授予它请求的其他任何权限。",
       "dashboard_viewer_scope_title": "仅限仪表板访问权限",

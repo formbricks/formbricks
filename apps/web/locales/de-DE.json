@@ -116,7 +116,7 @@
       "consent_failed": "OAuth-Zustimmung fehlgeschlagen. Bitte versuche es erneut.",
       "consent_grant_not_saved": "Der von Dir gewählte Zugriff konnte nicht gespeichert werden, daher hat sich nichts geändert. Versuch es noch einmal.",
       "consent_grant_selection_unavailable": "Du hast keinen Zugriff mehr auf einige der Organisationen oder Workspaces, die Du ausgewählt hast. Lade die Seite neu und wähle erneut.",
-      "consent_revoked": "OAuth-App-Zugriff widerrufen.",
+      "consent_revoked": "Zugriff des MCP-Clients widerrufen.",
       "dashboard_viewer_no_dashboard_scope": "Diese App hat nicht darum gebeten, Dashboards zu lesen – das ist der einzige Zugriff, den ein Dashboard-Betrachter gewähren kann.",
       "dashboard_viewer_scope_description": "Als Dashboard-Betrachter kannst Du dieser App nur erlauben, die Dashboards zu lesen, die Du sehen kannst. Weitere angefragte Zugriffe erhält sie nicht.",
       "dashboard_viewer_scope_title": "Nur Dashboard-Zugriff",

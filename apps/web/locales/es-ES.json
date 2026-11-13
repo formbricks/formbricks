@@ -116,7 +116,7 @@
       "consent_failed": "Fallo en el consentimiento OAuth. Por favor, inténtalo de nuevo.",
       "consent_grant_not_saved": "No se ha podido guardar el acceso que elegiste, así que no ha cambiado nada. Inténtalo de nuevo.",
       "consent_grant_selection_unavailable": "Ya no tienes acceso a algunas de las organizaciones o espacios de trabajo que seleccionaste. Recarga la página y vuelve a elegir.",
-      "consent_revoked": "Acceso de la aplicación OAuth revocado.",
+      "consent_revoked": "Se ha revocado el acceso del cliente MCP.",
       "dashboard_viewer_no_dashboard_scope": "Esta aplicación no ha solicitado leer paneles, que es el único acceso que puede conceder un visor de paneles.",
       "dashboard_viewer_scope_description": "Como visor de paneles, solo puedes permitir que esta aplicación lea los paneles que tú puedes ver. No obtendrá ningún otro acceso de los que ha solicitado.",
       "dashboard_viewer_scope_title": "Acceso solo a paneles",
