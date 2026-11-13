@@ -1,0 +1,34 @@
+type: object
+description: >-
+  If/else logic step: a run continues down the edge whose `sourceHandle` is `then` when the
+  condition group holds, and down the `else` edge otherwise. Each branch has at most one edge; a
+  branch with none ends the run on that side. The step's output (`branch`, `matched`, and each
+  condition's result) is a Variable later steps can read as `steps.<id>.branch`.
+required:
+  - id
+  - type
+  - config
+properties:
+  id:
+    type: string
+    minLength: 1
+  type:
+    type: string
+    enum:
+      - if_else
+  label:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: Optional display label shown in the builder.
+  config:
+    type: object
+    required:
+      - condition
+    properties:
+      condition:
+        $ref: ./WorkflowConditionGroup.yml
+    additionalProperties: false
+  ui:
+    $ref: ./WorkflowNodeUi.yml
+additionalProperties: false

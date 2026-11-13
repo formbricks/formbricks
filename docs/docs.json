@@ -335,7 +335,19 @@
           },
           {
             "group": "Workflow Features",
-            "pages": ["workflows/build", "workflows/manage-and-monitor"]
+            "pages": [
+              "workflows/build",
+              "workflows/webhook-trigger",
+              "workflows/variables",
+              "workflows/if-else",
+              "workflows/switch",
+              "workflows/http-request",
+              "workflows/email-payload-address",
+              "workflows/test-runs",
+              "workflows/manage-and-monitor",
+              "workflows/webhooks-vs-workflows",
+              "workflows/limits"
+            ]
           }
         ],
         "tab": "Workflows (Act)"

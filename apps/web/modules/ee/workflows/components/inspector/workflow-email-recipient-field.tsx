@@ -1,6 +1,6 @@
 "use client";
 
-import { FileType2Icon, MailIcon, TriangleAlertIcon, UserIcon } from "lucide-react";
+import { FileType2Icon, MailIcon, TriangleAlertIcon, UserIcon, WebhookIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -9,6 +9,7 @@ import {
   WorkflowFieldError,
   WorkflowFieldLabel,
 } from "@/modules/ee/workflows/components/inspector/workflow-field";
+import type { TRecipientVariableOption } from "@/modules/ee/workflows/lib/email-recipient";
 import {
   type EmailSendToOption,
   findEmailSendToOption,
@@ -61,7 +62,12 @@ const renderSelectItem = (option: EmailSendToOption, elementIconMap: TElementIco
 interface WorkflowEmailRecipientFieldProps {
   /** Selectable recipients derived from the trigger's bound survey. Empty = nothing to pick. */
   options: EmailSendToOption[];
-  /** The stored `config.to`: an element id, hidden-field id, email, or "verifiedEmail". */
+  /**
+   * Addresses read from a Variable (a Webhook payload, ENG-7169), as `variable:<path>` values. Picking
+   * one makes the email's content fixed.
+   */
+  variableOptions?: TRecipientVariableOption[];
+  /** The stored `config.to` as a select value: an element id, hidden-field id, email, "verifiedEmail" or `variable:<path>`. */
   value: string;
   isEditable: boolean;
   isInvalid: boolean;
@@ -79,6 +85,7 @@ interface WorkflowEmailRecipientFieldProps {
  */
 export const WorkflowEmailRecipientField = ({
   options,
+  variableOptions = [],
   value,
   isEditable,
   isInvalid,
@@ -112,7 +119,8 @@ export const WorkflowEmailRecipientField = ({
   // normalization the runtime allowlist uses, so a `to` that only differs in case from a member's
   // address is not flagged as unavailable while it still sends.
   const matchedOption = findEmailSendToOption(options, value);
-  const isValueUnavailable = value !== "" && !matchedOption;
+  const isVariableValue = variableOptions.some((option) => option.value === value);
+  const isValueUnavailable = value !== "" && !matchedOption && !isVariableValue;
 
   // Radix selects by exact string match, so drive it with the resolved option's id — otherwise a
   // case-differing stored `to` would render as the placeholder, i.e. an empty field.
@@ -130,7 +138,7 @@ export const WorkflowEmailRecipientField = ({
       <p className="text-xs text-slate-500">
         {t("workspace.surveys.edit.follow_ups_modal_action_to_description")}
       </p>
-      {groups.length > 0 || isValueUnavailable ? (
+      {groups.length > 0 || variableOptions.length > 0 || isValueUnavailable ? (
         <Select
           value={selectedValue}
           disabled={!isEditable}
@@ -149,6 +157,21 @@ export const WorkflowEmailRecipientField = ({
             <SelectValue placeholder={t("workspace.workflows.email_to_placeholder")} />
           </SelectTrigger>
           <SelectContent>
+            {variableOptions.length > 0 ? (
+              <div className="flex flex-col">
+                <div className="flex items-center gap-x-2 p-2">
+                  <p className="text-sm text-slate-500">{t("workspace.workflows.variable_group_payload")}</p>
+                </div>
+                {variableOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    <div className="flex w-full items-center gap-x-2">
+                      <WebhookIcon className="size-4" />
+                      <span className="truncate font-mono text-sm">{option.label}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </div>
+            ) : null}
             {groups.map((group) => (
               <div key={group.label} className="flex flex-col">
                 <div className="flex items-center gap-x-2 p-2">
@@ -180,6 +203,9 @@ export const WorkflowEmailRecipientField = ({
           <p className="text-sm">{t("workspace.surveys.edit.follow_ups_modal_action_to_warning")}</p>
         </div>
       )}
+      {isVariableValue ? (
+        <p className="text-xs text-slate-500">{t("workspace.workflows.email_to_variable_help")}</p>
+      ) : null}
       {isValueUnavailable ? (
         <p id={UNAVAILABLE_ID} className="text-sm text-warning-foreground">
           {t("workspace.workflows.email_to_unavailable_warning")}

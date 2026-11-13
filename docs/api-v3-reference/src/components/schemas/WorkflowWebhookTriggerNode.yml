@@ -1,0 +1,35 @@
+type: object
+description: >
+  A Webhook trigger: the workflow starts a run when an outside system POSTs a
+  JSON object to its Webhook Secret URL. It has nothing to configure; the
+  Secret URL's token is stored with the workflow, never in the definition, and
+  is read with `GET /api/v3/workflows/{workflowId}/webhook`.
+required:
+  - id
+  - type
+  - triggerType
+properties:
+  id:
+    type: string
+    minLength: 1
+  type:
+    type: string
+    enum:
+      - trigger
+  triggerType:
+    type: string
+    enum:
+      - webhook
+  label:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: Optional display label shown in the builder.
+  config:
+    type: object
+    default: {}
+    additionalProperties: false
+    description: Always empty. Optional on writes; always present in responses.
+  ui:
+    $ref: ./WorkflowNodeUi.yml
+additionalProperties: false

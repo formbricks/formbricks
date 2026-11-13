@@ -1,0 +1,88 @@
+---
+title: "Workflow limits"
+sidebarTitle: "Limits"
+description: "The size, rate and time limits that apply to workflows, their Webhook trigger, steps and test tools."
+icon: "gauge-high"
+---
+
+These limits keep one workflow, or one leaked Webhook Secret URL, from slowing down or spending the budget of a
+whole organization. Self-hosters can change the ones marked with an environment variable; every other limit is
+fixed.
+
+<Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
+
+## Workflow definition
+
+Saving a workflow over one of these limits is refused. A workflow saved before a limit existed keeps running.
+
+| Limit                                  | Value           |
+| -------------------------------------- | --------------- |
+| Steps per workflow                     | 25              |
+| Conditions per If/else, groups included | 20             |
+| Cases per Switch, Default not counted  | 2 to 10         |
+| Values in a list condition             | 100             |
+| Text in a condition value              | 1,000 characters |
+| Variable path length                   | 512 characters  |
+
+## Webhook trigger
+
+| Limit                                               | Value                | Environment variable                    |
+| --------------------------------------------------- | -------------------- | --------------------------------------- |
+| Calls per minute to one workflow's URL              | 100                  | —                                       |
+| Calls per minute across an organization's workflows | 300                  | `WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE` |
+| Calls per day (UTC) to one enabled workflow's URL   | 10,000               | `WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT`      |
+| Payload size, also for a pasted Sample payload      | 100 KB               | —                                       |
+| Payload nesting                                     | 10 levels            | —                                       |
+| `Idempotency-Key` length                            | 255 characters       | —                                       |
+| Payload values the `@` picker lists                 | 500                  | —                                       |
+
+The daily limit counts every call to an enabled workflow that passes the plan check, including calls then
+refused for size or content type and calls that repeat an `Idempotency-Key`. A call over a rate limit answers
+`429` with a `Retry-After` header. See
+[Status codes](/workflows/webhook-trigger#status-codes).
+
+## HTTP request
+
+| Limit                                | Value                         |
+| ------------------------------------ | ----------------------------- |
+| URL length                           | 2 KB                          |
+| Headers                              | 30                            |
+| Header value                         | 8 KB                          |
+| Query parameters                     | 30                            |
+| Query parameter value                | 2 KB                          |
+| Body template                        | 100 KB                        |
+| Timeout per attempt                  | 10 seconds                    |
+| Retries                              | 3, after 1, 2 and 4 seconds   |
+| Response read by later steps         | 1 MB                          |
+| Response kept in run detail          | 64 KB                         |
+| "Don't wait" request still sending   | Marked failed after 1 hour    |
+
+## Send email
+
+| Limit                                                 | Value                                                                  |
+| ----------------------------------------------------- | ---------------------------------------------------------------------- |
+| Emails per hour per workflow to an address from a Variable | 50                                                                |
+| Organization email limits                             | See [Email limits](/self-hosting/configuration/rate-limiting#email-limits) |
+| Embedded Data rows on a survey link                   | 30                                                                     |
+| Embedded Data value                                   | 2 KB                                                                   |
+| Subject                                               | 998 characters                                                         |
+| Body                                                  | 100,000 characters                                                     |
+
+## Test tools
+
+| Limit                                  | Value                                   |
+| -------------------------------------- | --------------------------------------- |
+| Test runs                              | 30 per minute per user or API key       |
+| Test requests                          | 30 per minute per user or API key       |
+| Test request timeout                   | 10 seconds, no retry                    |
+| Test response kept                     | 64 KB                                   |
+
+## Run data
+
+| Limit                                             | Value                     | Environment variable               |
+| ------------------------------------------------- | ------------------------- | ---------------------------------- |
+| Run details kept after the run finished           | 90 days                   | `WORKFLOW_RUN_DATA_RETENTION_DAYS` |
+| Sample payload and Test request response kept     | 90 days without an update | `WORKFLOW_RUN_DATA_RETENTION_DAYS` |
+| Test runs kept                                    | 7 days                    | —                                  |
+
+See [Run data retention](/workflows/manage-and-monitor#run-data-retention).

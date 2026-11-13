@@ -63,6 +63,11 @@ const nextConfig = {
   basePath: process.env.BASE_PATH || undefined,
   output: "standalone",
   poweredByHeader: false,
+  // The Webhook Secret URL token is a credential (ADR 0041); keep `next dev`'s request log from
+  // printing it. Production never logs incoming requests.
+  logging: {
+    incomingRequests: { ignore: [/\/api\/v3\/workflows\/[^/]+\/webhook\/[^/]+$/] },
+  },
   // Enable source maps only when uploading to Sentry (CI/production); skip for faster local builds
   productionBrowserSourceMaps: !!process.env.SENTRY_AUTH_TOKEN,
   serverExternalPackages: [

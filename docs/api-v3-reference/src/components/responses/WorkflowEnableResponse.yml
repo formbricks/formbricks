@@ -1,0 +1,31 @@
+description: >
+  Workflow enabled. `meta.warnings` is present only when something will not stop the workflow from
+  running but probably needs a look, such as a survey link Embedded Data key the survey doesn't
+  accept.
+headers:
+  X-Request-Id:
+    schema:
+      type: string
+    description: Request correlation ID
+  Cache-Control:
+    schema:
+      type: string
+    example: private, no-store
+content:
+  application/json:
+    schema:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: ../schemas/WorkflowResource.yml
+        meta:
+          type: object
+          required:
+            - warnings
+          properties:
+            warnings:
+              type: array
+              items:
+                $ref: ../schemas/WorkflowWarning.yml

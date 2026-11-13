@@ -8,6 +8,12 @@ description: >-
   author can save an unfinished draft. Completeness is enforced when the workflow
   has to run: enabling it returns **422** `workflow_not_executable` naming each
   blank field, and the dry run reports them as problems.
+
+
+  With a Variable recipient (`to: {type: "variable", ref}`), the email must be fixed: `subject` and
+  `body` may not contain recall tokens and `attachResponseData` must be false. Only the survey
+  link's Embedded Data values may carry Variables. Enabling a workflow that breaks this returns
+  **422** `workflow_not_executable`.
 required:
   - to
   - from
@@ -17,32 +23,25 @@ required:
   - attachResponseData
 properties:
   to:
-    type: string
+    oneOf:
+      - type: string
+        description: >
+          A literal email address (e.g. a teammate) or the element id of a survey question /
+          hidden field whose answer contains the respondent's email address (contact-info
+          elements resolve index [2]) — the same semantics as the Follow-ups `to` field.
+
+
+          A **literal** address must belong to someone who can access this workspace — an
+          organization owner or manager, or a member of a team the workspace is shared with.
+          Enabling a workflow whose literal recipient cannot access the workspace returns **422**
+          `workflow_not_executable`, the dry run reports a `recipient_not_allowed` problem, and the
+          runner refuses to send to it — so a workflow cannot forward response data to an
+          arbitrary external inbox. An element-id `to` resolves to the respondent's own address
+          and is never allowlist-checked.
+      - $ref: ./WorkflowVariableEmailRecipient.yml
     description: >
-      Recipient: either a literal email address (e.g. a teammate) or the element
-      id of a
-
-      survey question / hidden field whose answer contains the respondent's email
-      address
-
-      (contact-info elements resolve index [2]) — the same semantics as the
-      Follow-ups `to` field.
-
-
-      A **literal** address must belong to someone who can access this
-      workspace — an organization owner or manager, or a member of a team the
-
-      workspace is shared with. Enabling a workflow whose literal recipient
-      cannot access the workspace returns **422**
-      `workflow_not_executable`, the
-
-      dry run reports a `recipient_not_allowed` problem, and the runner refuses
-      to send to it — so a
-
-      workflow cannot forward response data to an arbitrary external inbox. An
-      element-id `to`
-
-      resolves to the respondent's own address and is never allowlist-checked.
+      Recipient: a string (literal address or survey element id), or a Variable recipient
+      such as the customer's address in a Webhook payload.
   from:
     type: string
     format: email
@@ -70,11 +69,27 @@ properties:
 
       and it is wrapped in the branded Follow-ups email template — identical
       rendering to survey Follow-ups.
+
+
+      `#survey-link#` places the survey link (`surveyLink`) as a link; a body
+      with the token needs a `surveyLink`, and a `surveyLink` needs the token.
   attachResponseData:
     type: boolean
+  surveyLink:
+    $ref: ./WorkflowSurveyLink.yml
+  includeEmbeddedData:
+    type: boolean
+    default: false
+    description: >
+      Adds the response's Embedded Data to the attached response data. Replaces
+      `includeVariables`; send one or the other, never both (**400**).
   includeVariables:
     type: boolean
     default: false
+    deprecated: true
+    description: >
+      Deprecated: use `includeEmbeddedData`. Accepted until v7.0.0 and returned as written;
+      never together with `includeEmbeddedData`.
   includeHiddenFields:
     type: boolean
     default: false

@@ -142,3 +142,43 @@ that is not listed here.
 **Import report** — The warnings and notes an import shows before anything is created or updated: what was removed, changed or needs a check.
 
 **Excel export** — A survey written as a workbook for reviewers and translators: one row per question and option, one column per language, plus a Survey sheet of its properties. It is not a Formbricks file, but it names its survey: imported back, it matches that survey, its rows match the survey's texts by id, and it only changes and adds, never removes.
+
+## Workflows
+
+**Workflow** — An automation in a workspace: one trigger followed by steps, kept as a draft, enabled, disabled or archived. Only an enabled workflow starts runs. _Avoid_: automation, flow (a flow is a survey's block flow).
+
+**Trigger** — The event that starts a workflow's runs: Response completed, or a call to its Webhook Secret URL. A workflow has exactly one. _Avoid_: event, start.
+
+**Webhook trigger** — The trigger that starts a run when an outside system POSTs JSON to the workflow's Webhook Secret URL. _Avoid_: incoming webhook, API trigger, JSON event.
+
+**Webhook Secret URL** — The secret address of a Webhook trigger, and its only credential: anyone holding it can start runs, so it is handled like an API key or a password. Regenerate replaces it and the old one stops working at once. _Avoid_: Webhook URL, endpoint, hook URL.
+
+**Payload** — The JSON a Webhook trigger received to start a run. _Avoid_: event, body, request.
+
+**Sample payload** — The payload a workflow keeps as its example: the last one received, or one pasted in. The @ picker offers its Variables and a Test run uses it. _Avoid_: test payload, captured event.
+
+**Step** — Anything after the trigger. Steps are grouped as Logic or Actions. _Avoid_: node (code and API only), block (a survey card), task.
+
+**Logic step** — A step that decides or shapes data inside the run and has no effect outside it, such as If/else or Switch. _Avoid_: condition node, decision.
+
+**Action** — A step with an effect outside the run, such as Send email or HTTP request. _Avoid_: task, connector.
+
+**If/else** — A logic step that sends a run down its Then branch when its conditions hold, and down its Else branch otherwise.
+
+**Switch** — A logic step that compares one Variable against 2 to 10 named cases and sends a run down the branch of the first case that matches, or down its Default branch when none does. Matching on more than one Variable is an If/else. _Avoid_: router, case statement, multi-branch.
+
+**Branch** — One of the ways out of an If/else (Then or Else) or a Switch (one per case, plus Default). A run takes exactly one, and run detail shows the branch taken. _Avoid_: path, route, outcome (a response status).
+
+**HTTP request** — The action that calls an outside URL with a method, headers and body, and passes the response to later steps. _Avoid_: API call, web service task, webhook action, outgoing webhook.
+
+**Secret header** — A header of an HTTP request whose value is stored encrypted and never shown again; it can only be replaced. A duplicate keeps the header but not its value. _Avoid_: credential, token (as the general word).
+
+**Variable** — A named value a run can use in later steps: part of the payload, a step's output or a response answer, inserted with @. _Avoid_: field (a chart-query term), data reference.
+
+**Run** — One execution of a workflow from its trigger to its last step, tied to the version that was enabled when it started. _Avoid_: execution, job.
+
+**Test run** — A run started from the editor with the sample payload. It sends no email, calls nothing outside, appears under Runs with a Test label and is never billed. _Avoid_: dry run, simulation, preview.
+
+**Test request** — One real call made by an HTTP request's "Send test request" button, so the author sees the real response. It is not a run. _Avoid_: ping, test call.
+
+**Version** — The unchangeable copy of a workflow made each time it is enabled. _Avoid_: revision, snapshot.

@@ -14,6 +14,9 @@ import { CREATIVE_TEXTS, type TCreativeTextSpec } from "@/modules/ee/creatives/l
 import * as creativeSchemas from "./creative-schemas";
 import * as surveyAndFeedbackSchemas from "./schemas";
 import * as workflowSchemas from "./workflow-schemas";
+import * as workflowTestRequestSchemas from "./workflow-test-request-schemas";
+import * as workflowTestRunSchemas from "./workflow-test-run-schemas";
+import * as workflowWebhookSchemas from "./workflow-webhook-schemas";
 
 vi.mock("server-only", () => ({}));
 
@@ -133,6 +136,9 @@ function classifyObjectNodes(name: string, schema: z.ZodType): Walked {
 const allExports: [string, unknown][] = Object.entries({
   ...surveyAndFeedbackSchemas,
   ...workflowSchemas,
+  ...workflowWebhookSchemas,
+  ...workflowTestRequestSchemas,
+  ...workflowTestRunSchemas,
   ...creativeSchemas,
 });
 
@@ -188,6 +194,18 @@ const EXPECTED_FREE_FORM_PATHS: Record<string, string[]> = {
   ZMcpCreateFeedbackRecordInput: ["ZMcpCreateFeedbackRecordInput.metadata"],
   ZMcpCreateFeedbackRecordsInput: ["ZMcpCreateFeedbackRecordsInput.records[].metadata"],
   ZMcpUpdateFeedbackRecordInput: ["ZMcpUpdateFeedbackRecordInput.metadata"],
+  // A Webhook workflow's Sample payload is any JSON object an outside system would send; the operation
+  // bounds its size and depth.
+  ZMcpSetSamplePayloadInput: ["ZMcpSetSamplePayloadInput.payload"],
+  // A Test request's Variables: a test payload (any JSON object, like a Sample payload) and earlier
+  // steps' outputs keyed by step id, each an outside server's JSON response.
+  ZMcpSendTestRequestInput: [
+    "ZMcpSendTestRequestInput.variables.payload",
+    "ZMcpSendTestRequestInput.variables.steps",
+    "ZMcpSendTestRequestInput.variables.steps{}",
+  ],
+  // A Test run's payload: any JSON object, like a Sample payload; the operation bounds size and depth.
+  ZMcpRunTestInput: ["ZMcpRunTestInput.payload"],
   // A creative's texts are maps keyed by locale code ({"en-US": "..."}): the keys are data, not declared
   // fields. The operation checks each against the languages the creative declares, so a misspelled locale
   // is refused (422) rather than dropped.

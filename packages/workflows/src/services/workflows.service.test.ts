@@ -70,16 +70,21 @@ const versionFindFirst = vi.fn<WorkflowVersionDelegate["findFirst"]>();
 const versionCreate = vi.fn<WorkflowVersionDelegate["create"]>();
 const runFindMany = vi.fn<WorkflowRunDelegate["findMany"]>();
 const runFindUnique = vi.fn<WorkflowRunDelegate["findUnique"]>();
+const runCreate = vi.fn<WorkflowRunDelegate["create"]>();
 const workflow = { findMany, findUnique, create, update, delete: deleteFn, updateMany, count };
 const workflowVersion = { findFirst: versionFindFirst, create: versionCreate };
-const workflowRun = { findMany: runFindMany, findUnique: runFindUnique };
+const workflowRun = { findMany: runFindMany, findUnique: runFindUnique, create: runCreate };
 const prisma: WorkflowsDb = {
   workflow,
   workflowVersion,
   workflowRun,
+  workflowSample: { findUnique: vi.fn(), upsert: vi.fn() },
   $transaction: (fn) => fn({ workflow, workflowVersion }),
 };
-const service = createWorkflowsService({ prisma });
+const service = createWorkflowsService({
+  prisma,
+  webhookTokens: { issue: () => ({ hash: "hash", encrypted: "encrypted" }), reveal: () => "token" },
+});
 
 const runId = "cm9zr4w9d000308l8c5n8xk7e";
 
@@ -116,6 +121,10 @@ const makeRunDetail = (overrides: Partial<WorkflowRunWithLogsRow> = {}): Workflo
   idempotencyKey: null,
   nextAttemptAt: null,
   lastErrorAt: null,
+  callerIp: null,
+  contentDeletedAt: null,
+  contentRetentionDays: null,
+  workflowVersion: null,
   logs: [],
   ...overrides,
 });
@@ -655,6 +664,38 @@ describe("listWorkflowRuns", () => {
   });
 });
 
+describe("createTestRun", () => {
+  test("saves a queued dry run with no version, so nothing bills or dispatches it", async () => {
+    runCreate.mockResolvedValue({ id: runId });
+    const triggerPayload = {
+      type: "webhook" as const,
+      workspaceId: "cm9zr4mps000008l8btfy1vtz",
+      payload: { order: 1 },
+      triggeredAt: "2026-11-13T10:00:00.000Z",
+    };
+
+    const result = await service.createTestRun(
+      { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId: "cm9zr4mps000008l8btfy1vtz" },
+      triggerPayload
+    );
+
+    expect(result).toEqual({ id: runId });
+    expect(runCreate).toHaveBeenCalledWith({
+      data: {
+        workflowId: "cm9zr4t2b000208l8h2m1aq3c",
+        workspaceId: "cm9zr4mps000008l8btfy1vtz",
+        workflowVersionId: null,
+        status: "queued",
+        triggerType: "webhook",
+        isDryRun: true,
+        attempt: 0,
+        triggerPayload,
+      },
+      select: { id: true },
+    });
+  });
+});
+
 describe("getWorkflowRun", () => {
   test("loads a run by id and eager-loads its logs ordered by sequence", async () => {
     const detail = makeRunDetail({ logs: [] });
@@ -664,7 +705,10 @@ describe("getWorkflowRun", () => {
 
     expect(runFindUnique.mock.calls[0][0]).toEqual({
       where: { id: runId },
-      include: { logs: { orderBy: { sequence: "asc" } } },
+      include: {
+        logs: { orderBy: { sequence: "asc" } },
+        workflowVersion: { select: { version: true } },
+      },
     });
     expect(result).toBe(detail);
   });

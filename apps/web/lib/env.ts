@@ -713,6 +713,14 @@ const parsedEnv = createEnv({
     IMPRINT_ADDRESS: z.string().optional(),
     INVITE_DISABLED: z.enum(["1", "0"]).optional(),
     INVITE_RATE_LIMIT_PER_24_HOURS: z.coerce.number().int().min(1).optional().default(50),
+    // Workflows Webhook trigger (ENG-7177). The plain-HTTP switch is hard-ignored on Formbricks Cloud
+    // (see `ALLOW_WORKFLOW_PLAIN_HTTP` in constants.ts).
+    DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP: z.enum(["1", "0"]).optional(),
+    WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT: z.coerce.number().int().min(1).optional().default(10_000),
+    WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE: z.coerce.number().int().min(1).optional().default(300),
+    // Workflow run data retention (ENG-7186, ADR 0044): days after a run finished that its content is
+    // cleared, and that an unchanged sample is kept.
+    WORKFLOW_RUN_DATA_RETENTION_DAYS: z.coerce.number().int().min(1).max(3650).optional().default(90),
     PLAIN_APP_ID: z.string().optional(),
     PLAIN_CHAT_HMAC_SECRET: z.string().optional(),
     PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID: z.string().optional(),
@@ -950,6 +958,10 @@ const parsedEnv = createEnv({
     IMPRINT_ADDRESS: process.env.IMPRINT_ADDRESS,
     INVITE_DISABLED: process.env.INVITE_DISABLED,
     INVITE_RATE_LIMIT_PER_24_HOURS: process.env.INVITE_RATE_LIMIT_PER_24_HOURS,
+    DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP: process.env.DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP,
+    WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT: process.env.WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT,
+    WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE: process.env.WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE,
+    WORKFLOW_RUN_DATA_RETENTION_DAYS: process.env.WORKFLOW_RUN_DATA_RETENTION_DAYS,
     PLAIN_APP_ID: process.env.PLAIN_APP_ID,
     PLAIN_CHAT_HMAC_SECRET: process.env.PLAIN_CHAT_HMAC_SECRET,
     PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID: process.env.PLAIN_ACTIVE_CUSTOMER_LABEL_TYPE_ID,

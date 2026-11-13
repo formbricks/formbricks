@@ -1,3 +1,5 @@
+import { WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW } from "@formbricks/workflows";
+
 /**
  * `failClosed: true` marks the abuse limits: email-sending, account and organization creation, and the
  * brute-force guards. They refuse while Redis is unavailable instead of letting everything through; every
@@ -53,6 +55,28 @@ export const rateLimitConfigs = {
       namespace: "api:v3:state-mutation",
     }, // 120 per minute per principal — the API twin of `actions.stateMutation`, for batch writes that fan out to the response pipeline
     mcpAuth: { interval: 60, allowedPerInterval: 30, namespace: "api:mcp:auth", failClosed: true }, // 30 per minute
+    // Calls to one workflow's Webhook Secret URL (ENG-7167), keyed by workflow id and checked before the
+    // database is read. The default API number, in a namespace of its own. The organization-wide and
+    // daily-run quotas are configurable and live in `modules/ee/workflows/lib/webhook/limits.ts`.
+    v3WorkflowWebhook: {
+      interval: 60,
+      allowedPerInterval: WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW,
+      namespace: "api:v3:workflow-webhook",
+    }, // 100 per minute per workflow, the number the trigger panel shows
+    // "Send test request" on a workflow HTTP request step (ENG-7179): each one is a real outbound call,
+    // so a principal gets 30 a minute, REST and MCP together.
+    v3WorkflowTestRequests: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "api:v3:workflow-test-request",
+    }, // 30 per minute per user or API key
+    // A Test run of a workflow's draft (ENG-7181): it sends nothing, but each one saves a run and walks
+    // the whole workflow inside the request, so a principal gets 30 a minute, REST and MCP together.
+    v3WorkflowTestRuns: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "api:v3:workflow-test-run",
+    }, // 30 per minute per user or API key
     v3SurveyGenerate: {
       interval: 60,
       allowedPerInterval: 10,

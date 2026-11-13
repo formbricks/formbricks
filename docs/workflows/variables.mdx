@@ -1,0 +1,65 @@
+---
+title: "Variables"
+description: "Use values from the payload, a survey response or an earlier step in later workflow steps."
+icon: "at"
+---
+
+A **Variable** is a value a run can use in a later step: part of the [payload](/workflows/webhook-trigger), an
+answer from the survey response, or the output of an earlier step. Type `@` in a field that accepts Variables to
+pick one.
+
+<Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
+
+{/* SCREENSHOT PLACEHOLDER: variable-picker.webp. The @ picker open in an HTTP request body, listing Payload
+and step Variables with their types. Save to /images/platform/workflows/variable-picker.webp and replace this
+comment with a <Frame>. */}
+
+## Where Variables come from
+
+| Source            | Path                       | Available when                                                                 |
+| ----------------- | -------------------------- | ------------------------------------------------------------------------------ |
+| **Payload**       | `payload.customer.email`   | The workflow has a [Webhook trigger](/workflows/webhook-trigger).               |
+| **Response**      | `response.<questionId>`    | The workflow has a **Response completed** trigger.                              |
+| **An earlier step** | `steps.<stepId>.status`, `steps.<stepId>.body.order.id` | The step is an [HTTP request](/workflows/http-request) that runs before this one on the same branch. |
+
+The picker lists the Variables of the **Sample payload**, so send or paste one in the trigger first. It lists
+the first 500 values of the sample. For an HTTP request step, it lists `status` and, once you have used **Send
+test request**, the values of that response's body.
+
+Steps are named by their ID in a path, so renaming a step never breaks a Variable that uses it.
+
+## What a Variable can point at
+
+- **A single value.** Texts, numbers and true/false values. The picker doesn't list objects; pick the value
+  inside them instead. A list (a JSON array) can't be used as a Variable yet, and neither can anything inside a
+  list.
+- **Keys made of letters, digits, `_` and `-`.** A payload key that contains a space, a dot or another character
+  can't be reached. Rename it in the system that sends the payload, for example `first_name` instead of
+  `first name`.
+
+## How a value is inserted
+
+Each field inserts a value the way it needs, so a payload can't break the request or the email around it:
+
+| Field                                   | How the value goes in                                                                     |
+| --------------------------------------- | ----------------------------------------------------------------------------------------- |
+| HTTP request query parameter value      | URL-encoded.                                                                              |
+| HTTP request header value               | With line breaks removed.                                                                 |
+| HTTP request body                       | A Variable that is the whole value of a JSON string keeps its type: when `payload.amount` is `42`, the body sends the number `42`. Inside longer text, it is inserted as escaped text. |
+| Email body                              | As text: HTML in a value is shown, never run. Survey answers keep their recall formatting. |
+| If/else condition                       | Compared as it is. See [If/else](/workflows/if-else#how-values-are-compared).              |
+
+An HTTP request's URL never takes Variables. See [Fixed URL](/workflows/http-request#the-url-is-fixed).
+
+### When a value is missing
+
+Every Variable can have a fallback. When a run has no value for the Variable, for example because the payload
+left out a key, the fallback is used. Without a fallback, a missing value is empty text, or `null` where it is a
+whole value in an HTTP request body.
+
+## Checks on Enable
+
+When you select **Enable**, Formbricks checks that every Variable can exist where it is used: a `payload.` path
+needs a Webhook trigger, a `response.` path needs a Response completed trigger, and a `steps.` path needs an
+earlier step on the way to this one. It can't know whether a future payload will contain the key, so use a
+fallback or an [If/else](/workflows/if-else) with **Is set** when a value is optional.

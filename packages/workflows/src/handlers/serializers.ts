@@ -6,6 +6,7 @@ import type {
   TWorkflowRunResource,
   TWorkflowRunSummary,
 } from "../contracts";
+import { maskWorkflowSecretHeaders } from "../secret-headers/headers";
 import type {
   WorkflowRowWithLastRun,
   WorkflowRunListRow,
@@ -13,6 +14,8 @@ import type {
   WorkflowRunRow,
   WorkflowRunWithLogsRow,
 } from "../services/ports";
+import { WORKFLOW_TRIGGERS } from "../types/triggers/enum";
+import { describeWorkflowRunSteps } from "./run-detail";
 
 /**
  * Map Prisma rows to the public v3 resource shapes. Serializer output is validated against the
@@ -70,6 +73,12 @@ export const toWorkflowRunResource = (run: WorkflowRunWithLogsRow): TWorkflowRun
   idempotencyKey: run.idempotencyKey,
   nextAttemptAt: toIso(run.nextAttemptAt),
   lastErrorAt: toIso(run.lastErrorAt),
+  callerIp: run.callerIp,
+  workflowVersionNumber: run.workflowVersion?.version ?? null,
+  // A run whose content was deleted has empty step logs; reading them would describe what did not happen.
+  steps: describeWorkflowRunSteps(run.logs, run.data.notTaken, { withDetail: run.contentDeletedAt === null }),
+  contentDeletedAt: toIso(run.contentDeletedAt),
+  contentRetentionDays: run.contentRetentionDays,
 });
 
 export const toWorkflowListItem = (row: WorkflowRowWithLastRun): TWorkflowListItem => {
@@ -82,7 +91,7 @@ export const toWorkflowListItem = (row: WorkflowRowWithLastRun): TWorkflowListIt
     description: row.description,
     status: row.status,
     triggerType: trigger?.triggerType ?? null,
-    surveyId: trigger?.config.surveyId ?? null,
+    surveyId: trigger?.triggerType === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED ? trigger.config.surveyId : null,
     createdBy: row.createdBy,
     creator: row.creator ? { name: row.creator.name } : null,
     createdAt: row.createdAt.toISOString(),
@@ -92,7 +101,8 @@ export const toWorkflowListItem = (row: WorkflowRowWithLastRun): TWorkflowListIt
   };
 };
 
+/** Secret headers read as `{name, secret: true, isSet}`: never a value or a stored secret id. */
 export const toWorkflowResource = (row: WorkflowRowWithLastRun): TWorkflowResource => ({
   ...toWorkflowListItem(row),
-  definition: row.definition,
+  definition: maskWorkflowSecretHeaders(row.definition),
 });

@@ -86,6 +86,15 @@ export const ZAuditAction = z.enum([
   "deactivated",
   "reactivated",
   "revoked",
+  // Workflows Part 2 (ENG-7179): an HTTP request's secret header value stored or replaced (the header
+  // name only, never the value), and a "Send test request" call (host and status).
+  "secretHeaderSet",
+  "secretHeaderReplaced",
+  "testRequestSent",
+  // ENG-7181: a Test run of a workflow's draft started (run id and outcome only, never the payload).
+  "testRunStarted",
+  // ENG-7177: a workflow's Webhook Secret URL was replaced; the old URL stopped working.
+  "webhookUrlRegenerated",
 ]);
 export const ZActor = z.enum(["user", "api", "system"]);
 export const ZAuditStatus = z.enum(["success", "failure"]);

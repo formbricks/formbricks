@@ -16,7 +16,7 @@ info:
 
     Creatives needs a self-hosted license that includes it; Formbricks Cloud does not offer it. With one, every operation is available. Without one, a workspace that still has creatives is in **wind-down**: its creatives are no longer shown on sites, and they can only be listed, read (stats included), paused (a PATCH that sets nothing but `status`, or **POST /api/v3/creatives/pause**), closed (the same PATCH) or deleted. A workspace with no creatives has no access at all. Anything not allowed answers **403** `creatives_not_entitled`.
 
-    **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and **GET /api/v3/workflows/runs/{runId}**.
+    **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, **GET /api/v3/workflows/runs/{runId}**, and for Webhook triggers **GET /api/v3/workflows/{workflowId}/webhook**, **POST /api/v3/workflows/{workflowId}/webhook/regenerate**, **PUT /api/v3/workflows/{workflowId}/sample**, for HTTP request steps **POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request**, Test runs **POST /api/v3/workflows/{workflowId}/test-runs**, and the public Webhook Secret URL **POST /api/v3/workflows/{workflowId}/webhook/{token}**, which takes no login: the token in its path is the credential.
 
     **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard, **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values, **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**; the embedded-data fields its filters can use, **GET /api/v3/dashboards/{dashboardId}/filter-fields**).
     - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
@@ -97,7 +97,7 @@ info:
     **Workflows Scope 1**
     Workflows are a follow-up extension of the existing v3 Survey API work. The Survey API establishes API-first survey authoring; Workflows build on that same v3 style to automate actions around survey responses through workspace-scoped JSON definitions. Scope 1 models the existing Follow-ups capability as workflows: one `response.completed` trigger with an optional `endingCardIds` filter, and `send_email` actions with Follow-up email field parity. The definition and run shapes mirror the shared Zod schemas in `packages/workflows` (ENG-1100), which are the implementation source of truth for this contract.
 
-    Workflows use `draft`, `enabled`, and `disabled` lifecycle states plus an `archived` soft-delete state. Status only changes through the lifecycle endpoints (`enable`, `disable`, `archive`, `unarchive`); it is not writable via `POST` or `PATCH`. Enabling validates that the definition is executable and snapshots an immutable workflow version; runs reference that snapshot via `workflowVersionId`. `POST .../test` is a dry run: it validates the definition and resolves the trigger's references synchronously, creating no run and sending no email, and returns `{ workflowId, ok, problems }` directly. Real runs execute asynchronously and are polled via `GET /api/v3/workflows/runs/{runId}`.
+    Workflows use `draft`, `enabled`, and `disabled` lifecycle states plus an `archived` soft-delete state. Status only changes through the lifecycle endpoints (`enable`, `disable`, `archive`, `unarchive`); it is not writable via `POST` or `PATCH`. Enabling validates that the definition is executable and snapshots an immutable workflow version; runs reference that snapshot via `workflowVersionId`. `POST .../test` is a dry run: it validates the definition and resolves the trigger's references synchronously, creating no run and sending no email, and returns `{ workflowId, ok, problems }` directly. `POST .../test-runs` is a Test run: it runs the draft at once with fake effects (nothing is sent or called), saves it as a dry run with no version, and returns the finished run. Real runs execute asynchronously and are polled via `GET /api/v3/workflows/runs/{runId}`.
 
     **Overview migration note**
     The v3-backed survey overview page intentionally removes actions that are not yet exposed by this contract: `Created by` filtering, `Duplicate`, `Copy...`, `Preview`, and `Copy link`.
@@ -3366,7 +3366,7 @@ paths:
                           subject: Thanks for your feedback
                           body: We saw your feedback and will follow up soon.
                           attachResponseData: true
-                          includeVariables: true
+                          includeEmbeddedData: true
                           includeHiddenFields: false
                         ui:
                           position:
@@ -3785,7 +3785,7 @@ paths:
         reachable from the trigger, only Scope 1 node types are present, the referenced survey
         and ending cards still exist, and every `send_email` action addressing a *literal* email address
         targets someone who can access this workspace (an element-id `to` resolves to the respondent's own
-        address and is exempt) — and then snapshots an immutable workflow version. Runs
+        address and is exempt), every `send_email` survey link points to a link survey in this workspace, and a step with a Variable recipient has a fixed subject and body — and then snapshots an immutable workflow version. Runs
         reference that snapshot via `workflowVersionId`, so later draft edits never change what an
         enabled workflow executes. Validation failures return **422** with code
         `workflow_not_executable` and structured `invalid_params`; calling enable in a state other
@@ -3796,7 +3796,7 @@ paths:
         - $ref: '#/components/parameters/WorkflowIdPath'
       responses:
         '200':
-          $ref: '#/components/responses/WorkflowResourceResponse'
+          $ref: '#/components/responses/WorkflowEnableResponse'
         '400':
           $ref: '#/components/responses/V3BadRequest'
         '401':
@@ -3918,9 +3918,9 @@ paths:
       operationId: testWorkflowV3
       summary: Dry-run (validate) a workflow
       description: |
-        Validates a workflow without running it or causing any side effect. It checks that the workflow's current definition is executable, that the trigger's referenced survey and ending cards still exist in the workspace, and that every `send_email` action addressing a *literal* email address targets someone who can access this workspace. **No** workflow run is created and **no** email or webhook is sent.
+        Validates a workflow without running it or causing any side effect. It checks that the workflow's current definition is executable, that the trigger's referenced survey and ending cards still exist in the workspace, and that every `send_email` action addressing a *literal* email address targets someone who can access this workspace, and that every `send_email` survey link points to a link survey in this workspace. **No** workflow run is created and **no** email or webhook is sent.
 
-        The response is always `200` with `{ data: { workflowId, ok, problems } }`. `data.ok` is `true` when the workflow would execute; otherwise `data.problems` lists every issue found — each with a machine-readable `code` and the offending `field` — so they can be fixed in a single pass.
+        The response is always `200` with `{ data: { workflowId, ok, problems, warnings } }`. `data.ok` is `true` when the workflow would execute; otherwise `data.problems` lists every issue found — each with a machine-readable `code` and the offending `field` — so they can be fixed in a single pass. `data.warnings` lists things that don't stop a run, such as survey link Embedded Data keys the linked survey doesn't accept.
 
         Drafts are testable — validating the setup before going live is the point of a dry run. Only an `archived` workflow is rejected, with **422** and code `invalid_workflow_state`.
       tags:
@@ -3957,6 +3957,18 @@ paths:
                       workflowId: clworkflow0000000000000000
                       ok: true
                       problems: []
+                      warnings: []
+                surveyLinkKeyNotAccepted:
+                  summary: Ready, but the linked survey drops one Embedded Data key
+                  value:
+                    data:
+                      workflowId: clworkflow0000000000000000
+                      ok: true
+                      problems: []
+                      warnings:
+                        - code: survey_link_key_not_accepted
+                          field: definition.nodes.0.config.surveyLink.embeddedData.1.key
+                          message: The linked survey has no passed-in Embedded Data field call_id, so the link leaves it off. Add the field to the survey to keep this value.
                 problems:
                   summary: Workflow has unresolved trigger references
                   value:
@@ -3970,6 +3982,7 @@ paths:
                         - code: ending_card_not_found
                           field: definition.trigger.config.endingCardIds
                           message: Ending card clending000000000000000000 does not exist on the survey.
+                      warnings: []
                 recipientNotAllowed:
                   summary: A send_email action addresses a literal recipient without workspace access
                   value:
@@ -3980,10 +3993,439 @@ paths:
                         - code: recipient_not_allowed
                           field: definition.nodes.config.to
                           message: Recipient outsider@external.example cannot access this workspace. A send_email action may only address someone with access to this workspace or a respondent field.
+                      warnings: []
         '401':
           $ref: '#/components/responses/V3Unauthorized'
         '403':
           $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/workflows/{workflowId}/webhook:
+    get:
+      operationId: getWorkflowWebhookV3
+      summary: Get a workflow's Webhook Secret URL
+      description: |
+        Returns the Webhook Secret URL of a workflow with a Webhook trigger, when it was last called and from which IP, and its Sample payload with the Variables it offers.
+
+        The URL is a credential: anyone holding it can start runs. It is therefore returned only to callers with **write** access to the workspace (`readWrite` or `manage`); read-only callers get **403**. Do not log or share it; if it leaks, call `POST /api/v3/workflows/{workflowId}/webhook/regenerate`.
+
+        A workflow whose trigger is not a Webhook trigger answers **422** `invalid_workflow_state`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      responses:
+        '200':
+          description: The Webhook Secret URL, last call and Sample payload.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowWebhookResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/workflows/{workflowId}/webhook/regenerate:
+    post:
+      operationId: regenerateWorkflowWebhookV3
+      summary: Regenerate a workflow's Webhook Secret URL
+      description: |
+        Replaces the workflow's Webhook Secret URL with a new one and returns it. The old URL stops working at once: its next call answers **404**. The workflow itself, its status and its runs are unchanged. Recorded in the audit log as `webhookUrlRegenerated`.
+
+        Requires **write** access. A workflow whose trigger is not a Webhook trigger, or an archived workflow, answers **422** `invalid_workflow_state`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      responses:
+        '200':
+          description: The new Webhook Secret URL, last call and Sample payload.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowWebhookResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/workflows/{workflowId}/webhook/{token}:
+    post:
+      operationId: callWorkflowWebhookV3
+      summary: Call a Webhook Secret URL
+      description: |
+        Starts a run of a workflow with a Webhook trigger. This is the Webhook Secret URL itself: it needs no login or API key, because the token in the path is the credential. Send a JSON object as the body with `Content-Type: application/json`. Use the URL exactly as returned, with no trailing slash (a trailing slash answers a redirect some clients will not follow on a POST).
+
+        - **202** `{"runId": "…"}`: the workflow is enabled and a run is queued. The payload also becomes the workflow's Sample payload.
+        - **202** `{"runId": null}`: the workflow is a draft or disabled. The payload is saved as the Sample payload; no run starts.
+        - **200** `{"runId": "…"}`: an `Idempotency-Key` this workflow has already seen; nothing new starts and the earlier run's id is returned.
+        - **404**: the workflow is archived, does not exist, or the token is wrong or was regenerated. The answer is identical in every case.
+        - **400** / **413** / **415**: the body is not a JSON object or is nested more than 10 levels / is over 100 KB / is not `application/json`. Errors never echo the payload.
+        - **429** with `Retry-After`: over 100 calls a minute for this workflow, over the organization's calls per minute across its Webhook workflows (default 300), or over the workflow's runs per day (default 10,000).
+        - **403**: the organization's plan no longer includes workflows, or the call used plain HTTP where HTTPS is required.
+
+        Runs started here are billed like other workflow runs.
+      tags:
+        - V3 Workflows
+      parameters:
+        - in: path
+          name: workflowId
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          description: Workflow identifier.
+        - in: path
+          name: token
+          required: true
+          schema:
+            type: string
+            minLength: 1
+          description: The secret token of the Webhook Secret URL.
+        - in: header
+          name: Idempotency-Key
+          required: false
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 255
+          description: Optional. A repeated key for the same workflow returns the run it started (200) instead of starting another.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+              description: Any JSON object of at most 100 KB, nested at most 10 levels.
+            examples:
+              order:
+                value:
+                  customer:
+                    email: jane@example.com
+                  order:
+                    id: 1042
+      responses:
+        '200':
+          $ref: '#/components/responses/WorkflowWebhookCallResponse'
+        '202':
+          $ref: '#/components/responses/WorkflowWebhookCallResponse'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '404':
+          description: Unknown workflow, archived workflow, or a wrong or regenerated token. Identical in every case.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '413':
+          description: The body is over 100 KB.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '415':
+          description: The body is not `application/json`.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security: []
+  /api/v3/workflows/{workflowId}/sample:
+    put:
+      operationId: setWorkflowSampleV3
+      summary: Set a workflow's Sample payload
+      description: |
+        Replaces the Sample payload of a workflow with a Webhook trigger, e.g. with one pasted in the editor, and returns it with the Variables it offers. A call to the Webhook Secret URL replaces it too. The payload must be a JSON object of at most 100 KB nested at most 10 levels: a larger one answers **413** `payload_too_large`, a deeper one or a non-object **400**. Writing a sample does not change the workflow's `updatedAt`.
+
+        Requires **write** access. A workflow whose trigger is not a Webhook trigger, or an archived workflow, answers **422** `invalid_workflow_state`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetWorkflowSampleRequest'
+            examples:
+              order:
+                value:
+                  payload:
+                    customer:
+                      email: jane@example.com
+                    order:
+                      id: 1042
+                      total: 59.9
+      responses:
+        '200':
+          description: The stored Sample payload and its Variables.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowSampleResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '413':
+          description: The sample payload is over 100 KB.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/workflows/{workflowId}/steps/{stepId}/test-request:
+    post:
+      operationId: sendWorkflowTestRequestV3
+      summary: Send a test request for an HTTP request step
+      description: |
+        Makes one real call of an HTTP request step, from its saved or draft settings, so the author sees the real response. It is not a run: no later step runs and nothing is billed. The call goes through the same address checks as a run (HTTPS, no private addresses, no redirects followed), times out after 10 s and is not retried. A target that answers with an error status still returns **200**: the request itself succeeded.
+
+        When an answer came, it is saved as the step's sample (up to 64 KB). Recorded in the audit log as `testRequestSent` with the host and status.
+
+        Requires **write** access and is limited to 30 calls per minute per user or API key (**429**). A step that is not an HTTP request answers **404**; an archived workflow **422** `invalid_workflow_state`; settings that can't be sent (no URL, a secret header with no value, a body that is not JSON) **400**.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+        - name: stepId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+          description: The HTTP request step's id in the workflow definition.
+      requestBody:
+        required: true
+        description: Send `{}` to call the saved step with the default Variables.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendWorkflowTestRequestRequest'
+      responses:
+        '200':
+          description: The request that was sent and the answer it got.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowTestRequestResult'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '404':
+          description: The workflow has no HTTP request step with this id.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/workflows/{workflowId}/test-runs:
+    post:
+      operationId: createWorkflowTestRunV3
+      summary: Start a Test run of a workflow's draft
+      description: |
+        Runs the workflow's current draft at once, inside the request, with the same runner as a real run but with fake effects: Send email records whom it would send to, and an HTTP request records what it would call (secret header values masked) and sends nothing. In "Wait and use it" mode an HTTP request's output is that step's last Test request response; without one it is empty and flagged (`testSample: missing`), and the run goes on. If/else conditions are evaluated for real, so the answer shows the branch a real run would take.
+
+        The run is saved with `isDryRun: true` and no version, appears in the runs list (hide it with `filter[isDryRun][eq]=false`), and is never billed or counted as usage. A failed step fails the run, not the call: the answer is still **201** with the run's `status` and step detail. Recorded in the audit log as `testRunStarted` with the run id. `POST .../test`, the setup check that runs nothing, is unchanged.
+
+        The test payload is the body's `payload`, else the workflow's Sample payload. Only a Webhook trigger can be test-run. Requires **write** access and is limited to 30 Test runs per minute per user or API key (**429**). An archived workflow, one without a Webhook trigger, or one with no payload to test with answers **422** `invalid_workflow_state`; a draft that cannot run answers **422** `workflow_not_executable` with the fields to fix; a payload over 100 KB **413**.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+      requestBody:
+        required: false
+        description: Send `{}` (or no body) to test with the workflow's Sample payload.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkflowTestRunRequest'
+      responses:
+        '201':
+          description: The finished Test run.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Location:
+              schema:
+                type: string
+              description: The run's address, `/api/v3/workflows/runs/{runId}`.
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - data
+                properties:
+                  data:
+                    $ref: '#/components/schemas/WorkflowRunResource'
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '413':
+          description: The test payload is over 100 KB.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
         '422':
           $ref: '#/components/responses/V3UnprocessableContent'
         '429':
@@ -10737,6 +11179,7 @@ components:
             - survey_not_workspace_visible
             - too_many_requests
             - unprocessable_content
+            - unsupported_media_type
             - visibility_blocked_by_connections
             - visibility_change_not_allowed
             - visibility_not_enabled
@@ -13531,12 +13974,104 @@ components:
         ui:
           $ref: '#/components/schemas/WorkflowNodeUi'
       additionalProperties: false
+    WorkflowWebhookTriggerNode:
+      type: object
+      description: |
+        A Webhook trigger: the workflow starts a run when an outside system POSTs a JSON object to its Webhook Secret URL. It has nothing to configure; the Secret URL's token is stored with the workflow, never in the definition, and is read with `GET /api/v3/workflows/{workflowId}/webhook`.
+      required:
+        - id
+        - type
+        - triggerType
+      properties:
+        id:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          enum:
+            - trigger
+        triggerType:
+          type: string
+          enum:
+            - webhook
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Optional display label shown in the builder.
+        config:
+          type: object
+          default: {}
+          additionalProperties: false
+          description: Always empty. Optional on writes; always present in responses.
+        ui:
+          $ref: '#/components/schemas/WorkflowNodeUi'
+      additionalProperties: false
+    WorkflowVariableEmailRecipient:
+      type: object
+      description: |
+        Recipient read from a Variable when the step runs, such as `payload.customer.email`. The step's subject and body must then be fixed (no recall tokens, no attached response data): the caller picks who gets the email, not what it says. The address is not allowlist-checked. It is capped at 50 emails an hour per workflow on top of the organization's email caps, and an empty or invalid address, or a spent cap, fails the step and the run with the reason in run detail (no retry).
+      required:
+        - type
+        - ref
+      properties:
+        type:
+          type: string
+          enum:
+            - variable
+        ref:
+          type: string
+          minLength: 1
+          maxLength: 512
+          description: |
+            Variable path holding the address: `payload.<path>`, `steps.<stepId>.<path>` or `response.<questionId>`. Segments `__proto__`, `prototype` and `constructor` are refused.
+          example: payload.customer.email
+      additionalProperties: false
+    WorkflowSurveyLink:
+      type: object
+      description: |
+        The survey link a `send_email` step carries: `<public domain>/s/<surveyId>?key=value`, placed in the body with `#survey-link#`. The survey must be a link survey in this workflow's workspace (enable returns **422** otherwise). Embedded Data values may insert Variables and are URL-encoded; keys the survey doesn't accept as passed-in Embedded Data are left off the link, and enable and the dry run warn about them (`survey_link_key_not_accepted`).
+      required:
+        - surveyId
+        - embeddedData
+      properties:
+        surveyId:
+          type: string
+          format: cuid2
+          description: A link survey in this workflow's workspace.
+        embeddedData:
+          type: array
+          maxItems: 30
+          description: |
+            Embedded Data put on the link as URL parameters, in order. Keys are unique, compared case-insensitively as the link survey compares them.
+          items:
+            type: object
+            required:
+              - key
+              - value
+            properties:
+              key:
+                type: string
+                minLength: 1
+                maxLength: 100
+                description: Passed-in Embedded Data key the survey declares; the URL parameter name.
+                example: call_id
+              value:
+                type: string
+                maxLength: 2048
+                description: |
+                  Text that may insert Variables as recall tokens, e.g. `#recall:payload.call.id/fallback:#`. URL-encoded when the link is built.
+                example: '#recall:payload.call.id/fallback:#'
+            additionalProperties: false
+      additionalProperties: false
     WorkflowSendEmailActionConfig:
       type: object
       description: |-
         Send-email action with 1:1 field parity to survey Follow-ups (`ZSurveyFollowUpAction`).
 
         `to`, `subject` and `body` accept an empty string on create and update, so an author can save an unfinished draft. Completeness is enforced when the workflow has to run: enabling it returns **422** `workflow_not_executable` naming each blank field, and the dry run reports them as problems.
+
+        With a Variable recipient (`to: {type: "variable", ref}`), the email must be fixed: `subject` and `body` may not contain recall tokens and `attachResponseData` must be false. Only the survey link's Embedded Data values may carry Variables. Enabling a workflow that breaks this returns **422** `workflow_not_executable`.
       required:
         - to
         - from
@@ -13546,17 +14081,15 @@ components:
         - attachResponseData
       properties:
         to:
-          type: string
-          description: |
-            Recipient: either a literal email address (e.g. a teammate) or the element id of a
-            survey question / hidden field whose answer contains the respondent's email address
-            (contact-info elements resolve index [2]) — the same semantics as the Follow-ups `to` field.
+          oneOf:
+            - type: string
+              description: |
+                A literal email address (e.g. a teammate) or the element id of a survey question / hidden field whose answer contains the respondent's email address (contact-info elements resolve index [2]) — the same semantics as the Follow-ups `to` field.
 
-            A **literal** address must belong to someone who can access this workspace — an organization owner or manager, or a member of a team the
-            workspace is shared with. Enabling a workflow whose literal recipient cannot access the workspace returns **422** `workflow_not_executable`, the
-            dry run reports a `recipient_not_allowed` problem, and the runner refuses to send to it — so a
-            workflow cannot forward response data to an arbitrary external inbox. An element-id `to`
-            resolves to the respondent's own address and is never allowlist-checked.
+                A **literal** address must belong to someone who can access this workspace — an organization owner or manager, or a member of a team the workspace is shared with. Enabling a workflow whose literal recipient cannot access the workspace returns **422** `workflow_not_executable`, the dry run reports a `recipient_not_allowed` problem, and the runner refuses to send to it — so a workflow cannot forward response data to an arbitrary external inbox. An element-id `to` resolves to the respondent's own address and is never allowlist-checked.
+            - $ref: '#/components/schemas/WorkflowVariableEmailRecipient'
+          description: |
+            Recipient: a string (literal address or survey element id), or a Variable recipient such as the customer's address in a Webhook payload.
         from:
           type: string
           format: email
@@ -13577,11 +14110,23 @@ components:
             Email body as HTML with recall tokens (`#recall:[elementId]/fallback:x#`). Recall tokens
             are expanded against the response, the result is sanitized to a narrow HTML allowlist,
             and it is wrapped in the branded Follow-ups email template — identical rendering to survey Follow-ups.
+
+            `#survey-link#` places the survey link (`surveyLink`) as a link; a body with the token needs a `surveyLink`, and a `surveyLink` needs the token.
         attachResponseData:
           type: boolean
+        surveyLink:
+          $ref: '#/components/schemas/WorkflowSurveyLink'
+        includeEmbeddedData:
+          type: boolean
+          default: false
+          description: |
+            Adds the response's Embedded Data to the attached response data. Replaces `includeVariables`; send one or the other, never both (**400**).
         includeVariables:
           type: boolean
           default: false
+          deprecated: true
+          description: |
+            Deprecated: use `includeEmbeddedData`. Accepted until v7.0.0 and returned as written; never together with `includeEmbeddedData`.
         includeHiddenFields:
           type: boolean
           default: false
@@ -13616,6 +14161,349 @@ components:
         ui:
           $ref: '#/components/schemas/WorkflowNodeUi'
       additionalProperties: false
+    WorkflowHttpHeader:
+      type: object
+      description: 'A plain or secret header of an HTTP request step. A secret header''s value is stored encrypted beside the workflow and never returned: writes send `{name, value, secret: true}` to set or replace it, or `{name, secret: true}` to keep the stored one; reads return `{name, secret: true, isSet}`. Replacing a value updates the enabled workflow at once. A duplicated workflow keeps the names but not the values, and can''t be enabled until they are entered again. `Authorization` and names containing `token`, `key`, `secret` or `cookie` are secret unless `secret: false` is sent. Setting or replacing a secret is recorded in the audit log with the header name only.'
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 256
+          pattern: ^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$
+        value:
+          type: string
+          maxLength: 8192
+          description: A plain header's value (may use Variables; required for a plain header), or a secret header's new value on write. Never returned for a secret header.
+        secret:
+          type: boolean
+        secretId:
+          type: string
+          description: Server-managed. Ignored on write and never returned.
+        isSet:
+          type: boolean
+          readOnly: true
+          description: Read only. Whether a secret header has a stored value.
+      additionalProperties: false
+    WorkflowHttpRequestActionConfig:
+      type: object
+      description: |-
+        HTTP request action. The URL is fixed: it takes no Variables, and saving refuses one in it, so a payload can change what is sent but never where it goes. Variables (`#recall:<path>/fallback:<text>#`) go in query parameter values (URL-encoded), header values (line breaks removed) and the JSON body (a string that is exactly one Variable keeps the Variable's type).
+
+        Sending: HTTPS only, unless a self-hosted instance sets `DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP=1`; private and internal addresses only with `DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS=1` (both ignored on Formbricks Cloud). Redirects are not followed: a 3xx is the response. 10 s timeout, at most 1 MB of response read; timeouts, network errors, 429 and 5xx are retried 3 times with backoff. A 4xx or 5xx answer, or none, fails the step and the run unless `continueOnError` is true.
+
+        Limits on save: at most 30 headers, a URL of at most 2 KB and a body template of at most 100 KB. Enabling needs an absolute http(s) URL, a body only for POST, PUT and PATCH (valid JSON), and a stored value for every secret header (**422** `workflow_not_executable` otherwise).
+      required:
+        - method
+        - url
+      properties:
+        method:
+          type: string
+          enum:
+            - GET
+            - POST
+            - PUT
+            - PATCH
+            - DELETE
+        url:
+          type: string
+          maxLength: 2048
+          description: Fixed URL. May be empty in a draft. Never contains a Variable.
+        queryParameters:
+          type: array
+          default: []
+          maxItems: 30
+          items:
+            type: object
+            required:
+              - name
+              - value
+            properties:
+              name:
+                type: string
+                minLength: 1
+                maxLength: 256
+              value:
+                type: string
+                maxLength: 2048
+                description: May use Variables; URL-encoded when sent.
+            additionalProperties: false
+          description: Appended to the URL's own query string.
+        headers:
+          type: array
+          default: []
+          maxItems: 30
+          items:
+            $ref: '#/components/schemas/WorkflowHttpHeader'
+          description: 'Header names are unique (case-insensitive). `Host`, `Content-Length`, `Transfer-Encoding`, `Connection`, `Keep-Alive`, `Upgrade`, `TE`, `Trailer` and `Expect` are set by Formbricks and refused. `Content-Type: application/json` is added when a body is sent and none is set.'
+        body:
+          type:
+            - string
+            - 'null'
+          description: JSON body template for POST, PUT and PATCH, at most 100 KB.
+        responseMode:
+          type: string
+          enum:
+            - wait
+            - dont_wait
+          default: wait
+          description: '`wait` ("Wait and use it"): later steps can read the response. `dont_wait` ("Don''t wait"): the call is sent in the background with the same retries and the run moves on; its outcome shows on the step and never fails the run. A call still sending after an hour is marked failed.'
+        continueOnError:
+          type: boolean
+          default: false
+          description: When true, a failed call does not fail the run; later steps read its status.
+      additionalProperties: false
+    WorkflowHttpRequestActionNode:
+      type: object
+      description: 'HTTP request action node: calls an outside URL and passes the response to later steps as `steps.<id>.status` and `steps.<id>.body.<path>`.'
+      required:
+        - id
+        - type
+        - actionType
+        - config
+      properties:
+        id:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          enum:
+            - action
+        actionType:
+          type: string
+          enum:
+            - http_request
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Optional display label shown in the builder.
+        config:
+          $ref: '#/components/schemas/WorkflowHttpRequestActionConfig'
+        ui:
+          $ref: '#/components/schemas/WorkflowNodeUi'
+      additionalProperties: false
+    WorkflowDataRef:
+      type: object
+      description: 'Reference to a workflow Variable, mirroring `ZWorkflowDataRef`. The path is a dot path whose first segment says where the value comes from: `payload.<path>` (Webhook trigger payload), `steps.<stepId>.status` or `steps.<stepId>.body.<path>` (an earlier HTTP request''s answer) or `response.<questionId>` (a Response completed run''s answer). Saving any other path is refused with **400**, as are the segments `__proto__`, `prototype` and `constructor`. Segments may contain letters, digits, `_` and `-`. Payload and step-output paths that go into or end at a list resolve as missing. A workflow saved before these rules may still return an older path.'
+      required:
+        - path
+      properties:
+        path:
+          type: string
+          minLength: 1
+          maxLength: 512
+          pattern: ^(payload|steps|response)(\.[A-Za-z0-9_-]+)+$
+          examples:
+            - response.nps
+            - steps.get-plan.body.tier
+        fallback:
+          type: string
+          maxLength: 1000
+          description: Used when the run has no value at the path.
+      additionalProperties: false
+    WorkflowConditionOperator:
+      description: 'If/else operator. New definitions use the survey logic operator names, compared exactly as survey logic compares them (a number sent as text compares as a number). The workflow operator names from v1 are deprecated: still accepted, stored and returned as written until v7.0.0, but one definition uses one name set, never a mix (**400**). `equals` and `contains` belong to both sets.'
+      oneOf:
+        - title: Survey operator
+          type: string
+          enum:
+            - equals
+            - doesNotEqual
+            - contains
+            - doesNotContain
+            - startsWith
+            - doesNotStartWith
+            - endsWith
+            - doesNotEndWith
+            - isGreaterThan
+            - isLessThan
+            - isGreaterThanOrEqual
+            - isLessThanOrEqual
+            - isBefore
+            - isAfter
+            - equalsOneOf
+            - includesAllOf
+            - includesOneOf
+            - doesNotIncludeAllOf
+            - doesNotIncludeOneOf
+            - isSet
+            - isNotSet
+            - isEmpty
+            - isNotEmpty
+        - title: Deprecated workflow operator
+          type: string
+          deprecated: true
+          description: 'Removed in v7.0.0. Each means a survey operator: `notEquals` → `doesNotEqual`, `lessThan` → `isLessThan`, `lessEqual` → `isLessThanOrEqual`, `greaterThan` → `isGreaterThan`, `greaterEqual` → `isGreaterThanOrEqual`, `notContains` → `doesNotContain`, `exists` → `isSet`, `notExists` → `isNotSet`.'
+          enum:
+            - notEquals
+            - lessThan
+            - lessEqual
+            - greaterThan
+            - greaterEqual
+            - notContains
+            - exists
+            - notExists
+    WorkflowCondition:
+      type: object
+      description: One If/else comparison, mirroring `ZWorkflowCondition`. `isSet`, `isNotSet`, `isEmpty` and `isNotEmpty` (and the deprecated `exists` / `notExists`) take no `right`; every other operator requires one. The list operators (`equalsOneOf`, `includesAllOf`, `includesOneOf`, `doesNotIncludeAllOf`, `doesNotIncludeOneOf`) take a list of texts or a Variable; no other operator takes a list.
+      required:
+        - id
+        - left
+        - operator
+      properties:
+        id:
+          type: string
+          minLength: 1
+        left:
+          $ref: '#/components/schemas/WorkflowDataRef'
+        operator:
+          $ref: '#/components/schemas/WorkflowConditionOperator'
+        right:
+          description: The value to compare against, or a Variable.
+          oneOf:
+            - type: string
+              maxLength: 1000
+            - type: number
+            - type: boolean
+            - type: 'null'
+            - type: array
+              minItems: 1
+              maxItems: 100
+              items:
+                type: string
+                maxLength: 1000
+            - $ref: '#/components/schemas/WorkflowDataRef'
+      additionalProperties: false
+    WorkflowConditionGroup:
+      type: object
+      description: Conditions joined by `and` (all must hold) or `or` (any must hold), nested to any depth, mirroring `ZWorkflowConditionGroup`. An If/else holds at most 20 conditions in all, nested ones included (**400** on save).
+      required:
+        - id
+        - connector
+        - conditions
+      properties:
+        id:
+          type: string
+          minLength: 1
+        connector:
+          type: string
+          enum:
+            - and
+            - or
+        conditions:
+          type: array
+          minItems: 1
+          items:
+            anyOf:
+              - $ref: '#/components/schemas/WorkflowCondition'
+              - $ref: '#/components/schemas/WorkflowConditionGroup'
+      additionalProperties: false
+    WorkflowIfElseNode:
+      type: object
+      description: 'If/else logic step: a run continues down the edge whose `sourceHandle` is `then` when the condition group holds, and down the `else` edge otherwise. Each branch has at most one edge; a branch with none ends the run on that side. The step''s output (`branch`, `matched`, and each condition''s result) is a Variable later steps can read as `steps.<id>.branch`.'
+      required:
+        - id
+        - type
+        - config
+      properties:
+        id:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          enum:
+            - if_else
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Optional display label shown in the builder.
+        config:
+          type: object
+          required:
+            - condition
+          properties:
+            condition:
+              $ref: '#/components/schemas/WorkflowConditionGroup'
+          additionalProperties: false
+        ui:
+          $ref: '#/components/schemas/WorkflowNodeUi'
+      additionalProperties: false
+    WorkflowSwitchCase:
+      type: object
+      description: 'One case of a Switch, mirroring `ZWorkflowSwitchCase`: its branch''s id and label, and how the Switch''s Variable is compared, with the If/else operator and value rules (see `WorkflowCondition`).'
+      required:
+        - id
+        - name
+        - operator
+      properties:
+        id:
+          type: string
+          minLength: 1
+          description: The case's branch; edges leaving by it use this as their `sourceHandle`. Never `default`.
+        name:
+          type: string
+          maxLength: 50
+          description: The branch's label on the canvas and in run detail. Required (non-blank) to enable.
+        operator:
+          $ref: '#/components/schemas/WorkflowConditionOperator'
+        right:
+          description: The value to compare against, or a Variable. Omit for presence operators.
+          oneOf:
+            - type: string
+              maxLength: 1000
+            - type: number
+            - type: boolean
+            - type: 'null'
+            - type: array
+              minItems: 1
+              maxItems: 100
+              items:
+                type: string
+                maxLength: 1000
+            - $ref: '#/components/schemas/WorkflowDataRef'
+      additionalProperties: false
+    WorkflowSwitchNode:
+      type: object
+      description: 'Switch logic step: compares one Variable (`config.left`) against each case in order, and a run continues down the edge whose `sourceHandle` is the id of the first case that matches, or down the `default` edge when none does. Each branch has at most one edge; a branch with none ends the run there. Saving needs 2 to 10 cases with unique ids other than `default`; enabling also needs every case named. Use If/else to match on more than one Variable.'
+      required:
+        - id
+        - type
+        - config
+      properties:
+        id:
+          type: string
+          minLength: 1
+        type:
+          type: string
+          enum:
+            - switch
+        label:
+          type: string
+          minLength: 1
+          maxLength: 120
+          description: Optional display label shown in the builder.
+        config:
+          type: object
+          required:
+            - left
+            - cases
+          properties:
+            left:
+              $ref: '#/components/schemas/WorkflowDataRef'
+            cases:
+              type: array
+              minItems: 2
+              maxItems: 10
+              description: Tried in order; the run takes the first that matches.
+              items:
+                $ref: '#/components/schemas/WorkflowSwitchCase'
+          additionalProperties: false
+        ui:
+          $ref: '#/components/schemas/WorkflowNodeUi'
+      additionalProperties: false
     WorkflowEdge:
       type: object
       required:
@@ -13637,7 +14525,7 @@ components:
         sourceHandle:
           type: string
           minLength: 1
-          description: Builder handle identifier on the source node. Reserved for branch nodes (`then`/`else`) in future scopes.
+          description: Builder handle identifier on the source node. `then` and `else` mark the two branches of an `if_else` node; an edge leaving a `switch` node uses one of its case ids, or `default` for its Default branch. No other node uses `then` or `else`.
         targetHandle:
           type: string
           minLength: 1
@@ -13646,17 +14534,11 @@ components:
     WorkflowDefinition:
       type: object
       description: |
-        Scope 1 workflow JSON document, mirroring `ZWorkflowDefinition` in `packages/workflows`. The
-        definition is the public source of truth for the builder and API clients. Scope 1
-        intentionally excludes user-authored if/else branches, webhook actions, schedules, delays,
-        loops, and AI/MCP-assisted creation; future node types extend `nodes` additively.
+        Workflow JSON document, mirroring `ZWorkflowDefinition` in `packages/workflows`. The definition is the public source of truth for the builder and API clients. A run walks it from the trigger along its edges; an `if_else` step picks its `then` or `else` edge, and a `switch` step the edge of the first case that matches or its `default` edge. Future node types extend `nodes` additively.
 
-        Graph rules enforced on every write (**400** with `invalid_params` on violation):
-        node ids are unique across `trigger` and `nodes`; every edge references existing node ids;
-        the trigger has at most one outgoing edge; `entryNodeId` equals `trigger.id`. Trigger-only
-        drafts (no `nodes`, no `edges`) are valid persisted documents. Executability rules (exactly
-        one outgoing trigger edge, acyclic graph, every node reachable from the trigger) are
-        additionally enforced by `enable` and `test` with **422** `workflow_not_executable`.
+        Rules enforced on every write (**400** with `invalid_params` on violation): node ids are unique across `trigger` and `nodes`; every edge references existing node ids; the trigger has at most one outgoing edge; `entryNodeId` equals `trigger.id`; only `if_else` edges use the `then` / `else` handles, at most one each; `switch` edges use one of its case ids or `default`, at most one each; no node has more than one incoming edge (branches never join); at most 25 steps (`nodes`), 20 conditions per `if_else` and 2 to 10 cases per `switch`, with unique case ids other than `default`; Variable paths start with `payload.`, `steps.` or `response.`; one definition uses either the survey operator names or the deprecated workflow operator names, never both. Trigger-only drafts (no `nodes`, no `edges`) are valid persisted documents.
+
+        Executability rules are additionally enforced by `enable` and `test` with **422** `workflow_not_executable`: exactly one outgoing trigger edge, an acyclic graph, every node reachable from the trigger, at most one next step for every node other than `if_else` and `switch`, every `switch` case named, and every Variable readable where it is used (a source the trigger provides, and `steps.<id>` only for a step that runs earlier on the same branch).
       required:
         - trigger
         - entryNodeId
@@ -13668,13 +14550,21 @@ components:
           default: 1
           description: Definition schema version. Optional on writes (defaults to the current version); always present in responses.
         trigger:
-          $ref: '#/components/schemas/WorkflowResponseCompletedTriggerNode'
+          oneOf:
+            - $ref: '#/components/schemas/WorkflowResponseCompletedTriggerNode'
+            - $ref: '#/components/schemas/WorkflowWebhookTriggerNode'
+          description: 'The workflow''s one trigger: Response completed (`response.completed`) or a call to its Webhook Secret URL (`webhook`).'
         nodes:
           type: array
           default: []
+          maxItems: 25
           items:
-            $ref: '#/components/schemas/WorkflowSendEmailActionNode'
-          description: Child nodes of the graph. The trigger lives in `trigger`, not in this array. Scope 1 accepts `send_email` action nodes only. Optional on writes (defaults to empty for trigger-only drafts); always present in responses.
+            oneOf:
+              - $ref: '#/components/schemas/WorkflowSendEmailActionNode'
+              - $ref: '#/components/schemas/WorkflowHttpRequestActionNode'
+              - $ref: '#/components/schemas/WorkflowIfElseNode'
+              - $ref: '#/components/schemas/WorkflowSwitchNode'
+          description: Steps of the graph. The trigger lives in `trigger`, not in this array. Optional on writes (defaults to empty for trigger-only drafts); always present in responses.
         edges:
           type: array
           default: []
@@ -13748,7 +14638,7 @@ components:
         A list `meta` carrying pagination and nothing else — the shape for collections that do not report a total and have no domain context to echo.
 
         Adds nothing to `ListPaginationMeta`; the `allOf` wrapper is what closes it. Each composing operation bounds its own requests through its `limit` query parameter, which is why this shape states no cap of its own.
-    WorkflowTriggerPayload:
+    WorkflowResponseCompletedTriggerPayload:
       type: object
       description: |
         Trigger payload snapshot captured when a run is created, mirroring
@@ -13785,6 +14675,38 @@ components:
           type: string
           format: date-time
       additionalProperties: true
+    WorkflowWebhookTriggerPayload:
+      type: object
+      description: Trigger payload of a run started by a Webhook Secret URL call.
+      required:
+        - type
+        - workspaceId
+        - payload
+        - triggeredAt
+      properties:
+        type:
+          type: string
+          enum:
+            - webhook
+        workspaceId:
+          type: string
+          format: cuid2
+        payload:
+          type: object
+          additionalProperties: true
+          description: The JSON object the call delivered (the Payload).
+        triggeredAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    WorkflowTriggerPayload:
+      description: |
+        Trigger payload snapshot captured when a run is created, mirroring
+        `ZWorkflowTriggerRunPayload`: a completed survey response, or the JSON object a
+        Webhook Secret URL call delivered. `type` says which.
+      oneOf:
+        - $ref: '#/components/schemas/WorkflowResponseCompletedTriggerPayload'
+        - $ref: '#/components/schemas/WorkflowWebhookTriggerPayload'
     WorkflowRunLogStatus:
       type: string
       enum:
@@ -13843,6 +14765,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/WorkflowRunStepResult'
+        notTaken:
+          type: array
+          description: The steps on If/else branches the run did not take, in graph order. Absent on runs without an If/else.
+          items:
+            type: object
+            required:
+              - stepId
+              - stepType
+            properties:
+              stepId:
+                type: string
+                minLength: 1
+              stepType:
+                type: string
+                minLength: 1
       additionalProperties: true
     WorkflowRunLog:
       type: object
@@ -13899,11 +14836,270 @@ components:
             - 'null'
           format: date-time
       additionalProperties: false
+    WorkflowRunIfElseDetail:
+      type: object
+      description: An If/else step's result. Run detail shows each condition as "(matched)" or "(not matched)".
+      required:
+        - kind
+        - branch
+        - conditions
+      properties:
+        kind:
+          type: string
+          enum:
+            - if_else
+        branch:
+          type:
+            - string
+            - 'null'
+          enum:
+            - then
+            - else
+            - null
+          description: The branch the run took; null until decided.
+        conditions:
+          type: array
+          description: Each condition, in order.
+          items:
+            type: object
+            required:
+              - id
+              - matched
+            properties:
+              id:
+                type: string
+              matched:
+                type: boolean
+            additionalProperties: false
+      additionalProperties: false
+    WorkflowRunSwitchDetail:
+      type: object
+      description: 'A Switch step''s result: the branch it took and each case it tried, in order, up to and including the one that matched. Cases after the match are not tried.'
+      required:
+        - kind
+        - branch
+        - cases
+      properties:
+        kind:
+          type: string
+          enum:
+            - switch
+        branch:
+          type:
+            - string
+            - 'null'
+          description: The id of the case the run took, or `default` when none matched; null until decided.
+        cases:
+          type: array
+          items:
+            type: object
+            required:
+              - id
+              - matched
+            properties:
+              id:
+                type: string
+              matched:
+                type: boolean
+            additionalProperties: false
+      additionalProperties: false
+    WorkflowRunSendEmailDetail:
+      type: object
+      description: 'A Send email step''s result. In a Test run (`isDryRun`) nothing was sent: the recipient is whom it would have gone to.'
+      required:
+        - kind
+        - recipient
+        - subject
+        - surveyLink
+      properties:
+        kind:
+          type: string
+          enum:
+            - send_email
+        recipient:
+          type:
+            - string
+            - 'null'
+          description: The address the email went (or would go) to. Null when none was resolved.
+        subject:
+          type:
+            - string
+            - 'null'
+        surveyLink:
+          type:
+            - string
+            - 'null'
+          description: The survey link the email carried, or null.
+      additionalProperties: false
+    WorkflowRunHttpRequestDetail:
+      type: object
+      description: 'An HTTP request step''s result, secret header values masked. In a Test run (`isDryRun`) nothing was called: the request is what would have been sent, and in Wait and use it the response is the step''s last Test request response (`testSample: used`), or none (`testSample: missing`).'
+      required:
+        - kind
+        - mode
+        - request
+        - response
+        - delivery
+        - testSample
+        - attempts
+        - error
+      properties:
+        kind:
+          type: string
+          enum:
+            - http_request
+        mode:
+          type:
+            - string
+            - 'null'
+          enum:
+            - wait
+            - dont_wait
+            - null
+          description: Wait and use it (`wait`) or Don't wait (`dont_wait`).
+        request:
+          type:
+            - object
+            - 'null'
+          description: The request, secret header values shown as `••••••`. Null when it could not be built.
+          required:
+            - method
+            - url
+            - headers
+          properties:
+            method:
+              type: string
+              enum:
+                - GET
+                - POST
+                - PUT
+                - PATCH
+                - DELETE
+            url:
+              type: string
+            headers:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - value
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+                additionalProperties: false
+            body:
+              type: string
+            bodyTruncated:
+              type: boolean
+          additionalProperties: false
+        response:
+          type:
+            - object
+            - 'null'
+          description: The answer, with at most 64 KB of body. Null when none came.
+          required:
+            - status
+            - contentType
+            - body
+          properties:
+            status:
+              type: integer
+            contentType:
+              type:
+                - string
+                - 'null'
+            body:
+              description: Parsed JSON when it fits in 64 KB, else up to 64 KB of text.
+            bodyTruncated:
+              type: boolean
+          additionalProperties: false
+        delivery:
+          type:
+            - string
+            - 'null'
+          enum:
+            - sending
+            - sent
+            - failed
+            - null
+          description: 'Don''t wait only: `sending` while its own job sends it, then `sent` or `failed`. A failed delivery never fails the run. Null for Wait and use it, and in a Test run.'
+        testSample:
+          type:
+            - string
+            - 'null'
+          enum:
+            - used
+            - missing
+            - null
+          description: 'Test runs only, Wait and use it: whether the step had a Test request response to use. With `missing`, later steps saw no response. Null outside Test runs.'
+        attempts:
+          type:
+            - integer
+            - 'null'
+          minimum: 0
+        error:
+          type:
+            - string
+            - 'null'
+          description: Why no answer came, when Continue on error let the run go on.
+      additionalProperties: false
+    WorkflowRunStep:
+      type: object
+      description: 'One step of a run as run detail shows it: the steps that ran, in order, then the steps on If/else and Switch branches the run did not take.'
+      required:
+        - stepId
+        - stepType
+        - status
+        - error
+        - startedAt
+        - finishedAt
+        - detail
+      properties:
+        stepId:
+          type: string
+          minLength: 1
+        stepType:
+          type: string
+          minLength: 1
+          description: '`if_else`, `switch`, `send_email` or `http_request`.'
+        status:
+          type: string
+          enum:
+            - pending
+            - running
+            - succeeded
+            - failed
+            - skipped
+            - not_taken
+          description: The step's log status, or `not_taken` for a step on an If/else or Switch branch the run did not take. A Don't wait HTTP request stays `running` while it sends; its delivery is in `detail.delivery`.
+        error:
+          type:
+            - string
+            - 'null'
+        startedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        finishedAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+        detail:
+          description: What the step did, by step type (`kind`). Null for a step not taken and for a step type without detail.
+          oneOf:
+            - $ref: '#/components/schemas/WorkflowRunIfElseDetail'
+            - $ref: '#/components/schemas/WorkflowRunSwitchDetail'
+            - $ref: '#/components/schemas/WorkflowRunSendEmailDetail'
+            - $ref: '#/components/schemas/WorkflowRunHttpRequestDetail'
+            - type: 'null'
+      additionalProperties: false
     WorkflowRunResource:
-      description: |
-        Full run shape returned by `GET /api/v3/workflows/runs/{runId}` and
-        `POST /api/v3/workflows/{workflowId}/test`: the summary fields plus the captured trigger
-        payload, per-step results, the persisted log trace, and retry/idempotency metadata.
+      description: 'Full run shape returned by `GET /api/v3/workflows/runs/{runId}` and `POST /api/v3/workflows/{workflowId}/test-runs`: the summary fields plus the captured trigger payload, per-step results, the persisted log trace, run detail per step (`steps`) and retry/idempotency metadata.'
       allOf:
         - $ref: '#/components/schemas/WorkflowRunSummary'
         - type: object
@@ -13914,6 +15110,11 @@ components:
             - idempotencyKey
             - nextAttemptAt
             - lastErrorAt
+            - callerIp
+            - workflowVersionNumber
+            - steps
+            - contentDeletedAt
+            - contentRetentionDays
           properties:
             triggerPayload:
               $ref: '#/components/schemas/WorkflowTriggerPayload'
@@ -13940,6 +15141,34 @@ components:
                 - string
                 - 'null'
               format: date-time
+            callerIp:
+              type:
+                - string
+                - 'null'
+              description: The caller's IP for a run a Webhook Secret URL call started; null otherwise.
+            workflowVersionNumber:
+              type:
+                - integer
+                - 'null'
+              minimum: 1
+              description: The number of the version the run executed; null for a Test run, which runs the draft.
+            steps:
+              type: array
+              items:
+                $ref: '#/components/schemas/WorkflowRunStep'
+              description: 'Run detail per step: the steps that ran, in order, then the steps on If/else branches the run did not take (`not_taken`).'
+            contentDeletedAt:
+              type:
+                - string
+                - 'null'
+              format: date-time
+              description: When the run's content was deleted, `contentRetentionDays` after the run finished. From then on the trigger payload keeps only its type, ids and trigger time (a Webhook payload becomes `{}`), `data` is `{}`, every log's `input` and `output` are `{}`, errors and `callerIp` are null and `steps` carry no `detail`. Status, timestamps, workflow and version stay. Null while the content is kept.
+            contentRetentionDays:
+              type:
+                - integer
+                - 'null'
+              minimum: 1
+              description: The retention period in days that applied when the content was deleted, for "Details deleted after N days". Null while the content is kept.
     PatchWorkflowRequest:
       type: object
       description: |
@@ -13969,6 +15198,27 @@ components:
           maxLength: 120
           description: Optional name for the duplicate. If omitted, the server chooses a non-conflicting copy name.
       additionalProperties: false
+    WorkflowWarning:
+      type: object
+      description: |
+        Something that does not stop the workflow from running but probably needs a look, such as an Embedded Data key the linked survey does not accept (the link leaves it off).
+      required:
+        - code
+        - field
+        - message
+      properties:
+        code:
+          type: string
+          enum:
+            - survey_link_key_not_accepted
+          description: Machine-readable warning category.
+        field:
+          type: string
+          description: |
+            Dotted path to the field, e.g. `definition.nodes.0.config.surveyLink.embeddedData.1.key`.
+        message:
+          type: string
+          description: Human-readable explanation.
     WorkflowTestResult:
       type: object
       description: |
@@ -13977,6 +15227,7 @@ components:
         - workflowId
         - ok
         - problems
+        - warnings
       properties:
         workflowId:
           type: string
@@ -13985,7 +15236,7 @@ components:
         ok:
           type: boolean
           description: |
-            True when the definition is executable, every trigger reference resolves, and every literal `send_email` recipient can access this workspace.
+            True when the definition is executable, every trigger reference resolves, every literal `send_email` recipient can access this workspace, and every survey link points to a link survey in this workspace.
         problems:
           type: array
           description: Every problem found, so all issues can be fixed at once. Empty when `ok` is true.
@@ -14004,6 +15255,8 @@ components:
                   - ending_card_not_found
                   - survey_not_workspace_visible
                   - recipient_not_allowed
+                  - survey_link_survey_not_found
+                  - survey_link_survey_not_link
                 description: Machine-readable problem category.
               field:
                 type: string
@@ -14012,6 +15265,235 @@ components:
               message:
                 type: string
                 description: Human-readable explanation of the problem.
+        warnings:
+          type: array
+          description: |
+            Things that do not stop the workflow from running but probably need a look. They never make `ok` false.
+          items:
+            $ref: '#/components/schemas/WorkflowWarning'
+    WorkflowSampleResource:
+      type: object
+      description: |
+        A workflow's Sample payload — the last payload its Webhook Secret URL received, or one pasted in — and the Variables it offers. Variables are detected for the first 500 paths; lists are reported as not supported yet.
+      required:
+        - workflowId
+        - source
+        - payload
+        - variables
+        - updatedAt
+      properties:
+        workflowId:
+          type: string
+          format: cuid2
+        source:
+          type: string
+          enum:
+            - trigger
+        payload:
+          type: object
+          additionalProperties: true
+          description: The Sample payload, a JSON object.
+        variables:
+          type: object
+          required:
+            - variables
+            - notSupported
+            - truncated
+          properties:
+            variables:
+              type: array
+              description: Variables the Sample payload offers, in document order.
+              items:
+                type: object
+                required:
+                  - path
+                  - valueType
+                properties:
+                  path:
+                    type: string
+                    minLength: 1
+                    example: payload.customer.email
+                  valueType:
+                    type: string
+                    enum:
+                      - object
+                      - string
+                      - number
+                      - boolean
+                      - 'null'
+                additionalProperties: false
+            notSupported:
+              type: array
+              description: 'Paths that cannot be used as Variables: `list` (lists are not supported yet), `unsafe_segment` (`__proto__`, `prototype` or `constructor`) or `unreachable_key` (a key with characters other than letters, digits, `-` and `_`, such as a dot or a space, which a Variable path cannot carry).'
+              items:
+                type: object
+                required:
+                  - path
+                  - reason
+                properties:
+                  path:
+                    type: string
+                    minLength: 1
+                  reason:
+                    type: string
+                    enum:
+                      - list
+                      - unsafe_segment
+                      - unreachable_key
+                additionalProperties: false
+            truncated:
+              type: boolean
+              description: True when only the first 500 paths were read.
+          additionalProperties: false
+        updatedAt:
+          type: string
+          format: date-time
+      additionalProperties: false
+    WorkflowWebhookResource:
+      type: object
+      description: |
+        A workflow's Webhook Secret URL, its last call, and its Sample payload. The URL is a credential: anyone holding it can start runs, so treat it like an API key and regenerate it if it leaks.
+      required:
+        - workflowId
+        - url
+        - lastCalledAt
+        - lastCallerIp
+        - sample
+      properties:
+        workflowId:
+          type: string
+          format: cuid2
+        url:
+          type: string
+          format: uri
+          description: The Webhook Secret URL.
+          example: https://app.formbricks.com/api/v3/workflows/clworkflow00000000000000/webhook/q8Zk3vT1xN2yR5wP7mC4bA
+        lastCalledAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+          description: When the Secret URL was last called. Null if never.
+        lastCallerIp:
+          type:
+            - string
+            - 'null'
+          description: IP of the last call. Null if never called.
+        sample:
+          anyOf:
+            - $ref: '#/components/schemas/WorkflowSampleResource'
+            - type: 'null'
+          description: Null until a call arrives or a sample is set.
+      additionalProperties: false
+    SetWorkflowSampleRequest:
+      type: object
+      description: Replaces the workflow's Sample payload, e.g. with one pasted in the editor.
+      required:
+        - payload
+      properties:
+        payload:
+          type: object
+          additionalProperties: true
+          description: A JSON object of at most 100 KB once serialized, nested at most 10 levels (lists count as levels).
+      additionalProperties: false
+    SendWorkflowTestRequestRequest:
+      type: object
+      description: 'What to send. Both fields are optional: an empty object sends the saved step with the workflow''s Sample payload and each HTTP request step''s last Test request response as Variables.'
+      properties:
+        config:
+          $ref: '#/components/schemas/WorkflowHttpRequestActionConfig'
+          description: The step's draft settings; defaults to the saved step. A secret header without a value uses the saved secret of that name; one with a value uses it for this call only and stores nothing.
+        variables:
+          type: object
+          properties:
+            payload:
+              type: object
+              additionalProperties: true
+              description: The test payload for `payload.<path>` Variables; defaults to the Sample payload.
+            steps:
+              type: object
+              additionalProperties:
+                type: object
+                additionalProperties: true
+              description: Earlier step outputs for `steps.<id>.<path>` Variables; defaults to each HTTP request step's last Test request response.
+          additionalProperties: false
+      additionalProperties: false
+    WorkflowTestRequestResult:
+      type: object
+      description: The outcome of one Test request. When an answer came, it is also saved as the step's sample (status, content type and up to 64 KB of body), which the editor offers as that step's Variables.
+      required:
+        - request
+        - response
+        - error
+      properties:
+        request:
+          type: object
+          description: The request that was sent, with secret header values shown as `••••••`.
+          required:
+            - method
+            - url
+            - headers
+          properties:
+            method:
+              type: string
+              enum:
+                - GET
+                - POST
+                - PUT
+                - PATCH
+                - DELETE
+            url:
+              type: string
+            headers:
+              type: array
+              items:
+                type: object
+                required:
+                  - name
+                  - value
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+            body:
+              type: string
+            bodyTruncated:
+              type: boolean
+        response:
+          type:
+            - object
+            - 'null'
+          description: Null when no answer came (timeout, network error, refused address).
+          required:
+            - status
+            - contentType
+            - body
+          properties:
+            status:
+              type: integer
+            contentType:
+              type:
+                - string
+                - 'null'
+            body:
+              description: Parsed JSON when the response is JSON and fits in 64 KB, else up to 64 KB of text.
+            bodyTruncated:
+              type: boolean
+        error:
+          type:
+            - string
+            - 'null'
+          description: Why the call got no answer, or null.
+    CreateWorkflowTestRunRequest:
+      type: object
+      description: Starts a Test run of the workflow's draft.
+      properties:
+        payload:
+          type: object
+          additionalProperties: true
+          description: 'The test payload: a JSON object of at most 100 KB once serialized, nested at most 10 levels (lists count as levels). Defaults to the workflow''s Sample payload.'
+      additionalProperties: false
     ChartDateRange:
       description: |-
         A date range on a time dimension: a named preset from the field catalog's `datePresets` (`last 7 days`, `this month`, …), `all-time` (no range), or a pair of ISO calendar dates `[from, to]`, both inclusive, `from` not after `to`. Every range is read in the organization's display time zone; a `timezone` cannot be supplied.
@@ -17418,6 +18900,51 @@ components:
         application/problem+json:
           schema:
             $ref: '#/components/schemas/Problem'
+    WorkflowEnableResponse:
+      description: |
+        Workflow enabled. `meta.warnings` is present only when something will not stop the workflow from running but probably needs a look, such as a survey link Embedded Data key the survey doesn't accept.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: '#/components/schemas/WorkflowResource'
+              meta:
+                type: object
+                required:
+                  - warnings
+                properties:
+                  warnings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WorkflowWarning'
+    V3Conflict:
+      description: Conflict — an `Idempotency-Key` retry arrived while the original request was still being processed (IETF `draft-ietf-httpapi-idempotency-key-header` semantics). Retry after the original request completes to receive its stored result.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
     WorkflowResourceResponse:
       description: Workflow returned successfully
       headers:
@@ -17438,21 +18965,26 @@ components:
             properties:
               data:
                 $ref: '#/components/schemas/WorkflowResource'
-    V3Conflict:
-      description: Conflict — an `Idempotency-Key` retry arrived while the original request was still being processed (IETF `draft-ietf-httpapi-idempotency-key-header` semantics). Retry after the original request completes to receive its stored result.
+    WorkflowWebhookCallResponse:
+      description: The call was accepted. `runId` is the run it started (202), the run an earlier call with the same `Idempotency-Key` started (200), or null when the workflow is a draft or disabled (202).
       headers:
         X-Request-Id:
           schema:
             type: string
           description: Request correlation ID
-        Cache-Control:
-          schema:
-            type: string
-          example: private, no-store
       content:
-        application/problem+json:
+        application/json:
           schema:
-            $ref: '#/components/schemas/Problem'
+            type: object
+            required:
+              - runId
+            properties:
+              runId:
+                type:
+                  - string
+                  - 'null'
+                format: cuid2
+            additionalProperties: false
     V3DashboardsForbidden:
       description: 'Forbidden. `code: forbidden` when the caller has no access to the workspace, the Feedback Dataset or the resource (which may also not exist; 404 is not used, to avoid leaking existence). `code: dashboards_plan_required` when the caller is authorized but the organization does not have the Dashboards add-on or a license that includes it — checked after authorization, so a caller without access never learns the organization''s plan.'
       headers:

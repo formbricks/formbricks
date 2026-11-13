@@ -1,0 +1,37 @@
+type: object
+description: >
+  A workflow's Webhook Secret URL, its last call, and its Sample payload. The
+  URL is a credential: anyone holding it can start runs, so treat it like an
+  API key and regenerate it if it leaks.
+required:
+  - workflowId
+  - url
+  - lastCalledAt
+  - lastCallerIp
+  - sample
+properties:
+  workflowId:
+    type: string
+    format: cuid2
+  url:
+    type: string
+    format: uri
+    description: The Webhook Secret URL.
+    example: https://app.formbricks.com/api/v3/workflows/clworkflow00000000000000/webhook/q8Zk3vT1xN2yR5wP7mC4bA
+  lastCalledAt:
+    type:
+      - string
+      - "null"
+    format: date-time
+    description: When the Secret URL was last called. Null if never.
+  lastCallerIp:
+    type:
+      - string
+      - "null"
+    description: IP of the last call. Null if never called.
+  sample:
+    anyOf:
+      - $ref: ./WorkflowSampleResource.yml
+      - type: "null"
+    description: Null until a call arrives or a sample is set.
+additionalProperties: false

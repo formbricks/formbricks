@@ -1,0 +1,87 @@
+post:
+  operationId: createWorkflowTestRunV3
+  summary: Start a Test run of a workflow's draft
+  description: >
+    Runs the workflow's current draft at once, inside the request, with the same runner as a real
+    run but with fake effects: Send email records whom it would send to, and an HTTP request records
+    what it would call (secret header values masked) and sends nothing. In "Wait and use it" mode an
+    HTTP request's output is that step's last Test request response; without one it is empty and
+    flagged (`testSample: missing`), and the run goes on. If/else conditions are evaluated for real,
+    so the answer shows the branch a real run would take.
+
+
+    The run is saved with `isDryRun: true` and no version, appears in the runs list (hide it with
+    `filter[isDryRun][eq]=false`), and is never billed or counted as usage. A failed step fails the
+    run, not the call: the answer is still **201** with the run's `status` and step detail. Recorded
+    in the audit log as `testRunStarted` with the run id. `POST .../test`, the setup check that runs
+    nothing, is unchanged.
+
+
+    The test payload is the body's `payload`, else the workflow's Sample payload. Only a Webhook
+    trigger can be test-run. Requires **write** access and is limited to 30 Test runs per minute per
+    user or API key (**429**). An archived workflow, one without a Webhook trigger, or one with no
+    payload to test with answers **422** `invalid_workflow_state`; a draft that cannot run answers
+    **422** `workflow_not_executable` with the fields to fix; a payload over 100 KB **413**.
+  tags:
+    - V3 Workflows
+  parameters:
+    - $ref: ../components/parameters/WorkflowIdPath.yml
+  requestBody:
+    required: false
+    description: Send `{}` (or no body) to test with the workflow's Sample payload.
+    content:
+      application/json:
+        schema:
+          $ref: ../components/schemas/CreateWorkflowTestRunRequest.yml
+  responses:
+    "201":
+      description: The finished Test run.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+        Location:
+          schema:
+            type: string
+          description: The run's address, `/api/v3/workflows/runs/{runId}`.
+        Cache-Control:
+          schema:
+            type: string
+          example: private, no-store
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - data
+            properties:
+              data:
+                $ref: ../components/schemas/WorkflowRunResource.yml
+    "400":
+      $ref: ../components/responses/V3BadRequest.yml
+    "401":
+      $ref: ../components/responses/V3Unauthorized.yml
+    "403":
+      $ref: ../components/responses/V3Forbidden.yml
+    "413":
+      description: The test payload is over 100 KB.
+      headers:
+        X-Request-Id:
+          schema:
+            type: string
+          description: Request correlation ID
+      content:
+        application/problem+json:
+          schema:
+            $ref: ../components/schemas/Problem.yml
+    "422":
+      $ref: ../components/responses/V3UnprocessableContent.yml
+    "429":
+      $ref: ../components/responses/V3TooManyRequests.yml
+    "500":
+      $ref: ../components/responses/V3InternalServerError.yml
+  security:
+    - sessionAuth: []
+    - apiKeyAuth: []
+    - bearerAuth: []

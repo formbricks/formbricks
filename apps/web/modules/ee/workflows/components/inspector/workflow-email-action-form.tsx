@@ -7,24 +7,51 @@ import { useTranslation } from "react-i18next";
 import {
   type TWorkflowSendEmailActionNode,
   type TWorkflowSendEmailContentField,
+  WORKFLOW_SURVEY_LINK_TOKEN,
+  WORKFLOW_TRIGGERS,
   getBlankSendEmailContentFields,
+  getIncludeEmbeddedData,
+  getTriggerSurveyId,
+  isVariableEmailRecipient,
 } from "@formbricks/workflows";
 import { WorkflowEmailRecipientField } from "@/modules/ee/workflows/components/inspector/workflow-email-recipient-field";
+import { WorkflowEmailSurveyLinkSection } from "@/modules/ee/workflows/components/inspector/workflow-email-survey-link-section";
 import {
   WorkflowFieldError,
   WorkflowFieldLabel,
 } from "@/modules/ee/workflows/components/inspector/workflow-field";
+import { useWorkflowVariablePicker } from "@/modules/ee/workflows/components/variable-picker/use-workflow-variable-picker";
 import { useWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
 import { useWorkflowNodeFieldFocus } from "@/modules/ee/workflows/hooks/use-workflow-node-field-focus";
 import { resolveBoundTriggerSurvey } from "@/modules/ee/workflows/lib/bound-survey";
+import {
+  fromRecipientSelectValue,
+  getRecipientVariableOptions,
+  toRecipientSelectValue,
+} from "@/modules/ee/workflows/lib/email-recipient";
+import {
+  appendSurveyLinkToken,
+  hasSurveyLinkToken,
+  withSurveyLinkSurvey,
+  withoutSurveyLink,
+} from "@/modules/ee/workflows/lib/email-survey-link";
+import {
+  getSendEmailBodyRecall,
+  withWorkflowVariableItems,
+} from "@/modules/ee/workflows/lib/variable-picker";
 import { openWorkflowNodeConfigModalAtom, workflowDefinitionAtom } from "@/modules/ee/workflows/state/editor";
 import FollowUpActionMultiEmailInput from "@/modules/survey/follow-ups/components/follow-up-action-multi-email-input";
 import {
   type EmailSendToOption,
   buildEmailSendToOptions,
 } from "@/modules/survey/follow-ups/lib/email-send-to-options";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Editor } from "@/modules/ui/components/editor";
+import {
+  type TEditorRecallSource,
+  createSurveyRecallSource,
+} from "@/modules/ui/components/editor/components/recall-source";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
@@ -84,6 +111,8 @@ export const WorkflowEmailActionForm = ({
   const definition = useAtomValue(workflowDefinitionAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const [firstRender, setFirstRender] = useState(true);
+  // Bumped to re-seed the body editor after the form changes the body itself (the survey link).
+  const [bodyEditorKey, setBodyEditorKey] = useState(0);
 
   // Which required fields may show their error. A freshly added node stays clean until the user
   // has actually engaged with a field and left it empty (or arrived here from the problems
@@ -131,7 +160,7 @@ export const WorkflowEmailActionForm = ({
         : document.getElementById(FIELD_INPUT_IDS[field as keyof typeof FIELD_INPUT_IDS]),
   });
 
-  const triggerSurveyId = definition?.trigger?.type === "trigger" ? definition.trigger.config.surveyId : null;
+  const triggerSurveyId = getTriggerSurveyId(definition?.trigger);
   const survey = resolveBoundTriggerSurvey(authoringContext, definition);
 
   // Clear the recipient + body when the trigger's bound survey changes: `config.to` is an element/
@@ -152,8 +181,25 @@ export const WorkflowEmailActionForm = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [triggerSurveyId]);
 
+  // A Webhook workflow has no survey: its email goes to team members (or, ENG-7182, a Variable) and
+  // its body inserts Variables from the payload and earlier steps (ENG-7113).
+  const isWebhookTrigger = definition?.trigger?.triggerType === WORKFLOW_TRIGGERS.WEBHOOK;
+  const variablePicker = useWorkflowVariablePicker({ nodeId: node.id });
+  const bodyRecall = getSendEmailBodyRecall(definition?.trigger, node.config.to);
+  const bodyRecallSource: TEditorRecallSource | undefined = useMemo(() => {
+    if (bodyRecall === "variables") return variablePicker.recallSource;
+    if (bodyRecall === "survey" && survey) {
+      // The survey picker as before; Variable tokens written through the API still show as chips.
+      return withWorkflowVariableItems(
+        createSurveyRecallSource(survey, node.id, DEFAULT_LANGUAGE_CODE),
+        variablePicker.groups
+      );
+    }
+    return undefined;
+  }, [bodyRecall, survey, node.id, variablePicker.recallSource, variablePicker.groups]);
+
   const emailSendToOptions: EmailSendToOption[] = useMemo(() => {
-    if (!survey || !authoringContext) return [];
+    if ((!survey && !isWebhookTrigger) || !authoringContext) return [];
     return buildEmailSendToOptions({
       survey,
       teamMemberDetails: authoringContext.teamMemberDetails,
@@ -161,12 +207,12 @@ export const WorkflowEmailActionForm = ({
       selectedLanguageCode: DEFAULT_LANGUAGE_CODE,
       t,
     });
-  }, [survey, authoringContext, t]);
+  }, [survey, isWebhookTrigger, authoringContext, t]);
 
   // Without a resolvable bound survey there is nothing meaningful to author — the recipient
   // options and recall body both come from the survey. Point the user at the trigger instead of
   // rendering degraded plain inputs (and the seed's placeholder values).
-  if (!survey) {
+  if (!survey && !isWebhookTrigger) {
     return (
       <div className="flex flex-col gap-3 rounded-md border border-slate-200 bg-slate-50 p-3">
         <p className="text-sm text-slate-600">{t("workspace.workflows.email_needs_survey")}</p>
@@ -188,18 +234,35 @@ export const WorkflowEmailActionForm = ({
     );
   }
 
+  // The body only changes from outside the editor here; re-seed it so it shows the new text.
+  const replaceBody = (next: Partial<TWorkflowSendEmailActionNode["config"]>) => {
+    updateConfig(next);
+    setFirstRender(true);
+    setBodyEditorKey((key) => key + 1);
+  };
+  const isVariableRecipient = isVariableEmailRecipient(node.config.to);
+
   return (
     <div className="flex flex-col gap-4">
       <WorkflowEmailRecipientField
         options={emailSendToOptions}
-        value={node.config.to}
+        // A Webhook workflow can also send to an address in the payload (ENG-7169).
+        variableOptions={
+          isWebhookTrigger ? getRecipientVariableOptions(variablePicker.groups, node.config.to) : []
+        }
+        value={toRecipientSelectValue(node.config.to)}
         isEditable={isEditable}
         isInvalid={invalidFields.has("to")}
-        onChange={(value) => updateConfig({ to: value })}
+        onChange={(value) => updateConfig({ to: fromRecipientSelectValue(value) })}
         // A picked recipient can't be un-picked, so closing the dropdown without choosing is this
         // control's only "touched while still empty" moment.
         onClose={() => markTouched("to")}
       />
+      {isVariableRecipient ? (
+        <Alert variant="info">
+          <AlertDescription>{t("workspace.workflows.email_variable_recipient_fixed_body")}</AlertDescription>
+        </Alert>
+      ) : null}
 
       {/* From (read-only) */}
       <div className="flex flex-col gap-2">
@@ -264,10 +327,12 @@ export const WorkflowEmailActionForm = ({
           {t("workspace.workflows.email_body_label")}
         </WorkflowFieldLabel>
         <Editor
+          key={bodyEditorKey}
           // The editor's contenteditable takes its accessible name from this label.
           id="workflow-email-body-label"
           disableLists
-          excludedToolbarItems={["blockType"]}
+          // No @ button when the body takes no recall (a Variable recipient: the email must be fixed).
+          excludedToolbarItems={bodyRecallSource ? ["blockType"] : ["blockType", "recall"]}
           getText={() => toEditorHtml(node.config.body)}
           setText={(value: string) => updateConfig({ body: value })}
           // The editor is the authority on its own emptiness: its serialized value keeps the
@@ -280,17 +345,54 @@ export const WorkflowEmailActionForm = ({
           setFirstRender={setFirstRender}
           editable={isEditable}
           placeholder={t("workspace.workflows.email_body_placeholder")}
-          localSurvey={survey}
-          elementId={node.id}
-          selectedLanguageCode={DEFAULT_LANGUAGE_CODE}
+          recallSource={bodyRecallSource}
         />
         {invalidFields.has("body") ? (
           <WorkflowFieldError id="workflow-email-body-error">
             {t("workspace.workflows.email_body_required")}
           </WorkflowFieldError>
         ) : null}
+        {/* The editor shows the survey link token as plain text (it has no chip for it), so say what it is. */}
+        {hasSurveyLinkToken(node.config.body) ? (
+          <p className="text-xs text-slate-500">
+            {t("workspace.workflows.email_survey_link_token_help", { token: WORKFLOW_SURVEY_LINK_TOKEN })}
+          </p>
+        ) : null}
       </div>
 
+      <WorkflowEmailSurveyLinkSection
+        config={node.config}
+        isEditable={isEditable}
+        onPickSurvey={(surveyId) => replaceBody(withSurveyLinkSurvey(node.config, surveyId))}
+        onRemove={() => replaceBody(withoutSurveyLink(node.config))}
+        onInsertLink={() => replaceBody({ body: appendSurveyLinkToken(node.config.body) })}
+        onChangeEmbeddedData={(embeddedData) =>
+          node.config.surveyLink && updateConfig({ surveyLink: { ...node.config.surveyLink, embeddedData } })
+        }
+        requestVariable={variablePicker.requestVariable}
+      />
+
+      {/* A Webhook run has no response to attach. */}
+      {isWebhookTrigger ? null : (
+        <WorkflowEmailResponseDataFields node={node} isEditable={isEditable} updateConfig={updateConfig} />
+      )}
+      {variablePicker.pickerElement}
+    </div>
+  );
+};
+
+const WorkflowEmailResponseDataFields = ({
+  node,
+  isEditable,
+  updateConfig,
+}: Readonly<{
+  node: TWorkflowSendEmailActionNode;
+  isEditable: boolean;
+  updateConfig: (next: Partial<TWorkflowSendEmailActionNode["config"]>) => void;
+}>) => {
+  const { t } = useTranslation();
+  return (
+    <>
       <div className="flex items-start justify-between gap-3 rounded-md border border-slate-200 p-3">
         <div className="flex flex-col">
           <Label htmlFor="workflow-email-attach-response-data" className="text-sm font-medium">
@@ -311,14 +413,22 @@ export const WorkflowEmailActionForm = ({
       {node.config.attachResponseData ? (
         <div className="flex flex-col gap-3 rounded-md border border-slate-200 p-3">
           <div className="flex items-start justify-between gap-3">
-            <Label htmlFor="workflow-email-include-variables" className="text-sm font-medium">
-              {t("workspace.workflows.email_include_variables_label")}
-            </Label>
+            <div className="flex flex-col">
+              <Label htmlFor="workflow-email-include-variables" className="text-sm font-medium">
+                {t("workspace.workflows.email_include_variables_label")}
+              </Label>
+              <p className="text-xs text-slate-500">
+                {t("workspace.workflows.email_include_embedded_data_description")}
+              </p>
+            </div>
             <Switch
               id="workflow-email-include-variables"
-              checked={node.config.includeVariables ?? false}
+              checked={getIncludeEmbeddedData(node.config)}
               disabled={!isEditable}
-              onCheckedChange={(checked) => updateConfig({ includeVariables: checked })}
+              // Saved under the new name; the deprecated one is dropped so the two never mix (ADR 0050).
+              onCheckedChange={(checked) =>
+                updateConfig({ includeEmbeddedData: checked, includeVariables: undefined })
+              }
             />
           </div>
           <div className="flex items-start justify-between gap-3">
@@ -334,6 +444,6 @@ export const WorkflowEmailActionForm = ({
           </div>
         </div>
       ) : null}
-    </div>
+    </>
   );
 };

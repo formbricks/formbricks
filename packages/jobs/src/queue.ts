@@ -29,6 +29,7 @@ import {
   type TResponsePipelineJobData,
   type TTestLogJobData,
   type TWebhookDeliveryJobData,
+  type TWorkflowHttpRequestDeliveryJobData,
   type TWorkflowRunJobData,
 } from "@/src/types";
 
@@ -337,6 +338,28 @@ export const enqueueWorkflowRunJob = async (
   }
 };
 
+/**
+ * Enqueues one "Don't wait" HTTP request call (ENG-7179). One attempt: the handler retries the call
+ * itself (3 times with backoff, like a waiting step), so a BullMQ retry would only re-send a call that
+ * may already have gone out. The run step id makes a re-enqueue a no-op.
+ */
+export const enqueueWorkflowHttpRequestDeliveryJob = async (
+  data: TWorkflowHttpRequestDeliveryJobData
+): Promise<Job> => {
+  try {
+    return await enqueueBackgroundJob(JOB_NAMES.workflowHttpRequestDelivery, data, {
+      attempts: 1,
+      jobId: `${data.workflowRunId}-${data.stepId}`,
+    });
+  } catch (error) {
+    logger.error(
+      { err: error, jobName: JOB_NAMES.workflowHttpRequestDelivery, workflowRunId: data.workflowRunId },
+      "Failed to enqueue BullMQ workflow HTTP request delivery job"
+    );
+    throw error;
+  }
+};
+
 export const enqueueWebhookDeliveryJob = async (
   data: TWebhookDeliveryJobData,
   options: { jobId: string }
@@ -479,6 +502,7 @@ export const ONE_SHOT_JOB_NAMES = Object.freeze({
   responsePipeline: JOB_NAMES.responsePipeline,
   webhookDelivery: JOB_NAMES.webhookDelivery,
   workflowRun: JOB_NAMES.workflowRun,
+  workflowHttpRequestDelivery: JOB_NAMES.workflowHttpRequestDelivery,
 });
 
 export const getBackgroundJobProducer = (): BackgroundJobProducer => ({

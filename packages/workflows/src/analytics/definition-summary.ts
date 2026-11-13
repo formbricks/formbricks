@@ -86,10 +86,15 @@ export interface WorkflowDefinitionOptions {
   endingScope: "all" | "specific" | null;
   /**
    * `send_email` actions: whether recipients are author-chosen `literal` addresses, survey `element`
-   * ids resolved per response, or `mixed` across several actions.
+   * ids resolved per response, a `variable` (such as a payload address), or `mixed` across several
+   * actions.
    */
-  emailRecipientKind: "literal" | "element" | "mixed" | null;
-  /** `send_email` actions: `true` when any action has the option on. */
+  emailRecipientKind: "literal" | "element" | "variable" | "mixed" | null;
+  /**
+   * `send_email` actions: `true` when any action has the option on. `includeVariables` reads either
+   * name of the Embedded Data option (`includeEmbeddedData` or the deprecated `includeVariables`), so
+   * the analytics property keeps its name across the rename.
+   */
   attachResponseData: boolean | null;
   includeVariables: boolean | null;
   includeHiddenFields: boolean | null;
@@ -127,8 +132,11 @@ export const summarizeWorkflowDefinitionOptions = (
   const recipientKinds = new Set(
     emailConfigs
       .map((config) => config.to)
-      .filter((to): to is string => typeof to === "string" && to.length > 0)
-      .map((to) => (isLiteralEmailRecipient(to) ? "literal" : "element"))
+      .flatMap((to): ("literal" | "element" | "variable")[] => {
+        if (isRecord(to)) return to.type === "variable" ? ["variable"] : [];
+        if (typeof to !== "string" || to.length === 0) return [];
+        return [isLiteralEmailRecipient(to) ? "literal" : "element"];
+      })
   );
   let emailRecipientKind: WorkflowDefinitionOptions["emailRecipientKind"] = null;
   if (recipientKinds.size === 1) emailRecipientKind = [...recipientKinds][0];
@@ -138,7 +146,12 @@ export const summarizeWorkflowDefinitionOptions = (
     endingScope,
     emailRecipientKind,
     attachResponseData: anyFlag(emailConfigs, "attachResponseData"),
-    includeVariables: anyFlag(emailConfigs, "includeVariables"),
+    includeVariables:
+      emailConfigs.length === 0
+        ? null
+        : emailConfigs.some(
+            (config) => config.includeEmbeddedData === true || config.includeVariables === true
+          ),
     includeHiddenFields: anyFlag(emailConfigs, "includeHiddenFields"),
   };
 };

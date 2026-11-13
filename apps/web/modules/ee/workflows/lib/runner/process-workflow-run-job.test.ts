@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import type { TWorkflowRunJobData } from "@formbricks/jobs";
 import { TooManyRequestsError } from "@formbricks/types/errors";
-import { processWorkflowRunJob } from "./process-workflow-run-job";
+import type { WorkflowRunEffects } from "./effects";
+import { createWorkflowRunJobHandler, processWorkflowRunJob } from "./process-workflow-run-job";
 
 const {
   mockSendEmail,
@@ -42,6 +43,8 @@ const {
 
 // Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
+// The live effects enqueue "Don't wait" HTTP calls (ENG-7179); no test here reaches the queue.
+vi.mock("@formbricks/jobs", () => ({ enqueueWorkflowHttpRequestDeliveryJob: vi.fn() }));
 vi.mock("@formbricks/database", () => ({
   prisma: {
     workflowRun: {
@@ -126,6 +129,14 @@ vi.mock("@/lib/workspace/service", () => ({
 vi.mock("@/lib/posthog", () => ({
   capturePostHogEvent: mockCapturePostHogEvent,
 }));
+
+vi.mock("../survey-link-surveys", () => ({
+  getWorkflowSurveyLinkSurveys: vi.fn(async ({ surveyIds }: { surveyIds: string[] }) =>
+    surveyIds.map((surveyId) => ({ surveyId, status: "ok", acceptedEmbeddedDataKeys: ["call_id"] }))
+  ),
+}));
+
+vi.mock("@/lib/getPublicUrl", () => ({ getPublicDomain: () => "https://surveys.example.com" }));
 
 vi.mock("@formbricks/logger", () => {
   const mockLogger = {
@@ -344,7 +355,7 @@ describe("processWorkflowRunJob", () => {
         where: { runId_stepId: { runId: baseRun.id, stepId: "send-email" } },
         data: expect.objectContaining({
           status: "succeeded",
-          output: { provider: "smtp", messageId: sendArgs.messageId },
+          output: { provider: "smtp", messageId: sendArgs.messageId, recipient: "jane@example.com" },
         }),
       })
     );
@@ -943,6 +954,174 @@ describe("processWorkflowRunJob", () => {
     expect(mockCapturePostHogEvent).not.toHaveBeenCalled();
   });
 
+  test("does not report a Test run's failure: it is not a workflow failing in production", async () => {
+    mockWorkflowRunFindFirst.mockResolvedValue({ ...baseRun, isDryRun: true });
+    mockSendEmail.mockRejectedValue(new Error("SMTP provider rejected the message"));
+
+    await expect(processWorkflowRunJob(data, finalAttemptContext)).resolves.toBeUndefined();
+
+    expect(mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0].data.status).toBe("failed");
+    expect(mockCapturePostHogEvent).not.toHaveBeenCalled();
+  });
+
+  describe("If/else", () => {
+    const emailNode = (id: string, subject: string, body = "<p>Hi</p>") => ({
+      id,
+      type: "action",
+      actionType: "send_email",
+      config: {
+        to: "email",
+        from: "noreply@example.com",
+        replyTo: [],
+        subject,
+        body,
+        attachResponseData: false,
+      },
+    });
+
+    // trigger → check → then: then-email | else: else-email
+    const branchingDefinition = (condition: Record<string, unknown>, thenBody?: string) => ({
+      schemaVersion: 1,
+      entryNodeId: "trigger",
+      trigger: executableDefinition.trigger,
+      nodes: [
+        {
+          id: "check",
+          type: "if_else",
+          config: { condition: { id: "group", connector: "and", conditions: [condition] } },
+        },
+        emailNode("then-email", "Then", thenBody),
+        emailNode("else-email", "Else"),
+      ],
+      edges: [
+        { id: "e1", source: "trigger", target: "check" },
+        { id: "e2", source: "check", target: "then-email", sourceHandle: "then" },
+        { id: "e3", source: "check", target: "else-email", sourceHandle: "else" },
+      ],
+    });
+
+    const runWith = (definition: unknown) =>
+      mockWorkflowRunFindFirst.mockResolvedValue({
+        ...baseRun,
+        workflowVersion: { definition },
+        workflow: { createdBy: "creator-1", definition },
+      });
+
+    const scoreAbove8 = (operator: string) => ({
+      id: "c1",
+      left: { path: "response.score" },
+      operator,
+      right: 8,
+    });
+
+    test("takes the Then branch when the conditions hold, with survey operator names", async () => {
+      // A number sent as text compares as a number, as in survey logic.
+      mockGetResponse.mockResolvedValue({ ...mockResponse, data: { ...mockResponse.data, score: "9" } });
+      runWith(branchingDefinition(scoreAbove8("isGreaterThan")));
+
+      await processWorkflowRunJob(data, baseContext);
+
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][0].subject).toBe("Then");
+
+      const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+      expect(completion.data.status).toBe("completed");
+      expect(completion.data.data.steps.map((step: { stepId: string }) => step.stepId)).toEqual([
+        "check",
+        "then-email",
+      ]);
+      expect(completion.data.data.steps[0]).toMatchObject({
+        stepType: "if_else",
+        status: "succeeded",
+        output: { branch: "then", matched: true, conditions: [{ id: "c1", matched: true }] },
+      });
+      // The If/else is recorded like any step, so run detail and resume see it.
+      expect(mockWorkflowRunLogCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ stepId: "check", sequence: 1 }) })
+      );
+      expect(mockWorkflowRunLogCreate).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ stepId: "then-email", sequence: 2 }) })
+      );
+    });
+
+    test("records the steps on the branch not taken, for run detail", async () => {
+      mockGetResponse.mockResolvedValue({ ...mockResponse, data: { ...mockResponse.data, score: 9 } });
+      runWith(branchingDefinition(scoreAbove8("isGreaterThan")));
+
+      await processWorkflowRunJob(data, baseContext);
+
+      const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+      expect(completion.data.data.notTaken).toEqual([{ stepId: "else-email", stepType: "send_email" }]);
+    });
+
+    test("takes the Else branch with the legacy operator names", async () => {
+      mockGetResponse.mockResolvedValue({ ...mockResponse, data: { ...mockResponse.data, score: 5 } });
+      runWith(branchingDefinition(scoreAbove8("greaterThan")));
+
+      await processWorkflowRunJob(data, baseContext);
+
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][0].subject).toBe("Else");
+    });
+
+    test("a missing Variable is not set, so a presence check takes Else", async () => {
+      runWith(branchingDefinition({ id: "c1", left: { path: "response.nope" }, operator: "isSet" }));
+
+      await processWorkflowRunJob(data, baseContext);
+
+      expect(mockSendEmail.mock.calls[0][0].subject).toBe("Else");
+    });
+
+    test("resumes an If/else from its log instead of deciding again", async () => {
+      // The response changed since the first attempt took Else; the run must stay on Else.
+      mockGetResponse.mockResolvedValue({ ...mockResponse, data: { ...mockResponse.data, score: 9 } });
+      runWith(branchingDefinition(scoreAbove8("isGreaterThan")));
+      mockWorkflowRunLogFindFirst.mockImplementation(async ({ where }: { where: { stepId: string } }) =>
+        where.stepId === "check"
+          ? existingStepLog("succeeded", {
+              stepId: "check",
+              stepType: "if_else",
+              output: { branch: "else", matched: false, conditions: [] },
+            })
+          : null
+      );
+
+      await processWorkflowRunJob(data, baseContext);
+
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockSendEmail.mock.calls[0][0].subject).toBe("Else");
+    });
+
+    test("an email body can use a response answer through a Variable path", async () => {
+      runWith(
+        branchingDefinition(
+          { id: "c1", left: { path: "response.email" }, operator: "isSet" },
+          "<p>#recall:response.name/fallback:there#</p>"
+        )
+      );
+
+      await processWorkflowRunJob(data, baseContext);
+
+      // Response answers go to survey recall as bare question ids.
+      expect(mockBuildHtml).toHaveBeenCalledWith(
+        expect.objectContaining({ body: "<p>#recall:name/fallback:there#</p>" })
+      );
+    });
+
+    test("an If/else's branch is not a Variable: a body reading it is not executable", async () => {
+      runWith(
+        branchingDefinition(
+          { id: "c1", left: { path: "response.email" }, operator: "isSet" },
+          "<p>#recall:steps.check.branch/fallback:x#</p>"
+        )
+      );
+
+      await processWorkflowRunJob(data, finalAttemptContext);
+
+      expect(mockSendEmail).not.toHaveBeenCalled();
+    });
+  });
+
   test("marks the run failed for an invalid / non-executable definition (final attempt)", async () => {
     mockWorkflowRunFindFirst.mockResolvedValue({
       ...baseRun,
@@ -1025,4 +1204,198 @@ describe("processWorkflowRunJob", () => {
       "Workflow run job failed after final attempt"
     );
   });
+
+  describe("a Webhook run emailing a payload address (ENG-7180)", () => {
+    const linkSurveyId = "cm9zr4lnk000008l8btfy1vtz";
+    const webhookDefinition = {
+      schemaVersion: 1,
+      entryNodeId: "trigger",
+      trigger: { id: "trigger", type: "trigger", triggerType: "webhook", config: {} },
+      nodes: [
+        {
+          id: "send-email",
+          type: "action",
+          actionType: "send_email",
+          config: {
+            to: { type: "variable", ref: "payload.customer.email" },
+            from: "noreply@example.com",
+            replyTo: [],
+            subject: "How was your call?",
+            body: "<p>Tell us: #survey-link#</p>",
+            attachResponseData: false,
+            surveyLink: {
+              surveyId: linkSurveyId,
+              embeddedData: [{ key: "call_id", value: "#recall:payload.call.id/fallback:#" }],
+            },
+          },
+        },
+      ],
+      edges: [{ id: "trigger-send-email", source: "trigger", target: "send-email" }],
+    };
+    const webhookRun = (customer: Record<string, unknown>) => ({
+      ...baseRun,
+      triggerType: "webhook",
+      triggerPayload: {
+        type: "webhook",
+        workspaceId: data.workspaceId,
+        payload: { customer, call: { id: "K-771" } },
+        triggeredAt: "2026-11-13T12:01:00.000Z",
+      },
+      workflowVersion: { definition: webhookDefinition },
+      workflow: { definition: webhookDefinition, createdBy: "creator-1" },
+    });
+
+    test("emails the payload address a survey link whose Embedded Data comes from the payload", async () => {
+      mockWorkflowRunFindFirst.mockResolvedValue(webhookRun({ email: "lena@example.com" }));
+
+      await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
+
+      expect(mockGetResponse).not.toHaveBeenCalled();
+      expect(mockSendEmail).toHaveBeenCalledWith(
+        expect.objectContaining({
+          to: "lena@example.com",
+          rateLimit: expect.objectContaining({ workflowId: data.workflowId, externalRecipient: true }),
+        })
+      );
+      const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+      expect(completion.data.status).toBe("completed");
+      expect(completion.data.data.steps[0].output).toMatchObject({
+        recipient: "lena@example.com",
+        surveyLink: `https://surveys.example.com/s/${linkSurveyId}?call_id=K-771`,
+      });
+    });
+
+    test("an invalid payload address fails the run at once, with no retry left to the queue", async () => {
+      mockWorkflowRunFindFirst.mockResolvedValue(webhookRun({ email: "not-an-address" }));
+
+      // A non-final attempt: a retryable failure would rethrow so BullMQ retries.
+      await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
+
+      expect(mockSendEmail).not.toHaveBeenCalled();
+      const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+      expect(failure.data.status).toBe("failed");
+      expect(failure.data.data.steps[0]).toMatchObject({
+        status: "failed",
+        error: "Recipient payload.customer.email is not a valid email address",
+      });
+    });
+  });
+});
+
+describe("HTTP request steps in a run (ENG-7179)", () => {
+  // trigger → call (HTTP request) → send-email, whose body reads the call's response.
+  const httpDefinition = (responseMode: "wait" | "dont_wait") => {
+    const base = makeDefinition("email", {
+      body: "<p>Customer #recall:steps.call.body.id/fallback:none#</p>",
+    });
+    return {
+      ...base,
+      nodes: [
+        {
+          id: "call",
+          type: "action",
+          actionType: "http_request",
+          config: {
+            method: "GET",
+            url: "https://api.example.com/customers",
+            queryParameters: [],
+            headers: [],
+            responseMode,
+            continueOnError: false,
+          },
+        },
+        ...base.nodes,
+      ],
+      edges: [
+        { id: "e1", source: "trigger", target: "call" },
+        { id: "e2", source: "call", target: "send-email" },
+      ],
+    };
+  };
+
+  const effects = {
+    sendEmail: mockSendEmail,
+    sendHttpRequest: vi.fn<WorkflowRunEffects["sendHttpRequest"]>(),
+    enqueueHttpRequestDelivery: vi.fn<WorkflowRunEffects["enqueueHttpRequestDelivery"]>(),
+  };
+  const handler = createWorkflowRunJobHandler(effects);
+
+  const runWith = (definition: unknown) =>
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      workflowVersion: { definition },
+      workflow: { definition, createdBy: "creator-1" },
+    });
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockWorkflowRunUpdateMany.mockResolvedValue({ count: 1 });
+    mockWorkflowRunLogFindFirst.mockResolvedValue(null);
+    mockWorkflowRunLogCreate.mockResolvedValue(undefined);
+    mockWorkflowRunLogUpdate.mockResolvedValue(undefined);
+    mockWorkflowRunLogUpdateMany.mockResolvedValue({ count: 1 });
+    mockSendEmail.mockResolvedValue(true);
+    mockBuildHtml.mockResolvedValue("<html>branded</html>");
+    mockGetResponse.mockResolvedValue(mockResponse);
+    mockGetSurvey.mockResolvedValue(mockSurvey);
+    mockGetOrganizationByWorkspaceId.mockResolvedValue({ id: "org1", whitelabel: null });
+    mockGetWorkspaceMemberEmails.mockResolvedValue(new Set());
+    effects.enqueueHttpRequestDelivery.mockResolvedValue({ handedOff: true });
+  });
+
+  test("a later step reads the whole response, even past what the run log keeps", async () => {
+    runWith(httpDefinition("wait"));
+    // Larger than the 64 KB the log keeps, so only the in-memory copy still has `id` as a field.
+    const body = JSON.stringify({ id: "c_42", padding: "x".repeat(70 * 1024) });
+    effects.sendHttpRequest.mockResolvedValue({
+      response: { status: 200, contentType: "application/json", bodyText: body, truncated: false },
+      error: null,
+      attempts: 1,
+    });
+
+    await handler(data, baseContext);
+
+    expect(mockBuildHtml).toHaveBeenCalledWith(expect.objectContaining({ body: "<p>Customer c_42</p>" }));
+    expect(mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0].data.status).toBe("completed");
+  });
+
+  test("Don't wait: the run goes on and completes while the call is still sending", async () => {
+    runWith(httpDefinition("dont_wait"));
+
+    await handler(data, baseContext);
+
+    expect(effects.sendHttpRequest).not.toHaveBeenCalled();
+    expect(effects.enqueueHttpRequestDelivery).toHaveBeenCalledTimes(1);
+    expect(mockSendEmail).toHaveBeenCalledTimes(1);
+    expect(mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0].data.status).toBe("completed");
+  });
+
+  test.each(["running", "failed"])(
+    "a resumed run never re-sends a Don't wait call its job owns (%s), and its outcome doesn't fail the run",
+    async (status) => {
+      runWith(httpDefinition("dont_wait"));
+      mockWorkflowRunLogFindFirst.mockImplementation(({ where }: { where: { stepId: string } }) =>
+        Promise.resolve(
+          where.stepId === "call"
+            ? {
+                stepId: "call",
+                stepType: "http_request",
+                status,
+                input: {},
+                output: { mode: "dont_wait", delivery: status === "failed" ? "failed" : "sending" },
+                error: status === "failed" ? "The request timed out after 10 s" : null,
+                startedAt: new Date("2026-06-09T12:01:00.000Z"),
+                finishedAt: null,
+              }
+            : null
+        )
+      );
+
+      await handler(data, baseContext);
+
+      expect(effects.enqueueHttpRequestDelivery).not.toHaveBeenCalled();
+      expect(mockSendEmail).toHaveBeenCalledTimes(1);
+      expect(mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0].data.status).toBe("completed");
+    }
+  );
 });

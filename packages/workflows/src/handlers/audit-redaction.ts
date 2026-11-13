@@ -40,6 +40,42 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 /**
+ * `http_request` headers in an audit snapshot (ENG-7168): a secret header keeps only its name and
+ * whether it is set — whatever shape reached here, its value and stored id never do — and a plain
+ * header's value becomes a marker, since an author may keep a credential in a header they unlocked.
+ * The URL, method and names stay readable: "changing the URL is recorded in the audit log" (ADR 0042).
+ */
+const redactHttpRequestConfig = (config: Record<string, unknown>, key?: string): Record<string, unknown> => {
+  if (!Array.isArray(config.headers)) return config;
+  const headers: unknown[] = config.headers;
+  return {
+    ...config,
+    headers: headers.map((header): unknown => {
+      if (!isRecord(header)) return header;
+      if (header.secret === true) {
+        return { name: header.name, secret: true, isSet: Boolean(header.secretId ?? header.isSet) };
+      }
+      return "value" in header ? { ...header, value: redactField(header.value, key) } : header;
+    }),
+  };
+};
+
+/**
+ * A survey link's Embedded Data values can be literal text (a name, an id), so they are masked like
+ * the subject; the survey id and the keys are configuration and stay readable.
+ */
+const redactSurveyLink = (surveyLink: unknown, key?: string): unknown => {
+  if (!isRecord(surveyLink) || !Array.isArray(surveyLink.embeddedData)) return surveyLink;
+  const embeddedData: unknown[] = surveyLink.embeddedData;
+  return {
+    ...surveyLink,
+    embeddedData: embeddedData.map((entry) =>
+      isRecord(entry) && "value" in entry ? { ...entry, value: redactField(entry.value, key) } : entry
+    ),
+  };
+};
+
+/**
  * Redact PII from a workflow definition's actions before the snapshot leaves this package for the
  * audit log. The shared `redactPII` keys off field NAMES (`email`, `token`, …) and does not match
  * the workflow definition's `to`/`from`/`replyTo`/`subject`/`body`, so without this the values
@@ -58,6 +94,9 @@ export const redactWorkflowDefinitionPII = (definition: unknown, key?: string): 
 
   const nodes: unknown[] = definition.nodes;
   const redactedNodes = nodes.map((node): unknown => {
+    if (isRecord(node) && node.actionType === WORKFLOW_ACTIONS.HTTP_REQUEST && isRecord(node.config)) {
+      return { ...node, config: redactHttpRequestConfig(node.config, key) };
+    }
     if (
       !isRecord(node) ||
       node.type !== "action" ||
@@ -69,10 +108,13 @@ export const redactWorkflowDefinitionPII = (definition: unknown, key?: string): 
 
     const redactedConfig: Record<string, unknown> = { ...node.config };
     for (const field of SEND_EMAIL_PII_FIELDS) {
-      if (field in redactedConfig) {
+      // A Variable recipient (`{type: "variable", ref}`) holds a path, not an address: kept readable.
+      if (field in redactedConfig && !isRecord(redactedConfig[field])) {
         redactedConfig[field] = redactField(redactedConfig[field], key);
       }
     }
+    redactedConfig.surveyLink = redactSurveyLink(redactedConfig.surveyLink, key);
+    if (redactedConfig.surveyLink === undefined) delete redactedConfig.surveyLink;
     return { ...node, config: redactedConfig };
   });
 

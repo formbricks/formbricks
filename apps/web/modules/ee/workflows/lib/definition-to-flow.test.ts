@@ -2,6 +2,7 @@ import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 import {
+  WORKFLOW_BRANCH_NODE_TYPE,
   reorganizeWorkflowDefinition,
   snapWorkflowNodePosition,
   updateNodePosition,
@@ -98,6 +99,29 @@ describe("workflowDefinitionToFlowNodes / Edges", () => {
     expect(nodes[1].data.issue).toBeNull();
   });
 
+  test("a Webhook trigger has no survey to pick, so neither it nor its email waits for one", () => {
+    const def = buildDefinition();
+    def.trigger = { id: "trigger-1", type: "trigger", triggerType: "webhook", config: {} };
+    (def.nodes[0] as { config: { subject: string } }).config.subject = "";
+
+    const nodes = workflowDefinitionToFlowNodes(def, t, { hasBoundSurvey: false, isDraft: true });
+
+    expect(nodes[0].data.issue).toBeNull();
+    expect(nodes[1].data.issue).toEqual({
+      severity: "setup",
+      label: "workspace.workflows.node_needs_email_content",
+    });
+  });
+
+  test("shows the trigger summary the canvas worked out from the Webhook sample", () => {
+    const def = buildDefinition();
+    def.trigger = { id: "trigger-1", type: "trigger", triggerType: "webhook", config: {} };
+
+    const nodes = workflowDefinitionToFlowNodes(def, t, { triggerSummary: "Sample received · 9 Variables" });
+
+    expect(nodes[0].data.summary).toBe("Sample received · 9 Variables");
+  });
+
   test("flags an incomplete email node once the survey is bound, with error severity when live", () => {
     const def = buildDefinition();
     (def.nodes[0] as { config: { to: string } }).config.to = "";
@@ -164,6 +188,184 @@ describe("reorganizeWorkflowDefinition", () => {
     const reachableY = next.nodes[0].ui?.position?.y ?? 0;
     const orphanY = next.nodes[1].ui?.position?.y ?? 0;
     expect(orphanY).toBeGreaterThan(reachableY);
+  });
+});
+
+const emailNode = (id: string) =>
+  ({
+    id,
+    type: "action",
+    actionType: "send_email",
+    config: {
+      to: "respondent@example.com",
+      from: "team@example.com",
+      replyTo: [],
+      subject: "Thanks",
+      body: "Body",
+      attachResponseData: false,
+    },
+    ui: { position: { x: 0, y: 0 } },
+  }) as TWorkflowDefinition["nodes"][number];
+
+const ifElseNode = (id: string) =>
+  ({
+    id,
+    type: "if_else",
+    config: {
+      condition: {
+        id: `${id}-group`,
+        connector: "and",
+        conditions: [
+          { id: `${id}-c1`, left: { path: "payload.channel" }, operator: "equals", right: "call" },
+        ],
+      },
+    },
+    ui: { position: { x: 0, y: 0 } },
+  }) as TWorkflowDefinition["nodes"][number];
+
+// trigger → if-1; Then → email-a; Else is empty.
+const branchDefinition = () =>
+  buildDefinition({
+    nodes: [ifElseNode("if-1"), emailNode("email-a")],
+    edges: [
+      { id: "e-trigger", source: "trigger-1", target: "if-1" },
+      { id: "e-then", source: "if-1", target: "email-a", sourceHandle: "then" },
+    ],
+  });
+
+describe("If/else on the canvas", () => {
+  test("projects an If/else as a branch node that knows which branch is still empty", () => {
+    const nodes = workflowDefinitionToFlowNodes(branchDefinition(), t);
+    const branchNode = nodes.find((node) => node.id === "if-1");
+    expect(branchNode?.type).toBe(WORKFLOW_BRANCH_NODE_TYPE);
+    expect(branchNode?.data.emptyBranches).toEqual(["else"]);
+  });
+
+  test("offers a + under the last step of the workflow or of a branch, never mid-chain", () => {
+    const linear = workflowDefinitionToFlowNodes(buildDefinition(), t);
+    expect(linear.map((node) => node.data.canAppendStep)).toEqual([false, true]);
+
+    const branched = workflowDefinitionToFlowNodes(branchDefinition(), t);
+    const canAppendById = Object.fromEntries(branched.map((node) => [node.id, node.data.canAppendStep]));
+    expect(canAppendById).toEqual({ "trigger-1": false, "if-1": false, "email-a": true });
+
+    const triggerOnly = workflowDefinitionToFlowNodes(buildDefinition({ nodes: [], edges: [] }), t);
+    expect(triggerOnly[0].data.canAppendStep).toBe(true);
+  });
+
+  test("draws the edges out of an If/else as branch edges and leaves other edges as they were", () => {
+    const edges = workflowDefinitionToFlowEdges(branchDefinition());
+    expect(edges.find((edge) => edge.id === "e-then")).toMatchObject({
+      type: "branch",
+      sourceHandle: "then",
+    });
+    expect(edges.find((edge) => edge.id === "e-trigger")).toMatchObject({ type: "addButton" });
+  });
+
+  test("auto layout keeps a linear workflow where it always was", () => {
+    const next = reorganizeWorkflowDefinition(buildDefinition());
+    expect(next.trigger?.ui?.position).toEqual({ x: 220, y: 80 });
+    expect(next.nodes[0].ui?.position).toEqual({ x: 220, y: 200 });
+  });
+
+  test("auto layout puts Then on the left and Else on the right, widening for a nested If/else", () => {
+    // trigger → if-1; Then → email-a; Else → if-2 (Then → email-b, Else → email-c).
+    const def = buildDefinition({
+      nodes: [
+        ifElseNode("if-1"),
+        emailNode("email-a"),
+        ifElseNode("if-2"),
+        emailNode("email-b"),
+        emailNode("email-c"),
+      ],
+      edges: [
+        { id: "e1", source: "trigger-1", target: "if-1" },
+        { id: "e2", source: "if-1", target: "if-2", sourceHandle: "else" },
+        { id: "e3", source: "if-1", target: "email-a", sourceHandle: "then" },
+        { id: "e4", source: "if-2", target: "email-b", sourceHandle: "then" },
+        { id: "e5", source: "if-2", target: "email-c", sourceHandle: "else" },
+      ],
+    });
+
+    const next = reorganizeWorkflowDefinition(def);
+    const positions = Object.fromEntries(next.nodes.map((node) => [node.id, node.ui?.position]));
+    expect(next.trigger?.ui?.position).toEqual({ x: 220, y: 80 });
+    expect(positions).toEqual({
+      "if-1": { x: 220, y: 200 },
+      "email-a": { x: -140, y: 400 },
+      "if-2": { x: 400, y: 400 },
+      "email-b": { x: 220, y: 600 },
+      "email-c": { x: 580, y: 600 },
+    });
+  });
+});
+
+const switchNode = (id: string, caseNames: string[]) =>
+  ({
+    id,
+    type: "switch",
+    config: {
+      left: { path: "payload.customer.tier" },
+      cases: caseNames.map((name, index) => ({
+        id: `${id}-case-${index}`,
+        name,
+        operator: "equals",
+        right: name.toLowerCase(),
+      })),
+    },
+    ui: { position: { x: 0, y: 0 } },
+  }) as TWorkflowDefinition["nodes"][number];
+
+describe("Switch on the canvas", () => {
+  // trigger → route; Gold → email-g, the unnamed case and Default empty.
+  const routing = () =>
+    buildDefinition({
+      nodes: [switchNode("route", ["Gold", " "]), emailNode("email-g")],
+      edges: [
+        { id: "e-trigger", source: "trigger-1", target: "route" },
+        { id: "e-gold", source: "route", target: "email-g", sourceHandle: "route-case-0" },
+      ],
+    });
+
+  test("projects a Switch as a branch node with one labelled path per case and Default, in order", () => {
+    const route = workflowDefinitionToFlowNodes(routing(), t).find((node) => node.id === "route");
+
+    expect(route?.type).toBe(WORKFLOW_BRANCH_NODE_TYPE);
+    expect(route?.data.branches.map(({ handle, label }) => ({ handle, label }))).toEqual([
+      { handle: "route-case-0", label: "Gold" },
+      // A case without a name yet reads by its number.
+      { handle: "route-case-1", label: "workspace.workflows.switch_case_name_default" },
+      { handle: "default", label: "workspace.workflows.switch_default" },
+    ]);
+    expect(route?.data.emptyBranches).toEqual(["route-case-1", "default"]);
+    expect(route?.data.canAppendStep).toBe(false);
+  });
+
+  test("draws the edges out of a Switch as branch edges", () => {
+    expect(workflowDefinitionToFlowEdges(routing()).find((edge) => edge.id === "e-gold")).toMatchObject({
+      type: "branch",
+      sourceHandle: "route-case-0",
+    });
+  });
+
+  test("auto layout puts each case's branch in its own column, left to right, Default last", () => {
+    const def = buildDefinition({
+      nodes: [switchNode("route", ["Gold", "Silver"]), emailNode("email-d"), emailNode("email-g")],
+      edges: [
+        { id: "e1", source: "trigger-1", target: "route" },
+        { id: "e2", source: "route", target: "email-d", sourceHandle: "default" },
+        { id: "e3", source: "route", target: "email-g", sourceHandle: "route-case-0" },
+      ],
+    });
+
+    const next = reorganizeWorkflowDefinition(def);
+    const positions = Object.fromEntries(next.nodes.map((node) => [node.id, node.ui?.position]));
+    // Three columns centered under the Switch: Gold, Silver (empty), Default.
+    expect(positions).toEqual({
+      route: { x: 220, y: 200 },
+      "email-g": { x: -140, y: 400 },
+      "email-d": { x: 580, y: 400 },
+    });
   });
 });
 

@@ -29,6 +29,20 @@ import type {
   TWorkflowRunResource,
   TWorkflowTestResult,
 } from "./resources";
+import {
+  ZSendWorkflowTestRequestInput,
+  ZWorkflowTestRequestParams,
+  ZWorkflowTestRequestResult,
+} from "./test-request";
+import { ZCreateWorkflowTestRunInput } from "./test-run";
+import {
+  ZSetWorkflowSampleInput,
+  ZWorkflowSampleResource,
+  ZWorkflowWebhookCallParams,
+  ZWorkflowWebhookCallResult,
+  ZWorkflowWebhookPayloadInput,
+  ZWorkflowWebhookResource,
+} from "./webhook";
 
 /**
  * Route-agnostic operation contracts for the v3 Workflows API (ENG-1101). Keys match the
@@ -100,6 +114,36 @@ export const WORKFLOW_API_OPERATIONS = {
   getWorkflowRunV3: {
     params: ZWorkflowRunIdInput,
     input: null,
+    output: ZWorkflowRunResource,
+  },
+  getWorkflowWebhookV3: {
+    params: ZWorkflowIdInput,
+    input: null,
+    output: ZWorkflowWebhookResource,
+  },
+  regenerateWorkflowWebhookV3: {
+    params: ZWorkflowIdInput,
+    input: null,
+    output: ZWorkflowWebhookResource,
+  },
+  setWorkflowSampleV3: {
+    params: ZWorkflowIdInput,
+    input: ZSetWorkflowSampleInput,
+    output: ZWorkflowSampleResource,
+  },
+  callWorkflowWebhookV3: {
+    params: ZWorkflowWebhookCallParams,
+    input: ZWorkflowWebhookPayloadInput,
+    output: ZWorkflowWebhookCallResult,
+  },
+  sendWorkflowTestRequestV3: {
+    params: ZWorkflowTestRequestParams,
+    input: ZSendWorkflowTestRequestInput,
+    output: ZWorkflowTestRequestResult,
+  },
+  createWorkflowTestRunV3: {
+    params: ZWorkflowIdInput,
+    input: ZCreateWorkflowTestRunInput,
     output: ZWorkflowRunResource,
   },
 } as const satisfies Record<

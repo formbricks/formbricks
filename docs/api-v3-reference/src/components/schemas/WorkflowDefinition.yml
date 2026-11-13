@@ -1,35 +1,30 @@
 type: object
 description: >
-  Scope 1 workflow JSON document, mirroring `ZWorkflowDefinition` in
-  `packages/workflows`. The
-
-  definition is the public source of truth for the builder and API clients.
-  Scope 1
-
-  intentionally excludes user-authored if/else branches, webhook actions,
-  schedules, delays,
-
-  loops, and AI/MCP-assisted creation; future node types extend `nodes`
-  additively.
+  Workflow JSON document, mirroring `ZWorkflowDefinition` in `packages/workflows`. The
+  definition is the public source of truth for the builder and API clients. A run walks it from
+  the trigger along its edges; an `if_else` step picks its `then` or `else` edge, and a `switch`
+  step the edge of the first case that matches or its `default` edge. Future node types
+  extend `nodes` additively.
 
 
-  Graph rules enforced on every write (**400** with `invalid_params` on
-  violation):
+  Rules enforced on every write (**400** with `invalid_params` on violation): node ids are unique
+  across `trigger` and `nodes`; every edge references existing node ids; the trigger has at most
+  one outgoing edge; `entryNodeId` equals `trigger.id`; only `if_else` edges use the `then` / `else`
+  handles, at most one each; `switch` edges use one of its case ids or `default`, at most one
+  each; no node has more than one incoming edge (branches never join);
+  at most 25 steps (`nodes`), 20 conditions per `if_else` and 2 to 10 cases per `switch`, with
+  unique case ids other than `default`; Variable paths start with
+  `payload.`, `steps.` or `response.`; one definition uses either the survey operator names or
+  the deprecated workflow operator names, never both. Trigger-only drafts (no `nodes`, no
+  `edges`) are valid persisted documents.
 
-  node ids are unique across `trigger` and `nodes`; every edge references
-  existing node ids;
 
-  the trigger has at most one outgoing edge; `entryNodeId` equals `trigger.id`.
-  Trigger-only
-
-  drafts (no `nodes`, no `edges`) are valid persisted documents. Executability
-  rules (exactly
-
-  one outgoing trigger edge, acyclic graph, every node reachable from the
-  trigger) are
-
-  additionally enforced by `enable` and `test` with **422**
-  `workflow_not_executable`.
+  Executability rules are additionally enforced by `enable` and `test` with **422**
+  `workflow_not_executable`: exactly one outgoing trigger edge, an acyclic graph, every node
+  reachable from the trigger, at most one next step for every node other than `if_else` and
+  `switch`, every `switch` case named, and every
+  Variable readable where it is used (a source the trigger provides, and `steps.<id>` only for a
+  step that runs earlier on the same branch).
 required:
   - trigger
   - entryNodeId
@@ -43,16 +38,26 @@ properties:
       Definition schema version. Optional on writes (defaults to the current
       version); always present in responses.
   trigger:
-    $ref: ./WorkflowResponseCompletedTriggerNode.yml
+    oneOf:
+      - $ref: ./WorkflowResponseCompletedTriggerNode.yml
+      - $ref: ./WorkflowWebhookTriggerNode.yml
+    description: >-
+      The workflow's one trigger: Response completed (`response.completed`) or
+      a call to its Webhook Secret URL (`webhook`).
   nodes:
     type: array
     default: []
+    maxItems: 25
     items:
-      $ref: ./WorkflowSendEmailActionNode.yml
+      oneOf:
+        - $ref: ./WorkflowSendEmailActionNode.yml
+        - $ref: ./WorkflowHttpRequestActionNode.yml
+        - $ref: ./WorkflowIfElseNode.yml
+        - $ref: ./WorkflowSwitchNode.yml
     description: >-
-      Child nodes of the graph. The trigger lives in `trigger`, not in this
-      array. Scope 1 accepts `send_email` action nodes only. Optional on writes
-      (defaults to empty for trigger-only drafts); always present in responses.
+      Steps of the graph. The trigger lives in `trigger`, not in this array.
+      Optional on writes (defaults to empty for trigger-only drafts); always
+      present in responses.
   edges:
     type: array
     default: []

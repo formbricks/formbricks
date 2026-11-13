@@ -26,6 +26,9 @@ import {
   ZMcpTestWorkflowInput,
   ZMcpWorkflowIdInput,
 } from "./workflow-schemas";
+import { registerWorkflowTestRequestTools } from "./workflow-test-request";
+import { registerWorkflowTestRunTools } from "./workflow-test-run";
+import { registerWorkflowWebhookTools } from "./workflow-webhook";
 
 type WorkflowApiContext = ReturnType<typeof buildWorkflowApiContext>;
 
@@ -218,7 +221,7 @@ export function registerWorkflowTools(server: McpServer): void {
     {
       title: "Get workflow run",
       description:
-        "Get one Formbricks workflow run with its ordered step logs using the v3 Workflows API contract.",
+        "Get one Formbricks workflow run with its ordered step logs using the v3 Workflows API contract. A run whose content was deleted after the retention period has `contentDeletedAt` set: its status and timing stay, its payload and step data are empty.",
       inputSchema: ZMcpGetWorkflowRunInput,
       annotations: {
         readOnlyHint: true,
@@ -245,8 +248,9 @@ export function registerWorkflowTools(server: McpServer): void {
       title: "Test workflow (dry-run)",
       description: [
         "Dry-run a Formbricks workflow using the v3 Workflows API contract:",
-        "validate its live definition would execute, resolve the trigger's survey + ending cards, and confirm every literal send_email recipient is an organization member.",
-        "No run is persisted and no side effects occur; the response reports { ok, problems }.",
+        "validate its live definition would execute, resolve the trigger's survey + ending cards, confirm every literal send_email recipient is an organization member,",
+        "and check every send_email survey link points to a link survey in the workspace.",
+        "No run is persisted and no side effects occur; the response reports { ok, problems, warnings }, where warnings (such as survey link Embedded Data keys the survey drops) never make ok false.",
       ].join(" "),
       annotations: {
         // Dry-run: validates the definition and resolves its trigger references. Nothing is
@@ -467,4 +471,9 @@ export function registerWorkflowTools(server: McpServer): void {
         workflowsHandlers.unarchive({ ctx, params: { workflowId: input.workflowId } })
       )
   );
+
+  // Part 2 tools (ENG-7171): Secret URL, sample, Send test request, Test run.
+  registerWorkflowWebhookTools(server);
+  registerWorkflowTestRequestTools(server);
+  registerWorkflowTestRunTools(server);
 }

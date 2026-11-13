@@ -36,6 +36,13 @@ model Workflow {
   definition  Json
   versions    WorkflowVersion[]
   runs        WorkflowRun[]
+  secrets     WorkflowSecret[]
+  samples     WorkflowSample[]
+
+  /// Webhook Secret URL token (ADR 0041, 0048): SHA-256 hash to check calls, and an encrypted copy so
+  /// the editor can show the URL again. Never part of the definition, its versions or its copies.
+  webhookTokenHash      String?
+  webhookTokenEncrypted String?
 
   @@unique([id, workspaceId])
   @@index([workspaceId, status])
@@ -61,34 +68,41 @@ model WorkflowVersion {
 }
 
 model WorkflowRun {
-  id                String            @id @default(cuid(2))
-  createdAt         DateTime          @default(now()) @map(name: "created_at")
-  updatedAt         DateTime          @updatedAt @map(name: "updated_at")
-  workflow          Workflow          @relation(fields: [workflowId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
-  workflowId        String
-  workspace         Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId       String
-  workflowVersion   WorkflowVersion?  @relation(fields: [workflowVersionId], references: [id], onDelete: SetNull)
-  workflowVersionId String?
-  response          Response?         @relation(fields: [responseId], references: [id], onDelete: Cascade)
-  responseId        String?
-  status            WorkflowRunStatus @default(queued)
-  triggerType       String
-  surveyId          String?
-  isDryRun          Boolean           @default(false)
-  idempotencyKey    String?
-  attempt           Int               @default(0)
-  nextAttemptAt     DateTime?
-  lastErrorAt       DateTime?
+  id                   String            @id @default(cuid(2))
+  createdAt            DateTime          @default(now()) @map(name: "created_at")
+  updatedAt            DateTime          @updatedAt @map(name: "updated_at")
+  workflow             Workflow          @relation(fields: [workflowId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  workflowId           String
+  workspace            Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId          String
+  workflowVersion      WorkflowVersion?  @relation(fields: [workflowVersionId], references: [id], onDelete: SetNull)
+  workflowVersionId    String?
+  response             Response?         @relation(fields: [responseId], references: [id], onDelete: Cascade)
+  responseId           String?
+  status               WorkflowRunStatus @default(queued)
+  triggerType          String
+  surveyId             String?
+  isDryRun             Boolean           @default(false)
+  idempotencyKey       String?
+  attempt              Int               @default(0)
+  nextAttemptAt        DateTime?
+  lastErrorAt          DateTime?
   /// [WorkflowTriggerRunPayload]
-  triggerPayload    Json
+  triggerPayload       Json
   /// [WorkflowRunData]
-  data              Json              @default("{}")
-  error             String?
-  dispatchedAt      DateTime?
-  startedAt         DateTime?
-  finishedAt        DateTime?
-  logs              WorkflowRunLog[]
+  data                 Json              @default("{}")
+  error                String?
+  dispatchedAt         DateTime?
+  startedAt            DateTime?
+  finishedAt           DateTime?
+  logs                 WorkflowRunLog[]
+  /// The caller's IP for a run started by a Webhook Secret URL call; shown in run detail.
+  callerIp             String?
+  /// When the run retention job cleared the run's content (ADR 0044): payload contents, run data, step
+  /// input, output and errors, the run error and the caller IP. Null while the content is kept.
+  contentDeletedAt     DateTime?
+  /// The retention period in days that applied when the content was cleared ("Details deleted after N days").
+  contentRetentionDays Int?
 
   @@unique([workflowId, idempotencyKey])
   @@index([workspaceId, createdAt])
@@ -96,7 +110,30 @@ model WorkflowRun {
   @@index([status, createdAt])
   @@index([responseId])
   @@index([isDryRun])
+  @@index([isDryRun, createdAt])
   @@index([nextAttemptAt])
+  @@index([contentDeletedAt, finishedAt])
+}
+
+/// Per-call data kept beside a workflow (ADR 0048): one row per source, `trigger` for the Webhook
+/// trigger's last payload (plus the last call's time and IP), or an HTTP request step id for its last
+/// Test request response. Written on every call, so it lives here and never bumps `Workflow.updatedAt`.
+model WorkflowSample {
+  id           String    @id @default(cuid(2))
+  createdAt    DateTime  @default(now()) @map(name: "created_at")
+  updatedAt    DateTime  @updatedAt @map(name: "updated_at")
+  workflow     Workflow  @relation(fields: [workflowId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  workflowId   String
+  workspaceId  String
+  source       String
+  /// [WorkflowSampleData]
+  sample       Json
+  lastCalledAt DateTime?
+  lastCallerIp String?
+
+  @@unique([workflowId, source])
+  @@index([workflowId, workspaceId])
+  @@index([updatedAt])
 }
 
 model WorkflowRunLog {
@@ -117,4 +154,22 @@ model WorkflowRunLog {
 
   @@unique([runId, stepId])
   @@index([runId, sequence])
+  @@index([status, startedAt])
+}
+
+/// Encrypted value of an HTTP request secret header (ENG-7168, ADR 0043). The definition and every version
+/// store only `{name, secret: true, secretId}`; Replace overwrites this row in place, so the enabled
+/// version uses the new value at once. Rows nothing references are deleted on Enable; all are deleted
+/// with the workflow.
+model WorkflowSecret {
+  id          String   @id @default(cuid(2))
+  createdAt   DateTime @default(now()) @map(name: "created_at")
+  updatedAt   DateTime @updatedAt @map(name: "updated_at")
+  workflow    Workflow @relation(fields: [workflowId, workspaceId], references: [id, workspaceId], onDelete: Cascade)
+  workflowId  String
+  workspaceId String
+  /// `symmetricEncrypt` ciphertext (AES-256-GCM). Never logged, never returned.
+  value       String
+
+  @@index([workflowId, workspaceId])
 }

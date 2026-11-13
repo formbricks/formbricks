@@ -1,0 +1,57 @@
+type: object
+description: >-
+  One step of a run as run detail shows it: the steps that ran, in order, then the steps on If/else and Switch
+  branches the run did not take.
+required:
+  - stepId
+  - stepType
+  - status
+  - error
+  - startedAt
+  - finishedAt
+  - detail
+properties:
+  stepId:
+    type: string
+    minLength: 1
+  stepType:
+    type: string
+    minLength: 1
+    description: "`if_else`, `switch`, `send_email` or `http_request`."
+  status:
+    type: string
+    enum:
+      - pending
+      - running
+      - succeeded
+      - failed
+      - skipped
+      - not_taken
+    description: >-
+      The step's log status, or `not_taken` for a step on an If/else or Switch branch the run did not take. A
+      Don't wait HTTP request stays `running` while it sends; its delivery is in `detail.delivery`.
+  error:
+    type:
+      - string
+      - "null"
+  startedAt:
+    type:
+      - string
+      - "null"
+    format: date-time
+  finishedAt:
+    type:
+      - string
+      - "null"
+    format: date-time
+  detail:
+    description: >-
+      What the step did, by step type (`kind`). Null for a step not taken and for a step type
+      without detail.
+    oneOf:
+      - $ref: ./WorkflowRunIfElseDetail.yml
+      - $ref: ./WorkflowRunSwitchDetail.yml
+      - $ref: ./WorkflowRunSendEmailDetail.yml
+      - $ref: ./WorkflowRunHttpRequestDetail.yml
+      - type: "null"
+additionalProperties: false

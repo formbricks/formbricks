@@ -1,0 +1,29 @@
+type: object
+description: >-
+  A Send email step's result. In a Test run (`isDryRun`) nothing was sent: the recipient is whom it
+  would have gone to.
+required:
+  - kind
+  - recipient
+  - subject
+  - surveyLink
+properties:
+  kind:
+    type: string
+    enum:
+      - send_email
+  recipient:
+    type:
+      - string
+      - "null"
+    description: The address the email went (or would go) to. Null when none was resolved.
+  subject:
+    type:
+      - string
+      - "null"
+  surveyLink:
+    type:
+      - string
+      - "null"
+    description: The survey link the email carried, or null.
+additionalProperties: false

@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import type {
+  TWorkflowHttpRequestActionNode,
   TWorkflowIfElseNode,
   TWorkflowResponseCompletedTriggerNode,
   TWorkflowSendEmailActionNode,
@@ -92,6 +93,107 @@ describe("getNodeRegistryEntry", () => {
     expect(entry.icon).toBe("ifElse");
     expect(entry.title(ifElseNode, t)).toBe("workspace.workflows.if_else");
     expect(entry.summary(ifElseNode, t)).toBe("workspace.workflows.if_else_summary");
-    expect(entry.ConfigForm).toBeNull();
+    expect(entry.ConfigForm).not.toBeNull();
+  });
+
+  test("if-else card shows the step's own name when it has one", () => {
+    const named = { ...ifElseNode, label: "Enterprise customer?" };
+    expect(getNodeRegistryEntry(named).title(named, t)).toBe("Enterprise customer?");
+  });
+
+  test("webhook trigger entry has its own title, icon and panel", () => {
+    const webhookTrigger = { id: "t", type: "trigger", triggerType: "webhook", config: {} } as const;
+    const entry = getNodeRegistryEntry(webhookTrigger);
+    expect(entry.icon).toBe("webhook");
+    expect(entry.title(webhookTrigger, t)).toBe("workspace.workflows.webhook_trigger");
+    expect(entry.summary(webhookTrigger, t)).toBe("workspace.workflows.webhook_trigger_summary");
+    expect(entry.ConfigForm).not.toBeNull();
+  });
+
+  test("http-request summary says the method and target, or asks for a URL", () => {
+    const httpNode = {
+      id: "call",
+      type: "action",
+      actionType: "http_request",
+      config: {
+        method: "POST",
+        url: "https://dl.acme.example/interactions",
+        queryParameters: [],
+        headers: [],
+        responseMode: "wait",
+        continueOnError: false,
+      },
+    } satisfies TWorkflowHttpRequestActionNode as TWorkflowHttpRequestActionNode;
+    const entry = getNodeRegistryEntry(httpNode);
+    expect(entry.icon).toBe("http");
+    expect(entry.summary(httpNode, t)).toBe("POST dl.acme.example/interactions");
+    const blank = { ...httpNode, config: { ...httpNode.config, url: "" } };
+    expect(entry.summary(blank, t)).toBe("workspace.workflows.http_request_unconfigured");
+  });
+
+  test("send-email summary names a payload recipient the way the picker does", () => {
+    const toVariable = {
+      ...sendEmailNode,
+      config: { ...sendEmailNode.config, to: { type: "variable" as const, ref: "payload.customer.email" } },
+    };
+    expect(getNodeRegistryEntry(toVariable).summary(toVariable, t)).toContain("@customer.email");
+  });
+
+  test("send-email summary with a payload recipient and a survey link passes t() a string, not the recipient object", () => {
+    const toVariableWithLink: TWorkflowSendEmailActionNode = {
+      ...sendEmailNode,
+      config: {
+        ...sendEmailNode.config,
+        to: { type: "variable", ref: "payload.customer.email" },
+        surveyLink: { surveyId: "cmw3rc8lv004kj8okxqfkbyvj", embeddedData: [] },
+      },
+    };
+    expect(getNodeRegistryEntry(toVariableWithLink).summary(toVariableWithLink, t)).toBe(
+      'workspace.workflows.send_email_summary_with_link:{"to":"@customer.email"}'
+    );
+  });
+
+  test("if-else summary says its first condition in words and how many more follow", () => {
+    const node = {
+      ...ifElseNode,
+      config: {
+        condition: {
+          id: "group-1",
+          connector: "and",
+          conditions: [
+            { id: "c1", left: { path: "payload.channel" }, operator: "equals", right: "call" },
+            {
+              id: "group-2",
+              connector: "or",
+              conditions: [
+                { id: "c2", left: { path: "payload.resolved" }, operator: "equals", right: false },
+                { id: "c3", left: { path: "payload.customer.tier" }, operator: "exists" },
+              ],
+            },
+          ],
+        },
+      },
+    } as TWorkflowIfElseNode;
+
+    expect(getNodeRegistryEntry(node).summary(node, t)).toBe(
+      'workspace.workflows.if_else_summary_more:{"condition":"workspace.workflows.if_else_operator_equals:{\\"variable\\":\\"channel\\",\\"value\\":\\"call\\"}","count":2}'
+    );
+  });
+
+  test("if-else summary for a single presence check has no count and no value", () => {
+    const node = {
+      ...ifElseNode,
+      config: {
+        condition: {
+          id: "group-1",
+          connector: "and",
+          conditions: [{ id: "c1", left: { path: "steps.http-1.status" }, operator: "notExists" }],
+        },
+      },
+    } as TWorkflowIfElseNode;
+
+    expect(getNodeRegistryEntry(node).summary(node, t)).toBe(
+      'workspace.workflows.if_else_operator_not_exists:{"variable":"steps.http-1.status"}'
+    );
   });
 });

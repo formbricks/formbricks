@@ -3,18 +3,30 @@ import type { TFunction } from "i18next";
 import {
   type TWorkflowDefinition,
   type TWorkflowNode,
+  WORKFLOW_SWITCH_DEFAULT_BRANCH,
   getBlankSendEmailContentFields,
   getWorkflowNodeConcreteType,
+  isResponseCompletedTrigger,
 } from "@formbricks/workflows";
+import {
+  WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT,
+  WORKFLOW_CANVAS_NODE_SPACING,
+  WORKFLOW_CANVAS_START_POSITION,
+} from "@/modules/ee/workflows/lib/canvas-geometry";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
-import type { TWorkflowNodeData, TWorkflowNodeIssue } from "@/modules/ee/workflows/state/editor";
+import { getBranchHandles, isBranchingStep } from "@/modules/ee/workflows/lib/workflow-steps";
+import type {
+  TWorkflowCanvasBranch,
+  TWorkflowNodeData,
+  TWorkflowNodeIssue,
+} from "@/modules/ee/workflows/state/editor";
 
 export const WORKFLOW_CANVAS_NODE_TYPE = "workflowCanvasNode";
+export const WORKFLOW_BRANCH_NODE_TYPE = "workflowBranchNode";
+export const WORKFLOW_ADD_BUTTON_EDGE_TYPE = "addButton";
+export const WORKFLOW_BRANCH_EDGE_TYPE = "branch";
 
 export const WORKFLOW_CANVAS_SNAP_GRID: SnapGrid = [20, 20];
-
-const WORKFLOW_CANVAS_NODE_SPACING = { x: 360, y: 120 };
-const WORKFLOW_CANVAS_START_POSITION = { x: 220, y: 80 };
 
 interface WorkflowFlowNodeOptions {
   /**
@@ -28,6 +40,11 @@ interface WorkflowFlowNodeOptions {
    * state, not an error. Live or previously-live workflows get "error" (red).
    */
   isDraft?: boolean;
+  /**
+   * The trigger card's summary when only the canvas can say it, e.g. a Webhook trigger's "Sample
+   * received · 9 Variables", which needs the sample from the server.
+   */
+  triggerSummary?: string;
 }
 
 // Client-side counterpart of the dry-run test's checks: flags nodes that can't run as configured.
@@ -36,15 +53,18 @@ interface WorkflowFlowNodeOptions {
 const getWorkflowNodeIssue = (
   node: TWorkflowNode,
   t: TFunction,
-  options: Required<WorkflowFlowNodeOptions>
+  options: Required<Omit<WorkflowFlowNodeOptions, "triggerSummary">>,
+  isSurveyTrigger: boolean
 ): TWorkflowNodeIssue | null => {
   const severity = options.isDraft ? "setup" : "error";
+  // Only a Response completed trigger waits for a survey; a Webhook workflow never does.
+  const isWaitingForSurvey = isSurveyTrigger && !options.hasBoundSurvey;
 
-  if (node.type === "trigger" && !options.hasBoundSurvey) {
+  if (node.type === "trigger" && isWaitingForSurvey) {
     return { severity, label: t("workspace.workflows.node_needs_survey") };
   }
-  if (node.type === "action" && node.actionType === "send_email" && options.hasBoundSurvey) {
-    // Same completeness rule ZWorkflowExecutableDefinition enforces server-side on enable/test,
+  if (node.type === "action" && node.actionType === "send_email" && !isWaitingForSurvey) {
+    // Same completeness rule ZWorkflowEnableDefinition enforces server-side on enable/test,
     // including its rich-text handling of the body (see isBlankWorkflowRichText).
     if (getBlankSendEmailContentFields(node.config).length > 0) {
       return { severity, label: t("workspace.workflows.node_needs_email_content") };
@@ -53,13 +73,56 @@ const getWorkflowNodeIssue = (
   return null;
 };
 
+const getBranchingNodeIds = (definition: TWorkflowDefinition) =>
+  new Set(definition.nodes.filter(isBranchingStep).map((node) => node.id));
+
+/**
+ * The legs of a branching step's fork, left to right, each with its plain label (ED8: no icons): Then
+ * and Else, or each Switch case by its name ("Case 2" while it has none) and Default.
+ */
+export const getCanvasBranches = (node: TWorkflowNode, t: TFunction): TWorkflowCanvasBranch[] => {
+  if (node.type === "if_else") {
+    return [
+      {
+        handle: "then",
+        label: t("workspace.workflows.branch_then"),
+        ariaLabel: t("workspace.workflows.branch_then_aria"),
+        addStepLabel: t("workspace.workflows.add_step_to_then_branch"),
+      },
+      {
+        handle: "else",
+        label: t("workspace.workflows.branch_else"),
+        ariaLabel: t("workspace.workflows.branch_else_aria"),
+        addStepLabel: t("workspace.workflows.add_step_to_else_branch"),
+      },
+    ];
+  }
+  if (node.type !== "switch") return [];
+  const named = (handle: string, label: string): TWorkflowCanvasBranch => ({
+    handle,
+    label,
+    ariaLabel: t("workspace.workflows.switch_branch_aria", { name: label }),
+    addStepLabel: t("workspace.workflows.add_step_to_switch_branch", { name: label }),
+  });
+  return [
+    ...node.config.cases.map((switchCase, index) =>
+      named(
+        switchCase.id,
+        switchCase.name.trim() || t("workspace.workflows.switch_case_name_default", { number: index + 1 })
+      )
+    ),
+    named(WORKFLOW_SWITCH_DEFAULT_BRANCH, t("workspace.workflows.switch_default")),
+  ];
+};
+
 export const workflowDefinitionToFlowNodes = (
   definition: TWorkflowDefinition,
   t: TFunction,
   options?: WorkflowFlowNodeOptions
 ): Array<Node<TWorkflowNodeData>> => {
   const sourcesWithEdges = new Set(definition.edges.map((edge) => edge.source));
-  const resolvedOptions: Required<WorkflowFlowNodeOptions> = {
+  const isSurveyTrigger = isResponseCompletedTrigger(definition.trigger);
+  const resolvedOptions: Required<Omit<WorkflowFlowNodeOptions, "triggerSummary">> = {
     hasBoundSurvey: options?.hasBoundSurvey ?? true,
     isDraft: options?.isDraft ?? true,
   };
@@ -68,33 +131,50 @@ export const workflowDefinitionToFlowNodes = (
     const registryEntry = getNodeRegistryEntry(node);
     const fallbackPosition = { x: 120, y: 80 + index * 120 };
 
+    const branchHandles = getBranchHandles(node);
+    const isLeaf = !sourcesWithEdges.has(node.id);
+
     return {
       id: node.id,
-      type: WORKFLOW_CANVAS_NODE_TYPE,
+      type: branchHandles ? WORKFLOW_BRANCH_NODE_TYPE : WORKFLOW_CANVAS_NODE_TYPE,
       position: node.ui?.position ?? fallbackPosition,
       data: {
         category: registryEntry.category,
         icon: registryEntry.icon,
         nodeType: getWorkflowNodeConcreteType(node) ?? node.type,
         title: registryEntry.title(node, t),
-        summary: registryEntry.summary(node, t),
-        isLeaf: !sourcesWithEdges.has(node.id),
-        issue: getWorkflowNodeIssue(node, t, resolvedOptions),
+        summary:
+          node.type === "trigger" && options?.triggerSummary
+            ? options.triggerSummary
+            : registryEntry.summary(node, t),
+        // The end of the workflow or of a branch: a step with nothing after it. An If/else or a
+        // Switch ends in its branches' own `+` instead.
+        canAppendStep: !branchHandles && isLeaf,
+        branches: getCanvasBranches(node, t),
+        emptyBranches: (branchHandles ?? []).filter(
+          (branch) =>
+            !definition.edges.some((edge) => edge.source === node.id && edge.sourceHandle === branch)
+        ),
+        issue: getWorkflowNodeIssue(node, t, resolvedOptions, isSurveyTrigger),
       },
     };
   });
 };
 
-export const workflowDefinitionToFlowEdges = (definition: TWorkflowDefinition): Edge[] =>
-  definition.edges.map((edge) => ({
+export const workflowDefinitionToFlowEdges = (definition: TWorkflowDefinition): Edge[] => {
+  const branchingIds = getBranchingNodeIds(definition);
+
+  return definition.edges.map((edge) => ({
     id: edge.id,
     source: edge.source,
     target: edge.target,
     sourceHandle: edge.sourceHandle,
     targetHandle: edge.targetHandle,
     label: edge.sourceHandle,
-    type: "addButton",
+    // A branch edge starts at the end of its leg of the fork, which carries the label.
+    type: branchingIds.has(edge.source) ? WORKFLOW_BRANCH_EDGE_TYPE : WORKFLOW_ADD_BUTTON_EDGE_TYPE,
   }));
+};
 
 export const snapWorkflowNodePosition = (position: { x: number; y: number }) => ({
   x: Math.round(position.x / WORKFLOW_CANVAS_SNAP_GRID[0]) * WORKFLOW_CANVAS_SNAP_GRID[0],
@@ -124,39 +204,87 @@ export const updateNodePosition = (
   };
 };
 
-// BFS rank from the trigger so reachable nodes share a row; unreachable nodes (and every node of
-// a trigger-less draft) each get their own row below, keeping the original order.
-const rankWorkflowNodes = (
+// The children a step lays out below itself, left to right: an If/else's Then and Else branches, or
+// a Switch's cases and Default (null while a branch has no step); any other step's outgoing edges.
+const getLayoutChildren = (
+  node: TWorkflowNode,
+  definition: TWorkflowDefinition,
+  nodesById: Map<string, TWorkflowNode>
+): Array<string | null> => {
+  const outgoing = definition.edges.filter((edge) => edge.source === node.id && nodesById.has(edge.target));
+  const branchHandles = getBranchHandles(node);
+  if (!branchHandles) return outgoing.map((edge) => edge.target);
+  return branchHandles.map((branch) => outgoing.find((edge) => edge.sourceHandle === branch)?.target ?? null);
+};
+
+// A tree layout from the trigger: each step sits centered over the columns its subtree needs, a
+// branching step puts its branches' subtrees left to right, and an empty branch keeps one column for
+// its `+`. A linear workflow stays in one column, where the earlier row layout put it. Unreachable
+// steps (and every step of a trigger-less draft) each get their own row below, in original order.
+const layoutWorkflowNodes = (
   definition: TWorkflowDefinition,
   nodesById: Map<string, TWorkflowNode>,
   originalNodeOrder: string[]
-): Map<string, number> => {
-  const edgesBySource = new Map<string, string[]>();
-  for (const edge of definition.edges) {
-    edgesBySource.set(edge.source, [...(edgesBySource.get(edge.source) ?? []), edge.target]);
-  }
+): Map<string, { x: number; y: number }> => {
+  const columnWidth = WORKFLOW_CANVAS_NODE_SPACING.x;
+  const widths = new Map<string, number>();
+  // Hand-written data can hold a cycle or a join: a step is measured and placed once, at its
+  // first visit, so neither recurses forever nor places a step twice.
+  const measuring = new Set<string>();
 
-  const ranks = new Map<string, number>(definition.trigger ? [[definition.trigger.id, 0]] : []);
-  const queue = definition.trigger ? [definition.trigger.id] : [];
-  while (queue.length > 0) {
-    const nodeId = queue.shift()!;
-    const nextRank = (ranks.get(nodeId) ?? 0) + 1;
-    for (const targetId of edgesBySource.get(nodeId) ?? []) {
-      if (!nodesById.has(targetId) || ranks.has(targetId)) continue;
-      ranks.set(targetId, nextRank);
-      queue.push(targetId);
+  const getWidth = (nodeId: string | null): number => {
+    if (nodeId === null) return 1;
+    const known = widths.get(nodeId);
+    if (known !== undefined) return known;
+    const node = nodesById.get(nodeId);
+    if (!node || measuring.has(nodeId)) return 1;
+    measuring.add(nodeId);
+    const childrenWidth = getLayoutChildren(node, definition, nodesById)
+      .map(getWidth)
+      .reduce((sum, width) => sum + width, 0);
+    measuring.delete(nodeId);
+    const width = Math.max(1, childrenWidth);
+    widths.set(nodeId, width);
+    return width;
+  };
+
+  const positions = new Map<string, { x: number; y: number }>();
+  let lowestY = WORKFLOW_CANVAS_START_POSITION.y;
+
+  const place = (nodeId: string, left: number, y: number) => {
+    const node = nodesById.get(nodeId);
+    if (!node || positions.has(nodeId)) return;
+    const centerX = left + (getWidth(nodeId) * columnWidth) / 2;
+    positions.set(nodeId, { x: centerX - columnWidth / 2, y });
+    lowestY = Math.max(lowestY, y);
+
+    const childY =
+      y + (isBranchingStep(node) ? WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT : WORKFLOW_CANVAS_NODE_SPACING.y);
+    let childLeft = left;
+    for (const childId of getLayoutChildren(node, definition, nodesById)) {
+      if (childId !== null) place(childId, childLeft, childY);
+      childLeft += getWidth(childId) * columnWidth;
     }
+  };
+
+  if (definition.trigger) {
+    const rootWidth = getWidth(definition.trigger.id);
+    const rootCenterX = WORKFLOW_CANVAS_START_POSITION.x + columnWidth / 2;
+    place(
+      definition.trigger.id,
+      rootCenterX - (rootWidth * columnWidth) / 2,
+      WORKFLOW_CANVAS_START_POSITION.y
+    );
   }
 
-  let nextUnreachableRank = Math.max(0, ...ranks.values()) + 1;
+  let nextUnreachableY = lowestY + WORKFLOW_CANVAS_NODE_SPACING.y;
   for (const nodeId of originalNodeOrder) {
-    if (!ranks.has(nodeId)) {
-      ranks.set(nodeId, nextUnreachableRank);
-      nextUnreachableRank += 1;
-    }
+    if (positions.has(nodeId)) continue;
+    positions.set(nodeId, { x: WORKFLOW_CANVAS_START_POSITION.x, y: nextUnreachableY });
+    nextUnreachableY += WORKFLOW_CANVAS_NODE_SPACING.y;
   }
 
-  return ranks;
+  return positions;
 };
 
 export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): TWorkflowDefinition => {
@@ -166,27 +294,12 @@ export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): T
   ];
   const nodesById = new Map(allNodes.map((node) => [node.id, node]));
   const originalNodeOrder = allNodes.map((node) => node.id);
-  const ranks = rankWorkflowNodes(definition, nodesById, originalNodeOrder);
-
-  const nodeIdsByRank = new Map<number, string[]>();
-  for (const nodeId of originalNodeOrder) {
-    const rank = ranks.get(nodeId) ?? 0;
-    nodeIdsByRank.set(rank, [...(nodeIdsByRank.get(rank) ?? []), nodeId]);
-  }
-
-  const positionsByNodeId = new Map<string, { x: number; y: number }>();
-  for (const [rank, nodeIds] of nodeIdsByRank) {
-    const rowOffset = ((nodeIds.length - 1) * WORKFLOW_CANVAS_NODE_SPACING.x) / 2;
-    nodeIds.forEach((nodeId, index) => {
-      positionsByNodeId.set(
-        nodeId,
-        snapWorkflowNodePosition({
-          x: WORKFLOW_CANVAS_START_POSITION.x + index * WORKFLOW_CANVAS_NODE_SPACING.x - rowOffset,
-          y: WORKFLOW_CANVAS_START_POSITION.y + rank * WORKFLOW_CANVAS_NODE_SPACING.y,
-        })
-      );
-    });
-  }
+  const positionsByNodeId = new Map(
+    [...layoutWorkflowNodes(definition, nodesById, originalNodeOrder)].map(([nodeId, position]) => [
+      nodeId,
+      snapWorkflowNodePosition(position),
+    ])
+  );
 
   return {
     ...definition,

@@ -1,0 +1,43 @@
+type: object
+description: >-
+  Switch logic step: compares one Variable (`config.left`) against each case in order, and a run
+  continues down the edge whose `sourceHandle` is the id of the first case that matches, or down the
+  `default` edge when none does. Each branch has at most one edge; a branch with none ends the run
+  there. Saving needs 2 to 10 cases with unique ids other than `default`; enabling also needs every
+  case named. Use If/else to match on more than one Variable.
+required:
+  - id
+  - type
+  - config
+properties:
+  id:
+    type: string
+    minLength: 1
+  type:
+    type: string
+    enum:
+      - switch
+  label:
+    type: string
+    minLength: 1
+    maxLength: 120
+    description: Optional display label shown in the builder.
+  config:
+    type: object
+    required:
+      - left
+      - cases
+    properties:
+      left:
+        $ref: ./WorkflowDataRef.yml
+      cases:
+        type: array
+        minItems: 2
+        maxItems: 10
+        description: Tried in order; the run takes the first that matches.
+        items:
+          $ref: ./WorkflowSwitchCase.yml
+    additionalProperties: false
+  ui:
+    $ref: ./WorkflowNodeUi.yml
+additionalProperties: false

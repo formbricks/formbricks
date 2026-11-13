@@ -86,6 +86,11 @@ These are the limits that still run inside the Formbricks application server:
 | `api.v3`                      | 100 requests | 1 minute   | API key ID or session user ID | v3 API wrapper                                                                                                                                            |
 | `api.client`                  | 100 requests | 1 minute   | IP hash                       | Uncovered client routes such as `GET /api/v1/client/og`, `GET /api/v2/client/[workspaceId]/environment`, and `POST /api/v2/client/[workspaceId]/user` |
 | `api.clientCreativeEvents`    | 600 requests | 1 minute   | IP hash                       | `POST /api/v2/client/[workspaceId]/creatives/events`, the SDK's creative Impressions and Clicks; a request over the limit still gets 204, uncounted |
+| `api.v3WorkflowWebhook`       | 100 requests | 1 minute   | Workflow ID                   | Calls to one workflow's [Webhook Secret URL](/workflows/webhook-trigger), checked before the token                                                       |
+| Workflow webhook, organization | 300 requests | 1 minute  | Organization ID               | Webhook Secret URL calls across one organization's workflows. Change it with `WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE`                                  |
+| Workflow webhook, daily runs  | 10000 calls  | 1 day (UTC) | Workflow ID                 | Calls to one enabled workflow's Webhook Secret URL that pass the plan check, whether or not they start a run. Change it with `WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT`. Refuses runs while Redis is unavailable            |
+| `api.v3WorkflowTestRequests`  | 30 requests  | 1 minute   | API key ID or session user ID | "Send test request" on a workflow's HTTP request step                                                                                                     |
+| `api.v3WorkflowTestRuns`      | 30 requests  | 1 minute   | API key ID or session user ID | Workflow Test runs                                                                                                                                        |
 | `storage.upload`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `POST /api/v1/management/storage`                                                                                                   |
 | `storage.delete`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `DELETE /storage/[workspaceId]/[accessType]/[fileName]`                                                                           |
 | `actions.emailUpdate`         | 3 requests   | 60 minutes | User ID                       | Profile email update action                                                                                                                               |
@@ -149,8 +154,10 @@ What happens when an email is capped depends on the flow:
   sign-in hint** look the same as a sent email, so a capped email cannot reveal whether an account or address
   exists. The verification resend and the signed-in reset also have their own per-account limit of 3 an hour,
   which does show an error.
-- **Follow-ups, workflow emails and response notifications** are skipped, and a workflow step is recorded as
-  failed.
+- **Follow-ups, workflow emails and response notifications** are skipped. A workflow email step is recorded as
+  skipped, except an email to an address from a workflow Variable, such as a Webhook payload: that step and its
+  run fail at once. Those emails also have a cap of 50 per hour per workflow, which
+  `EMAIL_RATE_LIMIT_MULTIPLIER` doesn't change.
 
 An email is charged before it is sent, so one the SMTP server then refuses still counts. Every capped email is
 logged as `Outbound email suppressed: rate limit reached` with the email type and the limit that was spent, never

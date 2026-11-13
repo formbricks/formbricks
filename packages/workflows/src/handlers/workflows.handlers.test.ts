@@ -72,6 +72,11 @@ const service = {
   disableWorkflow: vi.fn<WorkflowsService["disableWorkflow"]>(),
   listWorkflowRuns: vi.fn<WorkflowsService["listWorkflowRuns"]>(),
   getWorkflowRun: vi.fn<WorkflowsService["getWorkflowRun"]>(),
+  regenerateWebhookToken: vi.fn<WorkflowsService["regenerateWebhookToken"]>(),
+  revealWebhookToken: vi.fn<WorkflowsService["revealWebhookToken"]>(),
+  getTriggerSample: vi.fn<WorkflowsService["getTriggerSample"]>(),
+  setTriggerSample: vi.fn<WorkflowsService["setTriggerSample"]>(),
+  createTestRun: vi.fn<WorkflowsService["createTestRun"]>(),
 };
 const handlers = createWorkflowsHandlers(service);
 
@@ -81,6 +86,7 @@ const authorizeAllow = vi.fn<WorkflowApiContext["authorize"]>();
 const verifyTriggerSurvey = vi.fn<WorkflowApiContext["verifyTriggerSurvey"]>();
 const verifyRecipientsAllowed = vi.fn<WorkflowApiContext["verifyRecipientsAllowed"]>();
 const listUnreadableSurveyIds = vi.fn<WorkflowApiContext["listUnreadableSurveyIds"]>();
+const verifySurveyLinkSurveys = vi.fn<WorkflowApiContext["verifySurveyLinkSurveys"]>();
 const logger: WorkflowsLogger = { warn: vi.fn(), error: vi.fn() };
 
 const authorized: AuthorizedWorkspace = { workspaceId, organizationId: "cm9zr5org00000000000000000" };
@@ -94,6 +100,7 @@ const makeCtx = (overrides: Partial<WorkflowApiContext> = {}): WorkflowApiContex
   verifyTriggerSurvey,
   verifyRecipientsAllowed,
   listUnreadableSurveyIds,
+  verifySurveyLinkSurveys,
   ...overrides,
 });
 
@@ -109,6 +116,7 @@ beforeEach(() => {
   verifyTriggerSurvey.mockResolvedValue({ surveyExists: true, missingEndingCardIds: [] });
   verifyRecipientsAllowed.mockResolvedValue({ disallowedEmails: [] });
   listUnreadableSurveyIds.mockResolvedValue([]);
+  verifySurveyLinkSurveys.mockResolvedValue([]);
 });
 
 describe("get", () => {
@@ -199,6 +207,49 @@ describe("create", () => {
     expect(body.code).toBe("bad_request");
     expect(Array.isArray(body.invalid_params)).toBe(true);
     expect(service.createWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("refuses a definition over the step limit with 400, naming the limit", async () => {
+    const emailNode = definition.nodes[0];
+    const nodes = Array.from({ length: 26 }, (_, index) => ({ ...emailNode, id: `email-${index}` }));
+    const edges = nodes.map((node, index) => ({
+      id: `edge-${index}`,
+      source: index === 0 ? "trigger" : `email-${index - 1}`,
+      target: node.id,
+    }));
+
+    const res = await handlers.create({
+      req: postRequest({ workspaceId, name: "Too long", definition: { ...definition, nodes, edges } }),
+      ctx: makeCtx(),
+    });
+
+    expect(res.status).toBe(400);
+    const body = await readJson<{ invalid_params: { reason: string }[] }>(res);
+    expect(JSON.stringify(body.invalid_params)).toMatch(/at most 25 steps/);
+    expect(service.createWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("refuses an If/else over the condition limit with 400", async () => {
+    const conditions = Array.from({ length: 21 }, (_, index) => ({
+      id: `c${index}`,
+      left: { path: "response.q1" },
+      operator: "isSet",
+    }));
+    const overLimit = {
+      ...definition,
+      nodes: [
+        { id: "check", type: "if_else", config: { condition: { id: "g", connector: "and", conditions } } },
+      ],
+      edges: [{ id: "e1", source: "trigger", target: "check" }],
+    };
+
+    const res = await handlers.create({
+      req: postRequest({ workspaceId, name: "Too many conditions", definition: overLimit }),
+      ctx: makeCtx(),
+    });
+
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(await readJson(res))).toMatch(/at most 20 conditions/);
   });
 
   test("returns the denial response without creating when access is missing", async () => {
@@ -334,7 +385,10 @@ describe("patch", () => {
     });
 
     expect(res.status).toBe(200);
-    expect(service.updateWorkflow).toHaveBeenCalledWith({ workflowId, workspaceId }, { name: "Renamed" });
+    expect(service.updateWorkflow).toHaveBeenCalledWith(
+      { workflowId, workspaceId },
+      { name: "Renamed", issueWebhookToken: false }
+    );
   });
 
   test("allows name/description edits on an enabled workflow", async () => {
@@ -418,6 +472,93 @@ describe("duplicate", () => {
       name: undefined,
       createdBy: "cm9zr52kh000508l8e3q7bw9j",
     });
+  });
+});
+
+describe("a stored definition that predates the save-time rules", () => {
+  // 26 steps (over the limit of 25) and an If/else whose path the Variable path rule refuses: both
+  // could be saved before the rules existed, so they must keep reading; writing them is refused.
+  const emailNode = definition.nodes[0];
+  const nodes = [
+    {
+      id: "check",
+      type: "if_else" as const,
+      config: {
+        condition: {
+          id: "g",
+          connector: "and" as const,
+          conditions: [{ id: "c1", left: { path: "data.q1" }, operator: "exists" as const }],
+        },
+      },
+    },
+    ...Array.from({ length: 25 }, (_, index) => ({ ...emailNode, id: `email-${index}` })),
+  ];
+  const edges = [
+    { id: "e-check", source: "trigger", target: "check" },
+    { id: "e-then", source: "check", target: "email-0", sourceHandle: "then" },
+    ...nodes.slice(2).map((node, index) => ({ id: `e-${index}`, source: `email-${index}`, target: node.id })),
+  ];
+  const stored = { ...definition, nodes, edges };
+  const emptyPost = (): Request =>
+    new Request("http://localhost/api/v3/workflows/x/duplicate", { method: "POST" });
+
+  test("reads with 200", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ definition: stored }));
+
+    const res = await handlers.get({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+  });
+
+  test("disables and archives with 200", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "enabled", definition: stored }));
+    service.disableWorkflow.mockResolvedValue(makeRow({ status: "disabled", definition: stored }));
+    expect((await handlers.disable({ ctx: makeCtx(), params: { workflowId } })).status).toBe(200);
+
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "disabled", definition: stored }));
+    service.setStatus.mockResolvedValue(makeRow({ status: "archived", definition: stored }));
+    expect((await handlers.archive({ ctx: makeCtx(), params: { workflowId } })).status).toBe(200);
+  });
+
+  test("saving it is refused with 400", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ definition: stored }));
+
+    const res = await handlers.patch({
+      req: new Request("http://localhost/api/v3/workflows/x", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ definition: stored }),
+      }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
+
+    expect(res.status).toBe(400);
+    const body = await readJson<{ invalid_params: unknown }>(res);
+    expect(JSON.stringify(body.invalid_params)).toMatch(/at most 25 steps/);
+    expect(JSON.stringify(body.invalid_params)).toMatch(/payload\., steps\., response\./);
+    expect(service.updateWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("duplicating it is refused with 400", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ definition: stored }));
+
+    const res = await handlers.duplicate({ req: emptyPost(), ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(400);
+    expect(service.duplicateWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("enabling it is refused with 422 workflow_not_executable", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "disabled", definition: stored }));
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(422);
+    const body = await readJson<{ code: string; invalid_params: unknown }>(res);
+    expect(body.code).toBe("workflow_not_executable");
+    expect(JSON.stringify(body.invalid_params)).toMatch(/at most 25 steps/);
+    expect(service.enableWorkflow).not.toHaveBeenCalled();
   });
 });
 
@@ -571,6 +712,102 @@ describe("archive / unarchive", () => {
 
     expect(res.status).toBe(422);
     expect(service.setStatus).not.toHaveBeenCalled();
+  });
+});
+
+describe("a Switch step (ENG-7157)", () => {
+  const emailNode = definition.nodes[0];
+  const withSwitch = (cases: { id: string; name: string }[]) => ({
+    ...definition,
+    nodes: [
+      {
+        id: "route",
+        type: "switch" as const,
+        config: {
+          left: { path: "response.plan" },
+          cases: cases.map((switchCase) => ({
+            ...switchCase,
+            operator: "equals" as const,
+            right: switchCase.id,
+          })),
+        },
+      },
+      { ...emailNode, id: "gold-email" },
+      { ...emailNode, id: "default-email" },
+    ],
+    edges: [
+      { id: "e1", source: "trigger", target: "route" },
+      { id: "e2", source: "route", target: "gold-email", sourceHandle: "gold" },
+      { id: "e3", source: "route", target: "default-email", sourceHandle: "default" },
+    ],
+  });
+  const goldAndSilver = withSwitch([
+    { id: "gold", name: "Gold" },
+    { id: "silver", name: "Silver" },
+  ]);
+
+  test("is created with 201 and read back as written", async () => {
+    service.createWorkflow.mockResolvedValue(makeRow({ definition: goldAndSilver }));
+
+    const res = await handlers.create({
+      req: new Request("http://localhost/api/v3/workflows", {
+        method: "POST",
+        body: JSON.stringify({ workspaceId, name: "Route by plan", definition: goldAndSilver }),
+        headers: { "Content-Type": "application/json" },
+      }),
+      ctx: makeCtx(),
+    });
+
+    expect(res.status).toBe(201);
+    const body = await readJson<{ data: { definition: { nodes: { config: unknown }[] } } }>(res);
+    expect(body.data.definition.nodes[0].config).toEqual(goldAndSilver.nodes[0].config);
+  });
+
+  test("a change to more than 10 cases is refused with 400", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ definition: goldAndSilver }));
+    const elevenCases = withSwitch(
+      Array.from({ length: 11 }, (_, index) => ({
+        id: index === 0 ? "gold" : `case-${index}`,
+        name: `Case ${index}`,
+      }))
+    );
+
+    const res = await handlers.patch({
+      req: new Request(`http://localhost/api/v3/workflows/${workflowId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ definition: elevenCases }),
+        headers: { "Content-Type": "application/json" },
+      }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
+
+    expect(res.status).toBe(400);
+    expect(JSON.stringify(await readJson(res))).toMatch(/at most 10 cases/);
+    expect(service.updateWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("is enabled with 200", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft", definition: goldAndSilver }));
+    service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled", definition: goldAndSilver }));
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+  });
+
+  test("enabling with an unnamed case is refused with 422 workflow_not_executable", async () => {
+    const unnamed = withSwitch([
+      { id: "gold", name: "Gold" },
+      { id: "silver", name: "" },
+    ]);
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft", definition: unnamed }));
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(422);
+    expect(JSON.stringify(await readJson(res))).toMatch(/workflow_not_executable/);
+    expect(service.enableWorkflow).not.toHaveBeenCalled();
   });
 });
 
@@ -818,7 +1055,7 @@ describe("testWorkflow", () => {
     expect(res.status).toBe(200);
     expect(verifyTriggerSurvey).toHaveBeenCalledWith({ workspaceId, surveyId, endingCardIds: [] });
     const body = await readJson<TestResultBody>(res);
-    expect(body.data).toEqual({ workflowId, ok: true, problems: [] });
+    expect(body.data).toEqual({ workflowId, ok: true, problems: [], warnings: [] });
   });
 
   test("authorizes at read — it is a dry run and the MCP tool is workflows:read scoped", async () => {
@@ -1015,6 +1252,105 @@ describe("testWorkflow", () => {
 
     expect(res.status).toBe(403);
     expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+  });
+});
+
+describe("survey link checks on enable and test (ENG-7180)", () => {
+  const linkSurveyId = "cm9zr4mps000008l8linksrvy";
+  const withSurveyLink = makeRow({
+    status: "draft",
+    definition: {
+      ...definition,
+      nodes: [
+        {
+          ...definition.nodes[0],
+          config: {
+            ...definition.nodes[0].config,
+            body: "<p>Tell us: #survey-link#</p>",
+            surveyLink: {
+              surveyId: linkSurveyId,
+              embeddedData: [
+                { key: "agent_id", value: "A-42" },
+                { key: "call_id", value: "K-771" },
+              ],
+            },
+          },
+        },
+      ],
+    },
+  });
+
+  test("enable refuses a survey link to a survey that is not a link survey in the workspace", async () => {
+    service.getWorkflowById.mockResolvedValue(withSurveyLink);
+    verifySurveyLinkSurveys.mockResolvedValue([
+      { surveyId: linkSurveyId, status: "not_link", acceptedEmbeddedDataKeys: [] },
+    ]);
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(verifySurveyLinkSurveys).toHaveBeenCalledWith({ workspaceId, surveyIds: [linkSurveyId] });
+    expect(res.status).toBe(422);
+    const body = await readJson<{ code: string; invalid_params: { name: string }[] }>(res);
+    expect(body.code).toBe("workflow_not_executable");
+    expect(body.invalid_params.map((p) => p.name)).toContain("definition.nodes.0.config.surveyLink.surveyId");
+    expect(service.enableWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("enable succeeds and warns about Embedded Data keys the survey does not accept", async () => {
+    service.getWorkflowById.mockResolvedValue(withSurveyLink);
+    service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled" }));
+    verifySurveyLinkSurveys.mockResolvedValue([
+      { surveyId: linkSurveyId, status: "ok", acceptedEmbeddedDataKeys: ["Agent_ID"] },
+    ]);
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
+    const body = await readJson<{ meta?: { warnings: { code: string; field: string; message: string }[] } }>(
+      res
+    );
+    // Matched case-insensitively, as the link survey does; only call_id is undeclared.
+    const warnings = body.meta?.warnings ?? [];
+    expect(warnings.map(({ code, field }) => ({ code, field }))).toEqual([
+      {
+        code: "survey_link_key_not_accepted",
+        field: "definition.nodes.0.config.surveyLink.embeddedData.1.key",
+      },
+    ]);
+    expect(warnings[0]?.message).toContain("call_id");
+  });
+
+  test("test reports a missing link survey as a problem and undeclared keys as warnings", async () => {
+    service.getWorkflowById.mockResolvedValue(withSurveyLink);
+    verifySurveyLinkSurveys.mockResolvedValue([
+      { surveyId: linkSurveyId, status: "not_found", acceptedEmbeddedDataKeys: [] },
+    ]);
+
+    const res = await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } });
+
+    const body = await readJson<{
+      data: TestResultBody["data"] & { warnings: { code: string }[] };
+    }>(res);
+    expect(body.data.ok).toBe(false);
+    expect(body.data.problems.map((p) => p.code)).toContain("survey_link_survey_not_found");
+
+    verifySurveyLinkSurveys.mockResolvedValue([
+      { surveyId: linkSurveyId, status: "ok", acceptedEmbeddedDataKeys: ["agent_id"] },
+    ]);
+    const okBody = await readJson<{ data: TestResultBody["data"] & { warnings: { code: string }[] } }>(
+      await handlers.testWorkflow({ ctx: makeCtx(), params: { workflowId } })
+    );
+    expect(okBody.data.ok).toBe(true);
+    expect(okBody.data.warnings.map((w) => w.code)).toEqual(["survey_link_key_not_accepted"]);
+  });
+
+  test("a workflow without a survey link never looks one up", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
+    service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled" }));
+
+    await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(verifySurveyLinkSurveys).not.toHaveBeenCalled();
   });
 });
 
@@ -1437,6 +1773,10 @@ const makeRunDetail = (overrides: Partial<WorkflowRunWithLogsRow> = {}): Workflo
   idempotencyKey: null,
   nextAttemptAt: null,
   lastErrorAt: null,
+  callerIp: null,
+  contentDeletedAt: null,
+  contentRetentionDays: null,
+  workflowVersion: null,
   logs: [
     {
       id: "cm9zr5log0000000000000000a",

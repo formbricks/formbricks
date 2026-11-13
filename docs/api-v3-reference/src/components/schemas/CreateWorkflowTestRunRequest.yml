@@ -1,0 +1,10 @@
+type: object
+description: Starts a Test run of the workflow's draft.
+properties:
+  payload:
+    type: object
+    additionalProperties: true
+    description: >-
+      The test payload: a JSON object of at most 100 KB once serialized, nested at most 10 levels
+      (lists count as levels). Defaults to the workflow's Sample payload.
+additionalProperties: false

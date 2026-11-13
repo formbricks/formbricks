@@ -17,4 +17,21 @@ properties:
     type: array
     items:
       $ref: ./WorkflowRunStepResult.yml
+  notTaken:
+    type: array
+    description: >-
+      The steps on If/else branches the run did not take, in graph order. Absent on runs without an
+      If/else.
+    items:
+      type: object
+      required:
+        - stepId
+        - stepType
+      properties:
+        stepId:
+          type: string
+          minLength: 1
+        stepType:
+          type: string
+          minLength: 1
 additionalProperties: true

@@ -22,6 +22,14 @@ export interface TriggerSurveyCheck {
   surveyNotWorkspaceVisible?: boolean;
 }
 
+/** Result of checking a survey a `send_email` step links to. */
+export interface SurveyLinkSurveyCheck {
+  surveyId: string;
+  status: "ok" | "not_found" | "not_link";
+  /** Keys the survey's link takes as Embedded Data (its passed-in fields); empty unless `ok`. */
+  acceptedEmbeddedDataKeys: string[];
+}
+
 /**
  * Audit detail a mutating handler surfaces to the adapter after a successful service call.
  * Deliberately app-agnostic: the affected workflow id, its workspace id, plus before/after
@@ -82,6 +90,39 @@ export interface WorkflowAnalyticsDetail {
 }
 
 /**
+ * Stores secret header values (ENG-7168, ADR 0043). Injected by the adapter, which owns the
+ * encryption key, so this package never handles key material. Every call is scoped to one workflow:
+ * `replace` and the deletes must never reach another workflow's rows.
+ */
+export interface WorkflowSecretStore {
+  /** Encrypts and stores a new value for the workflow; returns the new row's id. */
+  create: (input: { workflowId: string; workspaceId: string; value: string }) => Promise<{ id: string }>;
+  /** Overwrites a stored value in place, so every version that references it uses the new value. */
+  replace: (input: {
+    secretId: string;
+    workflowId: string;
+    workspaceId: string;
+    value: string;
+  }) => Promise<void>;
+  /**
+   * Deletes the workflow's secrets that neither `referencedSecretIds` (the draft being enabled) nor
+   * any of the workflow's versions reference. The adapter reads the versions.
+   */
+  deleteUnreferenced: (input: {
+    workflowId: string;
+    workspaceId: string;
+    referencedSecretIds: string[];
+  }) => Promise<void>;
+}
+
+/** One secret header a write stored: the header name only, never its value. */
+export interface TWorkflowSecretHeaderChange {
+  stepId: string;
+  headerName: string;
+  change: "set" | "replaced";
+}
+
+/**
  * Per-request context the Next.js adapter builds and passes to the framework-agnostic handlers.
  *
  * `authorize` is a capability bound by the adapter to the authenticated request (wrapping
@@ -119,6 +160,11 @@ export interface WorkflowApiContext {
   instance?: string;
   logger: WorkflowsLogger;
   auditRedactionKey?: string;
+  /**
+   * Origin the Webhook Secret URL is built on (the app's own URL, where `/api/v3` is served). Injected as
+   * data like `auditRedactionKey`; the webhook operations answer 500 without it.
+   */
+  webhookBaseUrl?: string;
   authorize: (workspaceId: string, access: WorkflowApiAccess) => Promise<AuthorizedWorkspace | Response>;
   verifyTriggerSurvey: (input: {
     workspaceId: string;
@@ -155,6 +201,37 @@ export interface WorkflowApiContext {
     organizationId: string;
     surveyIds?: string[];
   }) => Promise<string[]>;
+  /**
+   * Injected lookup of the surveys `send_email` steps link to (ENG-7180), so the package stays
+   * survey-agnostic. One entry per requested id: `not_found` when the survey is not in this workspace,
+   * `not_link` when it is not a link survey, and the Embedded Data keys its link accepts (its
+   * passed-in fields) so enable and test can warn about keys the survey would drop.
+   */
+  verifySurveyLinkSurveys: (input: {
+    workspaceId: string;
+    surveyIds: string[];
+  }) => Promise<SurveyLinkSurveyCheck[]>;
   recordAudit?: (detail: WorkflowAuditDetail) => void | Promise<void>;
+  /**
+   * Where secret header values are stored. Required by any write that carries a secret value; a
+   * write that would otherwise have to persist one in the definition is refused instead.
+   */
+  secrets?: WorkflowSecretStore;
+  /**
+   * Audit sink for secret headers set or replaced by a write ("secret set" / "secret replaced"), with
+   * the header name only. Called once per write that changed any, after it succeeded.
+   */
+  recordSecretHeaderChanges?: (detail: {
+    workflowId: string;
+    workspaceId: string;
+    changes: TWorkflowSecretHeaderChange[];
+  }) => void | Promise<void>;
   recordAnalytics?: (detail: WorkflowAnalyticsDetail) => void | Promise<void>;
+  /**
+   * Runs a Test run already saved as a queued dry run, inside the request, with fake effects (ENG-7181,
+   * ADR 0049): the adapter walks the workflow's draft with the real runner and records "would send" /
+   * "would call" instead of sending. Resolves once the run is finished; a failed step fails the run,
+   * not the call.
+   */
+  runTest?: (run: { runId: string; workflowId: string; workspaceId: string }) => Promise<void>;
 }

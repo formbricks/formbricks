@@ -9,6 +9,7 @@ import {
   buildWorkflowListSearchParams,
   buildWorkflowRunListSearchParams,
   createWorkflow,
+  createWorkflowTestRun,
   deleteWorkflow,
   disableWorkflow,
   duplicateWorkflow,
@@ -16,7 +17,12 @@ import {
   getWorkflow,
   getWorkflowRun,
   listWorkflowRuns,
+  listWorkflowSamples,
   listWorkflows,
+  regenerateWorkflowWebhook,
+  replaceWorkflowSecretHeader,
+  sendWorkflowTestRequest,
+  setWorkflowSample,
   unarchiveWorkflow,
   updateWorkflow,
 } from "./api-client";
@@ -34,6 +40,61 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+describe("webhook, sample and test request calls", () => {
+  test("regenerate POSTs and returns the new Secret URL", async () => {
+    fetchMock.mockResolvedValueOnce(okResponse({ url: "https://x/webhook/new" }));
+
+    expect(await regenerateWorkflowWebhook("wf1")).toEqual({ url: "https://x/webhook/new" });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v3/workflows/wf1/webhook/regenerate",
+      expect.objectContaining({ method: "POST" })
+    );
+  });
+
+  test("setting a sample PUTs it under payload", async () => {
+    fetchMock.mockResolvedValueOnce(okResponse({ source: "trigger" }));
+
+    await setWorkflowSample("wf1", { channel: "call" });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v3/workflows/wf1/sample",
+      expect.objectContaining({ method: "PUT", body: JSON.stringify({ payload: { channel: "call" } }) })
+    );
+  });
+
+  test("samples are read from the samples list", async () => {
+    fetchMock.mockResolvedValueOnce(okResponse([{ source: "call", sample: {}, updatedAt: "x" }]));
+
+    expect(await listWorkflowSamples("wf1")).toEqual([{ source: "call", sample: {}, updatedAt: "x" }]);
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/internal/workflows/wf1/samples",
+      expect.objectContaining({ method: "GET" })
+    );
+  });
+
+  test("replacing a secret PUTs the one value to the step's header", async () => {
+    fetchMock.mockResolvedValueOnce({ ok: true, status: 204 } as Response);
+
+    await replaceWorkflowSecretHeader("wf1", "call", "Authorization", "Bearer new");
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/internal/workflows/wf1/steps/call/secret-headers/Authorization",
+      expect.objectContaining({ method: "PUT", body: JSON.stringify({ value: "Bearer new" }) })
+    );
+  });
+
+  test("a test request POSTs the draft settings to the step", async () => {
+    fetchMock.mockResolvedValueOnce(okResponse({ response: null, error: "timeout" }));
+
+    await sendWorkflowTestRequest("wf1", "call 1", { variables: { payload: { a: 1 } } });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/api/v3/workflows/wf1/steps/call%201/test-request",
+      expect.objectContaining({ method: "POST", body: JSON.stringify({ variables: { payload: { a: 1 } } }) })
+    );
+  });
 });
 
 describe("getWorkflow", () => {
@@ -382,5 +443,30 @@ describe("workflow runs api-client requests", () => {
     );
 
     await expect(getWorkflowRun("run_x")).rejects.toBeInstanceOf(V3ApiError);
+  });
+
+  test("createWorkflowTestRun posts the test payload and unwraps the finished run", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      jsonResponse({ data: { id: "run_t", isDryRun: true } }, 201)
+    );
+
+    const result = await createWorkflowTestRun("wf_1", { payload: { channel: "call" } });
+
+    expect(result).toEqual({ id: "run_t", isDryRun: true });
+    const [url, init] = vi.mocked(global.fetch).mock.calls[0]!;
+    expect(url).toBe("/api/v3/workflows/wf_1/test-runs");
+    expect(init).toMatchObject({ method: "POST", cache: "no-store" });
+    expect(JSON.parse(String((init as RequestInit).body))).toEqual({ payload: { channel: "call" } });
+  });
+
+  test("createWorkflowTestRun keeps the problem code so a refusal can be explained", async () => {
+    vi.mocked(global.fetch).mockResolvedValueOnce(
+      problemResponse(422, { status: 422, detail: "No test payload", code: "invalid_workflow_state" })
+    );
+
+    await expect(createWorkflowTestRun("wf_1", {})).rejects.toMatchObject({
+      status: 422,
+      code: "invalid_workflow_state",
+    });
   });
 });

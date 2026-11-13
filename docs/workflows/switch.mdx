@@ -1,0 +1,87 @@
+---
+title: "Switch"
+description: "Send a run down one of several branches by comparing one Variable against named cases."
+icon: "split"
+---
+
+A **Switch** step compares one [Variable](/workflows/variables) against a list of named cases and sends the run
+down the branch of the first case that matches, or down **Default** when none does. Use it when one value picks
+between more than two paths, for example to send a different survey for each of five product lines.
+
+<Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
+
+{/* SCREENSHOT PLACEHOLDER: switch-panel.webp. A Switch step on the canvas with its Gold, Silver and Default
+branches, and its panel open showing the Variable and two cases. Save to
+/images/platform/workflows/switch-panel.webp and replace this comment with a <Frame>. */}
+
+## Add a Switch
+
+<Steps>
+  <Step title="Add the step">
+    Select the **+** below the trigger or a step, then choose **Switch** under **Logic**.
+  </Step>
+
+  <Step title="Pick the Variable to compare">
+    Under **Compare**, pick the Variable every case compares, such as `customer.tier`.
+  </Step>
+
+  <Step title="Write the cases">
+    Each case has a name, an operator and a value. The name labels the case's branch on the canvas and in run
+    detail. Select **Add case** for more, up to 10. Remove a case from its menu; if its branch has steps, you are
+    asked first, because they go with it.
+  </Step>
+
+  <Step title="Add steps to each branch">
+    Select the **+** under a case or under **Default**, and add the steps that branch should run.
+  </Step>
+</Steps>
+
+Cases are tried in order and the first that matches wins, so put the most specific case first. A branch can stay
+empty, which means "do nothing" for that case. Branches never join again, so steps after a Switch belong to one
+branch. Deleting a Switch deletes its branches too, after you confirm.
+
+A Switch counts as one step toward the [25 steps](/workflows/limits) a workflow can have.
+
+## Operators
+
+A case uses the same operators and comparison as an [If/else](/workflows/if-else#operators), so the
+[rules for comparing values](/workflows/if-else#how-values-are-compared) apply here too. To match on more than one
+Variable, use an If/else instead.
+
+## Run detail
+
+Run detail, including a [Test run](/workflows/test-runs), lists the cases the Switch tried, each marked matched or
+not matched, and shows the case it took (or **Default**). Steps on the other branches show as not taken. See
+[Manage and monitor](/workflows/manage-and-monitor#inspect-run-details-and-logs).
+
+## In the API and MCP
+
+A Switch is a node with `type: "switch"`. Its `config.left` is the Variable and `config.cases` the cases, each
+with an `id`, a `name`, an `operator` and, except for presence operators, a `right` value. An edge leaving the
+Switch uses a case's `id` as its `sourceHandle`, or `default` for the Default branch:
+
+```json
+{
+  "nodes": [
+    {
+      "id": "route",
+      "type": "switch",
+      "config": {
+        "left": { "path": "payload.customer.tier" },
+        "cases": [
+          { "id": "gold", "name": "Gold", "operator": "equals", "right": "gold" },
+          { "id": "silver", "name": "Silver", "operator": "equals", "right": "silver" }
+        ]
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "route", "target": "gold-email", "sourceHandle": "gold" },
+    { "id": "e2", "source": "route", "target": "standard-email", "sourceHandle": "default" }
+  ]
+}
+```
+
+Saving needs 2 to 10 cases with unique ids, and no case may use the id `default`. Enabling also needs every case
+named. Operator names follow the [If/else rules](/workflows/if-else#operator-names-in-the-api-and-mcp): one
+workflow uses either the current or the deprecated names, across all its If/else and Switch steps.

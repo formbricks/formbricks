@@ -1,0 +1,34 @@
+type: object
+description: >-
+  A plain or secret header of an HTTP request step. A secret header's value is stored encrypted
+  beside the workflow and never returned: writes send `{name, value, secret: true}` to set or
+  replace it, or `{name, secret: true}` to keep the stored one; reads return
+  `{name, secret: true, isSet}`. Replacing a value updates the enabled workflow at once. A
+  duplicated workflow keeps the names but not the values, and can't be enabled until they are
+  entered again. `Authorization` and names containing `token`, `key`, `secret` or `cookie` are
+  secret unless `secret: false` is sent. Setting or replacing a secret is recorded in the audit log
+  with the header name only.
+required:
+  - name
+properties:
+  name:
+    type: string
+    minLength: 1
+    maxLength: 256
+    pattern: "^[!#$%&'*+\\-.^_`|~0-9A-Za-z]+$"
+  value:
+    type: string
+    maxLength: 8192
+    description: >-
+      A plain header's value (may use Variables; required for a plain header), or a secret
+      header's new value on write. Never returned for a secret header.
+  secret:
+    type: boolean
+  secretId:
+    type: string
+    description: Server-managed. Ignored on write and never returned.
+  isSet:
+    type: boolean
+    readOnly: true
+    description: Read only. Whether a secret header has a stored value.
+additionalProperties: false

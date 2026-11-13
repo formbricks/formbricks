@@ -7,6 +7,7 @@ import {
   ChevronDownIcon,
   CirclePauseIcon,
   CirclePlayIcon,
+  PlayIcon,
   TrashIcon,
 } from "lucide-react";
 import { useRouter, useSelectedLayoutSegment } from "next/navigation";
@@ -39,9 +40,18 @@ import {
 interface WorkflowHeaderCtaProps {
   workflowId: string;
   isReadOnly: boolean;
+  /** Starts a Test run of the draft (ED6). Absent until the Test run slice wires it: the button is disabled. */
+  onTestRun?: () => void;
+  /** A Test run is in flight: the button spins and can't start another. */
+  isTestRunning?: boolean;
 }
 
-export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowHeaderCtaProps>) => {
+export const WorkflowHeaderCta = ({
+  workflowId,
+  isReadOnly,
+  onTestRun,
+  isTestRunning = false,
+}: Readonly<WorkflowHeaderCtaProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const segment = useSelectedLayoutSegment();
@@ -117,6 +127,17 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly }: Readonly<WorkflowH
           only — on the runs tab the pill above is carrying a save failure and nothing else. */}
       {isEditTab && (
         <>
+          {/* Secondary on purpose: the status menu stays the one primary control (ED8). A Test run
+              runs the draft with fake effects, so read-only members may not start one. */}
+          <Button
+            variant="secondary"
+            size="sm"
+            loading={isTestRunning}
+            disabled={!onTestRun || isReadOnly || isDeleting || isTestRunning}
+            onClick={onTestRun}>
+            <PlayIcon />
+            {t("workspace.workflows.test_run")}
+          </Button>
           <DropdownMenu onOpenChange={handleStatusMenuOpenChange}>
             {/* `disabled` must sit on the trigger, not only the child Button: Radix's open guard
                 reads the trigger's own prop, so a value passed solely to the Button leaves the menu

@@ -1,0 +1,121 @@
+type: object
+description: >-
+  An HTTP request step's result, secret header values masked. In a Test run (`isDryRun`) nothing was
+  called: the request is what would have been sent, and in Wait and use it the response is the
+  step's last Test request response (`testSample: used`), or none (`testSample: missing`).
+required:
+  - kind
+  - mode
+  - request
+  - response
+  - delivery
+  - testSample
+  - attempts
+  - error
+properties:
+  kind:
+    type: string
+    enum:
+      - http_request
+  mode:
+    type:
+      - string
+      - "null"
+    enum:
+      - wait
+      - dont_wait
+      - null
+    description: Wait and use it (`wait`) or Don't wait (`dont_wait`).
+  request:
+    type:
+      - object
+      - "null"
+    description: The request, secret header values shown as `••••••`. Null when it could not be built.
+    required:
+      - method
+      - url
+      - headers
+    properties:
+      method:
+        type: string
+        enum:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+      url:
+        type: string
+      headers:
+        type: array
+        items:
+          type: object
+          required:
+            - name
+            - value
+          properties:
+            name:
+              type: string
+            value:
+              type: string
+          additionalProperties: false
+      body:
+        type: string
+      bodyTruncated:
+        type: boolean
+    additionalProperties: false
+  response:
+    type:
+      - object
+      - "null"
+    description: The answer, with at most 64 KB of body. Null when none came.
+    required:
+      - status
+      - contentType
+      - body
+    properties:
+      status:
+        type: integer
+      contentType:
+        type:
+          - string
+          - "null"
+      body:
+        description: Parsed JSON when it fits in 64 KB, else up to 64 KB of text.
+      bodyTruncated:
+        type: boolean
+    additionalProperties: false
+  delivery:
+    type:
+      - string
+      - "null"
+    enum:
+      - sending
+      - sent
+      - failed
+      - null
+    description: >-
+      Don't wait only: `sending` while its own job sends it, then `sent` or `failed`. A failed
+      delivery never fails the run. Null for Wait and use it, and in a Test run.
+  testSample:
+    type:
+      - string
+      - "null"
+    enum:
+      - used
+      - missing
+      - null
+    description: >-
+      Test runs only, Wait and use it: whether the step had a Test request response to use. With
+      `missing`, later steps saw no response. Null outside Test runs.
+  attempts:
+    type:
+      - integer
+      - "null"
+    minimum: 0
+  error:
+    type:
+      - string
+      - "null"
+    description: Why no answer came, when Continue on error let the run go on.
+additionalProperties: false

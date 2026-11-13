@@ -54,8 +54,15 @@ info:
     /api/v3/workflows/{workflowId}/disable**, **POST
     /api/v3/workflows/{workflowId}/archive**, **POST
     /api/v3/workflows/{workflowId}/unarchive**, **POST
-    /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, and
-    **GET /api/v3/workflows/runs/{runId}**.
+    /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**,
+    **GET /api/v3/workflows/runs/{runId}**, and for Webhook triggers **GET
+    /api/v3/workflows/{workflowId}/webhook**, **POST
+    /api/v3/workflows/{workflowId}/webhook/regenerate**, **PUT
+    /api/v3/workflows/{workflowId}/sample**, for HTTP request steps **POST
+    /api/v3/workflows/{workflowId}/steps/{stepId}/test-request**, Test runs **POST
+    /api/v3/workflows/{workflowId}/test-runs**, and the public Webhook Secret URL
+    **POST /api/v3/workflows/{workflowId}/webhook/{token}**, which takes no
+    login: the token in its path is the credential.
 
 
     **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**;
@@ -346,7 +353,9 @@ info:
     via `workflowVersionId`. `POST .../test` is a dry run: it validates the
     definition and resolves the trigger's references synchronously, creating no
     run and sending no email, and returns `{ workflowId, ok, problems }`
-    directly. Real runs execute asynchronously and are polled via
+    directly. `POST .../test-runs` is a Test run: it runs the draft at once with
+    fake effects (nothing is sent or called), saves it as a dry run with no
+    version, and returns the finished run. Real runs execute asynchronously and are polled via
     `GET /api/v3/workflows/runs/{runId}`.
 
 
@@ -441,6 +450,18 @@ paths:
     $ref: paths/api_v3_workflows_{workflowId}_unarchive.yml
   /api/v3/workflows/{workflowId}/test:
     $ref: paths/api_v3_workflows_{workflowId}_test.yml
+  /api/v3/workflows/{workflowId}/webhook:
+    $ref: paths/api_v3_workflows_{workflowId}_webhook.yml
+  /api/v3/workflows/{workflowId}/webhook/regenerate:
+    $ref: paths/api_v3_workflows_{workflowId}_webhook_regenerate.yml
+  /api/v3/workflows/{workflowId}/webhook/{token}:
+    $ref: paths/api_v3_workflows_{workflowId}_webhook_{token}.yml
+  /api/v3/workflows/{workflowId}/sample:
+    $ref: paths/api_v3_workflows_{workflowId}_sample.yml
+  /api/v3/workflows/{workflowId}/steps/{stepId}/test-request:
+    $ref: paths/api_v3_workflows_{workflowId}_steps_{stepId}_test-request.yml
+  /api/v3/workflows/{workflowId}/test-runs:
+    $ref: paths/api_v3_workflows_{workflowId}_test-runs.yml
   /api/v3/charts:
     $ref: paths/api_v3_charts.yml
   /api/v3/charts/fields:

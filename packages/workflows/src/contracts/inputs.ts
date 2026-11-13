@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZWorkflowStatus } from "../types/common";
-import { ZWorkflowDefinition } from "../types/document";
+import { ZWorkflowDefinitionInput } from "../types/document";
 import { ZWorkflowRunStatus } from "../types/runs";
 import { zPostgresText } from "./postgres-text";
 
@@ -19,7 +19,7 @@ export const ZCreateWorkflowInput = z
       .literal("draft")
       .optional()
       .describe("Workflows are always created as drafts; only enable can make them live."),
-    definition: ZWorkflowDefinition,
+    definition: ZWorkflowDefinitionInput,
   })
   .describe("Creates a draft workflow.");
 export type TCreateWorkflowInput = z.infer<typeof ZCreateWorkflowInput>;
@@ -28,7 +28,7 @@ export const ZPatchWorkflowInput = z
   .strictObject({
     name: z.string().min(1).max(120).optional(),
     description: z.string().max(500).nullable().optional(),
-    definition: ZWorkflowDefinition.optional().describe(
+    definition: ZWorkflowDefinitionInput.optional().describe(
       "Only accepted while the workflow is draft or disabled; the live version of an enabled workflow is immutable."
     ),
   })

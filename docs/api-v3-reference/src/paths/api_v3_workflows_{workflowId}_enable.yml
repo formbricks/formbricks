@@ -23,7 +23,9 @@ post:
     targets someone who can access this workspace (an element-id `to` resolves
     to the respondent's own
 
-    address and is exempt) — and then snapshots an immutable workflow
+    address and is exempt), every `send_email` survey link points to a link survey in this
+    workspace, and a step with a Variable recipient has a fixed subject and body — and then
+    snapshots an immutable workflow
     version. Runs
 
     reference that snapshot via `workflowVersionId`, so later draft edits never
@@ -44,7 +46,7 @@ post:
     - $ref: ../components/parameters/WorkflowIdPath.yml
   responses:
     "200":
-      $ref: ../components/responses/WorkflowResourceResponse.yml
+      $ref: ../components/responses/WorkflowEnableResponse.yml
     "400":
       $ref: ../components/responses/V3BadRequest.yml
     "401":

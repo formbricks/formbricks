@@ -1,0 +1,35 @@
+type: object
+description: >-
+  One If/else comparison, mirroring `ZWorkflowCondition`. `isSet`, `isNotSet`, `isEmpty` and
+  `isNotEmpty` (and the deprecated `exists` / `notExists`) take no `right`; every other operator
+  requires one. The list operators (`equalsOneOf`, `includesAllOf`, `includesOneOf`,
+  `doesNotIncludeAllOf`, `doesNotIncludeOneOf`) take a list of texts or a Variable; no other
+  operator takes a list.
+required:
+  - id
+  - left
+  - operator
+properties:
+  id:
+    type: string
+    minLength: 1
+  left:
+    $ref: ./WorkflowDataRef.yml
+  operator:
+    $ref: ./WorkflowConditionOperator.yml
+  right:
+    description: The value to compare against, or a Variable.
+    oneOf:
+      - type: string
+        maxLength: 1000
+      - type: number
+      - type: boolean
+      - type: "null"
+      - type: array
+        minItems: 1
+        maxItems: 100
+        items:
+          type: string
+          maxLength: 1000
+      - $ref: ./WorkflowDataRef.yml
+additionalProperties: false

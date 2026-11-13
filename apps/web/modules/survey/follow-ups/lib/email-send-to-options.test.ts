@@ -239,6 +239,21 @@ describe("buildEmailSendToOptions", () => {
       { id: "me@example.com", type: "user", label: "Yourself (me@example.com)" },
     ]);
   });
+
+  test("without a survey (a Webhook workflow's email) offers only the team", () => {
+    const options = buildEmailSendToOptions({
+      survey: null,
+      teamMemberDetails: [{ name: "Alice", email: "alice@example.com" }],
+      userEmail: "me@example.com",
+      selectedLanguageCode: "default",
+      t,
+    });
+
+    expect(options).toEqual([
+      { id: "alice@example.com", type: "user", label: "Alice (alice@example.com)" },
+      { id: "me@example.com", type: "user", label: "Yourself (me@example.com)" },
+    ]);
+  });
 });
 
 describe("findEmailSendToOption", () => {

@@ -45,7 +45,7 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` | Read surveys, creatives and their counts, and surveys' custom CSS, and validate survey documents and CSS |
 | `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` | Create, update, and delete surveys and creatives, and save a workspace's shared survey CSS — which additionally needs an organization owner or manager |
 | `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`¹ | Read workflows and their runs |
-| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, `unarchive_workflow` | Create, update, and delete workflows |
+| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, `enable_workflow`, `disable_workflow`, `archive_workflow`, `unarchive_workflow`, `get_webhook_url`⁴, `regenerate_webhook_url`, `set_sample_payload`, `send_test_request`, `run_test` | Create, update, and delete workflows, and manage Webhook Secret URLs |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` | Read, count and search feedback records in a workspace's feedback dataset |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`², `delete_feedback_record`² | Create, correct and delete feedback records |
 | `responses:read` | `list_responses`, `count_responses`, `get_response` | Read and count survey responses |
@@ -65,6 +65,8 @@ own, as before. `list_dashboard_filter_fields` lists the embedded-data fields a 
 charts, filter fields and filter values through their dashboards with that alone. Running a query of your own (`preview_chart`) or listing a field's stored values (`list_chart_field_values`) always needs
 `feedbackRecords:read` — a dashboards grant alone never runs arbitrary queries over feedback. All three also need
 read access to the chart's feedback dataset.
+
+⁴ `get_webhook_url` only reads, but its result is the Webhook Secret URL, a credential that lets anyone holding it start runs, so it needs `workflows:write`.
 
 A response is someone's submitted answers, so grant `responses:read` deliberately — it is respondent
 data, which `surveys:read` never exposes. An integration you connected before these scopes existed

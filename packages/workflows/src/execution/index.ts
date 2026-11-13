@@ -1,1 +1,1 @@
-export * from "./plan";
+export * from "./walk";

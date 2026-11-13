@@ -1,0 +1,72 @@
+---
+title: "Test runs"
+description: "Run a workflow's draft with its Sample payload, without sending email or calling anything outside."
+icon: "flask"
+---
+
+A **Test run** runs the workflow as it is in the editor, with its **Sample payload**, and shows what a real run
+would do: which branch each [If/else](/workflows/if-else) takes, whom each email would go to, and what each
+[HTTP request](/workflows/http-request) would send. It sends no email and calls nothing outside Formbricks.
+
+<Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
+
+{/* SCREENSHOT PLACEHOLDER: test-run-result.webp. Run detail of a Test run with the Test label, an If/else that
+took its Then branch with each condition marked matched, and a Send email step showing the address it would have
+emailed. Save to /images/platform/workflows/test-run-result.webp and replace this comment with a <Frame>. */}
+
+## Start a Test run
+
+<Steps>
+  <Step title="Set a Sample payload">
+    Open the [Webhook trigger](/workflows/webhook-trigger) and send a call to its URL, or paste an example payload.
+  </Step>
+
+  <Step title="Get test responses for HTTP requests">
+    For each HTTP request set to **Wait and use it**, select **Send test request** once. A Test run uses that
+    response as the step's answer.
+  </Step>
+
+  <Step title="Run the test">
+    Select **Test run**. Formbricks runs the draft at once and saves the result as a run.
+  </Step>
+</Steps>
+
+You don't have to save or enable the workflow first: a Test run uses the current draft. It does need to pass the
+same checks as **Enable**, so fix any problem the editor lists first.
+
+## What a Test run does
+
+The trigger, the conditions and the order of the steps work exactly as in a real run. Only the steps with an
+effect outside Formbricks are replaced:
+
+| Step                              | In a Test run                                                                                                   |
+| --------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| **If/else**                       | Runs for real, so you see the branch a real run would take and which conditions matched.                        |
+| **Switch**                        | Runs for real, so you see the case a real run would take, or Default.                                           |
+| **Send email**                    | Sends nothing. Run detail shows the recipient and, if there is one, the survey link the email would have used.  |
+| **HTTP request, Wait and use it** | Calls nothing. Run detail shows the request it would have sent, and later steps get the step's last test response. Without a test response, later steps get no response from it. |
+| **HTTP request, Don't wait**      | Calls nothing. The step ends at once with the request it would have sent.                                       |
+
+## Find Test runs
+
+Test runs appear under **Runs** with a **Test** label, next to real runs. Use the runs filter to hide them. Test
+runs are never billed and don't count toward usage. They are deleted 7 days after they started (see
+[Run data retention](/workflows/manage-and-monitor#run-data-retention)).
+
+## When Test runs are available
+
+- The workflow has a Webhook trigger. For a **Response completed** workflow, the
+  [manual check](/workflows/build#check-validity-or-enable) verifies the setup without running it.
+- The workflow has a Sample payload.
+- The workflow isn't archived.
+- You have write or manage access to the workspace.
+
+You can start 30 Test runs per minute.
+
+## Test run, Test request or a real call?
+
+| You want to…                                                      | Use                                                                              |
+| ----------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| See which branch a payload takes and what each step would do      | **Test run**                                                                     |
+| See what one API really answers                                   | **Send test request** on that [HTTP request](/workflows/http-request#send-test-request) |
+| Check the whole workflow end to end, including email delivery     | Enable it and call the Webhook Secret URL with a payload that points at your own address |

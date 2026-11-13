@@ -1,13 +1,19 @@
 import type {
   TCreateWorkflowInput,
+  TCreateWorkflowTestRunInput,
   TPatchWorkflowInput,
+  TSendWorkflowTestRequestInput,
   TWorkflowListItem,
   TWorkflowResource,
   TWorkflowRunListItem,
   TWorkflowRunResource,
   TWorkflowRunStatus,
+  TWorkflowSampleList,
+  TWorkflowSampleResource,
   TWorkflowSortBy,
   TWorkflowStatus,
+  TWorkflowTestRequestResult,
+  TWorkflowWebhookResource,
 } from "@formbricks/workflows";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
 
@@ -135,6 +141,28 @@ export async function getWorkflow(workflowId: string, signal?: AbortSignal): Pro
   });
 
   return readWorkflowResponse(response);
+}
+
+/**
+ * The workflow's Webhook Secret URL, last call and Sample payload (with the Variables it offers).
+ * Write access only: the URL is a credential (ADR 0041).
+ */
+export async function getWorkflowWebhook(
+  workflowId: string,
+  signal?: AbortSignal
+): Promise<TWorkflowWebhookResource> {
+  const response = await fetch(`/api/v3/workflows/${workflowId}/webhook`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const body = (await response.json()) as { data: TWorkflowWebhookResource };
+  return body.data;
 }
 
 export async function updateWorkflow(
@@ -287,4 +315,117 @@ export async function getWorkflowRun(runId: string, signal?: AbortSignal): Promi
 
   const body = (await response.json()) as { data: TWorkflowRunResource };
   return body.data;
+}
+
+/**
+ * Runs the workflow's draft at once with fake effects (a Test run, ADR 0049) and answers with the
+ * finished run. Without `payload` the server uses the workflow's Sample payload.
+ */
+export async function createWorkflowTestRun(
+  workflowId: string,
+  input: TCreateWorkflowTestRunInput
+): Promise<TWorkflowRunResource> {
+  const response = await fetch(`/api/v3/workflows/${workflowId}/test-runs`, {
+    method: "POST",
+    cache: "no-store",
+    headers: JSON_HEADERS,
+    body: JSON.stringify(input),
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
+  });
+
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+
+  const body = (await response.json()) as { data: TWorkflowRunResource };
+  return body.data;
+}
+async function readDataResponse<T>(response: Response): Promise<T> {
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+  const body = (await response.json()) as { data: T };
+  return body.data;
+}
+
+/** The workflow's samples: the Sample payload and each HTTP request step's last Test request response. */
+export async function listWorkflowSamples(
+  workflowId: string,
+  signal?: AbortSignal
+): Promise<TWorkflowSampleList> {
+  const response = await fetch(`/api/internal/workflows/${workflowId}/samples`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+  return readDataResponse<TWorkflowSampleList>(response);
+}
+
+/** Replaces the Webhook Secret URL; the old one stops working at once. */
+export async function regenerateWorkflowWebhook(workflowId: string): Promise<TWorkflowWebhookResource> {
+  const response = await fetch(`/api/v3/workflows/${workflowId}/webhook/regenerate`, {
+    method: "POST",
+    cache: "no-store",
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
+  });
+  return readDataResponse<TWorkflowWebhookResource>(response);
+}
+
+/** Replaces the Webhook trigger's Sample payload, e.g. with one pasted in the editor. */
+export async function setWorkflowSample(
+  workflowId: string,
+  payload: Record<string, unknown>
+): Promise<TWorkflowSampleResource> {
+  const response = await fetch(`/api/v3/workflows/${workflowId}/sample`, {
+    method: "PUT",
+    cache: "no-store",
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ payload }),
+    signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
+  });
+  return readDataResponse<TWorkflowSampleResource>(response);
+}
+
+/**
+ * Replaces one stored secret header value in place (ADR 0043). For an enabled workflow, whose
+ * definition can't be edited: the enabled workflow uses the new value from its next run.
+ */
+export async function replaceWorkflowSecretHeader(
+  workflowId: string,
+  stepId: string,
+  headerName: string,
+  value: string
+): Promise<void> {
+  const response = await fetch(
+    `/api/internal/workflows/${workflowId}/steps/${encodeURIComponent(stepId)}/secret-headers/${encodeURIComponent(headerName)}`,
+    {
+      method: "PUT",
+      cache: "no-store",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ value }),
+      signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
+    }
+  );
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+}
+
+/** One real call of an HTTP request step ("Send test request"), from its draft settings. */
+export async function sendWorkflowTestRequest(
+  workflowId: string,
+  stepId: string,
+  input: TSendWorkflowTestRequestInput
+): Promise<TWorkflowTestRequestResult> {
+  const response = await fetch(
+    `/api/v3/workflows/${workflowId}/steps/${encodeURIComponent(stepId)}/test-request`,
+    {
+      method: "POST",
+      cache: "no-store",
+      headers: JSON_HEADERS,
+      body: JSON.stringify(input),
+      signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
+    }
+  );
+  return readDataResponse<TWorkflowTestRequestResult>(response);
 }

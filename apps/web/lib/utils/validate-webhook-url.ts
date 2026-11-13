@@ -181,13 +181,13 @@ const parseWebhookUrl = (url: string): URL => {
  * arrive here as `127.0.0.1`) and rejected malformed ones, so this only has to tell a valid
  * literal from a hostname.
  */
-const validateIpLiteral = (hostname: string): ResolvedAddress | null => {
+const validateIpLiteral = (hostname: string, allowInternalUrls: boolean): ResolvedAddress | null => {
   const ip = stripIPv6Brackets(hostname);
   const version = net.isIP(ip);
   if (version === 0) return null;
 
   const family: 4 | 6 = version === 4 ? 4 : 6;
-  if (!DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS && isPrivateIP(ip)) {
+  if (!allowInternalUrls && isPrivateIP(ip)) {
     throw new InvalidInputError("Webhook URL must not point to private or internal IP addresses");
   }
   return { ip, family };
@@ -216,28 +216,34 @@ const resolveHostnameOrThrow = async (hostname: string): Promise<ResolvedAddress
  * Pinning the returned address into the fetch dispatcher closes the TOCTOU window
  * where DNS could rebind between this validation and the subsequent HTTP request.
  *
+ * `allowInternalUrls` defaults to `DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS` (the Webhooks integration);
+ * workflow HTTP requests pass their own switch, which Formbricks Cloud ignores.
+ *
  * @throws {InvalidInputError} when the URL fails any validation check
  */
-export const validateAndResolveWebhookUrl = async (url: string): Promise<ResolvedAddress | null> => {
+export const validateAndResolveWebhookUrl = async (
+  url: string,
+  { allowInternalUrls = DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS }: { allowInternalUrls?: boolean } = {}
+): Promise<ResolvedAddress | null> => {
   const parsed = parseWebhookUrl(url);
   const hostname = parsed.hostname;
   const isBlockedName = BLOCKED_HOSTNAMES.has(hostname.toLowerCase());
 
-  if (!DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS && isBlockedName) {
+  if (!allowInternalUrls && isBlockedName) {
     throw new InvalidInputError("Webhook URL must not point to localhost or internal services");
   }
 
-  const literal = validateIpLiteral(hostname);
+  const literal = validateIpLiteral(hostname, allowInternalUrls);
   if (literal) return literal;
 
   // Skip DNS for localhost-like hostnames when internal URLs are allowed (resolved via /etc/hosts)
-  if (DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS && isBlockedName) {
+  if (allowInternalUrls && isBlockedName) {
     return null;
   }
 
   const resolved = await resolveHostnameOrThrow(hostname);
 
-  if (!DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS) {
+  if (!allowInternalUrls) {
     for (const addr of resolved) {
       if (isPrivateIP(addr.ip)) {
         throw new InvalidInputError("Webhook URL must not point to private or internal IP addresses");

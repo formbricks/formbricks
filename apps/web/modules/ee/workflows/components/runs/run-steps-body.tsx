@@ -1,21 +1,33 @@
 "use client";
 
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { getRunContentDeletedDays, toRunDetailRows } from "@/modules/ee/workflows/lib/run-detail-rows";
 import { type TWorkflowRunDetail } from "@/modules/ee/workflows/types";
 import { Skeleton } from "@/modules/ui/components/skeleton";
-import { WorkflowRunSteps } from "./workflow-run-steps";
+import { RunDetailSteps } from "./run-detail-steps";
 
 interface RunStepsBodyProps {
   isLoading: boolean;
   isError: boolean;
   error: unknown;
   detail?: TWorkflowRunDetail;
+  /** Names steps and conditions; null when the workflow could not be loaded. */
+  definition: TWorkflowDefinition | null;
 }
 
-// Step-logs section body: one early return per fetch state keeps this flat (no nested ternary).
-export const RunStepsBody = ({ isLoading, isError, error, detail }: Readonly<RunStepsBodyProps>) => {
+// Step list body: one early return per fetch state keeps this flat (no nested ternary).
+export const RunStepsBody = ({
+  isLoading,
+  isError,
+  error,
+  detail,
+  definition,
+}: Readonly<RunStepsBodyProps>) => {
   const { t } = useTranslation();
+  const rows = useMemo(() => (detail ? toRunDetailRows(detail, definition) : null), [detail, definition]);
 
   if (isLoading) {
     return (
@@ -34,8 +46,18 @@ export const RunStepsBody = ({ isLoading, isError, error, detail }: Readonly<Run
     );
   }
 
-  if (detail) {
-    return <WorkflowRunSteps logs={detail.logs} />;
+  if (detail && rows) {
+    const deletedAfterDays = getRunContentDeletedDays(detail);
+    return (
+      <>
+        <RunDetailSteps rows={rows} responseId={detail.responseId} />
+        {deletedAfterDays === null ? null : (
+          <p className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">
+            {t("workspace.workflows.run_details_deleted", { days: deletedAfterDays })}
+          </p>
+        )}
+      </>
+    );
   }
 
   return null;

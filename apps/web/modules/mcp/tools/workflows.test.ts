@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { z } from "zod";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
@@ -153,7 +154,9 @@ describe("registerWorkflowTools", () => {
   test("registers all read + mutation tools with correct annotations", () => {
     const { server, tools } = createToolServer();
 
-    expect(server.registerTool).toHaveBeenCalledTimes(13);
+    expect(server.registerTool).toHaveBeenCalledTimes(18);
+    expect(tools.has("send_test_request")).toBe(true);
+    expect(tools.has("run_test")).toBe(true);
     for (const name of [
       "list_workflows",
       "get_workflow",
@@ -479,6 +482,55 @@ describe("registerWorkflowTools", () => {
   });
 });
 
+describe("save-time rules on MCP writes", () => {
+  const surveyId = "cm9zr4q7i000108l84gozfggr";
+  const email = (id: string) => ({
+    id,
+    type: "action",
+    actionType: "send_email",
+    config: {
+      from: "noreply@example.com",
+      to: "support@example.com",
+      replyTo: [],
+      subject: "Thanks",
+      body: "Thanks.",
+      attachResponseData: false,
+    },
+  });
+  // 26 steps: over the limit of 25, which a workflow saved before the limit may still hold.
+  const nodes = Array.from({ length: 26 }, (_, index) => email(`email-${index}`));
+  const overLimit = {
+    schemaVersion: 1,
+    trigger: {
+      id: "trigger",
+      type: "trigger",
+      triggerType: "response.completed",
+      config: { surveyId, endingCardIds: [] },
+    },
+    nodes,
+    edges: nodes.map((node, index) => ({
+      id: `edge-${index}`,
+      source: index === 0 ? "trigger" : `email-${index - 1}`,
+      target: node.id,
+    })),
+    entryNodeId: "trigger",
+  };
+
+  test("create_workflow and patch_workflow refuse a definition over a save-time limit", () => {
+    const { tools } = createToolServer();
+    const create = tools.get("create_workflow")!.config.inputSchema as z.ZodType;
+    const patch = tools.get("patch_workflow")!.config.inputSchema as z.ZodType;
+
+    const created = create.safeParse({ workspaceId: WORKSPACE_ID, name: "WF", definition: overLimit });
+    const patched = patch.safeParse({ workflowId: WORKFLOW_ID, data: { definition: overLimit } });
+
+    expect(created.success).toBe(false);
+    expect(JSON.stringify(created.error?.issues)).toMatch(/at most 25 steps/);
+    expect(patched.success).toBe(false);
+    expect(JSON.stringify(patched.error?.issues)).toMatch(/at most 25 steps/);
+  });
+});
+
 describe("MCP scope enforcement (ENG-1967)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
@@ -624,5 +676,62 @@ describe("create_workflow advertised input schema", () => {
     // validation failures — and so would have passed with strictness removed entirely.
     expect(schema.safeParse(VALID_CREATE_WORKFLOW_INPUT).success).toBe(true);
     expect(schema.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, bogus: 1 }).success).toBe(false);
+  });
+});
+
+describe("a Switch step through MCP (ENG-7157)", () => {
+  const routing = (caseCount: number) => {
+    const [emailNode] = VALID_CREATE_WORKFLOW_INPUT.definition.nodes;
+    const cases = Array.from({ length: caseCount }, (_, index) => ({
+      id: `case-${index}`,
+      name: `Case ${index + 1}`,
+      operator: "equals",
+      right: `tier-${index}`,
+    }));
+    return {
+      ...VALID_CREATE_WORKFLOW_INPUT.definition,
+      nodes: [
+        { id: "route", type: "switch", config: { left: { path: "response.tier" }, cases } },
+        { ...emailNode, id: "first-case-email" },
+      ],
+      edges: [
+        { id: "e1", source: VALID_CREATE_WORKFLOW_INPUT.definition.trigger.id, target: "route" },
+        { id: "e2", source: "route", target: "first-case-email", sourceHandle: "case-0" },
+      ],
+    };
+  };
+
+  test("create_workflow and patch_workflow take a Switch with 2 to 10 cases", () => {
+    const { tools } = createToolServer();
+    const create = tools.get("create_workflow")!.config.inputSchema as z.ZodType;
+    const patch = tools.get("patch_workflow")!.config.inputSchema as z.ZodType;
+
+    expect(create.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, definition: routing(10) }).success).toBe(true);
+    expect(patch.safeParse({ workflowId: WORKFLOW_ID, data: { definition: routing(2) } }).success).toBe(true);
+    const overLimit = create.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, definition: routing(11) });
+    expect(JSON.stringify(overLimit.error?.issues)).toMatch(/at most 10 cases/);
+  });
+});
+
+describe("create_workflow save-time limits (ENG-7176)", () => {
+  test("refuses a definition with more than 25 steps before it reaches the handler", () => {
+    const { tools } = createToolServer();
+    const schema = tools.get("create_workflow")!.config.inputSchema as ZodObjectLike;
+    const [emailNode] = VALID_CREATE_WORKFLOW_INPUT.definition.nodes;
+    const nodes = Array.from({ length: 26 }, (_, index) => ({ ...emailNode, id: `email-${index}` }));
+    const edges = nodes.map((node, index) => ({
+      id: `edge-${index}`,
+      source: index === 0 ? "trigger" : `email-${index - 1}`,
+      target: node.id,
+    }));
+    const definition = { ...VALID_CREATE_WORKFLOW_INPUT.definition, nodes, edges };
+
+    expect(schema.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, definition }).success).toBe(false);
+    expect(
+      schema.safeParse({
+        ...VALID_CREATE_WORKFLOW_INPUT,
+        definition: { ...definition, nodes: nodes.slice(0, 25), edges: edges.slice(0, 25) },
+      }).success
+    ).toBe(true);
   });
 });

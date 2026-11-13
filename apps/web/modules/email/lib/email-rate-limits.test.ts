@@ -236,6 +236,24 @@ describe("applyEmailRateLimits", () => {
     });
   });
 
+  // ENG-7169: a leaked Webhook Secret URL must not spend the organization's whole budget through one workflow.
+  describe("payload-address workflow email", () => {
+    const payload = (workflowId: string) => ({ ...external("org-1"), workflowId });
+
+    test("is capped at 50 an hour per workflow, leaving the organization's budget to its others", async () => {
+      await sendTimes(
+        50,
+        "workflow_email",
+        (index) => `caller-${index}@example.com`,
+        () => payload("wf-1")
+      );
+
+      await refused(send("workflow_email", "next@example.com", payload("wf-1")));
+      await expect(send("workflow_email", "next@example.com", payload("wf-2"))).resolves.toBeUndefined();
+      await expect(send("workflow_email", "other@example.com", external("org-1"))).resolves.toBeUndefined();
+    });
+  });
+
   describe("email to the organization's own members", () => {
     // Respondents trigger these; letting them spend the budget would stop the organization's mail to itself.
     test("is not counted for follow-ups and workflow emails", async () => {

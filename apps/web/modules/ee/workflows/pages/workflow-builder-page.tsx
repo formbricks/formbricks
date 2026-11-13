@@ -3,6 +3,7 @@
 import { useSetAtom } from "jotai";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { getTriggerSurveyId } from "@formbricks/workflows";
 import { WorkflowCanvas } from "@/modules/ee/workflows/components/canvas/workflow-canvas";
 import { WorkflowInspectorPanel } from "@/modules/ee/workflows/components/inspector/workflow-inspector-panel";
 import { WorkflowEmailAuthoringProvider } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
@@ -55,7 +56,7 @@ export const WorkflowBuilderPage = ({
   const definition = builder.definition;
   const surveyOptions = surveyOptionsQuery.options;
   useEffect(() => {
-    const triggerSurveyId = definition?.trigger?.config.surveyId ?? null;
+    const triggerSurveyId = getTriggerSurveyId(definition?.trigger);
     const isBound =
       Boolean(resolveBoundTriggerSurvey(emailAuthoringContext, definition)) ||
       (triggerSurveyId !== null && surveyOptions.some((option) => option.id === triggerSurveyId));
@@ -65,7 +66,7 @@ export const WorkflowBuilderPage = ({
   // ENG-3395: a restricted trigger survey is refused by enable and test and skipped by the runner, so
   // the editor reports it as a problem up front. Same keying as above, for the same reason.
   useEffect(() => {
-    const triggerSurveyId = definition?.trigger?.config.surveyId ?? null;
+    const triggerSurveyId = getTriggerSurveyId(definition?.trigger);
     const triggerSurvey = surveyOptions.find((option) => option.id === triggerSurveyId);
     setIsSurveyVisibilityEnabled(surveyVisibilityEnabled);
     setIsTriggerSurveyRestricted(

@@ -1,6 +1,6 @@
 "use client";
 
-import { type LucideIcon, PlusIcon, ZapIcon } from "lucide-react";
+import { type LucideIcon, PlusIcon, WebhookIcon, ZapIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { type TWorkflowTriggerType, WORKFLOW_TRIGGERS } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { CATEGORY_CHIP_CLASS_NAMES } from "./workflow-canvas-node";
+import { CATEGORY_CHIP_CLASS_NAMES } from "./workflow-node-card";
 
 interface WorkflowAddTriggerPickerProps {
   onSelect: (triggerType: TWorkflowTriggerType) => void;
@@ -34,6 +34,12 @@ export const WorkflowAddTriggerPicker = ({ onSelect }: Readonly<WorkflowAddTrigg
   const { t } = useTranslation();
 
   const options: TriggerOption[] = [
+    {
+      triggerType: WORKFLOW_TRIGGERS.WEBHOOK,
+      icon: WebhookIcon,
+      label: t("workspace.workflows.webhook_trigger"),
+      description: t("workspace.workflows.webhook_trigger_description"),
+    },
     {
       triggerType: WORKFLOW_TRIGGERS.RESPONSE_COMPLETED,
       icon: ZapIcon,

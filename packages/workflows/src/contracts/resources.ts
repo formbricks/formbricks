@@ -9,6 +9,7 @@ import {
 } from "../types/runs";
 import { ZWorkflowTriggerType } from "../types/triggers";
 import { ZIsoDateTime } from "./common";
+import { ZWorkflowRunStep } from "./run-detail";
 
 /**
  * API resource shapes returned by the v3 Workflows endpoints. These are the serializer outputs:
@@ -74,7 +75,33 @@ export const ZWorkflowRunResource = ZWorkflowRunSummary.extend({
   idempotencyKey: z.string().nullable().describe("Deduplication key for this run, unique per workflow."),
   nextAttemptAt: ZIsoDateTime.nullable(),
   lastErrorAt: ZIsoDateTime.nullable(),
-}).describe("Full debug-oriented run shape returned by run detail and dry-run creation.");
+  callerIp: z
+    .string()
+    .nullable()
+    .describe("The caller's IP for a run a Webhook Secret URL call started; null otherwise."),
+  workflowVersionNumber: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .describe("The number of the version the run executed; null for a Test run, which runs the draft."),
+  steps: z
+    .array(ZWorkflowRunStep)
+    .describe(
+      "Run detail per step: the steps that ran, in order, then the steps on If/else branches the run did not take (`not_taken`)."
+    ),
+  contentDeletedAt: ZIsoDateTime.nullable().describe(
+    "When the run's content was deleted, `contentRetentionDays` after the run finished: the payload keeps only its type, ids and trigger time, data and step input/output are empty, errors and callerIp are null, steps carry no detail. Null while the content is kept."
+  ),
+  contentRetentionDays: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .describe(
+      'The retention period in days that applied when the content was deleted, for "Details deleted after N days". Null while the content is kept.'
+    ),
+}).describe("Full debug-oriented run shape returned by run detail and Test run creation.");
 export type TWorkflowRunResource = z.infer<typeof ZWorkflowRunResource>;
 
 /** Categories of problem a dry-run validation can surface, so callers (or agents) can branch on `code`. */
@@ -84,6 +111,8 @@ export const ZWorkflowTestProblemCode = z.enum([
   "ending_card_not_found",
   "survey_not_workspace_visible",
   "recipient_not_allowed",
+  "survey_link_survey_not_found",
+  "survey_link_survey_not_link",
 ]);
 export type TWorkflowTestProblemCode = z.infer<typeof ZWorkflowTestProblemCode>;
 
@@ -98,6 +127,22 @@ export const ZWorkflowTestProblem = z
   .describe("A single problem found while validating a workflow for a dry run.");
 export type TWorkflowTestProblem = z.infer<typeof ZWorkflowTestProblem>;
 
+export const ZWorkflowWarningCode = z.enum(["survey_link_key_not_accepted"]);
+export type TWorkflowWarningCode = z.infer<typeof ZWorkflowWarningCode>;
+
+export const ZWorkflowWarning = z
+  .object({
+    code: ZWorkflowWarningCode,
+    field: z
+      .string()
+      .describe("Dotted path to the field, e.g. definition.nodes.0.config.surveyLink.embeddedData.1.key."),
+    message: z.string().describe("Human-readable explanation."),
+  })
+  .describe(
+    "Something that does not stop the workflow from running but probably needs a look, such as an Embedded Data key the linked survey drops."
+  );
+export type TWorkflowWarning = z.infer<typeof ZWorkflowWarning>;
+
 export const ZWorkflowTestResult = z
   .object({
     workflowId: z.cuid2(),
@@ -109,6 +154,9 @@ export const ZWorkflowTestResult = z
     problems: z
       .array(ZWorkflowTestProblem)
       .describe("Every problem found, so all issues can be fixed at once. Empty when ok is true."),
+    warnings: z
+      .array(ZWorkflowWarning)
+      .describe("Things that will not stop the workflow from running but probably need a look."),
   })
   .describe(
     "Result of dry-running (testing) a workflow: whether it would execute and, if not, why not. No run is created and no side effects occur."

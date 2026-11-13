@@ -1,0 +1,94 @@
+---
+title: "If/else"
+description: "Send a run down one of two branches depending on conditions."
+icon: "code-branch"
+---
+
+An **If/else** step checks one or more conditions and sends the run down its **Then** branch when they hold, or
+down its **Else** branch when they don't. Use it to act only on some events, for example to email a customer
+only when the ticket was closed by phone, or to call your CRM only for paying plans.
+
+<Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
+
+{/* SCREENSHOT PLACEHOLDER: if-else-panel.webp. An If/else step on the canvas with its Then and Else branches,
+and its panel open showing two conditions joined by "and". Save to /images/platform/workflows/if-else-panel.webp
+and replace this comment with a <Frame>. */}
+
+## Add an If/else
+
+<Steps>
+  <Step title="Add the step">
+    Select the **+** below the trigger or a step, then choose **If/else** under **Logic**.
+  </Step>
+
+  <Step title="Write the conditions">
+    In each condition, pick a [Variable](/workflows/variables) with `@`, choose an operator, and enter the value to
+    compare with, or pick another Variable. Join conditions with **and** or **or**, and group them to mix both.
+  </Step>
+
+  <Step title="Add steps to each branch">
+    Select the **+** on the **Then** branch, the **Else** branch, or both, and add the steps each should run.
+  </Step>
+</Steps>
+
+A run takes exactly one branch. A branch can stay empty, which means "do nothing" on that side: an If/else with
+only a Then branch acts only when its conditions hold. Branches never join again, so steps after an If/else
+belong to one branch.
+
+## Operators
+
+If/else uses the same operators and the same comparison as [survey logic](/surveys/general-features/conditional-logic),
+so a value behaves the same in a survey and in a workflow.
+
+| Operator                                   | Holds when the Variable…                                                     |
+| ------------------------------------------ | ---------------------------------------------------------------------------- |
+| **Equals**, **Does not equal**             | is, or is not, exactly the value.                                            |
+| **Contains**, **Does not contain**         | contains, or doesn't contain, the text.                                       |
+| **Starts with**, **Does not start with**   | starts, or doesn't start, with the text.                                      |
+| **Ends with**, **Does not end with**       | ends, or doesn't end, with the text.                                          |
+| **Is greater than**, **Is less than**      | is a larger, or smaller, number.                                              |
+| **Is greater than or equal to**, **Is less than or equal to** | is at least, or at most, the number.                       |
+| **Is before**, **Is after**                | is an earlier, or later, date.                                                |
+| **Equals one of**                          | is one of the texts in a list.                                                |
+| **Includes one of**, **Includes all of**   | is a list that includes one, or all, of the texts.                            |
+| **Does not include one of**, **Does not include all of** | is a list that includes none, or not all, of the texts.         |
+| **Is set**, **Is not set**                 | has a value, or is missing, `null` or empty text.                             |
+| **Is empty**, **Is not empty**             | is empty text, or has a value.                                                |
+
+An If/else holds at most 20 conditions, nested groups included.
+
+### How values are compared
+
+- **Numbers sent as text work with number operators.** **Is greater than** and the other number operators read
+  `"412"` as the number 412.
+- **Equals compares the value as it is.** The text `"412"` doesn't equal the number `412`. When a payload sends
+  numbers as text, compare with a text value, or use **Is greater than or equal to** and **Is less than or equal
+  to**.
+- **Missing values.** A Variable the run has no value for uses its fallback. Without one, comparisons such as
+  **Equals** or **Is greater than** don't hold, while **Is not set** and **Does not equal** do. Use **Is set** to
+  branch on an optional value before you use it.
+
+## Run detail
+
+For every run, run detail shows the branch the If/else took and whether each condition matched, so you can see
+why a run went one way. See [Manage and monitor](/workflows/manage-and-monitor#inspect-run-details-and-logs).
+
+## Operator names in the API and MCP
+
+API v3 and MCP use the survey logic operator names, such as `doesNotEqual` and `isGreaterThan`. The workflow
+API first shipped with its own operator names. Those names are deprecated: they are still accepted, stored and returned as written until **Formbricks v7.0.0**, when they will be
+removed.
+
+| Deprecated name | Use instead            |
+| --------------- | ---------------------- |
+| `notEquals`     | `doesNotEqual`         |
+| `lessThan`      | `isLessThan`           |
+| `lessEqual`     | `isLessThanOrEqual`    |
+| `greaterThan`   | `isGreaterThan`        |
+| `greaterEqual`  | `isGreaterThanOrEqual` |
+| `notContains`   | `doesNotContain`       |
+| `exists`        | `isSet`                |
+| `notExists`     | `isNotSet`             |
+
+`equals` and `contains` keep their names. One workflow can't mix deprecated and current names: saving a
+definition that uses both is refused.

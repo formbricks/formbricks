@@ -158,6 +158,10 @@ const detailRun: WorkflowRunWithLogsRow = {
   idempotencyKey: "idem-1",
   nextAttemptAt: null,
   lastErrorAt: null,
+  callerIp: null,
+  contentDeletedAt: null,
+  contentRetentionDays: null,
+  workflowVersion: null,
   logs: [logA],
 };
 
@@ -197,6 +201,50 @@ describe("run serializers", () => {
     expect(resource.logs).toHaveLength(1);
     expect(resource.logs[0]).toMatchObject({ id: logA.id, sequence: 0, status: "succeeded" });
     expect(resource.logs[0].startedAt).toBe("2026-06-12T10:00:30.000Z");
+  });
+
+  test("run resource carries the caller IP, the version number and run detail per step", () => {
+    const resource = toWorkflowRunResource({
+      ...detailRun,
+      callerIp: "203.0.113.7",
+      workflowVersion: { version: 3 },
+      data: { steps: [], notTaken: [{ stepId: "other", stepType: "send_email" }] },
+    });
+
+    expect(resource.callerIp).toBe("203.0.113.7");
+    expect(resource.workflowVersionNumber).toBe(3);
+    expect(resource.steps.map((step) => [step.stepId, step.status])).toEqual([
+      ["send-email", "succeeded"],
+      ["other", "not_taken"],
+    ]);
+  });
+
+  test("a run whose content is kept says so with null deletion fields", () => {
+    const resource = toWorkflowRunResource(detailRun);
+
+    expect(resource.contentDeletedAt).toBeNull();
+    expect(resource.contentRetentionDays).toBeNull();
+  });
+
+  test("a run whose content was deleted says when and after how many days, and its steps carry no detail", () => {
+    const resource = toWorkflowRunResource({
+      ...detailRun,
+      contentDeletedAt: new Date("2026-09-11T10:00:00.000Z"),
+      contentRetentionDays: 90,
+      logs: [{ ...logA, stepType: "if_else", input: {}, output: {} }],
+    });
+
+    expect(resource.contentDeletedAt).toBe("2026-09-11T10:00:00.000Z");
+    expect(resource.contentRetentionDays).toBe(90);
+    // A cleared If/else log would otherwise read as "no branch, no conditions", which is not what happened.
+    expect(resource.steps).toEqual([expect.objectContaining({ stepId: "send-email", detail: null })]);
+  });
+
+  test("a Test run has no version number", () => {
+    const resource = toWorkflowRunResource({ ...detailRun, isDryRun: true, workflowVersionId: null });
+
+    expect(resource.isDryRun).toBe(true);
+    expect(resource.workflowVersionNumber).toBeNull();
   });
 
   test("serializes non-null nextAttemptAt / lastErrorAt as ISO strings", () => {

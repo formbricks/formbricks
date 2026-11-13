@@ -19,14 +19,20 @@ import {
 } from "../handlers/runs-cursor";
 import type { TWorkflowStatus } from "../types/common";
 import type { TWorkflowDefinition, TWorkflowExecutableDefinition } from "../types/document";
+import type { TWorkflowTriggerRunPayload } from "../types/runs";
+import { type TWorkflowSampleData, WORKFLOW_SAMPLE_TRIGGER_SOURCE } from "../types/samples";
+import { WORKFLOW_TRIGGERS } from "../types/triggers/enum";
 import type {
   LastRunInclude,
+  WebhookTokenIssuer,
   WorkflowDelegate,
   WorkflowOrderByInput,
+  WorkflowRow,
   WorkflowRowWithLastRun,
   WorkflowRunListRow,
   WorkflowRunWhereInput,
   WorkflowRunWithLogsRow,
+  WorkflowSampleRow,
   WorkflowWhereInput,
   WorkflowsDb,
 } from "./ports";
@@ -42,6 +48,8 @@ export interface WorkflowUpdateInput {
   name?: string;
   description?: string | null;
   definition?: TWorkflowDefinition;
+  /** Issue a Webhook Secret URL token with this write: the first save of a Webhook trigger. */
+  issueWebhookToken?: boolean;
 }
 
 /**
@@ -125,7 +133,10 @@ export interface WorkflowListPage {
 }
 
 /** Eager-load shape for a run's step logs, ordered by sequence; mirrors the injected delegate. */
-const RUN_LOG_INCLUDE = { logs: { orderBy: { sequence: "asc" } } } as const;
+const RUN_LOG_INCLUDE = {
+  logs: { orderBy: { sequence: "asc" } },
+  workflowVersion: { select: { version: true } },
+} as const;
 
 /** Keyset page for newest-first run listing (`createdAt desc`, `id desc` tie-breaker). */
 const buildRunCursorWhere = (cursor: TWorkflowRunListCursor): WorkflowRunWhereInput => {
@@ -190,7 +201,31 @@ export interface WorkflowsService {
   disableWorkflow: (params: WorkflowScopedParams) => Promise<WorkflowRowWithLastRun>;
   listWorkflowRuns: (input: TListWorkflowRunsServiceInput) => Promise<WorkflowRunListPage>;
   getWorkflowRun: (runId: string) => Promise<WorkflowRunWithLogsRow | null>;
+  regenerateWebhookToken: (params: WorkflowScopedParams) => Promise<WorkflowRowWithLastRun>;
+  revealWebhookToken: (row: WorkflowRow) => string | null;
+  getTriggerSample: (workflowId: string) => Promise<WorkflowSampleRow | null>;
+  setTriggerSample: (params: WorkflowScopedParams, sample: TWorkflowSampleData) => Promise<WorkflowSampleRow>;
+  /** Saves a Test run as a queued dry run with no version; the adapter then runs it (ENG-7181). */
+  createTestRun: (
+    params: WorkflowScopedParams,
+    triggerPayload: TWorkflowTriggerRunPayload
+  ) => Promise<{ id: string }>;
 }
+
+/** Token columns for a newly issued Webhook Secret URL token. */
+const issueWebhookTokenColumns = (
+  webhookTokens: WebhookTokenIssuer
+): { webhookTokenHash: string; webhookTokenEncrypted: string } => {
+  const { hash, encrypted } = webhookTokens.issue();
+  return { webhookTokenHash: hash, webhookTokenEncrypted: encrypted };
+};
+
+const hasWebhookTrigger = (definition: TWorkflowDefinition): boolean =>
+  definition.trigger?.triggerType === WORKFLOW_TRIGGERS.WEBHOOK;
+
+const triggerSampleKey = (workflowId: string) => ({
+  workflowId_source: { workflowId, source: WORKFLOW_SAMPLE_TRIGGER_SOURCE },
+});
 
 /**
  * Data-access layer for the v3 Workflows API. Prisma is injected (see `ports.ts`) so the package
@@ -198,7 +233,13 @@ export interface WorkflowsService {
  * contract schemas at the handler boundary, so the service does not re-parse them. DB errors are
  * allowed to bubble to the handler's error mapper (logged there once, as a 500).
  */
-export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): WorkflowsService => ({
+export const createWorkflowsService = ({
+  prisma,
+  webhookTokens,
+}: {
+  prisma: WorkflowsDb;
+  webhookTokens: WebhookTokenIssuer;
+}): WorkflowsService => ({
   async listWorkflows(input) {
     const cursor = input.cursor ? decodeWorkflowListCursor(input.cursor, input.sortBy) : null;
 
@@ -238,6 +279,8 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
         status: "draft",
         definition: input.definition,
         createdBy,
+        // The token is created on the first save of a Webhook trigger (ENG-7177).
+        ...(hasWebhookTrigger(input.definition) ? issueWebhookTokenColumns(webhookTokens) : {}),
       },
       include: LAST_RUN_INCLUDE,
     });
@@ -258,6 +301,7 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
         ...(data.name !== undefined ? { name: data.name } : {}),
         ...(data.description !== undefined ? { description: data.description } : {}),
         ...(data.definition !== undefined ? { definition: data.definition } : {}),
+        ...(data.issueWebhookToken ? issueWebhookTokenColumns(webhookTokens) : {}),
       }
     );
   },
@@ -272,6 +316,8 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
           status: "draft",
           definition: source.definition,
           createdBy,
+          // A copy never shares the source's Secret URL: it gets a token of its own (ADR 0048).
+          ...(hasWebhookTrigger(source.definition) ? issueWebhookTokenColumns(webhookTokens) : {}),
         },
         include: LAST_RUN_INCLUDE,
       });
@@ -386,5 +432,45 @@ export const createWorkflowsService = ({ prisma }: { prisma: WorkflowsDb }): Wor
     // Workspace scoping is enforced by the handler: it authorizes against the loaded run's
     // workspaceId (a cross-workspace runId surfaces as 403), mirroring getWorkflowById.
     return prisma.workflowRun.findUnique({ where: { id: runId }, include: RUN_LOG_INCLUDE });
+  },
+
+  async regenerateWebhookToken(params) {
+    // Overwriting the hash is what kills the old URL: the next call with it no longer matches.
+    return updateWorkflowRow(prisma.workflow, params, issueWebhookTokenColumns(webhookTokens));
+  },
+
+  revealWebhookToken(row) {
+    return row.webhookTokenEncrypted ? webhookTokens.reveal(row.webhookTokenEncrypted) : null;
+  },
+
+  async getTriggerSample(workflowId) {
+    return prisma.workflowSample.findUnique({ where: triggerSampleKey(workflowId) });
+  },
+
+  async setTriggerSample({ workflowId, workspaceId }, sample) {
+    // Its own table, so a sample write never bumps `Workflow.updatedAt` (ADR 0048).
+    return prisma.workflowSample.upsert({
+      where: triggerSampleKey(workflowId),
+      create: { workflowId, workspaceId, source: WORKFLOW_SAMPLE_TRIGGER_SOURCE, sample },
+      update: { sample },
+    });
+  },
+
+  async createTestRun({ workflowId, workspaceId }, triggerPayload) {
+    // No version and never dispatched: the adapter runs it in the request. `isDryRun` keeps it out of
+    // billing, usage counts and the run reconcilers.
+    return prisma.workflowRun.create({
+      data: {
+        workflowId,
+        workspaceId,
+        workflowVersionId: null,
+        status: "queued",
+        triggerType: triggerPayload.type,
+        isDryRun: true,
+        attempt: 0,
+        triggerPayload,
+      },
+      select: { id: true },
+    });
   },
 });

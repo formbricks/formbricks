@@ -113,7 +113,7 @@ Supported scopes:
 | `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` |
 | `surveys:write` | `create_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` |
 | `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
-| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
+| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, the enable/disable/archive/unarchive mutations, and the Webhook trigger tools `get_webhook_url`, `regenerate_webhook_url`, `set_sample_payload`, `send_test_request`, and `run_test` |
 | `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
 | `responses:read` | `list_responses`, `count_responses`, `get_response` |
@@ -253,6 +253,11 @@ API key permissions are enforced through the same workspace access checks as the
 | `disable_workflow` | `write` or `manage` |
 | `archive_workflow` | `write` or `manage` |
 | `unarchive_workflow` | `write` or `manage` |
+| `get_webhook_url` | `write` or `manage` — the Webhook Secret URL is a credential, so reading it needs write access |
+| `regenerate_webhook_url` | `write` or `manage` |
+| `set_sample_payload` | `write` or `manage` |
+| `send_test_request` | `write` or `manage` |
+| `run_test` | `write` or `manage` |
 | `list_feedback_datasets` | `read` |
 | `list_feedback_records` | `read` |
 | `count_feedback_records` | `read` |
@@ -1375,7 +1380,9 @@ Gets one workflow run with its ordered step logs. Read-only and idempotent.
 #### test_workflow
 
 Dry-runs a workflow: validates its live definition would execute and resolves the trigger's survey +
-ending cards. No run is persisted and no side effects occur; the result reports `{ ok, problems }`.
+ending cards, and checks that every `send_email` survey link points to a link survey in the workspace. No
+run is persisted and no side effects occur; the result reports `{ ok, problems, warnings }`. Warnings
+(such as survey link Embedded Data keys the survey doesn't accept) never make `ok` false.
 Annotated read-only (no world mutation). **Drafts are testable** — checking the setup before going
 live is the point of a dry run — so a workflow can be tested straight after `create_workflow`. Only
 **archived** workflows are rejected, with `422 invalid_workflow_state`, since they are soft-deleted.
@@ -1447,6 +1454,49 @@ each take only a workflow id:
 - `disable_workflow` — stops future runs.
 - `archive_workflow` / `unarchive_workflow` — soft archive and restore (to draft).
 - `delete_workflow` — the v3 delete returns `204 No Content`; the MCP result contains the `requestId`.
+
+#### Webhook trigger tools
+
+A workflow with a Webhook trigger starts a run whenever an outside system POSTs JSON to its Webhook
+Secret URL. The URL is a credential (ADR 0041), so all three tools need `workflows:write`, reading
+included.
+
+- `get_webhook_url` — `{ "workflowId" }`. Returns the Secret URL, when it was last called and from
+  which IP, and the Sample payload with the Variables it offers. Its description tells the agent the
+  result is a credential.
+- `regenerate_webhook_url` — `{ "workflowId" }`. Replaces the URL; the old one answers 404 from the
+  next call on. Audited as `webhookUrlRegenerated`.
+- `set_sample_payload` — `{ "workflowId", "payload" }`. Replaces the Sample payload (a JSON object up
+  to 100 KB, 10 levels deep) and returns its Variables. Audited as `updated` on the workflow, without the payload.
+
+Injection assessment: the Sample payload and Variable paths are caller-supplied text that reaches the
+agent's context. The tools return nothing beyond the one workflow the caller can already write, and
+permit nothing beyond what the caller's `workflows:write` scope and v3 authorization already allow, so
+hostile text in a payload cannot cross a workspace or user boundary.
+
+- `send_test_request` — `{ "workflowId", "stepId", "config"?, "variables"? }`. Makes one real call of an
+  HTTP request step (saved settings, or the draft `config`) and returns the request, with secret header
+  values masked, and the response. Not a run. Saves the response as the step's sample. Shares the
+  30-per-minute budget of `POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request` and is
+  audited as `testRequestSent` (host and status).
+
+Injection assessment for `send_test_request`: the response body comes from an outside server and reaches
+the agent's context as untrusted text; the tool description says so. A hostile body cannot widen what
+the tool does: the URL is fixed by the step (ADR 0042), secrets go only to that URL and come back
+masked, and the call needs `workflows:write` on that workflow.
+
+- `run_test` — `{ "workflowId", "payload"? }`. Runs a Webhook workflow's current draft once, at once,
+  with fake effects (ADR 0049): If/else conditions are evaluated for real, emails record whom they would
+  go to, HTTP requests record what they would call and, in "Wait and use it", answer with the step's last
+  Test request response. Nothing is sent or called. Returns the finished run (`isDryRun: true`, no
+  version) with run detail per step: the branch taken, each condition matched or not, and the steps not
+  taken. Uses the workflow's Sample payload when `payload` is absent. Shares the 30-per-minute budget of
+  `POST /api/v3/workflows/{workflowId}/test-runs` and is audited as `testRunStarted` (run id only).
+
+Injection assessment for `run_test`: the result carries the test payload's values and stored Test request
+responses, untrusted text the description flags. Hostile text cannot widen what the tool does: it walks
+only the caller's own draft, sends and calls nothing, returns secret header values masked, and needs
+`workflows:write` on that workflow.
 
 ### Response tools
 
@@ -2049,6 +2099,11 @@ framework-agnostic `@formbricks/workflows` handlers used by the v3 REST routes:
 | `disable_workflow`   | `POST /api/v3/workflows/{workflowId}/disable`   |
 | `archive_workflow`   | `POST /api/v3/workflows/{workflowId}/archive`   |
 | `unarchive_workflow` | `POST /api/v3/workflows/{workflowId}/unarchive` |
+| `get_webhook_url` | `GET /api/v3/workflows/{workflowId}/webhook` |
+| `regenerate_webhook_url` | `POST /api/v3/workflows/{workflowId}/webhook/regenerate` |
+| `set_sample_payload` | `PUT /api/v3/workflows/{workflowId}/sample` |
+| `send_test_request` | `POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request` |
+| `run_test` | `POST /api/v3/workflows/{workflowId}/test-runs` |
 
 ## Relationship to V3 Creatives API
 
