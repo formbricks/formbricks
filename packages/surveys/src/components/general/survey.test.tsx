@@ -51,7 +51,7 @@ vi.mock("@/lib/recall", () => ({
 }));
 
 vi.mock("@/components/general/block-conditional", () => ({
-  BlockConditional: ({ block, onSubmit, onBack }: any) => (
+  BlockConditional: ({ block, onSubmit, onBack, isFirstBlock }: any) => (
     <>
       <button
         data-testid={`submit-${block.id}`}
@@ -65,7 +65,11 @@ vi.mock("@/components/general/block-conditional", () => ({
         }>
         Submit {block.id}
       </button>
-      <button data-testid={`back-${block.id}`} onClick={() => onBack()}>
+      {/* The real card hides Back on the first block it is told about. */}
+      <button
+        data-testid={`back-${block.id}`}
+        data-first-block={String(!!isFirstBlock)}
+        onClick={() => onBack()}>
         Back {block.id}
       </button>
     </>
@@ -462,5 +466,146 @@ describe("Survey offline restore", () => {
     });
 
     expect(apiClientMocks.getResponseIdByDisplayId).not.toHaveBeenCalled();
+  });
+});
+
+/**
+ * The client wiring of the Flow tab's runtime (ENG-6932, ENG-6933): what `Survey` does with a rule
+ * before the first question and a Mark as low quality rule, checked through the requests it sends.
+ */
+describe("Survey flow wiring", () => {
+  /** `src` is not in the URL, so a rule on "src is not set" fires as the survey opens. */
+  const startRule = (target: string) => ({
+    id: "startrule000000000000001",
+    conditions: {
+      id: "startgroup00000000000001",
+      connector: "and",
+      conditions: [
+        {
+          id: "startcond000000000000001",
+          leftOperand: { type: "hiddenField", value: "src" },
+          operator: "isNotSet",
+        },
+      ],
+    },
+    actions: [{ id: "startaction0000000000001", objective: "jumpToBlock", target }],
+  });
+
+  const flowSurvey = (overrides: Record<string, unknown>) =>
+    ({
+      ...baseSurvey,
+      hiddenFields: { enabled: true, fieldIds: ["src"] },
+      ...overrides,
+    }) as unknown as TJsWorkspaceStateSurvey;
+
+  const renderFlowSurvey = (
+    survey: TJsWorkspaceStateSurvey,
+    props: { isSpamProtectionEnabled?: boolean; getRecaptchaToken?: () => Promise<string | null> } = {}
+  ) =>
+    render(
+      <Survey
+        appUrl="http://localhost:3000"
+        workspaceId="ws1234567890123456789012"
+        survey={survey}
+        styling={{} as any}
+        isBrandingEnabled={false}
+        languageCode="en"
+        offlineSupport
+        isSpamProtectionEnabled={props.isSpamProtectionEnabled ?? false}
+        getRecaptchaToken={props.getRecaptchaToken}
+      />
+    );
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    offlineStorageMocks.addPendingResponse.mockResolvedValue(1);
+    offlineStorageMocks.countPendingResponses.mockResolvedValue(0);
+    offlineStorageMocks.getPendingResponses.mockResolvedValue([]);
+    offlineStorageMocks.removePendingResponse.mockResolvedValue(undefined);
+    offlineStorageMocks.clearSurveyProgress.mockResolvedValue(undefined);
+    offlineStorageMocks.getSurveyProgress.mockResolvedValue(null);
+    offlineStorageMocks.patchSurveyProgressSnapshot.mockResolvedValue(undefined);
+    offlineStorageMocks.saveSurveyProgress.mockResolvedValue(undefined);
+    apiClientMocks.createDisplay.mockResolvedValue({ ok: true, data: { id: "display-created" } });
+    apiClientMocks.createResponse.mockResolvedValue({ ok: true, data: { id: "response-created" } });
+    apiClientMocks.updateResponse.mockResolvedValue({ ok: true, data: { quotaFull: false } });
+    apiClientMocks.getResponseIdByDisplayId.mockResolvedValue({ ok: true, data: { responseId: null } });
+    window.parent.postMessage = vi.fn();
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  describe("Mark as low quality is sent once per response", () => {
+    // block-2 marks every response that submits it Low quality.
+    const markingSurvey = flowSurvey({
+      blocks: [
+        baseSurvey.blocks[0],
+        {
+          ...baseSurvey.blocks[1],
+          logic: [
+            {
+              id: "lowqrule0000000000000001",
+              conditions: { id: "lowqgroup000000000000001", connector: "and", conditions: [] },
+              actions: [{ id: "lowqaction00000000000001", objective: "markLowQuality" }],
+            },
+          ],
+        },
+      ],
+    });
+    const sentMarkLowQuality = () =>
+      [...apiClientMocks.createResponse.mock.calls, ...apiClientMocks.updateResponse.mock.calls].some(
+        ([request]) => request?.markLowQuality === true
+      );
+
+    test("a session that already sent it, resumed from offline progress, does not send it again", async () => {
+      offlineStorageMocks.getSurveyProgress.mockResolvedValue(makeProgress({ lowQualitySent: true }));
+
+      renderFlowSurvey(markingSurvey);
+      fireEvent.click(await screen.findByTestId("submit-block-2"));
+
+      await waitFor(() => {
+        expect(apiClientMocks.createResponse).toHaveBeenCalled();
+      });
+      expect(sentMarkLowQuality()).toBe(false);
+    });
+
+    test("a resumed session that never sent it sends it with the next write", async () => {
+      offlineStorageMocks.getSurveyProgress.mockResolvedValue(makeProgress());
+
+      renderFlowSurvey(markingSurvey);
+      fireEvent.click(await screen.findByTestId("submit-block-2"));
+
+      await waitFor(() => {
+        expect(sentMarkLowQuality()).toBe(true);
+      });
+    });
+  });
+
+  test("a screen-out before the first question creates the finished response with a reCAPTCHA token", async () => {
+    const getRecaptchaToken = vi.fn(async () => "recaptcha-token");
+
+    renderFlowSurvey(
+      flowSurvey({ startLogic: [startRule("ending-1")], recaptcha: { enabled: true, threshold: 0.5 } }),
+      { isSpamProtectionEnabled: true, getRecaptchaToken }
+    );
+
+    await waitFor(() => {
+      expect(apiClientMocks.createResponse).toHaveBeenCalledWith(
+        expect.objectContaining({ finished: true, endingId: "ending-1", recaptchaToken: "recaptcha-token" })
+      );
+    });
+    expect(getRecaptchaToken).toHaveBeenCalledTimes(1);
+  });
+
+  test("the block a start rule jumped to shows no Back: the respondent saw no page before it", async () => {
+    renderFlowSurvey(flowSurvey({ startLogic: [startRule("block-2")] }));
+
+    const back = await screen.findByTestId("back-block-2");
+
+    await waitFor(() => {
+      expect(back.getAttribute("data-first-block")).toBe("true");
+    });
   });
 });

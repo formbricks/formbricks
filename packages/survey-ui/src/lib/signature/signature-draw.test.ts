@@ -27,6 +27,7 @@ const createRecordingContext = (measuredWidth = 100) => {
     textAlign: "start",
     textBaseline: "alphabetic",
     fillRect: (...a: number[]) => calls.push(["fillRect", ...a]),
+    clearRect: (...a: number[]) => calls.push(["clearRect", ...a]),
     beginPath: () => calls.push(["beginPath"]),
     moveTo: (...a: number[]) => calls.push(["moveTo", ...a]),
     lineTo: (...a: number[]) => calls.push(["lineTo", ...a]),
@@ -146,5 +147,42 @@ describe("renderSignatureImage", () => {
     const name = createRecordingContext();
     renderSignatureImage(name.ctx, { kind: "name", name: "Ada" }, 900, 300);
     expect(name.calls.some(([call]) => call === "fillText")).toBe(true);
+  });
+
+  test("draws in near-black ink unless a palette says otherwise", () => {
+    const { ctx } = createRecordingContext();
+    renderSignatureImage(ctx, { kind: "strokes", strokes: [[{ x: 0.5, y: 0.5 }]] }, 900, 300);
+    expect(ctx.strokeStyle).toBe(SIGNATURE_INK_COLOR);
+  });
+
+  test("a palette without paper clears the page, so the pad's background shows through", () => {
+    const { ctx, calls } = createRecordingContext();
+    renderSignatureImage(ctx, null, 600, 200, { paper: null, ink: "#dde2f3" });
+    expect(calls).toEqual([["clearRect", 0, 0, 600, 200]]);
+  });
+
+  test("strokes and a typed name are drawn in the palette's ink", () => {
+    const palette = { paper: null, ink: "#dde2f3" };
+    const strokes = createRecordingContext();
+    renderSignatureImage(
+      strokes.ctx,
+      {
+        kind: "strokes",
+        strokes: [
+          [
+            { x: 0.1, y: 0.1 },
+            { x: 0.9, y: 0.9 },
+          ],
+        ],
+      },
+      600,
+      200,
+      palette
+    );
+    expect(strokes.ctx.strokeStyle).toBe("#dde2f3");
+
+    const name = createRecordingContext();
+    renderSignatureImage(name.ctx, { kind: "name", name: "Ada" }, 600, 200, palette);
+    expect(name.ctx.fillStyle).toBe("#dde2f3");
   });
 });

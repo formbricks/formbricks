@@ -8,7 +8,7 @@ export interface TInvite extends Omit<
   "deprecatedRole" | "organizationId" | "creatorId" | "acceptorId" | "teamIds"
 > {}
 
-export interface InviteWithCreator extends Pick<Invite, "email"> {
+export interface InviteWithCreator extends Pick<Invite, "email" | "role"> {
   creator: {
     name: string;
   };

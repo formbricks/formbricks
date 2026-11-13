@@ -128,16 +128,58 @@ describe("@formbricks/cache cacheKeys", () => {
     describe("creative stats namespace", () => {
       test("keys one UTC day's counters of a creative, and the day's flush sets", () => {
         expect(createCacheKey.creativeStats.devices("2026-10-16", "clcr1")).toBe(
-          "fb:creative-stats:2026-10-16:clcr1:devices"
+          "fb:creative-stats:{2026-10-16}:clcr1:devices"
         );
         expect(createCacheKey.creativeStats.pages("2026-10-16", "clcr1")).toBe(
-          "fb:creative-stats:2026-10-16:clcr1:pages"
+          "fb:creative-stats:{2026-10-16}:clcr1:pages"
         );
         expect(createCacheKey.creativeStats.pending("2026-10-16")).toBe(
-          "fb:creative-stats:2026-10-16:pending"
+          "fb:creative-stats:{2026-10-16}:pending"
         );
         expect(createCacheKey.creativeStats.flushing("2026-10-16")).toBe(
+          "fb:creative-stats:{2026-10-16}:flushing"
+        );
+      });
+
+      test("puts every key used by a day's Redis scripts in the same cluster slot", () => {
+        const day = "2026-10-16";
+        const keys = [
+          createCacheKey.creativeStats.pending(day),
+          createCacheKey.creativeStats.flushing(day),
+          createCacheKey.creativeStats.devices(day, "clcr1"),
+          createCacheKey.creativeStats.pages(day, "clcr1"),
+          createCacheKey.creativeStats.devices(day, "clcr2"),
+          createCacheKey.creativeStats.pages(day, "clcr2"),
+        ];
+        expect(keys.map((key) => /\{([^}]+)\}/.exec(key)?.[1])).toEqual(Array(keys.length).fill(day));
+      });
+
+      test("keeps the old untagged keys readable during a rolling upgrade", () => {
+        const day = "2026-10-16";
+        expect(createCacheKey.creativeStats.legacyDevices(day, "clcr1")).toBe(
+          "fb:creative-stats:2026-10-16:clcr1:devices"
+        );
+        expect(createCacheKey.creativeStats.legacyPages(day, "clcr1")).toBe(
+          "fb:creative-stats:2026-10-16:clcr1:pages"
+        );
+        expect(createCacheKey.creativeStats.legacyPending(day)).toBe("fb:creative-stats:2026-10-16:pending");
+        expect(createCacheKey.creativeStats.legacyFlushing(day)).toBe(
           "fb:creative-stats:2026-10-16:flushing"
+        );
+      });
+
+      test("rejects an empty tagged day", () => {
+        expect(() => createCacheKey.creativeStats.devices("", "clcr1")).toThrow(
+          "Invalid Cache key: Parts cannot be empty"
+        );
+        expect(() => createCacheKey.creativeStats.pages("", "clcr1")).toThrow(
+          "Invalid Cache key: Parts cannot be empty"
+        );
+        expect(() => createCacheKey.creativeStats.pending("")).toThrow(
+          "Invalid Cache key: Parts cannot be empty"
+        );
+        expect(() => createCacheKey.creativeStats.flushing("")).toThrow(
+          "Invalid Cache key: Parts cannot be empty"
         );
       });
 
@@ -155,6 +197,14 @@ describe("@formbricks/cache cacheKeys", () => {
       test("should throw error for empty feedback record id", () => {
         expect(() => createCacheKey.hub.feedbackRecordTenant("")).toThrow(
           "Invalid Cache key: Parts cannot be empty"
+        );
+      });
+    });
+
+    describe("survey import namespace", () => {
+      test("scopes an idempotency key to the user who sent it", () => {
+        expect(createCacheKey.surveyImport.idempotency("user-1", "abc123")).toBe(
+          "fb:survey_import:user-1:idempotency:abc123"
         );
       });
     });

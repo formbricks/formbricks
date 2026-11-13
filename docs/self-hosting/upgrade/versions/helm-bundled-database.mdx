@@ -1,0 +1,67 @@
+---
+title: "6.2: Helm connects Cube and the SpiceDB bootstrap to the bundled database"
+description: "The Helm chart now sets Cube's database connection and the SpiceDB bootstrap role from the bundled PostgreSQL."
+icon: "database"
+---
+
+**Applies to:** the upgrade to 6.2. Part of the [6.2 upgrade guide](/self-hosting/upgrade/versions/6.2).
+**Upgrade impact: Action required** for Helm installations with the bundled PostgreSQL that gave Cube its own
+database settings through `cube.envFrom` or the app Secret. Docker Compose is unchanged.
+
+## What changes
+
+A fresh Helm install that sets only `formbricks.webappUrl` now becomes ready. Two defaults change for
+installations that use the bundled PostgreSQL (`postgresql.enabled: true`):
+
+- **The chart sets Cube's database connection.** Cube gets `CUBEJS_DB_HOST`, `CUBEJS_DB_PORT`, `CUBEJS_DB_NAME`
+  and `CUBEJS_DB_USER` from the `postgresql` values, and `CUBEJS_DB_PASS` from the Secret and key the PostgreSQL
+  server reads its password from. By default Cube connects as the bundled `formbricks` user, which owns the
+  database and is a superuser. Before, Cube got no connection settings and its liveness probe failed.
+- **The SpiceDB bootstrap Job connects as the bundled user.** With every
+  `authzed.bundledPostgresqlBootstrap.admin*` value empty, it connects as `postgresql.auth.username` on
+  `postgresql.auth.database` with that user's password. The bundled `pgvector/pgvector` image has no `postgres`
+  role, so the previous default failed with `password authentication failed for user "postgres"`. To use
+  your own administrator, set `adminUsername`, `adminPasswordSecretName` and `adminPasswordKey` together;
+  `adminDatabase` is optional and defaults to `postgres`. A username without the Secret name, or a Secret
+  name without the key, fails when Helm renders the chart. Setting only `adminDatabase` or `adminPasswordKey`
+  keeps the previous `postgres` administrator from the bundled Secret, which needs
+  `postgresql.auth.enablePostgresUser: true` (the default). With it `false`, clear every `admin*` value to
+  connect as the bundled user.
+
+<Warning>
+  This changes which database role Cube uses. Kubernetes gives a container's `env` precedence over its
+  `envFrom`, so the chart's `CUBEJS_DB_*` values replace any you supplied through `cube.envFrom` or the app
+  Secret. If you gave Cube a different role, such as a read-only one, Cube switches to the bundled owner when you
+  upgrade, unless you move those settings to `cube.env` first.
+</Warning>
+
+## Before you upgrade
+
+| Who | What to do |
+| --- | --- |
+| Helm with the bundled PostgreSQL, Cube settings in `cube.envFrom` or the app Secret | Move `CUBEJS_DB_*` to `cube.env`. A name set there replaces the chart's default. Setting `CUBEJS_DB_HOST`, `CUBEJS_DB_USER` or `CUBEJS_DB_PASS` drops both bundled credentials, so set the user and password together. |
+| Helm with an external PostgreSQL | Nothing. The chart sets no Cube connection, so keep yours in `cube.env` or `cube.envFrom`. |
+| Helm with a custom SpiceDB bootstrap administrator | Nothing. An explicit `adminUsername` renders as before. |
+| Docker Compose and one-click | Nothing. |
+
+`cube.env` accepts a secret reference for the password:
+
+```yaml
+cube:
+  env:
+    CUBEJS_DB_USER: cube_reader
+    CUBEJS_DB_PASS:
+      valueFrom:
+        secretKeyRef:
+          name: formbricks-cube-db
+          key: password
+```
+
+## Check it worked
+
+```bash
+kubectl get deployment -n <namespace> formbricks-cube \
+  -o jsonpath='{range .spec.template.spec.containers[0].env[*]}{.name}{"\n"}{end}' | grep CUBEJS_DB_
+```
+
+Each `CUBEJS_DB_*` name appears once, and the Cube pod is ready.

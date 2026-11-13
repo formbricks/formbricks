@@ -4,7 +4,6 @@ import { UploadIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type ReactNode, useCallback, useState, useTransition } from "react";
 import { useTranslation } from "react-i18next";
-import type { TAIUnavailableReason } from "@/lib/ai/service";
 import { ImportSurveyForm } from "@/modules/survey/import/components/import-survey-form";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
@@ -21,17 +20,19 @@ import {
 type ImportSurveyDialogProps = {
   workspaceId: string;
   isAIAvailable: boolean;
-  aiUnavailableReason?: TAIUnavailableReason;
   trigger?: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 };
 
-/** Import a Qualtrics survey (.qsf): the dialog shell around `ImportSurveyForm`, as Create with AI's. */
+/**
+ * Import survey: a Formbricks file, or with Formbricks AI a Qualtrics export or an Excel or CSV question
+ * list (ENG-6852). The dialog shell around `ImportSurveyForm`, as Create with AI's; the New survey menu,
+ * the templates page and Create with AI's import hint open the same one.
+ */
 export const ImportSurveyDialog = ({
   workspaceId,
   isAIAvailable,
-  aiUnavailableReason,
   trigger,
   open,
   onOpenChange,
@@ -91,14 +92,21 @@ export const ImportSurveyDialog = ({
         <DialogHeader>
           <UploadIcon aria-hidden="true" />
           <DialogTitle>{t("workspace.surveys.import.dialog_title")}</DialogTitle>
-          <DialogDescription>{t("workspace.surveys.import.dialog_description")}</DialogDescription>
+          <DialogDescription>
+            {/* Without AI only a Formbricks file can be read, as the drop zone says. AI turned off after
+                the page loaded is the form's shared alert to explain. */}
+            {isAIAvailable
+              ? t("workspace.surveys.import.dialog_description")
+              : t("workspace.surveys.import.dialog_description_json_only")}
+          </DialogDescription>
         </DialogHeader>
 
-        <DialogBody unconstrained className="-mx-1 -mt-1 flex flex-none flex-col px-1 pt-1 pb-1">
+        {/* flex-initial, not flex-none: the body may shrink, so on a narrow screen a wrapped header
+            plus the review's fixed height still fit the dialog, and the review pane scrolls instead. */}
+        <DialogBody unconstrained className="-mx-1 -mt-1 flex min-h-0 flex-initial flex-col px-1 pt-1 pb-1">
           <ImportSurveyForm
             workspaceId={workspaceId}
             isAIAvailable={isAIAvailable}
-            aiUnavailableReason={aiUnavailableReason}
             onSuccess={handleSuccess}
             onCancel={() => setDialogOpen(false)}
             renderFooter={(footer) => <DialogFooter>{footer}</DialogFooter>}

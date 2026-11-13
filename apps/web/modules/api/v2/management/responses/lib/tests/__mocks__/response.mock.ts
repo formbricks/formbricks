@@ -19,6 +19,7 @@ export const responseInput: Omit<Response, "id"> = {
   contactId: null,
   ingestFlags: null,
   calBookings: null,
+  notShown: null,
   outcome: null,
 };
 
@@ -39,6 +40,7 @@ export const responseInputNotFinished: Omit<Response, "id"> = {
   contactId: null,
   ingestFlags: null,
   calBookings: null,
+  notShown: null,
   outcome: null,
 };
 
@@ -59,6 +61,7 @@ export const responseInputWithoutTtc: Omit<Response, "id"> = {
   contactId: null,
   ingestFlags: null,
   calBookings: null,
+  notShown: null,
   outcome: null,
 };
 
@@ -79,6 +82,7 @@ export const responseInputWithoutDisplay: Omit<Response, "id"> = {
   contactId: null,
   ingestFlags: null,
   calBookings: null,
+  notShown: null,
   outcome: null,
 };
 

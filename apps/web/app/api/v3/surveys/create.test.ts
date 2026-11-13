@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import { TooManyRequestsError } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -13,12 +14,14 @@ import { DEFAULT_ENDING_CARD_BUTTON_LINK } from "@/lib/survey/default-ending-car
 import { createSurvey, getSurveyWithCustomCss } from "@/lib/survey/service";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
+import { SurveyWriteAfterCommitError } from "@/lib/survey/write-transaction";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { getCustomCssPlanAllowed } from "@/modules/custom-css/lib/access";
 import { processCustomCss } from "@/modules/custom-css/processor";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { V3SurveyCreatePermissionError, V3SurveyInputValidationError, createV3Survey } from "./create";
+import { prepareV3SurveyCreateInput } from "./prepare";
 import { V3SurveyReferenceValidationError } from "./reference-validation";
 import { ZV3CreateSurveyBody } from "./schemas";
 import { resolveV3ContactsEntitlement } from "./targeting";
@@ -47,6 +50,9 @@ vi.mock("@formbricks/database", () => ({
     language: {
       upsert: vi.fn(),
     },
+    embeddedData: {
+      findMany: vi.fn(),
+    },
   },
 }));
 
@@ -55,6 +61,14 @@ vi.mock("@/lib/survey/service", () => ({
   getSurveyWithCustomCss: vi.fn(),
 }));
 
+// ENG-6870: the targeting actor, resolved without the authorization backend.
+vi.mock("@/lib/survey/visibility/actor-context", () => ({
+  resolveSurveyActorContext: vi.fn(async (actor: { type: string; id: string }) =>
+    actor.type === "apiKey"
+      ? { enforced: true, kind: "apiKey" }
+      : { enforced: true, isOrganizationAdmin: false, kind: "user", userId: actor.id }
+  ),
+}));
 vi.mock("@/lib/survey/visibility/limit", () => ({
   WorkspaceSurveyLimitError: class extends Error {},
   assertWorkspaceSurveyLimit: vi.fn(),
@@ -84,6 +98,7 @@ vi.mock("@/modules/survey/lib/permission", () => ({
 
 vi.mock("@formbricks/logger", () => ({
   logger: {
+    error: vi.fn(),
     withContext: vi.fn(() => ({
       error: vi.fn(),
       warn: vi.fn(),
@@ -242,7 +257,12 @@ describe("createV3Survey", () => {
           expect.objectContaining({ default: false, enabled: true }),
         ],
       }),
-      { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [], customCss: null }
+      {
+        creationFacts: WORKSPACE_FACTS,
+        privateSegmentFilters: [],
+        customCss: null,
+        targetingActor: expect.anything(),
+      }
     );
     expect(getOrganizationByWorkspaceId).not.toHaveBeenCalled();
     expect(getExternalUrlsPermission).not.toHaveBeenCalled();
@@ -313,7 +333,12 @@ describe("createV3Survey", () => {
           expect.objectContaining({ language: expect.objectContaining({ code: "fr-FR" }), enabled: false }),
         ]),
       }),
-      { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [], customCss: null }
+      {
+        creationFacts: WORKSPACE_FACTS,
+        privateSegmentFilters: [],
+        customCss: null,
+        targetingActor: expect.anything(),
+      }
     );
   });
 
@@ -556,6 +581,60 @@ describe("createV3Survey", () => {
     expect(createSurvey).toHaveBeenCalled();
   });
 
+  test("a condition equal to 0 passes validate and create alike", async () => {
+    const raw = {
+      ...rawCreateBody,
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          elements: [{ ...rawCreateBody.blocks[0].elements[0], inputType: "number" }],
+          logic: [
+            {
+              id: "clrule12345678901234567890",
+              conditions: {
+                id: "clgroup1234567890123456789",
+                connector: "and",
+                conditions: [
+                  {
+                    id: "clcond12345678901234567890",
+                    leftOperand: { type: "element", value: "satisfaction" },
+                    operator: "equals",
+                    rightOperand: { type: "static", value: 0 },
+                  },
+                ],
+              },
+              actions: [
+                {
+                  id: "claction123456789012345678",
+                  objective: "jumpToBlock",
+                  target: "clbk2234567890123456789012",
+                },
+              ],
+            },
+          ],
+        },
+        {
+          id: "clbk2234567890123456789012",
+          name: "Follow-up",
+          elements: [
+            {
+              id: "why_zero",
+              type: "openText",
+              headline: { "en-US": "Why none?", "de-DE": "Warum keine?" },
+              required: false,
+            },
+          ],
+        },
+      ],
+    };
+
+    expect(prepareV3SurveyCreateInput(raw).ok).toBe(true);
+    await expect(
+      createV3Survey(ZV3CreateSurveyBody.parse(raw), null, "req_equals_zero")
+    ).resolves.toBeDefined();
+    expect(createSurvey).toHaveBeenCalled();
+  });
+
   test("rejects external CTA buttons for API-key creates without external URL permission", async () => {
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
     const body = ZV3CreateSurveyBody.parse({
@@ -643,6 +722,94 @@ describe("createV3Survey", () => {
     expect(getOrganizationByWorkspaceId).toHaveBeenCalledWith(workspaceId);
     expect(getExternalUrlsPermission).toHaveBeenCalledWith("org_1");
     expect(createSurvey).not.toHaveBeenCalled();
+  });
+
+  describe("typed Embedded Data (ENG-6930)", () => {
+    const session = {
+      user: { id: "user_1", email: "user@example.com", name: "User" },
+      expires: "2026-05-01",
+    };
+    const npsRow = {
+      id: "clnpsscore00000000000000001",
+      key: "nps_score",
+      name: "NPS score",
+      source: "computed",
+      dataType: "number",
+      defaultValue: 0,
+      locked: false,
+    };
+
+    test("hands the survey service its fields as rows, a library field linked by its id", async () => {
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([npsRow] as never);
+      const body = ZV3CreateSurveyBody.parse({
+        ...rawCreateBody,
+        embeddedFields: [
+          { key: "nps_score", storageKey: "clnpslink000000000000000001" },
+          { name: "plan", source: "ingested", locked: true },
+        ],
+      });
+
+      await createV3Survey(body, session, "req_ed", "org_1");
+
+      expect(createSurvey).toHaveBeenCalledWith(
+        workspaceId,
+        expect.objectContaining({
+          embeddedFields: [
+            {
+              field: {
+                id: npsRow.id,
+                key: "nps_score",
+                name: "NPS score",
+                source: "computed",
+                dataType: "number",
+                defaultValue: 0,
+                locked: false,
+              },
+              link: { storageKey: "clnpslink000000000000000001" },
+            },
+            {
+              field: {
+                key: null,
+                name: "plan",
+                source: "ingested",
+                dataType: "string",
+                defaultValue: null,
+                locked: true,
+              },
+              link: { storageKey: "plan" },
+            },
+          ],
+          // The legacy format is derived from the fields; a library computed field answers to its key.
+          variables: [{ id: "clnpslink000000000000000001", name: "nps_score", type: "number", value: 0 }],
+          hiddenFields: { enabled: true, fieldIds: ["plan"] },
+        }),
+        expect.anything()
+      );
+    });
+
+    test("refuses an unknown library key with an Embedded Data error and creates nothing", async () => {
+      vi.mocked(prisma.embeddedData.findMany).mockResolvedValue([]);
+      const body = ZV3CreateSurveyBody.parse({ ...rawCreateBody, embeddedFields: [{ key: "nps_score" }] });
+
+      await expect(createV3Survey(body, session, "req_ed")).rejects.toMatchObject({
+        name: "V3SurveyEmbeddedFieldsError",
+        invalidParams: [expect.objectContaining({ name: "embeddedFields.0.key" })],
+      });
+      expect(createSurvey).not.toHaveBeenCalled();
+    });
+
+    test("refuses disagreeing formats with an Embedded Data error", async () => {
+      const body = ZV3CreateSurveyBody.parse({
+        ...rawCreateBody,
+        embeddedFields: [{ name: "plan", source: "ingested" }],
+        hiddenFields: { enabled: true, fieldIds: ["region"] },
+      });
+
+      await expect(createV3Survey(body, session, "req_ed")).rejects.toMatchObject({
+        name: "V3SurveyEmbeddedFieldsError",
+      });
+      expect(createSurvey).not.toHaveBeenCalled();
+    });
   });
 
   test("create still rejects invalid v3 documents", async () => {
@@ -746,6 +913,37 @@ describe("createV3Survey", () => {
         ...overrides,
       });
 
+    test("re-reads an app survey whose work after the commit failed, so its 201 shows what was stored", async () => {
+      const cause = new Error("response alert subscription failed");
+      vi.mocked(createSurvey).mockRejectedValue(new SurveyWriteAfterCommitError(createdAppSurvey, cause));
+
+      const error = await createV3Survey(buildAppBody(), null, "req_app_1").catch(
+        (caught: unknown) => caught
+      );
+
+      expect(error).toBeInstanceOf(SurveyWriteAfterCommitError);
+      expect((error as SurveyWriteAfterCommitError).result).toBe(appSurveyWithSegment);
+      expect((error as SurveyWriteAfterCommitError).cause).toBe(cause);
+    });
+
+    test("keeps the committed survey when the re-read after a failed after-commit fails too", async () => {
+      vi.mocked(createSurvey).mockRejectedValue(
+        new SurveyWriteAfterCommitError(createdAppSurvey, new Error())
+      );
+      vi.mocked(getSurveyWithCustomCss).mockRejectedValue(new Error("connection reset"));
+
+      const error = await createV3Survey(buildAppBody(), null, "req_app_1").catch(
+        (caught: unknown) => caught
+      );
+
+      expect((error as SurveyWriteAfterCommitError).result).toBe(createdAppSurvey);
+      // Kept, but not silently: the failed re-read is logged.
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.objectContaining({ errName: "Error", surveyId: createdAppSurvey.id }),
+        expect.any(String)
+      );
+    });
+
     test("forwards distribution scalars and resolved triggers to createSurvey", async () => {
       vi.mocked(getActionClasses).mockResolvedValue([actionClass]);
 
@@ -769,7 +967,12 @@ describe("createV3Survey", () => {
           delay: 5,
           triggers: [{ actionClass }],
         }),
-        { creationFacts: WORKSPACE_FACTS, privateSegmentFilters: [], customCss: null }
+        {
+          creationFacts: WORKSPACE_FACTS,
+          privateSegmentFilters: [],
+          customCss: null,
+          targetingActor: expect.anything(),
+        }
       );
       // No targeting filters → empty private segment, no entitlement check.
       expect(resolveV3ContactsEntitlement).not.toHaveBeenCalled();
@@ -790,6 +993,7 @@ describe("createV3Survey", () => {
       expect(createSurvey).toHaveBeenCalledWith(workspaceId, expect.objectContaining({ type: "app" }), {
         creationFacts: WORKSPACE_FACTS,
         privateSegmentFilters: attributeFilters,
+        targetingActor: expect.anything(),
         customCss: null,
       });
       expect(getSurveyWithCustomCss).toHaveBeenCalledWith(appSurveyId);
@@ -859,6 +1063,7 @@ describe("createV3Survey", () => {
       expect(createSurvey).toHaveBeenCalledWith(workspaceId, expect.anything(), {
         creationFacts: { ownerId: "user_1", visibility: "restricted" },
         privateSegmentFilters: [],
+        targetingActor: expect.anything(),
         customCss: null,
       });
     });
@@ -922,6 +1127,7 @@ describe("createV3Survey custom CSS (ENG-3641)", () => {
       {
         creationFacts: WORKSPACE_FACTS,
         privateSegmentFilters: [],
+        targetingActor: expect.anything(),
         customCss: {
           light: { source: "a{}", compiled: "@layer fb-survey{x}" },
           dark: null,

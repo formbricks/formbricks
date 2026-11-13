@@ -10,7 +10,15 @@ import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-fi
 import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
 import { getOrganization } from "../organization/service";
 import { getSurvey } from "../survey/service";
-import { deleteResponse, getResponseDownloadFile, responseSelection, updateResponse } from "./service";
+import { getSurveyFilteringValues } from "./filtering-values";
+import {
+  deleteResponse,
+  getResponseDownloadFile,
+  getResponseFilteringValues,
+  lockResponseForUpdate,
+  responseSelection,
+  updateResponse,
+} from "./service";
 import { calculateTtcTotal, getResponsesJson } from "./utils";
 
 vi.mock("@formbricks/database", () => ({
@@ -49,6 +57,10 @@ vi.mock("./utils", async (importOriginal) => {
     getResponsesJson: vi.fn(() => []),
   };
 });
+
+vi.mock("./filtering-values", () => ({
+  getSurveyFilteringValues: vi.fn(),
+}));
 
 vi.mock("../survey/service", () => ({
   getSurvey: vi.fn(() =>
@@ -98,17 +110,22 @@ const mockResponseId = "response-123";
  * `vi.mocked(prisma.response.findUnique)` types `mockResolvedValue` against the method's default
  * instantiation, so the `select` at the call site is invisible to it and it asks for the **whole**
  * `Response` model — every scalar, not just the fourteen `responseSelection` names. That is what the
- * `as any` casts here were hiding, and it is why this is spelled as the selection plus the two
- * scalars it deliberately leaves out: `contactId`, and `ingestFlags` and `calBookings`, which only
- * `updateResponse`'s pre-read selects (keeping it off every response the module returns). Together those are all
- * sixteen columns, and `responseSelection` carries the `contact` and `tags` relations the code under
- * test reads.
+ * `as any` casts here were hiding, and it is why this is spelled as the selection plus the four
+ * scalars it deliberately leaves out: `contactId`, `ingestFlags` and `calBookings`, which only
+ * `updateResponse`'s pre-read selects (keeping them off every response the module returns), and
+ * `notShown` (ENG-6936), read only by the app's results. Together those are all eighteen columns,
+ * and `responseSelection` carries the `contact` and `tags` relations the code under test reads.
  *
  * Worth the indirection because it makes the fixture track the schema: add a column to the model and
  * these tests stop compiling, instead of a cast quietly supplying `undefined` for it.
  */
 type MockCurrentResponse = Prisma.ResponseGetPayload<{
-  select: typeof responseSelection & { contactId: true; ingestFlags: true; calBookings: true };
+  select: typeof responseSelection & {
+    contactId: true;
+    ingestFlags: true;
+    calBookings: true;
+    notShown: true;
+  };
 }>;
 
 const createMockCurrentResponse = (overrides: Partial<MockCurrentResponse> = {}): MockCurrentResponse => ({
@@ -132,6 +149,7 @@ const createMockCurrentResponse = (overrides: Partial<MockCurrentResponse> = {})
   contactId: null,
   ingestFlags: null,
   calBookings: null,
+  notShown: null,
   ...overrides,
 });
 
@@ -146,6 +164,29 @@ describe("responseSelection", () => {
   // out of it is a key missing from the payload rather than a `null` (ENG-6780).
   test("selects the outcome", () => {
     expect(responseSelection.outcome).toBe(true);
+  });
+});
+
+describe("lockResponseForUpdate", () => {
+  // The lock mode, the workspace scope and the blocking behavior are proven against Postgres in
+  // response-concurrency.integration.test.ts; this covers the binding and the result mapping.
+  const lockingTx = (rows: { finished: boolean }[]) => ({ $queryRaw: vi.fn().mockResolvedValue(rows) });
+
+  test("binds the response and its workspace, and returns the finished flag", async () => {
+    const tx = lockingTx([{ finished: true }]);
+
+    await expect(
+      lockResponseForUpdate(tx as never, { responseId: "response-1", workspaceId: "workspace-1" })
+    ).resolves.toEqual({ finished: true });
+
+    const [, ...values] = tx.$queryRaw.mock.calls[0] as [TemplateStringsArray, ...unknown[]];
+    expect(values).toEqual(["response-1", "workspace-1"]);
+  });
+
+  test("returns null when the workspace has no such response", async () => {
+    await expect(
+      lockResponseForUpdate(lockingTx([]) as never, { responseId: "missing", workspaceId: "workspace-1" })
+    ).resolves.toBeNull();
   });
 });
 
@@ -769,5 +810,43 @@ describe("updateResponse — Cal.com booking details", () => {
     await run({ cal1: first }, createMockResponseInput({ data: { q1: "answer" } }));
 
     expect(updateArgs().data).not.toHaveProperty("calBookings");
+  });
+});
+
+describe("getResponseFilteringValues", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  test("derives the values from the loaded survey without reading every response (ENG-3755)", async () => {
+    const values = {
+      contactAttributes: {},
+      meta: {},
+      hiddenFields: {},
+      reservedValues: {},
+      variableValues: {},
+    };
+    vi.mocked(getSurveyFilteringValues).mockResolvedValue(values);
+
+    await expect(getResponseFilteringValues("survey-123")).resolves.toBe(values);
+
+    expect(getSurvey).toHaveBeenCalledWith("survey-123");
+    expect(getSurveyFilteringValues).toHaveBeenCalledWith(expect.objectContaining({ id: "survey-123" }));
+    expect(prisma.response.findMany).not.toHaveBeenCalled();
+  });
+
+  test("throws ResourceNotFoundError and queries nothing when the survey does not exist", async () => {
+    vi.mocked(getSurvey).mockResolvedValueOnce(null);
+
+    await expect(getResponseFilteringValues("survey-missing")).rejects.toThrow(ResourceNotFoundError);
+    expect(getSurveyFilteringValues).not.toHaveBeenCalled();
+  });
+
+  test("maps Prisma errors to DatabaseError", async () => {
+    vi.mocked(getSurveyFilteringValues).mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("boom", { code: "P2010", clientVersion: "test" })
+    );
+
+    await expect(getResponseFilteringValues("survey-123")).rejects.toThrow(DatabaseError);
   });
 });

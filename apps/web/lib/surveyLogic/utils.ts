@@ -16,15 +16,29 @@ import {
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TResponseData, TResponseVariables } from "@formbricks/types/responses";
 import {
+  type TActionCalculate as TBlockActionCalculate,
   TSurveyBlockLogic,
   TSurveyBlockLogicAction,
   TSurveyBlockLogicActionObjective,
 } from "@formbricks/types/surveys/blocks";
+import {
+  compareDateValues,
+  isDateAfter,
+  isDateBefore,
+  isDateFieldOperand,
+} from "@formbricks/types/surveys/date-comparison";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { evaluateSetValue } from "@formbricks/types/surveys/expression-evaluation";
+import { findByLocalizedLabel, findMatrixRowKey } from "@formbricks/types/surveys/localized-label";
 import { TConditionGroup, TSingleCondition } from "@formbricks/types/surveys/logic";
 import { evaluateConditionGroup } from "@formbricks/types/surveys/logic-evaluation";
+import {
+  isMatrixRowCondition,
+  namesUnknownMatrixId,
+  resolveMatrixColumnValue,
+  resolveMatrixRowIndex,
+} from "@formbricks/types/surveys/matrix-conditions";
 import { TActionCalculate, TSurveyLogicAction } from "@formbricks/types/surveys/types";
-import { getLocalizedValue } from "@/lib/i18n/utils";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 
 type TCondition = TSingleCondition | TConditionGroup;
@@ -210,6 +224,32 @@ export const updateCondition = (
   }
 };
 
+/**
+ * The empty Set value action: Assign, an empty value, with the editor's Expression switch off. A new rule
+ * from the Add logic menu and an action switched to Set value both start here (ENG-6969 review, supersedes
+ * P63 and the expression-on start of P73); the switch turns it into an expression. Refused on save until
+ * filled in. A date field starts from {@link createEmptyFormulaAction} instead.
+ */
+export const createEmptySetValueAction = (id: string, variableId = ""): TSurveyBlockLogicAction => ({
+  id,
+  objective: "calculate",
+  variableId,
+  operator: "assign",
+  value: { type: "static", value: "" },
+});
+
+/**
+ * The empty Set value action stored as an expression. A date field needs it even in one step: the
+ * schema has no one-step date value, so the editor shows this leaf as its Assign row (P38, ENG-6968).
+ */
+export const createEmptyFormulaAction = (id: string, variableId = ""): TSurveyBlockLogicAction => ({
+  id,
+  objective: "calculate",
+  variableId,
+  operator: "assign",
+  value: { type: "expression", value: { type: "static", value: "" } },
+});
+
 export const getUpdatedActionBody = (
   action: TSurveyBlockLogicAction,
   objective: TSurveyBlockLogicActionObjective
@@ -217,13 +257,7 @@ export const getUpdatedActionBody = (
   if (objective === action.objective) return action;
   switch (objective) {
     case "calculate":
-      return {
-        id: action.id,
-        objective: "calculate",
-        variableId: "",
-        operator: "assign",
-        value: { type: "static", value: "" },
-      };
+      return createEmptySetValueAction(action.id);
     case "requireAnswer":
       return {
         id: action.id,
@@ -236,6 +270,8 @@ export const getUpdatedActionBody = (
         objective: "jumpToBlock",
         target: "",
       };
+    case "markLowQuality":
+      return { id: action.id, objective: "markLowQuality" };
     default:
       return action;
   }
@@ -366,8 +402,31 @@ const evaluateSingleCondition = (
       rightValue = Number(rightValue as string);
     }
 
+    // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
+    if (
+      condition.leftOperand.type === "element" &&
+      typeof leftField === "object" &&
+      leftField.type === TSurveyElementTypeEnum.Matrix &&
+      isMatrixRowCondition(condition.leftOperand.meta)
+    ) {
+      // A row or column id the matrix doesn't have never matches (P48), negated operators included.
+      if (namesUnknownMatrixId(leftField, condition.leftOperand.meta, condition.rightOperand)) return false;
+      if (condition.rightOperand?.type === "static") {
+        rightValue = resolveMatrixColumnValue(leftField, condition.rightOperand);
+      }
+    }
+
+    // ENG-6935: a date field (computed or ingested) holding a timestamp equals a picked day when it
+    // falls on that day, as "is before" and "is after" read it; see `compareDateValues`.
+    const embeddedFields = getSurveyEmbeddedFields(localSurvey);
+    const onDateField =
+      isDateFieldOperand(condition.leftOperand, embeddedFields) ||
+      isDateFieldOperand(condition.rightOperand, embeddedFields);
+    const dateOrder = onDateField ? compareDateValues(leftValue, rightValue) : undefined;
+
     switch (condition.operator) {
       case "equals":
+        if (dateOrder !== undefined) return dateOrder === 0;
         if (condition.leftOperand.type === "element") {
           if (
             (leftField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
@@ -402,6 +461,7 @@ const evaluateSingleCondition = (
           leftValue === rightValue
         );
       case "doesNotEqual":
+        if (dateOrder !== undefined) return dateOrder !== 0;
         // when left value is of picture selection element and right value is its option
         if (
           condition.leftOperand.type === "element" &&
@@ -520,9 +580,9 @@ const evaluateSingleCondition = (
       case "isClicked":
         return leftValue === "clicked";
       case "isAfter":
-        return new Date(String(leftValue)) > new Date(String(rightValue));
+        return isDateAfter(leftValue, rightValue);
       case "isBefore":
-        return new Date(String(leftValue)) < new Date(String(rightValue));
+        return isDateBefore(leftValue, rightValue);
       case "isBooked":
         return leftValue === "booked" || !!(leftValue && leftValue !== "");
       case "isPartiallySubmitted":
@@ -581,10 +641,9 @@ const getLeftOperandValue = (
       if (currentElement.type === "multipleChoiceSingle" || currentElement.type === "multipleChoiceMulti") {
         const isOthersEnabled = currentElement.choices.at(-1)?.id === "other";
 
+        // ENG-6943: the label in the response's language first, then in any language of the survey.
         if (typeof responseValue === "string") {
-          const choice = currentElement.choices.find((choice) => {
-            return getLocalizedValue(choice.label, selectedLanguage) === responseValue;
-          });
+          const choice = findByLocalizedLabel(currentElement.choices, responseValue, selectedLanguage);
 
           if (!choice) {
             if (isOthersEnabled) {
@@ -598,9 +657,7 @@ const getLeftOperandValue = (
         } else if (Array.isArray(responseValue)) {
           let choices: string[] = [];
           responseValue.forEach((value) => {
-            const foundChoice = currentElement.choices.find((choice) => {
-              return getLocalizedValue(choice.label, selectedLanguage) === value;
-            });
+            const foundChoice = findByLocalizedLabel(currentElement.choices, value, selectedLanguage);
 
             if (foundChoice) {
               choices.push(foundChoice.id);
@@ -614,28 +671,33 @@ const getLeftOperandValue = (
         }
       }
 
+      // T21 (ENG-6937): a ranking stores the ranked labels in the respondent's language; conditions name
+      // option ids, so "was ranked" maps each label back, as multi select does.
+      if (currentElement.type === "ranking" && Array.isArray(responseValue)) {
+        return responseValue.flatMap((value) => {
+          const choice = findByLocalizedLabel(currentElement.choices, value, selectedLanguage);
+          return choice ? [choice.id] : [];
+        });
+      }
+
       if (
         currentElement.type === "matrix" &&
         typeof responseValue === "object" &&
         !Array.isArray(responseValue)
       ) {
-        if (leftOperand.meta && leftOperand.meta.row !== undefined) {
-          const rowIndex = Number(leftOperand.meta.row);
+        if (isMatrixRowCondition(leftOperand.meta)) {
+          // ENG-6934: the row id first, the position as the fallback; an unknown id is no row.
+          const rowIndex = resolveMatrixRowIndex(currentElement, leftOperand.meta);
+          if (rowIndex === undefined) return undefined;
+          const row = findMatrixRowKey(currentElement.rows[rowIndex].label, responseValue, selectedLanguage);
 
-          if (isNaN(rowIndex) || rowIndex < 0 || rowIndex >= currentElement.rows.length) {
-            return undefined;
-          }
-          const row = getLocalizedValue(currentElement.rows[rowIndex].label, selectedLanguage);
-
-          const rowValue = responseValue[row];
+          const rowValue = row === undefined ? undefined : responseValue[row];
           if (rowValue === "") return "";
 
-          if (rowValue) {
-            const columnIndex = currentElement.columns.findIndex((column) => {
-              return getLocalizedValue(column.label, selectedLanguage) === rowValue;
-            });
-            if (columnIndex === -1) return undefined;
-            return columnIndex.toString();
+          if (typeof rowValue === "string") {
+            const column = findByLocalizedLabel(currentElement.columns, rowValue, selectedLanguage);
+            if (!column) return undefined;
+            return currentElement.columns.indexOf(column).toString();
           }
           return undefined;
         }
@@ -680,11 +742,22 @@ const getRightOperandValue = (
   }
 };
 
+/**
+ * What a Set value expression reads beyond answers and variables: the respondent's language (a
+ * single-select answer yields its answer code) and the reserved-field map a `reserved` leaf reads —
+ * {@link buildServerEmbeddedValues} for a persisted response.
+ */
+export interface TPerformActionsContext {
+  selectedLanguage?: string;
+  embeddedValues?: TResponseData;
+}
+
 export const performActions = (
   survey: TJsWorkspaceStateSurvey,
   actions: TSurveyBlockLogicAction[] | TSurveyLogicAction[],
   data: TResponseData,
-  calculationResults: TResponseVariables
+  calculationResults: TResponseVariables,
+  context: TPerformActionsContext = {}
 ): {
   jumpTarget: string | undefined;
   requiredElementIds: string[];
@@ -696,10 +769,11 @@ export const performActions = (
 
   actions.forEach((action) => {
     switch (action.objective) {
-      case "calculate":
-        const result = performCalculation(survey, action, data, calculations);
+      case "calculate": {
+        const result = performCalculation(survey, action, data, calculations, context);
         if (result !== undefined) calculations[action.variableId] = result;
         break;
+      }
       case "requireAnswer":
         requiredElementIds.push(action.target);
         break;
@@ -716,15 +790,29 @@ export const performActions = (
 
 const performCalculation = (
   survey: TJsWorkspaceStateSurvey,
-  action: TActionCalculate,
+  action: TActionCalculate | TBlockActionCalculate,
   data: TResponseData,
-  calculations: Record<string, number | string>
+  calculations: Record<string, number | string>,
+  context: TPerformActionsContext
 ): number | string | undefined => {
   const computedField = findComputedEmbeddedField(getComputedEmbeddedFields(survey), action.variableId);
 
   if (!computedField) return undefined;
 
   const { dataType } = computedField.field;
+
+  // Set value (ENG-6935): the shared evaluator, as in the survey bundle, "empty in, empty out". An
+  // empty result is written as "" so it clears the field; the one-step operators below keep "empty
+  // counts as 0".
+  if (action.value.type === "expression") {
+    return evaluateSetValue(action.value.value, dataType, {
+      survey,
+      data,
+      variables: calculations,
+      reservedValues: context.embeddedValues,
+      language: context.selectedLanguage ?? "default",
+    });
+  }
 
   let currentValue = calculations[action.variableId];
   if (currentValue === undefined) {

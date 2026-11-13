@@ -28,7 +28,6 @@ export interface MemberRowProps {
   currentUserId: string;
   onMemberSelectionChange: (index: number, userId: string) => void;
   onRemoveMember: (index: number) => void;
-  memberCount: number;
 }
 
 export function MemberRow(props: Readonly<MemberRowProps>) {
@@ -46,7 +45,6 @@ export function MemberRow(props: Readonly<MemberRowProps>) {
     currentUserId,
     onMemberSelectionChange,
     onRemoveMember,
-    memberCount,
   } = props;
   const { t } = useTranslation();
   const chosenMember = orgMembers.find((m) => m.id === watchMembers[index]?.userId);
@@ -56,6 +54,8 @@ export function MemberRow(props: Readonly<MemberRowProps>) {
       ? !canEditWhenNoMember
       : chosenMember.role === "owner" ||
         chosenMember.role === "manager" ||
+        // A Dashboard viewer is always a contributor: it can't be a team admin (ADR-0025).
+        chosenMember.role === "dashboard_viewer" ||
         isTeamContributorMember ||
         chosenMember.id === currentUserId;
 
@@ -119,19 +119,17 @@ export function MemberRow(props: Readonly<MemberRowProps>) {
           );
         }}
       />
-      {memberCount > 1 && (
-        <TooltipRenderer tooltipContent={t("common.remove_from_team")}>
-          <Button
-            size="icon"
-            type="button"
-            variant="destructive"
-            className="shrink-0"
-            disabled={!isOwnerOrManager && (!isTeamAdminMember || member.userId === currentUserId)}
-            onClick={() => onRemoveMember(index)}>
-            <XIcon className="size-4" />
-          </Button>
-        </TooltipRenderer>
-      )}
+      <TooltipRenderer tooltipContent={t("common.remove_from_team")}>
+        <Button
+          size="icon"
+          type="button"
+          variant="destructive"
+          className="shrink-0"
+          disabled={!isOwnerOrManager && (!isTeamAdminMember || member.userId === currentUserId)}
+          onClick={() => onRemoveMember(index)}>
+          <XIcon className="size-4" />
+        </Button>
+      </TooltipRenderer>
     </div>
   );
 }

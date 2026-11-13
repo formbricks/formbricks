@@ -396,6 +396,29 @@ describe("ResponseQueue", () => {
     );
   });
 
+  test("sendResponse carries the Mark as low quality flag on an update and on a create (ENG-6933)", async () => {
+    apiMock.createResponse.mockResolvedValue({ ok: true, data: { id: "newid" } });
+    await queue.sendResponse({ ...responseUpdate, markLowQuality: true });
+    expect(apiMock.createResponse).toHaveBeenCalledWith(expect.objectContaining({ markLowQuality: true }));
+
+    surveyState.responseId = "resp1";
+    apiMock.updateResponse.mockResolvedValue({ ok: true, data: { quotaFull: false } });
+    await queue.sendResponse({ ...responseUpdate, markLowQuality: true });
+    expect(apiMock.updateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ responseId: "resp1", markLowQuality: true })
+    );
+  });
+
+  test("a create from the accumulated response carries the flag an earlier submit asked for (ENG-6933)", async () => {
+    surveyState.shouldCreateResponseFromState = true;
+    surveyState.responseAcc = { finished: false, data: { q1: "a" }, ttc: {}, markLowQuality: true };
+    apiMock.createResponse.mockResolvedValue({ ok: true, data: { id: "newid" } });
+
+    await queue.sendResponse({ data: { q2: "b" }, finished: false });
+
+    expect(apiMock.createResponse).toHaveBeenCalledWith(expect.objectContaining({ markLowQuality: true }));
+  });
+
   test("sendResponse notifies when a responseId is created", async () => {
     const onResponseCreated = vi.fn();
     queue = new ResponseQueue(getConfig({ onResponseCreated }), surveyState);
@@ -1153,5 +1176,95 @@ describe("ResponseQueue", () => {
     expect(offlineQueue.queue).toEqual([responseUpdate]);
     expect(offlineQueue["pendingDbIds"].get(responseUpdate)).toBe(10);
     expect(_syncLocks.get("s1")).toBe(false);
+  });
+  describe("queue recreated after every add while a send is in flight", () => {
+    // The link-survey host re-renders on every page change, which rebuilds the ResponseQueue right
+    // after each add(), so the newest instance can hold nothing at all. Every instance records into
+    // one list, since which instance does the sending is an implementation detail.
+    let sent: TResponseUpdate[];
+    let holdNextSend: boolean;
+    let failSends: boolean;
+    let releaseHeldSend: () => void;
+
+    const createQueue = (sharedState: SurveyState) => {
+      const config = getConfig({ surveyId: "s1" });
+      const instance = new ResponseQueue(config, sharedState);
+      vi.spyOn(instance, "sendResponse").mockImplementation(async (update) => {
+        sent.push(update);
+        if (failSends) {
+          return err({ code: "internal_server_error", message: "down", status: 500 });
+        }
+        if (holdNextSend) {
+          holdNextSend = false;
+          await new Promise<void>((resolve) => {
+            releaseHeldSend = resolve;
+          });
+        }
+        return ok(true);
+      });
+      return { instance, config };
+    };
+
+    beforeEach(() => {
+      sent = [];
+      holdNextSend = false;
+      failSends = false;
+      releaseHeldSend = () => {};
+    });
+
+    test("sends every update added during the in-flight send, in order", async () => {
+      const sharedState = getSurveyState();
+      sharedState.responseId = "response1";
+
+      holdNextSend = true;
+      const first = createQueue(sharedState);
+      const firstUpdate: TResponseUpdate = { data: { q1: "first" }, finished: false };
+      first.instance.add(firstUpdate);
+      await flushPromises();
+      expect(_syncLocks.getRequestInProgress("s1")).toBe(true);
+
+      const editedUpdate: TResponseUpdate = { data: { q1: "edited" }, finished: false };
+      createQueue(sharedState).instance.add(editedUpdate);
+      const last = createQueue(sharedState);
+      const finishUpdate: TResponseUpdate = { data: { q2: "done" }, finished: true };
+      last.instance.add(finishUpdate);
+      const newest = createQueue(sharedState); // rendered after Finish, nothing added to it
+      await flushPromises();
+      expect(sent).toEqual([firstUpdate]);
+
+      releaseHeldSend();
+      await flushPromises();
+      await flushPromises();
+
+      expect(sent).toEqual([firstUpdate, editedUpdate, finishUpdate]);
+      expect(newest.instance.queue).toHaveLength(0);
+      expect(_syncLocks.getRequestInProgress("s1")).toBe(false);
+    });
+
+    test("a manual Retry on the newest instance resends an update an older instance left queued", async () => {
+      const sharedState = getSurveyState();
+      sharedState.responseId = "response1";
+
+      // The older instance's send fails through every retry, so its update stays queued; survey.tsx
+      // then runs Retry on the newest instance.
+      vi.useFakeTimers();
+      try {
+        failSends = true;
+        const older = createQueue(sharedState);
+        older.instance.add(responseUpdate);
+        await vi.advanceTimersByTimeAsync(3000); // 1s + 2s backoff for retryAttempts: 2
+        expect(older.config.onResponseSendingFailed).toHaveBeenCalled();
+      } finally {
+        vi.useRealTimers();
+      }
+      const newest = createQueue(sharedState);
+
+      failSends = false;
+      const result = await newest.instance.processQueue();
+
+      expect(result).toEqual({ success: true });
+      expect(sent).toEqual([responseUpdate, responseUpdate, responseUpdate]);
+      expect(newest.instance.queue).toHaveLength(0);
+    });
   });
 });

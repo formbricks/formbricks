@@ -15,7 +15,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -78,12 +78,14 @@ jobs:
 
           helm lint "$chart" --set formbricks.webappUrl=https://qa.example.com
           bash charts/formbricks/tests/postgresql-overrides.sh
+          bash charts/formbricks/tests/cube-database.sh
           bash charts/formbricks/tests/authzed-operations.sh
           bash charts/formbricks/tests/authzed-security-context.sh
           bash charts/formbricks/tests/embeddings-external.sh
           bash charts/formbricks/tests/envoy-gateway.sh
           bash charts/formbricks/tests/envoy-crd-preflight.sh
           bash charts/formbricks/tests/pdb-selectors.sh
+          bash charts/formbricks/tests/statefulset-claim-templates.sh
           bash charts/formbricks/tests/taxonomy-llm-base-url.sh
           bash charts/formbricks/tests/taxonomy-thinking.sh
           bash charts/formbricks/tests/taxonomy-security-context.sh
@@ -150,6 +152,8 @@ jobs:
             --show-only templates/cube-deployment.yaml > "$render_dir/cube-default.yaml"
           grep -A1 'name: CUBEJS_EXTERNAL_DEFAULT' "$render_dir/cube-default.yaml" \
             | grep -q 'value: "false"'
+          grep -A1 'name: CUBEJS_DB_QUERY_TIMEOUT' "$render_dir/cube-default.yaml" \
+            | grep -q 'value: "60s"'
 
           helm template qa "$chart" \
             --set formbricks.webappUrl=https://qa.example.com \
@@ -682,7 +686,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 

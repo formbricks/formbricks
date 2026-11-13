@@ -1,0 +1,83 @@
+---
+title: "Upgrade paths"
+description: "Upgrade one minor version at a time, always to its latest patch. Skipping a version is not supported."
+icon: "arrow-up-right-dots"
+---
+
+## The rule
+
+Upgrade **one minor version at a time**, and always to the **latest patch** of each minor version.
+**Skipping a minor version is not supported.**
+
+For example, from 5.2.1 you upgrade to 5.2.2, then 5.3.5, then the latest 5.4 patch, then the latest 6.0 patch,
+then the latest 6.1 patch, then the latest 6.2 patch.
+
+Each minor release is tested as an upgrade from the latest patch of the previous minor. Each patch is
+tested from the previous patch. Other routes are not tested, which is why skipping is not supported.
+
+Within one minor version, you can go straight to its latest patch, for example from 6.0.0 to 6.0.6.
+Patches are backward compatible, but a security fix can still need an action from you. Check the
+**upgrade impact** of each patch you cross in the
+[release notes](/platform/changelog).
+
+<span id="choose-your-next-stop" />
+
+## Find your next stop
+
+Find the row for the version you run now. Upgrade to the version in **Next stop**, check that it works,
+then repeat from that row.
+
+| You run | Next stop | Read before upgrading |
+| --- | --- | --- |
+| 4.0.x | 4.1.2 | [4.x notes](/self-hosting/upgrade/versions/4.x) (4.1 row) |
+| 4.1.x | 4.2.0 | [4.x notes](/self-hosting/upgrade/versions/4.x) (4.2 row) |
+| 4.2.x | 4.3.3 | [4.x notes](/self-hosting/upgrade/versions/4.x) (4.3 row) |
+| 4.3.x | 4.4.3 | [4.x notes](/self-hosting/upgrade/versions/4.x) (4.4 row) |
+| 4.4.x | 4.5.0 | [4.x notes](/self-hosting/upgrade/versions/4.x) (4.5 row) |
+| 4.5.x | 4.6.1 | [4.x notes](/self-hosting/upgrade/versions/4.x) (4.6 row) |
+| 4.6.x | 4.7.5 | [4.7](/self-hosting/upgrade/versions/4.7) |
+| 4.7.x | 4.8.7 | [4.x notes](/self-hosting/upgrade/versions/4.x) (4.8 row) |
+| 4.8.x | 4.9.7 | [4.x notes](/self-hosting/upgrade/versions/4.x) (4.9 row) |
+| 4.9.x | 5.0.2 | [5.0](/self-hosting/upgrade/versions/5.0) |
+| 5.0.x | 5.1.5 | [5.1](/self-hosting/upgrade/versions/5.1) |
+| 5.1.x | 5.2.2 | [5.2](/self-hosting/upgrade/versions/5.2) |
+| 5.2.x | 5.3.5 | [5.3](/self-hosting/upgrade/versions/5.3) |
+| 5.3.x | Latest 5.4 patch | [5.4](/self-hosting/upgrade/versions/5.4) |
+| 5.4.x | Latest 6.0 patch | [6.0](/self-hosting/upgrade/versions/6.0) |
+| 6.0.x | Latest 6.1 patch | [6.1](/self-hosting/upgrade/versions/6.1) |
+| 6.1.x | Latest 6.2 patch | [6.2](/self-hosting/upgrade/versions/6.2) |
+| 6.2.x | Latest 6.2 patch | The [release notes](/platform/changelog) of each patch you cross |
+
+Find the latest patches on [GitHub releases](https://github.com/formbricks/formbricks/releases).
+Ignore release candidates. Versions before 4.0 are covered in the [archive](/self-hosting/advanced/migration#older-releases).
+
+## At each stop
+
+1. Read the version page in the table, including its **patch actions**.
+2. Upgrade with the runbook for your setup: [Kubernetes](/self-hosting/upgrade/kubernetes),
+   [Docker Compose](/self-hosting/upgrade/docker) or [one-click](/self-hosting/upgrade/one-click).
+3. Check that the upgrade worked, and that all migrations and background jobs finished, before you
+   start the next stop.
+
+Minor and major upgrades run in a maintenance window, because they can contain database migrations.
+
+<span id="record-the-selected-versions" />
+
+## Pin exact versions
+
+- Set exact version tags, for example `ghcr.io/formbricks/formbricks:6.0.5`. Never use `latest` to
+  upgrade: it jumps straight to the newest release and skips your stops.
+- Use the Compose file, Cube model files and migration images from the same release as the app. The
+  [configuration checklist](/self-hosting/upgrade/configuration) lists every pin to change.
+- On Kubernetes, use the chart with the same version as the app: since 4.0, each release publishes its chart
+  with the app's version number. If your values override the image tag, set it to the same version.
+- Keep your PostgreSQL major version and storage setup. A newer example file for fresh installs is not
+  a reason to change them.
+
+<span id="what-has-been-tested" />
+
+## Old versions
+
+Versions outside the [maintenance window](/self-hosting/advanced/release-maintenance-policy) no longer get
+fixes. You can still use them as stops on the way to a maintained version. Upgrade through them in one
+maintenance plan and don't leave production on them.

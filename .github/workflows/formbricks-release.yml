@@ -26,7 +26,7 @@ jobs:
     # skipped step leaves is_latest empty, which every consumer reads as false.
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -55,7 +55,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -67,19 +67,8 @@ jobs:
       - name: Install YQ
         uses: dcarbone/install-yq-action@4075b4dca348d74bd83f2bf82d30f25d7c54539b # v1.3.1
 
-      # docker/__tests__/formbricks-script.test.ts keeps docker/docker-compose.yml on the same tag.
       - name: Pull the pinned Cube image without credentials
-        shell: bash
-        run: |
-          set -euo pipefail
-          image="$(yq -r '.cube.image.repository + ":" + .cube.image.tag' charts/formbricks/values.yaml)"
-          DOCKER_CONFIG="$(mktemp -d)"
-          export DOCKER_CONFIG
-          if ! docker manifest inspect "$image" > /dev/null; then
-            echo "::error::$image cannot be pulled without credentials. Publish it with cube-image.yml and make the formbricks/cube package public, then re-run this release."
-            exit 1
-          fi
-          echo "$image is publicly pullable."
+        run: bash .github/scripts/check-cube-image.sh
 
   docker-build-community:
     name: Build & release community docker image
@@ -144,7 +133,7 @@ jobs:
       - docker-build-cloud
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -186,7 +175,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -304,7 +293,7 @@ jobs:
     if: ${{ !github.event.release.prerelease }}
     steps:
       - name: Harden the runner
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -322,13 +311,13 @@ jobs:
       # release-docker-github.yml. Using the raw tag_name instead would silently create a
       # second, v-prefixed Linear release the first time somebody tags v5.6.0.
       - name: Stamp Linear release version
-        uses: linear/linear-release-action@30f9ae77461ec29f07fffe0c52edd1909bfbb6f5 # v0.18.1
+        uses: linear/linear-release-action@dd4fc407f860b9460d2cf0b3fb1edd8985cf443f # v0.18.2
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
           version: ${{ needs.docker-build-community.outputs.VERSION }}
 
       - name: Complete Linear release
-        uses: linear/linear-release-action@30f9ae77461ec29f07fffe0c52edd1909bfbb6f5 # v0.18.1
+        uses: linear/linear-release-action@dd4fc407f860b9460d2cf0b3fb1edd8985cf443f # v0.18.2
         with:
           access_key: ${{ secrets.LINEAR_ACCESS_KEY }}
           command: complete

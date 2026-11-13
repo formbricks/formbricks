@@ -20,6 +20,11 @@ properties:
       catalog still parses on an older self-hosted deployment.
   meta:
     type: object
+    description: >-
+      On a matrix row condition: `row`, the 0-based position of the row, and `rowId`, its id. The id
+      is read first and wins when the two disagree, so the condition survives reordering; it must be a
+      row of the matrix. Either may be sent alone: the other is filled in on write. Positions stay for
+      the previous release, which reads them only.
     additionalProperties:
       type: string
 additionalProperties: false

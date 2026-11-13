@@ -113,6 +113,10 @@ describe("policy summaries", () => {
     expect(formatRetentionPeriod(1095, t)).toBe('period_years {"count":3}');
     expect(formatRetentionPeriod(180, t)).toBe('period_months {"count":6}');
     expect(formatRetentionPeriod(45, t)).toBe('period_days {"count":45}');
+    // ENG-7038: what no unit divides reads in years to two decimals from a year up, in days below.
+    expect(formatRetentionPeriod(913, t)).toBe('period_years {"count":2.5}');
+    expect(formatRetentionPeriod(403, t)).toBe('period_years {"count":1.1}');
+    expect(formatRetentionPeriod(200, t)).toBe('period_days {"count":200}');
   });
 
   test("summarises each policy by its own period, and the surveys policy by its conditions", () => {

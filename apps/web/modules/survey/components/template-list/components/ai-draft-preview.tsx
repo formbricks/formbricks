@@ -10,12 +10,15 @@ import {
   type TAiDraftState,
   groupAiDraftByBlock,
 } from "@/modules/survey/components/template-list/lib/ai-draft-reducer";
+import {
+  getGenerationScrollAction,
+  isPinnedToBottom,
+  shouldFollowNewQuestions,
+} from "@/modules/survey/components/template-list/lib/ai-draft-scroll";
 import { getElementIconMap, getElementNameMap } from "@/modules/survey/lib/elements";
 import { AiActivityBar } from "@/modules/ui/components/ai";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 
-/** How close to the bottom still counts as "following along", in px. */
-const PIN_THRESHOLD_PX = 32;
 const PENDING_ROW_COUNT = 3;
 /** Above this many rows the list is windowed: only the rows near the viewport are mounted (ENG-3478). */
 export const DRAFT_PREVIEW_VIRTUALIZE_THRESHOLD = 50;
@@ -87,6 +90,16 @@ const AiDraftRow = memo(
 
 AiDraftRow.displayName = "AiDraftRow";
 
+/**
+ * Lands focus on the draft list when the review opens, so Space and the arrow keys scroll it, without
+ * drawing the list's focus ring: the user did not move there. The mark clears on blur.
+ */
+export const landFocusOnDraft = (element: HTMLElement | null, options?: FocusOptions) => {
+  if (!element) return;
+  element.dataset.landed = "";
+  element.focus(options);
+};
+
 type AiDraftPreviewProps = {
   draft: TAiDraftState;
   isGenerating: boolean;
@@ -131,20 +144,32 @@ export const AiDraftPreview = ({
     return () => observer?.disconnect();
   }, [isVirtualized]);
 
+  // While generating, the list follows new questions down. Once it is done, the review starts at the
+  // first question, so a finished draft (or an import that lands all at once) is read from the top.
+  // Declared before the follow effect, so a new generation re-pins before the first question lands.
+  const wasGeneratingRef = useRef(isGenerating);
+  useEffect(() => {
+    const wasGenerating = wasGeneratingRef.current;
+    wasGeneratingRef.current = isGenerating;
+    const action = getGenerationScrollAction(wasGenerating, isGenerating);
+    if (action === "repin") isPinnedRef.current = true;
+    if (action === "scroll_to_top") scrollRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  }, [isGenerating]);
+
   useEffect(() => {
     const element = scrollRef.current;
-    if (!element || !isPinnedRef.current) return;
+    if (!element || !shouldFollowNewQuestions(isGenerating, isPinnedRef.current)) return;
 
     // The CSS reduced-motion kill-switch cannot reach a JS scroll option, so check it here.
     const prefersReducedMotion = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     element.scrollTo({ top: element.scrollHeight, behavior: prefersReducedMotion ? "auto" : "smooth" });
-  }, [draft.questions.length]);
+  }, [draft.questions.length, isGenerating]);
 
   const handleScroll = () => {
     const element = scrollRef.current;
     if (!element) return;
 
-    isPinnedRef.current = element.scrollHeight - element.scrollTop - element.clientHeight < PIN_THRESHOLD_PX;
+    isPinnedRef.current = isPinnedToBottom(element);
     if (isVirtualized) setScrollTop(element.scrollTop);
   };
 
@@ -167,7 +192,7 @@ export const AiDraftPreview = ({
       )}>
       {isGenerating ? <AiActivityBar /> : null}
 
-      <div className="shrink-0 border-b border-slate-100 px-4 py-3">
+      <div className="shrink-0 border-b border-slate-200 px-4 py-3">
         {draft.name ? (
           <p className="truncate text-sm font-semibold text-slate-800">{draft.name}</p>
         ) : (
@@ -195,7 +220,13 @@ export const AiDraftPreview = ({
         tabIndex={0} // NOSONAR
         aria-label={t("workspace.surveys.ai_create.draft_survey")}
         aria-busy={isGenerating}
-        className="focus-visible:ring-ring min-h-0 flex-1 overflow-y-auto focus-visible:ring-1 focus-visible:outline-hidden">
+        // Focus that the review put here (`landFocusOnDraft`) shows no ring: the textarea before it
+        // makes every scripted focus "visible", so a mouse user would get a frame around the list.
+        // Tabbing back in clears the mark, and the ring shows as usual.
+        onBlur={(event) => {
+          delete event.currentTarget.dataset.landed;
+        }}
+        className="min-h-0 flex-1 overflow-y-auto focus-visible:ring-slate-400 focus-visible:outline-hidden focus-visible:ring-inset [&:focus-visible:not([data-landed])]:ring-1">
         {rowWindow ? (
           <ul className="relative" style={{ height: rowWindow.total * ROW_HEIGHT_PX }}>
             {draft.questions.slice(rowWindow.first, rowWindow.last).map((question, index) => (
@@ -214,7 +245,7 @@ export const AiDraftPreview = ({
         ) : null}
         {!rowWindow &&
           blocks.map((block) => (
-            <section key={block.key} className="-mt-px first:mt-0">
+            <section key={block.key} className="group/block -mt-px first:mt-0">
               {/*
               The model is asked to name every block, so show that structure rather than flattening
               it into one list — but only when there is more than one, since a lone header over the
@@ -224,7 +255,8 @@ export const AiDraftPreview = ({
               band is opaque, so rows pass cleanly behind it rather than showing through.
             */}
               {showsBlockNames && (
-                <h4 className="sticky top-0 z-10 border-y border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-medium text-slate-500">
+                // The first band sits right under the name's line: no second line on top of it.
+                <h4 className="sticky top-0 z-10 border-y border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-medium text-slate-500 group-first/block:border-t-0">
                   {block.name ?? (
                     <Skeleton className="my-0.5 inline-block h-3 w-24 rounded-md align-middle" />
                   )}

@@ -271,6 +271,9 @@ services:
   postgres:
     restart: always
     image: pgvector/pgvector:pg18
+    # Docker's 64 MB /dev/shm is too small for parallel query workers on large analytics charts
+    # ("could not resize shared memory segment").
+    shm_size: 512mb
     volumes:
       - postgres:/var/lib/postgresql
     environment:
@@ -556,7 +559,7 @@ services:
   vllm:
     restart: always
     profiles: ["qwen"]
-    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.32.0}
+    image: ${QWEN_VLLM_IMAGE:-vllm/vllm-openai:v0.33.0}
     deploy:
       resources:
         reservations:
@@ -611,7 +614,7 @@ services:
   # "CUBEJS_API_SECRET is required to run Cube" when the secret is empty.
   cube:
     restart: always
-    image: ghcr.io/formbricks/cube:1.8.8-2
+    image: ghcr.io/formbricks/cube:1.8.20-1
     depends_on:
       hub-migrate:
         condition: service_completed_successfully
@@ -630,6 +633,8 @@ services:
       CUBEJS_DEFAULT_API_SCOPES: meta,data
       CUBEJS_EXTERNAL_DEFAULT: ${CUBEJS_EXTERNAL_DEFAULT:-false}
       CUBEJS_CACHE_AND_QUEUE_DRIVER: memory
+      # Cube sets it as each query's Postgres statement_timeout (Cube's default is 10 minutes).
+      CUBEJS_DB_QUERY_TIMEOUT: ${CUBEJS_DB_QUERY_TIMEOUT:-60s}
     volumes:
       - ./cube/cube.js:/cube/conf/cube.js:ro
       - ./cube/schema:/cube/conf/model:ro

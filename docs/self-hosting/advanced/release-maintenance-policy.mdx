@@ -23,7 +23,47 @@ Formbricks follows [Semantic Versioning](https://semver.org/): `Major.Minor.Patc
 | Patch   | Bug fixes and security fixes, no new features | `6.2.0` → `6.2.1` |
 
 Every release is published on [GitHub Releases](https://github.com/formbricks/formbricks/releases) with its
-release notes.
+release notes. Each release states its **upgrade impact**: *None*, or *Action required* with the steps.
+
+<span id="patch-releases" />
+
+### Patch releases
+
+Patch releases are backward compatible. They contain bug fixes and security fixes only. They add no
+new features and don't change APIs. They normally contain no database migrations.
+
+If a security fix needs a small change in behavior, or a new optional setting such as an environment
+variable, the release notes say so under **Upgrade impact: Action required**.
+
+### Upgrade path
+
+Upgrade one minor version at a time, always to its latest patch. Skipping a minor version is not
+supported. Within a minor version you can go straight to its latest patch. See
+[Upgrade paths](/self-hosting/upgrade/paths).
+
+## Integration compatibility
+
+**Patch and minor releases preserve supported SDK and stable public API integrations within the
+same Formbricks major version.** You do not need to rewrite a supported integration for a routine
+patch or minor upgrade. Breaking changes to that contract require a major release and migration guidance.
+
+- Existing documented requests, response fields and SDK behavior remain compatible. New features
+  may require a newer SDK; see [SDK compatibility](/surveys/website-app-surveys/sdk-compatibility).
+- API versions and SDK package versions are independent of the Formbricks app version. Beta and
+  private-beta interfaces carry their stated stability limits.
+- If an urgent security fix must change existing behavior, its release notes identify the exception,
+  affected versions and required action. Historical exceptions remain documented in the
+  [version pages](/self-hosting/advanced/migration).
+
+This commitment applies to releases published after this policy is adopted. Historical
+[6.1 exceptions](/self-hosting/upgrade/versions/6.1#integration-changes-requiring-action) remain actionable.
+6.2 is the one exception after adoption: its
+[integration changes](/self-hosting/upgrade/versions/6.2#integration-changes-requiring-action) were merged before
+this policy was adopted. From 6.3 on, only an urgent security fix can change existing behavior in a minor or patch.
+
+This commitment covers integrations. It does not promise mixed-version deployment safety,
+uninterrupted service or reversible database migrations. Use the
+[upgrade procedure](/self-hosting/advanced/upgrade) for service impact and recovery.
 
 ## Maintained Versions
 
@@ -77,8 +117,8 @@ even if the work finishes after it.
 
 - Run the latest stable release. It is the only version that receives every fix.
 - Pin a release tag in production instead of a moving tag such as `latest`.
-- Read the [migration guide](/self-hosting/advanced/migration) before a major upgrade. Major versions can
-  carry breaking changes that need steps before you switch images.
+- Upgrade one minor version at a time. Read its [version page](/self-hosting/advanced/migration) and the
+  upgrade impact of each patch you cross, then follow the [upgrade procedure](/self-hosting/advanced/upgrade).
 - Plan to move to a newer minor before your current one reaches its support-end date.
 
 ## Exceptions

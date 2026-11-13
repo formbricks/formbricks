@@ -144,13 +144,7 @@ export const TemplateList = ({
             aiUnavailableReason={aiUnavailableReason}
           />
         )}
-        {showImportCard && (
-          <ImportSurveyCard
-            workspaceId={workspaceId}
-            isAIAvailable={isAIAvailable}
-            aiUnavailableReason={aiUnavailableReason}
-          />
-        )}
+        {showImportCard && <ImportSurveyCard workspaceId={workspaceId} isAIAvailable={isAIAvailable} />}
         {(IS_DEVELOPMENT_BUILD ? [...filteredTemplates()] : filteredTemplates()).map(
           (template: TTemplate) => {
             return (

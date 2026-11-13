@@ -3,13 +3,16 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { DatasetFieldsGate } from "@/modules/ee/analysis/charts/components/dataset-fields-gate";
 import { DimensionsPanel } from "@/modules/ee/analysis/charts/components/dimensions-panel";
 import { FiltersPanel } from "@/modules/ee/analysis/charts/components/filters-panel";
 import { MatrixQuestionPicker } from "@/modules/ee/analysis/charts/components/matrix-question-picker";
 import { MeasuresPanel } from "@/modules/ee/analysis/charts/components/measures-panel";
 import { TimeDimensionPanel } from "@/modules/ee/analysis/charts/components/time-dimension-panel";
 import { useChartQuery } from "@/modules/ee/analysis/charts/hooks/use-chart-query";
+import { useDatasetChartFields } from "@/modules/ee/analysis/charts/hooks/use-dataset-chart-fields";
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
+import { namesDatasetField } from "@/modules/ee/analysis/charts/lib/catalog-embedded-fields";
 import { supportsTimeGrouping } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { createDefaultFilterRow } from "@/modules/ee/analysis/charts/lib/filter-conditions";
 import {
@@ -116,6 +119,7 @@ export function AdvancedChartBuilder({
   );
 
   const { isLoading, error, runQuery } = useChartQuery(workspaceId, feedbackDirectoryId, initialQuery);
+  const datasetFields = useDatasetChartFields(workspaceId, feedbackDirectoryId);
   const [isConfigDirty, setIsConfigDirty] = useState(false);
   const chartTypeRef = useRef(chartType);
 
@@ -258,14 +262,17 @@ export function AdvancedChartBuilder({
         customContainerClass="mt-2 px-0"
         childrenContainerClass="flex-col gap-3 p-4"
         childBorder>
-        <FiltersPanel
-          workspaceId={workspaceId}
-          feedbackDirectoryId={feedbackDirectoryId}
-          filters={state.filters}
-          filterLogic={state.filterLogic}
-          onFiltersChange={(filters) => dispatch({ type: ACTION.SET_FILTERS, payload: filters })}
-          onFilterLogicChange={(logic) => dispatch({ type: ACTION.SET_FILTER_LOGIC, payload: logic })}
-        />
+        <DatasetFieldsGate status={datasetFields} isNeeded={namesDatasetField(state.filters)}>
+          <FiltersPanel
+            workspaceId={workspaceId}
+            feedbackDirectoryId={feedbackDirectoryId}
+            datasetFields={datasetFields}
+            filters={state.filters}
+            filterLogic={state.filterLogic}
+            onFiltersChange={(filters) => dispatch({ type: ACTION.SET_FILTERS, payload: filters })}
+            onFilterLogicChange={(logic) => dispatch({ type: ACTION.SET_FILTER_LOGIC, payload: logic })}
+          />
+        </DatasetFieldsGate>
       </AdvancedOptionToggle>
 
       <AdvancedOptionToggle
@@ -280,12 +287,17 @@ export function AdvancedChartBuilder({
         customContainerClass="mt-2 px-0"
         childrenContainerClass="flex-col gap-3 p-4"
         childBorder>
-        <DimensionsPanel
-          hideTitle
-          isMatrix={isMatrix}
-          selectedDimensions={state.selectedDimensions}
-          onDimensionsChange={(dimensions) => dispatch({ type: ACTION.SET_DIMENSIONS, payload: dimensions })}
-        />
+        <DatasetFieldsGate status={datasetFields} isNeeded={namesDatasetField(state.selectedDimensions)}>
+          <DimensionsPanel
+            hideTitle
+            isMatrix={isMatrix}
+            embeddedFields={datasetFields.embeddedFields}
+            selectedDimensions={state.selectedDimensions}
+            onDimensionsChange={(dimensions) =>
+              dispatch({ type: ACTION.SET_DIMENSIONS, payload: dimensions })
+            }
+          />
+        </DatasetFieldsGate>
       </AdvancedOptionToggle>
 
       <AdvancedOptionToggle

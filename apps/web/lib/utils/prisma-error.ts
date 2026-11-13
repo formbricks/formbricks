@@ -20,14 +20,32 @@ export const isPrismaKnownRequestError = (
 export const isUniqueConstraintError = (error: unknown): error is PrismaClientKnownRequestError =>
   isPrismaKnownRequestError(error, PrismaErrorType.UniqueConstraintViolation);
 
+/** SQLSTATEs Postgres aborts a transaction with when it clashed with a concurrent one. */
+const CONFLICT_SQLSTATES = new Set(["40001", "40P01"]);
+
+/** The `cause` a pg driver adapter error carries: its mapped kind and the original SQLSTATE. */
+const driverAdapterCauseOf = (error: unknown): { kind?: unknown; originalCode?: unknown } | null => {
+  if (!(error instanceof Error) || typeof error.cause !== "object" || error.cause === null) return null;
+  return error.cause as { kind?: unknown; originalCode?: unknown };
+};
+
 /**
  * True for a transaction the database aborted over a clash with a concurrent one, which is safe to
  * run again: a `Serializable` write conflict or a deadlock. Prisma reports both as P2034 on an
- * interactive transaction; the pg driver adapter can also surface a deadlock as a plain error whose
- * message carries "deadlock detected" or SQLSTATE 40P01 (the shape seen in Sentry for ENG-2038).
+ * interactive transaction. The pg driver adapter can instead throw its own error, whose `cause` names
+ * the kind (`TransactionWriteConflict`) and the SQLSTATE (40001, measured against real Postgres for a
+ * Serializable read/write dependency), or surface a deadlock as a plain error whose message carries
+ * "deadlock detected" or SQLSTATE 40P01 (the shape seen in Sentry for ENG-2038).
  */
 export const isTransactionConflictError = (error: unknown): boolean => {
   if (isPrismaKnownRequestError(error, PrismaErrorType.TransactionConflict)) {
+    return true;
+  }
+  const cause = driverAdapterCauseOf(error);
+  if (
+    cause?.kind === "TransactionWriteConflict" ||
+    (typeof cause?.originalCode === "string" && CONFLICT_SQLSTATES.has(cause.originalCode))
+  ) {
     return true;
   }
   const message = error instanceof Error ? error.message : "";

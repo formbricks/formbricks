@@ -335,7 +335,12 @@ const reverseLogicActions = (
       };
     }
 
-    return action;
+    // A Set value expression (ENG-6935) has no counterpart in the legacy question-logic types; it is
+    // passed through as stored so a legacy reader sees the step rather than losing it.
+    // The cast is safe: a legacy update converts its questions to blocks (`updateLogicActions` passes
+    // this step through unchanged) before any logic is validated, so the step is checked by the block
+    // schema, which knows expressions, never by the legacy logic types.
+    return action as TSurveyLogicAction;
   });
 };
 
@@ -571,9 +576,9 @@ type TInternalSurveyProjectionKey = (typeof INTERNAL_SURVEY_PROJECTION_KEYS)[num
  * `embeddedFields` (ENG-1837) is joined onto every survey the management endpoints read, but v1 is a
  * versioned public contract and how Embedded Data is serialised is ENG-1838's call — so it does not
  * leak out ahead of that decision. The v1 write path is unaffected for the same reason from the
- * other side: `ZSurveyUpdateInput` omits the key, so a v1 PUT reaches `updateSurvey` carrying only
- * the legacy `variables` / `hiddenFields` even though ENG-3228 made the key accepted input
- * elsewhere. Those two stay on the response: since ENG-2404 they are derived from the same rows.
+ * other side: `ZSurveyUpdateInput` never outputs the key (it only validates logic against the rows the
+ * write leaves, ENG-6935), so a v1 PUT reaches `updateSurvey` carrying only the legacy `variables` /
+ * `hiddenFields` even though ENG-3228 made the key accepted input elsewhere. Those two stay on the response: since ENG-2404 they are derived from the same rows.
  * The ENG-3282 authorization facts (visibility, owner, versions) are v3's to describe, and `ownerId`
  * is an identifier v3 deliberately never exposes; every one of them is omitted from both create schemas
  * and stripped again in `updateSurveyInternal`.

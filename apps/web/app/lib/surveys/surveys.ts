@@ -8,7 +8,9 @@ import {
 import { TSurveyQuota } from "@formbricks/types/quota";
 import {
   TResponseFilterCriteria,
+  TResponseFilterCriteriaShown,
   TResponseHiddenFieldsFilter,
+  TResponseStatusFilter,
   TSurveyContactAttributes,
   TSurveyMetaFieldFilter,
 } from "@formbricks/types/responses";
@@ -834,6 +836,37 @@ const processQuotaFilters = (quotas: FilterValue[], filters: TResponseFilterCrit
   });
 };
 
+const isShownFilterOp = (value: unknown): value is TResponseFilterCriteriaShown["op"] =>
+  value === "shown" || value === "notShown";
+
+// Shown / not shown rows → the `shown` criteria group (ENG-6951). A row without a target or with any
+// other value is left out.
+const processShownFilters = (rows: FilterValue[], filters: TResponseFilterCriteria) => {
+  for (const { filterType, shownTarget } of rows) {
+    const op = filterType.filterComboBoxValue;
+    if (!shownTarget || !isShownFilterOp(op)) continue;
+    const condition: TResponseFilterCriteriaShown = { ...shownTarget, op };
+    filters.shown = [...(filters.shown ?? []), condition];
+  }
+};
+
+/** One status narrows by `finished` or `outcome`; several mean any of them. */
+const applyResponseStatuses = (
+  statuses: readonly TResponseStatusFilter[],
+  filters: TResponseFilterCriteria
+): void => {
+  if (statuses.length === 0) return;
+  if (statuses.length > 1) {
+    filters.statuses = [...statuses];
+  } else if (statuses[0] === "complete") {
+    filters.finished = true;
+  } else if (statuses[0] === "partial") {
+    filters.finished = false;
+  } else {
+    filters.outcome = "lowQuality";
+  }
+};
+
 // get the formatted filter expression to fetch filtered responses
 export const getFormattedFilters = (
   survey: TSurvey,
@@ -850,6 +883,7 @@ export const getFormattedFilters = (
   const hiddenFields: FilterValue[] = [];
   const variables: FilterValue[] = [];
   const quotas: FilterValue[] = [];
+  const shown: FilterValue[] = [];
 
   selectedFilter.filter.forEach((filter) => {
     if (filter.elementType?.type === "Elements") {
@@ -868,17 +902,12 @@ export const getFormattedFilters = (
       variables.push(filter);
     } else if (filter.elementType?.type === "Quotas") {
       quotas.push(filter);
+    } else if (filter.elementType?.type === OptionsType.SHOWN) {
+      shown.push(filter);
     }
   });
 
-  // for completed responses
-  if (selectedFilter.responseStatus === "complete") {
-    filters["finished"] = true;
-  } else if (selectedFilter.responseStatus === "partial") {
-    filters["finished"] = false;
-  } else if (selectedFilter.responseStatus === "lowQuality") {
-    filters["outcome"] = "lowQuality";
-  }
+  applyResponseStatuses(selectedFilter.responseStatuses, filters);
 
   // for date range responses
   if (dateRange.from && dateRange.to) {
@@ -927,6 +956,7 @@ export const getFormattedFilters = (
 
   processReservedFilters(meta, survey, filters);
   processQuotaFilters(quotas, filters);
+  processShownFilters(shown, filters);
 
   return filters;
 };

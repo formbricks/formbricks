@@ -10,6 +10,8 @@ allOf:
         type: string
         enum:
           - multipleChoiceSingle
+      optionsCopiedFrom:
+        $ref: ./SurveyOptionsCopiedFrom.yml
       choices:
         type: array
         minItems: 2

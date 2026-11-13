@@ -140,7 +140,8 @@ describe("renderSurvey custom CSS teardown", () => {
     const closeOlder = renderModal(vi.fn());
     const closeNewer = renderModal(vi.fn(), { survey: { light: "@layer fb-survey{#fbjs{color:green}}" } });
 
-    closeOlder?.();
+    expect(closeOlder).toBeTypeOf("function");
+    closeOlder!();
     expect(getCustomStyle()?.textContent).toContain("green");
 
     closeNewer?.();
@@ -161,8 +162,24 @@ describe("renderSurvey custom CSS teardown", () => {
     expect(getCustomStyle()?.textContent).toContain("green");
   });
 
-  test("a host without onClose still gets none", () => {
-    expect(renderModal(undefined)).toBeUndefined();
+  test("closing a modal app survey without a host onClose still removes its CSS", () => {
+    const onClose = renderModal(undefined);
+    expect(getCustomStyle()?.textContent).toContain("fb-survey");
+
+    expect(onClose).toBeTypeOf("function");
+    onClose!();
+
+    expect(getCustomStyle()).toBeNull();
+  });
+
+  test("a survey without a host onClose closing after a newer one leaves the newer one's CSS", () => {
+    const closeOlder = renderModal(undefined);
+    renderModal(undefined, { survey: { light: "@layer fb-survey{#fbjs{color:green}}" } });
+
+    expect(closeOlder).toBeTypeOf("function");
+    closeOlder!();
+
+    expect(getCustomStyle()?.textContent).toContain("green");
   });
 
   test("exposes removeCustomCss for hosts that tear a survey down without closing it", () => {
@@ -190,10 +207,31 @@ describe("renderSurvey inline onClose", () => {
     expect(hostOnClose).toHaveBeenCalledTimes(1);
   });
 
+  test("closing an inline app survey without a host onClose removes its CSS", () => {
+    document.body.innerHTML = '<div id="survey-container"></div>';
+
+    renderInline({
+      survey: { id: "survey-1", type: "app", languages: [] },
+      customCss: COMPILED,
+    } as unknown as Partial<SurveyContainerProps>);
+    expect(document.getElementById("formbricks__custom-css")).not.toBeNull();
+
+    expect(seen.onClose).toBeTypeOf("function");
+    seen.onClose!();
+
+    expect(document.getElementById("formbricks__custom-css")).toBeNull();
+  });
+
   test("an inline link survey still gets no onClose", () => {
     document.body.innerHTML = '<div id="survey-container"></div>';
 
     renderInline({ onClose: vi.fn() });
+
+    expect(seen.onClose).toBeUndefined();
+  });
+
+  test("a modal link survey without a host onClose still gets none", () => {
+    renderInline({ mode: "modal", containerId: undefined, customCss: COMPILED });
 
     expect(seen.onClose).toBeUndefined();
   });

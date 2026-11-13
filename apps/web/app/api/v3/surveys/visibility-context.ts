@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { getV3AuthorizationActor } from "@/app/api/v3/lib/auth";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
-import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
+import { type TSurveyActorContext, resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { getSurveyVisibilityGates } from "@/lib/survey/visibility/gates";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
 import type { TV3SurveyResourceVisibility, TV3SurveyVisibilityContext } from "./serializers";
@@ -56,4 +56,17 @@ export async function resolveV3VisibleSurveyWhere(
   const actor = getV3AuthorizationActor(authentication);
   if (!actor || !organizationId) return NO_VISIBLE_SURVEYS;
   return buildVisibleSurveyWhere(await resolveSurveyActorContext(actor, organizationId));
+}
+
+/**
+ * Who a survey's targeting is checked against (ENG-6870), in visibility terms. Fails closed: without an
+ * actor or an organization it is an API key's view, which sees no restricted survey.
+ */
+export async function resolveV3SurveyTargetingActor(
+  authentication: TV3Authentication,
+  organizationId: string | null | undefined
+): Promise<TSurveyActorContext> {
+  const actor = getV3AuthorizationActor(authentication);
+  if (!actor || !organizationId) return { enforced: true, kind: "apiKey" };
+  return resolveSurveyActorContext(actor, organizationId);
 }

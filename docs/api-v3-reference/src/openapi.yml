@@ -66,14 +66,21 @@ info:
     **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST
     /api/v3/dashboards/{dashboardId}/duplicate**; **POST
     /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE
-    /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**).
+    /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard,
+    **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values,
+    **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**; the embedded-data fields its
+    filters can use, **GET /api/v3/dashboards/{dashboardId}/filter-fields**).
 
     - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
       them; the validator refuses anything else, and Cube options (`timezone`, `segments`, `ungrouped`,
       …), with **422** naming each problem. Counts, filter depth, `limit` and `offset` are bounded.
     - **Date ranges.** A preset from the catalog's `datePresets`, `all-time`, or two ISO dates, both
-      inclusive, read in the organization's time zone. On the data operation a requested range
+      inclusive, read in the organization's time zone. On the data operations a requested range
       replaces the chart's own range on `collectedAt`, the way a dashboard's date filter does.
+    - **Dashboard filters.** A person filters a dashboard by any dimension of its charts' datasets or
+      embedded-data field, up to 10 at once: each `filter[<id>]=<operator>:<field>`, with its values
+      in `picks[<id>]`, is ANDed onto every chart's saved query on the dashboard-bound operations,
+      never replacing a saved rule. The dashboard keeps no list of them.
     - **Data needs the dataset.** Reading a chart's rows, previewing one and looking up field values
       need read access to its Feedback Dataset as well as the workspace. They share one budget of
       **600 per minute** per user or key, sized for dashboards that load one query per widget, and at
@@ -458,6 +465,12 @@ paths:
     $ref: paths/api_v3_dashboards_{dashboardId}_widgets.yml
   /api/v3/dashboards/{dashboardId}/widgets/{widgetId}:
     $ref: paths/api_v3_dashboards_{dashboardId}_widgets_{widgetId}.yml
+  /api/v3/dashboards/{dashboardId}/charts/{chartId}/data:
+    $ref: paths/api_v3_dashboards_{dashboardId}_charts_{chartId}_data.yml
+  /api/v3/dashboards/{dashboardId}/filters/{filterId}/values:
+    $ref: paths/api_v3_dashboards_{dashboardId}_filters_{filterId}_values.yml
+  /api/v3/dashboards/{dashboardId}/filter-fields:
+    $ref: paths/api_v3_dashboards_{dashboardId}_filter-fields.yml
   /api/v3/creatives:
     $ref: paths/api_v3_creatives.yml
   /api/v3/creatives/pause:

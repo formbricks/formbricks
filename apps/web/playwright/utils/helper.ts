@@ -15,6 +15,15 @@ type MockStorageFileFixture = {
   publicAssetPath?: string;
 };
 
+/**
+ * Sets a Set value action's Expression switch to `on`, reading it first, so a step does what it says
+ * whatever a new Set value starts as (that default has changed before: P73, P74).
+ */
+export const setExpressionMode = async (page: Page, actionIdx: number, on: boolean): Promise<void> => {
+  const toggle = page.locator(`#action-${actionIdx}-formula-toggle`).first();
+  if ((await toggle.getAttribute("aria-checked")) !== String(on)) await toggle.click();
+};
+
 export const PLAYWRIGHT_PICTURE_SELECTION_FILES: MockStorageFileFixture[] = [
   {
     name: "playwright-choice-1.png",
@@ -928,34 +937,13 @@ export const createSurvey = async (page: Page, params: CreateSurveyParams) => {
 const selectConditionLeftOperand = async (page: Page, conditionId: string, label: string) => {
   await page.locator(`#${conditionId}`).first().click();
 
-  const search = page.getByPlaceholder("Search", { exact: true });
+  // The rule editor's field list (ENG-6969 T6) says what it searches.
+  const search = page.getByPlaceholder("Search questions and fields", { exact: true });
   await expect(search).toBeVisible();
   await search.fill(label);
 
   await page.getByRole("option", { name: label }).first().click();
 };
-
-/**
- * A question's collapsed card heading inside the survey editor's element list.
- *
- * Scoped to the editor `<main>` on purpose. The editor renders a LIVE PREVIEW of the survey into
- * the same document (the `<aside>` holding `#survey-preview`, visible from the `md` breakpoint up),
- * and since ENG-2336 that preview exposes each element prompt as an `<h2>`. An unscoped
- * `getByRole("heading", { name })` would then match both the accordion heading and the preview's
- * prompt whenever the previewed card is the one being edited, failing Playwright's strict mode.
- */
-const editorElementHeading = (page: Page, name: string): Locator =>
-  page.getByRole("main").getByRole("heading", { name });
-
-/**
- * The header row of the nth block card (1-based), which doubles as its collapse toggle.
- *
- * Addressed by position rather than by text: since ENG-742 the block name is an editable input,
- * so the header no longer carries the name as text content and `hasText: /^Block N…/` matches
- * nothing. Position is also the stabler key here — a creator-set title would break a name match.
- */
-const blockCardHeader = (page: Page, blockNumber: number): Locator =>
-  page.getByTestId("block-card-header").nth(blockNumber - 1);
 
 const formatVisibleMonth = (date: Date): string =>
   new Intl.DateTimeFormat("en-US", { month: "long", year: "numeric" }).format(date);
@@ -1119,6 +1107,24 @@ export const editEmbeddedField = async (
   await expect(embeddedFieldRow(page, patch.name ?? name)).toBeVisible();
 };
 
+/**
+ * Adds a rule to block `blockNumber` (1-based) on the Flow tab, where logic lives since ENG-6929, and
+ * waits for its editor: a "Jump to" rule with a condition on the block's first question, as "Add logic"
+ * on the block card used to start one. Only the new rule's editor is open, so its ids
+ * (`condition-0-0-…`, `action-0-…`) are the ones the steps after it fill in.
+ */
+export const addFlowRule = async (page: Page, blockNumber: number): Promise<void> => {
+  // The Flow tab opens with every block collapsed; a block's Add logic shows once it is open.
+  const expand = page.getByRole("button", { name: "Expand", exact: true });
+  if (await expand.isVisible()) await expand.click();
+  await page
+    .locator('[id^="flow-add-logic-"]:not([id="flow-add-logic-start"])')
+    .nth(blockNumber - 1)
+    .click();
+  await page.getByRole("menuitem", { name: "Jump to", exact: true }).click();
+  await expect(page.locator("#condition-0-0-conditionValue")).toBeVisible();
+};
+
 export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWithLogicParams) => {
   await createSurveyFromScratch(page);
 
@@ -1233,43 +1239,43 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("row", { name: "Zip" }).getByRole("cell").nth(2).click();
   await page.getByRole("row", { name: "Country" }).getByRole("switch").nth(1).click();
 
-  // Adding logic to blocks
+  // Adding logic to blocks, on the Flow tab (ENG-6929): one "Add logic" per block, each opening its new rule.
+  await page.getByRole("button", { name: "Flow", exact: true }).click();
+  // Every Set value below uses the one-step operators, to keep covering one-step calculations.
   // Block 1 (Open Text Question)
-  await editorElementHeading(page, params.openTextQuestion.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 1);
   await selectConditionLeftOperand(page, "condition-0-0-conditionValue", params.openTextQuestion.question);
   await page.locator("#condition-0-0-conditionOperator").first().click();
   await page.getByRole("option", { name: "is submitted" }).click();
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").first().click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").first().click();
-  await page.getByRole("option", { name: "Assign =" }).click();
+  await page.getByRole("option", { name: "Assign", exact: true }).click();
   await page.locator("#action-0-value-input").first().click();
   await page.locator("#action-0-value-input").first().fill("1");
   await page.locator("#actions-0-dropdown").first().click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
-  await page.getByRole("option", { name: "Require Answer" }).click();
+  await page.getByRole("option", { name: "Require answer" }).click();
   await page.locator("#action-1-target").click();
   await page.getByRole("option", { name: params.singleSelectQuestion.question }).click();
   await page.locator("#actions-1-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-2-objective").click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 2, false);
   await page.locator("#action-2-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-2-operator").click();
-  await page.getByRole("option", { name: "Assign =" }).click();
+  await page.getByRole("option", { name: "Assign", exact: true }).click();
   await page.locator("#action-2-value-input").click();
   await page.locator("#action-2-value-input").fill("This ");
-  // Close Block 1 settings before moving to Block 2
-  await blockCardHeader(page, 1).click();
 
   // Block 2 (Single Select Question)
-  await editorElementHeading(page, params.singleSelectQuestion.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 2);
   await selectConditionLeftOperand(
     page,
     "condition-0-0-conditionValue",
@@ -1280,32 +1286,32 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#condition-0-0-conditionMatchValue").first().click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[0] }).click();
   await page.getByRole("option", { name: params.singleSelectQuestion.options[1] }).click();
-  await page.locator("html").click();
+  // Escape closes the multi-select list; a click on the page centre can land inside the open list.
+  await page.keyboard.press("Escape");
   await page.waitForSelector('[data-testid="dropdown-menu-content"]', { state: "hidden", timeout: 3000 });
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Append", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("is ");
-  // Close Block 2 settings
-  await blockCardHeader(page, 2).click();
 
   // Block 3 (Multi Select Question)
-  await editorElementHeading(page, params.multiSelectQuestion.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 3);
   await selectConditionLeftOperand(page, "condition-0-0-conditionValue", params.multiSelectQuestion.question);
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "Includes all of" }).click();
@@ -1313,7 +1319,8 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: params.multiSelectQuestion.options[0] }).click();
   await page.getByRole("option", { name: params.multiSelectQuestion.options[1] }).click();
   await page.getByRole("option", { name: params.multiSelectQuestion.options[2] }).click();
-  await page.locator("html").click();
+  // Escape closes the multi-select list; a click on the page centre can land inside the open list.
+  await page.keyboard.press("Escape");
   await page.waitForSelector('[data-testid="dropdown-menu-content"]', { state: "hidden", timeout: 3000 });
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
@@ -1325,35 +1332,34 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#condition-0-1-conditionOperator").click();
   await page.getByRole("option", { name: "is submitted" }).click();
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
-  await page.getByRole("option", { name: "Require Answer" }).click();
+  await page.getByRole("option", { name: "Require answer" }).click();
   await page.locator("#action-1-target").click();
   await page.getByRole("option", { name: params.pictureSelectQuestion.question }).click();
   await page.locator("#actions-1-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-2-objective").click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 2, false);
   await page.locator("#action-2-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-2-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Append", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("a ");
-  // Close Block 3 settings
-  await blockCardHeader(page, 3).click();
 
   // Block 4 (Picture Select Question)
-  await editorElementHeading(page, params.pictureSelectQuestion.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 4);
   await selectConditionLeftOperand(
     page,
     "condition-0-0-conditionValue",
@@ -1362,29 +1368,28 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is submitted" }).click();
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Append", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("secret ");
-  // Close Block 4 settings
-  await blockCardHeader(page, 4).click();
 
   // Block 5 (Rating Question)
-  await editorElementHeading(page, params.ratingQuestion.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 5);
   await page.locator("#condition-0-0-conditionValue").click();
   await page.getByRole("option", { name: params.ratingQuestion.question }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
@@ -1392,29 +1397,28 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#condition-0-0-conditionMatchValue").click();
   await page.getByRole("option", { name: "3" }).click();
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Append", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("message ");
-  // Close Block 5 settings
-  await blockCardHeader(page, 5).click();
 
   // Block 6 (NPS Question)
-  await editorElementHeading(page, params.npsQuestion.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 6);
   await page.locator("#condition-0-0-conditionValue").click();
   await page.getByRole("option", { name: params.npsQuestion.question }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
@@ -1450,8 +1454,9 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#condition-1-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
 
-  await page.getByRole("combobox").filter({ hasText: "all are true" }).nth(1).click();
-  await page.getByText("any is true").click();
+  // The and/or select sits before a group's second condition (ENG-6969 T6): the nested group's is second.
+  await page.getByRole("combobox", { name: "Combine conditions with" }).nth(1).click();
+  await page.getByRole("option", { name: "or", exact: true }).click();
 
   await page.locator("#condition-1-1-conditionValue").click();
   await page
@@ -1462,104 +1467,102 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.locator("#condition-1-1-conditionOperator").click();
   await page.getByRole("option", { name: "is submitted" }).click();
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Append", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("for ");
-  // Close Block 6 settings
-  await blockCardHeader(page, 6).click();
 
   // Block 7 (Ranking Question)
-  await editorElementHeading(page, params.ranking.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 7);
   await page.locator("#condition-0-0-conditionValue").click();
   await page.getByRole("option", { name: params.ranking.question }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is skipped" }).click();
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Append", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("e2e ");
-  // Close Block 7 settings
-  await blockCardHeader(page, 7).click();
 
   // Block 8 (Matrix Question)
-  await editorElementHeading(page, params.matrix.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 8);
   await page.locator("#condition-0-0-conditionValue").first().click();
   await page.getByTestId("dropdown-menu-content").getByText(params.matrix.question).click();
-  await page.getByRole("menuitem", { name: "All fields" }).click();
+  // The whole matrix, named like a row since ENG-6934: "Any row (q8 · Matrix Question)".
+  await page.getByRole("menuitem", { name: /^Any row \(/ }).click();
   // Click the operator dropdown (currently shows "Is partially submitted")
-  await page.getByText("Is partially submitted").click();
+  await page.getByText("Is partially submitted", { exact: true }).click();
   // Select "Is completely submitted" from the dropdown
-  await page.getByText("Is completely submitted").click();
+  await page.getByText("Is completely submitted", { exact: true }).click();
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("1");
   await page.locator("#actions-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "secret" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Concat +" }).click();
+  await page.getByRole("option", { name: "Append", exact: true }).click();
   await page.getByRole("textbox", { name: "Value" }).click();
   await page.getByRole("textbox", { name: "Value" }).fill("tests");
   await page.locator("#actions-1-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-2-objective").click();
-  await page.getByRole("option", { name: "Require Answer" }).click();
+  await page.getByRole("option", { name: "Require answer" }).click();
   await page.locator("#action-2-target").click();
   await page.getByRole("option", { name: params.ctaQuestion.question }).click();
-  // Close Block 8 settings
-  await blockCardHeader(page, 8).click();
 
   // Block 9 (CTA Question)
-  await editorElementHeading(page, params.ctaQuestion.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 9);
   await page.locator("#condition-0-0-conditionValue").click();
   await page.getByRole("option", { name: params.ctaQuestion.question }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is not clicked" }).click();
   await page.locator("#condition-0-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add condition below" }).click();
-  await page.getByRole("combobox").filter({ hasText: "all are true" }).first().click();
-  await page.getByText("any is true").click();
+  await page.getByRole("combobox", { name: "Combine conditions with" }).first().click();
+  await page.getByRole("option", { name: "or", exact: true }).click();
   await page.locator("#condition-0-1-dropdown").click();
   await page.getByRole("menuitem", { name: "Create group" }).click();
   await page.locator("#condition-1-0-conditionValue").click();
@@ -1573,51 +1576,45 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByPlaceholder("Value").click();
   await page.getByPlaceholder("Value").fill("test");
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
-  // Close Block 9 settings
-  await blockCardHeader(page, 9).click();
 
   // Block 10 (Consent Question)
-  await editorElementHeading(page, params.consentQuestion.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 10);
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("2");
-  // Close Block 10 settings
-  await blockCardHeader(page, 10).click();
 
   // Block 11 (File Upload Question)
-  await editorElementHeading(page, params.fileUploadQuestion.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 11);
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
-  // Close Block 11 settings
-  await blockCardHeader(page, 11).click();
 
   // Block 12 (Date Question)
   const today = new Date();
   const yesterday = new Date(new Date().setDate(new Date().getDate() - 1));
   const tomorrow = new Date(new Date().setDate(new Date().getDate() + 1));
 
-  await page.getByRole("main").getByText(params.date.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 12);
 
   await page.locator("#condition-0-0-conditionValue").click();
   await page.getByRole("option", { name: params.date.question }).click();
@@ -1644,63 +1641,62 @@ export const createSurveyWithLogic = async (page: Page, params: CreateSurveyWith
   await page.getByRole("option", { name: "is after" }).click();
   await setConditionDate(page, "condition-0-3-conditionMatchValue", yesterday);
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
-  // Close Block 12 settings
-  await blockCardHeader(page, 12).click();
 
   // Block 13 (Cal Question)
-  await editorElementHeading(page, params.cal.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 13);
   await page.locator("#condition-0-0-conditionValue").click();
   await page.getByRole("option", { name: params.cal.question }).click();
   await page.locator("#condition-0-0-conditionOperator").click();
   await page.getByRole("option", { name: "is skipped" }).click();
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
-  // Close Block 13 settings
-  await blockCardHeader(page, 13).click();
 
   // Block 14 (Address Question)
-  await editorElementHeading(page, params.address.question).click();
-  await page.getByRole("button", { name: "Add logic" }).first().click();
+  await addFlowRule(page, 14);
   await page.locator("#action-0-objective").first().click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 0, false);
   await page.locator("#action-0-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-0-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-0-value-input").click();
   await page.locator("#action-0-value-input").fill("1");
   await page.locator("#actions-0-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-1-objective").click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 1, false);
   await page.locator("#action-1-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-1-operator").click();
-  await page.getByRole("option", { name: "Add +" }).click();
+  await page.getByRole("option", { name: "Add", exact: true }).click();
   await page.locator("#action-1-value-input").click();
   await page.locator("#action-1-value-input").fill("1");
   await page.locator("#actions-1-dropdown").click();
   await page.getByRole("menuitem", { name: "Add action below" }).click();
   await page.locator("#action-2-objective").click();
-  await page.getByRole("option", { name: "Calculate" }).click();
+  await page.getByRole("option", { name: "Set value", exact: true }).click();
+  await setExpressionMode(page, 2, false);
   await page.locator("#action-2-variableId").click();
   await page.getByRole("option", { name: "score" }).click();
   await page.locator("#action-2-operator").click();
-  await page.getByRole("option", { name: "Multiply *" }).click();
+  await page.getByRole("option", { name: "Multiply", exact: true }).click();
   await page.locator("#action-2-value-input").click();
   await page.locator("#action-2-value-input").fill("2");
 };

@@ -1,5 +1,12 @@
 import { describe, expect, test } from "vitest";
-import { BoundedInvalidParams, V3_INVALID_PARAMS_MAX, capInvalidParams } from "./invalid-params";
+import {
+  BoundedInvalidParams,
+  V3_INVALID_PARAMS_MAX,
+  V3_INVALID_PARAM_NAME_MAX_CHARS,
+  V3_INVALID_PARAM_REASON_MAX_CHARS,
+  capInvalidParams,
+  clipInvalidParam,
+} from "./invalid-params";
 
 describe("capInvalidParams", () => {
   const params = (count: number) =>
@@ -66,5 +73,39 @@ describe("BoundedInvalidParams", () => {
 
     expect(params.empty).toBe(false);
     expect(params.report("order", "order")).toEqual([{ name: "a", reason: "bad" }]);
+  });
+});
+
+// ENG-4100: a name or reason can carry caller text, such as an unknown key, and used to come back in
+// full twice per param.
+describe("clipInvalidParam", () => {
+  test("clips a name and reason past their limits", () => {
+    const key = "k".repeat(1_500_000);
+
+    const clipped = clipInvalidParam({ name: `blocks.0.${key}`, reason: `Unsupported field '${key}'` });
+
+    expect(clipped.name).toHaveLength(V3_INVALID_PARAM_NAME_MAX_CHARS + 1);
+    expect(clipped.reason).toHaveLength(V3_INVALID_PARAM_REASON_MAX_CHARS + 1);
+    expect(clipped.name.endsWith("…")).toBe(true);
+  });
+
+  test("returns a param within the limits as it is", () => {
+    const param = { name: "blocks.0.id", reason: "bad", code: "unsupported_field" as const };
+
+    expect(clipInvalidParam(param)).toBe(param);
+  });
+
+  test("applies to every param a bounded list keeps, and to a capped list", () => {
+    const long = { name: "n".repeat(5000), reason: "r".repeat(5000) };
+    const bounded = new BoundedInvalidParams();
+    bounded.push(() => long);
+
+    for (const param of [
+      ...bounded.report("body", "request"),
+      ...capInvalidParams([long], "body", "request"),
+    ]) {
+      expect(param.name.length).toBeLessThanOrEqual(V3_INVALID_PARAM_NAME_MAX_CHARS + 1);
+      expect(param.reason.length).toBeLessThanOrEqual(V3_INVALID_PARAM_REASON_MAX_CHARS + 1);
+    }
   });
 });

@@ -30,6 +30,9 @@ vi.mock("@formbricks/database", () => ({
     contact: {
       findFirst: vi.fn(),
     },
+    survey: {
+      findMany: vi.fn(),
+    },
     $transaction: vi.fn(),
   },
 }));
@@ -101,6 +104,8 @@ describe("segments lib", () => {
     const mockWhereClause = { AND: [{ workspaceId: mockWorkspaceId }, {}] };
 
     beforeEach(() => {
+      // ENG-6870: the `any`-scope visibility lookup finds no restricted survey unless a test says so.
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
       vi.mocked(prisma.segment.findMany).mockResolvedValue(
         mockSegmentsData as Prisma.Result<typeof prisma.segment, unknown, "findMany">
       );
@@ -259,6 +264,78 @@ describe("segments lib", () => {
           },
         },
       ],
+    });
+
+    // ENG-6870: `any` scope only counts workspace-visible surveys, looked up once and only when needed.
+    test("does not count a restricted survey's display for an `any`-scoped segment", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([
+        buildInteractionSegment("interaction-segment", "haveSeen"),
+      ] as unknown as Prisma.Result<typeof prisma.segment, unknown, "findMany">);
+      vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "survey-restricted" }] as any);
+
+      const result = await getPersonSegmentIds(
+        mockWorkspaceId,
+        mockContactId,
+        mockContactUserId,
+        mockDeviceType,
+        { displays: [{ surveyId: "survey-restricted", createdAt: new Date() }], responses: [] }
+      );
+
+      expect(result).toEqual([]);
+      expect(prisma.survey.findMany).toHaveBeenCalledWith({
+        where: {
+          workspaceId: mockWorkspaceId,
+          id: { in: ["survey-restricted"] },
+          AND: [expect.objectContaining({ OR: expect.arrayContaining([{ visibility: "restricted" }]) })],
+        },
+        select: { id: true },
+      });
+    });
+
+    test("falls back to the DB path for interaction segments when the visibility lookup fails", async () => {
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([
+        buildInteractionSegment("interaction-segment", "haveSeen"),
+        { id: "always-segment", filters: [] },
+      ] as unknown as Prisma.Result<typeof prisma.segment, unknown, "findMany">);
+      vi.mocked(prisma.survey.findMany).mockRejectedValue(new Error("pool timeout"));
+      vi.mocked(prisma.$transaction).mockResolvedValue([{ id: mockContactId }]);
+
+      const result = await getPersonSegmentIds(
+        mockWorkspaceId,
+        mockContactId,
+        mockContactUserId,
+        mockDeviceType,
+        { displays: [{ surveyId: "survey-1", createdAt: new Date() }], responses: [] }
+      );
+
+      // The other segments still resolve; the interaction one is answered by the Prisma query instead.
+      expect(result).toEqual(["always-segment", "interaction-segment"]);
+      expect(segmentFilterToPrismaQuery).toHaveBeenCalledTimes(1);
+    });
+
+    test("skips the visibility lookup when no segment uses `any` scope", async () => {
+      const segment = buildInteractionSegment("specific-segment", "haveSeen");
+      (segment.filters[0].resource.value as { surveyScope: string; surveyIds: string[] }).surveyScope =
+        "specific";
+      (segment.filters[0].resource.value as { surveyScope: string; surveyIds: string[] }).surveyIds = [
+        "survey-1",
+      ];
+      vi.mocked(prisma.segment.findMany).mockResolvedValue([segment] as unknown as Prisma.Result<
+        typeof prisma.segment,
+        unknown,
+        "findMany"
+      >);
+
+      const result = await getPersonSegmentIds(
+        mockWorkspaceId,
+        mockContactId,
+        mockContactUserId,
+        mockDeviceType,
+        { displays: [{ surveyId: "survey-1", createdAt: new Date() }], responses: [] }
+      );
+
+      expect(result).toEqual(["specific-segment"]);
+      expect(prisma.survey.findMany).not.toHaveBeenCalled();
     });
 
     test("should evaluate an interaction-only segment in memory without any DB query", async () => {

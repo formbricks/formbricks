@@ -262,6 +262,13 @@ model Response {
   /// export by default and from Feedback Records, and nothing else: it is never deleted and every
   /// count, list, webhook and integration still includes it (ENG-6780).
   outcome           ResponseOutcome?
+  /// What the respondent was not shown (ENG-6936, ADR 0029): the blocks and elements a show-if kept
+  /// from them, and per element its options, matrix rows and columns, by stable ids. Written by the
+  /// survey while they answer; null means unknown (older responses and bundles), read as before.
+  /// Omitted from reads without a `select` (PRISMA_GLOBAL_OMIT), so it never reaches a v1/v2 payload,
+  /// webhook or integration.
+  /// [ResponseNotShown]
+  notShown          Json?               @map(name: "not_shown")
   tags              TagsOnResponses[]
   quotaLinks        ResponseQuotaLink[]
   /// [ResponseContactAttributes]
@@ -585,6 +592,10 @@ model Survey {
   /// (ENG-3873). null = no conditions, which is what every existing survey keeps.
   showConditions Json?
 
+  /// [SurveyStartLogic] Rules before the first question (ENG-6932): block-rule format, run by the
+  /// survey on load. null = none, which is what every existing survey keeps.
+  startLogic Json?
+
   @@unique([id, workspaceId])
   @@index([workspaceId, updatedAt])
   @@index([workspaceId, ownerId])
@@ -889,6 +900,9 @@ enum OrganizationRole {
   manager
   member
   billing
+  /// Reads only the dashboards of workspaces its teams are granted. Projects to the SpiceDB relation
+  /// `organization#dashboard_viewer` (ADR-0025), which reaches `workspace#dashboard_read` and nothing else.
+  dashboard_viewer
 }
 
 /// Links users to organizations with specific roles.
@@ -1706,6 +1720,8 @@ model Chart {
 /// @property name - Display name of the dashboard
 /// @property workspace - The workspace this dashboard belongs to
 /// @property widgets - Charts on this dashboard
+/// @property filters - The dashboard filters pinned to its top bar, in order: `{ id, field, operator, label }`,
+///                     at most 10 (ADR-0026). Each viewer's picks live in their own browser, not here.
 /// @property createdBy - User who created the dashboard
 model Dashboard {
   id          String            @id @default(cuid())
@@ -1717,6 +1733,7 @@ model Dashboard {
   creator     User?             @relation("dashboardCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
   createdBy   String?
   widgets     DashboardWidget[]
+  filters     Json              @default("[]")
 
   @@unique([workspaceId, name])
   @@index([workspaceId, createdAt])

@@ -1,0 +1,46 @@
+---
+title: "6.2: Cube memory and PostgreSQL shared memory"
+description: "New Cube and PostgreSQL settings that Docker installations add by hand when they upgrade to 6.2."
+icon: "memory"
+---
+
+**Applies to:** the upgrade to 6.2. Part of the [6.2 upgrade guide](/self-hosting/upgrade/versions/6.2).
+**Upgrade impact: Action required** for Docker Compose and one-click installations. Helm gets the settings with the chart.
+
+## What changes
+
+Embedded Data fields and answer filters change how much memory Cube and PostgreSQL use, so the shipped Compose
+file and Helm chart change three settings:
+
+- **Cube compiles fewer data models at a time.** Cube keeps a compiled data model for each set of Embedded Data
+  keys a Feedback Dataset uses. A model takes 2–5 MB, so the default cache now holds 60 models (about 120–300 MB)
+  and at most 30,000 compiled members, instead of Cube's default of 250 models. If you raise
+  `CUBEJS_COMPILER_CACHE_SIZE` or `CUBEJS_MAX_COMPILED_MEMBERS`, raise Cube's memory limit by about 5 MB per extra model.
+- **Cube cancels a query after 60 seconds** (`CUBEJS_DB_QUERY_TIMEOUT=60s`). A chart or filter query that runs
+  longer shows an error instead of holding a database connection. Narrow it with filters or a shorter date range.
+- **PostgreSQL gets 512 MB of shared memory on Docker** (`shm_size: 512mb`). Answer filters run as parallel hash
+  joins in `/dev/shm`, and Docker's default of 64 MB is too small for a large dataset: the query fails with
+  `could not resize shared memory segment`.
+
+## Before you upgrade
+
+| Who | What to do |
+| --- | --- |
+| Docker Compose and one-click | Add `CUBEJS_DB_QUERY_TIMEOUT: 60s` to the `cube` service's `environment`, and `shm_size: 512mb` to the `postgres` service. Updates keep your local `docker-compose.yml`, so these aren't added for you. |
+| Docker Compose and one-click | Set the `cube` service's image to the tag in the release's Compose file (6.2: `ghcr.io/formbricks/cube:1.8.8-3`), and install the release's Cube model files. The new models and the new image belong together. |
+| External PostgreSQL | Give it enough shared memory for parallel queries. Managed databases already have it. |
+| Kubernetes | Nothing. The chart sets the Cube values. |
+
+The Cube cache defaults ship in `cube/cube.js`. Install the Cube model files for the target version as your
+runbook describes: the one-click updater refreshes them from 6.1, and the
+[Docker Compose runbook](/self-hosting/upgrade/docker) has a step for it.
+
+## Check it worked
+
+After the upgrade, recreate both services if you changed them after starting the stack:
+
+```bash
+docker compose up -d --force-recreate cube postgres
+```
+
+Then open a dashboard with an answer filter on a large dataset. It should load without a shared-memory error.

@@ -4,7 +4,7 @@ description: >
   only: name,
 
   metadata, languages and language settings, welcome card, blocks/elements/logic, endings, hidden
-  fields, and variables.
+  fields, variables, and rules before the first question (`startLogic`).
 
   App surveys (`type: app`) additionally accept the `distribution` (display options + triggers) and
   `targeting` (contact segment filters) objects; these are rejected for `link` surveys.
@@ -134,6 +134,22 @@ properties:
     maxItems: 100
     items:
       $ref: ./CreateSurveyVariable.yml
+  startLogic:
+    allOf:
+      - $ref: ./SurveyStartLogic.yml
+    default: []
+  embeddedFields:
+    type: array
+    maxItems: 300
+    description: >-
+      Typed Embedded Data (ADR 0028): the survey's complete set of computed and ingested fields,
+      including workspace library fields linked by `key`. Optional: existing clients keep sending
+      `variables` and `hiddenFields` alone, which work exactly as before. Sent alone, the legacy
+      fields are derived from this list. Sent together with either legacy field, both have to
+      describe the same fields — matched by storage key, comparing a variable's name, type and value
+      — or the request is refused with **400**, `invalid_params` naming each path where they differ. On create, an empty `variables` or `hiddenFields` counts as not sent.
+    items:
+      $ref: ./SurveyEmbeddedFieldInput.yml
   distribution:
     allOf:
       - $ref: ./SurveyDistribution.yml

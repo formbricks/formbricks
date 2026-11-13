@@ -10,11 +10,14 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
+import { useTranslation } from "react-i18next";
 import { ActionClass, Language, OrganizationRole } from "@formbricks/database/prisma-browser";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TSegment } from "@formbricks/types/segment";
+import type { TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import {
   TSurvey,
   TSurveyEditorTabs,
@@ -40,11 +43,16 @@ import type { TSurveyDataRetentionContext } from "@/modules/ee/data-retention/ty
 import { TTeamPermission } from "@/modules/ee/teams/workspace-teams/types/team";
 import { EditPublicSurveyAlertDialog } from "@/modules/survey/components/edit-public-survey-alert-dialog";
 import { ElementsView } from "@/modules/survey/editor/components/elements-view";
+import { EMBEDDED_DATA_CARD_ID } from "@/modules/survey/editor/components/embedded-data-card";
+import { FlowView } from "@/modules/survey/editor/components/flow-view";
 import { LoadingSkeleton } from "@/modules/survey/editor/components/loading-skeleton";
 import { SettingsView } from "@/modules/survey/editor/components/settings-view";
 import { StylingView } from "@/modules/survey/editor/components/styling-view";
 import { SurveyEditorTabs } from "@/modules/survey/editor/components/survey-editor-tabs";
 import { SurveyMenuBar } from "@/modules/survey/editor/components/survey-menu-bar";
+import { describeRuleSummary } from "@/modules/survey/editor/lib/flow-outline-text";
+import { hasSeenFlowTab, markFlowTabSeen } from "@/modules/survey/editor/lib/flow-tab-notice";
+import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { type TEditorWorkspace } from "@/modules/survey/editor/lib/workspace";
 import { TFollowUpEmailToUser } from "@/modules/survey/editor/types/survey-follow-up";
 import { FollowUpsView } from "@/modules/survey/follow-ups/components/follow-ups-view";
@@ -67,6 +75,8 @@ const PREVIEW_DEBOUNCE_MS = 300;
 // Memoized so the editor's per-keystroke re-renders skip the preview while its debounced inputs are
 // unchanged; without it the preview would still re-render (and re-mount the survey) every time.
 const MemoizedPreviewSurvey = memo(PreviewSurvey);
+// The "Logic has moved" flag changes only through this editor, which tracks it in state as well.
+const subscribeToNothing = () => () => {};
 
 interface SurveyEditorProps {
   survey: TSurvey;
@@ -161,6 +171,23 @@ export const SurveyEditor = ({
 
   const [activeView, setActiveView] = useState<TSurveyEditorTabs>("elements");
   const [activeElementId, setActiveElementId] = useState<string | null>(null);
+  // ENG-6929: the one-time "Logic has moved" notice, shown until the Flow tab has been opened once in
+  // this browser. Read from storage on the client only (the server snapshot says "seen", so the notice
+  // never flashes in and out on hydration); opening the Flow tab hides it for this page view even
+  // where storage is refused.
+  const hasSeenFlowInBrowser = useSyncExternalStore(subscribeToNothing, hasSeenFlowTab, () => true);
+  const [hasOpenedFlow, setHasOpenedFlow] = useState(false);
+  if (activeView === "flow" && !hasOpenedFlow) setHasOpenedFlow(true);
+  useEffect(() => {
+    if (activeView === "flow") markFlowTabSeen();
+  }, [activeView]);
+  const showLogicMovedNotice = !hasSeenFlowInBrowser && !hasOpenedFlow;
+  // Set value's field picker, when the survey has no Calculated field: the card where one is added.
+  const openEmbeddedDataCard = useCallback(() => {
+    setActiveView("elements");
+    setActiveElementId(EMBEDDED_DATA_CARD_ID);
+    scrollElementCardIntoView(EMBEDDED_DATA_CARD_ID);
+  }, []);
   // `localSurvey` must stay a structural clone of `survey`: the menu bar compares the two with
   // `isDeepEqual` to gate the draft auto-save, the back-navigation dialog and the beforeunload
   // prompt, and that comparison short-circuits on differing key counts. The inlined
@@ -171,6 +198,10 @@ export const SurveyEditor = ({
   // Only the preview trails; the editor panes keep reading `localSurvey` so input stays immediate.
   const debouncedPreviewSurvey = useDebouncedValue(localSurvey, PREVIEW_DEBOUNCE_MS);
   const [invalidElements, setInvalidElements] = useState<string[] | null>(null);
+  // The Flow tab's open blocks, kept here because the tab unmounts on every switch: coming back keeps
+  // what was opened and closed. It opens with every block collapsed.
+  const [flowExpandedBlockIds, setFlowExpandedBlockIds] = useState<Set<string>>(() => new Set());
+  const flowHandledInvalidRef = useRef<string[] | null>(null);
   const [hasIncompleteTranslations, setHasIncompleteTranslations] = useState(false);
   // Set when a save or publish is blocked by a missing trigger, so the Survey Trigger card can say
   // so (ENG-2581). The card itself stops showing the error once the survey has a trigger.
@@ -309,6 +340,16 @@ export const SurveyEditor = ({
     }
   }, [localSurvey?.languages, selectedLanguageCode]);
 
+  // How the preview's banner reads a rule before the first question that screened it out: as the
+  // Flow tab writes it (ENG-6969 T13 ①).
+  const { t, i18n } = useTranslation();
+  const textLocale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
+  const describeStartRule = useCallback(
+    (rule: TSurveyBlockLogic, previewed: TSurvey) =>
+      describeRuleSummary(rule, previewed, t, { locale: textLocale }),
+    [t, textLocale]
+  );
+
   if (!localSurvey) {
     return <LoadingSkeleton />;
   }
@@ -380,10 +421,24 @@ export const SurveyEditor = ({
               isCxMode={isCxMode}
               locale={locale}
               responseCount={responseCount}
-              setIsCautionDialogOpen={setIsCautionDialogOpen}
               isStorageConfigured={isStorageConfigured}
               quotas={quotas}
               isExternalUrlsAllowed={isExternalUrlsAllowed}
+              showLogicMovedNotice={showLogicMovedNotice}
+              onOpenFlow={() => setActiveView("flow")}
+            />
+          )}
+
+          {activeView === "flow" && (
+            <FlowView
+              localSurvey={localSurvey}
+              setLocalSurvey={setLocalSurveyNonNull}
+              invalidElements={invalidElements}
+              setInvalidElements={setInvalidElements}
+              expandedBlockIds={flowExpandedBlockIds}
+              handledInvalidRef={flowHandledInvalidRef}
+              onAddCalculatedField={openEmbeddedDataCard}
+              setExpandedBlockIds={setFlowExpandedBlockIds}
             />
           )}
 
@@ -467,7 +522,9 @@ export const SurveyEditor = ({
         <aside className="group hidden w-1/3 shrink-0 items-center justify-center overflow-hidden border-l border-slate-200 bg-slate-100 shadow-inner md:flex md:flex-col">
           <MemoizedPreviewSurvey
             survey={previewSurvey}
-            elementId={activeElementId}
+            // The Flow tab's preview is for trying the flow: editing a rule there must not pull it
+            // back to the question last active on the Questions tab.
+            elementId={activeView === "flow" ? null : activeElementId}
             workspace={localWorkspace}
             previewType={previewSurvey.type === "app" ? "modal" : "fullwidth"}
             languageCode={selectedLanguageCode}
@@ -480,6 +537,7 @@ export const SurveyEditor = ({
               activeView === "styling" && previewSurvey.type === "app" ? setStylingAppearance : undefined
             }
             customCss={previewCustomCss}
+            describeStartRule={describeStartRule}
           />
         </aside>
       </div>

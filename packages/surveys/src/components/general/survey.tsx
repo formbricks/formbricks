@@ -26,6 +26,8 @@ import { TUploadFileConfig } from "@formbricks/types/storage";
 import { getLinkSurveyCardMaxWidth } from "@formbricks/types/styling";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
+import { withOptionsShown } from "@formbricks/types/surveys/show-if";
 import { BlockConditional } from "@/components/general/block-conditional";
 import { EndingCard } from "@/components/general/ending-card";
 import { ErrorComponent } from "@/components/general/error-component";
@@ -46,11 +48,32 @@ import { AutoCloseWrapper } from "@/components/wrappers/auto-close-wrapper";
 import { CardlessSurveyLayout } from "@/components/wrappers/cardless-survey-layout";
 import { StackedCardsContainer } from "@/components/wrappers/stacked-cards-container";
 import { ApiClient } from "@/lib/api-client";
-import { advanceFromBlock } from "@/lib/block-flow";
+import {
+  advanceFromBlock,
+  enterBlock,
+  getPageAnswers,
+  getPageVisibility,
+  startSurvey,
+} from "@/lib/block-flow";
 import { type TWebSurveyMeta, createWebSurveyMetaSnapshot } from "@/lib/browser-context";
 import { getCardStartsWithMedia } from "@/lib/card-header";
+import { type TFinishOnLoad, getFinishOnLoadToSend, prepareResponseCreate } from "@/lib/finish-on-load";
 import { getLocalizedValue } from "@/lib/i18n";
 import { INGEST_DROP_MESSAGES, logIngestResult } from "@/lib/ingest-logging";
+import {
+  type TLowQualityFlag,
+  raiseLowQualityFlag,
+  resumeLowQualityFlag,
+  startLowQualityFlag,
+  takeLowQualityFlag,
+} from "@/lib/low-quality-flag";
+import {
+  type TNotShownStep,
+  appendNotShownStep,
+  buildNotShownRecord,
+  getRestorableNotShownSteps,
+  mergeSubmittedAnswers,
+} from "@/lib/not-shown-record";
 import {
   type SerializedSurveyState,
   clearSurveyProgress,
@@ -61,7 +84,12 @@ import {
 import { parseRecallInformation, replaceRecallInfo } from "@/lib/recall";
 import { ResponseQueue } from "@/lib/response-queue";
 import { clearSignatureDrafts, createSignatureDraftStore } from "@/lib/signature-answer";
-import { getPreviousBlockId, getRestorableHistory, isFinishedBlockId } from "@/lib/survey-navigation";
+import {
+  getEntryBlockId,
+  getPreviousBlockId,
+  getRestorableHistory,
+  isFinishedBlockId,
+} from "@/lib/survey-navigation";
 import { SURVEY_INSTRUCTIONS_ID, getSurveyPagePosition, hasSurveyInstructions } from "@/lib/survey-page";
 import { SurveyState } from "@/lib/survey-state";
 import { useOnlineStatus } from "@/lib/use-online-status";
@@ -102,6 +130,23 @@ interface VariableStackEntry {
 const getHoverColor = (styling: SurveyContainerProps["styling"]) =>
   `var(--fb-hover-bg-color, ${styling.inputBgColor?.light ?? "#f8fafc"})`;
 
+/**
+ * The computed fields seeded from their definitions in the EmbeddedData tables (ENG-1837).
+ *
+ * Provably the variable's declared value for every field derived from the legacy shape:
+ * ZSurveyVariable pins a number variable to a number and a text one to a string, and both are
+ * pass-throughs here (see the seeding test in embedded-data-mapping.test.ts). Booleans and dates have
+ * no slot in TResponseVariables and no computed field can carry one.
+ */
+const seedComputedVariables = (
+  embeddedFields: TJsWorkspaceStateSurvey["embeddedFields"]
+): TResponseVariables =>
+  getComputedEmbeddedFields({ embeddedFields }).reduce<TResponseVariables>((acc, { field, link }) => {
+    const seed = coerceToEmbeddedDataType(field.defaultValue, field.dataType);
+    if (typeof seed === "string" || typeof seed === "number") acc[link.storageKey] = seed;
+    return acc;
+  }, {});
+
 // Counts the displays mounted in this page, see `displayKey` in the response queue config.
 let displayCounter = 0;
 
@@ -137,6 +182,7 @@ export function Survey({
   responseCount,
   startAtQuestionId,
   hiddenFieldsRecord,
+  previewPageUrl,
   shouldResetQuestionId,
   fullSizeCards = false,
   autoFocus,
@@ -195,7 +241,109 @@ export function Survey({
   const [hasInteracted, setHasInteracted] = useState(false);
 
   const [localSurvey, setlocalSurvey] = useState<TJsWorkspaceStateSurvey>(survey);
-  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>({});
+
+  /**
+   * The browser-runtime context, snapshotted **once on this survey's first render** and frozen for
+   * the rest of its life. `onResponseCreateOrUpdate` runs on every submit, so reading the runtime
+   * there — as this did before — meant a respondent who rotated their phone or resized the window
+   * mid-survey silently rewrote the viewport the finished response reports.
+   *
+   * Lazy `useRef` initialisation is what makes "first render" the capture point. A survey with a
+   * `delay` is not mounted until the widget actually renders it, so render time is the only moment
+   * this component can reach — and it is the right one anyway: it is when the respondent first sees
+   * the survey, not when some earlier action queued it.
+   */
+  const webSurveyMetaRef = useRef<(() => TWebSurveyMeta) | null>(null);
+  webSurveyMetaRef.current ??= (() => {
+    const snapshot = createWebSurveyMetaSnapshot(isWebEnvironment, visit);
+    // The editor preview's Test values can stand in for the page address (`previewPageUrl`); a live
+    // survey always reports the page it is shown on.
+    return isPreviewMode && previewPageUrl ? () => ({ ...snapshot(), url: previewPageUrl }) : snapshot;
+  })();
+
+  /**
+   * The Embedded Data ingest contract (ENG-1845) applied to whatever the host handed us — URL params
+   * for a link survey, `track({ hiddenFields })` or `setEmbeddedData` for an app one. Every caller
+   * passes a raw bag and this is the one place it is filtered and coerced, so the SDKs stay dumb
+   * pipes and the four mobile ones inherit the rules without shipping a copy (ENG-2472).
+   *
+   * In a lazy initialiser because it belongs to the display-time snapshot: the bag is read once, at
+   * mount, like the browser-runtime context beside it. The values it produces are the ones the
+   * respondent's logic and recall see, so they must not change under them mid-survey.
+   *
+   * Client-side enforcement is for immediate correctness and developer feedback only — the server
+   * re-runs the same contract on ingest and recomputes the flags, because it cannot trust this.
+   */
+  const [ingestedFieldsRecord] = useState<TResponseData>(() => {
+    const elementIds = getElementsFromSurveyBlocks(survey.blocks).map((element) => element.id);
+    const result = applyIngestContract({
+      incoming: hiddenFieldsRecord ?? {},
+      ingestedFields: getIngestedEmbeddedFields(survey),
+      elementIds,
+      // This record is what the queue sends, so cutting here would hand the server a value that
+      // already fits — and the server's re-run is what produces the persisted flags, so the
+      // `truncated` verdict would be lost on the only path the feature actually ships on. The flag is
+      // still raised below for the console; the server does the cutting.
+      enforceSizeLimit: false,
+    });
+    logIngestResult(result);
+
+    // The contract passes question answers through because at a server boundary `incoming` IS
+    // `response.data`. Here it is only the host's bag, so a key naming a question is not an answer —
+    // and keeping it would be worse than useless: `ResponseQueue` merges this record OVER `data` on
+    // every submit, so a hidden field named after a question id would re-apply its display-time
+    // value on top of whatever the respondent actually answered. Prefilling has its own prop.
+    const elementIdSet = new Set(elementIds);
+    return Object.fromEntries(
+      Object.entries(result.data).filter(([key]) => {
+        if (!elementIdSet.has(key)) return true;
+        console.warn(
+          `Formbricks: "${key}" ${INGEST_DROP_MESSAGES.element_id_collision}, so the value was ignored.`
+        );
+        return false;
+      })
+    );
+  });
+
+  /**
+   * How the survey starts (ENG-6932): the rules before the first question run once, as soon as the
+   * survey loads — before the welcome card, and on start-at links too. They read what the survey
+   * loaded with (the ingested hidden fields and URL parameters, the seeded computed fields and the
+   * reserved fields this browser knows), so this lives in a lazy initialiser like the ingest record
+   * above: the decision belongs to the display, and later renders must not re-run it.
+   */
+  const [startOutcome] = useState(() => {
+    const elementIds = getElementsFromSurveyBlocks(survey.blocks).map((element) => element.id);
+    const variables = seedComputedVariables(survey.embeddedFields);
+    const reservedFieldValues = projectClientReservedValues(
+      dropShadowedReservedEntries(
+        RESERVED_FIELD_CATALOG,
+        listShadowingNames(getSurveyEmbeddedFields(survey), elementIds)
+      ),
+      {
+        surveyId: survey.id,
+        language: languageCode === "default" ? (getDefaultLanguageCode(survey) ?? null) : languageCode,
+        data: ingestedFieldsRecord,
+        variables,
+        ttc: {},
+        meta: { ...webSurveyMetaRef.current?.(), action },
+      }
+    );
+    // A start-at link skips the welcome card; an unknown question id opens the first block, as before.
+    const startAtBlockId = startAtQuestionId
+      ? (findBlockByElementId(survey.blocks, startAtQuestionId)?.id ?? survey.blocks[0]?.id)
+      : undefined;
+
+    return startSurvey({
+      survey,
+      startAtBlockId,
+      responseData: ingestedFieldsRecord,
+      variables,
+      selectedLanguage: languageCode,
+      reservedFieldValues,
+    });
+  });
+  const [currentVariables, setCurrentVariables] = useState<TResponseVariables>(startOutcome.variables);
 
   const isLinkSurvey = survey.type === "link";
   const offlinePersistEnabled = offlineSupport && isLinkSurvey && !isPreviewMode && !!appUrl && !!workspaceId;
@@ -323,39 +471,22 @@ export function Survey({
     setlocalSurvey(survey);
   }, [survey]);
 
-  // ENG-1837: computed fields are seeded from their definitions in the EmbeddedData tables. Only
-  // `embeddedFields` is passed (and depended on), since nothing else can change this map.
+  // ENG-1837: computed fields are seeded from their definitions in the EmbeddedData tables. The
+  // first seed is `startOutcome`'s, with what the rules before the first question set on top
+  // (ENG-6932); this re-seeds only when the definitions change afterwards (the editor's preview).
+  const seededEmbeddedFieldsRef = useRef(survey.embeddedFields);
   useEffect(() => {
-    setCurrentVariables(
-      getComputedEmbeddedFields({ embeddedFields: survey.embeddedFields }).reduce<TResponseVariables>(
-        (acc, { field, link }) => {
-          // Provably the variable's declared value for every field derived from the legacy shape:
-          // ZSurveyVariable pins a number variable to a number and a text one to a string, and both
-          // are pass-throughs here (see the seeding test in embedded-data-mapping.test.ts). Booleans
-          // and dates have no slot in TResponseVariables and no computed field can carry one.
-          const seed = coerceToEmbeddedDataType(field.defaultValue, field.dataType);
-          if (typeof seed === "string" || typeof seed === "number") acc[link.storageKey] = seed;
-          return acc;
-        },
-        {}
-      )
-    );
+    if (survey.embeddedFields === seededEmbeddedFieldsRef.current) return;
+    seededEmbeddedFieldsRef.current = survey.embeddedFields;
+    setCurrentVariables(seedComputedVariables(survey.embeddedFields));
   }, [survey.embeddedFields]);
 
   const autoFocusEnabled = autoFocus ?? window.self === window.top;
 
   // Block-based navigation: track current block ID instead of question ID
-  const [blockId, setBlockId] = useState(() => {
-    if (startAtQuestionId) {
-      // If starting at a specific question, find its parent block
-      const startBlock = findBlockByElementId(localSurvey.blocks, startAtQuestionId);
-      return startBlock?.id || localSurvey.blocks[0]?.id;
-    } else if (localSurvey.welcomeCard.enabled) {
-      return "start";
-    }
-
-    return localSurvey.blocks[0]?.id;
-  });
+  // The welcome card, a start-at block, or wherever the rules before the first question sent the
+  // respondent — an ending for a screen-out (see `startOutcome`).
+  const [blockId, setBlockId] = useState(() => startOutcome.firstCardId);
 
   // True once the user navigated between cards (Next/Back/auto-progress). Moving focus into
   // the new card is then a response to a user action (safe under WCAG 3.2.x), unlike the
@@ -375,50 +506,18 @@ export function Survey({
   const [selectedLanguage, setSelectedLanguage] = useState(languageCode);
   const [loadingElement, setLoadingElement] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
-  const isNavigatingBackRef = useRef(false);
+  // The block the survey opened on after passing over blocks hidden by show-if (ENG-6931), or that a
+  // start-logic jump opened (ENG-6932). Nothing precedes it, so it shows no Back button, like the
+  // first block. See `getEntryBlockId`.
+  const [entryBlockId, setEntryBlockId] = useState<string | undefined>(undefined);
   /**
-   * The Embedded Data ingest contract (ENG-1845) applied to whatever the host handed us — URL params
-   * for a link survey, `track({ hiddenFields })` or `setEmbeddedData` for an app one. Every caller
-   * passes a raw bag and this is the one place it is filtered and coerced, so the SDKs stay dumb
-   * pipes and the four mobile ones inherit the rules without shipping a copy (ENG-2472).
-   *
-   * In a lazy initialiser because it belongs to the display-time snapshot: the bag is read once, at
-   * mount, like the browser-runtime context beside it. The values it produces are the ones the
-   * respondent's logic and recall see, so they must not change under them mid-survey.
-   *
-   * Client-side enforcement is for immediate correctness and developer feedback only — the server
-   * re-runs the same contract on ingest and recomputes the flags, because it cannot trust this.
+   * What the survey kept from the respondent, one step per submitted card, next to `history` (ENG-6936).
+   * The record every update sends is folded from them; see `not-shown-record.ts`. The entry step holds
+   * the blocks passed over when the survey opened straight onto a block.
    */
-  const [ingestedFieldsRecord] = useState<TResponseData>(() => {
-    const elementIds = getElementsFromSurveyBlocks(survey.blocks).map((element) => element.id);
-    const result = applyIngestContract({
-      incoming: hiddenFieldsRecord ?? {},
-      ingestedFields: getIngestedEmbeddedFields(survey),
-      elementIds,
-      // This record is what the queue sends, so cutting here would hand the server a value that
-      // already fits — and the server's re-run is what produces the persisted flags, so the
-      // `truncated` verdict would be lost on the only path the feature actually ships on. The flag is
-      // still raised below for the console; the server does the cutting.
-      enforceSizeLimit: false,
-    });
-    logIngestResult(result);
-
-    // The contract passes question answers through because at a server boundary `incoming` IS
-    // `response.data`. Here it is only the host's bag, so a key naming a question is not an answer —
-    // and keeping it would be worse than useless: `ResponseQueue` merges this record OVER `data` on
-    // every submit, so a hidden field named after a question id would re-apply its display-time
-    // value on top of whatever the respondent actually answered. Prefilling has its own prop.
-    const elementIdSet = new Set(elementIds);
-    return Object.fromEntries(
-      Object.entries(result.data).filter(([key]) => {
-        if (!elementIdSet.has(key)) return true;
-        console.warn(
-          `Formbricks: "${key}" ${INGEST_DROP_MESSAGES.element_id_collision}, so the value was ignored.`
-        );
-        return false;
-      })
-    );
-  });
+  const [notShownSteps, setNotShownSteps] = useState<TNotShownStep[]>([]);
+  const [entryNotShownStep, setEntryNotShownStep] = useState<TNotShownStep | null>(null);
+  const isNavigatingBackRef = useRef(false);
   const [responseData, setResponseData] = useState<TResponseData>(ingestedFieldsRecord);
   const [_variableStack, setVariableStack] = useState<VariableStackEntry[]>([]);
 
@@ -542,6 +641,20 @@ export function Survey({
   // Create display on mount. When offline persistence is enabled, wait for progress
   // restoration so we can skip creating a new display if a session was restored.
   const displayCreatedRef = useRef(false);
+  // Set once the display exists (or never will, outside a real deployment), so a screen-out before
+  // the first question creates its response against that display (ENG-6932).
+  const [isDisplaySettled, setIsDisplaySettled] = useState(false);
+  // A finish on load (a screen-out, or every block hidden) is sent at most once, and never for a
+  // session resumed from offline progress.
+  const screenOutHandledRef = useRef(false);
+  // Every block was passed over by show-if as the survey opened (ENG-6931): the finish to send once
+  // the display has settled.
+  const [allHiddenFinish, setAllHiddenFinish] = useState<TFinishOnLoad | null>(null);
+  // A rule marked the response Low quality (ENG-6933): the next write carries `markLowQuality: true`,
+  // once per response (see `low-quality-flag.ts`). Saved with offline progress, so a resumed session
+  // does not send it again. A rule before the first question raises it as the survey loads
+  // (ENG-6952), so it rides on the first write, or on a screen-out's finished response.
+  const lowQualityFlagRef = useRef<TLowQualityFlag>(startLowQualityFlag(startOutcome.markLowQuality));
 
   useEffect(() => {
     if (offlinePersistEnabled && !progressRestored) return;
@@ -556,9 +669,10 @@ export function Survey({
     displayCreatedRef.current = true;
 
     if (appUrl && workspaceId) {
-      createDisplay();
+      void createDisplay().finally(() => setIsDisplaySettled(true));
     } else {
       onDisplay?.();
+      setIsDisplaySettled(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, or once after restore for offline
   }, [progressRestored]);
@@ -688,11 +802,15 @@ export function Survey({
         localSurvey.endings.some((e) => e.id === progress.blockId);
 
       if (blockExists) {
+        // Resuming where the respondent was: the rules before the first question already let them in.
+        screenOutHandledRef.current = true;
         setBlockId(progress.blockId);
         setResponseData(progress.responseData);
         setTtc(progress.ttc);
         setCurrentVariables(progress.currentVariables);
         setHistory(getRestorableHistory(localSurvey, progress.history));
+        setNotShownSteps(getRestorableNotShownSteps(localSurvey, progress.notShownSteps ?? []));
+        lowQualityFlagRef.current = resumeLowQualityFlag(progress.lowQualitySent);
         setSelectedLanguage(progress.selectedLanguage);
 
         // Restore survey state from snapshot
@@ -904,20 +1022,6 @@ export function Survey({
     });
   };
 
-  /**
-   * The browser-runtime context, snapshotted **once on this survey's first render** and frozen for
-   * the rest of its life. `onResponseCreateOrUpdate` runs on every submit, so reading the runtime
-   * there — as this did before — meant a respondent who rotated their phone or resized the window
-   * mid-survey silently rewrote the viewport the finished response reports.
-   *
-   * Lazy `useRef` initialisation is what makes "first render" the capture point. A survey with a
-   * `delay` is not mounted until the widget actually renders it, so render time is the only moment
-   * this component can reach — and it is the right one anyway: it is when the respondent first sees
-   * the survey, not when some earlier action queued it.
-   */
-  const webSurveyMetaRef = useRef<(() => TWebSurveyMeta) | null>(null);
-  webSurveyMetaRef.current ??= createWebSurveyMetaSnapshot(isWebEnvironment, visit);
-
   const getWebSurveyMeta = useCallback((): TWebSurveyMeta => webSurveyMetaRef.current?.() ?? {}, []);
 
   const onResponseCreateOrUpdate = useCallback(
@@ -956,7 +1060,10 @@ export function Survey({
         }
 
         responseQueue.updateSurveyState(surveyState);
+        const { send: markLowQuality, next: lowQualityFlag } = takeLowQualityFlag(lowQualityFlagRef.current);
+        lowQualityFlagRef.current = lowQualityFlag;
         responseQueue.add({
+          ...(markLowQuality && { markLowQuality: true }),
           data: responseUpdate.data,
           ttc: responseUpdate.ttc,
           finished: responseUpdate.finished,
@@ -971,6 +1078,7 @@ export function Survey({
           variables: responseUpdate.variables,
           displayId: surveyState.displayId,
           endingId: responseUpdate.endingId,
+          notShown: responseUpdate.notShown,
           // The filtered record, not the raw prop: `ResponseQueue` merges `hiddenFields` over `data`
           // on every submit, so sending the raw bag here would put the dropped and uncoerced values
           // straight back.
@@ -1075,6 +1183,60 @@ export function Survey({
     [localSurvey, reservedValues, responseData]
   );
 
+  /**
+   * Show-if (ENG-6931): a survey that opens straight onto a block (no welcome card, or a start-at
+   * link) passes over it when it is not shown, running its logic, exactly as the welcome card's
+   * Next does. Values it sets travel with the first page's submit; when every block is passed over,
+   * the survey finishes on the ending at once.
+   */
+  const entryCheckedRef = useRef(false);
+  useEffect(() => {
+    if (entryCheckedRef.current) return;
+    entryCheckedRef.current = true;
+    if (!localSurvey.blocks.some((block) => block.id === blockId)) return;
+
+    const entry = enterBlock({
+      survey: localSurvey,
+      blockId,
+      responseData,
+      variables: currentVariables,
+      selectedLanguage,
+      reservedFieldValues: reservedValues,
+    });
+    // Back hides on the block the survey opened on when a start-logic jump opened it, or when blocks
+    // before it were passed over (ENG-6932, ENG-6931): the respondent saw no page before it.
+    setEntryBlockId(
+      getEntryBlockId({
+        openedBlockId: blockId,
+        startBlockId: startOutcome.startBlockId,
+        nextCardId: entry.nextCardId,
+        skippedBlockIds: entry.skippedBlockIds,
+      })
+    );
+    if (entry.skippedBlockIds.length === 0) return;
+
+    const entryStep: TNotShownStep = {
+      blockId: "",
+      hiddenElementIds: [],
+      skippedBlockIds: entry.skippedBlockIds,
+    };
+    setEntryNotShownStep(entryStep);
+    setCurrentVariables(entry.variables);
+    if (entry.requiredQuestionIds.length > 0) makeQuestionsRequired(entry.requiredQuestionIds);
+    // Travels with the first write, like the values the passed-over blocks set.
+    if (entry.markLowQuality) lowQualityFlagRef.current = raiseLowQualityFlag(lowQualityFlagRef.current);
+    // Sent by the finish-on-load effect below, once the display has settled.
+    if (entry.finished) {
+      setAllHiddenFinish({
+        variables: entry.variables,
+        endingId: entry.endingId,
+        notShown: buildNotShownRecord(localSurvey, [entryStep]),
+      });
+    }
+    setBlockId(entry.nextCardId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once, on the card the survey opened on
+  }, []);
+
   useEffect(() => {
     if (isPreviewMode || !survey.recaptcha?.enabled) return;
 
@@ -1103,6 +1265,59 @@ export function Survey({
       onFinished?.(surveyState?.responseId ?? undefined);
     }
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
+
+  /**
+   * A survey that finishes as it loads: a screen-out before the first question (ENG-6932, T17), or
+   * every block passed over by show-if (ENG-6931). The ending is already on screen. Once the display
+   * has settled, the survey creates the finished response through the create endpoint every first
+   * submit uses: the ending, the hidden fields and URL parameters (the queue merges them into `data`),
+   * the values the rules set and, for passed-over blocks, the not-shown record. With spam protection
+   * on, it fetches a reCAPTCHA token first, as the first submit does.
+   */
+  useEffect(() => {
+    const finish = getFinishOnLoadToSend({
+      isDisplaySettled,
+      alreadyHandled: screenOutHandledRef.current,
+      screenOut: startOutcome.finished
+        ? { variables: startOutcome.variables, endingId: startOutcome.endingId }
+        : null,
+      allHidden: allHiddenFinish,
+    });
+    if (!finish) return;
+    screenOutHandledRef.current = true;
+
+    const submitFinishOnLoad = async () => {
+      const mayCreate = await prepareResponseCreate({
+        isSpamProtectionEnabled: !!isSpamProtectionEnabled,
+        hasResponseId: !!surveyState?.responseId,
+        getRecaptchaToken,
+        setRecaptchaToken: responseQueue
+          ? (token) => responseQueue.setResponseRecaptchaToken(token)
+          : undefined,
+      });
+      if (!mayCreate) {
+        setShowError(true);
+        setErrorType(TResponseErrorCodesEnum.RecaptchaError);
+        return;
+      }
+
+      setIsSurveyFinished(true);
+      await onResponseCreateOrUpdate({
+        data: {},
+        ttc: {},
+        finished: true,
+        variables: finish.variables,
+        language: selectedLanguage,
+        endingId: finish.endingId,
+        ...(finish.notShown && { notShown: finish.notShown }),
+      });
+    };
+
+    submitFinishOnLoad().catch((error: unknown) => {
+      console.error("Formbricks: Failed to send the finished response", error);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, when the display has settled
+  }, [isDisplaySettled, allHiddenFinish]);
 
   // The outgoing card stays visible while the card transition cross-fades, so a
   // control that kept focus would show its focus ring hanging mid-fade before
@@ -1150,6 +1365,11 @@ export function Survey({
       endingId,
       variables: calculatedVariables,
       requiredQuestionIds,
+      submittedData,
+      hiddenElementIds,
+      optionsNotShown,
+      markLowQuality,
+      skippedBlockIds,
     } = advanceFromBlock({
       survey: localSurvey,
       blockId,
@@ -1158,6 +1378,7 @@ export function Survey({
       variables: currentVariables,
       selectedLanguage,
       reservedFieldValues: reservedValues,
+      startBlockId: startOutcome.startBlockId,
     });
 
     if (requiredQuestionIds.length > 0) {
@@ -1169,16 +1390,41 @@ export function Survey({
 
     setIsSurveyFinished(finished);
 
-    onChange(surveyResponseData);
+    // The not-shown record after this submit (ENG-6936): the steps of the cards still on the path,
+    // then this one. Sent whole with the update; the server replaces the stored record with it.
+    const nextNotShownSteps = appendNotShownStep(notShownSteps, history.length, {
+      blockId,
+      hiddenElementIds,
+      skippedBlockIds,
+      optionsNotShown,
+    });
+    setNotShownSteps(nextNotShownSteps);
+    const notShown = buildNotShownRecord(
+      localSurvey,
+      entryNotShownStep ? [entryNotShownStep, ...nextNotShownSteps] : nextNotShownSteps
+    );
+    const notShownElementIds = getNotShownElementIds(notShown, localSurvey.blocks);
+
+    // An answer typed into a question that show-if hid before the submit is dropped, not submitted
+    // (ENG-6931), and so is an earlier answer to anything the record now lists, after Back or a changed
+    // answer (ENG-6936): from the answers later conditions and recall read. The server removes it from
+    // the response.
+    const droppedElementIds = [...hiddenElementIds, ...notShownElementIds];
+    setResponseData((prev) => mergeSubmittedAnswers(prev, submittedData, droppedElementIds));
     onChangeVariables(calculatedVariables);
 
+    // A rule marked the response Low quality (ENG-6933): this submit's write carries the flag. The
+    // respondent sees nothing.
+    if (markLowQuality) lowQualityFlagRef.current = raiseLowQualityFlag(lowQualityFlagRef.current);
+
     onResponseCreateOrUpdate({
-      data: surveyResponseData,
+      data: submittedData,
       ttc: responsettc,
       finished,
       variables: calculatedVariables,
       language: selectedLanguage,
       endingId,
+      notShown,
     });
 
     setBlockId(nextCardId);
@@ -1191,10 +1437,13 @@ export function Survey({
       void saveSurveyProgress({
         surveyId: survey.id,
         blockId: nextCardId,
-        responseData: { ...responseData, ...surveyResponseData },
+        // The same answers the renderer keeps: without the ones the record now lists (ENG-6936).
+        responseData: mergeSubmittedAnswers(responseData, submittedData, droppedElementIds),
         ttc: { ...ttc, ...responsettc },
         currentVariables: calculatedVariables,
         history: newHistory,
+        notShownSteps: nextNotShownSteps,
+        lowQualitySent: lowQualityFlagRef.current.sent,
         selectedLanguage,
         webSurveyMeta: getWebSurveyMeta(),
         surveyStateSnapshot: {
@@ -1360,6 +1609,17 @@ export function Survey({
         }
       } else {
         const block = localSurvey.blocks[blockIdx];
+        // Re-evaluated on every render, so a question appears or hides as the answers above it change,
+        // and its options are filtered live (ENG-6937).
+        const pageVisibility = getPageVisibility({
+          survey: localSurvey,
+          blockId: block?.id ?? "",
+          responseData,
+          variables: currentVariables,
+          selectedLanguage,
+          reservedFieldValues: reservedValues,
+        });
+        const { visibleElementIds, optionsNotShown } = pageVisibility;
         return (
           Boolean(block) && (
             <BlockConditional
@@ -1369,23 +1629,29 @@ export function Survey({
               block={{
                 ...block,
                 elements: block.elements.map((element) =>
-                  parseRecallInformation(element, selectedLanguage, recallValues, currentVariables)
+                  withOptionsShown(
+                    parseRecallInformation(element, selectedLanguage, recallValues, currentVariables),
+                    optionsNotShown[element.id]
+                  )
                 ),
               }}
-              value={responseData}
+              value={getPageAnswers(responseData, pageVisibility)}
               onChange={onChange}
               onSubmit={onSubmit}
               onBack={onBack}
               ttc={ttc}
               setTtc={setTtc}
               onFileUpload={onFileUpload}
-              isFirstBlock={block.id === localSurvey.blocks[0]?.id}
+              isFirstBlock={
+                block.id === localSurvey.blocks[0]?.id || (history.length === 0 && block.id === entryBlockId)
+              }
+              visibleElementIds={visibleElementIds}
               skipPrefilled={skipPrefilled && !isNavigatingBackRef.current}
               prefilledResponseData={offset === 0 ? prefillResponseData : undefined}
               isLastBlock={block.id === localSurvey.blocks[localSurvey.blocks.length - 1].id}
               languageCode={selectedLanguage}
               autoFocusEnabled={autoFocusEnabled}
-              shouldFocusOnMount={autoFocusEnabled || hasUserNavigatedRef.current}
+              shouldFocusOnMount={offset === 0 && (autoFocusEnabled || hasUserNavigatedRef.current)}
               isBackButtonHidden={localSurvey.isBackButtonHidden}
               isAutoProgressingEnabled={localSurvey.isAutoProgressingEnabled}
               onOpenExternalURL={onOpenExternalURL}

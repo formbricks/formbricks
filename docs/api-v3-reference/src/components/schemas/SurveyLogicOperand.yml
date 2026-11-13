@@ -15,5 +15,24 @@ oneOf:
           - type: array
             items:
               type: string
+        description: >-
+          On a matrix row condition, the 0-based position of the column (a list of positions for
+          `isAnyOf`). Kept next to `columnId` / `columnIds` for the previous release, which reads
+          positions only; every write rewrites it from the ids.
+      columnId:
+        type: string
+        minLength: 1
+        description: >-
+          On a matrix row condition, the id of the column. Read before `value` and wins when the two
+          disagree, so the condition survives reordering. Must be a column of the matrix. Optional:
+          when only `value` is sent, the id is filled in from the position on write.
+      columnIds:
+        type: array
+        items:
+          type: string
+          minLength: 1
+        description: >-
+          On a matrix row condition with `isAnyOf`, the ids of the columns `value` lists. Read before
+          `value`, like `columnId`.
     additionalProperties: false
   - $ref: ./SurveyDynamicReference.yml

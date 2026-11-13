@@ -15,6 +15,7 @@ import {
   resolveV3ContactsEntitlement,
   setV3SurveySegmentFilters,
 } from "./targeting";
+import { collectV3TargetingAttributeKeys } from "./targeting-references";
 
 vi.mock("server-only", () => ({}));
 
@@ -202,7 +203,7 @@ const mockAttributeKeys = (keys: string[]): void => {
 
 const mockSegments = (ids: string[]): void => {
   vi.mocked(getSegments).mockResolvedValueOnce(
-    ids.map((id) => ({ id })) as Awaited<ReturnType<typeof getSegments>>
+    ids.map((id) => ({ id, filters: [] })) as unknown as Awaited<ReturnType<typeof getSegments>>
   );
 };
 
@@ -366,6 +367,34 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
     expect(getSegments).toHaveBeenCalledWith("ws_1", {});
   });
 
+  // ENG-6870: a nested segment reads the surveys its own filters name.
+  test("rejects a segment whose filters read a survey hidden from the caller", async () => {
+    vi.mocked(getSegments).mockResolvedValueOnce([
+      { id: "seg_known", filters: [surveyInteractionNode("n1", "specific", ["clrestrictedsurvey0000001"])] },
+    ] as unknown as Awaited<ReturnType<typeof getSegments>>);
+    vi.mocked(getExistingWorkspaceSurveyIds)
+      .mockResolvedValueOnce(new Set(["clrestrictedsurvey0000001"]))
+      .mockResolvedValueOnce(new Set());
+    const filters = [segmentFilterNode("f1", "seg_known")] as unknown as TFilterTree;
+
+    await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).rejects.toMatchObject({
+      invalidParams: [
+        {
+          name: "targeting.filters.0.resource.root.segmentId",
+          reason: "Segment 'seg_known' filters on a survey you don't have access to",
+          code: "invalid_reference",
+          identifier: "seg_known",
+        },
+      ],
+    });
+    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith("ws_1", ["clrestrictedsurvey0000001"], {});
+    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(
+      "ws_1",
+      ["clrestrictedsurvey0000001"],
+      VISIBLE
+    );
+  });
+
   test("rejects a segment filter referencing an unknown or foreign segment", async () => {
     mockSegments(["seg_known"]);
     const filters = [segmentFilterNode("f1", "seg_other_workspace")] as unknown as TFilterTree;
@@ -402,15 +431,19 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
     // The lookup applies the clause; a restricted survey the caller cannot see is simply not returned.
     mockSurveyRefs([]);
     const filters = [
-      surveyInteractionNode("f1", "specific", ["survey_restricted"]),
+      surveyInteractionNode("f1", "specific", ["clrestrictedsurvey0000001"]),
     ] as unknown as TFilterTree;
 
     await expect(assertV3SurveyTargetingFilterReferences("ws_1", filters, VISIBLE)).rejects.toMatchObject({
       invalidParams: [
-        expect.objectContaining({ code: "invalid_reference", identifier: "survey_restricted" }),
+        expect.objectContaining({ code: "invalid_reference", identifier: "clrestrictedsurvey0000001" }),
       ],
     });
-    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith("ws_1", ["survey_restricted"], VISIBLE);
+    expect(getExistingWorkspaceSurveyIds).toHaveBeenCalledWith(
+      "ws_1",
+      ["clrestrictedsurvey0000001"],
+      VISIBLE
+    );
   });
 
   test("rejects a survey interaction filter referencing an unknown or foreign survey", async () => {
@@ -429,5 +462,28 @@ describe("assertV3SurveyTargetingFilterReferences", () => {
         },
       ],
     });
+  });
+});
+
+describe("collectV3TargetingAttributeKeys", () => {
+  test("names each attribute key once, nested groups and person filters on userId included", () => {
+    const filters = [
+      attributeFilterNode("a", "plan"),
+      {
+        id: "group",
+        connector: "and",
+        resource: [attributeFilterNode("b", "country"), attributeFilterNode("c", "plan")],
+      },
+      personFilterNode("d", "userId"),
+      segmentFilterNode("e", "segment_1"),
+      deviceFilterNode("f", "phone"),
+      surveyInteractionNode("g", "specific", ["survey_1"]),
+    ] as unknown as TFilterTree;
+
+    expect(collectV3TargetingAttributeKeys(filters)).toEqual(["plan", "country", "userId"]);
+  });
+
+  test("names none for a survey shown to everyone", () => {
+    expect(collectV3TargetingAttributeKeys(EMPTY_FILTERS)).toEqual([]);
   });
 });

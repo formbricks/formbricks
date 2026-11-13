@@ -1,0 +1,316 @@
+import "server-only";
+import { logger } from "@formbricks/logger";
+import { generateOrganizationAIObject } from "@/lib/ai/service";
+import { getAITimeoutMs } from "@/lib/ai/timeout";
+import { AI_TRACING_FEATURE } from "@/lib/posthog/ai-tracing-feature";
+import type { TImportPlanGenerate } from "../core/ai-plan";
+import type { TSurveyImportAssembly, TSurveyImportDraft } from "../core/draft";
+import { SurveyImportFailedError, noQuestionsPlanned } from "../core/errors";
+import { yieldToOthers } from "../core/event-loop";
+import { checkImportDraftInSlices, elementsAtFault } from "../core/final-gate";
+import { fitDraftToCreateLimit } from "../core/fit-draft";
+import { getImportedSurveyName, getImporterTranslate } from "../core/imported-survey-name";
+import type { TSurveyImportResult, TSurveyImportRunParams } from "../core/lane";
+import { type TSurveyImportPipelineIssue, buildSurveyImportReport } from "../core/report";
+import { sanitizeName } from "../core/sanitize-text";
+import { SURVEY_IMPORT_DOCUMENT_CALL_TIMEOUT_MS, SURVEY_IMPORT_MAX_QUESTIONS } from "../limits";
+import { planDocumentImport } from "./ai-plan";
+import { assembleDocumentDraft } from "./assemble";
+import { describeDocumentQuestion } from "./issue-subject";
+import {
+  type DocumentPlanContext,
+  type TDocumentPlannedEntry,
+  collapseWhitespace,
+  orderedEntries,
+} from "./plan-checks";
+import type { TPreparedDocumentImport } from "./prepare";
+
+/**
+ * The document import pipeline (ENG-6852): a question list read into the keyed model in, a v3 create
+ * document and the import report out. It is the Excel, CSV and Word lane (`documentImportLane`);
+ * nothing here knows about HTTP or about the kind of file, only about the model each reader builds.
+ *
+ * - `prepareDocumentImport` (`prepare.ts`) reads the file into the model and holds it to the AI ceiling
+ *   before the stream opens, in the upload's worker thread: past 240k
+ *   characters, or more chunks than the AI budget plans, the file is refused with a 422 and the dialog
+ *   points at MCP (decision 18);
+ * - `runDocumentImport` plans (`ai`), refuses a plan of more than 200 questions with the same pointer,
+ *   then names, assembles and gates the draft (`assembling`).
+ *
+ * The AI never writes survey text (decision 17): the plan names cells and quotes the parts of a cell it
+ * splits, and only what is found in the cell word for word is used, copied from the cell.
+ */
+
+/** A document lane's run, plus the model call an eval script or a test swaps in. */
+export interface TRunDocumentImportParams extends TSurveyImportRunParams<TPreparedDocumentImport> {
+  generate?: TImportPlanGenerate;
+}
+
+function organizationGenerate(params: TRunDocumentImportParams): TImportPlanGenerate {
+  const aiTracing = params.userId
+    ? { distinctId: params.userId, feature: AI_TRACING_FEATURE.SurveyImport, workspaceId: params.workspaceId }
+    : undefined;
+  // Not strict: the plan schemas default the fields a JSON-object provider may leave out, which a
+  // strict-decoding provider refuses. The answer is still validated against the schema, and the lane's
+  // checks judge every field after it.
+  return (request) =>
+    generateOrganizationAIObject({
+      organizationId: params.organizationId,
+      aiTracing,
+      ...request,
+      strictSchema: false,
+    });
+}
+
+/** The file name without its extension: `Visitor survey.xlsx` → `Visitor survey`. */
+const withoutExtension = (fileName: string): string => {
+  const dot = fileName.lastIndexOf(".");
+  return dot > 0 ? fileName.slice(0, dot) : fileName;
+};
+
+/**
+ * The survey's name (decision 20): the title the file declares, else the title line the AI found, else
+ * the file name — sanitized, capped, then "(imported N)".
+ */
+async function nameDraft(
+  prepared: TPreparedDocumentImport,
+  titleCell: string | null,
+  params: Pick<TRunDocumentImportParams, "workspaceId" | "userId">
+): Promise<string> {
+  const candidates = [
+    prepared.model.title,
+    titleCell === null ? null : (prepared.model.cells.get(titleCell) ?? null),
+    withoutExtension(prepared.fileName),
+  ];
+  const base =
+    candidates
+      .map((candidate) => (candidate === null ? "" : sanitizeName(collapseWhitespace(candidate))))
+      .find((candidate) => candidate.length > 0) ?? "";
+  return getImportedSurveyName(
+    params.workspaceId,
+    base || "Imported survey",
+    await getImporterTranslate(params.userId)
+  );
+}
+
+const countQuestions = (entries: readonly TDocumentPlannedEntry[]): number =>
+  entries.filter((entry) => entry.kind !== "welcome" && entry.kind !== "ending").length;
+
+const countElements = (document: TSurveyImportDraft): number =>
+  document.blocks.reduce((count, block) => count + block.elements.length, 0);
+
+/**
+ * Whether a matrix was read off a table's grid (ENG-6853): its texts come from more than one row of a
+ * table in a document of flowing text, as a Word question laid out as a table does. A matrix whose
+ * texts all sit in one row — a questionnaire kept in a table, a row per question — is not.
+ */
+const isTableMatrix = (context: DocumentPlanContext, entry: TDocumentPlannedEntry): boolean => {
+  if (entry.kind !== "matrix") return false;
+  const rows = new Set<number>();
+  for (const cell of entry.cells) {
+    const index = context.cellLineAt(cell);
+    if (index !== undefined && context.model.lines[index]?.table !== undefined) rows.add(index);
+  }
+  return rows.size > 1;
+};
+
+/** What the file holds that the draft cannot: the pictures and drawings, and the tables made matrices. */
+const documentNotes = (
+  context: DocumentPlanContext,
+  entries: readonly TDocumentPlannedEntry[],
+  droppedRefs: ReadonlySet<string>
+): TSurveyImportPipelineIssue[] => {
+  const notes: TSurveyImportPipelineIssue[] = entries
+    .filter((entry) => !droppedRefs.has(entry.ref) && isTableMatrix(context, entry))
+    .map((entry) => ({
+      code: "table_as_matrix",
+      severity: "warning",
+      questionTag: entry.ref,
+      questionRef: entry.ref,
+    }));
+  const { images } = context.model;
+  if (images > 0) notes.push({ code: "images_not_imported", severity: "warning", params: { count: images } });
+  return notes;
+};
+
+/**
+ * Assemble the draft and hold it to the create's checks. A problem with elements drops them (reported)
+ * and the draft is assembled again; a problem anywhere else is the logic built from the file's routing,
+ * so the draft is assembled again without it, every rule reported as not imported. Still failing, the
+ * import fails. Only the problems' paths are logged: their reasons can quote the file.
+ */
+async function assembleCheckedDraft(
+  build: (options: {
+    excludedRefs: ReadonlySet<string>;
+    withoutLogic: boolean;
+  }) => Promise<TSurveyImportAssembly>,
+  signal: AbortSignal
+): Promise<{ assembly: TSurveyImportAssembly; dropped: TSurveyImportPipelineIssue[] }> {
+  const pause = () => yieldToOthers(signal);
+  let excludedRefs = new Set<string>();
+  let withoutLogic = false;
+
+  // At most three passes: as built, without the elements at fault, and without logic.
+  for (let pass = 0; pass < 3; pass += 1) {
+    const assembly = await build({ excludedRefs, withoutLogic });
+    await pause();
+    const problems = await checkImportDraftInSlices(assembly.document, pause);
+    if (problems.length === 0) {
+      return {
+        assembly,
+        dropped: [...excludedRefs].map((ref) => ({
+          code: "question_skipped" as const,
+          severity: "warning" as const,
+          questionTag: ref,
+          questionRef: ref,
+          params: { cause: "validation_failed" },
+        })),
+      };
+    }
+
+    const names = problems.slice(0, 20).map((problem) => problem.name);
+    const atFault = elementsAtFault(problems);
+    if (atFault) {
+      excludedRefs = new Set([
+        ...excludedRefs,
+        ...atFault.flatMap(([block, element]) => assembly.elementRefs[block]?.[element] ?? []),
+      ]);
+      logger.warn({ invalidParamNames: names }, "Document import dropped elements the create would refuse");
+    } else if (withoutLogic) {
+      break;
+    } else {
+      withoutLogic = true;
+      logger.warn({ invalidParamNames: names }, "Document import left out logic the create would refuse");
+    }
+    await pause();
+  }
+
+  throw new SurveyImportFailedError("draft_invalid");
+}
+
+/** Plan and assemble the document. */
+export async function runDocumentImport(
+  params: TRunDocumentImportParams
+): Promise<TSurveyImportResult<TSurveyImportDraft>> {
+  const { prepared, workspaceId, signal, onProgress } = params;
+  const deadline = performance.now() + params.deadlineMs;
+
+  signal.throwIfAborted();
+  onProgress("ai");
+  const planned = await planDocumentImport({
+    model: prepared.model,
+    generate: params.generate ?? organizationGenerate(params),
+    signal,
+    deadline,
+    callTimeoutMs: getAITimeoutMs(SURVEY_IMPORT_DOCUMENT_CALL_TIMEOUT_MS),
+  });
+
+  signal.throwIfAborted();
+  onProgress("assembling");
+  const { entries, overlapping } = orderedEntries(planned.context, planned.plan);
+  const questionCount = countQuestions(entries);
+  // The AI ceiling on questions (decision 18): a survey this large is imported through MCP instead.
+  // Planning already stopped once its answers held more (`questionCeiling`); this holds it to the plan
+  // as checked. A line no call answered for may be a question too, so a file that could pass the
+  // ceiling with them is refused rather than imported short: a short draft of a file too large to
+  // import would look like a complete one.
+  if (questionCount > SURVEY_IMPORT_MAX_QUESTIONS) throw new SurveyImportFailedError("too_many_questions");
+  if (questionCount + planned.unreadLines > SURVEY_IMPORT_MAX_QUESTIONS) {
+    throw new SurveyImportFailedError("partly_unread");
+  }
+  if (questionCount === 0) throw noQuestionsPlanned(planned);
+  const languages = planned.context.languages;
+  if (!languages) throw new SurveyImportFailedError("no_questions");
+
+  const name = await nameDraft(prepared, planned.context.titleCell, params);
+  signal.throwIfAborted();
+
+  const { assembly, dropped } = await assembleCheckedDraft(
+    ({ excludedRefs, withoutLogic }) =>
+      assembleDocumentDraft({ entries, languages, name, workspaceId, excludedRefs, withoutLogic, signal }),
+    signal
+  );
+  const labelOf = (ref: string) => entries.find((entry) => entry.ref === ref)?.label ?? ref;
+  // A line about a question names it by the ID the file gives it, where it is and what it says, never
+  // by the import's own key for it (`R5`), which is what an issue carries until here (ENG-7070).
+  const nameQuestion = ({
+    questionTag,
+    ...issue
+  }: TSurveyImportPipelineIssue): TSurveyImportPipelineIssue => {
+    if (issue.questionRef === undefined) return questionTag === undefined ? issue : { ...issue, questionTag };
+    const { label, ...subject } = describeDocumentQuestion(issue.questionRef, {
+      entries,
+      model: prepared.model,
+      defaultLanguage: languages.codes[0],
+    });
+    return { ...issue, ...(label ? { questionTag: label } : {}), ...subject };
+  };
+  // The dialog sends the draft to the create, whose body has a size limit: past it, languages and then
+  // trailing questions are cut, and the cut draft is checked again.
+  await yieldToOthers(signal);
+  const fitted = fitDraftToCreateLimit(assembly, labelOf);
+  if (countElements(assembly.document) === 0) throw new SurveyImportFailedError("no_questions");
+  if (fitted.dropped.length > 0) {
+    const problems = await checkImportDraftInSlices(assembly.document, () => yieldToOthers(signal));
+    if (problems.length > 0) throw new SurveyImportFailedError("draft_invalid");
+  }
+
+  const skippedSheets: TSurveyImportPipelineIssue[] =
+    prepared.model.skippedParts.length > 0
+      ? [
+          {
+            code: "sheets_skipped",
+            severity: "info",
+            params: { sheets: prepared.model.skippedParts.join(", ") },
+          },
+        ]
+      : [];
+  // Only a file read as Windows-1252 says so: that encoding is the one guess (bytes that are not valid
+  // UTF-8, and carry no UTF-16 byte-order mark), so its accents may be wrong, and saving it as CSV UTF-8
+  // is the fix. A file read as UTF-8 or UTF-16 was read as it was written.
+  const encodingNote: TSurveyImportPipelineIssue[] =
+    prepared.model.encoding === "windows-1252"
+      ? [{ code: "file_encoding", severity: "info", params: { encoding: prepared.model.encoding } }]
+      : [];
+  const notes = documentNotes(
+    planned.context,
+    entries,
+    new Set(dropped.flatMap((issue) => (issue.questionRef === undefined ? [] : [issue.questionRef])))
+  );
+  // Lines no call answered for: the draft may be missing questions, which the review says up front.
+  const unreadNote: TSurveyImportPipelineIssue[] =
+    planned.unreadLines > 0
+      ? [{ code: "lines_unread", severity: "warning", params: { count: planned.unreadLines } }]
+      : [];
+  const issues = [
+    ...unreadNote,
+    ...encodingNote,
+    ...skippedSheets,
+    ...notes,
+    ...planned.issues,
+    // An entry whose cells an earlier one read: reported like any other dropped question.
+    ...overlapping.map(
+      (ref): TSurveyImportPipelineIssue => ({
+        code: "question_skipped",
+        severity: "warning",
+        questionTag: ref,
+        questionRef: ref,
+        params: { cause: "cells_taken" },
+      })
+    ),
+    ...dropped,
+    ...assembly.issues,
+  ];
+
+  return {
+    // No `references`: a document points at nothing outside itself, so the dialog creates it through
+    // `createSurveyFromImportDraft`, not the Formbricks file's create.
+    payload: assembly.document,
+    report: buildSurveyImportReport({
+      source: { kind: prepared.model.kind, fileName: prepared.fileName },
+      document: assembly.document,
+      issues: [...issues.filter(fitted.keepIssue), ...fitted.dropped].map(nameQuestion),
+    }),
+    ...(planned.calls > 0 ? { usage: planned.usage } : {}),
+  };
+}

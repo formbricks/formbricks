@@ -29,6 +29,7 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
+import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   mockActionClass,
@@ -47,12 +48,26 @@ import {
   getSurveys,
   getSurveysByActionClassId,
   getSurveysBySegmentId,
+  getSurveysWithCustomCssAndOwnerName,
   loadNewSegmentInSurvey,
+  selectSurveyWithCustomCss,
   updateSurvey,
   updateSurveyInternal,
 } from "./service";
 
 const WORKSPACE_CREATION_FACTS = { ownerId: null, visibility: "workspace" } as const;
+const OWNER_TARGETING_ACTOR = {
+  enforced: true,
+  isOrganizationAdmin: true,
+  kind: "user",
+  userId: "owner",
+} as const;
+const MEMBER_TARGETING_ACTOR = {
+  enforced: true,
+  isOrganizationAdmin: false,
+  kind: "user",
+  userId: "member",
+} as const;
 
 const SURVEY_SERVICE_TEST_TIMEOUT_MS = 30_000;
 
@@ -75,7 +90,13 @@ vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
   scheduleFeedbackSourceReconciliation: vi.fn(),
 }));
 
+vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
+  getIsQuotasEnabled: vi.fn(),
+}));
+
 beforeEach(() => {
+  vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
   prisma.survey.count.mockResolvedValue(1);
   // createSurvey and updateSurveyInternal wrap their core writes in prisma.$transaction; run the
   // callback with the same mocked client so per-test prisma.survey/segment mocks still apply inside
@@ -357,6 +378,62 @@ describe("Tests for getSurveys", () => {
   });
 });
 
+describe("Tests for getSurveysWithCustomCssAndOwnerName (ENG-6861)", () => {
+  const visibleWhere = { visibility: "workspace" as const };
+
+  test("reads the batch in one query scoped to the workspace and the caller's visibility", async () => {
+    const surveyIds = [createId(), createId()];
+    prisma.survey.findMany.mockResolvedValueOnce([
+      { ...mockSurveyOutput, owner: { name: "Grace" } },
+    ] as never);
+
+    const surveys = await getSurveysWithCustomCssAndOwnerName(mockId, surveyIds, visibleWhere);
+
+    expect(surveys).toEqual([{ survey: mockTransformedSurveyOutput, ownerName: "Grace" }]);
+    expect(prisma.survey.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.survey.findMany).toHaveBeenCalledWith({
+      where: { id: { in: surveyIds }, workspaceId: mockId, AND: [visibleWhere] },
+      select: { ...selectSurveyWithCustomCss, owner: { select: { name: true } } },
+    });
+  });
+
+  test("adds no visibility clause when enforcement contributes none, and reads a missing owner as null", async () => {
+    const surveyIds = [createId()];
+    prisma.survey.findMany.mockResolvedValueOnce([{ ...mockSurveyOutput, owner: null }] as never);
+
+    const surveys = await getSurveysWithCustomCssAndOwnerName(mockId, surveyIds, {});
+
+    expect(surveys).toEqual([{ survey: mockTransformedSurveyOutput, ownerName: null }]);
+    expect(vi.mocked(prisma.survey.findMany).mock.calls[0]?.[0]?.where).toEqual({
+      id: { in: surveyIds },
+      workspaceId: mockId,
+    });
+  });
+
+  test("answers an empty batch without querying", async () => {
+    expect(await getSurveysWithCustomCssAndOwnerName(mockId, [], visibleWhere)).toEqual([]);
+    expect(prisma.survey.findMany).not.toHaveBeenCalled();
+  });
+
+  test("rejects a malformed survey id", async () => {
+    await expect(getSurveysWithCustomCssAndOwnerName(mockId, ["123#"], visibleWhere)).rejects.toThrow(
+      ValidationError
+    );
+  });
+
+  test("maps a known Prisma error to a DatabaseError", async () => {
+    prisma.survey.findMany.mockRejectedValueOnce(
+      new Prisma.PrismaClientKnownRequestError("Mock error message", {
+        code: PrismaErrorType.UniqueConstraintViolation,
+        clientVersion: "0.0.1",
+      })
+    );
+    await expect(getSurveysWithCustomCssAndOwnerName(mockId, [createId()], visibleWhere)).rejects.toThrow(
+      DatabaseError
+    );
+  });
+});
+
 describe("Tests for updateSurvey", () => {
   beforeEach(() => {
     vi.mocked(getActionClasses).mockResolvedValueOnce([mockActionClass] as TActionClass[]);
@@ -452,6 +529,49 @@ describe("Tests for updateSurvey", () => {
           ]),
         })
       );
+    });
+
+    describe("the quotas' matrix conditions (ENG-6934)", () => {
+      const matrixBlock = {
+        id: "clmatrixblock0000000000001",
+        name: "Grid",
+        elements: [
+          {
+            id: "grid",
+            type: "matrix",
+            headline: { default: "Rate" },
+            required: false,
+            shuffleOption: "none",
+            rows: [{ id: "netflix", label: { default: "Netflix" } }],
+            columns: [{ id: "good", label: { default: "Good" } }],
+          },
+        ],
+      };
+      const withMatrix = {
+        ...updateSurveyInput,
+        blocks: [...updateSurveyInput.blocks, matrixBlock],
+      } as unknown as TSurvey;
+
+      test("follows a matrix reorder where quotas are licensed", async () => {
+        prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.surveyQuota.findMany.mockResolvedValueOnce([]);
+
+        await updateSurvey(withMatrix);
+
+        expect(getIsQuotasEnabled).toHaveBeenCalledWith(mockOrganizationOutput.id);
+        expect(prisma.surveyQuota.findMany).toHaveBeenCalled();
+      });
+
+      test("leaves the quotas alone where quotas are not licensed", async () => {
+        vi.mocked(getIsQuotasEnabled).mockResolvedValue(false);
+        prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+        prisma.survey.update.mockResolvedValueOnce(mockSurveyOutput);
+
+        await updateSurvey(withMatrix);
+
+        expect(prisma.surveyQuota.findMany).not.toHaveBeenCalled();
+      });
     });
 
     // Note: Language handling tests (for languages.length > 0 fix) are covered in
@@ -1178,6 +1298,41 @@ describe("Tests for updateSurvey", () => {
     });
   });
 
+  // ENG-6935: a legacy write is validated against the rows it leaves the survey with, once they are
+  // read. Without that check it is not validated at all.
+  test("a legacy write whose logic sets a variable the survey doesn't have is refused, and not written", async () => {
+    prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+    const [firstBlock, ...otherBlocks] = updateSurveyInput.blocks;
+    const dangling = {
+      ...updateSurveyInput,
+      blocks: [
+        {
+          ...firstBlock,
+          logic: [
+            {
+              id: "cldanglingrule000000000001",
+              conditions: { id: "cldanglinggroup00000000001", connector: "and", conditions: [] },
+              actions: [
+                {
+                  id: "cldanglingaction0000000001",
+                  objective: "calculate",
+                  variableId: "clnosuchvariable0000000001",
+                  operator: "assign",
+                  value: { type: "static", value: 1 },
+                },
+              ],
+            },
+          ],
+        },
+        ...otherBlocks,
+      ],
+    } as TSurvey;
+    expect(dangling.embeddedFields).toBeUndefined();
+
+    await expect(updateSurvey(dangling)).rejects.toThrow(ValidationError);
+    expect(prisma.survey.update).not.toHaveBeenCalled();
+  });
+
   describe("reserved names for newly declared fields", () => {
     test("rejects a save that ADDS a hidden field named after a reserved field, and does not write", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({
@@ -1589,6 +1744,7 @@ describe("Tests for createSurvey", () => {
 
       const result = await createSurvey(mockWorkspaceId, mockCreateSurveyInput, {
         creationFacts: WORKSPACE_CREATION_FACTS,
+        targetingActor: OWNER_TARGETING_ACTOR,
       });
 
       expect(prisma.survey.create).toHaveBeenCalled();
@@ -1607,7 +1763,7 @@ describe("Tests for createSurvey", () => {
           questions: undefined,
           blocks: updateSurveyInput.blocks,
         } as never,
-        { creationFacts: WORKSPACE_CREATION_FACTS }
+        { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
       );
 
       const { data } = prisma.survey.create.mock.calls[0][0] as {
@@ -1627,7 +1783,10 @@ describe("Tests for createSurvey", () => {
       await createSurvey(
         mockWorkspaceId,
         { ...mockCreateSurveyInput, visibility: "workspace", ownerId: "body-owner" } as never,
-        { creationFacts: { ownerId: "user-1", visibility: "restricted" } }
+        {
+          creationFacts: { ownerId: "user-1", visibility: "restricted" },
+          targetingActor: OWNER_TARGETING_ACTOR,
+        }
       );
 
       const { data } = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
@@ -1637,7 +1796,10 @@ describe("Tests for createSurvey", () => {
       prisma.survey.create.mockClear();
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.survey.create.mockResolvedValueOnce({ ...mockSurveyOutput });
-      await createSurvey(mockWorkspaceId, mockCreateSurveyInput, { creationFacts: WORKSPACE_CREATION_FACTS });
+      await createSurvey(mockWorkspaceId, mockCreateSurveyInput, {
+        creationFacts: WORKSPACE_CREATION_FACTS,
+        targetingActor: OWNER_TARGETING_ACTOR,
+      });
       const { data: ownerless } = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
       expect(ownerless).toMatchObject({ visibility: "workspace" });
       expect(ownerless).not.toHaveProperty("owner");
@@ -1674,6 +1836,7 @@ describe("Tests for createSurvey", () => {
 
       const result = await createSurvey(mockWorkspaceId, mockCreateSurveyInput, {
         creationFacts: WORKSPACE_CREATION_FACTS,
+        targetingActor: OWNER_TARGETING_ACTOR,
       });
 
       expect(result.embeddedFields).toEqual([
@@ -1730,7 +1893,7 @@ describe("Tests for createSurvey", () => {
             },
           ],
         } as never,
-        { creationFacts: WORKSPACE_CREATION_FACTS }
+        { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
       );
 
       const createArg = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
@@ -1791,7 +1954,7 @@ describe("Tests for createSurvey", () => {
             },
           ],
         } as never,
-        { creationFacts: WORKSPACE_CREATION_FACTS }
+        { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
       );
 
       const createArg = prisma.survey.create.mock.calls[0][0] as { data: Record<string, unknown> };
@@ -1858,7 +2021,7 @@ describe("Tests for createSurvey", () => {
               },
             ],
           } as never,
-          { creationFacts: WORKSPACE_CREATION_FACTS }
+          { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
         )
       ).rejects.toThrow(/unique/);
       expect(prisma.survey.create).not.toHaveBeenCalled();
@@ -1878,7 +2041,7 @@ describe("Tests for createSurvey", () => {
           // otherwise the purge cron would hard-delete the survey with no archive audit or retention window.
           archivedAt: new Date("2020-01-01T00:00:00Z"),
         } as typeof mockCreateSurveyInput,
-        { creationFacts: WORKSPACE_CREATION_FACTS }
+        { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
       );
 
       expect(prisma.survey.create).toHaveBeenCalledTimes(1);
@@ -1891,7 +2054,7 @@ describe("Tests for createSurvey", () => {
         createSurvey(
           mockWorkspaceId,
           { ...mockCreateSurveyInput, type: "app", status: "inProgress" },
-          { creationFacts: WORKSPACE_CREATION_FACTS }
+          { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
         )
       ).rejects.toThrow(InvalidInputError);
       expect(prisma.survey.create).not.toHaveBeenCalled();
@@ -1920,11 +2083,47 @@ describe("Tests for createSurvey", () => {
           ...mockCreateSurveyInput,
           type: "app",
         },
-        { creationFacts: WORKSPACE_CREATION_FACTS }
+        { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
       );
 
       expect(prisma.segment.create).toHaveBeenCalled();
       expect(prisma.survey.update).toHaveBeenCalled();
+    });
+
+    // ENG-6870: a new app survey's targeting may only read surveys its creator can see.
+    test("refuses seeded targeting that names a survey hidden from the creator", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.findFirst.mockResolvedValueOnce({ id: "clrestricted00000000000001" } as any);
+      const filters = [
+        {
+          id: "clf01234567890123456789012",
+          connector: null,
+          resource: {
+            id: "clf11234567890123456789012",
+            root: { type: "surveyInteraction" },
+            qualifier: { operator: "haveCompleted" },
+            value: {
+              surveyScope: "specific",
+              surveyIds: ["clrestricted00000000000001"],
+              within: { amount: 30, unit: "days" },
+            },
+          },
+        },
+      ] as unknown as TBaseFilters;
+
+      await expect(
+        createSurvey(
+          mockWorkspaceId,
+          { ...mockCreateSurveyInput, type: "app" },
+          {
+            creationFacts: WORKSPACE_CREATION_FACTS,
+            targetingActor: MEMBER_TARGETING_ACTOR,
+            privateSegmentFilters: filters,
+          }
+        )
+      ).rejects.toThrow(InvalidInputError);
+      expect(prisma.survey.create).not.toHaveBeenCalled();
+      expect(prisma.segment.create).not.toHaveBeenCalled();
     });
 
     test("seeds the private segment with the provided filters for app surveys", async () => {
@@ -1959,7 +2158,11 @@ describe("Tests for createSurvey", () => {
       await createSurvey(
         mockWorkspaceId,
         { ...mockCreateSurveyInput, type: "app" },
-        { creationFacts: WORKSPACE_CREATION_FACTS, privateSegmentFilters: filters }
+        {
+          creationFacts: WORKSPACE_CREATION_FACTS,
+          targetingActor: OWNER_TARGETING_ACTOR,
+          privateSegmentFilters: filters,
+        }
       );
 
       expect(prisma.segment.create).toHaveBeenCalledWith(
@@ -2000,7 +2203,10 @@ describe("Tests for createSurvey", () => {
         ...mockSurveyOutput,
       });
 
-      await createSurvey(mockWorkspaceId, surveyWithFollowUps, { creationFacts: WORKSPACE_CREATION_FACTS });
+      await createSurvey(mockWorkspaceId, surveyWithFollowUps, {
+        creationFacts: WORKSPACE_CREATION_FACTS,
+        targetingActor: OWNER_TARGETING_ACTOR,
+      });
 
       expect(prisma.survey.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -2045,7 +2251,7 @@ describe("Tests for createSurvey", () => {
             },
           ],
         },
-        { creationFacts: WORKSPACE_CREATION_FACTS }
+        { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
       );
 
       expect(prisma.survey.create).toHaveBeenCalledWith(
@@ -2101,7 +2307,7 @@ describe("Tests for createSurvey", () => {
             updatedAt: new Date(),
           },
         },
-        { creationFacts: WORKSPACE_CREATION_FACTS }
+        { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
       );
 
       expect(prisma.survey.create).toHaveBeenCalledWith(
@@ -2146,7 +2352,7 @@ describe("Tests for createSurvey", () => {
               updatedAt: new Date(),
             },
           },
-          { creationFacts: WORKSPACE_CREATION_FACTS }
+          { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
         )
       ).rejects.toThrow(ResourceNotFoundError);
 
@@ -2173,7 +2379,7 @@ describe("Tests for createSurvey", () => {
               updatedAt: new Date(),
             },
           },
-          { creationFacts: WORKSPACE_CREATION_FACTS }
+          { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
         )
       ).rejects.toThrow(ResourceNotFoundError);
 
@@ -2184,12 +2390,16 @@ describe("Tests for createSurvey", () => {
   describe("Sad Path", () => {
     testInputValidation(createSurvey, "123#", mockCreateSurveyInput, {
       creationFacts: WORKSPACE_CREATION_FACTS,
+      targetingActor: OWNER_TARGETING_ACTOR,
     });
 
     test("throws ResourceNotFoundError if organization not found", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(null);
       await expect(
-        createSurvey(mockWorkspaceId, mockCreateSurveyInput, { creationFacts: WORKSPACE_CREATION_FACTS })
+        createSurvey(mockWorkspaceId, mockCreateSurveyInput, {
+          creationFacts: WORKSPACE_CREATION_FACTS,
+          targetingActor: OWNER_TARGETING_ACTOR,
+        })
       ).rejects.toThrow(ResourceNotFoundError);
     });
 
@@ -2219,7 +2429,7 @@ describe("Tests for createSurvey", () => {
               },
             ],
           },
-          { creationFacts: WORKSPACE_CREATION_FACTS }
+          { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
         )
       ).rejects.toThrow(ResourceNotFoundError);
 
@@ -2235,7 +2445,10 @@ describe("Tests for createSurvey", () => {
       prisma.survey.create.mockRejectedValueOnce(mockError);
 
       await expect(
-        createSurvey(mockWorkspaceId, mockCreateSurveyInput, { creationFacts: WORKSPACE_CREATION_FACTS })
+        createSurvey(mockWorkspaceId, mockCreateSurveyInput, {
+          creationFacts: WORKSPACE_CREATION_FACTS,
+          targetingActor: OWNER_TARGETING_ACTOR,
+        })
       ).rejects.toThrow(DatabaseError);
     });
 
@@ -2248,7 +2461,7 @@ describe("Tests for createSurvey", () => {
             ...mockCreateSurveyInput,
             hiddenFields: { enabled: true, fieldIds: ["country"] },
           },
-          { creationFacts: WORKSPACE_CREATION_FACTS }
+          { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
         )
       ).rejects.toThrow(InvalidInputError);
 
@@ -2263,7 +2476,7 @@ describe("Tests for createSurvey", () => {
             ...mockCreateSurveyInput,
             variables: [{ id: "wcfy2mkgc1ky2rzq7pcpjrxk", name: "browser", type: "text", value: "" }],
           },
-          { creationFacts: WORKSPACE_CREATION_FACTS }
+          { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
         )
       ).rejects.toThrow(InvalidInputError);
 
@@ -2281,7 +2494,7 @@ describe("Tests for createSurvey", () => {
             ...mockCreateSurveyInput,
             hiddenFields: { enabled: true, fieldIds: ["team_size"] },
           },
-          { creationFacts: WORKSPACE_CREATION_FACTS }
+          { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
         )
       ).resolves.toBeDefined();
 
@@ -2609,5 +2822,140 @@ describe("updateSurveyDraftAction", () => {
         expect(prisma.survey.update).not.toHaveBeenCalled();
       }
     );
+  });
+});
+
+describe("app survey targeting on save only reads surveys the saver can see (ENG-6870)", () => {
+  const restrictedId = "clrestricted00000000000001";
+  const segmentId = "clownsegment000000000001";
+  const interaction = (surveyIds: string[]) => [
+    {
+      id: "clf01234567890123456789012",
+      connector: null,
+      resource: {
+        id: "clf11234567890123456789012",
+        root: { type: "surveyInteraction" },
+        qualifier: { operator: "haveCompleted" },
+        value: { surveyScope: "specific", surveyIds, within: { amount: 30, unit: "days" } },
+      },
+    },
+  ];
+  const save = (
+    filters: unknown,
+    options: Parameters<typeof updateSurveyInternal>[2],
+    surveys: string[] = []
+  ) =>
+    updateSurveyInternal(
+      {
+        ...updateSurveyInput,
+        status: "draft",
+        type: "app",
+        segment: {
+          id: segmentId,
+          title: "seg",
+          description: null,
+          isPrivate: true,
+          filters,
+          workspaceId: updateSurveyInput.workspaceId,
+          surveys,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      } as any,
+      true,
+      options
+    );
+  /**
+   * The survey, its own segment (`ownSegment`) or none, then the saved segment's row: first its workspace
+   * (tenancy guard), then its stored filters and connected surveys.
+   */
+  const storeSegment = (storedFilters: unknown, { ownSegment = true, connected = [] as string[] } = {}) => {
+    prisma.survey.findUnique.mockResolvedValueOnce({
+      ...mockSurveyOutput,
+      status: "draft",
+      segment: ownSegment
+        ? {
+            id: segmentId,
+            title: "seg",
+            description: null,
+            isPrivate: true,
+            filters: storedFilters,
+            workspaceId: updateSurveyInput.workspaceId,
+            surveys: connected.map((id) => ({ id })),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          }
+        : null,
+    } as any);
+    prisma.segment.findUnique
+      .mockResolvedValueOnce({ workspaceId: updateSurveyInput.workspaceId } as any)
+      .mockResolvedValueOnce({ filters: storedFilters, surveys: connected.map((id) => ({ id })) } as any);
+    prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getActionClasses).mockResolvedValueOnce([mockActionClass] as TActionClass[]);
+    vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+  });
+
+  test("refuses a member adding a restricted survey to the targeting", async () => {
+    storeSegment([]);
+    prisma.survey.findFirst.mockResolvedValueOnce({ id: restrictedId } as any);
+
+    await expect(
+      save(interaction([restrictedId]), { targetingActor: MEMBER_TARGETING_ACTOR })
+    ).rejects.toThrow(InvalidInputError);
+    expect(prisma.survey.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ id: { in: [restrictedId] } }) })
+    );
+    expect(prisma.segment.update).not.toHaveBeenCalled();
+  });
+
+  test("keeps a restricted survey an administrator already targeted when a member saves", async () => {
+    storeSegment(interaction([restrictedId]));
+
+    await save(interaction([restrictedId]), { targetingActor: MEMBER_TARGETING_ACTOR });
+
+    expect(prisma.survey.findFirst).not.toHaveBeenCalled();
+    expect(prisma.segment.update).toHaveBeenCalledWith(expect.objectContaining({ where: { id: segmentId } }));
+  });
+
+  // Pointing the survey at another segment, or connecting more surveys to it, targets with the whole tree.
+  test("checks the whole tree when the save points the survey at a segment it does not own", async () => {
+    storeSegment(interaction([restrictedId]), { ownSegment: false });
+    prisma.survey.findFirst.mockResolvedValueOnce({ id: restrictedId } as any);
+
+    await expect(
+      save(interaction([restrictedId]), { targetingActor: MEMBER_TARGETING_ACTOR })
+    ).rejects.toThrow(InvalidInputError);
+    expect(prisma.segment.update).not.toHaveBeenCalled();
+  });
+
+  test("checks the whole tree when the save connects another survey to the segment", async () => {
+    storeSegment(interaction([restrictedId]));
+    prisma.survey.findFirst.mockResolvedValueOnce({ id: restrictedId } as any);
+
+    await expect(
+      save(interaction([restrictedId]), { targetingActor: MEMBER_TARGETING_ACTOR }, [
+        "clothersurvey000000000001",
+      ])
+    ).rejects.toThrow(InvalidInputError);
+    expect(prisma.segment.update).not.toHaveBeenCalled();
+  });
+
+  test("fails closed when a save adds a survey with no actor to check it against", async () => {
+    storeSegment([]);
+
+    await expect(save(interaction([restrictedId]), {})).rejects.toThrow(/acting user or API key/);
+    expect(prisma.segment.update).not.toHaveBeenCalled();
+  });
+
+  test("needs no actor when the save leaves the targeting's surveys alone", async () => {
+    storeSegment(interaction([restrictedId]));
+
+    await save(interaction([restrictedId]), {});
+
+    expect(prisma.segment.update).toHaveBeenCalled();
   });
 });

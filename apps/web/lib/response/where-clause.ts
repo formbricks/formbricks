@@ -9,9 +9,10 @@ import {
   listShadowingNames,
 } from "@formbricks/types/embedded-data-resolver";
 import { InvalidInputError } from "@formbricks/types/errors";
-import { TResponseFilterCriteria } from "@formbricks/types/responses";
+import { TResponseFilterCriteria, TResponseStatusFilter } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { buildShownFilterClauses } from "./shown-filter";
 
 type TTypedFieldFilterCondition = NonNullable<TResponseFilterCriteria["reserved"]>[string];
 
@@ -471,13 +472,33 @@ const includesAllClauses = (
   ];
 };
 
-/** The outcome the filter selects, or (for the export) only responses without one. */
+/** Whether the filter selects Low quality responses, by `outcome` or as one of several `statuses`. */
+export const selectsLowQuality = (filterCriteria: TResponseFilterCriteria | undefined): boolean =>
+  Boolean(filterCriteria?.outcome) || Boolean(filterCriteria?.statuses?.includes("lowQuality"));
+
+/**
+ * The outcome the filter selects, or (for the export) only responses without one. A filter that selects
+ * Low quality through `statuses` is not narrowed further: that choice wins over leaving them out.
+ */
 const buildOutcomeCondition = (
   filterCriteria: TResponseFilterCriteria | undefined
 ): Prisma.ResponseWhereInput | null => {
   if (filterCriteria?.outcome) return { outcome: filterCriteria.outcome };
-  return filterCriteria?.excludeLowQuality ? { outcome: null } : null;
+  return filterCriteria?.excludeLowQuality && !selectsLowQuality(filterCriteria) ? { outcome: null } : null;
 };
+
+const STATUS_CONDITIONS: Record<TResponseStatusFilter, Prisma.ResponseWhereInput> = {
+  complete: { finished: true },
+  partial: { finished: false },
+  lowQuality: { outcome: "lowQuality" },
+};
+
+const buildStatusesCondition = (
+  filterCriteria: TResponseFilterCriteria | undefined
+): Prisma.ResponseWhereInput | null =>
+  filterCriteria?.statuses?.length
+    ? { OR: filterCriteria.statuses.map((status) => STATUS_CONDITIONS[status]) }
+    : null;
 
 /** The time range the filter selects: `max` is the latest, `min` the earliest creation time. */
 const buildCreatedAtCondition = (
@@ -504,6 +525,11 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
   const outcomeCondition = buildOutcomeCondition(filterCriteria);
   if (outcomeCondition) {
     whereClause.push(outcomeCondition);
+  }
+
+  const statusesCondition = buildStatusesCondition(filterCriteria);
+  if (statusesCondition) {
+    whereClause.push(statusesCondition);
   }
 
   const createdAtCondition = buildCreatedAtCondition(filterCriteria);
@@ -671,7 +697,10 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
     });
   }
 
-  whereClause.push(...buildEmbeddedDataFilterClauses(survey, filterCriteria));
+  whereClause.push(
+    ...buildEmbeddedDataFilterClauses(survey, filterCriteria),
+    ...buildShownFilterClauses(survey, filterCriteria?.shown, spend)
+  );
 
   // `dataAnd` carries further conditions on keys `data` already holds; every one of them must hold.
   const dataEntries = [
@@ -833,8 +862,9 @@ export const buildWhereClause = (survey: TSurvey, filterCriteria?: TResponseFilt
               // with the write-in at an unprobed index — silently narrowing what the pre-ENG-3161
               // predicate matched:
               //
-              //   - nothing enforces uniqueness (`ZResponseDataValue` is `z.array(z.string())` with
-              //     no cap), so `["A0","A0","A0","A0","write-in"]` is accepted on a 3-choice element;
+              //   - nothing enforces uniqueness (`ZResponseDataValue` is `z.array(z.string())`; some
+              //     write paths cap its length, none its contents), so
+              //     `["A0","A0","A0","A0","write-in"]` is accepted on a 3-choice element;
               //   - deleting choices from a running survey shrinks `choices.length` while the already
               //     collected answers keep their original length.
               //

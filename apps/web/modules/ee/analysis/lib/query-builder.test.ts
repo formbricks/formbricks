@@ -635,3 +635,96 @@ describe("query-builder", () => {
     });
   });
 });
+
+describe("answer rules in the builder (ENG-6637)", () => {
+  const base: ChartBuilderState = {
+    selectedMeasures: ["FeedbackRecords.npsScore"],
+    selectedDimensions: [],
+    filters: [],
+    filterLogic: "and",
+    timeDimension: null,
+  };
+  const row = (operator: string, values: string[]) => ({
+    id: crypto.randomUUID(),
+    field: "FeedbackRecords.answer:q_delivery",
+    operator,
+    values,
+  });
+
+  test.each([
+    ["is", "equals", ["opt_late"], "equals", ["q_delivery:opt_late"]],
+    ["is not", "notEquals", ["opt_late"], "notEquals", ["q_delivery:opt_late"]],
+    [
+      "is any of",
+      "isAnyOf",
+      ["opt_late", "opt_early"],
+      "equals",
+      ["q_delivery:opt_late", "q_delivery:opt_early"],
+    ],
+  ])("writes '%s' as the public answer condition", (_label, operator, values, cubeOperator, cubeValues) => {
+    expect(buildCubeQuery({ ...base, filters: [row(operator, values)] }).filters).toEqual([
+      { member: "FeedbackRecords.answer", operator: cubeOperator, values: cubeValues },
+    ]);
+  });
+
+  test("reads a saved answer rule back into the row it was built from", () => {
+    const query: TChartQuery = {
+      measures: ["FeedbackRecords.npsScore"],
+      filters: [
+        { member: "FeedbackRecords.answer", operator: "equals", values: ["q_delivery:opt_late"] },
+        {
+          or: [
+            { member: "FeedbackRecords.answer", operator: "equals", values: ["q_feat:a", "q_feat:b"] },
+            { member: "FeedbackRecords.answer", operator: "notEquals", values: ["q_delivery:opt:x"] },
+          ],
+        },
+      ],
+    };
+    const state = parseQueryToState(query);
+
+    expect(state.filters).toEqual([
+      expect.objectContaining({
+        field: "FeedbackRecords.answer:q_delivery",
+        operator: "equals",
+        values: ["opt_late"],
+      }),
+      expect.objectContaining({
+        logic: "or",
+        children: [
+          expect.objectContaining({
+            field: "FeedbackRecords.answer:q_feat",
+            operator: "isAnyOf",
+            values: ["a", "b"],
+          }),
+          expect.objectContaining({
+            field: "FeedbackRecords.answer:q_delivery",
+            operator: "notEquals",
+            values: ["opt:x"],
+          }),
+        ],
+      }),
+    ]);
+    // Round-trips to the query it came from.
+    expect(buildCubeQuery({ ...base, ...state }).filters).toEqual(query.filters);
+  });
+
+  test("drops a malformed answer rule rather than inventing a question", () => {
+    const state = parseQueryToState({
+      measures: ["FeedbackRecords.count"],
+      filters: [{ member: "FeedbackRecords.answer", operator: "equals", values: ["q_a:1", "q_b:1"] }],
+    });
+
+    expect(state.filters).toEqual([]);
+  });
+
+  test("leaves the query of a chart without answer rules unchanged", () => {
+    const query: TChartQuery = {
+      measures: ["FeedbackRecords.count"],
+      filters: [{ member: "FeedbackRecords.ed_plan_64879f7d", operator: "equals", values: ["Pro"] }],
+    };
+    expect(
+      buildCubeQuery({ ...base, selectedMeasures: ["FeedbackRecords.count"], ...parseQueryToState(query) })
+        .filters
+    ).toEqual(query.filters);
+  });
+});

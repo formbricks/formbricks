@@ -61,7 +61,7 @@ jobs:
       # which run on ubuntu-24.04, are still audited. Enabling StepSecurity's third-party runner support
       # for the organization would close the gap.
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
           # This is a literal block, so every line below is an endpoint — no comments inside it.
@@ -83,7 +83,7 @@ jobs:
       - uses: ./.github/actions/dangerous-git-checkout
 
       - name: Install pnpm
-        uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
 
       - name: Setup Node.js (version from .nvmrc)
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -217,17 +217,15 @@ jobs:
           # Both are largely I/O-bound, so overlapping them shaves the browser-install
           # time (~1-2 min) off the critical path.
           #
-          # Only `chromium` is enabled in playwright.config.ts (firefox/webkit are
-          # commented out), and `ffmpeg` is a separate download that the config's
-          # `video: "retain-on-failure"` needs — naming neither would pull Firefox and
-          # WebKit for nothing, naming only chromium would silently break failure videos.
+          # Chromium runs the full suite; Firefox also runs the SDK's strict-CSP journey.
+          # `ffmpeg` is a separate download required for failure videos. WebKit is not enabled.
           #
           # Bounded with `timeout` and logged to a file that is always echoed below:
           # the `--with-deps` apt step has hung for 40+ minutes on the Ubuntu mirror,
           # and because it is backgrounded that looked like a hung build with no output.
           # 420s is ~5x the observed healthy install; it runs concurrently with the
           # ~247s build, so it only becomes this step's critical path when it misbehaves.
-          (timeout 420 pnpm exec playwright install chromium ffmpeg --with-deps \
+          (timeout 420 pnpm exec playwright install chromium firefox ffmpeg --with-deps \
             > /tmp/playwright-install.log 2>&1) &
           PW_INSTALL_PID=$!
 

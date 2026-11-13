@@ -21,6 +21,7 @@ import { createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { ElementFormInput } from "@/modules/survey/components/element-form-input";
 import { BulkEditOptionsModal } from "@/modules/survey/editor/components/bulk-edit-options-modal";
 import { ElementOptionChoice } from "@/modules/survey/editor/components/element-option-choice";
+import { type TSetOptionHidden } from "@/modules/survey/editor/components/option-hide-button";
 import {
   LOCK_TOOLTIP_DELAY_MS,
   PublishedLockNotice,
@@ -31,7 +32,7 @@ import {
   getShuffleOptionAfterAddingSpecialChoice,
   getShuffleOptionAfterRemovingSpecialChoice,
 } from "@/modules/survey/editor/lib/special-choices";
-import { findOptionUsedInLogic } from "@/modules/survey/editor/lib/utils";
+import { findOptionUse } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
@@ -47,6 +48,8 @@ interface MultipleChoiceElementFormProps {
   readonly isStorageConfigured: boolean;
   readonly isExternalUrlsAllowed?: boolean;
   readonly lock?: TElementLock;
+  /** The Hide quick action on each option (ENG-6949). */
+  readonly onSetOptionHidden?: TSetOptionHidden;
 }
 
 export const MultipleChoiceElementForm = ({
@@ -60,6 +63,7 @@ export const MultipleChoiceElementForm = ({
   isStorageConfigured = true,
   isExternalUrlsAllowed,
   lock = NO_ELEMENT_LOCK,
+  onSetOptionHidden,
 }: MultipleChoiceElementFormProps): JSX.Element => {
   const { t } = useTranslation();
   const lastChoiceRef = useRef<HTMLInputElement>(null);
@@ -156,12 +160,13 @@ export const MultipleChoiceElementForm = ({
     if (lock.isOptionLocked("choices", choiceToDelete)) return;
 
     if (choiceToDelete !== "other" && choiceToDelete !== "none") {
-      const idx = findOptionUsedInLogic(localSurvey, element.id, choiceToDelete);
-      if (idx !== -1) {
+      const use = findOptionUse(localSurvey, element.id, choiceToDelete);
+      if (use) {
+        const questionIndex = use.elementIndex + 1;
         toast.error(
-          t("workspace.surveys.edit.option_used_in_logic_error", {
-            questionIndex: idx + 1,
-          })
+          use.kind === "showIf"
+            ? t("workspace.surveys.edit.option_used_in_show_if_error", { questionIndex })
+            : t("workspace.surveys.edit.option_used_in_logic_error", { questionIndex })
         );
         return;
       }
@@ -316,6 +321,7 @@ export const MultipleChoiceElementForm = ({
                     locale={locale}
                     isStorageConfigured={isStorageConfigured}
                     lock={lock}
+                    onSetOptionHidden={onSetOptionHidden}
                   />
                 ))}
               </div>

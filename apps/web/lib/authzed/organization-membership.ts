@@ -1,6 +1,8 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
 import type { OrganizationRole } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
+import { isRelationMissingFromSchema } from "@/lib/authorization/schema-drift";
 import { type TAuthzedClient, type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
@@ -14,6 +16,7 @@ import { ORGANIZATION_RELATIONS } from "./relationship-map";
 export type { TAuthzedProjectionResult } from "./projection";
 
 const ORGANIZATION_RELATION_NAMES = Object.values(ORGANIZATION_RELATIONS);
+const DASHBOARD_VIEWER_RELATION = ORGANIZATION_RELATIONS.dashboard_viewer;
 
 export type TOrganizationMembershipProjectionTarget = Readonly<{
   organizationId: string;
@@ -95,8 +98,38 @@ const writeSnapshot = async (
     ),
   ]);
 
-  for (const batch of packRelationshipUpdateGroups(updateGroups)) {
+  // `dashboard_viewer` is new in this release. Until its schema is applied SpiceDB rejects any batch that
+  // names it, atomically, so it goes in batches of its own: the other roles always land (ADR-0025, S2).
+  const isAddedRelation = (update: TAuthzedRelationshipUpdate) =>
+    update.relationship.relation === DASHBOARD_VIEWER_RELATION;
+  const legacyGroups = updateGroups.map((group) => group.filter((update) => !isAddedRelation(update)));
+  const addedGroups = updateGroups.map((group) => group.filter(isAddedRelation));
+
+  for (const batch of packRelationshipUpdateGroups(legacyGroups)) {
     await client.writeRelationships(batch);
+  }
+  for (const batch of packRelationshipUpdateGroups(addedGroups)) {
+    await writeAddedRelationBatch(client, batch);
+  }
+};
+
+/**
+ * One batch of `dashboard_viewer` updates. On the previous schema SpiceDB has no such relation, so no
+ * Dashboard viewer can hold it yet and none needs removing: log and carry on, and the schema apply's
+ * backfill projects them. Any other failure stays a failure.
+ */
+const writeAddedRelationBatch = async (
+  client: TAuthzedClient,
+  batch: ReadonlyArray<TAuthzedRelationshipUpdate>
+): Promise<void> => {
+  try {
+    await client.writeRelationships(batch);
+  } catch (error) {
+    if (!isRelationMissingFromSchema(error, DASHBOARD_VIEWER_RELATION)) throw error;
+    logger.warn(
+      { relation: DASHBOARD_VIEWER_RELATION, updates: batch.length },
+      "AuthZed schema predates the dashboard_viewer relation; apply the release's schema to project Dashboard viewers"
+    );
   }
 };
 

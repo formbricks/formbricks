@@ -9,6 +9,10 @@ import {
 } from "lucide-react";
 import { describe, expect, test } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import {
+  SURVEY_FLOW_FIXTURE_IDS,
+  surveyFlowFixture,
+} from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { OptionsType } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/components/response-filter-options";
 import { generateElementAndFilterOptions, getFormattedFilters } from "@/app/lib/surveys/surveys";
@@ -98,6 +102,7 @@ const criteriaFor = (filters: TTableFilter[], now = new Date("2026-10-27T12:00:0
   const { selectedFilter, dateRange } = toResponseFilterState(filters, model.fields, "UTC", now);
   return getFormattedFilters(survey, selectedFilter, dateRange);
 };
+const ticked = (values: string[]): TTableFilter[] => [{ property: "status", operator: "in", values }];
 
 describe("buildResponseFilterModel", () => {
   test("offers Status, Date, Tags and Language as quick filters and nothing else", () => {
@@ -140,6 +145,35 @@ describe("toResponseFilterState → getFormattedFilters", () => {
     expect(criteriaFor([{ property: "status", operator: "in", values: ["complete", "partial"] }])).toEqual(
       {}
     );
+  });
+
+  test("one ticked Low quality narrows by outcome", () => {
+    expect(criteriaFor([{ property: "status", operator: "in", values: ["lowQuality"] }])).toEqual({
+      outcome: "lowQuality",
+    });
+  });
+
+  test("two ticked statuses that narrow the list mean either of them, in a fixed order (ENG-7078)", () => {
+    expect(criteriaFor(ticked(["lowQuality", "complete"]))).toEqual({ statuses: ["complete", "lowQuality"] });
+    expect(criteriaFor(ticked(["partial", "lowQuality"]))).toEqual({ statuses: ["partial", "lowQuality"] });
+  });
+
+  test("all three ticked keep the list, so the Analysis export still sees Low quality ticked", () => {
+    expect(criteriaFor(ticked(["complete", "partial", "lowQuality"]))).toEqual({
+      statuses: ["complete", "partial", "lowQuality"],
+    });
+  });
+
+  test("unknown and repeated ticked values are ignored", () => {
+    expect(criteriaFor(ticked(["archived"]))).toEqual({});
+    expect(criteriaFor(ticked(["complete", "complete", "archived"]))).toEqual({ finished: true });
+  });
+
+  test("the pages get no status filter for Complete + Partial, and the list for all three", () => {
+    const statusesOf = (values: string[]) =>
+      toResponseFilterState(ticked(values), model.fields, "UTC").selectedFilter.responseStatuses;
+    expect(statusesOf(["complete", "partial"])).toEqual([]);
+    expect(statusesOf(["partial", "lowQuality", "complete"])).toEqual(["complete", "partial", "lowQuality"]);
   });
 
   test("a date preset resolves to whole days in the reporting time zone at request time", () => {
@@ -255,7 +289,7 @@ describe("filterValueToTableFilter", () => {
     const click = row(TSurveyElementTypeEnum.MultipleChoiceMulti, "plan", "Includes either", ["Free"]);
     const fromClick = getFormattedFilters(
       survey,
-      { filter: [click], responseStatus: "all" },
+      { filter: [click], responseStatuses: [] },
       { from: undefined }
     );
     const rule = filterValueToTableFilter(click, survey)!;
@@ -459,5 +493,90 @@ describe("field icons", () => {
     expect(iconOf("quota.quota1")).toBe(PieChartIcon);
     expect(iconOf("tag")).toBe(HashIcon);
     expect(iconOf("language")).toBe(LanguagesIcon);
+  });
+});
+
+describe("shown / not shown (ENG-6951)", () => {
+  const { heavyUsers } = SURVEY_FLOW_FIXTURE_IDS.blocks;
+  // The fixture hides no matrix column: this copy hides `col_good`, so every target kind is offered.
+  const flowSurvey: TSurvey = {
+    ...surveyFlowFixture,
+    blocks: surveyFlowFixture.blocks.map((block) => ({
+      ...block,
+      elements: block.elements.map((element) =>
+        element.id === "brand_grid" && "columns" in element
+          ? {
+              ...element,
+              columns: element.columns.map((column) =>
+                column.id === "col_good" ? { ...column, hidden: true } : column
+              ),
+            }
+          : element
+      ),
+    })),
+  };
+  const flowOptions = generateElementAndFilterOptions({
+    survey: flowSurvey,
+    environmentTags: [],
+    attributes: {},
+    reservedValues: {},
+    hiddenFields: {},
+    variableValues: {},
+    quotas: [],
+    t,
+  });
+  const flowModel = buildResponseFilterModel({
+    survey: flowSurvey,
+    elementOptions: flowOptions.elementOptions,
+    elementFilterOptions: flowOptions.elementFilterOptions,
+    tagNames: [],
+    t,
+  });
+  const flowCriteria = (filters: TTableFilter[]) => {
+    const { selectedFilter, dateRange } = toResponseFilterState(filters, flowModel.fields, "UTC");
+    return getFormattedFilters(flowSurvey, selectedFilter, dateRange);
+  };
+
+  test("offers `is` Shown / Not shown, with help, grouped right under the questions", () => {
+    expect(flowModel.properties.find((item) => item.id === "shown.option.fav.apple")).toMatchObject({
+      ruleOperators: ["equals"],
+      valueType: "enum",
+      options: [
+        { value: "shown", label: "common.shown" },
+        { value: "notShown", label: "workspace.surveys.filter.not_shown" },
+      ],
+      description: "workspace.surveys.filter.shown_help",
+    });
+    const groups = [...new Set(flowModel.properties.map((item) => item.group).filter(Boolean))];
+    expect(groups.indexOf("workspace.surveys.filter.shown_group")).toBe(
+      groups.indexOf("common.elements") + 1
+    );
+  });
+
+  test("each target kind reaches the `shown` criteria group with its operator", () => {
+    expect(
+      flowCriteria([
+        { property: `shown.block.${heavyUsers}`, operator: "equals", values: ["shown"] },
+        { property: "shown.question.apple_reason", operator: "equals", values: ["notShown"] },
+        { property: "shown.option.fav.apple", operator: "equals", values: ["notShown"] },
+        { property: "shown.row.brand_grid.row_disney", operator: "equals", values: ["shown"] },
+        { property: "shown.column.brand_grid.col_good", operator: "equals", values: ["notShown"] },
+      ]).shown
+    ).toEqual([
+      { target: "block", blockId: heavyUsers, op: "shown" },
+      { target: "element", elementId: "apple_reason", op: "notShown" },
+      { target: "option", elementId: "fav", itemId: "apple", op: "notShown" },
+      { target: "row", elementId: "brand_grid", itemId: "row_disney", op: "shown" },
+      { target: "column", elementId: "brand_grid", itemId: "col_good", op: "notShown" },
+    ]);
+  });
+
+  test("any other operator or value is left out rather than sent", () => {
+    expect(
+      flowCriteria([
+        { property: "shown.option.fav.apple", operator: "notEquals", values: ["shown"] },
+        { property: "shown.question.apple_reason", operator: "equals", values: ["maybe"] },
+      ])
+    ).toEqual({});
   });
 });

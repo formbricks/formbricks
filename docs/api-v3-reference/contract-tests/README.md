@@ -2,7 +2,7 @@
 
 [Schemathesis](https://schemathesis.readthedocs.io/) drives a running instance against
 [`../openapi.yml`](../openapi.yml) — the committed bundle — and fails when a response violates the
-documented status codes, content type, or schema, or when anything answers 5xx. It runs on every PR
+documented status codes, content type, or schema, or on unexpected 5xx responses. It runs on every PR
 via [`.github/workflows/api-v3-contract-tests.yml`](../../../.github/workflows/api-v3-contract-tests.yml)
 and is part of the `PR Check Summary` required check.
 
@@ -62,8 +62,11 @@ Three things to know before reading the result:
   Dataset assigned to the seed workspace, charts, dashboards and widgets — one disposable victim per
   mutating operation, with layouts and the save's `expectedUpdatedAt` pinned so each answers its success
   code. Where the licence does not grant Dashboards, every one of them answers the documented 403
-  `dashboards_plan_required` instead. The chart data and preview operations answer a documented 502
-  either way: the job runs no Cube.
+  `dashboards_plan_required` instead. The chart field-values, data and preview operations also need
+  Cube: the job runs `scripts/start-cube-ci.sh`, which applies the Hub schema Cube reads and starts the
+  pinned Cube image, and `db:seed:contract` then writes NPS rows for the fixture dataset. Without Cube
+  those three answer a 502, which fails the run like any other server error. The job's post-boot probe
+  says whether Dashboards is granted on every run.
 - **Creatives endpoints need a licence with `creatives`.** Without it the fixture workspace, which
   has seeded creatives, is in wind-down: list, get, stats and delete still run against real data, a
   `PATCH` that only pauses or closes runs too, as does the survey-wide pause

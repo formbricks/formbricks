@@ -1,7 +1,7 @@
 import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
-import { TResponseInput } from "@formbricks/types/responses";
+import { TClientResponseInput } from "@formbricks/types/responses";
 import { normalizeResponseLanguage } from "@/lib/response/utils";
 
 /**
@@ -12,7 +12,10 @@ import { normalizeResponseLanguage } from "@/lib/response/utils";
  * leaves the column null; an empty array means "ran, nothing to report".
  */
 export const buildPrismaResponseData = (
-  responseInput: TResponseInput,
+  // The client create input is `TResponseInput` plus the optional Mark as low quality flag (handled by
+  // the caller, never written here) and not-shown record, so the management create, which parses
+  // `ZResponseInput`, passes through here unchanged and never writes one.
+  responseInput: TClientResponseInput,
   contact: { id: string; attributes: TContactAttributes } | null,
   ttc: Record<string, number>,
   ingestFlags?: readonly TIngestFlag[]
@@ -30,6 +33,7 @@ export const buildPrismaResponseData = (
     calBookings,
     createdAt,
     updatedAt,
+    notShown,
   } = responseInput;
 
   return {
@@ -62,6 +66,8 @@ export const buildPrismaResponseData = (
     // Set by the client routes only (`splitCalBookingsFromInput`): the management routes parse their body
     // with a schema that has no such key, so they never write it.
     ...(calBookings && Object.keys(calBookings).length > 0 && { calBookings }),
+    // The survey's not-shown record (ENG-6936), stored as sent. Omitted leaves the column null: unknown.
+    ...(notShown !== undefined && { notShown }),
     ttc: ttc,
     createdAt,
     updatedAt,

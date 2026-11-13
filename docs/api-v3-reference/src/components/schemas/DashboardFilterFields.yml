@@ -1,0 +1,45 @@
+type: object
+description: >-
+  The embedded-data fields a filter on the dashboard can use: each key of the Feedback Datasets its
+  charts read, once, in key order, with the type the key has on this dashboard. Datasets the caller
+  cannot read through the dashboard are left out.
+required:
+  - fields
+properties:
+  fields:
+    type: array
+    items:
+      type: object
+      required:
+        - name
+        - key
+        - label
+        - type
+      properties:
+        name:
+          type: string
+          description: >-
+            The member a filter names in `filter[<id>]=<operator>:<name>`, derived from the key alone, so
+            the same key in two datasets is one field.
+          example: FeedbackRecords.ed_plan_64879f7d
+        key:
+          type: string
+          description: The embedded-data key as collected, case included.
+          example: plan
+        label:
+          type: string
+          description: How the field is shown; the key itself.
+          example: plan
+        type:
+          type: string
+          enum:
+            - string
+            - number
+          description: >-
+            `number` when every Embedded Data field the key holds, in the surveys a Feedback Source of the
+            dashboard's workspace maps into its charts' datasets, is a number field: a filter may then
+            compare it with `gt`, `gte`, `lt` and `lte`, as a number. `string` otherwise — a key no
+            Embedded Data field declares, or one that fields of different types share.
+          example: string
+      additionalProperties: false
+additionalProperties: false

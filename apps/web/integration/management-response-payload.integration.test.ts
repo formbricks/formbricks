@@ -65,7 +65,14 @@ const seedResponse = async () => {
     select: { id: true },
   });
   const response = await prisma.response.create({
-    data: { surveyId: survey.id, finished: true, data: { plan: "gold" }, ingestFlags: INGEST_FLAGS },
+    data: {
+      surveyId: survey.id,
+      finished: true,
+      data: { plan: "gold" },
+      ingestFlags: INGEST_FLAGS,
+      // ENG-6936: the not-shown record is read by the app's results and v3 only, never served here.
+      notShown: { elements: ["satisfaction"] },
+    },
     select: { id: true },
   });
 
@@ -98,6 +105,7 @@ describe("ingestFlags at the Prisma client", () => {
     const row = await prisma.response.findUniqueOrThrow({ where: { id: responseId } });
 
     expect(row).not.toHaveProperty("ingestFlags");
+    expect(row).not.toHaveProperty("notShown");
     expect(row.finished).toBe(true);
   });
 });
@@ -132,6 +140,7 @@ describe("what the management APIs serve for a response", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.data).not.toHaveProperty("ingestFlags");
+    expect(result.data).not.toHaveProperty("notShown");
   });
 
   test("v1 serves exactly its own documented keys, which never included the column", async () => {

@@ -26,7 +26,9 @@ import type { V3WorkspaceContext } from "@/app/api/v3/lib/workspace-context";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { isPrismaKnownRequestError, isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { type TChartQueryIssue, validateChartQuery } from "@/modules/ee/analysis/lib/chart-query-validator";
+import type { TDatasetChartFields } from "@/modules/ee/analysis/lib/field-catalog";
 import { type TV3ChartOperationContext, getSessionUserId, loadAuthorizedChart } from "./access";
+import { loadDatasetChartFields } from "./dataset-fields";
 import { chartNameTaken, refuseChartQuery, refuseMatrixUntilUpgraded } from "./problems";
 import type { TV3ChartCreateBody, TV3ChartListQuery, TV3ChartUpdateBody } from "./schemas";
 import { serializeV3Chart } from "./serializers";
@@ -162,7 +164,9 @@ export async function createV3Chart({
     );
     if (refused) return refused;
 
-    const validated = validateChartQuery(body.query);
+    const validated = validateChartQuery(body.query, {
+      dataset: await loadDatasetChartFields(authentication, access, body.datasetId, body.query),
+    });
     if (!validated.ok) return refuseChartQuery(validated.issues, context);
 
     const matrixRefused = await refuseMatrixUntilUpgraded(body.type, context);
@@ -230,7 +234,8 @@ const storedDateRanges = (query: unknown): Set<string> => {
  */
 const chartUpdateOf = (
   body: TV3ChartUpdateBody,
-  storedQuery: unknown
+  storedQuery: unknown,
+  dataset: TDatasetChartFields | undefined
 ): { ok: true; data: Partial<TChartWrite> } | { ok: false; issues: TChartQueryIssue[] } => {
   const data: Partial<TChartWrite> = {};
   if (body.name !== undefined) data.name = body.name;
@@ -239,6 +244,7 @@ const chartUpdateOf = (
   if (body.query !== undefined) {
     const validated = validateChartQuery(body.query, {
       legacyDateRanges: storedDateRanges(storedQuery),
+      dataset,
     });
     if (!validated.ok) return { ok: false, issues: validated.issues };
     data.query = validated.query as TChartWrite["query"];
@@ -295,7 +301,16 @@ export async function updateV3Chart({
     const refused = await refuseChartDatasetWrite(loaded, context, { evenIfUngrantable: changesWhatItReads });
     if (refused) return refused;
 
-    const update = chartUpdateOf(body, loaded.row.query);
+    const dataset =
+      body.query === undefined
+        ? undefined
+        : await loadDatasetChartFields(
+            context.authentication,
+            loaded.access,
+            loaded.row.feedbackDirectoryId,
+            body.query
+          );
+    const update = chartUpdateOf(body, loaded.row.query, dataset);
     if (!update.ok) return refuseChartQuery(update.issues, context);
 
     if (Object.keys(update.data).length === 0) {

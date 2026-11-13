@@ -1,0 +1,20 @@
+type: object
+description: >-
+  Marks the response Low quality when the rule fires. The respondent sees nothing and carries on; the
+  survey sends a one-way `markLowQuality: true` with its next response write, and the server sets the
+  response's `outcome` to `lowQuality`, exactly as a reviewer marking it does (it leaves the Analysis
+  export and Dashboards, and can be restored). It never clears an outcome. Allowed in block rules and
+  in `startLogic`, where it rides on the response's first write: for example, to flag a respondent from
+  a known-bad panel source (a URL parameter) while letting them finish.
+required:
+  - id
+  - objective
+properties:
+  id:
+    type: string
+    format: cuid2
+  objective:
+    type: string
+    enum:
+      - markLowQuality
+additionalProperties: false

@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { fileURLToPath } from "node:url";
 import { createContext, runInContext } from "node:vm";
 import { describe, expect, test } from "vitest";
@@ -46,6 +47,7 @@ interface CubeMember {
   sql?: string;
   description?: string;
   filters?: { sql: string }[];
+  public?: boolean;
 }
 interface CubeDefinition {
   dimensions: Record<string, CubeMember>;
@@ -59,12 +61,26 @@ interface CubeDefinition {
  */
 const evaluateCubeSchema = (path: string): CubeDefinition => {
   let captured: CubeDefinition | undefined;
-  const sandbox = {
+  // The model is compiled per dataset inside `asyncModule` (ENG-6893) and joins the AnswerFilterN
+  // aliases (ENG-6894); it is evaluated here for a dataset without embedded-data keys.
+  process.env.CUBEJS_API_SECRET = process.env.CUBEJS_API_SECRET || "cube-secret";
+  const cubeConfig = createRequire(import.meta.url)(
+    path.replace(/schema\/FeedbackRecords\.js$/, "cube.js")
+  ) as { ANSWER_FILTER_ALIAS_COUNT: number };
+  const sandbox: Record<string, unknown> = {
     CUBE: "TBL",
-    cube: (_name: string, definition: CubeDefinition) => {
-      captured = definition;
+    COMPILE_CONTEXT: { securityContext: {} },
+    require: () => cubeConfig,
+    asyncModule: (define: () => unknown) => {
+      void define();
+    },
+    cube: (name: string, definition: CubeDefinition) => {
+      if (name === "FeedbackRecords") captured = definition;
     },
   };
+  for (let index = 1; index <= cubeConfig.ANSWER_FILTER_ALIAS_COUNT; index += 1) {
+    sandbox[`AnswerFilter${index}`] = `AF${index}`;
+  }
   createContext(sandbox);
   runInContext(readFileSync(path, "utf8"), sandbox);
   if (!captured) throw new Error(`No cube() definition found in ${path}`);
@@ -217,9 +233,24 @@ describe("schema-definition", () => {
     test("handles key with no dots", () => {
       expect(formatCubeColumnHeader("singleKey")).toBe("Single Key");
     });
+
+    test("heads an embedded-data member with its key's own name when the server named it", () => {
+      const plan = "FeedbackRecords.ed_plan_64879f7d";
+      expect(formatCubeColumnHeader(plan, undefined, { [plan]: "Plan (EU)" })).toBe("Plan (EU)");
+      // Other keys are untouched by the map.
+      expect(formatCubeColumnHeader("FeedbackRecords.count", undefined, { [plan]: "Plan" })).toBe(
+        "Feedback Records"
+      );
+    });
   });
 
   describe("FEEDBACK_FIELDS", () => {
+    test("keeps the embedded-key discovery member queryable in both Cube deployments", () => {
+      for (const path of [chartCubeSchemaPath, dockerCubeSchemaPath]) {
+        expect(evaluateCubeSchema(path).dimensions.embeddedDataKey.public).toBe(true);
+      }
+    });
+
     test("has dimensions and measures", () => {
       expect(FEEDBACK_FIELDS.dimensions.length).toBeGreaterThan(0);
       expect(FEEDBACK_FIELDS.measures.length).toBeGreaterThan(0);

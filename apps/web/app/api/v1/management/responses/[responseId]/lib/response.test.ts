@@ -81,6 +81,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
     contactId: "contact123",
     ingestFlags: null,
     calBookings: null,
+    notShown: null,
     outcome: null,
     contact: mockResponse.contact,
     tags: mockResponse.tags,

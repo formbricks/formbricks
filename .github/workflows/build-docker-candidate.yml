@@ -86,7 +86,7 @@ jobs:
       candidate_tag: ${{ steps.candidate.outputs.tag }}
       candidate_repository: ${{ steps.candidate.outputs.repository }}
     steps:
-      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+      - uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -168,7 +168,7 @@ jobs:
           registry_type: ${{ inputs.registry_type }}
           ecr_region: ${{ vars.ECR_REGION }}
           aws_role_arn: ${{ secrets.AWS_ECR_PUSH_ROLE_ARN }}
-      - uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2.2.0
+      - uses: useblacksmith/setup-docker-builder@06dd9c83a5d541274d2e3ac67625560979275267 # v2.3.0
         with:
           # Preserve the validated trial caches at cutover. PR builds use separate keys.
           cache-key: apps/web/Dockerfile-blacksmith-trial-${{ matrix.arch }}
@@ -216,7 +216,7 @@ jobs:
       image: ${{ steps.merge.outputs.image }}
       digest: ${{ steps.merge.outputs.digest }}
     steps:
-      - uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+      - uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

@@ -35,9 +35,12 @@ describe("creative counter Redis commands", () => {
     const readCommand = vi
       .fn()
       .mockResolvedValueOnce({ "impressions:phone": "2", "clicks:phone": "1" })
-      .mockResolvedValueOnce({ "impressions:example.com/": "2", "clicks:example.com/": "1" });
+      .mockResolvedValueOnce({ "impressions:example.com/": "2", "clicks:example.com/": "1" })
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({});
     const commandClient = {
       eval: evalCommand,
+      sCard: vi.fn().mockResolvedValue(0),
       sRem: removeCommand,
       hGetAll: readCommand,
     } as unknown as RedisClientType;
@@ -54,6 +57,9 @@ describe("creative counter Redis commands", () => {
       pageRows: [{ creativeId: CREATIVE_ID, date: DAY, page: "example.com/", impressions: 2, clicks: 1 }],
     });
     expect(removeCommand).toHaveBeenCalledWith(createCacheKey.creativeStats.flushing(DAY), [CREATIVE_ID]);
+    expect(removeCommand).toHaveBeenCalledWith(createCacheKey.creativeStats.legacyFlushing(DAY), [
+      CREATIVE_ID,
+    ]);
   });
 
   test("does not report a successful count when the bounded Redis command fails", async () => {
@@ -61,6 +67,37 @@ describe("creative counter Redis commands", () => {
     vi.mocked(cache.runRedisOperation).mockRejectedValueOnce(new Error("Redis operation timed out"));
 
     await expect(incrementCreativeCounters(counts)).rejects.toThrow("Redis operation timed out");
+  });
+
+  test("claims old-format pending counts and combines them with tagged running totals", async () => {
+    const commandClient = {
+      sCard: vi.fn().mockResolvedValueOnce(1).mockResolvedValueOnce(0),
+      eval: vi.fn().mockResolvedValueOnce([CREATIVE_ID]).mockResolvedValueOnce([]),
+      hGetAll: vi
+        .fn()
+        .mockResolvedValueOnce({ "impressions:phone": "3", "clicks:phone": "1" })
+        .mockResolvedValueOnce({ "impressions:example.com/": "3", "clicks:example.com/": "1" })
+        .mockResolvedValueOnce({ "impressions:phone": "2" })
+        .mockResolvedValueOnce({ "impressions:example.com/": "2" }),
+    } as unknown as RedisClientType;
+    vi.mocked(cache.getRedisClient).mockResolvedValue({} as RedisClientType);
+    vi.mocked(cache.runRedisOperation).mockImplementation(async (operation) => operation(commandClient));
+
+    expect(await claimCountedCreatives(DAY, 10)).toEqual([CREATIVE_ID]);
+    expect(await readCreativeCounters(DAY, [CREATIVE_ID])).toEqual({
+      deviceRows: [{ creativeId: CREATIVE_ID, date: DAY, deviceType: "phone", impressions: 5, clicks: 1 }],
+      pageRows: [{ creativeId: CREATIVE_ID, date: DAY, page: "example.com/", impressions: 5, clicks: 1 }],
+    });
+    expect(commandClient.eval).toHaveBeenNthCalledWith(
+      1,
+      expect.any(String),
+      expect.objectContaining({
+        keys: [
+          createCacheKey.creativeStats.legacyPending(DAY),
+          createCacheKey.creativeStats.legacyFlushing(DAY),
+        ],
+      })
+    );
   });
 
   test("reads a full creative claim without issuing a 200-command burst", async () => {

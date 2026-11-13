@@ -1,0 +1,262 @@
+---
+title: "Upgrade Kubernetes"
+description: "Upgrade a Helm, Argo CD or Flux installation, step by step."
+icon: "dharmachakra"
+---
+
+Use this runbook if you installed Formbricks with the Helm chart, directly or through Argo CD or Flux.
+It covers upgrades **to 6.0 or later**. To upgrade to a 4.x or 5.x version, use the
+[4.x and 5.x procedure](/self-hosting/upgrade/legacy).
+
+Before you start:
+
+- Find your next stop in [Upgrade paths](/self-hosting/upgrade/paths) and read its version page.
+- Plan a maintenance window for a minor or major upgrade. For a patch upgrade, see [patch upgrades](#patch-upgrades).
+- You need `kubectl` and `helm` access to the namespace, and `argocd` or `flux` if you use them.
+
+<Steps>
+  <Step title="Set the names and versions">
+    ```bash
+    ns=formbricks                 # your namespace
+    rel=formbricks                # your Helm release name (helm list -n "$ns")
+    target_version=6.1.3          # your next stop
+    app=formbricks                # the app Deployment: your nameOverride if you set one, otherwise formbricks
+    app_component=$(kubectl get deploy -n "$ns" "$app" \
+      -o jsonpath='{.spec.selector.matchLabels.app\.kubernetes\.io/component}')
+    echo "App component: ${app_component:?Deployment $app not found}"
+    writers="app.kubernetes.io/instance=${rel},app.kubernetes.io/component in (${app_component},hub,hub-worker,taxonomy)"
+    ```
+
+    `app_component` is the app's component label, read from the cluster. It differs from `app` if your values set
+    `componentOverride`.
+
+    Since 4.0, each release publishes a chart with the same version number as the app: chart `6.1.3` deploys app `6.1.3`.
+    If your values override `deployment.image.tag`, set it to the same version.
+    Check it with:
+
+    ```bash
+    helm show chart oci://ghcr.io/formbricks/helm-charts/formbricks --version "$target_version" | grep -E '^(version|appVersion):'
+    ```
+  </Step>
+  <Step title="Update your values">
+    Compare the new chart's defaults with your values file, and add what the version page asks for:
+
+    ```bash
+    helm show values oci://ghcr.io/formbricks/helm-charts/formbricks --version "$target_version" > values-${target_version}-defaults.yaml
+    ```
+
+    - Keep your Secrets, storage, database and ingress settings.
+    - If you pin `deployment.image.tag` or `deployment.image.digest`, change it to the target version. Otherwise the chart uses its own app version.
+    - Keep `authzed.consistency: fully_consistent`.
+    - Don't set `authzed.migrationAcknowledged: true` for a **first** 6.0 upgrade yet. You set it after permission preparation.
+
+    See [Prepare Helm values](/self-hosting/upgrade/configuration#prepare-helm-values) for details.
+  </Step>
+  <Step title="Pause GitOps and close traffic">
+    Stop your deployment tool from changing the release during the upgrade:
+
+    ```bash
+    argocd app set <app> --sync-policy none          # Argo CD
+    flux suspend helmrelease <name> -n "$ns"         # Flux
+    ```
+
+    Write down the original sync settings so you can restore them. Then close public traffic at your ingress or load balancer.
+  </Step>
+  <Step title="Stop the app and workers">
+    Record the current replica counts, then scale the app, Hub, Hub worker and taxonomy to zero:
+
+    ```bash
+    kubectl get deploy -n "$ns" -l "$writers" \
+      -o jsonpath='{range .items[*]}{.metadata.name}{" "}{.spec.replicas}{"\n"}{end}' > replicas-before.txt
+    cat replicas-before.txt
+    grep -q "^${app} " replicas-before.txt || echo "STOP: the app Deployment is missing from the list"
+    kubectl scale deploy -n "$ns" -l "$writers" --replicas=0
+    kubectl wait pod -n "$ns" -l "$writers" --for=delete --timeout=10m
+    kubectl get jobs -n "$ns"
+    ```
+
+    Wait for running Jobs to finish. Also stop any external process that writes to Formbricks.
+    PostgreSQL, Redis and SpiceDB (if you already run 6.x) keep running.
+  </Step>
+  <Step title="Back up">
+    Snapshot the app database with your provider, for example an RDS snapshot. If you already run 6.x, also
+    snapshot the SpiceDB database. On a first upgrade to 6.0 it doesn't exist yet.
+    For the bundled PostgreSQL:
+
+    ```bash
+    kubectl exec -n "$ns" formbricks-postgresql-0 -- pg_dump -Fc -U formbricks -d formbricks > formbricks-before-${target_version}.dump
+    ```
+
+    Also back up your values file, object storage and Secrets. See [backup and restore](/self-hosting/operate/backup-restore).
+  </Step>
+  <Step title="Prepare permissions (minor and major upgrades)">
+    Skip this step for a patch upgrade.
+
+    **First upgrade to 6.0 only:** SpiceDB must be running before preparation, but the 6.0 chart refuses the
+    upgrade until preparation is done. Deploy SpiceDB first, outside this Helm release, and point the chart
+    at it with `authzed.mode: external`, `authzed.operator.install: false` and `authzed.endpoint: <host>:<port>`.
+    For a database on managed PostgreSQL, first create its login and database:
+
+    ```sql
+    CREATE ROLE spicedb LOGIN PASSWORD '<password>';
+    GRANT spicedb TO CURRENT_USER;   -- needed when you aren't a superuser, for example on RDS
+    CREATE DATABASE spicedb OWNER spicedb;
+    ```
+
+    and store the connection and token in a Secret:
+
+    ```bash
+    kubectl create secret generic formbricks-authzed -n "$ns" \
+      --from-literal=preshared_key="$(openssl rand -hex 32)" \
+      --from-literal=datastore_uri='postgresql://spicedb:<url-encoded-password>@<host>:5432/spicedb?sslmode=require'
+    ```
+
+    See [SpiceDB authorization](/self-hosting/setup/kubernetes#spicedb-authorization) for the values that use this Secret.
+
+    **When the permission schema changes**, as from 6.0 to 6.1: before you run preparation, get the current schema
+    digest and add it to the Job's arguments. See [schema changes](/self-hosting/upgrade/prepare#schema-changes).
+    Without it, preparation stops.
+
+    **Every minor and major upgrade:** run the [preparation Job](/self-hosting/upgrade/prepare#helm-and-gitops)
+    with the target image and follow its log until it ends:
+
+    ```bash
+    kubectl delete job -n "$ns" formbricks-v6-prepare --ignore-not-found
+    kubectl apply -n "$ns" -f formbricks-prepare-job.yaml
+    kubectl logs -n "$ns" -f job/formbricks-v6-prepare --pod-running-timeout=10m
+    kubectl get job -n "$ns" formbricks-v6-prepare -o jsonpath='{.status.succeeded}{" succeeded, "}{.status.failed}{" failed"}{"\n"}'
+    ```
+
+    The log must end with `upgrade_prepared` and the Job must show `1 succeeded`. The Job doesn't retry, so a
+    failed run shows `1 failed`. Fix the cause, then run the same commands again: the first one deletes the old
+    Job, because `kubectl apply` can't change an existing Job. If preparation fails, keep everything stopped and
+    see [preparation results](/self-hosting/upgrade/prepare#results-and-recovery).
+  </Step>
+  <Step title="Deploy the new version">
+    After preparation succeeds, set `authzed.migrationAcknowledged: true` in your values. Remove any leftover
+    migration Job, because Helm can't change an existing Job:
+
+    ```bash
+    kubectl delete job -n "$ns" "${app}-migration" --ignore-not-found
+    ```
+
+    **Helm:**
+
+    ```bash
+    helm upgrade "$rel" oci://ghcr.io/formbricks/helm-charts/formbricks \
+      --namespace "$ns" --version "$target_version" --values values.yaml \
+      --wait --wait-for-jobs --timeout 30m
+    ```
+
+    Use a longer timeout if your migrations took longer in a test run.
+
+    **Argo CD:** commit the new chart version and values to Git, then sync once by hand, for example
+    `argocd app sync <app>`. Keep automatic sync off until the checks pass.
+
+    **Flux:** a suspended HelmRelease deploys nothing, so resume it for this step only. Commit the new chart
+    version and values to Git, set the HelmRelease's `spec.timeout` to at least `30m`, and wait until
+    `flux get sources all -A` shows the new revision. Then:
+
+    ```bash
+    flux resume helmrelease <name> -n "$ns"
+    flux get helmrelease <name> -n "$ns"
+    flux suspend helmrelease <name> -n "$ns"
+    ```
+
+    `flux resume` upgrades the release and waits for the result. The HelmRelease must show `Ready True` for the
+    target chart version before you suspend it again for the checks.
+  </Step>
+  <Step title="Restore replicas">
+    Hub, Hub worker and taxonomy start with the replica count from your values. If the app uses an autoscaler
+    (the default), scale it back up by hand, because an autoscaler doesn't scale up from zero. Keep traffic
+    closed and GitOps paused:
+
+    ```bash
+    while read -r name replicas; do kubectl scale deploy -n "$ns" "$name" --replicas="$replicas"; done < replicas-before.txt
+    kubectl rollout status "deploy/${app}" -n "$ns" --timeout=10m
+    ```
+  </Step>
+  <Step title="Check that it worked">
+    ```bash
+    kubectl get jobs -n "$ns"
+    kubectl get pods -n "$ns" -o custom-columns=NAME:.metadata.name,IMAGE:.spec.containers[0].image,STATUS:.status.phase
+    kubectl exec -n "$ns" "deploy/${app}" -- formbricks-authzed upgrade check
+    ```
+
+    The migration Jobs must show `Complete`, the pods must run the target version, and `upgrade check` must exit `0`.
+    Then do the [checks after the upgrade](/self-hosting/advanced/upgrade#after-the-upgrade).
+  </Step>
+  <Step title="Restore controllers and traffic">
+    Turn automatic sync back on with your original settings, for example
+    `argocd app set <app> --sync-policy automated --self-heal` or `flux resume helmrelease <name> -n "$ns"`.
+    Then reopen traffic and watch the logs and queues.
+  </Step>
+</Steps>
+
+<span id="gitops-sequencing" />
+
+## Patch upgrades
+
+A patch, such as 6.1.2 → 6.1.3, doesn't change the permission schema, so you don't run the preparation Job.
+Keep `authzed.migrationAcknowledged: true`.
+
+**Helm or Flux:** check that the permission setup is clean:
+
+```bash
+kubectl exec -n "$ns" "deploy/${app}" -- formbricks-authzed upgrade check
+```
+
+It must exit `0`. Then upgrade: run the `helm upgrade` command from **Deploy the new version**, or commit the
+new chart version for Flux. The chart runs the same check before it upgrades, and that check changes nothing.
+If it reports pending permission work on a busy instance, stop the writers first as in the steps above, and
+run the upgrade again.
+
+**Argo CD:** Argo CD renders the chart as a new install, so its Sync hook runs `upgrade prepare` on every sync,
+and that writes permission data. Stop the writers before a patch sync. Do every step above except
+**Prepare permissions**.
+
+<span id="recovery" />
+
+## If something goes wrong
+
+Keep traffic closed and GitOps paused. `helm rollback` restores the Kubernetes resources, not the database.
+To go back to the old version:
+
+1. Scale the writers to zero again.
+2. Restore the app database from the backup, for example from the RDS snapshot, and the SpiceDB database
+   if you backed it up. After a failed first upgrade to 6.0 there is no SpiceDB backup: 5.4 doesn't use it.
+3. Roll back the release with `helm rollback "$rel" <revision> -n "$ns"` (find the revision with
+   `helm history "$rel" -n "$ns"`), or revert the commit in Git for Argo CD or Flux.
+4. Restore the replicas, check the old version works, then reopen traffic.
+
+See [troubleshooting](/self-hosting/upgrade/troubleshooting) and [backup and restore](/self-hosting/operate/backup-restore).
+
+<span id="valkey-statefulset-forbidden" />
+
+### Upgrade fails on the Valkey StatefulSet
+
+Charts from 5.1 on put their own version on the volume claim template of the bundled Valkey StatefulSet (the
+default, with persistence on). Kubernetes doesn't allow changes to a claim template, so every upgrade to a new
+chart version failed, and the release ended `failed` and half applied:
+
+```text
+StatefulSet.apps "formbricks-redis-master" is invalid: spec: Forbidden: updates to statefulset spec for fields other than 'replicas', ...
+```
+
+The chart no longer puts a version there. With Helm or Flux, an upgrade keeps the labels the running StatefulSet
+already has, so it works without extra steps, also from a release stuck in `failed` because of this error.
+
+Argo CD renders the chart without reading the cluster, so its first sync to a fixed chart still hits the error
+once. A chart without the fix hits it on every upgrade, so upgrade to a chart that has the fix instead.
+
+For the one Argo CD sync, or if you must upgrade to a chart without the fix, delete the StatefulSet object but
+keep its pod and volume, then run the sync or upgrade again. `ns` and `rel` are set in the first step above.
+
+```bash
+kubectl delete statefulset -n "$ns" \
+  -l "app.kubernetes.io/instance=${rel},app.kubernetes.io/component=redis" --cascade=orphan
+```
+
+`--cascade=orphan` leaves the Valkey pod running and its PersistentVolumeClaim in place. The sync or upgrade
+creates the StatefulSet again, which takes over the same pod and volume. If the new chart changes the pod
+template, the pod restarts once under the same name; its data stays on the volume.

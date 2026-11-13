@@ -626,6 +626,14 @@ describe("processResponsePipelineJob", () => {
           equals: true,
           path: ["alert", "survey_123"],
         },
+        NOT: {
+          memberships: {
+            some: {
+              role: "dashboard_viewer",
+              organization: { workspaces: { some: { id: "workspace_123" } } },
+            },
+          },
+        },
         OR: [
           {
             memberships: {

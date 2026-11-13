@@ -92,6 +92,7 @@ export default defineConfig({
         "**/*.mock.*", // Mock files
         "**/mocks/**", // Mock directories
         "**/__mocks__/**", // Jest-style mock directories
+        "**/__fixtures__/**", // Test fixtures and the builders that make them
         "**/playwright/**", // Playwright E2E test files
 
         // TSX files (covered by E2E tests)

@@ -23,8 +23,9 @@ import {
 } from "@formbricks/types/responses";
 import { type TBaseFilters } from "@formbricks/types/segment";
 import type { TShowConditionGroup } from "@formbricks/types/show-conditions";
-import { type TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import { type TSurveyBlock, type TSurveyBlockLogic } from "@formbricks/types/surveys/blocks";
 import type { TSurveyFollowUpAction, TSurveyFollowUpTrigger } from "@formbricks/types/surveys/follow-up";
+import type { TResponseNotShown } from "@formbricks/types/surveys/not-shown";
 import {
   type TSurveyClosedMessage,
   type TSurveyEnding,
@@ -59,6 +60,7 @@ declare global {
     export type ResponseData = TResponseData;
     export type ResponseIngestFlags = TIngestFlag[];
     export type ResponseCalBookings = TCalBookingsByQuestionId;
+    export type ResponseNotShown = TResponseNotShown;
     export type ResponseVariables = TResponseVariables;
     export type ResponseTtc = TResponseTtc;
     export type ResponseMeta = TResponseMeta;
@@ -76,6 +78,7 @@ declare global {
     export type SurveySingleUse = TSurveySingleUse;
     export type SurveyRecaptcha = TSurveyRecaptcha;
     export type SurveyShowConditions = TShowConditionGroup;
+    export type SurveyStartLogic = TSurveyBlockLogic[];
     export type SurveyLinkMetadata = TSurveyMetadata;
     export type OrganizationBilling = TOrganizationBilling;
     export type OrganizationBillingPlanLimits = TOrganizationBillingPlanLimits;

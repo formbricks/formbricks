@@ -15,6 +15,9 @@ const mocks = vi.hoisted(() => ({
   getUserVisibleSurveyWhere: vi.fn(),
   assertSurveysInWorkspace: vi.fn(),
   assertSurveyInteractionSurveyIds: vi.fn(),
+  assertSegmentSurveyFiltersVisible: vi.fn(),
+  assertAddedSegmentSurveyFiltersVisible: vi.fn(),
+  resolveSurveyActorContext: vi.fn(),
   cloneSegment: vi.fn(),
   createSegment: vi.fn(),
   resetSegmentInSurvey: vi.fn(),
@@ -64,12 +67,15 @@ vi.mock("@/modules/ee/contacts/segments/lib/segments", () => ({
 vi.mock("@/lib/survey/service", () => ({ loadNewSegmentInSurvey: mocks.loadNewSegmentInSurvey }));
 vi.mock("@/lib/survey/visibility/actor-context", () => ({
   getUserVisibleSurveyWhere: mocks.getUserVisibleSurveyWhere,
+  resolveSurveyActorContext: mocks.resolveSurveyActorContext,
 }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({ applyRateLimit: vi.fn() }));
 vi.mock("@/lib/organization/service", () => ({ getOrganization: mocks.getOrganization }));
 vi.mock("@/lib/posthog", () => ({ capturePostHogEvent: vi.fn() }));
 vi.mock("@/modules/ee/contacts/lib/contact-attributes", () => ({ getDistinctAttributeValues: vi.fn() }));
 vi.mock("@/modules/ee/contacts/segments/lib/helper", () => ({
+  assertAddedSegmentSurveyFiltersVisible: mocks.assertAddedSegmentSurveyFiltersVisible,
+  assertSegmentSurveyFiltersVisible: mocks.assertSegmentSurveyFiltersVisible,
   assertSurveyInteractionSurveyIds: mocks.assertSurveyInteractionSurveyIds,
   assertSurveysInWorkspace: mocks.assertSurveysInWorkspace,
   checkForRecursiveSegmentFilter: vi.fn(),
@@ -134,6 +140,7 @@ describe("segment mutations authorize every referenced survey (ENG-3282)", () =>
   const run = (action: unknown, parsedInput: Record<string, unknown>) =>
     (action as (args: unknown) => Promise<unknown>)({ ctx: ctx(), parsedInput });
   const visibleWhere = { OR: [{ visibility: "workspace" }, { ownerId: "user1" }] };
+  const memberActor = { enforced: true, isOrganizationAdmin: false, kind: "user", userId: "user1" };
   /** Workspace checks pass; the survey-level one answers `surveyAllowed`. */
   const actAs = (surveyAllowed: boolean) =>
     mocks.assertCan.mockImplementation(async (_actor, _action, resource: { type: string }) => {
@@ -150,6 +157,8 @@ describe("segment mutations authorize every referenced survey (ENG-3282)", () =>
     mocks.getIsContactsEnabled.mockResolvedValue(true);
     mocks.getOrganization.mockResolvedValue({ id: "org1" });
     mocks.getUserVisibleSurveyWhere.mockResolvedValue(visibleWhere);
+    mocks.resolveSurveyActorContext.mockResolvedValue(memberActor);
+    mocks.getSegment.mockResolvedValue({ id: "seg1", workspaceId: "ws1", filters: [] });
     mocks.getSurveyWorkspaceIdMap.mockResolvedValue(
       new Map([
         ["s1", "ws1"],
@@ -269,5 +278,86 @@ describe("segment mutations authorize every referenced survey (ENG-3282)", () =>
       InvalidInputError
     );
     expect(mocks.updateSegment).not.toHaveBeenCalled();
+  });
+
+  // ENG-6870: nested segment filters read surveys too, so a caller may only save filters they could
+  // evaluate themselves; an edit only answers for the surveys it adds.
+  test("create checks the whole tree and update only what it adds, nested segments included", async () => {
+    actAs(true);
+    const nested = [
+      {
+        id: "clfilter0000000000000001",
+        connector: null,
+        resource: {
+          id: "clresource00000000000001",
+          root: { type: "segment", segmentId: "clsegment0000000000000001" },
+          qualifier: { operator: "userIsIn" },
+          value: "clsegment0000000000000001",
+        },
+      },
+    ];
+    const stored = [{ id: "f0", connector: null, resource: [] }];
+    mocks.getSegment.mockResolvedValue({ id: "seg1", workspaceId: "ws1", filters: stored });
+    mocks.restoreHiddenSegmentSurveyIds.mockImplementation(async (filters: unknown) => filters);
+    const refused = new InvalidInputError("Segment filters reference a survey you don't have access to");
+    mocks.assertSegmentSurveyFiltersVisible.mockRejectedValue(refused);
+    mocks.assertAddedSegmentSurveyFiltersVisible.mockRejectedValue(refused);
+
+    await expect(
+      run(createSegmentAction, { workspaceId: "ws1", title: "Seg", filters: nested, isPrivate: false })
+    ).rejects.toBe(refused);
+    await expect(run(updateSegmentAction, { segmentId: "seg1", data: { filters: nested } })).rejects.toBe(
+      refused
+    );
+
+    expect(mocks.resolveSurveyActorContext).toHaveBeenCalledWith({ type: "user", id: "user1" }, "org1");
+    expect(mocks.assertSegmentSurveyFiltersVisible).toHaveBeenCalledWith(nested, "ws1", memberActor);
+    expect(mocks.assertAddedSegmentSurveyFiltersVisible).toHaveBeenCalledWith(
+      nested,
+      stored,
+      "ws1",
+      memberActor,
+      "seg1"
+    );
+    expect(mocks.createSegment).not.toHaveBeenCalled();
+    expect(mocks.updateSegment).not.toHaveBeenCalled();
+  });
+
+  // ENG-6870: attaching or copying a segment targets the caller's survey with its filters.
+  test.each([
+    ["loadNewSegmentAction", () => run(loadNewSegmentAction, { surveyId: "s1", segmentId: "seg1" })],
+    ["cloneSegmentAction", () => run(cloneSegmentAction, { surveyId: "s1", segmentId: "seg1" })],
+  ] as const)("%s refuses a segment whose filters read a survey hidden from the caller", async (_n, call) => {
+    actAs(true);
+    const filters = [{ id: "f1", connector: null, resource: [] }];
+    mocks.getSegment.mockResolvedValue({ id: "seg1", workspaceId: "ws1", filters });
+    const refused = new InvalidInputError("Segment filters reference a survey you don't have access to");
+    mocks.assertSegmentSurveyFiltersVisible.mockRejectedValue(refused);
+
+    await expect(call()).rejects.toBe(refused);
+    expect(mocks.assertSegmentSurveyFiltersVisible).toHaveBeenCalledWith(filters, "ws1", memberActor, "seg1");
+    expect(mocks.loadNewSegmentInSurvey).not.toHaveBeenCalled();
+    expect(mocks.cloneSegment).not.toHaveBeenCalled();
+  });
+
+  // ENG-6870 review: connecting a survey to an existing segment targets it with the stored tree.
+  test("updateSegmentAction checks the whole stored tree when it connects a new survey", async () => {
+    actAs(true);
+    const stored = [{ id: "f1", connector: null, resource: [] }];
+    mocks.getSegment.mockResolvedValue({ id: "seg1", workspaceId: "ws1", filters: stored, surveys: ["s1"] });
+    const refused = new InvalidInputError("Segment filters reference a survey you don't have access to");
+    mocks.assertSegmentSurveyFiltersVisible.mockRejectedValueOnce(refused);
+
+    await expect(
+      run(updateSegmentAction, { segmentId: "seg1", data: { surveys: ["s1", "s2"] } })
+    ).rejects.toBe(refused);
+    expect(mocks.assertSegmentSurveyFiltersVisible).toHaveBeenCalledWith(stored, "ws1", memberActor, "seg1");
+    expect(mocks.updateSegment).not.toHaveBeenCalled();
+
+    // Re-sending the surveys already connected adds no target.
+    mocks.assertSegmentSurveyFiltersVisible.mockClear();
+    await run(updateSegmentAction, { segmentId: "seg1", data: { surveys: ["s1"] } });
+    expect(mocks.assertSegmentSurveyFiltersVisible).not.toHaveBeenCalled();
+    expect(mocks.updateSegment).toHaveBeenCalledOnce();
   });
 });

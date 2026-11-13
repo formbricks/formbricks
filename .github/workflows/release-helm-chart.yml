@@ -33,7 +33,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -76,6 +76,11 @@ jobs:
 
       - name: Install YQ
         uses: dcarbone/install-yq-action@4075b4dca348d74bd83f2bf82d30f25d7c54539b # v1.3.1
+
+      # The chart pins a Cube image that cube-image.yml publishes separately. Publishing the chart before
+      # that image is public leaves Cube unable to start on nodes that have not cached it.
+      - name: Check the pinned Cube image is publicly pullable
+        run: bash .github/scripts/check-cube-image.sh
 
       - name: Update Chart.yaml with new version
         env:

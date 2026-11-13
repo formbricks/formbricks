@@ -735,7 +735,7 @@ authzed:
   # PostgreSQL dependency is enabled and no datastore secret is supplied.
   bundledPostgresqlBootstrap:
     enabled: true
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     backoffLimit: 10
     # The administrative role the bootstrap Job connects as to create the
     # dedicated `spicedb` role and database. It needs CREATEROLE and CREATEDB,
@@ -748,19 +748,26 @@ authzed:
     # unsupported case is a `spicedb` role someone else already created. See the
     # chart README.
     #
-    # Defaults to the `postgres` superuser the bundled subchart creates. An
-    # existing PostgreSQL that was installed without one (see
-    # postgresql.auth.enablePostgresUser) would otherwise fail this Job, so point
-    # these at whichever role does hold those privileges instead of disabling
-    # bootstrap wholesale.
-    adminUsername: postgres
-    adminDatabase: postgres
-    # Where that role's password lives. Both default to the bundled PostgreSQL
-    # admin credentials, so overriding adminUsername alone is not enough — set
-    # these too whenever the role is not the bundled `postgres` superuser.
-    # Setting the name without the key is refused as well: the key would
-    # otherwise fall back to the subchart's own key name and be looked up inside
-    # your Secret, which fails only once the Pod is created.
+    # Leave all four admin* values empty to connect as the role the bundled
+    # server was initialised with: postgresql.auth.username on
+    # postgresql.auth.database, with the password the server reads
+    # (postgresql.auth.existingSecret / secretKeys.userPasswordKey). The bundled
+    # pgvector/pgvector image is the official PostgreSQL image, which makes that
+    # role a superuser and creates no `postgres` role. When the data directory
+    # was initialised by a Bitnami image instead, that role is not a superuser,
+    # so the Job falls back to the `postgres` superuser and its admin password.
+    #
+    # Setting any of them selects an explicit administrator, with the previous
+    # defaults for the rest: `postgres` on the `postgres` database with the
+    # bundled admin password. Point them at whichever role holds the privileges
+    # above instead of disabling bootstrap wholesale.
+    adminUsername: ""
+    adminDatabase: ""
+    # Where that role's password lives. With an explicit adminUsername other
+    # than `postgres`, both are required. Setting the name without the key is
+    # refused as well: the key would otherwise fall back to the subchart's own
+    # key name and be looked up inside your Secret, which fails only once the
+    # Pod is created.
     adminPasswordSecretName: ""
     adminPasswordKey: ""
 
@@ -769,7 +776,7 @@ authzed:
   # Its URL must explicitly set sslmode=require, verify-ca, or verify-full.
   externalPostgresqlBootstrap:
     enabled: false
-    image: postgres:17-alpine
+    image: postgres:18-alpine
     backoffLimit: 10
     adminSecretName: ""
     adminUrlKey: DATABASE_URL
@@ -1101,7 +1108,7 @@ cube:
   # repository and tag back at an upstream "cubejs/cube" release is supported.
   image:
     repository: "ghcr.io/formbricks/cube"
-    tag: "1.8.8-2"
+    tag: "1.8.20-1"
     digest: ""
     pullPolicy: IfNotPresent
 
@@ -1114,8 +1121,18 @@ cube:
     port: 4000
 
   # The generated app secret supplies CUBEJS_API_SECRET when secret.enabled=true.
-  # Secret values such as CUBEJS_DB_* should be supplied through envFrom or another secret-management
-  # flow.
+  #
+  # With the bundled PostgreSQL (postgresql.enabled=true) the chart connects Cube to it:
+  # CUBEJS_DB_HOST, _PORT, _NAME and _USER are rendered from the postgresql values, and CUBEJS_DB_PASS
+  # references the Secret and key the server reads its password from. A name set in cube.env replaces
+  # that default; the user and password are dropped together when cube.env sets CUBEJS_DB_HOST,
+  # CUBEJS_DB_USER or CUBEJS_DB_PASS. Kubernetes gives env precedence over envFrom, so override these
+  # in cube.env (valueFrom maps are accepted), not through envFrom.
+  #
+  # With an external database (postgresql.enabled=false) nothing is rendered: set CUBEJS_DB_HOST,
+  # CUBEJS_DB_PORT, CUBEJS_DB_NAME, CUBEJS_DB_USER and CUBEJS_DB_PASS (plus CUBEJS_DB_SSL=true for TLS)
+  # in cube.env or through envFrom. Cube's Postgres driver has no URL variable, so DATABASE_URL is not
+  # reused.
   envFrom: []
 
   env:
@@ -1131,6 +1148,9 @@ cube:
     CUBEJS_CACHE_AND_QUEUE_DRIVER: "memory"
     CUBEJS_JWT_ISSUER: "formbricks-web"
     CUBEJS_JWT_AUDIENCE: "formbricks-cube"
+    # Cube sets it as each query's Postgres statement_timeout (Cube's default is 10 minutes), so one
+    # dashboard cannot hold database connections busy for long.
+    CUBEJS_DB_QUERY_TIMEOUT: "60s"
 
   # Cube writes nothing to its own filesystem without Cube Store (in-memory cache and queue driver), so
   # the root filesystem is read-only and no writable mounts are needed. docker/cube-image/smoke-test.sh
@@ -1189,10 +1209,10 @@ hub:
     # Pinned by digest for immutable, reproducible deployments. When digest is set it takes
     # precedence over tag, and deployment, init container, and migration job all resolve to the
     # same immutable image. Update on each Hub release.
-    # Current digest corresponds to ghcr.io/formbricks/hub:0.14.1.
-    digest: "sha256:3407fff46303c3c24091f2d0d0a3dbc94b8539ebd84a258575bcbf52bedda745"
+    # Current digest corresponds to ghcr.io/formbricks/hub:0.14.3.
+    digest: "sha256:63b85da9a0eb4346dd9350cd2bc82e9fe00b195756ad9a4bd50195ba874d10bc"
     # Tag is a fallback for dev/non-prod when digest is cleared; keep aligned with the digest above.
-    tag: "0.14.1"
+    tag: "0.14.3"
     pullPolicy: IfNotPresent
 
   # Optional override for the secret Hub reads from.
@@ -1598,8 +1618,11 @@ postgresql:
     repository: pgvector/pgvector
     tag: pg17
   auth:
-    # The bundled AuthZed bootstrap creates a dedicated role and database and
-    # therefore requires the PostgreSQL administrator account.
+    # The bundled pgvector/pgvector image is the official PostgreSQL image: it
+    # makes `username` its superuser and ignores the Bitnami-only
+    # POSTGRES_POSTGRES_PASSWORD this enables, so no `postgres` role exists. It
+    # stays true for servers a Bitnami image initialised, where the AuthZed
+    # bootstrap falls back to `postgres` with the admin password.
     enablePostgresUser: true
     username: formbricks
     database: formbricks

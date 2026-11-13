@@ -26,7 +26,7 @@ export function ForgotPasswordEmail({
         <Text className="text-sm">{t("emails.forgot_password_email_text")}</Text>
         <EmailButton href={verifyLink} label={t("emails.forgot_password_email_change_password")} />
         <Text className="text-sm font-bold">
-          {t("emails.forgot_password_email_link_valid_for_24_hours", {
+          {t("emails.forgot_password_email_link_valid_for_minutes", {
             minutes: String(linkValidityInMinutes),
           })}
         </Text>

@@ -23,12 +23,14 @@ import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { fillSurveyBlockCodes } from "@/lib/survey/fill-codes";
 import { checkForInvalidMediaInBlocks } from "@/lib/survey/utils";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
+import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 import { resolveSurveyCreationFacts } from "@/lib/survey/visibility/creation";
 import { WorkspaceSurveyLimitError, assertWorkspaceSurveyLimit } from "@/lib/survey/visibility/limit";
 import { type TSurveyVisibilityFilter, buildSurveyAccessWhere } from "@/lib/survey/visibility/predicate";
 import { validateInputs } from "@/lib/utils/validate";
 import { getTranslate } from "@/lingodotdev/server";
 import { resolveCopiedSurveyCustomCss } from "@/modules/custom-css/lib/service";
+import { assertSegmentSurveyFiltersVisible } from "@/modules/ee/contacts/segments/lib/helper";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { getQuotas } from "@/modules/ee/quotas/lib/quotas";
 import { assertCanWriteCustomHeadScripts } from "@/modules/survey/lib/custom-head-scripts-permission";
@@ -102,6 +104,7 @@ const getExistingSurvey = async (surveyId: string) => {
       delay: true,
       displayPercentage: true,
       showConditions: true,
+      startLogic: true,
       showLanguageSwitch: true,
       autoSelectLanguage: true,
       pin: true,
@@ -251,6 +254,19 @@ export const copySurveyToOtherWorkspace = async (
     if (!existingWorkspace) throw new ResourceNotFoundError("Workspace", workspaceId);
     if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
     if (!organization) throw new ResourceNotFoundError("Organization", workspaceId);
+
+    // ENG-6870: a copy keeps the source's targeting (it connects the public segment, or writes its filters
+    // into a new one in the target), and the copier then reads the copy's responses, so the copier must
+    // see every survey that targeting reads *in the workspace it lands in*. Checked against the target:
+    // a stored filter can name an id that is foreign to the source but a hidden survey in the target.
+    if (existingSurvey.segment) {
+      await assertSegmentSurveyFiltersVisible(
+        existingSurvey.segment.filters,
+        targetWorkspaceId,
+        await resolveSurveyActorContext({ type: "user", id: userId }, organization.id),
+        isSameWorkspace && !existingSurvey.segment.isPrivate ? existingSurvey.segment.id : undefined
+      );
+    }
 
     const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
@@ -482,6 +498,8 @@ export const copySurveyToOtherWorkspace = async (
       showConditions: existingSurvey.showConditions
         ? structuredClone(existingSurvey.showConditions)
         : Prisma.DbNull,
+      // Names this survey's own blocks, endings and fields, whose ids the copy keeps.
+      startLogic: existingSurvey.startLogic ? structuredClone(existingSurvey.startLogic) : Prisma.DbNull,
       // "replace" means "run only this survey's scripts, not the workspace's". In another workspace
       // that would silently switch off the target's own head scripts (analytics, consent), so the
       // copy keeps its scripts but adds them to the target's instead.

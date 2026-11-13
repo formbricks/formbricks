@@ -1,0 +1,117 @@
+---
+title: "Envoy Gateway"
+description: "Choose CRD ownership, configure the rate-limit backend and coordinate GitOps."
+icon: "route"
+---
+
+## CRD ownership
+
+Use the Envoy Gateway version and Gateway API bundle required by your selected Formbricks chart.
+Check that release's `Chart.yaml` and CRD ownership guide; the links below show the current source,
+so select your chart's publication commit before copying examples.
+
+Choose who owns the two cluster-wide CRD sets before enabling Envoy:
+
+| Arrangement | Formbricks controller | Formbricks CRDs | Values example |
+| --- | --- | --- | --- |
+| Bundled controller and both CRD sets | Yes | Both sets | [Bundled](https://github.com/formbricks/formbricks/blob/main/charts/formbricks/examples/envoy/bundled.yaml) |
+| Platform Gateway API, separate Envoy CRDs | Yes | Neither set | [Platform Gateway API](https://github.com/formbricks/formbricks/blob/main/charts/formbricks/examples/envoy/platform-gateway-api.yaml) |
+| Both CRD sets managed externally | Yes | Neither set | [External CRDs](https://github.com/formbricks/formbricks/blob/main/charts/formbricks/examples/envoy/external-crds.yaml) |
+| Shared platform Envoy controller and CRDs | No | Neither set | [Shared controller](https://github.com/formbricks/formbricks/blob/main/charts/formbricks/examples/envoy/shared-controller.yaml) |
+
+For a chart-managed Envoy controller, configure a dedicated Redis/Valkey rate-limit backend:
+
+<Warning>
+  Use a dedicated external Redis/Valkey backend when bundled images are unavailable, including
+  [chart 6.1.0](/self-hosting/upgrade/versions/6.1-runtime#envoy-redis-images). The example below disables the bundled backend.
+</Warning>
+
+```yaml
+envoy:
+  enabled: true
+  controller:
+    enabled: true
+  crds:
+    enabled: true
+  config:
+    envoyGateway:
+      rateLimit:
+        backend:
+          type: Redis
+          redis:
+            url: "redis.example.internal:6379"
+
+envoyRedis:
+  enabled: false
+```
+
+Replace the address with your dedicated backend. Set its `maxmemory-policy` to `noeviction` and configure
+authentication/TLS as needed.
+This keeps rate-limiting state separate from the application's own Redis traffic.
+
+`envoy.crds.enabled=false` disables **both** Gateway API and Envoy Gateway CRDs, plus the bundled Gateway
+API safe-upgrade admission resources. A platform that manages only Gateway API must install matching Envoy
+Gateway CRDs separately at the chart-required version. After the platform has established compatible
+Gateway API CRDs, install only the Envoy CRDs:
+
+```bash
+ENVOY_GATEWAY_VERSION="<version from the selected Formbricks chart>"
+crd_dir="$(mktemp -d)"
+helm pull oci://docker.io/envoyproxy/gateway-crds-helm \
+  --version "$ENVOY_GATEWAY_VERSION" --untar --untardir "$crd_dir"
+helm template envoy-crds "$crd_dir/gateway-crds-helm" \
+  --set crds.gatewayAPI.enabled=false \
+  --set crds.envoyGateway.enabled=true \
+  | kubectl --context my-cluster apply --server-side -f -
+rm -rf "$crd_dir"
+```
+
+For separately managed **both** sets, use that same Envoy CRD chart with
+`crds.gatewayAPI.enabled=true`, `crds.gatewayAPI.channel=standard`, and
+`crds.envoyGateway.enabled=true` for a fresh cluster. During a handoff from bundled Experimental CRDs,
+keep `crds.gatewayAPI.channel=experimental` until clients using Experimental-only versions, such as
+`TLSRoute` v1alpha2, have migrated; a Standard bundle may not serve them. Do not apply the
+both-sets variant over provider-owned Gateway API CRDs. The Gateway API bundle must serve the types Envoy
+needs, including `BackendTLSPolicy` and `ListenerSet`. The OCI install does not
+place chart scripts in your working directory. Use the immutable source commit from the
+[chart publication run](https://github.com/formbricks/formbricks/actions/workflows/release-helm-chart.yml)
+for your installed chart version, then run the optional, read-only preflight after the CRD owner provisions the CRDs:
+
+```bash
+FORMBRICKS_SOURCE_COMMIT="<chart publication source commit>"
+git clone --depth 1 --filter=blob:none https://github.com/formbricks/formbricks.git formbricks-preflight
+git -C formbricks-preflight fetch --depth 1 origin "$FORMBRICKS_SOURCE_COMMIT"
+git -C formbricks-preflight checkout --detach FETCH_HEAD
+bash formbricks-preflight/charts/formbricks/scripts/preflight-envoy-crds.sh --context my-cluster
+```
+
+Replace `my-cluster` with the target kubectl context. The script checks Gateway API version/channel, served
+APIs, and Envoy CRD schemas against the selected release without changing the cluster. Envoy CRDs have no release
+annotation, so their owner must record and pin the matching package. It is separate from Helm rendering, so offline and GitOps
+workflows do not need Kubernetes access to render the chart.
+
+For **Helm**, apply externally owned CRDs first, wait for `Established`, run preflight, then install or
+upgrade Formbricks using the matching values example. Upgrade CRDs through their owner **before** a later
+Envoy controller upgrade; [Helm does not upgrade or delete CRDs](https://helm.sh/docs/chart_best_practices/custom_resource_definitions/)
+in `crds/`.
+
+For **Argo CD**, keep external CRDs in a platform Application, wait for `Established`, run preflight,
+then sync Formbricks with `envoy.crds.enabled=false`. For **Flux**, use a separate CRD Kustomization
+or release, wait for `Established`, run preflight, then reconcile Formbricks after its Ready condition.
+A global Argo CD `spec.source.helm.skipCrds` or Flux `spec.install.crds: Skip` or
+`spec.upgrade.crds: Skip` also skips the bundled SpiceDB operator CRD; use these only when **all** required
+CRDs are managed separately. Apply the same ownership order during upgrades and keep externally owned
+resources outside Formbricks pruning.
+
+A shared controller needs a compatible GatewayClass whose `controllerName` belongs to that controller and
+whose proxy settings and Redis rate-limit backend support the Formbricks routes and policies. Configure
+`envoy.formbricks.ingress` or your ingress/load balancer to send public traffic through Envoy. Other Gateway
+API implementations do not reconcile Envoy-specific `SecurityPolicy`, `HTTPRouteFilter`, or `EnvoyProxy`
+resources. See the [chart ownership guide](https://github.com/formbricks/formbricks/blob/main/charts/formbricks/README.md#envoy-crd-ownership)
+for the installation matrix and the [rate-limiting guide](/self-hosting/configuration/rate-limiting) for
+route coverage.
+
+When handing off to a shared controller, its proxy Service may live in the controller namespace. Update
+the public ingress target to the new proxy after the Gateway is Programmed and a request succeeds. Keep
+the shared GatewayClass and any class-level `EnvoyProxy` under platform ownership so they survive a
+Formbricks uninstall.

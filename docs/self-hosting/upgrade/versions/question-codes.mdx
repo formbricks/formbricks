@@ -1,0 +1,47 @@
+---
+title: "6.2: Question codes and the published lock"
+description: "What changes for API and MCP clients when every question gets a code and published surveys are locked."
+icon: "lock"
+---
+
+**Applies to:** the upgrade to 6.2. Part of the [6.2 upgrade guide](/self-hosting/upgrade/versions/6.2).
+Check it if API or MCP clients change surveys, if scripts read the Standard export, or if webhook receivers
+validate the payload strictly.
+
+## What changes
+
+- **Every question and answer option gets a code.** A data migration gives each question the next unused `q1`,
+  `q2`, … and each answer option, matrix row and matrix column a code `1`, `2`, … in today's order. It runs with
+  the other database migrations during the upgrade. It doesn't rename Question IDs, reorder anything or change
+  stored responses. See [question codes](/surveys/analysis/question-codes).
+- **A published survey is locked.** Once a survey leaves draft (active, paused, completed or scheduled), the
+  server refuses a save that changes a question code, an answer code, a question type or an option's text in
+  any language, or that deletes an option that existed at launch. Adding questions and options still works.
+- The Excel file of the **Standard export** names its sheet `Response Data` instead of `Sheet1`.
+- Webhook payloads gain two keys, `dataByQuestionCode` and `outcome`. Existing keys stay.
+
+## Before you upgrade
+
+| Who | What to do |
+| --- | --- |
+| API and MCP clients that edit published surveys | Expect an error instead of a saved change when they change a locked field (see below). |
+| Clients that send the whole survey on every save | Send the stored text and codes unchanged. A code you leave out isn't treated as a change. |
+| Scripts that read the export by sheet name | Read `Response Data` instead of `Sheet1`, or read the first sheet. CSV files are unchanged. |
+| Webhook receivers with a strict schema | Allow unknown keys. See [reading answers by question code](/platform/features/integrations/webhooks#reading-answers-by-question-code). |
+
+The lock applies to the survey editor, `PUT /api/v1/management/surveys/{surveyId}`, `PATCH /api/v3/surveys/{surveyId}`,
+the v3 block routes and the MCP survey tools. Clients that only read surveys, send unchanged values or edit
+draft surveys are not affected.
+
+| Path | Response when a change is refused |
+| --- | --- |
+| `PATCH /api/v3/surveys/{surveyId}` and the MCP tools | `422` with `invalid_params`. Each entry has the code `immutable_question_code`, `immutable_answer_code`, `immutable_question_type`, `immutable_option_text` or `immutable_option_deletion`, the path of the field, and the id of the question or option. |
+| `PUT /api/v1/management/surveys/{surveyId}` and the editor | `400` with a message that starts with `published_survey_locked:`, then one sentence per change. |
+
+## Working with the lock
+
+1. Fix typos and translations **before** you activate a survey. The editor has no unlock.
+2. To change an option's wording on a live survey, add a new option with the new text.
+3. If a script must change a locked field, set the survey back to `draft`, make the change and publish it
+   again. Responses already collected keep the old text, and the Analysis export lists answers that no longer
+   match an option as unmapped values. The lock protects the meaning of exported data; it isn't a security control.

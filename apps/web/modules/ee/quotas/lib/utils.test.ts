@@ -251,6 +251,19 @@ describe("Quota Utils", () => {
       );
     });
 
+    test.each([
+      ["and", true],
+      ["or", false],
+    ] as const)("a quota with no conditions and connector %s passes: %s, as before", (connector, passes) => {
+      const quota = { ...mockQuota, logic: { connector, conditions: [] } };
+
+      const result = evaluateQuotas(mockSurvey, mockResponseData, mockVariablesData, [quota], "default");
+
+      expect(result.passedQuotas).toEqual(passes ? [quota] : []);
+      expect(result.failedQuotas).toEqual(passes ? [] : [quota]);
+      expect(evaluateLogic).not.toHaveBeenCalled();
+    });
+
     test("should handle empty quotas array", () => {
       const result = evaluateQuotas(mockSurvey, mockResponseData, mockVariablesData, [], "en");
 

@@ -4,11 +4,11 @@ import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZUuid } from "@formbricks/types/common";
-import { AuthenticationError, OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
+import { AuthenticationError, ValidationError } from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
-import { assertCan, can } from "@/lib/authorization";
-import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
+import { assertCan } from "@/lib/authorization";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
+import { assertUserManagementAllowed } from "@/lib/membership/user-management";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -16,7 +16,10 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
-import { checkRoleManagementPermission } from "@/modules/ee/role-management/lib/permission";
+import {
+  assertCanAssignRole,
+  checkRoleManagementPermission,
+} from "@/modules/ee/role-management/lib/permission";
 import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { getInvite } from "@/modules/organization/settings/teams/lib/invite";
 import { getOrganizationOwnerCount } from "@/modules/organization/settings/teams/lib/membership";
@@ -37,29 +40,32 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
       throw new AuthenticationError("User not a member of this organization");
     }
 
+    await assertUserManagementAllowed(ctx.user.id, organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: organizationId,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, organizationId);
 
-    if (!IS_FORMBRICKS_CLOUD && parsedInput.data.role === "billing") {
-      throw new ValidationError("Billing role is not allowed");
-    }
-
-    if (currentUserMembership.role === "manager" && parsedInput.data.role !== "member") {
-      throw new OperationNotAllowedError("Managers can only invite members");
-    }
-
+    await assertCanAssignRole({
+      organizationId,
+      assignerRole: currentUserMembership.role,
+      roles: [parsedInput.data.role],
+    });
     await checkRoleManagementPermission(organizationId);
 
     ctx.auditLoggingCtx.organizationId = organizationId;
     ctx.auditLoggingCtx.inviteId = parsedInput.inviteId;
-    ctx.auditLoggingCtx.oldObject = { ...(await getInvite(parsedInput.inviteId)) };
+    const oldInvite = { ...(await getInvite(parsedInput.inviteId)) };
+    ctx.auditLoggingCtx.oldObject = oldInvite;
 
-    const result = await updateInvite(parsedInput.inviteId, parsedInput.data);
+    const result = await updateInvite(parsedInput.inviteId, parsedInput.data, {
+      allowOwnerInvite: currentUserMembership.role === "owner",
+    });
 
-    ctx.auditLoggingCtx.newObject = { ...(await getInvite(parsedInput.inviteId)) };
+    // Built from the write rather than re-read: `getInvite` is request-cached, so a second read in this
+    // action would return the snapshot from before the update.
+    ctx.auditLoggingCtx.newObject = { ...oldInvite, ...parsedInput.data };
     return result;
   })
 );
@@ -79,43 +85,23 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
     if (!currentUserMembership) {
       throw new AuthenticationError("User not a member of this organization");
     }
-    // `organization.manage_access` *is* this decision in the central vocabulary. The SpiceDB
-    // evaluator maps `USER_MANAGEMENT_MINIMUM_ROLE` onto the schema (`owner` → write, `manager` →
-    // manage_access, `disabled` → deny). Asking centrally makes SpiceDB authoritative for this role
-    // mutation — the highest-risk one in the product. The check
-    // below it stays `organization.manage`, which is a different and additionally required
-    // capability, so both remain.
-    const canManageAccess = await can({ type: "user", id: ctx.user.id }, "organization.manage_access", {
-      type: "organization",
-      id: parsedInput.organizationId,
-    });
-
-    if (!canManageAccess) {
-      throw new OperationNotAllowedError("User management is not allowed for your role");
-    }
-
+    await assertUserManagementAllowed(ctx.user.id, parsedInput.organizationId);
     await assertCan({ type: "user", id: ctx.user.id }, "organization.manage", {
       type: "organization",
       id: parsedInput.organizationId,
     });
     await applyRateLimit(rateLimitConfigs.actions.stateMutation, parsedInput.organizationId);
 
-    if (!IS_FORMBRICKS_CLOUD && parsedInput.data.role === "billing") {
-      throw new ValidationError("Billing role is not allowed");
-    }
-
-    if (currentUserMembership.role === "manager" && parsedInput.data.role !== "member") {
-      throw new OperationNotAllowedError("Managers can only assign users to the member role");
-    }
-
     const targetMembership = await getMembershipByUserIdOrganizationId(
       parsedInput.userId,
       parsedInput.organizationId
     );
-    if (currentUserMembership.role !== "owner" && targetMembership?.role === "owner") {
-      throw new OperationNotAllowedError("Only owners can change the role of an owner");
-    }
-
+    await assertCanAssignRole({
+      organizationId: parsedInput.organizationId,
+      assignerRole: currentUserMembership.role,
+      roles: [parsedInput.data.role],
+      targetCurrentRole: targetMembership?.role,
+    });
     await checkRoleManagementPermission(parsedInput.organizationId);
 
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;

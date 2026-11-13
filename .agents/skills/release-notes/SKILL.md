@@ -166,9 +166,9 @@ is an *index*: one line per change, linking its PR, with the procedure left to t
 guide, which already carries it.
 
 So: condense each table row to a single sentence, group the bullets by audience — **self-hosted
-deployment**, **API and SDK contract**, **changed defaults and limits** — and link
-`/self-hosting/advanced/migration#v6` (adjust the anchor per major) plus any version-specific
-upgrade page at the top of the section. Keep API and SDK bullets in the notes even when the
+deployment**, **API and SDK contract**, **changed defaults and limits** — and link the docs version
+page `/self-hosting/upgrade/versions/MAJOR.MINOR` (for example `/self-hosting/upgrade/versions/6.1`)
+at the top of the section. Keep API and SDK bullets in the notes even when the
 migration guide is linked: that guide is a self-hosting runbook, and a changed HTTP status code or
 a removed Management API field has no upgrade step to document there.
 
@@ -281,18 +281,33 @@ per paragraph; hard-wrapped source reads as odd line breaks in the release edito
 It carries three things:
 
 - What the release is, in a sentence or two. User-visible effect first.
-- The upgrade path: link the migration guide and any version-specific upgrade page, and name the
-  **tested upgrade pair**. The v6 upgrade page warns "Use only an upgrade pair listed as tested in
-  the target release notes", so this is load-bearing — **ask the human** what QA actually
-  exercised. Never assert a pair you have not been told was tested.
+- The upgrade path: "Upgrade from the latest PREVIOUS_MINOR patch", with a link to the docs version page
+  `/self-hosting/upgrade/versions/MAJOR.MINOR`. Skipping a minor version is not supported, and each minor
+  is tested from the latest patch of the previous minor. Confirm with the human that this test ran.
 - The support-end date, stated as a date, not a rule: *"receives bug fixes and security fixes until
   **21 December 2026**"*. Per `/self-hosting/advanced/release-maintenance-policy`, a minor is
   maintained for three calendar months from the day its first stable version is published — so this
   needs the intended publish date. Ask if it is not settled.
 
+### Upgrade impact
+
+Every stable release, minor or patch, has an `## Upgrade impact` section. It is the line operators
+scan, and the docs release notes page (`docs/platform/changelog.mdx`) copies it. Write exactly one of:
+
+- `**Upgrade impact: None.**` and, at most, one short sentence of context.
+- `**Upgrade impact: Action required** for WHO: WHAT.` followed by a link to the docs steps
+  (the version page, or a focused page under `/self-hosting/upgrade/versions/`).
+
+Base it on the Breaking changes tables and `## Before upgrading` steps of the PRs in range. Never write
+"review required" or any other "not yet known" status: if you can't tell, ask the human before drafting.
+
 ### Compose
 
 ```markdown
+## Upgrade impact
+
+**Upgrade impact: None.** / **Upgrade impact: Action required** for WHO: WHAT. [Upgrade steps](DOCS_URL)
+
 ## Overview
 
 Prose, unwrapped lines.
@@ -333,6 +348,10 @@ Omit any type-section with zero PRs — an empty header is worse than no header.
 A patch composes as:
 
 ```markdown
+## Upgrade impact
+
+**Upgrade impact: None.** / **Upgrade impact: Action required** for WHO: WHAT.
+
 ## Before upgrading
 
 Only when a PR in range has an upgrade step.
@@ -363,6 +382,20 @@ patch round, also post the draft URL on the round ticket: Hazel checks each draf
 (credits, "Before upgrading", no exploit detail in a title) before it is published.
 Never pass `--latest`, never omit `--draft`.
 
+### Mirror it in the docs
+
+GitHub Releases is the source of truth for release notes. After the human publishes the release, open a
+docs PR against `main` that:
+
+- Adds an `<Update label="NEW_TAG" description="PUBLICATION DATE">` entry at the top of
+  `docs/platform/changelog.mdx` with a `<span id="release-X-Y-Z" />`, one summary sentence, the
+  `**Upgrade impact: …**` line copied from the release, and `[All changes on GitHub](RELEASE_URL)`.
+  Copy the text; don't rewrite it. Escape `<`, `{` and `}` for MDX.
+- Adds a row for a patch to the **Patch actions** table on `docs/self-hosting/upgrade/versions/MAJOR.MINOR.mdx`.
+- For a new minor, creates that version page from `docs/templates/release-guidance.md` and adds it to
+  `docs/docs.json` and `docs/self-hosting/advanced/migration.mdx`, and adds its row to
+  `docs/self-hosting/upgrade/paths.mdx`.
+
 RCs are different — they keep GitHub's raw auto-generated notes (flat `## What's Changed`, no emoji
 sections). Only stable releases get this treatment.
 
@@ -373,7 +406,9 @@ sections). Only stable releases get this treatment.
 - Every docs page the notes link exists on the release branch.
 - The Security section lists every in-range `vulnerability` ticket except `Not shipped`, with its severity and one line of impact, and its credits match the tickets' `Credit:` lines: every named reporter, in that order, worded as they asked; none left as an unanswered request.
 - A patch has the flat list, `## Before upgrading` when a PR in range has an upgrade step, and no Overview.
-- Everything for the human (an unlabelled contract change, the tested upgrade pair, the support-end date) is in the reply, not in the notes.
+- Every stable release has an `## Upgrade impact` section with exactly one of the two allowed lines.
+- After publication, a docs PR mirrors the entry in `docs/platform/changelog.mdx` and the version page.
+- Everything for the human (an unlabelled contract change, confirmation of the upgrade test, the support-end date) is in the reply, not in the notes.
 
 ## Guardrails
 
@@ -390,7 +425,8 @@ sections). Only stable releases get this treatment.
   the human, never a guess.
 - Never fabricate a reporter's name or credit someone not explicitly named. Honour the exact
   wording they asked for, including any employer.
-- Ask the human for the tested upgrade pair and the support-end date. Never assert either.
+- Ask the human to confirm the upgrade test from the previous minor's latest patch, and the support-end
+  date. Never assert either.
 - The notes block must be immediately publishable — all caveats go in your reply, not in the notes.
 - Always `--draft`. Publishing is the user's call.
 - No AI/Claude attribution anywhere in the notes, the commits, or any PR this skill opens.

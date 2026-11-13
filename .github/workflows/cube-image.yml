@@ -13,6 +13,8 @@ on:
       # smoke-test.sh runs the cube service exactly as this file declares it.
       - "docker/docker-compose.yml"
       - ".github/workflows/cube-image.yml"
+      # The Trivy gate installs its scanner from here.
+      - ".github/actions/install-trivy/**"
   # merge_group has no `paths` filter; the verify job diffs against the queue's base instead.
   merge_group:
     branches:
@@ -26,6 +28,8 @@ on:
       # smoke-test.sh runs the cube service exactly as this file declares it.
       - "docker/docker-compose.yml"
       - ".github/workflows/cube-image.yml"
+      # The Trivy gate installs its scanner from here.
+      - ".github/actions/install-trivy/**"
   workflow_dispatch:
 
 permissions:
@@ -48,7 +52,7 @@ jobs:
       contents: read
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -75,7 +79,7 @@ jobs:
 
           git fetch --no-tags --depth=1 origin "$BASE_SHA"
           if git diff --quiet "$BASE_SHA" HEAD -- docker/cube-image docker/cube docker/docker-compose.yml \
-            .github/workflows/cube-image.yml; then
+            .github/workflows/cube-image.yml .github/actions/install-trivy; then
             echo "No Cube image changes; skipping."
             echo "relevant=false" >> "$GITHUB_OUTPUT"
             exit 0
@@ -88,7 +92,7 @@ jobs:
           image_inputs=(docker/cube-image/Dockerfile docker/cube-image/package.json
             docker/cube-image/package-lock.json docker/cube-image/native.sha256)
           if git diff --quiet "$BASE_SHA" HEAD -- "${image_inputs[@]}" docker/cube-image/.trivyignore.yaml \
-            .github/workflows/cube-image.yml; then
+            .github/workflows/cube-image.yml .github/actions/install-trivy; then
             echo "image=false" >> "$GITHUB_OUTPUT"
           else
             echo "image=true" >> "$GITHUB_OUTPUT"
@@ -131,10 +135,15 @@ jobs:
           load: true
           tags: formbricks-cube:ci
 
+      - name: Install Trivy
+        if: steps.changes.outputs.image == 'true'
+        uses: ./.github/actions/install-trivy
+
       - name: Trivy gate (CRITICAL and HIGH with a fix)
         if: steps.changes.outputs.image == 'true'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
+          skip-setup-trivy: true
           image-ref: formbricks-cube:ci
           scanners: vuln
           severity: "CRITICAL,HIGH"
@@ -142,7 +151,6 @@ jobs:
           trivyignores: docker/cube-image/.trivyignore.yaml
           exit-code: "1"
           format: table
-          version: "v0.71.2"
 
       - name: Set up Node.js
         if: steps.changes.outputs.relevant == 'true'
@@ -168,7 +176,7 @@ jobs:
       id-token: write
     steps:
       - name: Harden the runner (Audit all outbound calls)
-        uses: step-security/harden-runner@ccd8616d44fd3846e67624a50d5aad6d37bf2d25 # v2.22.1
+        uses: step-security/harden-runner@1d88384fd173af6ecb012dfd0264a306b711241a # v2.22.4
         with:
           egress-policy: audit
 
@@ -187,7 +195,7 @@ jobs:
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}

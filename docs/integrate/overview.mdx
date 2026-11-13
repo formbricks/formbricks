@@ -1,0 +1,30 @@
+---
+title: "Integrate with Formbricks"
+description: "Choose SDKs, APIs, webhooks or MCP for your integration."
+icon: "plug"
+---
+
+Choose the interface for the task. Formbricks app releases, API versions and SDK package versions
+are independent; see the [compatibility commitment](/self-hosting/advanced/release-maintenance-policy#integration-compatibility).
+
+<CardGroup cols={2}>
+  <Card title="Web and mobile SDKs" icon="code" href="/surveys/website-app-surveys/framework-guides">Show surveys in your website or app.</Card>
+  <Card title="REST API" icon="brackets-curly" href="/api-reference/rest-api">Manage surveys and responses from your backend.</Card>
+  <Card title="Webhooks" icon="webhook" href="/platform/features/integrations/webhooks">Send survey events to another service.</Card>
+  <Card title="MCP" icon="plug" href="/platform/mcp/setup">Connect an AI assistant to Formbricks.</Card>
+</CardGroup>
+
+## Choose an API
+
+- **v1:** stable management and client APIs. Use the documented endpoints for supported integrations.
+- **v2:** Beta; check endpoint-specific requirements and expect changes during Beta.
+- Hub has its own API and deployment. See [Formbricks Hub](/unify-feedback/formbricks-hub).
+
+Keep API keys on the server and grant only the scopes required. [Create a key](/api-reference/generate-key)
+and [test it](/api-reference/test-key) before connecting an integration.
+
+## Maintain an SDK integration
+
+Check [feature compatibility](/surveys/website-app-surveys/sdk-compatibility), follow the
+[workspace-ID migration](/surveys/website-app-surveys/workspace-id-migration) when applicable,
+and use the [framework setup](/surveys/website-app-surveys/framework-guides) for your platform.
