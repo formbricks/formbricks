@@ -186,7 +186,7 @@ export function containsMarkup(text: string): boolean {
 }
 
 /** Plain text that renders as typed: `<` replaced where the text would parse as markup. */
-function neutralize(text: string): { text: string; escaped: boolean } {
+export function neutralize(text: string): { text: string; escaped: boolean } {
   return containsMarkup(text)
     ? { text: text.replaceAll("<", NEUTRAL_LESS_THAN), escaped: true }
     : { text, escaped: false };

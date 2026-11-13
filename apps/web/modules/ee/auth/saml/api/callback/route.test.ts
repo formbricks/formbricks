@@ -507,6 +507,29 @@ describe("SAML callback route", () => {
       );
     });
 
+    // ENG-7054: jackson throws on a response saml20 cannot parse with an error that carries no status, which answered
+    // 500. The worker runs that same parse first, so the route refuses it as the sender's fault and jackson never sees it.
+    test("refuses a response saml20 cannot read, without jackson, logging it by size only", async () => {
+      const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+      probeMock.mockResolvedValueOnce({ outcome: "unreadable" });
+      const SAMLResponse = b64("not-xml");
+
+      const response = await POST(callback({ SAMLResponse, RelayState: "boxyhq_jackson_s" }));
+
+      expect(response.status).toBe(400);
+      expect(await response.json()).toMatchObject({ code: "bad_request" });
+      expect(samlResponseMock).not.toHaveBeenCalled();
+      expect(warn).toHaveBeenCalledWith(
+        {
+          length: SAMLResponse.length,
+          relayState: hashString("boxyhq_jackson_s"),
+          claimed: undefined,
+          suppressedSinceLast: 0,
+        },
+        "Refused a SAML response that is not well-formed XML"
+      );
+    });
+
     test.each([
       ["the queue is full", "busy" as const],
       ["the parse worker failed", "failed" as const],
@@ -584,6 +607,12 @@ describe("SAML callback route", () => {
         VALID,
         () => probeMock.mockResolvedValueOnce({ outcome: "failed" }),
         "saml_unavailable",
+      ],
+      [
+        "a response saml20 cannot read",
+        VALID,
+        () => probeMock.mockResolvedValueOnce({ outcome: "unreadable" }),
+        "saml_response_rejected",
       ],
       [
         "a parse past the budget",

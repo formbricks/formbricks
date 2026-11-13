@@ -95,6 +95,8 @@ const getDocumentLimitMessage = (limit: string, t: TTranslate): string => {
       return t("workspace.surveys.import.errors.document_limits.table_cells");
     case "source_size":
       return t("workspace.surveys.import.errors.document_limits.source_size");
+    case "text_size":
+      return t("workspace.surveys.import.errors.document_limits.text_size");
     default:
       return t("workspace.surveys.import.errors.document_limits.other");
   }
@@ -119,6 +121,13 @@ export const getSurveyImportFieldProblemHeadline = (code: TV3InvalidParam["code"
       return t("workspace.surveys.import.errors.field_problems.misordered_reference");
     case "immutable_identifier":
       return t("workspace.surveys.import.errors.field_problems.immutable_identifier");
+    // The published lock (ADR 0020): what responses are matched to stays as it was published.
+    case "immutable_question_code":
+    case "immutable_answer_code":
+    case "immutable_question_type":
+    case "immutable_option_text":
+    case "immutable_option_deletion":
+      return t("workspace.surveys.import.errors.field_problems.immutable_published");
     case "read_only_field":
       return t("workspace.surveys.import.errors.field_problems.read_only_field");
     case "duplicate_identifier":
@@ -166,6 +175,8 @@ const getUnprocessableFileCode = (error: V3ApiError): string => {
   const limit = error.invalid_params?.find((param) => param.code === "qsf_limit_exceeded")?.identifier;
   if (limit) return `${QSF_IMPORT_LIMIT_CODE_PREFIX}${limit}`;
   if (hasParam("qsf_not_recognized")) return "qsf_not_recognized";
+  // An Excel export whose rows are none of the survey its meta sheet names (ENG-6809).
+  if (hasParam("excel_export_other_survey")) return "excel_export_other_survey";
   // Any other 422 may come from any lane, so it gets the sentence that fits every file.
   return "file_unreadable";
 };
@@ -196,6 +207,43 @@ export const getSurveyImportRequestErrorCode = (error: V3ApiError): string => {
 };
 
 /**
+ * The sentence for a failure that carries nothing but its code. Each is a literal `t()` call, which is how
+ * the translation scan finds its key; a `Map`, so a code like `constructor` finds nothing.
+ */
+const FIXED_ERROR_MESSAGES = new Map<string, (t: TTranslate) => string>([
+  ["file_wrong_extension", (t) => t("workspace.surveys.import.errors.wrong_extension")],
+  ["file_needs_ai", (t) => t("workspace.surveys.import.errors.needs_ai")],
+  ["file_earlier_excel_export", (t) => t("workspace.surveys.import.errors.earlier_excel_export")],
+  ["file_type_unsupported", (t) => t("workspace.surveys.import.errors.file_type_unsupported")],
+  ["survey_too_large", (t) => t("workspace.surveys.import.errors.survey_too_large")],
+  ["formbricks_file_invalid", (t) => t("workspace.surveys.import.errors.formbricks_file_invalid")],
+  ["formbricks_file_too_new", (t) => t("workspace.surveys.import.errors.formbricks_file_too_new")],
+  ["idempotency_key_in_use", (t) => t("workspace.surveys.import.errors.still_creating")],
+  ["survey_active", (t) => t("workspace.surveys.import.errors.survey_active")],
+  ["survey_changed_again", (t) => t("workspace.surveys.import.errors.survey_changed_again")],
+  ["file_empty", (t) => t("workspace.surveys.import.errors.empty_file")],
+  ["file_too_large", (t) => t("workspace.surveys.import.errors.file_too_large")],
+  ["qsf_not_recognized", (t) => t("workspace.surveys.import.errors.not_a_qsf")],
+  ["excel_export_other_survey", (t) => t("workspace.surveys.import.errors.excel_export_other_survey")],
+  ["file_too_complex", (t) => t("workspace.surveys.import.errors.too_complex")],
+  ["file_unreadable", (t) => t("workspace.surveys.import.errors.unreadable")],
+  ["not_authenticated", (t) => t("workspace.surveys.import.errors.session_expired")],
+  ["forbidden", (t) => t("workspace.surveys.import.errors.not_allowed")],
+  ["concurrency_limit_reached", (t) => t("workspace.surveys.import.errors.already_importing")],
+  ["capacity_reached", (t) => t("workspace.surveys.import.errors.busy")],
+  ["import_timed_out", (t) => t("workspace.surveys.import.errors.timed_out")],
+  ["import_failed", (t) => t("workspace.surveys.import.errors.failed")],
+  ["import_too_large", (t) => t("workspace.surveys.import.errors.too_many_questions")],
+  ["import_partly_unread", (t) => t("workspace.surveys.import.errors.partly_unread")],
+  ["import_nothing_importable", (t) => t("workspace.surveys.import.errors.nothing_importable")],
+  ["import_too_large_for_ai", (t) => t("workspace.surveys.import.errors.too_large_for_ai")],
+  ["import_no_questions", (t) => t("workspace.surveys.import.errors.no_questions")],
+  // Create with AI's lines for these talk about a prompt; an import has a file.
+  ["ai_output_too_long", (t) => t("workspace.surveys.import.errors.too_complex")],
+  ["bad_request", (t) => t("workspace.surveys.import.errors.failed")],
+]);
+
+/**
  * The sentence for an import failure: a file the browser refused, a request the route refused, or an
  * `error` event from the stream. AI codes fall through to Create with AI's wording, so both features
  * say the same thing about the same provider problem.
@@ -216,56 +264,6 @@ export const getSurveyImportErrorMessage = (
   }
 
   switch (code) {
-    case "file_wrong_extension":
-      return t("workspace.surveys.import.errors.wrong_extension");
-    case "file_needs_ai":
-      return t("workspace.surveys.import.errors.needs_ai");
-    case "file_type_unsupported":
-      return t("workspace.surveys.import.errors.file_type_unsupported");
-    case "survey_too_large":
-      return t("workspace.surveys.import.errors.survey_too_large");
-    case "formbricks_file_invalid":
-      return t("workspace.surveys.import.errors.formbricks_file_invalid");
-    case "formbricks_file_too_new":
-      return t("workspace.surveys.import.errors.formbricks_file_too_new");
-    case "idempotency_key_in_use":
-      return t("workspace.surveys.import.errors.still_creating");
-    case "survey_active":
-      return t("workspace.surveys.import.errors.survey_active");
-    case "survey_changed_again":
-      return t("workspace.surveys.import.errors.survey_changed_again");
-    case "file_empty":
-      return t("workspace.surveys.import.errors.empty_file");
-    case "file_too_large":
-      return t("workspace.surveys.import.errors.file_too_large");
-    case "qsf_not_recognized":
-      return t("workspace.surveys.import.errors.not_a_qsf");
-    case "file_too_complex":
-      return t("workspace.surveys.import.errors.too_complex");
-    case "file_unreadable":
-      return t("workspace.surveys.import.errors.unreadable");
-    case "not_authenticated":
-      return t("workspace.surveys.import.errors.session_expired");
-    case "forbidden":
-      return t("workspace.surveys.import.errors.not_allowed");
-    case "concurrency_limit_reached":
-      return t("workspace.surveys.import.errors.already_importing");
-    case "capacity_reached":
-      return t("workspace.surveys.import.errors.busy");
-    case "import_timed_out":
-      return t("workspace.surveys.import.errors.timed_out");
-    case "import_failed":
-      return t("workspace.surveys.import.errors.failed");
-    case "import_too_large":
-      return t("workspace.surveys.import.errors.too_many_questions");
-    case "import_partly_unread":
-      return t("workspace.surveys.import.errors.partly_unread");
-    case "import_nothing_importable":
-      return t("workspace.surveys.import.errors.nothing_importable");
-    case "import_too_large_for_ai":
-      return t("workspace.surveys.import.errors.too_large_for_ai");
-    case "import_no_questions":
-      return t("workspace.surveys.import.errors.no_questions");
     case "too_many_requests":
       return retryAfterSeconds === null
         ? getAiErrorMessage(code, t)
@@ -274,12 +272,7 @@ export const getSurveyImportErrorMessage = (
       return retryAfterSeconds === null
         ? getAiErrorMessage(code, t)
         : t("workspace.surveys.import.errors.ai_busy", { seconds: retryAfterSeconds });
-    // Create with AI's lines for these talk about a prompt; an import has a file.
-    case "ai_output_too_long":
-      return t("workspace.surveys.import.errors.too_complex");
-    case "bad_request":
-      return t("workspace.surveys.import.errors.failed");
     default:
-      return getAiErrorMessage(code, t);
+      return FIXED_ERROR_MESSAGES.get(code)?.(t) ?? getAiErrorMessage(code, t);
   }
 };
