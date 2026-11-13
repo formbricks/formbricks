@@ -205,3 +205,50 @@ export const collectWorkflowSecretIds = (definition: Pick<TWorkflowDefinition, "
   }
   return [...ids];
 };
+
+/**
+ * A stored definition's secret header of an HTTP request step, by name (case-insensitive), with the id
+ * of its stored value if it has one. Null when the step is not an HTTP request step or has no secret
+ * header of that name.
+ */
+export const findWorkflowSecretHeader = (
+  definition: Pick<TWorkflowDefinition, "nodes"> | null,
+  stepId: string,
+  headerName: string
+): { name: string; secretId: string | undefined } | null => {
+  const node = definition?.nodes.find((candidate) => candidate.id === stepId);
+  if (!node || !isHttpRequestNode(node)) return null;
+  const wanted = headerName.toLowerCase();
+  const header = node.config.headers.find(
+    (candidate) => candidate.secret === true && candidate.name.toLowerCase() === wanted
+  );
+  return header ? { name: header.name, secretId: header.secretId } : null;
+};
+
+/** The definition with one secret header (step, name case-insensitive) pointing at a stored value. */
+export const setWorkflowSecretHeaderId = <D extends Pick<TWorkflowDefinition, "nodes">>(
+  definition: D,
+  stepId: string,
+  headerName: string,
+  secretId: string
+): D => {
+  const wanted = headerName.toLowerCase();
+  return {
+    ...definition,
+    nodes: definition.nodes.map((node) =>
+      node.id === stepId && isHttpRequestNode(node)
+        ? {
+            ...node,
+            config: {
+              ...node.config,
+              headers: node.config.headers.map((header) =>
+                header.secret === true && header.name.toLowerCase() === wanted
+                  ? toStoredSecretHeader(header.name, secretId)
+                  : header
+              ),
+            },
+          }
+        : node
+    ),
+  };
+};

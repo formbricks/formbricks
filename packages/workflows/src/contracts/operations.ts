@@ -30,6 +30,7 @@ import type {
   TWorkflowTestResult,
 } from "./resources";
 import { ZWorkflowSampleList } from "./samples";
+import { ZReplaceWorkflowSecretHeaderInput, ZWorkflowSecretHeaderParams } from "./secret-header";
 import {
   ZSendWorkflowTestRequestInput,
   ZWorkflowTestRequestParams,
@@ -146,6 +147,11 @@ export const WORKFLOW_API_OPERATIONS = {
     params: ZWorkflowTestRequestParams,
     input: ZSendWorkflowTestRequestInput,
     output: ZWorkflowTestRequestResult,
+  },
+  replaceWorkflowSecretHeaderV3: {
+    params: ZWorkflowSecretHeaderParams,
+    input: ZReplaceWorkflowSecretHeaderInput,
+    output: null,
   },
   createWorkflowTestRunV3: {
     params: ZWorkflowIdInput,
