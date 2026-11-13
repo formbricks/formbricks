@@ -1,8 +1,6 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, ValidationError } from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
@@ -22,7 +20,10 @@ import {
 } from "@/modules/ee/role-management/lib/permission";
 import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { getInvite } from "@/modules/organization/settings/teams/lib/invite";
-import { getOrganizationOwnerCount } from "@/modules/organization/settings/teams/lib/membership";
+import {
+  LastActiveOwnerError,
+  runOwnerGuardedTransaction,
+} from "@/modules/organization/settings/teams/lib/owner-guard";
 
 const ZUpdateInviteAction = z.object({
   inviteId: ZUuid,
@@ -70,6 +71,23 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
   })
 );
 
+const demoteOwner = async (
+  organizationId: string,
+  userId: string,
+  data: z.infer<typeof ZMembershipUpdateInput>
+) => {
+  try {
+    return await runOwnerGuardedTransaction(organizationId, userId, (tx) =>
+      updateMembership(userId, organizationId, data, tx)
+    );
+  } catch (error) {
+    if (error instanceof LastActiveOwnerError) {
+      throw new ValidationError("You cannot demote the last owner of the organization");
+    }
+    throw error;
+  }
+};
+
 const ZUpdateMembershipAction = z.object({
   userId: ZId,
   organizationId: ZId,
@@ -112,21 +130,12 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
 
     // The owner count and the role update must be one atomic unit: read then act, in two separate
     // statements, lets two owners demoting each other concurrently both read "more than one owner"
-    // and both writes land, leaving zero owners. Serializable isolation makes Postgres abort one of
-    // the two transactions instead.
+    // and both writes land, leaving zero owners. The owners' lock (`runOwnerGuardedTransaction`, the
+    // one every last-owner check takes) makes the second wait, then count what the first committed.
+    // Only a demotion of an owner runs in a transaction, as before; deciding it under the lock instead
+    // of from the lookup above is ENG-2177.
     const result = isDemotingOwner
-      ? await prisma.$transaction(
-          async (tx) => {
-            const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId, tx);
-
-            if (ownerCount <= 1) {
-              throw new ValidationError("You cannot demote the last owner of the organization");
-            }
-
-            return updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data, tx);
-          },
-          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
-        )
+      ? await demoteOwner(parsedInput.organizationId, parsedInput.userId, parsedInput.data)
       : await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data);
 
     ctx.auditLoggingCtx.newObject = result;

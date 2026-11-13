@@ -8,8 +8,11 @@ import { retryOnTransactionConflict } from "@/lib/utils/prisma-error";
  * memberships, taken before any user row. This module only exports the check together with that lock, so a
  * caller cannot run the check without it:
  *
- * - `runOwnerGuardedTransaction` opens the transaction itself (the v2 users API, removing a member);
- * - `lockOwnersAndCheckRemoval` is for a caller that opens its own (the data retention members sweep).
+ * - `runOwnerGuardedTransaction` opens the transaction itself: the v2 users API, removing a member, and
+ *   demoting an owner from the member list;
+ * - `lockOwnersAndCheckRemoval` is for a caller that opens its own: the data retention members sweep.
+ *
+ * Account deletion does not go through it yet (ENG-7204).
  */
 
 /** Thrown by `runOwnerGuardedTransaction` when the change would leave the organization with no active owner. */

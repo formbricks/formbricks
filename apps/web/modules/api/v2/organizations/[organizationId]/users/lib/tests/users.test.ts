@@ -29,10 +29,6 @@ type TExistingTeam = Pick<Team, "id" | "name"> & {
   workspaceTeams: Pick<WorkspaceTeam, "workspaceId">[];
 };
 
-// getOrganizationOwnerCount (pulled in via the last-owner guard) request-caches its result with
-// React's cache(); mocked to identity so repeated calls across tests re-hit the prisma mock below.
-vi.mock("react", () => ({ cache: (fn: Function) => fn }));
-
 vi.mock("@formbricks/database", () => ({
   prisma: {
     user: {
@@ -483,6 +479,27 @@ describe("Users Lib", () => {
 
       expect(result.ok).toBe(true);
       expect(prisma.membership.count).not.toHaveBeenCalled();
+    });
+
+    test("reports the last owner before the other-organizations rule when both apply", async () => {
+      // The owner check runs first, under the owners' lock and before the user row's, so it wins.
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(owner as never);
+      targetMembership("owner");
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+      lockedAccount({ otherOrganizations: ["org789"] });
+
+      const result = await updateUser({ email: mockUser.email, isActive: false }, "org456");
+
+      expect(result).toMatchObject({
+        ok: false,
+        error: {
+          type: "conflict",
+          details: [{ field: "isActive", issue: "Cannot remove the last owner of the organization" }],
+        },
+      });
+      expect(lockUserActiveState).not.toHaveBeenCalled();
+      expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
     test("answers a deadlock that outlasts every retry with a 500, without writing", async () => {

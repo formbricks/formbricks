@@ -15,7 +15,7 @@ import { isTransactionConflictError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
-import { LastActiveOwnerError, countActiveOwners, runOwnerGuardedTransaction } from "./owner-guard";
+import { LastActiveOwnerError, runOwnerGuardedTransaction } from "./owner-guard";
 
 export const getMembershipByOrganizationId = reactCache(
   async (organizationId: string, page?: number): Promise<TMember[]> => {
@@ -64,44 +64,6 @@ export const getMembershipByOrganizationId = reactCache(
     }
   }
 );
-
-const getOrganizationOwnerCountUncached = async (
-  organizationId: string,
-  tx?: Prisma.TransactionClient
-): Promise<number> => {
-  validateInputs([organizationId, ZString]);
-
-  try {
-    return await countActiveOwners(tx ?? prisma, organizationId);
-  } catch (error) {
-    // Inside a transaction the error belongs to the transaction's owner: wrapping a serialization
-    // conflict (P2034) here would hide it from the retry that re-runs the whole transaction.
-    if (!tx && error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
-const getOrganizationOwnerCountCached = reactCache((organizationId: string) =>
-  getOrganizationOwnerCountUncached(organizationId)
-);
-
-/**
- * Pass `tx` to read inside a transaction; without it the result is request-cached like the rest of this
- * module's reads. A write that must keep an active owner uses `owner-guard.ts` instead.
- */
-export const getOrganizationOwnerCount = async (
-  organizationId: string,
-  tx?: Prisma.TransactionClient
-): Promise<number> => {
-  if (tx) {
-    return getOrganizationOwnerCountUncached(organizationId, tx);
-  }
-
-  return getOrganizationOwnerCountCached(organizationId);
-};
 
 export const deleteMembership = async (
   userId: string,

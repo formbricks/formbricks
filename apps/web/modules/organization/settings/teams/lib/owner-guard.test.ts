@@ -1,10 +1,8 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { LastActiveOwnerError, lockOwnersAndCheckRemoval, runOwnerGuardedTransaction } from "./owner-guard";
-
-vi.mock("@formbricks/database", () => ({ prisma: { $transaction: vi.fn() } }));
 
 const organizationId = "org1";
 const userId = "user1";
@@ -119,18 +117,26 @@ describe("runOwnerGuardedTransaction", () => {
   });
 
   test("runs the whole transaction again after a conflict, lock and check included", async () => {
-    const tx = transactionClient({ role: "owner", isActive: true }, 2);
+    // The first attempt locks and checks, then Postgres aborts it; the second must lock and check again.
+    const first = transactionClient({ role: "owner", isActive: true }, 2);
+    const second = transactionClient({ role: "owner", isActive: true }, 2);
     const conflict = new Prisma.PrismaClientKnownRequestError("deadlock", {
       code: PrismaErrorType.TransactionConflict,
       clientVersion: "1.0.0",
     });
     vi.mocked(prisma.$transaction)
-      .mockRejectedValueOnce(conflict)
-      .mockImplementationOnce(((callback: (client: TClient) => unknown) => callback(tx)) as never);
+      .mockImplementationOnce((async (callback: (client: TClient) => Promise<unknown>) => {
+        await callback(first);
+        throw conflict;
+      }) as never)
+      .mockImplementationOnce(((callback: (client: TClient) => unknown) => callback(second)) as never);
     const change = vi.fn().mockResolvedValue("done");
 
     await expect(runOwnerGuardedTransaction(organizationId, userId, change)).resolves.toBe("done");
-    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
-    expect(tx.$queryRaw).toHaveBeenCalledTimes(1);
+    for (const tx of [first, second]) {
+      expect(tx.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(tx.membership.findUnique).toHaveBeenCalledTimes(1);
+    }
+    expect(change.mock.calls.map(([tx]) => tx)).toEqual([first, second]);
   });
 });

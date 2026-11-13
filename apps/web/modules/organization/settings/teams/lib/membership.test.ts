@@ -11,7 +11,6 @@ import {
   getMembersByOrganizationId,
   getMembershipByOrganizationId,
   getMembershipsByUserId,
-  getOrganizationOwnerCount,
 } from "./membership";
 
 vi.mock("@formbricks/database", () => ({
@@ -88,37 +87,6 @@ describe("getMembershipByOrganizationId", () => {
   test("throws UnknownError on unknown error", async () => {
     vi.mocked(prisma.membership.findMany).mockRejectedValue({});
     await expect(getMembershipByOrganizationId(organizationId, 1)).rejects.toThrow(UnknownError);
-  });
-});
-
-describe("getOrganizationOwnerCount", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-  test("returns owner count", async () => {
-    vi.mocked(prisma.membership.count).mockResolvedValue(2);
-    const result = await getOrganizationOwnerCount(organizationId);
-    expect(result).toBe(2);
-  });
-  test("only counts active owners", async () => {
-    vi.mocked(prisma.membership.count).mockResolvedValue(1);
-    const result = await getOrganizationOwnerCount(organizationId);
-    expect(result).toBe(1);
-    expect(prisma.membership.count).toHaveBeenCalledWith({
-      where: { organizationId, role: "owner", user: { isActive: true } },
-    });
-  });
-  test("throws DatabaseError on prisma error", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("db", {
-      code: "P2002",
-      clientVersion: "1.0.0",
-    });
-    vi.mocked(prisma.membership.count).mockRejectedValue(prismaError);
-    await expect(getOrganizationOwnerCount(organizationId)).rejects.toThrow(DatabaseError);
-  });
-  test("throws original error on unknown error", async () => {
-    vi.mocked(prisma.membership.count).mockRejectedValue({});
-    await expect(getOrganizationOwnerCount(organizationId)).rejects.toThrowError();
   });
 });
 
