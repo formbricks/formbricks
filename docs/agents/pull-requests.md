@@ -9,8 +9,12 @@ Use Conventional Commits (`fix:`, `chore:`, `feat:`), keep commits scoped, and r
 ## Pull requests
 
 Read `.github/pull_request_template.md` and follow its inline guidance when opening or updating a PR.
-It owns the structure, word budget, ticket syntax, coverage evidence, breaking-change decision, and
+It owns the structure, word budget, ticket syntax, evidence table, breaking-change decision, and
 migration/env reporting. Update the description with every scope change or review fix.
+
+If the `pr` skill from `robots` is installed, use it to write the body: take the before screenshots
+before you implement, prove new tests fail on `main`, then fill the template. Without it, the
+template's inline guidance carries the same rules.
 
 Complete QA on the change's PR before requesting review. The author accounts for each changed behavior
 and names unverified behavior under Open gaps; reviewers challenge that evidence. A failure called
