@@ -14,7 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { CATEGORY_CHIP_CLASS_NAMES } from "./workflow-canvas-node";
+import { CATEGORY_CHIP_CLASS_NAMES } from "./workflow-node-card";
 
 interface WorkflowAddTriggerPickerProps {
   onSelect: (triggerType: TWorkflowTriggerType) => void;

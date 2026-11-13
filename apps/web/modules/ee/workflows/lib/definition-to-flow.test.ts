@@ -2,6 +2,7 @@ import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 import {
+  WORKFLOW_BRANCH_NODE_TYPE,
   reorganizeWorkflowDefinition,
   snapWorkflowNodePosition,
   updateNodePosition,
@@ -164,6 +165,115 @@ describe("reorganizeWorkflowDefinition", () => {
     const reachableY = next.nodes[0].ui?.position?.y ?? 0;
     const orphanY = next.nodes[1].ui?.position?.y ?? 0;
     expect(orphanY).toBeGreaterThan(reachableY);
+  });
+});
+
+const emailNode = (id: string) =>
+  ({
+    id,
+    type: "action",
+    actionType: "send_email",
+    config: {
+      to: "respondent@example.com",
+      from: "team@example.com",
+      replyTo: [],
+      subject: "Thanks",
+      body: "Body",
+      attachResponseData: false,
+    },
+    ui: { position: { x: 0, y: 0 } },
+  }) as TWorkflowDefinition["nodes"][number];
+
+const ifElseNode = (id: string) =>
+  ({
+    id,
+    type: "if_else",
+    config: {
+      condition: {
+        id: `${id}-group`,
+        connector: "and",
+        conditions: [
+          { id: `${id}-c1`, left: { path: "payload.channel" }, operator: "equals", right: "call" },
+        ],
+      },
+    },
+    ui: { position: { x: 0, y: 0 } },
+  }) as TWorkflowDefinition["nodes"][number];
+
+// trigger → if-1; Then → email-a; Else is empty.
+const branchDefinition = () =>
+  buildDefinition({
+    nodes: [ifElseNode("if-1"), emailNode("email-a")],
+    edges: [
+      { id: "e-trigger", source: "trigger-1", target: "if-1" },
+      { id: "e-then", source: "if-1", target: "email-a", sourceHandle: "then" },
+    ],
+  });
+
+describe("If/else on the canvas", () => {
+  test("projects an If/else as a branch node that knows which branch is still empty", () => {
+    const nodes = workflowDefinitionToFlowNodes(branchDefinition(), t);
+    const branchNode = nodes.find((node) => node.id === "if-1");
+    expect(branchNode?.type).toBe(WORKFLOW_BRANCH_NODE_TYPE);
+    expect(branchNode?.data.emptyBranches).toEqual(["else"]);
+  });
+
+  test("offers a + under the last step of a branch, and still only under a leaf trigger outside one", () => {
+    const linear = workflowDefinitionToFlowNodes(buildDefinition(), t);
+    expect(linear.map((node) => node.data.canAppendStep)).toEqual([false, false]);
+
+    const branched = workflowDefinitionToFlowNodes(branchDefinition(), t);
+    const canAppendById = Object.fromEntries(branched.map((node) => [node.id, node.data.canAppendStep]));
+    expect(canAppendById).toEqual({ "trigger-1": false, "if-1": false, "email-a": true });
+
+    const triggerOnly = workflowDefinitionToFlowNodes(buildDefinition({ nodes: [], edges: [] }), t);
+    expect(triggerOnly[0].data.canAppendStep).toBe(true);
+  });
+
+  test("draws the edges out of an If/else as branch edges and leaves other edges as they were", () => {
+    const edges = workflowDefinitionToFlowEdges(branchDefinition());
+    expect(edges.find((edge) => edge.id === "e-then")).toMatchObject({
+      type: "branch",
+      sourceHandle: "then",
+    });
+    expect(edges.find((edge) => edge.id === "e-trigger")).toMatchObject({ type: "addButton" });
+  });
+
+  test("auto layout keeps a linear workflow where it always was", () => {
+    const next = reorganizeWorkflowDefinition(buildDefinition());
+    expect(next.trigger?.ui?.position).toEqual({ x: 220, y: 80 });
+    expect(next.nodes[0].ui?.position).toEqual({ x: 220, y: 200 });
+  });
+
+  test("auto layout puts Then on the left and Else on the right, widening for a nested If/else", () => {
+    // trigger → if-1; Then → email-a; Else → if-2 (Then → email-b, Else → email-c).
+    const def = buildDefinition({
+      nodes: [
+        ifElseNode("if-1"),
+        emailNode("email-a"),
+        ifElseNode("if-2"),
+        emailNode("email-b"),
+        emailNode("email-c"),
+      ],
+      edges: [
+        { id: "e1", source: "trigger-1", target: "if-1" },
+        { id: "e2", source: "if-1", target: "if-2", sourceHandle: "else" },
+        { id: "e3", source: "if-1", target: "email-a", sourceHandle: "then" },
+        { id: "e4", source: "if-2", target: "email-b", sourceHandle: "then" },
+        { id: "e5", source: "if-2", target: "email-c", sourceHandle: "else" },
+      ],
+    });
+
+    const next = reorganizeWorkflowDefinition(def);
+    const positions = Object.fromEntries(next.nodes.map((node) => [node.id, node.ui?.position]));
+    expect(next.trigger?.ui?.position).toEqual({ x: 220, y: 80 });
+    expect(positions).toEqual({
+      "if-1": { x: 220, y: 200 },
+      "email-a": { x: -140, y: 400 },
+      "if-2": { x: 400, y: 400 },
+      "email-b": { x: 220, y: 600 },
+      "email-c": { x: 580, y: 600 },
+    });
   });
 });
 

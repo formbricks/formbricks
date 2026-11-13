@@ -19,6 +19,9 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import {
+  WORKFLOW_ADD_BUTTON_EDGE_TYPE,
+  WORKFLOW_BRANCH_EDGE_TYPE,
+  WORKFLOW_BRANCH_NODE_TYPE,
   WORKFLOW_CANVAS_NODE_TYPE,
   WORKFLOW_CANVAS_SNAP_GRID,
   reorganizeWorkflowDefinition,
@@ -45,18 +48,22 @@ import {
 } from "@/modules/ee/workflows/state/editor";
 import { Button } from "@/modules/ui/components/button";
 import { AddButtonEdge } from "./add-button-edge";
+import { BranchEdge } from "./branch-edge";
 import { CanvasControls } from "./canvas-controls";
 import { WorkflowAddTriggerPicker } from "./workflow-add-trigger-picker";
+import { WorkflowBranchNode } from "./workflow-branch-node";
 import { WorkflowCanvasNode } from "./workflow-canvas-node";
 import "./workflow-canvas.css";
 import { WorkflowValidationStatus } from "./workflow-validation-status";
 
 const NODE_TYPES: NodeTypes = {
   [WORKFLOW_CANVAS_NODE_TYPE]: WorkflowCanvasNode,
+  [WORKFLOW_BRANCH_NODE_TYPE]: WorkflowBranchNode,
 };
 
 const EDGE_TYPES: EdgeTypes = {
-  addButton: AddButtonEdge,
+  [WORKFLOW_ADD_BUTTON_EDGE_TYPE]: AddButtonEdge,
+  [WORKFLOW_BRANCH_EDGE_TYPE]: BranchEdge,
 };
 
 // The canvas is the page's main action — let fitView scale small flows past the former 0.85 cap,

@@ -2,19 +2,27 @@ import { type Edge, type Node, type SnapGrid } from "@xyflow/react";
 import type { TFunction } from "i18next";
 import {
   type TWorkflowDefinition,
+  type TWorkflowIfElseBranch,
   type TWorkflowNode,
   getBlankSendEmailContentFields,
   getWorkflowNodeConcreteType,
 } from "@formbricks/workflows";
+import {
+  WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT,
+  WORKFLOW_CANVAS_NODE_SPACING,
+  WORKFLOW_CANVAS_START_POSITION,
+} from "@/modules/ee/workflows/lib/canvas-geometry";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import type { TWorkflowNodeData, TWorkflowNodeIssue } from "@/modules/ee/workflows/state/editor";
 
 export const WORKFLOW_CANVAS_NODE_TYPE = "workflowCanvasNode";
+export const WORKFLOW_BRANCH_NODE_TYPE = "workflowBranchNode";
+export const WORKFLOW_ADD_BUTTON_EDGE_TYPE = "addButton";
+export const WORKFLOW_BRANCH_EDGE_TYPE = "branch";
 
 export const WORKFLOW_CANVAS_SNAP_GRID: SnapGrid = [20, 20];
 
-const WORKFLOW_CANVAS_NODE_SPACING = { x: 360, y: 120 };
-const WORKFLOW_CANVAS_START_POSITION = { x: 220, y: 80 };
+const IF_ELSE_BRANCHES: TWorkflowIfElseBranch[] = ["then", "else"];
 
 interface WorkflowFlowNodeOptions {
   /**
@@ -53,12 +61,33 @@ const getWorkflowNodeIssue = (
   return null;
 };
 
+const getIfElseNodeIds = (definition: TWorkflowDefinition) =>
+  new Set(definition.nodes.filter((node) => node.type === "if_else").map((node) => node.id));
+
+// Every step at or below the start of an If/else branch. The last step of a branch offers its own
+// `+`, which adds the next step on that branch only.
+const getStepIdsInsideBranches = (definition: TWorkflowDefinition): Set<string> => {
+  const ifElseIds = getIfElseNodeIds(definition);
+  const insideBranches = new Set<string>();
+  const queue = definition.edges.filter((edge) => ifElseIds.has(edge.source)).map((edge) => edge.target);
+  while (queue.length > 0) {
+    const nodeId = queue.shift()!;
+    if (insideBranches.has(nodeId)) continue;
+    insideBranches.add(nodeId);
+    for (const edge of definition.edges) {
+      if (edge.source === nodeId) queue.push(edge.target);
+    }
+  }
+  return insideBranches;
+};
+
 export const workflowDefinitionToFlowNodes = (
   definition: TWorkflowDefinition,
   t: TFunction,
   options?: WorkflowFlowNodeOptions
 ): Array<Node<TWorkflowNodeData>> => {
   const sourcesWithEdges = new Set(definition.edges.map((edge) => edge.source));
+  const stepIdsInsideBranches = getStepIdsInsideBranches(definition);
   const resolvedOptions: Required<WorkflowFlowNodeOptions> = {
     hasBoundSurvey: options?.hasBoundSurvey ?? true,
     isDraft: options?.isDraft ?? true,
@@ -68,9 +97,12 @@ export const workflowDefinitionToFlowNodes = (
     const registryEntry = getNodeRegistryEntry(node);
     const fallbackPosition = { x: 120, y: 80 + index * 120 };
 
+    const isIfElse = node.type === "if_else";
+    const isLeaf = !sourcesWithEdges.has(node.id);
+
     return {
       id: node.id,
-      type: WORKFLOW_CANVAS_NODE_TYPE,
+      type: isIfElse ? WORKFLOW_BRANCH_NODE_TYPE : WORKFLOW_CANVAS_NODE_TYPE,
       position: node.ui?.position ?? fallbackPosition,
       data: {
         category: registryEntry.category,
@@ -78,23 +110,33 @@ export const workflowDefinitionToFlowNodes = (
         nodeType: getWorkflowNodeConcreteType(node) ?? node.type,
         title: registryEntry.title(node, t),
         summary: registryEntry.summary(node, t),
-        isLeaf: !sourcesWithEdges.has(node.id),
+        canAppendStep: !isIfElse && isLeaf && (node.type === "trigger" || stepIdsInsideBranches.has(node.id)),
+        emptyBranches: isIfElse
+          ? IF_ELSE_BRANCHES.filter(
+              (branch) =>
+                !definition.edges.some((edge) => edge.source === node.id && edge.sourceHandle === branch)
+            )
+          : [],
         issue: getWorkflowNodeIssue(node, t, resolvedOptions),
       },
     };
   });
 };
 
-export const workflowDefinitionToFlowEdges = (definition: TWorkflowDefinition): Edge[] =>
-  definition.edges.map((edge) => ({
+export const workflowDefinitionToFlowEdges = (definition: TWorkflowDefinition): Edge[] => {
+  const ifElseIds = getIfElseNodeIds(definition);
+
+  return definition.edges.map((edge) => ({
     id: edge.id,
     source: edge.source,
     target: edge.target,
     sourceHandle: edge.sourceHandle,
     targetHandle: edge.targetHandle,
     label: edge.sourceHandle,
-    type: "addButton",
+    // A branch edge starts at the end of its leg of the If/else fork, which carries the label.
+    type: ifElseIds.has(edge.source) ? WORKFLOW_BRANCH_EDGE_TYPE : WORKFLOW_ADD_BUTTON_EDGE_TYPE,
   }));
+};
 
 export const snapWorkflowNodePosition = (position: { x: number; y: number }) => ({
   x: Math.round(position.x / WORKFLOW_CANVAS_SNAP_GRID[0]) * WORKFLOW_CANVAS_SNAP_GRID[0],
@@ -124,39 +166,88 @@ export const updateNodePosition = (
   };
 };
 
-// BFS rank from the trigger so reachable nodes share a row; unreachable nodes (and every node of
-// a trigger-less draft) each get their own row below, keeping the original order.
-const rankWorkflowNodes = (
+// The children a step lays out below itself, left to right: an If/else's Then branch, then its
+// Else branch (null while that branch has no step); any other step's outgoing edges in order.
+const getLayoutChildren = (
+  node: TWorkflowNode,
+  definition: TWorkflowDefinition,
+  nodesById: Map<string, TWorkflowNode>
+): Array<string | null> => {
+  const outgoing = definition.edges.filter((edge) => edge.source === node.id && nodesById.has(edge.target));
+  if (node.type !== "if_else") return outgoing.map((edge) => edge.target);
+  return IF_ELSE_BRANCHES.map(
+    (branch) => outgoing.find((edge) => edge.sourceHandle === branch)?.target ?? null
+  );
+};
+
+// A tree layout from the trigger: each step sits centered over the columns its subtree needs, an
+// If/else puts its Then subtree left of its Else subtree, and an empty branch keeps one column for
+// its `+`. A linear workflow stays in one column, where the earlier row layout put it. Unreachable
+// steps (and every step of a trigger-less draft) each get their own row below, in original order.
+const layoutWorkflowNodes = (
   definition: TWorkflowDefinition,
   nodesById: Map<string, TWorkflowNode>,
   originalNodeOrder: string[]
-): Map<string, number> => {
-  const edgesBySource = new Map<string, string[]>();
-  for (const edge of definition.edges) {
-    edgesBySource.set(edge.source, [...(edgesBySource.get(edge.source) ?? []), edge.target]);
-  }
+): Map<string, { x: number; y: number }> => {
+  const columnWidth = WORKFLOW_CANVAS_NODE_SPACING.x;
+  const widths = new Map<string, number>();
+  // Hand-written data can hold a cycle or a join: a step is measured and placed once, at its
+  // first visit, so neither recurses forever nor places a step twice.
+  const measuring = new Set<string>();
 
-  const ranks = new Map<string, number>(definition.trigger ? [[definition.trigger.id, 0]] : []);
-  const queue = definition.trigger ? [definition.trigger.id] : [];
-  while (queue.length > 0) {
-    const nodeId = queue.shift()!;
-    const nextRank = (ranks.get(nodeId) ?? 0) + 1;
-    for (const targetId of edgesBySource.get(nodeId) ?? []) {
-      if (!nodesById.has(targetId) || ranks.has(targetId)) continue;
-      ranks.set(targetId, nextRank);
-      queue.push(targetId);
+  const getWidth = (nodeId: string | null): number => {
+    if (nodeId === null) return 1;
+    const known = widths.get(nodeId);
+    if (known !== undefined) return known;
+    const node = nodesById.get(nodeId);
+    if (!node || measuring.has(nodeId)) return 1;
+    measuring.add(nodeId);
+    const childrenWidth = getLayoutChildren(node, definition, nodesById)
+      .map(getWidth)
+      .reduce((sum, width) => sum + width, 0);
+    measuring.delete(nodeId);
+    const width = Math.max(1, childrenWidth);
+    widths.set(nodeId, width);
+    return width;
+  };
+
+  const positions = new Map<string, { x: number; y: number }>();
+  let lowestY = WORKFLOW_CANVAS_START_POSITION.y;
+
+  const place = (nodeId: string, left: number, y: number) => {
+    const node = nodesById.get(nodeId);
+    if (!node || positions.has(nodeId)) return;
+    const centerX = left + (getWidth(nodeId) * columnWidth) / 2;
+    positions.set(nodeId, { x: centerX - columnWidth / 2, y });
+    lowestY = Math.max(lowestY, y);
+
+    const childY =
+      y + (node.type === "if_else" ? WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT : WORKFLOW_CANVAS_NODE_SPACING.y);
+    let childLeft = left;
+    for (const childId of getLayoutChildren(node, definition, nodesById)) {
+      if (childId !== null) place(childId, childLeft, childY);
+      childLeft += getWidth(childId) * columnWidth;
     }
+  };
+
+  if (definition.trigger) {
+    const rootWidth = getWidth(definition.trigger.id);
+    const rootCenterX = WORKFLOW_CANVAS_START_POSITION.x + columnWidth / 2;
+    place(
+      definition.trigger.id,
+      rootCenterX - (rootWidth * columnWidth) / 2,
+      WORKFLOW_CANVAS_START_POSITION.y
+    );
   }
 
-  let nextUnreachableRank = Math.max(0, ...ranks.values()) + 1;
+  let nextUnreachableY = lowestY + WORKFLOW_CANVAS_NODE_SPACING.y;
   for (const nodeId of originalNodeOrder) {
-    if (!ranks.has(nodeId)) {
-      ranks.set(nodeId, nextUnreachableRank);
-      nextUnreachableRank += 1;
-    }
+    if (positions.has(nodeId)) continue;
+    positions.set(nodeId, { x: WORKFLOW_CANVAS_START_POSITION.x, y: nextUnreachableY });
+    nextUnreachableY += WORKFLOW_CANVAS_NODE_SPACING.y;
   }
 
-  return ranks;
+  return positions;
 };
 
 export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): TWorkflowDefinition => {
@@ -166,27 +257,12 @@ export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): T
   ];
   const nodesById = new Map(allNodes.map((node) => [node.id, node]));
   const originalNodeOrder = allNodes.map((node) => node.id);
-  const ranks = rankWorkflowNodes(definition, nodesById, originalNodeOrder);
-
-  const nodeIdsByRank = new Map<number, string[]>();
-  for (const nodeId of originalNodeOrder) {
-    const rank = ranks.get(nodeId) ?? 0;
-    nodeIdsByRank.set(rank, [...(nodeIdsByRank.get(rank) ?? []), nodeId]);
-  }
-
-  const positionsByNodeId = new Map<string, { x: number; y: number }>();
-  for (const [rank, nodeIds] of nodeIdsByRank) {
-    const rowOffset = ((nodeIds.length - 1) * WORKFLOW_CANVAS_NODE_SPACING.x) / 2;
-    nodeIds.forEach((nodeId, index) => {
-      positionsByNodeId.set(
-        nodeId,
-        snapWorkflowNodePosition({
-          x: WORKFLOW_CANVAS_START_POSITION.x + index * WORKFLOW_CANVAS_NODE_SPACING.x - rowOffset,
-          y: WORKFLOW_CANVAS_START_POSITION.y + rank * WORKFLOW_CANVAS_NODE_SPACING.y,
-        })
-      );
-    });
-  }
+  const positionsByNodeId = new Map(
+    [...layoutWorkflowNodes(definition, nodesById, originalNodeOrder)].map(([nodeId, position]) => [
+      nodeId,
+      snapWorkflowNodePosition(position),
+    ])
+  );
 
   return {
     ...definition,
