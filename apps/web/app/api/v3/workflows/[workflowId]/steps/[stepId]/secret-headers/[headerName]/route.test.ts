@@ -138,11 +138,12 @@ const put = (headerName = "authorization", body: unknown = { value: NEW_VALUE },
     { params: Promise.resolve({ workflowId: WORKFLOW_ID, stepId, headerName }) } as never
   );
 
-const valuesFor = (definition: Parameters<typeof collectWorkflowSecretIds>[0]) =>
+/** What a run of this definition would send: the runner loads its secrets exactly like this. */
+const valuesFor = (definition: object) =>
   loadWorkflowSecretValues({
     workflowId: WORKFLOW_ID,
     workspaceId: WORKSPACE_ID,
-    secretIds: collectWorkflowSecretIds(definition),
+    secretIds: collectWorkflowSecretIds(definition as Parameters<typeof collectWorkflowSecretIds>[0]),
   });
 
 /** Everything the request could have leaked the value through. */
