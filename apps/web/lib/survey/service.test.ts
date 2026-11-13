@@ -882,7 +882,7 @@ describe("Tests for updateSurvey", () => {
       );
 
       expect(prisma.survey.update).toHaveBeenCalledWith({
-        where: { id: updateSurveyInput.id },
+        where: { id: updateSurveyInput.id, workspaceId: updateSurveyInput.workspaceId },
         data: {
           segment: {
             connect: {
@@ -945,7 +945,7 @@ describe("Tests for updateSurvey", () => {
       );
 
       expect(prisma.survey.update).toHaveBeenCalledWith({
-        where: { id: updateSurveyInput.id },
+        where: { id: updateSurveyInput.id, workspaceId: updateSurveyInput.workspaceId },
         data: { segment: { disconnect: true } },
         select: { id: true },
       });

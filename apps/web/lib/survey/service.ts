@@ -1253,7 +1253,7 @@ const saveAppSurveySegment = async (
   );
   // `isPrivate` and `workspaceId` repeat the checks in the write: a segment that no longer matches fails it.
   await prisma.survey.update({
-    where: { id: survey.id },
+    where: { id: survey.id, workspaceId: survey.workspaceId },
     data: { segment: { connect: { id: segment.id, isPrivate: false, workspaceId: survey.workspaceId } } },
     select: { id: true },
   });
@@ -1268,7 +1268,7 @@ const unlinkSurveySegment = async (
 ): Promise<void> => {
   if (!survey.segment) return;
   await prisma.survey.update({
-    where: { id: survey.id },
+    where: { id: survey.id, workspaceId: survey.workspaceId },
     data: { segment: { disconnect: true } },
     select: { id: true },
   });
