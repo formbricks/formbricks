@@ -9,7 +9,8 @@ post:
     Moves every response tagged `{tagId}` onto `newTagId`, then deletes `{tagId}`.
 
     Both tags must belong to the same workspace — a cross-workspace merge answers `403`, since it would
-    move responses across a tenant boundary. Same authorization as rename.
+    move responses across a tenant boundary. It is the same `403` as for a `newTagId` that names no tag,
+    so a merge can't tell whether a tag exists in another workspace. Same authorization as rename.
 
     Merging a tag into itself answers `400`.
   tags:

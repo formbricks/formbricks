@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
-import { getTag, getTagsByWorkspaceId } from "@/lib/tag/service";
+import { getTag, getTagInWorkspace, getTagsByWorkspaceId } from "@/lib/tag/service";
 import { getTagsOnResponsesCount } from "@/lib/tagOnResponse/service";
 import { deleteTag, mergeTags, updateTagName } from "@/modules/workspaces/settings/lib/tag";
 import { deleteV3Tag, listV3Tags, mergeV3Tags, renameV3Tag } from "./operations";
@@ -8,7 +8,11 @@ import { deleteV3Tag, listV3Tags, mergeV3Tags, renameV3Tag } from "./operations"
 vi.mock("server-only", () => ({}));
 
 vi.mock("@/app/api/v3/lib/auth", () => ({ requireV3WorkspaceAccess: vi.fn() }));
-vi.mock("@/lib/tag/service", () => ({ getTag: vi.fn(), getTagsByWorkspaceId: vi.fn() }));
+vi.mock("@/lib/tag/service", () => ({
+  getTag: vi.fn(),
+  getTagInWorkspace: vi.fn(),
+  getTagsByWorkspaceId: vi.fn(),
+}));
 vi.mock("@/lib/tagOnResponse/service", () => ({ getTagsOnResponsesCount: vi.fn() }));
 // Tag counts only cover responses the caller may read (ENG-3282); enforcement off here.
 vi.mock("@/app/api/v3/responses/lib/visibility", () => ({
@@ -230,9 +234,8 @@ describe("deleteV3Tag", () => {
 
 describe("mergeV3Tags", () => {
   test("merges two tags in the same workspace", async () => {
-    vi.mocked(getTag).mockImplementation(async (id: string) =>
-      id === tagId ? tag : { ...tag, id: otherTagId, name: "Churn" }
-    );
+    vi.mocked(getTag).mockResolvedValue(tag);
+    vi.mocked(getTagInWorkspace).mockResolvedValue({ ...tag, id: otherTagId, name: "Churn" });
     grantAccess();
     vi.mocked(mergeTags).mockResolvedValue({ ok: true, data: tag } as Awaited<ReturnType<typeof mergeTags>>);
 
@@ -241,28 +244,27 @@ describe("mergeV3Tags", () => {
 
     expect(response.status).toBe(200);
     expect(body.data).toEqual({ id: otherTagId });
+    // The target is only ever looked up inside the source tag's workspace.
+    expect(getTagInWorkspace).toHaveBeenCalledWith(otherTagId, tag.workspaceId);
     expect(mergeTags).toHaveBeenCalledWith(tagId, otherTagId);
   });
 
-  test("refuses a cross-workspace merge, which would move responses across a tenant boundary", async () => {
-    vi.mocked(getTag).mockImplementation(async (id: string) =>
-      id === tagId ? tag : { ...tag, id: otherTagId, workspaceId: otherWorkspaceId }
-    );
+  // ENG-2858: a target in another workspace and a made-up one get the same answer, so the merge can't
+  // be used to learn whether a tag id exists elsewhere.
+  test("answers a target in another workspace exactly like one that does not exist", async () => {
+    vi.mocked(getTag).mockResolvedValue(tag);
+    vi.mocked(getTagInWorkspace).mockResolvedValue(null);
     grantAccess();
 
     const response = await mergeV3Tags({ ...base, tagId, newTagId: otherTagId });
+    const body = await response.json();
 
     expect(response.status).toBe(403);
-    expect(mergeTags).not.toHaveBeenCalled();
-  });
-
-  test("403s when the merge target does not exist, rather than confirming it is absent", async () => {
-    vi.mocked(getTag).mockImplementation(async (id: string) => (id === tagId ? tag : null));
-    grantAccess();
-
-    const response = await mergeV3Tags({ ...base, tagId, newTagId: otherTagId });
-
-    expect(response.status).toBe(403);
+    expect(body).toMatchObject({
+      code: "forbidden",
+      detail: "You are not authorized to access this resource",
+    });
+    expect(getTag).not.toHaveBeenCalledWith(otherTagId);
     expect(mergeTags).not.toHaveBeenCalled();
   });
 
@@ -292,7 +294,8 @@ describe("mergeV3Tags", () => {
 
   test("records both tag ids and the source row for the audit log", async () => {
     const target = { ...tag, id: otherTagId, name: "Churn" };
-    vi.mocked(getTag).mockImplementation(async (id: string) => (id === tagId ? tag : target));
+    vi.mocked(getTag).mockResolvedValue(tag);
+    vi.mocked(getTagInWorkspace).mockResolvedValue(target);
     grantAccess();
     vi.mocked(mergeTags).mockResolvedValue({ ok: true, data: target } as Awaited<
       ReturnType<typeof mergeTags>
@@ -311,9 +314,8 @@ describe("mergeV3Tags", () => {
   });
 
   test("reports a failed merge as a server fault, not a success", async () => {
-    vi.mocked(getTag).mockImplementation(async (id: string) =>
-      id === tagId ? tag : { ...tag, id: otherTagId }
-    );
+    vi.mocked(getTag).mockResolvedValue(tag);
+    vi.mocked(getTagInWorkspace).mockResolvedValue({ ...tag, id: otherTagId });
     grantAccess();
     vi.mocked(mergeTags).mockResolvedValue({ ok: false, error: { code: "unexpected" } } as unknown as Awaited<
       ReturnType<typeof mergeTags>

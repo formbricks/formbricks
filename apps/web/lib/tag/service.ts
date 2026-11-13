@@ -45,6 +45,15 @@ export const getTag = reactCache(async (id: string): Promise<TTag | null> => {
   }
 });
 
+/**
+ * The tag `id` if it belongs to `workspaceId`, `null` otherwise: a tag in another workspace and an id that
+ * names no tag look the same, so a caller can't learn that a tag exists outside its workspace (ENG-2858).
+ */
+export const getTagInWorkspace = reactCache(async (id: string, workspaceId: string): Promise<TTag | null> => {
+  validateInputs([id, ZId], [workspaceId, ZId]);
+  return prisma.tag.findFirst({ where: { id, workspaceId } });
+});
+
 export const createTag = async (
   workspaceId: string,
   name: string
