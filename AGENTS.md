@@ -58,7 +58,9 @@ format, PR template rules, review intake, and independent review passes.
 
 ## UI & Design
 
-Read `docs/agents/ui-design.md` before designing or building a screen, flow, or component.
+- Reuse existing design patterns before introducing new ones, to keep design consistency, unless it's justified.
+- Add a new component only when no existing one can carry the interaction. Say why in the plan and the PR.
+- Use the terms in `GLOSSARY.md` for all UI copy, and add every user-facing string to `apps/web/locales/en-US.json`.
 
 ## Performance Testing & SigNoz MCP
 
