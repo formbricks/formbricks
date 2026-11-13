@@ -133,10 +133,6 @@ async function runWorkflowMutation(
 }
 
 export function registerWorkflowTools(server: McpServer): void {
-  registerWorkflowWebhookTools(server);
-  registerWorkflowTestRequestTools(server);
-  registerWorkflowTestRunTools(server);
-
   registerScopedTool(
     server,
     "list_workflows",
@@ -475,4 +471,9 @@ export function registerWorkflowTools(server: McpServer): void {
         workflowsHandlers.unarchive({ ctx, params: { workflowId: input.workflowId } })
       )
   );
+
+  // Part 2 tools (ENG-7171): Secret URL, sample, Send test request, Test run.
+  registerWorkflowWebhookTools(server);
+  registerWorkflowTestRequestTools(server);
+  registerWorkflowTestRunTools(server);
 }
