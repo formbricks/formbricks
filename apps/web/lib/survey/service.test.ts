@@ -2654,6 +2654,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
           segment: {
             connect: {
               id: mockNewSegmentId,
+              isPrivate: false,
             },
           },
         },
@@ -2685,10 +2686,12 @@ describe("Tests for loadNewSegmentInSurvey", () => {
         segment: mockSegment,
       } as Survey);
 
-      // Mock segment exists
+      // Mock the shared segment being loaded
       prisma.segment.findUnique.mockResolvedValueOnce({
         ...mockSegment,
         id: mockNewSegmentId,
+        title: "Test Segment",
+        isPrivate: false,
         workspaceId: mockWorkspaceId,
       });
 
@@ -2705,20 +2708,13 @@ describe("Tests for loadNewSegmentInSurvey", () => {
         },
       } as Survey);
 
-      // Mock segment delete
-      prisma.segment.delete.mockResolvedValueOnce({
-        id: mockCurrentSegmentId,
-        workspaceId: mockWorkspaceId,
-        surveys: [{ id: mockSurveyId }],
-      } as unknown as TSegment);
-
       await loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId);
 
-      // Verify the private segment was deleted
-      expect(prisma.segment.delete).toHaveBeenCalledWith({
-        where: { id: mockCurrentSegmentId },
-        select: expect.anything(),
+      // ENG-6957: deleted only once no survey uses it any more.
+      expect(prisma.segment.deleteMany).toHaveBeenCalledWith({
+        where: { id: mockCurrentSegmentId, isPrivate: true, surveys: { none: {} } },
       });
+      expect(prisma.segment.delete).not.toHaveBeenCalled();
     });
   });
 
@@ -2731,6 +2727,25 @@ describe("Tests for loadNewSegmentInSurvey", () => {
       await expect(loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId)).rejects.toThrow(
         ResourceNotFoundError
       );
+    });
+
+    // ENG-6957: a private segment belongs to its own survey.
+    test("refuses to load another survey's private segment", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput });
+      prisma.segment.findUnique.mockResolvedValueOnce({
+        id: mockNewSegmentId,
+        workspaceId: mockWorkspaceId,
+        filters: [],
+        title: "clothersurvey00000000001",
+        isPrivate: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        description: null,
+      });
+
+      await expect(loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId)).rejects.toThrow(InvalidInputError);
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+      expect(prisma.segment.deleteMany).not.toHaveBeenCalled();
     });
 
     test("throws ResourceNotFoundError when segment not found", async () => {

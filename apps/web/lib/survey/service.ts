@@ -1166,6 +1166,9 @@ const assertTargetingAddsNoHiddenSurvey = async (
   await assertAddedSegmentSurveyFiltersVisible(filters, storedFilters, workspaceId, actor, segmentId);
 };
 
+/** ENG-6957: a private segment belongs to its own survey, so no other survey may be linked to it. */
+const SHARED_SEGMENT_ONLY_MESSAGE = "A survey can only be linked to a shared segment";
+
 /**
  * ENG-6957: whether `segment` is the survey's own private segment: the one it is targeted with, private,
  * and used by no other survey. It is the only segment a survey save writes. A shared segment changes the
@@ -1230,7 +1233,7 @@ const saveAppSurveySegment = async (
   });
   if (!target) throw new ResourceNotFoundError("Segment", segment.id);
   if (target.isPrivate) {
-    throw new InvalidInputError("A survey can only be linked to a shared segment");
+    throw new InvalidInputError(SHARED_SEGMENT_ONLY_MESSAGE);
   }
   await assertTargetingAddsNoHiddenSurvey(
     survey.workspaceId,
@@ -1644,6 +1647,12 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       throw new ResourceNotFoundError("segment", newSegmentId);
     }
 
+    // ENG-6957: a private segment belongs to its own survey. Linking another survey to it would let that
+    // survey read its targeting, and would stop its own survey's saves from writing it.
+    if (newSegment.isPrivate && newSegment.id !== currentSurveySegment?.id) {
+      throw new InvalidInputError(SHARED_SEGMENT_ONLY_MESSAGE);
+    }
+
     const prismaSurvey = await prisma.survey.update({
       where: {
         id: surveyId,
@@ -1651,29 +1660,24 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
       select: selectSurvey,
       data: {
         segment: {
-          connect: {
-            id: newSegmentId,
-          },
+          // `isPrivate: false` repeats the check in the write, unless the survey keeps its own segment.
+          connect:
+            newSegment.id === currentSurveySegment?.id
+              ? { id: newSegmentId }
+              : { id: newSegmentId, isPrivate: false },
         },
       },
     });
 
     if (
       currentSurveySegment &&
+      currentSurveySegment.id !== newSegmentId &&
       currentSurveySegment.isPrivate &&
       currentSurveySegment.title === currentSurvey.id
     ) {
-      await prisma.segment.delete({
-        where: {
-          id: currentSurveySegment.id,
-        },
-        select: {
-          surveys: {
-            select: {
-              id: true,
-            },
-          },
-        },
+      // Only once no survey uses it any more (ENG-6957).
+      await prisma.segment.deleteMany({
+        where: { id: currentSurveySegment.id, isPrivate: true, surveys: { none: {} } },
       });
     }
 

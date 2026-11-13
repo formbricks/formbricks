@@ -2,7 +2,12 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import { resetDb } from "@/integration/reset-db";
-import { selectSurvey, updateSurvey, updateSurveyInternal } from "@/lib/survey/service";
+import {
+  loadNewSegmentInSurvey,
+  selectSurvey,
+  updateSurvey,
+  updateSurveyInternal,
+} from "@/lib/survey/service";
 import { transformPrismaSurvey } from "@/lib/survey/utils";
 import type { TSurveyActorContext } from "@/lib/survey/visibility/actor-context";
 
@@ -311,5 +316,29 @@ describe("a survey save changes only its own survey's targeting (ENG-6957)", () 
     ).rejects.toMatchObject({ name: "InvalidInputError" });
 
     expect(await segmentIdOf(ids.W)).toBe(ids.segmentW);
+  });
+
+  // Load Segment (`loadNewSegmentInSurvey`) holds the same rule as the save.
+  test("Load Segment refuses another survey's private segment", async () => {
+    await expect(loadNewSegmentInSurvey(ids.W, ids.segmentR)).rejects.toMatchObject({
+      name: "InvalidInputError",
+    });
+
+    expect(await segmentIdOf(ids.W)).toBe(ids.segmentW);
+    expect(await segmentIdOf(ids.R)).toBe(ids.segmentR);
+  });
+
+  test("Load Segment deletes the old private segment only when no survey uses it", async () => {
+    await loadNewSegmentInSurvey(ids.W, ids.shared);
+    expect(await segmentIdOf(ids.W)).toBe(ids.shared);
+    expect(await prisma.segment.findUnique({ where: { id: ids.segmentW } })).toBeNull();
+
+    // R's private segment, also used by W (only possible before this fix): R keeps it when W moves on.
+    await prisma.survey.update({ where: { id: ids.W }, data: { segmentId: ids.segmentR } });
+    await prisma.segment.update({ where: { id: ids.segmentR }, data: { title: ids.W } });
+    await loadNewSegmentInSurvey(ids.W, ids.shared);
+
+    expect(await segmentIdOf(ids.R)).toBe(ids.segmentR);
+    expect(await prisma.segment.findUnique({ where: { id: ids.segmentR } })).not.toBeNull();
   });
 });
