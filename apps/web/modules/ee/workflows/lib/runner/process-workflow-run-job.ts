@@ -23,6 +23,7 @@ import {
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
 import { captureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/run-failure";
 import { type WorkflowRunEffects, liveWorkflowRunEffects } from "./effects";
+import { toJsonRecord } from "./json-record";
 import {
   type WorkflowRunEnvironment,
   WorkflowRunNotExecutableError,
@@ -137,11 +138,6 @@ const resultFromLogRow = (log: StepLogRow, status: TWorkflowStepResult["status"]
   startedAt: log.startedAt?.toISOString() ?? new Date().toISOString(),
   finishedAt: log.finishedAt?.toISOString() ?? new Date().toISOString(),
 });
-
-const toRecord = (value: unknown): Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
 
 /** A step taken from its log row: its Variables rebuilt from the stored output (≤64 KB of a response). */
 const resumedStep = (
@@ -295,7 +291,7 @@ const runStep = async (
 
   // A "Don't wait" call handed to its own job (ENG-7179): that job owns the row now. Never run it again,
   // whatever state the job left it in; the walk just goes on.
-  if (existing && step.executor.handedOff?.(toRecord(existing.output))) {
+  if (existing && step.executor.handedOff?.(toJsonRecord(existing.output))) {
     return resumedStep(step.executor, resultFromLogRow(existing, existing.status));
   }
 

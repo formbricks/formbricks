@@ -21,22 +21,20 @@ import {
   sendWorkflowHttpRequest,
 } from "../http-request/send-http-request";
 import { loadWorkflowSecretValues } from "../secret-headers/workflow-secret-store";
-
-const toRecord = (value: unknown): Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : {};
+import { toJsonRecord } from "./json-record";
 
 const isRequestRecord = (value: unknown): value is TWorkflowHttpRequestRecord => {
-  const record = toRecord(value);
+  const record = toJsonRecord(value);
   return typeof record.method === "string" && typeof record.url === "string" && Array.isArray(record.headers);
 };
 
 /** The step's node in the definition the run executed (its version, else the live one). */
 const findHttpRequestNode = (definition: unknown, stepId: string): TWorkflowHttpRequestActionNode | null => {
-  const nodes = toRecord(definition).nodes;
+  const nodes = toJsonRecord(definition).nodes;
   if (!Array.isArray(nodes)) return null;
-  const parsed = ZWorkflowHttpRequestActionNode.safeParse(nodes.find((node) => toRecord(node).id === stepId));
+  const parsed = ZWorkflowHttpRequestActionNode.safeParse(
+    nodes.find((node) => toJsonRecord(node).id === stepId)
+  );
   return parsed.success ? parsed.data : null;
 };
 
@@ -142,7 +140,7 @@ export const createWorkflowHttpRequestDeliveryJobHandler =
       where: { runId: data.workflowRunId, stepId: data.stepId },
       select: { status: true, output: true },
     });
-    const output = toRecord(row?.output);
+    const output = toJsonRecord(row?.output);
     if (row?.status !== "running" || output.delivery !== "sending" || !isRequestRecord(output.request)) {
       logger.info(logContext, "Workflow HTTP request is no longer sending; skipping delivery");
       return;

@@ -26,6 +26,7 @@ import { RequestBodyTooLargeError, readRequestBodyWithLimit } from "@/app/lib/ap
 import { ALLOW_WORKFLOW_PLAIN_HTTP } from "@/lib/constants";
 import { UNTRUSTED_CLIENT_IP, getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { loggableError } from "@/lib/utils/loggable-error";
+import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import type { TRateLimitConfig } from "@/modules/core/rate-limit/types/rate-limit";
@@ -185,9 +186,6 @@ const readPayload = async (ctx: WebhookCallInput): Promise<TPayloadRead> => {
   return parsed;
 };
 
-const isUniqueViolation = (error: unknown): boolean =>
-  typeof error === "object" && error !== null && (error as { code?: unknown }).code === "P2002";
-
 const findRunByIdempotencyKey = async (workflowId: string, idempotencyKey: string) =>
   prisma.workflowRun.findUnique({
     where: { workflowId_idempotencyKey: { workflowId, idempotencyKey } },
@@ -266,7 +264,7 @@ const saveCall = async (
     if (run === GONE) return { kind: "gone" };
     return run ? { kind: "created", run } : { kind: "none" };
   } catch (error) {
-    if (!idempotencyKey || !isUniqueViolation(error)) throw error;
+    if (!idempotencyKey || !isUniqueConstraintError(error)) throw error;
     const existing = await findRunByIdempotencyKey(workflow.id, idempotencyKey);
     if (!existing) throw error;
     return { kind: "existing", runId: existing.id };

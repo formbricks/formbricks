@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { Prisma } from "@formbricks/database/prisma";
 import { POST } from "./route";
 
 /**
@@ -312,7 +313,9 @@ describe("Idempotency-Key", () => {
   });
 
   test("a concurrent call with the same key that wins the race is returned with 200", async () => {
-    mocks.runCreate.mockRejectedValue(Object.assign(new Error("Unique constraint"), { code: "P2002" }));
+    mocks.runCreate.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Unique constraint", { code: "P2002", clientVersion: "test" })
+    );
     mocks.runFindUnique.mockResolvedValueOnce(null).mockResolvedValueOnce({ id: RUN_ID });
 
     const response = await call({ headers: { "idempotency-key": "order-44" } });

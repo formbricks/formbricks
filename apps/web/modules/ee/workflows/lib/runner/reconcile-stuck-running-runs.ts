@@ -3,6 +3,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { captureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/run-failure";
+import { toJsonRecord } from "./json-record";
 import {
   WORKFLOW_RUN_RECONCILE_BATCH_SIZE,
   WORKFLOW_RUN_STUCK_RUNNING_MAX_AGE_MS,
@@ -187,8 +188,7 @@ export const failStuckSendingHttpRequests = async ({
   let failed = 0;
   for (const row of stuck) {
     try {
-      const output =
-        typeof row.output === "object" && row.output !== null && !Array.isArray(row.output) ? row.output : {};
+      const output = toJsonRecord(row.output);
       const written = await prisma.workflowRunLog.updateMany({
         where: { id: row.id, status: "running" },
         data: {
