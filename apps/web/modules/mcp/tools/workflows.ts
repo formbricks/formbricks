@@ -26,6 +26,7 @@ import {
   ZMcpTestWorkflowInput,
   ZMcpWorkflowIdInput,
 } from "./workflow-schemas";
+import { registerWorkflowWebhookTools } from "./workflow-webhook";
 
 type WorkflowApiContext = ReturnType<typeof buildWorkflowApiContext>;
 
@@ -130,6 +131,8 @@ async function runWorkflowMutation(
 }
 
 export function registerWorkflowTools(server: McpServer): void {
+  registerWorkflowWebhookTools(server);
+
   registerScopedTool(
     server,
     "list_workflows",

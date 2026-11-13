@@ -153,7 +153,7 @@ describe("registerWorkflowTools", () => {
   test("registers all read + mutation tools with correct annotations", () => {
     const { server, tools } = createToolServer();
 
-    expect(server.registerTool).toHaveBeenCalledTimes(13);
+    expect(server.registerTool).toHaveBeenCalledTimes(16);
     for (const name of [
       "list_workflows",
       "get_workflow",
