@@ -14,6 +14,11 @@ export interface WorkflowStepOutcome {
   error: string | null;
   /** Kept under the step's id in the run context, so later steps can read `steps.<id>.…`. */
   output: Record<string, unknown>;
+  /**
+   * `false` for a failure another attempt can't fix (an invalid address, a spent per-workflow cap):
+   * the run fails at once instead of being retried. Failures are retryable by default.
+   */
+  retryable?: boolean;
 }
 
 export interface WorkflowStepExecution<T extends TWorkflowStepType> {

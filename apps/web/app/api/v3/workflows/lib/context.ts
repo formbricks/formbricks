@@ -18,6 +18,7 @@ import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getWorkflowSurveyLinkSurveys } from "@/modules/ee/workflows/lib/survey-link-surveys";
 import { buildRecordAnalytics } from "./analytics";
 
 /**
@@ -171,6 +172,7 @@ export const buildWorkflowApiContext = (
   verifyTriggerSurvey,
   verifyRecipientsAllowed,
   listUnreadableSurveyIds: buildListUnreadableSurveyIds(authentication),
+  verifySurveyLinkSurveys: getWorkflowSurveyLinkSurveys,
   ...(auditLog ? { recordAudit: buildRecordAudit(auditLog, authentication, requestId) } : {}),
   // Product analytics (ENG-2851): always bound, unlike the audit sink, because it no-ops on its own
   // when POSTHOG_KEY is unset and there is no per-request switch to respect.

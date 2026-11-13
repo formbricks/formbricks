@@ -344,7 +344,7 @@ describe("processWorkflowRunJob", () => {
         where: { runId_stepId: { runId: baseRun.id, stepId: "send-email" } },
         data: expect.objectContaining({
           status: "succeeded",
-          output: { provider: "smtp", messageId: sendArgs.messageId },
+          output: { provider: "smtp", messageId: sendArgs.messageId, recipient: "jane@example.com" },
         }),
       })
     );
