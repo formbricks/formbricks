@@ -350,6 +350,7 @@ describe("body", () => {
     ["a list", "[1,2,3]"],
     ["a string", '"hello"'],
     ["nesting deeper than ten levels", `${'{"a":'.repeat(11)}1${"}".repeat(11)}`],
+    ["a NUL character, which Postgres can't store", String.raw`{"a":"\u0000","b":1}`],
   ])("answers 400 for %s, without echoing it", async (_label, body) => {
     const response = await call({ body: body.replace("1", '"echo-me-not"') });
 

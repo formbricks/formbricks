@@ -6364,6 +6364,7 @@
       "webhook_never_called": "Not called yet · {limits}",
       "webhook_paste_invalid_json": "This is not valid JSON.",
       "webhook_paste_not_object": "The sample must be a JSON object.",
+      "webhook_paste_null_byte": "The sample can't contain the NULL character (\\u0000).",
       "webhook_paste_too_deep": "The sample is nested more than 10 levels deep.",
       "webhook_paste_too_large": "The sample is over {size} KB.",
       "webhook_regenerate": "Regenerate",

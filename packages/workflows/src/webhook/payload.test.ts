@@ -22,6 +22,16 @@ describe("parseWebhookPayload", () => {
     expect(parseWebhookPayload(text)).toEqual({ ok: false, reason });
   });
 
+  test("refuses a NUL character in any value or key, which Postgres can't store", () => {
+    expect(parseWebhookPayload(String.raw`{"a":{"b":["x\u0000y"]}}`)).toEqual({
+      ok: false,
+      reason: "null_byte",
+    });
+    expect(parseWebhookPayload(String.raw`{"k\u0000":1}`)).toEqual({ ok: false, reason: "null_byte" });
+    // A backslash followed by "u0000" is plain text, not a NUL.
+    expect(parseWebhookPayload(String.raw`{"a":"\\u0000"}`).ok).toBe(true);
+  });
+
   test("accepts exactly ten levels of nesting and refuses eleven", () => {
     expect(parseWebhookPayload(JSON.stringify(nest(10))).ok).toBe(true);
     expect(parseWebhookPayload(JSON.stringify(nest(11)))).toEqual({ ok: false, reason: "too_deep" });
@@ -43,6 +53,10 @@ describe("parseWebhookPayload", () => {
 });
 
 describe("checkWebhookPayloadShape", () => {
+  test("refuses a NUL character anywhere in the object", () => {
+    expect(checkWebhookPayloadShape({ a: [{ b: "x\u0000" }] })).toEqual({ ok: false, reason: "null_byte" });
+  });
+
   test("refuses an object over the size cap once serialized", () => {
     const payload = { text: "x".repeat(WEBHOOK_PAYLOAD_MAX_BYTES) };
 

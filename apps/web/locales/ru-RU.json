@@ -6364,6 +6364,7 @@
       "webhook_never_called": "Пока не вызывался · {limits}",
       "webhook_paste_invalid_json": "Это некорректный JSON.",
       "webhook_paste_not_object": "Пример должен быть JSON-объектом.",
+      "webhook_paste_null_byte": "Образец не может содержать символ NULL (\\u0000).",
       "webhook_paste_too_deep": "Вложенность примера превышает 10 уровней.",
       "webhook_paste_too_large": "Размер примера превышает {size} КБ.",
       "webhook_regenerate": "Сгенерировать заново",

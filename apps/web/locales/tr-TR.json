@@ -6364,6 +6364,7 @@
       "webhook_never_called": "Henüz çağrılmadı · {limits}",
       "webhook_paste_invalid_json": "Bu geçerli bir JSON değil.",
       "webhook_paste_not_object": "Örnek bir JSON nesnesi olmalı.",
+      "webhook_paste_null_byte": "Örnek, NULL karakterini (\\u0000) içeremez.",
       "webhook_paste_too_deep": "Örnek 10 seviyeden daha derin iç içe geçmiş.",
       "webhook_paste_too_large": "Örnek {size} KB'ı aşıyor.",
       "webhook_regenerate": "Yeniden oluştur",

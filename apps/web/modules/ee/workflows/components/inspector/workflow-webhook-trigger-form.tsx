@@ -96,6 +96,8 @@ const usePasteErrorMessage = () => {
         return t("workspace.workflows.webhook_paste_too_large", {
           size: WEBHOOK_PAYLOAD_MAX_BYTES / 1024,
         });
+      case "null_byte":
+        return t("workspace.workflows.webhook_paste_null_byte");
     }
   };
 };

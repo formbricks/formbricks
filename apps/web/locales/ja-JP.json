@@ -6364,6 +6364,7 @@
       "webhook_never_called": "まだ呼び出されていません · {limits}",
       "webhook_paste_invalid_json": "有効なJSONではありません。",
       "webhook_paste_not_object": "サンプルはJSONオブジェクトである必要があります。",
+      "webhook_paste_null_byte": "サンプルにNULL文字(\\u0000)を含めることはできません。",
       "webhook_paste_too_deep": "サンプルのネストが10階層を超えています。",
       "webhook_paste_too_large": "サンプルが{size} KBを超えています。",
       "webhook_regenerate": "再生成",

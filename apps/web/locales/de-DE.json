@@ -6364,6 +6364,7 @@
       "webhook_never_called": "Noch nicht aufgerufen · {limits}",
       "webhook_paste_invalid_json": "Das ist kein gültiges JSON.",
       "webhook_paste_not_object": "Das Beispiel muss ein JSON-Objekt sein.",
+      "webhook_paste_null_byte": "Das Beispiel darf das NULL-Zeichen (\\u0000) nicht enthalten.",
       "webhook_paste_too_deep": "Das Beispiel ist mehr als 10 Ebenen tief verschachtelt.",
       "webhook_paste_too_large": "Das Beispiel ist größer als {size} KB.",
       "webhook_regenerate": "Neu generieren",

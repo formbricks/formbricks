@@ -350,6 +350,17 @@ describe("setSample", () => {
     expect(service.setTriggerSample).not.toHaveBeenCalled();
   });
 
+  test("answers 400 for a payload holding a NUL character, which Postgres can't store", async () => {
+    const res = await handlers.setSample({
+      req: jsonRequest("PUT", { payload: { note: "a\u0000b" } }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
+
+    expect(res.status).toBe(400);
+    expect(service.setTriggerSample).not.toHaveBeenCalled();
+  });
+
   test("answers 400 for a payload that is not an object", async () => {
     const res = await handlers.setSample({
       req: jsonRequest("PUT", { payload: [1, 2] }),

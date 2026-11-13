@@ -8,5 +8,7 @@ import { z } from "zod";
  * The same rule as `apps/web`'s `zPostgresText`, copied because this package imports nothing from the
  * app. Deliberately not re-exported from `./index`: it is an internal detail, not package surface.
  */
+export const hasNullByte = (value: string): boolean => value.includes("\u0000");
+
 export const zPostgresText = () =>
-  z.string().refine((value) => !value.includes("\u0000"), "must not contain NULL bytes");
+  z.string().refine((value) => !hasNullByte(value), "must not contain NULL bytes");

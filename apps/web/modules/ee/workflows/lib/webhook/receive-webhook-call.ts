@@ -175,7 +175,9 @@ const readPayload = async (ctx: WebhookCallInput): Promise<TPayloadRead> => {
       ok: false,
       response: problemBadRequest(
         ctx.requestId,
-        `The payload must be a JSON object nested at most ${WEBHOOK_PAYLOAD_MAX_DEPTH} levels.`,
+        parsed.reason === "null_byte"
+          ? "The payload must not contain NULL bytes."
+          : `The payload must be a JSON object nested at most ${WEBHOOK_PAYLOAD_MAX_DEPTH} levels.`,
         { instance: ctx.instance }
       ),
     };

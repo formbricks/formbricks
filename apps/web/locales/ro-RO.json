@@ -6364,6 +6364,7 @@
       "webhook_never_called": "Încă neapelat · {limits}",
       "webhook_paste_invalid_json": "Acesta nu este un JSON valid.",
       "webhook_paste_not_object": "Exemplul trebuie să fie un obiect JSON.",
+      "webhook_paste_null_byte": "Exemplul nu poate conține caracterul NULL (\\u0000).",
       "webhook_paste_too_deep": "Exemplul are mai mult de 10 niveluri de imbricare.",
       "webhook_paste_too_large": "Exemplul depășește {size} KB.",
       "webhook_regenerate": "Regenerează",

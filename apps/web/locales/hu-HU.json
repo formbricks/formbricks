@@ -6364,6 +6364,7 @@
       "webhook_never_called": "Még nem érkezett hívás · {limits}",
       "webhook_paste_invalid_json": "Ez nem érvényes JSON.",
       "webhook_paste_not_object": "A mintának JSON-objektumnak kell lennie.",
+      "webhook_paste_null_byte": "A minta nem tartalmazhatja a NULL karaktert (\\u0000).",
       "webhook_paste_too_deep": "A minta több mint 10 szinten át van egymásba ágyazva.",
       "webhook_paste_too_large": "A minta mérete meghaladja a {size} KB-ot.",
       "webhook_regenerate": "Újragenerálás",

@@ -6364,6 +6364,7 @@
       "webhook_never_called": "尚未被调用 · {limits}",
       "webhook_paste_invalid_json": "这不是有效的 JSON。",
       "webhook_paste_not_object": "示例必须是 JSON 对象。",
+      "webhook_paste_null_byte": "示例中不能包含 NULL 字符（\\u0000）。",
       "webhook_paste_too_deep": "示例的嵌套层级超过了 10 层。",
       "webhook_paste_too_large": "示例大小超过了 {size} KB。",
       "webhook_regenerate": "重新生成",

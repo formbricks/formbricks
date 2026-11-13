@@ -6138,6 +6138,7 @@ checksums:
     workspace/workflows/webhook_never_called: 36401115078efd92a9d9de85242a84e4
     workspace/workflows/webhook_paste_invalid_json: d5debfe2f1a05ae899d973d10bdaa8c2
     workspace/workflows/webhook_paste_not_object: e86c1cc1a01117d5be14e0f1241925a9
+    workspace/workflows/webhook_paste_null_byte: eb53e278f497bd2e9c9802513dee6d83
     workspace/workflows/webhook_paste_too_deep: d29bc34882ca8d1a14dedd31259258cc
     workspace/workflows/webhook_paste_too_large: a2e7ddaca5b1d230505d96a700eb7929
     workspace/workflows/webhook_regenerate: 79bc737effc16d0546c048c6aa2ec415

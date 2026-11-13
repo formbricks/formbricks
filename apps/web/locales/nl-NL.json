@@ -6364,6 +6364,7 @@
       "webhook_never_called": "Nog niet aangeroepen · {limits}",
       "webhook_paste_invalid_json": "Dit is geen geldige JSON.",
       "webhook_paste_not_object": "Het voorbeeld moet een JSON-object zijn.",
+      "webhook_paste_null_byte": "Het voorbeeld mag het NULL-teken (\\u0000) niet bevatten.",
       "webhook_paste_too_deep": "Het voorbeeld is meer dan 10 niveaus diep genest.",
       "webhook_paste_too_large": "Het voorbeeld is groter dan {size} KB.",
       "webhook_regenerate": "Opnieuw genereren",

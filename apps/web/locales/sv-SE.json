@@ -6364,6 +6364,7 @@
       "webhook_never_called": "Har inte anropats ännu · {limits}",
       "webhook_paste_invalid_json": "Det här är inte giltig JSON.",
       "webhook_paste_not_object": "Exemplet måste vara ett JSON-objekt.",
+      "webhook_paste_null_byte": "Exemplet får inte innehålla NULL-tecknet (\\u0000).",
       "webhook_paste_too_deep": "Exemplet är nästlat på mer än 10 nivåer.",
       "webhook_paste_too_large": "Exemplet är större än {size} KB.",
       "webhook_regenerate": "Skapa ny",

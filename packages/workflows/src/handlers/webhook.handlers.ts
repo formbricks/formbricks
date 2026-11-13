@@ -154,6 +154,9 @@ export const createWebhookHandlers = (service: WorkflowsService): WebhookHandler
             `The sample payload is over the ${WEBHOOK_PAYLOAD_MAX_BYTES / 1024} KB limit.`
           );
         }
+        if (checked.reason === "null_byte") {
+          throw new WorkflowInvalidInputError("The sample payload must not contain NULL bytes.");
+        }
         throw new WorkflowInvalidInputError(
           `The sample payload must be a JSON object nested at most ${WEBHOOK_PAYLOAD_MAX_DEPTH} levels.`
         );
