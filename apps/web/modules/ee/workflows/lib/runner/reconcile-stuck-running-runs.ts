@@ -1,5 +1,7 @@
 import { prisma } from "@formbricks/database";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { captureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/run-failure";
 import {
   WORKFLOW_RUN_RECONCILE_BATCH_SIZE,
@@ -198,8 +200,17 @@ export const failStuckSendingHttpRequests = async ({
       });
       failed += written.count;
     } catch (error) {
+      // A database error for this row is logged and the batch goes on; anything else is a bug and
+      // fails the job. By name and code only: a Prisma message can quote the step's recorded request.
+      if (!(error instanceof Prisma.PrismaClientKnownRequestError)) throw error;
       logger.error(
-        { ...logContext, err: error, workflowRunId: row.runId, stepId: row.stepId },
+        {
+          ...logContext,
+          ...loggableError(error),
+          code: error.code,
+          workflowRunId: row.runId,
+          stepId: row.stepId,
+        },
         "Failed to mark a stuck sending HTTP request failed"
       );
     }

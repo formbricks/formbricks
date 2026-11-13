@@ -3,6 +3,7 @@ import type { WorkflowApiContext } from "@formbricks/workflows/server";
 import { buildV3AuditLog } from "@/app/api/v3/lib/audit";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 
 /**
@@ -40,6 +41,8 @@ export const buildRecordSecretHeaderChanges =
         });
       }
     } catch (error) {
-      logger.withContext({ requestId }).error({ error }, "Failed to record workflow secret header audit");
+      logger
+        .withContext({ requestId })
+        .error(loggableError(error), "Failed to record workflow secret header audit");
     }
   };

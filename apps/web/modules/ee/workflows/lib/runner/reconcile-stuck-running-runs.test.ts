@@ -1,5 +1,6 @@
 import { mockCaptureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/__mocks__/run-failure";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { Prisma } from "@formbricks/database/prisma";
 import {
   failStuckSendingHttpRequests,
   reconcileStuckRunningWorkflowRuns,
@@ -182,5 +183,35 @@ describe("failStuckSendingHttpRequests", () => {
       },
     });
     expect(result).toEqual({ scanned: 1, failed: 1 });
+  });
+
+  test("logs a database error by name and code, never its message, and goes on with the batch", async () => {
+    logFindMany.mockResolvedValue([sendingRow("log1"), sendingRow("log2")]);
+    // A Prisma message can quote the values it tried to write, here the step's recorded request.
+    const dbError = new Prisma.PrismaClientKnownRequestError("value too long: https://x.example/secret", {
+      code: "P2000",
+      clientVersion: "test",
+    });
+    logUpdateMany.mockRejectedValueOnce(dbError).mockResolvedValueOnce({ count: 1 });
+
+    const result = await failStuckSendingHttpRequests({ now: NOW });
+
+    expect(result).toEqual({ scanned: 2, failed: 1 });
+    expect(error).toHaveBeenCalledWith(
+      expect.objectContaining({
+        errName: "PrismaClientKnownRequestError",
+        code: "P2000",
+        workflowRunId: "run_log1",
+      }),
+      expect.any(String)
+    );
+    expect(JSON.stringify(error.mock.calls)).not.toContain("secret");
+  });
+
+  test("lets an unexpected error through instead of swallowing it", async () => {
+    logFindMany.mockResolvedValue([sendingRow("log1")]);
+    logUpdateMany.mockRejectedValueOnce(new TypeError("boom"));
+
+    await expect(failStuckSendingHttpRequests({ now: NOW })).rejects.toThrow("boom");
   });
 });

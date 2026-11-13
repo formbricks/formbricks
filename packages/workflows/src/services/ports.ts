@@ -347,6 +347,9 @@ export interface WorkflowsDb {
 /**
  * Minimal structural logger port. Satisfied by a request-bound `@formbricks/logger` child
  * (`logger.withContext({ requestId })`). The package never imports the logger package directly.
+ *
+ * Log a caught error under `error` or `err`: the adapter (`apps/web` `toWorkflowsLogger`) reduces it to
+ * name and frames, since a message can quote a definition, a payload or a stored value.
  */
 export interface WorkflowsLogger {
   warn: (obj: object, msg?: string) => void;

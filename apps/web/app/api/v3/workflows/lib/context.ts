@@ -16,6 +16,7 @@ import { isSurveyOutboundAllowed, surveyOutboundVisibilitySelect } from "@/lib/s
 import { buildHiddenSurveyWhere } from "@/lib/survey/visibility/predicate";
 import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { workflowSecretStore } from "@/modules/ee/workflows/lib/secret-headers/workflow-secret-store";
@@ -23,6 +24,7 @@ import { getWorkflowSurveyLinkSurveys } from "@/modules/ee/workflows/lib/survey-
 import { webhookTokenIssuer } from "@/modules/ee/workflows/lib/webhook/token";
 import { buildRecordAnalytics } from "./analytics";
 import { buildRecordSecretHeaderChanges } from "./secret-audit";
+import { toWorkflowsLogger } from "./workflows-logger";
 
 /**
  * Adapter glue between the Next.js v3 routes and the framework-agnostic `@formbricks/workflows`
@@ -116,7 +118,7 @@ const buildRecordAudit =
         auditLog.organizationId = await getOrganizationIdFromWorkspaceId(detail.workspaceId);
       }
     } catch (error) {
-      logger.withContext({ requestId }).error({ error }, "Failed to record workflow audit detail");
+      logger.withContext({ requestId }).error(loggableError(error), "Failed to record workflow audit detail");
     }
   };
 
@@ -147,7 +149,8 @@ export const buildWorkflowApiContext = (
   userId: getV3SessionUserId(authentication),
   requestId,
   instance,
-  logger: logger.withContext({ requestId }),
+  // Turns the errors the package logs into name and frames (`loggableError`).
+  logger: toWorkflowsLogger(logger.withContext({ requestId })),
   // HMAC key for redacting PII markers in audit snapshots; reuses the app's audit/encryption secret
   // so markers aren't offline-guessable. Injected as data to keep `@formbricks/workflows` agnostic.
   auditRedactionKey: ENCRYPTION_KEY,

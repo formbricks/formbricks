@@ -3,6 +3,7 @@ import { logger } from "@formbricks/logger";
 import { InvalidInputError } from "@formbricks/types/errors";
 import type { TWorkflowHttpMethod } from "@formbricks/workflows";
 import { ALLOW_WORKFLOW_PLAIN_HTTP, WORKFLOW_ALLOW_INTERNAL_URLS } from "@/lib/constants";
+import { loggableError } from "@/lib/utils/loggable-error";
 import { createPinnedDispatcher, validateAndResolveWebhookUrl } from "@/lib/utils/validate-webhook-url";
 
 /** One outbound call, fully rendered: Variables inserted, secret header values decrypted. */
@@ -154,7 +155,10 @@ const attempt = async (call: WorkflowHttpCall, timeoutMs: number): Promise<Attem
   } finally {
     // destroy(), not close(): close() waits for a target that accepted the connection but never answered.
     await dispatcher?.destroy().catch((cleanupError: unknown) => {
-      logger.warn({ err: cleanupError, host: urlHost(call.url) }, "Workflow HTTP dispatcher cleanup failed");
+      logger.warn(
+        { ...loggableError(cleanupError), host: urlHost(call.url) },
+        "Workflow HTTP dispatcher cleanup failed"
+      );
     });
   }
 };
