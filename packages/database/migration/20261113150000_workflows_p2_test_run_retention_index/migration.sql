@@ -7,4 +7,4 @@
 -- Run writes wait for the build (SHARE lock); the table holds one row per workflow run, far smaller than
 -- the Response tables earlier plain index builds were accepted on.
 -- squawk-ignore require-concurrent-index-creation
-CREATE INDEX IF NOT EXISTS "WorkflowRun_isDryRun_createdAt_idx" ON "WorkflowRun"("isDryRun", "createdAt");
+CREATE INDEX IF NOT EXISTS "WorkflowRun_isDryRun_created_at_idx" ON "WorkflowRun"("isDryRun", "created_at");
