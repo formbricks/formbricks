@@ -84,7 +84,7 @@
     "oauth": {
       "access": {
         "all": "全部访问权限",
-        "all_hint": "你可以访问的所有组织和工作区,包括之后加入的。",
+        "all_hint": "你有权访问的所有组织和工作区，包括之后加入的。",
         "description": "选择该应用可以访问哪些组织和工作区。其他内容对它而言都不存在。",
         "mode_label": "组织和工作区访问权限",
         "no_options": "你还没有加入任何组织或工作区。",
@@ -114,6 +114,8 @@
       "client_uri": "客户端 URI",
       "connected_at": "连接时间",
       "consent_failed": "OAuth 授权失败。请重试。",
+      "consent_grant_not_saved": "你选择的访问权限未能保存，因此没有任何更改。请重试。",
+      "consent_grant_selection_unavailable": "你已无法访问所选的部分组织或工作区。请刷新页面后重新选择。",
       "consent_revoked": "OAuth 应用访问权限已撤销。",
       "dashboard_viewer_no_dashboard_scope": "此应用没有请求读取仪表板的权限,而这是“仪表板查看者”唯一能授予的权限。",
       "dashboard_viewer_scope_description": "作为仪表板查看者,你只能允许此应用读取你可以查看的仪表板,无法授予它请求的其他任何权限。",
@@ -183,6 +185,7 @@
       "permissions": "权限",
       "redirect_host": "重定向主机",
       "revoke": "撤销",
+      "revoke_access_label": "撤销 {clientName} 的访问权限",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "unknown_client": "未知客户端"
     },

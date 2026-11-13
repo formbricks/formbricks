@@ -84,7 +84,7 @@
     "oauth": {
       "access": {
         "all": "Full åtkomst",
-        "all_hint": "Alla organisationer och arbetsytor du kan nå, inklusive sådana du går med i senare.",
+        "all_hint": "Alla organisationer och arbetsytor du har åtkomst till, inklusive sådana du går med i senare.",
         "description": "Välj vilka organisationer och arbetsytor appen kan komma åt. Allt annat finns inte för den.",
         "mode_label": "Åtkomst till organisationer och arbetsytor",
         "no_options": "Du tillhör ingen organisation eller arbetsyta ännu.",
@@ -114,6 +114,8 @@
       "client_uri": "Klient-URI",
       "connected_at": "Ansluten",
       "consent_failed": "OAuth-godkännande misslyckades. Försök igen.",
+      "consent_grant_not_saved": "Den åtkomst du valde kunde inte sparas, så ingenting har ändrats. Försök igen.",
+      "consent_grant_selection_unavailable": "Du har inte längre åtkomst till några av de organisationer eller arbetsytor du valde. Ladda om sidan och välj igen.",
       "consent_revoked": "OAuth-appåtkomst återkallad.",
       "dashboard_viewer_no_dashboard_scope": "Den här appen bad inte om att få läsa dashboards, vilket är den enda åtkomst som en Dashboard-läsare kan ge.",
       "dashboard_viewer_scope_description": "Som Dashboard-läsare kan du bara ge den här appen tillåtelse att läsa de dashboards du kan se. Appen får ingen annan åtkomst som den har bett om.",
@@ -183,6 +185,7 @@
       "permissions": "Behörigheter",
       "redirect_host": "Omdirigeringsvärd",
       "revoke": "Återkalla",
+      "revoke_access_label": "Återkalla {clientName}s åtkomst",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "unknown_client": "Okänd klient"
     },

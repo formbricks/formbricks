@@ -67,7 +67,7 @@ checksums:
     auth/login/please_verify_your_email_to_continue: 2ac048d93a4ec24950404a0c5fbfcd3a
     auth/login/use_a_backup_code: 181e4ab6ba9e5b063b46925f1925eb2b
     auth/oauth/access/all: b818d4def14a915a46730e6326127e1e
-    auth/oauth/access/all_hint: da6d3676f97cf2b028c7b286ef91d19a
+    auth/oauth/access/all_hint: c1270b19103dca8170db5ca4bcc3e88e
     auth/oauth/access/description: 3eee4a41fbc07bb86c188ada5fd0ee9e
     auth/oauth/access/mode_label: c2cd07e2a86a4a6d080d9d4af5b73213
     auth/oauth/access/no_options: 8bc823d3445feec86041498c4d632d2f
@@ -96,6 +96,8 @@ checksums:
     auth/oauth/client_uri: 39d52c7cfea1185b843e6388d65df4bd
     auth/oauth/connected_at: aa0ceca574641de34c74b9e590664230
     auth/oauth/consent_failed: d6c92762fac20817ff0ec8d9cbc0412c
+    auth/oauth/consent_grant_not_saved: 4a3c97c9b5c610d58c650e89f7a2337f
+    auth/oauth/consent_grant_selection_unavailable: eae08d5952ebedce496e34d5e30918f9
     auth/oauth/consent_revoked: f1c243aaacd7c466b9986e484b93247b
     auth/oauth/dashboard_viewer_no_dashboard_scope: 79ce3b9f2fc06850bc63405425e8d782
     auth/oauth/dashboard_viewer_scope_description: 485c4733b0af20534efd05854bd670b2
@@ -157,6 +159,7 @@ checksums:
     auth/oauth/permissions: 2160be68b1d6b6577e64634e9feba2ed
     auth/oauth/redirect_host: de1344fc555eea56791de81a90295bf5
     auth/oauth/revoke: be57685a85b6dfeaeb6eab4e9560b520
+    auth/oauth/revoke_access_label: 358af842d00f6e7a7da593a4c2a11e03
     auth/oauth/revoke_confirmation: 04bce52d76968647a8c2ba8c8db4c7a9
     auth/oauth/unknown_client: 561bc5afdb90606fbc1ed97f20698ead
     auth/password_compromised: d4ab0f66aaed039f956c2515328ed1c9

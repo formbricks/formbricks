@@ -84,7 +84,7 @@
     "oauth": {
       "access": {
         "all": "すべてにアクセスを許可",
-        "all_hint": "あなたがアクセスできるすべての組織とワークスペースが対象です。今後参加するものも含まれます。",
+        "all_hint": "アクセス権のあるすべての組織とワークスペースが対象です。今後参加するものも含まれます。",
         "description": "アプリがアクセスできる組織とワークスペースを選択してください。それ以外はアプリからは見えません。",
         "mode_label": "組織とワークスペースへのアクセス",
         "no_options": "まだどの組織やワークスペースにも所属していません。",
@@ -114,6 +114,8 @@
       "client_uri": "クライアントURI",
       "connected_at": "接続日時",
       "consent_failed": "OAuthの同意に失敗しました。もう一度お試しください。",
+      "consent_grant_not_saved": "選択したアクセス権を保存できなかったため、変更は反映されていません。もう一度お試しください。",
+      "consent_grant_selection_unavailable": "選択した組織またはワークスペースの一部にアクセスできなくなりました。ページを再読み込みして、もう一度選択してください。",
       "consent_revoked": "OAuthアプリのアクセス権を取り消しました。",
       "dashboard_viewer_no_dashboard_scope": "このアプリはダッシュボードの閲覧権限をリクエストしていません。ダッシュボード閲覧者が付与できるのは、この権限のみです。",
       "dashboard_viewer_scope_description": "ダッシュボード閲覧者は、自分が見られるダッシュボードの閲覧のみをこのアプリに許可できます。このアプリがリクエストしたその他のアクセス権は付与されません。",
@@ -183,6 +185,7 @@
       "permissions": "権限",
       "redirect_host": "リダイレクト先ホスト",
       "revoke": "取り消す",
+      "revoke_access_label": "{clientName}のアクセス権を取り消す",
       "revoke_confirmation": "このアプリのFormbricksアカウントへのアクセス権を取り消しますか？",
       "unknown_client": "不明なクライアント"
     },

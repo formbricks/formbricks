@@ -84,7 +84,7 @@
     "oauth": {
       "access": {
         "all": "Teljes hozzáférés",
-        "all_hint": "Minden szervezet és munkaterület, amelyet Ön elérhet, beleértve azokat is, amelyekhez később csatlakozik.",
+        "all_hint": "Minden szervezet és munkaterület, amelyhez Ön hozzáféréssel rendelkezik, beleértve azokat is, amelyekhez később csatlakozik.",
         "description": "Kérjük, válassza ki, mely szervezetekhez és munkaterületekhez férhet hozzá az alkalmazás. Minden más számára nem létezik.",
         "mode_label": "Szervezeti és munkaterület-hozzáférés",
         "no_options": "Ön jelenleg még egyetlen szervezethez vagy munkaterülethez sem tartozik.",
@@ -114,6 +114,8 @@
       "client_uri": "Ügyfél URI",
       "connected_at": "Csatlakoztatva",
       "consent_failed": "Az OAuth-hozzájárulás nem sikerült. Próbálja meg újra.",
+      "consent_grant_not_saved": "Az Ön által kiválasztott hozzáférést nem sikerült menteni, ezért nem történt változás. Kérjük, próbálja meg újra.",
+      "consent_grant_selection_unavailable": "Ön már nem rendelkezik hozzáféréssel az Ön által kiválasztott egyes szervezetekhez vagy munkaterületekhez. Kérjük, töltse be újra az oldalt, és válasszon ismét.",
       "consent_revoked": "Az OAuth-alkalmazás hozzáférése visszavonva.",
       "dashboard_viewer_no_dashboard_scope": "Ez az alkalmazás nem kérte az irányítópultok olvasását, amely az egyetlen hozzáférés, amelyet az Irányítópult-megtekintő megadhat.",
       "dashboard_viewer_scope_description": "Irányítópult-megtekintőként Ön kizárólag arra adhat engedélyt ennek az alkalmazásnak, hogy elolvassa az Ön által látható irányítópultokat. Az alkalmazás a kért egyéb hozzáféréseket nem kapja meg.",
@@ -183,6 +185,7 @@
       "permissions": "Jogosultságok",
       "redirect_host": "Gép átirányítása",
       "revoke": "Visszavonás",
+      "revoke_access_label": "{clientName} hozzáférésének visszavonása",
       "revoke_confirmation": "Visszavonja ennek az alkalmazásnak a Formbricks-fiókjához való hozzáférését?",
       "unknown_client": "Ismeretlen ügyfél"
     },

@@ -84,7 +84,7 @@
     "oauth": {
       "access": {
         "all": "Voller Zugriff",
-        "all_hint": "Alle Organisationen und Workspaces, auf die Du zugreifen kannst, einschließlich solcher, denen Du später beitrittst.",
+        "all_hint": "Alle Organisationen und Workspaces, auf die Du Zugriff hast – auch solche, denen Du später beitrittst.",
         "description": "Wähle aus, auf welche Organisationen und Workspaces die App zugreifen darf. Alles andere existiert für sie nicht.",
         "mode_label": "Zugriff auf Organisationen & Workspaces",
         "no_options": "Du gehörst noch keiner Organisation und keinem Workspace an.",
@@ -114,6 +114,8 @@
       "client_uri": "Client-URI",
       "connected_at": "Verbunden",
       "consent_failed": "OAuth-Zustimmung fehlgeschlagen. Bitte versuche es erneut.",
+      "consent_grant_not_saved": "Der von Dir gewählte Zugriff konnte nicht gespeichert werden, daher hat sich nichts geändert. Versuch es noch einmal.",
+      "consent_grant_selection_unavailable": "Du hast keinen Zugriff mehr auf einige der Organisationen oder Workspaces, die Du ausgewählt hast. Lade die Seite neu und wähle erneut.",
       "consent_revoked": "OAuth-App-Zugriff widerrufen.",
       "dashboard_viewer_no_dashboard_scope": "Diese App hat nicht darum gebeten, Dashboards zu lesen – das ist der einzige Zugriff, den ein Dashboard-Betrachter gewähren kann.",
       "dashboard_viewer_scope_description": "Als Dashboard-Betrachter kannst Du dieser App nur erlauben, die Dashboards zu lesen, die Du sehen kannst. Weitere angefragte Zugriffe erhält sie nicht.",
@@ -183,6 +185,7 @@
       "permissions": "Berechtigungen",
       "redirect_host": "Weiterleitungs-Host",
       "revoke": "Widerrufen",
+      "revoke_access_label": "Zugriff von {clientName} widerrufen",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "unknown_client": "Unbekannter Client"
     },

@@ -84,7 +84,7 @@
     "oauth": {
       "access": {
         "all": "完整存取權限",
-        "all_hint": "你能存取的所有組織和工作區,包括之後加入的。",
+        "all_hint": "你可存取的所有組織和工作區，包含日後加入的組織和工作區。",
         "description": "選擇這個應用程式可以存取哪些組織和工作區,其他的對它來說都不存在。",
         "mode_label": "組織與工作區存取權限",
         "no_options": "你目前還沒有加入任何組織或工作區。",
@@ -114,6 +114,8 @@
       "client_uri": "客戶端 URI",
       "connected_at": "連結時間",
       "consent_failed": "OAuth 同意失敗。請再試一次。",
+      "consent_grant_not_saved": "無法儲存你選擇的存取權限，因此沒有任何變更。請再試一次。",
+      "consent_grant_selection_unavailable": "你已無法存取所選的部分組織或工作區。請重新載入頁面後再選擇一次。",
       "consent_revoked": "OAuth 應用程式存取權限已撤銷。",
       "dashboard_viewer_no_dashboard_scope": "這個應用程式沒有要求讀取儀表板的權限，而這是「儀表板檢視者」唯一能授予的權限。",
       "dashboard_viewer_scope_description": "身為「儀表板檢視者」，你只能讓這個應用程式讀取你看得到的儀表板，它要求的其他權限都不會被授予。",
@@ -183,6 +185,7 @@
       "permissions": "權限",
       "redirect_host": "重新導向主機",
       "revoke": "撤銷",
+      "revoke_access_label": "撤銷 {clientName} 的存取權限",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "unknown_client": "未知的客戶端"
     },

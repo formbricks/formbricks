@@ -84,7 +84,7 @@
     "oauth": {
       "access": {
         "all": "Tam erişim",
-        "all_hint": "Sonradan katılacaklarınız dahil, ulaşabildiğin tüm kuruluşlar ve çalışma alanları.",
+        "all_hint": "Erişimin olan tüm organizasyonlar ve çalışma alanları; daha sonra katılacakların da dahil.",
         "description": "Uygulamanın hangi kuruluşlara ve çalışma alanlarına erişebileceğini seç. Geri kalan her şey uygulama için yok hükmündedir.",
         "mode_label": "Kuruluş ve çalışma alanı erişimi",
         "no_options": "Henüz hiçbir kuruluşa veya çalışma alanına ait değilsin.",
@@ -114,6 +114,8 @@
       "client_uri": "İstemci URI'si",
       "connected_at": "Bağlanma zamanı",
       "consent_failed": "OAuth onayı başarısız oldu. Lütfen tekrar dene.",
+      "consent_grant_not_saved": "Seçtiğin erişim kaydedilemedi, bu yüzden hiçbir şey değişmedi. Tekrar dene.",
+      "consent_grant_selection_unavailable": "Seçtiğin bazı organizasyonlara veya çalışma alanlarına artık erişimin yok. Sayfayı yenile ve tekrar seç.",
       "consent_revoked": "OAuth uygulama erişimi iptal edildi.",
       "dashboard_viewer_no_dashboard_scope": "Bu uygulama panoları okuma izni istemedi; oysa bir Pano görüntüleyici yalnızca bu erişimi verebilir.",
       "dashboard_viewer_scope_description": "Pano görüntüleyici olarak bu uygulamanın yalnızca görebildiğin panoları okumasına izin verebilirsin. Uygulama istediği diğer erişimlerin hiçbirini alamaz.",
@@ -183,6 +185,7 @@
       "permissions": "İzinler",
       "redirect_host": "Yönlendirme sunucusu",
       "revoke": "İptal Et",
+      "revoke_access_label": "{clientName} uygulamasının erişimini iptal et",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "unknown_client": "Bilinmeyen istemci"
     },

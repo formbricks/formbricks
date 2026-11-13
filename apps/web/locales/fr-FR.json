@@ -114,6 +114,8 @@
       "client_uri": "URI du client",
       "connected_at": "Connecté",
       "consent_failed": "Le consentement OAuth a échoué. Réessaye.",
+      "consent_grant_not_saved": "L'accès que tu as choisi n'a pas pu être enregistré, donc rien n'a changé. Réessaie.",
+      "consent_grant_selection_unavailable": "Tu n'as plus accès à certaines des organisations ou à certains des espaces de travail que tu as sélectionnés. Recharge la page et fais à nouveau ton choix.",
       "consent_revoked": "Accès à l'application OAuth révoqué.",
       "dashboard_viewer_no_dashboard_scope": "Cette application n'a pas demandé à lire les tableaux de bord, le seul accès qu'un lecteur de tableaux de bord peut accorder.",
       "dashboard_viewer_scope_description": "En tant que lecteur de tableaux de bord, tu peux uniquement autoriser cette application à lire les tableaux de bord que tu peux voir. Elle n'obtiendra aucun des autres accès demandés.",
@@ -183,6 +185,7 @@
       "permissions": "Autorisations",
       "redirect_host": "Hôte de redirection",
       "revoke": "Révoquer",
+      "revoke_access_label": "Révoquer l'accès de {clientName}",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "unknown_client": "Client inconnu"
     },

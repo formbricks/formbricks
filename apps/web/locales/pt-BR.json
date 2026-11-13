@@ -84,7 +84,7 @@
     "oauth": {
       "access": {
         "all": "Acesso total",
-        "all_hint": "Todas as organizações e todos os workspaces que você pode acessar, incluindo os que você entrar depois.",
+        "all_hint": "Todas as organizações e workspaces aos quais você tem acesso, incluindo os que você entrar no futuro.",
         "description": "Escolha quais organizações e workspaces o app pode acessar. Todo o resto simplesmente não existe para ele.",
         "mode_label": "Acesso a organizações e workspaces",
         "no_options": "Você ainda não faz parte de nenhuma organização ou workspace.",
@@ -114,6 +114,8 @@
       "client_uri": "URI do cliente",
       "connected_at": "Conectado",
       "consent_failed": "Falha no consentimento OAuth. Por favor, tente novamente.",
+      "consent_grant_not_saved": "Não foi possível salvar o acesso que você escolheu, então nada foi alterado. Tente novamente.",
+      "consent_grant_selection_unavailable": "Você não tem mais acesso a algumas das organizações ou workspaces que selecionou. Recarregue a página e escolha novamente.",
       "consent_revoked": "Acesso do app OAuth revogado.",
       "dashboard_viewer_no_dashboard_scope": "Este app não pediu para ler painéis, que é o único acesso que um Visualizador de painéis pode conceder.",
       "dashboard_viewer_scope_description": "Como Visualizador de painéis, você só pode permitir que este app leia os painéis que você consegue ver. Ele não receberá nenhum outro acesso que tenha solicitado.",
@@ -183,6 +185,7 @@
       "permissions": "Permissões",
       "redirect_host": "Host de redirecionamento",
       "revoke": "Revogar",
+      "revoke_access_label": "Revogar o acesso de {clientName}",
       "revoke_confirmation": "Revoke this app's access to your Formbricks account?",
       "unknown_client": "Cliente desconhecido"
     },
