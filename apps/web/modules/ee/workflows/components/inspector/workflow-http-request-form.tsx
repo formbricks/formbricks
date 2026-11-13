@@ -1,35 +1,27 @@
 "use client";
 
 import { useAtomValue } from "jotai";
-import { LockIcon, LockOpenIcon, PlusIcon, SendIcon, Trash2Icon } from "lucide-react";
-import { useMemo, useState } from "react";
-import toast from "react-hot-toast";
+import { LockIcon, LockOpenIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   type TWorkflowHttpHeader,
   type TWorkflowHttpRequestActionConfig,
   type TWorkflowHttpRequestActionNode,
-  type TWorkflowTestRequestResult,
   WORKFLOW_HTTP_METHODS,
   WORKFLOW_SECRET_MASK,
 } from "@formbricks/workflows";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { LiveSecretReplace } from "@/modules/ee/workflows/components/inspector/http-request-live-secret-replace";
+import { HttpResponseSection } from "@/modules/ee/workflows/components/inspector/http-request-response-section";
+import { SendTestRequestSection } from "@/modules/ee/workflows/components/inspector/http-request-send-test-section";
 import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspector/workflow-step-name-field";
 import { WorkflowVariableInput } from "@/modules/ee/workflows/components/inspector/workflow-variable-input";
 import { JsonEditor } from "@/modules/ee/workflows/components/json-editor/json-editor";
 import { useWorkflowVariablePicker } from "@/modules/ee/workflows/components/variable-picker/use-workflow-variable-picker";
-import { getTypeHintLabel } from "@/modules/ee/workflows/components/variable-picker/workflow-variable-picker";
 import {
-  useReplaceSecretHeader,
-  useSendTestRequest,
-} from "@/modules/ee/workflows/hooks/use-send-test-request";
-import { useWorkflowSamples } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
-import {
-  buildTestRequestInput,
   cancelReplacingSecret,
   createHeaderRow,
   findDuplicateHeaderIndexes,
-  formatResponseBody,
   getHeaderRowKind,
   getSavedSecretHeaderNames,
   getSecretReplaceMode,
@@ -42,9 +34,6 @@ import {
   toggleHeaderLock,
   urlHasVariables,
 } from "@/modules/ee/workflows/lib/http-request-panel";
-import { getStepOutputOptionsFromSample } from "@/modules/ee/workflows/lib/variable-picker";
-import { readStoredTestPayload } from "@/modules/ee/workflows/lib/webhook-trigger-panel";
-import { toStepVariableContext } from "@/modules/ee/workflows/lib/workflow-samples";
 import {
   isWorkflowReadOnlyAtom,
   workflowAtom,
@@ -52,7 +41,6 @@ import {
 } from "@/modules/ee/workflows/state/editor";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
-import { CodeBlock } from "@/modules/ui/components/code-block";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -63,7 +51,6 @@ import {
   SelectValue,
 } from "@/modules/ui/components/select";
 import { Switch } from "@/modules/ui/components/switch";
-import { TabToggle } from "@/modules/ui/components/tab-toggle";
 
 interface WorkflowHttpRequestFormProps {
   node: TWorkflowHttpRequestActionNode;
@@ -425,209 +412,5 @@ export const WorkflowHttpRequestForm = ({
       {!isReadOnly && workflowId ? <SendTestRequestSection node={node} workflowId={workflowId} /> : null}
       {picker.pickerElement}
     </div>
-  );
-};
-
-/**
- * Replace on an enabled workflow: the panel is read-only, so the new value is saved on its own and
- * the enabled workflow uses it from its next run. The author is told so before saving.
- */
-const LiveSecretReplace = ({
-  workflowId,
-  stepId,
-  headerName,
-  onDone,
-}: {
-  readonly workflowId: string;
-  readonly stepId: string;
-  readonly headerName: string;
-  readonly onDone: () => void;
-}) => {
-  const { t } = useTranslation();
-  const [value, setValue] = useState("");
-  const replace = useReplaceSecretHeader({ workflowId, stepId });
-
-  return (
-    <div className="flex flex-col gap-2 rounded-md border border-slate-200 p-2">
-      <Input
-        type="password"
-        autoComplete="off"
-        value={value}
-        placeholder={t("workspace.workflows.http_request_secret_placeholder")}
-        aria-label={t("workspace.workflows.http_request_header_value")}
-        className="ph-no-capture"
-        onChange={(event) => setValue(event.target.value)}
-      />
-      <Alert variant="warning">
-        <AlertDescription>{t("workspace.workflows.http_request_secret_live_warning")}</AlertDescription>
-      </Alert>
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="ghost" size="sm" onClick={onDone}>
-          {t("common.cancel")}
-        </Button>
-        <Button
-          type="button"
-          size="sm"
-          disabled={value === "" || replace.isPending}
-          loading={replace.isPending}
-          onClick={() =>
-            replace.mutate(
-              { headerName, value },
-              {
-                onSuccess: () => {
-                  toast.success(t("workspace.workflows.http_request_secret_replaced"));
-                  onDone();
-                },
-                onError: (error) =>
-                  toast.error(
-                    getV3ApiErrorMessage(error, t("workspace.workflows.http_request_secret_replace_failed"))
-                  ),
-              }
-            )
-          }>
-          {t("workspace.workflows.http_request_replace")}
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-const HttpResponseSection = ({
-  node,
-  isEditable,
-  canReadSamples,
-  workflowId,
-  onModeChange,
-}: {
-  readonly node: TWorkflowHttpRequestActionNode;
-  readonly isEditable: boolean;
-  readonly canReadSamples: boolean;
-  readonly workflowId: string;
-  readonly onModeChange: (mode: TWorkflowHttpRequestActionConfig["responseMode"]) => void;
-}) => {
-  const { t } = useTranslation();
-  const samples = useWorkflowSamples({ workflowId, enabled: canReadSamples });
-  const sample = toStepVariableContext(samples.data).stepSamples[node.id];
-  const options = useMemo(
-    () =>
-      sample ? getStepOutputOptionsFromSample(node.id, { status: sample.status, body: sample.body }) : [],
-    [node.id, sample]
-  );
-  const isWaiting = node.config.responseMode === "wait";
-
-  return (
-    <section className="flex flex-col gap-2">
-      <Label>{t("workspace.workflows.http_request_response")}</Label>
-      <TabToggle
-        id={`workflow-http-response-${node.id}`}
-        value={node.config.responseMode}
-        disabled={!isEditable}
-        options={[
-          { value: "dont_wait", label: t("workspace.workflows.http_request_dont_wait") },
-          { value: "wait", label: t("workspace.workflows.http_request_wait") },
-        ]}
-        onChange={onModeChange}
-      />
-      <p className="text-xs text-slate-500">
-        {isWaiting
-          ? t("workspace.workflows.http_request_wait_help")
-          : t("workspace.workflows.http_request_dont_wait_help")}
-      </p>
-      {isWaiting && options.length > 0 ? (
-        <>
-          <ul className="flex flex-col divide-y divide-slate-100 rounded-md border border-slate-200">
-            {options.map((option) => (
-              <li
-                key={option.path}
-                className={
-                  option.isPickable
-                    ? "flex items-center justify-between gap-2 px-3 py-1.5 text-xs text-slate-800"
-                    : "flex items-center justify-between gap-2 px-3 py-1.5 text-xs text-slate-400"
-                }>
-                <span className="truncate font-mono">{option.label}</span>
-                <span className="shrink-0 text-slate-500">{getTypeHintLabel(option.typeHint, t)}</span>
-              </li>
-            ))}
-          </ul>
-          <p className="text-xs text-slate-500">{t("workspace.workflows.http_request_variables_help")}</p>
-        </>
-      ) : null}
-      {isWaiting && options.length === 0 ? (
-        <p className="text-xs text-slate-500">{t("workspace.workflows.http_request_variables_empty")}</p>
-      ) : null}
-    </section>
-  );
-};
-
-const SendTestRequestSection = ({
-  node,
-  workflowId,
-}: {
-  readonly node: TWorkflowHttpRequestActionNode;
-  readonly workflowId: string;
-}) => {
-  const { t } = useTranslation();
-  const sendTestRequest = useSendTestRequest({ workflowId, stepId: node.id });
-  const [result, setResult] = useState<TWorkflowTestRequestResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const send = () => {
-    setError(null);
-    sendTestRequest.mutate(buildTestRequestInput(node.config, readStoredTestPayload(workflowId)), {
-      onSuccess: setResult,
-      onError: (cause) => {
-        setResult(null);
-        setError(getV3ApiErrorMessage(cause, t("workspace.workflows.http_request_test_failed")));
-      },
-    });
-  };
-
-  const response = result?.response ?? null;
-  const responseText = response === null ? null : formatResponseBody(response.body);
-
-  return (
-    <section className="flex flex-col gap-2">
-      <Button
-        type="button"
-        variant="secondary"
-        className="w-fit"
-        loading={sendTestRequest.isPending}
-        disabled={sendTestRequest.isPending}
-        onClick={send}>
-        <SendIcon />
-        {t("workspace.workflows.http_request_send_test")}
-      </Button>
-      <p className="text-xs text-slate-500">{t("workspace.workflows.http_request_send_test_help")}</p>
-      {error ? (
-        <Alert variant="error">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      ) : null}
-      {result && !response ? (
-        <Alert variant="error">
-          <AlertDescription>
-            {result.error ?? t("workspace.workflows.http_request_test_no_answer")}
-          </AlertDescription>
-        </Alert>
-      ) : null}
-      {response ? (
-        <div className="ph-no-capture flex flex-col gap-1">
-          <p className="text-xs font-medium text-slate-700">
-            {t("workspace.workflows.http_request_test_response", { status: response.status })}
-          </p>
-          <div className="max-h-64 overflow-auto">
-            <CodeBlock
-              language={typeof response.body === "string" ? "text" : "json"}
-              noMargin
-              showCopyToClipboard>
-              {responseText ?? ""}
-            </CodeBlock>
-          </div>
-          {response.bodyTruncated ? (
-            <p className="text-xs text-slate-500">{t("workspace.workflows.http_request_test_truncated")}</p>
-          ) : null}
-        </div>
-      ) : null}
-    </section>
   );
 };
