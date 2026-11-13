@@ -77,6 +77,20 @@ const utf8Bytes = (value: string): number => new TextEncoder().encode(value).len
 
 const RECALL_TOKEN_MARKER = "#recall:";
 
+// CR, LF and the Unicode line/paragraph separators: a header value with one could start another header.
+const LINE_BREAK = new RegExp(String.raw`[\r\n\u2028\u2029]`);
+const SECRET_VALUE_LINE_BREAK_MESSAGE = "A secret header value can't contain line breaks";
+
+/**
+ * A secret header's value as written, inline in a definition or through Replace (ADR 0043). It is
+ * sent exactly as typed, so it takes no Variables and no line breaks; at most 8 KB.
+ */
+export const ZWorkflowSecretHeaderValue = z
+  .string()
+  .min(1)
+  .max(MAX_HEADER_VALUE_LENGTH)
+  .refine((value) => !LINE_BREAK.test(value), { message: SECRET_VALUE_LINE_BREAK_MESSAGE });
+
 export const ZWorkflowHttpHeader = z
   .object({
     name: z
@@ -110,6 +124,10 @@ export const ZWorkflowHttpHeader = z
   .superRefine((header, ctx) => {
     if (header.secret !== true && header.value === undefined) {
       ctx.addIssue({ code: "custom", message: "A plain header needs a value", path: ["value"] });
+    }
+    const isSecret = header.secret ?? isDefaultSecretHeaderName(header.name);
+    if (isSecret && header.value !== undefined && LINE_BREAK.test(header.value)) {
+      ctx.addIssue({ code: "custom", message: SECRET_VALUE_LINE_BREAK_MESSAGE, path: ["value"] });
     }
   });
 export type TWorkflowHttpHeader = z.infer<typeof ZWorkflowHttpHeader>;

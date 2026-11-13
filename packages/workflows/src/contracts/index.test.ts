@@ -187,9 +187,10 @@ describe("workflow resources", () => {
 });
 
 describe("operations map", () => {
-  test("every operation defines an output or is the delete operation", () => {
+  test("every operation defines an output or answers 204 No Content", () => {
+    const noContent = new Set(["deleteWorkflowV3", "replaceWorkflowSecretHeaderV3"]);
     for (const [operationId, operation] of Object.entries(WORKFLOW_API_OPERATIONS)) {
-      if (operationId === "deleteWorkflowV3") {
+      if (noContent.has(operationId)) {
         expect(operation.output).toBeNull();
       } else {
         expect(operation.output).not.toBeNull();

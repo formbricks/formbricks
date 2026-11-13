@@ -4,6 +4,7 @@ import {
   WORKFLOW_LIMITS,
   ZWorkflowDefinition,
   ZWorkflowExecutableDefinition,
+  ZWorkflowSecretHeaderValue,
   isDefaultSecretHeaderName,
 } from "..";
 
@@ -129,6 +130,32 @@ describe("http_request definition (saving)", () => {
         definition(httpConfig({ headers: [{ name: "Authorization", secret: true }] }))
       ).success
     ).toBe(true);
+  });
+
+  test("refuses a secret value with a line break, typed as secret or secret by its name", () => {
+    for (const header of [
+      { name: "X-Team", secret: true, value: "Bearer a\r\nX-Evil: 1" },
+      { name: "Authorization", value: "Bearer a\nb" },
+    ]) {
+      expect(ZWorkflowDefinition.safeParse(definition(httpConfig({ headers: [header] }))).success).toBe(
+        false
+      );
+    }
+    expect(
+      ZWorkflowDefinition.safeParse(
+        definition(httpConfig({ headers: [{ name: "Authorization", secret: true, value: "Bearer a" }] }))
+      ).success
+    ).toBe(true);
+  });
+});
+
+describe("ZWorkflowSecretHeaderValue", () => {
+  test("takes a non-empty value of up to 8 KB without line breaks", () => {
+    expect(ZWorkflowSecretHeaderValue.safeParse("Bearer sk_live_1").success).toBe(true);
+    expect(ZWorkflowSecretHeaderValue.safeParse("a".repeat(8 * 1024)).success).toBe(true);
+    for (const value of ["", "a".repeat(8 * 1024 + 1), "a\rb", "a\nb", "a\u2028b"]) {
+      expect(ZWorkflowSecretHeaderValue.safeParse(value).success).toBe(false);
+    }
   });
 });
 

@@ -50,8 +50,12 @@ Mark a header as secret for anything that grants access, such as `Authorization:
 
 - **The value is stored encrypted and never shown again.** The editor, the API, run detail and the audit log show
   `••••••` instead. To change it, select **Replace** and enter a new value. The new value is used from the next
-  run on.
-- **A secret value can't insert Variables.** It is sent exactly as you entered it.
+  run on, also on the enabled workflow: you don't need to disable it or enable it again, and no other draft
+  change goes live with it. This makes rotating a leaked or expired key a single step. A typo breaks live runs
+  right away, so use **Send test request** to check the new value. A header that had no value yet gets one in
+  the draft only; the enabled workflow uses it once you enable the draft.
+- **A secret value can't insert Variables.** It is sent exactly as you entered it, and can't contain line
+  breaks.
 - **Duplicates don't copy secret values.** A duplicated workflow keeps the header names, and can't be enabled
   until you enter each value again.
 - **Echoed values are masked.** If the API you call repeats a secret value back in its response, run detail and

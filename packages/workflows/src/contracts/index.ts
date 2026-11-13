@@ -6,3 +6,4 @@ export * from "./webhook";
 export * from "./test-request";
 export * from "./run-detail";
 export * from "./test-run";
+export * from "./secret-header";
