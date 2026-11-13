@@ -29,6 +29,7 @@ import type {
   TWorkflowRunResource,
   TWorkflowTestResult,
 } from "./resources";
+import { ZWorkflowSampleList } from "./samples";
 import {
   ZSendWorkflowTestRequestInput,
   ZWorkflowTestRequestParams,
@@ -130,6 +131,11 @@ export const WORKFLOW_API_OPERATIONS = {
     params: ZWorkflowIdInput,
     input: ZSetWorkflowSampleInput,
     output: ZWorkflowSampleResource,
+  },
+  listWorkflowSamplesV3: {
+    params: ZWorkflowIdInput,
+    input: null,
+    output: ZWorkflowSampleList,
   },
   callWorkflowWebhookV3: {
     params: ZWorkflowWebhookCallParams,
