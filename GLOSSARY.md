@@ -5,7 +5,7 @@ programming or UI concepts, and no implementation details.
 
 ## Tenancy
 
-**Workspace** — The tenant unit inside an organization: surveys, contacts, API key permissions and stored files belong to exactly one. Until Formbricks 5 it was split into a project and its environments; `environmentId` survives only as the legacy id that the client API, old SDKs and old storage keys still accept. _Avoid_: environment, project.
+**Workspace** — The tenant unit inside an organization: surveys, contacts, API key permissions and stored files belong to exactly one. It replaced the older project and its environments. _Avoid_: environment, project.
 
 ## Survey runtime
 
@@ -13,17 +13,15 @@ programming or UI concepts, and no implementation details.
 
 **Block** — One card of a survey holding one or more elements. Logic rules and a fallback hang off a block.
 
-**Element** — One input inside a block, which the editor calls a question. Its `id` (the editor's "Question ID") is the key responses are stored under, so it never changes once a survey is published.
+**Element** — One input inside a block, which the editor calls a question. Its id, which the editor shows as Question ID, is the key responses are stored under, so it never changes once a survey is published.
 
-**Question code** — The readable name an element exposes to the outside: webhook payloads, prefill links (`?<questionCode>=…`) and start-at links. It is the editor's "Variable name". Integrations key on it rather than on the element id (ENG-3885). _Avoid_: question ID (when the public name is meant).
+**Choice id** — The stable id of one option of a choice element. Responses, filters, charts and Hub records store and compare it, never the label, whose text differs per language. The editor shows it as Option ID.
 
-**Choice id** — The stable id of one option of a choice element. Responses, filters, charts and Hub records store and compare it, never the label, whose text differs per language.
-
-**Default language** — A survey's fallback language. Its strings sit under the `default` key of every translated string, not under its own code; other languages sit under canonical BCP-47 tags (`de-DE`), and a bare or mis-cased code is normalized with `normalizeLanguageCode` (`@formbricks/i18n-utils`).
+**Default language** — A survey's fallback language, used wherever another language has no translation.
 
 **Signature element** — An element where the respondent signs, by drawing or by typing their name, and the owner gets the signature as one image with the response. UI copy says "Signature". _Avoid_ (in code and domain talk): signature question, signature field, e-signature (it carries no legal-signature claim).
 
-**Signed** — A Signature element is signed when the tab the respondent is on holds a signature: a drawn stroke of minimum length on Draw, or a name containing at least one letter, number or symbol on Type. A bare tap, an empty name, or a name of only spaces or punctuation does not count, and the other tab's input is kept but does not count. Clearing makes it not signed again. Logic conditions read "is signed" / "is not signed".
+**Signed** — A Signature element is signed when the tab the respondent is on holds a real signature; a bare tap or a blank name doesn't count. Logic conditions read "is signed" / "is not signed".
 
 **Ending** — A card shown when the survey finishes. A response records the ending it finished on.
 
@@ -35,9 +33,11 @@ programming or UI concepts, and no implementation details.
 
 **Not shown** — What a respondent never saw because of a show-if, a hidden option, or a question left with no options. Recorded on the response while they answer, never worked out later from the current rules. A question passed over is skipped, and one never reached is a drop-off; neither is not shown. _Avoid_: skipped (for hidden items), hidden (for responses).
 
-**Copied options** — The options of a question copied from an earlier question, keeping their ids and answer codes, each shown only if it was picked in the source. Native carry-forward lists are a different, later feature. _Avoid_: carry-forward list, piped options.
+**Copied options** — The options of a question copied from an earlier question, keeping their ids and answer codes, each shown only if it was picked in the source. _Avoid_: carry-forward list, piped options.
 
 **Start logic** — The rules that run before the respondent sees the first block: they can screen out to an ending, jump, or set a value. The editor labels it "Before the first question". _Avoid_: pre-qualification logic, pre-Q1 logic.
+
+**Embedded Data** — Values stored on a response that the respondent didn't type: set by rules, links or the SDK.
 
 **Set value** — The rule action that writes a computed Embedded Data field from a fixed value, an answer, another field or an expression. The editor names it "Set value" whether or not the rule has a condition; a rule with none reads "Always". _Avoid_: assign, variable update, calculation, "Set a value".
 
@@ -65,7 +65,7 @@ programming or UI concepts, and no implementation details.
 
 **Widget** — One chart's placement on one dashboard: its position, size and order. A chart sits on a dashboard at most once; removing a widget keeps the chart. User-facing copy says "chart". _Avoid_: placement, tile, panel.
 
-**Dashboard filter** — A filter on one field and operator that a dashboard's editors pin to the dashboard's top bar, shared by everyone who opens it. Each person picks or enters its value (their **filter pick**, kept in their own browser); the pick applies to every chart on the dashboard and only ever narrows what a chart's own saved filters let through, never widens it. A chart whose Feedback Dataset lacks the field shows no data and says it cannot be filtered by it. _Avoid_: global filter, slicer.
+**Dashboard filter** — A filter on one field and operator that a dashboard's editors pin to the dashboard's top bar, shared by everyone who opens it. Each person picks or enters its value (their **filter pick**); the pick applies to every chart on the dashboard and only ever narrows what a chart's own saved filters let through, never widens it. A chart whose Feedback Dataset lacks the field shows no data and says it cannot be filtered by it. _Avoid_: global filter, slicer.
 
 **Dashboard viewer** — An organization role that can only read the dashboards of the workspaces its teams are granted, and pick values in their dashboard filters. It never sees surveys, responses, contacts or Feedback Records, and never runs a chart query of its own: only the saved charts on dashboards it can see. _Avoid_: viewer, read-only member (a Member on a read team still sees raw data).
 
@@ -99,13 +99,11 @@ programming or UI concepts, and no implementation details.
 
 ## Recoding and exports
 
-**Question code** — The short name a question carries in exported data and in webhooks, prefill and start-at links, such as `q1`. Set automatically, editable until the survey is published. It starts with a lowercase letter, then lowercase letters, digits and `_`, and is unique in the survey across question codes and Embedded Data names. _Avoid_: variable name, question number.
+**Question code** — The short, readable name of a question, such as `q1`, used in exported data, webhooks, and prefill and start-at links. Integrations key on it, not on the element's id. Set automatically and editable until the survey is published. _Avoid_: variable name, question number, question ID (when the readable name is meant).
 
-**Answer code** — The short code of one answer option, or one matrix row or column, such as `1` or `98`. Defaults to 1…n, may use lowercase letters, digits and `_`, is unique within its question and is never reused. Scale questions (NPS, rating, CSAT, CES) use their number instead. The editor section that holds them is labelled "Recode". _Avoid_: option code, value.
+**Answer code** — The short code of one answer option, or one matrix row or column, such as `1` or `98`. Defaults to 1…n, is unique within its question and is never reused. Scale questions (NPS, rating, CSAT, CES) use their number instead. The editor section that holds them is labelled "Recode". _Avoid_: option code, value.
 
-**Question ID** — The generated, read-only key of a question. Responses are stored under it, and links and the API accept it next to the question code. **Option ID** is the same for an answer option. _Avoid_: element id in user-facing copy.
-
-**Published** — A survey that has left draft: active, paused or completed. From then on its question codes, answer codes, question types and option text are locked, and an option that existed at launch cannot be deleted. A scheduled survey counts as published once scheduled.
+**Published** — A survey that has left draft: active, paused or completed. From then on its codes, question types and options are locked.
 
 **Standard export** — Today's CSV or Excel file, which the export modal's default settings reproduce unchanged.
 
@@ -121,13 +119,13 @@ programming or UI concepts, and no implementation details.
 
 ## Survey import and export
 
-**Formbricks file** — A survey's content saved as a file (`.formbricks.json`) that imports into any workspace, organization or instance. It carries the questions, blocks, endings, welcome card, languages, hidden fields, variables, logic and triggers; styling, settings, follow-ups and quotas stay out. _Avoid_: JSON export, survey JSON.
+**Formbricks file** — A survey's content saved as a file (`.formbricks.json`) that imports into any workspace, organization or instance. It carries the survey's structure and logic, not its styling or settings. _Avoid_: JSON export, survey JSON.
 
 **Match** — A Formbricks file whose source survey is a survey in the current workspace that the importing user can edit. Only a match offers Update; anything else becomes a new survey.
 
 **Update** — Importing a matched Formbricks file over that survey's content. The survey keeps its ID, status, responses, settings and styling. An active survey is never updated. _Avoid_: re-import (which also covers creating a new survey), overwrite, import into existing.
 
-**Reference** — Something a survey points at that lives outside it in its workspace: an action class a trigger uses, a contact attribute key in targeting, a shared hidden field or variable. A Formbricks file carries enough of each to find or recreate it in another workspace. Media is not a reference: the file keeps only a link to each image or video on the source instance (ENG-3401).
+**Reference** — Something a survey points at that lives outside it in its workspace: an action class a trigger uses, a contact attribute key in targeting, a shared hidden field or variable. A Formbricks file carries enough of each to find or recreate it in another workspace. Media is not a reference: the file keeps only a link to each image or video on the source instance.
 
 **Document import** — Importing a Word, Excel or CSV questionnaire, read with AI. Texts come across word for word; the AI decides structure, types and logic only. _Avoid_: AI import (Qualtrics import also uses AI).
 
