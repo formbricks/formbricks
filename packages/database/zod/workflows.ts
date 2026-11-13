@@ -72,6 +72,16 @@ export const ZWorkflowRun = z.object({
   startedAt: z.coerce.date().nullable().describe("The date and time the workflow run started"),
   finishedAt: z.coerce.date().nullable().describe("The date and time the workflow run finished"),
   callerIp: z.string().nullable().describe("The caller's IP for a run started by a Webhook Secret URL call"),
+  contentDeletedAt: z.coerce
+    .date()
+    .nullable()
+    .describe("When the run's content (payload, step data, errors) was cleared by the retention job"),
+  contentRetentionDays: z
+    .number()
+    .int()
+    .positive()
+    .nullable()
+    .describe("The retention period, in days, that cleared the run's content"),
 }) satisfies z.ZodType<WorkflowRun>;
 
 export const ZWorkflowRunLog = z.object({
