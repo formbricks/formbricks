@@ -17,7 +17,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
-vi.mock("@/modules/ee/workflows/lib/secrets/workflow-secret-store", () => ({
+vi.mock("@/modules/ee/workflows/lib/secret-headers/workflow-secret-store", () => ({
   loadWorkflowSecretValues: loadSecrets,
 }));
 

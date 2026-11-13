@@ -18,7 +18,7 @@ import { normalizeEmailForComparison } from "@/lib/utils/email";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { getIsWorkflowsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { workflowSecretStore } from "@/modules/ee/workflows/lib/secrets/workflow-secret-store";
+import { workflowSecretStore } from "@/modules/ee/workflows/lib/secret-headers/workflow-secret-store";
 import { getWorkflowSurveyLinkSurveys } from "@/modules/ee/workflows/lib/survey-link-surveys";
 import { webhookTokenIssuer } from "@/modules/ee/workflows/lib/webhook/token";
 import { buildRecordAnalytics } from "./analytics";

@@ -19,7 +19,7 @@ import {
   type WorkflowHttpCallResult,
   sendWorkflowHttpRequest,
 } from "../http-request/send-http-request";
-import { loadWorkflowSecretValues } from "../secrets/workflow-secret-store";
+import { loadWorkflowSecretValues } from "../secret-headers/workflow-secret-store";
 
 const toRecord = (value: unknown): Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value)

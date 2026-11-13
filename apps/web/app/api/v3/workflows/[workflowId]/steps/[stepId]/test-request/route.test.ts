@@ -38,7 +38,7 @@ vi.mock("@formbricks/database", () => ({
     workflowSample: { findMany: mocks.sampleFindMany, upsert: mocks.sampleUpsert },
   },
 }));
-vi.mock("@/modules/ee/workflows/lib/secrets/workflow-secret-store", () => ({
+vi.mock("@/modules/ee/workflows/lib/secret-headers/workflow-secret-store", () => ({
   loadWorkflowSecretValues: mocks.loadSecrets,
   workflowSecretStore: {},
 }));

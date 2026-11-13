@@ -1,0 +1,69 @@
+import "server-only";
+import { prisma } from "@formbricks/database";
+import { collectWorkflowSecretIds } from "@formbricks/workflows";
+import type { WorkflowSecretStore } from "@formbricks/workflows/server";
+import { ENCRYPTION_KEY } from "@/lib/constants";
+import { symmetricDecrypt, symmetricEncrypt } from "@/lib/crypto";
+
+/**
+ * Secret header values (ENG-7168, ADR 0043), encrypted with the app's `ENCRYPTION_KEY`
+ * (AES-256-GCM via `symmetricEncrypt`). Every query is scoped to one workflow and workspace, so a
+ * secret id from anywhere else never reads, replaces or deletes another workflow's value. Plaintext
+ * leaves this module only to the code that sends the request.
+ */
+
+const encrypt = (value: string): string => symmetricEncrypt(value, ENCRYPTION_KEY);
+
+const readVersionSecretIds = async (workflowId: string, workspaceId: string): Promise<string[]> => {
+  // Enable is rare and a workflow's versions are few, so reading their definitions here is cheap.
+  const versions = await prisma.workflowVersion.findMany({
+    where: { workflowId, workspaceId },
+    select: { definition: true },
+  });
+  return versions.flatMap((version) => collectWorkflowSecretIds(version.definition));
+};
+
+export const workflowSecretStore: WorkflowSecretStore = {
+  create: async ({ workflowId, workspaceId, value }) => {
+    const created = await prisma.workflowSecret.create({
+      data: { workflowId, workspaceId, value: encrypt(value) },
+      select: { id: true },
+    });
+    return { id: created.id };
+  },
+
+  replace: async ({ secretId, workflowId, workspaceId, value }) => {
+    const updated = await prisma.workflowSecret.updateMany({
+      where: { id: secretId, workflowId, workspaceId },
+      data: { value: encrypt(value) },
+    });
+    if (updated.count === 0) {
+      throw new Error("Workflow secret to replace was not found");
+    }
+  },
+
+  deleteUnreferenced: async ({ workflowId, workspaceId, referencedSecretIds }) => {
+    const keep = new Set([...referencedSecretIds, ...(await readVersionSecretIds(workflowId, workspaceId))]);
+    await prisma.workflowSecret.deleteMany({
+      where: { workflowId, workspaceId, id: { notIn: [...keep] } },
+    });
+  },
+};
+
+/** The plaintext values of a workflow's secrets by id; ids it does not own are simply absent. */
+export const loadWorkflowSecretValues = async ({
+  workflowId,
+  workspaceId,
+  secretIds,
+}: {
+  workflowId: string;
+  workspaceId: string;
+  secretIds: string[];
+}): Promise<Map<string, string>> => {
+  if (secretIds.length === 0) return new Map();
+  const rows = await prisma.workflowSecret.findMany({
+    where: { id: { in: secretIds }, workflowId, workspaceId },
+    select: { id: true, value: true },
+  });
+  return new Map(rows.map((row) => [row.id, symmetricDecrypt(row.value, ENCRYPTION_KEY)]));
+};

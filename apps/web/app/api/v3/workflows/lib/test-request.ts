@@ -28,7 +28,7 @@ import {
   summarizeWorkflowHttpResponse,
 } from "@/modules/ee/workflows/lib/http-request/request";
 import { sendWorkflowHttpRequest } from "@/modules/ee/workflows/lib/http-request/send-http-request";
-import { loadWorkflowSecretValues } from "@/modules/ee/workflows/lib/secrets/workflow-secret-store";
+import { loadWorkflowSecretValues } from "@/modules/ee/workflows/lib/secret-headers/workflow-secret-store";
 import { buildWorkflowApiContext } from "./context";
 
 const isHttpRequestNode = (

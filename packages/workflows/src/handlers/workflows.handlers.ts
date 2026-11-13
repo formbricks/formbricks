@@ -34,7 +34,7 @@ import {
   dropWorkflowSecretIds,
   hasWorkflowSecretHeaderValues,
   withoutWorkflowSecretHeaderValues,
-} from "../secrets/headers";
+} from "../secret-headers/headers";
 import type { WorkflowRowWithLastRun } from "../services/ports";
 import type { WorkflowsService } from "../services/workflows.service";
 import {

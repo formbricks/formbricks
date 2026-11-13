@@ -6,7 +6,7 @@ import type {
   TWorkflowRunResource,
   TWorkflowRunSummary,
 } from "../contracts";
-import { maskWorkflowSecretHeaders } from "../secrets/headers";
+import { maskWorkflowSecretHeaders } from "../secret-headers/headers";
 import type {
   WorkflowRowWithLastRun,
   WorkflowRunListRow,

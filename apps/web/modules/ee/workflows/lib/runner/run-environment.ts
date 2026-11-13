@@ -15,7 +15,7 @@ import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { isSurveyOutboundAllowed } from "@/lib/survey/visibility/outbound";
 import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
-import { loadWorkflowSecretValues } from "@/modules/ee/workflows/lib/secrets/workflow-secret-store";
+import { loadWorkflowSecretValues } from "@/modules/ee/workflows/lib/secret-headers/workflow-secret-store";
 import { resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
 import { recordSurveyOutboundSkipped } from "@/modules/response-pipeline/lib/outbound-visibility-metrics";
 import { getWorkflowSurveyLinkSurveys } from "../survey-link-surveys";
