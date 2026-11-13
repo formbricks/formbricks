@@ -56,6 +56,10 @@ section before changing database access, its "Testing Guidelines" before adding 
 Read `docs/agents/pull-requests.md` before committing or opening, updating, or reviewing a PR: commit
 format, PR template rules, review intake, and independent review passes.
 
+## UI & Design
+
+Read `docs/agents/ui-design.md` before designing or building a screen, flow, or component.
+
 ## Performance Testing & SigNoz MCP
 
 Read `docs/agents/performance-testing.md` before running a load test or reading SigNoz telemetry for one.
