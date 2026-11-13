@@ -1,7 +1,3 @@
----
-status: accepted
----
-
 # The Webhook Secret URL is the Webhook trigger's only credential
 
 A Webhook trigger accepts any POST to its Webhook Secret URL, as Slack and Discord incoming webhooks do, with no header token or signature, because data-layer and ETL tools can call a URL without code but cannot sign. The URL is a capability URL (W3C TAG, "Good Practices for Capability URLs"): holding it proves possession, not that the request came from the intended system. So it is handled like an API key: a 128-bit random token checked against a stored hash, HTTPS and POST only, rate-limited per workflow, never written to logs, error reports, analytics or session recordings, shown only to people who can edit the workflow, and replaceable at once with Regenerate without deleting the workflow. Email actions stay within the organization's send caps, and an email to a payload address must have a fixed body.
