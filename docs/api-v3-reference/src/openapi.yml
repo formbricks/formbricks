@@ -59,7 +59,8 @@ info:
     /api/v3/workflows/{workflowId}/webhook**, **POST
     /api/v3/workflows/{workflowId}/webhook/regenerate**, **PUT
     /api/v3/workflows/{workflowId}/sample**, for HTTP request steps **POST
-    /api/v3/workflows/{workflowId}/steps/{stepId}/test-request**, **GET
+    /api/v3/workflows/{workflowId}/steps/{stepId}/test-request**, **PUT
+    /api/v3/workflows/{workflowId}/steps/{stepId}/secret-headers/{headerName}**, **GET
     /api/v3/workflows/{workflowId}/samples** for the saved samples, Test runs **POST
     /api/v3/workflows/{workflowId}/test-runs**, and the public Webhook Secret URL
     **POST /api/v3/workflows/{workflowId}/webhook/{token}**, which takes no
@@ -463,6 +464,8 @@ paths:
     $ref: paths/api_v3_workflows_{workflowId}_samples.yml
   /api/v3/workflows/{workflowId}/steps/{stepId}/test-request:
     $ref: paths/api_v3_workflows_{workflowId}_steps_{stepId}_test-request.yml
+  /api/v3/workflows/{workflowId}/steps/{stepId}/secret-headers/{headerName}:
+    $ref: paths/api_v3_workflows_{workflowId}_steps_{stepId}_secret-headers_{headerName}.yml
   /api/v3/workflows/{workflowId}/test-runs:
     $ref: paths/api_v3_workflows_{workflowId}_test-runs.yml
   /api/v3/charts:

@@ -4,6 +4,7 @@ import {
   type TWorkflowCondition,
   type TWorkflowConditionGroup,
   type TWorkflowConditionValue,
+  type TWorkflowDefinition,
   type TWorkflowSurveyConditionOperator,
   WORKFLOW_LIMITS,
   flattenWorkflowConditions,
@@ -189,6 +190,22 @@ export const withSurveyOperatorNames = (group: TWorkflowConditionGroup): TWorkfl
       isGroup(item) ? item : { ...item, operator: toSurveyConditionOperator(item.operator) }
     )
   );
+
+/**
+ * The definition with every If/else on survey operator names. Editing one If/else writes survey
+ * names, and a definition may not mix the two name sets (ADR 0050), so a second If/else still on
+ * legacy names would make the draft unsavable; renaming them all together keeps it valid.
+ */
+export const withSurveyOperatorNamesInDefinition = <D extends Pick<TWorkflowDefinition, "nodes">>(
+  definition: D
+): D => ({
+  ...definition,
+  nodes: definition.nodes.map((node) =>
+    node.type === "if_else"
+      ? { ...node, config: { ...node.config, condition: withSurveyOperatorNames(node.config.condition) } }
+      : node
+  ),
+});
 
 /** Whether another condition fits (spec §10: 20 per If/else). */
 export const canAddCondition = (group: TWorkflowConditionGroup): boolean =>

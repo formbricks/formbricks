@@ -116,7 +116,8 @@ the Sample payload and shows what each step would do, without sending anything.
 
 You do not have to run the manual check before enabling. Open the status menu and select **Enable** when you
 are ready to start the workflow. An enabled workflow listens for its configured trigger. Its definition is
-read-only while enabled; select **Disable** before editing it again.
+read-only while enabled; select **Disable** before editing it again. The one exception is replacing a
+[secret header](/workflows/http-request#secret-headers) value, which updates the enabled workflow right away.
 
 <Note>
   Enabling verifies that the workflow is executable. A workflow with incomplete or outdated configuration

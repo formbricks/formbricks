@@ -7,3 +7,4 @@ export * from "./test-request";
 export * from "./samples";
 export * from "./run-detail";
 export * from "./test-run";
+export * from "./secret-header";

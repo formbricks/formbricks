@@ -16,7 +16,7 @@ info:
 
     Creatives needs a self-hosted license that includes it; Formbricks Cloud does not offer it. With one, every operation is available. Without one, a workspace that still has creatives is in **wind-down**: its creatives are no longer shown on sites, and they can only be listed, read (stats included), paused (a PATCH that sets nothing but `status`, or **POST /api/v3/creatives/pause**), closed (the same PATCH) or deleted. A workspace with no creatives has no access at all. Anything not allowed answers **403** `creatives_not_entitled`.
 
-    **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, **GET /api/v3/workflows/runs/{runId}**, and for Webhook triggers **GET /api/v3/workflows/{workflowId}/webhook**, **POST /api/v3/workflows/{workflowId}/webhook/regenerate**, **PUT /api/v3/workflows/{workflowId}/sample**, for HTTP request steps **POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request**, **GET /api/v3/workflows/{workflowId}/samples** for the saved samples, Test runs **POST /api/v3/workflows/{workflowId}/test-runs**, and the public Webhook Secret URL **POST /api/v3/workflows/{workflowId}/webhook/{token}**, which takes no login: the token in its path is the credential.
+    **Workflows extension**: **GET /api/v3/workflows**, **POST /api/v3/workflows**, **GET /api/v3/workflows/{workflowId}**, **PATCH /api/v3/workflows/{workflowId}**, **DELETE /api/v3/workflows/{workflowId}**, **POST /api/v3/workflows/{workflowId}/duplicate**, **POST /api/v3/workflows/{workflowId}/enable**, **POST /api/v3/workflows/{workflowId}/disable**, **POST /api/v3/workflows/{workflowId}/archive**, **POST /api/v3/workflows/{workflowId}/unarchive**, **POST /api/v3/workflows/{workflowId}/test**, **GET /api/v3/workflows/runs**, **GET /api/v3/workflows/runs/{runId}**, and for Webhook triggers **GET /api/v3/workflows/{workflowId}/webhook**, **POST /api/v3/workflows/{workflowId}/webhook/regenerate**, **PUT /api/v3/workflows/{workflowId}/sample**, for HTTP request steps **POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request**, **PUT /api/v3/workflows/{workflowId}/steps/{stepId}/secret-headers/{headerName}**, **GET /api/v3/workflows/{workflowId}/samples** for the saved samples, Test runs **POST /api/v3/workflows/{workflowId}/test-runs**, and the public Webhook Secret URL **POST /api/v3/workflows/{workflowId}/webhook/{token}**, which takes no login: the token in its path is the credential.
 
     **Charts and dashboards**: charts on a Feedback Dataset (**GET**, **POST /api/v3/charts**; **GET**, **PATCH**, **DELETE /api/v3/charts/{chartId}**; **POST /api/v3/charts/{chartId}/duplicate**), their numbers (**GET /api/v3/charts/{chartId}/data**, **POST /api/v3/charts/preview**), the field catalog (**GET /api/v3/charts/fields**, **GET /api/v3/charts/fields/{field}/values**), and dashboards (**GET**, **POST /api/v3/dashboards**; **GET**, **PATCH**, **PUT**, **DELETE /api/v3/dashboards/{dashboardId}**; **POST /api/v3/dashboards/{dashboardId}/duplicate**; **POST /api/v3/dashboards/{dashboardId}/widgets**; **GET**, **PATCH**, **DELETE /api/v3/dashboards/{dashboardId}/widgets/{widgetId}**; a widget's numbers through its dashboard, **GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data**; a dashboard filter's values, **GET /api/v3/dashboards/{dashboardId}/filters/{filterId}/values**; the embedded-data fields its filters can use, **GET /api/v3/dashboards/{dashboardId}/filter-fields**).
     - **Field catalog.** A chart query names fields exactly as `GET /api/v3/charts/fields` lists
@@ -4404,6 +4404,84 @@ paths:
           $ref: '#/components/responses/V3Forbidden'
         '404':
           description: The workflow has no HTTP request step with this id.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+          content:
+            application/problem+json:
+              schema:
+                $ref: '#/components/schemas/Problem'
+        '422':
+          $ref: '#/components/responses/V3UnprocessableContent'
+        '429':
+          $ref: '#/components/responses/V3TooManyRequests'
+        '500':
+          $ref: '#/components/responses/V3InternalServerError'
+      security:
+        - sessionAuth: []
+        - apiKeyAuth: []
+        - bearerAuth: []
+  /api/v3/workflows/{workflowId}/steps/{stepId}/secret-headers/{headerName}:
+    put:
+      operationId: replaceWorkflowSecretHeaderV3
+      summary: Replace a secret header's value
+      description: |
+        Stores a new value for one secret header of an HTTP request step, for example to rotate a leaked or expired API key. The value is stored encrypted and never returned.
+
+        The value is overwritten in place, so it is used from the next run on, **also by the enabled workflow**: there is no need to disable the workflow or enable it again, and no other draft change goes live with it. This is the one change that reaches an enabled workflow without **Enable** (ADR 0043). A header that has no stored value yet gets one in the draft only; an enabled workflow uses it once the draft is enabled.
+
+        Recorded in the audit log as `secretHeaderReplaced` (or `secretHeaderSet` when the header had no value yet) with the step and header name, never the value.
+
+        Requires **write** access. The step must be an HTTP request step with a secret header of this name (case-insensitive) in the draft or the enabled version, else **404**. An archived workflow answers **422** `invalid_workflow_state`.
+      tags:
+        - V3 Workflows
+      parameters:
+        - $ref: '#/components/parameters/WorkflowIdPath'
+        - name: stepId
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 200
+          description: The HTTP request step's id in the workflow definition.
+        - name: headerName
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+            maxLength: 256
+          description: The secret header's name, matched case-insensitively.
+          example: Authorization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplaceWorkflowSecretHeaderRequest'
+      responses:
+        '204':
+          description: The value was stored.
+          headers:
+            X-Request-Id:
+              schema:
+                type: string
+              description: Request correlation ID
+            Cache-Control:
+              schema:
+                type: string
+              example: private, no-store
+        '400':
+          $ref: '#/components/responses/V3BadRequest'
+        '401':
+          $ref: '#/components/responses/V3Unauthorized'
+        '403':
+          $ref: '#/components/responses/V3Forbidden'
+        '404':
+          description: The step is not an HTTP request step, or has no secret header of this name.
           headers:
             X-Request-Id:
               schema:
@@ -15446,6 +15524,20 @@ components:
             - string
             - 'null'
           description: Why the call got no answer, or null.
+    ReplaceWorkflowSecretHeaderRequest:
+      type: object
+      description: The new value of a secret header. Stored encrypted and never returned.
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          minLength: 1
+          maxLength: 8192
+          pattern: ^[^\r\n\u2028\u2029]*$
+          description: 'Sent exactly as written: a secret value can''t insert Variables. At most 8 KB, no line breaks.'
+          example: Bearer sk_live_new
+      additionalProperties: false
     CreateWorkflowTestRunRequest:
       type: object
       description: Starts a Test run of the workflow's draft.
