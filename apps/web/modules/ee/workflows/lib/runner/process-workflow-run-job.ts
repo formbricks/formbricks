@@ -1,51 +1,35 @@
 import "server-only";
-import { createHash } from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { type JobHandler, type TWorkflowRunJobData } from "@formbricks/jobs";
 import { logger } from "@formbricks/logger";
-import { TooManyRequestsError } from "@formbricks/types/errors";
-import type { TResponse } from "@formbricks/types/responses";
-import type { TSurvey } from "@formbricks/types/surveys/types";
-import { type TUserLocale, ZUserLocale } from "@formbricks/types/user";
 import {
-  type TWorkflowExecutableStep,
+  type TWorkflowExecutableDefinition,
+  type TWorkflowRunContext,
   type TWorkflowRunData,
+  type TWorkflowStepNode,
   type TWorkflowStepResult,
+  type TWorkflowStepType,
   type TWorkflowTriggerRunPayload,
+  WorkflowWalkError,
   ZWorkflowExecutableDefinition,
   ZWorkflowRunData,
   ZWorkflowTriggerRunPayload,
-  isLiteralEmailRecipient,
-  planExecutableSteps,
+  getWorkflowStepType,
+  walkWorkflowSteps,
 } from "@formbricks/workflows";
 import { isDatabasePoolExhaustionError } from "@/lib/jobs/pool-exhaustion";
-import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
-import { getResponse } from "@/lib/response/service";
-import { getSurvey } from "@/lib/survey/service";
-import { isSurveyOutboundAllowed } from "@/lib/survey/visibility/outbound";
-import { normalizeEmailForComparison } from "@/lib/utils/email";
-import { getWorkspaceMemberEmails } from "@/lib/workspace/service";
 import { captureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analytics/run-failure";
-import { sendEmail } from "@/modules/email";
-import { resolveEmailActorUserId } from "@/modules/email/lib/email-actor";
+import { type WorkflowRunEffects, liveWorkflowRunEffects } from "./effects";
 import {
-  buildSurveyResponseEmailHtml,
-  resolveResponseRecipient,
-} from "@/modules/email/lib/survey-response-email";
-import { recordSurveyOutboundSkipped } from "@/modules/response-pipeline/lib/outbound-visibility-metrics";
-
-/** Strips CR/LF and other control chars from the subject — defense against SMTP header injection. */
-const CONTROL_CHARS_PATTERN = /[\x00-\x1f\x7f\u2028\u2029]/g;
-const stripControlChars = (value: string): string => value.replace(CONTROL_CHARS_PATTERN, "");
-
-/** Coerces a response's free-form `language` to a supported locale, falling back to undefined (→ default). */
-const toResponseLocale = (language: string | null): TUserLocale | undefined => {
-  const parsed = ZUserLocale.safeParse(language);
-  if (!parsed.success) return undefined;
-  return parsed.data;
-};
+  type WorkflowRunEnvironment,
+  WorkflowRunNotExecutableError,
+  createInitialRunContext,
+  loadWorkflowRunEnvironment,
+} from "./run-environment";
+import { getWorkflowStepExecutor } from "./steps";
+import type { WorkflowStepExecutor } from "./steps/types";
 
 /** Run states from which there is no further work — replays/redeliveries on these are no-ops. */
 const TERMINAL_STATUS_LIST = ["completed", "failed", "canceled"] as const;
@@ -53,8 +37,6 @@ const TERMINAL_STATUSES = new Set<string>(TERMINAL_STATUS_LIST);
 
 /** Run states a delivery may claim by transitioning to `running`. */
 const CLAIMABLE_STATUSES = ["queued"] as const;
-
-const EMAIL_PROVIDER = "smtp";
 
 const workflowRunSelect = {
   id: true,
@@ -66,14 +48,6 @@ const workflowRunSelect = {
   // `createdBy` carries the per-user email limit: the respondent who triggers a run is anonymous.
   workflow: { select: { definition: true, createdBy: true } },
 } as const;
-
-/** Thrown when the run cannot be executed at all (definition missing/invalid). Marks the run failed. */
-class WorkflowRunNotExecutableError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "WorkflowRunNotExecutableError";
-  }
-}
 
 /**
  * Thrown when a step fails after some steps may have run. Carries the partial `data.steps` so the
@@ -107,27 +81,6 @@ const getWorkflowRunLogContext = (
   workspaceId: data.workspaceId,
 });
 
-const MESSAGE_ID_FALLBACK_DOMAIN = "formbricks.com";
-
-/** Extracts the domain from a validated email address, falling back to a stable default. */
-const domainFromEmail = (from: string): string => from.split("@")[1]?.trim() || MESSAGE_ID_FALLBACK_DOMAIN;
-
-/**
- * Builds the deterministic RFC 5322 Message-ID (`<hash@domain>`) stored on a step output and sent as
- * the `Message-ID` header. Stable across retries for the same run + step, so a replayed send carries
- * the same id — enabling protocol-level dedup and traceability to the same logical message.
- *
- * Sized to 128 bits (32 hex chars) — the conventional scale for uniqueness ids (a UUID is 122).
- * The id only needs to be unique, never preimage-resistant, so the full 256-bit digest bought
- * nothing while pushing the header past the RFC 5322 78-char soft limit, forcing nodemailer to
- * fold it; folded headers are valid MIME but trip naive parsers (MailHog shows the folded id as
- * part of the Subject).
- */
-const buildMessageId = (workflowRunId: string, stepId: string, from: string): string => {
-  const hash = createHash("sha256").update(`${workflowRunId}:${stepId}`).digest("hex").slice(0, 32);
-  return `<${hash}@${domainFromEmail(from)}>`;
-};
-
 /**
  * Resolve the run's executable definition: prefer the immutable `workflowVersion.definition`
  * snapshot, fall back to the workflow's live `definition`. The persisted JSON is untrusted, so it is
@@ -143,122 +96,6 @@ const resolveExecutableDefinition = (run: {
     throw new WorkflowRunNotExecutableError("Workflow run definition is not executable");
   }
   return parsed.data;
-};
-
-interface StepOutcome {
-  status: TWorkflowStepResult["status"];
-  error: string | null;
-  output: Record<string, unknown>;
-}
-
-/** The survey/response/branding context, loaded once per run, that every step renders against. */
-interface RunEmailContext {
-  workflowId?: string;
-  configuredByUserId?: string;
-  survey: TSurvey;
-  response: TResponse;
-  logoUrl: string;
-  /**
-   * Lowercased allowlist of the emails of everyone who can access this run's workspace. A literal
-   * `to` recipient must be in this set to receive response data (ENG-2029); loaded once per run, and
-   * only when the run actually has a literal recipient to check. Empty when the workspace resolves
-   * to nobody (or when no step needs it), which fails closed — a literal external recipient is then
-   * rejected.
-   */
-  allowedRecipientEmails: Set<string>;
-  /** The organization and workflow owner the run's emails are rate-limited by (ENG-3823). */
-  rateLimit: { organizationId?: string; actorUserId: string | null };
-}
-
-/**
- * Resolves and sends one `send_email` step, Follow-Ups parity: resolves the recipient from the
- * response (literal email or question/hidden-field id), renders the branded HTML via
- * `buildSurveyResponseEmailHtml` (recall body + optional response-data blocks), and sends HTML-only.
- * The subject is sanitized (control chars stripped) and a stable RFC `Message-ID` is recorded on both
- * the sent header and the step output. Any resolution/send failure returns a failed outcome; the
- * caller fails the whole run so it propagates to the run lifecycle.
- */
-const sendResolvedEmail = async (
-  config: TWorkflowExecutableStep["node"]["config"],
-  emailContext: RunEmailContext,
-  workflowRunId: string,
-  stepId: string
-): Promise<StepOutcome> => {
-  const recipient = resolveResponseRecipient(config.to, emailContext.response);
-  if (!recipient.ok) {
-    return { status: "failed", error: recipient.error, output: {} };
-  }
-
-  // Recipient allowlist (ENG-2029): a literal `to` address may only belong to someone who can access
-  // this workspace, so a live workflow can't silently forward response data to an arbitrary external
-  // inbox. A respondent-field `to` resolves to the respondent's own address and is always allowed.
-  // This is the send-time backstop to the enable-time check — it also covers access lost after
-  // enable, whether the member was removed from the organization or their team lost this workspace
-  // (ENG-2186).
-  if (
-    isLiteralEmailRecipient(config.to) &&
-    !emailContext.allowedRecipientEmails.has(normalizeEmailForComparison(recipient.email))
-  ) {
-    return {
-      status: "failed",
-      error: `Recipient ${recipient.email} cannot access this workspace`,
-      output: {},
-    };
-  }
-
-  const messageId = buildMessageId(workflowRunId, stepId, config.from);
-  const subject = stripControlChars(config.subject);
-
-  try {
-    const html = await buildSurveyResponseEmailHtml({
-      body: config.body,
-      survey: emailContext.survey,
-      response: emailContext.response,
-      attachResponseData: config.attachResponseData,
-      includeVariables: config.includeVariables,
-      includeHiddenFields: config.includeHiddenFields,
-      logoUrl: emailContext.logoUrl,
-      locale: toResponseLocale(emailContext.response.language),
-    });
-
-    // No `from` — the deployment MAIL_FROM default applies, exactly like survey Follow-Ups. `config.from`
-    // is only used to derive the stable Message-ID domain, never as the actual sender.
-    const sent = await sendEmail({
-      emailType: "workflow_email",
-      auditContext: {
-        trigger: "workflow",
-        organizationId: emailContext.rateLimit.organizationId,
-        surveyId: emailContext.survey.id,
-        responseId: emailContext.response.id,
-        workflowRunId,
-        workflowId: emailContext.workflowId,
-        configuredByUserId: emailContext.configuredByUserId,
-      },
-      to: recipient.email,
-      replyTo: config.replyTo.length > 0 ? config.replyTo.join(", ") : undefined,
-      subject,
-      html,
-      messageId,
-      // A literal address is a workspace member (the allowlist above); a respondent-field one is external.
-      rateLimit: { ...emailContext.rateLimit, externalRecipient: !isLiteralEmailRecipient(config.to) },
-    });
-
-    if (sent) {
-      return { status: "succeeded", error: null, output: { messageId, provider: EMAIL_PROVIDER } };
-    }
-    return { status: "failed", error: "SMTP is not configured; workflow email was not sent", output: {} };
-  } catch (sendError) {
-    // A spent email cap is not a send failure: nothing reached SMTP, and the run history and failure
-    // analytics should say "throttled", not "broken". Recorded as skipped, which a later attempt retries.
-    if (sendError instanceof TooManyRequestsError) {
-      return { status: "skipped", error: null, output: { reason: "email_rate_limited" } };
-    }
-    return {
-      status: "failed",
-      error: toError(sendError, "Failed to send workflow email").message,
-      output: {},
-    };
-  }
 };
 
 /** A persisted `WorkflowRunLog` row, as much of it as the claim/resume logic needs. */
@@ -300,39 +137,46 @@ const isUniqueConstraintError = (error: unknown): boolean =>
   error instanceof Prisma.PrismaClientKnownRequestError &&
   error.code === PrismaErrorType.UniqueConstraintViolation;
 
+/** Everything one step needs from the run it belongs to. */
+interface StepRunInput {
+  node: TWorkflowStepNode;
+  stepType: TWorkflowStepType;
+  executor: WorkflowStepExecutor<TWorkflowStepType>;
+  sequence: number;
+  runId: string;
+  context: TWorkflowRunContext;
+  environment: WorkflowRunEnvironment;
+  effects: WorkflowRunEffects;
+}
+
 /**
- * Sends an owned step (we hold its `running` log row) and records the terminal outcome onto that same
+ * Runs an owned step (we hold its `running` log row) and records the terminal outcome onto that same
  * row via `update` (never a second `create` — the `(runId, stepId)` unique constraint forbids it).
  *
- * At-most-once tradeoff: we claim (`running`) BEFORE calling `sendEmail`, so if the process crashes
- * between a successful SMTP handoff and the `succeeded` update, the retry sees `running` and will NOT
- * re-send — that email is potentially lost rather than duplicated. This is the accepted policy: never
- * send the same step twice.
+ * At-most-once tradeoff for steps with effects: we claim (`running`) BEFORE the effect, so if the
+ * process crashes between a successful SMTP handoff and the `succeeded` update, the retry sees
+ * `running` and will NOT re-send — that email is potentially lost rather than duplicated. This is the
+ * accepted policy: never send the same step twice.
  */
-const sendOwnedStep = async (
-  step: TWorkflowExecutableStep,
-  runId: string,
-  emailContext: RunEmailContext
-): Promise<TWorkflowStepResult> => {
-  const input = { to: step.node.config.to, subject: step.node.config.subject };
-  const { status, error, output } = await sendResolvedEmail(
-    step.node.config,
-    emailContext,
-    runId,
-    step.stepId
-  );
+const executeOwnedStep = async (step: StepRunInput): Promise<TWorkflowStepResult> => {
+  const { status, error, output } = await step.executor.execute({
+    node: step.node,
+    context: step.context,
+    environment: step.environment,
+    effects: step.effects,
+  });
   const finishedAt = new Date();
 
   await prisma.workflowRunLog.update({
-    where: { runId_stepId: { runId, stepId: step.stepId } },
+    where: { runId_stepId: { runId: step.runId, stepId: step.node.id } },
     data: { status, output, error, finishedAt },
   });
 
   return {
-    stepId: step.stepId,
+    stepId: step.node.id,
     stepType: step.stepType,
     status,
-    input,
+    input: step.executor.describeInput(step.node),
     output,
     ...(error ? { error } : {}),
     startedAt: finishedAt.toISOString(),
@@ -341,19 +185,18 @@ const sendOwnedStep = async (
 };
 
 /**
- * Claims a not-yet-succeeded step and sends it. Two claim paths:
- *  - no row: `create` a `running` row. A P2002 means a concurrent worker created it first — re-read and
- *    defer to the resume/skip logic in `runStep`.
- *  - existing `failed`/`pending` row: flip it to `running` via a conditional `updateMany`; `count===0`
- *    means another worker already claimed it, so skip (at-most-once).
- * Returns `null` when the claim was lost (caller re-reads / skips).
+ * Claims a not-yet-succeeded step and runs it. Two claim paths:
+ *  - no row: `create` a `running` row. A P2002 means a concurrent worker created it first — the
+ *    caller bails.
+ *  - existing row in a re-runnable state: flip it to `running` via a conditional `updateMany`;
+ *    `count===0` means another worker already claimed it, so the caller bails (at-most-once).
+ *    `failed`/`pending`/`skipped` never had their effect; a `running` step without effects (If/else)
+ *    is safe to evaluate again.
+ * Returns `null` when the claim was lost.
  */
-const claimAndSendStep = async (
-  step: TWorkflowExecutableStep,
-  sequence: number,
-  runId: string,
-  existing: StepLogRow | null,
-  emailContext: RunEmailContext
+const claimAndRunStep = async (
+  step: StepRunInput,
+  existing: StepLogRow | null
 ): Promise<TWorkflowStepResult | null> => {
   const startedAt = new Date();
 
@@ -361,34 +204,35 @@ const claimAndSendStep = async (
     try {
       await prisma.workflowRunLog.create({
         data: {
-          runId,
-          sequence,
-          stepId: step.stepId,
+          runId: step.runId,
+          sequence: step.sequence,
+          stepId: step.node.id,
           stepType: step.stepType,
           status: "running",
-          input: { to: step.node.config.to, subject: step.node.config.subject },
+          input: step.executor.describeInput(step.node),
           startedAt,
         },
       });
     } catch (error) {
       if (isUniqueConstraintError(error)) {
-        return null; // Concurrent create won; caller re-reads and resumes/skips.
+        return null; // Concurrent create won; the caller bails.
       }
       throw error;
     }
-    return sendOwnedStep(step, runId, emailContext);
+    return executeOwnedStep(step);
   }
 
-  // A prior attempt left a `failed`/`pending`/`skipped` row — take it over only if it is still in that
-  // state. `skipped` means a rate-limited send that never went out, so re-attempting it is safe.
+  const reclaimable: TWorkflowStepResult["status"][] = ["failed", "pending", "skipped"];
+  if (!step.executor.hasEffects) reclaimable.push("running");
+
   const claim = await prisma.workflowRunLog.updateMany({
-    where: { runId, stepId: step.stepId, status: { in: ["failed", "pending", "skipped"] } },
+    where: { runId: step.runId, stepId: step.node.id, status: { in: reclaimable } },
     data: { status: "running", startedAt, output: {}, error: null, finishedAt: null },
   });
   if (claim.count === 0) {
     return null; // Another worker claimed it first; skip per at-most-once.
   }
-  return sendOwnedStep(step, runId, emailContext);
+  return executeOwnedStep(step);
 };
 
 /**
@@ -402,21 +246,17 @@ const claimAndSendStep = async (
 const STEP_BAIL = Symbol("workflow-step-bail");
 
 /**
- * Runs one planned step with a per-step claim guard:
- *  - `succeeded` row → resume (no send).
- *  - `running` row → owned by a concurrent delivery / stalled attempt → BAIL (no send, don't finalize).
- *  - no row / `failed` / `pending` / `skipped` → claim, then send (none of those ever went out, so
- *    re-sending is safe). A lost claim (concurrent `create`/`updateMany` won) also BAILs.
+ * Runs one step with a per-step claim guard:
+ *  - `succeeded` row → resume (not run again; its output, an If/else's branch included, is reused).
+ *  - `running` row of a step with effects → owned by a concurrent delivery / stalled attempt → BAIL.
+ *  - otherwise → claim, then run. A lost claim also BAILs.
  */
 const runStep = async (
-  step: TWorkflowExecutableStep,
-  sequence: number,
-  runId: string,
-  emailContext: RunEmailContext,
+  step: StepRunInput,
   logContext: ReturnType<typeof getWorkflowRunLogContext>
 ): Promise<TWorkflowStepResult | typeof STEP_BAIL> => {
   const existing: StepLogRow | null = await prisma.workflowRunLog.findFirst({
-    where: { runId, stepId: step.stepId },
+    where: { runId: step.runId, stepId: step.node.id },
     select: stepLogSelect,
   });
 
@@ -424,17 +264,17 @@ const runStep = async (
     return resultFromLogRow(existing, "succeeded");
   }
 
-  if (existing?.status === "running") {
+  if (existing?.status === "running" && step.executor.hasEffects) {
     // A `running` row we did NOT just create means another live delivery (or a stalled prior attempt)
     // owns this run. At-most-once: never re-send; and don't finalize the run — bail and let the owner.
     logger.warn(
-      { ...logContext, stepId: step.stepId },
+      { ...logContext, stepId: step.node.id },
       "Workflow step already in-flight (running); another delivery owns this run — bailing"
     );
     return STEP_BAIL;
   }
 
-  const result = await claimAndSendStep(step, sequence, runId, existing, emailContext);
+  const result = await claimAndRunStep(step, existing);
   if (result) {
     return result;
   }
@@ -442,7 +282,7 @@ const runStep = async (
   // Claim lost to a concurrent delivery after we read the row — bail rather than risk a double-send or
   // prematurely finalizing a run the winner still owns.
   logger.warn(
-    { ...logContext, stepId: step.stepId },
+    { ...logContext, stepId: step.node.id },
     "Workflow step claim lost to a concurrent delivery — bailing"
   );
   return STEP_BAIL;
@@ -472,107 +312,56 @@ const claimRun = async (
   return true;
 };
 
-/**
- * Loads the survey/response/branding context a run's emails render against. Uses the same loaders the
- * response-pipeline job uses (worker-safe, no request scope). Missing survey or response is
- * unrecoverable for this run and fails it.
- *
- * `steps` is taken (already planned by the caller) only to decide whether the recipient allowlist is
- * needed at all — see `allowedRecipientEmails` below.
- */
-const loadRunEmailContext = async (
-  triggerPayload: TWorkflowTriggerRunPayload,
-  workspaceId: string,
-  steps: TWorkflowExecutableStep[],
-  actorUserId: string | null
-): Promise<RunEmailContext> => {
-  const [response, survey] = await Promise.all([
-    getResponse(triggerPayload.responseId),
-    getSurvey(triggerPayload.surveyId),
-  ]);
-
-  if (!response) {
-    throw new WorkflowRunNotExecutableError(`Response ${triggerPayload.responseId} not found`);
-  }
-  if (!survey) {
-    throw new WorkflowRunNotExecutableError(`Survey ${triggerPayload.surveyId} not found`);
-  }
-
-  // Tenant-integrity guard: the survey/response ids come from the (untrusted) stored trigger payload,
-  // so confirm they belong to this run's workspace/survey before rendering an email from their data.
-  if (survey.workspaceId !== workspaceId) {
-    throw new WorkflowRunNotExecutableError(
-      `Survey ${triggerPayload.surveyId} does not belong to workspace ${workspaceId}`
-    );
-  }
-  if (response.surveyId !== triggerPayload.surveyId) {
-    throw new WorkflowRunNotExecutableError(
-      `Response ${triggerPayload.responseId} does not belong to survey ${triggerPayload.surveyId}`
-    );
-  }
-
-  // ENG-3283: the survey may have been restricted after this run was enqueued. A run forwards the
-  // response out of the app, so it stops here rather than sending a restricted survey's data.
-  if (!isSurveyOutboundAllowed(survey)) {
-    recordSurveyOutboundSkipped("workflow");
-    throw new WorkflowRunNotExecutableError(
-      `Survey ${triggerPayload.surveyId} is not visible to the whole workspace`
-    );
-  }
-
-  const organization = await getOrganizationByWorkspaceId(workspaceId);
-  const logoUrl = organization?.whitelabel?.logoUrl ?? "";
-  // Only literal `to` recipients are allowlist-checked, so the member query is skipped entirely for
-  // the common respondent-field-only run rather than paying an unbounded lookup on every response.
-  // Scoped to the workspace, matching the enable-time gate: an org member whose team lost access to
-  // this workspace is no longer allowed (ENG-2186). Fail closed: a workspace that resolves to nobody
-  // yields an empty allowlist, so a literal external recipient is rejected rather than allowed
-  // through unchecked.
-  const needsRecipientAllowlist = steps.some((step) => isLiteralEmailRecipient(step.node.config.to));
-  const [allowedRecipientEmails, rateLimitActorUserId] = await Promise.all([
-    needsRecipientAllowlist ? getWorkspaceMemberEmails(workspaceId) : new Set<string>(),
-    organization ? resolveEmailActorUserId(actorUserId, organization.id) : actorUserId,
-  ]);
-
-  return {
-    survey,
-    response,
-    logoUrl,
-    allowedRecipientEmails,
-    configuredByUserId: actorUserId ?? undefined,
-    rateLimit: { organizationId: organization?.id, actorUserId: rateLimitActorUserId },
-  };
-};
+type WalkOutcome =
+  | { bail: true }
+  | { bail: false; stepResults: TWorkflowStepResult[]; failure: string | null };
 
 /**
- * Runs the planned steps in order under the per-step claim guard (`runStep`). Three outcomes:
+ * Walks the run's graph from the trigger (ADR 0047) under the per-step claim guard (`runStep`):
+ * each step's output joins the run context under its id, and an If/else's output picks the branch.
+ * Three outcomes:
  *  - `bail`: a step is owned by a concurrent delivery / stalled attempt → stop, do NOT finalize the run
  *    (the owner does). The per-step `WorkflowRunLog` rows remain the source of truth for the run's state.
- *  - `failure`: a step's send definitively failed this attempt → fail the whole run (row stays `failed`,
+ *  - `failure`: a step definitively failed this attempt → fail the whole run (row stays `failed`,
  *    which is retryable).
- *  - success: all steps resolved.
+ *  - success: the walk reached the end of its branch.
  */
-const runSteps = async (
-  steps: TWorkflowExecutableStep[],
+const walkRun = async (
+  definition: TWorkflowExecutableDefinition,
   runId: string,
-  emailContext: RunEmailContext,
+  environment: WorkflowRunEnvironment,
+  effects: WorkflowRunEffects,
   logContext: ReturnType<typeof getWorkflowRunLogContext>
-): Promise<{ bail: true } | { bail: false; stepResults: TWorkflowStepResult[]; failure: string | null }> => {
+): Promise<WalkOutcome> => {
+  const context = createInitialRunContext(environment);
   const stepResults: TWorkflowStepResult[] = [];
+  let failure: string | null = null;
+  let bailed = false;
 
-  for (const [index, step] of steps.entries()) {
-    const result = await runStep(step, index + 1, runId, emailContext, logContext);
+  await walkWorkflowSteps(definition, async (node, sequence) => {
+    const executor = getWorkflowStepExecutor(node);
+    const result = await runStep(
+      { node, stepType: getWorkflowStepType(node), executor, sequence, runId, context, environment, effects },
+      logContext
+    );
     if (result === STEP_BAIL) {
-      return { bail: true };
+      bailed = true;
+      return { next: "stop" };
     }
+
     stepResults.push(result);
-
     if (result.status === "failed") {
-      return { bail: false, stepResults, failure: result.error ?? "Workflow step failed" };
+      failure = result.error ?? "Workflow step failed";
+      return { next: "stop" };
     }
-  }
 
-  return { bail: false, stepResults, failure: null };
+    const output = result.output ?? {};
+    context.steps[node.id] = output;
+    // A rate-limited (skipped) step has no result to branch on; only a succeeded one decides.
+    return result.status === "succeeded" && executor.decide ? executor.decide(output) : { next: "continue" };
+  });
+
+  return bailed ? { bail: true } : { bail: false, stepResults, failure };
 };
 
 /** Walks the claimed run to completion, throwing `WorkflowStepFailedError` (with the trace) on a failed step. */
@@ -582,18 +371,22 @@ const executeClaimedRun = async (
     workflowVersion: { definition: unknown } | null;
     workflow: { definition: unknown; createdBy: string | null };
   },
-  workspaceId: string,
+  data: TWorkflowRunJobData,
   triggerPayload: TWorkflowTriggerRunPayload,
+  effects: WorkflowRunEffects,
   logContext: ReturnType<typeof getWorkflowRunLogContext>
 ): Promise<void> => {
   const definition = resolveExecutableDefinition(run);
-  const steps = planExecutableSteps(definition);
+  const environment = await loadWorkflowRunEnvironment({
+    runId: run.id,
+    workflowId: data.workflowId,
+    workspaceId: data.workspaceId,
+    trigger: triggerPayload,
+    definition,
+    actorUserId: run.workflow.createdBy ?? null,
+  });
 
-  const emailContext = {
-    ...(await loadRunEmailContext(triggerPayload, workspaceId, steps, run.workflow.createdBy ?? null)),
-    workflowId: logContext.workflowId,
-  };
-  const outcome = await runSteps(steps, run.id, emailContext, logContext);
+  const outcome = await walkRun(definition, run.id, environment, effects, logContext);
 
   if (outcome.bail) {
     // Another live delivery / stalled attempt owns this run; leave it `running` for the owner to finish.
@@ -613,7 +406,7 @@ const executeClaimedRun = async (
   // Status-guarded terminal write: only finalize a run that is still `running`. A 0-row result means
   // another delivery already finalized it — don't clobber its verdict.
   const completed = await prisma.workflowRun.updateMany({
-    where: { id: run.id, workspaceId, status: "running" },
+    where: { id: run.id, workspaceId: data.workspaceId, status: "running" },
     data: { status: "completed", finishedAt: new Date(), data: runData },
   });
   if (completed.count === 0) {
@@ -671,7 +464,9 @@ const handleRunError = async (
 
 /** Coarse, PII-free failure class for analytics; the message itself can name a recipient. */
 const classifyRunError = (error: unknown): string => {
-  if (error instanceof WorkflowRunNotExecutableError) return "not_executable";
+  if (error instanceof WorkflowRunNotExecutableError || error instanceof WorkflowWalkError) {
+    return "not_executable";
+  }
   if (error instanceof WorkflowStepFailedError) return "step_failed";
   if (isDatabasePoolExhaustionError(error)) return "database_pool_exhausted";
   return "unknown";
@@ -694,39 +489,45 @@ const classifyRunError = (error: unknown): string => {
  * attempt any failure (incl. DB pool exhaustion) is rethrown so BullMQ retries; on the final attempt a
  * terminal `failed` is recorded and swallowed so the run never stays stuck `running`.
  */
-export const processWorkflowRunJob: JobHandler<TWorkflowRunJobData> = async (data, context) => {
-  const logContext = getWorkflowRunLogContext(data, context);
+export const createWorkflowRunJobHandler =
+  (effects: WorkflowRunEffects): JobHandler<TWorkflowRunJobData> =>
+  async (data, context) => {
+    const logContext = getWorkflowRunLogContext(data, context);
 
-  const run = await prisma.workflowRun.findFirst({
-    where: { id: data.workflowRunId, workspaceId: data.workspaceId },
-    select: workflowRunSelect,
-  });
+    const run = await prisma.workflowRun.findFirst({
+      where: { id: data.workflowRunId, workspaceId: data.workspaceId },
+      select: workflowRunSelect,
+    });
 
-  if (!run) {
-    // Missing OR cross-workspace: the row is the durable source of truth and a tenant mismatch must
-    // never be retried into a foreign workspace. Drop the job either way.
-    logger.error(logContext, "Workflow run not found for workspace; dropping job");
-    return;
-  }
-
-  if (TERMINAL_STATUSES.has(run.status)) {
-    logger.info({ ...logContext, status: run.status }, "Workflow run already terminal; skipping");
-    return;
-  }
-
-  try {
-    const triggerPayload = ZWorkflowTriggerRunPayload.parse(run.triggerPayload);
-
-    const claimed = await claimRun(run, data.workspaceId, context.attempt, logContext);
-    if (!claimed) {
+    if (!run) {
+      // Missing OR cross-workspace: the row is the durable source of truth and a tenant mismatch must
+      // never be retried into a foreign workspace. Drop the job either way.
+      logger.error(logContext, "Workflow run not found for workspace; dropping job");
       return;
     }
 
-    await executeClaimedRun(run, data.workspaceId, triggerPayload, logContext);
-  } catch (error) {
-    await handleRunError(error, run, data, context, logContext);
-  }
-};
+    if (TERMINAL_STATUSES.has(run.status)) {
+      logger.info({ ...logContext, status: run.status }, "Workflow run already terminal; skipping");
+      return;
+    }
+
+    try {
+      const triggerPayload = ZWorkflowTriggerRunPayload.parse(run.triggerPayload);
+
+      const claimed = await claimRun(run, data.workspaceId, context.attempt, logContext);
+      if (!claimed) {
+        return;
+      }
+
+      await executeClaimedRun(run, data, triggerPayload, effects, logContext);
+    } catch (error) {
+      await handleRunError(error, run, data, context, logContext);
+    }
+  };
+
+/** The `workflow-run.process` job handler with the live effects (real email). */
+export const processWorkflowRunJob: JobHandler<TWorkflowRunJobData> =
+  createWorkflowRunJobHandler(liveWorkflowRunEffects);
 
 /**
  * Persists the failure trace on the run, tenant-scoped by `workspaceId`. On the final attempt this

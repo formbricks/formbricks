@@ -900,7 +900,7 @@ describe("workflowValidationProblemsAtom", () => {
     expect(store.get(workflowValidationProblemsAtom)).toEqual([{ code: "flow_invalid", field: "edges" }]);
   });
 
-  test("an if_else step yields step_not_executable plus one flow_invalid for its missing branches", () => {
+  test("an if_else step runs, and its empty branches are no problem (ENG-7176)", () => {
     const store = createStore();
     const ifElseNode = {
       id: "ifelse-1",
@@ -921,11 +921,8 @@ describe("workflowValidationProblemsAtom", () => {
       } as Partial<TWorkflowDefinition>)
     );
 
-    const problems = store.get(workflowValidationProblemsAtom);
-    expect(problems).toHaveLength(2);
-    expect(problems).toContainEqual({ code: "step_not_executable", field: "nodes.0.type" });
-    expect(problems).toContainEqual({ code: "flow_invalid", field: "edges" });
-    expect(store.get(workflowValidityAtom).isReady).toBe(false);
+    expect(store.get(workflowValidationProblemsAtom)).toEqual([]);
+    expect(store.get(workflowValidityAtom).isReady).toBe(true);
   });
 
   test("independent problems accumulate, so the count matches what the user must fix", () => {

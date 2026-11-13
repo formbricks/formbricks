@@ -7,6 +7,8 @@ export const ZWorkflowIfElseNode = ZWorkflowNodeBase.extend({
   config: z.object({
     condition: ZWorkflowConditionGroup,
   }),
-}).describe("Workflow branch node for conditional logic. Not executable by the current workflow runner.");
+}).describe(
+  "If/else step: the run continues down its then edge when the condition group holds, else down its else edge."
+);
 
 export type TWorkflowIfElseNode = z.infer<typeof ZWorkflowIfElseNode>;

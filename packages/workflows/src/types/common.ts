@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_WORKFLOW_VARIABLE_PATH_LENGTH, parseWorkflowVariablePath } from "../variables/paths";
 
 export const ZWorkflowStatus = z
   .enum(["draft", "enabled", "disabled", "archived"])
@@ -30,10 +31,24 @@ export type TWorkflowNodeUi = z.infer<typeof ZWorkflowNodeUi>;
 
 export const ZWorkflowDataRef = z
   .object({
-    path: z.string().min(1).describe("Dot-path to a value in the workflow run context."),
-    fallback: z.string().optional().describe("Fallback string used when the referenced path is missing."),
+    path: z
+      .string()
+      .min(1)
+      .max(MAX_WORKFLOW_VARIABLE_PATH_LENGTH)
+      .superRefine((path, ctx) => {
+        const parsed = parseWorkflowVariablePath(path);
+        if (!parsed.ok) ctx.addIssue({ code: "custom", message: parsed.error });
+      })
+      .describe(
+        "Variable path in the run context: payload.<path>, steps.<stepId>.<path> or response.<questionId>. Segments __proto__, prototype and constructor are refused."
+      ),
+    fallback: z
+      .string()
+      .max(1000)
+      .optional()
+      .describe("Fallback string used when the referenced path is missing."),
   })
-  .describe("Reference to dynamic workflow data used by conditions or actions.");
+  .describe("Reference to a workflow Variable used by conditions or actions.");
 
 export type TWorkflowDataRef = z.infer<typeof ZWorkflowDataRef>;
 

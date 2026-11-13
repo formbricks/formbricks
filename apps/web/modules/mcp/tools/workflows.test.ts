@@ -626,3 +626,26 @@ describe("create_workflow advertised input schema", () => {
     expect(schema.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, bogus: 1 }).success).toBe(false);
   });
 });
+
+describe("create_workflow save-time limits (ENG-7176)", () => {
+  test("refuses a definition with more than 25 steps before it reaches the handler", () => {
+    const { tools } = createToolServer();
+    const schema = tools.get("create_workflow")!.config.inputSchema as ZodObjectLike;
+    const [emailNode] = VALID_CREATE_WORKFLOW_INPUT.definition.nodes;
+    const nodes = Array.from({ length: 26 }, (_, index) => ({ ...emailNode, id: `email-${index}` }));
+    const edges = nodes.map((node, index) => ({
+      id: `edge-${index}`,
+      source: index === 0 ? "trigger" : `email-${index - 1}`,
+      target: node.id,
+    }));
+    const definition = { ...VALID_CREATE_WORKFLOW_INPUT.definition, nodes, edges };
+
+    expect(schema.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, definition }).success).toBe(false);
+    expect(
+      schema.safeParse({
+        ...VALID_CREATE_WORKFLOW_INPUT,
+        definition: { ...definition, nodes: nodes.slice(0, 25), edges: edges.slice(0, 25) },
+      }).success
+    ).toBe(true);
+  });
+});
