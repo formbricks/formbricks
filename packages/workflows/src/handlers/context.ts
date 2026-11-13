@@ -119,6 +119,11 @@ export interface WorkflowApiContext {
   instance?: string;
   logger: WorkflowsLogger;
   auditRedactionKey?: string;
+  /**
+   * Origin the Webhook Secret URL is built on (the app's own URL, where `/api/v3` is served). Injected as
+   * data like `auditRedactionKey`; the webhook operations answer 500 without it.
+   */
+  webhookBaseUrl?: string;
   authorize: (workspaceId: string, access: WorkflowApiAccess) => Promise<AuthorizedWorkspace | Response>;
   verifyTriggerSurvey: (input: {
     workspaceId: string;

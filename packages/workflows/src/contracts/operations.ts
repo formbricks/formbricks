@@ -29,6 +29,14 @@ import type {
   TWorkflowRunResource,
   TWorkflowTestResult,
 } from "./resources";
+import {
+  ZSetWorkflowSampleInput,
+  ZWorkflowSampleResource,
+  ZWorkflowWebhookCallParams,
+  ZWorkflowWebhookCallResult,
+  ZWorkflowWebhookPayloadInput,
+  ZWorkflowWebhookResource,
+} from "./webhook";
 
 /**
  * Route-agnostic operation contracts for the v3 Workflows API (ENG-1101). Keys match the
@@ -101,6 +109,26 @@ export const WORKFLOW_API_OPERATIONS = {
     params: ZWorkflowRunIdInput,
     input: null,
     output: ZWorkflowRunResource,
+  },
+  getWorkflowWebhookV3: {
+    params: ZWorkflowIdInput,
+    input: null,
+    output: ZWorkflowWebhookResource,
+  },
+  regenerateWorkflowWebhookV3: {
+    params: ZWorkflowIdInput,
+    input: null,
+    output: ZWorkflowWebhookResource,
+  },
+  setWorkflowSampleV3: {
+    params: ZWorkflowIdInput,
+    input: ZSetWorkflowSampleInput,
+    output: ZWorkflowSampleResource,
+  },
+  callWorkflowWebhookV3: {
+    params: ZWorkflowWebhookCallParams,
+    input: ZWorkflowWebhookPayloadInput,
+    output: ZWorkflowWebhookCallResult,
   },
 } as const satisfies Record<
   string,

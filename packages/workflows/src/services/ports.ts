@@ -8,6 +8,7 @@ import type {
   TWorkflowRunStatus,
   TWorkflowTriggerRunPayload,
 } from "../types/runs";
+import type { TWorkflowSampleData } from "../types/samples";
 
 /**
  * Runtime ports the workflow server code depends on. They are injected by the adapter
@@ -33,6 +34,13 @@ export interface WorkflowRow {
   createdBy: string | null;
   creator?: { name: string } | null;
   definition: TWorkflowDefinition;
+  /**
+   * Webhook Secret URL token (ADR 0048): a hash to check calls and an encrypted copy to show the URL
+   * again. Optional on the port because only the webhook operations read them; the Prisma row always
+   * carries both. Never serialized into a resource, an audit snapshot or a log line.
+   */
+  webhookTokenHash?: string | null;
+  webhookTokenEncrypted?: string | null;
 }
 
 /** The subset of `WorkflowRun` fields the list/detail serializers read for `lastRun`. */
@@ -124,6 +132,8 @@ export interface WorkflowDelegate {
       status: TWorkflowStatus;
       definition: TWorkflowDefinition;
       createdBy: string | null;
+      webhookTokenHash?: string;
+      webhookTokenEncrypted?: string;
     };
     include: LastRunInclude;
   }) => Promise<WorkflowRowWithLastRun>;
@@ -134,6 +144,8 @@ export interface WorkflowDelegate {
       description?: string | null;
       status?: TWorkflowStatus;
       definition?: TWorkflowDefinition;
+      webhookTokenHash?: string;
+      webhookTokenEncrypted?: string;
     };
     include: LastRunInclude;
   }) => Promise<WorkflowRowWithLastRun>;
@@ -264,10 +276,47 @@ export interface WorkflowRunDelegate {
   }) => Promise<WorkflowRunWithLogsRow | null>;
 }
 
+/** A `WorkflowSample` row (ADR 0048): one per workflow and source, matching the Prisma schema. */
+export interface WorkflowSampleRow {
+  workflowId: string;
+  workspaceId: string;
+  source: string;
+  sample: TWorkflowSampleData;
+  lastCalledAt: Date | null;
+  lastCallerIp: string | null;
+  updatedAt: Date;
+}
+
+interface WorkflowSampleKey {
+  workflowId_source: { workflowId: string; source: string };
+}
+
+/** The slice of `prisma.workflowSample` the webhook operations call. */
+export interface WorkflowSampleDelegate {
+  findUnique: (args: { where: WorkflowSampleKey }) => Promise<WorkflowSampleRow | null>;
+  upsert: (args: {
+    where: WorkflowSampleKey;
+    create: { workflowId: string; workspaceId: string; source: string; sample: TWorkflowSampleData };
+    update: { sample: TWorkflowSampleData };
+  }) => Promise<WorkflowSampleRow>;
+}
+
+/**
+ * Issues and reveals Webhook Secret URL tokens. Injected by the adapter, which owns the randomness,
+ * the hash and the app's encryption key, so this package never handles key material.
+ */
+export interface WebhookTokenIssuer {
+  /** A new random token, returned only as its hash (to check calls) and encrypted copy (to show it again). */
+  issue: () => { hash: string; encrypted: string };
+  /** The plaintext token from its encrypted copy. */
+  reveal: (encrypted: string) => string;
+}
+
 export interface WorkflowsDb {
   workflow: WorkflowDelegate;
   workflowVersion: WorkflowVersionDelegate;
   workflowRun: WorkflowRunDelegate;
+  workflowSample: WorkflowSampleDelegate;
   /** Interactive transaction; the real Prisma client's `$transaction` satisfies this structurally. */
   $transaction: <R>(fn: (tx: WorkflowsTransaction) => Promise<R>) => Promise<R>;
 }

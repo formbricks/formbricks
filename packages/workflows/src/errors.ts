@@ -29,6 +29,7 @@ export const WORKFLOW_PROBLEM_CODES = [
   "workflow_not_executable",
   "unprocessable_content",
   "internal_server_error",
+  "payload_too_large",
 ] as const;
 
 export type WorkflowProblemCode = (typeof WORKFLOW_PROBLEM_CODES)[number];
@@ -58,6 +59,7 @@ const TITLE_BY_STATUS: Record<number, string> = {
   400: "Bad Request",
   403: "Forbidden",
   409: "Conflict",
+  413: "Payload Too Large",
   422: "Unprocessable Content",
   500: "Internal Server Error",
 };
@@ -89,6 +91,12 @@ export class WorkflowForbiddenError extends WorkflowApiError {
 export class WorkflowInvalidInputError extends WorkflowApiError {
   readonly status = 400;
   readonly code = "bad_request" as const;
+}
+
+/** 413 for a body over a size cap; the message names the cap. */
+export class WorkflowPayloadTooLargeError extends WorkflowApiError {
+  readonly status = 413;
+  readonly code = "payload_too_large" as const;
 }
 
 /**

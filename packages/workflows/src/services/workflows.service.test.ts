@@ -77,9 +77,13 @@ const prisma: WorkflowsDb = {
   workflow,
   workflowVersion,
   workflowRun,
+  workflowSample: { findUnique: vi.fn(), upsert: vi.fn() },
   $transaction: (fn) => fn({ workflow, workflowVersion }),
 };
-const service = createWorkflowsService({ prisma });
+const service = createWorkflowsService({
+  prisma,
+  webhookTokens: { issue: () => ({ hash: "hash", encrypted: "encrypted" }), reveal: () => "token" },
+});
 
 const runId = "cm9zr4w9d000308l8c5n8xk7e";
 

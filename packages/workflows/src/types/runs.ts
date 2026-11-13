@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ZWorkflowExecutableDefinition } from "./document";
-import { ZWorkflowTriggerPayload } from "./triggers";
+import { ZWorkflowTriggerPayload, ZWorkflowWebhookTriggerPayload } from "./triggers";
 
 const ZIsoDateTime = z.iso.datetime({ offset: true });
 
@@ -10,9 +10,12 @@ export type TWorkflowRunStatus = z.infer<typeof ZWorkflowRunStatus>;
 export const ZWorkflowRunLogStatus = z.enum(["pending", "running", "succeeded", "failed", "skipped"]);
 export type TWorkflowRunLogStatus = z.infer<typeof ZWorkflowRunLogStatus>;
 
-export const ZWorkflowTriggerRunPayload = ZWorkflowTriggerPayload.extend({
-  triggeredAt: ZIsoDateTime,
-}).describe("Trigger payload snapshot stored with a workflow run.");
+export const ZWorkflowTriggerRunPayload = z
+  .discriminatedUnion("type", [
+    ZWorkflowTriggerPayload.extend({ triggeredAt: ZIsoDateTime }),
+    ZWorkflowWebhookTriggerPayload.extend({ triggeredAt: ZIsoDateTime }),
+  ])
+  .describe("Trigger payload snapshot stored with a workflow run.");
 export type TWorkflowTriggerRunPayload = z.infer<typeof ZWorkflowTriggerRunPayload>;
 
 export const ZWorkflowRunLogInput = z.record(z.string(), z.unknown());

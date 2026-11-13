@@ -2,7 +2,12 @@ import { readFile, readdir } from "node:fs/promises";
 import { describe, expect, test } from "vitest";
 import type { z } from "zod";
 import { WORKFLOW_PROBLEM_CODES } from "../errors";
-import { ZWorkflowRunLogStatus, ZWorkflowRunStatus, ZWorkflowStatus } from "../types";
+import {
+  ZWorkflowRunLogStatus,
+  ZWorkflowRunStatus,
+  ZWorkflowStatus,
+  ZWorkflowWebhookTriggerPayload,
+} from "../types";
 import {
   WORKFLOW_API_OPERATIONS,
   ZCreateWorkflowInput,
@@ -12,8 +17,11 @@ import {
   ZWorkflowRunListItem,
   ZWorkflowRunResource,
   ZWorkflowRunSummary,
+  ZWorkflowSampleResource,
+  ZWorkflowSampleVariables,
   ZWorkflowTestProblemCode,
   ZWorkflowTestResult,
+  ZWorkflowWebhookResource,
 } from "./index";
 
 /**
@@ -211,6 +219,34 @@ describe("resource shapes", () => {
     expect(yamlPropertyKeys(yamlSchema)).toEqual(schemaKeys(ZWorkflowTestResult));
     expect([...((yamlSchema.required as string[] | undefined) ?? [])].sort()).toEqual(
       schemaKeys(ZWorkflowTestResult)
+    );
+  });
+
+  test.each([
+    ["WorkflowWebhookResource", ZWorkflowWebhookResource],
+    ["WorkflowSampleResource", ZWorkflowSampleResource],
+  ] as const)("%s properties match the contract shape", async (schemaName, zodSchema) => {
+    const yamlSchema = await loadYaml(`components/schemas/${schemaName}.yml`);
+    expect(yamlPropertyKeys(yamlSchema)).toEqual(schemaKeys(zodSchema));
+    expect([...((yamlSchema.required as string[] | undefined) ?? [])].sort()).toEqual(schemaKeys(zodSchema));
+  });
+
+  test("the sample's Variables shape matches the contract", async () => {
+    const yamlSchema = await loadYaml("components/schemas/WorkflowSampleResource.yml");
+    const variables = (yamlSchema.properties as Record<string, Record<string, unknown>>).variables;
+    expect(yamlPropertyKeys(variables)).toEqual(schemaKeys(ZWorkflowSampleVariables));
+    const notSupported = (variables.properties as Record<string, { items: Record<string, unknown> }>)
+      .notSupported;
+    const reason = (notSupported.items.properties as Record<string, { enum: string[] }>).reason;
+    expect(reason.enum).toEqual([
+      ...ZWorkflowSampleVariables.shape.notSupported.element.shape.reason.options,
+    ]);
+  });
+
+  test("the webhook run payload matches the contract", async () => {
+    const yamlSchema = await loadYaml("components/schemas/WorkflowWebhookTriggerPayload.yml");
+    expect(yamlPropertyKeys(yamlSchema)).toEqual(
+      [...schemaKeys(ZWorkflowWebhookTriggerPayload), "triggeredAt"].sort()
     );
   });
 

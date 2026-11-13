@@ -7,11 +7,12 @@ import {
   ZWorkflowRunLogOutput,
   ZWorkflowRunLogStatus,
   ZWorkflowRunStatus,
+  ZWorkflowSampleData,
   ZWorkflowStatus,
   ZWorkflowTriggerRunPayload,
   ZWorkflowTriggerType,
 } from "@formbricks/workflows";
-import type { Workflow, WorkflowRun, WorkflowRunLog, WorkflowVersion } from "../src/prisma";
+import type { Workflow, WorkflowRun, WorkflowRunLog, WorkflowSample, WorkflowVersion } from "../src/prisma";
 
 export const ZWorkflow = z.object({
   id: z.cuid2().describe("The ID of the workflow"),
@@ -23,6 +24,14 @@ export const ZWorkflow = z.object({
   workspaceId: z.cuid2().describe("The workspace ID of the workflow"),
   createdBy: z.cuid2().nullable().describe("The user who created the workflow"),
   definition: ZWorkflowDefinition.describe("The persisted workflow definition"),
+  webhookTokenHash: z
+    .string()
+    .nullable()
+    .describe("SHA-256 hash of the Webhook Secret URL token. Never returned by the API."),
+  webhookTokenEncrypted: z
+    .string()
+    .nullable()
+    .describe("Encrypted Webhook Secret URL token. Never returned by the API."),
 }) satisfies z.ZodType<Workflow>;
 
 export const ZWorkflowVersion = z.object({
@@ -62,6 +71,7 @@ export const ZWorkflowRun = z.object({
     .describe("The date and time the workflow run was handed off to the queue"),
   startedAt: z.coerce.date().nullable().describe("The date and time the workflow run started"),
   finishedAt: z.coerce.date().nullable().describe("The date and time the workflow run finished"),
+  callerIp: z.string().nullable().describe("The caller's IP for a run started by a Webhook Secret URL call"),
 }) satisfies z.ZodType<WorkflowRun>;
 
 export const ZWorkflowRunLog = z.object({
@@ -78,6 +88,18 @@ export const ZWorkflowRunLog = z.object({
   finishedAt: z.coerce.date().nullable().describe("The date and time the step finished"),
 }) satisfies z.ZodType<WorkflowRunLog>;
 
+export const ZWorkflowSample = z.object({
+  id: z.cuid2().describe("The ID of the workflow sample"),
+  createdAt: z.coerce.date().describe("The date and time the sample was created"),
+  updatedAt: z.coerce.date().describe("The date and time the sample was last updated"),
+  workflowId: z.cuid2().describe("The workflow ID"),
+  workspaceId: z.cuid2().describe("The workspace ID"),
+  source: z.string().min(1).describe("`trigger`, or the id of the HTTP request step the sample belongs to"),
+  sample: ZWorkflowSampleData.describe("The last sample payload or Test request response"),
+  lastCalledAt: z.coerce.date().nullable().describe("When the Webhook Secret URL was last called"),
+  lastCallerIp: z.string().nullable().describe("The IP of the last Webhook Secret URL call"),
+}) satisfies z.ZodType<WorkflowSample>;
+
 ZWorkflow.meta({
   id: "workflow",
 }).describe("A workflow");
@@ -93,3 +115,7 @@ ZWorkflowRun.meta({
 ZWorkflowRunLog.meta({
   id: "workflowRunLog",
 }).describe("A workflow run log");
+
+ZWorkflowSample.meta({
+  id: "workflowSample",
+}).describe("A workflow sample payload");
