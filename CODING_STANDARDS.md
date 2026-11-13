@@ -45,7 +45,10 @@ These remain review checks until their enforcement handles the repository's exis
 - Before designing a piece, find the feature that already does something similar and build the new one the
   same way: module layout, API shape, UI components, tests.
 - Extend what nearly fits (a prop, an option, a parameter) rather than copying it. UI reuses the components of
-  similar-looking screens, guided by `.agents/formbricks-context/DESIGN.md` when it exists.
+  similar-looking screens, guided by `.agents/formbricks-context/DESIGN.md` when it exists, so the design stays
+  consistent.
+- Add a new component or design pattern only when no existing one can carry the interaction. Say why in the
+  plan and the PR.
 - A bad pattern is the exception: name what is wrong with it and fix it. When the change already touches that
   code, the refactor ships in the same PR as its own commit; otherwise it becomes a Linear ticket.
 - A fix names its siblings. Search for the same call, predicate or literal, then fix every copy in the same

@@ -36,7 +36,7 @@ upgrade requires.
 
 ## i18n (Internationalization)
 
-- All user-facing text must use the `t()` function from `react-i18next`.
+- All user-facing text must use the `t()` function from `react-i18next`, and its wording uses the terms defined in `GLOSSARY.md`.
 - Key naming: use lowercase with dots for nesting (e.g., `common.welcome`).
 - Translations are in `apps/web/locales/`. `en-US.json` is the source of truth.
 - **Only ever add or edit strings in `en-US.json`.** Never hand-write, translate, or edit the other (non-English) locale files yourself — those are machine-generated from en-US by Lingo.dev.
@@ -55,12 +55,6 @@ section before changing database access, its "Testing Guidelines" before adding 
 
 Read `docs/agents/pull-requests.md` before committing or opening, updating, or reviewing a PR: commit
 format, PR template rules, review intake, and independent review passes.
-
-## UI & Design
-
-- Reuse existing design patterns before introducing new ones, to keep design consistency, unless it's justified.
-- Add a new component only when no existing one can carry the interaction. Say why in the plan and the PR.
-- Use the terms in `GLOSSARY.md` for all UI copy, and add every user-facing string to `apps/web/locales/en-US.json`.
 
 ## Performance Testing & SigNoz MCP
 
