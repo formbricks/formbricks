@@ -1,0 +1,138 @@
+---
+title: "Entry-Level NPS Program"
+description: "Run a simple, repeatable Net Promoter Score program: one short survey, a fixed rhythm, and a reply to every unhappy customer."
+icon: "gauge"
+---
+
+Net Promoter Score (NPS) asks customers how likely they are to recommend you, on a scale from 0 to 10. People who answer 9 or 10 are **promoters**, 7 or 8 are **passives**, and 0 to 6 are **detractors**. The score is the percentage of promoters minus the percentage of detractors, so it runs from −100 to +100.
+
+## Purpose
+
+The number on its own changes nothing. A program that works asks the same people the same question on a fixed rhythm, and someone answers every detractor. This guide sets up exactly that, and nothing more:
+
+- one survey with two questions
+- a separate ending for detractors
+- the customer ID and plan saved with every answer
+- a link you send once a quarter
+- an email to your team whenever a detractor answers
+
+Start here. Add segments, more channels or dashboards once this routine runs on its own.
+
+## 1. Start from the template
+
+Open **Surveys**, click **New Survey** and search for **NPS**. Click the **NPS Survey** card, then **Use this template**.
+
+![The NPS Survey template in the template picker, with the 0 to 10 scale in the preview](/images/surveys/best-practices/nps-program/template.webp)
+
+Keep the first question as it is: *How likely are you to recommend [your workspace] to a friend or colleague?* Published NPS benchmarks use this wording. If you change it, you can no longer compare your number with them, or with your own earlier rounds.
+
+## 2. Cut it down to two questions
+
+The template ends with a third question, *Any other comments, feedback, or concerns?*. Delete that block. Every extra question makes fewer people finish, and the reason question already gets you the comments.
+
+Then change the second question to **What is the main reason for your score?**. Asking for *the main* reason gets you one clear point per person, which is much easier to group later.
+
+While the survey is still a draft, give both questions readable codes in the question **Settings**: `nps` and `reason`. The codes are fixed once you activate the survey. See [Question codes](/surveys/analysis/question-codes).
+
+## 3. Give detractors their own ending
+
+Click **Add ending** and add a second ending card, for example:
+
+- **Headline:** Thank you for being honest
+- **Subheader:** Someone from our team will reach out within two business days.
+
+Only promise a reply you will actually send. Step 7 makes sure the right person hears about it.
+
+Now open the **Flow** tab. Under the **Reason** block, click **Add logic**, choose **Jump to** and build the rule *If `nps` is less than or equal to 6 → Thank you for being honest*. Everyone else goes on to the normal **Thank you!** ending.
+
+![The Flow tab: the Score and Reason blocks, a rule under Reason that sends nps less than or equal to 6 to the Thank you for being honest ending, and the two endings](/images/surveys/best-practices/nps-program/flow-detractor-rule.webp)
+
+Put the rule on the **Reason** block, not the Score block, so detractors still tell you why before they finish. The separate ending also lets a workflow tell detractors apart from everyone else. See [Flow Tab](/surveys/general-features/flow-tab) for how rules work.
+
+## 4. Know who answered
+
+An NPS answer you cannot tie to a customer is hard to act on. On the **Questions** tab, scroll down to **Embedded Data** and click **Add field**, then **Create new field**. Add two fields that are **Passed in**:
+
+| Name        | Key           |
+| ----------- | ------------- |
+| Customer ID | `customer_id` |
+| Plan        | `plan`        |
+
+![The Embedded Data card with the Customer ID and Plan fields, both passed in](/images/surveys/best-practices/nps-program/embedded-data.webp)
+
+The values arrive in the survey link, for example `?customer_id=C-10482&plan=Growth`. They are saved with the response, and you can filter by them later, for instance to compare plans. See [Hidden Fields](/surveys/general-features/hidden-fields).
+
+<Note>
+  Pass an ID, not a name or an email address, unless you need it. The fewer personal details you collect,
+  the less you have to protect.
+</Note>
+
+## 5. Send it on a fixed rhythm
+
+Click **Activate**, then **Distribute**. Copy the survey link from **Anonymous links**.
+
+![The Distribute dialog with the survey's link, Copy and Preview buttons](/images/surveys/best-practices/nps-program/share-link.webp)
+
+Paste the link into an email from your own email or CRM tool, and add the two fields with that tool's merge tags, for example `https://app.formbricks.com/s/<survey-id>?customer_id={{id}}&plan={{plan}}`. See [Data Prefilling](/surveys/link-surveys/data-prefilling) for passing values in a link.
+
+Three rules keep the numbers comparable from one round to the next:
+
+- **Same audience.** Send it to active customers who have used the product for at least a month. Brand-new signups rate your onboarding, not your product.
+- **Same timing.** Send every quarter, in the same week. A survey sent right after a price change or an outage measures that event.
+- **Same channel.** Changing from email to an in-app pop-up changes who answers, and so changes the score.
+
+Keep the survey running. You can reuse the same link every quarter and compare rounds by date.
+
+<Tip>
+  Prefer to ask inside your product? Distribute the survey as **Dynamic (Pop-up)** instead and set it to
+  show at most once per quarter under **Settings → Display & Recontact**. See
+  [Recontact Options](/surveys/website-app-surveys/recontact). Pick one channel and stay with it.
+</Tip>
+
+## 6. Read the score
+
+Open the survey's **Summary**. The NPS question shows how many people are promoters, passives and detractors, and the score on a gauge from −100 to 100.
+
+![The NPS summary: 52% promoters, 26% passives, 22% detractors and a score of 30 on the gauge](/images/surveys/best-practices/nps-program/nps-summary.webp)
+
+Two ways to read it:
+
+- **Watch the trend, not the number.** Benchmarks differ a lot between industries. Your own score going from 22 to 30 tells you more than how 30 compares with another company.
+- **Count your responses.** With 40 responses, a single detractor who becomes a promoter moves the score by 5 points. Don't react to small changes in a small round.
+
+Click **Detractors** to filter the whole summary to them. The reason question now shows only what unhappy customers wrote.
+
+![The summary filtered to detractors: the reasons they gave, and the Customer ID of each response](/images/surveys/best-practices/nps-program/detractor-reasons.webp)
+
+Read every reason and group them into a few themes, such as support speed, performance or price. Do the same for passives. They are the easiest to turn into promoters.
+
+## 7. Reply to every detractor
+
+A detractor who gets a personal reply within days often changes their mind. One who hears nothing usually doesn't. Let Formbricks tell your team as soon as one answers.
+
+<Note>
+  Workflows are in Beta and part of the [Enterprise Edition](/self-hosting/advanced/license). Without them,
+  send new responses to a channel with the [Slack integration](/platform/features/integrations/slack), or
+  check the Detractors filter every few days.
+</Note>
+
+Open **Workflows**, click **New workflow** and name it, for example *Alert CS about detractors*. Add the **Response completed** trigger, choose your NPS survey and, under **Ending cards**, pick **Specific endings** and select **Thank you for being honest**.
+
+![The Response completed trigger set to the NPS survey and only the Thank you for being honest ending](/images/surveys/best-practices/nps-program/workflow-trigger.webp)
+
+Add a **Send email** action. Send it to the person who owns the follow-up, write a short subject and body, and turn on **Attach response data** so the email includes the score, the reason and the customer ID.
+
+![The Send email action: recipient, subject, body and Attach response data turned on](/images/surveys/best-practices/nps-program/workflow-email.webp)
+
+Open the status menu and click **Enable**. See [Build a workflow](/workflows/build) for every option.
+
+## 8. Make it a routine
+
+| When                     | What                                                                    |
+| ------------------------ | ----------------------------------------------------------------------- |
+| Within 2 business days   | Reply to each detractor personally.                                     |
+| End of each round        | Note the score and response count. Group the reasons into themes.       |
+| After each round         | Pick the biggest theme and fix it. Tell customers what you changed.     |
+| Next quarter             | Send the same survey, to the same audience, the same way.               |
+
+The last two steps are what make customers answer next time. If people see that their feedback led to a change, they keep giving it.
