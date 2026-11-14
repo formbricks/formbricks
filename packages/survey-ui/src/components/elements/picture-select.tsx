@@ -1,7 +1,9 @@
+import { Maximize2 } from "lucide-react";
 import * as React from "react";
 import { Checkbox } from "@/components/general/checkbox";
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
+import { ImageLightbox } from "@/components/general/image-lightbox";
 import { FB_PART } from "@/lib/parts";
 import { useRovingRadioGroup } from "@/lib/use-roving-radio-group";
 import { cn } from "@/lib/utils";
@@ -51,6 +53,35 @@ interface PictureSelectProps {
   imageAltText?: string;
   /** Video URL to display above the headline */
   videoUrl?: string;
+  /** Accessible name of an option's enlarge button, given the option's alt text */
+  getEnlargeImageLabel?: (alt: string) => string;
+  /** Accessible name of the enlarged view's close button */
+  closeLabel?: string;
+}
+
+const defaultEnlargeImageLabel = (alt: string): string => `Enlarge ${alt}`;
+
+interface EnlargeImageButtonProps {
+  label: string;
+  onClick: () => void;
+}
+
+/**
+ * Opens an option's picture in the lightbox. It sits next to the option's `<label>`, never inside it:
+ * a button inside the label would also toggle the option (and, for single select, could auto-progress).
+ * Always visible rather than revealed on hover, so touch and keyboard users can find it too.
+ */
+function EnlargeImageButton({ label, onClick }: Readonly<EnlargeImageButtonProps>): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      className="absolute end-[5%] bottom-[5%] flex size-7 cursor-pointer items-center justify-center rounded-md border-0 bg-slate-800/60 p-0 text-white backdrop-blur-sm transition-colors hover:bg-slate-800/80 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-800 focus-visible:outline-none">
+      <Maximize2 aria-hidden="true" className="size-4" />
+    </button>
+  );
 }
 
 function PictureSelect({
@@ -70,8 +101,13 @@ function PictureSelect({
   imageUrl,
   imageAltText,
   videoUrl,
+  getEnlargeImageLabel = defaultEnlargeImageLabel,
+  closeLabel,
 }: Readonly<PictureSelectProps>): React.JSX.Element {
   const errorAria = getElementErrorAria(inputId, errorMessage);
+  const [enlargedOptionId, setEnlargedOptionId] = React.useState<string | null>(null);
+  const enlargedOption = options.find((option) => option.id === enlargedOptionId);
+  const getOptionAlt = (option: PictureSelectOption): string => option.alt ?? `Option ${option.id}`;
 
   // Ensure value is always the correct type
   let selectedValues: string[] | string | undefined;
@@ -136,47 +172,54 @@ function PictureSelect({
               const optionId = `${inputId}-${option.id}`;
 
               return (
-                <label
-                  key={option.id}
-                  htmlFor={optionId}
-                  data-fb-part={FB_PART.option}
-                  data-checked={isSelected ? "true" : undefined}
-                  className={cn(
-                    "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
-                    disabled && "cursor-not-allowed opacity-50"
-                  )}>
-                  {/* Image container with border when selected */}
-                  <div
+                <div key={option.id} className="relative">
+                  <label
+                    htmlFor={optionId}
+                    data-fb-part={FB_PART.option}
+                    data-checked={isSelected ? "true" : undefined}
                     className={cn(
-                      "rounded-option absolute inset-[2px] overflow-hidden",
-                      isSelected && "border-brand border-4 border-solid"
+                      "rounded-option relative block aspect-[162/97] w-full cursor-pointer transition-all",
+                      disabled && "cursor-not-allowed opacity-50"
                     )}>
-                    <img
-                      src={option.imageUrl}
-                      alt={option.alt ?? `Option ${option.id}`}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                  {/* Selection indicator - Checkbox for multi select */}
-                  <div
-                    className="absolute top-[5%] right-[5%]"
-                    onPointerDown={(e) => {
-                      e.stopPropagation();
-                    }}>
-                    <Checkbox
-                      id={optionId}
-                      data-fb-part={FB_PART.optionControl}
-                      checked={isSelected}
-                      onCheckedChange={(checked) => {
-                        handleMultiSelectChange(option.id, checked === true);
-                      }}
-                      disabled={disabled}
-                      className="h-4 w-4"
-                      aria-label={option.alt ?? `Select ${option.id}`}
-                    />
-                  </div>
-                </label>
+                    {/* Image container with border when selected */}
+                    <div
+                      className={cn(
+                        "rounded-option absolute inset-[2px] overflow-hidden",
+                        isSelected && "border-brand border-4 border-solid"
+                      )}>
+                      <img
+                        src={option.imageUrl}
+                        alt={getOptionAlt(option)}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    {/* Selection indicator - Checkbox for multi select */}
+                    <div
+                      className="absolute top-[5%] right-[5%]"
+                      onPointerDown={(e) => {
+                        e.stopPropagation();
+                      }}>
+                      <Checkbox
+                        id={optionId}
+                        data-fb-part={FB_PART.optionControl}
+                        checked={isSelected}
+                        onCheckedChange={(checked) => {
+                          handleMultiSelectChange(option.id, checked === true);
+                        }}
+                        disabled={disabled}
+                        className="h-4 w-4"
+                        aria-label={option.alt ?? `Select ${option.id}`}
+                      />
+                    </div>
+                  </label>
+                  <EnlargeImageButton
+                    label={getEnlargeImageLabel(getOptionAlt(option))}
+                    onClick={() => {
+                      setEnlargedOptionId(option.id);
+                    }}
+                  />
+                </div>
               );
             })}
           </fieldset>
@@ -196,63 +239,78 @@ function PictureSelect({
               const isSelected = selectedValues === option.id;
 
               return (
-                <label
-                  key={option.id}
-                  htmlFor={optionId}
-                  data-fb-part={FB_PART.option}
-                  data-checked={isSelected ? "true" : undefined}
-                  className={cn(
-                    "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
-                    disabled && "cursor-not-allowed opacity-50"
-                  )}>
-                  <input
-                    type="radio"
-                    id={optionId}
-                    name={inputId}
-                    value={option.id}
-                    checked={isSelected}
-                    disabled={disabled}
-                    className="peer sr-only"
-                    aria-label={option.alt ?? `Select ${option.id}`}
-                    onChange={() => {
-                      handleSingleSelectChange(option.id);
-                    }}
-                    {...getRadioProps(option.id)}
-                  />
-                  {/* Image container with border when selected */}
-                  <div
+                <div key={option.id} className="relative">
+                  <label
+                    htmlFor={optionId}
+                    data-fb-part={FB_PART.option}
+                    data-checked={isSelected ? "true" : undefined}
                     className={cn(
-                      "rounded-option absolute inset-[2px] overflow-hidden",
-                      isSelected && "border-brand border-4 border-solid"
+                      "rounded-option relative block aspect-[162/97] w-full cursor-pointer transition-all",
+                      disabled && "cursor-not-allowed opacity-50"
                     )}>
-                    <img
-                      src={option.imageUrl}
-                      alt={option.alt ?? `Option ${option.id}`}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
+                    <input
+                      type="radio"
+                      id={optionId}
+                      name={inputId}
+                      value={option.id}
+                      checked={isSelected}
+                      disabled={disabled}
+                      className="peer sr-only"
+                      aria-label={option.alt ?? `Select ${option.id}`}
+                      onChange={() => {
+                        handleSingleSelectChange(option.id);
+                      }}
+                      {...getRadioProps(option.id)}
                     />
-                  </div>
-                  {/* Selection indicator dot, painted from the hidden input's state */}
-                  <span
-                    aria-hidden="true"
-                    data-fb-part={FB_PART.optionControl}
-                    className={cn(
-                      "border-input-border dark:bg-input-bg absolute top-[5%] right-[5%] flex size-4 items-center justify-center rounded-full border bg-white shadow-xs transition-colors",
-                      isSelected && "border-brand"
-                    )}>
-                    <span
+                    {/* Image container with border when selected */}
+                    <div
                       className={cn(
-                        "size-2 rounded-full transition-colors",
-                        isSelected ? "bg-brand" : "bg-transparent"
-                      )}
-                    />
-                  </span>
-                </label>
+                        "rounded-option absolute inset-[2px] overflow-hidden",
+                        isSelected && "border-brand border-4 border-solid"
+                      )}>
+                      <img
+                        src={option.imageUrl}
+                        alt={getOptionAlt(option)}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                    {/* Selection indicator dot, painted from the hidden input's state */}
+                    <span
+                      aria-hidden="true"
+                      data-fb-part={FB_PART.optionControl}
+                      className={cn(
+                        "border-input-border dark:bg-input-bg absolute top-[5%] right-[5%] flex size-4 items-center justify-center rounded-full border bg-white shadow-xs transition-colors",
+                        isSelected && "border-brand"
+                      )}>
+                      <span
+                        className={cn(
+                          "size-2 rounded-full transition-colors",
+                          isSelected ? "bg-brand" : "bg-transparent"
+                        )}
+                      />
+                    </span>
+                  </label>
+                  <EnlargeImageButton
+                    label={getEnlargeImageLabel(getOptionAlt(option))}
+                    onClick={() => {
+                      setEnlargedOptionId(option.id);
+                    }}
+                  />
+                </div>
               );
             })}
           </div>
         )}
       </div>
+      <ImageLightbox
+        imageUrl={enlargedOption?.imageUrl ?? null}
+        alt={enlargedOption ? getOptionAlt(enlargedOption) : ""}
+        onClose={() => {
+          setEnlargedOptionId(null);
+        }}
+        closeLabel={closeLabel}
+      />
     </div>
   );
 }
