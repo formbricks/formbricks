@@ -7,7 +7,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { z } from "zod";
 import { TActionClass, TActionClassInput } from "@formbricks/types/action-classes";
 import {
-  createActionClassZodResolver,
   useActionClassKeys,
   validateActionKeyUniqueness,
   validateActionNameUniqueness,
@@ -372,25 +371,6 @@ describe("action-utils", () => {
         path: ["noCodeConfig", "urlFilters", 1, "value"],
         message: "Invalid regex pattern",
       });
-    });
-  });
-
-  describe("createActionClassZodResolver", () => {
-    test("should return a zodResolver function", () => {
-      const resolver = createActionClassZodResolver([], [], mockT);
-      expect(typeof resolver).toBe("function");
-    });
-
-    test("should create resolver with correct parameters", () => {
-      const testResolver = createActionClassZodResolver(["testAction"], ["testKey"], mockT);
-      expect(testResolver).toBeDefined();
-      expect(typeof testResolver).toBe("function");
-    });
-
-    test("should handle empty arrays", () => {
-      const emptyResolver = createActionClassZodResolver([], [], mockT);
-      expect(emptyResolver).toBeDefined();
-      expect(typeof emptyResolver).toBe("function");
     });
   });
 
