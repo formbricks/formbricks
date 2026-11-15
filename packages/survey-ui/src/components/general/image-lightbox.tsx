@@ -85,7 +85,7 @@ function ImageLightbox({
         if (event.target === event.currentTarget) onClose();
       }}
       className={cn(
-        "fixed inset-0 m-0 hidden h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-transparent p-4 open:flex sm:p-8",
+        "fixed inset-0 m-0 hidden h-full max-h-none w-full max-w-none items-center justify-center border-0 bg-transparent px-4 pt-16 pb-4 open:flex sm:px-8 sm:pb-8",
         // A literal colour: `::backdrop` only inherits custom properties in recent browsers, so a
         // var()-based colour would leave the overlay transparent in older ones.
         "backdrop:bg-[rgb(0_0_0/0.8)]"
