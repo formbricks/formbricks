@@ -433,7 +433,6 @@ describe("editMcpGrant", () => {
       clientId: CLIENT_ID,
       expectedUpdatedAt: OPENED_AT,
       permissions: {},
-      expectedUpdatedAt: OPENED_AT,
       isDashboardViewer: false,
     });
 
@@ -467,7 +466,6 @@ describe("editMcpGrant", () => {
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
         permissions: {},
-        expectedUpdatedAt: OPENED_AT,
         isDashboardViewer: false,
       })
     ).resolves.toEqual({ status: "not_found" });
@@ -483,7 +481,6 @@ describe("editMcpGrant", () => {
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
         permissions: {},
-        expectedUpdatedAt: OPENED_AT,
         isDashboardViewer: false,
       })
     ).resolves.toEqual({ status: "not_found" });
@@ -495,7 +492,6 @@ describe("editMcpGrant", () => {
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
         permissions: {},
-        expectedUpdatedAt: OPENED_AT,
         isDashboardViewer: false,
       })
     ).resolves.toEqual({ status: "not_found" });
@@ -574,7 +570,6 @@ describe("editMcpGrant", () => {
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
         permissions: {},
-        expectedUpdatedAt: OPENED_AT,
         isDashboardViewer: false,
       })
     ).rejects.toBe(failure);
