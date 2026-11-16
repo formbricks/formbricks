@@ -300,6 +300,7 @@ const PayloadJsonEditor = ({
         allowEmpty
         placeholder='{ "customer": { "email": "jane@example.com" } }'
       />
+      <p className="mt-1.5 text-xs text-slate-500">{t("workspace.workflows.webhook_payload_json_hint")}</p>
       {reason && reason !== "invalid_json" ? (
         <WorkflowFieldError id="workflow-webhook-payload-error">
           {pasteErrorMessage(reason)}

@@ -6170,7 +6170,7 @@ checksums:
     workspace/workflows/webhook_call_use_instead: e628c07977e53e55ee8cca29c2788647
     workspace/workflows/webhook_curl_copied: 4c6de0e3e32b61db78b0bebcac36b1e7
     workspace/workflows/webhook_curl_copy: aa6fe3fad72a9096784605d692a6c03e
-    workspace/workflows/webhook_expected_payload: 7d9eeffdd5b7691d176715725faa419c
+    workspace/workflows/webhook_expected_payload: 6a8c8c74ad8a4279271cd04be30a5aa1
     workspace/workflows/webhook_expected_payload_inferred: 4aaf486a72d39584a08c25f70ff998a0
     workspace/workflows/webhook_expected_payload_owned: d9fa5639f5bc4716e82f520c0b2920cf
     workspace/workflows/webhook_expected_payload_required: 0113300bde29ddc6a4889c497477985a
@@ -6181,6 +6181,7 @@ checksums:
     workspace/workflows/webhook_paste_null_byte: 1e6bbc968db6a1f1220bb828eeae048a
     workspace/workflows/webhook_paste_too_deep: 2c0ce252af522b743e8a8bef1ca072f7
     workspace/workflows/webhook_paste_too_large: 75a35f577f91a3751b232fe3ceacb3eb
+    workspace/workflows/webhook_payload_json_hint: 0dce52eee5d8cbafe70292228420773f
     workspace/workflows/webhook_payload_no_variables: 36b1303d8aa58370fe26362f8c6de353
     workspace/workflows/webhook_payload_save_failed: 1411cd073b4991d968ec6fde9f6e8d94
     workspace/workflows/webhook_payload_saving: ee98ff32f9a585a9108c8cd961d6077e
