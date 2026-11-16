@@ -41,6 +41,9 @@ type TScopeGate =
       };
     };
 
+/** A tool's declared permissions in the shape of `TScopeGate`, as `permission:level`. */
+type TDeclaredGate = TScopeGate;
+
 /** The scope gate of every tool before ENG-7148, in registration order. */
 const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   list_surveys: ["surveys:read"],
@@ -140,7 +143,14 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   },
   list_chart_field_values: ["dashboards:read", "feedbackRecords:read"],
   list_dashboards: ["dashboards:read"],
-  get_dashboard: ["dashboards:read"],
+  get_dashboard: {
+    byInput: {
+      viewerWithDashboard: ["dashboards:read"],
+      viewerNoDashboard: ["dashboards:read"],
+      otherWithDashboard: ["dashboards:read"],
+      otherNoDashboard: ["dashboards:read"],
+    },
+  },
   create_dashboard: ["dashboards:write"],
   update_dashboard: ["dashboards:write"],
   duplicate_dashboard: ["dashboards:write"],
@@ -149,7 +159,14 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   remove_chart_from_dashboard: ["dashboards:write"],
   update_dashboard_layout: ["dashboards:write"],
   set_dashboard_filters: ["dashboards:write"],
-  duplicate_chart: ["dashboards:write"],
+  duplicate_chart: {
+    byInput: {
+      viewerWithDashboard: ["dashboards:write"],
+      viewerNoDashboard: ["dashboards:write"],
+      otherWithDashboard: ["dashboards:write"],
+      otherNoDashboard: ["dashboards:write"],
+    },
+  },
   list_tags: ["responses:read"],
   update_tag: ["responses:write"],
   merge_tags: ["responses:write"],
@@ -159,6 +176,149 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   list_contact_attribute_values: ["audience:read"],
   list_segments: ["audience:read"],
   list_action_classes: ["audience:read"],
+};
+
+/**
+ * Every tool's declared permissions, exactly, as `permission:level`. The scope table above can't tell two
+ * permissions of one scope family apart (Tags and Responses both map to `responses:*`), so a tool moved to
+ * the wrong permission of its family would still pass it; this one fails.
+ */
+const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
+  list_surveys: ["surveys:read"],
+  get_survey: ["surveys:read"],
+  create_survey: ["surveys:write"],
+  generate_survey: ["surveys:write"],
+  validate_survey: ["surveys:read"],
+  patch_survey: ["surveys:write"],
+  edit_survey_blocks: ["surveys:write"],
+  set_survey_block_order: ["surveys:write"],
+  delete_survey: ["surveys:write"],
+  list_workflows: ["workflows:read"],
+  get_workflow: ["workflows:read"],
+  list_workflow_runs: ["workflowRuns:read"],
+  get_workflow_run: ["workflowRuns:read"],
+  test_workflow: ["workflows:read"],
+  create_workflow: ["workflows:write"],
+  patch_workflow: ["workflows:write"],
+  duplicate_workflow: ["workflows:write"],
+  delete_workflow: ["workflows:write"],
+  enable_workflow: ["workflows:write"],
+  disable_workflow: ["workflows:write"],
+  archive_workflow: ["workflows:write"],
+  unarchive_workflow: ["workflows:write"],
+  list_workspaces: {
+    anyOf: [
+      "surveys:read",
+      "creatives:read",
+      "surveyStyling:read",
+      "responses:read",
+      "tags:read",
+      "workflows:read",
+      "workflowRuns:read",
+      "charts:read",
+      "dashboards:read",
+      "feedbackRecords:read",
+      "feedbackDatasets:read",
+      "contacts:read",
+      "contactAttributes:read",
+      "segments:read",
+      "actionClasses:read",
+    ],
+  },
+  get_workspace_custom_css: ["surveyStyling:read"],
+  patch_workspace_custom_css: ["surveyStyling:write"],
+  list_feedback_datasets: ["feedbackDatasets:read"],
+  list_feedback_records: ["feedbackRecords:read"],
+  count_feedback_records: ["feedbackRecords:read"],
+  get_feedback_record: ["feedbackRecords:read"],
+  create_feedback_record: ["feedbackRecords:write"],
+  create_feedback_records: ["feedbackRecords:write"],
+  update_feedback_record: ["feedbackRecords:write"],
+  delete_feedback_record: ["feedbackRecords:write"],
+  search_feedback_records: ["feedbackRecords:read"],
+  find_similar_feedback_records: ["feedbackRecords:read"],
+  list_responses: ["responses:read"],
+  count_responses: ["responses:read"],
+  get_response: ["responses:read"],
+  validate_response: ["responses:write"],
+  create_response: ["responses:write"],
+  update_response: ["responses:write"],
+  set_responses_outcome: ["responses:write"],
+  delete_response: ["responses:write"],
+  batch_delete_responses: ["responses:write"],
+  list_creatives: ["creatives:read"],
+  get_creative: ["creatives:read"],
+  get_creative_stats: ["creatives:read"],
+  create_creative: ["creatives:write"],
+  patch_creative: ["creatives:write"],
+  delete_creative: ["creatives:write"],
+  duplicate_creative: ["creatives:write"],
+  archive_creative: ["creatives:write"],
+  restore_creative: ["creatives:write"],
+  list_chart_fields: ["charts:read", "feedbackRecords:read"],
+  list_charts: ["charts:read", "feedbackRecords:read"],
+  get_chart: ["charts:read", "feedbackRecords:read"],
+  preview_chart: ["charts:read", "feedbackRecords:read"],
+  create_chart: ["charts:write"],
+  update_chart: ["charts:write"],
+  get_chart_data: {
+    byInput: {
+      viewerWithDashboard: ["dashboards:read"],
+      viewerNoDashboard: ["charts:read", "feedbackRecords:read"],
+      otherWithDashboard: ["charts:read", "feedbackRecords:read"],
+      otherNoDashboard: ["charts:read", "feedbackRecords:read"],
+    },
+  },
+  list_dashboard_filter_fields: {
+    byInput: {
+      viewerWithDashboard: ["dashboards:read"],
+      viewerNoDashboard: ["dashboards:read"],
+      otherWithDashboard: ["dashboards:read", "feedbackRecords:read"],
+      otherNoDashboard: ["dashboards:read", "feedbackRecords:read"],
+    },
+  },
+  list_dashboard_filter_values: {
+    byInput: {
+      viewerWithDashboard: ["dashboards:read"],
+      viewerNoDashboard: ["dashboards:read"],
+      otherWithDashboard: ["dashboards:read", "feedbackRecords:read"],
+      otherNoDashboard: ["dashboards:read", "feedbackRecords:read"],
+    },
+  },
+  list_chart_field_values: ["charts:read", "feedbackRecords:read"],
+  list_dashboards: ["dashboards:read"],
+  get_dashboard: {
+    byInput: {
+      viewerWithDashboard: ["dashboards:read"],
+      viewerNoDashboard: ["dashboards:read"],
+      otherWithDashboard: ["dashboards:read", "charts:read"],
+      otherNoDashboard: ["dashboards:read", "charts:read"],
+    },
+  },
+  create_dashboard: ["dashboards:write"],
+  update_dashboard: ["dashboards:write"],
+  duplicate_dashboard: ["dashboards:write"],
+  add_chart_to_dashboard: ["dashboards:write"],
+  update_widget: ["dashboards:write"],
+  remove_chart_from_dashboard: ["dashboards:write"],
+  update_dashboard_layout: ["dashboards:write"],
+  set_dashboard_filters: ["dashboards:write"],
+  duplicate_chart: {
+    byInput: {
+      viewerWithDashboard: ["charts:write", "dashboards:write"],
+      viewerNoDashboard: ["charts:write"],
+      otherWithDashboard: ["charts:write", "dashboards:write"],
+      otherNoDashboard: ["charts:write"],
+    },
+  },
+  list_tags: ["tags:read"],
+  update_tag: ["tags:write"],
+  merge_tags: ["tags:write"],
+  list_contacts: ["contacts:read", "contactAttributes:read"],
+  list_contact_attribute_keys: ["contactAttributes:read"],
+  list_contact_attribute_values: ["contactAttributes:read"],
+  list_segments: ["segments:read", "contactAttributes:read"],
+  list_action_classes: ["actionClasses:read"],
 };
 
 const VIEWER = { extra: { dashboardViewerOnly: true } } as unknown as AuthInfo;
@@ -181,6 +341,24 @@ const toScopeGate = (permissions: TDeclared): TScopeGate => {
     };
   }
   return toScopes(permissions);
+};
+
+const toPermissionNames = (requirements: readonly TMcpPermissionRequirement[]): string[] =>
+  requirements.map(({ permission, level }) => `${permission}:${level}`);
+
+const toDeclaredGate = (permissions: TDeclared): TDeclaredGate => {
+  if ("anyOf" in permissions) return { anyOf: toPermissionNames(permissions.anyOf) };
+  if ("byInput" in permissions) {
+    return {
+      byInput: {
+        viewerWithDashboard: toPermissionNames(permissions.byInput({ dashboardId: "d" }, VIEWER)),
+        viewerNoDashboard: toPermissionNames(permissions.byInput({}, VIEWER)),
+        otherWithDashboard: toPermissionNames(permissions.byInput({ dashboardId: "d" }, NOT_VIEWER)),
+        otherNoDashboard: toPermissionNames(permissions.byInput({}, NOT_VIEWER)),
+      },
+    };
+  }
+  return toPermissionNames(permissions);
 };
 
 const loadRegistrations = async () => {
@@ -215,6 +393,14 @@ describe("MCP tool permissions", () => {
     expect(
       Object.fromEntries(tools.map(({ name, permissions }) => [name, toScopeGate(permissions)]))
     ).toEqual(SCOPES_BEFORE_PERMISSIONS);
+  });
+
+  test("declare exactly the permissions each tool needs", { timeout: 120_000 }, async () => {
+    const tools = await loadRegistrations();
+
+    expect(
+      Object.fromEntries(tools.map(({ name, permissions }) => [name, toDeclaredGate(permissions)]))
+    ).toEqual(DECLARED_PERMISSIONS);
   });
 
   test("chart reads declare both Charts and Feedback records", { timeout: 120_000 }, async () => {

@@ -453,7 +453,18 @@ export function registerDashboardTools(server: McpServer): void {
       outputSchema: ZMcpDashboardOutput,
       annotations: READ_ANNOTATIONS,
     },
-    [{ permission: "dashboards", level: "read" }],
+    // Each widget carries its whole chart, so the dashboard's charts need Charts: Read too. The exception
+    // is a Dashboard viewer (ADR-0025), whose token is trimmed to `dashboards:read` and who reads a
+    // dashboard as it shows, charts included, as `get_chart_data` through a dashboard allows.
+    {
+      byInput: (_input, authInfo) =>
+        isMcpDashboardViewerOnly(authInfo)
+          ? [{ permission: "dashboards", level: "read" }]
+          : [
+              { permission: "dashboards", level: "read" },
+              { permission: "charts", level: "read" },
+            ],
+    },
     async ({ dashboardId }: TMcpDashboardIdInput, ctx) => {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(
@@ -633,7 +644,17 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "created", targetType: "chart" },
       annotations: WRITE_ANNOTATIONS,
     },
-    [{ permission: "charts", level: "write" }],
+    // With a dashboardId the copy is also added to that dashboard, which is what `add_chart_to_dashboard`
+    // needs Dashboards: Write for.
+    {
+      byInput: (input) =>
+        hasDashboardId(input)
+          ? [
+              { permission: "charts", level: "write" },
+              { permission: "dashboards", level: "write" },
+            ]
+          : [{ permission: "charts", level: "write" }],
+    },
     async ({ chartId, ...body }: TMcpDuplicateChartInput, ctx) =>
       runMutation(ctx, "created", "chart", (context) => duplicateV3Chart({ chartId, body, ...context }))
   );
