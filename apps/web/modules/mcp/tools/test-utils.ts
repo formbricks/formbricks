@@ -85,3 +85,21 @@ export const callToolOverHttp = async ({
 /** The text of a tool result's content blocks, which is where a tool error's message lands. */
 export const errorText = (outcome: ToolCallOutcome) =>
   outcome.result?.content?.map((block) => block.text ?? "").join("") ?? "";
+
+/**
+ * A `tools/call` context for a person's OAuth token on a client that declared the `elicitation`
+ * capability: the case where the user can be asked, so the model's own `confirm: true` must not count.
+ */
+export const elicitingOAuthContext = (authInfo: { extra: Record<string, unknown> }) => ({
+  http: {
+    authInfo: {
+      ...authInfo,
+      token: "oauth:user_1:client_1",
+      extra: { ...authInfo.extra, authMethod: "oauth" },
+    },
+  },
+  mcpReq: {
+    method: "tools/call",
+    envelope: { "io.modelcontextprotocol/clientCapabilities": { elicitation: { form: {} } } },
+  },
+});

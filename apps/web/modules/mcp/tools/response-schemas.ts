@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZV3ResponseListItem, ZV3ResponseResource } from "@/app/api/v3/responses/lib/resources";
 import { RESPONSE_IDS_UNIQUE_MESSAGE, hasUniqueItems } from "@/app/api/v3/responses/lib/schemas";
+import { confirmArgument } from "./confirm-argument";
 import { mcpToolOutput } from "./output-schemas";
 
 /**
@@ -86,21 +87,6 @@ export type TMcpCountResponsesInput = z.infer<typeof ZMcpCountResponsesInput>;
 
 export const ZMcpGetResponseInput = z.object({ responseId: ZId.describe("Response to read.") }).strict();
 export type TMcpGetResponseInput = z.infer<typeof ZMcpGetResponseInput>;
-
-/**
- * `confirm` is how a caller says the user already agreed.
- *
- * It exists because elicitation does not reach every client: a 2025-era connection and a headless
- * caller have no way to answer a prompt, and without an in-band form the tool would be unusable for
- * them. Declared as a normal argument rather than hidden, so a model can see that confirming is a
- * step and that skipping it is a choice.
- */
-const confirmArgument = z
-  .boolean()
-  .optional()
-  .describe(
-    "Set true only when the user has already agreed to this deletion, or when your client cannot answer confirmation prompts. Omit it to be asked."
-  );
 
 export const ZMcpDeleteResponseInput = z
   .object({

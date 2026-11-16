@@ -358,6 +358,19 @@ describe("delete confirmation", () => {
     expect(result.resultType).toBeUndefined();
   });
 
+  test("a model-asserted confirm does not delete when the client can ask the user", async () => {
+    const result = await call(
+      "delete_response",
+      { responseId: RESPONSE_ID, confirm: true },
+      callContext({
+        envelope: { "io.modelcontextprotocol/clientCapabilities": { elicitation: { form: {} } } },
+      })
+    );
+
+    expect(deleteV3Response).not.toHaveBeenCalled();
+    expect(result.resultType).toBe("input_required");
+  });
+
   test("a declined prompt deletes nothing and is not reported as a failure", async () => {
     const result = await call(
       "delete_response",

@@ -24,13 +24,17 @@ import {
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { registerFeedbackRecordTools } from "./feedback-records";
 import { ZMcpUpdateFeedbackRecordInput } from "./schemas";
-import { type ToolCallEra, callToolOverHttp, errorText } from "./test-utils";
+import { type ToolCallEra, callToolOverHttp, elicitingOAuthContext, errorText } from "./test-utils";
 
 // Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
 // itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
 // invariant that matters is that the audit apiUrl is absolute, because the audit schema validates it
 // with z.url() and drops the whole event otherwise.
 const ABSOLUTE_MCP_AUDIT_URL = expect.stringMatching(/^https?:\/\/[^/]+\/api\/mcp$/);
+
+// vitestSetup stubs createHash, which the sealed confirmation state depends on.
+vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
+vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
 
 vi.mock("@/app/api/v3/feedbackRecords/lib/operations", () => ({
   countV3FeedbackRecords: vi.fn(),
@@ -512,7 +516,7 @@ describe("create_feedback_record", () => {
 });
 
 describe("delete_feedback_record", () => {
-  const input = { workspaceId, feedbackRecordId: recordId, datasetId: directoryId };
+  const input = { workspaceId, feedbackRecordId: recordId, datasetId: directoryId, confirm: true };
 
   test("delegates to deleteV3FeedbackRecord and audits the deletion as a success", async () => {
     const auditLog = { status: "failure" } as any;
@@ -897,5 +901,31 @@ describe("every feedback-record tool is gated on its own scope", () => {
     expect((result.structuredContent as { error: { detail: string } }).error.detail).toBe(
       `OAuth token does not include the required MCP scope: feedbackRecords:${kind}`
     );
+  });
+});
+
+describe("delete_feedback_record confirmation", () => {
+  const input = { workspaceId, feedbackRecordId: recordId, datasetId: directoryId };
+
+  test("asks the user instead of deleting when called without confirm", async () => {
+    const { tools } = createToolServer();
+
+    const result = (await tools
+      .get("delete_feedback_record")!
+      .handler(input, { http: { authInfo } })) as Record<string, unknown>;
+
+    expect(result.resultType).toBe("input_required");
+    expect(deleteV3FeedbackRecord).not.toHaveBeenCalled();
+  });
+
+  test("a model-asserted confirm does not delete when the client can ask the user", async () => {
+    const { tools } = createToolServer();
+
+    const result = (await tools
+      .get("delete_feedback_record")!
+      .handler({ ...input, confirm: true }, elicitingOAuthContext(authInfo))) as Record<string, unknown>;
+
+    expect(result.resultType).toBe("input_required");
+    expect(deleteV3FeedbackRecord).not.toHaveBeenCalled();
   });
 });

@@ -9,6 +9,7 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflows/lib/context";
+import { elicitingOAuthContext } from "./test-utils";
 import {
   buildListWorkflowRunsSearchParams,
   buildListWorkflowsSearchParams,
@@ -23,6 +24,10 @@ type ZodObjectLike = { description?: string; safeParse: (value: unknown) => { su
 // invariant that matters is that the audit apiUrl is absolute, because the audit schema validates it
 // with z.url() and drops the whole event otherwise.
 const ABSOLUTE_MCP_AUDIT_URL = expect.stringMatching(/^https?:\/\/[^/]+\/api\/mcp$/);
+
+// vitestSetup stubs createHash, which the sealed confirmation state depends on.
+vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
+vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
 
 vi.mock("@/app/api/v3/workflows/lib/context", () => ({
   buildWorkflowApiContext: vi.fn(() => ({ __ctx: true })),
@@ -344,7 +349,7 @@ describe("registerWorkflowTools", () => {
 
     const result = await tools
       .get("delete_workflow")!
-      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo } });
+      .handler({ workflowId: WORKFLOW_ID, confirm: true }, { http: { authInfo } });
 
     expect(buildV3AuditLog).toHaveBeenCalledWith(apiKeyAuth, "deleted", "workflow", ABSOLUTE_MCP_AUDIT_URL);
     expect(auditLog.status).toBe("success");
@@ -624,5 +629,32 @@ describe("create_workflow advertised input schema", () => {
     // validation failures — and so would have passed with strictness removed entirely.
     expect(schema.safeParse(VALID_CREATE_WORKFLOW_INPUT).success).toBe(true);
     expect(schema.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, bogus: 1 }).success).toBe(false);
+  });
+});
+
+describe("delete_workflow confirmation", () => {
+  const input = { workflowId: WORKFLOW_ID };
+
+  test("asks the user instead of deleting when called without confirm", async () => {
+    const { tools } = createToolServer();
+
+    const result = (await tools.get("delete_workflow")!.handler(input, { http: { authInfo } })) as Record<
+      string,
+      unknown
+    >;
+
+    expect(result.resultType).toBe("input_required");
+    expect(workflowsHandlers.delete).not.toHaveBeenCalled();
+  });
+
+  test("a model-asserted confirm does not delete when the client can ask the user", async () => {
+    const { tools } = createToolServer();
+
+    const result = (await tools
+      .get("delete_workflow")!
+      .handler({ ...input, confirm: true }, elicitingOAuthContext(authInfo))) as Record<string, unknown>;
+
+    expect(result.resultType).toBe("input_required");
+    expect(workflowsHandlers.delete).not.toHaveBeenCalled();
   });
 });

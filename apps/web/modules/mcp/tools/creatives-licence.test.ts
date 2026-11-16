@@ -150,7 +150,12 @@ const CALLS: { label: string; tool: string; input: Record<string, unknown>; wind
     input: { creativeId, data: { status: "completed" } },
     windDown: true,
   },
-  { label: "delete_creative", tool: "delete_creative", input: { creativeId }, windDown: true },
+  {
+    label: "delete_creative",
+    tool: "delete_creative",
+    input: { creativeId, confirm: true },
+    windDown: true,
+  },
   {
     label: "create_creative",
     tool: "create_creative",

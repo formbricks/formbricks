@@ -5,7 +5,7 @@ import { createMcpHandler } from "mcp-handler";
 import { logger } from "@formbricks/logger";
 import { instrumentMcpServerWithTracing } from "@/lib/posthog/mcp-tracing";
 import { getMcpAuthentication } from "./auth";
-import { MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./constants";
+import { MCP_SERVER_INSTRUCTIONS, MCP_SERVER_NAME, MCP_SERVER_VERSION } from "./constants";
 import { MCP_REQUEST_MAX_ELEMENTS } from "./request-budget";
 import { mcpRequestStateCodec } from "./request-state";
 import { registerCreativeTools } from "./tools/creatives";
@@ -79,6 +79,11 @@ export const MCP_HANDLER_OPTIONS = {
     version: MCP_SERVER_VERSION,
   },
   verboseLogs: false,
+  // Shown to the model once per session. Tool results carry text that third parties wrote (an anonymous
+  // respondent's answer, a feedback record, a contact attribute); this is the one place that tells the
+  // agent so, ahead of any tool description. Deletes are also guarded server-side (`mayAssertConfirm`),
+  // so this is the hint, not the control. docs/development/technical-handbook/ai-code.mdx.
+  instructions: MCP_SERVER_INSTRUCTIONS,
   // GHSA-46jr-4wx8-v453: SDK 2.3 leaves its pre-validation limit disabled unless configured.
   // The route also checks the combined budget across calls in a legacy batch.
   maxToolInputElements: MCP_REQUEST_MAX_ELEMENTS,
