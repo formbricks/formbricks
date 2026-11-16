@@ -3,7 +3,6 @@ import { prisma } from "@formbricks/database";
 import {
   type TSendWorkflowTestRequestInput,
   type TWorkflowDefinition,
-  type TWorkflowHttpHeader,
   type TWorkflowHttpRequestActionNode,
   type TWorkflowRunContext,
   type TWorkflowTestRequestParams,
@@ -11,6 +10,7 @@ import {
   WORKFLOW_SAMPLE_TRIGGER_SOURCE,
   ZWorkflowHttpRequestActionConfig,
   isDefaultSecretHeaderName,
+  resolveBoundWorkflowSecret,
 } from "@formbricks/workflows";
 import {
   WorkflowForbiddenError,
@@ -23,6 +23,7 @@ import { problemNotFound, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
+  type TWorkflowSecretResolver,
   buildWorkflowHttpCall,
   capRequestRecord,
   collectSentSecretValues,
@@ -83,14 +84,18 @@ const loadTestContext = async (
 };
 
 /**
- * Secret header values for this call: a value typed in the draft is used once and never stored; a
- * secret without one uses the saved secret of the same step and name. Secret ids come only from the
- * saved definition, never from the request (ADR 0043).
+ * Secret header values for a call to `requestUrl`: a value typed in the draft is used once and never
+ * stored, and goes wherever the draft points, since it is the caller's own. A secret without one uses
+ * the saved secret of the same step and name, but only on the origin that value was set for (ADR 0051):
+ * a draft URL elsewhere could otherwise carry the workflow's stored credential to any server, which is
+ * the step an agent obeying hostile text in a payload or API response would take. Secret ids come only
+ * from the saved definition, never from the request (ADR 0043).
  */
 const buildSecretResolver = async (
   workflow: { id: string; workspaceId: string },
-  savedNode: TWorkflowHttpRequestActionNode
-): Promise<(header: TWorkflowHttpHeader) => string | undefined> => {
+  savedNode: TWorkflowHttpRequestActionNode,
+  requestUrl: string
+): Promise<TWorkflowSecretResolver> => {
   const savedIds = new Map(
     savedNode.config.headers
       .filter((header) => header.secret === true && header.secretId)
@@ -104,54 +109,21 @@ const buildSecretResolver = async (
   return (header) => {
     if (header.value !== undefined && header.value !== "") return header.value;
     const secretId = savedIds.get(header.name.toLowerCase());
-    return secretId ? values.get(secretId) : undefined;
+    const resolved = resolveBoundWorkflowSecret({
+      headerName: header.name,
+      secret: secretId ? values.get(secretId) : undefined,
+      requestUrl,
+      savedUrl: savedNode.config.url,
+    });
+    return resolved && "value" in resolved ? resolved.value : resolved;
   };
-};
-
-const originOf = (url: string): string | null => {
-  try {
-    return new URL(url).origin;
-  } catch {
-    return null;
-  }
-};
-
-/**
- * A stored secret only goes to the host its step is saved with. A draft URL pointing elsewhere could
- * otherwise carry the workflow's stored credential to any server, which is the step an agent obeying
- * hostile text in a payload or API response would take; a value typed in the draft is the caller's own
- * and still goes anywhere. The secret's step must be saved with the new URL first, an audited edit.
- */
-const assertStoredSecretsStayOnSavedHost = (
-  config: { url: string; headers: TWorkflowHttpHeader[] },
-  savedNode: TWorkflowHttpRequestActionNode
-): void => {
-  const savedOrigin = originOf(savedNode.config.url);
-  if (savedOrigin !== null && originOf(config.url) === savedOrigin) return;
-
-  const storedNames = new Set(
-    savedNode.config.headers
-      .filter((header) => header.secret === true && header.secretId)
-      .map((header) => header.name.toLowerCase())
-  );
-  const usesStored = config.headers.find(
-    (header) =>
-      header.secret === true &&
-      (header.value === undefined || header.value === "") &&
-      storedNames.has(header.name.toLowerCase())
-  );
-  if (!usesStored) return;
-
-  throw new WorkflowInvalidInputError(
-    `The stored value of secret header ${usesStored.name} is only sent to ${urlHost(savedNode.config.url)}. Save the step with the new URL, or enter the value again, to test another host.`
-  );
 };
 
 /**
  * `POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request` and the MCP `send_test_request`
  * tool (ENG-7179, ENG-7168): one real call of an HTTP request step from its saved or draft settings.
- * Write access, 30 per minute per user or API key, the same address checks as a run, 10 s and no
- * retry. Not a run and not billed. An answer is saved as the step's sample (≤64 KB) and the call is
+ * Write access, 30 per minute per user or API key, the same address checks and secret host binding
+ * as a run (a stored secret set for another host is a 400), 10 s and no retry. Not a run and not billed. An answer is saved as the step's sample (≤64 KB) and the call is
  * audited (`testRequestSent`) with its host and status, never its headers or body.
  */
 export const sendWorkflowTestRequest = async ({
@@ -210,10 +182,9 @@ export const sendWorkflowTestRequest = async ({
         secret: header.secret ?? isDefaultSecretHeaderName(header.name),
       })),
     };
-    assertStoredSecretsStayOnSavedHost(config, savedNode);
     const [context, resolveSecret] = await Promise.all([
       loadTestContext(workflow.id, definition, params.stepId, input.variables),
-      buildSecretResolver(workflow, savedNode),
+      buildSecretResolver(workflow, savedNode, config.url),
     ]);
     const built = buildWorkflowHttpCall(config, context, resolveSecret);
     if (!built.ok) throw new WorkflowInvalidInputError(built.error);

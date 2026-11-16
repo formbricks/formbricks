@@ -71,7 +71,18 @@ export interface WorkflowRunRow {
 export type WorkflowRowWithLastRun = WorkflowRow & {
   runs: WorkflowRunRow[];
   _count: { runs: number };
+  /**
+   * The workflow's stored secret header values, id and the origin each was set for (ADR 0051), so a
+   * read can say where each is sent. Never the value. Optional on the port: test rows may omit it.
+   */
+  secrets?: WorkflowSecretOriginRow[];
 };
+
+/** A stored secret header value's id and the origin it was set for (null: before host binding). */
+export interface WorkflowSecretOriginRow {
+  id: string;
+  boundOrigin: string | null;
+}
 
 /** A run-list row: the slim run plus its workflow's name, joined for the runs-list display. */
 export interface WorkflowRunListRow extends WorkflowRunRow {
@@ -87,6 +98,7 @@ export interface LastRunInclude {
   runs: { take: number; orderBy: { createdAt: "desc" } };
   creator: { select: { name: true } };
   _count: { select: { runs: { where: { isDryRun: false } } } };
+  secrets: { select: { id: true; boundOrigin: true } };
 }
 
 /** Narrow `where` filter the service builds — a deliberately small slice of Prisma's WhereInput. */

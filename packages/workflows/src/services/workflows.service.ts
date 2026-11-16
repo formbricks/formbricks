@@ -53,14 +53,16 @@ export interface WorkflowUpdateInput {
 }
 
 /**
- * Eagerly load the most recent run and the creating user's name so the serializer can emit
- * `lastRun` and `creator` without an N+1. Every resource-returning path uses this include.
+ * Eagerly load the most recent run, the creating user's name and the origin each stored secret header
+ * value was set for, so the serializer can emit `lastRun`, `creator` and each secret's `boundOrigin`
+ * without an N+1. Every resource-returning path uses this include.
  */
 const LAST_RUN_INCLUDE: LastRunInclude = {
   runs: { take: 1, orderBy: { createdAt: "desc" } },
   creator: { select: { name: true } },
   // The Runs column counts real runs only, like the runs list's default and billing: Test runs are excluded.
   _count: { select: { runs: { where: { isDryRun: false } } } },
+  secrets: { select: { id: true, boundOrigin: true } },
 };
 
 /** Every field a workflow update may set; mirrors the injected delegate's `update` data shape. */

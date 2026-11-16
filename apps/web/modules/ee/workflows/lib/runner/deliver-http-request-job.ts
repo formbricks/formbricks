@@ -4,9 +4,11 @@ import type { JobHandler, TWorkflowHttpRequestDeliveryJobData } from "@formbrick
 import { logger } from "@formbricks/logger";
 import {
   type TWorkflowHttpRequestActionNode,
+  type TWorkflowStoredSecret,
   WORKFLOW_HTTP_RUN_LIMITS,
   WORKFLOW_SECRET_MASK,
   ZWorkflowHttpRequestActionNode,
+  resolveBoundWorkflowSecret,
 } from "@formbricks/workflows";
 import {
   type TWorkflowHttpRequestRecord,
@@ -40,12 +42,13 @@ const findHttpRequestNode = (definition: unknown, stepId: string): TWorkflowHttp
 
 /**
  * Rebuilds the call from the stored (masked) request: each masked header of a secret takes its value
- * from the workflow's secret row as it is now, so a Replace done in between is already used (ADR 0043).
+ * from the workflow's secret row as it is now, so a Replace done in between is already used (ADR 0043),
+ * and only while that value is still set for the request's origin (ADR 0051).
  */
 const rebuildCall = (
   request: TWorkflowHttpRequestRecord,
   node: TWorkflowHttpRequestActionNode,
-  secretValues: ReadonlyMap<string, string>
+  secretValues: ReadonlyMap<string, TWorkflowStoredSecret>
 ): { call: WorkflowHttpCall } | { error: string } => {
   const secretIdsByName = new Map(
     node.config.headers
@@ -60,9 +63,15 @@ const rebuildCall = (
       continue;
     }
     const secretId = secretIdsByName.get(header.name.toLowerCase());
-    const value = secretId ? secretValues.get(secretId) : undefined;
-    if (value === undefined) return { error: `Secret header ${header.name} has no value; enter it again` };
-    headers[header.name] = value;
+    const resolved = resolveBoundWorkflowSecret({
+      headerName: header.name,
+      secret: secretId ? secretValues.get(secretId) : undefined,
+      requestUrl: request.url,
+      savedUrl: node.config.url,
+    });
+    if (resolved === undefined) return { error: `Secret header ${header.name} has no value; enter it again` };
+    if ("error" in resolved) return resolved;
+    headers[header.name] = resolved.value;
   }
   return {
     call: {

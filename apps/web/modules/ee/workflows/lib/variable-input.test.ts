@@ -1,31 +1,39 @@
 import { describe, expect, test } from "vitest";
-import { fromVariableInputDisplay, insertVariableAtCaret, toVariableInputDisplay } from "./variable-input";
+import type { TEditorRecallSource } from "@/modules/ui/components/editor/components/recall-source";
+import { withEveryRecallTokenKept } from "./variable-input";
 
-describe("Variable input text", () => {
-  test("shows stored tokens as {{path}}, with the fallback after a bar", () => {
-    expect(toVariableInputDisplay("id=#recall:payload.customer.id/fallback:#")).toBe(
-      "id={{payload.customer.id}}"
-    );
-    expect(toVariableInputDisplay("Bearer #recall:steps.auth.body.token/fallback:none#")).toBe(
-      "Bearer {{steps.auth.body.token|none}}"
-    );
+const variableSource: TEditorRecallSource = {
+  getRecallItems: (text) =>
+    text.includes("#recall:payload.customer.id/")
+      ? [{ id: "payload.customer.id", label: "customer.id", type: "variable" }]
+      : [],
+  getRecallItemLabel: () => undefined,
+  renderPicker: () => null,
+};
+
+describe("withEveryRecallTokenKept", () => {
+  test("keeps the source's items and labels", () => {
+    const source = withEveryRecallTokenKept(variableSource);
+
+    expect(source.getRecallItems("id=#recall:payload.customer.id/fallback:#")).toEqual([
+      { id: "payload.customer.id", label: "customer.id", type: "variable" },
+    ]);
   });
 
-  test("stores what the field shows as tokens again, exactly", () => {
-    const stored = "a #recall:payload.a/fallback:# b #recall:steps.s1.status/fallback:0#";
-    expect(fromVariableInputDisplay(toVariableInputDisplay(stored))).toBe(stored);
+  test("a complete token the source can't name still gets an item named after its id", () => {
+    const source = withEveryRecallTokenKept(variableSource);
+
+    expect(
+      source.getRecallItems("#recall:payload.customer.id/fallback:# and #recall:abc123/fallback:x#")
+    ).toEqual([
+      { id: "payload.customer.id", label: "customer.id", type: "variable" },
+      { id: "abc123", label: "abc123", type: "variable" },
+    ]);
   });
 
-  test("leaves braces around anything but a Variable path as text", () => {
-    expect(fromVariableInputDisplay("{{name}} and {payload.a}")).toBe("{{name}} and {payload.a}");
-    expect(fromVariableInputDisplay("{{payload.a}}")).toBe("#recall:payload.a/fallback:#");
-  });
+  test("a half-typed token stays text", () => {
+    const source = withEveryRecallTokenKept(variableSource);
 
-  test("replaces the @ just typed with the picked Variable", () => {
-    expect(insertVariableAtCaret("id=@", 4, "payload.customer.id")).toEqual({
-      display: "id={{payload.customer.id}}",
-      caret: 26,
-    });
-    expect(insertVariableAtCaret("id=", 3, "payload.customer.id")).toBeNull();
+    expect(source.getRecallItems("#recall:abc123/fallback:x")).toEqual([]);
   });
 });

@@ -7,7 +7,8 @@ properties:
     $ref: ./WorkflowHttpRequestActionConfig.yml
     description: >-
       The step's draft settings; defaults to the saved step. A secret header without a value uses
-      the saved secret of that name; one with a value uses it for this call only and stores nothing.
+      the saved secret of that name, only on the origin that secret was set for; one with a value
+      uses it for this call only and stores nothing.
   variables:
     type: object
     properties:

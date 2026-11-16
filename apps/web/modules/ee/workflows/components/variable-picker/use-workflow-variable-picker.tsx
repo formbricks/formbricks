@@ -16,7 +16,7 @@ import type { TEditorRecallSource } from "@/modules/ui/components/editor/compone
 
 /**
  * A field's ask for a Variable. The same shape as the JsonEditor's `onRequestVariable` request, so
- * `onRequestVariable={picker.requestVariable}` works as is; a plain input builds one from its caret.
+ * `onRequestVariable={picker.requestVariable}` works as is.
  */
 export interface TWorkflowVariableRequest {
   /** Viewport position to open at; null opens at the top left of the viewport. */
@@ -33,14 +33,14 @@ export interface TWorkflowVariablePicker {
   requestVariable: (request: TWorkflowVariableRequest) => void;
   /** Render this once next to the fields that call `requestVariable`. */
   pickerElement: ReactNode;
-  /** For the kit `Editor`'s `recallSource`: Variable chips and this picker on `@`. */
+  /** For the kit `Editor`'s and `RecallInput`'s `recallSource`: Variable chips and this picker on `@`. */
   recallSource: TEditorRecallSource;
 }
 
 /**
- * The Variable picker (ENG-7113) for the fields of one step: the groups that step can use and three
- * ways to plug them into a field — `requestVariable` for the JsonEditor and plain inputs, and
- * `recallSource` for the kit Editor (an email body).
+ * The Variable picker (ENG-7113) for the fields of one step: the groups that step can use and two
+ * ways to plug them into a field — `requestVariable` for the JsonEditor, and `recallSource` for the
+ * kit Editor (an email body) and one-line fields (`WorkflowVariableInput`).
  */
 export const useWorkflowVariablePicker = ({
   nodeId,

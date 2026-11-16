@@ -24,7 +24,9 @@ post:
     to the respondent's own
 
     address and is exempt), every `send_email` survey link points to a link survey in this
-    workspace, and a step with a Variable recipient has a fixed subject and body — and then
+    workspace, a step with a Variable recipient has a fixed subject and body, and every stored
+    secret header value of an HTTP request step was set for the origin its URL now has (a step
+    moved to another host needs its secret values set again) — and then
     snapshots an immutable workflow
     version. Runs
 

@@ -8,6 +8,7 @@ import {
   formatResponseBody,
   getHeaderRowKind,
   getSavedSecretHeaderNames,
+  getSecretBoundHostMismatch,
   getSecretReplaceMode,
   isPlainHttpUrl,
   methodSendsBody,
@@ -139,6 +140,26 @@ describe("header rows", () => {
   });
 });
 
+describe("getSecretBoundHostMismatch", () => {
+  const stored = { name: "Authorization", secret: true, isSet: true, boundOrigin: "https://api.example.com" };
+
+  test("names the host a stored value is still sent to once the URL points at another origin", () => {
+    expect(getSecretBoundHostMismatch(stored, "https://new-api.example.com/v1")).toBe("api.example.com");
+    expect(getSecretBoundHostMismatch(stored, "http://api.example.com/v1")).toBe("api.example.com");
+    expect(getSecretBoundHostMismatch(stored, "")).toBe("api.example.com");
+  });
+
+  test("says nothing on the same origin, for a value being typed, or for a value set before host binding", () => {
+    expect(getSecretBoundHostMismatch(stored, "https://api.example.com/v2/customers")).toBeNull();
+    expect(
+      getSecretBoundHostMismatch({ name: "Authorization", secret: true, value: "new" }, "https://x.example")
+    ).toBeNull();
+    expect(
+      getSecretBoundHostMismatch({ name: "Authorization", secret: true, isSet: true }, "https://x.example")
+    ).toBeNull();
+  });
+});
+
 describe("getSavedSecretHeaderNames", () => {
   test("names the secrets the saved step holds a value for", () => {
     const saved = {
@@ -210,6 +231,29 @@ describe("withSecretIdsForCheck", () => {
     const definition = withHeaders([{ name: "Authorization", secret: true, isSet: false }]);
     expect(headersOf(withSecretIdsForCheck(definition))[0]).not.toHaveProperty("secretId");
   });
+
+  test("flags a stored secret whose value is set for another host than the step's URL", () => {
+    const definition = {
+      nodes: [
+        {
+          id: "call",
+          type: "action",
+          actionType: "http_request",
+          config: {
+            url: "https://new-api.example.com/v1",
+            headers: [
+              { name: "Authorization", secret: true, isSet: true, boundOrigin: "https://api.example.com" },
+              { name: "X-Api-Key", secret: true, isSet: true, boundOrigin: "https://new-api.example.com" },
+            ],
+          },
+        },
+      ],
+    } as unknown as TWorkflowDefinition;
+
+    const [moved, kept] = headersOf(withSecretIdsForCheck(definition));
+    expect(moved).not.toHaveProperty("secretId");
+    expect(kept).toHaveProperty("secretId");
+  });
 });
 
 describe("buildTestRequestInput", () => {
@@ -250,7 +294,7 @@ describe("settleSentSecretValues", () => {
       ],
     }) as unknown as TWorkflowDefinition;
 
-  test("swaps a saved secret value for the stored shape, so the next save does not send it again", () => {
+  test("swaps a saved secret value for the stored shape, bound to the URL it was saved with", () => {
     const sent = withHeaders([
       { name: "Authorization", secret: true, value: "Bearer new" },
       { name: "X-Source", value: "formbricks" },
@@ -259,7 +303,7 @@ describe("settleSentSecretValues", () => {
     const settled = settleSentSecretValues(sent, sent);
 
     expect((settled.nodes[0] as { config: { headers: unknown[] } }).config.headers).toEqual([
-      { name: "Authorization", secret: true, isSet: true },
+      { name: "Authorization", secret: true, isSet: true, boundOrigin: "https://a.example" },
       { name: "X-Source", value: "formbricks" },
     ]);
   });

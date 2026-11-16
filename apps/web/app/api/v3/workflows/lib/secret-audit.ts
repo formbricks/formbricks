@@ -8,9 +8,9 @@ import { queueAuditEvent } from "@/modules/ee/audit-logs/lib/handler";
 
 /**
  * "Secret set" / "secret replaced" audit events (ENG-7179, spec §8): one per secret header a workflow
- * write stored, beside the write's own "updated" event. The event names the step and header only;
- * the value never reaches this sink. Failures are logged, never thrown, since the write already
- * succeeded.
+ * write stored, beside the write's own "updated" event. The event names the step, the header and the
+ * host the value is now sent to (ADR 0051); the value never reaches this sink. Failures are logged,
+ * never thrown, since the write already succeeded.
  */
 export const buildRecordSecretHeaderChanges =
   (
@@ -37,7 +37,7 @@ export const buildRecordSecretHeaderChanges =
           targetId: workflowId,
           organizationId,
           status: "success",
-          newObject: { stepId: change.stepId, headerName: change.headerName },
+          newObject: { stepId: change.stepId, headerName: change.headerName, host: change.host },
         });
       }
     } catch (error) {

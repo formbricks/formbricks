@@ -3,11 +3,15 @@ description: >-
   A plain or secret header of an HTTP request step. A secret header's value is stored encrypted
   beside the workflow and never returned: writes send `{name, value, secret: true}` to set or
   replace it, or `{name, secret: true}` to keep the stored one; reads return
-  `{name, secret: true, isSet}`. Replacing a value updates the enabled workflow at once. A
-  duplicated workflow keeps the names but not the values, and can't be enabled until they are
-  entered again. `Authorization` and names containing `token`, `key`, `secret` or `cookie` are
-  secret unless `secret: false` is sent. Setting or replacing a secret is recorded in the audit log
-  with the header name only.
+  `{name, secret: true, isSet, boundOrigin}`. A stored value is bound to the origin (scheme, host,
+  port) of its step's URL when it was set, and is only ever sent there: after the URL moves to
+  another origin, a run fails the step, a test request answers **400** and enable answers **422**
+  until the value is set again, which binds it to the new URL. Replacing a value updates the
+  enabled workflow at once when it stays on the same origin. A duplicated workflow keeps the names
+  but not the values, and can't be enabled until they are entered again. `Authorization` and names
+  containing `token`, `key`, `secret` or `cookie` are secret unless `secret: false` is sent.
+  Setting or replacing a secret is recorded in the audit log with the header name and the host it
+  is bound to.
 required:
   - name
 properties:
@@ -31,4 +35,12 @@ properties:
     type: boolean
     readOnly: true
     description: Read only. Whether a secret header has a stored value.
+  boundOrigin:
+    type: string
+    maxLength: 2048
+    readOnly: true
+    description: >-
+      Read only. The origin (scheme, host, port) a secret header's stored value was set for, such
+      as `https://api.example.com`; the value is only sent there. Absent for a value set before
+      host binding, which is held to the step's saved URL until it is set again. Ignored on write.
 additionalProperties: false

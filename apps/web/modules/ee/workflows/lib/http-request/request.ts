@@ -61,21 +61,29 @@ export const capRequestRecord = (record: TWorkflowHttpRequestRecord): TWorkflowH
 
 export type TBuiltWorkflowHttpCall =
   | { ok: true; call: WorkflowHttpCall; record: TWorkflowHttpRequestRecord }
-  | { ok: false; error: string };
+  /** `secretRefused`: a stored secret was not sent because it is set for another host (ADR 0051). */
+  | { ok: false; error: string; secretRefused?: true };
+
+/**
+ * A secret header's plaintext, nothing when it has no value, or why its stored value may not go with
+ * this request (it is set for another host, ADR 0051).
+ */
+export type TWorkflowSecretResolver = (header: TWorkflowHttpHeader) => string | { error: string } | undefined;
 
 const renderHeaders = (
   configHeaders: TWorkflowHttpRequestActionConfig["headers"],
   context: TWorkflowRunContext,
-  resolveSecret: (header: TWorkflowHttpHeader) => string | undefined
+  resolveSecret: TWorkflowSecretResolver
 ):
   | { headers: Record<string, string>; recordedHeaders: TWorkflowHttpRequestRecord["headers"] }
-  | { error: string } => {
+  | { error: string; secretRefused?: true } => {
   const headers: Record<string, string> = {};
   const recordedHeaders: TWorkflowHttpRequestRecord["headers"] = [];
   for (const header of configHeaders) {
     if (header.secret === true) {
       const value = resolveSecret(header);
       if (value === undefined) return { error: `Secret header ${header.name} has no value; enter it again` };
+      if (typeof value === "object") return { error: value.error, secretRefused: true };
       headers[header.name] = value.replaceAll(LINE_BREAKS, "");
       recordedHeaders.push({ name: header.name, value: WORKFLOW_SECRET_MASK });
       continue;
@@ -106,13 +114,13 @@ const renderBody = (
  * Renders an HTTP request step into the call to send and its masked record (ENG-7168, ADR 0042). The
  * URL is used as written; Variables go in only where the definition allows them, each the way its
  * place needs: query values URL-encoded, header values without line breaks, the body as typed JSON.
- * `resolveSecret` gives a secret header's plaintext; a secret it can't resolve fails the build, so a
- * request never goes out without a header its author configured.
+ * `resolveSecret` gives a secret header's plaintext; a secret it can't resolve, or refuses for this
+ * host, fails the build, so a request never goes out without a header its author configured.
  */
 export const buildWorkflowHttpCall = (
   config: TWorkflowHttpRequestActionConfig,
   context: TWorkflowRunContext,
-  resolveSecret: (header: TWorkflowHttpHeader) => string | undefined
+  resolveSecret: TWorkflowSecretResolver
 ): TBuiltWorkflowHttpCall => {
   let url: string;
   try {
@@ -122,7 +130,7 @@ export const buildWorkflowHttpCall = (
   }
 
   const rendered = renderHeaders(config.headers, context, resolveSecret);
-  if ("error" in rendered) return { ok: false, error: rendered.error };
+  if ("error" in rendered) return { ok: false, ...rendered };
   const { headers, recordedHeaders } = rendered;
 
   const renderedBody = renderBody(config, context);

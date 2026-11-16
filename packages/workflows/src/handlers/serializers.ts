@@ -101,8 +101,14 @@ export const toWorkflowListItem = (row: WorkflowRowWithLastRun): TWorkflowListIt
   };
 };
 
-/** Secret headers read as `{name, secret: true, isSet}`: never a value or a stored secret id. */
+/**
+ * Secret headers read as `{name, secret: true, isSet, boundOrigin?}`: never a value or a stored secret
+ * id; `boundOrigin` is where a stored value is sent (ADR 0051).
+ */
 export const toWorkflowResource = (row: WorkflowRowWithLastRun): TWorkflowResource => ({
   ...toWorkflowListItem(row),
-  definition: maskWorkflowSecretHeaders(row.definition),
+  definition: maskWorkflowSecretHeaders(
+    row.definition,
+    new Map((row.secrets ?? []).map((secret) => [secret.id, secret.boundOrigin]))
+  ),
 });

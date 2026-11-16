@@ -28,8 +28,10 @@ import {
 } from "../errors";
 import { isLiteralEmailRecipient } from "../recipients";
 import { createdResponse, dataResponse, listResponse, noContentResponse } from "../responses";
+import { findWorkflowSecretHostMismatches } from "../secret-headers/binding";
 import {
   applyWorkflowSecretHeaderWrites,
+  assertWorkflowSecretHeaderValuesBindable,
   collectWorkflowSecretIds,
   dropWorkflowSecretIds,
   hasWorkflowSecretHeaderValues,
@@ -71,6 +73,7 @@ const assertSecretStoreFor = (ctx: WorkflowApiContext, definition: TWorkflowDefi
   if (!ctx.secrets && hasWorkflowSecretHeaderValues(definition)) {
     throw new Error("Secret header values can't be stored: no secret store is configured");
   }
+  assertWorkflowSecretHeaderValuesBindable(definition);
 };
 
 /** "Secret set" / "secret replaced" audit events, header names only; never fails the write. */
@@ -106,6 +109,35 @@ const deleteUnreferencedSecretsSafely = async (
   } catch (error) {
     ctx.logger.warn({ error, workflowId: row.id }, "Failed to delete unreferenced workflow secrets");
   }
+};
+
+/**
+ * Enable refuses while a stored secret header value was set for another host than its step's URL now
+ * points at (ADR 0051): a run would refuse to send it, so the author enters it again first. A value
+ * set before host binding is held to the step's URL at run time and does not block.
+ */
+const assertSecretHeadersOnTheirHosts = async (
+  ctx: WorkflowApiContext,
+  row: { id: string; workspaceId: string },
+  definition: TWorkflowExecutableDefinition
+): Promise<void> => {
+  const secretIds = collectWorkflowSecretIds(definition);
+  if (secretIds.length === 0) return;
+  if (!ctx.secrets) {
+    throw new Error("Secret headers can't be checked: no secret store is configured");
+  }
+  const boundOrigins = await ctx.secrets.readBoundOrigins({
+    workflowId: row.id,
+    workspaceId: row.workspaceId,
+    secretIds,
+  });
+  const mismatches = findWorkflowSecretHostMismatches(definition, boundOrigins);
+  if (mismatches.length === 0) return;
+  // An explicit `detail`: the editor shows only `detail`, and it has to name the header and the host.
+  throw new WorkflowNotExecutableError(
+    mismatches.map((mismatch) => ({ name: mismatch.path.join("."), reason: mismatch.message })),
+    mismatches.map((mismatch) => mismatch.message).join(". ")
+  );
 };
 
 /** Same contract as `recordAuditSafely`, for the product-analytics sink. */
@@ -636,6 +668,8 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
           SURVEY_LINK_DETAIL
         );
       }
+
+      await assertSecretHeadersOnTheirHosts(ctx, loaded, executable.data);
 
       const updated = await service.enableWorkflow(
         { workflowId: params.workflowId, workspaceId: loaded.workspaceId },

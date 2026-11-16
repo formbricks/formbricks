@@ -154,6 +154,7 @@ describe("createWorkflow", () => {
       runs: { take: 1, orderBy: { createdAt: "desc" } },
       creator: { select: { name: true } },
       _count: { select: { runs: { where: { isDryRun: false } } } },
+      secrets: { select: { id: true, boundOrigin: true } },
     });
     expect(result).toBe(row);
   });
@@ -293,7 +294,7 @@ describe("listWorkflows", () => {
 });
 
 describe("getWorkflowById", () => {
-  test("loads a single row by id with its last run", async () => {
+  test("loads a single row by id with its last run and its secrets' origins", async () => {
     const row = makeRow();
     findUnique.mockResolvedValue(row);
 
@@ -304,6 +305,7 @@ describe("getWorkflowById", () => {
         runs: { take: 1, orderBy: { createdAt: "desc" } },
         creator: { select: { name: true } },
         _count: { select: { runs: { where: { isDryRun: false } } } },
+        secrets: { select: { id: true, boundOrigin: true } },
       },
     });
   });

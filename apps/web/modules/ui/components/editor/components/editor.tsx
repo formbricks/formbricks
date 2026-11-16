@@ -20,6 +20,7 @@ import { FallbackInput } from "@/modules/survey/components/element-form-input/co
 import "@/modules/ui/components/editor/styles-editor-frontend.css";
 import "@/modules/ui/components/editor/styles-editor.css";
 import { exampleTheme } from "../lib/example-theme";
+import type { TEditorTokenChip } from "../lib/token-chips";
 import "../styles-editor-frontend.css";
 import "../styles-editor.css";
 import { PlaygroundAutoLinkPlugin as AutoLinkPlugin } from "./auto-link-plugin";
@@ -29,6 +30,8 @@ import { ListTabIndentationPlugin } from "./list-tab-indentation-plugin";
 import { RecallNode } from "./recall-node";
 import { RecallPlugin } from "./recall-plugin";
 import { type TEditorRecallSource, createSurveyRecallSource } from "./recall-source";
+import { TokenChipNode } from "./token-chip-node";
+import { TokenChipPlugin } from "./token-chip-plugin";
 import { ToolbarPlugin } from "./toolbar-plugin";
 
 /*
@@ -68,6 +71,12 @@ export type TextEditorProps = {
    * the recall plugin re-registers its listeners when it changes.
    */
   readonly recallSource?: TEditorRecallSource;
+  /**
+   * Fixed tokens to show as chips, such as a workflow email's `#survey-link#`; each serialises back to
+   * exactly its token. Keep its identity stable (memoize it), since the transform re-registers when
+   * it changes.
+   */
+  readonly tokenChips?: readonly TEditorTokenChip[];
   readonly fallbacks?: { [id: string]: string };
   readonly addFallback?: () => void;
   readonly autoFocus?: boolean;
@@ -99,6 +108,7 @@ const editorConfig = {
     AutoLinkNode,
     LinkNode,
     RecallNode,
+    TokenChipNode,
   ],
 };
 
@@ -199,6 +209,9 @@ export const Editor = (props: TextEditorProps) => {
               {props.isExternalUrlsAllowed && <LinkPlugin />}
               {props.isExternalUrlsAllowed && <AutoLinkPlugin />}
               {props.autoFocus && <AutoFocusPlugin />}
+              {props.tokenChips && props.tokenChips.length > 0 && (
+                <TokenChipPlugin chips={props.tokenChips} />
+              )}
               {recallSource && (
                 <RecallPlugin
                   recallSource={recallSource}

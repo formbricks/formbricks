@@ -95,15 +95,38 @@ export interface WorkflowAnalyticsDetail {
  * `replace` and the deletes must never reach another workflow's rows.
  */
 export interface WorkflowSecretStore {
-  /** Encrypts and stores a new value for the workflow; returns the new row's id. */
-  create: (input: { workflowId: string; workspaceId: string; value: string }) => Promise<{ id: string }>;
-  /** Overwrites a stored value in place, so every version that references it uses the new value. */
+  /**
+   * Encrypts and stores a new value for the workflow, bound to `boundOrigin`, the origin of its step's
+   * URL (ADR 0051); returns the new row's id.
+   */
+  create: (input: {
+    workflowId: string;
+    workspaceId: string;
+    value: string;
+    boundOrigin: string;
+  }) => Promise<{ id: string }>;
+  /**
+   * Stores a new value for a stored secret, bound to `boundOrigin` (ADR 0051). A row set for the same
+   * origin, or before host binding, is overwritten in place, so every version that references it uses
+   * the new value (ADR 0043). A row set for another origin is left to that host, for whatever still
+   * sends it there, and the value goes to a new row. Returns the id that now holds the value.
+   */
   replace: (input: {
     secretId: string;
     workflowId: string;
     workspaceId: string;
     value: string;
-  }) => Promise<void>;
+    boundOrigin: string;
+  }) => Promise<{ id: string }>;
+  /**
+   * The origin each of the workflow's secrets was set for, by id; null for a value set before host
+   * binding. Ids the workflow does not own are absent.
+   */
+  readBoundOrigins: (input: {
+    workflowId: string;
+    workspaceId: string;
+    secretIds: string[];
+  }) => Promise<Map<string, string | null>>;
   /**
    * Deletes the workflow's secrets that neither `referencedSecretIds` (the draft being enabled) nor
    * any of the workflow's versions reference. The adapter reads the versions.
@@ -120,6 +143,8 @@ export interface TWorkflowSecretHeaderChange {
   stepId: string;
   headerName: string;
   change: "set" | "replaced";
+  /** The host the value is now bound to (ADR 0051). */
+  host: string;
 }
 
 /**

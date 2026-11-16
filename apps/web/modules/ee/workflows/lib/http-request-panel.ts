@@ -5,14 +5,17 @@ import {
   type TWorkflowHttpRequestActionConfig,
   type TWorkflowStatus,
   WORKFLOW_HTTP_METHODS_WITH_BODY,
+  getWorkflowOriginHost,
+  getWorkflowUrlOrigin,
   isDefaultSecretHeaderName,
 } from "@formbricks/workflows";
 
 /**
  * The HTTP request panel's logic (ENG-7182), pure so it is tested here and the form only draws it.
  * Header shapes follow the API (ADR 0043): plain `{name, value}`; a stored secret reads
- * `{name, secret: true, isSet}` and is written back as is to keep it; a new or replaced secret is
- * written once as `{name, secret: true, value}`.
+ * `{name, secret: true, isSet, boundOrigin?}` and is written back as is to keep it; a new or replaced
+ * secret is written once as `{name, secret: true, value}`. A stored value is only sent to its
+ * `boundOrigin` (ADR 0051).
  */
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "[::1]", "::1"]);
@@ -74,6 +77,17 @@ export const getHeaderRowKind = (header: TWorkflowHttpHeader): THeaderRowKind =>
   if (header.secret !== true) return "plain";
   if (header.value !== undefined) return "secret_value";
   return header.isSet ? "secret_set" : "secret_missing";
+};
+
+/**
+ * The host a stored secret's value is still sent to when the step's URL now points at another origin
+ * (ADR 0051): a run won't send it to the new URL and Enable refuses, so the panel asks for the value
+ * again. Null for a value being typed, a value set before host binding, or a URL on that origin.
+ */
+export const getSecretBoundHostMismatch = (header: TWorkflowHttpHeader, url: string): string | null => {
+  if (getHeaderRowKind(header) !== "secret_set" || !header.boundOrigin) return null;
+  if (getWorkflowUrlOrigin(url) === header.boundOrigin) return null;
+  return getWorkflowOriginHost(header.boundOrigin);
 };
 
 /** A new, empty header row. */
@@ -206,7 +220,8 @@ export const buildTestRequestInput = (
  * The definition as the server will hold it, for the editor's live readiness check. The API reads a
  * stored secret back as `{secret: true, isSet: true}` with no `secretId`, and a typed value gets one
  * on save; the executable schema only knows the stored shape and would flag every secret header as
- * missing. A secret with neither a stored nor a typed value stays without one, so it is still flagged.
+ * missing. A secret with neither a stored nor a typed value stays without one, so it is still flagged,
+ * and so does a stored one set for another host than the step's URL, which Enable refuses (ADR 0051).
  */
 export const withSecretIdsForCheck = (definition: TWorkflowDefinition): TWorkflowDefinition => {
   let changed = false;
@@ -214,7 +229,9 @@ export const withSecretIdsForCheck = (definition: TWorkflowDefinition): TWorkflo
     if (node.type !== "action" || node.actionType !== "http_request") return node;
     let nodeChanged = false;
     const headers = node.config.headers.map((header) => {
-      const hasValue = header.isSet === true || (header.value !== undefined && header.value !== "");
+      const hasValue =
+        (header.isSet === true && getSecretBoundHostMismatch(header, node.config.url) === null) ||
+        (header.value !== undefined && header.value !== "");
       if (header.secret !== true || header.secretId || !hasValue) return header;
       nodeChanged = true;
       return { ...header, secretId: "pending" };
@@ -228,20 +245,22 @@ export const withSecretIdsForCheck = (definition: TWorkflowDefinition): TWorkflo
 
 /**
  * After a save, the secret values it sent are stored: swap them in the draft for the stored shape
- * (`{name, secret: true, isSet: true}`), so the next autosave keeps the secret instead of sending its
- * value again (which would record another "replaced"). Only headers whose value is still the one sent
- * are swapped; one edited since keeps its new value for the next save.
+ * (`{name, secret: true, isSet: true, boundOrigin}`, bound to the URL the save sent, ADR 0051), so the
+ * next autosave keeps the secret instead of sending its value again (which would record another
+ * "replaced"). Only headers whose value is still the one sent are swapped; one edited since keeps its
+ * new value for the next save.
  */
 export const settleSentSecretValues = (
   draft: TWorkflowDefinition,
   sent: TWorkflowDefinition
 ): TWorkflowDefinition => {
-  const sentValues = new Map<string, string>();
+  const sentValues = new Map<string, { value: string; boundOrigin: string | null }>();
   for (const node of sent.nodes) {
     if (node.type !== "action" || node.actionType !== "http_request") continue;
+    const boundOrigin = getWorkflowUrlOrigin(node.config.url);
     for (const header of node.config.headers) {
       if (header.secret === true && header.value) {
-        sentValues.set(`${node.id}\u0000${header.name.toLowerCase()}`, header.value);
+        sentValues.set(`${node.id}\u0000${header.name.toLowerCase()}`, { value: header.value, boundOrigin });
       }
     }
   }
@@ -252,10 +271,15 @@ export const settleSentSecretValues = (
     if (node.type !== "action" || node.actionType !== "http_request") return node;
     let nodeChanged = false;
     const headers = node.config.headers.map((header) => {
-      const sentValue = sentValues.get(`${node.id}\u0000${header.name.toLowerCase()}`);
-      if (header.secret !== true || sentValue === undefined || header.value !== sentValue) return header;
+      const sent = sentValues.get(`${node.id}\u0000${header.name.toLowerCase()}`);
+      if (header.secret !== true || sent === undefined || header.value !== sent.value) return header;
       nodeChanged = true;
-      return { name: header.name, secret: true, isSet: true };
+      return {
+        name: header.name,
+        secret: true,
+        isSet: true,
+        ...(sent.boundOrigin ? { boundOrigin: sent.boundOrigin } : {}),
+      };
     });
     if (!nodeChanged) return node;
     changed = true;
