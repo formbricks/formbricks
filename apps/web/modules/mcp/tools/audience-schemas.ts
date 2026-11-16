@@ -35,8 +35,19 @@ const limitField = (what: string, max: number, fallback: number) =>
     .default(fallback)
     .describe(`Maximum number of ${what} to return. Defaults to ${String(fallback)}.`);
 
+/**
+ * The longest cursor a tool accepts. A real one is about 150 characters, and the v3 operations refuse one
+ * past 512 before decoding it; this refuses an oversized one at the MCP boundary, with room to spare.
+ */
+export const MCP_MAX_CURSOR_LENGTH = 1_024;
+
 const cursorField = (tool: string) =>
-  z.string().min(1).optional().describe(`Opaque pagination cursor from a previous ${tool} response.`);
+  z
+    .string()
+    .min(1)
+    .max(MCP_MAX_CURSOR_LENGTH)
+    .optional()
+    .describe(`Opaque pagination cursor from a previous ${tool} response.`);
 
 const includeTotalCountField = z
   .boolean()

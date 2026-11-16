@@ -9,7 +9,13 @@ import { successListResponse, successResponse } from "@/app/api/v3/lib/response"
 import { listV3Segments } from "@/app/api/v3/segments/lib/operations";
 import type { TMcpGrantPermissions } from "../grant";
 import { registerAudienceTools } from "./audience";
-import { ZMcpListContactsInput } from "./audience-schemas";
+import {
+  MCP_MAX_CURSOR_LENGTH,
+  ZMcpListActionClassesInput,
+  ZMcpListContactAttributeKeysInput,
+  ZMcpListContactsInput,
+  ZMcpListSegmentsInput,
+} from "./audience-schemas";
 import { FULL_MCP_GRANT } from "./test-utils";
 
 vi.mock("@/app/api/v3/contacts/lib/operations", () => ({ listV3Contacts: vi.fn() }));
@@ -194,6 +200,20 @@ describe("list_contacts", () => {
     });
 
     expect(parsed.success).toBe(false);
+  });
+});
+
+describe("pagination cursors", () => {
+  test.each([
+    ["list_contacts", ZMcpListContactsInput],
+    ["list_contact_attribute_keys", ZMcpListContactAttributeKeysInput],
+    ["list_segments", ZMcpListSegmentsInput],
+    ["list_action_classes", ZMcpListActionClassesInput],
+  ] as const)("%s takes a cursor up to the cap and refuses a longer one", (_tool, schema) => {
+    const at = (length: number) => schema.safeParse({ workspaceId, cursor: "c".repeat(length) }).success;
+
+    expect(at(MCP_MAX_CURSOR_LENGTH)).toBe(true);
+    expect(at(MCP_MAX_CURSOR_LENGTH + 1)).toBe(false);
   });
 });
 
