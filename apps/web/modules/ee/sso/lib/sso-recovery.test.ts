@@ -56,6 +56,8 @@ vi.mock("./recovery-intent", () => ({
   consumeSsoRecoveryIntent: mocks.consumeSsoRecoveryIntent,
 }));
 
+// Ending the user's OAuth grants marks their pending sign-in codes in Redis, which the unit run has none of.
+vi.mock("@/modules/auth/lib/oauth-revocation-marker", () => ({ markOAuthRevocation: vi.fn() }));
 vi.mock("@/modules/auth/lib/session-revocation", () => ({
   revokeUserSessionsExcept: vi.fn(),
 }));
