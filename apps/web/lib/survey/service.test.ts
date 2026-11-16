@@ -2796,8 +2796,9 @@ describe("updateSurveyDraftAction", () => {
     });
 
     // ENG-1939 at the write: the guard's read happens outside the transaction, so the write repeats
-    // the stored-status condition. A publish that commits in between then wins the row.
-    test("scopes the draft save's write to a survey that is still a draft", async () => {
+    // the guards it can enforce at the row: still a draft, still unarchived. A publish or archive that
+    // commits in between then wins.
+    test("scopes the draft save's write to an unarchived survey that is still a draft", async () => {
       prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
       prisma.survey.update.mockResolvedValue(mockDraftSurveyOutput);
 
@@ -2809,6 +2810,7 @@ describe("updateSurveyDraftAction", () => {
             id: updateSurveyInput.id,
             workspaceId: mockDraftSurveyOutput.workspaceId,
             status: "draft",
+            archivedAt: null,
           },
         })
       );

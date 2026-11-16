@@ -1130,16 +1130,18 @@ export const updateSurveyInternal = async (
         // ENG-1939 at the write: the guard above reads the stored status before the transaction opens,
         // so a publish committing in between passes it. Under `skipValidation` the payload status is
         // always "draft", so requiring the same of the row makes this a compare-and-set: the publish
-        // wins and this save matches no row (P2025) instead of reverting it. That P2025 is the guard's
-        // own refusal, not a database failure — the outer catch would otherwise report a 500. It also
-        // covers the row being deleted in the same window, which shares this refusal because neither
-        // case matches the predicate. This is the one refusal that ranks after the segment writes
-        // above, which run outside this transaction: a save that loses the race keeps its intended
-        // targeting change, where under any other refusal the segment is untouched.
+        // wins and this save matches no row (P2025) instead of reverting it. `archivedAt: null` closes
+        // the same window on the guard's archived check — archiving a draft keeps its status, so the
+        // status predicate alone would still match. That P2025 is the guard's own refusal, not a
+        // database failure — the outer catch would otherwise report a 500. It also covers the row being
+        // deleted in the same window, which shares this refusal because none of the cases match the
+        // predicate. This is the one refusal that ranks after the segment writes above, which run
+        // outside this transaction: a save that loses the race keeps its intended targeting change,
+        // where under any other refusal the segment is untouched.
         try {
           await tx.survey.update({
             where: skipValidation
-              ? { id: surveyId, workspaceId: currentSurvey.workspaceId, status: "draft" }
+              ? { id: surveyId, workspaceId: currentSurvey.workspaceId, status: "draft", archivedAt: null }
               : { id: surveyId, workspaceId: currentSurvey.workspaceId },
             data,
             select: { id: true },
