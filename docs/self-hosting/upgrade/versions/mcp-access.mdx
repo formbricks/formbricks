@@ -11,8 +11,13 @@ new ones start.
 ## What changes
 
 - Every MCP connection (one user and one MCP client) gets a **grant**: what the user allows that client to do,
-  and in which organizations and workspaces. A data migration gives every existing connection a grant with the
-  access it had, so existing clients keep working.
+  and in which organizations and workspaces. Two data migrations give every existing connection a grant with the
+  access it had, one for connections approved on the consent screen and one for clients registered with
+  `skipConsent`, so existing clients keep working.
+- Every MCP access token names the grant it was issued under, and `/api/mcp` refuses a token issued under
+  another one. A token issued by the previous version names none, and is accepted for the rest of its life
+  (at most 15 minutes) when it was issued no earlier than its grant was created. That comparison reads the
+  clocks of the container that issued the token and of the database, so keep them in sync (NTP).
 - `/api/mcp` refuses a call whose connection has no grant, with `401`. The client's next token refresh then
   ends the connection, and the user connects the client again.
 - The permission schema doesn't change. Grants that select organizations or workspaces are written to SpiceDB
@@ -30,6 +35,10 @@ version doesn't know grants, so a user who approves an MCP client on that contai
 connection without one. That client's calls answer `401` until the user connects it again. Its next token
 refresh also fails, which sends it back to the consent screen on its own; Allow on a new container writes the
 grant.
+
+A client registered with `skipConsent` that connects on a container of the previous version during the
+rollout gets no grant either. It skips the consent screen, so it never sees one, but the same holds: its next
+token refresh is refused, and it has to authorize again, which a new container answers with a grant.
 
 Ask anyone who connected an MCP client during the rollout and now sees `401` to connect it again.
 
