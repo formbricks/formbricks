@@ -514,7 +514,8 @@ export function Survey({
     if (isSurveyFinished) clearSignatureDrafts(signatureDraftsRef.current);
   }, [isSurveyFinished]);
   const [selectedLanguage, setSelectedLanguage] = useState(languageCode);
-  const [loadingElement, setLoadingElement] = useState(false);
+  const [loadingCardVisit, setLoadingCardVisit] = useState<typeof cardVisit | null>(null);
+  const loadingElement = loadingCardVisit === cardVisit;
   const [history, setHistory] = useState<string[]>([]);
   // The block the survey opened on after passing over blocks hidden by show-if (ENG-6931), or that a
   // start-logic jump opened (ENG-6932). Nothing precedes it, so it shows no Back button, like the
@@ -1353,7 +1354,7 @@ export function Survey({
     const respondedElementIds = Object.keys(surveyResponseData);
     const firstRespondedElementId = respondedElementIds[0];
 
-    setLoadingElement(true);
+    setLoadingCardVisit(cardVisit);
 
     if (isSpamProtectionEnabled && !surveyState?.responseId && getRecaptchaToken) {
       const token = await getRecaptchaToken();
@@ -1363,7 +1364,6 @@ export function Survey({
       } else {
         setShowError(true);
         setErrorType(TResponseErrorCodesEnum.RecaptchaError);
-        setLoadingElement(false);
         return;
       }
     }
@@ -1469,8 +1469,6 @@ export function Survey({
         updatedAt: Date.now(),
       });
     }
-
-    setLoadingElement(false);
   };
 
   const onSubmit = async (
@@ -1483,6 +1481,7 @@ export function Survey({
     try {
       await submitResponse(surveyResponseData, responsettc);
     } finally {
+      if (submissionGuard.isCurrent(cardVisit, sourceBlockId)) setLoadingCardVisit(null);
       release();
     }
   };
