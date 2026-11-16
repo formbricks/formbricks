@@ -12,7 +12,7 @@ import { buildWorkflowApiContext, workflowsService } from "@/app/api/v3/workflow
 
 /**
  * `GET /api/internal/workflows/{workflowId}/samples`: the samples a workflow keeps (ADR 0048), one per
- * source — the Webhook trigger's Sample payload and each HTTP request step's last Test request
+ * source — the Webhook trigger's expected payload and each HTTP request step's last Test request
  * response. Write access, like the Secret URL read: samples can hold customer data and API answers.
  * Archived workflows still answer, since reading changes nothing.
  */

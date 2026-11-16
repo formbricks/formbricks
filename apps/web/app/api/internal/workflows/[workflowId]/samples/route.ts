@@ -1,6 +1,6 @@
 /**
  * GET /api/internal/workflows/{workflowId}/samples — the workflow's samples: the Webhook trigger's
- * Sample payload and each HTTP request step's last Test request response. Write access only. The editor
+ * expected payload and each HTTP request step's last Test request response. Write access only. The editor
  * reads it to offer an HTTP request's response fields as Variables.
  *
  * Internal (CODING_STANDARDS "API Design"): only the app calls it, so it is session-only, with no

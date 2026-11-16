@@ -221,6 +221,12 @@ export const markWorkflowDraftSavedAtom = atom(null, (get, set, savedDraft: TWor
 
 export const workflowLastSavedAtAtom = atom((get) => get(workflowEditorAtom).lastSavedAt);
 
+// The last secret settle below: what was sent, and the definition it left. Undo history (use-workflow-history)
+// reads it so the settle isn't recorded as an edit, and so older steps drop the same plaintext values.
+export const lastSecretSettleAtom = atom<{ sent: TWorkflowDefinition; result: TWorkflowDefinition } | null>(
+  null
+);
+
 // After a save, the secret header values it sent are stored server-side: keep them out of the draft
 // (and out of the saved snapshot, so this is no edit) or the next autosave would send them again.
 export const settleSentSecretHeaderValuesAtom = atom(null, (get, set, sent: TWorkflowDefinition) => {
@@ -239,6 +245,8 @@ export const settleSentSecretHeaderValuesAtom = atom(null, (get, set, sent: TWor
       if (draft.lastSavedDraft) draft.lastSavedDraft.definition = savedDefinition;
     })
   );
+  if (definition)
+    set(lastSecretSettleAtom, { sent, result: get(workflowEditorAtom).definition ?? definition });
 });
 
 // True while the editable draft (name, description, definition) differs from what was last

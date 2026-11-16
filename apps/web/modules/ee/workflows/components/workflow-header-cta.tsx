@@ -1,6 +1,6 @@
 "use client";
 
-import { useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import {
   ArchiveIcon,
   ArchiveRestoreIcon,
@@ -9,6 +9,7 @@ import {
   CirclePlayIcon,
   PlayIcon,
   TrashIcon,
+  Undo2Icon,
 } from "lucide-react";
 import { useRouter, useSelectedLayoutSegment } from "next/navigation";
 import { useState } from "react";
@@ -16,6 +17,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { WorkflowAutoSaveIndicator } from "@/modules/ee/workflows/components/workflow-auto-save-indicator";
+import { usePublishedWorkflowVersion } from "@/modules/ee/workflows/hooks/use-published-workflow-version";
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
 import { summarizeValidationProblems, trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
 import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
@@ -23,7 +25,9 @@ import { deleteWorkflow } from "@/modules/ee/workflows/lib/api-client";
 import { getWorkflowStatusBadge } from "@/modules/ee/workflows/lib/display";
 import {
   hasWorkflowSaveFailedAtom,
+  setWorkflowDefinitionAtom,
   workflowAtom,
+  workflowDefinitionAtom,
   workflowValidationProblemsAtom,
   workflowValidityAtom,
 } from "@/modules/ee/workflows/state/editor";
@@ -63,6 +67,14 @@ export const WorkflowHeaderCta = ({
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
+  const definition = useAtomValue(workflowDefinitionAtom);
+  const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
+  // "Discard changes" goes back to the latest enabled version, so it only exists for a draft or
+  // disabled workflow that has been enabled before. A workflow never enabled has nothing to go back to.
+  const canDiscard =
+    !isReadOnly && workflow !== null && workflow.status !== "enabled" && workflow.status !== "archived";
+  const publishedVersion = usePublishedWorkflowVersion({ workflowId, enabled: canDiscard });
 
   if (!workflow) return null;
   // Only the edit tab gets the lifecycle controls — the runs tab is read-only. An unresolved save
@@ -86,7 +98,20 @@ export const WorkflowHeaderCta = ({
 
   // Analytics: a user opening the status menu of a draft whose Enable is greyed out is the closest
   // thing to "tried to enable and could not", and the problem codes say what stopped them.
+  const published = canDiscard ? (publishedVersion.data ?? null) : null;
+  const hasChangesSincePublished =
+    published !== null && JSON.stringify(published.definition) !== JSON.stringify(definition);
+
+  // Loads the enabled version into the draft. It then saves like any edit, and Undo brings the
+  // discarded changes back.
+  const handleDiscardConfirm = () => {
+    if (published) setDefinition(published.definition);
+    setIsDiscardModalOpen(false);
+    toast.success(t("workspace.workflows.discard_changes_done"));
+  };
+
   const handleStatusMenuOpenChange = (open: boolean) => {
+    if (open && canDiscard) void publishedVersion.refetch();
     if (open && !isArchived && !isActive && !validity.isReady) {
       trackWorkflowEvent(
         WORKFLOW_CLIENT_EVENTS.enableBlocked,
@@ -187,6 +212,14 @@ export const WorkflowHeaderCta = ({
                         {t("common.enable")}
                       </DropdownMenuItem>
                     )}
+                    {published ? (
+                      <DropdownMenuItem
+                        icon={<Undo2Icon className="size-4" />}
+                        disabled={!hasChangesSincePublished}
+                        onSelect={() => setIsDiscardModalOpen(true)}>
+                        {t("workspace.workflows.discard_changes")}
+                      </DropdownMenuItem>
+                    ) : null}
                     <DropdownMenuItem
                       icon={<ArchiveIcon className="size-4" />}
                       onSelect={() => setIsArchiveModalOpen(true)}>
@@ -209,6 +242,19 @@ export const WorkflowHeaderCta = ({
             isButtonDisabled={isReadOnly || builder.isTransitioning}
             onConfirm={handleArchiveConfirm}
             Icon={ArchiveIcon}
+          />
+          <ConfirmationModal
+            open={isDiscardModalOpen}
+            setOpen={setIsDiscardModalOpen}
+            title={t("workspace.workflows.discard_changes_title")}
+            // The dialog's default subtitle says the action can't be undone; this one can.
+            description={t("workspace.workflows.discard_changes_undoable")}
+            body={t("workspace.workflows.discard_changes_body", { version: published?.version ?? 0 })}
+            buttonText={t("workspace.workflows.discard_changes")}
+            buttonVariant="destructive"
+            isButtonDisabled={!published}
+            onConfirm={handleDiscardConfirm}
+            Icon={Undo2Icon}
           />
           <DeleteDialog
             open={isDeleteDialogOpen}

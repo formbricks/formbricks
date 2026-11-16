@@ -19,6 +19,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
+import { useWorkflowHistory } from "@/modules/ee/workflows/hooks/use-workflow-history";
 import { useWorkflowWebhook } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import {
   TEST_RUN_DRAWER_SELECTOR,
@@ -117,6 +118,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   // user-driven gate layered on top: even when permissions allow editing, the canvas stays
   // non-mutable until the user switches to pointer mode.
   const canMutate = isEditable && !isLocked;
+  const history = useWorkflowHistory();
   // Shared by the picker overlay and the validation chip: while the centered add-trigger picker
   // is the canvas's main event, the chip would only restate it ("1 problem: no trigger"), so the
   // two are mutually exclusive by construction.
@@ -349,6 +351,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         </div>
       )}
       <CanvasControls
+        history={history}
         canMutate={canMutate}
         isPanMode={isLocked}
         onAutoLayout={handleAutoLayout}

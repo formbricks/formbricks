@@ -3,6 +3,7 @@ import type {
   TCreateWorkflowTestRunInput,
   TPatchWorkflowInput,
   TSendWorkflowTestRequestInput,
+  TWorkflowDefinition,
   TWorkflowListItem,
   TWorkflowResource,
   TWorkflowRunListItem,
@@ -16,6 +17,13 @@ import type {
   TWorkflowWebhookResource,
 } from "@formbricks/workflows";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
+
+/** The latest enabled version of a workflow, for "Discard changes". */
+export type TPublishedWorkflowVersion = {
+  version: number;
+  publishedAt: string;
+  definition: TWorkflowDefinition;
+};
 
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
@@ -348,7 +356,7 @@ async function readDataResponse<T>(response: Response): Promise<T> {
   return body.data;
 }
 
-/** The workflow's samples: the Sample payload and each HTTP request step's last Test request response. */
+/** The workflow's samples: the expected payload and each HTTP request step's last Test request response. */
 export async function listWorkflowSamples(
   workflowId: string,
   signal?: AbortSignal
@@ -359,6 +367,19 @@ export async function listWorkflowSamples(
     signal,
   });
   return readDataResponse<TWorkflowSampleList>(response);
+}
+
+/** The definition of the workflow's latest enabled version, or null if it was never enabled. */
+export async function getPublishedWorkflowVersion(
+  workflowId: string,
+  signal?: AbortSignal
+): Promise<TPublishedWorkflowVersion | null> {
+  const response = await fetch(`/api/internal/workflows/${workflowId}/published-version`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+  return readDataResponse<TPublishedWorkflowVersion | null>(response);
 }
 
 /** Replaces the Webhook Secret URL; the old one stops working at once. */

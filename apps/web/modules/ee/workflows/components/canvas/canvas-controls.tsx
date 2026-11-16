@@ -5,6 +5,8 @@ import {
   HandIcon,
   type LucideIcon,
   MousePointerClickIcon,
+  Redo2Icon,
+  Undo2Icon,
   WandSparklesIcon,
   ZoomInIcon,
   ZoomOutIcon,
@@ -20,6 +22,8 @@ interface CanvasControlsProps {
   onAutoLayout: () => void;
   onPanMode: () => void;
   onPointerMode: () => void;
+  /** Undo and redo of definition edits (use-workflow-history). */
+  history: { undo: () => void; redo: () => void; canUndo: boolean; canRedo: boolean };
 }
 
 interface ControlDescriptor {
@@ -41,11 +45,28 @@ export const CanvasControls = ({
   onAutoLayout,
   onPanMode,
   onPointerMode,
+  history,
 }: Readonly<CanvasControlsProps>) => {
   const { t } = useTranslation();
   const { zoomIn, zoomOut } = useReactFlow();
 
   const controls: ControlDescriptor[] = [
+    {
+      key: "undo",
+      Icon: Undo2Icon,
+      label: t("workspace.workflows.undo"),
+      variant: "outline",
+      disabled: !history.canUndo,
+      onClick: history.undo,
+    },
+    {
+      key: "redo",
+      Icon: Redo2Icon,
+      label: t("workspace.workflows.redo"),
+      variant: "outline",
+      disabled: !history.canRedo,
+      onClick: history.redo,
+    },
     {
       key: "zoom-in",
       Icon: ZoomInIcon,
