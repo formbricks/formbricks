@@ -31,4 +31,15 @@ describe("createInitialRunContext", () => {
   test("a run with no payload has no `payload` source", () => {
     expect(createInitialRunContext(environment())).toEqual({ steps: {} });
   });
+
+  test("computed Embedded Data reads under response.<storageKey>, next to the answers", () => {
+    const surveyResponse = {
+      response: { data: { plan: "gold", q1: "Yes" }, variables: { score_total: 82 } },
+    } as unknown as WorkflowRunEnvironment["surveyResponse"];
+
+    expect(createInitialRunContext(environment({ surveyResponse }))).toEqual({
+      steps: {},
+      response: { data: { plan: "gold", q1: "Yes", score_total: 82 } },
+    });
+  });
 });

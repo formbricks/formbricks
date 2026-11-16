@@ -1,6 +1,9 @@
 import type { TFunction } from "i18next";
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
-import { getIngestedEmbeddedFields } from "@formbricks/types/embedded-data-resolver";
+import {
+  getComputedEmbeddedFields,
+  getIngestedEmbeddedFields,
+} from "@formbricks/types/embedded-data-resolver";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -260,9 +263,11 @@ const getElementTypeHint = (element: TSurveyElement): TWorkflowVariableTypeHint 
 };
 
 /**
- * The survey's questions and hidden fields, as the recall picker lists them today: questions whose
- * answer recall can show, then the ingested Embedded Data fields. Both live in `response.data`, which
- * is all a `response.<id>` path reads; computed fields and auto-captured values don't.
+ * The survey's questions and Embedded Data, as the recall picker lists them: questions whose answer
+ * recall can show, then the ingested Embedded Data fields (links, URL parameters, the SDK), then the
+ * computed ones (set by Set value rules, e.g. a score). A run reads all three under `response.<id>`:
+ * it merges the response's computed values into its answers (createInitialRunContext). Auto-captured
+ * values (meta) aren't offered.
  */
 const getResponseOptions = (survey: TSurvey): TWorkflowVariableOption[] => {
   const questions = getElementsFromBlocks(survey.blocks)
@@ -283,7 +288,14 @@ const getResponseOptions = (survey: TSurvey): TWorkflowVariableOption[] => {
     isPickable: true,
     iconKey: "hiddenField" as const,
   }));
-  return [...questions, ...hiddenFields];
+  const computedFields = getComputedEmbeddedFields(survey).map(({ field, link }) => ({
+    path: `response.${link.storageKey}`,
+    label: field.name || link.storageKey,
+    typeHint: EMBEDDED_DATA_TYPE_HINTS[field.dataType],
+    isPickable: true,
+    // No iconKey: the picker shows its generic Variable icon, as the survey editor does for them.
+  }));
+  return [...questions, ...hiddenFields, ...computedFields];
 };
 
 /**

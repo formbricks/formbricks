@@ -452,7 +452,7 @@ describe("buildWorkflowVariableGroups for a Response completed workflow", () => 
     entryNodeId: "trigger",
   });
 
-  test("offers the survey's questions and hidden fields as response.<id> Variables, and no Payload", () => {
+  test("offers the survey's questions and Embedded Data as response.<id> Variables, and no Payload", () => {
     const groups = buildWorkflowVariableGroups({
       definition: responseDefinition(),
       nodeId: "email",
@@ -460,7 +460,8 @@ describe("buildWorkflowVariableGroups for a Response completed workflow", () => 
       survey,
     });
 
-    // The CTA records no answer recall can show, and a computed field is not in the response data.
+    // The CTA records no answer recall can show. Computed fields are offered too: a run merges the
+    // response's computed values into what response.<id> reads (createInitialRunContext).
     expect(groups).toEqual([
       {
         kind: "response",
@@ -492,6 +493,12 @@ describe("buildWorkflowVariableGroups for a Response completed workflow", () => 
             typeHint: "text",
             isPickable: true,
             iconKey: "hiddenField",
+          },
+          {
+            path: "response.score_total",
+            label: "Total",
+            typeHint: "text",
+            isPickable: true,
           },
         ],
       },
