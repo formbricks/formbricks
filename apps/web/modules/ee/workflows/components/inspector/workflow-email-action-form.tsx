@@ -431,25 +431,20 @@ const WorkflowEmailResponseDataFields = ({
                 {t("workspace.workflows.email_include_embedded_data_description")}
               </p>
             </div>
+            {/* One switch for all Embedded Data: the passed-in fields (Follow-ups' "hidden fields") and
+                the computed ones are both Embedded Data now. It sets both settings the step keeps for
+                Follow-ups parity; the deprecated name is dropped so the two never mix (ADR 0050). */}
             <Switch
               id="workflow-email-include-variables"
-              checked={getIncludeEmbeddedData(node.config)}
+              checked={getIncludeEmbeddedData(node.config) || (node.config.includeHiddenFields ?? false)}
               disabled={!isEditable}
-              // Saved under the new name; the deprecated one is dropped so the two never mix (ADR 0050).
               onCheckedChange={(checked) =>
-                updateConfig({ includeEmbeddedData: checked, includeVariables: undefined })
+                updateConfig({
+                  includeEmbeddedData: checked,
+                  includeHiddenFields: checked,
+                  includeVariables: undefined,
+                })
               }
-            />
-          </div>
-          <div className="flex items-start justify-between gap-3">
-            <Label htmlFor="workflow-email-include-hidden-fields" className="text-sm font-medium">
-              {t("workspace.workflows.email_include_hidden_fields_label")}
-            </Label>
-            <Switch
-              id="workflow-email-include-hidden-fields"
-              checked={node.config.includeHiddenFields ?? false}
-              disabled={!isEditable}
-              onCheckedChange={(checked) => updateConfig({ includeHiddenFields: checked })}
             />
           </div>
         </div>
