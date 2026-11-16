@@ -5,10 +5,14 @@ import { useAtomValue } from "jotai";
 import { PlayIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { WEBHOOK_PAYLOAD_MAX_BYTES } from "@formbricks/workflows";
+import { useStoredTestPayload } from "@/modules/ee/workflows/hooks/use-stored-test-payload";
 import { useWorkflowRun } from "@/modules/ee/workflows/hooks/use-workflow-run";
 import type { TWorkflowTestRunFailure } from "@/modules/ee/workflows/hooks/use-workflow-test-run";
+import { useWorkflowWebhook } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import { getWorkflowApiErrorMessage } from "@/modules/ee/workflows/lib/api-error";
 import { TEST_RUN_DRAWER_ATTRIBUTE } from "@/modules/ee/workflows/lib/canvas-fit";
+import { getTestRunDrawerPayload } from "@/modules/ee/workflows/lib/test-run";
+import { hasSavedWebhookTrigger } from "@/modules/ee/workflows/lib/workflow-samples";
 import { workflowAtom, workflowDefinitionAtom } from "@/modules/ee/workflows/state/editor";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -17,6 +21,7 @@ import { Skeleton } from "@/modules/ui/components/skeleton";
 import { RunDetailHeader } from "./run-detail-header";
 import { RunStepsBody } from "./run-steps-body";
 import { RunSummarySection } from "./run-summary-section";
+import { TestRunPayloadEditor } from "./test-run-payload-editor";
 import { TestRunNotice } from "./workflow-run-detail-drawer";
 
 // Literal `t()` calls per failure so the translation scanner sees every key.
@@ -76,6 +81,31 @@ export const WorkflowTestRunDrawer = ({
   // Seeded by the Test run's own answer, so this reads the cache rather than fetching again.
   const { data: run, isLoading, isError, error: loadError } = useWorkflowRun({ runId, enabled: open });
 
+  // The Webhook step's payload is the test payload itself, editable here as in the Webhook trigger
+  // panel the drawer covers: the same text, kept in this browser, and what Run again sends.
+  const [storedPayload, setStoredPayload] = useStoredTestPayload(workflow?.id ?? "");
+  const webhook = useWorkflowWebhook({
+    workflowId: workflow?.id ?? null,
+    enabled: open && hasSavedWebhookTrigger(workflow),
+  });
+  const runPayload = run?.triggerPayload.type === "webhook" ? run.triggerPayload.payload : null;
+  // The last received payload; until the webhook loads, the run's own payload, which is the same one
+  // unless an edit was sent (and then the edit is what shows).
+  const receivedPayload = webhook.data ? (webhook.data.sample?.payload ?? null) : runPayload;
+  const testPayload = getTestRunDrawerPayload({ stored: storedPayload, sample: receivedPayload });
+  const payloadEditor = (
+    <TestRunPayloadEditor
+      text={testPayload.text}
+      source={testPayload.source}
+      canReset={testPayload.canReset}
+      onChange={setStoredPayload}
+      onReset={() => setStoredPayload(null)}
+    />
+  );
+  // A refusal about the payload has no run to show it in: offer the editor under the explanation.
+  const isPayloadFailure =
+    failure === "invalid_payload" || failure === "payload_too_large" || failure === "no_payload";
+
   return (
     <Sheet
       open={open}
@@ -100,11 +130,14 @@ export const WorkflowTestRunDrawer = ({
             size="sm"
             className="mt-2 w-fit"
             loading={isRunning}
-            disabled={isRunning}
+            disabled={isRunning || !testPayload.canRunAgain}
             onClick={onRunAgain}>
             <PlayIcon />
             {t("workspace.workflows.test_run_again")}
           </Button>
+          {testPayload.canRunAgain ? null : (
+            <p className="mt-1 text-xs text-error">{t("workspace.workflows.test_run_payload_invalid")}</p>
+          )}
         </RunDetailHeader>
         <div className="space-y-4 py-4">
           {failure ? (
@@ -112,6 +145,12 @@ export const WorkflowTestRunDrawer = ({
               <AlertTitle>{t("workspace.workflows.test_run_failed_title")}</AlertTitle>
               <AlertDescription>{describeFailure(failure, error, t)}</AlertDescription>
             </Alert>
+          ) : null}
+          {isPayloadFailure && !isRunning ? (
+            <section className="flex flex-col gap-2">
+              <h3 className="text-sm font-medium text-slate-800">{t("workspace.workflows.test_payload")}</h3>
+              {payloadEditor}
+            </section>
           ) : null}
           {!failure && (isRunning || (runId === null && !run)) ? (
             <div className="space-y-3" aria-busy="true">
@@ -130,6 +169,7 @@ export const WorkflowTestRunDrawer = ({
                 error={loadError}
                 detail={run}
                 definition={definition}
+                triggerPayloadEditor={payloadEditor}
               />
             </>
           ) : null}

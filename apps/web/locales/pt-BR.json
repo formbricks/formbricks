@@ -6328,6 +6328,7 @@
       "test_run_failed_payload_too_large": "O payload de teste ultrapassa o limite de {size} KB.",
       "test_run_failed_title": "A execução de teste não foi iniciada",
       "test_run_failed_unsaved": "Não foi possível salvar suas alterações mais recentes, então a execução de teste não foi iniciada. Tente novamente.",
+      "test_run_payload_invalid": "O payload de teste precisa ser um objeto JSON. Corrija-o para executar novamente.",
       "test_run_running": "Executando o rascunho com o seu payload de teste…",
       "trigger_ending_cards_label": "Cartões de encerramento",
       "trigger_ending_cards_none": "Esta pesquisa não tem encerramentos configurados.",

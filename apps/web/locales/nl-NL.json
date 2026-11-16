@@ -6328,6 +6328,7 @@
       "test_run_failed_payload_too_large": "De testpayload is groter dan de limiet van {size} KB.",
       "test_run_failed_title": "De testrun is niet gestart",
       "test_run_failed_unsaved": "Je laatste wijzigingen konden niet worden opgeslagen, dus de testrun is niet gestart. Probeer het opnieuw.",
+      "test_run_payload_invalid": "De testpayload moet een JSON-object zijn. Pas deze aan om opnieuw te kunnen uitvoeren.",
       "test_run_running": "Het concept wordt uitgevoerd met je testpayload…",
       "trigger_ending_cards_label": "Eindschermen",
       "trigger_ending_cards_none": "Deze enquête heeft geen eindschermen geconfigureerd.",

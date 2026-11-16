@@ -6328,6 +6328,7 @@
       "test_run_failed_payload_too_large": "測試負載超過 {size} KB 的上限。",
       "test_run_failed_title": "測試執行未能啟動",
       "test_run_failed_unsaved": "你的最新變更無法儲存，因此測試執行未能啟動，請再試一次。",
+      "test_run_payload_invalid": "測試酬載必須是 JSON 物件，請修正後再重新執行。",
       "test_run_running": "正在使用你的測試負載執行草稿…",
       "trigger_ending_cards_label": "結束卡片",
       "trigger_ending_cards_none": "此問卷沒有設定任何結束畫面。",

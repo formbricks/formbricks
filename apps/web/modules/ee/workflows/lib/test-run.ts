@@ -7,6 +7,10 @@ import {
 } from "@formbricks/workflows";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import type { TWorkflowRunListFilters } from "@/modules/ee/workflows/lib/api-client";
+import {
+  type TTestPayloadSource,
+  resolveTestPayload,
+} from "@/modules/ee/workflows/lib/webhook-trigger-panel";
 
 /**
  * A Test run from the editor header (ED6, ADR 0049): which payload it sends, what stops it before it
@@ -29,6 +33,27 @@ export const buildTestRunInput = (storedText: string | null): TTestRunInputResul
   const parsed = parseWebhookPayload(storedText);
   if (!parsed.ok) return { ok: false, reason: "invalid_payload" };
   return { ok: true, input: { payload: parsed.payload } };
+};
+
+/**
+ * The test payload as the Test run drawer's Webhook step edits it: the same text the Webhook trigger
+ * panel shows (the edit kept in this browser, else the last received payload), whether Run again can
+ * send it (the rule `buildTestRunInput` applies), and whether there is a received payload to reset to.
+ */
+export const getTestRunDrawerPayload = ({
+  stored,
+  sample,
+}: {
+  stored: string | null;
+  sample: Record<string, unknown> | null;
+}): { text: string; source: TTestPayloadSource; canRunAgain: boolean; canReset: boolean } => {
+  const { text, source } = resolveTestPayload({ stored, sample });
+  return {
+    text,
+    source,
+    canRunAgain: buildTestRunInput(stored).ok,
+    canReset: source === "edited" && sample !== null,
+  };
 };
 
 export type TTestRunBlocker = "not_webhook" | "archived";

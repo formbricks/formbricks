@@ -6328,6 +6328,7 @@
       "test_run_failed_payload_too_large": "The test payload is over the {size} KB limit.",
       "test_run_failed_title": "The Test run didn't start",
       "test_run_failed_unsaved": "Your latest changes couldn't be saved, so the Test run didn't start. Try again.",
+      "test_run_payload_invalid": "The test payload must be a JSON object. Fix it to run again.",
       "test_run_running": "Running the draft with your test payload…",
       "trigger_ending_cards_label": "Ending cards",
       "trigger_ending_cards_none": "This survey has no endings configured.",

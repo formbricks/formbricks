@@ -6328,6 +6328,7 @@
       "test_run_failed_payload_too_large": "Payloadul de test depășește limita de {size} KB.",
       "test_run_failed_title": "Rularea de test nu a pornit",
       "test_run_failed_unsaved": "Ultimele tale modificări nu au putut fi salvate, așa că rularea de test nu a pornit. Încearcă din nou.",
+      "test_run_payload_invalid": "Payload-ul de test trebuie să fie un obiect JSON. Corectează-l pentru a rula din nou.",
       "test_run_running": "Se rulează ciorna cu payloadul tău de test…",
       "trigger_ending_cards_label": "Ecrane de încheiere",
       "trigger_ending_cards_none": "Acest chestionar nu are încheieri configurate.",

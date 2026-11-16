@@ -6328,6 +6328,7 @@
       "test_run_failed_payload_too_large": "テストペイロードが上限の {size} KB を超えています。",
       "test_run_failed_title": "テスト実行を開始できませんでした",
       "test_run_failed_unsaved": "最新の変更を保存できなかったため、テスト実行を開始できませんでした。もう一度お試しください。",
+      "test_run_payload_invalid": "テスト用のペイロードはJSONオブジェクトである必要があります。修正してからもう一度実行してください。",
       "test_run_running": "テストペイロードを使って下書きを実行しています…",
       "trigger_ending_cards_label": "エンディングカード",
       "trigger_ending_cards_none": "このアンケートにはエンディングが設定されていません。",

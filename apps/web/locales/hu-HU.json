@@ -6328,6 +6328,7 @@
       "test_run_failed_payload_too_large": "A tesztadatcsomag mérete meghaladja a {size} KB-os korlátot.",
       "test_run_failed_title": "A tesztfuttatás nem indult el",
       "test_run_failed_unsaved": "Az Ön legutóbbi módosításait nem sikerült menteni, ezért a tesztfuttatás nem indult el. Kérjük, próbálja újra.",
+      "test_run_payload_invalid": "A teszt adatcsomagnak JSON-objektumnak kell lennie. Kérjük, javítsa ki, majd futtassa újra.",
       "test_run_running": "A piszkozat futtatása az Ön tesztadatcsomagjával…",
       "trigger_ending_cards_label": "Befejező kártyák",
       "trigger_ending_cards_none": "Ennek a kérdőívnek nincsenek beállított befejezései.",

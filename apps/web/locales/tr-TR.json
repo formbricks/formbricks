@@ -6328,6 +6328,7 @@
       "test_run_failed_payload_too_large": "Test verisi {size} KB sınırını aşıyor.",
       "test_run_failed_title": "Test çalıştırması başlamadı",
       "test_run_failed_unsaved": "Son değişiklikların kaydedilemedi, bu yüzden Test çalıştırması başlamadı. Tekrar dene.",
+      "test_run_payload_invalid": "Test yükü bir JSON nesnesi olmalıdır. Tekrar çalıştırmak için düzeltin.",
       "test_run_running": "Taslak, test verinle çalıştırılıyor…",
       "trigger_ending_cards_label": "Bitiş kartları",
       "trigger_ending_cards_none": "Bu ankette yapılandırılmış bitiş yok.",

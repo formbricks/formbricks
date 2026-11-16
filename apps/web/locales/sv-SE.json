@@ -6328,6 +6328,7 @@
       "test_run_failed_payload_too_large": "Testdatan överskrider gränsen på {size} KB.",
       "test_run_failed_title": "Testkörningen startade inte",
       "test_run_failed_unsaved": "Dina senaste ändringar kunde inte sparas, så testkörningen startade inte. Försök igen.",
+      "test_run_payload_invalid": "Testdatan måste vara ett JSON-objekt. Åtgärda den och kör igen.",
       "test_run_running": "Kör utkastet med din testdata…",
       "trigger_ending_cards_label": "Avslutningskort",
       "trigger_ending_cards_none": "Denna undersökning har inga avslutningar konfigurerade.",

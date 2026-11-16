@@ -282,10 +282,15 @@ interface RunDetailStepsProps {
   rows: TRunDetailRow[];
   /** Shown on the trigger row of a response-completed run, which has no payload. */
   responseId: string | null;
+  /**
+   * Replaces the Webhook step's read-only payload: the Test run drawer's editable test payload. Real
+   * runs leave it out.
+   */
+  triggerPayloadEditor?: React.ReactNode;
 }
 
 /** Run detail's numbered list (mock screens 7–9): the trigger, then each step. */
-export const RunDetailSteps = ({ rows, responseId }: Readonly<RunDetailStepsProps>) => {
+export const RunDetailSteps = ({ rows, responseId, triggerPayloadEditor }: Readonly<RunDetailStepsProps>) => {
   const { t } = useTranslation();
   return (
     <ol className="flex flex-col gap-3">
@@ -297,7 +302,7 @@ export const RunDetailSteps = ({ rows, responseId }: Readonly<RunDetailStepsProp
             title={getWorkflowTriggerTypeLabel(row.triggerType, t)}
             duration={null}
             badge={getBadge("succeeded", t)}>
-            {row.payload ? <RunJsonCode value={row.payload} /> : null}
+            {row.payload ? (triggerPayloadEditor ?? <RunJsonCode value={row.payload} />) : null}
             {!row.payload && responseId ? (
               <p className="text-xs text-slate-600">
                 {t("workspace.workflows.run_trigger_response", { responseId })}

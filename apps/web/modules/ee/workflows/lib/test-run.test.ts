@@ -1,6 +1,12 @@
 import { describe, expect, test } from "vitest";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
-import { buildTestRunInput, classifyTestRunError, getTestRunBlocker, withTestRunsHidden } from "./test-run";
+import {
+  buildTestRunInput,
+  classifyTestRunError,
+  getTestRunBlocker,
+  getTestRunDrawerPayload,
+  withTestRunsHidden,
+} from "./test-run";
 
 describe("buildTestRunInput", () => {
   test("sends the payload kept in this browser", () => {
@@ -69,5 +75,40 @@ describe("withTestRunsHidden", () => {
       workflowId: "wf_1",
     });
     expect(withTestRunsHidden(undefined, false)).toEqual({});
+  });
+});
+
+describe("getTestRunDrawerPayload", () => {
+  const sample = { channel: "call" };
+
+  test("shows the payload kept in this browser, the same text the Webhook trigger panel shows", () => {
+    expect(getTestRunDrawerPayload({ stored: '{ "channel": "chat" }', sample })).toEqual({
+      text: '{ "channel": "chat" }',
+      source: "edited",
+      canRunAgain: true,
+      canReset: true,
+    });
+  });
+
+  test("shows the last received payload while nothing is kept, with nothing to reset", () => {
+    expect(getTestRunDrawerPayload({ stored: null, sample })).toEqual({
+      text: '{\n  "channel": "call"\n}',
+      source: "received",
+      canRunAgain: true,
+      canReset: false,
+    });
+  });
+
+  test("blocks Run again while the kept payload is not a JSON object", () => {
+    expect(getTestRunDrawerPayload({ stored: '{ "channel": ', sample }).canRunAgain).toBe(false);
+    expect(getTestRunDrawerPayload({ stored: "[1, 2]", sample }).canRunAgain).toBe(false);
+  });
+
+  test("runs a blank kept payload with the Sample payload, as the header's Test run does", () => {
+    expect(getTestRunDrawerPayload({ stored: "  ", sample }).canRunAgain).toBe(true);
+  });
+
+  test("cannot reset to a received payload when none was ever received", () => {
+    expect(getTestRunDrawerPayload({ stored: '{ "a": 1 }', sample: null }).canReset).toBe(false);
   });
 });

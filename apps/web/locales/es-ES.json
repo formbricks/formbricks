@@ -6328,6 +6328,7 @@
       "test_run_failed_payload_too_large": "La carga de prueba supera el límite de {size} KB.",
       "test_run_failed_title": "La ejecución de prueba no se ha iniciado",
       "test_run_failed_unsaved": "No se han podido guardar tus últimos cambios, así que la ejecución de prueba no se ha iniciado. Inténtalo de nuevo.",
+      "test_run_payload_invalid": "La carga de prueba debe ser un objeto JSON. Corrígela para volver a ejecutarla.",
       "test_run_running": "Ejecutando el borrador con tu carga de prueba…",
       "trigger_ending_cards_label": "Pantallas de finalización",
       "trigger_ending_cards_none": "Esta encuesta no tiene finales configurados.",

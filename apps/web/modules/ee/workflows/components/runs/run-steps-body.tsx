@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -16,6 +16,8 @@ interface RunStepsBodyProps {
   detail?: TWorkflowRunDetail;
   /** Names steps and conditions; null when the workflow could not be loaded. */
   definition: TWorkflowDefinition | null;
+  /** The Test run drawer's editable test payload, in place of the Webhook step's read-only one. */
+  triggerPayloadEditor?: ReactNode;
 }
 
 // Step list body: one early return per fetch state keeps this flat (no nested ternary).
@@ -25,6 +27,7 @@ export const RunStepsBody = ({
   error,
   detail,
   definition,
+  triggerPayloadEditor,
 }: Readonly<RunStepsBodyProps>) => {
   const { t } = useTranslation();
   const rows = useMemo(() => (detail ? toRunDetailRows(detail, definition) : null), [detail, definition]);
@@ -50,7 +53,11 @@ export const RunStepsBody = ({
     const deletedAfterDays = getRunContentDeletedDays(detail);
     return (
       <>
-        <RunDetailSteps rows={rows} responseId={detail.responseId} />
+        <RunDetailSteps
+          rows={rows}
+          responseId={detail.responseId}
+          triggerPayloadEditor={triggerPayloadEditor}
+        />
         {deletedAfterDays === null ? null : (
           <p className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600">
             {t("workspace.workflows.run_details_deleted", { days: deletedAfterDays })}

@@ -6328,6 +6328,7 @@
       "test_run_failed_payload_too_large": "Die Test-Payload überschreitet das Limit von {size} KB.",
       "test_run_failed_title": "Der Testlauf wurde nicht gestartet",
       "test_run_failed_unsaved": "Deine letzten Änderungen konnten nicht gespeichert werden, deshalb wurde der Testlauf nicht gestartet. Versuch es noch einmal.",
+      "test_run_payload_invalid": "Die Test-Payload muss ein JSON-Objekt sein. Korrigiere sie, um den Test erneut auszuführen.",
       "test_run_running": "Der Entwurf wird mit deiner Test-Payload ausgeführt…",
       "trigger_ending_cards_label": "Abschlusskarten",
       "trigger_ending_cards_none": "Diese Umfrage hat keine konfigurierten Abschlüsse.",

@@ -6328,6 +6328,7 @@
       "test_run_failed_payload_too_large": "测试载荷超出了 {size} KB 的限制。",
       "test_run_failed_title": "测试运行未能启动",
       "test_run_failed_unsaved": "你的最新更改未能保存，因此测试运行没有启动。请重试。",
+      "test_run_payload_invalid": "测试负载必须是 JSON 对象。请修改后重新运行。",
       "test_run_running": "正在使用你的测试载荷运行草稿…",
       "trigger_ending_cards_label": "结束卡片",
       "trigger_ending_cards_none": "此调查问卷尚未配置结束页面。",

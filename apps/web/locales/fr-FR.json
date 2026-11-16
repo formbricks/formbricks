@@ -6328,6 +6328,7 @@
       "test_run_failed_payload_too_large": "Le payload de test dépasse la limite de {size} Ko.",
       "test_run_failed_title": "L'exécution de test n'a pas démarré",
       "test_run_failed_unsaved": "Tes dernières modifications n'ont pas pu être enregistrées, donc l'exécution de test n'a pas démarré. Réessaie.",
+      "test_run_payload_invalid": "Le payload de test doit être un objet JSON. Corrige-le pour relancer le test.",
       "test_run_running": "Exécution du brouillon avec ton payload de test…",
       "trigger_ending_cards_label": "Écrans de fin",
       "trigger_ending_cards_none": "Ce questionnaire n'a aucune fin configurée.",
