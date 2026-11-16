@@ -5,7 +5,7 @@ import {
   HandIcon,
   type LucideIcon,
   MousePointerClickIcon,
-  WandSparklesIcon,
+  NetworkIcon,
   ZoomInIcon,
   ZoomOutIcon,
 } from "lucide-react";
@@ -78,7 +78,7 @@ export const CanvasControls = ({
     },
     {
       key: "auto-layout",
-      Icon: WandSparklesIcon,
+      Icon: NetworkIcon,
       label: t("workspace.workflows.auto_layout"),
       variant: "outline",
       disabled: !canMutate,
