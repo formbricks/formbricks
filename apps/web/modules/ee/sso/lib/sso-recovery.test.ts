@@ -12,6 +12,7 @@ import {
   SsoRecoveryError,
   completeSsoRecovery,
   getSsoRecoveryFailureRedirectUrl,
+  getSsoRecoveryLoginRedirectUrl,
   startSsoRecovery,
 } from "./sso-recovery";
 
@@ -1083,6 +1084,17 @@ describe("sso-recovery", () => {
     );
     expect(getSsoRecoveryFailureRedirectUrl("https://evil.example/phish")).toBe(
       "http://localhost:3000/auth/login?error=OAuthAccountNotLinked"
+    );
+  });
+
+  test("sends a 2FA user to the login page with the completion URL as callbackUrl and no error", () => {
+    expect(
+      getSsoRecoveryLoginRedirectUrl("http://localhost:3000/api/auth/sso/recovery/complete?state=test-state")
+    ).toBe(
+      "http://localhost:3000/auth/login?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fauth%2Fsso%2Frecovery%2Fcomplete%3Fstate%3Dtest-state"
+    );
+    expect(getSsoRecoveryLoginRedirectUrl("https://evil.example/phish")).toBe(
+      "http://localhost:3000/auth/login"
     );
   });
 });

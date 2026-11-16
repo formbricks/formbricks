@@ -8,13 +8,16 @@ import { logger } from "@formbricks/logger";
 import { WEBAPP_URL } from "@/lib/constants";
 import { verifyToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
-import { getSsoRecoveryFailureRedirectUrl } from "@/modules/ee/sso/lib/sso-recovery";
+import {
+  getSsoRecoveryFailureRedirectUrl,
+  getSsoRecoveryLoginRedirectUrl,
+} from "@/modules/ee/sso/lib/sso-recovery";
 
 /**
  * SSO-recovery magic-link sign-in (ENG-1054, Phase 7) — the Better Auth replacement for the NextAuth
  * `"token"` CredentialsProvider's `sso_recovery` path. Verifies the `sso_recovery` JWT, establishes a
- * Better Auth session, then redirects to the recovery completion route (which verifies identity and
- * links the SSO account — already BA-compatible).
+ * Better Auth session (or, for a verified 2FA account, defers to the login page), then redirects to the
+ * recovery completion route (which verifies identity and links the SSO account — already BA-compatible).
  *
  * Deliberately recovery-SCOPED — not BA's general `magicLink` plugin, which would introduce a new
  * passwordless auth method (out of scope for the like-for-like migration). Live: the `[...all]` handler
@@ -24,6 +27,12 @@ import { getSsoRecoveryFailureRedirectUrl } from "@/modules/ee/sso/lib/sso-recov
  * page; the security-critical outcome — the account link — is audited by `completeSsoRecovery`, and
  * abuse is bounded by the `/sso-recovery/*` rate limit (auth.ts). The token is replayable until its
  * 1-day expiry, matching the legacy `"token"` provider (not single-use).
+ *
+ * The link proves mailbox access only, so it must not stand in for a second factor (ENG-7266). A user
+ * with a verified email and 2FA gets no session here: they are sent to the login page with the
+ * completion URL as `callbackUrl`, sign in with password + TOTP (or an SSO provider already linked),
+ * and recovery completes from there. Unverified accounts keep the direct session: completing recovery
+ * strips their local factors anyway (ENG-2557), since the mailbox owner may not be who set them.
  */
 export const ssoRecoverySignInPlugin = {
   id: "sso-recovery",
@@ -47,20 +56,28 @@ export const ssoRecoverySignInPlugin = {
             throw new Error("Token is not an SSO recovery token");
           }
           // isActive is a Formbricks column, not a Better Auth field — check it directly.
-          const dbUser = await prisma.user.findUnique({ where: { id }, select: { isActive: true } });
+          const dbUser = await prisma.user.findUnique({
+            where: { id },
+            select: { isActive: true, emailVerified: true, twoFactorEnabled: true },
+          });
           if (!dbUser || dbUser.isActive === false) {
             throw new Error("User not found or inactive");
           }
-          const user = await ctx.context.internalAdapter.findUserById(id);
-          if (!user) {
-            throw new Error("User not found");
+          if (dbUser.emailVerified && dbUser.twoFactorEnabled) {
+            logger.info({ userId: id }, "SSO recovery sign-in deferred to login: account has 2FA");
+            destination = getSsoRecoveryLoginRedirectUrl(callbackUrl);
+          } else {
+            const user = await ctx.context.internalAdapter.findUserById(id);
+            if (!user) {
+              throw new Error("User not found");
+            }
+            const session = await ctx.context.internalAdapter.createSession(user.id, false);
+            if (!session) {
+              throw new Error("Failed to create recovery session");
+            }
+            await setSessionCookie(ctx, { session, user });
+            destination = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL) ?? WEBAPP_URL;
           }
-          const session = await ctx.context.internalAdapter.createSession(user.id, false);
-          if (!session) {
-            throw new Error("Failed to create recovery session");
-          }
-          await setSessionCookie(ctx, { session, user });
-          destination = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL) ?? WEBAPP_URL;
         } catch (err) {
           logger.error(err, "SSO recovery sign-in failed");
         }

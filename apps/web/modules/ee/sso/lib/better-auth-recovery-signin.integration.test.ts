@@ -33,6 +33,51 @@ describe("SSO recovery sign-in (real Postgres)", () => {
     expect(res.headers.getSetCookie().some((c) => c.includes("session_token"))).toBe(true);
   });
 
+  /**
+   * ENG-7266. The link proves mailbox access only; for a verified 2FA account that must not replace the
+   * second factor. No session, no cookie, and the login page carries the completion URL so the user
+   * finishes recovery after password + TOTP.
+   */
+  test("a verified 2FA user gets no session and is sent to login with the completion URL", async () => {
+    const user = await prisma.user.create({
+      data: {
+        email: "twofactor@example.com",
+        name: "Two Factor",
+        emailVerified: true,
+        twoFactorEnabled: true,
+      },
+    });
+    const token = createToken(user.id, { purpose: "sso_recovery" });
+    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=test-state`;
+
+    const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
+
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
+    expect(res.headers.getSetCookie().some((c) => c.includes("session_token"))).toBe(false);
+    const location = new URL(res.headers.get("location") ?? "");
+    expect(location.pathname).toBe("/auth/login");
+    expect(location.searchParams.get("error")).toBeNull();
+    expect(location.searchParams.get("callbackUrl")).toBe(callbackUrl);
+  });
+
+  // Recovery strips an unverified account's local factors on completion (ENG-2557), so the factor set
+  // by a possible squatter is not one the mailbox owner can be asked for.
+  test("an unverified user with 2FA still gets the recovery session", async () => {
+    const user = await prisma.user.create({
+      data: {
+        email: "unverified-2fa@example.com",
+        name: "Unverified",
+        emailVerified: false,
+        twoFactorEnabled: true,
+      },
+    });
+    const token = createToken(user.id, { purpose: "sso_recovery" });
+
+    await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl: WEBAPP_URL }, asResponse: true });
+
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(1);
+  });
+
   test("a token with a non-recovery purpose creates no session", async () => {
     const user = await prisma.user.create({
       data: { email: "wrongpurpose@example.com", name: "Wrong", emailVerified: true },

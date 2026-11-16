@@ -368,9 +368,11 @@ const resolveRecoveryCallbackUrl = (callbackUrl: string): string => {
   return validatedCallbackUrl;
 };
 
-export const getSsoRecoveryFailureRedirectUrl = (callbackUrl?: string): string => {
+const buildSsoRecoveryLoginUrl = (callbackUrl: string | undefined, error?: string): string => {
   const loginUrl = new URL("/auth/login", WEBAPP_URL);
-  loginUrl.searchParams.set("error", OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+  if (error) {
+    loginUrl.searchParams.set("error", error);
+  }
 
   const validatedCallbackUrl = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL);
   if (validatedCallbackUrl) {
@@ -379,6 +381,18 @@ export const getSsoRecoveryFailureRedirectUrl = (callbackUrl?: string): string =
 
   return loginUrl.toString();
 };
+
+export const getSsoRecoveryFailureRedirectUrl = (callbackUrl?: string): string =>
+  buildSsoRecoveryLoginUrl(callbackUrl, OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+
+/**
+ * Where the recovery link sends a user whose second factor it cannot check (ENG-7266): the login page,
+ * carrying the completion URL as `callbackUrl`. They sign in with password + TOTP (or a linked SSO
+ * provider), the login form follows the callback, and `completeSsoRecovery` links the new identity once
+ * the session user matches the intent.
+ */
+export const getSsoRecoveryLoginRedirectUrl = (callbackUrl?: string): string =>
+  buildSsoRecoveryLoginUrl(callbackUrl);
 
 export const startSsoRecovery = async ({
   existingUser,
