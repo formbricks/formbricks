@@ -120,7 +120,7 @@ describe("generateInternalChart", () => {
         organizationId: ORGANIZATION_ID,
         actor: { type: "user", id: USER_ID },
       },
-      { withAnswerQuestions: true }
+      { withAnswerQuestions: true, withTopics: true }
     );
     expect(runChartQuery).toHaveBeenCalledWith(
       expect.objectContaining({

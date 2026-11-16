@@ -76,6 +76,9 @@ export const createCacheKey = {
   hub: {
     feedbackRecordTenant: (recordId: string): CacheKey =>
       makeCacheKey("hub", recordId, "feedback_record_tenant"),
+    // The topic labels of a Feedback Directory's active taxonomy, as chart fields offer them (ENG-6989).
+    directoryTopicLabels: (directoryId: string): CacheKey =>
+      makeCacheKey("hub", directoryId, "directory_topic_labels"),
   },
 
   // Rate limiting and security

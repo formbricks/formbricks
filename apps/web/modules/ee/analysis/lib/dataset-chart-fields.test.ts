@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getDatasetChartFieldCatalog, getDatasetChartFields } from "./dataset-chart-fields";
 
-const { mockGetKeys, mockResolve, mockGetAnswerQuestions } = vi.hoisted(() => ({
+const { mockGetKeys, mockResolve, mockGetAnswerQuestions, mockGetDatasetTopics } = vi.hoisted(() => ({
   mockGetKeys: vi.fn(),
   mockResolve: vi.fn(),
   mockGetAnswerQuestions: vi.fn(),
+  mockGetDatasetTopics: vi.fn(),
 }));
 
 vi.mock("server-only", () => ({}));
@@ -18,6 +19,7 @@ vi.mock("./embedded-member-name", () => ({
 vi.mock("@/modules/ee/analysis/charts/lib/answer-questions", () => ({
   getAnswerQuestions: mockGetAnswerQuestions,
 }));
+vi.mock("./dataset-topics", () => ({ getDatasetTopics: mockGetDatasetTopics }));
 
 const scope = {
   datasetId: "frd-1",
@@ -78,5 +80,54 @@ describe("getDatasetChartFields (ENG-6893)", () => {
     const catalog = await getDatasetChartFieldCatalog(scope);
     expect(catalog.at(-1)).toMatchObject({ name: PLAN, label: "plan", kind: "dimension" });
     expect(mockResolve).not.toHaveBeenCalled();
+  });
+});
+
+describe("getDatasetChartFields with topics (ENG-6989)", () => {
+  const topics = {
+    status: "active" as const,
+    labels: { topics: ["Billing"], subtopics: ["Billing › Refunds"] },
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetKeys.mockResolvedValue([]);
+    mockResolve.mockResolvedValue(new Map());
+    mockGetDatasetTopics.mockResolvedValue(topics);
+  });
+
+  test("reads the dataset's topics only when asked, so a saved chart's read costs no Hub call", async () => {
+    await expect(getDatasetChartFields(scope, { withTopics: true })).resolves.toEqual({
+      embeddedFields: [],
+      topics,
+    });
+    expect(mockGetDatasetTopics).toHaveBeenCalledWith({
+      datasetId: "frd-1",
+      organizationId: "organization-1",
+    });
+
+    mockGetDatasetTopics.mockClear();
+    await expect(
+      getDatasetChartFields(scope, { query: { dimensions: ["FeedbackRecords.topic"] } })
+    ).resolves.toEqual({
+      embeddedFields: [],
+    });
+    expect(mockGetDatasetTopics).not.toHaveBeenCalled();
+  });
+
+  test("passes on why topics are missing, for the validator to name", async () => {
+    mockGetDatasetTopics.mockResolvedValue({ status: "inactive" });
+
+    await expect(getDatasetChartFields(scope, { withTopics: true })).resolves.toEqual({
+      embeddedFields: [],
+      topics: { status: "inactive" },
+    });
+  });
+
+  test("lists the topic fields in the whole catalog of a dataset with an active taxonomy", async () => {
+    const names = (await getDatasetChartFieldCatalog(scope)).map((field) => field.name);
+    expect(names).toEqual(
+      expect.arrayContaining(["FeedbackRecords.topic", "FeedbackRecords.responseSubtopic"])
+    );
   });
 });

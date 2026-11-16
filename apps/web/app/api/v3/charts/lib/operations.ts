@@ -165,7 +165,9 @@ export async function createV3Chart({
     if (refused) return refused;
 
     const validated = validateChartQuery(body.query, {
-      dataset: await loadDatasetChartFields(authentication, access, body.datasetId, body.query),
+      dataset: await loadDatasetChartFields(authentication, access, body.datasetId, body.query, {
+        checkTopics: true,
+      }),
     });
     if (!validated.ok) return refuseChartQuery(validated.issues, context);
 
@@ -308,7 +310,8 @@ export async function updateV3Chart({
             context.authentication,
             loaded.access,
             loaded.row.feedbackDirectoryId,
-            body.query
+            body.query,
+            { checkTopics: true }
           );
     const update = chartUpdateOf(body, loaded.row.query, dataset);
     if (!update.ok) return refuseChartQuery(update.issues, context);

@@ -17,10 +17,13 @@ import {
   type TChartField,
   type TChartFieldKind,
   type TDatasetChartFields,
+  type TDatasetTopicsState,
+  TOPICS_UNAVAILABLE_REASONS,
   createChartFieldLookup,
   isFilterOnlyField,
 } from "./field-catalog";
-import { TIME_GRANULARITIES } from "./schema-definition";
+import { RESPONSE_TOPIC_CLASH_REASON, responseTopicConditionsClash } from "./response-topic-filters";
+import { TIME_GRANULARITIES, isSubtopicDimensionId, isTopicDimensionId } from "./schema-definition";
 import { MAX_TIME_BUCKETS, countTimeBuckets } from "./time-buckets";
 
 /**
@@ -35,6 +38,8 @@ import { MAX_TIME_BUCKETS, countTimeBuckets } from "./time-buckets";
  *   `renewQuery`, `joinHints`, `total`, `compareDateRange`), and so is `timezone`: every date range is
  *   read in the organization's display time zone;
  * - field, filter and order counts, filter nesting, `limit`/`offset` and string lengths are bounded;
+ * - conditions on the response's topics hold together: two that would have to hold for one topic of the
+ *   response at once, and so match nothing, are refused (`responseTopicConditionsClash`);
  * - a date range is a preset, `all-time`, or two ISO calendar dates, and with a granularity it spans at
  *   most `MAX_TIME_BUCKETS` buckets.
  *
@@ -325,14 +330,15 @@ export const DATE_RANGE_REASON =
 
 /**
  * Collects the problems found, and carries what they are judged against: the dataset's field lookup and,
- * when loaded, its answerable questions.
+ * when loaded, its answerable questions and the state of its topics.
  */
 class IssueCollector {
   readonly issues: TChartQueryIssue[] = [];
 
   constructor(
     readonly lookupField: (name: string) => TChartField | undefined,
-    readonly answerQuestions?: ReadonlyMap<string, TAnswerQuestion>
+    readonly answerQuestions?: ReadonlyMap<string, TAnswerQuestion>,
+    readonly topics?: TDatasetTopicsState
   ) {}
 
   add(name: string, reason: string, code?: TChartQueryIssue["code"]): void {
@@ -376,6 +382,13 @@ const checkField = (
   const field = issues.lookupField(value);
   if (!field) {
     issues.add(path, "Not a field in the field catalog (GET /api/v3/charts/fields).", "invalid_reference");
+    return undefined;
+  }
+
+  // A query being written or previewed may only use topic fields its dataset has topics for (ENG-6989).
+  // A saved chart is read without `topics`, so it keeps running whatever its taxonomy's state.
+  if (isTopicDimensionId(field.name) && issues.topics && issues.topics.status !== "active") {
+    issues.add(path, TOPICS_UNAVAILABLE_REASONS[issues.topics.status], "invalid_reference");
     return undefined;
   }
 
@@ -521,6 +534,7 @@ const checkCondition = (
 
   const values = checkConditionValues(entry.values, operator, `${path}.values`, issues);
   if (!values || !field) return undefined;
+  if (!checkTopicValues(field.name, operator, values, `${path}.values`, issues)) return undefined;
   if (field.name === ANSWER_MEMBER) {
     budget.answerRules += 1;
     // Without the dataset's questions a rule is refused, not checked for its shape alone: an unknown
@@ -534,6 +548,46 @@ const checkCondition = (
     }
   }
   return values.length === 0 ? { member: field.name, operator } : { member: field.name, operator, values };
+};
+
+/** Most labels a refused topic value lists; the values lookup lists them all. */
+const LISTED_TOPIC_LABELS = 20;
+
+/**
+ * Whether the values of a condition on a topic field are current labels of the dataset's taxonomy,
+ * recording the problem if not (ENG-6989). Only checked where the labels were loaded, and only for the
+ * operators that compare whole labels: a `contains` value is a fragment.
+ */
+const checkTopicValues = (
+  member: string,
+  operator: string,
+  values: readonly string[],
+  path: string,
+  issues: IssueCollector
+): boolean => {
+  if (!isTopicDimensionId(member) || issues.topics?.status !== "active") return true;
+  if (operator !== "equals" && operator !== "notEquals") return true;
+
+  const subtopic = isSubtopicDimensionId(member);
+  const labels = subtopic ? issues.topics.labels.subtopics : issues.topics.labels.topics;
+  const known = new Set(labels);
+  const unknown = values.findIndex((value) => !known.has(value));
+  if (unknown === -1) return true;
+
+  const kind = subtopic ? "subtopic" : "topic";
+  const listed = labels.slice(0, LISTED_TOPIC_LABELS).join(", ");
+  const more =
+    labels.length > LISTED_TOPIC_LABELS
+      ? `, and ${labels.length - LISTED_TOPIC_LABELS} more (GET /api/v3/charts/fields/${member}/values lists them all)`
+      : "";
+  issues.add(
+    `${path}[${unknown}]`,
+    labels.length === 0
+      ? `Not a current ${kind} of this dataset: its taxonomy has none.`
+      : `Not a current ${kind} of this dataset. Current ${kind}s: ${listed}${more}.`,
+    "invalid_reference"
+  );
+  return false;
 };
 
 /**
@@ -641,7 +695,9 @@ const checkFilters = (value: unknown, path: string, issues: IssueCollector): TCu
       "limit_exceeded"
     );
   }
-  return filters.filter((filter): filter is TCubeFilter => filter !== undefined);
+  const checked = filters.filter((filter): filter is TCubeFilter => filter !== undefined);
+  if (responseTopicConditionsClash(checked)) issues.add(path, RESPONSE_TOPIC_CLASH_REASON);
+  return checked;
 };
 
 const DIRECTIONS = new Set(["asc", "desc"]);
@@ -738,7 +794,8 @@ export const validateChartQuery = (
     legacyDateRanges?: TLegacyDateRanges;
     /**
      * The chart's Feedback Dataset: its embedded-data fields join the catalog and, when loaded, answer
-     * rules must name its questions. Without it only the fields every dataset shares are accepted.
+     * rules must name its questions, and topic fields need its active taxonomy and filter on its current
+     * labels. Without it only the fields every dataset may name are accepted.
      */
     dataset?: TDatasetChartFields;
   } = {}
@@ -747,7 +804,8 @@ export const validateChartQuery = (
     createChartFieldLookup(dataset),
     dataset?.answerQuestions
       ? new Map(dataset.answerQuestions.map((question) => [question.id, question]))
-      : undefined
+      : undefined,
+    dataset?.topics
   );
 
   if (!isRecord(input)) {

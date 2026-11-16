@@ -85,8 +85,8 @@ export async function generateInternalChart({
     );
     if (refused) return refused;
 
-    // The dataset's embedded-data fields and answerable questions are offered to the model (ENG-6893,
-    // ENG-6894), and the query it writes is judged against the same dataset.
+    // The dataset's embedded-data fields, answerable questions and current topics are offered to the
+    // model (ENG-6893, ENG-6894, ENG-6989), and the query it writes is judged against the same dataset.
     const dataset = await getDatasetChartFields(
       {
         datasetId: body.datasetId,
@@ -94,7 +94,7 @@ export async function generateInternalChart({
         organizationId,
         actor: { type: "user", id: userId },
       },
-      { withAnswerQuestions: true }
+      { withAnswerQuestions: true, withTopics: true }
     );
     const { chartType, query, name } = await generateAIChartQuery({
       organizationId,

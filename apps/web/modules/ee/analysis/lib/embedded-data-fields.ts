@@ -111,16 +111,15 @@ const collectFilterMembers = (filters: unknown, into: Set<string>): void => {
 };
 
 /**
- * The embedded-data members a chart query names, wherever it names one: measures, dimensions, time
- * dimensions, filters (nested `and`/`or` included) and order. A numeric twin (`edn_`) counts as the member
- * it reads. Filter values are never read, so a value
- * that happens to look like a member name is not mistaken for one. Read defensively: a stored query is
- * JSON and could hold anything.
+ * Every member a chart query names, wherever it names one: measures, dimensions, time dimensions,
+ * filters (nested `and`/`or` included) and order. Filter values are never read, so a value that happens
+ * to look like a member name is not mistaken for one. Read defensively: a stored query is JSON and could
+ * hold anything.
  */
-export const collectEmbeddedMemberNames = (query: unknown): string[] => {
-  if (typeof query !== "object" || query === null) return [];
-  const { measures, dimensions, timeDimensions, filters, order } = query as Record<string, unknown>;
+export const collectQueryMemberNames = (query: unknown): Set<string> => {
   const members = new Set<string>();
+  if (typeof query !== "object" || query === null) return members;
+  const { measures, dimensions, timeDimensions, filters, order } = query as Record<string, unknown>;
   for (const list of [measures, dimensions]) {
     if (Array.isArray(list)) list.forEach((name) => typeof name === "string" && members.add(name));
   }
@@ -136,10 +135,20 @@ export const collectEmbeddedMemberNames = (query: unknown): string[] => {
   } else if (typeof order === "object" && order !== null) {
     Object.keys(order).forEach((name) => members.add(name));
   }
+  return members;
+};
+
+/**
+ * The embedded-data members a chart query names, wherever it names one (`collectQueryMemberNames`). A
+ * numeric twin (`edn_`) counts as the member it reads.
+ */
+export const collectEmbeddedMemberNames = (query: unknown): string[] => {
   // A numeric twin needs its key in the token like the key's own member does.
   return [
     ...new Set(
-      [...members].map((name) => (isEmbeddedNumberMemberName(name) ? fromEmbeddedNumberMember(name) : name))
+      [...collectQueryMemberNames(query)].map((name) =>
+        isEmbeddedNumberMemberName(name) ? fromEmbeddedNumberMember(name) : name
+      )
     ),
   ].filter(isEmbeddedMemberName);
 };

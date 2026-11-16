@@ -4,6 +4,7 @@ import {
   canDropEmptyMeasureRows,
   dropEmptyMeasureRows,
   withOptionIdFilter,
+  withResponseTopicFieldTypeFilter,
 } from "@/modules/ee/analysis/charts/lib/empty-measure-rows";
 
 const CES_AVG = "FeedbackRecords.cesAverage";
@@ -173,5 +174,74 @@ describe("withOptionIdFilter", () => {
     const query: TChartQuery = { measures: [COUNT], dimensions: [VALUE_ID] };
     withOptionIdFilter(query);
     expect(query.filters).toBeUndefined();
+  });
+});
+
+describe("withResponseTopicFieldTypeFilter (ENG-6989)", () => {
+  const RESPONSE_TOPIC = "FeedbackRecords.responseTopic";
+  const RESPONSE_SUBTOPIC = "FeedbackRecords.responseSubtopic";
+  const NPS_SCORE = "FeedbackRecords.npsScore";
+  const NPS_AVERAGE = "FeedbackRecords.npsAverage";
+  const NPS_COUNT = "FeedbackRecords.npsCount";
+  const narrowedTo = (family: string) => ({
+    member: "FeedbackRecords.fieldType",
+    operator: "equals",
+    values: [family],
+  });
+
+  test.each([
+    ["NPS", [NPS_SCORE, NPS_AVERAGE], "nps"],
+    ["CSAT", ["FeedbackRecords.csatScore"], "csat"],
+    ["CES", ["FeedbackRecords.cesAverage"], "ces"],
+    ["rating", ["FeedbackRecords.ratingAverage"], "rating"],
+  ])("narrows %s scores grouped by response topic to that field type", (_label, measures, family) => {
+    const query: TChartQuery = { measures, dimensions: [RESPONSE_TOPIC] };
+    expect(withResponseTopicFieldTypeFilter(query).filters).toEqual([narrowedTo(family)]);
+  });
+
+  test("narrows a one-row query filtered by response subtopic, counts included", () => {
+    const query: TChartQuery = {
+      measures: [NPS_SCORE, NPS_COUNT],
+      filters: [{ member: RESPONSE_SUBTOPIC, operator: "equals", values: ["Billing › Refunds"] }],
+    };
+    expect(withResponseTopicFieldTypeFilter(query).filters).toEqual([
+      ...(query.filters ?? []),
+      narrowedTo("nps"),
+    ]);
+  });
+
+  test.each([
+    // A group with no NPS answer keeps its row with a count of 0; narrowing would drop it.
+    ["a grouped count", { measures: [NPS_SCORE, NPS_COUNT], dimensions: [RESPONSE_TOPIC] }],
+    // An empty month is a gap in a time series; narrowing would close it.
+    [
+      "a time series",
+      {
+        measures: [NPS_SCORE],
+        dimensions: [RESPONSE_TOPIC],
+        timeDimensions: [{ dimension: "FeedbackRecords.collectedAt", granularity: "month" as const }],
+      },
+    ],
+    [
+      "two score families",
+      { measures: [NPS_SCORE, "FeedbackRecords.csatScore"], dimensions: [RESPONSE_TOPIC] },
+    ],
+    [
+      "a measure of no family",
+      { measures: ["FeedbackRecords.uniqueResponses"], dimensions: [RESPONSE_TOPIC] },
+    ],
+    ["the record's own topic", { measures: [NPS_SCORE], dimensions: ["FeedbackRecords.topic"] }],
+    ["no topic at all", { measures: [NPS_SCORE], dimensions: [FIELD_LABEL] }],
+  ])("leaves %s as it is", (_label, query) => {
+    expect(withResponseTopicFieldTypeFilter(query as TChartQuery)).toBe(query);
+  });
+
+  test("does not add the filter twice", () => {
+    const query: TChartQuery = {
+      measures: [NPS_SCORE],
+      dimensions: [RESPONSE_TOPIC],
+      filters: [narrowedTo("nps")],
+    };
+    expect(withResponseTopicFieldTypeFilter(query)).toBe(query);
   });
 });

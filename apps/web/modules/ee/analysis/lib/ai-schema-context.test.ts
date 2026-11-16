@@ -5,6 +5,7 @@ import {
   MAX_PROMPT_ANSWER_QUESTIONS,
   MAX_PROMPT_EMBEDDED_FIELDS,
   MAX_PROMPT_LABEL_LENGTH,
+  MAX_PROMPT_TOPICS,
   generateSchemaContext,
 } from "./ai-schema-context";
 
@@ -177,5 +178,45 @@ describe("AI schema context bounds (C21)", () => {
     const context = generateSchemaContext({ embeddedFields });
 
     expect(context.match(/: embedded data "/g)).toHaveLength(MAX_PROMPT_EMBEDDED_FIELDS);
+  });
+});
+
+describe("AI schema context: topics (ENG-6989)", () => {
+  const withTopics = (topics: string[], subtopics: string[] = []) =>
+    generateSchemaContext({
+      embeddedFields: [],
+      topics: { status: "active", labels: { topics, subtopics } },
+    });
+
+  test("explains which pair of topic fields to use, and lists the dataset's labels as data", () => {
+    const context = withTopics(["Billing", 'Say "hi"'], ["Billing › Refunds"]);
+
+    expect(context).toContain("### Topics (this dataset's current taxonomy)");
+    expect(context).toContain("`FeedbackRecords.topic` / `FeedbackRecords.subtopic`: the record's own topic");
+    expect(context).toContain("`FeedbackRecords.responseTopic` / `FeedbackRecords.responseSubtopic`");
+    expect(context).toContain("Filter them only with `equals`, `set`, `notSet`.");
+    expect(context).toContain('Topics: "Billing", "Say \\"hi\\""');
+    expect(context).toContain('Subtopics: "Billing › Refunds"');
+  });
+
+  test("has no topic section without current topics", () => {
+    expect(generateSchemaContext({ embeddedFields: [] })).not.toContain("### Topics");
+    expect(generateSchemaContext({ embeddedFields: [], topics: { status: "inactive" } })).not.toContain(
+      "### Topics"
+    );
+  });
+
+  test("lists at most MAX_PROMPT_TOPICS labels, never a cut one", () => {
+    const many = Array.from(
+      { length: MAX_PROMPT_TOPICS + 5 },
+      (_, index) => `Topic ${String(index).padStart(2, "0")}`
+    );
+    const long = "x".repeat(MAX_PROMPT_LABEL_LENGTH + 1);
+    const context = withTopics([...many, long]);
+
+    expect(context).toContain(`"Topic ${String(MAX_PROMPT_TOPICS - 1).padStart(2, "0")}"`);
+    expect(context).not.toContain(`"Topic ${String(MAX_PROMPT_TOPICS).padStart(2, "0")}"`);
+    expect(context).not.toContain(long.slice(0, MAX_PROMPT_LABEL_LENGTH));
+    expect(context).toContain("(6 more are not listed; do not invent labels)");
   });
 });

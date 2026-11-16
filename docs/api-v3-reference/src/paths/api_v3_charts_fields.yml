@@ -7,6 +7,14 @@ get:
     Write chart queries against this list — the chart query validator refuses any field that is not
     in it, so the catalog cannot drift from what the API accepts.
 
+    A dataset with an active taxonomy also lists its topic fields: `FeedbackRecords.topic` and
+    `subtopic` (the record's own topic, for counts, sentiment and emotions) and
+    `FeedbackRecords.responseTopic` and `responseSubtopic` (the topics of the response, for NPS, CSAT,
+    CES, rating and unique responses). Subtopics are written "Topic › Subtopic". A chart query that
+    names one is written and previewed only while the dataset has an active taxonomy and the
+    organization's plan includes Feedback Directories, and its `equals` and `notEquals` filter values
+    must be current labels. A saved chart keeps running if the taxonomy later goes away.
+
     Needs read access to the workspace and to the Feedback Dataset. Session cookie, `x-api-key`, or
     a Bearer token.
   tags:

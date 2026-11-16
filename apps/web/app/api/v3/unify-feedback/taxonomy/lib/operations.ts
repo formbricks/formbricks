@@ -7,6 +7,7 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
+import { invalidateDatasetTopics } from "@/modules/ee/analysis/lib/dataset-topics";
 import {
   createTaxonomyRun,
   getActiveTaxonomyTree,
@@ -308,6 +309,10 @@ export async function renameV3TaxonomyNode(
     });
   }
 
+  // Charts offer the directory's topic labels from a short-lived cache; drop it so the new label is
+  // offered, and accepted in a filter, at once.
+  await invalidateDatasetTopics(directoryId);
+
   return successResponse(result.data, { requestId });
 }
 
@@ -334,6 +339,8 @@ export async function removeV3TaxonomyNode(params: TBaseParams & { nodeId: strin
       notFound: { resourceType: "Taxonomy node", resourceId: nodeId },
     });
   }
+
+  await invalidateDatasetTopics(directoryId);
 
   return noContentResponse({ requestId });
 }

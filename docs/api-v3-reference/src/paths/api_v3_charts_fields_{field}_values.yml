@@ -7,6 +7,9 @@ get:
     catalog marks `valueLookup: true` qualify; any other field, or one outside the catalog, answers
     422. Narrow a field with more values using `search`. The list is not paged.
 
+    A topic field lists the dataset's current topic labels from its active taxonomy, including labels
+    no record has yet; a dataset without one answers 422.
+
     Needs read access to the workspace and the Feedback Dataset. Counts against the chart-query
     budget (600 per minute, 20 at once, per user or API key), not the v3 default.
   tags:

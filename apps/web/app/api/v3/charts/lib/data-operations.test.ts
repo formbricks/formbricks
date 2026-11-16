@@ -184,6 +184,25 @@ describe("chart queries within budget", () => {
       expect(acquireInFlightSlot).not.toHaveBeenCalled();
     });
 
+    test("checks a previewed query's topic fields against the taxonomy, as a write does (ENG-6989)", async () => {
+      const query = { measures: ["FeedbackRecords.npsScore"], dimensions: ["FeedbackRecords.responseTopic"] };
+      vi.mocked(loadDatasetChartFields).mockResolvedValueOnce({
+        embeddedFields: [],
+        topics: { status: "inactive" },
+      });
+
+      const response = await preview({ query });
+
+      expect(loadDatasetChartFields).toHaveBeenCalledWith(context.authentication, access, datasetId, query, {
+        checkTopics: true,
+      });
+      expect(response.status).toBe(422);
+      expect((await problemOf(response)).invalid_params).toEqual([
+        expect.objectContaining({ name: "query.dimensions[0]", code: "invalid_reference" }),
+      ]);
+      expect(runChartQuery).not.toHaveBeenCalled();
+    });
+
     test("names each embedded-data member the query groups by with its key's own name", async () => {
       const plan = "FeedbackRecords.ed_plan_64879f7d";
       vi.mocked(loadDatasetChartFields).mockResolvedValueOnce({
@@ -408,7 +427,9 @@ describe("chart queries within budget", () => {
         context.authentication,
         access,
         datasetId,
-        expect.objectContaining({ filters: [pick] })
+        expect.objectContaining({ filters: [pick] }),
+        // A saved chart's data is read without checking its topic fields against the taxonomy.
+        { checkTopics: false }
       );
     });
 
@@ -483,6 +504,18 @@ describe("chart queries within budget", () => {
 
     beforeEach(() => {
       vi.mocked(loadAuthorizedChart).mockResolvedValue({ row: chartOf(RANGED), access });
+    });
+
+    test("reads a saved topic chart without checking its topics, so it keeps running (ENG-6989)", async () => {
+      const saved = { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.topic"] };
+      vi.mocked(loadAuthorizedChart).mockResolvedValue({ row: chartOf(saved), access });
+
+      const response = await read();
+
+      expect(response.status).toBe(200);
+      expect(loadDatasetChartFields).toHaveBeenCalledWith(context.authentication, access, datasetId, saved, {
+        checkTopics: false,
+      });
     });
 
     test("runs the saved query on the chart's own dataset, in its workspace, as a data read", async () => {

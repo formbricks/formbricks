@@ -3,6 +3,7 @@ import type { TChartQuery, TCubeFilter, TMemberFilter } from "@formbricks/types/
 import { getStartOfDayInTimeZone } from "@/lib/date-ranges";
 import { parseLocalDay } from "@/lib/utils/datetime";
 import { toEmbeddedNumberMember } from "@/modules/ee/analysis/lib/embedded-data-fields";
+import { ruleAddsResponseTopicClash } from "@/modules/ee/analysis/lib/response-topic-filters";
 import { isRealIsoDate } from "./dashboard-date-filter";
 import { filterRuleIdOf } from "./dashboard-filter-rules";
 import {
@@ -243,8 +244,9 @@ export type TResolvedPicks = {
   /** The rules to AND onto the chart's query, in the dashboard's filter order. */
   rules: TCubeFilter[];
   /**
-   * Picked filters the chart cannot be narrowed by: its Feedback Dataset lacks their field, or the pick needs a
-   * text answer the chart never reads (`pickNeedsTextAnswer`). The chart shows no data.
+   * Picked filters the chart cannot be narrowed by: its Feedback Dataset lacks their field, the pick needs a
+   * text answer the chart never reads (`pickNeedsTextAnswer`), or it is a response-topic condition that
+   * clashes with one already on the chart (`ruleAddsResponseTopicClash`). The chart shows no data.
    */
   unfilterable: TDashboardFilter[];
 };
@@ -253,9 +255,12 @@ export type TResolvedPicks = {
  * Resolve picks against one chart's Feedback Dataset. Picks for filters the dashboard no longer has are
  * dropped; a picked filter whose field the dataset lacks makes the chart unfilterable rather than being
  * skipped, since skipping it would show the chart wider than the pick. So does a pick on an enrichment field
- * (Sentiment, Sentiment Score, Emotions) that needs a value, on a chart whose saved query reads no text answer
- * (`excludesTextAnswers`, from `chartExcludesTextAnswers`): it could only ever show nothing. `timeZone` is
- * the organization's reporting zone, which a picked calendar day is cut in.
+ * (Sentiment, Sentiment Score, Emotions, Topic, Subtopic) that needs a value, on a chart whose saved query
+ * reads no text answer (`excludesTextAnswers`, from `chartExcludesTextAnswers`): it could only ever show
+ * nothing. And so does a pick on Response topic or Response subtopic whose condition clashes with one in the
+ * chart's saved filters (`savedFilters`) or an earlier pick (`ruleAddsResponseTopicClash`): "mentions Login"
+ * on a chart saved for "mentions Payments" would show nothing, not the responses that mention both.
+ * `timeZone` is the organization's reporting zone, which a picked calendar day is cut in.
  */
 export const resolvePicksForDataset = (
   filters: readonly TDashboardFilter[],
@@ -265,18 +270,29 @@ export const resolvePicksForDataset = (
     except,
     timeZone,
     excludesTextAnswers = false,
-  }: { except?: string; timeZone: string; excludesTextAnswers?: boolean }
+    savedFilters,
+  }: {
+    except?: string;
+    timeZone: string;
+    excludesTextAnswers?: boolean;
+    /** The chart's saved filters, which the rules are ANDed onto. Read defensively: a stored query is JSON. */
+    savedFilters?: unknown;
+  }
 ): TResolvedPicks => {
   const rules: TCubeFilter[] = [];
   const unfilterable: TDashboardFilter[] = [];
+  const saved: readonly unknown[] = Array.isArray(savedFilters) ? savedFilters : [];
 
   for (const filter of filters) {
     if (filter.id === except) continue;
     const values = pickValuesOf(filter, picks[filter.id]);
     if (!values) continue;
+    const rule = toPickRule(filter, values, { timeZone });
     const narrowable =
-      datasetHasField(filter.field) && !(excludesTextAnswers && pickNeedsTextAnswer(filter, values));
-    if (narrowable) rules.push(toPickRule(filter, values, { timeZone }));
+      datasetHasField(filter.field) &&
+      !(excludesTextAnswers && pickNeedsTextAnswer(filter, values)) &&
+      !ruleAddsResponseTopicClash([...saved, ...rules], rule);
+    if (narrowable) rules.push(rule);
     else unfilterable.push(filter);
   }
 

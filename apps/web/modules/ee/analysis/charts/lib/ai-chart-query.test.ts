@@ -638,6 +638,24 @@ describe("AI chart generation for one dataset (ENG-6893, ENG-6894)", () => {
     );
   });
 
+  test("offers the topic fields only for a dataset with current topics (ENG-6989)", () => {
+    const topicFilter = { member: "FeedbackRecords.responseTopic", operator: "equals", values: ["Billing"] };
+    const withTopics = buildAIQueryResponseSchema({
+      embeddedFields: [],
+      topics: { status: "active", labels: { topics: ["Billing"], subtopics: [] } },
+    });
+
+    expect(withTopics.safeParse(output([topicFilter], ["FeedbackRecords.subtopic"])).success).toBe(true);
+    for (const dataset of [
+      { embeddedFields: [] },
+      { embeddedFields: [], topics: { status: "inactive" as const } },
+    ]) {
+      const schema = buildAIQueryResponseSchema(dataset);
+      expect(schema.safeParse(output([topicFilter])).success).toBe(false);
+      expect(schema.safeParse(output(null, ["FeedbackRecords.topic"])).success).toBe(false);
+    }
+  });
+
   test("turns 'NPS when delivery was late' into an answer rule the query keeps", async () => {
     mocks.generateOrganizationAIObject.mockResolvedValueOnce({
       object: output([

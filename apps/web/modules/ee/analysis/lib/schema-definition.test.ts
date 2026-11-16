@@ -12,6 +12,7 @@ import {
   SELECTABLE_VALUE_DIMENSION_IDS,
   SENTIMENT_MEASURE_ORDER,
   SENTIMENT_VALUE_ORDER,
+  TOPIC_FIELDS,
   VALUE_BAND_VALUES,
   formatCubeColumnHeader,
   getFieldById,
@@ -322,6 +323,13 @@ describe("schema-definition", () => {
 
       for (const member of exposedMembers) {
         expect(chartCubeSchema).toContain(`    ${member}: {`);
+      }
+    });
+
+    test("exposes topic fields present in the deployed Cube schema (ENG-6989)", () => {
+      const chartCubeSchema = readChartCubeSchema();
+      for (const { id } of TOPIC_FIELDS) {
+        expect(chartCubeSchema).toContain(`    ${getCubeMemberName(id)}: {`);
       }
     });
 

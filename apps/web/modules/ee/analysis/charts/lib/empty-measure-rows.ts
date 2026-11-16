@@ -1,4 +1,12 @@
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { FIELD_TYPE_DIMENSION_ID } from "@/modules/ee/analysis/lib/dimension-value-lookup";
+import { collectQueryMemberNames } from "@/modules/ee/analysis/lib/embedded-data-fields";
+import {
+  getResponseBaseFamily,
+  getResponseBaseMeasureId,
+  isRatioMeasure,
+  isResponseTopicDimensionId,
+} from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
 
 /**
@@ -76,4 +84,49 @@ const VALUE_ID_DIMENSION = "FeedbackRecords.valueId";
 export const withOptionIdFilter = (query: TChartQuery): TChartQuery => {
   if (!(query.dimensions ?? []).includes(VALUE_ID_DIMENSION)) return query;
   return { ...query, filters: [...(query.filters ?? []), { member: VALUE_ID_DIMENSION, operator: "set" }] };
+};
+
+/**
+ * The query to execute for a chart of one score over a response-topic field (ENG-6989): the same query
+ * narrowed to that score's answers (`fieldType equals <family>`) wherever that cannot change the chart.
+ *
+ * A response-topic field joins every answer of each response, and Cube's deduplication then sorts every
+ * record of the dataset: about 2 s on 583k records, 0.25 s narrowed. Each measure of a score family only
+ * counts that family's answers, so every cell keeps its value; what narrowing can change is which rows
+ * exist, since a group whose answers are all of other types disappears instead of showing empty cells.
+ * So it applies only where that group could not be seen anyway:
+ *
+ * - without a dimension or time granularity the result is one row either way;
+ * - with dimensions, no time granularity, and only scores and averages (`isRatioMeasure`), such a group
+ *   would hold only empty cells, which `dropEmptyMeasureRows` drops.
+ *
+ * A count reads 0 for such a group and keeps its row, and an empty time bucket is information, so those
+ * queries run as they are. Execution only, like `withOptionIdFilter`.
+ */
+export const withResponseTopicFieldTypeFilter = (query: TChartQuery): TChartQuery => {
+  if (![...collectQueryMemberNames(query)].some(isResponseTopicDimensionId)) return query;
+
+  const measures = query.measures ?? [];
+  const base = getResponseBaseMeasureId(measures);
+  const family = base ? getResponseBaseFamily(base) : undefined;
+  if (!family) return query;
+  if (query.timeDimensions?.some((timeDimension) => Boolean(timeDimension.granularity))) return query;
+  if ((query.dimensions?.length ?? 0) > 0 && !measures.every(isRatioMeasure)) return query;
+
+  const narrowed = (query.filters ?? []).some(
+    (filter) =>
+      "member" in filter &&
+      filter.member === FIELD_TYPE_DIMENSION_ID &&
+      filter.operator === "equals" &&
+      filter.values?.length === 1 &&
+      filter.values[0] === family
+  );
+  if (narrowed) return query;
+  return {
+    ...query,
+    filters: [
+      ...(query.filters ?? []),
+      { member: FIELD_TYPE_DIMENSION_ID, operator: "equals", values: [family] },
+    ],
+  };
 };

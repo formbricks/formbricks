@@ -33,6 +33,27 @@ describe("withResponseBaseMeasure", () => {
   });
 });
 
+describe("withResponseBaseMeasure with topics in the response (ENG-6989)", () => {
+  test("adds no base when the chart groups by a response-topic field", () => {
+    for (const dimension of ["FeedbackRecords.responseTopic", "FeedbackRecords.responseSubtopic"]) {
+      const query: TChartQuery = { measures: [NPS_SCORE], dimensions: [dimension] };
+      expect(withResponseBaseMeasure(query)).toBe(query);
+    }
+  });
+
+  test("still adds it for a response-topic filter, or a grouping by the record's own topic", () => {
+    expect(
+      withResponseBaseMeasure({
+        measures: [NPS_SCORE],
+        filters: [{ member: "FeedbackRecords.responseTopic", operator: "equals", values: ["Billing"] }],
+      }).measures
+    ).toEqual([NPS_SCORE, NPS_COUNT]);
+    expect(
+      withResponseBaseMeasure({ measures: [NPS_SCORE], dimensions: ["FeedbackRecords.topic"] }).measures
+    ).toEqual([NPS_SCORE, NPS_COUNT]);
+  });
+});
+
 describe("computeResponseBase", () => {
   test("sums the base over every row, numeric strings included", () => {
     expect(
