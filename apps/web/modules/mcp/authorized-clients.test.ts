@@ -262,6 +262,47 @@ describe("listAuthorizedMcpClients", () => {
     ]);
   });
 
+  // More consents than the list shows: the capped read leaves a client's consent out while its grant is
+  // among the user's other grants. Its cap is still its consent's, not nothing.
+  test("caps a grant whose consent the capped read left out by that consent", async () => {
+    const listed = Array.from({ length: 500 }, (_unused, index) =>
+      consent({ id: `consent-${index.toString()}`, clientId: `client-${index.toString()}` })
+    );
+    prisma.oauthConsent.findMany.mockResolvedValueOnce(listed as never).mockResolvedValueOnce([
+      { clientId: "client-omitted", scopes: ["surveys:write"] },
+      { clientId: "client-omitted", scopes: ["surveys:read"] },
+    ] as never);
+    grants(
+      [],
+      [
+        {
+          ...grantRow({ clientId: "client-omitted", updatedAt: at("2026-06-01T00:00:00Z") }),
+          client: CLIENT,
+        },
+      ]
+    );
+
+    const clients = await list();
+
+    expect(clients.find(({ clientId }) => clientId === "client-omitted")?.cap).toEqual({
+      surveys: "write",
+      creatives: "write",
+      surveyStyling: "write",
+    });
+    expect(prisma.oauthConsent.findMany).toHaveBeenLastCalledWith(
+      expect.objectContaining({ where: { userId: USER_ID, clientId: { in: ["client-omitted"] } } })
+    );
+  });
+
+  test("reads no further consents below the cap", async () => {
+    prisma.oauthConsent.findMany.mockResolvedValue([consent({})] as never);
+    grants([], [{ ...grantRow({ clientId: "other" }), client: CLIENT }]);
+
+    await list();
+
+    expect(prisma.oauthConsent.findMany).toHaveBeenCalledTimes(1);
+  });
+
   test("caps a consented client that is skipConsent by its registered scopes", async () => {
     prisma.oauthConsent.findMany.mockResolvedValue([
       consent({

@@ -75,12 +75,37 @@ const capScopes = (
 ): string[] => (client.skipConsent ? client.scopes : consentedScopes);
 
 /**
+ * Past the cap, a grant read as unconsented may belong to a client whose consent the capped read left
+ * out: its cap comes from that consent, not from none. Reads those consents' current scopes by client,
+ * only then; below the cap there is nothing left out, and nothing is read.
+ */
+const readOmittedConsentScopes = async (
+  userId: string,
+  listedConsents: number,
+  unconsentedGrants: ReadonlyArray<{ clientId: string }>
+): Promise<ReadonlyMap<string, string[]>> => {
+  const scopes = new Map<string, string[]>();
+  if (listedConsents < MAX_LISTED_AUTHORIZED_MCP_CLIENTS || unconsentedGrants.length === 0) return scopes;
+  const consents = await prisma.oauthConsent.findMany({
+    where: { userId, clientId: { in: unconsentedGrants.map(({ clientId }) => clientId) } },
+    select: { clientId: true, scopes: true },
+    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+  });
+  for (const consent of consents) {
+    // Newest first, so the first row seen holds the consent's current scopes.
+    if (!scopes.has(consent.clientId)) scopes.set(consent.clientId, consent.scopes);
+  }
+  return scopes;
+};
+
+/**
  * The MCP clients the user authorized, most recently changed first: one per client with a consent, and one
  * per other grant the user holds (spec stories 29 and 38), so Revoke reaches every grant. That is a
  * `skipConsent` client, which never has a consent, capped by its registered scopes; or a client left with a
  * grant and no consent (switched off `skipConsent` after it was authorized), capped at nothing until the
- * user approves it again. Three reads whatever the count: the consents with their clients, then, side by
- * side, the grants of those clients and the user's other grants. Duplicate consent rows of one client
+ * user approves it again. Three reads up to the cap: the consents with their clients, then, side by
+ * side, the grants of those clients and the user's other grants; past it, a fourth reads the consents of
+ * those other grants' clients. Duplicate consent rows of one client
  * fold into one entry.
  */
 export const listAuthorizedMcpClients = async (
@@ -115,6 +140,7 @@ export const listAuthorizedMcpClients = async (
       take: MAX_LISTED_AUTHORIZED_MCP_CLIENTS,
     }),
   ]);
+  const omittedScopes = await readOmittedConsentScopes(userId, consents.length, unconsentedGrants);
   const grantByClient = new Map(consentedGrants.map((grant) => [grant.clientId, grant]));
   const accessOf = (grant: TMcpGrantAccessRow) =>
     limitMcpGrantAccessToOptions(readMcpGrantAccessSelection(grant), accessOptions);
@@ -148,7 +174,7 @@ export const listAuthorizedMcpClients = async (
       updatedAt: grant.updatedAt,
       permissions: parseMcpGrantPermissions(grant.permissions),
       access: accessOf(grant),
-      cap: capForScopes(capScopes(grant.client, []), isDashboardViewer),
+      cap: capForScopes(capScopes(grant.client, omittedScopes.get(grant.clientId) ?? []), isDashboardViewer),
     });
   }
   return [...clients.values()]
