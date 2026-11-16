@@ -519,6 +519,14 @@ const createAuthzedClient = (requestTimeoutMs: number): TAuthzedClientSingleton 
         });
       if (response.pairs.length !== checks.length) throw invalidResponse();
       return response.pairs.map((pair, index) => {
+        // SpiceDB answers a failed item with its own status (bulkcheck.go), such as FAILED_PRECONDITION
+        // for a permission the schema lacks. Raised as that status, not as a malformed response, so the
+        // retry wrapper doesn't retry a permanent failure and callers can read which element is missing
+        // (`isPermissionMissingFromSchema`). Never a decision either way.
+        if (pair.response.oneofKind === "error") {
+          const { code, message } = pair.response.error;
+          throw mapAuthzedError(Object.assign(new Error(message), { code }), "check_bulk_permissions", 1);
+        }
         const expected = items[index];
         const echoed = pair.request;
         // Never associate an allow with a different recipient or permission, including reordered pairs.

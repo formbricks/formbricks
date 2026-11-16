@@ -2,6 +2,7 @@ import { configMocks, envMock, retryMocks, sdkMocks } from "./__mocks__/client-d
 import { v1 } from "@authzed/authzed-node";
 import { status } from "@grpc/grpc-js";
 import { beforeEach, describe, expect, test } from "vitest";
+import { isMcpReachMissingFromSchema } from "@/lib/authorization/mcp-reach";
 import { closeAuthzedClient, configureAuthzedClientForBulkWork, getAuthzedClient } from "./client";
 import { AUTHZED_MAX_RESOURCE_LOOKUP_RESULTS, AUTHZED_RESOURCE_LOOKUP_PAGE_SIZE } from "./constants";
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
@@ -323,6 +324,37 @@ describe("AuthZed client facade", () => {
     ])("fails closed on mismatched, missing, failed, or caveated results", async (...pairs) => {
       sdkMocks.checkBulkPermissions.mockResolvedValue({ pairs });
       await expect(getAuthzedClient().checkPermissionBatch(checks)).rejects.toThrow(AuthzedError);
+    });
+    // The previous release's schema: SpiceDB fails the item, not the call (bulkcheck.go), with
+    // FAILED_PRECONDITION naming the missing permission. A permanent failure the caller can read, never
+    // a retried "malformed response".
+    test("raises a failed item as its own status, naming the missing schema element", async () => {
+      const reach = { ...checks[1], permission: "mcp_reach" };
+      sdkMocks.checkBulkPermissions.mockResolvedValue({
+        pairs: [
+          pair(0, 2),
+          {
+            request: { ...reach, subject: { object: reach.subject, optionalRelation: "" } },
+            response: {
+              oneofKind: "error",
+              error: {
+                code: 9,
+                message: "relation/permission `mcp_reach` not found under definition `survey`",
+                details: [],
+              },
+            },
+          },
+        ],
+      });
+
+      const error = await getAuthzedClient()
+        .checkPermissionBatch([checks[0], reach])
+        .catch((thrown: unknown) => thrown);
+
+      expect(error).toBeInstanceOf(AuthzedError);
+      expect(error).toMatchObject({ code: AUTHZED_ERROR_CODES.FAILED_PRECONDITION, retryable: false });
+      expect(isMcpReachMissingFromSchema(error)).toBe(true);
+      expect(sdkMocks.checkBulkPermissions).toHaveBeenCalledOnce();
     });
     test("bounds batches and skips empty requests", async () => {
       await expect(getAuthzedClient().checkPermissionBatch([])).resolves.toEqual([]);
