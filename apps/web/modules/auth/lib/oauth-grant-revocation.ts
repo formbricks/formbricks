@@ -1011,7 +1011,7 @@ const invalidGrant = (): APIError =>
  * row, has no consent to check: its grant alone is checked, and a refresh of a connection without one
  * (revoked, or connected on a previous release during a rolling upgrade) is refused and its tokens
  * revoked, so the client authorizes again and the code exchange gives it a grant
- * (`grantSkipConsentClientAfterHandler`). Fails closed if the presented token can't be matched to a row,
+ * (`mcpGrantAccessTokenClaims`). Fails closed if the presented token can't be matched to a row,
  * which after upstream accepted it only happens if the storage format has drifted.
  */
 export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookContext): Promise<void> => {

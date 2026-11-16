@@ -1,3 +1,4 @@
+import { decodeJwt } from "jose";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
@@ -9,6 +10,7 @@ import {
   toolText,
 } from "@/integration/mcp-client";
 import {
+  approve,
   authorize,
   createUser,
   exchangeCode,
@@ -287,13 +289,34 @@ describe("a connection's grant", () => {
   test("a token minted before Revoke stays refused after the user approves the client again", async () => {
     const before = await grant(setup.cookie, setup.clientId, EVERYTHING);
     expect(await revokeMcpClient({ userId: setup.userId, clientId: setup.clientId })).not.toBeNull();
-    // The new approval must land in a later second than the old token's `iat`, as any real one does.
+    // A sign-in code issued in the second of the Revoke is refused, so the new approval waits that out.
     await new Promise((resolve) => setTimeout(resolve, 1_100));
 
     const after = await grant(setup.cookie, setup.clientId, EVERYTHING);
 
     expectUnauthenticated(await listSurveys(before.access_token, setup));
     expect(succeeded(await listSurveys(after.access_token, setup))).toBe(true);
+  });
+
+  // Issue times count whole seconds and come from each pod's clock, so they can't tell an old token from a
+  // new grant made in the same second, or on a pod whose clock runs behind. The grant a token was issued
+  // under can: here the new grant is dated in the old token's own second.
+  test("a token stays refused under a new grant made in the second it was issued", async () => {
+    const before = await grant(setup.cookie, setup.clientId, EVERYTHING);
+    const issuedAt = new Date((decodeJwt(before.access_token).iat as number) * 1000);
+    const old = await getMcpGrant(setup.userId, setup.clientId);
+    await prisma.mcpGrant.delete({ where: { id: old!.id } });
+    await prisma.mcpGrant.create({
+      data: {
+        userId: setup.userId,
+        clientId: setup.clientId,
+        access: "all",
+        permissions: old!.permissions,
+        createdAt: issuedAt,
+      },
+    });
+
+    expectUnauthenticated(await listSurveys(before.access_token, setup));
   });
 
   // The control for the skipConsent case (mcp-skip-consent-grant.integration.test.ts): a consent client's
@@ -417,12 +440,23 @@ describe("the user's own role caps the grant", () => {
 describe("connections from before grants existed", () => {
   const runBackfill = () => backfillMcpGrants.run!({ prisma: prisma as never, tx: prisma as never });
 
-  test("keep the access their scopes gave, with Tags at No access", async () => {
+  test("keep the access their scopes gave, with Tags at No access, and their tokens keep working", async () => {
     const setup = await setUp();
-    const { access_token } = await grant(setup.cookie, setup.clientId, EVERYTHING);
-    // What an upgraded instance holds: a consent and no grant.
+    // What an upgraded instance holds: a consent, no grant, and an access token without the grant claim,
+    // issued by the previous release a while after the connection was made.
+    const { code, verifier } = await approve(setup.cookie, setup.clientId, EVERYTHING);
     await prisma.mcpGrant.deleteMany({ where: { userId: setup.userId } });
-    expectUnauthenticated(await listSurveys(access_token, setup));
+    const exchanged = await exchangeCode(setup.clientId, code, verifier);
+    const accessToken = exchanged.body.access_token as string;
+    expect(decodeJwt(accessToken)).not.toHaveProperty("mcp_grant");
+    await prisma.oauthConsent.updateMany({
+      where: { userId: setup.userId },
+      data: { createdAt: new Date(Date.now() - 60_000) },
+    });
+    expectUnauthenticated(await listSurveys(accessToken, setup));
+    // The backfill runs in a later second than the token was issued: a grant it dated when it ran would be
+    // newer than the token, and the token refused.
+    await new Promise((resolve) => setTimeout(resolve, 1_100));
 
     await runBackfill();
 
@@ -440,8 +474,8 @@ describe("connections from before grants existed", () => {
       feedbackRecords: "write",
       feedbackDatasets: "read",
     });
-    expect(succeeded(await listSurveys(access_token, setup))).toBe(true);
-    expect(succeeded(await renameSurvey(access_token, setup))).toBe(true);
+    expect(succeeded(await listSurveys(accessToken, setup))).toBe(true);
+    expect(succeeded(await renameSurvey(accessToken, setup))).toBe(true);
   }, 120_000);
 
   test("a read-only consent stays read-only, and a re-run changes nothing", async () => {

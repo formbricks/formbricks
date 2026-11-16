@@ -590,6 +590,34 @@ describe("authenticateMcpRequest", () => {
     if (!result.ok) expect(result.response.status).toBe(401);
   });
 
+  // Every token from this release names the grant it was issued under, and that is the check: issue times
+  // can't tell an old token from a new grant made in the same second, or on a pod with another clock.
+  test.each([
+    ["names the connection's grant, even when issued long before it", "grant_1", TOKEN_IAT - 3_600, true],
+    ["names another grant, even when issued after this one", "grant_old", TOKEN_IAT + 3_600, false],
+  ])("an OAuth bearer token that %s", async (_case, claimedGrant, iat, accepted) => {
+    verifyBearerTokenMock.mockResolvedValue({
+      iat,
+      mcp_grant: claimedGrant,
+      aud: MCP_AUDIENCE,
+      sub: "user_1",
+      azp: "client_1",
+      scope: "surveys:read surveys:write",
+    });
+    userFindUniqueMock.mockResolvedValue({
+      isActive: true,
+      memberships: [{ role: "member" }],
+      mcpGrants: [{ ...GRANT_ROWS[0], id: "grant_1" }],
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+    );
+
+    expect(result.ok).toBe(accepted);
+  });
+
+  // A token without the claim was issued by the release before it: its issue time is checked instead.
   test("accepts an OAuth bearer token issued in the second its grant was created", async () => {
     verifyBearerTokenMock.mockResolvedValue({
       iat: Math.floor(GRANT_CREATED_AT.getTime() / 1000),

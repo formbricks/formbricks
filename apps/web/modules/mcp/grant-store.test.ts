@@ -342,30 +342,15 @@ describe("writeMcpGrant", () => {
 });
 
 describe("createMcpGrantIfMissing", () => {
-  const ISSUED_AT = new Date("2026-11-16T10:00:00.000Z");
-
   test("returns the grant it created", async () => {
     prisma.mcpGrant.createMany.mockResolvedValue({ count: 1 });
     prisma.mcpGrant.findUnique.mockResolvedValue(row() as never);
 
     await expect(
-      createMcpGrantIfMissing({
-        userId: USER_ID,
-        clientId: CLIENT_ID,
-        permissions: { surveys: "read" },
-        createdAt: ISSUED_AT,
-      })
+      createMcpGrantIfMissing({ userId: USER_ID, clientId: CLIENT_ID, permissions: { surveys: "read" } })
     ).resolves.toEqual(stored());
     expect(prisma.mcpGrant.createMany).toHaveBeenCalledWith({
-      data: [
-        {
-          userId: USER_ID,
-          clientId: CLIENT_ID,
-          access: "all",
-          permissions: { surveys: "read" },
-          createdAt: ISSUED_AT,
-        },
-      ],
+      data: [{ userId: USER_ID, clientId: CLIENT_ID, access: "all", permissions: { surveys: "read" } }],
       skipDuplicates: true,
     });
   });
@@ -374,7 +359,7 @@ describe("createMcpGrantIfMissing", () => {
     prisma.mcpGrant.createMany.mockResolvedValue({ count: 0 });
 
     await expect(
-      createMcpGrantIfMissing({ userId: USER_ID, clientId: CLIENT_ID, permissions: {}, createdAt: ISSUED_AT })
+      createMcpGrantIfMissing({ userId: USER_ID, clientId: CLIENT_ID, permissions: {} })
     ).resolves.toBeNull();
     expect(prisma.mcpGrant.findUnique).not.toHaveBeenCalled();
   });

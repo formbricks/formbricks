@@ -235,22 +235,18 @@ export const writeMcpGrant = async (
  * Gives the user's MCP client a grant with All access and `permissions`, unless it has one: a grant the
  * user already has, or narrowed, is never reset. Returns the grant when this created it, `null` otherwise.
  * One insert that skips an existing (user, client) row, so two tokens issued at once create one grant.
- * `createdAt` is when the token that brings the grant was issued: `/api/mcp` refuses a token issued
- * before its grant was created, and this one is created just after.
  */
 export const createMcpGrantIfMissing = async ({
   userId,
   clientId,
   permissions,
-  createdAt,
 }: {
   userId: string;
   clientId: string;
   permissions: TMcpGrantPermissions;
-  createdAt: Date;
 }): Promise<TStoredMcpGrant | null> => {
   const { count } = await prisma.mcpGrant.createMany({
-    data: [{ userId, clientId, access: "all", permissions, createdAt }],
+    data: [{ userId, clientId, access: "all", permissions }],
     skipDuplicates: true,
   });
   return count === 1 ? getMcpGrant(userId, clientId) : null;

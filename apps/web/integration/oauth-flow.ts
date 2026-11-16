@@ -120,15 +120,16 @@ export const consent = (cookie: string, target: URL, body: Record<string, unknow
   });
 
 /**
- * authorize → consent (when asked for) → code exchange, as the signed-in user. `mcpGrant` is what the
- * consent screen's Allow sends with the approval; without it the grant gets what the scopes give.
+ * authorize → consent (when asked for), as the signed-in user: the authorization code and its PKCE
+ * verifier, not yet exchanged. `mcpGrant` is what the consent screen's Allow sends with the approval;
+ * without it the grant gets what the scopes give.
  */
-export const grant = async (
+export const approve = async (
   cookie: string,
   clientId: string,
   scope: string,
   { mcpGrant, ...options }: { prompt?: "consent"; mcpGrant?: unknown } = {}
-): Promise<TTokens> => {
+): Promise<{ code: string; verifier: string }> => {
   const { verifier, target: authorizeTarget } = await authorize(cookie, clientId, scope, options);
   let target = authorizeTarget;
   if (!target.searchParams.get("code")) {
@@ -142,8 +143,18 @@ export const grant = async (
   }
   const code = target.searchParams.get("code");
   expect(code, target.toString()).toBeTruthy();
+  return { code: code as string, verifier };
+};
 
-  const response = await exchangeCode(clientId, code as string, verifier);
+/** {@link approve}, then the code exchange: the tokens, as the signed-in user. */
+export const grant = async (
+  cookie: string,
+  clientId: string,
+  scope: string,
+  options: { prompt?: "consent"; mcpGrant?: unknown } = {}
+): Promise<TTokens> => {
+  const { code, verifier } = await approve(cookie, clientId, scope, options);
+  const response = await exchangeCode(clientId, code, verifier);
   expect(response.status, JSON.stringify(response.body)).toBe(200);
   return response.body as TTokens;
 };

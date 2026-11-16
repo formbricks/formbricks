@@ -1,3 +1,4 @@
+import { decodeJwt } from "jose";
 import { NextRequest } from "next/server";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
@@ -7,6 +8,7 @@ import { GET as listGrants } from "@/app/api/internal/mcp-grants/route";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { callMcpTool, serveJwksFromAuthHandler, succeeded, toolText } from "@/integration/mcp-client";
 import {
+  approve,
   authorize,
   createUser,
   exchangeCode,
@@ -142,9 +144,25 @@ describe("a skipConsent client", () => {
   });
 
   test("a connection made before grants gets one from the migration, dated so its tokens keep working", async () => {
-    const { access_token, refresh_token } = await grant(setup.cookie, setup.clientId, EVERYTHING);
-    // What an upgraded instance holds: the connection's tokens and no grant.
+    // What an upgraded instance holds: the client's refresh token, no grant and no consent, and an access
+    // token without the grant claim, issued by the previous release a while after the connection was made.
+    // Issued through the consent screen with the client not yet first-party, since a skipConsent code
+    // exchange now always brings a grant.
+    await prisma.oauthClient.update({ where: { clientId: setup.clientId }, data: { skipConsent: false } });
+    const { code, verifier } = await approve(setup.cookie, setup.clientId, EVERYTHING);
     await prisma.mcpGrant.deleteMany({ where: { userId: setup.userId, clientId: setup.clientId } });
+    const exchanged = await exchangeCode(setup.clientId, code, verifier);
+    const { access_token, refresh_token } = exchanged.body as { access_token: string; refresh_token: string };
+    expect(decodeJwt(access_token)).not.toHaveProperty("mcp_grant");
+    await prisma.oauthConsent.deleteMany({ where: { userId: setup.userId } });
+    await prisma.oauthClient.update({ where: { clientId: setup.clientId }, data: { skipConsent: true } });
+    await prisma.oauthRefreshToken.updateMany({
+      where: { userId: setup.userId },
+      data: { createdAt: new Date(Date.now() - 60_000) },
+    });
+    // The backfill runs in a later second than the token was issued: a grant it dated when it ran would be
+    // newer than the token, and the token refused.
+    await new Promise((resolve) => setTimeout(resolve, 1_100));
 
     await backfillSkipConsentMcpGrants.run!({ prisma: prisma as never, tx: prisma as never });
     const backfilled = await getMcpGrant(setup.userId, setup.clientId);
@@ -157,7 +175,6 @@ describe("a skipConsent client", () => {
     expect(backfilled?.permissions).not.toHaveProperty("tags");
     expect(backfilled?.permissions).not.toHaveProperty("contacts");
     expect(await getMcpGrant(setup.userId, setup.clientId)).toEqual(backfilled);
-    // The access token issued before the upgrade is issued under the grant, and the connection refreshes.
     const outcome = await callMcpTool({ accessToken: access_token }, "list_surveys", {
       workspaceId: setup.workspaceId,
     });

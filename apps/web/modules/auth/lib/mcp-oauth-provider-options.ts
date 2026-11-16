@@ -1,5 +1,6 @@
 import "server-only";
 import type { oauthProvider } from "@better-auth/oauth-provider";
+import { mcpGrantAccessTokenClaims } from "./mcp-grant-token-claim";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
 
 type TOauthProviderOptions = Parameters<typeof oauthProvider>[0];
@@ -90,6 +91,9 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
     refreshToken: MCP_OAUTH_REFRESH_TOKEN_PREFIX,
     clientSecret: "fbocs_",
   },
+  // ADR-0041: every access token names the grant it is issued under, and a `skipConsent` client's code
+  // exchange gives the connection its grant. See mcp-grant-token-claim.ts.
+  extensions: [{ claims: { accessToken: mcpGrantAccessTokenClaims } }],
   customAccessTokenClaims: ({ user }) => ({
     ...(user?.email ? { email: user.email } : {}),
     ...(user?.name ? { name: user.name } : {}),

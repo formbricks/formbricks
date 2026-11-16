@@ -22,6 +22,7 @@ import { hasOnlyDashboardViewerRoles } from "@/lib/membership/dashboard-viewer";
 import { authenticateApiKeyFromHeaders, getBearerTokenFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { auth } from "@/modules/auth/lib/auth";
 import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewer-oauth-scopes";
+import { MCP_GRANT_TOKEN_CLAIM } from "@/modules/auth/lib/mcp-grant-token-claim";
 import {
   MCP_CHALLENGE_SCOPE,
   MCP_READ_SCOPES,
@@ -337,12 +338,20 @@ async function getOAuthUserStanding(
 /**
  * Whether the token was issued under the grant it is checked against. The grant is keyed on the user and
  * the client, so Revoke followed by a new approval makes a new grant under the same key, and a token from
- * before the Revoke would otherwise pass. `iat` counts whole seconds, so a token issued in the second its
- * grant was created passes: the provider issues one only after the grant is saved (Allow), or saves the
- * grant with the token's own `iat` (a `skipConsent` client). A token without `iat` is refused.
+ * before the Revoke must not pass under it.
+ *
+ * Every access token names the grant it was issued under (`mcp_grant`, `mcp-grant-token-claim.ts`), and
+ * that is the check. A token without the claim was issued by the release before it, during its last 15
+ * minutes; it passes when it was issued no earlier than its grant was created. That comparison counts
+ * whole seconds and reads two clocks (the pod that issued the token, the database that dated the grant),
+ * so it needs them in sync. Grants that existed before this release are dated when their connection was
+ * made, so those tokens keep working through the upgrade. A token without `iat` is refused.
  */
-const isIssuedUnderGrant = (payload: JWTPayload, grantCreatedAt: Date): boolean =>
-  typeof payload.iat === "number" && payload.iat >= Math.floor(grantCreatedAt.getTime() / 1000);
+const isIssuedUnderGrant = (payload: JWTPayload, grant: { id: string; createdAt: Date }): boolean => {
+  const issuedUnder = payload[MCP_GRANT_TOKEN_CLAIM];
+  if (issuedUnder !== undefined) return issuedUnder === grant.id;
+  return typeof payload.iat === "number" && payload.iat >= Math.floor(grant.createdAt.getTime() / 1000);
+};
 
 /**
  * The slice of the SDK's `ServerContext` our tools actually read. Derived from it rather than
@@ -632,8 +641,8 @@ async function authenticateMcpOAuthBearer(
     });
   }
 
-  // A grant made after the token: the connection the token belonged to was revoked, then approved again.
-  if (!isIssuedUnderGrant(payload, standing.grant.createdAt)) {
+  // Not the grant the token was issued under: the connection it belonged to was revoked, then approved again.
+  if (!isIssuedUnderGrant(payload, standing.grant)) {
     return await rejectUnauthenticatedMcpRequest({
       requestId,
       instance,
