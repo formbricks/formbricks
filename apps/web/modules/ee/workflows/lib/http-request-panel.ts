@@ -4,10 +4,13 @@ import {
   type TWorkflowHttpHeader,
   type TWorkflowHttpRequestActionConfig,
   type TWorkflowStatus,
+  type TWorkflowUrlTemplateIssue,
   WORKFLOW_HTTP_METHODS_WITH_BODY,
+  findWorkflowUrlTemplateIssue,
   getWorkflowOriginHost,
   getWorkflowUrlOrigin,
   isDefaultSecretHeaderName,
+  isWorkflowUrlPathPosition,
 } from "@formbricks/workflows";
 
 /**
@@ -47,8 +50,16 @@ export const isPlainHttpUrl = (url: string): boolean => {
   return parsed?.protocol === "http:" && !LOCAL_HOSTNAMES.has(parsed.hostname);
 };
 
-/** The URL takes no Variables (ADR 0042); saving refuses one, so the panel says so first. */
-export const urlHasVariables = (url: string): boolean => url.includes("#recall:");
+/**
+ * Why the URL's Variables are where saving refuses them (ADR 0053): before the path (scheme, host or
+ * port), in the query or fragment, or not a Variable at all. Null when the URL has none or all sit in
+ * the path. The panel says so before saving does.
+ */
+export const getUrlVariableIssue = (url: string): TWorkflowUrlTemplateIssue | null =>
+  findWorkflowUrlTemplateIssue(url);
+
+/** Whether `@` typed after `textBefore` may insert a Variable: only in the path, after the host. */
+export const canInsertUrlVariableAt = (textBefore: string): boolean => isWorkflowUrlPathPosition(textBefore);
 
 /** Whether the method sends the JSON body; GET and DELETE never do. */
 export const methodSendsBody = (method: TWorkflowHttpRequestActionConfig["method"]): boolean =>

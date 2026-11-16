@@ -43,13 +43,15 @@ Each field inserts a value the way it needs, so a payload can't break the reques
 
 | Field                                   | How the value goes in                                                                     |
 | --------------------------------------- | ----------------------------------------------------------------------------------------- |
+| HTTP request URL path                   | URL-encoded as one path segment. Empty, `.` and `..` values fail the step. Not allowed in the host or query. |
 | HTTP request query parameter value      | URL-encoded.                                                                              |
 | HTTP request header value               | With line breaks removed.                                                                 |
 | HTTP request body                       | A Variable that is the whole value of a JSON string keeps its type: when `payload.amount` is `42`, the body sends the number `42`. Inside longer text, it is inserted as escaped text. |
 | Email body                              | As text: HTML in a value is shown, never run. Survey answers keep their recall formatting. |
 | If/else condition                       | Compared as it is. See [If/else](/workflows/if-else#how-values-are-compared).              |
 
-An HTTP request's URL never takes Variables. See [Fixed URL](/workflows/http-request#the-url-is-fixed).
+An HTTP request's URL takes Variables in its path only, never in its host. See
+[Variables in the URL path](/workflows/http-request#variables-in-the-url-path).
 
 ### When a value is missing
 

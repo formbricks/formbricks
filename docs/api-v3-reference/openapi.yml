@@ -14196,7 +14196,7 @@ components:
     WorkflowHttpRequestActionConfig:
       type: object
       description: |-
-        HTTP request action. The URL is fixed: it takes no Variables, and saving refuses one in it, so a payload can change what is sent but never where it goes. Variables (`#recall:<path>/fallback:<text>#`) go in query parameter values (URL-encoded), header values (line breaks removed) and the JSON body (a string that is exactly one Variable keeps the Variable's type).
+        HTTP request action. The URL's scheme, host and port are fixed, so a payload can change what is sent but never which host receives it. Variables (`#recall:<path>/fallback:<text>#`) go in the URL path (each value encoded as one path segment), query parameter values (URL-encoded), header values (line breaks removed) and the JSON body (a string that is exactly one Variable keeps the Variable's type).
 
         Sending: HTTPS only, unless a self-hosted instance sets `DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP=1`; private and internal addresses only with `DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS=1` (both ignored on Formbricks Cloud). Redirects are not followed: a 3xx is the response. 10 s timeout, at most 1 MB of response read; timeouts, network errors, 429 and 5xx are retried 3 times with backoff. A 4xx or 5xx answer, or none, fails the step and the run unless `continueOnError` is true.
 
@@ -14216,7 +14216,7 @@ components:
         url:
           type: string
           maxLength: 2048
-          description: Fixed URL. May be empty in a draft. Never contains a Variable.
+          description: URL with a fixed scheme, host and port. May be empty in a draft. Variables may go in the path only, after the first `/` that follows the host and before any `?` or `#`; saving refuses one anywhere else. When sent, each value is URL-encoded as one path segment (`/`, `?`, `#`, `%` and `\` can't add segments, a query or a fragment). A value that is empty, `.` or `..` (also once decoded) fails the step, as does a filled-in URL over 2 KB or with another origin.
         queryParameters:
           type: array
           default: []

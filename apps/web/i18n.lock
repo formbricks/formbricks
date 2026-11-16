@@ -5959,8 +5959,12 @@ checksums:
     workspace/workflows/http_request_test_truncated: 20b304a780cff465665952725453b96b
     workspace/workflows/http_request_unconfigured: 503137a9808095859b178401df85338b
     workspace/workflows/http_request_unlock_header: 10a381095f16450ba069d116c08a5107
-    workspace/workflows/http_request_url_help: dc5e13a717d94806924dc56086989282
-    workspace/workflows/http_request_url_no_variables: ab253bc6302443646f0accf3f0c265d7
+    workspace/workflows/http_request_url: ca97457614226960d41dd18c3c29c86b
+    workspace/workflows/http_request_url_help: 77ff4c3b072018f0bfbdf8781f70590f
+    workspace/workflows/http_request_url_issue_not_a_variable: e04152d07a6e800c5fd2d2ac07da5bdf
+    workspace/workflows/http_request_url_issue_variable_after_path: b755f57333fddf156d195a6795de9467
+    workspace/workflows/http_request_url_issue_variable_before_path: 02e53d3b475fd3009b82bc31de96a057
+    workspace/workflows/http_request_url_variables_in_path: f68ed81c301a6760b48f693cd0f6a7cb
     workspace/workflows/http_request_value_placeholder: 23e92a8f2d494c264ab687de38d308a4
     workspace/workflows/http_request_variables_empty: abad12b95b462703483e065ef79ebc8a
     workspace/workflows/http_request_variables_help: 1c90d808037656dbe2a9350f4c91bdf5

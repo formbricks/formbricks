@@ -294,4 +294,56 @@ describe("httpRequestStepExecutor", () => {
     expect(outcome.output).not.toHaveProperty("delivery");
     expect(JSON.stringify(outcome)).not.toContain(SECRET);
   });
+  describe("Variables in the URL path (ADR 0053)", () => {
+    const PATH_URL = "https://api.example.com/customers/#recall:payload.id/fallback:#/orders";
+    const runWithId = (id: unknown, config: Partial<TWorkflowHttpRequestActionConfig> = {}) =>
+      httpRequestStepExecutor.execute({
+        node: node({ url: PATH_URL, queryParameters: [], ...config }),
+        context: { ...context, payload: { ...context.payload, id } },
+        environment,
+        effects,
+      });
+
+    test("inserts the value as one segment and still sends the secret set for that host", async () => {
+      const outcome = await runWithId("a/b?x=1#frag");
+
+      expect(effects.sendHttpRequest.mock.calls[0][0]).toMatchObject({
+        url: "https://api.example.com/customers/a%2Fb%3Fx%3D1%23frag/orders",
+        headers: { Authorization: `Bearer ${SECRET}` },
+      });
+      expect(outcome.output).toMatchObject({
+        request: { url: "https://api.example.com/customers/a%2Fb%3Fx%3D1%23frag/orders" },
+      });
+    });
+
+    test.each(["..", "%2e%2e", ""])("fails the step for %j before anything is sent", async (id) => {
+      const outcome = await runWithId(id);
+
+      expect(effects.sendHttpRequest).not.toHaveBeenCalled();
+      expect(outcome.status).toBe("failed");
+      expect(outcome.error).toMatch(/URL path Variable payload\.id/);
+    });
+
+    test("a value that tries to change the host stays in the path", async () => {
+      await runWithId("@evil.com");
+      await runWithId("//evil.com");
+
+      for (const [call] of effects.sendHttpRequest.mock.calls) {
+        expect(new URL(call.url).host).toBe("api.example.com");
+      }
+    });
+
+    test("Don't wait stores the filled-in URL for its job, and a Test run shows it", async () => {
+      const sending = await runWithId("cus_42", { responseMode: "dont_wait" });
+      expect(sending.output).toMatchObject({
+        request: { url: "https://api.example.com/customers/cus_42/orders" },
+      });
+
+      effects.enqueueHttpRequestDelivery.mockResolvedValue({ handedOff: false });
+      const testRun = await runWithId("cus_42", { responseMode: "dont_wait" });
+      expect(testRun.output).toMatchObject({
+        request: { url: "https://api.example.com/customers/cus_42/orders" },
+      });
+    });
+  });
 });

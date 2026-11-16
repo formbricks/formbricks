@@ -23,6 +23,11 @@ export interface TEditorRecallSource {
   /** The current label of a token's id, so a chip follows a rename; undefined keeps its label. */
   getRecallItemLabel: (id: string) => string | undefined;
   renderPicker: (props: TEditorRecallPickerProps) => ReactNode;
+  /**
+   * Whether `@` may open the menu after `textBefore` (the field's text up to the `@`, tokens
+   * included). Left out, it always may; a workflow URL field allows it only in the path (ADR 0053).
+   */
+  canInsertAt?: (textBefore: string) => boolean;
 }
 
 /** The survey recall the editor has always had: questions, Embedded Data and auto-captured fields. */

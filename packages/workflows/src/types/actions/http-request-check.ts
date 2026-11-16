@@ -39,7 +39,7 @@ const isJson = (text: string): boolean => {
 /**
  * What an `http_request` step needs to run, beyond the persisted schema: a real URL, a body only where
  * the method sends one (and that body a JSON template), every secret header with a stored value (a
- * duplicate keeps the names but not the values), and Variables this step can see. Whether the URL is
+ * duplicate keeps the names but not the values), and Variables this step can see, URL path included. Whether the URL is
  * allowed (HTTPS, public address) depends on the instance and is checked when the request is sent.
  */
 export const checkHttpRequest = (
@@ -50,6 +50,7 @@ export const checkHttpRequest = (
   if (!isHttpUrl(config.url)) {
     context.addIssue(`http_request node ${node.id} needs an absolute http(s) URL`, ["config", "url"]);
   }
+  checkVariablesIn(config.url, context, ["config", "url"]);
 
   const hasBody = typeof config.body === "string" && config.body.trim() !== "";
   if (hasBody && !WORKFLOW_HTTP_METHODS_WITH_BODY.has(config.method)) {

@@ -1482,7 +1482,8 @@ hostile text in a payload cannot cross a workspace or user boundary.
 
 Injection assessment for `send_test_request`: the response body comes from an outside server and reaches
 the agent's context as untrusted text; the tool description says so. A hostile body cannot widen what
-the tool does: the URL is fixed by the step (ADR 0042), a stored secret goes only to the origin it was
+the tool does: the URL's origin is fixed by the step and Variables only fill encoded path segments
+(ADR 0053), a stored secret goes only to the origin it was
 set for and comes back masked, and the call needs `workflows:write` on that workflow. An agent persuaded to
 point the step elsewhere, in the draft `config` or with `patch_workflow`, cannot take a stored credential
 with it: the call is refused and Enable fails until someone who has the value enters it again (ADR 0051).

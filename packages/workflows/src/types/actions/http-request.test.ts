@@ -75,15 +75,23 @@ describe("http_request definition (saving)", () => {
     expect(issues(ZWorkflowExecutableDefinition.safeParse(draft)).join()).toMatch(/URL/);
   });
 
-  test("saving refuses a Variable in the URL, so a payload never chooses the host (ADR 0042)", () => {
+  test("saving refuses a Variable before the URL path or in its query, so a payload never chooses the host (ADR 0053)", () => {
     for (const url of [
       "https://#recall:payload.host/fallback:x#/path",
-      "https://api.example.com/customers/#recall:payload.id/fallback:#",
+      "https://api.#recall:payload.host/fallback:x#.com/path",
+      "https://api.example.com#recall:payload.id/fallback:#",
+      "https://api.example.com/customers?id=#recall:payload.id/fallback:#",
+      "https://api.example.com/customers/#recall:q1/fallback:#",
     ]) {
       expect(issues(ZWorkflowDefinition.safeParse(definition(httpConfig({ url })))).join()).toMatch(
-        /Variables/
+        /Variables|path/
       );
     }
+  });
+
+  test("saving accepts Variables in the URL path", () => {
+    const url = "https://api.example.com/customers/#recall:payload.id/fallback:#/orders";
+    expect(ZWorkflowDefinition.safeParse(definition(httpConfig({ url }))).success).toBe(true);
   });
 
   test("applies the header, URL and body template limits on save", () => {
@@ -189,7 +197,12 @@ describe("http_request definition (running)", () => {
     ).toMatch(/JSON/);
   });
 
-  test("Variables in query values, header values and the body must be available at this step", () => {
+  test("Variables in the URL path, query values, header values and the body must be available at this step", () => {
+    const payloadInPath = definition(
+      httpConfig({ url: "https://api.example.com/customers/#recall:payload.id/fallback:#" })
+    );
+    expect(issues(ZWorkflowExecutableDefinition.safeParse(payloadInPath)).join()).toMatch(/payload/);
+
     const payloadInQuery = definition(
       httpConfig({ queryParameters: [{ name: "id", value: "#recall:payload.id/fallback:#" }] })
     );

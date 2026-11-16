@@ -9,7 +9,7 @@ import { createPinnedDispatcher, validateAndResolveWebhookUrl } from "@/lib/util
 /** One outbound call, fully rendered: Variables inserted, secret header values decrypted. */
 export interface WorkflowHttpCall {
   method: TWorkflowHttpMethod;
-  /** The step's fixed URL with its query string appended. */
+  /** The step's URL, path Variables filled in, with its query string appended. */
   url: string;
   headers: Record<string, string>;
   body?: string;

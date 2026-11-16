@@ -14,6 +14,7 @@ import {
 import { LiveSecretReplace } from "@/modules/ee/workflows/components/inspector/http-request-live-secret-replace";
 import { HttpResponseSection } from "@/modules/ee/workflows/components/inspector/http-request-response-section";
 import { SendTestRequestSection } from "@/modules/ee/workflows/components/inspector/http-request-send-test-section";
+import { HttpRequestUrlSection } from "@/modules/ee/workflows/components/inspector/http-request-url-section";
 import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspector/workflow-step-name-field";
 import { WorkflowVariableInput } from "@/modules/ee/workflows/components/inspector/workflow-variable-input";
 import { JsonEditor } from "@/modules/ee/workflows/components/json-editor/json-editor";
@@ -26,14 +27,12 @@ import {
   getSavedSecretHeaderNames,
   getSecretBoundHostMismatch,
   getSecretReplaceMode,
-  isPlainHttpUrl,
   methodSendsBody,
   renameHeader,
   shouldWarnSecretGoesLive,
   startReplacingSecret,
   toStoredBody,
   toggleHeaderLock,
-  urlHasVariables,
 } from "@/modules/ee/workflows/lib/http-request-panel";
 import {
   isWorkflowReadOnlyAtom,
@@ -60,8 +59,8 @@ interface WorkflowHttpRequestFormProps {
 }
 
 /**
- * The HTTP request panel (ED4, mock screen 5): method and a fixed URL (no Variables, ADR 0042), query
- * parameters and headers whose values take Variables, secret headers (locked, masked, Replace), the
+ * The HTTP request panel (ED4, mock screen 5): method and a URL whose path takes Variables (its
+ * scheme, host and port never do, ADR 0053), query parameters and headers whose values take Variables, secret headers (locked, masked, Replace), the
  * JSON body, the response mode, Continue on error, and Send test request — the one real call an author
  * can make from the editor.
  */
@@ -159,11 +158,13 @@ export const WorkflowHttpRequestForm = ({
       <WorkflowStepNameField node={node} isEditable={isEditable} onChange={onChange} />
 
       {/* Request */}
-      <section className="flex flex-col gap-2">
-        <Label htmlFor={`workflow-http-url-${node.id}`}>
-          {t("workspace.workflows.http_request_request")}
-        </Label>
-        <div className="flex gap-2">
+      <HttpRequestUrlSection
+        nodeId={node.id}
+        url={config.url}
+        isEditable={isEditable}
+        recallSource={picker.recallSource}
+        onUrlChange={(url) => updateConfig({ url })}
+        methodControl={
           <Select
             value={config.method}
             disabled={!isEditable}
@@ -183,25 +184,8 @@ export const WorkflowHttpRequestForm = ({
               ))}
             </SelectContent>
           </Select>
-          <Input
-            id={`workflow-http-url-${node.id}`}
-            value={config.url}
-            disabled={!isEditable}
-            placeholder="https://api.example.com/customers"
-            isInvalid={urlHasVariables(config.url)}
-            onChange={(event) => updateConfig({ url: event.target.value })}
-          />
-        </div>
-        <p className="text-xs text-slate-500">{t("workspace.workflows.http_request_url_help")}</p>
-        {urlHasVariables(config.url) ? (
-          <p className="text-sm text-error">{t("workspace.workflows.http_request_url_no_variables")}</p>
-        ) : null}
-        {isPlainHttpUrl(config.url) ? (
-          <Alert variant="warning">
-            <AlertDescription>{t("workspace.workflows.http_request_plain_http_warning")}</AlertDescription>
-          </Alert>
-        ) : null}
-      </section>
+        }
+      />
 
       {/* Query parameters */}
       <section className="flex flex-col gap-2">

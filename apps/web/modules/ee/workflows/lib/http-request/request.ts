@@ -10,6 +10,7 @@ import {
   buildWorkflowQueryString,
   renderWorkflowHeaderValue,
   renderWorkflowJsonBody,
+  renderWorkflowUrlPath,
 } from "@formbricks/workflows";
 import type { WorkflowHttpCall, WorkflowHttpResponse } from "./send-http-request";
 
@@ -111,9 +112,12 @@ const renderBody = (
 };
 
 /**
- * Renders an HTTP request step into the call to send and its masked record (ENG-7168, ADR 0042). The
- * URL is used as written; Variables go in only where the definition allows them, each the way its
- * place needs: query values URL-encoded, header values without line breaks, the body as typed JSON.
+ * Renders an HTTP request step into the call to send and its masked record (ENG-7168, ADR 0053). The
+ * URL's origin is used as written; Variables go in only where the definition allows them, each the way
+ * its place needs: URL path values as one encoded segment each (empty, `.` and `..` fail the step, and
+ * the filled-in URL must keep its origin), query values URL-encoded, header values without line
+ * breaks, the body as typed JSON. Runs, "Don't wait" deliveries, Test runs and Send test request all
+ * build their call here, so the record's URL is the one sent.
  * `resolveSecret` gives a secret header's plaintext; a secret it can't resolve, or refuses for this
  * host, fails the build, so a request never goes out without a header its author configured.
  */
@@ -124,8 +128,12 @@ export const buildWorkflowHttpCall = (
 ): TBuiltWorkflowHttpCall => {
   let url: string;
   try {
-    url = appendQuery(config.url, buildWorkflowQueryString(config.queryParameters, context));
-  } catch {
+    url = appendQuery(
+      renderWorkflowUrlPath(config.url, context),
+      buildWorkflowQueryString(config.queryParameters, context)
+    );
+  } catch (error) {
+    if (error instanceof WorkflowTemplateError) return { ok: false, error: error.message };
     return { ok: false, error: "The HTTP request needs an absolute http(s) URL" };
   }
 

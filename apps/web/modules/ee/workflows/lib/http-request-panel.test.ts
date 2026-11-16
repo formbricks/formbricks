@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 import {
   buildTestRequestInput,
+  canInsertUrlVariableAt,
   cancelReplacingSecret,
   describeHttpRequestTarget,
   findDuplicateHeaderIndexes,
@@ -10,6 +11,7 @@ import {
   getSavedSecretHeaderNames,
   getSecretBoundHostMismatch,
   getSecretReplaceMode,
+  getUrlVariableIssue,
   isPlainHttpUrl,
   methodSendsBody,
   renameHeader,
@@ -18,7 +20,6 @@ import {
   startReplacingSecret,
   toStoredBody,
   toggleHeaderLock,
-  urlHasVariables,
   withSecretIdsForCheck,
 } from "./http-request-panel";
 
@@ -46,9 +47,20 @@ describe("URL checks", () => {
     expect(isPlainHttpUrl("not a url")).toBe(false);
   });
 
-  test("spots a Variable in the URL, which saving refuses", () => {
-    expect(urlHasVariables("https://api.example.com/#recall:payload.id/fallback:#")).toBe(true);
-    expect(urlHasVariables("https://api.example.com/customers")).toBe(false);
+  test("spots a Variable outside the URL path, which saving refuses", () => {
+    expect(getUrlVariableIssue("https://#recall:payload.host/fallback:#/x")).toBe("variable_before_path");
+    expect(getUrlVariableIssue("https://api.example.com/x?id=#recall:payload.id/fallback:#")).toBe(
+      "variable_after_path"
+    );
+    expect(getUrlVariableIssue("https://api.example.com/#recall:payload.id/fallback:#")).toBeNull();
+    expect(getUrlVariableIssue("https://api.example.com/customers")).toBeNull();
+  });
+
+  test("offers the Variable picker only once the path has started", () => {
+    expect(canInsertUrlVariableAt("https://api.example.com")).toBe(false);
+    expect(canInsertUrlVariableAt("https://api.")).toBe(false);
+    expect(canInsertUrlVariableAt("https://api.example.com/customers/")).toBe(true);
+    expect(canInsertUrlVariableAt("https://api.example.com/customers?id=")).toBe(false);
   });
 });
 

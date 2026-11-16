@@ -28,6 +28,8 @@ interface RecallInputProps {
   placeholder?: string;
   "aria-label"?: string;
   className?: string;
+  /** Draws the field's border red, as `Input` does. */
+  isInvalid?: boolean;
 }
 
 const OneLinePlugin = () => {
@@ -108,6 +110,7 @@ export const RecallInput = ({
   disabled,
   placeholder,
   className,
+  isInvalid,
   ...rest
 }: Readonly<RecallInputProps>) => {
   const { t } = useTranslation();
@@ -142,7 +145,8 @@ export const RecallInput = ({
                 className={cn(
                   "flex h-10 w-full no-scrollbar items-center overflow-x-auto overflow-y-hidden rounded-md border border-slate-300 bg-white px-3 py-2 text-base break-normal! whitespace-pre! text-slate-800 focus:border-brand-dark focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 focus:outline-hidden sm:text-sm",
                   recallItems.length > 0 && editable && "pr-9",
-                  !editable && "cursor-not-allowed opacity-50"
+                  !editable && "cursor-not-allowed opacity-50",
+                  isInvalid && "border-red-500 focus:border-red-500"
                 )}
               />
             }

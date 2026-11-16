@@ -1,12 +1,14 @@
 import { z } from "zod";
+import { WORKFLOW_URL_TEMPLATE_ISSUE_MESSAGES, findWorkflowUrlTemplateIssue } from "../../variables/url-path";
 import { ZWorkflowNodeBase } from "../common";
 import { WORKFLOW_LIMITS } from "../limits";
 import { WORKFLOW_ACTIONS } from "./enum";
 
 /**
- * HTTP request action (ENG-7168, ADRs 0042 and 0043). The URL is fixed: Variables go only in query
- * parameter values, header values and the JSON body, so a payload can change what is sent but never
- * where it goes. Headers are plain (`{name, value}`) or secret: a secret's value lives encrypted in a
+ * HTTP request action (ENG-7168, ADRs 0042, 0043 and 0053). The URL's origin is fixed: Variables go in
+ * the URL path (each value one encoded segment), query parameter values, header values and the JSON
+ * body, so a payload can change what is sent and which resource on the host it goes to, never the
+ * host. Headers are plain (`{name, value}`) or secret: a secret's value lives encrypted in a
  * `WorkflowSecret` row and the definition stores only `{name, secret: true, secretId}`.
  *
  * Header shapes by direction:
@@ -76,8 +78,6 @@ export const isDefaultSecretHeaderName = (name: string): boolean => {
 };
 
 const utf8Bytes = (value: string): number => new TextEncoder().encode(value).length;
-
-const RECALL_TOKEN_MARKER = "#recall:";
 
 // CR, LF and the Unicode line/paragraph separators: a header value with one could start another header.
 const LINE_BREAK = new RegExp(String.raw`[\r\n\u2028\u2029]`);
@@ -158,12 +158,12 @@ export const ZWorkflowHttpRequestActionConfig = z
       .refine((url) => utf8Bytes(url) <= WORKFLOW_LIMITS.maxHttpUrlBytes, {
         message: `The URL can be at most ${WORKFLOW_LIMITS.maxHttpUrlBytes.toString()} bytes`,
       })
-      .refine((url) => !url.includes(RECALL_TOKEN_MARKER), {
-        message:
-          "The URL can't use Variables; put them in query parameters, header values or the body instead",
+      .superRefine((url, ctx) => {
+        const issue = findWorkflowUrlTemplateIssue(url);
+        if (issue) ctx.addIssue({ code: "custom", message: WORKFLOW_URL_TEMPLATE_ISSUE_MESSAGES[issue] });
       })
       .describe(
-        "Fixed https URL. Takes no Variables (ADR 0042); plain http only where the instance allows it."
+        "https URL with a fixed scheme, host and port. Variables may go in the path only, each inserted as one URL-encoded path segment (ADR 0053); plain http only where the instance allows it."
       ),
     queryParameters: z.array(ZWorkflowHttpQueryParameter).max(MAX_QUERY_PARAMETERS).default([]),
     headers: z

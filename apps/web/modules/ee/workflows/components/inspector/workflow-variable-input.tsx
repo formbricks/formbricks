@@ -16,6 +16,7 @@ interface WorkflowVariableInputProps {
   placeholder?: string;
   "aria-label"?: string;
   className?: string;
+  isInvalid?: boolean;
 }
 
 /**

@@ -21,6 +21,15 @@ import { createRecallTokenPattern, getFallbackValues } from "@/lib/utils/recall"
 import { $createRecallNode, RecallNode } from "./recall-node";
 import type { TEditorRecallSource } from "./recall-source";
 
+/** The paragraph's text before `offset` in `node`, recall chips read as their tokens. */
+const $getTextBefore = (node: LexicalNode, offset: number): string => {
+  let text = node.getTextContent().slice(0, offset);
+  for (let sibling = node.getPreviousSibling(); sibling; sibling = sibling.getPreviousSibling()) {
+    text = sibling.getTextContent() + text;
+  }
+  return text;
+};
+
 interface RecallPluginProps {
   readonly recallSource: TEditorRecallSource;
   readonly recallItems: TSurveyRecallItem[];
@@ -243,8 +252,12 @@ export const RecallPlugin = ({
               if ($isTextNode(anchorNode)) {
                 const nodeText = anchorNode.getTextContent();
 
-                // Check if there's an @ at the current cursor position (just typed)
-                if (nodeText[anchorOffset - 1] === "@") {
+                // Check if there's an @ at the current cursor position (just typed), where the source
+                // takes a recall item
+                if (
+                  nodeText[anchorOffset - 1] === "@" &&
+                  (recallSource.canInsertAt?.($getTextBefore(anchorNode, anchorOffset - 1)) ?? true)
+                ) {
                   // Store the position of the @ symbol
                   setAtSymbolPosition({
                     node: anchorNode,
@@ -260,7 +273,7 @@ export const RecallPlugin = ({
       }
       return false;
     },
-    [editor, setShowRecallItemSelect]
+    [editor, recallSource, setShowRecallItemSelect]
   );
 
   // Close dropdown when clicking outside

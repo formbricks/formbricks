@@ -12,8 +12,9 @@ import { WORKFLOW_VARIABLE_PATH_PATTERN_SOURCE, resolveWorkflowVariable } from "
  * - JSON body → a token that is the whole string value keeps its type, inside a string it is text
  *   that JSON escaping covers (`renderWorkflowJsonBody`);
  * - email body → HTML-escaped (`renderWorkflowEmailBody`).
- * A missing value uses the fallback, else `null` in JSON and empty text elsewhere. The HTTP request
- * URL takes no Variables at all (ADR 0042); that is a definition rule, not an insertion mode.
+ * - HTTP request URL path → one encoded path segment per value (`renderWorkflowUrlPath`, ADR 0053);
+ *   the URL's origin takes none.
+ * A missing value uses the fallback, else `null` in JSON and empty text elsewhere.
  */
 
 export class WorkflowTemplateError extends Error {

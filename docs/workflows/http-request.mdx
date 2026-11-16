@@ -19,7 +19,7 @@ comment with a <Frame>. */}
 | Field                | Configuration                                                                                       |
 | -------------------- | --------------------------------------------------------------------------------------------------- |
 | **Method**           | `GET`, `POST`, `PUT`, `PATCH` or `DELETE`.                                                          |
-| **URL**              | The full `https://` address to call. It can't contain Variables.                                    |
+| **URL**              | The full `https://` address to call. Its path can insert Variables; its host can't.                 |
 | **Query parameters** | Name and value rows added to the URL. Values can insert Variables and are URL-encoded.              |
 | **Headers**          | Name and value rows. Values can insert Variables. Mark a header as secret for API keys and tokens.  |
 | **Body**             | A JSON body for `POST`, `PUT` and `PATCH`. It can insert Variables. `GET` and `DELETE` send no body. |
@@ -28,13 +28,30 @@ When the request has a body and no `Content-Type` header, Formbricks sends `Cont
 Formbricks sets `Host`, `Content-Length`, `Transfer-Encoding`, `Connection` and the other transport headers
 itself, so they can't be added.
 
-### The URL is fixed
+### Variables in the URL path
 
-The URL takes no [Variables](/workflows/variables). Anyone who has a [Webhook Secret URL](/workflows/webhook-trigger)
-controls the payload, so a Variable in the URL would let them choose where the request goes, together with your
-secret headers. Put per-run values in **query parameters**, header values or the body instead. An API that
-expects an ID in its path, such as `/customers/123`, needs an endpoint that takes the ID as a query parameter or
-in the body.
+An API that expects an ID in its path, such as `PATCH /customers/123`, can get it from a
+[Variable](/workflows/variables). Type `@` in the URL's path and pick the Variable:
+
+```
+https://api.example.com/customers/@payload.customer.id/orders
+```
+
+The host is fixed. Anyone who has a [Webhook Secret URL](/workflows/webhook-trigger) controls the payload, so
+Variables can never choose where the request goes or where your secret headers are sent:
+
+- **Only in the path.** The `@` picker opens only after the `/` that follows the host. Saving refuses a Variable
+  in the scheme, host or port, and in the query or fragment. Put query values in **query parameters** instead.
+- **One path segment per value.** Each value is URL-encoded, so a `/`, `?`, `#`, `%` or `\` in it stays part of
+  that segment. A customer ID of `a/b` is sent as `a%2Fb`, never as two segments.
+- **No empty, `.` or `..` values.** A value that is empty, `.` or `..` (also when encoded, such as `%2e%2e`)
+  fails the step with an error that names the Variable, so a payload can't move the request to another path.
+  Set a [fallback](/workflows/variables#when-a-value-is-missing) for values that can be missing.
+- **Same host after insertion.** Formbricks checks the final URL again and fails the step if its host is not the
+  one you typed.
+
+Run detail, Test run results and **Send test request** show the final URL, with the values filled in. The 2 KB URL
+limit applies to that final URL.
 
 The URL must use HTTPS and point to a public address. Self-hosted instances can allow plain HTTP with
 `DANGEROUSLY_ALLOW_WORKFLOW_PLAIN_HTTP` and internal addresses with `DANGEROUSLY_ALLOW_WEBHOOK_INTERNAL_URLS`;
