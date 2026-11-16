@@ -1,5 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
-import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
+import { MCP_OAUTH_CODE_EXPIRES_IN_SECONDS, getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
 
 // Env-dependent URL getters resolve from here; scope constants stay real so these assertions cannot
@@ -75,5 +75,11 @@ describe("getMcpOauthProviderOptions", () => {
     const writeScopes = MCP_OAUTH_SCOPES.filter((scope) => scope.endsWith(":write"));
     expect(writeScopes.length).toBeGreaterThan(0);
     expect(scopeExpirations).toEqual(Object.fromEntries(writeScopes.map((scope) => [scope, "15m"])));
+  });
+
+  // The revocation mark on pending sign-in codes lives as long as a code can, from this one value.
+  test("gives an authorization code the lifetime the revocation mark is sized from", () => {
+    expect(getMcpOauthProviderOptions().codeExpiresIn).toBe(MCP_OAUTH_CODE_EXPIRES_IN_SECONDS);
+    expect(MCP_OAUTH_CODE_EXPIRES_IN_SECONDS).toBe(600);
   });
 });

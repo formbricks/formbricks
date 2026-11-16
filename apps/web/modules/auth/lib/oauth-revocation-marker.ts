@@ -2,6 +2,7 @@ import "server-only";
 import { APIError } from "better-auth/api";
 import { createHash } from "node:crypto";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
+import { MCP_OAUTH_CODE_EXPIRES_IN_SECONDS } from "./mcp-oauth-provider-options";
 import { redisSecondaryStorage } from "./secondary-storage";
 
 /**
@@ -10,7 +11,8 @@ import { redisSecondaryStorage } from "./secondary-storage";
  * Revoke, and every bulk end of a user's OAuth access (member removal, the switch to Dashboard viewer, the
  * retention sweep, SSO recovery), ends the consents, grants and tokens it can find in PostgreSQL. A pending
  * authorization code is none of those: the provider keeps it in Better Auth's secondary storage (Redis),
- * keyed by its hash alone, for `codeExpiresIn` (600 s by default), and nothing indexes it by user or client.
+ * keyed by its hash alone, for `codeExpiresIn` (`MCP_OAUTH_CODE_EXPIRES_IN_SECONDS`), and nothing indexes it
+ * by user or client.
  * Exchanged after the revocation, it issues tokens again, and a `skipConsent` client's code exchange gives
  * the connection a new grant: the revoked client is back.
  *
@@ -21,8 +23,11 @@ import { redisSecondaryStorage } from "./secondary-storage";
  * in the second of the revocation is refused too: the user authorizes again.
  */
 
-/** The provider's default `codeExpiresIn`, which our options leave unset, plus room for clock skew. */
-const REVOCATION_MARK_TTL_SECONDS = 600 + 60;
+/** Room for clock skew between the pod that marks and the one that issued the code. */
+const REVOCATION_MARK_SKEW_SECONDS = 60;
+
+/** As long as a code issued before the revocation can live, and a little longer. */
+const REVOCATION_MARK_TTL_SECONDS = MCP_OAUTH_CODE_EXPIRES_IN_SECONDS + REVOCATION_MARK_SKEW_SECONDS;
 
 const markKey = (userId: string, clientId?: string): string =>
   clientId ? `oauth-revoked:${userId}:${clientId}` : `oauth-revoked:${userId}`;

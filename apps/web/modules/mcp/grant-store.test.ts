@@ -512,8 +512,8 @@ describe("queueMcpClientRevocationAudit", () => {
         userType: "user",
         organizationId,
         status: "success",
-        oldObject: null,
-        newObject: { clientId: CLIENT_ID, grant: null, ended: ENDED },
+        oldObject: { clientId: CLIENT_ID, grant: null, ended: ENDED },
+        newObject: null,
       }))
     );
   });

@@ -532,8 +532,8 @@ export const queueMcpClientRevocationAudit = async ({
         userType: "user",
         organizationId,
         status: "success",
-        oldObject: null,
-        newObject: { clientId, grant: null, ended },
+        oldObject: { clientId, grant: null, ended },
+        newObject: null,
       });
     }
   } catch (error) {

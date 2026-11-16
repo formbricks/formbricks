@@ -272,10 +272,6 @@ const setUp = async (): Promise<TSetup> => {
   };
 };
 
-/**
- * Sets the grant's access through Edit, as Authorized apps does. Nothing projects it afterwards: the
- * next call has to see it because the save itself wrote it to SpiceDB (spec story 32), not the outbox.
- */
 /** When the client's grant was last saved: the version Edit opens it at. */
 const grantVersion = async ({ userId, clientId }: { userId: string; clientId: string }): Promise<string> =>
   (
@@ -289,6 +285,10 @@ const grantVersion = async ({ userId, clientId }: { userId: string; clientId: st
 const editAsOpened = async (input: Omit<Parameters<typeof editMcpGrant>[0], "expectedUpdatedAt">) =>
   editMcpGrant({ ...input, expectedUpdatedAt: new Date(await grantVersion(input)) });
 
+/**
+ * Sets the grant's access through Edit, as Authorized apps does. Nothing projects it afterwards: the
+ * next call has to see it because the save itself wrote it to SpiceDB (spec story 32), not the outbox.
+ */
 const setAccess = async (
   setup: TSetup,
   access: TMcpGrantAccessSelection,
