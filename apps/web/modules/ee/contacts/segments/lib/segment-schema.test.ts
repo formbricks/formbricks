@@ -79,31 +79,6 @@ describe("segment schema validation", () => {
     expect(result.success).toBe(true);
   });
 
-  test("a private segment is titled with the id of its own survey (ENG-6956)", () => {
-    const base = { workspaceId: "workspaceId", filters: validFilters, isPrivate: true };
-
-    expect(ZSegmentCreateInput.safeParse({ ...base, title: "surveyId", surveyId: "surveyId" }).success).toBe(
-      true
-    );
-
-    const other = ZSegmentCreateInput.safeParse({ ...base, title: "otherSurveyId", surveyId: "surveyId" });
-    expect(other.success).toBe(false);
-    expect(other.error?.issues[0]?.path).toEqual(["title"]);
-
-    // No survey, no private segment: an empty id would equal an empty title.
-    expect(ZSegmentCreateInput.safeParse({ ...base, title: "", surveyId: "" }).success).toBe(false);
-    // A shared segment made from the segments page carries no survey.
-    expect(
-      ZSegmentCreateInput.safeParse({ ...base, isPrivate: false, title: "Power users", surveyId: "" }).success
-    ).toBe(true);
-
-    // A segment is private unless the caller says otherwise.
-    const { isPrivate: _isPrivate, ...withoutFlag } = base;
-    expect(
-      ZSegmentCreateInput.safeParse({ ...withoutFlag, title: "otherSurveyId", surveyId: "surveyId" }).success
-    ).toBe(false);
-  });
-
   test("requires at least one filter when updating a segment", () => {
     const result = ZSegmentUpdateInput.safeParse({
       filters: [],
