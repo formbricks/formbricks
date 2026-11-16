@@ -178,3 +178,11 @@ export const refresh = (clientId: string, refreshToken: string, scope?: string) 
     client_id: clientId,
     ...(scope ? { scope } : {}),
   });
+
+/**
+ * Waits until the clock enters the next second. A sign-in code is stamped to the second, and one issued in
+ * the second of a revocation of its user is refused at the exchange (`oauth-revocation-marker.ts`), so a
+ * test that authorizes again right after a revocation waits this out first, as any real reconnect does.
+ */
+export const waitForNextSecond = (): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, 1_000 - (Date.now() % 1_000) + 5));

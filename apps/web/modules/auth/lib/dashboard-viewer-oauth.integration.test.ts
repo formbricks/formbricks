@@ -10,6 +10,7 @@ import {
   refresh,
   registerClient,
   signIn,
+  waitForNextSecond,
 } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
 import { lockUserActiveState } from "@/lib/user/reactivation";
@@ -184,6 +185,7 @@ describe("a Dashboard viewer's OAuth grant", () => {
     expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
 
     // Authorizing again goes through consent, which now offers only dashboards:read.
+    await waitForNextSecond();
     const again = await grant(cookie, clientId, EVERYTHING);
     expect(scopesOf(again.scope)).toEqual([...VIEWER_GRANT].sort());
   });
@@ -219,6 +221,8 @@ describe("a Dashboard viewer's OAuth grant", () => {
           accepted: true,
         })),
       });
+      // The previous round ended the grant: its revocation refuses codes issued in its second.
+      await waitForNextSecond();
       const tokens = await grant(cookie, clientId, EVERYTHING);
       expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
@@ -251,6 +255,8 @@ describe("a Dashboard viewer's OAuth grant", () => {
           { userId: otherOwner.id, organizationId: demotedIn.id, role: "owner", accepted: true },
         ],
       });
+      // The previous round ended the grant: its revocation refuses codes issued in its second.
+      await waitForNextSecond();
       const tokens = await grant(cookie, clientId, EVERYTHING);
       expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
@@ -289,6 +295,8 @@ describe("a Dashboard viewer's OAuth grant", () => {
           { userId: otherOwner.id, organizationId: id, role: "owner" as const, accepted: true },
         ]),
       });
+      // The previous round ended the grant: its revocation refuses codes issued in its second.
+      await waitForNextSecond();
       const tokens = await grant(cookie, clientId, EVERYTHING);
       expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
