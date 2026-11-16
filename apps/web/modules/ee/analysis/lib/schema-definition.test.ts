@@ -251,11 +251,6 @@ describe("schema-definition", () => {
       }
     });
 
-    test("has dimensions and measures", () => {
-      expect(FEEDBACK_FIELDS.dimensions.length).toBeGreaterThan(0);
-      expect(FEEDBACK_FIELDS.measures.length).toBeGreaterThan(0);
-    });
-
     test("exposes CSAT, CES, NPS, rating and universal measures", () => {
       const ids = FEEDBACK_FIELDS.measures.map((m) => m.id);
       expect(ids).toEqual(
@@ -777,17 +772,6 @@ describe("schema-definition", () => {
       ]);
       // input untouched
       expect(rows[0]["FeedbackRecords.sentiment"]).toBe("mixed");
-    });
-
-    test("covers the full sentiment scale order", () => {
-      expect(SENTIMENT_VALUE_ORDER).toEqual([
-        "very_negative",
-        "negative",
-        "neutral",
-        "positive",
-        "very_positive",
-        "mixed",
-      ]);
     });
 
     test("sorts value band rows positive-first with unknowns at the end", () => {

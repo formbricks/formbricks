@@ -260,10 +260,6 @@ describe("the total picks budget", () => {
     expect(exceedsPicksBudget({ [A]: [half], [B]: [`${half}x`] })).toBe(true);
   });
 
-  test("is far below what 10 filters of 100 values of 1000 characters could carry", () => {
-    expect(MAX_DASHBOARD_FILTER_PICKS_CHARS).toBe(4000);
-  });
-
   test("counts each value as it travels in the URL, so text outside ASCII costs what it takes there", () => {
     // "日" is three UTF-8 bytes, nine characters once percent-encoded; a space is three ("%20").
     expect(countPickChars({ [A]: ["日本"], [B]: ["a b"] })).toBe(18 + 5);

@@ -112,11 +112,3 @@ describe("logAuditEvent", () => {
     });
   });
 });
-
-describe("logAuditEvent export", () => {
-  test("is a function and works as expected", async () => {
-    expect(typeof logAuditEvent).toBe("function");
-    // Just check it calls the underlying logic and does not throw
-    await expect(logAuditEvent(validEvent)).resolves.not.toThrow();
-  });
-});

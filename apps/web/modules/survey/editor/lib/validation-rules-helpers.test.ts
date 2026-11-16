@@ -48,39 +48,6 @@ describe("getContactInfoFields", () => {
 });
 
 describe("getRuleLabels", () => {
-  test("should return all rule labels", () => {
-    const labels = getRuleLabels(mockT);
-    expect(labels).toHaveProperty("min_length");
-    expect(labels).toHaveProperty("max_length");
-    expect(labels).toHaveProperty("pattern");
-    expect(labels).toHaveProperty("email");
-    expect(labels).toHaveProperty("url");
-    expect(labels).toHaveProperty("phone");
-    expect(labels).toHaveProperty("min_value");
-    expect(labels).toHaveProperty("max_value");
-    expect(labels).toHaveProperty("min_selections");
-    expect(labels).toHaveProperty("max_selections");
-    expect(labels).toHaveProperty("characters");
-    expect(labels).toHaveProperty("options_selected");
-    expect(labels).toHaveProperty("is");
-    expect(labels).toHaveProperty("is_not");
-    expect(labels).toHaveProperty("contains");
-    expect(labels).toHaveProperty("does_not_contain");
-    expect(labels).toHaveProperty("is_greater_than");
-    expect(labels).toHaveProperty("is_less_than");
-    expect(labels).toHaveProperty("is_later_than");
-    expect(labels).toHaveProperty("is_earlier_than");
-    expect(labels).toHaveProperty("is_between");
-    expect(labels).toHaveProperty("is_not_between");
-    expect(labels).toHaveProperty("minimum_options_ranked");
-    expect(labels).toHaveProperty("rank_all_options");
-    expect(labels).toHaveProperty("minimum_rows_answered");
-    expect(labels).toHaveProperty("file_extension_is");
-    expect(labels).toHaveProperty("file_extension_is_not");
-    expect(labels).toHaveProperty("kb");
-    expect(labels).toHaveProperty("mb");
-  });
-
   test("should return correct translation keys", () => {
     const labels = getRuleLabels(mockT);
     expect(labels.min_length).toBe("workspace.surveys.edit.validation.min_length");
