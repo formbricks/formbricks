@@ -153,19 +153,14 @@ export const revokeAllUserOAuthGrants = async (
  * their SpiceDB relationships, best-effort, and audits them. They end as a consequence of something else
  * (a role lost, an account switched off or recovered), so the entries name who did that: `actorUserId`,
  * the user who removed the member or changed the role, or the system when no user did (the retention
- * sweep, SSO recovery). Call it once that transaction has committed. Never throws.
- *
- * `removeRelationships: false` for a caller that can only call it before the commit (a role change inside
- * its caller's transaction): removing them then could leave a grant whose delete rolls back reaching less
- * than its rows say, and the outbox event the delete queues removes them once it commits.
+ * sweep, SSO recovery). Call it once that transaction has committed: removing them before could leave a
+ * grant whose delete rolls back reaching less than its rows say. Never throws.
  */
 export const finishRevokedMcpGrants = async (
   records: ReadonlyArray<TMcpGrantAuditRecord>,
-  { removeRelationships = true, actorUserId }: { removeRelationships?: boolean; actorUserId?: string } = {}
+  { actorUserId }: { actorUserId?: string } = {}
 ): Promise<void> => {
-  if (removeRelationships) {
-    await removeDeletedMcpGrants(records.flatMap(({ before }) => (before ? [before] : [])));
-  }
+  await removeDeletedMcpGrants(records.flatMap(({ before }) => (before ? [before] : [])));
   await queueMcpGrantAudits(
     actorUserId ? { userId: actorUserId, userType: "user" } : MCP_GRANT_SYSTEM_ACTOR,
     records

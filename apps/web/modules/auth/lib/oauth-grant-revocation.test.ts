@@ -663,13 +663,6 @@ describe("finishRevokedMcpGrants", () => {
       expect.objectContaining({ userId: "owner-1", userType: "user", organizationId: "org-1" })
     );
   });
-
-  test("leaves the relationships to the outbox for a caller that can't wait for the commit", async () => {
-    await finishRevokedMcpGrants([record], { removeRelationships: false });
-
-    expect(removeDeletedMcpGrantRelationships).not.toHaveBeenCalled();
-    expect(queueAuditEventBackground).toHaveBeenCalledTimes(1);
-  });
 });
 
 describe("revokeOAuthConsentBeforeHandler audit", () => {

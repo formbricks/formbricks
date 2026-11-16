@@ -179,10 +179,16 @@ approval) lock it `FOR SHARE` (`shareLockMcpGrant`).
 
 Ending a user's grants from a membership change sits under two earlier locks, so the full order is: the
 organization's owner memberships (`runOwnerGuardedTransaction`), then the user's row (`lockUserActiveState`),
-then the grant rows, then the consent rows. A member removal, an owner's demotion and the retention members
-sweep take them in that order. A consent approval creates the grant row, whose foreign key locks the user's
-row, so it takes that row `FOR KEY SHARE` first, before the grant: taken at the insert instead, it would
-close a cycle with a removal that holds the user's row and waits on the consent rows.
+then the grant rows, then the consent rows. A member removal and an owner's demotion take all four in that
+order, in one transaction. The retention members sweep takes the owners and the user's row to deactivate the
+member, commits, and then takes the grant and consent rows in a separate transaction (`revokeCredentials`).
+A consent approval creates the grant row, whose foreign key locks the user's row, so it takes that row
+`FOR KEY SHARE` first, before the grant: taken at the insert instead, it would close a cycle with a removal
+that holds the user's row and waits on the consent rows.
+
+An approval holds the user's row `FOR KEY SHARE` across its SpiceDB narrowing call, so a path that locks the
+row `FOR UPDATE` (PATCH users, Reactivate, the sweep's deactivation) can wait up to
+`MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS` for it.
 
 **There are no exceptions, and tests are what keep it that way.** The feedback-record tools were one
 for a while — they gated inside their own handler factories and registered through
