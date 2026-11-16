@@ -286,6 +286,13 @@ const getResponseOptions = (survey: TSurvey): TWorkflowVariableOption[] => {
   return [...questions, ...hiddenFields];
 };
 
+/**
+ * The human names of a survey's `response.<id>` Variables: each question's headline and each hidden
+ * field's name, for anywhere the editor shows a Variable as text (canvas summaries, run detail).
+ */
+export const getSurveyVariableLabels = (survey: TSurvey | null | undefined): Map<string, string> =>
+  new Map(survey ? getResponseOptions(survey).map((option) => [option.path, option.label] as const) : []);
+
 const isWebhookTrigger = (
   trigger: TWorkflowDefinition["trigger"] | undefined
 ): trigger is TWorkflowWebhookTriggerNode => trigger?.triggerType === WORKFLOW_TRIGGERS.WEBHOOK;

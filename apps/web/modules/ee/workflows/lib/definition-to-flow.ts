@@ -15,6 +15,7 @@ import {
   getBranchLegOffsets,
 } from "@/modules/ee/workflows/lib/canvas-geometry";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
+import type { TVariableLabels } from "@/modules/ee/workflows/lib/variable-name";
 import { getBranchHandles, isBranchingStep } from "@/modules/ee/workflows/lib/workflow-steps";
 import type {
   TWorkflowCanvasBranch,
@@ -46,6 +47,8 @@ interface WorkflowFlowNodeOptions {
    * received · 9 Variables", which needs the sample from the server.
    */
   triggerSummary?: string;
+  /** Human names for Variable paths (a survey question's headline), so summaries never show ids. */
+  variableLabels?: TVariableLabels;
 }
 
 // Client-side counterpart of the dry-run test's checks: flags nodes that can't run as configured.
@@ -54,7 +57,7 @@ interface WorkflowFlowNodeOptions {
 const getWorkflowNodeIssue = (
   node: TWorkflowNode,
   t: TFunction,
-  options: Required<Omit<WorkflowFlowNodeOptions, "triggerSummary">>,
+  options: Required<Omit<WorkflowFlowNodeOptions, "triggerSummary" | "variableLabels">>,
   isSurveyTrigger: boolean
 ): TWorkflowNodeIssue | null => {
   const severity = options.isDraft ? "setup" : "error";
@@ -123,7 +126,7 @@ export const workflowDefinitionToFlowNodes = (
 ): Array<Node<TWorkflowNodeData>> => {
   const sourcesWithEdges = new Set(definition.edges.map((edge) => edge.source));
   const isSurveyTrigger = isResponseCompletedTrigger(definition.trigger);
-  const resolvedOptions: Required<Omit<WorkflowFlowNodeOptions, "triggerSummary">> = {
+  const resolvedOptions: Required<Omit<WorkflowFlowNodeOptions, "triggerSummary" | "variableLabels">> = {
     hasBoundSurvey: options?.hasBoundSurvey ?? true,
     isDraft: options?.isDraft ?? true,
   };
@@ -159,7 +162,7 @@ export const workflowDefinitionToFlowNodes = (
         summary:
           node.type === "trigger" && options?.triggerSummary
             ? options.triggerSummary
-            : registryEntry.summary(node, t),
+            : registryEntry.summary(node, t, options?.variableLabels),
         // The end of the workflow or of a branch: a step with nothing after it. An If/else or a
         // Switch ends in its branches' own `+` instead.
         canAppendStep: !branchHandles && isLeaf,

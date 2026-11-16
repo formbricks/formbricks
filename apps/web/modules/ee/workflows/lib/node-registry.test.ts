@@ -96,6 +96,32 @@ describe("getNodeRegistryEntry", () => {
     expect(entry.ConfigForm).not.toBeNull();
   });
 
+  test("if-else summary names a survey answer by its question, not its id", () => {
+    const onAnswer = {
+      ...ifElseNode,
+      config: {
+        condition: {
+          id: "group-1",
+          connector: "and",
+          conditions: [
+            {
+              id: "c1",
+              left: { path: "response.binvjg000r446q10" },
+              operator: "includesAllOf",
+              right: ["gold"],
+            },
+          ],
+        },
+      },
+    } as unknown as TWorkflowIfElseNode;
+    const labels = new Map([["response.binvjg000r446q10", "Which plan are you on?"]]);
+
+    const summary = getNodeRegistryEntry(onAnswer).summary(onAnswer, t, labels);
+
+    expect(summary).toContain("Which plan are you on?");
+    expect(summary).not.toContain("binvjg000r446q10");
+  });
+
   test("if-else card shows the step's own name when it has one", () => {
     const named = { ...ifElseNode, label: "Enterprise customer?" };
     expect(getNodeRegistryEntry(named).title(named, t)).toBe("Enterprise customer?");

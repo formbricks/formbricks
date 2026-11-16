@@ -18,8 +18,10 @@ import { PanelLeftIcon, PanelRightOpenIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { useWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
 import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
 import { useWorkflowWebhook } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
+import { resolveBoundTriggerSurvey } from "@/modules/ee/workflows/lib/bound-survey";
 import {
   TEST_RUN_DRAWER_SELECTOR,
   WORKFLOW_CANVAS_FIT_PADDING,
@@ -39,6 +41,7 @@ import {
   workflowDefinitionToFlowNodes,
 } from "@/modules/ee/workflows/lib/definition-to-flow";
 import { isEdgeOffRunPath } from "@/modules/ee/workflows/lib/run-canvas-highlight";
+import { getSurveyVariableLabels } from "@/modules/ee/workflows/lib/variable-picker";
 import { countUsableVariables } from "@/modules/ee/workflows/lib/webhook-trigger-panel";
 import { hasSavedWebhookTrigger } from "@/modules/ee/workflows/lib/workflow-samples";
 import {
@@ -142,12 +145,22 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
       })
     : undefined;
 
+  // Summaries name survey answers by their question, never by its id (`response.<questionId>`).
+  const authoringContext = useWorkflowEmailAuthoringContext();
+  const boundSurvey = resolveBoundTriggerSurvey(authoringContext, definition);
+  const variableLabels = useMemo(() => getSurveyVariableLabels(boundSurvey), [boundSurvey]);
+
   const derivedFlowNodes = useMemo(
     () =>
       definition
-        ? workflowDefinitionToFlowNodes(definition, t, { hasBoundSurvey, isDraft, triggerSummary })
+        ? workflowDefinitionToFlowNodes(definition, t, {
+            hasBoundSurvey,
+            isDraft,
+            triggerSummary,
+            variableLabels,
+          })
         : [],
-    [definition, t, hasBoundSurvey, isDraft, triggerSummary]
+    [definition, t, hasBoundSurvey, isDraft, triggerSummary, variableLabels]
   );
   // While a run is open in the run drawer, the canvas marks its path: the steps and edges off it
   // are greyed (mock screen 7), and each If/else labels the branch it took (workflow-branch-node).

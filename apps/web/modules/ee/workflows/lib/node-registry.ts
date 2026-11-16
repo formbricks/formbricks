@@ -15,7 +15,7 @@ import { WorkflowTriggerForm } from "@/modules/ee/workflows/components/inspector
 import { WorkflowWebhookTriggerForm } from "@/modules/ee/workflows/components/inspector/workflow-webhook-trigger-form";
 import { describeHttpRequestTarget } from "@/modules/ee/workflows/lib/http-request-panel";
 import { describeIfElseCondition } from "@/modules/ee/workflows/lib/if-else-summary";
-import { getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
+import { type TVariableLabels, getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
 import type { TWorkflowNodeCategory, TWorkflowNodeIcon } from "@/modules/ee/workflows/state/editor";
 
 export type TWorkflowNodeRegistryKind =
@@ -37,7 +37,8 @@ export interface TWorkflowNodeRegistryEntry {
   title: (node: TWorkflowNode, t: TFunction) => string;
   /** The step's docs page, linked from the panel header. */
   docsUrl?: string;
-  summary: (node: TWorkflowNode, t: TFunction) => string;
+  /** `labels` names Variables by what users know them as, e.g. a question's headline. */
+  summary: (node: TWorkflowNode, t: TFunction, labels?: TVariableLabels) => string;
   // Stored erased to `TWorkflowNode`; the inspector narrows by kind before rendering.
   ConfigForm: ComponentType<TWorkflowNodeFormProps<TWorkflowNode>> | null;
 }
@@ -68,11 +69,11 @@ const sendEmailActionEntry: TWorkflowNodeRegistryEntry = {
   category: "action",
   icon: "email",
   title: (node, t) => node.label ?? t("workspace.workflows.send_email"),
-  summary: (node, t) => {
+  summary: (node, t, labels) => {
     if (node.type !== "action" || node.actionType !== WORKFLOW_ACTIONS.SEND_EMAIL) return "";
     const { to, surveyLink } = node.config;
     // A Variable recipient reads as the picker shows it: "@customer.email".
-    const recipient = isVariableEmailRecipient(to) ? `@${getVariableDisplayName(to.ref)}` : to;
+    const recipient = isVariableEmailRecipient(to) ? `@${getVariableDisplayName(to.ref, labels)}` : to;
     if (!recipient) return t("workspace.workflows.send_email_unconfigured");
     return surveyLink
       ? t("workspace.workflows.send_email_summary_with_link", { to: recipient })
@@ -86,8 +87,8 @@ const ifElseEntry: TWorkflowNodeRegistryEntry = {
   category: "flow",
   icon: "ifElse",
   title: (node, t) => node.label ?? t("workspace.workflows.if_else"),
-  summary: (node, t) =>
-    (node.type === "if_else" ? describeIfElseCondition(node.config.condition, t) : null) ??
+  summary: (node, t, labels) =>
+    (node.type === "if_else" ? describeIfElseCondition(node.config.condition, t, labels) : null) ??
     t("workspace.workflows.if_else_summary"),
   ConfigForm: eraseForm(WorkflowIfElseForm),
 };
@@ -98,10 +99,10 @@ const switchEntry: TWorkflowNodeRegistryEntry = {
   category: "flow",
   icon: "switch",
   title: (node, t) => node.label ?? t("workspace.workflows.switch"),
-  summary: (node, t) =>
+  summary: (node, t, labels) =>
     node.type === "switch"
       ? t("workspace.workflows.switch_summary", {
-          variable: getVariableDisplayName(node.config.left.path),
+          variable: getVariableDisplayName(node.config.left.path, labels),
           count: node.config.cases.length,
         })
       : "",

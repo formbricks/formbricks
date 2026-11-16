@@ -5,7 +5,7 @@ import {
   type TWorkflowConditionValue,
   toSurveyConditionOperator,
 } from "@formbricks/workflows";
-import { getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
+import { type TVariableLabels, getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
 
 type TConditionWords = { variable: string; value?: string };
 
@@ -76,10 +76,10 @@ const isConditionGroup = (
 const flattenConditions = (group: TWorkflowConditionGroup): TWorkflowCondition[] =>
   group.conditions.flatMap((item) => (isConditionGroup(item) ? flattenConditions(item) : [item]));
 
-const toValueText = (value: TWorkflowConditionValue): string => {
+const toValueText = (value: TWorkflowConditionValue, labels?: TVariableLabels): string => {
   // A list operator compares against a list of texts (ENG-7176).
   if (Array.isArray(value)) return value.join(", ");
-  if (value !== null && typeof value === "object") return getVariableDisplayName(value.path);
+  if (value !== null && typeof value === "object") return getVariableDisplayName(value.path, labels);
   return String(value);
 };
 
@@ -88,15 +88,19 @@ const toValueText = (value: TWorkflowConditionValue): string => {
  * more follow ("… and 2 more"). Null when there is no condition to describe or its operator is
  * not one this summary knows.
  */
-export const describeIfElseCondition = (group: TWorkflowConditionGroup, t: TFunction): string | null => {
+export const describeIfElseCondition = (
+  group: TWorkflowConditionGroup,
+  t: TFunction,
+  labels?: TVariableLabels
+): string | null => {
   const [first, ...rest] = flattenConditions(group);
   if (!first) return null;
 
   const condition = describeComparison(
     first.operator,
     {
-      variable: getVariableDisplayName(first.left.path),
-      ...(first.right === undefined ? {} : { value: toValueText(first.right) }),
+      variable: getVariableDisplayName(first.left.path, labels),
+      ...(first.right === undefined ? {} : { value: toValueText(first.right, labels) }),
     },
     t
   );
@@ -105,12 +109,16 @@ export const describeIfElseCondition = (group: TWorkflowConditionGroup, t: TFunc
 };
 
 /** One condition in words ("channel is call"), as run detail lists them; null for an unknown operator. */
-export const describeWorkflowCondition = (condition: TWorkflowCondition, t: TFunction): string | null =>
+export const describeWorkflowCondition = (
+  condition: TWorkflowCondition,
+  t: TFunction,
+  labels?: TVariableLabels
+): string | null =>
   describeComparison(
     condition.operator,
     {
-      variable: getVariableDisplayName(condition.left.path),
-      ...(condition.right === undefined ? {} : { value: toValueText(condition.right) }),
+      variable: getVariableDisplayName(condition.left.path, labels),
+      ...(condition.right === undefined ? {} : { value: toValueText(condition.right, labels) }),
     },
     t
   );
