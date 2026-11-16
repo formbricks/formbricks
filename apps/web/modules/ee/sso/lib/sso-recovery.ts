@@ -391,7 +391,7 @@ export const getSsoRecoveryFailureRedirectUrl = (callbackUrl?: string): string =
  * provider), the login form follows the callback, and `completeSsoRecovery` links the new identity once
  * the session user matches the intent.
  */
-export const getSsoRecoveryLoginRedirectUrl = (callbackUrl?: string): string =>
+export const getSsoRecoverySecondFactorRedirectUrl = (callbackUrl?: string): string =>
   buildSsoRecoveryLoginUrl(callbackUrl);
 
 export const startSsoRecovery = async ({

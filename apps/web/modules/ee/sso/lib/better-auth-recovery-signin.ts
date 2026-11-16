@@ -10,7 +10,7 @@ import { verifyToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import {
   getSsoRecoveryFailureRedirectUrl,
-  getSsoRecoveryLoginRedirectUrl,
+  getSsoRecoverySecondFactorRedirectUrl,
 } from "@/modules/ee/sso/lib/sso-recovery";
 
 /**
@@ -25,8 +25,8 @@ import {
  *
  * Failures (invalid/expired token, inactive user) are logged and redirected to the recovery failure
  * page; the security-critical outcome — the account link — is audited by `completeSsoRecovery`, and
- * abuse is bounded by the `/sso-recovery/*` rate limit (auth.ts). The token is replayable until its
- * 1-day expiry, matching the legacy `"token"` provider (not single-use).
+ * abuse is bounded by the `/sso-recovery/*` rate limit (auth.ts). The token is replayable until it
+ * expires (`VERIFICATION_LINK_TTL_SECONDS`), matching the legacy `"token"` provider (not single-use).
  *
  * The link proves mailbox access only, so it must not stand in for a second factor (ENG-7266). A user
  * with a verified email and 2FA gets no session here: they are sent to the login page with the
@@ -65,7 +65,7 @@ export const ssoRecoverySignInPlugin = {
           }
           if (dbUser.emailVerified && dbUser.twoFactorEnabled) {
             logger.info({ userId: id }, "SSO recovery sign-in deferred to login: account has 2FA");
-            destination = getSsoRecoveryLoginRedirectUrl(callbackUrl);
+            destination = getSsoRecoverySecondFactorRedirectUrl(callbackUrl);
           } else {
             const user = await ctx.context.internalAdapter.findUserById(id);
             if (!user) {
