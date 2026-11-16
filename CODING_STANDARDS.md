@@ -36,6 +36,10 @@ These remain review checks until their enforcement handles the repository's exis
 - Prefer type inference and shared types from `@formbricks/types`; new `any`s are still findings where
   ESLint reports them only as warnings.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
+- A file stays under 5,000 tokens (about 20 KB of source). Past that, split it along its responsibilities
+  instead of growing it. A change that pushes a file over the limit splits it in the same PR. Generated
+  files, locale files and lockfiles are exempt, and an existing file already over the limit is not a
+  reason to refactor it unless the change touches it.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 - A control's enabled state comes from the permission the server action checks, passed down from the server,
   not recomputed on the client. A control that looks editable and then fails on save is a finding.
