@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
+import { WORKFLOW_CANVAS_START_POSITION } from "./canvas-geometry";
 import {
   WORKFLOW_BRANCH_NODE_TYPE,
   reorganizeWorkflowDefinition,
@@ -242,6 +243,28 @@ describe("If/else on the canvas", () => {
     expect(branchNode?.data.emptyBranches).toEqual(["else"]);
   });
 
+  test("lays out steps saved without positions (API, MCP) as a tree, so branches sit side by side", () => {
+    const withoutUi = <T extends { ui?: unknown }>(node: T): T => ({ ...node, ui: undefined });
+    const definition = buildDefinition({
+      nodes: [ifElseNode("if-1"), emailNode("email-a"), emailNode("email-b")].map(withoutUi),
+      edges: [
+        { id: "e-trigger", source: "trigger-1", target: "if-1" },
+        { id: "e-then", source: "if-1", target: "email-a", sourceHandle: "then" },
+        { id: "e-else", source: "if-1", target: "email-b", sourceHandle: "else" },
+      ],
+    });
+    definition.trigger = withoutUi(definition.trigger!);
+
+    const byId = Object.fromEntries(
+      workflowDefinitionToFlowNodes(definition, t).map((node) => [node.id, node.position])
+    );
+
+    expect(byId["email-a"].y).toBe(byId["email-b"].y);
+    expect(byId["email-a"].x).toBeLessThan(byId["email-b"].x);
+    expect(byId["email-a"].y).toBeGreaterThan(byId["if-1"].y);
+    expect(byId["if-1"].y).toBeGreaterThan(byId["trigger-1"].y);
+  });
+
   test("offers a + under the last step of the workflow or of a branch, never mid-chain", () => {
     const linear = workflowDefinitionToFlowNodes(buildDefinition(), t);
     expect(linear.map((node) => node.data.canAppendStep)).toEqual([false, true]);
@@ -436,12 +459,14 @@ describe("Switch on the canvas", () => {
 });
 
 describe("workflowDefinitionToFlowNodes fallback", () => {
-  test("falls back to a derived position when ui.position is missing", () => {
+  test("places a step without ui.position where the tree layout puts it", () => {
     const base = buildDefinition();
     const triggerWithoutUi = { ...base.trigger, ui: undefined };
     const def = { ...base, trigger: triggerWithoutUi } as TWorkflowDefinition;
     const nodes = workflowDefinitionToFlowNodes(def, t);
-    expect(nodes[0].position).toEqual({ x: 120, y: 80 });
+    expect(nodes[0].position).toEqual(snapWorkflowNodePosition(WORKFLOW_CANVAS_START_POSITION));
+    // A step that has a position keeps it.
+    expect(nodes[1].position).toEqual(def.nodes[0].ui?.position);
   });
 });
 

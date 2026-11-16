@@ -128,9 +128,21 @@ export const workflowDefinitionToFlowNodes = (
     isDraft: options?.isDraft ?? true,
   };
 
-  return [...(definition.trigger ? [definition.trigger] : []), ...definition.nodes].map((node, index) => {
+  const allNodes = [...(definition.trigger ? [definition.trigger] : []), ...definition.nodes];
+  // Steps saved without a position (created through API v3 or MCP) take the tree layout Auto layout
+  // uses, so branches sit side by side instead of stacking in one column under their If/else.
+  const layoutPositions = allNodes.some((node) => !node.ui?.position)
+    ? layoutWorkflowNodes(
+        definition,
+        new Map(allNodes.map((node) => [node.id, node])),
+        allNodes.map((node) => node.id)
+      )
+    : null;
+
+  return allNodes.map((node, index) => {
     const registryEntry = getNodeRegistryEntry(node);
-    const fallbackPosition = { x: 120, y: 80 + index * 120 };
+    const laidOut = layoutPositions?.get(node.id);
+    const fallbackPosition = laidOut ? snapWorkflowNodePosition(laidOut) : { x: 120, y: 80 + index * 120 };
 
     const branchHandles = getBranchHandles(node);
     const isLeaf = !sourcesWithEdges.has(node.id);
