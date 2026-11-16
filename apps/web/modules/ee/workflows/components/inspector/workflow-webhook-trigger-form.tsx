@@ -4,9 +4,8 @@ import { useAtomValue } from "jotai";
 import { useTranslation } from "react-i18next";
 import { type TWorkflowWebhookTriggerNode } from "@formbricks/workflows";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { WebhookSampleSection } from "@/modules/ee/workflows/components/inspector/webhook-sample-section";
+import { WebhookPayloadSection } from "@/modules/ee/workflows/components/inspector/webhook-payload-section";
 import { WebhookSecretUrlSection } from "@/modules/ee/workflows/components/inspector/webhook-secret-url-section";
-import { WebhookTestPayloadSection } from "@/modules/ee/workflows/components/inspector/webhook-test-payload-section";
 import { useWorkflowWebhook } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import { hasSavedWebhookTrigger } from "@/modules/ee/workflows/lib/workflow-samples";
 import { isWorkflowReadOnlyAtom, workflowAtom } from "@/modules/ee/workflows/state/editor";
@@ -69,18 +68,15 @@ export const WorkflowWebhookTriggerForm = (_props: Readonly<WorkflowWebhookTrigg
       <WebhookSecretUrlSection
         workflowId={workflowId}
         url={webhook.url}
-        lastCalledAt={webhook.lastCalledAt}
-        lastCallerIp={webhook.lastCallerIp}
         canRegenerate={workflow?.status !== "archived"}
       />
-      <WebhookSampleSection
+      <WebhookPayloadSection
         workflowId={workflowId}
         sample={webhook.sample}
         lastCalledAt={webhook.lastCalledAt}
         lastCallerIp={webhook.lastCallerIp}
         canSetSample={workflow?.status !== "archived"}
       />
-      <WebhookTestPayloadSection workflowId={workflowId} sample={webhook.sample?.payload ?? null} />
     </div>
   );
 };

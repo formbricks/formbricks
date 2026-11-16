@@ -4,12 +4,7 @@ import { CopyIcon, EyeIcon, EyeOffIcon, InfoIcon, RefreshCwIcon } from "lucide-r
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW, WEBHOOK_PAYLOAD_MAX_BYTES } from "@formbricks/workflows";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import {
-  useCallerIpLabel,
-  useRelativeTime,
-} from "@/modules/ee/workflows/components/inspector/webhook-trigger-labels";
 import { useWorkflowWebhookMutations } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import { maskWebhookSecretUrl } from "@/modules/ee/workflows/lib/webhook-trigger-panel";
 import { Button } from "@/modules/ui/components/button";
@@ -23,19 +18,13 @@ const SECRET_URL_FIELD_ID = "workflow-webhook-secret-url";
 export const WebhookSecretUrlSection = ({
   workflowId,
   url,
-  lastCalledAt,
-  lastCallerIp,
   canRegenerate,
 }: {
   readonly workflowId: string;
   readonly url: string;
-  readonly lastCalledAt: string | null;
-  readonly lastCallerIp: string | null;
   readonly canRegenerate: boolean;
 }) => {
   const { t } = useTranslation();
-  const relativeTime = useRelativeTime();
-  const callerIpLabel = useCallerIpLabel();
   const { regenerate } = useWorkflowWebhookMutations(workflowId);
   const [isRevealed, setIsRevealed] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -48,11 +37,6 @@ export const WebhookSecretUrlSection = ({
       toast.error(t("workspace.workflows.webhook_url_copy_failed"));
     }
   };
-
-  const limits = t("workspace.workflows.webhook_limits", {
-    calls: WEBHOOK_CALLS_PER_MINUTE_PER_WORKFLOW,
-    size: WEBHOOK_PAYLOAD_MAX_BYTES / 1024,
-  });
 
   return (
     <section className="flex flex-col gap-2">
@@ -92,21 +76,20 @@ export const WebhookSecretUrlSection = ({
           {t("common.copy")}
         </Button>
       </div>
-      <p className="text-xs text-slate-500">{t("workspace.workflows.webhook_secret_url_help")}</p>
-      {/* Wraps instead of overflowing the inspector: the line may hold a long IPv6 network. */}
-      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
-        <p className="min-w-0 flex-1 basis-40 text-xs break-words text-slate-500">
-          {lastCalledAt
-            ? t("workspace.workflows.webhook_last_call", {
-                time: relativeTime(lastCalledAt),
-                ip: callerIpLabel(lastCallerIp),
-                limits,
-              })
-            : t("workspace.workflows.webhook_never_called", { limits })}
+      <div className="flex items-center justify-between gap-3">
+        <p className="min-w-0 flex-1 text-xs text-slate-500">
+          {t("workspace.workflows.webhook_secret_url_private")}{" "}
+          <a
+            href="https://formbricks.com/docs/workflows/webhook-trigger"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 hover:text-slate-700">
+            {t("common.learn_more")}
+          </a>
         </p>
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="sm"
           className="shrink-0"
           disabled={!canRegenerate || regenerate.isPending}
