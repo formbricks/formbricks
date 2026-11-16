@@ -148,6 +148,7 @@ checksums:
     auth/oauth/grant/presets: db7616c227f9759fe2e4a4cba59e8f9f
     auth/oauth/grant/read_only: 9109fd6e72125af271d41181f1f35dd2
     auth/oauth/grant/select_all: eedc7cdb02de467c15dc418a066a77f2
+    auth/oauth/grant_changed_elsewhere: 8b8bc43f22b77b402054272d082ee7a8
     auth/oauth/grant_update_failed: edb296bd480f3da98914209e3e607dbc
     auth/oauth/grant_updated: 0756500936deba1b3930f43d95a076a2
     auth/oauth/invalid_oauth_request: 02936ced8cd4df963282fe5d413f6900

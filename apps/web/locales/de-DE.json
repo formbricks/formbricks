@@ -174,6 +174,7 @@
         "read_only": "Schreibgeschützt",
         "select_all": "Alle auswählen"
       },
+      "grant_changed_elsewhere": "Der Zugriff dieses MCP-Clients wurde an anderer Stelle geändert. Lade die Seite neu, um die Änderung zu sehen.",
       "grant_update_failed": "Der Zugriff dieser App konnte nicht aktualisiert werden. Bitte versuche es erneut.",
       "grant_updated": "Zugriff aktualisiert.",
       "invalid_oauth_request": "Ungültige OAuth-Anfrage",

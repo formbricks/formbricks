@@ -174,6 +174,7 @@
         "read_only": "唯讀",
         "select_all": "全選"
       },
+      "grant_changed_elsewhere": "這個 MCP 用戶端的存取權限已在其他地方變更,請重新載入以查看最新狀態。",
       "grant_update_failed": "無法更新此應用程式的存取權限，請再試一次。",
       "grant_updated": "存取權限已更新。",
       "invalid_oauth_request": "無效的 OAuth 請求",

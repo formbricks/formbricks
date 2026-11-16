@@ -174,6 +174,7 @@
         "read_only": "Salt okunur",
         "select_all": "Tümünü seç"
       },
+      "grant_changed_elsewhere": "Bu MCP istemcisinin erişimi başka bir yerde değiştirildi. Görmek için sayfayı yeniden yükle.",
       "grant_update_failed": "Bu uygulamanın erişimi güncellenemedi. Lütfen tekrar dene.",
       "grant_updated": "Erişim güncellendi.",
       "invalid_oauth_request": "Geçersiz OAuth isteği",
