@@ -90,6 +90,13 @@ describe("segment schema validation", () => {
     expect(other.success).toBe(false);
     expect(other.error?.issues[0]?.path).toEqual(["title"]);
 
+    // No survey, no private segment: an empty id would equal an empty title.
+    expect(ZSegmentCreateInput.safeParse({ ...base, title: "", surveyId: "" }).success).toBe(false);
+    // A shared segment made from the segments page carries no survey.
+    expect(
+      ZSegmentCreateInput.safeParse({ ...base, isPrivate: false, title: "Power users", surveyId: "" }).success
+    ).toBe(true);
+
     // A segment is private unless the caller says otherwise.
     const { isPrivate: _isPrivate, ...withoutFlag } = base;
     expect(

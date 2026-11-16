@@ -656,7 +656,9 @@ export const ZSegmentCreateInput = z
   // ENG-6956: a survey's private targeting segment is stored under that survey's id, and the rest of the
   // app finds it by that title. So a private segment is always the one for the survey it is created for;
   // any other title would write another survey's segment (`createSegment` upserts private ones by title).
-  .refine((input) => !input.isPrivate || input.title === input.surveyId, {
+  // Shared segments made from the segments page carry no survey (`surveyId: ""`), so only private ones
+  // need a non-empty id.
+  .refine((input) => !input.isPrivate || (input.surveyId !== "" && input.title === input.surveyId), {
     message: "A private segment is titled with the id of its survey",
     path: ["title"],
   });

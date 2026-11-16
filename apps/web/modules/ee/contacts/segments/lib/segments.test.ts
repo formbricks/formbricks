@@ -375,42 +375,11 @@ describe("Segment Service Tests", () => {
       await expect(createSegment(mockSegmentCreateInput)).rejects.toThrow(Error);
     });
 
-    test("should upsert a private segment without surveyId", async () => {
-      const privateInput: TSegmentCreateInput = {
-        ...mockSegmentCreateInput,
-        isPrivate: true,
-      };
-      const privateSegmentPrisma = { ...mockSegmentPrisma, isPrivate: true };
-      vi.mocked(prisma.segment.upsert).mockResolvedValue(privateSegmentPrisma);
-      const segment = await createSegment(privateInput);
-      expect(segment).toEqual({ ...mockSegment, isPrivate: true });
-      expect(prisma.segment.upsert).toHaveBeenCalledWith({
-        where: {
-          workspaceId_title: {
-            workspaceId,
-            title: privateInput.title,
-          },
-          isPrivate: true,
-        },
-        create: {
-          workspaceId,
-          title: privateInput.title,
-          description: undefined,
-          isPrivate: true,
-          filters: [],
-        },
-        update: {
-          description: undefined,
-          filters: [],
-        },
-        select: selectSegment,
-      });
-      expect(prisma.segment.create).not.toHaveBeenCalled();
-    });
-
     test("should upsert a private segment with surveyId", async () => {
+      // A private segment is titled with the id of its survey (ZSegmentCreateInput).
       const privateInputWithSurvey: TSegmentCreateInput = {
         ...mockSegmentCreateInput,
+        title: surveyId,
         isPrivate: true,
         surveyId,
       };
