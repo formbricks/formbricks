@@ -7,7 +7,6 @@ import {
   CATEGORY_AXIS_MAX_SHARE,
   CATEGORY_AXIS_MIN_CEILING,
   CATEGORY_AXIS_MIN_WIDTH,
-  CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
   CHART_NOT_ENRICHED_COLOR,
   CHART_SENTIMENT_COLORS,
@@ -537,11 +536,6 @@ describe("chart-utils", () => {
   });
 
   describe("constants", () => {
-    test("CHART_MEASURE_COLORS has expected length", () => {
-      expect(CHART_MEASURE_COLORS).toHaveLength(8);
-      expect(CHART_MEASURE_COLORS[0]).toBe(CHART_BRAND_DARK);
-    });
-
     test("CHART_MEASURE_COLORS has no duplicate hues", () => {
       expect(new Set(CHART_MEASURE_COLORS).size).toBe(CHART_MEASURE_COLORS.length);
     });

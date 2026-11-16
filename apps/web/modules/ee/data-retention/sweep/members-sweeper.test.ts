@@ -126,8 +126,16 @@ const database = ({
   candidates = [] as TRow[],
   recheck = (userId: string): TRow[] => candidates.filter((row) => row.userId === userId),
   activeOwners = 2,
-  otherActiveOwners = 1,
+  activeOwnersWhenActing = activeOwners,
+}: {
+  candidates?: TRow[];
+  recheck?: (userId: string) => TRow[];
+  activeOwners?: number;
+  activeOwnersWhenActing?: number;
 } = {}) => {
+  // The scan counts active owners before acting; `deactivateDueMember` counts them again under the
+  // owners' lock, once it has read the member, and may see a different number by then.
+  let acting = false;
   const tx = {
     $queryRaw: vi.fn(async (...args: unknown[]) => {
       const { text, values } = statement(args);
@@ -136,9 +144,12 @@ const database = ({
       return userId === undefined ? candidates : recheck(userId as string);
     }),
     membership: {
-      count: vi.fn(async ({ where }: { where: { userId?: unknown } }) =>
-        where.userId ? otherActiveOwners : activeOwners
-      ),
+      findUnique: vi.fn(async ({ where }: { where: { userId_organizationId: { userId: string } } }) => {
+        acting = true;
+        const [row] = recheck(where.userId_organizationId.userId);
+        return row ? { role: row.role, user: { isActive: true } } : null;
+      }),
+      count: vi.fn(async () => (acting ? activeOwnersWhenActing : activeOwners)),
     },
     user: { update: vi.fn() },
   };
@@ -338,7 +349,8 @@ describe("createMembersSweeper: deactivations", () => {
           ? [dueForDeactivation("multi", { organizationCount: 2 })]
           : [dueForDeactivation("owner", { role: "owner" })],
       activeOwners: 2,
-      otherActiveOwners: 0,
+      // Another owner was deactivated since the scan: this one is now the last.
+      activeOwnersWhenActing: 1,
     });
 
     await sweep();
@@ -389,14 +401,14 @@ describe("deactivateDueMember", () => {
   test("deactivates an owner while another owner is still active", async () => {
     const tx = database({
       candidates: [dueForDeactivation("owner", { role: "owner" })],
-      otherActiveOwners: 1,
+      activeOwners: 2,
     });
 
     await expect(deactivateDueMember(context(), "owner", NOTICE_DUE_AT_OR_BEFORE)).resolves.toBe(
       "deactivated"
     );
     expect(tx.membership.count).toHaveBeenCalledWith({
-      where: { organizationId: "clorg", role: "owner", userId: { not: "owner" }, user: { isActive: true } },
+      where: { organizationId: "clorg", role: "owner", user: { isActive: true } },
     });
   });
 

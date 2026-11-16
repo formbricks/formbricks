@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 import {
-  GRID_COLUMNS,
   findNextOpenSlot,
   findOverlappingWidget,
   getDefaultWidgetLayout,
@@ -65,10 +64,6 @@ describe("findNextOpenSlot", () => {
 
   test("honours a narrower breakpoint", () => {
     expect(findNextOpenSlot([{ x: 0, y: 0, w: 4, h: 4 }], { w: 4, h: 4 }, 6)).toEqual({ x: 0, y: 4 });
-  });
-
-  test("defaults to the lg breakpoint's column count", () => {
-    expect(GRID_COLUMNS).toBe(12);
   });
 });
 

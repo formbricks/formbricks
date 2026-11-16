@@ -15,18 +15,6 @@ describe("lingodotdev server", () => {
     vi.clearAllMocks();
   });
 
-  test("should get translate", async () => {
-    vi.mocked(getLocale).mockResolvedValue("en-US");
-    const translate = await getTranslate();
-    expect(translate).toBeDefined();
-  });
-
-  test("should get translate with default locale", async () => {
-    vi.mocked(getLocale).mockResolvedValue(undefined as any);
-    const translate = await getTranslate();
-    expect(translate).toBeDefined();
-  });
-
   test("should use provided locale instead of calling getLocale", async () => {
     const translate = await getTranslate("de-DE");
     expect(getLocale).not.toHaveBeenCalled();

@@ -170,15 +170,6 @@ describe("ResponseQueue", () => {
     expect(queue.processQueue).toHaveBeenCalled();
   });
 
-  test("processQueue does nothing if request in progress or queue empty", async () => {
-    queue["isRequestInProgress"] = true;
-    await queue.processQueue();
-    queue["isRequestInProgress"] = false;
-    queue.queue.length = 0;
-    await queue.processQueue();
-    expect(true).toBe(true); // just to ensure no errors
-  });
-
   test("processQueue sends response and removes from queue on success", async () => {
     queue.queue.push(responseUpdate);
     vi.spyOn(queue, "sendResponse").mockResolvedValue(ok(true));

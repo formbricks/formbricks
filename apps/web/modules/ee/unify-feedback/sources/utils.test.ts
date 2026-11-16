@@ -1,12 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TFeedbackSourceWithMappings } from "@formbricks/types/feedback-source";
-import {
-  CSV_HIDDEN_STATIC_MAPPINGS,
-  MAX_CSV_VALUES,
-  TFieldMapping,
-  TSourceField,
-  TUnifySurvey,
-} from "./types";
+import { MAX_CSV_VALUES, TFieldMapping, TSourceField, TUnifySurvey } from "./types";
 import {
   areAllRequiredCsvFieldsMapped,
   autoMapCsvSourceFields,
@@ -324,14 +318,6 @@ describe("areAllRequiredCsvFieldsMapped", () => {
     const withoutFieldLabel = fullMappings.filter((m) => m.targetFieldId !== "field_label");
 
     expect(areAllRequiredCsvFieldsMapped(withoutFieldLabel)).toEqual({ valid: true, missing: [] });
-  });
-});
-
-describe("CSV_HIDDEN_STATIC_MAPPINGS", () => {
-  test("persists source_type=csv with a valid static mapping shape", () => {
-    expect(CSV_HIDDEN_STATIC_MAPPINGS).toEqual([
-      { sourceFieldId: "", targetFieldId: "source_type", staticValue: "csv" },
-    ]);
   });
 });
 

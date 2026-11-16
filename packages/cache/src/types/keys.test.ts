@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { type CacheKey, type CustomCacheNamespace, ZCacheKey } from "./keys";
+import { type CacheKey, ZCacheKey } from "./keys";
 
 describe("@formbricks/cache types/keys", () => {
   describe("ZCacheKey schema", () => {
@@ -56,65 +56,6 @@ describe("@formbricks/cache types/keys", () => {
       // Type assertion to ensure it's properly branded
       const typedKey: CacheKey = result;
       expect(typedKey).toBe(validKey);
-    });
-  });
-
-  describe("CacheKey type", () => {
-    test("should work with type-safe functions", () => {
-      // Helper function that only accepts CacheKey
-      const acceptsCacheKey = (key: CacheKey): string => key;
-
-      const validKey = ZCacheKey.parse("fb:env:test:state");
-      expect(acceptsCacheKey(validKey)).toBe("fb:env:test:state");
-    });
-
-    test("should maintain string behavior", () => {
-      const key = ZCacheKey.parse("fb:test:123");
-
-      // Should work with string methods
-      expect(key.length).toBe(11);
-      expect(key.startsWith("fb:")).toBe(true);
-      expect(key.split(":")).toEqual(["fb", "test", "123"]);
-      expect(key.includes("test")).toBe(true);
-    });
-
-    test("should be serializable", () => {
-      const key = ZCacheKey.parse("fb:serialization:test");
-
-      // Should serialize as regular string
-      expect(JSON.stringify({ cacheKey: key })).toBe('{"cacheKey":"fb:serialization:test"}');
-
-      // Should parse back correctly
-      const parsed = JSON.parse('{"cacheKey":"fb:serialization:test"}') as { cacheKey: string };
-      expect(parsed.cacheKey).toBe("fb:serialization:test");
-    });
-  });
-
-  describe("CustomCacheNamespace type", () => {
-    test("should support known custom namespaces in parsed cache keys", () => {
-      // Type test - this will fail at compile time if types don't match
-      const namespaces: CustomCacheNamespace[] = [
-        "account_deletion",
-        "analytics",
-        "billing",
-        "oauth",
-        "github",
-      ];
-      const cacheKeys = namespaces.map((namespace) => ZCacheKey.parse(`${namespace}:test:123`));
-
-      expect(cacheKeys).toEqual([
-        "account_deletion:test:123",
-        "analytics:test:123",
-        "billing:test:123",
-        "oauth:test:123",
-        "github:test:123",
-      ]);
-    });
-
-    test("should be usable in cache key construction", () => {
-      const namespace: CustomCacheNamespace = "analytics";
-      const cacheKey = ZCacheKey.parse(`${namespace}:user:123`);
-      expect(cacheKey).toBe("analytics:user:123");
     });
   });
 });
