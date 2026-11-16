@@ -9,7 +9,6 @@ import { getUserByEmail } from "@/modules/auth/lib/user";
 // Import mocked functions
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
-import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { sendVerificationEmail } from "@/modules/email";
 import { resendVerificationEmailAction } from "./actions";
 
@@ -528,12 +527,6 @@ describe("resendVerificationEmailAction", () => {
   });
 
   describe("Audit Logging", () => {
-    test("should be wrapped with audit logging decorator", () => {
-      // withAuditLogging is called at module load time to wrap the action
-      // We just verify the mock was set up correctly
-      expect(withAuditLogging).toBeDefined();
-    });
-
     test("should set audit context userId when sending verification email", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
       vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
