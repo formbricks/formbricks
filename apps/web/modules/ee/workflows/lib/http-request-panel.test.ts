@@ -125,6 +125,20 @@ describe("header rows", () => {
     expect(cancelReplacingSecret(startReplacingSecret(stored))).toEqual(stored);
   });
 
+  test("cancelling a Replace keeps the stored value's host, so its warning comes back", () => {
+    const stored = {
+      name: "Authorization",
+      secret: true,
+      isSet: true,
+      boundOrigin: "https://api.example.com",
+    };
+
+    const kept = cancelReplacingSecret(startReplacingSecret(stored));
+
+    expect(kept).toEqual(stored);
+    expect(getSecretBoundHostMismatch(kept, "https://other.example.net/hook")).toBe("api.example.com");
+  });
+
   test("flag every row of a name used twice, whatever the case", () => {
     expect(
       [
