@@ -6156,7 +6156,6 @@ checksums:
     workspace/workflows/validation_problems_title: dca6132844fcd065bc5ab7fd2dd3ca40
     workspace/workflows/validation_status_valid: 4a3ddc0ebe876ff26001201203348d2c
     workspace/workflows/variable_group_payload: 50701a00fae155ea7a0358358b190671
-    workspace/workflows/variable_group_response: c7a9d88269d8ff117abcbc0d97f88b2c
     workspace/workflows/variable_group_unavailable: 8702916d998fc7fd9399982262187e2e
     workspace/workflows/variable_not_supported: 1d2d368337e3194d8bdc09abd8b27cb3
     workspace/workflows/variable_not_supported_yet: 4fa3052bd4c8052abe963d34815c0602
