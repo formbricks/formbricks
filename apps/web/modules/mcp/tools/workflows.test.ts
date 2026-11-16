@@ -228,8 +228,9 @@ describe("registerWorkflowTools", () => {
     const params = new URL(callArg.req.url).searchParams;
     expect(params.get("workspaceId")).toBe(WORKSPACE_ID);
     expect(params.get("workflowId")).toBe(WORKFLOW_ID);
+    // This token has no responses:read, so each run's error is left out.
     expect(result.structuredContent).toEqual({
-      data: [{ id: RUN_ID }],
+      data: [{ id: RUN_ID, error: null }],
       meta: { limit: 20, nextCursor: null },
       requestId: "req_tool",
     });
@@ -710,6 +711,42 @@ describe("create_workflow advertised input schema", () => {
     // validation failures — and so would have passed with strictness removed entirely.
     expect(schema.safeParse(VALID_CREATE_WORKFLOW_INPUT).success).toBe(true);
     expect(schema.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, bogus: 1 }).success).toBe(false);
+  });
+});
+
+describe("list_workflow_runs without Responses: Read", () => {
+  const runs = [
+    { id: "run_1", status: "failed", responseId: "resp_1", error: "550 mailbox a@b.c unavailable" },
+    { id: "run_2", status: "succeeded", responseId: "resp_2", error: null },
+  ];
+  const callWith = async (callerAuthInfo: unknown) => {
+    const { tools } = createToolServer();
+    vi.mocked(workflowsHandlers.listRuns).mockResolvedValue(
+      successListResponse(runs, { limit: 20, nextCursor: null }, { requestId: "req_tool" })
+    );
+    return tools
+      .get("list_workflow_runs")!
+      .handler({ workspaceId: WORKSPACE_ID, limit: 20 }, { http: { authInfo: callerAuthInfo } });
+  };
+
+  // A run's error text can quote what a failed step sent, as `get_workflow_run` leaves out.
+  test("leaves each run's error out for a grant without Responses: Read", async () => {
+    const workflowsOnly = {
+      ...readOnlyAuthInfo,
+      extra: { ...readOnlyAuthInfo.extra, grant: { access: "all", permissions: { workflowRuns: "read" } } },
+    };
+
+    const result = await callWith(workflowsOnly);
+
+    const redacted = runs.map((run) => ({ ...run, error: null }));
+    expect((result.structuredContent as { data: unknown }).data).toEqual(redacted);
+    expect(JSON.parse(result.content[0].text).data).toEqual(redacted);
+  });
+
+  test("returns each run's error when both the token and the grant give Responses: Read", async () => {
+    const result = await callWith({ ...readOnlyAuthInfo, scopes: ["workflows:read", "responses:read"] });
+
+    expect((result.structuredContent as { data: unknown }).data).toEqual(runs);
   });
 });
 

@@ -168,6 +168,25 @@ export const withoutRespondentData = (result: CallToolResult): CallToolResult =>
   };
 };
 
+/**
+ * A `list_workflow_runs` result without each run's error text, which can quote what a failed step sent
+ * (see {@link withoutRespondentData}), for a caller without Responses: Read. A run row carries no other
+ * respondent-derived field. An error result passes through.
+ */
+export const withoutRespondentDataInRunList = (result: CallToolResult): CallToolResult => {
+  const payload = result.structuredContent;
+  if (result.isError || !isRecord(payload) || !Array.isArray(payload.data)) return result;
+  const redacted = {
+    ...payload,
+    data: payload.data.map((run: unknown) => (isRecord(run) ? { ...run, error: null } : run)),
+  };
+  return {
+    ...result,
+    structuredContent: redacted,
+    content: [{ type: "text", text: JSON.stringify(redacted) }],
+  };
+};
+
 export function registerWorkflowTools(server: McpServer): void {
   registerMcpTool(
     server,
@@ -228,7 +247,7 @@ export function registerWorkflowTools(server: McpServer): void {
     {
       title: "List workflow runs",
       description:
-        "List workflow runs for a Formbricks workspace (newest first) using the v3 Workflows API contract.",
+        "List workflow runs for a Formbricks workspace (newest first) using the v3 Workflows API contract. Without Responses: Read in the user's grant, each run's error is null: it can quote respondents' answers.",
       inputSchema: ZMcpListWorkflowRunsInput,
       annotations: {
         readOnlyHint: true,
@@ -246,8 +265,9 @@ export function registerWorkflowTools(server: McpServer): void {
         req: buildWorkflowsListRequest(buildListWorkflowRunsSearchParams(input)),
         ctx,
       });
+      const result = await responseToMcpToolResult(response, requestId);
 
-      return await responseToMcpToolResult(response, requestId);
+      return mcpCallerHolds(authInfo, RESPONSES_READ) ? result : withoutRespondentDataInRunList(result);
     }
   );
 
