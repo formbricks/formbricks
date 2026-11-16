@@ -380,6 +380,21 @@ export const getSsoRecoveryFailureRedirectUrl = (callbackUrl?: string): string =
   return loginUrl.toString();
 };
 
+/**
+ * The plain login page carrying `callbackUrl`, for a recovery link that must not create a session by
+ * itself (ENG-7266): the user signs in with every factor, then lands on the completion URL.
+ */
+export const getSsoRecoverySignInRedirectUrl = (callbackUrl?: string): string => {
+  const loginUrl = new URL("/auth/login", WEBAPP_URL);
+
+  const validatedCallbackUrl = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL);
+  if (validatedCallbackUrl) {
+    loginUrl.searchParams.set("callbackUrl", validatedCallbackUrl);
+  }
+
+  return loginUrl.toString();
+};
+
 export const startSsoRecovery = async ({
   existingUser,
   provider,

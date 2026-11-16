@@ -75,6 +75,82 @@ describe("SSO recovery sign-in (real Postgres)", () => {
 });
 
 /**
+ * ENG-7266. The magic link is mailbox proof, not a second factor: for a verified account with 2FA it
+ * must not mint a session, or the mailbox alone defeats TOTP and the completion then links the
+ * attacker's identity. The user signs in normally (password + TOTP) and the redirect carries the
+ * completion URL, which `completeSsoRecovery` accepts once the session user matches the intent.
+ */
+describe("SSO recovery sign-in for an account with two-factor auth (real Postgres)", () => {
+  const completionUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=test-state`;
+
+  test("a verified 2FA account gets no session and is sent to sign in with the completion URL", async () => {
+    const user = await prisma.user.create({
+      data: { email: "twofa@example.com", name: "TwoFa", emailVerified: true, twoFactorEnabled: true },
+    });
+    const token = createToken(user.id, { purpose: "sso_recovery" });
+
+    const res = await auth.api.ssoRecoverySignIn({
+      query: { token, callbackUrl: completionUrl },
+      asResponse: true,
+    });
+
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
+    expect(res.headers.getSetCookie().some((c) => c.includes("session_token"))).toBe(false);
+    const location = new URL(res.headers.get("location") ?? "");
+    expect(location.pathname).toBe("/auth/login");
+    expect(location.searchParams.get("callbackUrl")).toBe(completionUrl);
+    expect(location.searchParams.get("error")).toBeNull();
+  });
+
+  test("a 2FA account with a hostile callback is sent to a bare login page", async () => {
+    const user = await prisma.user.create({
+      data: { email: "twofa-evil@example.com", name: "TwoFa", emailVerified: true, twoFactorEnabled: true },
+    });
+    const token = createToken(user.id, { purpose: "sso_recovery" });
+
+    const res = await auth.api.ssoRecoverySignIn({
+      query: { token, callbackUrl: "https://evil.example/phish" },
+      asResponse: true,
+    });
+
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
+    expect(res.headers.get("location")).toBe(`${WEBAPP_URL}/auth/login`);
+  });
+
+  test("an inactive 2FA account is refused with the recovery failure redirect", async () => {
+    const user = await prisma.user.create({
+      data: {
+        email: "twofa-inactive@example.com",
+        name: "TwoFa",
+        emailVerified: true,
+        twoFactorEnabled: true,
+        isActive: false,
+      },
+    });
+    const token = createToken(user.id, { purpose: "sso_recovery" });
+
+    const res = await auth.api.ssoRecoverySignIn({
+      query: { token, callbackUrl: completionUrl },
+      asResponse: true,
+    });
+
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
+    expect(new URL(res.headers.get("location") ?? "").searchParams.get("error")).not.toBeNull();
+  });
+
+  test("an unverified 2FA account still gets the session: completion strips its factors (ENG-2557)", async () => {
+    const user = await prisma.user.create({
+      data: { email: "squat@example.com", name: "Squat", emailVerified: false, twoFactorEnabled: true },
+    });
+    const token = createToken(user.id, { purpose: "sso_recovery" });
+
+    await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl: completionUrl }, asResponse: true });
+
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(1);
+  });
+});
+
+/**
  * ENG-2555. The unit tests for `syncSsoIdentityForUser` mock Prisma and assert the issuer *we* pass, so
  * they can only ever confirm the value we chose — which is exactly how a wrong one shipped. These assert
  * the property that actually matters: after recovery links an account, a 1.7.0 pod can find it again.
