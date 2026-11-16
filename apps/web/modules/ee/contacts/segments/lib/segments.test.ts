@@ -3,7 +3,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { OperationNotAllowedError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import {
+  InvalidInputError,
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import {
   TBaseFilters,
   TEvaluateSegmentUserData,
@@ -47,6 +52,7 @@ vi.mock("@formbricks/database", () => ({
     survey: {
       update: vi.fn(),
       findMany: vi.fn(),
+      findFirst: vi.fn(),
     },
     $transaction: vi.fn((callback) => callback(prisma)), // Mock transaction to execute the callback
   },
@@ -384,6 +390,7 @@ describe("Segment Service Tests", () => {
             workspaceId,
             title: privateInput.title,
           },
+          isPrivate: true,
         },
         create: {
           workspaceId,
@@ -417,6 +424,7 @@ describe("Segment Service Tests", () => {
             workspaceId,
             title: privateInputWithSurvey.title,
           },
+          isPrivate: true,
         },
         create: {
           workspaceId,
@@ -432,6 +440,23 @@ describe("Segment Service Tests", () => {
           surveys: { connect: { id: surveyId } },
         },
         select: selectSegment,
+      });
+      expect(prisma.segment.create).not.toHaveBeenCalled();
+    });
+
+    // ENG-6956: the ticket's overwrite needs a shared segment (or any title a caller picks) that is
+    // really a survey's id. The private upsert is covered against real Postgres in
+    // integration/segment-private-title.integration.test.ts.
+    test("should refuse a shared segment titled with the id of a survey in the workspace", async () => {
+      vi.mocked(prisma.survey.findFirst).mockResolvedValueOnce({ id: "other-survey-id" } as never);
+
+      await expect(
+        createSegment({ ...mockSegmentCreateInput, title: "other-survey-id", surveyId })
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.findFirst).toHaveBeenCalledWith({
+        where: { id: "other-survey-id", workspaceId },
+        select: { id: true },
       });
       expect(prisma.segment.create).not.toHaveBeenCalled();
     });
@@ -677,6 +702,28 @@ describe("Segment Service Tests", () => {
         [segmentId, expect.any(Object)],
         [updateData, expect.any(Object)]
       );
+    });
+
+    test("should refuse renaming a segment to the id of a survey in its workspace (ENG-6956)", async () => {
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegmentPrisma);
+      vi.mocked(prisma.survey.findFirst).mockResolvedValueOnce({ id: "other-survey-id" } as never);
+
+      await expect(updateSegment(segmentId, { title: "other-survey-id" })).rejects.toThrow(InvalidInputError);
+
+      expect(prisma.survey.findFirst).toHaveBeenCalledWith({
+        where: { id: "other-survey-id", workspaceId },
+        select: { id: true },
+      });
+      expect(prisma.segment.update).not.toHaveBeenCalled();
+    });
+
+    test("should not look up a survey when the title is not changing (a private segment keeps its survey's id)", async () => {
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegmentPrisma);
+
+      await updateSegment(segmentId, { title: mockSegmentPrisma.title });
+
+      expect(prisma.survey.findFirst).not.toHaveBeenCalled();
+      expect(prisma.segment.update).toHaveBeenCalled();
     });
 
     test("should update segment with survey connections", async () => {

@@ -79,6 +79,24 @@ describe("segment schema validation", () => {
     expect(result.success).toBe(true);
   });
 
+  test("a private segment is titled with the id of its own survey (ENG-6956)", () => {
+    const base = { workspaceId: "workspaceId", filters: validFilters, isPrivate: true };
+
+    expect(ZSegmentCreateInput.safeParse({ ...base, title: "surveyId", surveyId: "surveyId" }).success).toBe(
+      true
+    );
+
+    const other = ZSegmentCreateInput.safeParse({ ...base, title: "otherSurveyId", surveyId: "surveyId" });
+    expect(other.success).toBe(false);
+    expect(other.error?.issues[0]?.path).toEqual(["title"]);
+
+    // A segment is private unless the caller says otherwise.
+    const { isPrivate: _isPrivate, ...withoutFlag } = base;
+    expect(
+      ZSegmentCreateInput.safeParse({ ...withoutFlag, title: "otherSurveyId", surveyId: "surveyId" }).success
+    ).toBe(false);
+  });
+
   test("requires at least one filter when updating a segment", () => {
     const result = ZSegmentUpdateInput.safeParse({
       filters: [],

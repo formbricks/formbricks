@@ -6,6 +6,7 @@ import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import {
   DatabaseError,
+  InvalidInputError,
   OperationNotAllowedError,
   ResourceNotFoundError,
   ValidationError,
@@ -247,6 +248,18 @@ export const getExistingWorkspaceSurveyIds = reactCache(
   }
 );
 
+/**
+ * ENG-6956: a survey's private targeting segment is stored under the survey's id as its title, and the
+ * survey save finds (or connects to) it by that title. A segment a caller titles freely must therefore
+ * never take a survey's id, or it would be picked up as that survey's targeting.
+ */
+const assertTitleIsNotSurveyId = async (workspaceId: string, title: string): Promise<void> => {
+  const survey = await prisma.survey.findFirst({ where: { id: title, workspaceId }, select: { id: true } });
+  if (survey) {
+    throw new InvalidInputError("A segment cannot be titled with the id of a survey");
+  }
+};
+
 export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Promise<TSegment> => {
   validateInputs([segmentCreateInput, ZSegmentCreateInput]);
 
@@ -258,6 +271,8 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
     // Private segments use upsert because auto-save may have already created a
     // default (empty-filter) segment via connectOrCreate before the user publishes.
     // Without upsert the second create hits the (workspaceId, title) unique constraint.
+    // ZSegmentCreateInput ties a private segment's title to its survey, so the update branch can only
+    // reach that survey's own segment; `isPrivate` keeps it off a shared segment that holds the title.
     if (isPrivate) {
       const segment = await prisma.segment.upsert({
         where: {
@@ -265,6 +280,7 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
             workspaceId,
             title,
           },
+          isPrivate: true,
         },
         create: {
           workspaceId,
@@ -284,6 +300,8 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
 
       return transformPrismaSegment(segment);
     }
+
+    await assertTitleIsNotSurveyId(workspaceId, title);
 
     const segment = await prisma.segment.create({
       data: {
@@ -525,6 +543,10 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
     const currentSegment = await getSegment(segmentId);
     if (!currentSegment) {
       throw new ResourceNotFoundError("segment", segmentId);
+    }
+
+    if (data.title !== undefined && data.title !== currentSegment.title) {
+      await assertTitleIsNotSurveyId(currentSegment.workspaceId, data.title);
     }
 
     const segment = await prisma.segment.update({
