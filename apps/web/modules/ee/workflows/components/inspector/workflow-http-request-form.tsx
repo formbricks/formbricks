@@ -276,7 +276,7 @@ export const WorkflowHttpRequestForm = ({
           const boundHost = getSecretBoundHostMismatch(header, config.url);
           return (
             <div key={index} className="flex flex-col gap-1">
-              {/* Four controls share the 360px inspector: a narrower name and smaller icon buttons
+              {/* Four controls share the inspector row: a narrower name and smaller icon buttons
                   leave the value cell room for a stored secret's mask and its Replace button. */}
               <div className="flex items-center gap-1.5">
                 <Input

@@ -93,7 +93,7 @@ export const WebhookSecretUrlSection = ({
         </Button>
       </div>
       <p className="text-xs text-slate-500">{t("workspace.workflows.webhook_secret_url_help")}</p>
-      {/* Wraps instead of overflowing the 360px inspector: the line may hold a long IPv6 network. */}
+      {/* Wraps instead of overflowing the inspector: the line may hold a long IPv6 network. */}
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
         <p className="min-w-0 flex-1 basis-40 text-xs break-words text-slate-500">
           {lastCalledAt
