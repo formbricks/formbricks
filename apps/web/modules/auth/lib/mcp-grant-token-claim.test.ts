@@ -50,9 +50,10 @@ describe("mcpGrantAccessTokenClaims", () => {
     });
   });
 
-  test("names no grant while the connection has none, and none without a user", async () => {
+  // `null`, not absent: an absent claim marks a token from the previous release, checked by issue time.
+  test("names no grant (null) while the connection has none, and nothing without a user", async () => {
     prisma.mcpGrant.findUnique.mockResolvedValue(null);
-    await expect(claims({ client: CONSENT_CLIENT })).resolves.toEqual({});
+    await expect(claims({ client: CONSENT_CLIENT })).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: null });
     await expect(claims({ user: null })).resolves.toEqual({});
     await expect(claims({ user: undefined })).resolves.toEqual({});
   });
@@ -106,11 +107,11 @@ describe("mcpGrantAccessTokenClaims", () => {
     expect(createMcpGrantIfMissing).not.toHaveBeenCalled();
   });
 
-  test("logs an unexpected failure as an error and still issues the token, without a grant claim", async () => {
+  test("logs an unexpected failure as an error and still issues the token, naming no grant", async () => {
     vi.mocked(createMcpGrantIfMissing).mockRejectedValue(new Error("db down for user a@b.c"));
     prisma.mcpGrant.findUnique.mockResolvedValue(null);
 
-    await expect(claims()).resolves.toEqual({});
+    await expect(claims()).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: null });
     expect(logger.error).toHaveBeenCalledWith(
       { err: expect.objectContaining({ errName: "Error" }), userId: "user-1", clientId: "client-1" },
       "Saving the grant of a skipConsent MCP client failed"

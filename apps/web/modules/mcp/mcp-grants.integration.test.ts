@@ -21,6 +21,7 @@ import {
 } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
+import { mcpGrantAccessTokenClaims } from "@/modules/auth/lib/mcp-grant-token-claim";
 import { revokeAllUserOAuthGrants, revokeMcpClient } from "@/modules/auth/lib/oauth-grant-revocation";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
@@ -62,6 +63,12 @@ const BLOCKS = [
     ],
   },
 ];
+
+// The real grant claim, which a test can turn off for one token to mint one as the previous release did.
+vi.mock("@/modules/auth/lib/mcp-grant-token-claim", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/auth/lib/mcp-grant-token-claim")>();
+  return { ...actual, mcpGrantAccessTokenClaims: vi.fn(actual.mcpGrantAccessTokenClaims) };
+});
 
 const PASSWORD = "Correct-Horse1";
 const EMAIL = "mcp-grants@example.com";
@@ -319,6 +326,30 @@ describe("a connection's grant", () => {
     expectUnauthenticated(await listSurveys(before.access_token, setup));
   });
 
+  // A token minted while its connection had no grant names none (`mcp_grant: null`), so a grant made for
+  // the connection later, even in the token's own second, doesn't take it in. Only a token from the
+  // previous release, with no claim at all, is checked by its issue time.
+  test("a token minted while the connection had no grant stays refused once one is made", async () => {
+    const { code, verifier } = await approve(setup.cookie, setup.clientId, EVERYTHING);
+    const old = await getMcpGrant(setup.userId, setup.clientId);
+    await prisma.mcpGrant.deleteMany({ where: { userId: setup.userId } });
+    const exchanged = await exchangeCode(setup.clientId, code, verifier);
+    const accessToken = exchanged.body.access_token as string;
+    expect(decodeJwt(accessToken)).toHaveProperty("mcp_grant", null);
+
+    await prisma.mcpGrant.create({
+      data: {
+        userId: setup.userId,
+        clientId: setup.clientId,
+        access: "all",
+        permissions: old!.permissions,
+        createdAt: new Date((decodeJwt(accessToken).iat as number) * 1000),
+      },
+    });
+
+    expectUnauthenticated(await listSurveys(accessToken, setup));
+  });
+
   // The control for the skipConsent case (mcp-skip-consent-grant.integration.test.ts): a consent client's
   // pending code, issued before Revoke, is refused at the exchange too, and so after every bulk end.
   test.each([
@@ -446,6 +477,8 @@ describe("connections from before grants existed", () => {
     // issued by the previous release a while after the connection was made.
     const { code, verifier } = await approve(setup.cookie, setup.clientId, EVERYTHING);
     await prisma.mcpGrant.deleteMany({ where: { userId: setup.userId } });
+    // The previous release minted tokens without the grant claim.
+    vi.mocked(mcpGrantAccessTokenClaims).mockResolvedValueOnce({});
     const exchanged = await exchangeCode(setup.clientId, code, verifier);
     const accessToken = exchanged.body.access_token as string;
     expect(decodeJwt(accessToken)).not.toHaveProperty("mcp_grant");

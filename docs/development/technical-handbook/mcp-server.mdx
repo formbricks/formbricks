@@ -141,8 +141,8 @@ call to the MCP client's **grant** (ADR-0041): each declared permission must be 
 level in the grant, or the call is refused with a 403 whose detail starts "Not permitted" and names the
 permission and level. The grant is read with the user in `modules/mcp/auth.ts`, which refuses a
 client without one (that is what makes Revoke immediate), or a token issued under another grant (a
-Revoke followed by a new approval): every access token names its grant in an `mcp_grant` claim, set when it
-is minted (`modules/auth/lib/mcp-grant-token-claim.ts`). API keys have no grant and are gated on scopes
+Revoke followed by a new approval): every access token names its grant in an `mcp_grant` claim (`null` when
+minted while its connection had none), set when it is minted (`modules/auth/lib/mcp-grant-token-claim.ts`). API keys have no grant and are gated on scopes
 alone. Allow on the consent screen saves the grant; a client registered with `skipConsent` never sees that
 screen, so the same claim contributor gives the client one when it exchanges an authorization code, before
 the token is minted, by the migration's rule: All access, each permission at its scope family's level,

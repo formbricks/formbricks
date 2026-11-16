@@ -595,6 +595,8 @@ describe("authenticateMcpRequest", () => {
   test.each([
     ["names the connection's grant, even when issued long before it", "grant_1", TOKEN_IAT - 3_600, true],
     ["names another grant, even when issued after this one", "grant_old", TOKEN_IAT + 3_600, false],
+    // Minted while the connection had no grant: no grant made later takes it in, issue time regardless.
+    ["names no grant, even when issued after this one", null, TOKEN_IAT + 3_600, false],
   ])("an OAuth bearer token that %s", async (_case, claimedGrant, iat, accepted) => {
     verifyBearerTokenMock.mockResolvedValue({
       iat,

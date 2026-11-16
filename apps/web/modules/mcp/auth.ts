@@ -340,9 +340,10 @@ async function getOAuthUserStanding(
  * the client, so Revoke followed by a new approval makes a new grant under the same key, and a token from
  * before the Revoke must not pass under it.
  *
- * Every access token names the grant it was issued under (`mcp_grant`, `mcp-grant-token-claim.ts`), and
- * that is the check. A token without the claim was issued by the release before it, during its last 15
- * minutes; it passes when it was issued no earlier than its grant was created. That comparison counts
+ * Every access token names the grant it was issued under (`mcp_grant`, `mcp-grant-token-claim.ts`), or
+ * `null` when it was minted while the connection had none, and that is the check: `null` never matches. A
+ * token without the claim at all was issued by the release before it, during its last 15 minutes; it
+ * passes when it was issued no earlier than its grant was created. That comparison counts
  * whole seconds and reads two clocks (the pod that issued the token, the database that dated the grant),
  * so it needs them in sync. Grants that existed before this release are dated when their connection was
  * made, so those tokens keep working through the upgrade. A token without `iat` is refused.

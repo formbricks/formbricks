@@ -14,10 +14,12 @@ new ones start.
   and in which organizations and workspaces. Two data migrations give every existing connection a grant with the
   access it had, one for connections approved on the consent screen and one for clients registered with
   `skipConsent`, so existing clients keep working.
-- Every MCP access token names the grant it was issued under, and `/api/mcp` refuses a token issued under
-  another one. A token issued by the previous version names none, and is accepted for the rest of its life
-  (at most 15 minutes) when it was issued no earlier than its grant was created. That comparison reads the
-  clocks of the container that issued the token and of the database, so keep them in sync (NTP).
+- Every MCP access token the new version issues names the grant it was issued under, or no grant when its
+  connection had none, and `/api/mcp` refuses a token that doesn't name the connection's grant now. Only a
+  token issued by the previous version lacks that claim entirely; it is accepted for the rest of its life (at
+  most 15 minutes after the upgrade) when it was issued no earlier than its grant was created. That
+  comparison reads the clocks of the container that issued the token and of the database, so keep them in
+  sync (NTP) during the upgrade.
 - `/api/mcp` refuses a call whose connection has no grant, with `401`. The client's next token refresh then
   ends the connection, and the user connects the client again.
 - The permission schema doesn't change. Grants that select organizations or workspaces are written to SpiceDB

@@ -18,6 +18,7 @@ import {
   signIn,
 } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
+import { mcpGrantAccessTokenClaims } from "@/modules/auth/lib/mcp-grant-token-claim";
 import { revokeMcpClient } from "@/modules/auth/lib/oauth-grant-revocation";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 // The data migration under test (auto-discovered by the migration runner at deploy).
@@ -41,6 +42,12 @@ vi.mock("@/modules/ee/audit-logs/lib/handler", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/audit-logs/lib/handler")>()),
   queueAuditEventBackground: vi.fn(async () => undefined),
 }));
+
+// The real grant claim, which a test can turn off for one token to mint one as the previous release did.
+vi.mock("@/modules/auth/lib/mcp-grant-token-claim", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/auth/lib/mcp-grant-token-claim")>();
+  return { ...actual, mcpGrantAccessTokenClaims: vi.fn(actual.mcpGrantAccessTokenClaims) };
+});
 
 const PASSWORD = "Correct-Horse1";
 const EMAIL = "mcp-skip-consent@example.com";
@@ -151,6 +158,8 @@ describe("a skipConsent client", () => {
     await prisma.oauthClient.update({ where: { clientId: setup.clientId }, data: { skipConsent: false } });
     const { code, verifier } = await approve(setup.cookie, setup.clientId, EVERYTHING);
     await prisma.mcpGrant.deleteMany({ where: { userId: setup.userId, clientId: setup.clientId } });
+    // The previous release minted tokens without the grant claim.
+    vi.mocked(mcpGrantAccessTokenClaims).mockResolvedValueOnce({});
     const exchanged = await exchangeCode(setup.clientId, code, verifier);
     const { access_token, refresh_token } = exchanged.body as { access_token: string; refresh_token: string };
     expect(decodeJwt(access_token)).not.toHaveProperty("mcp_grant");

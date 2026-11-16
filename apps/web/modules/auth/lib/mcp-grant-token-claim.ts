@@ -20,7 +20,8 @@ import { trimScopesForDashboardViewer } from "./dashboard-viewer-oauth-scopes";
  *
  * An access-token claim contributor of the provider (`extensions[].claims.accessToken`), called while it
  * mints each access token, after it has checked the code or refresh token. A token minted while the
- * connection has no grant carries no claim, and `/api/mcp` refuses it while there is none.
+ * connection has no grant names none (`mcp_grant: null`), so no grant made later takes it in. Only a token
+ * from the previous release has no claim at all, and only those are checked by their issue time.
  *
  * A grant for a `skipConsent` client too. Allow on the consent screen saves a client's grant, and a client
  * registered with `skipConsent` (a trusted first-party client) is authorized without that screen. So an
@@ -70,7 +71,10 @@ const grantSkipConsentClient = async (userId: string, clientId: string, scopes: 
   }
 };
 
-/** The access-token claims for the grant the token is issued under; none without a user or a grant. */
+/**
+ * The access-token claims for the grant the token is issued under: its id, or `null` while the connection
+ * has none. Nothing without a user (a client credentials token, which no MCP call accepts).
+ */
 export const mcpGrantAccessTokenClaims = async ({
   user,
   client,
@@ -85,5 +89,5 @@ export const mcpGrantAccessTokenClaims = async ({
     where: { userId_clientId: { userId: user.id, clientId: client.clientId } },
     select: { id: true },
   });
-  return grant ? { [MCP_GRANT_TOKEN_CLAIM]: grant.id } : {};
+  return { [MCP_GRANT_TOKEN_CLAIM]: grant?.id ?? null };
 };
