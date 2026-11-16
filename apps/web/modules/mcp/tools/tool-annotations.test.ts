@@ -25,14 +25,18 @@ vi.mock("./guard-permissions", () => ({
     _server: unknown,
     name: string,
     config: { annotations?: TRegistration["annotations"] },
-    permissions: TPermission[] | { anyOf: TPermission[] } | { byInput: unknown }
+    permissions:
+      | TPermission[]
+      | { anyOf: TPermission[] }
+      | { byInput: (input: unknown, authInfo: unknown) => TPermission[] }
   ) => {
-    registrations.push({
-      name,
-      annotations: config.annotations,
-      // An input-dependent declaration only ever reads (chart data, dashboard filters).
-      permissions: Array.isArray(permissions) ? permissions : "anyOf" in permissions ? permissions.anyOf : [],
-    });
+    const declared = (): TPermission[] => {
+      if (Array.isArray(permissions)) return permissions;
+      if ("anyOf" in permissions) return permissions.anyOf;
+      // An input-dependent declaration, read for the smallest input: the least it ever asks for.
+      return permissions.byInput({}, undefined);
+    };
+    registrations.push({ name, annotations: config.annotations, permissions: declared() });
   },
 }));
 // Importing the real response operations pulls in modules that do not load under the unit setup; the
