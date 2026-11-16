@@ -3,7 +3,7 @@
 import { Handle, type Node, type NodeProps, Position, useUpdateNodeInternals } from "@xyflow/react";
 import { useAtomValue, useSetAtom, useStore } from "jotai";
 import { MoreVerticalIcon, Trash2Icon } from "lucide-react";
-import { type CSSProperties, memo, useEffect, useState } from "react";
+import { type CSSProperties, memo, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { useAppendWorkflowStep } from "@/modules/ee/workflows/hooks/use-append-workflow-step";
@@ -90,6 +90,17 @@ export const WorkflowBranchNode = memo(
     useEffect(() => {
       updateNodeInternals(id);
     }, [id, legOffsetsKey, updateNodeInternals]);
+    // The node keeps its size while its card changes height (no ⋮ menu outside editing lets the
+    // summary fit one line, a problem adds one), which moves the fork and its legs inside it. React
+    // Flow only re-measures handles when the node resizes, so watch the card and measure again.
+    const nodeRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+      const card = nodeRef.current?.firstElementChild;
+      if (!card || typeof ResizeObserver === "undefined") return;
+      const observer = new ResizeObserver(() => updateNodeInternals(id));
+      observer.observe(card);
+      return () => observer.disconnect();
+    }, [id, updateNodeInternals]);
     const isSwitch = data.nodeType === "switch";
     // Inline literal t() calls so the translation-key scanner detects the keys.
     const deleteTitle = isSwitch
@@ -106,6 +117,7 @@ export const WorkflowBranchNode = memo(
 
     return (
       <div
+        ref={nodeRef}
         className={cn("flex", isHorizontal ? "flex-row items-start" : "flex-col items-center")}
         style={
           isHorizontal
