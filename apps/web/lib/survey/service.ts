@@ -1,7 +1,7 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type Survey as TPrismaSurveyRow } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import type { TCustomCssStored } from "@formbricks/types/custom-css";
@@ -516,6 +516,9 @@ export type TUpdateSurveyOptions = {
   targetingActor?: TSurveyActorContext;
 };
 
+/** ENG-7127: what a survey save does with a key of its payload; see `SURVEY_SAVE_KEYS`. */
+type TSurveySaveKeyRole = "column" | "handler" | "derived" | "serverOwned";
+
 /**
  * ENG-7127: what a survey save does with each key of its payload. The update `data` is built from the
  * `column` keys and the handlers in `updateSurveyInternal` only, never by spreading the payload: the
@@ -566,6 +569,7 @@ const SURVEY_SAVE_KEYS = {
   customHeadScriptsMode: "column",
   showConditions: "column",
   startLogic: "column",
+  type: "column",
   questions: "handler",
   triggers: "handler",
   segment: "handler",
@@ -575,7 +579,6 @@ const SURVEY_SAVE_KEYS = {
   variables: "handler",
   hiddenFields: "handler",
   customCss: "handler",
-  type: "derived",
   updatedAt: "derived",
   publishOn: "derived",
   closeOn: "derived",
@@ -590,18 +593,20 @@ const SURVEY_SAVE_KEYS = {
   visibilityProjectedVersion: "serverOwned",
   visibilityChangedAt: "serverOwned",
   visibilityChangedById: "serverOwned",
-} as const satisfies Record<keyof TSurvey, "column" | "handler" | "derived" | "serverOwned">;
+} as const satisfies Record<keyof TSurvey, TSurveySaveKeyRole>;
 
 type TSurveySaveColumn = {
   [K in keyof typeof SURVEY_SAVE_KEYS]: (typeof SURVEY_SAVE_KEYS)[K] extends "column" ? K : never;
 }[keyof typeof SURVEY_SAVE_KEYS];
 
 /**
- * A `column` must be a plain column of `Prisma.SurveyUpdateInput`, which has no foreign-key columns: a
- * foreign key marked `column` fails to compile here.
+ * A `column` must be a plain column: a field of the `Survey` row, which has no relations, that
+ * `Prisma.SurveyUpdateInput` also takes, which has no foreign keys. A relation or foreign key marked
+ * `column` fails to compile here.
  */
-const asSurveyUpdateColumns = <K extends keyof Prisma.SurveyUpdateInput>(columns: K[]): readonly K[] =>
-  columns;
+const asSurveyUpdateColumns = <K extends keyof TPrismaSurveyRow & keyof Prisma.SurveyUpdateInput>(
+  columns: K[]
+): readonly K[] => columns;
 
 const SURVEY_SAVE_COLUMNS = asSurveyUpdateColumns<TSurveySaveColumn>(
   (Object.keys(SURVEY_SAVE_KEYS) as (keyof typeof SURVEY_SAVE_KEYS)[]).filter(
@@ -1080,7 +1085,6 @@ export const updateSurveyInternal = async (
     data = {
       ...pickSurveySaveColumns(updatedSurvey),
       ...data,
-      type,
       updatedAt: new Date(),
       publishOn: normalizedScheduling.publishOn,
       closeOn: normalizedScheduling.closeOn,
