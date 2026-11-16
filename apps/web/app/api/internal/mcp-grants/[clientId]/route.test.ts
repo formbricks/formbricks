@@ -258,6 +258,26 @@ describe("DELETE /api/internal/mcp-grants/{clientId}", () => {
     expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
 
+  // A consent left without a grant (written by the previous release during a rolling upgrade): nothing
+  // for the grant store to audit, so the route's own entry is the record of the revoke.
+  test("keeps the route's audit entry for a revoke that ended a consent and no grant", async () => {
+    mocks.revokeMcpClient.mockResolvedValue({
+      consentsDeleted: 1,
+      refreshTokensRevoked: 1,
+      accessTokensRevoked: 0,
+      grants: [],
+    });
+
+    const response = await revoke();
+
+    expect(response.status).toBe(200);
+    expect(mocks.queueMcpGrantAudit).not.toHaveBeenCalled();
+    expect(mocks.queueAuditEvent).toHaveBeenCalledTimes(1);
+    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "deleted", status: "success", userId: USER_ID })
+    );
+  });
+
   test("answers 403 for a client the user has nothing for, like another user's", async () => {
     mocks.revokeMcpClient.mockResolvedValue(null);
 

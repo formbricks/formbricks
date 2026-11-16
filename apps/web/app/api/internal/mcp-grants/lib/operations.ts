@@ -148,8 +148,9 @@ export async function revokeMcpGrantOperation({
   const revoked = await revokeMcpClient({ userId, clientId });
   if (!revoked) return problemForbidden(requestId, undefined, instance);
 
-  // Audited by the grant store, one entry per organization the grant reached, as Edit is.
-  skipV3AuditLog(auditLog);
+  // Audited by the grant store, one entry per organization the grant reached, as Edit is. A revoke that
+  // ended only a consent (one left without a grant) has nothing for it to audit: the route's entry stays.
+  if (revoked.grants.length > 0) skipV3AuditLog(auditLog);
   for (const grant of revoked.grants) {
     await queueMcpGrantAudit({ action: "deleted", actorUserId: userId, before: grant, after: null });
   }
