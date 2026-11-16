@@ -510,6 +510,38 @@ describe("registerMcpTool — the connection's grant", () => {
     );
   });
 
+  // The token's scopes cap the grant: an any-of tool runs only for a permission both give. Scopes that
+  // reach Surveys alone and a grant that gives Dashboards alone reach no permission of the tool.
+  test("refuses an any-of tool when the token's scopes and the grant each give a different permission", async () => {
+    const { server, tools } = createToolServer();
+    const handler = vi.fn().mockResolvedValue({ structuredContent: {} });
+    registerMcpTool(
+      server as any,
+      "discover",
+      CONFIG,
+      {
+        anyOf: [
+          { permission: "surveys", level: "read" },
+          { permission: "dashboards", level: "read" },
+        ],
+      },
+      handler as any
+    );
+    const split = { ...withGrant({ dashboards: "read" }), scopes: ["surveys:read"] } as AuthInfo;
+    const both = {
+      ...withGrant({ surveys: "read", dashboards: "read" }),
+      scopes: ["surveys:read"],
+    } as AuthInfo;
+
+    const refused = await tools.get("discover")!.handler({}, { http: { authInfo: split } });
+    await tools.get("discover")!.handler({}, { http: { authInfo: both } });
+
+    expect((refused.structuredContent as ScopeErrorContent).error.detail).toContain(
+      "does not give Surveys: Read."
+    );
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
   test("refuses a user's call that carries no grant at all", async () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn();

@@ -221,10 +221,13 @@ const guardPermissions = async (
   requestId: string
 ): Promise<CallToolResult | null> => {
   if ("anyOf" in permissions) {
-    return (
-      (await guardScopes(permissions.anyOf, "anyOf", authInfo, requestId)) ??
-      (await guardGrant(permissions.anyOf, "anyOf", authInfo, requestId))
-    );
+    const scopeError = await guardScopes(permissions.anyOf, "anyOf", authInfo, requestId);
+    if (scopeError) return scopeError;
+    // One permission must pass both halves: the grant is checked only for those the scopes reach, or a
+    // token scoped to one permission and a grant giving another would together pass a tool neither gives.
+    const held = new Set(authInfo?.scopes ?? []);
+    const reached = permissions.anyOf.filter((requirement) => held.has(getMcpPermissionScope(requirement)));
+    return await guardGrant(reached, "anyOf", authInfo, requestId);
   }
   const selected: unknown = "byInput" in permissions ? permissions.byInput(input, authInfo) : permissions;
   // Fail closed: an empty or invalid list would otherwise gate on nothing.
