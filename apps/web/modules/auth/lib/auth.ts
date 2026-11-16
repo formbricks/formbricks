@@ -46,6 +46,7 @@ import {
   revokeOAuthConsentBeforeHandler,
   snapshotConsentBeforeApprovalHandler,
 } from "./oauth-grant-revocation";
+import { refuseCodeIssuedBeforeRevocationBeforeHandler } from "./oauth-revocation-marker";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
@@ -406,6 +407,10 @@ export const auth = betterAuth({
       // Path-disjoint from the revocation below (consent and update-consent vs delete-consent).
       const viewerConsent = await restrictDashboardViewerConsentBeforeHandler(ctx);
       if (viewerConsent) return viewerConsent;
+      // A sign-in code issued before a revocation of its user and client is refused at the exchange, which
+      // would otherwise issue tokens again, and a new grant to a `skipConsent` client. See
+      // oauth-revocation-marker.ts.
+      await refuseCodeIssuedBeforeRevocationBeforeHandler(ctx);
       // ENG-2499: revoking an app deletes its consent AND revokes its tokens, in one transaction. Returns
       // a response only for /oauth2/delete-consent, short-circuiting the upstream delete, which would
       // leave the tokens live. See oauth-grant-revocation.ts.

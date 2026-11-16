@@ -6,7 +6,15 @@ import { DELETE as revokeGrant } from "@/app/api/internal/mcp-grants/[clientId]/
 import { GET as listGrants } from "@/app/api/internal/mcp-grants/route";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { callMcpTool, serveJwksFromAuthHandler, succeeded, toolText } from "@/integration/mcp-client";
-import { createUser, grant, refresh, registerClient, signIn } from "@/integration/oauth-flow";
+import {
+  authorize,
+  createUser,
+  exchangeCode,
+  grant,
+  refresh,
+  registerClient,
+  signIn,
+} from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
 import { revokeMcpClient } from "@/modules/auth/lib/oauth-grant-revocation";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
@@ -235,5 +243,25 @@ describe("a skipConsent client", () => {
     expect(refreshed.body.error, JSON.stringify(refreshed.body)).toBe("invalid_grant");
     expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
     expect(await liveRefreshTokens(setup.userId, setup.clientId)).toBe(0);
+  });
+
+  // A sign-in code lives 10 minutes outside PostgreSQL, so Revoke can't delete it. One issued before
+  // Revoke and exchanged after it would give the client a new grant: the revoked client would be back.
+  test("a sign-in code issued before Revoke can't bring the client back", async () => {
+    await grant(setup.cookie, setup.clientId, EVERYTHING);
+    const pending = await authorize(setup.cookie, setup.clientId, EVERYTHING);
+    const code = pending.target.searchParams.get("code");
+    expect(code, pending.target.toString()).toBeTruthy();
+
+    expect(await revokeMcpClient({ userId: setup.userId, clientId: setup.clientId })).not.toBeNull();
+    const exchanged = await exchangeCode(setup.clientId, code as string, pending.verifier);
+
+    expect(exchanged.body.error, JSON.stringify(exchanged.body)).toBe("invalid_grant");
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+
+    // Authorizing again after the Revoke is a new connection, and works.
+    await new Promise((resolve) => setTimeout(resolve, 1_100));
+    await grant(setup.cookie, setup.clientId, EVERYTHING);
+    expect(await getMcpGrant(setup.userId, setup.clientId)).not.toBeNull();
   });
 });

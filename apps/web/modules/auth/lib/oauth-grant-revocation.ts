@@ -39,6 +39,7 @@ import {
   MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
 } from "./mcp-grant-consent-errors";
 import { MCP_OAUTH_REFRESH_TOKEN_PREFIX } from "./mcp-oauth-provider-options";
+import { markOAuthRevocation } from "./oauth-revocation-marker";
 
 /**
  * ENG-2499: revoking an app on Authorized Apps has to end the app's access, not just hide it.
@@ -119,6 +120,9 @@ export const revokeAllUserOAuthGrants = async (
   /** One per deleted grant: pass to `finishRevokedMcpGrants` once the caller's transaction commits. */
   grantAudits: TMcpGrantAuditRecord[];
 }> => {
+  // The user's pending sign-in codes live outside PostgreSQL: marked, so none issued before now is
+  // exchanged. Before the commit, so no code can be exchanged between it and the mark.
+  await markOAuthRevocation({ userId });
   // Grants first, then consents, the order every path that locks both takes, so a concurrent save waits
   // rather than deadlocks. Each kind is locked in id order before its delete. The tokens are revoked last:
   // a refresh that passed its consent check before the consents were locked has inserted its token by
@@ -445,6 +449,8 @@ export const revokeMcpClient = async ({
   userId: string;
   clientId: string;
 }): Promise<(TRevokedGrant & { grants: TStoredMcpGrant[] }) | null> => {
+  // Its pending sign-in codes live outside PostgreSQL: marked first, so none issued before now is exchanged.
+  await markOAuthRevocation({ userId, clientId });
   const revoked = await prisma.$transaction((tx) => endClientAccess(tx, userId, clientId));
   if (revoked.grants.length === 0 && revoked.consentsDeleted === 0) return null;
   await removeDeletedMcpGrants(revoked.grants);

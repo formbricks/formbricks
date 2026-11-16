@@ -143,17 +143,21 @@ export const grant = async (
   const code = target.searchParams.get("code");
   expect(code, target.toString()).toBeTruthy();
 
-  const response = await token({
+  const response = await exchangeCode(clientId, code as string, verifier);
+  expect(response.status, JSON.stringify(response.body)).toBe(200);
+  return response.body as TTokens;
+};
+
+/** The code exchange `grant` ends with, for a test that holds a code before exchanging it. */
+export const exchangeCode = (clientId: string, code: string, verifier: string) =>
+  token({
     grant_type: "authorization_code",
-    code: code as string,
+    code,
     redirect_uri: REDIRECT_URI,
     client_id: clientId,
     code_verifier: verifier,
     resource: getMcpResourceUrl(),
   });
-  expect(response.status, JSON.stringify(response.body)).toBe(200);
-  return response.body as TTokens;
-};
 
 /** A refresh grant; `scope` is sent only when given, as RFC 6749 §6 makes it optional. */
 export const refresh = (clientId: string, refreshToken: string, scope?: string) =>

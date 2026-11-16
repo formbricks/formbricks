@@ -21,6 +21,7 @@ import {
   revokeTokensBeyondConsentAfterHandler,
   snapshotConsentBeforeApprovalHandler,
 } from "./oauth-grant-revocation";
+import { markOAuthRevocation } from "./oauth-revocation-marker";
 
 /**
  * The decisions each hook makes, against a mocked Prisma: refuse or let through, which consent rows it
@@ -94,6 +95,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 vi.mock("./mcp-oauth-provider-options", () => ({ MCP_OAUTH_REFRESH_TOKEN_PREFIX: "fbor_" }));
+vi.mock("./oauth-revocation-marker", () => ({ markOAuthRevocation: vi.fn() }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventBackground: vi.fn() }));
 vi.mock("@/lib/authzed/mcp-grant", () => ({
   deleteMcpGrantRelationshipsBeforeCommit: vi.fn(),
@@ -287,6 +289,11 @@ describe("revokeMcpClient", () => {
       consentsDeleted: 0,
       grants: [expect.objectContaining({ id: "grant-1" })],
     });
+    // Its pending sign-in codes are marked before the transaction that ends the rest.
+    expect(markOAuthRevocation).toHaveBeenCalledWith({ userId: "user-1", clientId: "client-1" });
+    expect(vi.mocked(markOAuthRevocation).mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(prisma.$transaction).mock.invocationCallOrder[0]
+    );
     expect(mocks.tx.oauthRefreshToken.updateMany).toHaveBeenCalled();
     expect(removeDeletedMcpGrantRelationships).toHaveBeenCalledTimes(1);
   });
@@ -623,6 +630,7 @@ describe("revokeAllUserOAuthGrants", () => {
 
     const result = await revokeAllUserOAuthGrants(mocks.tx as never, "user-1");
 
+    expect(markOAuthRevocation).toHaveBeenCalledWith({ userId: "user-1" });
     expect(mocks.calls).toEqual([
       "delete grant",
       "delete consent",

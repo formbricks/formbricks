@@ -8,7 +8,15 @@ import {
   succeeded,
   toolText,
 } from "@/integration/mcp-client";
-import { createUser, grant, refresh, registerClient, signIn } from "@/integration/oauth-flow";
+import {
+  authorize,
+  createUser,
+  exchangeCode,
+  grant,
+  refresh,
+  registerClient,
+  signIn,
+} from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { revokeAllUserOAuthGrants, revokeMcpClient } from "@/modules/auth/lib/oauth-grant-revocation";
@@ -286,6 +294,28 @@ describe("a connection's grant", () => {
 
     expectUnauthenticated(await listSurveys(before.access_token, setup));
     expect(succeeded(await listSurveys(after.access_token, setup))).toBe(true);
+  });
+
+  // The control for the skipConsent case (mcp-skip-consent-grant.integration.test.ts): a consent client's
+  // pending code, issued before Revoke, is refused at the exchange too, and so after every bulk end.
+  test.each([
+    ["Revoke", (setup: TSetup) => revokeMcpClient({ userId: setup.userId, clientId: setup.clientId })],
+    [
+      "ending every grant the user holds",
+      (setup: TSetup) => prisma.$transaction((tx) => revokeAllUserOAuthGrants(tx, setup.userId)),
+    ],
+  ])("a sign-in code issued before %s is refused at the exchange", async (_case, end) => {
+    await grant(setup.cookie, setup.clientId, EVERYTHING);
+    // The consent already covers the scopes, so authorize answers with a code at once.
+    const pending = await authorize(setup.cookie, setup.clientId, EVERYTHING);
+    const code = pending.target.searchParams.get("code");
+    expect(code, pending.target.toString()).toBeTruthy();
+
+    await end(setup);
+    const exchanged = await exchangeCode(setup.clientId, code as string, pending.verifier);
+
+    expect(exchanged.body.error, JSON.stringify(exchanged.body)).toBe("invalid_grant");
+    expect(await prisma.oauthRefreshToken.count({ where: { userId: setup.userId, revoked: null } })).toBe(0);
   });
 
   test("ending every grant a user holds (deactivation, SSO recovery) refuses the next call", async () => {
