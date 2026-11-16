@@ -2747,6 +2747,54 @@ describe("updateSurveyDraftAction", () => {
       expect(prisma.survey.update).toHaveBeenCalled();
     });
 
+    // ENG-7127: the draft path skips `ZSurvey`, so whatever keys reach here must not reach Prisma.
+    // The update data is built from an allow-list of columns plus the dedicated handlers.
+    test("writes only allow-listed columns, never a relation write or foreign key from the payload", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
+      prisma.survey.update.mockResolvedValue(mockDraftSurveyOutput);
+
+      await updateSurveyInternal(
+        {
+          ...updateSurveyInput,
+          status: "draft",
+          responses: { connect: [{ id: "clresponse00000000000001" }] },
+          segmentId: "clsegment000000000000001",
+          workspace: { update: { organization: { update: { name: "x" } } } },
+          creator: { update: { email: "x@example.com" } },
+          owner: { update: { email: "x@example.com" } },
+          createdBy: "cluser000000000000000001",
+          createdAt: new Date(0),
+          ownerId: "cluser000000000000000001",
+          visibility: "restricted",
+          archivedAt: new Date(0),
+        } as unknown as TSurvey,
+        true
+      );
+
+      const data = vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data ?? {};
+      for (const key of [
+        "responses",
+        "segmentId",
+        "workspace",
+        "creator",
+        "owner",
+        "createdBy",
+        "createdAt",
+        "ownerId",
+        "visibility",
+        "archivedAt",
+        "workspaceId",
+        "id",
+      ]) {
+        expect(data).not.toHaveProperty(key);
+      }
+      expect(data).toMatchObject({
+        name: updateSurveyInput.name,
+        status: "draft",
+        type: updateSurveyInput.type,
+      });
+    });
+
     test("should allow draft with invalid images if gating is applied", async () => {
       prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
       prisma.survey.update.mockResolvedValue(mockDraftSurveyOutput);
