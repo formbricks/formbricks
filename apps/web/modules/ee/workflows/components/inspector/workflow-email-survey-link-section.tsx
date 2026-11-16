@@ -6,10 +6,10 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowSendEmailActionConfig } from "@formbricks/workflows";
 import { WorkflowVariableInput } from "@/modules/ee/workflows/components/inspector/workflow-variable-input";
-import type { TWorkflowVariableRequest } from "@/modules/ee/workflows/components/variable-picker/use-workflow-variable-picker";
 import { useWorkflowSurveyOptions } from "@/modules/ee/workflows/hooks/use-trigger-survey-picker";
 import { updateEmbeddedDataRow } from "@/modules/ee/workflows/lib/email-survey-link";
 import { Button } from "@/modules/ui/components/button";
+import type { TEditorRecallSource } from "@/modules/ui/components/editor/components/recall-source";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import {
@@ -30,7 +30,8 @@ interface WorkflowEmailSurveyLinkSectionProps {
   onChangeEmbeddedData: (
     embeddedData: NonNullable<TWorkflowSendEmailActionConfig["surveyLink"]>["embeddedData"]
   ) => void;
-  requestVariable: (request: TWorkflowVariableRequest) => void;
+  /** The step's Variable picker, for the Embedded Data values. */
+  recallSource: TEditorRecallSource;
 }
 
 /**
@@ -45,7 +46,7 @@ export const WorkflowEmailSurveyLinkSection = ({
   onRemove,
   onInsertLink,
   onChangeEmbeddedData,
-  requestVariable,
+  recallSource,
 }: Readonly<WorkflowEmailSurveyLinkSectionProps>) => {
   const { t } = useTranslation();
   const params = useParams<{ workspaceId: string }>();
@@ -114,7 +115,7 @@ export const WorkflowEmailSurveyLinkSection = ({
                   placeholder={t("workspace.workflows.http_request_value_placeholder")}
                   aria-label={t("workspace.workflows.email_survey_link_value")}
                   className="min-w-0 flex-1"
-                  requestVariable={requestVariable}
+                  recallSource={recallSource}
                   onChange={(value) => changeRows(updateEmbeddedDataRow(rows, index, { value }))}
                 />
                 <Button

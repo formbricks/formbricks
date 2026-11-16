@@ -111,7 +111,7 @@ export const WorkflowHttpRequestForm = ({
           placeholder={t("workspace.workflows.http_request_value_placeholder")}
           aria-label={t("workspace.workflows.http_request_header_value")}
           className="min-w-0 flex-1"
-          requestVariable={picker.requestVariable}
+          recallSource={picker.recallSource}
           onChange={(value) => setHeader(index, { ...header, value })}
         />
       );
@@ -227,7 +227,7 @@ export const WorkflowHttpRequestForm = ({
               placeholder={t("workspace.workflows.http_request_value_placeholder")}
               aria-label={t("workspace.workflows.http_request_query_value")}
               className="min-w-0 flex-1"
-              requestVariable={picker.requestVariable}
+              recallSource={picker.recallSource}
               onChange={(value) =>
                 updateConfig({
                   queryParameters: config.queryParameters.map((current, i) =>

@@ -369,14 +369,13 @@ export const WorkflowEmailActionForm = ({
         onChangeEmbeddedData={(embeddedData) =>
           node.config.surveyLink && updateConfig({ surveyLink: { ...node.config.surveyLink, embeddedData } })
         }
-        requestVariable={variablePicker.requestVariable}
+        recallSource={variablePicker.recallSource}
       />
 
       {/* A Webhook run has no response to attach. */}
       {isWebhookTrigger ? null : (
         <WorkflowEmailResponseDataFields node={node} isEditable={isEditable} updateConfig={updateConfig} />
       )}
-      {variablePicker.pickerElement}
     </div>
   );
 };
