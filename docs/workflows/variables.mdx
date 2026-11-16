@@ -19,8 +19,12 @@ comment with a <Frame>. */}
 | Source            | Path                       | Available when                                                                 |
 | ----------------- | -------------------------- | ------------------------------------------------------------------------------ |
 | **Payload**       | `payload.customer.email`   | The workflow has a [Webhook trigger](/workflows/webhook-trigger).               |
-| **Response**      | `response.<questionId>`    | The workflow has a **Response completed** trigger.                              |
+| **Response**      | `response.<id>`            | The workflow has a **Response completed** trigger.                              |
 | **An earlier step** | `steps.<stepId>.status`, `steps.<stepId>.body.order.id` | The step is an [HTTP request](/workflows/http-request) that runs before this one on the same branch. |
+
+`response.<id>` covers a survey's answers and its Embedded Data: fields filled by links, URL parameters or
+the SDK, and fields computed by Set value rules, such as a score. The `@` picker lists them by question
+title or field name.
 
 The picker lists the Variables of the trigger's **expected payload**, so set it in the trigger first. It lists
 the first 500 values of the payload. For an HTTP request step, it lists `status` and, once you have used **Send
