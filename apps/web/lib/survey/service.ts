@@ -517,70 +517,105 @@ export type TUpdateSurveyOptions = {
 };
 
 /**
- * ENG-7127: the `Survey` columns a survey save copies from its payload as given. The update `data` is
- * built from this list and the dedicated handlers in `updateSurveyInternal` only, never by spreading the
- * payload: the draft save's schema used to keep unknown keys, and a spread passed Prisma relation writes
+ * ENG-7127: what a survey save does with each key of its payload. The update `data` is built from the
+ * `column` keys and the handlers in `updateSurveyInternal` only, never by spreading the payload: the
+ * draft save's schema used to keep unknown keys, and a spread passed Prisma relation writes
  * (`workspace`, `creator`, `owner`, `responses`, …) and raw foreign keys (`segmentId`) straight to
  * `tx.survey.update`, writing rows outside the survey.
  *
- * Left out on purpose, so a save never writes them:
- * - relations and foreign keys. Segment, languages, triggers and follow-ups are written by their own
- *   handlers below, which check the ids; Embedded Data (`embeddedFields`, `variables`, `hiddenFields`)
- *   by `reconcileEmbeddedData`; custom CSS by the custom CSS service (ENG-2949).
- * - server-owned columns: `id`, `workspaceId`, `createdAt`, `createdBy`, `archivedAt` (archive and
- *   restore only), and the visibility facts (ENG-3282), which the visibility endpoint writes under the
- *   per-survey lock.
- * - `type`, `questions`, `blocks` when it has content, `updatedAt`, `publishOn` and `closeOn`, which the
- *   save derives itself.
-
+ * - `column`: copied from the payload as given.
+ * - `handler`: written by its own code, which checks the ids: segment, languages, triggers and
+ *   follow-ups below, Embedded Data through `reconcileEmbeddedData`, custom CSS through the custom CSS
+ *   service (ENG-2949), and `questions`, stripped of `isDraft`.
+ * - `derived`: set by the save itself.
+ * - `serverOwned`: never written by a save. `archivedAt` belongs to archive and restore; the visibility
+ *   facts to the visibility endpoint, under the per-survey lock (ENG-3282).
  *
- * Typed against `Prisma.SurveyUpdateInput`, which has no foreign-key columns, so adding one here fails
- * to compile.
+ * Every key of `TSurvey` must be listed, so a new survey field fails to compile until it is given one.
  */
-const SURVEY_SAVE_COLUMNS = [
-  "name",
-  "status",
-  "displayOption",
-  "autoClose",
-  "keepEndingCardOpen",
-  "recontactDays",
-  "displayLimit",
-  "welcomeCard",
-  "blocks",
-  "endings",
-  "delay",
-  "autoComplete",
-  "workspaceOverwrites",
-  "styling",
-  "showLanguageSwitch",
-  "autoSelectLanguage",
-  "surveyClosedMessage",
-  "singleUse",
-  "isVerifyEmailEnabled",
-  "recaptcha",
-  "isBackButtonHidden",
-  "isAutoProgressingEnabled",
-  "isCaptureIpEnabled",
-  "isAnonymizeResponsesEnabled",
-  "pin",
-  "displayPercentage",
-  "metadata",
-  "slug",
-  "customHeadScripts",
-  "customHeadScriptsMode",
-  "showConditions",
-  "startLogic",
-] as const satisfies readonly (keyof TSurvey & keyof Prisma.SurveyUpdateInput)[];
+const SURVEY_SAVE_KEYS = {
+  name: "column",
+  status: "column",
+  displayOption: "column",
+  autoClose: "column",
+  keepEndingCardOpen: "column",
+  recontactDays: "column",
+  displayLimit: "column",
+  welcomeCard: "column",
+  blocks: "column",
+  endings: "column",
+  delay: "column",
+  autoComplete: "column",
+  workspaceOverwrites: "column",
+  styling: "column",
+  showLanguageSwitch: "column",
+  autoSelectLanguage: "column",
+  surveyClosedMessage: "column",
+  singleUse: "column",
+  isVerifyEmailEnabled: "column",
+  recaptcha: "column",
+  isBackButtonHidden: "column",
+  isAutoProgressingEnabled: "column",
+  isCaptureIpEnabled: "column",
+  isAnonymizeResponsesEnabled: "column",
+  pin: "column",
+  displayPercentage: "column",
+  metadata: "column",
+  slug: "column",
+  customHeadScripts: "column",
+  customHeadScriptsMode: "column",
+  showConditions: "column",
+  startLogic: "column",
+  questions: "handler",
+  triggers: "handler",
+  segment: "handler",
+  languages: "handler",
+  followUps: "handler",
+  embeddedFields: "handler",
+  variables: "handler",
+  hiddenFields: "handler",
+  customCss: "handler",
+  type: "derived",
+  updatedAt: "derived",
+  publishOn: "derived",
+  closeOn: "derived",
+  id: "serverOwned",
+  workspaceId: "serverOwned",
+  createdAt: "serverOwned",
+  createdBy: "serverOwned",
+  archivedAt: "serverOwned",
+  visibility: "serverOwned",
+  ownerId: "serverOwned",
+  visibilityVersion: "serverOwned",
+  visibilityProjectedVersion: "serverOwned",
+  visibilityChangedAt: "serverOwned",
+  visibilityChangedById: "serverOwned",
+} as const satisfies Record<keyof TSurvey, "column" | "handler" | "derived" | "serverOwned">;
 
-/** ENG-7127: the payload's values for `SURVEY_SAVE_COLUMNS`, and nothing else from it. */
-const pickSurveySaveColumns = (
-  survey: TSurvey
-): Partial<Pick<TSurvey, (typeof SURVEY_SAVE_COLUMNS)[number]>> => {
-  const columns: Partial<Record<(typeof SURVEY_SAVE_COLUMNS)[number], unknown>> = {};
+type TSurveySaveColumn = {
+  [K in keyof typeof SURVEY_SAVE_KEYS]: (typeof SURVEY_SAVE_KEYS)[K] extends "column" ? K : never;
+}[keyof typeof SURVEY_SAVE_KEYS];
+
+/**
+ * A `column` must be a plain column of `Prisma.SurveyUpdateInput`, which has no foreign-key columns: a
+ * foreign key marked `column` fails to compile here.
+ */
+const asSurveyUpdateColumns = <K extends keyof Prisma.SurveyUpdateInput>(columns: K[]): readonly K[] =>
+  columns;
+
+const SURVEY_SAVE_COLUMNS = asSurveyUpdateColumns<TSurveySaveColumn>(
+  (Object.keys(SURVEY_SAVE_KEYS) as (keyof typeof SURVEY_SAVE_KEYS)[]).filter(
+    (key): key is TSurveySaveColumn => SURVEY_SAVE_KEYS[key] === "column"
+  )
+);
+
+/** ENG-7127: the payload's values for the `column` keys of `SURVEY_SAVE_KEYS`, and nothing else from it. */
+const pickSurveySaveColumns = (survey: TSurvey): Partial<Pick<TSurvey, TSurveySaveColumn>> => {
+  const columns: Partial<Record<TSurveySaveColumn, unknown>> = {};
   for (const column of SURVEY_SAVE_COLUMNS) {
     if (Object.hasOwn(survey, column)) columns[column] = survey[column];
   }
-  return columns as Partial<Pick<TSurvey, (typeof SURVEY_SAVE_COLUMNS)[number]>>;
+  return columns as Partial<Pick<TSurvey, TSurveySaveColumn>>;
 };
 
 /** Whether the workspace's organization is licensed for quotas; a workspace with none is not. */
