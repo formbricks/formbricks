@@ -15,6 +15,7 @@ import { LiveSecretReplace } from "@/modules/ee/workflows/components/inspector/h
 import { HttpResponseSection } from "@/modules/ee/workflows/components/inspector/http-request-response-section";
 import { SendTestRequestSection } from "@/modules/ee/workflows/components/inspector/http-request-send-test-section";
 import { HttpRequestUrlSection } from "@/modules/ee/workflows/components/inspector/http-request-url-section";
+import { InspectorCard } from "@/modules/ee/workflows/components/inspector/inspector-card";
 import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspector/workflow-step-name-field";
 import { WorkflowVariableInput } from "@/modules/ee/workflows/components/inspector/workflow-variable-input";
 import { JsonEditor } from "@/modules/ee/workflows/components/json-editor/json-editor";
@@ -154,105 +155,109 @@ export const WorkflowHttpRequestForm = ({
   };
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3">
       <WorkflowStepNameField node={node} isEditable={isEditable} onChange={onChange} />
 
-      {/* Request */}
-      <HttpRequestUrlSection
-        nodeId={node.id}
-        url={config.url}
-        isEditable={isEditable}
-        recallSource={picker.recallSource}
-        onUrlChange={(url) => updateConfig({ url })}
-        methodControl={
-          <Select
-            value={config.method}
-            disabled={!isEditable}
-            onValueChange={(method) =>
-              updateConfig({ method: method as TWorkflowHttpRequestActionConfig["method"] })
-            }>
-            <SelectTrigger
-              className="w-28 shrink-0 bg-white"
-              aria-label={t("workspace.workflows.http_request_method")}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {WORKFLOW_HTTP_METHODS.map((method) => (
-                <SelectItem key={method} value={method}>
-                  {method}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        }
-      />
+      {/* One card per question: where the request goes (method, URL, query), what it sends (headers,
+          body), what to do with the answer, and what to do if it fails. */}
+      <InspectorCard title={t("workspace.workflows.http_request_request")}>
+        <HttpRequestUrlSection
+          nodeId={node.id}
+          url={config.url}
+          isEditable={isEditable}
+          recallSource={picker.recallSource}
+          onUrlChange={(url) => updateConfig({ url })}
+          methodControl={
+            <Select
+              value={config.method}
+              disabled={!isEditable}
+              onValueChange={(method) =>
+                updateConfig({ method: method as TWorkflowHttpRequestActionConfig["method"] })
+              }>
+              <SelectTrigger
+                className="w-28 shrink-0 bg-white"
+                aria-label={t("workspace.workflows.http_request_method")}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {WORKFLOW_HTTP_METHODS.map((method) => (
+                  <SelectItem key={method} value={method}>
+                    {method}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          }
+        />
 
-      {/* Query parameters */}
-      <section className="flex flex-col gap-2">
-        <Label>{t("workspace.workflows.http_request_query_parameters")}</Label>
-        {config.queryParameters.map((parameter, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <Input
-              value={parameter.name}
-              disabled={!isEditable}
-              placeholder={t("common.name")}
-              aria-label={t("workspace.workflows.http_request_query_name")}
-              className="w-2/5"
-              onChange={(event) =>
-                updateConfig({
-                  queryParameters: config.queryParameters.map((current, i) =>
-                    i === index ? { ...current, name: event.target.value } : current
-                  ),
-                })
-              }
-            />
-            <WorkflowVariableInput
-              value={parameter.value}
-              disabled={!isEditable}
-              placeholder={t("workspace.workflows.http_request_value_placeholder")}
-              aria-label={t("workspace.workflows.http_request_query_value")}
-              className="min-w-0 flex-1"
-              recallSource={picker.recallSource}
-              onChange={(value) =>
-                updateConfig({
-                  queryParameters: config.queryParameters.map((current, i) =>
-                    i === index ? { ...current, value } : current
-                  ),
-                })
-              }
-            />
+        {/* Query parameters */}
+        <div className="flex flex-col gap-2">
+          <Label>{t("workspace.workflows.http_request_query_parameters")}</Label>
+          {config.queryParameters.map((parameter, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <Input
+                value={parameter.name}
+                disabled={!isEditable}
+                placeholder={t("common.name")}
+                aria-label={t("workspace.workflows.http_request_query_name")}
+                className="w-2/5"
+                onChange={(event) =>
+                  updateConfig({
+                    queryParameters: config.queryParameters.map((current, i) =>
+                      i === index ? { ...current, name: event.target.value } : current
+                    ),
+                  })
+                }
+              />
+              <WorkflowVariableInput
+                value={parameter.value}
+                disabled={!isEditable}
+                placeholder={t("workspace.workflows.http_request_value_placeholder")}
+                aria-label={t("workspace.workflows.http_request_query_value")}
+                className="min-w-0 flex-1"
+                recallSource={picker.recallSource}
+                onChange={(value) =>
+                  updateConfig({
+                    queryParameters: config.queryParameters.map((current, i) =>
+                      i === index ? { ...current, value } : current
+                    ),
+                  })
+                }
+              />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                disabled={!isEditable}
+                aria-label={t("workspace.workflows.http_request_remove_row")}
+                onClick={() =>
+                  updateConfig({ queryParameters: config.queryParameters.filter((_, i) => i !== index) })
+                }>
+                <Trash2Icon />
+              </Button>
+            </div>
+          ))}
+          {isEditable ? (
             <Button
               type="button"
-              variant="ghost"
-              size="icon"
-              disabled={!isEditable}
-              aria-label={t("workspace.workflows.http_request_remove_row")}
+              variant="secondary"
+              size="sm"
+              className="w-fit"
               onClick={() =>
-                updateConfig({ queryParameters: config.queryParameters.filter((_, i) => i !== index) })
+                updateConfig({ queryParameters: [...config.queryParameters, { name: "", value: "" }] })
               }>
-              <Trash2Icon />
+              <PlusIcon />
+              {t("workspace.workflows.http_request_add_query_parameter")}
             </Button>
-          </div>
-        ))}
-        {isEditable ? (
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            className="w-fit"
-            onClick={() =>
-              updateConfig({ queryParameters: [...config.queryParameters, { name: "", value: "" }] })
-            }>
-            <PlusIcon />
-            {t("workspace.workflows.http_request_add_query_parameter")}
-          </Button>
-        ) : null}
-        <p className="text-xs text-slate-500">{t("workspace.workflows.http_request_query_help")}</p>
-      </section>
+          ) : null}
+          <p className="text-xs text-slate-500">{t("workspace.workflows.http_request_query_help")}</p>
+        </div>
+      </InspectorCard>
 
       {/* Headers */}
-      <section className="flex flex-col gap-2">
-        <Label>{t("workspace.workflows.http_request_headers")}</Label>
+      <InspectorCard
+        title={t("workspace.workflows.http_request_headers")}
+        description={t("workspace.workflows.http_request_headers_help")}>
         {config.headers.map((header, index) => {
           const kind = getHeaderRowKind(header);
           const isLocked = header.secret === true;
@@ -349,20 +354,22 @@ export const WorkflowHttpRequestForm = ({
             {t("workspace.workflows.http_request_add_header")}
           </Button>
         ) : null}
-        <p className="text-xs text-slate-500">{t("workspace.workflows.http_request_headers_help")}</p>
         {isReplacingSecret && shouldWarnSecretGoesLive(status) ? (
           <Alert variant="warning">
             <AlertDescription>{t("workspace.workflows.http_request_secret_live_warning")}</AlertDescription>
           </Alert>
         ) : null}
-      </section>
+      </InspectorCard>
 
       {/* Body */}
       {sendsBody ? (
-        <section className="flex flex-col gap-2">
-          <Label htmlFor={`workflow-http-body-${node.id}`}>
-            {t("workspace.workflows.http_request_body")}
-          </Label>
+        <InspectorCard
+          title={
+            <Label htmlFor={`workflow-http-body-${node.id}`} className="text-sm font-semibold">
+              {t("workspace.workflows.http_request_body")}
+            </Label>
+          }
+          description={t("workspace.workflows.http_request_body_help")}>
           <JsonEditor
             id={`workflow-http-body-${node.id}`}
             label={t("workspace.workflows.http_request_body")}
@@ -371,8 +378,7 @@ export const WorkflowHttpRequestForm = ({
             onRequestVariable={isEditable ? picker.requestVariable : undefined}
             placeholder='{ "customer_id": @ }'
           />
-          <p className="text-xs text-slate-500">{t("workspace.workflows.http_request_body_help")}</p>
-        </section>
+        </InspectorCard>
       ) : null}
 
       <HttpResponseSection
@@ -383,23 +389,23 @@ export const WorkflowHttpRequestForm = ({
         onModeChange={(responseMode) => updateConfig({ responseMode })}
       />
 
-      {/* Continue on error */}
-      <div className="flex items-start justify-between gap-3 rounded-md border border-slate-200 p-3">
-        <div className="flex flex-col">
-          <Label htmlFor={`workflow-http-continue-${node.id}`} className="text-sm font-medium">
+      {/* Continue on error: a one-switch card, same shape as the email's response data card. */}
+      <InspectorCard
+        title={
+          <Label htmlFor={`workflow-http-continue-${node.id}`} className="text-sm font-semibold">
             {t("workspace.workflows.http_request_continue_on_error")}
           </Label>
-          <p className="text-xs text-slate-500">
-            {t("workspace.workflows.http_request_continue_on_error_help")}
-          </p>
-        </div>
-        <Switch
-          id={`workflow-http-continue-${node.id}`}
-          checked={config.continueOnError}
-          disabled={!isEditable}
-          onCheckedChange={(continueOnError) => updateConfig({ continueOnError })}
-        />
-      </div>
+        }
+        description={t("workspace.workflows.http_request_continue_on_error_help")}
+        aside={
+          <Switch
+            id={`workflow-http-continue-${node.id}`}
+            checked={config.continueOnError}
+            disabled={!isEditable}
+            onCheckedChange={(continueOnError) => updateConfig({ continueOnError })}
+          />
+        }
+      />
 
       {!isReadOnly && workflowId ? <SendTestRequestSection node={node} workflowId={workflowId} /> : null}
       {picker.pickerElement}

@@ -70,8 +70,11 @@ export const HttpRequestUrlSection = ({
   }
 
   return (
-    <section className="flex flex-col gap-2">
-      <Label htmlFor={`workflow-http-url-${nodeId}`}>{t("workspace.workflows.http_request_request")}</Label>
+    // The Request card around it shows the visible title; the label stays for the URL field's name.
+    <div className="flex flex-col gap-2">
+      <Label htmlFor={`workflow-http-url-${nodeId}`} className="sr-only">
+        {t("workspace.workflows.http_request_request")}
+      </Label>
       <div className="flex gap-2">
         {methodControl}
         <WorkflowVariableInput
@@ -95,6 +98,6 @@ export const HttpRequestUrlSection = ({
           <AlertDescription>{t("workspace.workflows.http_request_plain_http_warning")}</AlertDescription>
         </Alert>
       ) : null}
-    </section>
+    </div>
   );
 };

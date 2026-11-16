@@ -6,11 +6,11 @@ import {
   type TWorkflowHttpRequestActionConfig,
   type TWorkflowHttpRequestActionNode,
 } from "@formbricks/workflows";
+import { InspectorCard } from "@/modules/ee/workflows/components/inspector/inspector-card";
 import { getTypeHintLabel } from "@/modules/ee/workflows/components/variable-picker/workflow-variable-picker";
 import { useWorkflowSamples } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import { getStepOutputOptionsFromSample } from "@/modules/ee/workflows/lib/variable-picker";
 import { toStepVariableContext } from "@/modules/ee/workflows/lib/workflow-samples";
-import { Label } from "@/modules/ui/components/label";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
 
 export const HttpResponseSection = ({
@@ -37,8 +37,7 @@ export const HttpResponseSection = ({
   const isWaiting = node.config.responseMode === "wait";
 
   return (
-    <section className="flex flex-col gap-2">
-      <Label>{t("workspace.workflows.http_request_response")}</Label>
+    <InspectorCard title={t("workspace.workflows.http_request_response")}>
       <TabToggle
         id={`workflow-http-response-${node.id}`}
         value={node.config.responseMode}
@@ -76,6 +75,6 @@ export const HttpResponseSection = ({
       {isWaiting && options.length === 0 ? (
         <p className="text-xs text-slate-500">{t("workspace.workflows.http_request_variables_empty")}</p>
       ) : null}
-    </section>
+    </InspectorCard>
   );
 };
