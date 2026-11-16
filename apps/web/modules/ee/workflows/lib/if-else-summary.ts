@@ -79,7 +79,24 @@ const flattenConditions = (group: TWorkflowConditionGroup): TWorkflowCondition[]
 // Typed values read in quotes, as the survey flow editor writes them (“gold”); numbers stay bare.
 const quote = (text: string) => `“${text}”`;
 
-const toValueText = (value: TWorkflowConditionValue, labels?: TVariableLabels): string => {
+// A value still to be filled in (the field was just changed, the box is empty) reads as "…", so the
+// sentence never shows its template's placeholder.
+const PENDING_VALUE = "…";
+
+const PRESENCE_OPERATORS = new Set(["isSet", "isNotSet", "isEmpty", "isNotEmpty"]);
+
+/** The words a condition's sentence fills in; a presence check compares no value. */
+const toConditionWords = (condition: TWorkflowCondition, labels?: TVariableLabels): TConditionWords => {
+  const variable = getVariableDisplayName(condition.left.path, labels);
+  return PRESENCE_OPERATORS.has(toSurveyConditionOperator(condition.operator))
+    ? { variable }
+    : { variable, value: toValueText(condition.right, labels) };
+};
+
+const toValueText = (value: TWorkflowConditionValue | undefined, labels?: TVariableLabels): string => {
+  if (value === undefined || value === "" || (Array.isArray(value) && value.length === 0)) {
+    return PENDING_VALUE;
+  }
   // A list operator compares against a list of texts (ENG-7176).
   if (Array.isArray(value)) return value.map((item) => quote(String(item))).join(", ");
   if (value !== null && typeof value === "object") return getVariableDisplayName(value.path, labels);
@@ -99,14 +116,7 @@ export const describeIfElseCondition = (
   const [first, ...rest] = flattenConditions(group);
   if (!first) return null;
 
-  const condition = describeComparison(
-    first.operator,
-    {
-      variable: getVariableDisplayName(first.left.path, labels),
-      ...(first.right === undefined ? {} : { value: toValueText(first.right, labels) }),
-    },
-    t
-  );
+  const condition = describeComparison(first.operator, toConditionWords(first, labels), t);
   if (condition === null || rest.length === 0) return condition;
   return t("workspace.workflows.if_else_summary_more", { condition, count: rest.length });
 };
@@ -116,12 +126,4 @@ export const describeWorkflowCondition = (
   condition: TWorkflowCondition,
   t: TFunction,
   labels?: TVariableLabels
-): string | null =>
-  describeComparison(
-    condition.operator,
-    {
-      variable: getVariableDisplayName(condition.left.path, labels),
-      ...(condition.right === undefined ? {} : { value: toValueText(condition.right, labels) }),
-    },
-    t
-  );
+): string | null => describeComparison(condition.operator, toConditionWords(condition, labels), t);

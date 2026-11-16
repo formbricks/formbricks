@@ -10,6 +10,7 @@ import {
 } from "@formbricks/workflows";
 import { InspectorCard } from "@/modules/ee/workflows/components/inspector/inspector-card";
 import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspector/workflow-step-name-field";
+import { useBoundTriggerSurvey } from "@/modules/ee/workflows/hooks/use-bound-trigger-survey";
 import { useWorkflowVariableGroups } from "@/modules/ee/workflows/hooks/use-workflow-variable-groups";
 import {
   addConditionBelowInGroup,
@@ -17,7 +18,6 @@ import {
   canAddCondition,
   createConditionLike,
   duplicateConditionInGroup,
-  getConditionOperatorOptions,
   getTypeHintLookup,
   isListOperator,
   isPresenceOperator,
@@ -28,6 +28,7 @@ import {
   updateConditionInGroup,
   withSurveyOperatorNames,
 } from "@/modules/ee/workflows/lib/if-else-conditions";
+import { getVariableOperatorOptions } from "@/modules/ee/workflows/lib/survey-condition-operators";
 import { getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
 import { WORKFLOW_STEP_VARIABLE_PROVIDERS } from "@/modules/ee/workflows/lib/variable-picker";
 import { Button } from "@/modules/ui/components/button";
@@ -54,6 +55,7 @@ export const WorkflowIfElseForm = ({ node, isEditable, onChange }: Readonly<Work
   const groups = useWorkflowVariableGroups(node.id);
   const group = node.config.condition;
   const typeHintOf = useMemo(() => getTypeHintLookup(groups), [groups]);
+  const survey = useBoundTriggerSurvey();
 
   const setGroup = (next: TWorkflowConditionGroup) => {
     if (!isEditable) return;
@@ -89,7 +91,13 @@ export const WorkflowIfElseForm = ({ node, isEditable, onChange }: Readonly<Work
   const config: TConditionsEditorConfig = {
     getLeftOperandOptions: () => leftOptions,
     getOperatorOptions: (condition) =>
-      getConditionOperatorOptions(typeHintOf(condition.leftOperand.value), t),
+      getVariableOperatorOptions({
+        path: String(condition.leftOperand.value),
+        operator: condition.operator,
+        survey,
+        typeHint: typeHintOf(condition.leftOperand.value),
+        t,
+      }),
     getValueProps: (condition) => ({
       show: !isPresenceOperator(condition.operator),
       showInput: true,

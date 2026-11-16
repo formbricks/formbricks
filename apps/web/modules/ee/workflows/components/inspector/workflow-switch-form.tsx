@@ -7,15 +7,16 @@ import { useTranslation } from "react-i18next";
 import { MAX_SWITCH_CASE_NAME_LENGTH, type TWorkflowSwitchNode } from "@formbricks/workflows";
 import { InspectorCard } from "@/modules/ee/workflows/components/inspector/inspector-card";
 import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspector/workflow-step-name-field";
+import { useBoundTriggerSurvey } from "@/modules/ee/workflows/hooks/use-bound-trigger-survey";
 import { useWorkflowVariableGroups } from "@/modules/ee/workflows/hooks/use-workflow-variable-groups";
 import {
-  getConditionOperatorOptions,
   getTypeHintLookup,
   isListOperator,
   isPresenceOperator,
   toGenericRight,
   toVariableComboboxGroups,
 } from "@/modules/ee/workflows/lib/if-else-conditions";
+import { getVariableOperatorOptions } from "@/modules/ee/workflows/lib/survey-condition-operators";
 import {
   addSwitchCase,
   applySwitchCaseEdit,
@@ -80,7 +81,9 @@ export const WorkflowSwitchForm = ({ node, isEditable, onChange }: Readonly<Work
     ];
   }, [groups, left.path, t]);
 
-  const operatorOptions = getConditionOperatorOptions(typeHintOf(left.path), t);
+  const survey = useBoundTriggerSurvey();
+  const operatorOptionsFor = (operator: string) =>
+    getVariableOperatorOptions({ path: left.path, operator, survey, typeHint: typeHintOf(left.path), t });
 
   const requestRemoval = (caseId: string) => {
     const definition = store.get(workflowDefinitionAtom);
@@ -177,7 +180,7 @@ export const WorkflowSwitchForm = ({ node, isEditable, onChange }: Readonly<Work
                       name: switchCase.name || fallbackName,
                     })}
                     showSearch={false}
-                    options={operatorOptions}
+                    options={operatorOptionsFor(switchCase.operator)}
                     value={switchCase.operator}
                     disabled={!isEditable}
                     onChangeValue={(value) =>

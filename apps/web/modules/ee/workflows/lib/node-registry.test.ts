@@ -206,6 +206,23 @@ describe("getNodeRegistryEntry", () => {
     );
   });
 
+  test("if-else summary reads a value still to be filled in as an ellipsis, not its placeholder", () => {
+    const node = {
+      ...ifElseNode,
+      config: {
+        condition: {
+          id: "group-1",
+          connector: "and",
+          conditions: [{ id: "c1", left: { path: "payload.channel" }, operator: "equals" }],
+        },
+      },
+    } as unknown as TWorkflowIfElseNode;
+
+    expect(getNodeRegistryEntry(node).summary(node, t)).toBe(
+      'workspace.workflows.if_else_operator_equals:{"variable":"channel","value":"…"}'
+    );
+  });
+
   test("if-else summary for a single presence check has no count and no value", () => {
     const node = {
       ...ifElseNode,
