@@ -6,6 +6,7 @@ import {
   WorkflowEditorPlainHeader,
 } from "@/modules/ee/workflows/components/workflow-editor-header";
 import { WorkflowEditorProvider } from "@/modules/ee/workflows/components/workflow-editor-provider";
+import { WorkflowEditorToolbar } from "@/modules/ee/workflows/components/workflow-editor-toolbar";
 import { WorkflowsUpgradePrompt } from "@/modules/ee/workflows/components/workflows-upgrade-prompt";
 import { getWorkflowsRouteAuth } from "@/modules/ee/workflows/lib/auth";
 
@@ -43,7 +44,8 @@ const WorkflowDetailLayout = async (
             workflowId={params.workflowId}
             isReadOnly={isReadOnly}
           />
-        }>
+        }
+        toolbar={<WorkflowEditorToolbar isReadOnly={isReadOnly} />}>
         {props.children}
       </WorkflowEditorFrame>
     </WorkflowEditorProvider>

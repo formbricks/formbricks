@@ -61,7 +61,9 @@ export const WebhookSecretUrlSection = ({
     <section className="rounded-lg border border-slate-200 bg-white">
       <div className="flex items-center justify-between gap-2 px-3 pt-2.5">
         <div className="flex items-center gap-1.5">
-          <Label htmlFor={SECRET_URL_FIELD_ID}>{t("workspace.workflows.webhook_secret_url")}</Label>
+          <Label htmlFor={SECRET_URL_FIELD_ID} className="font-semibold">
+            {t("workspace.workflows.webhook_secret_url")}
+          </Label>
           <TooltipRenderer
             className="max-w-72"
             tooltipContent={t("workspace.workflows.webhook_secret_url_tooltip")}>

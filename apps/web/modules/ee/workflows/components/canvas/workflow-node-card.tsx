@@ -15,7 +15,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import type { TWorkflowNodeData, TWorkflowNodeIcon } from "@/modules/ee/workflows/state/editor";
 
-const NODE_ICONS: Record<TWorkflowNodeIcon, LucideIcon> = {
+export const NODE_ICONS: Record<TWorkflowNodeIcon, LucideIcon> = {
   trigger: ZapIcon,
   webhook: WebhookIcon,
   ifElse: GitBranchIcon,
@@ -30,6 +30,26 @@ export const CATEGORY_CHIP_CLASS_NAMES: Record<TWorkflowNodeData["category"], st
   trigger: "bg-indigo-500 text-white",
   flow: "bg-purple-500 text-white",
   action: "bg-green-600 text-white",
+};
+
+/** A step's icon on its category color, as on its canvas card. Also leads the step's panel header. */
+export const WorkflowNodeChip = ({
+  icon,
+  category,
+  size = "md",
+}: Readonly<{ icon: TWorkflowNodeIcon; category: TWorkflowNodeData["category"]; size?: "sm" | "md" }>) => {
+  const Icon = NODE_ICONS[icon];
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-md",
+        size === "sm" ? "size-6" : "size-8",
+        CATEGORY_CHIP_CLASS_NAMES[category]
+      )}>
+      <Icon className={size === "sm" ? "size-3.5" : "size-4"} strokeWidth={1.75} />
+    </span>
+  );
 };
 
 // Handles stay invisible: connections are made by the editor, never dragged by hand.

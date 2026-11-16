@@ -8,6 +8,7 @@ import {
   type TWorkflowIfElseNode,
   flattenWorkflowConditions,
 } from "@formbricks/workflows";
+import { InspectorCard } from "@/modules/ee/workflows/components/inspector/inspector-card";
 import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspector/workflow-step-name-field";
 import { useWorkflowVariableGroups } from "@/modules/ee/workflows/hooks/use-workflow-variable-groups";
 import {
@@ -29,7 +30,6 @@ import {
 } from "@/modules/ee/workflows/lib/if-else-conditions";
 import { getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
 import { WORKFLOW_STEP_VARIABLE_PROVIDERS } from "@/modules/ee/workflows/lib/variable-picker";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConditionsEditor } from "@/modules/ui/components/conditions-editor";
 import type {
@@ -37,7 +37,6 @@ import type {
   TConditionsEditorConfig,
 } from "@/modules/ui/components/conditions-editor/types";
 import { Input } from "@/modules/ui/components/input";
-import { Label } from "@/modules/ui/components/label";
 
 interface WorkflowIfElseFormProps {
   node: TWorkflowIfElseNode;
@@ -149,8 +148,11 @@ export const WorkflowIfElseForm = ({ node, isEditable, onChange }: Readonly<Work
   return (
     <div className="flex flex-col gap-4">
       <WorkflowStepNameField node={node} isEditable={isEditable} onChange={onChange} />
-      <div className="flex flex-col gap-2">
-        <Label>{t("workspace.workflows.if_else_run_then_when")}</Label>
+      {/* One card for the one question this step asks: when does "Then" run. What happens otherwise is
+          its footer, next to the conditions it depends on, instead of a separate blue alert. */}
+      <InspectorCard
+        title={t("workspace.workflows.if_else_run_then_when")}
+        footer={t("workspace.workflows.if_else_else_hint")}>
         {/* Inert for a read-only member or a live workflow: the editor has no disabled mode. */}
         <fieldset
           disabled={!isEditable}
@@ -173,10 +175,7 @@ export const WorkflowIfElseForm = ({ node, isEditable, onChange }: Readonly<Work
             {t("workspace.workflows.if_else_add_condition")}
           </Button>
         ) : null}
-      </div>
-      <Alert variant="info" size="small">
-        <AlertDescription>{t("workspace.workflows.if_else_else_hint")}</AlertDescription>
-      </Alert>
+      </InspectorCard>
     </div>
   );
 };

@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition, TWorkflowNode, TWorkflowResource } from "@formbricks/workflows";
 import { getWorkflowNodeConcreteType } from "@formbricks/workflows";
+import { WorkflowNodeChip } from "@/modules/ee/workflows/components/canvas/workflow-node-card";
 import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
 import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import { withSurveyOperatorNamesInDefinition } from "@/modules/ee/workflows/lib/if-else-conditions";
@@ -135,7 +136,13 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
     // The header sits outside the scrolling area and stays put.
     <aside className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
       <header className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 px-4 py-3">
-        <h2 className="text-sm font-semibold text-slate-900">{registryEntry.title(selectedNode, t)}</h2>
+        {/* The step's colored icon, as on its canvas card, so the panel reads as that step at a glance. */}
+        <div className="flex min-w-0 items-center gap-2">
+          <WorkflowNodeChip icon={registryEntry.icon} category={registryEntry.category} size="sm" />
+          <h2 className="truncate text-sm font-semibold text-slate-900">
+            {registryEntry.title(selectedNode, t)}
+          </h2>
+        </div>
         {registryEntry.docsUrl ? (
           <a
             href={registryEntry.docsUrl}

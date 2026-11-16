@@ -16,7 +16,6 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
-import { WorkflowAutoSaveIndicator } from "@/modules/ee/workflows/components/workflow-auto-save-indicator";
 import { usePublishedWorkflowVersion } from "@/modules/ee/workflows/hooks/use-published-workflow-version";
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
 import { summarizeValidationProblems, trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
@@ -24,7 +23,6 @@ import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-eve
 import { deleteWorkflow } from "@/modules/ee/workflows/lib/api-client";
 import { getWorkflowStatusBadge } from "@/modules/ee/workflows/lib/display";
 import {
-  hasWorkflowSaveFailedAtom,
   setWorkflowDefinitionAtom,
   workflowAtom,
   workflowDefinitionAtom,
@@ -62,7 +60,6 @@ export const WorkflowHeaderCta = ({
   const workflow = useAtomValue(workflowAtom);
   const validity = useAtomValue(workflowValidityAtom);
   const validationProblems = useAtomValue(workflowValidationProblemsAtom);
-  const hasSaveFailed = useAtomValue(hasWorkflowSaveFailedAtom);
   const builder = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
   const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -77,11 +74,10 @@ export const WorkflowHeaderCta = ({
   const publishedVersion = usePublishedWorkflowVersion({ workflowId, enabled: canDiscard });
 
   if (!workflow) return null;
-  // Only the edit tab gets the lifecycle controls — the runs tab is read-only. An unresolved save
-  // failure is the exception: the unmount flush can fail during the very tab switch that lands the
-  // user here, and the editor is no longer mounted to report it, so the pill has to follow them.
+  // Only the edit tab gets the lifecycle controls — the runs tab is read-only. The autosave pill
+  // lives in the tab row (workflow-editor-toolbar), which also follows a save failure to the runs tab.
   const isEditTab = segment === null;
-  if (!isEditTab && !hasSaveFailed) return null;
+  if (!isEditTab) return null;
 
   const isArchived = workflow.status === "archived";
   const isActive = workflow.status === "enabled";
@@ -135,18 +131,6 @@ export const WorkflowHeaderCta = ({
 
   return (
     <div className="flex shrink-0 items-center gap-3">
-      {/* The definition is the workflow's real content: while it can't change (enabled, archived,
-          or a read-only member) the editor is effectively read-only, so say that instead of
-          advertising an autosave that has nothing to act on. An outstanding save failure still wins,
-          because name/description autosave keeps running while a workflow is enabled — a failed
-          rename would otherwise hide behind a "Read-only" pill. */}
-      {builder.canEditDefinition || hasSaveFailed ? (
-        <WorkflowAutoSaveIndicator />
-      ) : (
-        <span className="inline-flex cursor-default items-center rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
-          {t("workspace.workflows.read_only")}
-        </span>
-      )}
       {/* Lifecycle as a status dropdown (same shape as the surveys list "New survey" menu): the
           button reads the current state, the menu holds the transitions available from it. Edit tab
           only — on the runs tab the pill above is carrying a save failure and nothing else. */}

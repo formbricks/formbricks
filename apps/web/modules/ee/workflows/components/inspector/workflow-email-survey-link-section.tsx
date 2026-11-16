@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowSendEmailActionConfig } from "@formbricks/workflows";
+import { InspectorCard } from "@/modules/ee/workflows/components/inspector/inspector-card";
 import { WorkflowVariableInput } from "@/modules/ee/workflows/components/inspector/workflow-variable-input";
 import { useWorkflowSurveyOptions } from "@/modules/ee/workflows/hooks/use-trigger-survey-picker";
 import { updateEmbeddedDataRow } from "@/modules/ee/workflows/lib/email-survey-link";
@@ -62,15 +63,15 @@ export const WorkflowEmailSurveyLinkSection = ({
   };
 
   return (
-    <section className="flex flex-col gap-3 rounded-md border border-slate-200 p-3">
-      <div className="flex items-center justify-between gap-2">
-        <Label htmlFor="workflow-email-survey-link">{t("workspace.workflows.email_survey_link")}</Label>
-        {surveyLink && isEditable ? (
-          <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
+    <InspectorCard
+      title={<Label htmlFor="workflow-email-survey-link">{t("workspace.workflows.email_survey_link")}</Label>}
+      aside={
+        surveyLink && isEditable ? (
+          <Button type="button" variant="ghost" size="sm" className="-my-1" onClick={onRemove}>
             {t("common.remove")}
           </Button>
-        ) : null}
-      </div>
+        ) : null
+      }>
       <Select value={surveyLink?.surveyId} disabled={!isEditable} onValueChange={onPickSurvey}>
         <SelectTrigger id="workflow-email-survey-link" className="bg-white">
           <SelectValue placeholder={t("workspace.workflows.email_survey_link_placeholder")} />
@@ -148,6 +149,6 @@ export const WorkflowEmailSurveyLinkSection = ({
       ) : (
         <p className="text-xs text-slate-500">{t("workspace.workflows.email_survey_link_help")}</p>
       )}
-    </section>
+    </InspectorCard>
   );
 };

@@ -84,7 +84,7 @@ const PayloadHeader = ({ aside }: { aside: ReactNode }) => {
   return (
     <header className="flex items-start justify-between gap-3 px-3 py-2.5">
       <div className="flex flex-col gap-0.5">
-        <h3 className="text-sm font-medium text-slate-900">
+        <h3 className="text-sm font-semibold text-slate-900">
           {t("workspace.workflows.webhook_expected_payload")}
         </h3>
         <p className="text-xs text-slate-500">{t("workspace.workflows.webhook_expected_payload_inferred")}</p>

@@ -14,6 +14,7 @@ import {
   getTriggerSurveyId,
   isVariableEmailRecipient,
 } from "@formbricks/workflows";
+import { InspectorCard } from "@/modules/ee/workflows/components/inspector/inspector-card";
 import { WorkflowEmailRecipientField } from "@/modules/ee/workflows/components/inspector/workflow-email-recipient-field";
 import { WorkflowEmailSurveyLinkSection } from "@/modules/ee/workflows/components/inspector/workflow-email-survey-link-section";
 import {
@@ -44,7 +45,6 @@ import {
   type EmailSendToOption,
   buildEmailSendToOptions,
 } from "@/modules/survey/follow-ups/lib/email-send-to-options";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { Editor } from "@/modules/ui/components/editor";
 import {
@@ -255,117 +255,122 @@ export const WorkflowEmailActionForm = ({
   const isVariableRecipient = isVariableEmailRecipient(node.config.to);
 
   return (
-    <div className="flex flex-col gap-4">
-      <WorkflowEmailRecipientField
-        options={emailSendToOptions}
-        // A Webhook workflow can also send to an address in the payload (ENG-7169).
-        variableOptions={
-          isWebhookTrigger ? getRecipientVariableOptions(variablePicker.groups, node.config.to) : []
-        }
-        value={toRecipientSelectValue(node.config.to)}
-        isEditable={isEditable}
-        isInvalid={invalidFields.has("to")}
-        onChange={(value) => updateConfig({ to: fromRecipientSelectValue(value) })}
-        // A picked recipient can't be un-picked, so closing the dropdown without choosing is this
-        // control's only "touched while still empty" moment.
-        onClose={() => markTouched("to")}
-      />
-      {isVariableRecipient ? (
-        <Alert variant="info">
-          <AlertDescription>{t("workspace.workflows.email_variable_recipient_fixed_body")}</AlertDescription>
-        </Alert>
-      ) : null}
+    <div className="flex flex-col gap-3">
+      {/* Who gets it and from whom, then what it says: one card per question. The rule for a payload
+          recipient is the footer of the card it applies to. */}
+      <InspectorCard
+        title={t("workspace.workflows.email_addresses_card")}
+        footer={
+          isVariableRecipient ? t("workspace.workflows.email_variable_recipient_fixed_body") : undefined
+        }>
+        <WorkflowEmailRecipientField
+          options={emailSendToOptions}
+          // A Webhook workflow can also send to an address in the payload (ENG-7169).
+          variableOptions={
+            isWebhookTrigger ? getRecipientVariableOptions(variablePicker.groups, node.config.to) : []
+          }
+          value={toRecipientSelectValue(node.config.to)}
+          isEditable={isEditable}
+          isInvalid={invalidFields.has("to")}
+          onChange={(value) => updateConfig({ to: fromRecipientSelectValue(value) })}
+          // A picked recipient can't be un-picked, so closing the dropdown without choosing is this
+          // control's only "touched while still empty" moment.
+          onClose={() => markTouched("to")}
+        />
 
-      {/* From (read-only) */}
-      <div className="flex flex-col gap-2">
-        <Label>{t("workspace.workflows.email_from_label")}</Label>
-        <p className="text-xs text-slate-500">
-          {t("workspace.surveys.edit.follow_ups_modal_action_from_description")}
-        </p>
-        <div className="w-fit rounded-md border border-slate-200 bg-slate-100 px-2 py-1">
-          {/* The real deployment sender (MAIL_FROM), not `config.from` — parity with Follow-Ups, which
+        {/* From (read-only) */}
+        <div className="flex flex-col gap-2">
+          <Label>{t("workspace.workflows.email_from_label")}</Label>
+          <p className="text-xs text-slate-500">
+            {t("workspace.surveys.edit.follow_ups_modal_action_from_description")}
+          </p>
+          <div className="w-fit rounded-md border border-slate-200 bg-slate-100 px-2 py-1">
+            {/* The real deployment sender (MAIL_FROM), not `config.from` — parity with Follow-Ups, which
               always sends from MAIL_FROM. `config.from` is a vestigial seed value, never the send sender. */}
-          <span className="text-sm text-slate-900">{authoringContext?.mailFrom ?? node.config.from}</span>
+            <span className="text-sm text-slate-900">{authoringContext?.mailFrom ?? node.config.from}</span>
+          </div>
         </div>
-      </div>
 
-      {/* Reply To */}
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="workflow-email-reply-to">{t("workspace.workflows.email_reply_to_label")}</Label>
-        <p className="text-xs text-slate-500">
-          {t("workspace.surveys.edit.follow_ups_modal_action_replyTo_description")}
-        </p>
-        <FollowUpActionMultiEmailInput
-          disabled={!isEditable}
-          emails={node.config.replyTo}
-          setEmails={(update) => {
-            const nextReplyTo = typeof update === "function" ? update(node.config.replyTo) : update;
-            updateConfig({ replyTo: nextReplyTo });
-          }}
-        />
-      </div>
+        {/* Reply To */}
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="workflow-email-reply-to">{t("workspace.workflows.email_reply_to_label")}</Label>
+          <p className="text-xs text-slate-500">
+            {t("workspace.surveys.edit.follow_ups_modal_action_replyTo_description")}
+          </p>
+          <FollowUpActionMultiEmailInput
+            disabled={!isEditable}
+            emails={node.config.replyTo}
+            setEmails={(update) => {
+              const nextReplyTo = typeof update === "function" ? update(node.config.replyTo) : update;
+              updateConfig({ replyTo: nextReplyTo });
+            }}
+          />
+        </div>
+      </InspectorCard>
 
-      {/* Subject */}
-      <div className="flex flex-col gap-2">
-        <WorkflowFieldLabel
-          htmlFor="workflow-email-subject"
-          isRequired
-          isInvalid={invalidFields.has("subject")}>
-          {t("workspace.workflows.email_subject_label")}
-        </WorkflowFieldLabel>
-        <Input
-          id="workflow-email-subject"
-          value={node.config.subject}
-          disabled={!isEditable}
-          placeholder={t("workspace.workflows.email_subject_placeholder")}
-          isInvalid={invalidFields.has("subject")}
-          aria-invalid={invalidFields.has("subject")}
-          aria-describedby={invalidFields.has("subject") ? "workflow-email-subject-error" : undefined}
-          onBlur={() => markTouched("subject")}
-          onChange={(event) => updateConfig({ subject: event.target.value })}
-        />
-        {invalidFields.has("subject") ? (
-          <WorkflowFieldError id="workflow-email-subject-error">
-            {t("workspace.workflows.email_subject_required")}
-          </WorkflowFieldError>
-        ) : null}
-      </div>
+      <InspectorCard title={t("workspace.workflows.email_message_card")}>
+        {/* Subject */}
+        <div className="flex flex-col gap-2">
+          <WorkflowFieldLabel
+            htmlFor="workflow-email-subject"
+            isRequired
+            isInvalid={invalidFields.has("subject")}>
+            {t("workspace.workflows.email_subject_label")}
+          </WorkflowFieldLabel>
+          <Input
+            id="workflow-email-subject"
+            value={node.config.subject}
+            disabled={!isEditable}
+            placeholder={t("workspace.workflows.email_subject_placeholder")}
+            isInvalid={invalidFields.has("subject")}
+            aria-invalid={invalidFields.has("subject")}
+            aria-describedby={invalidFields.has("subject") ? "workflow-email-subject-error" : undefined}
+            onBlur={() => markTouched("subject")}
+            onChange={(event) => updateConfig({ subject: event.target.value })}
+          />
+          {invalidFields.has("subject") ? (
+            <WorkflowFieldError id="workflow-email-subject-error">
+              {t("workspace.workflows.email_subject_required")}
+            </WorkflowFieldError>
+          ) : null}
+        </div>
 
-      {/* Body (recall editor) */}
-      {/* The editor defaults to a 2-line min-height (48px); a 4-line body (24px line-height)
+        {/* Body (recall editor) */}
+        {/* The editor defaults to a 2-line min-height (48px); a 4-line body (24px line-height)
           better matches the amount of content an email body usually holds. */}
-      <div className="flex flex-col gap-2 [--editor-min-height:96px]" ref={bodyWrapperRef}>
-        <WorkflowFieldLabel id="workflow-email-body-label" isRequired isInvalid={invalidFields.has("body")}>
-          {t("workspace.workflows.email_body_label")}
-        </WorkflowFieldLabel>
-        <Editor
-          key={bodyEditorKey}
-          // The editor's contenteditable takes its accessible name from this label.
-          id="workflow-email-body-label"
-          disableLists
-          // No @ button when the body takes no recall (a Variable recipient: the email must be fixed).
-          excludedToolbarItems={bodyRecallSource ? ["blockType"] : ["blockType", "recall"]}
-          getText={() => toEditorHtml(node.config.body)}
-          setText={(value: string) => updateConfig({ body: value })}
-          // The editor is the authority on its own emptiness: its serialized value keeps the
-          // enclosing `<p>` even when blank, so "had content at some point" is the only reliable
-          // signal that the user has engaged with this field.
-          onEmptyChange={handleBodyEmptyChange}
-          isInvalid={invalidFields.has("body")}
-          ariaDescribedBy={invalidFields.has("body") ? "workflow-email-body-error" : undefined}
-          firstRender={firstRender}
-          setFirstRender={setFirstRender}
-          editable={isEditable}
-          placeholder={t("workspace.workflows.email_body_placeholder")}
-          recallSource={bodyRecallSource}
-          tokenChips={bodyTokenChips}
-        />
-        {invalidFields.has("body") ? (
-          <WorkflowFieldError id="workflow-email-body-error">
-            {t("workspace.workflows.email_body_required")}
-          </WorkflowFieldError>
-        ) : null}
-      </div>
+        <div className="flex flex-col gap-2 [--editor-min-height:96px]" ref={bodyWrapperRef}>
+          <WorkflowFieldLabel id="workflow-email-body-label" isRequired isInvalid={invalidFields.has("body")}>
+            {t("workspace.workflows.email_body_label")}
+          </WorkflowFieldLabel>
+          <Editor
+            key={bodyEditorKey}
+            // The editor's contenteditable takes its accessible name from this label.
+            id="workflow-email-body-label"
+            disableLists
+            // No @ button when the body takes no recall (a Variable recipient: the email must be fixed).
+            excludedToolbarItems={bodyRecallSource ? ["blockType"] : ["blockType", "recall"]}
+            getText={() => toEditorHtml(node.config.body)}
+            setText={(value: string) => updateConfig({ body: value })}
+            // The editor is the authority on its own emptiness: its serialized value keeps the
+            // enclosing `<p>` even when blank, so "had content at some point" is the only reliable
+            // signal that the user has engaged with this field.
+            onEmptyChange={handleBodyEmptyChange}
+            isInvalid={invalidFields.has("body")}
+            ariaDescribedBy={invalidFields.has("body") ? "workflow-email-body-error" : undefined}
+            firstRender={firstRender}
+            setFirstRender={setFirstRender}
+            editable={isEditable}
+            placeholder={t("workspace.workflows.email_body_placeholder")}
+            recallSource={bodyRecallSource}
+            tokenChips={bodyTokenChips}
+          />
+          {invalidFields.has("body") ? (
+            <WorkflowFieldError id="workflow-email-body-error">
+              {t("workspace.workflows.email_body_required")}
+            </WorkflowFieldError>
+          ) : null}
+        </div>
+      </InspectorCard>
 
       <WorkflowEmailSurveyLinkSection
         config={node.config}
@@ -397,27 +402,26 @@ const WorkflowEmailResponseDataFields = ({
   updateConfig: (next: Partial<TWorkflowSendEmailActionNode["config"]>) => void;
 }>) => {
   const { t } = useTranslation();
+  // One card: the switch in its header turns response data on; the options for it follow inside,
+  // instead of a second bordered box under the first.
   return (
-    <>
-      <div className="flex items-start justify-between gap-3 rounded-md border border-slate-200 p-3">
-        <div className="flex flex-col">
-          <Label htmlFor="workflow-email-attach-response-data" className="text-sm font-medium">
-            {t("workspace.workflows.email_attach_response_data_label")}
-          </Label>
-          <p className="text-xs text-slate-500">
-            {t("workspace.workflows.email_attach_response_data_description")}
-          </p>
-        </div>
+    <InspectorCard
+      title={
+        <Label htmlFor="workflow-email-attach-response-data" className="text-sm font-medium">
+          {t("workspace.workflows.email_attach_response_data_label")}
+        </Label>
+      }
+      description={t("workspace.workflows.email_attach_response_data_description")}
+      aside={
         <Switch
           id="workflow-email-attach-response-data"
           checked={node.config.attachResponseData}
           disabled={!isEditable}
           onCheckedChange={(checked) => updateConfig({ attachResponseData: checked })}
         />
-      </div>
-
+      }>
       {node.config.attachResponseData ? (
-        <div className="flex flex-col gap-3 rounded-md border border-slate-200 p-3">
+        <div className="flex flex-col gap-3 border-t border-slate-100 pt-3">
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col">
               <Label htmlFor="workflow-email-include-variables" className="text-sm font-medium">
@@ -450,6 +454,6 @@ const WorkflowEmailResponseDataFields = ({
           </div>
         </div>
       ) : null}
-    </>
+    </InspectorCard>
   );
 };

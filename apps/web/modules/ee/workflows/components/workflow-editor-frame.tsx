@@ -5,6 +5,8 @@ interface WorkflowEditorFrameProps {
   workspaceId: string;
   workflowId: string;
   header: ReactNode;
+  /** The right side of the tab row: autosave status and Undo/Redo. */
+  toolbar?: ReactNode;
   children: ReactNode;
 }
 
@@ -18,12 +20,14 @@ export const WorkflowEditorFrame = ({
   workspaceId,
   workflowId,
   header,
+  toolbar,
   children,
 }: Readonly<WorkflowEditorFrameProps>) => (
   <div className="flex h-full flex-col">
     {header}
-    <div className="shrink-0 border-b border-slate-200 bg-white px-4">
+    <div className="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4">
       <WorkflowSecondaryNavigation workspaceId={workspaceId} workflowId={workflowId} />
+      {toolbar}
     </div>
     <main className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">{children}</main>
   </div>

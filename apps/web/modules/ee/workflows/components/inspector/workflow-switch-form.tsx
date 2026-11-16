@@ -5,6 +5,7 @@ import { MoreVerticalIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MAX_SWITCH_CASE_NAME_LENGTH, type TWorkflowSwitchNode } from "@formbricks/workflows";
+import { InspectorCard } from "@/modules/ee/workflows/components/inspector/inspector-card";
 import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspector/workflow-step-name-field";
 import { useWorkflowVariableGroups } from "@/modules/ee/workflows/hooks/use-workflow-variable-groups";
 import {
@@ -26,7 +27,6 @@ import { getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name
 import { WORKFLOW_STEP_VARIABLE_PROVIDERS } from "@/modules/ee/workflows/lib/variable-picker";
 import { countStepsOnSwitchCase } from "@/modules/ee/workflows/lib/workflow-steps";
 import { workflowDefinitionAtom } from "@/modules/ee/workflows/state/editor";
-import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
 import {
@@ -37,7 +37,6 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Input } from "@/modules/ui/components/input";
 import { InputCombobox } from "@/modules/ui/components/input-combo-box";
-import { Label } from "@/modules/ui/components/label";
 
 interface WorkflowSwitchFormProps {
   node: TWorkflowSwitchNode;
@@ -93,8 +92,7 @@ export const WorkflowSwitchForm = ({ node, isEditable, onChange }: Readonly<Work
   return (
     <div className="flex flex-col gap-4">
       <WorkflowStepNameField node={node} isEditable={isEditable} onChange={onChange} />
-      <div className="flex flex-col gap-2">
-        <Label>{t("workspace.workflows.switch_compare")}</Label>
+      <InspectorCard title={t("workspace.workflows.switch_compare")}>
         <InputCombobox
           id={`switch-${node.id}-variable`}
           aria-label={t("workspace.workflows.switch_compare")}
@@ -107,9 +105,12 @@ export const WorkflowSwitchForm = ({ node, isEditable, onChange }: Readonly<Work
             update({ ...node, config: { ...node.config, left: { path: String(value) } } })
           }
         />
-      </div>
-      <div className="flex flex-col gap-2">
-        <Label>{t("workspace.workflows.switch_cases")}</Label>
+      </InspectorCard>
+      {/* What runs that match no case do is the Cases card's footer, next to the cases, instead of
+          a separate blue alert. Each case is a row divided from the next, not a card in a card. */}
+      <InspectorCard
+        title={t("workspace.workflows.switch_cases")}
+        footer={t("workspace.workflows.switch_hint")}>
         {cases.map((switchCase, index) => {
           const fallbackName = t("workspace.workflows.switch_case_name_default", { number: index + 1 });
           const valueLabel = t("workspace.workflows.switch_case_value", {
@@ -143,7 +144,9 @@ export const WorkflowSwitchForm = ({ node, isEditable, onChange }: Readonly<Work
           return (
             // Two lines per case so each field keeps a usable width in the panel: the name with its
             // menu, then the operator and the value.
-            <div key={switchCase.id} className="flex flex-col gap-2 rounded-lg border border-slate-200 p-2">
+            <div
+              key={switchCase.id}
+              className="flex flex-col gap-2 border-t border-slate-100 pt-3 first:border-t-0 first:pt-0">
               <div className="flex items-center gap-2">
                 <Input
                   aria-label={t("workspace.workflows.switch_case_name")}
@@ -254,11 +257,7 @@ export const WorkflowSwitchForm = ({ node, isEditable, onChange }: Readonly<Work
             {t("workspace.workflows.switch_add_case")}
           </Button>
         ) : null}
-      </div>
-      {/* Default size: the small alert cuts its text to one line. */}
-      <Alert variant="info">
-        <AlertDescription>{t("workspace.workflows.switch_hint")}</AlertDescription>
-      </Alert>
+      </InspectorCard>
       <ConfirmationModal
         open={pendingRemoval !== null}
         setOpen={(open) => {
