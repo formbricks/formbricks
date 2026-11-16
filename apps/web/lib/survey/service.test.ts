@@ -29,7 +29,7 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
-import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
   mockActionClass,
@@ -93,10 +93,12 @@ vi.mock("@/lib/feedback-source/mapping-reconciliation", () => ({
 vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/license-check/lib/utils")>()),
   getIsQuotasEnabled: vi.fn(),
+  getIsContactsEnabled: vi.fn(),
 }));
 
 beforeEach(() => {
   vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
+  vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
   prisma.survey.count.mockResolvedValue(1);
   // createSurvey and updateSurveyInternal wrap their core writes in prisma.$transaction; run the
   // callback with the same mocked client so per-test prisma.survey/segment mocks still apply inside
@@ -838,6 +840,141 @@ describe("Tests for updateSurvey", () => {
           data: expect.objectContaining({ filters: halfBuiltFilters }),
         })
       );
+    });
+
+    describe("advanced targeting on a survey save (ENG-7267)", () => {
+      const SEGMENT_ID = "clownsegment000000000001";
+      const attributeFilters = [
+        {
+          id: createId(),
+          connector: null,
+          resource: {
+            id: createId(),
+            root: { type: "attribute", contactAttributeKey: "email" },
+            qualifier: { operator: "equals" },
+            value: "a@b.com",
+          },
+        },
+      ];
+      const selfReferencingFilters = [
+        {
+          id: createId(),
+          connector: null,
+          resource: {
+            id: createId(),
+            root: { type: "segment", segmentId: SEGMENT_ID },
+            qualifier: { operator: "userIsIn" },
+            value: SEGMENT_ID,
+          },
+        },
+      ];
+      const save = (filters: unknown) =>
+        updateSurveyInternal(
+          {
+            ...updateSurveyInput,
+            status: "draft",
+            type: "app",
+            segment: {
+              id: SEGMENT_ID,
+              title: "seg",
+              description: null,
+              isPrivate: false,
+              filters,
+              workspaceId: updateSurveyInput.workspaceId,
+              surveys: [],
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          } as any,
+          true
+        );
+
+      beforeEach(() => {
+        prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
+        prisma.segment.findUnique.mockResolvedValueOnce({
+          workspaceId: updateSurveyInput.workspaceId,
+        } as any);
+        prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
+      });
+
+      test("refuses new filters when the organization has no Contacts licence", async () => {
+        vi.mocked(getIsContactsEnabled).mockResolvedValueOnce(false);
+
+        await expect(save(attributeFilters)).rejects.toThrow(OperationNotAllowedError);
+
+        expect(prisma.segment.update).not.toHaveBeenCalled();
+        expect(prisma.survey.update).not.toHaveBeenCalled();
+      });
+
+      test("saves new filters when the organization has the Contacts licence", async () => {
+        await save(attributeFilters);
+
+        expect(getIsContactsEnabled).toHaveBeenCalledWith(mockOrganizationOutput.id);
+        expect(prisma.segment.update).toHaveBeenCalled();
+      });
+
+      test("keeps saving without asking for the licence when the filters are empty", async () => {
+        await save([]);
+
+        expect(getIsContactsEnabled).not.toHaveBeenCalled();
+        expect(prisma.segment.update).toHaveBeenCalled();
+      });
+
+      test("keeps saving unchanged filters after the licence lapsed", async () => {
+        vi.mocked(getIsContactsEnabled).mockResolvedValue(false);
+        prisma.survey.findUnique.mockReset();
+        prisma.survey.findUnique.mockResolvedValueOnce({
+          ...mockSurveyOutput,
+          status: "draft",
+          segment: {
+            id: SEGMENT_ID,
+            title: "seg",
+            description: null,
+            isPrivate: false,
+            filters: attributeFilters,
+            workspaceId: updateSurveyInput.workspaceId,
+            surveys: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+
+        await save(attributeFilters);
+
+        expect(getIsContactsEnabled).not.toHaveBeenCalled();
+        expect(prisma.segment.update).toHaveBeenCalled();
+      });
+
+      test("refuses a self-reference nested in a group, and one inside filters that fail the schema", async () => {
+        const nested = [{ id: createId(), connector: null, resource: selfReferencingFilters }];
+        await expect(save(nested)).rejects.toThrow("Recursive segment filter is not allowed");
+
+        prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
+        prisma.segment.findUnique.mockResolvedValueOnce({
+          workspaceId: updateSurveyInput.workspaceId,
+        } as any);
+        const malformed = [
+          ...selfReferencingFilters,
+          { id: "junk", resource: { root: { type: "attribute" } } },
+        ];
+        await expect(save(malformed)).rejects.toThrow("Recursive segment filter is not allowed");
+        expect(prisma.segment.update).not.toHaveBeenCalled();
+      });
+
+      test("asks for the licence when half-built draft filters change", async () => {
+        vi.mocked(getIsContactsEnabled).mockResolvedValueOnce(false);
+        const halfBuilt = [{ id: "f1", connector: null, resource: { root: { type: "attribute" } } }];
+
+        await expect(save(halfBuilt)).rejects.toThrow(OperationNotAllowedError);
+        expect(prisma.segment.update).not.toHaveBeenCalled();
+      });
+
+      test("refuses filters that name their own segment", async () => {
+        await expect(save(selfReferencingFilters)).rejects.toThrow("Recursive segment filter is not allowed");
+
+        expect(prisma.segment.update).not.toHaveBeenCalled();
+        expect(prisma.survey.update).not.toHaveBeenCalled();
+      });
     });
 
     // ENG-2305 sibling of the filter-tree gate: on the draft path segment.surveys is just as

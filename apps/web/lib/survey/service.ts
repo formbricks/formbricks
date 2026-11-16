@@ -1,4 +1,5 @@
 import "server-only";
+import { isDeepStrictEqual } from "node:util";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
@@ -72,6 +73,7 @@ import {
 import {
   assertAddedSegmentSurveyFiltersVisible,
   assertSegmentSurveyFiltersVisible,
+  checkForRecursiveSegmentFilter,
   getAddedSegmentSurveyIds,
 } from "@/modules/ee/contacts/segments/lib/helper";
 import { getSurveyWorkspaceIdMap } from "@/modules/ee/contacts/segments/lib/segments";
@@ -80,7 +82,7 @@ import {
   getDestinationSettingTurnedOn,
 } from "@/modules/ee/creatives/lib/linked-creatives";
 import { isAppSurveyBlockedFromPublishing } from "@/modules/ee/creatives/lib/survey-publish";
-import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
+import { getIsContactsEnabled, getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { hasMatrixElement, syncQuotaMatrixConditions } from "@/modules/ee/quotas/lib/quotas";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
 import {
@@ -522,6 +524,49 @@ const getIsQuotasEnabledForWorkspace = async (workspaceId: string): Promise<bool
   return organization ? getIsQuotasEnabled(organization.id) : false;
 };
 
+/** Every segment id named by a (possibly half-built) filter tree, read without assuming its shape. */
+const collectReferencedSegmentIds = (node: unknown, found: Set<string> = new Set()): Set<string> => {
+  if (Array.isArray(node)) {
+    for (const child of node) collectReferencedSegmentIds(child, found);
+  } else if (node && typeof node === "object") {
+    const { root, resource } = node as { root?: { type?: unknown; segmentId?: unknown }; resource?: unknown };
+    if (root?.type === "segment" && typeof root.segmentId === "string") found.add(root.segmentId);
+    if (resource) collectReferencedSegmentIds(resource, found);
+  }
+  return found;
+};
+
+/**
+ * ENG-7267: the segment endpoints and the v3 survey writes refuse advanced targeting without the
+ * Contacts licence and filters that name their own segment; a survey save writes filters too, so it
+ * holds the same two rules, on the raw tree it is about to write (a draft save skips the schema, so a
+ * tree that fails it must not slip past). The licence is asked only when the save changes the stored
+ * filters, so a survey keeps saving after its organization's licence lapses.
+ */
+const assertAppTargetingFiltersAllowed = async (
+  currentSurvey: Pick<TSurvey, "workspaceId" | "segment">,
+  segment: { id?: string | null; filters?: unknown } | null | undefined
+): Promise<void> => {
+  const filters = segment?.filters;
+  if (!segment || !Array.isArray(filters) || filters.length === 0) return;
+
+  if (segment.id) {
+    if (collectReferencedSegmentIds(filters).has(segment.id)) {
+      throw new InvalidInputError("Recursive segment filter is not allowed");
+    }
+    const parsed = ZSegmentFilters.safeParse(filters);
+    if (parsed.success) await checkForRecursiveSegmentFilter(parsed.data, segment.id);
+  }
+
+  const storedFilters = segment.id === currentSurvey.segment?.id ? currentSurvey.segment?.filters : [];
+  if (isDeepStrictEqual(filters, storedFilters ?? [])) return;
+  const organization = await getOrganizationByWorkspaceId(currentSurvey.workspaceId);
+  if (!organization) throw new ResourceNotFoundError("Workspace", currentSurvey.workspaceId);
+  if (!(await getIsContactsEnabled(organization.id))) {
+    throw new OperationNotAllowedError("Advanced targeting is not allowed for this organization");
+  }
+};
+
 export const updateSurveyInternal = async (
   updatedSurvey: TSurvey,
   skipValidation = false,
@@ -636,6 +681,9 @@ export const updateSurveyInternal = async (
     // segment belongs to this survey's workspace so a caller cannot mutate or delete another
     // tenant's segment by supplying its id. Mirrors the create path guard.
     await assertSurveySegmentBelongsToWorkspace(currentSurvey.workspaceId, segment);
+    if (type === "app") {
+      await assertAppTargetingFiltersAllowed(currentSurvey, segment);
+    }
 
     // ENG-1749 sibling: the languages block below links languages by language.id. Ensure every
     // referenced language belongs to this survey's workspace so a caller cannot attach another
