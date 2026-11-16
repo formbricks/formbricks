@@ -4,6 +4,7 @@ import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { WORKFLOW_CANVAS_START_POSITION } from "./canvas-geometry";
 import {
   WORKFLOW_BRANCH_NODE_TYPE,
+  haveSameNodePositions,
   reorganizeWorkflowDefinition,
   snapWorkflowNodePosition,
   updateNodePosition,
@@ -190,6 +191,17 @@ describe("reorganizeWorkflowDefinition", () => {
     const reachableY = next.nodes[0].ui?.position?.y ?? 0;
     const orphanY = next.nodes[1].ui?.position?.y ?? 0;
     expect(orphanY).toBeGreaterThan(reachableY);
+  });
+
+  test("arranging an arranged workflow moves nothing, which Auto layout reports as already arranged", () => {
+    const arranged = reorganizeWorkflowDefinition(buildDefinition());
+
+    expect(haveSameNodePositions(arranged, reorganizeWorkflowDefinition(arranged))).toBe(true);
+    const moved = {
+      ...arranged,
+      nodes: arranged.nodes.map((node) => ({ ...node, ui: { position: { x: 999, y: 999 } } })),
+    } as TWorkflowDefinition;
+    expect(haveSameNodePositions(moved, reorganizeWorkflowDefinition(moved))).toBe(false);
   });
 });
 

@@ -6069,6 +6069,8 @@
       "archive_workflow_confirmation": "Biztosan archiválni szeretné a(z) „{name}” munkafolyamatot? Később helyreállíthatja.",
       "archive_workflow_description": "Az archiválás elrejti a munkafolyamatot a listáról. Később helyreállíthatja.",
       "auto_layout": "Automatikus elrendezés",
+      "auto_layout_done": "A lépések elrendezése megtörtént.",
+      "auto_layout_unchanged": "A lépések elrendezése már megtörtént.",
       "autosave_blocked": "Nincs mentve",
       "autosave_blocked_tooltip": "A változtatásai nem kerülnek mentésre. Adjon nevet a munkafolyamatnak a folytatáshoz.",
       "autosave_failed": "A mentés nem sikerült",

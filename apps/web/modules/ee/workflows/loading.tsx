@@ -73,7 +73,7 @@ export const WorkflowBuilderBodyLoading = () => {
           </div>
         </div>
         {showInspector ? (
-          <aside className="min-h-0 w-[480px] shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <aside className="min-h-0 w-[380px] shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white 2xl:w-[480px]">
             {/* Mirrors the node config panel: title bar + a few form fields. */}
             <div className="border-b border-slate-200 px-4 py-3">
               <Skeleton className="h-4 w-32 rounded-md" />

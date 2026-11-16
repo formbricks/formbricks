@@ -16,6 +16,7 @@ import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
 import { PanelLeftIcon, PanelRightOpenIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
+import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { useWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
@@ -33,6 +34,7 @@ import {
   WORKFLOW_BRANCH_NODE_TYPE,
   WORKFLOW_CANVAS_NODE_TYPE,
   WORKFLOW_CANVAS_SNAP_GRID,
+  haveSameNodePositions,
   reorganizeWorkflowDefinition,
   snapWorkflowNodePosition,
   updateNodePosition,
@@ -240,7 +242,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     [fitView, isRunDrawerOpen]
   );
 
-  // Opening/closing the inspector resizes the canvas by 480px, which can push nodes behind the
+  // Opening/closing the inspector resizes the canvas by the panel's width, which can push nodes behind the
   // panel edge. Refit the VIEWPORT once the width transition settles — fitView only pans/zooms;
   // node coordinates are untouched. Opening or closing the Test run drawer refits the same way.
   const isInspectorVisible = isNodeConfigOpen && !isInspectorCollapsed;
@@ -253,7 +255,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     previousLayoutRef.current = { isInspectorVisible, isRunDrawerOpen };
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Wait out the whole width transition: fitting mid-way measured a canvas still wider than it ends
-    // up, which cut off a wide flow once the 480px inspector had finished opening.
+    // up, which cut off a wide flow once the inspector had finished opening.
     const timeoutHandle = setTimeout(
       () => refitViewport(prefersReducedMotion ? 0 : INSPECTOR_REFIT_PAN_MS),
       INSPECTOR_RESIZE_SETTLE_MS
@@ -262,16 +264,24 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   }, [isInspectorVisible, isRunDrawerOpen, refitViewport]);
 
   const handleAutoLayout = useCallback(() => {
-    if (!canMutate) return;
-    setDefinition((currentDefinition) =>
-      currentDefinition ? reorganizeWorkflowDefinition(currentDefinition) : currentDefinition
-    );
+    if (!canMutate || !definition) return;
+    // Says what happened, since a workflow that is already arranged doesn't visibly change. Nothing
+    // moved means nothing to save and no undo step.
+    const arranged = reorganizeWorkflowDefinition(definition);
+    if (haveSameNodePositions(definition, arranged)) {
+      toast.success(t("workspace.workflows.auto_layout_unchanged"));
+    } else {
+      setDefinition((currentDefinition) =>
+        currentDefinition ? reorganizeWorkflowDefinition(currentDefinition) : currentDefinition
+      );
+      toast.success(t("workspace.workflows.auto_layout_done"));
+    }
     // Skip the animated recenter for users who ask for reduced motion (read at call time —
     // no reactivity needed for a click handler).
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Defer one frame so the new node positions render before RF recenters the viewport.
     requestAnimationFrame(() => refitViewport(prefersReducedMotion ? 0 : 300));
-  }, [canMutate, setDefinition, refitViewport]);
+  }, [canMutate, definition, setDefinition, refitViewport, t]);
 
   // Pan mode is the pan/browse tool: nodes are fully inert (no click, selection, or drag), so
   // switching into it also clears any leftover selection. Pointer mode is the select/inspect

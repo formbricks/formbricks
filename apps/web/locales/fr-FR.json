@@ -6069,6 +6069,8 @@
       "archive_workflow_confirmation": "Es-tu sûr de vouloir archiver « {name} » ? Tu pourras le restaurer plus tard.",
       "archive_workflow_description": "L'archivage masque le workflow de la liste. Tu pourras le restaurer plus tard.",
       "auto_layout": "Disposition automatique",
+      "auto_layout_done": "Étapes organisées.",
+      "auto_layout_unchanged": "Les étapes sont déjà organisées.",
       "autosave_blocked": "Non enregistré",
       "autosave_blocked_tooltip": "Tes modifications ne sont pas enregistrées. Donne un nom au workflow pour continuer.",
       "autosave_failed": "Échec de l'enregistrement",

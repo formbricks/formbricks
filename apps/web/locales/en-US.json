@@ -6069,6 +6069,8 @@
       "archive_workflow_confirmation": "Are you sure you want to archive “{name}”? You can restore it later.",
       "archive_workflow_description": "Archiving hides the workflow from the list. You can restore it later.",
       "auto_layout": "Auto layout",
+      "auto_layout_done": "Steps arranged.",
+      "auto_layout_unchanged": "Steps are already arranged.",
       "autosave_blocked": "Not saved",
       "autosave_blocked_tooltip": "Your changes are not being saved. Give the workflow a name to continue.",
       "autosave_failed": "Save failed",

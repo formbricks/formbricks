@@ -6069,6 +6069,8 @@
       "archive_workflow_confirmation": "Tens a certeza de que queres arquivar \"{name}\"? Podes restaurá-lo mais tarde.",
       "archive_workflow_description": "Arquivar oculta o fluxo de trabalho da lista. Podes restaurá-lo mais tarde.",
       "auto_layout": "Disposição automática",
+      "auto_layout_done": "Passos organizados.",
+      "auto_layout_unchanged": "Os passos já estão organizados.",
       "autosave_blocked": "Não guardado",
       "autosave_blocked_tooltip": "As tuas alterações não estão a ser guardadas. Dá um nome ao fluxo de trabalho para continuar.",
       "autosave_failed": "Falha ao guardar",

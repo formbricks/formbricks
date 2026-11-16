@@ -6069,6 +6069,8 @@
       "archive_workflow_confirmation": "Weet je zeker dat je \"{name}\" wilt archiveren? Je kunt deze later herstellen.",
       "archive_workflow_description": "Archiveren verbergt de workflow uit de lijst. Je kunt deze later herstellen.",
       "auto_layout": "Automatische indeling",
+      "auto_layout_done": "Stappen gerangschikt.",
+      "auto_layout_unchanged": "De stappen zijn al gerangschikt.",
       "autosave_blocked": "Niet opgeslagen",
       "autosave_blocked_tooltip": "Je wijzigingen worden niet opgeslagen. Geef de workflow een naam om door te gaan.",
       "autosave_failed": "Opslaan mislukt",

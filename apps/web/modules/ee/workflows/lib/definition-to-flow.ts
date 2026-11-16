@@ -347,6 +347,18 @@ const layoutWorkflowNodes = (
   return positions;
 };
 
+/** Whether two definitions place every step (and the trigger) at the same spot on the canvas. */
+export const haveSameNodePositions = (a: TWorkflowDefinition, b: TWorkflowDefinition): boolean => {
+  const positionsOf = (definition: TWorkflowDefinition) =>
+    JSON.stringify(
+      [...(definition.trigger ? [definition.trigger] : []), ...definition.nodes].map((node) => [
+        node.id,
+        node.ui?.position ?? null,
+      ])
+    );
+  return positionsOf(a) === positionsOf(b);
+};
+
 export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): TWorkflowDefinition => {
   const allNodes: TWorkflowNode[] = [
     ...(definition.trigger ? [definition.trigger] : []),

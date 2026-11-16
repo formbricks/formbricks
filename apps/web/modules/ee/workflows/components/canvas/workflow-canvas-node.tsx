@@ -69,7 +69,7 @@ export const WorkflowCanvasNode = memo(
         </WorkflowNodeCard>
         {data.canAppendStep && canMutate && (
           // The end of the workflow or of an If/else branch gets an inline `+`; mid-chain edges
-          // don't offer one.
+          // don't offer one. A path that ends on a step needs no end mark: the card is its end.
           <div className="mt-2 flex flex-col items-center gap-1">
             <div className="h-3 w-px bg-slate-300" />
             <WorkflowAddStepMenu

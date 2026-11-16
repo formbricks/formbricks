@@ -6069,6 +6069,8 @@
       "archive_workflow_confirmation": "「{name}」をアーカイブしてもよろしいですか？後で復元できます。",
       "archive_workflow_description": "アーカイブすると、ワークフローがリストに表示されなくなります。後で復元できます。",
       "auto_layout": "自動レイアウト",
+      "auto_layout_done": "ステップを整列しました。",
+      "auto_layout_unchanged": "ステップはすでに整列されています。",
       "autosave_blocked": "保存されていません",
       "autosave_blocked_tooltip": "変更が保存されていません。続行するには、ワークフローに名前を付けてください。",
       "autosave_failed": "保存に失敗しました",
