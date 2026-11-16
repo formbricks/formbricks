@@ -1,5 +1,7 @@
 # An HTTP request's URL takes no Variables
 
+Narrowed by ADR 0053: Variables may now go in the URL path, never in its origin (scheme, host and port).
+
 A workflow's HTTP request step has a fixed URL. Variables can fill query parameter values (name and value rows, URL-encoded), header values and the JSON body, but never the URL itself, and saving refuses a URL that contains one (ENG-7168). A Webhook trigger accepts any payload from anyone holding its Secret URL (ADR 0041), so a Variable in the URL would let that payload choose the host, and the request would carry the step's secret headers and data to it. Keeping the URL fixed means a payload can change what is sent, never where it goes.
 
 ## Considered Options
