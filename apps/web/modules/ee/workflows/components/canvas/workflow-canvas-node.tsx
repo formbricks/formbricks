@@ -20,7 +20,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
-import { BranchEndMarker } from "./branch-end-marker";
 import { WorkflowAddStepMenu } from "./workflow-add-step-menu";
 import { HANDLE_CLASS_NAMES, WorkflowNodeCard } from "./workflow-node-card";
 
@@ -68,20 +67,16 @@ export const WorkflowCanvasNode = memo(
           }>
           <Handle type="source" position={Position.Bottom} className={HANDLE_CLASS_NAMES} />
         </WorkflowNodeCard>
-        {data.canAppendStep && (
-          // The end of the workflow or of an If/else branch gets an inline `+` while editing, and an
-          // end mark otherwise; mid-chain edges offer neither.
+        {data.canAppendStep && canMutate && (
+          // The end of the workflow or of an If/else branch gets an inline `+`; mid-chain edges
+          // don't offer one. A path that ends on a step needs no end mark: the card is its end.
           <div className="mt-2 flex flex-col items-center gap-1">
             <div className="h-3 w-px bg-slate-300" />
-            {canMutate ? (
-              <WorkflowAddStepMenu
-                afterNodeType={data.nodeType}
-                ariaLabel={t("workspace.workflows.add_step")}
-                onAdd={(stepType) => appendStep(id, stepType)}
-              />
-            ) : (
-              <BranchEndMarker />
-            )}
+            <WorkflowAddStepMenu
+              afterNodeType={data.nodeType}
+              ariaLabel={t("workspace.workflows.add_step")}
+              onAdd={(stepType) => appendStep(id, stepType)}
+            />
           </div>
         )}
       </div>

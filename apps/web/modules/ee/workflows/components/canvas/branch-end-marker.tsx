@@ -7,8 +7,9 @@ const barStyle = (width: number) => ({
 });
 
 /**
- * Where a path ends when no step can be added there (pan mode, a read-only workflow): two bars,
- * like a flowchart's end mark, so the line doesn't just stop. The `+` takes its place while editing.
+ * The end of an If/else or Switch branch with no step, when no step can be added there (pan mode, a
+ * read-only workflow): two bars, like a flowchart's end mark, so the line doesn't just stop. The `+`
+ * takes its place while editing. A path that ends on a step has none: the card is its end.
  */
 export const BranchEndMarker = () => (
   <div aria-hidden="true" className="flex flex-col items-center gap-1">
