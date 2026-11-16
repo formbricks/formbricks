@@ -133,12 +133,40 @@ export const auth = betterAuth({
   // spend that address's verification-email cap so the user's own resend went nowhere. Nothing calls it
   // over HTTP: `resendVerificationEmailAction` uses `auth.api.sendVerificationEmail` in-process and limits
   // each account, and the resend on sign-in runs inside `/sign-in/email`.
+  //
+  // The account-security routes (ENG-7268). Each has a stricter in-app counterpart that calls
+  // `auth.api.*` in-process, and a raw POST with a stolen or borrowed session cookie skipped it:
+  //
+  //  - `/two-factor/disable` removed 2FA with the password alone, where `disableTwoFactorAuthAction`
+  //    also asks for a TOTP or backup code; `/two-factor/generate-backup-codes` minted fresh codes the
+  //    same way. `/two-factor/enable`, `/get-totp-uri`, `/send-otp` and `/verify-otp` likewise have no
+  //    caller (the login form needs only `/two-factor/verify-totp` and `/verify-backup-code`, which stay).
+  //  - `/verify-password` answered valid or invalid at Better Auth's default ~100 per 10 s, around the
+  //    5-per-hour limit on account deletion that exists so a stolen session cannot brute-force the password.
+  //  - `/change-password` skipped the HIBP check and `ZUserPassword` (ENG-4042); `/change-email` skipped
+  //    the verified email-change flow.
+  //  - `/link-social` and `/unlink-account` fight `accountLinking.enabled: false` and the verify-before-
+  //    link recovery flow.
+  //
+  // Whatever Better Auth adds next is not open by default: `native-endpoints.integration.test.ts`
+  // fails on any declared route that is neither listed here nor on its explicit allow-list (ADR 0017).
   disabledPaths: [
     "/token",
     "/update-user",
     "/request-password-reset",
     "/sign-up/email",
     "/send-verification-email",
+    "/verify-password",
+    "/change-password",
+    "/change-email",
+    "/two-factor/enable",
+    "/two-factor/disable",
+    "/two-factor/generate-backup-codes",
+    "/two-factor/get-totp-uri",
+    "/two-factor/send-otp",
+    "/two-factor/verify-otp",
+    "/link-social",
+    "/unlink-account",
   ],
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
