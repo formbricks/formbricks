@@ -13,7 +13,7 @@ import type { TSsoProvisioningRejectReason } from "./sso-provisioning-reject-rea
  * `gateSsoProvisioning`, which arrives as its own reason code — rendered the same untouched form,
  * leaving the user to guess whether they had mistyped something, lost a session, or hit a policy.
  *
- * Codes collapse into four variants rather than a message each, because what the user can *do*
+ * Codes collapse into five variants rather than a message each, because what the user can *do*
  * differs by variant and the exact code rarely does. Anything unrecognized still gets `generic`,
  * which is the point: Better Auth's code set moves between versions (`oauth_code_verification_failed`
  * from the original report no longer exists upstream), and a new code must degrade to "something went
@@ -31,8 +31,9 @@ export type TOAuthErrorVariant =
   /** The instance's SSO configuration is incomplete. Remedy: tell an admin; retrying cannot help. */
   | "misconfigured"
   /**
-   * The account needs a second factor this instance has no way to ask for (2FA on an SSO-only
-   * instance). Remedy: an admin; every self-service route is closed.
+   * The account needs a second factor this instance has no way to ask for (2FA on an instance with
+   * credential sign-in off). Remedy: sign in with a provider already linked to the account, else an
+   * admin — the recovery link itself cannot stand in for the factor.
    */
   | "second_factor_unavailable"
   /** Anything else, including transient callback failures. Remedy: try again. */
