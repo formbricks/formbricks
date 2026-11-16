@@ -143,6 +143,9 @@ type MockTx = {
   response: {
     create: ReturnType<typeof vi.fn>;
   };
+  display: {
+    findUnique: ReturnType<typeof vi.fn>;
+  };
 };
 let mockTx: MockTx;
 
@@ -153,6 +156,10 @@ describe("Response Lib Tests", () => {
     mockTx = {
       response: {
         create: vi.fn(),
+      },
+      // Default: the display named by the fixtures belongs to the survey under test.
+      display: {
+        findUnique: vi.fn().mockResolvedValue({ surveyId }),
       },
     };
     prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
@@ -273,6 +280,61 @@ describe("Response Lib Tests", () => {
         })
       );
       expect(response.contact).toEqual({ id: mockContact.id, userId: mockUserId });
+    });
+
+    // Regression (ENG-7146): displayId was connected with no ownership check, so a write key could bind
+    // another workspace's display to its own response (Display<->Response is 1:1).
+    test.each([
+      ["belongs to a different survey", { surveyId: "other-survey-id" }],
+      ["does not exist", null],
+    ])("rejects a displayId that %s, without writing", async (_label, display) => {
+      vi.mocked(mockTx.display.findUnique).mockResolvedValue(display);
+
+      await expect(
+        createResponse(mockResponseInput, noContact, mockTx as unknown as Prisma.TransactionClient)
+      ).rejects.toThrow(new ResourceNotFoundError("Display", displayId));
+      expect(mockTx.response.create).not.toHaveBeenCalled();
+    });
+
+    test("answers a foreign and a nonexistent displayId identically (no existence oracle)", async () => {
+      const outcome = async (display: { surveyId: string } | null) => {
+        vi.mocked(mockTx.display.findUnique).mockResolvedValue(display);
+        return createResponse(
+          mockResponseInput,
+          noContact,
+          mockTx as unknown as Prisma.TransactionClient
+        ).catch((error: Error) => ({ name: error.constructor.name, message: error.message }));
+      };
+
+      expect(await outcome({ surveyId: "other-survey-id" })).toEqual(await outcome(null));
+    });
+
+    test("does not look up a display when none is supplied", async () => {
+      vi.mocked(mockTx.response.create).mockResolvedValue({ ...mockResponsePrisma });
+
+      await createResponse(
+        { ...mockResponseInput, displayId: undefined },
+        noContact,
+        mockTx as unknown as Prisma.TransactionClient
+      );
+
+      expect(mockTx.display.findUnique).not.toHaveBeenCalled();
+    });
+
+    test("connects a displayId that belongs to the survey", async () => {
+      vi.mocked(mockTx.response.create).mockResolvedValue({ ...mockResponsePrisma });
+
+      await createResponse(mockResponseInput, noContact, mockTx as unknown as Prisma.TransactionClient);
+
+      expect(mockTx.display.findUnique).toHaveBeenCalledWith({
+        where: { id: displayId },
+        select: { surveyId: true },
+      });
+      expect(mockTx.response.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ display: { connect: { id: displayId } } }),
+        })
+      );
     });
 
     test("should handle PrismaClientKnownRequestError", async () => {

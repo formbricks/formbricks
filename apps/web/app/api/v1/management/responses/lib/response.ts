@@ -11,6 +11,7 @@ import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TTag } from "@formbricks/types/tags";
 import { buildPrismaResponseData } from "@/app/api/v1/lib/utils";
 import { RESPONSES_PER_PAGE } from "@/lib/constants";
+import { isDisplayOfSurvey } from "@/lib/display/service";
 import { getQuestionCodes } from "@/lib/response/data-by-question-code";
 import { getResponseContact } from "@/lib/response/service";
 import { calculateTtcTotal } from "@/lib/response/utils";
@@ -155,6 +156,16 @@ export const createResponse = async (
 
   try {
     const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
+
+    // `displayId` is caller-supplied; this route only proved the survey belongs to the API key's workspace.
+    // Uniform not-found for "does not exist" and "belongs elsewhere" (see `isDisplayOfSurvey`) — an
+    // `assertDisplayOwnership` message would confirm that a display id of another workspace is real.
+    if (
+      responseInput.displayId &&
+      !(await isDisplayOfSurvey(responseInput.displayId, responseInput.surveyId, tx))
+    ) {
+      throw new ResourceNotFoundError("Display", responseInput.displayId);
+    }
 
     const prismaData = buildPrismaResponseData(responseInput, contact, ttc);
 
