@@ -30,14 +30,16 @@ const definition = {
 } as unknown as TWorkflowDefinition;
 
 describe("findWorkflowSecretHeader", () => {
-  test("finds a secret header of an HTTP request step by name, ignoring case", () => {
+  test("finds a secret header of an HTTP request step by name, ignoring case, with its step's URL", () => {
     expect(findWorkflowSecretHeader(definition, "call", "authorization")).toEqual({
       name: "Authorization",
       secretId: "sec_1",
+      stepUrl: "https://api.example.com",
     });
     expect(findWorkflowSecretHeader(definition, "call", "X-API-KEY")).toEqual({
       name: "X-Api-Key",
       secretId: undefined,
+      stepUrl: "https://api.example.com",
     });
   });
 

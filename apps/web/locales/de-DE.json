@@ -6166,6 +6166,7 @@
       "http_request_response": "Antwort",
       "http_request_secret_live_warning": "Dadurch wird auch der aktivierte Workflow sofort aktualisiert.",
       "http_request_secret_missing": "Gib einen Wert ein",
+      "http_request_secret_other_host": "Bitte erneut eingeben: Der gespeicherte Wert wird nur an {host} gesendet",
       "http_request_secret_placeholder": "Wert, verschlüsselt gespeichert",
       "http_request_secret_replace_failed": "Das Secret konnte nicht ersetzt werden.",
       "http_request_secret_replaced": "Secret ersetzt. Der aktivierte Workflow verwendet es ab seiner nächsten Ausführung.",

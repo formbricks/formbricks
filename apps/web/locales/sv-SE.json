@@ -6166,6 +6166,7 @@
       "http_request_response": "Svar",
       "http_request_secret_live_warning": "Det här uppdaterar också det aktiverade arbetsflödet direkt.",
       "http_request_secret_missing": "Ange ett värde",
+      "http_request_secret_other_host": "Ange igen: det sparade värdet skickas bara till {host}",
       "http_request_secret_placeholder": "Värde, lagras krypterat",
       "http_request_secret_replace_failed": "Det gick inte att byta ut hemligheten.",
       "http_request_secret_replaced": "Hemligheten har bytts ut. Det aktiverade arbetsflödet använder den från och med nästa körning.",

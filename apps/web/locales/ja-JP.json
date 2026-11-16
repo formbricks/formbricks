@@ -6166,6 +6166,7 @@
       "http_request_response": "レスポンス",
       "http_request_secret_live_warning": "有効になっているワークフローにもすぐに反映されます。",
       "http_request_secret_missing": "値を入力してください",
+      "http_request_secret_other_host": "もう一度入力してください。保存された値は {host} にのみ送信されます",
       "http_request_secret_placeholder": "値(暗号化して保存)",
       "http_request_secret_replace_failed": "シークレットを置き換えられませんでした。",
       "http_request_secret_replaced": "シークレットを置き換えました。有効なワークフローは、次回の実行からこのシークレットを使用します。",

@@ -4,6 +4,7 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
   type TWorkflowExecutableDefinition,
   type TWorkflowRunContext,
+  type TWorkflowStoredSecret,
   type TWorkflowTriggerRunPayload,
   collectWorkflowSecretIds,
   isLiteralEmailRecipient,
@@ -53,11 +54,11 @@ export interface WorkflowRunEnvironment {
    */
   allowedRecipientEmails: Set<string>;
   /**
-   * Plaintext secret header values by secret id, for this run's HTTP request steps (ENG-7179). Loaded
-   * only when a step has a secret header; scoped to this workflow, so another workflow's id resolves to
-   * nothing.
+   * Plaintext secret header values by secret id, each with the origin it was set for and is only sent
+   * to (ENG-7179, ADR 0051), for this run's HTTP request steps. Loaded only when a step has a secret
+   * header; scoped to this workflow, so another workflow's id resolves to nothing.
    */
-  secretValues: ReadonlyMap<string, string>;
+  secretValues: ReadonlyMap<string, TWorkflowStoredSecret>;
   /** The organization and workflow owner the run's emails are rate-limited by (ENG-3823). */
   rateLimit: { organizationId?: string; actorUserId: string | null };
   /** Where survey links point: `<public domain>/s/<surveyId>`. */

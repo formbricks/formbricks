@@ -93,7 +93,9 @@ beforeEach(() => {
   });
   logFindFirst.mockResolvedValue(sendingRow);
   logUpdateMany.mockResolvedValue({ count: 1 });
-  loadSecrets.mockResolvedValue(new Map([["sec_1", SECRET]]));
+  loadSecrets.mockResolvedValue(
+    new Map([["sec_1", { value: SECRET, boundOrigin: "https://api.example.com" }]])
+  );
   send.mockResolvedValue({
     response: { status: 202, contentType: "application/json", bodyText: '{"ok":true}', truncated: false },
     error: null,
@@ -181,5 +183,21 @@ describe("workflow HTTP request delivery job", () => {
 
     expect(send).not.toHaveBeenCalled();
     expect(finalWrite().data).toMatchObject({ status: "failed", output: { delivery: "failed" } });
+  });
+
+  test("a secret now set for another host is not sent: the delivery fails naming the header and that host", async () => {
+    loadSecrets.mockResolvedValue(
+      new Map([["sec_1", { value: SECRET, boundOrigin: "https://new-api.example.com" }]])
+    );
+
+    await handler(data, jobContext);
+
+    expect(send).not.toHaveBeenCalled();
+    expect(finalWrite().data).toMatchObject({
+      status: "failed",
+      error: "Secret header Authorization is set for new-api.example.com; enter it again for the new URL",
+      output: { delivery: "failed" },
+    });
+    expect(JSON.stringify(logUpdateMany.mock.calls)).not.toContain(SECRET);
   });
 });

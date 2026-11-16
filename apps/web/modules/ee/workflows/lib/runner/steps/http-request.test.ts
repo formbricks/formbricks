@@ -44,7 +44,7 @@ const context: TWorkflowRunContext = {
 
 const environment = {
   ...ids,
-  secretValues: new Map([["sec_1", `Bearer ${SECRET}`]]),
+  secretValues: new Map([["sec_1", { value: `Bearer ${SECRET}`, boundOrigin: "https://api.example.com" }]]),
 } as unknown as WorkflowRunEnvironment;
 
 const answer = (
@@ -171,6 +171,66 @@ describe("httpRequestStepExecutor", () => {
 
     expect(outcome).toMatchObject({ status: "failed", error: expect.stringContaining("Authorization") });
     expect(effects.sendHttpRequest).not.toHaveBeenCalled();
+  });
+
+  test("a stored secret set for another host is not sent: the step fails naming the header and that host", async () => {
+    const movedEnvironment = {
+      ...environment,
+      secretValues: new Map([["sec_1", { value: SECRET, boundOrigin: "https://old-api.example.com" }]]),
+    };
+
+    for (const responseMode of ["wait", "dont_wait"] as const) {
+      const outcome = await httpRequestStepExecutor.execute({
+        node: node({ responseMode }),
+        context,
+        environment: movedEnvironment,
+        effects,
+      });
+      expect(outcome).toMatchObject({
+        status: "failed",
+        error: "Secret header Authorization is set for old-api.example.com; enter it again for the new URL",
+      });
+      expect(JSON.stringify(outcome)).not.toContain(SECRET);
+    }
+    expect(effects.sendHttpRequest).not.toHaveBeenCalled();
+    expect(effects.enqueueHttpRequestDelivery).not.toHaveBeenCalled();
+  });
+
+  test("Continue on error lets the run go on past a secret set for another host, with the error shown", async () => {
+    const outcome = await httpRequestStepExecutor.execute({
+      node: node({ continueOnError: true }),
+      context,
+      environment: {
+        ...environment,
+        secretValues: new Map([["sec_1", { value: SECRET, boundOrigin: "https://old-api.example.com" }]]),
+      },
+      effects,
+    });
+
+    expect(outcome).toMatchObject({
+      status: "succeeded",
+      error: null,
+      output: {
+        mode: "wait",
+        error: "Secret header Authorization is set for old-api.example.com; enter it again for the new URL",
+      },
+      variables: {},
+    });
+    expect(effects.sendHttpRequest).not.toHaveBeenCalled();
+  });
+
+  test("a value set before host binding is sent to the step's own URL", async () => {
+    await httpRequestStepExecutor.execute({
+      node: node(),
+      context,
+      environment: {
+        ...environment,
+        secretValues: new Map([["sec_1", { value: SECRET, boundOrigin: null }]]),
+      },
+      effects,
+    });
+
+    expect(effects.sendHttpRequest.mock.calls[0][0].headers).toMatchObject({ Authorization: SECRET });
   });
 
   test("GET and DELETE never send a body", async () => {

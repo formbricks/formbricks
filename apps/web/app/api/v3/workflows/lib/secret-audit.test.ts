@@ -18,15 +18,15 @@ beforeEach(() => {
 });
 
 describe("buildRecordSecretHeaderChanges", () => {
-  test("queues one audit event per stored secret header, naming the header only", async () => {
+  test("queues one audit event per stored secret header, naming the header and its host only", async () => {
     const record = buildRecordSecretHeaderChanges(session, "req_1", "/api/v3/workflows/wf_1");
 
     await record({
       workflowId: "wf_1",
       workspaceId: "ws_1",
       changes: [
-        { stepId: "call", headerName: "Authorization", change: "set" },
-        { stepId: "call", headerName: "X-Api-Key", change: "replaced" },
+        { stepId: "call", headerName: "Authorization", change: "set", host: "api.example.com" },
+        { stepId: "call", headerName: "X-Api-Key", change: "replaced", host: "new-api.example.com" },
       ],
     });
 
@@ -40,11 +40,11 @@ describe("buildRecordSecretHeaderChanges", () => {
         userId: "user_1",
         userType: "user",
         status: "success",
-        newObject: { stepId: "call", headerName: "Authorization" },
+        newObject: { stepId: "call", headerName: "Authorization", host: "api.example.com" },
       }),
       expect.objectContaining({
         action: "secretHeaderReplaced",
-        newObject: { stepId: "call", headerName: "X-Api-Key" },
+        newObject: { stepId: "call", headerName: "X-Api-Key", host: "new-api.example.com" },
       }),
     ]);
   });

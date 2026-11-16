@@ -13,7 +13,8 @@ import { WORKFLOW_ACTIONS } from "./enum";
  * - write (API / MCP): `{name, value}` plain, `{name, value, secret: true}` sets or replaces a secret,
  *   `{name, secret: true}` (with or without `isSet`) keeps the stored secret of that name;
  * - stored: `{name, value}` or `{name, secret: true, secretId?}` (no `secretId` = no value yet);
- * - read: `{name, value}` or `{name, secret: true, isSet}`, never the value or the `secretId`.
+ * - read: `{name, value}` or `{name, secret: true, isSet, boundOrigin?}`, never the value or the
+ *   `secretId`; a stored value is only sent to `boundOrigin`, its step's URL when set (ADR 0051).
  * The server swaps values for ids on write and ids for `isSet` on read; a client-sent `secretId` is
  * ignored, so a workflow can never point at another workflow's secret.
  */
@@ -38,6 +39,7 @@ export const WORKFLOW_SECRET_MASK = "••••••";
 
 const MAX_HEADER_NAME_LENGTH = 256;
 const MAX_HEADER_VALUE_LENGTH = 8 * 1024;
+const MAX_BOUND_ORIGIN_LENGTH = 2 * 1024;
 const MAX_QUERY_PARAMETERS = 30;
 const MAX_QUERY_NAME_LENGTH = 256;
 const MAX_QUERY_VALUE_LENGTH = 2 * 1024;
@@ -120,6 +122,13 @@ export const ZWorkflowHttpHeader = z
       .optional()
       .describe("Server-managed reference to the stored secret value. Ignored on write, never returned."),
     isSet: z.boolean().optional().describe("Read only: whether a secret header has a stored value."),
+    boundOrigin: z
+      .string()
+      .max(MAX_BOUND_ORIGIN_LENGTH)
+      .optional()
+      .describe(
+        "Read only: the origin (scheme, host, port) the stored value of a secret header was set for. It is only sent to that origin; after the URL moves elsewhere, enter the value again. Absent for a value set before host binding, which is held to the step's saved URL. Ignored on write."
+      ),
   })
   .superRefine((header, ctx) => {
     if (header.secret !== true && header.value === undefined) {

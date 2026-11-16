@@ -6166,6 +6166,7 @@
       "http_request_response": "Răspuns",
       "http_request_secret_live_warning": "Aceasta actualizează imediat și fluxul de lucru activat.",
       "http_request_secret_missing": "Introdu o valoare",
+      "http_request_secret_other_host": "Introdu din nou valoarea: valoarea salvată este trimisă doar către {host}",
       "http_request_secret_placeholder": "Valoare, stocată criptat",
       "http_request_secret_replace_failed": "Nu am putut înlocui secretul.",
       "http_request_secret_replaced": "Secretul a fost înlocuit. Workflow-ul activat îl va folosi începând cu următoarea rulare.",

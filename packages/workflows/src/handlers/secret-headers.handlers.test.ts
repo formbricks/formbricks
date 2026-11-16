@@ -12,10 +12,12 @@ const copyId = "cm9zr4t2b000208l8copy0001";
 const storedSecretId = "cm9zr4t2b000208l8secret01";
 const foreignSecretId = "cm9zr4t2b000208l8foreign1";
 const SECRET_VALUE = "sk_live_do_not_leak_4242";
+const API_ORIGIN = "https://api.example.com";
+const MOVED_URL = "https://collector.example.net/hook";
 
 type THeaderInput = Record<string, unknown>;
 
-const definitionWith = (headers: THeaderInput[]): TWorkflowDefinition =>
+const definitionWith = (headers: THeaderInput[], url = `${API_ORIGIN}/hook`): TWorkflowDefinition =>
   ({
     schemaVersion: 1,
     trigger: {
@@ -31,7 +33,7 @@ const definitionWith = (headers: THeaderInput[]): TWorkflowDefinition =>
         actionType: "http_request",
         config: {
           method: "POST",
-          url: "https://api.example.com/hook",
+          url,
           queryParameters: [],
           headers,
           body: "{}",
@@ -84,6 +86,7 @@ const store = {
   create: vi.fn<WorkflowSecretStore["create"]>(),
   replace: vi.fn<WorkflowSecretStore["replace"]>(),
   deleteUnreferenced: vi.fn<WorkflowSecretStore["deleteUnreferenced"]>(),
+  readBoundOrigins: vi.fn<WorkflowSecretStore["readBoundOrigins"]>(),
 };
 const recordAudit = vi.fn<NonNullable<WorkflowApiContext["recordAudit"]>>();
 const recordSecretHeaderChanges = vi.fn<NonNullable<WorkflowApiContext["recordSecretHeaderChanges"]>>();
@@ -133,8 +136,11 @@ const echoUpdate = () =>
 beforeEach(() => {
   vi.clearAllMocks();
   store.create.mockResolvedValue({ id: storedSecretId });
-  store.replace.mockResolvedValue(undefined);
+  store.replace.mockImplementation(({ secretId }) => Promise.resolve({ id: secretId }));
   store.deleteUnreferenced.mockResolvedValue(undefined);
+  store.readBoundOrigins.mockImplementation(({ secretIds }) =>
+    Promise.resolve(new Map(secretIds.map((id) => [id, API_ORIGIN])))
+  );
 });
 
 describe("secret headers on create", () => {
@@ -154,7 +160,12 @@ describe("secret headers on create", () => {
     });
 
     expect(res.status).toBe(201);
-    expect(store.create).toHaveBeenCalledWith({ workflowId, workspaceId, value: SECRET_VALUE });
+    expect(store.create).toHaveBeenCalledWith({
+      workflowId,
+      workspaceId,
+      value: SECRET_VALUE,
+      boundOrigin: API_ORIGIN,
+    });
     // Created without the value, then pointed at the stored secret.
     expect(JSON.stringify(service.createWorkflow.mock.calls[0][0])).not.toContain(SECRET_VALUE);
     expect(headersOf(persistedDefinition(service.updateWorkflow.mock.calls[0][1]))).toEqual([
@@ -171,7 +182,7 @@ describe("secret headers on create", () => {
     expect(recordSecretHeaderChanges).toHaveBeenCalledWith({
       workflowId,
       workspaceId,
-      changes: [{ stepId: "call", headerName: "Authorization", change: "set" }],
+      changes: [{ stepId: "call", headerName: "Authorization", change: "set", host: "api.example.com" }],
     });
     expect(JSON.stringify(recordSecretHeaderChanges.mock.calls)).not.toContain(SECRET_VALUE);
   });
@@ -194,10 +205,63 @@ describe("secret headers on create", () => {
       ctx: makeCtx(),
     });
 
-    expect(store.create).toHaveBeenCalledWith({ workflowId, workspaceId, value: SECRET_VALUE });
+    expect(store.create).toHaveBeenCalledWith({
+      workflowId,
+      workspaceId,
+      value: SECRET_VALUE,
+      boundOrigin: API_ORIGIN,
+    });
     expect(headersOf(persistedDefinition(service.updateWorkflow.mock.calls[0][1]))).toEqual([
       { name: "X-Api-Key", secret: true, secretId: storedSecretId },
       { name: "X-Session-Token", value: "visible", secret: false },
+    ]);
+  });
+});
+
+describe("secret headers on read", () => {
+  test("say which origin each stored value is sent to, never the value or its id", async () => {
+    service.getWorkflowById.mockResolvedValue(
+      makeRow({
+        definition: definitionWith([
+          { name: "Authorization", secret: true, secretId: storedSecretId },
+          { name: "X-Legacy-Token", secret: true, secretId: foreignSecretId },
+          { name: "X-Api-Key", secret: true },
+        ]),
+        secrets: [
+          { id: storedSecretId, boundOrigin: API_ORIGIN },
+          { id: foreignSecretId, boundOrigin: null },
+        ],
+      })
+    );
+
+    const res = await handlers.get({ ctx: makeCtx(), params: { workflowId } });
+
+    const body = await res.text();
+    expect(body).not.toContain(storedSecretId);
+    const returned = (JSON.parse(body) as { data: { definition: TWorkflowDefinition } }).data.definition;
+    expect(headersOf(returned)).toEqual([
+      { name: "Authorization", secret: true, isSet: true, boundOrigin: API_ORIGIN },
+      { name: "X-Legacy-Token", secret: true, isSet: true },
+      { name: "X-Api-Key", secret: true, isSet: false },
+    ]);
+  });
+
+  test("sending a read back keeps the stored secret, and never stores its origin in the definition", async () => {
+    service.getWorkflowById.mockResolvedValue(makeRow());
+    echoUpdate();
+
+    await handlers.patch({
+      req: jsonRequest("PATCH", {
+        definition: definitionWith([
+          { name: "Authorization", secret: true, isSet: true, boundOrigin: "https://evil.example" },
+        ]),
+      }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
+
+    expect(headersOf(persistedDefinition(service.updateWorkflow.mock.calls[0][1]))).toEqual([
+      { name: "Authorization", secret: true, secretId: storedSecretId },
     ]);
   });
 });
@@ -223,6 +287,7 @@ describe("secret headers on patch", () => {
       workflowId,
       workspaceId,
       value: "rotated",
+      boundOrigin: API_ORIGIN,
     });
     expect(store.create).not.toHaveBeenCalled();
     expect(headersOf(persistedDefinition(service.updateWorkflow.mock.calls[0][1]))).toEqual([
@@ -230,9 +295,59 @@ describe("secret headers on patch", () => {
     ]);
     expect(recordSecretHeaderChanges).toHaveBeenCalledWith(
       expect.objectContaining({
-        changes: [{ stepId: "call", headerName: "authorization", change: "replaced" }],
+        changes: [
+          { stepId: "call", headerName: "authorization", change: "replaced", host: "api.example.com" },
+        ],
       })
     );
+  });
+
+  test("a value entered again for a step moved to another host is bound to the URL being saved", async () => {
+    const movedSecretId = "cm9zr4t2b000208l8moved001";
+    store.replace.mockResolvedValue({ id: movedSecretId });
+
+    await handlers.patch({
+      req: jsonRequest("PATCH", {
+        definition: definitionWith([{ name: "Authorization", secret: true, value: "new-key" }], MOVED_URL),
+      }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
+
+    expect(store.replace).toHaveBeenCalledWith({
+      secretId: storedSecretId,
+      workflowId,
+      workspaceId,
+      value: "new-key",
+      boundOrigin: "https://collector.example.net",
+    });
+    // The store kept the old row for the old host: the draft now points at the one bound to the new URL.
+    expect(headersOf(persistedDefinition(service.updateWorkflow.mock.calls[0][1]))).toEqual([
+      { name: "Authorization", secret: true, secretId: movedSecretId },
+    ]);
+    expect(recordSecretHeaderChanges).toHaveBeenCalledWith(
+      expect.objectContaining({
+        changes: [
+          { stepId: "call", headerName: "Authorization", change: "replaced", host: "collector.example.net" },
+        ],
+      })
+    );
+  });
+
+  test("a secret value for a step without a URL is refused, since it could not be bound to a host", async () => {
+    const res = await handlers.patch({
+      req: jsonRequest("PATCH", {
+        definition: definitionWith([{ name: "Authorization", secret: true, value: "new-key" }], ""),
+      }),
+      ctx: makeCtx(),
+      params: { workflowId },
+    });
+
+    expect(res.status).toBe(400);
+    expect(await res.text()).toContain("Authorization");
+    expect(store.replace).not.toHaveBeenCalled();
+    expect(store.create).not.toHaveBeenCalled();
+    expect(service.updateWorkflow).not.toHaveBeenCalled();
   });
 
   test("sending back what GET returned keeps the stored secret untouched", async () => {
@@ -303,5 +418,48 @@ describe("duplicate and enable", () => {
       workspaceId,
       referencedSecretIds: [storedSecretId],
     });
+  });
+
+  test("Enable refuses while a stored secret was set for another host than its step's URL", async () => {
+    service.getWorkflowById.mockResolvedValue(
+      makeRow({
+        definition: definitionWith(
+          [{ name: "Authorization", secret: true, secretId: storedSecretId }],
+          MOVED_URL
+        ),
+      })
+    );
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as { code: string; detail: string };
+    expect(body.code).toBe("workflow_not_executable");
+    expect(body.detail).toBe(
+      "Secret header Authorization is set for api.example.com; enter it again for the new URL"
+    );
+    expect(store.readBoundOrigins).toHaveBeenCalledWith({
+      workflowId,
+      workspaceId,
+      secretIds: [storedSecretId],
+    });
+    expect(service.enableWorkflow).not.toHaveBeenCalled();
+  });
+
+  test("Enable accepts a value set before host binding, which stays held to its step's URL", async () => {
+    service.getWorkflowById.mockResolvedValue(
+      makeRow({
+        definition: definitionWith(
+          [{ name: "Authorization", secret: true, secretId: storedSecretId }],
+          MOVED_URL
+        ),
+      })
+    );
+    store.readBoundOrigins.mockResolvedValue(new Map([[storedSecretId, null]]));
+    service.enableWorkflow.mockResolvedValue(makeRow({ status: "enabled" }));
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(200);
   });
 });

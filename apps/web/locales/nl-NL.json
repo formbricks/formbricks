@@ -6166,6 +6166,7 @@
       "http_request_response": "Antwoord",
       "http_request_secret_live_warning": "Hiermee wordt ook de ingeschakelde workflow direct bijgewerkt.",
       "http_request_secret_missing": "Voer een waarde in",
+      "http_request_secret_other_host": "Voer opnieuw in: de opgeslagen waarde wordt alleen naar {host} verzonden",
       "http_request_secret_placeholder": "Waarde, versleuteld opgeslagen",
       "http_request_secret_replace_failed": "Het geheim kon niet worden vervangen.",
       "http_request_secret_replaced": "Geheim vervangen. De ingeschakelde workflow gebruikt het vanaf de volgende uitvoering.",

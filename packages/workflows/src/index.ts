@@ -10,4 +10,12 @@ export {
   maskWorkflowSecretHeaders,
   setWorkflowSecretHeaderId,
 } from "./secret-headers/headers";
+export {
+  type TWorkflowSecretHostMismatch,
+  type TWorkflowStoredSecret,
+  findWorkflowSecretHostMismatches,
+  getWorkflowOriginHost,
+  getWorkflowUrlOrigin,
+  resolveBoundWorkflowSecret,
+} from "./secret-headers/binding";
 export * from "./webhook";
