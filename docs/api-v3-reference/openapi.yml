@@ -5262,7 +5262,8 @@ paths:
           filters and never widens them; a saved rule on the same field is kept, at any depth. A filter
           on a field the chart's Feedback Dataset lacks answers empty `rows` and names the filter in
           `unfilterableFilters`, as does a Sentiment, Sentiment Score, Emotions, Topic or Subtopic filter
-          that needs a value, on a chart that reads no text answer (see `unfilterableFilters`). Picks may take at
+          that needs a value, on a chart that reads no text answer, and a Response topic or Response
+          subtopic filter whose topics clash with the chart's own (see `unfilterableFilters`). Picks may take at
           most 4000 characters in all, each value counted percent-encoded as the URL carries it
           (`MAX_DASHBOARD_FILTER_PICKS_CHARS`); past it the request answers 422 naming `picks` with
           `limit_exceeded`.
@@ -14949,7 +14950,7 @@ components:
       additionalProperties: false
     DashboardChartData:
       type: object
-      description: 'A chart''s rows read through its dashboard, after the dashboard date range, the dashboard''s locked filters and the caller''s own filters narrowed its saved query. `unfilterableFilters` lists those filters the chart cannot be narrowed by: its Feedback Dataset does not have their field (a topic field where the dataset has no active taxonomy), or they need a value of `FeedbackRecords.sentiment`, `sentimentScore` or `emotions` — which AI enrichment sets on text answers only — or of `FeedbackRecords.topic` or `subtopic`, which only classified text answers have, on a chart whose saved query reads no text answer (its saved filters pin `FeedbackRecords.fieldType` to `nps`, `csat`, `ces`, `rating`, `number`, `boolean` or `date`, or every measure is an NPS, CSAT, CES or rating one). A filter a record without a value passes (`notEquals`, `notContains`, `notSet`, or a list pick with "no value") still applies. When it is not empty, `rows` is empty: the chart cannot be narrowed to the pick, so it shows nothing rather than more than was picked.'
+      description: 'A chart''s rows read through its dashboard, after the dashboard date range, the dashboard''s locked filters and the caller''s own filters narrowed its saved query. `unfilterableFilters` lists those filters the chart cannot be narrowed by: its Feedback Dataset does not have their field (a topic field where the dataset has no active taxonomy), or they need a value of `FeedbackRecords.sentiment`, `sentimentScore` or `emotions` — which AI enrichment sets on text answers only — or of `FeedbackRecords.topic` or `subtopic`, which only classified text answers have, on a chart whose saved query reads no text answer (its saved filters pin `FeedbackRecords.fieldType` to `nps`, `csat`, `ces`, `rating`, `number`, `boolean` or `date`, or every measure is an NPS, CSAT, CES or rating one), or they are a `FeedbackRecords.responseTopic` or `responseSubtopic` filter whose topics clash with a condition the chart or an earlier filter already has on the response''s topics — both would have to hold for one topic at once and match nothing, so "mentions Login" on a chart saved for "mentions Payments" is unfilterable, while "mentions Payments" on it still applies. A filter a record without a value passes (`notEquals`, `notContains`, `notSet`, or a list pick with "no value") still applies. When it is not empty, `rows` is empty: the chart cannot be narrowed to the pick, so it shows nothing rather than more than was picked.'
       required:
         - rows
         - optionLabels

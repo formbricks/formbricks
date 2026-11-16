@@ -213,6 +213,64 @@ describe("resolvePicksForDataset", () => {
     expect(resolvePicksForDataset([sentiment], picks, () => true, UTC_CLOCK).unfilterable).toEqual([]);
   });
 
+  describe("on the response's topics (ENG-6989)", () => {
+    const RESPONSE_TOPIC = "FeedbackRecords.responseTopic";
+    const topicFilter: TDashboardFilter = {
+      id: A,
+      field: RESPONSE_TOPIC,
+      operator: "equals",
+      label: "Response topic",
+    };
+    const savedForPayments = [{ member: RESPONSE_TOPIC, operator: "equals", values: ["Payments"] }];
+    const resolveOn = (savedFilters: unknown, picked: string[], filterList = [topicFilter]) =>
+      resolvePicksForDataset(filterList, { [A]: picked, [B]: ["Login"] }, () => true, {
+        ...UTC_CLOCK,
+        savedFilters,
+      });
+
+    test("marks a pick of another topic unfilterable on a chart saved for one, instead of showing nothing", () => {
+      expect(resolveOn(savedForPayments, ["Login"])).toEqual({ rules: [], unfilterable: [topicFilter] });
+    });
+
+    test("applies a pick whose topics nest with the chart's: within its list, or holding all of it", () => {
+      expect(resolveOn(savedForPayments, ["Payments"]).rules).toEqual([
+        { member: RESPONSE_TOPIC, operator: "equals", values: ["Payments"] },
+      ]);
+      expect(resolveOn(savedForPayments, ["Payments", "Login"]).unfilterable).toEqual([]);
+    });
+
+    test("applies a pick on a chart without a topic condition, or with set / notSet only", () => {
+      expect(resolveOn(undefined, ["Login"]).unfilterable).toEqual([]);
+      expect(resolveOn([{ member: RESPONSE_TOPIC, operator: "set" }], ["Login"]).unfilterable).toEqual([]);
+      // A stored query is JSON: filters that are no array narrow nothing.
+      expect(resolveOn({ not: "an array" }, ["Login"]).unfilterable).toEqual([]);
+    });
+
+    test("marks a later pick unfilterable when it clashes with an earlier one", () => {
+      const second: TDashboardFilter = { ...topicFilter, id: B, label: "Locked topic" };
+      expect(resolveOn(undefined, ["Payments"], [topicFilter, second])).toEqual({
+        rules: [{ member: RESPONSE_TOPIC, operator: "equals", values: ["Payments"] }],
+        unfilterable: [second],
+      });
+    });
+
+    test("marks a Response subtopic pick unfilterable beside a saved Response topic condition", () => {
+      const subtopic: TDashboardFilter = {
+        ...topicFilter,
+        field: "FeedbackRecords.responseSubtopic",
+        label: "Response subtopic",
+      };
+      expect(resolveOn(savedForPayments, ["Login › Two-factor"], [subtopic]).unfilterable).toEqual([
+        subtopic,
+      ]);
+    });
+
+    test("leaves picks on other fields alone", () => {
+      const source: TDashboardFilter = { id: A, field: SOURCE, operator: "equals", label: "Source" };
+      expect(resolveOn(savedForPayments, ["Web"], [source]).unfilterable).toEqual([]);
+    });
+  });
+
   test("applies nothing with no filters or no picks", () => {
     expect(resolvePicksForDataset([], { [A]: ["Web"] }, hasField, UTC_CLOCK)).toEqual({
       rules: [],

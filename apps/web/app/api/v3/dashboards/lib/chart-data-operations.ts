@@ -117,8 +117,10 @@ const chartNotOnDashboard = (chartId: string, { requestId, instance }: TV3ChartO
  * filters (`filter[<id>]`, with its values in `picks[<id>]`) is ANDed onto the chart's saved filters
  * (ADR-0026) — a saved rule on the same field is kept — and so is every filter an editor locked on the
  * dashboard, whoever reads it. A filter on a field the chart's Feedback Dataset
- * lacks leaves the chart empty, naming the filter; so does a filter on Sentiment, Sentiment Score or
- * Emotions that needs a value, on a chart whose saved query reads no text answer (`chartExcludesTextAnswers`).
+ * lacks leaves the chart empty, naming the filter; so does a filter on Sentiment, Sentiment Score, Emotions,
+ * Topic or Subtopic that needs a value, on a chart whose saved query reads no text answer
+ * (`chartExcludesTextAnswers`), and a Response topic or Response subtopic filter whose topics clash with the
+ * chart's own (`ruleAddsResponseTopicClash`).
  *
  * Needs read access to the dashboard and to the chart's Feedback Dataset; spends from the chart-query budget.
  */
@@ -218,6 +220,8 @@ export async function getV3DashboardChartData({
         timeZone: await getOrganizationReportingTimeZone(access.organizationId),
         // A chart that reads no text answer cannot be narrowed by Sentiment or Emotions: it says so.
         excludesTextAnswers: chartExcludesTextAnswers(chart.query),
+        // Nor by a response topic that clashes with the one it is saved for: it says so too.
+        savedFilters: (chart.query as { filters?: unknown } | null)?.filters,
       }
     );
     const unfilterableFilters = unfilterable.map(({ id, label }) => ({ id, label }));

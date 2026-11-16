@@ -647,13 +647,13 @@ export const TOPIC_FIELDS: readonly FieldDefinition[] = [
     label: "Response topic",
     type: "string",
     description:
-      "The current topics of the open-text answers in the same response. Use it with NPS, CSAT, CES, rating and unique responses. A response with answers in two topics counts once under each, so rows can add up to more than the total; count counts every record of the matching responses, so use unique responses for topic volume. Filter with equals, set or notSet.",
+      "The current topics of the open-text answers in the same response. Use it with NPS, CSAT, CES, rating and unique responses. A response with answers in two topics counts once under each, so rows can add up to more than the total; count counts every record of the matching responses, so use unique responses for topic volume. Filter with equals, set or notSet. Equals keeps the responses that mention any of its topics; a query takes one such condition across Response topic and Response subtopic, so responses that mention all of several topics cannot be kept.",
   },
   {
     id: RESPONSE_SUBTOPIC_DIMENSION_ID,
     label: "Response subtopic",
     type: "string",
-    description: `The current subtopics of the open-text answers in the same response, written "Topic${TOPIC_PATH_SEPARATOR}Subtopic". Counts like Response topic. Filter with equals, set or notSet.`,
+    description: `The current subtopics of the open-text answers in the same response, written "Topic${TOPIC_PATH_SEPARATOR}Subtopic". Counts and filters like Response topic, and shares its one equals condition.`,
   },
 ];
 

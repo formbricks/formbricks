@@ -735,4 +735,47 @@ describe("topic fields (ENG-6989)", () => {
     expect(issuesOf(saved)).toEqual([]);
     expect(issuesOf(saved, { embeddedFields: [] })).toEqual([]);
   });
+
+  test("refuses two response-topic conditions that would have to hold for one topic at once", () => {
+    const issues = issuesOf({
+      measures: [NPS],
+      filters: [
+        condition(RESPONSE_TOPIC, "equals", ["Billing"]),
+        { and: [condition(RESPONSE_SUBTOPIC, "equals", ["Login › Password reset"])] },
+      ],
+    });
+
+    expect(issues).toEqual([
+      expect.objectContaining({
+        name: "query.filters",
+        reason: expect.stringContaining("one equals condition"),
+      }),
+    ]);
+  });
+
+  test("accepts response-topic conditions whose topics nest, and an `or` of them alone", () => {
+    expect(
+      issuesOf({
+        measures: [NPS],
+        filters: [
+          condition(RESPONSE_TOPIC, "equals", ["Billing", "Login"]),
+          condition(RESPONSE_TOPIC, "equals", ["Billing"]),
+          { member: RESPONSE_TOPIC, operator: "set" },
+        ],
+      })
+    ).toEqual([]);
+    expect(
+      issuesOf({
+        measures: [NPS],
+        filters: [
+          {
+            or: [
+              condition(RESPONSE_TOPIC, "equals", ["Billing"]),
+              condition(RESPONSE_TOPIC, "equals", ["Login"]),
+            ],
+          },
+        ],
+      })
+    ).toEqual([]);
+  });
 });

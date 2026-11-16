@@ -22,6 +22,7 @@ import {
   createChartFieldLookup,
   isFilterOnlyField,
 } from "./field-catalog";
+import { RESPONSE_TOPIC_CLASH_REASON, responseTopicConditionsClash } from "./response-topic-filters";
 import { TIME_GRANULARITIES, isSubtopicDimensionId, isTopicDimensionId } from "./schema-definition";
 import { MAX_TIME_BUCKETS, countTimeBuckets } from "./time-buckets";
 
@@ -37,6 +38,8 @@ import { MAX_TIME_BUCKETS, countTimeBuckets } from "./time-buckets";
  *   `renewQuery`, `joinHints`, `total`, `compareDateRange`), and so is `timezone`: every date range is
  *   read in the organization's display time zone;
  * - field, filter and order counts, filter nesting, `limit`/`offset` and string lengths are bounded;
+ * - conditions on the response's topics hold together: two that would have to hold for one topic of the
+ *   response at once, and so match nothing, are refused (`responseTopicConditionsClash`);
  * - a date range is a preset, `all-time`, or two ISO calendar dates, and with a granularity it spans at
  *   most `MAX_TIME_BUCKETS` buckets.
  *
@@ -692,7 +695,9 @@ const checkFilters = (value: unknown, path: string, issues: IssueCollector): TCu
       "limit_exceeded"
     );
   }
-  return filters.filter((filter): filter is TCubeFilter => filter !== undefined);
+  const checked = filters.filter((filter): filter is TCubeFilter => filter !== undefined);
+  if (responseTopicConditionsClash(checked)) issues.add(path, RESPONSE_TOPIC_CLASH_REASON);
+  return checked;
 };
 
 const DIRECTIONS = new Set(["asc", "desc"]);

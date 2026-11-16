@@ -302,6 +302,7 @@ export const buildBoundedChartQueries = ({
       except: filter.id,
       timeZone: clock.timeZone,
       excludesTextAnswers: chartExcludesTextAnswers(chart.query),
+      savedFilters: chart.query.filters,
     });
     if (otherPicks.unfilterable.length > 0) return [];
     // A chart reading no text answer offers no Sentiment or Emotions value.

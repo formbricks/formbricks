@@ -8,7 +8,11 @@ description: >-
   `FeedbackRecords.topic` or `subtopic`, which only classified text answers have, on a chart whose
   saved query reads no text answer (its saved filters pin
   `FeedbackRecords.fieldType` to `nps`, `csat`, `ces`, `rating`, `number`, `boolean` or `date`, or
-  every measure is an NPS, CSAT, CES or rating one). A filter a record without a value passes
+  every measure is an NPS, CSAT, CES or rating one), or they are a `FeedbackRecords.responseTopic` or
+  `responseSubtopic` filter whose topics clash with a condition the chart or an earlier filter already
+  has on the response's topics — both would have to hold for one topic at once and match nothing, so
+  "mentions Login" on a chart saved for "mentions Payments" is unfilterable, while "mentions Payments"
+  on it still applies. A filter a record without a value passes
   (`notEquals`, `notContains`, `notSet`, or a list pick with "no value") still applies. When it is not
   empty, `rows` is empty: the chart cannot be narrowed to the pick, so it shows nothing rather than
   more than was picked.
