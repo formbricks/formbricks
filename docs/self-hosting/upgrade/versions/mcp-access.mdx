@@ -83,12 +83,29 @@ container instead of dead-lettering it, so the next new type can't cause this.
 
 Going back to the previous version leaves the grant tables in place; that version doesn't read them, and MCP
 clients get the access their OAuth scopes give, as before. It doesn't know `mcp_grant` outbox events either, so
-it dead-letters them, and `replay` can't deliver them. They mean nothing to that version, so once the rollback
-has finished, delete them instead:
+it dead-letters them, and `replay` can't deliver them. The database triggers that queue them stay after a
+rollback, so deleting a user, organization or workspace that a grant selects keeps queueing them, and a
+dead-lettered one is a revocation that blocks authorization (see above).
+
+Before you roll back, stop the triggers:
+
+```sql
+DROP TRIGGER IF EXISTS "authzed_projection_mcp_grant_delete" ON "McpGrant";
+DROP TRIGGER IF EXISTS "authzed_projection_mcp_grant_access" ON "McpGrant";
+DROP TRIGGER IF EXISTS "authzed_projection_mcp_grant_organization" ON "McpGrantOrganization";
+DROP TRIGGER IF EXISTS "authzed_projection_mcp_grant_workspace" ON "McpGrantWorkspace";
+```
+
+Once the rollback has finished, delete the events queued before the triggers went, which mean nothing to that
+version:
 
 ```sql
 DELETE FROM "AuthzedProjectionOutbox" WHERE "targetType" = 'mcp_grant' AND "processedAt" IS NULL;
 ```
 
-Then run `formbricks-authzed outbox status` and expect no dead letters. When you upgrade again, the permission
-preparation projects every grant's selection again.
+Then run `formbricks-authzed outbox status` and expect no dead letters.
+
+Before you upgrade again, create the four triggers again: run the `CREATE TRIGGER` statements in
+`packages/database/migration/20261112140000_add_mcp_grant_projection_trigger/migration.sql`. The migration is
+already recorded as applied, so the upgrade doesn't run it again. The permission preparation then projects every
+grant's selection again.
