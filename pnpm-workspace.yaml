@@ -140,20 +140,6 @@ overrides:
   # (CVE-2026-101916 / CVE-2026-101915), alongside the malformed-message crash fixes in 1.14.4.
   # load-bearing: @boxyhq/metrics resolves 1.14.3.
   "@grpc/grpc-js": 1.14.5
-  # CVE-2026-104872 / GHSA-qqmp-wf37-98f9: database instrumentation unconditionally exports db.user.
-  # Pin every affected instrumentation, including nested Sentry copies, to its first patched release.
-  # ENG-7229 / GHSA-3v2p-hm54-8qcq (CVE-2026-128080): apps/web moved to auto-instrumentations-node 0.80.0
-  # (instrumentation-http 0.222.0 redacts query credentials on server spans), which requires the next minor of
-  # each package below; the pins are raised to exactly those minors so the override does not downgrade them.
-  # load-bearing: @sentry/node's instrumentation chain still resolves the pre-patch db.user releases.
-  "@opentelemetry/instrumentation-cassandra-driver": 0.67.0
-  "@opentelemetry/instrumentation-knex": 0.66.0
-  "@opentelemetry/instrumentation-mongoose": 0.68.0
-  "@opentelemetry/instrumentation-mysql": 0.68.0
-  "@opentelemetry/instrumentation-mysql2": 0.68.0
-  "@opentelemetry/instrumentation-oracledb": 0.47.0
-  "@opentelemetry/instrumentation-pg": 0.74.0
-  "@opentelemetry/instrumentation-tedious": 0.41.0
   # Prisma dev tooling and @modelcontextprotocol/sdk chains.
   # ENG-1998 / GHSA-frvp-7c67-39w9: @hono/node-server <2.0.5 serve-static path traversal on Windows via
   # encoded backslash; patched in 2.0.5 (major bump, only peer is hono ^4; node >=20 is already required).
