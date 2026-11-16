@@ -20,7 +20,11 @@ import {
 import type { TWorkflowStatus } from "../types/common";
 import type { TWorkflowDefinition, TWorkflowExecutableDefinition } from "../types/document";
 import type { TWorkflowTriggerRunPayload } from "../types/runs";
-import { type TWorkflowSampleData, WORKFLOW_SAMPLE_TRIGGER_SOURCE } from "../types/samples";
+import {
+  type TWorkflowSampleData,
+  WORKFLOW_SAMPLE_LAST_CALL_SOURCE,
+  WORKFLOW_SAMPLE_TRIGGER_SOURCE,
+} from "../types/samples";
 import { WORKFLOW_TRIGGERS } from "../types/triggers/enum";
 import type {
   LastRunInclude,
@@ -206,7 +210,10 @@ export interface WorkflowsService {
   getWorkflowRun: (runId: string) => Promise<WorkflowRunWithLogsRow | null>;
   regenerateWebhookToken: (params: WorkflowScopedParams) => Promise<WorkflowRowWithLastRun>;
   revealWebhookToken: (row: WorkflowRow) => string | null;
+  /** The Webhook trigger's expected payload, set by editors only (ADR 0052). */
   getTriggerSample: (workflowId: string) => Promise<WorkflowSampleRow | null>;
+  /** The last payload a call to the Secret URL sent, with its time and IP. */
+  getLastCall: (workflowId: string) => Promise<WorkflowSampleRow | null>;
   setTriggerSample: (params: WorkflowScopedParams, sample: TWorkflowSampleData) => Promise<WorkflowSampleRow>;
   /** Saves a Test run as a queued dry run with no version; the adapter then runs it (ENG-7181). */
   createTestRun: (
@@ -228,6 +235,10 @@ const hasWebhookTrigger = (definition: TWorkflowDefinition): boolean =>
 
 const triggerSampleKey = (workflowId: string) => ({
   workflowId_source: { workflowId, source: WORKFLOW_SAMPLE_TRIGGER_SOURCE },
+});
+
+const lastCallKey = (workflowId: string) => ({
+  workflowId_source: { workflowId, source: WORKFLOW_SAMPLE_LAST_CALL_SOURCE },
 });
 
 /**
@@ -448,6 +459,10 @@ export const createWorkflowsService = ({
 
   async getTriggerSample(workflowId) {
     return prisma.workflowSample.findUnique({ where: triggerSampleKey(workflowId) });
+  },
+
+  async getLastCall(workflowId) {
+    return prisma.workflowSample.findUnique({ where: lastCallKey(workflowId) });
   },
 
   async setTriggerSample({ workflowId, workspaceId }, sample) {

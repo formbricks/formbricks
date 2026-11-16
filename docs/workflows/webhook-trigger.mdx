@@ -12,7 +12,7 @@ helpdesk, an order shipped, a data layer or ETL tool that finds a new customer. 
 <Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
 
 {/* SCREENSHOT PLACEHOLDER: webhook-trigger-panel.webp. The Webhook trigger panel with the Webhook Secret
-URL (copy and Regenerate buttons), the last call, and the Sample payload. Save to
+URL (Copy and the actions menu) and the expected payload with its Variables. Save to
 /images/platform/workflows/webhook-trigger-panel.webp and replace this comment with a <Frame>. */}
 
 ## Set up the trigger
@@ -28,10 +28,10 @@ URL (copy and Regenerate buttons), the last call, and the Sample payload. Save t
     send a `POST` request with a JSON body.
   </Step>
 
-  <Step title="Send a sample payload">
-    Send one real call while the workflow is still a draft, or paste an example payload into the trigger. Formbricks
-    keeps it as the workflow's **Sample payload**, so the `@` picker can offer its values as Variables and a
-    [Test run](/workflows/test-runs) can use it.
+  <Step title="Set the expected payload">
+    The **expected payload** is the JSON your system sends. Write or paste it in the trigger, or send one real call
+    while the workflow is still a draft and select **Use as expected payload**. Its fields become the Variables the
+    `@` picker offers, and a [Test run](/workflows/test-runs) sends it. A workflow can't be enabled without one.
   </Step>
 
   <Step title="Add steps and enable">
@@ -49,7 +49,7 @@ who has the URL can start runs, so handle it like an API key or a password.
   workflow, but not its URL.
 - **Formbricks never writes the token** to its logs, error reports or analytics.
 - **Keep it out of places others can read**, such as client-side code, shared documents or tickets.
-- **A duplicate gets a new URL.** Duplicating a workflow never copies its URL or its Sample payload.
+- **A duplicate gets a new URL.** Duplicating a workflow never copies its URL or its expected payload.
 
 ### Regenerate the URL
 
@@ -81,9 +81,12 @@ What happens next depends on the workflow's status:
 
 | Workflow status         | What a call does                                                                      |
 | ----------------------- | ------------------------------------------------------------------------------------- |
-| **Enabled**             | Starts a run and saves the payload as the Sample payload. Answers `202` with the run ID. |
-| **Draft** or **Disabled** | Saves the payload as the Sample payload and starts no run. Answers `202` with `runId: null`. |
+| **Enabled**             | Starts a run and keeps the payload as the last call. Answers `202` with the run ID. |
+| **Draft** or **Disabled** | Keeps the payload as the last call and starts no run. Answers `202` with `runId: null`. |
 | **Archived**            | Answers `404`.                                                                        |
+
+A call never changes the expected payload. When a call arrives with different fields, the trigger shows it so you can
+**Review** it and **Use it instead**, or keep the current one.
 
 A successful answer looks like this:
 
@@ -114,7 +117,7 @@ payload or the token.
 
 | Status | Meaning                                                                                                                              | What to do                                                                                     |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| `202`  | Accepted. The body holds the new run's ID, or `null` when the workflow isn't enabled and only the Sample payload was saved.         | Nothing.                                                                                       |
+| `202`  | Accepted. The body holds the new run's ID, or `null` when the workflow isn't enabled and only the last call was kept.         | Nothing.                                                                                       |
 | `200`  | A call with the same `Idempotency-Key` already started a run. The body holds that run's ID.                                          | Nothing. No new run was started.                                                               |
 | `400`  | The body isn't a JSON object, is nested more than 10 levels, or the `Idempotency-Key` is empty or longer than 255 characters.        | Fix the request. Resending it unchanged fails again.                                           |
 | `403`  | The call didn't use HTTPS, or Workflows aren't part of the organization's plan.                                                      | Call the HTTPS URL. For the plan, contact your Formbricks administrator.                       |
@@ -147,6 +150,6 @@ the daily limit. All limits are listed on [Limits](/workflows/limits).
     Insert values from the payload into conditions, requests and emails.
   </Card>
   <Card title="Test the workflow" icon="flask" href="/workflows/test-runs">
-    Run the draft with the Sample payload without sending anything.
+    Run the draft with the expected payload without sending anything.
   </Card>
 </CardGroup>

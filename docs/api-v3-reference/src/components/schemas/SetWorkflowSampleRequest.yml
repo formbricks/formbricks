@@ -1,5 +1,5 @@
 type: object
-description: Replaces the workflow's Sample payload, e.g. with one pasted in the editor.
+description: Sets the workflow's expected payload, typed or pasted in the editor or taken from a received call.
 required:
   - payload
 properties:

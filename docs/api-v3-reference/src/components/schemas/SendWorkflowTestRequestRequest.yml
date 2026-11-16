@@ -1,7 +1,7 @@
 type: object
 description: >-
   What to send. Both fields are optional: an empty object sends the saved step with the workflow's
-  Sample payload and each HTTP request step's last Test request response as Variables.
+  expected payload and each HTTP request step's last Test request response as Variables.
 properties:
   config:
     $ref: ./WorkflowHttpRequestActionConfig.yml
@@ -15,7 +15,7 @@ properties:
       payload:
         type: object
         additionalProperties: true
-        description: The test payload for `payload.<path>` Variables; defaults to the Sample payload.
+        description: The test payload for `payload.<path>` Variables; defaults to the expected payload.
       steps:
         type: object
         additionalProperties:

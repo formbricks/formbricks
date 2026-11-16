@@ -17,7 +17,7 @@ post:
     nothing, is unchanged.
 
 
-    The test payload is the body's `payload`, else the workflow's Sample payload. Only a Webhook
+    The test payload is the body's `payload`, else the workflow's expected payload. Only a Webhook
     trigger can be test-run. Requires **write** access and is limited to 30 Test runs per minute per
     user or API key (**429**). An archived workflow, one without a Webhook trigger, or one with no
     payload to test with answers **422** `invalid_workflow_state`; a draft that cannot run answers
@@ -28,7 +28,7 @@ post:
     - $ref: ../components/parameters/WorkflowIdPath.yml
   requestBody:
     required: false
-    description: Send `{}` (or no body) to test with the workflow's Sample payload.
+    description: Send `{}` (or no body) to test with the workflow's expected payload.
     content:
       application/json:
         schema:

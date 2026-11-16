@@ -147,7 +147,9 @@ programming or UI concepts, and no implementation details.
 
 **Payload** — The JSON a Webhook trigger received to start a run. _Avoid_: event, body, request.
 
-**Sample payload** — The payload a workflow keeps as its example: the last one received, or one pasted in. The @ picker offers its Variables and a Test run uses it. _Avoid_: test payload, captured event.
+**Expected payload** — What a Webhook trigger's calling system sends to the Secret URL, set by an editor: typed, pasted, or a received call they chose to use. Its fields become the Variables the @ picker offers, a Test run sends it, and enabling requires it. Calls never change it. _Avoid_: sample payload, example payload, test payload, captured event, schema.
+
+**Last call** — The payload the most recent call to a Webhook Secret URL sent, with its time and IP. Shown in the editor so it can be reviewed and used as the expected payload; it never becomes one on its own. _Avoid_: sample.
 
 **Step** — Anything after the trigger. Steps are grouped as Logic or Actions. _Avoid_: node (code and API only), block (a survey card), task.
 
@@ -169,7 +171,7 @@ programming or UI concepts, and no implementation details.
 
 **Run** — One execution of a workflow from its trigger to its last step, tied to the version that was enabled when it started. _Avoid_: execution, job.
 
-**Test run** — A run started from the editor with the sample payload. It sends no email, calls nothing outside, appears under Runs with a Test label and is never billed. _Avoid_: dry run, simulation, preview.
+**Test run** — A run started from the editor with the expected payload. It sends no email, calls nothing outside, appears under Runs with a Test label and is never billed. _Avoid_: dry run, simulation, preview.
 
 **Test request** — One real call made by an HTTP request's "Send test request" button, so the author sees the real response. It is not a run. _Avoid_: ping, test call.
 

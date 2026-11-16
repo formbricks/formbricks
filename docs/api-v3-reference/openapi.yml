@@ -3783,7 +3783,7 @@ paths:
         Enabling validates that the definition is executable — the trigger has exactly one outgoing
         edge (trigger-only drafts cannot be enabled), the graph is acyclic, every node is
         reachable from the trigger, only Scope 1 node types are present, the referenced survey
-        and ending cards still exist, and every `send_email` action addressing a *literal* email address
+        and ending cards still exist, a Webhook trigger has its expected payload, and every `send_email` action addressing a *literal* email address
         targets someone who can access this workspace (an element-id `to` resolves to the respondent's own
         address and is exempt), every `send_email` survey link points to a link survey in this workspace, a step with a Variable recipient has a fixed subject and body, and every stored secret header value of an HTTP request step was set for the origin its URL now has (a step moved to another host needs its secret values set again) — and then snapshots an immutable workflow version. Runs
         reference that snapshot via `workflowVersionId`, so later draft edits never change what an
@@ -4013,7 +4013,7 @@ paths:
       operationId: getWorkflowWebhookV3
       summary: Get a workflow's Webhook Secret URL
       description: |
-        Returns the Webhook Secret URL of a workflow with a Webhook trigger, when it was last called and from which IP, and its Sample payload with the Variables it offers.
+        Returns the Webhook Secret URL of a workflow with a Webhook trigger, its last call (when, from which IP, and the payload it sent), and its expected payload with the Variables inferred from it.
 
         The URL is a credential: anyone holding it can start runs. It is therefore returned only to callers with **write** access to the workspace (`readWrite` or `manage`); read-only callers get **403**. Do not log or share it; if it leaks, call `POST /api/v3/workflows/{workflowId}/webhook/regenerate`.
 
@@ -4024,7 +4024,7 @@ paths:
         - $ref: '#/components/parameters/WorkflowIdPath'
       responses:
         '200':
-          description: The Webhook Secret URL, last call and Sample payload.
+          description: The Webhook Secret URL, last call and expected payload.
           headers:
             X-Request-Id:
               schema:
@@ -4073,7 +4073,7 @@ paths:
         - $ref: '#/components/parameters/WorkflowIdPath'
       responses:
         '200':
-          description: The new Webhook Secret URL, last call and Sample payload.
+          description: The new Webhook Secret URL, last call and expected payload.
           headers:
             X-Request-Id:
               schema:
@@ -4115,8 +4115,10 @@ paths:
       description: |
         Starts a run of a workflow with a Webhook trigger. This is the Webhook Secret URL itself: it needs no login or API key, because the token in the path is the credential. Send a JSON object as the body with `Content-Type: application/json`. Use the URL exactly as returned, with no trailing slash (a trailing slash answers a redirect some clients will not follow on a POST).
 
-        - **202** `{"runId": "…"}`: the workflow is enabled and a run is queued. The payload also becomes the workflow's Sample payload.
-        - **202** `{"runId": null}`: the workflow is a draft or disabled. The payload is saved as the Sample payload; no run starts.
+        - **202** `{"runId": "…"}`: the workflow is enabled and a run is queued. The payload is kept as the workflow's last call.
+        - **202** `{"runId": null}`: the workflow is a draft or disabled. The payload is kept as the last call; no run starts.
+
+        A call never changes the workflow's expected payload: an editor can review the last call and choose to use it.
         - **200** `{"runId": "…"}`: an `Idempotency-Key` this workflow has already seen; nothing new starts and the earlier run's id is returned.
         - **404**: the workflow is archived, does not exist, or the token is wrong or was regenerated. The answer is identical in every case.
         - **400** / **413** / **415**: the body is not a JSON object or is nested more than 10 levels / is over 100 KB / is not `application/json`. Errors never echo the payload.
@@ -4214,9 +4216,9 @@ paths:
   /api/v3/workflows/{workflowId}/sample:
     put:
       operationId: setWorkflowSampleV3
-      summary: Set a workflow's Sample payload
+      summary: Set a workflow's expected payload
       description: |
-        Replaces the Sample payload of a workflow with a Webhook trigger, e.g. with one pasted in the editor, and returns it with the Variables it offers. A call to the Webhook Secret URL replaces it too. The payload must be a JSON object of at most 100 KB nested at most 10 levels: a larger one answers **413** `payload_too_large`, a deeper one or a non-object **400**. Writing a sample does not change the workflow's `updatedAt`.
+        Sets the expected payload of a workflow with a Webhook trigger — what the calling system sends — and returns it with the Variables inferred from it. Use it with a payload typed or pasted in the editor, or with the last call's payload to use that call. Calls to the Webhook Secret URL never change it, and enabling the workflow requires it. The payload must be a JSON object of at most 100 KB nested at most 10 levels: a larger one answers **413** `payload_too_large`, a deeper one or a non-object **400**. Writing a sample does not change the workflow's `updatedAt`.
 
         Requires **write** access. A workflow whose trigger is not a Webhook trigger, or an archived workflow, answers **422** `invalid_workflow_state`.
       tags:
@@ -4240,7 +4242,7 @@ paths:
                       total: 59.9
       responses:
         '200':
-          description: The stored Sample payload and its Variables.
+          description: The expected payload and its Variables.
           headers:
             X-Request-Id:
               schema:
@@ -4266,7 +4268,7 @@ paths:
         '403':
           $ref: '#/components/responses/V3Forbidden'
         '413':
-          description: The sample payload is over 100 KB.
+          description: The payload is over 100 KB.
           headers:
             X-Request-Id:
               schema:
@@ -4372,14 +4374,14 @@ paths:
 
         The run is saved with `isDryRun: true` and no version, appears in the runs list (hide it with `filter[isDryRun][eq]=false`), and is never billed or counted as usage. A failed step fails the run, not the call: the answer is still **201** with the run's `status` and step detail. Recorded in the audit log as `testRunStarted` with the run id. `POST .../test`, the setup check that runs nothing, is unchanged.
 
-        The test payload is the body's `payload`, else the workflow's Sample payload. Only a Webhook trigger can be test-run. Requires **write** access and is limited to 30 Test runs per minute per user or API key (**429**). An archived workflow, one without a Webhook trigger, or one with no payload to test with answers **422** `invalid_workflow_state`; a draft that cannot run answers **422** `workflow_not_executable` with the fields to fix; a payload over 100 KB **413**.
+        The test payload is the body's `payload`, else the workflow's expected payload. Only a Webhook trigger can be test-run. Requires **write** access and is limited to 30 Test runs per minute per user or API key (**429**). An archived workflow, one without a Webhook trigger, or one with no payload to test with answers **422** `invalid_workflow_state`; a draft that cannot run answers **422** `workflow_not_executable` with the fields to fix; a payload over 100 KB **413**.
       tags:
         - V3 Workflows
       parameters:
         - $ref: '#/components/parameters/WorkflowIdPath'
       requestBody:
         required: false
-        description: Send `{}` (or no body) to test with the workflow's Sample payload.
+        description: Send `{}` (or no body) to test with the workflow's expected payload.
         content:
           application/json:
             schema:
@@ -15276,10 +15278,89 @@ components:
             Things that do not stop the workflow from running but probably need a look. They never make `ok` false.
           items:
             $ref: '#/components/schemas/WorkflowWarning'
+    WorkflowSampleVariables:
+      description: |
+        The Variables inferred from a payload, in document order. Read for the first 500 paths; lists are reported as not supported yet.
+      type: object
+      required:
+        - variables
+        - notSupported
+        - truncated
+      properties:
+        variables:
+          type: array
+          description: The Variables, in document order.
+          items:
+            type: object
+            required:
+              - path
+              - valueType
+            properties:
+              path:
+                type: string
+                minLength: 1
+                example: payload.customer.email
+              valueType:
+                type: string
+                enum:
+                  - object
+                  - string
+                  - number
+                  - boolean
+                  - 'null'
+            additionalProperties: false
+        notSupported:
+          type: array
+          description: 'Paths that cannot be used as Variables: `list` (lists are not supported yet), `unsafe_segment` (`__proto__`, `prototype` or `constructor`) or `unreachable_key` (a key with characters other than letters, digits, `-` and `_`, such as a dot or a space, which a Variable path cannot carry).'
+          items:
+            type: object
+            required:
+              - path
+              - reason
+            properties:
+              path:
+                type: string
+                minLength: 1
+              reason:
+                type: string
+                enum:
+                  - list
+                  - unsafe_segment
+                  - unreachable_key
+            additionalProperties: false
+        truncated:
+          type: boolean
+          description: True when only the first 500 paths were read.
+      additionalProperties: false
+    WorkflowWebhookLastCall:
+      type: object
+      description: |
+        The last call to the Webhook Secret URL: the payload it sent, the Variables inferred from it, when it arrived and from where. Shown so an editor can review it and use it as the expected payload.
+      required:
+        - payload
+        - variables
+        - receivedAt
+        - callerIp
+      properties:
+        payload:
+          type: object
+          additionalProperties: true
+          description: The JSON object the last call sent.
+        variables:
+          $ref: '#/components/schemas/WorkflowSampleVariables'
+        receivedAt:
+          type: string
+          format: date-time
+        callerIp:
+          type:
+            - string
+            - 'null'
+          description: IP of the call. Null when unknown.
+      additionalProperties: false
     WorkflowSampleResource:
       type: object
       description: |
-        A workflow's Sample payload — the last payload its Webhook Secret URL received, or one pasted in — and the Variables it offers. Variables are detected for the first 500 paths; lists are reported as not supported yet.
+        A workflow's expected payload — what the calling system sends to its Webhook Secret URL — and the Variables inferred from it. Only editors set it (typed, pasted, or a received call they chose to use); calls never change it.
       required:
         - workflowId
         - source
@@ -15297,59 +15378,9 @@ components:
         payload:
           type: object
           additionalProperties: true
-          description: The Sample payload, a JSON object.
+          description: The expected payload, a JSON object.
         variables:
-          type: object
-          required:
-            - variables
-            - notSupported
-            - truncated
-          properties:
-            variables:
-              type: array
-              description: Variables the Sample payload offers, in document order.
-              items:
-                type: object
-                required:
-                  - path
-                  - valueType
-                properties:
-                  path:
-                    type: string
-                    minLength: 1
-                    example: payload.customer.email
-                  valueType:
-                    type: string
-                    enum:
-                      - object
-                      - string
-                      - number
-                      - boolean
-                      - 'null'
-                additionalProperties: false
-            notSupported:
-              type: array
-              description: 'Paths that cannot be used as Variables: `list` (lists are not supported yet), `unsafe_segment` (`__proto__`, `prototype` or `constructor`) or `unreachable_key` (a key with characters other than letters, digits, `-` and `_`, such as a dot or a space, which a Variable path cannot carry).'
-              items:
-                type: object
-                required:
-                  - path
-                  - reason
-                properties:
-                  path:
-                    type: string
-                    minLength: 1
-                  reason:
-                    type: string
-                    enum:
-                      - list
-                      - unsafe_segment
-                      - unreachable_key
-                additionalProperties: false
-            truncated:
-              type: boolean
-              description: True when only the first 500 paths were read.
-          additionalProperties: false
+          $ref: '#/components/schemas/WorkflowSampleVariables'
         updatedAt:
           type: string
           format: date-time
@@ -15357,12 +15388,13 @@ components:
     WorkflowWebhookResource:
       type: object
       description: |
-        A workflow's Webhook Secret URL, its last call, and its Sample payload. The URL is a credential: anyone holding it can start runs, so treat it like an API key and regenerate it if it leaks.
+        A workflow's Webhook Secret URL, its last call, and its expected payload. The URL is a credential: anyone holding it can start runs, so treat it like an API key and regenerate it if it leaks.
       required:
         - workflowId
         - url
         - lastCalledAt
         - lastCallerIp
+        - lastCall
         - sample
       properties:
         workflowId:
@@ -15384,15 +15416,20 @@ components:
             - string
             - 'null'
           description: IP of the last call. Null if never called.
+        lastCall:
+          anyOf:
+            - $ref: '#/components/schemas/WorkflowWebhookLastCall'
+            - type: 'null'
+          description: The payload the last call sent, to review and use as the expected payload. Null if never called.
         sample:
           anyOf:
             - $ref: '#/components/schemas/WorkflowSampleResource'
             - type: 'null'
-          description: Null until a call arrives or a sample is set.
+          description: The expected payload. Null until an editor sets one; enabling the workflow requires it.
       additionalProperties: false
     SetWorkflowSampleRequest:
       type: object
-      description: Replaces the workflow's Sample payload, e.g. with one pasted in the editor.
+      description: Sets the workflow's expected payload, typed or pasted in the editor or taken from a received call.
       required:
         - payload
       properties:
@@ -15403,7 +15440,7 @@ components:
       additionalProperties: false
     SendWorkflowTestRequestRequest:
       type: object
-      description: 'What to send. Both fields are optional: an empty object sends the saved step with the workflow''s Sample payload and each HTTP request step''s last Test request response as Variables.'
+      description: 'What to send. Both fields are optional: an empty object sends the saved step with the workflow''s expected payload and each HTTP request step''s last Test request response as Variables.'
       properties:
         config:
           $ref: '#/components/schemas/WorkflowHttpRequestActionConfig'
@@ -15414,7 +15451,7 @@ components:
             payload:
               type: object
               additionalProperties: true
-              description: The test payload for `payload.<path>` Variables; defaults to the Sample payload.
+              description: The test payload for `payload.<path>` Variables; defaults to the expected payload.
             steps:
               type: object
               additionalProperties:
@@ -15497,7 +15534,7 @@ components:
         payload:
           type: object
           additionalProperties: true
-          description: 'The test payload: a JSON object of at most 100 KB once serialized, nested at most 10 levels (lists count as levels). Defaults to the workflow''s Sample payload.'
+          description: 'The test payload: a JSON object of at most 100 KB once serialized, nested at most 10 levels (lists count as levels). Defaults to the workflow''s expected payload.'
       additionalProperties: false
     ChartDateRange:
       description: |-

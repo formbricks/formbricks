@@ -75,6 +75,7 @@ const service = {
   regenerateWebhookToken: vi.fn<WorkflowsService["regenerateWebhookToken"]>(),
   revealWebhookToken: vi.fn<WorkflowsService["revealWebhookToken"]>(),
   getTriggerSample: vi.fn<WorkflowsService["getTriggerSample"]>(),
+  getLastCall: vi.fn<WorkflowsService["getLastCall"]>(),
   setTriggerSample: vi.fn<WorkflowsService["setTriggerSample"]>(),
   createTestRun: vi.fn<WorkflowsService["createTestRun"]>(),
 };

@@ -1,6 +1,10 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import type { TWorkflowIdInput, TWorkflowSampleList } from "@formbricks/workflows";
+import {
+  type TWorkflowIdInput,
+  type TWorkflowSampleList,
+  WORKFLOW_SAMPLE_LAST_CALL_SOURCE,
+} from "@formbricks/workflows";
 import { loadAndAuthorize, toProblemResponse } from "@formbricks/workflows/server";
 import { successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
@@ -29,7 +33,8 @@ export const listWorkflowSamples = async ({
     if (workflow instanceof Response) return workflow;
 
     const rows = await prisma.workflowSample.findMany({
-      where: { workflowId: workflow.id },
+      // The last call is read through GET /webhook, next to the expected payload it may replace.
+      where: { workflowId: workflow.id, source: { not: WORKFLOW_SAMPLE_LAST_CALL_SOURCE } },
       select: { source: true, sample: true, updatedAt: true },
       orderBy: { source: "asc" },
     });

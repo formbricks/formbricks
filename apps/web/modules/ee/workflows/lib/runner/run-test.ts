@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { WORKFLOW_SAMPLE_TRIGGER_SOURCE } from "@formbricks/workflows";
+import { WORKFLOW_TRIGGER_SAMPLE_SOURCES } from "@formbricks/workflows";
 import { createWorkflowRunJobHandler } from "./process-workflow-run-job";
 import { createTestRunEffects } from "./test-run-effects";
 
@@ -21,7 +21,7 @@ export const executeWorkflowTestRun = async ({
 }): Promise<void> => {
   // Each HTTP request step's last Test request response, for "Wait and use it" (ENG-7179). One query.
   const samples = await prisma.workflowSample.findMany({
-    where: { workflowId, workspaceId, source: { not: WORKFLOW_SAMPLE_TRIGGER_SOURCE } },
+    where: { workflowId, workspaceId, source: { notIn: [...WORKFLOW_TRIGGER_SAMPLE_SOURCES] } },
     select: { source: true, sample: true },
   });
   const effects = createTestRunEffects(new Map(samples.map((row) => [row.source, row.sample])));

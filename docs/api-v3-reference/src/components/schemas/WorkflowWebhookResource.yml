@@ -1,6 +1,6 @@
 type: object
 description: >
-  A workflow's Webhook Secret URL, its last call, and its Sample payload. The
+  A workflow's Webhook Secret URL, its last call, and its expected payload. The
   URL is a credential: anyone holding it can start runs, so treat it like an
   API key and regenerate it if it leaks.
 required:
@@ -8,6 +8,7 @@ required:
   - url
   - lastCalledAt
   - lastCallerIp
+  - lastCall
   - sample
 properties:
   workflowId:
@@ -29,9 +30,18 @@ properties:
       - string
       - "null"
     description: IP of the last call. Null if never called.
+  lastCall:
+    anyOf:
+      - $ref: ./WorkflowWebhookLastCall.yml
+      - type: "null"
+    description: >-
+      The payload the last call sent, to review and use as the expected
+      payload. Null if never called.
   sample:
     anyOf:
       - $ref: ./WorkflowSampleResource.yml
       - type: "null"
-    description: Null until a call arrives or a sample is set.
+    description: >-
+      The expected payload. Null until an editor sets one; enabling the
+      workflow requires it.
 additionalProperties: false

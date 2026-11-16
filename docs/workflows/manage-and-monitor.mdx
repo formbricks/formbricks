@@ -28,7 +28,7 @@ Archived workflows are excluded from the Workflows list by default. Open the **S
 
 Select **Duplicate** from a workflow's options menu to create a draft copy of its definition. The copy does
 not inherit the source workflow's run history. A copy of a workflow with a Webhook trigger gets its own Webhook
-Secret URL and no Sample payload, and secret header values aren't copied: enter them again before you enable the
+Secret URL and no expected payload, and secret header values aren't copied: enter them again before you enable the
 copy.
 
 ### Delete a workflow
@@ -101,7 +101,7 @@ workflow, with its status, trigger, version, and start and finish times, so run 
 don't change. Its details drawer then shows **Details deleted after 90 days** in place of its steps.
 
 - [Test runs](/workflows/test-runs) are deleted entirely 7 days after they started.
-- A saved [Sample payload](/workflows/webhook-trigger) or Test request response is deleted after 90 days without
+- A Webhook trigger's [last call](/workflows/webhook-trigger) or a Test request response is deleted after 90 days without
   an update.
 
 Self-hosted instances can change the period with `WORKFLOW_RUN_DATA_RETENTION_DAYS`. See

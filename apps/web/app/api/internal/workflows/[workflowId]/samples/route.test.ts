@@ -81,7 +81,8 @@ describe("GET /api/internal/workflows/{workflowId}/samples", () => {
       { source: "trigger", sample: { email: "ana@example.com" }, updatedAt: "2026-11-13T09:00:00.000Z" },
     ]);
     expect(mocks.sampleFindMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { workflowId: WORKFLOW_ID } })
+      // The last call is served by GET /webhook, next to the expected payload (ADR 0052).
+      expect.objectContaining({ where: { workflowId: WORKFLOW_ID, source: { not: "trigger_last_call" } } })
     );
   });
 

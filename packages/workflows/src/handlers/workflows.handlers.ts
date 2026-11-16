@@ -194,6 +194,21 @@ const collectLiteralRecipientEmails = (definition: TWorkflowExecutableDefinition
 const DISALLOWED_RECIPIENT_FIELD = "definition.nodes.config.to";
 
 /** Short 422 `detail` for a recipient-allowlist failure, so UI surfacing only `detail` still names the cause. */
+const EXPECTED_PAYLOAD_REQUIRED_DETAIL =
+  "Add the Webhook trigger's expected payload before enabling: write or paste it, or use a received call.";
+
+/**
+ * A Webhook trigger needs its expected payload (ADR 0052): the Variables the steps use are inferred
+ * from it, and Test runs send it. Only editors set it, so enabling can rely on it.
+ */
+const assertExpectedPayload = async (service: WorkflowsService, workflowId: string): Promise<void> => {
+  if (await service.getTriggerSample(workflowId)) return;
+  throw new WorkflowNotExecutableError(
+    [{ name: "trigger.expectedPayload", reason: EXPECTED_PAYLOAD_REQUIRED_DETAIL }],
+    EXPECTED_PAYLOAD_REQUIRED_DETAIL
+  );
+};
+
 const DISALLOWED_RECIPIENT_DETAIL = "A send_email recipient cannot access this workspace.";
 
 /** Per-recipient explanation, shared so enable's `invalid_params` and test's `problems` never diverge. */
@@ -637,6 +652,8 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
           throw new WorkflowNotExecutableError(buildSurveyInvalidParams(surveyCheck));
         }
       }
+
+      if (trigger.triggerType === WORKFLOW_TRIGGERS.WEBHOOK) await assertExpectedPayload(service, loaded.id);
 
       // Recipient allowlist: a send_email action addressing a literal email may only target someone
       // who can access this workspace — otherwise enabling the workflow would let it forward response

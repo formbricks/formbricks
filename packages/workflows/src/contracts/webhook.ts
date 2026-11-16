@@ -40,12 +40,24 @@ export const ZWorkflowSampleResource = z
   .object({
     workflowId: z.cuid2(),
     source: z.literal(WORKFLOW_SAMPLE_TRIGGER_SOURCE),
-    payload: ZWorkflowWebhookPayload.describe("The Sample payload: the last one received, or one pasted in."),
+    payload: ZWorkflowWebhookPayload.describe(
+      "The expected payload: what the calling system sends. Set by editors (typed, pasted, or a received call they chose to use); calls never change it."
+    ),
     variables: ZWorkflowSampleVariables,
     updatedAt: ZIsoDateTime,
   })
-  .describe("A workflow's Sample payload and the Variables it offers.");
+  .describe("A workflow's expected payload and the Variables inferred from it.");
 export type TWorkflowSampleResource = z.infer<typeof ZWorkflowSampleResource>;
+
+export const ZWorkflowWebhookLastCall = z
+  .object({
+    payload: ZWorkflowWebhookPayload.describe("The JSON object the last call sent."),
+    variables: ZWorkflowSampleVariables,
+    receivedAt: ZIsoDateTime,
+    callerIp: z.string().nullable().describe("IP of the call. Null when unknown."),
+  })
+  .describe("The last call to the Webhook Secret URL.");
+export type TWorkflowWebhookLastCall = z.infer<typeof ZWorkflowWebhookLastCall>;
 
 export const ZWorkflowWebhookResource = z
   .object({
@@ -57,9 +69,14 @@ export const ZWorkflowWebhookResource = z
       ),
     lastCalledAt: ZIsoDateTime.nullable().describe("When the Secret URL was last called. Null if never."),
     lastCallerIp: z.string().nullable().describe("IP of the last call. Null if never called."),
-    sample: ZWorkflowSampleResource.nullable().describe("Null until a call arrives or a sample is set."),
+    lastCall: ZWorkflowWebhookLastCall.nullable().describe(
+      "The payload the last call sent, to review and use as the expected payload. Null if never called."
+    ),
+    sample: ZWorkflowSampleResource.nullable().describe(
+      "The expected payload. Null until an editor sets one; enabling the workflow requires it."
+    ),
   })
-  .describe("A workflow's Webhook Secret URL, its last call, and its Sample payload.");
+  .describe("A workflow's Webhook Secret URL, its last call, and its expected payload.");
 export type TWorkflowWebhookResource = z.infer<typeof ZWorkflowWebhookResource>;
 
 export const ZSetWorkflowSampleInput = z
@@ -68,7 +85,9 @@ export const ZSetWorkflowSampleInput = z
       `A JSON object of at most ${WEBHOOK_PAYLOAD_MAX_BYTES / 1024} KB, nested at most ${WEBHOOK_PAYLOAD_MAX_DEPTH} levels.`
     ),
   })
-  .describe("Replaces the workflow's Sample payload, e.g. with one pasted in the editor.");
+  .describe(
+    "Sets the workflow's expected payload: typed or pasted in the editor, or a received call to use."
+  );
 export type TSetWorkflowSampleInput = z.infer<typeof ZSetWorkflowSampleInput>;
 
 export const ZWorkflowWebhookCallResult = z

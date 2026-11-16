@@ -147,7 +147,7 @@ such as `Idempotency-Key: @payload.ticket.id`.
 Select **Send test request** to make one real call with the step's current settings, even before you save them,
 so you can see what the API answers.
 
-- Variables are filled from the **Sample payload** and from the last test responses of other HTTP request steps.
+- Variables are filled from the **expected payload** and from the last test responses of other HTTP request steps.
 - A secret value you just typed is used for this call. Otherwise the saved value is used, but only for the host
   it was entered for: if you changed the URL to another host, type the value again.
 - The call waits up to 10 seconds and isn't retried.

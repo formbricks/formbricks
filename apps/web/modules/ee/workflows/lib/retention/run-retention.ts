@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import { WORKFLOW_TRIGGERS } from "@formbricks/workflows";
+import { WORKFLOW_SAMPLE_TRIGGER_SOURCE, WORKFLOW_TRIGGERS } from "@formbricks/workflows";
 import {
   WORKFLOW_RUN_RETENTION_BATCH_SIZE,
   WORKFLOW_RUN_RETENTION_MAX_BATCHES_PER_TICK,
@@ -147,8 +147,10 @@ const deleteStaleSampleBatch = async (
   batchSize: number
 ): Promise<BatchResult> => {
   const cutoff = new Date(now.getTime() - retentionDays * DAY_MS);
+  // The expected payload is the trigger's configuration, set by editors, so it stays as long as the
+  // workflow does (ADR 0052). Last calls and Test request responses are call data and expire.
   const due = await prisma.workflowSample.findMany({
-    where: { updatedAt: { lt: cutoff } },
+    where: { updatedAt: { lt: cutoff }, source: { not: WORKFLOW_SAMPLE_TRIGGER_SOURCE } },
     orderBy: { updatedAt: "asc" },
     take: batchSize,
     select: { id: true },
@@ -156,7 +158,11 @@ const deleteStaleSampleBatch = async (
   if (due.length === 0) return { scanned: 0, changed: 0 };
 
   const { count } = await prisma.workflowSample.deleteMany({
-    where: { id: { in: due.map((sample) => sample.id) }, updatedAt: { lt: cutoff } },
+    where: {
+      id: { in: due.map((sample) => sample.id) },
+      updatedAt: { lt: cutoff },
+      source: { not: WORKFLOW_SAMPLE_TRIGGER_SOURCE },
+    },
   });
   return { scanned: due.length, changed: count };
 };

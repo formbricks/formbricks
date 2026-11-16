@@ -77,12 +77,23 @@ const webhookResponse = async (
   ctx: WorkflowApiContext,
   row: WorkflowRowWithLastRun
 ): Promise<Response> => {
-  const sample = await service.getTriggerSample(row.id);
+  const [sample, lastCall] = await Promise.all([
+    service.getTriggerSample(row.id),
+    service.getLastCall(row.id),
+  ]);
   const resource = validateOutput(ZWorkflowWebhookResource, {
     workflowId: row.id,
     url: buildWebhookUrl(ctx, row.id, service.revealWebhookToken(row)),
-    lastCalledAt: sample?.lastCalledAt?.toISOString() ?? null,
-    lastCallerIp: sample?.lastCallerIp ?? null,
+    lastCalledAt: lastCall?.lastCalledAt?.toISOString() ?? null,
+    lastCallerIp: lastCall?.lastCallerIp ?? null,
+    lastCall: lastCall
+      ? {
+          payload: lastCall.sample,
+          variables: detectWebhookVariables(lastCall.sample),
+          receivedAt: (lastCall.lastCalledAt ?? lastCall.updatedAt).toISOString(),
+          callerIp: lastCall.lastCallerIp,
+        }
+      : null,
     sample: sample ? toSampleResource(sample) : null,
   });
   return dataResponse(resource, ctx.requestId);

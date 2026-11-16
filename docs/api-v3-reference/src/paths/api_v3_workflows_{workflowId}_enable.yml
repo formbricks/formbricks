@@ -17,7 +17,7 @@ post:
     reachable from the trigger, only Scope 1 node types are present, the
     referenced survey
 
-    and ending cards still exist, and every `send_email` action addressing a
+    and ending cards still exist, a Webhook trigger has its expected payload, and every `send_email` action addressing a
     *literal* email address
 
     targets someone who can access this workspace (an element-id `to` resolves

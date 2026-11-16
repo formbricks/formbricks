@@ -31,7 +31,7 @@ Saving a workflow over one of these limits is refused. A workflow saved before a
 | Calls per minute to one workflow's URL              | 100                  | —                                       |
 | Calls per minute across an organization's workflows | 300                  | `WORKFLOW_WEBHOOK_ORG_CALLS_PER_MINUTE` |
 | Calls per day (UTC) to one enabled workflow's URL   | 10,000               | `WORKFLOW_WEBHOOK_DAILY_RUN_LIMIT`      |
-| Payload size, also for a pasted Sample payload      | 100 KB               | —                                       |
+| Payload size, also for the expected payload         | 100 KB               | —                                       |
 | Payload nesting                                     | 10 levels            | —                                       |
 | `Idempotency-Key` length                            | 255 characters       | —                                       |
 | Payload values the `@` picker lists                 | 500                  | —                                       |
@@ -82,7 +82,7 @@ refused for size or content type and calls that repeat an `Idempotency-Key`. A c
 | Limit                                             | Value                     | Environment variable               |
 | ------------------------------------------------- | ------------------------- | ---------------------------------- |
 | Run details kept after the run finished           | 90 days                   | `WORKFLOW_RUN_DATA_RETENTION_DAYS` |
-| Sample payload and Test request response kept     | 90 days without an update | `WORKFLOW_RUN_DATA_RETENTION_DAYS` |
+| Last call and Test request response kept          | 90 days without an update | `WORKFLOW_RUN_DATA_RETENTION_DAYS` |
 | Test runs kept                                    | 7 days                    | —                                  |
 
 See [Run data retention](/workflows/manage-and-monitor#run-data-retention).

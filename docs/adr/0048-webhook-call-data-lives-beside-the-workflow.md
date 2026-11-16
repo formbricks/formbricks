@@ -11,3 +11,5 @@ The Webhook Secret URL token is stored on the `Workflow` row as a hash (to look 
 
 - Duplicating a workflow copies none of it; the copy gets a new token.
 - Run detail reads the caller's IP from the run itself (`WorkflowRun.callerIp`), not from the sample.
+
+> Amended by ADR 0052: calls no longer write the trigger's payload. The last call has its own row (`trigger_last_call`), and the `trigger` row holds the expected payload, which only editors set.

@@ -35,6 +35,8 @@ export interface TWorkflowNodeRegistryEntry {
   category: TWorkflowNodeCategory;
   icon: TWorkflowNodeIcon;
   title: (node: TWorkflowNode, t: TFunction) => string;
+  /** The step's docs page, linked from the panel header. */
+  docsUrl?: string;
   summary: (node: TWorkflowNode, t: TFunction) => string;
   // Stored erased to `TWorkflowNode`; the inspector narrows by kind before rendering.
   ConfigForm: ComponentType<TWorkflowNodeFormProps<TWorkflowNode>> | null;
@@ -113,6 +115,7 @@ const webhookTriggerEntry: TWorkflowNodeRegistryEntry = {
   category: "trigger",
   icon: "webhook",
   title: (_node, t) => t("workspace.workflows.webhook_trigger"),
+  docsUrl: "https://formbricks.com/docs/workflows/webhook-trigger",
   summary: (_node, t) => t("workspace.workflows.webhook_trigger_summary"),
   ConfigForm: eraseForm(WorkflowWebhookTriggerForm),
 };

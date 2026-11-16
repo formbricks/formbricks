@@ -11,3 +11,5 @@ For every workflow, whatever its trigger, a run's content (payload, step input a
 
 - Run detail for an older run shows its status and timing but "Details deleted after 90 days" instead of its steps.
 - The period is `WORKFLOW_RUN_DATA_RETENTION_DAYS` (default 90) and can later become a per-workspace policy in Data Retention, with the variable as its default.
+
+> Amended by ADR 0052: the Webhook trigger's expected payload is configuration set by editors, so the sweep no longer deletes it. Last calls and Test request responses still expire after 90 days without an update.

@@ -203,15 +203,16 @@ describe("an enabled workflow", () => {
     });
   });
 
-  test("saves the payload as the sample with the call's time and IP", async () => {
+  test("keeps the payload as the last call with its time and IP, never as the expected payload", async () => {
     await call();
 
+    expect(mocks.sampleUpsert).toHaveBeenCalledTimes(1);
     expect(mocks.sampleUpsert).toHaveBeenCalledWith({
-      where: { workflowId_source: { workflowId: WORKFLOW_ID, source: "trigger" } },
+      where: { workflowId_source: { workflowId: WORKFLOW_ID, source: "trigger_last_call" } },
       create: expect.objectContaining({
         workflowId: WORKFLOW_ID,
         workspaceId: WORKSPACE_ID,
-        source: "trigger",
+        source: "trigger_last_call",
         sample: { order: { id: 42 } },
         lastCallerIp: "203.0.113.9",
       }),

@@ -1,10 +1,12 @@
 put:
   operationId: setWorkflowSampleV3
-  summary: Set a workflow's Sample payload
+  summary: Set a workflow's expected payload
   description: >
-    Replaces the Sample payload of a workflow with a Webhook trigger, e.g. with
-    one pasted in the editor, and returns it with the Variables it offers. A call
-    to the Webhook Secret URL replaces it too. The payload must be a JSON object
+    Sets the expected payload of a workflow with a Webhook trigger — what the
+    calling system sends — and returns it with the Variables inferred from it.
+    Use it with a payload typed or pasted in the editor, or with the last call's
+    payload to use that call. Calls to the Webhook Secret URL never change it,
+    and enabling the workflow requires it. The payload must be a JSON object
     of at most 100 KB nested at most 10 levels: a larger one answers **413**
     `payload_too_large`, a deeper one or a non-object **400**. Writing a sample
     does not change the workflow's `updatedAt`.
@@ -33,7 +35,7 @@ put:
                   total: 59.9
   responses:
     "200":
-      description: The stored Sample payload and its Variables.
+      description: The expected payload and its Variables.
       headers:
         X-Request-Id:
           schema:
@@ -59,7 +61,7 @@ put:
     "403":
       $ref: ../components/responses/V3Forbidden.yml
     "413":
-      description: The sample payload is over 100 KB.
+      description: The payload is over 100 KB.
       headers:
         X-Request-Id:
           schema:

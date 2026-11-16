@@ -9,7 +9,7 @@ import {
   WEBHOOK_IDEMPOTENCY_KEY_MAX_LENGTH,
   WEBHOOK_PAYLOAD_MAX_BYTES,
   WEBHOOK_PAYLOAD_MAX_DEPTH,
-  WORKFLOW_SAMPLE_TRIGGER_SOURCE,
+  WORKFLOW_SAMPLE_LAST_CALL_SOURCE,
   WORKFLOW_TRIGGERS,
   parseWebhookPayload,
 } from "@formbricks/workflows";
@@ -231,13 +231,15 @@ const saveCall = async (
       });
       if (!current || current.status === "archived") return GONE;
 
+      // The last call is kept on its own row: it never changes the expected payload, which only
+      // editors set (ADR 0052). They can review it and choose to use it.
       const callData = { sample: payload, lastCalledAt: now, lastCallerIp: callerIp };
       await tx.workflowSample.upsert({
-        where: { workflowId_source: { workflowId: workflow.id, source: WORKFLOW_SAMPLE_TRIGGER_SOURCE } },
+        where: { workflowId_source: { workflowId: workflow.id, source: WORKFLOW_SAMPLE_LAST_CALL_SOURCE } },
         create: {
           workflowId: workflow.id,
           workspaceId: workflow.workspaceId,
-          source: WORKFLOW_SAMPLE_TRIGGER_SOURCE,
+          source: WORKFLOW_SAMPLE_LAST_CALL_SOURCE,
           ...callData,
         },
         update: callData,

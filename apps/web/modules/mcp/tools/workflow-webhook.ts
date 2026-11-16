@@ -19,7 +19,7 @@ export function registerWorkflowWebhookTools(server: McpServer): void {
     {
       title: "Get Webhook Secret URL",
       description: [
-        "Get a Webhook workflow's Secret URL, its last call and its Sample payload with the Variables it offers.",
+        "Get a Webhook workflow's Secret URL, its last call (with the payload it sent) and its expected payload with the Variables inferred from it.",
         "The URL is a credential: anyone holding it can start runs. Do not repeat, log or share it unless the user asks;",
         "use regenerate_webhook_url if it leaked.",
       ].join(" "),
@@ -64,9 +64,9 @@ export function registerWorkflowWebhookTools(server: McpServer): void {
     server,
     "set_sample_payload",
     {
-      title: "Set Sample payload",
+      title: "Set expected payload",
       description:
-        "Replace a Webhook workflow's Sample payload (a JSON object up to 100 KB, 10 levels deep) and get back the Variables it offers. Replaces the previous sample.",
+        "Set a Webhook workflow's expected payload: the JSON object its calling system sends (up to 100 KB, 10 levels deep). Get back the Variables inferred from it. Calls to the Secret URL never change it, and enabling the workflow requires it.",
       inputSchema: ZMcpSetSamplePayloadInput,
       audit: { action: "updated", targetType: "workflow", targetIdArg: "workflowId" },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },

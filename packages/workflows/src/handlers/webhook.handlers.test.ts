@@ -86,6 +86,7 @@ const service = {
   regenerateWebhookToken: vi.fn<WorkflowsService["regenerateWebhookToken"]>(),
   revealWebhookToken: vi.fn<WorkflowsService["revealWebhookToken"]>(),
   getTriggerSample: vi.fn<WorkflowsService["getTriggerSample"]>(),
+  getLastCall: vi.fn<WorkflowsService["getLastCall"]>(),
   setTriggerSample: vi.fn<WorkflowsService["setTriggerSample"]>(),
   createTestRun: vi.fn<WorkflowsService["createTestRun"]>(),
 };
@@ -129,7 +130,10 @@ beforeEach(() => {
   verifyTriggerSurvey.mockResolvedValue({ surveyExists: true, missingEndingCardIds: [] });
   service.getWorkflowById.mockResolvedValue(makeRow());
   service.revealWebhookToken.mockReturnValue(token);
-  service.getTriggerSample.mockResolvedValue(makeSample());
+  service.getTriggerSample.mockResolvedValue(makeSample({ lastCalledAt: null, lastCallerIp: null }));
+  service.getLastCall.mockResolvedValue(
+    makeSample({ source: "trigger_last_call", sample: { order: { id: 8 } } })
+  );
 });
 
 describe("a Webhook workflow through the existing operations", () => {
@@ -140,6 +144,19 @@ describe("a Webhook workflow through the existing operations", () => {
 
     expect(res.status).toBe(200);
     expect(verifyTriggerSurvey).not.toHaveBeenCalled();
+  });
+
+  test("is not enabled without an expected payload, even after calls (ADR 0052)", async () => {
+    service.getTriggerSample.mockResolvedValue(null);
+
+    const res = await handlers.enable({ ctx: makeCtx(), params: { workflowId } });
+
+    expect(res.status).toBe(422);
+    const body = await readJson<{ code: string; detail: string; invalid_params: { name: string }[] }>(res);
+    expect(body.code).toBe("workflow_not_executable");
+    expect(body.detail).toContain("expected payload");
+    expect(body.invalid_params).toEqual([expect.objectContaining({ name: "trigger.expectedPayload" })]);
+    expect(service.enableWorkflow).not.toHaveBeenCalled();
   });
 
   test("passes a dry run without looking for a survey", async () => {
@@ -206,7 +223,7 @@ describe("getWebhook", () => {
     expect(res.status).toBe(403);
   });
 
-  test("returns the Secret URL, the last call and the sample with its Variables", async () => {
+  test("returns the Secret URL, the last call and the expected payload with their Variables", async () => {
     const res = await handlers.getWebhook({ ctx: makeCtx(), params: { workflowId } });
 
     expect(res.status).toBe(200);
@@ -216,6 +233,19 @@ describe("getWebhook", () => {
       url: `https://app.example.com/api/v3/workflows/${workflowId}/webhook/${token}`,
       lastCalledAt: "2026-11-03T10:00:00.000Z",
       lastCallerIp: "203.0.113.9",
+      lastCall: {
+        payload: { order: { id: 8 } },
+        variables: {
+          variables: [
+            { path: "payload.order", valueType: "object" },
+            { path: "payload.order.id", valueType: "number" },
+          ],
+          notSupported: [],
+          truncated: false,
+        },
+        receivedAt: "2026-11-03T10:00:00.000Z",
+        callerIp: "203.0.113.9",
+      },
       sample: {
         workflowId,
         source: "trigger",
@@ -233,14 +263,16 @@ describe("getWebhook", () => {
     });
   });
 
-  test("returns a null sample before any call or paste", async () => {
+  test("returns no last call and no expected payload before any call or paste", async () => {
     service.getTriggerSample.mockResolvedValue(null);
+    service.getLastCall.mockResolvedValue(null);
 
     const res = await handlers.getWebhook({ ctx: makeCtx(), params: { workflowId } });
 
     expect((await readJson<{ data: Record<string, unknown> }>(res)).data).toMatchObject({
       lastCalledAt: null,
       lastCallerIp: null,
+      lastCall: null,
       sample: null,
     });
   });

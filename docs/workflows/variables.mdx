@@ -22,8 +22,8 @@ comment with a <Frame>. */}
 | **Response**      | `response.<questionId>`    | The workflow has a **Response completed** trigger.                              |
 | **An earlier step** | `steps.<stepId>.status`, `steps.<stepId>.body.order.id` | The step is an [HTTP request](/workflows/http-request) that runs before this one on the same branch. |
 
-The picker lists the Variables of the **Sample payload**, so send or paste one in the trigger first. It lists
-the first 500 values of the sample. For an HTTP request step, it lists `status` and, once you have used **Send
+The picker lists the Variables of the trigger's **expected payload**, so set it in the trigger first. It lists
+the first 500 values of the payload. For an HTTP request step, it lists `status` and, once you have used **Send
 test request**, the values of that response's body.
 
 Steps are named by their ID in a path, so renaming a step never breaks a Variable that uses it.

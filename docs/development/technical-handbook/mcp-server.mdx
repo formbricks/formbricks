@@ -1462,14 +1462,14 @@ Secret URL. The URL is a credential (ADR 0041), so all three tools need `workflo
 included.
 
 - `get_webhook_url` — `{ "workflowId" }`. Returns the Secret URL, when it was last called and from
-  which IP, and the Sample payload with the Variables it offers. Its description tells the agent the
+  which IP and its payload, and the expected payload with the Variables inferred from it. Its description tells the agent the
   result is a credential.
 - `regenerate_webhook_url` — `{ "workflowId" }`. Replaces the URL; the old one answers 404 from the
   next call on. Audited as `webhookUrlRegenerated`.
-- `set_sample_payload` — `{ "workflowId", "payload" }`. Replaces the Sample payload (a JSON object up
+- `set_sample_payload` — `{ "workflowId", "payload" }`. Sets the expected payload (a JSON object up
   to 100 KB, 10 levels deep) and returns its Variables. Audited as `updated` on the workflow, without the payload.
 
-Injection assessment: the Sample payload and Variable paths are caller-supplied text that reaches the
+Injection assessment: the expected payload, the last call and Variable paths are caller-supplied text that reaches the
 agent's context. The tools return nothing beyond the one workflow the caller can already write, and
 permit nothing beyond what the caller's `workflows:write` scope and v3 authorization already allow, so
 hostile text in a payload cannot cross a workspace or user boundary.
@@ -1492,7 +1492,7 @@ with it: the call is refused and Enable fails until someone who has the value en
   go to, HTTP requests record what they would call and, in "Wait and use it", answer with the step's last
   Test request response. Nothing is sent or called. Returns the finished run (`isDryRun: true`, no
   version) with run detail per step: the branch taken, each condition matched or not, and the steps not
-  taken. Uses the workflow's Sample payload when `payload` is absent. Shares the 30-per-minute budget of
+  taken. Uses the workflow's expected payload when `payload` is absent. Shares the 30-per-minute budget of
   `POST /api/v3/workflows/{workflowId}/test-runs` and is audited as `testRunStarted` (run id only).
 
 Injection assessment for `run_test`: the result carries the test payload's values and stored Test request

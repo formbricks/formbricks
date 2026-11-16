@@ -247,8 +247,8 @@ describe("resource shapes", () => {
   });
 
   test("the sample's Variables shape matches the contract", async () => {
-    const yamlSchema = await loadYaml("components/schemas/WorkflowSampleResource.yml");
-    const variables = (yamlSchema.properties as Record<string, Record<string, unknown>>).variables;
+    // Shared by the expected payload and the last call (ADR 0052).
+    const variables = await loadYaml("components/schemas/WorkflowSampleVariables.yml");
     expect(yamlPropertyKeys(variables)).toEqual(schemaKeys(ZWorkflowSampleVariables));
     const notSupported = (variables.properties as Record<string, { items: Record<string, unknown> }>)
       .notSupported;

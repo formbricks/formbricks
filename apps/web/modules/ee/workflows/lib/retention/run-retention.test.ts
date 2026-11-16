@@ -122,16 +122,20 @@ describe("runWorkflowRunRetention — Test runs", () => {
 });
 
 describe("runWorkflowRunRetention — samples", () => {
-  test("deletes samples not updated for the retention period, re-checking the age on delete", async () => {
+  test("deletes last calls and test responses not updated for the retention period, never the expected payload", async () => {
     sampleFindMany.mockResolvedValueOnce([{ id: "s1" }]);
     const cutoff = new Date(NOW.getTime() - 30 * DAY);
 
     const result = await retention({ retentionDays: 30 });
 
-    expect(sampleFindMany.mock.calls[0][0]).toMatchObject({ where: { updatedAt: { lt: cutoff } }, take: 2 });
+    // The expected payload (source "trigger") is configuration editors set, so it never expires (ADR 0052).
+    expect(sampleFindMany.mock.calls[0][0]).toMatchObject({
+      where: { updatedAt: { lt: cutoff }, source: { not: "trigger" } },
+      take: 2,
+    });
     // A sample a call refreshed between the scan and the delete is kept.
     expect(sampleDeleteMany).toHaveBeenCalledWith({
-      where: { id: { in: ["s1"] }, updatedAt: { lt: cutoff } },
+      where: { id: { in: ["s1"] }, updatedAt: { lt: cutoff }, source: { not: "trigger" } },
     });
     expect(result.samplesDeleted).toBe(1);
   });

@@ -11,10 +11,14 @@ post:
 
 
     - **202** `{"runId": "…"}`: the workflow is enabled and a run is queued.
-    The payload also becomes the workflow's Sample payload.
+    The payload is kept as the workflow's last call.
 
     - **202** `{"runId": null}`: the workflow is a draft or disabled. The
-    payload is saved as the Sample payload; no run starts.
+    payload is kept as the last call; no run starts.
+
+
+    A call never changes the workflow's expected payload: an editor can review
+    the last call and choose to use it.
 
     - **200** `{"runId": "…"}`: an `Idempotency-Key` this workflow has already
     seen; nothing new starts and the earlier run's id is returned.

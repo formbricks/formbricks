@@ -1,6 +1,14 @@
 "use client";
 
-import { CopyIcon, EyeIcon, EyeOffIcon, InfoIcon, RefreshCwIcon } from "lucide-react";
+import {
+  CopyIcon,
+  EyeIcon,
+  EyeOffIcon,
+  InfoIcon,
+  LockIcon,
+  MoreHorizontalIcon,
+  RefreshCwIcon,
+} from "lucide-react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -9,12 +17,23 @@ import { useWorkflowWebhookMutations } from "@/modules/ee/workflows/hooks/use-wo
 import { maskWebhookSecretUrl } from "@/modules/ee/workflows/lib/webhook-trigger-panel";
 import { Button } from "@/modules/ui/components/button";
 import { ConfirmationModal } from "@/modules/ui/components/confirmation-modal";
-import { Input } from "@/modules/ui/components/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import { Label } from "@/modules/ui/components/label";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 const SECRET_URL_FIELD_ID = "workflow-webhook-secret-url";
 
+/**
+ * The Webhook Secret URL as one compact card (redesign prototype): the masked URL, Copy, and a menu
+ * for the rarer actions (show, regenerate). The URL is a credential (ADR 0041), so the card keeps one
+ * line about keeping it private; the rest lives in the docs linked from the panel header.
+ */
 export const WebhookSecretUrlSection = ({
   workflowId,
   url,
@@ -39,66 +58,66 @@ export const WebhookSecretUrlSection = ({
   };
 
   return (
-    <section className="flex flex-col gap-2">
-      <div className="flex items-center gap-1.5">
-        <Label htmlFor={SECRET_URL_FIELD_ID}>{t("workspace.workflows.webhook_secret_url")}</Label>
-        <TooltipRenderer
-          className="max-w-72"
-          tooltipContent={t("workspace.workflows.webhook_secret_url_tooltip")}>
-          <InfoIcon
-            className="size-3.5 text-slate-500"
-            aria-label={t("workspace.workflows.webhook_secret_url_tooltip")}
-          />
-        </TooltipRenderer>
+    <section className="rounded-lg border border-slate-200 bg-white">
+      <div className="flex items-center justify-between gap-2 px-3 pt-2.5">
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor={SECRET_URL_FIELD_ID}>{t("workspace.workflows.webhook_secret_url")}</Label>
+          <TooltipRenderer
+            className="max-w-72"
+            tooltipContent={t("workspace.workflows.webhook_secret_url_tooltip")}>
+            <InfoIcon
+              className="size-3.5 text-slate-500"
+              aria-label={t("workspace.workflows.webhook_secret_url_tooltip")}
+            />
+          </TooltipRenderer>
+        </div>
+        <div className="flex items-center gap-1">
+          <Button type="button" variant="secondary" size="sm" onClick={() => void copy()}>
+            <CopyIcon />
+            {t("common.copy")}
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label={t("workspace.workflows.webhook_url_actions")}>
+                <MoreHorizontalIcon />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setIsRevealed((current) => !current)}>
+                {isRevealed ? <EyeOffIcon className="size-4" /> : <EyeIcon className="size-4" />}
+                {isRevealed
+                  ? t("workspace.workflows.webhook_url_hide")
+                  : t("workspace.workflows.webhook_url_show")}
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                disabled={!canRegenerate || regenerate.isPending}
+                onClick={() => setIsConfirmOpen(true)}>
+                <RefreshCwIcon className="size-4" />
+                {t("workspace.workflows.webhook_regenerate_menu")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
-      {/* ph-no-capture keeps the field (and the URL in it) out of PostHog session recordings. */}
-      <div className="ph-no-capture flex items-center gap-2">
-        <Input
+      {/* ph-no-capture keeps the URL out of PostHog session recordings. */}
+      <div className="ph-no-capture px-3 pt-1.5 pb-2.5">
+        <input
           id={SECRET_URL_FIELD_ID}
           readOnly
           value={isRevealed ? url : maskWebhookSecretUrl(url)}
-          className="ph-no-capture min-w-0 flex-1 bg-slate-50 font-mono text-xs"
+          className="ph-no-capture w-full truncate rounded-md border-0 bg-slate-50 px-2 py-1.5 font-mono text-xs text-slate-700 focus:ring-2 focus:ring-slate-300 focus:outline-hidden"
           onFocus={(event) => event.currentTarget.select()}
         />
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-pressed={isRevealed}
-          aria-label={
-            isRevealed ? t("workspace.workflows.webhook_url_hide") : t("workspace.workflows.webhook_url_show")
-          }
-          onClick={() => setIsRevealed((current) => !current)}>
-          {isRevealed ? <EyeOffIcon /> : <EyeIcon />}
-        </Button>
-        <Button type="button" variant="secondary" size="sm" onClick={() => void copy()}>
-          <CopyIcon />
-          {t("common.copy")}
-        </Button>
       </div>
-      <div className="flex items-center justify-between gap-3">
-        <p className="min-w-0 flex-1 text-xs text-slate-500">
-          {t("workspace.workflows.webhook_secret_url_private")}{" "}
-          <a
-            href="https://formbricks.com/docs/workflows/webhook-trigger"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline underline-offset-2 hover:text-slate-700">
-            {t("common.learn_more")}
-          </a>
-        </p>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="shrink-0"
-          disabled={!canRegenerate || regenerate.isPending}
-          loading={regenerate.isPending}
-          onClick={() => setIsConfirmOpen(true)}>
-          <RefreshCwIcon />
-          {t("workspace.workflows.webhook_regenerate")}
-        </Button>
-      </div>
+      <p className="flex items-center gap-1.5 border-t border-slate-100 px-3 py-2 text-xs text-slate-500">
+        <LockIcon className="size-3.5 shrink-0" aria-hidden />
+        {t("workspace.workflows.webhook_secret_url_private")}
+      </p>
       <ConfirmationModal
         open={isConfirmOpen}
         setOpen={setIsConfirmOpen}

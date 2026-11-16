@@ -30,7 +30,12 @@ export const WorkflowWebhookTriggerForm = (_props: Readonly<WorkflowWebhookTrigg
   const isReadOnly = useAtomValue(isWorkflowReadOnlyAtom);
   const workflowId = workflow?.id ?? null;
   const isSaved = hasSavedWebhookTrigger(workflow);
-  const webhookQuery = useWorkflowWebhook({ workflowId, enabled: isSaved && !isReadOnly });
+  const webhookQuery = useWorkflowWebhook({
+    workflowId,
+    enabled: isSaved && !isReadOnly,
+    // While no payload has arrived, check for the first call every few seconds.
+    refetchInterval: (data) => (data?.sample || data?.lastCall ? false : 4000),
+  });
 
   if (isReadOnly) {
     return (
@@ -64,7 +69,7 @@ export const WorkflowWebhookTriggerForm = (_props: Readonly<WorkflowWebhookTrigg
   const webhook = webhookQuery.data;
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-3">
       <WebhookSecretUrlSection
         workflowId={workflowId}
         url={webhook.url}
@@ -72,9 +77,9 @@ export const WorkflowWebhookTriggerForm = (_props: Readonly<WorkflowWebhookTrigg
       />
       <WebhookPayloadSection
         workflowId={workflowId}
+        url={webhook.url}
         sample={webhook.sample}
-        lastCalledAt={webhook.lastCalledAt}
-        lastCallerIp={webhook.lastCallerIp}
+        lastCall={webhook.lastCall}
         canSetSample={workflow?.status !== "archived"}
       />
     </div>

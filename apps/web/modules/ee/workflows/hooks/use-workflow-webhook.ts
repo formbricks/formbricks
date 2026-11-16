@@ -18,14 +18,18 @@ import { workflowKeys } from "../lib/query";
 export const useWorkflowWebhook = ({
   workflowId,
   enabled,
+  refetchInterval,
 }: {
   workflowId: string | null;
   enabled: boolean;
+  /** Poll while waiting for something, e.g. the first call; return false to stop. */
+  refetchInterval?: (data: TWorkflowWebhookResource | undefined) => number | false;
 }) =>
   useQuery({
     queryKey: workflowKeys.webhook(workflowId ?? ""),
     enabled: enabled && workflowId !== null,
     queryFn: ({ signal }) => getWorkflowWebhook(workflowId as string, signal),
+    refetchInterval: refetchInterval ? (query) => refetchInterval(query.state.data) : undefined,
   });
 
 /** Regenerate the Secret URL and replace the Sample payload, keeping the cached webhook in step. */
