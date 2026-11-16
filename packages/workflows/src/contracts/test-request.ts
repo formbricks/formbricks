@@ -67,3 +67,16 @@ export const ZWorkflowTestRequestResult = z
   })
   .describe("The outcome of one Test request. Saved as the step's sample when an answer came.");
 export type TWorkflowTestRequestResult = z.infer<typeof ZWorkflowTestRequestResult>;
+
+/**
+ * Sets an HTTP request step's expected response (ADR 0054): the body the API answers with, typed or
+ * pasted in the editor, or a Test request response the editor chose to use. Test requests never set it.
+ */
+export const ZSetWorkflowExpectedResponseInput = z
+  .strictObject({
+    body: z
+      .record(z.string(), z.unknown())
+      .describe("A JSON object of at most 100 KB, nested at most as deep as a Webhook payload."),
+  })
+  .describe("Sets an HTTP request step's expected response.");
+export type TSetWorkflowExpectedResponseInput = z.infer<typeof ZSetWorkflowExpectedResponseInput>;

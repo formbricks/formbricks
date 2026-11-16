@@ -30,7 +30,7 @@ import { CodeBlock } from "@/modules/ui/components/code-block";
 const SAVE_DELAY_MS = 800;
 const EXAMPLE_BODY = '{"customer":{"email":"jane@example.com"}}';
 
-type TPayloadView = "variables" | "json";
+export type TPayloadView = "variables" | "json";
 type TExpectedPayload = NonNullable<TWorkflowWebhookResource["sample"]>;
 type TLastCall = NonNullable<TWorkflowWebhookResource["lastCall"]>;
 
@@ -49,7 +49,13 @@ const isNewerDifferentCall = (
   JSON.stringify(lastCall.payload) !== JSON.stringify(sample.payload);
 
 /** A compact two-option switch, styled like the app's TabToggle but sized for a card header. */
-const ViewSwitch = ({ value, onChange }: { value: TPayloadView; onChange: (next: TPayloadView) => void }) => {
+export const ViewSwitch = ({
+  value,
+  onChange,
+}: {
+  value: TPayloadView;
+  onChange: (next: TPayloadView) => void;
+}) => {
   const { t } = useTranslation();
   const options: { value: TPayloadView; label: string }[] = [
     { value: "variables", label: t("workspace.workflows.webhook_payload_view_variables") },
@@ -104,7 +110,7 @@ const RequiredTag = () => {
 };
 
 /** A blue notice about a received call, with the actions it offers. */
-const CallNotice = ({ message, children }: { message: string; children: ReactNode }) => (
+export const CallNotice = ({ message, children }: { message: string; children: ReactNode }) => (
   <div className="flex flex-col gap-2 border-t border-blue-100 bg-blue-50 px-3 py-2.5">
     <p className="flex items-start gap-1.5 text-xs text-blue-900">
       <InboxIcon className="mt-px size-3.5 shrink-0" aria-hidden />
@@ -115,7 +121,7 @@ const CallNotice = ({ message, children }: { message: string; children: ReactNod
 );
 
 /** The Variables inferred from a payload; lists are shown as not supported yet. */
-const VariableRows = ({ variables }: { variables: TExpectedPayload["variables"] }) => {
+export const VariableRows = ({ variables }: { variables: TExpectedPayload["variables"] }) => {
   const { t } = useTranslation();
   const typeLabel = useTypeLabel();
   const rows = toVariableListRows(variables);

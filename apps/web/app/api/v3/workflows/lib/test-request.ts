@@ -9,6 +9,7 @@ import {
   type TWorkflowTestRequestResult,
   WORKFLOW_SAMPLE_TRIGGER_SOURCE,
   ZWorkflowHttpRequestActionConfig,
+  getLastTestSampleSource,
   isDefaultSecretHeaderName,
   resolveBoundWorkflowSecret,
 } from "@formbricks/workflows";
@@ -47,7 +48,7 @@ const urlHost = (url: string): string | null => {
 
 /**
  * The Variables a Test request renders with: the given test payload, else the workflow's Sample
- * payload; the given step outputs, else each other HTTP request step's last Test request response.
+ * payload; the given step outputs, else each other HTTP request step's expected response.
  * One query for all samples.
  */
 const loadTestContext = async (
@@ -123,7 +124,7 @@ const buildSecretResolver = async (
  * `POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request` and the MCP `send_test_request`
  * tool (ENG-7179, ENG-7168): one real call of an HTTP request step from its saved or draft settings.
  * Write access, 30 per minute per user or API key, the same address checks and secret host binding
- * as a run (a stored secret set for another host is a 400), 10 s and no retry. Not a run and not billed. An answer is saved as the step's sample (≤64 KB) and the call is
+ * as a run (a stored secret set for another host is a 400), 10 s and no retry. Not a run and not billed. An answer is kept as the step's last Test request response (≤64 KB, ADR 0054) and the call is
  * audited (`testRequestSent`) with its host and status, never its headers or body.
  */
 export const sendWorkflowTestRequest = async ({
@@ -194,13 +195,16 @@ export const sendWorkflowTestRequest = async ({
       ? summarizeWorkflowHttpResponse(outcome.response, collectSentSecretValues(built.call, built.record))
           .record
       : null;
+    // Kept as the step's last Test request response, never as its expected response, which only
+    // editors set (ADR 0054): the editor offers it, and the Variables stay put until one is chosen.
     if (response) {
+      const source = getLastTestSampleSource(params.stepId);
       await prisma.workflowSample.upsert({
-        where: { workflowId_source: { workflowId: workflow.id, source: params.stepId } },
+        where: { workflowId_source: { workflowId: workflow.id, source } },
         create: {
           workflowId: workflow.id,
           workspaceId: workflow.workspaceId,
-          source: params.stepId,
+          source,
           sample: { ...response },
         },
         update: { sample: { ...response } },

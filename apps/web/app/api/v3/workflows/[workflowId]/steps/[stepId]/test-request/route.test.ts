@@ -139,12 +139,12 @@ describe("POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request", () =
     });
   });
 
-  test("saves the answer as the step's sample and audits the host and status only", async () => {
+  test("keeps the answer as the step's last test response and audits the host and status only", async () => {
     await post();
 
     expect(mocks.sampleUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { workflowId_source: { workflowId: WORKFLOW_ID, source: "call" } },
+        where: { workflowId_source: { workflowId: WORKFLOW_ID, source: "call:last_test" } },
         update: { sample: { status: 201, contentType: "application/json", body: { id: "c_1" } } },
       })
     );

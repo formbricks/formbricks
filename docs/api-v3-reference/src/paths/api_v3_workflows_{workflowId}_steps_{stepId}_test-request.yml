@@ -9,8 +9,9 @@ post:
     returns **200**: the request itself succeeded.
 
 
-    When an answer came, it is saved as the step's sample (up to 64 KB). Recorded in the audit log as
-    `testRequestSent` with the host and status.
+    When an answer came, it is kept as the step's last Test request response (up to 64 KB), which the
+    editor offers to use as the step's expected response; it never replaces it. Recorded in the audit
+    log as `testRequestSent` with the host and status.
 
 
     Requires **write** access and is limited to 30 calls per minute per user or API key (**429**).

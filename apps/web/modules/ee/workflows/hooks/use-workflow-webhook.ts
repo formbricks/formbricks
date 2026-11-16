@@ -1,11 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import type { TWorkflowWebhookResource } from "@formbricks/workflows";
+import type { TWorkflowSampleList, TWorkflowWebhookResource } from "@formbricks/workflows";
 import {
   getWorkflowWebhook,
   listWorkflowSamples,
   regenerateWorkflowWebhook,
+  setWorkflowExpectedResponse,
   setWorkflowSample,
 } from "../lib/api-client";
 import { workflowKeys } from "../lib/query";
@@ -69,3 +70,19 @@ export const useWorkflowSamples = ({
     enabled: enabled && workflowId !== null,
     queryFn: ({ signal }) => listWorkflowSamples(workflowId as string, signal),
   });
+
+/**
+ * Saves an HTTP request step's expected response (ADR 0054) into the samples the editor already holds,
+ * so the step's Variables update at once.
+ */
+export const useSetExpectedResponse = (workflowId: string, stepId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: Record<string, unknown>) => setWorkflowExpectedResponse(workflowId, stepId, body),
+    onSuccess: (entry) =>
+      queryClient.setQueryData<TWorkflowSampleList>(workflowKeys.samples(workflowId), (current) => [
+        ...(current ?? []).filter((item) => item.source !== entry.source),
+        entry,
+      ]),
+  });
+};

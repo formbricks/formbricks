@@ -10,6 +10,7 @@ import type {
   TWorkflowRunResource,
   TWorkflowRunStatus,
   TWorkflowSampleList,
+  TWorkflowSampleListItem,
   TWorkflowSampleResource,
   TWorkflowSortBy,
   TWorkflowStatus,
@@ -405,6 +406,25 @@ export async function setWorkflowSample(
     signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
   });
   return readDataResponse<TWorkflowSampleResource>(response);
+}
+
+/** Sets an HTTP request step's expected response (ADR 0054): the body its API answers with. */
+export async function setWorkflowExpectedResponse(
+  workflowId: string,
+  stepId: string,
+  body: Record<string, unknown>
+): Promise<TWorkflowSampleListItem> {
+  const response = await fetch(
+    `/api/internal/workflows/${workflowId}/steps/${encodeURIComponent(stepId)}/expected-response`,
+    {
+      method: "PUT",
+      cache: "no-store",
+      headers: JSON_HEADERS,
+      body: JSON.stringify({ body }),
+      signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
+    }
+  );
+  return readDataResponse<TWorkflowSampleListItem>(response);
 }
 
 /**

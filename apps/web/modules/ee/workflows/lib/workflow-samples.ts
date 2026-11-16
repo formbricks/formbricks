@@ -2,23 +2,38 @@ import {
   type TWorkflowDefinition,
   type TWorkflowResource,
   type TWorkflowSampleList,
+  type TWorkflowSampleListItem,
   WORKFLOW_SAMPLE_TRIGGER_SOURCE,
   WORKFLOW_TRIGGERS,
+  getLastTestSampleSource,
+  isLastTestSampleSource,
 } from "@formbricks/workflows";
 import type { TWorkflowStepVariableContext } from "@/modules/ee/workflows/lib/variable-picker";
 
 /**
- * The Variable picker's step samples from a workflow's saved samples: each HTTP request step's last
- * Test request response, keyed by step id. The trigger's Sample payload is not a step output.
+ * The Variable picker's step samples from a workflow's saved samples: each HTTP request step's
+ * expected response, keyed by step id (ADR 0054). The trigger's expected payload is not a step output,
+ * and a step's last Test request response only counts once an editor chooses to use it.
  */
 export const toStepVariableContext = (
   samples: TWorkflowSampleList | undefined
 ): TWorkflowStepVariableContext => ({
   stepSamples: Object.fromEntries(
     (samples ?? [])
-      .filter((entry) => entry.source !== WORKFLOW_SAMPLE_TRIGGER_SOURCE)
+      .filter(
+        (entry) => entry.source !== WORKFLOW_SAMPLE_TRIGGER_SOURCE && !isLastTestSampleSource(entry.source)
+      )
       .map((entry) => [entry.source, entry.sample])
   ),
+});
+
+/** A step's expected response and its last Test request response, each with when it was saved. */
+export const getStepResponseSamples = (
+  samples: TWorkflowSampleList | undefined,
+  stepId: string
+): { expected: TWorkflowSampleListItem | null; lastTest: TWorkflowSampleListItem | null } => ({
+  expected: samples?.find((entry) => entry.source === stepId) ?? null,
+  lastTest: samples?.find((entry) => entry.source === getLastTestSampleSource(stepId)) ?? null,
 });
 
 /**
