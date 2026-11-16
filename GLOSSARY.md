@@ -171,7 +171,7 @@ programming or UI concepts, and no implementation details.
 
 **Run** — One execution of a workflow from its trigger to its last step, tied to the version that was enabled when it started. _Avoid_: execution, job.
 
-**Test run** — A run started from the editor with the expected payload. It sends no email, calls nothing outside, appears under Runs with a Test label and is never billed. _Avoid_: dry run, simulation, preview.
+**Test run** — A run started from the editor with the expected payload, or, for a Response completed workflow, against an existing response of its survey. It sends no email, calls nothing outside, appears under Runs with a Test label and is never billed. _Avoid_: dry run, simulation, preview.
 
 **Test request** — One real call made by an HTTP request's "Send test request" button, so the author sees the real response. It is not a run. _Avoid_: ping, test call.
 

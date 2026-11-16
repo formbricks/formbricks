@@ -28,10 +28,10 @@ describe("buildTestRunInput", () => {
 });
 
 describe("getTestRunBlocker", () => {
-  test("only a Webhook trigger can be tested", () => {
+  test("a Webhook and a Response completed trigger can be tested, no trigger cannot", () => {
     expect(getTestRunBlocker({ triggerType: "webhook", status: "draft" })).toBeNull();
-    expect(getTestRunBlocker({ triggerType: "response.completed", status: "draft" })).toBe("not_webhook");
-    expect(getTestRunBlocker({ triggerType: null, status: "draft" })).toBe("not_webhook");
+    expect(getTestRunBlocker({ triggerType: "response.completed", status: "enabled" })).toBeNull();
+    expect(getTestRunBlocker({ triggerType: null, status: "draft" })).toBe("no_trigger");
   });
 
   test("an archived workflow cannot be tested", () => {
@@ -56,6 +56,22 @@ describe("classifyTestRunError", () => {
       "payload_too_large"
     );
     expect(classifyTestRunError(problem(400, "bad_request"), { sentPayload: true })).toBe("invalid_payload");
+  });
+
+  test("a picked response refused means it is gone or no longer the trigger survey's", () => {
+    expect(
+      classifyTestRunError(problem(403, "forbidden"), { sentPayload: false, sentResponseId: true })
+    ).toBe("response_unavailable");
+    expect(classifyTestRunError(problem(403, "forbidden"), { sentPayload: false })).toBe("other");
+  });
+
+  test("a refused state for a response run is not a missing payload", () => {
+    expect(
+      classifyTestRunError(problem(422, "invalid_workflow_state"), {
+        sentPayload: false,
+        sentResponseId: true,
+      })
+    ).toBe("other");
   });
 
   test("anything else is unexplained", () => {

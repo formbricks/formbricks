@@ -74,9 +74,10 @@ export const WorkflowEditorHeader = ({
       <WorkflowTestRunDrawer
         open={testRun.isDrawerOpen}
         onClose={testRun.closeDrawer}
-        onRunAgain={startTestRun}
+        onRunAgain={(responseId) => void testRun.startTestRun(responseId)}
         runId={testRun.runId}
         isRunning={testRun.isRunning}
+        isPickingResponse={testRun.isPickingResponse}
         failure={testRun.failure}
         error={testRun.error}
       />

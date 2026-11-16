@@ -10,8 +10,14 @@ import { WEBHOOK_PAYLOAD_MAX_BYTES, WEBHOOK_PAYLOAD_MAX_DEPTH } from "../webhook
 export const ZCreateWorkflowTestRunInput = z
   .strictObject({
     payload: ZWorkflowWebhookPayload.optional().describe(
-      `The test payload: a JSON object of at most ${WEBHOOK_PAYLOAD_MAX_BYTES / 1024} KB, nested at most ${WEBHOOK_PAYLOAD_MAX_DEPTH} levels. Defaults to the workflow's Sample payload.`
+      `Webhook trigger only. The test payload: a JSON object of at most ${WEBHOOK_PAYLOAD_MAX_BYTES / 1024} KB, nested at most ${WEBHOOK_PAYLOAD_MAX_DEPTH} levels. Defaults to the workflow's Sample payload.`
     ),
+    responseId: z
+      .cuid2()
+      .optional()
+      .describe(
+        "Response completed trigger only, and required there. An existing response of the trigger's survey to run against, completed or not, whatever ending it reached."
+      ),
   })
   .describe("Starts a Test run of the workflow's draft.");
 export type TCreateWorkflowTestRunInput = z.infer<typeof ZCreateWorkflowTestRunInput>;

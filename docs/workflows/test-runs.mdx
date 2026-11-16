@@ -1,11 +1,11 @@
 ---
 title: "Test runs"
-description: "Run a workflow's draft with its expected payload, without sending email or calling anything outside."
+description: "Run a workflow's draft with its expected payload or an existing survey response, without sending email or calling anything outside."
 icon: "flask"
 ---
 
-A **Test run** runs the workflow as it is in the editor, with its **expected payload**, and shows what a real run
-would do: which branch each [If/else](/workflows/if-else) takes, whom each email would go to, and what each
+A **Test run** runs the workflow as it is in the editor, with its **expected payload** (a Webhook trigger) or with
+**an existing response** to its survey (a Response completed trigger), and shows what a real run would do: which branch each [If/else](/workflows/if-else) takes, whom each email would go to, and what each
 [HTTP request](/workflows/http-request) would send. It sends no email and calls nothing outside Formbricks.
 
 <Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
@@ -15,6 +15,8 @@ took its Then branch with each condition marked matched, and a Send email step s
 emailed. Save to /images/platform/workflows/test-run-result.webp and replace this comment with a <Frame>. */}
 
 ## Start a Test run
+
+### Webhook trigger
 
 <Steps>
   <Step title="Set the expected payload">
@@ -31,6 +33,33 @@ emailed. Save to /images/platform/workflows/test-run-result.webp and replace thi
     Select **Test run**. Formbricks runs the draft at once and saves the result as a run.
   </Step>
 </Steps>
+
+### Response completed trigger
+
+<Steps>
+  <Step title="Have a response to test with">
+    The survey needs at least one response. To test a new workflow, fill out the survey once yourself.
+  </Step>
+
+  <Step title="Get test responses for HTTP requests">
+    As for a Webhook trigger, select **Send test request** once on each HTTP request set to **Wait and use it**.
+  </Step>
+
+  <Step title="Pick the response">
+    Select **Test run**. The drawer lists the survey's responses, newest first, with when each came in, whether it
+    is completed or partial, and its first answer. The newest completed response is selected. Pick another, or
+    select **Load more** to see older ones.
+  </Step>
+
+  <Step title="Run the test">
+    Select **Run test**. Formbricks runs the draft as if that response had just come in and saves the result as a
+    run. To try another response, pick it in the trigger step and select **Run again**.
+  </Step>
+</Steps>
+
+A real run only starts for a completed response, and, if the trigger is limited to certain endings, only for a
+response that reached one of them. You can still test with any other response: the drawer tells you a real run
+would skip it.
 
 You don't have to save or enable the workflow first: a Test run uses the current draft. It does need to pass the
 same checks as **Enable**, so fix any problem the editor lists first.
@@ -56,9 +85,8 @@ runs are never billed and don't count toward usage. They are deleted 7 days afte
 
 ## When Test runs are available
 
-- The workflow has a Webhook trigger. For a **Response completed** workflow, the
-  [manual check](/workflows/build#check-validity-or-enable) verifies the setup without running it.
-- The workflow has an expected payload.
+- A Webhook workflow has an expected payload, or you write one in the trigger panel.
+- A Response completed workflow's survey has at least one response, and you can see that survey.
 - The workflow isn't archived.
 - You have write or manage access to the workspace.
 
@@ -68,6 +96,6 @@ You can start 30 Test runs per minute.
 
 | You want to…                                                      | Use                                                                              |
 | ----------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| See which branch a payload takes and what each step would do      | **Test run**                                                                     |
+| See which branch a payload or a response takes and what each step would do | **Test run**                                                            |
 | See what one API really answers                                   | **Send test request** on that [HTTP request](/workflows/http-request#send-test-request) |
-| Check the whole workflow end to end, including email delivery     | Enable it and call the Webhook Secret URL with a payload that points at your own address |
+| Check the whole workflow end to end, including email delivery     | Enable it and call the Webhook Secret URL, or fill out the survey, so that it emails your own address |

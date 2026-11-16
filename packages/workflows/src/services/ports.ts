@@ -303,6 +303,9 @@ export interface WorkflowRunDelegate {
       workflowVersionId: null;
       status: "queued";
       triggerType: string;
+      /** A Response completed Test run's survey and response, as a real run records them. */
+      surveyId?: string;
+      responseId?: string;
       isDryRun: true;
       attempt: number;
       triggerPayload: TWorkflowTriggerRunPayload;

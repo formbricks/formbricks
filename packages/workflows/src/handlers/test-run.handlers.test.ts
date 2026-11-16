@@ -36,6 +36,19 @@ const webhookDefinition = {
   entryNodeId: "trigger",
 };
 
+const responseId = "cm9zr5res000000000000000a";
+const endingId = "cm9zr4end000008l8btfy1vtz";
+
+const responseDefinition = {
+  ...webhookDefinition,
+  trigger: {
+    id: "trigger",
+    type: "trigger" as const,
+    triggerType: "response.completed" as const,
+    config: { surveyId, endingCardIds: [] },
+  },
+};
+
 const makeRow = (overrides: Partial<WorkflowRowWithLastRun> = {}): WorkflowRowWithLastRun => ({
   id: workflowId,
   createdAt: new Date("2026-11-01T09:30:00.000Z"),
@@ -128,6 +141,7 @@ const handlers = createWorkflowsHandlers(service);
 const authorize = vi.fn<WorkflowApiContext["authorize"]>();
 const recordAudit = vi.fn<NonNullable<WorkflowApiContext["recordAudit"]>>();
 const runTest = vi.fn<NonNullable<WorkflowApiContext["runTest"]>>();
+const loadTestRunResponse = vi.fn<NonNullable<WorkflowApiContext["loadTestRunResponse"]>>();
 const logger: WorkflowsLogger = { warn: vi.fn(), error: vi.fn() };
 const authorized: AuthorizedWorkspace = { workspaceId, organizationId: "cm9zr5org00000000000000000" };
 
@@ -142,6 +156,7 @@ const makeCtx = (overrides: Partial<WorkflowApiContext> = {}): WorkflowApiContex
   verifySurveyLinkSurveys: vi.fn().mockResolvedValue([]),
   recordAudit,
   runTest,
+  loadTestRunResponse,
   ...overrides,
 });
 
@@ -225,24 +240,25 @@ describe("createTestRun", () => {
     expect((await startTestRun({ payload: {} })).status).toBe(403);
   });
 
-  test("refuses an archived workflow and one without a Webhook trigger", async () => {
+  test("refuses an archived workflow", async () => {
     service.getWorkflowById.mockResolvedValueOnce(makeRow({ status: "archived" }));
     expect((await startTestRun({ payload: {} })).status).toBe(422);
+    expect(service.createTestRun).not.toHaveBeenCalled();
+  });
 
+  test("refuses a workflow with no trigger yet", async () => {
     service.getWorkflowById.mockResolvedValueOnce(
-      makeRow({
-        definition: {
-          ...webhookDefinition,
-          trigger: {
-            id: "trigger",
-            type: "trigger",
-            triggerType: "response.completed",
-            config: { surveyId, endingCardIds: [] },
-          },
-        },
-      })
+      makeRow({ definition: { ...webhookDefinition, trigger: null } })
     );
-    expect((await startTestRun({ payload: {} })).status).toBe(422);
+    expect((await startTestRun({})).status).toBe(422);
+    expect(service.createTestRun).not.toHaveBeenCalled();
+  });
+
+  test("a Webhook workflow refuses a responseId", async () => {
+    const res = await startTestRun({ responseId });
+
+    expect(res.status).toBe(400);
+    expect(loadTestRunResponse).not.toHaveBeenCalled();
     expect(service.createTestRun).not.toHaveBeenCalled();
   });
 
@@ -271,5 +287,62 @@ describe("createTestRun", () => {
       workspaceId,
       newObject: { runId, status: "completed" },
     });
+  });
+});
+
+describe("createTestRun for a Response completed workflow", () => {
+  beforeEach(() => {
+    service.getWorkflowById.mockResolvedValue(makeRow({ definition: responseDefinition }));
+    loadTestRunResponse.mockResolvedValue({
+      id: responseId,
+      surveyId,
+      endingId,
+      data: { nps: 9 },
+    });
+  });
+
+  test("runs against the picked response, looked up within the trigger's survey and workspace", async () => {
+    const res = await startTestRun({ responseId });
+
+    expect(res.status).toBe(201);
+    expect(loadTestRunResponse).toHaveBeenCalledWith({ workspaceId, surveyId, responseId });
+    expect(service.createTestRun).toHaveBeenCalledWith(
+      { workflowId, workspaceId },
+      expect.objectContaining({
+        type: "response.completed",
+        workspaceId,
+        surveyId,
+        responseId,
+        endingCardId: endingId,
+        data: { nps: 9 },
+      })
+    );
+    expect(runTest).toHaveBeenCalledWith({ runId, workflowId, workspaceId });
+  });
+
+  test("leaves the ending out for a response that reached none", async () => {
+    loadTestRunResponse.mockResolvedValue({ id: responseId, surveyId, endingId: null, data: {} });
+
+    await startTestRun({ responseId });
+
+    expect(service.createTestRun.mock.calls[0][1]).not.toHaveProperty("endingCardId");
+  });
+
+  test("refuses a response outside the trigger's survey or workspace like an unknown id, running nothing", async () => {
+    loadTestRunResponse.mockResolvedValue(null);
+
+    const res = await startTestRun({ responseId });
+
+    expect(res.status).toBe(403);
+    expect(service.createTestRun).not.toHaveBeenCalled();
+    expect(runTest).not.toHaveBeenCalled();
+  });
+
+  test("needs a responseId and refuses a payload", async () => {
+    expect((await startTestRun({})).status).toBe(400);
+    expect((await startTestRun({ payload: { nps: 9 } })).status).toBe(400);
+    expect((await startTestRun({ responseId: "not-a-cuid" })).status).toBe(400);
+    expect(loadTestRunResponse).not.toHaveBeenCalled();
+    expect(service.createTestRun).not.toHaveBeenCalled();
   });
 });
