@@ -3626,7 +3626,7 @@ paths:
         can only be updated while the workflow is `draft` or `disabled`: the live version of an
         `enabled` workflow is an immutable snapshot, so definition changes require disabling (or
         moving to draft) first and re-enabling afterwards. Violations return **422** with code
-        `invalid_workflow_state`. A structurally invalid definition returns **400** with structured `invalid_params`; the referenced survey and ending cards are not verified here — that existence check runs when the workflow is enabled.
+        `invalid_workflow_state`. A structurally invalid definition returns **400** with structured `invalid_params`, and so does a secret header value for an HTTP request step without a valid URL (a stored value is bound to its step's URL); the referenced survey and ending cards are not verified here — that existence check runs when the workflow is enabled.
       tags:
         - V3 Workflows
       parameters:
@@ -3785,7 +3785,7 @@ paths:
         reachable from the trigger, only Scope 1 node types are present, the referenced survey
         and ending cards still exist, and every `send_email` action addressing a *literal* email address
         targets someone who can access this workspace (an element-id `to` resolves to the respondent's own
-        address and is exempt), every `send_email` survey link points to a link survey in this workspace, and a step with a Variable recipient has a fixed subject and body — and then snapshots an immutable workflow version. Runs
+        address and is exempt), every `send_email` survey link points to a link survey in this workspace, a step with a Variable recipient has a fixed subject and body, and every stored secret header value of an HTTP request step was set for the origin its URL now has (a step moved to another host needs its secret values set again) — and then snapshots an immutable workflow version. Runs
         reference that snapshot via `workflowVersionId`, so later draft edits never change what an
         enabled workflow executes. Validation failures return **422** with code
         `workflow_not_executable` and structured `invalid_params`; calling enable in a state other
@@ -4295,7 +4295,7 @@ paths:
 
         When an answer came, it is saved as the step's sample (up to 64 KB). Recorded in the audit log as `testRequestSent` with the host and status.
 
-        Requires **write** access and is limited to 30 calls per minute per user or API key (**429**). A step that is not an HTTP request answers **404**; an archived workflow **422** `invalid_workflow_state`; settings that can't be sent (no URL, a secret header with no value, a body that is not JSON, or a draft URL on another host than the saved step while a secret header relies on its stored value) **400**. A stored secret value is only sent to the saved step's host.
+        Requires **write** access and is limited to 30 calls per minute per user or API key (**429**). A step that is not an HTTP request answers **404**; an archived workflow **422** `invalid_workflow_state`; settings that can't be sent (no URL, a secret header with no value, a body that is not JSON, or a URL on another origin than a stored secret header value was set for) **400**. A stored secret value is only sent to the origin it was set for (its `boundOrigin`); a value typed in the draft `config` is used for this call only and goes to the draft URL.
       tags:
         - V3 Workflows
       parameters:
@@ -14163,7 +14163,7 @@ components:
       additionalProperties: false
     WorkflowHttpHeader:
       type: object
-      description: 'A plain or secret header of an HTTP request step. A secret header''s value is stored encrypted beside the workflow and never returned: writes send `{name, value, secret: true}` to set or replace it, or `{name, secret: true}` to keep the stored one; reads return `{name, secret: true, isSet}`. Replacing a value updates the enabled workflow at once. A duplicated workflow keeps the names but not the values, and can''t be enabled until they are entered again. `Authorization` and names containing `token`, `key`, `secret` or `cookie` are secret unless `secret: false` is sent. Setting or replacing a secret is recorded in the audit log with the header name only.'
+      description: 'A plain or secret header of an HTTP request step. A secret header''s value is stored encrypted beside the workflow and never returned: writes send `{name, value, secret: true}` to set or replace it, or `{name, secret: true}` to keep the stored one; reads return `{name, secret: true, isSet, boundOrigin}`. A stored value is bound to the origin (scheme, host, port) of its step''s URL when it was set, and is only ever sent there: after the URL moves to another origin, a run fails the step, a test request answers **400** and enable answers **422** until the value is set again, which binds it to the new URL. Replacing a value updates the enabled workflow at once when it stays on the same origin. A duplicated workflow keeps the names but not the values, and can''t be enabled until they are entered again. `Authorization` and names containing `token`, `key`, `secret` or `cookie` are secret unless `secret: false` is sent. Setting or replacing a secret is recorded in the audit log with the header name and the host it is bound to.'
       required:
         - name
       properties:
@@ -14185,6 +14185,11 @@ components:
           type: boolean
           readOnly: true
           description: Read only. Whether a secret header has a stored value.
+        boundOrigin:
+          type: string
+          maxLength: 2048
+          readOnly: true
+          description: Read only. The origin (scheme, host, port) a secret header's stored value was set for, such as `https://api.example.com`; the value is only sent there. Absent for a value set before host binding, which is held to the step's saved URL until it is set again. Ignored on write.
       additionalProperties: false
     WorkflowHttpRequestActionConfig:
       type: object
@@ -15402,7 +15407,7 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/WorkflowHttpRequestActionConfig'
-          description: The step's draft settings; defaults to the saved step. A secret header without a value uses the saved secret of that name; one with a value uses it for this call only and stores nothing.
+          description: The step's draft settings; defaults to the saved step. A secret header without a value uses the saved secret of that name, only on the origin that secret was set for; one with a value uses it for this call only and stores nothing.
         variables:
           type: object
           properties:

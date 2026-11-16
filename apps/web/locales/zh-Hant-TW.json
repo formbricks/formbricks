@@ -6167,6 +6167,7 @@
       "http_request_response": "回應",
       "http_request_secret_live_warning": "這也會立即更新已啟用的工作流程。",
       "http_request_secret_missing": "請輸入值",
+      "http_request_secret_other_host": "請重新輸入：已儲存的值只會傳送至 {host}",
       "http_request_secret_placeholder": "值(加密儲存)",
       "http_request_secret_replace_failed": "無法取代密鑰。",
       "http_request_secret_replaced": "密鑰已取代。已啟用的工作流程會從下次執行起使用新的密鑰。",

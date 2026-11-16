@@ -6167,6 +6167,7 @@
       "http_request_response": "响应",
       "http_request_secret_live_warning": "这也会立即更新已启用的工作流。",
       "http_request_secret_missing": "请输入值",
+      "http_request_secret_other_host": "请重新输入：已保存的值只会发送到 {host}",
       "http_request_secret_placeholder": "值,加密存储",
       "http_request_secret_replace_failed": "无法替换密钥。",
       "http_request_secret_replaced": "密钥已替换。已启用的工作流将从下次运行起使用该密钥。",

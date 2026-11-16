@@ -5941,6 +5941,7 @@ checksums:
     workspace/workflows/http_request_response: c7a9d88269d8ff117abcbc0d97f88b2c
     workspace/workflows/http_request_secret_live_warning: fa2a6c7b5ef21d5d7380cb2d2036710e
     workspace/workflows/http_request_secret_missing: 6faf7f1a38d9c160c3c9a3d84a370ead
+    workspace/workflows/http_request_secret_other_host: 4acaf0d348d1c0048ece08811d728e07
     workspace/workflows/http_request_secret_placeholder: e4b698ccef5111dccb4d8181096c7bcc
     workspace/workflows/http_request_secret_replace_failed: 8452ff5e345edf9474f806afa483415d
     workspace/workflows/http_request_secret_replaced: eb1baf47900a4777a6d50f4cfae56be6

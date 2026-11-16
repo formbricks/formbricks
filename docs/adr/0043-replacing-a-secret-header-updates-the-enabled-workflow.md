@@ -10,5 +10,6 @@ A secret header's value lives encrypted in its own `WorkflowSecret` row, and the
 ## Consequences
 
 - A typo in a replaced value breaks live runs immediately; "Send test request" uses the same row, so authors can check it first.
+- A value is bound to the origin of its step's URL (ADR 0051), so Replace overwrites in place only while the step stays on that origin; for a step the draft moved to another host, the new value goes to a row of the draft's own.
 - A version does not pin its secret values. Restoring an old version (ENG-7119) will run with today's values.
 - Duplicates copy the header names but not the values, and can't be enabled until the values are entered again.

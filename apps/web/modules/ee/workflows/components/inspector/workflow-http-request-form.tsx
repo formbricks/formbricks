@@ -24,6 +24,7 @@ import {
   findDuplicateHeaderIndexes,
   getHeaderRowKind,
   getSavedSecretHeaderNames,
+  getSecretBoundHostMismatch,
   getSecretReplaceMode,
   isPlainHttpUrl,
   methodSendsBody,
@@ -271,6 +272,8 @@ export const WorkflowHttpRequestForm = ({
         {config.headers.map((header, index) => {
           const kind = getHeaderRowKind(header);
           const isLocked = header.secret === true;
+          // A stored value is only sent to the host it was set for (ADR 0051).
+          const boundHost = getSecretBoundHostMismatch(header, config.url);
           return (
             <div key={index} className="flex flex-col gap-1">
               {/* Four controls share the 360px inspector: a narrower name and smaller icon buttons
@@ -335,6 +338,11 @@ export const WorkflowHttpRequestForm = ({
                   headerName={header.name}
                   onDone={() => setLiveReplaceIndex(null)}
                 />
+              ) : null}
+              {boundHost ? (
+                <p className="text-xs text-warning-foreground">
+                  {t("workspace.workflows.http_request_secret_other_host", { host: boundHost })}
+                </p>
               ) : null}
               {kind === "secret_missing" || duplicateHeaders.has(index) ? (
                 <p className="text-xs text-warning-foreground">

@@ -163,7 +163,7 @@ programming or UI concepts, and no implementation details.
 
 **HTTP request** — The action that calls an outside URL with a method, headers and body, and passes the response to later steps. _Avoid_: API call, web service task, webhook action, outgoing webhook.
 
-**Secret header** — A header of an HTTP request whose value is stored encrypted and never shown again; it can only be replaced. A duplicate keeps the header but not its value. _Avoid_: credential, token (as the general word).
+**Secret header** — A header of an HTTP request whose value is stored encrypted and never shown again; it can only be replaced. The value is bound to the host (origin) of the step's URL when it was set and is only ever sent there; a step moved to another host needs it entered again (ADR 0051). A duplicate keeps the header but not its value. _Avoid_: credential, token (as the general word).
 
 **Variable** — A named value a run can use in later steps: part of the payload, a step's output or a response answer, inserted with @. _Avoid_: field (a chart-query term), data reference.
 

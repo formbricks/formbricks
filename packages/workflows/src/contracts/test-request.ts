@@ -19,7 +19,7 @@ export type TWorkflowTestRequestParams = z.infer<typeof ZWorkflowTestRequestPara
 export const ZSendWorkflowTestRequestInput = z
   .object({
     config: ZWorkflowHttpRequestActionConfig.optional().describe(
-      "The step's draft settings; defaults to the saved step. A secret header without a value uses the saved secret of that name; one with a value uses that value for this call only and stores nothing."
+      "The step's draft settings; defaults to the saved step. A secret header without a value uses the saved secret of that name, only on the origin that secret was set for; one with a value uses that value for this call only and stores nothing."
     ),
     variables: z
       .object({

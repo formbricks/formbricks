@@ -20,7 +20,7 @@ const ZMcpHttpRequestConfig = ZWorkflowHttpRequestActionConfig.extend({
 export const ZMcpSendTestRequestInput = ZSendWorkflowTestRequestInput.extend({
   ...ZWorkflowTestRequestParams.shape,
   config: ZMcpHttpRequestConfig.optional().describe(
-    "The step's draft settings; defaults to the saved step. A secret header without a value uses the saved secret of that name; one with a value uses that value for this call only."
+    "The step's draft settings; defaults to the saved step. A secret header without a value uses the saved secret of that name, only if the URL is on the host that secret was set for; one with a value uses that value for this call only."
   ),
 })
   .strict()

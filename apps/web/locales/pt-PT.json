@@ -6167,6 +6167,7 @@
       "http_request_response": "Resposta",
       "http_request_secret_live_warning": "Isto também atualiza de imediato o fluxo de trabalho ativado.",
       "http_request_secret_missing": "Introduz um valor",
+      "http_request_secret_other_host": "Introduz novamente: o valor guardado só é enviado para {host}",
       "http_request_secret_placeholder": "Valor, guardado encriptado",
       "http_request_secret_replace_failed": "Não foi possível substituir o segredo.",
       "http_request_secret_replaced": "Segredo substituído. O fluxo de trabalho ativo vai usá-lo a partir da próxima execução.",

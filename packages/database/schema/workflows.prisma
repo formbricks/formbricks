@@ -160,7 +160,7 @@ model WorkflowRunLog {
 /// Encrypted value of an HTTP request secret header (ENG-7168, ADR 0043). The definition and every version
 /// store only `{name, secret: true, secretId}`; Replace overwrites this row in place, so the enabled
 /// version uses the new value at once. Rows nothing references are deleted on Enable; all are deleted
-/// with the workflow.
+/// with the workflow. A value is only sent to the origin it was set for (ADR 0051).
 model WorkflowSecret {
   id          String   @id @default(cuid(2))
   createdAt   DateTime @default(now()) @map(name: "created_at")
@@ -170,6 +170,10 @@ model WorkflowSecret {
   workspaceId String
   /// `symmetricEncrypt` ciphertext (AES-256-GCM). Never logged, never returned.
   value       String
+  /// Origin (scheme, host, port) of the step's URL when the value was set or replaced; the value is only
+  /// sent there (ADR 0051). Null for a value set before host binding: held to the step's saved URL
+  /// until it is set again.
+  boundOrigin String?
 
   @@index([workflowId, workspaceId])
 }

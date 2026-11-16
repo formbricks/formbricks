@@ -9,7 +9,8 @@ import { PUT } from "./route";
 /**
  * Replace on a secret header (ADR 0043) behind the route: authentication, write access, the step and
  * header lookup in the draft and the enabled version, the encrypted row written in place (a real store
- * over an in-memory table), the draft pointer for a first value, and the audit event.
+ * over an in-memory table) and bound to the step's URL (ADR 0051), the draft pointer for a first value
+ * or a new host, and the audit event.
  */
 const KEY = vi.hoisted(() => "0123456789abcdef0123456789abcdef");
 
@@ -27,7 +28,10 @@ const mocks = vi.hoisted(() => ({
   logError: vi.fn(),
   logWarn: vi.fn(),
   logInfo: vi.fn(),
-  secrets: new Map<string, { workflowId: string; workspaceId: string; value: string }>(),
+  secrets: new Map<
+    string,
+    { workflowId: string; workspaceId: string; value: string; boundOrigin: string | null }
+  >(),
 }));
 
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
@@ -45,11 +49,18 @@ vi.mock("@/lib/constants", async (importOriginal) => ({
   ENCRYPTION_KEY: KEY,
 }));
 vi.mock("@formbricks/database", () => {
-  type TWhere = { id?: string | { in: string[] }; workflowId: string; workspaceId: string };
-  const matches = (id: string, row: { workflowId: string; workspaceId: string }, where: TWhere) =>
+  type TWhere = {
+    id?: string | { in: string[] };
+    workflowId: string;
+    workspaceId: string;
+    OR?: { boundOrigin: string | null }[];
+  };
+  type TRow = { workflowId: string; workspaceId: string; value: string; boundOrigin: string | null };
+  const matches = (id: string, row: TRow, where: TWhere) =>
     row.workflowId === where.workflowId &&
     row.workspaceId === where.workspaceId &&
-    (typeof where.id === "string" ? where.id === id : (where.id?.in.includes(id) ?? true));
+    (typeof where.id === "string" ? where.id === id : (where.id?.in.includes(id) ?? true)) &&
+    (where.OR?.some((option) => option.boundOrigin === row.boundOrigin) ?? true);
   const client = {
     workflow: {
       findUnique: mocks.workflowFindUnique,
@@ -58,27 +69,31 @@ vi.mock("@formbricks/database", () => {
     },
     workflowVersion: { findFirst: mocks.versionFindFirst },
     workflowSecret: {
-      create: vi.fn(
-        async ({ data }: { data: { workflowId: string; workspaceId: string; value: string } }) => {
-          const id = `sec_new_${(mocks.secrets.size + 1).toString()}`;
-          mocks.secrets.set(id, data);
-          return { id };
+      create: vi.fn(async ({ data }: { data: TRow }) => {
+        const id = `sec_new_${(mocks.secrets.size + 1).toString()}`;
+        mocks.secrets.set(id, data);
+        return { id };
+      }),
+      updateMany: vi.fn(
+        async ({ where, data }: { where: TWhere; data: { value: string; boundOrigin: string } }) => {
+          let count = 0;
+          for (const [id, row] of mocks.secrets) {
+            if (matches(id, row, where)) {
+              mocks.secrets.set(id, { ...row, ...data });
+              count += 1;
+            }
+          }
+          return { count };
         }
       ),
-      updateMany: vi.fn(async ({ where, data }: { where: TWhere; data: { value: string } }) => {
-        let count = 0;
-        for (const [id, row] of mocks.secrets) {
-          if (matches(id, row, where)) {
-            mocks.secrets.set(id, { ...row, value: data.value });
-            count += 1;
-          }
-        }
-        return { count };
+      findFirst: vi.fn(async ({ where }: { where: TWhere }) => {
+        const found = [...mocks.secrets].find(([id, row]) => matches(id, row, where));
+        return found ? { id: found[0] } : null;
       }),
       findMany: vi.fn(async ({ where }: { where: TWhere }) =>
         [...mocks.secrets]
           .filter(([id, row]) => matches(id, row, where))
-          .map(([id, row]) => ({ id, value: row.value }))
+          .map(([id, row]) => ({ id, value: row.value, boundOrigin: row.boundOrigin }))
       ),
     },
   };
@@ -98,8 +113,9 @@ vi.mock("@formbricks/logger", () => {
 const WORKFLOW_ID = "cm9zr4t2b000208l8h2m1aq3c";
 const WORKSPACE_ID = "cm9zr4mps000008l8btfy1vtz";
 const NEW_VALUE = "Bearer sk_live_rotated";
+const API_ORIGIN = "https://api.example.com";
 
-const definitionWith = (headers: unknown[]) => ({
+const definitionWith = (headers: unknown[], url = `${API_ORIGIN}/customers`) => ({
   schemaVersion: 1,
   entryNodeId: "trigger",
   trigger: { id: "trigger", type: "trigger", triggerType: "webhook", config: {} },
@@ -110,7 +126,7 @@ const definitionWith = (headers: unknown[]) => ({
       actionType: "http_request",
       config: {
         method: "POST",
-        url: "https://api.example.com/customers",
+        url,
         queryParameters: [],
         headers,
         responseMode: "wait",
@@ -148,13 +164,17 @@ const put = (headerName = "authorization", body: unknown = { value: NEW_VALUE },
     { params: Promise.resolve({ workflowId: WORKFLOW_ID, stepId, headerName }) } as never
   );
 
-/** What a run of this definition would send: the runner loads its secrets exactly like this. */
-const valuesFor = (definition: object) =>
+/** The stored values of this definition's secrets: the runner loads them exactly like this. */
+const storedFor = (definition: object) =>
   loadWorkflowSecretValues({
     workflowId: WORKFLOW_ID,
     workspaceId: WORKSPACE_ID,
     secretIds: collectWorkflowSecretIds(definition as Parameters<typeof collectWorkflowSecretIds>[0]),
   });
+
+/** The plaintext values of this definition's secrets, by id. */
+const valuesFor = async (definition: object) =>
+  new Map([...(await storedFor(definition))].map(([id, secret]) => [id, secret.value]));
 
 /** Everything the request could have leaked the value through. */
 const sinks = () =>
@@ -172,6 +192,7 @@ beforeEach(() => {
     workflowId: WORKFLOW_ID,
     workspaceId: WORKSPACE_ID,
     value: symmetricEncrypt("Bearer sk_live_old", KEY),
+    boundOrigin: API_ORIGIN,
   });
   mocks.getSession.mockResolvedValue({ user: { id: "cm9zr52kh000508l8e3q7bw9j" }, expires: "2099-01-01" });
   mocks.applyRateLimit.mockResolvedValue(undefined);
@@ -209,7 +230,7 @@ describe("PUT /api/internal/workflows/{workflowId}/steps/{stepId}/secret-headers
         targetType: "workflow",
         targetId: WORKFLOW_ID,
         status: "success",
-        newObject: { stepId: "call", headerName: "Authorization" },
+        newObject: { stepId: "call", headerName: "Authorization", host: "api.example.com" },
       })
     );
     expect(sinks()).not.toContain(NEW_VALUE);
@@ -249,9 +270,70 @@ describe("PUT /api/internal/workflows/{workflowId}/steps/{stepId}/secret-headers
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         action: "secretHeaderSet",
-        newObject: { stepId: "call", headerName: "X-Api-Key" },
+        newObject: { stepId: "call", headerName: "X-Api-Key", host: "api.example.com" },
       })
     );
+  });
+
+  test("binds the new value to the origin of the step's URL", async () => {
+    expect((await put()).status).toBe(204);
+
+    expect(await storedFor(enabledDefinition)).toEqual(
+      new Map([["sec_1", { value: NEW_VALUE, boundOrigin: API_ORIGIN }]])
+    );
+  });
+
+  test("a value set before host binding is replaced in place and bound to the step's URL", async () => {
+    mocks.secrets.set("sec_1", { ...mocks.secrets.get("sec_1")!, boundOrigin: null });
+
+    expect((await put()).status).toBe(204);
+
+    expect([...mocks.secrets.keys()]).toEqual(["sec_1"]);
+    expect(await storedFor(enabledDefinition)).toEqual(
+      new Map([["sec_1", { value: NEW_VALUE, boundOrigin: API_ORIGIN }]])
+    );
+  });
+
+  test("a draft moved to another host gets the value in a new row bound there; the enabled version keeps its own", async () => {
+    const movedDraft = definitionWith(
+      [{ name: "Authorization", secret: true, secretId: "sec_1" }],
+      "https://collector.example.net/customers"
+    );
+    mocks.workflowFindUnique.mockResolvedValue(workflowRow({ status: "disabled", definition: movedDraft }));
+
+    expect((await put()).status).toBe(204);
+
+    // The enabled version still sends its old value, and only to its own host.
+    expect(await storedFor(enabledDefinition)).toEqual(
+      new Map([["sec_1", { value: "Bearer sk_live_old", boundOrigin: API_ORIGIN }]])
+    );
+    const update = mocks.workflowUpdateMany.mock.calls[0][0];
+    const [newId] = [...mocks.secrets.keys()].filter((id) => id !== "sec_1");
+    expect(update.data.definition.nodes[0].config.headers).toEqual([
+      { name: "Authorization", secret: true, secretId: newId },
+    ]);
+    expect(await storedFor(update.data.definition)).toEqual(
+      new Map([[newId, { value: NEW_VALUE, boundOrigin: "https://collector.example.net" }]])
+    );
+    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "secretHeaderReplaced",
+        newObject: { stepId: "call", headerName: "Authorization", host: "collector.example.net" },
+      })
+    );
+  });
+
+  test("refuses a value for a step without a URL with 400, since it could not be bound to a host", async () => {
+    mocks.workflowFindUnique.mockResolvedValue(
+      workflowRow({
+        status: "disabled",
+        definition: definitionWith([{ name: "X-Api-Key", secret: true }], ""),
+        versions: [],
+      })
+    );
+
+    expect((await put("x-api-key")).status).toBe(400);
+    expect([...mocks.secrets.keys()]).toEqual(["sec_1"]);
   });
 
   test("answers 404 for a step that is not an HTTP request or a header that is not secret", async () => {

@@ -1,4 +1,5 @@
 import "server-only";
+import { resolveBoundWorkflowSecret } from "@formbricks/workflows";
 import {
   buildWorkflowHttpCall,
   capRequestRecord,
@@ -20,7 +21,9 @@ import type { WorkflowStepExecutor, WorkflowStepOutcome } from "./types";
  * has sent it. In a Test run (fake effects, ADR 0049) nothing is sent: "Wait and use it" gets the
  * step's last Test request response (`testSample: "used"`) or goes on with none (`"missing"`), and
  * "Don't wait" ends at once with the request it would have sent. A failed call fails the step, and
- * so the run, unless "Continue on error" is on.
+ * so the run, unless "Continue on error" is on. A stored secret value is attached only when the step's
+ * URL is on the origin it was set for (ADR 0051); otherwise nothing is sent and the step fails naming
+ * the header and that host, which "Continue on error" also lets the run go past.
  */
 export const httpRequestStepExecutor: WorkflowStepExecutor<"http_request"> = {
   hasEffects: true,
@@ -31,10 +34,21 @@ export const httpRequestStepExecutor: WorkflowStepExecutor<"http_request"> = {
   }),
   execute: async ({ node, context, environment, effects }): Promise<WorkflowStepOutcome> => {
     const { config } = node;
-    const built = buildWorkflowHttpCall(config, context, (header) =>
-      header.secretId ? environment.secretValues.get(header.secretId) : undefined
-    );
-    if (!built.ok) return { status: "failed", error: built.error, output: { mode: config.responseMode } };
+    const built = buildWorkflowHttpCall(config, context, (header) => {
+      const resolved = resolveBoundWorkflowSecret({
+        headerName: header.name,
+        secret: header.secretId ? environment.secretValues.get(header.secretId) : undefined,
+        requestUrl: config.url,
+        savedUrl: config.url,
+      });
+      return resolved && "value" in resolved ? resolved.value : resolved;
+    });
+    if (!built.ok) {
+      const mode = config.responseMode;
+      return built.secretRefused && config.continueOnError
+        ? { status: "succeeded", error: null, output: { mode, error: built.error }, variables: {} }
+        : { status: "failed", error: built.error, output: { mode } };
+    }
 
     if (config.responseMode === "dont_wait") {
       const { handedOff } = await effects.enqueueHttpRequestDelivery({

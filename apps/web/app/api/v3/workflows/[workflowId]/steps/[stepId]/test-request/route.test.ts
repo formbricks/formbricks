@@ -106,7 +106,9 @@ beforeEach(() => {
   });
   mocks.sampleFindMany.mockResolvedValue([{ source: "trigger", sample: { email: "ana@example.com" } }]);
   mocks.sampleUpsert.mockResolvedValue({});
-  mocks.loadSecrets.mockResolvedValue(new Map([["sec_1", SECRET]]));
+  mocks.loadSecrets.mockResolvedValue(
+    new Map([["sec_1", { value: SECRET, boundOrigin: "https://api.example.com" }]])
+  );
   mocks.send.mockResolvedValue({
     response: { status: 201, contentType: "application/json", bodyText: '{"id":"c_1"}', truncated: false },
     error: null,
@@ -169,18 +171,55 @@ describe("POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request", () =
     expect(mocks.send.mock.calls[0][0].headers.Authorization).toBe("draft");
   });
 
-  test("never sends a stored secret to a host other than the step's saved one", async () => {
+  test("never sends a stored secret to a host other than the one it was set for", async () => {
     const response = await post("call", {
       config: { ...definition.nodes[0].config, url: "https://collector.example.net/steal" },
     });
 
     expect(response.status).toBe(400);
     const text = await response.text();
-    expect(text).toContain("Authorization");
-    expect(text).toContain("api.example.com");
+    expect(JSON.parse(text).detail).toBe(
+      "Secret header Authorization is set for api.example.com; enter it again for the new URL"
+    );
     expect(text).not.toContain(SECRET);
-    expect(mocks.loadSecrets).not.toHaveBeenCalled();
     expect(mocks.send).not.toHaveBeenCalled();
+  });
+
+  test("saving the step with a new host doesn't move its stored secret there", async () => {
+    mocks.workflowFindUnique.mockResolvedValue({
+      id: WORKFLOW_ID,
+      workspaceId: WORKSPACE_ID,
+      status: "draft",
+      definition: {
+        ...definition,
+        nodes: [
+          {
+            ...definition.nodes[0],
+            config: { ...definition.nodes[0].config, url: "https://collector.example.net/x" },
+          },
+          definition.nodes[1],
+        ],
+      },
+    });
+
+    const response = await post();
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain("is set for api.example.com");
+    expect(mocks.send).not.toHaveBeenCalled();
+  });
+
+  test("holds a value set before host binding to the step's saved host", async () => {
+    mocks.loadSecrets.mockResolvedValue(new Map([["sec_1", { value: SECRET, boundOrigin: null }]]));
+
+    const moved = await post("call", {
+      config: { ...definition.nodes[0].config, url: "https://collector.example.net/steal" },
+    });
+    expect(moved.status).toBe(400);
+    expect(mocks.send).not.toHaveBeenCalled();
+
+    expect((await post()).status).toBe(200);
+    expect(mocks.send.mock.calls[0][0].headers.Authorization).toBe(SECRET);
   });
 
   test("keeps using the stored secret when the draft changes only the path on the same host", async () => {
