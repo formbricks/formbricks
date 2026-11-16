@@ -142,15 +142,18 @@ overrides:
   "@grpc/grpc-js": 1.14.5
   # CVE-2026-104872 / GHSA-qqmp-wf37-98f9: database instrumentation unconditionally exports db.user.
   # Pin every affected instrumentation, including nested Sentry copies, to its first patched release.
-  # load-bearing: @opentelemetry/auto-instrumentations-node@0.75 and @sentry/node's instrumentation chain.
-  "@opentelemetry/instrumentation-cassandra-driver": 0.66.0
-  "@opentelemetry/instrumentation-knex": 0.65.0
-  "@opentelemetry/instrumentation-mongoose": 0.67.0
-  "@opentelemetry/instrumentation-mysql": 0.67.0
-  "@opentelemetry/instrumentation-mysql2": 0.67.0
-  "@opentelemetry/instrumentation-oracledb": 0.46.0
-  "@opentelemetry/instrumentation-pg": 0.73.0
-  "@opentelemetry/instrumentation-tedious": 0.40.0
+  # ENG-7229 / GHSA-3v2p-hm54-8qcq (CVE-2026-128080): apps/web moved to auto-instrumentations-node 0.80.0
+  # (instrumentation-http 0.222.0 redacts query credentials on server spans), which requires the next minor of
+  # each package below; the pins are raised to exactly those minors so the override does not downgrade them.
+  # load-bearing: @sentry/node's instrumentation chain still resolves the pre-patch db.user releases.
+  "@opentelemetry/instrumentation-cassandra-driver": 0.67.0
+  "@opentelemetry/instrumentation-knex": 0.66.0
+  "@opentelemetry/instrumentation-mongoose": 0.68.0
+  "@opentelemetry/instrumentation-mysql": 0.68.0
+  "@opentelemetry/instrumentation-mysql2": 0.68.0
+  "@opentelemetry/instrumentation-oracledb": 0.47.0
+  "@opentelemetry/instrumentation-pg": 0.74.0
+  "@opentelemetry/instrumentation-tedious": 0.41.0
   # Prisma dev tooling and @modelcontextprotocol/sdk chains.
   # ENG-1998 / GHSA-frvp-7c67-39w9: @hono/node-server <2.0.5 serve-static path traversal on Windows via
   # encoded backslash; patched in 2.0.5 (major bump, only peer is hono ^4; node >=20 is already required).
@@ -284,7 +287,9 @@ overrides:
   # load-bearing: socket.io-adapter resolves 8.17.1 and engine.io resolves 8.18.3.
   ws@8: 8.21.0
   # Dependabot security batch (transitive-only; direct deps vite/ua-parser-js bumped in package.json).
-  "@opentelemetry/core": 2.8.0 # ENG-1355 / GHSA-8988-4f7v-96qf (<2.8.0). load-bearing: the 0.208.0/0.211.0/0.212.0/0.217.0 exporter lines resolve 2.2.0–2.7.1.
+  # ENG-1355 / GHSA-8988-4f7v-96qf (<2.8.0). Raised to 2.11.0 with ENG-7229 because sdk-node 0.222.0 pins core
+  # 2.11.0 exactly; 2.8.0 would downgrade it. load-bearing: the 0.208.0/0.211.0/0.212.0 exporter lines resolve 2.2.0–2.7.1.
+  "@opentelemetry/core": 2.11.0
   esbuild: 0.28.1 # ENG-1327 / GHSA-g7r4-m6w7-qqqr (>=0.27.3 <0.28.1). load-bearing: vite@7/tsx/storybook resolve 0.27.7.
   # ENG-1947 / GHSA-23hp-3jrh-7fpw (CVE-2026-59873): node-tar <=7.5.18 has no hard
   # upper bound on total decompressed bytes / entry count, so a small gzip bomb can
@@ -344,8 +349,9 @@ overrides:
   # ENG-1992 / GHSA-45rx-2jwx-cxfr (CVE-2026-59892): @opentelemetry/propagator-jaeger <2.9.0 DoS via an
   # unhandled decodeURIComponent() error on a malformed header; patched in 2.9.0. Coerces the transitive
   # 1.26.0 line up to 2.9.0 (core is already pinned to 2.x above).
-  # load-bearing: @opentelemetry/sdk-node resolves 2.7.1 and @redocly/cli's sdk-trace-node pins 1.26.0.
-  "@opentelemetry/propagator-jaeger": 2.9.0
+  # Raised to 2.11.0 with ENG-7229: sdk-node 0.222.0 pins propagator-jaeger 2.11.0 exactly, so 2.9.0 would downgrade it.
+  # load-bearing: @redocly/cli's sdk-trace-node pins 1.26.0.
+  "@opentelemetry/propagator-jaeger": 2.11.0
   # GHSA-5qjj-4xww-7phc: valibot <=1.4.1 record() issue paths can make flatten() throw for
   # inherited Object property names (e.g. "constructor"). Pulled in transitively via prisma's dev-only
   # tooling (@prisma/dev); patched in 1.4.2.
