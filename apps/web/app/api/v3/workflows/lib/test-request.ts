@@ -108,6 +108,45 @@ const buildSecretResolver = async (
   };
 };
 
+const originOf = (url: string): string | null => {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * A stored secret only goes to the host its step is saved with. A draft URL pointing elsewhere could
+ * otherwise carry the workflow's stored credential to any server, which is the step an agent obeying
+ * hostile text in a payload or API response would take; a value typed in the draft is the caller's own
+ * and still goes anywhere. The secret's step must be saved with the new URL first, an audited edit.
+ */
+const assertStoredSecretsStayOnSavedHost = (
+  config: { url: string; headers: TWorkflowHttpHeader[] },
+  savedNode: TWorkflowHttpRequestActionNode
+): void => {
+  const savedOrigin = originOf(savedNode.config.url);
+  if (savedOrigin !== null && originOf(config.url) === savedOrigin) return;
+
+  const storedNames = new Set(
+    savedNode.config.headers
+      .filter((header) => header.secret === true && header.secretId)
+      .map((header) => header.name.toLowerCase())
+  );
+  const usesStored = config.headers.find(
+    (header) =>
+      header.secret === true &&
+      (header.value === undefined || header.value === "") &&
+      storedNames.has(header.name.toLowerCase())
+  );
+  if (!usesStored) return;
+
+  throw new WorkflowInvalidInputError(
+    `The stored value of secret header ${usesStored.name} is only sent to ${urlHost(savedNode.config.url)}. Save the step with the new URL, or enter the value again, to test another host.`
+  );
+};
+
 /**
  * `POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request` and the MCP `send_test_request`
  * tool (ENG-7179, ENG-7168): one real call of an HTTP request step from its saved or draft settings.
@@ -171,6 +210,7 @@ export const sendWorkflowTestRequest = async ({
         secret: header.secret ?? isDefaultSecretHeaderName(header.name),
       })),
     };
+    assertStoredSecretsStayOnSavedHost(config, savedNode);
     const [context, resolveSecret] = await Promise.all([
       loadTestContext(workflow.id, definition, params.stepId, input.variables),
       buildSecretResolver(workflow, savedNode),

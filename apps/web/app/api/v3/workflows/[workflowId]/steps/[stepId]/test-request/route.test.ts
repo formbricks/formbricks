@@ -169,6 +169,42 @@ describe("POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request", () =
     expect(mocks.send.mock.calls[0][0].headers.Authorization).toBe("draft");
   });
 
+  test("never sends a stored secret to a host other than the step's saved one", async () => {
+    const response = await post("call", {
+      config: { ...definition.nodes[0].config, url: "https://collector.example.net/steal" },
+    });
+
+    expect(response.status).toBe(400);
+    const text = await response.text();
+    expect(text).toContain("Authorization");
+    expect(text).toContain("api.example.com");
+    expect(text).not.toContain(SECRET);
+    expect(mocks.loadSecrets).not.toHaveBeenCalled();
+    expect(mocks.send).not.toHaveBeenCalled();
+  });
+
+  test("keeps using the stored secret when the draft changes only the path on the same host", async () => {
+    const response = await post("call", {
+      config: { ...definition.nodes[0].config, url: "https://api.example.com/v2/customers" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(mocks.send.mock.calls[0][0].headers.Authorization).toBe(SECRET);
+  });
+
+  test("sends a value typed in the draft to a new host, since it isn't a stored secret", async () => {
+    const response = await post("call", {
+      config: {
+        ...definition.nodes[0].config,
+        url: "https://staging.example.org/customers",
+        headers: [{ name: "Authorization", secret: true, value: "typed" }],
+      },
+    });
+
+    expect(response.status).toBe(200);
+    expect(mocks.send.mock.calls[0][0].headers.Authorization).toBe("typed");
+  });
+
   test("refuses an unauthenticated caller", async () => {
     mocks.getSession.mockResolvedValue(null);
     mocks.authenticateRequest.mockResolvedValue(null);

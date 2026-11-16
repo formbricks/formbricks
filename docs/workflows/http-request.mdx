@@ -113,7 +113,8 @@ Select **Send test request** to make one real call with the step's current setti
 so you can see what the API answers.
 
 - Variables are filled from the **Sample payload** and from the last test responses of other HTTP request steps.
-- A secret value you just typed is used for this call. Otherwise the saved value is used.
+- A secret value you just typed is used for this call. Otherwise the saved value is used, but only for the host
+  the step is saved with: if you changed the URL to another host, save the step first or type the value again.
 - The call waits up to 10 seconds and isn't retried.
 - The answer is saved as the step's test response (up to 64 KB). The `@` picker offers its values as Variables, and
   [Test runs](/workflows/test-runs) use it as this step's response.

@@ -4295,7 +4295,7 @@ paths:
 
         When an answer came, it is saved as the step's sample (up to 64 KB). Recorded in the audit log as `testRequestSent` with the host and status.
 
-        Requires **write** access and is limited to 30 calls per minute per user or API key (**429**). A step that is not an HTTP request answers **404**; an archived workflow **422** `invalid_workflow_state`; settings that can't be sent (no URL, a secret header with no value, a body that is not JSON) **400**.
+        Requires **write** access and is limited to 30 calls per minute per user or API key (**429**). A step that is not an HTTP request answers **404**; an archived workflow **422** `invalid_workflow_state`; settings that can't be sent (no URL, a secret header with no value, a body that is not JSON, or a draft URL on another host than the saved step while a secret header relies on its stored value) **400**. A stored secret value is only sent to the saved step's host.
       tags:
         - V3 Workflows
       parameters:
