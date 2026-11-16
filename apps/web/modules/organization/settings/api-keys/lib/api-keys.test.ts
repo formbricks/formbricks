@@ -102,15 +102,10 @@ vi.mock("@/lib/crypto", () => ({
     // Return a mock bcrypt hash
     return `$2a$12$mockBcryptHashFor${secret}`;
   }),
-  verifySecret: vi.fn(async (secret: string, hash: string) => {
-    // Control hash for timing attack prevention (should always return false)
-    const controlHash = "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q";
-    if (hash === controlHash) {
-      return false;
-    }
-    // Simple mock verification - just check if hash contains the secret
-    return hash.includes(secret) || hash === "sha256HashValue";
-  }),
+  verifySecret: vi.fn(async () => true),
+  isApiKeyLookupHashMatch: vi.fn(
+    (stored: string | null | undefined, computed: string) => !!stored && stored === computed
+  ),
 }));
 
 describe("API Key Management", () => {
@@ -185,8 +180,8 @@ describe("API Key Management", () => {
         where: { lookupHash: "sha256LookupHashValue" },
         include: expect.any(Object),
       });
-      // Verify hybrid approach: bcrypt verification is called
-      expect(verifySecret).toHaveBeenCalledWith("testSecret123", mockApiKey.hashedKey);
+      // The lookup-hash row is the proof of possession: no bcrypt on the request path
+      expect(verifySecret).not.toHaveBeenCalled();
       // Should NOT update because lastUsedAt is too recent (< 30s)
       expect(prisma.apiKey.update).not.toHaveBeenCalled();
     });
@@ -212,8 +207,8 @@ describe("API Key Management", () => {
         where: { lookupHash: "sha256LookupHashValue" },
         include: expect.any(Object),
       });
-      // Verify hybrid approach: bcrypt verification is called
-      expect(verifySecret).toHaveBeenCalledWith("testSecret123", mockApiKey.hashedKey);
+      // The lookup-hash row is the proof of possession: no bcrypt on the request path
+      expect(verifySecret).not.toHaveBeenCalled();
       // SHOULD update because lastUsedAt is null (first use)
       expect(prisma.apiKey.update).toHaveBeenCalledWith({
         where: { id: "apikey123" },
@@ -243,8 +238,8 @@ describe("API Key Management", () => {
         where: { lookupHash: "sha256LookupHashValue" },
         include: expect.any(Object),
       });
-      // Verify hybrid approach: bcrypt verification is called
-      expect(verifySecret).toHaveBeenCalledWith("testSecret123", mockApiKey.hashedKey);
+      // The lookup-hash row is the proof of possession: no bcrypt on the request path
+      expect(verifySecret).not.toHaveBeenCalled();
       // SHOULD update because lastUsedAt is old enough (> 30s)
       expect(prisma.apiKey.update).toHaveBeenCalledWith({
         where: { id: "apikey123" },
@@ -301,33 +296,30 @@ describe("API Key Management", () => {
       });
     });
 
-    test("returns null if v2 api key not found", async () => {
+    test("returns null for an unknown v2 api key without running bcrypt", async () => {
       const { verifySecret } = await import("@/lib/crypto");
       vi.mocked(prisma.apiKey.findUnique).mockResolvedValue(null);
 
       const result = await getApiKeyWithPermissions("fbk_invalid_secret");
 
       expect(result).toBeNull();
-      // Verify timing attack prevention: verifySecret should be called even when key not found
-      expect(verifySecret).toHaveBeenCalledWith(
-        "invalid_secret",
-        "$2b$12$fzHf9le13Ss9UJ04xzmsjODXpFJxz6vsnupoepF5FiqDECkX2BH5q" // control hash
-      );
+      // ENG-3709 / security review #13: unauthenticated callers must not be able to burn bcrypt CPU
+      expect(verifySecret).not.toHaveBeenCalled();
+      expect(prisma.apiKey.update).not.toHaveBeenCalled();
     });
 
-    test("returns null if v2 api key bcrypt verification fails", async () => {
+    test("returns null for a v2 key whose stored lookupHash does not match (or is missing)", async () => {
       const { verifySecret } = await import("@/lib/crypto");
-      // Mock verifySecret to return false for this test
-      vi.mocked(verifySecret).mockResolvedValueOnce(false);
-
       vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({
         ...mockApiKey,
+        lookupHash: "someOtherHash",
       } as any);
+      expect(await getApiKeyWithPermissions("fbk_testSecret123")).toBeNull();
 
-      const result = await getApiKeyWithPermissions("fbk_wrongSecret");
+      vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({ ...mockApiKey, lookupHash: null } as any);
+      expect(await getApiKeyWithPermissions("fbk_testSecret123")).toBeNull();
 
-      expect(result).toBeNull();
-      expect(verifySecret).toHaveBeenCalledWith("wrongSecret", mockApiKey.hashedKey);
+      expect(verifySecret).not.toHaveBeenCalled();
     });
 
     test("returns null if v1 api key not found", async () => {

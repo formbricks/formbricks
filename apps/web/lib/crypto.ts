@@ -150,6 +150,13 @@ export const constantTimeEqual = (a: string, b: string, encoding: BufferEncoding
 };
 
 /**
+ * Constant-time check that a stored API-key lookup hash (hex SHA-256) equals the one computed from the
+ * presented secret. A missing stored hash (legacy keys) never matches.
+ */
+export const isApiKeyLookupHashMatch = (stored: string | null | undefined, computed: string): boolean =>
+  !!stored && constantTimeEqual(stored, computed, "hex");
+
+/**
  * Parse a v2 API key format: fbk_{secret}
  * Returns null if the key doesn't match the expected format
  */

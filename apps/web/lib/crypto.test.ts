@@ -9,6 +9,7 @@ import {
   getWebhookSecretBytes,
   hashSecret,
   hashSha256,
+  isApiKeyLookupHashMatch,
   parseApiKeyV2,
   symmetricDecrypt,
   symmetricEncrypt,
@@ -117,6 +118,22 @@ describe("Crypto Utils", () => {
       const expectedHash = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824";
 
       expect(hashSha256(input)).toBe(expectedHash);
+    });
+  });
+
+  describe("isApiKeyLookupHashMatch", () => {
+    const hash = hashSha256("some-secret");
+
+    test("matches the same hex digest", () => {
+      expect(isApiKeyLookupHashMatch(hash, hashSha256("some-secret"))).toBe(true);
+    });
+
+    test("rejects a different digest, a malformed one, and a missing stored hash", () => {
+      expect(isApiKeyLookupHashMatch(hash, hashSha256("other-secret"))).toBe(false);
+      expect(isApiKeyLookupHashMatch(hash, "abcd")).toBe(false);
+      expect(isApiKeyLookupHashMatch(null, hash)).toBe(false);
+      expect(isApiKeyLookupHashMatch(undefined, hash)).toBe(false);
+      expect(isApiKeyLookupHashMatch("", "")).toBe(false);
     });
   });
 

@@ -9,8 +9,7 @@ import { ZId } from "@formbricks/types/common";
 import { DatabaseError, OperationNotAllowedError } from "@formbricks/types/errors";
 import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
-import { CONTROL_HASH } from "@/lib/constants";
-import { hashSecret, hashSha256, parseApiKeyV2, verifySecret } from "@/lib/crypto";
+import { hashSecret, hashSha256, isApiKeyLookupHashMatch, parseApiKeyV2 } from "@/lib/crypto";
 import { validateInputs } from "@/lib/utils/validate";
 import { getWorkspacesByOrganizationId } from "@/modules/organization/settings/api-keys/lib/workspaces";
 import {
@@ -88,16 +87,12 @@ export const getApiKeyWithPermissions = reactCache(
           include: includeQuery,
         });
 
-        // Step 2: Security verification with bcrypt
-        // Always perform bcrypt verification to prevent timing attacks
-        // Use a control hash when API key doesn't exist to maintain constant timing
-        const hashToVerify = apiKeyData?.hashedKey || CONTROL_HASH;
-        const isValid = await verifySecret(v2Parsed.secret, hashToVerify);
-
-        if (!apiKeyData || !isValid) {
-          if (apiKeyData && !isValid) {
-            logger.warn({ apiKeyId: apiKeyData.id }, "API key bcrypt verification failed");
-          }
+        // Step 2: the secret is 32 random bytes, so a row found by SHA-256(secret) already proves
+        // possession; bcrypt would add ~300ms of main-thread CPU per request for no extra security
+        // (and let anonymous callers burn it with random keys). Unknown key and wrong secret are
+        // the same "no row" outcome, so there is nothing to distinguish. The comparison below is
+        // defense-in-depth and constant-time.
+        if (!apiKeyData || !isApiKeyLookupHashMatch(apiKeyData.lookupHash, lookupHash)) {
           return null;
         }
       } else {
