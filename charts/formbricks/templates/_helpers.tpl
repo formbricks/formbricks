@@ -1007,3 +1007,15 @@ Include this ONCE per render and reuse the value: the final branch is `randAlpha
 {{- define "formbricks.envoy.defaultRedisUrl" -}}
 {{- printf "%s-master:6379" .Values.envoyRedis.fullnameOverride -}}
 {{- end }}
+
+{{/*
+Non-empty when Envoy rate-limit policies cover every v1 route family the app would otherwise limit itself
+(management, webhooks, client). Drives ENVOY_RATE_LIMITING_ENABLED: without it the app keeps its own limiter,
+because its path matcher alone cannot tell whether a gateway is deployed.
+*/}}
+{{- define "formbricks.envoy.appRateLimitsDelegated" -}}
+{{- $f := .Values.envoy.formbricks -}}
+{{- if and .Values.envoy.enabled $f.policies.enabled $f.routes.v1Management $f.policies.v1Management $f.routes.v1Webhooks $f.policies.v1Webhooks $f.routes.v1Client $f.policies.v1Client -}}
+true
+{{- end -}}
+{{- end -}}

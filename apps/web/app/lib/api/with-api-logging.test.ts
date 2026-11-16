@@ -113,6 +113,7 @@ describe("withV1ApiWrapper", () => {
       SENTRY_DSN: "dsn",
       ENCRYPTION_KEY: "test-key",
       REDIS_URL: "redis://localhost:6379",
+      ENVOY_RATE_LIMITING_ENABLED: true,
     }));
 
     vi.clearAllMocks();
@@ -461,6 +462,7 @@ describe("withV1ApiWrapper", () => {
       SENTRY_DSN: "dsn",
       ENCRYPTION_KEY: "test-key",
       REDIS_URL: "redis://localhost:6379",
+      ENVOY_RATE_LIMITING_ENABLED: true,
     }));
 
     const { queueAuditEvent: mockedQueueAuditEvent } =
@@ -496,6 +498,7 @@ describe("withV1ApiWrapper", () => {
       SENTRY_DSN: "dsn",
       ENCRYPTION_KEY: "test-key",
       REDIS_URL: "redis://localhost:6379",
+      ENVOY_RATE_LIMITING_ENABLED: true,
     }));
 
     const { queueAuditEvent: mockedQueueAuditEvent } =
@@ -758,6 +761,40 @@ describe("withV1ApiWrapper", () => {
 
     expect(res.status).toBe(200);
     expect(applyRateLimit).not.toHaveBeenCalled();
+  });
+
+  test("applies the app rate limit to API-key management routes when Envoy is not deployed", async () => {
+    vi.doMock("@/lib/constants", () => ({
+      AUDIT_LOG_ENABLED: true,
+      IS_PRODUCTION: true,
+      SENTRY_DSN: "dsn",
+      ENCRYPTION_KEY: "test-key",
+      REDIS_URL: "redis://localhost:6379",
+      ENVOY_RATE_LIMITING_ENABLED: false,
+    }));
+    const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+      await import("@/app/middleware/endpoint-validator");
+    const { authenticateRequest } = await import("@/app/api/v1/auth");
+
+    vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+    vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+    vi.mocked(isManagementApiRoute).mockReturnValue({
+      isManagementApi: true,
+      authenticationMethod: AuthMethod.ApiKey,
+    });
+    vi.mocked(isIntegrationRoute).mockReturnValue(false);
+    vi.mocked(applyRateLimit).mockRejectedValue(new TooManyRequestsError("Rate limit exceeded"));
+
+    const handler = vi.fn();
+    const req = createMockRequest({ url: V1_MANAGEMENT_SURVEYS_URL });
+    const { withV1ApiWrapper } = await import("./with-api-logging");
+    const wrapped = withV1ApiWrapper({ handler });
+    const res = await wrapped(req, undefined);
+
+    expect(res.status).toBe(429);
+    expect(handler).not.toHaveBeenCalled();
+    expect(applyRateLimit).toHaveBeenCalledWith(expect.anything(), "api-key-1");
   });
 
   test("returns a generic error for unexpected client rate limit failures", async () => {

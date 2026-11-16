@@ -185,8 +185,8 @@ export const createResponse = async (
 export const getResponsesByWorkspaceIds = reactCache(
   async (
     workspaceIds: string[],
-    limit?: number,
-    offset?: number,
+    limit: number,
+    offset: number,
     /** ENG-3282: the API key's visibility clause on the response's survey. */
     visibleSurveyWhere: Prisma.SurveyWhereInput = {}
   ): Promise<TResponse[]> => {
@@ -204,9 +204,12 @@ export const getResponsesByWorkspaceIds = reactCache(
           {
             createdAt: "desc",
           },
+          {
+            id: "desc", // Secondary sort by ID for consistent pagination
+          },
         ],
-        take: limit ? limit : undefined,
-        skip: offset ? offset : undefined,
+        take: limit,
+        skip: offset,
       });
 
       const transformedResponses: TResponse[] = responses.map((responsePrisma) => ({

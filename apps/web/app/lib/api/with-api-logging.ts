@@ -12,6 +12,7 @@ import {
   isManagementApiRoute,
 } from "@/app/middleware/endpoint-validator";
 import { withAuthorizationSurface } from "@/lib/authorization/context";
+import { ENVOY_RATE_LIMITING_ENABLED } from "@/lib/constants";
 import { getApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { getSession } from "@/modules/auth/lib/session";
 import {
@@ -105,11 +106,14 @@ const handleRateLimiting = async (
     return responses.internalServerErrorResponse("Invalid authentication configuration");
   }
 
-  const isEnvoyManagedRateLimit = isRouteRateLimitedByEnvoy({
-    pathname: req.nextUrl.pathname,
-    method: req.method,
-    authType,
-  });
+  // The matcher is static, so it only says "Envoy would limit this" when Envoy is actually deployed.
+  const isEnvoyManagedRateLimit =
+    ENVOY_RATE_LIMITING_ENABLED &&
+    isRouteRateLimitedByEnvoy({
+      pathname: req.nextUrl.pathname,
+      method: req.method,
+      authType,
+    });
 
   try {
     if (authentication && !isEnvoyManagedRateLimit) {

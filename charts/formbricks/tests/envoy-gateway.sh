@@ -120,4 +120,16 @@ if grep -q 'image: docker.io/envoyproxy/gateway:v1.8.4' "${render_dir}/shared-co
 fi
 grep -q 'gatewayClassName: platform-envoy' "${render_dir}/shared-controller.yaml"
 
+# ENVOY_RATE_LIMITING_ENABLED tells the app a gateway really limits the v1 routes, so it may skip its own
+# limiter there. It must not appear without Envoy policies, or the v1 management API is left unlimited.
+rate_limit_env() {
+  helm template qa "${chart_dir}" --set formbricks.webappUrl=https://qa.example.com \
+    --set envoy.formbricks.ingress.host=api.qa.example.com "$@" | grep -c 'name: ENVOY_RATE_LIMITING_ENABLED' || true
+}
+test "$(rate_limit_env)" = 0
+test "$(rate_limit_env --set envoy.enabled=true)" = 0
+test "$(rate_limit_env --set envoy.enabled=true --set envoy.formbricks.policies.enabled=true)" != 0
+test "$(rate_limit_env --set envoy.enabled=true --set envoy.formbricks.policies.enabled=true \
+  --set envoy.formbricks.policies.v1Management=false)" = 0
+
 echo "Envoy Gateway Helm validation passed"

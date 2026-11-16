@@ -19,20 +19,22 @@ const selectActionClass = {
   workspaceId: true,
 } satisfies Prisma.ActionClassSelect;
 
-export const getActionClasses = reactCache(async (workspaceIds: string[]): Promise<TActionClass[]> => {
-  validateInputs([workspaceIds, ZId.array()]);
+export const getActionClasses = reactCache(
+  async (workspaceIds: string[], limit: number, offset: number): Promise<TActionClass[]> => {
+    validateInputs([workspaceIds, ZId.array()]);
 
-  try {
-    return await prisma.actionClass.findMany({
-      where: {
-        workspaceId: { in: workspaceIds },
-      },
-      select: selectActionClass,
-      orderBy: {
-        createdAt: "asc",
-      },
-    });
-  } catch {
-    throw new DatabaseError(`Database error when fetching actions for workspace ${workspaceIds}`);
+    try {
+      return await prisma.actionClass.findMany({
+        where: {
+          workspaceId: { in: workspaceIds },
+        },
+        select: selectActionClass,
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+        take: limit,
+        skip: offset,
+      });
+    } catch {
+      throw new DatabaseError(`Database error when fetching actions for workspace ${workspaceIds}`);
+    }
   }
-});
+);

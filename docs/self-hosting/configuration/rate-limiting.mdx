@@ -13,9 +13,10 @@ Starting with Formbricks v5, rate limiting is split across two layers:
   not currently cover
 
 <Warning>
-  Formbricks v5 removes application-level rate limiting for several routes that are now expected to be
-  protected by Envoy Gateway. If you self-host Formbricks without Envoy or an equivalent edge rate limiter,
-  those routes will no longer be throttled by the application server after upgrading.
+  Formbricks v5 moves rate limiting for several routes to Envoy Gateway. The application skips its own limiter
+  for them only when `ENVOY_RATE_LIMITING_ENABLED=1`. If you use an edge rate limiter other than the bundled
+  Envoy policies, set that variable yourself once it covers the routes below; without it the application keeps
+  limiting them.
 </Warning>
 
 <Info>
@@ -46,7 +47,12 @@ configuration and the [v5 migration guide](/self-hosting/advanced/migration#v5).
 
 ## Envoy-Managed Limits
 
-These limits are expected to be enforced at the gateway layer in Formbricks v5 and later:
+These limits are enforced at the gateway layer in Formbricks v5 and later. The application skips its own limiter for
+these routes only when `ENVOY_RATE_LIMITING_ENABLED=1` is set. The Helm chart sets it when `envoy.enabled` and the Envoy
+policies are on, and clears it again if the v1 management, webhook or client route or policy is turned off. Without it,
+the application applies its own limit (`api.v1`: 100 requests per minute per API key) to API-key
+`/api/v1/management/*` and `/api/v1/webhooks/*` requests and its client limits to the v1 client routes.
+
 
 | **Route Group**                                                          | **Limit**    | **Window** | **Identifier** |
 | ------------------------------------------------------------------------ | ------------ | ---------- | -------------- |

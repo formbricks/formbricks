@@ -315,7 +315,7 @@ describe("Response Lib Tests", () => {
       vi.mocked(prisma.response.findMany).mockResolvedValue(mockResponsesPrisma);
       vi.mocked(getResponseContact).mockReturnValue(null); // Assume no contact for simplicity
 
-      const responses = await getResponsesByWorkspaceIds(mockWorkspaceIds);
+      const responses = await getResponsesByWorkspaceIds(mockWorkspaceIds, 25, 0);
 
       expect(validateInputs).toHaveBeenCalledTimes(1);
       expect(prisma.response.findMany).toHaveBeenCalledWith(
@@ -325,9 +325,9 @@ describe("Response Lib Tests", () => {
               workspaceId: { in: mockWorkspaceIds },
             },
           },
-          orderBy: [{ createdAt: "desc" }],
-          take: undefined,
-          skip: undefined,
+          orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+          take: 25,
+          skip: 0,
         })
       );
       expect(getResponseContact).toHaveBeenCalledTimes(mockResponsesPrisma.length);
@@ -351,7 +351,7 @@ describe("Response Lib Tests", () => {
     test("should return empty array if no responses found", async () => {
       vi.mocked(prisma.response.findMany).mockResolvedValue([]);
 
-      const responses = await getResponsesByWorkspaceIds(mockWorkspaceIds);
+      const responses = await getResponsesByWorkspaceIds(mockWorkspaceIds, 25, 0);
 
       expect(responses).toEqual([]);
       expect(prisma.response.findMany).toHaveBeenCalled();
@@ -365,14 +365,14 @@ describe("Response Lib Tests", () => {
       });
       vi.mocked(prisma.response.findMany).mockRejectedValue(prismaError);
 
-      await expect(getResponsesByWorkspaceIds(mockWorkspaceIds)).rejects.toThrow(DatabaseError);
+      await expect(getResponsesByWorkspaceIds(mockWorkspaceIds, 25, 0)).rejects.toThrow(DatabaseError);
     });
 
     test("should handle generic errors", async () => {
       const genericError = new Error("Something went wrong");
       vi.mocked(prisma.response.findMany).mockRejectedValue(genericError);
 
-      await expect(getResponsesByWorkspaceIds(mockWorkspaceIds)).rejects.toThrow(genericError);
+      await expect(getResponsesByWorkspaceIds(mockWorkspaceIds, 25, 0)).rejects.toThrow(genericError);
     });
   });
 });

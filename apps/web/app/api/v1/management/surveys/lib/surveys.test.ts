@@ -101,7 +101,7 @@ describe("getSurveys (Management API)", () => {
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
       where: { workspaceId: { in: [workspaceId1] } },
       select: selectSurvey,
-      orderBy: { updatedAt: "desc" },
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
       take: limit,
       skip: offset,
     });
@@ -117,19 +117,19 @@ describe("getSurveys (Management API)", () => {
       mockSurveyPrisma3,
     ]);
 
-    const surveys = await getSurveys([workspaceId1, workspaceId2]);
+    const surveys = await getSurveys([workspaceId1, workspaceId2], 250, 0);
 
     expect(validateInputs).toHaveBeenCalledWith(
       [[workspaceId1, workspaceId2], expect.any(Object)],
-      [undefined, expect.any(Object)],
-      [undefined, expect.any(Object)]
+      [expect.any(Number), expect.any(Object)],
+      [expect.any(Number), expect.any(Object)]
     );
     expect(prisma.survey.findMany).toHaveBeenCalledWith({
       where: { workspaceId: { in: [workspaceId1, workspaceId2] } },
       select: selectSurvey,
-      orderBy: { updatedAt: "desc" },
-      take: undefined,
-      skip: undefined,
+      orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
+      take: 250,
+      skip: 0,
     });
     expect(transformPrismaSurvey).toHaveBeenCalledTimes(3);
     expect(surveys).toEqual([mockSurveyTransformed1, mockSurveyTransformed2, mockSurveyTransformed3]);
@@ -138,7 +138,7 @@ describe("getSurveys (Management API)", () => {
   test("should return an empty array if no surveys are found", async () => {
     vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
 
-    const surveys = await getSurveys([workspaceId1]);
+    const surveys = await getSurveys([workspaceId1], 250, 0);
 
     expect(prisma.survey.findMany).toHaveBeenCalled();
     expect(transformPrismaSurvey).not.toHaveBeenCalled();
@@ -152,7 +152,7 @@ describe("getSurveys (Management API)", () => {
     });
     vi.mocked(prisma.survey.findMany).mockRejectedValue(prismaError);
 
-    await expect(getSurveys([workspaceId1])).rejects.toThrow(DatabaseError);
+    await expect(getSurveys([workspaceId1], 250, 0)).rejects.toThrow(DatabaseError);
     expect(logger.error).toHaveBeenCalledWith(prismaError, "Error getting surveys");
   });
 
@@ -160,7 +160,7 @@ describe("getSurveys (Management API)", () => {
     const genericError = new Error("Something went wrong");
     vi.mocked(prisma.survey.findMany).mockRejectedValue(genericError);
 
-    await expect(getSurveys([workspaceId1])).rejects.toThrow(genericError);
+    await expect(getSurveys([workspaceId1], 250, 0)).rejects.toThrow(genericError);
     expect(logger.error).not.toHaveBeenCalled();
   });
 
@@ -171,7 +171,7 @@ describe("getSurveys (Management API)", () => {
       throw validationError;
     });
 
-    await expect(getSurveys([invalidEnvId])).rejects.toThrow(validationError);
+    await expect(getSurveys([invalidEnvId], 250, 0)).rejects.toThrow(validationError);
     expect(prisma.survey.findMany).not.toHaveBeenCalled();
   });
 });

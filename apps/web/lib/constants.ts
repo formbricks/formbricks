@@ -249,6 +249,8 @@ export { ENTERPRISE_LICENSE_REQUEST_FORM_URL } from "@/modules/ee/license-check/
 
 export const REDIS_URL = env.REDIS_URL;
 export const RATE_LIMITING_DISABLED = env.RATE_LIMITING_DISABLED === "1";
+/** True only when an Envoy gateway in front of the app enforces the covered API rate limits. */
+export const ENVOY_RATE_LIMITING_ENABLED = env.ENVOY_RATE_LIMITING_ENABLED === "1";
 /**
  * Number of reverse proxies in front of the app whose `X-Forwarded-For` entries may be believed.
  *

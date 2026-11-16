@@ -1,5 +1,6 @@
 import { logger } from "@formbricks/logger";
 import { TResponse, TResponseInput, ZResponseInput } from "@formbricks/types/responses";
+import { parseV1Pagination } from "@/app/api/v1/management/lib/pagination";
 import { resolveBodyIds } from "@/app/api/v1/management/lib/workspace-resolver";
 import { handleApiError } from "@/app/lib/api/handle-api-error";
 import { RequestBodyTooLargeError, parseJsonBodyWithLimit } from "@/app/lib/api/request-body";
@@ -9,6 +10,7 @@ import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
 import { can } from "@/lib/authorization";
 import { getWorkspaceAuthorizationActionForMethod } from "@/lib/authorization/permission-action";
+import { RESPONSES_PER_PAGE } from "@/lib/constants";
 import { applyAnonymizePolicy } from "@/lib/response/anonymize";
 import { buildDataByQuestionCode } from "@/lib/response/data-by-question-code";
 import { getSurvey } from "@/lib/survey/service";
@@ -35,8 +37,7 @@ export const GET = withV1ApiWrapper({
 
     const searchParams = req.nextUrl.searchParams;
     const surveyId = searchParams.get("surveyId");
-    const limit = searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined;
-    const offset = searchParams.get("skip") ? Number(searchParams.get("skip")) : undefined;
+    const { limit, offset } = parseV1Pagination(searchParams, { defaultLimit: RESPONSES_PER_PAGE });
 
     try {
       let allResponses: TResponse[] = [];
