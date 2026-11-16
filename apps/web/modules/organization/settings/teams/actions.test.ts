@@ -134,7 +134,6 @@ vi.mock("@/modules/email", () => ({
 vi.mock("@/modules/organization/settings/teams/lib/membership", () => ({
   deleteMembership: mocks.deleteMembership,
   getMembershipsByUserId: vi.fn(),
-  getOrganizationOwnerCount: vi.fn(),
 }));
 
 vi.mock("./lib/invite", () => ({

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, ValidationError } from "@formbricks/types/errors";
+import { LastActiveOwnerError } from "@/modules/organization/settings/teams/lib/owner-guard";
 import { updateInviteAction, updateMembershipAction } from "./actions";
 
 const mocks = vi.hoisted(() => ({
@@ -12,7 +13,8 @@ const mocks = vi.hoisted(() => ({
   getOrganization: vi.fn(),
   getOrganizationIdFromInviteId: vi.fn(),
   getInvite: vi.fn(),
-  getOrganizationOwnerCount: vi.fn(),
+  runOwnerGuardedTransaction: vi.fn(),
+  lockUserActiveState: vi.fn(),
   updateInvite: vi.fn(),
   updateMembership: vi.fn(),
 }));
@@ -20,16 +22,6 @@ const mocks = vi.hoisted(() => ({
 vi.mock("@/lib/authorization", () => ({
   assertCan: mocks.assertCan,
   can: mocks.can,
-}));
-
-vi.mock("@formbricks/database", () => ({
-  // The last-owner guard runs the owner-count re-check and the update inside one transaction;
-  // the fake just invokes the callback with a stand-in tx so both still hit the mocks below.
-  prisma: { $transaction: vi.fn((callback: (tx: unknown) => unknown) => callback({})) },
-}));
-
-vi.mock("@formbricks/database/prisma", () => ({
-  Prisma: { TransactionIsolationLevel: { Serializable: "Serializable" } },
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -85,8 +77,14 @@ vi.mock("@/modules/organization/settings/teams/lib/invite", () => ({
   getInvite: mocks.getInvite,
 }));
 
-vi.mock("@/modules/organization/settings/teams/lib/membership", () => ({
-  getOrganizationOwnerCount: mocks.getOrganizationOwnerCount,
+vi.mock("@/lib/user/reactivation", () => ({ lockUserActiveState: mocks.lockUserActiveState }));
+
+vi.mock("@/modules/organization/settings/teams/lib/owner-guard", async (importOriginal) => ({
+  // The real error class, so the action's `instanceof` check sees what the guard throws.
+  LastActiveOwnerError: (
+    await importOriginal<typeof import("@/modules/organization/settings/teams/lib/owner-guard")>()
+  ).LastActiveOwnerError,
+  runOwnerGuardedTransaction: mocks.runOwnerGuardedTransaction,
 }));
 
 const organizationId = "cm9gptbhg0000192zceq9ayuc";
@@ -114,50 +112,74 @@ describe("updateMembershipAction", () => {
     mocks.getMembershipByUserIdOrganizationId.mockImplementation(async (userId: string) =>
       membership(userId, "owner")
     );
-    mocks.getOrganizationOwnerCount.mockResolvedValue(2);
+    // The guard runs the change in a stand-in transaction while another owner remains.
+    mocks.runOwnerGuardedTransaction.mockImplementation(
+      (_organizationId: string, _userId: string, change: (tx: unknown) => unknown) => change({ stand: "tx" })
+    );
     mocks.updateMembership.mockImplementation(async (userId: string, _orgId: string, data: any) =>
       membership(userId, data.role)
     );
   });
 
   test("rejects demoting the last owner of the organization", async () => {
-    mocks.getOrganizationOwnerCount.mockResolvedValue(1);
+    mocks.runOwnerGuardedTransaction.mockRejectedValue(new LastActiveOwnerError());
 
-    await expect(callUpdateMembership("member")).rejects.toThrow(ValidationError);
+    const rejection = callUpdateMembership("member");
+    await expect(rejection).rejects.toBeInstanceOf(ValidationError);
+    await expect(rejection).rejects.toThrow("You cannot demote the last owner of the organization");
     expect(mocks.updateMembership).not.toHaveBeenCalled();
   });
 
-  test("allows demoting an owner when the organization has another owner", async () => {
-    mocks.getOrganizationOwnerCount.mockResolvedValue(2);
-
+  test("demotes an owner under the owners' lock when the organization has another owner", async () => {
     await expect(callUpdateMembership("member")).resolves.toMatchObject({ role: "member" });
-    expect(mocks.getOrganizationOwnerCount).toHaveBeenCalledWith(organizationId, expect.anything());
+    expect(mocks.runOwnerGuardedTransaction).toHaveBeenCalledWith(
+      organizationId,
+      targetUserId,
+      expect.any(Function)
+    );
     expect(mocks.updateMembership).toHaveBeenCalledWith(
       targetUserId,
       organizationId,
       { role: "member" },
-      expect.anything()
+      { stand: "tx" }
+    );
+    // The user's row first, so a demotion to Dashboard viewer sees a concurrent removal elsewhere.
+    expect(mocks.lockUserActiveState).toHaveBeenCalledWith({ stand: "tx" }, targetUserId);
+    expect(mocks.lockUserActiveState.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.updateMembership.mock.invocationCallOrder[0]
     );
   });
 
-  test("allows changing a non-owner's role", async () => {
+  test("changes a non-owner's role outside any transaction, as before", async () => {
     mocks.getMembershipByUserIdOrganizationId.mockImplementation(async (userId: string) =>
       membership(userId, userId === currentUserId ? "owner" : "member")
     );
 
     await expect(callUpdateMembership("manager")).resolves.toMatchObject({ role: "manager" });
+    expect(mocks.runOwnerGuardedTransaction).not.toHaveBeenCalled();
+    // No transaction client: updateMembership reconciles SpiceDB right away.
+    expect(mocks.updateMembership).toHaveBeenCalledWith(targetUserId, organizationId, { role: "manager" });
   });
 
-  test("allows keeping an owner's role unchanged", async () => {
+  test("passes any other failure of the demotion through unchanged", async () => {
+    const failure = new Error("database down");
+    mocks.runOwnerGuardedTransaction.mockRejectedValue(failure);
+
+    await expect(callUpdateMembership("member")).rejects.toBe(failure);
+  });
+
+  test("allows keeping an owner's role unchanged, outside any transaction", async () => {
     await expect(callUpdateMembership("owner")).resolves.toMatchObject({ role: "owner" });
+    expect(mocks.runOwnerGuardedTransaction).not.toHaveBeenCalled();
   });
 
-  test("still rejects a manager demoting an owner before the owner count is read", async () => {
+  test("still rejects a manager demoting an owner before the owners are locked", async () => {
     mocks.getMembershipByUserIdOrganizationId.mockImplementation(async (userId: string) =>
       membership(userId, userId === currentUserId ? "manager" : "owner")
     );
 
     await expect(callUpdateMembership("member")).rejects.toThrow(OperationNotAllowedError);
+    expect(mocks.runOwnerGuardedTransaction).not.toHaveBeenCalled();
     expect(mocks.updateMembership).not.toHaveBeenCalled();
   });
 });
