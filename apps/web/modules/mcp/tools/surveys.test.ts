@@ -381,6 +381,93 @@ describe("registerSurveyTools", () => {
     });
   });
 
+  // Targeting filters carry literal contact attribute values, which list_segments gates on Segments and
+  // Contact attributes: Read. A survey tool leaves them out for a caller without both, over MCP only.
+  describe("an app survey's targeting", () => {
+    const survey = {
+      id: "clxx1234567890123456789012",
+      type: "app",
+      targeting: { filters: [{ attributeKey: "email", value: "ceo@example.com" }] },
+    };
+    const withoutTargeting = { id: survey.id, type: "app" };
+    const oauthWith = (scopes: string[], permissions: Record<string, string>) => ({
+      ...readOnlyOAuthAuthInfo,
+      scopes,
+      extra: { ...readOnlyOAuthAuthInfo.extra, grant: { access: "all", permissions } },
+    });
+    const getWith = async (callerAuthInfo: unknown) => {
+      const { tools } = createToolServer();
+      vi.mocked(getV3Survey).mockResolvedValue(successResponse(survey, { requestId: "req_tool" }));
+      return tools
+        .get("get_survey")!
+        .handler({ surveyId: survey.id }, { http: { authInfo: callerAuthInfo } });
+    };
+
+    test.each([
+      ["Surveys: Read alone", oauthWith(["surveys:read", "audience:read"], { surveys: "read" })],
+      [
+        "Segments but not Contact attributes",
+        oauthWith(["surveys:read", "audience:read"], { surveys: "read", segments: "read" }),
+      ],
+      [
+        "a grant with both, on a token without audience:read",
+        oauthWith(["surveys:read"], FULL_MCP_GRANT.permissions),
+      ],
+      ["an API key without audience:read", authInfo],
+    ])("is left out for %s, in the text too", async (_case, callerAuthInfo) => {
+      const result = await getWith(callerAuthInfo);
+
+      expect(result.structuredContent).toEqual({ data: withoutTargeting, requestId: "req_tool" });
+      expect(JSON.parse(result.content[0].text)).toEqual({ data: withoutTargeting, requestId: "req_tool" });
+    });
+
+    test.each([
+      [
+        "Segments and Contact attributes: Read",
+        oauthWith(["surveys:read", "audience:read"], {
+          surveys: "read",
+          segments: "read",
+          contactAttributes: "read",
+        }),
+      ],
+      ["an API key with audience:read", { ...authInfo, scopes: ["surveys:read", "audience:read"] }],
+    ])("is returned for %s", async (_case, callerAuthInfo) => {
+      const result = await getWith(callerAuthInfo);
+
+      expect(result.structuredContent).toEqual({ data: survey, requestId: "req_tool" });
+    });
+
+    test("is left out of every listed survey", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(listV3Surveys).mockResolvedValue(
+        successListResponse(
+          [survey, { id: "link", type: "link" }],
+          { limit: 20, nextCursor: null },
+          {
+            requestId: "req_tool",
+          }
+        )
+      );
+
+      const result = await tools
+        .get("list_surveys")!
+        .handler({ workspaceId: "clws1234567890123456789012" }, { http: { authInfo } });
+
+      expect(result.structuredContent.data).toEqual([withoutTargeting, { id: "link", type: "link" }]);
+    });
+
+    test("is left out of a patched survey", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(patchV3SurveyResponse).mockResolvedValue(successResponse(survey, { requestId: "req_tool" }));
+
+      const result = await tools
+        .get("patch_survey")!
+        .handler({ surveyId: survey.id, data: { name: "Renamed" } }, { http: { authInfo } });
+
+      expect(result.structuredContent.data).toEqual(withoutTargeting);
+    });
+  });
+
   test("get_survey calls the shared v3 get operation", async () => {
     const { tools } = createToolServer();
     vi.mocked(getV3Survey).mockResolvedValue(

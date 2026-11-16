@@ -922,6 +922,12 @@ when `includeTotalCount` is `false`.
 
 Gets one survey by ID. The tool is read-only and idempotent.
 
+An app survey's `targeting` is its segment's filters, which carry literal contact attribute values. Every
+survey tool (`list_surveys`, `get_survey`, `create_survey`, `patch_survey`, and the block tools'
+`detailed` answer) leaves `targeting` out unless the caller holds Segments and Contact attributes at Read,
+as `list_segments` needs. It is left out rather than set to `null`, so a survey sent back to `patch_survey`
+as read keeps its targeting. The REST operations return it as before.
+
 Input:
 
 ```json

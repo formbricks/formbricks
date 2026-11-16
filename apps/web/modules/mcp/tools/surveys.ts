@@ -37,6 +37,7 @@ import {
   ZMcpValidateSurveyInput,
 } from "./schemas";
 import { ZMcpGeneratedSurveyOutput } from "./survey-output-schemas";
+import { surveyResultForCaller } from "./survey-targeting";
 
 export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSearchParams {
   const searchParams = new URLSearchParams();
@@ -131,7 +132,7 @@ export function registerSurveyTools(server: McpServer): void {
         instance: MCP_API_ROUTE,
       });
 
-      return await responseToMcpToolResult(response, requestId);
+      return surveyResultForCaller(authInfo, await responseToMcpToolResult(response, requestId));
     }
   );
 
@@ -141,7 +142,7 @@ export function registerSurveyTools(server: McpServer): void {
     {
       title: "Get survey",
       description:
-        "Get one Formbricks survey using the v3 Surveys API contract, including its custom CSS source (`customCss`).",
+        "Get one Formbricks survey using the v3 Surveys API contract, including its custom CSS source (`customCss`). An app survey's `targeting` (segment filters, which name contact attribute values) is left out unless the user's grant gives Segments and Contact attributes: Read.",
       inputSchema: ZMcpGetSurveyInput,
       annotations: {
         readOnlyHint: true,
@@ -162,7 +163,7 @@ export function registerSurveyTools(server: McpServer): void {
         instance: MCP_API_ROUTE,
       });
 
-      return await responseToMcpToolResult(response, requestId);
+      return surveyResultForCaller(authInfo, await responseToMcpToolResult(response, requestId));
     }
   );
 
@@ -184,17 +185,20 @@ export function registerSurveyTools(server: McpServer): void {
     },
     [{ permission: "surveys", level: "write" }],
     async (input: TMcpCreateSurveyInput, ctx) =>
-      runMcpMutation(
-        ctx,
-        { action: "created", resource: "survey", logContext: { workspaceId: input.workspaceId } },
-        ({ authentication, requestId, auditLog }) =>
-          createV3SurveyResponseFromRawInput({
-            body: input,
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-          })
+      surveyResultForCaller(
+        getMcpToolAuthInfo(ctx),
+        await runMcpMutation(
+          ctx,
+          { action: "created", resource: "survey", logContext: { workspaceId: input.workspaceId } },
+          ({ authentication, requestId, auditLog }) =>
+            createV3SurveyResponseFromRawInput({
+              body: input,
+              authentication,
+              requestId,
+              instance: MCP_API_ROUTE,
+              auditLog,
+            })
+        )
       )
   );
 
@@ -292,19 +296,22 @@ export function registerSurveyTools(server: McpServer): void {
     },
     [{ permission: "surveys", level: "write" }],
     async (input: TMcpPatchSurveyInput, ctx) =>
-      runMcpMutation(
-        ctx,
-        { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
-        ({ authentication, requestId, auditLog }) =>
-          patchV3SurveyResponse({
-            surveyId: input.surveyId,
-            body: input.data,
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-            writeConfirmation: { confirmed: input.confirm === true },
-          })
+      surveyResultForCaller(
+        getMcpToolAuthInfo(ctx),
+        await runMcpMutation(
+          ctx,
+          { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
+          ({ authentication, requestId, auditLog }) =>
+            patchV3SurveyResponse({
+              surveyId: input.surveyId,
+              body: input.data,
+              authentication,
+              requestId,
+              instance: MCP_API_ROUTE,
+              auditLog,
+              writeConfirmation: { confirmed: input.confirm === true },
+            })
+        )
       )
   );
 
@@ -334,32 +341,35 @@ export function registerSurveyTools(server: McpServer): void {
     },
     [{ permission: "surveys", level: "write" }],
     async (input: TMcpEditSurveyBlocksInput, ctx) =>
-      runMcpMutation(
-        ctx,
-        { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
-        async ({ authentication, requestId, auditLog }) => {
-          const { surveyId, response_format: responseFormat, confirm, ...body } = input;
-          // Mint insert ids here rather than letting the operation do it alone, so `applied` can
-          // report the id of a block the caller did not name — otherwise an agent inserts a block
-          // and has no way to reference it without re-reading the survey. The helper is idempotent,
-          // so the operation running it again is a no-op.
-          const ops = withGeneratedInsertIds(body.ops);
-          const response = await editV3SurveyBlocksResponse({
-            surveyId,
-            body: { ...body, ops },
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-            writeConfirmation: { confirmed: confirm === true },
-          });
+      surveyResultForCaller(
+        getMcpToolAuthInfo(ctx),
+        await runMcpMutation(
+          ctx,
+          { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
+          async ({ authentication, requestId, auditLog }) => {
+            const { surveyId, response_format: responseFormat, confirm, ...body } = input;
+            // Mint insert ids here rather than letting the operation do it alone, so `applied` can
+            // report the id of a block the caller did not name — otherwise an agent inserts a block
+            // and has no way to reference it without re-reading the survey. The helper is idempotent,
+            // so the operation running it again is a no-op.
+            const ops = withGeneratedInsertIds(body.ops);
+            const response = await editV3SurveyBlocksResponse({
+              surveyId,
+              body: { ...body, ops },
+              authentication,
+              requestId,
+              instance: MCP_API_ROUTE,
+              auditLog,
+              writeConfirmation: { confirmed: confirm === true },
+            });
 
-          return responseFormat === "detailed"
-            ? response
-            : conciseSurveyResponse(response, {
-                applied: ops.map((op) => ({ op: op.op, id: op.op === "insert" ? op.block.id : op.id })),
-              });
-        }
+            return responseFormat === "detailed"
+              ? response
+              : conciseSurveyResponse(response, {
+                  applied: ops.map((op) => ({ op: op.op, id: op.op === "insert" ? op.block.id : op.id })),
+                });
+          }
+        )
       )
   );
 
@@ -389,25 +399,28 @@ export function registerSurveyTools(server: McpServer): void {
     },
     [{ permission: "surveys", level: "write" }],
     async (input: TMcpSetSurveyBlockOrderInput, ctx) =>
-      runMcpMutation(
-        ctx,
-        { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
-        async ({ authentication, requestId, auditLog }) => {
-          const { surveyId, response_format: responseFormat, confirm, ...body } = input;
-          const response = await setV3SurveyBlockOrderResponse({
-            surveyId,
-            body,
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-            writeConfirmation: { confirmed: confirm === true },
-          });
+      surveyResultForCaller(
+        getMcpToolAuthInfo(ctx),
+        await runMcpMutation(
+          ctx,
+          { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
+          async ({ authentication, requestId, auditLog }) => {
+            const { surveyId, response_format: responseFormat, confirm, ...body } = input;
+            const response = await setV3SurveyBlockOrderResponse({
+              surveyId,
+              body,
+              authentication,
+              requestId,
+              instance: MCP_API_ROUTE,
+              auditLog,
+              writeConfirmation: { confirmed: confirm === true },
+            });
 
-          return responseFormat === "detailed"
-            ? response
-            : conciseSurveyResponse(response, { order: body.order });
-        }
+            return responseFormat === "detailed"
+              ? response
+              : conciseSurveyResponse(response, { order: body.order });
+          }
+        )
       )
   );
 
