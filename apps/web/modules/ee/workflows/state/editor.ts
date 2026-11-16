@@ -88,9 +88,15 @@ export type TWorkflowNodeData = {
  */
 export type TWorkflowNodeFieldFocusRequest = {
   nodeId: string;
-  /** Config key within the node's form, e.g. "to" | "subject" | "body" | "surveyId". */
+  /**
+   * Config key within the node's form, e.g. "to" | "subject" | "body" | "surveyId" | "url", or
+   * WORKFLOW_STEP_PANEL_FIELD to open the step's panel with nothing to focus.
+   */
   field: string;
 };
+
+/** A focus request for the step's panel as a whole: it opens the panel and focuses no field. */
+export const WORKFLOW_STEP_PANEL_FIELD = "step";
 
 /**
  * The editable draft fields exactly as last persisted (or hydrated). Compared against the live
@@ -741,7 +747,8 @@ export const requestWorkflowNodeFieldFocusAtom = atom(
         draft.selectedNodeId = request.nodeId;
         draft.isNodeConfigModalOpen = true;
         draft.isInspectorCollapsed = false;
-        draft.fieldFocusRequest = request;
+        // A whole-panel request has no field for a form to consume, so it leaves nothing pending.
+        draft.fieldFocusRequest = request.field === WORKFLOW_STEP_PANEL_FIELD ? null : request;
       })
     );
   }

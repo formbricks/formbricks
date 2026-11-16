@@ -11,6 +11,7 @@ import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import {
   type TWorkflowNodeFieldFocusRequest,
   type TWorkflowValidationProblem,
+  WORKFLOW_STEP_PANEL_FIELD,
   workflowProblemFields,
 } from "@/modules/ee/workflows/state/editor";
 
@@ -121,6 +122,21 @@ const TRIGGER_CONFIG_FIELD_TARGETS: Record<string, string> = {
 };
 
 /**
+ * The field an unfinished step's problem lands on: the email step's first blank required field, an
+ * HTTP request's URL while it has none, otherwise the step's panel itself (an If/else or Switch
+ * condition, or a field the step can't name), which opens with nothing focused.
+ */
+const getStepProblemField = (node: TWorkflowDefinition["nodes"][number]): string => {
+  if (node.type === "action" && node.actionType === "send_email") {
+    return getBlankSendEmailContentFields(node.config)[0] ?? WORKFLOW_STEP_PANEL_FIELD;
+  }
+  if (node.type === "action" && node.actionType === "http_request" && !node.config.url.trim()) {
+    return "url";
+  }
+  return WORKFLOW_STEP_PANEL_FIELD;
+};
+
+/**
  * The config field a validation problem should send the user to, or null when the problem has no
  * single field to fix (a missing trigger, a broken flow shape, an unnamed workflow — those are
  * fixed on the canvas or in the page title, not in a config form).
@@ -141,10 +157,7 @@ export const getWorkflowValidationProblemFocusTarget = (
   const nodeIndex = workflowProblemFields.parseNodeConfigIndex(problem.field);
   if (nodeIndex !== null) {
     const node = definition.nodes[nodeIndex];
-    // Covers an out-of-range index too: `undefined?.type` is undefined, which is not "action".
-    if (node?.type !== "action" || node.actionType !== "send_email") return null;
-    const [firstBlankField] = getBlankSendEmailContentFields(node.config);
-    return firstBlankField ? { nodeId: node.id, field: firstBlankField } : null;
+    return node ? { nodeId: node.id, field: getStepProblemField(node) } : null;
   }
 
   // A stale ending is a problem with the endings list, not with the survey itself — sending it to

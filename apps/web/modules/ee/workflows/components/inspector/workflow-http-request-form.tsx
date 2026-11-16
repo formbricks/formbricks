@@ -20,6 +20,7 @@ import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspect
 import { WorkflowVariableInput } from "@/modules/ee/workflows/components/inspector/workflow-variable-input";
 import { JsonEditor } from "@/modules/ee/workflows/components/json-editor/json-editor";
 import { useWorkflowVariablePicker } from "@/modules/ee/workflows/components/variable-picker/use-workflow-variable-picker";
+import { useWorkflowNodeFieldFocus } from "@/modules/ee/workflows/hooks/use-workflow-node-field-focus";
 import {
   cancelReplacingSecret,
   createHeaderRow,
@@ -75,6 +76,12 @@ export const WorkflowHttpRequestForm = ({
   const status = useAtomValue(workflowStatusAtom);
   const isReadOnly = useAtomValue(isWorkflowReadOnlyAtom);
   const picker = useWorkflowVariablePicker({ nodeId: node.id });
+  // "Finish setting up this step" in the problems dialog lands on the URL it still needs.
+  useWorkflowNodeFieldFocus({
+    nodeId: node.id,
+    resolveElement: (field) =>
+      field === "url" ? document.getElementById(`workflow-http-url-${node.id}`) : null,
+  });
   const config = node.config;
   const workflowId = workflow?.id ?? "";
   // Header rows whose lock the author set by hand: the lock then stops following the name.

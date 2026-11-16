@@ -3,6 +3,7 @@ import { describe, expect, test } from "vitest";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 import {
   type TWorkflowValidationProblem,
+  WORKFLOW_STEP_PANEL_FIELD,
   deriveTriggerEndingProblems,
   deriveWorkflowValidation,
 } from "@/modules/ee/workflows/state/editor";
@@ -280,12 +281,39 @@ describe("getWorkflowValidationProblemFocusTarget", () => {
     expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0"), definition)).toBeNull();
   });
 
+  test("opens the step's panel when the step has no single field to point at", () => {
+    const definition = buildDefinition({ to: "a", subject: "b", body: "c" });
+    // An email step with nothing blank, and an If/else, still take the user to the step.
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0.config"), definition)).toEqual({
+      nodeId: "email-1",
+      field: WORKFLOW_STEP_PANEL_FIELD,
+    });
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.1.config"), definition)).toEqual({
+      nodeId: "ifelse-1",
+      field: WORKFLOW_STEP_PANEL_FIELD,
+    });
+  });
+
+  test("points an HTTP request without a URL at its URL, and one with a URL at its panel", () => {
+    const withHttp = (url: string) =>
+      ({
+        ...buildDefinition({}),
+        nodes: [{ id: "http-1", type: "action", actionType: "http_request", config: { url } }],
+      }) as unknown as TWorkflowDefinition;
+
+    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0.config"), withHttp(" "))).toEqual({
+      nodeId: "http-1",
+      field: "url",
+    });
+    expect(
+      getWorkflowValidationProblemFocusTarget(problem("nodes.0.config"), withHttp("https://acme.example"))
+    ).toEqual({ nodeId: "http-1", field: WORKFLOW_STEP_PANEL_FIELD });
+  });
+
   test("has no target for problems that aren't fixed in a config form", () => {
     const definition = buildDefinition({ to: "a", subject: "b", body: "c" });
-    // Nothing blank on the step, a non-action node, whole-flow problems, and out-of-range or
-    // trigger-less paths all leave the row passive rather than jumping somewhere arbitrary.
-    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.0.config"), definition)).toBeNull();
-    expect(getWorkflowValidationProblemFocusTarget(problem("nodes.1.config"), definition)).toBeNull();
+    // Whole-flow problems, and out-of-range or trigger-less paths, leave the row passive rather
+    // than jumping somewhere arbitrary.
     expect(getWorkflowValidationProblemFocusTarget(problem("nodes.9.config"), definition)).toBeNull();
     expect(getWorkflowValidationProblemFocusTarget(problem("name"), definition)).toBeNull();
     expect(getWorkflowValidationProblemFocusTarget(problem("trigger"), definition)).toBeNull();
