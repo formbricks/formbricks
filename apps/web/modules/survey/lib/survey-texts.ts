@@ -84,7 +84,8 @@ export interface TSurveyText {
 
 const RICH_TEXT_PROPERTIES = new Set<TSurveyTextProperty>(["headline", "subheader", "html"]);
 
-const encodeKeySegment = (id: string): string => encodeURIComponent(id).replaceAll(".", "%2E");
+/** An id as a text key holds it: percent-encoded, dots included, so a key splits back into its segments. */
+export const encodeKeySegment = (id: string): string => encodeURIComponent(id).replaceAll(".", "%2E");
 
 const keyOf = (...segments: string[]): string => segments.join(".");
 

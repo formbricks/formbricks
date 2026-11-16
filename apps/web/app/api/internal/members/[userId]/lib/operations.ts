@@ -1,5 +1,4 @@
 import "server-only";
-import { prisma } from "@formbricks/database";
 import { ValidationError } from "@formbricks/types/errors";
 import type { TMembership } from "@formbricks/types/memberships";
 import {
@@ -18,60 +17,49 @@ import {
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { canManageUsers } from "@/lib/membership/user-management";
+import { lockUserActiveState } from "@/lib/user/reactivation";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   refuseRoleAssignment,
   requireRoleManagementEntitlement,
 } from "@/modules/ee/role-management/lib/api-access";
 import { updateMembership } from "@/modules/ee/role-management/lib/membership";
+import { deleteMembership } from "@/modules/organization/settings/teams/lib/membership";
 import {
-  deleteMembership,
-  getOrganizationOwnerCount,
-} from "@/modules/organization/settings/teams/lib/membership";
+  LastActiveOwnerError,
+  runOwnerGuardedTransaction,
+} from "@/modules/organization/settings/teams/lib/owner-guard";
 import type { TMemberUpdateBody } from "../schemas";
 import { serializeMemberRole } from "../serializers";
 
 export const LAST_OWNER_DETAIL = "You cannot demote the last owner of the organization";
 
-/** Raised inside the demotion transaction, so the transaction rolls back and the route answers 409. */
-class LastOwnerDemotionError extends Error {}
-
 /**
- * Change the role, demoting an owner only while another active owner remains. Read then act in two
- * unguarded statements would let two owners demoting each other concurrently both see "more than one
- * owner", leaving none.
- *
- * So the organization's owner memberships are locked first, in `userId` order — the same lock the data
- * retention members sweep takes before deactivating an owner (`deactivateDueMember`) — and only then
- * counted. The transaction is Read Committed on purpose: the second of two racing demotions waits on the
- * lock, and once the first commits, its count is a fresh statement that sees the first one's demotion, so
- * it finds the last owner and answers 409. Under Serializable (or Repeatable Read) that waiting transaction
- * would instead fail with a serialization error (40001 / P2034) on the row the first one changed: a 500.
+ * Change the role, demoting an owner only while another active owner remains, as the member list's server
+ * action did (ENG-6767). `runOwnerGuardedTransaction` takes the owners' lock that every last-owner check
+ * takes, so of two owners demoting each other at once the second waits, then counts what the first
+ * committed, and is refused. The user's row is locked next, as removing a member locks it: a demotion to
+ * Dashboard viewer decides whether only viewer memberships remain (and revokes the wider OAuth grants), and
+ * must see a removal from another organization that commits at the same moment.
  */
-const applyRoleChange = (
+const applyRoleChange = async (
   target: TMembership,
   body: TMemberUpdateBody
-): Promise<TMembership | LastOwnerDemotionError> => {
+): Promise<TMembership | LastActiveOwnerError> => {
   const { userId, organizationId } = target;
   if (target.role !== "owner" || body.role === "owner") {
     return updateMembership(userId, organizationId, body);
   }
 
-  return prisma
-    .$transaction(async (tx) => {
-      await tx.$queryRaw`
-        SELECT 1 FROM "Membership"
-        WHERE "organizationId" = ${organizationId} AND "role" = 'owner'
-        ORDER BY "userId"
-        FOR UPDATE
-      `;
-      if ((await getOrganizationOwnerCount(organizationId, tx)) <= 1) throw new LastOwnerDemotionError();
+  try {
+    return await runOwnerGuardedTransaction(organizationId, userId, async (tx) => {
+      await lockUserActiveState(tx, userId);
       return updateMembership(userId, organizationId, body, tx);
-    })
-    .catch((error: unknown) => {
-      if (error instanceof LastOwnerDemotionError) return error;
-      throw error;
     });
+  } catch (error) {
+    if (error instanceof LastActiveOwnerError) return error;
+    throw error;
+  }
 };
 
 /**
@@ -155,7 +143,7 @@ export async function updateMemberRoleOperation({
   if (auditLog) auditLog.oldObject = target;
 
   const result = await applyRoleChange(target, body);
-  if (result instanceof LastOwnerDemotionError) {
+  if (result instanceof LastActiveOwnerError) {
     return problemConflict(requestId, LAST_OWNER_DETAIL, instance);
   }
 

@@ -21,7 +21,6 @@ vi.mock("@/lib/membership/service", () => ({
 }));
 vi.mock("@/modules/organization/settings/teams/lib/membership", () => ({
   deleteMembership: mocks.deleteMembership,
-  getOrganizationOwnerCount: vi.fn(),
 }));
 vi.mock("@/modules/ee/role-management/lib/membership", () => ({ updateMembership: vi.fn() }));
 vi.mock("@/modules/ee/role-management/lib/api-access", () => ({

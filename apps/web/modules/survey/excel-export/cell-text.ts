@@ -30,6 +30,9 @@ const flattenRichText = (html: string): string =>
 export const fitCell = (text: string, truncatedSuffix: string): string =>
   cutText(text, EXCEL_EXPORT_MAX_CELL_CHARS, truncatedSuffix);
 
+/** Whether `fitCell` cuts `text`. Its result's length can't say: a cut at an emoji drops a unit more. */
+export const isCutToFitCell = (text: string): boolean => text.length > EXCEL_EXPORT_MAX_CELL_CHARS;
+
 /** `text` with the characters an xlsx file cannot hold removed. */
 export const toXmlSafeText = (text: string): string => text.replaceAll(XML_INVALID, "");
 

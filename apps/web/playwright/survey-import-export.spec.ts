@@ -3,6 +3,7 @@ import { expect } from "@playwright/test";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { type Page } from "playwright";
+import * as XLSX from "xlsx";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
 import { tableRow } from "./utils/table-toolbar";
@@ -211,6 +212,130 @@ test.describe("Survey import and export", () => {
       ]);
       // Updated in place: workspace A still holds just the one survey.
       expect(await prisma.survey.count({ where: { workspaceId: sourceWorkspaceId } })).toBe(1);
+    });
+  });
+
+  test("exports a survey as an Excel file, and New survey › Import updates it from the edited sheet", async ({
+    page,
+    users,
+  }) => {
+    const run = stamp();
+    const surveyName = `Excel Round Trip ${run}`;
+    const headline = "How was your visit?";
+    const translation = "Wie war dein Besuch?";
+    const addedHeadline = "Anything else?";
+
+    const user = await users.create({
+      email: `excel-round-trip-${run}@example.com`,
+      name: `excel-round-trip-${run}`,
+      skipSurveySeed: true,
+    });
+    const { workspaceId } = user;
+    if (!workspaceId) throw new Error("Workspace not seeded for the test user");
+
+    // A draft in English and German, its German headline still the English one: what a translator gets.
+    const survey = await prisma.survey.create({
+      data: {
+        workspaceId,
+        createdBy: user.id,
+        name: surveyName,
+        status: "draft",
+        type: "link",
+        blocks: [
+          {
+            id: createId(),
+            name: "Block 1",
+            elements: [
+              {
+                id: "visit",
+                type: "openText",
+                headline: { default: headline, "de-DE": headline },
+                required: true,
+                inputType: "text",
+                charLimit: { enabled: false },
+              },
+            ],
+          },
+        ],
+        endings: [{ id: createId(), type: "endScreen", headline: { default: "Thanks!", "de-DE": "Danke!" } }],
+        languages: {
+          create: [
+            { default: true, enabled: true, language: { create: { code: "en-US", workspaceId } } },
+            { default: false, enabled: true, language: { create: { code: "de-DE", workspaceId } } },
+          ],
+        },
+      },
+    });
+
+    await user.login();
+    await page.waitForURL(/\/workspaces\/[^/]+\/surveys/);
+    await page.goto(`/workspaces/${workspaceId}/surveys`);
+    const openMenu = () =>
+      tableRow(page, "survey-list-table", surveyName).getByTestId("survey-dropdown-trigger").click();
+
+    const sheetPath = await test.step("the card menu downloads the survey as an Excel file", async () => {
+      await openMenu();
+      await page.getByTestId("survey-export-submenu").focus();
+      await page.keyboard.press("ArrowRight");
+      await expect(page.getByTestId("export-formbricks-file")).toBeFocused();
+      await page.keyboard.press("ArrowDown");
+      await expect(page.getByTestId("export-excel-file")).toBeFocused();
+      const downloadEvent = page.waitForEvent("download");
+      await page.keyboard.press("Enter");
+      const download = await downloadEvent;
+      expect(download.suggestedFilename()).toBe(`${surveyName}.xlsx`);
+      const filePath = test.info().outputPath("exported", download.suggestedFilename());
+      await download.saveAs(filePath);
+      return filePath;
+    });
+
+    const editedPath =
+      await test.step("a translator fills the German column and adds a question", async () => {
+        const book = XLSX.read(await readFile(sheetPath), { type: "buffer" });
+        const sheet = book.Sheets[book.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, raw: false, defval: "" });
+        const header = rows[0];
+        const german = header.findIndex((cell) => cell.includes("(de-DE)"));
+        const english = header.findIndex((cell) => cell.includes("(en-US)"));
+        const headlineRow = rows.findIndex((row) => row[0] === "element.visit.headline");
+        expect(german).toBeGreaterThan(0);
+        expect(headlineRow).toBeGreaterThan(0);
+        rows[headlineRow][german] = translation;
+        const addedRow = Array.from({ length: header.length }, () => "");
+        addedRow[1] = "anything_else";
+        addedRow[2] = "Free text";
+        addedRow[english] = addedHeadline;
+        rows.splice(headlineRow + 1, 0, addedRow);
+        book.Sheets[book.SheetNames[0]] = XLSX.utils.aoa_to_sheet(rows);
+        const filePath = test.info().outputPath("edited", `${surveyName}.xlsx`);
+        await mkdir(path.dirname(filePath), { recursive: true });
+        await writeFile(filePath, XLSX.write(book, { type: "buffer", bookType: "xlsx" }) as Buffer);
+        return filePath;
+      });
+
+    await test.step("New survey › Import matches the sheet with its survey and updates it", async () => {
+      // The sheet names the survey it was exported from, as a Formbricks file does: no menu to start from.
+      const dialog = await importFile(page, editedPath);
+
+      const match = dialog.getByTestId("survey-import-match-choice");
+      await expect(match).toBeVisible({ timeout: 30000 });
+      await expect(match.getByRole("radio", { name: `Update “${surveyName}”` })).toBeChecked();
+      await expect(dialog.getByText(addedHeadline, { exact: true })).toBeVisible();
+      await dialog.getByTestId("survey-import-update").click();
+      await page.waitForURL(`**/workspaces/${workspaceId}/surveys/${survey.id}/edit`, { timeout: 60000 });
+
+      const updated = await prisma.survey.findUniqueOrThrow({ where: { id: survey.id } });
+      const elements = (
+        updated.blocks as { elements: { id: string; type: string; headline: TI18n }[] }[]
+      ).flatMap((block) => block.elements);
+      expect(elements.map(({ id, type }) => ({ id, type }))).toEqual([
+        { id: "visit", type: "openText" },
+        { id: "anything_else", type: "openText" },
+      ]);
+      expect(elements[0].headline).toEqual({ default: headline, "de-DE": translation });
+      expect(elements[1].headline.default).toBe(addedHeadline);
+      expect(updated.name).toBe(surveyName);
+      expect(await prisma.survey.count({ where: { workspaceId } })).toBe(1);
     });
   });
 });

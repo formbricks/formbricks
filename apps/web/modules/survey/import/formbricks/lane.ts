@@ -9,8 +9,8 @@ import type { TFormbricksFileRead } from "@/modules/survey/formbricks-file/read"
 import { findFormbricksFileMatch } from "@/modules/survey/formbricks-file/update";
 import type { TSurveyImportFileDraft } from "@/modules/survey/import/core/draft";
 import type { TSurveyImportPipelineIssue } from "@/modules/survey/import/core/report";
-import type { TSurveyImportMatch } from "@/modules/survey/import/types";
-import type { TSurveyImportLane } from "../core/lane";
+import type { TSurveyImportMatch, TSurveyImportSourceKind } from "@/modules/survey/import/types";
+import type { TSurveyImportLane, TSurveyImportResult } from "../core/lane";
 import { buildSurveyImportReport } from "../core/report";
 
 /**
@@ -26,7 +26,7 @@ export interface TFormbricksFileImportInput {
   authentication: TV3Authentication;
 }
 
-interface TPreparedFormbricksFileImport {
+export interface TPreparedFormbricksFileImport {
   draft: TSurveyImportFileDraft;
   references: TFormbricksFileReferences;
   issues: TSurveyImportPipelineIssue[];
@@ -76,20 +76,28 @@ export const formbricksFileImportLane: TSurveyImportLane<
   },
   run: ({ prepared, onProgress }) => {
     onProgress("assembling");
-    const { draft, references, issues, match, fileName } = prepared;
-    return Promise.resolve({
-      payload: draft,
-      references,
-      match,
-      report: buildSurveyImportReport({
-        source: { kind: "formbricks", fileName },
-        document: {
-          blocks: draft.blocks,
-          languages: getFormbricksFileSurveyLanguageCodes(draft).map((code) => ({ code })),
-          hiddenFields: { fieldIds: getHiddenFieldIds(draft) },
-        },
-        issues,
-      }),
-    });
+    return Promise.resolve(toFormbricksFileImportResult(prepared, "formbricks"));
   },
 };
+
+/**
+ * The stream's result for a draft in a Formbricks file's shape: a Formbricks file's, or an Excel export
+ * applied to its survey (ENG-6809), whose draft is that survey as a Formbricks file.
+ */
+export const toFormbricksFileImportResult = (
+  { draft, references, issues, match, fileName }: TPreparedFormbricksFileImport,
+  kind: TSurveyImportSourceKind
+): TSurveyImportResult => ({
+  payload: draft,
+  references,
+  match,
+  report: buildSurveyImportReport({
+    source: { kind, fileName },
+    document: {
+      blocks: draft.blocks,
+      languages: getFormbricksFileSurveyLanguageCodes(draft).map((code) => ({ code })),
+      hiddenFields: { fieldIds: getHiddenFieldIds(draft) },
+    },
+    issues,
+  }),
+});

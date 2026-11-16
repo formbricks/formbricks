@@ -24,7 +24,6 @@ vi.mock("@/lib/membership/service", () => ({
 vi.mock("@/modules/organization/settings/teams/lib/membership", () => ({
   deleteMembership: mocks.deleteMembership,
   getMembershipsByUserId: mocks.getMembershipsByUserId,
-  getOrganizationOwnerCount: vi.fn(),
 }));
 vi.mock("@/modules/ee/license-check/lib/utils", () => ({ getIsMultiOrgEnabled: mocks.getIsMultiOrgEnabled }));
 vi.mock("@/modules/ee/role-management/lib/membership", () => ({ updateMembership: vi.fn() }));

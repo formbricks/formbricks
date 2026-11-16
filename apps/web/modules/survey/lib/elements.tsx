@@ -1,4 +1,3 @@
-import { createId } from "@paralleldrive/cuid2";
 import { TFunction } from "i18next";
 import {
   ArrowUpFromLineIcon,
@@ -24,8 +23,7 @@ import {
 } from "lucide-react";
 import type { JSX } from "react";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import { createI18nString } from "@/lib/i18n/utils";
-import { replaceElementPresetPlaceholders } from "@/lib/utils/templates";
+import { getElementPreset } from "./element-presets";
 import { getElementTypeLabel } from "./element-type-labels";
 
 export enum TElementCategory {
@@ -63,12 +61,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.free_text_description"),
     icon: MessageSquareTextIcon,
     category: TElementCategory.Input,
-    preset: {
-      headline: createI18nString("", []),
-      placeholder: createI18nString(t("templates.free_text_placeholder"), []),
-      longAnswer: true,
-      inputType: "text",
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.OpenText, t),
   },
   {
     id: TSurveyElementTypeEnum.MultipleChoiceSingle,
@@ -76,20 +69,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.single_select_description"),
     icon: Rows3Icon,
     category: TElementCategory.Choice,
-    preset: {
-      headline: createI18nString("", []),
-      choices: [
-        {
-          id: createId(),
-          label: createI18nString("", []),
-        },
-        {
-          id: createId(),
-          label: createI18nString("", []),
-        },
-      ],
-      shuffleOption: "none",
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.MultipleChoiceSingle, t),
   },
   {
     id: TSurveyElementTypeEnum.MultipleChoiceMulti,
@@ -97,24 +77,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.multi_select_description"),
     icon: ListIcon,
     category: TElementCategory.Choice,
-    preset: {
-      headline: createI18nString("", []),
-      choices: [
-        {
-          id: createId(),
-          label: createI18nString("", []),
-        },
-        {
-          id: createId(),
-          label: createI18nString("", []),
-        },
-        {
-          id: createId(),
-          label: createI18nString("", []),
-        },
-      ],
-      shuffleOption: "none",
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.MultipleChoiceMulti, t),
   },
   {
     id: TSurveyElementTypeEnum.PictureSelection,
@@ -122,11 +85,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.picture_selection_description"),
     icon: ImageIcon,
     category: TElementCategory.Choice,
-    preset: {
-      headline: createI18nString("", []),
-      allowMulti: true,
-      choices: [],
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.PictureSelection, t),
   },
   {
     id: TSurveyElementTypeEnum.Rating,
@@ -134,13 +93,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.rating_description"),
     icon: StarIcon,
     category: TElementCategory.Scoring,
-    preset: {
-      headline: createI18nString("", []),
-      scale: "star",
-      range: 5,
-      lowerLabel: createI18nString(t("templates.rating_lower_label"), []),
-      upperLabel: createI18nString(t("templates.rating_upper_label"), []),
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.Rating, t),
   },
   {
     id: TSurveyElementTypeEnum.NPS,
@@ -148,11 +101,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.nps_description"),
     icon: PresentationIcon,
     category: TElementCategory.Scoring,
-    preset: {
-      headline: createI18nString("", []),
-      lowerLabel: createI18nString(t("templates.nps_lower_label"), []),
-      upperLabel: createI18nString(t("templates.nps_upper_label"), []),
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.NPS, t),
   },
   {
     id: TSurveyElementTypeEnum.CSAT,
@@ -160,13 +109,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.csat_description"),
     icon: SmilePlusIcon,
     category: TElementCategory.Scoring,
-    preset: {
-      headline: createI18nString("", []),
-      scale: "smiley",
-      range: 5,
-      lowerLabel: createI18nString(t("templates.csat_lower_label"), []),
-      upperLabel: createI18nString(t("templates.csat_upper_label"), []),
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.CSAT, t),
   },
   {
     id: TSurveyElementTypeEnum.CES,
@@ -174,13 +117,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.ces_description"),
     icon: GaugeIcon,
     category: TElementCategory.Scoring,
-    preset: {
-      headline: createI18nString("", []),
-      scale: "number",
-      range: 5,
-      lowerLabel: createI18nString(t("templates.ces_lower_label"), []),
-      upperLabel: createI18nString(t("templates.ces_upper_label"), []),
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.CES, t),
   },
   {
     id: TSurveyElementTypeEnum.Ranking,
@@ -188,19 +125,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.ranking_description"),
     icon: ListOrderedIcon,
     category: TElementCategory.Choice,
-    preset: {
-      headline: createI18nString("", []),
-      choices: [
-        {
-          id: createId(),
-          label: createI18nString("", []),
-        },
-        {
-          id: createId(),
-          label: createI18nString("", []),
-        },
-      ],
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.Ranking, t),
   },
   {
     id: TSurveyElementTypeEnum.Matrix,
@@ -208,18 +133,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.matrix_description"),
     icon: Grid3X3Icon,
     category: TElementCategory.Choice,
-    preset: {
-      headline: createI18nString("", []),
-      rows: [
-        { id: createId(), label: createI18nString("", []) },
-        { id: createId(), label: createI18nString("", []) },
-      ],
-      columns: [
-        { id: createId(), label: createI18nString("", []) },
-        { id: createId(), label: createI18nString("", []) },
-      ],
-      shuffleOption: "none",
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.Matrix, t),
   },
   {
     id: TSurveyElementTypeEnum.CTA,
@@ -227,13 +141,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.cta_description"),
     icon: MousePointerClickIcon,
     category: TElementCategory.Content,
-    preset: {
-      headline: createI18nString("", []),
-      ctaButtonLabel: createI18nString(t("templates.book_interview"), []),
-      buttonUrl: "",
-      buttonExternal: true,
-      required: false,
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.CTA, t),
   },
   {
     id: TSurveyElementTypeEnum.Consent,
@@ -241,10 +149,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.consent_description"),
     icon: CheckIcon,
     category: TElementCategory.Content,
-    preset: {
-      headline: createI18nString("", []),
-      label: createI18nString("", []),
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.Consent, t),
   },
   {
     id: TSurveyElementTypeEnum.FileUpload,
@@ -252,10 +157,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.file_upload_description"),
     icon: ArrowUpFromLineIcon,
     category: TElementCategory.Input,
-    preset: {
-      headline: createI18nString("", []),
-      allowMultipleFiles: false,
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.FileUpload, t),
   },
   {
     id: TSurveyElementTypeEnum.Signature,
@@ -263,11 +165,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.signature_description"),
     icon: SignatureIcon,
     category: TElementCategory.Input,
-    preset: {
-      headline: createI18nString("", []),
-      required: true,
-      allowTypedSignature: true,
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.Signature, t),
   },
   {
     id: TSurveyElementTypeEnum.Date,
@@ -275,10 +173,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.date_description"),
     icon: CalendarDaysIcon,
     category: TElementCategory.Input,
-    preset: {
-      headline: createI18nString("", []),
-      format: "M-d-y",
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.Date, t),
   },
   {
     id: TSurveyElementTypeEnum.Cal,
@@ -286,10 +181,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.schedule_a_meeting_description"),
     icon: PhoneIcon,
     category: TElementCategory.Contact,
-    preset: {
-      headline: createI18nString("", []),
-      calUserName: "rick/get-rick-rolled",
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.Cal, t),
   },
   {
     id: TSurveyElementTypeEnum.Address,
@@ -297,15 +189,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.address_description"),
     icon: HomeIcon,
     category: TElementCategory.Contact,
-    preset: {
-      headline: createI18nString("", []),
-      addressLine1: { show: true, required: true, placeholder: { default: "Address Line 1" } },
-      addressLine2: { show: true, required: true, placeholder: { default: "Address Line 2" } },
-      city: { show: true, required: true, placeholder: { default: "City" } },
-      state: { show: true, required: true, placeholder: { default: "State" } },
-      zip: { show: true, required: true, placeholder: { default: "Zip" } },
-      country: { show: true, required: true, placeholder: { default: "Country" } },
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.Address, t),
   },
   {
     id: TSurveyElementTypeEnum.ContactInfo,
@@ -313,14 +197,7 @@ export const getElementTypes = (t: TFunction): TElement[] => [
     description: t("templates.contact_info_description"),
     icon: ContactIcon,
     category: TElementCategory.Contact,
-    preset: {
-      headline: createI18nString("", []),
-      firstName: { show: true, required: true, placeholder: { default: "First Name" } },
-      lastName: { show: true, required: true, placeholder: { default: "Last Name" } },
-      email: { show: true, required: true, placeholder: { default: "Email" } },
-      phone: { show: true, required: true, placeholder: { default: "Phone" } },
-      company: { show: true, required: true, placeholder: { default: "Company" } },
-    },
+    preset: getElementPreset(TSurveyElementTypeEnum.ContactInfo, t),
   },
 ];
 
@@ -444,15 +321,6 @@ export const getCXElementNameMap = (t: TFunction) =>
     }),
     {}
   ) as Record<TSurveyElementTypeEnum, string>;
-
-export const universalElementPresets = {
-  required: false,
-};
-
-export const getElementDefaults = (id: string, workspace: any, t: TFunction) => {
-  const elementType = getElementTypes(t).find((elementType) => elementType.id === id);
-  return replaceElementPresetPlaceholders(elementType?.preset, workspace);
-};
 
 export const getTSurveyElementTypeEnumName = (id: string, t: TFunction) => {
   const elementType = getElementTypes(t).find((elementType) => elementType.id === id);

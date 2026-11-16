@@ -9,6 +9,8 @@ import type { TSurvey } from "@formbricks/types/surveys/types";
 export const EXCEL_EXPORT_ROUND_TRIP_SURVEY = {
   id: "clsurvey0000000000000002",
   name: "Visitor feedback",
+  type: "link",
+  status: "draft",
   updatedAt: new Date("2026-10-30T12:00:00.000Z"),
   welcomeCard: {
     enabled: true,
