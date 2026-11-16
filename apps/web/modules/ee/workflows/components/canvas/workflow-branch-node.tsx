@@ -31,6 +31,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { BranchEndMarker } from "./branch-end-marker";
 import { BranchLabel } from "./branch-label";
 import { WorkflowAddStepMenu } from "./workflow-add-step-menu";
 import { HANDLE_CLASS_NAMES, WorkflowNodeCard } from "./workflow-node-card";
@@ -190,13 +191,18 @@ export const WorkflowBranchNode = memo(
                           isDimmed={false}
                         />
                       </div>
-                      {canMutate && (
+                      {canMutate ? (
                         <div className="pointer-events-auto absolute top-full left-1/2 mt-1 -translate-x-1/2">
                           <WorkflowAddStepMenu
                             afterNodeType={data.nodeType}
                             ariaLabel={branch.addStepLabel}
                             onAdd={(stepType) => appendStep(id, stepType, branch.handle)}
                           />
+                        </div>
+                      ) : (
+                        // Nothing runs on this branch and nothing can be added here now: the line ends.
+                        <div className="absolute top-full left-1/2 -translate-x-1/2">
+                          <BranchEndMarker />
                         </div>
                       )}
                     </div>
