@@ -119,6 +119,29 @@ export const updateWebhookAction = authenticatedActionClient.inputSchema(ZUpdate
   })
 );
 
+const ZGetWebhookSecretAction = z.object({
+  webhookId: ZId,
+});
+
+// The signing secret is never part of the webhook list; a workspace writer reveals it here on demand.
+export const getWebhookSecretAction = authenticatedActionClient
+  .inputSchema(ZGetWebhookSecretAction)
+  .action(async ({ ctx, parsedInput }) => {
+    const workspaceId = await getWorkspaceIdFromWebhookId(parsedInput.webhookId);
+    await assertCan({ type: "user", id: ctx.user.id }, "workspace.write", {
+      type: "workspace",
+      id: workspaceId,
+    });
+    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
+
+    const webhookResult = await getWebhookWithSecret(parsedInput.webhookId);
+    if (!webhookResult.ok || webhookResult.data.secret === null) {
+      throw new ResourceNotFoundError("Webhook secret", parsedInput.webhookId);
+    }
+
+    return { secret: webhookResult.data.secret };
+  });
+
 const ZTestEndpointAction = z.object({
   url: z.string(),
   webhookId: ZId.optional(),

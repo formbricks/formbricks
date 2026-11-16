@@ -2,14 +2,14 @@
 
 import { type JSX, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { WebhookModal } from "@/modules/integrations/webhooks/components/webhook-detail-modal";
+import type { TWebhookListItem } from "@/modules/integrations/webhooks/types/webhooks";
 import { EmptyState } from "@/modules/ui/components/empty-state";
 
 interface WebhookTableProps {
   workspaceId: string;
-  webhooks: Webhook[];
+  webhooks: TWebhookListItem[];
   surveys: TSurvey[];
   children: [JSX.Element, JSX.Element[]];
   isReadOnly: boolean;
@@ -28,7 +28,7 @@ export const WebhookTable = ({
 }: Readonly<WebhookTableProps>) => {
   const [isWebhookDetailModalOpen, setWebhookDetailModalOpen] = useState(false);
   const { t } = useTranslation();
-  const [activeWebhook, setActiveWebhook] = useState<Webhook>({
+  const [activeWebhook, setActiveWebhook] = useState<TWebhookListItem>({
     workspaceId,
     id: "",
     name: "",
@@ -38,10 +38,10 @@ export const WebhookTable = ({
     surveyIds: [],
     createdAt: new Date(),
     updatedAt: new Date(),
-    secret: null,
+    hasSecret: false,
   });
 
-  const handleOpenWebhookDetailModalClick = (e: React.MouseEvent, webhook: Webhook) => {
+  const handleOpenWebhookDetailModalClick = (e: React.MouseEvent, webhook: TWebhookListItem) => {
     e.preventDefault();
     setActiveWebhook(webhook);
     setWebhookDetailModalOpen(true);

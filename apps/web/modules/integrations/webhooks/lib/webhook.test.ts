@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { prisma } from "@formbricks/database";
 import { InvalidInputError } from "@formbricks/types/errors";
 import { generateStandardWebhookSignature } from "@/lib/crypto";
 import {
@@ -8,7 +9,7 @@ import {
 } from "@/lib/utils/validate-webhook-url";
 import { getTranslate } from "@/lingodotdev/server";
 import { isDiscordWebhook } from "@/modules/integrations/webhooks/lib/utils";
-import { testEndpoint } from "./webhook";
+import { getWebhooks, testEndpoint } from "./webhook";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -191,5 +192,20 @@ describe("testEndpoint", () => {
     await expect(testEndpoint("https://example.com/webhook")).rejects.toThrow(
       "Error while fetching the URL: socket hang up"
     );
+  });
+});
+
+describe("getWebhooks", () => {
+  test("never returns the signing secret, only whether one is set", async () => {
+    vi.mocked(prisma.webhook.findMany).mockResolvedValue([
+      { id: "w1", name: "a", secret: "whsec_top_secret" },
+      { id: "w2", name: "b", secret: null },
+    ] as never);
+
+    const result = await getWebhooks("cjld2cjxh0000qzrmn831i7rn");
+
+    expect(JSON.stringify(result)).not.toContain("whsec_top_secret");
+    expect(result.map((w) => "secret" in w)).toEqual([false, false]);
+    expect(result.map((w) => w.hasSecret)).toEqual([true, false]);
   });
 });

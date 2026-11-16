@@ -3,11 +3,11 @@
 import { WebhookIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Webhook } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { type TUserLocale } from "@formbricks/types/user";
 import { WebhookOverviewTab } from "@/modules/integrations/webhooks/components/webhook-overview-tab";
 import { WebhookSettingsTab } from "@/modules/integrations/webhooks/components/webhook-settings-tab";
+import type { TWebhookListItem } from "@/modules/integrations/webhooks/types/webhooks";
 import {
   Dialog,
   DialogBody,
@@ -20,7 +20,7 @@ import {
 interface WebhookModalProps {
   open: boolean;
   setOpen: (v: boolean) => void;
-  webhook: Webhook;
+  webhook: TWebhookListItem;
   surveys: TSurvey[];
   isReadOnly: boolean;
   allowInternalUrls: boolean;
@@ -49,6 +49,7 @@ export const WebhookModal = ({
       title: t("common.settings"),
       children: (
         <WebhookSettingsTab
+          key={webhook.id}
           webhook={webhook}
           surveys={surveys}
           setOpen={setOpen}
