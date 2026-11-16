@@ -1,10 +1,14 @@
 "use client";
 
 import type { TFunction } from "i18next";
-import { EyeOffIcon, type LucideIcon, VariableIcon, WebhookIcon } from "lucide-react";
+import { type LucideIcon, VariableIcon, WebhookIcon } from "lucide-react";
 import { useId, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { WEBHOOK_VARIABLE_MAX_PATHS } from "@formbricks/workflows";
+import {
+  getResponseOptionIcon,
+  getResponseSectionLabel,
+} from "@/modules/ee/workflows/components/variable-picker/response-option-display";
 import {
   type TWorkflowVariableGroup,
   type TWorkflowVariableListGroup,
@@ -13,7 +17,6 @@ import {
   WORKFLOW_STEP_VARIABLE_PROVIDERS,
   filterWorkflowVariableGroups,
 } from "@/modules/ee/workflows/lib/variable-picker";
-import { elementIconMapping } from "@/modules/survey/components/element-form-input/components/recall-item-select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,7 +67,7 @@ const getGroupLabel = (group: TWorkflowVariableListGroup, t: TFunction): string 
     case "payload":
       return t("workspace.workflows.variable_group_payload");
     case "response":
-      return t("workspace.workflows.variable_group_response");
+      return getResponseSectionLabel(group.section, t);
     case "step": {
       const typeLabel = WORKFLOW_STEP_VARIABLE_PROVIDERS[group.stepType].getTypeLabel(t);
       return group.stepLabel ? `${typeLabel} · ${group.stepLabel}` : typeLabel;
@@ -74,11 +77,7 @@ const getGroupLabel = (group: TWorkflowVariableListGroup, t: TFunction): string 
 
 const getOptionIcon = (group: TWorkflowVariableListGroup, option: TWorkflowVariableOption): LucideIcon => {
   if (group.kind === "payload") return WebhookIcon;
-  if (option.iconKey === "hiddenField") return EyeOffIcon;
-  if (option.iconKey && option.iconKey in elementIconMapping) {
-    return elementIconMapping[option.iconKey as keyof typeof elementIconMapping];
-  }
-  return VariableIcon;
+  return getResponseOptionIcon(option.iconKey) ?? VariableIcon;
 };
 
 /**

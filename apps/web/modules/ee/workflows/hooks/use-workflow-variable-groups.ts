@@ -2,6 +2,7 @@
 
 import { useAtomValue } from "jotai";
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
 import { useWorkflowSamples, useWorkflowWebhook } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import { resolveBoundTriggerSurvey } from "@/modules/ee/workflows/lib/bound-survey";
@@ -27,6 +28,7 @@ export const useWorkflowVariableGroups = (
   nodeId: string,
   stepContext?: TWorkflowStepVariableContext
 ): TWorkflowVariableGroup[] => {
+  const { t } = useTranslation();
   const definition = useAtomValue(workflowDefinitionAtom);
   const workflow = useAtomValue(workflowAtom);
   const isReadOnly = useAtomValue(isWorkflowReadOnlyAtom);
@@ -56,6 +58,7 @@ export const useWorkflowVariableGroups = (
       sampleVariables,
       survey,
       stepContext: resolvedStepContext,
+      t,
     })
   );
   return useMemo(() => JSON.parse(groupsKey) as TWorkflowVariableGroup[], [groupsKey]);

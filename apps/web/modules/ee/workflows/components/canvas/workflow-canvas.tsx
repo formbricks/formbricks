@@ -148,8 +148,8 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   // Summaries name survey answers by their question, never by its id (`response.<questionId>`).
   const authoringContext = useWorkflowEmailAuthoringContext();
   const boundSurvey = resolveBoundTriggerSurvey(authoringContext, definition);
-  const variableLabels = useMemo(() => getSurveyVariableLabels(boundSurvey), [boundSurvey]);
-  const variableRefs = useMemo(() => getSurveyVariableRefs(boundSurvey), [boundSurvey]);
+  const variableLabels = useMemo(() => getSurveyVariableLabels(boundSurvey, t), [boundSurvey, t]);
+  const variableRefs = useMemo(() => getSurveyVariableRefs(boundSurvey, t), [boundSurvey, t]);
 
   const derivedFlowNodes = useMemo(
     () =>

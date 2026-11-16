@@ -42,4 +42,20 @@ describe("createInitialRunContext", () => {
       response: { data: { plan: "gold", q1: "Yes", score_total: 82 } },
     });
   });
+
+  test("built-in Survey info values read under response.<name>, and the survey's own fields win a clash", () => {
+    const surveyResponse = {
+      response: {
+        data: { q1: "Yes", source: "from the survey" },
+        variables: {},
+        language: "de",
+        meta: { url: "https://acme.example/pricing", source: "link" },
+      },
+    } as unknown as WorkflowRunEnvironment["surveyResponse"];
+
+    const data = createInitialRunContext(environment({ surveyResponse })).response?.data;
+
+    expect(data).toMatchObject({ q1: "Yes", language: "de", url: "https://acme.example/pricing" });
+    expect(data?.source).toBe("from the survey");
+  });
 });

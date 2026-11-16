@@ -363,6 +363,7 @@ describe("withWorkflowVariableItems", () => {
   const groups: TWorkflowVariableGroup[] = [
     {
       kind: "response",
+      section: "questions",
       options: [{ path: "response.q1", label: "Your name", typeHint: "text", isPickable: true }],
     },
   ];
@@ -452,7 +453,7 @@ describe("buildWorkflowVariableGroups for a Response completed workflow", () => 
     entryNodeId: "trigger",
   });
 
-  test("offers the survey's questions and Embedded Data as response.<id> Variables, and no Payload", () => {
+  test("groups the survey's Variables the way the survey editor does: questions, hidden fields, Embedded Data, Survey info", () => {
     const groups = buildWorkflowVariableGroups({
       definition: responseDefinition(),
       nodeId: "email",
@@ -460,49 +461,57 @@ describe("buildWorkflowVariableGroups for a Response completed workflow", () => 
       survey,
     });
 
-    // The CTA records no answer recall can show. Computed fields are offered too: a run merges the
-    // response's computed values into what response.<id> reads (createInitialRunContext).
-    expect(groups).toEqual([
+    expect(groups.map((group) => (group.kind === "response" ? group.section : group.kind))).toEqual([
+      "questions",
+      "hiddenFields",
+      "embeddedData",
+      "surveyInfo",
+    ]);
+    const [questions, hiddenFields, embeddedData, surveyInfo] = groups;
+
+    // The CTA records no answer recall can show.
+    expect(questions.options).toEqual([
       {
-        kind: "response",
-        options: [
-          {
-            path: "response.name",
-            label: "What is your name?",
-            typeHint: "text",
-            isPickable: true,
-            iconKey: "openText",
-          },
-          {
-            path: "response.score",
-            label: "How likely?",
-            typeHint: "number",
-            isPickable: true,
-            iconKey: "rating",
-          },
-          {
-            path: "response.tools",
-            label: "Which tools?",
-            typeHint: "list",
-            isPickable: true,
-            iconKey: "multipleChoiceMulti",
-          },
-          {
-            path: "response.plan",
-            label: "Plan",
-            typeHint: "text",
-            isPickable: true,
-            iconKey: "hiddenField",
-          },
-          {
-            path: "response.score_total",
-            label: "Total",
-            typeHint: "text",
-            isPickable: true,
-          },
-        ],
+        path: "response.name",
+        label: "What is your name?",
+        typeHint: "text",
+        isPickable: true,
+        iconKey: "openText",
+        section: "questions",
+        code: "name",
+      },
+      {
+        path: "response.score",
+        label: "How likely?",
+        typeHint: "number",
+        isPickable: true,
+        iconKey: "rating",
+        section: "questions",
+        code: "score",
+      },
+      {
+        path: "response.tools",
+        label: "Which tools?",
+        typeHint: "list",
+        isPickable: true,
+        iconKey: "multipleChoiceMulti",
+        section: "questions",
+        code: "tools",
       },
     ]);
+    // Computed fields are offered too: a run merges the response's computed values into what
+    // response.<id> reads (createInitialRunContext).
+    expect(hiddenFields.options.map((option) => [option.path, option.iconKey])).toEqual([
+      ["response.plan", "dataType:string"],
+    ]);
+    expect(embeddedData.options.map((option) => [option.path, option.iconKey])).toEqual([
+      ["response.score_total", "dataType:string"],
+    ]);
+    // Built-in values the respondent's visit records, projected into every run.
+    expect(surveyInfo.options.map((option) => option.path)).toEqual(
+      expect.arrayContaining(["response.url", "response.language", "response.utmSource"])
+    );
+    expect(surveyInfo.options.find((option) => option.path === "response.url")?.iconKey).toBe("reserved:url");
   });
 
   test("has no Response group until the bound survey is loaded", () => {

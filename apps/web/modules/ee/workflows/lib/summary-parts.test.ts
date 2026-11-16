@@ -38,7 +38,7 @@ describe("describeIfElseConditionParts", () => {
 
     expect(parts).toEqual([
       { kind: "reference", chip: refs.get("response.q1"), plain: "Which plan?" },
-      { kind: "text", text: " includes all of gold" },
+      { kind: "text", text: " includes all of “gold”" },
     ]);
   });
 
@@ -53,6 +53,22 @@ describe("describeIfElseConditionParts", () => {
       { kind: "text", text: " is " },
       { kind: "reference", chip: { kind: "reserved", label: "plan" }, plain: "plan" },
     ]);
+  });
+
+  test("draws an answer the survey no longer has as a missing chip with its id", () => {
+    const refs = new Map([["response.q1", { kind: "question" as const, label: "q1" }]]);
+
+    const parts = describeIfElseConditionParts(
+      group({ left: { path: "response.gone" }, operator: "equals", right: "yes" }),
+      t,
+      refs
+    );
+
+    expect(parts?.[0]).toEqual({
+      kind: "reference",
+      chip: { kind: "question", label: "gone", missing: true },
+      plain: "gone",
+    });
   });
 
   test("has no parts when there is no condition", () => {

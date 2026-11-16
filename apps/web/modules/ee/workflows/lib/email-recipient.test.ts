@@ -42,6 +42,7 @@ describe("getRecipientVariableOptions", () => {
     },
     {
       kind: "response" as const,
+      section: "questions" as const,
       options: [{ path: "response.q1", label: "Q1", typeHint: "text" as const, isPickable: true }],
     },
   ];

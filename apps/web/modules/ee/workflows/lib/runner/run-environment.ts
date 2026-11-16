@@ -1,4 +1,5 @@
 import "server-only";
+import { RESERVED_FIELD_CATALOG, projectReservedValues } from "@formbricks/types/embedded-data-resolver";
 import type { TResponse } from "@formbricks/types/responses";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import {
@@ -201,15 +202,23 @@ export const loadWorkflowRunEnvironment = async ({
 };
 
 /**
- * The run context a run starts with (ADR 0045): the response's answers for `response.<questionId>`
- * (variables win over answers on a shared id, as in survey recall), a Webhook run's payload for
- * `payload.<path>` (ENG-7177), and no step outputs yet.
+ * The run context a run starts with (ADR 0045): under `response.<id>`, the response's answers and its
+ * Embedded Data (computed values win over answers on a shared id, as in survey recall), plus the
+ * built-in Survey info fields the survey editor offers (URL, language, device, …), which a survey's
+ * own field of the same name shadows; a Webhook run's payload for `payload.<path>` (ENG-7177); and no
+ * step outputs yet.
  */
 export const createInitialRunContext = (environment: WorkflowRunEnvironment): TWorkflowRunContext => {
   const response = environment.surveyResponse?.response;
+  const surveyInfo = response
+    ? projectReservedValues(
+        RESERVED_FIELD_CATALOG.filter((entry) => entry.availability !== "server"),
+        response
+      )
+    : {};
   return {
     steps: {},
-    ...(response ? { response: { data: { ...response.data, ...response.variables } } } : {}),
+    ...(response ? { response: { data: { ...surveyInfo, ...response.data, ...response.variables } } } : {}),
     ...(environment.payload ? { payload: environment.payload } : {}),
   };
 };

@@ -1,8 +1,9 @@
 import type { TFunction } from "i18next";
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import {
-  getComputedEmbeddedFields,
-  getIngestedEmbeddedFields,
+  RESERVED_FIELD_CATALOG,
+  getSurveyEmbeddedFields,
+  listMidSurveyReservedEntries,
 } from "@formbricks/types/embedded-data-resolver";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
@@ -26,9 +27,11 @@ import {
 import { getLocalizedValue } from "@/lib/i18n/utils";
 import { extractCompleteRecallIds, replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
 import { getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
+import { getReservedFieldLabel } from "@/modules/embedded-data/lib/field-display";
 import { isRecallExcludedElementType } from "@/modules/survey/components/element-form-input/utils";
 import type { TReferenceChip } from "@/modules/survey/editor/lib/reference-chips";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
+import { formatCodedLabel, getElementBadgeText } from "@/modules/survey/lib/element-code-label";
 import type { TEditorRecallSource } from "@/modules/ui/components/editor/components/recall-source";
 
 /**
@@ -51,9 +54,28 @@ export interface TWorkflowVariableOption {
    * can't be picked until loops exist (ENG-7173).
    */
   isPickable: boolean;
-  /** Response Variables only: the question type, or `hiddenField`, for the row's icon. */
-  iconKey?: TSurveyElementTypeEnum | "hiddenField";
+  /**
+   * Response Variables only, for the row's icon, as the survey editor's field pickers draw it: the
+   * question type, an Embedded Data field's data type, or a built-in (Survey info) field's own icon.
+   */
+  iconKey?: TSurveyElementTypeEnum | `dataType:${TEmbeddedDataType}` | `reserved:${string}`;
+  /**
+   * Response Variables only: the picker section, the survey editor's grouping (Questions, Hidden
+   * fields, Embedded Data, Survey info).
+   */
+  section?: TWorkflowResponseSection;
+  /** A survey question's code (or id), which a canvas chip shows, as in the survey flow editor. */
+  code?: string;
 }
+
+/** The survey editor's field groups, in its order. */
+export const WORKFLOW_RESPONSE_SECTIONS = [
+  "questions",
+  "hiddenFields",
+  "embeddedData",
+  "surveyInfo",
+] as const;
+export type TWorkflowResponseSection = (typeof WORKFLOW_RESPONSE_SECTIONS)[number];
 
 export interface TWorkflowPayloadVariableGroup {
   kind: "payload";
@@ -75,6 +97,8 @@ export interface TWorkflowStepVariableGroup {
 
 export interface TWorkflowResponseVariableGroup {
   kind: "response";
+  /** Which of the survey editor's field groups this is (Questions, Hidden fields, …). */
+  section: TWorkflowResponseSection;
   options: TWorkflowVariableOption[];
 }
 
@@ -151,6 +175,8 @@ export interface TBuildWorkflowVariableGroupsInput {
   /** Defaults to `WORKFLOW_STEP_VARIABLE_PROVIDERS`. */
   stepProviders?: TWorkflowStepVariableProviders;
   stepContext?: TWorkflowStepVariableContext;
+  /** For the built-in (Survey info) fields' labels; without it they read by their key. */
+  t?: TFunction;
 }
 
 const SAMPLE_VALUE_TYPE_HINTS = {
@@ -264,64 +290,94 @@ const getElementTypeHint = (element: TSurveyElement): TWorkflowVariableTypeHint 
 };
 
 /**
- * The survey's questions and Embedded Data, as the recall picker lists them: questions whose answer
- * recall can show, then the ingested Embedded Data fields (links, URL parameters, the SDK), then the
- * computed ones (set by Set value rules, e.g. a score). A run reads all three under `response.<id>`:
- * it merges the response's computed values into its answers (createInitialRunContext). Auto-captured
- * values (meta) aren't offered.
+ * The survey's fields as the survey editor's field pickers list them (toSentenceFieldGroups):
+ * Questions ("q1 · text", type icon), Hidden fields (links, URL parameters, the SDK) and Embedded Data
+ * (computed by Set value rules) with their data type icon, then Survey info, the built-in fields
+ * Formbricks captures itself (URL, language, device, …) that a survey's own field doesn't shadow. A
+ * run reads all of them under `response.<id>` (createInitialRunContext).
  */
-const getResponseOptions = (survey: TSurvey): TWorkflowVariableOption[] => {
+const getResponseOptions = (survey: TSurvey, t?: TFunction): TWorkflowVariableOption[] => {
   const questions = getElementsFromBlocks(survey.blocks)
     .filter((element) => !isRecallExcludedElementType(element))
-    .map((element) => ({
-      path: `response.${element.id}`,
-      label: replaceRecallInfoWithUnderline(
-        getTextContent(getLocalizedValue(element.headline, DEFAULT_LANGUAGE_CODE))
-      ),
-      typeHint: getElementTypeHint(element),
+    .map(
+      (element): TWorkflowVariableOption => ({
+        path: `response.${element.id}`,
+        label: formatCodedLabel(
+          "code" in element ? element.code : undefined,
+          replaceRecallInfoWithUnderline(
+            getTextContent(getLocalizedValue(element.headline, DEFAULT_LANGUAGE_CODE))
+          )
+        ),
+        typeHint: getElementTypeHint(element),
+        isPickable: true,
+        iconKey: element.type,
+        section: "questions",
+        code: getElementBadgeText(element),
+      })
+    );
+  const embedded = getSurveyEmbeddedFields(survey).map(
+    ({ field, link }): TWorkflowVariableOption => ({
+      path: `response.${link.storageKey}`,
+      label: field.name.trim() === "" ? link.storageKey : field.name,
+      typeHint: EMBEDDED_DATA_TYPE_HINTS[field.dataType],
       isPickable: true,
-      iconKey: element.type,
-    }));
-  const hiddenFields = getIngestedEmbeddedFields(survey).map(({ field, link }) => ({
-    path: `response.${link.storageKey}`,
-    label: field.name || link.storageKey,
-    typeHint: EMBEDDED_DATA_TYPE_HINTS[field.dataType],
-    isPickable: true,
-    iconKey: "hiddenField" as const,
-  }));
-  const computedFields = getComputedEmbeddedFields(survey).map(({ field, link }) => ({
-    path: `response.${link.storageKey}`,
-    label: field.name || link.storageKey,
-    typeHint: EMBEDDED_DATA_TYPE_HINTS[field.dataType],
-    isPickable: true,
-    // No iconKey: the picker shows its generic Variable icon, as the survey editor does for them.
-  }));
-  return [...questions, ...hiddenFields, ...computedFields];
+      iconKey: `dataType:${field.dataType}`,
+      section: field.source === "ingested" ? "hiddenFields" : "embeddedData",
+    })
+  );
+  const declaredKeys = [
+    ...getElementsFromBlocks(survey.blocks).map((element) => element.id),
+    ...getSurveyEmbeddedFields(survey).map(({ link }) => link.storageKey),
+  ];
+  const surveyInfo = listMidSurveyReservedEntries(RESERVED_FIELD_CATALOG, declaredKeys).map(
+    (entry): TWorkflowVariableOption => ({
+      path: `response.${entry.name}`,
+      label: t ? getReservedFieldLabel(entry.name, t) : entry.name,
+      typeHint: EMBEDDED_DATA_TYPE_HINTS[entry.dataType],
+      isPickable: true,
+      iconKey: `reserved:${entry.name}`,
+      section: "surveyInfo",
+    })
+  );
+  return [...questions, ...embedded, ...surveyInfo];
 };
 
-/**
- * The human names of a survey's `response.<id>` Variables: each question's headline and each hidden
- * field's name, for anywhere the editor shows a Variable as text (canvas summaries, run detail).
- */
-export const getSurveyVariableLabels = (survey: TSurvey | null | undefined): Map<string, string> =>
-  new Map(survey ? getResponseOptions(survey).map((option) => [option.path, option.label] as const) : []);
+/** A survey's `response.<id>` Variables by path, with their labels, for anywhere they show as text. */
+export const getSurveyVariableLabels = (
+  survey: TSurvey | null | undefined,
+  t?: TFunction
+): Map<string, string> =>
+  new Map(survey ? getResponseOptions(survey, t).map((option) => [option.path, option.label] as const) : []);
 
 /**
- * How a survey's `response.<id>` Variables draw as chips in canvas summaries, the way the survey
- * flow editor draws them: a question with its type icon, a hidden field (links, URL parameters, SDK)
- * outlined, a computed Embedded Data field green.
+ * How a survey's `response.<id>` Variables draw as chips in canvas summaries, as the survey flow
+ * editor draws them: a question by its code with its type icon, a hidden field outlined, an Embedded
+ * Data field green, a built-in (Survey info) field outlined by its name.
  */
-export const getSurveyVariableRefs = (survey: TSurvey | null | undefined): Map<string, TReferenceChip> =>
+export const getSurveyVariableRefs = (
+  survey: TSurvey | null | undefined,
+  t?: TFunction
+): Map<string, TReferenceChip> =>
   new Map(
     survey
-      ? getResponseOptions(survey).map((option): [string, TReferenceChip] => {
-          if (option.iconKey === "hiddenField") {
-            return [option.path, { kind: "hiddenField", label: option.label }];
+      ? getResponseOptions(survey, t).map((option): [string, TReferenceChip] => {
+          switch (option.section) {
+            case "questions":
+              return [
+                option.path,
+                {
+                  kind: "question",
+                  label: option.code ?? option.label,
+                  elementType: option.iconKey as TSurveyElementTypeEnum,
+                },
+              ];
+            case "hiddenFields":
+              return [option.path, { kind: "hiddenField", label: option.label }];
+            case "embeddedData":
+              return [option.path, { kind: "field", label: option.label }];
+            default:
+              return [option.path, { kind: "reserved", label: option.label }];
           }
-          if (option.iconKey) {
-            return [option.path, { kind: "question", label: option.label, elementType: option.iconKey }];
-          }
-          return [option.path, { kind: "field", label: option.label }];
         })
       : []
   );
@@ -343,6 +399,7 @@ export const buildWorkflowVariableGroups = ({
   survey,
   stepProviders = WORKFLOW_STEP_VARIABLE_PROVIDERS,
   stepContext = EMPTY_STEP_CONTEXT,
+  t,
 }: TBuildWorkflowVariableGroupsInput): TWorkflowVariableGroup[] => {
   const groups: TWorkflowVariableGroup[] = [];
 
@@ -360,7 +417,12 @@ export const buildWorkflowVariableGroups = ({
   }
 
   if (isResponseCompletedTrigger(definition?.trigger) && survey) {
-    groups.push({ kind: "response", options: getResponseOptions(survey) });
+    // One group per survey editor field group, in its order; an empty one is left out.
+    const options = getResponseOptions(survey, t);
+    for (const section of WORKFLOW_RESPONSE_SECTIONS) {
+      const sectionOptions = options.filter((option) => option.section === section);
+      if (sectionOptions.length > 0) groups.push({ kind: "response", section, options: sectionOptions });
+    }
   }
 
   return groups;

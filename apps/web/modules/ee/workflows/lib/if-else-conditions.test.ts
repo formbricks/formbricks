@@ -262,7 +262,7 @@ describe("options", () => {
               { path: "payload.tags", label: "tags", typeHint: "list", isPickable: false },
             ],
           },
-          { kind: "response", options: [] },
+          { kind: "response", section: "questions", options: [] },
         ],
         t,
         () => "step"

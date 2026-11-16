@@ -76,11 +76,14 @@ const isConditionGroup = (
 const flattenConditions = (group: TWorkflowConditionGroup): TWorkflowCondition[] =>
   group.conditions.flatMap((item) => (isConditionGroup(item) ? flattenConditions(item) : [item]));
 
+// Typed values read in quotes, as the survey flow editor writes them (“gold”); numbers stay bare.
+const quote = (text: string) => `“${text}”`;
+
 const toValueText = (value: TWorkflowConditionValue, labels?: TVariableLabels): string => {
   // A list operator compares against a list of texts (ENG-7176).
-  if (Array.isArray(value)) return value.join(", ");
+  if (Array.isArray(value)) return value.map((item) => quote(String(item))).join(", ");
   if (value !== null && typeof value === "object") return getVariableDisplayName(value.path, labels);
-  return String(value);
+  return typeof value === "string" ? quote(value) : String(value);
 };
 
 /**

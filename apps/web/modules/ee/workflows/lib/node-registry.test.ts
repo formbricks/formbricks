@@ -202,7 +202,7 @@ describe("getNodeRegistryEntry", () => {
     } as TWorkflowIfElseNode;
 
     expect(getNodeRegistryEntry(node).summary(node, t)).toBe(
-      'workspace.workflows.if_else_summary_more:{"condition":"workspace.workflows.if_else_operator_equals:{\\"variable\\":\\"channel\\",\\"value\\":\\"call\\"}","count":2}'
+      'workspace.workflows.if_else_summary_more:{"condition":"workspace.workflows.if_else_operator_equals:{\\"variable\\":\\"channel\\",\\"value\\":\\"“call”\\"}","count":2}'
     );
   });
 

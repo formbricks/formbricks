@@ -18,8 +18,20 @@ export type TVariableRefs = ReadonlyMap<string, TReferenceChip>;
 const SLOT = "";
 const slotFor = (index: number) => `${SLOT}${index}${SLOT}`;
 
-const chipFor = (path: string, refs: TVariableRefs | undefined): TReferenceChip =>
-  refs?.get(path) ?? { kind: "reserved", label: getVariableDisplayName(path) };
+const RESPONSE_PREFIX = "response.";
+
+/**
+ * A path's chip. Once the survey is known (refs has entries), a survey answer it no longer has reads
+ * as a red missing chip with its id, as the survey flow editor draws a deleted question.
+ */
+const chipFor = (path: string, refs: TVariableRefs | undefined): TReferenceChip => {
+  const known = refs?.get(path);
+  if (known) return known;
+  if (refs && refs.size > 0 && path.startsWith(RESPONSE_PREFIX)) {
+    return { kind: "question", label: path.slice(RESPONSE_PREFIX.length), missing: true };
+  }
+  return { kind: "reserved", label: getVariableDisplayName(path) };
+};
 
 /** Splits a sentence rendered with slots back into words and the chips that fill the slots. */
 const toParts = (sentence: string, chips: TReferenceChip[]): TFlowTextPart[] =>

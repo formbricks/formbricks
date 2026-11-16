@@ -10,6 +10,10 @@ import {
   flattenWorkflowConditions,
   toSurveyConditionOperator,
 } from "@formbricks/workflows";
+import {
+  getResponseOptionIcon,
+  getResponseSectionLabel,
+} from "@/modules/ee/workflows/components/variable-picker/response-option-display";
 import type {
   TWorkflowVariableGroup,
   TWorkflowVariableTypeHint,
@@ -312,16 +316,29 @@ export const getConditionOperatorOptions = (
   }
 };
 
-const GROUP_LABEL_KEYS = {
-  payload: "workspace.workflows.variable_group_payload",
-  response: "workspace.workflows.variable_group_response",
-} as const;
-
 /**
  * The Variable picker's groups as the editor's grouped options: what a condition can compare, and
  * what its value can be instead of typed text. A path the groups no longer offer (the sample changed)
  * stays listed under its own name, so the condition still shows what it compares.
  */
+type TStepGroup = Extract<TWorkflowVariableGroup, { kind: "step" }>;
+
+const getComboboxGroupLabel = (
+  group: TWorkflowVariableGroup,
+  t: TFunction,
+  stepGroupLabel: (group: TStepGroup) => string
+): string => {
+  if (group.kind === "step") return stepGroupLabel(group);
+  if (group.kind === "response") return getResponseSectionLabel(group.section, t);
+  return t("workspace.workflows.variable_group_payload");
+};
+
+const getComboboxGroupValue = (group: TWorkflowVariableGroup): string => {
+  if (group.kind === "step") return `step:${group.stepId}`;
+  if (group.kind === "response") return `response:${group.section}`;
+  return group.kind;
+};
+
 export const toVariableComboboxGroups = (
   groups: readonly TWorkflowVariableGroup[],
   t: TFunction,
@@ -329,14 +346,19 @@ export const toVariableComboboxGroups = (
 ): TComboboxGroupedOption[] =>
   groups
     .map((group) => ({
-      label: group.kind === "step" ? stepGroupLabel(group) : t(GROUP_LABEL_KEYS[group.kind]),
-      value: group.kind === "step" ? `step:${group.stepId}` : group.kind,
-      options: group.options.map((option) => ({
-        label: option.label,
-        value: option.path,
-        disabled: !option.isPickable,
-        meta: { type: VARIABLE_OPERAND },
-      })),
+      label: getComboboxGroupLabel(group, t, stepGroupLabel),
+      value: getComboboxGroupValue(group),
+      // Survey fields carry the icon the survey editor's pickers draw for them.
+      options: group.options.map((option) => {
+        const icon = getResponseOptionIcon(option.iconKey);
+        return {
+          label: option.label,
+          value: option.path,
+          disabled: !option.isPickable,
+          meta: { type: VARIABLE_OPERAND },
+          ...(icon ? { icon } : {}),
+        };
+      }),
     }))
     .filter((group) => group.options.length > 0);
 
