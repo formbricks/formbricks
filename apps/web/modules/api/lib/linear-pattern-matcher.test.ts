@@ -122,6 +122,7 @@ describe("createLinearPatternMatcher", () => {
     const pattern = "(?:a|b){1000}".repeat(2);
     const value = `${"ab".repeat(2047)}c!`;
 
+    // Counts the `test` path only; a `y` rule runs through `lookingAt()`, under the same budget check.
     let work = 0;
     const test = vi.spyOn(RE2JS.prototype, "test");
     test.mockImplementation(function (this: RE2JS, input: Parameters<RE2JS["test"]>[0]) {

@@ -18,7 +18,9 @@ import type { TPatternMatcher } from "@formbricks/surveys/validation";
  * A pattern RE2 cannot run the way JavaScript would (lookarounds, backreferences, escapes the two read
  * differently, the `v` flag's set syntax, `(?m:` and `(?s:` modifier groups), or not cheaply, is not
  * evaluated here: the rule passes on the server and is still enforced in the respondent's browser, as an
- * invalid pattern always has been.
+ * invalid pattern always has been. Some of these skips depend on the answer (its length against the
+ * budget, its line breaks under `m`), so a respondent posting to the API directly can trigger them:
+ * pattern rules check data quality, they are not a server-side guarantee.
  *
  * The server must never be stricter than the browser, or it refuses answers the survey accepted. So the
  * pattern is rewritten where RE2 reads it differently:
