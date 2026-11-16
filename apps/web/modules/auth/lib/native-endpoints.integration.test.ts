@@ -157,6 +157,13 @@ describe("Better Auth native endpoints", () => {
     expect(stale).toEqual([]);
   });
 
+  test("every closed route is one Better Auth really declares", () => {
+    // A mistyped or stale `disabledPaths` entry would also answer 404, and close nothing.
+    const declared = new Set(declaredPaths());
+
+    expect(closedPaths().filter((path) => !declared.has(path))).toEqual([]);
+  });
+
   test("a closed route is never also a route our own client calls", () => {
     // The client reaches these over HTTP; closing one would break sign-in or deletion for everyone.
     const callsOverHttp = [
