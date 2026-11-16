@@ -97,6 +97,27 @@ const openLinksInNewTab = (node: Element): void => {
 };
 
 /**
+ * What survey text may contain: the markup the rich-text editor writes (paragraphs, line breaks, lists,
+ * headings, bold, italic, underline, strikethrough, highlight, quotes, code, links) and nothing else.
+ * DOMPurify's default profile also keeps `<style>`, `<img>`, `<form>` and `<input>`, which let hostile
+ * text (a recalled URL parameter, an imported survey) restyle the page or draw a fake prompt.
+ * `style` is not allowed (CSP). `ALLOWED_URI_REGEXP` applies to every attribute DOMPurify does not treat
+ * as URI-safe, so the non-URL attributes are declared URI-safe or they are dropped.
+ */
+const SURVEY_HTML_SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    ...["p", "br", "span", "a", "ul", "ol", "li", "blockquote", "pre", "code"],
+    ...["b", "strong", "i", "em", "u", "s", "mark"],
+    ...["h1", "h2", "h3", "h4", "h5", "h6"],
+  ],
+  ALLOWED_ATTR: ["class", "dir", "href", "target", "rel", "start", "value"],
+  ALLOWED_URI_REGEXP: /^(?:https?|mailto|tel):/i,
+  ADD_URI_SAFE_ATTR: ["target", "rel", "dir", "start"],
+  ALLOW_DATA_ATTR: false,
+  ALLOW_ARIA_ATTR: false,
+};
+
+/**
  * Sanitize survey content HTML for rendering: strips inline styles (CSP) and makes
  * links open in a new tab.
  * @param html - The HTML string to sanitize
@@ -107,10 +128,7 @@ export const sanitizeSurveyHtml = (html: string): string => {
 
   addHook("afterSanitizeAttributes", openLinksInNewTab);
   try {
-    return sanitize(stripInlineStyles(html), {
-      ADD_ATTR: ["target"],
-      FORBID_ATTR: ["style"],
-    });
+    return sanitize(stripInlineStyles(html), SURVEY_HTML_SANITIZE_CONFIG);
   } finally {
     removeHook("afterSanitizeAttributes");
   }
