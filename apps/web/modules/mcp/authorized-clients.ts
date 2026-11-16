@@ -48,6 +48,11 @@ export type TAuthorizedMcpClient = {
   access: TMcpGrantAccessSelection | null;
   /** What the client's scopes ask for: Edit can't give more (ADR-0041). */
   cap: TMcpGrantPermissions;
+  /**
+   * When the grant was last saved, `null` without one: the version Edit opened, sent back with its save so
+   * a save over a change made elsewhere is refused instead of undoing it.
+   */
+  grantUpdatedAt: Date | null;
 };
 
 const capForScopes = (scopes: readonly string[], isDashboardViewer: boolean): TMcpGrantPermissions =>
@@ -163,6 +168,7 @@ export const listAuthorizedMcpClients = async (
       permissions: grant ? parseMcpGrantPermissions(grant.permissions) : null,
       access: grant ? accessOf(grant) : null,
       cap: capForScopes(capScopes(consent.client, consent.scopes), isDashboardViewer),
+      grantUpdatedAt: grant?.updatedAt ?? null,
     });
   }
   for (const grant of unconsentedGrants) {
@@ -175,6 +181,7 @@ export const listAuthorizedMcpClients = async (
       permissions: parseMcpGrantPermissions(grant.permissions),
       access: accessOf(grant),
       cap: capForScopes(capScopes(grant.client, omittedScopes.get(grant.clientId) ?? []), isDashboardViewer),
+      grantUpdatedAt: grant.updatedAt,
     });
   }
   return [...clients.values()]
@@ -184,6 +191,7 @@ export const listAuthorizedMcpClients = async (
 
 export type TEditMcpGrantResult =
   | { status: "not_found" }
+  | { status: "changed"; currentUpdatedAt: Date }
   | { status: "beyond_scopes" }
   | { status: "selection_unavailable"; field: "organizationIds" | "workspaceIds" }
   | { status: "saved"; before: TStoredMcpGrant; after: TStoredMcpGrant };
@@ -209,7 +217,8 @@ const readCapScopes = async (
 
 /**
  * Sets the user's grant to `clientId` (Authorized apps' Edit): its permissions and, when given, its
- * organization & workspace access. Refused when the user has no grant (or no consent, for a client that
+ * organization & workspace access. Refused when the grant was saved since `expectedUpdatedAt` (another tab
+ * or session changed it, and this save would undo that), when the user has no grant (or no consent, for a client that
  * needs one), when `permissions` go above what the client's scopes ask for (and, for a Dashboard viewer,
  * what a viewer may give), and when `access` adds an organization or workspace the user can't select;
  * one the grant already selected and the user has lost is dropped instead (`resolveMcpGrantSelection`).
@@ -226,6 +235,7 @@ export const editMcpGrant = async ({
   clientId,
   permissions,
   access,
+  expectedUpdatedAt,
   isDashboardViewer,
 }: {
   userId: string;
@@ -233,6 +243,8 @@ export const editMcpGrant = async ({
   permissions: TMcpGrantPermissions;
   /** The organization & workspace access to set; omitted keeps the grant's (ENG-7153). */
   access?: TMcpGrantAccessSelection;
+  /** When the grant Edit opened was last saved: a grant saved since is not overwritten. */
+  expectedUpdatedAt: Date;
   isDashboardViewer: boolean;
 }): Promise<TEditMcpGrantResult> => {
   let grantId: string | null = null;
@@ -243,6 +255,15 @@ export const editMcpGrant = async ({
         const before = await lockMcpGrant(tx, { userId, clientId });
         if (!before) return { status: "not_found" };
         grantId = before.id;
+        // Read under the row lock: a save from another tab or session either committed before it, and is
+        // seen here, or waits for this one.
+        const { updatedAt } = await tx.mcpGrant.findUniqueOrThrow({
+          where: { id: before.id },
+          select: { updatedAt: true },
+        });
+        if (updatedAt.getTime() !== expectedUpdatedAt.getTime()) {
+          return { status: "changed", currentUpdatedAt: updatedAt };
+        }
         const scopes = await readCapScopes(tx, userId, clientId);
         if (!scopes) return { status: "not_found" };
         if (!isMcpGrantWithinCap(permissions, capForScopes(scopes, isDashboardViewer))) {

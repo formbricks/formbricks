@@ -18,12 +18,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
-import { useUpdateMcpGrant } from "../hooks/use-update-mcp-grant";
+import { isMcpGrantChangedError, useUpdateMcpGrant } from "../hooks/use-update-mcp-grant";
 
 interface EditMcpGrantDialogProps {
   client: TAuthorizedMcpClientResource & {
     permissions: TMcpGrantPermissions;
     access: TMcpGrantAccessSelection;
+    grantUpdatedAt: string;
   };
   /** The organizations and workspaces the access picker offers. */
   accessOptions: TMcpGrantAccessOptions;
@@ -36,7 +37,8 @@ interface EditMcpGrantDialogProps {
  * Authorized apps' Edit: the consent screen's organization & workspace access and permission matrix in a
  * dialog, opened with the client's grant and capped by its scopes. Save applies from the client's
  * next call; Cancel discards the changes. Mounted only while open, so each opening starts from the saved
- * grant.
+ * grant, and Save sends the grant version it opened, so a save over a change made elsewhere is refused
+ * rather than undoing it.
  */
 export const EditMcpGrantDialog = ({
   client,
@@ -59,13 +61,27 @@ export const EditMcpGrantDialog = ({
   const handleSave = () => {
     if (!draft.accessSelection) return;
     updateGrant.mutate(
-      { clientId: client.clientId, permissions: draft.permissions, access: draft.accessSelection },
+      {
+        clientId: client.clientId,
+        permissions: draft.permissions,
+        access: draft.accessSelection,
+        expectedUpdatedAt: client.grantUpdatedAt,
+      },
       {
         onSuccess: () => {
           toast.success(t("auth.oauth.grant_updated"));
           onClose();
         },
-        onError: (error) => toast.error(getV3ApiErrorMessage(error, t("auth.oauth.grant_update_failed"))),
+        onError: (error) => {
+          // Changed in another tab or session since this opened: saving it would undo that unseen. The
+          // list is refreshing; closing lets Edit open again on what was saved.
+          if (isMcpGrantChangedError(error)) {
+            toast.error(t("auth.oauth.grant_changed_elsewhere"));
+            onClose();
+            return;
+          }
+          toast.error(getV3ApiErrorMessage(error, t("auth.oauth.grant_update_failed")));
+        },
       }
     );
   };

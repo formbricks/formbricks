@@ -54,12 +54,15 @@ const stored = (permissions: Record<string, string>, workspaceIds?: string[]) =>
   ...(workspaceIds ? { access: "workspaces", workspaceIds } : { access: "all" }),
 });
 
-const edit = (body: unknown, clientId = CLIENT_ID) =>
+/** The grant version Edit opened, which every save sends back. */
+const OPENED_AT = "2026-06-01T10:00:00.123Z";
+
+const edit = (body: Record<string, unknown>, clientId = CLIENT_ID) =>
   PATCH(
     new NextRequest(`http://localhost/api/internal/mcp-grants/${clientId}`, {
       method: "PATCH",
       headers: { "x-request-id": "req_1", "content-type": "application/json" },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ expectedUpdatedAt: OPENED_AT, ...body }),
     }),
     { params: Promise.resolve({ clientId }) } as never
   );
@@ -90,6 +93,7 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
       userId: USER_ID,
       clientId: CLIENT_ID,
       permissions: { surveys: "read" },
+      expectedUpdatedAt: new Date(OPENED_AT),
       isDashboardViewer: false,
     });
     // The grant store writes the entries (one per organization the grant reaches, both snapshots
@@ -134,6 +138,23 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     await edit({ permissions: { dashboards: "read" } });
 
     expect(mocks.editMcpGrant).toHaveBeenCalledWith(expect.objectContaining({ isDashboardViewer: true }));
+  });
+
+  // Another tab or session saved the grant after Edit opened it: saving would undo that change unseen.
+  test("answers 409 mcp_grant_changed, with both versions, for a grant saved since Edit opened it", async () => {
+    const savedSince = new Date("2026-06-01T10:05:00.000Z");
+    mocks.editMcpGrant.mockResolvedValue({ status: "changed", currentUpdatedAt: savedSince });
+
+    const response = await edit({ permissions: { surveys: "read" } });
+
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({
+      code: "mcp_grant_changed",
+      detail: "This MCP client's access changed elsewhere. Reload to see it.",
+      details: { expectedUpdatedAt: OPENED_AT, currentUpdatedAt: savedSince.toISOString() },
+    });
+    expect(mocks.queueMcpGrantAudit).not.toHaveBeenCalled();
+    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ status: "failure" }));
   });
 
   test("answers a client the user never connected, or another user's, with 403", async () => {
@@ -205,6 +226,11 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     ["a selection with nothing picked", { permissions: { surveys: "read" }, access: "workspaces" }],
     ["an unknown access", { permissions: { surveys: "read" }, access: "everything" }],
     ["no permissions", {}],
+    ["no grant version", { permissions: { surveys: "read" }, expectedUpdatedAt: undefined }],
+    [
+      "a grant version that isn't a date",
+      { permissions: { surveys: "read" }, expectedUpdatedAt: "yesterday" },
+    ],
   ])("returns 400 for %s and saves nothing", async (_case, body) => {
     expect((await edit(body)).status).toBe(400);
     expect(mocks.editMcpGrant).not.toHaveBeenCalled();

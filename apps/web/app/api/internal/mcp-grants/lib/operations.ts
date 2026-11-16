@@ -2,6 +2,7 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
+  problemConflict,
   problemForbidden,
   problemInternalError,
   problemUnauthorized,
@@ -11,6 +12,8 @@ import {
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { loggableError } from "@/lib/utils/loggable-error";
 import {
+  MCP_GRANT_CHANGED_CODE,
+  MCP_GRANT_CHANGED_DETAIL,
   MCP_GRANT_NOT_SAVED_CODE,
   MCP_GRANT_NOT_SAVED_DETAIL,
   MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
@@ -64,6 +67,7 @@ export async function updateMcpGrantOperation({
   clientId,
   permissions,
   access,
+  expectedUpdatedAt,
   requestId,
   instance,
   auditLog,
@@ -72,6 +76,7 @@ export async function updateMcpGrantOperation({
   clientId: string;
   permissions: TMcpGrantPermissions;
   access?: TMcpGrantAccessSelection;
+  expectedUpdatedAt: Date;
   requestId: string;
   instance?: string;
   auditLog?: TV3AuditLog;
@@ -84,7 +89,14 @@ export async function updateMcpGrantOperation({
   const isDashboardViewer = await isDashboardViewerOnly(userId);
   let result: TEditMcpGrantResult;
   try {
-    result = await editMcpGrant({ userId, clientId, permissions, access, isDashboardViewer });
+    result = await editMcpGrant({
+      userId,
+      clientId,
+      permissions,
+      access,
+      expectedUpdatedAt,
+      isDashboardViewer,
+    });
   } catch (error) {
     // Nothing was saved: a narrowing SpiceDB couldn't apply (an outage), or a failed transaction. The
     // consent screen's refusal and message for the same failure, rather than the wrapper's generic 500.
@@ -94,6 +106,15 @@ export async function updateMcpGrantOperation({
   switch (result.status) {
     case "not_found":
       return problemForbidden(requestId, undefined, instance);
+    case "changed":
+      // Saved from another tab or session since Edit opened: this save would undo that change unseen.
+      return problemConflict(requestId, MCP_GRANT_CHANGED_DETAIL, instance, {
+        code: MCP_GRANT_CHANGED_CODE,
+        details: {
+          expectedUpdatedAt: expectedUpdatedAt.toISOString(),
+          currentUpdatedAt: result.currentUpdatedAt.toISOString(),
+        },
+      });
     case "beyond_scopes":
       return problemUnprocessableContent(
         requestId,

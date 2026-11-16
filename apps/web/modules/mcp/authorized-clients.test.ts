@@ -109,6 +109,7 @@ describe("listAuthorizedMcpClients", () => {
       connectedAt: at("2026-01-01T00:00:00Z"),
       permissions: null,
       access: null,
+      grantUpdatedAt: null,
       cap: { surveys: "write", creatives: "write", surveyStyling: "write" },
     });
     expect(prisma.oauthConsent.findMany).toHaveBeenCalledWith(
@@ -170,6 +171,8 @@ describe("listAuthorizedMcpClients", () => {
     expect(clients[0]).toMatchObject({
       permissions: { surveys: "read" },
       access: { access: "workspaces", workspaceIds: ["ws-1"] },
+      // The grant's own version, which Edit sends back with its save, not the later of the two dates.
+      grantUpdatedAt: at("2026-01-09T00:00:00Z"),
     });
     expect(clients[1].access).toEqual({ access: "all" });
   });
@@ -228,6 +231,7 @@ describe("listAuthorizedMcpClients", () => {
       permissions: { surveys: "read" },
       access: { access: "all" },
       cap: { surveys: "read", creatives: "read", surveyStyling: "read" },
+      grantUpdatedAt: at("2026-02-01T00:00:00Z"),
     });
     expect(clients).toHaveLength(2);
   });
@@ -258,6 +262,7 @@ describe("listAuthorizedMcpClients", () => {
         permissions: { surveys: "read" },
         access: { access: "all" },
         cap: {},
+        grantUpdatedAt: at("2026-01-01T00:00:00Z"),
       },
     ]);
   });
@@ -330,7 +335,8 @@ describe("listAuthorizedMcpClients", () => {
 });
 
 describe("editMcpGrant", () => {
-  const tx = { oauthClient: { findUnique: vi.fn() } };
+  const OPENED_AT = at("2026-06-01T10:00:00.123Z");
+  const tx = { oauthClient: { findUnique: vi.fn() }, mcpGrant: { findUniqueOrThrow: vi.fn() } };
 
   beforeEach(() => {
     vi.mocked(readConsentedScopes).mockReset().mockResolvedValue(["surveys:write"]);
@@ -342,8 +348,33 @@ describe("editMcpGrant", () => {
       .mockReset()
       .mockResolvedValue(new Set(["ws-1"]));
     tx.oauthClient.findUnique.mockReset().mockResolvedValue({ scopes: ["surveys:read"], skipConsent: false });
+    tx.mcpGrant.findUniqueOrThrow.mockReset().mockResolvedValue({ updatedAt: OPENED_AT });
     prisma.$transaction.mockImplementation((async (callback: (client: unknown) => unknown) =>
       callback(tx)) as never);
+  });
+
+  // Another tab or session saved the grant after Edit opened it: this save would undo that change unseen.
+  test("is changed, and writes nothing, when the grant was saved since Edit opened it", async () => {
+    const savedSince = at("2026-06-01T10:00:00.124Z");
+    tx.mcpGrant.findUniqueOrThrow.mockResolvedValue({ updatedAt: savedSince });
+
+    await expect(
+      editMcpGrant({
+        userId: USER_ID,
+        clientId: CLIENT_ID,
+        expectedUpdatedAt: OPENED_AT,
+        permissions: { surveys: "read" },
+        access: { access: "workspaces", workspaceIds: ["ws-1"] },
+        isDashboardViewer: false,
+      })
+    ).resolves.toEqual({ status: "changed", currentUpdatedAt: savedSince });
+    expect(tx.mcpGrant.findUniqueOrThrow).toHaveBeenCalledWith({
+      where: { id: "grant-1" },
+      select: { updatedAt: true },
+    });
+    expect(readConsentedScopes).not.toHaveBeenCalled();
+    expect(narrowMcpGrantAccess).not.toHaveBeenCalled();
+    expect(writeMcpGrant).not.toHaveBeenCalled();
   });
 
   test("locks the grant, narrows the access, saves within the cap and projects after the commit", async () => {
@@ -360,6 +391,7 @@ describe("editMcpGrant", () => {
       editMcpGrant({
         userId: USER_ID,
         clientId: CLIENT_ID,
+        expectedUpdatedAt: OPENED_AT,
         permissions: { surveys: "write" },
         access: { access: "workspaces", workspaceIds: ["ws-1", "ws-lost"] },
         isDashboardViewer: false,
@@ -396,7 +428,14 @@ describe("editMcpGrant", () => {
   test("keeps the grant's access when the edit names none, without resolving anything", async () => {
     vi.mocked(writeMcpGrant).mockResolvedValue({ before: stored(), after: stored() });
 
-    await editMcpGrant({ userId: USER_ID, clientId: CLIENT_ID, permissions: {}, isDashboardViewer: false });
+    await editMcpGrant({
+      userId: USER_ID,
+      clientId: CLIENT_ID,
+      expectedUpdatedAt: OPENED_AT,
+      permissions: {},
+      expectedUpdatedAt: OPENED_AT,
+      isDashboardViewer: false,
+    });
 
     expect(narrowMcpGrantAccess).not.toHaveBeenCalled();
     expect(writeMcpGrant).toHaveBeenCalledWith(tx, expect.objectContaining({ access: undefined }));
@@ -409,6 +448,7 @@ describe("editMcpGrant", () => {
       editMcpGrant({
         userId: USER_ID,
         clientId: CLIENT_ID,
+        expectedUpdatedAt: OPENED_AT,
         permissions: {},
         access: { access: "workspaces", workspaceIds: ["ws-foreign"] },
         isDashboardViewer: false,
@@ -422,7 +462,14 @@ describe("editMcpGrant", () => {
     vi.mocked(lockMcpGrant).mockResolvedValue(null);
 
     await expect(
-      editMcpGrant({ userId: USER_ID, clientId: CLIENT_ID, permissions: {}, isDashboardViewer: false })
+      editMcpGrant({
+        userId: USER_ID,
+        clientId: CLIENT_ID,
+        expectedUpdatedAt: OPENED_AT,
+        permissions: {},
+        expectedUpdatedAt: OPENED_AT,
+        isDashboardViewer: false,
+      })
     ).resolves.toEqual({ status: "not_found" });
     expect(readConsentedScopes).not.toHaveBeenCalled();
     expect(writeMcpGrant).not.toHaveBeenCalled();
@@ -431,12 +478,26 @@ describe("editMcpGrant", () => {
   test("is not_found for a grant whose consent is gone, or whose client is gone", async () => {
     vi.mocked(readConsentedScopes).mockResolvedValue(null);
     await expect(
-      editMcpGrant({ userId: USER_ID, clientId: CLIENT_ID, permissions: {}, isDashboardViewer: false })
+      editMcpGrant({
+        userId: USER_ID,
+        clientId: CLIENT_ID,
+        expectedUpdatedAt: OPENED_AT,
+        permissions: {},
+        expectedUpdatedAt: OPENED_AT,
+        isDashboardViewer: false,
+      })
     ).resolves.toEqual({ status: "not_found" });
 
     tx.oauthClient.findUnique.mockResolvedValue(null);
     await expect(
-      editMcpGrant({ userId: USER_ID, clientId: CLIENT_ID, permissions: {}, isDashboardViewer: false })
+      editMcpGrant({
+        userId: USER_ID,
+        clientId: CLIENT_ID,
+        expectedUpdatedAt: OPENED_AT,
+        permissions: {},
+        expectedUpdatedAt: OPENED_AT,
+        isDashboardViewer: false,
+      })
     ).resolves.toEqual({ status: "not_found" });
     expect(writeMcpGrant).not.toHaveBeenCalled();
   });
@@ -448,6 +509,7 @@ describe("editMcpGrant", () => {
       editMcpGrant({
         userId: USER_ID,
         clientId: CLIENT_ID,
+        expectedUpdatedAt: OPENED_AT,
         permissions: { surveys: "write" },
         isDashboardViewer: false,
       })
@@ -462,6 +524,7 @@ describe("editMcpGrant", () => {
       editMcpGrant({
         userId: USER_ID,
         clientId: CLIENT_ID,
+        expectedUpdatedAt: OPENED_AT,
         permissions: { surveys: "write" },
         access: { access: "all" },
         isDashboardViewer: false,
@@ -476,6 +539,7 @@ describe("editMcpGrant", () => {
       editMcpGrant({
         userId: USER_ID,
         clientId: CLIENT_ID,
+        expectedUpdatedAt: OPENED_AT,
         permissions: { surveys: "write" },
         isDashboardViewer: true,
       })
@@ -491,6 +555,7 @@ describe("editMcpGrant", () => {
       editMcpGrant({
         userId: USER_ID,
         clientId: CLIENT_ID,
+        expectedUpdatedAt: OPENED_AT,
         permissions: {},
         access: { access: "all" },
         isDashboardViewer: false,
@@ -504,7 +569,14 @@ describe("editMcpGrant", () => {
     vi.mocked(lockMcpGrant).mockRejectedValue(failure);
 
     await expect(
-      editMcpGrant({ userId: USER_ID, clientId: CLIENT_ID, permissions: {}, isDashboardViewer: false })
+      editMcpGrant({
+        userId: USER_ID,
+        clientId: CLIENT_ID,
+        expectedUpdatedAt: OPENED_AT,
+        permissions: {},
+        expectedUpdatedAt: OPENED_AT,
+        isDashboardViewer: false,
+      })
     ).rejects.toBe(failure);
     expect(projectMcpGrants).not.toHaveBeenCalled();
   });

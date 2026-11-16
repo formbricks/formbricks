@@ -54,6 +54,7 @@ describe("GET /api/internal/mcp-grants", () => {
         permissions: { surveys: "read" },
         access: { access: "workspaces", workspaceIds: ["ws_1"] },
         cap: { surveys: "write" },
+        grantUpdatedAt: new Date("2030-01-15T00:00:00.123Z"),
       },
     ]);
     mocks.listMcpGrantAccessOptions.mockResolvedValue(ACCESS_OPTIONS);
@@ -82,6 +83,7 @@ describe("GET /api/internal/mcp-grants", () => {
           permissions: { surveys: "read" },
           access: { access: "workspaces", workspaceIds: ["ws_1"] },
           cap: { surveys: "write" },
+          grantUpdatedAt: "2030-01-15T00:00:00.123Z",
         },
       ],
     });

@@ -116,9 +116,14 @@ export const AuthorizedAppsList = ({ locale }: Readonly<AuthorizedAppsListProps>
           })}
         </TableBody>
       </Table>
-      {editing?.permissions && editing.access && (
+      {editing?.permissions && editing.access && editing.grantUpdatedAt && (
         <EditMcpGrantDialog
-          client={{ ...editing, permissions: editing.permissions, access: editing.access }}
+          client={{
+            ...editing,
+            permissions: editing.permissions,
+            access: editing.access,
+            grantUpdatedAt: editing.grantUpdatedAt,
+          }}
           accessOptions={data.accessOptions}
           clientName={clientNameOf(editing)}
           isDashboardViewer={data.isDashboardViewer}

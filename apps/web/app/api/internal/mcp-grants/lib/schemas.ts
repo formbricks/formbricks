@@ -10,7 +10,8 @@ export const ZMcpGrantPathParams = z.object({ clientId: z.string().min(1).max(25
  * (`access`: `all`, `organizations` with `organizationIds`, or `workspaces` with `workspaceIds`), which
  * otherwise stays as it is. Read with the consent screen's own parser, so an unknown permission, a level
  * the permission doesn't offer, an empty grant (Revoke ends access) and a selection with nothing picked
- * are refused.
+ * are refused. `expectedUpdatedAt` is the `grantUpdatedAt` Edit opened: a grant saved since is not
+ * overwritten (409).
  */
 export const ZMcpGrantUpdateBody = z
   .object({
@@ -18,11 +19,13 @@ export const ZMcpGrantUpdateBody = z
     access: z.string().optional(),
     organizationIds: z.array(z.string()).optional(),
     workspaceIds: z.array(z.string()).optional(),
+    expectedUpdatedAt: z.iso.datetime(),
   })
   .strict()
   .transform((body, ctx) => {
+    const { expectedUpdatedAt, ...requested } = body;
     const grant = parseRequestedMcpGrant(
-      Object.fromEntries(Object.entries(body).filter(([, value]) => value !== undefined))
+      Object.fromEntries(Object.entries(requested).filter(([, value]) => value !== undefined))
     );
     if (!grant) {
       ctx.addIssue({
@@ -33,5 +36,5 @@ export const ZMcpGrantUpdateBody = z
       });
       return z.NEVER;
     }
-    return grant;
+    return { ...grant, expectedUpdatedAt: new Date(expectedUpdatedAt) };
   });

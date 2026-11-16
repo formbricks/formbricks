@@ -30,6 +30,8 @@ export async function updateMcpGrant(params: {
   permissions: TMcpGrantPermissions;
   /** The organization & workspace access to set; omitted keeps the grant's. */
   access?: TMcpGrantAccessSelection;
+  /** The `grantUpdatedAt` Edit opened: a grant saved since is not overwritten (409 `mcp_grant_changed`). */
+  expectedUpdatedAt: string;
 }): Promise<TMcpGrantResource> {
   return request<TMcpGrantResource>(`${BASE_PATH}/${encodeURIComponent(params.clientId)}`, {
     method: "PATCH",
@@ -37,6 +39,7 @@ export async function updateMcpGrant(params: {
     body: JSON.stringify({
       permissions: params.permissions,
       ...(params.access ? toMcpGrantAccessRequest(params.access) : {}),
+      expectedUpdatedAt: params.expectedUpdatedAt,
     }),
     signal: AbortSignal.timeout(15_000),
   });

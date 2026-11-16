@@ -4,9 +4,13 @@ import type { TMcpGrantAccessOptions } from "@/modules/mcp/grant-access";
 import { type TStoredMcpGrant, getMcpGrantAccessSelection } from "@/modules/mcp/grant-store";
 
 /** An authorized MCP client as Authorized apps reads it: dates as ISO strings. */
-export type TAuthorizedMcpClientResource = Omit<TAuthorizedMcpClient, "connectedAt" | "updatedAt"> & {
+export type TAuthorizedMcpClientResource = Omit<
+  TAuthorizedMcpClient,
+  "connectedAt" | "updatedAt" | "grantUpdatedAt"
+> & {
   connectedAt: string;
   updatedAt: string;
+  grantUpdatedAt: string | null;
 };
 
 export type TAuthorizedMcpClientList = {
@@ -33,6 +37,7 @@ export const serializeAuthorizedMcpClient = (client: TAuthorizedMcpClient): TAut
   permissions: client.permissions,
   access: client.access,
   cap: client.cap,
+  grantUpdatedAt: client.grantUpdatedAt?.toISOString() ?? null,
 });
 
 export const serializeMcpGrant = (grant: TStoredMcpGrant): TMcpGrantResource => ({

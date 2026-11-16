@@ -19,6 +19,7 @@ export const PATCH = withV3ApiWrapper({
       clientId: parsedInput.params.clientId,
       permissions: parsedInput.body.permissions,
       access: parsedInput.body.access,
+      expectedUpdatedAt: parsedInput.body.expectedUpdatedAt,
       requestId,
       instance,
       auditLog,

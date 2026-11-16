@@ -104,12 +104,23 @@ const listClients = async () => {
   return { status: response.status, body: await response.json() };
 };
 
-const editGrant = async (clientId: string, permissions: Record<string, string>) => {
+/** The version Edit opens a grant at: the session user's grant to the client, when it was last saved. */
+const openedVersion = async (clientId: string): Promise<string> => {
+  const grant = await prisma.mcpGrant.findFirst({
+    where: { clientId, userId: session.userId },
+    select: { updatedAt: true },
+  });
+  return (grant?.updatedAt ?? new Date(0)).toISOString();
+};
+
+/** Edit's Save, sent with the version Edit opened: the grant as saved now, unless `opened` is given. */
+const editGrant = async (clientId: string, permissions: Record<string, string>, opened?: string) => {
+  const expectedUpdatedAt = opened ?? (await openedVersion(clientId));
   const response = await PATCH(
     new NextRequest(`http://localhost:3000/api/internal/mcp-grants/${clientId}`, {
       method: "PATCH",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ permissions }),
+      body: JSON.stringify({ permissions, expectedUpdatedAt }),
     }),
     { params: Promise.resolve({ clientId }) } as never
   );
@@ -215,6 +226,22 @@ describe("Authorized apps' Edit", () => {
 
     const renamed = await renameSurvey(access_token, setup);
     expect(succeeded(renamed), toolText(renamed)).toBe(true);
+  });
+
+  // Two tabs opened Edit on the same grant. The first narrows it; the second, still showing the wider
+  // grant, must not save it back unseen.
+  test("a save from an Edit opened before another save is refused with 409, and changes nothing", async () => {
+    const { access_token } = await grant(setup.cookie, setup.clientId, EVERYTHING);
+    session.userId = setup.userId;
+    const secondTab = await openedVersion(setup.clientId);
+
+    expect((await editGrant(setup.clientId, { surveys: "read" })).status).toBe(200);
+    const stale = await editGrant(setup.clientId, { surveys: "write", responses: "write" }, secondTab);
+
+    expect(stale.status).toBe(409);
+    expect(stale.body).toMatchObject({ code: "mcp_grant_changed" });
+    expect((await getMcpGrant(setup.userId, setup.clientId))?.permissions).toEqual({ surveys: "read" });
+    expectNotPermitted(await renameSurvey(access_token, setup), "Surveys: Write");
   });
 
   test("can't widen past what the client's scopes ask for", async () => {

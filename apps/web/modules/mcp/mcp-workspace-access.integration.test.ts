@@ -276,12 +276,25 @@ const setUp = async (): Promise<TSetup> => {
  * Sets the grant's access through Edit, as Authorized apps does. Nothing projects it afterwards: the
  * next call has to see it because the save itself wrote it to SpiceDB (spec story 32), not the outbox.
  */
+/** When the client's grant was last saved: the version Edit opens it at. */
+const grantVersion = async ({ userId, clientId }: { userId: string; clientId: string }): Promise<string> =>
+  (
+    await prisma.mcpGrant.findUniqueOrThrow({
+      where: { userId_clientId: { userId, clientId } },
+      select: { updatedAt: true },
+    })
+  ).updatedAt.toISOString();
+
+/** Edit's save as Edit sends it: with the version of the grant as it is now. */
+const editAsOpened = async (input: Omit<Parameters<typeof editMcpGrant>[0], "expectedUpdatedAt">) =>
+  editMcpGrant({ ...input, expectedUpdatedAt: new Date(await grantVersion(input)) });
+
 const setAccess = async (
   setup: TSetup,
   access: TMcpGrantAccessSelection,
   permissions: TMcpGrantPermissions = READ_ALL
 ) => {
-  const edited = await editMcpGrant({
+  const edited = await editAsOpened({
     userId: setup.userId,
     clientId: setup.clientId,
     permissions,
@@ -423,7 +436,7 @@ describe("organization & workspace access on MCP calls", () => {
     });
     expect(succeeded(before), toolText(before)).toBe(true);
 
-    const edited = await editMcpGrant({
+    const edited = await editAsOpened({
       userId: setup.userId,
       clientId: setup.clientId,
       permissions: READ_ALL,
@@ -453,7 +466,7 @@ describe("organization & workspace access on MCP calls", () => {
     spicedbWrites.failing = true;
     try {
       await expect(
-        editMcpGrant({
+        editAsOpened({
           userId: setup.userId,
           clientId: setup.clientId,
           permissions: READ_ALL,
@@ -597,6 +610,7 @@ describe("organization & workspace access on MCP calls", () => {
             permissions: READ_ALL,
             access: "workspaces",
             workspaceIds: [setup.inside.workspaceId],
+            expectedUpdatedAt: await grantVersion(setup),
           }),
         }),
         { params: Promise.resolve({ clientId: setup.clientId }) } as never
@@ -1017,7 +1031,7 @@ describe("organization & workspace access on MCP calls", () => {
       { access: "organizations", organizationIds: [setup.acmeId, stranger.id] },
       { access: "workspaces", workspaceIds: [setup.inside.workspaceId, strangerWorkspace.id] },
     ] satisfies TMcpGrantAccessSelection[]) {
-      const edited = await editMcpGrant({
+      const edited = await editAsOpened({
         userId: setup.userId,
         clientId: setup.clientId,
         permissions: READ_ALL,
@@ -1072,7 +1086,7 @@ describe("organization & workspace access on MCP calls", () => {
       expect(await listed()).toEqual({ access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
 
       // A permissions-only save, sending the selection Edit opened with.
-      const opened = await editMcpGrant({
+      const opened = await editAsOpened({
         userId: setup.userId,
         clientId: setup.clientId,
         permissions: { surveys: "read" },
@@ -1092,7 +1106,7 @@ describe("organization & workspace access on MCP calls", () => {
           workspaceId: setup.outside.workspaceId,
         },
       });
-      const resent = await editMcpGrant({
+      const resent = await editAsOpened({
         userId: setup.userId,
         clientId: setup.clientId,
         permissions: READ_ALL,
@@ -1109,7 +1123,7 @@ describe("organization & workspace access on MCP calls", () => {
       await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
       await loseOutside();
 
-      const edited = await editMcpGrant({
+      const edited = await editAsOpened({
         userId: setup.userId,
         clientId: setup.clientId,
         permissions: READ_ALL,
@@ -1129,7 +1143,7 @@ describe("organization & workspace access on MCP calls", () => {
       await synchronizeAuthzedIntegrationFixture();
 
       expect(await listed()).toEqual({ access: "organizations", organizationIds: [setup.acmeId] });
-      const saved = await editMcpGrant({
+      const saved = await editAsOpened({
         userId: setup.userId,
         clientId: setup.clientId,
         permissions: READ_ALL,
