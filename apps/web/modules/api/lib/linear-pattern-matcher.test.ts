@@ -19,11 +19,11 @@ const match = (pattern: string, flags: string | undefined, value: string) =>
  * The matcher may parse the pattern with `RegExp` (to refuse what the browser refuses) but never run it.
  */
 const withoutBacktracking = <T>(pattern: string, fn: () => T): T => {
-  const source = new RegExp(pattern).source;
+  // Compared as a string: the test patterns hold no `/` or line break, which `source` would escape.
   const exec = vi.spyOn(RegExp.prototype, "exec");
   try {
     const result = fn();
-    const ranPattern = exec.mock.contexts.some((regex) => (regex as RegExp).source === source);
+    const ranPattern = exec.mock.contexts.some((regex) => (regex as RegExp).source === pattern);
     expect(ranPattern).toBe(false);
     return result;
   } finally {
