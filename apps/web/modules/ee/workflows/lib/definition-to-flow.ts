@@ -12,6 +12,7 @@ import {
   WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT,
   WORKFLOW_CANVAS_NODE_SPACING,
   WORKFLOW_CANVAS_START_POSITION,
+  getBranchLegOffsets,
 } from "@/modules/ee/workflows/lib/canvas-geometry";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import { getBranchHandles, isBranchingStep } from "@/modules/ee/workflows/lib/workflow-steps";
@@ -174,6 +175,27 @@ export const workflowDefinitionToFlowEdges = (definition: TWorkflowDefinition): 
     // A branch edge starts at the end of its leg of the fork, which carries the label.
     type: branchingIds.has(edge.source) ? WORKFLOW_BRANCH_EDGE_TYPE : WORKFLOW_ADD_BUTTON_EDGE_TYPE,
   }));
+};
+
+/**
+ * Gives each If/else and Switch on the canvas the x offsets of its fork's legs (see getBranchLegOffsets),
+ * from where the canvas has its steps right now, so each leg sits straight above its branch's first
+ * step even while the user drags it. Steps without branches come back as they were.
+ */
+export const withBranchLegOffsets = <TNode extends Node<TWorkflowNodeData>>(
+  nodes: TNode[],
+  edges: ReadonlyArray<Pick<Edge, "source" | "target" | "sourceHandle">>
+): TNode[] => {
+  const xById = new Map(nodes.map((node) => [node.id, node.position.x]));
+  return nodes.map((node) => {
+    if (node.data.branches.length === 0) return node;
+    const childOffsets = node.data.branches.map(({ handle }) => {
+      const edge = edges.find((item) => item.source === node.id && item.sourceHandle === handle);
+      const childX = edge ? xById.get(edge.target) : undefined;
+      return childX === undefined ? null : childX - node.position.x;
+    });
+    return { ...node, data: { ...node.data, legOffsets: getBranchLegOffsets(childOffsets) } };
+  });
 };
 
 export const snapWorkflowNodePosition = (position: { x: number; y: number }) => ({

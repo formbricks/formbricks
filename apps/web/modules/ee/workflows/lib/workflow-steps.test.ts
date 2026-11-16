@@ -8,7 +8,7 @@ import {
   countStepsOnBranches,
   countStepsOnSwitchCase,
   createDefaultWorkflowStep,
-  getBranchLeg,
+  getBranchLegOffset,
   getDefaultConditionPath,
   removeBranchingStepWithBranches,
   withSwitchBranchesPruned,
@@ -136,16 +136,39 @@ describe("removing a case", () => {
   });
 });
 
-describe("getBranchLeg", () => {
-  test("places each branch one column apart, centered under its step", () => {
-    expect(getBranchLeg(route, "gold")).toEqual({ index: 0, count: 3 });
-    expect(getBranchLeg(route, "default")).toEqual({ index: 2, count: 3 });
-    expect(
-      getBranchLeg({ id: "x", type: "if_else" } as TWorkflowDefinition["nodes"][number], "else")
-    ).toEqual({
-      index: 1,
-      count: 2,
-    });
-    expect(getBranchLeg(email("e"), "then")).toBeNull();
+describe("getBranchLegOffset", () => {
+  const at = (node: TWorkflowDefinition["nodes"][number], x: number) => ({
+    ...node,
+    ui: { position: { x, y: 0 } },
+  });
+
+  test("places the legs of a fork with no steps one column apart, centred under it", () => {
+    const definition: TWorkflowDefinition = {
+      ...routing(),
+      nodes: [at(route, 220)],
+      edges: [],
+    };
+    expect(getBranchLegOffset(definition, at(route, 220), "gold")).toBe(-360);
+    expect(getBranchLegOffset(definition, at(route, 220), "default")).toBe(360);
+  });
+
+  test("puts an empty leg one column beside a neighbour's step, wherever that step was placed", () => {
+    // Gold's and Default's steps sit where the user dragged them; Silver is empty.
+    const definition: TWorkflowDefinition = {
+      ...routing(),
+      nodes: [at(route, 220), at(email("g"), -240), at(email("d"), 700)],
+      edges: [
+        { id: "e2", source: "route", target: "g", sourceHandle: "gold" },
+        { id: "e5", source: "route", target: "d", sourceHandle: "default" },
+      ],
+    };
+    expect(getBranchLegOffset(definition, at(route, 220), "gold")).toBe(-460);
+    expect(getBranchLegOffset(definition, at(route, 220), "silver")).toBe(-100);
+    expect(getBranchLegOffset(definition, at(route, 220), "default")).toBe(480);
+  });
+
+  test("is null for a step without branches or an unknown branch", () => {
+    expect(getBranchLegOffset(routing(), email("e"), "then")).toBeNull();
+    expect(getBranchLegOffset(routing(), route, "missing")).toBeNull();
   });
 });

@@ -6,6 +6,7 @@ import {
   reorganizeWorkflowDefinition,
   snapWorkflowNodePosition,
   updateNodePosition,
+  withBranchLegOffsets,
   workflowDefinitionToFlowEdges,
   workflowDefinitionToFlowNodes,
 } from "./definition-to-flow";
@@ -297,6 +298,71 @@ describe("If/else on the canvas", () => {
       "email-b": { x: 220, y: 600 },
       "email-c": { x: 580, y: 600 },
     });
+  });
+});
+
+describe("withBranchLegOffsets", () => {
+  // trigger → if-1; Then → email-a; Else → if-2 (Then → email-b, Else → email-c), auto-laid out.
+  const nestedFlow = () => {
+    const definition = reorganizeWorkflowDefinition(
+      buildDefinition({
+        nodes: [
+          ifElseNode("if-1"),
+          emailNode("email-a"),
+          ifElseNode("if-2"),
+          emailNode("email-b"),
+          emailNode("email-c"),
+        ],
+        edges: [
+          { id: "e1", source: "trigger-1", target: "if-1" },
+          { id: "e2", source: "if-1", target: "if-2", sourceHandle: "else" },
+          { id: "e3", source: "if-1", target: "email-a", sourceHandle: "then" },
+          { id: "e4", source: "if-2", target: "email-b", sourceHandle: "then" },
+          { id: "e5", source: "if-2", target: "email-c", sourceHandle: "else" },
+        ],
+      })
+    );
+    return { definition, nodes: workflowDefinitionToFlowNodes(definition, t) };
+  };
+  const legsById = (nodes: ReturnType<typeof withBranchLegOffsets>) =>
+    Object.fromEntries(nodes.map((node) => [node.id, node.data.legOffsets]));
+
+  test("puts each leg of a fork straight above its branch's first step after auto layout", () => {
+    const { definition, nodes } = nestedFlow();
+    expect(legsById(withBranchLegOffsets(nodes, definition.edges))).toEqual({
+      "trigger-1": undefined,
+      // Then's step is one and a half columns left of the If/else: its sibling If/else is two wide.
+      "if-1": [-360, 180],
+      "if-2": [-180, 180],
+      "email-a": undefined,
+      "email-b": undefined,
+      "email-c": undefined,
+    });
+  });
+
+  test("follows a branch's step the user dragged, so its line stays straight", () => {
+    const { definition, nodes } = nestedFlow();
+    const dragged = nodes.map((node) =>
+      node.id === "email-a" ? { ...node, position: { x: -300, y: 460 } } : node
+    );
+    expect(legsById(withBranchLegOffsets(dragged, definition.edges))["if-1"]).toEqual([-520, 180]);
+  });
+
+  test("gives an empty branch its own leg beside the other one", () => {
+    const definition = branchDefinition();
+    const nodes = workflowDefinitionToFlowNodes(definition, t).map((node) =>
+      node.id === "email-a" ? { ...node, position: { x: -180, y: 200 } } : node
+    );
+    // if-1 sits at x 0; Then's step at -180; Else is empty.
+    expect(legsById(withBranchLegOffsets(nodes, definition.edges))["if-1"]).toEqual([-180, 180]);
+  });
+
+  test("leaves steps without branches untouched", () => {
+    const definition = buildDefinition();
+    const nodes = workflowDefinitionToFlowNodes(definition, t);
+    const next = withBranchLegOffsets(nodes, definition.edges);
+    expect(next[0]).toBe(nodes[0]);
+    expect(next[1]).toBe(nodes[1]);
   });
 });
 

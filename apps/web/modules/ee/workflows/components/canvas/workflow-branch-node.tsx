@@ -1,9 +1,9 @@
 "use client";
 
-import { Handle, type Node, type NodeProps, Position } from "@xyflow/react";
+import { Handle, type Node, type NodeProps, Position, useUpdateNodeInternals } from "@xyflow/react";
 import { useAtomValue, useSetAtom, useStore } from "jotai";
 import { MoreVerticalIcon, Trash2Icon } from "lucide-react";
-import { memo, useState } from "react";
+import { type CSSProperties, memo, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { useAppendWorkflowStep } from "@/modules/ee/workflows/hooks/use-append-workflow-step";
@@ -11,8 +11,10 @@ import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-r
 import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
 import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import {
-  WORKFLOW_CANVAS_BRANCH_FORK_HEIGHT,
-  WORKFLOW_CANVAS_BRANCH_SPREAD,
+  WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP,
+  WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT,
+  WORKFLOW_CANVAS_CONNECTOR,
+  getBranchLegOffsets,
 } from "@/modules/ee/workflows/lib/canvas-geometry";
 import {
   type TWorkflowNodeData,
@@ -29,20 +31,25 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { BranchLabel } from "./branch-label";
 import { WorkflowAddStepMenu } from "./workflow-add-step-menu";
 import { HANDLE_CLASS_NAMES, WorkflowNodeCard } from "./workflow-node-card";
 
-// 2px slate-500 lines: 4.5:1 on the canvas, so the fork reads as a real path, unlike the faint
-// connector between steps.
-const FORK_LINE_CLASS_NAME = "absolute bg-slate-500";
-// Where the stem meets the bar, from the top of the fork.
-const FORK_BAR_TOP_PX = 20;
+// The fork's lines are drawn like every connector on the canvas (see WORKFLOW_CANVAS_CONNECTOR).
+const FORK_LINE_CLASS_NAME = "absolute";
+const VERTICAL_LINE_STYLE: CSSProperties = {
+  width: WORKFLOW_CANVAS_CONNECTOR.width,
+  background: WORKFLOW_CANVAS_CONNECTOR.color,
+  transform: "translateX(-50%)",
+};
 
 /**
  * An If/else or Switch step on the canvas (ENG-7111, ENG-7157): the step card, and under it a fork
- * into its branches, one column apart, each labelled at its start with a plain label (ED8: Then and
- * Else, or each case's name and Default). A branch's edge to its first step leaves from the end of
- * its leg; a branch with no step yet ends in its own `+` there instead.
+ * bar with one leg per branch, right above the branch's first step (withBranchLegOffsets). A branch's
+ * edge runs straight down from its leg on the bar and carries its plain label (ED8: Then and Else, or
+ * each case's name and Default, see BranchEdge). A branch with no step yet gets its own line down to
+ * its `+` instead, labelled the same way. The node is one branch row tall, so that `+` sits where the
+ * branch's first step will go.
  */
 export const WorkflowBranchNode = memo(
   ({ id, data, selected }: Readonly<NodeProps<Node<TWorkflowNodeData>>>) => {
@@ -57,6 +64,16 @@ export const WorkflowBranchNode = memo(
     // steps go too. Counted when the menu item is picked, not on every render of the card.
     const [deleteStepCount, setDeleteStepCount] = useState<number | null>(null);
     const legs = data.branches;
+    const legOffsets = data.legOffsets ?? getBranchLegOffsets(legs.map(() => null));
+    const barLeft = Math.min(0, ...legOffsets);
+    const barRight = Math.max(0, ...legOffsets);
+    // The legs' handles move with the branches' steps, which doesn't resize the node: tell React Flow
+    // to measure them again so each edge starts at its leg.
+    const updateNodeInternals = useUpdateNodeInternals();
+    const legOffsetsKey = legOffsets.join(",");
+    useEffect(() => {
+      updateNodeInternals(id);
+    }, [id, legOffsetsKey, updateNodeInternals]);
     const isSwitch = data.nodeType === "switch";
     // Inline literal t() calls so the translation-key scanner detects the keys.
     const deleteTitle = isSwitch
@@ -72,7 +89,7 @@ export const WorkflowBranchNode = memo(
     }
 
     return (
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center" style={{ height: WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT }}>
         <WorkflowNodeCard
           data={data}
           selected={selected}
@@ -126,50 +143,67 @@ export const WorkflowBranchNode = memo(
             Icon={Trash2Icon}
           />
         </div>
-        <div className="relative w-64" style={{ height: WORKFLOW_CANVAS_BRANCH_FORK_HEIGHT }}>
-          {/* Wider than the card on purpose: the legs sit one column apart, over the branches. */}
-          <div
-            className="absolute inset-y-0 left-1/2 -translate-x-1/2"
-            style={{ width: WORKFLOW_CANVAS_BRANCH_SPREAD * (legs.length - 1) + 2 }}>
+        <div className="pointer-events-none relative w-64 flex-1">
+          {/* Zero-width origin at the card's centre; the bar and the legs reach past the card on purpose. */}
+          <div className="absolute inset-y-0 left-1/2 w-0">
             <div
-              className={cn(FORK_LINE_CLASS_NAME, "top-0 left-1/2 w-0.5 -translate-x-1/2")}
-              style={{ height: FORK_BAR_TOP_PX }}
+              className={cn(FORK_LINE_CLASS_NAME, "top-0 left-0")}
+              style={{ ...VERTICAL_LINE_STYLE, height: WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP }}
             />
-            <div className={cn(FORK_LINE_CLASS_NAME, "inset-x-0 h-0.5")} style={{ top: FORK_BAR_TOP_PX }} />
-            {legs.map(({ handle: branch, label, ariaLabel, addStepLabel }, index) => (
-              <div
-                key={branch}
-                className={cn(
-                  FORK_LINE_CLASS_NAME,
-                  "bottom-0 w-0.5",
-                  takenBranch !== null && takenBranch !== branch && "opacity-40"
-                )}
-                style={{ top: FORK_BAR_TOP_PX, left: index * WORKFLOW_CANVAS_BRANCH_SPREAD }}>
-                <span
-                  className={cn(
-                    "absolute top-2 left-1/2 z-10 inline-flex max-w-[18rem] -translate-x-1/2 items-center rounded-full border border-slate-500 bg-white px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-slate-900",
-                    takenBranch === branch && "border-slate-900 bg-slate-900 text-white"
-                  )}>
-                  <span aria-hidden="true" className="truncate">
-                    {label}
-                  </span>
-                  <span className="sr-only">{ariaLabel}</span>
-                  {takenBranch === branch ? (
-                    <span className="sr-only">{t("workspace.workflows.run_branch_taken_aria")}</span>
-                  ) : null}
-                </span>
-                <Handle id={branch} type="source" position={Position.Bottom} className={HANDLE_CLASS_NAMES} />
-                {canMutate && data.emptyBranches.includes(branch) && (
-                  <div className="absolute top-full left-1/2 mt-1 -translate-x-1/2">
-                    <WorkflowAddStepMenu
-                      afterNodeType={data.nodeType}
-                      ariaLabel={addStepLabel}
-                      onAdd={(stepType) => appendStep(id, stepType, branch)}
+            <div
+              className={FORK_LINE_CLASS_NAME}
+              style={{
+                top: WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP,
+                left: barLeft,
+                width: barRight - barLeft,
+                height: WORKFLOW_CANVAS_CONNECTOR.width,
+                background: WORKFLOW_CANVAS_CONNECTOR.color,
+                transform: "translateY(-50%)",
+              }}
+            />
+            {legs.map((branch, index) => {
+              const left = legOffsets[index];
+              const isEmpty = data.emptyBranches.includes(branch.handle);
+              return (
+                <div key={branch.handle}>
+                  {/* Where the branch's edge starts: on the bar, right above the branch's first step. */}
+                  <div className="absolute size-0" style={{ top: WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP, left }}>
+                    <Handle
+                      id={branch.handle}
+                      type="source"
+                      position={Position.Bottom}
+                      className={HANDLE_CLASS_NAMES}
                     />
                   </div>
-                )}
-              </div>
-            ))}
+                  {isEmpty ? (
+                    <div
+                      className={cn(
+                        FORK_LINE_CLASS_NAME,
+                        "bottom-0",
+                        takenBranch !== null && takenBranch !== branch.handle && "opacity-40"
+                      )}
+                      style={{ ...VERTICAL_LINE_STYLE, top: WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP, left }}>
+                      <div className="absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+                        <BranchLabel
+                          branch={branch}
+                          isTaken={takenBranch === branch.handle}
+                          isDimmed={false}
+                        />
+                      </div>
+                      {canMutate && (
+                        <div className="pointer-events-auto absolute top-full left-1/2 mt-1 -translate-x-1/2">
+                          <WorkflowAddStepMenu
+                            afterNodeType={data.nodeType}
+                            ariaLabel={branch.addStepLabel}
+                            onAdd={(stepType) => appendStep(id, stepType, branch.handle)}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

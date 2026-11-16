@@ -426,6 +426,26 @@ describe("appendSendEmailAfterNodeAtom", () => {
     });
     expect(added.ui?.position).toEqual({ x: 400, y: 400 });
   });
+
+  test("appends on an empty branch one column beside its neighbour's step, wherever that step was dragged", () => {
+    const store = createStore();
+    store.set(setWorkflowDefinitionAtom, {
+      ...graphDefinition(),
+      nodes: [
+        { id: "if-1", type: "if_else", ui: { position: { x: 220, y: 200 } } },
+        { id: "then-step", type: "action", actionType: "send_email", ui: { position: { x: -240, y: 440 } } },
+      ],
+      edges: [
+        { id: "e1", source: "trigger-1", target: "if-1" },
+        { id: "e2", source: "if-1", target: "then-step", sourceHandle: "then" },
+      ],
+    } as unknown as TWorkflowDefinition);
+
+    store.set(appendSendEmailAfterNodeAtom, "if-1", "else");
+
+    const def = store.get(workflowDefinitionAtom)!;
+    expect(def.nodes[def.nodes.length - 1].ui?.position).toEqual({ x: 120, y: 400 });
+  });
 });
 
 describe("insertSendEmailAfterEdgeAtom", () => {

@@ -34,6 +34,7 @@ import {
   reorganizeWorkflowDefinition,
   snapWorkflowNodePosition,
   updateNodePosition,
+  withBranchLegOffsets,
   workflowDefinitionToFlowEdges,
   workflowDefinitionToFlowNodes,
 } from "@/modules/ee/workflows/lib/definition-to-flow";
@@ -172,14 +173,18 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     });
   }, [derivedFlowNodes, setFlowNodes]);
 
+  // Each If/else and Switch puts its fork's legs right above its branches' steps, from where the
+  // canvas has them now, so a branch's line runs straight down even while its step is dragged.
+  const definitionEdges = definition?.edges;
   const displayedFlowNodes = useMemo(() => {
-    if (!runHighlight) return flowNodes;
-    return flowNodes.map((node) =>
+    const nodes = withBranchLegOffsets(flowNodes, definitionEdges ?? []);
+    if (!runHighlight) return nodes;
+    return nodes.map((node) =>
       runHighlight.notTakenStepIds.has(node.id)
         ? { ...node, className: cn(node.className, "opacity-40") }
         : node
     );
-  }, [flowNodes, runHighlight]);
+  }, [flowNodes, definitionEdges, runHighlight]);
 
   const handleNodesChange: OnNodesChange<Node<TWorkflowNodeData>> = useCallback(
     (changes) => setFlowNodes((currentNodes) => applyNodeChanges(changes, currentNodes)),
@@ -220,7 +225,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     [fitView, isRunDrawerOpen]
   );
 
-  // Opening/closing the inspector resizes the canvas by 360px, which can push nodes behind the
+  // Opening/closing the inspector resizes the canvas by 480px, which can push nodes behind the
   // panel edge. Refit the VIEWPORT once the width transition settles — fitView only pans/zooms;
   // node coordinates are untouched. Opening or closing the Test run drawer refits the same way.
   const isInspectorVisible = isNodeConfigOpen && !isInspectorCollapsed;
@@ -232,9 +237,11 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     }
     previousLayoutRef.current = { isInspectorVisible, isRunDrawerOpen };
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Wait out the whole width transition: fitting mid-way measured a canvas still wider than it ends
+    // up, which cut off a wide flow once the 480px inspector had finished opening.
     const timeoutHandle = setTimeout(
       () => refitViewport(prefersReducedMotion ? 0 : INSPECTOR_REFIT_PAN_MS),
-      INSPECTOR_RESIZE_SETTLE_MS / 2
+      INSPECTOR_RESIZE_SETTLE_MS
     );
     return () => clearTimeout(timeoutHandle);
   }, [isInspectorVisible, isRunDrawerOpen, refitViewport]);

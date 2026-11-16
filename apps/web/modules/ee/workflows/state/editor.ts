@@ -17,7 +17,7 @@ import { settleSentSecretValues, withSecretIdsForCheck } from "@/modules/ee/work
 import {
   type TAddableWorkflowStepType,
   createDefaultWorkflowStep,
-  getBranchLeg,
+  getBranchLegOffset,
   isBranchingStep,
   removeBranchingStepWithBranches,
 } from "@/modules/ee/workflows/lib/workflow-steps";
@@ -67,6 +67,11 @@ export type TWorkflowNodeData = {
   branches: TWorkflowCanvasBranch[];
   /** The branches (handles) with no step yet, which end in their own `+` under the fork. */
   emptyBranches: string[];
+  /**
+   * Each branch's leg under the fork, as an x offset from the step's centre, in `branches` order. Set
+   * by the canvas from where the branches' steps are (withBranchLegOffsets).
+   */
+  legOffsets?: number[];
   issue: TWorkflowNodeIssue | null;
 };
 
@@ -880,9 +885,10 @@ export const appendWorkflowStepAfterNodeAtom = atom(null, (get, set, input: TApp
       const sourceNode = definition.nodes.find((node) => node.id === sourceNodeId);
       const sourcePosition =
         definition.trigger?.id === sourceNodeId ? definition.trigger.ui?.position : sourceNode?.ui?.position;
-      const leg = branch !== undefined && sourceNode ? getBranchLeg(sourceNode, branch) : null;
+      const legOffset =
+        branch !== undefined && sourceNode ? getBranchLegOffset(definition, sourceNode, branch) : null;
       const newPosition = sourcePosition
-        ? getAppendedStepPosition(sourcePosition, leg)
+        ? getAppendedStepPosition(sourcePosition, legOffset)
         : SEND_EMAIL_FALLBACK_POSITION;
 
       const newNode = createDefaultWorkflowStep(stepType, newPosition, { conditionPath, caseName });

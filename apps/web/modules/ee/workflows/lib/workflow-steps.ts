@@ -6,6 +6,7 @@ import {
   WORKFLOW_ACTIONS,
   getSwitchBranches,
 } from "@formbricks/workflows";
+import { getBranchLegOffsets } from "@/modules/ee/workflows/lib/canvas-geometry";
 import type { TWorkflowVariableGroup } from "@/modules/ee/workflows/lib/variable-picker";
 
 /** The step types the add-step menu offers (ENG-7182, ENG-7157): Logic, then Actions. */
@@ -133,14 +134,28 @@ export const getBranchHandles = (node: TWorkflowNode): string[] | null => {
   return null;
 };
 
-/** Which leg of its step's fork a branch is, for placing the branch's first step under it. */
-export const getBranchLeg = (
+/**
+ * Where a branch's leg sits under its step's fork, as an x offset from the step (see
+ * getBranchLegOffsets): above the branch's first step, or, while the branch is empty, one column beside
+ * its neighbour. Null for a step without branches or an unknown branch.
+ */
+export const getBranchLegOffset = (
+  definition: TWorkflowDefinition,
   node: TWorkflowNode,
   handle: string
-): { index: number; count: number } | null => {
+): number | null => {
   const handles = getBranchHandles(node);
   const index = handles?.indexOf(handle) ?? -1;
-  return handles && index !== -1 ? { index, count: handles.length } : null;
+  if (!handles || index === -1) return null;
+  const sourceX = node.ui?.position?.x ?? 0;
+  const childOffsets = handles.map((branch) => {
+    const edge = definition.edges.find((item) => item.source === node.id && item.sourceHandle === branch);
+    const childX = edge
+      ? definition.nodes.find((item) => item.id === edge.target)?.ui?.position?.x
+      : undefined;
+    return childX === undefined ? null : childX - sourceX;
+  });
+  return getBranchLegOffsets(childOffsets)[index];
 };
 
 /**
