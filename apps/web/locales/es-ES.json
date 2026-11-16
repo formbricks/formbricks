@@ -6069,6 +6069,8 @@
       "archive_workflow_confirmation": "¿Estás seguro de que quieres archivar \"{name}\"? Puedes restaurarlo más tarde.",
       "archive_workflow_description": "Archivar oculta el flujo de trabajo de la lista. Puedes restaurarlo más tarde.",
       "auto_layout": "Diseño automático",
+      "auto_layout_done": "Pasos organizados.",
+      "auto_layout_unchanged": "Los pasos ya están organizados.",
       "autosave_blocked": "No guardado",
       "autosave_blocked_tooltip": "Tus cambios no se están guardando. Dale un nombre al flujo de trabajo para continuar.",
       "autosave_failed": "Error al guardar",

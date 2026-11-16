@@ -6069,6 +6069,8 @@
       "archive_workflow_confirmation": "\"{name}\" iş akışını arşivlemek istediğinizden emin misiniz? Daha sonra geri yükleyebilirsiniz.",
       "archive_workflow_description": "Arşivleme, iş akışını listeden gizler. Daha sonra geri yükleyebilirsiniz.",
       "auto_layout": "Otomatik düzen",
+      "auto_layout_done": "Adımlar düzenlendi.",
+      "auto_layout_unchanged": "Adımlar zaten düzenli.",
       "autosave_blocked": "Kaydedilmedi",
       "autosave_blocked_tooltip": "Değişiklikleriniz kaydedilmiyor. Devam etmek için iş akışına bir isim ver.",
       "autosave_failed": "Kaydetme başarısız oldu",

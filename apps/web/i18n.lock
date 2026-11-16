@@ -5843,6 +5843,8 @@ checksums:
     workspace/workflows/archive_workflow_confirmation: 1a5769819284242fc202c49fb8d649ed
     workspace/workflows/archive_workflow_description: 06e437998a762e504d7d0101b0c53565
     workspace/workflows/auto_layout: 553d4f054655684130a8b5bc8f800bf0
+    workspace/workflows/auto_layout_done: 2d5dc7e4c2e9ec6be511b801a55796ca
+    workspace/workflows/auto_layout_unchanged: 6bf9cd2273131b104c8bedc3ac0d0f4a
     workspace/workflows/autosave_blocked: 675161fc3d48278839a611e2795b9725
     workspace/workflows/autosave_blocked_tooltip: 24f6c0a86e84a5a2ea720e9d4a1a2288
     workspace/workflows/autosave_failed: 5d9b22b31b83828d5eeaeae87d2b6d14

@@ -6069,6 +6069,8 @@
       "archive_workflow_confirmation": "確定要封存「{name}」嗎?你之後可以還原它。",
       "archive_workflow_description": "封存會將工作流程從列表中隱藏,你之後可以還原它。",
       "auto_layout": "自動排版",
+      "auto_layout_done": "步驟已排列完成。",
+      "auto_layout_unchanged": "步驟已經排列好了。",
       "autosave_blocked": "未儲存",
       "autosave_blocked_tooltip": "你的變更尚未儲存。請為工作流程命名以繼續。",
       "autosave_failed": "儲存失敗",
