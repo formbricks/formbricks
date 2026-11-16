@@ -147,6 +147,14 @@ export const auth = betterAuth({
   //    the verified email-change flow.
   //  - `/link-social` and `/unlink-account` fight `accountLinking.enabled: false` and the verify-before-
   //    link recovery flow.
+  //  - `/oauth2/create-client`, `/update-client`, `/delete-client` and `/client/rotate-secret` (ENG-3253)
+  //    are the session-authenticated client CRUD. No screen calls them, and they skip the redirect
+  //    allowlist that guards `/oauth2/register` (ENG-3086, ENG-3471): any account could mint a client
+  //    for its own `https` redirect URI, or repoint one with `update-client`, then phish a consent.
+  //    Closed by path rather than with `clientPrivileges`, because the plugin also asserts that hook
+  //    on `/oauth2/register` whenever a session cookie rides along, which would break MCP
+  //    self-registration from a signed-in browser. `/admin/oauth2/*` is `SERVER_ONLY` upstream, so it
+  //    is never routable. Registration stays `/oauth2/register` only.
   //
   // Whatever Better Auth adds next is not open by default: `native-endpoints.integration.test.ts`
   // fails on any declared route that is neither listed here nor on its explicit allow-list (ADR 0017).
@@ -167,6 +175,10 @@ export const auth = betterAuth({
     "/two-factor/verify-otp",
     "/link-social",
     "/unlink-account",
+    "/oauth2/create-client",
+    "/oauth2/update-client",
+    "/oauth2/delete-client",
+    "/oauth2/client/rotate-secret",
   ],
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },

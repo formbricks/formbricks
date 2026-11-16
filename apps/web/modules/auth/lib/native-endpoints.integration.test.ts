@@ -60,10 +60,10 @@ const SERVED_OVER_HTTP: Record<string, string> = {
   "/oauth2/delete-consent": "MCP OAuth consent management",
   "/oauth2/get-client": "MCP OAuth client management",
   "/oauth2/get-clients": "MCP OAuth client management",
-  "/oauth2/create-client": "MCP OAuth client management",
-  "/oauth2/update-client": "MCP OAuth client management",
-  "/oauth2/delete-client": "MCP OAuth client management",
-  "/oauth2/client/rotate-secret": "MCP OAuth client management",
+  // Registration is `/oauth2/register` only, behind the redirect allowlist (ENG-3086, ENG-3471).
+  // `/oauth2/create-client`, `/oauth2/update-client`, `/oauth2/delete-client` and
+  // `/oauth2/client/rotate-secret` are closed in `disabledPaths` (ENG-3253): no screen calls them and
+  // they skip that allowlist for any signed-in user.
   "/admin/oauth2/create-client": "MCP OAuth admin",
   "/admin/oauth2/update-client": "MCP OAuth admin",
   "/admin/oauth2/resources": "MCP OAuth admin",
@@ -194,6 +194,10 @@ describe("Better Auth native endpoints", () => {
       "/two-factor/verify-otp",
       "/link-social",
       "/unlink-account",
+      "/oauth2/create-client",
+      "/oauth2/update-client",
+      "/oauth2/delete-client",
+      "/oauth2/client/rotate-secret",
     ];
 
     // One at a time: before the fix several of these mutate the same user and race each other.
@@ -203,6 +207,31 @@ describe("Better Auth native endpoints", () => {
     }
 
     expect(Object.fromEntries(statuses)).toEqual(Object.fromEntries(mustBeClosed.map((path) => [path, 404])));
+  });
+
+  test("a signed-in user cannot register an OAuth client with their own redirect URI", async () => {
+    const { cookie } = await userWithTwoFactor();
+
+    const created = await rawPost("/oauth2/create-client", cookie, {
+      client_name: "Claude",
+      redirect_uris: ["https://attacker.example.org/cb"],
+    });
+
+    // Before the fix: 201 with a client_id for the attacker's redirect, past the DCR allowlist.
+    expect(created.status).toBe(404);
+    // Near-miss spellings must not route to the handler either.
+    const body = { client_name: "Claude", redirect_uris: ["https://attacker.example.org/cb"] };
+    expect((await rawPost("/oauth2/create-client/", cookie, body)).status).toBe(404);
+    expect((await rawPost("//oauth2/create-client", cookie, body)).status).toBe(404);
+    expect(closedPaths()).toEqual(
+      expect.arrayContaining([
+        "/oauth2/create-client",
+        "/oauth2/update-client",
+        "/oauth2/delete-client",
+        "/oauth2/client/rotate-secret",
+      ])
+    );
+    expect(await prisma.oauthClient.count()).toBe(0);
   });
 
   test("a session and the password alone cannot switch 2FA off or mint backup codes over HTTP", async () => {
