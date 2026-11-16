@@ -15,6 +15,11 @@ import {
   getBranchLegOffsets,
 } from "@/modules/ee/workflows/lib/canvas-geometry";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
+import {
+  type TVariableRefs,
+  describeIfElseConditionParts,
+  describeSwitchParts,
+} from "@/modules/ee/workflows/lib/summary-parts";
 import type { TVariableLabels } from "@/modules/ee/workflows/lib/variable-name";
 import { getBranchHandles, isBranchingStep } from "@/modules/ee/workflows/lib/workflow-steps";
 import type {
@@ -22,6 +27,7 @@ import type {
   TWorkflowNodeData,
   TWorkflowNodeIssue,
 } from "@/modules/ee/workflows/state/editor";
+import type { TFlowTextPart } from "@/modules/survey/editor/lib/reference-chips";
 
 export const WORKFLOW_CANVAS_NODE_TYPE = "workflowCanvasNode";
 export const WORKFLOW_BRANCH_NODE_TYPE = "workflowBranchNode";
@@ -49,6 +55,8 @@ interface WorkflowFlowNodeOptions {
   triggerSummary?: string;
   /** Human names for Variable paths (a survey question's headline), so summaries never show ids. */
   variableLabels?: TVariableLabels;
+  /** How Variables draw as chips in summaries (a question with its icon, a field). */
+  variableRefs?: TVariableRefs;
 }
 
 // Client-side counterpart of the dry-run test's checks: flags nodes that can't run as configured.
@@ -57,7 +65,7 @@ interface WorkflowFlowNodeOptions {
 const getWorkflowNodeIssue = (
   node: TWorkflowNode,
   t: TFunction,
-  options: Required<Omit<WorkflowFlowNodeOptions, "triggerSummary" | "variableLabels">>,
+  options: Required<Omit<WorkflowFlowNodeOptions, "triggerSummary" | "variableLabels" | "variableRefs">>,
   isSurveyTrigger: boolean
 ): TWorkflowNodeIssue | null => {
   const severity = options.isDraft ? "setup" : "error";
@@ -119,6 +127,18 @@ export const getCanvasBranches = (node: TWorkflowNode, t: TFunction): TWorkflowC
   ];
 };
 
+/** The If/else and Switch summaries as sentences with chips; null for every other step. */
+const getSummaryParts = (
+  node: TWorkflowNode,
+  t: TFunction,
+  refs: TVariableRefs | undefined
+): TFlowTextPart[] | null => {
+  if (node.type === "if_else") return describeIfElseConditionParts(node.config.condition, t, refs);
+  if (node.type === "switch")
+    return describeSwitchParts(node.config.left.path, node.config.cases.length, t, refs);
+  return null;
+};
+
 export const workflowDefinitionToFlowNodes = (
   definition: TWorkflowDefinition,
   t: TFunction,
@@ -126,7 +146,9 @@ export const workflowDefinitionToFlowNodes = (
 ): Array<Node<TWorkflowNodeData>> => {
   const sourcesWithEdges = new Set(definition.edges.map((edge) => edge.source));
   const isSurveyTrigger = isResponseCompletedTrigger(definition.trigger);
-  const resolvedOptions: Required<Omit<WorkflowFlowNodeOptions, "triggerSummary" | "variableLabels">> = {
+  const resolvedOptions: Required<
+    Omit<WorkflowFlowNodeOptions, "triggerSummary" | "variableLabels" | "variableRefs">
+  > = {
     hasBoundSurvey: options?.hasBoundSurvey ?? true,
     isDraft: options?.isDraft ?? true,
   };
@@ -163,6 +185,7 @@ export const workflowDefinitionToFlowNodes = (
           node.type === "trigger" && options?.triggerSummary
             ? options.triggerSummary
             : registryEntry.summary(node, t, options?.variableLabels),
+        summaryParts: getSummaryParts(node, t, options?.variableRefs),
         // The end of the workflow or of a branch: a step with nothing after it. An If/else or a
         // Switch ends in its branches' own `+` instead.
         canAppendStep: !branchHandles && isLeaf,

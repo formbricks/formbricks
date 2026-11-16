@@ -21,6 +21,7 @@ import {
   isBranchingStep,
   removeBranchingStepWithBranches,
 } from "@/modules/ee/workflows/lib/workflow-steps";
+import type { TFlowTextPart } from "@/modules/survey/editor/lib/reference-chips";
 
 export { countStepsOnBranches } from "@/modules/ee/workflows/lib/workflow-steps";
 
@@ -55,6 +56,11 @@ export type TWorkflowNodeData = {
   nodeType: string;
   title: string;
   summary: string;
+  /**
+   * The summary as a sentence with chips (If/else and Switch), drawn like the survey flow editor's
+   * rules; `summary` stays the plain text for tooltips and screen readers.
+   */
+  summaryParts?: TFlowTextPart[] | null;
   /**
    * Shows the inline `+` under the card: a trigger with no step yet, or the last step of an If/else
    * branch. Other steps don't offer it while a workflow outside branches is capped at one action.

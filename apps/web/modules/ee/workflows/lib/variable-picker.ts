@@ -27,6 +27,7 @@ import { getLocalizedValue } from "@/lib/i18n/utils";
 import { extractCompleteRecallIds, replaceRecallInfoWithUnderline } from "@/lib/utils/recall";
 import { getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
 import { isRecallExcludedElementType } from "@/modules/survey/components/element-form-input/utils";
+import type { TReferenceChip } from "@/modules/survey/editor/lib/reference-chips";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import type { TEditorRecallSource } from "@/modules/ui/components/editor/components/recall-source";
 
@@ -304,6 +305,26 @@ const getResponseOptions = (survey: TSurvey): TWorkflowVariableOption[] => {
  */
 export const getSurveyVariableLabels = (survey: TSurvey | null | undefined): Map<string, string> =>
   new Map(survey ? getResponseOptions(survey).map((option) => [option.path, option.label] as const) : []);
+
+/**
+ * How a survey's `response.<id>` Variables draw as chips in canvas summaries, the way the survey
+ * flow editor draws them: a question with its type icon, a hidden field (links, URL parameters, SDK)
+ * outlined, a computed Embedded Data field green.
+ */
+export const getSurveyVariableRefs = (survey: TSurvey | null | undefined): Map<string, TReferenceChip> =>
+  new Map(
+    survey
+      ? getResponseOptions(survey).map((option): [string, TReferenceChip] => {
+          if (option.iconKey === "hiddenField") {
+            return [option.path, { kind: "hiddenField", label: option.label }];
+          }
+          if (option.iconKey) {
+            return [option.path, { kind: "question", label: option.label, elementType: option.iconKey }];
+          }
+          return [option.path, { kind: "field", label: option.label }];
+        })
+      : []
+  );
 
 const isWebhookTrigger = (
   trigger: TWorkflowDefinition["trigger"] | undefined

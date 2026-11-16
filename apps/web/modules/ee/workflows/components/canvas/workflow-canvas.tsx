@@ -41,7 +41,7 @@ import {
   workflowDefinitionToFlowNodes,
 } from "@/modules/ee/workflows/lib/definition-to-flow";
 import { isEdgeOffRunPath } from "@/modules/ee/workflows/lib/run-canvas-highlight";
-import { getSurveyVariableLabels } from "@/modules/ee/workflows/lib/variable-picker";
+import { getSurveyVariableLabels, getSurveyVariableRefs } from "@/modules/ee/workflows/lib/variable-picker";
 import { countUsableVariables } from "@/modules/ee/workflows/lib/webhook-trigger-panel";
 import { hasSavedWebhookTrigger } from "@/modules/ee/workflows/lib/workflow-samples";
 import {
@@ -149,6 +149,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const authoringContext = useWorkflowEmailAuthoringContext();
   const boundSurvey = resolveBoundTriggerSurvey(authoringContext, definition);
   const variableLabels = useMemo(() => getSurveyVariableLabels(boundSurvey), [boundSurvey]);
+  const variableRefs = useMemo(() => getSurveyVariableRefs(boundSurvey), [boundSurvey]);
 
   const derivedFlowNodes = useMemo(
     () =>
@@ -158,9 +159,10 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
             isDraft,
             triggerSummary,
             variableLabels,
+            variableRefs,
           })
         : [],
-    [definition, t, hasBoundSurvey, isDraft, triggerSummary, variableLabels]
+    [definition, t, hasBoundSurvey, isDraft, triggerSummary, variableLabels, variableRefs]
   );
   // While a run is open in the run drawer, the canvas marks its path: the steps and edges off it
   // are greyed (mock screen 7), and each If/else labels the branch it took (workflow-branch-node).

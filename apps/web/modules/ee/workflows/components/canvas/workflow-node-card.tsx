@@ -14,6 +14,7 @@ import {
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import type { TWorkflowNodeData, TWorkflowNodeIcon } from "@/modules/ee/workflows/state/editor";
+import { FlowTextParts, useElementIcons } from "@/modules/survey/editor/components/reference-chip";
 
 export const NODE_ICONS: Record<TWorkflowNodeIcon, LucideIcon> = {
   trigger: ZapIcon,
@@ -68,6 +69,7 @@ interface WorkflowNodeCardProps {
 // or the issue that replaces it.
 export const WorkflowNodeCard = ({ data, selected, menu, children }: Readonly<WorkflowNodeCardProps>) => {
   const Icon = NODE_ICONS[data.icon];
+  const elementIcons = useElementIcons();
 
   return (
     <div
@@ -101,7 +103,17 @@ export const WorkflowNodeCard = ({ data, selected, menu, children }: Readonly<Wo
             <span className="line-clamp-2">{data.issue.label}</span>
           </span>
         ) : (
-          <span className="line-clamp-2 text-xs leading-tight text-slate-500">{data.summary}</span>
+          // If/else and Switch read as a sentence with chips, like the survey flow editor's rules. A
+          // chip gets at most 60% of the line, so a long question title leaves room for the words after it.
+          <span
+            className="line-clamp-2 text-xs leading-[20px] text-slate-500 [&>span.inline-flex]:max-w-[60%]"
+            title={data.summary}>
+            {data.summaryParts ? (
+              <FlowTextParts parts={data.summaryParts} elementIcons={elementIcons} />
+            ) : (
+              data.summary
+            )}
+          </span>
         )}
       </div>
       {menu}
