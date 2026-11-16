@@ -6155,7 +6155,7 @@
       "http_request": "Solicitare HTTP",
       "http_request_add_header": "Adaugă antet",
       "http_request_add_query_parameter": "Adaugă parametru de interogare",
-      "http_request_body": "Corp",
+      "http_request_body": "Corpul cererii",
       "http_request_body_help": "JSON. Tastează @ pentru a insera o variabilă.",
       "http_request_continue_on_error": "Continuă în caz de eroare",
       "http_request_continue_on_error_help": "Dezactivat: la expirarea timpului, la 429 și la 5xx se fac 3 reîncercări, apoi rularea eșuează. Activat: codul de stare este transmis pașilor următori.",

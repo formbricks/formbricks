@@ -6155,7 +6155,7 @@
       "http_request": "HTTP 請求",
       "http_request_add_header": "新增標頭",
       "http_request_add_query_parameter": "新增查詢參數",
-      "http_request_body": "內文",
+      "http_request_body": "請求主體",
       "http_request_body_help": "JSON。輸入 @ 即可插入變數。",
       "http_request_continue_on_error": "發生錯誤時繼續",
       "http_request_continue_on_error_help": "關閉:逾時、429 和 5xx 錯誤會重試 3 次,之後執行即告失敗。開啟:狀態碼會傳遞給後續步驟。",

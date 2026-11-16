@@ -6155,7 +6155,7 @@
       "http_request": "Solicitud HTTP",
       "http_request_add_header": "Añadir encabezado",
       "http_request_add_query_parameter": "Añadir parámetro de consulta",
-      "http_request_body": "Cuerpo",
+      "http_request_body": "Cuerpo de la solicitud",
       "http_request_body_help": "JSON. Escribe @ para insertar una variable.",
       "http_request_continue_on_error": "Continuar en caso de error",
       "http_request_continue_on_error_help": "Desactivado: los tiempos de espera agotados, el 429 y los 5xx se reintentan 3 veces y, después, la ejecución falla. Activado: el código de estado se pasa a los pasos posteriores.",

@@ -6155,7 +6155,7 @@
       "http_request": "HTTP isteği",
       "http_request_add_header": "Üst bilgi ekle",
       "http_request_add_query_parameter": "Sorgu parametresi ekle",
-      "http_request_body": "Gövde",
+      "http_request_body": "İstek gövdesi",
       "http_request_body_help": "JSON. Değişken eklemek için @ yaz.",
       "http_request_continue_on_error": "Hata olursa devam et",
       "http_request_continue_on_error_help": "Kapalı: zaman aşımları, 429 ve 5xx hataları 3 kez yeniden denenir, ardından çalıştırma başarısız olur. Açık: durum kodu sonraki adımlara iletilir.",

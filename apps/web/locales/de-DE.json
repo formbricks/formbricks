@@ -6155,7 +6155,7 @@
       "http_request": "HTTP-Anfrage",
       "http_request_add_header": "Header hinzufügen",
       "http_request_add_query_parameter": "Query-Parameter hinzufügen",
-      "http_request_body": "Body",
+      "http_request_body": "Anfragetext",
       "http_request_body_help": "JSON. Tippe @, um eine Variable einzufügen.",
       "http_request_continue_on_error": "Bei Fehler fortfahren",
       "http_request_continue_on_error_help": "Aus: Bei Timeouts, 429 und 5xx gibt es 3 Wiederholungsversuche, danach schlägt der Durchlauf fehl. An: Der Statuscode wird an spätere Schritte weitergegeben.",

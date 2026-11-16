@@ -6155,7 +6155,7 @@
       "http_request": "HTTP-begäran",
       "http_request_add_header": "Lägg till header",
       "http_request_add_query_parameter": "Lägg till frågeparameter",
-      "http_request_body": "Brödtext",
+      "http_request_body": "Förfrågningens brödtext",
       "http_request_body_help": "JSON. Skriv @ för att infoga en variabel.",
       "http_request_continue_on_error": "Fortsätt vid fel",
       "http_request_continue_on_error_help": "Av: timeouter, 429 och 5xx försöker igen 3 gånger, sedan misslyckas körningen. På: statuskoden skickas vidare till senare steg.",

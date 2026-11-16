@@ -6155,7 +6155,7 @@
       "http_request": "HTTP-kérés",
       "http_request_add_header": "Fejléc hozzáadása",
       "http_request_add_query_parameter": "Lekérdezési paraméter hozzáadása",
-      "http_request_body": "Törzs",
+      "http_request_body": "Kérés törzse",
       "http_request_body_help": "JSON. A változó beszúrásához írja be a @ karaktert.",
       "http_request_continue_on_error": "Folytatás hiba esetén",
       "http_request_continue_on_error_help": "Kikapcsolva: időtúllépés, 429-es és 5xx-es hibák esetén a rendszer 3 alkalommal újrapróbálkozik, majd a futtatás sikertelen lesz. Bekapcsolva: az állapotkód továbbítódik a későbbi lépésekhez.",

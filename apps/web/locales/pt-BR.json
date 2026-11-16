@@ -6155,7 +6155,7 @@
       "http_request": "Requisição HTTP",
       "http_request_add_header": "Adicionar cabeçalho",
       "http_request_add_query_parameter": "Adicionar parâmetro de consulta",
-      "http_request_body": "Corpo",
+      "http_request_body": "Corpo da requisição",
       "http_request_body_help": "JSON. Digite @ para inserir uma Variável.",
       "http_request_continue_on_error": "Continuar em caso de erro",
       "http_request_continue_on_error_help": "Desativado: timeouts, 429 e 5xx são repetidos 3 vezes e, depois, a execução falha. Ativado: o código de status é repassado às próximas etapas.",

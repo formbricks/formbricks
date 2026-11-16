@@ -6155,7 +6155,7 @@
       "http_request": "Requête HTTP",
       "http_request_add_header": "Ajouter un en-tête",
       "http_request_add_query_parameter": "Ajouter un paramètre de requête",
-      "http_request_body": "Corps",
+      "http_request_body": "Corps de la requête",
       "http_request_body_help": "JSON. Tape @ pour insérer une variable.",
       "http_request_continue_on_error": "Continuer en cas d'erreur",
       "http_request_continue_on_error_help": "Désactivé : en cas de délai dépassé, d'erreur 429 ou 5xx, 3 nouvelles tentatives sont effectuées, puis l'exécution échoue. Activé : le code de statut est transmis aux étapes suivantes.",

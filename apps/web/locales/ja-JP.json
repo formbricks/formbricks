@@ -6155,7 +6155,7 @@
       "http_request": "HTTPリクエスト",
       "http_request_add_header": "ヘッダーを追加",
       "http_request_add_query_parameter": "クエリパラメーターを追加",
-      "http_request_body": "本文",
+      "http_request_body": "リクエストボディ",
       "http_request_body_help": "JSON形式。@ を入力すると変数を挿入できます。",
       "http_request_continue_on_error": "エラー時も続行",
       "http_request_continue_on_error_help": "オフ:タイムアウト、429、5xxエラーは3回再試行し、それでも失敗すると実行が失敗します。オン:ステータスコードが後続のステップに渡されます。",

@@ -6155,7 +6155,7 @@
       "http_request": "HTTP-verzoek",
       "http_request_add_header": "Header toevoegen",
       "http_request_add_query_parameter": "Queryparameter toevoegen",
-      "http_request_body": "Body",
+      "http_request_body": "Berichttekst van het verzoek",
       "http_request_body_help": "JSON. Typ @ om een variabele in te voegen.",
       "http_request_continue_on_error": "Doorgaan bij fout",
       "http_request_continue_on_error_help": "Uit: bij time-outs, 429 en 5xx wordt 3 keer opnieuw geprobeerd, daarna mislukt de run. Aan: de statuscode wordt doorgegeven aan latere stappen.",

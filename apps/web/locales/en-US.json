@@ -6155,7 +6155,7 @@
       "http_request": "HTTP request",
       "http_request_add_header": "Add header",
       "http_request_add_query_parameter": "Add query parameter",
-      "http_request_body": "Body",
+      "http_request_body": "Request body",
       "http_request_body_help": "JSON. Type @ to insert a Variable.",
       "http_request_continue_on_error": "Continue on error",
       "http_request_continue_on_error_help": "Off: timeouts, 429 and 5xx retry 3 times, then the run fails. On: the status code is passed to later steps.",
