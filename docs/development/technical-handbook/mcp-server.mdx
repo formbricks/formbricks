@@ -1455,7 +1455,9 @@ Gets one workflow by ID. Read-only and idempotent. Unknown or cross-workspace id
 
 #### list_workflow_runs
 
-Lists workflow runs for a workspace, newest first. Read-only and idempotent.
+Lists workflow runs for a workspace, newest first. Read-only and idempotent. Declares Workflow runs: Read
+alone, like `get_workflow_run`, and like it leaves out what can quote respondents' answers: without
+Responses: Read (in the grant and in the token's scopes) each run's `error` comes back as `null`.
 
 ```json
 {
@@ -2318,8 +2320,9 @@ query, like `create_feedback_record`.
   a query and a tenant. Those need Hub-side support first.
 - The search tools require an embedding model configured on the Hub API **and** the Hub worker; without
   one they return 503. Embedding is asynchronous and covers only records with text.
-- `outputSchema` is declared on the response tools only. The survey, workflow and feedback-record tools
-  still advertise no result shape, so a client has to infer theirs from an example.
+- The survey, workflow, feedback-record and Audience tools advertise no result shape (`outputSchema`), so a
+  client has to infer theirs from an example. An output schema is built from the v3 resource schema and never
+  retyped, and none exists yet for those resources.
 - The response tools cover the v3 operations and nothing more: there is no tool that adds or removes a
   single tag, because `PATCH` replaces the tag set wholesale and such a tool would be a read-modify-write
   wrapper with its own race rather than an operation.
