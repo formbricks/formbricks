@@ -13896,7 +13896,7 @@ components:
         runCount:
           type: integer
           minimum: 0
-          description: Total number of runs (dry runs included) for this workflow.
+          description: Number of real runs for this workflow; Test runs (dry runs) are not counted.
     CountedListMeta:
       allOf:
         - $ref: '#/components/schemas/ListPaginationMeta'

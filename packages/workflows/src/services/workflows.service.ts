@@ -59,7 +59,8 @@ export interface WorkflowUpdateInput {
 const LAST_RUN_INCLUDE: LastRunInclude = {
   runs: { take: 1, orderBy: { createdAt: "desc" } },
   creator: { select: { name: true } },
-  _count: { select: { runs: true } },
+  // The Runs column counts real runs only, like the runs list's default and billing: Test runs are excluded.
+  _count: { select: { runs: { where: { isDryRun: false } } } },
 };
 
 /** Every field a workflow update may set; mirrors the injected delegate's `update` data shape. */

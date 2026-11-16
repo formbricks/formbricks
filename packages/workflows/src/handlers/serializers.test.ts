@@ -101,7 +101,7 @@ describe("serializers", () => {
     expect(item.lastRun?.startedAt).toBe("2026-06-12T10:00:30.000Z");
   });
 
-  test("maps the total run count through from _count", () => {
+  test("maps the real-run count through from _count", () => {
     expect(toWorkflowListItem(baseRow).runCount).toBe(0);
     expect(toWorkflowListItem({ ...baseRow, _count: { runs: 7 } }).runCount).toBe(7);
   });

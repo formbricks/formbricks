@@ -153,7 +153,7 @@ describe("createWorkflow", () => {
     expect(createArgs.include).toEqual({
       runs: { take: 1, orderBy: { createdAt: "desc" } },
       creator: { select: { name: true } },
-      _count: { select: { runs: true } },
+      _count: { select: { runs: { where: { isDryRun: false } } } },
     });
     expect(result).toBe(row);
   });
@@ -182,6 +182,16 @@ describe("listWorkflows", () => {
     expect(findManyArgs.orderBy).toEqual([{ updatedAt: "desc" }, { id: "desc" }]);
     expect(page.nextCursor).toBeNull();
     expect(page.workflows).toHaveLength(1);
+  });
+
+  test("counts only real runs for the Runs column, never Test runs", async () => {
+    findMany.mockResolvedValue([makeRow()]);
+
+    await service.listWorkflows({ workspaceId, limit: 20, sortBy: "updatedAt", includeTotalCount: false });
+
+    expect(findMany.mock.calls[0][0].include._count).toEqual({
+      select: { runs: { where: { isDryRun: false } } },
+    });
   });
 
   test("honors an explicit status filter", async () => {
@@ -293,7 +303,7 @@ describe("getWorkflowById", () => {
       include: {
         runs: { take: 1, orderBy: { createdAt: "desc" } },
         creator: { select: { name: true } },
-        _count: { select: { runs: true } },
+        _count: { select: { runs: { where: { isDryRun: false } } } },
       },
     });
   });

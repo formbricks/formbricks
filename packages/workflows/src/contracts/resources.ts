@@ -191,7 +191,7 @@ export const ZWorkflowListItem = z
       .number()
       .int()
       .nonnegative()
-      .describe("Total number of runs (dry runs included) for this workflow."),
+      .describe("Number of real runs for this workflow; Test runs (dry runs) are not counted."),
   })
   .describe("Slim workflow shape returned by the workflow list. Excludes the definition.");
 export type TWorkflowListItem = z.infer<typeof ZWorkflowListItem>;
