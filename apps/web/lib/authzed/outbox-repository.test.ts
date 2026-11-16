@@ -1,6 +1,5 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { Prisma } from "@formbricks/database/prisma";
 import {
   AUTHZED_OUTBOX_HISTORY_DELETE_BATCH_SIZE,
   AUTHZED_OUTBOX_HISTORY_MAX_DELETE_BATCHES,
@@ -36,15 +35,12 @@ describe("AuthZed projection outbox repository", () => {
   beforeEach(() => vi.clearAllMocks());
   afterEach(() => vi.useRealTimers());
 
-  test("claims only the target types this release knows, and dead-letters nothing itself", async () => {
+  // That an unknown type is left untouched for a newer worker is checked on real Postgres in
+  // `outbox-trigger.integration.test.ts` ("claims the types this release knows …").
+  test("returns the claimed events, and dead-letters nothing itself", async () => {
     vi.mocked(prisma.$queryRaw).mockResolvedValue([row("membership")]);
 
     await expect(claimAuthzedOutboxEvents("lease-owner")).resolves.toEqual([row("membership")]);
-    // The known types are a bound parameter of the claim, so a newer release's type is never leased.
-    const bound = (vi.mocked(prisma.$queryRaw).mock.calls.at(-1) ?? [])
-      .slice(1)
-      .flatMap((value) => (value instanceof Prisma.Sql ? value.values : [value]));
-    expect(bound).toContainEqual(expect.arrayContaining(["mcp_grant", "membership", "survey"]));
     expect(prisma.authzedProjectionOutbox.updateMany).not.toHaveBeenCalled();
   });
 

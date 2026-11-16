@@ -156,33 +156,8 @@ describe("reconcileMcpGrantRelationships", () => {
     expect(readAllRelationships).toHaveBeenCalledTimes(2);
   });
 
-  // A narrowing holds its grant's row `FOR UPDATE` while it deletes from SpiceDB: a pass that read the
-  // grant before it must not write the old relationships back after it.
-  test("reads and writes each pass inside a transaction that holds the grants' rows FOR SHARE", async () => {
-    const order: string[] = [];
-    vi.mocked(prisma.$queryRaw).mockImplementation((async (strings: TemplateStringsArray) => {
-      order.push(strings.join("?").includes("FOR SHARE") ? "lock" : "other");
-      return [];
-    }) as never);
-    vi.mocked(prisma.mcpGrant.findMany).mockImplementation((async () => {
-      order.push("read");
-      return [grantRow({ workspaces: ["ws-1"] })];
-    }) as never);
-    clientMocks.writeRelationships.mockImplementation(async () => {
-      order.push("write");
-    });
-
-    await reconcileMcpGrantRelationships({ grantIds: ["grant-b", GRANT_ID] });
-
-    expect(order).toEqual(["lock", "read", "write", "lock", "read"]);
-    const [lock] = vi.mocked(prisma.$queryRaw).mock.calls[0] as unknown as [TemplateStringsArray, string[]];
-    expect(lock.join("?")).toMatch(/ORDER BY "id" FOR SHARE/);
-    expect(vi.mocked(prisma.$queryRaw).mock.calls[0][1]).toEqual([GRANT_ID, "grant-b"]);
-    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
-      maxWait: 10_000,
-      timeout: 30_000,
-    });
-  });
+  // That a reconcile racing a narrowing waits for it and leaves the narrowed relationships is a database
+  // behaviour, checked on real Postgres and SpiceDB in `mcp-workspace-access.integration.test.ts`.
 
   test("deletes every observed relationship of a grant that no longer exists", async () => {
     vi.mocked(prisma.mcpGrant.findMany).mockResolvedValue([] as never);

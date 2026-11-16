@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { authorizedMcpClientKeys } from "../lib/query";
+import { useAuthorizedMcpClients } from "./use-authorized-mcp-clients";
 import { useRevokeMcpGrant } from "./use-revoke-mcp-grant";
 
 const wrapper = (queryClient: QueryClient) => {
@@ -14,6 +14,9 @@ const wrapper = (queryClient: QueryClient) => {
   Wrapper.displayName = "useRevokeMcpGrantTestWrapper";
   return Wrapper;
 };
+
+const json = (body: unknown) =>
+  new Response(JSON.stringify(body), { status: 200, headers: { "Content-Type": "application/json" } });
 
 const newQueryClient = () =>
   new QueryClient({ defaultOptions: { mutations: { retry: false }, queries: { retry: false } } });
@@ -29,24 +32,27 @@ describe("useRevokeMcpGrant", () => {
     vi.unstubAllGlobals();
   });
 
-  test("revokes through the grant route by client id, then invalidates the client list", async () => {
-    vi.mocked(global.fetch).mockResolvedValue(
-      new Response(JSON.stringify({ data: { clientId: "client/a" } }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      })
+  test("revokes through the grant route by client id, and the shown list drops the client", async () => {
+    const lists = [
+      { clients: [{ clientId: "client/a" }, { clientId: "client_b" }] },
+      { clients: [{ clientId: "client_b" }] },
+    ];
+    vi.mocked(global.fetch).mockImplementation(async (_url, init) =>
+      init?.method === "DELETE"
+        ? json({ data: { clientId: "client/a" } })
+        : json({ data: { isDashboardViewer: false, ...(lists.shift() ?? { clients: [] }) } })
     );
     const queryClient = newQueryClient();
-    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
 
-    const { result } = renderHook(() => useRevokeMcpGrant(), { wrapper: wrapper(queryClient) });
-    result.current.mutate("client/a");
+    const { result } = renderHook(() => ({ list: useAuthorizedMcpClients(), revoke: useRevokeMcpGrant() }), {
+      wrapper: wrapper(queryClient),
+    });
+    await waitFor(() => expect(result.current.list.data?.clients).toHaveLength(2));
+    result.current.revoke.mutate("client/a");
 
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    const [url, init] = vi.mocked(global.fetch).mock.calls[0];
-    expect(url).toBe("/api/internal/mcp-grants/client%2Fa");
-    expect(init).toMatchObject({ method: "DELETE" });
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: authorizedMcpClientKeys.list() });
+    await waitFor(() => expect(result.current.list.data?.clients).toEqual([{ clientId: "client_b" }]));
+    const revoked = vi.mocked(global.fetch).mock.calls.find(([, init]) => init?.method === "DELETE");
+    expect(revoked?.[0]).toBe("/api/internal/mcp-grants/client%2Fa");
   });
 
   test("surfaces a refused revoke instead of reporting success", async () => {
@@ -60,12 +66,11 @@ describe("useRevokeMcpGrant", () => {
       )
     );
     const queryClient = newQueryClient();
-    const invalidate = vi.spyOn(queryClient, "invalidateQueries");
 
     const { result } = renderHook(() => useRevokeMcpGrant(), { wrapper: wrapper(queryClient) });
     result.current.mutate("client_a");
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(invalidate).not.toHaveBeenCalled();
+    expect(result.current.error).toMatchObject({ status: 403 });
   });
 });
