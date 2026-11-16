@@ -58,6 +58,7 @@ describe("isBlockedEmailDomain", () => {
       "test@live.nl",
       "test@yahoo.fr",
       "test@privaterelay.appleid.com",
+      "test@private.icloud.com",
       "test@anonaddy.com",
       "test@8alias.com",
       "test@keemail.me",
