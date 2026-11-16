@@ -19,6 +19,7 @@ import {
   narrowMcpGrantAccess,
   prepareMcpGrantAudits,
   projectMcpGrants,
+  queueMcpClientRevocationAudit,
   queueMcpGrantAudit,
   queueMcpGrantAudits,
   removeDeletedMcpGrants,
@@ -480,6 +481,53 @@ describe("prepareMcpGrantAudits", () => {
     expect(records[0].organizationIds).toEqual(["org-1"]);
     expect(db.membership.findMany).not.toHaveBeenCalled();
     expect(db.workspace.findMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("queueMcpClientRevocationAudit", () => {
+  const ENDED = { consentsDeleted: 1, refreshTokensRevoked: 2, accessTokensRevoked: 0 };
+
+  beforeEach(() => {
+    vi.mocked(queueAuditEventBackground).mockReset().mockResolvedValue(undefined);
+  });
+
+  test("audits the client and what was ended, once per organization the user belongs to", async () => {
+    prisma.membership.findMany.mockResolvedValue([
+      { organizationId: "org-1" },
+      { organizationId: "org-2" },
+    ] as never);
+
+    await queueMcpClientRevocationAudit({ actorUserId: USER_ID, clientId: CLIENT_ID, ended: ENDED });
+
+    expect(prisma.membership.findMany).toHaveBeenCalledWith({
+      where: { userId: USER_ID },
+      select: { organizationId: true },
+    });
+    expect(vi.mocked(queueAuditEventBackground).mock.calls.map(([event]) => event)).toEqual(
+      ["org-1", "org-2"].map((organizationId) => ({
+        action: "deleted",
+        targetType: "mcpGrant",
+        targetId: CLIENT_ID,
+        userId: USER_ID,
+        userType: "user",
+        organizationId,
+        status: "success",
+        oldObject: null,
+        newObject: { clientId: CLIENT_ID, grant: null, ended: ENDED },
+      }))
+    );
+  });
+
+  test("files one entry without an organization for a user in none, and never throws", async () => {
+    prisma.membership.findMany.mockResolvedValue([] as never);
+    vi.mocked(queueAuditEventBackground).mockRejectedValueOnce(new Error("queue down"));
+
+    await expect(
+      queueMcpClientRevocationAudit({ actorUserId: USER_ID, clientId: CLIENT_ID, ended: ENDED })
+    ).resolves.toBeUndefined();
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({ organizationId: "unknown", targetId: CLIENT_ID })
+    );
   });
 });
 

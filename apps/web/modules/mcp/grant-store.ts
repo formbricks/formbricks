@@ -494,6 +494,56 @@ export const queueMcpGrantAudit = async ({
   }
 };
 
+/** What Revoke ended for a client, as `revokeMcpClient` counts it. */
+export type TMcpClientRevocation = {
+  consentsDeleted: number;
+  refreshTokensRevoked: number;
+  accessTokensRevoked: number;
+};
+
+/**
+ * Audits a Revoke that ended a client's consent and tokens but no grant: a consent left without one (the
+ * previous release wrote it during a rolling upgrade). Its grant entries would be none, so the client is
+ * the target and what was ended the record. Filed like a grant with All access, which is what such a
+ * consent gave: one entry per organization the user belongs to, or one without an organization. Call it
+ * once the revocation has committed. Never throws.
+ */
+export const queueMcpClientRevocationAudit = async ({
+  actorUserId,
+  clientId,
+  ended,
+}: {
+  actorUserId: string;
+  clientId: string;
+  ended: TMcpClientRevocation;
+}): Promise<void> => {
+  try {
+    const memberships = await prisma.membership.findMany({
+      where: { userId: actorUserId },
+      select: { organizationId: true },
+    });
+    const filings = memberships.length > 0 ? memberships.map((m) => m.organizationId) : [UNKNOWN_DATA];
+    for (const organizationId of filings) {
+      await queueAuditEventBackground({
+        action: "deleted",
+        targetType: "mcpGrant",
+        targetId: clientId,
+        userId: actorUserId,
+        userType: "user",
+        organizationId,
+        status: "success",
+        oldObject: null,
+        newObject: { clientId, grant: null, ended },
+      });
+    }
+  } catch (error) {
+    logger.error(
+      { err: loggableError(error), clientId },
+      "Failed to queue MCP client revocation audit event"
+    );
+  }
+};
+
 /** The actor of a grant ended by no user: an account switched off by the retention sweep, or recovered by SSO. */
 export const MCP_GRANT_SYSTEM_ACTOR = { userId: "system", userType: "system" } as const;
 

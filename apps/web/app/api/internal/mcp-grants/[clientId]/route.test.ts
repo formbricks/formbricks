@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   editMcpGrant: vi.fn(),
   revokeMcpClient: vi.fn(),
   queueMcpGrantAudit: vi.fn(),
+  queueMcpClientRevocationAudit: vi.fn(),
   queueAuditEvent: vi.fn(),
 }));
 
@@ -22,6 +23,7 @@ vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({ revokeMcpClient: m
 vi.mock("@/modules/mcp/grant-store", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/mcp/grant-store")>()),
   queueMcpGrantAudit: mocks.queueMcpGrantAudit,
+  queueMcpClientRevocationAudit: mocks.queueMcpClientRevocationAudit,
 }));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
 vi.mock("@/modules/core/rate-limit/helpers", () => ({
@@ -284,12 +286,13 @@ describe("DELETE /api/internal/mcp-grants/{clientId}", () => {
     expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
 
-  // A consent left without a grant (written by the previous release during a rolling upgrade): nothing
-  // for the grant store to audit, so the route's own entry is the record of the revoke.
-  test("keeps the route's audit entry for a revoke that ended a consent and no grant", async () => {
+  // A consent left without a grant (written by the previous release during a rolling upgrade): no grant
+  // entry to write, so the client is the target, with what was ended, instead of the route's entry, which
+  // could name neither.
+  test("audits a revoke that ended a consent and no grant with the client and what was ended", async () => {
     mocks.revokeMcpClient.mockResolvedValue({
       consentsDeleted: 1,
-      refreshTokensRevoked: 1,
+      refreshTokensRevoked: 2,
       accessTokensRevoked: 0,
       grants: [],
     });
@@ -298,10 +301,12 @@ describe("DELETE /api/internal/mcp-grants/{clientId}", () => {
 
     expect(response.status).toBe(200);
     expect(mocks.queueMcpGrantAudit).not.toHaveBeenCalled();
-    expect(mocks.queueAuditEvent).toHaveBeenCalledTimes(1);
-    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ action: "deleted", status: "success", userId: USER_ID })
-    );
+    expect(mocks.queueMcpClientRevocationAudit).toHaveBeenCalledWith({
+      actorUserId: USER_ID,
+      clientId: CLIENT_ID,
+      ended: { consentsDeleted: 1, refreshTokensRevoked: 2, accessTokensRevoked: 0 },
+    });
+    expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
 
   test("answers 403 for a client the user has nothing for, like another user's", async () => {
