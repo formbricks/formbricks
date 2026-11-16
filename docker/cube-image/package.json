@@ -14,7 +14,7 @@
       "uuid": "11.1.1"
     },
     "get-uri": {
-      "basic-ftp": "6.2.2"
+      "basic-ftp": "6.2.4"
     },
     "follow-redirects": "1.16.2",
     "joi": "17.13.9"
