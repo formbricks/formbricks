@@ -31,7 +31,6 @@ import {
 } from "@/modules/ee/workflows/lib/email-recipient";
 import {
   appendSurveyLinkToken,
-  hasSurveyLinkToken,
   withSurveyLinkSurvey,
   withoutSurveyLink,
 } from "@/modules/ee/workflows/lib/email-survey-link";
@@ -52,6 +51,7 @@ import {
   type TEditorRecallSource,
   createSurveyRecallSource,
 } from "@/modules/ui/components/editor/components/recall-source";
+import type { TEditorTokenChip } from "@/modules/ui/components/editor/lib/token-chips";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
 import { Switch } from "@/modules/ui/components/switch";
@@ -197,6 +197,18 @@ export const WorkflowEmailActionForm = ({
     }
     return undefined;
   }, [bodyRecall, survey, node.id, variablePicker.recallSource, variablePicker.groups]);
+
+  // `#survey-link#` shows as a "Survey link" chip and is stored as the bare token.
+  const bodyTokenChips: TEditorTokenChip[] = useMemo(
+    () => [
+      {
+        token: WORKFLOW_SURVEY_LINK_TOKEN,
+        label: t("workspace.workflows.email_survey_link_chip"),
+        description: t("workspace.workflows.email_survey_link_chip_help"),
+      },
+    ],
+    [t]
+  );
 
   const emailSendToOptions: EmailSendToOption[] = useMemo(() => {
     if ((!survey && !isWebhookTrigger) || !authoringContext) return [];
@@ -346,17 +358,12 @@ export const WorkflowEmailActionForm = ({
           editable={isEditable}
           placeholder={t("workspace.workflows.email_body_placeholder")}
           recallSource={bodyRecallSource}
+          tokenChips={bodyTokenChips}
         />
         {invalidFields.has("body") ? (
           <WorkflowFieldError id="workflow-email-body-error">
             {t("workspace.workflows.email_body_required")}
           </WorkflowFieldError>
-        ) : null}
-        {/* The editor shows the survey link token as plain text (it has no chip for it), so say what it is. */}
-        {hasSurveyLinkToken(node.config.body) ? (
-          <p className="text-xs text-slate-500">
-            {t("workspace.workflows.email_survey_link_token_help", { token: WORKFLOW_SURVEY_LINK_TOKEN })}
-          </p>
         ) : null}
       </div>
 
