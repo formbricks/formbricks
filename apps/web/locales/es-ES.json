@@ -6276,6 +6276,7 @@
       "run_step_on_then_branch": "En la rama Entonces.",
       "run_step_sending": "Enviando…",
       "run_step_sent": "Enviado",
+      "run_step_would_call": "Llamaría a",
       "run_step_would_send": "Se enviaría",
       "run_switch_case_taken": "Caso seleccionado:",
       "run_test_badge": "Prueba",

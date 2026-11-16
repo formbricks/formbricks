@@ -6276,6 +6276,7 @@
       "run_step_on_then_branch": "位於「則」分支。",
       "run_step_sending": "傳送中…",
       "run_step_sent": "已傳送",
+      "run_step_would_call": "將會呼叫",
       "run_step_would_send": "將會傳送",
       "run_switch_case_taken": "符合的條件:",
       "run_test_badge": "測試",

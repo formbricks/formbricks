@@ -6276,6 +6276,7 @@
       "run_step_on_then_branch": "位于“则”分支。",
       "run_step_sending": "正在发送…",
       "run_step_sent": "已发送",
+      "run_step_would_call": "将调用",
       "run_step_would_send": "将会发送",
       "run_switch_case_taken": "命中的条件分支:",
       "run_test_badge": "测试",

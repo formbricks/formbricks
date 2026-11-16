@@ -274,7 +274,7 @@ describe("toRunDetailRows", () => {
     });
   });
 
-  test("in a Test run, a succeeded email or HTTP request reads 'would send'; a failed one stays failed", () => {
+  test("in a Test run, a succeeded email reads 'would send', an HTTP request 'would call'; a failed one stays failed", () => {
     const rows = toRunDetailRows(
       buildRun({
         isDryRun: true,
@@ -287,7 +287,7 @@ describe("toRunDetailRows", () => {
       definition
     );
 
-    expect(rows.slice(1).map((row) => badgeOf(row))).toEqual(["would_send", "would_send", "failed"]);
+    expect(rows.slice(1).map((row) => badgeOf(row))).toEqual(["would_send", "would_call", "failed"]);
     expect(rows[3]).toMatchObject({ error: "No recipient" });
   });
 
@@ -410,7 +410,7 @@ describe("toRunDetailRows", () => {
       definition
     );
 
-    expect(http).toMatchObject({ badge: "would_send", testSample: "missing", response: null });
+    expect(http).toMatchObject({ badge: "would_call", testSample: "missing", response: null });
   });
 
   test("a response-completed run starts with the response it came from", () => {

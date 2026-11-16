@@ -37,6 +37,8 @@ const getBadge = (badge: TRunDetailBadge, t: TFunction): { label: string; type: 
       return { label: t("workspace.workflows.run_step_not_taken"), type: "gray" };
     case "would_send":
       return { label: t("workspace.workflows.run_step_would_send"), type: "gray" };
+    case "would_call":
+      return { label: t("workspace.workflows.run_step_would_call"), type: "gray" };
     case "sending":
       return { label: t("workspace.workflows.run_step_sending"), type: "warning" };
     case "sent":

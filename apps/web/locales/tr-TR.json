@@ -6276,6 +6276,7 @@
       "run_step_on_then_branch": "O zaman dalında.",
       "run_step_sending": "Gönderiliyor…",
       "run_step_sent": "Gönderildi",
+      "run_step_would_call": "Şunu çağırırdı",
       "run_step_would_send": "Gönderilecekti",
       "run_switch_case_taken": "Seçilen durum:",
       "run_test_badge": "Test",

@@ -6276,6 +6276,7 @@
       "run_step_on_then_branch": "Thenブランチです。",
       "run_step_sending": "送信中…",
       "run_step_sent": "送信済み",
+      "run_step_would_call": "呼び出し予定",
       "run_step_would_send": "送信予定",
       "run_switch_case_taken": "選択されたケース:",
       "run_test_badge": "テスト",

@@ -23,10 +23,14 @@ import { formatStepDuration } from "@/modules/ee/workflows/lib/run-display";
  * may name a condition that is gone; that condition keeps its result without a text.
  */
 
-/** What the badge on a row says. A Test run makes no outside calls, so its sends read "would send". */
+/**
+ * What the badge on a row says. A Test run makes no outside calls, so its emails read "would send" and
+ * its HTTP requests "would call".
+ */
 export type TRunDetailBadge =
   | TWorkflowRunStep["status"]
   | "would_send"
+  | "would_call"
   | "sending"
   | "sent"
   | "delivery_failed";
@@ -136,7 +140,10 @@ const DELIVERY_BADGES: Record<NonNullable<THttpDetail["delivery"]>, TRunDetailBa
   failed: "delivery_failed",
 };
 
-const SENDING_STEP_TYPES = new Set(["send_email", "http_request"]);
+const TEST_RUN_BADGES: Record<string, TRunDetailBadge> = {
+  send_email: "would_send",
+  http_request: "would_call",
+};
 
 const getBadge = (step: TWorkflowRunStep, isDryRun: boolean): TRunDetailBadge => {
   const { detail } = step;
@@ -144,9 +151,8 @@ const getBadge = (step: TWorkflowRunStep, isDryRun: boolean): TRunDetailBadge =>
   if (detail?.kind === "http_request" && detail.mode === "dont_wait" && detail.delivery) {
     return DELIVERY_BADGES[detail.delivery];
   }
-  if (isDryRun && step.status === "succeeded" && SENDING_STEP_TYPES.has(step.stepType)) {
-    return "would_send";
-  }
+  const testRunBadge = TEST_RUN_BADGES[step.stepType];
+  if (isDryRun && step.status === "succeeded" && testRunBadge) return testRunBadge;
   return step.status;
 };
 
