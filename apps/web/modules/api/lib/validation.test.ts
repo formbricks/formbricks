@@ -32,16 +32,15 @@ const LINEAR_TIME = { matchPattern: expect.any(Function) };
 describe("validateResponseData", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  test("passes a linear-time matcher that refuses a catastrophic pattern quickly (ENG-7109)", () => {
+  test("passes a linear-time matcher that refuses a catastrophic pattern (ENG-7109)", () => {
     mockGetElementsFromBlocks.mockReturnValue([{ id: "q1" }]);
     mockValidateBlockResponses.mockReturnValue({});
 
     validateResponseData([{ id: "b1" }] as unknown as TSurveyBlock[], { q1: "x" }, "en");
 
     const { matchPattern } = mockValidateBlockResponses.mock.calls[0][3];
-    const started = performance.now();
+    // The backtracking engine would not return on this input within any test timeout.
     expect(matchPattern("^(a+)+$", undefined, `${"a".repeat(64)}!`)).toBe(false);
-    expect(performance.now() - started).toBeLessThan(1000);
   });
 
   const mockBlocks: TSurveyBlock[] = [

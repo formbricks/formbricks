@@ -3,11 +3,7 @@ import { RE2JS } from "re2js";
 import { describe, expect, test, vi } from "vitest";
 import { validateBlockResponses } from "@formbricks/surveys/validation";
 import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
-import {
-  MAX_PATTERN_WORK_PER_RUN,
-  MAX_PROGRAM_SIZE,
-  createLinearPatternMatcher,
-} from "./linear-pattern-matcher";
+import { MAX_PATTERN_WORK_PER_RUN, createLinearPatternMatcher } from "./linear-pattern-matcher";
 
 vi.mock("server-only", () => ({}));
 
@@ -18,10 +14,21 @@ const native = (pattern: string, flags: string | undefined, value: string): bool
 const match = (pattern: string, flags: string | undefined, value: string) =>
   createLinearPatternMatcher()(pattern, flags, value);
 
-const timed = <T>(fn: () => T): { result: T; ms: number } => {
-  const started = performance.now();
-  const result = fn();
-  return { result, ms: performance.now() - started };
+/**
+ * Runs `fn` and returns its result, failing if the backtracking engine executed `pattern` meanwhile.
+ * The matcher may parse the pattern with `RegExp` (to refuse what the browser refuses) but never run it.
+ */
+const withoutBacktracking = <T>(pattern: string, fn: () => T): T => {
+  const source = new RegExp(pattern).source;
+  const exec = vi.spyOn(RegExp.prototype, "exec");
+  try {
+    const result = fn();
+    const ranPattern = exec.mock.contexts.some((regex) => (regex as RegExp).source === source);
+    expect(ranPattern).toBe(false);
+    return result;
+  } finally {
+    exec.mockRestore();
+  }
 };
 
 // Each takes the backtracking engine exponential (or high-polynomial) time on a short non-matching
@@ -86,40 +93,49 @@ const CODE_UNIT_PATTERNS: Array<[string, string | undefined]> = [
 ];
 
 describe("createLinearPatternMatcher", () => {
-  test.each(CATASTROPHIC_PATTERNS)("returns quickly on a 4096-character answer to %s", (pattern) => {
-    const { result, ms } = timed(() => match(pattern, undefined, `${"ab".repeat(2047)}a!`));
+  test.each(CATASTROPHIC_PATTERNS)("never backtracks on a 4096-character answer to %s", (pattern) => {
+    const result = withoutBacktracking(pattern, () => match(pattern, undefined, `${"ab".repeat(2047)}a!`));
 
     expect(result === undefined || typeof result === "boolean").toBe(true);
-    // The backtracking engine would not return within the test timeout.
-    expect(ms).toBeLessThan(1000);
   });
 
-  test("refuses rules once a run has spent its budget, instead of running them", () => {
+  test("skips rules once a run has spent its budget, instead of running or failing them", () => {
     const run = createLinearPatternMatcher(10_000);
-    const value = "a".repeat(100);
+    const value = "b".repeat(100);
 
     // Each call costs well over 1% of this budget, so 100 calls must exhaust it.
     const results = Array.from({ length: 100 }, () => run("^a+$", undefined, value));
 
-    expect(results[0]).toBe(true);
-    expect(results.at(-1)).toBe(false);
-    // Once refused, every later rule in the run is refused too.
-    expect(results.slice(results.indexOf(false))).not.toContain(true);
+    expect(results[0]).toBe(false);
+    expect(results.at(-1)).toBeUndefined();
+    // Once the budget is spent, every later rule in the run is skipped, never failed.
+    expect(results.slice(results.indexOf(undefined))).toEqual(
+      Array.from({ length: 100 - results.indexOf(undefined) }, () => undefined)
+    );
     // A new run starts with a full budget.
-    expect(createLinearPatternMatcher(10_000)("^a+$", undefined, value)).toBe(true);
+    expect(createLinearPatternMatcher(10_000)("^a+$", undefined, value)).toBe(false);
   });
 
-  test("bounds one run's total time, however many pathological rules a survey carries", () => {
+  test("never runs more work than the budget, however many pathological rules a survey carries", () => {
     const run = createLinearPatternMatcher();
-    // ~2,000 instructions: under the program cap, so each rule would run.
+    // ~2,000 instructions: under the program cap, so each rule would run if the budget allowed.
     const pattern = "(?:a|b){1000}".repeat(2);
     const value = `${"ab".repeat(2047)}c!`;
 
-    const { ms } = timed(() => {
-      for (let i = 0; i < 50; i++) run(pattern, undefined, value);
+    let work = 0;
+    const test = vi.spyOn(RE2JS.prototype, "test");
+    test.mockImplementation(function (this: RE2JS, input: Parameters<RE2JS["test"]>[0]) {
+      work += this.programSize() * input.length;
+      return false;
     });
-
-    expect(ms).toBeLessThan(1500);
+    try {
+      const results = Array.from({ length: 50 }, () => run(pattern, undefined, value));
+      expect(test).toHaveBeenCalled();
+      expect(results).toContain(undefined);
+    } finally {
+      test.mockRestore();
+    }
+    expect(work).toBeLessThanOrEqual(MAX_PATTERN_WORK_PER_RUN);
   });
 
   test("does not run a pattern that compiles past the program cap, and remembers it", () => {
@@ -134,7 +150,6 @@ describe("createLinearPatternMatcher", () => {
     } finally {
       compileSpy.mockRestore();
     }
-    expect(MAX_PROGRAM_SIZE).toBeLessThan(72_000);
   });
 
   test("keeps a long but realistic pattern under the program cap", () => {
@@ -147,7 +162,6 @@ describe("createLinearPatternMatcher", () => {
     for (let i = 0; i < 500; i++) {
       expect(run(String.raw`^[\w.+-]+@[\w-]+\.[\w.]+$`, undefined, answer)).toBe(true);
     }
-    expect(MAX_PATTERN_WORK_PER_RUN).toBeGreaterThan(500 * 100 * answer.length);
   });
 
   test.each([
@@ -332,15 +346,22 @@ describe("validateBlockResponses with the linear-time matcher", () => {
     },
   } as unknown as TSurveyElement;
 
-  test("rejects a non-matching answer to a catastrophic pattern in linear time", () => {
-    const { result: errors, ms } = timed(() =>
+  test("rejects a non-matching answer to a catastrophic pattern without backtracking", () => {
+    const errors = withoutBacktracking("^(a+)+$", () =>
       validateBlockResponses([element], { q1: `${"a".repeat(4095)}!` }, "default", {
         matchPattern: createLinearPatternMatcher(),
       })
     );
 
     expect(errors.q1?.[0]?.ruleType).toBe("pattern");
-    expect(ms).toBeLessThan(1000);
+  });
+
+  test("passes a rule the run has no budget left for, leaving it to the browser", () => {
+    expect(
+      validateBlockResponses([element], { q1: `${"a".repeat(4095)}!` }, "default", {
+        matchPattern: createLinearPatternMatcher(0),
+      })
+    ).toEqual({});
   });
 
   test("accepts a matching answer", () => {

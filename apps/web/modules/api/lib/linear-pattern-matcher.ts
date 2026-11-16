@@ -205,8 +205,13 @@ const NON_UNICODE_DIVERGENT_ESCAPES = new Set(["k", "a", "A", "z", "Q", "E", "C"
 const DIGIT = /\d/;
 // With `u`, JavaScript joins `\uD83D\uDE00` into one code point; RE2 reads two lone surrogates.
 const SURROGATE_ESCAPE = /^u(?:\{0*[Dd][89A-Fa-f][\dA-Fa-f]{2}\}|[Dd][89A-Fa-f][\dA-Fa-f]{2})/;
-// `(?m:...)`, `(?-s:...)`, `(?is:...)` and the like; `(?:` and `(?i:` do not match.
-const LINE_MODIFIER_GROUP = /\(\?[ims-]*[ms][ims-]*:/;
+// A modifier group's flags, as in `(?m:...)`, `(?-s:...)` or `(?i:...)`. `:` is outside the class, so
+// the match cannot backtrack.
+const MODIFIER_GROUP = /\(\?([ims-]*):/g;
+
+/** Whether a `(?m:`, `(?s:`, `(?-m:` (and so on) group changes what counts as a line break. */
+const hasLineModifierGroup = (pattern: string): boolean =>
+  [...pattern.matchAll(MODIFIER_GROUP)].some(([, modifiers]) => /[ms]/.test(modifiers));
 
 const isDivergentEscape = (pattern: string, at: number, unicode: boolean): boolean => {
   const next = pattern[at + 1] ?? "";
@@ -241,7 +246,7 @@ const COMPILE_COST_PER_INSTRUCTION = 150;
 
 type TCompiled = { program: RE2JS; cost: number } | { program: null; cost: number };
 
-const compile = (pattern: string, flags: string | undefined): TCompiled => {
+const compile = (pattern: string, flags: string | undefined, unicode: boolean): TCompiled => {
   let native: RegExp;
   try {
     // Parses (does not run) the pattern, so it is refused exactly where the browser refuses it.
@@ -253,9 +258,8 @@ const compile = (pattern: string, flags: string | undefined): TCompiled => {
   // `v` adds nested classes and set operations, which the rewrite below does not read. A `(?m:` or `(?s:`
   // modifier group changes what `^`, `$` and `.` treat as a line break inside it, which neither the
   // rewrite nor the matcher's `m` check follows.
-  if (native.unicodeSets || LINE_MODIFIER_GROUP.test(pattern)) return { program: null, cost: 0 };
+  if (native.unicodeSets || hasLineModifierGroup(pattern)) return { program: null, cost: 0 };
 
-  const unicode = isUnicodeAware(flags);
   if (hasDivergentEscape(pattern, unicode)) {
     return { program: null, cost: 0 };
   }
@@ -292,7 +296,8 @@ const NON_NEWLINE_LINE_BREAK = /[\r\u2028\u2029]/;
 
 /**
  * A matcher for one validation run (one response). Once the run has spent `budget`, further rules are
- * refused rather than run: the response is rejected instead of the server stalling.
+ * not evaluated, like any other pattern the server cannot run cheaply: they pass here and the browser
+ * still enforces them. The budget bounds the work; it does not refuse the answer.
  */
 export const createLinearPatternMatcher = (budget: number = MAX_PATTERN_WORK_PER_RUN): TPatternMatcher => {
   let spent = 0;
@@ -301,9 +306,10 @@ export const createLinearPatternMatcher = (budget: number = MAX_PATTERN_WORK_PER
     const key = `${flags ?? ""}/${pattern}`;
     if (unevaluable.has(key)) return undefined;
     if (flags?.includes("m") && NON_NEWLINE_LINE_BREAK.test(value)) return undefined;
-    if (spent > budget) return false;
+    if (spent > budget) return undefined;
 
-    const { program, cost } = compile(pattern, flags);
+    const unicode = isUnicodeAware(flags);
+    const { program, cost } = compile(pattern, flags, unicode);
     spent += cost;
     if (!program) {
       rememberUnevaluable(key);
@@ -311,9 +317,9 @@ export const createLinearPatternMatcher = (budget: number = MAX_PATTERN_WORK_PER
     }
 
     spent += program.programSize() * Math.max(value.length, 1);
-    if (spent > budget) return false;
+    if (spent > budget) return undefined;
 
-    const input = isUnicodeAware(flags) ? value : withSurrogateStandIns(value);
+    const input = unicode ? value : withSurrogateStandIns(value);
     // `y` (sticky): a fresh RegExp only matches at index 0, which RE2 calls a prefix match. RE2's
     // translation of the pattern drops the flag, so it is applied here.
     return flags?.includes("y") ? program.matcher(input).lookingAt() : program.test(input);
