@@ -5,12 +5,13 @@ import { setSessionCookie } from "better-auth/cookies";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { WEBAPP_URL } from "@/lib/constants";
+import { EMAIL_AUTH_ENABLED, WEBAPP_URL } from "@/lib/constants";
 import { verifyToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import {
   getSsoRecoveryFailureRedirectUrl,
   getSsoRecoverySecondFactorRedirectUrl,
+  getSsoRecoverySecondFactorUnavailableRedirectUrl,
 } from "@/modules/ee/sso/lib/sso-recovery";
 
 /**
@@ -31,8 +32,10 @@ import {
  * The link proves mailbox access only, so it must not stand in for a second factor (ENG-7266). A user
  * with a verified email and 2FA gets no session here: they are sent to the login page with the
  * completion URL as `callbackUrl`, sign in with password + TOTP (or an SSO provider already linked),
- * and recovery completes from there. Unverified accounts keep the direct session: completing recovery
- * strips their local factors anyway (ENG-2557), since the mailbox owner may not be who set them.
+ * and recovery completes from there. Where the instance has credential sign-in off, that page cannot
+ * ask for the factor at all, so the redirect carries an error code naming the dead end instead. Unverified
+ * accounts keep the direct session: completing recovery strips their local factors anyway (ENG-2557),
+ * since the mailbox owner may not be who set them.
  */
 export const ssoRecoverySignInPlugin = {
   id: "sso-recovery",
@@ -64,8 +67,16 @@ export const ssoRecoverySignInPlugin = {
             throw new Error("User not found or inactive");
           }
           if (dbUser.emailVerified && dbUser.twoFactorEnabled) {
-            logger.info({ userId: id }, "SSO recovery sign-in deferred to login: account has 2FA");
-            destination = getSsoRecoverySecondFactorRedirectUrl(callbackUrl);
+            // The login page is only a way through when it can ask for the factor. With credential
+            // sign-in off it renders no form, and the identity that started recovery is unlinked by
+            // definition — so say so instead of looping the user through the provider again.
+            logger.info(
+              { userId: id, emailAuthEnabled: EMAIL_AUTH_ENABLED },
+              "SSO recovery sign-in deferred to login: account has 2FA"
+            );
+            destination = EMAIL_AUTH_ENABLED
+              ? getSsoRecoverySecondFactorRedirectUrl(callbackUrl)
+              : getSsoRecoverySecondFactorUnavailableRedirectUrl(callbackUrl);
           } else {
             const user = await ctx.context.internalAdapter.findUserById(id);
             if (!user) {

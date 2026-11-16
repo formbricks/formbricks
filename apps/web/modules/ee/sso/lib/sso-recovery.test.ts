@@ -13,6 +13,7 @@ import {
   completeSsoRecovery,
   getSsoRecoveryFailureRedirectUrl,
   getSsoRecoverySecondFactorRedirectUrl,
+  getSsoRecoverySecondFactorUnavailableRedirectUrl,
   startSsoRecovery,
 } from "./sso-recovery";
 
@@ -1097,6 +1098,19 @@ describe("sso-recovery", () => {
     );
     expect(getSsoRecoverySecondFactorRedirectUrl("https://evil.example/phish")).toBe(
       "http://localhost:3000/auth/login"
+    );
+  });
+
+  test("names the dead end when credential sign-in is off, filtering callbacks the same way", () => {
+    expect(
+      getSsoRecoverySecondFactorUnavailableRedirectUrl(
+        "http://localhost:3000/api/auth/sso/recovery/complete?state=test-state"
+      )
+    ).toBe(
+      "http://localhost:3000/auth/login?error=sso_recovery_second_factor_unavailable&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fauth%2Fsso%2Frecovery%2Fcomplete%3Fstate%3Dtest-state"
+    );
+    expect(getSsoRecoverySecondFactorUnavailableRedirectUrl("https://evil.example/phish")).toBe(
+      "http://localhost:3000/auth/login?error=sso_recovery_second_factor_unavailable"
     );
   });
 });

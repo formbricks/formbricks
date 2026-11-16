@@ -1,4 +1,7 @@
-import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
+import {
+  SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
+  SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE,
+} from "@formbricks/types/errors";
 import type { TSsoProvisioningRejectReason } from "./sso-provisioning-reject-reasons";
 
 /**
@@ -27,6 +30,11 @@ export type TOAuthErrorVariant =
   | "signup_not_allowed"
   /** The instance's SSO configuration is incomplete. Remedy: tell an admin; retrying cannot help. */
   | "misconfigured"
+  /**
+   * The account needs a second factor this instance has no way to ask for (2FA on an SSO-only
+   * instance). Remedy: an admin; every self-service route is closed.
+   */
+  | "second_factor_unavailable"
   /** Anything else, including transient callback failures. Remedy: try again. */
   | "generic";
 
@@ -65,6 +73,12 @@ const VARIANT_BY_CODE = new Map<string, TOAuthErrorVariant>([
   // Callback failures that no user action can clear.
   ["oauth_provider_not_found", "misconfigured"],
   ["invalid_scope", "misconfigured"],
+
+  // ENG-7266: the SSO-recovery link verified the mailbox, but the account has 2FA and this instance
+  // has credential sign-in off, so nothing on the login page can produce the second factor. The code
+  // arrives on the redirect `better-auth-recovery-signin.ts` builds, not on an SSO callback — same
+  // query param, and the user's next step is the same kind of dead end to resolve with an admin.
+  [SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE, "second_factor_unavailable"],
 
   // The SAML callback's own refusals (ENG-3973). jackson's raw reasons stay in the server log; the browser gets
   // one of these fixed codes. A response that is malformed, oversized or failed validation may be fixed by
