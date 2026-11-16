@@ -140,11 +140,13 @@ permission, the missing scope and that the client must reconnect (and an `insuff
 call to the MCP client's **grant** (ADR-0041): each declared permission must be at least the declared
 level in the grant, or the call is refused with a 403 whose detail starts "Not permitted" and names the
 permission and level. The grant is read with the user in `modules/mcp/auth.ts`, which refuses a
-client without one (that is what makes Revoke immediate); API keys have no grant and are gated on
-scopes alone. Allow on the consent screen saves the grant; a client registered with `skipConsent` never
-sees that screen, so the token endpoint's after-hook (`modules/auth/lib/skip-consent-mcp-grant.ts`) gives
-the client one when it issues a token, by the migration's rule: All access, each permission at its
-scope family's level, Tags and Audience at No access. Tools that more than one permission
+client without one (that is what makes Revoke immediate), or a token issued before its grant was created
+(a Revoke followed by a new approval); API keys have no grant and are gated on scopes alone. Allow on the
+consent screen saves the grant; a client registered with `skipConsent` never sees that screen, so the
+token endpoint's after-hook (`modules/auth/lib/skip-consent-mcp-grant.ts`) gives the client one when it
+exchanges an authorization code, by the migration's rule: All access, each permission at its scope
+family's level, Tags and Audience at No access. A refresh never creates a grant: the refresh check
+refuses a `skipConsent` connection without one, as it refuses a consent without one. Tools that more than one permission
 legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, and a tool whose input decides what
 it reads passes `{ byInput }`; both keep the tool on the same registration path rather than a hand-rolled
 gate.

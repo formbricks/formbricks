@@ -19,6 +19,10 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
  *    trimmed to `dashboards:read` on every MCP request anyway (ADR-0025), so this keeps the access the
  *    connection had, and Edit then offers no level the grant already exceeds.
  *
+ * Each grant is dated when its connection was made (its earliest consent row), not when this runs:
+ * `/api/mcp` refuses an access token issued before its grant was created, and a token issued before the
+ * upgrade must keep working.
+ *
  * One grant per connection (user + client). The provider can hold duplicate consent rows for one
  * connection; the grant follows the most recently written row, and rows written in the same second
  * count only for the scopes every one of them holds, as `consentBound` in
@@ -113,10 +117,13 @@ export const backfillMcpGrants: MigrationScript = {
         GROUP BY "userId", "clientId"
       ),
       connections AS (
-        SELECT DISTINCT "userId", "clientId" FROM tied
+        SELECT "userId", "clientId", MIN("createdAt") AS "connectedAt"
+        FROM "oauthConsent"
+        WHERE "userId" IS NOT NULL
+        GROUP BY "userId", "clientId"
       )
       INSERT INTO "McpGrant" ("id", "created_at", "updated_at", "userId", "clientId", "access", "permissions")
-      SELECT gen_random_uuid()::TEXT, NOW(), NOW(), n."userId", n."clientId", 'all',
+      SELECT gen_random_uuid()::TEXT, n."connectedAt", NOW(), n."userId", n."clientId", 'all',
         COALESCE(g."permissions", '{}'::JSONB)
       FROM connections n
       LEFT JOIN granted g ON g."userId" = n."userId" AND g."clientId" = n."clientId"

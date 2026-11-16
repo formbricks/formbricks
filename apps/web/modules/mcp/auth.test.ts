@@ -15,7 +15,10 @@ import {
 } from "./auth";
 
 /** What the user read returns for a connection with a grant (ENG-7149); its content is the guard's. */
-const GRANT_ROWS = [{ access: "all", permissions: {} }];
+/** Tokens are issued after the grant they are checked against (`isIssuedUnderGrant`). */
+const GRANT_CREATED_AT = new Date("2026-11-01T00:00:00.000Z");
+const TOKEN_IAT = GRANT_CREATED_AT.getTime() / 1000 + 60;
+const GRANT_ROWS = [{ access: "all", permissions: {}, createdAt: GRANT_CREATED_AT }];
 const { getJwksMock, verifyBearerTokenMock, userFindUniqueMock, warnMock } = vi.hoisted(() => ({
   getJwksMock: vi.fn(),
   verifyBearerTokenMock: vi.fn(),
@@ -352,6 +355,7 @@ describe("authenticateMcpRequest", () => {
       mcpGrants: GRANT_ROWS,
     });
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: MCP_AUDIENCE,
       sub: "viewer_1",
       exp: 2_000_000_000,
@@ -380,6 +384,7 @@ describe("authenticateMcpRequest", () => {
       mcpGrants: GRANT_ROWS,
     });
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: MCP_AUDIENCE,
       sub: "mixed_1",
       exp: 2_000_000_000,
@@ -405,6 +410,7 @@ describe("authenticateMcpRequest", () => {
       mcpGrants: GRANT_ROWS,
     });
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: MCP_AUDIENCE,
       sub: "viewer_1",
       exp: 2_000_000_000,
@@ -422,6 +428,7 @@ describe("authenticateMcpRequest", () => {
 
   test("authenticates OAuth bearer tokens and rate limits by user and client", async () => {
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "user@example.com",
@@ -470,7 +477,10 @@ describe("authenticateMcpRequest", () => {
       select: {
         isActive: true,
         memberships: { select: { role: true } },
-        mcpGrants: { where: { clientId: "client_1" }, select: { id: true, access: true, permissions: true } },
+        mcpGrants: {
+          where: { clientId: "client_1" },
+          select: { id: true, access: true, permissions: true, createdAt: true },
+        },
       },
     });
     expect(applyRateLimit).toHaveBeenCalledWith(
@@ -481,6 +491,7 @@ describe("authenticateMcpRequest", () => {
 
   test("rejects OAuth bearer tokens for inactive users", async () => {
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       azp: "client_1",
@@ -518,7 +529,10 @@ describe("authenticateMcpRequest", () => {
       select: {
         isActive: true,
         memberships: { select: { role: true } },
-        mcpGrants: { where: { clientId: "client_1" }, select: { id: true, access: true, permissions: true } },
+        mcpGrants: {
+          where: { clientId: "client_1" },
+          select: { id: true, access: true, permissions: true, createdAt: true },
+        },
       },
     });
     expect(applyIPRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "api:mcp:auth" }));
@@ -529,6 +543,7 @@ describe("authenticateMcpRequest", () => {
     "rejects an OAuth bearer token whose connection %s",
     async (_case, mcpGrants) => {
       verifyBearerTokenMock.mockResolvedValue({
+        iat: TOKEN_IAT,
         aud: MCP_AUDIENCE,
         sub: "user_1",
         azp: "client_1",
@@ -549,8 +564,56 @@ describe("authenticateMcpRequest", () => {
     }
   );
 
+  // Revoke and a new approval of the same client make a new grant under the same user and client.
+  test.each([
+    ["issued before its grant was created", { iat: TOKEN_IAT - 120 }],
+    ["without an issue time", { iat: undefined }],
+  ])("rejects an OAuth bearer token %s", async (_case, claims) => {
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
+      sub: "user_1",
+      azp: "client_1",
+      scope: "surveys:read surveys:write",
+      ...claims,
+    });
+    userFindUniqueMock.mockResolvedValue({
+      isActive: true,
+      memberships: [{ role: "member" }],
+      mcpGrants: GRANT_ROWS,
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+    );
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.response.status).toBe(401);
+  });
+
+  test("accepts an OAuth bearer token issued in the second its grant was created", async () => {
+    verifyBearerTokenMock.mockResolvedValue({
+      iat: Math.floor(GRANT_CREATED_AT.getTime() / 1000),
+      aud: MCP_AUDIENCE,
+      sub: "user_1",
+      azp: "client_1",
+      scope: "surveys:read surveys:write",
+    });
+    userFindUniqueMock.mockResolvedValue({
+      isActive: true,
+      memberships: [{ role: "member" }],
+      mcpGrants: [{ ...GRANT_ROWS[0], createdAt: new Date(GRANT_CREATED_AT.getTime() + 999) }],
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+    );
+
+    expect(result.ok).toBe(true);
+  });
+
   test("attaches the connection's grant, read with the user, to an OAuth request", async () => {
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       azp: "client_1",
@@ -565,6 +628,7 @@ describe("authenticateMcpRequest", () => {
           id: "grant_1",
           access: "all",
           permissions: { surveys: "read", workflowRuns: "write", everything: "write" },
+          createdAt: GRANT_CREATED_AT,
         },
       ],
     });
@@ -587,6 +651,7 @@ describe("authenticateMcpRequest", () => {
   // ENG-7153: organization & workspace access is enforced by `can()`, so such a grant authenticates.
   test("accepts a connection whose grant selects workspaces, carrying the grant for can()", async () => {
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       azp: "client_1",
@@ -595,7 +660,14 @@ describe("authenticateMcpRequest", () => {
     userFindUniqueMock.mockResolvedValue({
       isActive: true,
       memberships: [{ role: "member" }],
-      mcpGrants: [{ id: "grant_1", access: "workspaces", permissions: { surveys: "write" } }],
+      mcpGrants: [
+        {
+          id: "grant_1",
+          access: "workspaces",
+          permissions: { surveys: "write" },
+          createdAt: GRANT_CREATED_AT,
+        },
+      ],
     });
 
     const result = await authenticateMcpRequest(
@@ -614,6 +686,7 @@ describe("authenticateMcpRequest", () => {
 
   test("rejects OAuth bearer tokens holding no MCP resource scope at all", async () => {
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       client_id: "client_2",
@@ -645,6 +718,7 @@ describe("authenticateMcpRequest", () => {
   // token, but it grants no resource access, so it must never satisfy the baseline gate on its own.
   test("rejects an OAuth bearer token scoped only to offline_access", async () => {
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       client_id: "client_2",
@@ -670,7 +744,13 @@ describe("authenticateMcpRequest", () => {
   test.each([["feedbackRecords:read"], ["surveys:write"], ["responses:read"]])(
     "authenticates an OAuth token scoped only to %s",
     async (scope) => {
-      verifyBearerTokenMock.mockResolvedValue({ aud: MCP_AUDIENCE, sub: "user_1", azp: "client_1", scope });
+      verifyBearerTokenMock.mockResolvedValue({
+        iat: TOKEN_IAT,
+        aud: MCP_AUDIENCE,
+        sub: "user_1",
+        azp: "client_1",
+        scope,
+      });
 
       const result = await authenticateMcpRequest(
         createRequest("http://localhost/api/mcp", {
@@ -691,6 +771,7 @@ describe("authenticateMcpRequest", () => {
   // the only thing standing between a foreign-audience token and the MCP tools.
   test("rejects an OAuth token whose audience omits the MCP resource, independently of jose", async () => {
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: "https://other.example.com/api",
       sub: "user_1",
       azp: "client_1",
@@ -713,6 +794,7 @@ describe("authenticateMcpRequest", () => {
 
   test("returns 429 when audience-rejected tokens exceed the unauthenticated MCP rate limit", async () => {
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: [MCP_AUDIENCE, "https://other.example.com/api"],
       sub: "user_1",
       azp: "client_1",
@@ -735,6 +817,7 @@ describe("authenticateMcpRequest", () => {
 
   test("rejects OAuth bearer tokens without a user subject", async () => {
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: MCP_AUDIENCE,
       azp: "client_1",
       scope: "surveys:read",
@@ -798,6 +881,7 @@ describe("authenticateMcpRequest", () => {
 
   test("returns 429 when OAuth requests are rate limited", async () => {
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       azp: "client_1",

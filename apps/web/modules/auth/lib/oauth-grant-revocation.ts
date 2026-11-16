@@ -1001,9 +1001,12 @@ const invalidGrant = (): APIError =>
  * it. In the second case the revoke's own token update comes later and catches the new token. The grant
  * is locked `FOR SHARE` before any consent row, the order every path that locks both takes.
  *
- * Exempt: clients registered with `skipConsent`, which the provider authorizes without ever writing a
- * consent row. Fails closed if the presented token can't be matched to a row, which after upstream
- * accepted it only happens if the storage format has drifted.
+ * A client registered with `skipConsent`, which the provider authorizes without ever writing a consent
+ * row, has no consent to check: its grant alone is checked, and a refresh of a connection without one
+ * (revoked, or connected on a previous release during a rolling upgrade) is refused and its tokens
+ * revoked, so the client authorizes again and the code exchange gives it a grant
+ * (`grantSkipConsentClientAfterHandler`). Fails closed if the presented token can't be matched to a row,
+ * which after upstream accepted it only happens if the storage format has drifted.
  */
 export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookContext): Promise<void> => {
   if (ctx.path !== TOKEN_PATH) return;
@@ -1032,10 +1035,16 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
     logger.warn("OAuth refresh token no longer stored: ended concurrently, or the storage format drifted");
     throw invalidGrant();
   }
-  if (refreshToken.client.skipConsent) return;
-
   const { userId, clientId, scopes, authorizationCodeId, rotatedAt, sessionId } = refreshToken;
   const refused = await prisma.$transaction(async (tx) => {
+    if (refreshToken.client.skipConsent) {
+      // No consent to check: the grant is the connection's liveness check alone. Read `FOR SHARE` after
+      // issuance, as for a consent: a Revoke still in flight is waited on and its delete seen, and one
+      // that commits later revokes the token this refresh just inserted. Without the check, a refresh
+      // that rotated before a Revoke and inserted its token after it would keep a live token.
+      if (await shareLockMcpGrant(tx, { userId, clientId })) return null;
+      return { reason: "grant_missing", ...(await revokeClientTokens(tx, userId, clientId)) };
+    }
     // The grant first, then the consent rows. `FOR SHARE`: refreshes don't wait on each other, and a
     // revoke or a save, which lock it `FOR UPDATE`, wait on this check or it on them.
     if (!(await shareLockMcpGrant(tx, { userId, clientId }))) {

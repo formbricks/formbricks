@@ -23,8 +23,9 @@ const base64url = (value: unknown): string => Buffer.from(JSON.stringify(value))
 const jwt = (payload: Record<string, unknown>): string =>
   `${base64url({ alg: "EdDSA", typ: "JWT" })}.${base64url(payload)}.signature`;
 
+const IAT = 1_794_800_000;
 const issued = (
-  payload: Record<string, unknown> = { sub: "user-1", azp: "client-1" },
+  payload: Record<string, unknown> = { sub: "user-1", azp: "client-1", iat: IAT },
   scope = "surveys:write responses:write dashboards:read"
 ) => ({
   access_token: jwt(payload),
@@ -45,7 +46,7 @@ describe("grantSkipConsentClientAfterHandler", () => {
     prisma.oauthClient.findUnique.mockResolvedValue({ skipConsent: true } as never);
   });
 
-  test.each(["authorization_code", "refresh_token"])(
+  test.each(["authorization_code"])(
     "gives a skipConsent client a grant on a %s issuance, without Tags or Audience, and audits it",
     async (grantType) => {
       await grantSkipConsentClientAfterHandler(tokenCtx(issued(), grantType));
@@ -53,8 +54,10 @@ describe("grantSkipConsentClientAfterHandler", () => {
       expect(prisma.oauthClient.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({ where: { clientId: "client-1" } })
       );
-      const [{ userId, clientId, permissions }] = vi.mocked(createMcpGrantIfMissing).mock.calls[0];
+      const [{ userId, clientId, permissions, createdAt }] = vi.mocked(createMcpGrantIfMissing).mock.calls[0];
       expect({ userId, clientId }).toEqual({ userId: "user-1", clientId: "client-1" });
+      // Dated with the token's issue time, so `/api/mcp` reads the token as issued under it.
+      expect(createdAt).toEqual(new Date(IAT * 1000));
       // `responses:write` gives Responses, never Tags: only a user picks that on a consent screen.
       expect(permissions).toMatchObject({ surveys: "write", responses: "write", dashboards: "read" });
       expect(permissions).not.toHaveProperty("tags");
@@ -68,7 +71,9 @@ describe("grantSkipConsentClientAfterHandler", () => {
   );
 
   test("reads the client from `client_id` when the token carries no `azp`", async () => {
-    await grantSkipConsentClientAfterHandler(tokenCtx(issued({ sub: "user-1", client_id: "client-2" })));
+    await grantSkipConsentClientAfterHandler(
+      tokenCtx(issued({ sub: "user-1", client_id: "client-2", iat: IAT }))
+    );
 
     expect(createMcpGrantIfMissing).toHaveBeenCalledWith(
       expect.objectContaining({ userId: "user-1", clientId: "client-2" })
@@ -108,13 +113,19 @@ describe("grantSkipConsentClientAfterHandler", () => {
   test.each([
     ["another path", ctx("/oauth2/consent", { grant_type: "authorization_code" }, issued())],
     ["a client_credentials grant", tokenCtx(issued(), "client_credentials")],
+    // A refresh never brings a grant back: Revoke may have ended it (the refresh check ends the connection).
+    ["a refresh_token grant", tokenCtx(issued(), "refresh_token")],
     ["no grant type", ctx("/oauth2/token", undefined, issued())],
     ["a refused issuance", tokenCtx(new APIError("BAD_REQUEST"))],
     ["no response", tokenCtx(null)],
-    ["a response without a scope", tokenCtx({ access_token: jwt({ sub: "user-1", azp: "client-1" }) })],
+    [
+      "a response without a scope",
+      tokenCtx({ access_token: jwt({ sub: "user-1", azp: "client-1", iat: IAT }) }),
+    ],
     ["an opaque access token", tokenCtx({ access_token: "opaque", scope: "surveys:read" })],
-    ["a token without a subject", tokenCtx(issued({ azp: "client-1" }))],
-    ["a token without a client", tokenCtx(issued({ sub: "user-1" }))],
+    ["a token without a subject", tokenCtx(issued({ azp: "client-1", iat: IAT }))],
+    ["a token without a client", tokenCtx(issued({ sub: "user-1", iat: IAT }))],
+    ["a token without an issue time", tokenCtx(issued({ sub: "user-1", azp: "client-1" }))],
   ])("does nothing for %s", async (_label, hookCtx) => {
     await grantSkipConsentClientAfterHandler(hookCtx);
 

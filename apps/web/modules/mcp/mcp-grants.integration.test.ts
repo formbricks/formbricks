@@ -11,7 +11,7 @@ import {
 import { createUser, grant, refresh, registerClient, signIn } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
-import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
+import { revokeAllUserOAuthGrants, revokeMcpClient } from "@/modules/auth/lib/oauth-grant-revocation";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { revokeCredentials } from "@/modules/ee/data-retention/sweep/members-sweeper";
@@ -272,6 +272,20 @@ describe("a connection's grant", () => {
         newObject: { before: expect.objectContaining({ clientId: setup.clientId }), after: null },
       })
     );
+  });
+
+  // The grant is keyed on the user and the client, so approving the client again after Revoke makes a new
+  // one under the same key. A token from before the Revoke must stay refused: it was ended with the old one.
+  test("a token minted before Revoke stays refused after the user approves the client again", async () => {
+    const before = await grant(setup.cookie, setup.clientId, EVERYTHING);
+    expect(await revokeMcpClient({ userId: setup.userId, clientId: setup.clientId })).not.toBeNull();
+    // The new approval must land in a later second than the old token's `iat`, as any real one does.
+    await new Promise((resolve) => setTimeout(resolve, 1_100));
+
+    const after = await grant(setup.cookie, setup.clientId, EVERYTHING);
+
+    expectUnauthenticated(await listSurveys(before.access_token, setup));
+    expect(succeeded(await listSurveys(after.access_token, setup))).toBe(true);
   });
 
   test("ending every grant a user holds (deactivation, SSO recovery) refuses the next call", async () => {

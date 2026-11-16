@@ -192,10 +192,17 @@ describe("POST /api/mcp", () => {
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
     userFindUniqueMock.mockResolvedValue({
       isActive: true,
-      mcpGrants: [{ access: "all", permissions: { surveys: "write", workflows: "write" } }],
+      mcpGrants: [
+        {
+          access: "all",
+          permissions: { surveys: "write", workflows: "write" },
+          createdAt: new Date("2026-11-01T00:00:00.000Z"),
+        },
+      ],
     });
     getJwksMock.mockResolvedValue({ keys: [] });
     verifyBearerTokenMock.mockResolvedValue({
+      iat: Date.parse("2026-11-02T00:00:00.000Z") / 1000,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",
@@ -820,6 +827,7 @@ describe("POST /api/mcp", () => {
 
   test("blocks write tools for read-only OAuth tokens", async () => {
     verifyBearerTokenMock.mockResolvedValueOnce({
+      iat: Date.parse("2026-11-02T00:00:00.000Z") / 1000,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",
@@ -866,6 +874,7 @@ describe("POST /api/mcp", () => {
     // A write-capable user whose OAuth token was only granted read scopes (surveys:read + workflows:read)
     // must not be able to reach a workflow mutation — the ENG-1967 token-scope boundary.
     verifyBearerTokenMock.mockResolvedValueOnce({
+      iat: Date.parse("2026-11-02T00:00:00.000Z") / 1000,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",

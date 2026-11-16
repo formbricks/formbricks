@@ -302,13 +302,20 @@ function createOAuthMcpAuthInfo(payload: JWTPayload, requestId: string): TMcpAut
 async function getOAuthUserStanding(
   userId: string,
   clientId: string
-): Promise<{ isActive: boolean; isDashboardViewerOnly: boolean; grant: TMcpRequestGrant | null }> {
+): Promise<{
+  isActive: boolean;
+  isDashboardViewerOnly: boolean;
+  grant: (TMcpRequestGrant & { createdAt: Date }) | null;
+}> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
       isActive: true,
       memberships: { select: { role: true } },
-      mcpGrants: { where: { clientId }, select: { id: true, access: true, permissions: true } },
+      mcpGrants: {
+        where: { clientId },
+        select: { id: true, access: true, permissions: true, createdAt: true },
+      },
     },
   });
   const grant = user?.mcpGrants[0];
@@ -317,10 +324,25 @@ async function getOAuthUserStanding(
     isActive: user?.isActive === true,
     isDashboardViewerOnly: hasOnlyDashboardViewerRoles(user?.memberships ?? []),
     grant: grant
-      ? { id: grant.id, access: grant.access, permissions: parseMcpGrantPermissions(grant.permissions) }
+      ? {
+          id: grant.id,
+          access: grant.access,
+          permissions: parseMcpGrantPermissions(grant.permissions),
+          createdAt: grant.createdAt,
+        }
       : null,
   };
 }
+
+/**
+ * Whether the token was issued under the grant it is checked against. The grant is keyed on the user and
+ * the client, so Revoke followed by a new approval makes a new grant under the same key, and a token from
+ * before the Revoke would otherwise pass. `iat` counts whole seconds, so a token issued in the second its
+ * grant was created passes: the provider issues one only after the grant is saved (Allow), or saves the
+ * grant with the token's own `iat` (a `skipConsent` client). A token without `iat` is refused.
+ */
+const isIssuedUnderGrant = (payload: JWTPayload, grantCreatedAt: Date): boolean =>
+  typeof payload.iat === "number" && payload.iat >= Math.floor(grantCreatedAt.getTime() / 1000);
 
 /**
  * The slice of the SDK's `ServerContext` our tools actually read. Derived from it rather than
@@ -610,9 +632,21 @@ async function authenticateMcpOAuthBearer(
     });
   }
 
+  // A grant made after the token: the connection the token belonged to was revoked, then approved again.
+  if (!isIssuedUnderGrant(payload, standing.grant.createdAt)) {
+    return await rejectUnauthenticatedMcpRequest({
+      requestId,
+      instance,
+      log,
+      logMessage: "MCP OAuth token predates its connection's grant",
+      logContext: { clientId: authInfo.clientId },
+    });
+  }
+
   // Its organization & workspace access is enforced by `can()` for the whole request
   // (`handleAuthenticatedMcpRequest`, ADR-0042).
-  authInfo.extra.grant = standing.grant;
+  const { id, access, permissions } = standing.grant;
+  authInfo.extra.grant = { id, access, permissions };
 
   // ADR-0025: a Dashboard viewer's grant never reaches past `dashboards:read`, whatever the token
   // carries. Consent already narrows new grants; this bounds a token minted before the user became a

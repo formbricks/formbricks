@@ -522,11 +522,27 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
     expect(endedTokensBeyondConsent()).toBe(false);
   });
 
-  test("exempts a skipConsent client, which never has a consent row", async () => {
+  test("lets a skipConsent client, which never has a consent row, refresh while it has a grant", async () => {
     vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow(true) as never);
 
     await expect(requireOAuthConsentOnRefreshAfterHandler(refreshCtx())).resolves.toBeUndefined();
-    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(mocks.sequence).toEqual(["share grant"]);
+    expect(mocks.calls).toEqual([]);
+  });
+
+  // Revoke deleted it, or a previous release connected the client: the refresh may have rotated before a
+  // Revoke and inserted its token after it, so nothing the client holds may stay live.
+  test("refuses a skipConsent client's refresh without a grant, and revokes its tokens", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow(true) as never);
+    mocks.grantRows = [];
+
+    await expectApiError(
+      requireOAuthConsentOnRefreshAfterHandler(refreshCtx()),
+      "BAD_REQUEST",
+      "invalid_grant"
+    );
+    expect(mocks.sequence).toEqual(["share grant"]);
+    expect(mocks.calls).toEqual(["revoke refresh tokens", "revoke access tokens"]);
   });
 
   test.each([

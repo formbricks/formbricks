@@ -1,13 +1,17 @@
 import { NextRequest } from "next/server";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import { DELETE as revokeGrant } from "@/app/api/internal/mcp-grants/[clientId]/route";
 import { GET as listGrants } from "@/app/api/internal/mcp-grants/route";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { callMcpTool, serveJwksFromAuthHandler, succeeded, toolText } from "@/integration/mcp-client";
 import { createUser, grant, refresh, registerClient, signIn } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
+import { revokeMcpClient } from "@/modules/auth/lib/oauth-grant-revocation";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
+// The data migration under test (auto-discovered by the migration runner at deploy).
+import { backfillSkipConsentMcpGrants } from "../../../../packages/database/migration/20261112150000_backfill_skip_consent_mcp_grants/migration";
 import { getMcpGrant } from "./grant-store";
 
 /**
@@ -54,6 +58,29 @@ const setUp = async (): Promise<TSetup> => {
   await prisma.oauthClient.update({ where: { clientId }, data: { skipConsent: true } });
   return { cookie, userId, workspaceId: workspace.id, clientId };
 };
+
+/**
+ * Resolves once a statement is blocked on a lock the transaction `tx` holds. Scoped to `tx`'s own backend
+ * through `pg_blocking_pids`, and fails if it never happens, so a race test can't pass by running in order.
+ */
+const waitForBlockOn = async (tx: Prisma.TransactionClient): Promise<void> => {
+  const [{ pid }] = await tx.$queryRaw<{ pid: number }[]>`SELECT pg_backend_pid() AS "pid"`;
+  const deadline = Date.now() + 8_000;
+  while (Date.now() < deadline) {
+    const [{ waiting }] = await prisma.$queryRaw<{ waiting: number }[]>`
+      SELECT count(*)::int AS "waiting" FROM pg_stat_activity
+      WHERE ${pid}::int = ANY(pg_blocking_pids("pid"))`;
+    if (waiting > 0) return;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  throw new Error("nothing blocked on the transaction's lock");
+};
+
+/** Refresh tokens the client still holds for the user: not revoked and not expired. */
+const liveRefreshTokens = (userId: string, clientId: string): Promise<number> =>
+  prisma.oauthRefreshToken.count({
+    where: { userId, clientId, revoked: null, expiresAt: { gt: new Date() } },
+  });
 
 beforeAll(() => {
   serveJwksFromAuthHandler();
@@ -106,22 +133,50 @@ describe("a skipConsent client", () => {
     });
   });
 
-  test("a connection made before grants gets one at its next refresh, and an existing one is kept", async () => {
+  test("a connection made before grants gets one from the migration, dated so its tokens keep working", async () => {
+    const { access_token, refresh_token } = await grant(setup.cookie, setup.clientId, EVERYTHING);
+    // What an upgraded instance holds: the connection's tokens and no grant.
+    await prisma.mcpGrant.deleteMany({ where: { userId: setup.userId, clientId: setup.clientId } });
+
+    await backfillSkipConsentMcpGrants.run!({ prisma: prisma as never, tx: prisma as never });
+    const backfilled = await getMcpGrant(setup.userId, setup.clientId);
+    await backfillSkipConsentMcpGrants.run!({ prisma: prisma as never, tx: prisma as never });
+
+    expect(backfilled).toMatchObject({
+      access: "all",
+      permissions: { surveys: "write", dashboards: "write" },
+    });
+    expect(backfilled?.permissions).not.toHaveProperty("tags");
+    expect(backfilled?.permissions).not.toHaveProperty("contacts");
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toEqual(backfilled);
+    // The access token issued before the upgrade is issued under the grant, and the connection refreshes.
+    const outcome = await callMcpTool({ accessToken: access_token }, "list_surveys", {
+      workspaceId: setup.workspaceId,
+    });
+    expect(succeeded(outcome), toolText(outcome)).toBe(true);
+    expect((await refresh(setup.clientId, refresh_token)).status).toBe(200);
+  });
+
+  test("a connection without a grant is refused at its refresh, and its tokens end", async () => {
     const { refresh_token } = await grant(setup.cookie, setup.clientId, EVERYTHING);
     await prisma.mcpGrant.deleteMany({ where: { userId: setup.userId, clientId: setup.clientId } });
 
     const refreshed = await refresh(setup.clientId, refresh_token);
-    expect(refreshed.status, JSON.stringify(refreshed.body)).toBe(200);
-    const created = await getMcpGrant(setup.userId, setup.clientId);
-    expect(created).toMatchObject({ access: "all", permissions: { surveys: "write" } });
 
-    // A grant the user narrowed is never reset by a later token.
+    expect(refreshed.body.error, JSON.stringify(refreshed.body)).toBe("invalid_grant");
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+    expect(await liveRefreshTokens(setup.userId, setup.clientId)).toBe(0);
+  });
+
+  test("a later token never resets a grant the user narrowed", async () => {
+    const { refresh_token } = await grant(setup.cookie, setup.clientId, EVERYTHING);
     await prisma.mcpGrant.update({
       where: { userId_clientId: { userId: setup.userId, clientId: setup.clientId } },
       data: { permissions: { surveys: "read" } },
     });
-    const again = await refresh(setup.clientId, (refreshed.body as { refresh_token: string }).refresh_token);
-    expect(again.status, JSON.stringify(again.body)).toBe(200);
+
+    expect((await refresh(setup.clientId, refresh_token)).status).toBe(200);
+    await grant(setup.cookie, setup.clientId, EVERYTHING);
     expect((await getMcpGrant(setup.userId, setup.clientId))?.permissions).toEqual({ surveys: "read" });
   });
 
@@ -155,5 +210,30 @@ describe("a skipConsent client", () => {
     // And the refresh token can't mint a new one, so the grant doesn't come back.
     expect((await refresh(setup.clientId, refresh_token)).status).not.toBe(200);
     expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+  });
+
+  // The provider rotates a refresh token in two steps outside any transaction: it marks the presented
+  // token rotated, then inserts the new one. A Revoke that commits between them revokes nothing the
+  // refresh still holds, and the new token is inserted live after it.
+  test("a refresh that rotates before Revoke and issues after it gets no grant and no live token", async () => {
+    const { refresh_token } = await grant(setup.cookie, setup.clientId, EVERYTHING);
+
+    let raced: ReturnType<typeof refresh> | undefined;
+    await prisma.$transaction(
+      async (tx) => {
+        // Holding the client row holds the new refresh token's insert (its foreign key) after the
+        // rotation's update, which takes no lock on the client, has committed.
+        await tx.$queryRaw`SELECT 1 FROM "oauthClient" WHERE "clientId" = ${setup.clientId} FOR UPDATE`;
+        raced = refresh(setup.clientId, refresh_token);
+        await waitForBlockOn(tx);
+        expect(await revokeMcpClient({ userId: setup.userId, clientId: setup.clientId })).not.toBeNull();
+      },
+      { timeout: 15_000 }
+    );
+
+    const refreshed = await (raced as ReturnType<typeof refresh>);
+    expect(refreshed.body.error, JSON.stringify(refreshed.body)).toBe("invalid_grant");
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+    expect(await liveRefreshTokens(setup.userId, setup.clientId)).toBe(0);
   });
 });
