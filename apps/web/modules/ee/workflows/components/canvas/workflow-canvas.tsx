@@ -242,7 +242,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     [fitView, isRunDrawerOpen]
   );
 
-  // Opening/closing the inspector resizes the canvas by 480px, which can push nodes behind the
+  // Opening/closing the inspector resizes the canvas by the panel's width, which can push nodes behind the
   // panel edge. Refit the VIEWPORT once the width transition settles — fitView only pans/zooms;
   // node coordinates are untouched. Opening or closing the Test run drawer refits the same way.
   const isInspectorVisible = isNodeConfigOpen && !isInspectorCollapsed;
@@ -255,7 +255,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     previousLayoutRef.current = { isInspectorVisible, isRunDrawerOpen };
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // Wait out the whole width transition: fitting mid-way measured a canvas still wider than it ends
-    // up, which cut off a wide flow once the 480px inspector had finished opening.
+    // up, which cut off a wide flow once the inspector had finished opening.
     const timeoutHandle = setTimeout(
       () => refitViewport(prefersReducedMotion ? 0 : INSPECTOR_REFIT_PAN_MS),
       INSPECTOR_RESIZE_SETTLE_MS
