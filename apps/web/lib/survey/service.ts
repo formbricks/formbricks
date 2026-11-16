@@ -2,6 +2,7 @@ import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma, type Survey as TPrismaSurveyRow } from "@formbricks/database/prisma";
+import { PrismaErrorType } from "@formbricks/database/types/error";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import type { TCustomCssStored } from "@formbricks/types/custom-css";
@@ -763,7 +764,10 @@ export const updateSurveyInternal = async (
     //   - payload status (ENG-2115): stops a caller publishing a draft that never passed ZSurvey.
     //     `status` is one of `SURVEY_SAVE_COLUMNS`, so it flows straight to the write.
     // Deliberately placed after the ENG-1749 tenant guards so a cross-workspace attempt still reports
-    // the authorization failure first, and before prisma.survey.update so nothing is persisted.
+    // the authorization failure first, and before prisma.survey.update so nothing is persisted. The
+    // write repeats the stored-status half of this condition (see `tx.survey.update`): this read is
+    // outside the transaction, so a publish that commits in between is not seen here, and the in-flight
+    // draft save would otherwise revert the published survey to draft.
     if (skipValidation && (currentSurvey.status !== "draft" || updatedSurvey.status !== "draft")) {
       throw new OperationNotAllowedError("Only draft surveys can be updated without validation");
     }
@@ -1122,11 +1126,35 @@ export const updateSurveyInternal = async (
         // unique and every caller authorizes the workspace before reaching here, so this is the rule
         // rather than a bypass being closed — the predicate is what keeps that true if a future
         // caller forgets.
-        await tx.survey.update({
-          where: { id: surveyId, workspaceId: currentSurvey.workspaceId },
-          data,
-          select: { id: true },
-        });
+        //
+        // ENG-1939 at the write: the guard above reads the stored status before the transaction opens,
+        // so a publish committing in between passes it. Under `skipValidation` the payload status is
+        // always "draft", so requiring the same of the row makes this a compare-and-set: the publish
+        // wins and this save matches no row (P2025) instead of reverting it. That P2025 is the guard's
+        // own refusal, not a database failure — the outer catch would otherwise report a 500. It also
+        // covers the row being deleted in the same window, which shares this refusal because neither
+        // case matches the predicate. This is the one refusal that ranks after the segment writes
+        // above, which run outside this transaction: a save that loses the race keeps its intended
+        // targeting change, where under any other refusal the segment is untouched.
+        try {
+          await tx.survey.update({
+            where: skipValidation
+              ? { id: surveyId, workspaceId: currentSurvey.workspaceId, status: "draft" }
+              : { id: surveyId, workspaceId: currentSurvey.workspaceId },
+            data,
+            select: { id: true },
+          });
+        } catch (error) {
+          if (
+            skipValidation &&
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === PrismaErrorType.RecordNotFound
+          ) {
+            throw new OperationNotAllowedError("Only draft surveys can be updated without validation");
+          }
+
+          throw error;
+        }
 
         // ENG-6934: the quotas' matrix conditions follow a row or column reorder, as the blocks' do.
         if (syncsQuotaMatrix) await syncQuotaMatrixConditions(tx, surveyId, data.blocks);

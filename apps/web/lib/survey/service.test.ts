@@ -2795,6 +2795,68 @@ describe("updateSurveyDraftAction", () => {
       });
     });
 
+    // ENG-1939 at the write: the guard's read happens outside the transaction, so the write repeats
+    // the stored-status condition. A publish that commits in between then wins the row.
+    test("scopes the draft save's write to a survey that is still a draft", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
+      prisma.survey.update.mockResolvedValue(mockDraftSurveyOutput);
+
+      await updateSurveyInternal({ ...updateSurveyInput, status: "draft" }, true);
+
+      expect(prisma.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            id: updateSurveyInput.id,
+            workspaceId: mockDraftSurveyOutput.workspaceId,
+            status: "draft",
+          },
+        })
+      );
+    });
+
+    test("reports a draft save that loses that race as the guard's refusal, not a database error", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
+      prisma.survey.update.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Record to update not found.", {
+          code: PrismaErrorType.RecordNotFound,
+          clientVersion: "0.0.1",
+        })
+      );
+
+      const save = updateSurveyInternal({ ...updateSurveyInput, status: "draft" }, true);
+
+      await expect(save).rejects.toThrow(OperationNotAllowedError);
+      await expect(save).rejects.toThrow("Only draft surveys can be updated without validation");
+    });
+
+    // The predicate and the P2025 mapping are draft-path guards only: a validated save must still
+    // write a survey in any status, publishing included. An unconditional predicate fails the first
+    // of these; dropping `skipValidation` from the catch fails the second.
+    test("leaves the validated save's predicate as id and workspace", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.survey.update.mockResolvedValue(mockSurveyOutput);
+
+      await updateSurvey({ ...updateSurveyInput });
+
+      expect(prisma.survey.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: updateSurveyInput.id, workspaceId: mockSurveyOutput.workspaceId },
+        })
+      );
+    });
+
+    test("keeps a P2025 on the validated path a database error", async () => {
+      prisma.survey.findUnique.mockResolvedValue(mockSurveyOutput);
+      prisma.survey.update.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Record to update not found.", {
+          code: PrismaErrorType.RecordNotFound,
+          clientVersion: "0.0.1",
+        })
+      );
+
+      await expect(updateSurvey({ ...updateSurveyInput })).rejects.toThrow(DatabaseError);
+    });
+
     test("should allow draft with invalid images if gating is applied", async () => {
       prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
       prisma.survey.update.mockResolvedValue(mockDraftSurveyOutput);
