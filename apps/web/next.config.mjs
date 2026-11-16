@@ -228,7 +228,8 @@ const nextConfig = {
     const anyCase = (extension) =>
       extension.replace(/[a-z]/g, (letter) => `[${letter}${letter.toUpperCase()}]`);
     const UPLOADED_MEDIA_EXTENSIONS = ["mp4", "mov", "avi", "mkv", "webm", "mp3"].map(anyCase).join("|");
-    const UPLOADED_FILE_UNSANDBOXED_EXTENSIONS = `${anyCase("pdf")}|${UPLOADED_MEDIA_EXTENSIONS}`;
+    const UPLOADED_PDF_EXTENSION = anyCase("pdf");
+    const UPLOADED_FILE_UNSANDBOXED_EXTENSIONS = `${UPLOADED_PDF_EXTENSION}|${UPLOADED_MEDIA_EXTENSIONS}`;
 
     // `worker-src` must stay explicit: without it browsers fall back to `script-src`, which has no
     // `blob:`, and blocks the `blob:` worker Sentry Session Replay compresses recordings in (ENG-3194).
@@ -264,10 +265,11 @@ const nextConfig = {
         // Uploaded files (ENG-7108). A stored file must never act as a page of the app: should one be
         // rendered as a document anyway, `sandbox` gives it an opaque origin and no scripts. These rules
         // have to come after the one above, because a route handler cannot set this header itself: the
-        // config's CSP replaces it. Two kinds are left out of `sandbox`, as it stops the browser's own
+        // config's CSP replaces it. Two kinds are left out of `sandbox`, as it can stop the browser's own
         // viewer for them; both are served with their real type and `nosniff`, so never parsed as HTML:
-        // PDFs (a bare `sandbox` blocks Chromium's plugin-based viewer) and audio/video (Chromium's media
-        // viewer runs script). Media still gets `default-src 'none'`, which blocks every script.
+        // audio/video (Chromium's media viewer runs script) and PDFs (`sandbox` without `allow-plugins`
+        // may block a plugin-based viewer such as Safari's). Both still get `default-src 'none'`, which
+        // blocks every script.
         source: String.raw`/storage/:path((?!.*\.(?:${UPLOADED_FILE_UNSANDBOXED_EXTENSIONS})$).*)`,
         headers: [
           {
@@ -282,6 +284,15 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
             value: "default-src 'none'; media-src 'self'; frame-ancestors 'self'",
+          },
+        ],
+      },
+      {
+        source: String.raw`/storage/:path(.*\.(?:${UPLOADED_PDF_EXTENSION})$)`,
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'none'; object-src 'self'; frame-ancestors 'self'",
           },
         ],
       },

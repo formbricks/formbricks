@@ -97,33 +97,30 @@ describe("CSP for uploaded files (ENG-7108)", () => {
     expect(await effectiveCsp(pathname)).toBe("default-src 'none'; frame-ancestors 'self'; sandbox");
   });
 
+  // Chromium's media viewer runs script, so `sandbox` stops a directly opened video or song from
+  // playing; `sandbox` may also stop a plugin-based PDF viewer. Both keep `default-src 'none'`, which
+  // blocks every script of the file's own.
+  const MEDIA_CSP = "default-src 'none'; media-src 'self'; frame-ancestors 'self'";
+  const PDF_CSP = "default-src 'none'; object-src 'self'; frame-ancestors 'self'";
+  const SANDBOX_CSP = "default-src 'none'; frame-ancestors 'self'; sandbox";
+  const expectedCsp = (type: string): string =>
+    type === "application/pdf" ? PDF_CSP : /^(audio|video)\//.test(type) ? MEDIA_CSP : SANDBOX_CSP;
+
   test.each(["/storage/ws1/private/report--fid--1.pdf", "/storage/ws1/private/report--fid--1.PDF"])(
-    "leaves %s on the app policy so the browser's PDF viewer still opens it",
+    "serves %s scriptless, without sandbox, so the browser's PDF viewer still opens it",
     async (pathname) => {
       const csp = await effectiveCsp(pathname);
-      expect(csp).toBeDefined();
-      expect(isScriptless(csp ?? "")).toBe(false);
+      expect(csp).toBe(PDF_CSP);
+      expect(isScriptless(csp ?? "")).toBe(true);
     }
   );
-
-  // Chromium's media viewer runs script, so `sandbox` stops a directly opened video or song from
-  // playing; `default-src 'none'` still blocks every script of the file's own.
-  const MEDIA_CSP = "default-src 'none'; media-src 'self'; frame-ancestors 'self'";
-  const SANDBOX_CSP = "default-src 'none'; frame-ancestors 'self'; sandbox";
-  const expectedCsp = (type: string): string | "app" =>
-    type === "application/pdf" ? "app" : /^(audio|video)\//.test(type) ? MEDIA_CSP : SANDBOX_CSP;
 
   test.each(Object.entries(mimeTypes))(
     "serves an uploaded .%s (%s) under the policy for its type",
     async (extension, type) => {
       for (const name of [`file--fid--1.${extension}`, `FILE--fid--1.${extension.toUpperCase()}`]) {
         const csp = await effectiveCsp(`/storage/ws1/private/surveys/s1/elements/e1/${name}`);
-        const expected = expectedCsp(type);
-        if (expected === "app") {
-          expect(isScriptless(csp ?? ""), name).toBe(false);
-        } else {
-          expect(csp, name).toBe(expected);
-        }
+        expect(csp, name).toBe(expectedCsp(type));
       }
     }
   );
