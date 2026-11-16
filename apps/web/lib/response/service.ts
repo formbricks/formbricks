@@ -35,6 +35,7 @@ import { getOrganization } from "../organization/service";
 import { getSurvey } from "../survey/service";
 import { convertToCsv, convertToXlsxBuffer } from "../utils/file-conversion";
 import { validateInputs } from "../utils/validate";
+import { calBookingsForAnswers } from "./cal-bookings";
 import { getSurveyFilteringValues } from "./filtering-values";
 import { withoutNotShownAnswers } from "./not-shown-answers";
 import { TResponseCursor, ZResponseCursor, whereAfterResponseCursor } from "./pagination";
@@ -636,9 +637,16 @@ export const updateResponse = async (
           });
     // By Question ID, like `data`: a booking this payload carries replaces that question's stored one, and
     // the other questions' bookings stay. Nothing in the payload leaves the column untouched.
-    const mergedCalBookings = responseInput.calBookings
-      ? { ...currentResponse.calBookings, ...responseInput.calBookings }
-      : undefined;
+    // Bookings follow their answers: one whose answer the not-shown filter just removed goes too, even
+    // when this update carries no booking of its own.
+    const storedCalBookings = currentResponse.calBookings ?? {};
+    const mergedCalBookings = calBookingsForAnswers(
+      { ...storedCalBookings, ...responseInput.calBookings },
+      data
+    );
+    const calBookingsChanged =
+      responseInput.calBookings !== undefined ||
+      Object.keys(mergedCalBookings).length !== Object.keys(storedCalBookings).length;
 
     const responsePrisma = await prismaClient.response.update({
       where: {
@@ -655,7 +663,7 @@ export const updateResponse = async (
         // Written whenever the contract ran, empty included — see `buildPrismaResponseData` for why
         // `null` has to stay reserved for "no ingest boundary has written this".
         ...(mergedIngestFlags !== undefined && { ingestFlags: mergedIngestFlags }),
-        ...(mergedCalBookings !== undefined && { calBookings: mergedCalBookings }),
+        ...(calBookingsChanged && { calBookings: mergedCalBookings }),
       },
       select: responseSelection,
     });

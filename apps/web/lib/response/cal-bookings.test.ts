@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { MAX_CAL_BOOKING_VALUE_LENGTH } from "@formbricks/types/cal-booking";
 import { type TResponseData } from "@formbricks/types/responses";
-import { extractCalBookings, splitCalBookingsFromInput } from "./cal-bookings";
+import { calBookingsForAnswers, extractCalBookings, splitCalBookingsFromInput } from "./cal-bookings";
 
 const survey = {
   blocks: [
@@ -109,5 +109,39 @@ describe("splitCalBookingsFromInput", () => {
     splitCalBookingsFromInput(survey, input as never);
 
     expect(input.calBookings).toBeUndefined();
+  });
+});
+
+describe("a booking Postgres cannot store", () => {
+  test("is reported with the element and leaves data alone", () => {
+    const bad = { ...booking, title: "Intro\u0000call" };
+    const result = extractCalBookings(survey, { cal1: bad, text1: "hello" });
+
+    expect(result.invalidElementId).toBe("cal1");
+    expect(result.calBookings).toBeUndefined();
+    expect(result.data).toEqual({ cal1: bad, text1: "hello" });
+  });
+
+  test("makes splitCalBookingsFromInput report it and leave the input as it arrived", () => {
+    const input = { data: { cal1: { ...booking, uid: "a\u0000b" } } } as {
+      data: TResponseData;
+      calBookings?: never;
+    };
+    const before = structuredClone(input);
+
+    expect(splitCalBookingsFromInput(survey, input)).toEqual({ invalidElementId: "cal1" });
+    expect(input).toEqual(before);
+  });
+});
+
+describe("calBookingsForAnswers", () => {
+  const b = { status: "booked" } as const;
+
+  test("keeps only the bookings whose answer is in data", () => {
+    expect(calBookingsForAnswers({ cal1: b, cal2: b }, { cal2: "booked" })).toEqual({ cal2: b });
+  });
+
+  test("returns an empty set for no bookings", () => {
+    expect(calBookingsForAnswers(null, { cal1: "booked" })).toEqual({});
   });
 });

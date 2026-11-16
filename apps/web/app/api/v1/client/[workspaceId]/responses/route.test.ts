@@ -271,6 +271,7 @@ describe("POST /api/v1/client/[workspaceId]/responses — duplicate submissions 
       contactId,
       data: { q1: 5 },
       finished: true,
+      hasCalBookings: false,
     });
     expect(mocks.createResponseWithQuotaEvaluation).not.toHaveBeenCalled();
     expect(mocks.sendToPipeline).not.toHaveBeenCalled();
@@ -405,6 +406,21 @@ describe("POST /api/v1/client/[workspaceId]/responses — Cal booking details", 
 
     expect(persistedInput().data).toEqual({ cal1: "booked" });
     expect(persistedInput().calBookings).toBeUndefined();
+  });
+
+  test("answers 400 for a booking with a NUL byte, and stores nothing", async () => {
+    const result = await postRawBody({ cal1: { ...booking, title: "Intro\u0000call" } });
+
+    expect(result.response.status).toBe(400);
+    expect(mocks.createResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+  });
+
+  test("does not fold a submission that carries a booking into an earlier response", async () => {
+    await postRawBody({ cal1: booking }, { finished: true });
+
+    expect(mocks.findRecentDuplicateResponse).toHaveBeenCalledWith(
+      expect.objectContaining({ hasCalBookings: true })
+    );
   });
 
   test("ignores a calBookings key the client sends itself", async () => {

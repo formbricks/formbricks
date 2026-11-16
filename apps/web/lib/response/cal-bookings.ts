@@ -8,6 +8,7 @@ import { type TResponseData } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TSurvey } from "@formbricks/types/surveys/types";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
+import { zPostgresText } from "@/lib/utils/postgres-text";
 
 /**
  * The survey renderer holds a Cal element's full booking record as its value and sends it in `data`. What
@@ -20,10 +21,20 @@ import { getElementsFromBlocks } from "@/lib/survey/utils";
  * booking, is left exactly as it arrived. A renderer from before this change sends the string "booked",
  * which passes through, so such a response simply has no details.
  */
+export type TCalBookingSplit = {
+  data: TResponseData | undefined;
+  calBookings: TCalBookingsByQuestionId | undefined;
+  /** The Cal element whose booking holds a value Postgres cannot store; the caller answers 400. */
+  invalidElementId?: string;
+};
+
+const isPostgresSafe = (booking: Record<string, string>) =>
+  Object.values(booking).every((value) => zPostgresText().safeParse(value).success);
+
 export const extractCalBookings = (
   survey: Pick<TSurvey, "blocks">,
   data: TResponseData | undefined
-): { data: TResponseData | undefined; calBookings: TCalBookingsByQuestionId | undefined } => {
+): TCalBookingSplit => {
   if (!data) return { data, calBookings: undefined };
 
   // Null-prototype, because an element id only has to satisfy the legacy id charset, which admits
@@ -36,6 +47,8 @@ export const extractCalBookings = (
     if (element.type !== TSurveyElementTypeEnum.Cal) continue;
     const booking = sanitizeCalBooking(data[element.id]);
     if (!booking) continue;
+    // A NUL byte fails the whole write with a 500, so it is refused here with the other bad input.
+    if (!isPostgresSafe(booking)) return { data, calBookings: undefined, invalidElementId: element.id };
     bookings[element.id] = booking;
     nextData[element.id] = CAL_BOOKED_STATUS;
     found = true;
@@ -53,9 +66,21 @@ export const extractCalBookings = (
 export const splitCalBookingsFromInput = (
   survey: Pick<TSurvey, "blocks">,
   input: { data?: TResponseData } & TWithCalBookings
-): void => {
-  const { data, calBookings } = extractCalBookings(survey, input.data);
+): { invalidElementId?: string } => {
+  const { data, calBookings, invalidElementId } = extractCalBookings(survey, input.data);
+  if (invalidElementId) return { invalidElementId };
   if (data) input.data = data;
   if (calBookings) input.calBookings = calBookings;
   else delete input.calBookings;
+  return {};
 };
+
+/**
+ * The bookings that still have an answer in `data`. Run after the not-shown filter removed the answers of
+ * questions the respondent was not shown, so a booking never outlives the answer it belongs to.
+ */
+export const calBookingsForAnswers = (
+  calBookings: TCalBookingsByQuestionId | null | undefined,
+  data: TResponseData
+): TCalBookingsByQuestionId =>
+  Object.fromEntries(Object.entries(calBookings ?? {}).filter(([elementId]) => elementId in data));

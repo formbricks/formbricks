@@ -10,8 +10,7 @@ import { type ApiErrorResult, handleApiError } from "@/app/lib/api/handle-api-er
 import { responses } from "@/app/lib/api/response";
 import { THandlerParams } from "@/app/lib/api/with-api-logging";
 import { sendToPipeline } from "@/app/lib/pipelines";
-import { splitCalBookingsFromInput } from "@/lib/response/cal-bookings";
-import { applyIngestContractToResponseData } from "@/lib/response/ingest";
+import { applyIngestContractToResponseInput } from "@/lib/response/ingest";
 import { getResponse } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
 import { resolveClientApiIds } from "@/lib/utils/resolve-client-id";
@@ -251,13 +250,18 @@ export const putResponseHandler = async ({
   // everything else passes through — which is how a crafted PUT could write a locked key, an unknown
   // key or an oversize value straight into `response.data`, where exports read it. Ahead of
   // validation and quota evaluation so both see the values that will be stored.
-  const ingestResult = applyIngestContractToResponseData(survey, responseUpdateInput.data);
-  if (responseUpdateInput.data) {
-    responseUpdateInput.data = ingestResult.data;
+  // The same step splits a Cal element's booking record out of `data` (the stored answer stays the string
+  // "booked"); on an update the details are merged into what is stored, by Question ID.
+  const ingestResult = applyIngestContractToResponseInput(survey, responseUpdateInput);
+  if (ingestResult.invalidCalElementId) {
+    return {
+      response: responses.badRequestResponse(
+        "Invalid booking details",
+        { elementId: ingestResult.invalidCalElementId },
+        true
+      ),
+    };
   }
-  // A Cal element's booking record moves out of `data`, which keeps the string "booked" (see
-  // `extractCalBookings`). On an update it is merged into what is stored, by Question ID.
-  splitCalBookingsFromInput(survey, responseUpdateInput);
 
   const validationResult = validateUpdateRequest(existingResponse, survey, responseUpdateInput, workspaceId);
   if (validationResult) {

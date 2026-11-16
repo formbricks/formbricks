@@ -571,7 +571,7 @@ describe("processWebhookDeliveryJob", () => {
 });
 
 describe("buildWebhookDeliveryBody calBookingsByQuestionId", () => {
-  const booking = { status: "booked", startTime: "2026-11-05T10:00:00.000Z", title: "Intro call" };
+  const booking = { status: "booked", startTime: "2026-11-05T10:00:00.000Z", title: "Intro call" } as const;
 
   test("adds what the Cal.com element reported beside the unchanged data", () => {
     const body = JSON.parse(buildWebhookDeliveryBody({ ...data, calBookings: { cal1: booking } }));

@@ -55,6 +55,7 @@ export const findRecentDuplicateResponse = async ({
   contactId,
   data,
   finished,
+  hasCalBookings = false,
   now = new Date(),
 }: {
   surveyId: string;
@@ -62,9 +63,15 @@ export const findRecentDuplicateResponse = async ({
   contactId: string | null | undefined;
   data: TResponseData;
   finished: boolean;
+  /**
+   * The submission carries Cal booking details. They live outside `data`, which the comparison reads, and a
+   * booking is made by a person, not by a link scanner, so such a submission is never folded: folding it
+   * would drop its details.
+   */
+  hasCalBookings?: boolean;
   now?: Date;
 }): Promise<{ id: string } | null> => {
-  if (!contactId || !canFoldSubmission({ surveyType, finished })) return null;
+  if (hasCalBookings || !contactId || !canFoldSubmission({ surveyType, finished })) return null;
 
   // Served by the (contactId, createdAt) index; bounded because a contact has a handful of
   // responses in any one minute. Unfinished rows are filtered here, not only in the predicate, so

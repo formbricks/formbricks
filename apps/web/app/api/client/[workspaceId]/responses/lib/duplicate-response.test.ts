@@ -71,6 +71,20 @@ describe("findRecentDuplicateResponse", () => {
     expect(prisma.response.findMany).not.toHaveBeenCalled();
   });
 
+  test("skips the lookup for a submission that carries Cal booking details", async () => {
+    const result = await findRecentDuplicateResponse({
+      surveyId,
+      surveyType: "link",
+      contactId,
+      data: { q1: 5 },
+      finished: true,
+      hasCalBookings: true,
+    });
+
+    expect(result).toBeNull();
+    expect(prisma.response.findMany).not.toHaveBeenCalled();
+  });
+
   test("returns the matching response from the contact's recent ones", async () => {
     const now = new Date("2026-10-01T12:00:00.000Z");
     vi.mocked(prisma.response.findMany).mockResolvedValue([

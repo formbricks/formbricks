@@ -64,10 +64,25 @@ describe("buildPrismaResponseData — Cal.com booking details", () => {
 
   test("writes the bookings the route split out of data", () => {
     expect(
-      buildPrismaResponseData({ ...input(), calBookings: { cal1: booking } }, null, {}).calBookings
+      buildPrismaResponseData(
+        { ...input(), data: { cal1: "booked" }, calBookings: { cal1: booking } },
+        null,
+        {}
+      ).calBookings
     ).toEqual({
       cal1: booking,
     });
+  });
+
+  test("keeps a booking only while its answer is in data", () => {
+    const withAnswer = {
+      ...input(),
+      data: { cal1: "booked" },
+      calBookings: { cal1: booking, cal2: booking },
+    };
+
+    expect(buildPrismaResponseData(withAnswer, null, {}).calBookings).toEqual({ cal1: booking });
+    expect(buildPrismaResponseData({ ...withAnswer, data: {} }, null, {})).not.toHaveProperty("calBookings");
   });
 
   test("omits the column when there is no booking, or an empty set", () => {

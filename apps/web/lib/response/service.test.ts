@@ -3,8 +3,9 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
+import { TCalBooking } from "@formbricks/types/cal-booking";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { TResponseUpdateInput } from "@formbricks/types/responses";
+import { TClientResponseUpdateInput } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { deleteResponseFileUrls } from "@/modules/storage/lib/delete-response-files";
 import { enqueueReplacedSignatureFileCleanup } from "@/modules/storage/lib/replaced-signature-files";
@@ -28,6 +29,9 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       findUnique: vi.fn(),
       update: vi.fn(),
+    },
+    survey: {
+      findUnique: vi.fn(),
     },
   },
 }));
@@ -153,7 +157,9 @@ const createMockCurrentResponse = (overrides: Partial<MockCurrentResponse> = {})
   ...overrides,
 });
 
-const createMockResponseInput = (overrides: Partial<TResponseUpdateInput> = {}): TResponseUpdateInput => ({
+const createMockResponseInput = (
+  overrides: Partial<TClientResponseUpdateInput> = {}
+): TClientResponseUpdateInput => ({
   finished: false,
   data: {},
   ...overrides,
@@ -776,15 +782,24 @@ describe("updateResponse — Cal.com booking details", () => {
     vi.clearAllMocks();
   });
 
-  const run = async (stored: Record<string, typeof first> | null, input: TResponseUpdateInput) => {
-    const currentResponse = createMockCurrentResponse({ calBookings: stored });
+  /** `stored` bookings sit beside the `booked` answers they belong to, as a real response holds them. */
+  const run = async (stored: Record<string, TCalBooking> | null, input: TClientResponseUpdateInput) => {
+    const storedData = Object.fromEntries(Object.keys(stored ?? {}).map((id) => [id, "booked"]));
+    const currentResponse = createMockCurrentResponse({ calBookings: stored, data: storedData });
+    const {
+      calBookings: _calBookings,
+      ingestFlags: _ingestFlags,
+      notShown: _notShown,
+      ...returned
+    } = currentResponse;
     vi.mocked(prisma.response.findUnique).mockResolvedValue(currentResponse);
-    vi.mocked(prisma.response.update).mockResolvedValue(currentResponse);
-    await updateResponse(mockResponseId, input);
+    // The update's own `select` has no `calBookings`, so that is what the database hands back.
+    vi.mocked(prisma.response.update).mockResolvedValue(returned as never);
+    return updateResponse(mockResponseId, input);
   };
 
   test("reads the stored column for the merge, and does not return it", async () => {
-    await run(null, createMockResponseInput());
+    const result = await run(null, createMockResponseInput());
 
     expect(vi.mocked(prisma.response.findUnique).mock.calls[0][0]).toMatchObject({
       select: { calBookings: true },
@@ -792,16 +807,23 @@ describe("updateResponse — Cal.com booking details", () => {
     expect(vi.mocked(prisma.response.update).mock.calls[0][0]).toMatchObject({
       select: expect.not.objectContaining({ calBookings: true }),
     });
+    expect(result).not.toHaveProperty("calBookings");
   });
 
   test("keeps the stored bookings of other questions and adds the new one", async () => {
-    await run({ cal1: first }, createMockResponseInput({ calBookings: { cal2: second } }));
+    await run(
+      { cal1: first },
+      createMockResponseInput({ data: { cal2: "booked" }, calBookings: { cal2: second } })
+    );
 
     expect(updateArgs().data).toMatchObject({ calBookings: { cal1: first, cal2: second } });
   });
 
   test("a new booking for the same question replaces the stored one", async () => {
-    await run({ cal1: first }, createMockResponseInput({ calBookings: { cal1: second } }));
+    await run(
+      { cal1: first },
+      createMockResponseInput({ data: { cal1: "booked" }, calBookings: { cal1: second } })
+    );
 
     expect(updateArgs().data).toMatchObject({ calBookings: { cal1: second } });
   });
@@ -810,6 +832,32 @@ describe("updateResponse — Cal.com booking details", () => {
     await run({ cal1: first }, createMockResponseInput({ data: { q1: "answer" } }));
 
     expect(updateArgs().data).not.toHaveProperty("calBookings");
+  });
+
+  describe("a question the not-shown record lists", () => {
+    const notShown = { elements: ["cal1"] };
+
+    beforeEach(() => {
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue({
+        blocks: [{ id: "b1", elements: [{ id: "cal1" }, { id: "cal2" }] }],
+      } as never);
+    });
+
+    test("loses its stored booking with its answer, though the payload carries no booking", async () => {
+      await run({ cal1: first, cal2: second }, createMockResponseInput({ notShown }));
+
+      expect(updateArgs().data).toMatchObject({ data: { cal2: "booked" }, calBookings: { cal2: second } });
+      expect((updateArgs().data as { calBookings: object }).calBookings).not.toHaveProperty("cal1");
+    });
+
+    test("does not store a booking the same payload carries for it", async () => {
+      await run(
+        null,
+        createMockResponseInput({ notShown, data: { cal1: "booked" }, calBookings: { cal1: first } })
+      );
+
+      expect((updateArgs().data as { calBookings: object }).calBookings).toEqual({});
+    });
   });
 });
 

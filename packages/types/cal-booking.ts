@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 /**
  * Booking details of a Cal.com element.
  *
@@ -29,6 +31,22 @@ export type TCalBooking = {
 
 /** `{ [Question ID]: booking }`, as stored in `Response.calBookings` and sent in webhooks. */
 export type TCalBookingsByQuestionId = Record<string, TCalBooking>;
+
+/** The stored booking as a schema, for the places that parse one (the webhook delivery job). */
+export const ZCalBooking = z.object({
+  status: z.literal(CAL_BOOKED_STATUS),
+  uid: z.string().optional(),
+  title: z.string().optional(),
+  startTime: z.string().optional(),
+  endTime: z.string().optional(),
+  eventTypeId: z.string().optional(),
+  bookingStatus: z.string().optional(),
+  paymentRequired: z.string().optional(),
+  isRecurring: z.string().optional(),
+  videoCallUrl: z.string().optional(),
+}) satisfies z.ZodType<TCalBooking>;
+
+export const ZCalBookingsByQuestionId = z.record(z.string(), ZCalBooking);
 
 /**
  * Bookings the server pulled out of a response's `data`, carried beside the input that holds the rest.

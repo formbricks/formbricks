@@ -2,6 +2,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { TContactAttributes } from "@formbricks/types/contact-attribute";
 import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { TClientResponseInput } from "@formbricks/types/responses";
+import { calBookingsForAnswers } from "@/lib/response/cal-bookings";
 import { normalizeResponseLanguage } from "@/lib/response/utils";
 
 /**
@@ -36,6 +37,8 @@ export const buildPrismaResponseData = (
     notShown,
   } = responseInput;
 
+  const keptCalBookings = calBookings && calBookingsForAnswers(calBookings, data);
+
   return {
     survey: {
       connect: {
@@ -63,9 +66,10 @@ export const buildPrismaResponseData = (
     // is already `NULL` — so collapsing `[]` to `null` would make a checked-and-clean response
     // indistinguishable from a legacy one.
     ...(ingestFlags !== undefined && { ingestFlags: [...ingestFlags] }),
-    // Set by the client routes only (`splitCalBookingsFromInput`): the management routes parse their body
-    // with a schema that has no such key, so they never write it.
-    ...(calBookings && Object.keys(calBookings).length > 0 && { calBookings }),
+    // Set by the client routes only: the management routes parse their body with a schema that has no
+    // such key, so they never write it. `data` is already without the not-shown answers, and a booking
+    // is kept only while its answer is.
+    ...(keptCalBookings && Object.keys(keptCalBookings).length > 0 && { calBookings: keptCalBookings }),
     // The survey's not-shown record (ENG-6936), stored as sent. Omitted leaves the column null: unknown.
     ...(notShown !== undefined && { notShown }),
     ttc: ttc,
