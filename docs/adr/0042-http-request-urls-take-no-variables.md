@@ -5,7 +5,7 @@ A workflow's HTTP request step has a fixed URL. Variables can fill query paramet
 ## Considered Options
 
 - **Variables anywhere after the host**: allows dynamic paths (`/customers/@customer.id`), but splitting the URL into a fixed and a templated part is easy to get wrong, and a crafted value can still traverse the path. Query parameters cover the same lookups.
-- **Bind secret header values to the host they were entered for**: protects the secrets but not the payload data, and adds a confusing "your secret was cleared" state whenever someone edits the URL.
+- **Bind secret header values to the host they were entered for**: protects the secrets but not the payload data, and adds a confusing "your secret was cleared" state whenever someone edits the URL. Not an alternative to a fixed URL, and later adopted on top of it: ADR 0051 binds stored values to their host because an MCP agent obeying hostile text could edit the URL.
 
 ## Consequences
 

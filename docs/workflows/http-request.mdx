@@ -56,6 +56,7 @@ Mark a header as secret for anything that grants access, such as `Authorization:
   the draft only; the enabled workflow uses it once you enable the draft. **Replace** is in the editor only:
   through the API or MCP, send the new value in the workflow definition, which means disabling the workflow,
   updating it and enabling it again.
+- **The value is only sent to the host it was entered for.** See [Secret values stay with their host](#secret-values-stay-with-their-host).
 - **A secret value can't insert Variables.** It is sent exactly as you entered it, and can't contain line
   breaks.
 - **Duplicates don't copy secret values.** A duplicated workflow keeps the header names, and can't be enabled
@@ -64,7 +65,41 @@ Mark a header as secret for anything that grants access, such as `Authorization:
   the saved test response show it masked. Later steps in the same run still read the real response.
 
 Only people with write or manage access can set or replace a secret header. Every change is recorded in the
-audit log, with the header name only.
+audit log, with the header name and the host the value is sent to, never the value.
+
+### Secret values stay with their host
+
+When you enter a secret value, Formbricks remembers the host of the step's URL at that moment: its scheme, host
+name and port, such as `https://api.example.com`. The value is only ever sent to that host. Changing the path or
+the query parameters is fine; changing to another host, to `http://` or to another port is not.
+
+This protects your API keys when someone changes the URL, whether a person or an AI agent working through
+[MCP](/platform/mcp/overview) that was tricked by text in a response or payload into pointing the step at another
+server. To send a key somewhere new, someone has to enter it again.
+
+If a step's URL points at another host than a secret value was entered for:
+
+- The editor shows **Enter again: the saved value is only sent to api.example.com** under that header.
+- **Enable** is refused until you enter the value again.
+- **Send test request** is refused, unless you type the value for that call.
+- A run never sends the value to the other host. The step fails with "Secret header Authorization is set for
+  api.example.com; enter it again for the new URL" and nothing is sent. With **Continue on error** on, the run
+  goes on and run detail shows the error.
+
+To move a step to a new host:
+
+1. Change the URL.
+2. For each secret header, select **Replace** and enter the value for the new host. The value is saved for the
+   new URL. On a workflow that has been enabled, the enabled version keeps sending its old value to the old
+   host until you enable the draft.
+3. Use **Send test request** to check the call, then enable the workflow.
+
+Through the API or MCP, send the URL and each secret header's value together in the workflow definition. A read
+returns each stored secret header's `boundOrigin`, the host its value is sent to.
+
+A secret value needs the step's URL first: entering one while the URL is empty or invalid is refused. Values
+stored before Formbricks recorded hosts are sent to the URL their step was saved with, and are tied to a host
+the next time you enter them.
 
 ## Response mode
 
@@ -114,7 +149,7 @@ so you can see what the API answers.
 
 - Variables are filled from the **Sample payload** and from the last test responses of other HTTP request steps.
 - A secret value you just typed is used for this call. Otherwise the saved value is used, but only for the host
-  the step is saved with: if you changed the URL to another host, save the step first or type the value again.
+  it was entered for: if you changed the URL to another host, type the value again.
 - The call waits up to 10 seconds and isn't retried.
 - The answer is saved as the step's test response (up to 64 KB). The `@` picker offers its values as Variables, and
   [Test runs](/workflows/test-runs) use it as this step's response.
