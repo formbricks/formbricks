@@ -122,13 +122,16 @@ export const startReplacingSecret = (header: TWorkflowHttpHeader): TWorkflowHttp
   name: header.name,
   secret: true,
   value: "",
+  // Carried so a cancelled Replace still knows the stored value's host (ADR 0051); a write ignores it.
+  ...(header.boundOrigin ? { boundOrigin: header.boundOrigin } : {}),
 });
 
-/** Cancel a Replace: keep the stored value. */
+/** Cancel a Replace: keep the stored value, and the host it is sent to. */
 export const cancelReplacingSecret = (header: TWorkflowHttpHeader): TWorkflowHttpHeader => ({
   name: header.name,
   secret: true,
   isSet: true,
+  ...(header.boundOrigin ? { boundOrigin: header.boundOrigin } : {}),
 });
 
 /**
