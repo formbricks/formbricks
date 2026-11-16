@@ -892,6 +892,16 @@ const applySavedGrant = async (userId: string, savedGrant: TSavedMcpGrant): Prom
 };
 
 /**
+ * Locks the user's row `FOR KEY SHARE`, the lock a new grant row's foreign key takes anyway, ahead of any
+ * grant or consent row. A path that changes what the user may hold (a member removal, a demotion) takes the
+ * row `FOR UPDATE` first and their grant and consent rows after, so the two wait on each other instead of
+ * deadlocking. `FOR KEY SHARE` does not wait on a sign-in's `FOR NO KEY UPDATE` (`lastLoginAt`).
+ */
+const lockUserForMcpGrantWrite = async (tx: Prisma.TransactionClient, userId: string): Promise<void> => {
+  await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${userId} FOR KEY SHARE`;
+};
+
+/**
  * The consent hook's transaction. The workspaces SpiceDB lets the user select are looked up first, before
  * the transaction takes any lock. For an approval, the grant comes first: its row is locked `FOR UPDATE`,
  * the chosen access is resolved, and what a narrowing takes away is deleted from SpiceDB, all before any
@@ -917,6 +927,11 @@ const settleChangedConsent = async (
           select: { skipConsent: true },
         });
         if (!client || client.skipConsent) return null;
+        // The user's row before the grant: creating the grant row takes it `FOR KEY SHARE` (its foreign
+        // key), and a member removal or demotion holds it `FOR UPDATE` while it locks this user's grant and
+        // consent rows. Taken last, it would close a cycle with them; taken first, the approval waits for
+        // the removal and then finds the consent it ended gone.
+        await lockUserForMcpGrantWrite(tx, userId);
         before = await lockMcpGrant(tx, { userId, clientId: grantClientId });
         if (access) {
           const resolved = await narrowMcpGrantAccess(tx, { userId, before, access, readableWorkspaceIds });

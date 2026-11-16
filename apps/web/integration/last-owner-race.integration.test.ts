@@ -2,7 +2,12 @@ import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { ValidationError } from "@formbricks/types/errors";
 import { resetDb } from "@/integration/reset-db";
+import { updateMembershipInTransaction } from "@/modules/ee/role-management/lib/membership";
 import { deleteMembership } from "@/modules/organization/settings/teams/lib/membership";
+import {
+  LastActiveOwnerError,
+  runOwnerGuardedTransaction,
+} from "@/modules/organization/settings/teams/lib/owner-guard";
 
 /**
  * The last-owner guard on member removal against real Postgres.
@@ -45,7 +50,7 @@ describe("deleteMembership last-owner guard (real Postgres)", () => {
       const { organizationId, ownerIds } = await seedOrganizationWithOwners(round);
 
       const outcomes = await Promise.allSettled(
-        ownerIds.map((userId) => deleteMembership(userId, organizationId))
+        ownerIds.map((userId) => deleteMembership(userId, organizationId, userId))
       );
 
       expect(await countOwners(organizationId)).toBe(1);
@@ -57,11 +62,35 @@ describe("deleteMembership last-owner guard (real Postgres)", () => {
     }
   });
 
+  test("demoting one owner while the other is removed leaves one of them", async () => {
+    // The demotion runs as the member list's role change does: under the owners' lock. Without it (a
+    // Serializable transaction alone), the demotion counts two owners while the removal commits.
+    for (let round = 0; round < ROUNDS; round++) {
+      const { organizationId, ownerIds } = await seedOrganizationWithOwners(round);
+
+      const outcomes = await Promise.allSettled([
+        runOwnerGuardedTransaction(organizationId, ownerIds[0], (tx) =>
+          updateMembershipInTransaction(tx, ownerIds[0], organizationId, { role: "member" })
+        ),
+        deleteMembership(ownerIds[1], organizationId, ownerIds[0]),
+      ]);
+
+      expect(await countOwners(organizationId)).toBe(1);
+      const rejections = outcomes.flatMap((outcome) =>
+        outcome.status === "rejected" ? [outcome.reason] : []
+      );
+      expect(rejections).toHaveLength(1);
+      expect(rejections[0]).toSatisfy(
+        (reason: unknown) => reason instanceof LastActiveOwnerError || reason instanceof ValidationError
+      );
+    }
+  });
+
   test("refuses to remove the only owner", async () => {
     const { organizationId, ownerIds } = await seedOrganizationWithOwners(0);
-    await deleteMembership(ownerIds[0], organizationId);
+    await deleteMembership(ownerIds[0], organizationId, ownerIds[1]);
 
-    await expect(deleteMembership(ownerIds[1], organizationId)).rejects.toThrow(ValidationError);
+    await expect(deleteMembership(ownerIds[1], organizationId, ownerIds[1])).rejects.toThrow(ValidationError);
     expect(await countOwners(organizationId)).toBe(1);
   });
 });

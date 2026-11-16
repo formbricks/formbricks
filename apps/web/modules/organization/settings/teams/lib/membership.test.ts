@@ -5,13 +5,13 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { DatabaseError, UnknownError, ValidationError } from "@formbricks/types/errors";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
+import { lockUserActiveState } from "@/lib/user/reactivation";
 import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import {
   deleteMembership,
   getMembersByOrganizationId,
   getMembershipByOrganizationId,
   getMembershipsByUserId,
-  getOrganizationOwnerCount,
 } from "./membership";
 
 vi.mock("@formbricks/database", () => ({
@@ -29,6 +29,7 @@ vi.mock("@formbricks/database", () => ({
     invite: {
       updateMany: vi.fn(),
     },
+    $queryRaw: vi.fn(),
     $transaction: vi.fn(),
   },
 }));
@@ -46,6 +47,7 @@ vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({
   revokeAllUserOAuthGrants: vi.fn(),
   finishRevokedMcpGrants: vi.fn(),
 }));
+vi.mock("@/lib/user/reactivation", () => ({ lockUserActiveState: vi.fn() }));
 
 const organizationId = "org-1";
 /** The owner who removes the member: the actor of the ended grants' audit entries. */
@@ -95,37 +97,6 @@ describe("getMembershipByOrganizationId", () => {
   });
 });
 
-describe("getOrganizationOwnerCount", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-  test("returns owner count", async () => {
-    vi.mocked(prisma.membership.count).mockResolvedValue(2);
-    const result = await getOrganizationOwnerCount(organizationId);
-    expect(result).toBe(2);
-  });
-  test("only counts active owners", async () => {
-    vi.mocked(prisma.membership.count).mockResolvedValue(1);
-    const result = await getOrganizationOwnerCount(organizationId);
-    expect(result).toBe(1);
-    expect(prisma.membership.count).toHaveBeenCalledWith({
-      where: { organizationId, role: "owner", user: { isActive: true } },
-    });
-  });
-  test("throws DatabaseError on prisma error", async () => {
-    const prismaError = new Prisma.PrismaClientKnownRequestError("db", {
-      code: "P2002",
-      clientVersion: "1.0.0",
-    });
-    vi.mocked(prisma.membership.count).mockRejectedValue(prismaError);
-    await expect(getOrganizationOwnerCount(organizationId)).rejects.toThrow(DatabaseError);
-  });
-  test("throws original error on unknown error", async () => {
-    vi.mocked(prisma.membership.count).mockRejectedValue({});
-    await expect(getOrganizationOwnerCount(organizationId)).rejects.toThrowError();
-  });
-});
-
 describe("deleteMembership", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -143,9 +114,7 @@ describe("deleteMembership", () => {
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue([mockTeamMembership]);
     const result = await deleteMembership(userId, organizationId, ACTOR_ID);
     expect(result[0].teamId).toBe(teamId);
-    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
-      isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-    });
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
     expect(prisma.teamUser.deleteMany).toHaveBeenCalledWith({
       where: {
         userId,
@@ -183,12 +152,23 @@ describe("deleteMembership", () => {
       vi.mocked(prisma.membership.findMany).mockResolvedValue(
         remainingRoles.map((role) => ({ role })) as never
       );
-      vi.mocked(revokeAllUserOAuthGrants).mockResolvedValue({ grantAudits: [] } as never);
+      const grantAudits = [{ action: "deleted", before: { id: "grant-1" }, after: null }];
+      vi.mocked(revokeAllUserOAuthGrants).mockResolvedValue({ grantAudits } as never);
 
       await deleteMembership(userId, organizationId, ACTOR_ID);
 
+      // Decided under the user's row lock, so a removal from another organization at the same moment has
+      // committed by then (proven in dashboard-viewer-oauth.integration.test.ts).
+      expect(lockUserActiveState).toHaveBeenCalledWith(prisma, userId);
+      if (removedRole !== "dashboard_viewer") {
+        expect(vi.mocked(lockUserActiveState).mock.invocationCallOrder[0]).toBeLessThan(
+          vi.mocked(prisma.membership.findMany).mock.invocationCallOrder[0]
+        );
+      }
+
       if (revokes) {
-        expect(finishRevokedMcpGrants).toHaveBeenCalledWith([], { actorUserId: ACTOR_ID });
+        // After the commit, as the user who removed the member.
+        expect(finishRevokedMcpGrants).toHaveBeenCalledWith(grantAudits, { actorUserId: ACTOR_ID });
         expect(prisma.membership.findMany).toHaveBeenCalledWith({
           where: { userId, organizationId: { not: organizationId } },
           select: { role: true },
@@ -200,9 +180,38 @@ describe("deleteMembership", () => {
         );
       } else {
         expect(revokeAllUserOAuthGrants).not.toHaveBeenCalled();
+        expect(finishRevokedMcpGrants).toHaveBeenCalledWith([], { actorUserId: ACTOR_ID });
       }
     }
   );
+  test("audits only the grants the attempt that commits ended, when an earlier attempt is retried", async () => {
+    const conflict = new Prisma.PrismaClientKnownRequestError("deadlock", {
+      code: PrismaErrorType.TransactionConflict,
+      clientVersion: "1.0.0",
+    });
+    const rolledBack = [{ action: "deleted", before: { id: "grant-rolled-back" }, after: null }];
+    const committed = [{ action: "deleted", before: { id: "grant-1" }, after: null }];
+    vi.mocked(prisma.teamUser.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.membership.findUnique).mockResolvedValue({
+      role: "member",
+      user: { isActive: true },
+    } as never);
+    vi.mocked(prisma.membership.findMany).mockResolvedValue([{ role: "dashboard_viewer" }] as never);
+    vi.mocked(revokeAllUserOAuthGrants)
+      .mockResolvedValueOnce({ grantAudits: rolledBack } as never)
+      .mockResolvedValueOnce({ grantAudits: committed } as never);
+    // The first attempt runs to its end, then Postgres aborts it.
+    vi.mocked(prisma.$transaction).mockImplementationOnce(async (transaction) => {
+      await (transaction as (client: unknown) => Promise<unknown>)(prisma);
+      throw conflict;
+    });
+
+    await deleteMembership(userId, organizationId, ACTOR_ID);
+
+    expect(revokeAllUserOAuthGrants).toHaveBeenCalledTimes(2);
+    expect(finishRevokedMcpGrants).toHaveBeenCalledTimes(1);
+    expect(finishRevokedMcpGrants).toHaveBeenCalledWith(committed, { actorUserId: ACTOR_ID });
+  });
   test("expires the removed member's pending invites in that organization", async () => {
     const now = new Date("2026-10-08T12:00:00.000Z");
     vi.useFakeTimers();
@@ -220,7 +229,7 @@ describe("deleteMembership", () => {
       vi.useRealTimers();
     }
   });
-  test("retries a serializable transaction conflict up to a successful attempt", async () => {
+  test("retries a transaction conflict up to a successful attempt", async () => {
     const transactionConflict = new Prisma.PrismaClientKnownRequestError("transaction conflict", {
       code: PrismaErrorType.TransactionConflict,
       clientVersion: "1.0.0",
@@ -234,7 +243,7 @@ describe("deleteMembership", () => {
     expect(reconcileOrganizationMembership).toHaveBeenCalledTimes(1);
     expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledTimes(1);
   });
-  test("stops retrying a serializable transaction conflict after three attempts", async () => {
+  test("stops retrying a transaction conflict after three attempts", async () => {
     const transactionConflict = new Prisma.PrismaClientKnownRequestError("transaction conflict", {
       code: PrismaErrorType.TransactionConflict,
       clientVersion: "1.0.0",
@@ -275,6 +284,7 @@ describe("deleteMembership", () => {
         },
         teamUser: { findMany: vi.fn(), deleteMany: vi.fn() },
         invite: { updateMany: vi.fn() },
+        $queryRaw: vi.fn(),
       };
       vi.mocked(prisma.$transaction).mockImplementation(async (transaction) =>
         (transaction as (client: unknown) => unknown)(tx)
@@ -287,9 +297,11 @@ describe("deleteMembership", () => {
       expect(tx.membership.count).toHaveBeenCalledWith(
         expect.objectContaining({ where: expect.objectContaining({ organizationId, role: "owner" }) })
       );
-      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), {
-        isolationLevel: Prisma.TransactionIsolationLevel.Serializable,
-      });
+      // The owners are locked before the target and the count are read, so a concurrent owner change has
+      // committed by then (proven against real Postgres in last-owner-race.integration.test.ts).
+      expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+        tx.membership.findUnique.mock.invocationCallOrder[0]
+      );
       expect(prisma.membership.delete).not.toHaveBeenCalled();
       expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
     });

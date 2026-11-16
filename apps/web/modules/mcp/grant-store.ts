@@ -43,7 +43,10 @@ import { MCP_PERMISSIONS, type TMcpPermission } from "./permissions";
  *    ({@link removeDeletedMcpGrants}), best-effort.
  *
  * The outbox event is the repair for both best-effort writes. Every path that locks a grant row and
- * consent rows takes the grant first, so they wait on each other rather than deadlock.
+ * consent rows takes the grant first, so they wait on each other rather than deadlock. A path that also
+ * locks the user's row takes it before both (a member removal takes the organization's owners even
+ * before that), including a consent approval, whose new grant row's foreign key would otherwise lock it
+ * last.
  */
 
 /**

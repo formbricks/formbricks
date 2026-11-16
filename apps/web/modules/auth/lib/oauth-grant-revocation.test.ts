@@ -184,6 +184,10 @@ beforeEach(() => {
         named?.clientId ?? mocks.consents.find((row) => asked.includes(row.clientId))?.clientId;
       return mocks.consents.filter((row) => row.clientId === clientId);
     }
+    if (text.includes(`FROM "User"`)) {
+      mocks.sequence.push("share user");
+      return [];
+    }
     if (text.includes("EXISTS")) return [{ beyond: mocks.grantBeyond }];
     if (text.includes(`FROM "McpGrant"`)) {
       mocks.sequence.push(text.includes("FOR SHARE") ? "share grant" : "lock grant");
@@ -1010,7 +1014,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
       mocks.tx.mcpGrant.upsert.mockResolvedValue({ ...WORKSPACE_GRANT, permissions: { surveys: "read" } });
     });
 
-    test("locks the grant and narrows SpiceDB before it locks any consent row, then saves", async () => {
+    test("locks the user's row, then the grant, and narrows SpiceDB before it locks any consent row, then saves", async () => {
       vi.mocked(resolveMcpGrantSelection).mockResolvedValue({
         status: "ok",
         access: { access: "workspaces", workspaceIds: ["ws-1"] },
@@ -1020,7 +1024,8 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
         approveAccess({ access: "workspaces", workspaceIds: ["ws-1"] })
       );
 
-      expect(mocks.sequence).toEqual(["lock grant", "delete relationships", "lock consents"]);
+      // The user's row first, the order a member removal takes it in before this user's grant and consents.
+      expect(mocks.sequence).toEqual(["share user", "lock grant", "delete relationships", "lock consents"]);
       expect(deleteMcpGrantRelationshipsBeforeCommit).toHaveBeenCalledWith(
         expect.objectContaining({ id: "grant-1", workspaceIds: ["ws-1", "ws-2"] }),
         { access: "workspaces", workspaceIds: ["ws-1"] }
@@ -1177,7 +1182,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
           where: { userId: "user-1", clientId: "client-1", id: { in: ["consent-1"] } },
         });
         expect(mocks.tx.oauthConsent.update).not.toHaveBeenCalled();
-        expect(mocks.sequence).toEqual(["lock grant", "lock consents"]);
+        expect(mocks.sequence).toEqual(["share user", "lock grant", "lock consents"]);
         expect(prisma.$transaction).toHaveBeenCalledTimes(1);
         expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
       });

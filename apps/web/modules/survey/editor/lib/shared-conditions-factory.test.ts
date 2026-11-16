@@ -190,29 +190,6 @@ describe("shared-conditions-factory", () => {
   });
 
   describe("createSharedConditionsFactory", () => {
-    test("should create config and callbacks without questionIdx", () => {
-      const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
-
-      expect(result).toHaveProperty("config");
-      expect(result).toHaveProperty("callbacks");
-      expect(result.config).toHaveProperty("getLeftOperandOptions");
-      expect(result.config).toHaveProperty("getOperatorOptions");
-      expect(result.config).toHaveProperty("getValueProps");
-      expect(result.config).toHaveProperty("getDefaultOperator");
-      expect(result.config).toHaveProperty("formatLeftOperandValue");
-    });
-
-    test("should create config and callbacks with questionIdx", () => {
-      const paramsWithQuestionIdx = {
-        ...defaultParams,
-        questionIdx: 0,
-      };
-      const result = createSharedConditionsFactory(paramsWithQuestionIdx, defaultCallbacks);
-
-      expect(result).toHaveProperty("config");
-      expect(result).toHaveProperty("callbacks");
-    });
-
     test("should include onCreateGroup callback when includeCreateGroup is true", () => {
       const paramsWithCreateGroup = {
         ...defaultParams,

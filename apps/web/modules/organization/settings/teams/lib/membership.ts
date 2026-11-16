@@ -11,23 +11,13 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { hasOnlyDashboardViewerRoles } from "@/lib/membership/dashboard-viewer";
-import { isTransactionConflictError, retryOnTransactionConflict } from "@/lib/utils/prisma-error";
+import { lockUserActiveState } from "@/lib/user/reactivation";
+import { isTransactionConflictError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
 import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-store";
-
-/**
- * One serializable transaction, run again when Postgres aborts it over a concurrent one. Both the
- * shared conflict check and the retry live in `prisma-error`, so a driver adapter's own conflict error
- * is retried as well as Prisma's P2034.
- */
-const runSerializableTransactionWithRetry = <T>(
-  transaction: (tx: Prisma.TransactionClient) => Promise<T>
-): Promise<T> =>
-  retryOnTransactionConflict(() =>
-    prisma.$transaction(transaction, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable })
-  );
+import { LastActiveOwnerError, runOwnerGuardedTransaction } from "./owner-guard";
 
 export const getMembershipByOrganizationId = reactCache(
   async (organizationId: string, page?: number): Promise<TMember[]> => {
@@ -77,56 +67,6 @@ export const getMembershipByOrganizationId = reactCache(
   }
 );
 
-const getOrganizationOwnerCountUncached = async (
-  organizationId: string,
-  tx?: Prisma.TransactionClient
-): Promise<number> => {
-  validateInputs([organizationId, ZString]);
-
-  try {
-    const ownersCount = await (tx ?? prisma).membership.count({
-      where: {
-        organizationId,
-        role: "owner",
-        // A deactivated user can never sign in again (see modules/auth/lib/session.ts and
-        // better-auth-active-user-gate.ts), so counting them as "another owner" would let a
-        // guard pass while leaving the organization with no owner who can actually log in.
-        user: { isActive: true },
-      },
-    });
-
-    return ownersCount;
-  } catch (error) {
-    // Inside a transaction the error belongs to the transaction's owner: wrapping a serialization
-    // conflict (P2034) here would hide it from the retry that re-runs the whole transaction.
-    if (!tx && error instanceof Prisma.PrismaClientKnownRequestError) {
-      throw new DatabaseError(error.message);
-    }
-
-    throw error;
-  }
-};
-
-const getOrganizationOwnerCountCached = reactCache((organizationId: string) =>
-  getOrganizationOwnerCountUncached(organizationId)
-);
-
-/**
- * Pass `tx` when this must be read inside the same transaction as the mutation it's guarding
- * (see updateMembershipAction) so a Serializable transaction can catch concurrent demotions;
- * without `tx` the result is request-cached like the rest of this module's reads.
- */
-export const getOrganizationOwnerCount = async (
-  organizationId: string,
-  tx?: Prisma.TransactionClient
-): Promise<number> => {
-  if (tx) {
-    return getOrganizationOwnerCountUncached(organizationId, tx);
-  }
-
-  return getOrganizationOwnerCountCached(organizationId);
-};
-
 /**
  * Removes a member from the organization. `actorUserId` is the user who removes them (the member themselves
  * when leaving): the actor of the audit entries of any MCP grant the removal ends.
@@ -145,76 +85,77 @@ export const deleteMembership = async (
   validateInputs([userId, ZString], [organizationId, ZString]);
 
   try {
-    // Set by the attempt that commits: a retried attempt starts over.
-    let revokedMcpGrantAudits: TMcpGrantAuditRecord[] = [];
-    const deletedTeamMemberships = await runSerializableTransactionWithRetry(async (tx) => {
-      revokedMcpGrantAudits = [];
-      // The last-owner guard is read in the same serializable transaction as the delete, so two owners
-      // removed at once cannot both see "another owner is left" and leave the organization with none.
-      const target = await tx.membership.findUnique({
-        where: { userId_organizationId: { organizationId, userId } },
-        select: { role: true, user: { select: { isActive: true } } },
-      });
-      if (target?.role === "owner") {
-        const activeOwners = await getOrganizationOwnerCount(organizationId, tx);
-        const activeOwnersLeft = activeOwners - (target.user.isActive ? 1 : 0);
-        if (activeOwnersLeft < 1) {
-          throw new ValidationError("You cannot delete the last owner of the organization");
-        }
-      }
+    // The last-owner guard is read under the owners' lock, in the same transaction as the delete, so two
+    // owners removed at once cannot both see "another owner is left" and leave the organization with none.
+    // Each attempt returns the audit records of the grants it ended, so only the one that commits is audited.
+    const { teamMemberships: deletedTeamMemberships, revokedMcpGrantAudits } =
+      await runOwnerGuardedTransaction(organizationId, userId, async (tx) => {
+        // The user's row, so that removals of the same user from different organizations run one after the
+        // other: each decides whether only Dashboard viewer memberships remain (below) from what the other
+        // committed, instead of both still counting the other's membership and neither revoking the grants.
+        // Taken after the owners' lock, the order every guarded path takes them in, and before the user's
+        // MCP grant and consent rows (`revokeAllUserOAuthGrants`), which a consent approval also takes after
+        // the user's row.
+        await lockUserActiveState(tx, userId);
+        let grantAudits: TMcpGrantAuditRecord[] = [];
 
-      // Someone left with only Dashboard viewer memberships keeps no OAuth grant from the wider role they
-      // are losing: consents go and refresh tokens are revoked, as when a role edit makes them a viewer
-      // (`updateMembership`), so the next consent offers only dashboards:read (ADR-0025). Decided and done
-      // before the membership goes, so each ended grant's audit entries are filed under this organization
-      // too: its grant reached it until now.
-      if (target && target.role !== "dashboard_viewer") {
-        const remaining = await tx.membership.findMany({
-          where: { userId, organizationId: { not: organizationId } },
+        const target = await tx.membership.findUnique({
+          where: { userId_organizationId: { organizationId, userId } },
           select: { role: true },
         });
-        if (hasOnlyDashboardViewerRoles(remaining)) {
-          ({ grantAudits: revokedMcpGrantAudits } = await revokeAllUserOAuthGrants(tx, userId));
+
+        // Someone left with only Dashboard viewer memberships keeps no OAuth grant from the wider role they
+        // are losing: consents go and refresh tokens are revoked, as when a role edit makes them a viewer
+        // (`updateMembership`), so the next consent offers only dashboards:read (ADR-0025). Decided and done
+        // before the membership goes, so each ended grant's audit entries are filed under this organization
+        // too: its grant reached it until now.
+        if (target && target.role !== "dashboard_viewer") {
+          const remaining = await tx.membership.findMany({
+            where: { userId, organizationId: { not: organizationId } },
+            select: { role: true },
+          });
+          if (hasOnlyDashboardViewerRoles(remaining)) {
+            ({ grantAudits } = await revokeAllUserOAuthGrants(tx, userId));
+          }
         }
-      }
 
-      const teamMemberships = await tx.teamUser.findMany({
-        where: {
-          userId,
-          team: {
-            organizationId,
-          },
-        },
-      });
-
-      await tx.teamUser.deleteMany({
-        where: {
-          userId,
-          team: {
-            organizationId,
-          },
-        },
-      });
-      await tx.membership.delete({
-        where: {
-          userId_organizationId: {
-            organizationId,
+        const teamMemberships = await tx.teamUser.findMany({
+          where: {
             userId,
+            team: {
+              organizationId,
+            },
           },
-        },
-      });
+        });
 
-      // A pending invite is only as trustworthy as the member who sent it, so once the creator is out
-      // of the organization it must stop granting access. Expired rather than deleted: admins still see
-      // it in the invite list and can resend it on purpose.
-      const now = new Date();
-      await tx.invite.updateMany({
-        where: { organizationId, creatorId: userId, expiresAt: { gt: now } },
-        data: { expiresAt: now },
-      });
+        await tx.teamUser.deleteMany({
+          where: {
+            userId,
+            team: {
+              organizationId,
+            },
+          },
+        });
+        await tx.membership.delete({
+          where: {
+            userId_organizationId: {
+              organizationId,
+              userId,
+            },
+          },
+        });
 
-      return teamMemberships;
-    });
+        // A pending invite is only as trustworthy as the member who sent it, so once the creator is out
+        // of the organization it must stop granting access. Expired rather than deleted: admins still see
+        // it in the invite list and can resend it on purpose.
+        const now = new Date();
+        await tx.invite.updateMany({
+          where: { organizationId, creatorId: userId, expiresAt: { gt: now } },
+          data: { expiresAt: now },
+        });
+
+        return { teamMemberships, revokedMcpGrantAudits: grantAudits };
+      });
 
     await finishRevokedMcpGrants(revokedMcpGrantAudits, { actorUserId });
     await reconcileOrganizationMembership(organizationId, userId);
@@ -226,6 +167,9 @@ export const deleteMembership = async (
 
     return deletedTeamMemberships;
   } catch (error) {
+    if (error instanceof LastActiveOwnerError) {
+      throw new ValidationError("You cannot delete the last owner of the organization");
+    }
     // A conflict that outlasted every retry may be the driver adapter's own error rather than P2034.
     if (error instanceof Prisma.PrismaClientKnownRequestError || isTransactionConflictError(error)) {
       throw new DatabaseError(error instanceof Error ? error.message : "Transaction conflict");

@@ -1,28 +1,31 @@
 "use server";
 
 import { z } from "zod";
-import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
 import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, ValidationError } from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
 import { assertCan } from "@/lib/authorization";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { assertUserManagementAllowed } from "@/lib/membership/user-management";
+import { lockUserActiveState } from "@/lib/user/reactivation";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
+import { finishRevokedMcpGrants } from "@/modules/auth/lib/oauth-grant-revocation";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
-import { updateMembership } from "@/modules/ee/role-management/lib/membership";
+import { updateMembership, updateMembershipInTransaction } from "@/modules/ee/role-management/lib/membership";
 import {
   assertCanAssignRole,
   checkRoleManagementPermission,
 } from "@/modules/ee/role-management/lib/permission";
 import { ZInviteUpdateInput } from "@/modules/ee/role-management/types/invites";
 import { getInvite } from "@/modules/organization/settings/teams/lib/invite";
-import { getOrganizationOwnerCount } from "@/modules/organization/settings/teams/lib/membership";
+import {
+  LastActiveOwnerError,
+  runOwnerGuardedTransaction,
+} from "@/modules/organization/settings/teams/lib/owner-guard";
 
 const ZUpdateInviteAction = z.object({
   inviteId: ZUuid,
@@ -70,6 +73,40 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
   })
 );
 
+/**
+ * Demotes an owner under the owners' lock, refusing to demote the last active one. `actorUserId` is the
+ * user making the change: the actor of the audit entries of any MCP grant it ends, which are finished once
+ * the transaction commits. Each attempt returns its own records, so a retried attempt's are dropped.
+ */
+const demoteOwner = async (
+  organizationId: string,
+  userId: string,
+  data: z.infer<typeof ZMembershipUpdateInput>,
+  actorUserId: string
+) => {
+  try {
+    const { membership, grantAudits } = await runOwnerGuardedTransaction(
+      organizationId,
+      userId,
+      async (tx) => {
+        // The user's row, as removing a member takes it: a demotion to Dashboard viewer decides whether only
+        // viewer memberships remain (and revokes the wider OAuth grants), and must see a removal from another
+        // organization that commits at the same moment. After the owners' lock, before the user's MCP grant
+        // and consent rows.
+        await lockUserActiveState(tx, userId);
+        return updateMembershipInTransaction(tx, userId, organizationId, data);
+      }
+    );
+    await finishRevokedMcpGrants(grantAudits, { actorUserId });
+    return membership;
+  } catch (error) {
+    if (error instanceof LastActiveOwnerError) {
+      throw new ValidationError("You cannot demote the last owner of the organization");
+    }
+    throw error;
+  }
+};
+
 const ZUpdateMembershipAction = z.object({
   userId: ZId,
   organizationId: ZId,
@@ -112,27 +149,12 @@ export const updateMembershipAction = authenticatedActionClient.inputSchema(ZUpd
 
     // The owner count and the role update must be one atomic unit: read then act, in two separate
     // statements, lets two owners demoting each other concurrently both read "more than one owner"
-    // and both writes land, leaving zero owners. Serializable isolation makes Postgres abort one of
-    // the two transactions instead.
+    // and both writes land, leaving zero owners. The owners' lock (`runOwnerGuardedTransaction`, the
+    // one every last-owner check takes) makes the second wait, then count what the first committed.
+    // Only a demotion of an owner runs in a transaction, as before; deciding it under the lock instead
+    // of from the lookup above is ENG-2177.
     const result = isDemotingOwner
-      ? await prisma.$transaction(
-          async (tx) => {
-            const ownerCount = await getOrganizationOwnerCount(parsedInput.organizationId, tx);
-
-            if (ownerCount <= 1) {
-              throw new ValidationError("You cannot demote the last owner of the organization");
-            }
-
-            return updateMembership(
-              parsedInput.userId,
-              parsedInput.organizationId,
-              parsedInput.data,
-              ctx.user.id,
-              tx
-            );
-          },
-          { isolationLevel: Prisma.TransactionIsolationLevel.Serializable }
-        )
+      ? await demoteOwner(parsedInput.organizationId, parsedInput.userId, parsedInput.data, ctx.user.id)
       : await updateMembership(parsedInput.userId, parsedInput.organizationId, parsedInput.data, ctx.user.id);
 
     ctx.auditLoggingCtx.newObject = result;

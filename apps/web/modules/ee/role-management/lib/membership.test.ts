@@ -7,7 +7,7 @@ import { TOrganizationRole } from "@formbricks/types/memberships";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
-import { updateMembership } from "./membership";
+import { updateMembership, updateMembershipInTransaction } from "./membership";
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -162,24 +162,45 @@ describe("updateMembership", () => {
     else expect(revokeAllUserOAuthGrants).not.toHaveBeenCalled();
   });
 
-  test.each([
-    ["on its own, removes the ended grants' relationships after the commit", undefined, true],
-    ["inside a caller's transaction, leaves them to the outbox, since that hasn't committed", prisma, false],
-  ])("%s", async (_label, tx, removes) => {
+  const endGrantsOnDemotion = () => {
     const grantAudits = [{ action: "deleted", before: { id: "grant-1" }, after: null }];
     vi.mocked(prisma.membership.update).mockResolvedValue({ role: "dashboard_viewer" } as never);
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue([] as never);
     vi.mocked(prisma.membership.findMany).mockImplementation(((args: { select?: { role?: boolean } }) =>
       Promise.resolve(args.select?.role ? [{ role: "dashboard_viewer" }] : [])) as never);
     vi.mocked(revokeAllUserOAuthGrants).mockResolvedValue({ grantAudits } as never);
+    return grantAudits;
+  };
 
-    await updateMembership("user1", "org1", { role: "dashboard_viewer" }, "owner-1", tx as never);
+  test("on its own, audits the ended grants as the user who changed the role and removes their relationships", async () => {
+    const grantAudits = endGrantsOnDemotion();
+
+    await updateMembership("user1", "org1", { role: "dashboard_viewer" }, "owner-1");
 
     // Audited by the owner who changed the role, not the system.
-    expect(finishRevokedMcpGrants).toHaveBeenCalledWith(grantAudits, {
-      removeRelationships: removes,
-      actorUserId: "owner-1",
-    });
+    expect(finishRevokedMcpGrants).toHaveBeenCalledWith(grantAudits, { actorUserId: "owner-1" });
+  });
+
+  test("still audits grants it ended when a later write fails, since each write committed on its own", async () => {
+    const grantAudits = endGrantsOnDemotion();
+    vi.mocked(prisma.teamUser.findMany).mockRejectedValueOnce(new Error("database down"));
+
+    await expect(updateMembership("user1", "org1", { role: "dashboard_viewer" }, "owner-1")).rejects.toThrow(
+      "database down"
+    );
+
+    expect(finishRevokedMcpGrants).toHaveBeenCalledWith(grantAudits, { actorUserId: "owner-1" });
+    expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org1", "user1");
+  });
+
+  test("inside a caller's transaction, returns the ended grants for after the commit instead of finishing them", async () => {
+    const grantAudits = endGrantsOnDemotion();
+
+    await expect(
+      updateMembershipInTransaction(prisma as never, "user1", "org1", { role: "dashboard_viewer" })
+    ).resolves.toEqual({ membership: { role: "dashboard_viewer" }, grantAudits });
+
+    expect(finishRevokedMcpGrants).not.toHaveBeenCalled();
   });
 
   test("includes memberships added while team roles are being updated in reconciliation", async () => {
@@ -231,9 +252,10 @@ describe("updateMembership", () => {
       },
     } as unknown as Prisma.TransactionClient;
 
-    await expect(updateMembership("user1", "org1", { role: "member" }, "owner-1", tx)).resolves.toEqual(
-      mockMembership
-    );
+    await expect(updateMembershipInTransaction(tx, "user1", "org1", { role: "member" })).resolves.toEqual({
+      membership: mockMembership,
+      grantAudits: [],
+    });
 
     expect(tx.membership.update).toHaveBeenCalled();
     expect(prisma.membership.update).not.toHaveBeenCalled();

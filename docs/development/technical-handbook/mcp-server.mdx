@@ -177,6 +177,13 @@ Every path that locks both a grant row and consent rows takes the grant first. P
 grant to hold still while they read the consent (the refresh check, restoring a consent after a failed
 approval) lock it `FOR SHARE` (`shareLockMcpGrant`).
 
+Ending a user's grants from a membership change sits under two earlier locks, so the full order is: the
+organization's owner memberships (`runOwnerGuardedTransaction`), then the user's row (`lockUserActiveState`),
+then the grant rows, then the consent rows. A member removal, an owner's demotion and the retention members
+sweep take them in that order. A consent approval creates the grant row, whose foreign key locks the user's
+row, so it takes that row `FOR KEY SHARE` first, before the grant: taken at the insert instead, it would
+close a cycle with a removal that holds the user's row and waits on the consent rows.
+
 **There are no exceptions, and tests are what keep it that way.** The feedback-record tools were one
 for a while — they gated inside their own handler factories and registered through
 `server.registerTool` directly, which meant every handler was checked but a _new_ tool added outside
