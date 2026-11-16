@@ -119,7 +119,7 @@ export const NotificationSwitch = ({
 
   return (
     <Switch
-      id="notification-switch"
+      id={`notification-switch-${notificationType}-${surveyOrWorkspaceOrOrganizationId}`}
       aria-label={`toggle notification settings for ${notificationType}`}
       checked={isChecked}
       disabled={isLoading}
