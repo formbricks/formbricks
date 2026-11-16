@@ -14,13 +14,16 @@ import {
   WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP,
   WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT,
   WORKFLOW_CANVAS_CONNECTOR,
+  WORKFLOW_CANVAS_HORIZONTAL,
   getBranchLegOffsets,
+  getBranchSpread,
 } from "@/modules/ee/workflows/lib/canvas-geometry";
 import {
   type TWorkflowNodeData,
   canMutateCanvasAtom,
   countStepsOnBranches,
   deleteWorkflowNodeAtom,
+  workflowCanvasDirectionAtom,
   workflowDefinitionAtom,
 } from "@/modules/ee/workflows/state/editor";
 import { Button } from "@/modules/ui/components/button";
@@ -43,6 +46,12 @@ const VERTICAL_LINE_STYLE: CSSProperties = {
   background: WORKFLOW_CANVAS_CONNECTOR.color,
   transform: "translateX(-50%)",
 };
+const HORIZONTAL_LINE_STYLE: CSSProperties = {
+  height: WORKFLOW_CANVAS_CONNECTOR.width,
+  background: WORKFLOW_CANVAS_CONNECTOR.color,
+  transform: "translateY(-50%)",
+};
+const { forkBarLeft: FORK_BAR_LEFT } = WORKFLOW_CANVAS_HORIZONTAL;
 
 /**
  * An If/else or Switch step on the canvas (ENG-7111, ENG-7157): the step card, and under it a fork
@@ -64,8 +73,14 @@ export const WorkflowBranchNode = memo(
     // Deleting an If/else or a Switch takes its branches with it (spec §2), so it asks first, saying how many
     // steps go too. Counted when the menu item is picked, not on every render of the card.
     const [deleteStepCount, setDeleteStepCount] = useState<number | null>(null);
+    const isHorizontal = useAtomValue(workflowCanvasDirectionAtom) === "horizontal";
     const legs = data.branches;
-    const legOffsets = data.legOffsets ?? getBranchLegOffsets(legs.map(() => null));
+    const legOffsets =
+      data.legOffsets ??
+      getBranchLegOffsets(
+        legs.map(() => null),
+        getBranchSpread(isHorizontal ? "horizontal" : "vertical")
+      );
     const barLeft = Math.min(0, ...legOffsets);
     const barRight = Math.max(0, ...legOffsets);
     // The legs' handles move with the branches' steps, which doesn't resize the node: tell React Flow
@@ -90,10 +105,17 @@ export const WorkflowBranchNode = memo(
     }
 
     return (
-      <div className="flex flex-col items-center" style={{ height: WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT }}>
+      <div
+        className={cn("flex", isHorizontal ? "flex-row items-start" : "flex-col items-center")}
+        style={
+          isHorizontal
+            ? { width: WORKFLOW_CANVAS_HORIZONTAL.branchStepWidth }
+            : { height: WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT }
+        }>
         <WorkflowNodeCard
           data={data}
           selected={selected}
+          direction={isHorizontal ? "horizontal" : "vertical"}
           menu={
             canMutate && (
               <DropdownMenu>
@@ -144,74 +166,149 @@ export const WorkflowBranchNode = memo(
             Icon={Trash2Icon}
           />
         </div>
-        <div className="pointer-events-none relative w-64 flex-1">
-          {/* Zero-width origin at the card's centre; the bar and the legs reach past the card on purpose. */}
-          <div className="absolute inset-y-0 left-1/2 w-0">
-            <div
-              className={cn(FORK_LINE_CLASS_NAME, "top-0 left-0")}
-              style={{ ...VERTICAL_LINE_STYLE, height: WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP }}
-            />
-            <div
-              className={FORK_LINE_CLASS_NAME}
-              style={{
-                top: WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP,
-                left: barLeft,
-                width: barRight - barLeft,
-                height: WORKFLOW_CANVAS_CONNECTOR.width,
-                background: WORKFLOW_CANVAS_CONNECTOR.color,
-                transform: "translateY(-50%)",
-              }}
-            />
-            {legs.map((branch, index) => {
-              const left = legOffsets[index];
-              const isEmpty = data.emptyBranches.includes(branch.handle);
-              return (
-                <div key={branch.handle}>
-                  {/* Where the branch's edge starts: on the bar, right above the branch's first step. */}
-                  <div className="absolute size-0" style={{ top: WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP, left }}>
-                    <Handle
-                      id={branch.handle}
-                      type="source"
-                      position={Position.Bottom}
-                      className={HANDLE_CLASS_NAMES}
-                    />
-                  </div>
-                  {isEmpty ? (
-                    <div
-                      className={cn(
-                        FORK_LINE_CLASS_NAME,
-                        "bottom-0",
-                        takenBranch !== null && takenBranch !== branch.handle && "opacity-40"
-                      )}
-                      style={{ ...VERTICAL_LINE_STYLE, top: WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP, left }}>
-                      <div className="absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
-                        <BranchLabel
-                          branch={branch}
-                          isTaken={takenBranch === branch.handle}
-                          isDimmed={false}
-                        />
-                      </div>
-                      {canMutate ? (
-                        <div className="pointer-events-auto absolute top-full left-1/2 mt-1 -translate-x-1/2">
-                          <WorkflowAddStepMenu
-                            afterNodeType={data.nodeType}
-                            ariaLabel={branch.addStepLabel}
-                            onAdd={(stepType) => appendStep(id, stepType, branch.handle)}
+        {isHorizontal ? (
+          // Left to right: the fork sits right of the card, its bar running down, and each leg runs
+          // right from the bar, level with its branch's first step.
+          <div
+            className="pointer-events-none relative flex-1"
+            style={{ height: WORKFLOW_CANVAS_HORIZONTAL.cardHeight }}>
+            {/* Zero-height origin at the card's vertical centre, on its right edge. */}
+            <div className="absolute inset-x-0 top-1/2 h-0">
+              <div
+                className="absolute left-0"
+                style={{ ...HORIZONTAL_LINE_STYLE, top: 0, width: FORK_BAR_LEFT }}
+              />
+              <div
+                className="absolute"
+                style={{
+                  left: FORK_BAR_LEFT,
+                  top: barLeft,
+                  height: barRight - barLeft,
+                  width: WORKFLOW_CANVAS_CONNECTOR.width,
+                  background: WORKFLOW_CANVAS_CONNECTOR.color,
+                  transform: "translateX(-50%)",
+                }}
+              />
+              {legs.map((branch, index) => {
+                const top = legOffsets[index];
+                const isEmpty = data.emptyBranches.includes(branch.handle);
+                return (
+                  <div key={branch.handle}>
+                    <div className="absolute size-0" style={{ top, left: FORK_BAR_LEFT }}>
+                      <Handle
+                        id={branch.handle}
+                        type="source"
+                        position={Position.Right}
+                        className={HANDLE_CLASS_NAMES}
+                      />
+                    </div>
+                    {isEmpty ? (
+                      <div
+                        className={cn(
+                          "absolute right-0",
+                          takenBranch !== null && takenBranch !== branch.handle && "opacity-40"
+                        )}
+                        style={{ ...HORIZONTAL_LINE_STYLE, top, left: FORK_BAR_LEFT }}>
+                        <div className="absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+                          <BranchLabel
+                            branch={branch}
+                            isTaken={takenBranch === branch.handle}
+                            isDimmed={false}
+                            isCompact
                           />
                         </div>
-                      ) : (
-                        // Nothing runs on this branch and nothing can be added here now: the line ends.
-                        <div className="absolute top-full left-1/2 -translate-x-1/2">
-                          <BranchEndMarker />
-                        </div>
-                      )}
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })}
+                        {canMutate ? (
+                          <div className="pointer-events-auto absolute top-1/2 left-full ml-1 -translate-y-1/2">
+                            <WorkflowAddStepMenu
+                              afterNodeType={data.nodeType}
+                              ariaLabel={branch.addStepLabel}
+                              onAdd={(stepType) => appendStep(id, stepType, branch.handle)}
+                            />
+                          </div>
+                        ) : (
+                          <div className="absolute top-1/2 left-full -translate-y-1/2">
+                            <BranchEndMarker direction="horizontal" />
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="pointer-events-none relative w-64 flex-1">
+            {/* Zero-width origin at the card's centre; the bar and the legs reach past the card on purpose. */}
+            <div className="absolute inset-y-0 left-1/2 w-0">
+              <div
+                className={cn(FORK_LINE_CLASS_NAME, "top-0 left-0")}
+                style={{ ...VERTICAL_LINE_STYLE, height: WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP }}
+              />
+              <div
+                className={FORK_LINE_CLASS_NAME}
+                style={{
+                  top: WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP,
+                  left: barLeft,
+                  width: barRight - barLeft,
+                  height: WORKFLOW_CANVAS_CONNECTOR.width,
+                  background: WORKFLOW_CANVAS_CONNECTOR.color,
+                  transform: "translateY(-50%)",
+                }}
+              />
+              {legs.map((branch, index) => {
+                const left = legOffsets[index];
+                const isEmpty = data.emptyBranches.includes(branch.handle);
+                return (
+                  <div key={branch.handle}>
+                    {/* Where the branch's edge starts: on the bar, right above the branch's first step. */}
+                    <div
+                      className="absolute size-0"
+                      style={{ top: WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP, left }}>
+                      <Handle
+                        id={branch.handle}
+                        type="source"
+                        position={Position.Bottom}
+                        className={HANDLE_CLASS_NAMES}
+                      />
+                    </div>
+                    {isEmpty ? (
+                      <div
+                        className={cn(
+                          FORK_LINE_CLASS_NAME,
+                          "bottom-0",
+                          takenBranch !== null && takenBranch !== branch.handle && "opacity-40"
+                        )}
+                        style={{ ...VERTICAL_LINE_STYLE, top: WORKFLOW_CANVAS_BRANCH_FORK_BAR_TOP, left }}>
+                        <div className="absolute top-1/2 left-1/2 z-10 -translate-x-1/2 -translate-y-1/2">
+                          <BranchLabel
+                            branch={branch}
+                            isTaken={takenBranch === branch.handle}
+                            isDimmed={false}
+                          />
+                        </div>
+                        {canMutate ? (
+                          <div className="pointer-events-auto absolute top-full left-1/2 mt-1 -translate-x-1/2">
+                            <WorkflowAddStepMenu
+                              afterNodeType={data.nodeType}
+                              ariaLabel={branch.addStepLabel}
+                              onAdd={(stepType) => appendStep(id, stepType, branch.handle)}
+                            />
+                          </div>
+                        ) : (
+                          // Nothing runs on this branch and nothing can be added here now: the line ends.
+                          <div className="absolute top-full left-1/2 -translate-x-1/2">
+                            <BranchEndMarker />
+                          </div>
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     );
   }

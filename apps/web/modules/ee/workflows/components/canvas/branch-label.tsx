@@ -10,18 +10,21 @@ interface BranchLabelProps {
   isTaken: boolean;
   /** Another branch of the same step was taken: greyed. */
   isDimmed: boolean;
+  /** Left to right, the label sits on a shorter horizontal leg, so it is cut sooner. */
+  isCompact?: boolean;
 }
 
 /**
  * A branch's plain label (ED8: Then and Else, or a Switch case's name and Default), drawn on the
  * branch's line midway between the fork bar and the branch's first step or its `+`.
  */
-export const BranchLabel = ({ branch, isTaken, isDimmed }: Readonly<BranchLabelProps>) => {
+export const BranchLabel = ({ branch, isTaken, isDimmed, isCompact = false }: Readonly<BranchLabelProps>) => {
   const { t } = useTranslation();
   return (
     <span
       className={cn(
-        "inline-flex max-w-[18rem] items-center rounded-full border border-slate-500 bg-white px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-slate-900",
+        "inline-flex items-center rounded-full border border-slate-500 bg-white px-2 py-0.5 text-xs font-semibold whitespace-nowrap text-slate-900",
+        isCompact ? "max-w-[9rem]" : "max-w-[18rem]",
         isTaken && "border-slate-900 bg-slate-900 text-white",
         isDimmed && "opacity-40"
       )}>

@@ -60,6 +60,7 @@ import {
   setWorkflowDefinitionAtom,
   toggleWorkflowInspectorAtom,
   workflowAtom,
+  workflowCanvasDirectionAtom,
   workflowDefinitionAtom,
   workflowFlowNodesAtom,
 } from "@/modules/ee/workflows/state/editor";
@@ -99,6 +100,9 @@ interface WorkflowCanvasProps {
   isEditable: boolean;
 }
 
+/** How long a re-arranged flow takes to reach React Flow and be measured, before the view refits. */
+const LAYOUT_REFIT_DELAY_MS = 120;
+
 const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) => {
   const { t } = useTranslation();
   const workflow = useAtomValue(workflowAtom);
@@ -107,6 +111,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const isSnapToCanvasEnabled = useAtomValue(isWorkflowSnapToCanvasEnabledAtom);
   const isLocked = useAtomValue(isCanvasLockedAtom);
   const setLocked = useSetAtom(isCanvasLockedAtom);
+  const direction = useAtomValue(workflowCanvasDirectionAtom);
   const isInspectorCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
   const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
   const toggleInspector = useSetAtom(toggleWorkflowInspectorAtom);
@@ -162,9 +167,10 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
             triggerSummary,
             variableLabels,
             variableRefs,
+            direction,
           })
         : [],
-    [definition, t, hasBoundSurvey, isDraft, triggerSummary, variableLabels, variableRefs]
+    [definition, t, hasBoundSurvey, isDraft, triggerSummary, variableLabels, variableRefs, direction]
   );
   // While a run is open in the run drawer, the canvas marks its path: the steps and edges off it
   // are greyed (mock screen 7), and each If/else labels the branch it took (workflow-branch-node).
@@ -194,14 +200,14 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   // canvas has them now, so a branch's line runs straight down even while its step is dragged.
   const definitionEdges = definition?.edges;
   const displayedFlowNodes = useMemo(() => {
-    const nodes = withBranchLegOffsets(flowNodes, definitionEdges ?? []);
+    const nodes = withBranchLegOffsets(flowNodes, definitionEdges ?? [], direction);
     if (!runHighlight) return nodes;
     return nodes.map((node) =>
       runHighlight.notTakenStepIds.has(node.id)
         ? { ...node, className: cn(node.className, "opacity-40") }
         : node
     );
-  }, [flowNodes, definitionEdges, runHighlight]);
+  }, [flowNodes, definitionEdges, runHighlight, direction]);
 
   const handleNodesChange: OnNodesChange<Node<TWorkflowNodeData>> = useCallback(
     (changes) => setFlowNodes((currentNodes) => applyNodeChanges(changes, currentNodes)),
@@ -263,25 +269,61 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     return () => clearTimeout(timeoutHandle);
   }, [isInspectorVisible, isRunDrawerOpen, refitViewport]);
 
+  const recenterAfterLayout = useCallback(() => {
+    // Skip the animated recenter for users who ask for reduced motion (read at call time —
+    // no reactivity needed for a click handler).
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Wait for the new positions to reach React Flow (definition, then nodes, then their measured
+    // sizes) before it recenters the viewport; one frame is too early for a whole new orientation.
+    setTimeout(() => refitViewport(prefersReducedMotion ? 0 : 300), LAYOUT_REFIT_DELAY_MS);
+  }, [refitViewport]);
+
   const handleAutoLayout = useCallback(() => {
     if (!canMutate || !definition) return;
     // Says what happened, since a workflow that is already arranged doesn't visibly change. Nothing
     // moved means nothing to save and no undo step.
-    const arranged = reorganizeWorkflowDefinition(definition);
+    const arranged = reorganizeWorkflowDefinition(definition, direction);
     if (haveSameNodePositions(definition, arranged)) {
       toast.success(t("workspace.workflows.auto_layout_unchanged"));
     } else {
       setDefinition((currentDefinition) =>
-        currentDefinition ? reorganizeWorkflowDefinition(currentDefinition) : currentDefinition
+        currentDefinition ? reorganizeWorkflowDefinition(currentDefinition, direction) : currentDefinition
       );
       toast.success(t("workspace.workflows.auto_layout_done"));
     }
-    // Skip the animated recenter for users who ask for reduced motion (read at call time —
-    // no reactivity needed for a click handler).
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Defer one frame so the new node positions render before RF recenters the viewport.
-    requestAnimationFrame(() => refitViewport(prefersReducedMotion ? 0 : 300));
-  }, [canMutate, definition, setDefinition, refitViewport, t]);
+    recenterAfterLayout();
+  }, [canMutate, definition, direction, setDefinition, recenterAfterLayout, t]);
+
+  // The view first fits before React Flow has measured a left-to-right flow's wider layout: fit it
+  // again once per workflow opened.
+  const refitForDirectionRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!workflow?.id || !definition || refitForDirectionRef.current === workflow.id) return;
+    refitForDirectionRef.current = workflow.id;
+    if (direction === "horizontal") setTimeout(() => refitViewport(0), LAYOUT_REFIT_DELAY_MS);
+  }, [workflow?.id, definition, direction, refitViewport]);
+
+  // Switching the orientation re-arranges every step for it: positions laid out top to bottom
+  // would read wrong left to right. Saved with the workflow and undone like Auto layout.
+  const handleToggleDirection = useCallback(() => {
+    if (!canMutate) return;
+    const next = direction === "vertical" ? "horizontal" : "vertical";
+    // One edit: the orientation and the positions laid out for it, so Undo restores both.
+    setDefinition((currentDefinition) =>
+      currentDefinition
+        ? {
+            ...reorganizeWorkflowDefinition(currentDefinition, next),
+            ui: { ...currentDefinition.ui, direction: next },
+          }
+        : currentDefinition
+    );
+    toast.success(
+      next === "horizontal"
+        ? t("workspace.workflows.canvas_direction_horizontal_done")
+        : t("workspace.workflows.canvas_direction_vertical_done")
+    );
+    recenterAfterLayout();
+  }, [canMutate, direction, setDefinition, recenterAfterLayout, t]);
 
   // Pan mode is the pan/browse tool: nodes are fully inert (no click, selection, or drag), so
   // switching into it also clears any leftover selection. Pointer mode is the select/inspect
@@ -376,7 +418,9 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
       <CanvasControls
         canMutate={canMutate}
         isPanMode={isLocked}
+        direction={direction}
         onAutoLayout={handleAutoLayout}
+        onToggleDirection={handleToggleDirection}
         onPanMode={handlePanMode}
         onPointerMode={handlePointerMode}
       />

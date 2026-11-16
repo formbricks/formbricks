@@ -5854,6 +5854,10 @@ checksums:
     workspace/workflows/branch_else_aria: a213795430ad1b40fac60fbc6d407bc7
     workspace/workflows/branch_then: 5e941fb7dd51a18651fcfb865edd5ba6
     workspace/workflows/branch_then_aria: f125bc15f3ad3c925b98fd583b071f97
+    workspace/workflows/canvas_direction_horizontal_done: 336a2cc4a7d17fa8b1bdfde8551e0285
+    workspace/workflows/canvas_direction_to_horizontal: bd7da7c61914a9f001a245870ff119a9
+    workspace/workflows/canvas_direction_to_vertical: 0b3080e7df8e015cf98941d24a51089a
+    workspace/workflows/canvas_direction_vertical_done: f9c5bee74ae9ffbc15e4f7a017cc7354
     workspace/workflows/collapse_inspector: d3bd60a39c7d42e98c78df07c756ac22
     workspace/workflows/create_failed: b67532a43f2b040b3738ffba1d3c0ce7
     workspace/workflows/delete_failed: df67d2e7a4952b19c8371e592ea03c65
@@ -6018,6 +6022,7 @@ checksums:
     workspace/workflows/json_error_trailing_comma: 6e04eb15e86460470eba84c1f135f739
     workspace/workflows/json_error_unexpected_end: 96cecb7c7a151c11f1da8e5aef82e7f3
     workspace/workflows/json_error_unterminated_string: 1b45720eed3f357e834a8c683813235e
+    workspace/workflows/layout: 8ab849bdcd801c13e7e85474299e4ee8
     workspace/workflows/load_failed: 4e79a59e05cfc390294673e4aa111f02
     workspace/workflows/logic: c8e5ef649c6904d7327df3731d9de873
     workspace/workflows/name_invalid: c1f750725318d5e385443519730729da

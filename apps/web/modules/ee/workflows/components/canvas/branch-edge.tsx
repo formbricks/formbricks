@@ -8,9 +8,10 @@ import {
   getStraightPath,
   useNodesData,
 } from "@xyflow/react";
+import { useAtomValue } from "jotai";
 import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
 import { WORKFLOW_CANVAS_CONNECTOR } from "@/modules/ee/workflows/lib/canvas-geometry";
-import type { TWorkflowNodeData } from "@/modules/ee/workflows/state/editor";
+import { type TWorkflowNodeData, workflowCanvasDirectionAtom } from "@/modules/ee/workflows/state/editor";
 import { BranchLabel } from "./branch-label";
 
 // The edge from an If/else's or a Switch's fork bar to the first step of one of its branches. The
@@ -32,6 +33,7 @@ export const BranchEdge = ({
   const branch = sourceNode?.data.branches.find(({ handle }) => handle === sourceHandleId);
   // While a run is open in the run drawer: the branch it took, filled; the others greyed.
   const takenBranch = useEditorRunHighlight()?.takenBranchByStepId[source] ?? null;
+  const isHorizontal = useAtomValue(workflowCanvasDirectionAtom) === "horizontal";
 
   return (
     <>
@@ -54,6 +56,7 @@ export const BranchEdge = ({
               branch={branch}
               isTaken={takenBranch === branch.handle}
               isDimmed={takenBranch !== null && takenBranch !== branch.handle}
+              isCompact={isHorizontal}
             />
           </div>
         </EdgeLabelRenderer>

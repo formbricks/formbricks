@@ -70,4 +70,6 @@ properties:
     type: string
     minLength: 1
     description: Workflow entry point. Must equal `trigger.id`.
+  ui:
+    $ref: ./WorkflowDefinitionUi.yml
 additionalProperties: false

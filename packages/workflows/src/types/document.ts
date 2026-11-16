@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ZWorkflowActionNode } from "./actions";
+import { ZWorkflowDefinitionUi } from "./common";
 import {
   type TWorkflowConditionOperator,
   WORKFLOW_SWITCH_DEFAULT_BRANCH,
@@ -64,6 +65,7 @@ export const ZWorkflowDefinitionBase = z
       .min(1)
       .nullable()
       .describe("Workflow entry point. Must reference the workflow trigger node, or be null without one."),
+    ui: ZWorkflowDefinitionUi.optional(),
   })
   .describe("Persisted workflow graph definition.");
 export type TWorkflowDefinitionBase = z.infer<typeof ZWorkflowDefinitionBase>;

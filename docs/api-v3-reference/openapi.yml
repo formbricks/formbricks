@@ -14538,6 +14538,17 @@ components:
           minLength: 1
           description: Builder handle identifier on the target node.
       additionalProperties: false
+    WorkflowDefinitionUi:
+      type: object
+      description: Builder-only UI metadata for the whole workflow. It does not affect execution. Additional keys are preserved.
+      properties:
+        direction:
+          type: string
+          enum:
+            - vertical
+            - horizontal
+          description: 'Which way the builder''s canvas reads: `vertical` (top to bottom, the default when absent) or `horizontal` (left to right). Step positions in each node''s `ui.position` are laid out for it.'
+      additionalProperties: true
     WorkflowDefinition:
       type: object
       description: |
@@ -14582,6 +14593,8 @@ components:
           type: string
           minLength: 1
           description: Workflow entry point. Must equal `trigger.id`.
+        ui:
+          $ref: '#/components/schemas/WorkflowDefinitionUi'
       additionalProperties: false
     CreateWorkflowRequest:
       type: object

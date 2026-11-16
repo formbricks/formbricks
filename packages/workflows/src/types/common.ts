@@ -29,6 +29,19 @@ export const ZWorkflowNodeUi = z
   .describe("Builder-only UI metadata that does not affect workflow execution.");
 export type TWorkflowNodeUi = z.infer<typeof ZWorkflowNodeUi>;
 
+export const ZWorkflowCanvasDirection = z
+  .enum(["vertical", "horizontal"])
+  .describe("Which way the builder's canvas reads: top to bottom (the default) or left to right.");
+export type TWorkflowCanvasDirection = z.infer<typeof ZWorkflowCanvasDirection>;
+
+export const ZWorkflowDefinitionUi = z
+  .object({
+    direction: ZWorkflowCanvasDirection.optional(),
+  })
+  .catchall(z.unknown())
+  .describe("Builder-only UI metadata for the whole workflow that does not affect execution.");
+export type TWorkflowDefinitionUi = z.infer<typeof ZWorkflowDefinitionUi>;
+
 /** Longest fallback text a Variable reference may carry; checked on save (`ZWorkflowDefinitionInput`). */
 export const MAX_WORKFLOW_DATA_REF_FALLBACK_LENGTH = 1000;
 

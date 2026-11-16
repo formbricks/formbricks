@@ -5,6 +5,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { MoreVerticalIcon, Trash2Icon } from "lucide-react";
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
 import { useAppendWorkflowStep } from "@/modules/ee/workflows/hooks/use-append-workflow-step";
 import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
 import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
@@ -12,6 +13,7 @@ import {
   type TWorkflowNodeData,
   canMutateCanvasAtom,
   deleteWorkflowNodeAtom,
+  workflowCanvasDirectionAtom,
 } from "@/modules/ee/workflows/state/editor";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -30,12 +32,14 @@ export const WorkflowCanvasNode = memo(
     const appendStep = useAppendWorkflowStep();
     const canMutate = useAtomValue(canMutateCanvasAtom);
     const isTrigger = data.category === "trigger";
+    const isHorizontal = useAtomValue(workflowCanvasDirectionAtom) === "horizontal";
 
     return (
-      <div className="flex flex-col items-center">
+      <div className={cn("flex items-center", isHorizontal ? "flex-row" : "flex-col")}>
         <WorkflowNodeCard
           data={data}
           selected={selected}
+          direction={isHorizontal ? "horizontal" : "vertical"}
           menu={
             !isTrigger &&
             canMutate && (
@@ -65,13 +69,17 @@ export const WorkflowCanvasNode = memo(
               </DropdownMenu>
             )
           }>
-          <Handle type="source" position={Position.Bottom} className={HANDLE_CLASS_NAMES} />
+          <Handle
+            type="source"
+            position={isHorizontal ? Position.Right : Position.Bottom}
+            className={HANDLE_CLASS_NAMES}
+          />
         </WorkflowNodeCard>
         {data.canAppendStep && canMutate && (
           // The end of the workflow or of an If/else branch gets an inline `+`; mid-chain edges
           // don't offer one. A path that ends on a step needs no end mark: the card is its end.
-          <div className="mt-2 flex flex-col items-center gap-1">
-            <div className="h-3 w-px bg-slate-300" />
+          <div className={cn("flex items-center gap-1", isHorizontal ? "ml-2 flex-row" : "mt-2 flex-col")}>
+            <div className={isHorizontal ? "h-px w-3 bg-slate-300" : "h-3 w-px bg-slate-300"} />
             <WorkflowAddStepMenu
               afterNodeType={data.nodeType}
               ariaLabel={t("workspace.workflows.add_step")}

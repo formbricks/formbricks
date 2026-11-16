@@ -9,10 +9,13 @@ import {
   isResponseCompletedTrigger,
 } from "@formbricks/workflows";
 import {
+  type TWorkflowCanvasDirection,
   WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT,
+  WORKFLOW_CANVAS_HORIZONTAL,
   WORKFLOW_CANVAS_NODE_SPACING,
   WORKFLOW_CANVAS_START_POSITION,
   getBranchLegOffsets,
+  getBranchSpread,
 } from "@/modules/ee/workflows/lib/canvas-geometry";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import {
@@ -37,6 +40,8 @@ export const WORKFLOW_BRANCH_EDGE_TYPE = "branch";
 export const WORKFLOW_CANVAS_SNAP_GRID: SnapGrid = [20, 20];
 
 interface WorkflowFlowNodeOptions {
+  /** Which way steps saved without a position are laid out; top to bottom by default. */
+  direction?: TWorkflowCanvasDirection;
   /**
    * Whether the trigger's `surveyId` resolves to a real survey (see `resolveBoundTriggerSurvey`).
    * Only the canvas can know this (it needs the server-resolved authoring context), so callers
@@ -65,7 +70,9 @@ interface WorkflowFlowNodeOptions {
 const getWorkflowNodeIssue = (
   node: TWorkflowNode,
   t: TFunction,
-  options: Required<Omit<WorkflowFlowNodeOptions, "triggerSummary" | "variableLabels" | "variableRefs">>,
+  options: Required<
+    Omit<WorkflowFlowNodeOptions, "triggerSummary" | "variableLabels" | "variableRefs" | "direction">
+  >,
   isSurveyTrigger: boolean
 ): TWorkflowNodeIssue | null => {
   const severity = options.isDraft ? "setup" : "error";
@@ -147,7 +154,7 @@ export const workflowDefinitionToFlowNodes = (
   const sourcesWithEdges = new Set(definition.edges.map((edge) => edge.source));
   const isSurveyTrigger = isResponseCompletedTrigger(definition.trigger);
   const resolvedOptions: Required<
-    Omit<WorkflowFlowNodeOptions, "triggerSummary" | "variableLabels" | "variableRefs">
+    Omit<WorkflowFlowNodeOptions, "triggerSummary" | "variableLabels" | "variableRefs" | "direction">
   > = {
     hasBoundSurvey: options?.hasBoundSurvey ?? true,
     isDraft: options?.isDraft ?? true,
@@ -160,7 +167,8 @@ export const workflowDefinitionToFlowNodes = (
     ? layoutWorkflowNodes(
         definition,
         new Map(allNodes.map((node) => [node.id, node])),
-        allNodes.map((node) => node.id)
+        allNodes.map((node) => node.id),
+        options?.direction
       )
     : null;
 
@@ -222,17 +230,23 @@ export const workflowDefinitionToFlowEdges = (definition: TWorkflowDefinition): 
  */
 export const withBranchLegOffsets = <TNode extends Node<TWorkflowNodeData>>(
   nodes: TNode[],
-  edges: ReadonlyArray<Pick<Edge, "source" | "target" | "sourceHandle">>
+  edges: ReadonlyArray<Pick<Edge, "source" | "target" | "sourceHandle">>,
+  direction: TWorkflowCanvasDirection = "vertical"
 ): TNode[] => {
-  const xById = new Map(nodes.map((node) => [node.id, node.position.x]));
+  // Left to right, the legs spread down: offsets are along y.
+  const axis = direction === "horizontal" ? "y" : "x";
+  const coordinateById = new Map(nodes.map((node) => [node.id, node.position[axis]]));
   return nodes.map((node) => {
     if (node.data.branches.length === 0) return node;
     const childOffsets = node.data.branches.map(({ handle }) => {
       const edge = edges.find((item) => item.source === node.id && item.sourceHandle === handle);
-      const childX = edge ? xById.get(edge.target) : undefined;
-      return childX === undefined ? null : childX - node.position.x;
+      const childCoordinate = edge ? coordinateById.get(edge.target) : undefined;
+      return childCoordinate === undefined ? null : childCoordinate - node.position[axis];
     });
-    return { ...node, data: { ...node.data, legOffsets: getBranchLegOffsets(childOffsets) } };
+    return {
+      ...node,
+      data: { ...node.data, legOffsets: getBranchLegOffsets(childOffsets, getBranchSpread(direction)) },
+    };
   });
 };
 
@@ -284,9 +298,22 @@ const getLayoutChildren = (
 const layoutWorkflowNodes = (
   definition: TWorkflowDefinition,
   nodesById: Map<string, TWorkflowNode>,
-  originalNodeOrder: string[]
+  originalNodeOrder: string[],
+  direction: TWorkflowCanvasDirection = "vertical"
 ): Map<string, { x: number; y: number }> => {
-  const columnWidth = WORKFLOW_CANVAS_NODE_SPACING.x;
+  const isHorizontal = direction === "horizontal";
+  // The tree grows along `depth` (down, or right) and spreads its branches along `breadth`.
+  const breadthUnit = isHorizontal ? WORKFLOW_CANVAS_HORIZONTAL.rowHeight : WORKFLOW_CANVAS_NODE_SPACING.x;
+  const depthStep = isHorizontal ? WORKFLOW_CANVAS_HORIZONTAL.stepWidth : WORKFLOW_CANVAS_NODE_SPACING.y;
+  const branchDepthStep = isHorizontal
+    ? WORKFLOW_CANVAS_HORIZONTAL.branchStepWidth
+    : WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT;
+  const toPosition = (depth: number, breadth: number) =>
+    isHorizontal ? { x: depth, y: breadth } : { x: breadth, y: depth };
+  const start = isHorizontal
+    ? { depth: WORKFLOW_CANVAS_START_POSITION.y, breadth: WORKFLOW_CANVAS_START_POSITION.y }
+    : { depth: WORKFLOW_CANVAS_START_POSITION.y, breadth: WORKFLOW_CANVAS_START_POSITION.x };
+
   const widths = new Map<string, number>();
   // Hand-written data can hold a cycle or a join: a step is measured and placed once, at its
   // first visit, so neither recurses forever nor places a step twice.
@@ -309,34 +336,32 @@ const layoutWorkflowNodes = (
   };
 
   const positions = new Map<string, { x: number; y: number }>();
-  let lowestY = WORKFLOW_CANVAS_START_POSITION.y;
 
-  const place = (nodeId: string, left: number, y: number) => {
+  const place = (nodeId: string, left: number, depth: number) => {
     const node = nodesById.get(nodeId);
     if (!node || positions.has(nodeId)) return;
-    const centerX = left + (getWidth(nodeId) * columnWidth) / 2;
-    positions.set(nodeId, { x: centerX - columnWidth / 2, y });
-    lowestY = Math.max(lowestY, y);
+    const center = left + (getWidth(nodeId) * breadthUnit) / 2;
+    positions.set(nodeId, toPosition(depth, center - breadthUnit / 2));
 
-    const childY =
-      y + (isBranchingStep(node) ? WORKFLOW_CANVAS_BRANCH_ROW_HEIGHT : WORKFLOW_CANVAS_NODE_SPACING.y);
+    const childDepth = depth + (isBranchingStep(node) ? branchDepthStep : depthStep);
     let childLeft = left;
     for (const childId of getLayoutChildren(node, definition, nodesById)) {
-      if (childId !== null) place(childId, childLeft, childY);
-      childLeft += getWidth(childId) * columnWidth;
+      if (childId !== null) place(childId, childLeft, childDepth);
+      childLeft += getWidth(childId) * breadthUnit;
     }
   };
 
   if (definition.trigger) {
     const rootWidth = getWidth(definition.trigger.id);
-    const rootCenterX = WORKFLOW_CANVAS_START_POSITION.x + columnWidth / 2;
-    place(
-      definition.trigger.id,
-      rootCenterX - (rootWidth * columnWidth) / 2,
-      WORKFLOW_CANVAS_START_POSITION.y
-    );
+    const rootCenter = start.breadth + breadthUnit / 2;
+    place(definition.trigger.id, rootCenter - (rootWidth * breadthUnit) / 2, start.depth);
   }
 
+  // Unreachable steps (and every step of a trigger-less draft) each get their own row below the rest.
+  const lowestY = Math.max(
+    WORKFLOW_CANVAS_START_POSITION.y,
+    ...[...positions.values()].map((position) => position.y)
+  );
   let nextUnreachableY = lowestY + WORKFLOW_CANVAS_NODE_SPACING.y;
   for (const nodeId of originalNodeOrder) {
     if (positions.has(nodeId)) continue;
@@ -359,7 +384,10 @@ export const haveSameNodePositions = (a: TWorkflowDefinition, b: TWorkflowDefini
   return positionsOf(a) === positionsOf(b);
 };
 
-export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): TWorkflowDefinition => {
+export const reorganizeWorkflowDefinition = (
+  definition: TWorkflowDefinition,
+  direction: TWorkflowCanvasDirection = "vertical"
+): TWorkflowDefinition => {
   const allNodes: TWorkflowNode[] = [
     ...(definition.trigger ? [definition.trigger] : []),
     ...definition.nodes,
@@ -367,10 +395,9 @@ export const reorganizeWorkflowDefinition = (definition: TWorkflowDefinition): T
   const nodesById = new Map(allNodes.map((node) => [node.id, node]));
   const originalNodeOrder = allNodes.map((node) => node.id);
   const positionsByNodeId = new Map(
-    [...layoutWorkflowNodes(definition, nodesById, originalNodeOrder)].map(([nodeId, position]) => [
-      nodeId,
-      snapWorkflowNodePosition(position),
-    ])
+    [...layoutWorkflowNodes(definition, nodesById, originalNodeOrder, direction)].map(
+      ([nodeId, position]) => [nodeId, snapWorkflowNodePosition(position)]
+    )
   );
 
   return {

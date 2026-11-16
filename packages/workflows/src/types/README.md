@@ -48,6 +48,15 @@ Example:
 }
 ```
 
+### `ZWorkflowDefinitionUi` / `TWorkflowDefinitionUi`
+
+Optional builder-only metadata for the whole workflow. The runner ignores it. Unknown extra keys are allowed.
+
+Properties:
+
+- `direction`: Optional `"vertical"` (top to bottom, the default when absent) or `"horizontal"` (left to
+  right). Which way the canvas reads; the steps' `ui.position` values are laid out for it.
+
 ### `ZWorkflowNodeUi` / `TWorkflowNodeUi`
 
 Optional metadata used by the workflow builder UI. The runner should ignore this object. Unknown extra keys are
@@ -158,6 +167,7 @@ Properties:
 - `nodes`: Child nodes that run after the trigger. These are action or condition nodes, not trigger nodes.
 - `edges`: Connections between the trigger and child nodes.
 - `entryNodeId`: Workflow entry point. It must reference the trigger node id.
+- `ui`: Optional `ZWorkflowDefinitionUi`, builder-only metadata for the whole workflow.
 
 Example:
 

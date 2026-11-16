@@ -6,7 +6,11 @@ import {
   WORKFLOW_ACTIONS,
   getSwitchBranches,
 } from "@formbricks/workflows";
-import { getBranchLegOffsets } from "@/modules/ee/workflows/lib/canvas-geometry";
+import {
+  type TWorkflowCanvasDirection,
+  getBranchLegOffsets,
+  getBranchSpread,
+} from "@/modules/ee/workflows/lib/canvas-geometry";
 import type { TWorkflowVariableGroup } from "@/modules/ee/workflows/lib/variable-picker";
 
 /** The step types the add-step menu offers (ENG-7182, ENG-7157): Logic, then Actions. */
@@ -142,20 +146,23 @@ export const getBranchHandles = (node: TWorkflowNode): string[] | null => {
 export const getBranchLegOffset = (
   definition: TWorkflowDefinition,
   node: TWorkflowNode,
-  handle: string
+  handle: string,
+  direction: TWorkflowCanvasDirection = "vertical"
 ): number | null => {
   const handles = getBranchHandles(node);
   const index = handles?.indexOf(handle) ?? -1;
   if (!handles || index === -1) return null;
-  const sourceX = node.ui?.position?.x ?? 0;
+  // Left to right, the legs spread down: offsets are along y.
+  const axis = direction === "horizontal" ? "y" : "x";
+  const source = node.ui?.position?.[axis] ?? 0;
   const childOffsets = handles.map((branch) => {
     const edge = definition.edges.find((item) => item.source === node.id && item.sourceHandle === branch);
-    const childX = edge
-      ? definition.nodes.find((item) => item.id === edge.target)?.ui?.position?.x
+    const child = edge
+      ? definition.nodes.find((item) => item.id === edge.target)?.ui?.position?.[axis]
       : undefined;
-    return childX === undefined ? null : childX - sourceX;
+    return child === undefined ? null : child - source;
   });
-  return getBranchLegOffsets(childOffsets)[index];
+  return getBranchLegOffsets(childOffsets, getBranchSpread(direction))[index];
 };
 
 /**

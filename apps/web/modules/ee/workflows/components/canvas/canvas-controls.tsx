@@ -2,6 +2,8 @@
 
 import { useReactFlow } from "@xyflow/react";
 import {
+  ArrowDownIcon,
+  ArrowRightIcon,
   HandIcon,
   type LucideIcon,
   MousePointerClickIcon,
@@ -10,14 +12,25 @@ import {
   ZoomOutIcon,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
+import type { TWorkflowCanvasDirection } from "@/modules/ee/workflows/lib/canvas-geometry";
 import { Button, type ButtonProps } from "@/modules/ui/components/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/modules/ui/components/dropdown-menu";
 import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 
 interface CanvasControlsProps {
   canMutate: boolean;
   /** Pan mode = pan/browse only (nodes inert); pointer mode = select/inspect nodes, edit when permitted. */
   isPanMode: boolean;
+  /** Which way the canvas reads; the layout menu's tree icon turns to match. */
+  direction: TWorkflowCanvasDirection;
   onAutoLayout: () => void;
+  onToggleDirection: () => void;
   onPanMode: () => void;
   onPointerMode: () => void;
 }
@@ -38,12 +51,15 @@ interface ControlDescriptor {
 export const CanvasControls = ({
   canMutate,
   isPanMode,
+  direction,
   onAutoLayout,
+  onToggleDirection,
   onPanMode,
   onPointerMode,
 }: Readonly<CanvasControlsProps>) => {
   const { t } = useTranslation();
   const { zoomIn, zoomOut } = useReactFlow();
+  const isHorizontal = direction === "horizontal";
 
   const controls: ControlDescriptor[] = [
     {
@@ -76,14 +92,6 @@ export const CanvasControls = ({
       ariaPressed: !isPanMode,
       onClick: onPointerMode,
     },
-    {
-      key: "auto-layout",
-      Icon: NetworkIcon,
-      label: t("workspace.workflows.auto_layout"),
-      variant: "outline",
-      disabled: !canMutate,
-      onClick: onAutoLayout,
-    },
   ];
 
   return (
@@ -103,6 +111,39 @@ export const CanvasControls = ({
             </Button>
           </TooltipRenderer>
         ))}
+        {/* Layout: re-arrange the steps, or switch which way the canvas reads. The tree icon turns
+            with the orientation. */}
+        <DropdownMenu>
+          <TooltipRenderer tooltipContent={t("workspace.workflows.layout")} triggerClass="flex">
+            <DropdownMenuTrigger asChild disabled={!canMutate}>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                aria-label={t("workspace.workflows.layout")}
+                disabled={!canMutate}>
+                <NetworkIcon
+                  className={cn(
+                    "transition-transform duration-200 motion-reduce:transition-none",
+                    isHorizontal && "-rotate-90"
+                  )}
+                />
+              </Button>
+            </DropdownMenuTrigger>
+          </TooltipRenderer>
+          <DropdownMenuContent side="top" align="center" className="motion-reduce:animate-none">
+            <DropdownMenuItem onClick={onAutoLayout}>
+              <NetworkIcon className={cn("size-4", isHorizontal && "-rotate-90")} />
+              {t("workspace.workflows.auto_layout")}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onToggleDirection}>
+              {isHorizontal ? <ArrowDownIcon className="size-4" /> : <ArrowRightIcon className="size-4" />}
+              {isHorizontal
+                ? t("workspace.workflows.canvas_direction_to_vertical")
+                : t("workspace.workflows.canvas_direction_to_horizontal")}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

@@ -1,7 +1,7 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
-import { WORKFLOW_CANVAS_START_POSITION } from "./canvas-geometry";
+import { WORKFLOW_CANVAS_START_POSITION, getCanvasDirection } from "./canvas-geometry";
 import {
   WORKFLOW_BRANCH_NODE_TYPE,
   haveSameNodePositions,
@@ -191,6 +191,22 @@ describe("reorganizeWorkflowDefinition", () => {
     const reachableY = next.nodes[0].ui?.position?.y ?? 0;
     const orphanY = next.nodes[1].ui?.position?.y ?? 0;
     expect(orphanY).toBeGreaterThan(reachableY);
+  });
+
+  test("left to right, each step sits to the right of the one before it", () => {
+    const next = reorganizeWorkflowDefinition(buildDefinition(), "horizontal");
+    const trigger = next.trigger?.ui?.position;
+    const action = next.nodes[0].ui?.position;
+
+    expect(action?.x).toBeGreaterThan(trigger?.x ?? 0);
+    expect(action?.y).toBe(trigger?.y);
+  });
+
+  test("a workflow reads the way it saved, and top to bottom when it saved none", () => {
+    const definition = buildDefinition();
+
+    expect(getCanvasDirection(definition)).toBe("vertical");
+    expect(getCanvasDirection({ ...definition, ui: { direction: "horizontal" } })).toBe("horizontal");
   });
 
   test("arranging an arranged workflow moves nothing, which Auto layout reports as already arranged", () => {

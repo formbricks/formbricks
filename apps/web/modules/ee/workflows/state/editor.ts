@@ -12,7 +12,11 @@ import {
   ZWorkflowEnableDefinition,
   isResponseCompletedTrigger,
 } from "@formbricks/workflows";
-import { getAppendedStepPosition } from "@/modules/ee/workflows/lib/canvas-geometry";
+import {
+  type TWorkflowCanvasDirection,
+  getAppendedStepPosition,
+  getCanvasDirection,
+} from "@/modules/ee/workflows/lib/canvas-geometry";
 import { settleSentSecretValues, withSecretIdsForCheck } from "@/modules/ee/workflows/lib/http-request-panel";
 import {
   type TAddableWorkflowStepType,
@@ -571,6 +575,13 @@ export const workflowValidationProblemsAtom = atom((get) => get(workflowValidati
 // user-driven — nothing auto-switches it; mutations are gated separately by canMutateCanvasAtom.
 export const isCanvasLockedAtom = atom<boolean>(false);
 
+// Which way the canvas reads, as the workflow saved it (`definition.ui.direction`); top to bottom when
+// it has none. Switched from the Layout menu.
+export const workflowCanvasDirectionAtom = atom<TWorkflowCanvasDirection>((get) => {
+  const definition = get(workflowEditorAtom).definition;
+  return definition ? getCanvasDirection(definition) : "vertical";
+});
+
 // Auth-derived read-only flag, seeded at hydrate time. Exposed so the inspector can name the
 // actual reason edits are blocked (permission vs. status).
 export const isWorkflowReadOnlyAtom = atom((get) => get(workflowEditorAtom).isReadOnly);
@@ -906,10 +917,13 @@ export const appendWorkflowStepAfterNodeAtom = atom(null, (get, set, input: TApp
       const sourceNode = definition.nodes.find((node) => node.id === sourceNodeId);
       const sourcePosition =
         definition.trigger?.id === sourceNodeId ? definition.trigger.ui?.position : sourceNode?.ui?.position;
+      const direction = get(workflowCanvasDirectionAtom);
       const legOffset =
-        branch !== undefined && sourceNode ? getBranchLegOffset(definition, sourceNode, branch) : null;
+        branch !== undefined && sourceNode
+          ? getBranchLegOffset(definition, sourceNode, branch, direction)
+          : null;
       const newPosition = sourcePosition
-        ? getAppendedStepPosition(sourcePosition, legOffset)
+        ? getAppendedStepPosition(sourcePosition, legOffset, direction)
         : SEND_EMAIL_FALLBACK_POSITION;
 
       const newNode = createDefaultWorkflowStep(stepType, newPosition, { conditionPath, caseName });

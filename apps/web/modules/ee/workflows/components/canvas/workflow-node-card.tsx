@@ -13,6 +13,10 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
+import {
+  type TWorkflowCanvasDirection,
+  WORKFLOW_CANVAS_HORIZONTAL,
+} from "@/modules/ee/workflows/lib/canvas-geometry";
 import type { TWorkflowNodeData, TWorkflowNodeIcon } from "@/modules/ee/workflows/state/editor";
 import { FlowTextParts, useElementIcons } from "@/modules/survey/editor/components/reference-chip";
 
@@ -63,11 +67,20 @@ interface WorkflowNodeCardProps {
   menu?: ReactNode;
   /** Rendered last inside the card, such as its outgoing handle. */
   children?: ReactNode;
+  /** Left to right, the incoming line arrives on the left and every card is one height. */
+  direction?: TWorkflowCanvasDirection;
 }
 
 // The card every step and the trigger share on the canvas: category chip, title, and the summary
 // or the issue that replaces it.
-export const WorkflowNodeCard = ({ data, selected, menu, children }: Readonly<WorkflowNodeCardProps>) => {
+export const WorkflowNodeCard = ({
+  data,
+  selected,
+  menu,
+  children,
+  direction = "vertical",
+}: Readonly<WorkflowNodeCardProps>) => {
+  const isHorizontal = direction === "horizontal";
   const Icon = NODE_ICONS[data.icon];
   const elementIcons = useElementIcons();
 
@@ -80,8 +93,13 @@ export const WorkflowNodeCard = ({ data, selected, menu, children }: Readonly<Wo
         // nodes in pan mode, so hover styles can't fire there.
         "flex w-64 items-start gap-2.5 rounded-lg border border-slate-200 bg-white px-2.5 py-2.5 shadow-card-sm transition-shadow hover:shadow-card-md",
         selected && "ring-2 ring-brand-dark ring-offset-2 ring-offset-slate-50"
-      )}>
-      <Handle type="target" position={Position.Top} className={HANDLE_CLASS_NAMES} />
+      )}
+      style={isHorizontal ? { height: WORKFLOW_CANVAS_HORIZONTAL.cardHeight } : undefined}>
+      <Handle
+        type="target"
+        position={isHorizontal ? Position.Left : Position.Top}
+        className={HANDLE_CLASS_NAMES}
+      />
       <span
         className={cn(
           "flex size-8 shrink-0 items-center justify-center rounded-md",
