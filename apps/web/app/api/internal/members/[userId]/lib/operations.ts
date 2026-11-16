@@ -41,6 +41,9 @@ export const LAST_OWNER_DETAIL = "You cannot demote the last owner of the organi
  * committed, and is refused. The user's row is locked next, as removing a member locks it: a demotion to
  * Dashboard viewer decides whether only viewer memberships remain (and revokes the wider OAuth grants), and
  * must see a removal from another organization that commits at the same moment.
+ *
+ * Whether this is an owner's demotion is decided from the lookup before the lock, as the action did;
+ * deciding it under the lock instead is ENG-2177.
  */
 const applyRoleChange = async (
   target: TMembership,
@@ -152,8 +155,8 @@ export async function updateMemberRoleOperation({
 }
 
 /**
- * Remove a membership, mapping the last-owner guard `deleteMembership` runs inside its serializable
- * transaction (where two concurrent removals can't both pass it) to a 409 with its reason.
+ * Remove a membership, mapping the last-owner guard `deleteMembership` runs under the owners' lock
+ * (`runOwnerGuardedTransaction`, where two concurrent removals can't both pass it) to a 409 with its reason.
  */
 export async function deleteMembershipOrConflict(
   userId: string,
