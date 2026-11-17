@@ -350,3 +350,36 @@ describe("empty groups that merge", () => {
     ]);
   });
 });
+
+describe("a ratio over three empty groups", () => {
+  const rowsOf = (values: { nps: number; count?: number }[]) =>
+    applyEmptyValueSetting(
+      values.map((v, i) => ({
+        [SOURCE]: i % 2 === 0 ? null : "",
+        [NPS]: v.nps,
+        ...(v.count === undefined ? {} : { "FeedbackRecords.npsCount": v.count }),
+      })),
+      [SOURCE],
+      true
+    );
+
+  test("without bases the merge stays a gap, whatever the order", () => {
+    const merged = collapseEmptyGroupRows(rowsOf([{ nps: 10 }, { nps: 30 }, { nps: 50 }]), [SOURCE], [NPS]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0][NPS]).toBeNull();
+  });
+
+  test("with bases every row is weighed together", () => {
+    const merged = collapseEmptyGroupRows(
+      rowsOf([
+        { nps: 10, count: 1 },
+        { nps: 30, count: 1 },
+        { nps: 50, count: 2 },
+      ]),
+      [SOURCE],
+      [NPS]
+    );
+    expect(merged[0][NPS]).toBe(35);
+    expect(merged[0]["FeedbackRecords.npsCount"]).toBe(4);
+  });
+});

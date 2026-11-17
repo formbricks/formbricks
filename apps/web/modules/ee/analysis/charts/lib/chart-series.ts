@@ -56,7 +56,7 @@ export const applyEmptyValueSetting = (
 /**
  * Folds rows that became one group once their empty values were shown: a null and a blank value for the
  * same grouping both read as the empty group, and drawing them twice would split one bar in two. Rows
- * fold only when every other grouping column (the time bucket too) matches; see `mergeCellRows` for how
+ * fold only when every other grouping column (the time bucket too) matches; see `mergeRows` for how
  * values combine. Other rows pass through untouched.
  */
 export const collapseEmptyGroupRows = (
@@ -64,11 +64,13 @@ export const collapseEmptyGroupRows = (
   groupKeys: readonly string[],
   measureKeys: readonly string[]
 ): TChartDataRow[] => {
-  const byGroup = new Map<string, TChartDataRow>();
-  const out: TChartDataRow[] = [];
+  // Each output slot is a plain row or the list of empty-group rows folded into it, merged once at the end
+  // so every row of a group is weighed together.
+  const slots: (TChartDataRow | TChartDataRow[])[] = [];
+  const byGroup = new Map<string, TChartDataRow[]>();
   for (const row of rows) {
     if (!groupKeys.map((key) => row[key]).includes(EMPTY_GROUP_VALUE)) {
-      out.push(row);
+      slots.push(row);
       continue;
     }
     // Keyed by every grouping column the row carries — the time bucket included — so empty groups of
@@ -77,17 +79,16 @@ export const collapseEmptyGroupRows = (
       .filter((key) => !isMeasureColumn(key, measureKeys))
       .sort((a, b) => a.localeCompare(b));
     const id = JSON.stringify(idKeys.map((key) => [key, row[key] ?? null]));
-    const existing = byGroup.get(id);
-    if (existing) {
-      const merged = mergeCellRows(existing, row, measureKeys);
-      out[out.indexOf(existing)] = merged;
-      byGroup.set(id, merged);
+    const group = byGroup.get(id);
+    if (group) {
+      group.push(row);
     } else {
-      byGroup.set(id, row);
-      out.push(row);
+      const fresh = [row];
+      byGroup.set(id, fresh);
+      slots.push(fresh);
     }
   }
-  return out;
+  return slots.map((slot) => (Array.isArray(slot) ? mergeRows(slot, measureKeys) : slot));
 };
 
 // ── Natural order ─────────────────────────────────────────────────────────────
@@ -252,7 +253,7 @@ export const buildGroupedSeries = ({
   const comboWeight = new Map<string, number>();
   const categories: TChartDataRow[string][] = [];
   const categorySeen = new Set<string>();
-  const cells = new Map<string, TChartDataRow>();
+  const cells = new Map<string, TChartDataRow[]>();
 
   for (const row of rows) {
     const category = row[categoryKey];
@@ -267,10 +268,11 @@ export const buildGroupedSeries = ({
     const firstMeasure = measureKeys[0];
     comboWeight.set(id, (comboWeight.get(id) ?? 0) + (toFiniteNumber(row[firstMeasure]) ?? 0));
     // Rows that land on the same cell — a null and a blank value both shown as the empty group — are
-    // one group, folded as `mergeCellRows` describes.
+    // one group, folded as `mergeRows` describes.
     const cellKey = `${categoryId}\u0000${id}`;
-    const existing = cells.get(cellKey);
-    cells.set(cellKey, existing ? mergeCellRows(existing, row, measureKeys) : row);
+    const cellRows = cells.get(cellKey);
+    if (cellRows) cellRows.push(row);
+    else cells.set(cellKey, [row]);
   }
 
   const orderedCombos = groupOrder([...combos.values()], (values) => comboWeight.get(comboId(values)) ?? 0);
@@ -290,7 +292,8 @@ export const buildGroupedSeries = ({
     const categoryId = toGroupKey(category);
     const out: TChartDataRow = { [categoryKey]: category };
     for (const entry of series) {
-      const source = cells.get(`${categoryId}\u0000${comboId(entry.groupValues)}`);
+      const cellRows = cells.get(`${categoryId}\u0000${comboId(entry.groupValues)}`);
+      const source = cellRows ? mergeRows(cellRows, measureKeys) : undefined;
       const value = source ? toFiniteNumber(source[entry.measureKey]) : null;
       out[entry.key] = value ?? (isAdditiveMeasure(entry.measureKey) ? 0 : null);
     }
@@ -307,44 +310,47 @@ const isMeasureColumn = (key: string, measureKeys: readonly string[]): boolean =
   return field !== undefined && "group" in field;
 };
 
-/** A ratio over two rows, weighted by the answers each was computed from; null without both bases. */
-const mergeRatio = (measureKey: string, first: TChartDataRow, second: TChartDataRow): number | null => {
-  const firstValue = toFiniteNumber(first[measureKey]);
-  const secondValue = toFiniteNumber(second[measureKey]);
-  if (firstValue === null) return secondValue;
-  if (secondValue === null) return firstValue;
+/**
+ * A ratio over several rows, weighted by the answers each was computed from. Rows without a value add
+ * nothing. If more than one row has a value and any of them lacks its base, the merge cannot be computed
+ * and the result is null — whatever the order of the rows, so a failed merge never turns back into one
+ * row's reading.
+ */
+const mergeRatio = (measureKey: string, rows: readonly TChartDataRow[]): number | null => {
+  const valued = rows.filter((row) => toFiniteNumber(row[measureKey]) !== null);
+  if (valued.length === 0) return null;
+  if (valued.length === 1) return toFiniteNumber(valued[0][measureKey]);
   const field = getFieldById(measureKey);
   const baseKey = field && "responseBaseMeasureId" in field ? field.responseBaseMeasureId : undefined;
-  const firstBase = baseKey ? toFiniteNumber(first[baseKey]) : null;
-  const secondBase = baseKey ? toFiniteNumber(second[baseKey]) : null;
-  if (firstBase === null || secondBase === null || firstBase + secondBase <= 0) return null;
-  return (firstValue * firstBase + secondValue * secondBase) / (firstBase + secondBase);
+  if (!baseKey) return null;
+  let weighted = 0;
+  let total = 0;
+  for (const row of valued) {
+    const base = toFiniteNumber(row[baseKey]);
+    if (base === null) return null;
+    weighted += (toFiniteNumber(row[measureKey]) ?? 0) * base;
+    total += base;
+  }
+  return total > 0 ? weighted / total : null;
 };
 
 /**
- * Two result rows for one group, folded: counts add up; a score or an average is re-weighted by the
- * answers behind each row (its response base), which is how Cube would have computed it over the merged
- * group. A ratio without a base on both rows cannot be recomputed, so it becomes null — a gap, never one
- * row's reading passed off as the whole group's.
+ * The result rows of one group, folded into one: counts add up; a score or an average is re-weighted by
+ * the answers behind each row (its response base), which is how Cube would have computed it over the
+ * merged group. A ratio that cannot be recomputed becomes null — a gap, never one row's reading passed
+ * off as the whole group's.
  */
-const mergeCellRows = (
-  first: TChartDataRow,
-  second: TChartDataRow,
-  measureKeys: readonly string[]
-): TChartDataRow => {
-  const merged: TChartDataRow = { ...first };
+const mergeRows = (rows: readonly TChartDataRow[], measureKeys: readonly string[]): TChartDataRow => {
+  if (rows.length === 1) return rows[0];
+  const merged: TChartDataRow = { ...rows[0] };
   const measures = new Set([
     ...measureKeys,
-    ...Object.keys(first).filter((key) => isMeasureColumn(key, measureKeys)),
+    ...rows.flatMap((row) => Object.keys(row).filter((key) => isMeasureColumn(key, measureKeys))),
   ]);
-  // Ratios first: they read each row's own base before the bases are summed below.
   for (const key of measures) {
-    if (!isAdditiveMeasure(key)) merged[key] = mergeRatio(key, first, second);
-  }
-  for (const key of measures) {
-    if (isAdditiveMeasure(key)) {
-      merged[key] = (toFiniteNumber(first[key]) ?? 0) + (toFiniteNumber(second[key]) ?? 0);
-    }
+    merged[key] = isAdditiveMeasure(key)
+      ? rows.reduce((sum, row) => sum + (toFiniteNumber(row[key]) ?? 0), 0)
+      : mergeRatio(key, rows);
   }
   return merged;
 };
