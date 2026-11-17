@@ -6,6 +6,9 @@
  *
  * A line that has to use a restricted API disables the rule with the reason it is safe:
  *   // oxlint-disable-next-line formbricks/restricted-syntax -- <reason>
+ *
+ * `formbricks/no-inline-lint-config` reports ESLint's inline configuration comments, which oxlint
+ * ignores without a warning: a rule configured that way silently does nothing.
  */
 
 const restrictedSyntax = {
@@ -40,7 +43,33 @@ const restrictedSyntax = {
   },
 };
 
+// `/* eslint <rule>: … */`, `/* eslint-env … */`, `/* global … */` and `/* globals … */`. Disable and
+// enable directives (`eslint-disable…`, `eslint-enable…`), which oxlint honours, do not match.
+const INLINE_CONFIG = /^\s*(eslint(?:-env)?|globals?)\s/;
+
+const noInlineLintConfig = {
+  meta: {
+    type: "problem",
+    docs: { description: "Disallow ESLint inline configuration comments, which oxlint ignores." },
+    schema: [],
+  },
+  create(context) {
+    return {
+      Program() {
+        for (const comment of context.sourceCode.getAllComments()) {
+          const match = comment.type === "Block" ? INLINE_CONFIG.exec(comment.value) : null;
+          if (!match) continue;
+          context.report({
+            loc: comment.loc,
+            message: `oxlint ignores \`/* ${match[1]} */\` comments, so this configures nothing. Set the rule, environment or global in the workspace's oxlint.config.ts, in an override scoped to this file if needed.`,
+          });
+        }
+      },
+    };
+  },
+};
+
 export default {
   meta: { name: "formbricks" },
-  rules: { "restricted-syntax": restrictedSyntax },
+  rules: { "no-inline-lint-config": noInlineLintConfig, "restricted-syntax": restrictedSyntax },
 };

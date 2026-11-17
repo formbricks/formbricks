@@ -38,6 +38,9 @@ repeated in every block that declares the task, or a helper edit silently replay
 per field, so it only needs `dependsOn` when it is changing it. Guarded by
 `apps/web/lib/turbo-vite-plugins-edge.test.ts`.
 
+The root `turbo.json` is strict JSON, although Turbo accepts comments: the `apps/web/lib/turbo-*.test.ts`
+suites parse it with `JSON.parse` to guard its env, outputs and cache settings. Run them after editing it.
+
 ## Shared dependency versions (pnpm catalog)
 
 Every dependency used by **two or more** workspaces is pinned once in the `catalog:` block of

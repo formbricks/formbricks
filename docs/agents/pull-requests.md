@@ -17,6 +17,9 @@ and names unverified behavior under Open gaps; reviewers challenge that evidence
 pre-existing, flaky or noise names the run on `main` that shows it; without one it goes under Open gaps. Release review checks
 interactions between changes rather than repeating each PR's QA.
 
+Before opening a PR, run the `code-review` skill against the merge-base. The review is done when every
+Standards and Spec finding is fixed or answered in the PR description.
+
 ## Reviews
 
 Pin the PR head and base SHAs before reviewing. Collect inline threads, submitted review bodies
