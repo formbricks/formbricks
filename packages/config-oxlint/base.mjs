@@ -11,8 +11,8 @@ import { sonarParity } from "./sonar-parity.mjs";
  * This file intentionally carries no opinionated rule set: the exported tiers
  * (library/react/react-hooks/next) decide how strict each package class is.
  *
- * Prettier owns formatting. oxlint enables no stylistic rule unless a config asks for it, so
- * nothing here replaces `eslint-config-prettier`.
+ * oxfmt owns formatting and the order of import statements. oxlint enables no stylistic rule unless a
+ * config asks for it, with one exception: `sort-imports` below, for the one ordering oxfmt cannot do yet.
  */
 
 export { compose, denyWarnings, downgradeToWarn, jsPlugins } from "./compose.mjs";
@@ -39,6 +39,14 @@ export const unusedVarsOptions = {
  */
 export const reactSettings = { react: { version: "19.2" } };
 
+/*
+ * The names inside an import's braces, sorted case-sensitively (uppercase first), which is the order the
+ * Prettier import plugin wrote before oxfmt replaced it. oxfmt orders the import statements themselves,
+ * so `ignoreDeclarationSort` leaves those to it. The lint-staged hook fixes violations with only this
+ * rule on (scripts/oxlint-sort-imports.config.mjs). Drop it once oxfmt sorts named imports (oxc #23456).
+ */
+export const sortImportsRule = ["error", { ignoreDeclarationSort: true, ignoreCase: false }];
+
 export const commonIgnores = {
   // `.local/` is the repo-sanctioned scratch dir (root .gitignore); its files sit outside
   // every tsconfig, so type-aware linting would hard-error on them.
@@ -61,6 +69,7 @@ export const base = compose(
       // eslint-config-turbo: every env var a task reads must be declared in turbo.json.
       "turbo/no-undeclared-env-vars": "error",
       "vitest/consistent-test-it": ["error", { fn: "test", withinDescribe: "test" }],
+      "sort-imports": sortImportsRule,
     },
   },
   sonarParity()

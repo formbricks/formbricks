@@ -1,0 +1,22 @@
+# Editor defaults for every file, including the ones oxfmt doesn't format (SQL, shell, Prisma).
+# oxfmt reads this file too, but oxfmt.config.mts sets everything it overlaps with explicitly.
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 2
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Two trailing spaces are a Markdown line break.
+[*.{md,mdx}]
+trim_trailing_whitespace = false
+
+# Test fixtures are compared byte for byte (CRLF CSVs, recorded exports): an editor leaves them as they are.
+[**/__fixtures__/**]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset

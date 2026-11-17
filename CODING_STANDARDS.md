@@ -9,7 +9,8 @@ the first line stays in `AGENTS.md`, and task process lives under `docs/agents/`
 ## Tooling and Review Scope
 
 Apply the judgment calls below to the diff. Check the relevant tool output before repeating a finding:
-Prettier owns formatting and import order; oxlint owns its enabled rules; schema freshness checks own
+oxfmt owns formatting and the order of import statements; oxlint owns its enabled rules, including the order
+of the names inside an import's braces; schema freshness checks own
 generated API drift. `packages/config-oxlint/` and each workspace's `oxlint.config.ts` define lint severity
 and exceptions. A warning is still actionable when CI does not block it.
 

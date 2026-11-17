@@ -1,4 +1,12 @@
 {
+  // oxfmt (through oxc.oxc-vscode) formats on save with oxfmt.config.mts, the same output
+  // `pnpm format:check` gates in CI.
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.formatOnSave": true,
+  // oxfmt doesn't format Prisma schemas; `prisma format` does, as in the lint-staged hook.
+  "[prisma]": {
+    "editor.defaultFormatter": "Prisma.prisma"
+  },
   "javascript.updateImportsOnFileMove.enabled": "always",
   // oxlint (oxc.oxc-vscode) runs with the type-aware rules, as `pnpm lint:code` does.
   "oxc.typeAware": true,

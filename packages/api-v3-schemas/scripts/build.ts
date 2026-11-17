@@ -1,9 +1,9 @@
 /**
  * The generation pipeline: read bundle → scope to the adopted tags → normalize → hey-api (in memory) →
- * Prettier with the repository's own config. `generate.ts` is the CLI around it.
+ * oxfmt with the repository's own config. `generate.ts` is the CLI around it.
  */
 import { fileURLToPath } from "node:url";
-import { format, resolveConfig } from "prettier";
+import { type OxfmtConfig, format } from "oxfmt";
 import { readBundle } from "../src/testing/bundle";
 import { ADOPTED_OPERATIONS } from "./adopted";
 import { normalizeForGeneration } from "./normalize";
@@ -19,13 +19,32 @@ const HEADER = [
   `// Scope: ${Object.keys(ADOPTED_OPERATIONS).join(", ")} — see packages/api-v3-schemas/scripts/adopted.ts.`,
 ].join("\n");
 
+// oxfmt's `format()` takes options as they are and discovers no config file, so the repository config is
+// loaded and passed in. A runtime import keeps the root config file out of this package's TypeScript
+// program. Its file-selection keys (which files to skip, per-path Tailwind themes) don't apply to one file
+// whose path is fixed.
+const loadFormatOptions = async () => {
+  const configUrl = new URL("../../../oxfmt.config.mts", import.meta.url).href;
+  const { default: config } = (await import(configUrl)) as { default: OxfmtConfig };
+  const { ignorePatterns: _ignorePatterns, overrides: _overrides, ...options } = config;
+  return options;
+};
+
+const formatOnce = async (source: string): Promise<string> => {
+  const { code, errors } = await format(OUTPUT_PATH, source, await loadFormatOptions());
+  if (errors.length > 0) {
+    throw new Error(
+      `oxfmt could not format the generated module: ${errors.map((e) => e.message).join("; ")}`
+    );
+  }
+  return code;
+};
+
 const formatModule = async (source: string): Promise<string> => {
-  const config = (await resolveConfig(OUTPUT_PATH, { editorconfig: true })) ?? {};
-  const options = { ...config, filepath: OUTPUT_PATH };
-  const once = await format(source, options);
-  const twice = await format(once, options);
+  const once = await formatOnce(source);
+  const twice = await formatOnce(once);
   // A formatter that is not idempotent on this output would make the freshness check flap.
-  if (once !== twice) throw new Error("Prettier is not idempotent on the generated module");
+  if (once !== twice) throw new Error("oxfmt is not idempotent on the generated module");
   return once;
 };
 

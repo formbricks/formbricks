@@ -1,6 +1,7 @@
 // GENERATED FILE — do not edit. Source of truth: docs/api-v3-reference/src/ (bundled to openapi.yml).
 // Regenerate with `pnpm api:v3:schemas`; CI verifies freshness with `pnpm api:v3:schemas:check`.
 // Scope: V3 Creatives, V3 Responses — see packages/api-v3-schemas/scripts/adopted.ts.
+
 import * as z from "zod";
 
 /**

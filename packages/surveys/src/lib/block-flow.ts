@@ -63,7 +63,8 @@ export interface TAdvanceFromBlockResult {
    * Blocks passed over on the way to `nextBlockId` because they were not shown (their show-if
    * failed, or all their elements were hidden). Their logic ran as if submitted with no answers.
    */
-  skippedBlockIds: string[]; /**
+  skippedBlockIds: string[];
+  /**
    * A rule that ran on the way, on this block or a block passed over, marked the response Low
    * quality (ENG-6933). The caller sends `markLowQuality: true` with this submit's response write;
    * the respondent sees nothing.

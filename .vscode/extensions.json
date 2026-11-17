@@ -3,8 +3,7 @@
     "ban.spellright", // Spell check for docs
     "bradlc.vscode-tailwindcss", // hinting / autocompletion for tailwind
     "DavidAnson.vscode-markdownlint", // markdown linting
-    "oxc.oxc-vscode", // oxlint (lint) integration
-    "esbenp.prettier-vscode", // prettier plugin
+    "oxc.oxc-vscode", // oxlint (lint) and oxfmt (format) integration
     "Prisma.prisma", // syntax|format|completion for prisma
     "yzhang.markdown-all-in-one", // nicer markdown support
     "vitest.explorer", // run tests directly from the code window

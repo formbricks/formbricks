@@ -63,10 +63,9 @@ catalog:
   "@playwright/test": 1.58.2
   "@testing-library/react": 16.3.2
   # --- lint & format ---
-  prettier: 3.8.3
-  "@trivago/prettier-plugin-sort-imports": 6.0.2
-  prettier-plugin-sort-json: 4.2.0
-  prettier-plugin-tailwindcss: 0.7.4
+  # oxfmt is pre-1.0 and its minor releases change output, so it is bumped by hand with the reformat
+  # in the same PR, and Dependabot leaves it alone (docs/adr/0041-oxfmt-formats-the-repo.md).
+  oxfmt: 0.78.0
   # --- types ---
   "@types/js-yaml": 4.0.9
   "@types/node": 25.4.0

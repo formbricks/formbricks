@@ -115,7 +115,7 @@ describe("Color utilities", () => {
 
     test("always returns an AA-compliant text color across representative surfaces", () => {
       // Mix of poles, saturated hues, and the mid-tones where black/white cross over near AA.
-      const surfaces = ["#ffffff", "#000000", "#ff0000", "#00ff00", "#0000ff", "#7f7f7f", "#808080", "#f9a8c0", "#ffff00", "#1e40af"]; // prettier-ignore
+      const surfaces = ["#ffffff", "#000000", "#ff0000", "#00ff00", "#0000ff", "#7f7f7f", "#808080", "#f9a8c0", "#ffff00", "#1e40af"]; // oxfmt-ignore
       for (const surface of surfaces) {
         expect(getContrastRatio(getReadableTextColor(surface), surface)).toBeGreaterThanOrEqual(
           AA_CONTRAST_RATIO

@@ -45,7 +45,7 @@ const isTracked = (file) =>
 /**
  * The lines of `file` this commit changes, as oxlint sees them. Compared with HEAD's working tree,
  * not the index: lint-staged hides unstaged changes while its tasks run, so the working tree holds
- * the staged content after `prettier --write` reflowed it, which is the file oxlint lints. A file git
+ * the staged content after oxfmt reflowed it, which is the file oxlint lints. A file git
  * does not track is new code throughout. Throws when git can't say: the gate must not pass blind.
  */
 function stagedLineRanges(file) {

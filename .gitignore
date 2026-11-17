@@ -85,10 +85,12 @@ authzed/perf-samples.jsonl
 authzed/*.perf.jsonl
 
 # Local agent assets (machine-local, do not commit)
-# .claude is machine-local except committed symlinks into .agents/skills.
+# .claude is machine-local except the shared settings.json (its hook formats each file Claude Code
+# edits) and committed symlinks into .agents/skills.
 # Codex reads .agents/skills directly; Claude Code needs the symlink, so every
 # skill added to .agents/skills gets an exception here.
 .claude/*
+!.claude/settings.json
 !.claude/skills/
 .claude/skills/*
 !.claude/skills/code-review

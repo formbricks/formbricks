@@ -29,8 +29,9 @@ import {
 const SPEC_SRC_URL = new URL("../../../../docs/api-v3-reference/src/", import.meta.url);
 
 const loadYaml = async (relativePath: string): Promise<Record<string, unknown>> => {
-  // Dynamic import keeps js-yaml out of the static import block, where prettier's sort-imports
-  // grouping and eslint's import/order disagree about its position relative to node: builtins.
+  // Dynamic import keeps js-yaml out of the static import block, where Prettier's sort-imports grouping
+  // and ESLint's import/order used to disagree about its position relative to node: builtins. Both are
+  // gone now (oxfmt sorts imports), so a static import would do; ENG-7359 aligns these.
   const { load } = await import("js-yaml");
   const raw = await readFile(new URL(relativePath, SPEC_SRC_URL), "utf8");
   return load(raw) as Record<string, unknown>;

@@ -152,6 +152,12 @@ updates:
           - "better-auth"
           - "@better-auth/oauth-provider"
           - "pg-pool"
+    # oxfmt is pre-1.0 and its minor releases change its output, so a bump fails `pnpm format:check` until
+    # the repo is reformatted. We bump it by hand, with that reformat in the same PR
+    # (docs/adr/0041-oxfmt-formats-the-repo.md). A bare `ignore` also drops its security updates, which is
+    # acceptable for a formatter that only runs on our own source and ships nothing.
+    ignore:
+      - dependency-name: "oxfmt"
     labels:
       - dependencies
       - javascript

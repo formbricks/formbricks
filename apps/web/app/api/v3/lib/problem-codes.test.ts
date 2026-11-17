@@ -16,8 +16,9 @@ const SPEC_SRC_URL = new URL("../../../../../../docs/api-v3-reference/src/", imp
 
 const loadSpecEnum = async (relativePath: string): Promise<string[]> => {
   // Dynamic import mirrors `packages/workflows/src/contracts/spec-drift.test.ts`: it keeps the YAML
-  // parser out of the static import block, where prettier's grouping and eslint's import/order
-  // disagree about its position relative to `node:` builtins.
+  // parser out of the static import block, where Prettier's grouping and ESLint's import/order used to
+  // disagree about its position relative to `node:` builtins. Both are gone now (oxfmt sorts imports),
+  // so a static import would do; ENG-7359 aligns these.
   const { parse } = await import("yaml");
   const raw = await readFile(new URL(relativePath, SPEC_SRC_URL), "utf8");
   const schema = parse(raw) as { properties: { code: { enum: string[] } } };

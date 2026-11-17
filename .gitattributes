@@ -1,3 +1,7 @@
+# Every text file is stored and checked out with LF, whatever the contributor's platform or
+# core.autocrlf, so formatting checks never trip on line endings. Git detects binary files itself.
+* text=auto eol=lf
+
 # Files GitHub should treat as generated: collapsed by default in pull-request diffs and left out of
 # the repository's language statistics. Only build outputs that are committed on purpose belong here.
 
@@ -20,3 +24,6 @@ apps/web/modules/survey/import/qsf/__fixtures__/plans/** linguist-generated=true
 # The document import's CSV fixtures test decoding byte for byte (Windows-1252, UTF-16, CRLF): never
 # converted on checkout.
 apps/web/modules/survey/import/document/__fixtures__/*.csv -text
+
+# The analysis export's expected CSVs are CRLF, as the export writes them, and are compared byte for byte.
+apps/web/lib/analysis-export/__fixtures__/**/*.csv -text

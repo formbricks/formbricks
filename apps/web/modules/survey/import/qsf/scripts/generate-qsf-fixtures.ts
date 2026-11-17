@@ -2,7 +2,7 @@
  * Generates the QSF fixture pack in `../__fixtures__`. Run from `apps/web`:
  *
  *   npx tsx modules/survey/import/qsf/scripts/generate-qsf-fixtures.ts
- *   npx prettier --write modules/survey/import/qsf/__fixtures__   # the JSON files, as CI checks them
+ *   pnpm exec oxfmt modules/survey/import/qsf/__fixtures__   # the JSON files, as CI checks them
  *
  * The fixtures are committed; this script exists so they are reproducible, and so a shape change (a new
  * question type, another Qualtrics quirk) is one edit here rather than in a dozen hand-written files.

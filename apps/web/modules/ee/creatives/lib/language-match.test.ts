@@ -45,7 +45,7 @@ const LISTS: Record<string, TMatchableSurveyLanguage[]> = {
 };
 
 /** What visitors and sites send: codes in every spelling, regions, scripts, weights, aliases and noise. */
-// prettier-ignore
+// oxfmt-ignore
 const REQUESTS = [
   "en-US", "en", "EN_us", "en-GB", "en-AU", "en;q=0.9", " en-US ",
   "de-DE", "de", "DE-de", "de_DE", "de-AT", "de-CH", "deu", "german", "German", "de-Latn-DE",

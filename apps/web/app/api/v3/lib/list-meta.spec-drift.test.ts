@@ -29,8 +29,9 @@ type SpecSchema = {
 };
 
 const loadSchema = async (relativePath: string): Promise<SpecSchema> => {
-  // Dynamic import keeps the YAML parser out of the static block, where prettier's grouping and
-  // eslint's import/order disagree about its position relative to `node:` builtins.
+  // Dynamic import keeps the YAML parser out of the static block, where Prettier's grouping and ESLint's
+  // import/order used to disagree about its position relative to `node:` builtins. Both are gone now
+  // (oxfmt sorts imports), so a static import would do; ENG-7359 aligns these.
   const { parse } = await import("yaml");
   return parse(await readFile(new URL(relativePath, SPEC_SRC_URL), "utf8")) as SpecSchema;
 };

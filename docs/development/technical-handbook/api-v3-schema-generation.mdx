@@ -56,7 +56,7 @@ into the refinement layer.
   <Step title="Generate and format">
     hey-api runs in memory with two resolvers: `format: cuid2` becomes `z.cuid2()`, and `additionalProperties:
     false` becomes `z.strictObject`. Without the second, unknown keys would be stripped instead of answering 400
-    `unsupported_field` — a mass-assignment guard lost. The output is formatted with the repository's Prettier
+    `unsupported_field` — a mass-assignment guard lost. The output is formatted with the repository's oxfmt
     config into `src/generated/zod.gen.ts`.
   </Step>
 </Steps>
@@ -115,7 +115,7 @@ returns a new instance — so anything keyed on schema identity must be attached
 
 The version is exact-pinned and the output is committed, so an upgrade is a deliberate PR whose diff shows every
 change in the generated code. The fidelity and closedness tests are what catch a regression. The pipeline uses
-`ctx.gen.render()` with `dryRun`, which is not a documented API — check it on every bump. A TypeScript or Prettier
+`ctx.gen.render()` with `dryRun`, which is not a documented API — check it on every bump. A TypeScript or oxfmt
 catalog bump can also change the formatting and require a regenerate; `pnpm lint` reports it.
 
 The generator is a build-time dependency only. Lint forbids importing it from `src/`, so no generator code can

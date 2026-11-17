@@ -14,7 +14,7 @@
 language: en-US
 # Max 250 characters — the schema enforces it.
 tone_instructions: |
-  Prettier and oxlint own formatting, import order and quote style; never comment on them.
+  oxfmt and oxlint own formatting, import order and quote style; never comment on them.
   No docstring or JSDoc requests. One well-evidenced comment beats three speculative
   ones: if you cannot point at the line that breaks, say so or stay quiet.
 early_access: true

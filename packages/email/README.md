@@ -53,10 +53,11 @@ The v3 spellings mostly still resolve as deprecated aliases, but v4 re-scaled so
 `shadow-sm` now emits what v3's plain `shadow` emitted — so carrying v3 habits over changes the
 result silently.
 
-Nothing here should pin a Tailwind version of its own. Class sorting comes from the repo-root Prettier
-config, whose `prettier-plugin-tailwindcss` defaults to the same v4 theme. A package-local
-`tailwindConfig` override switches the plugin to its v3 code path, which sorts by v3 rules and treats
-every v4-only utility as unknown — sorting that quietly disagrees with what actually renders.
+Nothing here should pin a Tailwind version of its own. Class sorting comes from the repo-root
+`oxfmt.config.mts`, which has no override for this package, so it sorts against the same default v4
+theme. A `sortTailwindcss.config` override for this package would switch the sort to its v3 code path,
+which sorts by v3 rules and treats every v4-only utility as unknown — sorting that quietly disagrees
+with what actually renders.
 
 ### Path Aliases
 
