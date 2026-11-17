@@ -95,7 +95,7 @@ const fileFor = (dir: string, rule: string) => `${dir}/${rule.split("/").pop()}.
 
 const results = new Map<string, Record<string, FixtureDiagnostic[]>>();
 
-describe("error-level React Compiler rules report through each tier", () => {
+describe("error-level React Compiler rules and exhaustive-deps report through each tier", () => {
   beforeAll(() => {
     for (const { workspace, dir, rules } of tiers) {
       results.set(
