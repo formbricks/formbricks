@@ -31,7 +31,9 @@ const categoryFixtures: Record<string, { rule: string; source: string }> = {
 
 const conventionFixtures = {
   // Vitest's `expect` takes a failure message, and a wrapped test takes its title from a variable.
-  "convention.test.ts": `import { expect, test } from "vitest";
+  // Not named `*.test.ts`: oxlint's vitest rules apply to any file, and a test-named fixture inside a
+  // workspace is collected by that workspace's vitest run when Turbo runs it alongside this one.
+  "convention-vitest.ts": `import { expect, test } from "vitest";
 const run = (title: string) => {
   test(title, () => {
     expect(1, "one is one").toBe(1);
@@ -70,7 +72,7 @@ describe("every tier runs oxlint's correctness and suspicious categories", () =>
     });
 
     test("a message to `expect`, a variable test title and JSX without React pass", () => {
-      const diagnostics = [...results[tier]["convention.test.ts"], ...results[tier]["convention.tsx"]].map(
+      const diagnostics = [...results[tier]["convention-vitest.ts"], ...results[tier]["convention.tsx"]].map(
         (d) => d.ruleId
       );
       expect(diagnostics).not.toContain("vitest/valid-expect");
