@@ -505,7 +505,13 @@ export function CartesianChart({
   );
   const rotatedLeftMargin = getRotatedLabelLeftMargin(rotatedAxisHeight);
   const legendLabels = useMemo(
-    () => (showLegend ? dataKeys.map((key) => String(chartConfig[key]?.label ?? key)) : []),
+    () =>
+      showLegend
+        ? dataKeys.map((key) => {
+            const label = chartConfig[key]?.label;
+            return typeof label === "string" ? label : key;
+          })
+        : [],
     [showLegend, dataKeys, chartConfig]
   );
 

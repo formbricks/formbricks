@@ -67,7 +67,7 @@ export const collapseEmptyGroupRows = (
   const byGroup = new Map<string, TChartDataRow>();
   const out: TChartDataRow[] = [];
   for (const row of rows) {
-    if (!groupKeys.some((key) => row[key] === EMPTY_GROUP_VALUE)) {
+    if (!groupKeys.map((key) => row[key]).includes(EMPTY_GROUP_VALUE)) {
       out.push(row);
       continue;
     }
@@ -355,7 +355,15 @@ export const sumSeries = (row: TChartDataRow, seriesKeys: readonly string[]): nu
 
 // ── Labels ────────────────────────────────────────────────────────────────────
 
-const LABEL_PREFIX = /^(.+?)\s?:\s+(.+)$/;
+/** "Family: Name" → ["Family", "Name"]; a space before the colon ("Famille : Nom") is allowed. Plain string
+ * search rather than a regex, which would backtrack on long labels. */
+const splitLabelPrefix = (label: string): [string, string] | null => {
+  const colon = label.indexOf(":");
+  if (colon <= 0 || label[colon + 1] !== " ") return null;
+  const prefix = label.slice(0, colon).trimEnd();
+  const rest = label.slice(colon + 1).trimStart();
+  return prefix && rest ? [prefix, rest] : null;
+};
 
 /**
  * Drops a "Family: " prefix every label shares ("NPS: Promoters", "NPS: Passives" → "Promoters",
@@ -365,11 +373,11 @@ const LABEL_PREFIX = /^(.+?)\s?:\s+(.+)$/;
  */
 export const stripSharedLabelPrefix = (labels: readonly string[]): string[] => {
   if (labels.length < 2) return [...labels];
-  const parts = labels.map((label) => LABEL_PREFIX.exec(label));
-  if (parts.some((match) => match === null)) return [...labels];
-  const prefix = parts[0]?.[1];
-  if (!prefix || parts.some((match) => match?.[1] !== prefix)) return [...labels];
-  return parts.map((match) => match?.[2] ?? "");
+  const parts = labels.map(splitLabelPrefix);
+  if (parts.includes(null)) return [...labels];
+  const prefix = parts[0]?.[0];
+  if (!prefix || parts.some((part) => part?.[0] !== prefix)) return [...labels];
+  return parts.map((part) => part?.[1] ?? "");
 };
 
 // ── Bar layout ────────────────────────────────────────────────────────────────

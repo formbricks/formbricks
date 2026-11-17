@@ -248,7 +248,7 @@ const BarChartView = ({
         // Only sizes the flipped value-label gutter, so the shared format is close enough.
         valueLabelFormatter={(_key, value) => formatValue(sharedFormatMeasure ?? "", value)}
         tooltipValueFormatter={(_key, value, row) =>
-          formatValue(String(row?.[PIVOTED_MEASURE_KEY] ?? ""), value)
+          formatValue(typeof row?.[PIVOTED_MEASURE_KEY] === "string" ? row[PIVOTED_MEASURE_KEY] : "", value)
         }
         responseBaseKey={responseBaseKey}>
         <Bar dataKey={PIVOTED_VALUE_KEY} fill={CHART_BRAND_DARK} radius={4}>
@@ -700,7 +700,10 @@ function SeriesChart({
   const chartConfig: ChartConfig = seriesConfig;
 
   const seriesLabels = Object.fromEntries(
-    Object.entries(chartConfig).map(([key, entry]) => [key, String(entry.label ?? key)])
+    Object.entries(chartConfig).map(([key, entry]) => [
+      key,
+      typeof entry.label === "string" ? entry.label : key,
+    ])
   );
   const formatValue: TValueFormatter = (dataKey, value) =>
     formatMeasureValue(seriesMeasure[dataKey] ?? dataKey, value, locale);
