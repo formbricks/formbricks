@@ -96,5 +96,6 @@ describe("apps/web enforces the recommended baselines as errors", () => {
     for (const [rule, severity] of Object.entries(typescriptFileOverrides)) {
       expect(severityOf(tsOverride?.rules?.[rule]), rule).toBe(severity === "error" ? "deny" : "allow");
     }
-  });
+    // Spawns oxlint, which loads the sonarjs plugin on every run: vitest's 5s default is too tight on CI.
+  }, 30_000);
 });

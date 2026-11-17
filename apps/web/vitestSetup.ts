@@ -189,10 +189,8 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-export const testInputValidation = async (
-  service: (...args: any[]) => unknown,
-  ...args: any[]
-): Promise<void> => {
+// Registers a test; nothing to await, and no caller awaits it.
+export const testInputValidation = (service: (...args: any[]) => unknown, ...args: any[]): void => {
   test("throws a ValidationError if the inputs are invalid", async () => {
     await expect(service(...args)).rejects.toThrow(ValidationError);
   }, 15000);

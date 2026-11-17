@@ -26,7 +26,10 @@ export function ensureValidationObject(element: SurveyElement): {
   if (!element.validation.rules) {
     element.validation.rules = [];
   }
-  element.validation.logic ??= "and";
+  // eslint-disable-next-line typescript/prefer-nullish-coalescing -- falsy, not nullish: a stored "" is no valid logic either and must become "and" too, as it did when this migration shipped
+  if (!element.validation.logic) {
+    element.validation.logic = "and";
+  }
   // After ensuring logic is set, we know it's defined
   return element.validation as { rules: ValidationRule[]; logic: "and" | "or" };
 }
