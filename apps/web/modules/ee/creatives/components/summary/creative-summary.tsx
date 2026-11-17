@@ -140,6 +140,7 @@ export const CreativeSummary = ({
                 value={statusControl.value}
                 options={statusControl.options}
                 state={state}
+                // oxlint-disable-next-line react/purity -- the label reflects the clock as of this render, on purpose
                 isWaitingForStart={isWaitingForStart(creative.schedule, new Date())}
                 disabled={statusChange.isPending}
                 onChange={statusChange.changeStatus}

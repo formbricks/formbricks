@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "allowImportingTsExtensions": true,
-    "baseUrl": ".",
     "emitDeclarationOnly": true,
     "isolatedModules": true,
     "jsx": "react-jsx",
@@ -10,7 +9,8 @@
       "@/*": ["./src/*"],
       "@formbricks/survey-ui": ["../survey-ui"]
     },
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "rootDir": ".."
   },
   "extends": "@formbricks/config-typescript/js-library.json",
   "include": ["src", "../types/surveys.d.ts"]

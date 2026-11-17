@@ -81,6 +81,8 @@
       "oauth_generic_error_title": "Inloggen mislukt",
       "oauth_misconfigured_description": "Je identiteitsprovider heeft je ingelogd, maar deze Formbricks-instantie mist een deel van de single sign-on configuratie. Opnieuw proberen helpt niet - neem alsjeblieft contact op met een beheerder.",
       "oauth_misconfigured_title": "Single sign-on is niet volledig geconfigureerd",
+      "oauth_second_factor_unavailable_description": "Je e-mailadres is geverifieerd, maar dit account heeft tweestapsverificatie en bij deze Formbricks-instantie is inloggen met e-mailadres en wachtwoord uitgeschakeld, waardoor de tweede factor hier niet kan worden ingevoerd. Log in met een single sign-on-provider die al aan dit account is gekoppeld om het inloggen af te ronden, of neem contact op met een beheerder.",
+      "oauth_second_factor_unavailable_title": "Inloggen met tweestapsverificatie kan hier niet worden voltooid",
       "oauth_signup_not_allowed_description": "Je identiteitsprovider heeft je ingelogd, maar deze Formbricks-instantie is niet ingesteld om op deze manier nieuwe accounts aan te maken. Vraag een beheerder om je uit te nodigen en probeer het daarna opnieuw.",
       "oauth_signup_not_allowed_title": "We konden je account niet aanmaken",
       "please_verify_your_email_to_continue": "Verifieer je e-mailadres. We hebben je een verificatielink gestuurd.",

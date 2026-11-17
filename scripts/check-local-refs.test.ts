@@ -38,14 +38,14 @@ describe("mentionsLocalFolder", () => {
 });
 
 describe("isAllowedFile", () => {
-  test.each([".gitignore", "apps/web/.gitignore", ".worktreeinclude", "packages/config-eslint/base.mjs"])(
+  test.each([".gitignore", "apps/web/.gitignore", ".worktreeinclude", "packages/config-oxlint/base.mjs"])(
     "allows %s",
     (path) => {
       expect(isAllowedFile(path)).toBe(true);
     }
   );
 
-  test.each(["AGENTS.md", "packages/config-eslint/next.mjs", "docs/.gitignore.md"])("checks %s", (path) => {
+  test.each(["AGENTS.md", "packages/config-oxlint/next.mjs", "docs/.gitignore.md"])("checks %s", (path) => {
     expect(isAllowedFile(path)).toBe(false);
   });
 });

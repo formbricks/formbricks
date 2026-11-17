@@ -22,7 +22,7 @@ import {
  * the browser parses with a `style` attribute, and every `<style>` without the page's nonce, is a
  * violation on THEIR site (see the CSP section of docs/surveys/website-app-surveys/framework-guides.mdx).
  * Whether markup trips that depends on the DATA: survey text is rich-text HTML from the editor and the
- * API, full of `style` attributes. Lint (`no-restricted-syntax` in the bundle packages) stops new code that
+ * API, full of `style` attributes. Lint (`formbricks/restricted-syntax` in the bundle packages) stops new code that
  * parses or injects markup; only a real browser, a real policy and styled content catch the rest.
  *
  * Needs neither login nor database: it renders the BUILT bundle (apps/web/public/js, produced by the same

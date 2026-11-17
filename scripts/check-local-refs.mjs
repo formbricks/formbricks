@@ -19,10 +19,10 @@ const LOCAL_FOLDER = /(?<![\w-])\.local\//g;
 const HOME_DIR_PREFIX = /(?:~|\$HOME|\$\{HOME\}|\/root|\/home\/[\w.-]+)\/$/;
 
 // Files that have to name the folder to do their job: the ignore rules that keep it untracked,
-// the ESLint ignore entry that keeps type-aware linting off it, and this check with its test.
+// the oxlint ignore entry that keeps type-aware linting off it, and this check with its test.
 const ALLOWED_BASENAMES = new Set([".gitignore", ".worktreeinclude"]);
 const ALLOWED_PATHS = new Set([
-  "packages/config-eslint/base.mjs",
+  "packages/config-oxlint/base.mjs",
   "scripts/check-local-refs.mjs",
   "scripts/check-local-refs.test.ts",
 ]);

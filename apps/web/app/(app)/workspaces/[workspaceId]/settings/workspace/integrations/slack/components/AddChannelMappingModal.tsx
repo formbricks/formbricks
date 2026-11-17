@@ -137,6 +137,7 @@ export const AddChannelMappingModal = ({
           selectedElements.length === surveyElements.length
             ? t("common.all_questions")
             : t("common.selected_questions"),
+        // oxlint-disable-next-line react/purity -- runs on submit: handleSubmit(linkChannel) only wraps it during render
         createdAt: new Date(),
         includeVariables,
         includeHiddenFields,

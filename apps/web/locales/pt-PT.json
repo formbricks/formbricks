@@ -81,6 +81,8 @@
       "oauth_generic_error_title": "Falha no início de sessão",
       "oauth_misconfigured_description": "O teu fornecedor de identidade autenticou-te, mas esta instância do Formbricks está com parte da configuração de início de sessão único em falta. Tentar novamente não vai ajudar - contacta um administrador.",
       "oauth_misconfigured_title": "O início de sessão único não está totalmente configurado",
+      "oauth_second_factor_unavailable_description": "O teu endereço de email foi verificado, mas esta conta tem autenticação de dois fatores e esta instância do Formbricks tem o início de sessão com email e palavra-passe desativado, pelo que não é possível introduzir aqui o segundo fator. Para concluíres, inicia sessão com um fornecedor de início de sessão único já associado a esta conta ou contacta um administrador.",
+      "oauth_second_factor_unavailable_title": "Não é possível concluir aqui o início de sessão com dois fatores",
       "oauth_signup_not_allowed_description": "O teu fornecedor de identidade autenticou-te, mas esta instância do Formbricks não está configurada para criar novas contas desta forma. Pede a um administrador para te convidar e tenta novamente.",
       "oauth_signup_not_allowed_title": "Não conseguimos criar a tua conta",
       "please_verify_your_email_to_continue": "Verifica o teu endereço de e-mail. Enviámos-te um link de verificação.",

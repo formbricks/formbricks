@@ -81,6 +81,8 @@
       "oauth_generic_error_title": "Error al iniciar sesión",
       "oauth_misconfigured_description": "Tu proveedor de identidad te autenticó correctamente, pero a esta instancia de Formbricks le falta parte de su configuración de inicio de sesión único. Reintentar no ayudará; por favor, contacta con un administrador.",
       "oauth_misconfigured_title": "El inicio de sesión único no está completamente configurado",
+      "oauth_second_factor_unavailable_description": "Tu dirección de correo electrónico está verificada, pero esta cuenta tiene activada la autenticación en dos pasos y esta instancia de Formbricks tiene desactivado el inicio de sesión con correo electrónico y contraseña, por lo que no es posible introducir aquí el segundo factor. Para terminar, inicia sesión con un proveedor de inicio de sesión único que ya esté vinculado a esta cuenta o ponte en contacto con un administrador.",
+      "oauth_second_factor_unavailable_title": "No se puede completar aquí el inicio de sesión en dos pasos",
       "oauth_signup_not_allowed_description": "Tu proveedor de identidad te autenticó correctamente, pero esta instancia de Formbricks no está configurada para crear nuevas cuentas de esta manera. Pide a un administrador que te invite y luego inténtalo de nuevo.",
       "oauth_signup_not_allowed_title": "No pudimos crear tu cuenta",
       "please_verify_your_email_to_continue": "Verifica tu dirección de correo electrónico. Te hemos enviado un enlace de verificación.",

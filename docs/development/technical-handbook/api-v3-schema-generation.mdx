@@ -118,7 +118,7 @@ change in the generated code. The fidelity and closedness tests are what catch a
 `ctx.gen.render()` with `dryRun`, which is not a documented API — check it on every bump. A TypeScript or Prettier
 catalog bump can also change the formatting and require a regenerate; `pnpm lint` reports it.
 
-The generator is a build-time dependency only. ESLint forbids importing it from `src/`, so no generator code can
+The generator is a build-time dependency only. Lint forbids importing it from `src/`, so no generator code can
 reach a served bundle, and a test fails if the generated module ever imports anything but `zod`. The
 `@formbricks/api-v3-schemas/testing` entry point reads the bundle from disk and is lint-banned outside tests in
 `apps/web`. The pipeline passes an explicit config file that does not exist, so hey-api's loader executes

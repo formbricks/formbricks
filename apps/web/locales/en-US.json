@@ -81,6 +81,8 @@
       "oauth_generic_error_title": "Sign-in failed",
       "oauth_misconfigured_description": "Your identity provider signed you in, but this Formbricks instance is missing part of its single sign-on configuration. Retrying will not help - please contact an administrator.",
       "oauth_misconfigured_title": "Single sign-on is not fully configured",
+      "oauth_second_factor_unavailable_description": "Your email address is verified, but this account has two-factor authentication and this Formbricks instance has email and password sign-in turned off, so the second factor cannot be entered here. Sign in with a single sign-on provider already linked to this account to finish, or contact an administrator.",
+      "oauth_second_factor_unavailable_title": "Two-factor sign-in cannot be completed here",
       "oauth_signup_not_allowed_description": "Your identity provider signed you in, but this Formbricks instance is not set up to create new accounts this way. Ask an administrator to invite you, then try again.",
       "oauth_signup_not_allowed_title": "We could not create your account",
       "please_verify_your_email_to_continue": "Please verify your email address. We have sent you a verification link.",

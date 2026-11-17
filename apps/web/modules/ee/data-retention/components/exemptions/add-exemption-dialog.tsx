@@ -81,6 +81,7 @@ export const AddExemptionDialog = ({
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
+    // oxlint-disable-next-line react/purity -- read once, on the render where the dialog opens (see above)
     if (open) setBounds(getExemptionUntilBounds(new Date(), timeZone));
   }
   const createExemption = useCreateRetentionExemption();

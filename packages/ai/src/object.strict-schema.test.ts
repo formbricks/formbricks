@@ -152,7 +152,7 @@ describe("generateObject: a provider that cannot decode against the schema", () 
       { ...compatible(), AI_OPENAI_COMPATIBLE_SUPPORTS_STRUCTURED_OUTPUTS: "false" }
     );
 
-    const systems = (requests[0]?.messages as { role: string; content: string }[])
+    const systems = (requests[0].messages as { role: string; content: string }[])
       .filter((message) => message.role === "system")
       .map((message) => message.content);
     expect(systems[0]).toBe("Plan the survey.");
