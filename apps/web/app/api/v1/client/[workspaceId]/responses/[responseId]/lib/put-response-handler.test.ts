@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   resolveClientApiIds: vi.fn(),
   sendToPipeline: vi.fn(),
   updateResponseWithQuotaEvaluation: vi.fn(),
+  getStoredResponseNotShown: vi.fn(),
   validateClientFileUploads: vi.fn(),
   validateOtherOptionLengthForMultipleChoice: vi.fn(),
   validateResponseData: vi.fn(),
@@ -55,6 +56,7 @@ vi.mock("@/modules/storage/utils", () => ({
 
 vi.mock("./response", () => ({
   updateResponseWithQuotaEvaluation: mocks.updateResponseWithQuotaEvaluation,
+  getStoredResponseNotShown: mocks.getStoredResponseNotShown,
 }));
 
 vi.mock("./validated-response-update-input", () => ({

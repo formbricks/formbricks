@@ -215,7 +215,8 @@ describe("POST /api/v2/client/[workspaceId]/responses — Embedded Data ingest c
       expect.anything(),
       { seats: 12 },
       expect.anything(),
-      expect.anything()
+      expect.anything(),
+      undefined
     );
     expect(mocks.checkSurveyValidity).toHaveBeenCalledWith(
       expect.anything(),
