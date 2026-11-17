@@ -11,8 +11,10 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
  *  - every permission in a scope family the consent holds, at that family's level (`write` when the
  *    consent holds `<family>:write`, else `read`), capped at the highest level the permission offers, so
  *    Workflow runs and Feedback datasets stop at Read;
- *  - Tags and the Audience permissions at No access (absent), so an upgrade never hands an agent data it
- *    did not have before, though Tags shares the `responses` family.
+ *  - Tags and the Audience permissions at No access (absent): they open tools an existing connection
+ *    never had (`list_tags`, `update_tag`, `merge_tags`, and the Audience tools), though Tags shares the
+ *    `responses` family. A response's own tags stay Responses data, as before. The one read that
+ *    narrows is a response's `contact.userId`, which now needs Contacts and Contact attributes.
  *  - for a Dashboard viewer (every membership the Dashboard viewer role, the rule of
  *    `isOnlyDashboardViewer`), only what the consent screen offers one: `dashboards:read`, so Charts and
  *    Dashboards at Read, whatever wider scopes a consent from before the role holds. A viewer's token is
@@ -26,7 +28,7 @@ import type { MigrationScript } from "../../src/scripts/migration-runner";
  * One grant per connection (user + client). The provider can hold duplicate consent rows for one
  * connection; the grant follows the most recently written row, and rows written in the same second
  * count only for the scopes every one of them holds, as `consentBound` in
- * `apps/web/modules/auth/lib/oauth-grant-revocation.ts` reads them.
+ * `apps/web/modules/auth/lib/oauth-consent-rows.ts` reads them.
  *
  * One statement inside the runner's transaction; memory stays in Postgres. Set-based throughout: each
  * step aggregates once over the whole table and the next joins its result, with no subquery that runs

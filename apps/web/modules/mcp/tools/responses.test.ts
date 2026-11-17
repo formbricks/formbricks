@@ -25,7 +25,7 @@ import {
   buildCountResponsesSearchParams,
   buildListResponsesSearchParams,
   registerResponseTools,
-  withoutUnreachableResponseData,
+  withoutContactUserId,
 } from "./responses";
 
 /**
@@ -561,26 +561,20 @@ describe("the confirmation state is sealed", () => {
 });
 
 /**
- * A response names its contact and the tags it is filed under, and neither is the response's own data:
- * a caller without Contacts: Read or Tags: Read sees them null/empty rather than losing the tool.
+ * A response's contact id and its tags are Responses data (D1). Only the contact's `userId`, a contact
+ * attribute, needs Contacts and Contact attributes at Read, and comes back null without them.
  */
-describe("contact and tags without their permissions", () => {
-  // The detailed resource carries the contact; a list item carries tags only (the published item
-  // schema has no `contact`), so the two shapes are asserted apart.
+describe("a response's contact userId without Contacts and Contact attributes", () => {
   const tags = [{ id: "cltg000000000000000000001", name: "vip" }];
+  const contact = { id: "clct000000000000000000001", userId: "ext-user-42" };
   const resource = {
     id: RESPONSE_ID,
     surveyId: "clsv000000000000000000001",
     data: { q1: "an answer" },
-    contact: { id: "clct000000000000000000001", userId: null },
+    contact,
     tags,
   };
-  const listItem = {
-    id: RESPONSE_ID,
-    surveyId: "clsv000000000000000000001",
-    data: { q1: "an answer" },
-    tags,
-  };
+  const listItem = { id: RESPONSE_ID, surveyId: "clsv000000000000000000001", data: { q1: "an answer" }, tags };
 
   /** An OAuth caller, which unlike an API key has a grant to withhold a permission with. */
   const oauthAuthInfo = (scopes: string[], permissions: Record<string, string>) => ({
@@ -598,150 +592,97 @@ describe("contact and tags without their permissions", () => {
     },
   });
 
+  // An upgraded client's grant: Responses only, Tags and Audience at No access (story 41).
   const responsesOnly = oauthAuthInfo(["responses:read"], { responses: "read" });
   const responsesWrite = oauthAuthInfo(["responses:read", "responses:write"], { responses: "write" });
-  const withContacts = oauthAuthInfo(["responses:read", "audience:read"], {
+  const contactsOnly = oauthAuthInfo(["responses:read", "audience:read"], { responses: "read", contacts: "read" });
+  const withAudience = oauthAuthInfo(["responses:read", "audience:read"], {
     responses: "read",
     contacts: "read",
-  });
-  const withTags = oauthAuthInfo(["responses:read", "audience:read"], {
-    responses: "read",
-    tags: "read",
-  });
-  const withBoth = oauthAuthInfo(["responses:read", "audience:read"], {
-    responses: "read",
-    contacts: "read",
-    tags: "read",
+    contactAttributes: "read",
   });
 
   const callerContext = (authInfo: unknown) =>
     ({ http: { authInfo }, mcpReq: { method: "tools/call" } }) as never;
 
-  const listAs = async (authInfo: unknown) => {
-    vi.mocked(listV3Responses).mockResolvedValue(
-      successListResponse(
-        [listItem, { ...listItem, id: "clrs000000000000000000002" }],
-        { limit: 20, nextCursor: null },
-        { requestId: "req_tool" }
-      )
-    );
-
-    const result = await call(
-      "list_responses",
-      { workspaceId: WORKSPACE_ID, limit: 20 },
-      callerContext(authInfo)
-    );
-    return (result.structuredContent as { data: unknown[] }).data;
-  };
-
   const getAs = async (authInfo: unknown) => {
     vi.mocked(getV3Response).mockResolvedValue(successResponse(resource, { requestId: "req_tool" }));
-
     const result = await call("get_response", { responseId: RESPONSE_ID }, callerContext(authInfo));
     return (result.structuredContent as { data: unknown }).data;
   };
 
-  test("list_responses empties each item's tags for a caller without Tags: Read", async () => {
-    expect(await listAs(responsesOnly)).toEqual([
-      { ...listItem, tags: [] },
-      { ...listItem, id: "clrs000000000000000000002", tags: [] },
-    ]);
+  test("get_response keeps the contact id and the tags, and nulls only the userId", async () => {
+    expect(await getAs(responsesOnly)).toEqual({ ...resource, contact: { ...contact, userId: null } });
   });
 
-  test("list_responses leaves the items untouched with Tags: Read", async () => {
-    expect((await listAs(withTags))[0]).toEqual(listItem);
+  test("Contacts: Read alone is not enough for the userId: it is a contact attribute", async () => {
+    expect(await getAs(contactsOnly)).toEqual({ ...resource, contact: { ...contact, userId: null } });
   });
 
-  test("get_response nulls the contact for a caller without Contacts: Read", async () => {
-    expect(await getAs(responsesOnly)).toEqual({ ...resource, contact: null, tags: [] });
+  test("Contacts and Contact attributes at Read get the response untouched", async () => {
+    expect(await getAs(withAudience)).toEqual(resource);
   });
 
-  test("Contacts: Read keeps the contact and still empties the tags", async () => {
-    expect(await getAs(withContacts)).toEqual({ ...resource, tags: [] });
-  });
-
-  test("Tags: Read keeps the tags and still nulls the contact", async () => {
-    expect(await getAs(withTags)).toEqual({ ...resource, contact: null });
-  });
-
-  test("a caller holding both permissions gets the response untouched", async () => {
-    expect(await getAs(withBoth)).toEqual(resource);
-  });
-
-  // The caller reads every response's tags as [], so a tags replace from that view would drop tags it
-  // never saw: naming tags needs Tags: Read, and a write that leaves them out goes ahead.
-  test("update_response refuses to name tags without Tags: Read, and runs without them", async () => {
-    vi.mocked(updateV3ResponseFromRawInput).mockImplementation(async () =>
-      successResponse(resource, { requestId: "req_tool" })
+  test("list_responses keeps each item's tags under Responses: Read alone", async () => {
+    vi.mocked(listV3Responses).mockResolvedValue(
+      successListResponse([listItem], { limit: 20, nextCursor: null }, { requestId: "req_tool" })
     );
-
-    const refused = await call(
-      "update_response",
-      { responseId: RESPONSE_ID, data: { tags: [] } },
-      callerContext(responsesWrite)
-    );
-    expect(refused.isError).toBe(true);
-    expect(JSON.stringify(refused.structuredContent)).toContain("Tags: Read");
-    expect(updateV3ResponseFromRawInput).not.toHaveBeenCalled();
-
-    const ran = await call(
-      "update_response",
-      { responseId: RESPONSE_ID, data: { finished: true } },
-      callerContext(responsesWrite)
-    );
-    expect(ran.isError).toBeFalsy();
-    expect(updateV3ResponseFromRawInput).toHaveBeenCalledTimes(1);
+    const result = await call("list_responses", { workspaceId: WORKSPACE_ID, limit: 20 }, callerContext(responsesOnly));
+    expect((result.structuredContent as { data: unknown[] }).data).toEqual([listItem]);
   });
 
-  test("create_response and update_response redact the resource they return", async () => {
-    // A fresh Response per call: a body can only be read once.
+  // An upgraded client wrote tags before grants (story 40): Responses: Write still does.
+  test("create_response and update_response set tags under Responses: Write, and redact only the userId", async () => {
     vi.mocked(createV3ResponseFromRawInput).mockImplementation(async () =>
       successResponse(resource, { requestId: "req_tool" })
     );
     vi.mocked(updateV3ResponseFromRawInput).mockImplementation(async () =>
       successResponse(resource, { requestId: "req_tool" })
     );
-    const redacted = { ...resource, contact: null, tags: [] };
+    const redacted = { ...resource, contact: { ...contact, userId: null } };
 
     const created = await call(
       "create_response",
-      { data: { surveyId: "clsv000000000000000000001" } },
+      { data: { surveyId: "clsv000000000000000000001", tags: [tags[0].id] } },
       callerContext(responsesWrite)
     );
+    expect(created.isError).toBeFalsy();
     expect(created.structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
 
     const updated = await call(
       "update_response",
-      { responseId: RESPONSE_ID, data: { finished: true } },
+      { responseId: RESPONSE_ID, data: { tags: [] } },
       callerContext(responsesWrite)
     );
+    expect(updated.isError).toBeFalsy();
     expect(updated.structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
+    expect(updateV3ResponseFromRawInput).toHaveBeenCalledTimes(1);
+  });
+
+  // The dry run reports ids only: the contact's id and the tags it would apply, never a userId or an
+  // attribute, so it needs no redaction under D1.
+  test("validate_response passes the effects through, which name no userId", async () => {
+    const effects = { language: null, contactId: contact.id, displayId: null, firesPipeline: true, countsTowardMeteredResponses: false, quotas: [] };
+    vi.mocked(validateV3ResponseFromRawInput).mockResolvedValue(
+      successResponse({ valid: true, operation: "create", invalid_params: [], effects }, { requestId: "req_tool" })
+    );
+    const result = await call(
+      "validate_response",
+      { operation: "create", data: { surveyId: "clsv000000000000000000001", contactId: contact.id } },
+      callerContext(responsesWrite)
+    );
+    expect(JSON.stringify(result)).not.toContain("userId");
+    expect((result.structuredContent as { data: { effects: unknown } }).data.effects).toEqual(effects);
   });
 });
 
-describe("withoutUnreachableResponseData", () => {
-  const text = (payload: unknown) => ({
-    structuredContent: payload,
-    content: [{ type: "text" as const, text: "x" }],
-  });
-  const both = { contacts: true, tags: true };
-  const neither = { contacts: false, tags: false };
-
-  test("hands the result back when the caller may read both fields", () => {
-    const result = text({ data: { contact: { id: "c" }, tags: [{ id: "t" }] } });
-    expect(withoutUnreachableResponseData(result as never, both)).toBe(result);
-  });
-
-  test("passes an error result through untouched", () => {
-    const error = { ...text({ error: { status: 403 } }), isError: true };
-    expect(withoutUnreachableResponseData(error as never, neither)).toBe(error);
-  });
-
-  test("leaves a payload that carries neither field as it is", () => {
-    const counted = text({ data: { count: 3, relation: "eq" } });
-    expect(withoutUnreachableResponseData(counted as never, neither).structuredContent).toEqual({
-      data: { count: 3, relation: "eq" },
-    });
+describe("withoutContactUserId", () => {
+  test("leaves a response without a contact, or with a null userId, as the same object", () => {
+    const anonymous = { id: "r", contact: null };
+    expect(withoutContactUserId(anonymous)).toBe(anonymous);
+    const unknownUser = { id: "r", contact: { id: "c", userId: null } };
+    expect(withoutContactUserId(unknownUser)).toBe(unknownUser);
+    expect(withoutContactUserId("not a response")).toBe("not a response");
   });
 });
 
