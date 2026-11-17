@@ -9,7 +9,7 @@ import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
-import { surveyFilterDataKey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/hooks/use-response-table-filters";
+import { surveyAnalysisKeys } from "@/modules/analysis/lib/query";
 import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Tag } from "@/modules/ui/components/tag";
@@ -98,7 +98,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
     // panel's options.
     router.refresh();
     void queryClient?.invalidateQueries({ queryKey: tagKeys.list(workspaceId) });
-    void queryClient?.invalidateQueries({ queryKey: surveyFilterDataKey(response.surveyId) });
+    void queryClient?.invalidateQueries({ queryKey: surveyAnalysisKeys.filterData(response.surveyId) });
 
     try {
       await addResponseTag(responseId, newTag.id);

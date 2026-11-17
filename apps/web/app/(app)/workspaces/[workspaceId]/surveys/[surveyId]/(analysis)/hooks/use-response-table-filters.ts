@@ -15,6 +15,7 @@ import type {
 import { getResponseFilterOptions } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/lib/api-client";
 import { generateElementAndFilterOptions, getFormattedFilters } from "@/app/lib/surveys/surveys";
 import { getReportingTimeZone } from "@/lib/date-ranges";
+import { surveyAnalysisKeys } from "@/modules/analysis/lib/query";
 import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
 import { STRING_RULE_OPERATORS } from "@/modules/ui/components/table-toolbar/lib/operators";
 import type { TFilterProperty, TTableFilter } from "@/modules/ui/components/table-toolbar/lib/types";
@@ -48,9 +49,6 @@ const pendingProperties = (known: readonly TFilterProperty[], search: string): T
   }));
 };
 
-/** The filter panel's options for a survey (its tags among them), shared so a tag write can invalidate them. */
-export const surveyFilterDataKey = (surveyId: string) => ["surveys", surveyId, "filter-data"] as const;
-
 /** Properties the survey alone describes; every other one (attributes, tags, meta…) needs the filter data. */
 const isSurveyOnlyProperty = (id: string) =>
   id === "status" ||
@@ -83,7 +81,7 @@ export const useResponseTableFilters = (survey: TSurvey) => {
   const needsFilterData = urlNeedsFilterData(new URLSearchParams(searchParams?.toString() ?? ""));
   const [isFilterDataRequested, setIsFilterDataRequested] = useState(false);
   const filterData = useQuery({
-    queryKey: surveyFilterDataKey(survey.id),
+    queryKey: surveyAnalysisKeys.filterData(survey.id),
     queryFn: ({ signal }) => getResponseFilterOptions(survey.id, { signal }),
     enabled: needsFilterData || isFilterDataRequested,
     staleTime: 60_000,
