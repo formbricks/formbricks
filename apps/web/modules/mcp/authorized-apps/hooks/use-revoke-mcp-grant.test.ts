@@ -55,6 +55,30 @@ describe("useRevokeMcpGrant", () => {
     expect(revoked?.[0]).toBe("/api/internal/mcp-grants/client%2Fa");
   });
 
+  // The client gives up after 15 s, but a Revoke waiting behind a reconciling pass can still commit:
+  // the list is read again after a failure too, so it shows what the server holds.
+  test("refreshes the shown list when the revoke fails, which the server may still have committed", async () => {
+    const lists = [{ clients: [{ clientId: "client/a" }] }, { clients: [] }];
+    vi.mocked(global.fetch).mockImplementation(async (_url, init) =>
+      init?.method === "DELETE"
+        ? new Response(JSON.stringify({ title: "Error", status: 500, detail: "Error", code: "internal" }), {
+            status: 500,
+            headers: { "Content-Type": "application/problem+json" },
+          })
+        : json({ data: { isDashboardViewer: false, ...(lists.shift() ?? { clients: [] }) } })
+    );
+    const queryClient = newQueryClient();
+
+    const { result } = renderHook(() => ({ list: useAuthorizedMcpClients(), revoke: useRevokeMcpGrant() }), {
+      wrapper: wrapper(queryClient),
+    });
+    await waitFor(() => expect(result.current.list.data?.clients).toHaveLength(1));
+    result.current.revoke.mutate("client/a");
+
+    await waitFor(() => expect(result.current.revoke.isError).toBe(true));
+    await waitFor(() => expect(result.current.list.data?.clients).toEqual([]));
+  });
+
   test("surfaces a refused revoke instead of reporting success", async () => {
     vi.mocked(global.fetch).mockResolvedValue(
       new Response(
