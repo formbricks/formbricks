@@ -79,6 +79,8 @@ export const ResponseCardModal = ({
   const handleClose = (open: boolean) => {
     setOpen(open);
     if (!open) {
+      // Reopening the response a Next/Back click left from must not find navigation still in flight.
+      setNavigatingFromId(null);
       setSelectedResponseId(null);
     }
   };

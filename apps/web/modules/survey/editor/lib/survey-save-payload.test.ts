@@ -43,16 +43,19 @@ describe("parseSurveyEndings", () => {
 });
 
 describe("buildSurveySavePayload", () => {
-  const survey = {
-    id: "s1",
-    name: "Survey",
-    questions: [{ id: "legacy" }],
-    blocks: [{ id: "b1", name: "Block 1", elements: [{ id: "e1", type: "openText", isDraft: true }] }],
-    endings: [{ id: "end1", type: "endScreen", headline: { default: "Thanks" } }],
-  } as unknown as TSurvey;
+  // A fresh survey per test: a helper that normalised its input in place would otherwise leave a shared
+  // fixture normalised, and the non-mutation test would compare normalised against normalised.
+  const makeSurvey = () =>
+    ({
+      id: "s1",
+      name: "Survey",
+      questions: [{ id: "legacy" }],
+      blocks: [{ id: "b1", name: "Block 1", elements: [{ id: "e1", type: "openText", isDraft: true }] }],
+      endings: [{ id: "end1", type: "endScreen", headline: { default: "Thanks" } }],
+    }) as unknown as TSurvey;
 
   test("strips draft flags, empties the legacy questions and parses the endings", () => {
-    const payload = buildSurveySavePayload(survey);
+    const payload = buildSurveySavePayload(makeSurvey());
 
     expect(payload.id).toBe("s1");
     expect(payload.questions).toEqual([]);
@@ -61,6 +64,7 @@ describe("buildSurveySavePayload", () => {
   });
 
   test("leaves the editor's survey untouched, so a failed save keeps its draft flags", () => {
+    const survey = makeSurvey();
     const before = structuredClone(survey);
 
     buildSurveySavePayload(survey);
