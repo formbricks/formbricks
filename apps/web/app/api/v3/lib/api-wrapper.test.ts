@@ -247,6 +247,7 @@ describe("withV3ApiWrapper", () => {
     ["/sub/api/internal/tags", "api:internal"],
     ["/api/v3/surveys", "api:v3"],
     ["/sub/api/v3/surveys", "api:v3"],
+    ["/api/v3/things/api/internal/x", "api:v3"],
   ])("picks the default bucket for %s, a basePath prefix included", (pathname, namespace) => {
     expect(getDefaultRateLimitConfig(pathname).namespace).toBe(namespace);
   });

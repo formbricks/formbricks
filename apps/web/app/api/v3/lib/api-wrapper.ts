@@ -672,16 +672,19 @@ async function authenticateV3RequestOrRespond(
   };
 }
 
-const INTERNAL_PATH = /\/api\/internal\//;
-
 /**
  * The bucket a route charges unless it names its own: the dashboard's `/api/internal` surface gets one
  * sized for page loads and refetches, so it never spends a user's public API budget (ADR 0041: the
- * directory is the declaration). Matched anywhere in the path, not as a prefix: under a `basePath`
- * deployment the request URL keeps the prefix (see `reportServerError`).
+ * directory is the declaration). Under a `basePath` deployment the request URL keeps the prefix (see
+ * `reportServerError`), so the first `/api/` segment decides, wherever it sits: a later one, say inside a
+ * catch-all's path, can't move a request into the larger bucket.
  */
-export const getDefaultRateLimitConfig = (pathname: string): TRateLimitConfig =>
-  INTERNAL_PATH.test(pathname) ? rateLimitConfigs.api.internal : rateLimitConfigs.api.v3;
+export const getDefaultRateLimitConfig = (pathname: string): TRateLimitConfig => {
+  const api = pathname.indexOf("/api/");
+  return api !== -1 && pathname.startsWith("/api/internal/", api)
+    ? rateLimitConfigs.api.internal
+    : rateLimitConfigs.api.v3;
+};
 
 async function applyV3RateLimitOrRespond(params: {
   authentication: TV3Authentication;
