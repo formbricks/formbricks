@@ -236,7 +236,7 @@ describe("getNodeRegistryEntry", () => {
     } as TWorkflowIfElseNode;
 
     expect(getNodeRegistryEntry(node).summary(node, t)).toBe(
-      'workspace.workflows.if_else_operator_not_exists:{"variable":"steps.http-1.status"}'
+      'workspace.workflows.if_else_operator_not_exists:{"variable":"status"}'
     );
   });
 });

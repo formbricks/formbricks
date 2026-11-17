@@ -516,3 +516,46 @@ describe("trigger-less draft definitions", () => {
     expect(reorganizeWorkflowDefinition(emptyDefinition).trigger).toBeNull();
   });
 });
+
+describe("step Variables in If/else summaries", () => {
+  // Interpolates the words, so the test reads the names the summary was given.
+  const tWithValues = ((key: string, values?: Record<string, unknown>) =>
+    `${key} ${JSON.stringify(values ?? {})}`) as unknown as TFunction;
+
+  const definition = () =>
+    buildDefinition({
+      nodes: [
+        { ...emailNode("crm"), label: "Log the visit in the CRM" },
+        {
+          ...ifElseNode("if-1"),
+          config: {
+            condition: {
+              id: "g",
+              connector: "and",
+              conditions: [
+                { id: "c1", left: { path: "steps.crm.body.json.club" }, operator: "equals", right: "Mitte" },
+              ],
+            },
+          },
+        } as TWorkflowDefinition["nodes"][number],
+      ],
+      edges: [
+        { id: "e1", source: "trigger-1", target: "crm" },
+        { id: "e2", source: "crm", target: "if-1" },
+      ],
+    });
+
+  test("the chip shows the field as the picker does, never the step's id", () => {
+    const node = workflowDefinitionToFlowNodes(definition(), tWithValues).find((item) => item.id === "if-1");
+    const chips = node?.data.summaryParts?.filter((part) => part.kind === "reference");
+    expect(chips?.map((part) => (part.kind === "reference" ? part.chip.label : ""))).toEqual([
+      "body.json.club",
+    ]);
+  });
+
+  test("the plain summary, the card's tooltip, names the step and the field", () => {
+    const node = workflowDefinitionToFlowNodes(definition(), tWithValues).find((item) => item.id === "if-1");
+    expect(node?.data.summary).toContain("Log the visit in the CRM · body.json.club");
+    expect(node?.data.summary).not.toContain("steps.crm");
+  });
+});

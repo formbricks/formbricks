@@ -19,6 +19,7 @@ import {
 } from "@/modules/ee/workflows/lib/canvas-geometry";
 import type { TWorkflowNodeData, TWorkflowNodeIcon } from "@/modules/ee/workflows/state/editor";
 import { FlowTextParts, useElementIcons } from "@/modules/survey/editor/components/reference-chip";
+import { TruncationTooltip } from "@/modules/ui/components/info-tooltip";
 
 export const NODE_ICONS: Record<TWorkflowNodeIcon, LucideIcon> = {
   trigger: ZapIcon,
@@ -121,17 +122,17 @@ export const WorkflowNodeCard = ({
             <span className="line-clamp-2">{data.issue.label}</span>
           </span>
         ) : (
-          // If/else and Switch read as a sentence with chips, like the survey flow editor's rules. A
-          // chip gets at most 60% of the line, so a long question title leaves room for the words after it.
-          <span
-            className="line-clamp-2 text-xs leading-[20px] text-slate-500 [&>span.inline-flex]:max-w-[60%]"
-            title={data.summary}>
+          // If/else and Switch read as a sentence with chips, like the survey flow editor's rules. A chip
+          // can take the whole line; when the sentence is cut off, hovering shows all of it, as there.
+          <TruncationTooltip
+            content={data.summary}
+            className="line-clamp-2 text-xs leading-[20px] text-slate-500">
             {data.summaryParts ? (
               <FlowTextParts parts={data.summaryParts} elementIcons={elementIcons} />
             ) : (
               data.summary
             )}
-          </span>
+          </TruncationTooltip>
         )}
       </div>
       {menu}

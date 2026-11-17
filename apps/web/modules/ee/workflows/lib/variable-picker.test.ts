@@ -348,7 +348,7 @@ describe("getWorkflowVariableRecallItems", () => {
     expect(getWorkflowVariableRecallItems(text, groups)).toEqual([
       { id: "payload.customer.tier", label: "customer.tier", type: "variable" },
       { id: "payload.gone", label: "gone", type: "variable" },
-      { id: "steps.lookup.body.tier", label: "steps.lookup.body.tier", type: "variable" },
+      { id: "steps.lookup.body.tier", label: "body.tier", type: "variable" },
     ]);
   });
 });

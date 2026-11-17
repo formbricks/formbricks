@@ -1,6 +1,8 @@
 import { type Edge, type Node, type SnapGrid } from "@xyflow/react";
 import type { TFunction } from "i18next";
 import {
+  type TWorkflowCondition,
+  type TWorkflowConditionGroup,
   type TWorkflowDefinition,
   type TWorkflowNode,
   WORKFLOW_SWITCH_DEFAULT_BRANCH,
@@ -134,6 +136,48 @@ export const getCanvasBranches = (node: TWorkflowNode, t: TFunction): TWorkflowC
   ];
 };
 
+const STEP_VARIABLE_PATH = /^steps\.([^.]+)\.(.+)$/;
+
+const collectConditionPaths = (group: TWorkflowConditionGroup, paths: Set<string>): void => {
+  for (const item of group.conditions) {
+    if ("conditions" in item) {
+      collectConditionPaths(item, paths);
+      continue;
+    }
+    const condition: TWorkflowCondition = item;
+    paths.add(condition.left.path);
+    const right = condition.right;
+    if (right !== null && typeof right === "object" && !Array.isArray(right)) paths.add(right.path);
+  }
+};
+
+/**
+ * The summaries' labels plus one for each step Variable an If/else or Switch compares: the step's name
+ * and the field, "Log the visit in the CRM · body.json.club", never the step's id. The chips show the
+ * field alone, as the picker does; the plain summary, which is the card's tooltip, says which step.
+ */
+const withStepVariableLabels = (
+  definition: TWorkflowDefinition,
+  t: TFunction,
+  labels: TVariableLabels | undefined
+): TVariableLabels => {
+  const paths = new Set<string>();
+  for (const node of definition.nodes) {
+    if (node.type === "if_else") collectConditionPaths(node.config.condition, paths);
+    if (node.type === "switch") paths.add(node.config.left.path);
+  }
+  const titles = new Map(
+    definition.nodes.map((node) => [node.id, getNodeRegistryEntry(node).title(node, t)])
+  );
+  const result = new Map(labels ?? []);
+  for (const path of paths) {
+    const match = STEP_VARIABLE_PATH.exec(path);
+    const title = match ? titles.get(match[1]) : undefined;
+    if (match && title !== undefined && !result.has(path)) result.set(path, `${title} · ${match[2]}`);
+  }
+  return result;
+};
+
 /** The If/else and Switch summaries as sentences with chips; null for every other step. */
 const getSummaryParts = (
   node: TWorkflowNode,
@@ -160,6 +204,7 @@ export const workflowDefinitionToFlowNodes = (
     isDraft: options?.isDraft ?? true,
   };
 
+  const variableLabels = withStepVariableLabels(definition, t, options?.variableLabels);
   const allNodes = [...(definition.trigger ? [definition.trigger] : []), ...definition.nodes];
   // Steps saved without a position (created through API v3 or MCP) take the tree layout Auto layout
   // uses, so branches sit side by side instead of stacking in one column under their If/else.
@@ -192,7 +237,7 @@ export const workflowDefinitionToFlowNodes = (
         summary:
           node.type === "trigger" && options?.triggerSummary
             ? options.triggerSummary
-            : registryEntry.summary(node, t, options?.variableLabels),
+            : registryEntry.summary(node, t, variableLabels),
         summaryParts: getSummaryParts(node, t, options?.variableRefs),
         // The end of the workflow or of a branch: a step with nothing after it. An If/else or a
         // Switch ends in its branches' own `+` instead.
