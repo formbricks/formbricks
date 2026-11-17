@@ -54,7 +54,7 @@ export const useWorkflowHistory = () => {
     }
     // A save swapping sent secret values for stored ones is no edit. Older steps drop the same
     // plaintext values, so undoing never sends a secret again.
-    if (lastSecretSettle && definition === lastSecretSettle.result) {
+    if (lastSecretSettle?.result === definition) {
       const { sent } = lastSecretSettle;
       setHistory((current) => ({
         ...current,

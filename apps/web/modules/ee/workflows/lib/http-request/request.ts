@@ -34,7 +34,7 @@ export interface TWorkflowHttpResponseRecord {
   bodyTruncated?: boolean;
 }
 
-const LINE_BREAKS = new RegExp(String.raw`[\r\n\u2028\u2029]`, "g");
+const LINE_BREAKS = /[\r\n\u2028\u2029]/g;
 
 /** The UTF-8 prefix of `text` that fits in `maxBytes`, and whether anything was cut. */
 export const capUtf8 = (text: string, maxBytes: number): { text: string; truncated: boolean } => {

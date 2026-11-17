@@ -20,6 +20,7 @@ import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspect
 import { WorkflowVariableInput } from "@/modules/ee/workflows/components/inspector/workflow-variable-input";
 import { JsonEditor } from "@/modules/ee/workflows/components/json-editor/json-editor";
 import { useWorkflowVariablePicker } from "@/modules/ee/workflows/components/variable-picker/use-workflow-variable-picker";
+import { useStableRowKeys } from "@/modules/ee/workflows/hooks/use-stable-row-keys";
 import { useWorkflowNodeFieldFocus } from "@/modules/ee/workflows/hooks/use-workflow-node-field-focus";
 import {
   cancelReplacingSecret,
@@ -86,6 +87,9 @@ export const WorkflowHttpRequestForm = ({
   const workflowId = workflow?.id ?? "";
   // Header rows whose lock the author set by hand: the lock then stops following the name.
   const [lockChosenRows, setLockChosenRows] = useState<ReadonlySet<number>>(new Set());
+
+  const queryRowKeys = useStableRowKeys(config.queryParameters.length);
+  const headerRowKeys = useStableRowKeys(config.headers.length);
 
   const updateConfig = (next: Partial<TWorkflowHttpRequestActionConfig>) =>
     onChange({ ...node, config: { ...config, ...next } });
@@ -201,7 +205,7 @@ export const WorkflowHttpRequestForm = ({
         <div className="flex flex-col gap-2">
           <Label>{t("workspace.workflows.http_request_query_parameters")}</Label>
           {config.queryParameters.map((parameter, index) => (
-            <div key={index} className="flex items-center gap-2">
+            <div key={queryRowKeys.keys[index]} className="flex items-center gap-2">
               <Input
                 value={parameter.name}
                 disabled={!isEditable}
@@ -237,9 +241,10 @@ export const WorkflowHttpRequestForm = ({
                 size="icon"
                 disabled={!isEditable}
                 aria-label={t("workspace.workflows.http_request_remove_row")}
-                onClick={() =>
-                  updateConfig({ queryParameters: config.queryParameters.filter((_, i) => i !== index) })
-                }>
+                onClick={() => {
+                  queryRowKeys.remove(index);
+                  updateConfig({ queryParameters: config.queryParameters.filter((_, i) => i !== index) });
+                }}>
                 <Trash2Icon />
               </Button>
             </div>
@@ -271,7 +276,7 @@ export const WorkflowHttpRequestForm = ({
           // A stored value is only sent to the host it was set for (ADR 0051).
           const boundHost = getSecretBoundHostMismatch(header, config.url);
           return (
-            <div key={index} className="flex flex-col gap-1">
+            <div key={headerRowKeys.keys[index]} className="flex flex-col gap-1">
               {/* Four controls share the inspector row: a narrower name and smaller icon buttons
                   leave the value cell room for a stored secret's mask and its Replace button. */}
               <div className="flex items-center gap-1.5">
@@ -314,6 +319,7 @@ export const WorkflowHttpRequestForm = ({
                   aria-label={t("workspace.workflows.http_request_remove_row")}
                   onClick={() => {
                     setLockChosenRows(new Set());
+                    headerRowKeys.remove(index);
                     updateConfig({ headers: config.headers.filter((_, i) => i !== index) });
                   }}>
                   <Trash2Icon />

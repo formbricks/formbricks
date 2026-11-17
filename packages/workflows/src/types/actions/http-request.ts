@@ -80,7 +80,7 @@ export const isDefaultSecretHeaderName = (name: string): boolean => {
 const utf8Bytes = (value: string): number => new TextEncoder().encode(value).length;
 
 // CR, LF and the Unicode line/paragraph separators: a header value with one could start another header.
-const LINE_BREAK = new RegExp(String.raw`[\r\n\u2028\u2029]`);
+const LINE_BREAK = /[\r\n\u2028\u2029]/;
 const SECRET_VALUE_LINE_BREAK_MESSAGE = "A secret header value can't contain line breaks";
 
 /**

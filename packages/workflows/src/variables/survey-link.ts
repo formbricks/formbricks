@@ -2,6 +2,7 @@ import {
   type TWorkflowSurveyLinkEmbeddedData,
   WORKFLOW_SURVEY_LINK_TOKEN,
 } from "../types/actions/send-email";
+import { withoutTrailingSlashes } from "../url";
 import type { TWorkflowRunContext } from "./context";
 import { buildWorkflowQueryString, escapeWorkflowHtml, renderWorkflowText } from "./insert";
 
@@ -35,7 +36,7 @@ export const buildWorkflowSurveyLink = ({
     return renderWorkflowText(value, context) === "" ? [] : [{ name: declared, value }];
   });
   const query = buildWorkflowQueryString(parameters, context);
-  const base = `${publicDomain.replace(/\/+$/, "")}/s/${encodeURIComponent(surveyId)}`;
+  const base = `${withoutTrailingSlashes(publicDomain)}/s/${encodeURIComponent(surveyId)}`;
   return query === "" ? base : `${base}?${query}`;
 };
 

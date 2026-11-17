@@ -17,7 +17,7 @@ const expandIpv6 = (value: string): number[] | null => {
   const right = toGroups(halves[1]);
   const missing = 8 - left.length - right.length;
   if (halves.length === 1 ? missing !== 0 : missing < 1) return null;
-  const groups = [...left, ...Array<string>(halves.length === 1 ? 0 : missing).fill("0"), ...right];
+  const groups = [...left, ...new Array<string>(halves.length === 1 ? 0 : missing).fill("0"), ...right];
   if (!groups.every((group) => IPV6_GROUP.test(group))) return null;
   return groups.map((group) => Number.parseInt(group, 16));
 };

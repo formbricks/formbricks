@@ -20,6 +20,7 @@ import {
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
@@ -172,7 +173,7 @@ export const WorkflowVariablePicker = ({
           {list.groups.map((group, groupIndex) => {
             const headingId = `${idPrefix}-group-${groupIndex}`;
             return (
-              <div key={headingId} role="group" aria-labelledby={headingId}>
+              <DropdownMenuGroup key={headingId} aria-labelledby={headingId}>
                 <p id={headingId} className="px-2 pt-2 pb-1 text-xs font-medium text-slate-500">
                   {getGroupLabel(group, t)}
                 </p>
@@ -215,7 +216,7 @@ export const WorkflowVariablePicker = ({
                     </DropdownMenuItem>
                   );
                 })}
-              </div>
+              </DropdownMenuGroup>
             );
           })}
           {list.groups.length === 0 && !needsSample && (

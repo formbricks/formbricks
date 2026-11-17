@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import type { TWorkflowSendEmailActionConfig, TWorkflowSurveyLinkEmbeddedData } from "@formbricks/workflows";
 import { InspectorCard } from "@/modules/ee/workflows/components/inspector/inspector-card";
 import { WorkflowVariableInput } from "@/modules/ee/workflows/components/inspector/workflow-variable-input";
+import { useStableRowKeys } from "@/modules/ee/workflows/hooks/use-stable-row-keys";
 import { useSurveyLinkFields } from "@/modules/ee/workflows/hooks/use-survey-link-fields";
 import { useWorkflowSurveyOptions } from "@/modules/ee/workflows/hooks/use-trigger-survey-picker";
 import { hasSurveyLinkToken, updateEmbeddedDataRow } from "@/modules/ee/workflows/lib/email-survey-link";
@@ -71,6 +72,7 @@ export const WorkflowEmailSurveyLinkSection = ({
   // Rows live here while the panel is open: a row whose key is still blank can't be saved (the key is
   // required), so only rows with a key are written to the step.
   const [rows, setRows] = useState(surveyLink?.embeddedData ?? []);
+  const rowKeys = useStableRowKeys(rows.length);
   const changeRows = (next: typeof rows) => {
     setRows(next);
     onChangeEmbeddedData(next.filter((row) => row.key.trim() !== ""));
@@ -126,7 +128,7 @@ export const WorkflowEmailSurveyLinkSection = ({
             <div className="flex flex-col gap-2">
               <Label>{t("workspace.workflows.email_survey_link_embedded_data")}</Label>
               {rows.map((row, index) => (
-                <div key={index} className="flex flex-col gap-1">
+                <div key={rowKeys.keys[index]} className="flex flex-col gap-1">
                   <div className="flex items-center gap-2">
                     {fields ? (
                       <Select
@@ -177,7 +179,10 @@ export const WorkflowEmailSurveyLinkSection = ({
                       size="icon"
                       disabled={!isEditable}
                       aria-label={t("workspace.workflows.http_request_remove_row")}
-                      onClick={() => changeRows(rows.filter((_, i) => i !== index))}>
+                      onClick={() => {
+                        rowKeys.remove(index);
+                        changeRows(rows.filter((_, i) => i !== index));
+                      }}>
                       <Trash2Icon />
                     </Button>
                   </div>

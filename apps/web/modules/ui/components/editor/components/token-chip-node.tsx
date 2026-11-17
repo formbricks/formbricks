@@ -11,6 +11,9 @@ export type SerializedTokenChipNode = Spread<{ chip: TEditorTokenChip }, Seriali
  * `importDOM`: the token arrives as plain text and `registerTokenChipTransform` turns it into a chip,
  * only in an editor that asked for it.
  */
+/** What Lexical gets when it builds a node without arguments; `importJSON` fills the real one. */
+const EMPTY_TOKEN_CHIP: TEditorTokenChip = { token: "", label: "" };
+
 export class TokenChipNode extends DecoratorNode<ReactNode> {
   __chip: TEditorTokenChip;
 
@@ -26,7 +29,7 @@ export class TokenChipNode extends DecoratorNode<ReactNode> {
     return $createTokenChipNode(serializedNode.chip);
   }
 
-  constructor(chip: TEditorTokenChip = { token: "", label: "" }, key?: NodeKey) {
+  constructor(chip: TEditorTokenChip = EMPTY_TOKEN_CHIP, key?: NodeKey) {
     super(key);
     this.__chip = chip;
   }

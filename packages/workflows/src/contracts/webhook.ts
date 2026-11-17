@@ -103,7 +103,7 @@ export const ZWorkflowWebhookCallResult = z
 export type TWorkflowWebhookCallResult = z.infer<typeof ZWorkflowWebhookCallResult>;
 
 /** Body of a Webhook Secret URL call: any JSON object (size and depth are checked by the route). */
-export const ZWorkflowWebhookPayloadInput = ZWorkflowWebhookPayload;
+export { ZWorkflowWebhookPayload as ZWorkflowWebhookPayloadInput } from "../types/triggers/webhook";
 
 export const ZWorkflowWebhookCallParams = z
   .strictObject({

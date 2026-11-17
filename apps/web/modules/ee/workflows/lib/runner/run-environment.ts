@@ -118,12 +118,8 @@ const loadTriggerSurveyResponse = (
   trigger: TWorkflowTriggerRunPayload,
   workspaceId: string
 ): Promise<WorkflowRunSurveyResponse | null> => {
-  switch (trigger.type) {
-    case "response.completed":
-      return loadSurveyResponse(trigger, workspaceId);
-    default:
-      return Promise.resolve(null);
-  }
+  if (trigger.type === "response.completed") return loadSurveyResponse(trigger, workspaceId);
+  return Promise.resolve(null);
 };
 
 const hasLiteralEmailRecipient = (definition: TWorkflowExecutableDefinition): boolean =>

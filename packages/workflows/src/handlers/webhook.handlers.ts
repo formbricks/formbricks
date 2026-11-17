@@ -17,6 +17,7 @@ import type { WorkflowRow, WorkflowRowWithLastRun, WorkflowSampleRow } from "../
 import type { WorkflowsService } from "../services/workflows.service";
 import { WORKFLOW_SAMPLE_TRIGGER_SOURCE } from "../types/samples";
 import { WORKFLOW_TRIGGERS } from "../types/triggers/enum";
+import { withoutTrailingSlashes } from "../url";
 import { WEBHOOK_PAYLOAD_MAX_BYTES, WEBHOOK_PAYLOAD_MAX_DEPTH } from "../webhook/limits";
 import { checkWebhookPayloadShape } from "../webhook/payload";
 import { detectWebhookVariables } from "../webhook/variables";
@@ -60,7 +61,7 @@ const buildWebhookUrl = (ctx: WorkflowApiContext, workflowId: string, token: str
   if (!ctx.webhookBaseUrl || !token) {
     throw new Error("Webhook Secret URL cannot be built: missing base URL or token");
   }
-  const base = ctx.webhookBaseUrl.replace(/\/+$/, "");
+  const base = withoutTrailingSlashes(ctx.webhookBaseUrl);
   return `${base}/api/v3/workflows/${encodeURIComponent(workflowId)}/webhook/${encodeURIComponent(token)}`;
 };
 
