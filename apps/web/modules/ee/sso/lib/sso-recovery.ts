@@ -663,8 +663,8 @@ export const completeSsoRecovery = async ({
       });
 
       return outcome;
-      // It may end the user's MCP grants, whose rows a reconciling pass can hold: the Revoke timeout.
     },
+    // It may end the user's MCP grants, whose rows a reconciling pass can hold: the Revoke timeout.
     { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
   );
 

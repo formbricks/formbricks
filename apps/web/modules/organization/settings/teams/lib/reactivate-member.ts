@@ -62,9 +62,9 @@ export async function reactivateOrganizationMember({
       if (memberships.length > 1) return { status: "in_other_organizations" };
 
       return { status: "reactivated", reactivatedAt: await reactivateLockedUser(tx, userId) };
-      // The user's row can be held by a Revoke or a bulk end of their MCP grants waiting behind a
-      // reconciling pass.
     },
+    // The user's row can be held by a Revoke or a bulk end of their MCP grants waiting behind a
+    // reconciling pass.
     { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
   );
 }

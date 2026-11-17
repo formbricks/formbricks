@@ -92,8 +92,8 @@ const grantSkipConsentClient = async (userId: string, clientId: string, scopes: 
         const revokedAt = await readOAuthRevocationTime(userId, clientId);
         if (isIssuedBeforeRevocation(exchanged.issuedAt, revokedAt)) return null;
         return createMcpGrantIfMissing(tx, { userId, clientId, permissions });
-        // The user's row can be held by a Revoke waiting behind a reconciling pass.
       },
+      // The user's row can be held by a Revoke waiting behind a reconciling pass.
       { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
     );
     if (!created) return;

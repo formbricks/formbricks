@@ -182,12 +182,6 @@ export const refresh = (clientId: string, refreshToken: string, scope?: string) 
   });
 
 /**
- * Waits until a sign-in code issued now counts as issued after a revocation just made: past the skew the
- * exchange allows between pods' clocks (`REVOCATION_CLOCK_SKEW_MS`), and into the next second, since a code
- * is stamped to the second (`oauth-revocation-marker.ts`). A test that authorizes again right after a
- * revocation waits this out first, as any real reconnect does.
- */
-/**
  * Clears the user's revocation marks, for a test that ends a user's access and signs them in again in a
  * loop: each round starts as if the previous round's revocation were long past, without waiting out the
  * clock skew. A test about the mark itself waits instead ({@link waitPastRevocation}).
@@ -197,5 +191,11 @@ export const forgetRevocations = async (userId: string, clientId: string): Promi
   await redisSecondaryStorage.delete(oauthRevocationMarkKey(userId, clientId));
 };
 
+/**
+ * Waits until a sign-in code issued now counts as issued after a revocation just made: past the skew the
+ * exchange allows between pods' clocks (`REVOCATION_CLOCK_SKEW_MS`), and into the next second, since a code
+ * is stamped to the second (`oauth-revocation-marker.ts`). A test that authorizes again right after a
+ * revocation waits this out first, as any real reconnect does.
+ */
 export const waitPastRevocation = (): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, REVOCATION_CLOCK_SKEW_MS + 1_000 - (Date.now() % 1_000) + 5));

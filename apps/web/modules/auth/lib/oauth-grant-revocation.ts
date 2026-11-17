@@ -873,10 +873,10 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
           grant: { authorizationCodeId, rotatedAt, sessionId, scopes },
         })),
       };
-      // It takes the user's row or the client's grant row, either of which a Revoke can hold while it waits
-      // behind a reconciling pass: on the default budget the refresh would fail after rotating, and the
-      // client lose its token over another client's Revoke.
     },
+    // It takes the user's row or the client's grant row, either of which a Revoke can hold while it waits
+    // behind a reconciling pass: on the default budget the refresh would fail after rotating, and the
+    // client lose its token over another client's Revoke.
     { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
   );
   if (!refused) return;

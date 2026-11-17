@@ -312,6 +312,8 @@ describe("sso-recovery", () => {
       sessionToken: "current-session-token",
     });
 
+    // The reclaim may end the user's MCP grants, whose rows a reconciling pass can hold for 30 s.
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
     // Exact-match on purpose: the legacy nulls are load-bearing, not leftovers. `better-auth-two-factor-backfill`
     // re-materialises a `TwoFactor` row from `twoFactorEnabled && twoFactorSecret` on the next credential
     // sign-in, so dropping them from this payload would let the stripped factor come back.
