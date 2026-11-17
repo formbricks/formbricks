@@ -1,5 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { lockUserActiveState, reactivateLockedUser } from "@/lib/user/reactivation";
 
 export type TReactivateMemberResult =
@@ -38,27 +39,32 @@ export async function reactivateOrganizationMember({
   /** Who is reactivating: an owner may reactivate anyone, a manager anyone but an owner. */
   actorUserId: string;
 }): Promise<TReactivateMemberResult> {
-  return prisma.$transaction(async (tx) => {
-    const user = await lockUserActiveState(tx, userId);
-    if (!user) return { status: "not_member" };
+  return prisma.$transaction(
+    async (tx) => {
+      const user = await lockUserActiveState(tx, userId);
+      if (!user) return { status: "not_member" };
 
-    const memberships = await tx.membership.findMany({
-      where: { userId },
-      select: { organizationId: true, role: true },
-    });
-    const membership = memberships.find((candidate) => candidate.organizationId === organizationId);
-    if (!membership) return { status: "not_member" };
-    if (membership.role === "owner" && userId !== actorUserId) {
-      const actor = await tx.membership.findUnique({
-        where: { userId_organizationId: { userId: actorUserId, organizationId } },
-        select: { role: true },
+      const memberships = await tx.membership.findMany({
+        where: { userId },
+        select: { organizationId: true, role: true },
       });
-      if (actor?.role !== "owner") return { status: "owner_needs_owner" };
-    }
-    // Nothing to do for someone already active, wherever else they belong.
-    if (user.isActive) return { status: "already_active" };
-    if (memberships.length > 1) return { status: "in_other_organizations" };
+      const membership = memberships.find((candidate) => candidate.organizationId === organizationId);
+      if (!membership) return { status: "not_member" };
+      if (membership.role === "owner" && userId !== actorUserId) {
+        const actor = await tx.membership.findUnique({
+          where: { userId_organizationId: { userId: actorUserId, organizationId } },
+          select: { role: true },
+        });
+        if (actor?.role !== "owner") return { status: "owner_needs_owner" };
+      }
+      // Nothing to do for someone already active, wherever else they belong.
+      if (user.isActive) return { status: "already_active" };
+      if (memberships.length > 1) return { status: "in_other_organizations" };
 
-    return { status: "reactivated", reactivatedAt: await reactivateLockedUser(tx, userId) };
-  });
+      return { status: "reactivated", reactivatedAt: await reactivateLockedUser(tx, userId) };
+      // The user's row can be held by a Revoke or a bulk end of their MCP grants waiting behind a
+      // reconciling pass.
+    },
+    { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
+  );
 }

@@ -604,6 +604,9 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
     );
     expect(mocks.sequence).toEqual(["share user"]);
     expect(mocks.calls).toEqual(["revoke refresh tokens", "revoke access tokens"]);
+    // The user's row can be held by a Revoke (of any client) waiting behind a reconciling pass for 30 s:
+    // on the default 20 s budget this refresh would fail after rotating, losing this client's token.
+    expect(prisma.$transaction).toHaveBeenLastCalledWith(expect.any(Function), { timeout: 35_000 });
   });
 
   test.each([

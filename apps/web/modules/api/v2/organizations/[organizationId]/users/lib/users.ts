@@ -2,6 +2,7 @@ import { prisma } from "@formbricks/database";
 import { OrganizationRole, Prisma, TeamUserRole } from "@formbricks/database/prisma";
 import { TUser } from "@formbricks/database/zod/users";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
@@ -436,7 +437,10 @@ export const updateUser = async (
           });
           if (reactivating) await reactivateLockedUser(tx, existingUser.id);
           return user;
-        }
+        },
+        // The user's row can be held by a Revoke or a bulk end of their MCP grants waiting behind a
+        // reconciling pass.
+        touchesAccountFields ? { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } : undefined
       );
     } else {
       // Update by id so the mutation is bound to the org-scoped lookup above. Email is

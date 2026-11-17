@@ -2,6 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { getUnconsentedMcpGrantPermissions, isMcpGrantEmpty } from "@/modules/mcp/grant";
@@ -83,14 +84,18 @@ const grantSkipConsentClient = async (userId: string, clientId: string, scopes: 
     // A client that asked for no MCP scope gets no grant: it couldn't use one, and its refresh needs none.
     const permissions = getUnconsentedMcpGrantPermissions(granted);
     if (isMcpGrantEmpty(permissions)) return;
-    const created = await prisma.$transaction(async (tx) => {
-      // The lock a revocation waits on, before the mark is read: a Revoke that wrote its mark first is
-      // seen here, and one that starts after this commits deletes the grant below with the rest.
-      await lockUserForMcpGrantWrite(tx, userId);
-      const revokedAt = await readOAuthRevocationTime(userId, clientId);
-      if (isIssuedBeforeRevocation(exchanged.issuedAt, revokedAt)) return null;
-      return createMcpGrantIfMissing(tx, { userId, clientId, permissions });
-    });
+    const created = await prisma.$transaction(
+      async (tx) => {
+        // The lock a revocation waits on, before the mark is read: a Revoke that wrote its mark first is
+        // seen here, and one that starts after this commits deletes the grant below with the rest.
+        await lockUserForMcpGrantWrite(tx, userId);
+        const revokedAt = await readOAuthRevocationTime(userId, clientId);
+        if (isIssuedBeforeRevocation(exchanged.issuedAt, revokedAt)) return null;
+        return createMcpGrantIfMissing(tx, { userId, clientId, permissions });
+        // The user's row can be held by a Revoke waiting behind a reconciling pass.
+      },
+      { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
+    );
     if (!created) return;
     await queueMcpGrantAudit({ action: "created", actorUserId: userId, before: null, after: created });
   } catch (error) {

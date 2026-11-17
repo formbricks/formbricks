@@ -170,9 +170,12 @@ describe("mcpGrantAccessTokenClaims", () => {
 
   test("gives the grant when the last Revoke was before the code was issued, beyond the clock skew", async () => {
     vi.mocked(readOAuthRevocationTime).mockResolvedValue(ISSUED_AT - REVOCATION_CLOCK_SKEW_MS - 1);
+    prisma.$transaction.mockClear();
 
     await expect(claims()).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: "grant-1" });
     expect(createMcpGrantIfMissing).toHaveBeenCalled();
+    // Under the user's row, which a Revoke waiting behind a reconciling pass can hold for 30 s.
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
   });
 
   // A client that asked for no MCP scope could do nothing with a grant: none is created for it.

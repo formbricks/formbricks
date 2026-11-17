@@ -6,6 +6,7 @@ import { createHash } from "node:crypto";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { loggableError } from "@/lib/utils/loggable-error";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { readMcpGrantReadableWorkspaceIds } from "@/modules/mcp/access-options";
@@ -812,66 +813,72 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
   // A token without an MCP scope can't call `/api/mcp`, and its client was given no grant (an approval
   // saves none for it): only its consent is checked.
   const needsGrant = !isMcpGrantEmpty(getMcpGrantPermissionsForScopes(scopes));
-  const refused = await prisma.$transaction(async (tx) => {
-    if (refreshToken.client.skipConsent) {
-      if (!needsGrant) {
-        // No grant and no consent to read, so the user's row orders this refresh against a Revoke: Revoke
-        // marks first, then holds the row `FOR UPDATE` while it revokes the client's tokens. Waited on here
-        // (`FOR KEY SHARE`), a Revoke in flight has marked by the time the mark is read, and one that starts
-        // after this commits revokes the token this refresh inserted. A presented token the mark covers was
-        // revoked: the one this refresh issued goes too.
-        await lockUserForMcpGrantWrite(tx, userId);
-        const revokedAt = await readOAuthRevocationTime(userId, clientId);
-        if (!isIssuedBeforeRevocation(createdAt.getTime(), revokedAt)) return null;
-        return { reason: "client_revoked", ...(await revokeClientTokens(tx, userId, clientId)) };
+  const refused = await prisma.$transaction(
+    async (tx) => {
+      if (refreshToken.client.skipConsent) {
+        if (!needsGrant) {
+          // No grant and no consent to read, so the user's row orders this refresh against a Revoke: Revoke
+          // marks first, then holds the row `FOR UPDATE` while it revokes the client's tokens. Waited on here
+          // (`FOR KEY SHARE`), a Revoke in flight has marked by the time the mark is read, and one that starts
+          // after this commits revokes the token this refresh inserted. A presented token the mark covers was
+          // revoked: the one this refresh issued goes too.
+          await lockUserForMcpGrantWrite(tx, userId);
+          const revokedAt = await readOAuthRevocationTime(userId, clientId);
+          if (!isIssuedBeforeRevocation(createdAt.getTime(), revokedAt)) return null;
+          return { reason: "client_revoked", ...(await revokeClientTokens(tx, userId, clientId)) };
+        }
+        // No consent to check: the grant is the connection's liveness check alone. Read `FOR SHARE` after
+        // issuance, as for a consent: a Revoke still in flight is waited on and its delete seen, and one
+        // that commits later revokes the token this refresh just inserted. Without the check, a refresh
+        // that rotated before a Revoke and inserted its token after it would keep a live token.
+        if (await shareLockMcpGrant(tx, { userId, clientId })) return null;
+        return { reason: "grant_missing", ...(await revokeClientTokens(tx, userId, clientId)) };
       }
-      // No consent to check: the grant is the connection's liveness check alone. Read `FOR SHARE` after
-      // issuance, as for a consent: a Revoke still in flight is waited on and its delete seen, and one
-      // that commits later revokes the token this refresh just inserted. Without the check, a refresh
-      // that rotated before a Revoke and inserted its token after it would keep a live token.
-      if (await shareLockMcpGrant(tx, { userId, clientId })) return null;
-      return { reason: "grant_missing", ...(await revokeClientTokens(tx, userId, clientId)) };
-    }
-    // The grant first, then the consent rows. `FOR SHARE`: refreshes don't wait on each other, and a
-    // revoke or a save, which lock it `FOR UPDATE`, wait on this check or it on them.
-    if (needsGrant && !(await shareLockMcpGrant(tx, { userId, clientId }))) {
-      // Locked, then read again: an approval saves the grant while holding these rows, so a grant it
-      // commits while this waits is seen here rather than its client ended.
-      const consents = await lockConsents(tx, userId, { clientId }, "update");
-      if (consents.length > 0 && !(await hasMcpGrant(tx, { userId, clientId }))) {
-        // No grant to delete: there is none, and none can be written while these rows are held.
-        const deleted = await tx.oauthConsent.deleteMany({ where: { userId, clientId } });
+      // The grant first, then the consent rows. `FOR SHARE`: refreshes don't wait on each other, and a
+      // revoke or a save, which lock it `FOR UPDATE`, wait on this check or it on them.
+      if (needsGrant && !(await shareLockMcpGrant(tx, { userId, clientId }))) {
+        // Locked, then read again: an approval saves the grant while holding these rows, so a grant it
+        // commits while this waits is seen here rather than its client ended.
+        const consents = await lockConsents(tx, userId, { clientId }, "update");
+        if (consents.length > 0 && !(await hasMcpGrant(tx, { userId, clientId }))) {
+          // No grant to delete: there is none, and none can be written while these rows are held.
+          const deleted = await tx.oauthConsent.deleteMany({ where: { userId, clientId } });
+          return {
+            reason: "grant_missing",
+            consentsDeleted: deleted.count,
+            ...(await revokeClientTokens(tx, userId, clientId)),
+          };
+        }
+      }
+      const consentedScopes = await readConsentedScopes(tx, userId, clientId);
+      if (!consentedScopes) {
         return {
-          reason: "grant_missing",
-          consentsDeleted: deleted.count,
+          reason: "consent_revoked",
           ...(await revokeClientTokens(tx, userId, clientId)),
         };
       }
-    }
-    const consentedScopes = await readConsentedScopes(tx, userId, clientId);
-    if (!consentedScopes) {
+      const covered =
+        isCoveredBy(scopes, consentedScopes) &&
+        !(
+          authorizationCodeId &&
+          (await grantReachesBeyond(tx, { userId, clientId, grantId: authorizationCodeId, consentedScopes }))
+        );
+      if (covered) return null;
       return {
-        reason: "consent_revoked",
-        ...(await revokeClientTokens(tx, userId, clientId)),
+        reason: "consent_narrowed",
+        ...(await endTokensBeyondScopes(tx, {
+          userId,
+          clientId,
+          consentedScopes,
+          grant: { authorizationCodeId, rotatedAt, sessionId, scopes },
+        })),
       };
-    }
-    const covered =
-      isCoveredBy(scopes, consentedScopes) &&
-      !(
-        authorizationCodeId &&
-        (await grantReachesBeyond(tx, { userId, clientId, grantId: authorizationCodeId, consentedScopes }))
-      );
-    if (covered) return null;
-    return {
-      reason: "consent_narrowed",
-      ...(await endTokensBeyondScopes(tx, {
-        userId,
-        clientId,
-        consentedScopes,
-        grant: { authorizationCodeId, rotatedAt, sessionId, scopes },
-      })),
-    };
-  });
+      // It takes the user's row or the client's grant row, either of which a Revoke can hold while it waits
+      // behind a reconciling pass: on the default budget the refresh would fail after rotating, and the
+      // client lose its token over another client's Revoke.
+    },
+    { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
+  );
   if (!refused) return;
 
   logger.warn(
