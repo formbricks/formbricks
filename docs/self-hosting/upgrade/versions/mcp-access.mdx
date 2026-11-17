@@ -22,8 +22,31 @@ new ones start.
   sync (NTP) during the upgrade.
 - `/api/mcp` refuses a call whose connection has no grant, with `401`. The client's next token refresh then
   ends the connection, and the user connects the client again.
-- The permission schema doesn't change. Grants that select organizations or workspaces are written to SpiceDB
-  through the AuthZed outbox, with the new outbox target type `mcp_grant`.
+- The permission schema changes: it adds the `mcp_grant` definition and the `mcp_reach` permissions that carry
+  a grant's organization or workspace selection down to every resource below it. Grants that select
+  organizations or workspaces are written to SpiceDB through the AuthZed outbox, with the new outbox target
+  type `mcp_grant`.
+
+## Apply the permission schema
+
+Because the schema changes, this isn't a patch upgrade: follow the full upgrade steps for
+[Docker](/self-hosting/upgrade/docker) or [Kubernetes](/self-hosting/upgrade/kubernetes), which run
+permission preparation from the new image. In a container of the **new** version:
+
+```bash
+formbricks-authzed upgrade prepare
+formbricks-authzed upgrade check
+```
+
+`upgrade prepare` checks that SpiceDB is healthy, applies the release's schema, delivers the outbox and
+projects every grant's selection; it reports `status: prepared` or `status: ready`. `upgrade check` changes
+nothing and must report `status: ready` and exit `0`. `prepare` blocks on a schema in SpiceDB that isn't the
+previous release's: review `formbricks-authzed schema check` and this release's schema changes before passing
+`--expected-current-digest <remoteDigest>`, as in [preparing an upgrade](/self-hosting/upgrade/prepare).
+
+Until the new schema is applied, a grant that selects organizations or workspaces reaches nothing in SpiceDB:
+its client is denied, never given more. Grants with All access, which every existing connection gets, work
+either way.
 
 ## During a rolling upgrade
 
