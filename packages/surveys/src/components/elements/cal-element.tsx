@@ -30,7 +30,7 @@ export function CalElement({
   currentElementId,
   errorMessage,
 }: Readonly<CalElementProps>) {
-  const [startTime, setStartTime] = useState(performance.now());
+  const [startTime, setStartTime] = useState(() => performance.now());
   const isMediaAvailable = element.imageUrl || element.videoUrl;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
 
