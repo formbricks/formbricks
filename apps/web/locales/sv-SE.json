@@ -146,7 +146,7 @@
         "empty_grant_hint": "Välj minst en behörighet för att ge åtkomst.",
         "expand_category": "Visa behörigheter för {category}",
         "identity_name_and_email": "Ditt namn och din e-postadress",
-        "identity_only": "Appen vill bara veta vem du är. Den får ingen åtkomst till dina Formbricks-data.",
+        "identity_only": "Den här MCP-klienten vill bara veta vem du är. Den får ingen åtkomst till dina Formbricks-data.",
         "identity_stay_signed_in": "Förbli inloggad",
         "levels": {
           "custom": "Anpassad",
@@ -182,6 +182,7 @@
       "grant_beyond_scopes": "Appen har inte bett om den åtkomsten, så ingenting har ändrats. Ladda om sidan för att se vad du kan ge den.",
       "grant_changed_elsewhere": "Den här MCP-klientens åtkomst har ändrats på annat håll. Ladda om för att se ändringen.",
       "grant_invalid": "Den åtkomsten kan inte sparas. Välj minst en behörighet och minst en organisation eller arbetsyta.",
+      "grant_revoke_failed": "Det gick inte att återkalla den här MCP-klientens åtkomst. Försök igen.",
       "grant_update_failed": "Det gick inte att uppdatera den här appens åtkomst. Försök igen.",
       "grant_updated": "Åtkomsten har uppdaterats.",
       "invalid_oauth_request": "Ogiltig OAuth-begäran",

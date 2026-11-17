@@ -2,9 +2,9 @@
 
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { useRevokeMcpGrant } from "../hooks/use-revoke-mcp-grant";
+import { getMcpGrantRevokeFailureMessage } from "../lib/revoke-grant";
 
 interface RevokeMcpGrantButtonProps {
   clientId: string;
@@ -20,8 +20,7 @@ export const RevokeMcpGrantButton = ({ clientId, clientName }: Readonly<RevokeMc
     if (!globalThis.confirm(t("auth.oauth.revoke_confirmation"))) return;
     revoke.mutate(clientId, {
       onSuccess: () => toast.success(t("auth.oauth.consent_revoked")),
-      onError: (error) =>
-        toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))),
+      onError: (error) => toast.error(getMcpGrantRevokeFailureMessage(error, t)),
     });
   };
 

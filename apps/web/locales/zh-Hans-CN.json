@@ -146,7 +146,7 @@
         "empty_grant_hint": "请至少选择一项权限以允许访问。",
         "expand_category": "显示{category}权限",
         "identity_name_and_email": "你的姓名和电子邮箱地址",
-        "identity_only": "此应用仅需确认你的身份，无法访问你的 Formbricks 数据。",
+        "identity_only": "此 MCP 客户端仅请求确认你的身份，无法访问你在 Formbricks 中的任何数据。",
         "identity_stay_signed_in": "保持登录状态",
         "levels": {
           "custom": "自定义",
@@ -182,6 +182,7 @@
       "grant_beyond_scopes": "此应用并未请求该访问权限,因此未做任何更改。请刷新页面,查看你可以授予它的权限。",
       "grant_changed_elsewhere": "此 MCP 客户端的访问权限已在其他位置更改。请重新加载以查看最新状态。",
       "grant_invalid": "无法保存该访问权限。请至少选择一项权限,并至少选择一个组织或工作区。",
+      "grant_revoke_failed": "无法撤销此 MCP 客户端的访问权限，请重试。",
       "grant_update_failed": "无法更新此应用的访问权限,请重试。",
       "grant_updated": "访问权限已更新。",
       "invalid_oauth_request": "无效的 OAuth 请求",

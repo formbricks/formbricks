@@ -146,7 +146,7 @@
         "empty_grant_hint": "Escolhe pelo menos uma permissão para permitir o acesso.",
         "expand_category": "Mostrar permissões de {category}",
         "identity_name_and_email": "O teu nome e endereço de email",
-        "identity_only": "Esta aplicação só pede para saber quem és. Não tem acesso a nenhum dos teus dados do Formbricks.",
+        "identity_only": "Este cliente MCP só pede para saber quem és. Não tem acesso aos teus dados do Formbricks.",
         "identity_stay_signed_in": "Manter a sessão iniciada",
         "levels": {
           "custom": "Personalizado",
@@ -182,6 +182,7 @@
       "grant_beyond_scopes": "Esta aplicação não pediu esse acesso, por isso nada foi alterado. Recarrega a página para veres o que lhe podes conceder.",
       "grant_changed_elsewhere": "O acesso deste cliente MCP foi alterado noutro local. Recarregue a página para ver as alterações.",
       "grant_invalid": "Não é possível guardar esse acesso. Escolhe pelo menos uma permissão e seleciona pelo menos uma organização ou área de trabalho.",
+      "grant_revoke_failed": "Não foi possível revogar o acesso deste cliente MCP. Tenta novamente.",
       "grant_update_failed": "Não foi possível atualizar o acesso desta app. Tenta novamente.",
       "grant_updated": "Acesso atualizado.",
       "invalid_oauth_request": "Pedido OAuth inválido",

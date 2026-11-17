@@ -146,7 +146,7 @@
         "empty_grant_hint": "A hozzáférés engedélyezéséhez kérjük, válasszon ki legalább egy engedélyt.",
         "expand_category": "{category} engedélyeinek megjelenítése",
         "identity_name_and_email": "Az Ön neve és e-mail-címe",
-        "identity_only": "Ez az alkalmazás kizárólag azt kéri, hogy megismerhesse az Ön személyazonosságát. Az Ön Formbricks-adataihoz nem kap hozzáférést.",
+        "identity_only": "Ez az MCP-kliens kizárólag az Ön személyazonosságának megismerését kéri. Nem kap hozzáférést az Ön Formbricks-adataihoz.",
         "identity_stay_signed_in": "Bejelentkezve maradás",
         "levels": {
           "custom": "Egyéni",
@@ -182,6 +182,7 @@
       "grant_beyond_scopes": "Az alkalmazás nem kérte ezt a hozzáférést, ezért nem történt módosítás. Kérjük, töltse be újra az oldalt, hogy megtekinthesse, milyen hozzáféréseket biztosíthat számára.",
       "grant_changed_elsewhere": "Ennek az MCP-kliensnek a hozzáférése máshol megváltozott. A megtekintéséhez kérjük, töltse újra az oldalt.",
       "grant_invalid": "Ez a hozzáférés nem menthető. Kérjük, válasszon ki legalább egy engedélyt, valamint legalább egy szervezetet vagy munkaterületet.",
+      "grant_revoke_failed": "Az MCP-kliens hozzáférését nem sikerült visszavonni. Kérjük, próbálja meg újra.",
       "grant_update_failed": "Az alkalmazás hozzáférésének frissítése nem sikerült. Kérjük, próbálja meg újra.",
       "grant_updated": "A hozzáférés frissítése megtörtént.",
       "invalid_oauth_request": "Érvénytelen OAuth-kérés",

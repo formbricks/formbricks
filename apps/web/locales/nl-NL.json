@@ -146,7 +146,7 @@
         "empty_grant_hint": "Kies minstens één machtiging om toegang te verlenen.",
         "expand_category": "Machtigingen voor {category} tonen",
         "identity_name_and_email": "Je naam en e-mailadres",
-        "identity_only": "Deze app vraagt alleen om te weten wie je bent. Je Formbricks-gegevens blijven buiten bereik.",
+        "identity_only": "Deze MCP-client wil alleen weten wie je bent. Hij krijgt geen toegang tot je Formbricks-gegevens.",
         "identity_stay_signed_in": "Ingelogd blijven",
         "levels": {
           "custom": "Aangepast",
@@ -182,6 +182,7 @@
       "grant_beyond_scopes": "Deze app heeft die toegang niet aangevraagd, dus er is niets gewijzigd. Laad de pagina opnieuw om te zien welke toegang je kunt geven.",
       "grant_changed_elsewhere": "De toegang van deze MCP-client is elders gewijzigd. Laad de pagina opnieuw om de wijziging te zien.",
       "grant_invalid": "Deze toegang kan niet worden opgeslagen. Kies minimaal één machtiging en selecteer minimaal één organisatie of workspace.",
+      "grant_revoke_failed": "Kan de toegang van deze MCP-client niet intrekken. Probeer het opnieuw.",
       "grant_update_failed": "De toegang van deze app kon niet worden bijgewerkt. Probeer het opnieuw.",
       "grant_updated": "Toegang bijgewerkt.",
       "invalid_oauth_request": "Ongeldig OAuth-verzoek",

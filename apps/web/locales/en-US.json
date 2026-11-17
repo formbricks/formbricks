@@ -146,7 +146,7 @@
         "empty_grant_hint": "Choose at least one permission to allow access.",
         "expand_category": "Show {category} permissions",
         "identity_name_and_email": "Your name and email address",
-        "identity_only": "This app asks only to know who you are. It gets no access to your Formbricks data.",
+        "identity_only": "This MCP client asks only to know who you are. It gets no access to your Formbricks data.",
         "identity_stay_signed_in": "Staying signed in",
         "levels": {
           "custom": "Custom",
@@ -182,6 +182,7 @@
       "grant_beyond_scopes": "This app didn't ask for that access, so nothing changed. Reload to see what you can give it.",
       "grant_changed_elsewhere": "This MCP client's access changed elsewhere. Reload to see it.",
       "grant_invalid": "That access can't be saved. Choose at least one permission, and pick at least one organization or workspace.",
+      "grant_revoke_failed": "Couldn't revoke this MCP client's access. Please try again.",
       "grant_update_failed": "Couldn't update this app's access. Please try again.",
       "grant_updated": "Access updated.",
       "invalid_oauth_request": "Invalid OAuth request",

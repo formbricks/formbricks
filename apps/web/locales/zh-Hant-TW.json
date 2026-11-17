@@ -146,7 +146,7 @@
         "empty_grant_hint": "請至少選擇一項權限以允許存取。",
         "expand_category": "顯示{category}權限",
         "identity_name_and_email": "你的姓名和電子郵件地址",
-        "identity_only": "這個應用程式只會確認你的身分,無法存取你在 Formbricks 中的任何資料。",
+        "identity_only": "這個 MCP 用戶端只會要求確認你的身分,無法存取你的 Formbricks 資料。",
         "identity_stay_signed_in": "保持登入狀態",
         "levels": {
           "custom": "自訂",
@@ -182,6 +182,7 @@
       "grant_beyond_scopes": "這個應用程式並未要求該存取權限，所以沒有任何變更。請重新載入頁面，查看你可以授予哪些權限。",
       "grant_changed_elsewhere": "這個 MCP 用戶端的存取權限已在其他地方變更,請重新載入以查看最新狀態。",
       "grant_invalid": "無法儲存該存取權限。請至少選擇一項權限，並至少選擇一個組織或工作區。",
+      "grant_revoke_failed": "無法撤銷這個 MCP 用戶端的存取權限,請再試一次。",
       "grant_update_failed": "無法更新此應用程式的存取權限，請再試一次。",
       "grant_updated": "存取權限已更新。",
       "invalid_oauth_request": "無效的 OAuth 請求",

@@ -146,7 +146,7 @@
         "empty_grant_hint": "Alege cel puțin o permisiune pentru a permite accesul.",
         "expand_category": "Afișează permisiunile pentru {category}",
         "identity_name_and_email": "Numele și adresa ta de e-mail",
-        "identity_only": "Această aplicație cere doar să știe cine ești. Nu primește acces la datele tale din Formbricks.",
+        "identity_only": "Acest client MCP cere doar să știe cine ești. Nu primește acces la datele tale din Formbricks.",
         "identity_stay_signed_in": "Rămâi autentificat",
         "levels": {
           "custom": "Personalizat",
@@ -182,6 +182,7 @@
       "grant_beyond_scopes": "Aplicația nu a cerut acest acces, așa că nu s-a schimbat nimic. Reîncarcă pagina pentru a vedea ce acces îi poți acorda.",
       "grant_changed_elsewhere": "Accesul acestui client MCP a fost modificat în altă parte. Reîncarcă pagina pentru a-l vedea.",
       "grant_invalid": "Acest acces nu poate fi salvat. Alege cel puțin o permisiune și selectează cel puțin o organizație sau un spațiu de lucru.",
+      "grant_revoke_failed": "Nu am putut revoca accesul acestui client MCP. Încearcă din nou.",
       "grant_update_failed": "Nu am putut actualiza accesul acestei aplicații. Încearcă din nou.",
       "grant_updated": "Acces actualizat.",
       "invalid_oauth_request": "Solicitare OAuth invalidă",
