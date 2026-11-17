@@ -73,6 +73,17 @@ describe("Node.js version alignment", () => {
     expect(baseImage).toBe(nvmrcVersion.replace(/^v/, ""));
   });
 
+  // The official image drops Node's LICENSE, so the Dockerfile fetches it for the same release. Its checksum
+  // fails the build when the URL moves without it; this catches the URL staying behind.
+  test("the image ships the LICENSE of the .nvmrc version", () => {
+    const licenseVersion =
+      /https:\/\/raw\.githubusercontent\.com\/nodejs\/node\/v(\d+\.\d+\.\d+)\/LICENSE/.exec(
+        read("apps", "web", "Dockerfile")
+      )?.[1];
+
+    expect(licenseVersion).toBe(nvmrcVersion.replace(/^v/, ""));
+  });
+
   test("the devcontainer image runs the .nvmrc major", () => {
     const { image } = readJsonc(".devcontainer", "devcontainer.json") as { image?: string };
     // mcr.microsoft.com/devcontainers/javascript-node:<image major>-<node major>-<distro>

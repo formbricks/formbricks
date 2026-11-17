@@ -82,8 +82,8 @@ release-tag promotion gates using the existing repositories. The builder trial o
 prove Sentry upload, the cloud build profile, or Kubernetes deployment.
 
 Record build and complete job durations, cache size, and actual billed usage.
-Compare like workloads: warm application rebuilds, cold Node compilation, and
-fully cached images are different measurements. Include Blacksmith compute,
+Compare like workloads: warm application rebuilds, cold builds, and fully
+cached images are different measurements. Include Blacksmith compute,
 cache storage, and ECR storage and transfer when estimating monthly cost.
 
 After merging, validate a community experimental release and a staging cloud

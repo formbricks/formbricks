@@ -1226,6 +1226,8 @@ describe("utils.ts", () => {
         value: { search: "" },
         writable: true,
       });
+      // Node 25 and later have a global sessionStorage, so a flag one test stores is visible to the next.
+      (globalThis as { sessionStorage?: Storage }).sessionStorage?.clear();
     });
 
     test("returns true if debug parameter is set", () => {
@@ -1264,6 +1266,8 @@ describe("utils.ts", () => {
       const setSearch = (search: string) =>
         Object.defineProperty(window, "location", { value: { search }, writable: true });
       let stored: Map<string, string>;
+      // Node 25 and later define a global sessionStorage; older Node has none.
+      const nodeSessionStorage = Object.getOwnPropertyDescriptor(globalThis, "sessionStorage");
 
       beforeEach(() => {
         stored = new Map();
@@ -1275,8 +1279,9 @@ describe("utils.ts", () => {
       });
 
       afterEach(() => {
-        // Other suites run without sessionStorage, as node does.
+        // Other suites see the runtime's own sessionStorage, or none.
         delete (globalThis as { sessionStorage?: unknown }).sessionStorage;
+        if (nodeSessionStorage) Object.defineProperty(globalThis, "sessionStorage", nodeSessionStorage);
       });
 
       test("the next page load stays in debug mode without the parameter", () => {

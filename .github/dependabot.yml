@@ -48,8 +48,9 @@ updates:
 
   # The digest-pinned base images of the app image (apps/web/Dockerfile): the official Node image the
   # binary comes from and the Debian runtime. Daily, because new digests carry Debian security fixes. A new
-  # Node version also needs .nvmrc and the Node LICENSE checksum in the Dockerfile; the version alignment
-  # test fails until all three match.
+  # Node version also needs .nvmrc and the Node LICENSE URL and checksum in the Dockerfile;
+  # node-version-alignment.test.ts fails until the tag, the LICENSE URL and .nvmrc match, and the image build
+  # fails on a stale checksum.
   - package-ecosystem: docker
     directory: "/apps/web"
     schedule:

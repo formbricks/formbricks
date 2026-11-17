@@ -298,8 +298,9 @@ jobs:
           BUILD_IDENTITY: ${{ github.sha }}-pr
         run: docker run --rm --network none --entrypoint node "$IMAGE" verify-next-runtime.mjs "$BUILD_IDENTITY" pr
 
-      # Node must trust the OS CA bundle, or a CA-package fix such as the eMudhra distrust never reaches it.
-      - name: Verify Node trusts the OS CA bundle
+      # Node trusts its bundled root list (which blocks the eMudhra chains), the OS store must not widen it,
+      # and NODE_EXTRA_CA_CERTS must still add a private CA.
+      - name: Verify which CA store Node trusts
         env:
           IMAGE: formbricks-test:${{ github.sha }}
         run: bash apps/web/scripts/docker/verify-tls-image.sh "$IMAGE"

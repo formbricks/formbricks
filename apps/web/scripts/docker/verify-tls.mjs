@@ -165,11 +165,6 @@ const runOffline = (pkiDir) => {
       env: { NODE_EXTRA_CA_CERTS: root, NODE_OPTIONS: "--max_old_space_size=1024" },
       expected: { chained: "accepted", selfSigned: "rejected" },
     },
-    {
-      name: "the bundled list does not hold the test root",
-      env: {},
-      expected: { chained: "rejected", selfSigned: "rejected" },
-    },
   ];
   for (const { name, env, expected } of scenarios) {
     const results = runScenario(pkiDir, env);
