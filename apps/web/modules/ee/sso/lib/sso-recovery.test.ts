@@ -7,7 +7,13 @@ import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { sendSsoRecoveryFactorsRemovedEmail, sendVerificationEmail } from "@/modules/email";
 import { syncSsoIdentityForUser } from "./account-linking";
-import { completeSsoRecovery, getSsoRecoveryFailureRedirectUrl, startSsoRecovery } from "./sso-recovery";
+import {
+  completeSsoRecovery,
+  getSsoRecoveryFailureRedirectUrl,
+  getSsoRecoverySecondFactorRedirectUrl,
+  getSsoRecoverySecondFactorUnavailableRedirectUrl,
+  startSsoRecovery,
+} from "./sso-recovery";
 
 const mocks = vi.hoisted(() => ({
   createEmailToken: vi.fn(),
@@ -791,6 +797,32 @@ describe("sso-recovery", () => {
     );
     expect(getSsoRecoveryFailureRedirectUrl("https://evil.example/phish")).toBe(
       "http://localhost:3000/auth/login?error=OAuthAccountNotLinked"
+    );
+  });
+
+  test("sends a 2FA user to the login page with the completion URL as callbackUrl and no error", () => {
+    expect(
+      getSsoRecoverySecondFactorRedirectUrl(
+        "http://localhost:3000/api/auth/sso/recovery/complete?state=test-state"
+      )
+    ).toBe(
+      "http://localhost:3000/auth/login?callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fauth%2Fsso%2Frecovery%2Fcomplete%3Fstate%3Dtest-state"
+    );
+    expect(getSsoRecoverySecondFactorRedirectUrl("https://evil.example/phish")).toBe(
+      "http://localhost:3000/auth/login"
+    );
+  });
+
+  test("names the dead end when credential sign-in is off, filtering callbacks the same way", () => {
+    expect(
+      getSsoRecoverySecondFactorUnavailableRedirectUrl(
+        "http://localhost:3000/api/auth/sso/recovery/complete?state=test-state"
+      )
+    ).toBe(
+      "http://localhost:3000/auth/login?error=sso_recovery_second_factor_unavailable&callbackUrl=http%3A%2F%2Flocalhost%3A3000%2Fapi%2Fauth%2Fsso%2Frecovery%2Fcomplete%3Fstate%3Dtest-state"
+    );
+    expect(getSsoRecoverySecondFactorUnavailableRedirectUrl("https://evil.example/phish")).toBe(
+      "http://localhost:3000/auth/login?error=sso_recovery_second_factor_unavailable"
     );
   });
 });

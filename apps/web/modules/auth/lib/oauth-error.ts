@@ -1,3 +1,5 @@
+import { SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE } from "@formbricks/types/errors";
+
 /**
  * Classifies the `?error=<code>` an SSO callback lands on `/auth/login` with (ENG-2089).
  *
@@ -7,7 +9,7 @@
  * `gateSsoProvisioning`, which arrives as its own reason code — rendered the same untouched form,
  * leaving the user to guess whether they had mistyped something, lost a session, or hit a policy.
  *
- * Codes collapse into four variants rather than a message each, because what the user can *do*
+ * Codes collapse into five variants rather than a message each, because what the user can *do*
  * differs by variant and the exact code rarely does. Anything unrecognized still gets `generic`,
  * which is the point: Better Auth's code set moves between versions (`oauth_code_verification_failed`
  * from the original report no longer exists upstream), and a new code must degrade to "something went
@@ -24,6 +26,12 @@ export type TOAuthErrorVariant =
   | "signup_not_allowed"
   /** The instance's SSO configuration is incomplete. Remedy: tell an admin; retrying cannot help. */
   | "misconfigured"
+  /**
+   * The account needs a second factor this instance has no way to ask for (2FA on an instance with
+   * credential sign-in off). Remedy: sign in with a provider already linked to the account, else an
+   * admin — the recovery link itself cannot stand in for the factor.
+   */
+  | "second_factor_unavailable"
   /** Anything else, including transient callback failures. Remedy: try again. */
   | "generic";
 
@@ -48,6 +56,11 @@ const VARIANT_BY_CODE = new Map<string, TOAuthErrorVariant>([
   ["insufficient_role_permissions", "misconfigured"],
   ["oauth_provider_not_found", "misconfigured"],
   ["invalid_scope", "misconfigured"],
+  // ENG-7266: the SSO-recovery link verified the mailbox, but the account has 2FA and this instance
+  // has credential sign-in off, so nothing on the login page can produce the second factor. The code
+  // arrives on the redirect `better-auth-recovery-signin.ts` builds, not on an SSO callback — same
+  // query param, and the user's next step is the same kind of dead end to resolve with an admin.
+  [SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE, "second_factor_unavailable"],
 ]);
 
 /**
