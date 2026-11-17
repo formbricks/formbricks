@@ -41,7 +41,9 @@ const fixed = (value: unknown) => ({ type: "static", value });
 
 describe("block rule condition operands", () => {
   test("a valid condition reports nothing", () => {
-    expect(operandIssues({ leftOperand: element("fav"), operator: "isSubmitted" })).toEqual([]);
+    const condition = { leftOperand: element("fav"), operator: "isSubmitted" };
+    expect(operandIssues(condition)).toEqual([]);
+    expect(ZSurvey.safeParse(withRuleOn(PROFILE, condition)).success).toBe(true);
   });
 
   test.each([

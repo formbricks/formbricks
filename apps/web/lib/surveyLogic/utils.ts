@@ -616,7 +616,7 @@ const evaluateSingleCondition = (
     );
     if (!values) return false;
     return OPERATOR_EVALUATORS[condition.operator]?.(values) ?? false;
-  } catch (e) {
+  } catch {
     return false;
   }
 };

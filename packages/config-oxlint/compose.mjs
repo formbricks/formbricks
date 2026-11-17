@@ -73,18 +73,6 @@ export function compose(...fragments) {
   return config;
 }
 
-/* Returns `rules` with every "error" lowered to "warn", options kept. */
-export const downgradeToWarn = (rules) =>
-  Object.fromEntries(
-    Object.entries(rules).map(([id, entry]) => {
-      if (Array.isArray(entry)) {
-        const [severity, ...options] = entry;
-        return [id, severity === "error" ? ["warn", ...options] : entry];
-      }
-      return [id, entry === "error" ? "warn" : entry];
-    })
-  );
-
 /*
  * Returns `config` with every "warn" raised to "error", in its rules and its overrides. oxlint runs
  * once for the whole repo, so a workspace that must stay warning-free (ESLint's `--max-warnings 0`)

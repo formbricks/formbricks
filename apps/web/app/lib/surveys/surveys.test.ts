@@ -644,7 +644,7 @@ describe("surveys", () => {
 
       const result = getFormattedFilters(survey, selectedFilter, {} as any);
 
-      expect(Object.keys(result).length).toBe(0);
+      expect(Object.keys(result)).toHaveLength(0);
     });
 
     test("should filter by completed responses", () => {

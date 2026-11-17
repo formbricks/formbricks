@@ -196,7 +196,9 @@ export const FileInput = ({
       }
     });
 
-    const prevUrls = Array.isArray(fileUrl) ? fileUrl : fileUrl ? [fileUrl] : [];
+    let prevUrls: string[] = [];
+    if (Array.isArray(fileUrl)) prevUrls = fileUrl;
+    else if (fileUrl) prevUrls = [fileUrl];
     onFileUpload([...prevUrls, ...uploadedUrls], fileType);
   };
 

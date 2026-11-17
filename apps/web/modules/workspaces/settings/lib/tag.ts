@@ -76,9 +76,7 @@ export const mergeTags = async (
   }
 
   try {
-    let originalTag: TTag | null;
-
-    originalTag = await prisma.tag.findUnique({
+    const originalTag: TTag | null = await prisma.tag.findUnique({
       where: {
         id: originalTagId,
       },
@@ -91,9 +89,7 @@ export const mergeTags = async (
       });
     }
 
-    let newTag: TTag | null;
-
-    newTag = await prisma.tag.findUnique({
+    const newTag: TTag | null = await prisma.tag.findUnique({
       where: {
         id: newTagId,
       },

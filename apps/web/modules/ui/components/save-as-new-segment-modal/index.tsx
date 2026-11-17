@@ -106,7 +106,7 @@ export const SaveAsNewSegmentModal = ({
 
       setIsLoading(true);
 
-      if (!!segment) {
+      if (segment) {
         if (segment.id === "temp") {
           await createSegment();
         } else {

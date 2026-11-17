@@ -46,6 +46,20 @@ export const ClientLogo = ({
     }
   }
 
+  // Shown when there is no logo to render.
+  const addLogoPlaceholder = disableLinks ? (
+    <span className="rounded-md border border-dashed border-slate-400 bg-slate-200 px-6 py-3 text-xs whitespace-nowrap text-slate-900 opacity-50 backdrop-blur-xs">
+      {t("common.add_logo")}
+    </span>
+  ) : (
+    <Link
+      href={lookSettingsHref}
+      className="rounded-md border border-dashed border-slate-400 bg-slate-200 px-6 py-3 text-xs whitespace-nowrap text-slate-900 opacity-50 backdrop-blur-xs hover:cursor-pointer hover:border-slate-600"
+      target="_blank">
+      {t("common.add_logo")}
+    </Link>
+  );
+
   return (
     <div
       className={cn(
@@ -80,17 +94,8 @@ export const ClientLogo = ({
           alt={t("workspace.surveys.edit.company_logo")}
           unoptimized={isExternalImageSrc(logoToUse?.url)}
         />
-      ) : disableLinks ? (
-        <span className="rounded-md border border-dashed border-slate-400 bg-slate-200 px-6 py-3 text-xs whitespace-nowrap text-slate-900 opacity-50 backdrop-blur-xs">
-          {t("common.add_logo")}
-        </span>
       ) : (
-        <Link
-          href={lookSettingsHref}
-          className="rounded-md border border-dashed border-slate-400 bg-slate-200 px-6 py-3 text-xs whitespace-nowrap text-slate-900 opacity-50 backdrop-blur-xs hover:cursor-pointer hover:border-slate-600"
-          target="_blank">
-          {t("common.add_logo")}
-        </Link>
+        addLogoPlaceholder
       )}
     </div>
   );

@@ -88,7 +88,7 @@ const SegmentDetail = ({
         try {
           await handleLoadNewSegment(segment.id);
           setIsLoading(false);
-        } catch (err) {
+        } catch {
           setIsLoading(false);
         }
       }}>

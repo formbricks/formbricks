@@ -183,6 +183,7 @@ export const setup = async (
   logger.debug("Start setup");
 
   // Resolve effective ID: prefer workspaceId, fall back to environmentId
+  // eslint-disable-next-line typescript/no-deprecated -- reading the backward-compatible alias is the point
   const effectiveId = configInput.workspaceId ?? configInput.environmentId;
 
   if (!effectiveId) {
@@ -193,6 +194,7 @@ export const setup = async (
     });
   }
 
+  // eslint-disable-next-line typescript/no-deprecated -- warns callers still passing the alias
   if (configInput.environmentId && !configInput.workspaceId) {
     logger.debug(
       "environmentId is deprecated and will be removed in a future version. Please use workspaceId instead."

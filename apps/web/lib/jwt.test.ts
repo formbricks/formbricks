@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { createHmac } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import * as crypto from "@/lib/crypto";
@@ -878,9 +879,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         ).toString("base64url");
 
         // Create signature using HMAC (as if it were HS256)
-        const crypto = require("crypto");
-        const signature = crypto
-          .createHmac("sha256", TEST_AUTH_SECRET)
+        const signature = createHmac("sha256", TEST_AUTH_SECRET)
           .update(`${maliciousHeader}.${maliciousPayload}`)
           .digest("base64url");
 
@@ -1185,7 +1184,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
           tokens.push(createToken(`user-${i}`));
         }
 
-        expect(tokens.length).toBe(1000);
+        expect(tokens).toHaveLength(1000);
         expect(tokens.every((token) => typeof token === "string")).toBe(true);
       });
 
@@ -1198,7 +1197,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         }
 
         const results = await Promise.all(verifications);
-        expect(results.length).toBe(100);
+        expect(results).toHaveLength(100);
         expect(results.every((result: any) => result.id === mockUser.id)).toBe(true); // Returns decrypted user ID
       });
     });

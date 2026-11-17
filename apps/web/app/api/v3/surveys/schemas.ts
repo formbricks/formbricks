@@ -74,8 +74,6 @@ const createZV3SurveyLanguageInput = (options?: TV3LanguageCompatibilityOptions)
     })
     .strict();
 
-const ZV3SurveyLanguageInput = createZV3SurveyLanguageInput();
-
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -1163,10 +1161,11 @@ function getUnsupportedV3SurveyDocumentFields(
       ? fallbackDefaultLanguage
       : getNormalizedDefaultLanguage(value, options);
 
-  Array.isArray(value.languages) &&
+  if (Array.isArray(value.languages)) {
     value.languages.forEach((language, index) =>
       addUnknownKeyIssues(language, LANGUAGE_KEYS, `languages.${index}`, issues)
     );
+  }
   addUnknownKeyIssues(value.welcomeCard, WELCOME_CARD_KEYS, "welcomeCard", issues);
   if (isPlainObject(value.welcomeCard)) {
     const welcomeCard = value.welcomeCard;
@@ -1175,22 +1174,26 @@ function getUnsupportedV3SurveyDocumentFields(
     );
   }
   addUnknownKeyIssues(value.hiddenFields, HIDDEN_FIELDS_KEYS, "hiddenFields", issues);
-  Array.isArray(value.variables) &&
+  if (Array.isArray(value.variables)) {
     value.variables.forEach((variable, index) =>
       addUnknownKeyIssues(variable, VARIABLE_KEYS, `variables.${index}`, issues)
     );
-  Array.isArray(value.embeddedFields) &&
+  }
+  if (Array.isArray(value.embeddedFields)) {
     value.embeddedFields.forEach((field, index) =>
       addUnknownKeyIssues(field, V3_EMBEDDED_FIELD_KEYS, `embeddedFields.${index}`, issues, "embedded field")
     );
-  Array.isArray(value.blocks) &&
+  }
+  if (Array.isArray(value.blocks)) {
     value.blocks.forEach((block, index) =>
       validateBlock(block, `blocks.${index}`, issues, defaultLanguage, options)
     );
-  Array.isArray(value.endings) &&
+  }
+  if (Array.isArray(value.endings)) {
     value.endings.forEach((ending, index) =>
       validateEnding(ending, `endings.${index}`, issues, defaultLanguage, options)
     );
+  }
   // Rules before the first question (ENG-6932) use the block-rule format, so the same allowlists.
   if (Array.isArray(value.startLogic)) {
     value.startLogic.forEach((rule, index) => validateBlockLogic(rule, `startLogic.${index}`, issues));
@@ -1216,7 +1219,7 @@ function getUnsupportedV3SurveyDocumentFields(
 function addLanguageIssues(
   survey: {
     defaultLanguage?: string;
-    languages?: z.infer<typeof ZV3SurveyLanguageInput>[];
+    languages?: z.infer<ReturnType<typeof createZV3SurveyLanguageInput>>[];
   },
   ctx: z.RefinementCtx
 ): void {

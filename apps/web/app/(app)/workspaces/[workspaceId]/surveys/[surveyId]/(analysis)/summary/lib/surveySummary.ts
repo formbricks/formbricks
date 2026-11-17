@@ -220,12 +220,12 @@ export const getSurveySummaryDropOff = (
     return acc;
   }, {});
 
-  let totalTtc = { ...initialTtc };
-  let responseCounts = { ...initialTtc };
+  const totalTtc = { ...initialTtc };
+  const responseCounts = { ...initialTtc };
 
-  let dropOffArr = new Array(elements.length).fill(0) as number[];
-  let impressionsArr = new Array(elements.length).fill(0) as number[];
-  let dropOffPercentageArr = new Array(elements.length).fill(0) as number[];
+  const dropOffArr = new Array(elements.length).fill(0) as number[];
+  const impressionsArr = new Array(elements.length).fill(0) as number[];
+  const dropOffPercentageArr = new Array(elements.length).fill(0) as number[];
   const notShownArr = new Array(elements.length).fill(0) as number[];
   const elementIdToBlockId = getElementIdToBlockIdMap(survey);
   const isNotShown = createNotShownLookup(survey);
@@ -327,7 +327,7 @@ const checkForI18n = (
     element?.type === TSurveyElementTypeEnum.Ranking
   ) {
     // Initialize an array to hold the choice values
-    let choiceValues = [] as string[];
+    const choiceValues = [] as string[];
 
     // Type guard: both element types have choices property
     const hasChoices = "choices" in element;
@@ -1205,7 +1205,7 @@ export const getElementSummary = async (
   allResponses: TSurveySummaryResponse[],
   dropOff: TSurveySummary["dropOff"]
 ): Promise<TSurveySummary["summary"]> => {
-  let summary: TSurveySummary["summary"] = [];
+  const summary: TSurveySummary["summary"] = [];
   const isNotShown = createNotShownLookup(survey);
 
   for (const element of elements) {

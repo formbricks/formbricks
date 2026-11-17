@@ -121,6 +121,7 @@ export const performActions = (
         requiredQuestionIds.push(action.target);
         break;
       case "jumpToBlock":
+        // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty jump target means no jump
         if (!jumpTarget) {
           jumpTarget = action.target;
         }
@@ -577,10 +578,14 @@ const evaluateSingleCondition = (
     );
     if (!values) return false;
     return OPERATOR_EVALUATORS[condition.operator]?.(values) ?? false;
-  } catch (e) {
+  } catch {
     return false;
   }
 };
+
+/** A variable's value, or the one-step operators' starting value when it has none yet. */
+const withDefaultValue = (value: number | string | undefined, dataType: string): number | string =>
+  value ?? (dataType === "number" ? 0 : "");
 
 /** The value a one-step calculation applies: a static value, a variable, or an answer. */
 const getCalculationOperand = (
@@ -669,10 +674,7 @@ const performCalculation = (
     });
   }
 
-  let currentValue = calculations[action.variableId];
-  if (currentValue === undefined) {
-    currentValue = dataType === "number" ? 0 : "";
-  }
+  const currentValue = withDefaultValue(calculations[action.variableId], dataType);
 
   const operandValue = getCalculationOperand(action, data, calculations, dataType);
   if (operandValue === undefined || operandValue === null) return undefined;

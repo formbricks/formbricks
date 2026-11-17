@@ -38,7 +38,7 @@ export const validWebHookURL = (urlInput: string, allowInternalUrls = false) => 
     }
 
     return { valid: true };
-  } catch (error) {
+  } catch {
     return { valid: false, error: "Invalid URL format. Please enter a complete URL including https://" };
   }
 };
@@ -47,6 +47,14 @@ export const isDiscordWebhook = (urlString: string) => {
   const url = new URL(urlString);
   const DISCORD_WEBHOOK_URL_PATTERN = /^https:\/\/discord\.com\/api\/webhooks\/\d+\/.+$/;
   return DISCORD_WEBHOOK_URL_PATTERN.test(url.toString());
+};
+
+/** The URL input's border and background for the result of the endpoint check, if there is one. */
+export const getEndpointAccessibleClassName = (endpointAccessible: boolean | undefined): string | null => {
+  if (endpointAccessible === true) return "border-green-500 bg-green-50";
+  if (endpointAccessible === false) return "border-red-200 bg-red-50";
+  if (endpointAccessible === undefined) return "border-slate-200 bg-white";
+  return null;
 };
 
 export type TNewWebhookInputProblem = "missing_url" | "missing_trigger" | "missing_survey" | "discord_url";

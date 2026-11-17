@@ -1,3 +1,5 @@
+/* eslint-disable typescript/no-deprecated -- this module defines the deprecated v1 question types and
+ * builds them, and the survey schema that still accepts them, from one another. */
 import { z } from "zod";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import {
@@ -915,6 +917,14 @@ export const ZSurveyLanguage = z.object({
 
 export type TSurveyLanguage = z.infer<typeof ZSurveyLanguage>;
 
+/** Replaces "default" in `languageCodes` with the code of the survey's default language, if it has one. */
+const resolveDefaultLanguageCode = (languageCodes: string[], languages: TSurveyLanguage[]): string[] => {
+  const defaultLanguageCode = languages.find((lang) => lang.default)?.language.code ?? "default";
+  return languageCodes.map((languageCode) =>
+    languageCode === "default" ? defaultLanguageCode : languageCode
+  );
+};
+
 /**
  * @deprecated Kept for v1 API backward compatibility only.
  */
@@ -1193,11 +1203,7 @@ const duplicateLabelsIssue = (
   const duplicateLanguageCodes = findLanguageCodesForDuplicateLabels(labels, languages);
   if (duplicateLanguageCodes.length === 0) return null;
 
-  const invalidLanguageCodes = duplicateLanguageCodes.map((invalidLanguageCode) =>
-    invalidLanguageCode === "default"
-      ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-      : invalidLanguageCode
-  );
+  const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateLanguageCodes, languages);
 
   const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
@@ -1949,11 +1955,7 @@ export const surveyRefinement = (rawSurvey: TSurveyInput, ctx: z.RefinementCtx):
         );
 
         if (duplicateChoicesLanguageCodes.length > 0) {
-          const invalidLanguageCodes = duplicateChoicesLanguageCodes.map((invalidLanguageCode) =>
-            invalidLanguageCode === "default"
-              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-              : invalidLanguageCode
-          );
+          const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateChoicesLanguageCodes, languages);
 
           const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
@@ -2045,11 +2047,7 @@ export const surveyRefinement = (rawSurvey: TSurveyInput, ctx: z.RefinementCtx):
         );
 
         if (duplicateRowsLanguageCodes.length > 0) {
-          const invalidLanguageCodes = duplicateRowsLanguageCodes.map((invalidLanguageCode) =>
-            invalidLanguageCode === "default"
-              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-              : invalidLanguageCode
-          );
+          const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateRowsLanguageCodes, languages);
 
           const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
@@ -2062,11 +2060,7 @@ export const surveyRefinement = (rawSurvey: TSurveyInput, ctx: z.RefinementCtx):
         }
 
         if (duplicateColumnLanguageCodes.length > 0) {
-          const invalidLanguageCodes = duplicateColumnLanguageCodes.map((invalidLanguageCode) =>
-            invalidLanguageCode === "default"
-              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-              : invalidLanguageCode
-          );
+          const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateColumnLanguageCodes, languages);
 
           const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
@@ -2081,7 +2075,7 @@ export const surveyRefinement = (rawSurvey: TSurveyInput, ctx: z.RefinementCtx):
 
       if (question.type === TSurveyQuestionTypeEnum.FileUpload) {
         // allowedFileExtensions must have atleast one element
-        if (question.allowedFileExtensions && question.allowedFileExtensions.length === 0) {
+        if (question.allowedFileExtensions?.length === 0) {
           ctx.addIssue({
             code: "custom",
             message: `Question ${String(questionIndex + 1)} must have atleast one allowed file extension`,

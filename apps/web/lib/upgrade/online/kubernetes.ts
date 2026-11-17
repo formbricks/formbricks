@@ -87,17 +87,17 @@ const ready = (pod: Pod) =>
   pod.status?.conditions?.some((c) => c.type === "Ready" && c.status === "True");
 
 /** The API path of each resource kind outside the core group. */
-const KIND_API_PATHS: Partial<Record<string, string>> = {
-  deployments: "/apis/apps/v1",
-  statefulsets: "/apis/apps/v1",
-  replicasets: "/apis/apps/v1",
-  jobs: "/apis/batch/v1",
-  cronjobs: "/apis/batch/v1",
-  horizontalpodautoscalers: "/apis/autoscaling/v2",
-  endpointslices: "/apis/discovery.k8s.io/v1",
-  roles: "/apis/rbac.authorization.k8s.io/v1",
-  rolebindings: "/apis/rbac.authorization.k8s.io/v1",
-};
+const KIND_API_PATHS = new Map<string, string>([
+  ["deployments", "/apis/apps/v1"],
+  ["statefulsets", "/apis/apps/v1"],
+  ["replicasets", "/apis/apps/v1"],
+  ["jobs", "/apis/batch/v1"],
+  ["cronjobs", "/apis/batch/v1"],
+  ["horizontalpodautoscalers", "/apis/autoscaling/v2"],
+  ["endpointslices", "/apis/discovery.k8s.io/v1"],
+  ["roles", "/apis/rbac.authorization.k8s.io/v1"],
+  ["rolebindings", "/apis/rbac.authorization.k8s.io/v1"],
+]);
 
 export class KubernetesUpgrade {
   assertLock: () => Promise<void> = async () => {};
@@ -158,8 +158,9 @@ export class KubernetesUpgrade {
     });
   }
   path(kind: string, name = "") {
-    const api = KIND_API_PATHS[kind] ?? "/api/v1";
-    return `${api}/namespaces/${this.config.namespace}/${kind}${name ? `/${encodeURIComponent(name)}` : ""}`;
+    const api = KIND_API_PATHS.get(kind) ?? "/api/v1";
+    const namePath = name ? `/${encodeURIComponent(name)}` : "";
+    return `${api}/namespaces/${this.config.namespace}/${kind}${namePath}`;
   }
   async pods(selector?: string) {
     return (

@@ -3,6 +3,7 @@ import {
   eslintRecommended,
   typeAwareOff,
   typescriptFileOverrides,
+  typescriptRecommended,
   typescriptRecommendedTypeChecked,
 } from "./presets.mjs";
 import { sonarParityTyped } from "./sonar-parity.mjs";
@@ -40,5 +41,24 @@ export const typeCheckedBaseline = compose(
 );
 
 export const library = compose(base, typeCheckedBaseline, { env: { node: true } }, sonarParityTyped());
+
+/*
+ * The same tier without type information: eslint recommended + typescript-eslint `recommended`, for
+ * repo tooling that no tsconfig includes (the root `scripts/`, `.github/`, the `config-*` packages).
+ */
+export const untypedLibrary = compose(
+  base,
+  { ignorePatterns: ["**/*.config.{js,cjs,mjs,ts,mts}", "**/*.d.{ts,cts,mts}"] },
+  {
+    plugins: ["typescript"],
+    env: { node: true },
+    rules: {
+      ...eslintRecommended,
+      ...typescriptRecommended,
+      "no-unused-vars": ["error", unusedVarsOptions],
+    },
+    overrides: [{ files: TYPESCRIPT_FILES, rules: typescriptFileOverrides }],
+  }
+);
 
 export default library;

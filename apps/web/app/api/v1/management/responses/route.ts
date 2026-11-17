@@ -39,7 +39,7 @@ export const GET = withV1ApiWrapper({
     const offset = searchParams.get("skip") ? Number(searchParams.get("skip")) : undefined;
 
     try {
-      let allResponses: TResponse[] = [];
+      const allResponses: TResponse[] = [];
 
       if (surveyId) {
         const survey = await getSurvey(surveyId);

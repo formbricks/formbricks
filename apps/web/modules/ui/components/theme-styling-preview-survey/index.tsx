@@ -253,6 +253,11 @@ export const ThemeStylingPreviewSurvey = ({
     </MediaBackground>
   );
 
+  let previewScreenState = "shrink";
+  if (isFullScreenPreview) {
+    previewScreenState = previewPosition === "relative" ? "expanded" : "expanded_with_fixed_positioning";
+  }
+
   return (
     <MotionConfig reducedMotion="user">
       <div className="flex h-full w-full flex-col items-center justify-items-center overflow-hidden">
@@ -264,13 +269,7 @@ export const ThemeStylingPreviewSurvey = ({
         <motion.div
           layout
           variants={previewScreenVariants}
-          animate={
-            isFullScreenPreview
-              ? previewPosition === "relative"
-                ? "expanded"
-                : "expanded_with_fixed_positioning"
-              : "shrink"
-          }
+          animate={previewScreenState}
           className={cn(
             "relative z-10 flex w-5/6 flex-col rounded-lg border border-slate-300 shadow-xl",
             isAppSurvey ? "bg-slate-200" : "overflow-y-auto bg-white"

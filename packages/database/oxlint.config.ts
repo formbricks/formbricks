@@ -43,7 +43,8 @@ export default defineConfig(
          * trade for lint hygiene. These files are therefore exempted rather than fixed, each from only
          * the rules it actually violates, so a *new* violation of any other rule still fails.
          *
-         * Do not add entries. A migration that has not shipped yet should be fixed instead.
+         * Add an entry only when a newly enforced rule hits a migration that has already shipped. A
+         * migration that has not shipped yet should be fixed instead.
          */
         {
           files: ["migration/20250326111101_move_api_keys_to_api_keys_new/migration.ts"],
@@ -61,6 +62,8 @@ export default defineConfig(
             // Guards against legacy `Survey.blocks` JSON that the hand-written `SurveyElement` type
             // describes more optimistically than the stored data — the rule reads them as dead.
             "typescript/no-unnecessary-condition": "off",
+            // `if (!logic) logic = "and"` also replaces a stored "", which `??=` would not (ENG-7329).
+            "typescript/prefer-nullish-coalescing": "off",
           },
         },
         {
@@ -78,6 +81,21 @@ export default defineConfig(
             // Each has one function over the threshold of 15, written before the rule was enforced.
             "sonarjs/cognitive-complexity": "off",
           },
+        },
+        {
+          files: ["migration/20251118032116_migrate_questions_to_blocks/utils.ts"],
+          // `condition.rightOperand && condition.rightOperand.type === ...` (ENG-7329).
+          rules: { "typescript/prefer-optional-chain": "off" },
+        },
+        {
+          files: ["migration/20260205033241_added_attributes_data_types/migration.ts"],
+          // The two regex patterns are escaped string literals (ENG-7329).
+          rules: { "unicorn-js/prefer-string-raw": "off" },
+        },
+        {
+          files: ["migration/20260812110001_eng_2343_backfill_oauth_resource_links/migration.ts"],
+          // The MCP resource identifier is built with a nested template literal (ENG-7329).
+          rules: { "sonarjs/no-nested-template-literals": "off" },
         },
       ],
     }

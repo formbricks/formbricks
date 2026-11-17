@@ -343,7 +343,9 @@ export class ResponseQueue {
       return { success: false };
     }
 
-    if (await this.shouldDeferToPersistedSync()) {
+    // Only with persistence on: otherwise nothing may yield before the request flag is set, or a
+    // second call in the same turn would pass the guards above and send the same queue head.
+    if (this.hasOfflinePersistence() && (await this.shouldDeferToPersistedSync())) {
       return { success: false };
     }
 
@@ -366,6 +368,11 @@ export class ResponseQueue {
     return { success: false };
   }
 
+  /** Responses are persisted to IndexedDB while they wait to be sent. */
+  private hasOfflinePersistence(): boolean {
+    return Boolean(this.config.persistOffline && this.config.surveyId);
+  }
+
   /** Offline persistence is on and the browser is offline: what is queued is safe in IndexedDB. */
   private isOfflineWithPersistence(): boolean {
     return Boolean(this.config.persistOffline && typeof navigator !== "undefined" && !navigator.onLine);
@@ -378,8 +385,6 @@ export class ResponseQueue {
    * Also true when IndexedDB can't be read, or another send or sync started meanwhile.
    */
   private async shouldDeferToPersistedSync(): Promise<boolean> {
-    if (!this.config.persistOffline || !this.config.surveyId) return false;
-
     let pendingCount: number;
     try {
       await this.retryProcessedDbIdCleanup();
@@ -720,6 +725,7 @@ export class ResponseQueue {
         response = await this.api.updateResponse({
           ...responseUpdate,
           responseId: this.surveyState.responseId,
+          // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value is sent as null
           pinAuthToken: this.surveyState.pinAuthToken || null,
         });
 
@@ -731,10 +737,14 @@ export class ResponseQueue {
         response = await this.api.createResponse({
           ...createPayload,
           surveyId: this.surveyState.surveyId,
+          // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value is sent as null
           contactId: this.surveyState.contactId || null,
+          // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value is sent as null
           userId: this.surveyState.userId || null,
+          // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value is sent as null
           singleUseId: this.surveyState.singleUseId || null,
           displayId: this.surveyState.displayId,
+          // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value is sent as null
           pinAuthToken: this.surveyState.pinAuthToken || null,
           recaptchaToken: this.responseRecaptchaToken ?? undefined,
         });
@@ -757,7 +767,7 @@ export class ResponseQueue {
           quotaFull: true,
           quotaId: response.data.quota.id,
           action: response.data.quota.action,
-          endingCardId: response.data.quota.endingCardId || "",
+          endingCardId: response.data.quota.endingCardId ?? "",
         });
       }
 

@@ -11,7 +11,7 @@ import { getSegment } from "../segment";
 import { getSurvey } from "../surveys";
 
 vi.mock("react", () => ({
-  cache: vi.fn((fn: Function) => fn),
+  cache: vi.fn(<T>(fn: T) => fn),
 }));
 
 vi.mock("@formbricks/logger", () => ({

@@ -40,7 +40,7 @@ export type ParsedSchemas<S extends ExtendedSchemas | undefined> = S extends obj
         ? z.infer<NonNullable<S[K]>>
         : never;
     }
-  : {};
+  : Record<never, never>;
 
 type TBodyTransform = (
   body: Record<string, unknown>,
@@ -151,7 +151,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
     auditLog.organizationId = authentication.data.organizationId;
   }
 
-  let parsedInput: ParsedSchemas<S> = {} as ParsedSchemas<S>;
+  const parsedInput: ParsedSchemas<S> = {} as ParsedSchemas<S>;
 
   if (schemas?.body) {
     const bodyResult = await parseBody(request, schemas.body, authentication.data, bodyTransform);

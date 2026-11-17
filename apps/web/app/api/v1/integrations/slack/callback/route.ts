@@ -149,7 +149,7 @@ export const GET = withV1ApiWrapper({
       };
 
       const integration = {
-        type: "slack" as "slack",
+        type: "slack" as const,
         config: slackConfiguration,
       };
 
