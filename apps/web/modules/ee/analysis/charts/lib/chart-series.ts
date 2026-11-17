@@ -55,8 +55,9 @@ export const applyEmptyValueSetting = (
 
 /**
  * Folds rows that became one group once their empty values were shown: a null and a blank value for the
- * same grouping both read as the empty group, and drawing them twice would split one bar in two. Counts
- * add up; a ratio keeps the first reading, since it cannot be added. Other rows pass through untouched.
+ * same grouping both read as the empty group, and drawing them twice would split one bar in two. Rows
+ * fold only when every other grouping column (the time bucket too) matches; see `mergeCellRows` for how
+ * values combine. Other rows pass through untouched.
  */
 export const collapseEmptyGroupRows = (
   rows: TChartDataRow[],
@@ -70,7 +71,12 @@ export const collapseEmptyGroupRows = (
       out.push(row);
       continue;
     }
-    const id = JSON.stringify(groupKeys.map((key) => row[key] ?? null));
+    // Keyed by every grouping column the row carries — the time bucket included — so empty groups of
+    // different weeks stay apart.
+    const idKeys = Object.keys(row)
+      .filter((key) => !isMeasureColumn(key, measureKeys))
+      .sort((a, b) => a.localeCompare(b));
+    const id = JSON.stringify(idKeys.map((key) => [key, row[key] ?? null]));
     const existing = byGroup.get(id);
     if (existing) {
       const merged = mergeCellRows(existing, row, measureKeys);
@@ -261,7 +267,7 @@ export const buildGroupedSeries = ({
     const firstMeasure = measureKeys[0];
     comboWeight.set(id, (comboWeight.get(id) ?? 0) + (toFiniteNumber(row[firstMeasure]) ?? 0));
     // Rows that land on the same cell — a null and a blank value both shown as the empty group — are
-    // one group: counts add up, and a ratio keeps the first reading, since it cannot be added.
+    // one group, folded as `mergeCellRows` describes.
     const cellKey = `${categoryId}\u0000${id}`;
     const existing = cells.get(cellKey);
     cells.set(cellKey, existing ? mergeCellRows(existing, row, measureKeys) : row);
@@ -294,16 +300,51 @@ export const buildGroupedSeries = ({
   return { rows: pivoted, series };
 };
 
-/** Two result rows for one (category, group) cell, folded: additive measures summed, others kept. */
+/** Whether a result column holds a measure (a value to fold) rather than a grouping (part of the key). */
+const isMeasureColumn = (key: string, measureKeys: readonly string[]): boolean => {
+  if (measureKeys.includes(key)) return true;
+  const field = getFieldById(key);
+  return field !== undefined && "group" in field;
+};
+
+/** A ratio over two rows, weighted by the answers each was computed from; null without both bases. */
+const mergeRatio = (measureKey: string, first: TChartDataRow, second: TChartDataRow): number | null => {
+  const firstValue = toFiniteNumber(first[measureKey]);
+  const secondValue = toFiniteNumber(second[measureKey]);
+  if (firstValue === null) return secondValue;
+  if (secondValue === null) return firstValue;
+  const field = getFieldById(measureKey);
+  const baseKey = field && "responseBaseMeasureId" in field ? field.responseBaseMeasureId : undefined;
+  const firstBase = baseKey ? toFiniteNumber(first[baseKey]) : null;
+  const secondBase = baseKey ? toFiniteNumber(second[baseKey]) : null;
+  if (firstBase === null || secondBase === null || firstBase + secondBase <= 0) return null;
+  return (firstValue * firstBase + secondValue * secondBase) / (firstBase + secondBase);
+};
+
+/**
+ * Two result rows for one group, folded: counts add up; a score or an average is re-weighted by the
+ * answers behind each row (its response base), which is how Cube would have computed it over the merged
+ * group. A ratio without a base on both rows cannot be recomputed, so it becomes null — a gap, never one
+ * row's reading passed off as the whole group's.
+ */
 const mergeCellRows = (
   first: TChartDataRow,
   second: TChartDataRow,
   measureKeys: readonly string[]
 ): TChartDataRow => {
   const merged: TChartDataRow = { ...first };
-  for (const key of measureKeys) {
-    if (!isAdditiveMeasure(key)) continue;
-    merged[key] = (toFiniteNumber(first[key]) ?? 0) + (toFiniteNumber(second[key]) ?? 0);
+  const measures = new Set([
+    ...measureKeys,
+    ...Object.keys(first).filter((key) => isMeasureColumn(key, measureKeys)),
+  ]);
+  // Ratios first: they read each row's own base before the bases are summed below.
+  for (const key of measures) {
+    if (!isAdditiveMeasure(key)) merged[key] = mergeRatio(key, first, second);
+  }
+  for (const key of measures) {
+    if (isAdditiveMeasure(key)) {
+      merged[key] = (toFiniteNumber(first[key]) ?? 0) + (toFiniteNumber(second[key]) ?? 0);
+    }
   }
   return merged;
 };

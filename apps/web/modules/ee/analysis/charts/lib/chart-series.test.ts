@@ -305,7 +305,22 @@ describe("empty groups that merge", () => {
     expect(result.rows[0][result.series[0].key]).toBe(3);
   });
 
-  test("a ratio is never added up", () => {
+  test("a ratio is re-weighted by its response base, never added up", () => {
+    const NPS_COUNT = "FeedbackRecords.npsCount";
+    const shown = applyEmptyValueSetting(
+      [
+        { [SOURCE]: null, [NPS]: 10, [NPS_COUNT]: 1 },
+        { [SOURCE]: "", [NPS]: 30, [NPS_COUNT]: 3 },
+      ],
+      [SOURCE],
+      true
+    );
+    expect(collapseEmptyGroupRows(shown, [SOURCE], [NPS])).toEqual([
+      { [SOURCE]: EMPTY_GROUP_VALUE, [NPS]: 25, [NPS_COUNT]: 4 },
+    ]);
+  });
+
+  test("a ratio without a base cannot be recomputed and becomes a gap", () => {
     const shown = applyEmptyValueSetting(
       [
         { [SOURCE]: null, [NPS]: 10 },
@@ -315,7 +330,23 @@ describe("empty groups that merge", () => {
       true
     );
     expect(collapseEmptyGroupRows(shown, [SOURCE], [NPS])).toEqual([
-      { [SOURCE]: EMPTY_GROUP_VALUE, [NPS]: 10 },
+      { [SOURCE]: EMPTY_GROUP_VALUE, [NPS]: null },
+    ]);
+  });
+
+  test("empty groups of different weeks stay apart", () => {
+    const shown = applyEmptyValueSetting(
+      [
+        { [WEEK]: "w1", [SOURCE]: null, [COUNT]: 2 },
+        { [WEEK]: "w2", [SOURCE]: "", [COUNT]: 1 },
+        { [WEEK]: "w2", [SOURCE]: null, [COUNT]: 4 },
+      ],
+      [SOURCE],
+      true
+    );
+    expect(collapseEmptyGroupRows(shown, [SOURCE], [COUNT])).toEqual([
+      { [WEEK]: "w1", [SOURCE]: EMPTY_GROUP_VALUE, [COUNT]: 2 },
+      { [WEEK]: "w2", [SOURCE]: EMPTY_GROUP_VALUE, [COUNT]: 5 },
     ]);
   });
 });
