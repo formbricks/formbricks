@@ -29,6 +29,7 @@ import {
   DATE_FILTER_PARAM,
   DATE_FILTER_TO_PARAM,
   type TDashboardDateFilter,
+  getUrlDateFilterKey,
   parseDashboardDateFilter,
   parseStoredDefaultDateRange,
   resolveEffectiveDateFilter,
@@ -726,9 +727,26 @@ function DashboardDetailView({
   const { saveDefaultDateRange } = defaultDateRangeWriter;
   // Once the range the editor picked is the default, they are looking at the default: drop their own pick
   // (cookie and URL) so the selector shows "Default" and a later change to the default reaches them too.
+  //
+  // Only if nothing moved while the save ran: the view is still mounted on this dashboard, and the URL's
+  // date is the one the save started from. A date picked meanwhile (back/forward) is the newer choice and
+  // stays, and a viewer who already left is not pulled back here by the URL write.
+  const isMountedRef = useRef(true);
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
   const handleDefaultDateRangeChange = useCallback(
     async (preset: TDateRangePreset | null) => {
-      if ((await saveDefaultDateRange(preset)) && preset) handleDateFilterChange(null);
+      const startedAt = { path: window.location.pathname, date: getUrlDateFilterKey(window.location.search) };
+      const saved = await saveDefaultDateRange(preset);
+      const unchanged =
+        isMountedRef.current &&
+        window.location.pathname === startedAt.path &&
+        getUrlDateFilterKey(window.location.search) === startedAt.date;
+      if (saved && preset && unchanged) handleDateFilterChange(null);
     },
     [handleDateFilterChange, saveDefaultDateRange]
   );

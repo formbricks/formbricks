@@ -9,6 +9,7 @@ import {
   type TDashboardDateFilter,
   applyDashboardDateFilter,
   deserializeStoredDateFilter,
+  getUrlDateFilterKey,
   isDashboardDefaultDateRange,
   parseDashboardDateFilter,
   parseStoredDefaultDateRange,
@@ -329,5 +330,14 @@ describe("dashboard default date range", () => {
     for (const value of ["last 14 days", "last 60 days", "last 180 days", "last 4 weeks", "last 12 months"]) {
       expect(parseDashboardDateFilter({ [DATE_FILTER_PARAM]: value })).toEqual({ type: "preset", value });
     }
+  });
+});
+
+describe("getUrlDateFilterKey", () => {
+  test("changes only when the URL's date changes", () => {
+    const base = getUrlDateFilterKey("?dateRange=last+8+weeks&filters=abc");
+    expect(getUrlDateFilterKey("?filters=xyz&dateRange=last+8+weeks")).toBe(base);
+    expect(getUrlDateFilterKey("?dateRange=last+30+days")).not.toBe(base);
+    expect(getUrlDateFilterKey("")).toBe("||");
   });
 });

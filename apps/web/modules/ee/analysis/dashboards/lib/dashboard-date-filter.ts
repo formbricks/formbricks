@@ -303,3 +303,14 @@ export const toChartDateRange = (
   if (filter.type === "preset") return filter.value;
   return { from: filter.range[0], to: filter.range[1] };
 };
+
+/**
+ * The date filter a dashboard URL's query string pins, as one comparable string (empty parts when unset), to
+ * tell whether the date changed while something was in flight.
+ */
+export const getUrlDateFilterKey = (search: string): string => {
+  const params = new URLSearchParams(search);
+  return [DATE_FILTER_PARAM, DATE_FILTER_FROM_PARAM, DATE_FILTER_TO_PARAM]
+    .map((key) => params.get(key) ?? "")
+    .join("|");
+};
