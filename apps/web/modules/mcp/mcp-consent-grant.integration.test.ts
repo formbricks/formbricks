@@ -1,11 +1,13 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { getConsentApprovalBody } from "@/app/(app)/account/authorize/lib/consent-approval";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { callMcpTool, serveJwksFromAuthHandler, succeeded, toolText } from "@/integration/mcp-client";
 import {
   authorize,
   consent,
   createUser,
+  exchangeCode,
   grant,
   refresh,
   registerClient,
@@ -16,6 +18,8 @@ import { getAuthzedClient } from "@/lib/authzed/client";
 import { readAllRelationships } from "@/lib/authzed/relationship-reads";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { getMcpGrantPermissionsForScopes } from "./grant";
+import { getInitialMcpGrantPermissions } from "./grant-editor";
 import { getMcpGrant } from "./grant-store";
 
 /**
@@ -278,6 +282,33 @@ describe("Allow on the consent screen", () => {
     );
     expect(tooMany.status).toBe(400);
     expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+  });
+
+  // N1: a request for identity alone (no MCP scope) is approved with what the consent screen's Allow posts
+  // for it, and stores a consent without a grant.
+  test("approves an identity-only request as the consent screen posts it, storing no grant", async () => {
+    const scope = "openid profile email offline_access";
+    const { target, verifier } = await authorize(setup.cookie, setup.clientId, scope);
+    expect(target.pathname).toBe("/account/authorize");
+    const cap = getMcpGrantPermissionsForScopes(scope.split(" "));
+    const permissions = getInitialMcpGrantPermissions({ existing: null, cap });
+
+    const response = await consent(
+      setup.cookie,
+      target,
+      getConsentApprovalBody({
+        cap,
+        isDashboardViewer: false,
+        grant: { permissions, access: { access: "all" } },
+      })
+    );
+
+    expect(response.status, await response.clone().text()).toBe(200);
+    const code = new URL((await response.json()).url as string).searchParams.get("code") as string;
+    expect(code).toBeTruthy();
+    expect((await exchangeCode(setup.clientId, code, verifier)).status).toBe(200);
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+    expect(await prisma.oauthConsent.count({ where: { userId: setup.userId } })).toBe(1);
   });
 
   // A client that asked for no MCP scope could do nothing with a grant: none is stored, and its refresh,

@@ -146,6 +146,7 @@
         "empty_grant_hint": "Erişime izin vermek için en az bir izin seç.",
         "expand_category": "{category} izinlerini göster",
         "identity_name_and_email": "Adın ve e-posta adresin",
+        "identity_only": "Bu uygulama yalnızca kim olduğunu bilmek istiyor. Formbricks verilerine erişimi olmayacak.",
         "identity_stay_signed_in": "Oturumun açık kalması",
         "levels": {
           "custom": "Özel",

@@ -146,6 +146,7 @@
         "empty_grant_hint": "A hozzáférés engedélyezéséhez kérjük, válasszon ki legalább egy engedélyt.",
         "expand_category": "{category} engedélyeinek megjelenítése",
         "identity_name_and_email": "Az Ön neve és e-mail-címe",
+        "identity_only": "Ez az alkalmazás kizárólag azt kéri, hogy megismerhesse az Ön személyazonosságát. Az Ön Formbricks-adataihoz nem kap hozzáférést.",
         "identity_stay_signed_in": "Bejelentkezve maradás",
         "levels": {
           "custom": "Egyéni",

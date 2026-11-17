@@ -146,6 +146,7 @@
         "empty_grant_hint": "Elige al menos un permiso para permitir el acceso.",
         "expand_category": "Mostrar permisos de {category}",
         "identity_name_and_email": "Tu nombre y dirección de correo electrónico",
+        "identity_only": "Esta aplicación solo pide saber quién eres. No obtiene acceso a tus datos de Formbricks.",
         "identity_stay_signed_in": "Mantener la sesión iniciada",
         "levels": {
           "custom": "Personalizado",

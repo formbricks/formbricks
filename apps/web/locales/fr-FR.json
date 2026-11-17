@@ -146,6 +146,7 @@
         "empty_grant_hint": "Choisis au moins une autorisation pour permettre l'accès.",
         "expand_category": "Afficher les autorisations {category}",
         "identity_name_and_email": "Ton nom et ton adresse e-mail",
+        "identity_only": "Cette application demande uniquement à savoir qui tu es. Elle n'a aucun accès à tes données Formbricks.",
         "identity_stay_signed_in": "Rester connecté",
         "levels": {
           "custom": "Personnalisé",

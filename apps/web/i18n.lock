@@ -125,6 +125,7 @@ checksums:
     auth/oauth/grant/empty_grant_hint: 1f8b65ca52be70e0db9ec4f9c897c625
     auth/oauth/grant/expand_category: cd0dd34dcf2e7b109d0b249a8942e2dc
     auth/oauth/grant/identity_name_and_email: 75c9d441f76c18938640d9f0a50bce31
+    auth/oauth/grant/identity_only: 6365fb6647406b6a69cccab4ea1e58bb
     auth/oauth/grant/identity_stay_signed_in: 0f439b9579c71a3b256905b1293165bd
     auth/oauth/grant/levels/custom: b7b89901f46267f532600a23cfc54ae2
     auth/oauth/grant/levels/no_access: cdb44adb343d96f0a793f0ef31946d96

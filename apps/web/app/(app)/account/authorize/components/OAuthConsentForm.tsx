@@ -5,6 +5,7 @@ import { McpGrantDraftFields } from "@/modules/mcp/components/mcp-grant-draft-fi
 import type { TMcpGrantPermissions } from "@/modules/mcp/grant";
 import type { TMcpGrantAccessDraft, TMcpGrantAccessOptions } from "@/modules/mcp/grant-access";
 import { useMcpGrantDraft } from "@/modules/mcp/hooks/use-mcp-grant-draft";
+import { isIdentityOnlyConsent } from "../lib/consent-approval";
 import { OAuthConsentActions } from "./OAuthConsentActions";
 
 interface OAuthConsentFormProps {
@@ -21,7 +22,10 @@ interface OAuthConsentFormProps {
   readonly grantedScope?: string;
 }
 
-/** The consent screen's permission matrix and its Allow / Deny, which sends the chosen grant. */
+/**
+ * The consent screen's permission matrix and its Allow / Deny, which sends the chosen grant. A request for
+ * identity alone has no matrix: Allow approves it as it stands.
+ */
 export const OAuthConsentForm = ({
   initialPermissions,
   initialAccess,
@@ -33,23 +37,31 @@ export const OAuthConsentForm = ({
   const { t } = useTranslation();
   const draft = useMcpGrantDraft({ permissions: initialPermissions, access: initialAccess }, null);
 
+  const identityOnly = isIdentityOnlyConsent({ cap, isDashboardViewer });
+
   return (
     <div className="space-y-6">
-      <McpGrantDraftFields
-        id="mcp-consent"
-        draft={draft}
-        accessOptions={accessOptions}
+      {identityOnly ? (
+        <p className="text-sm text-slate-600">{t("auth.oauth.grant.identity_only")}</p>
+      ) : (
+        <McpGrantDraftFields
+          id="mcp-consent"
+          draft={draft}
+          accessOptions={accessOptions}
+          cap={cap}
+          isDashboardViewer={isDashboardViewer}
+          emptyHint={t("auth.oauth.grant.empty_grant_hint")}
+        />
+      )}
+      <OAuthConsentActions
         cap={cap}
         isDashboardViewer={isDashboardViewer}
-        emptyHint={t("auth.oauth.grant.empty_grant_hint")}
-      />
-      <OAuthConsentActions
         grantedScope={grantedScope}
         grant={{
           permissions: draft.permissions,
           ...(draft.accessSelection ? { access: draft.accessSelection } : {}),
         }}
-        isAllowDisabled={!draft.canSubmit}
+        isAllowDisabled={!identityOnly && !draft.canSubmit}
       />
     </div>
   );

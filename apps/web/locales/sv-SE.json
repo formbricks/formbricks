@@ -146,6 +146,7 @@
         "empty_grant_hint": "Välj minst en behörighet för att ge åtkomst.",
         "expand_category": "Visa behörigheter för {category}",
         "identity_name_and_email": "Ditt namn och din e-postadress",
+        "identity_only": "Appen vill bara veta vem du är. Den får ingen åtkomst till dina Formbricks-data.",
         "identity_stay_signed_in": "Förbli inloggad",
         "levels": {
           "custom": "Anpassad",

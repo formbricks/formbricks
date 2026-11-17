@@ -146,6 +146,7 @@
         "empty_grant_hint": "請至少選擇一項權限以允許存取。",
         "expand_category": "顯示{category}權限",
         "identity_name_and_email": "你的姓名和電子郵件地址",
+        "identity_only": "這個應用程式只會確認你的身分,無法存取你在 Formbricks 中的任何資料。",
         "identity_stay_signed_in": "保持登入狀態",
         "levels": {
           "custom": "自訂",

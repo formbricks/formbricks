@@ -146,6 +146,7 @@
         "empty_grant_hint": "Wähle mindestens eine Berechtigung aus, um den Zugriff zu erlauben.",
         "expand_category": "Berechtigungen für {category} anzeigen",
         "identity_name_and_email": "Dein Name und Deine E-Mail-Adresse",
+        "identity_only": "Diese App möchte nur wissen, wer du bist. Sie erhält keinen Zugriff auf deine Formbricks-Daten.",
         "identity_stay_signed_in": "Angemeldet bleiben",
         "levels": {
           "custom": "Benutzerdefiniert",

@@ -146,6 +146,7 @@
         "empty_grant_hint": "アクセスを許可するには、権限を1つ以上選択してください。",
         "expand_category": "{category}の権限を表示",
         "identity_name_and_email": "あなたの名前とメールアドレス",
+        "identity_only": "このアプリは、あなたが誰であるかを確認することだけを求めています。Formbricksのデータにはアクセスできません。",
         "identity_stay_signed_in": "ログイン状態の維持",
         "levels": {
           "custom": "カスタム",

@@ -146,6 +146,7 @@
         "empty_grant_hint": "Alege cel puțin o permisiune pentru a permite accesul.",
         "expand_category": "Afișează permisiunile pentru {category}",
         "identity_name_and_email": "Numele și adresa ta de e-mail",
+        "identity_only": "Această aplicație cere doar să știe cine ești. Nu primește acces la datele tale din Formbricks.",
         "identity_stay_signed_in": "Rămâi autentificat",
         "levels": {
           "custom": "Personalizat",

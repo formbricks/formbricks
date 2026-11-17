@@ -146,6 +146,7 @@
         "empty_grant_hint": "Kies minstens één machtiging om toegang te verlenen.",
         "expand_category": "Machtigingen voor {category} tonen",
         "identity_name_and_email": "Je naam en e-mailadres",
+        "identity_only": "Deze app vraagt alleen om te weten wie je bent. Je Formbricks-gegevens blijven buiten bereik.",
         "identity_stay_signed_in": "Ingelogd blijven",
         "levels": {
           "custom": "Aangepast",

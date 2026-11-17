@@ -5,21 +5,26 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import { getGrantErrorMessage } from "@/modules/auth/lib/mcp-grant-consent-errors";
-import type { TRequestedMcpGrant } from "@/modules/mcp/grant";
-import { toMcpGrantAccessRequest } from "@/modules/mcp/grant-access";
+import type { TMcpGrantPermissions, TRequestedMcpGrant } from "@/modules/mcp/grant";
 import { Button } from "@/modules/ui/components/button";
+import { getConsentApprovalBody } from "../lib/consent-approval";
 import { resolveConsentRedirectUrl } from "../lib/consent-redirect";
 
 interface OAuthConsentActionsProps {
+  /** What the client's scopes ask for: an identity-only request sends no grant. */
+  readonly cap: TMcpGrantPermissions;
+  readonly isDashboardViewer: boolean;
   /** The scopes to grant when narrower than the request (a Dashboard viewer's); all of them otherwise. */
   readonly grantedScope?: string;
   /** The grant the user chose in the matrix, sent with Allow as the connection's grant. */
   readonly grant: TRequestedMcpGrant;
-  /** Whether Allow is off, because the access picks nothing (a selection with no option chosen). */
+  /** Whether Allow is off: the grant gives nothing, or the access picks nothing. */
   readonly isAllowDisabled?: boolean;
 }
 
 export const OAuthConsentActions = ({
+  cap,
+  isDashboardViewer,
   grantedScope,
   grant,
   isAllowDisabled = false,
@@ -37,16 +42,7 @@ export const OAuthConsentActions = ({
       // `oauth_query` to the body.
       const response = await authClient.$fetch<unknown>("/oauth2/consent", {
         method: "POST",
-        body: accept
-          ? {
-              accept,
-              ...(grantedScope ? { scope: grantedScope } : {}),
-              mcp_grant: {
-                permissions: grant.permissions,
-                ...(grant.access ? toMcpGrantAccessRequest(grant.access) : {}),
-              },
-            }
-          : { accept },
+        body: accept ? getConsentApprovalBody({ cap, isDashboardViewer, grantedScope, grant }) : { accept },
       });
       if (response.error) {
         // A refused Allow says why: a pick the user can no longer select, a grant that couldn't be saved, or

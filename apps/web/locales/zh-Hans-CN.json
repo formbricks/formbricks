@@ -146,6 +146,7 @@
         "empty_grant_hint": "请至少选择一项权限以允许访问。",
         "expand_category": "显示{category}权限",
         "identity_name_and_email": "你的姓名和电子邮箱地址",
+        "identity_only": "此应用仅需确认你的身份，无法访问你的 Formbricks 数据。",
         "identity_stay_signed_in": "保持登录状态",
         "levels": {
           "custom": "自定义",
