@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
 import type { ProblemCode } from "@/app/api/v3/lib/response";
 import { getAIUnavailableReasonForErrorCode } from "@/lib/ai/availability";
@@ -12,8 +12,13 @@ import {
 } from "@/modules/survey/components/template-list/hooks/use-draft-creation";
 import type { TFormbricksFileReferences } from "@/modules/survey/formbricks-file/envelope";
 import type { TSurveyImportPayload } from "@/modules/survey/import/core/draft";
+import { getExcelExportFileKind } from "@/modules/survey/import/lib/excel-export-file";
 import { getSurveyImportRequestErrorCode } from "@/modules/survey/import/lib/import-errors";
-import { type TSurveyImportFileError, checkSurveyImportFile } from "@/modules/survey/import/lib/import-file";
+import {
+  type TSurveyImportFileError,
+  checkSurveyImportFile,
+  needsExcelExportCheck,
+} from "@/modules/survey/import/lib/import-file";
 import {
   SurveyImportRequestError,
   streamSurveyImportFile,
@@ -123,11 +128,24 @@ type TCreateVariables = {
  * the draft machine, and the outcome of an Update or a create in its TanStack mutation, which is what
  * the Match's conflict is read from. Only the user's own choices are state here.
  *
- * A Formbricks file needs no AI (ENG-6850): it imports without it. Every draft is created through
+ * A Formbricks file (ENG-6850) and a survey's Excel export (ENG-6809) need no AI: they import without it,
+ * and the server reads an Excel file that is no export of a survey the user may update as a document,
+ * with AI. Every draft is created through
  * `POST /api/internal/surveys/imports`, a Formbricks file's with the references it carries.
  */
 export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseImportSurveyProps) => {
   const [file, setFile] = useState<{ name: string; size: number } | null>(null);
+  /**
+   * Counts file choices, so an Excel file read after another was chosen, or after the dialog closed, is
+   * not submitted: an upload nobody sees would hold the user's import slot.
+   */
+  const selectionRef = useRef(0);
+  useEffect(
+    () => () => {
+      selectionRef.current += 1;
+    },
+    []
+  );
   const [fileError, setFileError] = useState<TSurveyImportFileError | null>(null);
   /** What a refusal of the upload said about each field of the file, for a file the dialog can say that of. */
   const [invalidParams, setInvalidParams] = useState<TV3InvalidParam[] | null>(null);
@@ -249,7 +267,8 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
     // Called on "Open in editor", by then with this render's review and choices (`commit` below).
     create: (payload) => commit(payload),
     // The file itself is checked in `selectFile`, against what this organization can import; a file
-    // that passes is submitted at once. A Formbricks file needs no AI, so the dialog always takes one.
+    // that passes is submitted at once. A Formbricks file and an Excel export need no AI, so the dialog
+    // always takes them.
     canSubmit: true,
     getSourceLabel: getFileLabel,
     sourceKind: "file",
@@ -303,8 +322,14 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
     setInvalidParams(null);
   };
 
-  /** Choosing a file is the submit: it is checked by name and size here, then uploaded if it passes. */
-  const selectFile = (next: File) => {
+  /**
+   * Choosing a file is the submit: it is checked by name and size here, then uploaded if it passes.
+   * Without Formbricks AI, an Excel file is read first and goes up only if it is an Excel export; the
+   * read is returned, so the drop zone shows it is reading.
+   */
+  const selectFile = (next: File): Promise<void> | undefined => {
+    selectionRef.current += 1;
+    const selection = selectionRef.current;
     draft.clearError();
     clearFileProblems();
     setFile({ name: next.name, size: next.size });
@@ -314,11 +339,21 @@ export const useImportSurvey = ({ workspaceId, isAIAvailable, onSuccess }: UseIm
       setFileError(refused);
       return;
     }
+    if (!needsExcelExportCheck(next, { isAIAvailable })) {
+      draft.submit({ file: next });
+      return;
+    }
 
-    draft.submit({ file: next });
+    return getExcelExportFileKind(next).then((kind) => {
+      // Another file was chosen, this one dropped, or the dialog closed while it was read.
+      if (selection !== selectionRef.current) return;
+      if (kind === "export") draft.submit({ file: next });
+      else setFileError(kind === "earlier_export" ? "file_earlier_excel_export" : "file_needs_ai");
+    });
   };
 
   const pickAnotherFile = () => {
+    selectionRef.current += 1;
     draft.reset();
     setFile(null);
     clearFileProblems();

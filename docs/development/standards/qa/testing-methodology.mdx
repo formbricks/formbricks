@@ -92,7 +92,7 @@ skipped, so that job's egress is not audited (the step is audit-only and blocks 
 `ubuntu-24.04` and are still audited.
 
 To roll back non-fork runs to GitHub's runner, set `E2E_RUNNER=ubuntu-24.04`; the worker count follows its 4 CPUs.
-Do not use `ubuntu-latest` with the pinned Playwright 1.58.2: that label can select unsupported Ubuntu 26.04. Check
+Do not use `ubuntu-latest` with the pinned Playwright 1.60.0: that label can select Ubuntu 26.04, which it is not verified on. Check
 that a runner exists before setting `E2E_RUNNER` to another label: one with no runner behind it leaves the
 job queued until its 30-minute timeout.
 

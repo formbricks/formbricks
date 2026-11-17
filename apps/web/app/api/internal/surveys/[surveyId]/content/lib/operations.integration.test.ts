@@ -392,6 +392,82 @@ describe("a Formbricks file of a survey in this workspace", () => {
   });
 });
 
+describe("an Excel export, matched with the survey it names (ENG-6809)", () => {
+  /** The survey's Excel export, as the card menu downloads it. */
+  const exportSheet = async (surveyId: string): Promise<Uint8Array> => {
+    const response = await exportSurveyOperation({
+      surveyId,
+      format: "xlsx",
+      authentication: owner(),
+      requestId: "req_export",
+      instance: `/api/internal/surveys/${surveyId}/export`,
+    });
+    expect(response.status).toBe(200);
+    return new Uint8Array(await response.arrayBuffer());
+  };
+
+  /** What New survey › Import answers for the sheet: the Match it offers, or the response it refuses with. */
+  const importSheet = async (bytes: Uint8Array, authentication: TV3Authentication = owner()) => {
+    const response = await streamSurveyImport({
+      req: new Request("http://localhost/api/internal/surveys/import/stream", { method: "POST" }),
+      authentication,
+      workspaceId: fixture.workspaceId,
+      file: new File([new Uint8Array(bytes)], "Onboarding.xlsx"),
+      requestId: "req_preview",
+      instance: "/api/internal/surveys/import/stream",
+    });
+    if (response.status !== 200) {
+      const { requestId: _requestId, ...problem } = (await response.json()) as Record<string, unknown>;
+      return { status: response.status, problem };
+    }
+    const done = (await response.text())
+      .split("\n")
+      .filter((line) => line.length > 0)
+      .map((line) => JSON.parse(line) as Record<string, unknown>)
+      .find((event) => event.type === "done") as
+      | { match?: TSurveyImportMatch; report: { source: { kind: string } } }
+      | undefined;
+    return { status: response.status, kind: done?.report.source.kind, match: done?.match };
+  };
+
+  test("offers to update a survey in this workspace the user may edit, read without AI", async () => {
+    const surveyId = await seedSurvey({ status: "draft" });
+
+    const answer = await importSheet(await exportSheet(surveyId));
+
+    expect(answer).toMatchObject({ status: 200, kind: "excel_export", match: { surveyId } });
+  });
+
+  test("answers an export of a survey the user may not update as one of a survey that never existed", async () => {
+    // A survey that never existed: exported, then deleted.
+    const goneId = await seedSurvey({ status: "draft" });
+    const neverExisted = await exportSheet(goneId);
+    await prisma.survey.delete({ where: { id: goneId } });
+    const baseline = await importSheet(neverExisted);
+    expect(baseline.match).toBeUndefined();
+
+    // Restricted to its owner: the editor may write in the workspace, not in the survey.
+    const restrictedId = await seedSurvey({ status: "draft", visibility: "restricted" });
+    const restricted = await exportSheet(restrictedId);
+    expect(await importSheet(restricted, sessionOf(fixture.users.editor))).toEqual(baseline);
+    expect((await importSheet(restricted)).match).toMatchObject({ surveyId: restrictedId });
+
+    // In another workspace the owner may edit: an import into this one doesn't offer to update it.
+    const elsewhere = await prisma.survey.create({
+      data: { name: "Elsewhere", type: "link", workspaceId: fixture.otherWorkspaceId, blocks: BLOCKS },
+      select: { id: true },
+    });
+    await synchronizeAuthzedIntegrationFixture();
+    expect(await importSheet(await exportSheet(elsewhere.id))).toEqual(baseline);
+
+    // Archived since the export.
+    const archivedId = await seedSurvey({ status: "draft" });
+    const beforeArchive = await exportSheet(archivedId);
+    await prisma.survey.update({ where: { id: archivedId }, data: { archivedAt: new Date() } });
+    expect(await importSheet(beforeArchive)).toEqual(baseline);
+  });
+});
+
 describe("a file an Update would refuse", () => {
   test("is offered with the reasons in the preview, and the Update it describes is the 422 it predicts", async () => {
     const surveyId = await seedSurvey({ status: "paused" });

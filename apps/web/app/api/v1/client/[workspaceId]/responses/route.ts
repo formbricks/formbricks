@@ -3,6 +3,7 @@ import { UAParser } from "ua-parser-js";
 import { logger } from "@formbricks/logger";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import {
+  TClientResponseInput,
   TResponseInput,
   ZClientResponseInput,
   isPlainRecord,
@@ -47,13 +48,14 @@ export const OPTIONS = async (): Promise<Response> => {
   );
 };
 
-const validateResponse = (responseInputData: TResponseInput, survey: TSurvey) => {
+const validateResponse = (responseInputData: TClientResponseInput, survey: TSurvey) => {
   // Validate response data against validation rules
   const validationErrors = validateResponseData(
     survey.blocks,
     responseInputData.data,
     responseInputData.language ?? "en",
-    survey.questions
+    survey.questions,
+    responseInputData.notShown
   );
 
   if (validationErrors) {

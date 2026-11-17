@@ -323,6 +323,29 @@ describe("getSurveyImportIssueLine", () => {
     ).toBe('Screening: logic_not_imported {"description":"Branch to the end"}');
   });
 
+  test("says why a sheet's edit was left out: a text cut on export, or one recalling too many answers", () => {
+    const line = (cause: string) =>
+      getSurveyImportIssueLine(
+        { code: "sheet_text_not_imported", severity: "warning", params: { row: 7, language: "de", cause } },
+        t
+      );
+
+    expect(line("cut_on_export")).toBe('sheet_text_not_imported {"row":"7","language":"de"}');
+    expect(
+      getSurveyImportIssueLine(
+        {
+          code: "sheet_text_not_imported",
+          severity: "warning",
+          params: { row: 7, language: "de", cause: "too_many_recalls", max: 64 },
+        },
+        t
+      )
+    ).toBe('sheet_text_not_imported_recalls {"row":"7","language":"de","max":"64"}');
+    expect(line("ambiguous_recalls")).toBe(
+      'sheet_text_not_imported_ambiguous_recalls {"row":"7","language":"de"}'
+    );
+  });
+
   test("still renders a line for a code this client does not know yet", () => {
     const unknownIssue = {
       code: "something_new",

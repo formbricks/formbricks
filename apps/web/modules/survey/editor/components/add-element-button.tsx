@@ -7,14 +7,13 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
+import { getElementDefaults, universalElementPresets } from "@/modules/survey/lib/element-presets";
 import {
   type TElement,
   type TElementCategoryMeta,
   getCXElementTypes,
   getElementCategories,
-  getElementDefaults,
   getElementTypes,
-  universalElementPresets,
 } from "@/modules/survey/lib/elements";
 
 interface AddElementButtonProps {

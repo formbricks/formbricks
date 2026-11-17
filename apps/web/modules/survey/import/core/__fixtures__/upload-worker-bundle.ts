@@ -23,7 +23,7 @@ export const bundleUploadWorker = async (): Promise<URL> => {
     build: {
       ssr: WORKER_ENTRY,
       outDir,
-      target: "node24",
+      target: "node26",
       copyPublicDir: false,
       rollupOptions: { output: { entryFileNames: "upload-worker.mjs" } },
     },

@@ -1,4 +1,3 @@
-import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
 import { ZChartConfig, ZChartQuery } from "@formbricks/types/analysis";
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
@@ -10,12 +9,7 @@ import {
   getMeasureAxisDomain,
   getResponseBaseMeasureId,
 } from "@/modules/ee/analysis/lib/schema-definition";
-import {
-  CHART_PRESET_IDS,
-  getChartPreset,
-  getChartPresetCopy,
-  presetToAnalyticsResponse,
-} from "./chart-presets";
+import { CHART_PRESET_IDS, getChartPreset } from "./chart-presets";
 
 const emptyState = {
   selectedMeasures: [],
@@ -85,26 +79,5 @@ describe("chart presets", () => {
       dimensions: ["FeedbackRecords.valueBand"],
       filters: [{ member: "FeedbackRecords.fieldType", operator: "equals", values: ["csat"] }],
     });
-  });
-
-  test("hands the builder a query with no rows, so the builder runs it", () => {
-    expect(presetToAnalyticsResponse("nps_breakdown", "NPS breakdown")).toEqual({
-      query: getChartPreset("nps_breakdown").query,
-      chartType: "pie",
-      config: { pieDisplay: "pie" },
-      suggestedName: "NPS breakdown",
-    });
-  });
-});
-
-describe("getChartPresetCopy", () => {
-  test("gives every preset a name and a description key", () => {
-    const copy = getChartPresetCopy(((key: string) => key) as TFunction);
-    for (const id of CHART_PRESET_IDS) {
-      expect(copy[id]).toEqual({
-        name: `workspace.analysis.charts.preset_${id}_name`,
-        description: `workspace.analysis.charts.preset_${id}_description`,
-      });
-    }
   });
 });

@@ -1,0 +1,25 @@
+{
+  "name": "@formbricks/config-oxlint",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.mjs",
+    "./csp-safe": "./csp-safe.mjs",
+    "./library": "./library.mjs",
+    "./next": "./next.mjs",
+    "./react": "./react.mjs",
+    "./react-hooks": "./react-hooks.mjs",
+    "./sonar-parity": "./sonar-parity.mjs",
+    "./testing": "./testing.mjs"
+  },
+  "dependencies": {
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-sonarjs": "3.0.7",
+    "eslint-plugin-turbo": "2.8.21",
+    "eslint-plugin-unicorn": "65.0.1"
+  },
+  "peerDependencies": {
+    "oxlint": "*"
+  }
+}

@@ -29,10 +29,6 @@ type TExistingTeam = Pick<Team, "id" | "name"> & {
   workspaceTeams: Pick<WorkspaceTeam, "workspaceId">[];
 };
 
-// getOrganizationOwnerCount (pulled in via the last-owner guard) request-caches its result with
-// React's cache(); mocked to identity so repeated calls across tests re-hit the prisma mock below.
-vi.mock("react", () => ({ cache: (fn: Function) => fn }));
-
 vi.mock("@formbricks/database", () => ({
   prisma: {
     user: {
@@ -52,7 +48,9 @@ vi.mock("@formbricks/database", () => ({
     },
     membership: {
       count: vi.fn(),
+      findUnique: vi.fn(),
     },
+    $queryRaw: vi.fn(),
     $transaction: vi.fn(),
   },
 }));
@@ -69,17 +67,10 @@ vi.mock("@/lib/user/reactivation", () => ({
 }));
 
 /** Run the interactive transaction against the mocked client, standing in for `tx`. */
-const runInTransaction = () => {
-  const options: unknown[] = [];
-  vi.mocked(prisma.$transaction).mockImplementationOnce(((
-    callback: (tx: typeof prisma) => unknown,
-    given?: unknown
-  ) => {
-    options.push(given);
-    return callback(prisma);
-  }) as never);
-  return options;
-};
+const runInTransaction = () =>
+  vi
+    .mocked(prisma.$transaction)
+    .mockImplementationOnce(((callback: (tx: typeof prisma) => unknown) => callback(prisma)) as never);
 
 /** The account as `lockAndCheckAccountFields` reads it under the user row's lock. */
 const lockedAccount = (account: { name?: string; isActive?: boolean; otherOrganizations?: string[] } = {}) =>
@@ -88,6 +79,10 @@ const lockedAccount = (account: { name?: string; isActive?: boolean; otherOrgani
     isActive: account.isActive ?? true,
     memberships: (account.otherOrganizations ?? []).map((organizationId) => ({ organizationId })),
   } as never);
+
+/** The target's membership as the last-owner guard reads it inside the transaction, under the owners' lock. */
+const targetMembership = (role: string, isActive = true) =>
+  vi.mocked(prisma.membership.findUnique).mockResolvedValueOnce({ role, user: { isActive } } as never);
 
 describe("Users Lib", () => {
   beforeEach(() => {
@@ -319,62 +314,210 @@ describe("Users Lib", () => {
     });
 
     test("blocks demoting the organization's last owner", async () => {
-      // The re-check runs inside the transaction, so the mock has to actually invoke the
-      // callback (against the same mocked client, standing in for `tx`) for the guard to run.
-      (prisma.$transaction as any).mockImplementationOnce((callback: any) => callback(prisma));
-      (prisma.user.findFirst as any).mockResolvedValueOnce({
-        ...mockUser,
-        memberships: [{ organizationId: "org456", role: "owner" }],
-      });
-      (prisma.membership.count as any).mockResolvedValueOnce(1);
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ ...mockUser, teamUsers: [] } as never);
+      targetMembership("owner");
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
 
       const result = await updateUser({ email: mockUser.email, role: "member" }, "org456");
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error.type).toBe("conflict");
-      }
+      expect(result).toEqual({
+        ok: false,
+        error: {
+          type: "conflict",
+          details: [{ field: "role", issue: "Cannot remove the last owner of the organization" }],
+        },
+      });
       expect(prisma.user.update).not.toHaveBeenCalled();
     });
 
     test("allows demoting an owner when the organization has another owner", async () => {
-      (prisma.$transaction as any).mockImplementationOnce((callback: any) => callback(prisma));
-      (prisma.user.findFirst as any).mockResolvedValueOnce({
-        ...mockUser,
-        memberships: [{ organizationId: "org456", role: "owner" }],
-        teamUsers: [],
-      });
-      (prisma.membership.count as any).mockResolvedValueOnce(2);
-      (prisma.team.findMany as any).mockResolvedValueOnce([]);
-      (prisma.user.update as any).mockResolvedValueOnce({
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ ...mockUser, teamUsers: [] } as never);
+      targetMembership("owner");
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(2);
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({
         ...mockUser,
         memberships: [{ organizationId: "org456", role: "member" }],
-      });
+      } as never);
 
       const result = await updateUser({ email: mockUser.email, role: "member" }, "org456");
 
-      expect(result.ok).toBe(true);
-      if (result.ok) {
-        expect(result.data.role).toBe("member");
-      }
+      expect(result).toMatchObject({ ok: true, data: { role: "member" } });
     });
 
     test("allows demoting an already-inactive owner without checking the owner count", async () => {
-      (prisma.user.findFirst as any).mockResolvedValueOnce({
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({
         ...mockUser,
         isActive: false,
-        memberships: [{ organizationId: "org456", role: "owner" }],
         teamUsers: [],
-      });
-      (prisma.team.findMany as any).mockResolvedValueOnce([]);
-      (prisma.$transaction as any).mockResolvedValueOnce([
-        { ...mockUser, isActive: false, memberships: [{ organizationId: "org456", role: "member" }] },
-      ]);
+      } as never);
+      targetMembership("owner", false);
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({
+        ...mockUser,
+        isActive: false,
+        memberships: [{ organizationId: "org456", role: "member" }],
+      } as never);
 
       const result = await updateUser({ email: mockUser.email, role: "member" }, "org456");
 
       expect(result.ok).toBe(true);
       expect(prisma.membership.count).not.toHaveBeenCalled();
+    });
+
+    test("reports the role as the rejected field when the request also deactivates the last owner", async () => {
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ ...mockUser, teamUsers: [] } as never);
+      lockedAccount();
+      targetMembership("owner");
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+
+      const result = await updateUser({ email: mockUser.email, role: "member", isActive: false }, "org456");
+
+      expect(result).toMatchObject({
+        ok: false,
+        error: { type: "conflict", details: [{ field: "role" }] },
+      });
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    test("decides on the role read inside the transaction, not the one looked up before it", async () => {
+      // Looked up as a member, but an owner by the time the owners are locked: still the last one.
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({
+        ...mockUser,
+        memberships: [{ organizationId: "org456", role: "member" }],
+        teamUsers: [],
+      } as never);
+      targetMembership("owner");
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+
+      const result = await updateUser({ email: mockUser.email, role: "manager" }, "org456");
+
+      expect(result).toMatchObject({ ok: false, error: { type: "conflict" } });
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    test("leaves the owners unlocked for an update that cannot remove one", async () => {
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ ...mockUser, teamUsers: [] } as never);
+      lockedAccount();
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockUser, name: "Renamed" } as never);
+
+      await updateUser({ email: mockUser.email, name: "Renamed", role: "owner", isActive: true }, "org456");
+
+      expect(prisma.$queryRaw).not.toHaveBeenCalled();
+      expect(prisma.membership.findUnique).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("updateUser deactivating an owner", () => {
+    const owner = { ...mockUser, memberships: [{ organizationId: "org456", role: "owner" }], teamUsers: [] };
+
+    test("blocks deactivating the organization's last active owner", async () => {
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(owner as never);
+      lockedAccount();
+      targetMembership("owner");
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+
+      const result = await updateUser({ email: mockUser.email, isActive: false }, "org456");
+
+      expect(result).toEqual({
+        ok: false,
+        error: {
+          type: "conflict",
+          details: [{ field: "isActive", issue: "Cannot remove the last owner of the organization" }],
+        },
+      });
+      expect(prisma.membership.count).toHaveBeenCalledWith({
+        where: { organizationId: "org456", role: "owner", user: { isActive: true } },
+      });
+      expect(prisma.user.update).not.toHaveBeenCalled();
+      expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
+    });
+
+    test("allows deactivating an owner when the organization has another active owner", async () => {
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(owner as never);
+      lockedAccount();
+      targetMembership("owner");
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(2);
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...owner, isActive: false } as never);
+
+      const result = await updateUser({ email: mockUser.email, isActive: false }, "org456");
+
+      expect(result).toMatchObject({ ok: true, data: { isActive: false, role: "owner" } });
+    });
+
+    test("skips the owner count when the owner is already inactive under the lock", async () => {
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(owner as never);
+      lockedAccount({ isActive: false });
+      targetMembership("owner", false);
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...owner, isActive: false } as never);
+
+      const result = await updateUser({ email: mockUser.email, isActive: false }, "org456");
+
+      expect(result.ok).toBe(true);
+      expect(prisma.membership.count).not.toHaveBeenCalled();
+    });
+
+    test("does not count owners when deactivating a non-owner", async () => {
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({
+        ...mockUser,
+        memberships: [{ organizationId: "org456", role: "member" }],
+        teamUsers: [],
+      } as never);
+      lockedAccount();
+      targetMembership("member");
+      vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockUser, isActive: false } as never);
+
+      const result = await updateUser({ email: mockUser.email, isActive: false }, "org456");
+
+      expect(result.ok).toBe(true);
+      expect(prisma.membership.count).not.toHaveBeenCalled();
+    });
+
+    test("reports the last owner before the other-organizations rule when both apply", async () => {
+      // The owner check runs first, under the owners' lock and before the user row's, so it wins.
+      runInTransaction();
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(owner as never);
+      targetMembership("owner");
+      vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
+      lockedAccount({ otherOrganizations: ["org789"] });
+
+      const result = await updateUser({ email: mockUser.email, isActive: false }, "org456");
+
+      expect(result).toMatchObject({
+        ok: false,
+        error: {
+          type: "conflict",
+          details: [{ field: "isActive", issue: "Cannot remove the last owner of the organization" }],
+        },
+      });
+      expect(lockUserActiveState).not.toHaveBeenCalled();
+      expect(prisma.user.update).not.toHaveBeenCalled();
+    });
+
+    test("answers a deadlock that outlasts every retry with a 500, without writing", async () => {
+      const deadlock = new Prisma.PrismaClientKnownRequestError("deadlock", {
+        code: PrismaErrorType.TransactionConflict,
+        clientVersion: "1.0.0",
+      });
+      // Once per attempt, so nothing carries over to the next test if an assertion below fails.
+      vi.mocked(prisma.$transaction)
+        .mockRejectedValueOnce(deadlock)
+        .mockRejectedValueOnce(deadlock)
+        .mockRejectedValueOnce(deadlock);
+      vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(owner as never);
+
+      const result = await updateUser({ email: mockUser.email, isActive: false }, "org456");
+
+      expect(result).toMatchObject({ ok: false, error: { type: "internal_server_error" } });
+      expect(prisma.$transaction).toHaveBeenCalledTimes(3);
     });
   });
 
@@ -384,7 +527,7 @@ describe("Users Lib", () => {
       vi.mocked(prisma.user.findFirst).mockResolvedValueOnce(user as never);
 
     test("turns an inactive account back on through the shared reactivation, in the same transaction", async () => {
-      const options = runInTransaction();
+      runInTransaction();
       lookup(inactiveUser);
       lockedAccount({ isActive: false });
       vi.mocked(prisma.user.update).mockResolvedValueOnce({ ...mockUser, isActive: true } as never);
@@ -399,8 +542,6 @@ describe("Users Lib", () => {
       expect(vi.mocked(reactivateLockedUser).mock.invocationCallOrder[0]).toBeGreaterThan(
         vi.mocked(prisma.user.update).mock.invocationCallOrder[0]
       );
-      // No owner is being demoted, so no serializable isolation.
-      expect(options).toEqual([undefined]);
     });
 
     test("restarts nothing for an account that is already active under the lock", async () => {
@@ -458,14 +599,15 @@ describe("Users Lib", () => {
       expect(reconcileOrganizationMembership).not.toHaveBeenCalled();
     });
 
-    test("demotes an owner and changes their account fields in one Serializable transaction", async () => {
-      const options = runInTransaction();
+    test("demotes an owner and changes their account fields in one transaction, owners locked first", async () => {
+      runInTransaction();
       vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({
         ...mockUser,
         memberships: [{ organizationId: "org456", role: "owner" }],
         teamUsers: [],
       } as never);
       lockedAccount();
+      targetMembership("owner");
       vi.mocked(prisma.membership.count).mockResolvedValueOnce(2);
       vi.mocked(prisma.user.update).mockResolvedValueOnce({
         ...mockUser,
@@ -476,7 +618,11 @@ describe("Users Lib", () => {
       const result = await updateUser({ email: mockUser.email, role: "member", name: "Renamed" }, "org456");
 
       expect(result.ok).toBe(true);
-      expect(options).toEqual([{ isolationLevel: Prisma.TransactionIsolationLevel.Serializable }]);
+      // Owners before the user row, the order the data retention members sweep takes them in, so the
+      // two cannot deadlock.
+      expect(vi.mocked(prisma.$queryRaw).mock.invocationCallOrder[0]).toBeLessThan(
+        vi.mocked(lockUserActiveState).mock.invocationCallOrder[0]
+      );
       expect(lockUserActiveState).toHaveBeenCalledWith(prisma, mockUser.id);
       expect(prisma.user.update).toHaveBeenCalledTimes(1);
     });

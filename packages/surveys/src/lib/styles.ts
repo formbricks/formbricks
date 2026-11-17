@@ -42,7 +42,7 @@ export const getStyleNonce = (): string | undefined => {
 
 export const addStylesToDom = () => {
   if (document.getElementById("formbricks__css") === null) {
-    // eslint-disable-next-line no-restricted-syntax -- nonce is set below
+    // oxlint-disable-next-line formbricks/restricted-syntax -- nonce is set below
     const styleElement = document.createElement("style");
     styleElement.id = "formbricks__css";
 
@@ -233,7 +233,7 @@ export const addCustomThemeToDom = ({
     }
   } else {
     // Create it and append to the head
-    // eslint-disable-next-line no-restricted-syntax -- nonce is set below
+    // oxlint-disable-next-line formbricks/restricted-syntax -- nonce is set below
     styleElement = document.createElement("style");
     styleElement.id = "formbricks__css__custom";
 

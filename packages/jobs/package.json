@@ -18,21 +18,20 @@
   "scripts": {
     "clean": "rimraf .turbo node_modules coverage dist",
     "build": "tsc && vite build",
-    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@formbricks/logger": "workspace:*",
+    "@formbricks/redis-config": "workspace:*",
     "@formbricks/types": "workspace:*",
     "bullmq": "5.81.5",
     "ioredis": "5.11.1",
-    "zod": "catalog:",
-    "@formbricks/redis-config": "workspace:*"
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-oxlint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@vitest/coverage-v8": "catalog:",
     "typescript": "catalog:",

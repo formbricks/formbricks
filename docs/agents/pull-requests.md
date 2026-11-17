@@ -45,7 +45,7 @@ SonarCloud project `formbricks_formbricks`; its API is public, no token needed.
 - Is the analysis current: compare the PR's `commit.sha` from `https://sonarcloud.io/api/project_pull_requests/list?project=formbricks_formbricks` with the branch head. The issue list shows the last analysed commit until a newer analysis lands.
 - Analysis trails the push by about 15 minutes and runs only in the PR workflow. A PR with merge conflicts gets no `pull_request` runs (no merge result), so Sonar and CI stay on an older commit until the conflict is resolved.
 - A passing quality gate allows open issues; read the list.
-- The pre-commit lint mirrors Sonar's rules on the staged lines (`packages/config-eslint/sonar-parity.mjs`), so a new violation fails the commit instead of a later review.
+- The pre-commit lint mirrors Sonar's rules on the staged lines (`packages/config-oxlint/sonar-parity.mjs`), so a new violation fails the commit instead of a later review.
 
 ## CI failure triage
 

@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   AuthenticationError,
   AuthorizationError,
-  EXPECTED_ERROR_NAMES,
   INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
   InvalidInputError,
   InvalidPasswordResetTokenError,
@@ -72,29 +71,6 @@ vi.mock("@/modules/ee/audit-logs/types/audit-log", () => ({
 // ── shared helper tests (pure logic, no action client needed) ──────────
 
 describe("isExpectedError (shared helper)", () => {
-  test("EXPECTED_ERROR_NAMES contains exactly the right error names", () => {
-    const expected = [
-      "ResourceNotFoundError",
-      "AuthorizationError",
-      "InvalidInputError",
-      "ValidationError",
-      "AuthenticationError",
-      "OperationNotAllowedError",
-      "ResponseAlreadyFinishedError",
-      "QueryExecutionError",
-      "TooManyRequestsError",
-      "InvalidPasswordResetTokenError",
-      "UniqueConstraintError",
-      "RequestBodyTooLargeError",
-      "SurveyLinkedCreativesError",
-    ];
-
-    expect(EXPECTED_ERROR_NAMES.size).toBe(expected.length);
-    for (const name of expected) {
-      expect(EXPECTED_ERROR_NAMES.has(name)).toBe(true);
-    }
-  });
-
   test.each([
     { ErrorClass: AuthorizationError, args: ["Not authorized"] },
     { ErrorClass: AuthenticationError, args: ["Not authenticated"] },

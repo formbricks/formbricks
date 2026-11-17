@@ -22,6 +22,11 @@ type ImportMatchChoiceProps = {
   triggersChoice: TSurveyImportTriggersChoice;
   onTriggersChoiceChange: (choice: TSurveyImportTriggersChoice) => void;
   conflict: TSurveyImportMatchConflict | null;
+  /**
+   * The file is the survey's Excel export (ENG-6809), whose Update edits texts and adds what the sheet
+   * adds, rather than replacing the survey's content.
+   */
+  isSheet?: boolean;
 };
 
 /** One option of the choice: a card holding its radio, its title, what it does, and anything it adds. */
@@ -100,6 +105,7 @@ export const ImportMatchChoice = ({
   triggersChoice,
   onTriggersChoiceChange,
   conflict,
+  isSheet = false,
 }: Readonly<ImportMatchChoiceProps>) => {
   const { t } = useTranslation();
   const legendId = useId();
@@ -122,7 +128,9 @@ export const ImportMatchChoice = ({
         newName: newSurveyName,
       });
     }
-    return t("workspace.surveys.import.match.update_description");
+    return isSheet
+      ? t("workspace.surveys.import.match.update_sheet_description")
+      : t("workspace.surveys.import.match.update_description");
   };
 
   return (

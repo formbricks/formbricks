@@ -311,3 +311,57 @@ describe("an encrypted assertion the parse worker refuses once opened (ENG-6646)
     60_000
   );
 });
+
+// ENG-7054: a SAMLResponse saml20 cannot parse made jackson throw an xmldom `ParseError` (or saml20's own "Invalid XML."),
+// which carries no status, so the callback answered 500 and reached Sentry for every anonymous probe. It is the sender's
+// fault: a browser goes back to the login page, any other caller gets a 400, and no session is started.
+describe("a SAMLResponse saml20 cannot parse (ENG-7054)", () => {
+  beforeEach(() => {
+    if (globalThis.samlParsePool) globalThis.samlParsePool.allowanceMs = SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS;
+  });
+
+  const post = (SAMLResponse: string, RelayState: string, browser: boolean) =>
+    callback(
+      new Request(ACS_URL, {
+        method: "POST",
+        headers: browser ? { accept: "text/html" } : {},
+        body: new URLSearchParams({ SAMLResponse, RelayState }),
+      })
+    );
+
+  test.each([
+    // The QA report's two bodies: base64 of "not-xml", and text that is not base64, which decodes to nothing.
+    ["not XML", Buffer.from("not-xml").toString("base64")],
+    ["not base64", "%%%"],
+    ["XML with a parse error", Buffer.from("<samlp:Response><a></samlp:Response>").toString("base64")],
+    ["XML with two roots", Buffer.from("<a/><b/>").toString("base64")],
+  ])(
+    "refuses one that is %s as the sender's fault, without asking jackson",
+    async (_name, SAMLResponse) => {
+      const samlResponse = vi.spyOn((await jackson())!.oauthController, "samlResponse");
+      for (const relayState of ["", `${JACKSON_RELAY_STATE_PREFIX}${randomUUID()}`]) {
+        const browser = await post(SAMLResponse, relayState, true);
+        expect(browser.status).toBe(303);
+        expect(browser.headers.get("location")).toBe(`${WEBAPP_URL}/auth/login?error=saml_response_rejected`);
+        expect(browser.headers.get("set-cookie")).toBeNull();
+
+        const api = await post(SAMLResponse, relayState, false);
+        expect(api.status).toBe(400);
+        expect(await api.json()).toMatchObject({ code: "bad_request" });
+      }
+      expect(samlResponse).not.toHaveBeenCalled();
+      samlResponse.mockRestore();
+    },
+    30_000
+  );
+
+  test("still hands jackson well-formed junk, which it answers itself", async () => {
+    // The QA report's control: `<a/>` is readable XML, and jackson refuses it (IdP-initiated sign-in is off).
+    const response = await post(Buffer.from("<a/>").toString("base64"), "", true);
+
+    expect(response.status).toBe(303);
+    expect(response.headers.get("location")).toBe(
+      `${WEBAPP_URL}/auth/login?error=saml_connection_unavailable`
+    );
+  });
+});
