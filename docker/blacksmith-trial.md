@@ -35,23 +35,22 @@ gh workflow run release-docker-github-experimental.yml \
 This opt-in path does not publish images. It builds the production Dockerfile
 on native 16-vCPU AMD64 and 32-vCPU ARM64 runners, loads each image locally, and runs the existing runtime,
 migration, startup and Chromium smoke checks. It fails if Blacksmith's persistent
-builder is unavailable. ARM64 uses 32 compiler workers; AMD64 retains four.
+builder is unavailable.
 
 Run sequentially and verify that the completed cold build's cache is available
 before measuring a warm build. A successful job and a cache commit request alone
-do not prove persistence: check that Node compilation is `CACHED` in the next
-build's logs. Each trial uses a new application identity, so a warm run still
+do not prove persistence: check that the dependency install is `CACHED` in the
+next build's logs. Each trial uses a new application identity, so a warm run still
 compiles and packages the application. Avoid overlapping trials on the same
 cache keys: concurrent cache writers can obscure reuse.
 
-Release builds retain the trial cache keys to reuse the expensive initial Node
-compilation. PR builds use `apps/web/Dockerfile-pr-amd64`, isolated from release
+Release builds retain the trial cache keys to reuse the dependency layers. PR builds use `apps/web/Dockerfile-pr-amd64`, isolated from release
 caches. Successful production and PR builds prune reclaimable BuildKit cache to
 30 GB per builder. This is not a hard billing limit: snapshots, active records,
 and Docker storage can differ from BuildKit's logical size. Monitor actual
 storage in Blacksmith's dashboard, particularly after failed jobs.
 Blacksmith also evicts builder caches after seven days of inactivity. Infrequent
-release builds may therefore compile Node from scratch again.
+release builds may therefore start cold.
 
 ## Full candidate pipeline checks
 
@@ -95,7 +94,8 @@ If promotion partially changes tags, follow the forward-recovery procedure in
 ## Migration trial evidence
 
 [PR #9715](https://github.com/formbricks/formbricks/pull/9715) tracks current
-results and unresolved cutover gates. On October 20, 2026:
+results and unresolved cutover gates. On October 20, 2026, when the image still compiled Node
+from source (it now copies the official binary, so cold builds no longer pay for that):
 
 | Workload                                       | Build duration  | Result                                                   |
 | ---------------------------------------------- | --------------- | -------------------------------------------------------- |

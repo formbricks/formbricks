@@ -257,7 +257,6 @@ jobs:
           push: false
           load: true
           build-args: |
-            NODE_BUILD_JOBS=12
             FORMBRICKS_DEPLOYMENT_ID=${{ github.sha }}-pr
             FORMBRICKS_BUILD_VARIANT=pr
           tags: formbricks-test:${{ github.sha }}

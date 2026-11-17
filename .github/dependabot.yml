@@ -1,5 +1,5 @@
-# Version updates for the actions pinned in .github/, the Cube image built from docker/cube-image, the
-# dev container's features, and patch and minor releases of the npm workspace.
+# Version updates for the actions pinned in .github/, the base images of the app and Cube images, the
+# Cube image's npm packages, the dev container's features, and patch and minor releases of the npm workspace.
 # Security updates for the npm workspace are configured separately in the repository settings and routed to
 # Linear by dependabot-to-linear.yml.
 version: 2
@@ -37,6 +37,24 @@ updates:
     schedule:
       interval: daily
     # The build stage stays on the runtime's Node major (the distroless base is nodejs24).
+    ignore:
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
+    commit-message:
+      prefix: "chore(docker)"
+    labels:
+      - dependencies
+
+  # The digest-pinned base images of the app image (apps/web/Dockerfile): the official Node image the
+  # binary comes from and the Debian runtime. Daily, because new digests carry Debian security fixes. A new
+  # Node version also needs .nvmrc and the Node LICENSE checksum in the Dockerfile; the version alignment
+  # test fails until all three match.
+  - package-ecosystem: docker
+    directory: "/apps/web"
+    schedule:
+      interval: daily
+    # Node majors move deliberately, with .nvmrc, engines and the runtime checks in verify-runtime.mjs.
     ignore:
       - dependency-name: node
         update-types:

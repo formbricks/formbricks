@@ -11,6 +11,7 @@ import {
 import { readFileSync, readdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
+import tls from "node:tls";
 import { deflateSync, inflateSync } from "node:zlib";
 
 const atLeast = (actual, minimum) => {
@@ -30,38 +31,27 @@ assert.equal(
 );
 assert.ok(atLeast(process.versions.openssl, "3.5.9"), "Node must use patched OpenSSL");
 assert.equal(process.versions.undici.split(".")[0], "7", "Recheck fixes before changing Undici majors");
-assert.ok(atLeast(process.versions.undici, "7.30.1"), "Node's built-in fetch must use patched Undici");
+assert.ok(atLeast(process.versions.undici, "7.30.2"), "Node's built-in fetch must use patched Undici");
 assert.equal(process.versions.modules, "137", "Native addons must retain the Node 24 ABI");
 assert.deepEqual(Intl.DateTimeFormat.supportedLocalesOf(["de", "es", "ja"]), ["de", "es", "ja"]);
 
-// The compromised eMudhra intermediates (ENG-4065) chain to this root. Alpine's ca-certificates 20261020-r0
-// removes it from the OS bundle, but Node only honours that if it reads the OS bundle instead of the list
-// compiled into its binary (--openssl-use-def-ca-store, see the Dockerfile). Check both halves here;
+// Node trusts the root list compiled into its binary (ENG-4065: Node 24.22.1 and later drop the emSign roots
+// behind the compromised eMudhra intermediates and block those intermediates' keys). Check that the bundled
+// list is the default, so the OS CA store never decides trust, and that the compromised root is not in it.
 // verify-tls.mjs then proves the behaviour with real handshakes.
 const EMSIGN_ECC_ROOT_G3_SHA256 = "86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b";
-const apkEntries = readFileSync("/lib/apk/db/installed", "utf8").split("\n\n");
-for (const name of ["ca-certificates", "ca-certificates-bundle"]) {
-  const entry = apkEntries.find((candidate) => candidate.split("\n").includes(`P:${name}`));
-  const version = entry?.match(/^V:(.+)$/m)?.[1];
-  assert.ok(version, `${name} must be installed`);
-  // Alpine versions this package by date: YYYYMMDD-rN.
-  assert.ok(Number(version.split("-")[0]) >= 20261020, `${name}@${version} predates the eMudhra distrust`);
-}
-const osRoots = readFileSync("/etc/ssl/certs/ca-certificates.crt", "utf8").match(
-  /-----BEGIN CERTIFICATE-----[^-]+-----END CERTIFICATE-----/g
+assert.match(
+  execFileSync(process.execPath, ["--help"], { encoding: "utf8" }),
+  /--use-bundled-ca\s+use bundled CA store\s+\(default\)/,
+  "Node must default to its bundled CA store"
 );
-assert.ok(osRoots?.length > 100, "OS CA bundle must be present");
+assert.ok(tls.rootCertificates.length > 100, "Node's bundled CA list must be present");
 assert.ok(
-  !osRoots.some(
+  !tls.rootCertificates.some(
     (pem) =>
       new X509Certificate(pem).fingerprint256.replaceAll(":", "").toLowerCase() === EMSIGN_ECC_ROOT_G3_SHA256
   ),
-  "OS CA bundle must not trust the compromised eMudhra root"
-);
-assert.match(
-  execFileSync(process.execPath, ["--help"], { encoding: "utf8" }),
-  /--use-openssl-ca\s+use OpenSSL's default CA store\s+\(default\)/,
-  "Node must default to the OS CA bundle"
+  "Node's bundled CA list must not trust the compromised eMudhra root"
 );
 
 const message = Buffer.from("Formbricks runtime smoke");
