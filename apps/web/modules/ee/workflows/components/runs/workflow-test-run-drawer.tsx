@@ -4,7 +4,7 @@ import type { TFunction } from "i18next";
 import { useAtomValue } from "jotai";
 import { PlayIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { WEBHOOK_PAYLOAD_MAX_BYTES } from "@formbricks/workflows";
+import { WEBHOOK_PAYLOAD_MAX_BYTES, isResponseCompletedTrigger } from "@formbricks/workflows";
 import { useStoredTestPayload } from "@/modules/ee/workflows/hooks/use-stored-test-payload";
 import { useWorkflowRun } from "@/modules/ee/workflows/hooks/use-workflow-run";
 import type { TWorkflowTestRunFailure } from "@/modules/ee/workflows/hooks/use-workflow-test-run";
@@ -22,13 +22,16 @@ import { RunDetailHeader } from "./run-detail-header";
 import { RunStepsBody } from "./run-steps-body";
 import { RunSummarySection } from "./run-summary-section";
 import { TestRunPayloadEditor } from "./test-run-payload-editor";
+import { useTestRunResponsePicker } from "./test-run-response-picker";
 import { TestRunNotice } from "./workflow-run-detail-drawer";
 
 // Literal `t()` calls per failure so the translation scanner sees every key.
 const describeFailure = (failure: TWorkflowTestRunFailure, error: unknown, t: TFunction): string => {
   switch (failure) {
-    case "not_webhook":
-      return t("workspace.workflows.test_run_failed_not_webhook");
+    case "no_trigger":
+      return t("workspace.workflows.test_run_failed_no_trigger");
+    case "response_unavailable":
+      return t("workspace.workflows.test_run_failed_response_unavailable");
     case "archived":
       return t("workspace.workflows.test_run_failed_archived");
     case "no_payload":
@@ -50,12 +53,67 @@ const describeFailure = (failure: TWorkflowTestRunFailure, error: unknown, t: TF
   return exhaustiveCheck;
 };
 
+/** The drawer's own run button: it covers the header's Test run button while open. */
+const TestRunAgainButton = ({
+  isRunning,
+  isPickingResponse,
+  canRun,
+  isPayloadInvalid,
+  onClick,
+}: Readonly<{
+  isRunning: boolean;
+  isPickingResponse: boolean;
+  canRun: boolean;
+  isPayloadInvalid: boolean;
+  onClick: () => void;
+}>) => {
+  const { t } = useTranslation();
+  return (
+    <>
+      <Button
+        variant="secondary"
+        size="sm"
+        className="mt-2 w-fit"
+        loading={isRunning}
+        disabled={isRunning || !canRun}
+        onClick={onClick}>
+        <PlayIcon />
+        {isPickingResponse
+          ? t("workspace.workflows.test_run_start")
+          : t("workspace.workflows.test_run_again")}
+      </Button>
+      {isPayloadInvalid ? (
+        <p className="mt-1 text-xs text-error">{t("workspace.workflows.test_run_payload_invalid")}</p>
+      ) : null}
+    </>
+  );
+};
+
+/** The run in progress, before its result comes back. */
+const TestRunRunning = ({ withResponse }: Readonly<{ withResponse: boolean }>) => {
+  const { t } = useTranslation();
+  return (
+    <div className="space-y-3" aria-busy="true">
+      <p className="text-sm text-slate-600">
+        {withResponse
+          ? t("workspace.workflows.test_run_running_response")
+          : t("workspace.workflows.test_run_running")}
+      </p>
+      <Skeleton className="h-16 w-full rounded-lg" />
+      <Skeleton className="h-16 w-full rounded-lg" />
+    </div>
+  );
+};
+
 interface WorkflowTestRunDrawerProps {
   open: boolean;
   onClose: () => void;
-  onRunAgain: () => void;
+  /** Runs the draft again; a Response completed workflow passes the response picked here. */
+  onRunAgain: (responseId?: string) => void;
   runId: string | null;
   isRunning: boolean;
+  /** A Response completed workflow is saved and waits for a response to be picked. */
+  isPickingResponse: boolean;
   failure: TWorkflowTestRunFailure | null;
   error: unknown;
 }
@@ -71,6 +129,7 @@ export const WorkflowTestRunDrawer = ({
   onRunAgain,
   runId,
   isRunning,
+  isPickingResponse,
   failure,
   error,
 }: Readonly<WorkflowTestRunDrawerProps>) => {
@@ -106,6 +165,21 @@ export const WorkflowTestRunDrawer = ({
   const isPayloadFailure =
     failure === "invalid_payload" || failure === "payload_too_large" || failure === "no_payload";
 
+  // A Response completed workflow tests with one of its survey's responses, picked here in place of
+  // the payload editor.
+  const responseTrigger = isResponseCompletedTrigger(definition?.trigger) ? definition.trigger : null;
+  const { picker: responsePicker, selectedResponseId } = useTestRunResponsePicker({
+    open,
+    workflowId: workflow?.id ?? null,
+    trigger: responseTrigger,
+    locale,
+  });
+  const canRun = responseTrigger ? selectedResponseId !== null : testPayload.canRunAgain;
+  const runAgain = () => (responseTrigger ? onRunAgain(selectedResponseId ?? undefined) : onRunAgain());
+  // Waiting for a pick, or refused over the picked response: the picker is all there is to show.
+  const showsPickerAlone =
+    responseTrigger !== null && !isRunning && (isPickingResponse || failure === "response_unavailable");
+
   return (
     <Sheet
       open={open}
@@ -125,19 +199,13 @@ export const WorkflowTestRunDrawer = ({
           triggerType={definition?.trigger?.triggerType ?? null}
           versionNumber={null}>
           {/* The drawer covers the header's Test run button while open, so it offers its own. */}
-          <Button
-            variant="secondary"
-            size="sm"
-            className="mt-2 w-fit"
-            loading={isRunning}
-            disabled={isRunning || !testPayload.canRunAgain}
-            onClick={onRunAgain}>
-            <PlayIcon />
-            {t("workspace.workflows.test_run_again")}
-          </Button>
-          {testPayload.canRunAgain ? null : (
-            <p className="mt-1 text-xs text-error">{t("workspace.workflows.test_run_payload_invalid")}</p>
-          )}
+          <TestRunAgainButton
+            isRunning={isRunning}
+            isPickingResponse={isPickingResponse}
+            canRun={canRun}
+            isPayloadInvalid={!responseTrigger && !testPayload.canRunAgain}
+            onClick={runAgain}
+          />
         </RunDetailHeader>
         <div className="space-y-4 py-4">
           {failure ? (
@@ -152,14 +220,17 @@ export const WorkflowTestRunDrawer = ({
               {payloadEditor}
             </section>
           ) : null}
-          {!failure && (isRunning || (runId === null && !run)) ? (
-            <div className="space-y-3" aria-busy="true">
-              <p className="text-sm text-slate-600">{t("workspace.workflows.test_run_running")}</p>
-              <Skeleton className="h-16 w-full rounded-lg" />
-              <Skeleton className="h-16 w-full rounded-lg" />
-            </div>
+          {showsPickerAlone ? (
+            <section className="flex flex-col gap-2">
+              <h3 className="text-sm font-medium text-slate-800">{t("workspace.workflows.test_response")}</h3>
+              <p className="text-xs text-slate-500">{t("workspace.workflows.test_response_description")}</p>
+              {responsePicker}
+            </section>
           ) : null}
-          {!failure && run ? (
+          {!failure && !showsPickerAlone && (isRunning || (runId === null && !run)) ? (
+            <TestRunRunning withResponse={responseTrigger !== null} />
+          ) : null}
+          {!failure && !showsPickerAlone && run ? (
             <>
               <RunSummarySection run={run} locale={locale} />
               <TestRunNotice />
@@ -169,7 +240,7 @@ export const WorkflowTestRunDrawer = ({
                 error={loadError}
                 detail={run}
                 definition={definition}
-                triggerPayloadEditor={payloadEditor}
+                triggerPayloadEditor={responsePicker ?? payloadEditor}
               />
             </>
           ) : null}

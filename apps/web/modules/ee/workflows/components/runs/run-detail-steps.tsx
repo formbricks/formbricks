@@ -285,8 +285,9 @@ interface RunDetailStepsProps {
   /** Shown on the trigger row of a response-completed run, which has no payload. */
   responseId: string | null;
   /**
-   * Replaces the Webhook step's read-only payload: the Test run drawer's editable test payload. Real
-   * runs leave it out.
+   * Replaces the Webhook step's read-only payload with the Test run drawer's editable test payload, or
+   * follows a Response completed step's response with the drawer's response picker. Real runs leave
+   * it out.
    */
   triggerPayloadEditor?: React.ReactNode;
 }
@@ -310,6 +311,8 @@ export const RunDetailSteps = ({ rows, responseId, triggerPayloadEditor }: Reado
                 {t("workspace.workflows.run_trigger_response", { responseId })}
               </p>
             ) : null}
+            {/* A Response completed Test run: the picker to run again with another response. */}
+            {!row.payload && responseId && triggerPayloadEditor ? triggerPayloadEditor : null}
           </RowFrame>
         ) : (
           <StepRow key={row.stepId} row={row} />

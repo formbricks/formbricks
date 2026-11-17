@@ -27,6 +27,9 @@ export const workflowKeys = {
   samples: (workflowId: string) => [...workflowKeys.detail(workflowId), "samples"] as const,
   publishedVersion: (workflowId: string) =>
     [...workflowKeys.detail(workflowId), "published-version"] as const,
+  /** The trigger survey's responses for the Test run picker; keyed by survey so a new one refetches. */
+  testResponses: (workflowId: string, surveyId: string) =>
+    [...workflowKeys.detail(workflowId), "test-responses", surveyId] as const,
 };
 
 export function flattenWorkflowPages(data?: InfiniteData<TWorkflowListPage>): TWorkflowListItem[] {

@@ -706,6 +706,29 @@ describe("createTestRun", () => {
       select: { id: true },
     });
   });
+
+  test("records a response run's survey and response, so the runs list's survey filter covers it", async () => {
+    runCreate.mockResolvedValue({ id: runId });
+
+    await service.createTestRun(
+      { workflowId: "cm9zr4t2b000208l8h2m1aq3c", workspaceId: "cm9zr4mps000008l8btfy1vtz" },
+      {
+        type: "response.completed",
+        workspaceId: "cm9zr4mps000008l8btfy1vtz",
+        surveyId: "cm9zr4q7i000108l84gozfggr",
+        responseId: "cm9zr5res000000000000000a",
+        data: {},
+        triggeredAt: "2026-11-13T10:00:00.000Z",
+      }
+    );
+
+    expect(runCreate.mock.calls[0][0].data).toMatchObject({
+      triggerType: "response.completed",
+      surveyId: "cm9zr4q7i000108l84gozfggr",
+      responseId: "cm9zr5res000000000000000a",
+      isDryRun: true,
+    });
+  });
 });
 
 describe("getWorkflowRun", () => {

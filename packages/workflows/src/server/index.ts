@@ -23,6 +23,7 @@ export type {
   WorkflowApiAccess,
   WorkflowApiContext,
   AuthorizedWorkspace,
+  WorkflowTestRunResponse,
   WorkflowAnalyticsDetail,
   WorkflowAnalyticsOperation,
   WorkflowAuditDetail,

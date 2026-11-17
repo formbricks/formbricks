@@ -18,6 +18,7 @@ import type {
   TWorkflowWebhookResource,
 } from "@formbricks/workflows";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
+import type { TWorkflowTestResponsePage } from "./test-run-responses";
 
 /** The latest enabled version of a workflow, for "Discard changes". */
 export type TPublishedWorkflowVersion = {
@@ -368,6 +369,31 @@ export async function listWorkflowSamples(
     signal,
   });
   return readDataResponse<TWorkflowSampleList>(response);
+}
+
+/**
+ * One page of the trigger survey's responses, newest first, for a Response completed workflow's Test
+ * run picker. The server reads the survey off the saved draft.
+ */
+export async function listWorkflowTestResponses({
+  workflowId,
+  cursor,
+  signal,
+}: {
+  workflowId: string;
+  cursor: string | null;
+  signal?: AbortSignal;
+}): Promise<TWorkflowTestResponsePage> {
+  const query = cursor ? `?${new URLSearchParams({ cursor }).toString()}` : "";
+  const response = await fetch(`/api/internal/workflows/${workflowId}/test-responses${query}`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+  if (!response.ok) {
+    throw await parseV3ApiError(response);
+  }
+  return (await response.json()) as TWorkflowTestResponsePage;
 }
 
 /** The definition of the workflow's latest enabled version, or null if it was never enabled. */

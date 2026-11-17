@@ -476,7 +476,12 @@ export const createWorkflowsService = ({
 
   async createTestRun({ workflowId, workspaceId }, triggerPayload) {
     // No version and never dispatched: the adapter runs it in the request. `isDryRun` keeps it out of
-    // billing, usage counts and the run reconcilers.
+    // billing, usage counts and the run reconcilers. A response run records its survey and response as
+    // a real one does, so the runs list's survey visibility filter covers it too.
+    const responseColumns =
+      triggerPayload.type === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED
+        ? { surveyId: triggerPayload.surveyId, responseId: triggerPayload.responseId }
+        : {};
     return prisma.workflowRun.create({
       data: {
         workflowId,
@@ -484,6 +489,7 @@ export const createWorkflowsService = ({
         workflowVersionId: null,
         status: "queued",
         triggerType: triggerPayload.type,
+        ...responseColumns,
         isDryRun: true,
         attempt: 0,
         triggerPayload,

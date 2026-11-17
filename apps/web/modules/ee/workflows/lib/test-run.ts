@@ -56,9 +56,12 @@ export const getTestRunDrawerPayload = ({
   };
 };
 
-export type TTestRunBlocker = "not_webhook" | "archived";
+export type TTestRunBlocker = "no_trigger" | "archived";
 
-/** What stops a Test run before it is sent: the server refuses both, so the editor says so at once. */
+/**
+ * What stops a Test run before it is sent: the server refuses both, so the editor says so at once.
+ * Every trigger type can be test-run (a Webhook with a payload, a Response completed with a response).
+ */
 export const getTestRunBlocker = ({
   triggerType,
   status,
@@ -67,7 +70,9 @@ export const getTestRunBlocker = ({
   status: TWorkflowStatus;
 }): TTestRunBlocker | null => {
   if (status === "archived") return "archived";
-  if (triggerType !== WORKFLOW_TRIGGERS.WEBHOOK) return "not_webhook";
+  if (triggerType !== WORKFLOW_TRIGGERS.WEBHOOK && triggerType !== WORKFLOW_TRIGGERS.RESPONSE_COMPLETED) {
+    return "no_trigger";
+  }
   return null;
 };
 
@@ -77,20 +82,25 @@ export type TTestRunFailure =
   | "not_executable"
   | "payload_too_large"
   | "invalid_payload"
+  | "response_unavailable"
   | "other";
 
 /**
  * Why the server refused a Test run. The trigger type and archived state are checked before
  * sending (`getTestRunBlocker`), so a refused state on a request without a payload can only mean
- * there was no Sample payload to fall back to.
+ * there was no Sample payload to fall back to. Write access is checked before the editor offers a
+ * Test run, so a 403 for a picked response means it is gone or no longer the trigger survey's.
  */
 export const classifyTestRunError = (
   error: unknown,
-  { sentPayload }: { sentPayload: boolean }
+  { sentPayload, sentResponseId = false }: { sentPayload: boolean; sentResponseId?: boolean }
 ): TTestRunFailure => {
   if (!(error instanceof V3ApiError)) return "other";
+  if (error.status === 403 && sentResponseId) return "response_unavailable";
   if (error.status === 422 && error.code === "workflow_not_executable") return "not_executable";
-  if (error.status === 422 && error.code === "invalid_workflow_state" && !sentPayload) return "no_payload";
+  if (error.status === 422 && error.code === "invalid_workflow_state" && !sentPayload && !sentResponseId) {
+    return "no_payload";
+  }
   if (error.status === 413) return "payload_too_large";
   if (error.status === 400 && sentPayload) return "invalid_payload";
   return "other";

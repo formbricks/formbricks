@@ -24,6 +24,7 @@ import { getWorkflowSurveyLinkSurveys } from "@/modules/ee/workflows/lib/survey-
 import { webhookTokenIssuer } from "@/modules/ee/workflows/lib/webhook/token";
 import { buildRecordAnalytics } from "./analytics";
 import { buildRecordSecretHeaderChanges } from "./secret-audit";
+import { type TIsSurveyHidden, loadTestRunResponse } from "./test-run-response";
 import { toWorkflowsLogger } from "./workflows-logger";
 
 /**
@@ -86,6 +87,22 @@ const buildListUnreadableSurveyIds =
       select: { id: true },
     });
     return surveys.map((survey) => survey.id);
+  };
+
+/**
+ * Whether this caller may not read one survey of the workspace (ENG-3282): a Test run against one of
+ * its responses, and the list the Test run picker shows, both show its answers.
+ */
+export const buildIsSurveyHidden =
+  (authentication: TV3Authentication): TIsSurveyHidden =>
+  async ({ workspaceId, surveyId }) => {
+    const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+    const hidden = await buildListUnreadableSurveyIds(authentication)({
+      workspaceId,
+      organizationId,
+      surveyIds: [surveyId],
+    });
+    return hidden.includes(surveyId);
   };
 
 /**
@@ -190,6 +207,8 @@ export const buildWorkflowApiContext = (
   // so the runner and the email renderer stay out of every other workflow route.
   runTest: async (run) =>
     (await import("@/modules/ee/workflows/lib/runner/run-test")).executeWorkflowTestRun(run),
+  // A Response completed Test run's response: of the trigger's survey, in this workspace, readable.
+  loadTestRunResponse: (input) => loadTestRunResponse(input, buildIsSurveyHidden(authentication)),
   ...(auditLog ? { recordAudit: buildRecordAudit(auditLog, authentication, requestId) } : {}),
   // Product analytics (ENG-2851): always bound, unlike the audit sink, because it no-ops on its own
   // when POSTHOG_KEY is unset and there is no per-request switch to respect.

@@ -4374,14 +4374,14 @@ paths:
 
         The run is saved with `isDryRun: true` and no version, appears in the runs list (hide it with `filter[isDryRun][eq]=false`), and is never billed or counted as usage. A failed step fails the run, not the call: the answer is still **201** with the run's `status` and step detail. Recorded in the audit log as `testRunStarted` with the run id. `POST .../test`, the setup check that runs nothing, is unchanged.
 
-        The test payload is the body's `payload`, else the workflow's expected payload. Only a Webhook trigger can be test-run. Requires **write** access and is limited to 30 Test runs per minute per user or API key (**429**). An archived workflow, one without a Webhook trigger, or one with no payload to test with answers **422** `invalid_workflow_state`; a draft that cannot run answers **422** `workflow_not_executable` with the fields to fix; a payload over 100 KB **413**.
+        A Webhook workflow tests with the body's `payload`, else the workflow's expected payload. A Response completed workflow tests with `responseId`, an existing response of its trigger's survey: the run gets that response's answers and ending as a real run would, even if the response is partial or reached an ending the trigger skips. A response of another survey or workspace, or of a survey the caller cannot read, answers **403**; a missing `responseId`, or a field meant for the other trigger, **400**. Requires **write** access and is limited to 30 Test runs per minute per user or API key (**429**). An archived workflow, one without a trigger, or a Webhook workflow with no payload to test with answers **422** `invalid_workflow_state`; a draft that cannot run answers **422** `workflow_not_executable` with the fields to fix; a payload over 100 KB **413**.
       tags:
         - V3 Workflows
       parameters:
         - $ref: '#/components/parameters/WorkflowIdPath'
       requestBody:
         required: false
-        description: Send `{}` (or no body) to test with the workflow's expected payload.
+        description: 'A Webhook workflow: send `{}` (or no body) to test with the workflow''s expected payload. A Response completed workflow: send `{ "responseId": "…" }`.'
         content:
           application/json:
             schema:
@@ -15542,12 +15542,16 @@ components:
           description: Why the call got no answer, or null.
     CreateWorkflowTestRunRequest:
       type: object
-      description: Starts a Test run of the workflow's draft.
+      description: Starts a Test run of the workflow's draft. A Webhook workflow tests with `payload`; a Response completed workflow tests with `responseId`. Sending the other trigger's field answers 400.
       properties:
         payload:
           type: object
           additionalProperties: true
-          description: 'The test payload: a JSON object of at most 100 KB once serialized, nested at most 10 levels (lists count as levels). Defaults to the workflow''s expected payload.'
+          description: 'Webhook trigger only. The test payload: a JSON object of at most 100 KB once serialized, nested at most 10 levels (lists count as levels). Defaults to the workflow''s expected payload.'
+        responseId:
+          type: string
+          format: cuid2
+          description: Response completed trigger only, and required there. An existing response of the trigger's survey to run against, completed or not, whatever ending it reached. A response of another survey or workspace, or of a survey the caller cannot read, answers 403.
       additionalProperties: false
     ChartDateRange:
       description: |-

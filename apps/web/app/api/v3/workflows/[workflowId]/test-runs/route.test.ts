@@ -21,7 +21,12 @@ const mocks = vi.hoisted(() => ({
   enqueueDelivery: vi.fn(),
   enqueueRun: vi.fn(),
   meter: vi.fn(),
+  getResponse: vi.fn(),
+  getSurvey: vi.fn(),
+  isOrganizationAdmin: vi.fn(),
   db: {
+    responses: [] as { id: string; surveyId: string; workspaceId: string; endingId: string | null }[],
+    hiddenSurveyIds: [] as string[],
     workflow: null as Record<string, unknown> | null,
     samples: [] as { source: string; sample: Record<string, unknown> }[],
     runs: new Map<string, Record<string, unknown>>(),
@@ -69,8 +74,11 @@ vi.mock("@/lib/organization/service", () => ({
 }));
 vi.mock("@/lib/workspace/service", () => ({ getWorkspaceMemberEmails: async () => new Set() }));
 vi.mock("@/modules/email/lib/email-actor", () => ({ resolveEmailActorUserId: async () => null }));
-vi.mock("@/lib/response/service", () => ({ getResponse: vi.fn() }));
-vi.mock("@/lib/survey/service", () => ({ getSurvey: vi.fn() }));
+vi.mock("@/lib/response/service", () => ({ getResponse: mocks.getResponse }));
+vi.mock("@/lib/survey/service", () => ({ getSurvey: mocks.getSurvey }));
+// Survey visibility (ENG-3282): an organization administrator sees every survey; anyone else not the
+// surveys listed in `db.hiddenSurveyIds`.
+vi.mock("@/lib/authorization", () => ({ can: mocks.isOrganizationAdmin }));
 vi.mock("@/modules/ee/workflows/lib/survey-link-surveys", () => ({
   getWorkflowSurveyLinkSurveys: async () => [],
 }));
@@ -164,6 +172,32 @@ const findLog = (runId: string, stepId: string) =>
 vi.mock("@formbricks/database", () => ({
   prisma: {
     workflow: { findUnique: vi.fn(async () => mocks.db.workflow) },
+    // The tenant check under test: a response by id, within a survey, within a workspace.
+    response: {
+      findFirst: vi.fn(
+        async ({
+          where,
+        }: {
+          where: { id: string; surveyId: string; survey: { id: string; workspaceId: string } };
+        }) => {
+          const row = mocks.db.responses.find(
+            (response) =>
+              response.id === where.id &&
+              response.surveyId === where.surveyId &&
+              response.surveyId === where.survey.id &&
+              response.workspaceId === where.survey.workspaceId
+          );
+          return row
+            ? { id: row.id, surveyId: row.surveyId, endingId: row.endingId, data: { nps: 9 } }
+            : null;
+        }
+      ),
+    },
+    survey: {
+      findMany: vi.fn(async ({ where }: { where: { id: { in: string[] } } }) =>
+        where.id.in.filter((id) => mocks.db.hiddenSurveyIds.includes(id)).map((id) => ({ id }))
+      ),
+    },
     workflowSample: {
       findUnique: vi.fn(async () => {
         const trigger = mocks.db.samples.find((row) => row.source === "trigger");
@@ -178,12 +212,12 @@ vi.mock("@formbricks/database", () => ({
         const id = `cm9zr5run00000000000000${mocks.db.runs.size}a`;
         const now = new Date();
         mocks.db.runs.set(id, {
+          responseId: null,
+          surveyId: null,
           ...data,
           id,
           createdAt: now,
           updatedAt: now,
-          responseId: null,
-          surveyId: null,
           error: null,
           data: {},
           idempotencyKey: null,
@@ -275,6 +309,9 @@ const steps = async (response: Response) =>
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.db.responses = [];
+  mocks.db.hiddenSurveyIds = [];
+  mocks.isOrganizationAdmin.mockResolvedValue(true);
   mocks.db.runs.clear();
   mocks.db.logs.length = 0;
   mocks.db.samples = [
@@ -440,5 +477,96 @@ describe("POST /api/v3/workflows/{workflowId}/test-runs", () => {
     };
     expect(body.data.status).toBe("failed");
     expect(body.data.steps.find((step) => step.stepId === "welcome")?.status).toBe("failed");
+  });
+});
+
+const SURVEY_ID = "cm9zr4q7i000108l84gozfggr";
+const OTHER_SURVEY_ID = "cm9zr4q7i000108l84gozfggs";
+const RESPONSE_ID = "cm9zr5res000000000000000a";
+
+/** Response completed → Don't wait HTTP request: what a response run would call. */
+const responseDraftDefinition = {
+  schemaVersion: 1,
+  entryNodeId: "trigger",
+  trigger: {
+    id: "trigger",
+    type: "trigger",
+    triggerType: "response.completed",
+    config: { surveyId: SURVEY_ID, endingCardIds: [] },
+  },
+  nodes: [
+    { ...httpNode("notify", "dont_wait"), config: { ...httpNode("notify", "dont_wait").config, body: "{}" } },
+  ],
+  edges: [{ id: "e1", source: "trigger", target: "notify" }],
+};
+
+describe("POST /api/v3/workflows/{workflowId}/test-runs for a Response completed workflow", () => {
+  beforeEach(() => {
+    (mocks.db.workflow as Record<string, unknown>).definition = responseDraftDefinition;
+    mocks.db.responses = [
+      { id: RESPONSE_ID, surveyId: SURVEY_ID, workspaceId: WORKSPACE_ID, endingId: null },
+    ];
+    mocks.getSurvey.mockResolvedValue({
+      id: SURVEY_ID,
+      workspaceId: WORKSPACE_ID,
+      visibility: "workspace",
+      visibilityVersion: 1,
+      visibilityProjectedVersion: 1,
+    });
+    mocks.getResponse.mockResolvedValue({ id: RESPONSE_ID, surveyId: SURVEY_ID, data: { nps: 9 } });
+  });
+
+  test("runs the draft against a response of its survey and saves it as a Test run of that response", async () => {
+    const response = await post({ responseId: RESPONSE_ID });
+
+    expect(response.status).toBe(201);
+    const body = (await response.clone().json()) as { data: Record<string, unknown> };
+    expect(body.data).toMatchObject({
+      isDryRun: true,
+      workflowVersionId: null,
+      triggerType: "response.completed",
+      status: "completed",
+    });
+    const [run] = [...mocks.db.runs.values()];
+    expect(run).toMatchObject({ surveyId: SURVEY_ID, responseId: RESPONSE_ID, isDryRun: true });
+    expect(run.triggerPayload).toMatchObject({
+      type: "response.completed",
+      surveyId: SURVEY_ID,
+      responseId: RESPONSE_ID,
+      data: { nps: 9 },
+    });
+    expect(mocks.sendHttp).not.toHaveBeenCalled();
+    expect(mocks.enqueueDelivery).not.toHaveBeenCalled();
+    expect(mocks.meter).not.toHaveBeenCalled();
+  });
+
+  test("refuses a response of another survey or another workspace, saving and running nothing", async () => {
+    mocks.db.responses = [
+      { id: RESPONSE_ID, surveyId: OTHER_SURVEY_ID, workspaceId: WORKSPACE_ID, endingId: null },
+    ];
+    expect((await post({ responseId: RESPONSE_ID })).status).toBe(403);
+
+    mocks.db.responses = [
+      { id: RESPONSE_ID, surveyId: SURVEY_ID, workspaceId: "cm9zr4mps000008l8btfy1vtx", endingId: null },
+    ];
+    expect((await post({ responseId: RESPONSE_ID })).status).toBe(403);
+
+    expect(mocks.db.runs.size).toBe(0);
+  });
+
+  test("refuses a response of a survey the caller may not read", async () => {
+    mocks.isOrganizationAdmin.mockResolvedValue(false);
+    mocks.db.hiddenSurveyIds = [SURVEY_ID];
+
+    expect((await post({ responseId: RESPONSE_ID })).status).toBe(403);
+    expect(mocks.db.runs.size).toBe(0);
+  });
+
+  test("needs a responseId, and a Webhook workflow refuses one", async () => {
+    expect((await post({})).status).toBe(400);
+
+    (mocks.db.workflow as Record<string, unknown>).definition = draftDefinition;
+    expect((await post({ responseId: RESPONSE_ID })).status).toBe(400);
+    expect(mocks.db.runs.size).toBe(0);
   });
 });

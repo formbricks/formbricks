@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAtom, useStore } from "jotai";
 import { useCallback, useState } from "react";
-import type { TCreateWorkflowTestRunInput } from "@formbricks/workflows";
+import { type TCreateWorkflowTestRunInput, WORKFLOW_TRIGGERS } from "@formbricks/workflows";
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
 import { MUTATION_TIMEOUT_MS, createWorkflowTestRun } from "@/modules/ee/workflows/lib/api-client";
 import { workflowRunKeys } from "@/modules/ee/workflows/lib/query";
@@ -27,10 +27,11 @@ import { editorRunDrawerAtom } from "@/modules/ee/workflows/state/run-drawer";
 export type TWorkflowTestRunFailure = TTestRunFailure | "unsaved";
 
 /**
- * Test run from the editor header (ED6, ADR 0049): saves the draft if needed, sends the test
- * payload kept in this browser (else the server uses the Sample payload), and opens the run drawer
- * on the finished run. The run goes into the query cache, never into component state; the drawer
- * atom only holds which run is shown.
+ * Test run from the editor header (ED6, ADR 0049): saves the draft if needed, then runs it and opens
+ * the run drawer on the finished run. A Webhook workflow sends the test payload kept in this browser
+ * (else the server uses the Sample payload). A Response completed workflow runs against a response
+ * picked in the drawer: started without one, it opens the drawer on the picker and waits. The run
+ * goes into the query cache, never into component state; the drawer atom only holds which run is shown.
  */
 export const useWorkflowTestRun = ({
   workflowId,
@@ -43,6 +44,8 @@ export const useWorkflowTestRun = ({
   const queryClient = useQueryClient();
   const [drawer, setDrawer] = useAtom(editorRunDrawerAtom);
   const [preflightFailure, setPreflightFailure] = useState<TWorkflowTestRunFailure | null>(null);
+  // A Response completed workflow, saved and waiting for a response to be picked in the drawer.
+  const [isPickingResponse, setIsPickingResponse] = useState(false);
   const { save } = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
 
   const mutation = useMutation({
@@ -76,54 +79,61 @@ export const useWorkflowTestRun = ({
     [store]
   );
 
-  const startTestRun = useCallback(async () => {
-    const workflow = store.get(workflowAtom);
-    if (!workflow || isReadOnly || mutation.isPending) return;
+  /** From the header, no response: a Response completed workflow then waits in the picker. */
+  const startTestRun = useCallback(
+    async (responseId?: string) => {
+      const workflow = store.get(workflowAtom);
+      if (!workflow || isReadOnly || mutation.isPending) return;
 
-    reset();
-    setPreflightFailure(null);
-    setDrawer({ isOpen: true, runId: null });
+      reset();
+      setPreflightFailure(null);
+      setIsPickingResponse(false);
+      setDrawer({ isOpen: true, runId: null });
 
-    const definition = store.get(workflowDefinitionAtom);
-    const blocker = getTestRunBlocker({
-      triggerType: definition?.trigger?.triggerType ?? null,
-      status: workflow.status,
-    });
-    if (blocker) {
-      setPreflightFailure(blocker);
-      return;
-    }
+      const definition = store.get(workflowDefinitionAtom);
+      const blocker = getTestRunBlocker({
+        triggerType: definition?.trigger?.triggerType ?? null,
+        status: workflow.status,
+      });
+      if (blocker) {
+        setPreflightFailure(blocker);
+        return;
+      }
 
-    await waitForSaveToSettle();
-    if (store.get(isWorkflowDirtyAtom) && !(await save({ silent: true }))) {
-      setPreflightFailure("unsaved");
-      return;
-    }
+      await waitForSaveToSettle();
+      if (store.get(isWorkflowDirtyAtom) && !(await save({ silent: true }))) {
+        setPreflightFailure("unsaved");
+        return;
+      }
 
-    const built = buildTestRunInput(readStoredTestPayload(workflowId));
-    if (!built.ok) {
-      setPreflightFailure(built.reason);
-      return;
-    }
-    mutate(built.input);
-  }, [
-    store,
-    isReadOnly,
-    mutation.isPending,
-    reset,
-    setDrawer,
-    waitForSaveToSettle,
-    save,
-    workflowId,
-    mutate,
-  ]);
+      if (definition?.trigger?.triggerType === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED) {
+        if (responseId) mutate({ responseId });
+        else setIsPickingResponse(true);
+        return;
+      }
 
-  const closeDrawer = useCallback(() => setDrawer({ isOpen: false, runId: null }), [setDrawer]);
+      const built = buildTestRunInput(readStoredTestPayload(workflowId));
+      if (!built.ok) {
+        setPreflightFailure(built.reason);
+        return;
+      }
+      mutate(built.input);
+    },
+    [store, isReadOnly, mutation.isPending, reset, setDrawer, waitForSaveToSettle, save, workflowId, mutate]
+  );
+
+  const closeDrawer = useCallback(() => {
+    setIsPickingResponse(false);
+    setDrawer({ isOpen: false, runId: null });
+  }, [setDrawer]);
 
   const failure: TWorkflowTestRunFailure | null =
     preflightFailure ??
     (mutation.error
-      ? classifyTestRunError(mutation.error, { sentPayload: mutation.variables?.payload !== undefined })
+      ? classifyTestRunError(mutation.error, {
+          sentPayload: mutation.variables?.payload !== undefined,
+          sentResponseId: mutation.variables?.responseId !== undefined,
+        })
       : null);
 
   return {
@@ -132,6 +142,7 @@ export const useWorkflowTestRun = ({
     isDrawerOpen: drawer.isOpen,
     runId: drawer.runId,
     isRunning: mutation.isPending,
+    isPickingResponse,
     failure,
     error: mutation.error,
   };

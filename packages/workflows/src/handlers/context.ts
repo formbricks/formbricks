@@ -259,4 +259,23 @@ export interface WorkflowApiContext {
    * not the call.
    */
   runTest?: (run: { runId: string; workflowId: string; workspaceId: string }) => Promise<void>;
+  /**
+   * The response a Response completed Test run runs against (ADR 0049), injected so the package stays
+   * survey-agnostic. The adapter must answer null unless the response belongs to `surveyId`, that
+   * survey belongs to `workspaceId`, and the caller may read the survey: the id comes from the
+   * request, so this lookup is the tenant check.
+   */
+  loadTestRunResponse?: (input: {
+    workspaceId: string;
+    surveyId: string;
+    responseId: string;
+  }) => Promise<WorkflowTestRunResponse | null>;
+}
+
+/** What a Response completed Test run copies into its trigger payload, as a real run does. */
+export interface WorkflowTestRunResponse {
+  id: string;
+  surveyId: string;
+  endingId: string | null;
+  data: Record<string, unknown>;
 }
