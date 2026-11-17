@@ -65,6 +65,15 @@ export const clickUntilVisible = async (trigger: Locator, target: Locator): Prom
   }).toPass({ timeout: 30_000 });
 };
 
+/** `clickUntilVisible` for a click that navigates: retries until the page is at `url`. */
+export const clickUntilURL = async (trigger: Locator, url: RegExp): Promise<void> => {
+  const page = trigger.page();
+  await expect(async () => {
+    if (!url.test(page.url())) await trigger.click({ timeout: 3000 });
+    await expect(page).toHaveURL(url, { timeout: 3000 });
+  }).toPass({ timeout: 30_000 });
+};
+
 export const waitForSurveyCreateResponse = async (page: Page): Promise<string> => {
   const response = await page.waitForResponse((response) => {
     const url = new URL(response.url());

@@ -289,18 +289,29 @@ const isOnEndingCard = (page: Page): Promise<boolean> =>
  * cards in with `transition-opacity duration-500`; scanning mid-fade makes axe blend
  * the semi-transparent text into the background and report contrast failures that do
  * not exist in the settled UI (observed as flaky `color-contrast` findings).
+ *
+ * It also waits for finite animations inside the card to finish: a just-selected date animates its
+ * text and background colours (`transition-all`), and measured mid-flight the pair fails AA although
+ * the settled one passes. Infinite animations (spinners) never finish, so they are ignored.
  */
 const waitForSettled = async (page: Page, selector: string): Promise<void> => {
   await page
     .waitForFunction(
       (sel) => {
-        let el: HTMLElement | null = document.querySelector(sel);
-        if (!el) return false;
+        const root: HTMLElement | null = document.querySelector(sel);
+        if (!root) return false;
+        let el: HTMLElement | null = root;
         while (el) {
           if (getComputedStyle(el).opacity !== "1") return false;
           el = el.parentElement;
         }
-        return true;
+        return root
+          .getAnimations({ subtree: true })
+          .every(
+            (animation) =>
+              animation.playState !== "running" ||
+              animation.effect?.getComputedTiming().iterations === Infinity
+          );
       },
       selector,
       { timeout: 5000 }
@@ -327,7 +338,13 @@ const waitForLocatorSettled = async (locator: Locator): Promise<void> => {
               if (getComputedStyle(el).opacity !== "1") return false;
               el = el.parentElement;
             }
-            return true;
+            return node
+              .getAnimations({ subtree: true })
+              .every(
+                (animation) =>
+                  animation.playState !== "running" ||
+                  animation.effect?.getComputedTiming().iterations === Infinity
+              );
           })
           .catch(() => false),
       { timeout: 5000, intervals: [100] }
