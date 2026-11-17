@@ -164,7 +164,7 @@ function clearAllMockHandles() {
   if (serviceLogAuditEventMockHandle) serviceLogAuditEventMockHandle.mockClear().mockResolvedValue(undefined);
   if (loggerErrorMockHandle) loggerErrorMockHandle.mockClear();
   vi.mocked(getClientIpFromHeaders).mockResolvedValue("127.0.0.1");
-  vi.mocked(headers).mockResolvedValue(new Headers({ "user-agent": "audit-test-agent" }) as never);
+  vi.mocked(headers).mockResolvedValue(new Headers({ "user-agent": "audit-test-agent" }));
   auditGate.enabled = true;
 }
 

@@ -991,7 +991,7 @@ describe("updateScopedResponse — the Feedback Record cleanup on an outcome cha
     const tx = txStub({
       workspace: { findUniqueOrThrow: vi.fn().mockResolvedValue({ organizationId: "clorg" }) },
     });
-    tx.response.findFirst.mockResolvedValue({ outcome: previous } as never);
+    tx.response.findFirst.mockResolvedValue({ outcome: previous });
     return runTx(tx);
   };
 

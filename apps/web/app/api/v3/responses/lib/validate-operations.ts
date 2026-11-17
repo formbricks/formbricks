@@ -2,12 +2,7 @@ import "server-only";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import type {
-  TResponseData,
-  TResponseDataValue,
-  TResponseMeta,
-  TResponseTtc,
-} from "@formbricks/types/responses";
+import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
@@ -202,9 +197,9 @@ async function validateCreate({
     finished: parsed.data.finished,
     language: plan.storedLanguage,
     data: plan.composed.data ?? {},
-    variables: (plan.composed.variables ?? {}) as Record<string, TResponseDataValue>,
+    variables: plan.composed.variables ?? {},
     ttc: normalizeV3Ttc(parsed.data.ttc, parsed.data.finished),
-    meta: (parsed.data.meta ?? {}) as TResponseMeta,
+    meta: parsed.data.meta ?? {},
     contactId: parsed.data.contactId,
     displayId: parsed.data.displayId,
   });
@@ -303,9 +298,7 @@ async function validatePatch({
         : ((stored.ttc ?? {}) as TResponseTtc),
     language: planned.effectiveLanguage,
     data: planned.composed.data ?? (stored.data as TResponseData) ?? {},
-    variables: (planned.composed.variables ??
-      (stored.variables as Record<string, TResponseDataValue>) ??
-      {}) as Record<string, TResponseDataValue>,
+    variables: planned.composed.variables ?? (stored.variables as Record<string, TResponseDataValue>) ?? {},
     // A patch that omits `tags` leaves the stored set alone; one that carries it replaces the set,
     // deduplicated exactly as the write deduplicates before writing the join rows.
     tagsToApply: [...new Set(parsed.data.tags ?? stored.tags.map(({ tag }) => tag.id))],

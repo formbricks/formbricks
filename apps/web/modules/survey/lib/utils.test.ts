@@ -206,8 +206,8 @@ describe("Survey Utils", () => {
     test("should build where clause for multiple criteria", () => {
       const filterCriteria: TSurveyFilterCriteria = {
         name: "Feedback Survey",
-        status: ["inProgress" as TSurveyStatus],
-        type: ["app" as TSurveyType],
+        status: ["inProgress"],
+        type: ["app"],
         createdBy: { value: ["you"], userId: "user456" },
       };
       const result = buildWhereClause(filterCriteria);

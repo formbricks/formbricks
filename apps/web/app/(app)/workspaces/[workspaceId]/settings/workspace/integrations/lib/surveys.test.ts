@@ -105,7 +105,7 @@ describe("getSurveys", () => {
       const found = mockTransformedSurveys.find((ts) => ts.id === survey.id);
       if (!found) throw new Error("Survey not found in mock transformed data");
       // Ensure the returned object matches the TSurvey structure precisely
-      return { ...found } as TSurvey;
+      return { ...found };
     });
 
     const surveys = await getSurveys(workspaceId, userId, organizationId);

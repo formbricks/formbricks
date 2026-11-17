@@ -153,7 +153,7 @@ describe("workspace lib", () => {
       vi.mocked(prisma.workspace.update).mockResolvedValueOnce({
         ...baseWorkspace,
         ...workspace,
-      } as unknown as Awaited<ReturnType<typeof prisma.workspace.update>>);
+      });
     };
 
     // The organization's whitelabel decides whether an object under this workspace's prefix is
@@ -491,9 +491,7 @@ describe("workspace lib", () => {
     test("creates workspace with team links and no FRD side-effects", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p2" };
       vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams("t1"));
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(
-        createdWorkspace as Awaited<ReturnType<typeof prisma.workspace.create>>
-      );
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace);
       vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce(
         {} as Awaited<ReturnType<typeof prisma.workspaceTeam.createMany>>
       );
@@ -568,9 +566,7 @@ describe("workspace lib", () => {
     // ENG-1922: the rejection log must not fire when every team is in the caller's organization.
     test("does not log a cross-organization warning on the happy path", async () => {
       vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams("t1"));
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce({ ...baseWorkspace, id: "p3" } as Awaited<
-        ReturnType<typeof prisma.workspace.create>
-      >);
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce({ ...baseWorkspace, id: "p3" });
       vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce(
         {} as Awaited<ReturnType<typeof prisma.workspaceTeam.createMany>>
       );
@@ -610,9 +606,7 @@ describe("workspace lib", () => {
 
     test("seeds English as the default survey language when creating a workspace", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p-language" };
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(
-        createdWorkspace as Awaited<ReturnType<typeof prisma.workspace.create>>
-      );
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace);
 
       await createWorkspace("org1", { name: "Workspace language" }, NEW_ORGANIZATION);
 
@@ -622,9 +616,7 @@ describe("workspace lib", () => {
 
     test("seeds the default contact attribute keys when creating a workspace", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p-defaults" };
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(
-        createdWorkspace as Awaited<ReturnType<typeof prisma.workspace.create>>
-      );
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace);
 
       await createWorkspace("org1", { name: "Workspace defaults" }, NEW_ORGANIZATION);
 
@@ -645,9 +637,7 @@ describe("workspace lib", () => {
 
     test("creates workspace without teams and does not auto-link any FRD", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p3" };
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(
-        createdWorkspace as Awaited<ReturnType<typeof prisma.workspace.create>>
-      );
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace);
 
       const result = await createWorkspace("org1", { name: "Workspace No Teams" }, NEW_ORGANIZATION);
 
@@ -658,9 +648,7 @@ describe("workspace lib", () => {
 
     test("does not upsert a Default Feedback Directory under any flow", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p4" };
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(
-        createdWorkspace as Awaited<ReturnType<typeof prisma.workspace.create>>
-      );
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace);
 
       await createWorkspace("org1", { name: "Second Workspace" }, NEW_ORGANIZATION);
 
@@ -809,9 +797,7 @@ describe("workspace lib", () => {
     // the workspace was migrated off its environment id survived the delete.
     test("passes the workspace's legacy environment prefix to storage cleanup", async () => {
       const migratedWorkspace = { ...baseWorkspace, legacyEnvironmentId: "env-1" };
-      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(
-        migratedWorkspace as Awaited<ReturnType<typeof prisma.workspace.delete>>
-      );
+      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(migratedWorkspace);
 
       await deleteWorkspace("p1");
 

@@ -6,20 +6,19 @@ import { getContactFilterProperties, toContactListParams } from "./table-filters
 const t = ((key: string) => key) as unknown as TFunction;
 const now = new Date("2026-10-26T10:00:00Z");
 
-const key = (overrides: Partial<TContactAttributeKey>): TContactAttributeKey =>
-  ({
-    id: "k",
-    key: "plan",
-    name: "Plan",
-    description: null,
-    type: "custom",
-    dataType: "string",
-    isUnique: false,
-    workspaceId: "w",
-    createdAt: now,
-    updatedAt: now,
-    ...overrides,
-  }) as TContactAttributeKey;
+const key = (overrides: Partial<TContactAttributeKey>): TContactAttributeKey => ({
+  id: "k",
+  key: "plan",
+  name: "Plan",
+  description: null,
+  type: "custom",
+  dataType: "string",
+  isUnique: false,
+  workspaceId: "w",
+  createdAt: now,
+  updatedAt: now,
+  ...overrides,
+});
 
 describe("getContactFilterProperties", () => {
   test("offers one property per attribute with operators by data type", () => {

@@ -10,5 +10,6 @@ export const extractAuthToken = (req: Request) => {
   const accessToken = params.get("access_token");
   if (accessToken) return accessToken;
 
+  // eslint-disable-next-line typescript/only-throw-error -- the route catches the thrown Response and returns it
   throw responses.unauthorizedResponse();
 };

@@ -109,7 +109,7 @@ export const UploadContactsCSVButton = ({
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target?.files?.[0];
     if (file) {
-      processCSVFile(file);
+      void processCSVFile(file);
     }
   };
 
@@ -431,7 +431,7 @@ export const UploadContactsCSVButton = ({
 
     const file = e.dataTransfer.files[0];
     if (file) {
-      processCSVFile(file);
+      void processCSVFile(file);
     }
   };
 

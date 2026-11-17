@@ -1,7 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { MAX_INGESTED_VALUE_BYTES } from "@formbricks/types/embedded-data-ingest";
 import type { TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
-import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { buildAnswerPlan } from "./answers";
 import {
@@ -29,7 +28,7 @@ const element = (id: string): TSurveyElement =>
 /** A real plan from a real flatten — the write predicate is the plan's, so faking it proves nothing. */
 const planFor = (elementIds: string[], ingestedStorageKeys: string[] = []) =>
   buildAnswerPlan(
-    [{ id: "blk", name: "Block", elements: elementIds.map(element) } as unknown as TSurveyBlock],
+    [{ id: "blk", name: "Block", elements: elementIds.map(element) }],
     "default",
     ingestedStorageKeys
   );
@@ -507,10 +506,10 @@ describe("totalStoredV3Ttc", () => {
     // Only `_total` and nothing to total: still no measurement.
     expect(totalStoredV3Ttc({ _total: 0 })).toEqual({});
     // Non-numeric buckets are dropped, so this is the same "nothing was measured" case.
-    expect(totalStoredV3Ttc({ junk: "x" as never })).toEqual({});
+    expect(totalStoredV3Ttc({ junk: "x" })).toEqual({});
   });
 
   test("non-numeric stored buckets are ignored rather than poisoning the sum", () => {
-    expect(totalStoredV3Ttc({ q1: 1000, junk: "x" as never })).toEqual({ q1: 1000, _total: 1000 });
+    expect(totalStoredV3Ttc({ q1: 1000, junk: "x" })).toEqual({ q1: 1000, _total: 1000 });
   });
 });

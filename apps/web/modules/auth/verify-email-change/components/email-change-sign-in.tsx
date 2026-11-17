@@ -30,7 +30,7 @@ export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {
     };
 
     if (token) {
-      validateToken();
+      void validateToken();
     } else {
       setStatus("error");
     }

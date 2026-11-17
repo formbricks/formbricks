@@ -2,11 +2,10 @@ import type {
   FeedbackRecordData,
   FeedbackRecordTaxonomy,
   SemanticSearchResultItem,
-  SimilarRecordsResultItem,
 } from "@/modules/hub/types";
 
 /** The two similarity endpoints return the same row shape; either is acceptable here. */
-type FeedbackRecordMatchSource = SemanticSearchResultItem | SimilarRecordsResultItem;
+type FeedbackRecordMatchSource = SemanticSearchResultItem;
 
 /**
  * Public DTO for a feedback record. Field names mirror the Hub's feedback-record contract (snake_case)

@@ -427,9 +427,9 @@ describe("validateWebhookUrl", () => {
     test("rejects with timeout error when DNS resolution hangs", async () => {
       vi.useFakeTimers();
 
-      mockResolve.mockImplementation((() => {
+      mockResolve.mockImplementation(() => {
         // never calls callback — simulates a hanging DNS server
-      }) as never);
+      });
 
       const promise = validateWebhookUrl("https://slow-dns.example.com/webhook");
 
@@ -464,7 +464,7 @@ describe("validateWebhookUrl", () => {
 
     test("a DNS timeout is also the WebhookDnsResolutionError subclass", async () => {
       vi.useFakeTimers();
-      mockResolve.mockImplementation((() => {}) as never);
+      mockResolve.mockImplementation(() => {});
 
       const rejection = validateWebhookUrl("https://slow-dns.example.com/webhook");
       const assertion = Promise.all([

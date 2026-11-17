@@ -124,7 +124,7 @@ describe("createV3Response — authorization", () => {
     mockGetSurveyForWrite.mockResolvedValueOnce(null);
     const missing = await createV3Response({
       ...params,
-      body: { surveyId: SURVEY_ID, finished: false, data: {} } as never,
+      body: { surveyId: SURVEY_ID, finished: false, data: {} },
     });
 
     // The foreign case must build its 403 through the real rejection path, not through the same
@@ -135,7 +135,7 @@ describe("createV3Response — authorization", () => {
     );
     const foreign = await createV3Response({
       ...params,
-      body: { surveyId: SURVEY_ID, finished: false, data: {} } as never,
+      body: { surveyId: SURVEY_ID, finished: false, data: {} },
     });
 
     expect(missing.status).toBe(403);
@@ -144,7 +144,7 @@ describe("createV3Response — authorization", () => {
   });
 
   test("creating requires readWrite, not read", async () => {
-    await createV3Response({ ...params, body: { surveyId: SURVEY_ID, finished: false, data: {} } as never });
+    await createV3Response({ ...params, body: { surveyId: SURVEY_ID, finished: false, data: {} } });
 
     expect(mockRequireAccess).toHaveBeenCalledWith(
       expect.anything(),
@@ -158,7 +158,7 @@ describe("createV3Response — authorization", () => {
   test("a workspace the caller cannot write to is never queried for a survey write", async () => {
     mockRequireAccess.mockResolvedValueOnce(problemForbidden("req-1", undefined, undefined));
 
-    await createV3Response({ ...params, body: { surveyId: SURVEY_ID, finished: false, data: {} } as never });
+    await createV3Response({ ...params, body: { surveyId: SURVEY_ID, finished: false, data: {} } });
 
     expect(mockCreate).not.toHaveBeenCalled();
   });
@@ -168,7 +168,7 @@ describe("createV3Response — the happy path and its side effects", () => {
   test("201 carries a Location header pointing at the new response", async () => {
     const response = await createV3Response({
       ...params,
-      body: { surveyId: SURVEY_ID, finished: false, data: { q1: "hi" } } as never,
+      body: { surveyId: SURVEY_ID, finished: false, data: { q1: "hi" } },
     });
 
     expect(response.status).toBe(201);
@@ -186,14 +186,14 @@ describe("createV3Response — the happy path and its side effects", () => {
 
     await createV3Response({
       ...params,
-      body: { surveyId: SURVEY_ID, finished: false, data: {} } as never,
+      body: { surveyId: SURVEY_ID, finished: false, data: {} },
     });
 
     expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ alsoFinished: true }));
   });
 
   test("a partial response fires no finish event", async () => {
-    await createV3Response({ ...params, body: { surveyId: SURVEY_ID, finished: false, data: {} } as never });
+    await createV3Response({ ...params, body: { surveyId: SURVEY_ID, finished: false, data: {} } });
 
     expect(mockDispatch).toHaveBeenCalledWith(
       expect.objectContaining({ event: "responseCreated", alsoFinished: false })
@@ -210,7 +210,7 @@ describe("createV3Response — the happy path and its side effects", () => {
       order.push("dispatch");
     });
 
-    await createV3Response({ ...params, body: { surveyId: SURVEY_ID, finished: true, data: {} } as never });
+    await createV3Response({ ...params, body: { surveyId: SURVEY_ID, finished: true, data: {} } });
 
     expect(order).toEqual(["write", "dispatch"]);
   });
@@ -231,7 +231,7 @@ describe("createV3Response — 422s", () => {
 
     const response = await createV3Response({
       ...params,
-      body: { surveyId: SURVEY_ID, finished: false, data: { plan: "free" } } as never,
+      body: { surveyId: SURVEY_ID, finished: false, data: { plan: "free" } },
     });
 
     expect(response.status).toBe(422);
@@ -244,7 +244,7 @@ describe("createV3Response — 422s", () => {
   test("an ending from another survey is a 422", async () => {
     const response = await createV3Response({
       ...params,
-      body: { surveyId: SURVEY_ID, finished: true, data: {}, endingId: "cmp-other" } as never,
+      body: { surveyId: SURVEY_ID, finished: true, data: {}, endingId: "cmp-other" },
     });
 
     expect(response.status).toBe(422);
@@ -260,7 +260,7 @@ describe("createV3Response — 422s", () => {
 
     const response = await createV3Response({
       ...params,
-      body: { surveyId: SURVEY_ID, finished: true, data: {}, singleUseId: "su-1" } as never,
+      body: { surveyId: SURVEY_ID, finished: true, data: {}, singleUseId: "su-1" },
     });
 
     expect(response.status).toBe(422);
@@ -280,7 +280,7 @@ describe("createV3Response — 422s", () => {
         data: { q1: "x" },
         endingId: "nope",
         language: "es",
-      } as never,
+      },
     });
 
     const names = (await bodyOf(response)).invalid_params.map((param: { name: string }) => param.name);
@@ -295,7 +295,7 @@ describe("updateV3Response", () => {
     const response = await updateV3Response({
       ...params,
       responseId: RESPONSE_ID,
-      body: { finished: true } as never,
+      body: { finished: true },
     });
 
     expect(response.status).toBe(403);
@@ -309,7 +309,7 @@ describe("updateV3Response", () => {
    * did not.
    */
   test("patching requires readWrite, not read", async () => {
-    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } as never });
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } });
 
     expect(mockRequireAccess).toHaveBeenCalledWith(
       expect.anything(),
@@ -332,7 +332,7 @@ describe("updateV3Response", () => {
     await updateV3Response({
       ...params,
       responseId: RESPONSE_ID,
-      body: { data: { q1: "typo fixed" } } as never,
+      body: { data: { q1: "typo fixed" } },
     });
 
     expect(mockDispatch).toHaveBeenCalledWith(
@@ -344,7 +344,7 @@ describe("updateV3Response", () => {
     mockGetScoped.mockResolvedValueOnce(row({ finished: false }));
     mockReadback.mockResolvedValueOnce(row({ finished: true }));
 
-    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } as never });
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } });
 
     expect(mockDispatch).toHaveBeenCalledWith(expect.objectContaining({ alsoFinished: true }));
   });
@@ -354,7 +354,7 @@ describe("updateV3Response", () => {
    * (`readWrite`) and the same per-response `response.write` check, so a read-only seat is refused.
    */
   test.each(["lowQuality", null] as const)("outcome %s is handed to the write", async (outcome) => {
-    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { outcome } as never });
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { outcome } });
 
     expect(mockUpdate.mock.calls[0][0].patch.outcome).toBe(outcome);
   });
@@ -411,7 +411,7 @@ describe("updateV3Response", () => {
     mockGetScoped.mockResolvedValueOnce(row({ outcome: before }));
     mockReadback.mockResolvedValueOnce(row({ outcome: after }));
 
-    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { outcome: after } as never });
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { outcome: after } });
 
     expect(mockDispatch).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -424,7 +424,7 @@ describe("updateV3Response", () => {
 
   /** An absent key must not reach Prisma as `undefined` — for a nullable column that is a null-out. */
   test("only the keys the payload carried are handed to the write", async () => {
-    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } as never });
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } });
 
     const { patch } = mockUpdate.mock.calls[0][0];
     expect(patch.finished).toBe(true);
@@ -452,7 +452,7 @@ describe("updateV3Response", () => {
     await updateV3Response({
       ...params,
       responseId: RESPONSE_ID,
-      body: { language: "de", data: { q1: "ja" } } as never,
+      body: { language: "de", data: { q1: "ja" } },
     });
 
     expect(mockValidateResponseData).toHaveBeenCalledWith(
@@ -475,7 +475,7 @@ describe("the read-back race", () => {
 
     const response = await createV3Response({
       ...params,
-      body: { surveyId: SURVEY_ID, finished: false, data: {} } as never,
+      body: { surveyId: SURVEY_ID, finished: false, data: {} },
     });
 
     expect(response.status).toBe(500);
@@ -488,7 +488,7 @@ describe("the read-back race", () => {
     const response = await updateV3Response({
       ...params,
       responseId: RESPONSE_ID,
-      body: { finished: true } as never,
+      body: { finished: true },
     });
 
     expect(response.status).toBe(403);
@@ -501,7 +501,7 @@ describe("the read-back race", () => {
     const response = await updateV3Response({
       ...params,
       responseId: RESPONSE_ID,
-      body: { finished: true } as never,
+      body: { finished: true },
     });
 
     expect(response.status).toBe(403);
@@ -526,7 +526,7 @@ describe("what the operation hands to the write", () => {
         contactId: "clct000000000000000000001",
         displayId: "cldp000000000000000000001",
         singleUseId: "su-1",
-      } as never,
+      },
     });
 
     expect(mockCreate).toHaveBeenCalledWith(
@@ -550,7 +550,7 @@ describe("what the operation hands to the write", () => {
   test("an omitted ttc reaches the write as an empty map", async () => {
     await createV3Response({
       ...params,
-      body: { surveyId: SURVEY_ID, finished: true, data: {} } as never,
+      body: { surveyId: SURVEY_ID, finished: true, data: {} },
     });
 
     expect(mockCreate.mock.calls[0][0].ttc).toEqual({});
@@ -563,7 +563,7 @@ describe("what the operation hands to the write", () => {
   test("a patch that finishes derives _total from the stored timings", async () => {
     mockGetScoped.mockResolvedValueOnce(row({ finished: false, ttc: { q1: 1000, nps: 500 } }));
 
-    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } as never });
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } });
 
     expect(mockUpdate.mock.calls[0][0].patch.ttc).toEqual({ q1: 1000, nps: 500, _total: 1500 });
   });
@@ -571,7 +571,7 @@ describe("what the operation hands to the write", () => {
   test("a patch that does not finish leaves ttc alone", async () => {
     mockGetScoped.mockResolvedValueOnce(row({ finished: false, ttc: { q1: 1000 } }));
 
-    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { data: { q1: "x" } } as never });
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { data: { q1: "x" } } });
 
     expect(mockUpdate.mock.calls[0][0].patch.ttc).toBeUndefined();
   });
@@ -579,7 +579,7 @@ describe("what the operation hands to the write", () => {
   test("patching an already-finished response does not re-total", async () => {
     mockGetScoped.mockResolvedValueOnce(row({ finished: true, ttc: { q1: 1000, _total: 1000 } }));
 
-    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } as never });
+    await updateV3Response({ ...params, responseId: RESPONSE_ID, body: { finished: true } });
 
     expect(mockUpdate.mock.calls[0][0].patch.ttc).toBeUndefined();
   });
@@ -604,7 +604,7 @@ describe("what the operation hands to the write", () => {
     await updateV3Response({
       ...params,
       responseId: RESPONSE_ID,
-      body: { data: { q1: "new" }, embeddedData: { Plan: "enterprise" } } as never,
+      body: { data: { q1: "new" }, embeddedData: { Plan: "enterprise" } },
     });
 
     // q1 replaced, nps dropped by the wholesale replace, plan merged from embeddedData.
@@ -627,7 +627,7 @@ describe("what the operation hands to the write", () => {
     await updateV3Response({
       ...params,
       responseId: RESPONSE_ID,
-      body: { embeddedData: { Plan: null } } as never,
+      body: { embeddedData: { Plan: null } },
     });
 
     expect(mockUpdate.mock.calls[0][0].patch.data).toEqual({ q1: "a" });
@@ -676,7 +676,7 @@ describe("file-upload answers", () => {
         surveyId: SURVEY_ID,
         finished: true,
         data: { upload: ["http://x.test/storage/other-ws/private/surveys/other/elements/up/f.pdf"] },
-      } as never,
+      },
     });
 
     expect(response.status).toBe(422);
@@ -695,7 +695,7 @@ describe("file-upload answers", () => {
   test("the check is scoped to the survey's own workspace and id", async () => {
     await createV3Response({
       ...params,
-      body: { surveyId: SURVEY_ID, finished: true, data: { upload: ["ok"] } } as never,
+      body: { surveyId: SURVEY_ID, finished: true, data: { upload: ["ok"] } },
     });
 
     expect(mockValidateFileUploads).toHaveBeenCalledWith(
@@ -722,7 +722,7 @@ describe("file-upload answers", () => {
 
     const response = await createV3Response({
       ...params,
-      body: { surveyId: SURVEY_ID, finished: true, data: { sig: signatureUrl } } as never,
+      body: { surveyId: SURVEY_ID, finished: true, data: { sig: signatureUrl } },
     });
 
     expect(response.status).toBe(201);
@@ -751,7 +751,7 @@ describe("file-upload answers", () => {
         surveyId: SURVEY_ID,
         finished: true,
         data: { sig: "/storage/other-ws/private/surveys/other/elements/sig/s.png" },
-      } as never,
+      },
     });
 
     expect(response.status).toBe(422);
@@ -789,7 +789,7 @@ describe("file-upload answers", () => {
         surveyId: SURVEY_ID,
         finished: true,
         data: { upload: ["bad"], sig: "/storage/ws/private/surveys/s/elements/sig/s--fid--abc.png" },
-      } as never,
+      },
     });
 
     expect(response.status).toBe(422);
@@ -806,7 +806,7 @@ describe("file-upload answers", () => {
     const response = await updateV3Response({
       ...params,
       responseId: RESPONSE_ID,
-      body: { data: { upload: ["http://x.test/storage/other/private/surveys/o/elements/u/f.pdf"] } } as never,
+      body: { data: { upload: ["http://x.test/storage/other/private/surveys/o/elements/u/f.pdf"] } },
     });
 
     expect(response.status).toBe(422);
@@ -830,7 +830,7 @@ describe("file-upload answers", () => {
     const response = await updateV3Response({
       ...params,
       responseId: RESPONSE_ID,
-      body: { finished: true } as never,
+      body: { finished: true },
     });
 
     expect(mockValidateFileUploads).not.toHaveBeenCalled();

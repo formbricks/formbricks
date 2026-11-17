@@ -1306,8 +1306,10 @@ describe("transformResponseToFeedbackRecords", () => {
       link: { storageKey },
     });
 
-    const surveyWith = (embeddedFields: TLinkedEmbeddedField[]): TSurvey =>
-      ({ ...mockSurvey, embeddedFields }) as unknown as TSurvey;
+    const surveyWith = (embeddedFields: TLinkedEmbeddedField[]): TSurvey => ({
+      ...mockSurvey,
+      embeddedFields,
+    });
 
     const responseWith = (
       data: Record<string, unknown> = {},

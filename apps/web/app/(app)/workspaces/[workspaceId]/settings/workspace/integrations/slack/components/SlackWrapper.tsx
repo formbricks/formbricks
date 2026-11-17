@@ -58,11 +58,11 @@ export const SlackWrapper = ({
   }, [workspaceId]);
 
   useEffect(() => {
-    getSlackChannels();
+    void getSlackChannels();
   }, [getSlackChannels]);
 
   const handleSlackAuthorization = async () => {
-    authorize(workspaceId, webAppUrl).then((url: string) => {
+    void authorize(workspaceId, webAppUrl).then((url: string) => {
       if (url) {
         window.location.replace(url);
       }

@@ -97,7 +97,7 @@ describe("listV3ContactAttributeKeys", () => {
       ...attributeKey,
       id: "clbk1234567890123456789012",
       key: "role",
-    } as typeof attributeKey;
+    };
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(accessGranted);
     vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKey, second]);
 
@@ -156,8 +156,7 @@ describe("listV3ContactAttributeKeys", () => {
 });
 
 describe("listV3ContactAttributeKeys — search, filters, sort, totals", () => {
-  const makeKey = (overrides: Record<string, unknown>) =>
-    ({ ...attributeKey, ...overrides }) as unknown as typeof attributeKey;
+  const makeKey = (overrides: Record<string, unknown>) => ({ ...attributeKey, ...overrides });
 
   const keys = [
     makeKey({

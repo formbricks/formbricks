@@ -48,7 +48,7 @@ const Page = async (props: { readonly params: Promise<{ workspaceId: string }> }
     ]);
 
   let databasesArray: TIntegrationNotionDatabase[] = [];
-  if (notionIntegration && (notionIntegration as TIntegrationNotion).config.key?.bot_id) {
+  if (notionIntegration && notionIntegration.config.key?.bot_id) {
     databasesArray = (await getNotionDatabases(workspace.id)) ?? [];
   }
 

@@ -228,11 +228,7 @@ const expandMatrixToRecords = (
 
     // Column labels are localized like the row labels — store the label as submitted and
     // attach the column id as stable cross-language identity (ENG-1673).
-    const matchedColumn = normalizeChoiceValue(
-      element.columns,
-      columnLabel as TResponseDataValue,
-      lookupLanguage
-    );
+    const matchedColumn = normalizeChoiceValue(element.columns, columnLabel, lookupLanguage);
     const valueFields = convertValueToHubFields(matchedColumn.value, mapping.hubFieldType);
 
     records.push({

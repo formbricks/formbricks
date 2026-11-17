@@ -147,7 +147,7 @@ const updateOption = (
         return {
           ...element,
           [target.listKey]: items.map((item) => (item.id === target.optionId ? update(item) : item)),
-        } as typeof element;
+        };
       }),
     };
   }),

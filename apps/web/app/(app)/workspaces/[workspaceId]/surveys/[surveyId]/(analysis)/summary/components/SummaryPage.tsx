@@ -128,7 +128,7 @@ export const SummaryPage = ({
   useEffect(() => {
     if (tab === "impressions" && !displaysFetchedRef.current) {
       displaysFetchedRef.current = true;
-      loadInitialDisplays();
+      void loadInitialDisplays();
     }
   }, [tab, loadInitialDisplays]);
 
@@ -220,7 +220,7 @@ export const SummaryPage = ({
       }
     };
 
-    fetchFilteredSummary();
+    void fetchFilteredSummary();
   }, [selectedFilter, dateRange, initialSurveySummary, fetchSummary, filterState.isReady, survey, t]);
 
   const surveyMemoized = useMemo(() => {

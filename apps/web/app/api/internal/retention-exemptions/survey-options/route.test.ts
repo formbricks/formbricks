@@ -28,10 +28,7 @@ const ORG_ID = "clorg11111111111111111111";
 const OPTION = { id: "clsrv11111111111111111111", name: "Site visit feedback", workspaceName: "Europe" };
 
 const get = (query: string) =>
-  GET(
-    new NextRequest(`http://localhost/api/internal/retention-exemptions/survey-options?${query}`),
-    {} as never
-  );
+  GET(new NextRequest(`http://localhost/api/internal/retention-exemptions/survey-options?${query}`), {});
 
 describe("GET /api/internal/retention-exemptions/survey-options", () => {
   beforeEach(() => {

@@ -16,7 +16,6 @@ import {
   OperationNotAllowedError,
   ResourceNotFoundError,
 } from "@formbricks/types/errors";
-import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyFilterCriteria } from "@formbricks/types/surveys/types";
 import { reconcileEmbeddedData } from "@/lib/embedded-data/reconcile";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
@@ -475,7 +474,7 @@ export const copySurveyToOtherWorkspace = async (
       },
       workspace: {
         connect: {
-          id: targetWorkspace!.id,
+          id: targetWorkspace.id,
         },
       },
       creator: {
@@ -540,7 +539,7 @@ export const copySurveyToOtherWorkspace = async (
             title: surveyData.id!,
             isPrivate: true,
             filters: existingSurvey.segment.filters,
-            workspace: { connect: { id: targetWorkspace!.id } },
+            workspace: { connect: { id: targetWorkspace.id } },
           },
         };
       } else if (isSameWorkspace) {
@@ -561,14 +560,14 @@ export const copySurveyToOtherWorkspace = async (
               : existingSurvey.segment.title,
             isPrivate: false,
             filters: existingSurvey.segment.filters,
-            workspace: { connect: { id: targetWorkspace!.id } },
+            workspace: { connect: { id: targetWorkspace.id } },
           },
         };
       }
     }
 
     if (surveyData.blocks) {
-      const result = checkForInvalidMediaInBlocks(surveyData.blocks as unknown as TSurveyBlock[]);
+      const result = checkForInvalidMediaInBlocks(surveyData.blocks);
       if (!result.ok) {
         throw new InvalidInputError(result.error.message);
       }

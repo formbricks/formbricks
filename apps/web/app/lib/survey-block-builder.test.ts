@@ -24,7 +24,7 @@ describe("survey-block-builder", () => {
         inputType: "text" as const,
         longAnswer: false,
         charLimit: { enabled: false },
-      } as TSurveyElement,
+      },
     ];
 
     test("should use getDefaultButtonLabel when buttonLabel is provided", () => {

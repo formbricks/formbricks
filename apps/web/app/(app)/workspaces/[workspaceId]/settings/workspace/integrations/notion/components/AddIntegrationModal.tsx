@@ -75,8 +75,7 @@ const getDatabaseTitle = (database: TIntegrationNotionDatabase): string =>
 
 const getDatabaseProperties = (
   database: TIntegrationNotionDatabase | null | undefined
-): Record<string, TNotionDatabaseProperty> =>
-  (database?.properties ?? {}) as Record<string, TNotionDatabaseProperty>;
+): Record<string, TNotionDatabaseProperty> => database?.properties ?? {};
 
 export const AddIntegrationModal = ({
   workspaceId,
@@ -440,7 +439,7 @@ export const AddIntegrationModal = ({
                 variant="destructive"
                 loading={isDeleting}
                 onClick={() => {
-                  deleteLink();
+                  void deleteLink();
                 }}>
                 {t("common.delete")}
               </Button>

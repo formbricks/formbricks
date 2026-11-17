@@ -535,7 +535,7 @@ describe("ordering rules (ENG-3069)", () => {
 
   const withHeadline = (blockIndex: number, headline: string) => {
     const survey = twoBlockSurvey();
-    survey.blocks[blockIndex].elements[0].headline = { "en-US": headline } as never;
+    survey.blocks[blockIndex].elements[0].headline = { "en-US": headline };
     return survey;
   };
 
@@ -1049,7 +1049,7 @@ describe("ordering rules (ENG-3069)", () => {
           ],
         } as never
       );
-      patch(survey.blocks.flatMap((block) => block.elements) as unknown as Record<string, unknown>[]);
+      patch(survey.blocks.flatMap((block) => block.elements));
       return survey;
     };
     // Flat order: first_q, brands, second_q, fav, poster.

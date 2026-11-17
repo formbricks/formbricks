@@ -52,10 +52,10 @@ const getRequestedScopes = (scope: string | null): string[] =>
 
 const getPublicOAuthClient = async (clientId: string): Promise<TOAuthPublicClient | null> => {
   try {
-    return (await auth.api.getOAuthClientPublic({
+    return await auth.api.getOAuthClientPublic({
       query: { client_id: clientId },
       headers: await headers(),
-    })) as TOAuthPublicClient;
+    });
   } catch {
     return null;
   }

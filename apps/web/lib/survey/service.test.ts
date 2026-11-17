@@ -492,6 +492,7 @@ describe("Tests for updateSurvey", () => {
         elements: Record<string, unknown>[];
       }[];
       const [firstElement, ...otherElements] = firstBlock.elements;
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       prisma.survey.findUnique.mockResolvedValueOnce({
         ...mockSurveyOutput,
         blocks: [
@@ -735,6 +736,7 @@ describe("Tests for updateSurvey", () => {
 
       await expect(
         updateSurveyInternal(
+          // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
           {
             ...updateSurveyInput,
             status: "draft",
@@ -809,6 +811,7 @@ describe("Tests for updateSurvey", () => {
       prisma.segment.findUnique.mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
       } as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as Awaited<
         ReturnType<typeof prisma.survey.update>
       >);
@@ -859,6 +862,7 @@ describe("Tests for updateSurvey", () => {
 
       await expect(
         updateSurveyInternal(
+          // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
           {
             ...updateSurveyInput,
             status: "draft",
@@ -892,6 +896,7 @@ describe("Tests for updateSurvey", () => {
 
       await expect(
         updateSurveyInternal(
+          // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
           {
             ...updateSurveyInput,
             status: "draft",
@@ -928,11 +933,13 @@ describe("Tests for updateSurvey", () => {
       prisma.survey.findMany.mockResolvedValueOnce([
         { id: connectedSurveyId, workspaceId: updateSurveyInput.workspaceId },
       ] as Awaited<ReturnType<typeof prisma.survey.findMany>>);
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as Awaited<
         ReturnType<typeof prisma.survey.update>
       >);
 
       await updateSurveyInternal(
+        // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
         {
           ...updateSurveyInput,
           status: "draft",
@@ -969,6 +976,7 @@ describe("Tests for updateSurvey", () => {
     // Archived surveys are read-only on every write path that flows through updateSurveyInternal
     // (editor save, summary status dropdown, v1/v3 update) — not just the v3 API layer.
     test("rejects updating an archived survey and does not write", async () => {
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       prisma.survey.findUnique.mockResolvedValueOnce({
         ...mockSurveyOutput,
         archivedAt: new Date(),
@@ -1100,15 +1108,18 @@ describe("Tests for updateSurvey", () => {
         // Draft + skipValidation is the survey editor's own save path, and the one that can send a
         // payload whose blocks differ from what ends up stored. ENG-1939/ENG-2115 gate BOTH sides of
         // the transition, so the stored survey and the payload both have to be drafts.
+        // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
         prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as Awaited<
           ReturnType<typeof prisma.survey.findUnique>
         >);
+        // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
         prisma.survey.update.mockResolvedValueOnce({
           ...mockSurveyOutput,
           blocks: persistedBlocks,
         } as Awaited<ReturnType<typeof prisma.survey.update>>);
 
         await updateSurveyInternal(
+          // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
           { ...updateSurveyInput, status: "draft", blocks: [] } as Parameters<typeof updateSurveyInternal>[0],
           true
         );
@@ -1320,6 +1331,7 @@ describe("Tests for updateSurvey", () => {
   test("a legacy write whose logic sets a variable the survey doesn't have is refused, and not written", async () => {
     prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
     const [firstBlock, ...otherBlocks] = updateSurveyInput.blocks;
+    // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
     const dangling = {
       ...updateSurveyInput,
       blocks: [
@@ -1352,6 +1364,7 @@ describe("Tests for updateSurvey", () => {
 
   describe("reserved names for newly declared fields", () => {
     test("rejects a save that ADDS a hidden field named after a reserved field, and does not write", async () => {
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       prisma.survey.findUnique.mockResolvedValueOnce({
         ...mockSurveyOutput,
         hiddenFields: { enabled: true, fieldIds: [] },
@@ -1410,6 +1423,7 @@ describe("Tests for updateSurvey", () => {
     });
 
     test("GRANDFATHER: a grandfathered survey may still not ADD a second reserved name", async () => {
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       prisma.survey.findUnique.mockResolvedValueOnce({
         ...mockSurveyOutput,
         hiddenFields: { enabled: true, fieldIds: ["country"] },
@@ -1785,6 +1799,7 @@ describe("Tests for createSurvey", () => {
 
       await createSurvey(
         mockWorkspaceId,
+        // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
         {
           ...mockCreateSurveyInput,
           questions: undefined,
@@ -2943,6 +2958,7 @@ describe("updateSurveyDraftAction", () => {
         prisma.survey.findUnique.mockResolvedValue({ ...mockSurveyOutput, status });
 
         await expect(
+          // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
           updateSurveyInternal({ ...updateSurveyInput, status: "draft" } as TSurvey, true)
         ).rejects.toThrow(OperationNotAllowedError);
         expect(prisma.survey.update).not.toHaveBeenCalled();
@@ -2957,6 +2973,7 @@ describe("updateSurveyDraftAction", () => {
       async (status) => {
         prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
 
+        // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
         await expect(updateSurveyInternal({ ...updateSurveyInput, status } as TSurvey, true)).rejects.toThrow(
           OperationNotAllowedError
         );
@@ -3036,6 +3053,7 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
         filters: storedFilters,
         surveys: connected.map((id) => ({ id })),
       } as unknown as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
+    // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
     prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as Awaited<
       ReturnType<typeof prisma.survey.update>
     >);

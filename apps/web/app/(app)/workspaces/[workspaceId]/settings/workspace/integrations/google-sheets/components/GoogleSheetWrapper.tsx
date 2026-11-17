@@ -60,11 +60,11 @@ export const GoogleSheetWrapper = ({
   }, [workspaceId, isConnected]);
 
   useEffect(() => {
-    validateConnection();
+    void validateConnection();
   }, [validateConnection]);
 
   const handleGoogleAuthorization = async () => {
-    authorize(workspaceId, webAppUrl).then((url: string) => {
+    void authorize(workspaceId, webAppUrl).then((url: string) => {
       if (url) {
         window.location.replace(url);
       }

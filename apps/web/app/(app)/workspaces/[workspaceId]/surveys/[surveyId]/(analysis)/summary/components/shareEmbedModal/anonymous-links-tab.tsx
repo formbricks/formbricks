@@ -410,7 +410,7 @@ export const AnonymousLinksTab = ({
           onOpenChange={() => setDisableLinkModal(null)}
           type={disableLinkModal.type}
           onDisable={() => {
-            disableLinkModal.pendingAction();
+            void disableLinkModal.pendingAction();
             setDisableLinkModal(null);
           }}
         />

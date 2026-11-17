@@ -171,7 +171,7 @@ const createPreviewElementByType = (type: TSurveyElementTypeEnum): TSurveyElemen
           id: `embed-survey-preview-picture-${index + 1}`,
           imageUrl,
         })),
-      } as TSurveyElement;
+      };
     case TSurveyElementTypeEnum.Cal:
       return {
         id: EMBED_SURVEY_PREVIEW_QUESTION_ID,
@@ -180,7 +180,7 @@ const createPreviewElementByType = (type: TSurveyElementTypeEnum): TSurveyElemen
         subheader: createI18nString("Book a time with us", []),
         required: false,
         calUserName: "demo-user",
-      } as TSurveyElement;
+      };
     case TSurveyElementTypeEnum.Date:
       return {
         id: EMBED_SURVEY_PREVIEW_QUESTION_ID,
@@ -188,7 +188,7 @@ const createPreviewElementByType = (type: TSurveyElementTypeEnum): TSurveyElemen
         headline: createI18nString(EMBED_SURVEY_PREVIEW_HEADLINE, []),
         required: true,
         format: "M-d-y",
-      } as TSurveyElement;
+      };
     case TSurveyElementTypeEnum.Matrix:
       return {
         id: EMBED_SURVEY_PREVIEW_QUESTION_ID,
@@ -204,7 +204,7 @@ const createPreviewElementByType = (type: TSurveyElementTypeEnum): TSurveyElemen
           id: `embed-survey-preview-column-${index + 1}`,
           label: createI18nString(label, []),
         })),
-      } as TSurveyElement;
+      };
     case TSurveyElementTypeEnum.Address:
       return {
         id: EMBED_SURVEY_PREVIEW_QUESTION_ID,
@@ -241,7 +241,7 @@ const createPreviewElementByType = (type: TSurveyElementTypeEnum): TSurveyElemen
           required: true,
           placeholder: createI18nString(EMBED_SURVEY_PREVIEW_ADDRESS_PLACEHOLDERS.country, []),
         },
-      } as TSurveyElement;
+      };
     case TSurveyElementTypeEnum.Ranking:
       return {
         id: EMBED_SURVEY_PREVIEW_QUESTION_ID,
@@ -253,7 +253,7 @@ const createPreviewElementByType = (type: TSurveyElementTypeEnum): TSurveyElemen
           id: `embed-survey-preview-ranking-${index + 1}`,
           label: createI18nString(choice, []),
         })),
-      } as TSurveyElement;
+      };
     case TSurveyElementTypeEnum.ContactInfo:
       return {
         id: EMBED_SURVEY_PREVIEW_QUESTION_ID,
@@ -285,7 +285,7 @@ const createPreviewElementByType = (type: TSurveyElementTypeEnum): TSurveyElemen
           required: false,
           placeholder: createI18nString(EMBED_SURVEY_PREVIEW_CONTACT_PLACEHOLDERS.company, []),
         },
-      } as TSurveyElement;
+      };
     case TSurveyElementTypeEnum.FileUpload:
       return {
         id: EMBED_SURVEY_PREVIEW_QUESTION_ID,
@@ -293,7 +293,7 @@ const createPreviewElementByType = (type: TSurveyElementTypeEnum): TSurveyElemen
         headline: createI18nString(EMBED_SURVEY_PREVIEW_HEADLINE, []),
         required: true,
         allowMultipleFiles: false,
-      } as TSurveyElement;
+      };
     case TSurveyElementTypeEnum.Signature:
       return {
         id: EMBED_SURVEY_PREVIEW_QUESTION_ID,
@@ -301,7 +301,7 @@ const createPreviewElementByType = (type: TSurveyElementTypeEnum): TSurveyElemen
         headline: createI18nString(EMBED_SURVEY_PREVIEW_HEADLINE, []),
         required: true,
         allowTypedSignature: true,
-      } as TSurveyElement;
+      };
     default:
       throw new Error(`Unsupported preview element type: ${type as string}`);
   }

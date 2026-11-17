@@ -214,7 +214,7 @@ export const updateCondition = (
     const item = group.conditions[i];
 
     if (item.id === resourceId && !("connector" in item)) {
-      group.conditions[i] = { ...item, ...condition } as TSingleCondition;
+      group.conditions[i] = { ...item, ...condition };
       return;
     }
 
@@ -373,7 +373,7 @@ const evaluateSingleCondition = (
     if (condition.leftOperand?.type === "element") {
       leftField = elements.find((q) => q.id === condition.leftOperand?.value) ?? "";
     } else if (condition.leftOperand?.type === "hiddenField") {
-      leftField = condition.leftOperand.value as string;
+      leftField = condition.leftOperand.value;
     } else {
       leftField = "";
     }
@@ -383,7 +383,7 @@ const evaluateSingleCondition = (
     if (condition.rightOperand?.type === "element") {
       rightField = elements.find((q) => q.id === condition.rightOperand?.value) ?? "";
     } else if (condition.rightOperand?.type === "hiddenField") {
-      rightField = condition.rightOperand.value as string;
+      rightField = condition.rightOperand.value;
     } else {
       rightField = "";
     }
@@ -399,7 +399,7 @@ const evaluateSingleCondition = (
       // key carries that raw string past the seam.
       (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
     ) {
-      rightValue = Number(rightValue as string);
+      rightValue = Number(rightValue);
     }
 
     // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
@@ -442,7 +442,7 @@ const evaluateSingleCondition = (
         if (condition.rightOperand?.type === "element") {
           if ((rightField as TSurveyElement).type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
             if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
-              return rightValue.includes(leftValue as string);
+              return rightValue.includes(leftValue);
             } else return false;
           } else if (
             (rightField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
@@ -487,7 +487,7 @@ const evaluateSingleCondition = (
         if (condition.rightOperand?.type === "element") {
           if ((rightField as TSurveyElement).type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
             if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
-              return !rightValue.includes(leftValue as string);
+              return !rightValue.includes(leftValue);
             } else return false;
           } else if (
             (rightField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&

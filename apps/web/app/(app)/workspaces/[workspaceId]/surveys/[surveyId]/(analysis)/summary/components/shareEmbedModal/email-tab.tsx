@@ -84,7 +84,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
       setEmailHtmlPreview(emailHtml?.data || "");
     };
 
-    getData();
+    void getData();
   }, [surveyId]);
 
   useEffect(() => {

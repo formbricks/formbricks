@@ -1294,7 +1294,7 @@ export const getResponsesForSummary = reactCache(
         updatedAt: responsePrisma.updatedAt,
         contact: responsePrisma.contact
           ? {
-              id: responsePrisma.contact.id as string,
+              id: responsePrisma.contact.id,
               userId: responsePrisma.contact.attributes.find(
                 (attribute) => attribute.attributeKey.key === "userId"
               )?.value as string,

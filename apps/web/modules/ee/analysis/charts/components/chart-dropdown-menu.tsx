@@ -150,7 +150,7 @@ export function ChartDropdownMenu({ workspaceId, chart, onEdit }: Readonly<Chart
               icon={<CopyIcon className="size-4" />}
               onClick={() => {
                 setIsDropDownOpen(false);
-                handleDuplicateChart();
+                void handleDuplicateChart();
               }}
               disabled={isDuplicating}>
               {t("common.duplicate")}

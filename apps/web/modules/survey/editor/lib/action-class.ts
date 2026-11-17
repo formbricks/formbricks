@@ -26,7 +26,7 @@ export const createActionClass = async (
     if (isUniqueConstraintError(error)) {
       const targetField = getUniqueConstraintFields(error)[0];
       throw new UniqueConstraintError(
-        `Action with ${targetField} ${targetField ? (actionClass as Record<string, unknown>)[targetField] : ""} already exists`
+        `Action with ${targetField} ${String(targetField ? (actionClass as Record<string, unknown>)[targetField] : "")} already exists`
       );
     }
 

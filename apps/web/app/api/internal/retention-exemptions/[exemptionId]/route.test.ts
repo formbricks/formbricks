@@ -42,7 +42,7 @@ const get = (exemptionId = EXEMPTION_ID) =>
     new NextRequest(`http://localhost/api/internal/retention-exemptions/${exemptionId}`, {
       headers: { "x-request-id": "req_1" },
     }),
-    { params: Promise.resolve({ exemptionId }) } as never
+    { params: Promise.resolve({ exemptionId }) }
   );
 
 const snapshot = async (response: Response) => ({

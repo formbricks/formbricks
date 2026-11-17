@@ -196,16 +196,15 @@ const previewDone = async (workspaceId: string, content: unknown) => {
   };
 };
 
-const auditLogStub = (): TV3AuditLog =>
-  ({
-    action: "created",
-    targetType: "survey",
-    userId: fixture.users.owner,
-    targetId: "unknown",
-    organizationId: "unknown",
-    status: "failure",
-    userType: "user",
-  }) as TV3AuditLog;
+const auditLogStub = (): TV3AuditLog => ({
+  action: "created",
+  targetType: "survey",
+  userId: fixture.users.owner,
+  targetId: "unknown",
+  organizationId: "unknown",
+  status: "failure",
+  userType: "user",
+});
 
 /** Create what a preview returned, as the dialog does: the draft without its workspace, and the references. */
 const commit = ({
