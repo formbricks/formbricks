@@ -58,7 +58,18 @@ const describeNeeds = (
  * pins every registered tool's permissions, and `feedback-records.test.ts` drives all ten tools with the
  * opposite scope.
  */
+/**
+ * The tools a Dashboard viewer may call through a dashboard, by its `dashboardId` (ADR-0025): a viewer
+ * refused one of them without it is told to pass one.
+ */
+const DASHBOARD_VIEWER_READS: ReadonlySet<string> = new Set([
+  "get_chart_data",
+  "list_dashboard_filter_fields",
+  "list_dashboard_filter_values",
+]);
+
 async function guardScopes(
+  toolName: string,
   requirements: readonly TMcpPermissionRequirement[],
   mode: "allOf" | "anyOf",
   authInfo: AuthInfo | undefined,
@@ -72,7 +83,9 @@ async function guardScopes(
   // A Dashboard viewer's scopes are the role's, not the client's: a reconnect can't widen them.
   if (isMcpDashboardViewerOnly(authInfo)) {
     return await responseToMcpToolResult(
-      createMcpRoleNotPermittedResponse(requestId, describeNeeds(missing, mode)),
+      createMcpRoleNotPermittedResponse(requestId, describeNeeds(missing, mode), {
+        readsThroughDashboard: DASHBOARD_VIEWER_READS.has(toolName),
+      }),
       requestId
     );
   }
@@ -224,13 +237,14 @@ const isOutsideMcpGrant = (
 };
 
 const guardPermissions = async (
+  toolName: string,
   permissions: TMcpToolPermissions,
   input: unknown,
   authInfo: AuthInfo | undefined,
   requestId: string
 ): Promise<CallToolResult | null> => {
   if ("anyOf" in permissions) {
-    const scopeError = await guardScopes(permissions.anyOf, "anyOf", authInfo, requestId);
+    const scopeError = await guardScopes(toolName, permissions.anyOf, "anyOf", authInfo, requestId);
     if (scopeError) return scopeError;
     // One permission must pass both halves: the grant is checked only for those the scopes reach, or a
     // token scoped to one permission and a grant giving another would together pass a tool neither gives.
@@ -247,7 +261,7 @@ const guardPermissions = async (
     );
   }
   return (
-    (await guardScopes(selected, "allOf", authInfo, requestId)) ??
+    (await guardScopes(toolName, selected, "allOf", authInfo, requestId)) ??
     (await guardGrant(selected, "allOf", authInfo, requestId))
   );
 };
@@ -318,7 +332,7 @@ export function registerMcpTool<
   const guardedHandler = (async (input: unknown, ctx: TMcpToolContext) => {
     const authInfo = getMcpToolAuthInfo(ctx);
     const requestId = getMcpRequestId(authInfo);
-    const scopeError = await guardPermissions(permissions, input, authInfo, requestId);
+    const scopeError = await guardPermissions(name, permissions, input, authInfo, requestId);
     if (scopeError) {
       if (audit) {
         await auditRefusedMutation(name, audit, input, authInfo, requestId);

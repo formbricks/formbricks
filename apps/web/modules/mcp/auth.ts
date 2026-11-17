@@ -770,10 +770,19 @@ export function createMcpScopeNotPermittedResponse(
  * can't help, and carries no `WWW-Authenticate` challenge: the role caps it, as the consent screen and
  * Edit say for the levels a viewer can't pick.
  */
-export function createMcpRoleNotPermittedResponse(requestId: string, needs: string): Response {
+export function createMcpRoleNotPermittedResponse(
+  requestId: string,
+  needs: string,
+  { readsThroughDashboard }: { readsThroughDashboard: boolean }
+): Response {
+  // Only a tool a viewer may call through a dashboard gets the dashboardId hint: for any other, there is
+  // nothing the client could pass that the role allows.
+  const hint = readsThroughDashboard
+    ? " A Dashboard viewer reads charts through a dashboard: pass its dashboardId."
+    : "";
   return problemForbidden(
     requestId,
-    `Not permitted: the user's Dashboard viewer role can't give this MCP client ${needs}, and reconnecting the client won't change that. A Dashboard viewer reads charts through a dashboard: pass its dashboardId.`,
+    `Not permitted: the user's Dashboard viewer role can't give this MCP client ${needs}, and reconnecting the client won't change that.${hint}`,
     "/api/mcp"
   );
 }

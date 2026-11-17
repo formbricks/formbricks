@@ -364,6 +364,22 @@ describe("chart and dashboard MCP tools", () => {
     expect(detail).not.toContain("reconnect the client and give it");
   });
 
+  // The dashboardId hint is for the tools a viewer reads through a dashboard; any other refusal names the
+  // role alone, since nothing the client could pass would help.
+  test("refuses a viewer a tool outside a dashboard read naming the role, with no dashboardId hint", async () => {
+    const result = await call(
+      "create_dashboard",
+      { workspaceId: WORKSPACE_ID, name: "Mine" },
+      ["dashboards:read"],
+      true
+    );
+    expect(result.isError).toBe(true);
+    const detail = JSON.stringify(result.structuredContent);
+    expect(detail).toContain("Dashboard viewer role");
+    expect(detail).not.toContain("dashboardId");
+    expect(detail).not.toContain("reconnect the client and give it");
+  });
+
   test("list_dashboards maps its filters and get_dashboard reads one, both under dashboards:read", async () => {
     vi.mocked(listV3Dashboards).mockResolvedValue(successResponse([], { requestId: "req" }));
     vi.mocked(getV3Dashboard).mockResolvedValue(successResponse({}, { requestId: "req" }));
