@@ -7,11 +7,12 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Switch } from "@/modules/ui/components/switch";
 import { useUpdateNotificationSetting } from "../hooks/use-notification-settings";
+import { type TNotificationSwitchType, getNotificationSwitchId } from "../lib/notification-switch-id";
 
 interface NotificationSwitchProps {
   readonly surveyOrWorkspaceOrOrganizationId: string;
   readonly notificationSettings: TUserNotificationSettings;
-  readonly notificationType: "alert" | "unsubscribedOrganizationIds";
+  readonly notificationType: TNotificationSwitchType;
   readonly autoDisableNotificationType?: string;
   readonly autoDisableNotificationElementId?: string;
 }
@@ -92,7 +93,7 @@ export const NotificationSwitch = ({
 
   return (
     <Switch
-      id="notification-switch"
+      id={getNotificationSwitchId(notificationType, surveyOrWorkspaceOrOrganizationId)}
       aria-label={`toggle notification settings for ${notificationType}`}
       checked={isChecked}
       disabled={updateSetting.isPending}
