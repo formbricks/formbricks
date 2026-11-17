@@ -52,6 +52,18 @@ const DEFAULT_MOCK_STORAGE_FILE_FIXTURE: MockStorageFileFixture = {
   ),
 };
 
+/**
+ * Clicks `trigger` until `target` shows. Server-rendered pages paint before they hydrate, and a click that
+ * lands first is dropped, so a single click followed by a visibility check can wait on a handler that
+ * never ran. Checking `target` first keeps it safe for a toggle.
+ */
+export const clickUntilVisible = async (trigger: Locator, target: Locator): Promise<void> => {
+  await expect(async () => {
+    if (!(await target.isVisible())) await trigger.click();
+    await expect(target).toBeVisible({ timeout: 3000 });
+  }).toPass({ timeout: 30_000 });
+};
+
 export const waitForSurveyCreateResponse = async (page: Page): Promise<string> => {
   const response = await page.waitForResponse((response) => {
     const url = new URL(response.url());
@@ -80,6 +92,10 @@ export const waitForSurveyEditor = async (
   if (!editorUrlPattern.test(`${currentUrl.pathname}${currentUrl.search}`)) {
     await page.waitForURL(editorUrlPattern);
   }
+  // The route has a loading skeleton, so the URL changes as soon as the skeleton shows, before the
+  // editor's data has loaded. Wait for the skeleton to go, with the navigation's budget rather than the
+  // 5 s assertion budget below: a cold editor under a full parallel suite can take longer than that.
+  await page.getByTestId("survey-editor-loading").waitFor({ state: "detached" });
 
   if (options.mode === "cx") {
     await expect(page).toHaveURL(
