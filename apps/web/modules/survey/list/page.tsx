@@ -12,15 +12,19 @@ import { SurveysList } from "@/modules/survey/list/components/survey-list";
 import { getSurveyVisibilityUiGate } from "@/modules/survey/visibility/lib/gate";
 import { getWorkspaceAuth } from "@/modules/workspaces/lib/utils";
 
-export const metadata: Metadata = {
-  title: "Your Surveys",
-};
-
 interface SurveyTemplateProps {
   readonly params: Promise<{
     workspaceId: string;
   }>;
 }
+
+// Runs the page's own access check first: a workspace the page 404s on (missing or not this user's)
+// then 404s here too, so the tab takes the not-found page's title rather than "Your Surveys".
+export const generateMetadata = async ({ params }: SurveyTemplateProps): Promise<Metadata> => {
+  await getWorkspaceAuth((await params).workspaceId);
+
+  return { title: "Your Surveys" };
+};
 
 export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) => {
   const publicDomain = getPublicDomain();
