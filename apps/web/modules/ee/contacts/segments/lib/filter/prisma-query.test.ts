@@ -22,7 +22,7 @@ vi.mock("../segments", () => ({
 }));
 
 vi.mock("react", () => ({
-  cache: (fn: Function) => fn,
+  cache: <T>(fn: T) => fn,
 }));
 
 describe("segmentFilterToPrismaQuery", () => {

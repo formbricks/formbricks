@@ -176,7 +176,7 @@ export const updateUser = async (
   }
 
   // Process contact attributes efficiently (single pass)
-  let contactAttributes = contactData.attributes.reduce(
+  const contactAttributes = contactData.attributes.reduce(
     (acc, ctx) => {
       acc[ctx.attributeKey.key] = ctx.value;
       return acc;

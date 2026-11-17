@@ -1065,7 +1065,7 @@ export const updateSurveyInternal = async (
     }
 
     data.questions = questions.map((question) => {
-      const { isDraft, ...rest } = question;
+      const { isDraft: _isDraft, ...rest } = question;
       return rest;
     });
 
@@ -1685,7 +1685,7 @@ export const createSurvey = async (
         );
 
     // TODO: Fix this, this happens because the survey type "web" is no longer in the zod types but its required in the schema for migration
-    // @ts-expect-error
+    // @ts-expect-error -- the Prisma row still carries the legacy "web" survey type (see the TODO above)
     const transformedSurvey: TSurvey = {
       // ENG-1837: this result is hand-built rather than routed through `transformPrismaSurvey`, so
       // the inlining has to happen here too — otherwise the raw relation leaks onto TSurvey. The

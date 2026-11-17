@@ -15,7 +15,7 @@ import { sonarParity } from "./sonar-parity.mjs";
  * nothing here replaces `eslint-config-prettier`.
  */
 
-export { compose, denyWarnings, downgradeToWarn, jsPlugins } from "./compose.mjs";
+export { compose, denyWarnings, jsPlugins } from "./compose.mjs";
 
 export const TYPESCRIPT_FILES = ["**/*.{ts,tsx,mts,cts}"];
 export const PLAIN_JS_FILES = ["**/*.{js,cjs,mjs}"];

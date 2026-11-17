@@ -523,7 +523,7 @@ export const formatSegmentDateFields = (segment: TSegment): TSegment => {
 };
 
 export const searchForAttributeKeyInSegment = (filters: TBaseFilters, attributeKey: string): boolean => {
-  for (let filter of filters) {
+  for (const filter of filters) {
     const { resource } = filter;
 
     if (isResourceFilter(resource)) {
@@ -550,7 +550,7 @@ export const searchForAttributeKeyInSegment = (filters: TBaseFilters, attributeK
 // check if a segment has a filter with "type" other than "attribute" or "person"
 // if it does, this is an advanced segment
 export const isAdvancedSegment = (filters: TBaseFilters): boolean => {
-  for (let filter of filters) {
+  for (const filter of filters) {
     const { resource } = filter;
 
     if (isResourceFilter(resource)) {

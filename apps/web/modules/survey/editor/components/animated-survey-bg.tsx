@@ -60,7 +60,11 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
   const togglePlayback = (index: number, type: "play" | "pause") => {
     const video = document.getElementById(`video-${index}`) as HTMLVideoElement;
     try {
-      type === "play" ? video.play() : video.pause();
+      if (type === "play") {
+        video.play();
+      } else {
+        video.pause();
+      }
     } catch (error) {
       console.error(error);
     }

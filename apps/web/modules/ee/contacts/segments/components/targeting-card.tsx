@@ -155,7 +155,7 @@ export function TargetingCard({
     try {
       const segmentResponse = await resetSegmentFiltersAction({ surveyId: localSurvey.id });
       return segmentResponse?.data;
-    } catch (err) {
+    } catch {
       toast.error(t("workspace.segments.error_resetting_filters"));
     }
   };

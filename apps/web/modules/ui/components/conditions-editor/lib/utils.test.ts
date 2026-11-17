@@ -41,7 +41,7 @@ describe("isConditionGroup", () => {
       id: "invalidGroup",
       connector: "and",
     };
-    // @ts-expect-error
+    // @ts-expect-error -- deliberately malformed condition group
     expect(isConditionGroup(invalidGroup)).toBe(false);
   });
 
@@ -51,7 +51,7 @@ describe("isConditionGroup", () => {
       connector: "and",
       conditions: "not-an-array",
     };
-    // @ts-expect-error
+    // @ts-expect-error -- deliberately malformed condition group
     expect(isConditionGroup(invalidGroup)).toBe(false);
   });
 });

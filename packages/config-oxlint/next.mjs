@@ -1,12 +1,4 @@
-import {
-  TYPESCRIPT_FILES,
-  base,
-  compose,
-  downgradeToWarn,
-  jsPlugins,
-  reactSettings,
-  unusedVarsOptions,
-} from "./base.mjs";
+import { TYPESCRIPT_FILES, base, compose, jsPlugins, reactSettings, unusedVarsOptions } from "./base.mjs";
 import {
   eslintRecommended,
   jsxA11yRecommended,
@@ -20,11 +12,11 @@ import { a11yParity, stagedSeverity } from "./sonar-parity.mjs";
  * Config for the Next.js app: eslint-config-next's rules + turbo + the vitest convention, with the
  * rule overrides the legacy config carried.
  *
- * The eslint/typescript-eslint recommended baselines are active but downgraded to warnings
- * (ENG-2264): apps/web was never linted against them, so the backlog is large and enabling them as
- * errors in one step would block every PR. Rules are promoted to "error" individually as their
- * violation count reaches zero. The type-aware rules (used by the library/react tiers) are not on
- * here yet; turning them on is part of ENG-7329.
+ * The eslint/typescript-eslint recommended baselines run at their upstream "error" (ENG-2264,
+ * ENG-7329). apps/web was never linted against them, so they started as warnings and were promoted as
+ * each backlog reached zero; a rule that still has one is listed at "warn" below, with its count.
+ * The type-aware rules (used by the library/react tiers) are not on here yet; turning them on is part
+ * of ENG-7329.
  */
 
 export const nextCacheRestriction = {
@@ -41,11 +33,13 @@ export const next = compose(
     env: { browser: true, node: true },
     settings: reactSettings,
     rules: {
-      ...downgradeToWarn(eslintRecommended),
-      ...downgradeToWarn(typescriptRecommended),
-      // Same underscore convention as the other tiers, at warning severity like the rest of the
-      // baseline; without the options, `_`-prefixed intentionally-unused bindings would be flagged.
-      "no-unused-vars": ["warn", unusedVarsOptions],
+      ...eslintRecommended,
+      ...typescriptRecommended,
+      // ~1,550 left, most of them in tests and mocks. Promote once it reaches zero.
+      "typescript/no-explicit-any": "warn",
+      // Same underscore convention as the other tiers; without the options, `_`-prefixed
+      // intentionally-unused bindings would be flagged.
+      "no-unused-vars": ["error", unusedVarsOptions],
       ...nextPreset,
       "nextjs/no-html-link-for-pages": "off",
       "react/jsx-key": "off",
@@ -63,7 +57,7 @@ export const next = compose(
         { elements: ["img", "object", "area", 'input[type="image"]'], img: ["Image"] },
       ],
     },
-    overrides: [{ files: TYPESCRIPT_FILES, rules: downgradeToWarn(typescriptFileOverrides) }],
+    overrides: [{ files: TYPESCRIPT_FILES, rules: typescriptFileOverrides }],
   },
   a11yParity(stagedSeverity())
 );
