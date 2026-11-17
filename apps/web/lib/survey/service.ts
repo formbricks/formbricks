@@ -1,7 +1,7 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type Survey as TPrismaSurveyRow } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import type { TCustomCssStored } from "@formbricks/types/custom-css";
@@ -449,6 +449,110 @@ export type TUpdateSurveyOptions = {
   customCssPrincipal?: string;
 };
 
+/** ENG-7127: what a survey save does with a key of its payload; see `SURVEY_SAVE_KEYS`. */
+type TSurveySaveKeyRole = "column" | "handler" | "derived" | "serverOwned";
+
+/**
+ * ENG-7127: what a survey save does with each key of its payload. The update `data` is built from the
+ * `column` keys and the handlers in `updateSurveyInternal` only, never by spreading the payload: the
+ * draft save's schema used to keep unknown keys, and a spread passed Prisma relation writes
+ * (`workspace`, `creator`, `owner`, `responses`, …) and raw foreign keys (`segmentId`) straight to
+ * `tx.survey.update`, writing rows outside the survey.
+ *
+ * - `column`: copied from the payload as given.
+ * - `handler`: written by its own code, which checks the ids: segment, languages, triggers and
+ *   follow-ups below, Embedded Data through `reconcileEmbeddedData`, custom CSS through the custom CSS
+ *   service (ENG-2949), and `questions`, stripped of `isDraft`.
+ * - `derived`: set by the save itself.
+ * - `serverOwned`: never written by a save. `archivedAt` belongs to archive and restore; the visibility
+ *   facts to the visibility endpoint, under the per-survey lock (ENG-3282).
+ *
+ * Every key of `TSurvey` must be listed, so a new survey field fails to compile until it is given one.
+ */
+const SURVEY_SAVE_KEYS = {
+  name: "column",
+  status: "column",
+  displayOption: "column",
+  autoClose: "column",
+  recontactDays: "column",
+  displayLimit: "column",
+  welcomeCard: "column",
+  blocks: "column",
+  endings: "column",
+  delay: "column",
+  autoComplete: "column",
+  workspaceOverwrites: "column",
+  styling: "column",
+  showLanguageSwitch: "column",
+  autoSelectLanguage: "column",
+  surveyClosedMessage: "column",
+  singleUse: "column",
+  isVerifyEmailEnabled: "column",
+  recaptcha: "column",
+  isBackButtonHidden: "column",
+  isAutoProgressingEnabled: "column",
+  isCaptureIpEnabled: "column",
+  isAnonymizeResponsesEnabled: "column",
+  pin: "column",
+  displayPercentage: "column",
+  metadata: "column",
+  slug: "column",
+  customHeadScripts: "column",
+  customHeadScriptsMode: "column",
+  type: "column",
+  questions: "handler",
+  triggers: "handler",
+  segment: "handler",
+  languages: "handler",
+  followUps: "handler",
+  embeddedFields: "handler",
+  variables: "handler",
+  hiddenFields: "handler",
+  customCss: "handler",
+  updatedAt: "derived",
+  publishOn: "derived",
+  closeOn: "derived",
+  id: "serverOwned",
+  workspaceId: "serverOwned",
+  createdAt: "serverOwned",
+  createdBy: "serverOwned",
+  archivedAt: "serverOwned",
+  visibility: "serverOwned",
+  ownerId: "serverOwned",
+  visibilityVersion: "serverOwned",
+  visibilityProjectedVersion: "serverOwned",
+  visibilityChangedAt: "serverOwned",
+  visibilityChangedById: "serverOwned",
+} as const satisfies Record<keyof TSurvey, TSurveySaveKeyRole>;
+
+type TSurveySaveColumn = {
+  [K in keyof typeof SURVEY_SAVE_KEYS]: (typeof SURVEY_SAVE_KEYS)[K] extends "column" ? K : never;
+}[keyof typeof SURVEY_SAVE_KEYS];
+
+/**
+ * A `column` must be a plain column: a field of the `Survey` row, which has no relations, that
+ * `Prisma.SurveyUpdateInput` also takes, which has no foreign keys. A relation or foreign key marked
+ * `column` fails to compile here.
+ */
+const asSurveyUpdateColumns = <K extends keyof TPrismaSurveyRow & keyof Prisma.SurveyUpdateInput>(
+  columns: K[]
+): readonly K[] => columns;
+
+const SURVEY_SAVE_COLUMNS = asSurveyUpdateColumns<TSurveySaveColumn>(
+  (Object.keys(SURVEY_SAVE_KEYS) as (keyof typeof SURVEY_SAVE_KEYS)[]).filter(
+    (key): key is TSurveySaveColumn => SURVEY_SAVE_KEYS[key] === "column"
+  )
+);
+
+/** ENG-7127: the payload's values for the `column` keys of `SURVEY_SAVE_KEYS`, and nothing else from it. */
+const pickSurveySaveColumns = (survey: TSurvey): Partial<Pick<TSurvey, TSurveySaveColumn>> => {
+  const columns: Partial<Record<TSurveySaveColumn, unknown>> = {};
+  for (const column of SURVEY_SAVE_COLUMNS) {
+    if (Object.hasOwn(survey, column)) columns[column] = survey[column];
+  }
+  return columns as Partial<Pick<TSurvey, TSurveySaveColumn>>;
+};
+
 export const updateSurveyInternal = async (
   updatedSurvey: TSurvey,
   skipValidation = false,
@@ -480,6 +584,8 @@ export const updateSurveyInternal = async (
     // so an authorized editor cannot re-point their own survey into another workspace/organization.
     const actionClasses = await getActionClasses(currentSurvey.workspaceId);
 
+    // ENG-7127: only these keys are read from the payload, each by its own handler below; the scalar
+    // columns come from `pickSurveySaveColumns`. Nothing else in the payload reaches the write.
     const {
       triggers,
       segment,
@@ -487,31 +593,10 @@ export const updateSurveyInternal = async (
       languages,
       type,
       followUps,
-      workspaceId: _workspaceId,
-      id: _id,
-      // archivedAt is owned exclusively by the archive/restore flows; never let a survey update touch it.
-      archivedAt: _archivedAt,
-      // ENG-3228: `embeddedFields` is now accepted input as well as a read projection, but it is
-      // still never spread into Prisma — `surveyData` goes straight into `tx.survey.update`'s
-      // `data`, and `Survey` owns relations named `embeddedData` / `embeddedDataLinks`, so leaving
-      // it in would turn the payload into a nested relation write. It reaches the database through
-      // `reconcileEmbeddedData` alone. ENG-2404: so do the two legacy keys, which have no column any
-      // more — Prisma would refuse them as unknown arguments.
       embeddedFields,
       variables,
       hiddenFields,
-      // ENG-3282: authorization facts are server-owned. Visibility changes go through the dedicated
-      // endpoint under the per-survey lock; a survey save must never write them, or it would race it.
-      visibility: _visibility,
-      ownerId: _ownerId,
-      visibilityVersion: _visibilityVersion,
-      visibilityProjectedVersion: _visibilityProjectedVersion,
-      visibilityChangedAt: _visibilityChangedAt,
-      visibilityChangedById: _visibilityChangedById,
-      // ENG-2949: never spread. Only its source is read, and it reaches the row through the shared
-      // custom CSS service below, so a caller's compiled CSS or processor version is never stored.
       customCss,
-      ...surveyData
     } = updatedSurvey;
 
     // **Every Embedded Data refusal, before anything is written.** The segment block below writes
@@ -564,7 +649,7 @@ export const updateSurveyInternal = async (
     //   - persisted status (ENG-1939): stops a caller pushing invalid blocks onto a live survey and
     //     silently reverting it to draft, stopping it from collecting responses.
     //   - payload status (ENG-2115): stops a caller publishing a draft that never passed ZSurvey.
-    //     `status` is not destructured out of surveyData below, so it flows straight to the write.
+    //     `status` is one of `SURVEY_SAVE_COLUMNS`, so it flows straight to the write.
     // Deliberately placed after the ENG-1749 tenant guards so a cross-workspace attempt still reports
     // the authorization failure first, and before prisma.survey.update so nothing is persisted.
     if (skipValidation && (currentSurvey.status !== "draft" || updatedSurvey.status !== "draft")) {
@@ -860,26 +945,23 @@ export const updateSurveyInternal = async (
 
     const normalizedScheduling = normalizeSurveyScheduling({
       currentStatus: currentSurvey.status,
-      closeOn: surveyData.closeOn,
-      publishOn: surveyData.publishOn,
+      closeOn: updatedSurvey.closeOn,
+      publishOn: updatedSurvey.publishOn,
       status: updatedSurvey.status,
     });
 
-    surveyData.updatedAt = new Date();
-    surveyData.publishOn = normalizedScheduling.publishOn;
-    surveyData.closeOn = normalizedScheduling.closeOn;
-
     data = {
-      ...surveyData,
+      ...pickSurveySaveColumns(updatedSurvey),
       ...data,
-      type,
+      updatedAt: new Date(),
+      publishOn: normalizedScheduling.publishOn,
+      closeOn: normalizedScheduling.closeOn,
     };
 
     if (customCssWrite?.changed) {
       data.customCss = customCssWrite.stored ?? Prisma.DbNull;
     }
 
-    delete data.createdBy;
     const persistedSurvey = await prisma.$transaction(
       async (tx) => {
         // Narrow select: what this update returns would describe the survey before the reconcile
