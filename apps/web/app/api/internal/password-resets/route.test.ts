@@ -8,7 +8,7 @@ import {
   PASSWORD_COMPROMISED_ERROR_CODE,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
-import { EMAILED_TOKEN_MAX } from "@/app/api/internal/lib/limits";
+import { EMAILED_TOKEN_MAX, PRE_LOGIN_BODY_LIMIT_BYTES } from "@/app/api/internal/lib/limits";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
@@ -152,6 +152,11 @@ describe("POST /api/internal/password-resets", () => {
     expect(mocks.resetPassword).toHaveBeenCalledWith(
       expect.objectContaining({ body: { token, newPassword: BODY.password } })
     );
+  });
+
+  test(`refuses a body over ${PRE_LOGIN_BODY_LIMIT_BYTES} bytes with 413`, async () => {
+    expect((await reset({ ...BODY, token: "t".repeat(PRE_LOGIN_BODY_LIMIT_BYTES) })).status).toBe(413);
+    expect(mocks.resetPassword).not.toHaveBeenCalled();
   });
 
   test("refuses a cross-site request (CSRF), though there is no session to ride", async () => {

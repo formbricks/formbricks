@@ -575,6 +575,31 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     expect(mocks.updateSegment).not.toHaveBeenCalled();
   });
 
+  test("answers 409 to a rename onto another segment's title", async () => {
+    mocks.updateSegment.mockRejectedValue(new DatabaseError("Unique constraint failed"));
+    mocks.countSegments.mockResolvedValue(1);
+
+    const response = await update({ title: "Taken" });
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).detail).toBe(
+      "A segment with this title already exists in this workspace."
+    );
+  });
+
+  test("lets a failed update through as a 500 when only the segment itself holds the title", async () => {
+    mocks.updateSegment.mockRejectedValue(new DatabaseError("connection reset"));
+    // Counts the segment itself unless the rename check excludes it.
+    mocks.countSegments.mockImplementation(async ({ where }: { where: { id?: { not: string } } }) =>
+      where.id?.not === SEGMENT_ID ? 0 : 1
+    );
+
+    expect((await update({ title: "Renamed" })).status).toBe(500);
+    expect(mocks.countSegments).toHaveBeenCalledWith({
+      where: { workspaceId: WORKSPACE_ID, title: "Renamed", id: { not: SEGMENT_ID } },
+    });
+  });
+
   test("answers 422 with the reason for a filter that refers to the segment itself", async () => {
     mocks.checkForRecursiveSegmentFilter.mockRejectedValue(
       new InvalidInputError("Recursive segment filter is not allowed")

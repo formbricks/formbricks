@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   ORG_ID,
   STATE_MUTATION,
+  USER_ID,
   billingMocks as mocks,
   operationLimits,
   queuedAudit,
@@ -60,6 +61,10 @@ describe("POST /api/internal/organizations/{organizationId}/billing/payment-meth
     const response = await send();
 
     expect((await response.json()).data).toEqual({ hasPaymentMethod: true });
+    expect(mocks.can).toHaveBeenCalledWith({ type: "user", id: USER_ID }, "organization.manage_billing", {
+      type: "organization",
+      id: ORG_ID,
+    });
     expect(operationLimits()).toEqual([STATE_MUTATION]);
     expect(mocks.syncOrganizationBillingFromStripeExclusively).toHaveBeenCalledTimes(1);
     expect(queuedAudit()).toMatchObject({

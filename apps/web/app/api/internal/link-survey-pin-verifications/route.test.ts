@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import { PRE_LOGIN_BODY_LIMIT_BYTES } from "@/app/api/internal/lib/limits";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { generateSurveySingleUseLinkParams } from "@/lib/utils/single-use-surveys";
 import { applyIPRateLimit } from "@/modules/core/rate-limit/helpers";
@@ -354,6 +355,13 @@ describe("POST /api/internal/link-survey-pin-verifications — input", () => {
     expect((await validatePinWith("1234", { suId: "a".repeat(255), suToken: "a".repeat(64) })).status).toBe(
       200
     );
+  });
+
+  test(`refuses a body over ${PRE_LOGIN_BODY_LIMIT_BYTES} bytes with 413`, async () => {
+    expect((await validatePinWith("1234", { suId: "a".repeat(PRE_LOGIN_BODY_LIMIT_BYTES) })).status).toBe(
+      413
+    );
+    expect(getSurveyWithMetadata).not.toHaveBeenCalled();
   });
 
   test("refuses an over-long PIN and an unknown key", async () => {

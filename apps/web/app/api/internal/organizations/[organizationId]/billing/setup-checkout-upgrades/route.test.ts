@@ -3,6 +3,7 @@ import { OperationNotAllowedError } from "@formbricks/types/errors";
 import {
   ORG_ID,
   STATE_MUTATION,
+  USER_ID,
   billingMocks as mocks,
   operationLimits,
   queuedAudit,
@@ -65,6 +66,10 @@ describe("POST /api/internal/organizations/{organizationId}/billing/setup-checko
       requiresAction: false,
       targetPlan: "pro",
     });
+    expect(mocks.can).toHaveBeenCalledWith({ type: "user", id: USER_ID }, "organization.manage_billing", {
+      type: "organization",
+      id: ORG_ID,
+    });
     expect(operationLimits()).toEqual([STATE_MUTATION]);
     expect(mocks.withOrganizationBillingLock).toHaveBeenCalledWith(
       ORG_ID,
@@ -114,6 +119,15 @@ describe("POST /api/internal/organizations/{organizationId}/billing/setup-checko
   test("answers 409 while another billing change holds the lock", async () => {
     mocks.withOrganizationBillingLock.mockResolvedValue({ ran: false });
     expect((await send()).status).toBe(409);
+    expect(mocks.applySetupCheckoutUpgrade).not.toHaveBeenCalled();
+  });
+
+  test("refuses a caller who can't manage billing, before any budget, lock or Stripe call", async () => {
+    mocks.can.mockResolvedValue(false);
+
+    expect((await send()).status).toBe(403);
+    expect(operationLimits()).toEqual([]);
+    expect(mocks.withOrganizationBillingLock).not.toHaveBeenCalled();
     expect(mocks.applySetupCheckoutUpgrade).not.toHaveBeenCalled();
   });
 

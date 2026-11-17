@@ -3,6 +3,7 @@ import {
   INTENT_KEY,
   ORG_ID,
   STATE_MUTATION,
+  USER_ID,
   billingOrganization,
   billingMocks as mocks,
   operationLimits,
@@ -58,6 +59,10 @@ describe("POST /api/internal/organizations/{organizationId}/billing/setup-checko
 
     expect(response.status).toBe(200);
     expect((await response.json()).data).toEqual({ url: "https://checkout.stripe.test/setup" });
+    expect(mocks.can).toHaveBeenCalledWith({ type: "user", id: USER_ID }, "organization.manage_billing", {
+      type: "organization",
+      id: ORG_ID,
+    });
     expect(operationLimits()).toEqual([STATE_MUTATION]);
     expect(mocks.createSetupCheckoutSession).toHaveBeenCalledWith(
       "cus_1",
