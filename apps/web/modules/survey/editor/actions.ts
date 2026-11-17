@@ -26,6 +26,7 @@ import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { createActionClass } from "@/modules/survey/editor/lib/action-class";
 import { checkExternalUrlsPermission } from "@/modules/survey/editor/lib/check-external-urls-permission";
+import { getLanguageAddedEvents } from "@/modules/survey/editor/lib/language-added-events";
 import { updateSurvey, updateSurveyDraft } from "@/modules/survey/editor/lib/survey";
 import { ZSurveyDraft } from "@/modules/survey/editor/types/survey";
 import { getSurveyFollowUpsPermission } from "@/modules/survey/follow-ups/lib/utils";
@@ -41,38 +42,6 @@ type SurveyEditDiffContext = {
   surveyId: string;
   organizationId: string;
   workspaceId: string;
-};
-
-/**
- * survey_language_enabled / survey_language_added: the first language added to a single-language
- * survey enables multi-language, every other one is an addition. Each event carries the language
- * count before it.
- */
-const captureLanguageAddedEvents = (
-  oldSurvey: TSurvey,
-  newSurvey: TSurvey,
-  context: SurveyEditDiffContext,
-  baseProps: { organization_id: string; workspace_id: string; survey_id: string }
-): void => {
-  const groupContext = { organizationId: context.organizationId, workspaceId: context.workspaceId };
-  const oldLanguages = oldSurvey.languages ?? [];
-  const newLanguages = newSurvey.languages ?? [];
-  const oldLanguageCodes = new Set(oldLanguages.map((l) => l.language.code));
-  const addedLanguages = newLanguages.filter((l) => !oldLanguageCodes.has(l.language.code));
-  const wasMultiLangBefore = oldLanguages.length > 1;
-
-  addedLanguages.forEach((lang, index) => {
-    capturePostHogEvent(
-      context.userId,
-      !wasMultiLangBefore && index === 0 ? "survey_language_enabled" : "survey_language_added",
-      {
-        ...baseProps,
-        language_code: lang.language.code,
-        existing_language_count: oldLanguages.length + index,
-      },
-      groupContext
-    );
-  });
 };
 
 const captureSurveyEditDiffEvents = (
@@ -135,7 +104,14 @@ const captureSurveyEditDiffEvents = (
   }
 
   // survey_language_enabled / survey_language_added
-  captureLanguageAddedEvents(oldSurvey, newSurvey, context, baseProps);
+  for (const { event, languageCode, existingLanguageCount } of getLanguageAddedEvents(oldSurvey, newSurvey)) {
+    capturePostHogEvent(
+      context.userId,
+      event,
+      { ...baseProps, language_code: languageCode, existing_language_count: existingLanguageCount },
+      groupContext
+    );
+  }
 
   // follow_up_added
   const oldFollowUpIds = new Set((oldSurvey.followUps ?? []).map((f) => f.id));
