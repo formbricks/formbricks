@@ -81,6 +81,14 @@ function ImageLightbox({
         event.stopPropagation();
         onClose();
       }}
+      // A close request that skips keydown (Android Back, a close watcher) fires `cancel` on its own.
+      // Route it through onClose too, so the parent's state is cleared and the same or another image
+      // can be opened again. If the browser makes the request uncancelable, the dialog closes natively
+      // and the re-render unmounts it.
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
