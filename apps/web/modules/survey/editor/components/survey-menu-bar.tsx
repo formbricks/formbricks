@@ -57,6 +57,7 @@ import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { saveSurvey, saveSurveyDraft } from "../lib/api-client";
 import { type TAutoSaveFailure } from "../lib/auto-save-badge";
+import { createAutoSaveInFlight } from "../lib/auto-save-in-flight";
 import { createSaveAttemptOrder } from "../lib/save-attempt-order";
 import { describeElementIssue, isMissingRequiredTrigger, isSurveyValid } from "../lib/validation";
 import { AutoSaveIndicator } from "./auto-save-indicator";
@@ -153,6 +154,8 @@ export const SurveyMenuBar = ({
   // arrives last. Saves are plain requests, so they can overlap and settle in any order; see
   // save-attempt-order.ts. One ordering per editor.
   const [saveAttemptOrder] = useState(createSaveAttemptOrder);
+  // The tick in flight, which a manual save, publish or schedule waits out before it sends.
+  const [autoSaveInFlight] = useState(createAutoSaveInFlight);
   const isSuccessfullySavedRef = useRef(false);
   const isAutoSavingRef = useRef(false);
   const isSurveyPublishingRef = useRef(false);
@@ -547,7 +550,7 @@ export const SurveyMenuBar = ({
     // Only set up interval for draft surveys
     if (localSurvey.status !== "draft" || localSurvey.publishOn !== null) return;
 
-    const intervalId = setInterval(async () => {
+    const runTick = async () => {
       // Skip if tab is not visible (no computation, no API calls for background tabs)
       if (document.hidden) return;
 
@@ -634,10 +637,23 @@ export const SurveyMenuBar = ({
       } finally {
         isAutoSavingRef.current = false;
       }
-    }, 10000);
+    };
+
+    const intervalId = setInterval(() => autoSaveInFlight.track(runTick()), 10000);
 
     return () => clearInterval(intervalId);
-  }, [localSurvey.publishOn, localSurvey.status, saveAttemptOrder, setLocalSurvey]);
+  }, [autoSaveInFlight, localSurvey.publishOn, localSurvey.status, saveAttemptOrder, setLocalSurvey]);
+
+  /**
+   * Hold new ticks off and wait out the one in flight, so the save that follows is the last write the
+   * server sees. Server actions went one at a time; these requests overlap. The ref is set here rather than
+   * left to the effect that mirrors `isSurveySaving`, so a tick cannot start before that effect runs; the
+   * caller clears it when it is done.
+   */
+  const waitOutAutoSave = async () => {
+    isSurveySavingRef.current = true;
+    await autoSaveInFlight.settled();
+  };
 
   /**
    * What a failed save says: the server's reason for a refusal, as the toast showed it before, or
@@ -670,6 +686,7 @@ export const SurveyMenuBar = ({
     if (blockOnInvalidCustomCss()) return false;
 
     setIsSurveySaving(true);
+    await waitOutAutoSave();
     const attempt = saveAttemptOrder.begin();
 
     try {
@@ -691,6 +708,8 @@ export const SurveyMenuBar = ({
       saveAttemptOrder.settle(attempt);
       toast.error(describeSaveFailure(e, t("workspace.surveys.edit.error_saving_changes")));
       return false;
+    } finally {
+      isSurveySavingRef.current = false;
     }
   };
 
@@ -727,6 +746,7 @@ export const SurveyMenuBar = ({
 
       localSurvey.endings = parseSurveyEndings(localSurvey.endings);
 
+      await waitOutAutoSave();
       attempt = saveAttemptOrder.begin();
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
@@ -754,6 +774,8 @@ export const SurveyMenuBar = ({
       if (attempt !== undefined) saveAttemptOrder.settle(attempt);
       toastSaveRefusal(describeSaveFailure(e, t("workspace.surveys.edit.error_saving_changes")));
       return false;
+    } finally {
+      isSurveySavingRef.current = false;
     }
   };
 
@@ -803,6 +825,8 @@ export const SurveyMenuBar = ({
         return;
       }
       const status = "inProgress";
+      // `isSurveyPublishingRef` already holds new ticks off; wait out the one in flight.
+      await autoSaveInFlight.settled();
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
@@ -857,6 +881,7 @@ export const SurveyMenuBar = ({
         return;
       }
       const status = "paused";
+      await autoSaveInFlight.settled();
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
