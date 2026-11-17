@@ -86,7 +86,7 @@ export const getUserLocale = async (userId: string): Promise<TUserLocale> => {
  * removed, and the session DAL (`session.ts`) reads Better Auth only — no dual-read, so the flip is
  * a one-time forced re-login.
  *
- * Field mappings target the EXISTING Prisma columns (packages/database/schema.prisma), verified
+ * Field mappings target the EXISTING Prisma columns (packages/database/schema/main.prisma), verified
  * against better-auth@1.6.18 `getAuthTables` (design doc §11). With Redis `secondaryStorage`
  * configured, BA skips the DB session/verification tables unless told otherwise — so
  * `session.storeSessionInDatabase` is set (the forward-auth proxies need DB sessions); verification

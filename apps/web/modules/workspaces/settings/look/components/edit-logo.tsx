@@ -131,45 +131,42 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
 
   return (
     <>
-      <div className="w-full space-y-8" id="edit-logo">
-        {logoUrl ? (
-          <Image
-            src={logoUrl}
-            alt="Logo"
-            width={256}
-            height={56}
-            style={{ backgroundColor: logoBgColor || undefined }}
-            className="-mb-6 h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
-            unoptimized={isExternalImageSrc(logoUrl)}
-          />
-        ) : (
-          <FileInput
-            id="logo-input"
-            allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
-            workspaceId={workspaceId}
-            onFileUpload={(files: string[] | undefined, _fileType: "image" | "video") => {
-              if (files?.[0]) {
-                setLogoUrl(files[0]);
-                setIsEditing(true);
-              }
-            }}
-            disabled={isReadOnly}
-            maxSizeInMB={5}
-            isStorageConfigured={isStorageConfigured}
-          />
-        )}
+      <div className="flex w-full flex-col gap-8" id="edit-logo">
+        <div className="flex flex-col items-start gap-2">
+          {logoUrl ? (
+            <Image
+              src={logoUrl}
+              alt="Logo"
+              width={256}
+              height={56}
+              style={{ backgroundColor: logoBgColor || undefined }}
+              className="h-20 w-auto max-w-64 rounded-lg border object-contain p-1"
+              unoptimized={isExternalImageSrc(logoUrl)}
+            />
+          ) : (
+            <FileInput
+              id="logo-input"
+              allowedFileExtensions={["png", "jpeg", "jpg", "webp", "heic"]}
+              workspaceId={workspaceId}
+              onFileUpload={(files: string[] | undefined, _fileType: "image" | "video") => {
+                if (files?.[0]) {
+                  setLogoUrl(files[0]);
+                  setIsEditing(true);
+                }
+              }}
+              disabled={isReadOnly}
+              maxSizeInMB={5}
+              isStorageConfigured={isStorageConfigured}
+            />
+          )}
 
-        <Input
-          ref={fileInputRef}
-          type="file"
-          accept="image/jpeg, image/png, image/webp, image/heic"
-          className="hidden"
-          disabled={isReadOnly}
-          onChange={handleFileChange}
-        />
+          {logoUrl && !isEditing && (
+            <Button onClick={saveChanges} disabled={isLoading || isReadOnly} size="sm">
+              {t("common.edit")}
+            </Button>
+          )}
 
-        {isEditing && logoUrl && (
-          <>
+          {logoUrl && isEditing && (
             <div className="flex gap-2">
               <Button
                 onClick={() => {
@@ -191,6 +188,20 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
                 {t("workspace.look.remove_logo")}
               </Button>
             </div>
+          )}
+        </div>
+
+        <Input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg, image/png, image/webp, image/heic"
+          className="hidden"
+          disabled={isReadOnly}
+          onChange={handleFileChange}
+        />
+
+        {isEditing && logoUrl && (
+          <>
             <AdvancedOptionToggle
               isChecked={isBgColorEnabled}
               onToggle={toggleBackgroundColor}
@@ -211,12 +222,10 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
                 </div>
               )}
             </AdvancedOptionToggle>
+            <Button onClick={saveChanges} disabled={isLoading || isReadOnly} size="sm" className="self-start">
+              {t("common.save")}
+            </Button>
           </>
-        )}
-        {logoUrl && (
-          <Button onClick={saveChanges} disabled={isLoading || isReadOnly} size="sm">
-            {isEditing ? t("common.save") : t("common.edit")}
-          </Button>
         )}
         <DeleteDialog
           open={confirmRemoveLogoModalOpen}

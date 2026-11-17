@@ -35,6 +35,7 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   "me.com",
   "mac.com",
   "privaterelay.appleid.com",
+  "private.icloud.com", // Sign in with Apple relay domain for newly issued addresses
   // Privacy-focused / relay
   "proton.me",
   "protonmail.com",
@@ -71,6 +72,7 @@ export const PERSONAL_EMAIL_DOMAINS: readonly string[] = [
   "tmpmailtor.com",
   "allwebemails.com",
   "oemails.com", // Cloudflare-routed throwaway domain, flagged disposable by verifymail.io / UserCheck
+  "consultant.com",
   // Other mainstream / international
   "gmx.com",
   "gmx.net",

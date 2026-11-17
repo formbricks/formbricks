@@ -156,6 +156,9 @@ describe("PUT /api/internal/organizations/{organizationId}/email-logo", () => {
     ["a non-string logo URL", { logoUrl: 42 }],
     ["an unknown key", { logoUrl: LOGO_URL, faviconUrl: LOGO_URL }],
     ["a logo URL past the cap", { logoUrl: `/storage/${"a".repeat(WHITELABEL_IMAGE_URL_MAX_LENGTH)}` }],
+    // `ZStorageUrl`: only a storage path or an http(s) URL; the logo is rendered into every email's `src`.
+    ["a script URL", { logoUrl: "javascript:alert(1)" }],
+    ["a URL that is neither a storage path nor http(s)", { logoUrl: "logo.png" }],
   ])("answers 400 for %s", async (_label, body) => {
     expect((await put(body)).status).toBe(400);
     expect(mocks.updateOrganizationEmailLogoUrl).not.toHaveBeenCalled();
