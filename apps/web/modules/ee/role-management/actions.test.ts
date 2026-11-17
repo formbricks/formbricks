@@ -146,10 +146,12 @@ describe("updateMembershipAction", () => {
 
   test("demotes an owner under the owners' lock when the organization has another owner", async () => {
     await expect(callUpdateMembership("member")).resolves.toMatchObject({ role: "member" });
+    // A demotion can end the user's MCP grants, which may wait on a reconciling pass: the Revoke timeout.
     expect(mocks.runOwnerGuardedTransaction).toHaveBeenCalledWith(
       organizationId,
       targetUserId,
-      expect.any(Function)
+      expect.any(Function),
+      { timeout: 35_000 }
     );
     expect(mocks.updateMembershipInTransaction).toHaveBeenCalledWith(
       { stand: "tx" },

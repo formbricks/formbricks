@@ -4,6 +4,7 @@ import { logger } from "@formbricks/logger";
 import type { Account } from "@formbricks/types/auth";
 import { SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE } from "@formbricks/types/errors";
 import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createEmailToken } from "@/lib/jwt";
@@ -641,27 +642,31 @@ export const completeSsoRecovery = async ({
     throw new SsoRecoveryError("rejected", intent.callbackUrl);
   }
 
-  const reclaimed = await prisma.$transaction(async (tx) => {
-    const outcome = await reclaimUnverifiedLocalAuthIfNeeded({
-      tx,
-      user,
-    });
+  const reclaimed = await prisma.$transaction(
+    async (tx) => {
+      const outcome = await reclaimUnverifiedLocalAuthIfNeeded({
+        tx,
+        user,
+      });
 
-    const recoveryAccount: TSsoAccountLinkInput = {
-      type: "oauth",
-      provider,
-      providerAccountId: intent.providerAccountId,
-    };
+      const recoveryAccount: TSsoAccountLinkInput = {
+        type: "oauth",
+        provider,
+        providerAccountId: intent.providerAccountId,
+      };
 
-    await syncSsoIdentityForUser({
-      userId: user.id,
-      provider,
-      account: recoveryAccount,
-      tx,
-    });
+      await syncSsoIdentityForUser({
+        userId: user.id,
+        provider,
+        account: recoveryAccount,
+        tx,
+      });
 
-    return outcome;
-  });
+      return outcome;
+      // It may end the user's MCP grants, whose rows a reconciling pass can hold: the Revoke timeout.
+    },
+    { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
+  );
 
   // Single use, applied at the only point where it is safe to: the link has committed, so the intent
   // has done its job and a replay would only redo work. Not on read — see the note above the read.

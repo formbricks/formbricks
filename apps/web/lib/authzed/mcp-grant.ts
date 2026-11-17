@@ -12,6 +12,7 @@ import { getMcpGrantSelectedIds } from "@/modules/mcp/grant-access";
 import { type TAuthzedRelationship, type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
+import { MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS } from "./mcp-grant-timeouts";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
   AuthzedProjectionUnstableError,
@@ -42,12 +43,6 @@ export type TProjectedMcpGrant = Readonly<{ id: string } & TMcpGrantAccessSelect
 
 type TGrantSnapshot = ReadonlyArray<TProjectedMcpGrant>;
 
-/**
- * How long one reconciling pass may hold its grants' row locks, SpiceDB round trips included. A path that
- * locks a grant row `FOR UPDATE` (a save, a Revoke) can wait this long behind one, so its own transaction
- * timeout allows for it (`grant-store.ts`).
- */
-export const MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS = 30_000;
 const MCP_GRANT_PROJECTION_TRANSACTION_MAX_WAIT_MS = 10_000;
 
 /**

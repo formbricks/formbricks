@@ -5,6 +5,7 @@ import { ZId, ZUuid } from "@formbricks/types/common";
 import { AuthenticationError, ValidationError } from "@formbricks/types/errors";
 import { ZMembershipUpdateInput } from "@formbricks/types/memberships";
 import { assertCan } from "@/lib/authorization";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { assertUserManagementAllowed } from "@/lib/membership/user-management";
 import { lockUserActiveState } from "@/lib/user/reactivation";
@@ -95,7 +96,9 @@ const demoteOwner = async (
         // and consent rows.
         await lockUserActiveState(tx, userId);
         return updateMembershipInTransaction(tx, userId, organizationId, data);
-      }
+      },
+      // A demotion to Dashboard viewer ends the user's MCP grants, which can wait on a reconciling pass.
+      { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
     );
     await finishRevokedMcpGrants(grantAudits, { actorUserId });
     return membership;

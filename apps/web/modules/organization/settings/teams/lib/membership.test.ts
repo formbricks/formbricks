@@ -114,7 +114,8 @@ describe("deleteMembership", () => {
     vi.mocked(prisma.teamUser.findMany).mockResolvedValue([mockTeamMembership]);
     const result = await deleteMembership(userId, organizationId, ACTOR_ID);
     expect(result[0].teamId).toBe(teamId);
-    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function));
+    // A removal can end the user's MCP grants, which may wait on a reconciling pass: the Revoke timeout.
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
     expect(prisma.teamUser.deleteMany).toHaveBeenCalledWith({
       where: {
         userId,

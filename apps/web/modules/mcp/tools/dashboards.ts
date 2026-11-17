@@ -151,8 +151,9 @@ export function registerDashboardTools(server: McpServer): void {
       outputSchema: ZMcpChartFieldCatalogOutput,
       annotations: READ_ANNOTATIONS,
     },
-    // Chart definitions and the field catalog are chart-building surfaces, not dashboard reading: they
-    // need feedback-record access, like preview_chart. A Dashboard viewer's token is trimmed to
+    // The field catalog is read off a Feedback Dataset's records: its embedded-data keys and the questions
+    // an answer may name come from what respondents submitted, so it needs Feedback records: Read, unlike
+    // a chart definition, which needs Charts: Read alone (D2). A Dashboard viewer's token is trimmed to
     // `dashboards:read` (ADR-0025) and its operation would 403, so the scope gate refuses it first.
     [
       { permission: "charts", level: "read" },

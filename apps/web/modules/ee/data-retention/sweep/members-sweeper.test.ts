@@ -331,6 +331,8 @@ describe("createMembersSweeper: deactivations", () => {
     ]);
     expect(revokeUserSessionsExcept).toHaveBeenCalledWith({ userId: "bob" });
     expect(revokeAllUserOAuthGrants).toHaveBeenCalledWith({ oauth: true }, "bob");
+    // Ending their grants can wait on a reconciling pass holding a grant row: the Revoke timeout.
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
     expect(queueAuditEventWithoutRequest).toHaveBeenCalledWith({
       action: "deactivated",
       targetType: "user",

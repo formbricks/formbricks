@@ -3,7 +3,6 @@ import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import {
-  MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS,
   deleteMcpGrantRelationshipsBeforeCommit,
   reconcileMcpGrantRelationships,
   removeDeletedMcpGrantRelationships,
@@ -646,22 +645,7 @@ export const queueMcpClientRevocationAudit = async ({
 /** The actor of a grant ended by no user: an account switched off by the retention sweep, or recovered by SSO. */
 export const MCP_GRANT_SYSTEM_ACTOR = { userId: "system", userType: "system" } as const;
 
-/**
- * How long a transaction that saves a grant may run. It locks the grant row `FOR UPDATE`, which can wait
- * behind a reconciling pass for up to `MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS` (see
- * {@link MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS}), and then deletes what a narrowing takes away from
- * SpiceDB before it commits, for which 15 seconds cover a SpiceDB retry.
- */
-export const MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS = MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS + 15_000;
-
-/**
- * How long Revoke's transaction may run. Its first grant-row step, `FOR UPDATE`, can wait behind a
- * reconciling pass that holds the row `FOR SHARE` across its SpiceDB calls for up to
- * `MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS`; the app client's 20-second budget
- * (`APP_TRANSACTION_TIMEOUT_MS` in `@formbricks/database`) would then fail a Revoke the user asked for,
- * while it was only waiting its turn. So Revoke allows the reconciler's whole bound, plus
- * the few writes of its own. The other way round, a reconciler that dropped the lock across SpiceDB calls,
- * would reopen the race the lock closes (a reconcile writing back what a narrowing just deleted), so the
- * wait is allowed for rather than removed.
- */
-export const MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS = MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS + 5_000;
+export {
+  MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS,
+  MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS,
+} from "@/lib/authzed/mcp-grant-timeouts";

@@ -113,8 +113,6 @@ vi.mock("./oauth-revocation-marker", async (importOriginal) => ({
 }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventBackground: vi.fn() }));
 vi.mock("@/lib/authzed/mcp-grant", () => ({
-  // The reconciler's lock-hold bound, which the save and Revoke timeouts allow for.
-  MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS: 30_000,
   deleteMcpGrantRelationshipsBeforeCommit: vi.fn(),
   reconcileMcpGrantRelationships: vi.fn(),
   removeDeletedMcpGrantRelationships: vi.fn(),

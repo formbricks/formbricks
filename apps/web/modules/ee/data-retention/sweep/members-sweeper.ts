@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZUserLocale } from "@formbricks/types/user";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/mcp-grant-revocation";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
@@ -156,7 +157,10 @@ export const revokeCredentials = async (userId: string): Promise<void> => {
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { isActive: true } });
     if (!user || user.isActive) return;
     await revokeUserSessionsExcept({ userId });
-    const { grantAudits } = await prisma.$transaction((tx) => revokeAllUserOAuthGrants(tx, userId));
+    // Its grant rows can be held by a reconciling pass: the Revoke timeout allows for that.
+    const { grantAudits } = await prisma.$transaction((tx) => revokeAllUserOAuthGrants(tx, userId), {
+      timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS,
+    });
     await finishRevokedMcpGrants(grantAudits);
   } catch (error) {
     logger.error({ err: error, userId }, "Revoking a deactivated member's credentials failed");
