@@ -100,8 +100,9 @@ there for Prisma's schema engine, which runs the migrations and verifies databas
 TLS and CA fixes therefore arrive as Node security releases: the eMudhra incident (ENG-4065)
 was fixed upstream in Node 24.22.1 and 26.12.1, which drop the affected emSign roots and
 block the compromised intermediates' keys. Moving `.nvmrc` to a new Node release is how such a
-fix ships. A deployment's own `NODE_OPTIONS`, such as a heap size, leaves the CA choice alone;
-only an explicit `--use-openssl-ca` or `--use-system-ca` would change it.
+fix ships. That is the default: a deployment's own `NODE_OPTIONS`, such as a heap size, leaves
+it alone, but one that adds `--use-openssl-ca` or `--use-system-ca` makes Node read the OS store
+too, and `SSL_CERT_FILE` and `SSL_CERT_DIR` then apply.
 
 The image build checks that Node defaults to its bundled store and that the compromised root is
 absent from it. Two scripts prove the behaviour
@@ -117,8 +118,13 @@ bash apps/web/scripts/docker/verify-tls-image.sh REPOSITORY@sha256:DIGEST --inci
 ```
 
 The live check depends on hosts we do not run, so it is not a PR gate. Node keeps honouring
-`NODE_EXTRA_CA_CERTS` on top of the bundled list, which is how a deployment adds a private CA.
-`SSL_CERT_FILE` and `SSL_CERT_DIR` have no effect on Node; Prisma's schema engine reads the OS bundle.
+`NODE_EXTRA_CA_CERTS` on top of the bundled list, which is how a deployment adds a private CA
+for the app. By default `SSL_CERT_FILE` and `SSL_CERT_DIR` have no effect on Node.
+
+Prisma's schema engine, which runs the migrations, verifies database TLS against the OS bundle
+instead: Debian's `ca-certificates` with every emSign root deselected, which the image build
+checks. A database certificate from a private CA therefore needs both settings: `NODE_EXTRA_CA_CERTS`
+for the app's connections and `SSL_CERT_FILE` for the migrations.
 
 ## Repair and recovery
 

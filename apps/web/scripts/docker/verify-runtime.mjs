@@ -55,6 +55,17 @@ assert.ok(
   "Node's bundled CA list must not trust the compromised eMudhra root"
 );
 
+// Prisma's schema engine verifies database TLS against the OS bundle instead. The Dockerfile deselects every
+// emSign root from it, since Debian still ships roots Mozilla has dropped or distrusts.
+const osRoots = readFileSync("/etc/ssl/certs/ca-certificates.crt", "utf8").match(
+  /-----BEGIN CERTIFICATE-----[^-]+-----END CERTIFICATE-----/g
+);
+assert.ok(osRoots?.length > 100, "OS CA bundle must be present");
+const emSignRoots = osRoots
+  .map((pem) => new X509Certificate(pem).subject)
+  .filter((subject) => /CN=emSign /.test(subject));
+assert.deepEqual(emSignRoots, [], "OS CA bundle must not trust emSign roots");
+
 const message = Buffer.from("Formbricks runtime smoke");
 assert.deepEqual(inflateSync(deflateSync(message)), message);
 

@@ -16,11 +16,16 @@ FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13
 # native binary that links OpenSSL (libssl3t64) and verifies database TLS against the OS CA bundle
 # (ca-certificates); Node itself reads neither. apt-get upgrade picks up Debian security fixes released
 # after the pinned digest.
+#
+# Debian's bundle still ships emSign roots that Mozilla and Node have dropped or distrust (ENG-4065), so
+# they are deselected here; verify-runtime.mjs fails the build if one comes back.
 FROM debian:trixie-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2 AS runtime-base
 RUN apt-get update \
     && apt-get upgrade -y --no-install-recommends \
     && apt-get install -y --no-install-recommends ca-certificates libatomic1 libssl3t64 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && sed -i -E 's#^(mozilla/emSign_.*\.crt)$#!\1#' /etc/ca-certificates.conf \
+    && update-ca-certificates --fresh > /dev/null
 COPY --from=base /usr/local/bin/node /usr/local/bin/node
 # The official image drops Node's license file, which redistributing the binary requires.
 ADD --checksum=sha256:8e603aa87c70d36e497004f0dec63111511cb61b7d65ace12e10ea791599286c \
