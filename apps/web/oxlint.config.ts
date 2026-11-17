@@ -92,10 +92,8 @@ export default defineConfig(
     {
       jsPlugins: [jsPlugins.formbricks],
       rules: {
-        // Runtime-only env reads, not build inputs: PATH in integration/gen-boolean-client.mjs (hashing it
-        // in turbo.json is tracked separately, ENG-1682), and the binary overrides of
-        // scripts/verify-redis-tls.mjs, which runs by hand through tsx rather than as a Turbo task.
-        "turbo/no-undeclared-env-vars": ["error", { allowList: ["PATH", "OPENSSL_BIN", "REDIS_SERVER_BIN"] }],
+        // runtime-only env read in integration/gen-boolean-client.mjs; hashing it in turbo.json is tracked separately (ENG-1682)
+        "turbo/no-undeclared-env-vars": ["error", { allowList: ["PATH"] }],
         /*
          * React Compiler-era react-hooks rules (ENG-2366), implemented natively by oxlint under
          * `react/`. Each carries the strongest severity its remaining violation count allows, on the
@@ -150,11 +148,31 @@ export default defineConfig(
         // CODING_STANDARDS.md asks for `Readonly<>` props on every React component and Sonar enforces
         // it as S6759, so until now a miss surfaced only after push. eslint-plugin-react (the
         // `react-js` JS plugin) accepts both the `Readonly<Props>` wrapper and `readonly` members; its
-        // autofix writes the latter, so `lint:fix` turns the rule off and fixes are made by hand with
-        // the wrapper. Promote to "error" once the count reaches zero (ENG-7329).
+        // autofix would write the latter, so packages/config-oxlint/plugins/react-js.mjs drops it and
+        // fixes are made by hand with the wrapper. Promote to "error" once the count reaches zero
+        // (ENG-7329).
         "react-js/prefer-read-only-props": "warn",
       },
       overrides: [
+        {
+          // Runs by hand through tsx against a disposable Redis, never as a Turbo task, so its env reads
+          // are not build inputs. ESLint scoped this with an inline config comment, which oxlint does
+          // not read.
+          files: ["scripts/verify-redis-tls.mjs"],
+          rules: {
+            "turbo/no-undeclared-env-vars": [
+              "error",
+              {
+                allowList: [
+                  "OPENSSL_BIN",
+                  "REDIS_SERVER_BIN",
+                  "REDIS_TLS_TEST_URL",
+                  "NODE_TLS_REJECT_UNAUTHORIZED",
+                ],
+              },
+            ],
+          },
+        },
         {
           files: ["**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}"],
           excludeFiles: PROCESS_ENV_EXEMPT_FILES,

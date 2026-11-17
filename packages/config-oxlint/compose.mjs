@@ -14,7 +14,10 @@ export const jsPlugins = {
     name: "formbricks",
     specifier: fileURLToPath(new URL("./plugins/formbricks.mjs", import.meta.url)),
   },
-  reactJs: { name: "react-js", specifier: resolvePackage("eslint-plugin-react") },
+  reactJs: {
+    name: "react-js",
+    specifier: fileURLToPath(new URL("./plugins/react-js.mjs", import.meta.url)),
+  },
   sonarjs: { name: "sonarjs", specifier: resolvePackage("eslint-plugin-sonarjs") },
   turbo: { name: "turbo", specifier: resolvePackage("eslint-plugin-turbo") },
   unicornJs: { name: "unicorn-js", specifier: resolvePackage("eslint-plugin-unicorn") },

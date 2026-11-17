@@ -11,3 +11,8 @@ export declare function lintFixtures(
   files: Record<string, string>,
   options?: { env?: Record<string, string>; typeAware?: boolean }
 ): Record<string, FixtureDiagnostic[]>;
+export declare function fixFixtures(
+  workspaceDir: string,
+  files: Record<string, string>,
+  options?: { env?: Record<string, string>; typeAware?: boolean }
+): Record<string, string>;

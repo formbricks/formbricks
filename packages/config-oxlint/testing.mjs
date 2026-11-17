@@ -34,7 +34,19 @@ export const ruleIdOf = (code) => {
  * `typeAware` runs the type-aware rules too (as `pnpm lint:code` does); the fixtures then need to sit
  * where the workspace's tsconfig includes them.
  */
-export function lintFixtures(workspaceDir, files, { env = {}, typeAware = false } = {}) {
+export function lintFixtures(workspaceDir, files, options = {}) {
+  return runFixtures(workspaceDir, files, options).results;
+}
+
+/**
+ * Runs `oxlint --fix` on `files` as `lintFixtures` lints them, and returns each file's source after
+ * the fixes, keyed by the same path.
+ */
+export function fixFixtures(workspaceDir, files, options = {}) {
+  return runFixtures(workspaceDir, files, { ...options, fix: true }).sources;
+}
+
+function runFixtures(workspaceDir, files, { env = {}, typeAware = false, fix = false } = {}) {
   const fixtureDir = mkdtempSync(path.join(workspaceDir, "oxlint-fixtures-"));
   try {
     writeFileSync(
@@ -53,6 +65,7 @@ export function lintFixtures(workspaceDir, files, { env = {}, typeAware = false 
         "--format",
         "json",
         ...(typeAware ? ["--type-aware"] : []),
+        ...(fix ? ["--fix"] : []),
         ...Object.keys(files).map((file) => path.join(fixtureDir, file)),
       ],
       {
@@ -85,7 +98,10 @@ export function lintFixtures(workspaceDir, files, { env = {}, typeAware = false 
         line: diagnostic.labels?.[0]?.span.line,
       });
     }
-    return results;
+    const sources = Object.fromEntries(
+      Object.keys(files).map((file) => [file, readFileSync(path.join(fixtureDir, file), "utf8")])
+    );
+    return { results, sources };
   } finally {
     rmSync(fixtureDir, { recursive: true, force: true });
   }
