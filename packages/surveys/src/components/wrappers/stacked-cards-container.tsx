@@ -8,6 +8,7 @@ import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { getArrangementResetBlockId } from "@/lib/card-arrangement-reset";
 import { isEndSlotEmpty, isSlotRendered } from "@/lib/end-slot";
+import { getStackAfterBack } from "@/lib/stacked-cards-back";
 import { cn } from "@/lib/utils";
 import { StackedCard } from "./stacked-card";
 
@@ -90,12 +91,9 @@ export function StackedCardsContainer({
       setNextBlockIdx(currentBlockIdx);
       setCurrentBlockIdx(blockIdxTemp);
 
-      // Compute new visited stack and safe previous index
-      const newStack = visitedBlocks.length > 0 ? visitedBlocks.slice(0, -1) : [];
-      const safePrevIdx = newStack.length > 0 ? newStack[newStack.length - 1] : Math.max(0, blockIdxTemp - 1);
-
-      setPrevBlockIdx(safePrevIdx);
-      setVisitedBlocks(newStack);
+      const afterBack = getStackAfterBack(visitedBlocks, blockIdxTemp);
+      setPrevBlockIdx(afterBack.prevBlockIdx);
+      setVisitedBlocks(afterBack.visitedBlocks);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- Only update when blockIdxTemp changes
   }, [blockIdxTemp]);

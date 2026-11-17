@@ -91,17 +91,25 @@ export const StackedCard = ({
         }
       : {};
 
+  // Both timers are cancelled when the offset changes again: a Next followed quickly by a Back left the
+  // first move's swap pending, and it then put the old card's content back under the respondent.
   useEffect(() => {
-    setTimeout(() => {
+    const swapTimer = setTimeout(() => {
       setDelayedOffset(offset);
     }, 300);
 
+    let fadeInTimer: ReturnType<typeof setTimeout> | undefined;
     if (offset === 0) {
       setContentOpacity(0);
-      setTimeout(() => {
+      fadeInTimer = setTimeout(() => {
         setContentOpacity(1);
       }, 300);
     }
+
+    return () => {
+      clearTimeout(swapTimer);
+      clearTimeout(fadeInTimer);
+    };
   }, [offset]);
 
   return (

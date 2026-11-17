@@ -328,8 +328,10 @@ test.describe("Signature element @slow", () => {
         await drawWithTouch(cdp, pad);
         await expect(signatureStatus(card)).toHaveText("Signed");
         await page.getByRole("button", { name: "Next", exact: true }).click();
+        // Waits on the upload itself: the next card's text can already show in the card stacked behind
+        // this one, so seeing it is no proof that Next has run.
+        await expect.poll(() => uploads.length, { timeout: UPLOAD_TIMEOUT }).toBe(1);
         await expect(page.getByText("Anything else?")).toBeVisible({ timeout: UPLOAD_TIMEOUT });
-        expect(uploads).toHaveLength(1);
       });
 
       await test.step("the response already holds the relative private URL of the PNG", async () => {
@@ -368,8 +370,8 @@ test.describe("Signature element @slow", () => {
 
         await page.getByRole("button", { name: "Next", exact: true }).focus();
         await page.keyboard.press("Enter");
+        await expect.poll(() => uploads.length, { timeout: UPLOAD_TIMEOUT }).toBe(2);
         await expect(page.getByText("Anything else?")).toBeVisible({ timeout: UPLOAD_TIMEOUT });
-        expect(uploads).toHaveLength(2);
 
         await expect
           .poll(() => readSignatureAnswer(seeded.surveyId, seeded.signatureId), {
