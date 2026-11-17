@@ -773,12 +773,17 @@ describe("workflow lastRun without Responses: Read", () => {
     vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
   });
 
-  // An upgraded client: `workflows:read` and a grant at Workflow runs: Read, nothing of Responses.
+  // An OAuth caller (a session user, so the grant applies; an API key has none) with `workflows:read`
+  // and a grant at Workflows and Workflow runs: Read, and nothing of Responses.
   const workflowsOnly = {
     ...readOnlyAuthInfo,
     extra: {
       ...readOnlyAuthInfo.extra,
-      grant: { access: "all", permissions: { workflowRuns: "read" } },
+      formbricksAuthentication: {
+        user: { id: "user_1", email: "person@example.com", name: "Person" },
+        expires: "2026-07-01T00:00:00.000Z",
+      },
+      grant: { access: "all", permissions: { workflows: "read", workflowRuns: "read" } },
     },
   };
   const withResponses = { ...readOnlyAuthInfo, scopes: ["workflows:read", "responses:read"] };
@@ -848,6 +853,26 @@ describe("workflow lastRun without Responses: Read", () => {
 
     expect(result.isError).toBe(true);
     expect(result.structuredContent).toMatchObject({ error: { status: 403 } });
+    // The operation's refusal, not the guard's: the grant reaches the tool.
+    expect(workflowsHandlers.get).toHaveBeenCalledTimes(1);
+  });
+
+  // The grant is what lets these tools run at all: without Workflows: Read they are refused before the
+  // handler, so the tests above exercise the redaction rather than a guard refusal.
+  test("refuses a grant without Workflows: Read before the handler", async () => {
+    const { tools } = createToolServer();
+    const noWorkflows = {
+      ...workflowsOnly,
+      extra: { ...workflowsOnly.extra, grant: { access: "all", permissions: { workflowRuns: "read" } } },
+    };
+
+    const result = await tools
+      .get("get_workflow")!
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo: noWorkflows } });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.structuredContent)).toContain("Workflows: Read");
+    expect(workflowsHandlers.get).not.toHaveBeenCalled();
   });
 });
 
