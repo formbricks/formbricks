@@ -3,8 +3,10 @@ import {
   type TWorkflowCondition,
   type TWorkflowConditionGroup,
   type TWorkflowConditionValue,
+  isWorkflowChoiceIds,
   toSurveyConditionOperator,
 } from "@formbricks/workflows";
+import type { TChoiceLabels } from "@/modules/ee/workflows/lib/choice-conditions";
 import { type TVariableLabels, getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
 
 type TConditionWords = { variable: string; value?: string };
@@ -86,16 +88,32 @@ const PENDING_VALUE = "…";
 const PRESENCE_OPERATORS = new Set(["isSet", "isNotSet", "isEmpty", "isNotEmpty"]);
 
 /** The words a condition's sentence fills in; a presence check compares no value. */
-const toConditionWords = (condition: TWorkflowCondition, labels?: TVariableLabels): TConditionWords => {
+const toConditionWords = (
+  condition: TWorkflowCondition,
+  labels?: TVariableLabels,
+  choiceLabels?: TChoiceLabels
+): TConditionWords => {
   const variable = getVariableDisplayName(condition.left.path, labels);
   return PRESENCE_OPERATORS.has(toSurveyConditionOperator(condition.operator))
     ? { variable }
-    : { variable, value: toValueText(condition.right, labels) };
+    : {
+        variable,
+        value: toValueText(condition.right, labels, choiceLabels?.get(condition.left.path)),
+      };
 };
 
-const toValueText = (value: TWorkflowConditionValue | undefined, labels?: TVariableLabels): string => {
+const toValueText = (
+  value: TWorkflowConditionValue | undefined,
+  labels?: TVariableLabels,
+  choices?: ReadonlyMap<string, string>
+): string => {
   if (value === undefined || value === "" || (Array.isArray(value) && value.length === 0)) {
     return PENDING_VALUE;
+  }
+  // Picked choices read by their label, as the survey flow editor shows them (DC11); a choice the
+  // survey no longer has reads by its id.
+  if (isWorkflowChoiceIds(value)) {
+    return value.choiceIds.map((id) => quote(choices?.get(id) ?? id)).join(", ");
   }
   // A list operator compares against a list of texts (ENG-7176).
   if (Array.isArray(value)) return value.map((item) => quote(String(item))).join(", ");
@@ -111,12 +129,13 @@ const toValueText = (value: TWorkflowConditionValue | undefined, labels?: TVaria
 export const describeIfElseCondition = (
   group: TWorkflowConditionGroup,
   t: TFunction,
-  labels?: TVariableLabels
+  labels?: TVariableLabels,
+  choiceLabels?: TChoiceLabels
 ): string | null => {
   const [first, ...rest] = flattenConditions(group);
   if (!first) return null;
 
-  const condition = describeComparison(first.operator, toConditionWords(first, labels), t);
+  const condition = describeComparison(first.operator, toConditionWords(first, labels, choiceLabels), t);
   if (condition === null || rest.length === 0) return condition;
   return t("workspace.workflows.if_else_summary_more", { condition, count: rest.length });
 };
@@ -125,5 +144,7 @@ export const describeIfElseCondition = (
 export const describeWorkflowCondition = (
   condition: TWorkflowCondition,
   t: TFunction,
-  labels?: TVariableLabels
-): string | null => describeComparison(condition.operator, toConditionWords(condition, labels), t);
+  labels?: TVariableLabels,
+  choiceLabels?: TChoiceLabels
+): string | null =>
+  describeComparison(condition.operator, toConditionWords(condition, labels, choiceLabels), t);

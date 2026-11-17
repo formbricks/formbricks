@@ -71,6 +71,23 @@ describe("describeIfElseConditionParts", () => {
     });
   });
 
+  test("reads picked choices by their label, and a choice the survey no longer has by its id", () => {
+    const choiceLabels = new Map([["response.q1", new Map([["gold", "Gold plan"]])]]);
+
+    const parts = describeIfElseConditionParts(
+      group({
+        left: { path: "response.q1" },
+        operator: "includesAllOf",
+        right: { choiceIds: ["gold", "old"] },
+      }),
+      t,
+      undefined,
+      choiceLabels
+    );
+
+    expect(parts?.at(-1)).toEqual({ kind: "text", text: " includes all of “Gold plan”, “old”" });
+  });
+
   test("has no parts when there is no condition", () => {
     expect(
       describeIfElseConditionParts({ id: "g", connector: "and", conditions: [] } as never, t)

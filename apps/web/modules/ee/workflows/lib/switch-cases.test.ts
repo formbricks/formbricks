@@ -7,6 +7,7 @@ import {
   canAddSwitchCase,
   canRemoveSwitchCase,
   removeSwitchCase,
+  withSwitchLeft,
 } from "./switch-cases";
 
 const route = (cases: TWorkflowSwitchNode["config"]["cases"]): TWorkflowSwitchNode => ({
@@ -66,6 +67,39 @@ describe("editing a Switch case", () => {
     const presence = route([{ id: "any", name: "Any", operator: "isSet" }, goldSilver.config.cases[1]]);
     const back = applySwitchCaseEdit(presence, "any", { operator: "equals" }, () => "text");
     expect(back.config.cases[0]).toEqual({ id: "any", name: "Any", operator: "equals", right: "" });
+  });
+});
+
+describe("choices picked by id (DC11)", () => {
+  const planRoute: TWorkflowSwitchNode = {
+    id: "route",
+    type: "switch",
+    config: {
+      left: { path: "response.plan" },
+      cases: [
+        { id: "basic", name: "Basic", operator: "equals", right: { choiceIds: ["basic"] } },
+        { id: "paid", name: "Paid", operator: "equalsOneOf", right: { choiceIds: ["pro", "team"] } },
+      ],
+    },
+  };
+
+  test("a new operator keeps the picks it can: a list operator one pick, equals the first", () => {
+    const toList = applySwitchCaseEdit(planRoute, "basic", { operator: "equalsOneOf" }, numberHint);
+    expect(toList.config.cases[0].right).toEqual({ choiceIds: ["basic"] });
+
+    const toSingle = applySwitchCaseEdit(planRoute, "paid", { operator: "doesNotEqual" }, numberHint);
+    expect(toSingle.config.cases[1].right).toEqual({ choiceIds: ["pro"] });
+  });
+
+  test("comparing another Variable clears the picks, which belong to the old question", () => {
+    const next = withSwitchLeft(planRoute, "response.tier");
+
+    expect(next.config.left).toEqual({ path: "response.tier" });
+    expect(next.config.cases).toEqual([
+      { id: "basic", name: "Basic", operator: "equals", right: "" },
+      { id: "paid", name: "Paid", operator: "equalsOneOf" },
+    ]);
+    expect(withSwitchLeft(planRoute, "response.plan")).toBe(planRoute);
   });
 });
 

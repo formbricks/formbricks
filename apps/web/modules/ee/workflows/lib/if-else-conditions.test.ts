@@ -160,6 +160,53 @@ describe("applyConditionEdit", () => {
   });
 });
 
+describe("choices picked by id (DC11)", () => {
+  const plan = { id: "c", left: { path: "response.plan" }, operator: "equals" } as const;
+
+  test("a picked choice is stored by its id; a list operator keeps every pick", () => {
+    expect(applyConditionEdit(plan, { rightOperand: { value: "basic", type: "choice" } }, hintOf)).toEqual({
+      ...plan,
+      right: { choiceIds: ["basic"] },
+    });
+    expect(
+      applyConditionEdit(
+        { ...plan, operator: "includesOneOf" },
+        { rightOperand: { value: ["basic", "pro"], type: "choice" } },
+        hintOf
+      )
+    ).toEqual({ ...plan, operator: "includesOneOf", right: { choiceIds: ["basic", "pro"] } });
+  });
+
+  test("the picker holds one id for equals and the ids for a list operator", () => {
+    const shown = toGenericConditionGroup({
+      id: "g",
+      connector: "and",
+      conditions: [
+        { ...plan, right: { choiceIds: ["basic"] } },
+        { ...plan, id: "c2", operator: "equalsOneOf", right: { choiceIds: ["basic"] } },
+      ],
+    });
+    expect(shown.conditions.map((item) => ("rightOperand" in item ? item.rightOperand : null))).toEqual([
+      { value: "basic", type: "choice" },
+      { value: ["basic"], type: "choice" },
+    ]);
+  });
+
+  test("clearing every pick leaves no value, and a typed label stays typed text", () => {
+    expect(
+      applyConditionEdit(
+        { ...plan, operator: "equalsOneOf", right: { choiceIds: ["basic"] } },
+        { rightOperand: { value: [], type: "choice" } },
+        hintOf
+      )
+    ).toEqual({ ...plan, operator: "equalsOneOf" });
+    expect(applyConditionEdit(plan, { rightOperand: { value: "Basic", type: "static" } }, hintOf)).toEqual({
+      ...plan,
+      right: "Basic",
+    });
+  });
+});
+
 describe("group operations", () => {
   test("adds a condition right below another, inside nested groups too", () => {
     const created = { id: "new", left: { path: "payload.tier" }, operator: "isSet" } as const;

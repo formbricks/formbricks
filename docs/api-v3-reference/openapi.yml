@@ -14444,9 +14444,24 @@ components:
             - notContains
             - exists
             - notExists
+    WorkflowChoiceIds:
+      type: object
+      description: 'Choices of a single or multi select survey question, by choice id, mirroring `ZWorkflowChoiceIds`. The condition''s Variable must be that question''s answer (`response.<questionId>`). A response stores a choice answer as its label in the respondent''s language, so a run maps the answer back to choice ids first, as survey logic does: the label in the response''s language, then in any language, and an answer that matches no choice counts as `other` when the question offers it. `equals` and `doesNotEqual` take exactly one id; the list operators take one or more.'
+      required:
+        - choiceIds
+      properties:
+        choiceIds:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items:
+            type: string
+            minLength: 1
+            maxLength: 1000
+      additionalProperties: false
     WorkflowCondition:
       type: object
-      description: One If/else comparison, mirroring `ZWorkflowCondition`. `isSet`, `isNotSet`, `isEmpty` and `isNotEmpty` (and the deprecated `exists` / `notExists`) take no `right`; every other operator requires one. The list operators (`equalsOneOf`, `includesAllOf`, `includesOneOf`, `doesNotIncludeAllOf`, `doesNotIncludeOneOf`) take a list of texts or a Variable; no other operator takes a list.
+      description: One If/else comparison, mirroring `ZWorkflowCondition`. `isSet`, `isNotSet`, `isEmpty` and `isNotEmpty` (and the deprecated `exists` / `notExists`) take no `right`; every other operator requires one. The list operators (`equalsOneOf`, `includesAllOf`, `includesOneOf`, `doesNotIncludeAllOf`, `doesNotIncludeOneOf`) take a list of texts or a Variable; no other operator takes a list. A survey choice question compares by choice id (`WorkflowChoiceIds`) with `equals`, `doesNotEqual` or a list operator.
       required:
         - id
         - left
@@ -14460,7 +14475,7 @@ components:
         operator:
           $ref: '#/components/schemas/WorkflowConditionOperator'
         right:
-          description: The value to compare against, or a Variable.
+          description: The value to compare against, choices of the survey question the Variable reads, or a Variable.
           oneOf:
             - type: string
               maxLength: 1000
@@ -14473,6 +14488,7 @@ components:
               items:
                 type: string
                 maxLength: 1000
+            - $ref: '#/components/schemas/WorkflowChoiceIds'
             - $ref: '#/components/schemas/WorkflowDataRef'
       additionalProperties: false
     WorkflowConditionGroup:
@@ -14549,7 +14565,7 @@ components:
         operator:
           $ref: '#/components/schemas/WorkflowConditionOperator'
         right:
-          description: The value to compare against, or a Variable. Omit for presence operators.
+          description: The value to compare against, choices of the survey question the Variable reads, or a Variable. Omit for presence operators.
           oneOf:
             - type: string
               maxLength: 1000
@@ -14562,6 +14578,7 @@ components:
               items:
                 type: string
                 maxLength: 1000
+            - $ref: '#/components/schemas/WorkflowChoiceIds'
             - $ref: '#/components/schemas/WorkflowDataRef'
       additionalProperties: false
     WorkflowSwitchNode:

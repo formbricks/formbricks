@@ -124,12 +124,39 @@ const MAX_CONDITION_LIST_VALUES = 100;
  */
 export const MAX_CONDITION_TEXT_LENGTH = 1000;
 
+/**
+ * Choices of the survey question a condition reads (`response.<questionId>`), by choice id (DC11). A
+ * response stores a choice answer as its label in the respondent's language, so the runner maps the
+ * answer back to choice ids first, exactly as survey logic does: the label in the response's language,
+ * then in any language, and an answer matching no choice counts as `other` when the question offers
+ * it. Renamed choices and translations compare the same.
+ */
+export const ZWorkflowChoiceIds = z
+  .object({
+    choiceIds: z
+      .array(z.string().min(1).max(MAX_CONDITION_TEXT_LENGTH))
+      .min(1)
+      .max(MAX_CONDITION_LIST_VALUES)
+      .describe(
+        "Choice ids of the survey question the Variable reads; exactly one for equals and doesNotEqual."
+      ),
+  })
+  .strict()
+  .describe(
+    "Choices of a single or multi select survey question, by choice id; the left Variable must be response.<questionId>."
+  );
+export type TWorkflowChoiceIds = z.infer<typeof ZWorkflowChoiceIds>;
+
+export const isWorkflowChoiceIds = (value: unknown): value is TWorkflowChoiceIds =>
+  typeof value === "object" && value !== null && !Array.isArray(value) && "choiceIds" in value;
+
 export const ZWorkflowConditionValue = z.union([
   z.string(),
   z.number(),
   z.boolean(),
   z.null(),
   z.array(z.string().max(MAX_CONDITION_TEXT_LENGTH)).min(1).max(MAX_CONDITION_LIST_VALUES),
+  ZWorkflowChoiceIds,
   ZWorkflowDataRef,
 ]);
 export type TWorkflowConditionValue = z.infer<typeof ZWorkflowConditionValue>;
@@ -146,6 +173,30 @@ export interface TWorkflowConditionGroup {
   connector: "and" | "or";
   conditions: (TWorkflowCondition | TWorkflowConditionGroup)[];
 }
+
+/** The operators survey logic offers for a choice question, the only ones that compare choice ids. */
+const SINGLE_CHOICE_OPERATORS = new Set<TWorkflowSurveyConditionOperator>(["equals", "doesNotEqual"]);
+
+const checkChoiceOperands = (
+  comparison: { operator: TWorkflowConditionOperator; right?: TWorkflowConditionValue },
+  operator: TWorkflowSurveyConditionOperator,
+  ctx: z.RefinementCtx
+): void => {
+  const { choiceIds } = comparison.right as TWorkflowChoiceIds;
+  if (!SINGLE_CHOICE_OPERATORS.has(operator) && !LIST_OPERATORS.has(operator)) {
+    ctx.addIssue({
+      code: "custom",
+      message: `Operator ${comparison.operator} does not compare choices`,
+      path: ["right"],
+    });
+  } else if (SINGLE_CHOICE_OPERATORS.has(operator) && choiceIds.length !== 1) {
+    ctx.addIssue({
+      code: "custom",
+      message: `Operator ${comparison.operator} compares against exactly one choice`,
+      path: ["right", "choiceIds"],
+    });
+  }
+};
 
 /**
  * The operator/value rules every comparison follows, an If/else condition or a Switch case: presence
@@ -183,6 +234,7 @@ export const checkConditionOperands = (
       path: ["right"],
     });
   }
+  if (isWorkflowChoiceIds(comparison.right)) checkChoiceOperands(comparison, operator, ctx);
   if (!LIST_OPERATORS.has(operator) && isList) {
     ctx.addIssue({
       code: "custom",
@@ -198,7 +250,7 @@ export const ZWorkflowCondition: z.ZodType<TWorkflowCondition> = z
     left: ZWorkflowDataRef,
     operator: ZWorkflowConditionOperator,
     right: ZWorkflowConditionValue.optional().describe(
-      "Right-hand comparison value: a fixed value, a list of texts for list operators, or a Variable reference. Omit for presence operators."
+      "Right-hand comparison value: a fixed value, a list of texts for list operators, choices of the survey question the Variable reads ({choiceIds}), or a Variable reference. Omit for presence operators."
     ),
   })
   .superRefine(checkConditionOperands);

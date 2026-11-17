@@ -4,7 +4,8 @@ description: >-
   `isNotEmpty` (and the deprecated `exists` / `notExists`) take no `right`; every other operator
   requires one. The list operators (`equalsOneOf`, `includesAllOf`, `includesOneOf`,
   `doesNotIncludeAllOf`, `doesNotIncludeOneOf`) take a list of texts or a Variable; no other
-  operator takes a list.
+  operator takes a list. A survey choice question compares by choice id (`WorkflowChoiceIds`) with
+  `equals`, `doesNotEqual` or a list operator.
 required:
   - id
   - left
@@ -18,7 +19,7 @@ properties:
   operator:
     $ref: ./WorkflowConditionOperator.yml
   right:
-    description: The value to compare against, or a Variable.
+    description: The value to compare against, choices of the survey question the Variable reads, or a Variable.
     oneOf:
       - type: string
         maxLength: 1000
@@ -31,5 +32,6 @@ properties:
         items:
           type: string
           maxLength: 1000
+      - $ref: ./WorkflowChoiceIds.yml
       - $ref: ./WorkflowDataRef.yml
 additionalProperties: false

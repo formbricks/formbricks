@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next";
 import type { TWorkflowCondition, TWorkflowConditionGroup } from "@formbricks/workflows";
+import type { TChoiceLabels } from "@/modules/ee/workflows/lib/choice-conditions";
 import { describeIfElseCondition } from "@/modules/ee/workflows/lib/if-else-summary";
 import { getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
 import type { TFlowTextPart, TReferenceChip } from "@/modules/survey/editor/lib/reference-chips";
@@ -63,18 +64,19 @@ const firstCondition = (group: TWorkflowConditionGroup): TWorkflowCondition | un
 export const describeIfElseConditionParts = (
   group: TWorkflowConditionGroup,
   t: TFunction,
-  refs?: TVariableRefs
+  refs?: TVariableRefs,
+  choiceLabels?: TChoiceLabels
 ): TFlowTextPart[] | null => {
   const first = firstCondition(group);
   if (!first) return null;
   const chips: TReferenceChip[] = [chipFor(first.left.path, refs)];
   const slotLabels = new Map([[first.left.path, slotFor(0)]]);
   const right = first.right;
-  if (right !== null && typeof right === "object" && !Array.isArray(right)) {
+  if (right !== null && typeof right === "object" && !Array.isArray(right) && "path" in right) {
     chips.push(chipFor(right.path, refs));
     slotLabels.set(right.path, slotFor(1));
   }
-  const sentence = describeIfElseCondition(group, t, slotLabels);
+  const sentence = describeIfElseCondition(group, t, slotLabels, choiceLabels);
   return sentence === null ? null : toParts(sentence, chips);
 };
 

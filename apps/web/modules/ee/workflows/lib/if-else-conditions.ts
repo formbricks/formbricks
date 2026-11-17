@@ -8,12 +8,18 @@ import {
   type TWorkflowSurveyConditionOperator,
   WORKFLOW_LIMITS,
   flattenWorkflowConditions,
+  isWorkflowChoiceIds,
   toSurveyConditionOperator,
 } from "@formbricks/workflows";
 import {
   getResponseOptionIcon,
   getResponseSectionLabel,
 } from "@/modules/ee/workflows/components/variable-picker/response-option-display";
+import {
+  CHOICE_OPERAND,
+  toChoiceIdsValue,
+  toChoicePickerValue,
+} from "@/modules/ee/workflows/lib/choice-conditions";
 import type {
   TWorkflowVariableGroup,
   TWorkflowVariableTypeHint,
@@ -49,9 +55,12 @@ const isGroup = (item: TWorkflowCondition | TWorkflowConditionGroup): item is TW
   "conditions" in item;
 
 export const toGenericRight = (
-  right: TWorkflowConditionValue | undefined
+  right: TWorkflowConditionValue | undefined,
+  operator: string
 ): TGenericCondition["rightOperand"] => {
   if (right === undefined) return undefined;
+  if (isWorkflowChoiceIds(right))
+    return { value: toChoicePickerValue(right, operator), type: CHOICE_OPERAND };
   if (Array.isArray(right)) return { value: right, type: STATIC_OPERAND };
   if (right !== null && typeof right === "object") return { value: right.path, type: VARIABLE_OPERAND };
   if (typeof right === "number") return { value: right, type: STATIC_OPERAND };
@@ -72,7 +81,7 @@ export const toGenericConditionGroup = (group: TWorkflowConditionGroup): TGeneri
           id: item.id,
           leftOperand: { value: item.left.path, type: VARIABLE_OPERAND },
           operator: toSurveyConditionOperator(item.operator),
-          rightOperand: toGenericRight(item.right),
+          rightOperand: toGenericRight(item.right, toSurveyConditionOperator(item.operator)),
         }
   ),
 });
@@ -98,6 +107,17 @@ export const parseConditionValue = (
   return value;
 };
 
+/** A right operand from the kit editor as the condition stores it; picked choices by id (DC11). */
+const toConditionRight = (
+  rightOperand: NonNullable<TGenericCondition["rightOperand"]>,
+  operator: string,
+  typeHint: TWorkflowVariableTypeHint | undefined
+): TWorkflowConditionValue | undefined => {
+  if (rightOperand.type === VARIABLE_OPERAND) return { path: String(rightOperand.value) };
+  if (rightOperand.type === CHOICE_OPERAND) return toChoiceIdsValue(rightOperand.value, operator);
+  return parseConditionValue(rightOperand.value, operator, typeHint);
+};
+
 /** Writes one condition-row edit from the kit editor back onto the workflow condition. */
 export const applyConditionEdit = (
   condition: TWorkflowCondition,
@@ -109,12 +129,13 @@ export const applyConditionEdit = (
     toSurveyConditionOperator(condition.operator)) as TWorkflowCondition["operator"];
   const next: TWorkflowCondition = { id: condition.id, left, operator };
 
-  const rightUpdate = "rightOperand" in updates ? updates.rightOperand : toGenericRight(condition.right);
+  const rightUpdate =
+    "rightOperand" in updates
+      ? updates.rightOperand
+      : toGenericRight(condition.right, toSurveyConditionOperator(condition.operator));
   if (rightUpdate && !isPresenceOperator(operator)) {
-    next.right =
-      rightUpdate.type === VARIABLE_OPERAND
-        ? { path: String(rightUpdate.value) }
-        : parseConditionValue(rightUpdate.value, operator, typeHintOf(left.path));
+    const right = toConditionRight(rightUpdate, operator, typeHintOf(left.path));
+    if (right !== undefined) next.right = right;
   }
   return next;
 };

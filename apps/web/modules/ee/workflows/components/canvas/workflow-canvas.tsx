@@ -29,6 +29,7 @@ import {
   WORKFLOW_CANVAS_FIT_PADDING,
   getCanvasFitPadding,
 } from "@/modules/ee/workflows/lib/canvas-fit";
+import { getSurveyChoiceLabels } from "@/modules/ee/workflows/lib/choice-conditions";
 import {
   WORKFLOW_ADD_BUTTON_EDGE_TYPE,
   WORKFLOW_BRANCH_EDGE_TYPE,
@@ -161,6 +162,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const boundSurvey = resolveBoundTriggerSurvey(authoringContext, definition);
   const variableLabels = useMemo(() => getSurveyVariableLabels(boundSurvey, t), [boundSurvey, t]);
   const variableRefs = useMemo(() => getSurveyVariableRefs(boundSurvey, t), [boundSurvey, t]);
+  const choiceLabels = useMemo(() => getSurveyChoiceLabels(boundSurvey), [boundSurvey]);
 
   const derivedFlowNodes = useMemo(
     () =>
@@ -171,10 +173,21 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
             triggerSummary,
             variableLabels,
             variableRefs,
+            choiceLabels,
             direction,
           })
         : [],
-    [definition, t, hasBoundSurvey, isDraft, triggerSummary, variableLabels, variableRefs, direction]
+    [
+      definition,
+      t,
+      hasBoundSurvey,
+      isDraft,
+      triggerSummary,
+      variableLabels,
+      variableRefs,
+      choiceLabels,
+      direction,
+    ]
   );
   // While a run is open in the run drawer, the canvas marks its path: the steps and edges off it
   // are greyed (mock screen 7), and each If/else labels the branch it took (workflow-branch-node).

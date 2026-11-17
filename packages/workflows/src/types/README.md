@@ -495,7 +495,9 @@ Properties:
   (ADR 0046). The v1 names (`notEquals`, `lessThan`, `lessEqual`, `greaterThan`, `greaterEqual`,
   `notContains`, `exists`, `notExists`) are deprecated but accepted until v7.0.0 and stored as written; one
   definition never mixes the two sets.
-- `right`: Right-hand comparison value: a fixed value, a list of texts (list operators only), or a
+- `right`: Right-hand comparison value: a fixed value, a list of texts (list operators only), choices
+  of the survey question `left` reads (`{ "choiceIds": [...] }`, ADR 0055: one id for `equals` /
+  `doesNotEqual`, one or more for list operators, `left` must be `response.<questionId>`), or a
   `ZWorkflowDataRef`. Presence operators (`isSet`, `isNotSet`, `isEmpty`, `isNotEmpty`, `exists`,
   `notExists`) must omit it. All other operators require it.
 

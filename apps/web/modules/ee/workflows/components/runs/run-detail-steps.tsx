@@ -1,8 +1,11 @@
 "use client";
 
 import type { TFunction } from "i18next";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { useBoundTriggerSurvey } from "@/modules/ee/workflows/hooks/use-bound-trigger-survey";
+import { getSurveyChoiceLabels } from "@/modules/ee/workflows/lib/choice-conditions";
 import { getWorkflowTriggerTypeLabel } from "@/modules/ee/workflows/lib/display";
 import { describeWorkflowCondition } from "@/modules/ee/workflows/lib/if-else-summary";
 import type {
@@ -119,11 +122,14 @@ const FieldLine = ({ label, value }: { readonly label: string; readonly value: R
 
 const IfElseBody = ({ row }: { readonly row: TRunDetailIfElseRow }) => {
   const { t } = useTranslation();
+  // In the editor, picked choices (DC11) read by their label; elsewhere by id.
+  const survey = useBoundTriggerSurvey();
+  const choiceLabels = useMemo(() => getSurveyChoiceLabels(survey), [survey]);
   if (row.conditions.length === 0 && !row.branch) return null;
   // "(matched)" / "(not matched)" in words, no icons (mock screen 7).
   const parts = row.conditions.map(({ id, matched, condition }, index) => {
     const text =
-      (condition ? describeWorkflowCondition(condition, t) : null) ??
+      (condition ? describeWorkflowCondition(condition, t, undefined, choiceLabels) : null) ??
       t("workspace.workflows.run_condition_unknown", { number: index + 1 });
     return {
       id,

@@ -19,7 +19,7 @@ properties:
   operator:
     $ref: ./WorkflowConditionOperator.yml
   right:
-    description: The value to compare against, or a Variable. Omit for presence operators.
+    description: The value to compare against, choices of the survey question the Variable reads, or a Variable. Omit for presence operators.
     oneOf:
       - type: string
         maxLength: 1000
@@ -32,5 +32,6 @@ properties:
         items:
           type: string
           maxLength: 1000
+      - $ref: ./WorkflowChoiceIds.yml
       - $ref: ./WorkflowDataRef.yml
 additionalProperties: false

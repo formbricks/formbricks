@@ -122,6 +122,22 @@ describe("If/else operators", () => {
     expect(ZWorkflowCondition.safeParse({ ...base, operator: "isSet", right: "x" }).success).toBe(false);
   });
 
+  test("choice ids (DC11): one for equals and does not equal, any number for a list operator", () => {
+    const base = { id: "c", left: { path: "response.plan" } };
+    const parse = (operator: string, choiceIds: string[]) =>
+      ZWorkflowCondition.safeParse({ ...base, operator, right: { choiceIds } }).success;
+
+    expect(parse("equals", ["basic"])).toBe(true);
+    expect(parse("doesNotEqual", ["basic"])).toBe(true);
+    expect(parse("equals", ["basic", "pro"])).toBe(false);
+    expect(parse("includesOneOf", ["basic", "pro"])).toBe(true);
+    expect(parse("equalsOneOf", ["basic"])).toBe(true);
+    // Text and number operators don't compare choices.
+    expect(parse("contains", ["basic"])).toBe(false);
+    expect(parse("isGreaterThan", ["basic"])).toBe(false);
+    expect(parse("equals", [])).toBe(false);
+  });
+
   test("refuses operators that need a survey element", () => {
     expect(
       ZWorkflowCondition.safeParse({ id: "c", left: { path: "response.q" }, operator: "isClicked" }).success
@@ -134,6 +150,16 @@ describe("Variable paths in conditions", () => {
     const definition = branching([{ id: "c1", left: { path: "contact.plan" }, operator: "isSet" }]);
     expect(issues(ZWorkflowDefinitionInput.safeParse(definition)).join()).toMatch(
       /payload\., steps\., response\./
+    );
+  });
+
+  test("choice ids compare only with a survey question's answer", () => {
+    const withLeft = (path: string) =>
+      branching([{ id: "c1", left: { path }, operator: "equals", right: { choiceIds: ["basic"] } }]);
+
+    expect(ZWorkflowDefinitionInput.safeParse(withLeft("response.plan")).success).toBe(true);
+    expect(issues(ZWorkflowDefinitionInput.safeParse(withLeft("payload.plan"))).join()).toMatch(
+      /response\.<questionId>/
     );
   });
 

@@ -13,6 +13,11 @@ import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspect
 import { useBoundTriggerSurvey } from "@/modules/ee/workflows/hooks/use-bound-trigger-survey";
 import { useWorkflowVariableGroups } from "@/modules/ee/workflows/hooks/use-workflow-variable-groups";
 import {
+  getChoiceQuestion,
+  getChoiceValueOptions,
+  isTypedValue,
+} from "@/modules/ee/workflows/lib/choice-conditions";
+import {
   addConditionBelowInGroup,
   applyConditionEdit,
   canAddCondition,
@@ -98,17 +103,31 @@ export const WorkflowIfElseForm = ({ node, isEditable, onChange }: Readonly<Work
         typeHint: typeHintOf(condition.leftOperand.value),
         t,
       }),
-    getValueProps: (condition) => ({
-      show: !isPresenceOperator(condition.operator),
-      showInput: true,
-      inputType: "text",
-      options: leftOptions,
-    }),
+    getValueProps: (condition) => {
+      // A choice question offers its choices, stored by id (DC11), as the survey flow editor does.
+      // A label typed before then stays visible and editable until a choice is picked.
+      const question = getChoiceQuestion(String(condition.leftOperand.value), survey);
+      if (question) {
+        return {
+          show: !isPresenceOperator(condition.operator),
+          showInput: isTypedValue(condition.rightOperand),
+          options: getChoiceValueOptions(question, condition.operator, t),
+        };
+      }
+      return {
+        show: !isPresenceOperator(condition.operator),
+        showInput: true,
+        inputType: "text",
+        options: leftOptions,
+      };
+    },
     getDefaultOperator: () => "equals",
     formatLeftOperandValue: (condition) => condition.leftOperand.value,
-    // A list operator compares against several typed values: one comma-separated field.
+    // A list operator compares against several typed values: one comma-separated field. A choice
+    // question's list operators pick several choices instead.
     renderValueInput: (condition) => {
       if (!isListOperator(condition.operator)) return undefined;
+      if (getChoiceQuestion(String(condition.leftOperand.value), survey)) return undefined;
       const value = condition.rightOperand?.value;
       return (
         <Input

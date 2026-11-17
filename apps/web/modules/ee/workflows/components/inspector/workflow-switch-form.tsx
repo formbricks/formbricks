@@ -10,6 +10,11 @@ import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspect
 import { useBoundTriggerSurvey } from "@/modules/ee/workflows/hooks/use-bound-trigger-survey";
 import { useWorkflowVariableGroups } from "@/modules/ee/workflows/hooks/use-workflow-variable-groups";
 import {
+  getChoiceQuestion,
+  getChoiceValueOptions,
+  isTypedValue,
+} from "@/modules/ee/workflows/lib/choice-conditions";
+import {
   getTypeHintLookup,
   isListOperator,
   isPresenceOperator,
@@ -23,6 +28,7 @@ import {
   canAddSwitchCase,
   canRemoveSwitchCase,
   removeSwitchCase,
+  withSwitchLeft,
 } from "@/modules/ee/workflows/lib/switch-cases";
 import { getVariableDisplayName } from "@/modules/ee/workflows/lib/variable-name";
 import { WORKFLOW_STEP_VARIABLE_PROVIDERS } from "@/modules/ee/workflows/lib/variable-picker";
@@ -82,6 +88,8 @@ export const WorkflowSwitchForm = ({ node, isEditable, onChange }: Readonly<Work
   }, [groups, left.path, t]);
 
   const survey = useBoundTriggerSurvey();
+  // A choice question's cases pick its choices, stored by id (DC11), as the survey flow editor does.
+  const choiceQuestion = getChoiceQuestion(left.path, survey);
   const operatorOptionsFor = (operator: string) =>
     getVariableOperatorOptions({ path: left.path, operator, survey, typeHint: typeHintOf(left.path), t });
 
@@ -104,9 +112,7 @@ export const WorkflowSwitchForm = ({ node, isEditable, onChange }: Readonly<Work
           groupedOptions={variableOptions}
           value={left.path}
           disabled={!isEditable}
-          onChangeValue={(value) =>
-            update({ ...node, config: { ...node.config, left: { path: String(value) } } })
-          }
+          onChangeValue={(value) => update(withSwitchLeft(node, String(value)))}
         />
       </InspectorCard>
       {/* What runs that match no case do is the Cases card's footer, next to the cases, instead of
@@ -119,7 +125,7 @@ export const WorkflowSwitchForm = ({ node, isEditable, onChange }: Readonly<Work
           const valueLabel = t("workspace.workflows.switch_case_value", {
             name: switchCase.name || fallbackName,
           });
-          const right = toGenericRight(switchCase.right);
+          const right = toGenericRight(switchCase.right, switchCase.operator);
           const menu = isEditable ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -193,7 +199,32 @@ export const WorkflowSwitchForm = ({ node, isEditable, onChange }: Readonly<Work
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  {isListOperator(switchCase.operator) ? (
+                  {choiceQuestion && !isPresenceOperator(switchCase.operator) ? (
+                    <InputCombobox
+                      id={`switch-${node.id}-case-${switchCase.id}-value`}
+                      aria-label={valueLabel}
+                      withInput={isTypedValue(right)}
+                      showSearch={false}
+                      inputProps={{ placeholder: t("workspace.surveys.edit.select_or_type_value") }}
+                      groupedOptions={getChoiceValueOptions(choiceQuestion, switchCase.operator, t)}
+                      allowMultiSelect={isListOperator(switchCase.operator)}
+                      showCheckIcon={isListOperator(switchCase.operator)}
+                      value={right?.value ?? ""}
+                      disabled={!isEditable}
+                      onChangeValue={(value, option) =>
+                        update(
+                          applySwitchCaseEdit(
+                            node,
+                            switchCase.id,
+                            // Text typed into the field (no option) stays a typed value.
+                            { rightOperand: { value, type: option?.meta?.type ?? "static" } },
+                            typeHintOf
+                          )
+                        )
+                      }
+                    />
+                  ) : null}
+                  {!choiceQuestion && isListOperator(switchCase.operator) ? (
                     <Input
                       key={`${switchCase.id}-${switchCase.operator}`}
                       aria-label={valueLabel}
@@ -214,7 +245,9 @@ export const WorkflowSwitchForm = ({ node, isEditable, onChange }: Readonly<Work
                       }
                     />
                   ) : null}
-                  {!isListOperator(switchCase.operator) && !isPresenceOperator(switchCase.operator) ? (
+                  {!choiceQuestion &&
+                  !isListOperator(switchCase.operator) &&
+                  !isPresenceOperator(switchCase.operator) ? (
                     <InputCombobox
                       id={`switch-${node.id}-case-${switchCase.id}-value`}
                       aria-label={valueLabel}

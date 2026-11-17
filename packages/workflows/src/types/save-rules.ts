@@ -7,6 +7,7 @@ import {
   type TWorkflowCondition,
   type TWorkflowConditionGroup,
   flattenWorkflowConditions,
+  isWorkflowChoiceIds,
 } from "./conditions/base";
 import {
   MAX_SWITCH_CASE_NAME_LENGTH,
@@ -48,9 +49,32 @@ const checkConditionValue = (right: TWorkflowCondition["right"], path: TPath, ct
   }
 };
 
+/**
+ * Choice ids name a survey question's choices, so the Variable they compare with must be that
+ * question's answer (`response.<questionId>`, one segment).
+ */
+const checkChoiceLeft = (
+  left: TWorkflowDataRef,
+  right: TWorkflowCondition["right"],
+  path: TPath,
+  ctx: z.RefinementCtx
+): void => {
+  if (!isWorkflowChoiceIds(right)) return;
+  const parsed = parseWorkflowVariablePath(left.path);
+  if (!parsed.ok) return;
+  if (parsed.source !== "response" || parsed.segments.length !== 1) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Choice ids compare only with a survey question's answer (response.<questionId>)",
+      path: [...path, "right"],
+    });
+  }
+};
+
 const checkCondition = (condition: TWorkflowCondition, path: TPath, ctx: z.RefinementCtx): void => {
   checkDataRef(condition.left, [...path, "left"], ctx);
   checkConditionValue(condition.right, path, ctx);
+  checkChoiceLeft(condition.left, condition.right, path, ctx);
 };
 
 const checkConditionGroup = (group: TWorkflowConditionGroup, path: TPath, ctx: z.RefinementCtx): void => {
@@ -115,6 +139,7 @@ const checkSwitch = (node: TWorkflowSwitchNode, path: TPath, ctx: z.RefinementCt
     }
     // The Variable is checked once above; a case adds only its value.
     checkConditionValue(switchCase.right, casePath, ctx);
+    checkChoiceLeft(left, switchCase.right, casePath, ctx);
   }
 };
 

@@ -1,4 +1,5 @@
 import { WORKFLOW_SWITCH_DEFAULT_BRANCH, toSwitchCaseCondition } from "@formbricks/workflows";
+import { createChoiceAnswerReader } from "./choice-answers";
 import { evaluateWorkflowCondition } from "./if-else";
 import type { WorkflowStepExecutor } from "./types";
 
@@ -10,11 +11,16 @@ import type { WorkflowStepExecutor } from "./types";
 export const switchStepExecutor: WorkflowStepExecutor<"switch"> = {
   hasEffects: false,
   describeInput: (node) => ({ left: node.config.left, cases: node.config.cases }),
-  execute: async ({ node, context }) => {
+  execute: async ({ node, context, environment }) => {
+    const readChoiceAnswer = createChoiceAnswerReader(environment.surveyResponse);
     const cases: { id: string; matched: boolean }[] = [];
     let branch = WORKFLOW_SWITCH_DEFAULT_BRANCH;
     for (const switchCase of node.config.cases) {
-      const matched = evaluateWorkflowCondition(toSwitchCaseCondition(node.config.left, switchCase), context);
+      const matched = evaluateWorkflowCondition(
+        toSwitchCaseCondition(node.config.left, switchCase),
+        context,
+        readChoiceAnswer
+      );
       cases.push({ id: switchCase.id, matched });
       if (matched) {
         branch = switchCase.id;

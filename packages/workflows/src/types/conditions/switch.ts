@@ -32,7 +32,7 @@ export const ZWorkflowSwitchCase: z.ZodType<TWorkflowSwitchCase> = z
     name: z.string().describe(`The branch's label, at most ${MAX_SWITCH_CASE_NAME_LENGTH} characters.`),
     operator: ZWorkflowConditionOperator,
     right: ZWorkflowConditionValue.optional().describe(
-      "What the Variable is compared against: a fixed value, a list of texts for list operators, or a Variable reference. Omit for presence operators."
+      "What the Variable is compared against: a fixed value, a list of texts for list operators, choices of the survey question the Variable reads ({choiceIds}), or a Variable reference. Omit for presence operators."
     ),
   })
   .superRefine(checkConditionOperands);

@@ -1,4 +1,9 @@
-import { type TWorkflowSwitchNode, WORKFLOW_LIMITS, toSwitchCaseCondition } from "@formbricks/workflows";
+import {
+  type TWorkflowSwitchNode,
+  WORKFLOW_LIMITS,
+  isWorkflowChoiceIds,
+  toSwitchCaseCondition,
+} from "@formbricks/workflows";
 import {
   applyConditionEdit,
   isListOperator,
@@ -48,6 +53,26 @@ export const applySwitchCaseEdit = (
       };
     })
   );
+
+/**
+ * The Switch comparing another Variable. Picked choices (DC11) belong to the question it compared, so
+ * they are cleared: an empty value to type into, or none for a list operator, as a new case has.
+ */
+export const withSwitchLeft = (node: TWorkflowSwitchNode, path: string): TWorkflowSwitchNode => {
+  if (path === node.config.left.path) return node;
+  return {
+    ...node,
+    config: {
+      ...node.config,
+      left: { path },
+      cases: node.config.cases.map((switchCase) => {
+        if (!isWorkflowChoiceIds(switchCase.right)) return switchCase;
+        const { right: _choices, ...rest } = switchCase;
+        return isListOperator(switchCase.operator) ? rest : { ...rest, right: "" };
+      }),
+    },
+  };
+};
 
 export const canAddSwitchCase = (node: TWorkflowSwitchNode): boolean =>
   node.config.cases.length < WORKFLOW_LIMITS.maxSwitchCases;
