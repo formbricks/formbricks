@@ -8,8 +8,8 @@ import type { TMcpGrantPermissions } from "@/modules/mcp/grant";
 import {
   type TMcpGrantEditorCategory,
   getMcpCategoryLevel,
+  getMcpDependencyHints,
   getMcpLevelOptions,
-  getUnmetMcpPermissionDependencies,
   setMcpCategoryLevel,
   setMcpPermissionLevel,
 } from "@/modules/mcp/grant-editor";
@@ -18,7 +18,6 @@ import {
   getMcpDependencyHint,
   getMcpPermissionLabel,
 } from "@/modules/mcp/grant-editor-labels";
-import { MCP_PERMISSION_DEPENDENCIES } from "@/modules/mcp/permissions";
 import { McpGrantLevelToggle } from "./mcp-grant-level-toggle";
 
 interface McpGrantCategoryProps {
@@ -27,8 +26,8 @@ interface McpGrantCategoryProps {
   permissions: TMcpGrantPermissions;
   cap: TMcpGrantPermissions;
   onChange: (permissions: TMcpGrantPermissions) => void;
-  /** Dependency hints name permissions in other categories; hidden when those aren't shown. */
-  showDependencyHints: boolean;
+  /** A Dashboard viewer's matrix shows no dependency hints (`getMcpDependencyHints`). */
+  isDashboardViewer: boolean;
   disabled?: boolean;
 }
 
@@ -42,14 +41,13 @@ export const McpGrantCategory = ({
   permissions,
   cap,
   onChange,
-  showDependencyHints,
+  isDashboardViewer,
   disabled,
 }: Readonly<McpGrantCategoryProps>) => {
   const { t } = useTranslation();
   const [isExpanded, setIsExpanded] = useState(false);
   const categoryId = `${id}-${category.category}`;
   const label = getMcpCategoryLabel(category.category, t);
-  const unmet = getUnmetMcpPermissionDependencies(permissions);
 
   return (
     <li className="border-b border-slate-200 last:border-b-0">
@@ -85,22 +83,20 @@ export const McpGrantCategory = ({
       <ul id={`${categoryId}-permissions`} hidden={!isExpanded} className="pb-3 pl-6">
         {category.permissions.map((permission) => {
           const permissionLabel = getMcpPermissionLabel(permission, t);
-          const dependencies = MCP_PERMISSION_DEPENDENCIES[permission] ?? [];
-          const isUnmet = Boolean(unmet[permission]);
+          const hints = getMcpDependencyHints(permission, permissions, { isDashboardViewer });
           return (
             <li
               key={permission}
               className="flex flex-col gap-2 py-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-slate-700">
                 <span>{permissionLabel}</span>
-                {showDependencyHints &&
-                  dependencies.map((requirement) => (
-                    <p
-                      key={requirement.permission}
-                      className={cn("mt-0.5 text-xs", isUnmet ? "text-amber-700" : "text-slate-500")}>
-                      {getMcpDependencyHint(requirement, t)}
-                    </p>
-                  ))}
+                {hints.map(({ requirement, isUnmet }) => (
+                  <p
+                    key={requirement.permission}
+                    className={cn("mt-0.5 text-xs", isUnmet ? "text-amber-700" : "text-slate-500")}>
+                    {getMcpDependencyHint(requirement, t)}
+                  </p>
+                ))}
               </div>
               <McpGrantLevelToggle
                 id={`${categoryId}-${permission}`}

@@ -5,11 +5,12 @@ import {
   canEditMcpGrant,
   getInitialMcpGrantPermissions,
   getMcpCategoryLevel,
+  getMcpDependencyHints,
   getMcpGrantEditorCategories,
   getMcpGrantSummary,
   getMcpLevelOptions,
   getUnmetMcpPermissionDependencies,
-  isMcpGrantEmpty,
+  hasMcpCappedLevel,
   setMcpCategoryLevel,
   setMcpPermissionLevel,
 } from "./grant-editor";
@@ -199,13 +200,6 @@ describe("presets", () => {
   });
 });
 
-describe("isMcpGrantEmpty", () => {
-  test("is true only when every permission is at No access", () => {
-    expect(isMcpGrantEmpty({})).toBe(true);
-    expect(isMcpGrantEmpty({ workflowRuns: "read" })).toBe(false);
-  });
-});
-
 describe("canEditMcpGrant", () => {
   test("is true for a grant whose client's scopes ask for something", () => {
     expect(canEditMcpGrant({ permissions: {}, cap: { surveys: "read" } })).toBe(true);
@@ -239,6 +233,53 @@ describe("getUnmetMcpPermissionDependencies", () => {
   test("names nothing once the dependency is given, or when the dependent permission is off", () => {
     expect(getUnmetMcpPermissionDependencies({ charts: "write", feedbackRecords: "read" })).toEqual({});
     expect(getUnmetMcpPermissionDependencies({ feedbackRecords: "read" })).toEqual({});
+  });
+});
+
+// The matrix's reconnect hint (spec story 14): shown on a toggle only when the client's scopes disable a
+// level it offers.
+describe("hasMcpCappedLevel", () => {
+  test("is true when the scopes leave a level the permission offers out of reach", () => {
+    expect(hasMcpCappedLevel(getMcpLevelOptions(["charts"], { charts: "read" }))).toBe(true);
+    expect(hasMcpCappedLevel(getMcpLevelOptions(["surveys", "creatives"], {}))).toBe(true);
+  });
+
+  test("is false when every level offered can be chosen, a read-only permission's included", () => {
+    expect(hasMcpCappedLevel(getMcpLevelOptions(["charts"], { charts: "write" }))).toBe(false);
+    // Workflow runs offer no Write, so Read is the whole cap and nothing is held back.
+    expect(hasMcpCappedLevel(getMcpLevelOptions(["workflowRuns"], { workflowRuns: "read" }))).toBe(false);
+  });
+});
+
+// The hints under a permission (spec story 16), and the viewer-only matrix (story 20), which has none.
+describe("getMcpDependencyHints", () => {
+  test("names what Charts needs, marked while the grant leaves it out", () => {
+    expect(getMcpDependencyHints("charts", { charts: "read" }, { isDashboardViewer: false })).toEqual([
+      { requirement: { permission: "feedbackRecords", level: "read" }, isUnmet: true },
+    ]);
+    expect(
+      getMcpDependencyHints(
+        "charts",
+        { charts: "read", feedbackRecords: "read" },
+        { isDashboardViewer: false }
+      )
+    ).toEqual([{ requirement: { permission: "feedbackRecords", level: "read" }, isUnmet: false }]);
+  });
+
+  test("names it unmarked while the permission itself is off", () => {
+    expect(getMcpDependencyHints("contacts", {}, { isDashboardViewer: false })).toEqual([
+      { requirement: { permission: "contactAttributes", level: "read" }, isUnmet: false },
+    ]);
+  });
+
+  test("shows nothing for a permission without dependencies", () => {
+    expect(getMcpDependencyHints("dashboards", { dashboards: "read" }, { isDashboardViewer: false })).toEqual(
+      []
+    );
+  });
+
+  test("shows a Dashboard viewer no hint, since Feedback records is outside their matrix", () => {
+    expect(getMcpDependencyHints("charts", { charts: "read" }, { isDashboardViewer: true })).toEqual([]);
   });
 });
 

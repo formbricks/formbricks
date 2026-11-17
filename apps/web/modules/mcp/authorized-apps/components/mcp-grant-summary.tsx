@@ -4,8 +4,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
 import { getMcpGrantAccessSummary } from "@/modules/mcp/grant-access";
-import { getMcpGrantSummary } from "@/modules/mcp/grant-editor";
-import { getMcpCategoryLabel, getMcpCategoryLevelLabel } from "@/modules/mcp/grant-editor-labels";
+import { getMcpGrantSummaryChips } from "@/modules/mcp/grant-editor-labels";
 
 interface McpGrantSummaryProps {
   permissions: TMcpGrantPermissions;
@@ -29,7 +28,7 @@ export const McpGrantSummary = ({
     <div className="space-y-1.5">
       {access && <p className="text-sm font-medium text-slate-700">{getMcpGrantAccessSummary(access, t)}</p>}
       <ul className="flex flex-wrap gap-1.5">
-        {getMcpGrantSummary(permissions, { isDashboardViewer }).map(({ category, level }) => (
+        {getMcpGrantSummaryChips(permissions, { isDashboardViewer }, t).map(({ category, level, label }) => (
           <li
             key={category}
             className={cn(
@@ -38,7 +37,7 @@ export const McpGrantSummary = ({
                 ? "border-slate-200 bg-white text-slate-500"
                 : "border-slate-200 bg-slate-50 text-slate-700"
             )}>
-            {getMcpCategoryLabel(category, t)} · {getMcpCategoryLevelLabel(level, t)}
+            {label}
           </li>
         ))}
       </ul>

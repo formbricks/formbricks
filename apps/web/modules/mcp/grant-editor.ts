@@ -1,4 +1,4 @@
-import { type TMcpGrantPermissions, capMcpGrantPermissions } from "./grant";
+import { type TMcpGrantPermissions, capMcpGrantPermissions, isMcpGrantEmpty } from "./grant";
 import {
   MCP_PERMISSIONS,
   MCP_PERMISSION_CATEGORIES,
@@ -143,10 +143,6 @@ export const applyMcpGrantPreset = (
   );
 };
 
-/** True when the grant gives nothing: Allow and Save are disabled then. */
-export const isMcpGrantEmpty = (permissions: TMcpGrantPermissions): boolean =>
-  Object.keys(permissions).length === 0;
-
 /**
  * Whether Authorized apps offers Edit for a client: it needs a grant to edit, and a cap above nothing. A
  * client capped at nothing (no consent, no `skipConsent`) has nothing Edit could give.
@@ -176,6 +172,35 @@ export const getUnmetMcpPermissionDependencies = (
   }
   return unmet;
 };
+
+/** One dependency hint under a permission: what it needs, and whether the grant leaves that out. */
+export type TMcpDependencyHint = { requirement: TMcpPermissionRequirement; isUnmet: boolean };
+
+/**
+ * The dependency hints the matrix shows under `permission` (spec story 16): one per permission it needs,
+ * marked when the grant leaves it out. None for a Dashboard viewer, whose matrix shows only Dashboards:
+ * a hint would name a permission (Feedback records) the viewer can't see or give, and their chart reads
+ * go through a dashboard, which needs nothing else (ADR-0025).
+ */
+export const getMcpDependencyHints = (
+  permission: TMcpPermission,
+  permissions: TMcpGrantPermissions,
+  { isDashboardViewer }: { isDashboardViewer: boolean }
+): TMcpDependencyHint[] => {
+  if (isDashboardViewer) return [];
+  const unmet = getUnmetMcpPermissionDependencies(permissions)[permission] ?? [];
+  return (MCP_PERMISSION_DEPENDENCIES[permission] ?? []).map((requirement) => ({
+    requirement,
+    isUnmet: unmet.includes(requirement),
+  }));
+};
+
+/**
+ * Whether a toggle shows the reconnect hint (spec story 14): some level it offers is disabled because the
+ * client's scopes don't ask for it, which only a new consent can change.
+ */
+export const hasMcpCappedLevel = (options: readonly TMcpLevelOption[]): boolean =>
+  options.some((option) => option.disabled);
 
 /**
  * What the matrix opens with: the client's existing grant when it has one (a reconnect must not undo a

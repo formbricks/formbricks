@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import type { TMcpCategoryLevel, TMcpLevelOption } from "@/modules/mcp/grant-editor";
+import { type TMcpCategoryLevel, type TMcpLevelOption, hasMcpCappedLevel } from "@/modules/mcp/grant-editor";
 import { getMcpAccessLevelLabel } from "@/modules/mcp/grant-editor-labels";
 import type { TMcpAccessLevel } from "@/modules/mcp/permissions";
 import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
@@ -30,7 +30,7 @@ export const McpGrantLevelToggle = ({
   disabled,
 }: Readonly<McpGrantLevelToggleProps>) => {
   const { t } = useTranslation();
-  const isCapped = options.some((option) => option.disabled);
+  const isCapped = hasMcpCappedLevel(options);
 
   return (
     <div className="flex items-center gap-1 sm:w-72">

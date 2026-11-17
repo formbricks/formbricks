@@ -19,6 +19,7 @@ import { getMcpGrant } from "@/modules/mcp/grant-store";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { Logo } from "@/modules/ui/components/logo";
 import { OAuthConsentForm } from "./components/OAuthConsentForm";
+import { getConsentIdentityAccess } from "./lib/identity-access";
 
 type TSearchParams = Record<string, string | string[] | undefined>;
 
@@ -128,12 +129,11 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
   const initialAccess = initialMcpGrantAccessDraft(
     existingGrant ? limitMcpGrantAccessToOptions(existingGrant, accessOptions) : null
   );
-  const identityAccess = [
-    ...(requestedScopes.includes("profile") || requestedScopes.includes("email")
-      ? [t("auth.oauth.grant.identity_name_and_email")]
-      : []),
-    ...(requestedScopes.includes("offline_access") ? [t("auth.oauth.grant.identity_stay_signed_in")] : []),
-  ];
+  const identityAccess = getConsentIdentityAccess(requestedScopes).map((row) =>
+    row === "name_and_email"
+      ? t("auth.oauth.grant.identity_name_and_email")
+      : t("auth.oauth.grant.identity_stay_signed_in")
+  );
   const clientUriHost = getHostFromUrl(client.client_uri ?? null);
 
   return (

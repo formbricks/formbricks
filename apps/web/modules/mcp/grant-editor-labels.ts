@@ -1,6 +1,6 @@
-import type { TMcpCategoryLevel } from "./grant-editor";
+import type { TMcpGrantPermissions } from "./grant";
+import { type TMcpCategoryLevel, getMcpGrantSummary } from "./grant-editor";
 import {
-  MCP_PERMISSIONS,
   type TMcpPermission,
   type TMcpPermissionCategory,
   type TMcpPermissionRequirement,
@@ -10,13 +10,13 @@ import {
  * The words the grant editor shows for the registry's categories, permissions and access levels. Takes
  * `t` from the calling component.
  *
- * The maps are partial on purpose: a permission or category added to the registry shows up in the
- * matrix straight away under its registry name, in English, until it gets a translated label here.
+ * The maps are complete, not partial: a permission or category added to the registry without a label here
+ * fails the typecheck rather than shipping English into a translated screen.
  */
 
 type TTranslate = (key: string, values?: Record<string, string>) => string;
 
-const CATEGORY_LABELS: Partial<Record<TMcpPermissionCategory, (t: TTranslate) => string>> = {
+const CATEGORY_LABELS: Record<TMcpPermissionCategory, (t: TTranslate) => string> = {
   surveys: (t) => t("auth.oauth.grant.categories.surveys"),
   responses: (t) => t("auth.oauth.grant.categories.responses"),
   workflows: (t) => t("auth.oauth.grant.categories.workflows"),
@@ -25,7 +25,7 @@ const CATEGORY_LABELS: Partial<Record<TMcpPermissionCategory, (t: TTranslate) =>
   audience: (t) => t("auth.oauth.grant.categories.audience"),
 };
 
-const PERMISSION_LABELS: Partial<Record<TMcpPermission, (t: TTranslate) => string>> = {
+const PERMISSION_LABELS: Record<TMcpPermission, (t: TTranslate) => string> = {
   surveys: (t) => t("auth.oauth.grant.permissions.surveys"),
   creatives: (t) => t("auth.oauth.grant.permissions.creatives"),
   surveyStyling: (t) => t("auth.oauth.grant.permissions.survey_styling"),
@@ -49,13 +49,11 @@ const LEVEL_LABELS: Record<Exclude<TMcpCategoryLevel, "mixed">, (t: TTranslate) 
   write: (t) => t("auth.oauth.grant.levels.write"),
 };
 
-const startCase = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
-
 export const getMcpCategoryLabel = (category: TMcpPermissionCategory, t: TTranslate): string =>
-  CATEGORY_LABELS[category]?.(t) ?? startCase(category);
+  CATEGORY_LABELS[category](t);
 
 export const getMcpPermissionLabel = (permission: TMcpPermission, t: TTranslate): string =>
-  PERMISSION_LABELS[permission]?.(t) ?? MCP_PERMISSIONS[permission].name;
+  PERMISSION_LABELS[permission](t);
 
 export const getMcpAccessLevelLabel = (level: Exclude<TMcpCategoryLevel, "mixed">, t: TTranslate): string =>
   LEVEL_LABELS[level](t);
@@ -70,3 +68,27 @@ export const getMcpDependencyHint = (requirement: TMcpPermissionRequirement, t: 
     permission: getMcpPermissionLabel(requirement.permission, t),
     level: getMcpAccessLevelLabel(requirement.level, t),
   });
+
+/** One chip of a grant's summary on Authorized apps: its category, its level, and what it reads. */
+export type TMcpGrantSummaryChip = {
+  category: TMcpPermissionCategory;
+  level: TMcpCategoryLevel;
+  /** "Surveys · Write"; "Custom" where the category's permissions differ (spec story 9). */
+  label: string;
+};
+
+/**
+ * The chips Authorized apps shows for a grant (spec story 29): one per category the editor shows, so a
+ * Dashboard viewer gets Dashboards alone, and a category the grant gives nothing reads "No access" rather
+ * than disappearing.
+ */
+export const getMcpGrantSummaryChips = (
+  permissions: TMcpGrantPermissions,
+  { isDashboardViewer }: { isDashboardViewer: boolean },
+  t: TTranslate
+): TMcpGrantSummaryChip[] =>
+  getMcpGrantSummary(permissions, { isDashboardViewer }).map(({ category, level }) => ({
+    category,
+    level,
+    label: `${getMcpCategoryLabel(category, t)} · ${getMcpCategoryLevelLabel(level, t)}`,
+  }));

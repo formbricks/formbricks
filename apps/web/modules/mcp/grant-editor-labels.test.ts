@@ -3,6 +3,7 @@ import {
   getMcpCategoryLabel,
   getMcpCategoryLevelLabel,
   getMcpDependencyHint,
+  getMcpGrantSummaryChips,
   getMcpPermissionLabel,
 } from "./grant-editor-labels";
 import { MCP_PERMISSIONS, MCP_PERMISSION_CATEGORIES, type TMcpPermission } from "./permissions";
@@ -30,5 +31,51 @@ describe("grant editor labels", () => {
   test("a category whose permissions differ reads as a custom level, the others as their level", () => {
     expect(getMcpCategoryLevelLabel("mixed", t)).toBe("auth.oauth.grant.levels.custom");
     expect(getMcpCategoryLevelLabel("none", t)).toBe("auth.oauth.grant.levels.no_access");
+  });
+});
+
+// Authorized apps' summary chips (spec stories 9, 20 and 29), as the list renders them.
+describe("getMcpGrantSummaryChips", () => {
+  /** English for the words a chip is made of, so the expectations read as what the list shows. */
+  const english = (key: string): string =>
+    ({
+      "auth.oauth.grant.categories.surveys": "Surveys",
+      "auth.oauth.grant.categories.responses": "Responses",
+      "auth.oauth.grant.categories.workflows": "Workflows",
+      "auth.oauth.grant.categories.dashboards": "Dashboards",
+      "auth.oauth.grant.categories.feedback": "Feedback",
+      "auth.oauth.grant.categories.audience": "Audience",
+      "auth.oauth.grant.levels.no_access": "No access",
+      "auth.oauth.grant.levels.read": "Read",
+      "auth.oauth.grant.levels.write": "Write",
+      "auth.oauth.grant.levels.custom": "Custom",
+    })[key] ?? key;
+
+  test("one chip per category: Custom where its permissions differ, No access where it gives nothing", () => {
+    const chips = getMcpGrantSummaryChips(
+      { surveys: "write", creatives: "write", surveyStyling: "read", charts: "read", dashboards: "read" },
+      { isDashboardViewer: false },
+      english
+    );
+
+    expect(chips.map(({ label }) => label)).toEqual([
+      "Surveys · Custom",
+      "Responses · No access",
+      "Workflows · No access",
+      "Dashboards · Read",
+      "Feedback · No access",
+      "Audience · No access",
+    ]);
+    expect(chips[0].level).toBe("mixed");
+  });
+
+  test("a Dashboard viewer's grant shows the Dashboards chip alone", () => {
+    expect(
+      getMcpGrantSummaryChips(
+        { surveys: "write", charts: "read", dashboards: "read" },
+        { isDashboardViewer: true },
+        english
+      )
+    ).toEqual([{ category: "dashboards", level: "read", label: "Dashboards · Read" }]);
   });
 });

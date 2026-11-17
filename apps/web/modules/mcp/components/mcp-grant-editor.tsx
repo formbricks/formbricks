@@ -76,7 +76,7 @@ export const McpGrantEditor = ({
             permissions={permissions}
             cap={cap}
             onChange={onChange}
-            showDependencyHints={!isDashboardViewer}
+            isDashboardViewer={isDashboardViewer}
             disabled={disabled}
           />
         ))}
