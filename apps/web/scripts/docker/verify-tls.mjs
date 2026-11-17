@@ -1,8 +1,7 @@
 // Proves with real TLS handshakes which CA store the runtime's Node trusts (ENG-4065).
 //
-// Node ships its own list of root CAs. Updating the OS CA package (Alpine's ca-certificates) only reaches
-// Node if the binary was built with --openssl-use-def-ca-store; see the Dockerfile. Listing the store is
-// no help here: with the OS store, tls.getCACertificates("default") returns nothing, so this connects.
+// Node trusts the Mozilla root list compiled into its binary; see the Dockerfile. The OS CA store must not
+// widen that trust, and NODE_EXTRA_CA_CERTS, the documented way to add a private CA, must keep working.
 //
 // Run it inside the image, normally through verify-tls-image.sh:
 //   node verify-tls.mjs <pki-dir>          offline, local servers; the directory comes from the wrapper
@@ -149,21 +148,22 @@ const runOffline = (pkiDir) => {
   const root = join(pkiDir, "root.pem");
   const scenarios = [
     {
-      name: "the OS CA store trusts the test root",
+      // SSL_CERT_FILE is what OpenSSL's default store reads. Node must ignore it.
+      name: "the OS CA store cannot add a root",
       env: { SSL_CERT_FILE: root },
-      expected: { chained: "accepted", selfSigned: "rejected" },
-    },
-    {
-      // Deployments set NODE_OPTIONS for the heap. That must not switch the CA store back.
-      name: "the same with a deployment's own NODE_OPTIONS",
-      env: { SSL_CERT_FILE: root, NODE_OPTIONS: "--max_old_space_size=1024" },
-      expected: { chained: "accepted", selfSigned: "rejected" },
-    },
-    {
-      // Without this control the test would also pass for a Node that trusts everything.
-      name: "the OS CA store does not hold the test root",
-      env: {},
       expected: { chained: "rejected", selfSigned: "rejected" },
+    },
+    {
+      // Without this control the test would also pass for a Node that rejects everything.
+      name: "NODE_EXTRA_CA_CERTS adds a private root",
+      env: { NODE_EXTRA_CA_CERTS: root },
+      expected: { chained: "accepted", selfSigned: "rejected" },
+    },
+    {
+      // Deployments set NODE_OPTIONS for the heap. That must not change which roots Node trusts.
+      name: "the same with a deployment's own NODE_OPTIONS",
+      env: { NODE_EXTRA_CA_CERTS: root, NODE_OPTIONS: "--max_old_space_size=1024" },
+      expected: { chained: "accepted", selfSigned: "rejected" },
     },
   ];
   for (const { name, env, expected } of scenarios) {

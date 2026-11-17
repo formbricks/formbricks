@@ -2,7 +2,7 @@ import "server-only";
 import { validateBlockResponses } from "@formbricks/surveys/validation";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { TSurveyQuestion } from "@formbricks/types/surveys/types";
+import { TResponseNotShown } from "@formbricks/types/surveys/not-shown";
 import { TValidationErrorMap } from "@formbricks/types/surveys/validation-rules";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
@@ -18,13 +18,18 @@ import { ApiErrorDetails } from "@/modules/api/v2/types/api-error";
  * @param responseData - Response data to validate (keyed by element ID); absent on partial updates
  * @param languageCode - Language code for error messages (defaults to "en")
  * @param questions - Survey questions (legacy format, used as fallback if blocks are empty)
+ * @param notShown - The response's not-shown record, when the request sends one: rules then skip the
+ *   options, rows and columns show-if kept from the respondent, as the survey does (ENG-7332). Hidden
+ *   ones are skipped either way.
  * @returns Validation error map keyed by element ID, or null if validation passes
  */
 export const validateResponseData = (
   blocks: unknown[] | undefined | null,
   responseData: TResponseData | undefined | null,
   languageCode: string = "en",
-  questions?: TSurveyQuestion[] | undefined | null
+  // The legacy questions `transformQuestionsToBlocks` takes, typed off it rather than the deprecated name.
+  questions?: Parameters<typeof transformQuestionsToBlocks>[0] | undefined | null,
+  notShown?: TResponseNotShown | null
 ): TValidationErrorMap | null => {
   // Partial updates omit `data` entirely (e.g. `{ "finished": true }`), so there is nothing to
   // validate. Matches the sibling validators on this path (validateClientFileUploads,
@@ -55,6 +60,7 @@ export const validateResponseData = (
   // and bound what one response can cost (a fresh budget per response).
   const errorMap = validateBlockResponses(elementsToValidate, responseData, languageCode, {
     matchPattern: createLinearPatternMatcher(),
+    notShown,
   });
 
   // Return null if no errors (validation passed), otherwise return error map

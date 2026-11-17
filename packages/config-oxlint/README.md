@@ -57,8 +57,8 @@ Notes:
   lines (`SONAR_PARITY_RULE_IDS`), as Sonar judges a PR's new code. Every rule except the vitest one skips
   test files, as Sonar does. `jsx-a11y/no-aria-hidden-on-focusable` (`a11yParity`) is an error in the react
   tiers; apps/web follows the staged severity.
-- Stale disable directives are reported as warnings repo-wide (`reportUnusedDisableDirectives` in the
-  root `oxlint.config.ts`). oxlint honours `eslint-disable` comments as well as its own `oxlint-disable`.
+- Stale disable directives are errors repo-wide (`reportUnusedDisableDirectives` in the root
+  `oxlint.config.ts`). oxlint honours `eslint-disable` comments as well as its own `oxlint-disable`.
 - `jsx-a11y` runs at its recommended (error) severity in both the `react` and `react-hooks` tiers, so
   `packages/surveys` — the renderer respondents actually see — has the same static a11y floor as the
   `survey-ui` components it renders, instead of resting solely on the axe gate in

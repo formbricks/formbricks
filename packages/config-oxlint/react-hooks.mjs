@@ -14,6 +14,8 @@ export const reactHooks = compose(
     env: { browser: true },
     rules: {
       ...reactHooksRecommended,
+      // Upstream ships it at "warn"; at zero violations it fails lint like the rest (ENG-7329).
+      "react/exhaustive-deps": "error",
       // Accessibility rules, at the same severity as the `react` tier runs them for survey-ui:
       // `packages/surveys` renders the survey respondents actually see, so it gets the same static
       // a11y floor as the component library it renders (ENG-2262).

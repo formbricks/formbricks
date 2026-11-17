@@ -17,9 +17,9 @@ export const Hello = ({ name }: Props) => <div>{name}</div>;
 `;
 
 describe("react-js/prefer-read-only-props in apps/web", () => {
-  test("reports a mutable prop", () => {
+  test("reports a mutable prop as an error", () => {
     expect(lintFixtures(webDir, { [FILE]: SOURCE })[FILE]).toContainEqual(
-      expect.objectContaining({ ruleId: "react-js/prefer-read-only-props" })
+      expect.objectContaining({ ruleId: "react-js/prefer-read-only-props", severity: "error" })
     );
   }, 30_000);
 
