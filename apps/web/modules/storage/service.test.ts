@@ -71,12 +71,7 @@ describe("storage service", () => {
 
       vi.mocked(getSignedUploadUrl).mockResolvedValue(mockSignedUrlResponse);
 
-      const result = await getSignedUrlForUpload(
-        "test-image.jpg",
-        "env-123",
-        "image/jpeg",
-        "public" as TAccessType
-      );
+      const result = await getSignedUrlForUpload("test-image.jpg", "env-123", "public" as TAccessType);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -95,6 +90,35 @@ describe("storage service", () => {
       );
     });
 
+    // Regression (ENG-7108): the uploader's own type string used to be signed into the upload, so
+    // `image/png;,text/html` was stored and later served as HTML.
+    test.each([
+      ["photo.PNG", "image/png", "png"],
+      ["report.pdf", "application/pdf", "pdf"],
+      ["sheet.xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "xlsx"],
+    ])("should sign the type derived from the extension of %s", async (fileName, expectedType, ext) => {
+      vi.mocked(getSignedUploadUrl).mockResolvedValue({
+        ok: true,
+        data: { signedUrl: "https://s3.example.com/upload", presignedFields: {} },
+      } as MockedSignedUploadReturn);
+
+      await getSignedUrlForUpload(fileName, "ws-1", "public");
+
+      expect(getSignedUploadUrl).toHaveBeenCalledWith(
+        expect.stringMatching(new RegExp(String.raw`--fid--.+\.${ext}$`, "i")),
+        expectedType,
+        "ws-1/public",
+        1024 * 1024 * 10
+      );
+    });
+
+    test("should refuse a file whose extension has no allowed type, without signing anything", async () => {
+      const result = await getSignedUrlForUpload("page.html", "ws-1", "public");
+
+      expect(result).toEqual({ ok: false, error: { code: StorageErrorCode.InvalidInput } });
+      expect(getSignedUploadUrl).not.toHaveBeenCalled();
+    });
+
     test("should return relative URL for private files", async () => {
       const mockSignedUrlResponse = {
         ok: true,
@@ -106,12 +130,7 @@ describe("storage service", () => {
 
       vi.mocked(getSignedUploadUrl).mockResolvedValue(mockSignedUrlResponse);
 
-      const result = await getSignedUrlForUpload(
-        "test-doc.pdf",
-        "env-123",
-        "application/pdf",
-        "private" as TAccessType
-      );
+      const result = await getSignedUrlForUpload("test-doc.pdf", "env-123", "private" as TAccessType);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -133,7 +152,6 @@ describe("storage service", () => {
       const result = await getSignedUrlForUpload(
         "test-doc.pdf",
         "ws-123",
-        "application/pdf",
         "private" as TAccessType,
         1024 * 1024 * 10,
         ["surveys", "survey-123", "elements", "element-123"]
@@ -160,7 +178,6 @@ describe("storage service", () => {
         const result = await getSignedUrlForUpload(
           "test-doc.pdf",
           "ws-123",
-          "application/pdf",
           "private" as TAccessType,
           1024 * 1024 * 10,
           ["surveys", unsafeSegment]
@@ -185,12 +202,7 @@ describe("storage service", () => {
 
       vi.mocked(getSignedUploadUrl).mockResolvedValue(mockSignedUrlResponse);
 
-      const result = await getSignedUrlForUpload(
-        "test#file.txt",
-        "env-123",
-        "text/plain",
-        "public" as TAccessType
-      );
+      const result = await getSignedUrlForUpload("test#file.txt", "env-123", "public" as TAccessType);
 
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -217,12 +229,7 @@ describe("storage service", () => {
 
       vi.mocked(getSignedUploadUrl).mockResolvedValue(mockSignedUrlResponse);
 
-      const result = await getSignedUrlForUpload(
-        "my.backup.file.pdf",
-        "env-123",
-        "application/pdf",
-        "public" as TAccessType
-      );
+      const result = await getSignedUrlForUpload("my.backup.file.pdf", "env-123", "public" as TAccessType);
 
       expect(result.ok).toBe(true);
       expect(getSignedUploadUrl).toHaveBeenCalledWith(
@@ -247,7 +254,6 @@ describe("storage service", () => {
       await getSignedUrlForUpload(
         "large-file.pdf",
         "env-123",
-        "application/pdf",
         "public" as TAccessType,
         1024 * 1024 * 50 // 50MB
       );
@@ -270,12 +276,7 @@ describe("storage service", () => {
 
       vi.mocked(getSignedUploadUrl).mockResolvedValue(mockErrorResponse);
 
-      const result = await getSignedUrlForUpload(
-        "test-file.pdf",
-        "env-123",
-        "application/pdf",
-        "public" as TAccessType
-      );
+      const result = await getSignedUrlForUpload("test-file.pdf", "env-123", "public" as TAccessType);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -286,12 +287,7 @@ describe("storage service", () => {
     test("should handle unexpected errors and return unknown error", async () => {
       vi.mocked(getSignedUploadUrl).mockRejectedValue(new Error("Unexpected error"));
 
-      const result = await getSignedUrlForUpload(
-        "test-file.pdf",
-        "env-123",
-        "application/pdf",
-        "public" as TAccessType
-      );
+      const result = await getSignedUrlForUpload("test-file.pdf", "env-123", "public" as TAccessType);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -311,7 +307,7 @@ describe("storage service", () => {
 
       vi.mocked(getSignedUploadUrl).mockResolvedValue(mockErrorResponse);
 
-      const result = await getSignedUrlForUpload("----.png", "env-123", "image/png", "public" as TAccessType);
+      const result = await getSignedUrlForUpload("----.png", "env-123", "public" as TAccessType);
 
       expect(result.ok).toBe(false);
       if (!result.ok) {
