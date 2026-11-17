@@ -17,7 +17,6 @@
   "scripts": {
     "clean": "rimraf .turbo node_modules coverage",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "schemas:generate": "tsx scripts/generate.ts",
@@ -28,7 +27,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-oxlint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@hey-api/openapi-ts": "0.99.0",
     "@types/js-yaml": "catalog:",

@@ -9,12 +9,12 @@ the first line stays in `AGENTS.md`, and task process lives under `docs/agents/`
 ## Tooling and Review Scope
 
 Apply the judgment calls below to the diff. Check the relevant tool output before repeating a finding:
-Prettier owns formatting and import order; ESLint owns its enabled rules; schema freshness checks own
-generated API drift. `packages/config-eslint/` and `apps/web/eslint.config.mjs` define lint severity and
-exceptions. A warning is still actionable when CI does not block it.
+Prettier owns formatting and import order; oxlint owns its enabled rules; schema freshness checks own
+generated API drift. `packages/config-oxlint/` and each workspace's `oxlint.config.ts` define lint severity
+and exceptions. A warning is still actionable when CI does not block it.
 
 Static `unstable_cache` imports from `next/cache` are lint errors, and so are React component props that
-are not read-only (`react/prefer-read-only-props`). `pnpm workflow:check` enforces explicit
+are not read-only (`react-js/prefer-read-only-props`). `pnpm workflow:check` enforces explicit
 permission maps (or caller inheritance for workflows triggered only by `workflow_call`) and runner
 hardening first for literal `ubuntu-*` runner labels, including version and architecture pins. Reviewers
 still judge whether requested token permissions are minimal and whether runner choices outside this
@@ -34,7 +34,7 @@ These remain review checks until their enforcement handles the repository's exis
 - Keep responsibilities focused; consolidate duplicated behavior when it has one reason to change.
 - Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
 - Prefer type inference and shared types from `@formbricks/types`; new `any`s are still findings where
-  ESLint reports them only as warnings.
+  oxlint reports them only as warnings.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 - A control's enabled state comes from the permission the server action checks, passed down from the server,
@@ -305,7 +305,7 @@ Do not:
   afterwards, and every `<style>` without the host's nonce. Survey text is rich-text HTML full of `style`
   attributes, so markup is never parsed or injected raw: pass it through `stripInlineStyles` or
   `sanitizeSurveyHtml` from `@formbricks/survey-ui`, and write CSS with `textContent`. The `csp-safe`
-  ESLint rules in those four packages flag `DOMParser`, `innerHTML`, `dangerouslySetInnerHTML`,
+  lint rules in those four packages flag `DOMParser`, `innerHTML`, `dangerouslySetInnerHTML`,
   `setAttribute("style")` and `createElement("style")`; an exception is disabled on its line with the reason.
   Lint cannot see data, so `apps/web/playwright/survey-csp.spec.ts` renders the built bundle under the
   customer policy with styled text in every rich-text field. A new question type goes into the kitchen sink

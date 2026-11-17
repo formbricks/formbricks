@@ -74,15 +74,6 @@ export const AddIntegrationModal = ({
   const queryClient = useQueryClient();
   const refetchIntegration = () =>
     queryClient.invalidateQueries({ queryKey: integrationKeys.byType(workspaceId, "googleSheets") });
-  const integrationData: TIntegrationGoogleSheetsConfigData = {
-    spreadsheetId: "",
-    spreadsheetName: "",
-    surveyId: "",
-    surveyName: "",
-    elementIds: [""],
-    elements: "",
-    createdAt: new Date(),
-  };
   const { handleSubmit } = useForm();
   // The mapping being edited keeps its survey selectable even if it has since been restricted.
   const attachedSurveyIds = selectedIntegration ? [selectedIntegration.surveyId] : [];
@@ -176,22 +167,24 @@ export const AddIntegrationModal = ({
         return;
       }
 
-      const spreadsheetName = spreadsheetNameResponse.data;
-      integrationData.spreadsheetId = spreadsheetId;
-      integrationData.spreadsheetName = spreadsheetName;
-      integrationData.surveyId = selectedSurvey.id;
-      integrationData.surveyName = selectedSurvey.name;
-      integrationData.elementIds = selectedElements;
-      integrationData.elements =
-        selectedElements.length === surveyElements.length
-          ? t("common.all_questions")
-          : t("common.selected_questions");
-      integrationData.createdAt = new Date();
-      integrationData.includeVariables = includeVariables;
-      integrationData.includeHiddenFields = includeHiddenFields;
-      integrationData.includeMetadata = includeMetadata;
-      integrationData.includeCreatedAt = includeCreatedAt;
-      integrationData.includeContactAttributes = includeContactAttributes;
+      const integrationData: TIntegrationGoogleSheetsConfigData = {
+        spreadsheetId,
+        spreadsheetName: spreadsheetNameResponse.data,
+        surveyId: selectedSurvey.id,
+        surveyName: selectedSurvey.name,
+        elementIds: selectedElements,
+        elements:
+          selectedElements.length === surveyElements.length
+            ? t("common.all_questions")
+            : t("common.selected_questions"),
+        // oxlint-disable-next-line react/purity -- runs on submit: handleSubmit(linkSheet) only wraps it during render
+        createdAt: new Date(),
+        includeVariables,
+        includeHiddenFields,
+        includeMetadata,
+        includeCreatedAt,
+        includeContactAttributes,
+      };
       if (selectedIntegration) {
         // update action
         googleSheetIntegrationData.config.data[selectedIntegration.index] = integrationData;
