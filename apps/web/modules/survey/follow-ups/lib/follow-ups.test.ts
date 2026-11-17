@@ -334,7 +334,7 @@ describe("Follow-ups", () => {
 
     // The author can type any address, so one outside the organization is counted like a respondent's.
     test("counts a literal follow-up address outside the organization as external", async () => {
-      vi.mocked(getSurvey).mockResolvedValue({
+      vi.mocked(getSurvey, { partial: true }).mockResolvedValue({
         ...mockSurvey,
         followUps: [
           {

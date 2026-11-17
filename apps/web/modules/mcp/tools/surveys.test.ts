@@ -13,7 +13,6 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import {
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
@@ -531,7 +530,7 @@ describe("registerSurveyTools", () => {
 
     test("every tool that changes a survey takes `confirm` and hands it to the operation, not the body", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
 
       for (const [name, input, operation, expected] of cases) {
         vi.mocked(operation as typeof patchV3SurveyResponse).mockResolvedValue(
@@ -551,7 +550,7 @@ describe("registerSurveyTools", () => {
 
     test("relays the refusal as an error carrying the caution text", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
       vi.mocked(patchV3SurveyResponse).mockResolvedValue(
         problemConfirmationRequired(
           "req_tool",
@@ -666,7 +665,7 @@ describe("registerSurveyTools", () => {
 
   test("delete_survey relays the 409 naming the creatives that still open the survey", async () => {
     const { tools } = createToolServer();
-    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
     const creatives = [{ id: "clcr1234567890123456789012", name: "Feedback tab" }];
     vi.mocked(deleteV3Survey).mockResolvedValue(
       problemSurveyHasLinkedCreatives("req_conflict", creatives, "/api/mcp")

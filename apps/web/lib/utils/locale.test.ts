@@ -11,17 +11,17 @@ vi.mock("next/headers", () => ({
 
 describe("locale", () => {
   test("getAcceptedLanguages reads the Accept-Language header in preference order", async () => {
-    vi.mocked(nextHeaders.headers).mockResolvedValue({
+    vi.mocked(nextHeaders.headers, { partial: true }).mockResolvedValue({
       get: vi.fn().mockReturnValue("en;q=0.5, de-DE"),
-    } as unknown as Awaited<ReturnType<typeof nextHeaders.headers>>);
+    });
 
     expect(await getAcceptedLanguages()).toEqual(["de-DE", "en"]);
   });
 
   test("getAcceptedLanguages returns nothing without the header", async () => {
-    vi.mocked(nextHeaders.headers).mockResolvedValue({
+    vi.mocked(nextHeaders.headers, { partial: true }).mockResolvedValue({
       get: vi.fn().mockReturnValue(null),
-    } as unknown as Awaited<ReturnType<typeof nextHeaders.headers>>);
+    });
 
     expect(await getAcceptedLanguages()).toEqual([]);
   });

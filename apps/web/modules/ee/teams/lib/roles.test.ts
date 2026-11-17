@@ -130,19 +130,19 @@ describe("roles lib", () => {
     });
 
     test("returns array of team IDs where user is admin", async () => {
-      vi.mocked(prisma.teamUser.findMany).mockResolvedValueOnce([
+      vi.mocked(prisma.teamUser.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         { teamId: "team-1" },
         { teamId: "team-2" },
         { teamId: "team-3" },
-      ] as unknown as Awaited<ReturnType<typeof prisma.teamUser.findMany>>);
+      ]);
       const result = await getTeamsWhereUserIsAdmin(mockUserId, mockOrganizationId);
       expect(result).toEqual(["team-1", "team-2", "team-3"]);
     });
 
     test("returns single team ID when user is admin of one team", async () => {
-      vi.mocked(prisma.teamUser.findMany).mockResolvedValueOnce([{ teamId: "team-1" }] as unknown as Awaited<
-        ReturnType<typeof prisma.teamUser.findMany>
-      >);
+      vi.mocked(prisma.teamUser.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        { teamId: "team-1" },
+      ]);
       const result = await getTeamsWhereUserIsAdmin(mockUserId, mockOrganizationId);
       expect(result).toEqual(["team-1"]);
     });

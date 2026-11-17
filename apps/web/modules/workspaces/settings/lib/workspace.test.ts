@@ -150,7 +150,7 @@ describe("workspace lib", () => {
       vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ logo: url ? { url } : null, updatedAt }]);
     };
     const resolvesTo = (workspace: Partial<TWorkspace> & { logo?: { url: string } | null }) => {
-      vi.mocked(prisma.workspace.update).mockResolvedValueOnce({
+      vi.mocked(prisma.workspace.update, { partial: true }).mockResolvedValueOnce({
         ...baseWorkspace,
         ...workspace,
       });
@@ -159,9 +159,7 @@ describe("workspace lib", () => {
     // The organization's whitelabel decides whether an object under this workspace's prefix is
     // actually an organization asset; by default the org claims nothing.
     const orgClaims = (whitelabel: { logoUrl?: string | null; faviconUrl?: string | null } | null) => {
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue({ whitelabel } as unknown as Awaited<
-        ReturnType<typeof prisma.organization.findUnique>
-      >);
+      vi.mocked(prisma.organization.findUnique, { partial: true }).mockResolvedValue({ whitelabel });
     };
 
     beforeEach(() => {

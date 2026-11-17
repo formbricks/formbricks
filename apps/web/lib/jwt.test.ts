@@ -127,9 +127,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       .spyOn(crypto, "symmetricDecrypt")
       .mockImplementation((encryptedText: string) => encryptedText.replace("encrypted_", ""));
 
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(
-      mockUser as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>
-    );
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue(mockUser);
   });
 
   describe("createToken", () => {
@@ -708,10 +706,10 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         });
 
         // ...which is exactly what makes the same link inert on a second click.
-        vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
           ...mockUser,
           email: "new@example.com",
-        } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+        });
 
         await expect(verifyEmailChangeToken(token)).rejects.toThrow("Email change token is no longer valid");
       });

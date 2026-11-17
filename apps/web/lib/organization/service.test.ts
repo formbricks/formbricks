@@ -381,13 +381,13 @@ describe("Organization Service", () => {
           alert: { "existing-survey-id": true },
           unsubscribedOrganizationIds: [], // User is subscribed to all organizations
         },
-      } as Awaited<ReturnType<typeof prisma.user.findUnique>>;
+      };
 
       const surveyId = "survey-123";
       const userId = "user-123";
       const organizationId = "org-123";
 
-      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockUser);
+      vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValueOnce(mockUser);
       vi.mocked(updateUser, { partial: true }).mockResolvedValueOnce({});
 
       await subscribeOrganizationMembersToSurveyResponses(surveyId, userId, organizationId);
@@ -414,13 +414,13 @@ describe("Organization Service", () => {
           alert: { "existing-survey-id": true },
           unsubscribedOrganizationIds: ["org-123"], // User has unsubscribed from this organization
         },
-      } as Awaited<ReturnType<typeof prisma.user.findUnique>>;
+      };
 
       const surveyId = "survey-123";
       const userId = "user-123";
       const organizationId = "org-123";
 
-      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockUser);
+      vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValueOnce(mockUser);
 
       await subscribeOrganizationMembersToSurveyResponses(surveyId, userId, organizationId);
 
