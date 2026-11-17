@@ -1,6 +1,11 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { ZWorkflowRunData, ZWorkflowTriggerRunPayload } from "@formbricks/workflows";
+import {
+  WORKFLOW_SAMPLE_LAST_CALL_SOURCE,
+  WORKFLOW_SAMPLE_LAST_TEST_SUFFIX,
+  ZWorkflowRunData,
+  ZWorkflowTriggerRunPayload,
+} from "@formbricks/workflows";
 import { resetDb } from "@/integration/reset-db";
 import { getOrganizationUsage } from "@/modules/organization/usage/lib/usage";
 import { runWorkflowRunRetention } from "./run-retention";
@@ -200,20 +205,29 @@ describe("workflow run retention (real Postgres)", () => {
     expect(await readRun(fresh)).not.toBeNull();
   });
 
-  test("deletes samples not updated for the retention period", async () => {
-    const stale = await prisma.workflowSample.create({
-      data: { workflowId, workspaceId, source: "trigger", sample: { email: "jane@example.com" } as never },
-    });
-    const fresh = await prisma.workflowSample.create({
-      data: { workflowId, workspaceId, source: "http-step", sample: {} as never },
-    });
-    // `updatedAt` is client-managed by Prisma, so age the row directly.
-    await prisma.$executeRaw`UPDATE "WorkflowSample" SET "updated_at" = ${ago(91)} WHERE "id" = ${stale.id}`;
+  test("deletes received calls and test answers not updated for the retention period, never what editors set", async () => {
+    const addSample = (source: string) =>
+      prisma.workflowSample.create({
+        data: { workflowId, workspaceId, source, sample: { email: "jane@example.com" } as never },
+      });
+    const staleCall = await addSample(WORKFLOW_SAMPLE_LAST_CALL_SOURCE);
+    const staleTest = await addSample(`http-step${WORKFLOW_SAMPLE_LAST_TEST_SUFFIX}`);
+    const freshTest = await addSample(`other-step${WORKFLOW_SAMPLE_LAST_TEST_SUFFIX}`);
+    // Set by editors (ADRs 0052 and 0054): kept however old.
+    const expectedPayload = await addSample("trigger");
+    const expectedResponse = await addSample("http-step");
+    // `updatedAt` is client-managed by Prisma, so age the rows directly.
+    const aged = [staleCall.id, staleTest.id, expectedPayload.id, expectedResponse.id];
+    for (const id of aged) {
+      await prisma.$executeRaw`UPDATE "WorkflowSample" SET "updated_at" = ${ago(91)} WHERE "id" = ${id}`;
+    }
 
     const result = await runWorkflowRunRetention({ now: NOW, retentionDays: 90 });
 
-    expect(result.samplesDeleted).toBe(1);
-    expect(await prisma.workflowSample.findUnique({ where: { id: stale.id } })).toBeNull();
-    expect(await prisma.workflowSample.findUnique({ where: { id: fresh.id } })).not.toBeNull();
+    expect(result.samplesDeleted).toBe(2);
+    const left = await prisma.workflowSample.findMany({ where: { workflowId }, select: { id: true } });
+    expect(left.map((row) => row.id).sort()).toEqual(
+      [freshTest.id, expectedPayload.id, expectedResponse.id].sort()
+    );
   });
 });
