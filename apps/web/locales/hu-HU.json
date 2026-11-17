@@ -6245,6 +6245,7 @@
       "if_else_summary_more": "{condition} és további {count} feltétel",
       "if_else_values_label": "Értékek",
       "if_else_values_placeholder": "arany, ezüst",
+      "insert_step": "Lépés beszúrása ide",
       "inspector_unsupported_node": "Ennek a csomóponttípusnak még nincs beállítási űrlapja.",
       "json_editor_label": "{label}, JSON-szerkesztő",
       "json_error_extra_content": "{line}. sor: váratlan szöveg a JSON vége után",

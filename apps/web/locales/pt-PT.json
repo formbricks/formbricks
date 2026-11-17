@@ -6245,6 +6245,7 @@
       "if_else_summary_more": "{condition} e mais {count}",
       "if_else_values_label": "Valores",
       "if_else_values_placeholder": "ouro, prata",
+      "insert_step": "Inserir um passo aqui",
       "inspector_unsupported_node": "Este tipo de nó ainda não tem um formulário de configuração.",
       "json_editor_label": "{label}, editor de JSON",
       "json_error_extra_content": "Linha {line}: texto inesperado após o fim do JSON",

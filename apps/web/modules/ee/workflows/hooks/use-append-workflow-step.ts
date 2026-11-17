@@ -20,28 +20,27 @@ import {
 } from "@/modules/ee/workflows/lib/workflow-steps";
 import {
   appendWorkflowStepAfterNodeAtom,
+  insertWorkflowStepOnEdgeAtom,
   workflowAtom,
   workflowDefinitionAtom,
 } from "@/modules/ee/workflows/state/editor";
 
+type TBranchingStepDefaults = { conditionPath?: string; caseName?: (number: number) => string };
+
 /**
- * Adds a step after a step (or at the start of an If/else or Switch branch) from the canvas `+`
- * menus. A new If/else or Switch starts on the first Variable the step could use; that is read only when one is added, from
- * whatever samples are already cached, so no canvas card subscribes to them.
+ * What a new If/else or Switch starts with: its first condition on the first Variable a step after
+ * `sourceNodeId` could use, read only when one is added, from whatever samples are already cached, so
+ * no canvas card subscribes to them. Nothing for other steps.
  */
-export const useAppendWorkflowStep = () => {
+const useBranchingStepDefaults = () => {
   const { t } = useTranslation();
   const store = useStore();
   const queryClient = useQueryClient();
   const authoringContext = useWorkflowEmailAuthoringContext();
-  const appendStep = useSetAtom(appendWorkflowStepAfterNodeAtom);
 
   return useCallback(
-    (sourceNodeId: string, stepType: TAddableWorkflowStepType, branch?: string) => {
-      if (stepType !== "if_else" && stepType !== "switch") {
-        appendStep({ sourceNodeId, stepType, branch });
-        return;
-      }
+    (sourceNodeId: string, stepType: TAddableWorkflowStepType): TBranchingStepDefaults => {
+      if (stepType !== "if_else" && stepType !== "switch") return {};
       const definition = store.get(workflowDefinitionAtom);
       const workflowId = store.get(workflowAtom)?.id ?? "";
       const webhook = queryClient.getQueryData<TWorkflowWebhookResource>(workflowKeys.webhook(workflowId));
@@ -55,14 +54,33 @@ export const useAppendWorkflowStep = () => {
         stepContext: toStepVariableContext(samples),
       });
       const fallback = isResponseCompletedTrigger(definition?.trigger) ? "response.answer" : undefined;
-      appendStep({
-        sourceNodeId,
-        stepType,
-        branch,
+      return {
         conditionPath: getDefaultConditionPath(groups, fallback),
         caseName: (number) => t("workspace.workflows.switch_case_name_default", { number }),
-      });
+      };
     },
-    [appendStep, authoringContext, queryClient, store, t]
+    [authoringContext, queryClient, store, t]
+  );
+};
+
+/** Adds a step after a step (or at the start of an If/else or Switch branch) from the canvas `+` menus. */
+export const useAppendWorkflowStep = () => {
+  const appendStep = useSetAtom(appendWorkflowStepAfterNodeAtom);
+  const getDefaults = useBranchingStepDefaults();
+  return useCallback(
+    (sourceNodeId: string, stepType: TAddableWorkflowStepType, branch?: string) =>
+      appendStep({ sourceNodeId, stepType, branch, ...getDefaults(sourceNodeId, stepType) }),
+    [appendStep, getDefaults]
+  );
+};
+
+/** Inserts a step on a line, between the two steps it connects, from the line's `+` menu. */
+export const useInsertWorkflowStepOnEdge = () => {
+  const insertStep = useSetAtom(insertWorkflowStepOnEdgeAtom);
+  const getDefaults = useBranchingStepDefaults();
+  return useCallback(
+    (edgeId: string, sourceNodeId: string, stepType: TAddableWorkflowStepType) =>
+      insertStep({ edgeId, stepType, ...getDefaults(sourceNodeId, stepType) }),
+    [insertStep, getDefaults]
   );
 };

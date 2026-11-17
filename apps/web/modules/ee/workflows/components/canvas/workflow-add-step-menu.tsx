@@ -26,6 +26,8 @@ interface WorkflowAddStepMenuProps {
   afterNodeType: string;
   ariaLabel: string;
   onAdd: (stepType: TAddableWorkflowStepType) => void;
+  /** Told when the step picker opens or closes, e.g. to keep a hover-only `+` visible meanwhile. */
+  onOpenChange?: (open: boolean) => void;
 }
 
 interface TStepOption {
@@ -43,6 +45,7 @@ export const WorkflowAddStepMenu = ({
   afterNodeType,
   ariaLabel,
   onAdd,
+  onOpenChange,
 }: Readonly<WorkflowAddStepMenuProps>) => {
   const { t } = useTranslation();
   const canAddStep = useAtomValue(canAddWorkflowStepAtom);
@@ -130,7 +133,7 @@ export const WorkflowAddStepMenu = ({
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="w-64 motion-reduce:animate-none">
         <DropdownMenuLabel>{t("workspace.workflows.logic")}</DropdownMenuLabel>

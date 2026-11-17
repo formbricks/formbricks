@@ -6245,6 +6245,7 @@
       "if_else_summary_more": "{condition}，以及另外 {count} 个条件",
       "if_else_values_label": "值",
       "if_else_values_placeholder": "金牌, 银牌",
+      "insert_step": "在此处插入步骤",
       "inspector_unsupported_node": "此节点类型暂无配置表单。",
       "json_editor_label": "{label}，JSON 编辑器",
       "json_error_extra_content": "第 {line} 行：JSON 结束后出现多余文本",

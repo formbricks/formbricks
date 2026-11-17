@@ -6245,6 +6245,7 @@
       "if_else_summary_more": "{condition} ve {count} koşul daha",
       "if_else_values_label": "Değerler",
       "if_else_values_placeholder": "altın, gümüş",
+      "insert_step": "Buraya bir adım ekle",
       "inspector_unsupported_node": "Bu düğüm türü henüz bir yapılandırma formuna sahip değil.",
       "json_editor_label": "{label}, JSON düzenleyici",
       "json_error_extra_content": "Satır {line}: JSON'un sonundan sonra beklenmeyen metin var",

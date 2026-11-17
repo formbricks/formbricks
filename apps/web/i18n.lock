@@ -6019,6 +6019,7 @@ checksums:
     workspace/workflows/if_else_summary_more: 77b06b54ec72fa329271c9b63cde513b
     workspace/workflows/if_else_values_label: 3b030ca6a9b13a8383ed5d83906dc224
     workspace/workflows/if_else_values_placeholder: 17576f564ad7fee21909c3f538367ec5
+    workspace/workflows/insert_step: f95f8be96bd987dba50c8b67ff398ae7
     workspace/workflows/inspector_unsupported_node: 09f8fe59e76923d7f3dd0a200fed52fa
     workspace/workflows/json_editor_label: 41b3326bb9d4dbbb2b8b1a5e9f57b2ab
     workspace/workflows/json_error_extra_content: cadc18f91441e1448277c84bec9304cb

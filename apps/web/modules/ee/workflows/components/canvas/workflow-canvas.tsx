@@ -69,6 +69,7 @@ import { Button } from "@/modules/ui/components/button";
 import { AddButtonEdge } from "./add-button-edge";
 import { BranchEdge } from "./branch-edge";
 import { CanvasControls } from "./canvas-controls";
+import { hoveredWorkflowEdgeIdAtom } from "./edge-insert-button";
 import { WorkflowAddTriggerPicker } from "./workflow-add-trigger-picker";
 import { WorkflowBranchNode } from "./workflow-branch-node";
 import { WorkflowCanvasNode } from "./workflow-canvas-node";
@@ -116,6 +117,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
   const toggleInspector = useSetAtom(toggleWorkflowInspectorAtom);
   const closeNodeConfig = useSetAtom(closeWorkflowNodeConfigModalAtom);
+  const setHoveredEdgeId = useSetAtom(hoveredWorkflowEdgeIdAtom);
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
   const setFlowNodes = useSetAtom(workflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
@@ -378,6 +380,9 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         // Clicking empty canvas deselects (ReactFlow) and dismisses the node inspector — with
         // Settings gone this is the natural way out of a node's config view.
         onPaneClick={() => closeNodeConfig()}
+        // The line under the pointer shows its `+` to insert a step (EdgeInsertButton).
+        onEdgeMouseEnter={(_event, edge) => setHoveredEdgeId(edge.id)}
+        onEdgeMouseLeave={() => setHoveredEdgeId(null)}
         // Mode-dependent cursor + hit-testing rules live in workflow-canvas.css, keyed off
         // these classes (Tailwind can't express `.react-flow__node` — underscores in arbitrary
         // selectors turn into spaces).

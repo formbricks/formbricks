@@ -6245,6 +6245,7 @@
       "if_else_summary_more": "{condition} en {count} meer",
       "if_else_values_label": "Waarden",
       "if_else_values_placeholder": "goud, zilver",
+      "insert_step": "Voeg hier een stap in",
       "inspector_unsupported_node": "Dit type node heeft nog geen configuratieformulier.",
       "json_editor_label": "{label}, JSON-editor",
       "json_error_extra_content": "Regel {line}: onverwachte tekst na het einde van de JSON",

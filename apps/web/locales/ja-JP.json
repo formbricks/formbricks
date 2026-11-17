@@ -6245,6 +6245,7 @@
       "if_else_summary_more": "{condition}ほか{count}件",
       "if_else_values_label": "値",
       "if_else_values_placeholder": "ゴールド、シルバー",
+      "insert_step": "ここにステップを挿入",
       "inspector_unsupported_node": "このノードタイプにはまだ設定フォームがありません。",
       "json_editor_label": "{label}、JSONエディター",
       "json_error_extra_content": "{line}行目：JSONの終端の後に予期しないテキストがあります",

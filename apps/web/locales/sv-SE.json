@@ -6245,6 +6245,7 @@
       "if_else_summary_more": "{condition} och {count} till",
       "if_else_values_label": "Värden",
       "if_else_values_placeholder": "guld, silver",
+      "insert_step": "Infoga ett steg här",
       "inspector_unsupported_node": "Den här nodtypen har inte något konfigurationsformulär än.",
       "json_editor_label": "{label}, JSON-redigerare",
       "json_error_extra_content": "Rad {line}: oväntad text efter slutet på JSON-koden",

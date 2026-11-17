@@ -6245,6 +6245,7 @@
       "if_else_summary_more": "{condition} et {count} autres",
       "if_else_values_label": "Valeurs",
       "if_else_values_placeholder": "or, argent",
+      "insert_step": "Insérer une étape ici",
       "inspector_unsupported_node": "Ce type de nœud n'a pas encore de formulaire de configuration.",
       "json_editor_label": "{label}, éditeur JSON",
       "json_error_extra_content": "Ligne {line} : texte inattendu après la fin du JSON",

@@ -6245,6 +6245,7 @@
       "if_else_summary_more": "{condition} и ещё {count}",
       "if_else_values_label": "Значения",
       "if_else_values_placeholder": "золото, серебро",
+      "insert_step": "Вставить шаг сюда",
       "inspector_unsupported_node": "Для этого типа узла пока нет формы настройки.",
       "json_editor_label": "{label}, редактор JSON",
       "json_error_extra_content": "Строка {line}: лишний текст после окончания JSON",

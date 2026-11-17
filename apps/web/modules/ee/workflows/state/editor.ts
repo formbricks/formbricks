@@ -21,6 +21,7 @@ import { settleSentSecretValues, withSecretIdsForCheck } from "@/modules/ee/work
 import {
   type TAddableWorkflowStepType,
   createDefaultWorkflowStep,
+  getBranchHandles,
   getBranchLegOffset,
   isBranchingStep,
   removeBranchingStepWithBranches,
@@ -903,6 +904,24 @@ export type TAppendWorkflowStepInput = {
   caseName?: (number: number) => string;
 };
 
+/**
+ * Steps saved without a position (through API v3 or MCP) are laid out when the canvas draws them. A
+ * step added among them first pins every step where the canvas shows it, so the new one lands next to
+ * the steps the user sees and they stay where they were.
+ */
+const pinDisplayedPositions = (
+  definition: TWorkflowDefinition,
+  flowNodes: ReadonlyArray<Node<TWorkflowNodeData>>
+): void => {
+  const shown = new Map(flowNodes.map((node) => [node.id, node.position]));
+  for (const node of [definition.trigger, ...definition.nodes]) {
+    if (!node || node.ui?.position) continue;
+    const position = shown.get(node.id);
+    if (position)
+      node.ui = { ...node.ui, position: { x: Math.round(position.x), y: Math.round(position.y) } };
+  }
+};
+
 // Append a fresh step after `sourceNodeId` (the end of the chain or of a branch) and open it. Refused
 // at the step limit, which saving would refuse too.
 export const appendWorkflowStepAfterNodeAtom = atom(null, (get, set, input: TAppendWorkflowStepInput) => {
@@ -913,6 +932,7 @@ export const appendWorkflowStepAfterNodeAtom = atom(null, (get, set, input: TApp
     produce(get(workflowEditorAtom), (draft) => {
       const definition = draft.definition;
       if (!definition) return;
+      pinDisplayedPositions(definition, get(workflowFlowNodesAtom));
 
       const sourceNode = definition.nodes.find((node) => node.id === sourceNodeId);
       const sourcePosition =
@@ -947,8 +967,21 @@ export const appendSendEmailAfterNodeAtom = atom(null, (_get, set, sourceNodeId:
   set(appendWorkflowStepAfterNodeAtom, { sourceNodeId, stepType: "send_email", branch });
 });
 
-// Split an existing edge with a fresh send_email node positioned between its endpoints.
-export const insertSendEmailAfterEdgeAtom = atom(null, (get, set, edgeId: string) => {
+export type TInsertWorkflowStepInput = Omit<TAppendWorkflowStepInput, "sourceNodeId" | "branch"> & {
+  /** The line the step goes on: the step between its two ends. */
+  edgeId: string;
+};
+
+/**
+ * Inserts a fresh step on a line, between the two steps it connects, and opens it. The new step takes
+ * the place of the line's target, and the target with every step after it moves one step further
+ * along, so a layout arranged by hand stays as it was. A new If/else or Switch carries on to the
+ * target through its first branch. The line keeps its branch when it leaves an If/else or a Switch.
+ * Refused at the step limit, which saving would refuse too.
+ */
+export const insertWorkflowStepOnEdgeAtom = atom(null, (get, set, input: TInsertWorkflowStepInput) => {
+  if (!get(canAddWorkflowStepAtom)) return;
+  const { edgeId, stepType, conditionPath, caseName } = input;
   set(
     workflowEditorAtom,
     produce(get(workflowEditorAtom), (draft) => {
@@ -956,25 +989,36 @@ export const insertSendEmailAfterEdgeAtom = atom(null, (get, set, edgeId: string
       if (!definition) return;
       const edgeIndex = definition.edges.findIndex((edge) => edge.id === edgeId);
       if (edgeIndex < 0) return;
+      pinDisplayedPositions(definition, get(workflowFlowNodesAtom));
       const edge = definition.edges[edgeIndex];
+      const target = definition.nodes.find((node) => node.id === edge.target);
+      const targetPosition = target?.ui?.position ?? SEND_EMAIL_FALLBACK_POSITION;
 
-      const positionOf = (nodeId: string) => {
-        if (definition.trigger?.id === nodeId) return definition.trigger.ui?.position;
-        return definition.nodes.find((node) => node.id === nodeId)?.ui?.position;
-      };
-      const sourcePosition = positionOf(edge.source);
-      const targetPosition = positionOf(edge.target);
-      const midpoint =
-        sourcePosition && targetPosition
-          ? {
-              x: Math.round((sourcePosition.x + targetPosition.x) / 2),
-              y: Math.round((sourcePosition.y + targetPosition.y) / 2),
-            }
-          : SEND_EMAIL_FALLBACK_POSITION;
+      const newNode = createDefaultWorkflowStep(stepType, targetPosition, { conditionPath, caseName });
+      const firstBranch = getBranchHandles(newNode)?.[0];
 
-      const newNode = createDefaultWorkflowStep("send_email", midpoint);
+      // Everything from the target on moves by one step: one row (or column), or a branch row when the
+      // new step forks.
+      const direction = get(workflowCanvasDirectionAtom);
+      const moved = getAppendedStepPosition(targetPosition, firstBranch ? 0 : null, direction);
+      const shift = { x: moved.x - targetPosition.x, y: moved.y - targetPosition.y };
+      const downstream = new Set([edge.target]);
+      let grew = true;
+      while (grew) {
+        grew = false;
+        for (const next of definition.edges) {
+          if (downstream.has(next.source) && !downstream.has(next.target)) {
+            downstream.add(next.target);
+            grew = true;
+          }
+        }
+      }
+      for (const node of definition.nodes) {
+        if (!downstream.has(node.id) || !node.ui?.position) continue;
+        node.ui.position = { x: node.ui.position.x + shift.x, y: node.ui.position.y + shift.y };
+      }
+
       definition.nodes.push(newNode);
-
       definition.edges.splice(
         edgeIndex,
         1,
@@ -984,7 +1028,12 @@ export const insertSendEmailAfterEdgeAtom = atom(null, (get, set, edgeId: string
           target: newNode.id,
           ...(edge.sourceHandle ? { sourceHandle: edge.sourceHandle } : {}),
         },
-        { id: createId(), source: newNode.id, target: edge.target }
+        {
+          id: createId(),
+          source: newNode.id,
+          target: edge.target,
+          ...(firstBranch ? { sourceHandle: firstBranch } : {}),
+        }
       );
 
       draft.selectedNodeId = newNode.id;

@@ -6245,6 +6245,7 @@
       "if_else_summary_more": "{condition} și încă {count}",
       "if_else_values_label": "Valori",
       "if_else_values_placeholder": "aur, argint",
+      "insert_step": "Inserează un pas aici",
       "inspector_unsupported_node": "Acest tip de nod nu are încă un formular de configurare.",
       "json_editor_label": "{label}, editor JSON",
       "json_error_extra_content": "Linia {line}: text neașteptat după sfârșitul JSON-ului",

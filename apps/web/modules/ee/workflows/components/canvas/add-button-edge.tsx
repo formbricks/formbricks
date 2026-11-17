@@ -2,13 +2,12 @@
 
 import { BaseEdge, type EdgeProps, getStraightPath } from "@xyflow/react";
 import { WORKFLOW_CANVAS_CONNECTOR } from "@/modules/ee/workflows/lib/canvas-geometry";
+import { EdgeInsertButton } from "./edge-insert-button";
 
-// The custom edge currently only renders the connector line. Inserting nodes mid-chain isn't
-// supported yet — we cap workflows at one action after the trigger — so the `+` affordance
-// lives on the trigger card itself (see workflow-canvas-node.tsx). When complex multi-step
-// flows land, this is where the mid-edge insertion control should come back.
+// The line between two steps. Hovering it offers a `+` at its middle to insert a step between them.
 export const AddButtonEdge = ({
   id,
+  source,
   sourceX,
   sourceY,
   targetX,
@@ -16,18 +15,21 @@ export const AddButtonEdge = ({
   markerEnd,
   style,
 }: Readonly<EdgeProps>) => {
-  const [edgePath] = getStraightPath({ sourceX, sourceY, targetX, targetY });
+  const [edgePath, midX, midY] = getStraightPath({ sourceX, sourceY, targetX, targetY });
 
   return (
-    <BaseEdge
-      id={id}
-      path={edgePath}
-      markerEnd={markerEnd}
-      style={{
-        stroke: WORKFLOW_CANVAS_CONNECTOR.color,
-        strokeWidth: WORKFLOW_CANVAS_CONNECTOR.width,
-        ...style,
-      }}
-    />
+    <>
+      <BaseEdge
+        id={id}
+        path={edgePath}
+        markerEnd={markerEnd}
+        style={{
+          stroke: WORKFLOW_CANVAS_CONNECTOR.color,
+          strokeWidth: WORKFLOW_CANVAS_CONNECTOR.width,
+          ...style,
+        }}
+      />
+      <EdgeInsertButton edgeId={id} source={source} x={midX} y={midY} />
+    </>
   );
 };

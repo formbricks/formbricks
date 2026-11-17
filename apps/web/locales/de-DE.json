@@ -6245,6 +6245,7 @@
       "if_else_summary_more": "{condition} und {count} weitere",
       "if_else_values_label": "Werte",
       "if_else_values_placeholder": "Gold, Silber",
+      "insert_step": "Hier einen Schritt einfügen",
       "inspector_unsupported_node": "Dieser Knotentyp hat noch kein Konfigurationsformular.",
       "json_editor_label": "{label}, JSON-Editor",
       "json_error_extra_content": "Zeile {line}: unerwarteter Text nach dem Ende des JSON",

@@ -6245,6 +6245,7 @@
       "if_else_summary_more": "{condition} and {count} more",
       "if_else_values_label": "Values",
       "if_else_values_placeholder": "gold, silver",
+      "insert_step": "Insert a step here",
       "inspector_unsupported_node": "This node type does not have a configuration form yet.",
       "json_editor_label": "{label}, JSON editor",
       "json_error_extra_content": "Line {line}: unexpected text after the end of the JSON",

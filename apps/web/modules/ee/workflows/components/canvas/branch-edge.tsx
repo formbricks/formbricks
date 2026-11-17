@@ -13,10 +13,12 @@ import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-r
 import { WORKFLOW_CANVAS_CONNECTOR } from "@/modules/ee/workflows/lib/canvas-geometry";
 import { type TWorkflowNodeData, workflowCanvasDirectionAtom } from "@/modules/ee/workflows/state/editor";
 import { BranchLabel } from "./branch-label";
+import { EdgeInsertButton } from "./edge-insert-button";
 
 // The edge from an If/else's or a Switch's fork bar to the first step of one of its branches. The
 // canvas puts the branch's leg right above that step (withBranchLegOffsets), so the line runs straight
-// down, drawn like every other connector, with the branch's label centred on it.
+// down, drawn like every other connector, with the branch's label centred on it. Hovering it offers a
+// `+` between the label and the step, to insert a step at the start of the branch.
 export const BranchEdge = ({
   id,
   source,
@@ -61,6 +63,7 @@ export const BranchEdge = ({
           </div>
         </EdgeLabelRenderer>
       ) : null}
+      <EdgeInsertButton edgeId={id} source={source} x={(labelX + targetX) / 2} y={(labelY + targetY) / 2} />
     </>
   );
 };

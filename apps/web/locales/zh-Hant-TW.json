@@ -6245,6 +6245,7 @@
       "if_else_summary_more": "{condition}，以及另外 {count} 個條件",
       "if_else_values_label": "值",
       "if_else_values_placeholder": "金、銀",
+      "insert_step": "在此插入步驟",
       "inspector_unsupported_node": "此節點類型尚未提供設定表單。",
       "json_editor_label": "{label}，JSON 編輯器",
       "json_error_extra_content": "第 {line} 行：JSON 結尾後有多餘的文字",
