@@ -615,12 +615,11 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
               : "w-(--radix-dropdown-menu-trigger-width)",
             dropdownClassName
           )}
-          // Radix focuses the menu itself on open unless focus is already inside it, which the
-          // search's `autoFocus` loses inside a dialog's focus trap. Put it in the search, so typing
-          // right after opening filters the list.
-          onOpenAutoFocus={(event) => {
-            if (!showSearch) return;
-            event.preventDefault();
+          // Radix focuses the menu itself on open, and inside a dialog's focus trap that wins over
+          // the search's `autoFocus`. Hand that focus to the search, so typing right after opening
+          // filters the list.
+          onFocus={(event) => {
+            if (!showSearch || event.target !== event.currentTarget) return;
             searchRef.current?.focus({ preventScroll: true });
           }}
           data-testid="dropdown-menu-content">
