@@ -6,6 +6,7 @@ import { RECAPTCHA_VERIFICATION_ERROR_CODE } from "@/lib/constants";
 import { TResponseErrorCodesEnum } from "@/types/response-error-codes";
 import { ApiClient } from "./api-client";
 import {
+  type PendingResponseEntry,
   type SerializedSurveyState,
   addPendingResponse,
   countPendingResponsesStrict,
@@ -333,7 +334,7 @@ export class ResponseQueue {
     }
 
     // If offline and persistence is enabled, don't attempt to send — data is safe in IndexedDB.
-    if (this.config.persistOffline && typeof navigator !== "undefined" && !navigator.onLine) {
+    if (this.isOfflineWithPersistence()) {
       return { success: false };
     }
 
@@ -342,28 +343,8 @@ export class ResponseQueue {
       return { success: false };
     }
 
-    // When offline support is active and there are multiple pending entries in
-    // IndexedDB, defer to syncPersistedResponses which drains them in order.
-    // This prevents processQueue and syncPersistedResponses from racing to
-    // create the same response concurrently (duplicate POSTs).
-    if (this.config.persistOffline && this.config.surveyId) {
-      let pendingCount: number;
-      try {
-        await this.retryProcessedDbIdCleanup();
-        pendingCount = await this.countPersistedResponses();
-      } catch {
-        return { success: false };
-      }
-
-      // Re-check after await — another processQueue/sync may have started during the yield
-      if (this.isSyncing || this.isRequestInProgress || this.queue.length === 0) {
-        return { success: false };
-      }
-
-      if (pendingCount > 1) {
-        this.syncPersistedResponsesInBackground("Failed to sync persisted responses in background");
-        return { success: false };
-      }
+    if (await this.shouldDeferToPersistedSync()) {
+      return { success: false };
     }
 
     const responseUpdate = this.queue[0];
@@ -379,29 +360,71 @@ export class ResponseQueue {
 
       this.handleSuccessfulResponse(responseUpdate, result.quotaFullResponse);
       return { success: true };
-    } else {
-      // If offline persistence is enabled and we're now offline, don't treat it as a failure
-      if (this.config.persistOffline && typeof navigator !== "undefined" && !navigator.onLine) {
-        this.isRequestInProgress = false;
-        return { success: false };
-      }
-
-      // Permanent 4xx rejection: drop the dead item so the manual Retry button can't
-      // re-send the identical payload forever.
-      if (result.isTerminalClientError) {
-        this.queue.shift();
-        const dbId = this.pendingDbIds.get(responseUpdate);
-        if (dbId !== undefined) {
-          await this.removePendingResponseFromIndexedDB(
-            dbId,
-            "Failed to remove rejected response from IndexedDB"
-          );
-        }
-      }
-
-      this.handleFailedResponse(responseUpdate, result.isRecaptchaError, result.errorCode);
-      return { success: false };
     }
+
+    await this.handleUnsentResponse(responseUpdate, result);
+    return { success: false };
+  }
+
+  /** Offline persistence is on and the browser is offline: what is queued is safe in IndexedDB. */
+  private isOfflineWithPersistence(): boolean {
+    return Boolean(this.config.persistOffline && typeof navigator !== "undefined" && !navigator.onLine);
+  }
+
+  /**
+   * When offline support is active and there are multiple pending entries in IndexedDB, processQueue
+   * defers to syncPersistedResponses, which drains them in order. This prevents processQueue and
+   * syncPersistedResponses from racing to create the same response concurrently (duplicate POSTs).
+   * Also true when IndexedDB can't be read, or another send or sync started meanwhile.
+   */
+  private async shouldDeferToPersistedSync(): Promise<boolean> {
+    if (!this.config.persistOffline || !this.config.surveyId) return false;
+
+    let pendingCount: number;
+    try {
+      await this.retryProcessedDbIdCleanup();
+      pendingCount = await this.countPersistedResponses();
+    } catch {
+      return true;
+    }
+
+    // Re-check after await — another processQueue/sync may have started during the yield
+    if (this.isSyncing || this.isRequestInProgress || this.queue.length === 0) {
+      return true;
+    }
+
+    if (pendingCount > 1) {
+      this.syncPersistedResponsesInBackground("Failed to sync persisted responses in background");
+      return true;
+    }
+    return false;
+  }
+
+  /** A send that failed: kept while offline, dropped when the server rejects it for good. */
+  private async handleUnsentResponse(
+    responseUpdate: TResponseUpdate,
+    result: Awaited<ReturnType<ResponseQueue["sendResponseWithRetry"]>>
+  ): Promise<void> {
+    // If offline persistence is enabled and we're now offline, don't treat it as a failure
+    if (this.isOfflineWithPersistence()) {
+      this.isRequestInProgress = false;
+      return;
+    }
+
+    // Permanent 4xx rejection: drop the dead item so the manual Retry button can't
+    // re-send the identical payload forever.
+    if (result.isTerminalClientError) {
+      this.queue.shift();
+      const dbId = this.pendingDbIds.get(responseUpdate);
+      if (dbId !== undefined) {
+        await this.removePendingResponseFromIndexedDB(
+          dbId,
+          "Failed to remove rejected response from IndexedDB"
+        );
+      }
+    }
+
+    this.handleFailedResponse(responseUpdate, result.isRecaptchaError, result.errorCode);
   }
 
   /**
@@ -459,62 +482,15 @@ export class ResponseQueue {
       const processedDbIds = new Set<number>();
 
       for (const entry of entriesToSync) {
-        // Only restore responseId from snapshot when it was set at capture time.
-        // Otherwise, let the responseId from the previous sendResponse carry forward
-        // (i.e., a create response in the previous iteration sets the responseId for updates).
-        if (entry.surveyStateSnapshot.responseId) {
-          this.surveyState.updateResponseId(entry.surveyStateSnapshot.responseId);
-        }
-
-        let result = await this.sendResponse(entry.responseUpdate);
-
-        // If updateResponse returned 404, the original createResponse likely never reached
-        // the server. Reset responseId and retry as a fresh createResponse.
-        if (!result.ok && result.error?.status === 404 && this.surveyState.responseId !== null) {
-          this.surveyState.responseId = null;
-          if (entry.surveyStateSnapshot.displayId) {
-            this.surveyState.updateDisplayId(entry.surveyStateSnapshot.displayId);
-          }
-          result = await this.sendResponse(entry.responseUpdate);
-        }
-
-        if (result.ok) {
-          if (entry.id !== undefined) {
-            const removed = await this.removePendingResponseFromIndexedDB(
-              entry.id,
-              "Failed to remove synced response from IndexedDB",
-              { removeTrackedDbIdOnSuccess: false }
-            );
-            processedDbIds.add(entry.id);
-            if (!removed) {
-              this.removeProcessedQueueItemsByDbId(processedDbIds);
-              return { success: false, syncedCount };
-            }
-          }
-        } else {
-          if (entry.id !== undefined && result.error && this.isTerminalClientError(result.error)) {
-            // Permanent 4xx client error (e.g., 400 "already finished" or 409 stale) —
-            // this entry can never be accepted, remove it and continue with the next one.
-            const removed = await this.removePendingResponseFromIndexedDB(
-              entry.id,
-              "Failed to remove stale response from IndexedDB",
-              { removeTrackedDbIdOnSuccess: false }
-            );
-            processedDbIds.add(entry.id);
-            if (!removed) {
-              this.removeProcessedQueueItemsByDbId(processedDbIds);
-              return { success: false, syncedCount };
-            }
-            continue;
-          }
-
-          // Server/network error — stop syncing, remaining entries stay for next attempt
+        const outcome = await this.syncPersistedEntry(entry, processedDbIds);
+        if (outcome === "stop") {
           this.removeProcessedQueueItemsByDbId(processedDbIds);
           return { success: false, syncedCount };
         }
-
-        syncedCount++;
-        onProgress?.(syncedCount, entriesToSync.length);
+        if (outcome === "synced") {
+          syncedCount++;
+          onProgress?.(syncedCount, entriesToSync.length);
+        }
       }
 
       this.removeProcessedQueueItemsByDbId(processedDbIds);
@@ -531,6 +507,60 @@ export class ResponseQueue {
     } finally {
       this.isSyncing = false;
     }
+  }
+
+  /**
+   * Sends one persisted entry. Only restores responseId from the snapshot when it was set at capture
+   * time; otherwise the responseId from the previous sendResponse carries forward (i.e., a create
+   * response in the previous iteration sets the responseId for updates).
+   */
+  private async sendPersistedEntry(
+    entry: PendingResponseEntry
+  ): Promise<Result<boolean | TQuotaFullResponse, ApiErrorResponse>> {
+    if (entry.surveyStateSnapshot.responseId) {
+      this.surveyState.updateResponseId(entry.surveyStateSnapshot.responseId);
+    }
+
+    const result = await this.sendResponse(entry.responseUpdate);
+
+    // If updateResponse returned 404, the original createResponse likely never reached
+    // the server. Reset responseId and retry as a fresh createResponse.
+    if (!result.ok && result.error?.status === 404 && this.surveyState.responseId !== null) {
+      this.surveyState.responseId = null;
+      if (entry.surveyStateSnapshot.displayId) {
+        this.surveyState.updateDisplayId(entry.surveyStateSnapshot.displayId);
+      }
+      return this.sendResponse(entry.responseUpdate);
+    }
+    return result;
+  }
+
+  /**
+   * Syncs one persisted entry and removes it from IndexedDB: "synced" when sent, "skipped" when the
+   * server rejected it for good (a permanent 4xx such as 400 "already finished" or 409 stale, which
+   * can never be accepted), "stop" when syncing must end here — a server or network error, whose
+   * entry stays for the next attempt, or an entry IndexedDB would not let go of.
+   */
+  private async syncPersistedEntry(
+    entry: PendingResponseEntry,
+    processedDbIds: Set<number>
+  ): Promise<"synced" | "skipped" | "stop"> {
+    const result = await this.sendPersistedEntry(entry);
+
+    const isTerminal = !result.ok && Boolean(result.error) && this.isTerminalClientError(result.error);
+    if (!result.ok && (entry.id === undefined || !isTerminal)) return "stop";
+    if (entry.id === undefined) return "synced";
+
+    const removed = await this.removePendingResponseFromIndexedDB(
+      entry.id,
+      result.ok
+        ? "Failed to remove synced response from IndexedDB"
+        : "Failed to remove stale response from IndexedDB",
+      { removeTrackedDbIdOnSuccess: false }
+    );
+    processedDbIds.add(entry.id);
+    if (!removed) return "stop";
+    return result.ok ? "synced" : "skipped";
   }
 
   private async sendResponseWithRetry(responseUpdate: TResponseUpdate): Promise<{

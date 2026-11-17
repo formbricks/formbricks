@@ -24,6 +24,22 @@ import { SignatureElement } from "@/components/elements/signature-element";
 import { type SubmitContributor } from "@/lib/block-submit";
 import { type SignatureDraftStore } from "@/lib/signature-answer";
 
+/** The answer if it is text. */
+const asText = (value: TResponseDataValue): string | undefined =>
+  typeof value === "string" ? value : undefined;
+
+/** The answer if it is a number. */
+const asNumber = (value: TResponseDataValue): number | undefined =>
+  typeof value === "number" ? value : undefined;
+
+/** The answer if it is a list. */
+const asList = (value: TResponseDataValue): string[] | undefined =>
+  Array.isArray(value) ? value : undefined;
+
+/** The answer if it is a record (a matrix answer), else an empty one. */
+const asRecord = (value: TResponseDataValue): Record<string, string> =>
+  typeof value === "object" && !Array.isArray(value) ? value : {};
+
 interface ElementConditionalProps {
   element: TSurveyElement;
   value: TResponseDataValue;
@@ -106,6 +122,14 @@ export function ElementConditional({
   }
 
   const renderElement = () => {
+    // Each element gets the answer in the shape it stores, or its empty value.
+    const text = asText(value);
+    const textOrEmpty = text ?? "";
+    const list = asList(value);
+    const listOrEmpty = list ?? [];
+    const numberValue = asNumber(value);
+    const recordOrEmpty = asRecord(value);
+
     // NOSONAR - This is readable enough and can't be changed
     switch (element.type) {
       case TSurveyElementTypeEnum.OpenText:
@@ -113,7 +137,7 @@ export function ElementConditional({
           <OpenTextElement
             key={element.id}
             element={element}
-            value={typeof value === "string" ? value : ""}
+            value={textOrEmpty}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -129,7 +153,7 @@ export function ElementConditional({
           <MultipleChoiceSingleElement
             key={element.id}
             element={element}
-            value={typeof value === "string" ? value : undefined}
+            value={text}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -145,7 +169,7 @@ export function ElementConditional({
           <MultipleChoiceMultiElement
             key={element.id}
             element={element}
-            value={Array.isArray(value) ? value : []}
+            value={listOrEmpty}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -161,7 +185,7 @@ export function ElementConditional({
           <NPSElement
             key={element.id}
             element={element}
-            value={typeof value === "number" ? value : undefined}
+            value={numberValue}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -177,7 +201,7 @@ export function ElementConditional({
           <CTAElement
             key={element.id}
             element={element}
-            value={typeof value === "string" ? value : ""}
+            value={textOrEmpty}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -192,7 +216,7 @@ export function ElementConditional({
           <RatingElement
             key={element.id}
             element={element}
-            value={typeof value === "number" ? value : undefined}
+            value={numberValue}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -207,7 +231,7 @@ export function ElementConditional({
           <ConsentElement
             key={element.id}
             element={element}
-            value={typeof value === "string" ? value : ""}
+            value={textOrEmpty}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -223,7 +247,7 @@ export function ElementConditional({
           <DateElement
             key={element.id}
             element={element}
-            value={typeof value === "string" ? value : ""}
+            value={textOrEmpty}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -240,7 +264,7 @@ export function ElementConditional({
           <PictureSelectionElement
             key={element.id}
             element={element}
-            value={Array.isArray(value) ? value : []}
+            value={listOrEmpty}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -257,7 +281,7 @@ export function ElementConditional({
             key={element.id}
             surveyId={surveyId}
             element={element}
-            value={Array.isArray(value) ? value : []}
+            value={listOrEmpty}
             onChange={onChange}
             onFileUpload={onFileUpload}
             languageCode={languageCode}
@@ -274,7 +298,7 @@ export function ElementConditional({
             key={element.id}
             surveyId={surveyId}
             element={element}
-            value={typeof value === "string" ? value : ""}
+            value={textOrEmpty}
             onChange={onChange}
             onFileUpload={onFileUpload}
             languageCode={languageCode}
@@ -293,7 +317,7 @@ export function ElementConditional({
           <CalElement
             key={element.id}
             element={element}
-            value={typeof value === "string" ? value : ""}
+            value={textOrEmpty}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -306,7 +330,7 @@ export function ElementConditional({
         return (
           <MatrixElement
             element={element}
-            value={typeof value === "object" && !Array.isArray(value) ? value : {}}
+            value={recordOrEmpty}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -320,7 +344,7 @@ export function ElementConditional({
         return (
           <AddressElement
             element={element}
-            value={Array.isArray(value) ? value : undefined}
+            value={list}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -336,7 +360,7 @@ export function ElementConditional({
           <RankingElement
             dir={dir}
             element={element}
-            value={Array.isArray(value) ? value : []}
+            value={listOrEmpty}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -352,7 +376,7 @@ export function ElementConditional({
           <RatingElement
             key={element.id}
             element={element}
-            value={typeof value === "number" ? value : undefined}
+            value={numberValue}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
@@ -366,7 +390,7 @@ export function ElementConditional({
         return (
           <ContactInfoElement
             element={element}
-            value={Array.isArray(value) ? value : undefined}
+            value={list}
             onChange={onChange}
             languageCode={languageCode}
             ttc={ttc}
