@@ -62,7 +62,10 @@ export function compose(...fragments) {
     config.ignorePatterns.push(...(fragment.ignorePatterns ?? []));
   }
   config.plugins = unique(config.plugins);
-  config.jsPlugins = unique(config.jsPlugins, (plugin) => plugin.name);
+  // An entry is a specifier string or a `{ name, specifier }` object; dedupe each by what names it.
+  config.jsPlugins = unique(config.jsPlugins, (plugin) =>
+    typeof plugin === "string" ? plugin : plugin.name
+  );
   config.ignorePatterns = unique(config.ignorePatterns);
   return config;
 }

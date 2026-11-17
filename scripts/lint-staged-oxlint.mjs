@@ -59,10 +59,12 @@ function stagedLineRanges(file) {
   return parseStagedLineRanges(stdout);
 }
 
-/* oxlint reports a span as a start line and a byte length; the end line comes from the source. */
+/* oxlint reports a span as a start line plus a UTF-8 byte offset and length; the end line comes from
+ * the source, sliced as bytes so non-ASCII text before the span cannot shift it. */
 const endLineOf = (file, span) => {
-  const source = readFileSync(file, "utf8");
-  const spanText = source.slice(span.offset, span.offset + span.length);
+  const spanText = readFileSync(file)
+    .subarray(span.offset, span.offset + span.length)
+    .toString("utf8");
   return span.line + (spanText.match(/\n/g)?.length ?? 0);
 };
 
