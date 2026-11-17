@@ -43,6 +43,68 @@ interface RewriteResult {
   unresolved: string[];
 }
 
+const rewriteArrayI18nKeys = (value: unknown[]): RewriteResult => {
+  const results = value.map((item) => rewriteI18nKeys(item));
+  const changed = results.some((result) => result.changed);
+  const keysRewritten = results.reduce((sum, result) => sum + result.keysRewritten, 0);
+  const unresolved = results.flatMap((result) => result.unresolved);
+  return {
+    value: changed ? results.map((result) => result.value) : value,
+    changed,
+    keysRewritten,
+    unresolved,
+  };
+};
+
+const rewriteI18nStringKeys = (value: Record<string, string>): RewriteResult => {
+  let changed = false;
+  let keysRewritten = 0;
+  const unresolved: string[] = [];
+  // target code -> chosen value (default handled separately so it always stays first / untouched)
+  const merged = new Map<string, { value: string; fromCanonicalKey: boolean }>();
+
+  for (const [key, raw] of Object.entries(value)) {
+    if (key === "default") continue;
+    if (normalizeLanguageCode(key) === null) unresolved.push(key);
+    const target = toCanonical(key);
+    if (target !== key) {
+      changed = true;
+      keysRewritten += 1;
+    }
+    const incoming = { value: raw, fromCanonicalKey: key === target };
+    const existing = merged.get(target);
+    if (existing) {
+      changed = true; // two source keys collapsed into one
+      merged.set(target, pickI18nValue(existing, incoming));
+    } else {
+      merged.set(target, incoming);
+    }
+  }
+
+  if (!changed) return { value, changed: false, keysRewritten: 0, unresolved };
+
+  const next: Record<string, string> = { default: value.default };
+  for (const [code, picked] of merged) {
+    next[code] = picked.value;
+  }
+  return { value: next, changed: true, keysRewritten, unresolved };
+};
+
+const rewriteObjectI18nKeys = (value: Record<string, unknown>): RewriteResult => {
+  let changed = false;
+  let keysRewritten = 0;
+  const unresolved: string[] = [];
+  const next: Record<string, unknown> = {};
+  for (const [key, child] of Object.entries(value)) {
+    const result = rewriteI18nKeys(child);
+    if (result.changed) changed = true;
+    keysRewritten += result.keysRewritten;
+    unresolved.push(...result.unresolved);
+    next[key] = result.value;
+  }
+  return { value: changed ? next : value, changed, keysRewritten, unresolved };
+};
+
 /**
  * Recursively walk a survey content value and rewrite every i18nString's language keys to their
  * canonical BCP-47 form, merging keys that collapse to the same canonical (e.g. `de` + `de-DE` →
@@ -50,68 +112,11 @@ interface RewriteResult {
  * mutated) plus whether anything changed.
  */
 export const rewriteI18nKeys = (value: unknown): RewriteResult => {
-  if (Array.isArray(value)) {
-    const results = value.map((item) => rewriteI18nKeys(item));
-    const changed = results.some((result) => result.changed);
-    const keysRewritten = results.reduce((sum, result) => sum + result.keysRewritten, 0);
-    const unresolved = results.flatMap((result) => result.unresolved);
-    return {
-      value: changed ? results.map((result) => result.value) : value,
-      changed,
-      keysRewritten,
-      unresolved,
-    };
-  }
-
-  if (isI18nString(value)) {
-    let changed = false;
-    let keysRewritten = 0;
-    const unresolved: string[] = [];
-    // target code -> chosen value (default handled separately so it always stays first / untouched)
-    const merged = new Map<string, { value: string; fromCanonicalKey: boolean }>();
-
-    for (const [key, raw] of Object.entries(value)) {
-      if (key === "default") continue;
-      if (normalizeLanguageCode(key) === null) unresolved.push(key);
-      const target = toCanonical(key);
-      if (target !== key) {
-        changed = true;
-        keysRewritten += 1;
-      }
-      const incoming = { value: raw, fromCanonicalKey: key === target };
-      const existing = merged.get(target);
-      if (existing) {
-        changed = true; // two source keys collapsed into one
-        merged.set(target, pickI18nValue(existing, incoming));
-      } else {
-        merged.set(target, incoming);
-      }
-    }
-
-    if (!changed) return { value, changed: false, keysRewritten: 0, unresolved };
-
-    const next: Record<string, string> = { default: value.default };
-    for (const [code, picked] of merged) {
-      next[code] = picked.value;
-    }
-    return { value: next, changed: true, keysRewritten, unresolved };
-  }
-
+  if (Array.isArray(value)) return rewriteArrayI18nKeys(value);
+  if (isI18nString(value)) return rewriteI18nStringKeys(value);
   if (typeof value === "object" && value !== null) {
-    let changed = false;
-    let keysRewritten = 0;
-    const unresolved: string[] = [];
-    const next: Record<string, unknown> = {};
-    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
-      const result = rewriteI18nKeys(child);
-      if (result.changed) changed = true;
-      keysRewritten += result.keysRewritten;
-      unresolved.push(...result.unresolved);
-      next[key] = result.value;
-    }
-    return { value: changed ? next : value, changed, keysRewritten, unresolved };
+    return rewriteObjectI18nKeys(value as Record<string, unknown>);
   }
-
   return { value, changed: false, keysRewritten: 0, unresolved: [] };
 };
 

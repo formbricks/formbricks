@@ -425,6 +425,50 @@ const runSchemaMigrationBatch = async (
   }
 };
 
+/** Adds a migration name to its type's set, or to the duplicates when the set already has it. */
+const recordMigrationName = (names: Set<string>, duplicates: string[], migrationName: string): void => {
+  if (names.has(migrationName)) {
+    duplicates.push(migrationName);
+  } else {
+    names.add(migrationName);
+  }
+};
+
+/** The data migration scripts (`type: "data"`) a migration module exports. */
+const importDataMigrations = async (modulePath: string): Promise<MigrationScript[]> => {
+  const mod = (await import(modulePath)) as Record<string, MigrationScript | undefined>;
+  const migrations: MigrationScript[] = [];
+
+  // Check each export in the module for a DataMigrationScript (type: "data")
+  for (const key of Object.keys(mod)) {
+    const exportedValue = mod[key];
+    if (exportedValue && typeof exportedValue === "object" && exportedValue.type === "data") {
+      migrations.push(exportedValue);
+    }
+  }
+  return migrations;
+};
+
+/** If any duplicate migration names are found for the same type, throw an error. */
+const assertNoDuplicateMigrations = (
+  duplicateSchemaMigrations: string[],
+  duplicateDataMigrations: string[]
+): void => {
+  if (duplicateSchemaMigrations.length === 0 && duplicateDataMigrations.length === 0) return;
+
+  const errorParts: string[] = [];
+  if (duplicateSchemaMigrations.length > 0) {
+    errorParts.push(`Schema migrations: ${duplicateSchemaMigrations.join(", ")}`);
+  }
+  if (duplicateDataMigrations.length > 0) {
+    errorParts.push(`Data migrations: ${duplicateDataMigrations.join(", ")}`);
+  }
+
+  throw new Error(
+    `Duplicate migration names found for the same type: ${errorParts.join(" | ")}. Please make sure each migration has a unique name within its type.`
+  );
+};
+
 const loadMigrations = async (): Promise<MigrationScript[]> => {
   const migrations: MigrationScript[] = [];
 
@@ -469,11 +513,7 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
 
     if (hasSchemaMigration) {
       // It's a schema migration
-      if (schemaMigrationNames.has(migrationName)) {
-        duplicateSchemaMigrations.push(migrationName);
-      } else {
-        schemaMigrationNames.add(migrationName);
-      }
+      recordMigrationName(schemaMigrationNames, duplicateSchemaMigrations, migrationName);
 
       // It's a schema migration
       // We just create an object with type: "schema" and name: dirName
@@ -483,24 +523,11 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
       });
     } else if (hasDataMigration) {
       // Check for duplicates among data migrations
-      if (dataMigrationNames.has(migrationName)) {
-        duplicateDataMigrations.push(migrationName);
-      } else {
-        dataMigrationNames.add(migrationName);
-      }
+      recordMigrationName(dataMigrationNames, duplicateDataMigrations, migrationName);
 
       // It's a data migration, dynamically import and extract the scripts
       // Use .js extension when running from built code, .ts when running from source
-      const modulePath = path.join(migrationPath, dataMigrationFileName);
-      const mod = (await import(modulePath)) as Record<string, MigrationScript | undefined>;
-
-      // Check each export in the module for a DataMigrationScript (type: "data")
-      for (const key of Object.keys(mod)) {
-        const exportedValue = mod[key];
-        if (exportedValue && typeof exportedValue === "object" && exportedValue.type === "data") {
-          migrations.push(exportedValue);
-        }
-      }
+      migrations.push(...(await importDataMigrations(path.join(migrationPath, dataMigrationFileName))));
     } else {
       logger.warn(
         `Migration directory ${dirName} doesn't have migration.sql or ${dataMigrationFileName}. Skipping...`
@@ -508,20 +535,7 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
     }
   }
 
-  // If any duplicate migration names are found for the same type, throw an error
-  if (duplicateSchemaMigrations.length > 0 || duplicateDataMigrations.length > 0) {
-    const errorParts: string[] = [];
-    if (duplicateSchemaMigrations.length > 0) {
-      errorParts.push(`Schema migrations: ${duplicateSchemaMigrations.join(", ")}`);
-    }
-    if (duplicateDataMigrations.length > 0) {
-      errorParts.push(`Data migrations: ${duplicateDataMigrations.join(", ")}`);
-    }
-
-    throw new Error(
-      `Duplicate migration names found for the same type: ${errorParts.join(" | ")}. Please make sure each migration has a unique name within its type.`
-    );
-  }
+  assertNoDuplicateMigrations(duplicateSchemaMigrations, duplicateDataMigrations);
 
   return migrations;
 };
