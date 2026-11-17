@@ -20,6 +20,7 @@ import {
   getMcpGrant,
   hasMcpGrant,
   lockMcpGrant,
+  lockUserForMcpGrantWrite,
   narrowMcpGrantAccess,
   projectMcpGrants,
   queueMcpGrantAudit,
@@ -607,16 +608,6 @@ const applySavedGrant = async (userId: string, savedGrant: TSavedMcpGrant): Prom
     before: savedGrant.before,
     after: savedGrant.after,
   });
-};
-
-/**
- * Locks the user's row `FOR KEY SHARE`, the lock a new grant row's foreign key takes anyway, ahead of any
- * grant or consent row. A path that changes what the user may hold (a member removal, a demotion) takes the
- * row `FOR UPDATE` first and their grant and consent rows after, so the two wait on each other instead of
- * deadlocking. `FOR KEY SHARE` does not wait on a sign-in's `FOR NO KEY UPDATE` (`lastLoginAt`).
- */
-const lockUserForMcpGrantWrite = async (tx: Prisma.TransactionClient, userId: string): Promise<void> => {
-  await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${userId} FOR KEY SHARE`;
 };
 
 /**

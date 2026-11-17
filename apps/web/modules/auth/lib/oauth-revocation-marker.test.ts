@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   markOAuthRevocation,
+  readExchangedAuthorizationCode,
   readOAuthRevocationTime,
   refuseCodeIssuedBeforeRevocationBeforeHandler,
 } from "./oauth-revocation-marker";
@@ -14,7 +15,27 @@ vi.mock("./secondary-storage", () => ({
     set: vi.fn(async (key: string, value: string, ttl?: number) => {
       storage.set(key, { value, ttl });
     }),
+    // The Lua script's contract: the stored number never goes down, and the TTL is refreshed either way.
+    setMax: vi.fn(async (key: string, value: number, ttl: number) => {
+      const stored = Number(storage.get(key)?.value);
+      const next = Number.isFinite(stored) && stored >= value ? stored : value;
+      storage.set(key, { value: String(next), ttl });
+    }),
   },
+}));
+
+// The request state Better Auth provides per request; here a plain map, so the hooks can record the
+// exchanged code as they do in production.
+const requestState = vi.hoisted(() => new Map<object, unknown>());
+vi.mock("@better-auth/core/context", () => ({
+  defineRequestState: (init: () => unknown) => {
+    const ref = {};
+    return {
+      get: async () => (requestState.has(ref) ? requestState.get(ref) : init()),
+      set: async (value: unknown) => void requestState.set(ref, value),
+    };
+  },
+  hasRequestState: () => true,
 }));
 
 const CODE = "the-code";
@@ -36,6 +57,7 @@ const setRevokedAt = (key: string, at: Date) => storage.set(key, { value: String
 
 beforeEach(() => {
   storage.clear();
+  requestState.clear();
   findVerificationValue.mockReset().mockResolvedValue(codeRecord(OWNED));
 });
 
@@ -51,6 +73,21 @@ describe("markOAuthRevocation", () => {
       ttl: 660,
     });
     expect(storage.get("oauth-revoked:user-2")).toEqual({ value: String(ISSUED_AT.getTime()), ttl: 660 });
+  });
+
+  // Two revocations can finish out of order (the later one marks first, the earlier one's write lands
+  // second). The mark must keep the later time, or a code issued between them would pass the check.
+  test("never moves a mark back, and refreshes its TTL anyway", async () => {
+    vi.useFakeTimers({ now: ISSUED_AT });
+    await markOAuthRevocation({ userId: "user-1", clientId: "client-1" });
+    vi.setSystemTime(new Date(ISSUED_AT.getTime() - 5_000));
+    await markOAuthRevocation({ userId: "user-1", clientId: "client-1" });
+    vi.useRealTimers();
+
+    expect(storage.get("oauth-revoked:user-1:client-1")).toEqual({
+      value: String(ISSUED_AT.getTime()),
+      ttl: 660,
+    });
   });
 });
 
@@ -69,6 +106,18 @@ describe("refuseCodeIssuedBeforeRevocationBeforeHandler", () => {
     await refuseCodeIssuedBeforeRevocationBeforeHandler(exchange());
 
     expect(findVerificationValue).toHaveBeenCalledWith(createHash("sha256").update(CODE).digest("base64url"));
+  });
+
+  // The grant claim re-checks the mark with the code's issue time, so a Revoke between this read and
+  // the code's exchange still leaves the connection without a grant.
+  test("records the code it accepts, with its issue time, for the grant claim", async () => {
+    await refuseCodeIssuedBeforeRevocationBeforeHandler(exchange());
+
+    expect(await readExchangedAuthorizationCode()).toEqual({
+      userId: "user-1",
+      clientId: "client-1",
+      issuedAt: ISSUED_AT.getTime(),
+    });
   });
 
   test.each([

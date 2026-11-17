@@ -166,6 +166,35 @@ export const narrowMcpGrantAccess = async (
 };
 
 /**
+ * Locks the user's row `FOR KEY SHARE`, the lock a new grant row's foreign key takes anyway, ahead of any
+ * grant or consent row. A path that changes what the user may hold (a member removal, a demotion) takes the
+ * row `FOR UPDATE` first and their grant and consent rows after, so the two wait on each other instead of
+ * deadlocking. `FOR KEY SHARE` does not wait on a sign-in's `FOR NO KEY UPDATE` (`lastLoginAt`).
+ *
+ * A path that writes a grant without holding a row to lock (`createMcpGrantIfMissing`) takes it to order
+ * its insert against a revocation that marks first and deletes after: the revocation takes the row
+ * `FOR UPDATE`, which waits on a writer's `FOR KEY SHARE`.
+ */
+export const lockUserForMcpGrantWrite = async (
+  tx: Prisma.TransactionClient,
+  userId: string
+): Promise<void> => {
+  await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${userId} FOR KEY SHARE`;
+};
+
+/**
+ * Locks the user's row `FOR UPDATE`, the waiting side of {@link lockUserForMcpGrantWrite}: a revocation
+ * takes it before it deletes, so a grant it wrote before the lock is deleted with the rest, and one written
+ * after (a code exchange whose claim re-reads the mark once it holds the row) sees the revocation's mark.
+ */
+export const lockUserForMcpRevocation = async (
+  tx: Prisma.TransactionClient,
+  userId: string
+): Promise<void> => {
+  await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
+};
+
+/**
  * Replaces the grant's selection rows with what `access` selects: deletes the rows no longer selected
  * (every row of the other kind included) and inserts the new ones, so an unchanged selection writes
  * nothing and queues no projection.
@@ -235,21 +264,33 @@ export const writeMcpGrant = async (
  * Gives the user's MCP client a grant with All access and `permissions`, unless it has one: a grant the
  * user already has, or narrowed, is never reset. Returns the grant when this created it, `null` otherwise.
  * One insert that skips an existing (user, client) row, so two tokens issued at once create one grant.
+ *
+ * Takes the caller's transaction so an insert can be ordered against a revocation: called after
+ * {@link lockUserForMcpGrantWrite}, a revocation that marked first is seen before it and deletes the
+ * grant after it, never the other way round.
  */
-export const createMcpGrantIfMissing = async ({
-  userId,
-  clientId,
-  permissions,
-}: {
-  userId: string;
-  clientId: string;
-  permissions: TMcpGrantPermissions;
-}): Promise<TStoredMcpGrant | null> => {
-  const { count } = await prisma.mcpGrant.createMany({
+export const createMcpGrantIfMissing = async (
+  tx: Prisma.TransactionClient,
+  {
+    userId,
+    clientId,
+    permissions,
+  }: {
+    userId: string;
+    clientId: string;
+    permissions: TMcpGrantPermissions;
+  }
+): Promise<TStoredMcpGrant | null> => {
+  const { count } = await tx.mcpGrant.createMany({
     data: [{ userId, clientId, access: "all", permissions }],
     skipDuplicates: true,
   });
-  return count === 1 ? getMcpGrant(userId, clientId) : null;
+  if (count !== 1) return null;
+  const row = await tx.mcpGrant.findUniqueOrThrow({
+    where: { userId_clientId: { userId, clientId } },
+    select: GRANT_SELECT,
+  });
+  return toStoredGrant(row);
 };
 
 /**

@@ -5,8 +5,13 @@ import { logger } from "@formbricks/logger";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { getUnconsentedMcpGrantPermissions } from "@/modules/mcp/grant";
-import { createMcpGrantIfMissing, queueMcpGrantAudit } from "@/modules/mcp/grant-store";
+import {
+  createMcpGrantIfMissing,
+  lockUserForMcpGrantWrite,
+  queueMcpGrantAudit,
+} from "@/modules/mcp/grant-store";
 import { trimScopesForDashboardViewer } from "./dashboard-viewer-oauth-scopes";
+import { readExchangedAuthorizationCode, readOAuthRevocationTime } from "./oauth-revocation-marker";
 
 /**
  * The grant an MCP access token is issued under (ADR-0041), as a claim of the token.
@@ -32,6 +37,12 @@ import { trimScopesForDashboardViewer } from "./dashboard-viewer-oauth-scopes";
  * screen does. A grant that exists, or that the user narrowed with Edit, is left alone. A refresh never
  * creates one: the refresh check (`requireOAuthConsentOnRefreshAfterHandler`) ends a `skipConsent`
  * connection without a grant, so a refresh that raced a Revoke can't bring it back.
+ *
+ * The creation is ordered against a Revoke like every other grant write ({@link grantSkipConsentClient}): it
+ * takes the user's row `FOR KEY SHARE`, which a revocation holds `FOR UPDATE` while it deletes, and re-reads
+ * the revocation mark once it has it. The token endpoint's before-hook read the mark before the provider
+ * spent the code, so a Revoke that committed between the two would otherwise leave the client with a new
+ * grant and its revoked connection back (`oauth-revocation-marker.ts`).
  */
 export const MCP_GRANT_TOKEN_CLAIM = "mcp_grant";
 
@@ -44,19 +55,38 @@ type TClaimInput = {
 };
 
 /**
- * Gives a `skipConsent` client's connection a grant if it has none. Never throws: the code is already
- * spent, and failing the exchange would leave the client nothing to retry with. Without a grant the token
- * carries no claim, its calls are refused, and its next refresh ends the connection, so it authorizes again.
+ * Gives a `skipConsent` client's connection a grant if it has none, unless a revocation covers the code
+ * being exchanged. Never throws: the code is already spent, and failing the exchange would leave the client
+ * nothing to retry with. Without a grant the token carries no claim, its calls are refused, and its next
+ * refresh ends the connection, so it authorizes again.
+ *
+ * The exchange's own read of the mark (`readExchangedAuthorizationCode`) supplies the code's issue time;
+ * without it, nothing is created, which is the same fail-closed answer if the hook ever stops recording it.
  */
 const grantSkipConsentClient = async (userId: string, clientId: string, scopes: string[]): Promise<void> => {
   try {
+    const exchanged = await readExchangedAuthorizationCode();
+    if (!exchanged || exchanged.userId !== userId || exchanged.clientId !== clientId) {
+      logger.warn(
+        { userId, clientId },
+        "No authorization code recorded for this exchange, so no grant was created for the skipConsent client"
+      );
+      return;
+    }
     const granted = (await isOnlyDashboardViewer(prisma, userId))
       ? trimScopesForDashboardViewer(scopes)
       : scopes;
-    const created = await createMcpGrantIfMissing({
-      userId,
-      clientId,
-      permissions: getUnconsentedMcpGrantPermissions(granted),
+    const created = await prisma.$transaction(async (tx) => {
+      // The lock a revocation waits on, before the mark is read: a Revoke that wrote its mark first is
+      // seen here, and one that starts after this commits deletes the grant below with the rest.
+      await lockUserForMcpGrantWrite(tx, userId);
+      const revokedAt = await readOAuthRevocationTime(userId, clientId);
+      if (revokedAt !== null && exchanged.issuedAt <= revokedAt) return null;
+      return createMcpGrantIfMissing(tx, {
+        userId,
+        clientId,
+        permissions: getUnconsentedMcpGrantPermissions(granted),
+      });
     });
     if (!created) return;
     await queueMcpGrantAudit({ action: "created", actorUserId: userId, before: null, after: created });

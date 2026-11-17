@@ -189,7 +189,8 @@ beforeEach(() => {
       return mocks.consents.filter((row) => row.clientId === clientId);
     }
     if (text.includes(`FROM "User"`)) {
-      mocks.sequence.push("share user");
+      // The user's row: `FOR KEY SHARE` for a grant write, `FOR UPDATE` for a revocation.
+      mocks.sequence.push(text.includes("FOR UPDATE") ? "lock user" : "share user");
       return [];
     }
     if (text.includes("EXISTS")) return [{ beyond: mocks.grantBeyond }];
@@ -261,7 +262,7 @@ describe("revokeOAuthConsentGrant", () => {
       "revoke refresh tokens",
       "revoke access tokens",
     ]);
-    expect(mocks.sequence).toEqual(["lock grant", "lock consents"]);
+    expect(mocks.sequence).toEqual(["lock user", "lock grant", "lock consents"]);
     // No SpiceDB call before the commit; the relationships go after it.
     expect(deleteMcpGrantRelationshipsBeforeCommit).not.toHaveBeenCalled();
     expect(removeDeletedMcpGrantRelationships).toHaveBeenCalledWith([

@@ -3,14 +3,25 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
-import { type TStoredMcpGrant, createMcpGrantIfMissing, queueMcpGrantAudit } from "@/modules/mcp/grant-store";
+import {
+  type TStoredMcpGrant,
+  createMcpGrantIfMissing,
+  lockUserForMcpGrantWrite,
+  queueMcpGrantAudit,
+} from "@/modules/mcp/grant-store";
 import { MCP_GRANT_TOKEN_CLAIM, mcpGrantAccessTokenClaims } from "./mcp-grant-token-claim";
+import { readExchangedAuthorizationCode, readOAuthRevocationTime } from "./oauth-revocation-marker";
 
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }));
 vi.mock("@/lib/membership/dashboard-viewer", () => ({ isOnlyDashboardViewer: vi.fn() }));
 vi.mock("@/modules/mcp/grant-store", () => ({
   createMcpGrantIfMissing: vi.fn(),
+  lockUserForMcpGrantWrite: vi.fn(),
   queueMcpGrantAudit: vi.fn(),
+}));
+vi.mock("./oauth-revocation-marker", () => ({
+  readExchangedAuthorizationCode: vi.fn(),
+  readOAuthRevocationTime: vi.fn(),
 }));
 
 const USER = { id: "user-1" };
@@ -29,12 +40,21 @@ const claims = (overrides: Partial<Parameters<typeof mcpGrantAccessTokenClaims>[
     ...overrides,
   });
 
+/** When the token endpoint's before-hook read the code this exchange spends. */
+const ISSUED_AT = 1_000;
+
 beforeEach(() => {
   vi.mocked(isOnlyDashboardViewer).mockReset().mockResolvedValue(false);
   vi.mocked(createMcpGrantIfMissing).mockReset().mockResolvedValue(created);
+  vi.mocked(lockUserForMcpGrantWrite).mockReset().mockResolvedValue(undefined);
   vi.mocked(queueMcpGrantAudit).mockReset().mockResolvedValue(undefined);
+  vi.mocked(readExchangedAuthorizationCode)
+    .mockReset()
+    .mockResolvedValue({ userId: "user-1", clientId: "client-1", issuedAt: ISSUED_AT });
+  vi.mocked(readOAuthRevocationTime).mockReset().mockResolvedValue(null);
   vi.mocked(logger.error).mockClear();
   vi.mocked(logger.warn).mockClear();
+  prisma.$transaction.mockImplementation((async (run: (tx: unknown) => unknown) => run(prisma)) as never);
   prisma.mcpGrant.findUnique.mockResolvedValue({ id: "grant-1" } as never);
 });
 
@@ -61,7 +81,7 @@ describe("mcpGrantAccessTokenClaims", () => {
   test("gives a skipConsent client's code exchange a grant, without Tags or Audience, and audits it", async () => {
     await expect(claims()).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: "grant-1" });
 
-    const [{ userId, clientId, permissions }] = vi.mocked(createMcpGrantIfMissing).mock.calls[0];
+    const [, { userId, clientId, permissions }] = vi.mocked(createMcpGrantIfMissing).mock.calls[0];
     expect({ userId, clientId }).toEqual({ userId: "user-1", clientId: "client-1" });
     // `responses:write` gives Responses, never Tags: only a user picks that on a consent screen.
     expect(permissions).toMatchObject({ surveys: "write", responses: "write", dashboards: "read" });
@@ -84,6 +104,7 @@ describe("mcpGrantAccessTokenClaims", () => {
     await claims();
 
     expect(createMcpGrantIfMissing).toHaveBeenCalledWith(
+      prisma,
       expect.objectContaining({ permissions: { charts: "read", dashboards: "read" } })
     );
   });
@@ -105,6 +126,40 @@ describe("mcpGrantAccessTokenClaims", () => {
     await claims(overrides);
 
     expect(createMcpGrantIfMissing).not.toHaveBeenCalled();
+  });
+
+  // Fail closed: without the hook's record of the code there is no issue time to check the mark against.
+  test("creates no grant when the exchange recorded no authorization code", async () => {
+    vi.mocked(readExchangedAuthorizationCode).mockResolvedValue(null);
+    prisma.mcpGrant.findUnique.mockResolvedValue(null);
+
+    await expect(claims()).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: null });
+    expect(createMcpGrantIfMissing).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      { userId: "user-1", clientId: "client-1" },
+      "No authorization code recorded for this exchange, so no grant was created for the skipConsent client"
+    );
+  });
+
+  // The provider spends the code after the before-hook read the mark: a Revoke that commits in between
+  // must leave the connection without a grant, or the revoked client would be back.
+  test.each([
+    ["in the code's second", ISSUED_AT],
+    ["after it", ISSUED_AT + 1],
+  ])("creates no grant when a Revoke marked %s", async (_case, revokedAt) => {
+    vi.mocked(readOAuthRevocationTime).mockResolvedValue(revokedAt);
+    prisma.mcpGrant.findUnique.mockResolvedValue(null);
+
+    await expect(claims()).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: null });
+    expect(lockUserForMcpGrantWrite).toHaveBeenCalledWith(prisma, "user-1");
+    expect(createMcpGrantIfMissing).not.toHaveBeenCalled();
+  });
+
+  test("gives the grant when the last Revoke was before the code was issued", async () => {
+    vi.mocked(readOAuthRevocationTime).mockResolvedValue(ISSUED_AT - 1);
+
+    await expect(claims()).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: "grant-1" });
+    expect(createMcpGrantIfMissing).toHaveBeenCalled();
   });
 
   test("logs an unexpected failure as an error and still issues the token, naming no grant", async () => {

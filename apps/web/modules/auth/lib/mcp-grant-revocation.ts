@@ -9,6 +9,7 @@ import {
   type TMcpGrantAuditRecord,
   type TStoredMcpGrant,
   deleteMcpGrants,
+  lockUserForMcpRevocation,
   prepareMcpGrantAudits,
   queueMcpGrantAudit,
   queueMcpGrantAudits,
@@ -22,8 +23,8 @@ import { markOAuthRevocation } from "./oauth-revocation-marker";
  * removal, the switch to Dashboard viewer, the retention sweep, SSO recovery).
  *
  * Split from `oauth-grant-revocation.ts`, which owns the hooks that follow a consent change. The two share
- * the consent row locks (`oauth-consent-rows.ts`) and take them in the same order: the grants, then the
- * consent rows.
+ * the consent row locks (`oauth-consent-rows.ts`) and take them in the same order: the user's row, then the
+ * grants, then the consent rows.
  */
 
 const CONSENT_DELETE_PATH = "/oauth2/delete-consent";
@@ -69,6 +70,10 @@ export const revokeAllUserOAuthGrants = async (
   // The user's pending sign-in codes live outside PostgreSQL: marked, so none issued before now is
   // exchanged. Before the commit, so no code can be exchanged between it and the mark.
   await markOAuthRevocation({ userId });
+  // The user's row `FOR UPDATE`, the lock a grant writer takes `FOR KEY SHARE` (a `skipConsent` code
+  // exchange): a grant it writes after this waits, then reads the mark this wrote and refuses, and one it
+  // wrote before is deleted below. Idempotent for a caller that already holds the row.
+  await lockUserForMcpRevocation(tx, userId);
   // Grants first, then consents, the order every path that locks both takes, so a concurrent save waits
   // rather than deadlocks. Each kind is locked in id order before its delete. The tokens are revoked last:
   // a refresh that passed its consent check before the consents were locked has inserted its token by
@@ -128,6 +133,9 @@ const endClientAccess = async (
   userId: string,
   clientId: string
 ): Promise<TRevokedGrant & { grants: TStoredMcpGrant[] }> => {
+  // Before the grant: the lock a code exchange's grant write takes `FOR KEY SHARE`, so one that marked
+  // and then waits here is waited for, and one that wrote first is deleted below.
+  await lockUserForMcpRevocation(tx, userId);
   const grants = await deleteMcpGrants(tx, { userId, clientId });
   await lockConsents(tx, userId, { clientId }, "update");
   const consents = await tx.oauthConsent.deleteMany({ where: { userId, clientId } });

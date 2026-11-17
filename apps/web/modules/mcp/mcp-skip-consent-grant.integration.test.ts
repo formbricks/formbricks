@@ -2,7 +2,6 @@ import { decodeJwt } from "jose";
 import { NextRequest } from "next/server";
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import type { Prisma } from "@formbricks/database/prisma";
 import { DELETE as revokeGrant } from "@/app/api/internal/mcp-grants/[clientId]/route";
 import { GET as listGrants } from "@/app/api/internal/mcp-grants/route";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
@@ -17,10 +16,13 @@ import {
   registerClient,
   signIn,
 } from "@/integration/oauth-flow";
+import { waitForBlockOn } from "@/integration/postgres-locks";
 import { resetDb } from "@/integration/reset-db";
 import { revokeMcpClient } from "@/modules/auth/lib/mcp-grant-revocation";
 import { mcpGrantAccessTokenClaims } from "@/modules/auth/lib/mcp-grant-token-claim";
+import { markOAuthRevocation } from "@/modules/auth/lib/oauth-revocation-marker";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
+import { redisSecondaryStorage } from "@/modules/auth/lib/secondary-storage";
 // The data migration under test (auto-discovered by the migration runner at deploy).
 import { backfillSkipConsentMcpGrants } from "../../../../packages/database/migration/20261112150000_backfill_skip_consent_mcp_grants/migration";
 import { getMcpGrant } from "./grant-store";
@@ -80,19 +82,6 @@ const setUp = async (): Promise<TSetup> => {
  * Resolves once a statement is blocked on a lock the transaction `tx` holds. Scoped to `tx`'s own backend
  * through `pg_blocking_pids`, and fails if it never happens, so a race test can't pass by running in order.
  */
-const waitForBlockOn = async (tx: Prisma.TransactionClient): Promise<void> => {
-  const [{ pid }] = await tx.$queryRaw<{ pid: number }[]>`SELECT pg_backend_pid() AS "pid"`;
-  const deadline = Date.now() + 8_000;
-  while (Date.now() < deadline) {
-    const [{ waiting }] = await prisma.$queryRaw<{ waiting: number }[]>`
-      SELECT count(*)::int AS "waiting" FROM pg_stat_activity
-      WHERE ${pid}::int = ANY(pg_blocking_pids("pid"))`;
-    if (waiting > 0) return;
-    await new Promise((resolve) => setTimeout(resolve, 25));
-  }
-  throw new Error("nothing blocked on the transaction's lock");
-};
-
 /** Refresh tokens the client still holds for the user: not revoked and not expired. */
 const liveRefreshTokens = (userId: string, clientId: string): Promise<number> =>
   prisma.oauthRefreshToken.count({
@@ -289,5 +278,56 @@ describe("a skipConsent client", () => {
     await new Promise((resolve) => setTimeout(resolve, 1_100));
     await grant(setup.cookie, setup.clientId, EVERYTHING);
     expect(await getMcpGrant(setup.userId, setup.clientId)).not.toBeNull();
+  });
+
+  // The provider spends the code after the token endpoint's before-hook read the revocation mark, so a
+  // Revoke can land in between. The claim re-checks the mark with the code's issue time, under the user's
+  // row, which a revocation holds while it deletes: the exchange then names no grant, and its calls fail.
+  test("a Revoke that lands between the code's check and its exchange still leaves no grant", async () => {
+    await grant(setup.cookie, setup.clientId, EVERYTHING);
+    const pending = await authorize(setup.cookie, setup.clientId, EVERYTHING);
+    const code = pending.target.searchParams.get("code");
+    expect(code, pending.target.toString()).toBeTruthy();
+
+    let exchanged: ReturnType<typeof exchangeCode> | undefined;
+    await prisma.$transaction(
+      async (tx) => {
+        // The exchange passes the before-hook's mark read (nothing marked yet) and waits here, the lock
+        // the claim takes `FOR KEY SHARE` before it reads the mark again.
+        await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${setup.userId} FOR UPDATE`;
+        exchanged = exchangeCode(setup.clientId, code as string, pending.verifier);
+        await waitForBlockOn(tx);
+        // What Revoke does: its mark first, then, under the user's row this transaction holds as Revoke's
+        // own does, the delete of the grant the earlier connect left.
+        await markOAuthRevocation({ userId: setup.userId, clientId: setup.clientId });
+        await tx.mcpGrant.deleteMany({ where: { userId: setup.userId, clientId: setup.clientId } });
+      },
+      { timeout: 15_000 }
+    );
+
+    const response = await (exchanged as ReturnType<typeof exchangeCode>);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+
+    const denied = await callMcpTool({ accessToken: response.body.access_token as string }, "list_surveys", {
+      workspaceId: setup.workspaceId,
+    });
+    expect(denied.status).toBe(401);
+  });
+});
+
+// Two revocations of one connection can finish out of order: the later one marks first, and the earlier
+// one's write lands second. Against real Valkey, the mark must keep the later time, or a code issued
+// between the two would pass the exchange's check.
+describe("the revocation mark", () => {
+  test("never moves back when an older write lands after a newer one", async () => {
+    const key = `oauth-revoked:it-${Date.now().toString()}`;
+    await redisSecondaryStorage.setMax(key, 3_000, 30);
+    await redisSecondaryStorage.setMax(key, 1_000, 60);
+    expect(await redisSecondaryStorage.get(key)).toBe("3000");
+
+    await redisSecondaryStorage.setMax(key, 5_000, 60);
+    expect(await redisSecondaryStorage.get(key)).toBe("5000");
+    await redisSecondaryStorage.delete(key);
   });
 });

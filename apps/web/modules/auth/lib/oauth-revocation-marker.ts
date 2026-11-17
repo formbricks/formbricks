@@ -1,4 +1,5 @@
 import "server-only";
+import { defineRequestState, hasRequestState } from "@better-auth/core/context";
 import { APIError } from "better-auth/api";
 import { createHash } from "node:crypto";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
@@ -36,6 +37,10 @@ const markKey = (userId: string, clientId?: string): string =>
  * Marks the user's codes, for `clientId` or for every client, as issued before a revocation. Call it before
  * the revocation's transaction commits, so no code can be exchanged between the commit and the mark. Throws
  * when Redis can't be written: the revocation must then fail rather than leave the codes live.
+ *
+ * The mark only ever moves forward: two revocations of the same connection can complete out of order (the
+ * later one marks first, the earlier one's write lands second), and the earlier timestamp would then let a
+ * code issued between the two through. An older write keeps the newer mark and refreshes its TTL instead.
  */
 export const markOAuthRevocation = async ({
   userId,
@@ -44,7 +49,7 @@ export const markOAuthRevocation = async ({
   userId: string;
   clientId?: string;
 }): Promise<void> => {
-  await redisSecondaryStorage.set(markKey(userId, clientId), String(Date.now()), REVOCATION_MARK_TTL_SECONDS);
+  await redisSecondaryStorage.setMax(markKey(userId, clientId), Date.now(), REVOCATION_MARK_TTL_SECONDS);
 };
 
 /** When the latest revocation covering the user's codes for the client happened, in ms; `null` if none. */
@@ -58,6 +63,20 @@ export const readOAuthRevocationTime = async (userId: string, clientId: string):
 };
 
 const TOKEN_PATH = "/oauth2/token";
+
+/** The authorization code this request is exchanging, as the token endpoint's before-hook read it. */
+type TExchangedCode = { userId: string; clientId: string; issuedAt: number };
+
+const exchangedCode = defineRequestState<TExchangedCode | null>(() => null);
+
+/**
+ * The authorization code this request is exchanging, and when it was issued; `null` outside a code
+ * exchange. Set by {@link refuseCodeIssuedBeforeRevocationBeforeHandler} for the grant claim
+ * (`mcp-grant-token-claim.ts`), whose grant creation must re-check the revocation mark: the hook's read
+ * happens before the provider spends the code, so a Revoke can land between the two.
+ */
+export const readExchangedAuthorizationCode = async (): Promise<TExchangedCode | null> =>
+  (await hasRequestState()) ? exchangedCode.get() : null;
 
 /**
  * The provider stores an authorization code as the unpadded base64url SHA-256 of its value
@@ -83,6 +102,10 @@ const readCodeOwner = (value: string): { userId: string; clientId: string } | nu
  * code, an authorization code issued no later than a revocation that covers its user and client. Reads the
  * code without consuming it; the provider consumes it when the exchange goes ahead. A code the provider
  * doesn't know, or can't read, is left to the provider to refuse.
+ *
+ * A code it accepts is recorded ({@link readExchangedAuthorizationCode}) so the grant claim re-checks the
+ * mark when it creates a `skipConsent` client's grant: the provider spends the code after this read, and a
+ * Revoke committed in the meantime must still leave the connection without a grant.
  */
 export const refuseCodeIssuedBeforeRevocationBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
   if (ctx.path !== TOKEN_PATH) return;
@@ -95,8 +118,11 @@ export const refuseCodeIssuedBeforeRevocationBeforeHandler = async (ctx: AuthHoo
   const owner = verification ? readCodeOwner(verification.value) : null;
   if (!verification || !owner) return;
 
+  const issuedAt = new Date(verification.createdAt).getTime();
+  await exchangedCode.set({ ...owner, issuedAt });
+
   const revokedAt = await readOAuthRevocationTime(owner.userId, owner.clientId);
-  if (revokedAt === null || new Date(verification.createdAt).getTime() > revokedAt) return;
+  if (revokedAt === null || issuedAt > revokedAt) return;
 
   throw new APIError("BAD_REQUEST", { error: "invalid_grant", error_description: "invalid code" });
 };

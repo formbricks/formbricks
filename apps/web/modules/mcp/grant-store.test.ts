@@ -16,6 +16,8 @@ import {
   deleteMcpGrants,
   getMcpGrant,
   lockMcpGrant,
+  lockUserForMcpGrantWrite,
+  lockUserForMcpRevocation,
   narrowMcpGrantAccess,
   prepareMcpGrantAudits,
   projectMcpGrants,
@@ -343,26 +345,49 @@ describe("writeMcpGrant", () => {
 });
 
 describe("createMcpGrantIfMissing", () => {
-  test("returns the grant it created", async () => {
-    prisma.mcpGrant.createMany.mockResolvedValue({ count: 1 });
-    prisma.mcpGrant.findUnique.mockResolvedValue(row() as never);
+  test("returns the grant it created, read in the caller's transaction", async () => {
+    const tx = newTx();
+    tx.mcpGrant.createMany.mockResolvedValue({ count: 1 } as never);
+    tx.mcpGrant.findUniqueOrThrow.mockResolvedValue(row() as never);
 
     await expect(
-      createMcpGrantIfMissing({ userId: USER_ID, clientId: CLIENT_ID, permissions: { surveys: "read" } })
+      createMcpGrantIfMissing(tx, { userId: USER_ID, clientId: CLIENT_ID, permissions: { surveys: "read" } })
     ).resolves.toEqual(stored());
-    expect(prisma.mcpGrant.createMany).toHaveBeenCalledWith({
+    expect(tx.mcpGrant.createMany).toHaveBeenCalledWith({
       data: [{ userId: USER_ID, clientId: CLIENT_ID, access: "all", permissions: { surveys: "read" } }],
       skipDuplicates: true,
     });
   });
 
   test("returns null and reads nothing when the connection already had a grant", async () => {
-    prisma.mcpGrant.createMany.mockResolvedValue({ count: 0 });
+    const tx = newTx();
+    tx.mcpGrant.createMany.mockResolvedValue({ count: 0 } as never);
 
     await expect(
-      createMcpGrantIfMissing({ userId: USER_ID, clientId: CLIENT_ID, permissions: {} })
+      createMcpGrantIfMissing(tx, { userId: USER_ID, clientId: CLIENT_ID, permissions: {} })
     ).resolves.toBeNull();
-    expect(prisma.mcpGrant.findUnique).not.toHaveBeenCalled();
+    expect(tx.mcpGrant.findUniqueOrThrow).not.toHaveBeenCalled();
+  });
+});
+
+describe("user row locks", () => {
+  test("a grant write takes the row FOR KEY SHARE, and a revocation FOR UPDATE", async () => {
+    const tx = newTx();
+    tx.$queryRaw.mockResolvedValue([{ "?column?": 1 }] as never);
+
+    await lockUserForMcpGrantWrite(tx, USER_ID);
+    await lockUserForMcpRevocation(tx, USER_ID);
+
+    expect(tx.$queryRaw).toHaveBeenNthCalledWith(
+      1,
+      expect.arrayContaining([expect.stringContaining("FOR KEY SHARE")]),
+      USER_ID
+    );
+    expect(tx.$queryRaw).toHaveBeenNthCalledWith(
+      2,
+      expect.arrayContaining([expect.stringContaining("FOR UPDATE")]),
+      USER_ID
+    );
   });
 });
 
