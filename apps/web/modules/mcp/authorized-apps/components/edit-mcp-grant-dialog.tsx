@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TAuthorizedMcpClientResource } from "@/app/api/internal/mcp-grants/lib/serializers";
 import { McpGrantDraftFields } from "@/modules/mcp/components/mcp-grant-draft-fields";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
 import type { TMcpGrantAccessOptions } from "@/modules/mcp/grant-access";
-import { useMcpGrantDraft } from "@/modules/mcp/hooks/use-mcp-grant-draft";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -18,8 +16,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/modules/ui/components/dialog";
+import { useMcpGrantEdit } from "../hooks/use-mcp-grant-edit";
 import { useUpdateMcpGrant } from "../hooks/use-update-mcp-grant";
-import { getMcpGrantSaveFailure, openMcpGrantEdit } from "../lib/edit-grant";
+import { getMcpGrantSaveFailure } from "../lib/edit-grant";
 
 interface EditMcpGrantDialogProps {
   client: TAuthorizedMcpClientResource & {
@@ -49,9 +48,8 @@ export const EditMcpGrantDialog = ({
   onClose,
 }: Readonly<EditMcpGrantDialogProps>) => {
   const { t } = useTranslation();
-  // Captured once, on mount: the list refetches while the dialog is open (`openMcpGrantEdit`).
-  const [opening] = useState(() => openMcpGrantEdit(client));
-  const draft = useMcpGrantDraft(opening.initial, opening.saved);
+  // Opened once, on mount; Save sends the grant version it opened (`useMcpGrantEdit`).
+  const { draft, saveRequest } = useMcpGrantEdit(client);
   const updateGrant = useUpdateMcpGrant();
 
   const handleOpenChange = (open: boolean) => {
@@ -59,27 +57,21 @@ export const EditMcpGrantDialog = ({
   };
 
   const handleSave = () => {
-    if (!draft.accessSelection) return;
-    updateGrant.mutate(
-      {
-        clientId: client.clientId,
-        grant: { permissions: draft.permissions, access: draft.accessSelection },
-        expectedUpdatedAt: opening.expectedUpdatedAt,
+    const request = saveRequest();
+    if (!request) return;
+    updateGrant.mutate(request, {
+      onSuccess: () => {
+        toast.success(t("auth.oauth.grant_updated"));
+        onClose();
       },
-      {
-        onSuccess: () => {
-          toast.success(t("auth.oauth.grant_updated"));
-          onClose();
-        },
-        onError: (error) => {
-          // A refusal that means this opened on something since changed closes it: the list is
-          // refreshing, and Edit opens again on what is true now.
-          const failure = getMcpGrantSaveFailure(error, t);
-          toast.error(failure.message);
-          if (failure.closeDialog) onClose();
-        },
-      }
-    );
+      onError: (error) => {
+        // A refusal that means this opened on something since changed closes it: the list is
+        // refreshing, and Edit opens again on what is true now.
+        const failure = getMcpGrantSaveFailure(error, t);
+        toast.error(failure.message);
+        if (failure.closeDialog) onClose();
+      },
+    });
   };
 
   return (

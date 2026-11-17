@@ -107,22 +107,40 @@ describe("useUpdateMcpGrant", () => {
     );
   });
 
-  test("surfaces a refused save instead of reporting success", async () => {
-    vi.mocked(global.fetch).mockResolvedValue(
-      problem(500, "mcp_grant_not_saved", "The access you chose couldn't be saved, so nothing changed.")
-    );
+  // The hook refreshes the shown list on a refusal that means Edit opened on something since changed,
+  // and leaves it alone on a save that just failed (Edit stays open to retry).
+  test.each([
+    ["a 409, the grant changed elsewhere", 409, "mcp_grant_changed", true],
+    ["a 422, the client's scopes narrowed", 422, "mcp_grant_beyond_scopes", true],
+    ["a 500, the save failed", 500, "mcp_grant_not_saved", false],
+  ])("on %s, refreshes the list: %s", async (_case, status, code, refreshes) => {
+    let listReads = 0;
+    vi.mocked(global.fetch).mockImplementation(async (_url, init) => {
+      if (init?.method === "PATCH") return problem(status, code, "Refused");
+      listReads += 1;
+      return json({ data: { isDashboardViewer: false, clients: [{ clientId: "client_a" }] } });
+    });
     const queryClient = newQueryClient();
 
-    const { result } = renderHook(() => useUpdateMcpGrant(), { wrapper: wrapper(queryClient) });
-    result.current.mutate({
+    const { result } = renderHook(() => ({ list: useAuthorizedMcpClients(), update: useUpdateMcpGrant() }), {
+      wrapper: wrapper(queryClient),
+    });
+    await waitFor(() => expect(result.current.list.data?.clients).toHaveLength(1));
+    expect(listReads).toBe(1);
+    result.current.update.mutate({
       clientId: "client_a",
-      grant: { permissions: { workflows: "write" } },
+      grant: { permissions: { surveys: "read" } },
       expectedUpdatedAt: OPENED_AT,
     });
 
-    await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error).toMatchObject({ status: 500 });
-    // A failed save is not a stale view: the dialog stays open on the draft, to try again.
-    expect(isStaleMcpGrantEditError(result.current.error)).toBe(false);
+    await waitFor(() => expect(result.current.update.isError).toBe(true));
+    expect(result.current.update.error).toMatchObject({ status });
+    if (refreshes) {
+      await waitFor(() => expect(listReads).toBe(2));
+    } else {
+      // Give a refetch the chance to happen, then check it didn't.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(listReads).toBe(1);
+    }
   });
 });
