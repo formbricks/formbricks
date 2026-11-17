@@ -56,7 +56,7 @@ const send = ({ id = ORG_ID, headers = SAME_ORIGIN_HEADERS as Record<string, str
 
 const operationLimits = () =>
   mocks.applyRateLimit.mock.calls
-    .filter(([config]) => config.namespace !== rateLimitConfigs.api.v3.namespace)
+    .filter(([config]) => config.namespace !== rateLimitConfigs.api.internal.namespace)
     .map(([config, identifier]) => [config.namespace, identifier]);
 
 beforeEach(() => {

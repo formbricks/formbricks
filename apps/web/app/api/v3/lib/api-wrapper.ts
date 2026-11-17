@@ -672,6 +672,14 @@ async function authenticateV3RequestOrRespond(
   };
 }
 
+/**
+ * The bucket a route charges unless it names its own: the dashboard's `/api/internal` surface gets one
+ * sized for page loads and refetches, so it never spends a user's public API budget (ADR 0041: the
+ * directory is the declaration).
+ */
+export const getDefaultRateLimitConfig = (pathname: string): TRateLimitConfig =>
+  pathname.startsWith("/api/internal/") ? rateLimitConfigs.api.internal : rateLimitConfigs.api.v3;
+
 async function applyV3RateLimitOrRespond(params: {
   authentication: TV3Authentication;
   enabled: boolean;
@@ -892,7 +900,7 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
         (await applyV3RateLimitOrRespond({
           authentication: authResult.authentication,
           enabled: rateLimit,
-          config: customRateLimitConfig ?? rateLimitConfigs.api.v3,
+          config: customRateLimitConfig ?? getDefaultRateLimitConfig(instance),
           requestId,
           log,
         }));

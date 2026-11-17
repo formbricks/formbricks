@@ -221,6 +221,27 @@ describe("withV3ApiWrapper", () => {
     expect(mockAuthenticateRequest).not.toHaveBeenCalled();
   });
 
+  test("charges an /api/internal route the dashboard's own bucket, not the public API's", async () => {
+    const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
+    mockGetSession.mockResolvedValue({
+      user: { id: "user_1", name: "Test", email: "t@example.com" },
+      expires: "2026-01-01",
+    });
+    const wrapped = withV3ApiWrapper({ auth: "session", handler: async () => Response.json({ ok: true }) });
+
+    const response = await wrapped(new NextRequest("http://localhost/api/internal/tags"), {} as never);
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(applyRateLimit)).toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "api:internal", allowedPerInterval: 600 }),
+      "user_1"
+    );
+    expect(vi.mocked(applyRateLimit)).not.toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "api:v3" }),
+      expect.anything()
+    );
+  });
+
   test("falls back to api key auth in both mode", async () => {
     const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
     mockAuthenticateRequest.mockResolvedValue({

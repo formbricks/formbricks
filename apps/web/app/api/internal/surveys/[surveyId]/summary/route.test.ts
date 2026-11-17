@@ -169,7 +169,7 @@ describe("POST /api/internal/surveys/{surveyId}/summary/queries", () => {
     await summaryQuery({});
 
     expect(mocks.can).toHaveBeenCalledWith(actor, "survey.response_read", { type: "survey", id: SURVEY_ID });
-    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3, USER_ID);
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.internal, USER_ID);
     expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
 

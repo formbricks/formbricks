@@ -140,7 +140,7 @@ describe("GET /api/internal/response-filter-options", () => {
   test("spends the default API budget and writes no audit entry: it is a read", async () => {
     await getOptions();
 
-    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3, USER_ID);
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.internal, USER_ID);
     expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
 

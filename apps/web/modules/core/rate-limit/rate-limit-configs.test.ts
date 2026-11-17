@@ -114,6 +114,7 @@ describe("rateLimitConfigs", () => {
         "v1",
         "v2",
         "v3",
+        "internal",
         "v3StateMutation",
         "mcpAuth",
         "v3SurveyGenerate",

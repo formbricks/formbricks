@@ -489,7 +489,7 @@ describe("GET /api/internal/languages?workspaceId=", () => {
     expect(mocks.getWorkspaceLanguages).toHaveBeenCalledWith(WORKSPACE_ID);
     expect(
       mocks.applyRateLimit.mock.calls.filter(
-        ([config]) => config.namespace !== rateLimitConfigs.api.v3.namespace
+        ([config]) => config.namespace !== rateLimitConfigs.api.internal.namespace
       )
     ).toEqual([]);
   });

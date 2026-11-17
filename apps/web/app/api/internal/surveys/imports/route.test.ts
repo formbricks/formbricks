@@ -94,7 +94,7 @@ describe("POST /api/internal/surveys/imports", () => {
     );
     const [[{ req }]] = mocks.createSurveyImport.mock.calls as [[{ req: Request }]];
     expect(req.headers.get("Idempotency-Key")).toBe('"key-1"');
-    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3, "user_1");
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.internal, "user_1");
   });
 
   test("takes a session only: an API key is refused before anything runs", async () => {

@@ -153,7 +153,7 @@ export const sendBillingRequest = (
 /** The operation budgets charged, beside the wrapper's per-user v3 limit: `[namespace, identifier]`. */
 export const operationLimits = () =>
   m.applyRateLimit.mock.calls
-    .filter(([config]) => config.namespace !== rateLimitConfigs.api.v3.namespace)
+    .filter(([config]) => config.namespace !== rateLimitConfigs.api.internal.namespace)
     .map(([config, identifier]) => [config.namespace, identifier]);
 
 /** The one audit entry the request queued. */

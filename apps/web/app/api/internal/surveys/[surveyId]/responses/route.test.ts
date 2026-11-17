@@ -153,7 +153,7 @@ describe("POST /api/internal/surveys/{surveyId}/responses/queries", () => {
     await queryResponses({ limit: 25 });
 
     expect(mocks.can).toHaveBeenCalledWith(actor, "survey.response_read", { type: "survey", id: SURVEY_ID });
-    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3, USER_ID);
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.internal, USER_ID);
     expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
 
@@ -251,7 +251,7 @@ describe("POST /api/internal/surveys/{surveyId}/responses/counts", () => {
     await countResponses({});
 
     expect(mocks.can).toHaveBeenCalledWith(actor, "survey.response_read", { type: "survey", id: SURVEY_ID });
-    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3, USER_ID);
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.internal, USER_ID);
     expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
 

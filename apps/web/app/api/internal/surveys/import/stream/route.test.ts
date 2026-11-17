@@ -127,7 +127,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
     await (await post()).text();
 
     expect(mocks.applyRateLimit).toHaveBeenCalledTimes(1);
-    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3, "user_1");
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.internal, "user_1");
   });
 
   test("hands the workspace and the uploaded file to the import, name and bytes as they came", async () => {

@@ -128,7 +128,7 @@ const checkedActions = () => mocks.assertCan.mock.calls.map(([, action, resource
 
 const operationLimits = () =>
   mocks.applyRateLimit.mock.calls
-    .filter(([config]) => config.namespace !== rateLimitConfigs.api.v3.namespace)
+    .filter(([config]) => config.namespace !== rateLimitConfigs.api.internal.namespace)
     .map(([config, identifier]) => [config.namespace, identifier]);
 
 beforeEach(() => {

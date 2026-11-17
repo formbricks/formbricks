@@ -80,7 +80,7 @@ describe("GET /api/internal/surveys/{surveyId}/displays", () => {
     await listDisplays();
 
     expect(mocks.can).toHaveBeenCalledWith(actor, "survey.response_read", { type: "survey", id: SURVEY_ID });
-    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3, USER_ID);
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.internal, USER_ID);
     expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
 

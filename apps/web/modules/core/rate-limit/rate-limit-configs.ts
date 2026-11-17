@@ -46,6 +46,10 @@ export const rateLimitConfigs = {
     v1: { interval: 60, allowedPerInterval: 100, namespace: "api:v1" }, // 100 per minute (Management API)
     v2: { interval: 60, allowedPerInterval: 100, namespace: "api:v2" }, // 100 per minute
     v3: { interval: 60, allowedPerInterval: 100, namespace: "api:v3" }, // 100 per minute
+    // The dashboard's own `/api/internal` routes, per signed-in user: every page load, refetch and open tab
+    // reads through here, where the server actions and server-rendered pages they replace had no per-user
+    // bucket. Writes also charge their own budget (`actions.stateMutation` and the like) on top.
+    internal: { interval: 60, allowedPerInterval: 600, namespace: "api:internal" }, // 600 per minute
     v3StateMutation: {
       interval: 60,
       allowedPerInterval: 120,

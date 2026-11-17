@@ -92,7 +92,7 @@ describe("PUT /api/internal/surveys/{surveyId}/content", () => {
         auditLog: expect.objectContaining({ action: "updated", targetType: "survey" }),
       })
     );
-    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3, "user_1");
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.internal, "user_1");
   });
 
   test("takes a session only: an API key is refused before anything runs", async () => {

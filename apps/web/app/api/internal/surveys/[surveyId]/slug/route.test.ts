@@ -62,7 +62,7 @@ const remove = ({ id = SURVEY_ID, headers = SAME_ORIGIN_HEADERS as Record<string
 
 const operationLimits = () =>
   mocks.applyRateLimit.mock.calls
-    .filter(([config]) => config.namespace !== rateLimitConfigs.api.v3.namespace)
+    .filter(([config]) => config.namespace !== rateLimitConfigs.api.internal.namespace)
     .map(([config, identifier]) => [config.namespace, identifier]);
 
 const SAVED_AT = new Date("2026-11-12T10:00:00.000Z");
