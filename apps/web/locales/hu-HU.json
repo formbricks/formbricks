@@ -65,6 +65,8 @@
       "new_to_formbricks": "Új a Formbicksen?",
       "oauth_account_not_linked_description": "Ez az SSO-szolgáltató nincs összekapcsolva egy meglévő Formbricks-fiókkal. Jelentkezzen be az eredetileg használt módszerrel. Ha ez e-mail és jelszó páros volt, akkor először végezze el az e-mail-ellenőrzést, ha a rendszer erre kéri.",
       "oauth_account_not_linked_title": "Ezt az SSO-bejelentkezést nem sikerült összekapcsolni",
+      "oauth_second_factor_unavailable_description": "Az Ön e-mail-címe ellenőrzésre került, azonban ehhez a fiókhoz kétlépcsős hitelesítés tartozik, a jelen Formbricks-példányon pedig az e-mail-címmel és jelszóval történő bejelentkezés ki van kapcsolva, ezért a második lépcsőt itt nem lehet megadni. A művelet befejezéséhez kérjük, jelentkezzen be egy, a fiókhoz már társított egyszeri bejelentkezési (SSO) szolgáltatóval, vagy forduljon a rendszergazdához.",
+      "oauth_second_factor_unavailable_title": "A kétlépcsős bejelentkezés itt nem fejezhető be",
       "please_verify_your_email_to_continue": "Kérjük, erősítsd meg az e-mail-címedet. Küldtünk egy megerősítő linket.",
       "use_a_backup_code": "Visszaszerzési kód használata"
     },

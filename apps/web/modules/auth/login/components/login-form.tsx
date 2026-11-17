@@ -8,6 +8,7 @@ import { FormProvider, SubmitHandler, useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
+import { SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE } from "@formbricks/types/errors";
 import { cn } from "@/lib/cn";
 import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
 import { buildAttributionQuerySuffix } from "@/modules/auth/lib/attribution";
@@ -79,6 +80,7 @@ export const LoginForm = ({
   // Better Auth surfaces the collision as `account_not_linked`; NextAuth used `OAuthAccountNotLinked`.
   // Accept both so the "not linked" alert survives the cutover.
   const oauthAccountNotLinked = oauthError === "OAuthAccountNotLinked" || oauthError === "account_not_linked";
+  const ssoRecoverySecondFactorUnavailable = oauthError === SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE;
   const { t } = useTranslation();
 
   const signupHref = useMemo(() => {
@@ -192,6 +194,14 @@ export const LoginForm = ({
     <FormProvider {...form}>
       <div className="text-center">
         <h1 className="mb-4 text-slate-700">{formLabel}</h1>
+        {ssoRecoverySecondFactorUnavailable && (
+          <Alert variant="error" className="mb-4 text-left" role="status">
+            <AlertTitle>{t("auth.login.oauth_second_factor_unavailable_title")}</AlertTitle>
+            <AlertDescription>
+              <p>{t("auth.login.oauth_second_factor_unavailable_description")}</p>
+            </AlertDescription>
+          </Alert>
+        )}
         {oauthAccountNotLinked && (
           <Alert variant="error" className="mb-4 text-left" role="status">
             <AlertTitle>{t("auth.login.oauth_account_not_linked_title")}</AlertTitle>

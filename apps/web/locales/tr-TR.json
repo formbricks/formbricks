@@ -65,6 +65,8 @@
       "new_to_formbricks": "Formbricks'te yeni misiniz?",
       "oauth_account_not_linked_description": "Bu SSO sağlayıcı mevcut bir Formbricks hesabına bağlı değil. Lütfen başlangıçta kullandığınız yöntemle giriş yap. E-posta ve şifre kullandıysan, istenirse önce e-posta doğrulamasını tamamla.",
       "oauth_account_not_linked_title": "Bu SSO girişi bağlanamadı",
+      "oauth_second_factor_unavailable_description": "E-posta adresin doğrulandı, ancak bu hesapta iki faktörlü kimlik doğrulama etkin ve bu Formbricks örneğinde e-posta ve parola ile giriş kapalı olduğundan ikinci faktör burada girilemiyor. İşlemi tamamlamak için bu hesaba bağlı bir çoklu oturum açma (SSO) sağlayıcısıyla giriş yap veya bir yöneticiyle iletişime geç.",
+      "oauth_second_factor_unavailable_title": "İki aşamalı giriş burada tamamlanamıyor",
       "please_verify_your_email_to_continue": "Lütfen e-posta adresinizi doğrulayın. Size bir doğrulama bağlantısı gönderdik.",
       "use_a_backup_code": "Yedek kod kullan"
     },

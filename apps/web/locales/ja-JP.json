@@ -65,6 +65,8 @@
       "new_to_formbricks": "Formbricksを初めてご利用ですか？",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_second_factor_unavailable_description": "メールアドレスは確認済みですが、このアカウントでは2要素認証が有効になっており、この Formbricks インスタンスではメールアドレスとパスワードによるサインインがオフになっているため、ここでは第2要素を入力できません。サインインを完了するには、このアカウントに連携済みのシングルサインオン(SSO)プロバイダーを使用するか、管理者にお問い合わせください。",
+      "oauth_second_factor_unavailable_title": "ここでは2要素認証によるサインインを完了できません",
       "please_verify_your_email_to_continue": "メールアドレスを確認してください。確認リンクをお送りしました。",
       "use_a_backup_code": "バックアップコードを使用"
     },

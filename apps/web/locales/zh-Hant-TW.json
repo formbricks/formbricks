@@ -65,6 +65,8 @@
       "new_to_formbricks": "初次使用 Formbricks？",
       "oauth_account_not_linked_description": "此 SSO 供應商尚未連結到既有的 Formbricks 帳戶。請改用你最初註冊時的登入方式；若是電子郵件加密碼，遇到提示時請先完成電子郵件驗證。",
       "oauth_account_not_linked_title": "無法連結此 SSO 登入",
+      "oauth_second_factor_unavailable_description": "你的電子郵件地址已通過驗證,但此帳號已啟用雙重驗證,而這個 Formbricks 執行個體已關閉電子郵件與密碼登入,因此無法在此輸入第二重驗證。請使用已連結至此帳號的單一登入 (SSO) 供應商登入以完成操作,或聯絡管理員。",
+      "oauth_second_factor_unavailable_title": "無法在此完成兩步驟驗證登入",
       "please_verify_your_email_to_continue": "請驗證您的電子郵件地址。我們已向您發送了一個驗證連結。",
       "use_a_backup_code": "使用備份碼"
     },
