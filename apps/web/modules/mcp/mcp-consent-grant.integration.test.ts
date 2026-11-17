@@ -12,6 +12,8 @@ import {
   signIn,
 } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
+import { getAuthzedClient } from "@/lib/authzed/client";
+import { readAllRelationships } from "@/lib/authzed/relationship-reads";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { getMcpGrant } from "./grant-store";
@@ -49,6 +51,18 @@ const EMAIL = "mcp-consent-grant@example.com";
 const EVERYTHING = MCP_OAUTH_SCOPES.join(" ");
 
 type TSetup = { cookie: string; userId: string; workspaceId: string; surveyId: string; clientId: string };
+
+/** The SpiceDB relationships that carry the grant's selection, to any organization or workspace. */
+const grantRelationships = async (grantId: string) => {
+  const client = getAuthzedClient();
+  const subject = { objectId: grantId, objectType: "mcp_grant" };
+  const reads = await Promise.all(
+    (["organization", "workspace"] as const).map((resourceType) =>
+      readAllRelationships(client, { relation: "mcp_grant", resourceType, subject })
+    )
+  );
+  return reads.flatMap(({ relationships }) => relationships);
+};
 
 /** One owner in one organization with one workspace and a draft survey, and a registered client. */
 const setUp = async (): Promise<TSetup> => {
@@ -283,11 +297,16 @@ describe("Allow on the consent screen", () => {
     const { access_token } = await grant(setup.cookie, setup.clientId, EVERYTHING, {
       mcpGrant: { permissions: { surveys: "read" }, access: "workspaces", workspaceIds: [setup.workspaceId] },
     });
-    const grantId = (await getMcpGrant(setup.userId, setup.clientId))?.id;
+    const grantId = (await getMcpGrant(setup.userId, setup.clientId))?.id as string;
     expect(grantId).toBeDefined();
+    // The grant's selection is in SpiceDB as a relationship to the workspace.
+    expect(await grantRelationships(grantId)).toHaveLength(1);
     vi.mocked(queueAuditEventBackground).mockClear();
 
     await grant(setup.cookie, setup.clientId, "openid offline_access", { prompt: "consent" });
+
+    // Gone from SpiceDB as well as from the rows, as Revoke removes them once its delete has committed.
+    expect(await grantRelationships(grantId)).toEqual([]);
 
     expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
     expect(await prisma.mcpGrantWorkspace.count({ where: { grantId } })).toBe(0);
