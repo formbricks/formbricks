@@ -2,6 +2,7 @@ import { mockCaptureWorkflowRunFailed } from "@/modules/ee/workflows/lib/analyti
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import {
+  failInterruptedTestRuns,
   failStuckSendingHttpRequests,
   reconcileStuckRunningWorkflowRuns,
 } from "./reconcile-stuck-running-runs";
@@ -213,5 +214,96 @@ describe("failStuckSendingHttpRequests", () => {
     logUpdateMany.mockRejectedValueOnce(new TypeError("boom"));
 
     await expect(failStuckSendingHttpRequests({ now: NOW })).rejects.toThrow("boom");
+  });
+});
+
+describe("failInterruptedTestRuns", () => {
+  const minutesAgo = (minutes: number) => new Date(NOW.getTime() - minutes * 60 * 1000);
+  interface FakeRun {
+    id: string;
+    isDryRun: boolean;
+    status: string;
+    createdAt: Date;
+    error?: string;
+  }
+  let runs: FakeRun[];
+
+  // The runs table as the sweep's filters see it, so the test checks which runs it ends, not its query.
+  type RunWhere = {
+    id?: { in: string[] };
+    isDryRun?: boolean;
+    status?: { in: string[] };
+    createdAt?: { lt: Date };
+  };
+  const matching = (where: RunWhere) =>
+    runs.filter(
+      (run) =>
+        (where.id === undefined || where.id.in.includes(run.id)) &&
+        (where.isDryRun === undefined || run.isDryRun === where.isDryRun) &&
+        (where.status === undefined || where.status.in.includes(run.status)) &&
+        (where.createdAt === undefined || run.createdAt < where.createdAt.lt)
+    );
+
+  beforeEach(() => {
+    runs = [
+      { id: "test_queued", isDryRun: true, status: "queued", createdAt: minutesAgo(11) },
+      { id: "test_running", isDryRun: true, status: "running", createdAt: minutesAgo(30) },
+      { id: "test_young", isDryRun: true, status: "running", createdAt: minutesAgo(9) },
+      { id: "test_done", isDryRun: true, status: "completed", createdAt: minutesAgo(60) },
+      { id: "real_queued", isDryRun: false, status: "queued", createdAt: minutesAgo(120) },
+      { id: "real_running", isDryRun: false, status: "running", createdAt: minutesAgo(120) },
+    ];
+    runFindMany.mockImplementation(async ({ where }: { where: RunWhere }) =>
+      matching(where).map(({ id }) => ({ id }))
+    );
+    runUpdateMany.mockImplementation(async ({ where, data }: { where: RunWhere; data: Partial<FakeRun> }) => {
+      const hit = matching(where);
+      for (const run of hit) Object.assign(run, data);
+      return { count: hit.length };
+    });
+    logUpdateMany.mockResolvedValue({ count: 1 });
+  });
+
+  const statusOf = (id: string) => runs.find((run) => run.id === id);
+
+  test("fails a Test run still queued or running after 10 minutes, in one sweep", async () => {
+    const result = await failInterruptedTestRuns({ now: NOW });
+
+    for (const id of ["test_queued", "test_running"]) {
+      expect(statusOf(id)).toMatchObject({ status: "failed", error: "Test run was interrupted" });
+    }
+    expect(logUpdateMany).toHaveBeenCalledWith({
+      where: { runId: { in: ["test_queued", "test_running"] }, status: "running" },
+      data: { status: "skipped", error: "Test run was interrupted", finishedAt: NOW },
+    });
+    expect(result).toEqual({ scanned: 2, failed: 2 });
+  });
+
+  test("leaves a Test run younger than 10 minutes, a finished one, and every real run untouched", async () => {
+    await failInterruptedTestRuns({ now: NOW });
+
+    expect(statusOf("test_young")?.status).toBe("running");
+    expect(statusOf("test_done")?.status).toBe("completed");
+    expect(statusOf("real_queued")?.status).toBe("queued");
+    expect(statusOf("real_running")?.status).toBe("running");
+  });
+
+  test("is not reported as a workflow failure, and the scan is bounded, oldest first", async () => {
+    await failInterruptedTestRuns({ now: NOW });
+
+    expect(mockCaptureWorkflowRunFailed).not.toHaveBeenCalled();
+    const args = runFindMany.mock.calls[0][0];
+    expect(args.orderBy).toEqual({ createdAt: "asc" });
+    expect(args.take).toBe(250);
+  });
+
+  test("does nothing when no Test run was interrupted", async () => {
+    runs = runs.filter((run) => !["test_queued", "test_running"].includes(run.id));
+
+    const result = await failInterruptedTestRuns({ now: NOW });
+
+    expect(runUpdateMany).not.toHaveBeenCalled();
+    expect(logUpdateMany).not.toHaveBeenCalled();
+    expect(result).toEqual({ scanned: 0, failed: 0 });
   });
 });

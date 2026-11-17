@@ -57,18 +57,7 @@ describe("createTestRunEffects", () => {
     }
   });
 
-  test("Don't wait hands nothing to a job", async () => {
-    const { enqueueWorkflowHttpRequestDeliveryJob } = await import("@formbricks/jobs");
-    const effects = createTestRunEffects(new Map());
-
-    await expect(
-      effects.enqueueHttpRequestDelivery({
-        workflowRunId: "run_1",
-        workflowId: "wf_1",
-        workspaceId: "ws_1",
-        stepId: "call",
-      })
-    ).resolves.toEqual({ handedOff: false });
-    expect(enqueueWorkflowHttpRequestDeliveryJob).not.toHaveBeenCalled();
+  test("Don't wait hands nothing to a job", () => {
+    expect(createTestRunEffects(new Map()).enqueueHttpRequestDelivery).toBeNull();
   });
 });

@@ -182,18 +182,27 @@ interface StepRunInput {
  * accepted policy: never send the same step twice.
  */
 const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
+  const where = { runId_stepId: { runId: step.runId, stepId: step.node.id } };
   const { status, error, output, retryable, variables } = await step.executor.execute({
     node: step.node,
     context: step.context,
     environment: step.environment,
     effects: step.effects,
+    saveOutput: async (saved) => {
+      await prisma.workflowRunLog.update({ where, data: { output: saved } });
+    },
   });
   const finishedAt = new Date();
 
-  await prisma.workflowRunLog.update({
-    where: { runId_stepId: { runId: step.runId, stepId: step.node.id } },
-    data: { status, output, error, finishedAt },
-  });
+  if (step.executor.handedOff?.(output)) {
+    // The job may already have run and recorded the call's outcome: only a row still `running` is ours.
+    await prisma.workflowRunLog.updateMany({
+      where: { runId: step.runId, stepId: step.node.id, status: "running" },
+      data: { status, output, error, finishedAt },
+    });
+  } else {
+    await prisma.workflowRunLog.update({ where, data: { status, output, error, finishedAt } });
+  }
 
   return {
     stepId: step.node.id,

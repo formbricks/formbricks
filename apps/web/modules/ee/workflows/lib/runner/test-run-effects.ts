@@ -42,5 +42,5 @@ export const createTestRunEffects = (
 ): WorkflowRunEffects => ({
   sendEmail: async () => true,
   sendHttpRequest: async (_call, { stepId }) => fromSample(samplesByStepId.get(stepId)),
-  enqueueHttpRequestDelivery: async () => ({ handedOff: false }),
+  enqueueHttpRequestDelivery: null,
 });

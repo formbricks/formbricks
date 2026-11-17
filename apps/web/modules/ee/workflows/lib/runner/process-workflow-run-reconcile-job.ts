@@ -4,6 +4,7 @@ import { logger } from "@formbricks/logger";
 import { dispatchWorkflowRunViaJobs } from "./dispatch";
 import { reconcileOrphanedWorkflowRuns } from "./reconcile-orphaned-runs";
 import {
+  failInterruptedTestRuns,
   failStuckSendingHttpRequests,
   reconcileStuckRunningWorkflowRuns,
 } from "./reconcile-stuck-running-runs";
@@ -35,26 +36,32 @@ export const processWorkflowRunReconcileJob: JobHandler<TWorkflowRunReconcileJob
   // rejects the job fails and BullMQ retries; the sibling's work is not cancelled (its writes are
   // idempotent/guarded, so a retried tick redoing them is harmless).
   // The third sweep fails "Don't wait" HTTP requests still sending after an hour (ENG-7179); it touches
-  // step rows only, never a run.
-  const [queued, stuckRunning, stuckSending] = await Promise.all([
+  // step rows only, never a run. The fourth fails Test runs whose request was cut short (ENG-7354); the
+  // first two skip Test runs, so the sets stay disjoint.
+  const [queued, stuckRunning, stuckSending, interruptedTestRuns] = await Promise.all([
     reconcileOrphanedWorkflowRuns({ dispatch: dispatchWorkflowRunViaJobs, now, logContext }),
     reconcileStuckRunningWorkflowRuns({ now, logContext }),
     failStuckSendingHttpRequests({ now, logContext }),
+    failInterruptedTestRuns({ now, logContext }),
   ]);
 
   const acted =
     queued.redispatched > 0 ||
     queued.agedOutFailed > 0 ||
     stuckRunning.recovered > 0 ||
-    stuckSending.failed > 0;
+    stuckSending.failed > 0 ||
+    interruptedTestRuns.failed > 0;
 
   if (acted) {
     // Neutral wording: the action may be a re-dispatch, an age-out, or a stuck-running recovery — the
     // per-sweep counts in the payload carry the specifics, so the message claims none of them.
-    logger.info({ ...logContext, queued, stuckRunning, stuckSending }, "Workflow run reconciliation acted");
+    logger.info(
+      { ...logContext, queued, stuckRunning, stuckSending, interruptedTestRuns },
+      "Workflow run reconciliation acted"
+    );
   } else {
     logger.debug(
-      { ...logContext, queued, stuckRunning, stuckSending },
+      { ...logContext, queued, stuckRunning, stuckSending, interruptedTestRuns },
       "Workflow run reconciliation found nothing to reconcile"
     );
   }

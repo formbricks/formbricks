@@ -2,6 +2,8 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import type { TWorkflowRunJobData } from "@formbricks/jobs";
 import { TooManyRequestsError } from "@formbricks/types/errors";
+import type { WorkflowHttpCallResult } from "../http-request/send-http-request";
+import { createWorkflowHttpRequestDeliveryJobHandler } from "./deliver-http-request-job";
 import type { WorkflowRunEffects } from "./effects";
 import { createWorkflowRunJobHandler, processWorkflowRunJob } from "./process-workflow-run-job";
 
@@ -1316,7 +1318,7 @@ describe("HTTP request steps in a run (ENG-7179)", () => {
   const effects = {
     sendEmail: mockSendEmail,
     sendHttpRequest: vi.fn<WorkflowRunEffects["sendHttpRequest"]>(),
-    enqueueHttpRequestDelivery: vi.fn<WorkflowRunEffects["enqueueHttpRequestDelivery"]>(),
+    enqueueHttpRequestDelivery: vi.fn<NonNullable<WorkflowRunEffects["enqueueHttpRequestDelivery"]>>(),
   };
   const handler = createWorkflowRunJobHandler(effects);
 
@@ -1340,7 +1342,7 @@ describe("HTTP request steps in a run (ENG-7179)", () => {
     mockGetSurvey.mockResolvedValue(mockSurvey);
     mockGetOrganizationByWorkspaceId.mockResolvedValue({ id: "org1", whitelabel: null });
     mockGetWorkspaceMemberEmails.mockResolvedValue(new Set());
-    effects.enqueueHttpRequestDelivery.mockResolvedValue({ handedOff: true });
+    effects.enqueueHttpRequestDelivery.mockResolvedValue(undefined);
   });
 
   test("a later step reads the whole response, even past what the run log keeps", async () => {
@@ -1367,6 +1369,63 @@ describe("HTTP request steps in a run (ENG-7179)", () => {
     expect(effects.sendHttpRequest).not.toHaveBeenCalled();
     expect(effects.enqueueHttpRequestDelivery).toHaveBeenCalledTimes(1);
     expect(mockSendEmail).toHaveBeenCalledTimes(1);
+    expect(mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0].data.status).toBe("completed");
+  });
+
+  test("Don't wait: a delivery job that runs before the step returns still sends the request (ENG-7354)", async () => {
+    runWith(httpDefinition("dont_wait"));
+    // The step's log rows as the database would hold them, so the delivery job reads what the runner wrote.
+    const rows = new Map<string, Record<string, unknown>>();
+    const matches = (row: Record<string, unknown>, where: { stepId: string; status?: unknown }) =>
+      row.stepId === where.stepId &&
+      (where.status === undefined ||
+        (typeof where.status === "string"
+          ? row.status === where.status
+          : (where.status as { in: unknown[] }).in.includes(row.status)));
+    mockWorkflowRunLogFindFirst.mockImplementation(({ where }: { where: { stepId: string } }) =>
+      Promise.resolve(rows.get(where.stepId) ?? null)
+    );
+    mockWorkflowRunLogCreate.mockImplementation(({ data: row }: { data: Record<string, unknown> }) => {
+      rows.set(row.stepId as string, { output: {}, error: null, finishedAt: null, ...row });
+      return Promise.resolve(row);
+    });
+    mockWorkflowRunLogUpdate.mockImplementation(
+      ({ where, data: patch }: { where: { runId_stepId: { stepId: string } }; data: object }) => {
+        const row = rows.get(where.runId_stepId.stepId);
+        if (row) Object.assign(row, patch);
+        return Promise.resolve(row);
+      }
+    );
+    mockWorkflowRunLogUpdateMany.mockImplementation(
+      ({ where, data: patch }: { where: { stepId: string; status?: unknown }; data: object }) => {
+        const row = rows.get(where.stepId);
+        if (!row || !matches(row, where)) return Promise.resolve({ count: 0 });
+        Object.assign(row, patch);
+        return Promise.resolve({ count: 1 });
+      }
+    );
+    const send = vi.fn(
+      async (): Promise<WorkflowHttpCallResult> => ({
+        response: { status: 200, contentType: "text/plain", bodyText: "ok", truncated: false },
+        error: null,
+        attempts: 1,
+      })
+    );
+    const deliver = createWorkflowHttpRequestDeliveryJobHandler({ send });
+    // The earliest the job can run: a free worker slot picks it up while the step is being enqueued.
+    effects.enqueueHttpRequestDelivery.mockImplementation(async (jobData) => {
+      await deliver(jobData, { ...baseContext, jobName: "workflow-http-request.deliver" });
+    });
+
+    await handler(data, baseContext);
+
+    expect(send).toHaveBeenCalledWith(
+      expect.objectContaining({ method: "GET", url: "https://api.example.com/customers" })
+    );
+    expect(rows.get("call")).toMatchObject({
+      status: "succeeded",
+      output: { mode: "dont_wait", delivery: "sent", status: 200 },
+    });
     expect(mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0].data.status).toBe("completed");
   });
 

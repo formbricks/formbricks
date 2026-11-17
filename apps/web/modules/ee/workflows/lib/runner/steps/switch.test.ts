@@ -25,6 +25,7 @@ const run = (customer: Record<string, unknown>, switchNode: TWorkflowSwitchNode 
     // A Switch acts on nothing outside the run.
     environment: {} as WorkflowRunEnvironment,
     effects: {} as WorkflowRunEffects,
+    saveOutput: async () => {},
   });
 };
 

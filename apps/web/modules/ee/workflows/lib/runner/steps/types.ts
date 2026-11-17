@@ -32,6 +32,11 @@ export interface WorkflowStepExecution<T extends TWorkflowStepType> {
   context: TWorkflowRunContext;
   environment: WorkflowRunEnvironment;
   effects: WorkflowRunEffects;
+  /**
+   * Stores `output` on the step's `running` log row before the step returns: what a job the step
+   * hands its effect to reads, so it must be there before that job is queued ("Don't wait").
+   */
+  saveOutput: (output: Record<string, unknown>) => Promise<void>;
 }
 
 /**

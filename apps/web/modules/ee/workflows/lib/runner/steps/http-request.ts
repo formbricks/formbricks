@@ -9,11 +9,56 @@ import {
 } from "../../http-request/request";
 import type { WorkflowStepExecutor, WorkflowStepOutcome } from "./types";
 
+type ExecuteInput = Parameters<WorkflowStepExecutor<"http_request">["execute"]>[0];
+
+/**
+ * "Don't wait": the delivery job reads the request from the step's row and skips a row that isn't
+ * sending, and with a free worker it can start before the enqueue returns, so the row is written first
+ * (ENG-7354). In a Test run nothing will send it, so the step ends with the request it would have sent.
+ */
+const handOffDontWaitRequest = async ({
+  node,
+  environment,
+  effects,
+  saveOutput,
+  record,
+}: Pick<ExecuteInput, "node" | "environment" | "effects" | "saveOutput"> & {
+  record: Parameters<typeof capRequestRecord>[0];
+}): Promise<WorkflowStepOutcome> => {
+  if (!effects.enqueueHttpRequestDelivery) {
+    return {
+      status: "succeeded",
+      error: null,
+      output: { mode: "dont_wait", request: capRequestRecord(record) },
+      variables: {},
+    };
+  }
+  const sending = { mode: "dont_wait", delivery: "sending", request: record };
+  await saveOutput(sending);
+  try {
+    await effects.enqueueHttpRequestDelivery({
+      workflowRunId: environment.runId,
+      workflowId: environment.workflowId,
+      workspaceId: environment.workspaceId,
+      stepId: node.id,
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    return {
+      status: "failed",
+      error: `The HTTP request could not be queued for sending: ${reason}`,
+      output: { mode: "dont_wait", delivery: "failed", request: capRequestRecord(record) },
+    };
+  }
+  return { status: "running", error: null, output: sending, variables: {} };
+};
+
 /**
  * Runs an HTTP request step (ENG-7168). "Wait and use it" calls through `effects.sendHttpRequest`
  * (10 s, 1 MB, 3 retries) and gives later steps `steps.<id>.status` and `steps.<id>.body`; "Don't
- * wait" stores the rendered request on the step's log row, hands the call to its own job and leaves
- * the step `running` ("Sending…") while the run moves on.
+ * wait" stores the rendered request on the step's log row, then hands the call to its own job and
+ * leaves the step `running` ("Sending…") while the run moves on; a job that can't be queued fails the
+ * step at once, with the reason.
  *
  * Log row output: `mode`, `request` (secret values masked), and for a waited call the response's
  * `status`, `contentType`, `body` (≤64 KB, `bodyTruncated` when cut) and `attempts`. A "Don't wait"
@@ -32,7 +77,7 @@ export const httpRequestStepExecutor: WorkflowStepExecutor<"http_request"> = {
     url: node.config.url,
     responseMode: node.config.responseMode,
   }),
-  execute: async ({ node, context, environment, effects }): Promise<WorkflowStepOutcome> => {
+  execute: async ({ node, context, environment, effects, saveOutput }): Promise<WorkflowStepOutcome> => {
     const { config } = node;
     const built = buildWorkflowHttpCall(config, context, (header) => {
       const resolved = resolveBoundWorkflowSecret({
@@ -51,27 +96,7 @@ export const httpRequestStepExecutor: WorkflowStepExecutor<"http_request"> = {
     }
 
     if (config.responseMode === "dont_wait") {
-      const { handedOff } = await effects.enqueueHttpRequestDelivery({
-        workflowRunId: environment.runId,
-        workflowId: environment.workflowId,
-        workspaceId: environment.workspaceId,
-        stepId: node.id,
-      });
-      if (!handedOff) {
-        // A Test run: nothing will send it, so the step ends with the request it would have sent.
-        return {
-          status: "succeeded",
-          error: null,
-          output: { mode: "dont_wait", request: capRequestRecord(built.record) },
-          variables: {},
-        };
-      }
-      return {
-        status: "running",
-        error: null,
-        output: { mode: "dont_wait", delivery: "sending", request: built.record },
-        variables: {},
-      };
+      return handOffDontWaitRequest({ node, environment, effects, saveOutput, record: built.record });
     }
 
     const result = await effects.sendHttpRequest(built.call, { stepId: node.id });
