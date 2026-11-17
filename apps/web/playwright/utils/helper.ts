@@ -103,8 +103,9 @@ export const waitForSurveyEditor = async (
     await page.waitForURL(editorUrlPattern);
   }
   // The route has a loading skeleton, so the URL changes as soon as the skeleton shows, before the
-  // editor's data has loaded. Wait for the skeleton to go, with the navigation's budget rather than the
-  // 5 s assertion budget below: a cold editor under a full parallel suite can take longer than that.
+  // editor's data has loaded. Wait for the skeleton to go, bounded by the test timeout (no action timeout
+  // is configured) rather than the 5 s assertion budget below: a cold editor under a full parallel suite
+  // can take longer than that.
   await page.getByTestId("survey-editor-loading").waitFor({ state: "detached" });
 
   if (options.mode === "cx") {

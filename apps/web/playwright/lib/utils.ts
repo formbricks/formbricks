@@ -141,16 +141,16 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   // The new key is listed only once the server has stored it, so its copy icon is the signal.
   const copyIcon = page.locator(".copyApiKeyIcon").first();
   await expect(copyIcon).toBeVisible({ timeout: 30_000 });
+  // The new key is shown once, in the span beside its copy icon.
+  const apiKey = (await copyIcon.locator("xpath=preceding-sibling::span").innerText()).trim();
+  expect(apiKey).toMatch(/^fbk_/);
   await copyIcon.click();
 
-  // The click writes the clipboard asynchronously; read it until the key is there.
-  let apiKey = "";
+  // The copy writes the clipboard asynchronously; the key the specs use is the one the copy affordance
+  // delivers, so wait until the clipboard holds exactly the shown key.
   await expect
-    .poll(async () => {
-      apiKey = (await page.evaluate("navigator.clipboard.readText()")) as string;
-      return apiKey;
-    })
-    .toMatch(/^fbk_/);
+    .poll(async () => (await page.evaluate("navigator.clipboard.readText()")) as string)
+    .toBe(apiKey);
 
   return { workspaceId, apiKey };
 }
