@@ -35,12 +35,15 @@ export function EmbeddedFieldRenameButton({
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
+  // The stored name as the editor saw it when the popover opened. Read again at save time it would be the
+  // refreshed name after a 409, and a retry would then overwrite exactly the rename the 409 protected.
+  const [expectedLabel, setExpectedLabel] = useState<string | null>(null);
   const rename = useRenameEmbeddedField(workspaceId);
   const shownName = getEmbeddedFieldDisplayName(field);
 
   const save = (label: string) =>
     rename.mutate(
-      { key: field.key, label, expectedLabel: field.label ?? null },
+      { key: field.key, label, expectedLabel },
       {
         onSuccess: () => {
           setOpen(false);
@@ -61,7 +64,10 @@ export function EmbeddedFieldRenameButton({
     <Popover
       open={open}
       onOpenChange={(next) => {
-        if (next) setDraft(shownName);
+        if (next) {
+          setDraft(shownName);
+          setExpectedLabel(field.label ?? null);
+        }
         setOpen(next);
       }}>
       <PopoverTrigger asChild>
