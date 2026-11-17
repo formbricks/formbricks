@@ -263,29 +263,17 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
       recStack[questionId] = true;
 
       const question = questions.find((ques) => ques.id === questionId);
-      if (question?.logic && question.logic.length > 0) {
-        for (const logic of question.logic) {
-          const jumpActions = findJumpToQuestionActions(logic.actions);
-          for (const jumpAction of jumpActions) {
-            const destination = jumpAction.target;
-            if (!visited[destination] && checkForCyclicLogic(destination)) {
-              cyclicQuestions.add(questionId);
-              return true;
-            } else if (recStack[destination]) {
-              cyclicQuestions.add(questionId);
-              return true;
-            }
-          }
-        }
+      const jumpTargets = (question?.logic ?? [])
+        .flatMap((logic) => findJumpToQuestionActions(logic.actions))
+        .map((jumpAction) => jumpAction.target);
+      if (jumpTargets.some(leadsToCycle)) {
+        cyclicQuestions.add(questionId);
+        return true;
       }
 
       // Check fallback logic
       if (question?.logicFallback) {
-        const fallbackQuestionId = question.logicFallback;
-        if (!visited[fallbackQuestionId] && checkForCyclicLogic(fallbackQuestionId)) {
-          cyclicQuestions.add(questionId);
-          return true;
-        } else if (recStack[fallbackQuestionId]) {
+        if (leadsToCycle(question.logicFallback)) {
           cyclicQuestions.add(questionId);
           return true;
         }
@@ -302,6 +290,10 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
     recStack[questionId] = false;
     return false;
   };
+
+  /** Whether following `destination` reaches a cycle: unvisited and cyclic, or still on the stack. */
+  const leadsToCycle = (destination: string): boolean =>
+    (!visited[destination] && checkForCyclicLogic(destination)) || Boolean(recStack[destination]);
 
   for (const question of questions) {
     checkForCyclicLogic(question.id);
