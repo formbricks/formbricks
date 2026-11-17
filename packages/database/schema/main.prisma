@@ -1306,8 +1306,9 @@ model McpGrant {
   user          User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   clientId      String
   client        oauthClient            @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
-  /// Which organizations and workspaces the grant reaches. Only `all` is enforced until ENG-7153; any
-  /// other value is refused on every call rather than read as All access.
+  /// Which organizations and workspaces the grant reaches (ENG-7153): All access, only the organizations
+  /// in `organizations` (and every workspace in them, later ones included), or only the workspaces in
+  /// `workspaces`. Enforced in SpiceDB through `can()` (ADR-0042); a value no row backs reaches nothing.
   access        McpGrantAccess         @default(all)
   /// The access level per permission of `apps/web/modules/mcp/permissions.ts`: `{ "surveys": "write" }`.
   /// A permission that is absent has No access.

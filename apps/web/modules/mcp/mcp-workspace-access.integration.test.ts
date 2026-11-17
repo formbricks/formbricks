@@ -22,6 +22,7 @@ import {
   registerClient,
   signIn,
 } from "@/integration/oauth-flow";
+import { waitForBlockOn } from "@/integration/postgres-locks";
 import { resetDb } from "@/integration/reset-db";
 import { reconcileMcpGrantRelationships } from "@/lib/authzed/mcp-grant";
 import { auth } from "@/modules/auth/lib/auth";
@@ -1180,7 +1181,6 @@ describe("organization & workspace access on MCP calls", () => {
       access: "workspaces",
       workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId],
     });
-    let reconcileSettled = false;
     let reconcile: Promise<unknown> = Promise.resolve();
     const access: TMcpGrantAccessSelection = {
       access: "workspaces",
@@ -1200,12 +1200,10 @@ describe("organization & workspace access on MCP calls", () => {
         });
         if (narrowed.status !== "ok") throw new Error("expected the narrowing to resolve");
         // The old access is gone from SpiceDB; a reconcile now starts while the rows still say the old one.
-        reconcile = reconcileMcpGrantRelationships({ grantIds: [before!.id] }).then((result) => {
-          reconcileSettled = true;
-          return result;
-        });
-        await new Promise((resolve) => setTimeout(resolve, 500));
-        expect(reconcileSettled).toBe(false);
+        reconcile = reconcileMcpGrantRelationships({ grantIds: [before!.id] });
+        // Blocked on this transaction's `FOR UPDATE` on the grant row, before its `FOR SHARE` read: the
+        // race is established, not hoped for.
+        await waitForBlockOn(tx);
         await writeMcpGrant(tx, { ...ids, before, permissions: READ_ALL, access: narrowed.access });
       },
       { timeout: 15_000 }

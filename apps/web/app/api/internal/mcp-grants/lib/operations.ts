@@ -1,6 +1,7 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
+import { getV3SessionUserId as getSessionUserId } from "@/app/api/v3/lib/auth";
 import {
   problemBadRequest,
   problemConflict,
@@ -44,9 +45,6 @@ import { serializeAuthorizedMcpClient, serializeMcpGrant } from "./serializers";
  * Authorized apps' grants (ENG-7152). A grant belongs to one user, so the only check is the session: every
  * read and write is keyed on the session user, and another user's grant answers like none.
  */
-
-const getSessionUserId = (authentication: TV3Authentication): string | null =>
-  authentication && "user" in authentication ? (authentication.user?.id ?? null) : null;
 
 export async function listMcpGrantsOperation({
   authentication,

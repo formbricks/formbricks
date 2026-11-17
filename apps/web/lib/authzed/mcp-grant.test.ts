@@ -1,5 +1,5 @@
+import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { type TAuthzedRelationship, type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
@@ -15,10 +15,6 @@ import {
 import { readAllRelationships } from "./relationship-reads";
 
 const clientMocks = { writeRelationships: vi.fn() };
-
-vi.mock("@formbricks/database", () => ({
-  prisma: { mcpGrant: { findMany: vi.fn() }, $queryRaw: vi.fn(), $transaction: vi.fn() },
-}));
 
 vi.mock("@formbricks/logger", () => ({
   logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn() },
