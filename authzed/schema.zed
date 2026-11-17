@@ -308,7 +308,14 @@ definition feedback_directory {
     permission write: user | api_key = administrator + assignment->write
     permission manage: user | api_key = administrator + assignment->manage
 
-    /** MCP grants that reach the dataset: its whole organization, or a workspace it is assigned to. */
+    /**
+     * MCP grants that reach the dataset: its whole organization, or a workspace it is
+     * assigned to. A dataset assigned to several workspaces is therefore reached through
+     * any of them, and a grant selecting one reads every record in it, including records
+     * ingested through the others. That is the dataset's own access model (`read` above is
+     * the same way): an assignment grants read of the whole dataset, not of what one
+     * workspace ingested. The MCP access docs say so on the product side.
+     */
     permission mcp_reach: mcp_grant = organization->mcp_reach + assignment->mcp_reach
 }
 

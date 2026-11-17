@@ -119,7 +119,7 @@ Supported scopes:
 | `responses:read` | `list_responses`, `count_responses`, `get_response`, `list_tags` |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses`, `set_responses_outcome`, `update_tag`, `merge_tags` |
 | `dashboards:read` | `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `list_chart_fields`, `list_charts`, `get_chart`, `get_chart_data`, `list_dashboard_filter_fields`, `list_dashboard_filter_values`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId`, `list_dashboard_filter_fields` and `list_dashboard_filter_values` on `dashboards:read` alone) |
-| `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` |
+| `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `remove_chart_from_dashboard`; with `dashboards:read` (Charts: Read, since their answers carry each widget's chart, as `get_dashboard` does), `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget` |
 | `audience:read` | `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` (read-only family: there is no `audience:write`) |
 | `openid` | OpenID Connect subject interoperability |
 | `profile` | User profile claims |
@@ -147,8 +147,13 @@ alone. Allow on the consent screen saves the grant; a client registered with `sk
 screen, so the same claim contributor gives the client one when it exchanges an authorization code, before
 the token is minted, by the migration's rule: All access, each permission at its scope family's level,
 Tags and Audience at No access. A sign-in code issued before a Revoke is refused at the exchange
-(`modules/auth/lib/oauth-revocation-marker.ts`). A refresh never creates a grant: the refresh check
-refuses a `skipConsent` connection without one, as it refuses a consent without one. Tools that more than one permission
+(`modules/auth/lib/oauth-revocation-marker.ts`), and the mark a revocation leaves only ever moves forward,
+so two revocations that finish out of order can't lower it. A refresh never creates a grant: the refresh check
+refuses a `skipConsent` connection without one, as it refuses a consent without one. The exchange's grant
+creation is ordered against a Revoke like every other grant write: the claim takes the user's row
+`FOR KEY SHARE` and re-reads the mark with the code's issue time once it has it, because the provider
+spends the code after the before-hook's check — a Revoke that lands in between leaves the connection
+without a grant rather than restoring it. Tools that more than one permission
 legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, and a tool whose input decides what
 it reads passes `{ byInput }`; both keep the tool on the same registration path rather than a hand-rolled
 gate.
@@ -165,7 +170,19 @@ can do in between:
   (`narrowMcpGrantAccess`). All of that runs before any consent row is locked. If SpiceDB can't apply the
   delete, the request fails and the grant is unchanged: Edit answers 500 and the consent screen shows an
   error, both `mcp_grant_not_saved`; a selection the user can't make answers 422
-  (`mcp_grant_selection_unavailable`) on both.
+  (`mcp_grant_selection_unavailable`) on both. A grant the client's scopes leave nothing of answers 400
+  `mcp_grant_beyond_scopes` on consent: it would connect a client that can do nothing (spec story 17).
+  Dependencies (`MCP_PERMISSION_DEPENDENCIES` in `permissions.ts`) are hints, not a save rule (spec story
+  16): a grant of Charts without Feedback records saves, and the chart tools answer "not permitted" naming
+  what they need. A grant the request can't read at all — unknown field or permission, a level the
+  permission doesn't offer, an empty selection — answers 400 `mcp_grant_invalid`. A selection holds at most
+  `MAX_MCP_GRANT_SELECTIONS` (100), the `/api/auth` per-list bound (`AUTH_REQUEST_MAX_ENTRIES`), because the
+  consent screen sends it in the request body; both screens hold Allow and Save back past it with a hint
+  naming the limit, and Edit's route bounds the lists in its schema. Both screens translate the code
+  (`getGrantErrorMessage`), never the server's English detail. Edit closes and refreshes on a refusal that
+  means it opened on something since changed (`mcp_grant_changed`, `mcp_grant_beyond_scopes`,
+  `mcp_grant_selection_unavailable`), and it opens on the stored grant held to the client's current cap,
+  so a grant saved before the scopes narrowed can still be edited (`openMcpGrantEdit`).
 - A consent approval whose grant can't be saved changes nothing, the consent included. Better Auth writes the
   consent before the hook that saves the grant runs, outside any transaction the hook can join, so a
   before-hook snapshots the client's consent rows (`snapshotConsentBeforeApprovalHandler`) and a failed save
@@ -180,6 +197,12 @@ can do in between:
 Every path that locks both a grant row and consent rows takes the grant first. Paths that only need the
 grant to hold still while they read the consent (the refresh check, restoring a consent after a failed
 approval) lock it `FOR SHARE` (`shareLockMcpGrant`).
+
+A revocation takes the user's row `FOR UPDATE` (`lockUserForMcpRevocation`) before it deletes, the waiting
+side of the `FOR KEY SHARE` a grant writer holds (`lockUserForMcpGrantWrite`): a grant written after the
+revocation's mark waits there, reads the mark, and doesn't write; one written before is deleted with the
+rest. That matters because a revocation writes its mark before its transaction, so the mark can be visible
+before the delete runs.
 
 Ending a user's grants from a membership change sits under two earlier locks, so the full order is: the
 organization's owner memberships (`runOwnerGuardedTransaction`), then the user's row (`lockUserActiveState`),
@@ -1450,12 +1473,16 @@ Input:
 ```
 
 Output mirrors the v3 list envelope: `{ "data": [...], "meta": { "limit", "nextCursor" }, "requestId" }`.
-Omitting `filter.status.in` returns every status except archived.
+Omitting `filter.status.in` returns every status except archived. Each workflow's embedded `lastRun.error`
+is `null` without Responses: Read, as on `get_workflow`.
 
 #### get_workflow
 
 Gets one workflow by ID. Read-only and idempotent. Unknown or cross-workspace ids return `403`
-(never `404`) so existence is not leaked.
+(never `404`) so existence is not leaked. Each workflow carries its `lastRun` summary, whose `error` can
+quote what a failed step sent; without Responses: Read (in the grant and in the token's scopes) it comes
+back as `null`, on this tool, on `list_workflows`, and on every workflow mutation that returns the resource
+(`patch_workflow`, `enable_workflow`, and the rest).
 
 ```json
 { "workflowId": "clwf1234567890123456789012" }
@@ -1573,6 +1600,10 @@ each take only a workflow id:
 Nine tools, one per documented v3 response operation. The set mirrors the API deliberately: what an
 agent can do through MCP is what an API key can do over HTTP, read off one list rather than two.
 
+The response resource carries a contact reference and the response's tags, which are other permissions'
+data: without Contacts: Read `contact` comes back as `null`, and without Tags: Read `tags` comes back as
+`[]`, on `list_responses`, `get_response` and both write tools, whose answers carry the same resource.
+
 Every tool description states the boundary against the feedback-record tools, because
 `list_feedback_records(source_id=<surveyId>)` looks like it answers the same question and does not —
 see **Feedback Records And The Hub** below. The full paragraph goes on `list_responses` and
@@ -1612,7 +1643,9 @@ describes.
 `create_response` records a real submission: webhooks, integrations, follow-ups, quotas and metering
 all run. `update_response` replaces `data` and `tags` wholesale rather than merging, which is why it is
 annotated `destructiveHint: true` — to add one tag, read the response and send every tag it should end
-up with.
+up with. A write that names `tags` therefore needs Tags: Read beside Responses: Write (`{ byInput }`):
+without it the caller reads every response's tags as `[]`, and a replace from that view would drop tags it
+never saw. A write that leaves `tags` out keeps them as they are.
 
 Both take the v3 body as an opaque `data` argument and let the operation parse it, so the tool and the
 route answer the same thing to a malformed body.

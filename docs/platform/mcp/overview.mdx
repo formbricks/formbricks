@@ -149,10 +149,17 @@ screen and in **Edit**:
 - **Only selected workspaces**: only the workspaces you pick, across your organizations. A workspace created
   later stays out until you add it.
 
+A grant selects at most 100 organizations or workspaces.
+
 Anything outside them **doesn't exist for the client**. Every tool is held to it, including the ones that
 find their workspace through a survey, response, chart, dashboard, creative, workflow or workflow run id,
 and `list_workspaces` lists only what the client reaches. Organization-level data, such as changing a
 feedback record or a feedback dataset not assigned to a picked workspace, needs the whole organization.
+
+A feedback dataset assigned to several workspaces is the exception, and it follows the dataset's own access
+model: a grant that reaches any one assigned workspace reads the whole dataset, including records ingested
+through its other assigned workspaces. Assigning a dataset to a workspace grants read of everything in it,
+everywhere the dataset is shown; pick the dataset's workspace assignments with that in mind.
 
 For a client limited to selected organizations or workspaces, an id outside them answers exactly like an id
 that doesn't exist, so the client can't learn what else is there:
