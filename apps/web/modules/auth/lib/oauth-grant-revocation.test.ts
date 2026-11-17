@@ -590,6 +590,24 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
     expect(mocks.calls).toEqual([]);
   });
 
+  // A skipConsent client with no MCP scope has neither a grant nor a consent: the user's row orders its
+  // refresh against a Revoke, and a Revoke's mark covering the presented token ends what the refresh issued.
+  test("refuses an identity-only skipConsent refresh a Revoke covers, under the user's row", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue({
+      ...storedRow(true),
+      scopes: ["openid", "offline_access"],
+    } as never);
+    vi.mocked(readOAuthRevocationTime).mockResolvedValue(new Date("2026-10-08T10:00:01Z").getTime());
+
+    await expectApiError(
+      requireOAuthConsentOnRefreshAfterHandler(refreshCtx()),
+      "BAD_REQUEST",
+      "invalid_grant"
+    );
+    expect(mocks.sequence).toEqual(["share user"]);
+    expect(mocks.calls).toEqual(["revoke refresh tokens", "revoke access tokens"]);
+  });
+
   test.each([
     ["a token without the provider's prefix", "raw-token"],
     ["a token that matches no stored row", "fbor_unknown"],

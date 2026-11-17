@@ -261,6 +261,34 @@ describe("a skipConsent client", () => {
     expect(await liveRefreshTokens(setup.userId, setup.clientId)).toBe(0);
   });
 
+  // A skipConsent client that asked for no MCP scope has neither a grant nor a consent to order its refresh
+  // against an ending of the user's access. The user's row does: the revocation holds it FOR UPDATE while
+  // it revokes the tokens, having marked first; the refresh reads the mark once it can lock the row.
+  test("an identity-only refresh racing a revocation leaves no live token", async () => {
+    const { refresh_token } = await grant(setup.cookie, setup.clientId, "openid offline_access");
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+
+    let raced: ReturnType<typeof refresh> | undefined;
+    await prisma.$transaction(
+      async (tx) => {
+        // What a revocation holds while it ends the user's tokens.
+        await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${setup.userId} FOR UPDATE`;
+        raced = refresh(setup.clientId, refresh_token);
+        await waitForBlockOn(tx);
+        await markOAuthRevocation({ userId: setup.userId, clientId: setup.clientId });
+        await tx.oauthRefreshToken.updateMany({
+          where: { userId: setup.userId, clientId: setup.clientId, revoked: null },
+          data: { revoked: new Date() },
+        });
+      },
+      { timeout: 15_000 }
+    );
+
+    const refreshed = await (raced as ReturnType<typeof refresh>);
+    expect(refreshed.body.error, JSON.stringify(refreshed.body)).toBe("invalid_grant");
+    expect(await liveRefreshTokens(setup.userId, setup.clientId)).toBe(0);
+  });
+
   // A sign-in code lives 10 minutes outside PostgreSQL, so Revoke can't delete it. One issued before
   // Revoke and exchanged after it would give the client a new grant: the revoked client would be back.
   test("a sign-in code issued before Revoke can't bring the client back", async () => {

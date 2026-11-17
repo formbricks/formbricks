@@ -49,6 +49,7 @@ import {
   lockConsents,
   readConsentedScopes,
 } from "./oauth-consent-rows";
+import { isIssuedBeforeRevocation, readOAuthRevocationTime } from "./oauth-revocation-marker";
 
 /**
  * ENG-2499: revoking an app on Authorized Apps has to end the app's access, not just hide it.
@@ -796,6 +797,7 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
           authorizationCodeId: true,
           rotatedAt: true,
           sessionId: true,
+          createdAt: true,
           client: { select: { skipConsent: true } },
         },
       })
@@ -806,13 +808,23 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
     logger.warn("OAuth refresh token no longer stored: ended concurrently, or the storage format drifted");
     throw invalidGrant();
   }
-  const { userId, clientId, scopes, authorizationCodeId, rotatedAt, sessionId } = refreshToken;
+  const { userId, clientId, scopes, authorizationCodeId, rotatedAt, sessionId, createdAt } = refreshToken;
   // A token without an MCP scope can't call `/api/mcp`, and its client was given no grant (an approval
   // saves none for it): only its consent is checked.
   const needsGrant = !isMcpGrantEmpty(getMcpGrantPermissionsForScopes(scopes));
   const refused = await prisma.$transaction(async (tx) => {
     if (refreshToken.client.skipConsent) {
-      if (!needsGrant) return null;
+      if (!needsGrant) {
+        // No grant and no consent to read, so the user's row orders this refresh against a Revoke: Revoke
+        // marks first, then holds the row `FOR UPDATE` while it revokes the client's tokens. Waited on here
+        // (`FOR KEY SHARE`), a Revoke in flight has marked by the time the mark is read, and one that starts
+        // after this commits revokes the token this refresh inserted. A presented token the mark covers was
+        // revoked: the one this refresh issued goes too.
+        await lockUserForMcpGrantWrite(tx, userId);
+        const revokedAt = await readOAuthRevocationTime(userId, clientId);
+        if (!isIssuedBeforeRevocation(createdAt.getTime(), revokedAt)) return null;
+        return { reason: "client_revoked", ...(await revokeClientTokens(tx, userId, clientId)) };
+      }
       // No consent to check: the grant is the connection's liveness check alone. Read `FOR SHARE` after
       // issuance, as for a consent: a Revoke still in flight is waited on and its delete seen, and one
       // that commits later revokes the token this refresh just inserted. Without the check, a refresh
