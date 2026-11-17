@@ -158,6 +158,42 @@ describe("counting and flushing", () => {
     ]);
   });
 
+  test("combines untagged counters from old workers with tagged counters through a rolling upgrade", async () => {
+    const { workspaceId, ids } = await seedCreatives(1);
+    const [creativeId] = ids;
+    const redis = await redisClient();
+    const legacyDevices = createCacheKey.creativeStats.legacyDevices(TODAY, creativeId);
+    const legacyPages = createCacheKey.creativeStats.legacyPages(TODAY, creativeId);
+    const legacyPending = createCacheKey.creativeStats.legacyPending(TODAY);
+    const legacyFlushing = createCacheKey.creativeStats.legacyFlushing(TODAY);
+
+    await redis.hSet(legacyDevices, "impressions:phone", "2");
+    await redis.hSet(legacyPages, "impressions:example.com/", "2");
+    // Simulate an old worker that claimed a flush and stopped before releasing it.
+    await redis.sAdd(legacyFlushing, creativeId);
+    await incrementCreativeCounters(
+      counts("example.com/", "phone", [{ creativeId, impressions: 3, clicks: 1 }]),
+      AT_NOON
+    );
+
+    await flushCreativeCounters(AT_NOON);
+    expect((await stored(creativeId, workspaceId)).devices).toEqual([
+      { date: TODAY, deviceType: "phone", impressions: 5, clicks: 1 },
+    ]);
+    expect((await stored(creativeId, workspaceId)).pages).toEqual([
+      { page: "example.com/", impressions: 5, clicks: 1 },
+    ]);
+
+    // An old replica can still write during rollout; the next flush must include that increment.
+    await redis.hIncrBy(legacyDevices, "impressions:phone", 1);
+    await redis.hIncrBy(legacyPages, "impressions:example.com/", 1);
+    await redis.sAdd(legacyPending, creativeId);
+    await flushCreativeCounters(AT_NOON);
+    expect((await stored(creativeId, workspaceId)).devices).toEqual([
+      { date: TODAY, deviceType: "phone", impressions: 6, clicks: 1 },
+    ]);
+  });
+
   test("a creative counted again after a failed flush is written once by the retry", async () => {
     const { workspaceId, ids } = await seedCreatives(1);
     const [creativeId] = ids;
