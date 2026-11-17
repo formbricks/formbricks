@@ -17,6 +17,7 @@ import {
   withoutRespondentData,
   withoutRespondentDataInWorkflows,
 } from "./workflows";
+import { toolResult, toolResultText } from "./__fixtures__/tool-result";
 
 // The registered inputSchema is a Standard Schema; only these two members are read here.
 type ZodObjectLike = { description?: string; safeParse: (value: unknown) => { success: boolean } };
@@ -851,21 +852,16 @@ describe("workflow lastRun without Responses: Read", () => {
 });
 
 describe("withoutRespondentDataInWorkflows", () => {
-  const text = (payload: unknown) => ({
-    structuredContent: payload,
-    content: [{ type: "text" as const, text: "x" }],
-  });
-
   test("leaves a result that carries no workflow as it is", () => {
-    const empty = text({ requestId: "r" });
+    const empty = toolResult({ requestId: "r" });
     expect(withoutRespondentDataInWorkflows(empty as never)).toBe(empty);
-    const listed = text({ data: [1, 2], requestId: "r" });
+    const listed = toolResult({ data: [1, 2], requestId: "r" });
     expect(withoutRespondentDataInWorkflows(listed as never)).toBe(listed);
   });
 
   test("redacts the single-workflow and list shapes, leaving other fields and shapes alone", () => {
     const single = withoutRespondentDataInWorkflows(
-      text({
+      toolResult({
         data: { id: "w", name: "n", lastRun: { status: "failed", error: "550 a@b.c" } },
         requestId: "r",
       })
@@ -874,10 +870,10 @@ describe("withoutRespondentDataInWorkflows", () => {
       data: { id: "w", name: "n", lastRun: { status: "failed", error: null } },
       requestId: "r",
     });
-    expect(JSON.parse((single.content[0] as { text: string }).text)).toEqual(single.structuredContent);
+    expect(toolResultText(single)).toEqual(single.structuredContent);
 
     const list = withoutRespondentDataInWorkflows(
-      text({
+      toolResult({
         data: [
           { id: "w", lastRun: { error: "x" } },
           { id: "v", lastRun: null },
@@ -901,24 +897,19 @@ describe("withoutRespondentDataInWorkflows", () => {
 });
 
 describe("withoutRespondentData", () => {
-  const text = (payload: unknown) => ({
-    structuredContent: payload,
-    content: [{ type: "text" as const, text: "x" }],
-  });
-
   test("leaves a result without a run object as it is", () => {
-    const empty = text({ requestId: "r" });
+    const empty = toolResult({ requestId: "r" });
     expect(withoutRespondentData(empty as never)).toBe(empty);
-    const listed = text({ data: [1, 2], requestId: "r" });
+    const listed = toolResult({ data: [1, 2], requestId: "r" });
     expect(withoutRespondentData(listed as never)).toBe(listed);
   });
 
   test("keeps logs it can't read as they are, and a queued run's missing logs", () => {
-    const result = withoutRespondentData(text({ data: { logs: ["odd"], data: { a: 1 } } }) as never);
+    const result = withoutRespondentData(toolResult({ data: { logs: ["odd"], data: { a: 1 } } }) as never);
     expect(result.structuredContent).toEqual({
       data: { logs: ["odd"], data: null, triggerPayload: null, error: null },
     });
-    const queued = withoutRespondentData(text({ data: { triggerPayload: { a: 1 } } }) as never);
+    const queued = withoutRespondentData(toolResult({ data: { triggerPayload: { a: 1 } } }) as never);
     expect(queued.structuredContent).toEqual({
       data: { triggerPayload: null, data: null, logs: undefined, error: null },
     });

@@ -1,6 +1,6 @@
 import type { AuthInfo, CallToolResult } from "@modelcontextprotocol/server";
 import type { TMcpPermissionRequirement } from "../permissions";
-import { mcpCallerHolds } from "./caller-permissions";
+import { isRecord, redactUnlessCallerHolds } from "./redacted-result";
 
 /**
  * An app survey's `targeting` is its segment's filters, which carry literal contact attribute values (an
@@ -14,9 +14,6 @@ const TARGETING_READS: readonly TMcpPermissionRequirement[] = [
   { permission: "segments", level: "read" },
   { permission: "contactAttributes", level: "read" },
 ];
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
 
 const withoutTargeting = (survey: unknown): unknown => {
   if (!isRecord(survey) || !("targeting" in survey)) return survey;
@@ -33,18 +30,4 @@ const withoutTargeting = (survey: unknown): unknown => {
 export const surveyResultForCaller = (
   authInfo: AuthInfo | undefined,
   result: CallToolResult
-): CallToolResult => {
-  if (TARGETING_READS.every((requirement) => mcpCallerHolds(authInfo, requirement))) return result;
-  const payload = result.structuredContent;
-  if (result.isError || !isRecord(payload) || !("data" in payload)) return result;
-  const data = Array.isArray(payload.data)
-    ? payload.data.map(withoutTargeting)
-    : withoutTargeting(payload.data);
-  if (data === payload.data) return result;
-  const redacted = { ...payload, data };
-  return {
-    ...result,
-    structuredContent: redacted,
-    content: [{ type: "text", text: JSON.stringify(redacted) }],
-  };
-};
+): CallToolResult => redactUnlessCallerHolds(authInfo, TARGETING_READS, result, withoutTargeting);

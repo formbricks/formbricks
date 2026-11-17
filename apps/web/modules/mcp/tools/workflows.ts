@@ -4,7 +4,7 @@ import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflo
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { type TMcpToolContext, getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
-import { mcpCallerHolds } from "./caller-permissions";
+import { isRecord, redactToolResultData, redactUnlessCallerHolds } from "./redacted-result";
 import { registerMcpTool } from "./guard-permissions";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
@@ -131,15 +131,10 @@ async function runWorkflowMutation(
     ({ authentication, requestId, auditLog }) =>
       run(buildWorkflowApiContext(authentication, requestId, MCP_API_ROUTE, auditLog ?? undefined))
   );
-  const authInfo = getMcpToolAuthInfo(mcpCtx);
-
-  return mcpCallerHolds(authInfo, RESPONSES_READ) ? result : withoutRespondentDataInWorkflows(result);
+  return redactUnlessCallerHolds(getMcpToolAuthInfo(mcpCtx), RESPONSES_READ, result, withoutLastRunError);
 }
 
-const RESPONSES_READ = { permission: "responses", level: "read" } as const;
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === "object" && value !== null && !Array.isArray(value);
+const RESPONSES_READ = [{ permission: "responses", level: "read" }] as const;
 
 /**
  * A `get_workflow_run` result without what is derived from respondents' answers: the trigger payload,
@@ -149,49 +144,33 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * order) don't tell anything a response says; a failed run still shows as failed. An error result passes
  * through.
  */
-export const withoutRespondentData = (result: CallToolResult): CallToolResult => {
-  const payload = result.structuredContent;
-  if (result.isError || !isRecord(payload) || !isRecord(payload.data)) return result;
-  const run = payload.data;
-  const redacted = {
-    ...payload,
-    data: {
-      ...run,
-      error: null,
-      triggerPayload: null,
-      data: null,
-      logs: Array.isArray(run.logs)
-        ? run.logs.map((log: unknown) =>
-            isRecord(log) ? { ...log, input: null, output: null, error: null } : log
-          )
-        : run.logs,
-    },
-  };
-  return {
-    ...result,
-    structuredContent: redacted,
-    content: [{ type: "text", text: JSON.stringify(redacted) }],
-  };
-};
+const withoutRunRespondentData = (run: unknown): unknown =>
+  isRecord(run)
+    ? {
+        ...run,
+        error: null,
+        triggerPayload: null,
+        data: null,
+        logs: Array.isArray(run.logs)
+          ? run.logs.map((log: unknown) =>
+              isRecord(log) ? { ...log, input: null, output: null, error: null } : log
+            )
+          : run.logs,
+      }
+    : run;
+
+export const withoutRespondentData = (result: CallToolResult): CallToolResult =>
+  redactToolResultData(result, withoutRunRespondentData);
 
 /**
  * A `list_workflow_runs` result without each run's error text, which can quote what a failed step sent
  * (see {@link withoutRespondentData}), for a caller without Responses: Read. A run row carries no other
  * respondent-derived field. An error result passes through.
  */
-export const withoutRespondentDataInRunList = (result: CallToolResult): CallToolResult => {
-  const payload = result.structuredContent;
-  if (result.isError || !isRecord(payload) || !Array.isArray(payload.data)) return result;
-  const redacted = {
-    ...payload,
-    data: payload.data.map((run: unknown) => (isRecord(run) ? { ...run, error: null } : run)),
-  };
-  return {
-    ...result,
-    structuredContent: redacted,
-    content: [{ type: "text", text: JSON.stringify(redacted) }],
-  };
-};
+const withoutRunError = (run: unknown): unknown => (isRecord(run) ? { ...run, error: null } : run);
+
+export const withoutRespondentDataInRunList = (result: CallToolResult): CallToolResult =>
+  redactToolResultData(result, withoutRunError);
 
 /** A workflow with its embedded `lastRun.error` set to `null`, when it carries a run; anything else as is. */
 const withoutLastRunError = (workflow: unknown): unknown => {
@@ -205,29 +184,8 @@ const withoutLastRunError = (workflow: unknown): unknown => {
  * caller without Responses: Read. A workflow carries no other respondent-derived field. An error result
  * passes through.
  */
-export const withoutRespondentDataInWorkflows = (result: CallToolResult): CallToolResult => {
-  const payload = result.structuredContent;
-  if (result.isError || !isRecord(payload) || !("data" in payload)) return result;
-  const source: unknown = payload.data;
-  let data: unknown;
-  let changed: boolean;
-  if (Array.isArray(source)) {
-    const workflows: unknown[] = source.map(withoutLastRunError);
-    data = workflows;
-    changed = workflows.some((workflow, index) => workflow !== source[index]);
-  } else {
-    data = withoutLastRunError(source);
-    changed = data !== source;
-  }
-  // Nothing carried a run: hand the same result back rather than a re-serialized copy of it.
-  if (!changed) return result;
-  const redacted = { ...payload, data };
-  return {
-    ...result,
-    structuredContent: redacted,
-    content: [{ type: "text", text: JSON.stringify(redacted) }],
-  };
-};
+export const withoutRespondentDataInWorkflows = (result: CallToolResult): CallToolResult =>
+  redactToolResultData(result, withoutLastRunError);
 
 export function registerWorkflowTools(server: McpServer): void {
   registerMcpTool(
@@ -256,7 +214,7 @@ export function registerWorkflowTools(server: McpServer): void {
       });
       const result = await responseToMcpToolResult(response, requestId);
 
-      return mcpCallerHolds(authInfo, RESPONSES_READ) ? result : withoutRespondentDataInWorkflows(result);
+      return redactUnlessCallerHolds(authInfo, RESPONSES_READ, result, withoutLastRunError);
     }
   );
 
@@ -283,7 +241,7 @@ export function registerWorkflowTools(server: McpServer): void {
       const response = await workflowsHandlers.get({ ctx, params: { workflowId: input.workflowId } });
       const result = await responseToMcpToolResult(response, requestId);
 
-      return mcpCallerHolds(authInfo, RESPONSES_READ) ? result : withoutRespondentDataInWorkflows(result);
+      return redactUnlessCallerHolds(authInfo, RESPONSES_READ, result, withoutLastRunError);
     }
   );
 
@@ -313,7 +271,7 @@ export function registerWorkflowTools(server: McpServer): void {
       });
       const result = await responseToMcpToolResult(response, requestId);
 
-      return mcpCallerHolds(authInfo, RESPONSES_READ) ? result : withoutRespondentDataInRunList(result);
+      return redactUnlessCallerHolds(authInfo, RESPONSES_READ, result, withoutRunError);
     }
   );
 
@@ -342,7 +300,7 @@ export function registerWorkflowTools(server: McpServer): void {
       const response = await workflowsHandlers.getRun({ ctx, params: { runId: input.runId } });
       const result = await responseToMcpToolResult(response, requestId);
 
-      return mcpCallerHolds(authInfo, RESPONSES_READ) ? result : withoutRespondentData(result);
+      return redactUnlessCallerHolds(authInfo, RESPONSES_READ, result, withoutRunRespondentData);
     }
   );
 
