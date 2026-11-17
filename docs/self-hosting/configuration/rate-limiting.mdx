@@ -77,10 +77,10 @@ These are the limits that still run inside the Formbricks application server:
 
 | **Config**                    | **Limit**    | **Window** | **Identifier**                | **Used For**                                                                                                                                              |
 | ----------------------------- | ------------ | ---------- | ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `auth.signup`                 | 30 requests  | 60 minutes | IP hash                       | Signup server action                                                                                                                                      |
-| `auth.forgotPassword`         | 5 requests   | 60 minutes | IP hash                       | Forgot password server action                                                                                                                             |
+| `auth.signup`                 | 30 requests  | 60 minutes | IP hash                       | `POST /api/internal/signups` |
+| `auth.forgotPassword`         | 5 requests   | 60 minutes | IP hash                       | `POST /api/internal/password-reset-requests` |
 | `auth.forgotPasswordPerAccount` | 3 emails | 60 minutes | User ID | Password-reset and SSO sign-in-hint emails to one account, however many IPs ask; once spent, further requests get the same answer but no email |
-| `auth.verifyEmail`            | 10 requests  | 60 minutes | IP hash                       | Resend verification server action                                                                                                                         |
+| `auth.verifyEmail`            | 10 requests  | 60 minutes | IP hash                       | `POST /api/internal/verification-emails` and `POST /api/internal/email-change-verifications` |
 | `api.v1`                      | 100 requests | 1 minute   | Session user ID               | Session-authenticated v1 management routes, `/api/v1/management/me`, and `/api/v1/integrations/*`                                                         |
 | `api.v2`                      | 100 requests | 1 minute   | API key ID                    | Authenticated v2 API wrapper outside the Envoy-managed `/api/v2/client/*` subset                                                                          |
 | `api.v3`                      | 100 requests | 1 minute   | API key ID or session user ID | v3 API wrapper                                                                                                                                            |
@@ -88,14 +88,14 @@ These are the limits that still run inside the Formbricks application server:
 | `api.clientCreativeEvents`    | 600 requests | 1 minute   | IP hash                       | `POST /api/v2/client/[workspaceId]/creatives/events`, the SDK's creative Impressions and Clicks; a request over the limit still gets 204, uncounted |
 | `storage.upload`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `POST /api/v1/management/storage`                                                                                                   |
 | `storage.delete`              | 5 requests   | 1 minute   | Session user ID               | Session-authenticated `DELETE /storage/[workspaceId]/[accessType]/[fileName]`                                                                           |
-| `actions.emailUpdate`         | 3 requests   | 60 minutes | User ID                       | Profile email update action                                                                                                                               |
+| `actions.emailUpdate`         | 3 requests   | 60 minutes | User ID                       | Changing the email in profile settings (`PATCH /api/internal/users/me`) |
 | `actions.passwordResetRequest` | 3 requests | 60 minutes | User ID                     | "Reset password" from the signed-in profile settings                                                                                                    |
-| `actions.inviteMember`        | 50 recipients | 24 hours  | Organization ID               | Single, bulk, onboarding, and resend invite actions                                                                                                       |
-| `actions.inviteMemberPerUser` | 50 recipients | 24 hours  | User ID                       | The same invite actions, counted for the inviting user across all of their organizations                                                                  |
-| `actions.createOrganization`  | 5 requests    | 24 hours  | User ID                       | Organization creation actions (onboarding and the organization switcher)                                                                                  |
+| `actions.inviteMember`        | 50 recipients | 24 hours  | Organization ID               | Single, bulk, onboarding and resend invites (`/api/internal/invites`, `/invites/batches`, `/onboarding-invites`, `/invites/{id}/emails`) |
+| `actions.inviteMemberPerUser` | 50 recipients | 24 hours  | User ID                       | The same invite routes, counted for the inviting user across all of their organizations |
+| `actions.createOrganization`  | 5 requests    | 24 hours  | User ID                       | `POST /api/internal/organizations` (onboarding and the organization switcher) |
 | `actions.surveyFollowUp`      | 50 requests  | 60 minutes | Organization ID               | Survey follow-up email processing                                                                                                                         |
-| `actions.sendLinkSurveyEmail` | 10 requests  | 60 minutes | IP hash                       | Link survey email send action                                                                                                                             |
-| `actions.licenseRecheck`      | 5 requests   | 1 minute   | User ID                       | Enterprise license recheck action                                                                                                                         |
+| `actions.sendLinkSurveyEmail` | 10 requests  | 60 minutes | IP hash                       | `POST /api/internal/link-survey-verification-emails` |
+| `actions.licenseRecheck`      | 5 requests   | 1 minute   | User ID                       | `POST /api/internal/license-checks` |
 
 Invite limits count successfully created or refreshed invites. A bulk request for 25 people consumes 25 units
 only when all 25 invites are created; recipients who are already members, already invited, or otherwise fail do
