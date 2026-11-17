@@ -5,15 +5,16 @@ import { compose, jsPlugins } from "./compose.mjs";
  * and the CI lint job had passed. Sonar analyses a PR roughly fifteen minutes after the push, so
  * catching these at commit time saves a review round trip.
  *
- * Rollout: existing code violates several of these rules, so the whole-repo lint (`pnpm lint`, the
- * CI lint job) leaves them off. `scripts/lint-staged-oxlint.mjs`, which the pre-commit hook runs
- * on the staged files only, sets OXLINT_SONAR_PARITY=warn and fails the commit on a rule in
- * `SONAR_PARITY_RULE_IDS` only inside the staged lines, as Sonar judges a PR's new code: a NEW
- * violation fails the commit while old ones stay untouched, even in the same file.
+ * Rollout: a rule whose backlog is fixed moves to `enforcedRules` below and is an error everywhere,
+ * the whole-repo lint (`pnpm lint`, the CI lint job) included. Existing code still violates the
+ * others, so the whole-repo lint leaves them off. `scripts/lint-staged-oxlint.mjs`, which the
+ * pre-commit hook runs on the staged files only, sets OXLINT_SONAR_PARITY=warn and fails the commit
+ * on one of those in `SONAR_PARITY_RULE_IDS` only inside the staged lines, as Sonar judges a PR's new
+ * code: a NEW violation fails the commit while old ones stay untouched, even in the same file.
  *
- * To widen: change `DEFAULT_SEVERITY` below to "error" once the backlog is fixed (or "warn" to
- * surface it in editors and CI first). Every consumer tier picks it up through `base.mjs`. The
- * backlog is tracked in ENG-7329.
+ * To widen: move a rule to `enforcedRules` once its backlog is fixed, or change `DEFAULT_SEVERITY`
+ * below once every backlog is (or "warn" to surface them in editors and CI first). Every consumer
+ * tier picks it up through `base.mjs`. The backlog is tracked in ENG-7329.
  */
 const DEFAULT_SEVERITY = "off";
 const SEVERITIES = new Set(["off", "warn", "error"]);
@@ -28,9 +29,14 @@ export const TEST_FILES = ["**/*.test.*", "**/*.spec.*", "**/__tests__/**", "**/
 
 const offFor = (rules) => Object.fromEntries(Object.keys(rules).map((id) => [id, "off"]));
 
-const sonarRules = (severity) => ({
+// Errors whatever the severity: their backlog is fixed (ENG-7329). An existing exception carries an
+// inline disable with its reason, or (applied data migrations) a per-file override in its package.
+const enforcedRules = () => ({
   // S3776. Sonar's default threshold; eslint-plugin-sonarjs@3 reproduces its exact scores.
-  "sonarjs/cognitive-complexity": [severity, 15],
+  "sonarjs/cognitive-complexity": ["error", 15],
+});
+
+const sonarRules = (severity) => ({
   // S5843. Sonar's default threshold.
   "sonarjs/regex-complexity": [severity, { threshold: 20 }],
   // S2004. Sonar flags functions nested more than four levels deep.
@@ -47,12 +53,18 @@ const sonarRules = (severity) => ({
 const testRules = (severity) => ({ "vitest/prefer-to-have-length": severity });
 
 /*
- * Config fragment for the Sonar-parity rules, at the severity the environment asks for.
- * `severity` is a parameter so tests (and a future whole-repo rollout) can set it directly. When
- * the rules are off the sonarjs JS plugin is not loaded at all, so the whole-repo lint pays nothing.
+ * Config fragment for the Sonar-parity rules: the enforced ones as errors, the rest at the severity
+ * the environment asks for. `severity` is a parameter so tests (and a future whole-repo rollout) can
+ * set it directly. When the rest are off only the sonarjs JS plugin loads, for the enforced rules.
  */
 export const sonarParity = (severity = stagedSeverity()) => {
-  if (severity === "off") return {};
+  if (severity === "off") {
+    return {
+      jsPlugins: [jsPlugins.sonarjs],
+      rules: enforcedRules(),
+      overrides: [{ files: TEST_FILES, rules: offFor(enforcedRules()) }],
+    };
+  }
   return compose({
     plugins: ["vitest"],
     jsPlugins: [jsPlugins.sonarjs, jsPlugins.unicornJs],
@@ -60,9 +72,9 @@ export const sonarParity = (severity = stagedSeverity()) => {
     // S3776, every line that adds to the complexity) into its message, so the pre-commit runner can
     // fail a function made too complex by a staged line other than its header.
     settings: { sonarRuntime: true },
-    rules: sonarRules(severity),
+    rules: { ...enforcedRules(), ...sonarRules(severity) },
     overrides: [
-      { files: TEST_FILES, rules: offFor(sonarRules(severity)) },
+      { files: TEST_FILES, rules: offFor({ ...enforcedRules(), ...sonarRules(severity) }) },
       // Test-only rule from the vitest plugin the repo already loads.
       { files: ["**/*.test.{ts,tsx,mts,cts,js,jsx,mjs}"], rules: testRules(severity) },
     ],
@@ -121,7 +133,10 @@ export const a11yParity = (severity = "error") => ({
   overrides: [{ files: TEST_FILES, rules: { "jsx-a11y/no-aria-hidden-on-focusable": "off" } }],
 });
 
-/** Every rule above, by id: what the pre-commit runner holds the staged lines to. */
+/**
+ * Every rule above that is not enforced, by id: what the pre-commit runner holds the staged lines to.
+ * An enforced rule fails the commit anywhere in a staged file, as any error does.
+ */
 export const SONAR_PARITY_RULE_IDS = [
   ...Object.keys(sonarRules("off")),
   ...Object.keys(testRules("off")),

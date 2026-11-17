@@ -51,8 +51,11 @@ Notes:
 - `sonar-parity.mjs` mirrors the SonarCloud rules that surfaced issues on PRs after local lint passed
   (`sonarjs/cognitive-complexity` at 15, `regex-complexity` at 20, `no-nested-functions`,
   `no-nested-conditional`, `no-nested-template-literals`, `prefer-string-raw`, `prefer-optional-chain`,
-  `no-deprecated`, `prefer-nullish-coalescing`, and `vitest/prefer-to-have-length` for tests). They are off
-  for `pnpm lint` and CI because existing code violates them; `scripts/lint-staged-oxlint.mjs` sets
+  `no-deprecated`, `prefer-nullish-coalescing`, and `vitest/prefer-to-have-length` for tests).
+  `cognitive-complexity` is an error everywhere, `pnpm lint` and CI included (`enforcedRules`); an
+  exception takes an inline disable with its reason, or, for an applied data migration, a per-file
+  override in `packages/database/oxlint.config.ts`. The others are off for `pnpm lint` and CI because
+  existing code violates them; `scripts/lint-staged-oxlint.mjs` sets
   `OXLINT_SONAR_PARITY=warn` for the pre-commit hook and fails the commit on one only inside the staged
   lines (`SONAR_PARITY_RULE_IDS`), as Sonar judges a PR's new code. Every rule except the vitest one skips
   test files, as Sonar does. `jsx-a11y/no-aria-hidden-on-focusable` (`a11yParity`) is an error in the react

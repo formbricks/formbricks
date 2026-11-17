@@ -99,8 +99,9 @@ function runOxlint(paths, { typeAware }) {
       maxBuffer: 64 * 1024 * 1024,
       env: {
         ...process.env,
-        // The Sonar-parity rules are off for the whole-repo lint until the backlog is fixed. Here they
-        // report as warnings, and the loop below fails the commit on one only inside the staged lines.
+        // The Sonar-parity rules not yet enforced are off for the whole-repo lint until their backlog is
+        // fixed. Here they report as warnings, and the loop below fails the commit on one only inside
+        // the staged lines. An enforced one (cognitive-complexity) is an error, as everywhere.
         OXLINT_SONAR_PARITY: "warn",
         // oxlint.config.ts in a package without "type": "module" makes Node print a warning per run.
         NODE_OPTIONS: [process.env.NODE_OPTIONS, "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON"]

@@ -84,9 +84,9 @@ describe("Sonar-parity lint rules", () => {
     expect(staged(cleanFixture).status).toBe(0);
   }, 120_000);
 
+  // `sonarjs/cognitive-complexity` is enforced repo-wide instead: cognitive-complexity-lint.test.ts.
   test("the whole-repo lint leaves the backlog rules off", () => {
     const mirroredRules = [
-      "sonarjs/cognitive-complexity",
       "sonarjs/no-nested-functions",
       "sonarjs/no-nested-conditional",
       "sonarjs/no-nested-template-literals",
