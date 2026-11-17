@@ -82,6 +82,7 @@ export function TargetingCard({
 
     try {
       setSegment(await copySegment(segment.id, localSurvey.id));
+      router.refresh();
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
@@ -113,10 +114,15 @@ export function TargetingCard({
     setSegment(updatedSegment);
   };
 
-  /** The dialogs below toast the message of what they catch, so a failure carries a readable one. */
+  /**
+   * The dialogs below toast the message of what they catch, so a failure carries a readable one. A success
+   * refreshes the route: `segments` (and so the editor's Cancel target) comes from the server render.
+   */
   const withReadableMessage = async <T,>(request: () => Promise<T>): Promise<T> => {
     try {
-      return await request();
+      const result = await request();
+      router.refresh();
+      return result;
     } catch (error) {
       throw new Error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
     }
@@ -139,6 +145,8 @@ export function TargetingCard({
       if (!segment) throw new Error(t("workspace.segments.invalid_segment"));
       await updateSegment(segment.id, data);
       toast.success(t("workspace.segments.segment_saved_successfully"));
+      // Cancel restores the segment from `segments`, which the server render owns: refresh it.
+      router.refresh();
 
       setIsSegmentEditorOpen(false);
       setSegmentEditorViewOnly(true);
