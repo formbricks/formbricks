@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   ZSendWorkflowTestRequestInput,
+  ZSetWorkflowExpectedResponseInput,
   ZWorkflowHttpHeader,
   ZWorkflowHttpQueryParameter,
   ZWorkflowHttpRequestActionConfig,
@@ -26,3 +27,10 @@ export const ZMcpSendTestRequestInput = ZSendWorkflowTestRequestInput.extend({
   .strict()
   .describe("Send one real call of an HTTP request step and get the response.");
 export type TMcpSendTestRequestInput = z.infer<typeof ZMcpSendTestRequestInput>;
+
+export const ZMcpSetExpectedResponseInput = ZSetWorkflowExpectedResponseInput.extend({
+  ...ZWorkflowTestRequestParams.shape,
+})
+  .strict()
+  .describe("Set an HTTP request step's expected response: the body its API answers with.");
+export type TMcpSetExpectedResponseInput = z.infer<typeof ZMcpSetExpectedResponseInput>;

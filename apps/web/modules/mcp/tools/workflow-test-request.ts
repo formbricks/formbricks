@@ -1,11 +1,17 @@
 import type { McpServer } from "@modelcontextprotocol/server";
-import { ZWorkflowTestRequestResult } from "@formbricks/workflows";
+import { ZWorkflowExpectedResponseResource, ZWorkflowTestRequestResult } from "@formbricks/workflows";
+import { setWorkflowExpectedResponse } from "@/app/api/v3/workflows/lib/expected-response";
 import { sendWorkflowTestRequest } from "@/app/api/v3/workflows/lib/test-request";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { registerScopedTool } from "./guard-scopes";
 import { mcpToolOutput } from "./output-schemas";
 import { runMcpMutation } from "./run-mcp-mutation";
-import { type TMcpSendTestRequestInput, ZMcpSendTestRequestInput } from "./workflow-test-request-schemas";
+import {
+  type TMcpSendTestRequestInput,
+  type TMcpSetExpectedResponseInput,
+  ZMcpSendTestRequestInput,
+  ZMcpSetExpectedResponseInput,
+} from "./workflow-test-request-schemas";
 
 /**
  * "Send test request" (ENG-7179) as an MCP tool, a thin adapter over the v3 operation it shares with
@@ -16,6 +22,11 @@ import { type TMcpSendTestRequestInput, ZMcpSendTestRequestInput } from "./workf
  * The description says so; the tool itself can only call the host the step's URL fixes (Variables go in
  * its path only, each one encoded segment, ADR 0053), sends a stored secret only to the host it was set
  * for (ADR 0051), and returns secret header values masked.
+ *
+ * `set_expected_response` (ADR 0054) writes the body an HTTP request step's API answers with, which
+ * becomes the step's Variables and what a Test run answers with. It stores the agent's own JSON (bounded
+ * like a Webhook payload) and calls nothing; a hostile body can only name Variables in this workflow,
+ * which an editor sees in the step's Response fields card. It returns the body as written.
  */
 export function registerWorkflowTestRequestTools(server: McpServer): void {
   registerScopedTool(
@@ -55,6 +66,35 @@ export function registerWorkflowTestRequestTools(server: McpServer): void {
             auditLog: auditLog ?? undefined,
             params: { workflowId, stepId },
             input,
+          })
+      )
+  );
+
+  registerScopedTool(
+    server,
+    "set_expected_response",
+    {
+      title: "Set expected response",
+      description:
+        "Set an HTTP request step's expected response: the JSON object its API answers with (up to 100 KB, 10 levels deep). Its fields become the step's Variables (`steps.<stepId>.body.*`) for later steps, and a Test run's \"Wait and use it\" answers with it. send_test_request never changes it. Get back the Variables inferred from it.",
+      inputSchema: ZMcpSetExpectedResponseInput,
+      outputSchema: mcpToolOutput(ZWorkflowExpectedResponseResource),
+      audit: { action: "updated", targetType: "workflow", targetIdArg: "workflowId" },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
+    },
+    ["workflows:write"],
+    async ({ workflowId, stepId, body }: TMcpSetExpectedResponseInput, mcpCtx) =>
+      runMcpMutation(
+        mcpCtx,
+        { action: "updated", resource: "workflow" },
+        ({ authentication, requestId, auditLog }) =>
+          setWorkflowExpectedResponse({
+            authentication,
+            requestId,
+            instance: MCP_API_ROUTE,
+            auditLog: auditLog ?? undefined,
+            params: { workflowId, stepId },
+            input: { body },
           })
       )
   );

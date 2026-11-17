@@ -39,6 +39,7 @@ export {
   WorkflowInvalidInputError,
   WorkflowInvalidStateError,
   WorkflowNotExecutableError,
+  WorkflowPayloadTooLargeError,
   WorkflowSerializationError,
   toProblemResponse,
 } from "../errors";

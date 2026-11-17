@@ -4,13 +4,13 @@ import type {
   TPatchWorkflowInput,
   TSendWorkflowTestRequestInput,
   TWorkflowDefinition,
+  TWorkflowExpectedResponseResource,
   TWorkflowListItem,
   TWorkflowResource,
   TWorkflowRunListItem,
   TWorkflowRunResource,
   TWorkflowRunStatus,
   TWorkflowSampleList,
-  TWorkflowSampleListItem,
   TWorkflowSampleResource,
   TWorkflowSortBy,
   TWorkflowStatus,
@@ -439,9 +439,9 @@ export async function setWorkflowExpectedResponse(
   workflowId: string,
   stepId: string,
   body: Record<string, unknown>
-): Promise<TWorkflowSampleListItem> {
+): Promise<TWorkflowExpectedResponseResource> {
   const response = await fetch(
-    `/api/internal/workflows/${workflowId}/steps/${encodeURIComponent(stepId)}/expected-response`,
+    `/api/v3/workflows/${workflowId}/steps/${encodeURIComponent(stepId)}/expected-response`,
     {
       method: "PUT",
       cache: "no-store",
@@ -450,7 +450,7 @@ export async function setWorkflowExpectedResponse(
       signal: AbortSignal.timeout(MUTATION_TIMEOUT_MS),
     }
   );
-  return readDataResponse<TWorkflowSampleListItem>(response);
+  return readDataResponse<TWorkflowExpectedResponseResource>(response);
 }
 
 /**

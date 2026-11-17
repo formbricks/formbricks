@@ -2,10 +2,12 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { successResponse } from "@/app/api/v3/lib/response";
+import { setWorkflowExpectedResponse } from "@/app/api/v3/workflows/lib/expected-response";
 import { sendWorkflowTestRequest } from "@/app/api/v3/workflows/lib/test-request";
 import { registerWorkflowTestRequestTools } from "./workflow-test-request";
 
 vi.mock("@/app/api/v3/workflows/lib/test-request", () => ({ sendWorkflowTestRequest: vi.fn() }));
+vi.mock("@/app/api/v3/workflows/lib/expected-response", () => ({ setWorkflowExpectedResponse: vi.fn() }));
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
   queueV3AuditLog: vi.fn().mockResolvedValue(undefined),
@@ -69,8 +71,48 @@ beforeEach(() => {
 });
 
 describe("registerWorkflowTestRequestTools", () => {
-  test("registers send_test_request", () => {
-    expect([...createToolServer().keys()]).toEqual(["send_test_request"]);
+  test("registers send_test_request and set_expected_response", () => {
+    expect([...createToolServer().keys()]).toEqual(["send_test_request", "set_expected_response"]);
+  });
+
+  test("set_expected_response needs workflows:write", async () => {
+    const result = await createToolServer()
+      .get("set_expected_response")!
+      .handler(
+        { workflowId: WORKFLOW_ID, stepId: "call", body: { id: 1 } },
+        { http: { authInfo: readOnlyAuthInfo } }
+      );
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent.error).toMatchObject({ status: 403, code: "forbidden" });
+    expect(setWorkflowExpectedResponse).not.toHaveBeenCalled();
+  });
+
+  test("set_expected_response calls the shared v3 operation and is audited as updated", async () => {
+    vi.mocked(setWorkflowExpectedResponse).mockResolvedValue(
+      successResponse(
+        {
+          workflowId: WORKFLOW_ID,
+          stepId: "call",
+          body: { id: 1 },
+          variables: { variables: [], notSupported: [], truncated: false },
+          updatedAt: "2026-11-17T08:00:00.000Z",
+        },
+        { requestId: "req_tool" }
+      )
+    );
+
+    await createToolServer()
+      .get("set_expected_response")!
+      .handler({ workflowId: WORKFLOW_ID, stepId: "call", body: { id: 1 } }, { http: { authInfo } });
+
+    expect(setWorkflowExpectedResponse).toHaveBeenCalledWith(
+      expect.objectContaining({
+        params: { workflowId: WORKFLOW_ID, stepId: "call" },
+        input: { body: { id: 1 } },
+      })
+    );
+    expect(vi.mocked(buildV3AuditLog).mock.calls[0][1]).toBe("updated");
   });
 
   test("needs workflows:write, since it makes a real outbound call", async () => {

@@ -197,6 +197,8 @@ const EXPECTED_FREE_FORM_PATHS: Record<string, string[]> = {
   // A Webhook workflow's Sample payload is any JSON object an outside system would send; the operation
   // bounds its size and depth.
   ZMcpSetSamplePayloadInput: ["ZMcpSetSamplePayloadInput.payload"],
+  // An HTTP request step's expected response: any JSON object, like a Sample payload.
+  ZMcpSetExpectedResponseInput: ["ZMcpSetExpectedResponseInput.body"],
   // A Test request's Variables: a test payload (any JSON object, like a Sample payload) and earlier
   // steps' outputs keyed by step id, each an outside server's JSON response.
   ZMcpSendTestRequestInput: [

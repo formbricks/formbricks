@@ -31,6 +31,8 @@ import type {
 } from "./resources";
 import {
   ZSendWorkflowTestRequestInput,
+  ZSetWorkflowExpectedResponseInput,
+  ZWorkflowExpectedResponseResource,
   ZWorkflowTestRequestParams,
   ZWorkflowTestRequestResult,
 } from "./test-request";
@@ -140,6 +142,11 @@ export const WORKFLOW_API_OPERATIONS = {
     params: ZWorkflowTestRequestParams,
     input: ZSendWorkflowTestRequestInput,
     output: ZWorkflowTestRequestResult,
+  },
+  setWorkflowExpectedResponseV3: {
+    params: ZWorkflowTestRequestParams,
+    input: ZSetWorkflowExpectedResponseInput,
+    output: ZWorkflowExpectedResponseResource,
   },
   createWorkflowTestRunV3: {
     params: ZWorkflowIdInput,

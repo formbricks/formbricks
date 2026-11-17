@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { PUT } from "./route";
 
-/** Setting an HTTP request step's expected response (ADR 0054): who may, which step, what is stored. */
+/** Setting an HTTP request step's expected response (ADR 0054): who may, which step, what is stored and audited. */
 const mocks = vi.hoisted(() => ({
   getSession: vi.fn(),
   authenticateRequest: vi.fn(),
@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   getIsWorkflowsEnabled: vi.fn(),
   workflowFindUnique: vi.fn(),
   sampleUpsert: vi.fn(),
+  queueAuditEvent: vi.fn(),
 }));
 
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: mocks.getSession }));
@@ -29,6 +30,7 @@ vi.mock("@formbricks/database", () => ({
     workflowSample: { upsert: mocks.sampleUpsert },
   },
 }));
+vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEvent: mocks.queueAuditEvent }));
 vi.mock("@/lib/utils/helper", () => ({
   getOrganizationIdFromWorkspaceId: vi.fn().mockResolvedValue("org_1"),
 }));
@@ -74,10 +76,11 @@ const definition = {
 
 const put = (stepId: string, body: unknown) =>
   PUT(
-    new NextRequest(
-      `http://localhost/api/internal/workflows/${WORKFLOW_ID}/steps/${stepId}/expected-response`,
-      { method: "PUT", body: JSON.stringify(body), headers: { "Content-Type": "application/json" } }
-    ),
+    new NextRequest(`http://localhost/api/v3/workflows/${WORKFLOW_ID}/steps/${stepId}/expected-response`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+      headers: { "Content-Type": "application/json" },
+    }),
     { params: Promise.resolve({ workflowId: WORKFLOW_ID, stepId }) } as never
   );
 
@@ -100,29 +103,57 @@ beforeEach(() => {
   }));
 });
 
-describe("PUT /api/internal/workflows/{workflowId}/steps/{stepId}/expected-response", () => {
+describe("PUT /api/v3/workflows/{workflowId}/steps/{stepId}/expected-response", () => {
   test("stores the body as the step's expected response, in a test response's shape", async () => {
     const response = await put("call", { body: { ticketId: "tk_1" } });
 
     expect(response.status).toBe(200);
-    const sample = {
-      status: 200,
-      contentType: "application/json",
-      body: { ticketId: "tk_1" },
-      bodyTruncated: false,
-    };
     // The step id row, which the Variable picker and Test runs read; never the `:last_test` one.
     expect(mocks.sampleUpsert).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { workflowId_source: { workflowId: WORKFLOW_ID, source: "call" } },
-        update: { sample },
+        update: {
+          sample: {
+            status: 200,
+            contentType: "application/json",
+            body: { ticketId: "tk_1" },
+            bodyTruncated: false,
+          },
+        },
       })
     );
+    // The Variables under the paths a later step reads.
     expect((await response.json()).data).toEqual({
-      source: "call",
-      sample,
+      workflowId: WORKFLOW_ID,
+      stepId: "call",
+      body: { ticketId: "tk_1" },
+      variables: {
+        variables: [{ path: "steps.call.body.ticketId", valueType: "string" }],
+        notSupported: [],
+        truncated: false,
+      },
       updatedAt: "2026-11-17T08:00:00.000Z",
     });
+  });
+
+  test("is audited as an update of the workflow with the step id, never the body", async () => {
+    await put("call", { body: { email: "jane@example.com" } });
+
+    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "updated",
+        targetType: "workflow",
+        targetId: WORKFLOW_ID,
+        status: "success",
+        newObject: { expectedResponse: "call" },
+      })
+    );
+    expect(JSON.stringify(mocks.queueAuditEvent.mock.calls)).not.toContain("jane@example.com");
+  });
+
+  test("refuses a body over 100 KB with 413", async () => {
+    expect((await put("call", { body: { blob: "x".repeat(101 * 1024) } })).status).toBe(413);
+    expect(mocks.sampleUpsert).not.toHaveBeenCalled();
   });
 
   test("refuses a step that isn't an HTTP request in the draft", async () => {

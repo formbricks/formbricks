@@ -1,11 +1,14 @@
 import { z } from "zod";
 import { ZWorkflowHttpMethod, ZWorkflowHttpRequestActionConfig } from "../types/actions/http-request";
 import { ZWorkflowWebhookPayload } from "../types/triggers/webhook";
+import { ZIsoDateTime } from "./common";
+import { ZWorkflowSampleVariables } from "./webhook";
 
 /**
  * Contracts for "Send test request" (ENG-7179, ENG-7168): one real call of an HTTP request step from
  * the editor, so the author sees the real response. Not a run: nothing is billed and no later step
- * runs. The response is saved as that step's sample, which "Wait and use it" Variables come from.
+ * runs. The response is kept as the step's last Test request response; the step's expected response
+ * (ADR 0054), which only editors set, is what "Wait and use it" Variables come from.
  */
 
 export const ZWorkflowTestRequestParams = z
@@ -69,14 +72,28 @@ export const ZWorkflowTestRequestResult = z
 export type TWorkflowTestRequestResult = z.infer<typeof ZWorkflowTestRequestResult>;
 
 /**
- * Sets an HTTP request step's expected response (ADR 0054): the body the API answers with, typed or
- * pasted in the editor, or a Test request response the editor chose to use. Test requests never set it.
+ * Sets an HTTP request step's expected response (ADR 0054): the body its API answers with, typed or
+ * pasted in the editor, a Test request response the author chose to use, or written by an API or MCP
+ * client. Test requests never set it.
  */
 export const ZSetWorkflowExpectedResponseInput = z
   .strictObject({
-    body: z
-      .record(z.string(), z.unknown())
-      .describe("A JSON object of at most 100 KB, nested at most as deep as a Webhook payload."),
+    body: ZWorkflowWebhookPayload.describe(
+      "The response body the step's API answers with: a JSON object of at most 100 KB, nested at most 10 levels."
+    ),
   })
   .describe("Sets an HTTP request step's expected response.");
 export type TSetWorkflowExpectedResponseInput = z.infer<typeof ZSetWorkflowExpectedResponseInput>;
+
+export const ZWorkflowExpectedResponseResource = z
+  .object({
+    workflowId: z.cuid2(),
+    stepId: z.string().min(1).describe("The HTTP request step's id."),
+    body: ZWorkflowWebhookPayload.describe(
+      "The expected response body. Its fields are the step's `steps.<stepId>.body.*` Variables."
+    ),
+    variables: ZWorkflowSampleVariables,
+    updatedAt: ZIsoDateTime,
+  })
+  .describe("An HTTP request step's expected response and the Variables inferred from it.");
+export type TWorkflowExpectedResponseResource = z.infer<typeof ZWorkflowExpectedResponseResource>;

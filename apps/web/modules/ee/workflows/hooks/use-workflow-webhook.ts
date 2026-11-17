@@ -79,10 +79,15 @@ export const useSetExpectedResponse = (workflowId: string, stepId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: Record<string, unknown>) => setWorkflowExpectedResponse(workflowId, stepId, body),
-    onSuccess: (entry) =>
+    // Stored as the step's sample, in a Test request response's shape, which is what the samples hold.
+    onSuccess: (resource) =>
       queryClient.setQueryData<TWorkflowSampleList>(workflowKeys.samples(workflowId), (current) => [
-        ...(current ?? []).filter((item) => item.source !== entry.source),
-        entry,
+        ...(current ?? []).filter((item) => item.source !== resource.stepId),
+        {
+          source: resource.stepId,
+          sample: { status: 200, contentType: "application/json", body: resource.body, bodyTruncated: false },
+          updatedAt: resource.updatedAt,
+        },
       ]),
   });
 };
