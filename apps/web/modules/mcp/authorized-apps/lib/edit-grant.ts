@@ -77,3 +77,16 @@ export const getMcpGrantSaveFailure = (
   message: getGrantErrorMessage(error, t) ?? t("auth.oauth.grant_update_failed"),
   closeDialog: isStaleMcpGrantEditError(error),
 });
+
+/**
+ * Whether an Escape the dialog sees belongs to an open organization or workspace picker. The picker
+ * (`MultiSelect`, a cmdk combobox) is open while its input has focus and closes on Escape by blurring it;
+ * the dialog listens for Escape on the whole document, so without this the same key press also closed
+ * Edit and threw the draft away. The dialog ignores such an Escape, and the next one, with the picker
+ * closed, closes it.
+ */
+export const isEscapeForOpenPicker = (target: EventTarget | null): boolean =>
+  typeof Element !== "undefined" &&
+  target instanceof Element &&
+  target.matches("input") &&
+  target.closest("[cmdk-root]") !== null;

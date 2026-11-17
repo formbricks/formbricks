@@ -18,7 +18,7 @@ import {
 } from "@/modules/ui/components/dialog";
 import { useMcpGrantEdit } from "../hooks/use-mcp-grant-edit";
 import { useUpdateMcpGrant } from "../hooks/use-update-mcp-grant";
-import { getMcpGrantSaveFailure } from "../lib/edit-grant";
+import { getMcpGrantSaveFailure, isEscapeForOpenPicker } from "../lib/edit-grant";
 
 interface EditMcpGrantDialogProps {
   client: TAuthorizedMcpClientResource & {
@@ -76,7 +76,11 @@ export const EditMcpGrantDialog = ({
 
   return (
     <Dialog open onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent
+        onEscapeKeyDown={(event) => {
+          // Escape in an open picker closes the picker only, keeping the draft.
+          if (isEscapeForOpenPicker(event.target)) event.preventDefault();
+        }}>
         <DialogHeader>
           <DialogTitle>{t("auth.oauth.edit_access_title", { clientName })}</DialogTitle>
           <DialogDescription>{t("auth.oauth.edit_access_description", { clientName })}</DialogDescription>
