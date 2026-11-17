@@ -34,7 +34,8 @@ export const InsertStepAfterMenuItem = ({
 
   return (
     <DropdownMenuSub>
-      <DropdownMenuSubTrigger>
+      {/* Same icon spacing as the menu's other items (DropdownMenuItem's gap-x-2). */}
+      <DropdownMenuSubTrigger className="gap-x-2">
         <PlusIcon className="size-4" />
         {t("workspace.workflows.insert_step_after")}
       </DropdownMenuSubTrigger>
