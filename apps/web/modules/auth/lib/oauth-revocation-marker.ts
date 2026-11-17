@@ -15,7 +15,7 @@ import { redisSecondaryStorage } from "./secondary-storage";
  * keyed by its hash alone, for `codeExpiresIn` (`MCP_OAUTH_CODE_EXPIRES_IN_SECONDS`), and nothing indexes it
  * by user or client.
  * Exchanged after the revocation, it issues tokens again, and a `skipConsent` client's code exchange gives
- * the connection a new grant: the revoked client is back.
+ * the user a new grant to the client: the revoked client is back.
  *
  * So a revocation leaves a mark, a Redis key holding when it happened, for as long as a code issued before
  * it can live: one per user and client for Revoke, one per user for a bulk end. The token endpoint refuses
@@ -57,7 +57,7 @@ const markKey = (userId: string, clientId?: string): string =>
  * the revocation's transaction commits, so no code can be exchanged between the commit and the mark. Throws
  * when Redis can't be written: the revocation must then fail rather than leave the codes live.
  *
- * The mark only ever moves forward: two revocations of the same connection can complete out of order (the
+ * The mark only ever moves forward: two revocations of the same user's client can complete out of order (the
  * later one marks first, the earlier one's write lands second), and the earlier timestamp would then let a
  * code issued between the two through. An older write keeps the newer mark and refreshes its TTL instead.
  */
@@ -124,7 +124,7 @@ const readCodeOwner = (value: string): { userId: string; clientId: string } | nu
  *
  * A code it accepts is recorded ({@link readExchangedAuthorizationCode}) so the grant claim re-checks the
  * mark when it creates a `skipConsent` client's grant: the provider spends the code after this read, and a
- * Revoke committed in the meantime must still leave the connection without a grant.
+ * Revoke committed in the meantime must still leave the client without a grant.
  */
 export const refuseCodeIssuedBeforeRevocationBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
   if (ctx.path !== TOKEN_PATH) return;

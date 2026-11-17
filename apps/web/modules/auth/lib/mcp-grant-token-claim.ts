@@ -24,29 +24,29 @@ import {
  * under the same key. `/api/mcp` reads the grant on every call, and a token from before the Revoke would
  * find the new one. Comparing issue times can't settle it: `iat` counts whole seconds and comes from the
  * issuing pod's clock. So every access token carries the id of the grant it was issued under, and
- * `/api/mcp` refuses a token whose grant is not the connection's grant now (`isIssuedUnderGrant` in
+ * `/api/mcp` refuses a token whose grant is not the user's grant to the client now (`isIssuedUnderGrant` in
  * `modules/mcp/auth.ts`).
  *
  * An access-token claim contributor of the provider (`extensions[].claims.accessToken`), called while it
  * mints each access token, after it has checked the code or refresh token. A token minted while the
- * connection has no grant names none (`mcp_grant: null`), so no grant made later takes it in. Only a token
+ * user has no grant to the client names none (`mcp_grant: null`), so no grant made later takes it in. Only a token
  * from the previous release has no claim at all, and only those are checked by their issue time.
  *
  * A grant for a `skipConsent` client too. Allow on the consent screen saves a client's grant, and a client
  * registered with `skipConsent` (a trusted first-party client) is authorized without that screen. So an
- * authorization code exchanged by such a client gives the connection a grant if it has none, before its
- * token is minted, by the rule the grant migration applied to connections made before grants: All access,
+ * authorization code exchanged by such a client gives the user a grant to the client if they have none, before its
+ * token is minted, by the rule the grant migration applied to clients connected before grants: All access,
  * every permission at its scope family's level, Tags and Audience at No access
  * (`getUnconsentedMcpGrantPermissions`). A Dashboard viewer's scopes are trimmed first, as the consent
  * screen does. A grant that exists, or that the user narrowed with Edit, is left alone. A refresh never
  * creates one: the refresh check (`requireOAuthConsentOnRefreshAfterHandler`) ends a `skipConsent`
- * connection without a grant, so a refresh that raced a Revoke can't bring it back.
+ * client without a grant, so a refresh that raced a Revoke can't bring it back.
  *
  * The creation is ordered against a Revoke like every other grant write ({@link grantSkipConsentClient}): it
  * takes the user's row `FOR KEY SHARE`, which a revocation holds `FOR UPDATE` while it deletes, and re-reads
  * the revocation mark once it has it. The token endpoint's before-hook read the mark before the provider
  * spent the code, so a Revoke that committed between the two would otherwise leave the client with a new
- * grant and its revoked connection back (`oauth-revocation-marker.ts`).
+ * grant and its revoked access back (`oauth-revocation-marker.ts`).
  */
 export const MCP_GRANT_TOKEN_CLAIM = "mcp_grant";
 
@@ -59,10 +59,10 @@ type TClaimInput = {
 };
 
 /**
- * Gives a `skipConsent` client's connection a grant if it has none, unless a revocation covers the code
+ * Gives the user a grant to a `skipConsent` client if they have none, unless a revocation covers the code
  * being exchanged. Never throws: the code is already spent, and failing the exchange would leave the client
  * nothing to retry with. Without a grant the token carries no claim, its calls are refused, and its next
- * refresh ends the connection, so it authorizes again.
+ * refresh ends its access, so it authorizes again.
  *
  * The exchange's own read of the mark (`readExchangedAuthorizationCode`) supplies the code's issue time;
  * without it, nothing is created, which is the same fail-closed answer if the hook ever stops recording it.
@@ -105,8 +105,8 @@ const grantSkipConsentClient = async (userId: string, clientId: string, scopes: 
 };
 
 /**
- * The access-token claims for the grant the token is issued under: its id, or `null` while the connection
- * has none. Nothing without a user (a client credentials token, which no MCP call accepts).
+ * The access-token claims for the grant the token is issued under: its id, or `null` while the user
+ * has no grant to the client. Nothing without a user (a client credentials token, which no MCP call accepts).
  */
 export const mcpGrantAccessTokenClaims = async ({
   user,

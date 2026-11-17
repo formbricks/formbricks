@@ -141,7 +141,7 @@ level in the grant, or the call is refused with a 403 whose detail starts "Not p
 permission and level. The grant is read with the user in `modules/mcp/auth.ts`, which refuses a
 client without one (that is what makes Revoke immediate), or a token issued under another grant (a
 Revoke followed by a new approval): every access token names its grant in an `mcp_grant` claim (`null` when
-minted while its connection had none), set when it is minted (`modules/auth/lib/mcp-grant-token-claim.ts`). API keys have no grant and are gated on scopes
+minted while its user had no grant to the client), set when it is minted (`modules/auth/lib/mcp-grant-token-claim.ts`). API keys have no grant and are gated on scopes
 alone. Allow on the consent screen saves the grant; a client registered with `skipConsent` never sees that
 screen, so the same claim contributor gives the client one when it exchanges an authorization code, before
 the token is minted, by the migration's rule: All access, each permission at its scope family's level,
@@ -150,10 +150,10 @@ Tags and Audience at No access. A sign-in code issued before a Revoke is refused
 the mark as issued before it, because the issuing and the revoking pod each stamp by their own clock; the mark a
 revocation leaves only ever moves forward,
 so two revocations that finish out of order can't lower it. A refresh never creates a grant: the refresh check
-refuses a `skipConsent` connection without one, as it refuses a consent without one. The exchange's grant
+refuses a `skipConsent` client without one, as it refuses a consent without one. The exchange's grant
 creation is ordered against a Revoke like every other grant write: the claim takes the user's row
 `FOR KEY SHARE` and re-reads the mark with the code's issue time once it has it, because the provider
-spends the code after the before-hook's check — a Revoke that lands in between leaves the connection
+spends the code after the before-hook's check — a Revoke that lands in between leaves the client
 without a grant rather than restoring it. Tools that more than one permission
 legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, and a tool whose input decides what
 it reads passes `{ byInput }`; both keep the tool on the same registration path rather than a hand-rolled
@@ -275,7 +275,7 @@ from that list, so `offline_access` must be advertised there for clients to be i
   `claude mcp add …`).
 </Warning>
 
-OAuth scopes gate MCP tool categories at the token layer, and the connection's grant
+OAuth scopes gate MCP tool categories at the token layer, and the user's grant to the client
 (`modules/mcp/grant.ts`, stored by `grant-store.ts`) narrows each permission below them. Actual workspace
 access is still evaluated at tool execution through the existing v3 authorization checks for the
 signed-in Formbricks user, so scope, grant and workspace role are independent gates — a call must satisfy
@@ -315,7 +315,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `delete_response`                                                                                                                                                                                           | `manage`                                                                                                                                                                      |
 | `batch_delete_responses`                                                                                                                                                                                    | `manage`                                                                                                                                                                      |
 | `set_responses_outcome`                                                                                                                                                                                     | `write` or `manage`                                                                                                                                                           |
-| `list_tags`, `update_tag`, `merge_tags`                                                                                                                                                                     | not available: `/api/v3/tags` is session-only, so the tag tools refuse API keys and answer only OAuth connections                                                             |
+| `list_tags`, `update_tag`, `merge_tags`                                                                                                                                                                     | not available: `/api/v3/tags` is session-only, so the tag tools refuse API keys and answer only OAuth callers                                                             |
 | `list_surveys`                                                                                                                                                                                              | `read`                                                                                                                                                                        |
 | `get_survey`                                                                                                                                                                                                | `read`                                                                                                                                                                        |
 | `create_survey`                                                                                                                                                                                             | `write` or `manage`                                                                                                                                                           |
@@ -1712,7 +1712,7 @@ Responses category, capped by the `responses` scopes.
   it fixes a duplicate or a misspelling. There is no `delete_tag`.
 
 The edit and merge tools take no workspace: the operation resolves it from the tag, and refuses a merge
-across workspaces. The tag tools answer **OAuth connections only**. `/api/v3/tags` is session-only, so an
+across workspaces. The tag tools answer **OAuth callers only**. `/api/v3/tags` is session-only, so an
 API key has never had tag access, and the tools refuse one with a `403` rather than widen what a key can do.
 
 ### Chart and dashboard tools

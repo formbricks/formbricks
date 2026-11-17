@@ -2,7 +2,7 @@ import "server-only";
 import { Prisma } from "@formbricks/database/prisma";
 
 /**
- * The consent rows an MCP connection's grant is held against: the row locks every path takes, the bound a
+ * The consent rows a user's grant to an MCP client is held against: the row locks every path takes, the bound a
  * client's scopes come from, and the read the grant hooks share.
  *
  * Extracted from `oauth-grant-revocation.ts` because both halves lock consents: the hooks that follow a
