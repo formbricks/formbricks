@@ -16,6 +16,27 @@ import {
 } from "@/modules/ee/contacts/segments/lib/utils";
 
 /**
+ * Throws when a filter's referenced segment is the segment being checked, or (recursively) one of its
+ * filters references it.
+ */
+const checkReferencedSegment = async (segmentIdFromRoot: string, segmentId: string) => {
+  if (segmentIdFromRoot === segmentId) {
+    throw new InvalidInputError("Recursive segment filter is not allowed");
+  }
+
+  const segment = await getSegment(segmentIdFromRoot);
+
+  if (segment) {
+    // recurse into this segment and check for recursive filters:
+    const segmentFilters = segment.filters;
+
+    if (segmentFilters) {
+      await checkForRecursiveSegmentFilter(segmentFilters, segmentId);
+    }
+  }
+};
+
+/**
  * Checks if a segment filter contains a recursive reference to itself
  * @param filters - The filters to check for recursive references
  * @param segmentId - The ID of the segment being checked
@@ -26,22 +47,7 @@ export const checkForRecursiveSegmentFilter = async (filters: TBaseFilters, segm
     const { resource } = filter;
     if (isResourceFilter(resource)) {
       if (resource.root.type === "segment") {
-        const { segmentId: segmentIdFromRoot } = resource.root;
-
-        if (segmentIdFromRoot === segmentId) {
-          throw new InvalidInputError("Recursive segment filter is not allowed");
-        }
-
-        const segment = await getSegment(segmentIdFromRoot);
-
-        if (segment) {
-          // recurse into this segment and check for recursive filters:
-          const segmentFilters = segment.filters;
-
-          if (segmentFilters) {
-            await checkForRecursiveSegmentFilter(segmentFilters, segmentId);
-          }
-        }
+        await checkReferencedSegment(resource.root.segmentId, segmentId);
       }
     } else {
       await checkForRecursiveSegmentFilter(resource, segmentId);

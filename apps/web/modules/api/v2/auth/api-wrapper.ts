@@ -42,6 +42,80 @@ export type ParsedSchemas<S extends ExtendedSchemas | undefined> = S extends obj
     }
   : {};
 
+type TBodyTransform = (
+  body: Record<string, unknown>,
+  auth: TAuthenticationApiKey
+) => Promise<Record<string, unknown>> | Record<string, unknown>;
+
+/** The request's JSON body, or the error response for one that is too large or malformed. */
+const readJsonBody = async (request: Request): Promise<Record<string, unknown> | Response> => {
+  try {
+    return await parseJsonBodyWithLimit<Record<string, unknown>>(request);
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return handleApiError(request, {
+        type: "payload_too_large",
+        details: [
+          {
+            field: "body",
+            issue: error.message,
+          },
+        ],
+      });
+    }
+
+    logger.error({ error, url: request.url }, "Error parsing JSON input");
+    return handleApiError(request, {
+      type: "bad_request",
+      details: [
+        {
+          field: "error",
+          issue: "Malformed JSON input, please check your request body",
+        },
+      ],
+    });
+  }
+};
+
+/** The body, transformed and validated against `schema`, or the error response that rejects it. */
+const parseBody = async (
+  request: Request,
+  schema: z.ZodObject<ZodRawShape>,
+  authentication: TAuthenticationApiKey,
+  bodyTransform: TBodyTransform | undefined
+): Promise<{ data: unknown } | Response> => {
+  const body = await readJsonBody(request);
+  if (body instanceof Response) {
+    return body;
+  }
+  const bodyData = bodyTransform ? await bodyTransform(body, authentication) : body;
+
+  const bodyResult = schema.safeParse(bodyData);
+
+  if (!bodyResult.success) {
+    return handleApiError(request, {
+      type: "unprocessable_entity",
+      details: formatZodError(bodyResult.error),
+    });
+  }
+  return { data: bodyResult.data };
+};
+
+/** The 429 response when the API key is over the v2 rate limit, or null when it may proceed. */
+const checkRateLimit = async (request: Request, apiKeyId: string): Promise<Response | null> => {
+  try {
+    await applyRateLimit(rateLimitConfigs.api.v2, apiKeyId);
+    return null;
+  } catch (error) {
+    return handleApiError(request, {
+      type: "too_many_requests",
+      details: [
+        { field: "rateLimit", issue: error instanceof Error ? error.message : "Unknown error occurred" },
+      ],
+    });
+  }
+};
+
 export const apiWrapper = async <S extends ExtendedSchemas>({
   request,
   schemas,
@@ -58,10 +132,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
   rateLimit?: boolean;
   handler: HandlerFn<ParsedSchemas<S>>;
   auditLog?: TApiAuditLog;
-  bodyTransform?: (
-    body: Record<string, unknown>,
-    auth: TAuthenticationApiKey
-  ) => Promise<Record<string, unknown>> | Record<string, unknown>;
+  bodyTransform?: TBodyTransform;
   /**
    * When true, API keys that only carry organization-level access (i.e. no workspace
    * permissions) are allowed to authenticate. Organization-scoped endpoints opt in so a
@@ -83,45 +154,9 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
   let parsedInput: ParsedSchemas<S> = {} as ParsedSchemas<S>;
 
   if (schemas?.body) {
-    let bodyData: Record<string, unknown>;
-    try {
-      bodyData = await parseJsonBodyWithLimit<Record<string, unknown>>(request);
-    } catch (error) {
-      if (error instanceof RequestBodyTooLargeError) {
-        return handleApiError(request, {
-          type: "payload_too_large",
-          details: [
-            {
-              field: "body",
-              issue: error.message,
-            },
-          ],
-        });
-      }
-
-      logger.error({ error, url: request.url }, "Error parsing JSON input");
-      return handleApiError(request, {
-        type: "bad_request",
-        details: [
-          {
-            field: "error",
-            issue: "Malformed JSON input, please check your request body",
-          },
-        ],
-      });
-    }
-
-    if (bodyTransform) {
-      bodyData = await bodyTransform(bodyData, authentication.data);
-    }
-
-    const bodyResult = schemas.body.safeParse(bodyData);
-
-    if (!bodyResult.success) {
-      return handleApiError(request, {
-        type: "unprocessable_entity",
-        details: formatZodError(bodyResult.error),
-      });
+    const bodyResult = await parseBody(request, schemas.body, authentication.data, bodyTransform);
+    if (bodyResult instanceof Response) {
+      return bodyResult;
     }
     parsedInput.body = bodyResult.data as ParsedSchemas<S>["body"];
   }
@@ -152,15 +187,9 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
   }
 
   if (rateLimit) {
-    try {
-      await applyRateLimit(rateLimitConfigs.api.v2, authentication.data.apiKeyId);
-    } catch (error) {
-      return handleApiError(request, {
-        type: "too_many_requests",
-        details: [
-          { field: "rateLimit", issue: error instanceof Error ? error.message : "Unknown error occurred" },
-        ],
-      });
+    const rateLimitResponse = await checkRateLimit(request, authentication.data.apiKeyId);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
   }
 
