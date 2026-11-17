@@ -1,4 +1,9 @@
 import { TPlacement } from "@formbricks/types/common";
+import { resolveDarkColors } from "@formbricks/types/dark-palette";
+import type { TSurveyStyling } from "@formbricks/types/surveys/types";
+import type { TWorkspaceStyling } from "@formbricks/types/workspace";
+
+export type TPreviewType = "modal" | "fullwidth" | "email";
 
 export const getPlacementStyle = (placement: TPlacement) => {
   switch (placement) {
@@ -51,3 +56,50 @@ export const mirrorPlacementForDir = (placement: TPlacement, dir: "ltr" | "rtl" 
  */
 export const isInsideSurveyRoot = (target: EventTarget | null): boolean =>
   typeof Element !== "undefined" && target instanceof Element && target.closest('[id="fbjs"]') !== null;
+
+/** The preview kind the caller asked for, or a modal once the workspace's app setup is done. */
+export const resolvePreviewType = (
+  previewType: TPreviewType | undefined,
+  appSetupCompleted: boolean
+): TPreviewType => previewType ?? (appSetupCompleted ? "modal" : "fullwidth");
+
+/** The test value for the page address, trimmed; undefined without a page-address field or value. */
+export const getPreviewPageUrl = (
+  hasPageUrlField: boolean,
+  value: string | undefined
+): string | undefined => {
+  if (!hasPageUrlField) return undefined;
+  return value?.trim() || undefined;
+};
+
+/** The mock modal's card color, which follows the dark palette in dark appearance. */
+export const getModalBackground = (
+  appearance: "light" | "dark",
+  styling: TSurveyStyling | TWorkspaceStyling
+): string | undefined =>
+  appearance === "dark" ? resolveDarkColors(styling).cardBackgroundColor : styling.cardBackgroundColor?.light;
+
+/** Positions of the backdrop and the preview frame, pinned to the viewport in full-screen preview. */
+export const getFullScreenPreviewStyles = (isFullScreen: boolean) => {
+  if (isFullScreen) {
+    return {
+      backdrop: { position: "fixed" as const, zIndex: 50, left: 0, top: 0 },
+      frame: { left: "2.5%", top: 0 },
+    };
+  }
+  return {
+    backdrop: { position: "absolute" as const, zIndex: 50, left: undefined, top: undefined },
+    frame: { left: undefined, top: undefined },
+  };
+};
+
+/** The mock modal's slide-in state: from the side in the browser frame, from below in the phone. */
+export const getSlidingAnimationClass = (previewMode: string, show: boolean): string => {
+  if (previewMode === "desktop") {
+    return show ? "translate-x-0 opacity-100" : "translate-x-32 opacity-0";
+  }
+  if (previewMode === "mobile") {
+    return show ? "bottom-0" : "-bottom-full";
+  }
+  return "";
+};
