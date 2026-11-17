@@ -19,6 +19,7 @@ const flagged: Record<string, string> = {
   "global.ts": "/* global myGlobal */\nexport const a = 1;\n",
   "globals.ts": "/* globals myGlobal */\nexport const a = 1;\n",
   "no-space.ts": "/*eslint-env*/\nexport const a = 1;\n",
+  "exported.ts": "/* exported a */\nexport const a = 1;\n",
 };
 
 const allowed: Record<string, string> = {
@@ -26,7 +27,7 @@ const allowed: Record<string, string> = {
   "disable-next-line.ts": "// eslint-disable-next-line no-console\nexport const a = 1;\n",
   "line-comment.ts":
     "// eslint turbo/no-undeclared-env-vars: off is not a config comment\nexport const a = 1;\n",
-  "prose.ts": "/* The eslint migration moved this to oxlint. */\nexport const a = 1;\n",
+  "keyword-mid-comment.ts": "/* The eslint migration moved this to oxlint. */\nexport const a = 1;\n",
 };
 
 // One workspace per tier family: library (packages/types) and next (apps/web).

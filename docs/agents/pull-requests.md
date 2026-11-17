@@ -18,7 +18,7 @@ pre-existing, flaky or noise names the run on `main` that shows it; without one 
 interactions between changes rather than repeating each PR's QA.
 
 Before opening a PR, run the `code-review` skill against the merge-base. The review is done when every
-Standards and Spec finding is fixed or answered in the PR description.
+Standards and Spec finding is fixed or listed under Open gaps.
 
 ## Reviews
 

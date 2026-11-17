@@ -43,9 +43,10 @@ const restrictedSyntax = {
   },
 };
 
-// `/* eslint <rule>: … */`, `/* eslint-env … */`, `/* global … */` and `/* globals … */`. Disable and
-// enable directives (`eslint-disable…`, `eslint-enable…`), which oxlint honours, do not match.
-const INLINE_CONFIG = /^\s*(eslint(?:-env)?|globals?)(?:\s|$)/;
+// `/* eslint <rule>: … */`, `/* eslint-env */`, `/* global(s) */` and `/* exported */`, as ESLint reads
+// them. Disable and enable directives (`eslint-disable…`, `eslint-enable…`), which oxlint honours, do
+// not match.
+const INLINE_CONFIG = /^\s*(eslint(?:-env)?|globals?|exported)(?:\s|$)/;
 
 const noInlineLintConfig = {
   meta: {

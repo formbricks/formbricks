@@ -39,7 +39,8 @@ Notes:
   Sonar parity only) and `eslint-plugin-storybook` (apps/storybook). `plugins/react-js.mjs` loads the three eslint-plugin-react rules and drops `prefer-read-only-props`'s autofix, which writes `readonly` members instead of the `Readonly<Props>` wrapper. `plugins/formbricks.mjs` is the
   repo's own: oxlint has no `no-restricted-syntax`, so `formbricks/restricted-syntax` takes the same
   selector options, and `formbricks/no-inline-lint-config` (on in every tier) fails on ESLint's inline
-  config comments (`/* eslint <rule>: … */`, `/* eslint-env */`, `/* global */`), which oxlint ignores.
+  config comments (`/* eslint <rule>: … */`, `/* eslint-env */`, `/* global */`, `/* exported */`), which
+  oxlint ignores.
   JS plugins are slower than native rules; `react-js` costs most of apps/web's run.
 - **Type-aware rules** run through `oxlint-tsgolint` (TypeScript 7) when oxlint gets `--type-aware`, which
   `pnpm lint:code` and the pre-commit hook pass. Every linted `.ts`/`.tsx` file must belong to its
