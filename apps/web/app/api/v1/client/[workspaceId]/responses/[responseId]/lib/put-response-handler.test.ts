@@ -457,6 +457,23 @@ describe("putResponseHandler", () => {
     expect(mocks.formatValidationErrorsForV1Api).toHaveBeenCalledWith([{ field: "q1", message: "Required" }]);
   });
 
+  test("validates the merged data with the not-shown record the update sends (ENG-7332)", async () => {
+    const notShown = { rows: { trip: ["visa"] } };
+    mocks.getValidatedResponseUpdateInput.mockResolvedValue({
+      responseUpdateInput: { ...getBaseResponseUpdateInput(), notShown },
+    });
+
+    await putResponseHandler(createHandlerParams());
+
+    expect(mocks.validateResponseData).toHaveBeenCalledWith(
+      getBaseSurvey().blocks,
+      expect.objectContaining({ q1: "updated-answer" }),
+      "en",
+      getBaseSurvey().questions,
+      notShown
+    );
+  });
+
   test("returns not found when the response disappears during update", async () => {
     mocks.updateResponseWithQuotaEvaluation.mockRejectedValue(
       new ResourceNotFoundError("Response", responseId)

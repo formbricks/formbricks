@@ -71,7 +71,9 @@ const validateResponse = (
     survey.blocks,
     mergedData,
     responseUpdateInput.language ?? response.language ?? "en",
-    survey.questions
+    survey.questions,
+    // The survey sends its whole not-shown record with every update (ENG-6936).
+    responseUpdateInput.notShown
   );
 
   if (validationErrors) {

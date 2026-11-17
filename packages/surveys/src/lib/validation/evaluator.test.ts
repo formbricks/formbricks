@@ -954,6 +954,108 @@ describe("validateElementResponse", () => {
     });
   });
 
+  // ENG-7332: the server validates against the survey as stored, the survey against the element it
+  // shows. Answers name rows and choices by label, as the survey stores them.
+  describe("rules read the element as the respondent was offered it", () => {
+    const tripMatrix = (extraRow: Record<string, unknown>) =>
+      ({
+        id: "trip",
+        type: TSurveyElementTypeEnum.Matrix,
+        headline: { default: "How was each part of your trip?" },
+        required: true,
+        shuffleOption: "none",
+        rows: [
+          { id: "flights", label: { default: "Flights" } },
+          { id: "hotel", label: { default: "Hotel" } },
+          { id: "visa", label: { default: "Visa Package" }, ...extraRow },
+        ],
+        columns: [
+          { id: "okay", label: { default: "Okay" } },
+          { id: "great", label: { default: "Great" } },
+        ],
+        validation: { rules: [{ id: "all", type: "answerAllRows", params: {} }] },
+      }) as unknown as TSurveyMatrixElement;
+
+    const premiumOnly = {
+      id: "g",
+      connector: "and",
+      conditions: [
+        {
+          id: "c",
+          leftOperand: { type: "element", value: "package" },
+          operator: "equals",
+          rightOperand: { type: "static", value: "premium" },
+        },
+      ],
+    };
+
+    const everyShownRow = { Flights: "Great", Hotel: "Okay" };
+
+    test("answerAllRows passes when every row but the Hidden one is answered", () => {
+      const result = validateElementResponse(tripMatrix({ hidden: true }), everyShownRow, "en");
+      expect(result).toEqual({ valid: true, errors: [] });
+    });
+
+    test("answerAllRows still fails when a shown row is unanswered", () => {
+      const result = validateElementResponse(tripMatrix({ hidden: true }), { Flights: "Great" }, "en");
+      expect(result.errors.map((error) => error.ruleType)).toEqual(["answerAllRows"]);
+    });
+
+    test("answerAllRows passes when an older survey also answered the Hidden row", () => {
+      const answers = { ...everyShownRow, "Visa Package": "Okay" };
+      expect(validateElementResponse(tripMatrix({ hidden: true }), answers, "en").valid).toBe(true);
+    });
+
+    test("answerAllRows skips the rows the not-shown record lists, and only those", () => {
+      const element = tripMatrix({ showIf: premiumOnly });
+      const notShown = { rows: { trip: ["visa"] } };
+
+      expect(validateElementResponse(element, everyShownRow, "en", { notShown }).valid).toBe(true);
+      // The record names another element's rows, or none: the row was shown and must be answered.
+      expect(
+        validateElementResponse(element, everyShownRow, "en", { notShown: { rows: { other: ["visa"] } } })
+          .valid
+      ).toBe(false);
+      expect(validateElementResponse(element, everyShownRow, "en").valid).toBe(false);
+    });
+
+    test("rankAll passes when every choice but the Hidden one is ranked", () => {
+      const element = {
+        id: "priorities",
+        type: TSurveyElementTypeEnum.Ranking,
+        headline: { default: "Rank what matters most" },
+        required: true,
+        shuffleOption: "none",
+        choices: [
+          { id: "price", label: { default: "Price" } },
+          { id: "comfort", label: { default: "Comfort" } },
+          { id: "visa", label: { default: "Visa Package" }, hidden: true },
+        ],
+        validation: { rules: [{ id: "all", type: "rankAll", params: {} }] },
+      } as unknown as TSurveyRankingElement;
+
+      expect(validateElementResponse(element, ["Price", "Comfort"], "en").valid).toBe(true);
+      expect(validateElementResponse(element, ["Price"], "en").valid).toBe(false);
+    });
+
+    test("an answer naming a Hidden choice stays a known choice", () => {
+      // A respondent who picked "Visa Package" before it was hidden keeps a valid answer.
+      const element = {
+        id: "package",
+        type: TSurveyElementTypeEnum.MultipleChoiceSingle,
+        headline: { default: "Which package did you book?" },
+        required: true,
+        shuffleOption: "none",
+        choices: [
+          { id: "standard", label: { default: "Standard" } },
+          { id: "visa", label: { default: "Visa Package" }, hidden: true },
+        ],
+      } as unknown as TSurveyElement;
+
+      expect(validateElementResponse(element, "Visa Package", "en")).toEqual({ valid: true, errors: [] });
+    });
+  });
+
   describe("unknown validation rule type", () => {
     test("should handle unknown rule type gracefully", () => {
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
