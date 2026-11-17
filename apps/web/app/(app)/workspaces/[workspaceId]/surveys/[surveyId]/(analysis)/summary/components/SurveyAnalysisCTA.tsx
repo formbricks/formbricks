@@ -280,9 +280,11 @@ export const SurveyAnalysisCTA = ({
       icon: SquarePenIcon,
       tooltip: t("common.edit"),
       onClick: () => {
-        responseCount > 0
-          ? setIsCautionDialogOpen(true)
-          : router.push(`/workspaces/${workspace?.id}/surveys/${survey.id}/edit`);
+        if (responseCount > 0) {
+          setIsCautionDialogOpen(true);
+        } else {
+          router.push(`/workspaces/${workspace?.id}/surveys/${survey.id}/edit`);
+        }
       },
       // Archived surveys are read-only; editing is blocked server-side, so hide the entry point too.
       isVisible: !isReadOnly && !survey.archivedAt,

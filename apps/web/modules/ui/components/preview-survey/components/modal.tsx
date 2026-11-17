@@ -129,16 +129,10 @@ export const Modal = ({
     }
   }, [children]);
 
-  const slidingAnimationClass =
-    previewMode === "desktop"
-      ? show
-        ? "translate-x-0 opacity-100"
-        : "translate-x-32 opacity-0"
-      : previewMode === "mobile"
-        ? show
-          ? "bottom-0"
-          : "-bottom-full"
-        : "";
+  let slidingAnimationClass = "";
+  if (previewMode === "desktop")
+    slidingAnimationClass = show ? "translate-x-0 opacity-100" : "translate-x-32 opacity-0";
+  else if (previewMode === "mobile") slidingAnimationClass = show ? "bottom-0" : "-bottom-full";
 
   const customOverlayStyle = getOverlayPreviewStyle({ overlay, overlayColor, overlayOpacity });
 

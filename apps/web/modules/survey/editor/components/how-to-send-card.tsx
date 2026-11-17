@@ -140,18 +140,18 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }
             onValueChange={setSurveyType}
             className="flex flex-col gap-y-3">
             {options
-              .filter((option) => !Boolean(option.hide))
+              .filter((option) => !option.hide)
               .map((option) => (
                 <Label
                   key={option.id}
                   htmlFor={option.id}
                   className={cn(
                     "flex w-full items-center rounded-lg border bg-slate-50 p-4",
-                    option.comingSoon
-                      ? "border-slate-200 bg-slate-50/50"
-                      : option.id === localSurvey.type
+                    option.comingSoon && "border-slate-200 bg-slate-50/50",
+                    !option.comingSoon &&
+                      (option.id === localSurvey.type
                         ? "cursor-pointer border-brand-dark bg-slate-50"
-                        : "cursor-pointer bg-slate-50"
+                        : "cursor-pointer bg-slate-50")
                   )}
                   id={`howToSendCardOption-${option.id}`}>
                   <RadioGroupItem

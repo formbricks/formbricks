@@ -197,7 +197,7 @@ export const QuotaModal = ({
       return;
     }
 
-    let payload = {
+    const payload = {
       name: trimmedName || t("workspace.surveys.edit.quotas.new_quota"),
       limit: data.limit,
       logic: data.logic,

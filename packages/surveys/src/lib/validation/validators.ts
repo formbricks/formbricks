@@ -650,7 +650,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
         if (typeof fileUrl !== "string") continue;
         // Extract filename from URL
         const urlPath = fileUrl.split("?")[0]; // Remove query params
-        const fileName = urlPath.split("/").pop() || "";
+        const fileName = urlPath.split("/").pop() ?? "";
         if (!fileName.includes(".")) {
           return { valid: false };
         }
@@ -696,7 +696,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
         if (typeof fileUrl !== "string") continue;
         // Extract filename from URL
         const urlPath = fileUrl.split("?")[0]; // Remove query params
-        const fileName = urlPath.split("/").pop() || "";
+        const fileName = urlPath.split("/").pop() ?? "";
         if (!fileName.includes(".")) {
           continue; // Files without extensions are allowed
         }

@@ -118,9 +118,9 @@ export const SecondaryNavigation = ({
   const visibleNavigation = navigation.filter((navElem) => !navElem.hidden);
   const isSteps = variant === "steps";
 
-  const renderTab = (navElem: TSecondaryNavItem) => (
-    <div className="group flex h-full flex-col truncate">
-      {loading ? (
+  const renderNavItem = (navElem: TSecondaryNavItem) => {
+    if (loading) {
+      return (
         <div
           aria-disabled="true"
           className={cn(
@@ -130,11 +130,15 @@ export const SecondaryNavigation = ({
           aria-current={navElem.id === activeId ? "page" : undefined}>
           {navElem.label}
         </div>
-      ) : navElem.disabled ? (
-        renderDisabledNavItem(navElem)
-      ) : (
-        renderInteractiveNavItem(navElem, activeId)
-      )}
+      );
+    }
+    if (navElem.disabled) return renderDisabledNavItem(navElem);
+    return renderInteractiveNavItem(navElem, activeId);
+  };
+
+  const renderTab = (navElem: TSecondaryNavItem) => (
+    <div className="group flex h-full flex-col truncate">
+      {renderNavItem(navElem)}
       <div
         className={cn(
           "bottom-0 mt-auto h-[2px] w-full rounded-t-lg transition-all duration-150 ease-in-out",

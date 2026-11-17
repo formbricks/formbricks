@@ -181,7 +181,7 @@ const replacePlaceholders = (text: string, replacements?: Record<string, string>
 
   let result = text;
   Object.entries(replacements).forEach(([key, value]) => {
-    result = result.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+    result = result.replace(new RegExp(String.raw`\{${key}\}`, "g"), value);
   });
 
   return result;

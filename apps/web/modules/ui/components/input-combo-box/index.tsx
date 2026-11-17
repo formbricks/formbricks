@@ -372,6 +372,30 @@ function SelectedChips({ options }: Readonly<{ options: TComboboxOption[] }>) {
   );
 }
 
+/** One entry of an option's submenu: a choice, or a heading over its own choices. */
+const renderSubmenuChild = (
+  child: TComboboxOption,
+  handleSelect: (option: TComboboxOption) => void,
+  isSelected: (option: TComboboxOption) => boolean
+) => (
+  <div className="flex flex-col" key={child.value}>
+    {child.children && child.children.length > 0 ? (
+      <p className="mb-2 px-2 text-sm font-medium text-slate-500">{child.label}</p>
+    ) : (
+      <DropdownMenuItem key={child.value} onSelect={() => handleSelect(child)}>
+        <SubmenuItemLabel label={child.label} selected={isSelected(child)} />
+      </DropdownMenuItem>
+    )}
+    {child.children?.map((subChild) => (
+      <DropdownMenuItem key={subChild.value} onSelect={() => handleSelect(subChild)}>
+        <SubmenuItemLabel label={subChild.label} selected={isSelected(subChild)} />
+      </DropdownMenuItem>
+    ))}
+
+    {child.children && child.children.length > 0 && <DropdownMenuSeparator />}
+  </div>
+);
+
 export const InputCombobox: React.FC<InputComboboxProps> = ({
   id = "temp",
   showSearch = true,
@@ -664,7 +688,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                 />
               </div>
             ) : (
-              // eslint-disable-next-line jsx-a11y/no-autofocus -- parks focus inside the opened menu when it has no search field, so the keyboard reaches the option list
+              // eslint-disable-next-line jsx-a11y/no-autofocus, jsx-a11y/no-aria-hidden-on-focusable -- an invisible focus target that parks focus inside the opened menu when it has no search field, so the keyboard reaches the option list
               <button autoFocus className="sr-only" aria-hidden type="button" />
             )}
 
@@ -733,31 +757,9 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                             </DropdownMenuSubTrigger>
                             {/* Wide enough for "Editor (grid · …)" on one line; the chosen one is checked. */}
                             <DropdownMenuSubContent alignOffset={4} className="w-max max-w-80 min-w-48 p-1">
-                              {opt.children.map((child) => (
-                                <div className="flex flex-col" key={child.value}>
-                                  {child.children && child.children.length > 0 ? (
-                                    <p className="mb-2 px-2 text-sm font-medium text-slate-500">
-                                      {child.label}
-                                    </p>
-                                  ) : (
-                                    <DropdownMenuItem key={child.value} onSelect={() => handleSelect(child)}>
-                                      <SubmenuItemLabel label={child.label} selected={isSelected(child)} />
-                                    </DropdownMenuItem>
-                                  )}
-                                  {child.children?.map((subChild) => (
-                                    <DropdownMenuItem
-                                      key={subChild.value}
-                                      onSelect={() => handleSelect(subChild)}>
-                                      <SubmenuItemLabel
-                                        label={subChild.label}
-                                        selected={isSelected(subChild)}
-                                      />
-                                    </DropdownMenuItem>
-                                  ))}
-
-                                  {child.children && child.children.length > 0 && <DropdownMenuSeparator />}
-                                </div>
-                              ))}
+                              {opt.children.map((child) =>
+                                renderSubmenuChild(child, handleSelect, isSelected)
+                              )}
                             </DropdownMenuSubContent>
                           </DropdownMenuSub>
                         </CommandItem>

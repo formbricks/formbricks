@@ -161,7 +161,7 @@ export const POST = withV1ApiWrapper({
       let attributeUpdatesToSend: TContactAttributesInput | null = null;
       if (attributes) {
         // remove userId and id from attributes
-        const { userId: userIdAttr, id: idAttr, ...updatedAttributes } = attributes;
+        const { userId: _userId, id: _id, ...updatedAttributes } = attributes;
         attributeUpdatesToSend = updatedAttributes as TContactAttributesInput;
       }
 

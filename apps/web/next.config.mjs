@@ -109,7 +109,7 @@ const nextConfig = {
       "../../node_modules/otlp-logger/**/*",
       // lightningcss picks its native package at runtime (require of "lightningcss-<platform>"),
       // which the tracer cannot follow; only the package matching the build's platform/libc is
-      // installed (musl in the Alpine image), so the wildcard copies exactly that one.
+      // installed (glibc in the Debian image), so the wildcard copies exactly that one.
       "../../node_modules/lightningcss/**/*",
       "../../node_modules/lightningcss-*/**/*",
       "../../node_modules/detect-libc/**/*",
@@ -410,7 +410,7 @@ const nextConfig = {
       },
       // SVG files (icons, logos) - long cache since they're usually static
       {
-        source: "/(.*)\\.svg",
+        source: String.raw`/(.*)\.svg`,
         headers: [
           {
             key: "Cache-Control",
@@ -500,7 +500,7 @@ const nextConfig = {
       },
       // Web manifest and browser config files - medium cache
       {
-        source: "/(site\\.webmanifest|browserconfig\\.xml)",
+        source: String.raw`/(site\.webmanifest|browserconfig\.xml)`,
         headers: [
           {
             key: "Cache-Control",

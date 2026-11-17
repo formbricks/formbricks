@@ -145,18 +145,14 @@ export class KubernetesUpgrade {
     });
   }
   path(kind: string, name = "") {
-    const api = ["deployments", "statefulsets", "replicasets"].includes(kind)
-      ? "/apis/apps/v1"
-      : ["jobs", "cronjobs"].includes(kind)
-        ? "/apis/batch/v1"
-        : kind === "horizontalpodautoscalers"
-          ? "/apis/autoscaling/v2"
-          : kind === "endpointslices"
-            ? "/apis/discovery.k8s.io/v1"
-            : ["roles", "rolebindings"].includes(kind)
-              ? "/apis/rbac.authorization.k8s.io/v1"
-              : "/api/v1";
-    return `${api}/namespaces/${this.config.namespace}/${kind}${name ? `/${encodeURIComponent(name)}` : ""}`;
+    let api = "/api/v1";
+    if (["deployments", "statefulsets", "replicasets"].includes(kind)) api = "/apis/apps/v1";
+    else if (["jobs", "cronjobs"].includes(kind)) api = "/apis/batch/v1";
+    else if (kind === "horizontalpodautoscalers") api = "/apis/autoscaling/v2";
+    else if (kind === "endpointslices") api = "/apis/discovery.k8s.io/v1";
+    else if (["roles", "rolebindings"].includes(kind)) api = "/apis/rbac.authorization.k8s.io/v1";
+    const namePath = name ? `/${encodeURIComponent(name)}` : "";
+    return `${api}/namespaces/${this.config.namespace}/${kind}${namePath}`;
   }
   async pods(selector?: string) {
     return (

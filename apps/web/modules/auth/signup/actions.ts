@@ -60,7 +60,7 @@ import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-sub
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
-const ZCreatedUser = ZUser.pick({
+const _ZCreatedUser = ZUser.pick({
   name: true,
   email: true,
   locale: true,
@@ -68,7 +68,7 @@ const ZCreatedUser = ZUser.pick({
   notificationSettings: true,
 });
 
-type TCreatedUser = z.infer<typeof ZCreatedUser>;
+type TCreatedUser = z.infer<typeof _ZCreatedUser>;
 
 async function verifyTurnstileIfConfigured(turnstileToken: string | undefined): Promise<void> {
   if (!IS_TURNSTILE_CONFIGURED) return;

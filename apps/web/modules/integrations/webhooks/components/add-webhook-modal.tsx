@@ -13,7 +13,11 @@ import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { SurveySelect } from "@/modules/integrations/webhooks/components/survey-select";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
 import { WebhookCreatedModal } from "@/modules/integrations/webhooks/components/webhook-created-modal";
-import { isDiscordWebhook, validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
+import {
+  getEndpointAccessibleClassName,
+  isDiscordWebhook,
+  validWebHookURL,
+} from "@/modules/integrations/webhooks/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import {
   Dialog,
@@ -222,15 +226,7 @@ export const AddWebhookModal = ({
                   onChange={(e) => {
                     setTestEndpointInput(e.target.value);
                   }}
-                  className={clsx(
-                    endpointAccessible === true
-                      ? "border-green-500 bg-green-50"
-                      : endpointAccessible === false
-                        ? "border-red-200 bg-red-50"
-                        : endpointAccessible === undefined
-                          ? "border-slate-200 bg-white"
-                          : null
-                  )}
+                  className={clsx(getEndpointAccessibleClassName(endpointAccessible))}
                   placeholder={t("workspace.integrations.webhooks.webhook_url_placeholder")}
                 />
                 <Button

@@ -154,7 +154,7 @@ export const createResponse = async (
   const { finished, ttc: initialTtc } = responseInput;
 
   try {
-    const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
+    const ttc = initialTtc && finished ? calculateTtcTotal(initialTtc) : (initialTtc ?? {});
 
     const prismaData = buildPrismaResponseData(responseInput, contact, ttc);
 

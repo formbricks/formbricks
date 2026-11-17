@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
@@ -85,16 +86,20 @@ export const SummaryList = ({
     );
   };
 
+  // What shows in place of the summaries, if anything.
+  let placeholder: ReactNode = null;
+  if (survey.type === "app" && responseCount === 0 && !workspace.appSetupCompleted) {
+    placeholder = <EmptyAppSurveys />;
+  } else if (summary.length === 0) {
+    placeholder = <SkeletonLoader type="summary" />;
+  } else if (responseCount === 0) {
+    placeholder = <EmptyState text={t("workspace.surveys.summary.no_responses_found")} />;
+  }
+
   return (
     <NotShownCountsProvider value={getNotShownCounts(dropOff)}>
       <div className="mt-4 space-y-8">
-        {survey.type === "app" && responseCount === 0 && !workspace.appSetupCompleted ? (
-          <EmptyAppSurveys />
-        ) : summary.length === 0 ? (
-          <SkeletonLoader type="summary" />
-        ) : responseCount === 0 ? (
-          <EmptyState text={t("workspace.surveys.summary.no_responses_found")} />
-        ) : (
+        {placeholder ??
           summary.map((elementSummary) => {
             if (elementSummary.type === TSurveyElementTypeEnum.OpenText) {
               return (
@@ -273,8 +278,7 @@ export const SummaryList = ({
             }
 
             return null;
-          })
-        )}
+          })}
       </div>
     </NotShownCountsProvider>
   );

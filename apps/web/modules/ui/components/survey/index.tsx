@@ -52,8 +52,6 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
       document.head.appendChild(scriptElement);
       setIsScriptLoaded(true);
       hasLoadedRef.current = true;
-    } catch (error) {
-      throw error;
     } finally {
       isLoadingScript = false;
     }

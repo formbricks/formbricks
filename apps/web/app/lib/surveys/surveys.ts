@@ -324,8 +324,8 @@ export const generateElementAndFilterOptions = ({
   elementFilterOptions: ElementFilterOptions[];
 } => {
   let elementOptions: ElementOptions[] = [];
-  let elementFilterOptions: ElementFilterOptions[] = [];
-  let elementsOptions: ElementOption[] = [];
+  const elementFilterOptions: ElementFilterOptions[] = [];
+  const elementsOptions: ElementOption[] = [];
 
   const elements = getElementsFromBlocks(survey.blocks);
 
@@ -460,7 +460,7 @@ export const generateElementAndFilterOptions = ({
     });
   }
 
-  let languageElement: ElementOption[] = [];
+  const languageElement: ElementOption[] = [];
 
   //can be extended to include more properties
   if (survey.languages?.length > 0) {

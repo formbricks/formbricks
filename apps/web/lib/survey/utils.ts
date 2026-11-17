@@ -212,7 +212,7 @@ export const stripIsDraftFromBlocks = (blocks: TSurveyBlock[]): TSurveyBlock[] =
   return blocks.map((block) => ({
     ...block,
     elements: block.elements.map((element) => {
-      const { isDraft, ...elementRest } = element;
+      const { isDraft: _isDraft, ...elementRest } = element;
       return elementRest;
     }),
   }));

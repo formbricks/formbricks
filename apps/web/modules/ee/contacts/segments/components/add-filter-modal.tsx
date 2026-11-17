@@ -163,6 +163,19 @@ export const handleAddFilter = ({
   }
 };
 
+/** A filter button's handlers: add the filter on click, and on Enter or Space. */
+const addFilterHandlers = (params: Parameters<typeof handleAddFilter>[0]) => ({
+  onClick: () => {
+    handleAddFilter(params);
+  },
+  onKeyDown: (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handleAddFilter(params);
+    }
+  },
+});
+
 export function AddFilterModal({
   // NOSONAR // the read-only attribute doesn't work as expected yet
   onAddFilter,
@@ -274,27 +287,13 @@ export function AddFilterModal({
                   data-testid={`filter-btn-attribute-${attributeKey.key}`}
                   icon={icon}
                   label={attributeKey.name ?? attributeKey.key}
-                  onClick={() => {
-                    handleAddFilter({
-                      type: "attribute",
-                      onAddFilter,
-                      setOpen,
-                      contactAttributeKey: attributeKey.key,
-                      attributeDataType: attributeKey.dataType,
-                    });
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handleAddFilter({
-                        type: "attribute",
-                        onAddFilter,
-                        setOpen,
-                        contactAttributeKey: attributeKey.key,
-                        attributeDataType: attributeKey.dataType,
-                      });
-                    }
-                  }}
+                  {...addFilterHandlers({
+                    type: "attribute",
+                    onAddFilter,
+                    setOpen,
+                    contactAttributeKey: attributeKey.key,
+                    attributeDataType: attributeKey.dataType,
+                  })}
                 />
               );
             })}
@@ -305,23 +304,11 @@ export function AddFilterModal({
                 data-testid={`filter-btn-person-${personAttribute.id}`}
                 icon={<FingerprintIcon className="size-4" />}
                 label={personAttribute.label}
-                onClick={() => {
-                  handleAddFilter({
-                    type: "person",
-                    onAddFilter,
-                    setOpen,
-                  });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    handleAddFilter({
-                      type: "person",
-                      onAddFilter,
-                      setOpen,
-                    });
-                  }
-                }}
+                {...addFilterHandlers({
+                  type: "person",
+                  onAddFilter,
+                  setOpen,
+                })}
               />
             ))}
 
@@ -330,15 +317,7 @@ export function AddFilterModal({
                 data-testid="filter-btn-survey-interaction"
                 icon={<MousePointerClickIcon className="size-4" />}
                 label={surveyInteractionLabel}
-                onClick={() => {
-                  handleAddFilter({ type: "surveyInteraction", onAddFilter, setOpen });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    handleAddFilter({ type: "surveyInteraction", onAddFilter, setOpen });
-                  }
-                }}
+                {...addFilterHandlers({ type: "surveyInteraction", onAddFilter, setOpen })}
               />
             ) : null}
 
@@ -348,25 +327,12 @@ export function AddFilterModal({
                 data-testid={`filter-btn-segment-${segment.id}`}
                 icon={<Users2Icon className="size-4" />}
                 label={segment.title}
-                onClick={() => {
-                  handleAddFilter({
-                    type: "segment",
-                    onAddFilter,
-                    setOpen,
-                    segmentId: segment.id,
-                  });
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    handleAddFilter({
-                      type: "segment",
-                      onAddFilter,
-                      setOpen,
-                      segmentId: segment.id,
-                    });
-                  }
-                }}
+                {...addFilterHandlers({
+                  type: "segment",
+                  onAddFilter,
+                  setOpen,
+                  segmentId: segment.id,
+                })}
               />
             ))}
           </div>
@@ -402,25 +368,12 @@ export function AddFilterModal({
               data-testid={`filter-btn-segment-${segment.id}`}
               icon={<Users2Icon className="size-4" />}
               label={segment.title}
-              onClick={() => {
-                handleAddFilter({
-                  type: "segment",
-                  onAddFilter,
-                  setOpen,
-                  segmentId: segment.id,
-                });
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  handleAddFilter({
-                    type: "segment",
-                    onAddFilter,
-                    setOpen,
-                    segmentId: segment.id,
-                  });
-                }
-              }}
+              {...addFilterHandlers({
+                type: "segment",
+                onAddFilter,
+                setOpen,
+                segmentId: segment.id,
+              })}
             />
           ))}
       </>

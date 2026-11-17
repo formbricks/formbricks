@@ -76,7 +76,7 @@ export const MemberActions = ({
 
       setIsDeleting(false);
       router.refresh();
-    } catch (err) {
+    } catch {
       setIsDeleting(false);
       toast.error(t("common.something_went_wrong_please_try_again"));
     }

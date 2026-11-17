@@ -57,6 +57,7 @@ export function FileUploadElement({
   const uploadingFileCountRef = useRef(0);
 
   // Use centralized error message for required validation, file-specific errors for upload issues
+  // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty message falls back too
   const errorMessage = centralizedErrorMessage || fileErrorMessage;
 
   // Convert string[] to UploadedFile[] for survey-ui component
@@ -72,6 +73,7 @@ export function FileUploadElement({
 
       // Extract filename from URL path
       const urlPath = url.split("?")[0]; // Remove query params
+      // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty last path segment falls back too
       let fileName = urlPath.split("/").pop() || "Unknown file";
 
       try {
@@ -135,7 +137,7 @@ export function FileUploadElement({
     (files: File[]): { filteredFiles: File[]; duplicateFiles: File[] } => {
       const existingFileNames = new Set(
         (value || []).map((url) => {
-          const fileName = fileNames[url] || url.split("/").pop() || "";
+          const fileName = fileNames[url] || (url.split("/").pop() ?? "");
           return fileName.toLowerCase();
         })
       );
