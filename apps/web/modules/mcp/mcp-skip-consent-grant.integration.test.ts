@@ -17,7 +17,7 @@ import {
   signIn,
   waitPastRevocation,
 } from "@/integration/oauth-flow";
-import { waitForBlockOn } from "@/integration/postgres-locks";
+import { lockUserRow, waitForBlockOn } from "@/integration/postgres-locks";
 import { resetDb } from "@/integration/reset-db";
 import { revokeMcpClient } from "@/modules/auth/lib/mcp-grant-revocation";
 import { mcpGrantAccessTokenClaims } from "@/modules/auth/lib/mcp-grant-token-claim";
@@ -272,7 +272,7 @@ describe("a skipConsent client", () => {
     await prisma.$transaction(
       async (tx) => {
         // What a revocation holds while it ends the user's tokens.
-        await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${setup.userId} FOR UPDATE`;
+        await lockUserRow(tx, setup.userId);
         raced = refresh(setup.clientId, refresh_token);
         await waitForBlockOn(tx);
         await markOAuthRevocation({ userId: setup.userId, clientId: setup.clientId });
@@ -323,7 +323,7 @@ describe("a skipConsent client", () => {
       async (tx) => {
         // The exchange passes the before-hook's mark read (nothing marked yet) and waits here, the lock
         // the claim takes `FOR KEY SHARE` before it reads the mark again.
-        await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${setup.userId} FOR UPDATE`;
+        await lockUserRow(tx, setup.userId);
         exchanged = exchangeCode(setup.clientId, code as string, pending.verifier);
         await waitForBlockOn(tx);
         // What Revoke does: its mark first, then, under the user's row this transaction holds as Revoke's

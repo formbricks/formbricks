@@ -179,7 +179,57 @@ describe("mcpGrantAccessTokenClaims", () => {
     const [lookup] = prisma.mcpGrant.findUnique.mock.invocationCallOrder;
     expect(lock).toBeLessThan(mark);
     expect(mark).toBeLessThan(lookup);
-    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 5_000 });
+  });
+
+  // The lock wait is bounded in the transaction itself, before the row is taken.
+  test("waits at most 2 s for the user's row, set before it locks the row", async () => {
+    await claims({ client: CONSENT_CLIENT });
+
+    const [setLockTimeout] = prisma.$queryRaw.mock.calls[0] as unknown[];
+    expect((setLockTimeout as TemplateStringsArray).join("?")).toContain("set_config('lock_timeout'");
+    expect(prisma.$queryRaw.mock.calls[0]).toContain("2000ms");
+    expect(prisma.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(lockUserForMcpGrantWrite).mock.invocationCallOrder[0]
+    );
+  });
+
+  // The provider has already spent the code: the exchange can't fail and be retried, so it fails closed.
+  test.each([
+    [
+      "the user's row held past the lock timeout",
+      () => {
+        vi.mocked(lockUserForMcpGrantWrite).mockRejectedValue(
+          new Prisma.PrismaClientKnownRequestError("canceling statement due to lock timeout", {
+            code: "P2010",
+            clientVersion: "test",
+          })
+        );
+      },
+    ],
+    [
+      "the transaction running out",
+      () => {
+        prisma.$transaction.mockRejectedValue(new Error("Transaction already closed: timeout"));
+      },
+    ],
+    [
+      "the revocation mark unreadable",
+      () => {
+        vi.mocked(readOAuthRevocationTime).mockRejectedValue(new Error("Redis connection lost"));
+      },
+    ],
+  ])("names no grant, and still issues the token, with %s", async (_case, fail) => {
+    fail();
+
+    for (const client of [CONSENT_CLIENT, FIRST_PARTY]) {
+      await expect(claims({ client })).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: null });
+    }
+    expect(prisma.mcpGrant.findUnique).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: "user-1", clientId: "client-1" }),
+      "Reading the grant of an MCP code exchange failed, so its token names no grant"
+    );
   });
 
   test("reads a refresh's grant without the code check", async () => {
@@ -213,8 +263,8 @@ describe("mcpGrantAccessTokenClaims", () => {
 
     await expect(claims()).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: "grant-1" });
     expect(createMcpGrantIfMissing).toHaveBeenCalled();
-    // Under the user's row, which a Revoke waiting behind a reconciling pass can hold for 30 s.
-    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
+    // Under the user's row, waited for briefly: a Revoke can hold it for 35 s.
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 5_000 });
   });
 
   // A client that asked for no MCP scope could do nothing with a grant: none is created for it.

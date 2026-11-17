@@ -20,7 +20,7 @@ import {
   signIn,
   waitPastRevocation,
 } from "@/integration/oauth-flow";
-import { waitForBlockOn } from "@/integration/postgres-locks";
+import { lockUserRow, waitForBlockOn } from "@/integration/postgres-locks";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { revokeAllUserOAuthGrants, revokeMcpClient } from "@/modules/auth/lib/mcp-grant-revocation";
@@ -329,7 +329,7 @@ describe("a connection's grant", () => {
     let replacementId = "";
     await prisma.$transaction(
       async (tx) => {
-        await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${setup.userId} FOR UPDATE`;
+        await lockUserRow(tx, setup.userId);
         exchanged = exchangeCode(setup.clientId, code, pending.verifier);
         await waitForBlockOn(tx);
         // What Revoke then a new approval leave behind: the mark, and a new grant for the client.
@@ -355,6 +355,38 @@ describe("a connection's grant", () => {
     const claim = decodeJwt(response.body.access_token as string).mcp_grant;
     expect(claim).not.toBe(replacementId);
     expect(claim).toBeNull();
+  });
+
+  // The provider has spent the code by the time the claim reads the grant, so the exchange can't fail. With
+  // the user's row held past the claim's 2 s lock timeout (a slow Revoke or member removal), the claim gives
+  // up rather than holding the exchange for the Revoke's 35 s budget, and the token names no grant: it is
+  // refused until the client authorizes again. (The provider's own token insert, whose foreign key takes
+  // the user's row `FOR KEY SHARE`, still waits for the row; that wait is upstream's.)
+  test("a code exchanged while the user's row is held past the lock timeout names no grant", async () => {
+    await grant(setup.cookie, setup.clientId, EVERYTHING);
+    const pending = await authorize(setup.cookie, setup.clientId, EVERYTHING);
+    const code = pending.target.searchParams.get("code") as string;
+    expect(code, pending.target.toString()).toBeTruthy();
+
+    let exchanged: ReturnType<typeof exchangeCode> | undefined;
+    await prisma.$transaction(
+      async (tx) => {
+        await lockUserRow(tx, setup.userId);
+        exchanged = exchangeCode(setup.clientId, code, pending.verifier);
+        await waitForBlockOn(tx);
+        // Past the claim's 2 s lock timeout: what is being tested is that wait running out.
+        await new Promise((resolve) => setTimeout(resolve, 2_500));
+      },
+      { timeout: 15_000 }
+    );
+
+    const response = await (exchanged as ReturnType<typeof exchangeCode>);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    const accessToken = response.body.access_token as string;
+    // The user still has the grant: only the lock timeout can have left the claim empty.
+    expect(await getMcpGrant(setup.userId, setup.clientId)).not.toBeNull();
+    expect(decodeJwt(accessToken).mcp_grant).toBeNull();
+    expectUnauthenticated(await listSurveys(accessToken, setup));
   });
 
   // The grant is keyed on the user and the client, so approving the client again after Revoke makes a new

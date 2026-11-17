@@ -13,6 +13,7 @@ import {
   signIn,
   waitPastRevocation,
 } from "@/integration/oauth-flow";
+import { lockUserRow } from "@/integration/postgres-locks";
 import { resetDb } from "@/integration/reset-db";
 import { lockUserActiveState } from "@/lib/user/reactivation";
 import { updateMembership, updateMembershipInTransaction } from "@/modules/ee/role-management/lib/membership";
@@ -343,7 +344,7 @@ describe("a Dashboard viewer's OAuth grant", () => {
 
       const blocker = prisma.$transaction(
         async (tx) => {
-          await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
+          await lockUserRow(tx, userId);
           userLocked();
           await userReleased;
         },

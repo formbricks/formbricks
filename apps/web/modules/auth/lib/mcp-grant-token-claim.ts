@@ -2,7 +2,6 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { getUnconsentedMcpGrantPermissions, isMcpGrantEmpty } from "@/modules/mcp/grant";
@@ -72,6 +71,42 @@ const readExchangedCodeFor = async (userId: string, clientId: string): Promise<T
 };
 
 /**
+ * How long a code exchange waits for the user's row, which a Revoke or a member removal holds `FOR UPDATE`
+ * while it ends grants (up to `MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS` behind a reconciling pass), and how
+ * long its transaction may run. The provider has already spent the code, so the exchange can't be failed
+ * and retried: one that can't get the row in time issues its token naming no grant instead (fail closed),
+ * and the client authorizes again. Short, so a slow Revoke never stalls every exchange of the user.
+ */
+const CODE_EXCHANGE_LOCK_TIMEOUT_MS = 2_000;
+const CODE_EXCHANGE_LOCK_TIMEOUT = `${CODE_EXCHANGE_LOCK_TIMEOUT_MS}ms`;
+const CODE_EXCHANGE_TRANSACTION_TIMEOUT_MS = 5_000;
+
+/**
+ * Runs `step` in a transaction that holds the user's row `FOR KEY SHARE`, the lock a revocation waits on
+ * with `FOR UPDATE`, waiting for it at most {@link CODE_EXCHANGE_LOCK_TIMEOUT_MS}. A Revoke that wrote its
+ * mark before this took the row is seen by a mark read in `step`; one that starts after this commits waits
+ * for it, then deletes what `step` named or created.
+ */
+const underUserRow = <T>(userId: string, step: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> =>
+  prisma.$transaction(
+    async (tx) => {
+      await tx.$queryRaw`SELECT set_config('lock_timeout', ${CODE_EXCHANGE_LOCK_TIMEOUT}, true)`;
+      await lockUserForMcpGrantWrite(tx, userId);
+      return step(tx);
+    },
+    { timeout: CODE_EXCHANGE_TRANSACTION_TIMEOUT_MS }
+  );
+
+/** The id of the user's grant to the client, or `null` without one. */
+const readGrantId = async (
+  db: Prisma.TransactionClient,
+  userId: string,
+  clientId: string
+): Promise<string | null> =>
+  (await db.mcpGrant.findUnique({ where: { userId_clientId: { userId, clientId } }, select: { id: true } }))
+    ?.id ?? null;
+
+/**
  * Gives the user a grant to a `skipConsent` client if they have none, unless a revocation covers the code
  * being exchanged. Never throws: the code is already spent, and failing the exchange would leave the client
  * nothing to retry with. Without a grant the token carries no claim, its calls are refused, and its next
@@ -90,23 +125,17 @@ const grantSkipConsentClient = async (
     // A client that asked for no MCP scope gets no grant: it couldn't use one, and its refresh needs none.
     const permissions = getUnconsentedMcpGrantPermissions(granted);
     if (isMcpGrantEmpty(permissions)) return;
-    const created = await prisma.$transaction(
-      async (tx) => {
-        // The lock a revocation waits on, before the mark is read: a Revoke that wrote its mark first is
-        // seen here, and one that starts after this commits deletes the grant below with the rest.
-        await lockUserForMcpGrantWrite(tx, userId);
-        const revokedAt = await readOAuthRevocationTime(userId, clientId);
-        if (isIssuedBeforeRevocation(exchanged.issuedAt, revokedAt)) return null;
-        return createMcpGrantIfMissing(tx, { userId, clientId, permissions });
-      },
-      // The user's row can be held by a Revoke waiting behind a reconciling pass.
-      { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
-    );
+    const created = await underUserRow(userId, async (tx) => {
+      const revokedAt = await readOAuthRevocationTime(userId, clientId);
+      if (isIssuedBeforeRevocation(exchanged.issuedAt, revokedAt)) return null;
+      return createMcpGrantIfMissing(tx, { userId, clientId, permissions });
+    });
     if (!created) return;
     await queueMcpGrantAudit({ action: "created", actorUserId: userId, before: null, after: created });
   } catch (error) {
     // A known Prisma error is the expected case (the user or the client deleted meanwhile, a lost race on
-    // the unique key) and is a warning; anything else is a fault and is logged as an error.
+    // the unique key, the user's row held past the lock timeout) and is a warning; anything else is a fault
+    // and is logged as an error.
     const expected = error instanceof Prisma.PrismaClientKnownRequestError;
     logger[expected ? "warn" : "error"](
       { err: loggableError(error), userId, clientId },
@@ -117,29 +146,34 @@ const grantSkipConsentClient = async (
 
 /**
  * The grant a token minted from an authorization code is issued under, or `null` when a revocation covers
- * the code. Reads the mark and the grant under the user's row: a Revoke that marked after the before-hook's
- * read is seen here, and one that starts later waits for this read and then deletes the grant it named.
- * Otherwise a Revoke and a new approval landing between the two would hand the revoked code's token the
- * new approval's grant.
+ * the code. Reads the mark and the grant under the user's row ({@link underUserRow}): a Revoke that marked
+ * after the before-hook's read is seen here, and one that starts later waits for this read and then deletes
+ * the grant it named. Otherwise a Revoke and a new approval landing between the two would hand the revoked
+ * code's token the new approval's grant.
+ *
+ * Never throws, as the provider has already spent the code: when the row isn't free within the lock
+ * timeout, the transaction runs out, or the mark can't be read, the token names no grant. `/api/mcp`
+ * refuses such a token, and the client authorizes again.
  */
 const readCodeExchangeGrantId = async (
   userId: string,
   clientId: string,
   exchanged: TExchangedCode
-): Promise<string | null> =>
-  prisma.$transaction(
-    async (tx) => {
-      await lockUserForMcpGrantWrite(tx, userId);
+): Promise<string | null> => {
+  try {
+    return await underUserRow(userId, async (tx) => {
       const revokedAt = await readOAuthRevocationTime(userId, clientId);
       if (isIssuedBeforeRevocation(exchanged.issuedAt, revokedAt)) return null;
-      const grant = await tx.mcpGrant.findUnique({
-        where: { userId_clientId: { userId, clientId } },
-        select: { id: true },
-      });
-      return grant?.id ?? null;
-    },
-    { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
-  );
+      return readGrantId(tx, userId, clientId);
+    });
+  } catch (error) {
+    logger.warn(
+      { err: loggableError(error), userId, clientId },
+      "Reading the grant of an MCP code exchange failed, so its token names no grant"
+    );
+    return null;
+  }
+};
 
 /**
  * The access-token claims for the grant the token is issued under: its id, or `null` while the user
@@ -157,11 +191,7 @@ export const mcpGrantAccessTokenClaims = async ({
   if (!user) return {};
   const { clientId } = client;
   if (grantType !== "authorization_code") {
-    const grant = await prisma.mcpGrant.findUnique({
-      where: { userId_clientId: { userId: user.id, clientId } },
-      select: { id: true },
-    });
-    return { [MCP_GRANT_TOKEN_CLAIM]: grant?.id ?? null };
+    return { [MCP_GRANT_TOKEN_CLAIM]: await readGrantId(prisma, user.id, clientId) };
   }
   const exchanged = await readExchangedCodeFor(user.id, clientId);
   if (!exchanged) {

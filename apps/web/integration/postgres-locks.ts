@@ -18,3 +18,11 @@ export const waitForBlockOn = async (tx: Prisma.TransactionClient, timeoutMs = 8
   }
   throw new Error("nothing blocked on the transaction's lock");
 };
+
+/**
+ * Locks the user's row `FOR UPDATE` in `tx`, as a Revoke or a member removal holds it while it ends the
+ * user's grants: what a code exchange's grant claim and a grant write wait on (`FOR KEY SHARE`).
+ */
+export const lockUserRow = async (tx: Prisma.TransactionClient, userId: string): Promise<void> => {
+  await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${userId} FOR UPDATE`;
+};
