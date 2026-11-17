@@ -159,6 +159,10 @@ The workspace must belong to the instance at `FORMBRICKS_APP_URL`. If you omit t
 to `https://app.formbricks.com`. If you omit the workspace ID, the SDK is not initialized. No API key or
 `IS_FORMBRICKS_CLOUD` setting is required to enable this integration.
 
+When enabled, the SDK sends each signed-in user's ID, email address, first name, and last name to the
+configured instance, or to `https://app.formbricks.com` if `FORMBRICKS_APP_URL` is unset. Choose an
+instance that may receive these user details before enabling the integration.
+
 For Docker Compose, add both variables to the app's `environment` configuration and recreate the app
 container so the new values take effect. A Compose `.env` file alone does not pass additional variables
 into the container.
