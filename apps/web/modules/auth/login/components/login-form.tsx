@@ -114,8 +114,13 @@ export const LoginForm = ({
           title: t("auth.login.oauth_generic_error_title"),
           description: t("auth.login.oauth_generic_error_description"),
         };
-      default:
+      case null:
         return null;
+      default: {
+        // A variant without a case would render no alert at all; make that a type error instead.
+        const unhandledVariant: never = oauthErrorVariant;
+        return unhandledVariant;
+      }
     }
   }, [oauthErrorVariant, t]);
 
