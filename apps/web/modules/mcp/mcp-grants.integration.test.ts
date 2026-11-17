@@ -18,7 +18,9 @@ import {
   refresh,
   registerClient,
   signIn,
+  waitPastRevocation,
 } from "@/integration/oauth-flow";
+import { waitForBlockOn } from "@/integration/postgres-locks";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { revokeAllUserOAuthGrants, revokeMcpClient } from "@/modules/auth/lib/mcp-grant-revocation";
@@ -291,13 +293,35 @@ describe("a connection's grant", () => {
     );
   });
 
+  // A reconciling pass holds the grant row FOR SHARE across its SpiceDB calls, for up to 30 s. Revoke
+  // waits that out rather than fail at the app client's 20-second transaction budget.
+  test("Revoke waits for a reconciling pass holding the grant row, rather than timing out", async () => {
+    await grant(setup.cookie, setup.clientId, EVERYTHING);
+    const grantId = (await getMcpGrant(setup.userId, setup.clientId))?.id as string;
+
+    let revoked: ReturnType<typeof revokeMcpClient> | undefined;
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT 1 FROM "McpGrant" WHERE "id" = ${grantId} FOR SHARE`;
+        revoked = revokeMcpClient({ userId: setup.userId, clientId: setup.clientId });
+        await waitForBlockOn(tx);
+        // Longer than the app client's 20-second transaction budget (APP_TRANSACTION_TIMEOUT_MS).
+        await new Promise((resolve) => setTimeout(resolve, 21_000));
+      },
+      { timeout: 30_000 }
+    );
+
+    await expect(revoked).resolves.not.toBeNull();
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+  }, 60_000);
+
   // The grant is keyed on the user and the client, so approving the client again after Revoke makes a new
   // one under the same key. A token from before the Revoke must stay refused: it was ended with the old one.
   test("a token minted before Revoke stays refused after the user approves the client again", async () => {
     const before = await grant(setup.cookie, setup.clientId, EVERYTHING);
     expect(await revokeMcpClient({ userId: setup.userId, clientId: setup.clientId })).not.toBeNull();
-    // A sign-in code issued in the second of the Revoke is refused, so the new approval waits that out.
-    await new Promise((resolve) => setTimeout(resolve, 1_100));
+    // A sign-in code issued within the skew of the Revoke is refused, so the new approval waits that out.
+    await waitPastRevocation();
 
     const after = await grant(setup.cookie, setup.clientId, EVERYTHING);
 

@@ -428,7 +428,8 @@ describe("editMcpGrant", () => {
       permissions: { surveys: "write" },
       access: { access: "workspaces", workspaceIds: ["ws-1"] },
     });
-    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 15_000 });
+    // The reconciler can hold the grant row for 30 s; the save allows for that, then 15 s of its own.
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 45_000 });
     expect(projectMcpGrants).toHaveBeenCalledWith(["grant-1"]);
   });
 

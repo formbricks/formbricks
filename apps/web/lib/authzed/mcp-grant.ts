@@ -42,8 +42,12 @@ export type TProjectedMcpGrant = Readonly<{ id: string } & TMcpGrantAccessSelect
 
 type TGrantSnapshot = ReadonlyArray<TProjectedMcpGrant>;
 
-/** How long one reconciling pass may hold its grants' row locks, SpiceDB round trips included. */
-const MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS = 30_000;
+/**
+ * How long one reconciling pass may hold its grants' row locks, SpiceDB round trips included. A path that
+ * locks a grant row `FOR UPDATE` (a save, a Revoke) can wait this long behind one, so its own transaction
+ * timeout allows for it (`grant-store.ts`).
+ */
+export const MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS = 30_000;
 const MCP_GRANT_PROJECTION_TRANSACTION_MAX_WAIT_MS = 10_000;
 
 /**

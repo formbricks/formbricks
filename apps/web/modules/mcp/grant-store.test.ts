@@ -37,6 +37,8 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 vi.mock("@/lib/authzed/mcp-grant", () => ({
+  // The reconciler's lock-hold bound, which the save and Revoke timeouts allow for.
+  MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS: 30_000,
   deleteMcpGrantRelationshipsBeforeCommit: vi.fn(),
   reconcileMcpGrantRelationships: vi.fn(),
   removeDeletedMcpGrantRelationships: vi.fn(),

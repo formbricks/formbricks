@@ -15,6 +15,7 @@ import {
   refresh,
   registerClient,
   signIn,
+  waitPastRevocation,
 } from "@/integration/oauth-flow";
 import { waitForBlockOn } from "@/integration/postgres-locks";
 import { resetDb } from "@/integration/reset-db";
@@ -275,7 +276,7 @@ describe("a skipConsent client", () => {
     expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
 
     // Authorizing again after the Revoke is a new connection, and works.
-    await new Promise((resolve) => setTimeout(resolve, 1_100));
+    await waitPastRevocation();
     await grant(setup.cookie, setup.clientId, EVERYTHING);
     expect(await getMcpGrant(setup.userId, setup.clientId)).not.toBeNull();
   });

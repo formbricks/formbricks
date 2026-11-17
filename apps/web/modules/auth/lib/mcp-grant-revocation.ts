@@ -5,6 +5,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import {
+  MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS,
   MCP_GRANT_SYSTEM_ACTOR,
   type TMcpGrantAuditRecord,
   type TStoredMcpGrant,
@@ -184,7 +185,10 @@ export const revokeMcpClient = async ({
 }): Promise<(TRevokedGrant & { grants: TStoredMcpGrant[] }) | null> => {
   // Its pending sign-in codes live outside PostgreSQL: marked first, so none issued before now is exchanged.
   await markOAuthRevocation({ userId, clientId });
-  const revoked = await prisma.$transaction((tx) => endClientAccess(tx, userId, clientId));
+  // Allows for a reconciling pass holding the grant row (MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS).
+  const revoked = await prisma.$transaction((tx) => endClientAccess(tx, userId, clientId), {
+    timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS,
+  });
   if (revoked.grants.length === 0 && revoked.consentsDeleted === 0) return null;
   await removeDeletedMcpGrants(revoked.grants);
   return revoked;

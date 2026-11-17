@@ -104,6 +104,8 @@ vi.mock("./mcp-oauth-provider-options", () => ({ MCP_OAUTH_REFRESH_TOKEN_PREFIX:
 vi.mock("./oauth-revocation-marker", () => ({ markOAuthRevocation: vi.fn() }));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventBackground: vi.fn() }));
 vi.mock("@/lib/authzed/mcp-grant", () => ({
+  // The reconciler's lock-hold bound, which the save and Revoke timeouts allow for.
+  MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS: 30_000,
   deleteMcpGrantRelationshipsBeforeCommit: vi.fn(),
   reconcileMcpGrantRelationships: vi.fn(),
   removeDeletedMcpGrantRelationships: vi.fn(),
@@ -258,6 +260,8 @@ describe("revokeOAuthConsentGrant", () => {
         data: { revoked: expect.any(Date) },
       });
     }
+    // A reconciling pass can hold the grant row for 30 s: Revoke waits that out rather than fail.
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
     // Grant first, the order every path that locks both takes; then the consent delete, which takes the
     // row locks a racing refresh's FOR SHARE read waits on, before the tokens.
     expect(mocks.calls).toEqual([
@@ -1131,7 +1135,8 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
       });
       // What the save adds is projected after the commit.
       expect(reconcileMcpGrantRelationships).toHaveBeenCalledWith({ grantIds: ["grant-1"] });
-      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 15_000 });
+      // The reconciler can hold the grant row for 30 s; the save allows for that, then 15 s of its own.
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 45_000 });
     });
 
     // A refusal after the SpiceDB delete would commit unchanged rows over relationships that no longer
