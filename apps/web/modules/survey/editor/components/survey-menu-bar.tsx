@@ -36,6 +36,7 @@ import {
 } from "@/modules/survey/editor/lib/custom-css-autosave";
 import { toFlowTabMessage } from "@/modules/survey/editor/lib/flow-error-message";
 import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
+import { withPageDates } from "@/modules/survey/editor/lib/survey-dates";
 import {
   parseSurveyEndings,
   removeDraftFlagsFromBlocks,
@@ -356,7 +357,7 @@ export const SurveyMenuBar = ({
   };
 
   const validateSurveyWithZod = (): boolean => {
-    const localSurveyValidation = ZSurvey.safeParse(localSurvey);
+    const localSurveyValidation = ZSurvey.safeParse(withPageDates(localSurvey));
     if (!localSurveyValidation.success) {
       const issues = localSurveyValidation.error.issues;
       const newInvalidIds: string[] = [];
@@ -744,7 +745,7 @@ export const SurveyMenuBar = ({
       attempt = saveAttemptOrder.begin();
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
-      const updatedSurveyResponse = await updateSurveyAction({ ...localSurvey, segment });
+      const updatedSurveyResponse = await updateSurveyAction(withPageDates({ ...localSurvey, segment }));
 
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
@@ -823,11 +824,7 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      const publishResult = await updateSurveyAction({
-        ...localSurvey,
-        status,
-        segment,
-      });
+      const publishResult = await updateSurveyAction(withPageDates({ ...localSurvey, status, segment }));
 
       if (!publishResult?.data) {
         const errorMessage = getFormattedErrorMessage(publishResult);
@@ -889,11 +886,7 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      const scheduleResult = await updateSurveyAction({
-        ...localSurvey,
-        status,
-        segment,
-      });
+      const scheduleResult = await updateSurveyAction(withPageDates({ ...localSurvey, status, segment }));
 
       if (!scheduleResult?.data) {
         const errorMessage = getFormattedErrorMessage(scheduleResult);
