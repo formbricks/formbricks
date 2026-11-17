@@ -118,6 +118,12 @@ const createToolServer = () => {
   return tools;
 };
 
+/**
+ * Dashboard and widget writes answer with charts on their widgets, so they need Charts: Read
+ * (`dashboards:read`) as well, as `get_dashboard` does.
+ */
+const DASHBOARD_WRITE_SCOPES = ["dashboards:read", "dashboards:write"];
+
 const call = async (name: string, input: unknown, scopes: string[], dashboardViewerOnly = false) => {
   const tool = createToolServer().get(name);
   if (!tool) throw new Error(`${name} is not registered`);
@@ -392,7 +398,7 @@ describe("chart and dashboard MCP tools", () => {
     expect(renameV3Dashboard).not.toHaveBeenCalled();
     expect(duplicateV3Dashboard).not.toHaveBeenCalled();
 
-    for (const [name, input] of writes) await call(name, input, ["dashboards:write"]);
+    for (const [name, input] of writes) await call(name, input, DASHBOARD_WRITE_SCOPES);
     expect(createV3Dashboard).toHaveBeenCalledWith(
       expect.objectContaining({ body: { workspaceId: WORKSPACE_ID, name: "Matchday" }, instance: "/api/mcp" })
     );
@@ -402,6 +408,37 @@ describe("chart and dashboard MCP tools", () => {
     expect(duplicateV3Dashboard).toHaveBeenCalledWith(
       expect.objectContaining({ dashboardId: DASHBOARD_ID, body: {} })
     );
+  });
+
+  // Their answers carry each widget's whole chart: Dashboards: Write alone must not read chart definitions
+  // that get_dashboard withholds without Charts: Read.
+  test("dashboard and widget writes that answer with charts are refused on dashboards:write alone", async () => {
+    const writes = [
+      ["update_dashboard", { dashboardId: DASHBOARD_ID, name: "Matchday 2" }],
+      ["duplicate_dashboard", { dashboardId: DASHBOARD_ID }],
+      ["add_chart_to_dashboard", { dashboardId: DASHBOARD_ID, chartId: CHART_ID }],
+      ["update_widget", { dashboardId: DASHBOARD_ID, widgetId: WIDGET_ID, chartId: CHART_ID }],
+      [
+        "update_dashboard_layout",
+        { dashboardId: DASHBOARD_ID, expectedUpdatedAt: "2026-01-01T00:00:00.000Z", widgets: [] },
+      ],
+      [
+        "set_dashboard_filters",
+        { dashboardId: DASHBOARD_ID, expectedUpdatedAt: "2026-01-01T00:00:00.000Z", filters: [] },
+      ],
+    ] as const;
+
+    for (const [name, input] of writes) {
+      const refused = await call(name, input, ["dashboards:write"]);
+      expect(refused.isError, name).toBe(true);
+      expect(JSON.stringify(refused), name).toContain("dashboards:read");
+    }
+    expect(renameV3Dashboard).not.toHaveBeenCalled();
+    expect(duplicateV3Dashboard).not.toHaveBeenCalled();
+    expect(addV3DashboardWidget).not.toHaveBeenCalled();
+    expect(updateV3DashboardWidget).not.toHaveBeenCalled();
+    expect(updateV3DashboardLayout).not.toHaveBeenCalled();
+    expect(setV3DashboardFilters).not.toHaveBeenCalled();
   });
 
   test("duplicate_dashboard warns the copy shares its charts, and no tool deletes anything", () => {
@@ -429,7 +466,7 @@ describe("chart and dashboard MCP tools", () => {
     expect(addV3DashboardWidget).not.toHaveBeenCalled();
 
     const results = [];
-    for (const [name, input] of writes) results.push(await call(name, input, ["dashboards:write"]));
+    for (const [name, input] of writes) results.push(await call(name, input, DASHBOARD_WRITE_SCOPES));
     expect(results.map((result) => result.isError)).toEqual([undefined, undefined, undefined]);
     expect(addV3DashboardWidget).toHaveBeenCalledWith(
       expect.objectContaining({ dashboardId: DASHBOARD_ID, body: { chartId: CHART_ID, layout } })
@@ -458,7 +495,7 @@ describe("chart and dashboard MCP tools", () => {
     expect((await call("update_dashboard_layout", input, ["dashboards:read"])).isError).toBe(true);
     expect(updateV3DashboardLayout).not.toHaveBeenCalled();
 
-    await call("update_dashboard_layout", input, ["dashboards:write"]);
+    await call("update_dashboard_layout", input, DASHBOARD_WRITE_SCOPES);
     expect(updateV3DashboardLayout).toHaveBeenCalledWith(
       expect.objectContaining({
         dashboardId: DASHBOARD_ID,
@@ -491,7 +528,7 @@ describe("chart and dashboard MCP tools", () => {
     expect((await call("set_dashboard_filters", input, ["dashboards:read"])).isError).toBe(true);
     expect(setV3DashboardFilters).not.toHaveBeenCalled();
 
-    await call("set_dashboard_filters", input, ["dashboards:write"]);
+    await call("set_dashboard_filters", input, DASHBOARD_WRITE_SCOPES);
     const { body } = vi.mocked(setV3DashboardFilters).mock.calls[0][0];
     expect(body.expectedUpdatedAt).toBe(input.expectedUpdatedAt);
     expect(body.filters[0]).toEqual(kept);
@@ -504,7 +541,7 @@ describe("chart and dashboard MCP tools", () => {
     await call(
       "set_dashboard_filters",
       { dashboardId: DASHBOARD_ID, expectedUpdatedAt: "2026-10-22T10:00:00.000Z", filters: [] },
-      ["dashboards:write"]
+      DASHBOARD_WRITE_SCOPES
     );
     expect(setV3DashboardFilters).toHaveBeenCalledWith(
       expect.objectContaining({ body: { expectedUpdatedAt: "2026-10-22T10:00:00.000Z", filters: [] } })

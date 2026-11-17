@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
-import { noContentResponse, successResponse } from "@/app/api/v3/lib/response";
+import { noContentResponse, successListResponse, successResponse } from "@/app/api/v3/lib/response";
 import {
   batchDeleteV3Responses,
   batchSetV3ResponsesOutcome,
@@ -25,6 +25,7 @@ import {
   buildCountResponsesSearchParams,
   buildListResponsesSearchParams,
   registerResponseTools,
+  withoutUnreachableResponseData,
 } from "./responses";
 
 /**
@@ -556,6 +557,191 @@ describe("the confirmation state is sealed", () => {
     expect(forged).not.toBe(minted);
     expect(body).toEqual(expect.any(String));
     await expect(mcpRequestStateCodec.verify(forged, codecContext)).rejects.toThrow();
+  });
+});
+
+/**
+ * A response names its contact and the tags it is filed under, and neither is the response's own data:
+ * a caller without Contacts: Read or Tags: Read sees them null/empty rather than losing the tool.
+ */
+describe("contact and tags without their permissions", () => {
+  // The detailed resource carries the contact; a list item carries tags only (the published item
+  // schema has no `contact`), so the two shapes are asserted apart.
+  const tags = [{ id: "cltg000000000000000000001", name: "vip" }];
+  const resource = {
+    id: RESPONSE_ID,
+    surveyId: "clsv000000000000000000001",
+    data: { q1: "an answer" },
+    contact: { id: "clct000000000000000000001", userId: null },
+    tags,
+  };
+  const listItem = {
+    id: RESPONSE_ID,
+    surveyId: "clsv000000000000000000001",
+    data: { q1: "an answer" },
+    tags,
+  };
+
+  /** An OAuth caller, which unlike an API key has a grant to withhold a permission with. */
+  const oauthAuthInfo = (scopes: string[], permissions: Record<string, string>) => ({
+    token: "oauth:user_1:client_1",
+    clientId: "client_1",
+    scopes,
+    extra: {
+      formbricksAuthentication: {
+        user: { id: "user_1", email: "person@example.com", name: "Person" },
+        expires: "2026-07-01T00:00:00.000Z",
+      },
+      requestId: "req_tool",
+      authMethod: "oauth",
+      grant: { access: "all", permissions },
+    },
+  });
+
+  const responsesOnly = oauthAuthInfo(["responses:read"], { responses: "read" });
+  const responsesWrite = oauthAuthInfo(["responses:read", "responses:write"], { responses: "write" });
+  const withContacts = oauthAuthInfo(["responses:read", "audience:read"], {
+    responses: "read",
+    contacts: "read",
+  });
+  const withTags = oauthAuthInfo(["responses:read", "audience:read"], {
+    responses: "read",
+    tags: "read",
+  });
+  const withBoth = oauthAuthInfo(["responses:read", "audience:read"], {
+    responses: "read",
+    contacts: "read",
+    tags: "read",
+  });
+
+  const callerContext = (authInfo: unknown) =>
+    ({ http: { authInfo }, mcpReq: { method: "tools/call" } }) as never;
+
+  const listAs = async (authInfo: unknown) => {
+    vi.mocked(listV3Responses).mockResolvedValue(
+      successListResponse(
+        [listItem, { ...listItem, id: "clrs000000000000000000002" }],
+        { limit: 20, nextCursor: null },
+        { requestId: "req_tool" }
+      )
+    );
+
+    const result = await call(
+      "list_responses",
+      { workspaceId: WORKSPACE_ID, limit: 20 },
+      callerContext(authInfo)
+    );
+    return (result.structuredContent as { data: unknown[] }).data;
+  };
+
+  const getAs = async (authInfo: unknown) => {
+    vi.mocked(getV3Response).mockResolvedValue(successResponse(resource, { requestId: "req_tool" }));
+
+    const result = await call("get_response", { responseId: RESPONSE_ID }, callerContext(authInfo));
+    return (result.structuredContent as { data: unknown }).data;
+  };
+
+  test("list_responses empties each item's tags for a caller without Tags: Read", async () => {
+    expect(await listAs(responsesOnly)).toEqual([
+      { ...listItem, tags: [] },
+      { ...listItem, id: "clrs000000000000000000002", tags: [] },
+    ]);
+  });
+
+  test("list_responses leaves the items untouched with Tags: Read", async () => {
+    expect((await listAs(withTags))[0]).toEqual(listItem);
+  });
+
+  test("get_response nulls the contact for a caller without Contacts: Read", async () => {
+    expect(await getAs(responsesOnly)).toEqual({ ...resource, contact: null, tags: [] });
+  });
+
+  test("Contacts: Read keeps the contact and still empties the tags", async () => {
+    expect(await getAs(withContacts)).toEqual({ ...resource, tags: [] });
+  });
+
+  test("Tags: Read keeps the tags and still nulls the contact", async () => {
+    expect(await getAs(withTags)).toEqual({ ...resource, contact: null });
+  });
+
+  test("a caller holding both permissions gets the response untouched", async () => {
+    expect(await getAs(withBoth)).toEqual(resource);
+  });
+
+  // The caller reads every response's tags as [], so a tags replace from that view would drop tags it
+  // never saw: naming tags needs Tags: Read, and a write that leaves them out goes ahead.
+  test("update_response refuses to name tags without Tags: Read, and runs without them", async () => {
+    vi.mocked(updateV3ResponseFromRawInput).mockImplementation(async () =>
+      successResponse(resource, { requestId: "req_tool" })
+    );
+
+    const refused = await call(
+      "update_response",
+      { responseId: RESPONSE_ID, data: { tags: [] } },
+      callerContext(responsesWrite)
+    );
+    expect(refused.isError).toBe(true);
+    expect(JSON.stringify(refused.structuredContent)).toContain("Tags: Read");
+    expect(updateV3ResponseFromRawInput).not.toHaveBeenCalled();
+
+    const ran = await call(
+      "update_response",
+      { responseId: RESPONSE_ID, data: { finished: true } },
+      callerContext(responsesWrite)
+    );
+    expect(ran.isError).toBeFalsy();
+    expect(updateV3ResponseFromRawInput).toHaveBeenCalledTimes(1);
+  });
+
+  test("create_response and update_response redact the resource they return", async () => {
+    // A fresh Response per call: a body can only be read once.
+    vi.mocked(createV3ResponseFromRawInput).mockImplementation(async () =>
+      successResponse(resource, { requestId: "req_tool" })
+    );
+    vi.mocked(updateV3ResponseFromRawInput).mockImplementation(async () =>
+      successResponse(resource, { requestId: "req_tool" })
+    );
+    const redacted = { ...resource, contact: null, tags: [] };
+
+    const created = await call(
+      "create_response",
+      { data: { surveyId: "clsv000000000000000000001" } },
+      callerContext(responsesWrite)
+    );
+    expect(created.structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
+
+    const updated = await call(
+      "update_response",
+      { responseId: RESPONSE_ID, data: { finished: true } },
+      callerContext(responsesWrite)
+    );
+    expect(updated.structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
+  });
+});
+
+describe("withoutUnreachableResponseData", () => {
+  const text = (payload: unknown) => ({
+    structuredContent: payload,
+    content: [{ type: "text" as const, text: "x" }],
+  });
+  const both = { contacts: true, tags: true };
+  const neither = { contacts: false, tags: false };
+
+  test("hands the result back when the caller may read both fields", () => {
+    const result = text({ data: { contact: { id: "c" }, tags: [{ id: "t" }] } });
+    expect(withoutUnreachableResponseData(result as never, both)).toBe(result);
+  });
+
+  test("passes an error result through untouched", () => {
+    const error = { ...text({ error: { status: 403 } }), isError: true };
+    expect(withoutUnreachableResponseData(error as never, neither)).toBe(error);
+  });
+
+  test("leaves a payload that carries neither field as it is", () => {
+    const counted = text({ data: { count: 3, relation: "eq" } });
+    expect(withoutUnreachableResponseData(counted as never, neither).structuredContent).toEqual({
+      data: { count: 3, relation: "eq" },
+    });
   });
 });
 

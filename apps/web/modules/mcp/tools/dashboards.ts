@@ -25,6 +25,7 @@ import { toRequestFilters } from "@/modules/ee/analysis/dashboards/lib/dashboard
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { type TMcpToolContext, isMcpDashboardViewerOnly } from "../auth";
 import { responseToMcpToolResult } from "../errors";
+import type { TMcpPermissionRequirement } from "../permissions";
 import {
   type TMcpAddChartToDashboardInput,
   type TMcpChartIdInput,
@@ -124,6 +125,17 @@ const hasDashboardId = (input: unknown): boolean =>
   typeof input === "object" &&
   input !== null &&
   typeof (input as { dashboardId?: unknown }).dashboardId === "string";
+
+/**
+ * Dashboard and widget writes answer with the dashboard or widget they wrote, whose widgets carry their
+ * whole chart, as `get_dashboard` returns them: so they need Charts: Read beside Dashboards: Write, or a
+ * grant without Charts could read chart definitions through a rename. `create_dashboard` answers with an
+ * empty dashboard and `remove_chart_from_dashboard` with an acknowledgement, so neither needs it.
+ */
+const DASHBOARD_WRITE_WITH_CHARTS = [
+  { permission: "dashboards", level: "write" },
+  { permission: "charts", level: "read" },
+] as const satisfies readonly TMcpPermissionRequirement[];
 
 export function registerDashboardTools(server: McpServer): void {
   registerMcpTool(
@@ -503,7 +515,7 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },
       annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
-    [{ permission: "dashboards", level: "write" }],
+    DASHBOARD_WRITE_WITH_CHARTS,
     async ({ dashboardId, ...body }: TMcpUpdateDashboardInput, ctx) =>
       runMutation(ctx, "updated", "dashboard", (context) =>
         renameV3Dashboard({ dashboardId, body, ...context })
@@ -522,7 +534,7 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "created", targetType: "dashboard" },
       annotations: WRITE_ANNOTATIONS,
     },
-    [{ permission: "dashboards", level: "write" }],
+    DASHBOARD_WRITE_WITH_CHARTS,
     async ({ dashboardId, ...body }: TMcpDuplicateDashboardInput, ctx) =>
       runMutation(ctx, "created", "dashboard", (context) =>
         duplicateV3Dashboard({ dashboardId, body, ...context })
@@ -541,7 +553,7 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "created", targetType: "dashboardWidget" },
       annotations: WRITE_ANNOTATIONS,
     },
-    [{ permission: "dashboards", level: "write" }],
+    DASHBOARD_WRITE_WITH_CHARTS,
     async ({ dashboardId, ...body }: TMcpAddChartToDashboardInput, ctx) =>
       runMutation(ctx, "created", "dashboardWidget", (context) =>
         addV3DashboardWidget({ dashboardId, body, ...context })
@@ -560,7 +572,7 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "updated", targetType: "dashboardWidget", targetIdArg: "widgetId" },
       annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
-    [{ permission: "dashboards", level: "write" }],
+    DASHBOARD_WRITE_WITH_CHARTS,
     async ({ dashboardId, widgetId, ...body }: TMcpUpdateWidgetInput, ctx) =>
       runMutation(ctx, "updated", "dashboardWidget", (context) =>
         updateV3DashboardWidget({ dashboardId, widgetId, body, ...context })
@@ -598,7 +610,7 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },
       annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
-    [{ permission: "dashboards", level: "write" }],
+    DASHBOARD_WRITE_WITH_CHARTS,
     async ({ dashboardId, ...body }: TMcpUpdateDashboardLayoutInput, ctx) =>
       runMutation(ctx, "updated", "dashboard", (context) =>
         updateV3DashboardLayout({ dashboardId, body, ...context })
@@ -617,7 +629,7 @@ export function registerDashboardTools(server: McpServer): void {
       audit: { action: "updated", targetType: "dashboard", targetIdArg: "dashboardId" },
       annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
-    [{ permission: "dashboards", level: "write" }],
+    DASHBOARD_WRITE_WITH_CHARTS,
     async ({ dashboardId, expectedUpdatedAt, filters }: TMcpSetDashboardFiltersInput, ctx) =>
       runMutation(ctx, "updated", "dashboard", (context) =>
         setV3DashboardFilters({

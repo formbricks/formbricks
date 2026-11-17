@@ -125,9 +125,15 @@ async function runWorkflowMutation(
 ): Promise<CallToolResult> {
   // The shared runner owns the audit lifecycle; workflows only differ in building their API context
   // (which threads the same auditLog through) before delegating to the caller's operation.
-  return runMcpMutation(mcpCtx, { action, resource: "workflow" }, ({ authentication, requestId, auditLog }) =>
-    run(buildWorkflowApiContext(authentication, requestId, MCP_API_ROUTE, auditLog ?? undefined))
+  const result = await runMcpMutation(
+    mcpCtx,
+    { action, resource: "workflow" },
+    ({ authentication, requestId, auditLog }) =>
+      run(buildWorkflowApiContext(authentication, requestId, MCP_API_ROUTE, auditLog ?? undefined))
   );
+  const authInfo = getMcpToolAuthInfo(mcpCtx);
+
+  return mcpCallerHolds(authInfo, RESPONSES_READ) ? result : withoutRespondentDataInWorkflows(result);
 }
 
 const RESPONSES_READ = { permission: "responses", level: "read" } as const;
@@ -187,13 +193,50 @@ export const withoutRespondentDataInRunList = (result: CallToolResult): CallTool
   };
 };
 
+/** A workflow with its embedded `lastRun.error` set to `null`, when it carries a run; anything else as is. */
+const withoutLastRunError = (workflow: unknown): unknown => {
+  if (!isRecord(workflow) || !isRecord(workflow.lastRun)) return workflow;
+  return { ...workflow, lastRun: { ...workflow.lastRun, error: null } };
+};
+
+/**
+ * A workflow result (`list_workflows`, `get_workflow`, or a mutation's) without each workflow's
+ * `lastRun.error`, which can quote what a failed step sent (see {@link withoutRespondentData}), for a
+ * caller without Responses: Read. A workflow carries no other respondent-derived field. An error result
+ * passes through.
+ */
+export const withoutRespondentDataInWorkflows = (result: CallToolResult): CallToolResult => {
+  const payload = result.structuredContent;
+  if (result.isError || !isRecord(payload) || !("data" in payload)) return result;
+  const source: unknown = payload.data;
+  let data: unknown;
+  let changed: boolean;
+  if (Array.isArray(source)) {
+    const workflows: unknown[] = source.map(withoutLastRunError);
+    data = workflows;
+    changed = workflows.some((workflow, index) => workflow !== source[index]);
+  } else {
+    data = withoutLastRunError(source);
+    changed = data !== source;
+  }
+  // Nothing carried a run: hand the same result back rather than a re-serialized copy of it.
+  if (!changed) return result;
+  const redacted = { ...payload, data };
+  return {
+    ...result,
+    structuredContent: redacted,
+    content: [{ type: "text", text: JSON.stringify(redacted) }],
+  };
+};
+
 export function registerWorkflowTools(server: McpServer): void {
   registerMcpTool(
     server,
     "list_workflows",
     {
       title: "List workflows",
-      description: "List workflows in a Formbricks workspace using the v3 Workflows API contract.",
+      description:
+        "List workflows in a Formbricks workspace using the v3 Workflows API contract. Without Responses: Read in the user's grant, each workflow's lastRun.error is null: it can quote respondents' answers.",
       inputSchema: ZMcpListWorkflowsInput,
       annotations: {
         readOnlyHint: true,
@@ -211,8 +254,9 @@ export function registerWorkflowTools(server: McpServer): void {
         req: buildWorkflowsListRequest(buildListWorkflowsSearchParams(input)),
         ctx,
       });
+      const result = await responseToMcpToolResult(response, requestId);
 
-      return await responseToMcpToolResult(response, requestId);
+      return mcpCallerHolds(authInfo, RESPONSES_READ) ? result : withoutRespondentDataInWorkflows(result);
     }
   );
 
@@ -221,7 +265,8 @@ export function registerWorkflowTools(server: McpServer): void {
     "get_workflow",
     {
       title: "Get workflow",
-      description: "Get one Formbricks workflow using the v3 Workflows API contract.",
+      description:
+        "Get one Formbricks workflow using the v3 Workflows API contract. Without Responses: Read in the user's grant, lastRun.error is null: it can quote respondents' answers.",
       inputSchema: ZMcpGetWorkflowInput,
       annotations: {
         readOnlyHint: true,
@@ -236,8 +281,9 @@ export function registerWorkflowTools(server: McpServer): void {
       const requestId = getMcpRequestId(authInfo);
       const ctx = buildWorkflowApiContext(getMcpAuthentication(authInfo), requestId, MCP_API_ROUTE);
       const response = await workflowsHandlers.get({ ctx, params: { workflowId: input.workflowId } });
+      const result = await responseToMcpToolResult(response, requestId);
 
-      return await responseToMcpToolResult(response, requestId);
+      return mcpCallerHolds(authInfo, RESPONSES_READ) ? result : withoutRespondentDataInWorkflows(result);
     }
   );
 

@@ -20,9 +20,10 @@ import {
 } from "@/app/api/v3/responses/lib/operations";
 import { validateV3ResponseFromRawInput } from "@/app/api/v3/responses/lib/validate-operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
-import type { TMcpToolContext } from "../auth";
+import { type TMcpToolContext, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { type TMcpConfirmationState, mcpRequestStateCodec } from "../request-state";
+import { mcpCallerHolds } from "./caller-permissions";
 import { registerMcpTool } from "./guard-permissions";
 import {
   type TMcpBatchDeleteResponsesInput,
@@ -148,6 +149,79 @@ export const buildListResponsesSearchParams = (input: TMcpListResponsesInput): U
 export const buildCountResponsesSearchParams = (input: TMcpCountResponsesInput): URLSearchParams =>
   toSearchParams({ ...sharedFilterParams(input), precision: input.precision });
 
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/**
+ * The response resource carries the contact it belongs to and the tags it is filed under, and neither is
+ * Responses data: `contact` is the audience's record and `tags` the Tags permission's, so a caller without
+ * them gets `contact: null` and `tags: []` — where the entry carries those fields at all — rather than a
+ * refusal for a tool `responses:read`/`write` reaches. Over MCP only; the REST operations are unchanged.
+ * An error result passes through.
+ */
+export const withoutUnreachableResponseData = (
+  result: CallToolResult,
+  reach: { contacts: boolean; tags: boolean }
+): CallToolResult => {
+  if (reach.contacts && reach.tags) return result;
+  const payload = result.structuredContent;
+  if (result.isError || !isRecord(payload) || !("data" in payload)) return result;
+  const redact = (entry: unknown) => {
+    if (!isRecord(entry)) return entry;
+    const redacted = { ...entry };
+    // A list item carries tags but not the contact (the published item schema has no `contact`), and the
+    // output schema is strict, so a field the entry does not carry is left out rather than invented.
+    if (!reach.contacts && "contact" in redacted) redacted.contact = null;
+    if (!reach.tags && "tags" in redacted) redacted.tags = [];
+    return redacted;
+  };
+  const source = payload.data;
+  const data = Array.isArray(source) ? source.map(redact) : redact(source);
+  const redacted = { ...payload, data };
+
+  return {
+    ...result,
+    structuredContent: redacted,
+    content: [{ type: "text", text: JSON.stringify(redacted) }],
+  };
+};
+
+const CONTACTS_READ = { permission: "contacts", level: "read" } as const;
+const TAGS_READ = { permission: "tags", level: "read" } as const;
+
+/** A response tool's result as the caller's grant may read it (see {@link withoutUnreachableResponseData}). */
+const responseResultForCaller = (ctx: TMcpToolContext, result: CallToolResult): CallToolResult => {
+  const authInfo = getMcpToolAuthInfo(ctx);
+
+  return withoutUnreachableResponseData(result, {
+    contacts: mcpCallerHolds(authInfo, CONTACTS_READ),
+    tags: mcpCallerHolds(authInfo, TAGS_READ),
+  });
+};
+
+/**
+ * Whether a create or update names the response's tags (`data.tags`). Tags are the Tags permission's
+ * data, and a caller without it reads every response's tags as `[]` (`withoutUnreachableResponseData`): a
+ * replace sent from that view would drop tags the caller never saw. So naming tags needs Tags: Read too,
+ * and a write that leaves them out keeps them as they are.
+ */
+export const namesResponseTags = (input: unknown): boolean => {
+  if (!isRecord(input) || !isRecord(input.data)) return false;
+  return Object.hasOwn(input.data, "tags") && input.data.tags !== undefined;
+};
+
+const responseWriteRequirements = (input: unknown) =>
+  namesResponseTags(input)
+    ? ([{ permission: "responses", level: "write" }, TAGS_READ] as const)
+    : ([{ permission: "responses", level: "write" }] as const);
+
+/**
+ * The contact and tags a response names are reachable from the audience and Tags permissions; said once so
+ * the four tools returning a response cannot word it differently.
+ */
+const UNREACHABLE_RESPONSE_FIELDS =
+  "Without Contacts: Read any contact a response carries is null, and without Tags: Read its tags are empty and a write that names tags is refused.";
+
 export function registerResponseTools(server: McpServer): void {
   registerMcpTool(
     server,
@@ -157,6 +231,7 @@ export function registerResponseTools(server: McpServer): void {
       description: [
         "List survey responses in a Formbricks workspace, newest first.",
         "Scope is always a workspace; narrow with surveyId or contactId.",
+        UNREACHABLE_RESPONSE_FIELDS,
         FEEDBACK_RECORD_BOUNDARY,
       ].join(" "),
       inputSchema: ZMcpListResponsesInput,
@@ -170,8 +245,9 @@ export function registerResponseTools(server: McpServer): void {
         searchParams: buildListResponsesSearchParams(input),
         ...context,
       });
+      const result = await responseToMcpToolResult(response, context.requestId);
 
-      return await responseToMcpToolResult(response, context.requestId);
+      return responseResultForCaller(ctx, result);
     }
   );
 
@@ -208,6 +284,7 @@ export function registerResponseTools(server: McpServer): void {
       title: "Get response",
       description: [
         "Read one survey response in full, with every answer labelled by the element that asked it.",
+        UNREACHABLE_RESPONSE_FIELDS,
         FEEDBACK_RECORD_BOUNDARY_SHORT,
       ].join(" "),
       inputSchema: ZMcpGetResponseInput,
@@ -218,8 +295,9 @@ export function registerResponseTools(server: McpServer): void {
     async (input: TMcpGetResponseInput, ctx) => {
       const context = toolContext(ctx);
       const response = await getV3Response({ responseId: input.responseId, ...context });
+      const result = await responseToMcpToolResult(response, context.requestId);
 
-      return await responseToMcpToolResult(response, context.requestId);
+      return responseResultForCaller(ctx, result);
     }
   );
 
@@ -261,6 +339,7 @@ export function registerResponseTools(server: McpServer): void {
         "Record a survey response. This is a real submission: it fires webhooks, integrations and",
         "follow-ups, counts against quotas, and is metered like any other response.",
         "Call validate_response first to see exactly what it would do.",
+        UNREACHABLE_RESPONSE_FIELDS,
         FEEDBACK_RECORD_BOUNDARY_SHORT,
       ].join(" "),
       inputSchema: ZMcpCreateResponseInput,
@@ -273,19 +352,22 @@ export function registerResponseTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    [{ permission: "responses", level: "write" }],
+    { byInput: responseWriteRequirements },
     async (input: TMcpCreateResponseInput, ctx) =>
-      runMcpMutation(
+      responseResultForCaller(
         ctx,
-        { action: "created", resource: "response" },
-        ({ authentication, requestId, auditLog }) =>
-          createV3ResponseFromRawInput({
-            body: input.data,
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-          })
+        await runMcpMutation(
+          ctx,
+          { action: "created", resource: "response" },
+          ({ authentication, requestId, auditLog }) =>
+            createV3ResponseFromRawInput({
+              body: input.data,
+              authentication,
+              requestId,
+              instance: MCP_API_ROUTE,
+              auditLog,
+            })
+        )
       )
   );
 
@@ -298,6 +380,7 @@ export function registerResponseTools(server: McpServer): void {
         "Correct a survey response. A provided `data` or `tags` replaces that whole value rather than",
         "merging into it, so send the complete set — to add one tag, read the response first and send",
         "every tag it should end up with. Finishing a response fires the response pipeline.",
+        UNREACHABLE_RESPONSE_FIELDS,
         FEEDBACK_RECORD_BOUNDARY_SHORT,
       ].join(" "),
       inputSchema: ZMcpUpdateResponseInput,
@@ -312,20 +395,23 @@ export function registerResponseTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    [{ permission: "responses", level: "write" }],
+    { byInput: responseWriteRequirements },
     async (input: TMcpUpdateResponseInput, ctx) =>
-      runMcpMutation(
+      responseResultForCaller(
         ctx,
-        { action: "updated", resource: "response", logContext: { responseId: input.responseId } },
-        ({ authentication, requestId, auditLog }) =>
-          updateV3ResponseFromRawInput({
-            responseId: input.responseId,
-            body: input.data,
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-          })
+        await runMcpMutation(
+          ctx,
+          { action: "updated", resource: "response", logContext: { responseId: input.responseId } },
+          ({ authentication, requestId, auditLog }) =>
+            updateV3ResponseFromRawInput({
+              responseId: input.responseId,
+              body: input.data,
+              authentication,
+              requestId,
+              instance: MCP_API_ROUTE,
+              auditLog,
+            })
+        )
       )
   );
 

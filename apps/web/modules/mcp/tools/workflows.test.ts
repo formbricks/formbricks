@@ -15,6 +15,7 @@ import {
   buildListWorkflowsSearchParams,
   registerWorkflowTools,
   withoutRespondentData,
+  withoutRespondentDataInWorkflows,
 } from "./workflows";
 
 // The registered inputSchema is a Standard Schema; only these two members are read here.
@@ -747,6 +748,155 @@ describe("list_workflow_runs without Responses: Read", () => {
     const result = await callWith({ ...readOnlyAuthInfo, scopes: ["workflows:read", "responses:read"] });
 
     expect((result.structuredContent as { data: unknown }).data).toEqual(runs);
+  });
+});
+
+/**
+ * A workflow embeds its latest run, whose error can quote what a failed step sent — the same leak
+ * `get_workflow_run` closes, reached through a tool that declares only Workflows.
+ */
+describe("workflow lastRun without Responses: Read", () => {
+  const workflow = {
+    id: WORKFLOW_ID,
+    name: "Notify",
+    status: "enabled",
+    lastRun: { id: RUN_ID, status: "failed", error: "550 mailbox a@b.c unavailable" },
+  };
+  const redacted = { ...workflow, lastRun: { ...workflow.lastRun, error: null } };
+  const other = { id: "wf9999999999999999999999ab", name: "Other", lastRun: null };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as any);
+    vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
+    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+  });
+
+  // An upgraded client: `workflows:read` and a grant at Workflow runs: Read, nothing of Responses.
+  const workflowsOnly = {
+    ...readOnlyAuthInfo,
+    extra: {
+      ...readOnlyAuthInfo.extra,
+      grant: { access: "all", permissions: { workflowRuns: "read" } },
+    },
+  };
+  const withResponses = { ...readOnlyAuthInfo, scopes: ["workflows:read", "responses:read"] };
+
+  test("get_workflow sets lastRun.error to null for a grant without Responses: Read", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(workflowsHandlers.get).mockResolvedValue(successResponse(workflow, { requestId: "req_tool" }));
+
+    const result = await tools
+      .get("get_workflow")!
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo: workflowsOnly } });
+
+    expect(result.structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
+    expect(JSON.parse(result.content[0].text)).toEqual({ data: redacted, requestId: "req_tool" });
+  });
+
+  test("list_workflows sets each lastRun.error to null, leaving a workflow without a run alone", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(workflowsHandlers.list).mockResolvedValue(
+      successListResponse([workflow, other], { limit: 20, nextCursor: null }, { requestId: "req_tool" })
+    );
+
+    const result = await tools
+      .get("list_workflows")!
+      .handler({ workspaceId: WORKSPACE_ID, limit: 20 }, { http: { authInfo: workflowsOnly } });
+
+    expect((result.structuredContent as { data: unknown }).data).toEqual([redacted, other]);
+    expect(JSON.parse(result.content[0].text).data).toEqual([redacted, other]);
+  });
+
+  test("a mutation's workflow keeps lastRun.error only for a caller with Responses: Read", async () => {
+    const { tools } = createToolServer();
+    const caller = (authInfo: unknown) =>
+      tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { http: { authInfo } });
+    // A fresh Response per call: a body can only be read once.
+    vi.mocked(workflowsHandlers.enable).mockImplementation(async () =>
+      successResponse(workflow, { requestId: "req_tool" })
+    );
+
+    expect((await caller(authInfo)).structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
+    expect(
+      (await caller({ ...authInfo, scopes: ["workflows:read", "workflows:write", "responses:read"] }))
+        .structuredContent
+    ).toEqual({ data: workflow, requestId: "req_tool" });
+  });
+
+  test("returns the workflow whole when both the token and the grant give Responses: Read", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(workflowsHandlers.get).mockResolvedValue(successResponse(workflow, { requestId: "req_tool" }));
+
+    const result = await tools
+      .get("get_workflow")!
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo: withResponses } });
+
+    expect(result.structuredContent).toEqual({ data: workflow, requestId: "req_tool" });
+  });
+
+  test("passes an error through untouched", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(workflowsHandlers.get).mockResolvedValue(
+      problemForbidden("req_tool", "You are not authorized to access this resource")
+    );
+
+    const result = await tools
+      .get("get_workflow")!
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo: workflowsOnly } });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({ error: { status: 403 } });
+  });
+});
+
+describe("withoutRespondentDataInWorkflows", () => {
+  const text = (payload: unknown) => ({
+    structuredContent: payload,
+    content: [{ type: "text" as const, text: "x" }],
+  });
+
+  test("leaves a result that carries no workflow as it is", () => {
+    const empty = text({ requestId: "r" });
+    expect(withoutRespondentDataInWorkflows(empty as never)).toBe(empty);
+    const listed = text({ data: [1, 2], requestId: "r" });
+    expect(withoutRespondentDataInWorkflows(listed as never)).toBe(listed);
+  });
+
+  test("redacts the single-workflow and list shapes, leaving other fields and shapes alone", () => {
+    const single = withoutRespondentDataInWorkflows(
+      text({
+        data: { id: "w", name: "n", lastRun: { status: "failed", error: "550 a@b.c" } },
+        requestId: "r",
+      })
+    );
+    expect(single.structuredContent).toEqual({
+      data: { id: "w", name: "n", lastRun: { status: "failed", error: null } },
+      requestId: "r",
+    });
+    expect(JSON.parse((single.content[0] as { text: string }).text)).toEqual(single.structuredContent);
+
+    const list = withoutRespondentDataInWorkflows(
+      text({
+        data: [
+          { id: "w", lastRun: { error: "x" } },
+          { id: "v", lastRun: null },
+        ],
+        requestId: "r",
+      })
+    );
+    expect(list.structuredContent).toEqual({
+      data: [
+        { id: "w", lastRun: { error: null } },
+        { id: "v", lastRun: null },
+      ],
+      requestId: "r",
+    });
+  });
+
+  test("passes an error result through untouched", () => {
+    const error = { isError: true, structuredContent: { data: { lastRun: { error: "x" } } }, content: [] };
+    expect(withoutRespondentDataInWorkflows(error as never)).toBe(error);
   });
 });
 

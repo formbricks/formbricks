@@ -44,7 +44,13 @@ type TScopeGate =
 /** A tool's declared permissions in the shape of `TScopeGate`, as `permission:level`. */
 type TDeclaredGate = TScopeGate;
 
-/** The scope gate of every tool before ENG-7148, in registration order. */
+/**
+ * The scope gate of every tool before ENG-7148, in registration order. One deliberate change since: the
+ * dashboard and widget writes that answer with charts also need `dashboards:read` (Charts: Read), as
+ * `get_dashboard` does, so a dashboards write can't read chart definitions a read would withhold; and
+ * `create_response` / `update_response` are gated per input, needing Tags: Read only when they name tags
+ * (the same `responses` scope family, so the scopes shown here are unchanged).
+ */
 const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   list_surveys: ["surveys:read"],
   get_survey: ["surveys:read"],
@@ -97,8 +103,22 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   count_responses: ["responses:read"],
   get_response: ["responses:read"],
   validate_response: ["responses:write"],
-  create_response: ["responses:write"],
-  update_response: ["responses:write"],
+  create_response: {
+    byInput: {
+      viewerWithDashboard: ["responses:write"],
+      viewerNoDashboard: ["responses:write"],
+      otherWithDashboard: ["responses:write"],
+      otherNoDashboard: ["responses:write"],
+    },
+  },
+  update_response: {
+    byInput: {
+      viewerWithDashboard: ["responses:write"],
+      viewerNoDashboard: ["responses:write"],
+      otherWithDashboard: ["responses:write"],
+      otherNoDashboard: ["responses:write"],
+    },
+  },
   delete_response: ["responses:write"],
   batch_delete_responses: ["responses:write"],
   set_responses_outcome: ["responses:write"],
@@ -152,13 +172,13 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
     },
   },
   create_dashboard: ["dashboards:write"],
-  update_dashboard: ["dashboards:write"],
-  duplicate_dashboard: ["dashboards:write"],
-  add_chart_to_dashboard: ["dashboards:write"],
-  update_widget: ["dashboards:write"],
+  update_dashboard: ["dashboards:write", "dashboards:read"],
+  duplicate_dashboard: ["dashboards:write", "dashboards:read"],
+  add_chart_to_dashboard: ["dashboards:write", "dashboards:read"],
+  update_widget: ["dashboards:write", "dashboards:read"],
   remove_chart_from_dashboard: ["dashboards:write"],
-  update_dashboard_layout: ["dashboards:write"],
-  set_dashboard_filters: ["dashboards:write"],
+  update_dashboard_layout: ["dashboards:write", "dashboards:read"],
+  set_dashboard_filters: ["dashboards:write", "dashboards:read"],
   duplicate_chart: {
     byInput: {
       viewerWithDashboard: ["dashboards:write"],
@@ -241,8 +261,22 @@ const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
   count_responses: ["responses:read"],
   get_response: ["responses:read"],
   validate_response: ["responses:write"],
-  create_response: ["responses:write"],
-  update_response: ["responses:write"],
+  create_response: {
+    byInput: {
+      viewerWithDashboard: ["responses:write"],
+      viewerNoDashboard: ["responses:write"],
+      otherWithDashboard: ["responses:write"],
+      otherNoDashboard: ["responses:write"],
+    },
+  },
+  update_response: {
+    byInput: {
+      viewerWithDashboard: ["responses:write"],
+      viewerNoDashboard: ["responses:write"],
+      otherWithDashboard: ["responses:write"],
+      otherNoDashboard: ["responses:write"],
+    },
+  },
   set_responses_outcome: ["responses:write"],
   delete_response: ["responses:write"],
   batch_delete_responses: ["responses:write"],
@@ -296,13 +330,13 @@ const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
     },
   },
   create_dashboard: ["dashboards:write"],
-  update_dashboard: ["dashboards:write"],
-  duplicate_dashboard: ["dashboards:write"],
-  add_chart_to_dashboard: ["dashboards:write"],
-  update_widget: ["dashboards:write"],
+  update_dashboard: ["dashboards:write", "charts:read"],
+  duplicate_dashboard: ["dashboards:write", "charts:read"],
+  add_chart_to_dashboard: ["dashboards:write", "charts:read"],
+  update_widget: ["dashboards:write", "charts:read"],
   remove_chart_from_dashboard: ["dashboards:write"],
-  update_dashboard_layout: ["dashboards:write"],
-  set_dashboard_filters: ["dashboards:write"],
+  update_dashboard_layout: ["dashboards:write", "charts:read"],
+  set_dashboard_filters: ["dashboards:write", "charts:read"],
   duplicate_chart: {
     byInput: {
       viewerWithDashboard: ["charts:write", "dashboards:write"],
@@ -401,6 +435,27 @@ describe("MCP tool permissions", () => {
     expect(
       Object.fromEntries(tools.map(({ name, permissions }) => [name, toDeclaredGate(permissions)]))
     ).toEqual(DECLARED_PERMISSIONS);
+  });
+
+  // A write naming tags needs Tags: Read: without it the caller reads every response's tags as empty, and
+  // a replace from that view would drop tags it never saw.
+  test("response writes that name tags declare Tags: Read too", { timeout: 120_000 }, async () => {
+    const tools = new Map((await loadRegistrations()).map(({ name, permissions }) => [name, permissions]));
+
+    for (const [name, input] of [
+      ["create_response", { data: { surveyId: "s", tags: ["t"] } }],
+      ["update_response", { responseId: "r", data: { tags: [] } }],
+    ] as const) {
+      const declared = tools.get(name);
+      if (!declared || !("byInput" in declared)) throw new Error(`${name} declares no byInput`);
+      expect(toPermissionNames(declared.byInput(input, NOT_VIEWER)), name).toEqual([
+        "responses:write",
+        "tags:read",
+      ]);
+      expect(toPermissionNames(declared.byInput({ data: { finished: true } }, NOT_VIEWER)), name).toEqual([
+        "responses:write",
+      ]);
+    }
   });
 
   test("chart reads declare both Charts and Feedback records", { timeout: 120_000 }, async () => {
