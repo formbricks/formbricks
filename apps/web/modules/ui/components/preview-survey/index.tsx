@@ -361,7 +361,7 @@ export const PreviewSurvey = ({
   const resetProgress = () => {
     // A restart runs the rules before the first question again, so the banner may apply again.
     setHasFollowedQuestion(false);
-    let storePreviewMode = previewMode;
+    const storePreviewMode = previewMode;
     setPreviewMode("null");
     setTimeout(() => {
       setPreviewMode(storePreviewMode);

@@ -58,7 +58,7 @@ const mockOrganizationBillingRecord = {
 };
 
 beforeEach(() => {
-  // @ts-expect-error
+  // @ts-expect-error -- the Prisma client is mocked, so its methods carry no mock typings
   prisma.response.create.mockImplementation(async (args) => {
     if (args.data.contact && args.data.contact.connect) {
       return {
@@ -75,7 +75,7 @@ beforeEach(() => {
 
   prisma.response.findUnique.mockResolvedValue(mockResponse);
 
-  // @ts-expect-error
+  // @ts-expect-error -- the Prisma client is mocked, so its methods carry no mock typings
   prisma.response.update.mockImplementation(async (args) => {
     if (args.data.finished === true) {
       return {
@@ -104,7 +104,7 @@ beforeEach(() => {
   prisma.organizationBilling.findUnique.mockResolvedValue(mockOrganizationBillingRecord as unknown as any);
   prisma.workspace.findMany.mockResolvedValue([]);
   prisma.workspace.findUnique.mockResolvedValue({ organizationId: mockOrganizationOutput.id } as any);
-  // @ts-expect-error
+  // @ts-expect-error -- the Prisma client is mocked, so its methods carry no mock typings
   prisma.response.aggregate.mockResolvedValue({ _count: { id: 1 } });
 });
 

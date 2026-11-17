@@ -13,7 +13,7 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
-import { SONAR_PARITY_RULE_IDS } from "../packages/config-oxlint/sonar-parity.mjs";
+import { STAGED_LINES_RULE_IDS } from "../packages/config-oxlint/sonar-parity.mjs";
 import { decodeSonarMessage, parseStagedLineRanges, touchesStagedCode } from "./staged-lines.mjs";
 
 // oxlint doesn't export its bin, but package.json is exported, so go through it to get an
@@ -25,11 +25,11 @@ const OXLINT_CLI = path.join(
 );
 
 /*
- * SonarCloud judges a pull request's new code only, and much existing code is over its limits. A
- * commit fails on a Sonar-parity rule (`SONAR_PARITY_RULE_IDS`, packages/config-oxlint/sonar-parity.mjs)
+ * SonarCloud judges a pull request's new code only, and existing code is still over some of its
+ * limits. A commit fails on such a rule (`STAGED_LINES_RULE_IDS`, packages/config-oxlint/sonar-parity.mjs)
  * only inside the lines it stages, as Sonar would on the PR.
  */
-const SONAR_RULES = new Set(SONAR_PARITY_RULE_IDS);
+const STAGED_LINES_RULES = new Set(STAGED_LINES_RULE_IDS);
 
 /** `sonarjs(cognitive-complexity)` → `sonarjs/cognitive-complexity`; core rules drop the `eslint` scope. */
 export const ruleIdOf = (code) => {
@@ -99,7 +99,7 @@ function runOxlint(paths, { typeAware }) {
       maxBuffer: 64 * 1024 * 1024,
       env: {
         ...process.env,
-        // The Sonar-parity rules are off for the whole-repo lint until the backlog is fixed. Here they
+        // The staged-lines rules are off for the whole-repo lint until their backlog is fixed. Here they
         // report as warnings, and the loop below fails the commit on one only inside the staged lines.
         OXLINT_SONAR_PARITY: "warn",
         // oxlint.config.ts in a package without "type": "module" makes Node print a warning per run.
@@ -142,7 +142,7 @@ for (const diagnostic of runs.flatMap((run) => run.diagnostics)) {
   if (diagnostic.severity === "error") {
     console.log(format(diagnostic.filename, message, "error"));
     failed = true;
-  } else if (SONAR_RULES.has(message.ruleId)) {
+  } else if (STAGED_LINES_RULES.has(message.ruleId)) {
     if (!rangesByFile.has(diagnostic.filename)) {
       rangesByFile.set(diagnostic.filename, stagedLineRanges(diagnostic.filename));
     }

@@ -16,11 +16,11 @@ interface EnterCodeProps {
   readonly refreshData: () => void;
 }
 
-const ZEnterCodeFormState = z.object({
+const _ZEnterCodeFormState = z.object({
   code: z.string().length(6),
 });
 
-type TEnterCodeFormState = z.infer<typeof ZEnterCodeFormState>;
+type TEnterCodeFormState = z.infer<typeof _ZEnterCodeFormState>;
 
 export const EnterCode = ({ setCurrentStep, setOpen, refreshData }: EnterCodeProps) => {
   const { t } = useTranslation();

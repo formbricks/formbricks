@@ -326,7 +326,7 @@ describe("getSurveySummaryDropOff", () => {
       displayCount
     );
 
-    expect(dropOff.length).toBe(2);
+    expect(dropOff).toHaveLength(2);
     // Q1: welcome card disabled so impressions = displayCount
     expect(dropOff[0].elementId).toBe("q1");
     expect(dropOff[0].impressions).toBe(displayCount);
@@ -536,7 +536,7 @@ describe("getQuestionSummary", () => {
     const openTextSummary = summary.find((s: any) => s.element?.id === "q_open");
     expect(openTextSummary?.type).toBe(TSurveyElementTypeEnum.OpenText);
     expect(openTextSummary?.responseCount).toBe(1);
-    // @ts-expect-error
+    // @ts-expect-error -- the summary is a union; the fixture, not the type, fixes which member it is
     expect(openTextSummary?.samples[0].value).toBe("Open answer");
   });
 
@@ -550,11 +550,11 @@ describe("getQuestionSummary", () => {
     const multiSingleSummary = summary.find((s: any) => s.element?.id === "q_multi_single");
     expect(multiSingleSummary?.type).toBe(TSurveyElementTypeEnum.MultipleChoiceSingle);
     expect(multiSingleSummary?.responseCount).toBe(1);
-    // @ts-expect-error
+    // @ts-expect-error -- the summary is a union; the fixture, not the type, fixes which member it is
     expect(multiSingleSummary?.choices[0].value).toBe("Choice 1");
-    // @ts-expect-error
+    // @ts-expect-error -- the summary is a union; the fixture, not the type, fixes which member it is
     expect(multiSingleSummary?.choices[0].count).toBe(1);
-    // @ts-expect-error
+    // @ts-expect-error -- the summary is a union; the fixture, not the type, fixes which member it is
     expect(multiSingleSummary?.choices[0].percentage).toBe(100);
   });
 
@@ -629,7 +629,7 @@ describe("getQuestionSummary", () => {
     expect(multiNoneSummary?.responseCount).toBe(3);
 
     // Check that "None of the above" option is included in choices
-    // @ts-expect-error
+    // @ts-expect-error -- the summary is a union; the fixture, not the type, fixes which member it is
     const noneChoice = multiNoneSummary?.choices.find((c: any) => c.value === "None of the above");
     expect(noneChoice).toBeDefined();
     expect(noneChoice?.count).toBe(2);
@@ -646,7 +646,7 @@ describe("getQuestionSummary", () => {
     const hiddenFieldSummary = summary.find((s) => s.type === "hiddenField" && s.id === "hidden1");
     expect(hiddenFieldSummary).toBeDefined();
     expect(hiddenFieldSummary?.responseCount).toBe(1);
-    // @ts-expect-error
+    // @ts-expect-error -- the summary is a union; the fixture, not the type, fixes which member it is
     expect(hiddenFieldSummary?.samples[0].value).toBe("Hidden val");
   });
 
@@ -1368,7 +1368,7 @@ describe("getResponsesForSummary", () => {
         where: { surveyId: mockSurveyId }, // buildWhereClause is mocked to return {}
       })
     );
-    expect(result.length).toBe(mockResponses.length); // Mock returns all, actual would be limited by prisma
+    expect(result).toHaveLength(mockResponses.length); // Mock returns all, actual would be limited by prisma
     expect(result[0].id).toBe(mockResponses[0].id);
     expect(result[0].contact).toBeNull(); // As per transformation logic
   });

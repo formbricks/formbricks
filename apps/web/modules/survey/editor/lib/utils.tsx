@@ -129,10 +129,9 @@ export const formatTextWithSlashes = (
   return parts.map((part, index) => {
     // Check if the part was inside slashes
     if (index % 2 !== 0) {
+      const extraClassNames = classNames ? ` ${classNames.join(" ")}` : "";
       return (
-        <span
-          key={index}
-          className={`mx-1 rounded-md bg-slate-100 p-1 px-2${classNames ? ` ${classNames.join(" ")}` : ""}`}>
+        <span key={index} className={`mx-1 rounded-md bg-slate-100 p-1 px-2${extraClassNames}`}>
           {prefix}
           {part}
         </span>
@@ -753,9 +752,9 @@ const getElementMatchValueProps = (
       };
     }
 
+    // Choice options by id; T21 (ENG-6937): a ranking's options too ("was ranked").
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
     case TSurveyElementTypeEnum.MultipleChoiceMulti:
-    // T21 (ENG-6937): a ranking's options, by id ("was ranked").
     case TSurveyElementTypeEnum.Ranking: {
       const operatorsToFilterNone = [
         "includesOneOf",

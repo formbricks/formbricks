@@ -21,7 +21,7 @@ vi.mock("@formbricks/database", () => ({
       findMany: vi.fn(),
       createMany: vi.fn(),
     },
-    $transaction: vi.fn((callback: Function) => callback(prisma)),
+    $transaction: vi.fn((callback: (tx: unknown) => unknown) => callback(prisma)),
     $executeRaw: vi.fn(),
     $queryRaw: vi.fn(),
   },

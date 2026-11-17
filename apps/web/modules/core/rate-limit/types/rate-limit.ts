@@ -16,9 +16,9 @@ export const ZRateLimitConfig = z.object({
 
 export type TRateLimitConfig = z.infer<typeof ZRateLimitConfig>;
 
-const ZRateLimitResponse = z.object({
+const _ZRateLimitResponse = z.object({
   allowed: z.boolean().describe("Whether the request is allowed"),
   retryAfter: z.int().positive().optional().describe("Seconds until the current rate-limit window resets"),
 });
 
-export type TRateLimitResponse = z.infer<typeof ZRateLimitResponse>;
+export type TRateLimitResponse = z.infer<typeof _ZRateLimitResponse>;
