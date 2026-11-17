@@ -45,6 +45,16 @@ run("adds");
   "convention.tsx": "export const C = () => <div />;\n",
 };
 
+// Positive control for the fixture above: the same file shape with three arguments to `expect`, one past
+// `maxArgs`, must report, so the absence of `vitest/valid-expect` above is not vacuous.
+const controlFixtures = {
+  "invalid-vitest.ts": `import { expect, test } from "vitest";
+test("adds", () => {
+  expect(1, "one is one", "extra").toBe(1);
+});
+`,
+};
+
 let results: Record<string, Record<string, FixtureDiagnostic[]>>;
 
 describe("every tier runs oxlint's correctness and suspicious categories", () => {
@@ -57,6 +67,7 @@ describe("every tier runs oxlint's correctness and suspicious categories", () =>
             Object.entries(categoryFixtures).map(([category, { source }]) => [`${category}.ts`, source])
           ),
           ...conventionFixtures,
+          ...controlFixtures,
         }),
       ])
     );
@@ -68,6 +79,13 @@ describe("every tier runs oxlint's correctness and suspicious categories", () =>
       const diagnostics = results[tier][`${category}.ts`];
       expect(diagnostics, JSON.stringify(diagnostics)).toContainEqual(
         expect.objectContaining({ ruleId: rule, severity: "error" })
+      );
+    });
+
+    test("vitest rules run on the non-test-named fixture: a third `expect` argument reports", () => {
+      const diagnostics = results[tier]["invalid-vitest.ts"];
+      expect(diagnostics, JSON.stringify(diagnostics)).toContainEqual(
+        expect.objectContaining({ ruleId: "vitest/valid-expect", severity: "error" })
       );
     });
 
