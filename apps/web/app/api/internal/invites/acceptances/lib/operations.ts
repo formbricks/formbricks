@@ -1,4 +1,5 @@
 import "server-only";
+import { after } from "next/server";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import type { TMembership } from "@formbricks/types/memberships";
@@ -42,7 +43,10 @@ type TInvite = NonNullable<Awaited<ReturnType<typeof getInvite>>>;
  * row lock and then finds nothing to delete. An existing membership refuses the whole acceptance, so an
  * invite never overwrites a role someone already holds (ENG-7097).
  */
-const acceptInviteInTransaction = (invite: TInvite, userId: string): Promise<TMembership> =>
+const acceptInviteInTransaction = (
+  invite: TInvite,
+  userId: string
+): Promise<{ membership: TMembership; teamIds: string[] }> =>
   prisma.$transaction(async (tx) => {
     const spent = await tx.invite.deleteMany({
       where: { id: invite.id, organizationId: invite.organizationId, expiresAt: { gt: new Date() } },
@@ -61,14 +65,15 @@ const acceptInviteInTransaction = (invite: TInvite, userId: string): Promise<TMe
       { accepted: true, role: invite.role },
       { projection: "deferred", transaction: tx }
     );
-    if (invite.teamIds.length > 0) {
-      await createTeamMembership(
-        { organizationId: invite.organizationId, role: invite.role, teamIds: invite.teamIds },
-        userId,
-        { projection: "deferred", transaction: tx }
-      );
-    }
-    return membership;
+    const teamIds =
+      invite.teamIds.length > 0
+        ? await createTeamMembership(
+            { organizationId: invite.organizationId, role: invite.role, teamIds: invite.teamIds },
+            userId,
+            { projection: "deferred", transaction: tx }
+          )
+        : [];
+    return { membership, teamIds };
   });
 
 const alreadyMember = (requestId: string, instance?: string) =>
@@ -104,18 +109,24 @@ const refuseFailedAcceptance = async (
 
 type TInviteUser = NonNullable<Awaited<ReturnType<typeof getUser>>>;
 
-/** What follows a committed acceptance. Each step is best-effort: the membership already exists. */
-const afterAcceptance = async (invite: TInvite, user: TInviteUser): Promise<void> => {
-  // SpiceDB follows PostgreSQL only after the commit, as for every other membership write.
-  await reconcileOrganizationMembership(invite.organizationId, user.id);
-  if (invite.teamIds.length > 0) {
+/**
+ * SpiceDB follows PostgreSQL only after the commit, as for every other membership write. Awaited: the page
+ * the acceptance redirects to needs the new access. Only the teams the transaction wrote are reconciled.
+ */
+const projectAcceptance = async (organizationId: string, userId: string, teamIds: string[]) => {
+  await reconcileOrganizationMembership(organizationId, userId);
+  if (teamIds.length > 0) {
     await runPostCommitProjection("invite_team_membership_create", () =>
-      reconcileTeamWorkspaceRelationships({
-        teamMemberships: invite.teamIds.map((teamId) => ({ teamId, userId: user.id })),
-      })
+      reconcileTeamWorkspaceRelationships({ teamMemberships: teamIds.map((teamId) => ({ teamId, userId })) })
     );
   }
+};
 
+/**
+ * The notices that follow a committed acceptance, run after the response as the page's acceptance did, so a
+ * slow SMTP server never holds the Accept button. Each is best-effort: the membership already exists.
+ */
+const notifyAcceptance = async (invite: TInvite, user: TInviteUser): Promise<void> => {
   try {
     await sendInviteAcceptedEmail(
       invite.creator.name ?? "",
@@ -198,18 +209,20 @@ export async function acceptInviteOperation({
     });
   }
 
-  let membership: TMembership;
+  let accepted: { membership: TMembership; teamIds: string[] };
   try {
-    membership = await acceptInviteInTransaction(invite, user.id);
+    accepted = await acceptInviteInTransaction(invite, user.id);
   } catch (error) {
     const refusal = await refuseFailedAcceptance(error, user.id, invite.organizationId, requestId, instance);
     if (refusal) return refusal;
     throw error;
   }
 
-  if (auditLog) auditLog.newObject = { ...membership, teamIds: invite.teamIds };
+  const { membership, teamIds } = accepted;
+  if (auditLog) auditLog.newObject = { ...membership, teamIds };
 
-  await afterAcceptance(invite, user);
+  await projectAcceptance(invite.organizationId, user.id, teamIds);
+  after(() => notifyAcceptance(invite, user));
 
   return successResponse(serializeInviteAcceptance(membership), { requestId, status: 201 });
 }

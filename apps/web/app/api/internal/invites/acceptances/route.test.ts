@@ -22,6 +22,15 @@ const mocks = vi.hoisted(() => ({
   deleteInvites: vi.fn(),
   findMembership: vi.fn(),
   log: [] as string[],
+  // Callbacks handed to `after()`, captured so a test can tell "after the response" from "before it".
+  afterCallbacks: [] as (() => unknown)[],
+}));
+
+vi.mock("next/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("next/server")>()),
+  after: vi.fn((callback: () => unknown) => {
+    mocks.afterCallbacks.push(callback);
+  }),
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -103,10 +112,15 @@ const expectNothingChanged = () => {
   expect(mocks.updateUser).not.toHaveBeenCalled();
 };
 
+const runAfterCallbacks = async () => {
+  for (const callback of mocks.afterCallbacks) await callback();
+};
+
 beforeEach(() => {
   mocks.findCommittedMembership.mockResolvedValue(null);
   vi.clearAllMocks();
   mocks.log.length = 0;
+  mocks.afterCallbacks.length = 0;
   mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
   mocks.applyRateLimit.mockResolvedValue(undefined);
   mocks.verifyInviteToken.mockReturnValue({ inviteId: INVITE_ID, email: "invitee@example.com" });
@@ -121,8 +135,9 @@ beforeEach(() => {
     mocks.log.push("createMembership");
     return { organizationId, userId, ...data };
   });
-  mocks.createTeamMembership.mockImplementation(async () => {
+  mocks.createTeamMembership.mockImplementation(async (target: { teamIds: string[] }) => {
     mocks.log.push("createTeamMembership");
+    return target.teamIds;
   });
   mocks.transaction.mockImplementation(async (callback: (tx: typeof TX) => Promise<unknown>) => {
     try {
@@ -186,6 +201,13 @@ describe("POST /api/internal/invites/acceptances — accepting", () => {
     });
   });
 
+  test("reconciles only the teams the transaction wrote, not a team that has gone since the invite", async () => {
+    mocks.createTeamMembership.mockResolvedValue([]);
+
+    expect((await accept()).status).toBe(201);
+    expect(mocks.reconcileTeamWorkspaceRelationships).not.toHaveBeenCalled();
+  });
+
   test("names no teams when the invite has none", async () => {
     mocks.getInvite.mockResolvedValue(invite({ teamIds: [] }));
 
@@ -194,8 +216,18 @@ describe("POST /api/internal/invites/acceptances — accepting", () => {
     expect(mocks.reconcileTeamWorkspaceRelationships).not.toHaveBeenCalled();
   });
 
+  test("answers before emailing the inviter: the notices run after the response", async () => {
+    expect((await accept()).status).toBe(201);
+    expect(mocks.sendInviteAcceptedEmail).not.toHaveBeenCalled();
+    expect(mocks.updateUser).not.toHaveBeenCalled();
+
+    await runAfterCallbacks();
+    expect(mocks.sendInviteAcceptedEmail).toHaveBeenCalledTimes(1);
+  });
+
   test("emails the inviter and unsubscribes the new member from the organization's alerts", async () => {
     await accept();
+    await runAfterCallbacks();
 
     expect(mocks.sendInviteAcceptedEmail).toHaveBeenCalledWith(
       "Inviter",
@@ -218,6 +250,7 @@ describe("POST /api/internal/invites/acceptances — accepting", () => {
     mocks.updateUser.mockRejectedValue(new Error("db hiccup"));
 
     expect((await accept()).status).toBe(201);
+    await expect(runAfterCallbacks()).resolves.toBeUndefined();
     expect(mocks.updateUser).toHaveBeenCalled();
   });
 
