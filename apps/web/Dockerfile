@@ -135,7 +135,7 @@ FROM runtime-base AS runner
 # UID 1001 and GID 101 match the earlier Alpine image, so existing upload volumes keep their ownership.
 # The home directory starts empty and owned by nextjs, as Alpine's adduser left it (no /etc/skel files).
 RUN groupadd --system --gid 101 nextjs \
-    && useradd --system --uid 1001 --gid nextjs --home-dir /home/nextjs --no-create-home \
+    && useradd --uid 1001 --gid nextjs --home-dir /home/nextjs --no-create-home \
       --shell /usr/sbin/nologin nextjs \
     && install -d -o nextjs -g nextjs -m 755 /home/nextjs
 
