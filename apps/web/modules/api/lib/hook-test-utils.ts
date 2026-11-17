@@ -35,7 +35,7 @@ export const routeFetch = (routes: Record<string, Response[]>) =>
 /** A fresh client with retries off, and a wrapper providing it to `renderHook`. */
 export const createQueryWrapper = () => {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: Readonly<{ children: ReactNode }>) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
   Wrapper.displayName = "QueryTestWrapper";
   return { queryClient, wrapper: Wrapper };

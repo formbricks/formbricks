@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import type { TResponseDataValue } from "@formbricks/types/responses";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
+import type { TResponseNotShown } from "@formbricks/types/surveys/not-shown";
 import type {
   TRelativeDateBound,
   TValidationRuleParams,
@@ -98,6 +99,12 @@ export interface TValidationOptions {
    * matcher.
    */
   matchPattern?: TPatternMatcher;
+  /**
+   * The response's not-shown record (ENG-6936). A server validating against the survey as stored
+   * passes it, so rules skip the options, rows and columns show-if kept from the respondent
+   * (ENG-7332). The survey itself validates elements already filtered and leaves it out.
+   */
+  notShown?: TResponseNotShown | null;
 }
 
 /** The browser engine: native, backtracking `RegExp`. Only for the respondent's own tab. */

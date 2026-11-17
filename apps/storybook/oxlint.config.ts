@@ -28,8 +28,7 @@ const storybookRecommended = {
 } as const;
 
 // Storybook stays warning-free (its ESLint script ran with `--max-warnings 0`). Its warnings are raised
-// to errors here, so the repo-wide `pnpm lint:code` fails on them too; `pnpm lint:storybook` (part of
-// `pnpm lint`) additionally fails on stale disable directives, which oxlint only reports repo-wide.
+// to errors here, so the repo-wide `pnpm lint:code` fails on them too.
 export default defineConfig(
   denyWarnings(
     compose({ ignorePatterns: ["storybook-static/**"] }, react, {
