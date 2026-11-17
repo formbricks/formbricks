@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   MAX_MCP_GRANT_SELECTIONS,
+  MAX_MCP_GRANT_SELECTION_ID_LENGTH,
   capMcpGrantPermissions,
   getMcpGrantPermissionsForScopes,
   isMcpGrantEmpty,
@@ -126,6 +127,24 @@ describe("MAX_MCP_GRANT_SELECTIONS", () => {
     expect(
       parseRequestedMcpGrant({ permissions: { surveys: "read" }, access: "workspaces", workspaceIds })
     ).toEqual({ permissions: { surveys: "read" }, access: { access: "workspaces", workspaceIds } });
+  });
+});
+
+describe("MAX_MCP_GRANT_SELECTION_ID_LENGTH", () => {
+  test("reads an id of the longest length a grant takes, and refuses a longer one, in either list", () => {
+    const longest = "x".repeat(MAX_MCP_GRANT_SELECTION_ID_LENGTH);
+    const tooLong = `${longest}x`;
+    for (const [access, field] of [
+      ["organizations", "organizationIds"],
+      ["workspaces", "workspaceIds"],
+    ] as const) {
+      expect(
+        parseRequestedMcpGrant({ permissions: { surveys: "read" }, access, [field]: [longest] })
+      ).not.toBeNull();
+      expect(
+        parseRequestedMcpGrant({ permissions: { surveys: "read" }, access, [field]: [tooLong] })
+      ).toBeNull();
+    }
   });
 });
 

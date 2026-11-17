@@ -6,7 +6,7 @@
  * grant stays as it was in every case.
  */
 
-/** 422 (Edit) / 400 (consent): the access chosen names an organization or workspace the user can't select. */
+/** 422, on Edit and on consent alike: the access chosen names an organization or workspace the user can't select. */
 export const MCP_GRANT_SELECTION_UNAVAILABLE_CODE = "mcp_grant_selection_unavailable";
 
 /** 500: the grant couldn't be saved, or its narrowing couldn't be applied (after one retry, on consent). */

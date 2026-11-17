@@ -72,6 +72,12 @@ export const readMcpGrantAccessSelection = (row: TMcpGrantAccessRow): TMcpGrantA
  */
 export const MAX_MCP_GRANT_SELECTIONS = AUTH_REQUEST_MAX_ENTRIES;
 
+/**
+ * The longest organization or workspace id a grant's selection takes: far above a cuid, and the bound the
+ * Edit route's body schema checks at the boundary too.
+ */
+export const MAX_MCP_GRANT_SELECTION_ID_LENGTH = 255;
+
 /** What a consent request or an Edit chose: the permissions, and the access when it names one. */
 export type TRequestedMcpGrant = { permissions: TMcpGrantPermissions; access?: TMcpGrantAccessSelection };
 
@@ -164,7 +170,12 @@ const readPermissions = (requested: unknown): TMcpGrantPermissions | null => {
 /** A non-empty, bounded list of ids, deduplicated and sorted; `null` for anything else. */
 const readSelection = (ids: unknown): string[] | null => {
   if (!Array.isArray(ids) || ids.length === 0 || ids.length > MAX_MCP_GRANT_SELECTIONS) return null;
-  if (!ids.every((id): id is string => typeof id === "string" && id.length > 0 && id.length <= 255)) {
+  if (
+    !ids.every(
+      (id): id is string =>
+        typeof id === "string" && id.length > 0 && id.length <= MAX_MCP_GRANT_SELECTION_ID_LENGTH
+    )
+  ) {
     return null;
   }
   return [...new Set(ids)].sort((a, b) => a.localeCompare(b));

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_MCP_GRANT_SELECTIONS } from "@/modules/mcp/grant";
+import { MAX_MCP_GRANT_SELECTIONS, MAX_MCP_GRANT_SELECTION_ID_LENGTH } from "@/modules/mcp/grant";
 
 /** `PATCH /api/internal/mcp-grants/{clientId}` path: an OAuth client id, as Better Auth issues them. */
 export const ZMcpGrantPathParams = z.object({ clientId: z.string().min(1).max(255) }).strict();
@@ -13,12 +13,17 @@ export const ZMcpGrantPathParams = z.object({ clientId: z.string().min(1).max(25
  * carry the code the screens translate. `expectedUpdatedAt` is the `grantUpdatedAt` Edit opened: a grant
  * saved since is not overwritten (409).
  */
+/** A grant's selected ids, bounded at the boundary (CODING_STANDARDS "Input Limits"). */
+const ZSelectionIds = z
+  .array(z.string().min(1).max(MAX_MCP_GRANT_SELECTION_ID_LENGTH))
+  .max(MAX_MCP_GRANT_SELECTIONS);
+
 export const ZMcpGrantUpdateBody = z
   .object({
     permissions: z.record(z.string(), z.unknown()),
     access: z.string().optional(),
-    organizationIds: z.array(z.string().min(1).max(255)).max(MAX_MCP_GRANT_SELECTIONS).optional(),
-    workspaceIds: z.array(z.string().min(1).max(255)).max(MAX_MCP_GRANT_SELECTIONS).optional(),
+    organizationIds: ZSelectionIds.optional(),
+    workspaceIds: ZSelectionIds.optional(),
     expectedUpdatedAt: z.iso.datetime(),
   })
   .strict();

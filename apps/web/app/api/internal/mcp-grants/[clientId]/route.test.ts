@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthzedError } from "@/lib/authzed/errors";
 import { MCP_GRANT_NOT_SAVED_CODE } from "@/modules/auth/lib/mcp-grant-consent-errors";
+import { MAX_MCP_GRANT_SELECTIONS, MAX_MCP_GRANT_SELECTION_ID_LENGTH } from "@/modules/mcp/grant";
 import { DELETE, PATCH } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -245,24 +246,54 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     expect(mocks.editMcpGrant).not.toHaveBeenCalled();
   });
 
-  // Bounded at the boundary (CODING_STANDARDS "Input Limits"), before the parser walks the list.
+  // Bounded at the boundary (CODING_STANDARDS "Input Limits"), before the parser walks the list: both id
+  // lists, at the most a grant selects and the longest id it takes.
+  const ids = (count: number, prefix: string) =>
+    Array.from({ length: count }, (_unused, index) => `${prefix}${index.toString()}`);
   test.each([
     [
-      "more selections than a grant holds",
-      { workspaceIds: Array.from({ length: 101 }, (_unused, index) => `clws${index.toString()}`) },
+      "more workspaces than a grant holds",
+      "workspaces",
+      { workspaceIds: ids(MAX_MCP_GRANT_SELECTIONS + 1, "clws") },
     ],
-    ["an id longer than an id can be", { workspaceIds: ["w".repeat(256)] }],
-  ])("returns 400 for %s, naming the field, and saves nothing", async (_case, selection) => {
-    const response = await edit({ permissions: { surveys: "read" }, access: "workspaces", ...selection });
+    [
+      "more organizations than a grant holds",
+      "organizations",
+      { organizationIds: ids(MAX_MCP_GRANT_SELECTIONS + 1, "clorg") },
+    ],
+    [
+      "a workspace id longer than an id can be",
+      "workspaces",
+      { workspaceIds: ["w".repeat(MAX_MCP_GRANT_SELECTION_ID_LENGTH + 1)] },
+    ],
+    [
+      "an organization id longer than an id can be",
+      "organizations",
+      { organizationIds: ["o".repeat(MAX_MCP_GRANT_SELECTION_ID_LENGTH + 1)] },
+    ],
+  ])("returns 400 for %s, naming the field, and saves nothing", async (_case, access, selection) => {
+    const response = await edit({ permissions: { surveys: "read" }, access, ...selection });
 
     expect(response.status).toBe(400);
-    expect(JSON.stringify(await response.json())).toContain("workspaceIds");
+    expect(JSON.stringify(await response.json())).toContain(Object.keys(selection)[0]);
     expect(mocks.editMcpGrant).not.toHaveBeenCalled();
+  });
+
+  test("saves an id of exactly the longest length a grant takes", async () => {
+    const organizationIds = ["o".repeat(MAX_MCP_GRANT_SELECTION_ID_LENGTH)];
+
+    const response = await edit({
+      permissions: { surveys: "read" },
+      access: "organizations",
+      organizationIds,
+    });
+
+    expect(response.status).toBe(200);
   });
 
   test("saves a selection of exactly as many as a grant holds", async () => {
     const workspaceIds = Array.from(
-      { length: 100 },
+      { length: MAX_MCP_GRANT_SELECTIONS },
       (_unused, index) => `clws${index.toString().padStart(3, "0")}`
     );
 
