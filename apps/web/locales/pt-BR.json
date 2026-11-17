@@ -175,6 +175,7 @@
         "permissions_title": "Permissões",
         "presets": "Predefinições",
         "read_only": "Somente leitura",
+        "role_capped_hint": "Sua função só pode conceder acesso de leitura aos painéis, então não é possível escolher níveis mais altos.",
         "select_all": "Selecionar tudo"
       },
       "grant_beyond_scopes": "Este app não solicitou esse acesso, então nada foi alterado. Recarregue a página para ver o que você pode conceder a ele.",

@@ -175,6 +175,7 @@
         "permissions_title": "權限",
         "presets": "預設組合",
         "read_only": "唯讀",
+        "role_capped_hint": "你的角色只能授予儀表板的唯讀權限，因此無法選擇更高的權限等級。",
         "select_all": "全選"
       },
       "grant_beyond_scopes": "這個應用程式並未要求該存取權限，所以沒有任何變更。請重新載入頁面，查看你可以授予哪些權限。",

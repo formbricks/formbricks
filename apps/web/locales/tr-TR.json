@@ -175,6 +175,7 @@
         "permissions_title": "İzinler",
         "presets": "Hazır ayarlar",
         "read_only": "Salt okunur",
+        "role_capped_hint": "Rolün yalnızca panolara okuma erişimi vermene izin veriyor, bu yüzden daha yüksek seviyeler seçilemiyor.",
         "select_all": "Tümünü seç"
       },
       "grant_beyond_scopes": "Bu uygulama o erişimi istemedi, bu yüzden hiçbir şey değişmedi. Ona verebileceklerini görmek için sayfayı yeniden yükle.",

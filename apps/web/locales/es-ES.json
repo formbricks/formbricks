@@ -175,6 +175,7 @@
         "permissions_title": "Permisos",
         "presets": "Ajustes predefinidos",
         "read_only": "Solo lectura",
+        "role_capped_hint": "Tu rol solo puede conceder acceso de lectura a los paneles, así que no se pueden elegir niveles superiores.",
         "select_all": "Seleccionar todo"
       },
       "grant_beyond_scopes": "Esta aplicación no ha solicitado ese acceso, así que no se ha cambiado nada. Recarga la página para ver qué accesos puedes concederle.",

@@ -175,6 +175,7 @@
         "permissions_title": "Berechtigungen",
         "presets": "Vorlagen",
         "read_only": "Schreibgeschützt",
+        "role_capped_hint": "Mit Deiner Rolle kannst Du nur Lesezugriff auf Dashboards erteilen, deshalb können höhere Stufen nicht ausgewählt werden.",
         "select_all": "Alle auswählen"
       },
       "grant_beyond_scopes": "Diese App hat diesen Zugriff nicht angefragt, daher wurde nichts geändert. Lade die Seite neu, um zu sehen, was Du ihr erlauben kannst.",

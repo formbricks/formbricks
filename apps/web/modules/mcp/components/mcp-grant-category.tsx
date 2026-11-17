@@ -75,6 +75,7 @@ export const McpGrantCategory = ({
           label={label}
           value={getMcpCategoryLevel(permissions, category.permissions)}
           options={getMcpLevelOptions(category.permissions, cap)}
+          isDashboardViewer={isDashboardViewer}
           disabled={disabled}
           onChange={(level) => onChange(setMcpCategoryLevel(permissions, category.permissions, level, cap))}
         />
@@ -103,6 +104,7 @@ export const McpGrantCategory = ({
                 label={permissionLabel}
                 value={permissions[permission] ?? "none"}
                 options={getMcpLevelOptions([permission], cap)}
+                isDashboardViewer={isDashboardViewer}
                 disabled={disabled}
                 onChange={(level) => onChange(setMcpPermissionLevel(permissions, permission, level, cap))}
               />

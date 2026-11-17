@@ -175,6 +175,7 @@
         "permissions_title": "Permissions",
         "presets": "Presets",
         "read_only": "Read-only",
+        "role_capped_hint": "Your role can only give read access to dashboards, so higher levels can't be chosen.",
         "select_all": "Select all"
       },
       "grant_beyond_scopes": "This app didn't ask for that access, so nothing changed. Reload to see what you can give it.",

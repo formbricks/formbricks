@@ -175,6 +175,7 @@
         "permissions_title": "Permisiuni",
         "presets": "Presetări",
         "read_only": "Doar citire",
+        "role_capped_hint": "Rolul tău poate oferi doar acces de citire la tablourile de bord, așa că nu poți alege niveluri mai ridicate.",
         "select_all": "Selectează tot"
       },
       "grant_beyond_scopes": "Aplicația nu a cerut acest acces, așa că nu s-a schimbat nimic. Reîncarcă pagina pentru a vedea ce acces îi poți acorda.",

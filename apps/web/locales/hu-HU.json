@@ -175,6 +175,7 @@
         "permissions_title": "Jogosultságok",
         "presets": "Előbeállítások",
         "read_only": "Csak olvasható",
+        "role_capped_hint": "Az Ön jogosultsági szintje kizárólag az irányítópultokhoz való olvasási hozzáférés megadását teszi lehetővé, ezért magasabb szintek nem választhatók.",
         "select_all": "Összes kijelölése"
       },
       "grant_beyond_scopes": "Az alkalmazás nem kérte ezt a hozzáférést, ezért nem történt módosítás. Kérjük, töltse be újra az oldalt, hogy megtekinthesse, milyen hozzáféréseket biztosíthat számára.",

@@ -150,6 +150,7 @@ checksums:
     auth/oauth/grant/permissions_title: 2160be68b1d6b6577e64634e9feba2ed
     auth/oauth/grant/presets: db7616c227f9759fe2e4a4cba59e8f9f
     auth/oauth/grant/read_only: 9109fd6e72125af271d41181f1f35dd2
+    auth/oauth/grant/role_capped_hint: 0d7152127a852cb30dc99cddc0680d7e
     auth/oauth/grant/select_all: eedc7cdb02de467c15dc418a066a77f2
     auth/oauth/grant_beyond_scopes: 822ae282ec84b610cfecb937e800658c
     auth/oauth/grant_changed_elsewhere: 8b8bc43f22b77b402054272d082ee7a8

@@ -175,6 +175,7 @@
         "permissions_title": "Permissões",
         "presets": "Predefinições",
         "read_only": "Só de leitura",
+        "role_capped_hint": "A tua função só permite conceder acesso de leitura aos dashboards, por isso não é possível escolher níveis superiores.",
         "select_all": "Selecionar tudo"
       },
       "grant_beyond_scopes": "Esta aplicação não pediu esse acesso, por isso nada foi alterado. Recarrega a página para veres o que lhe podes conceder.",

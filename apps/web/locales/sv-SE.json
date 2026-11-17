@@ -175,6 +175,7 @@
         "permissions_title": "Behörigheter",
         "presets": "Förval",
         "read_only": "Skrivskyddad",
+        "role_capped_hint": "Din roll kan bara ge läsbehörighet till dashboards, så högre nivåer kan inte väljas.",
         "select_all": "Markera alla"
       },
       "grant_beyond_scopes": "Appen har inte bett om den åtkomsten, så ingenting har ändrats. Ladda om sidan för att se vad du kan ge den.",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { type TMcpCategoryLevel, type TMcpLevelOption, hasMcpCappedLevel } from "@/modules/mcp/grant-editor";
+import { type TMcpCategoryLevel, type TMcpLevelOption, getMcpCappedHint } from "@/modules/mcp/grant-editor";
 import { getMcpAccessLevelLabel } from "@/modules/mcp/grant-editor-labels";
 import type { TMcpAccessLevel } from "@/modules/mcp/permissions";
 import { InfoTooltip } from "@/modules/ui/components/info-tooltip";
@@ -14,6 +14,8 @@ interface McpGrantLevelToggleProps {
   value: TMcpCategoryLevel;
   options: TMcpLevelOption[];
   onChange: (level: TMcpAccessLevel) => void;
+  /** A Dashboard viewer's levels are capped by the role, not the client's scopes (`getMcpCappedHint`). */
+  isDashboardViewer: boolean;
   disabled?: boolean;
 }
 
@@ -27,10 +29,11 @@ export const McpGrantLevelToggle = ({
   value,
   options,
   onChange,
+  isDashboardViewer,
   disabled,
 }: Readonly<McpGrantLevelToggleProps>) => {
   const { t } = useTranslation();
-  const isCapped = hasMcpCappedLevel(options);
+  const cappedHint = getMcpCappedHint(options, { isDashboardViewer });
 
   return (
     <div className="flex items-center gap-1 sm:w-72">
@@ -52,9 +55,9 @@ export const McpGrantLevelToggle = ({
           }}
         />
       </div>
-      {isCapped ? (
+      {cappedHint ? (
         <InfoTooltip label={t("auth.oauth.grant.capped_hint_label")} side="left">
-          {t("auth.oauth.grant.capped_hint")}
+          {cappedHint === "role" ? t("auth.oauth.grant.role_capped_hint") : t("auth.oauth.grant.capped_hint")}
         </InfoTooltip>
       ) : (
         <span className="size-5 shrink-0" aria-hidden="true" />

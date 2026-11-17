@@ -175,6 +175,7 @@
         "permissions_title": "权限",
         "presets": "预设",
         "read_only": "只读",
+        "role_capped_hint": "你的角色只能授予仪表板的读取权限，因此无法选择更高级别的权限。",
         "select_all": "全选"
       },
       "grant_beyond_scopes": "此应用并未请求该访问权限,因此未做任何更改。请刷新页面,查看你可以授予它的权限。",

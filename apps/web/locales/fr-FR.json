@@ -175,6 +175,7 @@
         "permissions_title": "Autorisations",
         "presets": "Préréglages",
         "read_only": "Lecture seule",
+        "role_capped_hint": "Ton rôle ne permet d'accorder qu'un accès en lecture aux tableaux de bord, donc tu ne peux pas choisir de niveaux supérieurs.",
         "select_all": "Tout sélectionner"
       },
       "grant_beyond_scopes": "Cette appli n'a pas demandé cet accès, donc rien n'a changé. Recharge la page pour voir ce que tu peux lui accorder.",

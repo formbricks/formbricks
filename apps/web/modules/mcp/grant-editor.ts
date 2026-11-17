@@ -217,6 +217,23 @@ export const getMcpDependencyHints = (
 export const hasMcpCappedLevel = (options: readonly TMcpLevelOption[]): boolean =>
   options.some((option) => option.disabled);
 
+/** Why a toggle's disabled levels can't be chosen: the user's role, or the client's scopes. */
+export type TMcpCappedHint = "role" | "scopes";
+
+/**
+ * The hint a toggle shows for its disabled levels, or `null` when none is disabled. A Dashboard viewer's
+ * levels are capped by the role, which can only ever give dashboard reads (ADR-0025): reconnecting the
+ * client changes nothing, so the hint says it is the role rather than asking for a reconnect. Anyone
+ * else's are capped by what the client's scopes ask for (spec story 14).
+ */
+export const getMcpCappedHint = (
+  options: readonly TMcpLevelOption[],
+  { isDashboardViewer }: { isDashboardViewer: boolean }
+): TMcpCappedHint | null => {
+  if (!hasMcpCappedLevel(options)) return null;
+  return isDashboardViewer ? "role" : "scopes";
+};
+
 /**
  * What the matrix opens with: the client's existing grant when it has one (a reconnect must not undo a
  * Read-only choice), otherwise what the client asked for; either way within what it asks for now.

@@ -175,6 +175,7 @@
         "permissions_title": "Machtigingen",
         "presets": "Voorinstellingen",
         "read_only": "Alleen-lezen",
+        "role_capped_hint": "Met jouw rol kun je alleen leestoegang tot dashboards geven, dus hogere niveaus kun je niet kiezen.",
         "select_all": "Alles selecteren"
       },
       "grant_beyond_scopes": "Deze app heeft die toegang niet aangevraagd, dus er is niets gewijzigd. Laad de pagina opnieuw om te zien welke toegang je kunt geven.",

@@ -4,6 +4,7 @@ import {
   applyMcpGrantPreset,
   canEditMcpGrant,
   getInitialMcpGrantPermissions,
+  getMcpCappedHint,
   getMcpCategoryLevel,
   getMcpDependencyHints,
   getMcpGrantEditorCategories,
@@ -274,6 +275,22 @@ describe("hasMcpCappedLevel", () => {
     expect(hasMcpCappedLevel(getMcpLevelOptions(["charts"], { charts: "write" }))).toBe(false);
     // Workflow runs offer no Write, so Read is the whole cap and nothing is held back.
     expect(hasMcpCappedLevel(getMcpLevelOptions(["workflowRuns"], { workflowRuns: "read" }))).toBe(false);
+  });
+});
+
+// A Dashboard viewer's levels are capped by the role, which a reconnect can't change (smoke D).
+describe("getMcpCappedHint", () => {
+  const capped = getMcpLevelOptions(["dashboards"], { dashboards: "read" });
+  const open = getMcpLevelOptions(["dashboards"], { dashboards: "write" });
+
+  test("names the role for a Dashboard viewer, so the hint doesn't ask for a reconnect", () => {
+    expect(getMcpCappedHint(capped, { isDashboardViewer: true })).toBe("role");
+  });
+
+  test("names the client's scopes for anyone else, and nothing when no level is disabled", () => {
+    expect(getMcpCappedHint(capped, { isDashboardViewer: false })).toBe("scopes");
+    expect(getMcpCappedHint(open, { isDashboardViewer: true })).toBeNull();
+    expect(getMcpCappedHint(open, { isDashboardViewer: false })).toBeNull();
   });
 });
 
