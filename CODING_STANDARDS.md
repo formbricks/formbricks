@@ -33,8 +33,9 @@ These remain review checks until their enforcement handles the repository's exis
   variables, and `SCREAMING_SNAKE_CASE` for constants.
 - Keep responsibilities focused; consolidate duplicated behavior when it has one reason to change.
 - Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
-- Prefer type inference and shared types from `@formbricks/types`; new `any`s are still findings where
-  oxlint reports them only as warnings.
+- Prefer type inference and shared types from `@formbricks/types`. `any` is a lint error everywhere
+  (`typescript/no-explicit-any`); in tests, type mocks with `vi.mocked(fn)` (`{ partial: true }` for a
+  partial fixture) rather than casting.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 - A control's enabled state comes from the permission the server action checks, passed down from the server,
