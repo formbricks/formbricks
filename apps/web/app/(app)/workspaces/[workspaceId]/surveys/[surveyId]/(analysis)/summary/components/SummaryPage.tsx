@@ -71,7 +71,7 @@ export const SummaryPage = ({
 
   const { registerAnalysisRefreshHandler } = useResponseFilter();
   const filterState = useResponseTableFilters(survey);
-  const { selectedFilter, dateRange } = filterState;
+  const { selectedFilter, dateRange, resolveFreshCriteria } = filterState;
 
   const [displays, setDisplays] = useState<TDisplayWithContact[]>([]);
   const [isDisplaysLoading, setIsDisplaysLoading] = useState(false);
@@ -134,7 +134,7 @@ export const SummaryPage = ({
 
   const fetchSummary = useCallback(async () => {
     // Asked about now: a refresh after midnight must not reuse yesterday's relative date window.
-    const currentFilters = filterState.resolveFreshCriteria();
+    const currentFilters = resolveFreshCriteria();
     const updatedSurveySummary = await getSurveySummaryAction({
       surveyId,
       filterCriteria: currentFilters,
@@ -145,7 +145,7 @@ export const SummaryPage = ({
     }
 
     setSurveySummary(updatedSurveySummary?.data ?? defaultSurveySummary);
-  }, [filterState.resolveFreshCriteria, surveyId]);
+  }, [resolveFreshCriteria, surveyId]);
 
   const refreshSummary = useCallback(async () => {
     if (!filterState.isReady) return;
