@@ -121,7 +121,7 @@ export const GET = withV1ApiWrapper({
       tokenData.access_token = encryptedAccessToken;
 
       const notionIntegration: TIntegrationNotionInput = {
-        type: "notion" as "notion",
+        type: "notion" as const,
         config: {
           key: tokenData,
           data: [],

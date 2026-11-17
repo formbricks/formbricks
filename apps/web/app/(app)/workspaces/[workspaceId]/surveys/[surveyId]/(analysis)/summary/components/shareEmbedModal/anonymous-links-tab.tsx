@@ -207,7 +207,7 @@ export const AnonymousLinksTab = ({
       }
 
       toast.error(t("workspace.surveys.share.anonymous_links.generate_links_error"));
-    } catch (error) {
+    } catch {
       toast.error(t("workspace.surveys.share.anonymous_links.generate_links_error"));
     }
   };

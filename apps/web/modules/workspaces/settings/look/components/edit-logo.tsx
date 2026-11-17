@@ -47,7 +47,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
         return;
       }
       setLogoUrl(uploadResult.url);
-    } catch (error) {
+    } catch {
       toast.error(t("workspace.look.logo_upload_failed"));
     } finally {
       setIsLoading(false);

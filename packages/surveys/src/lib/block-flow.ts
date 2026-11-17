@@ -183,6 +183,7 @@ const runBlockLogic = (
     markLowQuality ||= actions.markLowQuality;
   }
 
+  // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty jump target means no jump
   return { jumpTarget: jumpTarget || block.logicFallback, requiredQuestionIds, variables, markLowQuality };
 };
 
@@ -238,6 +239,7 @@ const skipBlocksNotShown = (
     variables = outcome.variables;
     requiredQuestionIds.push(...outcome.requiredQuestionIds);
     markLowQuality ||= outcome.markLowQuality;
+    // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty jump target means no jump
     current = outcome.jumpTarget || survey.blocks[blockIndex + 1]?.id;
   }
 
@@ -298,6 +300,7 @@ export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlo
   let optionsNotShown: TOptionsNotShown = {};
 
   if (blockId === START_BLOCK_ID) {
+    // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty start block id means none
     rawNextBlockId = input.startBlockId || survey.blocks[0]?.id || firstEndingId;
     // Kept, so values set before the first question travel with the first submit (ENG-6932).
     variables = { ...input.variables };
@@ -317,6 +320,7 @@ export const advanceFromBlock = (input: TAdvanceFromBlockInput): TAdvanceFromBlo
     data = page.data;
 
     const outcome = runBlockLogic(input, currentBlock, data, input.variables);
+    // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty jump target means no jump
     rawNextBlockId = outcome.jumpTarget || survey.blocks[currentBlockIndex + 1]?.id;
     variables = outcome.variables;
     requiredQuestionIds = outcome.requiredQuestionIds;

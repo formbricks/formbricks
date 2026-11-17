@@ -48,8 +48,7 @@ export const GeneratePersonalLinkModal = ({
   const [generatedUrl, setGeneratedUrl] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    if (open) {
-    } else {
+    if (!open) {
       setSelectedSurveyId(undefined);
       setGeneratedUrl("");
     }

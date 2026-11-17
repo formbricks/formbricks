@@ -10,7 +10,9 @@ import { TActor, TAuditAction, TAuditStatus, TAuditTarget } from "../types/audit
 import * as OriginalHandler from "./handler";
 
 // Use 'var' for all mock handles used in vi.mock factories to avoid hoisting/TDZ issues
+// eslint-disable-next-line no-var -- assigned by the hoisted vi.mock factories, which run before a `let` is initialised
 var serviceLogAuditEventMockHandle: ReturnType<typeof vi.fn>; // NOSONAR / test code
+// eslint-disable-next-line no-var -- assigned by the hoisted vi.mock factories, which run before a `let` is initialised
 var loggerErrorMockHandle: ReturnType<typeof vi.fn>; // NOSONAR / test code
 
 // The env var, the licence and Cloud are combined by getIsAuditLogsEnabled (tested in

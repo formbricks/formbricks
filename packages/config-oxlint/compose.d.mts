@@ -8,5 +8,4 @@ export declare const jsPlugins: Record<
 export declare function compose(
   ...fragments: (ConfigFragment | ConfigFragment[] | undefined)[]
 ): OxlintConfig;
-export declare function downgradeToWarn<T extends Record<string, unknown>>(rules: T): T;
 export declare function denyWarnings<T extends OxlintConfig>(config: T): T;

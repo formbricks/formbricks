@@ -1,5 +1,6 @@
 "use client";
 
+import type { TFunction } from "i18next";
 import { LanguagesIcon, SparklesIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -48,6 +49,16 @@ import {
 } from "../lib/utils";
 import { EmbeddedDataEntries } from "./embedded-data-entries";
 import { MetadataEntryRow } from "./metadata-entry-row";
+
+/** Why a record shows no taxonomy path. */
+const getTaxonomyStatusLabel = (
+  status: ReturnType<typeof getTaxonomyAssignmentDisplay>["status"],
+  t: TFunction
+): string => {
+  if (status === "no_active_taxonomy") return t("workspace.unify.taxonomy_assignment_no_active");
+  if (status === "unclassified") return t("workspace.unify.taxonomy_assignment_unclassified");
+  return t("workspace.unify.taxonomy_assignment_unavailable");
+};
 
 interface FeedbackRecordFormDrawerProps {
   open: boolean;
@@ -484,11 +495,7 @@ export const FeedbackRecordFormDrawer = ({
                     <p className="text-sm break-words text-slate-700">{taxonomyDisplay.path}</p>
                   ) : (
                     <p className="text-sm text-slate-500">
-                      {taxonomyDisplay.status === "no_active_taxonomy"
-                        ? t("workspace.unify.taxonomy_assignment_no_active")
-                        : taxonomyDisplay.status === "unclassified"
-                          ? t("workspace.unify.taxonomy_assignment_unclassified")
-                          : t("workspace.unify.taxonomy_assignment_unavailable")}
+                      {getTaxonomyStatusLabel(taxonomyDisplay.status, t)}
                     </p>
                   )}
                 </div>

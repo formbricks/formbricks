@@ -135,6 +135,7 @@ const FALSE_TOKENS: ReadonlySet<string> = new Set(["false", "0", "no", "off"]);
  * rather than guessed; see {@link normalizeDate}.
  */
 const ISO_DATETIME_REGEX =
+  // eslint-disable-next-line sonarjs/regex-complexity -- one ISO 8601 grammar; split up, it no longer reads as the format
   /^(\d{4}-\d{2}-\d{2})[Tt ](\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)([Zz]|[+-]\d{2}:?\d{2})?$/;
 
 /**

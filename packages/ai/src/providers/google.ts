@@ -112,6 +112,7 @@ export const googleProviderAdapter: AIProviderAdapter = {
     if (credentialsJson) {
       try {
         googleAuthOptions = {
+          // eslint-disable-next-line typescript/no-deprecated -- the deprecation guards against untrusted credentials; these are the operator's own
           credentials: parseGoogleCredentialsJson(credentialsJson),
         };
       } catch {
@@ -126,6 +127,7 @@ export const googleProviderAdapter: AIProviderAdapter = {
       }
     } else if (applicationCredentials) {
       googleAuthOptions = {
+        // eslint-disable-next-line typescript/no-deprecated -- the deprecation guards against untrusted credentials; these are the operator's own
         keyFilename: applicationCredentials,
       };
     }

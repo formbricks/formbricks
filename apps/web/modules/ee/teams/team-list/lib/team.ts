@@ -174,7 +174,7 @@ export const getTeams = reactCache(
     }
 
     const userTeams = await getUserTeams(userId, organizationId);
-    let otherTeams = await getOtherTeams(userId, organizationId);
+    const otherTeams = await getOtherTeams(userId, organizationId);
 
     return { userTeams, otherTeams };
   }

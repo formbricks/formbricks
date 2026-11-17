@@ -9,7 +9,7 @@ export const deleteWebhook = async (id: string): Promise<Omit<Webhook, "secret">
   validateInputs([id, ZId]);
 
   try {
-    let deletedWebhook = await prisma.webhook.delete({
+    const deletedWebhook = await prisma.webhook.delete({
       where: {
         id,
       },

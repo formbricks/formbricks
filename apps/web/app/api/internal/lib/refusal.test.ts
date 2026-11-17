@@ -47,21 +47,21 @@ describe("refusalResponse", () => {
     );
 
     expect(response?.status).toBe(403);
-    expect((await response?.json()).detail).toBe("Cannot reset an archived survey.");
+    expect((await response?.json())?.detail).toBe("Cannot reset an archived survey.");
   });
 
   test("answers the generic 403 for a missing resource", async () => {
     const response = refusalResponse(new ResourceNotFoundError("Survey", "survey-1"), REQUEST_ID);
 
     expect(response?.status).toBe(403);
-    expect((await response?.json()).detail).toBe("You are not authorized to access this resource");
+    expect((await response?.json())?.detail).toBe("You are not authorized to access this resource");
   });
 
   test("answers 422 with an InvalidInputError's own reason", async () => {
     const response = refusalResponse(new InvalidInputError("Invalid user segment filters"), REQUEST_ID);
 
     expect(response?.status).toBe(422);
-    expect((await response?.json()).detail).toBe("Invalid user segment filters");
+    expect((await response?.json())?.detail).toBe("Invalid user segment filters");
   });
 
   test("answers null for any other error", () => {

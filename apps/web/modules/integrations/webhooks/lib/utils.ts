@@ -38,7 +38,7 @@ export const validWebHookURL = (urlInput: string, allowInternalUrls = false) => 
     }
 
     return { valid: true };
-  } catch (error) {
+  } catch {
     return { valid: false, error: "Invalid URL format. Please enter a complete URL including https://" };
   }
 };

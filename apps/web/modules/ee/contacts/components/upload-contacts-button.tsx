@@ -197,7 +197,7 @@ export const UploadContactsCSVButton = ({
 
     const transformedCsvData = csvResponse.map((record) => {
       const newRecord: Record<string, string> = {};
-      Object.entries(record).forEach(([key, value]) => {
+      for (const [key, value] of Object.entries(record)) {
         // if the key is in the attribute map, we wanna replace it
         if (attributeMap[key]) {
           const attrKeyId = attributeMap[key];
@@ -211,7 +211,7 @@ export const UploadContactsCSVButton = ({
         } else {
           newRecord[key] = value;
         }
-      });
+      }
 
       return newRecord;
     });

@@ -54,7 +54,7 @@ import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-sub
 import { sendInviteAcceptedEmail } from "@/modules/email";
 import { createWorkspace } from "@/modules/workspaces/settings/lib/workspace";
 
-const ZCreatedUser = ZUser.pick({
+const _ZCreatedUser = ZUser.pick({
   name: true,
   email: true,
   locale: true,
@@ -62,7 +62,7 @@ const ZCreatedUser = ZUser.pick({
   notificationSettings: true,
 });
 
-export type TCreatedUser = z.infer<typeof ZCreatedUser>;
+export type TCreatedUser = z.infer<typeof _ZCreatedUser>;
 
 /**
  * What a sign-up leaves for its audit record, filled in as it goes so a sign-up that fails partway is

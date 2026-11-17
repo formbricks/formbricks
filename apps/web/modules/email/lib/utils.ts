@@ -22,6 +22,7 @@ export const getRatingNumberOptionColor = (range: number, idx: number): string =
 const defaultLocale = "en-US";
 
 const getMessages = (locale: string): Record<string, string> => {
+  // eslint-disable-next-line typescript/no-require-imports -- a synchronous per-locale load; import() would make every caller async
   const messages = require(`@/locales/${locale}.json`) as {
     emails: Record<string, string>;
   };
@@ -38,7 +39,7 @@ export const translateEmailText = (
 
   if (replacements) {
     Object.entries(replacements).forEach(([key, value]) => {
-      translatedText = translatedText.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+      translatedText = translatedText.replace(new RegExp(String.raw`\{${key}\}`, "g"), value);
     });
   }
 

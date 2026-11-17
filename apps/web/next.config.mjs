@@ -410,7 +410,7 @@ const nextConfig = {
       },
       // SVG files (icons, logos) - long cache since they're usually static
       {
-        source: "/(.*)\\.svg",
+        source: String.raw`/(.*)\.svg`,
         headers: [
           {
             key: "Cache-Control",
@@ -500,7 +500,7 @@ const nextConfig = {
       },
       // Web manifest and browser config files - medium cache
       {
-        source: "/(site\\.webmanifest|browserconfig\\.xml)",
+        source: String.raw`/(site\.webmanifest|browserconfig\.xml)`,
         headers: [
           {
             key: "Cache-Control",

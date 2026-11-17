@@ -252,11 +252,13 @@ export const findLanguageCodesForDuplicateLabels = (
   return Array.from(duplicateLabels);
 };
 
+// eslint-disable-next-line typescript/no-deprecated -- validates the legacy question shape the v1 API still accepts
 export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): string[] => {
   const visited: Record<string, boolean> = {};
   const recStack: Record<string, boolean> = {};
   const cyclicQuestions = new Set<string>();
 
+  // eslint-disable-next-line typescript/no-deprecated -- validates the legacy question shape the v1 API still accepts
   const checkForCyclicLogic = (questionId: TSurveyQuestionId): boolean => {
     if (!visited[questionId]) {
       visited[questionId] = true;
@@ -293,6 +295,7 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
 
       // Handle default behavior: move to the next question if no jump actions or fallback logic is defined
       const nextQuestionIndex = questions.findIndex((ques) => ques.id === questionId) + 1;
+      // eslint-disable-next-line typescript/no-deprecated -- validates the legacy question shape the v1 API still accepts
       const nextQuestion = questions[nextQuestionIndex] as TSurveyQuestion | undefined;
       if (nextQuestion && !visited[nextQuestion.id] && checkForCyclicLogic(nextQuestion.id)) {
         return true;
@@ -311,7 +314,9 @@ export const findQuestionsWithCyclicLogic = (questions: TSurveyQuestion[]): stri
 };
 
 // Helper function to find all "jumpToQuestion" actions in the logic
+// eslint-disable-next-line typescript/no-deprecated -- validates the legacy question shape the v1 API still accepts
 const findJumpToQuestionActions = (actions: TSurveyLogicAction[]): TActionJumpToQuestion[] => {
+  // eslint-disable-next-line typescript/no-deprecated -- validates the legacy question shape the v1 API still accepts
   return actions.filter((action): action is TActionJumpToQuestion => action.objective === "jumpToQuestion");
 };
 

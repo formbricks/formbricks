@@ -98,7 +98,7 @@ export const QuotasCard = ({
   };
 
   const duplicateQuota = async (quota: TSurveyQuota) => {
-    const { id, createdAt, updatedAt, ...rest } = quota;
+    const { id: _id, createdAt: _createdAt, updatedAt: _updatedAt, ...rest } = quota;
     const quotaInput: TSurveyQuotaInput = {
       ...rest,
       name: `${quota.name} (Copy)`,

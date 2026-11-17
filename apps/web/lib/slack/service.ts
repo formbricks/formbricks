@@ -99,7 +99,7 @@ export const writeDataToSlack = async (
   surveyName: string | undefined
 ) => {
   try {
-    let blockResponse = [
+    const blockResponse = [
       {
         type: "section",
         text: {
@@ -112,7 +112,7 @@ export const writeDataToSlack = async (
       },
     ];
     for (let i = 0; i < responses.length; i++) {
-      let questionSection = {
+      const questionSection = {
         type: "section",
         text: {
           type: "mrkdwn",
@@ -124,7 +124,7 @@ export const writeDataToSlack = async (
         responseText.length > SLACK_MESSAGE_LIMIT
           ? truncateText(responseText, SLACK_MESSAGE_LIMIT)
           : responseText;
-      let responseSection = {
+      const responseSection = {
         type: "section",
         text: {
           type: "mrkdwn",
