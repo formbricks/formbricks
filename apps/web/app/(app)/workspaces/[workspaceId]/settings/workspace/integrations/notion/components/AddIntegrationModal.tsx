@@ -29,6 +29,10 @@ import {
   TMapping,
   createEmptyMapping,
 } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/notion/components/MappingRow";
+import {
+  getDatabaseProperties,
+  getDatabaseTitle,
+} from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/notion/lib/database";
 import NotionLogo from "@/images/notion.png";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { recallToHeadline } from "@/lib/utils/recall";
@@ -62,21 +66,6 @@ interface AddIntegrationModalProps {
   selectedIntegration: (TIntegrationNotionConfigData & { index: number }) | null;
   contactAttributeKeys: TContactAttributeKey[];
 }
-
-/*
- * `getNotionDatabases` passes Notion's database objects through as they come, so they carry Notion's
- * own `title` rich text and a property map, which `TIntegrationNotionDatabase` leaves undeclared.
- */
-type TNotionDatabaseProperty = { id: string; name: string; type: string };
-
-// An untitled database has an empty `title`; it is listed and saved with an empty name.
-const getDatabaseTitle = (database: TIntegrationNotionDatabase): string =>
-  (database as { title?: { plain_text?: string }[] }).title?.[0]?.plain_text ?? "";
-
-const getDatabaseProperties = (
-  database: TIntegrationNotionDatabase | null | undefined
-): Record<string, TNotionDatabaseProperty> =>
-  (database?.properties ?? {}) as Record<string, TNotionDatabaseProperty>;
 
 export const AddIntegrationModal = ({
   workspaceId,
