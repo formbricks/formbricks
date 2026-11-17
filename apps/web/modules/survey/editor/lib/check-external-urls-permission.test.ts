@@ -77,7 +77,9 @@ describe("checkExternalUrlsPermission", () => {
   });
 
   test("should allow external URLs when permission is granted", async () => {
-    vi.mocked(getOrganizationBilling).mockResolvedValue(mockOrganizationBilling as any);
+    vi.mocked(getOrganizationBilling).mockResolvedValue(
+      mockOrganizationBilling as unknown as Awaited<ReturnType<typeof getOrganizationBilling>>
+    );
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
 
     const surveyWithExternalUrl: TSurvey = {
@@ -98,7 +100,9 @@ describe("checkExternalUrlsPermission", () => {
   });
 
   test("should throw OperationNotAllowedError for new ending card button link without permission", async () => {
-    vi.mocked(getOrganizationBilling).mockResolvedValue(mockOrganizationBilling as any);
+    vi.mocked(getOrganizationBilling).mockResolvedValue(
+      mockOrganizationBilling as unknown as Awaited<ReturnType<typeof getOrganizationBilling>>
+    );
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
 
     const surveyWithNewButtonLink: TSurvey = {
@@ -122,7 +126,9 @@ describe("checkExternalUrlsPermission", () => {
   });
 
   test("should allow unchanged ending card button link (grandfathering)", async () => {
-    vi.mocked(getOrganizationBilling).mockResolvedValue(mockOrganizationBilling as any);
+    vi.mocked(getOrganizationBilling).mockResolvedValue(
+      mockOrganizationBilling as unknown as Awaited<ReturnType<typeof getOrganizationBilling>>
+    );
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
 
     const oldSurvey: TSurvey = {
@@ -155,7 +161,9 @@ describe("checkExternalUrlsPermission", () => {
   });
 
   test("should throw OperationNotAllowedError for changed ending card button link without permission", async () => {
-    vi.mocked(getOrganizationBilling).mockResolvedValue(mockOrganizationBilling as any);
+    vi.mocked(getOrganizationBilling).mockResolvedValue(
+      mockOrganizationBilling as unknown as Awaited<ReturnType<typeof getOrganizationBilling>>
+    );
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
 
     const oldSurvey: TSurvey = {
@@ -237,7 +245,9 @@ describe("checkExternalUrlsPermission", () => {
   });
 
   test("should allow ending card without button link", async () => {
-    vi.mocked(getOrganizationBilling).mockResolvedValue(mockOrganizationBilling as any);
+    vi.mocked(getOrganizationBilling).mockResolvedValue(
+      mockOrganizationBilling as unknown as Awaited<ReturnType<typeof getOrganizationBilling>>
+    );
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
 
     const surveyWithoutButtonLink: TSurvey = {
@@ -257,7 +267,9 @@ describe("checkExternalUrlsPermission", () => {
   });
 
   test("should throw OperationNotAllowedError for new external CTA button without permission", async () => {
-    vi.mocked(getOrganizationBilling).mockResolvedValue(mockOrganizationBilling as any);
+    vi.mocked(getOrganizationBilling).mockResolvedValue(
+      mockOrganizationBilling as unknown as Awaited<ReturnType<typeof getOrganizationBilling>>
+    );
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
 
     const surveyWithExternalCTA: TSurvey = {
@@ -290,7 +302,9 @@ describe("checkExternalUrlsPermission", () => {
   });
 
   test("should allow unchanged external CTA button (grandfathering)", async () => {
-    vi.mocked(getOrganizationBilling).mockResolvedValue(mockOrganizationBilling as any);
+    vi.mocked(getOrganizationBilling).mockResolvedValue(
+      mockOrganizationBilling as unknown as Awaited<ReturnType<typeof getOrganizationBilling>>
+    );
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
 
     const oldSurvey: TSurvey = {
@@ -341,7 +355,9 @@ describe("checkExternalUrlsPermission", () => {
   });
 
   test("should throw OperationNotAllowedError when switching CTA button to external without permission", async () => {
-    vi.mocked(getOrganizationBilling).mockResolvedValue(mockOrganizationBilling as any);
+    vi.mocked(getOrganizationBilling).mockResolvedValue(
+      mockOrganizationBilling as unknown as Awaited<ReturnType<typeof getOrganizationBilling>>
+    );
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
 
     const oldSurvey: TSurvey = {
@@ -392,7 +408,9 @@ describe("checkExternalUrlsPermission", () => {
   });
 
   test("should throw OperationNotAllowedError when changing external CTA button URL without permission", async () => {
-    vi.mocked(getOrganizationBilling).mockResolvedValue(mockOrganizationBilling as any);
+    vi.mocked(getOrganizationBilling).mockResolvedValue(
+      mockOrganizationBilling as unknown as Awaited<ReturnType<typeof getOrganizationBilling>>
+    );
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
 
     const oldSurvey: TSurvey = {
@@ -443,7 +461,9 @@ describe("checkExternalUrlsPermission", () => {
   });
 
   test("should allow internal CTA button without permission", async () => {
-    vi.mocked(getOrganizationBilling).mockResolvedValue(mockOrganizationBilling as any);
+    vi.mocked(getOrganizationBilling).mockResolvedValue(
+      mockOrganizationBilling as unknown as Awaited<ReturnType<typeof getOrganizationBilling>>
+    );
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
 
     const surveyWithInternalCTA: TSurvey = {
@@ -473,7 +493,9 @@ describe("checkExternalUrlsPermission", () => {
   });
 
   test("should handle surveys with multiple questions and endings", async () => {
-    vi.mocked(getOrganizationBilling).mockResolvedValue(mockOrganizationBilling as any);
+    vi.mocked(getOrganizationBilling).mockResolvedValue(
+      mockOrganizationBilling as unknown as Awaited<ReturnType<typeof getOrganizationBilling>>
+    );
     vi.mocked(getExternalUrlsPermission).mockResolvedValue(false);
 
     const complexSurvey: TSurvey = {

@@ -33,7 +33,7 @@ describe("doesContactExistInWorkspace", () => {
       id: contactId,
       createdAt: new Date(),
       updatedAt: new Date(),
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.contact.findFirst>>);
 
     const result = await doesContactExistInWorkspace(contactId, workspaceId);
 

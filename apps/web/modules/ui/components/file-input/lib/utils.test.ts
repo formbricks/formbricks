@@ -7,7 +7,7 @@ import { checkForYoutubePrivacyMode, getAllowedFiles } from "./utils";
 // Mock FileReader
 class MockFileReader {
   onload: (() => void) | null = null;
-  onerror: ((error: any) => void) | null = null;
+  onerror: ((error: unknown) => void) | null = null;
   result: string | null = null;
 
   readAsDataURL() {
@@ -22,7 +22,7 @@ class MockFileReader {
 }
 
 // Mock global FileReader
-global.FileReader = MockFileReader as any;
+global.FileReader = MockFileReader as unknown as typeof FileReader;
 
 // Mock dependencies
 vi.mock("react-hot-toast", () => ({
@@ -154,8 +154,12 @@ describe("File Input Utils", () => {
     });
 
     test("should return false for non-string types", () => {
-      expect(checkForYoutubePrivacyMode(null as any)).toBe(false);
-      expect(checkForYoutubePrivacyMode(123 as any)).toBe(false);
+      expect(
+        checkForYoutubePrivacyMode(null as unknown as Parameters<typeof checkForYoutubePrivacyMode>[0])
+      ).toBe(false);
+      expect(
+        checkForYoutubePrivacyMode(123 as unknown as Parameters<typeof checkForYoutubePrivacyMode>[0])
+      ).toBe(false);
     });
   });
 });

@@ -355,7 +355,10 @@ describe("withAuditLogging", () => {
   test("logs audit event for successful handler", async () => {
     const handlerImpl = vi.fn().mockResolvedValue("ok");
     const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
-    await wrapped({ ctx: mockCtxBase as any, parsedInput: mockParsedInput });
+    await wrapped({
+      ctx: mockCtxBase as unknown as Parameters<typeof wrapped>[0]["ctx"],
+      parsedInput: mockParsedInput,
+    });
     await new Promise(setImmediate);
     expect(handlerImpl).toHaveBeenCalled();
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
@@ -368,7 +371,12 @@ describe("withAuditLogging", () => {
   test("logs audit event for failed handler and throws", async () => {
     const handlerImpl = vi.fn().mockRejectedValue(new Error("fail"));
     const wrapped = OriginalHandler.withAuditLogging("created", "survey", handlerImpl);
-    await expect(wrapped({ ctx: mockCtxBase as any, parsedInput: mockParsedInput })).rejects.toThrow("fail");
+    await expect(
+      wrapped({
+        ctx: mockCtxBase as unknown as Parameters<typeof wrapped>[0]["ctx"],
+        parsedInput: mockParsedInput,
+      })
+    ).rejects.toThrow("fail");
     await new Promise(setImmediate);
     expect(handlerImpl).toHaveBeenCalled();
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
@@ -389,7 +397,10 @@ describe("withAuditLogging", () => {
     const handlerImpl = vi.fn().mockResolvedValue("ok");
     const wrapped = OriginalHandler.withAuditLogging("created", "user", handlerImpl);
 
-    const result = await wrapped({ ctx: suppressedCtx as any, parsedInput: mockParsedInput });
+    const result = await wrapped({
+      ctx: suppressedCtx as unknown as Parameters<typeof wrapped>[0]["ctx"],
+      parsedInput: mockParsedInput,
+    });
     await new Promise(setImmediate);
 
     expect(result).toBe("ok"); // the response is unchanged — only the record is
@@ -406,9 +417,12 @@ describe("withAuditLogging", () => {
     const handlerImpl = vi.fn().mockRejectedValue(new Error("fail"));
     const wrapped = OriginalHandler.withAuditLogging("created", "user", handlerImpl);
 
-    await expect(wrapped({ ctx: suppressedCtx as any, parsedInput: mockParsedInput })).rejects.toThrow(
-      "fail"
-    );
+    await expect(
+      wrapped({
+        ctx: suppressedCtx as unknown as Parameters<typeof wrapped>[0]["ctx"],
+        parsedInput: mockParsedInput,
+      })
+    ).rejects.toThrow("fail");
     await new Promise(setImmediate);
 
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
@@ -456,7 +470,10 @@ describe("withAuditLogging", () => {
     };
     const handlerImpl = vi.fn().mockResolvedValue("ok");
     const wrapped = OriginalHandler.withAuditLogging("created", "chart", handlerImpl);
-    await wrapped({ ctx: chartCtx as any, parsedInput: mockParsedInput });
+    await wrapped({
+      ctx: chartCtx as unknown as Parameters<typeof wrapped>[0]["ctx"],
+      parsedInput: mockParsedInput,
+    });
     await new Promise(setImmediate);
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
@@ -471,7 +488,10 @@ describe("withAuditLogging", () => {
     };
     const handlerImpl = vi.fn().mockResolvedValue("ok");
     const wrapped = OriginalHandler.withAuditLogging("created", "feedbackSource", handlerImpl);
-    await wrapped({ ctx: feedbackSourceCtx as any, parsedInput: mockParsedInput });
+    await wrapped({
+      ctx: feedbackSourceCtx as unknown as Parameters<typeof wrapped>[0]["ctx"],
+      parsedInput: mockParsedInput,
+    });
     await new Promise(setImmediate);
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
@@ -486,7 +506,10 @@ describe("withAuditLogging", () => {
     };
     const handlerImpl = vi.fn().mockResolvedValue("ok");
     const wrapped = OriginalHandler.withAuditLogging("created", "embeddedData", handlerImpl);
-    await wrapped({ ctx: embeddedDataCtx as any, parsedInput: mockParsedInput });
+    await wrapped({
+      ctx: embeddedDataCtx as unknown as Parameters<typeof wrapped>[0]["ctx"],
+      parsedInput: mockParsedInput,
+    });
     await new Promise(setImmediate);
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
@@ -501,7 +524,10 @@ describe("withAuditLogging", () => {
     };
     const handlerImpl = vi.fn().mockResolvedValue("ok");
     const wrapped = OriginalHandler.withAuditLogging("created", "dashboard", handlerImpl);
-    await wrapped({ ctx: dashCtx as any, parsedInput: mockParsedInput });
+    await wrapped({
+      ctx: dashCtx as unknown as Parameters<typeof wrapped>[0]["ctx"],
+      parsedInput: mockParsedInput,
+    });
     await new Promise(setImmediate);
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];
@@ -516,7 +542,10 @@ describe("withAuditLogging", () => {
     };
     const handlerImpl = vi.fn().mockResolvedValue("ok");
     const wrapped = OriginalHandler.withAuditLogging("created", "dashboardWidget", handlerImpl);
-    await wrapped({ ctx: widgetCtx as any, parsedInput: mockParsedInput });
+    await wrapped({
+      ctx: widgetCtx as unknown as Parameters<typeof wrapped>[0]["ctx"],
+      parsedInput: mockParsedInput,
+    });
     await new Promise(setImmediate);
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalled();
     const callArgs = serviceLogAuditEventMockHandle.mock.calls[0][0];

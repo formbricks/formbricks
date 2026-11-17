@@ -33,7 +33,9 @@ describe("getApiKeyWithPermissions", () => {
       ],
     };
 
-    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(
+      mockApiKeyData as unknown as Awaited<ReturnType<typeof getApiKeyWithPermissions>>
+    );
 
     const result = await getApiKeyWithPermissions("test-api-key");
 
@@ -73,7 +75,9 @@ describe("authenticateRequest", () => {
       ],
     };
 
-    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(
+      mockApiKeyData as unknown as Awaited<ReturnType<typeof getApiKeyWithPermissions>>
+    );
     const result = await authenticateRequest(request);
 
     expect(result).toEqual({
@@ -125,7 +129,9 @@ describe("authenticateRequest", () => {
       apiKeyWorkspaces: [],
     };
 
-    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(
+      mockApiKeyData as unknown as Awaited<ReturnType<typeof getApiKeyWithPermissions>>
+    );
 
     const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
     expect(result).toEqual({
@@ -151,7 +157,7 @@ describe("authenticateRequest", () => {
       lastUsedAt: null,
       label: "Test API Key",
       apiKeyWorkspaces: [],
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof getApiKeyWithPermissions>>);
 
     const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
 
@@ -181,7 +187,9 @@ describe("authenticateRequest", () => {
       apiKeyWorkspaces: [],
     };
 
-    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
+    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(
+      mockApiKeyData as unknown as Awaited<ReturnType<typeof getApiKeyWithPermissions>>
+    );
 
     const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
     expect(result).toEqual({
@@ -214,7 +222,7 @@ describe("authenticateRequest", () => {
       apiKeyWorkspaces: [],
     };
 
-    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
+    vi.mocked(getApiKeyWithPermissions, { partial: true, deep: true }).mockResolvedValue(mockApiKeyData);
 
     const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
     expect(result).toEqual({

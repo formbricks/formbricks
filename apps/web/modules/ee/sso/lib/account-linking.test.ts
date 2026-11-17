@@ -50,7 +50,7 @@ describe("syncSsoIdentityForUser", () => {
         user: {
           update: mocks.userUpdate,
         },
-      } as any)
+      } as unknown as Parameters<typeof callback>[0])
     );
     mocks.accountFindUnique.mockResolvedValue(null);
     mocks.accountDelete.mockResolvedValue(undefined);
@@ -179,7 +179,7 @@ describe("syncSsoIdentityForUser", () => {
       userId: "user_1",
       provider: "google",
       account,
-      tx: tx as any,
+      tx: tx as unknown as Parameters<typeof syncSsoIdentityForUser>[0]["tx"],
     });
 
     expect(txAccountFindUnique).toHaveBeenCalledOnce();

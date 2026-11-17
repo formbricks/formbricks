@@ -316,7 +316,9 @@ describe("Follow-ups", () => {
         ],
       } as unknown as TSurvey);
 
-      vi.mocked(getResponse).mockResolvedValue(modifiedResponse as unknown as any);
+      vi.mocked(getResponse).mockResolvedValue(
+        modifiedResponse as unknown as Awaited<ReturnType<typeof getResponse>>
+      );
 
       const result = await sendFollowUpsForResponse("response1");
 

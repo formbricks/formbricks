@@ -23,7 +23,7 @@ vi.mock("@/modules/storage/service", () => ({
 }));
 
 // The delete helper takes a survey shape ({ blocks, questions }); most cases here only use questions.
-const questionsSurvey = (questions: unknown[]) => ({ questions, blocks: [] }) as any;
+const questionsSurvey = (questions: unknown[]) => ({ questions, blocks: [] });
 const surveyId = "kbr8tnr2q2vgztyrfnqlgfjt";
 
 describe("findAndDeleteUploadedFilesInResponse", () => {
@@ -58,10 +58,10 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const blockSurvey = {
       questions: [],
       blocks: [{ id: "block-1", elements: [{ id: elementId, type: TSurveyElementTypeEnum.FileUpload }] }],
-    } as any;
+    };
     const blockResponseData = {
       [elementId]: [`https://example.com/storage/${workspaceId}/private/block-file.png`],
-    } as any;
+    };
 
     const result = await findAndDeleteUploadedFilesInResponse(
       blockResponseData,
@@ -138,7 +138,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
 
     const plantedData = {
       [fileUploadQuestion.id]: [`https://example.com/storage/${foreignWorkspaceId}/public/victim.png`],
-    } as any;
+    };
 
     const result = await findAndDeleteUploadedFilesInResponse(
       plantedData,
@@ -155,7 +155,7 @@ describe("findAndDeleteUploadedFilesInResponse", () => {
     const invalidFileUrl = "https://example.com/invalid-url";
     const invalidResponseData = {
       [fileUploadQuestion.id]: [invalidFileUrl],
-    } as any;
+    };
 
     const loggerSpy = vi.spyOn(logger, "error");
 

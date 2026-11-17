@@ -26,7 +26,9 @@ describe("user password helpers", () => {
   });
 
   test("getCredentialPasswordHash reads the credential Account scoped to the user", async () => {
-    mockPrismaAccountFindUnique.mockResolvedValue({ password: "hashed-password" } as any);
+    mockPrismaAccountFindUnique.mockResolvedValue({ password: "hashed-password" } as Awaited<
+      ReturnType<typeof mockPrismaAccountFindUnique>
+    >);
 
     await expect(getCredentialPasswordHash("user-1")).resolves.toBe("hashed-password");
 
@@ -45,13 +47,17 @@ describe("user password helpers", () => {
   });
 
   test("getCredentialPasswordHash returns null when the credential Account has no password", async () => {
-    mockPrismaAccountFindUnique.mockResolvedValue({ password: null } as any);
+    mockPrismaAccountFindUnique.mockResolvedValue({ password: null } as Awaited<
+      ReturnType<typeof mockPrismaAccountFindUnique>
+    >);
 
     await expect(getCredentialPasswordHash("user-without-hash")).resolves.toBeNull();
   });
 
   test("verifies a password against the credential Account hash", async () => {
-    mockPrismaAccountFindUnique.mockResolvedValue({ password: "hashed-password" } as any);
+    mockPrismaAccountFindUnique.mockResolvedValue({ password: "hashed-password" } as Awaited<
+      ReturnType<typeof mockPrismaAccountFindUnique>
+    >);
     mockVerifyPassword.mockResolvedValue(true);
 
     await expect(verifyUserPassword("password-user", "plain-password")).resolves.toBe(true);
@@ -60,7 +66,9 @@ describe("user password helpers", () => {
   });
 
   test("returns false when the password does not match the credential Account hash", async () => {
-    mockPrismaAccountFindUnique.mockResolvedValue({ password: "hashed-password" } as any);
+    mockPrismaAccountFindUnique.mockResolvedValue({ password: "hashed-password" } as Awaited<
+      ReturnType<typeof mockPrismaAccountFindUnique>
+    >);
     mockVerifyPassword.mockResolvedValue(false);
 
     await expect(verifyUserPassword("password-user", "wrong-password")).resolves.toBe(false);

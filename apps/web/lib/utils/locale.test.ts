@@ -30,7 +30,7 @@ describe("locale", () => {
     // Set up the mock to return null for accept-language header
     vi.mocked(nextHeaders.headers).mockReturnValue({
       get: vi.fn().mockReturnValue(null),
-    } as any);
+    } as unknown as ReturnType<typeof nextHeaders.headers>);
 
     const result = await findMatchingLocale();
 
@@ -44,7 +44,7 @@ describe("locale", () => {
 
     vi.mocked(nextHeaders.headers).mockReturnValue({
       get: vi.fn().mockReturnValue(`${testLocale},fr-FR,de-DE`),
-    } as any);
+    } as unknown as ReturnType<typeof nextHeaders.headers>);
 
     const result = await findMatchingLocale();
 
@@ -63,7 +63,7 @@ describe("locale", () => {
 
     vi.mocked(nextHeaders.headers).mockReturnValue({
       get: vi.fn().mockReturnValue("en-US,fr-FR,de-DE"),
-    } as any);
+    } as unknown as ReturnType<typeof nextHeaders.headers>);
 
     const result = await findMatchingLocale();
 
@@ -75,7 +75,7 @@ describe("locale", () => {
     // Use a locale that should not exist in AVAILABLE_LOCALES
     vi.mocked(nextHeaders.headers).mockReturnValue({
       get: vi.fn().mockReturnValue("xx-XX,yy-YY"),
-    } as any);
+    } as unknown as ReturnType<typeof nextHeaders.headers>);
 
     const result = await findMatchingLocale();
 
@@ -94,7 +94,7 @@ describe("locale", () => {
 
     vi.mocked(nextHeaders.headers).mockReturnValue({
       get: vi.fn().mockReturnValue("de-DE,en-US,fr-FR"),
-    } as any);
+    } as unknown as ReturnType<typeof nextHeaders.headers>);
 
     const result = await findMatchingLocale();
 
@@ -114,7 +114,7 @@ describe("locale", () => {
     // Verify the locale can be matched from Accept-Language header
     vi.mocked(nextHeaders.headers).mockReturnValue({
       get: vi.fn().mockReturnValue("sv-SE,en-US"),
-    } as any);
+    } as unknown as ReturnType<typeof nextHeaders.headers>);
 
     const result = await findMatchingLocale();
 

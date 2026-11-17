@@ -26,7 +26,9 @@ describe("invite", () => {
         organizationId: "org-id",
       };
 
-      vi.mocked(prisma.invite.delete).mockResolvedValue(mockInvite as any);
+      vi.mocked(prisma.invite.delete).mockResolvedValue(
+        mockInvite as Awaited<ReturnType<typeof prisma.invite.delete>>
+      );
 
       const result = await deleteInvite("test-id");
 
@@ -41,7 +43,9 @@ describe("invite", () => {
     });
 
     test("should throw ResourceNotFoundError when invite is not found", async () => {
-      vi.mocked(prisma.invite.delete).mockResolvedValue(null as any);
+      vi.mocked(prisma.invite.delete).mockResolvedValue(
+        null as unknown as Awaited<ReturnType<typeof prisma.invite.delete>>
+      );
 
       await expect(deleteInvite("test-id")).rejects.toThrow(ResourceNotFoundError);
     });

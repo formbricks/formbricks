@@ -63,7 +63,9 @@ describe("getContactAttributes", () => {
   });
 
   test("should return contact attributes when found", async () => {
-    vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue(mockContactAttributes as any);
+    vi.mocked(prisma.contactAttribute.findMany, { partial: true, deep: true }).mockResolvedValue(
+      mockContactAttributes
+    );
 
     const result = await getContactAttributes(mockWorkspaceIds);
 

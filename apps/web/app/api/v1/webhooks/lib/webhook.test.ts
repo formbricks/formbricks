@@ -53,7 +53,7 @@ describe("createWebhook", () => {
       surveyIds: ["survey1", "survey2"],
       createdAt: new Date(),
       updatedAt: new Date(),
-    } as any;
+    } as Awaited<ReturnType<typeof prisma.webhook.create>>;
 
     vi.mocked(prisma.webhook.create).mockResolvedValueOnce(createdWebhook);
 
@@ -86,7 +86,7 @@ describe("createWebhook", () => {
       workspaceId: "workspace-id-mock",
     };
 
-    vi.mocked(prisma.webhook.create).mockResolvedValueOnce({} as any);
+    vi.mocked(prisma.webhook.create, { partial: true }).mockResolvedValueOnce({});
 
     await createWebhook(webhookInput);
 
@@ -124,7 +124,9 @@ describe("createWebhook", () => {
       throw new ValidationError("Validation failed");
     });
 
-    await expect(createWebhook(invalidWebhookInput as any)).rejects.toThrowError(ValidationError);
+    await expect(
+      createWebhook(invalidWebhookInput as unknown as Parameters<typeof createWebhook>[0])
+    ).rejects.toThrowError(ValidationError);
   });
 
   test("should throw a DatabaseError if a PrismaClientKnownRequestError occurs", async () => {

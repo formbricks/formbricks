@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { getNotShownElementIds } from "@formbricks/types/surveys/not-shown";
 import {
   surveyFlowFixture,
@@ -7,7 +8,7 @@ import {
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { getResponseCardRows } from "./card-rows";
 
-const element = (id: string, type = "openText") => ({ id, type }) as any;
+const element = (id: string, type = "openText") => ({ id, type }) as TSurveyElement;
 const elements = ["q1", "q2", "q3", "q4", "q5"].map((id) => element(id));
 const none = new Set<string>();
 

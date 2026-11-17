@@ -45,7 +45,7 @@ const organizationId = "organization-id";
 const mockPrismaSurveys = [
   { id: "survey1", name: "Survey 1", status: "inProgress", updatedAt: new Date() },
   { id: "survey2", name: "Survey 2", status: "draft", updatedAt: new Date() },
-] as any; // Use 'as any' to bypass complex type matching
+] as Awaited<ReturnType<typeof prisma.survey.findMany>>; // Use 'as any' to bypass complex type matching
 const mockTransformedSurveys: TSurvey[] = [
   {
     id: "survey1",
@@ -100,7 +100,7 @@ describe("getSurveys", () => {
   });
 
   test("should fetch and transform surveys successfully", async () => {
-    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockPrismaSurveys as any);
+    vi.mocked(prisma.survey.findMany).mockResolvedValue(mockPrismaSurveys);
     vi.mocked(transformPrismaSurvey).mockImplementation((survey) => {
       const found = mockTransformedSurveys.find((ts) => ts.id === survey.id);
       if (!found) throw new Error("Survey not found in mock transformed data");

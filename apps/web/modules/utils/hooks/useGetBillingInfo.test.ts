@@ -19,7 +19,7 @@ beforeEach(() => {
 describe("useGetBillingInfo", () => {
   test("fetches billing info on mount", async () => {
     const billingData = { stripeCustomerId: "cus_1", limits: {} };
-    mockAction.mockResolvedValue({ data: billingData } as any);
+    mockAction.mockResolvedValue({ data: billingData } as Awaited<ReturnType<typeof mockAction>>);
 
     const { result } = renderHook(() => useGetBillingInfo("org1"));
 
@@ -34,7 +34,7 @@ describe("useGetBillingInfo", () => {
   });
 
   test("sets error when response has no data", async () => {
-    mockAction.mockResolvedValue({ data: undefined } as any);
+    mockAction.mockResolvedValue({ data: undefined });
 
     const { result } = renderHook(() => useGetBillingInfo("org1"));
 

@@ -220,7 +220,7 @@ describe("sso-recovery", () => {
         type: "oauth",
         provider: "google",
         providerAccountId: "provider-account-1",
-      } as any,
+      },
       callbackUrl: "http://localhost:3000/environments/env_1",
     });
 
@@ -259,7 +259,7 @@ describe("sso-recovery", () => {
           type: "oauth",
           provider: "google",
           providerAccountId: "provider-account-1",
-        } as any,
+        },
         callbackUrl: "https://evil.example/phish",
       })
     ).rejects.toThrow("smtp unavailable");
@@ -286,7 +286,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     withApiKeys(["apikey_1", "apikey_2"]);
     // Same commit-step trick as `consumeSsoRecoveryIntent`: SpiceDB is not part of the transaction, so a
     // reconciliation issued inside it would survive a rollback and delete relationships for keys that
@@ -601,7 +601,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" });
 
@@ -625,7 +625,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(syncSsoIdentityForUser).mockRejectedValue(new Error("deadlock detected"));
 
     await expect(completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })).rejects.toThrow(
@@ -663,7 +663,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     // First completion: the account is unproven, so this is the one that strips and sweeps.
     await completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" });
@@ -680,7 +680,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     txUserUpdate.mockClear();
     vi.mocked(revokeUserSessionsExcept).mockClear();
     vi.mocked(syncSsoIdentityForUser).mockClear();
@@ -703,7 +703,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await completeSsoRecovery({
       stateId: "test-state",
@@ -746,7 +746,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "google",
       identityProviderAccountId: "provider-account-1",
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await completeSsoRecovery({
       stateId: "test-state",
@@ -777,7 +777,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(revokeUserSessionsExcept).mockRejectedValue(new Error("redis unavailable"));
 
     const callbackUrl = await completeSsoRecovery({
@@ -951,7 +951,7 @@ describe("sso-recovery", () => {
       twoFactorEnabled: false,
       twoFactorSecret: null,
       backupCodes: null,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await expect(
       completeSsoRecovery({
@@ -986,7 +986,7 @@ describe("sso-recovery", () => {
       twoFactorEnabled: false,
       twoFactorSecret: null,
       backupCodes: null,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(finalizeSuccessfulSignIn).mockRejectedValue(new Error("tracking unavailable"));
 
     await expect(
@@ -1035,7 +1035,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await expect(
       completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })
@@ -1072,7 +1072,7 @@ describe("sso-recovery", () => {
       isActive: true,
       identityProvider: "email",
       identityProviderAccountId: null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await expect(completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })).resolves.toBe(
       "http://localhost:3000"

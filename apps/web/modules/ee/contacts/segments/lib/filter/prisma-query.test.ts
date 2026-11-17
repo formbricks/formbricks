@@ -1,9 +1,18 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
-import { TBaseFilters, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
+import { TAttributeOperator, TBaseFilters, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
 import { effectivelyWorkspaceVisibleWhere } from "@/lib/survey/visibility/predicate";
 import { getSegment } from "../segments";
 import { segmentFilterToPrismaQuery } from "./prisma-query";
+
+/**
+ * A Prisma where clause read as nested plain data, so a test can assert on its shape. Every key reads
+ * as present: a missing one fails the assertion that reads it rather than the type check.
+ */
+type TClauseTree = { [key: string]: TClauseTree };
+const asClauseTree = (value: unknown) => value as TClauseTree;
+/** A leaf of that tree that holds a Date. */
+const asDate = (value: unknown) => value as Date;
 
 const mockQueryRawUnsafe = vi.fn();
 const mockFindFirst = vi.fn();
@@ -222,7 +231,7 @@ describe("segmentFilterToPrismaQuery", () => {
     const result = await segmentFilterToPrismaQuery(mockSegmentId, filters, mockWorkspaceId);
 
     if (result.ok) {
-      const whereClause = result.data.whereClause as Prisma.ContactWhereInput as any;
+      const whereClause = asClauseTree(result.data.whereClause);
       const nestedConditionsAnd = whereClause.AND?.[1].AND?.[0].AND;
       expect(nestedConditionsAnd).toContainEqual({
         attributes: {
@@ -399,8 +408,10 @@ describe("segmentFilterToPrismaQuery", () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect((result.error as any).type).toBe("bad_request");
-      expect((result.error as any).message).toBe("Failed to convert segment filters to Prisma query");
+      expect(result.error).toMatchObject({
+        type: "bad_request",
+        message: "Failed to convert segment filters to Prisma query",
+      });
     }
   });
 
@@ -746,9 +757,7 @@ describe("segmentFilterToPrismaQuery", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      const whereClause = (
-        (result.data.whereClause as Prisma.ContactWhereInput).AND as Prisma.ContactWhereInput[]
-      )?.[1] as any;
+      const whereClause = asClauseTree(result.data.whereClause).AND?.[1];
       expect(whereClause).toBeDefined();
 
       // Connectors on group_1's children are [null, and, or, or, and], so AND-before-OR precedence
@@ -848,7 +857,7 @@ describe("segmentFilterToPrismaQuery", () => {
           },
           value: "null", // String "null" value
           qualifier: {
-            operator: "invalidOperator" as any, // Invalid operator
+            operator: "invalidOperator" as unknown as TAttributeOperator, // Invalid operator
           },
         },
       },
@@ -977,7 +986,7 @@ describe("segmentFilterToPrismaQuery", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      const whereClause = result.data.whereClause as Prisma.ContactWhereInput as any;
+      const whereClause = asClauseTree(result.data.whereClause);
       // The circularSegmentId should be detected as circular and return an empty object
       expect(whereClause.AND?.[1].AND[0].AND).toContainEqual({
         attributes: {
@@ -1150,7 +1159,7 @@ describe("segmentFilterToPrismaQuery", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      const whereClause = (result.data.whereClause as Prisma.ContactWhereInput as any).AND?.[1];
+      const whereClause = asClauseTree(result.data.whereClause).AND?.[1];
 
       // group_1's children connectors are [null, and, or], so AND-before-OR precedence yields:
       //   (subgroup_1 AND subgroup_2) OR subgroup_3
@@ -1260,7 +1269,7 @@ describe("segmentFilterToPrismaQuery", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      const filterClause = result.data.whereClause.AND?.[1] as any;
+      const filterClause = asClauseTree(result.data.whereClause.AND?.[1]);
       expect(filterClause.AND[0]).toEqual({
         OR: [
           {
@@ -1317,7 +1326,7 @@ describe("segmentFilterToPrismaQuery", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      const filterClause = result.data.whereClause.AND?.[1] as any;
+      const filterClause = asClauseTree(result.data.whereClause.AND?.[1]);
       expect(filterClause.AND[0]).toEqual({
         attributes: {
           some: {
@@ -1503,7 +1512,7 @@ describe("segmentFilterToPrismaQuery", () => {
         const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
         const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
         // isSameDay should generate OR with valueDate and string fallback
-        const dateAttr = (filterClause as unknown as any)?.AND?.[0]?.attributes;
+        const dateAttr = asClauseTree(filterClause)?.AND?.[0]?.attributes;
         expect(dateAttr).toBeDefined();
         const orConditions = dateAttr?.some?.OR;
         expect(orConditions).toHaveLength(2);
@@ -1511,8 +1520,8 @@ describe("segmentFilterToPrismaQuery", () => {
         expect(valueDate).toHaveProperty("gte");
         expect(valueDate).toHaveProperty("lte");
         // Verify the date range is for the same day
-        const gteDate = valueDate.gte as Date;
-        const lteDate = valueDate.lte as Date;
+        const gteDate = asDate(valueDate.gte);
+        const lteDate = asDate(valueDate.lte);
         expect(gteDate.getUTCFullYear()).toBe(2024);
         expect(gteDate.getUTCMonth()).toBe(6); // July is month 6 (0-indexed)
         expect(gteDate.getUTCDate()).toBe(4);
@@ -1551,14 +1560,14 @@ describe("segmentFilterToPrismaQuery", () => {
       if (result.ok) {
         const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
         const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
-        const dateAttr = (filterClause as unknown as any)?.AND?.[0]?.attributes;
+        const dateAttr = asClauseTree(filterClause)?.AND?.[0]?.attributes;
         expect(dateAttr).toBeDefined();
         const orConditions = dateAttr?.some?.OR;
         expect(orConditions).toHaveLength(2);
         const valueDate = orConditions?.[0]?.valueDate;
         expect(valueDate).toHaveProperty("lt");
         // The threshold should be approximately 30 days ago
-        const threshold = valueDate.lt as Date;
+        const threshold = asDate(valueDate.lt);
         const now = new Date();
         const diffMs = now.getTime() - threshold.getTime();
         const diffDays = diffMs / (1000 * 60 * 60 * 24);
@@ -1593,14 +1602,14 @@ describe("segmentFilterToPrismaQuery", () => {
       if (result.ok) {
         const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
         const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
-        const dateAttr = (filterClause as unknown as any)?.AND?.[0]?.attributes;
+        const dateAttr = asClauseTree(filterClause)?.AND?.[0]?.attributes;
         expect(dateAttr).toBeDefined();
         const orConditions = dateAttr?.some?.OR;
         expect(orConditions).toHaveLength(2);
         const valueDate = orConditions?.[0]?.valueDate;
         expect(valueDate).toHaveProperty("gte");
         // The threshold should be approximately 2 weeks (14 days) ago
-        const threshold = valueDate.gte as Date;
+        const threshold = asDate(valueDate.gte);
         const now = new Date();
         const diffMs = now.getTime() - threshold.getTime();
         const diffDays = diffMs / (1000 * 60 * 60 * 24);
@@ -1634,14 +1643,14 @@ describe("segmentFilterToPrismaQuery", () => {
       if (result.ok) {
         const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
         const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
-        const dateAttr = (filterClause as unknown as any)?.AND?.[0]?.attributes;
+        const dateAttr = asClauseTree(filterClause)?.AND?.[0]?.attributes;
         expect(dateAttr).toBeDefined();
         const orConditions = dateAttr?.some?.OR;
         expect(orConditions).toHaveLength(2);
         const valueDate = orConditions?.[0]?.valueDate;
         expect(valueDate).toHaveProperty("lt");
         // The threshold should be approximately 6 months ago
-        const threshold = valueDate.lt as Date;
+        const threshold = asDate(valueDate.lt);
         const now = new Date();
         // Calculate expected threshold (approximately 6 months ago)
         const expectedThreshold = new Date(now);
@@ -1693,18 +1702,18 @@ describe("segmentFilterToPrismaQuery", () => {
       if (result.ok) {
         const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
         const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
-        const andConditions = (filterClause as unknown as any).AND as Prisma.ContactWhereInput[];
+        const andConditions = asClauseTree(filterClause).AND;
         expect(andConditions).toHaveLength(2);
 
         // First filter: isAfter (with OR fallback for transition)
-        const firstFilter = andConditions[0] as unknown as any;
+        const firstFilter = asClauseTree(andConditions[0]);
         expect(firstFilter.attributes.some.attributeKey.key).toBe("signupDate");
         expect(firstFilter.attributes.some.OR[0].valueDate.gt).toEqual(new Date("2024-01-01"));
         expect(firstFilter.attributes.some.OR[1].valueDate).toBeNull();
         expect(firstFilter.attributes.some.OR[1].value.gt).toBe(new Date("2024-01-01").toISOString());
 
         // Second filter: isNewerThan (with OR fallback for transition)
-        const secondFilter = andConditions[1] as unknown as any;
+        const secondFilter = asClauseTree(andConditions[1]);
         expect(secondFilter.attributes.some.attributeKey.key).toBe("lastActivityDate");
         expect(secondFilter.attributes.some.OR[0].valueDate).toHaveProperty("gte");
       }
@@ -1765,11 +1774,11 @@ describe("segmentFilterToPrismaQuery", () => {
       if (result.ok) {
         const whereClause = result.data.whereClause as Prisma.ContactWhereInput;
         const filterClause = (whereClause.AND as Prisma.ContactWhereInput[])?.[1];
-        const andConditions = (filterClause as unknown as any).AND as Prisma.ContactWhereInput[];
+        const andConditions = asClauseTree(filterClause).AND;
         expect(andConditions).toHaveLength(3);
 
         // String filter uses 'value'
-        expect((andConditions[0] as unknown as any).attributes.some.value).toEqual({
+        expect(asClauseTree(andConditions[0]).attributes.some.value).toEqual({
           equals: "premium",
           mode: "insensitive",
         });
@@ -1785,7 +1794,7 @@ describe("segmentFilterToPrismaQuery", () => {
         });
 
         // Date filter uses OR fallback with 'valueDate' and string 'value'
-        expect((andConditions[2] as unknown as any).attributes.some.OR[0].valueDate).toHaveProperty("gte");
+        expect(asClauseTree(andConditions[2]).attributes.some.OR[0].valueDate).toHaveProperty("gte");
       }
     });
   });
@@ -1823,7 +1832,7 @@ describe("survey interaction filters", () => {
 
   // Extract the single filter's where clause from the wrapped result.
   const extractClause = (result: unknown) => {
-    const whereClause = (result as any).data.whereClause;
+    const whereClause = asClauseTree(result).data.whereClause;
     return whereClause.AND[1].AND[0];
   };
 

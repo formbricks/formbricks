@@ -39,14 +39,14 @@ const authResult = { workspaceId, organizationId: "org_1" };
 const authentication = {
   user: { id: "user_1", email: "user@example.com", name: "User" },
   expires: "2026-05-01",
-} as any;
+};
 const requestId = "req_123";
 const instance = "/api/v3/surveys/templates";
 const workspace = {
   id: workspaceId,
   name: "Acme",
-} as any;
-const t = vi.fn((key: string) => key) as any;
+} as Awaited<ReturnType<typeof getWorkspace>>;
+const t = vi.fn((key: string) => key);
 
 describe("createTrustedTemplateSurveyResponse", () => {
   beforeEach(() => {
@@ -54,7 +54,7 @@ describe("createTrustedTemplateSurveyResponse", () => {
     t.mockImplementation((key: string) => key);
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(authResult);
     vi.mocked(getWorkspace).mockResolvedValue(workspace);
-    vi.mocked(getTranslate).mockResolvedValue(t);
+    vi.mocked(getTranslate).mockResolvedValue(t as unknown as Awaited<ReturnType<typeof getTranslate>>);
     vi.mocked(createV3SurveyResponse).mockResolvedValue(
       Response.json({ data: { id: "survey_1" } }, { status: 201 })
     );
@@ -156,7 +156,7 @@ describe("createTrustedTemplateSurveyResponse", () => {
         workspaceId,
         templateId: "product-market-fit-superhuman",
         source: "catalog",
-        surveyType: "invalid" as any,
+        surveyType: "invalid" as unknown as "link",
         defaultLanguage: "en-US",
       },
       authentication,

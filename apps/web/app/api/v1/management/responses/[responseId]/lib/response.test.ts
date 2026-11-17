@@ -93,7 +93,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
         update: vi.fn(),
       },
     };
-    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+    prisma.$transaction = vi.fn(async (cb) => cb(mockTx));
     mockLoadQuotaEvaluationContext.mockResolvedValue(mockQuotaContext);
   });
 

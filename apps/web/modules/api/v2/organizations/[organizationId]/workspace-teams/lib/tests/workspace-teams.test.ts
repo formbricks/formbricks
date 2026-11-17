@@ -39,7 +39,7 @@ describe("WorkspaceTeams Lib", () => {
   describe("getWorkspaceTeams", () => {
     test("returns workspaceTeams with meta on success", async () => {
       const mockTeams = [{ id: "projTeam1", organizationId: "orgx", workspaceId: "p1", teamId: "t1" }];
-      (prisma.$transaction as any).mockResolvedValueOnce([mockTeams, mockTeams.length]);
+      vi.mocked(prisma.$transaction).mockResolvedValueOnce([mockTeams, mockTeams.length]);
       const result = await getWorkspaceTeams("orgx", { skip: 0, limit: 10 } as TGetWorkspaceTeamsFilter);
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -52,7 +52,7 @@ describe("WorkspaceTeams Lib", () => {
     });
 
     test("returns internal_server_error on exception", async () => {
-      (prisma.$transaction as any).mockRejectedValueOnce(new Error("DB error"));
+      vi.mocked(prisma.$transaction).mockRejectedValueOnce(new Error("DB error"));
       const result = await getWorkspaceTeams("orgx", { skip: 0, limit: 10 } as TGetWorkspaceTeamsFilter);
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -64,7 +64,7 @@ describe("WorkspaceTeams Lib", () => {
   describe("createWorkspaceTeam", () => {
     test("creates a workspaceTeam successfully", async () => {
       const mockCreated = { id: "ptx", workspaceId: "p1", teamId: "t1", organizationId: "orgx" };
-      (prisma.workspaceTeam.create as any).mockResolvedValueOnce(mockCreated);
+      vi.mocked(prisma.workspaceTeam.create, { partial: true }).mockResolvedValueOnce(mockCreated);
       const result = await createWorkspaceTeam({
         workspaceId: "p1",
         teamId: "t1",
@@ -74,12 +74,12 @@ describe("WorkspaceTeams Lib", () => {
         workspaceTeamGrants: [{ teamId: "t1", workspaceId: "p1" }],
       });
       if (result.ok) {
-        expect((result.data as any).id).toBe("ptx");
+        expect(result.data).toHaveProperty("id", "ptx");
       }
     });
 
     test("returns internal_server_error on error", async () => {
-      (prisma.workspaceTeam.create as any).mockRejectedValueOnce(new Error("Create error"));
+      vi.mocked(prisma.workspaceTeam.create).mockRejectedValueOnce(new Error("Create error"));
       const result = await createWorkspaceTeam({
         workspaceId: "p1",
         teamId: "t1",
@@ -93,12 +93,12 @@ describe("WorkspaceTeams Lib", () => {
 
   describe("updateWorkspaceTeam", () => {
     test("updates a workspaceTeam successfully", async () => {
-      (prisma.workspaceTeam.update as any).mockResolvedValueOnce({
+      vi.mocked(prisma.workspaceTeam.update).mockResolvedValueOnce({
         id: "pt01",
         workspaceId: "p1",
         teamId: "t1",
         permission: "READ",
-      });
+      } as unknown as Awaited<ReturnType<typeof prisma.workspaceTeam.update>>);
       const result = await updateWorkspaceTeam("t1", "p1", { permission: "READ" } as unknown as TypeOf<
         typeof ZWorkspaceZTeamUpdateSchema
       >);
@@ -112,7 +112,7 @@ describe("WorkspaceTeams Lib", () => {
     });
 
     test("returns internal_server_error on error", async () => {
-      (prisma.workspaceTeam.update as any).mockRejectedValueOnce(new Error("Update error"));
+      vi.mocked(prisma.workspaceTeam.update).mockRejectedValueOnce(new Error("Update error"));
       const result = await updateWorkspaceTeam("t1", "p1", { permission: "READ" } as unknown as TypeOf<
         typeof ZWorkspaceZTeamUpdateSchema
       >);
@@ -125,11 +125,11 @@ describe("WorkspaceTeams Lib", () => {
 
   describe("deleteWorkspaceTeam", () => {
     test("deletes a workspaceTeam successfully", async () => {
-      (prisma.workspaceTeam.delete as any).mockResolvedValueOnce({
+      vi.mocked(prisma.workspaceTeam.delete).mockResolvedValueOnce({
         workspaceId: "p1",
         teamId: "t1",
         permission: "READ",
-      });
+      } as unknown as Awaited<ReturnType<typeof prisma.workspaceTeam.delete>>);
       const result = await deleteWorkspaceTeam("t1", "p1");
       expect(result.ok).toBe(true);
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
@@ -142,7 +142,7 @@ describe("WorkspaceTeams Lib", () => {
     });
 
     test("returns internal_server_error on error", async () => {
-      (prisma.workspaceTeam.delete as any).mockRejectedValueOnce(new Error("Delete error"));
+      vi.mocked(prisma.workspaceTeam.delete).mockRejectedValueOnce(new Error("Delete error"));
       const result = await deleteWorkspaceTeam("t1", "p1");
       expect(result.ok).toBe(false);
       if (!result.ok) {

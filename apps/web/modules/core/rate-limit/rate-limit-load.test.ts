@@ -375,7 +375,7 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
         acc[identifier].push(result);
         return acc;
       },
-      {} as Record<string, any[]>
+      {} as Record<string, (typeof results)[number]["result"][]>
     );
 
     // Each identifier should have exactly the allowed limit
@@ -514,7 +514,8 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
     const requestsPerPattern = 15;
 
     // Create mixed concurrent requests
-    const allPromises: Promise<{ pattern: string; result: any }>[] = [];
+    const allPromises: Promise<{ pattern: string; result: Awaited<ReturnType<typeof checkRateLimit>> }>[] =
+      [];
     for (const pattern of patterns) {
       for (let i = 0; i < requestsPerPattern; i++) {
         allPromises.push(checkRateLimit(config, pattern).then((result) => ({ pattern, result })));
@@ -536,7 +537,7 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
         acc[pattern].push(result);
         return acc;
       },
-      {} as Record<string, any[]>
+      {} as Record<string, (typeof results)[number]["result"][]>
     );
 
     Object.entries(resultsByPattern).forEach(([pattern, patternResults]) => {

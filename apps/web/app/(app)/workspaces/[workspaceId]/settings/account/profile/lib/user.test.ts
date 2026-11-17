@@ -23,7 +23,7 @@ describe("User Library Tests", () => {
     test("should return false if user exists", async () => {
       mockPrismaUserFindUnique.mockResolvedValue({
         id: "some-user-id",
-      } as any);
+      } as Awaited<ReturnType<typeof mockPrismaUserFindUnique>>);
 
       const result = await getIsEmailUnique(email);
       expect(result).toBe(false);

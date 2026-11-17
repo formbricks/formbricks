@@ -656,7 +656,7 @@ describe("Tests for updateSurvey", () => {
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
       prisma.language.findMany.mockResolvedValueOnce([
         { id: "cllangforeign00000000001", workspaceId: "clforeignws0000000000001" },
-      ] as any);
+      ] as Awaited<ReturnType<typeof prisma.language.findMany>>);
 
       await expect(
         updateSurveyInternal(
@@ -690,7 +690,9 @@ describe("Tests for updateSurvey", () => {
 
     test("rejects a language id that does not exist (absent from the DB result)", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
-      prisma.language.findMany.mockResolvedValueOnce([] as any);
+      prisma.language.findMany.mockResolvedValueOnce(
+        [] as Awaited<ReturnType<typeof prisma.language.findMany>>
+      );
 
       await expect(
         updateSurveyInternal(
@@ -726,10 +728,10 @@ describe("Tests for updateSurvey", () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" }); // getSurvey → current survey (own workspace)
       prisma.segment.findUnique.mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
-      } as any); // segment.id belongs to the survey's workspace (passes the segment guard)
+      } as Awaited<ReturnType<typeof prisma.segment.findUnique>>); // segment.id belongs to the survey's workspace (passes the segment guard)
       prisma.survey.findMany.mockResolvedValueOnce([
         { id: "clvictimsurvey0000000001", workspaceId: "clforeignws0000000000001" },
-      ] as any); // the connected survey is in ANOTHER workspace
+      ] as Awaited<ReturnType<typeof prisma.survey.findMany>>); // the connected survey is in ANOTHER workspace
 
       await expect(
         updateSurveyInternal(
@@ -748,7 +750,7 @@ describe("Tests for updateSurvey", () => {
               createdAt: new Date(),
               updatedAt: new Date(),
             },
-          } as any,
+          } as Parameters<typeof updateSurveyInternal>[0],
           true
         )
       ).rejects.toThrow(InvalidInputError);
@@ -764,7 +766,7 @@ describe("Tests for updateSurvey", () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
       prisma.segment.findUnique.mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
-      } as any); // segment belongs to the survey's workspace (passes the segment guard)
+      } as Awaited<ReturnType<typeof prisma.segment.findUnique>>); // segment belongs to the survey's workspace (passes the segment guard)
 
       // One node over the tree-wide cap. Junk-shaped on purpose: the bounds walk counts raw nodes
       // without requiring valid filter shapes, exactly what an unvalidated draft can carry.
@@ -791,7 +793,7 @@ describe("Tests for updateSurvey", () => {
               createdAt: new Date(),
               updatedAt: new Date(),
             },
-          } as any,
+          } as unknown as Parameters<typeof updateSurveyInternal>[0],
           true
         )
       ).rejects.toThrow(InvalidInputError);
@@ -806,8 +808,10 @@ describe("Tests for updateSurvey", () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
       prisma.segment.findUnique.mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
-      } as any);
-      prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
+      } as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
+      prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as Awaited<
+        ReturnType<typeof prisma.survey.update>
+      >);
 
       // Fails ZSegmentFilters (junk leaf shape, non-cuid id) but is far inside every tree bound.
       const halfBuiltFilters = [{ id: "f1", connector: null, resource: { root: { type: "attribute" } } }];
@@ -828,7 +832,7 @@ describe("Tests for updateSurvey", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
           },
-        } as any,
+        } as unknown as Parameters<typeof updateSurveyInternal>[0],
         true
       );
 
@@ -848,7 +852,7 @@ describe("Tests for updateSurvey", () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
       prisma.segment.findUnique.mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
-      } as any);
+      } as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
 
       // Every id is a valid cuid2 — only the cap can reject this list.
       const overCapSurveys = Array.from({ length: MAX_SEGMENT_SURVEYS + 1 }, () => createId());
@@ -870,7 +874,7 @@ describe("Tests for updateSurvey", () => {
               createdAt: new Date(),
               updatedAt: new Date(),
             },
-          } as any,
+          } as Parameters<typeof updateSurveyInternal>[0],
           true
         )
       ).rejects.toThrow(InvalidInputError);
@@ -884,7 +888,7 @@ describe("Tests for updateSurvey", () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
       prisma.segment.findUnique.mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
-      } as any);
+      } as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
 
       await expect(
         updateSurveyInternal(
@@ -903,7 +907,7 @@ describe("Tests for updateSurvey", () => {
               createdAt: new Date(),
               updatedAt: new Date(),
             },
-          } as any,
+          } as Parameters<typeof updateSurveyInternal>[0],
           true
         )
       ).rejects.toThrow(InvalidInputError);
@@ -919,12 +923,14 @@ describe("Tests for updateSurvey", () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
       prisma.segment.findUnique.mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
-      } as any);
+      } as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
       const connectedSurveyId = createId();
       prisma.survey.findMany.mockResolvedValueOnce([
         { id: connectedSurveyId, workspaceId: updateSurveyInput.workspaceId },
-      ] as any);
-      prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
+      ] as Awaited<ReturnType<typeof prisma.survey.findMany>>);
+      prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as Awaited<
+        ReturnType<typeof prisma.survey.update>
+      >);
 
       await updateSurveyInternal(
         {
@@ -942,7 +948,7 @@ describe("Tests for updateSurvey", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
           },
-        } as any,
+        } as Parameters<typeof updateSurveyInternal>[0],
         true
       );
 
@@ -963,7 +969,10 @@ describe("Tests for updateSurvey", () => {
     // Archived surveys are read-only on every write path that flows through updateSurveyInternal
     // (editor save, summary status dropdown, v1/v3 update) — not just the v3 API layer.
     test("rejects updating an archived survey and does not write", async () => {
-      prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, archivedAt: new Date() } as any);
+      prisma.survey.findUnique.mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        archivedAt: new Date(),
+      } as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
 
       await expect(updateSurveyInternal({ ...updateSurveyInput }, true)).rejects.toThrow(InvalidInputError);
 
@@ -1091,10 +1100,18 @@ describe("Tests for updateSurvey", () => {
         // Draft + skipValidation is the survey editor's own save path, and the one that can send a
         // payload whose blocks differ from what ends up stored. ENG-1939/ENG-2115 gate BOTH sides of
         // the transition, so the stored survey and the payload both have to be drafts.
-        prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
-        prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, blocks: persistedBlocks } as any);
+        prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as Awaited<
+          ReturnType<typeof prisma.survey.findUnique>
+        >);
+        prisma.survey.update.mockResolvedValueOnce({
+          ...mockSurveyOutput,
+          blocks: persistedBlocks,
+        } as Awaited<ReturnType<typeof prisma.survey.update>>);
 
-        await updateSurveyInternal({ ...updateSurveyInput, status: "draft", blocks: [] } as any, true);
+        await updateSurveyInternal(
+          { ...updateSurveyInput, status: "draft", blocks: [] } as Parameters<typeof updateSurveyInternal>[0],
+          true
+        );
 
         expect(scheduleFeedbackSourceReconciliation).toHaveBeenCalledWith(
           updateSurveyInput.id,
@@ -1338,7 +1355,7 @@ describe("Tests for updateSurvey", () => {
       prisma.survey.findUnique.mockResolvedValueOnce({
         ...mockSurveyOutput,
         hiddenFields: { enabled: true, fieldIds: [] },
-      } as any);
+      } as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
 
       await expect(
         updateSurveyInternal(
@@ -1372,8 +1389,12 @@ describe("Tests for updateSurvey", () => {
         status: "draft",
         hiddenFields: { enabled: true, fieldIds: ["country"] },
       };
-      prisma.survey.findUnique.mockResolvedValueOnce(withRowsForColumns(grandfathered) as any);
-      prisma.survey.update.mockResolvedValueOnce(grandfathered as any);
+      prisma.survey.findUnique.mockResolvedValueOnce(
+        withRowsForColumns(grandfathered) as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+      );
+      prisma.survey.update.mockResolvedValueOnce(
+        grandfathered as Awaited<ReturnType<typeof prisma.survey.update>>
+      );
 
       await expect(
         updateSurveyInternal(
@@ -1392,7 +1413,7 @@ describe("Tests for updateSurvey", () => {
       prisma.survey.findUnique.mockResolvedValueOnce({
         ...mockSurveyOutput,
         hiddenFields: { enabled: true, fieldIds: ["country"] },
-      } as any);
+      } as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
 
       await expect(
         updateSurveyInternal(
@@ -1407,8 +1428,12 @@ describe("Tests for updateSurvey", () => {
     test("GRANDFATHER: a survey that already declares `country` as a VARIABLE keeps it", async () => {
       const variable = { id: "wcfy2mkgc1ky2rzq7pcpjrxk", name: "country", type: "text" as const, value: "" };
       const grandfathered = { ...mockSurveyOutput, status: "draft", variables: [variable] };
-      prisma.survey.findUnique.mockResolvedValueOnce(withRowsForColumns(grandfathered) as any);
-      prisma.survey.update.mockResolvedValueOnce(grandfathered as any);
+      prisma.survey.findUnique.mockResolvedValueOnce(
+        withRowsForColumns(grandfathered) as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+      );
+      prisma.survey.update.mockResolvedValueOnce(
+        grandfathered as Awaited<ReturnType<typeof prisma.survey.update>>
+      );
 
       await expect(
         updateSurveyInternal({ ...updateSurveyInput, status: "draft", variables: [variable] }, true)
@@ -1417,8 +1442,10 @@ describe("Tests for updateSurvey", () => {
 
     test("accepts adding an ordinary new hidden field name", async () => {
       const draft = { ...mockSurveyOutput, status: "draft" };
-      prisma.survey.findUnique.mockResolvedValueOnce(draft as any);
-      prisma.survey.update.mockResolvedValueOnce(draft as any);
+      prisma.survey.findUnique.mockResolvedValueOnce(
+        draft as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+      );
+      prisma.survey.update.mockResolvedValueOnce(draft as Awaited<ReturnType<typeof prisma.survey.update>>);
 
       await expect(
         updateSurveyInternal(
@@ -2093,7 +2120,9 @@ describe("Tests for createSurvey", () => {
     // ENG-6870: a new app survey's targeting may only read surveys its creator can see.
     test("refuses seeded targeting that names a survey hidden from the creator", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
-      prisma.survey.findFirst.mockResolvedValueOnce({ id: "clrestricted00000000000001" } as any);
+      prisma.survey.findFirst.mockResolvedValueOnce({ id: "clrestricted00000000000001" } as Awaited<
+        ReturnType<typeof prisma.survey.findFirst>
+      >);
       const filters = [
         {
           id: "clf01234567890123456789012",
@@ -2227,7 +2256,7 @@ describe("Tests for createSurvey", () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
       prisma.language.findMany.mockResolvedValueOnce([
         { id: "cllang12345678901234567890", workspaceId: mockWorkspaceId },
-      ] as any);
+      ] as Awaited<ReturnType<typeof prisma.language.findMany>>);
       prisma.survey.create.mockResolvedValueOnce({
         ...mockSurveyOutput,
       });
@@ -2407,7 +2436,7 @@ describe("Tests for createSurvey", () => {
       // The DB says this language belongs to another workspace, regardless of what the input claims.
       prisma.language.findMany.mockResolvedValueOnce([
         { id: "cllang12345678901234567890", workspaceId: "clotherworkspace0000000000" },
-      ] as any);
+      ] as Awaited<ReturnType<typeof prisma.language.findMany>>);
 
       await expect(
         createSurvey(
@@ -2973,7 +3002,7 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
           createdAt: new Date(),
           updatedAt: new Date(),
         },
-      } as any,
+      } as Parameters<typeof updateSurveyInternal>[0],
       true,
       options
     );
@@ -2998,11 +3027,18 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
             updatedAt: new Date(),
           }
         : null,
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
     prisma.segment.findUnique
-      .mockResolvedValueOnce({ workspaceId: updateSurveyInput.workspaceId } as any)
-      .mockResolvedValueOnce({ filters: storedFilters, surveys: connected.map((id) => ({ id })) } as any);
-    prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
+      .mockResolvedValueOnce({ workspaceId: updateSurveyInput.workspaceId } as Awaited<
+        ReturnType<typeof prisma.segment.findUnique>
+      >)
+      .mockResolvedValueOnce({
+        filters: storedFilters,
+        surveys: connected.map((id) => ({ id })),
+      } as unknown as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
+    prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as Awaited<
+      ReturnType<typeof prisma.survey.update>
+    >);
   };
 
   beforeEach(() => {
@@ -3013,7 +3049,9 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
 
   test("refuses a member adding a restricted survey to the targeting", async () => {
     storeSegment([]);
-    prisma.survey.findFirst.mockResolvedValueOnce({ id: restrictedId } as any);
+    prisma.survey.findFirst.mockResolvedValueOnce({ id: restrictedId } as Awaited<
+      ReturnType<typeof prisma.survey.findFirst>
+    >);
 
     await expect(
       save(interaction([restrictedId]), { targetingActor: MEMBER_TARGETING_ACTOR })
@@ -3036,7 +3074,9 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
   // Pointing the survey at another segment, or connecting more surveys to it, targets with the whole tree.
   test("checks the whole tree when the save points the survey at a segment it does not own", async () => {
     storeSegment(interaction([restrictedId]), { ownSegment: false });
-    prisma.survey.findFirst.mockResolvedValueOnce({ id: restrictedId } as any);
+    prisma.survey.findFirst.mockResolvedValueOnce({ id: restrictedId } as Awaited<
+      ReturnType<typeof prisma.survey.findFirst>
+    >);
 
     await expect(
       save(interaction([restrictedId]), { targetingActor: MEMBER_TARGETING_ACTOR })
@@ -3046,7 +3086,9 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
 
   test("checks the whole tree when the save connects another survey to the segment", async () => {
     storeSegment(interaction([restrictedId]));
-    prisma.survey.findFirst.mockResolvedValueOnce({ id: restrictedId } as any);
+    prisma.survey.findFirst.mockResolvedValueOnce({ id: restrictedId } as Awaited<
+      ReturnType<typeof prisma.survey.findFirst>
+    >);
 
     await expect(
       save(interaction([restrictedId]), { targetingActor: MEMBER_TARGETING_ACTOR }, [

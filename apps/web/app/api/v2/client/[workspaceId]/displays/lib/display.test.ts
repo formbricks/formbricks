@@ -79,7 +79,7 @@ const mockSurvey = {
   name: "Test Survey",
   workspaceId,
   status: "inProgress",
-} as any;
+} as Awaited<ReturnType<typeof prisma.survey.findUnique>>;
 
 describe("createDisplay", () => {
   beforeEach(() => {
@@ -205,7 +205,9 @@ describe("createDisplay", () => {
     "should throw InvalidInputError when survey status is %s",
     async (status) => {
       vi.mocked(doesContactExistInWorkspace).mockResolvedValue(true);
-      vi.mocked(prisma.survey.findUnique).mockResolvedValue({ ...mockSurvey, status } as any);
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue({ ...mockSurvey, status } as unknown as Awaited<
+        ReturnType<typeof prisma.survey.findUnique>
+      >);
 
       await expect(createDisplay(displayInput)).rejects.toThrow(InvalidInputError);
       expect(prisma.display.create).not.toHaveBeenCalled();
