@@ -1,20 +1,16 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { V3ApiError } from "@/modules/api/lib/v3-client";
-import { MCP_GRANT_CHANGED_CODE } from "@/modules/auth/lib/mcp-grant-consent-errors";
 import type { TRequestedMcpGrant } from "@/modules/mcp/grant";
 import { updateMcpGrant } from "../lib/api-client";
+import { isStaleMcpGrantEditError } from "../lib/edit-grant";
 import { authorizedMcpClientKeys } from "../lib/query";
-
-/** Whether a save was refused because the grant changed elsewhere since Edit opened it. */
-export const isMcpGrantChangedError = (error: unknown): boolean =>
-  error instanceof V3ApiError && error.code === MCP_GRANT_CHANGED_CODE;
 
 /**
  * Edit's Save: replaces an MCP client's permissions and, when given, its organization & workspace access,
  * then refreshes the list's summary, chips and dates. Sends the grant version Edit opened, so a save over a
- * change made in another tab or session is refused; the list is then refreshed too, to show that change.
+ * change made in another tab or session is refused; the list is then refreshed too, to show that change,
+ * as it is for any refusal that means Edit opened on something since changed (`isStaleMcpGrantEditError`).
  */
 export const useUpdateMcpGrant = () => {
   const queryClient = useQueryClient();
@@ -24,7 +20,7 @@ export const useUpdateMcpGrant = () => {
       updateMcpGrant(variables),
     onSuccess: refreshList,
     onError: async (error) => {
-      if (isMcpGrantChangedError(error)) await refreshList();
+      if (isStaleMcpGrantEditError(error)) await refreshList();
     },
   });
 };

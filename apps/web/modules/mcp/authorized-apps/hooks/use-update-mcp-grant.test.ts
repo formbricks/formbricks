@@ -5,8 +5,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode, createElement } from "react";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { isStaleMcpGrantEditError } from "../lib/edit-grant";
 import { useAuthorizedMcpClients } from "./use-authorized-mcp-clients";
-import { isMcpGrantChangedError, useUpdateMcpGrant } from "./use-update-mcp-grant";
+import { useUpdateMcpGrant } from "./use-update-mcp-grant";
 
 const wrapper = (queryClient: QueryClient) => {
   const Wrapper = ({ children }: Readonly<{ children: ReactNode }>) =>
@@ -98,7 +99,7 @@ describe("useUpdateMcpGrant", () => {
     });
 
     await waitFor(() => expect(result.current.update.isError).toBe(true));
-    expect(isMcpGrantChangedError(result.current.update.error)).toBe(true);
+    expect(isStaleMcpGrantEditError(result.current.update.error)).toBe(true);
     await waitFor(() =>
       expect(result.current.list.data?.clients).toEqual([
         { clientId: "client_a", permissions: { surveys: "read" } },
@@ -108,7 +109,7 @@ describe("useUpdateMcpGrant", () => {
 
   test("surfaces a refused save instead of reporting success", async () => {
     vi.mocked(global.fetch).mockResolvedValue(
-      problem(422, "mcp_grant_beyond_scopes", "This app didn't ask for that much access.")
+      problem(500, "mcp_grant_not_saved", "The access you chose couldn't be saved, so nothing changed.")
     );
     const queryClient = newQueryClient();
 
@@ -120,8 +121,8 @@ describe("useUpdateMcpGrant", () => {
     });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
-    expect(result.current.error).toMatchObject({ status: 422 });
-    // Only a change made elsewhere reads as one: another refusal keeps its own message.
-    expect(isMcpGrantChangedError(result.current.error)).toBe(false);
+    expect(result.current.error).toMatchObject({ status: 500 });
+    // A failed save is not a stale view: the dialog stays open on the draft, to try again.
+    expect(isStaleMcpGrantEditError(result.current.error)).toBe(false);
   });
 });
