@@ -208,7 +208,7 @@
     "fast-check": "4.10.2",
     "intl-messageformat": "10.7.18",
     "jsdom": "catalog:",
-    "playwright": "1.58.2",
+    "playwright": "1.60.0",
     "postcss": "catalog:",
     "resize-observer-polyfill": "1.5.1",
     "storybook": "catalog:",

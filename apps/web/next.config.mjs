@@ -109,7 +109,7 @@ const nextConfig = {
       "../../node_modules/otlp-logger/**/*",
       // lightningcss picks its native package at runtime (require of "lightningcss-<platform>"),
       // which the tracer cannot follow; only the package matching the build's platform/libc is
-      // installed (musl in the Alpine image), so the wildcard copies exactly that one.
+      // installed (glibc in the Debian image), so the wildcard copies exactly that one.
       "../../node_modules/lightningcss/**/*",
       "../../node_modules/lightningcss-*/**/*",
       "../../node_modules/detect-libc/**/*",
