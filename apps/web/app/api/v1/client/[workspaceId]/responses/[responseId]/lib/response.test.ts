@@ -24,6 +24,7 @@ const mockQuotaContext = { quotas: [], survey: { id: "survey123" } } as unknown 
 type MockTx = {
   response: {
     update: ReturnType<typeof vi.fn>;
+    findUnique: ReturnType<typeof vi.fn>;
   };
 };
 let mockTx: MockTx;
@@ -35,6 +36,8 @@ describe("updateResponseWithQuotaEvaluation", () => {
     mockTx = {
       response: {
         update: vi.fn(),
+        // No stored not-shown record unless a test sets one.
+        findUnique: vi.fn().mockResolvedValue({ notShown: null }),
       },
     };
     prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
