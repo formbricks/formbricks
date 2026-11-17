@@ -76,24 +76,14 @@ const files = process.argv
   .map((file) => path.relative(process.cwd(), path.resolve(file)).split(path.sep).join("/"));
 
 /*
- * `--type-aware` makes oxlint-tsgolint build the TypeScript program of every file it lints, even where
- * no type-aware rule is on. apps/web (the `next` tier) has none, so its files lint without it: a
- * commit there then takes about a second instead of five. The other workspaces need it.
+ * Every tier runs type-aware rules, apps/web's `next` tier included, so oxlint always gets
+ * `--type-aware`: oxlint-tsgolint then builds the TypeScript program of each staged file's workspace.
  */
-const isTypeAwareFree = (file) => file.startsWith("apps/web/");
-
-function runOxlint(paths, { typeAware }) {
+function runOxlint(paths) {
   if (paths.length === 0) return { diagnostics: [], failed: false };
   const { status, error, stdout, stderr } = spawnSync(
     process.execPath,
-    [
-      OXLINT_CLI,
-      "--format",
-      "json",
-      "--no-error-on-unmatched-pattern",
-      ...(typeAware ? ["--type-aware"] : []),
-      ...paths,
-    ],
+    [OXLINT_CLI, "--format", "json", "--no-error-on-unmatched-pattern", "--type-aware", ...paths],
     {
       encoding: "utf8",
       maxBuffer: 64 * 1024 * 1024,
@@ -120,13 +110,7 @@ function runOxlint(paths, { typeAware }) {
   }
 }
 
-const runs = [
-  runOxlint(files.filter(isTypeAwareFree), { typeAware: false }),
-  runOxlint(
-    files.filter((file) => !isTypeAwareFree(file)),
-    { typeAware: true }
-  ),
-];
+const runs = [runOxlint(files)];
 
 let failed = runs.some((run) => run.failed);
 const rangesByFile = new Map();
