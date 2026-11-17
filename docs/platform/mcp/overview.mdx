@@ -50,7 +50,7 @@ delete require the `:write` scope. Everything below is offered on the consent sc
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`², `delete_feedback_record`² | Create, correct and delete feedback records |
 | `responses:read` | `list_responses`, `count_responses`, `get_response`, `list_tags`⁵ | Read and count survey responses, and list response tags |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses`, `set_responses_outcome`, `update_tag`⁵, `merge_tags`⁵ | Record, correct and delete survey responses, mark them Low quality, and rename and merge tags |
-| `dashboards:read` | `list_dashboards`, `get_dashboard`; with `feedbackRecords:read` also `list_chart_fields`, `list_charts`, `get_chart`, `get_chart_data`³, `list_dashboard_filter_fields`³, `list_dashboard_filter_values`³, `preview_chart`³, `list_chart_field_values`³ | Read dashboards and the numbers they show, and — with feedback-record access — charts, the fields a chart can use, and the numbers of any query |
+| `dashboards:read` | `list_dashboards`, `get_dashboard`, `list_charts`, `get_chart`; with `feedbackRecords:read` also `list_chart_fields`, `get_chart_data`³, `list_dashboard_filter_fields`³, `list_dashboard_filter_values`³, `preview_chart`³, `list_chart_field_values`³ | Read dashboards and charts, and — with feedback-record access — the fields a chart can use, the numbers dashboards show and the numbers of any query |
 | `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | Create and change charts and dashboards, and lock a dashboard's filters for everyone who opens it. There is no tool that deletes a chart or a dashboard |
 | `audience:read` | `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` | Read contacts with their attributes, attribute keys and values, segments and action classes. There is no `audience:write`: these tools only read |
 
@@ -102,7 +102,9 @@ offer Read. Some tools need a second permission because they return its data: `l
 `list_segments` need Contact attributes: Read (contacts carry their attribute values, and segment filters name
 them). The consent screen shows these as hints. `get_workflow_run` needs only Workflow runs: Read, but leaves
 out a run's trigger payload, data and step inputs and outputs, which carry respondents' answers, unless the
-grant also gives Responses: Read.
+grant also gives Responses: Read. A chart definition needs Charts: Read alone; only chart numbers need
+Feedback records: Read too. A response's contact id and tags are response data; only the contact's
+`userId` needs Contacts and Contact attributes: Read, and comes back as `null` without them.
 
 You can change a client's grant at any time with **Edit** under **Settings → Account → Authorized Apps**
 (see [Manage and revoke access](/platform/mcp/setup#manage-and-revoke-access)). The change applies from

@@ -118,7 +118,7 @@ Supported scopes:
 | `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
 | `responses:read` | `list_responses`, `count_responses`, `get_response`, `list_tags` |
 | `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses`, `set_responses_outcome`, `update_tag`, `merge_tags` |
-| `dashboards:read` | `list_dashboards`, `get_dashboard`; with `feedbackRecords:read`, `list_chart_fields`, `list_charts`, `get_chart`, `get_chart_data`, `list_dashboard_filter_fields`, `list_dashboard_filter_values`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId`, `list_dashboard_filter_fields` and `list_dashboard_filter_values` on `dashboards:read` alone) |
+| `dashboards:read` | `list_dashboards`, `get_dashboard`, `list_charts`, `get_chart`; with `feedbackRecords:read`, `list_chart_fields`, `get_chart_data`, `list_dashboard_filter_fields`, `list_dashboard_filter_values`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId`, `list_dashboard_filter_fields` and `list_dashboard_filter_values` on `dashboards:read` alone) |
 | `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `remove_chart_from_dashboard`; with `dashboards:read` (Charts: Read, since their answers carry each widget's chart, as `get_dashboard` does), `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget` |
 | `audience:read` | `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` (read-only family: there is no `audience:write`) |
 | `openid` | OpenID Connect subject interoperability |
@@ -819,7 +819,7 @@ operation owns both — so the MCP surface follows the v3 API rather than growin
     on the consent screen and on Authorized apps (see `GLOSSARY.md`, "MCP access"). Pick them from the
     registry in `modules/mcp/permissions.ts`; a permission the registry lacks is added there, in the
     category it belongs to, never inline. Declare every permission whose data the tool returns, not just
-    the one it is named after: chart tools that read Feedback Records declare Charts and Feedback records.
+    the one it is named after: chart tools that read chart numbers declare Charts and Feedback records.
     A tool with no declared permission can't be registered.
 
   </Step>
@@ -1600,9 +1600,10 @@ each take only a workflow id:
 Nine tools, one per documented v3 response operation. The set mirrors the API deliberately: what an
 agent can do through MCP is what an API key can do over HTTP, read off one list rather than two.
 
-The response resource carries a contact reference and the response's tags, which are other permissions'
-data: without Contacts: Read `contact` comes back as `null`, and without Tags: Read `tags` comes back as
-`[]`, on `list_responses`, `get_response` and both write tools, whose answers carry the same resource.
+A response's contact id and its tags are response data, under Responses. Only the contact's `userId`, a
+contact attribute, needs Contacts and Contact attributes at Read; without them it comes back as `null` on
+`get_response` and both write tools, whose answers carry the same resource. The tag tools (`list_tags`,
+`update_tag`, `merge_tags`) are a separate surface, on the Tags permission.
 
 Every tool description states the boundary against the feedback-record tools, because
 `list_feedback_records(source_id=<surveyId>)` looks like it answers the same question and does not —
@@ -1643,9 +1644,7 @@ describes.
 `create_response` records a real submission: webhooks, integrations, follow-ups, quotas and metering
 all run. `update_response` replaces `data` and `tags` wholesale rather than merging, which is why it is
 annotated `destructiveHint: true` — to add one tag, read the response and send every tag it should end
-up with. A write that names `tags` therefore needs Tags: Read beside Responses: Write (`{ byInput }`):
-without it the caller reads every response's tags as `[]`, and a replace from that view would drop tags it
-never saw. A write that leaves `tags` out keeps them as they are.
+up with. Setting tags needs Responses: Write alone, as it always did.
 
 Both take the v3 body as an opaque `data` argument and let the operation parse it, so the tool and the
 route answer the same thing to a malformed body.
@@ -1713,6 +1712,9 @@ writes the chart query itself.
 - **Write against the catalog.** `list_chart_fields` returns every field a chart query may use; the query
   validator refuses anything else with `invalid_params` naming each problem. `preview_chart` runs an unsaved
   chart so an agent can check it before `create_chart` saves it.
+- **A chart definition needs Charts: Read alone.** `list_charts` and `get_chart` return chart definitions,
+  Charts data, so they declare Charts at `read` and nothing else; the chart write tools return the chart they
+  wrote under Charts: Write, which includes Read.
 - **Free-form numbers need feedback access.** `preview_chart` and `list_chart_field_values` run a caller's own
   query over respondents' answers, so they declare Charts **and** Feedback records at `read`, which need
   `dashboards:read` and `feedbackRecords:read`.

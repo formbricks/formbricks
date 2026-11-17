@@ -193,8 +193,9 @@ describe("chart and dashboard MCP tools", () => {
     );
   });
 
-  test("get_chart reads one chart and is refused without dashboards:read", async () => {
-    await call("get_chart", { chartId: CHART_ID }, ["dashboards:read", "feedbackRecords:read"]);
+  // D2: a chart definition is Charts data, so Charts: Read (dashboards:read) is its one bar.
+  test("get_chart reads one chart on dashboards:read alone and is refused without it", async () => {
+    await call("get_chart", { chartId: CHART_ID }, ["dashboards:read"]);
     expect(getV3Chart).toHaveBeenCalledWith(expect.objectContaining({ chartId: CHART_ID }));
 
     vi.mocked(getV3Chart).mockClear();
@@ -203,13 +204,9 @@ describe("chart and dashboard MCP tools", () => {
     expect(getV3Chart).not.toHaveBeenCalled();
   });
 
-  // ADR-0025: a Dashboard viewer's token is trimmed to `dashboards:read`, and the chart operations 403 it.
-  // The scope gate refuses it first, as it does preview_chart, so the client sees why.
-  test.each([
-    ["list_chart_fields", { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID }],
-    ["list_charts", { workspaceId: WORKSPACE_ID }],
-    ["get_chart", { chartId: CHART_ID }],
-  ] as const)(
+  // ADR-0025: a Dashboard viewer's token is trimmed to `dashboards:read`. The field catalog needs
+  // feedbackRecords:read too, so the scope gate refuses it first, as it does preview_chart.
+  test.each([["list_chart_fields", { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID }]] as const)(
     "%s needs feedbackRecords:read, so a viewer's dashboards:read token is refused",
     async (name, input) => {
       const result = await call(name, input, ["dashboards:read"], true);
@@ -221,6 +218,15 @@ describe("chart and dashboard MCP tools", () => {
       expect(getV3Chart).not.toHaveBeenCalled();
     }
   );
+
+  test("list_charts lists chart definitions on dashboards:read alone (D2)", async () => {
+    vi.mocked(listV3Charts).mockResolvedValue(
+      successListResponse([], { limit: 20, nextCursor: null }, { requestId: "req" })
+    );
+    const result = await call("list_charts", { workspaceId: WORKSPACE_ID }, ["dashboards:read"]);
+    expect(result.isError).toBeFalsy();
+    expect(listV3Charts).toHaveBeenCalledTimes(1);
+  });
 
   test("preview_chart needs feedbackRecords:read on top of dashboards:read, because it returns data", async () => {
     const input = {

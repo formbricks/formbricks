@@ -48,8 +48,8 @@ type TDeclaredGate = TScopeGate;
  * The scope gate of every tool before ENG-7148, in registration order. One deliberate change since: the
  * dashboard and widget writes that answer with charts also need `dashboards:read` (Charts: Read), as
  * `get_dashboard` does, so a dashboards write can't read chart definitions a read would withhold; and
- * `create_response` / `update_response` are gated per input, needing Tags: Read only when they name tags
- * (the same `responses` scope family, so the scopes shown here are unchanged).
+ * `list_charts` / `get_chart` need only `dashboards:read` (Charts: Read is the one bar for a chart
+ * definition, D2), where they needed `feedbackRecords:read` too.
  */
 const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   list_surveys: ["surveys:read"],
@@ -103,22 +103,8 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   count_responses: ["responses:read"],
   get_response: ["responses:read"],
   validate_response: ["responses:write"],
-  create_response: {
-    byInput: {
-      viewerWithDashboard: ["responses:write"],
-      viewerNoDashboard: ["responses:write"],
-      otherWithDashboard: ["responses:write"],
-      otherNoDashboard: ["responses:write"],
-    },
-  },
-  update_response: {
-    byInput: {
-      viewerWithDashboard: ["responses:write"],
-      viewerNoDashboard: ["responses:write"],
-      otherWithDashboard: ["responses:write"],
-      otherNoDashboard: ["responses:write"],
-    },
-  },
+  create_response: ["responses:write"],
+  update_response: ["responses:write"],
   delete_response: ["responses:write"],
   batch_delete_responses: ["responses:write"],
   set_responses_outcome: ["responses:write"],
@@ -132,8 +118,8 @@ const SCOPES_BEFORE_PERMISSIONS: Record<string, TScopeGate> = {
   archive_creative: ["surveys:write"],
   restore_creative: ["surveys:write"],
   list_chart_fields: ["dashboards:read", "feedbackRecords:read"],
-  list_charts: ["dashboards:read", "feedbackRecords:read"],
-  get_chart: ["dashboards:read", "feedbackRecords:read"],
+  list_charts: ["dashboards:read"],
+  get_chart: ["dashboards:read"],
   preview_chart: ["dashboards:read", "feedbackRecords:read"],
   create_chart: ["dashboards:write"],
   update_chart: ["dashboards:write"],
@@ -261,22 +247,8 @@ const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
   count_responses: ["responses:read"],
   get_response: ["responses:read"],
   validate_response: ["responses:write"],
-  create_response: {
-    byInput: {
-      viewerWithDashboard: ["responses:write"],
-      viewerNoDashboard: ["responses:write"],
-      otherWithDashboard: ["responses:write"],
-      otherNoDashboard: ["responses:write"],
-    },
-  },
-  update_response: {
-    byInput: {
-      viewerWithDashboard: ["responses:write"],
-      viewerNoDashboard: ["responses:write"],
-      otherWithDashboard: ["responses:write"],
-      otherNoDashboard: ["responses:write"],
-    },
-  },
+  create_response: ["responses:write"],
+  update_response: ["responses:write"],
   set_responses_outcome: ["responses:write"],
   delete_response: ["responses:write"],
   batch_delete_responses: ["responses:write"],
@@ -290,8 +262,8 @@ const DECLARED_PERMISSIONS: Record<string, TDeclaredGate> = {
   archive_creative: ["creatives:write"],
   restore_creative: ["creatives:write"],
   list_chart_fields: ["charts:read", "feedbackRecords:read"],
-  list_charts: ["charts:read", "feedbackRecords:read"],
-  get_chart: ["charts:read", "feedbackRecords:read"],
+  list_charts: ["charts:read"],
+  get_chart: ["charts:read"],
   preview_chart: ["charts:read", "feedbackRecords:read"],
   create_chart: ["charts:write"],
   update_chart: ["charts:write"],
@@ -437,50 +409,31 @@ describe("MCP tool permissions", () => {
     ).toEqual(DECLARED_PERMISSIONS);
   });
 
-  // A write naming tags needs Tags: Read: without it the caller reads every response's tags as empty, and
-  // a replace from that view would drop tags it never saw.
-  test("response writes that name tags declare Tags: Read too", { timeout: 120_000 }, async () => {
-    const tools = new Map((await loadRegistrations()).map(({ name, permissions }) => [name, permissions]));
+  // D2: Charts: Read is the one bar for a chart definition; chart numbers need Feedback records too.
+  test(
+    "chart definitions declare Charts, and chart numbers Charts and Feedback records",
+    { timeout: 120_000 },
+    async () => {
+      const tools = new Map((await loadRegistrations()).map(({ name, permissions }) => [name, permissions]));
+      const chartAndRecords = [
+        { permission: "charts", level: "read" },
+        { permission: "feedbackRecords", level: "read" },
+      ];
 
-    for (const [name, input] of [
-      ["create_response", { data: { surveyId: "s", tags: ["t"] } }],
-      ["update_response", { responseId: "r", data: { tags: [] } }],
-    ] as const) {
-      const declared = tools.get(name);
-      if (!declared || !("byInput" in declared)) throw new Error(`${name} declares no byInput`);
-      expect(toPermissionNames(declared.byInput(input, NOT_VIEWER)), name).toEqual([
-        "responses:write",
-        "tags:read",
-      ]);
-      expect(toPermissionNames(declared.byInput({ data: { finished: true } }, NOT_VIEWER)), name).toEqual([
-        "responses:write",
+      for (const name of ["list_chart_fields", "preview_chart", "list_chart_field_values"]) {
+        expect(tools.get(name), name).toEqual(chartAndRecords);
+      }
+      for (const name of ["list_charts", "get_chart"]) {
+        expect(tools.get(name), name).toEqual([{ permission: "charts", level: "read" }]);
+      }
+      // Outside a Dashboard viewer's read through a dashboard (ADR-0025), chart data needs both too.
+      const getChartData = tools.get("get_chart_data") as Extract<TDeclared, { byInput: unknown }>;
+      expect(getChartData.byInput({ chartId: "c" }, NOT_VIEWER)).toEqual(chartAndRecords);
+      expect(getChartData.byInput({ chartId: "c", dashboardId: "d" }, VIEWER)).toEqual([
+        { permission: "dashboards", level: "read" },
       ]);
     }
-  });
-
-  test("chart reads declare both Charts and Feedback records", { timeout: 120_000 }, async () => {
-    const tools = new Map((await loadRegistrations()).map(({ name, permissions }) => [name, permissions]));
-    const chartAndRecords = [
-      { permission: "charts", level: "read" },
-      { permission: "feedbackRecords", level: "read" },
-    ];
-
-    for (const name of [
-      "list_chart_fields",
-      "list_charts",
-      "get_chart",
-      "preview_chart",
-      "list_chart_field_values",
-    ]) {
-      expect(tools.get(name), name).toEqual(chartAndRecords);
-    }
-    // Outside a Dashboard viewer's read through a dashboard (ADR-0025), chart data needs both too.
-    const getChartData = tools.get("get_chart_data") as Extract<TDeclared, { byInput: unknown }>;
-    expect(getChartData.byInput({ chartId: "c" }, NOT_VIEWER)).toEqual(chartAndRecords);
-    expect(getChartData.byInput({ chartId: "c", dashboardId: "d" }, VIEWER)).toEqual([
-      { permission: "dashboards", level: "read" },
-    ]);
-  });
+  );
 
   // A tool declares every permission whose data it returns, not only the one it is named after.
   test.each([

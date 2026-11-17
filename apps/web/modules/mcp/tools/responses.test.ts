@@ -574,7 +574,12 @@ describe("a response's contact userId without Contacts and Contact attributes", 
     contact,
     tags,
   };
-  const listItem = { id: RESPONSE_ID, surveyId: "clsv000000000000000000001", data: { q1: "an answer" }, tags };
+  const listItem = {
+    id: RESPONSE_ID,
+    surveyId: "clsv000000000000000000001",
+    data: { q1: "an answer" },
+    tags,
+  };
 
   /** An OAuth caller, which unlike an API key has a grant to withhold a permission with. */
   const oauthAuthInfo = (scopes: string[], permissions: Record<string, string>) => ({
@@ -595,7 +600,10 @@ describe("a response's contact userId without Contacts and Contact attributes", 
   // An upgraded client's grant: Responses only, Tags and Audience at No access (story 41).
   const responsesOnly = oauthAuthInfo(["responses:read"], { responses: "read" });
   const responsesWrite = oauthAuthInfo(["responses:read", "responses:write"], { responses: "write" });
-  const contactsOnly = oauthAuthInfo(["responses:read", "audience:read"], { responses: "read", contacts: "read" });
+  const contactsOnly = oauthAuthInfo(["responses:read", "audience:read"], {
+    responses: "read",
+    contacts: "read",
+  });
   const withAudience = oauthAuthInfo(["responses:read", "audience:read"], {
     responses: "read",
     contacts: "read",
@@ -627,7 +635,11 @@ describe("a response's contact userId without Contacts and Contact attributes", 
     vi.mocked(listV3Responses).mockResolvedValue(
       successListResponse([listItem], { limit: 20, nextCursor: null }, { requestId: "req_tool" })
     );
-    const result = await call("list_responses", { workspaceId: WORKSPACE_ID, limit: 20 }, callerContext(responsesOnly));
+    const result = await call(
+      "list_responses",
+      { workspaceId: WORKSPACE_ID, limit: 20 },
+      callerContext(responsesOnly)
+    );
     expect((result.structuredContent as { data: unknown[] }).data).toEqual([listItem]);
   });
 
@@ -662,9 +674,19 @@ describe("a response's contact userId without Contacts and Contact attributes", 
   // The dry run reports ids only: the contact's id and the tags it would apply, never a userId or an
   // attribute, so it needs no redaction under D1.
   test("validate_response passes the effects through, which name no userId", async () => {
-    const effects = { language: null, contactId: contact.id, displayId: null, firesPipeline: true, countsTowardMeteredResponses: false, quotas: [] };
+    const effects = {
+      language: null,
+      contactId: contact.id,
+      displayId: null,
+      firesPipeline: true,
+      countsTowardMeteredResponses: false,
+      quotas: [],
+    };
     vi.mocked(validateV3ResponseFromRawInput).mockResolvedValue(
-      successResponse({ valid: true, operation: "create", invalid_params: [], effects }, { requestId: "req_tool" })
+      successResponse(
+        { valid: true, operation: "create", invalid_params: [], effects },
+        { requestId: "req_tool" }
+      )
     );
     const result = await call(
       "validate_response",

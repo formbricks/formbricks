@@ -116,8 +116,8 @@ const runMutation = (
  * like "clean up old charts" cannot remove anything permanently. There is no generate tool either; AI
  * chart generation is the app's, not the API's.
  *
- * Chart reads declare Charts and Feedback records, both at Read, so a dashboards grant never becomes a
- * way into respondents' answers. Dashboard reads declare Dashboards. The one exception is a Dashboard viewer's token reading a
+ * A chart definition needs Charts: Read (D2); a read of chart numbers declares Charts and Feedback records,
+ * both at Read, so a dashboards grant never becomes a way into respondents' answers. Dashboard reads declare Dashboards. The one exception is a Dashboard viewer's token reading a
  * chart through its dashboard (ADR-0025): that token is trimmed to `dashboards:read`, so the read declares
  * Dashboards alone, and the dashboard is exactly what the role may see.
  */
@@ -178,13 +178,11 @@ export function registerDashboardTools(server: McpServer): void {
       outputSchema: ZMcpChartListOutput,
       annotations: READ_ANNOTATIONS,
     },
-    // Chart definitions and the field catalog are chart-building surfaces, not dashboard reading: they
-    // need feedback-record access, like preview_chart. A Dashboard viewer's token is trimmed to
-    // `dashboards:read` (ADR-0025) and its operation would 403, so the scope gate refuses it first.
-    [
-      { permission: "charts", level: "read" },
-      { permission: "feedbackRecords", level: "read" },
-    ],
+    // A chart definition is Charts data, so Charts: Read is its one bar (D2), as on get_chart and on the
+    // dashboard tools that carry charts. Feedback records stays a requirement only where a tool returns
+    // chart numbers (get_chart_data, preview_chart, field and filter values). A Dashboard viewer's
+    // operation still refuses a chart read outside a dashboard (ADR-0025).
+    [{ permission: "charts", level: "read" }],
     async (input: TMcpListChartsInput, ctx) => {
       const context = toolContext(ctx);
       const response = await listV3Charts({
@@ -212,13 +210,8 @@ export function registerDashboardTools(server: McpServer): void {
       outputSchema: ZMcpChartOutput,
       annotations: READ_ANNOTATIONS,
     },
-    // Chart definitions and the field catalog are chart-building surfaces, not dashboard reading: they
-    // need feedback-record access, like preview_chart. A Dashboard viewer's token is trimmed to
-    // `dashboards:read` (ADR-0025) and its operation would 403, so the scope gate refuses it first.
-    [
-      { permission: "charts", level: "read" },
-      { permission: "feedbackRecords", level: "read" },
-    ],
+    // Charts: Read alone, as list_charts (D2).
+    [{ permission: "charts", level: "read" }],
     async (input: TMcpChartIdInput, ctx) => {
       const context = toolContext(ctx);
       return await responseToMcpToolResult(
