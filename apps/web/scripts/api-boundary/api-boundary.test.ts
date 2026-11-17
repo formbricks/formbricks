@@ -30,7 +30,11 @@ const CLIENT_ACTION_IMPORTER_BASELINE = 4;
 const INTERNAL_AUTH_MODES = new Set(["session", "none"]);
 
 describe("internal routes", () => {
-  const internalRoutes = listRouteFiles().filter((route) => route.file.startsWith("app/api/internal/"));
+  // By the URL a route answers on, not its file: a route group (`app/api/(x)/internal/…`) serves the same
+  // `/api/internal/…` path from a file the prefix would miss.
+  const internalRoutes = listRouteFiles().filter(
+    (route) => route.path === "/api/internal" || route.path.startsWith("/api/internal/")
+  );
 
   test("is not empty, so the checks below are checking something", () => {
     expect(internalRoutes.length).toBeGreaterThan(0);

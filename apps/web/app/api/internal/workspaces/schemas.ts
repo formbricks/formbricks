@@ -168,6 +168,12 @@ export const ZWorkspacePatchBody = strictDeep(
 export type TWorkspacePatchBody = z.infer<typeof ZWorkspacePatchBody>;
 
 /**
+ * Bounds the typed-back name a deletion takes. Above `WORKSPACE_NAME_MAX` on purpose: names saved before that
+ * cap existed can be longer, and a workspace must stay deletable without being renamed first.
+ */
+export const WORKSPACE_DELETION_CONFIRMATION_MAX = 10_000;
+
+/**
  * `POST /api/internal/workspaces/{id}/deletions` body. Deleting a workspace takes its name, typed back, so a
  * stray request cannot delete one by id alone.
  */
@@ -177,7 +183,7 @@ export const ZWorkspaceDeletionBody = z
       .string()
       .trim()
       .min(1, { error: "Type the workspace name to confirm." })
-      .max(WORKSPACE_NAME_MAX),
+      .max(WORKSPACE_DELETION_CONFIRMATION_MAX),
   })
   .strict();
 

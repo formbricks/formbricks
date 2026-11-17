@@ -63,12 +63,12 @@ describe("survey summary API client", () => {
     expect(init()?.signal).toBeUndefined();
   });
 
-  test("POSTs a reset with the usual timeout", async () => {
+  test("POSTs a reset with no timeout: deleting many responses outlasts the usual one", async () => {
     const counts = { surveyId: SURVEY_ID, deletedResponsesCount: 3, deletedDisplaysCount: 5 };
     routeFetch({ [`POST ${BASE}/resets`]: [json({ data: counts })] });
 
     expect(await resetSurvey(SURVEY_ID)).toEqual(counts);
-    expect(init()?.signal).toBeInstanceOf(AbortSignal);
+    expect(init()?.signal).toBeUndefined();
   });
 
   test("PUTs the single-use settings", async () => {

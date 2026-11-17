@@ -1,9 +1,10 @@
 import "server-only";
 import { refusalResponse } from "@/app/api/internal/lib/refusal";
 import { requireSurveyActionAccess } from "@/app/api/internal/lib/survey-access";
-import { problemForbidden, successResponse } from "@/app/api/v3/lib/response";
+import { problemConflict, problemForbidden, successResponse } from "@/app/api/v3/lib/response";
 import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
+import { SurveyLinkedCreativesError } from "@/modules/ee/creatives/lib/linked-creatives";
 import type { TSurveySingleUseSettingsBody } from "../schemas";
 import { serializeSurveySingleUseSettings } from "../serializers";
 
@@ -47,6 +48,9 @@ export async function updateSingleUseSettingsOperation({
     });
     return successResponse(serializeSurveySingleUseSettings(updatedSurvey), { requestId });
   } catch (error) {
+    // A creative opens the survey: the dialog locks the switch, so this is one linked while it was open.
+    if (error instanceof SurveyLinkedCreativesError)
+      return problemConflict(requestId, error.message, instance);
     const refused = refusalResponse(error, requestId, instance);
     if (refused) return refused;
     throw error;

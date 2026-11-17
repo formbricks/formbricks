@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError, ValidationError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SurveyLinkedCreativesError } from "@/modules/ee/creatives/lib/linked-creatives";
 import { PUT } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -99,6 +100,17 @@ describe("PUT /api/internal/surveys/{surveyId}/single-use-settings", () => {
 
     expect(response.status).toBe(422);
     expect((await response.json()).detail).toBe("This survey is archived. Restore it before editing.");
+  });
+
+  test("answers 409 with the reason when a creative opens the survey", async () => {
+    mocks.updateSurvey.mockRejectedValue(
+      new SurveyLinkedCreativesError("singleUse", [{ id: "creative_1", name: "Homepage banner" }] as never)
+    );
+
+    const response = await put({ enabled: true, isEncrypted: false });
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).detail).toContain("Homepage banner");
   });
 
   test("answers 500 and logs at error when the update rejects the stored survey as invalid", async () => {

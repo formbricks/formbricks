@@ -54,7 +54,11 @@ const rebuild = (schema: z.ZodType): z.ZodType => {
     case "default": {
       const inner = (schema as z.ZodDefault).unwrap() as z.ZodType;
       const rebuilt = rebuild(inner);
-      return rebuilt === inner ? schema : rebuilt.default((schema as z.ZodDefault)._zod.def.defaultValue);
+      if (rebuilt === inner) return schema;
+      // `defaultValue` is a getter that runs a function default: read it per parse, not once here, so each
+      // parse gets a fresh value rather than one object shared by every request.
+      const original = schema as z.ZodDefault;
+      return rebuilt.default(() => original._zod.def.defaultValue);
     }
     default:
       // Any other wrapper around an inner schema is refused too, so nothing nested escapes unseen.

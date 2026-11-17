@@ -61,6 +61,25 @@ describe("strictDeep", () => {
     expect(() => strictDeep(z.object({ map: z.record(z.string(), z.object({})) }))).toThrow(/record/);
   });
 
+  test("runs a function default on every parse, so no two parses share the default's object", () => {
+    let calls = 0;
+    const strict = strictDeep(
+      z.object({
+        config: z.object({ tags: z.array(z.string()) }).default(() => {
+          calls += 1;
+          return { tags: [] };
+        }),
+      })
+    );
+
+    const first = strict.parse({});
+    const second = strict.parse({});
+
+    expect(first.config).toEqual({ tags: [] });
+    expect(first.config.tags).not.toBe(second.config.tags);
+    expect(calls).toBe(2);
+  });
+
   test("makes an object under a default strict, keeping the default", () => {
     const strict = strictDeep(z.object({ config: z.object({ x: z.string() }).default({ x: "a" }) }));
 

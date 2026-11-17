@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError, TooManyRequestsError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { STYLE_DEFAULTS } from "@/lib/styling/constants";
+import { WORKSPACE_DELETION_CONFIRMATION_MAX } from "../schemas";
 import { POST as DELETION } from "./deletions/route";
 import * as workspaceRoute from "./route";
 
@@ -366,6 +367,16 @@ describe("POST /api/internal/workspaces/{workspaceId}/deletions", () => {
     expect((await response.json()).detail).not.toContain("confirmation");
   });
 
+  test("deletes a workspace whose name predates the 255-character cap, typed back in full", async () => {
+    const longName = "Acme ".repeat(80).trim();
+    mocks.getWorkspace.mockResolvedValue(workspace({ name: longName }));
+
+    const response = await remove({ confirmationName: longName });
+
+    expect(response.status).toBeLessThan(300);
+    expect(mocks.deleteWorkspaceIfNotLast).toHaveBeenCalled();
+  });
+
   test("answers 409 for the organization's last workspace", async () => {
     mocks.deleteWorkspaceIfNotLast.mockRejectedValue(
       new OperationNotAllowedError("You can't delete the last workspace.")
@@ -412,8 +423,8 @@ describe("workspace write input limits", () => {
     expect(mocks.updateWorkspace).not.toHaveBeenCalled();
   });
 
-  test("a deletion answers 400 naming a confirmation longer than any workspace name", async () => {
-    const response = await remove({ confirmationName: "a".repeat(256) });
+  test("a deletion answers 400 naming a confirmation past its cap", async () => {
+    const response = await remove({ confirmationName: "a".repeat(WORKSPACE_DELETION_CONFIRMATION_MAX + 1) });
 
     expect(response.status).toBe(400);
     expect(await invalidParams(response)).toEqual(["confirmationName"]);

@@ -25,7 +25,31 @@ const EMAIL = "ada@example.com";
 const PASSWORD = "Passw0rd!long";
 const USER_AGENT = "sign-out-audit-test";
 
-const buildAuth = () => {
+/** Redis as production configures it (`auth.ts`): sessions in secondary storage, mirrored to the database. */
+const memorySecondaryStorage = () => {
+  const store = new Map<string, string>();
+  return {
+    get: async (key: string) => store.get(key) ?? null,
+    set: async (key: string, value: string) => {
+      store.set(key, value);
+    },
+    delete: async (key: string) => {
+      store.delete(key);
+    },
+    getAndDelete: async (key: string) => {
+      const value = store.get(key) ?? null;
+      store.delete(key);
+      return value;
+    },
+    increment: async (key: string) => {
+      const next = Number(store.get(key) ?? 0) + 1;
+      store.set(key, String(next));
+      return next;
+    },
+  };
+};
+
+const buildAuth = ({ withSecondaryStorage = false }: { withSecondaryStorage?: boolean } = {}) => {
   const db: Record<string, Record<string, unknown>[]> = {
     user: [],
     session: [],
@@ -41,6 +65,9 @@ const buildAuth = () => {
     baseURL: BASE_URL,
     secret: "sign-out-audit-test-secret-0123456789abcdef",
     database: memoryAdapter(db),
+    ...(withSecondaryStorage
+      ? { secondaryStorage: memorySecondaryStorage(), session: { storeSessionInDatabase: true } }
+      : {}),
     emailAndPassword: {
       enabled: true,
       revokeSessionsOnPasswordReset: true,
@@ -119,6 +146,19 @@ describe("auditSignOutOnSessionDelete (real Better Auth)", () => {
       newObject: { provider: "session", authMethod: "sign_out" },
       requestMetadata: { ipAddress: "unknown", userAgent: USER_AGENT },
     });
+  });
+
+  test("a sign-out records it too with sessions in secondary storage and the database, as production runs", async () => {
+    const setup = buildAuth({ withSecondaryStorage: true });
+    const { userId, signIn } = await signUpAndSignIn(setup);
+    vi.clearAllMocks();
+
+    const response = await post(setup.auth, "/sign-out", {}, cookieOf(signIn));
+
+    expect(response.status).toBe(200);
+    expect(setup.deletions).toEqual(["/sign-out"]);
+    expect(signedOutEvents()).toHaveLength(1);
+    expect(signedOutEvents()[0][0]).toMatchObject({ action: "userSignedOut", userId, targetId: userId });
   });
 
   test("a sign-out with no session records nothing", async () => {

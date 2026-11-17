@@ -6,6 +6,7 @@ import {
   STYLING_NUMBER_MAX,
   STYLING_TEXT_MAX_LENGTH,
   WORKSPACE_DEFAULT_LANGUAGE_MAX_LENGTH,
+  WORKSPACE_DELETION_CONFIRMATION_MAX,
   WORKSPACE_HEAD_SCRIPTS_MAX_LENGTH,
   WORKSPACE_LOGO_BG_COLOR_MAX_LENGTH,
   WORKSPACE_NAME_MAX,
@@ -136,13 +137,13 @@ describe("ZWorkspacePatchBody input limits", () => {
     );
   });
 
-  test("takes the workspace name back as the deletion confirmation, and refuses a longer one", () => {
-    expect(ZWorkspaceDeletionBody.safeParse({ confirmationName: text(WORKSPACE_NAME_MAX) }).success).toBe(
+  test("takes back a name longer than today's cap, which older workspaces may have, and bounds it", () => {
+    expect(ZWorkspaceDeletionBody.safeParse({ confirmationName: text(WORKSPACE_NAME_MAX + 1) }).success).toBe(
       true
     );
     expect(
-      ZWorkspaceDeletionBody.safeParse({ confirmationName: text(WORKSPACE_NAME_MAX + 1) }).error?.issues[0]
-        .path
+      ZWorkspaceDeletionBody.safeParse({ confirmationName: text(WORKSPACE_DELETION_CONFIRMATION_MAX + 1) })
+        .error?.issues[0].path
     ).toEqual(["confirmationName"]);
   });
 

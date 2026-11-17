@@ -8,6 +8,7 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import { UNSPLASH_ACCESS_KEY } from "@/lib/constants";
+import { loggableError } from "@/lib/utils/loggable-error";
 import type { TUnsplashPhotoDownloadBody, TUnsplashPhotoSearchQuery } from "../schemas";
 import { type TUnsplashPhotoResource, serializeUnsplashPhoto } from "../serializers";
 
@@ -85,7 +86,11 @@ export async function searchUnsplashPhotosOperation({
   try {
     response = await callUnsplash(`${UNSPLASH_SEARCH_URL}?${params}`, UNSPLASH_ACCESS_KEY);
   } catch (error) {
-    return upstreamFailure(context, "Unsplash could not be reached. Try again shortly.", { err: error });
+    return upstreamFailure(
+      context,
+      "Unsplash could not be reached. Try again shortly.",
+      loggableError(error)
+    );
   }
   if (!response.ok) {
     return upstreamFailure(context, "Failed to fetch images from Unsplash", { status: response.status });
@@ -118,7 +123,11 @@ export async function triggerUnsplashPhotoDownloadOperation({
   try {
     response = await callUnsplash(body.downloadUrl, UNSPLASH_ACCESS_KEY);
   } catch (error) {
-    return upstreamFailure(context, "Unsplash could not be reached. Try again shortly.", { err: error });
+    return upstreamFailure(
+      context,
+      "Unsplash could not be reached. Try again shortly.",
+      loggableError(error)
+    );
   }
   if (!response.ok) {
     return upstreamFailure(context, "Failed to download image from Unsplash", { status: response.status });

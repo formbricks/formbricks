@@ -99,9 +99,12 @@ export const sendSurveyPreviewEmail = (surveyId: string) =>
     timeoutMs: null,
   });
 
-/** Delete every response and display of the survey. */
+/**
+ * Delete every response and display of the survey. A survey with many responses takes a while, so it waits as
+ * long as it takes rather than reporting a failure while the server is still deleting.
+ */
 export const resetSurvey = (surveyId: string) =>
-  sendApiRequest<TSurveyResetResource>(surveyPath(surveyId, "resets"), { method: "POST" });
+  sendApiRequest<TSurveyResetResource>(surveyPath(surveyId, "resets"), { method: "POST", timeoutMs: null });
 
 /** Write AI-generated example responses into a survey with none. LLM calls: it can run for minutes. */
 export const generateExampleResponses = (surveyId: string) =>

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { AuthorizationError } from "@formbricks/types/errors";
+import { AuthorizationError, UniqueConstraintError } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { DELETE, PATCH } from "./[actionClassId]/route";
 import { GET as SURVEYS } from "./[actionClassId]/surveys/route";
@@ -129,6 +129,17 @@ beforeEach(() => {
 });
 
 describe("PATCH /api/internal/action-classes/{actionClassId}", () => {
+  test("answers a name another action uses with 409 and the service's message, as create does", async () => {
+    mocks.updateActionClass.mockRejectedValue(
+      new UniqueConstraintError("Action with name Clicked upgrade already exists")
+    );
+
+    const response = await patch(codeInput());
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).detail).toBe("Action with name Clicked upgrade already exists");
+  });
+
   test("updates the action in its own workspace and audits both sides", async () => {
     const response = await patch(codeInput());
 

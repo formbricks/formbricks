@@ -150,11 +150,20 @@ export async function updateActionClassOperation({
   if (authorized instanceof Response) return authorized;
   const { actionClass } = authorized;
 
-  // Always the action's own workspace: the body can't move an action to another one.
-  const updated = await updateActionClass(actionClass.workspaceId, actionClass.id, {
-    ...body,
-    workspaceId: actionClass.workspaceId,
-  });
+  let updated: TActionClass;
+  try {
+    // Always the action's own workspace: the body can't move an action to another one.
+    updated = await updateActionClass(actionClass.workspaceId, actionClass.id, {
+      ...body,
+      workspaceId: actionClass.workspaceId,
+    });
+  } catch (error) {
+    // A name or key another action in the workspace uses, named as create names it.
+    if (error instanceof UniqueConstraintError) {
+      return problemConflict(context.requestId, error.message, context.instance);
+    }
+    throw error;
+  }
   if (context.auditLog) {
     context.auditLog.oldObject = actionClass;
     context.auditLog.newObject = updated;
