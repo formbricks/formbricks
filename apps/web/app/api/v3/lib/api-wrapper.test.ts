@@ -6,7 +6,7 @@ import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { ConcurrencyLimiter } from "@/app/lib/api/concurrency-limiter";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
-import { formatZodIssues, withV3ApiWrapper } from "./api-wrapper";
+import { formatZodIssues, getDefaultRateLimitConfig, withV3ApiWrapper } from "./api-wrapper";
 import { V3_REQUEST_ARRAY_MAX_ITEMS, V3_REQUEST_MAX_DEPTH } from "./array-budget";
 import { V3_INVALID_PARAMS_MAX } from "./invalid-params";
 
@@ -240,6 +240,15 @@ describe("withV3ApiWrapper", () => {
       expect.objectContaining({ namespace: "api:v3" }),
       expect.anything()
     );
+  });
+
+  test.each([
+    ["/api/internal/tags", "api:internal"],
+    ["/sub/api/internal/tags", "api:internal"],
+    ["/api/v3/surveys", "api:v3"],
+    ["/sub/api/v3/surveys", "api:v3"],
+  ])("picks the default bucket for %s, a basePath prefix included", (pathname, namespace) => {
+    expect(getDefaultRateLimitConfig(pathname).namespace).toBe(namespace);
   });
 
   test("falls back to api key auth in both mode", async () => {
