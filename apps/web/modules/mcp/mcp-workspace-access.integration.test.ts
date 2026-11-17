@@ -811,6 +811,47 @@ describe("organization & workspace access on MCP calls", () => {
         (await authorize(setup.cookie, clientId, EVERYTHING)).target.searchParams.get("code")
       ).toBeTruthy();
     });
+
+    // N4: the same two tabs, approving the same scopes, with tab B's write a second after tab A's. Tab B
+    // updates the row tab A created; putting back what tab A found (no row) must not delete tab B's consent.
+    test("a failed approval leaves a later approval of the same scopes, which rewrote its row, as it was", async () => {
+      const clientId = await registerClient("two tabs, same scopes");
+      const tabA = await authorize(setup.cookie, clientId, NARROW);
+      const tabB = await authorize(setup.cookie, clientId, NARROW);
+      let approvedB: Response | undefined;
+      spicedbLookups.beforeNext = async () => {
+        // Past the second tab A's consent was stamped in, so tab B's write can't be taken for it.
+        await new Promise((resolve) => setTimeout(resolve, 1_100));
+        approvedB = await consent(setup.cookie, tabB.target, {
+          accept: true,
+          mcp_grant: { permissions: { surveys: "read" }, access: "all" },
+        });
+        spicedbLookups.failing = true;
+      };
+
+      let failedA: Response;
+      try {
+        failedA = await consent(setup.cookie, tabA.target, {
+          accept: true,
+          mcp_grant: {
+            permissions: { surveys: "read" },
+            access: "workspaces",
+            workspaceIds: [setup.inside.workspaceId],
+          },
+        });
+      } finally {
+        spicedbLookups.failing = false;
+        spicedbLookups.beforeNext = null;
+      }
+
+      expect(approvedB?.status).toBe(200);
+      expect(failedA.status).toBe(500);
+      const consents = await consentsOf(setup, clientId);
+      expect(consents).toHaveLength(1);
+      expect([...consents[0].scopes].sort((a, b) => a.localeCompare(b))).toEqual(sortedScopes(NARROW));
+      expect(await getMcpGrant(setup.userId, clientId)).toMatchObject({ access: "all" });
+      expect((await authorize(setup.cookie, clientId, NARROW)).target.searchParams.get("code")).toBeTruthy();
+    });
   });
 
   test("an edit widening the access applies on the next call with the same token", async () => {

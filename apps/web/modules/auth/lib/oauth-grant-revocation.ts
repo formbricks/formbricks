@@ -50,6 +50,7 @@ import {
   lockConsents,
   readConsentedScopes,
 } from "./oauth-consent-rows";
+import { readOwnConsentWriteCheck } from "./oauth-consent-writes";
 import { isIssuedBeforeRevocation, readOAuthRevocationTime } from "./oauth-revocation-marker";
 
 /**
@@ -276,13 +277,14 @@ const sameScopes = (a: string[], b: string[]): boolean =>
   a.length === b.length && a.every((scope) => b.includes(scope));
 
 const consentChange = async (ctx: AuthHookContext, userId: string): Promise<TConsentChange | null> => {
-  // A row is this request's write only if the provider accepted the request and the row was stamped in
-  // this request's second (the provider stamps to the second, just before this hook runs). Some
-  // accepted paths write nothing, such as a `prompt=login` bounce, so acceptance alone isn't enough: a
-  // tie left over from earlier must fall back to what every tied row allows.
+  // A row is this request's write only if the provider accepted the request and the row still is as this
+  // request's own write left it (`oauth-consent-writes.ts`). Some accepted paths write nothing, such as a
+  // `prompt=login` bounce, so acceptance alone isn't enough: a tie left over from earlier must fall back
+  // to what every tied row allows. And another request's later write to the row, such as a second tab's
+  // approval of the same client, is that request's, never this one's.
   const accepted = !isAPIError((ctx.context as { returned?: unknown }).returned);
-  const thisSecond = Math.floor(Date.now() / 1000) * 1000 - 1000;
-  const wrote = (consent: TConsentRow) => accepted && consent.updatedAt.getTime() >= thisSecond;
+  const isOwnWrite = await readOwnConsentWriteCheck();
+  const wrote = (consent: TConsentRow) => accepted && isOwnWrite(consent);
   if (isApproval(ctx)) {
     const query = new URLSearchParams((await getOAuthProviderState())?.query ?? "");
     const clientId = query.get("client_id");
@@ -495,14 +497,15 @@ export const snapshotConsentBeforeApprovalHandler = async (ctx: AuthHookContext)
  * Puts back, in the caller's transaction (which already holds the client's grant lock), the consent rows
  * this approval wrote, as the snapshot read them: deletes a row it created (none in the snapshot) and writes
  * the snapshot's values back to a row it updated. A row is this approval's write when `isOwnWrite` says so,
- * the test {@link consentBound} uses: the scopes it approved, stamped in its second. Every other row is
- * left alone, so an approval of the same client in another tab that landed since the snapshot keeps its
- * consent, and a row deleted since the snapshot (a revoke) stays deleted.
+ * the test {@link consentBound} uses: the scopes it approved, on the row this approval wrote, still stamped
+ * as its write left it. Every other row is left alone, so an approval of the same client in another tab
+ * that landed since the snapshot keeps its consent, whether it wrote a row of its own or rewrote this one,
+ * and a row deleted since the snapshot (a revoke) stays deleted.
  *
- * Compensation, not a rollback: another approval of the same client that wrote the same scopes in the same
- * second can't be told from this one, and its row is put back or deleted too. That approval keeps its
- * grant but gets the snapshot's consent back, or none: the refresh check holds its tokens to the
- * snapshot's scopes, or ends them at their next refresh and the consent screen shows again.
+ * Compensation, not a rollback: another approval of the same client that rewrote this row with the same
+ * scopes in the same second leaves it exactly as this one wrote it, and it is put back or deleted too.
+ * That approval keeps its grant but gets the snapshot's consent back, or none: the refresh check holds its
+ * tokens to the snapshot's scopes, or ends them at their next refresh and the consent screen shows again.
  */
 const restoreConsents = async (
   tx: Prisma.TransactionClient,

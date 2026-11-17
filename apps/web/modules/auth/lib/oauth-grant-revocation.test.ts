@@ -88,6 +88,12 @@ vi.mock("@better-auth/core/context", () => ({
     };
   },
 }));
+// Which rows this request wrote, as the adapter recorded them (`oauth-consent-writes.ts`, tested on its own):
+// here, a row stamped in this second, the way the tests' rows stand for the provider's write.
+vi.mock("./oauth-consent-writes", () => ({
+  readOwnConsentWriteCheck: async () => (consent: { updatedAt: Date }) =>
+    consent.updatedAt.getTime() >= Math.floor(Date.now() / 1000) * 1000 - 1000,
+}));
 vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: vi.fn((run: (tx: typeof mocks.tx) => unknown) => run(mocks.tx)),

@@ -43,6 +43,7 @@ import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-
 import { requireValidMcpGrantOnConsentBeforeHandler } from "./mcp-grant-consent";
 import { revokeOAuthConsentBeforeHandler } from "./mcp-grant-revocation";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
+import { recordOAuthConsentWrites } from "./oauth-consent-writes";
 import { snapshotConsentBeforeApprovalHandler } from "./oauth-grant-revocation";
 import { refuseCodeIssuedBeforeRevocationBeforeHandler } from "./oauth-revocation-marker";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
@@ -146,7 +147,9 @@ export const auth = betterAuth({
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
 
-  database: prismaAdapter(prisma, { provider: "postgresql" }),
+  // Consent writes are recorded per request, so the consent hooks can tell their own write from another
+  // request's (`oauth-consent-writes.ts`).
+  database: recordOAuthConsentWrites(prismaAdapter(prisma, { provider: "postgresql" })),
 
   // Sessions, verification records, and rate-limit counters in Redis (existing infra), shared
   // across instances. Sessions also persist to the DB via session.storeSessionInDatabase below.
