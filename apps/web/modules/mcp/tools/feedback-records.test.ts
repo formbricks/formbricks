@@ -442,7 +442,7 @@ describe("create_feedback_record", () => {
   test("delegates with body, builds and queues the audit log, and marks success", async () => {
     // Not a real status: the test reads it back to see the handler overwrote it.
     const auditLog = { status: "attempted" } as unknown as TV3AuditLog;
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(createV3FeedbackRecord).mockResolvedValue(
       successResponse({ id: "rec-1" }, { requestId: "req_tool", status: 201 })
     );
@@ -477,8 +477,8 @@ describe("create_feedback_record", () => {
   // The invariant is "a failed mutation is never silently unaudited" — including when the operation throws
   // rather than returning a problem response. Without this the catch branch is unguarded.
   test("still queues a failure audit event when the operation throws, and rethrows", async () => {
-    const auditLog = { status: "failure" } as TV3AuditLog;
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(createV3FeedbackRecord).mockRejectedValue(new Error("boom"));
     const { tools } = createToolServer();
 
@@ -494,8 +494,8 @@ describe("create_feedback_record", () => {
   // for correlation. The operations layer intentionally no longer sets eventId (this layer does), so this
   // is the only guard on that invariant.
   test("queues a failure audit event with an eventId when the create fails", async () => {
-    const auditLog = { status: "failure" } as TV3AuditLog;
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(createV3FeedbackRecord).mockResolvedValue(
       problemBadRequest("req_tool", "rejected", { instance: "/api/mcp" })
     );
@@ -514,8 +514,8 @@ describe("delete_feedback_record", () => {
   const input = { workspaceId, feedbackRecordId: recordId, datasetId: directoryId };
 
   test("delegates to deleteV3FeedbackRecord and audits the deletion as a success", async () => {
-    const auditLog = { status: "failure" } as TV3AuditLog;
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(deleteV3FeedbackRecord).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
     const { tools } = createToolServer();
 
@@ -555,8 +555,8 @@ describe("delete_feedback_record", () => {
   });
 
   test("queues a failure audit event with an eventId when the delete is refused", async () => {
-    const auditLog = { status: "failure" } as TV3AuditLog;
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(deleteV3FeedbackRecord).mockResolvedValue(
       problemForbidden("req_tool", "You are not authorized to access this feedback record", "/api/mcp")
     );
@@ -681,7 +681,7 @@ describe("create_feedback_records", () => {
   // branches on it, so the mock has to carry it. Omitting it (as these tests used to) makes a plain
   // truthiness check pass here while matching every entry in production — which is how the batch path
   // came to emit success events for records the Hub had rejected.
-  const makeAuditLog = () => ({ status: "failure", targetId: UNKNOWN_DATA }) as TV3AuditLog;
+  const makeAuditLog = (): Partial<TV3AuditLog> => ({ status: "failure", targetId: UNKNOWN_DATA });
   const records = [
     { source_type: "call_notes", field_id: "note", field_type: "text", value_text: "one" },
     { source_type: "call_notes", field_id: "note", field_type: "text", value_text: "two" },
@@ -702,8 +702,8 @@ describe("create_feedback_records", () => {
   // One creation is one audit event, so a batch of N creations must be N events — not one summary event
   // that loses which records were written.
   test("queues one success audit event per created record", async () => {
-    const built: TV3AuditLog[] = [];
-    vi.mocked(buildV3AuditLog).mockImplementation(() => {
+    const built: Partial<TV3AuditLog>[] = [];
+    vi.mocked(buildV3AuditLog, { partial: true }).mockImplementation(() => {
       const auditLog = makeAuditLog();
       built.push(auditLog);
       return auditLog;
@@ -729,8 +729,8 @@ describe("create_feedback_records", () => {
   });
 
   test("still queues a failure event when the batch operation throws, and rethrows", async () => {
-    const built: TV3AuditLog[] = [];
-    vi.mocked(buildV3AuditLog).mockImplementation(() => {
+    const built: Partial<TV3AuditLog>[] = [];
+    vi.mocked(buildV3AuditLog, { partial: true }).mockImplementation(() => {
       const auditLog = makeAuditLog();
       built.push(auditLog);
       return auditLog;
@@ -747,8 +747,8 @@ describe("create_feedback_records", () => {
   });
 
   test("queues a single failure event when nothing was created", async () => {
-    const built: TV3AuditLog[] = [];
-    vi.mocked(buildV3AuditLog).mockImplementation(() => {
+    const built: Partial<TV3AuditLog>[] = [];
+    vi.mocked(buildV3AuditLog, { partial: true }).mockImplementation(() => {
       const auditLog = makeAuditLog();
       built.push(auditLog);
       return auditLog;
@@ -770,8 +770,8 @@ describe("update_feedback_record", () => {
   const input = { workspaceId, feedbackRecordId: recordId, value_text: "corrected" };
 
   test("delegates with the whole input as the body and audits as an update", async () => {
-    const auditLog = { status: "failure" } as TV3AuditLog;
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(updateV3FeedbackRecord).mockResolvedValue(
       successResponse({ id: recordId, value_text: "corrected" }, { requestId: "req_tool" })
     );
