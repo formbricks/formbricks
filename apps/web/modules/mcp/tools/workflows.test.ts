@@ -9,6 +9,7 @@ import {
   successResponse,
 } from "@/app/api/v3/lib/response";
 import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflows/lib/context";
+import { toolResult, toolResultText } from "./__fixtures__/tool-result";
 import { FULL_MCP_GRANT } from "./test-utils";
 import {
   buildListWorkflowRunsSearchParams,
@@ -17,7 +18,6 @@ import {
   withoutRespondentData,
   withoutRespondentDataInWorkflows,
 } from "./workflows";
-import { toolResult, toolResultText } from "./__fixtures__/tool-result";
 
 // The registered inputSchema is a Standard Schema; only these two members are read here.
 type ZodObjectLike = { description?: string; safeParse: (value: unknown) => { success: boolean } };

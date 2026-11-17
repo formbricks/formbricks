@@ -4,8 +4,8 @@ import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflo
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { type TMcpToolContext, getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
-import { isRecord, redactToolResultData, redactUnlessCallerHolds } from "./redacted-result";
 import { registerMcpTool } from "./guard-permissions";
+import { isRecord, redactToolResultData, redactUnlessCallerHolds } from "./redacted-result";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCreateWorkflowInput,
