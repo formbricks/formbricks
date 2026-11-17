@@ -1,11 +1,6 @@
 import { describe, expect, test } from "vitest";
-import {
-  checkForLoomUrl,
-  checkForVimeoUrl,
-  checkForYoutubeUrl,
-  convertToEmbedUrl,
-  extractYoutubeId,
-} from "./video-upload";
+import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "./video";
+import { extractYoutubeId } from "./youtube-id";
 
 describe("checkForYoutubeUrl", () => {
   const validUrls = [
