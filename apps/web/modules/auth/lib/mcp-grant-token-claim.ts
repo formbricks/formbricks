@@ -11,7 +11,11 @@ import {
   queueMcpGrantAudit,
 } from "@/modules/mcp/grant-store";
 import { trimScopesForDashboardViewer } from "./dashboard-viewer-oauth-scopes";
-import { readExchangedAuthorizationCode, readOAuthRevocationTime } from "./oauth-revocation-marker";
+import {
+  isIssuedBeforeRevocation,
+  readExchangedAuthorizationCode,
+  readOAuthRevocationTime,
+} from "./oauth-revocation-marker";
 
 /**
  * The grant an MCP access token is issued under (ADR-0041), as a claim of the token.
@@ -84,7 +88,7 @@ const grantSkipConsentClient = async (userId: string, clientId: string, scopes: 
       // seen here, and one that starts after this commits deletes the grant below with the rest.
       await lockUserForMcpGrantWrite(tx, userId);
       const revokedAt = await readOAuthRevocationTime(userId, clientId);
-      if (revokedAt !== null && exchanged.issuedAt <= revokedAt) return null;
+      if (isIssuedBeforeRevocation(exchanged.issuedAt, revokedAt)) return null;
       return createMcpGrantIfMissing(tx, { userId, clientId, permissions });
     });
     if (!created) return;

@@ -2,6 +2,7 @@ import { APIError } from "better-auth/api";
 import { createHash } from "node:crypto";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
+  REVOCATION_CLOCK_SKEW_MS,
   markOAuthRevocation,
   readExchangedAuthorizationCode,
   readOAuthRevocationTime,
@@ -123,6 +124,12 @@ describe("refuseCodeIssuedBeforeRevocationBeforeHandler", () => {
   test.each([
     ["issued before the client's Revoke", "oauth-revoked:user-1:client-1", 1_000],
     ["issued in the second of the user's bulk end", "oauth-revoked:user-1", 0],
+    // The revoking pod's clock may run behind the issuing pod's.
+    [
+      "issued within the clock skew after the Revoke",
+      "oauth-revoked:user-1:client-1",
+      -REVOCATION_CLOCK_SKEW_MS,
+    ],
   ])("refuses a code %s", async (_case, key, revokedAfterMs) => {
     setRevokedAt(key, new Date(ISSUED_AT.getTime() + revokedAfterMs));
 
@@ -132,8 +139,11 @@ describe("refuseCodeIssuedBeforeRevocationBeforeHandler", () => {
     expect((thrown as APIError).body).toMatchObject({ error: "invalid_grant" });
   });
 
-  test("lets a code issued after the revocation through, and one of another client", async () => {
-    setRevokedAt("oauth-revoked:user-1:client-1", new Date(ISSUED_AT.getTime() - 1));
+  test("lets a code issued after the revocation and its clock skew through, and one of another client", async () => {
+    setRevokedAt(
+      "oauth-revoked:user-1:client-1",
+      new Date(ISSUED_AT.getTime() - REVOCATION_CLOCK_SKEW_MS - 1)
+    );
     setRevokedAt("oauth-revoked:user-1:client-2", new Date(ISSUED_AT.getTime() + 1_000));
 
     await expect(refuseCodeIssuedBeforeRevocationBeforeHandler(exchange())).resolves.toBeUndefined();

@@ -10,7 +10,11 @@ import {
   queueMcpGrantAudit,
 } from "@/modules/mcp/grant-store";
 import { MCP_GRANT_TOKEN_CLAIM, mcpGrantAccessTokenClaims } from "./mcp-grant-token-claim";
-import { readExchangedAuthorizationCode, readOAuthRevocationTime } from "./oauth-revocation-marker";
+import {
+  REVOCATION_CLOCK_SKEW_MS,
+  readExchangedAuthorizationCode,
+  readOAuthRevocationTime,
+} from "./oauth-revocation-marker";
 
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }));
 vi.mock("@/lib/membership/dashboard-viewer", () => ({ isOnlyDashboardViewer: vi.fn() }));
@@ -19,10 +23,17 @@ vi.mock("@/modules/mcp/grant-store", () => ({
   lockUserForMcpGrantWrite: vi.fn(),
   queueMcpGrantAudit: vi.fn(),
 }));
-vi.mock("./oauth-revocation-marker", () => ({
-  readExchangedAuthorizationCode: vi.fn(),
-  readOAuthRevocationTime: vi.fn(),
-}));
+vi.mock("./oauth-revocation-marker", async (importOriginal) => {
+  // The skew rule is the real one: the claim and the token endpoint decide by the same function.
+  const { REVOCATION_CLOCK_SKEW_MS, isIssuedBeforeRevocation } =
+    await importOriginal<typeof import("./oauth-revocation-marker")>();
+  return {
+    REVOCATION_CLOCK_SKEW_MS,
+    isIssuedBeforeRevocation,
+    readExchangedAuthorizationCode: vi.fn(),
+    readOAuthRevocationTime: vi.fn(),
+  };
+});
 
 const USER = { id: "user-1" };
 const CONSENT_CLIENT = { clientId: "client-1", skipConsent: false };
@@ -146,6 +157,8 @@ describe("mcpGrantAccessTokenClaims", () => {
   test.each([
     ["in the code's second", ISSUED_AT],
     ["after it", ISSUED_AT + 1],
+    // The revoking pod's clock may run behind the issuing pod's.
+    ["just before it, within the clock skew", ISSUED_AT - REVOCATION_CLOCK_SKEW_MS],
   ])("creates no grant when a Revoke marked %s", async (_case, revokedAt) => {
     vi.mocked(readOAuthRevocationTime).mockResolvedValue(revokedAt);
     prisma.mcpGrant.findUnique.mockResolvedValue(null);
@@ -155,8 +168,8 @@ describe("mcpGrantAccessTokenClaims", () => {
     expect(createMcpGrantIfMissing).not.toHaveBeenCalled();
   });
 
-  test("gives the grant when the last Revoke was before the code was issued", async () => {
-    vi.mocked(readOAuthRevocationTime).mockResolvedValue(ISSUED_AT - 1);
+  test("gives the grant when the last Revoke was before the code was issued, beyond the clock skew", async () => {
+    vi.mocked(readOAuthRevocationTime).mockResolvedValue(ISSUED_AT - REVOCATION_CLOCK_SKEW_MS - 1);
 
     await expect(claims()).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: "grant-1" });
     expect(createMcpGrantIfMissing).toHaveBeenCalled();

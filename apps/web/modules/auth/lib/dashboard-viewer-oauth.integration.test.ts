@@ -10,7 +10,7 @@ import {
   refresh,
   registerClient,
   signIn,
-  waitForNextSecond,
+  waitPastRevocation,
 } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
 import { lockUserActiveState } from "@/lib/user/reactivation";
@@ -185,7 +185,7 @@ describe("a Dashboard viewer's OAuth grant", () => {
     expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
 
     // Authorizing again goes through consent, which now offers only dashboards:read.
-    await waitForNextSecond();
+    await waitPastRevocation();
     const again = await grant(cookie, clientId, EVERYTHING);
     expect(scopesOf(again.scope)).toEqual([...VIEWER_GRANT].sort());
   });
@@ -205,107 +205,122 @@ describe("a Dashboard viewer's OAuth grant", () => {
     expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
   });
 
-  test("removing them from their last two wider organizations at once still ends the wide grant", async () => {
-    // Each removal decides "only viewer memberships left?" on its own; without the user-row lock both can
-    // still see the other's membership, and neither revokes. A race, so several rounds.
-    const { cookie, userId } = await userWithRole("dashboard_viewer");
-    for (let round = 0; round < 5; round++) {
-      const [first, second] = await Promise.all(
-        [1, 2].map((n) => prisma.organization.create({ data: { name: `Member org ${round}-${n}` } }))
-      );
-      await prisma.membership.createMany({
-        data: [first, second].map(({ id }) => ({
-          userId,
-          organizationId: id,
-          role: "member",
-          accepted: true,
-        })),
-      });
-      // The previous round ended the grant: its revocation refuses codes issued in its second.
-      await waitForNextSecond();
-      const tokens = await grant(cookie, clientId, EVERYTHING);
-      expect(scopesOf(tokens.scope)).toContain("surveys:read");
+  test(
+    "removing them from their last two wider organizations at once still ends the wide grant",
+    { timeout: 90_000 },
+    async () => {
+      // Each removal decides "only viewer memberships left?" on its own; without the user-row lock both can
+      // still see the other's membership, and neither revokes. A race, so several rounds.
+      const { cookie, userId } = await userWithRole("dashboard_viewer");
+      for (let round = 0; round < 5; round++) {
+        const [first, second] = await Promise.all(
+          [1, 2].map((n) => prisma.organization.create({ data: { name: `Member org ${round}-${n}` } }))
+        );
+        await prisma.membership.createMany({
+          data: [first, second].map(({ id }) => ({
+            userId,
+            organizationId: id,
+            role: "member",
+            accepted: true,
+          })),
+        });
+        // The previous round ended the grant: its revocation refuses codes issued within the clock skew of
+        // it, so each round waits that out, and the test gets the time five rounds of it take.
+        await waitPastRevocation();
+        const tokens = await grant(cookie, clientId, EVERYTHING);
+        expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
-      await Promise.all([
-        deleteMembership(userId, first.id, userId),
-        deleteMembership(userId, second.id, userId),
-      ]);
+        await Promise.all([
+          deleteMembership(userId, first.id, userId),
+          deleteMembership(userId, second.id, userId),
+        ]);
 
-      expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
-      expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
+        expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
+        expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
+      }
     }
-  });
+  );
 
-  test("a demotion to viewer racing a removal elsewhere still ends the wide grant", async () => {
-    // The member list's owner demotion (`demoteOwner` in role-management/actions.ts): the owners' lock,
-    // then the user's row, then the role change. Without the user-row lock, the demotion's "only viewer
-    // memberships left?" check can miss the removal committing at the same moment.
-    const { cookie, userId } = await userWithRole("dashboard_viewer");
-    for (let round = 0; round < 5; round++) {
-      const [removedFrom, demotedIn] = await Promise.all(
-        [1, 2].map((n) => prisma.organization.create({ data: { name: `Org ${round}-${n}` } }))
-      );
-      const otherOwner = await prisma.user.create({
-        data: { name: "Other owner", email: `other-owner-${round}@example.com` },
-      });
-      await prisma.membership.createMany({
-        data: [
-          { userId, organizationId: removedFrom.id, role: "member", accepted: true },
-          { userId, organizationId: demotedIn.id, role: "owner", accepted: true },
-          { userId: otherOwner.id, organizationId: demotedIn.id, role: "owner", accepted: true },
-        ],
-      });
-      // The previous round ended the grant: its revocation refuses codes issued in its second.
-      await waitForNextSecond();
-      const tokens = await grant(cookie, clientId, EVERYTHING);
-      expect(scopesOf(tokens.scope)).toContain("surveys:read");
+  test(
+    "a demotion to viewer racing a removal elsewhere still ends the wide grant",
+    { timeout: 90_000 },
+    async () => {
+      // The member list's owner demotion (`demoteOwner` in role-management/actions.ts): the owners' lock,
+      // then the user's row, then the role change. Without the user-row lock, the demotion's "only viewer
+      // memberships left?" check can miss the removal committing at the same moment.
+      const { cookie, userId } = await userWithRole("dashboard_viewer");
+      for (let round = 0; round < 5; round++) {
+        const [removedFrom, demotedIn] = await Promise.all(
+          [1, 2].map((n) => prisma.organization.create({ data: { name: `Org ${round}-${n}` } }))
+        );
+        const otherOwner = await prisma.user.create({
+          data: { name: "Other owner", email: `other-owner-${round}@example.com` },
+        });
+        await prisma.membership.createMany({
+          data: [
+            { userId, organizationId: removedFrom.id, role: "member", accepted: true },
+            { userId, organizationId: demotedIn.id, role: "owner", accepted: true },
+            { userId: otherOwner.id, organizationId: demotedIn.id, role: "owner", accepted: true },
+          ],
+        });
+        // The previous round ended the grant: its revocation refuses codes issued within the clock skew of
+        // it, so each round waits that out, and the test gets the time five rounds of it take.
+        await waitPastRevocation();
+        const tokens = await grant(cookie, clientId, EVERYTHING);
+        expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
-      await Promise.all([
-        deleteMembership(userId, removedFrom.id, userId),
-        runOwnerGuardedTransaction(demotedIn.id, userId, async (tx) => {
+        await Promise.all([
+          deleteMembership(userId, removedFrom.id, userId),
+          runOwnerGuardedTransaction(demotedIn.id, userId, async (tx) => {
+            await lockUserActiveState(tx, userId);
+            return updateMembershipInTransaction(tx, userId, demotedIn.id, { role: "dashboard_viewer" });
+          }),
+        ]);
+
+        expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
+        expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
+      }
+    }
+  );
+
+  test(
+    "two demotions to viewer of the same owner at once still end the wide grant",
+    { timeout: 90_000 },
+    async () => {
+      // Different organizations, so different owner locks: only the user-row lock makes the second demotion's
+      // "only viewer memberships left?" check see the first.
+      const { cookie, userId } = await userWithRole("dashboard_viewer");
+      const demote = (organizationId: string) =>
+        runOwnerGuardedTransaction(organizationId, userId, async (tx) => {
           await lockUserActiveState(tx, userId);
-          return updateMembershipInTransaction(tx, userId, demotedIn.id, { role: "dashboard_viewer" });
-        }),
-      ]);
+          return updateMembershipInTransaction(tx, userId, organizationId, { role: "dashboard_viewer" });
+        });
+      for (let round = 0; round < 5; round++) {
+        const organizations = await Promise.all(
+          [1, 2].map((n) => prisma.organization.create({ data: { name: `Owned ${round}-${n}` } }))
+        );
+        const otherOwner = await prisma.user.create({
+          data: { name: "Other owner", email: `co-owner-${round}@example.com` },
+        });
+        await prisma.membership.createMany({
+          data: organizations.flatMap(({ id }) => [
+            { userId, organizationId: id, role: "owner" as const, accepted: true },
+            { userId: otherOwner.id, organizationId: id, role: "owner" as const, accepted: true },
+          ]),
+        });
+        // The previous round ended the grant: its revocation refuses codes issued within the clock skew of
+        // it, so each round waits that out, and the test gets the time five rounds of it take.
+        await waitPastRevocation();
+        const tokens = await grant(cookie, clientId, EVERYTHING);
+        expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
-      expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
-      expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
+        await Promise.all(organizations.map(({ id }) => demote(id)));
+
+        expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
+        expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
+      }
     }
-  });
-
-  test("two demotions to viewer of the same owner at once still end the wide grant", async () => {
-    // Different organizations, so different owner locks: only the user-row lock makes the second demotion's
-    // "only viewer memberships left?" check see the first.
-    const { cookie, userId } = await userWithRole("dashboard_viewer");
-    const demote = (organizationId: string) =>
-      runOwnerGuardedTransaction(organizationId, userId, async (tx) => {
-        await lockUserActiveState(tx, userId);
-        return updateMembershipInTransaction(tx, userId, organizationId, { role: "dashboard_viewer" });
-      });
-    for (let round = 0; round < 5; round++) {
-      const organizations = await Promise.all(
-        [1, 2].map((n) => prisma.organization.create({ data: { name: `Owned ${round}-${n}` } }))
-      );
-      const otherOwner = await prisma.user.create({
-        data: { name: "Other owner", email: `co-owner-${round}@example.com` },
-      });
-      await prisma.membership.createMany({
-        data: organizations.flatMap(({ id }) => [
-          { userId, organizationId: id, role: "owner" as const, accepted: true },
-          { userId: otherOwner.id, organizationId: id, role: "owner" as const, accepted: true },
-        ]),
-      });
-      // The previous round ended the grant: its revocation refuses codes issued in its second.
-      await waitForNextSecond();
-      const tokens = await grant(cookie, clientId, EVERYTHING);
-      expect(scopesOf(tokens.scope)).toContain("surveys:read");
-
-      await Promise.all(organizations.map(({ id }) => demote(id)));
-
-      expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
-      expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
-    }
-  });
+  );
 
   test("a first approval racing a removal that ends the grant finishes without a deadlock", async () => {
     // The removal takes the owners, then the user's row `FOR UPDATE`, then the grant and consent rows. The

@@ -20,12 +20,31 @@ import { redisSecondaryStorage } from "./secondary-storage";
  * So a revocation leaves a mark, a Redis key holding when it happened, for as long as a code issued before
  * it can live: one per user and client for Revoke, one per user for a bulk end. The token endpoint refuses
  * an authorization code issued no later than the mark that covers it
- * ({@link refuseCodeIssuedBeforeRevocationBeforeHandler}). A code is stamped to the second, so one issued
- * in the second of the revocation is refused too: the user authorizes again.
+ * ({@link refuseCodeIssuedBeforeRevocationBeforeHandler}). A code is stamped to the second, and its pod's
+ * clock may differ from the revoking pod's, so one issued within {@link REVOCATION_CLOCK_SKEW_MS} after the
+ * revocation is refused too: the user authorizes again.
  */
 
-/** Room for clock skew between the pod that marks and the one that issued the code. */
+/** Room for clock skew between the pod that marks and the one that issued the code, in the mark's TTL. */
 const REVOCATION_MARK_SKEW_SECONDS = 60;
+
+/**
+ * How far apart two pods' clocks may be when a code's issue time is held against a revocation's mark: the
+ * code is stamped by the pod that issued it, the mark by the pod that revoked. A code issued up to this
+ * long after the mark (by the issuing pod's clock) still counts as issued before it and is refused, so a
+ * revoking pod running behind can't let a code it should cover through. Pods keep NTP time, usually within
+ * milliseconds; 5 s bounds a badly drifting one while a user who reconnects right after a Revoke only has
+ * to authorize again if they do it within those seconds.
+ */
+export const REVOCATION_CLOCK_SKEW_MS = 5_000;
+
+/**
+ * Whether a code issued at `issuedAt` (ms) is covered by a revocation marked at `revokedAt` (ms; `null`
+ * for none): issued no later than the mark, allowing {@link REVOCATION_CLOCK_SKEW_MS} between the clocks.
+ * The token endpoint's check and the `skipConsent` grant claim both decide by this.
+ */
+export const isIssuedBeforeRevocation = (issuedAt: number, revokedAt: number | null): boolean =>
+  revokedAt !== null && issuedAt <= revokedAt + REVOCATION_CLOCK_SKEW_MS;
 
 /** As long as a code issued before the revocation can live, and a little longer. */
 const REVOCATION_MARK_TTL_SECONDS = MCP_OAUTH_CODE_EXPIRES_IN_SECONDS + REVOCATION_MARK_SKEW_SECONDS;
@@ -122,7 +141,7 @@ export const refuseCodeIssuedBeforeRevocationBeforeHandler = async (ctx: AuthHoo
   await exchangedCode.set({ ...owner, issuedAt });
 
   const revokedAt = await readOAuthRevocationTime(owner.userId, owner.clientId);
-  if (revokedAt === null || issuedAt > revokedAt) return;
+  if (!isIssuedBeforeRevocation(issuedAt, revokedAt)) return;
 
   throw new APIError("BAD_REQUEST", { error: "invalid_grant", error_description: "invalid code" });
 };

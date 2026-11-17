@@ -146,7 +146,9 @@ alone. Allow on the consent screen saves the grant; a client registered with `sk
 screen, so the same claim contributor gives the client one when it exchanges an authorization code, before
 the token is minted, by the migration's rule: All access, each permission at its scope family's level,
 Tags and Audience at No access. A sign-in code issued before a Revoke is refused at the exchange
-(`modules/auth/lib/oauth-revocation-marker.ts`), and the mark a revocation leaves only ever moves forward,
+(`modules/auth/lib/oauth-revocation-marker.ts`), counting a code issued up to `REVOCATION_CLOCK_SKEW_MS` (5 s) after
+the mark as issued before it, because the issuing and the revoking pod each stamp by their own clock; the mark a
+revocation leaves only ever moves forward,
 so two revocations that finish out of order can't lower it. A refresh never creates a grant: the refresh check
 refuses a `skipConsent` connection without one, as it refuses a consent without one. The exchange's grant
 creation is ordered against a Revoke like every other grant write: the claim takes the user's row

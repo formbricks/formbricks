@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { expect } from "vitest";
 import { prisma } from "@formbricks/database";
 import { auth } from "@/modules/auth/lib/auth";
+import { REVOCATION_CLOCK_SKEW_MS } from "@/modules/auth/lib/oauth-revocation-marker";
 import { getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 
 /**
@@ -180,9 +181,10 @@ export const refresh = (clientId: string, refreshToken: string, scope?: string) 
   });
 
 /**
- * Waits until the clock enters the next second. A sign-in code is stamped to the second, and one issued in
- * the second of a revocation of its user is refused at the exchange (`oauth-revocation-marker.ts`), so a
- * test that authorizes again right after a revocation waits this out first, as any real reconnect does.
+ * Waits until a sign-in code issued now counts as issued after a revocation just made: past the skew the
+ * exchange allows between pods' clocks (`REVOCATION_CLOCK_SKEW_MS`), and into the next second, since a code
+ * is stamped to the second (`oauth-revocation-marker.ts`). A test that authorizes again right after a
+ * revocation waits this out first, as any real reconnect does.
  */
-export const waitForNextSecond = (): Promise<void> =>
-  new Promise((resolve) => setTimeout(resolve, 1_000 - (Date.now() % 1_000) + 5));
+export const waitPastRevocation = (): Promise<void> =>
+  new Promise((resolve) => setTimeout(resolve, REVOCATION_CLOCK_SKEW_MS + 1_000 - (Date.now() % 1_000) + 5));
