@@ -11,8 +11,8 @@ import {
   deleteMcpGrants,
   lockUserForMcpRevocation,
   prepareMcpGrantAudits,
-  queueMcpGrantAudit,
   queueMcpGrantAudits,
+  queueMcpGrantDeletionsAudit,
   removeDeletedMcpGrants,
 } from "@/modules/mcp/grant-store";
 import { lockConsents } from "./oauth-consent-rows";
@@ -233,9 +233,7 @@ export const revokeOAuthConsentBeforeHandler = async (
   if (!revoked) throw new APIError("NOT_FOUND", { error: "not_found", error_description: "no consent" });
 
   const { grants, ...counts } = revoked;
-  for (const grant of grants) {
-    await queueMcpGrantAudit({ action: "deleted", actorUserId: session.user.id, before: grant, after: null });
-  }
+  await queueMcpGrantDeletionsAudit({ actorUserId: session.user.id, grants });
   logger.info(
     { userId: session.user.id, consentId, ...counts, grantsDeleted: grants.length },
     "OAuth consent revoked with its grant and tokens"

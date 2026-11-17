@@ -273,10 +273,9 @@ describe("listAuthorizedMcpClients", () => {
     const listed = Array.from({ length: 500 }, (_unused, index) =>
       consent({ id: `consent-${index.toString()}`, clientId: `client-${index.toString()}` })
     );
-    prisma.oauthConsent.findMany.mockResolvedValueOnce(listed as never).mockResolvedValueOnce([
-      { clientId: "client-omitted", scopes: ["surveys:write"] },
-      { clientId: "client-omitted", scopes: ["surveys:read"] },
-    ] as never);
+    prisma.oauthConsent.findMany.mockResolvedValueOnce(listed as never);
+    // One row per client, the newest, chosen in the database: a client's duplicate consents cost one row.
+    prisma.$queryRaw.mockResolvedValue([{ clientId: "client-omitted", scopes: ["surveys:write"] }] as never);
     grants(
       [],
       [
@@ -294,9 +293,12 @@ describe("listAuthorizedMcpClients", () => {
       creatives: "write",
       surveyStyling: "write",
     });
-    expect(prisma.oauthConsent.findMany).toHaveBeenLastCalledWith(
-      expect.objectContaining({ where: { userId: USER_ID, clientId: { in: ["client-omitted"] } } })
-    );
+    expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+    // Bound by the clients the grants name, not by every consent the user has.
+    const [, queryUserId, boundClientIds] = prisma.$queryRaw.mock.calls[0] as unknown[];
+    expect(queryUserId).toBe(USER_ID);
+    expect(JSON.stringify(boundClientIds)).toContain("client-omitted");
+    expect(prisma.oauthConsent.findMany).toHaveBeenCalledTimes(1);
   });
 
   test("reads no further consents below the cap", async () => {
@@ -306,6 +308,7 @@ describe("listAuthorizedMcpClients", () => {
     await list();
 
     expect(prisma.oauthConsent.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.$queryRaw).not.toHaveBeenCalled();
   });
 
   test("caps a consented client that is skipConsent by its registered scopes", async () => {

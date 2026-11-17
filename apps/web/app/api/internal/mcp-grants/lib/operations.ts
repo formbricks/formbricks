@@ -33,7 +33,11 @@ import {
   listAuthorizedMcpClients,
 } from "@/modules/mcp/authorized-clients";
 import { parseRequestedMcpGrant } from "@/modules/mcp/grant";
-import { queueMcpClientRevocationAudit, queueMcpGrantAudit } from "@/modules/mcp/grant-store";
+import {
+  queueMcpClientRevocationAudit,
+  queueMcpGrantAudit,
+  queueMcpGrantDeletionsAudit,
+} from "@/modules/mcp/grant-store";
 import { serializeAuthorizedMcpClient, serializeMcpGrant } from "./serializers";
 
 /**
@@ -182,16 +186,15 @@ export async function revokeMcpGrantOperation({
   const revoked = await revokeMcpClient({ userId, clientId });
   if (!revoked) return problemForbidden(requestId, undefined, instance);
 
-  // Audited by the grant store, one entry per organization the grant reached, as Edit is. A revoke that
-  // ended only a consent (one left without a grant) is audited with the client as its target and what
+  // Audited by the grant store, one entry per organization each grant reached, as Edit is; one pass for
+  // all of them, so a Revoke that ended many grants costs its reads once rather than per grant. A revoke
+  // that ended only a consent (one left without a grant) is audited with the client as its target and what
   // was ended, filed the same way. Either replaces the route's single entry, which can name neither.
   skipV3AuditLog(auditLog);
   const { grants, ...ended } = revoked;
   if (grants.length === 0) {
     await queueMcpClientRevocationAudit({ actorUserId: userId, clientId, ended });
   }
-  for (const grant of grants) {
-    await queueMcpGrantAudit({ action: "deleted", actorUserId: userId, before: grant, after: null });
-  }
+  await queueMcpGrantDeletionsAudit({ actorUserId: userId, grants });
   return successResponse({ clientId }, { requestId });
 }

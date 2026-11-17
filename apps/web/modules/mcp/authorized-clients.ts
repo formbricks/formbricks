@@ -1,6 +1,6 @@
 import "server-only";
 import { prisma } from "@formbricks/database";
-import type { Prisma } from "@formbricks/database/prisma";
+import { Prisma } from "@formbricks/database/prisma";
 import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewer-oauth-scopes";
 import { readConsentedScopes } from "@/modules/auth/lib/oauth-consent-rows";
 import { readMcpGrantReadableWorkspaceIds } from "./access-options";
@@ -83,7 +83,8 @@ const capScopes = (
 /**
  * Past the cap, a grant read as unconsented may belong to a client whose consent the capped read left
  * out: its cap comes from that consent, not from none. Reads those consents' current scopes by client,
- * only then; below the cap there is nothing left out, and nothing is read.
+ * only then, one row per client chosen in the database; below the cap there is nothing left out, and
+ * nothing is read. The read is bounded by the requested clients, never by every consent the user gave.
  */
 const readOmittedConsentScopes = async (
   userId: string,
@@ -92,15 +93,14 @@ const readOmittedConsentScopes = async (
 ): Promise<ReadonlyMap<string, string[]>> => {
   const scopes = new Map<string, string[]>();
   if (listedConsents < MAX_LISTED_AUTHORIZED_MCP_CLIENTS || unconsentedGrants.length === 0) return scopes;
-  const consents = await prisma.oauthConsent.findMany({
-    where: { userId, clientId: { in: unconsentedGrants.map(({ clientId }) => clientId) } },
-    select: { clientId: true, scopes: true },
-    orderBy: [{ updatedAt: "desc" }, { id: "desc" }],
-  });
-  for (const consent of consents) {
-    // Newest first, so the first row seen holds the consent's current scopes.
-    if (!scopes.has(consent.clientId)) scopes.set(consent.clientId, consent.scopes);
-  }
+  const clientIds = unconsentedGrants.map(({ clientId }) => clientId);
+  // DISTINCT ON keeps the newest consent of each client, so a client with duplicate rows costs one row.
+  const consents = await prisma.$queryRaw<{ clientId: string; scopes: string[] }[]>`
+    SELECT DISTINCT ON ("clientId") "clientId", "scopes"
+    FROM "oauthConsent"
+    WHERE "userId" = ${userId} AND "clientId" IN (${Prisma.join(clientIds)})
+    ORDER BY "clientId", "updatedAt" DESC, "id" DESC`;
+  for (const consent of consents) scopes.set(consent.clientId, consent.scopes);
   return scopes;
 };
 

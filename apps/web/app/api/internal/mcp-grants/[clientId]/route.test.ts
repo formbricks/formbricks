@@ -10,6 +10,7 @@ const mocks = vi.hoisted(() => ({
   editMcpGrant: vi.fn(),
   revokeMcpClient: vi.fn(),
   queueMcpGrantAudit: vi.fn(),
+  queueMcpGrantDeletionsAudit: vi.fn(),
   queueMcpClientRevocationAudit: vi.fn(),
   queueAuditEvent: vi.fn(),
 }));
@@ -23,6 +24,7 @@ vi.mock("@/modules/auth/lib/mcp-grant-revocation", () => ({ revokeMcpClient: moc
 vi.mock("@/modules/mcp/grant-store", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/mcp/grant-store")>()),
   queueMcpGrantAudit: mocks.queueMcpGrantAudit,
+  queueMcpGrantDeletionsAudit: mocks.queueMcpGrantDeletionsAudit,
   queueMcpClientRevocationAudit: mocks.queueMcpClientRevocationAudit,
 }));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
@@ -324,12 +326,12 @@ describe("DELETE /api/internal/mcp-grants/{clientId}", () => {
     expect(response.status).toBe(200);
     expect((await response.json()).data).toEqual({ clientId: CLIENT_ID });
     expect(mocks.revokeMcpClient).toHaveBeenCalledWith({ userId: USER_ID, clientId: CLIENT_ID });
-    expect(mocks.queueMcpGrantAudit).toHaveBeenCalledWith({
-      action: "deleted",
+    // One pass over every grant the revoke ended, not one audit per grant.
+    expect(mocks.queueMcpGrantDeletionsAudit).toHaveBeenCalledWith({
       actorUserId: USER_ID,
-      before: grant,
-      after: null,
+      grants: [grant],
     });
+    expect(mocks.queueMcpGrantAudit).not.toHaveBeenCalled();
     // The grant store files the entries; the wrapper's own entry is skipped.
     expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
@@ -349,6 +351,7 @@ describe("DELETE /api/internal/mcp-grants/{clientId}", () => {
 
     expect(response.status).toBe(200);
     expect(mocks.queueMcpGrantAudit).not.toHaveBeenCalled();
+    expect(mocks.queueMcpGrantDeletionsAudit).toHaveBeenCalledWith({ actorUserId: USER_ID, grants: [] });
     expect(mocks.queueMcpClientRevocationAudit).toHaveBeenCalledWith({
       actorUserId: USER_ID,
       clientId: CLIENT_ID,
