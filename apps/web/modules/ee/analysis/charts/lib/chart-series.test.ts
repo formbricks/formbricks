@@ -60,6 +60,24 @@ describe("orderGroupValues", () => {
     ]);
   });
 
+  test("answer text follows survey order too, unknown answers after", () => {
+    const optionLabels = { a: "Very dissatisfied", b: "Neutral", c: "Very satisfied" };
+    const weights: Record<string, number> = {
+      "Very satisfied": 1,
+      Neutral: 9,
+      "Very dissatisfied": 2,
+      Sehr: 5,
+    };
+    expect(
+      orderGroupValues(
+        ["Very satisfied", "Sehr", "Neutral", "Very dissatisfied"],
+        "FeedbackRecords.valueText",
+        (v) => weights[v],
+        optionLabels
+      )
+    ).toEqual(["Very dissatisfied", "Neutral", "Very satisfied", "Sehr"]);
+  });
+
   test("numeric groupings run low to high", () => {
     expect(orderGroupValues(["10", "2", "7"], "FeedbackRecords.valueNumber", noWeight)).toEqual([
       "2",

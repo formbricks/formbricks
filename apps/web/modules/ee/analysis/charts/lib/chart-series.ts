@@ -7,6 +7,7 @@ import {
   VALUE_BAND_DIMENSION_ID,
   VALUE_BAND_VALUES,
   VALUE_ID_DIMENSION_ID,
+  VALUE_TEXT_DIMENSION_ID,
   getFieldById,
 } from "@/modules/ee/analysis/lib/schema-definition";
 import type { TChartDataRow } from "@/modules/ee/analysis/types/analysis";
@@ -57,8 +58,8 @@ export const applyEmptyValueSetting = (
 /**
  * The order a grouping's values have in the survey or on their scale, when they have one: sentiment
  * low → high (mixed last), NPS/CSAT bands positive first, emotions in their fixed series order, and
- * choice answers in the order the survey lists them (the keys of `optionLabels`, which the server
- * sends in survey order). Undefined for groupings without a natural order.
+ * choice answers in the order the survey lists them — by id or by text — from `optionLabels`, which
+ * the server sends in survey order. Undefined for groupings without a natural order.
  */
 export const getNaturalValueOrder = (
   dimensionId: string,
@@ -68,6 +69,10 @@ export const getNaturalValueOrder = (
   if (dimensionId === VALUE_BAND_DIMENSION_ID) return VALUE_BAND_VALUES;
   if (dimensionId === EMOTIONS_DIMENSION_ID) return EMOTION_MEASURE_ORDER;
   if (dimensionId === VALUE_ID_DIMENSION_ID && optionLabels) return Object.keys(optionLabels);
+  // Grouped by answer text, the same map gives the order as labels. Its labels are the survey's
+  // default language, so an answer recorded in another language sorts after them, largest first.
+  if (dimensionId === VALUE_TEXT_DIMENSION_ID && optionLabels)
+    return [...new Set(Object.values(optionLabels))];
   return undefined;
 };
 
@@ -372,7 +377,7 @@ export const orderGroupCombos = (
     combos.map((values) => values[0]),
     dimensionId,
     (value) => weight([value]),
-    dimensionId === VALUE_ID_DIMENSION_ID ? optionLabels : undefined
+    optionLabels
   );
   return order.map((value) => [value]);
 };

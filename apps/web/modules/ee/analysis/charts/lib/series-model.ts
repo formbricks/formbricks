@@ -158,8 +158,7 @@ const orderGroupedRows = (
     return [...rows].sort((a, b) => String(a[xAxisKey]).localeCompare(String(b[xAxisKey])));
   }
   const withTotals = rows.map((row) => ({ ...row, [SERIES_TOTAL_KEY]: sumSeries(row, seriesKeys) }));
-  const categoryOptionLabels = xAxisKey === VALUE_ID_DIMENSION_ID ? optionLabels : undefined;
-  return sortCategoryRows(withTotals, xAxisKey, SERIES_TOTAL_KEY, categoryOptionLabels);
+  return sortCategoryRows(withTotals, xAxisKey, SERIES_TOTAL_KEY, optionLabels);
 };
 
 /**
