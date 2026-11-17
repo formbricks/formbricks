@@ -40,7 +40,7 @@ export function EmbeddedFieldRenameButton({
 
   const save = (label: string) =>
     rename.mutate(
-      { key: field.key, label },
+      { key: field.key, label, expectedLabel: field.label ?? null },
       {
         onSuccess: () => {
           setOpen(false);

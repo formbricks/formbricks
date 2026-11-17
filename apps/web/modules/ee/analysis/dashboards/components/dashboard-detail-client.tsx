@@ -642,7 +642,9 @@ function DashboardDetailView({
 
   const applyDateFilterToUrl = useCallback(
     (filter: TDashboardDateFilter | null) => {
-      const params = new URLSearchParams(searchParams.toString());
+      // The live query string, not the render's `searchParams`: this also runs after an async save, and a
+      // toolbar filter changed meanwhile must not be rolled back to what the URL held when the save began.
+      const params = new URLSearchParams(window.location.search);
       params.delete(DATE_FILTER_PARAM);
       params.delete(DATE_FILTER_FROM_PARAM);
       params.delete(DATE_FILTER_TO_PARAM);
@@ -662,7 +664,7 @@ function DashboardDetailView({
       const queryString = params.toString();
       window.history.pushState(null, "", queryString ? `${pathname}?${queryString}` : pathname);
     },
-    [pathname, searchParams]
+    [pathname]
   );
 
   const handleDateFilterChange = useCallback(

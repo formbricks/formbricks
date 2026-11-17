@@ -789,4 +789,10 @@ describe("getLegendHeight", () => {
     const many = Array.from({ length: 30 }, (_, i) => `Source number ${i}`);
     expect(getLegendHeight(many, 800)).toBeGreaterThan(36);
   });
+
+  test("never reserves more than its share of the chart height", () => {
+    const many = Array.from({ length: 40 }, (_, i) => `Source number ${i}`);
+    expect(getLegendHeight(many, 400, 300)).toBe(90);
+    expect(getLegendHeight(["A"], 400, 300)).toBe(36);
+  });
 });

@@ -22,7 +22,7 @@ const context = {
 const put = (label: string, auditLog?: Record<string, unknown>) =>
   putInternalEmbeddedFieldLabel({
     ...context,
-    body: { workspaceId, key: "plan", label },
+    body: { workspaceId, key: "plan", label, expectedLabel: null },
     auditLog: auditLog as never,
   });
 
@@ -55,7 +55,12 @@ describe("putInternalEmbeddedFieldLabel", () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ data: { key: "plan", label: "Subscription plan" } });
-    expect(mockSetLabel).toHaveBeenCalledWith({ workspaceId, key: "plan", label: "Subscription plan" });
+    expect(mockSetLabel).toHaveBeenCalledWith({
+      workspaceId,
+      key: "plan",
+      label: "Subscription plan",
+      expectedLabel: null,
+    });
     expect(auditLog).toMatchObject({ targetId: "row-1", organizationId: "org-1", newObject: current });
   });
 
@@ -64,7 +69,7 @@ describe("putInternalEmbeddedFieldLabel", () => {
 
     const response = await put("");
 
-    expect(mockSetLabel).toHaveBeenCalledWith({ workspaceId, key: "plan", label: null });
+    expect(mockSetLabel).toHaveBeenCalledWith({ workspaceId, key: "plan", label: null, expectedLabel: null });
     expect(await response.json()).toMatchObject({ data: { key: "plan", label: null } });
   });
 
@@ -75,5 +80,11 @@ describe("putInternalEmbeddedFieldLabel", () => {
 
     expect(response.status).toBe(422);
     expect(JSON.stringify(await response.json())).toContain("at most 1000");
+  });
+
+  test("answers 409 and writes nothing when the name changed since the editor read it", async () => {
+    mockSetLabel.mockResolvedValue({ kind: "stale", current: { id: "row-1", key: "plan", label: "Tier" } });
+    const response = await put("Subscription plan");
+    expect(response.status).toBe(409);
   });
 });

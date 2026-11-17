@@ -26,7 +26,8 @@ export type TEmbeddedFieldLabelRow = { id: string; key: string; label: string };
 export type TSetEmbeddedFieldLabelResult =
   | { kind: "saved"; previous: TEmbeddedFieldLabelRow | null; current: TEmbeddedFieldLabelRow | null }
   | { kind: "workspaceGone" }
-  | { kind: "limitReached" };
+  | { kind: "limitReached" }
+  | { kind: "stale"; current: TEmbeddedFieldLabelRow | null };
 
 /**
  * Give `key` the name `label` across the workspace, or clear it (`label: null`), which deletes the row so the
@@ -36,15 +37,22 @@ export type TSetEmbeddedFieldLabelResult =
  * The per-workspace cap is checked in the same transaction as the insert, with the workspace row held
  * `FOR NO KEY UPDATE` — that serializes concurrent renames in one workspace without blocking the foreign-key
  * locks other tables' inserts take on it, so two requests cannot both pass the count.
+ *
+ * `expectedLabel` is the name the editor saw (`null`: none). If the stored name moved on since — another
+ * editor renamed the key in between — nothing is written and the result is `stale`, so a rename never
+ * silently replaces one the editor never saw. Asking for the name already stored is not stale: both editors
+ * wanted the same thing.
  */
 export const setEmbeddedFieldLabel = ({
   workspaceId,
   key,
   label,
+  expectedLabel,
 }: {
   workspaceId: string;
   key: string;
   label: string | null;
+  expectedLabel: string | null;
 }): Promise<TSetEmbeddedFieldLabelResult> =>
   prisma.$transaction(async (tx): Promise<TSetEmbeddedFieldLabelResult> => {
     const locked = await tx.$queryRaw<
@@ -57,6 +65,9 @@ export const setEmbeddedFieldLabel = ({
       where: { workspaceId_key: { workspaceId, key } },
       select,
     });
+
+    const stored = previous?.label ?? null;
+    if (stored !== expectedLabel && stored !== label) return { kind: "stale", current: previous };
 
     if (label === null) {
       if (previous) await tx.embeddedFieldLabel.delete({ where: { id: previous.id } });

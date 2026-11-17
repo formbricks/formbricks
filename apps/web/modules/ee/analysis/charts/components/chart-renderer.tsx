@@ -21,6 +21,7 @@ import { isChartResultEmpty } from "@/modules/ee/analysis/charts/lib/chart-empti
 import {
   applyEmptyValueSetting,
   canStackSeries,
+  collapseEmptyGroupRows,
   getChartGrouping,
   getStackedBarRadius,
   stripSharedLabelPrefix,
@@ -129,13 +130,13 @@ const PieCenterLabel = ({
   label,
 }: {
   readonly viewBox?: { cx?: number; cy?: number };
-  /** Already formatted for the measure. */
+  /** Already formatted for the measure; empty when the slices do not add up to a total. */
   readonly total: string;
   readonly label: string;
 }) => {
   const cx = viewBox?.cx;
   const cy = viewBox?.cy;
-  if (cx == null || cy == null) return null;
+  if (cx == null || cy == null || !total) return null;
   return (
     <g>
       <text
@@ -370,7 +371,13 @@ const PieChartView = ({
       )
     : sortedData;
   // Slices of several measures are summed counts; a dimension pie shows its one measure.
-  const formatSliceValue = (value: unknown) => formatValue(dataKey, value);
+  // Every slice and the centre share one format: the slices' common measure format, or the plain
+  // default when the measures disagree (a CSAT percent beside a count) rather than the first one's.
+  const sliceMeasures = useMeasureSlices ? dataKeys : [dataKey];
+  const sliceFormatMeasure = getSharedMeasureFormatId(sliceMeasures) ?? "";
+  const formatSliceValue = (value: unknown) => formatValue(sliceFormatMeasure, value);
+  // A total only means something for counts; adding up scores or averages does not.
+  const showsTotal = canStackSeries(sliceMeasures);
   const renderPieLabel = createPieLabelRenderer(i18n.language, formatSliceValue);
   const pieResult = preparePieData(pieSource, pieDataKey, pieNameKey);
   // Every slice is zero: there is no whole to take a share of.
@@ -408,7 +415,9 @@ const PieChartView = ({
             })}
             <Label
               position="center"
-              content={<PieCenterLabel total={formatSliceValue(total)} label={centerLabel} />}
+              content={
+                <PieCenterLabel total={showsTotal ? formatSliceValue(total) : ""} label={centerLabel} />
+              }
             />
           </Pie>
           {/* Measure slices carry the measure label on the row itself, so the header (the same
@@ -573,7 +582,12 @@ function SeriesChartRenderer({
 }: Readonly<Omit<ChartRendererProps, "fieldLabels">>) {
   // Empty groups go before anything is counted, so the response base matches the bars on screen.
   const { showEmptyValues } = resolveChartDisplay(config);
-  const rows = applyEmptyValueSetting(data ?? [], getChartGrouping(query).dimensionKeys, showEmptyValues);
+  const { dimensionKeys } = getChartGrouping(query);
+  const rows = collapseEmptyGroupRows(
+    applyEmptyValueSetting(data ?? [], dimensionKeys, showEmptyValues),
+    dimensionKeys,
+    query.measures ?? []
+  );
   const responseBase = resolveResponseBase(query, rows);
   const chart = (
     <SeriesChart
@@ -712,7 +726,8 @@ function SeriesChart({
         <BarChartView
           sortedData={chartRows}
           dataKeys={dataKeys}
-          isMultiMeasure={isMultiSeries}
+          // A grouped chart keeps its series colour and legend even when only one group came back.
+          isMultiMeasure={isMultiSeries || isGrouped}
           hasCategoryAxis={hasCategoryAxis}
           xAxisKey={xAxisKey}
           chartConfig={chartConfig}

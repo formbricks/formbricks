@@ -5,6 +5,7 @@ import {
   assignSeriesColors,
   buildGroupedSeries,
   canStackSeries,
+  collapseEmptyGroupRows,
   getChartGrouping,
   getStackedBarRadius,
   hasStackableSeries,
@@ -264,6 +265,57 @@ describe("orderGroupCombos", () => {
     ).toEqual([
       ["b", "y"],
       ["a", "x"],
+    ]);
+  });
+});
+
+describe("empty groups that merge", () => {
+  test("a null and a blank value become one shown group, counts added", () => {
+    const shown = applyEmptyValueSetting(
+      [
+        { [SOURCE]: null, [COUNT]: 2 },
+        { [SOURCE]: " ", [COUNT]: 1 },
+        { [SOURCE]: "Web", [COUNT]: 5 },
+      ],
+      [SOURCE],
+      true
+    );
+    expect(collapseEmptyGroupRows(shown, [SOURCE], [COUNT])).toEqual([
+      { [SOURCE]: EMPTY_GROUP_VALUE, [COUNT]: 3 },
+      { [SOURCE]: "Web", [COUNT]: 5 },
+    ]);
+  });
+
+  test("the grouped pivot keeps both rows' counts in one cell", () => {
+    const rows = applyEmptyValueSetting(
+      [
+        { [WEEK]: "w1", [SOURCE]: null, [COUNT]: 2 },
+        { [WEEK]: "w1", [SOURCE]: "", [COUNT]: 1 },
+      ],
+      [SOURCE],
+      true
+    );
+    const result = buildGroupedSeries({
+      rows,
+      categoryKey: WEEK,
+      groupKeys: [SOURCE],
+      measureKeys: [COUNT],
+      groupOrder: (v) => v,
+    });
+    expect(result.rows[0][result.series[0].key]).toBe(3);
+  });
+
+  test("a ratio is never added up", () => {
+    const shown = applyEmptyValueSetting(
+      [
+        { [SOURCE]: null, [NPS]: 10 },
+        { [SOURCE]: "", [NPS]: 30 },
+      ],
+      [SOURCE],
+      true
+    );
+    expect(collapseEmptyGroupRows(shown, [SOURCE], [NPS])).toEqual([
+      { [SOURCE]: EMPTY_GROUP_VALUE, [NPS]: 10 },
     ]);
   });
 });

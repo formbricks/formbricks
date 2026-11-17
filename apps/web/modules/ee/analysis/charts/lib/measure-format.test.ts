@@ -78,4 +78,11 @@ describe("formatMeasureAxisTick", () => {
     expect(formatMeasureAxisTick("FeedbackRecords.csatScore", 50, "en-US")).toBe("50%");
     expect(formatMeasureAxisTick("FeedbackRecords.count", 2000, "en-US")).toBe("2,000");
   });
+
+  test("a count axis keeps fractional ticks distinct", () => {
+    const ticks = [1, 1.2, 1.4, 1.6, 1.8, 2].map((v) =>
+      formatMeasureAxisTick("FeedbackRecords.count", v, "en-US")
+    );
+    expect(ticks).toEqual(["1", "1.2", "1.4", "1.6", "1.8", "2"]);
+  });
 });

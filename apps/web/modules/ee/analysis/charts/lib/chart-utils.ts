@@ -599,13 +599,16 @@ export const getRotatedAxisHeight = (labels: string[]): number => {
 
 /** Room (px) one legend entry takes besides its text: the swatch, its gap and the gap to the next. */
 const LEGEND_ENTRY_CHROME = 26;
+/** Share of the chart's height the legend may reserve at most; more entries scroll inside it. */
+export const LEGEND_MAX_HEIGHT_SHARE = 0.3;
 /** Height (px) of one wrapped legend row. */
 const LEGEND_ROW_HEIGHT = 20;
 /**
- * Height (px) the legend reserves, from the rows its entries wrap onto at this width. A grouped chart
- * can carry dozens of series ("one line per source"), and a fixed one-row legend overlapped the axis.
+ * Height (px) the legend reserves, from the rows its entries wrap onto at this width, capped at
+ * {@link LEGEND_MAX_HEIGHT_SHARE} of the chart's height. A grouped chart can carry dozens of series ("one
+ * line per source"): a fixed one-row legend overlapped the axis, an uncapped one ate the plot.
  */
-export const getLegendHeight = (labels: string[], chartWidth?: number): number => {
+export const getLegendHeight = (labels: string[], chartWidth?: number, chartHeight?: number): number => {
   if (labels.length === 0) return CHART_LEGEND_HEIGHT;
   const width = chartWidth !== undefined && Number.isFinite(chartWidth) && chartWidth > 0 ? chartWidth : 600;
   let rows = 1;
@@ -618,5 +621,8 @@ export const getLegendHeight = (labels: string[], chartWidth?: number): number =
     }
     rowWidth += entry;
   }
-  return Math.max(CHART_LEGEND_HEIGHT, rows * LEGEND_ROW_HEIGHT + 16);
+  const needed = Math.max(CHART_LEGEND_HEIGHT, rows * LEGEND_ROW_HEIGHT + 16);
+  // Never more than a share of the chart: past it the legend scrolls, so the plot keeps its room.
+  if (chartHeight === undefined || !Number.isFinite(chartHeight) || chartHeight <= 0) return needed;
+  return Math.min(needed, Math.max(CHART_LEGEND_HEIGHT, Math.floor(chartHeight * LEGEND_MAX_HEIGHT_SHARE)));
 };

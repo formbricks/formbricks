@@ -10,7 +10,8 @@ import {
 
 /**
  * `PUT /api/internal/embedded-field-labels`: the workspace's name for one imported (embedded-data) key. An
- * empty `label`, or the key itself, clears the name.
+ * empty `label`, or the key itself, clears the name. `expectedLabel` guards against overwriting a rename
+ * the editor never saw.
  */
 export const ZInternalEmbeddedFieldLabelBody = z
   .object({
@@ -23,6 +24,8 @@ export const ZInternalEmbeddedFieldLabelBody = z
       .string()
       .max(MAX_EMBEDDED_FIELD_LABEL_LENGTH)
       .refine(isStorableEmbeddedFieldLabel, { message: "Must not contain control characters" }),
+    /** The name the editor saw (`null`: none). A different stored name answers 409 and saves nothing. */
+    expectedLabel: z.string().max(MAX_EMBEDDED_FIELD_LABEL_LENGTH).nullable(),
   })
   .strict();
 export type TInternalEmbeddedFieldLabelBody = z.infer<typeof ZInternalEmbeddedFieldLabelBody>;

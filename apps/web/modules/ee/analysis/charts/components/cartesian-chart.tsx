@@ -428,7 +428,7 @@ function MeasuredChart({
 }>) {
   const categoryAxisWidth = categoryLabels.length > 0 ? getCategoryAxisWidth(categoryLabels, width) : 0;
   const rotateCategoryLabels = shouldRotateCategoryLabels(verticalCategoryCount, width);
-  const legendHeight = getLegendHeight(legendLabels, width);
+  const legendHeight = getLegendHeight(legendLabels, width, height);
   return children({ width, height, categoryAxisWidth, rotateCategoryLabels, legendHeight });
 }
 
@@ -624,7 +624,13 @@ export function CartesianChart({
                 shared={hasCategoryAxis}
               />
               {showLegend && (
-                <ChartLegend content={<ChartLegendContent />} verticalAlign="bottom" height={legendHeight} />
+                <ChartLegend
+                  content={<ChartLegendContent />}
+                  verticalAlign="bottom"
+                  height={legendHeight}
+                  // Entries past the capped height scroll inside the legend instead of covering the plot.
+                  wrapperStyle={{ maxHeight: legendHeight, overflowY: "auto" }}
+                />
               )}
               {children}
             </Chart>

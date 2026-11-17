@@ -37,7 +37,9 @@ describe("getEmbeddedFieldLabels", () => {
 describe("setEmbeddedFieldLabel", () => {
   test("answers workspaceGone when the workspace row no longer exists", async () => {
     prisma.$queryRaw.mockResolvedValue([] as never);
-    await expect(setEmbeddedFieldLabel({ workspaceId, key: "plan", label: "X" })).resolves.toEqual({
+    await expect(
+      setEmbeddedFieldLabel({ workspaceId, key: "plan", label: "X", expectedLabel: null })
+    ).resolves.toEqual({
       kind: "workspaceGone",
     });
     expect(prisma.embeddedFieldLabel.create).not.toHaveBeenCalled();
@@ -49,7 +51,7 @@ describe("setEmbeddedFieldLabel", () => {
     prisma.embeddedFieldLabel.create.mockResolvedValue(row as never);
 
     await expect(
-      setEmbeddedFieldLabel({ workspaceId, key: "plan", label: "Subscription plan" })
+      setEmbeddedFieldLabel({ workspaceId, key: "plan", label: "Subscription plan", expectedLabel: null })
     ).resolves.toEqual({ kind: "saved", previous: null, current: row });
     expect(prisma.embeddedFieldLabel.create).toHaveBeenCalledWith(
       expect.objectContaining({ data: { workspaceId, key: "plan", label: "Subscription plan" } })
@@ -60,7 +62,9 @@ describe("setEmbeddedFieldLabel", () => {
     prisma.embeddedFieldLabel.findUnique.mockResolvedValue(null);
     prisma.embeddedFieldLabel.count.mockResolvedValue(MAX_EMBEDDED_FIELD_LABELS_PER_WORKSPACE);
 
-    await expect(setEmbeddedFieldLabel({ workspaceId, key: "plan", label: "X" })).resolves.toEqual({
+    await expect(
+      setEmbeddedFieldLabel({ workspaceId, key: "plan", label: "X", expectedLabel: null })
+    ).resolves.toEqual({
       kind: "limitReached",
     });
     expect(prisma.embeddedFieldLabel.create).not.toHaveBeenCalled();
@@ -70,7 +74,12 @@ describe("setEmbeddedFieldLabel", () => {
     prisma.embeddedFieldLabel.findUnique.mockResolvedValue(row as never);
     prisma.embeddedFieldLabel.update.mockResolvedValue({ ...row, label: "Plan tier" } as never);
 
-    const result = await setEmbeddedFieldLabel({ workspaceId, key: "plan", label: "Plan tier" });
+    const result = await setEmbeddedFieldLabel({
+      workspaceId,
+      key: "plan",
+      label: "Plan tier",
+      expectedLabel: row.label,
+    });
 
     expect(result).toEqual({ kind: "saved", previous: row, current: { ...row, label: "Plan tier" } });
     expect(prisma.embeddedFieldLabel.count).not.toHaveBeenCalled();
@@ -78,7 +87,9 @@ describe("setEmbeddedFieldLabel", () => {
 
   test("clearing deletes the row, and is a no-op for a key without one", async () => {
     prisma.embeddedFieldLabel.findUnique.mockResolvedValueOnce(row as never);
-    await expect(setEmbeddedFieldLabel({ workspaceId, key: "plan", label: null })).resolves.toEqual({
+    await expect(
+      setEmbeddedFieldLabel({ workspaceId, key: "plan", label: null, expectedLabel: row.label })
+    ).resolves.toEqual({
       kind: "saved",
       previous: row,
       current: null,
@@ -86,7 +97,27 @@ describe("setEmbeddedFieldLabel", () => {
     expect(prisma.embeddedFieldLabel.delete).toHaveBeenCalledWith({ where: { id: "row-1" } });
 
     prisma.embeddedFieldLabel.findUnique.mockResolvedValueOnce(null);
-    await setEmbeddedFieldLabel({ workspaceId, key: "plan", label: null });
+    await setEmbeddedFieldLabel({ workspaceId, key: "plan", label: null, expectedLabel: null });
     expect(prisma.embeddedFieldLabel.delete).toHaveBeenCalledTimes(1);
+  });
+
+  test("refuses a stale rename: another editor's name is stored", async () => {
+    prisma.embeddedFieldLabel.findUnique.mockResolvedValue(row as never);
+
+    await expect(
+      setEmbeddedFieldLabel({ workspaceId, key: "plan", label: "Tier", expectedLabel: null })
+    ).resolves.toEqual({ kind: "stale", current: row });
+    await expect(
+      setEmbeddedFieldLabel({ workspaceId, key: "plan", label: null, expectedLabel: "Plan" })
+    ).resolves.toEqual({ kind: "stale", current: row });
+    expect(prisma.embeddedFieldLabel.update).not.toHaveBeenCalled();
+    expect(prisma.embeddedFieldLabel.delete).not.toHaveBeenCalled();
+  });
+
+  test("asking for the name already stored is not stale", async () => {
+    prisma.embeddedFieldLabel.findUnique.mockResolvedValue(row as never);
+    await expect(
+      setEmbeddedFieldLabel({ workspaceId, key: "plan", label: row.label, expectedLabel: null })
+    ).resolves.toEqual({ kind: "saved", previous: row, current: row });
   });
 });

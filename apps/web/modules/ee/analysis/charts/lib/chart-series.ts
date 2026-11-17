@@ -53,6 +53,37 @@ export const applyEmptyValueSetting = (
   });
 };
 
+/**
+ * Folds rows that became one group once their empty values were shown: a null and a blank value for the
+ * same grouping both read as the empty group, and drawing them twice would split one bar in two. Counts
+ * add up; a ratio keeps the first reading, since it cannot be added. Other rows pass through untouched.
+ */
+export const collapseEmptyGroupRows = (
+  rows: TChartDataRow[],
+  groupKeys: readonly string[],
+  measureKeys: readonly string[]
+): TChartDataRow[] => {
+  const byGroup = new Map<string, TChartDataRow>();
+  const out: TChartDataRow[] = [];
+  for (const row of rows) {
+    if (!groupKeys.some((key) => row[key] === EMPTY_GROUP_VALUE)) {
+      out.push(row);
+      continue;
+    }
+    const id = JSON.stringify(groupKeys.map((key) => row[key] ?? null));
+    const existing = byGroup.get(id);
+    if (existing) {
+      const merged = mergeCellRows(existing, row, measureKeys);
+      out[out.indexOf(existing)] = merged;
+      byGroup.set(id, merged);
+    } else {
+      byGroup.set(id, row);
+      out.push(row);
+    }
+  }
+  return out;
+};
+
 // ── Natural order ─────────────────────────────────────────────────────────────
 
 /**
@@ -229,7 +260,11 @@ export const buildGroupedSeries = ({
     if (!combos.has(id)) combos.set(id, values);
     const firstMeasure = measureKeys[0];
     comboWeight.set(id, (comboWeight.get(id) ?? 0) + (toFiniteNumber(row[firstMeasure]) ?? 0));
-    cells.set(`${categoryId}\u0000${id}`, row);
+    // Rows that land on the same cell — a null and a blank value both shown as the empty group — are
+    // one group: counts add up, and a ratio keeps the first reading, since it cannot be added.
+    const cellKey = `${categoryId}\u0000${id}`;
+    const existing = cells.get(cellKey);
+    cells.set(cellKey, existing ? mergeCellRows(existing, row, measureKeys) : row);
   }
 
   const orderedCombos = groupOrder([...combos.values()], (values) => comboWeight.get(comboId(values)) ?? 0);
@@ -257,6 +292,20 @@ export const buildGroupedSeries = ({
   });
 
   return { rows: pivoted, series };
+};
+
+/** Two result rows for one (category, group) cell, folded: additive measures summed, others kept. */
+const mergeCellRows = (
+  first: TChartDataRow,
+  second: TChartDataRow,
+  measureKeys: readonly string[]
+): TChartDataRow => {
+  const merged: TChartDataRow = { ...first };
+  for (const key of measureKeys) {
+    if (!isAdditiveMeasure(key)) continue;
+    merged[key] = (toFiniteNumber(first[key]) ?? 0) + (toFiniteNumber(second[key]) ?? 0);
+  }
+  return merged;
 };
 
 /** Sum of every series column on a pivoted row — the stacked bar's total. */

@@ -20,7 +20,12 @@ vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })) },
 }));
 
-const body = { workspaceId: "clws111111111111111111111", key: "plan", label: "Subscription plan" };
+const body = {
+  workspaceId: "clws111111111111111111111",
+  key: "plan",
+  label: "Subscription plan",
+  expectedLabel: null,
+};
 
 const put = (payload: unknown = body) =>
   PUT(

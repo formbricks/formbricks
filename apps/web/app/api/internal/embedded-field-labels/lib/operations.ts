@@ -3,7 +3,12 @@ import { logger } from "@formbricks/logger";
 import type { TV3ChartOperationContext } from "@/app/api/v3/charts/lib/access";
 import { requireDashboardsAccess } from "@/app/api/v3/lib/dashboards-access";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
-import { problemForbidden, problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
+import {
+  problemConflict,
+  problemForbidden,
+  problemUnprocessableContent,
+  successResponse,
+} from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import {
   MAX_EMBEDDED_FIELD_LABELS_PER_WORKSPACE,
@@ -43,9 +48,21 @@ export async function putInternalEmbeddedFieldLabel({
     if (access instanceof Response) return access;
 
     const label = normalizeEmbeddedFieldLabel(body.key, body.label);
-    const result = await setEmbeddedFieldLabel({ workspaceId: access.workspaceId, key: body.key, label });
+    const result = await setEmbeddedFieldLabel({
+      workspaceId: access.workspaceId,
+      key: body.key,
+      label,
+      expectedLabel: body.expectedLabel,
+    });
 
     if (result.kind === "workspaceGone") return problemForbidden(requestId, undefined, instance);
+    if (result.kind === "stale") {
+      return problemConflict(
+        requestId,
+        "This field was renamed by someone else since you opened it. Reload to see the current name.",
+        instance
+      );
+    }
     if (result.kind === "limitReached") {
       return problemUnprocessableContent(requestId, "Too many renamed fields in this workspace", {
         instance,

@@ -13,9 +13,17 @@ import { chartFieldCatalogQueryPrefix } from "./chart-field-catalog-query";
 export const useRenameEmbeddedField = (workspaceId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ key, label }: { key: string; label: string }) =>
-      setEmbeddedFieldLabel({ workspaceId, key, label }),
-    onSuccess: () =>
+    mutationFn: ({
+      key,
+      label,
+      expectedLabel,
+    }: {
+      key: string;
+      label: string;
+      expectedLabel: string | null;
+    }) => setEmbeddedFieldLabel({ workspaceId, key, label, expectedLabel }),
+    // Refreshed on a refusal too: a 409 means another editor's name is stored, and the editor should see it.
+    onSettled: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: chartFieldCatalogQueryPrefix(workspaceId) }),
         queryClient.invalidateQueries({ queryKey: chartKeys.allData() }),

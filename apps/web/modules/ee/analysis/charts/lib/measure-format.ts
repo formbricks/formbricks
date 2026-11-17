@@ -86,13 +86,20 @@ export const getSharedMeasureFormatId = (measureIds: readonly string[]): string 
 
 /**
  * A value-axis tick for a measure: the measure's format, except that an average's axis drops the
- * forced decimal — ticks land on round numbers, and "1.0, 2.0, 3.0" only adds noise.
+ * forced decimal — ticks land on round numbers, and "1.0, 2.0, 3.0" only adds noise — and a whole-number
+ * measure keeps a fractional tick's fraction, so two gridlines never read the same.
  */
 export const formatMeasureAxisTick = (
   measureId: string | undefined,
   value: unknown,
   locale: string | undefined
 ): string => {
-  if (getMeasureFormat(measureId) !== "decimal") return formatMeasureValue(measureId, value, locale);
-  return formatMeasureValue(undefined, value, locale);
+  const format = getMeasureFormat(measureId);
+  if (format === "decimal") return formatMeasureValue(undefined, value, locale);
+  // A count axis over a small range ticks between whole numbers (1, 1.2, 1.4…); rounding those would
+  // print the same count on several gridlines, so a fractional tick keeps its fraction.
+  if ((format === "count" || format === "integer") && !Number.isInteger(Number(value))) {
+    return formatMeasureValue(undefined, value, locale);
+  }
+  return formatMeasureValue(measureId, value, locale);
 };

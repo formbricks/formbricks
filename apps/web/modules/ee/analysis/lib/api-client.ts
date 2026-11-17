@@ -599,9 +599,14 @@ export const setEmbeddedFieldLabel = async ({
   workspaceId,
   key,
   label,
+  expectedLabel,
 }: {
   workspaceId: string;
   key: string;
   label: string;
+  /** The name the editor saw (`null`: none); the server refuses with 409 if it changed since. */
+  expectedLabel: string | null;
 }): Promise<{ key: string; label: string | null }> =>
-  readData(await sendJson("PUT", "/api/internal/embedded-field-labels", { workspaceId, key, label }));
+  readData(
+    await sendJson("PUT", "/api/internal/embedded-field-labels", { workspaceId, key, label, expectedLabel })
+  );
