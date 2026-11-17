@@ -8,7 +8,7 @@ export default defineConfig({
     emptyOutDir: true,
     outDir: "dist/docker",
     ssr: "scripts/docker/validate-env.ts",
-    target: "node24",
+    target: "node26",
     rollupOptions: {
       output: {
         entryFileNames: "validate-env.mjs",

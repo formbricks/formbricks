@@ -57,6 +57,12 @@ Shared steps for patches released on several release lines at once. Each minor's
 
 ## Upcoming changes
 
+Changes on `main` that need an action when you upgrade are listed here until they ship.
+
+- **The app image runs on Debian 13 and Node 26.** It used to run on Alpine 3.24 and Node 24.
+  - If you build your own image `FROM ghcr.io/formbricks/formbricks`, replace `apk add` with `apt-get install`. The `nextjs` user keeps UID 1001 and GID 101.
+  - Node now trusts its own bundled list of root certificates. Adding a CA to `/etc/ssl/certs` or pointing `SSL_CERT_FILE` at it no longer reaches the app. To trust a private CA (an internal SMTP server, S3 endpoint or AI gateway), mount it and set `NODE_EXTRA_CA_CERTS` to its path, as described in [SMTP](/self-hosting/configuration/smtp).
+  - If your PostgreSQL certificate comes from a private CA, set both `NODE_EXTRA_CA_CERTS` (for the app) and `SSL_CERT_FILE` (for the database migrations) to the mounted CA file. Before, `SSL_CERT_FILE` alone covered both.
 - <span id="session-cookie-writes-need-the-formbricks-app-action-required-only-for-scripts-using-a-session-cookie" />[Unreleased: Session-cookie writes need the Formbricks app](/self-hosting/upgrade/versions/session-cookie-writes)
 
 ## Older releases

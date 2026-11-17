@@ -99,11 +99,14 @@ updates:
     commit-message:
       prefix: "chore(docker)"
 
+  # The digest-pinned base images of the app image: the official Node image the binary comes from and the
+  # Debian runtime. A new Node version also needs .nvmrc and the Node LICENSE URL and checksum in the
+  # Dockerfile; node-version-alignment.test.ts fails until the tag, the LICENSE URL and .nvmrc match, and the
+  # image build fails on a stale checksum. Node majors move deliberately, with engines and verify-runtime.mjs.
   - package-ecosystem: docker
     directory: "/apps/web"
     schedule:
       interval: daily
-    # Keep the build-stage Node major aligned with .nvmrc and the compiled runtime.
     ignore:
       - dependency-name: node
         update-types:
