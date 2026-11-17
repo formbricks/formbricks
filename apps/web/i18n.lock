@@ -83,6 +83,7 @@ checksums:
     auth/oauth/access/summary_organizations: b7ce11824d10d74df9e94987337a741a
     auth/oauth/access/summary_workspaces: 60f9931e316ffe0ead179131ec112d1c
     auth/oauth/access/title: c2cd07e2a86a4a6d080d9d4af5b73213
+    auth/oauth/access/too_many_picked_hint: d95db708093ad4942d645dcf8deef38a
     auth/oauth/access/workspaces: 7a37d88472a59ea6a4a685c46f018c91
     auth/oauth/access/workspaces_hint: 67b41a3b8d389a26f4fcf32033c33d4e
     auth/oauth/allow_access: 5eec574c92b23a33fa6e938ae55754ef
@@ -148,7 +149,9 @@ checksums:
     auth/oauth/grant/presets: db7616c227f9759fe2e4a4cba59e8f9f
     auth/oauth/grant/read_only: 9109fd6e72125af271d41181f1f35dd2
     auth/oauth/grant/select_all: eedc7cdb02de467c15dc418a066a77f2
+    auth/oauth/grant_beyond_scopes: 822ae282ec84b610cfecb937e800658c
     auth/oauth/grant_changed_elsewhere: 8b8bc43f22b77b402054272d082ee7a8
+    auth/oauth/grant_invalid: 2fd9375879b9a9e9087253c180646b6b
     auth/oauth/grant_update_failed: edb296bd480f3da98914209e3e607dbc
     auth/oauth/grant_updated: 0756500936deba1b3930f43d95a076a2
     auth/oauth/invalid_oauth_request: 02936ced8cd4df963282fe5d413f6900

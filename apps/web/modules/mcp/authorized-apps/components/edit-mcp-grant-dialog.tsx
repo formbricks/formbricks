@@ -3,7 +3,7 @@
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TAuthorizedMcpClientResource } from "@/app/api/internal/mcp-grants/lib/serializers";
-import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
+import { getGrantErrorMessage } from "@/modules/auth/lib/mcp-grant-consent-errors";
 import { McpGrantDraftFields } from "@/modules/mcp/components/mcp-grant-draft-fields";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
 import { type TMcpGrantAccessOptions, initialMcpGrantAccessDraft } from "@/modules/mcp/grant-access";
@@ -63,8 +63,7 @@ export const EditMcpGrantDialog = ({
     updateGrant.mutate(
       {
         clientId: client.clientId,
-        permissions: draft.permissions,
-        access: draft.accessSelection,
+        grant: { permissions: draft.permissions, access: draft.accessSelection },
         expectedUpdatedAt: client.grantUpdatedAt,
       },
       {
@@ -80,7 +79,7 @@ export const EditMcpGrantDialog = ({
             onClose();
             return;
           }
-          toast.error(getV3ApiErrorMessage(error, t("auth.oauth.grant_update_failed")));
+          toast.error(getGrantErrorMessage(error, t) ?? t("auth.oauth.grant_update_failed"));
         },
       }
     );

@@ -3,7 +3,7 @@ import type {
   TMcpGrantResource,
 } from "@/app/api/internal/mcp-grants/lib/serializers";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
-import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
+import type { TRequestedMcpGrant } from "@/modules/mcp/grant";
 import { toMcpGrantAccessRequest } from "@/modules/mcp/grant-access";
 
 /**
@@ -27,9 +27,8 @@ export async function getAuthorizedMcpClients(signal?: AbortSignal): Promise<TAu
 
 export async function updateMcpGrant(params: {
   clientId: string;
-  permissions: TMcpGrantPermissions;
-  /** The organization & workspace access to set; omitted keeps the grant's. */
-  access?: TMcpGrantAccessSelection;
+  /** The grant to save: its permissions, and its access when the edit names one. */
+  grant: TRequestedMcpGrant;
   /** The `grantUpdatedAt` Edit opened: a grant saved since is not overwritten (409 `mcp_grant_changed`). */
   expectedUpdatedAt: string;
 }): Promise<TMcpGrantResource> {
@@ -37,8 +36,8 @@ export async function updateMcpGrant(params: {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      permissions: params.permissions,
-      ...(params.access ? toMcpGrantAccessRequest(params.access) : {}),
+      permissions: params.grant.permissions,
+      ...(params.grant.access ? toMcpGrantAccessRequest(params.grant.access) : {}),
       expectedUpdatedAt: params.expectedUpdatedAt,
     }),
     signal: AbortSignal.timeout(15_000),

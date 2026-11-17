@@ -100,6 +100,7 @@
         "summary_organizations": "{count} 个组织",
         "summary_workspaces": "{count} 个工作区",
         "title": "组织和工作区访问权限",
+        "too_many_picked_hint": "最多选择 {count} 项。如需涵盖更多,请在上方选择范围更广的访问权限。",
         "workspaces": "仅限所选工作区",
         "workspaces_hint": "仅限你所选的工作区。之后创建的工作区在你添加之前不会被包含在内。"
       },
@@ -174,7 +175,9 @@
         "read_only": "只读",
         "select_all": "全选"
       },
+      "grant_beyond_scopes": "此应用并未请求该访问权限,因此未做任何更改。请刷新页面,查看你可以授予它的权限。",
       "grant_changed_elsewhere": "此 MCP 客户端的访问权限已在其他位置更改。请重新加载以查看最新状态。",
+      "grant_invalid": "无法保存该访问权限。请至少选择一项权限,并至少选择一个组织或工作区。",
       "grant_update_failed": "无法更新此应用的访问权限,请重试。",
       "grant_updated": "访问权限已更新。",
       "invalid_oauth_request": "无效的 OAuth 请求",

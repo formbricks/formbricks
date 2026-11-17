@@ -100,6 +100,7 @@
         "summary_organizations": "{count} szervezet",
         "summary_workspaces": "{count} munkaterület",
         "title": "Szervezeti és munkaterület-hozzáférés",
+        "too_many_picked_hint": "Legfeljebb {count} elemet szíveskedjék kiválasztani. Ha ennél többet kíván elérni, kérjük, válasszon fentebb tágabb hozzáférést.",
         "workspaces": "Kizárólag a kiválasztott munkaterületek",
         "workspaces_hint": "Kizárólag az Ön által kiválasztott munkaterületek. A később létrehozott munkaterületek mindaddig kívül maradnak, amíg Ön hozzá nem adja azokat."
       },
@@ -174,7 +175,9 @@
         "read_only": "Csak olvasható",
         "select_all": "Összes kijelölése"
       },
+      "grant_beyond_scopes": "Az alkalmazás nem kérte ezt a hozzáférést, ezért nem történt módosítás. Kérjük, töltse be újra az oldalt, hogy megtekinthesse, milyen hozzáféréseket biztosíthat számára.",
       "grant_changed_elsewhere": "Ennek az MCP-kliensnek a hozzáférése máshol megváltozott. A megtekintéséhez kérjük, töltse újra az oldalt.",
+      "grant_invalid": "Ez a hozzáférés nem menthető. Kérjük, válasszon ki legalább egy engedélyt, valamint legalább egy szervezetet vagy munkaterületet.",
       "grant_update_failed": "Az alkalmazás hozzáférésének frissítése nem sikerült. Kérjük, próbálja meg újra.",
       "grant_updated": "A hozzáférés frissítése megtörtént.",
       "invalid_oauth_request": "Érvénytelen OAuth-kérés",

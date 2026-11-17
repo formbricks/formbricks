@@ -2,6 +2,7 @@ import "server-only";
 import { logger } from "@formbricks/logger";
 import { skipV3AuditLog } from "@/app/api/v3/lib/audit";
 import {
+  problemBadRequest,
   problemConflict,
   problemForbidden,
   problemInternalError,
@@ -12,8 +13,12 @@ import {
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { loggableError } from "@/lib/utils/loggable-error";
 import {
+  MCP_GRANT_BEYOND_SCOPES_CODE,
+  MCP_GRANT_BEYOND_SCOPES_DETAIL,
   MCP_GRANT_CHANGED_CODE,
   MCP_GRANT_CHANGED_DETAIL,
+  MCP_GRANT_INVALID_CODE,
+  MCP_GRANT_INVALID_DETAIL,
   MCP_GRANT_NOT_SAVED_CODE,
   MCP_GRANT_NOT_SAVED_DETAIL,
   MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
@@ -27,7 +32,7 @@ import {
   editMcpGrant,
   listAuthorizedMcpClients,
 } from "@/modules/mcp/authorized-clients";
-import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
+import { parseRequestedMcpGrant } from "@/modules/mcp/grant";
 import { queueMcpClientRevocationAudit, queueMcpGrantAudit } from "@/modules/mcp/grant-store";
 import { serializeAuthorizedMcpClient, serializeMcpGrant } from "./serializers";
 
@@ -65,8 +70,7 @@ export async function listMcpGrantsOperation({
 export async function updateMcpGrantOperation({
   authentication,
   clientId,
-  permissions,
-  access,
+  requestedGrant,
   expectedUpdatedAt,
   requestId,
   instance,
@@ -74,8 +78,8 @@ export async function updateMcpGrantOperation({
 }: {
   authentication: TV3Authentication;
   clientId: string;
-  permissions: TMcpGrantPermissions;
-  access?: TMcpGrantAccessSelection;
+  /** The grant the request carries, unread: parsed here so its refusal answers with a code. */
+  requestedGrant: unknown;
   expectedUpdatedAt: Date;
   requestId: string;
   instance?: string;
@@ -86,14 +90,24 @@ export async function updateMcpGrantOperation({
   // A refusal's entry: the grant store files a saved edit's entries under each organization it reaches.
   if (auditLog) auditLog.organizationId = UNKNOWN_DATA;
 
+  // The consent screen's own parser: an unknown permission, a level the permission doesn't offer, an empty
+  // grant (Revoke ends access) and a selection with nothing picked are refused here, with the code the
+  // screens translate rather than the server's English detail.
+  const grant = parseRequestedMcpGrant(requestedGrant);
+  if (!grant) {
+    return problemBadRequest(requestId, MCP_GRANT_INVALID_DETAIL, {
+      instance,
+      code: MCP_GRANT_INVALID_CODE,
+    });
+  }
+
   const isDashboardViewer = await isDashboardViewerOnly(userId);
   let result: TEditMcpGrantResult;
   try {
     result = await editMcpGrant({
       userId,
       clientId,
-      permissions,
-      access,
+      grant,
       expectedUpdatedAt,
       isDashboardViewer,
     });
@@ -116,11 +130,10 @@ export async function updateMcpGrantOperation({
         },
       });
     case "beyond_scopes":
-      return problemUnprocessableContent(
-        requestId,
-        "This app didn't ask for that much access. Reconnect it so it asks again.",
-        { instance, code: "mcp_grant_beyond_scopes" }
-      );
+      return problemUnprocessableContent(requestId, MCP_GRANT_BEYOND_SCOPES_DETAIL, {
+        instance,
+        code: MCP_GRANT_BEYOND_SCOPES_CODE,
+      });
     case "selection_unavailable": {
       const kind = result.field === "organizationIds" ? "organizations" : "workspaces";
       return problemUnprocessableContent(requestId, `Pick only ${kind} you have access to.`, {

@@ -100,6 +100,7 @@
         "summary_organizations": "{count} organizations",
         "summary_workspaces": "{count} workspaces",
         "title": "Organization & workspace access",
+        "too_many_picked_hint": "Pick at most {count}. To reach more, choose a broader access above.",
         "workspaces": "Only selected workspaces",
         "workspaces_hint": "Only the workspaces you pick. Workspaces created later stay out until you add them."
       },
@@ -174,7 +175,9 @@
         "read_only": "Read-only",
         "select_all": "Select all"
       },
+      "grant_beyond_scopes": "This app didn't ask for that access, so nothing changed. Reload to see what you can give it.",
       "grant_changed_elsewhere": "This MCP client's access changed elsewhere. Reload to see it.",
+      "grant_invalid": "That access can't be saved. Choose at least one permission, and pick at least one organization or workspace.",
       "grant_update_failed": "Couldn't update this app's access. Please try again.",
       "grant_updated": "Access updated.",
       "invalid_oauth_request": "Invalid OAuth request",

@@ -100,6 +100,7 @@
         "summary_organizations": "{count} organizații",
         "summary_workspaces": "{count} spații de lucru",
         "title": "Acces la organizații și spații de lucru",
+        "too_many_picked_hint": "Alege cel mult {count}. Pentru a include mai multe, alege mai sus un acces mai larg.",
         "workspaces": "Doar spațiile de lucru selectate",
         "workspaces_hint": "Doar spațiile de lucru alese de tine. Cele create ulterior rămân excluse până când le adaugi."
       },
@@ -174,7 +175,9 @@
         "read_only": "Doar citire",
         "select_all": "Selectează tot"
       },
+      "grant_beyond_scopes": "Aplicația nu a cerut acest acces, așa că nu s-a schimbat nimic. Reîncarcă pagina pentru a vedea ce acces îi poți acorda.",
       "grant_changed_elsewhere": "Accesul acestui client MCP a fost modificat în altă parte. Reîncarcă pagina pentru a-l vedea.",
+      "grant_invalid": "Acest acces nu poate fi salvat. Alege cel puțin o permisiune și selectează cel puțin o organizație sau un spațiu de lucru.",
       "grant_update_failed": "Nu am putut actualiza accesul acestei aplicații. Încearcă din nou.",
       "grant_updated": "Acces actualizat.",
       "invalid_oauth_request": "Solicitare OAuth invalidă",

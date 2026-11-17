@@ -363,8 +363,10 @@ describe("editMcpGrant", () => {
         userId: USER_ID,
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
-        permissions: { surveys: "read" },
-        access: { access: "workspaces", workspaceIds: ["ws-1"] },
+        grant: {
+          permissions: { surveys: "read" },
+          access: { access: "workspaces", workspaceIds: ["ws-1"] },
+        },
         isDashboardViewer: false,
       })
     ).resolves.toEqual({ status: "changed", currentUpdatedAt: savedSince });
@@ -392,8 +394,10 @@ describe("editMcpGrant", () => {
         userId: USER_ID,
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
-        permissions: { surveys: "write" },
-        access: { access: "workspaces", workspaceIds: ["ws-1", "ws-lost"] },
+        grant: {
+          permissions: { surveys: "write" },
+          access: { access: "workspaces", workspaceIds: ["ws-1", "ws-lost"] },
+        },
         isDashboardViewer: false,
       })
     ).resolves.toEqual({ status: "saved", before, after });
@@ -432,7 +436,7 @@ describe("editMcpGrant", () => {
       userId: USER_ID,
       clientId: CLIENT_ID,
       expectedUpdatedAt: OPENED_AT,
-      permissions: {},
+      grant: { permissions: {} },
       isDashboardViewer: false,
     });
 
@@ -448,8 +452,7 @@ describe("editMcpGrant", () => {
         userId: USER_ID,
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
-        permissions: {},
-        access: { access: "workspaces", workspaceIds: ["ws-foreign"] },
+        grant: { permissions: {}, access: { access: "workspaces", workspaceIds: ["ws-foreign"] } },
         isDashboardViewer: false,
       })
     ).resolves.toEqual({ status: "selection_unavailable", field: "workspaceIds" });
@@ -465,7 +468,7 @@ describe("editMcpGrant", () => {
         userId: USER_ID,
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
-        permissions: {},
+        grant: { permissions: {} },
         isDashboardViewer: false,
       })
     ).resolves.toEqual({ status: "not_found" });
@@ -480,7 +483,7 @@ describe("editMcpGrant", () => {
         userId: USER_ID,
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
-        permissions: {},
+        grant: { permissions: {} },
         isDashboardViewer: false,
       })
     ).resolves.toEqual({ status: "not_found" });
@@ -491,7 +494,7 @@ describe("editMcpGrant", () => {
         userId: USER_ID,
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
-        permissions: {},
+        grant: { permissions: {} },
         isDashboardViewer: false,
       })
     ).resolves.toEqual({ status: "not_found" });
@@ -506,7 +509,7 @@ describe("editMcpGrant", () => {
         userId: USER_ID,
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
-        permissions: { surveys: "write" },
+        grant: { permissions: { surveys: "write" } },
         isDashboardViewer: false,
       })
     ).resolves.toEqual({ status: "beyond_scopes" });
@@ -521,8 +524,7 @@ describe("editMcpGrant", () => {
         userId: USER_ID,
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
-        permissions: { surveys: "write" },
-        access: { access: "all" },
+        grant: { permissions: { surveys: "write" }, access: { access: "all" } },
         isDashboardViewer: false,
       })
     ).resolves.toEqual({ status: "beyond_scopes" });
@@ -536,7 +538,7 @@ describe("editMcpGrant", () => {
         userId: USER_ID,
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
-        permissions: { surveys: "write" },
+        grant: { permissions: { surveys: "write" } },
         isDashboardViewer: true,
       })
     ).resolves.toEqual({ status: "beyond_scopes" });
@@ -552,8 +554,7 @@ describe("editMcpGrant", () => {
         userId: USER_ID,
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
-        permissions: {},
-        access: { access: "all" },
+        grant: { permissions: {}, access: { access: "all" } },
         isDashboardViewer: false,
       })
     ).rejects.toBe(failure);
@@ -569,7 +570,7 @@ describe("editMcpGrant", () => {
         userId: USER_ID,
         clientId: CLIENT_ID,
         expectedUpdatedAt: OPENED_AT,
-        permissions: {},
+        grant: { permissions: {} },
         isDashboardViewer: false,
       })
     ).rejects.toBe(failure);

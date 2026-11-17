@@ -100,6 +100,7 @@
         "summary_organizations": "{count} 個組織",
         "summary_workspaces": "{count} 個工作區",
         "title": "組織與工作區存取權限",
+        "too_many_picked_hint": "最多只能選擇 {count} 個。若要涵蓋更多項目，請在上方選擇範圍更廣的存取權限。",
         "workspaces": "僅限選取的工作區",
         "workspaces_hint": "僅限你所選的工作區。之後建立的工作區在你新增之前不會納入。"
       },
@@ -174,7 +175,9 @@
         "read_only": "唯讀",
         "select_all": "全選"
       },
+      "grant_beyond_scopes": "這個應用程式並未要求該存取權限，所以沒有任何變更。請重新載入頁面，查看你可以授予哪些權限。",
       "grant_changed_elsewhere": "這個 MCP 用戶端的存取權限已在其他地方變更,請重新載入以查看最新狀態。",
+      "grant_invalid": "無法儲存該存取權限。請至少選擇一項權限，並至少選擇一個組織或工作區。",
       "grant_update_failed": "無法更新此應用程式的存取權限，請再試一次。",
       "grant_updated": "存取權限已更新。",
       "invalid_oauth_request": "無效的 OAuth 請求",

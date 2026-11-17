@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { MAX_MCP_GRANT_SELECTIONS } from "./grant";
 import type { TMcpGrantAccessDraft } from "./grant-access";
 import { type TMcpSavedGrant, getMcpGrantDraftState } from "./grant-draft";
 
@@ -21,6 +22,29 @@ describe("getMcpGrantDraftState on the consent screen (no saved grant)", () => {
       accessSelection: { access: "workspaces", workspaceIds: ["ws_1"] },
       canSubmit: true,
     });
+  });
+
+  // Over the limit the consent request would be refused by the /api/auth body guard as a generic error;
+  // the picker names the limit instead and Allow stays off.
+  test("refuses a selection over the most a grant holds, and allows one at it", () => {
+    const picks = (count: number): TMcpGrantAccessDraft => ({
+      access: "workspaces",
+      organizationIds: [],
+      workspaceIds: Array.from({ length: count }, (_, i) => `ws_${i.toString()}`),
+    });
+
+    expect(
+      getMcpGrantDraftState(
+        { permissions: { surveys: "read" }, access: picks(MAX_MCP_GRANT_SELECTIONS + 1) },
+        null
+      ).canSubmit
+    ).toBe(false);
+    expect(
+      getMcpGrantDraftState(
+        { permissions: { surveys: "read" }, access: picks(MAX_MCP_GRANT_SELECTIONS) },
+        null
+      ).canSubmit
+    ).toBe(true);
   });
 
   test("refuses a grant with no permission, and says it is empty", () => {

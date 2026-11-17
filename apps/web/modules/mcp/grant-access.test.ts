@@ -1,7 +1,12 @@
 import { describe, expect, test } from "vitest";
+import { MAX_MCP_GRANT_SELECTIONS } from "./grant";
 import {
+  type TMcpGrantAccessDraft,
+  type TMcpGrantAccessOptions,
+  getMcpGrantAccessHint,
   getMcpGrantAccessSummary,
   initialMcpGrantAccessDraft,
+  isOverMcpGrantSelectionLimit,
   isSameMcpGrantAccess,
   limitMcpGrantAccessToOptions,
   toMcpGrantAccessRequest,
@@ -129,5 +134,44 @@ describe("limitMcpGrantAccessToOptions", () => {
       access: "workspaces",
       workspaceIds: [],
     });
+  });
+});
+
+describe("getMcpGrantAccessHint", () => {
+  const options: TMcpGrantAccessOptions = {
+    organizations: [{ id: "org-1", name: "Acme" }],
+    workspaces: [],
+  };
+  const draft = (overrides: Partial<TMcpGrantAccessDraft>): TMcpGrantAccessDraft => ({
+    access: "all",
+    organizationIds: [],
+    workspaceIds: [],
+    ...overrides,
+  });
+
+  test("says nothing for All access or a selection within the limit", () => {
+    expect(getMcpGrantAccessHint(draft({}), options)).toBeNull();
+    expect(
+      getMcpGrantAccessHint(draft({ access: "organizations", organizationIds: ["org-1"] }), options)
+    ).toBeNull();
+  });
+
+  test("asks for a pick, or says there is nothing to pick", () => {
+    expect(getMcpGrantAccessHint(draft({ access: "organizations" }), options)).toBe("none_picked");
+    expect(getMcpGrantAccessHint(draft({ access: "workspaces" }), options)).toBe("no_options");
+  });
+
+  test("names the limit for a selection over it", () => {
+    const organizationIds = Array.from(
+      { length: MAX_MCP_GRANT_SELECTIONS + 1 },
+      (_, i) => `org-${i.toString()}`
+    );
+    expect(getMcpGrantAccessHint(draft({ access: "organizations", organizationIds }), options)).toBe(
+      "too_many_picked"
+    );
+    expect(isOverMcpGrantSelectionLimit({ access: "organizations", organizationIds })).toBe(true);
+    expect(
+      isOverMcpGrantSelectionLimit({ access: "organizations", organizationIds: organizationIds.slice(1) })
+    ).toBe(false);
   });
 });

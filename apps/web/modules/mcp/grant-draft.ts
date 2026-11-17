@@ -1,6 +1,11 @@
-import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "./grant";
-import { type TMcpGrantAccessDraft, isSameMcpGrantAccess, toMcpGrantAccessSelection } from "./grant-access";
-import { isMcpGrantEmpty, isSameMcpGrant } from "./grant-editor";
+import { type TMcpGrantAccessSelection, type TMcpGrantPermissions, isMcpGrantEmpty } from "./grant";
+import {
+  type TMcpGrantAccessDraft,
+  isOverMcpGrantSelectionLimit,
+  isSameMcpGrantAccess,
+  toMcpGrantAccessSelection,
+} from "./grant-access";
+import { isSameMcpGrant } from "./grant-editor";
 
 /**
  * A grant being chosen (ENG-7150, ENG-7152, ENG-7153): its permissions and its organization & workspace
@@ -24,7 +29,7 @@ export type TMcpGrantDraftState = {
 
 /**
  * What the draft submits and whether it may: never a grant that gives nothing, nor a selection with
- * nothing picked. Against a saved grant (Edit), also never one that changes nothing.
+ * nothing picked or more picked than a grant holds. Against a saved grant (Edit), also never one that changes nothing.
  */
 export const getMcpGrantDraftState = (
   draft: TMcpGrantDraft,
@@ -36,5 +41,10 @@ export const getMcpGrantDraftState = (
     saved === null ||
     !isSameMcpGrant(draft.permissions, saved.permissions) ||
     (accessSelection !== null && !isSameMcpGrantAccess(accessSelection, saved.access));
-  return { isEmpty, accessSelection, canSubmit: !isEmpty && accessSelection !== null && changed };
+  return {
+    isEmpty,
+    accessSelection,
+    canSubmit:
+      !isEmpty && accessSelection !== null && !isOverMcpGrantSelectionLimit(accessSelection) && changed,
+  };
 };

@@ -10,6 +10,7 @@ import {
   type TMcpGrantAccessRow,
   type TMcpGrantAccessSelection,
   type TMcpGrantPermissions,
+  type TRequestedMcpGrant,
   getMcpGrantPermissionsForScopes,
   isMcpGrantWithinCap,
   parseMcpGrantPermissions,
@@ -216,12 +217,12 @@ const readCapScopes = async (
 };
 
 /**
- * Sets the user's grant to `clientId` (Authorized apps' Edit): its permissions and, when given, its
- * organization & workspace access. Refused when the grant was saved since `expectedUpdatedAt` (another tab
- * or session changed it, and this save would undo that), when the user has no grant (or no consent, for a client that
- * needs one), when `permissions` go above what the client's scopes ask for (and, for a Dashboard viewer,
- * what a viewer may give), and when `access` adds an organization or workspace the user can't select;
- * one the grant already selected and the user has lost is dropped instead (`resolveMcpGrantSelection`).
+ * Sets the user's grant to `clientId` (Authorized apps' Edit): `grant`'s permissions and, when it names
+ * one, its organization & workspace access. Refused when the grant was saved since `expectedUpdatedAt`
+ * (another tab or session changed it, and this save would undo that), when the user has no grant (or no
+ * consent, for a client that needs one), when `grant.permissions` go above what the client's scopes ask
+ * for (and, for a Dashboard viewer, what a viewer may give), and when `grant.access` adds an organization or workspace the user can't select; one the grant already selected
+ * and the user has lost is dropped instead (`resolveMcpGrantSelection`).
  *
  * The workspaces SpiceDB lets the user select are looked up before the transaction, so no lookup runs
  * under a row lock; the transaction re-checks the user's memberships from PostgreSQL. In it, the grant row
@@ -233,23 +234,21 @@ const readCapScopes = async (
 export const editMcpGrant = async ({
   userId,
   clientId,
-  permissions,
-  access,
+  grant,
   expectedUpdatedAt,
   isDashboardViewer,
 }: {
   userId: string;
   clientId: string;
-  permissions: TMcpGrantPermissions;
-  /** The organization & workspace access to set; omitted keeps the grant's (ENG-7153). */
-  access?: TMcpGrantAccessSelection;
+  /** The grant to set: its permissions, and its access when the edit names one (ENG-7153). */
+  grant: TRequestedMcpGrant;
   /** When the grant Edit opened was last saved: a grant saved since is not overwritten. */
   expectedUpdatedAt: Date;
   isDashboardViewer: boolean;
 }): Promise<TEditMcpGrantResult> => {
   let grantId: string | null = null;
   try {
-    const readableWorkspaceIds = await readMcpGrantReadableWorkspaceIds(userId, access);
+    const readableWorkspaceIds = await readMcpGrantReadableWorkspaceIds(userId, grant.access);
     const result = await prisma.$transaction(
       async (tx): Promise<TEditMcpGrantResult> => {
         const before = await lockMcpGrant(tx, { userId, clientId });
@@ -266,17 +265,28 @@ export const editMcpGrant = async ({
         }
         const scopes = await readCapScopes(tx, userId, clientId);
         if (!scopes) return { status: "not_found" };
-        if (!isMcpGrantWithinCap(permissions, capForScopes(scopes, isDashboardViewer))) {
+        if (!isMcpGrantWithinCap(grant.permissions, capForScopes(scopes, isDashboardViewer))) {
           return { status: "beyond_scopes" };
         }
-        let saved = access;
-        if (access) {
-          const resolved = await narrowMcpGrantAccess(tx, { userId, before, access, readableWorkspaceIds });
+        let saved = grant.access;
+        if (grant.access) {
+          const resolved = await narrowMcpGrantAccess(tx, {
+            userId,
+            before,
+            access: grant.access,
+            readableWorkspaceIds,
+          });
           if (resolved.status === "unavailable")
             return { status: "selection_unavailable", field: resolved.field };
           saved = resolved.access;
         }
-        const written = await writeMcpGrant(tx, { userId, clientId, before, permissions, access: saved });
+        const written = await writeMcpGrant(tx, {
+          userId,
+          clientId,
+          before,
+          permissions: grant.permissions,
+          access: saved,
+        });
         return { status: "saved", before, after: written.after };
       },
       { timeout: MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS }

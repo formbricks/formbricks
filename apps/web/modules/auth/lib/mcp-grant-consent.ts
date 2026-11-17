@@ -2,6 +2,7 @@ import "server-only";
 import { APIError } from "better-auth/api";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { type TRequestedMcpGrant, parseRequestedMcpGrant } from "@/modules/mcp/grant";
+import { MCP_GRANT_INVALID_CODE, MCP_GRANT_INVALID_DETAIL } from "./mcp-grant-consent-errors";
 
 /**
  * The grant the consent screen's Allow sends with the approval (ENG-7150): `POST /oauth2/consent` with
@@ -35,8 +36,9 @@ export const getApprovedMcpGrant = (ctx: AuthHookContext): TRequestedMcpGrant | 
 
 /**
  * `hooks.before` for `POST /oauth2/consent`: an approval carrying a grant must carry a valid one, one
- * the consent screen could have sent (known permissions, offered levels, at least one permission). A
- * Deny is left alone: it writes nothing, so its grant is never read.
+ * the consent screen could have sent (known permissions, offered levels, at least one permission, a
+ * selection with something picked and within the size a grant holds). A Deny is left alone: it writes nothing, so its grant is never
+ * read. Refused before the provider writes the consent, with the code the screen translates.
  */
 export const requireValidMcpGrantOnConsentBeforeHandler = (ctx: AuthHookContext): void => {
   const body = approvalBody(ctx);
@@ -44,7 +46,7 @@ export const requireValidMcpGrantOnConsentBeforeHandler = (ctx: AuthHookContext)
   if (parseRequestedMcpGrant(body[FIELD])) return;
   throw new APIError("BAD_REQUEST", {
     error: "invalid_request",
-    error_description:
-      "mcp_grant must give at least one permission a level it offers, and pick at least one organization or workspace when it selects them",
+    error_description: MCP_GRANT_INVALID_DETAIL,
+    code: MCP_GRANT_INVALID_CODE,
   });
 };

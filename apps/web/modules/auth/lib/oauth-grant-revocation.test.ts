@@ -10,7 +10,11 @@ import {
 } from "@/lib/authzed/mcp-grant";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { resolveMcpGrantSelection } from "@/modules/mcp/access-options";
-import { MCP_GRANT_NOT_SAVED_CODE, MCP_GRANT_SELECTION_UNAVAILABLE_CODE } from "./mcp-grant-consent-errors";
+import {
+  MCP_GRANT_BEYOND_SCOPES_CODE,
+  MCP_GRANT_NOT_SAVED_CODE,
+  MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
+} from "./mcp-grant-consent-errors";
 import {
   finishRevokedMcpGrants,
   revokeAllUserOAuthGrants,
@@ -776,6 +780,50 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     expect(endedTokensBeyondConsent()).toBe(true);
     // A single consent row: nothing to fold.
     expect(mocks.tx.oauthConsent.deleteMany).not.toHaveBeenCalled();
+  });
+
+  // A chosen grant the consent's scopes leave nothing of would connect a client that can do nothing.
+  test("refuses a grant the client's scopes leave nothing of, with a 400, and saves nothing", async () => {
+    const thrown = await revokeTokensBeyondConsentAfterHandler(
+      ctx(
+        "/oauth2/consent",
+        { accept: true, oauth_query: oauthQuery, mcp_grant: { permissions: { workflows: "read" } } },
+        { redirect: true, url: "https://client/cb" }
+      )
+    ).catch((error: unknown) => error);
+
+    expect((thrown as APIError).statusCode).toBe(400);
+    expect((thrown as APIError).body).toMatchObject({
+      error: "invalid_request",
+      code: MCP_GRANT_BEYOND_SCOPES_CODE,
+    });
+    expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
+  });
+
+  // Dependencies are hints (spec story 16): a grant giving Charts without Feedback records is saved as
+  // chosen, and the chart tools answer "not permitted" naming what they need.
+  test("saves a grant that leaves a permission's dependency out, as chosen", async () => {
+    mocks.consents = [
+      consentRow("consent-1", ["dashboards:read", "feedbackRecords:read"], new Date("2026-10-08T10:00:00Z")),
+    ];
+
+    await revokeTokensBeyondConsentAfterHandler(
+      ctx(
+        "/oauth2/consent",
+        {
+          accept: true,
+          oauth_query: oauthQuery,
+          mcp_grant: { permissions: { charts: "read" } },
+        },
+        { redirect: true, url: "https://client/cb" }
+      )
+    );
+
+    expect(mocks.tx.mcpGrant.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ permissions: { charts: "read" } }),
+      })
+    );
   });
 
   test("folds duplicate consent rows into the newest, so /authorize can't read a stale wider one", async () => {

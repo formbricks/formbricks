@@ -100,6 +100,7 @@
         "summary_organizations": "{count} kuruluş",
         "summary_workspaces": "{count} çalışma alanı",
         "title": "Kuruluş ve çalışma alanı erişimi",
+        "too_many_picked_hint": "En fazla {count} seçim yapabilirsin. Daha fazlasına erişmek için yukarıdan daha geniş bir erişim seç.",
         "workspaces": "Yalnızca seçili çalışma alanları",
         "workspaces_hint": "Yalnızca seçtiğin çalışma alanları. Sonradan oluşturulan çalışma alanları, sen ekleyene kadar dışarıda kalır."
       },
@@ -174,7 +175,9 @@
         "read_only": "Salt okunur",
         "select_all": "Tümünü seç"
       },
+      "grant_beyond_scopes": "Bu uygulama o erişimi istemedi, bu yüzden hiçbir şey değişmedi. Ona verebileceklerini görmek için sayfayı yeniden yükle.",
       "grant_changed_elsewhere": "Bu MCP istemcisinin erişimi başka bir yerde değiştirildi. Görmek için sayfayı yeniden yükle.",
+      "grant_invalid": "Bu erişim kaydedilemiyor. En az bir izin seç ve en az bir kuruluş ya da çalışma alanı seç.",
       "grant_update_failed": "Bu uygulamanın erişimi güncellenemedi. Lütfen tekrar dene.",
       "grant_updated": "Erişim güncellendi.",
       "invalid_oauth_request": "Geçersiz OAuth isteği",

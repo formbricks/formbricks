@@ -116,6 +116,7 @@ export const INTERNAL_PROBLEM_CODES = [
   "idempotency_key_reused",
   "mcp_grant_beyond_scopes",
   "mcp_grant_changed",
+  "mcp_grant_invalid",
   "mcp_grant_not_saved",
   "mcp_grant_selection_unavailable",
   "member_in_other_organizations",
@@ -252,10 +253,10 @@ function problemResponse(
 export function problemBadRequest(
   requestId: string,
   detail: string,
-  options?: { invalid_params?: InvalidParam[]; instance?: string }
+  options?: { invalid_params?: InvalidParam[]; instance?: string; code?: ProblemCode }
 ): Response {
   return problemResponse(400, "Bad Request", detail, requestId, {
-    code: "bad_request",
+    code: options?.code ?? "bad_request",
     instance: options?.instance,
     invalid_params: options?.invalid_params,
   });

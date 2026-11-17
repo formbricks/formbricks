@@ -100,6 +100,7 @@
         "summary_organizations": "{count} organisationer",
         "summary_workspaces": "{count} arbetsytor",
         "title": "Åtkomst till organisationer och arbetsytor",
+        "too_many_picked_hint": "Välj högst {count}. Om du vill nå fler, välj en bredare åtkomst ovan.",
         "workspaces": "Endast valda arbetsytor",
         "workspaces_hint": "Endast de arbetsytor du väljer. Arbetsytor som skapas senare förblir utanför tills du lägger till dem."
       },
@@ -174,7 +175,9 @@
         "read_only": "Skrivskyddad",
         "select_all": "Markera alla"
       },
+      "grant_beyond_scopes": "Appen har inte bett om den åtkomsten, så ingenting har ändrats. Ladda om sidan för att se vad du kan ge den.",
       "grant_changed_elsewhere": "Den här MCP-klientens åtkomst har ändrats på annat håll. Ladda om för att se ändringen.",
+      "grant_invalid": "Den åtkomsten kan inte sparas. Välj minst en behörighet och minst en organisation eller arbetsyta.",
       "grant_update_failed": "Det gick inte att uppdatera den här appens åtkomst. Försök igen.",
       "grant_updated": "Åtkomsten har uppdaterats.",
       "invalid_oauth_request": "Ogiltig OAuth-begäran",

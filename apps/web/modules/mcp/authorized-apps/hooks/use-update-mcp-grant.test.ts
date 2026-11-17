@@ -58,7 +58,7 @@ describe("useUpdateMcpGrant", () => {
     await waitFor(() => expect(result.current.list.data?.clients).toHaveLength(1));
     result.current.update.mutate({
       clientId: "client/a",
-      permissions: { surveys: "read" },
+      grant: { permissions: { surveys: "read" } },
       expectedUpdatedAt: OPENED_AT,
     });
 
@@ -93,7 +93,7 @@ describe("useUpdateMcpGrant", () => {
     await waitFor(() => expect(result.current.list.data?.clients).toHaveLength(1));
     result.current.update.mutate({
       clientId: "client_a",
-      permissions: { surveys: "write", responses: "read" },
+      grant: { permissions: { surveys: "write", responses: "read" } },
       expectedUpdatedAt: OPENED_AT,
     });
 
@@ -115,7 +115,7 @@ describe("useUpdateMcpGrant", () => {
     const { result } = renderHook(() => useUpdateMcpGrant(), { wrapper: wrapper(queryClient) });
     result.current.mutate({
       clientId: "client_a",
-      permissions: { workflows: "write" },
+      grant: { permissions: { workflows: "write" } },
       expectedUpdatedAt: OPENED_AT,
     });
 

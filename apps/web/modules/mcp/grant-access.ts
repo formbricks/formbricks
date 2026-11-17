@@ -1,4 +1,4 @@
-import type { TMcpGrantAccess, TMcpGrantAccessSelection } from "./grant";
+import { MAX_MCP_GRANT_SELECTIONS, type TMcpGrantAccess, type TMcpGrantAccessSelection } from "./grant";
 
 /**
  * The organization & workspace access half of the grant editor (GLOSSARY.md "Organization & workspace
@@ -86,6 +86,36 @@ export const toMcpGrantAccessSelection = (draft: TMcpGrantAccessDraft): TMcpGran
         ? { access: "workspaces", workspaceIds: draft.workspaceIds }
         : null;
   }
+};
+
+/**
+ * True when `selection` picks more organizations or workspaces than a grant holds
+ * ({@link MAX_MCP_GRANT_SELECTIONS}): Allow and Save stay disabled, with a hint naming the limit, since the
+ * server refuses it (on the consent screen, the `/api/auth` body guard, before any grant hook).
+ */
+export const isOverMcpGrantSelectionLimit = (selection: TMcpGrantAccessSelection | null): boolean => {
+  if (!selection) return false;
+  const { organizationIds, workspaceIds } = getMcpGrantSelectedIds(selection);
+  return organizationIds.length > MAX_MCP_GRANT_SELECTIONS || workspaceIds.length > MAX_MCP_GRANT_SELECTIONS;
+};
+
+/** The hint under the access picker, when one is due. */
+export type TMcpGrantAccessHint = "no_options" | "none_picked" | "too_many_picked";
+
+/**
+ * Which hint the access picker shows: a selection with nothing picked says why (the user has nothing to
+ * pick, or hasn't picked), and one over the limit names the limit; `null` otherwise.
+ */
+export const getMcpGrantAccessHint = (
+  draft: TMcpGrantAccessDraft,
+  options: TMcpGrantAccessOptions
+): TMcpGrantAccessHint | null => {
+  const selection = toMcpGrantAccessSelection(draft);
+  if (selection === null) {
+    const offered = draft.access === "organizations" ? options.organizations : options.workspaces;
+    return offered.length === 0 ? "no_options" : "none_picked";
+  }
+  return isOverMcpGrantSelectionLimit(selection) ? "too_many_picked" : null;
 };
 
 /** The fields a request carries for an access: `access`, and the matching ids for a selection. */

@@ -45,8 +45,10 @@ export const OAuthConsentForm = ({
       />
       <OAuthConsentActions
         grantedScope={grantedScope}
-        permissions={draft.permissions}
-        access={draft.accessSelection}
+        grant={{
+          permissions: draft.permissions,
+          ...(draft.accessSelection ? { access: draft.accessSelection } : {}),
+        }}
         isAllowDisabled={!draft.canSubmit}
       />
     </div>

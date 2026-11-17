@@ -208,6 +208,56 @@ describe("Allow on the consent screen", () => {
     expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
   });
 
+  // The request's own check passes a grant naming only what the client never asked for; capping it leaves
+  // nothing, which would connect an app that can do nothing (spec story 17). Refused after the cap.
+  test("refuses a grant the client's scopes leave nothing of, and writes neither consent nor grant", async () => {
+    const { target } = await authorize(setup.cookie, setup.clientId, "openid offline_access surveys:read");
+
+    const response = await consent(setup.cookie, target, {
+      accept: true,
+      mcp_grant: { permissions: { workflows: "read" } },
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toContain("mcp_grant_beyond_scopes");
+    expect(await prisma.oauthConsent.count({ where: { userId: setup.userId } })).toBe(0);
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+  });
+
+  // The /api/auth body guard refuses a list over 100 entries before any hook reads it; the grant's own
+  // limit is the same, so a selection of exactly 100 reaches the hook and the consent screen can send it.
+  test("takes a selection of as many workspaces as a grant holds, the /api/auth list bound", async () => {
+    const { target } = await authorize(setup.cookie, setup.clientId, EVERYTHING);
+    const workspaceIds = [
+      setup.workspaceId,
+      ...Array.from({ length: 99 }, (_unused, index) => `clwsunknown${index.toString().padStart(3, "0")}`),
+    ];
+
+    const response = await consent(setup.cookie, target, {
+      accept: true,
+      mcp_grant: { permissions: { surveys: "read" }, access: "workspaces", workspaceIds },
+    });
+
+    // Past both bounds: refused only because the user can't pick the 99 unknown ids.
+    expect(response.status).toBe(422);
+    expect(await response.text()).toContain("mcp_grant_selection_unavailable");
+
+    const tooMany = await consent(
+      setup.cookie,
+      (await authorize(setup.cookie, setup.clientId, EVERYTHING)).target,
+      {
+        accept: true,
+        mcp_grant: {
+          permissions: { surveys: "read" },
+          access: "workspaces",
+          workspaceIds: [...workspaceIds, "clwsextra"],
+        },
+      }
+    );
+    expect(tooMany.status).toBe(400);
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+  });
+
   test("Deny ignores the grant and writes nothing", async () => {
     const { target } = await authorize(setup.cookie, setup.clientId, EVERYTHING);
 

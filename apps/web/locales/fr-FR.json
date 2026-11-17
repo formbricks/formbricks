@@ -100,6 +100,7 @@
         "summary_organizations": "{count} organisations",
         "summary_workspaces": "{count} espaces de travail",
         "title": "Accès aux organisations et aux espaces de travail",
+        "too_many_picked_hint": "Sélectionne {count} élément(s) au maximum. Pour en couvrir davantage, choisis un accès plus étendu ci-dessus.",
         "workspaces": "Uniquement les espaces de travail sélectionnés",
         "workspaces_hint": "Uniquement les espaces de travail que tu sélectionnes. Ceux créés plus tard restent exclus tant que tu ne les ajoutes pas."
       },
@@ -174,7 +175,9 @@
         "read_only": "Lecture seule",
         "select_all": "Tout sélectionner"
       },
+      "grant_beyond_scopes": "Cette appli n'a pas demandé cet accès, donc rien n'a changé. Recharge la page pour voir ce que tu peux lui accorder.",
       "grant_changed_elsewhere": "L'accès de ce client MCP a été modifié ailleurs. Recharge la page pour voir les changements.",
+      "grant_invalid": "Impossible d'enregistrer cet accès. Choisis au moins une autorisation et sélectionne au moins une organisation ou un espace de travail.",
       "grant_update_failed": "Impossible de mettre à jour l'accès de cette application. Veuillez réessayer.",
       "grant_updated": "Accès mis à jour.",
       "invalid_oauth_request": "Requête OAuth invalide",

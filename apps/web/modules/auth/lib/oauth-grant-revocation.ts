@@ -13,6 +13,7 @@ import {
   type TRequestedMcpGrant,
   capMcpGrantPermissions,
   getMcpGrantPermissionsForScopes,
+  isMcpGrantEmpty,
 } from "@/modules/mcp/grant";
 import {
   MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS,
@@ -29,6 +30,8 @@ import {
 } from "@/modules/mcp/grant-store";
 import { getApprovedMcpGrant } from "./mcp-grant-consent";
 import {
+  MCP_GRANT_BEYOND_SCOPES_CODE,
+  MCP_GRANT_BEYOND_SCOPES_DETAIL,
   MCP_GRANT_NOT_SAVED_CODE,
   MCP_GRANT_NOT_SAVED_DETAIL,
   MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
@@ -351,7 +354,7 @@ export const revokeTokensBeyondConsentAfterHandler = async (ctx: AuthHookContext
 
   const ended = await settleChangedConsentWithRetry(userId, change, ids);
   if (!ended) return;
-  if (ended.status === "selection_unavailable") return refuseUnavailableSelection(ended.field, change, ids);
+  if (ended.status !== "settled") return refuseConsentRequest(ended, change, ids);
 
   ids.clientId = ended.clientId;
   const { savedGrant, refreshTokensDeleted, accessTokensRevoked } = ended;
@@ -549,29 +552,31 @@ const restoreConsentAfterFailedApproval = async (
   }
 };
 
+/** An approval the hook refuses: the reason decides the answer, and the grant stays as it was. */
+type TConsentRefusal =
+  | { status: "selection_unavailable"; field: "organizationIds" | "workspaceIds" }
+  | { status: "beyond_scopes" };
+
 /**
- * An approval's selection the user can't make: puts the consent back from the snapshot, in the grant's
- * transaction, which already holds the grant's lock, so the 422 changes nothing.
+ * Refuses an approval, putting the consent back from the snapshot in the grant's transaction, which already
+ * holds the grant's lock: a selection the user can't make (422), or a grant the client's scopes narrow to
+ * nothing (400). `auth.oauth.*` messages carry the codes to the screen.
  */
-const refuseSelection = async (
+const refuseConsent = async (
   tx: Prisma.TransactionClient,
-  {
-    userId,
-    clientId,
-    change,
-    field,
-  }: { userId: string; clientId: string; change: TConsentChange; field: "organizationIds" | "workspaceIds" }
+  { userId, clientId, change }: { userId: string; clientId: string; change: TConsentChange },
+  refusal: TConsentRefusal
 ): Promise<TSettledConsent> => {
   if (change.previousConsents) {
     await restoreConsents(tx, userId, clientId, change.previousConsents, change.isLatestWrite);
   }
-  return { status: "selection_unavailable", field };
+  return refusal;
 };
 
 type TSavedMcpGrant = { before: TStoredMcpGrant | null; after: TStoredMcpGrant };
 
 type TSettledConsent =
-  | { status: "selection_unavailable"; field: "organizationIds" | "workspaceIds" }
+  | TConsentRefusal
   | ({
       status: "settled";
       clientId: string;
@@ -579,21 +584,32 @@ type TSettledConsent =
     } & TTokensBeyondConsent);
 
 /**
- * Refuses an approval that picked an organization or workspace the user can't select, with a 422 the consent
- * screen shows. Its transaction already put the consent back, when a snapshot named it.
+ * Answers an approval the hook refused with the status the screen understands: 422 for a selection the user
+ * can't make, 400 for a grant the client's scopes leave nothing of. The transaction that refused already
+ * put the consent back, when a snapshot named it.
  */
-const refuseUnavailableSelection = (
-  field: "organizationIds" | "workspaceIds",
+const refuseConsentRequest = (
+  refusal: TConsentRefusal,
   change: TConsentChange,
   ids: { userId: string; clientId?: string }
 ): never => {
   if (!change.previousConsents) warnConsentNotRestored(ids);
-  const kind = field === "organizationIds" ? "organizations" : "workspaces";
-  throw new APIError("UNPROCESSABLE_ENTITY", {
-    error: "invalid_request",
-    error_description: `Pick only ${kind} you have access to.`,
-    code: MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
-  });
+  switch (refusal.status) {
+    case "selection_unavailable": {
+      const kind = refusal.field === "organizationIds" ? "organizations" : "workspaces";
+      throw new APIError("UNPROCESSABLE_ENTITY", {
+        error: "invalid_request",
+        error_description: `Pick only ${kind} you have access to.`,
+        code: MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
+      });
+    }
+    case "beyond_scopes":
+      throw new APIError("BAD_REQUEST", {
+        error: "invalid_request",
+        error_description: MCP_GRANT_BEYOND_SCOPES_DETAIL,
+        code: MCP_GRANT_BEYOND_SCOPES_CODE,
+      });
+  }
 };
 
 /**
@@ -645,7 +661,11 @@ const settleChangedConsent = async (
         if (access) {
           const resolved = await narrowMcpGrantAccess(tx, { userId, before, access, readableWorkspaceIds });
           if (resolved.status === "unavailable") {
-            return refuseSelection(tx, { userId, clientId: grantClientId, change, field: resolved.field });
+            return refuseConsent(
+              tx,
+              { userId, clientId: grantClientId, change },
+              { status: "selection_unavailable", field: resolved.field }
+            );
           }
           access = resolved.access;
         }
@@ -655,16 +675,17 @@ const settleChangedConsent = async (
       if (!consent) return null;
       const { clientId, scopes: consentedScopes } = consent;
       const cap = getMcpGrantPermissionsForScopes(consentedScopes);
+      const permissions = change.chosenGrant
+        ? capMcpGrantPermissions(change.chosenGrant.permissions, cap)
+        : cap;
+      // A chosen grant the scopes leave nothing of would connect a client that can do nothing (spec story
+      // 17): refused, not stored. The consent screen's matrix never offers one; a request made by hand can,
+      // since the request's own check (`requireValidMcpGrantOnConsentBeforeHandler`) runs before the cap.
+      if (change.chosenGrant && isMcpGrantEmpty(permissions)) {
+        return refuseConsent(tx, { userId, clientId, change }, { status: "beyond_scopes" });
+      }
       const savedGrant = grantClientId
-        ? await writeMcpGrant(tx, {
-            userId,
-            clientId,
-            before,
-            permissions: change.chosenGrant
-              ? capMcpGrantPermissions(change.chosenGrant.permissions, cap)
-              : cap,
-            access,
-          })
+        ? await writeMcpGrant(tx, { userId, clientId, before, permissions, access })
         : null;
       return {
         status: "settled",

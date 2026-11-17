@@ -1,11 +1,12 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import type { TMcpGrantAccess } from "@/modules/mcp/grant";
+import { MAX_MCP_GRANT_SELECTIONS, type TMcpGrantAccess } from "@/modules/mcp/grant";
 import {
   type TMcpGrantAccessDraft,
+  type TMcpGrantAccessHint,
   type TMcpGrantAccessOptions,
-  toMcpGrantAccessSelection,
+  getMcpGrantAccessHint,
 } from "@/modules/mcp/grant-access";
 import { MultiSelect } from "@/modules/ui/components/multi-select";
 import { TabToggle } from "@/modules/ui/components/tab-toggle";
@@ -44,10 +45,12 @@ export const McpGrantAccessSelector = ({
     organizations: t("auth.oauth.access.organizations_hint"),
     workspaces: t("auth.oauth.access.workspaces_hint"),
   };
-  const nothingPicked = toMcpGrantAccessSelection(value) === null;
-  const noOptions =
-    (value.access === "organizations" && options.organizations.length === 0) ||
-    (value.access === "workspaces" && options.workspaces.length === 0);
+  const hint = getMcpGrantAccessHint(value, options);
+  const hintText: Record<TMcpGrantAccessHint, string> = {
+    no_options: t("auth.oauth.access.no_options"),
+    none_picked: t("auth.oauth.access.none_picked_hint"),
+    too_many_picked: t("auth.oauth.access.too_many_picked_hint", { count: MAX_MCP_GRANT_SELECTIONS }),
+  };
 
   return (
     <section aria-labelledby={`${id}-title`}>
@@ -97,11 +100,7 @@ export const McpGrantAccessSelector = ({
           />
         </div>
       )}
-      {nothingPicked && (
-        <output className="mt-2 block text-sm text-slate-600">
-          {noOptions ? t("auth.oauth.access.no_options") : t("auth.oauth.access.none_picked_hint")}
-        </output>
-      )}
+      {hint && <output className="mt-2 block text-sm text-slate-600">{hintText[hint]}</output>}
     </section>
   );
 };

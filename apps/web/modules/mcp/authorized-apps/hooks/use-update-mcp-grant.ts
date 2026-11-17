@@ -3,7 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
 import { MCP_GRANT_CHANGED_CODE } from "@/modules/auth/lib/mcp-grant-consent-errors";
-import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
+import type { TRequestedMcpGrant } from "@/modules/mcp/grant";
 import { updateMcpGrant } from "../lib/api-client";
 import { authorizedMcpClientKeys } from "../lib/query";
 
@@ -20,12 +20,8 @@ export const useUpdateMcpGrant = () => {
   const queryClient = useQueryClient();
   const refreshList = () => queryClient.invalidateQueries({ queryKey: authorizedMcpClientKeys.list() });
   return useMutation({
-    mutationFn: (variables: {
-      clientId: string;
-      permissions: TMcpGrantPermissions;
-      access?: TMcpGrantAccessSelection;
-      expectedUpdatedAt: string;
-    }) => updateMcpGrant(variables),
+    mutationFn: (variables: { clientId: string; grant: TRequestedMcpGrant; expectedUpdatedAt: string }) =>
+      updateMcpGrant(variables),
     onSuccess: refreshList,
     onError: async (error) => {
       if (isMcpGrantChangedError(error)) await refreshList();

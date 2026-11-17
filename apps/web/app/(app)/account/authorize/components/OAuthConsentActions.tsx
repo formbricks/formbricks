@@ -4,8 +4,8 @@ import { useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { authClient } from "@/modules/auth/lib/auth-client";
-import { getConsentErrorMessage } from "@/modules/auth/lib/mcp-grant-consent-errors";
-import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
+import { getGrantErrorMessage } from "@/modules/auth/lib/mcp-grant-consent-errors";
+import type { TRequestedMcpGrant } from "@/modules/mcp/grant";
 import { toMcpGrantAccessRequest } from "@/modules/mcp/grant-access";
 import { Button } from "@/modules/ui/components/button";
 import { resolveConsentRedirectUrl } from "../lib/consent-redirect";
@@ -13,17 +13,15 @@ import { resolveConsentRedirectUrl } from "../lib/consent-redirect";
 interface OAuthConsentActionsProps {
   /** The scopes to grant when narrower than the request (a Dashboard viewer's); all of them otherwise. */
   readonly grantedScope?: string;
-  /** The levels the user chose in the permission matrix, sent with Allow as the connection's grant. */
-  readonly permissions: TMcpGrantPermissions;
-  /** The organization & workspace access chosen with it; `null` while nothing is picked (Allow is off). */
-  readonly access: TMcpGrantAccessSelection | null;
+  /** The grant the user chose in the matrix, sent with Allow as the connection's grant. */
+  readonly grant: TRequestedMcpGrant;
+  /** Whether Allow is off, because the access picks nothing (a selection with no option chosen). */
   readonly isAllowDisabled?: boolean;
 }
 
 export const OAuthConsentActions = ({
   grantedScope,
-  permissions,
-  access,
+  grant,
   isAllowDisabled = false,
 }: OAuthConsentActionsProps) => {
   const { t } = useTranslation();
@@ -43,13 +41,17 @@ export const OAuthConsentActions = ({
           ? {
               accept,
               ...(grantedScope ? { scope: grantedScope } : {}),
-              mcp_grant: { permissions, ...(access ? toMcpGrantAccessRequest(access) : {}) },
+              mcp_grant: {
+                permissions: grant.permissions,
+                ...(grant.access ? toMcpGrantAccessRequest(grant.access) : {}),
+              },
             }
           : { accept },
       });
       if (response.error) {
-        // A refused Allow says why: a pick the user can no longer select, or a grant that couldn't be saved.
-        toast.error(getConsentErrorMessage(response.error, t));
+        // A refused Allow says why: a pick the user can no longer select, a grant that couldn't be saved, or
+        // one the client never asked for. Translated from the refusal's code, never its English detail.
+        toast.error(getGrantErrorMessage(response.error, t) ?? t("auth.oauth.consent_failed"));
         return;
       }
 

@@ -100,6 +100,7 @@
         "summary_organizations": "{count} Organisationen",
         "summary_workspaces": "{count} Workspaces",
         "title": "Zugriff auf Organisationen & Workspaces",
+        "too_many_picked_hint": "Wähle höchstens {count} aus. Um mehr abzudecken, wähle oben einen breiteren Zugriff.",
         "workspaces": "Nur ausgewählte Workspaces",
         "workspaces_hint": "Nur die Workspaces, die Du auswählst. Später erstellte Workspaces bleiben außen vor, bis Du sie hinzufügst."
       },
@@ -174,7 +175,9 @@
         "read_only": "Schreibgeschützt",
         "select_all": "Alle auswählen"
       },
+      "grant_beyond_scopes": "Diese App hat diesen Zugriff nicht angefragt, daher wurde nichts geändert. Lade die Seite neu, um zu sehen, was Du ihr erlauben kannst.",
       "grant_changed_elsewhere": "Der Zugriff dieses MCP-Clients wurde an anderer Stelle geändert. Lade die Seite neu, um die Änderung zu sehen.",
+      "grant_invalid": "Dieser Zugriff kann nicht gespeichert werden. Wähle mindestens eine Berechtigung sowie mindestens eine Organisation oder einen Workspace aus.",
       "grant_update_failed": "Der Zugriff dieser App konnte nicht aktualisiert werden. Bitte versuche es erneut.",
       "grant_updated": "Zugriff aktualisiert.",
       "invalid_oauth_request": "Ungültige OAuth-Anfrage",

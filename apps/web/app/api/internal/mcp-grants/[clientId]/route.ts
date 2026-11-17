@@ -13,17 +13,20 @@ export const PATCH = withV3ApiWrapper({
   schemas: { params: ZMcpGrantPathParams, body: ZMcpGrantUpdateBody },
   action: "updated",
   targetType: "mcpGrant",
-  handler: async ({ authentication, parsedInput, requestId, instance, auditLog }) =>
-    updateMcpGrantOperation({
+  handler: async ({ authentication, parsedInput, requestId, instance, auditLog }) => {
+    const { expectedUpdatedAt, ...requestedGrant } = parsedInput.body;
+    return updateMcpGrantOperation({
       authentication,
       clientId: parsedInput.params.clientId,
-      permissions: parsedInput.body.permissions,
-      access: parsedInput.body.access,
-      expectedUpdatedAt: parsedInput.body.expectedUpdatedAt,
+      requestedGrant: Object.fromEntries(
+        Object.entries(requestedGrant).filter(([, value]) => value !== undefined)
+      ),
+      expectedUpdatedAt: new Date(expectedUpdatedAt),
       requestId,
       instance,
       auditLog,
-    }),
+    });
+  },
 });
 
 /**

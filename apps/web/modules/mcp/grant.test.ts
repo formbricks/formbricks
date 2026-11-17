@@ -1,7 +1,9 @@
 import { describe, expect, test } from "vitest";
 import {
+  MAX_MCP_GRANT_SELECTIONS,
   capMcpGrantPermissions,
   getMcpGrantPermissionsForScopes,
+  isMcpGrantEmpty,
   isMcpGrantWithinCap,
   parseRequestedMcpGrant,
   readMcpGrantAccessSelection,
@@ -101,7 +103,7 @@ describe("parseRequestedMcpGrant", () => {
       {
         permissions: { surveys: "read" },
         access: "workspaces",
-        workspaceIds: Array.from({ length: 501 }, (_, i) => `ws_${i}`),
+        workspaceIds: Array.from({ length: MAX_MCP_GRANT_SELECTIONS + 1 }, (_, i) => `ws_${i}`),
       },
     ],
     ["no permissions field", {}],
@@ -109,6 +111,28 @@ describe("parseRequestedMcpGrant", () => {
     ["null", null],
   ])("refuses %s", (_case, value) => {
     expect(parseRequestedMcpGrant(value)).toBeNull();
+  });
+});
+
+describe("MAX_MCP_GRANT_SELECTIONS", () => {
+  // The consent screen sends the selection through /api/auth, whose body guard refuses a list over 100
+  // entries before any hook reads it; a larger bound here would be unreachable there.
+  test("is the /api/auth per-list bound, and a selection of exactly that many is read", () => {
+    expect(MAX_MCP_GRANT_SELECTIONS).toBe(100);
+    const workspaceIds = Array.from(
+      { length: MAX_MCP_GRANT_SELECTIONS },
+      (_, i) => `ws_${String(i).padStart(3, "0")}`
+    );
+    expect(
+      parseRequestedMcpGrant({ permissions: { surveys: "read" }, access: "workspaces", workspaceIds })
+    ).toEqual({ permissions: { surveys: "read" }, access: { access: "workspaces", workspaceIds } });
+  });
+});
+
+describe("isMcpGrantEmpty", () => {
+  test("is true only when every permission is at No access", () => {
+    expect(isMcpGrantEmpty({})).toBe(true);
+    expect(isMcpGrantEmpty({ workflowRuns: "read" })).toBe(false);
   });
 });
 

@@ -94,7 +94,7 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     expect(mocks.editMcpGrant).toHaveBeenCalledWith({
       userId: USER_ID,
       clientId: CLIENT_ID,
-      permissions: { surveys: "read" },
+      grant: { permissions: { surveys: "read" } },
       expectedUpdatedAt: new Date(OPENED_AT),
       isDashboardViewer: false,
     });
@@ -127,7 +127,9 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
       access: { access: "workspaces", workspaceIds: ["ws_1"] },
     });
     expect(mocks.editMcpGrant).toHaveBeenCalledWith(
-      expect.objectContaining({ access: { access: "workspaces", workspaceIds: ["ws_1"] } })
+      expect.objectContaining({
+        grant: { permissions: { surveys: "read" }, access: { access: "workspaces", workspaceIds: ["ws_1"] } },
+      })
     );
     expect(mocks.queueMcpGrantAudit).toHaveBeenCalledWith(
       expect.objectContaining({ after: stored({ surveys: "read" }, ["ws_1"]) })
@@ -174,7 +176,11 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     const response = await edit({ permissions: { workflows: "write" } });
 
     expect(response.status).toBe(422);
-    expect((await response.json()).code).toBe("mcp_grant_beyond_scopes");
+    expect(await response.json()).toMatchObject({
+      code: "mcp_grant_beyond_scopes",
+      detail: "The grant names access this client didn't ask for.",
+    });
+    expect(mocks.queueAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ status: "failure" }));
   });
 
   test("refuses with 422 an organization or workspace the user can't pick, rather than saving it as none", async () => {
@@ -220,6 +226,8 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ status: "failure" }));
   });
 
+  // Refused by the consent screen's own parser in the operation, so the screen translates the code rather
+  // than showing the server's English detail.
   test.each([
     ["an empty grant, which Revoke is for", { permissions: {} }],
     ["an unknown permission", { permissions: { everything: "write" } }],
@@ -227,6 +235,46 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     ["No access spelled out", { permissions: { surveys: "none" } }],
     ["a selection with nothing picked", { permissions: { surveys: "read" }, access: "workspaces" }],
     ["an unknown access", { permissions: { surveys: "read" }, access: "everything" }],
+  ])("returns 400 mcp_grant_invalid for %s and saves nothing", async (_case, body) => {
+    const response = await edit(body);
+
+    expect(response.status).toBe(400);
+    expect((await response.json()).code).toBe("mcp_grant_invalid");
+    expect(mocks.editMcpGrant).not.toHaveBeenCalled();
+  });
+
+  // Bounded at the boundary (CODING_STANDARDS "Input Limits"), before the parser walks the list.
+  test.each([
+    [
+      "more selections than a grant holds",
+      { workspaceIds: Array.from({ length: 101 }, (_unused, index) => `clws${index.toString()}`) },
+    ],
+    ["an id longer than an id can be", { workspaceIds: ["w".repeat(256)] }],
+  ])("returns 400 for %s, naming the field, and saves nothing", async (_case, selection) => {
+    const response = await edit({ permissions: { surveys: "read" }, access: "workspaces", ...selection });
+
+    expect(response.status).toBe(400);
+    expect(JSON.stringify(await response.json())).toContain("workspaceIds");
+    expect(mocks.editMcpGrant).not.toHaveBeenCalled();
+  });
+
+  test("saves a selection of exactly as many as a grant holds", async () => {
+    const workspaceIds = Array.from(
+      { length: 100 },
+      (_unused, index) => `clws${index.toString().padStart(3, "0")}`
+    );
+
+    const response = await edit({ permissions: { surveys: "read" }, access: "workspaces", workspaceIds });
+
+    expect(response.status).toBe(200);
+    expect(mocks.editMcpGrant).toHaveBeenCalledWith(
+      expect.objectContaining({
+        grant: { permissions: { surveys: "read" }, access: { access: "workspaces", workspaceIds } },
+      })
+    );
+  });
+
+  test.each([
     ["no permissions", {}],
     ["no grant version", { permissions: { surveys: "read" }, expectedUpdatedAt: undefined }],
     [

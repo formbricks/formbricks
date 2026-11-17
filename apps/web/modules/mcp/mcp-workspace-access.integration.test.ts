@@ -297,8 +297,7 @@ const setAccess = async (
   const edited = await editAsOpened({
     userId: setup.userId,
     clientId: setup.clientId,
-    permissions,
-    access,
+    grant: { permissions, access },
     isDashboardViewer: false,
   });
   expect(edited.status).toBe("saved");
@@ -439,8 +438,10 @@ describe("organization & workspace access on MCP calls", () => {
     const edited = await editAsOpened({
       userId: setup.userId,
       clientId: setup.clientId,
-      permissions: READ_ALL,
-      access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+      grant: {
+        permissions: READ_ALL,
+        access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+      },
       isDashboardViewer: false,
     });
     expect(edited.status).toBe("saved");
@@ -469,8 +470,10 @@ describe("organization & workspace access on MCP calls", () => {
         editAsOpened({
           userId: setup.userId,
           clientId: setup.clientId,
-          permissions: READ_ALL,
-          access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+          grant: {
+            permissions: READ_ALL,
+            access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+          },
           isDashboardViewer: false,
         })
       ).rejects.toThrow();
@@ -1034,8 +1037,7 @@ describe("organization & workspace access on MCP calls", () => {
       const edited = await editAsOpened({
         userId: setup.userId,
         clientId: setup.clientId,
-        permissions: READ_ALL,
-        access,
+        grant: { permissions: READ_ALL, access },
         isDashboardViewer: false,
       });
       expect(edited).toEqual({
@@ -1089,8 +1091,10 @@ describe("organization & workspace access on MCP calls", () => {
       const opened = await editAsOpened({
         userId: setup.userId,
         clientId: setup.clientId,
-        permissions: { surveys: "read" },
-        access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+        grant: {
+          permissions: { surveys: "read" },
+          access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+        },
         isDashboardViewer: false,
       });
       expect(opened.status).toBe("saved");
@@ -1109,8 +1113,13 @@ describe("organization & workspace access on MCP calls", () => {
       const resent = await editAsOpened({
         userId: setup.userId,
         clientId: setup.clientId,
-        permissions: READ_ALL,
-        access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId] },
+        grant: {
+          permissions: READ_ALL,
+          access: {
+            access: "workspaces",
+            workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId],
+          },
+        },
         isDashboardViewer: false,
       });
       expect(resent.status).toBe("saved");
@@ -1126,8 +1135,13 @@ describe("organization & workspace access on MCP calls", () => {
       const edited = await editAsOpened({
         userId: setup.userId,
         clientId: setup.clientId,
-        permissions: READ_ALL,
-        access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId] },
+        grant: {
+          permissions: READ_ALL,
+          access: {
+            access: "workspaces",
+            workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId],
+          },
+        },
         isDashboardViewer: false,
       });
 
@@ -1146,8 +1160,10 @@ describe("organization & workspace access on MCP calls", () => {
       const saved = await editAsOpened({
         userId: setup.userId,
         clientId: setup.clientId,
-        permissions: READ_ALL,
-        access: { access: "organizations", organizationIds: [setup.acmeId, setup.globexId] },
+        grant: {
+          permissions: READ_ALL,
+          access: { access: "organizations", organizationIds: [setup.acmeId, setup.globexId] },
+        },
         isDashboardViewer: false,
       });
       expect(saved.status).toBe("saved");

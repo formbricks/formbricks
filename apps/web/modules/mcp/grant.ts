@@ -1,3 +1,4 @@
+import { AUTH_REQUEST_MAX_ENTRIES } from "@/modules/auth/lib/auth-request-bounds";
 import {
   MCP_PERMISSIONS,
   type TMcpAccessLevel,
@@ -63,8 +64,13 @@ export const readMcpGrantAccessSelection = (row: TMcpGrantAccessRow): TMcpGrantA
   }
 };
 
-/** The most organizations or workspaces one grant selects: far above a person's own memberships. */
-export const MAX_MCP_GRANT_SELECTIONS = 500;
+/**
+ * The most organizations or workspaces one grant selects. It is as many as an `/api/auth` request may
+ * carry in one list (`AUTH_REQUEST_MAX_ENTRIES`), because the consent screen sends the selection in the
+ * request body and that guard refuses a longer one before this parser sees it. The two must not drift:
+ * a higher value here would be unreachable on the consent screen.
+ */
+export const MAX_MCP_GRANT_SELECTIONS = AUTH_REQUEST_MAX_ENTRIES;
 
 /** What a consent request or an Edit chose: the permissions, and the access when it names one. */
 export type TRequestedMcpGrant = { permissions: TMcpGrantPermissions; access?: TMcpGrantAccessSelection };
@@ -196,8 +202,8 @@ const readAccess = (value: Record<string, unknown>): TMcpGrantAccessSelection | 
  * `{ permissions: { <permission>: "read" | "write" }, access?, organizationIds? | workspaceIds? }`.
  * Unlike {@link parseMcpGrantPermissions}, which reads a stored row and drops what it doesn't know, this
  * refuses the whole request (`null`) on anything it doesn't expect: an unknown field or permission, a
- * level the permission doesn't offer, a grant that gives nothing, or a selection with nothing picked,
- * none of which the editor sends.
+ * level the permission doesn't offer, a grant that gives nothing, a selection with nothing picked, or one
+ * over {@link MAX_MCP_GRANT_SELECTIONS}, none of which the editor sends.
  */
 export const parseRequestedMcpGrant = (value: unknown): TRequestedMcpGrant | null => {
   if (typeof value !== "object" || value === null || Array.isArray(value)) return null;
@@ -237,6 +243,10 @@ export const capMcpGrantPermissions = (
   }
   return capped;
 };
+
+/** True when the grant gives nothing: Allow and Save are disabled, and a save never stores one. */
+export const isMcpGrantEmpty = (permissions: TMcpGrantPermissions): boolean =>
+  Object.keys(permissions).length === 0;
 
 /**
  * True when no permission in `permissions` goes above `cap`. Authorized apps' Edit refuses a grant that
