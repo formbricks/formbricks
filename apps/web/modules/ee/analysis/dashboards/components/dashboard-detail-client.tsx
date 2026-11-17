@@ -668,8 +668,11 @@ function DashboardDetailView({
     [pathname]
   );
 
+  // Bumped on every personal date pick, so an async step can tell whether one happened while it ran.
+  const dateChoiceGenerationRef = useRef(0);
   const handleDateFilterChange = useCallback(
     (filter: TDashboardDateFilter | null) => {
+      dateChoiceGenerationRef.current += 1;
       // Persist the choice (cookie) so it survives across sessions and seeds the next visit's first
       // fetch, then reflect it in the URL so the view can be shared.
       writeStoredDateFilter(dashboard.id, filter);
@@ -728,8 +731,8 @@ function DashboardDetailView({
   // Once the range the editor picked is the default, they are looking at the default: drop their own pick
   // (cookie and URL) so the selector shows "Default" and a later change to the default reaches them too.
   //
-  // Only if nothing moved while the save ran: the view is still mounted on this dashboard, and the URL's
-  // date is the one the save started from. A date picked meanwhile (back/forward) is the newer choice and
+  // Only if nothing moved while the save ran: the view is still mounted on this dashboard, the URL's
+  // date is the one the save started from, and no personal date was picked in between. A date picked meanwhile (back/forward) is the newer choice and
   // stays, and a viewer who already left is not pulled back here by the URL write.
   const isMountedRef = useRef(true);
   useEffect(() => {
@@ -740,12 +743,17 @@ function DashboardDetailView({
   }, []);
   const handleDefaultDateRangeChange = useCallback(
     async (preset: TDateRangePreset | null) => {
-      const startedAt = { path: window.location.pathname, date: getUrlDateFilterKey(window.location.search) };
+      const startedAt = {
+        path: window.location.pathname,
+        date: getUrlDateFilterKey(window.location.search),
+        generation: dateChoiceGenerationRef.current,
+      };
       const saved = await saveDefaultDateRange(preset);
       const unchanged =
         isMountedRef.current &&
         window.location.pathname === startedAt.path &&
-        getUrlDateFilterKey(window.location.search) === startedAt.date;
+        getUrlDateFilterKey(window.location.search) === startedAt.date &&
+        dateChoiceGenerationRef.current === startedAt.generation;
       if (saved && preset && unchanged) handleDateFilterChange(null);
     },
     [handleDateFilterChange, saveDefaultDateRange]
