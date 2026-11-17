@@ -550,6 +550,7 @@ describe("POST /api/mcp", () => {
       "regenerate_webhook_url",
       "set_sample_payload",
       "send_test_request",
+      "set_expected_response",
       "run_test",
       "list_workspaces",
       "get_workspace_custom_css",
