@@ -71,6 +71,8 @@
       "oauth_generic_error_title": "A bejelentkezés sikertelen",
       "oauth_misconfigured_description": "A személyazonosság-szolgáltatója bejelentkeztette Önt, de ebből a Formbricks-példányból hiányzik az egyszeri bejelentkezés beállításának egy része. Az újbóli próbálkozás nem fog segíteni. Vegye fel a kapcsolatot egy adminisztrátorral.",
       "oauth_misconfigured_title": "Az egyszeri bejelentkezés nincs teljesen beállítva",
+      "oauth_second_factor_unavailable_description": "Az Ön e-mail-címe ellenőrzésre került, azonban ehhez a fiókhoz kétlépcsős hitelesítés tartozik, a jelen Formbricks-példányon pedig az e-mail-címmel és jelszóval történő bejelentkezés ki van kapcsolva, ezért a második lépcsőt itt nem lehet megadni. A művelet befejezéséhez kérjük, jelentkezzen be egy, a fiókhoz már társított egyszeri bejelentkezési (SSO) szolgáltatóval, vagy forduljon a rendszergazdához.",
+      "oauth_second_factor_unavailable_title": "A kétlépcsős bejelentkezés itt nem fejezhető be",
       "oauth_signup_not_allowed_description": "A személyazonosság-szolgáltatója bejelentkeztette Önt, de ez a Formbricks-példány nem úgy van beállítva, hogy ilyen módon új fiókokat hozzon létre. Kérjen meg egy adminisztrátort, hogy hívja meg Önt, majd próbálja meg újra.",
       "oauth_signup_not_allowed_title": "Nem sikerült létrehoznunk a fiókját",
       "please_verify_your_email_to_continue": "Ellenőrizze az e-mail-címét. Küldtünk Önnek egy ellenőrzési hivatkozást.",

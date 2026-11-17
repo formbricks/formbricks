@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE } from "@formbricks/types/errors";
 import { getOAuthErrorVariant } from "./oauth-error";
 
 describe("getOAuthErrorVariant", () => {
@@ -51,5 +52,16 @@ describe("getOAuthErrorVariant", () => {
     "a_code_no_version_of_better_auth_has_ever_emitted",
   ])("falls back to the generic alert for %s", (code) => {
     expect(getOAuthErrorVariant(code)).toBe("generic");
+  });
+
+  /**
+   * ENG-7266. A verified 2FA account on an instance with credential sign-in off has no way to produce
+   * the factor on the login page, and the identity that started recovery is unlinked by definition —
+   * so this must not fall through to `generic` ("try again"), which cannot ever work.
+   */
+  test("names the unmeetable second factor rather than inviting a retry", () => {
+    expect(getOAuthErrorVariant(SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE)).toBe(
+      "second_factor_unavailable"
+    );
   });
 });
