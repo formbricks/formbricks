@@ -78,12 +78,10 @@ test.describe("Workflows", () => {
     if (!workspaceId) throw new Error("Workspace not seeded for the test user");
     await user.login();
 
-    const licensed = await test.step("the instance's license includes Workflows", () =>
-      hasWorkflowsLicense(page.request, workspaceId));
-    // TEMPORARY (ENG-2553): CI's license grants `contacts` but not `workflows`, so every workflow route
-    // answers 403 there. Once it has the flag, replace this skip with `expect(licensed).toBe(true)`, so
-    // a license without Workflows fails the journey instead of hiding it.
-    test.skip(!licensed, "The instance's Enterprise license doesn't include Workflows (403)");
+    await test.step("the instance's license includes Workflows", async () => {
+      // A license without Workflows fails the journey instead of skipping it: CI's license has the flag.
+      expect(await hasWorkflowsLicense(page.request, workspaceId)).toBe(true);
+    });
 
     const workflowId = await test.step("seed a Webhook workflow through API v3", async () => {
       const response = await page.request.post("/api/v3/workflows", {
@@ -94,20 +92,23 @@ test.describe("Workflows", () => {
       return data.id;
     });
 
-    await test.step("a Test run with a pasted payload takes the Then branch", async () => {
+    await test.step("a Test run with a pasted expected payload takes the Then branch", async () => {
       await page.goto(`/workspaces/${workspaceId}/workflows/${workflowId}`);
 
-      // The trigger card on the canvas opens the Webhook trigger panel.
+      // The trigger card on the canvas opens the Webhook trigger panel; its expected payload is what a
+      // Test run sends (ADR 0052), and enabling needs one.
       await page.getByText("Starts when its Webhook Secret URL is called").click();
-      const testPayload = page.getByRole("textbox", { name: "Test payload, JSON editor" });
-      await testPayload.fill(JSON.stringify({ customer: { plan: "enterprise" } }));
+      await page.getByRole("button", { name: "Write or paste the expected payload" }).click();
+      const expectedPayload = page.getByRole("textbox", { name: "Response fields, JSON editor" });
+      await expectedPayload.fill(JSON.stringify({ customer: { plan: "enterprise" } }));
+      await expect(page.getByText(/^Modified: /)).toBeVisible({ timeout: 15_000 });
 
       await page.getByRole("button", { name: "Test run" }).click();
 
       const drawer = page.getByRole("dialog");
       await expect(drawer.getByRole("heading", { name: `Run · ${WORKFLOW_NAME}` })).toContainText("Test");
       await expect(drawer.getByRole("listitem").filter({ hasText: IF_ELSE_LABEL })).toContainText(
-        "customer.plan is enterprise (matched) → Then"
+        /customer\.plan is .enterprise. \(matched\) → Then/
       );
       await expect(drawer.getByRole("listitem").filter({ hasText: EMAIL_LABEL })).toContainText("Would send");
       await page.keyboard.press("Escape");
@@ -155,7 +156,7 @@ test.describe("Workflows", () => {
       await runs.click();
       const drawer = page.getByRole("dialog");
       await expect(drawer.getByRole("listitem").filter({ hasText: IF_ELSE_LABEL })).toContainText(
-        "customer.plan is enterprise (not matched) → Else"
+        /customer\.plan is .enterprise. \(not matched\) → Else/
       );
       await expect(drawer.getByRole("listitem").filter({ hasText: EMAIL_LABEL })).toContainText("Not taken");
     });
