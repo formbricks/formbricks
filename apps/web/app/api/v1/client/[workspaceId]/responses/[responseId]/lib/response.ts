@@ -3,6 +3,7 @@ import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { ResourceNotFoundError, ResponseAlreadyFinishedError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TClientResponseUpdateInput } from "@formbricks/types/responses";
+import { type TResponseNotShown, ZResponseNotShown } from "@formbricks/types/surveys/not-shown";
 import {
   type TLowQualityMark,
   auditLowQualityMark,
@@ -13,6 +14,16 @@ import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
 } from "@/modules/ee/quotas/lib/evaluation-service";
+
+/**
+ * The not-shown record stored on a response (ENG-6936), or `null` when it is unknown. An update that
+ * sends no record keeps this one, so validating that update reads it too (ENG-7332).
+ */
+export const getStoredResponseNotShown = async (responseId: string): Promise<TResponseNotShown | null> => {
+  const row = await prisma.response.findUnique({ where: { id: responseId }, select: { notShown: true } });
+  const parsed = ZResponseNotShown.safeParse(row?.notShown);
+  return parsed.success ? parsed.data : null;
+};
 
 /**
  * `workspaceId` is the workspace the caller authorized; the row lock is scoped to it. `surveyId` is the stored

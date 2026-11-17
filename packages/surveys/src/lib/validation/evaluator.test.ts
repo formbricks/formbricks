@@ -1038,6 +1038,45 @@ describe("validateElementResponse", () => {
       expect(validateElementResponse(element, ["Price"], "en").valid).toBe(false);
     });
 
+    test("answers naming a Hidden row or choice by id are left out too, as API callers may send them", () => {
+      const matrixAnswer = { flights: "great", hotel: "okay", visa: "okay" };
+      expect(validateElementResponse(tripMatrix({ hidden: true }), matrixAnswer, "en").valid).toBe(true);
+
+      const ranking = {
+        id: "priorities",
+        type: TSurveyElementTypeEnum.Ranking,
+        headline: { default: "Rank what matters most" },
+        required: true,
+        shuffleOption: "none",
+        choices: [
+          { id: "price", label: { default: "Price" } },
+          { id: "comfort", label: { default: "Comfort" } },
+          { id: "visa", label: { default: "Visa Package" }, hidden: true },
+        ],
+        validation: { rules: [{ id: "all", type: "rankAll", params: {} }] },
+      } as unknown as TSurveyRankingElement;
+      expect(validateElementResponse(ranking, ["price", "comfort", "visa"], "en").valid).toBe(true);
+    });
+
+    test("selection rules count only the options offered, as the survey does", () => {
+      const element = {
+        id: "extras",
+        type: TSurveyElementTypeEnum.MultipleChoiceMulti,
+        headline: { default: "Which extras did you use?" },
+        required: false,
+        shuffleOption: "none",
+        choices: [
+          { id: "lounge", label: { default: "Lounge" } },
+          { id: "spa", label: { default: "Spa" } },
+          { id: "visa", label: { default: "Visa Package" }, hidden: true },
+        ],
+        validation: { rules: [{ id: "min", type: "minSelections", params: { min: 2 } }] },
+      } as unknown as TSurveyElement;
+
+      expect(validateElementResponse(element, ["Lounge", "Visa Package"], "en").valid).toBe(false);
+      expect(validateElementResponse(element, ["Lounge", "Spa"], "en").valid).toBe(true);
+    });
+
     test("an answer naming a Hidden choice stays a known choice", () => {
       // A respondent who picked "Visa Package" before it was hidden keeps a valid answer.
       const element = {

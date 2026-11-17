@@ -555,6 +555,36 @@ const getOptionsNotOffered = (
 };
 
 /**
+ * The answer without what it says about options, rows and columns the respondent was not offered. The
+ * survey names them by label, which `dropOptionsFromAnswer` removes; an API caller may name them by id,
+ * which the choice check accepts too, so ids go as well.
+ */
+const dropNotOfferedAnswers = (
+  element: TSurveyElement,
+  notOffered: TElementOptionsNotShown,
+  value: TResponseDataValue,
+  languageCode: string
+): TResponseDataValue => {
+  const withoutLabels = dropOptionsFromAnswer(element, notOffered, value, languageCode);
+  const choiceIds = new Set(notOffered.choices ?? []);
+  const rowIds = new Set(notOffered.rows ?? []);
+  const columnIds = new Set(notOffered.columns ?? []);
+
+  if (typeof withoutLabels === "string") return choiceIds.has(withoutLabels) ? "" : withoutLabels;
+  if (Array.isArray(withoutLabels)) return withoutLabels.filter((entry) => !choiceIds.has(entry));
+  const isMatrixAnswer =
+    typeof withoutLabels === "object" && withoutLabels !== null && !Array.isArray(withoutLabels);
+  if (element.type === TSurveyElementTypeEnum.Matrix && isMatrixAnswer) {
+    return Object.fromEntries(
+      Object.entries(withoutLabels).filter(
+        ([row, column]) => !rowIds.has(row) && !(typeof column === "string" && columnIds.has(column))
+      )
+    ) as TResponseDataValue;
+  }
+  return withoutLabels;
+};
+
+/**
  * Single entrypoint for validating an element's response value.
  * Called by block-conditional.tsx during form submission.
  *
@@ -609,7 +639,7 @@ export const validateElementResponse = (
   const hasNotOffered = Object.keys(notOffered).length > 0;
   const offeredElement = hasNotOffered ? withOptionsShown(element, notOffered) : element;
   const offeredValue = hasNotOffered
-    ? dropOptionsFromAnswer(element, notOffered, value, languageCode)
+    ? dropNotOfferedAnswers(element, notOffered, value, languageCode)
     : value;
 
   // Get validation rules
