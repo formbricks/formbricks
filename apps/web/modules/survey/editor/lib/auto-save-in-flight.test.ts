@@ -11,12 +11,11 @@ const deferred = () => {
   return { promise, resolve, reject };
 };
 
-/** Whether `promise` has settled once the microtasks queued so far have run. */
+/** Whether `promise` has settled once every microtask queued so far, and those they queue, has run. */
 const isSettled = async (promise: Promise<unknown>) => {
   let settled = false;
   void promise.then(() => (settled = true));
-  await Promise.resolve();
-  await Promise.resolve();
+  await new Promise((resolve) => setTimeout(resolve, 0));
   return settled;
 };
 
@@ -47,7 +46,19 @@ describe("createAutoSaveInFlight", () => {
     await expect(inFlight.settled()).resolves.toBeUndefined();
   });
 
-  test("follows the newest tick", async () => {
+  test("keeps waiting for a slow tick after a later tick skipped and resolved at once", async () => {
+    // The request outlives the 10 s interval; the next tick sees one in flight and returns straight away.
+    const inFlight = createAutoSaveInFlight();
+    const slow = deferred();
+    inFlight.track(slow.promise);
+    inFlight.track(Promise.resolve());
+
+    expect(await isSettled(inFlight.settled())).toBe(false);
+    slow.resolve();
+    expect(await isSettled(inFlight.settled())).toBe(true);
+  });
+
+  test("waits for a later tick too", async () => {
     const inFlight = createAutoSaveInFlight();
     const first = deferred();
     const second = deferred();
