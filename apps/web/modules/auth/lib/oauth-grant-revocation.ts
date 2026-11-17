@@ -19,12 +19,15 @@ import {
   MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS,
   type TStoredMcpGrant,
   applyMcpGrantNarrowing,
+  deleteMcpGrants,
   getMcpGrant,
   hasMcpGrant,
   lockMcpGrant,
   lockUserForMcpGrantWrite,
   projectMcpGrants,
   queueMcpGrantAudit,
+  queueMcpGrantDeletionsAudit,
+  removeDeletedMcpGrants,
   resolveMcpGrantNarrowing,
   shareLockMcpGrant,
   writeMcpGrant,
@@ -358,8 +361,13 @@ export const revokeTokensBeyondConsentAfterHandler = async (ctx: AuthHookContext
   if (ended.status !== "settled") return refuseConsentRequest(ended, change, ids);
 
   ids.clientId = ended.clientId;
-  const { savedGrant, refreshTokensDeleted, accessTokensRevoked } = ended;
+  const { savedGrant, endedGrants, refreshTokensDeleted, accessTokensRevoked } = ended;
   if (savedGrant) await applySavedGrant(userId, savedGrant);
+  if (endedGrants.length > 0) {
+    // As Revoke does once its delete has committed: the relationships go, best-effort, and it is audited.
+    await removeDeletedMcpGrants(endedGrants);
+    await queueMcpGrantDeletionsAudit({ actorUserId: userId, grants: endedGrants });
+  }
   if (refreshTokensDeleted + accessTokensRevoked === 0) return;
   logger.info(
     { ...ids, refreshTokensDeleted, accessTokensRevoked },
@@ -582,6 +590,8 @@ type TSettledConsent =
       status: "settled";
       clientId: string;
       savedGrant: TSavedMcpGrant | null;
+      /** The grant an approval that asked for no MCP scope ended: removed and audited after the commit. */
+      endedGrants: TStoredMcpGrant[];
     } & TTokensBeyondConsent);
 
 /**
@@ -629,13 +639,20 @@ const applySavedGrant = async (userId: string, savedGrant: TSavedMcpGrant): Prom
 
 /**
  * The consent hook's transaction. The workspaces SpiceDB lets the user select are looked up first, before
- * the transaction takes any lock. For an approval, the grant comes first: its row is locked `FOR UPDATE`,
- * the chosen access is resolved, and what a narrowing takes away is deleted from SpiceDB, all before any
- * consent row is locked, so no SpiceDB call runs while the consent rows are held. A selection the user
- * can't make puts the consent back from the snapshot in this transaction, and changes nothing else. Then
- * the consent rows are settled, the grant written while they are locked (a revoke or a refresh check
- * racing the approval sees both or neither), and the tokens beyond the consent ended. `null` when there is
- * nothing to settle: a `skipConsent` client, or no consent row.
+ * the transaction takes any lock. For an approval, the grant comes first: its row is locked `FOR UPDATE`
+ * and the chosen access resolved; a selection the user can't make puts the consent back from the snapshot
+ * in this transaction and changes nothing else. Then the consent rows are settled and the cap checked, and
+ * only once nothing can refuse the approval is what a narrowing takes away deleted from SpiceDB, the last
+ * step before the grant is written (or ended, for an approval that asked for no MCP scope) while the
+ * consent rows are locked: a revoke or a refresh check racing the approval sees both or neither. The
+ * tokens beyond the consent are ended last. `null` when there is nothing to settle: a `skipConsent`
+ * client, or no consent row.
+ *
+ * The trade-off of deleting after the checks: the SpiceDB call runs while the consent rows are held, so
+ * a path that locks them without the grant row (`update-consent`, the refresh check of a token with no MCP
+ * scope) can wait on its retries: the 15 seconds `MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS` allows for them.
+ * Every other path takes the grant row first, which this transaction holds from the start anyway. Deleting
+ * before the checks instead could commit a refusal over relationships already removed.
  */
 const settleChangedConsent = async (
   userId: string,
@@ -693,8 +710,14 @@ const settleChangedConsent = async (
         return refuseConsent(tx, { userId, clientId, change }, { status: "beyond_scopes" });
       }
       // A client that asked for no MCP scope (`openid offline_access`) gets no grant: it could do nothing
-      // with one, Authorized apps lists it with Revoke alone, and its refresh needs none.
+      // with one, Authorized apps lists it with Revoke alone, and its refresh needs none. One that had a
+      // grant loses it, as Revoke would end it: a grant left in place would keep MCP access and SpiceDB
+      // relationships that no consent backs, and Authorized apps would show and edit them.
       const writesGrant = grantClientId !== null && !isMcpGrantEmpty(permissions);
+      const endedGrants =
+        grantClientId !== null && before !== null && !writesGrant
+          ? await deleteMcpGrants(tx, { userId, clientId: grantClientId })
+          : [];
       if (writesGrant && access) await applyMcpGrantNarrowing(before, access);
       const savedGrant = writesGrant
         ? await writeMcpGrant(tx, { userId, clientId, before, permissions, access })
@@ -703,6 +726,7 @@ const settleChangedConsent = async (
         status: "settled",
         clientId,
         savedGrant,
+        endedGrants,
         ...(await endTokensBeyondScopes(tx, { userId, clientId, consentedScopes })),
       };
     },

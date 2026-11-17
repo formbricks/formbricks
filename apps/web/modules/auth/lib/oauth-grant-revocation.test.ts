@@ -27,7 +27,7 @@ import {
   revokeTokensBeyondConsentAfterHandler,
   snapshotConsentBeforeApprovalHandler,
 } from "./oauth-grant-revocation";
-import { markOAuthRevocation } from "./oauth-revocation-marker";
+import { markOAuthRevocation, readOAuthRevocationTime } from "./oauth-revocation-marker";
 
 /**
  * The decisions each hook makes, against a mocked Prisma: refuse or let through, which consent rows it
@@ -100,8 +100,17 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
-vi.mock("./mcp-oauth-provider-options", () => ({ MCP_OAUTH_REFRESH_TOKEN_PREFIX: "fbor_" }));
-vi.mock("./oauth-revocation-marker", () => ({ markOAuthRevocation: vi.fn() }));
+vi.mock("./mcp-oauth-provider-options", () => ({
+  MCP_OAUTH_CODE_EXPIRES_IN_SECONDS: 600,
+  MCP_OAUTH_REFRESH_TOKEN_PREFIX: "fbor_",
+}));
+vi.mock("./oauth-revocation-marker", async (importOriginal) => ({
+  // The skew rule is the real one; the mark itself is a test's to set.
+  isIssuedBeforeRevocation: (await importOriginal<typeof import("./oauth-revocation-marker")>())
+    .isIssuedBeforeRevocation,
+  markOAuthRevocation: vi.fn(),
+  readOAuthRevocationTime: vi.fn(async () => null),
+}));
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({ queueAuditEventBackground: vi.fn() }));
 vi.mock("@/lib/authzed/mcp-grant", () => ({
   // The reconciler's lock-hold bound, which the save and Revoke timeouts allow for.
@@ -383,6 +392,7 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
     authorizationCodeId: "code-1" as string | null,
     rotatedAt: new Date("2026-10-08T10:00:00Z"),
     sessionId: "session-1",
+    createdAt: new Date("2026-10-08T10:00:00Z"),
     client: { skipConsent },
   });
   /** Consent rows newest first, each a second older than the one before. */

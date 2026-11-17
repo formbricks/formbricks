@@ -2,7 +2,15 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { callMcpTool, serveJwksFromAuthHandler, succeeded, toolText } from "@/integration/mcp-client";
-import { authorize, consent, createUser, grant, refresh, registerClient, signIn } from "@/integration/oauth-flow";
+import {
+  authorize,
+  consent,
+  createUser,
+  grant,
+  refresh,
+  registerClient,
+  signIn,
+} from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
@@ -267,6 +275,28 @@ describe("Allow on the consent screen", () => {
     expect(await prisma.oauthConsent.count({ where: { userId: setup.userId } })).toBe(1);
     const refreshed = await refresh(setup.clientId, tokens.refresh_token as string);
     expect(refreshed.status, JSON.stringify(refreshed.body)).toBe(200);
+  });
+
+  // A re-approval for no MCP scope leaves no consent that backs the old grant's access: the grant ends as
+  // Revoke would end it, so Authorized apps can't show or edit access nothing backs.
+  test("ends the grant of a client re-approved for no MCP scope, and audits it", async () => {
+    const { access_token } = await grant(setup.cookie, setup.clientId, EVERYTHING, {
+      mcpGrant: { permissions: { surveys: "read" }, access: "workspaces", workspaceIds: [setup.workspaceId] },
+    });
+    const grantId = (await getMcpGrant(setup.userId, setup.clientId))?.id;
+    expect(grantId).toBeDefined();
+    vi.mocked(queueAuditEventBackground).mockClear();
+
+    await grant(setup.cookie, setup.clientId, "openid offline_access", { prompt: "consent" });
+
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+    expect(await prisma.mcpGrantWorkspace.count({ where: { grantId } })).toBe(0);
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({ action: "deleted", targetType: "mcpGrant", targetId: grantId })
+    );
+    // The earlier token named that grant; it is refused now.
+    const refused = await listSurveys(access_token, setup);
+    expect(succeeded(refused)).toBe(false);
   });
 
   test("Deny ignores the grant and writes nothing", async () => {
