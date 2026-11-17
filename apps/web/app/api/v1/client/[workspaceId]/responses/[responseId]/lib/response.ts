@@ -1,6 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
-import { ResourceNotFoundError, ResponseAlreadyFinishedError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ResponseAlreadyFinishedError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
 import { TClientResponseUpdateInput } from "@formbricks/types/responses";
 import { type TResponseNotShown, ZResponseNotShown } from "@formbricks/types/surveys/not-shown";
@@ -17,12 +17,15 @@ import {
 
 /**
  * The not-shown record stored on a response (ENG-6936), or `null` when it is unknown. An update that
- * sends no record keeps this one, so validating that update reads it too (ENG-7332).
+ * sends no record keeps this one, so validating that update reads it too (ENG-7332). A stored record
+ * that does not parse is a server fault, not an unknown record: it throws.
  */
 export const getStoredResponseNotShown = async (responseId: string): Promise<TResponseNotShown | null> => {
   const row = await prisma.response.findUnique({ where: { id: responseId }, select: { notShown: true } });
-  const parsed = ZResponseNotShown.safeParse(row?.notShown);
-  return parsed.success ? parsed.data : null;
+  if (row?.notShown == null) return null;
+  const parsed = ZResponseNotShown.safeParse(row.notShown);
+  if (!parsed.success) throw new DatabaseError("The response's stored not-shown record is invalid");
+  return parsed.data;
 };
 
 /**

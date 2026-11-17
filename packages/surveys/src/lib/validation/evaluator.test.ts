@@ -1058,6 +1058,37 @@ describe("validateElementResponse", () => {
       expect(validateElementResponse(ranking, ["price", "comfort", "visa"], "en").valid).toBe(true);
     });
 
+    test("a required ranking or matrix answered only with what it does not offer reads as unanswered", () => {
+      const ranking = {
+        id: "priorities",
+        type: TSurveyElementTypeEnum.Ranking,
+        headline: { default: "Rank what matters most" },
+        required: true,
+        shuffleOption: "none",
+        choices: [
+          { id: "price", label: { default: "Price" } },
+          { id: "comfort", label: { default: "Comfort" } },
+          { id: "visa", label: { default: "Visa Package" }, hidden: true },
+        ],
+        validation: { rules: [{ id: "all", type: "rankAll", params: {} }] },
+      } as unknown as TSurveyRankingElement;
+
+      for (const answer of [["visa"], ["Visa Package"]]) {
+        const result = validateElementResponse(ranking, answer, "en");
+        expect(result.errors.map((error) => error.ruleId)).toEqual(["required"]);
+      }
+      const matrixResult = validateElementResponse(
+        tripMatrix({ hidden: true }),
+        { "Visa Package": "Okay" },
+        "en"
+      );
+      expect(matrixResult.errors.map((error) => error.ruleId)).toContain("required");
+
+      // Not required: an answer with nothing offered in it is no answer, which is allowed.
+      const optional = { ...ranking, required: false } as TSurveyRankingElement;
+      expect(validateElementResponse(optional, ["visa"], "en").valid).toBe(true);
+    });
+
     test("selection rules count only the options offered, as the survey does", () => {
       const element = {
         id: "extras",

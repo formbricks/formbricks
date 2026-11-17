@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { ResourceNotFoundError, ResponseAlreadyFinishedError } from "@formbricks/types/errors";
+import { DatabaseError, ResourceNotFoundError, ResponseAlreadyFinishedError } from "@formbricks/types/errors";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import { TResponse } from "@formbricks/types/responses";
 import { lockResponseForUpdate, updateResponse } from "@/lib/response/service";
@@ -239,11 +239,16 @@ describe("getStoredResponseNotShown", () => {
 
   test.each([
     ["no record (a response from before 6.2)", null],
-    ["a record that does not parse", { rows: "visa" }],
     ["no response", undefined],
   ])("returns null for %s", async (_case, notShown) => {
     findStored(notShown);
 
     await expect(getStoredResponseNotShown("response123")).resolves.toBeNull();
+  });
+
+  test("throws a server fault for a stored record that does not parse", async () => {
+    findStored({ rows: "visa" });
+
+    await expect(getStoredResponseNotShown("response123")).rejects.toThrow(DatabaseError);
   });
 });

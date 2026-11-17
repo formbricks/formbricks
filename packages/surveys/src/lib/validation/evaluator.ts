@@ -554,6 +554,12 @@ const getOptionsNotOffered = (
   return notOffered;
 };
 
+/** Question types whose answer covers every item they offer: a ranking ranks, a matrix rates each row. */
+const RANKS_OR_RATES_EVERY_ITEM: ReadonlySet<string> = new Set([
+  TSurveyElementTypeEnum.Ranking,
+  TSurveyElementTypeEnum.Matrix,
+]);
+
 /**
  * The answer without what it says about options, rows and columns the respondent was not offered. The
  * survey names them by label, which `dropOptionsFromAnswer` removes; an API caller may name them by id,
@@ -641,6 +647,14 @@ export const validateElementResponse = (
   const offeredValue = hasNotOffered
     ? dropNotOfferedAnswers(element, notOffered, value, languageCode)
     : value;
+
+  // A required ranking or matrix that ranks or rates only what it does not offer answers none of what
+  // it does: it reads as unanswered, where the rules alone would skip the emptied answer.
+  const answersOnlyNotOffered =
+    hasNotOffered && !isEmpty(value) && isEmpty(offeredValue) && RANKS_OR_RATES_EVERY_ITEM.has(element.type);
+  if (element.required && !requiredError && answersOnlyNotOffered) {
+    errors.push(createRequiredError(t));
+  }
 
   // Get validation rules
   const validation = (
