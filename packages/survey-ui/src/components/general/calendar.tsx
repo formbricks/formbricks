@@ -81,21 +81,24 @@ function Calendar({
     return locale;
   }, [locale]);
 
+  // Read the clock once, not on every render: the dropdown range below is centred on this year.
+  const [currentYear] = React.useState(() => new Date().getFullYear());
+
   const resolvedStartMonth = React.useMemo(() => {
     if (startMonth) return startMonth;
     if (captionLayout === "dropdown") {
-      return new Date(new Date().getFullYear() - 100, 0);
+      return new Date(currentYear - 100, 0);
     }
     return undefined;
-  }, [startMonth, captionLayout]);
+  }, [startMonth, captionLayout, currentYear]);
 
   const resolvedEndMonth = React.useMemo(() => {
     if (endMonth) return endMonth;
     if (captionLayout === "dropdown") {
-      return new Date(new Date().getFullYear() + 100, 11);
+      return new Date(currentYear + 100, 11);
     }
     return undefined;
-  }, [endMonth, captionLayout]);
+  }, [endMonth, captionLayout, currentYear]);
 
   return (
     <DayPicker

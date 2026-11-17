@@ -42,8 +42,8 @@ catalog:
   # @preact/preset-vite for packages/surveys — caps at 7.x. Moving the repo to Vite 8
   # is its own migration, tracked separately; see ENG-1689's follow-ups.
   # Note: the workspace root declares `vite` alongside `vitest`. Without it, the root's vitest
-  # (and `@vitest/eslint-plugin`'s optional `vitest` peer, and packages/types' vitest) resolved
-  # their vite peer to the newest 8.x instead of this catalog's 7.3.5.
+  # (and packages/types' vitest) resolved their vite peer to the newest 8.x instead of this
+  # catalog's 7.3.5.
   vite: 7.3.7
   vitest: 4.1.12
   "@vitest/coverage-v8": 4.1.12
@@ -67,10 +67,6 @@ catalog:
   "@trivago/prettier-plugin-sort-imports": 6.0.2
   prettier-plugin-sort-json: 4.2.0
   prettier-plugin-tailwindcss: 0.7.4
-  "@eslint/js": 9.39.5
-  globals: 16.5.0
-  typescript-eslint: 8.63.0
-  eslint-plugin-react-hooks: 7.1.1
   # --- types ---
   "@types/js-yaml": 4.0.9
   "@types/node": 25.4.0
@@ -495,7 +491,7 @@ overrides:
   brace-expansion@2: 2.1.7
   # load-bearing: @sentry/nextjs (runtime, apps/web `dependencies`, via @fastify/otel>@sentry/node) and
   # react-email (runtime, @formbricks/email `dependencies`) resolve the vulnerable 5.x line, alongside
-  # vite-plugin-dts, typescript-eslint and storybook (dev).
+  # vite-plugin-dts and storybook (dev).
   brace-expansion@5: 5.0.12
   # === Closed by ENG-2343 (kept as a record, like the section above) ===
   # GHSA-p2fr-6hmx-4528 (@better-auth/oauth-provider RFC 8707 resource-indicator confusion) was carried

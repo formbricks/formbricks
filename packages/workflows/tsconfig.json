@@ -3,7 +3,8 @@
     "module": "es2020",
     "moduleResolution": "bundler",
     "outDir": "dist",
-    "rootDir": "."
+    "rootDir": ".",
+    "types": ["node"]
   },
   "exclude": ["node_modules", "dist"],
   "extends": "@formbricks/config-typescript/js-library.json",

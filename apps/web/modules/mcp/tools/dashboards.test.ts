@@ -596,7 +596,7 @@ describe("chart and dashboard MCP tools", () => {
     const tools = createToolServer();
     const accepts = (name: string, input: unknown) =>
       (
-        tools.get(name)?.config.inputSchema as { safeParse: (value: unknown) => { success: boolean } }
+        tools.get(name)!.config.inputSchema as { safeParse: (value: unknown) => { success: boolean } }
       ).safeParse(input).success;
     const layout = { x: 0, y: 0, w: 6, h: 4 };
     const widgets = (ids: string[]) => ids.map((widgetId) => ({ widgetId, layout }));

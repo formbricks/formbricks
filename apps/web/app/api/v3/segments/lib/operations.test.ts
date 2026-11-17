@@ -96,7 +96,7 @@ describe("listV3Segments", () => {
     expect(args?.where).toEqual(where);
     expect(args?.orderBy).toEqual([{ updatedAt: "desc" }, { id: "desc" }]);
     expect(args?.take).toBe(2);
-    expect((args?.select as { surveys: { where: unknown } }).surveys.where).toBe(visibleSurveyWhere);
+    expect((args!.select as { surveys: { where: unknown } }).surveys.where).toBe(visibleSurveyWhere);
     expect(resolveV3VisibleSurveyWhere).toHaveBeenCalledWith(null, organizationId);
     expect(prisma.segment.count).toHaveBeenCalledWith({ where });
   });
