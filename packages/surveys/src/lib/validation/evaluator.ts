@@ -648,12 +648,12 @@ export const validateElementResponse = (
     ? dropNotOfferedAnswers(element, notOffered, value, languageCode)
     : value;
 
-  // A required ranking or matrix that ranks or rates only what it does not offer answers none of what
-  // it does: it reads as unanswered, where the rules alone would skip the emptied answer.
-  const answersOnlyNotOffered =
-    hasNotOffered && !isEmpty(value) && isEmpty(offeredValue) && RANKS_OR_RATES_EVERY_ITEM.has(element.type);
-  if (element.required && !requiredError && answersOnlyNotOffered) {
-    errors.push(createRequiredError(t));
+  // A required ranking or matrix must rank or rate something it offers. The required check above reads
+  // the full answer, so it runs again on the offered one: an answer naming only what the question does
+  // not offer reads as unanswered, where the rules alone would skip it once emptied.
+  if (!requiredError && hasNotOffered && RANKS_OR_RATES_EVERY_ITEM.has(element.type)) {
+    const offeredRequiredError = checkRequiredField(offeredElement, offeredValue, t);
+    if (offeredRequiredError) errors.push(offeredRequiredError);
   }
 
   // Get validation rules

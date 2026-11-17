@@ -1077,12 +1077,21 @@ describe("validateElementResponse", () => {
         const result = validateElementResponse(ranking, answer, "en");
         expect(result.errors.map((error) => error.ruleId)).toEqual(["required"]);
       }
-      const matrixResult = validateElementResponse(
-        tripMatrix({ hidden: true }),
+      const hiddenOnly: Record<string, string>[] = [
         { "Visa Package": "Okay" },
+        { Flights: "", "Visa Package": "Okay" },
+      ];
+      for (const answer of hiddenOnly) {
+        const matrixResult = validateElementResponse(tripMatrix({ hidden: true }), answer, "en");
+        expect(matrixResult.errors.map((error) => error.ruleId)).toContain("required");
+      }
+      // One shown row rated is an answer; "Answer all rows" is the rule that asks for the rest.
+      const oneShownRow = validateElementResponse(
+        tripMatrix({ hidden: true }),
+        { Flights: "Great", "Visa Package": "Okay" },
         "en"
       );
-      expect(matrixResult.errors.map((error) => error.ruleId)).toContain("required");
+      expect(oneShownRow.errors.map((error) => error.ruleId)).toEqual(["all"]);
 
       // Not required: an answer with nothing offered in it is no answer, which is allowed.
       const optional = { ...ranking, required: false } as TSurveyRankingElement;
