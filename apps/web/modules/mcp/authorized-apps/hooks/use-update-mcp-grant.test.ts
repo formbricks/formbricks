@@ -75,6 +75,30 @@ describe("useUpdateMcpGrant", () => {
     });
   });
 
+  // The client gives up after 15 s; the server, waiting behind a reconciling pass, can still commit.
+  test("refreshes the shown list when the save never answers, which the server may still have committed", async () => {
+    let listReads = 0;
+    vi.mocked(global.fetch).mockImplementation(async (_url, init) => {
+      if (init?.method === "PATCH") throw new TypeError("Failed to fetch");
+      listReads += 1;
+      return json({ data: { isDashboardViewer: false, clients: [{ clientId: "client_a" }] } });
+    });
+    const queryClient = newQueryClient();
+
+    const { result } = renderHook(() => ({ list: useAuthorizedMcpClients(), update: useUpdateMcpGrant() }), {
+      wrapper: wrapper(queryClient),
+    });
+    await waitFor(() => expect(result.current.list.data?.clients).toHaveLength(1));
+    result.current.update.mutate({
+      clientId: "client_a",
+      grant: { permissions: { surveys: "read" } },
+      expectedUpdatedAt: OPENED_AT,
+    });
+
+    await waitFor(() => expect(result.current.update.isError).toBe(true));
+    await waitFor(() => expect(listReads).toBe(2));
+  });
+
   // Saved from another tab since Edit opened: the save is refused, and the list shows what that tab saved.
   test("refreshes the shown list when the grant changed elsewhere, and says so", async () => {
     const lists = [
@@ -107,13 +131,14 @@ describe("useUpdateMcpGrant", () => {
     );
   });
 
-  // The hook refreshes the shown list on a refusal that means Edit opened on something since changed,
-  // and leaves it alone on a save that just failed (Edit stays open to retry).
+  // The hook refreshes the shown list whenever a save fails: a refusal means Edit opened on something
+  // since changed, and a failure may be a save the server still committed after the client gave up (15 s).
+  // Edit keeps its draft and the version it opened across the refetch, so a retry stays possible.
   test.each([
-    ["a 409, the grant changed elsewhere", 409, "mcp_grant_changed", true],
-    ["a 422, the client's scopes narrowed", 422, "mcp_grant_beyond_scopes", true],
-    ["a 500, the save failed", 500, "mcp_grant_not_saved", false],
-  ])("on %s, refreshes the list: %s", async (_case, status, code, refreshes) => {
+    ["a 409, the grant changed elsewhere", 409, "mcp_grant_changed"],
+    ["a 422, the client's scopes narrowed", 422, "mcp_grant_beyond_scopes"],
+    ["a 500, the save failed", 500, "mcp_grant_not_saved"],
+  ])("on %s, refreshes the list", async (_case, status, code) => {
     let listReads = 0;
     vi.mocked(global.fetch).mockImplementation(async (_url, init) => {
       if (init?.method === "PATCH") return problem(status, code, "Refused");
@@ -135,12 +160,6 @@ describe("useUpdateMcpGrant", () => {
 
     await waitFor(() => expect(result.current.update.isError).toBe(true));
     expect(result.current.update.error).toMatchObject({ status });
-    if (refreshes) {
-      await waitFor(() => expect(listReads).toBe(2));
-    } else {
-      // Give a refetch the chance to happen, then check it didn't.
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      expect(listReads).toBe(1);
-    }
+    await waitFor(() => expect(listReads).toBe(2));
   });
 });
