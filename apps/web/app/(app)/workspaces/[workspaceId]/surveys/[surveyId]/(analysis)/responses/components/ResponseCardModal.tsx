@@ -5,6 +5,10 @@ import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
+import {
+  isNavigationInFlight,
+  navigatingFromIdAfterSelect,
+} from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/responses/lib/response-navigation";
 import { SingleResponseCard } from "@/modules/analysis/components/SingleResponseCard";
 import type { TOutcomeActions } from "@/modules/analysis/response-outcome/lib/outcome";
 import { Button } from "@/modules/ui/components/button";
@@ -60,7 +64,14 @@ export const ResponseCardModal = ({
   }, [responses]);
 
   const currentIndex = selectedResponseId === null ? null : (idToIndexMap.get(selectedResponseId) ?? -1);
-  const isNavigating = navigatingFromId !== null && navigatingFromId === selectedResponseId;
+  const isNavigating = isNavigationInFlight(navigatingFromId, selectedResponseId);
+
+  // Every selection change goes through here, including the card's own (it clears the selection after
+  // deleting the open response), so clearing it always ends navigation.
+  const selectResponse = (id: string | null) => {
+    setNavigatingFromId((current) => navigatingFromIdAfterSelect(current, id));
+    setSelectedResponseId(id);
+  };
 
   const handleNext = () => {
     if (currentIndex !== null && currentIndex < responses.length - 1) {
@@ -79,9 +90,7 @@ export const ResponseCardModal = ({
   const handleClose = (open: boolean) => {
     setOpen(open);
     if (!open) {
-      // Reopening the response a Next/Back click left from must not find navigation still in flight.
-      setNavigatingFromId(null);
-      setSelectedResponseId(null);
+      selectResponse(null);
     }
   };
 
@@ -118,7 +127,7 @@ export const ResponseCardModal = ({
               isReadOnly={isReadOnly}
               updateResponse={updateResponse}
               updateResponseList={updateResponseList}
-              setSelectedResponseId={setSelectedResponseId}
+              setSelectedResponseId={selectResponse}
               locale={locale}
               outcomeActions={outcomeActions}
             />
