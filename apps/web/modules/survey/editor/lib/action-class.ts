@@ -17,11 +17,7 @@ export const createActionClass = async (
         workspace: { connect: { id: workspaceId } },
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig:
-          actionClassInput.type === "noCode"
-            ? actionClassInput.noCodeConfig === null
-              ? undefined
-              : actionClassInput.noCodeConfig
-            : undefined,
+          actionClassInput.type === "noCode" ? (actionClassInput.noCodeConfig ?? undefined) : undefined,
       },
     });
 

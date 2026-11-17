@@ -122,11 +122,9 @@ export const ElementFormInput = ({
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
 
   const elementId = useMemo(() => {
-    return isWelcomeCard
-      ? "start"
-      : isEndingCard
-        ? localSurvey.endings[elementIdx - elements.length].id
-        : currentElement.id;
+    if (isWelcomeCard) return "start";
+    if (isEndingCard) return localSurvey.endings[elementIdx - elements.length].id;
+    return currentElement.id;
   }, [isWelcomeCard, isEndingCard, currentElement?.id, elementIdx, elements.length, localSurvey.endings]);
   const endingCard = localSurvey.endings.find((ending) => ending.id === elementId);
 

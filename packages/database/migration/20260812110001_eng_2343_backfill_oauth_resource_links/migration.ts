@@ -91,7 +91,8 @@ export const resolveMcpResourceIdentifier = (webAppUrl: string | undefined): str
     url.hash = "";
     url.search = "";
     const basePath = trimTrailingSlash(url.pathname);
-    return `${url.origin}${basePath.endsWith("/api/mcp") ? basePath : `${basePath}/api/mcp`}`;
+    const mcpPath = basePath.endsWith("/api/mcp") ? basePath : `${basePath}/api/mcp`;
+    return `${url.origin}${mcpPath}`;
   } catch {
     return null;
   }

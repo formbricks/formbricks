@@ -311,7 +311,7 @@ export const convertQuestionToElementType = (condition: Condition | null | undef
     }
 
     // Update rightOperand if it exists and is of type "question"
-    if (condition.rightOperand && condition.rightOperand.type === "question") {
+    if (condition.rightOperand?.type === "question") {
       newCondition.rightOperand = {
         ...condition.rightOperand,
         type: "element",

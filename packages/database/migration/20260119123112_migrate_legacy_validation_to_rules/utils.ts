@@ -26,9 +26,7 @@ export function ensureValidationObject(element: SurveyElement): {
   if (!element.validation.rules) {
     element.validation.rules = [];
   }
-  if (!element.validation.logic) {
-    element.validation.logic = "and";
-  }
+  element.validation.logic ??= "and";
   // After ensuring logic is set, we know it's defined
   return element.validation as { rules: ValidationRule[]; logic: "and" | "or" };
 }

@@ -80,7 +80,7 @@ describe("LANGUAGE_CANONICAL_MAP / CANONICAL_LANGUAGE_CODES", () => {
   });
 
   test("the canonical list has no duplicates", () => {
-    expect(CANONICAL_LANGUAGE_CODES.length).toBe(new Set(CANONICAL_LANGUAGE_CODES).size);
+    expect(CANONICAL_LANGUAGE_CODES).toHaveLength(new Set(CANONICAL_LANGUAGE_CODES).size);
   });
 });
 

@@ -7,7 +7,7 @@ const byCode = new Map(supportedLanguages.map((language) => [language.code, lang
 
 describe("supportedLanguages", () => {
   test("has no duplicate codes", () => {
-    expect(codes.length).toBe(new Set(codes).size);
+    expect(codes).toHaveLength(new Set(codes).size);
   });
 
   test("every code is a canonical tag", () => {

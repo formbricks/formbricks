@@ -1,3 +1,4 @@
+import type { MouseEvent } from "react";
 import { cn } from "@/lib/cn";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/modules/ui/components/table";
 import {
@@ -9,6 +10,8 @@ import {
 } from "./lib/column-classes";
 import { SettingsTableSkeletonRows } from "./settings-table-skeleton";
 import type { TSettingsTableProps } from "./types";
+
+const stopPropagation = (event: MouseEvent) => event.stopPropagation();
 
 /**
  * The settings-page table: one frame, a tinted `h-12` header, divided rows.
@@ -89,7 +92,7 @@ export const SettingsTable = <TRow,>({
               <TableCell
                 key={column.id}
                 className={getBodyCellClassName(column)}
-                onClick={column.stopRowClick ? (event) => event.stopPropagation() : undefined}>
+                onClick={column.stopRowClick ? stopPropagation : undefined}>
                 {isClickable && getRowLabel && column.id === activatorColumnId ? (
                   <button
                     type="button"

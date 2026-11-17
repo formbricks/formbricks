@@ -1104,6 +1104,20 @@ function documentMutationRejection(
   });
 }
 
+/**
+ * How a document write was guarded, for the log. "matched": the caller supplied one and it held.
+ * "implicit": the block endpoints' own read-time token. "none": a PATCH with no `updatedAt`, i.e.
+ * last-write-wins.
+ */
+const describePrecondition = (
+  precondition: TV3SurveyWritePrecondition | undefined,
+  effectivePrecondition: TV3SurveyWritePrecondition | undefined
+): "matched" | "implicit" | "none" => {
+  if (precondition) return "matched";
+  if (effectivePrecondition) return "implicit";
+  return "none";
+};
+
 type TV3SurveyDocumentMutationParams = TPatchV3SurveyParams & {
   operation: "patch" | "blocks.edit" | "blocks.reorder";
   precondition?: TV3SurveyWritePrecondition;
@@ -1274,9 +1288,7 @@ async function runV3SurveyDocumentMutation({
         statusCode: 200,
         workspaceId,
         wrote: true,
-        // "matched": the caller supplied one and it held. "implicit": the block endpoints' own
-        // read-time token. "none": a PATCH with no `updatedAt`, i.e. last-write-wins.
-        precondition: precondition ? "matched" : effectivePrecondition ? "implicit" : "none",
+        precondition: describePrecondition(precondition, effectivePrecondition),
         ...built.logFields,
       },
       "Survey document updated"

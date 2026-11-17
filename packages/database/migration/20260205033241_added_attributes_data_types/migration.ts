@@ -4,9 +4,9 @@ import type { KeyTypeAnalysis, MigrationStats } from "./types";
 
 // Regex patterns as constants for consistency
 // NUMBER_PATTERN: requires digits after decimal if present (e.g., "123", "-45.67")
-const NUMBER_PATTERN = "^-?[0-9]+(\\.[0-9]+)?$";
+const NUMBER_PATTERN = String.raw`^-?[0-9]+(\.[0-9]+)?$`;
 // ISO_DATE_PATTERN: YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss.sssZ
-const ISO_DATE_PATTERN = "^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z?)?$";
+const ISO_DATE_PATTERN = String.raw`^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{3})?Z?)?$`;
 
 export const addedAttributesDataTypes: MigrationScript = {
   type: "data",

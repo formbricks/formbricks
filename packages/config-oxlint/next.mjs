@@ -6,7 +6,7 @@ import {
   typescriptFileOverrides,
   typescriptRecommended,
 } from "./presets.mjs";
-import { a11yParity, stagedSeverity } from "./sonar-parity.mjs";
+import { a11yParity } from "./sonar-parity.mjs";
 
 /*
  * Config for the Next.js app: eslint-config-next's rules + turbo + the vitest convention, with the
@@ -59,7 +59,7 @@ export const next = compose(
     },
     overrides: [{ files: TYPESCRIPT_FILES, rules: typescriptFileOverrides }],
   },
-  a11yParity(stagedSeverity())
+  a11yParity()
 );
 
 export default next;

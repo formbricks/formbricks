@@ -238,8 +238,8 @@ export class CacheService {
       // Use SET with NX (only set if not exists) and PX (expiration in milliseconds) for atomic lock acquisition
       const result = await this.withTimeout(
         this.redis.set(key, value, {
-          NX: true,
-          PX: ttlMs,
+          expiration: { type: "PX", value: ttlMs },
+          condition: "NX",
         })
       );
       // SET returns "OK" if lock was acquired, null if key already exists
