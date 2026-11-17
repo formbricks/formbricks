@@ -14,6 +14,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { STAGED_LINES_RULE_IDS } from "../packages/config-oxlint/sonar-parity.mjs";
+import { missingBuildsHint, missingLintBuilds } from "./lint-builds.mjs";
 import { decodeSonarMessage, parseStagedLineRanges, touchesStagedCode } from "./staged-lines.mjs";
 
 // oxlint doesn't export its bin, but package.json is exported, so go through it to get an
@@ -135,6 +136,15 @@ for (const diagnostic of runs.flatMap((run) => run.diagnostics)) {
       failed = true;
     }
   }
+}
+
+/*
+ * Unlike `pnpm lint`, the hook builds nothing first. In a fresh clone the packages the type-aware
+ * rules read types from have no dist/, which can fail a commit on code that is fine: say so.
+ */
+if (failed) {
+  const missing = missingLintBuilds(process.cwd());
+  if (missing.length > 0) console.log(missingBuildsHint(missing));
 }
 
 process.exit(failed ? 1 : 0);
