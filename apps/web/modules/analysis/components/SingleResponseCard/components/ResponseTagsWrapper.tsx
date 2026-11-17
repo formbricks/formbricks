@@ -1,17 +1,20 @@
 "use client";
 
+import { QueryClientContext } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { logger } from "@formbricks/logger";
 import { TResponse } from "@formbricks/types/responses";
 import { TTag } from "@formbricks/types/tags";
 import { TUserLocale } from "@formbricks/types/user";
+import { surveyFilterDataKey } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/hooks/use-response-table-filters";
 import { V3ApiError, getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { IdBadge } from "@/modules/ui/components/id-badge";
 import { Tag } from "@/modules/ui/components/tag";
 import { TagsCombobox } from "@/modules/ui/components/tags-combobox";
+import { tagKeys } from "@/modules/workspaces/settings/tags/lib/query";
 import { addResponseTag, createTag, removeResponseTag } from "../lib/api-client";
 import { SingleResponseCardMetadata } from "./SingleResponseCardMetadata";
 
@@ -46,6 +49,9 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   const [tagIdToHighlight, setTagIdToHighlight] = useState("");
   const [isLoadingTagOperation, setIsLoadingTagOperation] = useState(false);
   const router = useRouter();
+  // Read from context rather than `useQueryClient`, which throws: not every page that shows a response
+  // card provides a query client, and only those that do hold tag queries to invalidate.
+  const queryClient = useContext(QueryClientContext);
 
   const onDelete = async (tagId: string) => {
     setIsLoadingTagOperation(true);
@@ -87,9 +93,12 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
       setIsLoadingTagOperation(false);
       return;
     }
-    // The workspace's tag list is the page's server-rendered prop: refresh it, so every other response's
-    // picker offers the new tag instead of offering to create it again.
+    // Every other picker must offer the new tag instead of offering to create it again: the page's
+    // server-rendered list (responses and contact pages), the summary sample's tag query, and the filter
+    // panel's options.
     router.refresh();
+    void queryClient?.invalidateQueries({ queryKey: tagKeys.list(workspaceId) });
+    void queryClient?.invalidateQueries({ queryKey: surveyFilterDataKey(response.surveyId) });
 
     try {
       await addResponseTag(responseId, newTag.id);

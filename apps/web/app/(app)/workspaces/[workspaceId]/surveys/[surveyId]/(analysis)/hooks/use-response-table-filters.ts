@@ -48,7 +48,8 @@ const pendingProperties = (known: readonly TFilterProperty[], search: string): T
   }));
 };
 
-const surveyFilterDataKey = (surveyId: string) => ["surveys", surveyId, "filter-data"] as const;
+/** The filter panel's options for a survey (its tags among them), shared so a tag write can invalidate them. */
+export const surveyFilterDataKey = (surveyId: string) => ["surveys", surveyId, "filter-data"] as const;
 
 /** Properties the survey alone describes; every other one (attributes, tags, meta…) needs the filter data. */
 const isSurveyOnlyProperty = (id: string) =>
