@@ -14,6 +14,7 @@ import { type TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type UsersFixture } from "./fixtures/users";
 import { test } from "./lib/fixtures";
+import { clickUntilVisible } from "./utils/helper";
 
 /**
  * **Signature element, end to end (ENG-6810).**
@@ -277,17 +278,6 @@ const expectSignaturePng = async (page: Page, png: Buffer) => {
   const { corner, inkPixels } = await inspectPixels(page, png);
   expect(corner, "opaque white background").toEqual([255, 255, 255, 255]);
   expect(inkPixels, "the signature has ink").toBeGreaterThan(100);
-};
-
-/**
- * Clicks `trigger` until `target` shows. The owner pages hydrate after they paint, and a click that lands
- * first is dropped, so a single click followed by a visibility check can wait on a handler that never ran.
- */
-const clickUntilVisible = async (trigger: Locator, target: Locator): Promise<void> => {
-  await expect(async () => {
-    if (!(await target.isVisible())) await trigger.click();
-    await expect(target).toBeVisible({ timeout: 3000 });
-  }).toPass({ timeout: 30_000 });
 };
 
 const attachShot = async (page: Page, testInfo: TestInfo, name: string): Promise<void> => {
