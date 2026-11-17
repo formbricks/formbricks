@@ -10,11 +10,32 @@ const draft = (overrides: Record<string, unknown> = {}) => ({
 });
 
 describe("ZSurveyDraft", () => {
-  test("keeps passing unknown keys through, which is what makes it a draft schema", () => {
-    const parsed = ZSurveyDraft.safeParse(draft({ somethingTheEditorAdded: 1 }));
+  // ENG-7127: unknown keys used to pass through to `updateSurveyInternal`, where Prisma took them as
+  // relation writes and foreign keys outside the survey.
+  test("strips keys a survey does not have, relation writes and foreign keys included", () => {
+    const parsed = ZSurveyDraft.safeParse(
+      draft({
+        responses: { connect: [{ id: "clx000000000000000000001" }] },
+        segmentId: "clx000000000000000000002",
+        workspace: { update: { name: "x" } },
+        creator: { update: { email: "x@example.com" } },
+        owner: { update: { email: "x@example.com" } },
+        displays: { deleteMany: {} },
+        somethingTheEditorAdded: 1,
+      })
+    );
 
     expect(parsed.success).toBe(true);
-    expect(parsed.data).toMatchObject({ somethingTheEditorAdded: 1 });
+    expect(Object.keys(parsed.data!).sort()).toEqual(["id", "name", "status", "type"]);
+  });
+
+  // Still a draft schema: the survey's own fields pass unchecked, so an incomplete draft saves.
+  test("keeps a survey's own fields without checking them", () => {
+    const welcomeCard = { enabled: "not-a-boolean" };
+    const parsed = ZSurveyDraft.safeParse(draft({ welcomeCard, displayOption: "anything", languages: [{}] }));
+
+    expect(parsed.success).toBe(true);
+    expect(parsed.data).toMatchObject({ welcomeCard, displayOption: "anything", languages: [{}] });
   });
 
   test("accepts a well-formed row list", () => {
