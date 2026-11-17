@@ -1,33 +1,27 @@
-import { expect } from "@playwright/test";
+import { type Page, expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
 import { createSurveyFromScratch, publishSurvey } from "./utils/helper";
 
 test.describe("Survey Styling", async () => {
   // Shared Helpers
-  const openAccordion = async (page: any, name: string) => {
-    // Find the trigger by text, ensuring we get the visible one (important for nested or reusable components)
-    const accordionHeader = page
-      .locator("div,button")
-      .filter({ hasText: name })
-      .locator("visible=true")
-      .last();
-    // Check if open (aria-expanded or data-state)
-    const expanded = await accordionHeader.getAttribute("aria-expanded");
-    const state = await accordionHeader.getAttribute("data-state");
-    if (expanded === "false" || state === "closed" || (!expanded && !state)) {
-      await accordionHeader.click();
-      await page.waitForTimeout(500); // Animation
-    }
+  // Opens a styling section and waits until it says it is open. Retried, because a click that lands
+  // before the page hydrates is dropped; reading `aria-expanded` first keeps it from closing it again.
+  const openAccordion = async (page: Page, name: string) => {
+    const header = page.locator("[aria-expanded]").filter({ hasText: name }).locator("visible=true").last();
+    await expect(async () => {
+      if ((await header.getAttribute("aria-expanded")) !== "true") await header.click({ timeout: 3000 });
+      await expect(header).toHaveAttribute("aria-expanded", "true", { timeout: 3000 });
+    }).toPass({ timeout: 30_000 });
   };
 
-  const setColor = async (page: any, label: string, hex: string) => {
+  const setColor = async (page: Page, label: string, hex: string) => {
     const labelEl = page.locator("label").filter({ hasText: label }).locator("visible=true").last();
     const container = labelEl.locator("..");
     await container.getByRole("textbox").fill(hex.replace("#", ""));
     await container.getByRole("textbox").blur();
   };
 
-  const setDimension = async (page: any, label: string, value: string) => {
+  const setDimension = async (page: Page, label: string, value: string) => {
     const labelEl = page.locator("label").filter({ hasText: label }).locator("visible=true").last();
     const container = labelEl.locator("..");
     // Try finding number input, fallback to simple fill if it's text
