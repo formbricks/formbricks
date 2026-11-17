@@ -1123,6 +1123,8 @@ describe("validateElementResponse", () => {
       } as unknown as TSurveyElement;
 
       expect(validateElementResponse(element, "Visa Package", "en")).toEqual({ valid: true, errors: [] });
+      // An API caller may name it by id, which the choice check accepts too.
+      expect(validateElementResponse(element, "visa", "en")).toEqual({ valid: true, errors: [] });
     });
   });
 
