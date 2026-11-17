@@ -2,6 +2,13 @@ import type { TFunction } from "i18next";
 import type { TResponseData, TResponseDataValue } from "@formbricks/types/responses";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import { getElementOptionsNotShownFromRecord } from "@formbricks/types/surveys/not-shown";
+import {
+  type TElementOptionsNotShown,
+  getElementOptionsNotShown,
+  getOptionListKeys,
+  withOptionsShown,
+} from "@formbricks/types/surveys/show-if";
 import type {
   TAddressField,
   TContactInfoField,
@@ -11,6 +18,7 @@ import type {
   TValidationRule,
 } from "@formbricks/types/surveys/validation-rules";
 import { getLocalizedValue, getTranslations } from "@/lib/i18n";
+import { dropOptionsFromAnswer } from "@/lib/option-answers";
 import { type TValidationOptions, validators } from "./validators";
 
 /**
@@ -526,6 +534,63 @@ const executeAndLogic = (
 };
 
 /**
+ * The options, rows and columns the respondent was not offered (ENG-7332): the ones the survey marks
+ * Hidden, which are never shown, plus the ones the response's not-shown record lists, which show-if
+ * kept from this respondent. The survey hands over an element already filtered this way, so both are
+ * empty there; a server holds the survey as stored and needs them.
+ */
+const getOptionsNotOffered = (
+  element: TSurveyElement,
+  options: TValidationOptions | undefined
+): TElementOptionsNotShown => {
+  // With every show-if passing, only Hidden items remain: the record covers the show-if ones.
+  const hidden = getElementOptionsNotShown(element, () => true);
+  const recorded = getElementOptionsNotShownFromRecord(options?.notShown, element.id);
+  const notOffered: TElementOptionsNotShown = {};
+  for (const listKey of getOptionListKeys(element.type)) {
+    const ids = new Set([...(hidden[listKey] ?? []), ...(recorded[listKey] ?? [])]);
+    if (ids.size > 0) notOffered[listKey] = [...ids];
+  }
+  return notOffered;
+};
+
+/** Question types whose answer covers every item they offer: a ranking ranks, a matrix rates each row. */
+const RANKS_OR_RATES_EVERY_ITEM: ReadonlySet<string> = new Set([
+  TSurveyElementTypeEnum.Ranking,
+  TSurveyElementTypeEnum.Matrix,
+]);
+
+/**
+ * The answer without what it says about options, rows and columns the respondent was not offered. The
+ * survey names them by label, which `dropOptionsFromAnswer` removes; an API caller may name them by id,
+ * which the choice check accepts too, so ids go as well.
+ */
+const dropNotOfferedAnswers = (
+  element: TSurveyElement,
+  notOffered: TElementOptionsNotShown,
+  value: TResponseDataValue,
+  languageCode: string
+): TResponseDataValue => {
+  const withoutLabels = dropOptionsFromAnswer(element, notOffered, value, languageCode);
+  const choiceIds = new Set(notOffered.choices ?? []);
+  const rowIds = new Set(notOffered.rows ?? []);
+  const columnIds = new Set(notOffered.columns ?? []);
+
+  if (typeof withoutLabels === "string") return choiceIds.has(withoutLabels) ? "" : withoutLabels;
+  if (Array.isArray(withoutLabels)) return withoutLabels.filter((entry) => !choiceIds.has(entry));
+  const isMatrixAnswer =
+    typeof withoutLabels === "object" && withoutLabels !== null && !Array.isArray(withoutLabels);
+  if (element.type === TSurveyElementTypeEnum.Matrix && isMatrixAnswer) {
+    return Object.fromEntries(
+      Object.entries(withoutLabels).filter(
+        ([row, column]) => !rowIds.has(row) && !(typeof column === "string" && columnIds.has(column))
+      )
+    ) as TResponseDataValue;
+  }
+  return withoutLabels;
+};
+
+/**
  * Single entrypoint for validating an element's response value.
  * Called by block-conditional.tsx during form submission.
  *
@@ -573,6 +638,24 @@ export const validateElementResponse = (
 
   // Validation rules apply to matrix elements regardless of required status
 
+  // Rules read the element and the answer as the respondent was offered them, the way the survey checks
+  // them in the browser (ENG-7332): "Answer all rows" counts the rows shown, not the Hidden ones. The
+  // checks above keep the full element, so an answer naming a Hidden option is still a known one.
+  const notOffered = getOptionsNotOffered(element, options);
+  const hasNotOffered = Object.keys(notOffered).length > 0;
+  const offeredElement = hasNotOffered ? withOptionsShown(element, notOffered) : element;
+  const offeredValue = hasNotOffered
+    ? dropNotOfferedAnswers(element, notOffered, value, languageCode)
+    : value;
+
+  // A required ranking or matrix must rank or rate something it offers. The required check above reads
+  // the full answer, so it runs again on the offered one: an answer naming only what the question does
+  // not offer reads as unanswered, where the rules alone would skip it once emptied.
+  if (!requiredError && hasNotOffered && RANKS_OR_RATES_EVERY_ITEM.has(element.type)) {
+    const offeredRequiredError = checkRequiredField(offeredElement, offeredValue, t);
+    if (offeredRequiredError) errors.push(offeredRequiredError);
+  }
+
   // Get validation rules
   const validation = (
     element as TSurveyElement & { validation?: { rules?: TValidationRule[]; logic?: "and" | "or" } }
@@ -590,10 +673,10 @@ export const validateElementResponse = (
   const validationLogic = validation?.logic ?? "and";
 
   if (validationLogic === "or") {
-    return executeOrLogic(rules, element, value, languageCode, errors, t, options);
+    return executeOrLogic(rules, offeredElement, offeredValue, languageCode, errors, t, options);
   }
 
-  return executeAndLogic(rules, element, value, languageCode, errors, t, options);
+  return executeAndLogic(rules, offeredElement, offeredValue, languageCode, errors, t, options);
 };
 
 /**

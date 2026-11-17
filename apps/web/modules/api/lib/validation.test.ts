@@ -43,6 +43,16 @@ describe("validateResponseData", () => {
     expect(matchPattern("^(a+)+$", undefined, `${"a".repeat(64)}!`)).toBe(false);
   });
 
+  test("hands the response's not-shown record to the rules (ENG-7332)", () => {
+    mockGetElementsFromBlocks.mockReturnValue([{ id: "q1" }]);
+    mockValidateBlockResponses.mockReturnValue({});
+    const notShown = { rows: { q1: ["visa"] } };
+
+    validateResponseData([{ id: "b1" }] as unknown as TSurveyBlock[], { q1: {} }, "en", undefined, notShown);
+
+    expect(mockValidateBlockResponses.mock.calls[0][3].notShown).toBe(notShown);
+  });
+
   const mockBlocks: TSurveyBlock[] = [
     {
       id: "block1",
