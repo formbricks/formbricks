@@ -18,13 +18,14 @@ import {
 import {
   MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS,
   type TStoredMcpGrant,
+  applyMcpGrantNarrowing,
   getMcpGrant,
   hasMcpGrant,
   lockMcpGrant,
   lockUserForMcpGrantWrite,
-  narrowMcpGrantAccess,
   projectMcpGrants,
   queueMcpGrantAudit,
+  resolveMcpGrantNarrowing,
   shareLockMcpGrant,
   writeMcpGrant,
 } from "@/modules/mcp/grant-store";
@@ -659,7 +660,14 @@ const settleChangedConsent = async (
         await lockUserForMcpGrantWrite(tx, userId);
         before = await lockMcpGrant(tx, { userId, clientId: grantClientId });
         if (access) {
-          const resolved = await narrowMcpGrantAccess(tx, { userId, before, access, readableWorkspaceIds });
+          // Resolved now, applied to SpiceDB only after every check below that can still refuse: a
+          // refusal after the delete would leave SpiceDB narrower than the rows it commits.
+          const resolved = await resolveMcpGrantNarrowing(tx, {
+            userId,
+            before,
+            access,
+            readableWorkspaceIds,
+          });
           if (resolved.status === "unavailable") {
             return refuseConsent(
               tx,
@@ -684,6 +692,7 @@ const settleChangedConsent = async (
       if (change.chosenGrant && isMcpGrantEmpty(permissions)) {
         return refuseConsent(tx, { userId, clientId, change }, { status: "beyond_scopes" });
       }
+      if (grantClientId && access) await applyMcpGrantNarrowing(before, access);
       const savedGrant = grantClientId
         ? await writeMcpGrant(tx, { userId, clientId, before, permissions, access })
         : null;

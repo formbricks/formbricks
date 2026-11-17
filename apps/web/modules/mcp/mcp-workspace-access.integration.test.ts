@@ -569,6 +569,43 @@ describe("organization & workspace access on MCP calls", () => {
     expect(succeeded(still), toolText(still)).toBe(true);
   });
 
+  // The consent hook checks the cap after it resolves the access. A refusal there must come before the
+  // SpiceDB delete: the rows stay as they were on a refusal, so a delete already applied would leave
+  // SpiceDB narrower than the rows, with nothing to repair it.
+  test("an approval refused for a grant the scopes leave nothing of keeps SpiceDB matching the rows", async () => {
+    await setAccess(setup, {
+      access: "workspaces",
+      workspaceIds: [setup.inside.workspaceId, setup.outside.workspaceId],
+    });
+    const { target } = await authorize(setup.cookie, setup.clientId, "openid offline_access surveys:read", {
+      prompt: "consent",
+    });
+
+    const response = await consent(setup.cookie, target, {
+      accept: true,
+      mcp_grant: {
+        permissions: { workflows: "read" },
+        access: "workspaces",
+        workspaceIds: [setup.inside.workspaceId],
+      },
+    });
+
+    expect(response.status).toBe(400);
+    expect(await response.json()).toMatchObject({ code: "mcp_grant_beyond_scopes" });
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toMatchObject({
+      access: "workspaces",
+      workspaceIds: sorted(setup.inside.workspaceId, setup.outside.workspaceId),
+    });
+    // SpiceDB still reaches the workspace the refused approval would have dropped.
+    expect(await listedWorkspaceIds(setup)).toEqual(
+      sorted(setup.inside.workspaceId, setup.outside.workspaceId)
+    );
+    const still = await callMcpTool({ accessToken: setup.accessToken }, "get_survey", {
+      surveyId: setup.outside.surveyId,
+    });
+    expect(succeeded(still), toolText(still)).toBe(true);
+  });
+
   test("a crafted approval naming a workspace the user can't select is refused, and saves nothing", async () => {
     await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
     const stranger = await prisma.organization.create({ data: { name: "Stranger" } });

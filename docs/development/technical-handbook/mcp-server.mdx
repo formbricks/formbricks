@@ -6,7 +6,6 @@ icon: "robot"
 
 For customer connection instructions and API-key fallback, use [MCP setup](/platform/mcp/setup). This handbook describes implementation and contributor behavior.
 
-
 ## Overview
 
 The Formbricks MCP server exposes v3 Surveys, Creatives and Workflows tool surfaces for AI agents. It runs inside
@@ -108,23 +107,23 @@ Discovery endpoints:
 
 Supported scopes:
 
-| Scope | Use |
-| --- | --- |
-| `surveys:read` | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats` |
-| `surveys:write` | `create_survey`, `generate_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative` |
-| `workflows:read` | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow` |
-| `workflows:write` | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations |
-| `feedbackRecords:read` | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records` |
-| `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record` |
-| `responses:read` | `list_responses`, `count_responses`, `get_response`, `list_tags` |
-| `responses:write` | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses`, `set_responses_outcome`, `update_tag`, `merge_tags` |
-| `dashboards:read` | `list_dashboards`, `get_dashboard`, `list_charts`, `get_chart`; with `feedbackRecords:read`, `list_chart_fields`, `get_chart_data`, `list_dashboard_filter_fields`, `list_dashboard_filter_values`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId`, `list_dashboard_filter_fields` and `list_dashboard_filter_values` on `dashboards:read` alone) |
-| `dashboards:write` | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `remove_chart_from_dashboard`; with `dashboards:read` (Charts: Read, since their answers carry each widget's chart, as `get_dashboard` does), `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget` |
-| `audience:read` | `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` (read-only family: there is no `audience:write`) |
-| `openid` | OpenID Connect subject interoperability |
-| `profile` | User profile claims |
-| `email` | User email claim |
-| `offline_access` | Refresh tokens for MCP clients |
+| Scope                   | Use                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `surveys:read`          | `list_surveys`, `get_survey`, `validate_survey`, `get_workspace_custom_css`, `list_creatives`, `get_creative`, `get_creative_stats`                                                                                                                                                                                                                                                                                   |
+| `surveys:write`         | `create_survey`, `generate_survey`, `patch_survey`, `edit_survey_blocks`, `set_survey_block_order`, `delete_survey`, `patch_workspace_custom_css`, `create_creative`, `patch_creative`, `delete_creative`, `duplicate_creative`, `archive_creative`, `restore_creative`                                                                                                                                               |
+| `workflows:read`        | `list_workflows`, `get_workflow`, `list_workflow_runs`, `get_workflow_run`, `test_workflow`                                                                                                                                                                                                                                                                                                                           |
+| `workflows:write`       | `create_workflow`, `patch_workflow`, `duplicate_workflow`, `delete_workflow`, and the enable/disable/archive/unarchive mutations                                                                                                                                                                                                                                                                                      |
+| `feedbackRecords:read`  | `list_feedback_datasets`, `list_feedback_records`, `count_feedback_records`, `get_feedback_record`, `search_feedback_records`, `find_similar_feedback_records`                                                                                                                                                                                                                                                        |
+| `feedbackRecords:write` | `create_feedback_record`, `create_feedback_records`, `update_feedback_record`, `delete_feedback_record`                                                                                                                                                                                                                                                                                                               |
+| `responses:read`        | `list_responses`, `count_responses`, `get_response`, `list_tags`                                                                                                                                                                                                                                                                                                                                                      |
+| `responses:write`       | `validate_response`, `create_response`, `update_response`, `delete_response`, `batch_delete_responses`, `set_responses_outcome`, `update_tag`, `merge_tags`                                                                                                                                                                                                                                                           |
+| `dashboards:read`       | `list_dashboards`, `get_dashboard`, `list_charts`, `get_chart`; with `feedbackRecords:read`, `list_chart_fields`, `get_chart_data`, `list_dashboard_filter_fields`, `list_dashboard_filter_values`, `preview_chart`, `list_chart_field_values` (a Dashboard viewer's token reads `get_chart_data` with a `dashboardId`, `list_dashboard_filter_fields` and `list_dashboard_filter_values` on `dashboards:read` alone) |
+| `dashboards:write`      | `create_chart`, `update_chart`, `duplicate_chart`, `create_dashboard`, `remove_chart_from_dashboard`; with `dashboards:read` (Charts: Read, since their answers carry each widget's chart, as `get_dashboard` does), `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`                                                         |
+| `audience:read`         | `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` (read-only family: there is no `audience:write`)                                                                                                                                                                                                                                              |
+| `openid`                | OpenID Connect subject interoperability                                                                                                                                                                                                                                                                                                                                                                               |
+| `profile`               | User profile claims                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `email`                 | User email claim                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `offline_access`        | Refresh tokens for MCP clients                                                                                                                                                                                                                                                                                                                                                                                        |
 
 **The rule:** every MCP tool is registered through `registerMcpTool`, which takes the permissions the
 tool needs as a mandatory argument and runs the gate before the handler. A permission comes from the
@@ -167,7 +166,11 @@ can do in between:
   (`readMcpGrantReadableWorkspaceIds`), before its transaction takes any lock. Then it locks the grant row
   (`lockMcpGrant`), resolves the chosen access by the shared rule (`resolveMcpGrantSelection`, which re-checks
   the user's memberships from PostgreSQL), and deletes what it takes away from SpiceDB before it commits
-  (`narrowMcpGrantAccess`). All of that runs before any consent row is locked. If SpiceDB can't apply the
+  (`narrowMcpGrantAccess`), as the last step before the grant write: nothing that can still refuse the save
+  runs after it. Edit checks the cap first; the consent hook resolves the access before it locks the consent
+  rows and applies the delete only after its cap check (`resolveMcpGrantNarrowing`,
+  `applyMcpGrantNarrowing`), because a refusal after the delete would commit unchanged rows over
+  relationships that no longer match them. If SpiceDB can't apply the
   delete, the request fails and the grant is unchanged: Edit answers 500 and the consent screen shows an
   error, both `mcp_grant_not_saved`; a selection the user can't make answers 422
   (`mcp_grant_selection_unavailable`) on both. A grant the client's scopes leave nothing of answers 400
@@ -299,68 +302,68 @@ Do not pass credentials in the query string. The MCP route rejects query credent
 
 API key permissions are enforced through the same workspace access checks as the v3 REST API:
 
-| Tool | Minimum Workspace Permission |
-| --- | --- |
-| `list_responses` | `read` |
-| `count_responses` | `read` |
-| `get_response` | `read` |
-| `validate_response` | `write` or `manage` — a dry run, but it resolves the same references the write does |
-| `create_response` | `write` or `manage` |
-| `update_response` | `write` or `manage` |
-| `delete_response` | `manage` |
-| `batch_delete_responses` | `manage` |
-| `set_responses_outcome` | `write` or `manage` |
-| `list_tags`, `update_tag`, `merge_tags` | not available: `/api/v3/tags` is session-only, so the tag tools refuse API keys and answer only OAuth connections |
-| `list_surveys` | `read` |
-| `get_survey` | `read` |
-| `create_survey` | `write` or `manage` |
-| `generate_survey` | `write` or `manage` — saves nothing, but spends the organization's AI budget |
-| `validate_survey` | `read` — a dry run; it validates a create or patch payload without writing |
-| `patch_survey` | `write` or `manage` |
-| `edit_survey_blocks` | `write` or `manage` |
-| `set_survey_block_order` | `write` or `manage` |
-| `delete_survey` | `write` or `manage` |
-| `get_workspace_custom_css` | `read` |
-| `patch_workspace_custom_css` | `manage` for an API key; an organization owner or manager for an OAuth user — stricter than `surveys:write` |
-| `list_creatives` | `read` |
-| `get_creative` | `read` |
-| `get_creative_stats` | `read` |
-| `create_creative` | `write` or `manage` |
-| `patch_creative` | `write` or `manage` |
-| `delete_creative` | `write` or `manage` |
-| `duplicate_creative` | `write` or `manage` |
-| `archive_creative` | `write` or `manage` |
-| `restore_creative` | `write` or `manage` |
-| `list_workflows` | `read` |
-| `get_workflow` | `read` |
-| `list_workflow_runs` | `read` |
-| `get_workflow_run` | `read` |
-| `test_workflow` | `read` — a dry run; it validates the definition and resolves its trigger references, creating no run |
-| `create_workflow` | `write` or `manage` |
-| `patch_workflow` | `write` or `manage` |
-| `duplicate_workflow` | `write` or `manage` |
-| `delete_workflow` | `write` or `manage` |
-| `enable_workflow` | `write` or `manage` |
-| `disable_workflow` | `write` or `manage` |
-| `archive_workflow` | `write` or `manage` |
-| `unarchive_workflow` | `write` or `manage` |
-| `list_feedback_datasets` | `read` |
-| `list_feedback_records` | `read` |
-| `count_feedback_records` | `read` |
-| `get_feedback_record` | `read` |
-| `search_feedback_records` | `read` |
-| `find_similar_feedback_records` | `read` |
-| `create_feedback_record` | `write` or `manage` |
-| `create_feedback_records` | `write` or `manage` |
-| `update_feedback_record` | `write` or `manage` |
-| `delete_feedback_record` | `manage` |
-| `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard` | `read` |
-| `preview_chart`, `get_chart_data`, `list_chart_field_values` | `read`, and read access to the chart's feedback dataset |
-| `list_dashboard_filter_fields` | `read`; a feedback dataset the caller cannot read through the dashboard is left out of the list, and a Dashboard viewer gets only the keys a chart on the dashboard groups by |
-| `list_dashboard_filter_values` | `read`, and read access to each feedback dataset its charts read |
-| `create_chart`, `duplicate_chart` | `write` or `manage`, and write access to the feedback dataset |
-| `update_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | `write` or `manage` |
-| `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes` | `read`; all but `list_action_classes` also need the Contacts entitlement |
+| Tool                                                                                                                                                                                                        | Minimum Workspace Permission                                                                                                                                                  |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list_responses`                                                                                                                                                                                            | `read`                                                                                                                                                                        |
+| `count_responses`                                                                                                                                                                                           | `read`                                                                                                                                                                        |
+| `get_response`                                                                                                                                                                                              | `read`                                                                                                                                                                        |
+| `validate_response`                                                                                                                                                                                         | `write` or `manage` — a dry run, but it resolves the same references the write does                                                                                           |
+| `create_response`                                                                                                                                                                                           | `write` or `manage`                                                                                                                                                           |
+| `update_response`                                                                                                                                                                                           | `write` or `manage`                                                                                                                                                           |
+| `delete_response`                                                                                                                                                                                           | `manage`                                                                                                                                                                      |
+| `batch_delete_responses`                                                                                                                                                                                    | `manage`                                                                                                                                                                      |
+| `set_responses_outcome`                                                                                                                                                                                     | `write` or `manage`                                                                                                                                                           |
+| `list_tags`, `update_tag`, `merge_tags`                                                                                                                                                                     | not available: `/api/v3/tags` is session-only, so the tag tools refuse API keys and answer only OAuth connections                                                             |
+| `list_surveys`                                                                                                                                                                                              | `read`                                                                                                                                                                        |
+| `get_survey`                                                                                                                                                                                                | `read`                                                                                                                                                                        |
+| `create_survey`                                                                                                                                                                                             | `write` or `manage`                                                                                                                                                           |
+| `generate_survey`                                                                                                                                                                                           | `write` or `manage` — saves nothing, but spends the organization's AI budget                                                                                                  |
+| `validate_survey`                                                                                                                                                                                           | `read` — a dry run; it validates a create or patch payload without writing                                                                                                    |
+| `patch_survey`                                                                                                                                                                                              | `write` or `manage`                                                                                                                                                           |
+| `edit_survey_blocks`                                                                                                                                                                                        | `write` or `manage`                                                                                                                                                           |
+| `set_survey_block_order`                                                                                                                                                                                    | `write` or `manage`                                                                                                                                                           |
+| `delete_survey`                                                                                                                                                                                             | `write` or `manage`                                                                                                                                                           |
+| `get_workspace_custom_css`                                                                                                                                                                                  | `read`                                                                                                                                                                        |
+| `patch_workspace_custom_css`                                                                                                                                                                                | `manage` for an API key; an organization owner or manager for an OAuth user — stricter than `surveys:write`                                                                   |
+| `list_creatives`                                                                                                                                                                                            | `read`                                                                                                                                                                        |
+| `get_creative`                                                                                                                                                                                              | `read`                                                                                                                                                                        |
+| `get_creative_stats`                                                                                                                                                                                        | `read`                                                                                                                                                                        |
+| `create_creative`                                                                                                                                                                                           | `write` or `manage`                                                                                                                                                           |
+| `patch_creative`                                                                                                                                                                                            | `write` or `manage`                                                                                                                                                           |
+| `delete_creative`                                                                                                                                                                                           | `write` or `manage`                                                                                                                                                           |
+| `duplicate_creative`                                                                                                                                                                                        | `write` or `manage`                                                                                                                                                           |
+| `archive_creative`                                                                                                                                                                                          | `write` or `manage`                                                                                                                                                           |
+| `restore_creative`                                                                                                                                                                                          | `write` or `manage`                                                                                                                                                           |
+| `list_workflows`                                                                                                                                                                                            | `read`                                                                                                                                                                        |
+| `get_workflow`                                                                                                                                                                                              | `read`                                                                                                                                                                        |
+| `list_workflow_runs`                                                                                                                                                                                        | `read`                                                                                                                                                                        |
+| `get_workflow_run`                                                                                                                                                                                          | `read`                                                                                                                                                                        |
+| `test_workflow`                                                                                                                                                                                             | `read` — a dry run; it validates the definition and resolves its trigger references, creating no run                                                                          |
+| `create_workflow`                                                                                                                                                                                           | `write` or `manage`                                                                                                                                                           |
+| `patch_workflow`                                                                                                                                                                                            | `write` or `manage`                                                                                                                                                           |
+| `duplicate_workflow`                                                                                                                                                                                        | `write` or `manage`                                                                                                                                                           |
+| `delete_workflow`                                                                                                                                                                                           | `write` or `manage`                                                                                                                                                           |
+| `enable_workflow`                                                                                                                                                                                           | `write` or `manage`                                                                                                                                                           |
+| `disable_workflow`                                                                                                                                                                                          | `write` or `manage`                                                                                                                                                           |
+| `archive_workflow`                                                                                                                                                                                          | `write` or `manage`                                                                                                                                                           |
+| `unarchive_workflow`                                                                                                                                                                                        | `write` or `manage`                                                                                                                                                           |
+| `list_feedback_datasets`                                                                                                                                                                                    | `read`                                                                                                                                                                        |
+| `list_feedback_records`                                                                                                                                                                                     | `read`                                                                                                                                                                        |
+| `count_feedback_records`                                                                                                                                                                                    | `read`                                                                                                                                                                        |
+| `get_feedback_record`                                                                                                                                                                                       | `read`                                                                                                                                                                        |
+| `search_feedback_records`                                                                                                                                                                                   | `read`                                                                                                                                                                        |
+| `find_similar_feedback_records`                                                                                                                                                                             | `read`                                                                                                                                                                        |
+| `create_feedback_record`                                                                                                                                                                                    | `write` or `manage`                                                                                                                                                           |
+| `create_feedback_records`                                                                                                                                                                                   | `write` or `manage`                                                                                                                                                           |
+| `update_feedback_record`                                                                                                                                                                                    | `write` or `manage`                                                                                                                                                           |
+| `delete_feedback_record`                                                                                                                                                                                    | `manage`                                                                                                                                                                      |
+| `list_chart_fields`, `list_charts`, `get_chart`, `list_dashboards`, `get_dashboard`                                                                                                                         | `read`                                                                                                                                                                        |
+| `preview_chart`, `get_chart_data`, `list_chart_field_values`                                                                                                                                                | `read`, and read access to the chart's feedback dataset                                                                                                                       |
+| `list_dashboard_filter_fields`                                                                                                                                                                              | `read`; a feedback dataset the caller cannot read through the dashboard is left out of the list, and a Dashboard viewer gets only the keys a chart on the dashboard groups by |
+| `list_dashboard_filter_values`                                                                                                                                                                              | `read`, and read access to each feedback dataset its charts read                                                                                                              |
+| `create_chart`, `duplicate_chart`                                                                                                                                                                           | `write` or `manage`, and write access to the feedback dataset                                                                                                                 |
+| `update_chart`, `create_dashboard`, `update_dashboard`, `duplicate_dashboard`, `update_dashboard_layout`, `set_dashboard_filters`, `add_chart_to_dashboard`, `update_widget`, `remove_chart_from_dashboard` | `write` or `manage`                                                                                                                                                           |
+| `list_contacts`, `list_contact_attribute_keys`, `list_contact_attribute_values`, `list_segments`, `list_action_classes`                                                                                     | `read`; all but `list_action_classes` also need the Contacts entitlement                                                                                                      |
 
 Synthesized MCP scopes for an API key: every `:read` scope always (`surveys`, `workflows`,
 `feedbackRecords`, `responses`, `dashboards`, `audience`); the matching `:write` scopes when the key has `write` or
@@ -422,11 +425,12 @@ curl -sS -X POST http://localhost:3000/api/auth/oauth2/register \
   This passes `scope` explicitly, so it does **not** reproduce a real client's behavior — real MCP clients
   register with the scopes from the protected-resource metadata's `scopes_supported` (`surveys:read
   surveys:write workflows:read workflows:write feedbackRecords:read feedbackRecords:write responses:read
-  responses:write dashboards:read dashboards:write offline_access`, built from `MCP_PROTECTED_RESOURCE_SCOPES`).
-  Because the authorization server validates the `/authorize` request against the client's **registered**
-  scopes, a client that registers with a narrower set than it later requests (e.g. it registers surveys-only
-  but requests `offline_access`) is rejected with `invalid_scope`. To smoke-test the real path, omit `scope`
-  and let the client adopt the advertised set, or pass exactly what the metadata advertises.
+  responses:write dashboards:read dashboards:write offline_access`, built from
+  `MCP_PROTECTED_RESOURCE_SCOPES`). Because the authorization server validates the `/authorize` request
+  against the client's **registered** scopes, a client that registers with a narrower set than it later
+  requests (e.g. it registers surveys-only but requests `offline_access`) is rejected with `invalid_scope`. To
+  smoke-test the real path, omit `scope` and let the client adopt the advertised set, or pass exactly what the
+  metadata advertises.
 </Note>
 
 <Note>
@@ -1175,7 +1179,10 @@ organization's budget. Both paths go through `generateV3Survey`
 and the provider configuration. An organization without AI gets the AI error code, never a draft.
 
 ```json
-{ "prompt": "Ask new users what slowed them down during onboarding", "workspaceId": "clxx1234567890123456789012" }
+{
+  "prompt": "Ask new users what slowed them down during onboarding",
+  "workspaceId": "clxx1234567890123456789012"
+}
 ```
 
 ### patch_survey
@@ -1410,8 +1417,8 @@ list has no total.
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
-  "filter": { "displayStatus": { "in": ["active", "scheduled"] } }
+  "filter": { "displayStatus": { "in": ["active", "scheduled"] } },
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
@@ -1424,12 +1431,12 @@ default-language text (a `422` names the field). Texts are keyed by locale code.
 
 ```json
 {
-  "workspaceId": "clxx1234567890123456789012",
+  "content": { "icon": "messageSquare", "label": { "en-US": "Feedback" } },
+  "destination": { "surveyId": "clsv1234567890123456789012", "type": "survey" },
   "name": "Pricing page feedback",
+  "status": "inProgress",
   "type": "feedbackButton",
-  "content": { "label": { "en-US": "Feedback" }, "icon": "messageSquare" },
-  "destination": { "type": "survey", "surveyId": "clsv1234567890123456789012" },
-  "status": "inProgress"
+  "workspaceId": "clxx1234567890123456789012"
 }
 ```
 
@@ -1683,7 +1690,11 @@ The operation charges the state-mutation budget (`v3StateMutation`, 120 per minu
 so the REST route and the tool spend from one bucket.
 
 ```json
-{ "ids": ["clrs1234567890123456789012"], "outcome": "lowQuality", "workspaceId": "clxx1234567890123456789012" }
+{
+  "ids": ["clrs1234567890123456789012"],
+  "outcome": "lowQuality",
+  "workspaceId": "clxx1234567890123456789012"
+}
 ```
 
 ### Tag tools
@@ -1763,13 +1774,13 @@ operation, with no write tools. Each declares its Audience permission at Read �
 (keys and values), Segments, Action classes — capped by `audience:read`. The operations own the workspace check
 and the Contacts entitlement (all but action classes), exactly as over REST.
 
-| Tool | REST operation | Permission |
-| --- | --- | --- |
-| `list_contacts` | `GET /api/v3/contacts` | Contacts: Read and Contact attributes: Read (each contact carries its attribute values) |
-| `list_contact_attribute_keys` | `GET /api/v3/contact-attribute-keys` | Contact attributes: Read |
-| `list_contact_attribute_values` | `GET /api/v3/contacts/attribute-values` | Contact attributes: Read |
-| `list_segments` | `GET /api/v3/segments` | Segments: Read and Contact attributes: Read (filters carry literal attribute values) |
-| `list_action_classes` | `GET /api/v3/action-classes` | Action classes: Read |
+| Tool                            | REST operation                          | Permission                                                                              |
+| ------------------------------- | --------------------------------------- | --------------------------------------------------------------------------------------- |
+| `list_contacts`                 | `GET /api/v3/contacts`                  | Contacts: Read and Contact attributes: Read (each contact carries its attribute values) |
+| `list_contact_attribute_keys`   | `GET /api/v3/contact-attribute-keys`    | Contact attributes: Read                                                                |
+| `list_contact_attribute_values` | `GET /api/v3/contacts/attribute-values` | Contact attributes: Read                                                                |
+| `list_segments`                 | `GET /api/v3/segments`                  | Segments: Read and Contact attributes: Read (filters carry literal attribute values)    |
+| `list_action_classes`           | `GET /api/v3/action-classes`            | Action classes: Read                                                                    |
 
 - **Smaller pages.** `list_contacts` and `list_segments` default to 20 and cap at 50 (the API allows 250): a
   contact carries every attribute it has, a segment its filter tree. The key and value lists cap at 100.
@@ -2270,17 +2281,17 @@ framework-agnostic `@formbricks/workflows` handlers used by the v3 REST routes:
 
 The creative tools call the same operations as the REST routes (`app/api/v3/creatives/lib/operations.ts`):
 
-| MCP Tool | REST Contract |
-| --- | --- |
-| `list_creatives` | `GET /api/v3/creatives` |
-| `get_creative` | `GET /api/v3/creatives/{creativeId}` |
-| `get_creative_stats` | `GET /api/v3/creatives/{creativeId}/stats` |
-| `create_creative` | `POST /api/v3/creatives` |
-| `patch_creative` | `PATCH /api/v3/creatives/{creativeId}` |
-| `delete_creative` | `DELETE /api/v3/creatives/{creativeId}` |
+| MCP Tool             | REST Contract                                   |
+| -------------------- | ----------------------------------------------- |
+| `list_creatives`     | `GET /api/v3/creatives`                         |
+| `get_creative`       | `GET /api/v3/creatives/{creativeId}`            |
+| `get_creative_stats` | `GET /api/v3/creatives/{creativeId}/stats`      |
+| `create_creative`    | `POST /api/v3/creatives`                        |
+| `patch_creative`     | `PATCH /api/v3/creatives/{creativeId}`          |
+| `delete_creative`    | `DELETE /api/v3/creatives/{creativeId}`         |
 | `duplicate_creative` | `POST /api/v3/creatives/{creativeId}/duplicate` |
-| `archive_creative` | `POST /api/v3/creatives/{creativeId}/archive` |
-| `restore_creative` | `POST /api/v3/creatives/{creativeId}/restore` |
+| `archive_creative`   | `POST /api/v3/creatives/{creativeId}/archive`   |
+| `restore_creative`   | `POST /api/v3/creatives/{creativeId}/restore`   |
 
 The creative schemas are generated from the contract (`@formbricks/api-v3-schemas`), so the tools' input
 and output schemas follow it through `pnpm api:v3:sync` rather than by hand.

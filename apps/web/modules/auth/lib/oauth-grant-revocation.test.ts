@@ -1082,7 +1082,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
       mocks.tx.mcpGrant.upsert.mockResolvedValue({ ...WORKSPACE_GRANT, permissions: { surveys: "read" } });
     });
 
-    test("locks the user's row, then the grant, and narrows SpiceDB before it locks any consent row, then saves", async () => {
+    test("locks the user's row, then the grant and the consents, and narrows SpiceDB only once nothing can refuse, then saves", async () => {
       vi.mocked(resolveMcpGrantSelection).mockResolvedValue({
         status: "ok",
         access: { access: "workspaces", workspaceIds: ["ws-1"] },
@@ -1093,7 +1093,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
       );
 
       // The user's row first, the order a member removal takes it in before this user's grant and consents.
-      expect(mocks.sequence).toEqual(["share user", "lock grant", "delete relationships", "lock consents"]);
+      expect(mocks.sequence).toEqual(["share user", "lock grant", "lock consents", "delete relationships"]);
       expect(deleteMcpGrantRelationshipsBeforeCommit).toHaveBeenCalledWith(
         expect.objectContaining({ id: "grant-1", workspaceIds: ["ws-1", "ws-2"] }),
         { access: "workspaces", workspaceIds: ["ws-1"] }
@@ -1104,6 +1104,30 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
       // What the save adds is projected after the commit.
       expect(reconcileMcpGrantRelationships).toHaveBeenCalledWith({ grantIds: ["grant-1"] });
       expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 15_000 });
+    });
+
+    // A refusal after the SpiceDB delete would commit unchanged rows over relationships that no longer
+    // match them, and nothing would repair it: the cap check runs first.
+    test("refuses a grant the scopes leave nothing of without narrowing SpiceDB", async () => {
+      vi.mocked(resolveMcpGrantSelection).mockResolvedValue({
+        status: "ok",
+        access: { access: "workspaces", workspaceIds: ["ws-1"] },
+      });
+
+      const thrown = await revokeTokensBeyondConsentAfterHandler(
+        ctx(
+          "/oauth2/consent",
+          {
+            accept: true,
+            mcp_grant: { permissions: { workflows: "read" }, access: "workspaces", workspaceIds: ["ws-1"] },
+          },
+          { redirect: true, url: "https://client/cb" }
+        )
+      ).catch((error: unknown) => error);
+
+      expect((thrown as APIError).statusCode).toBe(400);
+      expect(deleteMcpGrantRelationshipsBeforeCommit).not.toHaveBeenCalled();
+      expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
     });
 
     test("refuses a selection the user can't make with a 422, and saves nothing", async () => {
@@ -1150,10 +1174,10 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
 
       expect((thrown as APIError).statusCode).toBe(500);
       expect((thrown as APIError).body).toMatchObject({ code: MCP_GRANT_NOT_SAVED_CODE });
-      // Tried twice, never got as far as the consent rows or the grant write.
+      // Tried twice, each time the last step before the grant write, which never ran; each attempt's
+      // transaction rolls back what it locked and folded.
       expect(deleteMcpGrantRelationshipsBeforeCommit).toHaveBeenCalledTimes(2);
       expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
-      expect(mocks.sequence).not.toContain("lock consents");
       // The grant is reconciled from its committed rows after each failed attempt.
       expect(reconcileMcpGrantRelationships).toHaveBeenCalledWith({ grantIds: ["grant-1"] });
     });

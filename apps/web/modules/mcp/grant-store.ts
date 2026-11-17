@@ -34,8 +34,9 @@ import { MCP_PERMISSIONS, type TMcpPermission } from "./permissions";
  * synchronously, ordered so the safe direction wins:
  *
  *  - Narrowing a grant that stays (consent re-approval, Edit) deletes what it takes away inside the
- *    transaction, while it holds the grant's row `FOR UPDATE` and before it locks any consent row
- *    ({@link narrowMcpGrantAccess}). A failure fails the change. The workspaces the user may select are
+ *    transaction, while it holds the grant's row `FOR UPDATE`, once nothing can refuse the save any more
+ *    ({@link narrowMcpGrantAccess}; the consent hook resolves first and applies after its checks,
+ *    {@link applyMcpGrantNarrowing}). A failure fails the change. The workspaces the user may select are
  *    looked up in SpiceDB before the transaction, never while it holds a lock.
  *  - What a save adds is written once it has committed ({@link projectMcpGrants}), best-effort.
  *  - Deleting a grant needs no SpiceDB call to take effect: `/api/mcp` refuses a request whose user and
@@ -147,6 +148,27 @@ export const lockMcpGrant = async (
  */
 export const narrowMcpGrantAccess = async (
   tx: Prisma.TransactionClient,
+  input: {
+    userId: string;
+    before: TStoredMcpGrant | null;
+    access: TMcpGrantAccessSelection;
+    readableWorkspaceIds: ReadonlySet<string>;
+  }
+): Promise<TMcpGrantSelectionResolution> => {
+  const resolved = await resolveMcpGrantNarrowing(tx, input);
+  if (resolved.status === "ok") await applyMcpGrantNarrowing(input.before, resolved.access);
+  return resolved;
+};
+
+/**
+ * The checking half of {@link narrowMcpGrantAccess}: resolves the access to save, with no SpiceDB call. A
+ * save that can still refuse after this (the consent hook, whose cap comes from consent rows it locks
+ * later) resolves first, checks everything else, and only then applies the narrowing
+ * ({@link applyMcpGrantNarrowing}): a refusal after the SpiceDB delete would commit unchanged rows over
+ * relationships that no longer match them, and nothing would repair it.
+ */
+export const resolveMcpGrantNarrowing = (
+  tx: Prisma.TransactionClient,
   {
     userId,
     before,
@@ -158,11 +180,19 @@ export const narrowMcpGrantAccess = async (
     access: TMcpGrantAccessSelection;
     readableWorkspaceIds: ReadonlySet<string>;
   }
-): Promise<TMcpGrantSelectionResolution> => {
-  const resolved = await resolveMcpGrantSelection(tx, userId, access, before, readableWorkspaceIds);
-  if (resolved.status === "ok" && before)
-    await deleteMcpGrantRelationshipsBeforeCommit(before, resolved.access);
-  return resolved;
+): Promise<TMcpGrantSelectionResolution> =>
+  resolveMcpGrantSelection(tx, userId, access, before, readableWorkspaceIds);
+
+/**
+ * The applying half of {@link narrowMcpGrantAccess}: deletes from SpiceDB what `access` takes away from
+ * the grant `before` (nothing for a new grant). Call it in the save's transaction once nothing can refuse
+ * the save any more, right before {@link writeMcpGrant}. A failure throws and fails the save.
+ */
+export const applyMcpGrantNarrowing = async (
+  before: TStoredMcpGrant | null,
+  access: TMcpGrantAccessSelection
+): Promise<void> => {
+  if (before) await deleteMcpGrantRelationshipsBeforeCommit(before, access);
 };
 
 /**

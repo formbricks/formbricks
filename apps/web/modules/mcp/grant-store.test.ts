@@ -12,6 +12,7 @@ import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { resolveMcpGrantSelection } from "./access-options";
 import {
   type TStoredMcpGrant,
+  applyMcpGrantNarrowing,
   createMcpGrantIfMissing,
   deleteMcpGrants,
   getMcpGrant,
@@ -26,6 +27,7 @@ import {
   queueMcpGrantAudits,
   queueMcpGrantDeletionsAudit,
   removeDeletedMcpGrants,
+  resolveMcpGrantNarrowing,
   shareLockMcpGrant,
   writeMcpGrant,
 } from "./grant-store";
@@ -154,6 +156,27 @@ describe("narrowMcpGrantAccess", () => {
   beforeEach(() => {
     vi.mocked(deleteMcpGrantRelationshipsBeforeCommit).mockReset().mockResolvedValue(undefined);
     vi.mocked(resolveMcpGrantSelection).mockReset();
+  });
+
+  // The consent hook resolves first and applies only once nothing can refuse the save (oauth-grant-revocation).
+  test("resolving alone calls no SpiceDB, and applying deletes only for a grant that exists", async () => {
+    const tx = newTx();
+    const access = { access: "workspaces" as const, workspaceIds: ["ws-1"] };
+    vi.mocked(resolveMcpGrantSelection).mockResolvedValue({ status: "ok", access });
+
+    await resolveMcpGrantNarrowing(tx, {
+      userId: USER_ID,
+      before: stored({ access: "all" }),
+      access,
+      readableWorkspaceIds: new Set(["ws-1"]),
+    });
+    expect(deleteMcpGrantRelationshipsBeforeCommit).not.toHaveBeenCalled();
+
+    await applyMcpGrantNarrowing(null, access);
+    expect(deleteMcpGrantRelationshipsBeforeCommit).not.toHaveBeenCalled();
+    const before = stored({ access: "all" });
+    await applyMcpGrantNarrowing(before, access);
+    expect(deleteMcpGrantRelationshipsBeforeCommit).toHaveBeenCalledWith(before, access);
   });
 
   test("deletes what the resolved access takes away before the save commits", async () => {
