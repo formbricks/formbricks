@@ -1,7 +1,8 @@
 type: object
 description: >-
-  The whole edited dashboard: its name, every widget's place and, optionally, its filters. A widget left
-  out of `widgets` is removed (its chart is kept); without `filters` the saved ones are kept.
+  The whole edited dashboard: its name, every widget's place and, optionally, its filters and default
+  date range. A widget left out of `widgets` is removed (its chart is kept); without `filters` or
+  `defaultDateRange` the saved ones are kept.
   `expectedUpdatedAt` is the dashboard's `updatedAt` from your read; if it changed since, nothing is
   saved.
 required:
@@ -26,6 +27,36 @@ properties:
       `id` may appear once.
     items:
       $ref: ./DashboardFilter.yml
+  defaultDateRange:
+    type:
+      - string
+      - "null"
+    enum:
+      - today
+      - yesterday
+      - last 24 hours
+      - last 7 days
+      - last 14 days
+      - last 30 days
+      - last 60 days
+      - last 90 days
+      - last 180 days
+      - last 4 weeks
+      - last 8 weeks
+      - last 12 weeks
+      - this month
+      - last month
+      - this quarter
+      - last quarter
+      - last 6 months
+      - last 12 months
+      - this year
+      - last year
+      - null
+    description: >-
+      The rolling date preset the dashboard opens with (400 for anything else); `null` clears it, so each
+      chart keeps its own range.
+    example: last 30 days
   widgets:
     type: array
     maxItems: 1000

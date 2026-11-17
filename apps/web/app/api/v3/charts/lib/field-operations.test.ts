@@ -11,6 +11,7 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { acquireInFlightSlot } from "@/modules/core/rate-limit/in-flight";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { CubeQueryError, executeTenantScopedQuery } from "@/modules/ee/analysis/api/lib/cube-client";
+import { getDatasetQuestions } from "@/modules/ee/analysis/charts/lib/answer-questions";
 import { getDatasetChartFields } from "@/modules/ee/analysis/lib/dataset-chart-fields";
 import { getV3ChartFieldCatalog, listV3ChartFieldValues } from "./field-operations";
 import { ZV3ChartFieldCatalog } from "./resources";
@@ -39,6 +40,7 @@ vi.mock("@/modules/ee/analysis/api/lib/cube-client", async (importOriginal) => (
 }));
 
 vi.mock("@/modules/ee/analysis/lib/dataset-chart-fields", () => ({ getDatasetChartFields: vi.fn() }));
+vi.mock("@/modules/ee/analysis/charts/lib/answer-questions", () => ({ getDatasetQuestions: vi.fn() }));
 
 const EMBEDDED_FIELD = { name: "FeedbackRecords.ed_area_manager_1a2b3c4d", key: "Area Manager" };
 
@@ -63,6 +65,7 @@ const problemOf = async (response: Response) => (await response.json()) as TProb
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.mocked(getDatasetQuestions).mockResolvedValue([]);
   vi.mocked(applyRateLimit).mockResolvedValue(undefined as never);
   vi.mocked(acquireInFlightSlot).mockResolvedValue({
     allowed: true,
@@ -159,6 +162,18 @@ describe("getV3ChartFieldCatalog", () => {
         options: [{ value: "q_topics:opt_price", label: "Price" }],
       },
     ]);
+  });
+
+  test("lists the questions a question filter may name, by id and label (ENG-7323)", async () => {
+    vi.mocked(getDatasetChartFields).mockResolvedValueOnce({ embeddedFields: [] });
+    vi.mocked(getDatasetQuestions).mockResolvedValueOnce([{ id: "q_nps", label: "Recommend us?" }]);
+
+    const catalog = ZV3ChartFieldCatalog.parse(
+      ((await (await readCatalog()).json()) as { data: unknown }).data
+    );
+
+    expect(catalog.questions).toEqual([{ id: "q_nps", label: "Recommend us?" }]);
+    expect(getDatasetQuestions).toHaveBeenCalledWith(internalWorkspaceId, datasetId);
   });
 
   test("lists no answer questions for a dataset without any", async () => {

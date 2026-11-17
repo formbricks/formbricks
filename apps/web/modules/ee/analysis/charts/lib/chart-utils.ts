@@ -1,11 +1,16 @@
 import { format, isValid, parseISO } from "date-fns";
+import { EMPTY_GROUP_VALUE } from "@/modules/ee/analysis/charts/lib/chart-series";
 import {
+  EMOTIONS_DIMENSION_ID,
   SENTIMENT_DIMENSION_ID,
+  type TEmotionValue,
   type TSentimentValue,
   type TValueBandPolarity,
   VALUE_BAND_DIMENSION_ID,
   VALUE_BAND_POLARITY,
+  getEmotionValueForMeasureId,
   getSentimentValueForMeasureId,
+  isEmotionValue,
   isNotEnrichedDimensionValue,
   isSentimentValue,
   isValueBandValue,
@@ -39,35 +44,53 @@ export const CHART_MEASURE_COLORS = [
  * categorical palette. */
 export const CHART_NOT_ENRICHED_COLOR = "#a3a3a3"; // neutral-400
 
+/** Red → green steps shared by every scale that runs from bad to good (sentiment, NPS and CSAT
+ * bands), so "bad" and "good" read the same on every chart of a dashboard. */
+const CHART_SCALE_RED = "#e34948";
+const CHART_SCALE_ORANGE = "#eb6834";
+const CHART_SCALE_AMBER = "#eda100";
+const CHART_SCALE_LIGHT_GREEN = "#62b33f";
+const CHART_SCALE_GREEN = "#008300";
+
 /**
  * Semantic scale for sentiment buckets, keyed by enum value (never by series index) so each bucket
- * keeps its color regardless of which buckets appear. Hues deliberately mirror the emotion chart,
- * where the six emotion count measures take CHART_MEASURE_COLORS in EMOTION_MEASURE_ORDER: very
- * negative = sadness red, negative = disgust orange, neutral = surprise blue, mixed = anger
- * yellow; positive is the brand teal and very positive the next-darker brand step
- * (--color-brandnew in globals.css). Validated with the dataviz palette script on white: lightness
- * band and adjacent-pair CVD separation pass (worst adjacent ΔE 16.2, deutan); the dark brand teal
- * sits just under the categorical chroma floor, acceptable for a brand hue.
+ * keeps its color regardless of which buckets appear: red for very negative through amber for
+ * neutral to green for very positive. "Mixed" sits off the scale, so it takes violet — not a step
+ * of the red → green run a reader would place it on.
  */
 export const CHART_SENTIMENT_COLORS: Record<TSentimentValue, string> = {
-  very_negative: "#e34948", // red (palette red — sadness)
-  negative: "#eb6834", // orange (palette orange — disgust)
-  neutral: "#2a78d6", // blue (palette blue — surprise)
-  positive: CHART_BRAND_DARK, // teal (brand)
-  very_positive: "#038178", // dark teal (brand, one step darker)
-  mixed: "#eda100", // yellow (palette yellow — anger)
+  very_negative: CHART_SCALE_RED,
+  negative: CHART_SCALE_ORANGE,
+  neutral: CHART_SCALE_AMBER,
+  positive: CHART_SCALE_LIGHT_GREEN,
+  very_positive: CHART_SCALE_GREEN,
+  mixed: "#4a3aa7", // violet
 };
 
 /**
- * Polarity colors for NPS and CSAT bands: promoter/satisfied teal, passive/neutral yellow,
- * detractor/dissatisfied red — the palette's own teal, yellow and red, so they keep its CVD
- * validation. Neutral is deliberately yellow here and blue in sentiment: a passive NPS answer is a
- * lukewarm 7 or 8, not "no opinion", and a traffic-light reading is what NPS readers expect.
+ * Polarity colors for NPS and CSAT bands: promoter/satisfied green, passive/neutral amber,
+ * detractor/dissatisfied red — the traffic light NPS readers expect, on the same steps as the
+ * sentiment scale.
  */
 export const CHART_VALUE_BAND_COLORS: Record<TValueBandPolarity, string> = {
-  positive: CHART_BRAND_DARK,
-  neutral: "#eda100",
-  negative: "#e34948",
+  positive: CHART_SCALE_GREEN,
+  neutral: CHART_SCALE_AMBER,
+  negative: CHART_SCALE_RED,
+};
+
+/**
+ * One fixed color per emotion, so an emotion keeps its color whichever emotions a chart picks and in
+ * whatever order (the palette-by-index it replaced painted "joy" teal on one chart and blue on the
+ * next). Hues follow the common emotion color associations — joy yellow, sadness blue, anger red,
+ * fear violet, disgust green, surprise orange — all from the validated categorical palette.
+ */
+export const CHART_EMOTION_COLORS: Record<TEmotionValue, string> = {
+  joy: "#eda100",
+  surprise: "#eb6834",
+  anger: "#e34948",
+  sadness: "#2a78d6",
+  fear: "#4a3aa7",
+  disgust: "#008300",
 };
 
 /**
@@ -76,12 +99,20 @@ export const CHART_VALUE_BAND_COLORS: Record<TValueBandPolarity, string> = {
  * dimensions, unknown tokens) so callers fall back to the generic palette.
  */
 export const getSemanticDimensionColor = (dimensionId: string, value: unknown): string | undefined => {
-  if (isNotEnrichedDimensionValue(dimensionId, value)) return CHART_NOT_ENRICHED_COLOR;
+  // The shown empty group ("(no value)", "Not enriched", "Unspecified") is gray on every chart type.
+  if (value === EMPTY_GROUP_VALUE || isNotEnrichedDimensionValue(dimensionId, value)) {
+    return CHART_NOT_ENRICHED_COLOR;
+  }
   if (dimensionId === SENTIMENT_DIMENSION_ID && typeof value === "string" && isSentimentValue(value)) {
     return CHART_SENTIMENT_COLORS[value];
   }
   if (dimensionId === VALUE_BAND_DIMENSION_ID && typeof value === "string" && isValueBandValue(value)) {
     return CHART_VALUE_BAND_COLORS[VALUE_BAND_POLARITY[value]];
+  }
+  // Only a record tagged with one emotion has an emotion's color; a combination ("joy, fear") is a
+  // group of its own and takes the palette.
+  if (dimensionId === EMOTIONS_DIMENSION_ID && typeof value === "string" && isEmotionValue(value)) {
+    return CHART_EMOTION_COLORS[value];
   }
   return undefined;
 };
@@ -108,9 +139,15 @@ export const getBandMeasureColor = (measureId: string): string | undefined => {
   return polarity ? CHART_VALUE_BAND_COLORS[polarity] : undefined;
 };
 
-/** Meaning-bound series color for a measure (sentiment or band counts), or undefined for the palette. */
+/** Fixed color for an emotion count measure (e.g. "FeedbackRecords.joyCount"). */
+export const getEmotionMeasureColor = (measureId: string): string | undefined => {
+  const emotion = getEmotionValueForMeasureId(measureId);
+  return emotion ? CHART_EMOTION_COLORS[emotion] : undefined;
+};
+
+/** Meaning-bound series color for a measure (sentiment, emotion or band counts), or undefined for the palette. */
 export const getSemanticMeasureColor = (measureId: string): string | undefined =>
-  getSentimentMeasureColor(measureId) ?? getBandMeasureColor(measureId);
+  getSentimentMeasureColor(measureId) ?? getEmotionMeasureColor(measureId) ?? getBandMeasureColor(measureId);
 
 /**
  * Chart types that no longer exist, mapped to the type that replaced them. `line` merged into
@@ -517,4 +554,69 @@ export const getValueLabelPadding = (labels: string[]): number => {
   const longest = labels.reduce((max, label) => Math.max(max, label.length), 0);
   const needed = Math.ceil(longest * AXIS_CHAR_WIDTH) + AXIS_TICK_GAP;
   return Math.min(VALUE_LABEL_MAX_PADDING, Math.max(VALUE_LABEL_MIN_PADDING, needed));
+};
+
+// ── Crowded category axis ─────────────────────────────────────────────────────
+
+/** Narrowest box (px) a wrapped x-axis label keeps; below it the axis rotates its labels instead.
+ * About eight characters per line: narrower, a wrapped label breaks into a column of word stubs. */
+export const X_AXIS_MIN_WRAP_WIDTH = 56;
+/** Room (px) the y-axis and the chart margins take from the plot width, for the band estimate. */
+const VALUE_AXIS_ALLOWANCE = 72;
+/** Angle of a rotated label, in degrees below the axis. */
+export const ROTATED_LABEL_ANGLE = 45;
+/** Characters a rotated label keeps before it is cut from the middle; the full text is on hover. */
+export const ROTATED_LABEL_MAX_CHARS = 24;
+/** Ceiling (px) of the axis height a rotated set of labels reserves. */
+const ROTATED_AXIS_MAX_HEIGHT = 140;
+
+/**
+ * Whether a vertical category axis rotates its labels: once each category's band leaves a wrapped
+ * label less than {@link X_AXIS_MIN_WRAP_WIDTH}. Above that, wrapping keeps labels horizontal and
+ * readable; below, a −45° line uses the diagonal instead of piling words into a narrow column.
+ * Unknown width (first render) keeps the wrapped layout.
+ */
+export const shouldRotateCategoryLabels = (categoryCount: number, chartWidth?: number): boolean => {
+  if (categoryCount <= 1 || chartWidth === undefined || !Number.isFinite(chartWidth) || chartWidth <= 0) {
+    return false;
+  }
+  const band = (chartWidth - VALUE_AXIS_ALLOWANCE) / categoryCount;
+  return band - AXIS_LABEL_GAP < X_AXIS_MIN_WRAP_WIDTH;
+};
+
+/** A rotated label cut to {@link ROTATED_LABEL_MAX_CHARS}, from the middle like the flipped axis. */
+export const truncateRotatedLabel = (label: string): string =>
+  truncateLabelToBox(label, ROTATED_LABEL_MAX_CHARS * AXIS_CHAR_WIDTH_WIDE, 1);
+
+/** Height (px) a rotated axis reserves: the diagonal of its longest (cut) label, plus the offset. */
+export const getRotatedAxisHeight = (labels: string[]): number => {
+  const longest = labels.reduce((max, label) => Math.max(max, truncateRotatedLabel(label).length), 0);
+  const diagonal = longest * AXIS_CHAR_WIDTH * Math.sin((ROTATED_LABEL_ANGLE * Math.PI) / 180);
+  return Math.min(ROTATED_AXIS_MAX_HEIGHT, Math.ceil(diagonal) + 24);
+};
+
+// ── Legend ────────────────────────────────────────────────────────────────────
+
+/** Room (px) one legend entry takes besides its text: the swatch, its gap and the gap to the next. */
+const LEGEND_ENTRY_CHROME = 26;
+/** Height (px) of one wrapped legend row. */
+const LEGEND_ROW_HEIGHT = 20;
+/**
+ * Height (px) the legend reserves, from the rows its entries wrap onto at this width. A grouped chart
+ * can carry dozens of series ("one line per source"), and a fixed one-row legend overlapped the axis.
+ */
+export const getLegendHeight = (labels: string[], chartWidth?: number): number => {
+  if (labels.length === 0) return CHART_LEGEND_HEIGHT;
+  const width = chartWidth !== undefined && Number.isFinite(chartWidth) && chartWidth > 0 ? chartWidth : 600;
+  let rows = 1;
+  let rowWidth = 0;
+  for (const label of labels) {
+    const entry = label.length * AXIS_CHAR_WIDTH + LEGEND_ENTRY_CHROME;
+    if (rowWidth > 0 && rowWidth + entry > width) {
+      rows += 1;
+      rowWidth = 0;
+    }
+    rowWidth += entry;
+  }
+  return Math.max(CHART_LEGEND_HEIGHT, rows * LEGEND_ROW_HEIGHT + 16);
 };

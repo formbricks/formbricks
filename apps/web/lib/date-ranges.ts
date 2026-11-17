@@ -35,13 +35,20 @@ export const DATE_RANGE_PRESETS = [
   "yesterday",
   "last 24 hours",
   "last 7 days",
+  "last 14 days",
   "last 30 days",
+  "last 60 days",
   "last 90 days",
+  "last 180 days",
+  "last 4 weeks",
+  "last 8 weeks",
+  "last 12 weeks",
   "this month",
   "last month",
   "this quarter",
   "last quarter",
   "last 6 months",
+  "last 12 months",
   "this year",
   "last year",
 ] as const;
@@ -51,14 +58,24 @@ export type TDateRangePreset = (typeof DATE_RANGE_PRESETS)[number];
 type TSubDayDateRangePreset = "last 24 hours";
 type TCalendarDateRangePreset = Exclude<TDateRangePreset, TSubDayDateRangePreset>;
 
+/** The `count` calendar days ending with `today`, today included. */
+const lastDays = (today: Date, count: number): [Date, Date] => [addDays(today, 1 - count), today];
+
 // Calendar-day presets are pure calendar arithmetic on `today` — the reporting zone's current
 // calendar day — and yield calendar days, so they never touch a clock or an offset.
 const CALENDAR_PRESET_RESOLVERS: Record<TCalendarDateRangePreset, (today: Date) => [Date, Date]> = {
   today: (today) => [today, today],
   yesterday: (today) => [addDays(today, -1), addDays(today, -1)],
-  "last 7 days": (today) => [addDays(today, -6), today],
-  "last 30 days": (today) => [addDays(today, -29), today],
-  "last 90 days": (today) => [addDays(today, -89), today],
+  "last 7 days": (today) => lastDays(today, 7),
+  "last 14 days": (today) => lastDays(today, 14),
+  "last 30 days": (today) => lastDays(today, 30),
+  "last 60 days": (today) => lastDays(today, 60),
+  "last 90 days": (today) => lastDays(today, 90),
+  "last 180 days": (today) => lastDays(today, 180),
+  // Rolling weeks, not calendar weeks: whole 7-day blocks ending today, so no week-start setting is involved.
+  "last 4 weeks": (today) => lastDays(today, 4 * 7),
+  "last 8 weeks": (today) => lastDays(today, 8 * 7),
+  "last 12 weeks": (today) => lastDays(today, 12 * 7),
   "this month": (today) => [startOfMonth(today), today],
   "last month": (today) => {
     const lastOfLastMonth = addDays(startOfMonth(today), -1);
@@ -70,6 +87,7 @@ const CALENDAR_PRESET_RESOLVERS: Record<TCalendarDateRangePreset, (today: Date) 
     return [startOfQuarter(lastQuarter), startOfDay(endOfQuarter(lastQuarter))];
   },
   "last 6 months": (today) => [subMonths(today, 6), today],
+  "last 12 months": (today) => [subMonths(today, 12), today],
   "this year": (today) => [startOfYear(today), today],
   "last year": (today) => {
     const lastYear = subYears(today, 1);

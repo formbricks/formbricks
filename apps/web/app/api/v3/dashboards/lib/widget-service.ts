@@ -209,6 +209,7 @@ export type TDashboardReplaceResult =
       previous: {
         name: string;
         filters?: unknown;
+        defaultDateRange?: string | null;
         widgets: { id: string; layout: unknown; order: number }[];
       };
     }
@@ -278,7 +279,7 @@ const checkWidgetPlaces = (
 };
 
 /**
- * Replace a dashboard's name, filters and its widgets' places in one transaction, provided it is still the
+ * Replace a dashboard's name, filters, default date range and its widgets' places in one transaction, provided it is still the
  * version the caller read (`expectedUpdatedAt`). Every check runs against the transaction's own read,
  * before anything is written, so a refused write changes nothing.
  *
@@ -290,6 +291,7 @@ export const replaceDashboardRow = ({
   expectedUpdatedAt,
   name,
   filters,
+  defaultDateRange,
   widgets,
   requireEveryWidget = false,
 }: {
@@ -299,6 +301,8 @@ export const replaceDashboardRow = ({
   name?: string;
   /** Kept as they are when omitted. */
   filters?: TDashboardFilter[];
+  /** A date preset name, or `null` to clear it. Kept as it is when omitted. */
+  defaultDateRange?: string | null;
   /** `order` is kept as it is when omitted. Every widget is kept as it is when `widgets` is omitted. */
   widgets?: { widgetId: string; layout: TWidgetLayout; order?: number }[];
   requireEveryWidget?: boolean;
@@ -313,6 +317,7 @@ export const replaceDashboardRow = ({
           name: true,
           updatedAt: true,
           filters: true,
+          defaultDateRange: true,
           widgets: { select: { id: true, layout: true, order: true } },
         },
       });
@@ -338,6 +343,7 @@ export const replaceDashboardRow = ({
         data: {
           ...(name === undefined ? {} : { name }),
           ...(filters === undefined ? {} : { filters: filters as Prisma.InputJsonValue }),
+          ...(defaultDateRange === undefined ? {} : { defaultDateRange }),
           updatedAt: nextDashboardUpdatedAt(locked),
         },
         select: selectDashboardResource,
@@ -346,7 +352,12 @@ export const replaceDashboardRow = ({
       return {
         kind: "ok",
         row,
-        previous: { name: current.name, filters: current.filters, widgets: current.widgets },
+        previous: {
+          name: current.name,
+          filters: current.filters,
+          defaultDateRange: current.defaultDateRange,
+          widgets: current.widgets,
+        },
       };
     }, REPLACE_TRANSACTION_OPTIONS)
   );

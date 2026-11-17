@@ -660,9 +660,50 @@ describe("replaceV3Dashboard (PUT)", () => {
       newObject: {
         name: "Saved",
         filters: [],
+        defaultDateRange: null,
         widgets: [{ id: WIDGET_A, layout: { x: 0, y: 0, w: 6, h: 4 }, order: 0 }],
       },
     });
+  });
+
+  test("passes the default date range through, serves it back, and audits it", async () => {
+    resultIs({
+      kind: "ok",
+      row: dashboardRow({ defaultDateRange: "last 4 weeks" }),
+      previous: { name: "Board", defaultDateRange: null, widgets: [] },
+    });
+    const log = auditLog();
+
+    const response = await replaceV3Dashboard({
+      dashboardId: DASHBOARD_ID,
+      body: {
+        name: "Board",
+        expectedUpdatedAt: EXPECTED_UPDATED_AT,
+        widgets,
+        defaultDateRange: "last 4 weeks",
+      },
+      auditLog: log,
+      ...contextOf(),
+    });
+
+    expect(response.status).toBe(200);
+    expect(vi.mocked(replaceDashboardRow).mock.calls[0][0]).toMatchObject({
+      defaultDateRange: "last 4 weeks",
+    });
+    expect((await response.json()).data.defaultDateRange).toBe("last 4 weeks");
+    expect(log.newObject).toMatchObject({ defaultDateRange: "last 4 weeks" });
+  });
+
+  test("serves a stored default that is no longer a preset as no default", async () => {
+    resultIs({
+      kind: "ok",
+      row: dashboardRow({ defaultDateRange: "last fortnight" }),
+      previous: { name: "Board", widgets: [] },
+    });
+
+    const response = await replace();
+
+    expect((await response.json()).data.defaultDateRange).toBeNull();
   });
 
   test("answers 409 with both timestamps when the dashboard changed since the caller's read", async () => {

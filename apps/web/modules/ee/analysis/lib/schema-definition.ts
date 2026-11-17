@@ -616,8 +616,13 @@ export const isSentimentValue = (value: string): value is TSentimentValue =>
 export const getSentimentValueForMeasureId = (measureId: string): TSentimentValue | undefined =>
   SENTIMENT_VALUE_ORDER.find((value) => measureId === `FeedbackRecords.${toCountMeasureId(value)}Count`);
 
-const isEmotionValue = (value: string): value is TEmotionValue =>
+export const isEmotionValue = (value: string): value is TEmotionValue =>
   (EMOTION_VALUES as readonly string[]).includes(value);
+
+/** Map an emotion count measure id (e.g. "FeedbackRecords.joyCount") back to its emotion. Charts use
+ * this to give each emotion series its fixed color. Undefined for every other measure. */
+export const getEmotionValueForMeasureId = (measureId: string): TEmotionValue | undefined =>
+  EMOTION_VALUES.find((value) => measureId === `FeedbackRecords.${value}Count`);
 
 /** Sentiment/emotions are populated by AI enrichment, so their values are empty until a record is
  * enriched. Charts special-case that empty bucket (a "Not enriched" label + neutral gray). */
@@ -1018,6 +1023,13 @@ export function getTranslatedDatePresetLabel(value: string, t: TFunction): strin
     "last 7 days": t("workspace.analysis.charts.date_preset_last_7_days"),
     "last 30 days": t("workspace.analysis.charts.date_preset_last_30_days"),
     "last 90 days": t("workspace.analysis.charts.date_preset_last_90_days"),
+    "last 14 days": t("workspace.analysis.charts.date_preset_last_14_days"),
+    "last 60 days": t("workspace.analysis.charts.date_preset_last_60_days"),
+    "last 180 days": t("workspace.analysis.charts.date_preset_last_180_days"),
+    "last 4 weeks": t("workspace.analysis.charts.date_preset_last_4_weeks"),
+    "last 8 weeks": t("workspace.analysis.charts.date_preset_last_8_weeks"),
+    "last 12 weeks": t("workspace.analysis.charts.date_preset_last_12_weeks"),
+    "last 12 months": t("workspace.analysis.charts.date_preset_last_12_months"),
     "this month": t("workspace.analysis.charts.date_preset_this_month"),
     "last month": t("workspace.analysis.charts.date_preset_last_month"),
     "this quarter": t("workspace.analysis.charts.date_preset_this_quarter"),

@@ -14233,6 +14233,10 @@ components:
             - right
         stacked:
           type: boolean
+          description: Bar charts with several series of counts. Stacks them into one bar per category (default true); false places them side by side. Series that cannot be added up (scores, averages) are always side by side.
+        showEmptyValues:
+          type: boolean
+          description: 'Charts with a grouping. Shows records that have no value for a grouping (including "Not enriched" sentiment and "Unspecified" language) as their own group. Default false: those records are left out.'
         showGrid:
           type: boolean
         showValues:
@@ -14391,6 +14395,7 @@ components:
             - boolean
         label:
           type: string
+          description: Display text. For an embedded-data field, the name the workspace gave the key, or else the key as collected.
           example: 'NPS: Score'
         description:
           type:
@@ -14482,6 +14487,22 @@ components:
                 example: Late
             additionalProperties: false
       additionalProperties: false
+    ChartQuestion:
+      type: object
+      description: A question of the Feedback Dataset a question filter (`FeedbackRecords.fieldId`) may name.
+      required:
+        - id
+        - label
+      properties:
+        id:
+          type: string
+          description: The question's id, the value to filter `FeedbackRecords.fieldId` by.
+          example: q_delivery
+        label:
+          type: string
+          description: The question as respondents read it, in the survey's default language.
+          example: How was the delivery?
+      additionalProperties: false
     ChartFieldCatalog:
       type: object
       description: 'The field catalog: the fields a chart query may use, and the named date ranges it may use on `FeedbackRecords.collectedAt` and other time dimensions. The chart query validator checks against this same list, so the catalog is the contract.'
@@ -14489,6 +14510,7 @@ components:
         - fields
         - datePresets
         - answerQuestions
+        - questions
       properties:
         fields:
           type: array
@@ -14509,6 +14531,11 @@ components:
           description: The questions of the Feedback Dataset an answer rule (`FeedbackRecords.answer`) may name, with the operators and values each takes. Empty for a dataset without such questions.
           items:
             $ref: '#/components/schemas/ChartAnswerQuestion'
+        questions:
+          type: array
+          description: 'The questions of the Feedback Dataset a question filter may name: filter `FeedbackRecords.fieldId` with `equals` and a question''s `id` to keep that question''s records, however its text is later edited or translated. Multi-select, matrix and ranking questions are not listed: their records carry a per-option id. Empty for a dataset without surveys.'
+          items:
+            $ref: '#/components/schemas/ChartQuestion'
       additionalProperties: false
     ChartPreviewRequest:
       type: object
@@ -14579,7 +14606,7 @@ components:
         type: string
     ChartDataMemberLabels:
       type: object
-      description: Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the embedded-data key's own name as collected, so a column or legend can read `Plan` rather than the field name. Empty when the query names no embedded-data field.
+      description: 'Embedded-data fields (`FeedbackRecords.ed_…`) the query names, to the name the workspace gave the embedded-data key, or else the key''s own name as collected, so a column or legend can read `Plan` rather than the field name. Display text only: read the key from the field catalog''s `key`. Empty when the query names no embedded-data field.'
       additionalProperties:
         type: string
       example:
@@ -14815,6 +14842,7 @@ components:
         - name
         - creator
         - filters
+        - defaultDateRange
         - widgets
         - createdAt
         - updatedAt
@@ -14836,6 +14864,12 @@ components:
           maxItems: 10
           items:
             $ref: '#/components/schemas/DashboardFilter'
+        defaultDateRange:
+          type:
+            - string
+            - 'null'
+          description: 'The rolling date preset (one of the field catalog''s `datePresets`, never `all-time`) the dashboard opens with when no `dateRange` is chosen. `null`: each chart keeps its own saved range. It is not applied to `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data` on its own; pass it as that read''s `dateRange` to see what a person opening the dashboard sees.'
+          example: last 30 days
         widgets:
           type: array
           description: In display order.
@@ -14851,7 +14885,7 @@ components:
       additionalProperties: false
     DashboardReplaceRequest:
       type: object
-      description: 'The whole edited dashboard: its name, every widget''s place and, optionally, its filters. A widget left out of `widgets` is removed (its chart is kept); without `filters` the saved ones are kept. `expectedUpdatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
+      description: 'The whole edited dashboard: its name, every widget''s place and, optionally, its filters and default date range. A widget left out of `widgets` is removed (its chart is kept); without `filters` or `defaultDateRange` the saved ones are kept. `expectedUpdatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
       required:
         - name
         - expectedUpdatedAt
@@ -14871,6 +14905,34 @@ components:
           description: Every dashboard filter, in top-bar order, replacing the saved ones. At most 10; each `field` must be a catalog dimension and `operator` one it allows (422 naming the filter otherwise), and each `id` may appear once.
           items:
             $ref: '#/components/schemas/DashboardFilter'
+        defaultDateRange:
+          type:
+            - string
+            - 'null'
+          enum:
+            - today
+            - yesterday
+            - last 24 hours
+            - last 7 days
+            - last 14 days
+            - last 30 days
+            - last 60 days
+            - last 90 days
+            - last 180 days
+            - last 4 weeks
+            - last 8 weeks
+            - last 12 weeks
+            - this month
+            - last month
+            - this quarter
+            - last quarter
+            - last 6 months
+            - last 12 months
+            - this year
+            - last year
+            - null
+          description: The rolling date preset the dashboard opens with (400 for anything else); `null` clears it, so each chart keeps its own range.
+          example: last 30 days
         widgets:
           type: array
           maxItems: 1000

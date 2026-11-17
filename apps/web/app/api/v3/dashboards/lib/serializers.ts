@@ -1,6 +1,7 @@
 import "server-only";
 import { ZWidgetLayout } from "@formbricks/types/analysis";
 import { serializeV3Chart } from "@/app/api/v3/charts/lib/serializers";
+import { parseStoredDefaultDateRange } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
 import { parseStoredDashboardFilters } from "@/modules/ee/analysis/dashboards/lib/dashboard-filters";
 import type {
   TV3DashboardListItem,
@@ -52,5 +53,6 @@ export const serializeV3Dashboard = (row: TDashboardResourceRow): TV3DashboardRe
   createdAt: row.createdAt.toISOString(),
   updatedAt: row.updatedAt.toISOString(),
   filters: parseStoredDashboardFilters(row.filters),
+  defaultDateRange: parseStoredDefaultDateRange(row.defaultDateRange),
   widgets: row.widgets.map(serializeV3DashboardWidget),
 });

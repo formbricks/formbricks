@@ -9,6 +9,7 @@ required:
   - name
   - creator
   - filters
+  - defaultDateRange
   - widgets
   - createdAt
   - updatedAt
@@ -30,6 +31,16 @@ properties:
     maxItems: 10
     items:
       $ref: ./DashboardFilter.yml
+  defaultDateRange:
+    type:
+      - string
+      - "null"
+    description: >-
+      The rolling date preset (one of the field catalog's `datePresets`, never `all-time`) the dashboard
+      opens with when no `dateRange` is chosen. `null`: each chart keeps its own saved range. It is
+      not applied to `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data` on its own; pass it as
+      that read's `dateRange` to see what a person opening the dashboard sees.
+    example: last 30 days
   widgets:
     type: array
     description: In display order.

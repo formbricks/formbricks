@@ -1,5 +1,10 @@
 import type { TChartQuery, TMemberFilter } from "@formbricks/types/analysis";
-import { DATE_RANGE_PRESETS, isSubDayDateRangePreset, resolveDateRangePreset } from "@/lib/date-ranges";
+import {
+  DATE_RANGE_PRESETS,
+  type TDateRangePreset,
+  isSubDayDateRangePreset,
+  resolveDateRangePreset,
+} from "@/lib/date-ranges";
 import { formatLocalDay } from "@/lib/utils/datetime";
 import { writeDashboardCookie } from "./dashboard-cookies";
 
@@ -134,6 +139,49 @@ export const applyDashboardDateFilter = (
   const next = [...timeDimensions];
   next[index] = { ...next[index], dateRange };
   return { ...query, timeDimensions: next };
+};
+
+/**
+ * Whether `value` can be a dashboard's default date range: a rolling preset, never a fixed pair of dates
+ * (it would stop moving) and never "all time" (no default already means each chart's own range, and an
+ * explicit `?dateRange=all time` overrides a default).
+ */
+export const isDashboardDefaultDateRange = (value: unknown): value is TDateRangePreset =>
+  typeof value === "string" &&
+  // "all time" is the absence of a range, never a default — excluded explicitly so adding it to the
+  // presets one day cannot make it one.
+  value !== "all time" &&
+  (DATE_RANGE_PRESETS as readonly string[]).includes(value);
+
+/**
+ * A dashboard's stored default date range, or `null`. A stored name that is no longer a preset reads as
+ * no default, so the dashboard falls back to each chart's own range rather than failing.
+ */
+export const parseStoredDefaultDateRange = (value: string | null | undefined): TDateRangePreset | null =>
+  isDashboardDefaultDateRange(value) ? value : null;
+
+/**
+ * The date filter a dashboard is shown with. Most specific first:
+ *
+ * 1. a filter pinned in the URL (a shared link, back/forward) — `?dateRange=all time` included, so a viewer
+ *    can always lift a default;
+ * 2. the range this viewer last chose on this dashboard (the cookie);
+ * 3. the dashboard's saved default rolling range;
+ * 4. none: each chart keeps its own saved range.
+ */
+export const resolveEffectiveDateFilter = ({
+  urlFilter,
+  chosenFilter,
+  defaultDateRange,
+}: {
+  urlFilter: TDashboardDateFilter | null;
+  chosenFilter: TDashboardDateFilter | null;
+  defaultDateRange: string | null | undefined;
+}): TDashboardDateFilter | null => {
+  if (urlFilter) return urlFilter;
+  if (chosenFilter) return chosenFilter;
+  const preset = parseStoredDefaultDateRange(defaultDateRange);
+  return preset ? { type: "preset", value: preset } : null;
 };
 
 /**

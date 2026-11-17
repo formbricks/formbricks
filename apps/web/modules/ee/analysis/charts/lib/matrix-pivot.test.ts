@@ -137,14 +137,24 @@ describe("buildMatrixPivot", () => {
     expect(pivot.rows[1].cells.every((c) => c.value === 0 && c.share === null)).toBe(true);
   });
 
-  test("without a label map, orders columns by label and rows by size", () => {
+  test("without a label map, orders columns and rows by size", () => {
     const pivot = pivotOf(
-      [record("DE", "web", 1), record("US", "app", 5), record("US", "web", 4), record("DE", "app", 2)],
+      [record("DE", "web", 1), record("US", "app", 2), record("US", "web", 8), record("DE", "app", 2)],
       { rowOrder: undefined, columnOrder: undefined, formatRowLabel: (v) => v, formatColumnLabel: (v) => v }
     );
 
-    expect(pivot.columns.map((c) => c.key)).toEqual(["app", "web"]);
+    expect(pivot.columns.map((c) => c.key)).toEqual(["web", "app"]);
     expect(pivot.rows.map((r) => r.key)).toEqual(["US", "DE"]);
+  });
+
+  test("equal columns fall back to their label", () => {
+    const pivot = pivotOf([record("US", "web", 1), record("US", "app", 1)], {
+      rowOrder: undefined,
+      columnOrder: undefined,
+      formatRowLabel: (v) => v,
+      formatColumnLabel: (v) => v,
+    });
+    expect(pivot.columns.map((c) => c.key)).toEqual(["app", "web"]);
   });
 
   test("a ratio measure is neither shared nor totalled", () => {

@@ -8,6 +8,7 @@ import type {
   TV3DashboardResource,
   TV3DashboardWidget,
 } from "@/app/api/v3/dashboards/lib/resources";
+import type { TDateRangePreset } from "@/lib/date-ranges";
 import { V3ApiError, parseV3ApiError } from "@/modules/api/lib/v3-client";
 import {
   type TDashboardFilterState,
@@ -366,7 +367,10 @@ const toAppDashboardListItem = (item: TV3DashboardListItem): TAppDashboardListIt
  * A dashboard as the page renders it. `updatedAt` stays the server's ISO string: it is what a full save
  * sends back for the stale-check, and a round trip through `Date` would be one more place to lose it.
  */
-export type TAppDashboard = Pick<TV3DashboardResource, "id" | "workspaceId" | "name" | "updatedAt"> & {
+export type TAppDashboard = Pick<
+  TV3DashboardResource,
+  "id" | "workspaceId" | "name" | "updatedAt" | "defaultDateRange"
+> & {
   filters: TLockedDashboardFilter[];
   widgets: TDashboardWidget[];
 };
@@ -386,6 +390,7 @@ export const toAppDashboard = (resource: TV3DashboardResource): TAppDashboard =>
   name: resource.name,
   updatedAt: resource.updatedAt,
   filters: resource.filters,
+  defaultDateRange: resource.defaultDateRange,
   widgets: resource.widgets.map((widget) => toAppDashboardWidget(resource.id, widget)),
 });
 
@@ -438,7 +443,8 @@ export const createDashboard = async ({
   );
 
 /**
- * Saves the whole edited dashboard — its name, every widget's place and its filters — in one call. `expectedUpdatedAt` is the
+ * Saves the whole edited dashboard — its name, every widget's place, its filters and its default date
+ * range — in one call. `filters` and `defaultDateRange` are kept as saved when omitted. `expectedUpdatedAt` is the
  * version the edit started from; if the dashboard changed since, nothing is saved and the call throws
  * the 409 `isStaleDashboardError` recognises. A widget left out is removed.
  */
@@ -448,6 +454,7 @@ export const replaceDashboard = async (
     name: string;
     expectedUpdatedAt: string;
     filters?: TLockedDashboardFilter[];
+    defaultDateRange?: TDateRangePreset | null;
     widgets: { widgetId: string; layout: TDashboardWidget["layout"]; order: number }[];
   }
 ): Promise<TAppDashboard> =>
@@ -583,3 +590,18 @@ export const generateChart = async ({
   });
   return readData<AnalyticsResponse>(response);
 };
+
+/**
+ * Name an imported (embedded-data) key across the workspace, or clear its name with an empty `label`.
+ * Resolves to the stored name, `null` when the key shows as collected again.
+ */
+export const setEmbeddedFieldLabel = async ({
+  workspaceId,
+  key,
+  label,
+}: {
+  workspaceId: string;
+  key: string;
+  label: string;
+}): Promise<{ key: string; label: string | null }> =>
+  readData(await sendJson("PUT", "/api/internal/embedded-field-labels", { workspaceId, key, label }));

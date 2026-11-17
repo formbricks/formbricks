@@ -1,6 +1,8 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { EmbeddedFieldRenameButton } from "@/modules/ee/analysis/charts/components/embedded-field-rename-button";
+import { getEmbeddedFieldDisplayName } from "@/modules/ee/analysis/lib/embedded-field-label-limits";
 import type { TEmbeddedChartField } from "@/modules/ee/analysis/lib/field-catalog";
 import {
   FEEDBACK_FIELDS,
@@ -22,6 +24,13 @@ interface DimensionsPanelProps {
   isMatrix?: boolean;
   /** The dataset's embedded-data keys, offered as groupings under their own names (ENG-6893). */
   embeddedFields?: readonly TEmbeddedChartField[];
+  /**
+   * With a workspace, a chosen imported field's chip carries a ✎ that renames the key across the workspace.
+   * Built-in fields keep their translated names.
+   */
+  workspaceId?: string;
+  /** Called once an imported field is renamed, e.g. to re-run the preview so its legend shows the name. */
+  onEmbeddedFieldRenamed?: () => void;
 }
 
 export function DimensionsPanel({
@@ -30,6 +39,8 @@ export function DimensionsPanel({
   hideTitle = false,
   isMatrix = false,
   embeddedFields = [],
+  workspaceId,
+  onEmbeddedFieldRenamed,
 }: Readonly<DimensionsPanelProps>) {
   const { t } = useTranslation();
 
@@ -50,13 +61,20 @@ export function DimensionsPanel({
     group: embeddedFields.length > 0 ? t("workspace.analysis.charts.dimensions") : undefined,
   }));
   // Under one "Embedded data" heading, as the filter field picker groups them (U15).
+  // Listed under the workspace's name for a key, when it renamed it; the key itself is the description.
   const embeddedOptions = embeddedFields.map((field) => ({
     value: field.name,
-    label: field.key,
+    label: getEmbeddedFieldDisplayName(field),
+    description: field.label === undefined ? undefined : field.key,
     group: t("workspace.analysis.charts.embedded_data"),
+    badgeAction: workspaceId ? (
+      <EmbeddedFieldRenameButton workspaceId={workspaceId} field={field} onRenamed={onEmbeddedFieldRenamed} />
+    ) : undefined,
   }));
-  const fieldLabel = (id: string) =>
-    embeddedFields.find((field) => field.name === id)?.key ?? getTranslatedFieldLabel(id, t);
+  const fieldLabel = (id: string) => {
+    const embedded = embeddedFields.find((field) => field.name === id);
+    return embedded ? getEmbeddedFieldDisplayName(embedded) : getTranslatedFieldLabel(id, t);
+  };
 
   return (
     <div className="w-full space-y-2">

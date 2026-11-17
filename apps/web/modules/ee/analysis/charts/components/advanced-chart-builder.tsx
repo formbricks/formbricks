@@ -292,6 +292,11 @@ export function AdvancedChartBuilder({
             hideTitle
             isMatrix={isMatrix}
             embeddedFields={datasetFields.embeddedFields}
+            workspaceId={workspaceId}
+            // The preview's legend and headers name a renamed key only once it runs again.
+            onEmbeddedFieldRenamed={() => {
+              if (feedbackDirectoryId && isConfigComplete) executeQueryRef.current();
+            }}
             selectedDimensions={state.selectedDimensions}
             onDimensionsChange={(dimensions) =>
               dispatch({ type: ACTION.SET_DIMENSIONS, payload: dimensions })

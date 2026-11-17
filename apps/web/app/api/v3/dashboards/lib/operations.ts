@@ -444,6 +444,7 @@ const runDashboardReplace = async (
     auditLog.newObject = {
       name: dashboard.name,
       filters: dashboard.filters,
+      defaultDateRange: dashboard.defaultDateRange,
       widgets: dashboard.widgets.map(({ id, layout, order }) => ({ id, layout, order })),
     };
   }
@@ -518,6 +519,7 @@ export async function replaceV3Dashboard({
           expectedUpdatedAt: new Date(body.expectedUpdatedAt),
           name: body.name,
           filters: body.filters,
+          defaultDateRange: body.defaultDateRange,
           widgets: body.widgets,
         }),
       async (access) =>

@@ -8,6 +8,7 @@ import {
   getDefaultFilterOperator,
   getFilterFieldOptions,
   getFilterFieldType,
+  getQuestionValueOptions,
   toConditionGroup,
   toFilterRowUpdates,
 } from "./filter-conditions";
@@ -157,5 +158,54 @@ describe("dataset fields in the filter editor (ENG-6893, ENG-6637)", () => {
       "and"
     );
     expect(group.conditions[0]).toMatchObject({ rightOperand: { value: ["x", "y"], type: "static" } });
+  });
+});
+
+describe("question filters in the filter editor (ENG-7323)", () => {
+  const scale = (from: number, to: number) =>
+    Array.from({ length: to - from + 1 }, (_, index) => ({ value: String(from + index), label: "" }));
+  const questions = [
+    { id: "q_nps", label: "Recommend us?" },
+    { id: "q_text", label: "Anything else?" },
+  ];
+
+  test("leads the dimensions with the question id as 'Question' when the dataset has questions", () => {
+    const [dimensions] = getFilterFieldOptions(t, { embeddedFields: [], answerQuestions: [], questions });
+    expect(dimensions.options?.[0]).toEqual({
+      value: "FeedbackRecords.fieldId",
+      label: "workspace.analysis.charts.question_filter_field",
+    });
+    expect(dimensions.options?.filter((option) => option.value === "FeedbackRecords.fieldId")).toHaveLength(
+      1
+    );
+  });
+
+  test("keeps the question id as a plain field without questions to pick from", () => {
+    const [dimensions] = getFilterFieldOptions(t, { embeddedFields: [], answerQuestions: [] });
+    expect(dimensions.options?.[0]?.value).not.toBe("FeedbackRecords.fieldId");
+    expect(dimensions.options).toContainEqual(
+      expect.objectContaining({
+        value: "FeedbackRecords.fieldId",
+        label: "workspace.analysis.charts.field_label_field_id",
+      })
+    );
+  });
+
+  test("offers each question by label, keyed by id, and keeps a stored id the list no longer has", () => {
+    expect(getQuestionValueOptions(questions, "q_text")).toEqual([
+      { value: "q_nps", label: "Recommend us?" },
+      { value: "q_text", label: "Anything else?" },
+    ]);
+    expect(getQuestionValueOptions(questions, "q_gone")).toContainEqual({ value: "q_gone", label: "q_gone" });
+  });
+
+  test("offers 'NPS segment is' on an NPS question only", () => {
+    const nps = { id: "q_nps", label: "NPS", kind: "number" as const, options: scale(0, 10) };
+    const rating = { id: "q_rating", label: "Rating", kind: "number" as const, options: scale(1, 10) };
+    expect(getAnswerOperatorOptions(nps, t)).toContainEqual({
+      value: "npsSegment",
+      label: "workspace.analysis.charts.nps_segment_is",
+    });
+    expect(getAnswerOperatorOptions(rating, t).map((option) => option.value)).not.toContain("npsSegment");
   });
 });

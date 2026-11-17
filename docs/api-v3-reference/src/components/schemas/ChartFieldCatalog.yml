@@ -7,6 +7,7 @@ required:
   - fields
   - datePresets
   - answerQuestions
+  - questions
 properties:
   fields:
     type: array
@@ -31,4 +32,13 @@ properties:
       the operators and values each takes. Empty for a dataset without such questions.
     items:
       $ref: ./ChartAnswerQuestion.yml
+  questions:
+    type: array
+    description: >-
+      The questions of the Feedback Dataset a question filter may name: filter
+      `FeedbackRecords.fieldId` with `equals` and a question's `id` to keep that question's records,
+      however its text is later edited or translated. Multi-select, matrix and ranking questions are
+      not listed: their records carry a per-option id. Empty for a dataset without surveys.
+    items:
+      $ref: ./ChartQuestion.yml
 additionalProperties: false

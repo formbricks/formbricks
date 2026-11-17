@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getDatasetChartFieldCatalog, getDatasetChartFields } from "./dataset-chart-fields";
 
-const { mockGetKeys, mockResolve, mockGetAnswerQuestions } = vi.hoisted(() => ({
+const { mockGetKeys, mockResolve, mockGetAnswerQuestions, mockGetLabels } = vi.hoisted(() => ({
+  mockGetLabels: vi.fn(async () => new Map<string, string>()),
   mockGetKeys: vi.fn(),
   mockResolve: vi.fn(),
   mockGetAnswerQuestions: vi.fn(),
@@ -12,6 +13,7 @@ vi.mock("./dataset-embedded-keys", () => ({
   getDatasetEmbeddedKeys: mockGetKeys,
   resolveEmbeddedMemberKeys: mockResolve,
 }));
+vi.mock("./embedded-field-labels", () => ({ getEmbeddedFieldLabels: mockGetLabels }));
 vi.mock("./embedded-member-name", () => ({
   getEmbeddedMemberName: (key: string) => `FeedbackRecords.ed_${key}_00000000`,
 }));
@@ -34,6 +36,20 @@ describe("getDatasetChartFields (ENG-6893)", () => {
     mockGetKeys.mockResolvedValue(["plan"]);
     mockResolve.mockResolvedValue(new Map());
     mockGetAnswerQuestions.mockResolvedValue([]);
+    mockGetLabels.mockResolvedValue(new Map());
+  });
+
+  test("carries the workspace's name for a renamed key, and leaves the others as collected", async () => {
+    mockGetKeys.mockResolvedValue(["plan", "tier"]);
+    mockGetLabels.mockResolvedValue(new Map([["plan", "Subscription plan"]]));
+
+    const fields = await getDatasetChartFields(scope);
+
+    expect(mockGetLabels).toHaveBeenCalledWith("workspace-1", ["plan", "tier"]);
+    expect(fields.embeddedFields).toEqual([
+      { name: PLAN, key: "plan", label: "Subscription plan" },
+      { name: "FeedbackRecords.ed_tier_00000000", key: "tier" },
+    ]);
   });
 
   test("offers the dataset's top keys, and no answer questions unless asked", async () => {

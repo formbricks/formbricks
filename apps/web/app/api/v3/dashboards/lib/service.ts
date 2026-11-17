@@ -58,6 +58,7 @@ export const WIDGET_READ_ORDER = [
 export const selectDashboardResource = {
   ...selectDashboardBase,
   filters: true,
+  defaultDateRange: true,
   widgets: { orderBy: WIDGET_READ_ORDER, select: selectWidgetResource },
 } satisfies Prisma.DashboardSelect;
 
@@ -164,6 +165,7 @@ export const duplicateDashboardRow = ({
         name: true,
         workspaceId: true,
         filters: true,
+        defaultDateRange: true,
         // In the order the source shows them, so the copy can number them plainly: orders may tie.
         widgets: { orderBy: WIDGET_READ_ORDER, select: { chartId: true, layout: true } },
       },
@@ -193,6 +195,7 @@ export const duplicateDashboardRow = ({
         createdBy,
         // The copy keeps the filter bar: its filters say how the shared charts are meant to be sliced.
         filters: (source.filters ?? []) as Prisma.InputJsonValue,
+        defaultDateRange: source.defaultDateRange,
         widgets: {
           create: source.widgets.map((widget, order) => ({
             chartId: widget.chartId,
