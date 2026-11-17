@@ -1,7 +1,7 @@
 import "server-only";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { Prisma } from "@formbricks/database/prisma";
+import { Prisma, type Survey as TPrismaSurveyRow } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZOptionalNumber } from "@formbricks/types/common";
 import {
@@ -287,6 +287,99 @@ export const getSurveyCount = reactCache(async (workspaceId: string): Promise<nu
   }
 });
 
+/** ENG-7127: what a survey save does with a key of its payload; see `SURVEY_SAVE_KEYS`. */
+type TSurveySaveKeyRole = "column" | "handler" | "derived" | "serverOwned";
+
+/**
+ * ENG-7127: what a survey save does with each key of its payload. The update `data` is built from the
+ * `column` keys and the handlers in `updateSurveyInternal` only, never by spreading the payload: the
+ * draft save's schema used to keep unknown keys, and a spread passed Prisma relation writes
+ * (`workspace`, `creator`, `responses`, …) and raw foreign keys (`segmentId`) straight to
+ * `prisma.survey.update`, writing rows outside the survey.
+ *
+ * - `column`: copied from the payload as given.
+ * - `handler`: written by its own code, which checks the ids: segment, languages, triggers and
+ *   follow-ups below, and `questions`, stripped of `isDraft`.
+ * - `derived`: set by the save itself.
+ * - `serverOwned`: never written by a save. `archivedAt` belongs to archive and restore.
+ *
+ * Every key of `TSurvey` must be listed, so a new survey field fails to compile until it is given one.
+ */
+const SURVEY_SAVE_KEYS = {
+  name: "column",
+  status: "column",
+  displayOption: "column",
+  autoClose: "column",
+  recontactDays: "column",
+  displayLimit: "column",
+  welcomeCard: "column",
+  blocks: "column",
+  endings: "column",
+  hiddenFields: "column",
+  variables: "column",
+  delay: "column",
+  autoComplete: "column",
+  workspaceOverwrites: "column",
+  styling: "column",
+  showLanguageSwitch: "column",
+  surveyClosedMessage: "column",
+  singleUse: "column",
+  isVerifyEmailEnabled: "column",
+  recaptcha: "column",
+  isSingleResponsePerEmailEnabled: "column",
+  isBackButtonHidden: "column",
+  isAutoProgressingEnabled: "column",
+  isCaptureIpEnabled: "column",
+  pin: "column",
+  displayPercentage: "column",
+  metadata: "column",
+  slug: "column",
+  customHeadScripts: "column",
+  customHeadScriptsMode: "column",
+  type: "column",
+  questions: "handler",
+  triggers: "handler",
+  segment: "handler",
+  languages: "handler",
+  followUps: "handler",
+  updatedAt: "derived",
+  publishOn: "derived",
+  closeOn: "derived",
+  id: "serverOwned",
+  workspaceId: "serverOwned",
+  createdAt: "serverOwned",
+  createdBy: "serverOwned",
+  archivedAt: "serverOwned",
+} as const satisfies Record<keyof TSurvey, TSurveySaveKeyRole>;
+
+type TSurveySaveColumn = {
+  [K in keyof typeof SURVEY_SAVE_KEYS]: (typeof SURVEY_SAVE_KEYS)[K] extends "column" ? K : never;
+}[keyof typeof SURVEY_SAVE_KEYS];
+
+/**
+ * A `column` must be a plain column: a field of the `Survey` row, which has no relations, that
+ * `Prisma.SurveyUpdateInput` also takes, which has no foreign keys. A relation or foreign key marked
+ * `column` fails to compile here.
+ */
+const asSurveyUpdateColumns = <K extends keyof TPrismaSurveyRow & keyof Prisma.SurveyUpdateInput>(
+  columns: K[]
+): readonly K[] => columns;
+
+const SURVEY_SAVE_COLUMNS = asSurveyUpdateColumns<TSurveySaveColumn>(
+  (Object.keys(SURVEY_SAVE_KEYS) as (keyof typeof SURVEY_SAVE_KEYS)[]).filter(
+    (key): key is TSurveySaveColumn => SURVEY_SAVE_KEYS[key] === "column"
+  )
+);
+
+/** ENG-7127: the payload's values for the `column` keys of `SURVEY_SAVE_KEYS`, and nothing else from it. */
+const pickSurveySaveColumns = (survey: TSurvey): Partial<Pick<TSurvey, TSurveySaveColumn>> => {
+  const columns: Partial<Record<TSurveySaveColumn, unknown>> = {};
+  for (const column of SURVEY_SAVE_COLUMNS) {
+    if (Object.hasOwn(survey, column)) columns[column] = survey[column];
+  }
+  return columns as Partial<Pick<TSurvey, TSurveySaveColumn>>;
+};
+
 export const updateSurveyInternal = async (
   updatedSurvey: TSurvey,
   skipValidation = false
@@ -317,19 +410,9 @@ export const updateSurveyInternal = async (
     // so an authorized editor cannot re-point their own survey into another workspace/organization.
     const actionClasses = await getActionClasses(currentSurvey.workspaceId);
 
-    const {
-      triggers,
-      segment,
-      questions,
-      languages,
-      type,
-      followUps,
-      workspaceId: _workspaceId,
-      id: _id,
-      // archivedAt is owned exclusively by the archive/restore flows; never let a survey update touch it.
-      archivedAt: _archivedAt,
-      ...surveyData
-    } = updatedSurvey;
+    // ENG-7127: only these keys are read from the payload, each by its own handler below; the scalar
+    // columns come from `pickSurveySaveColumns`. Nothing else in the payload reaches the write.
+    const { triggers, segment, questions, languages, type, followUps } = updatedSurvey;
 
     // ENG-1749 sibling: the segment block below updates/deletes by segment.id directly. Ensure the
     // segment belongs to this survey's workspace so a caller cannot mutate or delete another
@@ -348,7 +431,7 @@ export const updateSurveyInternal = async (
     //   - persisted status (ENG-1939): stops a caller pushing invalid blocks onto a live survey and
     //     silently reverting it to draft, stopping it from collecting responses.
     //   - payload status (ENG-2115): stops a caller publishing a draft that never passed ZSurvey.
-    //     `status` is not destructured out of surveyData below, so it flows straight to the write.
+    //     `status` is one of `SURVEY_SAVE_COLUMNS`, so it flows straight to the write.
     // Deliberately placed after the ENG-1749 tenant guards so a cross-workspace attempt still reports
     // the authorization failure first, and before prisma.survey.update so nothing is persisted.
     if (skipValidation && (currentSurvey.status !== "draft" || updatedSurvey.status !== "draft")) {
@@ -601,22 +684,19 @@ export const updateSurveyInternal = async (
 
     const normalizedScheduling = normalizeSurveyScheduling({
       currentStatus: currentSurvey.status,
-      closeOn: surveyData.closeOn,
-      publishOn: surveyData.publishOn,
+      closeOn: updatedSurvey.closeOn,
+      publishOn: updatedSurvey.publishOn,
       status: updatedSurvey.status,
     });
 
-    surveyData.updatedAt = new Date();
-    surveyData.publishOn = normalizedScheduling.publishOn;
-    surveyData.closeOn = normalizedScheduling.closeOn;
-
     data = {
-      ...surveyData,
+      ...pickSurveySaveColumns(updatedSurvey),
       ...data,
-      type,
+      updatedAt: new Date(),
+      publishOn: normalizedScheduling.publishOn,
+      closeOn: normalizedScheduling.closeOn,
     };
 
-    delete data.createdBy;
     const persistedSurvey = await prisma.survey.update({
       where: { id: surveyId },
       data,
