@@ -1,5 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
+import { clickUntilVisible } from "./utils/helper";
 
 // Exercises the interaction-based segment filter (ENG-1275): adding the "Survey interaction"
 // filter, configuring its scope/window, its empty-survey validation, and persisting the segment.
@@ -13,10 +14,9 @@ test.describe("Interaction-based segments", () => {
 
     await page.goto(`/workspaces/${user.workspaceId}/segments`, { waitUntil: "domcontentloaded" });
 
-    // Open the create-segment modal.
-    await page.getByRole("button", { name: "Create segment" }).first().click();
+    // Open the create-segment modal. The page is read before it hydrates, so a single click can be dropped.
     const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
+    await clickUntilVisible(page.getByRole("button", { name: "Create segment" }).first(), dialog);
 
     await dialog.getByPlaceholder("Ex. Power Users").fill(segmentTitle);
 
@@ -50,9 +50,8 @@ test.describe("Interaction-based segments", () => {
 
     await page.goto(`/workspaces/${user.workspaceId}/segments`, { waitUntil: "domcontentloaded" });
 
-    await page.getByRole("button", { name: "Create segment" }).first().click();
     const dialog = page.getByRole("dialog");
-    await expect(dialog).toBeVisible();
+    await clickUntilVisible(page.getByRole("button", { name: "Create segment" }).first(), dialog);
 
     await dialog.getByRole("button", { name: "Add filter" }).click();
 

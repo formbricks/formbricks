@@ -55,11 +55,12 @@ const DEFAULT_MOCK_STORAGE_FILE_FIXTURE: MockStorageFileFixture = {
 /**
  * Clicks `trigger` until `target` shows. Server-rendered pages paint before they hydrate, and a click that
  * lands first is dropped, so a single click followed by a visibility check can wait on a handler that
- * never ran. Checking `target` first keeps it safe for a toggle.
+ * never ran. Checking `target` first keeps it safe for a toggle. Each click is bounded: one that lands
+ * while a dialog from the previous click is still opening would otherwise wait on its overlay forever.
  */
 export const clickUntilVisible = async (trigger: Locator, target: Locator): Promise<void> => {
   await expect(async () => {
-    if (!(await target.isVisible())) await trigger.click();
+    if (!(await target.isVisible())) await trigger.click({ timeout: 3000 });
     await expect(target).toBeVisible({ timeout: 3000 });
   }).toPass({ timeout: 30_000 });
 };

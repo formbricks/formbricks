@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { type Page, expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
+import { clickUntilVisible } from "./utils/helper";
 import { mockUsers } from "./utils/mock";
 
 const { name, email, password } = mockUsers.signup[0];
@@ -11,7 +12,8 @@ test.describe("Email Signup Flow Test", async () => {
   test.describe.configure({ mode: "serial" });
   test.beforeEach(async ({ page }) => {
     await page.goto("/auth/signup");
-    await page.getByText("Continue with Email").click();
+    // Retried: a click that lands before the page hydrates is dropped and the form never opens.
+    await clickUntilVisible(page.getByText("Continue with Email"), page.locator('input[name="name"]'));
   });
 
   test("Valid User", async ({ page }) => {
@@ -100,7 +102,7 @@ test.describe("Signed-out screens on a phone", () => {
 
     await page.setViewportSize(MOBILE);
     await page.goto("/auth/signup");
-    await page.getByText("Continue with Email").click();
+    await clickUntilVisible(page.getByText("Continue with Email"), page.getByTestId("signup-name"));
 
     await page.getByTestId("signup-name").fill(name);
     await page.getByTestId("signup-email").fill(mobileEmail);
