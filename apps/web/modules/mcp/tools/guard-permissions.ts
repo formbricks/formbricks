@@ -48,6 +48,16 @@ const describeNeeds = (
 };
 
 /**
+ * The tools a Dashboard viewer may call through a dashboard, by its `dashboardId` (ADR-0025): a viewer
+ * refused one of them without it is told to pass one.
+ */
+const DASHBOARD_VIEWER_READS: ReadonlySet<string> = new Set([
+  "get_chart_data",
+  "list_dashboard_filter_fields",
+  "list_dashboard_filter_values",
+]);
+
+/**
  * The scope half of the gate: the token's scopes cap the grant (ADR-0041), so a requirement whose scope
  * the token lacks is refused as "Not permitted", naming the permissions and the missing scopes. `null`
  * when the scopes reach every requirement (`allOf`) or at least one (`anyOf`).
@@ -58,16 +68,6 @@ const describeNeeds = (
  * pins every registered tool's permissions, and `feedback-records.test.ts` drives all ten tools with the
  * opposite scope.
  */
-/**
- * The tools a Dashboard viewer may call through a dashboard, by its `dashboardId` (ADR-0025): a viewer
- * refused one of them without it is told to pass one.
- */
-const DASHBOARD_VIEWER_READS: ReadonlySet<string> = new Set([
-  "get_chart_data",
-  "list_dashboard_filter_fields",
-  "list_dashboard_filter_values",
-]);
-
 async function guardScopes(
   toolName: string,
   requirements: readonly TMcpPermissionRequirement[],
