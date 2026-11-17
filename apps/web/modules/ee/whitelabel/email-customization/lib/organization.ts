@@ -3,7 +3,7 @@ import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
-import { ZId, ZString } from "@formbricks/types/common";
+import { ZId, ZStorageUrl } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { validateInputs } from "@/lib/utils/validate";
 
@@ -11,7 +11,7 @@ export const updateOrganizationEmailLogoUrl = async (
   organizationId: string,
   logoUrl: string
 ): Promise<boolean> => {
-  validateInputs([organizationId, ZId], [logoUrl, ZString]);
+  validateInputs([organizationId, ZId], [logoUrl, ZStorageUrl]);
 
   try {
     const organization = await prisma.organization.findUnique({

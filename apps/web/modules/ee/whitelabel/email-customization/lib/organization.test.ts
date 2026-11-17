@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { validateInputs } from "@/lib/utils/validate";
 import {
   getOrganizationLogoUrl,
   removeOrganizationEmailLogoUrl,
@@ -254,5 +255,47 @@ describe("organization", () => {
         },
       });
     });
+  });
+
+  describe("updateOrganizationEmailLogoUrl input validation", () => {
+    const organizationId = "clg123456789012345678901234";
+
+    beforeEach(async () => {
+      const actual = await vi.importActual<typeof import("@/lib/utils/validate")>("@/lib/utils/validate");
+      vi.mocked(validateInputs).mockImplementation(actual.validateInputs);
+      vi.mocked(prisma.organization.findUnique).mockResolvedValue({
+        id: organizationId,
+        whitelabel: {},
+      } as any);
+      vi.mocked(prisma.organization.update).mockResolvedValue({ workspaces: [] } as any);
+    });
+
+    afterEach(() => {
+      vi.mocked(validateInputs).mockReset();
+    });
+
+    test.each([
+      "javascript:alert(document.domain)",
+      "data:image/svg+xml;base64,PHN2Zz48L3N2Zz4=",
+      "vbscript:msgbox(1)",
+      "not a url",
+    ])("rejects %s without writing it", async (logoUrl) => {
+      // importActual loads its own copy of the errors module, so match the error by name, not class.
+      await expect(updateOrganizationEmailLogoUrl(organizationId, logoUrl)).rejects.toMatchObject({
+        name: "ValidationError",
+        message: expect.stringContaining("Must be a valid http(s) URL or a relative storage path"),
+      });
+      expect(prisma.organization.update).not.toHaveBeenCalled();
+    });
+
+    test.each(["/storage/clp123456789012345678901234/public/logo.png", "https://cdn.example.com/logo.png"])(
+      "saves %s",
+      async (logoUrl) => {
+        await expect(updateOrganizationEmailLogoUrl(organizationId, logoUrl)).resolves.toBe(true);
+        expect(prisma.organization.update).toHaveBeenCalledWith(
+          expect.objectContaining({ data: { whitelabel: { logoUrl } } })
+        );
+      }
+    );
   });
 });
