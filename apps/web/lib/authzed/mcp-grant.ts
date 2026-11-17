@@ -12,7 +12,10 @@ import { getMcpGrantSelectedIds } from "@/modules/mcp/grant-access";
 import { type TAuthzedRelationship, type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
-import { MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS } from "./mcp-grant-timeouts";
+import {
+  MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS,
+  MCP_GRANT_PROJECTION_WRITE_MARGIN_MS,
+} from "./mcp-grant-timeouts";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
   AuthzedProjectionUnstableError,
@@ -116,7 +119,16 @@ const observeGrants = async (
   return observed;
 };
 
-const writeSnapshot = async (grantIds: ReadonlyArray<string>, snapshot: TGrantSnapshot): Promise<void> => {
+/**
+ * Writes the snapshot's relationships, every write fenced by `deadline`: the time by which the pass's row
+ * locks are still certainly held (see {@link reconcileMcpGrantRelationships}). A batch not started by then
+ * is not sent, and one under way carries the deadline to SpiceDB, which abandons it there.
+ */
+const writeSnapshot = async (
+  grantIds: ReadonlyArray<string>,
+  snapshot: TGrantSnapshot,
+  deadline: number
+): Promise<void> => {
   const expectedByGrant = new Map(snapshot.map((grant) => [grant.id, expectedMcpGrantRelationships(grant)]));
   const observedByGrant = await observeGrants(grantIds);
 
@@ -133,9 +145,18 @@ const writeSnapshot = async (grantIds: ReadonlyArray<string>, snapshot: TGrantSn
 
   const client = getAuthzedClient();
   for (const batch of packRelationshipUpdateGroups(groups)) {
-    await client.writeRelationships(batch);
+    if (Date.now() >= deadline) throw new McpGrantProjectionFenceError();
+    await client.writeRelationships(batch, { deadline });
   }
 };
+
+/** A reconciling pass that ran out of the time its row locks are certainly held, before writing all. */
+class McpGrantProjectionFenceError extends Error {
+  constructor() {
+    super("The reconciling pass ran out of time while it held the grants' locks");
+    this.name = "McpGrantProjectionFenceError";
+  }
+}
 
 const snapshotsMatch = (left: TGrantSnapshot, right: TGrantSnapshot): boolean =>
   JSON.stringify(left) === JSON.stringify(right);
@@ -150,9 +171,14 @@ export const reconcileMcpGrantRelationships = async (
     for (let pass = 1; pass <= AUTHZED_MAX_RECONCILIATION_PASSES; pass++) {
       const outcome = await prisma.$transaction(
         async (tx) => {
+          // The row locks last until the transaction ends, at its timeout at the latest; its rollback
+          // doesn't stop a SpiceDB write under way. So every write is held to a deadline short of it, or a
+          // late one could land after a narrowing took the lock and restore what it removed.
+          const writeDeadline =
+            Date.now() + MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS - MCP_GRANT_PROJECTION_WRITE_MARGIN_MS;
           const sourceSnapshot = await readSnapshot(tx, grantIds);
           try {
-            await writeSnapshot(grantIds, sourceSnapshot);
+            await writeSnapshot(grantIds, sourceSnapshot, writeDeadline);
           } catch (error) {
             // The previous release's schema has no `mcp_grant`. Nothing can be projected yet, and nothing
             // needs removing: `mcp_reach` is missing too, so a grant that selects reaches nothing (denied,

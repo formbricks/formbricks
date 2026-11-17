@@ -1,6 +1,6 @@
 import { configMocks, envMock, retryMocks, sdkMocks } from "./__mocks__/client-dependencies";
 import { v1 } from "@authzed/authzed-node";
-import { status } from "@grpc/grpc-js";
+import { Metadata, status } from "@grpc/grpc-js";
 import { beforeEach, describe, expect, test } from "vitest";
 import { isMcpReachMissingFromSchema } from "@/lib/authorization/mcp-reach";
 import { closeAuthzedClient, configureAuthzedClientForBulkWork, getAuthzedClient } from "./client";
@@ -682,38 +682,65 @@ describe("AuthZed client facade", () => {
       ])
     ).resolves.toBeUndefined();
 
-    expect(sdkMocks.writeRelationships).toHaveBeenCalledWith({
-      optionalPreconditions: [],
-      updates: [
-        {
-          operation: 2,
-          relationship: {
-            optionalCaveat: undefined,
-            optionalExpiresAt: undefined,
-            relation: "owner",
-            resource: { objectId: "org-1", objectType: "organization" },
-            subject: {
-              object: { objectId: "user-1", objectType: "user" },
-              optionalRelation: "",
+    expect(sdkMocks.writeRelationships).toHaveBeenCalledWith(
+      {
+        optionalPreconditions: [],
+        updates: [
+          {
+            operation: 2,
+            relationship: {
+              optionalCaveat: undefined,
+              optionalExpiresAt: undefined,
+              relation: "owner",
+              resource: { objectId: "org-1", objectType: "organization" },
+              subject: {
+                object: { objectId: "user-1", objectType: "user" },
+                optionalRelation: "",
+              },
             },
           },
-        },
-        {
-          operation: 3,
-          relationship: {
-            optionalCaveat: undefined,
-            optionalExpiresAt: undefined,
-            relation: "manager",
-            resource: { objectId: "org-1", objectType: "organization" },
-            subject: {
-              object: { objectId: "user-1", objectType: "user" },
-              optionalRelation: "member",
+          {
+            operation: 3,
+            relationship: {
+              optionalCaveat: undefined,
+              optionalExpiresAt: undefined,
+              relation: "manager",
+              resource: { objectId: "org-1", objectType: "organization" },
+              subject: {
+                object: { objectId: "user-1", objectType: "user" },
+                optionalRelation: "member",
+              },
             },
+          },
+        ],
+      },
+      expect.any(Metadata),
+      {}
+    );
+    expect(retryMocks.execute).toHaveBeenCalledWith("write_relationships", expect.any(Function));
+  });
+
+  // A reconciling pass holds its writes to the time its row locks are certainly held.
+  test("sends a write's deadline in place of the channel's", async () => {
+    sdkMocks.writeRelationships.mockResolvedValue({});
+
+    await getAuthzedClient().writeRelationships(
+      [
+        {
+          operation: "touch",
+          relationship: {
+            relation: "owner",
+            resource: { objectId: "org-1", objectType: "organization" },
+            subject: { objectId: "user-1", objectType: "user" },
           },
         },
       ],
+      { deadline: 1_234 }
+    );
+
+    expect(sdkMocks.writeRelationships).toHaveBeenCalledWith(expect.any(Object), expect.any(Metadata), {
+      deadline: 1_234,
     });
-    expect(retryMocks.execute).toHaveBeenCalledWith("write_relationships", expect.any(Function));
   });
 
   test.each([0, 1_001])(

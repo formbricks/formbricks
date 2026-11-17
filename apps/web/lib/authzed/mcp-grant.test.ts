@@ -108,6 +108,38 @@ describe("reconcileMcpGrantRelationships", () => {
     observe({});
   });
 
+  // The pass's row locks last until its transaction times out, and a SpiceDB write isn't part of it:
+  // every write is held to a deadline 5 s short of the 30 s timeout, measured from the pass's start.
+  test("holds every write to a deadline short of the pass's transaction timeout", async () => {
+    vi.spyOn(Date, "now").mockReturnValue(1_000_000);
+    vi.mocked(prisma.mcpGrant.findMany).mockResolvedValue([
+      grantRow({ access: "workspaces", workspaces: ["ws-1"] }),
+    ] as never);
+
+    await reconcileMcpGrantRelationships({ grantIds: [GRANT_ID] });
+
+    expect(clientMocks.writeRelationships).toHaveBeenCalledWith(expect.any(Array), {
+      deadline: 1_000_000 + 30_000 - 5_000,
+    });
+    vi.mocked(Date.now).mockRestore();
+  });
+
+  test("sends no batch once the deadline has passed, and fails the pass", async () => {
+    const now = vi
+      .spyOn(Date, "now")
+      .mockReturnValueOnce(1_000_000)
+      .mockReturnValue(1_000_000 + 25_000);
+    vi.mocked(prisma.mcpGrant.findMany).mockResolvedValue([
+      grantRow({ access: "workspaces", workspaces: ["ws-1"] }),
+    ] as never);
+
+    await expect(reconcileMcpGrantRelationships({ grantIds: [GRANT_ID] })).resolves.toMatchObject({
+      status: "failed",
+    });
+    expect(clientMocks.writeRelationships).not.toHaveBeenCalled();
+    now.mockRestore();
+  });
+
   test("reports disabled and touches nothing when AuthZed is off", async () => {
     vi.mocked(isAuthzedEnabled).mockReturnValue(false);
 
