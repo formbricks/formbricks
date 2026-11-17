@@ -65,28 +65,3 @@ export const base = compose(
   },
   sonarParity()
 );
-
-/*
- * React Compiler-era react-hooks rules that `flat.recommended` turns on (ENG-2366), at the
- * strongest severity each one's remaining violation count allows. oxlint implements them natively
- * under `react/`. `apps/web/oxlint.config.ts` makes the same call separately for the `next` tier,
- * where the counts are larger.
- *
- * Counts are for the tiers' consumers — `packages/surveys` (react-hooks tier) and
- * `packages/survey-ui` (react tier); `packages/email` is clean. A warning surfaces without
- * failing lint.
- *
- * Anything still at `warn` here is respondent-facing renderer code, where the fix is a
- * derive-during-render or state-ownership change rather than a mechanical edit — worth doing, but
- * not as a side effect of a lint config change.
- */
-export const reactCompilerRulesOptOut = {
-  rules: {
-    // Impure reads during render in packages/surveys (ENG-3073).
-    "react/purity": "warn",
-    // Mostly in packages/surveys' survey.tsx (ENG-3071).
-    "react/immutability": "warn",
-    // Effects that derive state from a prop; the fix is to derive it during render (ENG-3072).
-    "react/set-state-in-effect": "warn",
-  },
-};

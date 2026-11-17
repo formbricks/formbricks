@@ -4,8 +4,8 @@ import { beforeAll, describe, expect, test } from "vitest";
 import { type FixtureDiagnostic, lintFixtures } from "@formbricks/config-oxlint/testing";
 
 /*
- * The React Compiler-era rules at "error" sit at zero violations in the codebase, so a clean lint
- * run cannot show they still catch anything. One failing fixture per rule, linted through each
+ * The React Compiler-era rules at "error" (and the jsx-a11y rules promoted alongside them) sit at
+ * zero violations in the codebase, so a clean lint run cannot show they still catch anything. One failing fixture per rule, linted through each
  * tier's real config, proves oxlint's native ports report it as an error.
  *
  * `react/preserve-manual-memoization` has no fixture: the compiler validates it last, after its
@@ -73,21 +73,45 @@ export function C(${PROPS}) {
   return <div>{Date.now()}</div>;
 }
 `,
+  "react/immutability": `export function C({ o }: Readonly<{ o: { n: number } }>) {
+  o.n = 1;
+  return <div>{o.n}</div>;
+}
+`,
+  "react/set-state-in-effect": `import { useEffect, useState } from "react";
+export function C(${PROPS}) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    setValue(a);
+  }, [a]);
+  return <div>{value}</div>;
+}
+`,
+  // Not React Compiler rules, but promoted to "error" in the same pass (ENG-7329).
+  "jsx-a11y/no-autofocus": `export function C() {
+  return <input aria-label="name" autoFocus />;
+}
+`,
+  "jsx-a11y/prefer-tag-over-role": `export function C() {
+  return <div role="status">Saved</div>;
+}
+`,
 };
 
-// Each tier and the rules it holds at "error". `purity` is still a warning in the react tiers
-// (reactCompilerRulesOptOut in packages/config-oxlint/base.mjs).
+// Each tier and the rules it holds at "error". `prefer-tag-over-role` is not in jsx-a11y's
+// recommended set; only apps/web turns it on.
+const webOnly = new Set(["jsx-a11y/prefer-tag-over-role"]);
 const tiers = [
   { workspace: "apps/web", dir: "modules/react-compiler", rules: Object.keys(fixtures) },
   {
     workspace: "packages/survey-ui",
     dir: "src/react-compiler",
-    rules: Object.keys(fixtures).filter((rule) => rule !== "react/purity"),
+    rules: Object.keys(fixtures).filter((rule) => !webOnly.has(rule)),
   },
   {
     workspace: "packages/surveys",
     dir: "src/react-compiler",
-    rules: Object.keys(fixtures).filter((rule) => rule !== "react/purity"),
+    rules: Object.keys(fixtures).filter((rule) => !webOnly.has(rule)),
   },
 ];
 
@@ -95,7 +119,7 @@ const fileFor = (dir: string, rule: string) => `${dir}/${rule.split("/").pop()}.
 
 const results = new Map<string, Record<string, FixtureDiagnostic[]>>();
 
-describe("error-level React Compiler rules and exhaustive-deps report through each tier", () => {
+describe("error-level React Compiler, exhaustive-deps and jsx-a11y rules report through each tier", () => {
   beforeAll(() => {
     for (const { workspace, dir, rules } of tiers) {
       results.set(
