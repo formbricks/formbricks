@@ -498,6 +498,16 @@ describe("putResponseHandler", () => {
     );
   });
 
+  test("answers 500 and updates nothing when the stored not-shown record cannot be read", async () => {
+    mocks.getStoredResponseNotShown.mockRejectedValue(new Error("connection lost"));
+    mocks.getValidatedResponseUpdateInput.mockResolvedValue({ responseUpdateInput: { finished: true } });
+
+    const result = await putResponseHandler(createHandlerParams());
+
+    expect(result.response.status).toBe(500);
+    expect(mocks.updateResponseWithQuotaEvaluation).not.toHaveBeenCalled();
+  });
+
   test("returns not found when the response disappears during update", async () => {
     mocks.updateResponseWithQuotaEvaluation.mockRejectedValue(
       new ResourceNotFoundError("Response", responseId)

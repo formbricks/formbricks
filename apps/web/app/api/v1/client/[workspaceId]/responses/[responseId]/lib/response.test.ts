@@ -8,8 +8,9 @@ import {
   evaluateResponseQuotas,
   loadQuotaEvaluationContext,
 } from "@/modules/ee/quotas/lib/evaluation-service";
-import { updateResponseWithQuotaEvaluation } from "./response";
+import { getStoredResponseNotShown, updateResponseWithQuotaEvaluation } from "./response";
 
+vi.mock("@formbricks/database", () => ({ prisma: { response: { findUnique: vi.fn() } } }));
 vi.mock("@/lib/response/service");
 vi.mock("@/modules/ee/quotas/lib/evaluation-service");
 
@@ -216,5 +217,33 @@ describe("updateResponseWithQuotaEvaluation", () => {
     await expect(updateResponseWithQuotaEvaluation(updateArgs)).rejects.toThrow(ResourceNotFoundError);
 
     expect(mockUpdateResponse).not.toHaveBeenCalled();
+  });
+});
+
+describe("getStoredResponseNotShown", () => {
+  const findStored = (notShown: unknown) => {
+    vi.mocked(prisma.response.findUnique).mockResolvedValue(
+      (notShown === undefined ? null : { notShown }) as never
+    );
+  };
+
+  test("returns the record stored on the response", async () => {
+    findStored({ rows: { trip: ["visa"] } });
+
+    await expect(getStoredResponseNotShown("response123")).resolves.toEqual({ rows: { trip: ["visa"] } });
+    expect(prisma.response.findUnique).toHaveBeenCalledWith({
+      where: { id: "response123" },
+      select: { notShown: true },
+    });
+  });
+
+  test.each([
+    ["no record (a response from before 6.2)", null],
+    ["a record that does not parse", { rows: "visa" }],
+    ["no response", undefined],
+  ])("returns null for %s", async (_case, notShown) => {
+    findStored(notShown);
+
+    await expect(getStoredResponseNotShown("response123")).resolves.toBeNull();
   });
 });
