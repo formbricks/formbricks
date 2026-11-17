@@ -1,13 +1,10 @@
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { randomUUID } from "node:crypto";
+import { afterAll, afterEach, describe, expect, test, vi } from "vitest";
 import { cache } from "@/lib/cache";
 import { applyRateLimit } from "./helpers";
 import { checkRateLimit, reserveRateLimit, settleRateLimit } from "./rate-limit";
 import { TRateLimitConfig } from "./types/rate-limit";
 
-// Check if Redis is available (basic requirements)
-let isRedisAvailable = false;
-
-// Test Redis availability
 async function checkRedisAvailability() {
   try {
     const redis = await cache.getRedisClient();
@@ -16,9 +13,7 @@ async function checkRedisAvailability() {
       return false;
     }
 
-    // Test basic Redis operation
     await redis.ping();
-    console.log("Redis ping successful - Redis is available");
     return true;
   } catch (error) {
     console.error("Error checking Redis availability:", error);
@@ -26,93 +21,40 @@ async function checkRedisAvailability() {
   }
 }
 
+// Decided at collection time, so a missing Redis reports the suite as skipped rather than passed.
+const isRedisAvailable = await checkRedisAvailability();
+
 /**
  * Rate Limiter Load Tests - Race Condition Detection
  *
- * This test suite verifies that the rate limiter implementation is free from race conditions
- * and handles high concurrency correctly. The rate limiter uses Redis with Lua scripts for
- * atomic operations to prevent race conditions in multi-pod Kubernetes environments.
+ * This suite verifies that the Redis Lua script admits exactly `allowedPerInterval` requests per fixed
+ * window under high concurrency, and that windows roll over and expire correctly.
  *
- * Prerequisites:
- * - Redis server must be running and accessible
- * - REDIS_URL environment variable must be set to a valid Redis connection string
- * - Tests will be automatically skipped if REDIS_URL is empty or Redis client is not available
+ * Prerequisites: a reachable Redis/Valkey in REDIS_URL. Without one the suite is reported as skipped.
  *
  * Running the tests:
  * Local development: cd apps/web && npx vitest run modules/core/rate-limit/rate-limit-load.test.ts
  * CI Environment: Tests run automatically in E2E workflow with Redis/Valkey service
  *
- * Test Scenarios:
- *
- * 1. Basic Race Condition Test
- *    - Purpose: Verify atomic operations under high concurrency
- *    - Method: Send 20 concurrent requests to the same identifier (limit: 3)
- *    - Expected: Exactly 3 requests allowed, 17 denied
- *    - Failure Indicates: Race conditions in the Redis Lua script
- *
- * 2. Multiple Waves Test
- *    - Purpose: Test consistency across multiple request waves
- *    - Method: Send 3 waves of 15 concurrent requests each (limit: 10)
- *    - Expected: Exactly 10 requests allowed total across all waves
- *    - Failure Indicates: Window boundary issues or counter corruption
- *
- * 3. Different Identifiers Test
- *    - Purpose: Ensure identifiers don't interfere with each other
- *    - Method: 5 different identifiers, 10 requests each (limit: 3 per identifier)
- *    - Expected: Each identifier gets exactly 3 allowed requests
- *    - Failure Indicates: Key collision or identifier mixing
- *
- * 4. Window Boundary Test
- *    - Purpose: Verify correct window expiration and reset
- *    - Method: Send requests, wait for window expiry, send more requests
- *    - Expected: Fresh limits after window expiry
- *    - Failure Indicates: TTL or window calculation issues
- *
- * 5. High Throughput Stress Test
- *    - Purpose: Test performance under sustained load within single time window
- *    - Method: 200 concurrent requests (limit: 50)
- *    - Expected: Exactly 50 requests allowed, consistent performance
- *    - Failure Indicates: Performance degradation or counter corruption
- *    - Note: Fixed to send all requests concurrently to avoid window boundary race conditions
- *
- * 6. applyRateLimit Function Test
- *    - Purpose: Test the higher-level wrapper function
- *    - Method: Concurrent requests using applyRateLimit instead of checkRateLimit
- *    - Expected: Exact limit compliance with proper error handling
- *    - Failure Indicates: Issues in the wrapper function logic
- *
- * 7. Mixed Identifier Patterns Test
- *    - Purpose: Test real-world identifier patterns under load
- *    - Method: Different identifier formats running concurrently
- *    - Expected: Each pattern respects its individual limits
- *    - Failure Indicates: Pattern-specific issues
- *
- * 8. TTL Expiration Test
- *    - Purpose: Verify that rate limit keys expire correctly and unblock requests
- *    - Method: Hit rate limit, wait for TTL expiration, verify unblocking
- *    - Expected: Keys expire automatically, fresh limits after expiration
- *    - Failure Indicates: TTL not working, keys not expiring, memory leaks
- *
- * Success Indicators:
- * ✅ Exact limit compliance (no more, no less than configured limit)
- * ✅ Consistent behavior across multiple runs
- * ✅ No interference between different identifiers
- * ✅ Proper window reset behavior
+ * Determinism (ENG-2756): the limiter derives its window key from `Date.now()` on every call, so a real
+ * window boundary falling mid-burst split a burst across two keys and broke the exact counts. Each test
+ * therefore freezes `Date` (only `Date`: Redis I/O and timers stay real) 100 ms after the next real
+ * window boundary, and moves to the next window by advancing the frozen clock instead of sleeping.
+ * Being 100 ms into the window makes the script's first-write EXPIRE the full interval, so a key
+ * outlives its test's burst in real time. Every identifier carries a random UUID, so no counter
+ * survives from another run or leaks between tests.
  *
  * Failure Indicators:
- * ❌ More requests allowed than limit: Race condition in increment
- * ❌ Fewer requests allowed than limit: Lock contention or failed operations
- * ❌ Identifier interference: Key collision or namespace issues
- * ❌ Window boundary failures: TTL or timestamp calculation errors
+ * - More requests allowed than the limit: race condition in the increment
+ * - Fewer requests allowed than the limit: failed operations or lock contention
+ * - Identifier interference: key collision or namespace issues
+ * - Window rollover failures: TTL or window calculation errors
  */
 
-// The availability check and logging is now handled in the beforeAll hook
-
-// Test configurations
 const TEST_CONFIGS = {
   // Very restrictive for race condition testing
   strict: {
-    interval: 5, // 5 seconds
+    interval: 5,
     allowedPerInterval: 3,
     namespace: "test:strict",
   } as TRateLimitConfig,
@@ -132,71 +74,76 @@ const TEST_CONFIGS = {
   } as TRateLimitConfig,
 } as const;
 
-describe("Rate Limiter Load Tests - Race Conditions", () => {
-  beforeAll(async () => {
-    // Check Redis availability first
-    isRedisAvailable = await checkRedisAvailability();
+type TCheckResult = Awaited<ReturnType<typeof checkRateLimit>>;
 
-    if (!isRedisAvailable) {
-      console.log("🟡 Rate Limiter Load Tests: Redis not available - tests will be skipped");
-      console.log("   To run these tests locally, ensure Redis is running and REDIS_URL is set");
-      return;
-    }
+const createdIdentifiers = new Set<string>();
 
-    console.log("🟢 Rate Limiter Load Tests: Redis available - tests will run");
+/** A per-run identifier, so counters from earlier runs or other tests can never be read. */
+const uniqueIdentifier = (prefix: string): string => {
+  const identifier = `${prefix}-${randomUUID()}`;
+  createdIdentifiers.add(identifier);
+  return identifier;
+};
 
-    // Clear any existing test keys
+/**
+ * Freeze `Date` 100 ms after the next real boundary of a window of `intervalSeconds`, and return the
+ * frozen time in milliseconds.
+ */
+const freezeClockAtWindowStart = (intervalSeconds: number): number => {
+  const intervalMs = intervalSeconds * 1000;
+  const frozenNow = (Math.floor(Date.now() / intervalMs) + 1) * intervalMs + 100;
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(frozenNow);
+  return frozenNow;
+};
 
-    const redis = await cache.getRedisClient();
-    if (redis) {
-      const testKeys = await redis.keys("fb:rate_limit:test:*");
-      if (testKeys.length > 0) {
-        await redis.del(testKeys);
-      }
-    }
+/** The fixed-window key the limiter must charge at `now`, rebuilt independently of `rate-limit.ts`. */
+const windowKey = (config: TRateLimitConfig, identifier: string, now: number): string => {
+  const windowStart = Math.floor(now / (config.interval * 1000)) * config.interval;
+  return `fb:rate_limit:${config.namespace}:${identifier}:${windowStart}`;
+};
+
+/** Every result must be an answer from Redis, and exactly `limit` of them may be admitted. */
+const expectExactlyAdmitted = (results: TCheckResult[], limit: number) => {
+  const allowed = results.filter((r) => r.ok && r.data.allowed).length;
+  const denied = results.filter((r) => r.ok && !r.data.allowed).length;
+
+  expect(allowed + denied).toBe(results.length);
+  expect(allowed).toBe(limit);
+  expect(denied).toBe(results.length - limit);
+};
+
+describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", () => {
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   afterAll(async () => {
-    // Clean up test keys
-    isRedisAvailable = await checkRedisAvailability();
-
-    if (!isRedisAvailable) {
-      console.log("Skipping cleanup: Redis not available");
-      return;
-    }
-
     const redis = await cache.getRedisClient();
-    if (redis) {
-      const testKeys = await redis.keys("fb:rate_limit:test:*");
-      if (testKeys.length > 0) {
-        await redis.del(testKeys);
+    if (!redis) return;
+
+    for (const identifier of createdIdentifiers) {
+      const keys = await redis.keys(`fb:rate_limit:test:*:${identifier}:*`);
+      if (keys.length > 0) {
+        await redis.del(keys);
       }
     }
   });
 
   test("Weighted requests preserve the first-write TTL and reject without consuming quota", async () => {
-    if (!isRedisAvailable) {
-      console.log("Skipping test: Redis not available");
-      return;
-    }
-
     const config: TRateLimitConfig = {
       interval: 3600,
       allowedPerInterval: 5,
       namespace: "test:weighted",
     };
-    const identifier = `weighted-test-${Date.now()}`;
+    const now = freezeClockAtWindowStart(config.interval);
+    const identifier = uniqueIdentifier("weighted-test");
+    const key = windowKey(config, identifier, now);
     const redis = await cache.getRedisClient();
-
-    expect(redis).not.toBeNull();
-    if (!redis) return;
+    if (!redis) throw new Error("Expected a Redis client");
 
     const firstResult = await checkRateLimit(config, identifier, 3);
     expect(firstResult).toEqual({ ok: true, data: { allowed: true, retryAfter: undefined } });
-
-    const [key] = await redis.keys(`fb:rate_limit:${config.namespace}:${identifier}:*`);
-    expect(key).toBeDefined();
-    if (!key) throw new Error("Expected the weighted rate-limit key to exist");
     expect(await redis.get(key)).toBe("3");
 
     const firstWriteTtl = await redis.ttl(key);
@@ -218,27 +165,22 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
   });
 
   test("Reservations release failed units without extending the fixed window", async () => {
-    if (!isRedisAvailable) {
-      console.log("Skipping test: Redis not available");
-      return;
-    }
-
     const config: TRateLimitConfig = {
       interval: 3600,
       allowedPerInterval: 5,
       namespace: "test:reservation",
     };
-    const identifier = `reservation-test-${Date.now()}`;
+    const now = freezeClockAtWindowStart(config.interval);
+    const identifier = uniqueIdentifier("reservation-test");
     const redis = await cache.getRedisClient();
-
-    expect(redis).not.toBeNull();
-    if (!redis) return;
+    if (!redis) throw new Error("Expected a Redis client");
 
     const result = await reserveRateLimit(config, identifier, 5);
     expect(result.ok).toBe(true);
     if (!result.ok || !result.data.reservation) {
       throw new Error("Expected a rate-limit reservation");
     }
+    expect(result.data.reservation.key).toBe(windowKey(config, identifier, now));
 
     const initialTtl = await redis.ttl(result.data.reservation.key);
     await settleRateLimit(result.data.reservation, 2);
@@ -248,36 +190,32 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
   });
 
   test("Settlement cannot decrement a newer fixed window", async () => {
-    if (!isRedisAvailable) {
-      console.log("Skipping test: Redis not available");
-      return;
-    }
-
     const config: TRateLimitConfig = {
       interval: 1,
       allowedPerInterval: 5,
       namespace: "test:reservation-window",
     };
-    const identifier = `reservation-window-test-${Date.now()}`;
+    const now = freezeClockAtWindowStart(config.interval);
+    const identifier = uniqueIdentifier("reservation-window-test");
     const redis = await cache.getRedisClient();
-
-    expect(redis).not.toBeNull();
-    if (!redis) return;
+    if (!redis) throw new Error("Expected a Redis client");
 
     const firstResult = await reserveRateLimit(config, identifier, 2);
     expect(firstResult.ok).toBe(true);
     if (!firstResult.ok || !firstResult.data.reservation) {
       throw new Error("Expected the first rate-limit reservation");
     }
+    expect(firstResult.data.reservation.key).toBe(windowKey(config, identifier, now));
 
-    await new Promise((resolve) => setTimeout(resolve, 1100));
+    const nextWindow = now + config.interval * 1000;
+    vi.setSystemTime(nextWindow);
 
     const secondResult = await reserveRateLimit(config, identifier, 1);
     expect(secondResult.ok).toBe(true);
     if (!secondResult.ok || !secondResult.data.reservation) {
       throw new Error("Expected the second rate-limit reservation");
     }
-    expect(secondResult.data.reservation.key).not.toBe(firstResult.data.reservation.key);
+    expect(secondResult.data.reservation.key).toBe(windowKey(config, identifier, nextWindow));
 
     await settleRateLimit(firstResult.data.reservation, 0);
 
@@ -285,211 +223,126 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
   });
 
   test("Race condition test: concurrent requests to same identifier", async () => {
-    if (!isRedisAvailable) {
-      console.log("Skipping test: Redis not available");
-      return;
-    }
-
     const config = TEST_CONFIGS.strict;
-    const identifier = "race-test-same-id";
+    freezeClockAtWindowStart(config.interval);
+    const identifier = uniqueIdentifier("race-test-same-id");
     const concurrentRequests = 20; // More than allowed (3)
 
-    // Create array of concurrent promises
-    const promises = Array.from({ length: concurrentRequests }, () => checkRateLimit(config, identifier));
+    const results = await Promise.all(
+      Array.from({ length: concurrentRequests }, () => checkRateLimit(config, identifier))
+    );
 
-    // Execute all requests concurrently
-    const results = await Promise.all(promises);
-
-    // Count allowed vs denied requests
-    const allowed = results.filter((r) => r.ok && r.data.allowed).length;
-    const denied = results.filter((r) => r.ok && !r.data.allowed).length;
-
-    console.log(`Race condition test results: ${allowed} allowed, ${denied} denied`);
-
-    // Should allow exactly the configured limit
-    expect(allowed).toBe(config.allowedPerInterval);
-    expect(denied).toBe(concurrentRequests - config.allowedPerInterval);
-    expect(allowed + denied).toBe(concurrentRequests);
+    expectExactlyAdmitted(results, config.allowedPerInterval);
   }, 15000);
 
   test("Race condition test: multiple waves of concurrent requests", async () => {
-    if (!isRedisAvailable) {
-      console.log("Skipping test: Redis not available");
-      return;
-    }
-
     const config = TEST_CONFIGS.medium;
-    const identifier = "race-test-waves";
+    freezeClockAtWindowStart(config.interval);
+    const identifier = uniqueIdentifier("race-test-waves");
     const wavesCount = 3;
     const requestsPerWave = 15; // More than allowed (10)
 
-    const allResults: Array<Awaited<ReturnType<typeof checkRateLimit>>> = [];
+    const allResults: TCheckResult[] = [];
 
-    // Send waves of concurrent requests (no delay to ensure same window)
+    // The clock is frozen, so every wave lands in the same window.
     for (let wave = 0; wave < wavesCount; wave++) {
-      const promises = Array.from({ length: requestsPerWave }, () => checkRateLimit(config, identifier));
-
-      const waveResults = await Promise.all(promises);
+      const waveResults = await Promise.all(
+        Array.from({ length: requestsPerWave }, () => checkRateLimit(config, identifier))
+      );
       allResults.push(...waveResults);
-
-      // No delay - we want all waves in the same window for this test
     }
 
-    const totalAllowed = allResults.filter((r) => r.ok && r.data.allowed).length;
-    const totalDenied = allResults.filter((r) => r.ok && !r.data.allowed).length;
-
-    console.log(`Multi-wave test: ${totalAllowed} allowed, ${totalDenied} denied`);
-
     // Should still only allow the configured limit across all waves
-    expect(totalAllowed).toBe(config.allowedPerInterval);
-    expect(totalDenied).toBe(wavesCount * requestsPerWave - config.allowedPerInterval);
+    expectExactlyAdmitted(allResults, config.allowedPerInterval);
   }, 20000);
 
   test("Race condition test: different identifiers should not interfere", async () => {
-    if (!isRedisAvailable) {
-      console.log("Skipping test: Redis not available");
-      return;
-    }
-
     const config = TEST_CONFIGS.strict;
+    freezeClockAtWindowStart(config.interval);
     const identifiersCount = 5;
     const requestsPerIdentifier = 10;
 
-    // Create promises for multiple identifiers concurrently
-    const allPromises: Promise<{ identifier: string; result: Awaited<ReturnType<typeof checkRateLimit>> }>[] =
-      [];
-    for (let i = 0; i < identifiersCount; i++) {
-      const identifier = `race-test-different-${i}`;
-      for (let j = 0; j < requestsPerIdentifier; j++) {
-        allPromises.push(checkRateLimit(config, identifier).then((result) => ({ identifier, result })));
-      }
-    }
-
-    // Execute all requests concurrently
-    const results = await Promise.all(allPromises);
-
-    // Group results by identifier
-    const resultsByIdentifier = results.reduce(
-      (acc, { identifier, result }) => {
-        if (!acc[identifier]) acc[identifier] = [];
-        acc[identifier].push(result);
-        return acc;
-      },
-      {} as Record<string, any[]>
+    const identifiers = Array.from({ length: identifiersCount }, (_, i) =>
+      uniqueIdentifier(`race-test-different-${i}`)
+    );
+    const results = await Promise.all(
+      identifiers.flatMap((identifier) =>
+        Array.from({ length: requestsPerIdentifier }, () =>
+          checkRateLimit(config, identifier).then((result) => ({ identifier, result }))
+        )
+      )
     );
 
     // Each identifier should have exactly the allowed limit
-    Object.entries(resultsByIdentifier).forEach(([identifier, identifierResults]) => {
-      const allowed = identifierResults.filter((r) => r.ok && r.data.allowed).length;
-      const denied = identifierResults.filter((r) => r.ok && !r.data.allowed).length;
-
-      console.log(`Identifier ${identifier}: ${allowed} allowed, ${denied} denied`);
-
-      expect(allowed).toBe(config.allowedPerInterval);
-      expect(denied).toBe(requestsPerIdentifier - config.allowedPerInterval);
-    });
+    for (const identifier of identifiers) {
+      const identifierResults = results.filter((r) => r.identifier === identifier).map((r) => r.result);
+      expect(identifierResults).toHaveLength(requestsPerIdentifier);
+      expectExactlyAdmitted(identifierResults, config.allowedPerInterval);
+    }
   }, 20000);
 
-  test("Window boundary race condition test", async () => {
-    if (!isRedisAvailable) {
-      console.log("Skipping test: Redis not available");
-      return;
-    }
-
+  test("Window boundary test: the next window starts with a fresh limit", async () => {
     const config = {
-      interval: 2, // Very short window for testing
+      interval: 2,
       allowedPerInterval: 5,
       namespace: "test:boundary",
     } as TRateLimitConfig;
+    const now = freezeClockAtWindowStart(config.interval);
+    const identifier = uniqueIdentifier("boundary-test");
+    const redis = await cache.getRedisClient();
+    if (!redis) throw new Error("Expected a Redis client");
 
-    const identifier = "boundary-test";
+    const firstResults = await Promise.all(
+      Array.from({ length: 8 }, () => checkRateLimit(config, identifier))
+    );
+    expectExactlyAdmitted(firstResults, config.allowedPerInterval);
 
-    // First batch of requests
-    const firstBatch = Array.from({ length: 8 }, () => checkRateLimit(config, identifier));
-
-    const firstResults = await Promise.all(firstBatch);
-    const firstAllowed = firstResults.filter((r) => r.ok && r.data.allowed).length;
-
-    console.log(`First batch: ${firstAllowed} allowed`);
-    expect(firstAllowed).toBe(config.allowedPerInterval);
-
-    // Wait for window to expire
-    await new Promise((resolve) => setTimeout(resolve, config.interval * 1000 + 100));
+    const nextWindow = now + config.interval * 1000;
+    vi.setSystemTime(nextWindow);
 
     // Second batch should get fresh limits
-    const secondBatch = Array.from({ length: 8 }, () => checkRateLimit(config, identifier));
-
-    const secondResults = await Promise.all(secondBatch);
-    const secondAllowed = secondResults.filter((r) => r.ok && r.data.allowed).length;
-
-    console.log(`Second batch: ${secondAllowed} allowed`);
-    expect(secondAllowed).toBe(config.allowedPerInterval);
+    const secondResults = await Promise.all(
+      Array.from({ length: 8 }, () => checkRateLimit(config, identifier))
+    );
+    expectExactlyAdmitted(secondResults, config.allowedPerInterval);
+    expect(await redis.get(windowKey(config, identifier, nextWindow))).toBe(
+      String(config.allowedPerInterval)
+    );
   }, 15000);
 
   test("High throughput stress test", async () => {
-    if (!isRedisAvailable) {
-      console.log("Skipping test: Redis not available");
-      return;
-    }
-
     const config = TEST_CONFIGS.high;
+    freezeClockAtWindowStart(config.interval);
     const totalRequests = 200;
-    const identifier = "stress-test";
+    const identifier = uniqueIdentifier("stress-test");
 
-    // Clear any existing keys first to ensure clean state
-
-    const redis = await cache.getRedisClient();
-    if (redis) {
-      const existingKeys = await redis.keys(`fb:rate_limit:${config.namespace}:*`);
-      if (existingKeys.length > 0) {
-        await redis.del(existingKeys);
-      }
-    }
-
-    // Send ALL requests concurrently within the same time window
-    // This eliminates window boundary race conditions that caused intermittent failures
-    const allPromises = Array.from({ length: totalRequests }, () => checkRateLimit(config, identifier));
-
-    console.log(`Sending ${totalRequests} concurrent requests...`);
-    const results = await Promise.all(allPromises);
-
-    const totalAllowed = results.filter((r) => r.ok && r.data.allowed).length;
-    const totalDenied = results.filter((r) => r.ok && !r.data.allowed).length;
-
-    console.log(`Stress test: ${totalAllowed} allowed, ${totalDenied} denied`);
+    const results = await Promise.all(
+      Array.from({ length: totalRequests }, () => checkRateLimit(config, identifier))
+    );
 
     // Should respect the rate limit even under high load
-    expect(totalAllowed).toBe(config.allowedPerInterval);
-    expect(totalDenied).toBe(totalRequests - config.allowedPerInterval);
-    expect(totalAllowed + totalDenied).toBe(totalRequests);
+    expectExactlyAdmitted(results, config.allowedPerInterval);
   }, 30000);
 
   test("applyRateLimit function race condition test", async () => {
-    if (!isRedisAvailable) {
-      console.log("Skipping test: Redis not available");
-      return;
-    }
-
     const config = TEST_CONFIGS.strict;
-    const identifier = "apply-rate-limit-test";
+    freezeClockAtWindowStart(config.interval);
+    const identifier = uniqueIdentifier("apply-rate-limit-test");
     const concurrentRequests = 15;
 
-    // Test the higher-level applyRateLimit function
-    const promises = Array.from({ length: concurrentRequests }, async () => {
-      try {
-        await applyRateLimit(config, identifier);
-        return { success: true, error: null };
-      } catch (error) {
-        return { success: false, error: (error as Error).message };
-      }
-    });
-
-    const results = await Promise.all(promises);
+    const results = await Promise.all(
+      Array.from({ length: concurrentRequests }, async () => {
+        try {
+          await applyRateLimit(config, identifier);
+          return { success: true, error: null };
+        } catch (error) {
+          return { success: false, error: (error as Error).message };
+        }
+      })
+    );
 
     const successes = results.filter((r) => r.success).length;
     const failures = results.filter((r) => !r.success).length;
-
-    console.log(`applyRateLimit test: ${successes} successes, ${failures} failures`);
 
     // Should allow exactly the configured limit
     expect(successes).toBe(config.allowedPerInterval);
@@ -503,18 +356,12 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
   }, 15000);
 
   test("Mixed identifier patterns under load", async () => {
-    if (!isRedisAvailable) {
-      console.log("Skipping test: Redis not available");
-      return;
-    }
-
     const config = TEST_CONFIGS.medium;
-    const patterns = ["user-123", "ip-192.168.1.1", "api-key-abc", "session-xyz"];
-
+    freezeClockAtWindowStart(config.interval);
+    const patterns = ["user-123", "ip-192.168.1.1", "api-key-abc", "session-xyz"].map(uniqueIdentifier);
     const requestsPerPattern = 15;
 
-    // Create mixed concurrent requests
-    const allPromises: Promise<{ pattern: string; result: any }>[] = [];
+    const allPromises: Promise<{ pattern: string; result: TCheckResult }>[] = [];
     for (const pattern of patterns) {
       for (let i = 0; i < requestsPerPattern; i++) {
         allPromises.push(checkRateLimit(config, pattern).then((result) => ({ pattern, result })));
@@ -529,134 +376,59 @@ describe("Rate Limiter Load Tests - Race Conditions", () => {
 
     const results = await Promise.all(allPromises);
 
-    // Group and verify results
-    const resultsByPattern = results.reduce(
-      (acc, { pattern, result }) => {
-        if (!acc[pattern]) acc[pattern] = [];
-        acc[pattern].push(result);
-        return acc;
-      },
-      {} as Record<string, any[]>
-    );
-
-    Object.entries(resultsByPattern).forEach(([pattern, patternResults]) => {
-      const allowed = patternResults.filter((r) => r.ok && r.data.allowed).length;
-      const denied = patternResults.filter((r) => r.ok && !r.data.allowed).length;
-
-      console.log(`Pattern ${pattern}: ${allowed} allowed, ${denied} denied`);
-
-      expect(allowed).toBe(config.allowedPerInterval);
-      expect(denied).toBe(requestsPerPattern - config.allowedPerInterval);
-    });
+    for (const pattern of patterns) {
+      const patternResults = results.filter((r) => r.pattern === pattern).map((r) => r.result);
+      expect(patternResults).toHaveLength(requestsPerPattern);
+      expectExactlyAdmitted(patternResults, config.allowedPerInterval);
+    }
   }, 25000);
 
-  test("TTL expiration test: rate limit key should expire and unblock requests", async () => {
-    if (!isRedisAvailable) {
-      console.log("Skipping test: Redis not available");
-      return;
-    }
-
-    // Use a very short interval for faster testing
+  test("TTL test: a window's key carries an expiry and the next window starts fresh", async () => {
     const config: TRateLimitConfig = {
-      interval: 3, // 3 seconds
+      interval: 3,
       allowedPerInterval: 2,
       namespace: "test:ttl",
     };
-
-    const identifier = "ttl-test-user";
-
-    // Clear any existing keys first
-
+    const now = freezeClockAtWindowStart(config.interval);
+    const identifier = uniqueIdentifier("ttl-test-user");
     const redis = await cache.getRedisClient();
-    if (redis) {
-      const existingKeys = await redis.keys(`fb:rate_limit:${config.namespace}:*`);
-      if (existingKeys.length > 0) {
-        await redis.del(existingKeys);
-      }
-    }
+    if (!redis) throw new Error("Expected a Redis client");
 
-    console.log("Phase 1: Hitting rate limit...");
+    // Phase 1: hit the limit in the first window
+    const phase1Results = await Promise.all(
+      Array.from({ length: 5 }, () => checkRateLimit(config, identifier))
+    );
+    expectExactlyAdmitted(phase1Results, config.allowedPerInterval);
 
-    // Phase 1: Make requests until rate limit is hit
-    const phase1Promises = Array.from({ length: 5 }, () => checkRateLimit(config, identifier));
+    // The first write set an expiry of at most one interval. Deleting the key when it runs out is
+    // Valkey's job; the limiter's job is to set it.
+    const firstKey = windowKey(config, identifier, now);
+    expect(await redis.get(firstKey)).toBe(String(config.allowedPerInterval));
+    const firstKeyPttl = await redis.pTTL(firstKey);
+    expect(firstKeyPttl).toBeGreaterThan(0);
+    expect(firstKeyPttl).toBeLessThanOrEqual(config.interval * 1000);
 
-    const phase1Results = await Promise.all(phase1Promises);
-    const phase1Allowed = phase1Results.filter((r) => r.ok && r.data.allowed).length;
-    const phase1Denied = phase1Results.filter((r) => r.ok && !r.data.allowed).length;
+    // Phase 2: move into the next window
+    const nextWindow = now + config.interval * 1000;
+    vi.setSystemTime(nextWindow);
 
-    console.log(`Phase 1 results: ${phase1Allowed} allowed, ${phase1Denied} denied`);
+    // Phase 3: fresh limits in the new window, on a new key with its own expiry
+    const phase3Results = await Promise.all(
+      Array.from({ length: 5 }, () => checkRateLimit(config, identifier))
+    );
+    expectExactlyAdmitted(phase3Results, config.allowedPerInterval);
 
-    // Verify rate limit is working
-    expect(phase1Allowed).toBe(config.allowedPerInterval);
-    expect(phase1Denied).toBe(5 - config.allowedPerInterval);
+    const newKey = windowKey(config, identifier, nextWindow);
+    expect(newKey).not.toBe(firstKey);
+    expect(await redis.get(newKey)).toBe(String(config.allowedPerInterval));
+    const newKeyPttl = await redis.pTTL(newKey);
+    expect(newKeyPttl).toBeGreaterThan(0);
+    expect(newKeyPttl).toBeLessThanOrEqual(config.interval * 1000);
 
-    // Check that the key exists in Redis
-    if (redis) {
-      const now = Date.now();
-      const windowStart = Math.floor(now / (config.interval * 1000)) * config.interval;
-      const expectedKey = `fb:rate_limit:${config.namespace}:${identifier}:${windowStart}`;
-
-      const keyExists = await redis.exists(expectedKey);
-      expect(keyExists).toBe(1);
-      console.log(`Redis key exists: ${expectedKey}`);
-
-      // Check the TTL
-      const ttl = await redis.ttl(expectedKey);
-      expect(ttl).toBeGreaterThan(0);
-      expect(ttl).toBeLessThanOrEqual(config.interval);
-      console.log(`Key TTL: ${ttl} seconds`);
-
-      // Phase 2: Wait for TTL to expire
-      console.log(`Phase 2: Waiting for TTL expiration (${config.interval + 1} seconds)...`);
-      await new Promise((resolve) => setTimeout(resolve, (config.interval + 1) * 1000));
-
-      // Verify key has been automatically deleted by Redis
-      const keyExistsAfterTTL = await redis.exists(expectedKey);
-      expect(keyExistsAfterTTL).toBe(0);
-      console.log("Key automatically deleted by Redis TTL ✅");
-    }
-
-    // Phase 3: Make new requests after TTL expiration
-    console.log("Phase 3: Making requests after TTL expiration...");
-
-    const phase3Promises = Array.from({ length: 5 }, () => checkRateLimit(config, identifier));
-
-    const phase3Results = await Promise.all(phase3Promises);
-    const phase3Allowed = phase3Results.filter((r) => r.ok && r.data.allowed).length;
-    const phase3Denied = phase3Results.filter((r) => r.ok && !r.data.allowed).length;
-
-    console.log(`Phase 3 results: ${phase3Allowed} allowed, ${phase3Denied} denied`);
-
-    // Should get fresh limits after TTL expiration
-    expect(phase3Allowed).toBe(config.allowedPerInterval);
-    expect(phase3Denied).toBe(5 - config.allowedPerInterval);
-
-    // Verify new key was created for the new window
-    if (redis) {
-      const newNow = Date.now();
-      const newWindowStart = Math.floor(newNow / (config.interval * 1000)) * config.interval;
-      const newKey = `fb:rate_limit:${config.namespace}:${identifier}:${newWindowStart}`;
-
-      const newKeyExists = await redis.exists(newKey);
-      expect(newKeyExists).toBe(1);
-      console.log(`New Redis key created: ${newKey}`);
-    }
-
-    // Phase 4: Test that we're blocked again within the new window
-    console.log("Phase 4: Verifying rate limit is active in new window...");
-
-    const phase4Promises = Array.from({ length: 3 }, () => checkRateLimit(config, identifier));
-
-    const phase4Results = await Promise.all(phase4Promises);
-    const phase4Allowed = phase4Results.filter((r) => r.ok && r.data.allowed).length;
-    const phase4Denied = phase4Results.filter((r) => r.ok && !r.data.allowed).length;
-
-    console.log(`Phase 4 results: ${phase4Allowed} allowed, ${phase4Denied} denied`);
-
-    // Should be blocked since we already used up the limit in phase 3
-    expect(phase4Allowed).toBe(0);
-    expect(phase4Denied).toBe(3);
-
-    console.log("✅ TTL expiration working correctly - rate limits properly reset after expiration");
+    // Phase 4: the new window's limit is already used up
+    const phase4Results = await Promise.all(
+      Array.from({ length: 3 }, () => checkRateLimit(config, identifier))
+    );
+    expectExactlyAdmitted(phase4Results, 0);
   }, 20000);
 });
