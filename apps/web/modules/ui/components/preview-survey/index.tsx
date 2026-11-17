@@ -140,8 +140,15 @@ export const PreviewSurvey = ({
   );
   // The strip's Clear (ENG-6969 T13 ②): no values means a new start key, so the preview restarts.
   const clearTestValues = () => setTestValues({});
-  // Bumped when an app survey without endings finishes, to start it over (see `onFinished`).
+  // Bumped to start the preview over with a new start key: when an app survey without endings
+  // finishes (see `onFinished`), and on every Apply of the Test values (see `applyTestValues`).
   const [previewRun, setPreviewRun] = useState(0);
+  // "Restart with these values" always restarts (ENG-7029): values equal to the current ones leave the
+  // start key as it was, so the run is bumped too. Both updates land in one render: one remount.
+  const applyTestValues = (values: Record<string, string>) => {
+    setTestValues(values);
+    setPreviewRun((run) => run + 1);
+  };
   const previewStartKey = useMemo(
     () =>
       getPreviewStartKey(
@@ -463,7 +470,7 @@ export const PreviewSurvey = ({
                   fields={testValueFields}
                   values={testValues}
                   activeCount={testValueEntries.length}
-                  onApply={setTestValues}
+                  onApply={applyTestValues}
                   openRequest={testValuesOpenRequest}
                 />
                 <ResetProgressButton onClick={resetProgress} />
@@ -621,7 +628,7 @@ export const PreviewSurvey = ({
                   fields={testValueFields}
                   values={testValues}
                   activeCount={testValueEntries.length}
-                  onApply={setTestValues}
+                  onApply={applyTestValues}
                   openRequest={testValuesOpenRequest}
                 />
                 <ResetProgressButton onClick={resetProgress} />
