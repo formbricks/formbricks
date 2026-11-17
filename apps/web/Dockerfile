@@ -9,7 +9,7 @@
 # releases (a new .nvmrc version), not as OS package upgrades. Node trusts its bundled list, not the OS
 # store; that list also blocks the compromised eMudhra intermediates (ENG-4065), and NODE_EXTRA_CA_CERTS
 # adds private CAs on top.
-FROM node:24.22.3-trixie-slim@sha256:af02d57b57719b9657a45199a79264a9437940cd55b3c7b3fc99615654f124a0 AS base
+FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS base
 
 # The runtime gets only the node binary: no npm, npx, corepack or yarn. libatomic1 is the one library the
 # binary links that Debian's slim image lacks. Prisma's schema engine, which runs the migrations, is a
@@ -23,8 +23,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 COPY --from=base /usr/local/bin/node /usr/local/bin/node
 # The official image drops Node's license file, which redistributing the binary requires.
-ADD --checksum=sha256:5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace \
-    https://raw.githubusercontent.com/nodejs/node/v24.22.3/LICENSE /usr/local/share/doc/node/LICENSE
+ADD --checksum=sha256:8e603aa87c70d36e497004f0dec63111511cb61b7d65ace12e10ea791599286c \
+    https://raw.githubusercontent.com/nodejs/node/v26.13.1/LICENSE /usr/local/share/doc/node/LICENSE
 RUN chmod 644 /usr/local/share/doc/node/LICENSE
 COPY apps/web/scripts/docker/verify-runtime.mjs /tmp/verify-runtime.mjs
 RUN node /tmp/verify-runtime.mjs && rm /tmp/verify-runtime.mjs

@@ -23,19 +23,20 @@ const atLeast = (actual, minimum) => {
   return true;
 };
 
-assert.equal(process.versions.node.split(".")[0], "24", "Runtime must match .nvmrc's Node major");
+assert.equal(process.versions.node.split(".")[0], "26", "Runtime must match .nvmrc's Node major");
 assert.equal(
   process.versions.openssl.split(".").slice(0, 2).join("."),
   "3.5",
   "Recheck fixes before changing OpenSSL branches"
 );
 assert.ok(atLeast(process.versions.openssl, "3.5.9"), "Node must use patched OpenSSL");
-assert.equal(process.versions.undici.split(".")[0], "7", "Recheck fixes before changing Undici majors");
-assert.ok(atLeast(process.versions.undici, "7.30.2"), "Node's built-in fetch must use patched Undici");
-assert.equal(process.versions.modules, "137", "Native addons must retain the Node 24 ABI");
+assert.equal(process.versions.undici.split(".")[0], "8", "Recheck fixes before changing Undici majors");
+// 8.12.4 carries the October and November 2026 Undici advisories (8.12.2 and 8.12.4 releases).
+assert.ok(atLeast(process.versions.undici, "8.12.4"), "Node's built-in fetch must use patched Undici");
+assert.equal(process.versions.modules, "147", "Native addons must retain the Node 26 ABI");
 assert.deepEqual(Intl.DateTimeFormat.supportedLocalesOf(["de", "es", "ja"]), ["de", "es", "ja"]);
 
-// Node trusts the root list compiled into its binary (ENG-4065: Node 24.22.1 and later drop the emSign roots
+// Node trusts the root list compiled into its binary (ENG-4065: Node 24.22.1 and 26.12.1 and later drop the emSign roots
 // behind the compromised eMudhra intermediates and block those intermediates' keys). Check that the bundled
 // list is the default, so the OS CA store never decides trust, and that the compromised root is not in it.
 // verify-tls.mjs then proves the behaviour with real handshakes.
