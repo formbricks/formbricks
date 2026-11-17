@@ -2,7 +2,14 @@ import { AsyncParser } from "@json2csv/node";
 import { describe, expect, test, vi } from "vitest";
 import * as xlsx from "xlsx";
 import { logger } from "@formbricks/logger";
-import { convertToCsv, convertToXlsxBuffer, toCsvLine } from "./file-conversion";
+import {
+  XLSX_MAX_CELL_LENGTH,
+  XLSX_TRUNCATION_MARKER,
+  convertToCsv,
+  convertToXlsxBuffer,
+  toCsvLine,
+  truncateForXlsxCell,
+} from "./file-conversion";
 
 // Mock the logger to capture error calls
 vi.mock("@formbricks/logger", () => ({
@@ -23,6 +30,12 @@ describe("convertToCsv", () => {
     expect(lines[0]).toBe('"name","age"');
     expect(lines[1]).toBe('"Alice",30');
     expect(lines[2]).toBe('"Bob",25');
+  });
+
+  test("should keep text over the Excel cell limit in full", async () => {
+    const long = "a".repeat(XLSX_MAX_CELL_LENGTH + 500);
+    const csv = await convertToCsv(["answer"], [{ answer: long }]);
+    expect(csv.trim().split("\n")[1]).toBe(`"${long}"`);
   });
 
   test("should log an error and throw when conversion fails", async () => {
@@ -147,6 +160,70 @@ describe("convertToXlsxBuffer", () => {
     expect(sheet["B1"].v).toBe("'=field");
     expect(sheet["A2"].v).toBe("a");
     expect(sheet["B2"].v).toBe("b");
+  });
+
+  describe("Excel cell length limit", () => {
+    const readSheet = (buffer: Buffer) => xlsx.read(buffer, { type: "buffer" }).Sheets["Response Data"];
+
+    test("should export a value over the limit, truncated with a visible marker", () => {
+      const long = "a".repeat(XLSX_MAX_CELL_LENGTH + 500);
+      const sheet = readSheet(convertToXlsxBuffer(["answer", "age"], [{ answer: long, age: 30 }]));
+      const value = sheet["A2"].v as string;
+      expect(value).toHaveLength(XLSX_MAX_CELL_LENGTH);
+      expect(value.endsWith(XLSX_TRUNCATION_MARKER)).toBe(true);
+      expect(value.startsWith("aaa")).toBe(true);
+      // other cells are untouched
+      expect(sheet["B2"].v).toBe(30);
+    });
+
+    test("should export a header over the limit, truncated with a visible marker", () => {
+      const longHeader = "Q".repeat(XLSX_MAX_CELL_LENGTH + 1);
+      const sheet = readSheet(convertToXlsxBuffer([longHeader], [{ [longHeader]: "answer" }]));
+      const header = sheet["A1"].v as string;
+      expect(header).toHaveLength(XLSX_MAX_CELL_LENGTH);
+      expect(header.endsWith(XLSX_TRUNCATION_MARKER)).toBe(true);
+      // the row is still looked up by the original, untruncated key
+      expect(sheet["A2"].v).toBe("answer");
+    });
+
+    test("should leave a value of exactly the limit unchanged", () => {
+      const exact = "b".repeat(XLSX_MAX_CELL_LENGTH);
+      const sheet = readSheet(convertToXlsxBuffer(["answer"], [{ answer: exact }]));
+      expect(sheet["A2"].v).toBe(exact);
+    });
+
+    test("should keep the formula-safety prefix when it pushes a value at the limit over it", () => {
+      const payload = "=" + "c".repeat(XLSX_MAX_CELL_LENGTH - 1);
+      const sheet = readSheet(convertToXlsxBuffer(["answer"], [{ answer: payload }]));
+      const value = sheet["A2"].v as string;
+      expect(sheet["A2"].f).toBeUndefined();
+      expect(value).toHaveLength(XLSX_MAX_CELL_LENGTH);
+      expect(value.startsWith("'=")).toBe(true);
+      expect(value.endsWith(XLSX_TRUNCATION_MARKER)).toBe(true);
+    });
+  });
+});
+
+describe("truncateForXlsxCell", () => {
+  test("should not split a surrogate pair at the cut", () => {
+    const keep = XLSX_MAX_CELL_LENGTH - XLSX_TRUNCATION_MARKER.length;
+    // Place an emoji so its high surrogate is the last kept code unit.
+    const value = "d".repeat(keep - 1) + "😀" + "e".repeat(100);
+    const result = truncateForXlsxCell(value);
+    expect(result).toBe("d".repeat(keep - 1) + XLSX_TRUNCATION_MARKER);
+    expect(result.length).toBeLessThanOrEqual(XLSX_MAX_CELL_LENGTH);
+  });
+
+  test("should keep a surrogate pair that ends exactly at the cut", () => {
+    const keep = XLSX_MAX_CELL_LENGTH - XLSX_TRUNCATION_MARKER.length;
+    const value = "d".repeat(keep - 2) + "😀" + "e".repeat(100);
+    expect(truncateForXlsxCell(value)).toBe("d".repeat(keep - 2) + "😀" + XLSX_TRUNCATION_MARKER);
+  });
+
+  test("should pass numbers and short strings through unchanged", () => {
+    expect(truncateForXlsxCell(42)).toBe(42);
+    expect(truncateForXlsxCell("short")).toBe("short");
+    expect(truncateForXlsxCell(undefined)).toBeUndefined();
   });
 });
 
