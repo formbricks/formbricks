@@ -69,6 +69,18 @@ describe("getMcpGrantSummaryChips", () => {
     expect(chips[0].level).toBe("mixed");
   });
 
+  // An upgraded grant at the scopes' Write gives Workflow runs and Feedback datasets their highest, Read.
+  test("a migrated Write grant's Workflows and Feedback chips say Write, not Custom", () => {
+    const labels = getMcpGrantSummaryChips(
+      { workflows: "write", workflowRuns: "read", feedbackRecords: "write", feedbackDatasets: "read" },
+      { isDashboardViewer: false },
+      english
+    ).map(({ label }) => label);
+
+    expect(labels).toContain("Workflows · Write");
+    expect(labels).toContain("Feedback · Write");
+  });
+
   test("a Dashboard viewer's grant shows the Dashboards chip alone", () => {
     expect(
       getMcpGrantSummaryChips(

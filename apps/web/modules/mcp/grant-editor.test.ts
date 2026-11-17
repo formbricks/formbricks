@@ -129,6 +129,32 @@ describe("category level", () => {
     expect(getMcpCategoryLevel({}, ["surveys", "creatives", "surveyStyling"])).toBe("none");
   });
 
+  // Workflow runs and Feedback datasets only go up to Read: Write on their category sets them to Read, so
+  // the category reads as Write, and a migrated grant's chip says Write rather than Custom.
+  test("is Write when every permission sits at its own highest level, a read-only one at Read", () => {
+    expect(
+      getMcpCategoryLevel({ workflows: "write", workflowRuns: "read" }, ["workflows", "workflowRuns"])
+    ).toBe("write");
+    expect(
+      getMcpCategoryLevel({ feedbackRecords: "write", feedbackDatasets: "read" }, [
+        "feedbackRecords",
+        "feedbackDatasets",
+      ])
+    ).toBe("write");
+    expect(
+      getMcpCategoryLevel({ workflows: "read", workflowRuns: "read" }, ["workflows", "workflowRuns"])
+    ).toBe("read");
+    expect(getMcpCategoryLevel({ workflows: "write" }, ["workflows", "workflowRuns"])).toBe("mixed");
+    // What the category's own Write sets reads back as Write.
+    const cap = { workflows: "write", workflowRuns: "read" } as const;
+    expect(
+      getMcpCategoryLevel(setMcpCategoryLevel({}, ["workflows", "workflowRuns"], "write", cap), [
+        "workflows",
+        "workflowRuns",
+      ])
+    ).toBe("write");
+  });
+
   test("is no single level when its permissions differ", () => {
     expect(
       getMcpCategoryLevel({ surveys: "write", creatives: "read" }, ["surveys", "creatives", "surveyStyling"])

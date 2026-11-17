@@ -106,13 +106,28 @@ export const setMcpPermissionLevel = (
   cap: TMcpGrantPermissions
 ): TMcpGrantPermissions => withLevel(permissions, permission, reachableLevel(permission, level, cap));
 
-/** The level a category's permissions share, or `mixed` when they differ. */
+/** The highest level `permission` offers: Write, or Read for one with only read tools. */
+const highestOfferedLevel = (permission: TMcpPermission): TMcpAccessLevel =>
+  [...MCP_PERMISSIONS[permission].levels].reduce<TMcpAccessLevel>(
+    (highest, level) => (RANK[level] > RANK[highest] ? level : highest),
+    "none"
+  );
+
+/**
+ * The level a category's permissions share, or `mixed` when they differ. A category whose permissions all
+ * sit at their own highest level is at Write, though one of them (Workflow runs, Feedback datasets) only
+ * goes up to Read: that is what the category's Write sets (`setMcpCategoryLevel`), so the row shows it.
+ */
 export const getMcpCategoryLevel = (
   permissions: TMcpGrantPermissions,
   categoryPermissions: readonly TMcpPermission[]
 ): TMcpCategoryLevel => {
   const levels = new Set(categoryPermissions.map((permission) => levelOf(permissions, permission)));
-  return levels.size === 1 ? [...levels][0] : "mixed";
+  if (levels.size === 1) return [...levels][0];
+  const atTheirHighest = categoryPermissions.every(
+    (permission) => levelOf(permissions, permission) === highestOfferedLevel(permission)
+  );
+  return atTheirHighest ? "write" : "mixed";
 };
 
 /** Sets every permission of a category to `level`, each as far as it and `cap` allow. */
