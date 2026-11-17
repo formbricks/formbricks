@@ -33,4 +33,34 @@ describe("isTextCutOff", () => {
   test("an empty header is not cut off", () => {
     expect(isTextCutOff([])).toBe(false);
   });
+
+  test("text clamped to a few lines and taller than its box is cut off", () => {
+    expect(
+      isTextCutOff([
+        {
+          scrollWidth: 200,
+          clientWidth: 200,
+          overflowX: "hidden",
+          scrollHeight: 60,
+          clientHeight: 40,
+          overflowY: "hidden",
+        },
+      ])
+    ).toBe(true);
+  });
+
+  test("a pixel of descender below a line is not cut off", () => {
+    expect(
+      isTextCutOff([
+        {
+          scrollWidth: 200,
+          clientWidth: 200,
+          overflowX: "hidden",
+          scrollHeight: 41,
+          clientHeight: 40,
+          overflowY: "hidden",
+        },
+      ])
+    ).toBe(false);
+  });
 });
