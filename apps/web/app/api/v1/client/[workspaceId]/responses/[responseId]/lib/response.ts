@@ -1,4 +1,5 @@
 import { prisma } from "@formbricks/database";
+import { type Prisma } from "@formbricks/database/prisma";
 import { type TIngestFlag } from "@formbricks/types/embedded-data-ingest";
 import { DatabaseError, ResourceNotFoundError, ResponseAlreadyFinishedError } from "@formbricks/types/errors";
 import { TResponseWithQuotaFull } from "@formbricks/types/quota";
@@ -20,8 +21,11 @@ import {
  * sends no record keeps this one, so validating that update reads it too (ENG-7332). A stored record
  * that does not parse is a server fault, not an unknown record: it throws.
  */
-export const getStoredResponseNotShown = async (responseId: string): Promise<TResponseNotShown | null> => {
-  const row = await prisma.response.findUnique({ where: { id: responseId }, select: { notShown: true } });
+export const getStoredResponseNotShown = async (
+  responseId: string,
+  client: Pick<Prisma.TransactionClient, "response"> = prisma
+): Promise<TResponseNotShown | null> => {
+  const row = await client.response.findUnique({ where: { id: responseId }, select: { notShown: true } });
   if (row?.notShown == null) return null;
   const parsed = ZResponseNotShown.safeParse(row.notShown);
   if (!parsed.success) throw new DatabaseError("The response's stored not-shown record is invalid");
@@ -64,7 +68,14 @@ export const updateResponseWithQuotaEvaluation = async ({
       throw new ResponseAlreadyFinishedError(responseId);
     }
 
-    const updated = await updateResponse(responseId, responseInput, tx, ingestFlags);
+    // An update without a not-shown record keeps the stored one (ENG-6936), and the write applies it as
+    // when the survey sends it: an answer to anything it lists is removed (ENG-7332). Read under the lock,
+    // so a concurrent update cannot make it stale.
+    const storedNotShown =
+      responseInput.notShown === undefined ? await getStoredResponseNotShown(responseId, tx) : null;
+    const writeInput = storedNotShown ? { ...responseInput, notShown: storedNotShown } : responseInput;
+
+    const updated = await updateResponse(responseId, writeInput, tx, ingestFlags);
     // ENG-6933: one way, and only on this flag; `outcome` itself is not part of the client update (#9847).
     lowQualityMark = responseInput.markLowQuality
       ? await markResponseLowQualityFromSurvey(tx, updated)

@@ -25,6 +25,7 @@ const mockQuotaContext = { quotas: [], survey: { id: "survey123" } } as unknown 
 type MockTx = {
   response: {
     update: ReturnType<typeof vi.fn>;
+    findUnique: ReturnType<typeof vi.fn>;
   };
 };
 let mockTx: MockTx;
@@ -36,6 +37,8 @@ describe("updateResponseWithQuotaEvaluation", () => {
     mockTx = {
       response: {
         update: vi.fn(),
+        // No stored not-shown record unless a test sets one.
+        findUnique: vi.fn().mockResolvedValue({ notShown: null }),
       },
     };
     prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
@@ -181,6 +184,37 @@ describe("updateResponseWithQuotaEvaluation", () => {
     await updateResponseWithQuotaEvaluation({ ...updateArgs, ingestFlags });
 
     expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, mockResponseInput, mockTx, ingestFlags);
+  });
+
+  test("writes an update without a not-shown record with the stored one, read under the lock (ENG-7332)", async () => {
+    mockUpdateResponse.mockResolvedValue(mockResponse);
+    mockEvaluateResponseQuotas.mockResolvedValue({ shouldEndSurvey: false });
+    const stored = { elements: ["q2"], rows: { trip: ["visa"] } };
+    mockTx.response.findUnique.mockResolvedValue({ notShown: stored });
+
+    await updateResponseWithQuotaEvaluation(updateArgs);
+
+    expect(mockTx.response.findUnique).toHaveBeenCalledWith({
+      where: { id: mockResponseId },
+      select: { notShown: true },
+    });
+    expect(mockUpdateResponse).toHaveBeenCalledWith(
+      mockResponseId,
+      { ...mockResponseInput, notShown: stored },
+      mockTx,
+      undefined
+    );
+  });
+
+  test("writes a not-shown record the update sends as sent, without reading the stored one (ENG-7332)", async () => {
+    mockUpdateResponse.mockResolvedValue(mockResponse);
+    mockEvaluateResponseQuotas.mockResolvedValue({ shouldEndSurvey: false });
+    const responseInput = { ...mockResponseInput, notShown: {} };
+
+    await updateResponseWithQuotaEvaluation({ ...updateArgs, responseInput });
+
+    expect(mockTx.response.findUnique).not.toHaveBeenCalled();
+    expect(mockUpdateResponse).toHaveBeenCalledWith(mockResponseId, responseInput, mockTx, undefined);
   });
 
   test("reads the quota definitions before opening the transaction, not inside it (ENG-3285)", async () => {

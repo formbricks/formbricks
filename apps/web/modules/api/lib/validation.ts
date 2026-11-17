@@ -3,7 +3,6 @@ import { validateBlockResponses } from "@formbricks/surveys/validation";
 import { TResponseData } from "@formbricks/types/responses";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TResponseNotShown } from "@formbricks/types/surveys/not-shown";
-import { TSurveyQuestion } from "@formbricks/types/surveys/types";
 import { TValidationErrorMap } from "@formbricks/types/surveys/validation-rules";
 import { transformQuestionsToBlocks } from "@/app/lib/api/survey-transformation";
 import { getElementsFromBlocks } from "@/lib/survey/utils";
@@ -28,7 +27,8 @@ export const validateResponseData = (
   blocks: unknown[] | undefined | null,
   responseData: TResponseData | undefined | null,
   languageCode: string = "en",
-  questions?: TSurveyQuestion[] | undefined | null,
+  // The legacy questions `transformQuestionsToBlocks` takes, typed off it rather than the deprecated name.
+  questions?: Parameters<typeof transformQuestionsToBlocks>[0] | undefined | null,
   notShown?: TResponseNotShown | null
 ): TValidationErrorMap | null => {
   // Partial updates omit `data` entirely (e.g. `{ "finished": true }`), so there is nothing to
