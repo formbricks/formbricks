@@ -235,6 +235,15 @@ const getResponseFileUrlOwner = ({
  * `data` is deliberately `unknown`: callers hand this a raw `Prisma.JsonValue` column or an already
  * typed `TResponseData`, and the shape is checked here either way rather than cast at each call site.
  */
+/** The strings an answer could hold a file URL in: each string of a list, or a bare string. */
+const getAnswerUrlCandidates = (answer: unknown): string[] => {
+  if (Array.isArray(answer)) {
+    return answer.filter((fileUrl): fileUrl is string => typeof fileUrl === "string");
+  }
+  if (typeof answer === "string") return [answer];
+  return [];
+};
+
 export const collectResponseFileUrls = (
   data: unknown,
   elementIds: TSurveyUploadElementIds,
@@ -251,20 +260,10 @@ export const collectResponseFileUrls = (
   const answers: [string, unknown][] = Object.entries(data);
 
   for (const [elementId, answer] of answers) {
-    let answerUrls: unknown[];
-    if (Array.isArray(answer)) {
-      answerUrls = answer;
-    } else if (typeof answer === "string") {
-      answerUrls = [answer];
-    } else {
-      continue;
-    }
-
+    const answerUrls = getAnswerUrlCandidates(answer);
     const isBareString = typeof answer === "string";
     const isFileUploadAnswer = !isBareString && elementIds.fileUpload.has(elementId);
     for (const fileUrl of answerUrls) {
-      if (typeof fileUrl !== "string") continue;
-
       const owner = getResponseFileUrlOwner({
         fileUrl,
         elementId,

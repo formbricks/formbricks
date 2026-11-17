@@ -56,6 +56,19 @@ const afterCursor = (cursor: ResponseScanCursor) => ({
  * since those can only match a current upload element, it skips the scan when there is none rather than
  * reading every response for nothing.
  */
+/** The file URLs one page of responses owns; with `flatKeysOnly`, only the flat (pre-#8044) keys. */
+const collectPageFileUrls = (
+  responses: { data: unknown }[],
+  uploadElementIds: ReturnType<typeof getSurveyUploadElementIds>,
+  surveyId: string,
+  flatKeysOnly: boolean
+): string[] =>
+  responses.flatMap((response) =>
+    collectResponseFileUrls(response.data, uploadElementIds, surveyId).filter(
+      (fileUrl) => !flatKeysOnly || getStorageUrlSurveyId(fileUrl) === null
+    )
+  );
+
 export const collectSurveyResponseFileUrls = async (
   surveyId: string,
   { flatKeysOnly = false }: { flatKeysOnly?: boolean } = {}
@@ -98,11 +111,7 @@ export const collectSurveyResponseFileUrls = async (
       break;
     }
 
-    for (const response of responses) {
-      for (const fileUrl of collectResponseFileUrls(response.data, uploadElementIds, surveyId)) {
-        if (!flatKeysOnly || getStorageUrlSurveyId(fileUrl) === null) fileUrls.push(fileUrl);
-      }
-    }
+    fileUrls.push(...collectPageFileUrls(responses, uploadElementIds, surveyId, flatKeysOnly));
 
     // A short page means the last one. The `lastRow` check only guards the cursor from going undefined
     // and re-reading the same page forever; a full page always has a last row.
