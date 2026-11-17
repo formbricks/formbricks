@@ -27,24 +27,24 @@ const AlertContext = createContext<AlertContextValue>({
 const useAlertContext = () => useContext(AlertContext);
 
 // Define alert styles with variants
-const alertVariants = cva("relative w-full rounded-lg border [&>svg]:size-4 bg-white", {
+const alertVariants = cva("relative w-full rounded-lg border bg-white [&>svg]:size-4", {
   variants: {
     variant: {
       default: "text-foreground border-border",
       outbound: "text-foreground border-border",
       error:
-        "text-error-foreground [&>svg]:text-error border-error/50 [&_button]:bg-error-background [&_button]:text-error-foreground [&_button:hover]:bg-error-background-muted [&_a]:bg-error-background [&_a]:text-error-foreground [&_a:hover]:bg-error-background-muted",
+        "border-error/50 text-error-foreground [&_a]:bg-error-background [&_a]:text-error-foreground [&_a:hover]:bg-error-background-muted [&_button]:bg-error-background [&_button]:text-error-foreground [&_button:hover]:bg-error-background-muted [&>svg]:text-error",
       warning:
-        "text-warning-foreground [&>svg]:text-warning border-warning/50 [&_button]:bg-warning-background [&_button]:text-warning-foreground [&_button:hover]:bg-warning-background-muted [&_a]:bg-warning-background [&_a]:text-warning-foreground [&_a:hover]:bg-warning-background-muted",
-      info: "text-info-foreground [&>svg]:text-info border-info/50 [&_button]:bg-info-background [&_button]:text-info-foreground [&_button:hover]:bg-info-background-muted [&_a]:bg-info-background [&_a]:text-info-foreground [&_a:hover]:bg-info-background-muted",
+        "border-warning/50 text-warning-foreground [&_a]:bg-warning-background [&_a]:text-warning-foreground [&_a:hover]:bg-warning-background-muted [&_button]:bg-warning-background [&_button]:text-warning-foreground [&_button:hover]:bg-warning-background-muted [&>svg]:text-warning",
+      info: "border-info/50 text-info-foreground [&_a]:bg-info-background [&_a]:text-info-foreground [&_a:hover]:bg-info-background-muted [&_button]:bg-info-background [&_button]:text-info-foreground [&_button:hover]:bg-info-background-muted [&>svg]:text-info",
       success:
-        "text-success-foreground [&>svg]:text-success border-success/50 [&_button]:bg-success-background [&_button]:text-success-foreground [&_button:hover]:bg-success-background-muted [&_a]:bg-success-background [&_a]:text-success-foreground [&_a:hover]:bg-success-background-muted",
+        "border-success/50 text-success-foreground [&_a]:bg-success-background [&_a]:text-success-foreground [&_a:hover]:bg-success-background-muted [&_button]:bg-success-background [&_button]:text-success-foreground [&_button:hover]:bg-success-background-muted [&>svg]:text-success",
     },
     size: {
       default:
-        "py-3 px-4 text-sm grid grid-cols-[2fr_auto] grid-rows-[auto_auto] gap-y-0.5 gap-x-3 [&>svg]:absolute [&>svg]:left-4 [&>svg]:top-4 [&>svg~*]:pl-7",
+        "grid grid-cols-[2fr_auto] grid-rows-[auto_auto] gap-x-3 gap-y-0.5 px-4 py-3 text-sm [&>svg]:absolute [&>svg]:top-4 [&>svg]:left-4 [&>svg~*]:pl-7",
       small:
-        "px-4 py-2 text-xs flex items-center gap-2 [&>svg]:shrink-0 [&_button]:bg-transparent [&_button:hover]:bg-transparent [&_a]:bg-transparent [&_a:hover]:bg-transparent [&>svg~*]:pl-0",
+        "flex items-center gap-2 px-4 py-2 text-xs [&_a]:bg-transparent [&_a:hover]:bg-transparent [&_button]:bg-transparent [&_button:hover]:bg-transparent [&>svg]:shrink-0 [&>svg~*]:pl-0",
     },
   },
   defaultVariants: {

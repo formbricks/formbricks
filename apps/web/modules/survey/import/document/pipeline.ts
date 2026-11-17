@@ -289,15 +289,13 @@ export async function runDocumentImport(
     ...notes,
     ...planned.issues,
     // An entry whose cells an earlier one read: reported like any other dropped question.
-    ...overlapping.map(
-      (ref): TSurveyImportPipelineIssue => ({
-        code: "question_skipped",
-        severity: "warning",
-        questionTag: ref,
-        questionRef: ref,
-        params: { cause: "cells_taken" },
-      })
-    ),
+    ...overlapping.map((ref): TSurveyImportPipelineIssue => ({
+      code: "question_skipped",
+      severity: "warning",
+      questionTag: ref,
+      questionRef: ref,
+      params: { cause: "cells_taken" },
+    })),
     ...dropped,
     ...assembly.issues,
   ];

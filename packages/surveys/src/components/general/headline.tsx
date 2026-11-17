@@ -29,7 +29,7 @@ export function Headline({
   const safeHtml = isHeadlineHtml && strippedHeadline ? sanitizeSurveyHtml(strippedHeadline) : "";
 
   return (
-    <div className="text-heading mb-[3px] flex flex-col">
+    <div className="mb-[3px] flex flex-col text-heading">
       {hasRequiredRule && (
         <span
           className="label-card mb-[3px] text-xs leading-6 font-normal"

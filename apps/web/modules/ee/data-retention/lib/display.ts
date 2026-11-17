@@ -141,9 +141,10 @@ const getHoldingExemption = (
 ): TRetentionExemption | undefined =>
   exemptions
     .filter((exemption) => policy === "surveys" || exemption.policy === policy)
-    .reduce<
-      TRetentionExemption | undefined
-    >((longest, exemption) => (!longest || exemption.until > longest.until ? exemption : longest), undefined);
+    .reduce<TRetentionExemption | undefined>(
+      (longest, exemption) => (!longest || exemption.until > longest.until ? exemption : longest),
+      undefined
+    );
 
 /** One policy's line for a survey: what it does next and when, or that the survey is exempt. */
 const describeSurveyRetentionPlan = (

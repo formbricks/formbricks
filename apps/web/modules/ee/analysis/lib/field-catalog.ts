@@ -60,31 +60,27 @@ export const CHART_DATE_PRESETS: readonly string[] = [...DATE_RANGE_PRESETS, ALL
 const VALUE_LOOKUP_FIELDS = new Set<string>(SELECTABLE_VALUE_DIMENSION_IDS);
 
 const buildCatalog = (): TChartField[] => [
-  ...FEEDBACK_FIELDS.measures.map(
-    (measure): TChartField => ({
-      name: measure.id,
-      kind: "measure",
-      // Cube reports every measure as a number; `count` is only the builder's grouping of it.
-      type: "number",
-      label: measure.label,
-      description: measure.description ?? null,
-      filterOperators: FILTER_OPERATORS.number,
-      granularities: [],
-      valueLookup: false,
-    })
-  ),
-  ...FEEDBACK_FIELDS.dimensions.map(
-    (dimension): TChartField => ({
-      name: dimension.id,
-      kind: dimension.type === "time" ? "timeDimension" : "dimension",
-      type: dimension.type,
-      label: dimension.label,
-      description: dimension.description ?? null,
-      filterOperators: FILTER_OPERATORS[dimension.type],
-      granularities: dimension.type === "time" ? TIME_GRANULARITIES : [],
-      valueLookup: VALUE_LOOKUP_FIELDS.has(dimension.id),
-    })
-  ),
+  ...FEEDBACK_FIELDS.measures.map((measure): TChartField => ({
+    name: measure.id,
+    kind: "measure",
+    // Cube reports every measure as a number; `count` is only the builder's grouping of it.
+    type: "number",
+    label: measure.label,
+    description: measure.description ?? null,
+    filterOperators: FILTER_OPERATORS.number,
+    granularities: [],
+    valueLookup: false,
+  })),
+  ...FEEDBACK_FIELDS.dimensions.map((dimension): TChartField => ({
+    name: dimension.id,
+    kind: dimension.type === "time" ? "timeDimension" : "dimension",
+    type: dimension.type,
+    label: dimension.label,
+    description: dimension.description ?? null,
+    filterOperators: FILTER_OPERATORS[dimension.type],
+    granularities: dimension.type === "time" ? TIME_GRANULARITIES : [],
+    valueLookup: VALUE_LOOKUP_FIELDS.has(dimension.id),
+  })),
 ];
 
 /** The answer filter: the operators it takes and how its values are written. Filter-only. */

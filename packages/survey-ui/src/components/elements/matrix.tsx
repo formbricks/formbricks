@@ -62,7 +62,7 @@ function MatrixRadioIndicator(): React.JSX.Element {
       data-fb-focus-ring
       data-fb-part={FB_PART.optionControl}
       className={cn(
-        "border-input-border dark:bg-input-bg relative flex size-4 shrink-0 items-center justify-center rounded-full border bg-white shadow-xs transition-colors",
+        "relative flex size-4 shrink-0 items-center justify-center rounded-full border border-input-border bg-white shadow-xs transition-colors dark:bg-input-bg",
         "peer-checked:border-brand-readable",
         "after:size-2 after:rounded-full after:bg-transparent after:transition-colors after:content-['']",
         "peer-checked:after:bg-brand-readable"

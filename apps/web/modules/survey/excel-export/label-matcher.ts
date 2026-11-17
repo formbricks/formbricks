@@ -89,7 +89,7 @@ export const createLabelMatcher = (labels: readonly string[]): ((text: string) =
       const key = keyAt(text, index);
       while (node !== 0 && !trie.next[node].has(key)) node = trie.fail[node];
       node = trie.next[node].get(key) ?? 0;
-      for (let found = trie.labelLength[node] > 0 ? node : trie.output[node]; found > 0; ) {
+      for (let found = trie.labelLength[node] > 0 ? node : trie.output[node]; found > 0;) {
         const length = trie.labelLength[found];
         const start = index - length + 1;
         if (length > longest[start]) longest[start] = length;

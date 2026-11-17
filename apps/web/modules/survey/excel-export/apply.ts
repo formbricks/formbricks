@@ -132,7 +132,7 @@ const splitRecalls = (text: string, labels: ReadonlyMap<string, string>): ({ tok
   const longest = createLabelMatcher([...labels.keys()])(text);
   const parts: ({ token: string } | string)[] = [];
   let from = 0;
-  for (let index = 0; index < text.length; ) {
+  for (let index = 0; index < text.length;) {
     const length = longest[index];
     if (length === 0) {
       index += 1;

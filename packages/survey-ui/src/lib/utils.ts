@@ -135,7 +135,7 @@ export const getRTLScaleOptionClasses = (
   );
 
   const borderClasses = cn(
-    "border-t border-b border-e", // block borders (top/bottom) and inline-end border
+    "border-e border-t border-b", // block borders (top/bottom) and inline-end border
     isFirst && "border-s" // inline-start border for first item
   );
 

@@ -31,14 +31,14 @@ function RadioGroupItem({
     <RadioGroupPrimitive.Item
       data-slot="radio-group-item"
       className={cn(
-        "border-input-border text-input focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 aria-invalid:border-destructive dark:bg-input-bg aspect-square size-4 shrink-0 rounded-full border bg-white shadow-xs transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+        "aspect-square size-4 shrink-0 rounded-full border border-input-border bg-white text-input shadow-xs transition-[color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:bg-input-bg",
         className
       )}
       {...props}>
       <RadioGroupPrimitive.Indicator
         data-slot="radio-group-indicator"
         className="flex items-center justify-center">
-        <CircleIcon className="fill-brand-readable stroke-brand-readable size-2" />
+        <CircleIcon className="size-2 fill-brand-readable stroke-brand-readable" />
       </RadioGroupPrimitive.Indicator>
     </RadioGroupPrimitive.Item>
   );

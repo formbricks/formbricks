@@ -308,15 +308,13 @@ export const ResponseOptionsCard = ({
 
   const handleThresholdChange = (value: number) => {
     setRecaptchaThreshold(value);
-    setLocalSurvey(
-      (prevSurvey: TSurvey): TSurvey => ({
-        ...prevSurvey,
-        recaptcha: {
-          enabled: prevSurvey.recaptcha?.enabled ?? false,
-          threshold: value,
-        },
-      })
-    );
+    setLocalSurvey((prevSurvey: TSurvey): TSurvey => ({
+      ...prevSurvey,
+      recaptcha: {
+        enabled: prevSurvey.recaptcha?.enabled ?? false,
+        threshold: value,
+      },
+    }));
   };
 
   return (

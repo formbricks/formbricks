@@ -206,7 +206,7 @@ export const WithHelpText: Story = {
     <div className="space-y-2">
       <Label htmlFor="password">Password</Label>
       <Input id="password" type="password" placeholder="Enter your password..." />
-      <p className="text-muted-foreground text-sm">
+      <p className="text-sm text-muted-foreground">
         Must be at least 8 characters with a mix of letters and numbers
       </p>
     </div>
@@ -226,7 +226,7 @@ export const ErrorState: Story = {
         value="invalid-email"
         placeholder="Enter your email..."
       />
-      <p className="text-destructive text-sm">Please enter a valid email address</p>
+      <p className="text-sm text-destructive">Please enter a valid email address</p>
     </div>
   ),
 };

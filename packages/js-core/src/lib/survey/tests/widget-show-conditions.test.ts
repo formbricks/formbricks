@@ -1,9 +1,9 @@
+import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import { type Mock, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
 import type * as CommonUtils from "@/lib/common/utils";
 import { shouldDisplayBasedOnPercentage } from "@/lib/common/utils";
 import { passesShowConditions } from "@/lib/survey/show-conditions";
-import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import * as widget from "@/lib/survey/widget";
 import { getVisitSnapshot } from "@/lib/visit/visit-store";
 

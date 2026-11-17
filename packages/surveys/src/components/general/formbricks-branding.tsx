@@ -10,7 +10,7 @@ export function FormbricksBranding() {
         href="https://formbricks.com?utm_source=formbricks-app&utm_medium=survey&utm_campaign=powered_by_badge"
         target="_blank"
         rel="noopener">
-        <p className="text-signature text-xs">
+        <p className="text-xs text-signature">
           {t("common.powered_by")}{" "}
           <b>
             <span className="text-branding-text hover:text-signature">Formbricks</span>

@@ -1,8 +1,8 @@
+import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Config } from "@/lib/common/config";
 import { TimeoutStack } from "@/lib/common/timeout-stack";
 import { checkPageUrl } from "@/lib/survey/no-code-action";
-import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import * as widget from "@/lib/survey/widget";
 import { type TWorkspaceStateSurvey } from "@/types/config";
 

@@ -272,12 +272,10 @@ const splitPseudoElementLists = (rules: Rule[]): Rule[] =>
       selector.some((component) => component.type === "pseudo-element")
     );
     if (!hasPseudoElement || rule.value.selectors.length > CUSTOM_CSS_MAX_SELECTOR_LIST_LENGTH) return [rule];
-    return rule.value.selectors.map(
-      (selector): Rule => ({
-        type: "style",
-        value: { ...structuredClone(rule.value), selectors: [selector] },
-      })
-    );
+    return rule.value.selectors.map((selector): Rule => ({
+      type: "style",
+      value: { ...structuredClone(rule.value), selectors: [selector] },
+    }));
   });
 
 /** Declarations between or after nested rules, applying to the parent's selector. */

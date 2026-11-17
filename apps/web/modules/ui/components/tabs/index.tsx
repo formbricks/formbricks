@@ -6,14 +6,14 @@ import * as React from "react";
 import { cn } from "@/lib/cn";
 
 const tabsVariants = cva(
-  "bg-slate-100 rounded-lg p-1 inline-flex items-center overflow-x-auto scrollbar-none",
+  "inline-flex scrollbar-none items-center overflow-x-auto rounded-lg bg-slate-100 p-1",
   {
     variants: {
       variant: {
         default: "",
         // Underlined tabs: a hairline under the row, the active tab marked by a brand bar.
-        underline: "h-auto w-full gap-3 rounded-none bg-transparent p-0 border-b border-slate-200",
-        disabled: "opacity-50 pointer-events-none",
+        underline: "h-auto w-full gap-3 rounded-none border-b border-slate-200 bg-transparent p-0",
+        disabled: "pointer-events-none opacity-50",
       },
       size: {
         default: "h-9",
@@ -33,7 +33,7 @@ const tabsVariants = cva(
 );
 
 const tabsTriggerVariants = cva(
-  "inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
+  "focus-visible:ring-ring inline-flex items-center justify-center rounded-md text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
@@ -41,7 +41,7 @@ const tabsTriggerVariants = cva(
           "data-[state=active]:bg-white data-[state=active]:text-slate-900 data-[state=active]:shadow-xs data-[state=inactive]:text-slate-600",
         underline:
           "-mb-px rounded-none border-b-2 border-transparent text-slate-500 hover:text-slate-900 data-[state=active]:border-brand-dark data-[state=active]:text-slate-900",
-        disabled: "opacity-50 pointer-events-none",
+        disabled: "pointer-events-none opacity-50",
       },
       size: {
         default: "px-3 py-1 [&_svg]:size-4 [&_svg]:stroke-2",

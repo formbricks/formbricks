@@ -194,7 +194,7 @@ export function WelcomeCard({
         </div>
         {timeToFinish && !showResponseCount ? (
           <div
-            className="text-subheading my-4 flex items-center space-x-1"
+            className="my-4 flex items-center space-x-1 text-subheading"
             data-testid="fb__surveys__welcome-card__time-display">
             <TimerIcon />
             <p className="pt-1 text-xs">
@@ -203,7 +203,7 @@ export function WelcomeCard({
           </div>
         ) : null}
         {showResponseCount && !timeToFinish && responseCount && responseCount > 3 ? (
-          <div className="text-subheading my-4 flex items-center space-x-1">
+          <div className="my-4 flex items-center space-x-1 text-subheading">
             <UsersIcon />
             <p className="pt-1 text-xs">
               <span data-testid="fb__surveys__welcome-card__response-count">
@@ -213,7 +213,7 @@ export function WelcomeCard({
           </div>
         ) : null}
         {timeToFinish && showResponseCount ? (
-          <div className="text-subheading my-4 flex items-center space-x-1">
+          <div className="my-4 flex items-center space-x-1 text-subheading">
             <TimerIcon />
             <p className="pt-1 text-xs" data-testid="fb__surveys__welcome-card__info-text-test">
               <span>{calculateTimeToComplete()} </span>

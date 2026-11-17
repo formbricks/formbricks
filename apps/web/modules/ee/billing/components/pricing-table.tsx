@@ -164,11 +164,7 @@ const getPlanPeriodLabel = (
   return t("workspace.settings.billing.per_year");
 };
 
-const getPlanChangePayload = (
-  organizationId: string,
-  plan: TStandardPlan,
-  interval: TCloudBillingInterval
-) =>
+const getPlanChangePayload = (organizationId: string, plan: TStandardPlan, interval: TCloudBillingInterval) =>
   plan === "hobby"
     ? {
         organizationId,

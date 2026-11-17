@@ -47,7 +47,6 @@ import { getCacheService } from "@formbricks/cache";
 // ✅ GOOD - Production validation (index.ts)
 import { validateRedisConfig } from "@formbricks/cache";
 // Throws if REDIS_URL missing in production
-
 // ❌ BAD - CacheService class not exported for direct instantiation
 import { CacheService } from "@formbricks/cache";
 

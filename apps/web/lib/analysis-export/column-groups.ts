@@ -95,9 +95,11 @@ export const withoutColumnGroups = (
     columns: exported.columns.filter((_, index) => keep[index]),
     rows: async function* () {
       for await (const batch of exported.rows()) {
-        yield batch.map(
-          (row): TAnalysisRow => ({ ...row, codes: pick(row.codes), labels: pick(row.labels) })
-        );
+        yield batch.map((row): TAnalysisRow => ({
+          ...row,
+          codes: pick(row.codes),
+          labels: pick(row.labels),
+        }));
       }
     },
   };

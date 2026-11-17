@@ -178,7 +178,7 @@ export function LanguageSwitch({
         title={activeLanguage ? getLanguageDisplayName(activeLanguage.language.code) : triggerLabel}
         type="button"
         className={cn(
-          "text-heading relative flex h-8 items-center justify-center gap-1.5 rounded-md",
+          "relative flex h-8 items-center justify-center gap-1.5 rounded-md text-heading",
           activeDisplayName ? "w-auto px-2" : "w-8"
         )}
         style={{
@@ -206,7 +206,7 @@ export function LanguageSwitch({
       {showLanguageDropdown ? (
         <div
           className={cn(
-            "bg-survey-bg text-heading border-border absolute top-10 max-h-64 space-y-2 overflow-auto rounded-md border p-2 text-xs shadow-lg",
+            "absolute top-10 max-h-64 space-y-2 overflow-auto rounded-md border border-border bg-survey-bg p-2 text-xs text-heading shadow-lg",
             dir === "rtl" ? "left-8" : "right-8"
           )}
           ref={languageDropdownRef}>
@@ -224,7 +224,7 @@ export function LanguageSwitch({
                 // "Deutsch" and "日本語" with the page language's pronunciation rules.
                 lang={surveyLanguage.language.code}
                 className={cn(
-                  "hover:bg-brand hover:text-on-brand block w-full max-w-48 truncate rounded-md p-1.5 text-left",
+                  "block w-full max-w-48 truncate rounded-md p-1.5 text-left hover:bg-brand hover:text-on-brand",
                   isCurrent && "font-semibold"
                 )}
                 onClick={() => {

@@ -14,7 +14,7 @@ function Textarea({ className, dir = "auto", ...props }: TextareaProps): React.J
         data-fb-part={FB_PART.textarea}
         dir={dir}
         className={cn(
-          "w-input bg-input-bg border-input-border rounded-input font-input font-input-weight px-input-x py-input-y shadow-input placeholder:text-input-placeholder placeholder:opacity-input-placeholder focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 aria-invalid:border-destructive text-input-text flex field-sizing-content min-h-16 border [font-size:var(--fb-input-font-size)] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+          "flex field-sizing-content min-h-16 w-input rounded-input border border-input-border bg-input-bg px-input-x py-input-y font-input [font-size:var(--fb-input-font-size)] font-input-weight text-input-text shadow-input transition-[color,box-shadow] outline-none placeholder:text-input-placeholder placeholder:opacity-input-placeholder focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-destructive/20",
           className
         )}
         {...props}

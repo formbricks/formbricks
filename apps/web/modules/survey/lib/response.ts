@@ -16,8 +16,8 @@ const countResponses = async (where: Prisma.ResponseWhereInput): Promise<number>
 };
 
 /** Counts every response row for the survey, including partial starts. */
-export const getResponseCountBySurveyId = reactCache(
-  async (surveyId: string): Promise<number> => countResponses({ surveyId })
+export const getResponseCountBySurveyId = reactCache(async (surveyId: string): Promise<number> =>
+  countResponses({ surveyId })
 );
 
 /**
@@ -25,6 +25,6 @@ export const getResponseCountBySurveyId = reactCache(
  * defined in terms of completed responses, so partial starts must never count towards it —
  * anything comparing against `survey.autoComplete` has to use this count.
  */
-export const getFinishedResponseCountBySurveyId = reactCache(
-  async (surveyId: string): Promise<number> => countResponses({ surveyId, finished: true })
+export const getFinishedResponseCountBySurveyId = reactCache(async (surveyId: string): Promise<number> =>
+  countResponses({ surveyId, finished: true })
 );

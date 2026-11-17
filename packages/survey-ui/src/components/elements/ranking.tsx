@@ -155,13 +155,13 @@ function RankingItem({
       data-fb-part={FB_PART.option}
       data-checked={isRanked ? "true" : undefined}
       className={cn(
-        "rounded-option flex min-h-12 cursor-pointer flex-col border px-3 transition-all",
-        "bg-option-bg border-option-border",
+        "flex min-h-12 cursor-pointer flex-col rounded-option border px-3 transition-all",
+        "border-option-border bg-option-bg",
         // No focus-within fill: it repainted the item in the *ranked* colors, so the card's mount
         // autofocus made the first item look already ranked (ENG-2288). Focus has its own uniform
         // ring, painted on the item's button by survey-ui's globals.css.
         "hover:bg-option-hover-bg",
-        isRanked && "bg-option-selected-bg border-brand",
+        isRanked && "border-brand bg-option-selected-bg",
         disabled && "cursor-not-allowed opacity-50"
       )}>
       <div className="flex h-12 items-center">
@@ -183,23 +183,23 @@ function RankingItem({
           <span
             data-fb-part={FB_PART.optionControl}
             className={cn(
-              "border-brand flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold",
+              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-brand text-xs font-semibold",
               isRanked
                 ? "bg-brand text-white"
-                : "group-hover:bg-background group-hover:text-foreground border-dashed text-transparent"
+                : "border-dashed text-transparent group-hover:bg-background group-hover:text-foreground"
             )}>
             {displayNumber}
           </span>
           <span
             data-fb-part={FB_PART.optionLabel}
-            className="font-option text-option font-option-weight text-option-label shrink grow text-start">
+            className="shrink grow text-start font-option text-option font-option-weight text-option-label">
             {item.label}
           </span>
         </button>
 
         {/* Up/Down buttons for ranked items */}
         {isRanked ? (
-          <div className={cn("border-option-border -mx-3 flex h-full grow-0 flex-col")} dir={dir}>
+          <div className={cn("-mx-3 flex h-full grow-0 flex-col border-option-border")} dir={dir}>
             <button
               type="button"
               tabIndex={isFirst ? -1 : 0}
@@ -222,7 +222,7 @@ function RankingItem({
               disabled={isLast || disabled}
               aria-label={`Move ${item.label} down`}
               className={cn(
-                "border-option-border flex flex-1 items-center justify-center border-t px-2 transition-colors"
+                "flex flex-1 items-center justify-center border-t border-option-border px-2 transition-colors"
               )}>
               <ChevronDown className="h-5 w-5" />
             </button>

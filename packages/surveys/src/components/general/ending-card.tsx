@@ -75,7 +75,7 @@ export function EndingCard({
     ) : null;
 
   const checkmark = (
-    <div className="text-brand-readable flex flex-col items-center justify-center">
+    <div className="flex flex-col items-center justify-center text-brand-readable">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
@@ -89,7 +89,7 @@ export function EndingCard({
           d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
         />
       </svg>
-      <span className="bg-brand mb-[10px] inline-block h-1 w-16 rounded-[100%]" />
+      <span className="mb-[10px] inline-block h-1 w-16 rounded-[100%] bg-brand" />
     </div>
   );
 

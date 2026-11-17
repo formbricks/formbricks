@@ -111,7 +111,7 @@ export { Base };
 const smallVariants = cva("text-sm leading-none", {
   variants: {
     color: {
-      default: "text-slate-800 font-medium",
+      default: "font-medium text-slate-800",
       muted: "text-slate-500",
     },
     margin: {

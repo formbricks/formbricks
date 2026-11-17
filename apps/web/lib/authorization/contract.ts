@@ -38,7 +38,9 @@ export const AUTHORIZATION_PERMISSION_MAP = {
 } as const satisfies Readonly<Record<string, readonly string[]>>;
 
 type TAuthorizationPermissionMap = {
-  readonly [TResourceType in keyof typeof AUTHORIZATION_PERMISSION_MAP]: (typeof AUTHORIZATION_PERMISSION_MAP)[TResourceType][number];
+  readonly [
+    TResourceType in keyof typeof AUTHORIZATION_PERMISSION_MAP
+  ]: (typeof AUTHORIZATION_PERMISSION_MAP)[TResourceType][number];
 };
 
 export type TAuthorizationResourceType = keyof TAuthorizationPermissionMap;
@@ -70,7 +72,9 @@ type TAuthorizationResourceOfType<TResourceType extends TAuthorizationResourceTy
 export type TAuthorizationResource = TAuthorizationResourceOfType<TAuthorizationResourceType>;
 
 export type TAuthorizationAction = {
-  [TResourceType in TAuthorizationResourceType]: `${TResourceType}.${TAuthorizationPermissionMap[TResourceType]}`;
+  [
+    TResourceType in TAuthorizationResourceType
+  ]: `${TResourceType}.${TAuthorizationPermissionMap[TResourceType]}`;
 }[TAuthorizationResourceType];
 
 type TAuthorizationResourceTypeForAction<TAction extends TAuthorizationAction> =

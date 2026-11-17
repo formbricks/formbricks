@@ -38,9 +38,8 @@ import { TWorkspaceAuth, TWorkspaceLayoutData } from "@/modules/workspaces/types
  * Opened as the `page` authorization surface (ENG-2388). Every product page funnels through here, so
  * this wrapper attributes authoritative decisions and checks-per-request telemetry to page traffic.
  */
-export const getWorkspaceAuth = reactCache(
-  async (workspaceId: string): Promise<TWorkspaceAuth> =>
-    withAuthorizationSurface("page", () => resolveWorkspaceAuth(workspaceId))
+export const getWorkspaceAuth = reactCache(async (workspaceId: string): Promise<TWorkspaceAuth> =>
+  withAuthorizationSurface("page", () => resolveWorkspaceAuth(workspaceId))
 );
 
 const resolveWorkspaceAuth = async (workspaceId: string): Promise<TWorkspaceAuth> => {

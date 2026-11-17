@@ -75,7 +75,7 @@ function UploadedFileItem({
   return (
     <div
       className={cn(
-        "border-input-border bg-accent-selected text-input-text rounded-input relative m-1 rounded-md border"
+        "relative m-1 rounded-input rounded-md border border-input-border bg-accent-selected text-input-text"
       )}>
       <div className="absolute top-0 right-0 m-2">
         <button
@@ -90,7 +90,7 @@ function UploadedFileItem({
             disabled && "cursor-not-allowed opacity-50"
           )}
           aria-label={`Delete ${file.name}`}>
-          <X className="text-foreground h-5" />
+          <X className="h-5 text-foreground" />
         </button>
       </div>
       <div className="flex flex-col items-center justify-center p-2">
@@ -192,9 +192,9 @@ function UploadArea({
         "hover:cursor-pointer",
         disabled && "cursor-not-allowed opacity-50"
       )}>
-      <Upload className="text-input-text h-6" aria-hidden="true" />
+      <Upload className="h-6 text-input-text" aria-hidden="true" />
       <span
-        className="text-input-text font-input-weight m-2 text-center [font-size:var(--fb-input-font-size)]"
+        className="m-2 text-center [font-size:var(--fb-input-font-size)] font-input-weight text-input-text"
         id={`${inputId}-label`}>
         {placeholderText}
       </span>
@@ -301,7 +301,7 @@ function FileUpload({
 
         <div
           className={cn(
-            "w-input px-input-x py-input-y rounded-input bg-accent relative flex flex-col items-center justify-center border-2 border-dashed transition-colors",
+            "relative flex w-input flex-col items-center justify-center rounded-input border-2 border-dashed bg-accent px-input-x py-input-y transition-colors",
             errorMessage ? "border-destructive" : "border-input-border",
             disabled && "cursor-not-allowed opacity-50"
           )}>
@@ -310,7 +310,7 @@ function FileUpload({
           <div className="w-full">
             {isUploading ? (
               <div className="flex animate-pulse items-center justify-center rounded-lg py-4">
-                <p className="text-muted-foreground [font-size:var(--fb-input-font-size)] font-medium">
+                <p className="[font-size:var(--fb-input-font-size)] font-medium text-muted-foreground">
                   {uploadingText}
                 </p>
               </div>

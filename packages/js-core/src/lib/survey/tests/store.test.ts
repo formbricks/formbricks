@@ -1,6 +1,6 @@
+import { createMockSurvey } from "@/lib/survey/tests/__mocks__/store.mock";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { SurveyStore } from "@/lib/survey/store";
-import { createMockSurvey } from "@/lib/survey/tests/__mocks__/store.mock";
 
 describe("SurveyStore", () => {
   let store: SurveyStore;

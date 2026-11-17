@@ -64,7 +64,7 @@ export function ElementMedia({ imgUrl, videoUrl, altText, className }: Readonly<
           key={safeImgUrl}
           src={safeImgUrl}
           alt={altText ?? ""}
-          className={cn("rounded-custom mx-auto max-h-[40dvh] object-contain", isLoading ? "opacity-0" : "")}
+          className={cn("mx-auto max-h-[40dvh] rounded-custom object-contain", isLoading ? "opacity-0" : "")}
           onLoad={() => {
             setIsLoading(false);
           }}
@@ -80,7 +80,7 @@ export function ElementMedia({ imgUrl, videoUrl, altText, className }: Readonly<
               src={safeVideoUrl}
               title={t("common.question_video")}
               frameBorder="0"
-              className={cn("rounded-custom aspect-video w-full", isLoading ? "opacity-0" : "")}
+              className={cn("aspect-video w-full rounded-custom", isLoading ? "opacity-0" : "")}
               onLoad={() => {
                 setIsLoading(false);
               }}

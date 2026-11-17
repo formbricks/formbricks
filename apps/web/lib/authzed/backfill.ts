@@ -394,28 +394,33 @@ const toSourceRefs = (source: TAuthzedOrganizationSource): ReadonlyArray<TAuthze
   const activeAssignmentIds = expectedFeedbackDirectoryAssignmentIds(source.expectedRelationships);
 
   return [
-    ...source.memberships.map(
-      ({ organizationId, userId }): TAuthzedSourceRef => ({ kind: "membership", organizationId, userId })
-    ),
+    ...source.memberships.map(({ organizationId, userId }): TAuthzedSourceRef => ({
+      kind: "membership",
+      organizationId,
+      userId,
+    })),
     ...source.teamIds.map((teamId): TAuthzedSourceRef => ({ kind: "team", teamId })),
-    ...source.teamMemberships.map(
-      ({ teamId, userId }): TAuthzedSourceRef => ({ kind: "teamMembership", teamId, userId })
-    ),
+    ...source.teamMemberships.map(({ teamId, userId }): TAuthzedSourceRef => ({
+      kind: "teamMembership",
+      teamId,
+      userId,
+    })),
     ...source.workspaceIds.map((workspaceId): TAuthzedSourceRef => ({ kind: "workspace", workspaceId })),
-    ...source.workspaceTeamGrants.map(
-      ({ teamId, workspaceId }): TAuthzedSourceRef => ({ kind: "workspaceTeamGrant", teamId, workspaceId })
-    ),
+    ...source.workspaceTeamGrants.map(({ teamId, workspaceId }): TAuthzedSourceRef => ({
+      kind: "workspaceTeamGrant",
+      teamId,
+      workspaceId,
+    })),
     ...source.apiKeyIds.map((apiKeyId): TAuthzedSourceRef => ({ apiKeyId, kind: "apiKey" })),
-    ...source.apiKeyWorkspaceGrants.map(
-      ({ apiKeyId, workspaceId }): TAuthzedSourceRef => ({
-        apiKeyId,
-        kind: "apiKeyWorkspaceGrant",
-        workspaceId,
-      })
-    ),
-    ...source.feedbackDirectoryIds.map(
-      (feedbackDirectoryId): TAuthzedSourceRef => ({ feedbackDirectoryId, kind: "feedbackDirectory" })
-    ),
+    ...source.apiKeyWorkspaceGrants.map(({ apiKeyId, workspaceId }): TAuthzedSourceRef => ({
+      apiKeyId,
+      kind: "apiKeyWorkspaceGrant",
+      workspaceId,
+    })),
+    ...source.feedbackDirectoryIds.map((feedbackDirectoryId): TAuthzedSourceRef => ({
+      feedbackDirectoryId,
+      kind: "feedbackDirectory",
+    })),
     ...source.feedbackDirectoryAssignments.flatMap(
       ({ feedbackDirectoryId, workspaceId }): ReadonlyArray<TAuthzedSourceRef> => {
         const assignmentId = getFeedbackDirectoryAssignmentObjectId(feedbackDirectoryId, workspaceId);
@@ -982,20 +987,16 @@ const toWorkspaceSourceRefs = (
 
   const activeAssignmentIds = expectedFeedbackDirectoryAssignmentIds(source.expectedRelationships);
   return [
-    ...source.workspaceTeamGrants.map(
-      ({ teamId, workspaceId: grantWorkspaceId }): TAuthzedSourceRef => ({
-        kind: "workspaceTeamGrant",
-        teamId,
-        workspaceId: grantWorkspaceId,
-      })
-    ),
-    ...source.apiKeyWorkspaceGrants.map(
-      ({ apiKeyId, workspaceId: grantWorkspaceId }): TAuthzedSourceRef => ({
-        apiKeyId,
-        kind: "apiKeyWorkspaceGrant",
-        workspaceId: grantWorkspaceId,
-      })
-    ),
+    ...source.workspaceTeamGrants.map(({ teamId, workspaceId: grantWorkspaceId }): TAuthzedSourceRef => ({
+      kind: "workspaceTeamGrant",
+      teamId,
+      workspaceId: grantWorkspaceId,
+    })),
+    ...source.apiKeyWorkspaceGrants.map(({ apiKeyId, workspaceId: grantWorkspaceId }): TAuthzedSourceRef => ({
+      apiKeyId,
+      kind: "apiKeyWorkspaceGrant",
+      workspaceId: grantWorkspaceId,
+    })),
     ...source.feedbackDirectoryAssignments.flatMap(
       ({ feedbackDirectoryId, workspaceId: assignmentWorkspaceId }): ReadonlyArray<TAuthzedSourceRef> => {
         const assignmentId = getFeedbackDirectoryAssignmentObjectId(

@@ -9,23 +9,23 @@ import { cn } from "@/modules/ui/lib/utils";
 // it — the classes sit in the DOM and do nothing (ENG-3138). `:not(:disabled)` matches both a live
 // `<button>` and an `<a>`, and still drops out on a disabled `<button>`.
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50 disabled:cursor-not-allowed [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
+  "focus-visible:ring-ring inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium whitespace-nowrap transition-colors focus-visible:ring-1 focus-visible:outline-hidden disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
   {
     variants: {
       variant: {
         default: "bg-primary text-primary-foreground not-disabled:hover:bg-primary/80",
         destructive: "bg-destructive text-destructive-foreground not-disabled:hover:bg-destructive/80",
         outline:
-          "border border-input bg-background not-disabled:hover:bg-accent not-disabled:hover:text-accent-foreground",
+          "border-input bg-background border not-disabled:hover:bg-accent not-disabled:hover:text-accent-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground not-disabled:hover:bg-secondary/30 border border-primary/5 not-disabled:hover:border-primary/20",
+          "border border-primary/5 bg-secondary text-secondary-foreground not-disabled:hover:border-primary/20 not-disabled:hover:bg-secondary/30",
         // AI flavours. These deliberately step outside the Quiet Primary Rule: a generative action
         // is a different class of thing from a save, and marking it is the point. Reserved for
         // actions that actually invoke a model — a save that follows one stays `default`.
         "ai-primary": "bg-ai-strong text-white not-disabled:hover:bg-ai-strong/90",
         "ai-secondary":
-          "bg-ai-subtle text-ai-dark border border-ai-dark/10 not-disabled:hover:bg-ai-subtle/60 not-disabled:hover:border-ai-dark/20",
-        ghost: "not-disabled:hover:bg-accent not-disabled:hover:text-accent-foreground text-primary",
+          "border border-ai-dark/10 bg-ai-subtle text-ai-dark not-disabled:hover:border-ai-dark/20 not-disabled:hover:bg-ai-subtle/60",
+        ghost: "text-primary not-disabled:hover:bg-accent not-disabled:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 not-disabled:hover:underline",
       },
       size: {

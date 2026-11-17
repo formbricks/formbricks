@@ -125,7 +125,7 @@ export const StackedCard = ({
         ...straightCardArrangementStyles,
         ...getTopBottomStyles(),
       }}
-      className="pointer rounded-custom bg-survey-bg absolute inset-x-0 overflow-hidden">
+      className="pointer absolute inset-x-0 overflow-hidden rounded-custom bg-survey-bg">
       <div
         style={{
           opacity: contentOpacity,

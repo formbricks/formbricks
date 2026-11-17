@@ -142,14 +142,14 @@ function PictureSelect({
                   data-fb-part={FB_PART.option}
                   data-checked={isSelected ? "true" : undefined}
                   className={cn(
-                    "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
+                    "relative aspect-[162/97] w-full cursor-pointer rounded-option transition-all",
                     disabled && "cursor-not-allowed opacity-50"
                   )}>
                   {/* Image container with border when selected */}
                   <div
                     className={cn(
-                      "rounded-option absolute inset-[2px] overflow-hidden",
-                      isSelected && "border-brand border-4 border-solid"
+                      "absolute inset-[2px] overflow-hidden rounded-option",
+                      isSelected && "border-4 border-solid border-brand"
                     )}>
                     <img
                       src={option.imageUrl}
@@ -202,7 +202,7 @@ function PictureSelect({
                   data-fb-part={FB_PART.option}
                   data-checked={isSelected ? "true" : undefined}
                   className={cn(
-                    "rounded-option relative aspect-[162/97] w-full cursor-pointer transition-all",
+                    "relative aspect-[162/97] w-full cursor-pointer rounded-option transition-all",
                     disabled && "cursor-not-allowed opacity-50"
                   )}>
                   <input
@@ -222,8 +222,8 @@ function PictureSelect({
                   {/* Image container with border when selected */}
                   <div
                     className={cn(
-                      "rounded-option absolute inset-[2px] overflow-hidden",
-                      isSelected && "border-brand border-4 border-solid"
+                      "absolute inset-[2px] overflow-hidden rounded-option",
+                      isSelected && "border-4 border-solid border-brand"
                     )}>
                     <img
                       src={option.imageUrl}
@@ -237,7 +237,7 @@ function PictureSelect({
                     aria-hidden="true"
                     data-fb-part={FB_PART.optionControl}
                     className={cn(
-                      "border-input-border dark:bg-input-bg absolute top-[5%] right-[5%] flex size-4 items-center justify-center rounded-full border bg-white shadow-xs transition-colors",
+                      "absolute top-[5%] right-[5%] flex size-4 items-center justify-center rounded-full border border-input-border bg-white shadow-xs transition-colors dark:bg-input-bg",
                       isSelected && "border-brand"
                     )}>
                     <span

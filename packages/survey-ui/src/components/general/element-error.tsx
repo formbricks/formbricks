@@ -38,7 +38,7 @@ function ElementError({ errorMessage, dir = "auto", id }: Readonly<ElementErrorP
       {errorMessage ? (
         <div
           className={cn(
-            "bg-destructive absolute top-0 bottom-0 w-[4px]",
+            "absolute top-0 bottom-0 w-[4px] bg-destructive",
             dir === "rtl" ? "right-[-10px]" : "left-[-10px]"
           )}
         />
@@ -53,7 +53,7 @@ function ElementError({ errorMessage, dir = "auto", id }: Readonly<ElementErrorP
         aria-live="polite"
         aria-atomic="true"
         data-fb-part={errorMessage ? FB_PART.error : undefined}
-        className={errorMessage ? "text-destructive mb-2 flex items-center gap-1 text-sm" : undefined}
+        className={errorMessage ? "mb-2 flex items-center gap-1 text-sm text-destructive" : undefined}
         dir={dir}>
         {errorMessage ? (
           <>

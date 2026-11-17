@@ -39,7 +39,7 @@ export const DateFilterEditor = ({
 
   const optionClass = (isActive: boolean) =>
     cn(
-      "flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden",
+      "focus-visible:ring-ring flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm text-slate-700 hover:bg-slate-100 focus-visible:ring-1 focus-visible:outline-hidden",
       isActive && "font-medium text-slate-900"
     );
 

@@ -95,7 +95,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
           className={cn(
             disableInternalScroll
               ? "overflow-visible"
-              : "bg-survey-bg [scroll-padding-top:calc(var(--fb-scroll-fade-solid,0px)+1rem)] overflow-auto px-4 pt-4",
+              : "[scroll-padding-top:calc(var(--fb-scroll-fade-solid,0px)+1rem)] overflow-auto bg-survey-bg px-4 pt-4",
             // The sticky Back/Next row overlays the bottom of the content; keep a focused field above it.
             !disableInternalScroll && fullSizeCards && "[scroll-padding-bottom:6rem]",
             // The scroll-down button floats over the bottom of the content: a field scrolled into view
@@ -106,7 +106,7 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
         </div>
         {!disableInternalScroll && !isAtBottom && (
           <>
-            <div className="from-survey-bg absolute right-4 bottom-0 left-4 h-4 bg-linear-to-t to-transparent" />
+            <div className="absolute right-4 bottom-0 left-4 h-4 bg-linear-to-t from-survey-bg to-transparent" />
             <ScrollToBottomButton onClick={scrollToBottom} />
           </>
         )}

@@ -44,9 +44,9 @@ export const StartFromScratchTemplate = ({
 
   const cardClass = cn(
     showCreateSurveyButton
-      ? "ring-brand-dark border-transparent ring-2"
-      : "hover:border-brand-dark border-dashed border-slate-300",
-    "flex flex-col group relative rounded-lg border-2 bg-transparent p-6 transition-colors duration-120 duration-150"
+      ? "border-transparent ring-2 ring-brand-dark"
+      : "border-dashed border-slate-300 hover:border-brand-dark",
+    "group relative flex flex-col rounded-lg border-2 bg-transparent p-6 transition-colors duration-120 duration-150"
   );
 
   const cardContent = (

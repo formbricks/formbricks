@@ -1,3 +1,4 @@
+import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 // @vitest-environment jsdom
 import { afterEach, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_CREATIVE_STYLE, type TBannerPayload, type TCreativePayload } from "@formbricks/creatives";
@@ -7,7 +8,6 @@ import { Config } from "@/lib/common/config";
 import { setIsSetup } from "@/lib/common/status";
 import { reconcileCreatives, removeCreatives, showCachedCreatives } from "@/lib/creatives/creatives";
 import { trackAction } from "@/lib/survey/action";
-import { mockSurvey } from "@/lib/survey/tests/__mocks__/widget.mock";
 import {
   getOpenSurveyIds,
   loadFormbricksSurveysExternally,

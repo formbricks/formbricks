@@ -95,7 +95,7 @@ const getOptionContainerClassName = (isSelected: boolean, isDisabled: boolean): 
   cn(
     "relative flex flex-col border transition-colors outline-none",
     "rounded-option px-option-x py-option-y",
-    isSelected ? "bg-option-selected-bg border-brand-readable" : "bg-option-bg border-option-border",
+    isSelected ? "border-brand-readable bg-option-selected-bg" : "border-option-border bg-option-bg",
     // No focus-within fill: it repainted the option in the *selected* colors, so the card's
     // mount autofocus made option 1 look answered (ENG-2288). Focus has its own uniform ring
     // on the option label, from survey-ui's globals.css.
@@ -114,8 +114,8 @@ function CheckboxIndicator(): React.JSX.Element {
       aria-hidden="true"
       data-fb-part={FB_PART.optionControl}
       className={cn(
-        "border-input-border text-brand-foreground dark:bg-input-bg relative flex size-4 shrink-0 items-center justify-center rounded-[4px] border bg-white shadow-xs transition-colors",
-        "peer-checked:bg-brand peer-checked:border-brand",
+        "relative flex size-4 shrink-0 items-center justify-center rounded-[4px] border border-input-border bg-white text-brand-foreground shadow-xs transition-colors dark:bg-input-bg",
+        "peer-checked:border-brand peer-checked:bg-brand",
         // The tick lives inside this sibling span, so reveal it via a peer-checked descendant rule.
         "[&>svg]:opacity-0 [&>svg]:transition-opacity peer-checked:[&>svg]:opacity-100"
       )}>
@@ -271,13 +271,13 @@ function DropdownVariant({
             variant="outline"
             disabled={disabled}
             data-fb-part={FB_PART.dropdown}
-            className="rounded-input min-h-input bg-input-bg border-input-border text-input-text py-input-y px-input-x w-full justify-between"
+            className="min-h-input w-full justify-between rounded-input border-input-border bg-input-bg px-input-x py-input-y text-input-text"
             aria-invalid={errorAria.ariaInvalid}
             aria-describedby={errorAria.ariaDescribedBy}
             aria-labelledby={`${inputId}-headline ${inputId}-trigger-value`}>
             <span
               id={`${inputId}-trigger-value`}
-              className="font-input font-input-weight text-input-text truncate">
+              className="truncate font-input font-input-weight text-input-text">
               {displayText}
             </span>
             <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -287,7 +287,7 @@ function DropdownVariant({
           ref={contentRef}
           side={lockedSide}
           avoidCollisions={lockedSide === undefined}
-          className="bg-option-bg border-input-border w-(--radix-dropdown-menu-trigger-width) overflow-hidden"
+          className="w-(--radix-dropdown-menu-trigger-width) overflow-hidden border-input-border bg-option-bg"
           align="start"
           onKeyDown={handleContentKeyDown}>
           {showSearch ? (
@@ -370,7 +370,7 @@ function DropdownVariant({
               </DropdownMenuCheckboxItem>
             ) : null}
             {hasNoResults ? (
-              <div className="text-input-placeholder px-2 py-4 text-center text-sm">
+              <div className="px-2 py-4 text-center text-sm text-input-placeholder">
                 {searchNoResultsText}
               </div>
             ) : null}

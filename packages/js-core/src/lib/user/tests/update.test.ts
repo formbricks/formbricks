@@ -1,13 +1,13 @@
-import { type Mock, beforeEach, describe, expect, test, vi } from "vitest";
-import { ApiClient } from "@/lib/common/api";
-import { Config } from "@/lib/common/config";
-import { Logger } from "@/lib/common/logger";
 import {
   mockAppUrl,
   mockAttributes,
   mockUserId,
   mockWorkspaceId,
 } from "@/lib/user/tests/__mocks__/update.mock";
+import { type Mock, beforeEach, describe, expect, test, vi } from "vitest";
+import { ApiClient } from "@/lib/common/api";
+import { Config } from "@/lib/common/config";
+import { Logger } from "@/lib/common/logger";
 import { sendUpdates, sendUpdatesToBackend } from "@/lib/user/update";
 import { type TUpdates } from "@/types/config";
 

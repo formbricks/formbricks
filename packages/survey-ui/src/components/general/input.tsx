@@ -25,10 +25,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
           // Layout and behavior
           "flex min-w-0 border transition-[color,box-shadow] outline-none",
           // Customizable styles via CSS variables (using Tailwind theme extensions)
-          "w-input min-h-[var(--fb-input-height)]",
-          "bg-input-bg border-input-border rounded-input",
+          "min-h-[var(--fb-input-height)] w-input",
+          "rounded-input border-input-border bg-input-bg",
           "font-input font-input-weight",
-          "text-input-text [font-size:var(--fb-input-font-size)]",
+          "[font-size:var(--fb-input-font-size)] text-input-text",
           "px-input-x py-input-y",
           "shadow-input",
           // Placeholder styling
@@ -38,11 +38,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(function Input(
           // Selection styling
           "selection:bg-primary selection:text-primary-foreground",
           // File input specifics
-          "file:text-foreground file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium",
+          "file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground",
           // Focus ring
-          "focus-visible:border-ring focus-visible:ring-ring focus-visible:ring-[3px]",
+          "focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring",
           // Error state ring
-          "aria-invalid:ring-destructive/20 aria-invalid:border-destructive",
+          "aria-invalid:border-destructive aria-invalid:ring-destructive/20",
           // Disabled state
           "disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50",
           className

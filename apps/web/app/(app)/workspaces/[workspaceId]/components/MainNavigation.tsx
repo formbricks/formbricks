@@ -409,7 +409,7 @@ export const MainNavigation = ({
   );
 
   const switcherTriggerClasses = cn(
-    "w-full border-t px-3 py-3 text-left transition-colors duration-200 hover:bg-slate-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:ring-inset",
+    "w-full border-t px-3 py-3 text-left transition-colors duration-200 hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-slate-500 focus-visible:outline-hidden focus-visible:ring-inset",
     isCollapsed ? "flex items-center justify-center" : ""
   );
 

@@ -1,6 +1,6 @@
+import { mockSurveyId } from "@/lib/common/tests/__mocks__/config.mock";
 // utils.test.ts
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { mockSurveyId } from "@/lib/common/tests/__mocks__/config.mock";
 import {
   checkUrlMatch,
   diffInDays,

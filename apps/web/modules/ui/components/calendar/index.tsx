@@ -122,28 +122,28 @@ export const Calendar = ({
         ),
         button_previous: cn(
           buttonVariants({ variant: "ghost" }),
-          "size-[var(--cell-size)] select-none p-0 aria-disabled:opacity-50",
+          "size-[var(--cell-size)] p-0 select-none aria-disabled:opacity-50",
           defaultClassNames.button_previous
         ),
         button_next: cn(
           buttonVariants({ variant: "ghost" }),
-          "size-[var(--cell-size)] select-none p-0 aria-disabled:opacity-50",
+          "size-[var(--cell-size)] p-0 select-none aria-disabled:opacity-50",
           defaultClassNames.button_next
         ),
         month_caption: cn(
           "flex h-[var(--cell-size)] w-full items-center justify-center px-[var(--cell-size)]",
           defaultClassNames.month_caption
         ),
-        caption_label: cn("select-none text-sm font-medium text-slate-900", defaultClassNames.caption_label),
+        caption_label: cn("text-sm font-medium text-slate-900 select-none", defaultClassNames.caption_label),
         table: "w-full border-collapse",
         weekdays: cn("flex", defaultClassNames.weekdays),
         weekday: cn(
-          "flex-1 select-none rounded-md text-[0.8rem] font-normal text-slate-500",
+          "flex-1 rounded-md text-[0.8rem] font-normal text-slate-500 select-none",
           defaultClassNames.weekday
         ),
         week: cn("mt-2 flex w-full", defaultClassNames.week),
         day: cn(
-          "group/day relative aspect-square h-full w-full select-none p-0 text-center",
+          "group/day relative aspect-square h-full w-full p-0 text-center select-none",
           defaultClassNames.day
         ),
         range_start: cn("rounded-l-md", defaultClassNames.range_start),
@@ -152,7 +152,7 @@ export const Calendar = ({
         // A ring rather than a fill: today has to stay legible under a selection, and a filled
         // "today" was previously indistinguishable from a selected day.
         today: cn(
-          "rounded-md ring-1 ring-inset ring-slate-400 data-[selected=true]:ring-0",
+          "rounded-md ring-1 ring-slate-400 ring-inset data-[selected=true]:ring-0",
           defaultClassNames.today
         ),
         outside: cn("text-slate-400", defaultClassNames.outside),

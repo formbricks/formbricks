@@ -296,14 +296,12 @@ export const buildFlowOutline = (survey: TSurvey): TFlowOutline => {
     };
   });
 
-  const endings = survey.endings.map(
-    (ending, endingIdx): TFlowEndingRow => ({
-      id: ending.id,
-      endingIdx,
-      type: ending.type,
-      ...(ending.type === "redirectToUrl" && ending.url ? { url: ending.url } : {}),
-    })
-  );
+  const endings = survey.endings.map((ending, endingIdx): TFlowEndingRow => ({
+    id: ending.id,
+    endingIdx,
+    type: ending.type,
+    ...(ending.type === "redirectToUrl" && ending.url ? { url: ending.url } : {}),
+  }));
 
   return {
     start: getStartSection(survey),

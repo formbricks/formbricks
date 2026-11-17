@@ -25,12 +25,12 @@ export function AutoCloseProgressBar({ autoCloseTimeout }: Readonly<AutoClosePro
           indeterminate progressbar, which in ARIA means omitting aria-valuenow. Declaring a value we
           could not update would be worse than declaring none. */}
       <div // NOSONAR(typescript:S6819) - a native <progress> cannot run this CSS shrink animation
-        className="bg-accent-bg h-2 w-full overflow-hidden"
+        className="h-2 w-full overflow-hidden bg-accent-bg"
         role="progressbar"
         aria-label={t("common.time_remaining_before_the_survey_closes")}>
         <div
           key={autoCloseTimeout}
-          className="bg-brand z-20 h-2"
+          className="z-20 h-2 bg-brand"
           style={{
             animation: `shrink-width-to-zero ${autoCloseTimeout.toString()}s linear forwards`,
             width: "100%",

@@ -10,7 +10,6 @@ x-hub-runtime-environment: &hub-runtime-environment
 x-environment: &environment
   environment: &app-environment
     ######################################################## REQUIRED ########################################################
-
     # The url of your Formbricks instance used in the admin panel
     # Set this to your public-facing URL, e.g., example http://localhost:3000 or https://example.com
     WEBAPP_URL:

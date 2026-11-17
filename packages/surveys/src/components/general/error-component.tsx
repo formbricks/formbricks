@@ -34,7 +34,7 @@ export function ErrorComponent({ errorType }: ErrorComponentProps) {
 
   return (
     <div
-      className="bg-survey-bg text-heading flex flex-col items-center p-8 text-center"
+      className="flex flex-col items-center bg-survey-bg p-8 text-center text-heading"
       role="alert"
       aria-live="assertive">
       <span className="mb-1.5 text-base leading-6 font-bold">{error.title}</span>

@@ -577,7 +577,7 @@ export function BlockConditional({
               "flex w-full flex-row-reverse justify-between",
               // The gap lives in the row's own padding: a margin on the elements scrolls away and
               // leaves the sticky row flush against the last input.
-              isActionRowSticky ? "bg-survey-bg sticky bottom-0 pt-6" : ""
+              isActionRowSticky ? "sticky bottom-0 bg-survey-bg pt-6" : ""
             )}>
             <div>
               {shouldHideSubmitButton ? (

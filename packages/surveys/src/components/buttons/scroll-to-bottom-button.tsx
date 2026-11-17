@@ -29,7 +29,7 @@ export function ScrollToBottomButton({ onClick, className }: Readonly<ScrollToBo
         color: "var(--fb-button-text-color)",
       }}
       className={cn(
-        "border-submit-button-border focus:ring-focus absolute bottom-2 left-1/2 z-20 flex h-11 w-11 items-center justify-center rounded-full border shadow-md transition-opacity hover:opacity-90 focus:ring-2 focus:ring-offset-2 focus:outline-hidden",
+        "absolute bottom-2 left-1/2 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-submit-button-border shadow-md transition-opacity hover:opacity-90 focus:ring-2 focus:ring-focus focus:ring-offset-2 focus:outline-hidden",
         className
       )}
       aria-label={t("common.scroll_to_bottom")}>

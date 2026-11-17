@@ -1,7 +1,7 @@
-import { describe, expect, test } from "vitest";
 import { resolve } from "node:path";
 import { gzipSync } from "node:zlib";
 import { build } from "vite";
+import { describe, expect, test } from "vitest";
 
 /**
  * The SDK loads on every page of every customer site, so its size is held here rather than noticed in

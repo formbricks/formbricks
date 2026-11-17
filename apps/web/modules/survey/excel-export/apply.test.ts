@@ -649,8 +649,8 @@ describe("applyExcelExport: added rows", () => {
     });
 
     expect(
-      (elementOf(applied.survey, "single").choices as { id: string; label: unknown }[]).map(
-        ({ id, label }) => (id === "other" ? { id, label } : label)
+      (elementOf(applied.survey, "single").choices as { id: string; label: unknown }[]).map(({ id, label }) =>
+        id === "other" ? { id, label } : label
       )
     ).toEqual([
       { default: "Yes", de: "Ja" },

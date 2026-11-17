@@ -149,7 +149,7 @@ export const SurveyElement: Story = {
     <div className="w-[400px] space-y-4">
       <div>
         <h3 className="text-lg font-medium">How satisfied are you with our service?</h3>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <p className="mt-1 text-sm text-muted-foreground">
           Please select one option that best describes your experience.
         </p>
       </div>
@@ -191,7 +191,7 @@ export const WithDescriptions: Story = {
               Basic Plan
             </Label>
           </div>
-          <p className="text-muted-foreground ml-6 text-sm">
+          <p className="ml-6 text-sm text-muted-foreground">
             Perfect for individuals. Includes basic features and 5GB storage.
           </p>
           <p className="ml-6 text-sm font-medium">$9/month</p>
@@ -203,7 +203,7 @@ export const WithDescriptions: Story = {
               Pro Plan
             </Label>
           </div>
-          <p className="text-muted-foreground ml-6 text-sm">
+          <p className="ml-6 text-sm text-muted-foreground">
             Great for small teams. Advanced features and 50GB storage.
           </p>
           <p className="ml-6 text-sm font-medium">$29/month</p>
@@ -215,7 +215,7 @@ export const WithDescriptions: Story = {
               Enterprise Plan
             </Label>
           </div>
-          <p className="text-muted-foreground ml-6 text-sm">
+          <p className="ml-6 text-sm text-muted-foreground">
             For large organizations. Custom features and unlimited storage.
           </p>
           <p className="ml-6 text-sm font-medium">Contact sales</p>
@@ -232,7 +232,7 @@ export const Required: Story = {
         <h3 className="text-lg font-medium">
           Gender <span className="text-red-500">*</span>
         </h3>
-        <p className="text-muted-foreground text-sm">This field is required</p>
+        <p className="text-sm text-muted-foreground">This field is required</p>
       </div>
       <RadioGroup required>
         <div className="flex items-center gap-2">

@@ -1233,9 +1233,8 @@ const switchTrialToHobbyImmediately = async (
 
 type TActiveSubscription = NonNullable<Awaited<ReturnType<typeof resolveCurrentSubscription>>>;
 
-const getPaymentMethodId = (
-  paymentMethod: string | Stripe.PaymentMethod | null | undefined
-): string | null => (typeof paymentMethod === "string" ? paymentMethod : (paymentMethod?.id ?? null));
+const getPaymentMethodId = (paymentMethod: string | Stripe.PaymentMethod | null | undefined): string | null =>
+  typeof paymentMethod === "string" ? paymentMethod : (paymentMethod?.id ?? null);
 
 /**
  * The card a replacement subscription will charge, checked BEFORE the legacy subscription is

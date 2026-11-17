@@ -109,7 +109,7 @@ interface SignatureProps {
 
 const CONTROL_BASE_CLASSES = cn(
   "inline-flex items-center justify-center gap-1.5 border px-3 py-1.5 transition-colors",
-  "border-input-border bg-input-bg text-input-text font-input-weight",
+  "border-input-border bg-input-bg font-input-weight text-input-text",
   "[font-size:var(--fb-input-font-size)]",
   "disabled:cursor-not-allowed disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0"
 );
@@ -154,12 +154,12 @@ function PadOverlays({
       {showHint ? (
         <span
           aria-hidden="true"
-          className="text-input-placeholder opacity-input-placeholder pointer-events-none absolute inset-0 flex items-center justify-center text-sm">
+          className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-input-placeholder opacity-input-placeholder">
           {mode === "type" ? text.typeYourName : text.signHere}
         </span>
       ) : null}
       {hasSavedOnly ? (
-        <div className="bg-input-bg absolute inset-0 flex items-center justify-center gap-2 p-4 text-center text-sm [color:var(--fb-input-text-color,var(--fb-input-color))]">
+        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-input-bg p-4 text-center text-sm [color:var(--fb-input-text-color,var(--fb-input-color))]">
           <Check aria-hidden="true" className="size-4 shrink-0" />
           <span>{text.saved}</span>
         </div>
@@ -337,7 +337,7 @@ function Signature({
           SEGMENT_CLASSES,
           SEGMENT_CORNER_CLASSES[tabMode],
           selected
-            ? "border-brand-readable bg-input-selected-bg z-10 font-semibold"
+            ? "z-10 border-brand-readable bg-input-selected-bg font-semibold"
             : "hover:bg-input-selected-bg"
         )}>
         {label}
@@ -413,7 +413,7 @@ function Signature({
               onContextMenu={(event) => {
                 event.preventDefault();
               }}
-              className="rounded-input border-input-border bg-input-bg relative w-full overflow-hidden border outline-none"
+              className="relative w-full overflow-hidden rounded-input border border-input-border bg-input-bg outline-none"
               style={{ aspectRatio: `${String(SIGNATURE_ASPECT_RATIO)} / 1` }}>
               {/* The canvas is a picture of the pad. It is hidden from assistive technology through this
                   wrapper, because the rule against aria-hidden on focusable elements counts a canvas as one. */}

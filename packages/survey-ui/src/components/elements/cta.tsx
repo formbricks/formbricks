@@ -111,7 +111,7 @@ function CTA({
               disabled={disabled}
               aria-invalid={errorAria.ariaInvalid}
               aria-describedby={errorAria.ariaDescribedBy}
-              className="text-button font-button-weight flex items-center gap-2"
+              className="flex items-center gap-2 text-button font-button-weight"
               variant={buttonVariant}
               size="custom">
               {buttonLabel}

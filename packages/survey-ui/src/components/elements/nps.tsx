@@ -118,10 +118,10 @@ function NPS({
         data-fb-part={FB_PART.option}
         data-checked={isSelected ? "true" : undefined}
         className={cn(
-          "text-input-text font-input font-input-weight relative flex w-full cursor-pointer items-center justify-center overflow-hidden transition-colors",
+          "relative flex w-full cursor-pointer items-center justify-center overflow-hidden font-input font-input-weight text-input-text transition-colors",
           borderClasses,
           isSelected
-            ? "bg-brand-20 border-brand z-10 -ml-[1px] border-2 first:ml-0"
+            ? "z-10 -ml-[1px] border-2 border-brand bg-brand-20 first:ml-0"
             : "border-input-border bg-input-bg",
           borderRadiusClasses,
           isHovered && !isSelected && "bg-input-selected-bg",

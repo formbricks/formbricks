@@ -207,10 +207,7 @@ const namesByNamespace = (source: TDeclaredFieldSource): TDeclaredNamespaces =>
  * both namespaces, so there is nothing to carry over; the per-carrier merge is for the legacy keys,
  * which arrive independently.
  */
-const namesAfterWrite = (
-  current: TDeclaredNamespaces,
-  incoming: TDeclaredFieldSource
-): TDeclaredNamespaces =>
+const namesAfterWrite = (current: TDeclaredNamespaces, incoming: TDeclaredFieldSource): TDeclaredNamespaces =>
   isDeclared(incoming.embeddedFields)
     ? namesByNamespace(incoming)
     : {

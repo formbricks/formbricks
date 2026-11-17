@@ -407,14 +407,12 @@ function getDocumentTypedFields(
   );
 
   return [
-    ...document.variables.map(
-      (variable): TV3TypedEmbeddedField => ({
-        storageKey: variable.id,
-        name: variable.name,
-        source: "computed",
-        dataType: variable.type === "number" ? "number" : "string",
-      })
-    ),
+    ...document.variables.map((variable): TV3TypedEmbeddedField => ({
+      storageKey: variable.id,
+      name: variable.name,
+      source: "computed",
+      dataType: variable.type === "number" ? "number" : "string",
+    })),
     ...storedEmbeddedFields.filter(
       (field) =>
         field.source === "computed" &&

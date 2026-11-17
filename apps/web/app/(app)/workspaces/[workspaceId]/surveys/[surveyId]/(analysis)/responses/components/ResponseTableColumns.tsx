@@ -104,7 +104,7 @@ const getElementColumnsData = (
   const renderChoiceIdBadges = (choiceIds: string[], isExpanded: boolean) => {
     if (choiceIds.length === 0) return null;
 
-    const containerClasses = cn("flex gap-x-1 w-full", isExpanded && "flex-wrap gap-y-1");
+    const containerClasses = cn("flex w-full gap-x-1", isExpanded && "flex-wrap gap-y-1");
 
     return (
       <div className={containerClasses}>
