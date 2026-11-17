@@ -29,6 +29,7 @@ import {
 import {
   CHART_BRAND_DARK,
   CHART_MEASURE_COLORS,
+  PIE_MEASURE_ID_KEY,
   PIE_MEASURE_NAME_KEY,
   PIE_MEASURE_VALUE_KEY,
   PIVOTED_MEASURE_KEY,
@@ -73,6 +74,8 @@ interface PieLabelProps {
   readonly outerRadius?: number;
   readonly percent?: number;
   readonly value?: number;
+  /** The slice's data row; a measure slice carries its measure id, so it is formatted by that measure. */
+  readonly payload?: TChartDataRow;
 }
 
 // Tiny slices hide both label and leader line so adjacent labels don't overlap
@@ -84,8 +87,11 @@ const NO_DATA_PLACEHOLDER = "\u2013";
 
 // Curried with the active language: recharts calls the renderer outside React, so the locale has
 // to be closed over rather than read from a hook inside it.
-const createPieLabelRenderer = (locale: string, formatValue: (value: unknown) => string) =>
-  function PieSliceLabel({ cx, cy, midAngle, outerRadius, percent, value }: PieLabelProps) {
+const createPieLabelRenderer = (
+  locale: string,
+  formatValue: (value: unknown, row: TChartDataRow | undefined) => string
+) =>
+  function PieSliceLabel({ cx, cy, midAngle, outerRadius, percent, value, payload }: PieLabelProps) {
     if (cx == null || cy == null || midAngle == null || outerRadius == null || percent == null) return null;
     if (percent < PIE_LABEL_MIN_PERCENT) return null;
     const RADIAN = Math.PI / 180;
@@ -101,7 +107,7 @@ const createPieLabelRenderer = (locale: string, formatValue: (value: unknown) =>
         fontSize={11}
         textAnchor={textAnchor}
         dominantBaseline="central">
-        {formatValue(value)} ({formatPercentShare(percent, locale)})
+        {formatValue(value, payload)} ({formatPercentShare(percent, locale)})
       </text>
     );
   };
@@ -371,14 +377,19 @@ const PieChartView = ({
       )
     : sortedData;
   // Slices of several measures are summed counts; a dimension pie shows its one measure.
-  // Every slice and the centre share one format: the slices' common measure format, or the plain
-  // default when the measures disagree (a CSAT percent beside a count) rather than the first one's.
+  // The centre total uses the slices' common format (only counts get one, see below); each slice and its
+  // tooltip are formatted by their own measure.
   const sliceMeasures = useMeasureSlices ? dataKeys : [dataKey];
   const sliceFormatMeasure = getSharedMeasureFormatId(sliceMeasures) ?? "";
   const formatSliceValue = (value: unknown) => formatValue(sliceFormatMeasure, value);
+  // A measure slice is formatted by its own measure (a CSAT score as a percent beside a count).
+  const formatSlice = (value: unknown, row: Record<string, unknown> | undefined) => {
+    const measureId = row?.[PIE_MEASURE_ID_KEY];
+    return typeof measureId === "string" ? formatValue(measureId, value) : formatSliceValue(value);
+  };
   // A total only means something for counts; adding up scores or averages does not.
   const showsTotal = canStackSeries(sliceMeasures);
-  const renderPieLabel = createPieLabelRenderer(i18n.language, formatSliceValue);
+  const renderPieLabel = createPieLabelRenderer(i18n.language, formatSlice);
   const pieResult = preparePieData(pieSource, pieDataKey, pieNameKey);
   // Every slice is zero: there is no whole to take a share of.
   if (!pieResult) {
@@ -428,7 +439,7 @@ const PieChartView = ({
                 labelFormatter={formatDimensionValue}
                 hideLabel={useMeasureSlices}
                 responseBaseKey={responseBaseKey}
-                valueFormatter={(_key, value) => formatSliceValue(value)}
+                valueFormatter={(_key, value, row) => formatSlice(value, row)}
               />
             }
           />
