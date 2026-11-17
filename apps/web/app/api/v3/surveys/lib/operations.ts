@@ -1113,6 +1113,102 @@ type TV3SurveyDocumentMutationParams = TPatchV3SurveyParams & {
   }) => TV3SurveyDocumentMutationInput;
 };
 
+/** Why the stored survey cannot take a v3 document write: archived, or legacy question-based. */
+const getStoredSurveyRefusal = (
+  survey: TInternalSurvey,
+  {
+    log,
+    workspaceId,
+    requestId,
+    instance,
+  }: { log: ReturnType<typeof logger.withContext>; workspaceId: string; requestId: string; instance: string }
+): Response | null => {
+  // Archived surveys are read-only. Editing (esp. flipping status back to inProgress) would let an
+  // archived survey collect responses while it is queued for permanent deletion. Require restore first.
+  // archivedAt is already loaded on `survey` (selectSurvey includes it), so no extra query — and reading
+  // it from the same fetch the auth check used avoids a restore-between-reads TOCTOU.
+  if (survey.archivedAt) {
+    log.warn({ statusCode: 422, workspaceId }, "Attempted to patch an archived survey");
+    return problemSurveyArchived(requestId, instance);
+  }
+
+  // Legacy question-based surveys have no v3 block list. Without this the block endpoints would
+  // reach the serializer, throw V3SurveyUnsupportedShapeError and answer 400 — attributing a
+  // property of the stored survey to the caller's request, and contradicting the 422
+  // `stored_survey_invalid` the contract documents. PATCH already reports it that way via prepare.
+  if (Array.isArray(survey.questions) && survey.questions.length > 0) {
+    log.warn({ statusCode: 422, workspaceId }, "Legacy question-based survey is not v3-editable");
+    return problemUnprocessableContent(
+      requestId,
+      "The stored survey does not satisfy the v3 survey document contract, so this request was not evaluated. Legacy question-based surveys are not supported by the v3 survey management API.",
+      {
+        code: "stored_survey_invalid",
+        instance,
+        invalid_params: [
+          {
+            name: "survey",
+            reason: "Legacy question-based surveys are not supported by the v3 survey management API",
+          },
+        ],
+      }
+    );
+  }
+
+  return null;
+};
+
+/** Records the write on the audit log, when the request keeps one. */
+const recordMutationAudit = (
+  auditLog: TV3SurveyDocumentMutationParams["auditLog"],
+  targetId: string,
+  organizationId: string,
+  oldObject: ReturnType<typeof serializeV3SurveyResource>,
+  newObject: ReturnType<typeof serializeV3SurveyResource>
+): void => {
+  if (!auditLog) return;
+  auditLog.targetId = targetId;
+  auditLog.organizationId = organizationId;
+  auditLog.oldObject = oldObject;
+  auditLog.newObject = newObject;
+};
+
+/**
+ * "matched": the caller supplied one and it held. "implicit": the block endpoints' own read-time
+ * token. "none": a PATCH with no `updatedAt`, i.e. last-write-wins.
+ */
+const describePrecondition = (
+  precondition: TV3SurveyWritePrecondition | undefined,
+  effectivePrecondition: TV3SurveyWritePrecondition | undefined
+): "matched" | "implicit" | "none" => {
+  if (precondition) return "matched";
+  return effectivePrecondition ? "implicit" : "none";
+};
+
+/** The problem response for a failed document mutation, in the caller's coordinates. */
+const mapDocumentMutationError = (
+  error: unknown,
+  remapInvalidParam: ((param: InvalidParam) => InvalidParam) | undefined,
+  context: Parameters<typeof mapV3SurveyPatchError>[1]
+): Response => {
+  // A block op or reorder produced this document, so every `blocks.<i>` path is indexed against an
+  // array the caller never sent. Rewrite them into the caller's coordinates — the op that produced
+  // the block, or its stored index — before the error leaves the building. Both attributions carry
+  // such paths: a stored-survey problem sits in a block whose index the ops may have shifted.
+  if (remapInvalidParam && error instanceof V3SurveyReferenceValidationError) {
+    return mapV3SurveyPatchError(
+      new V3SurveyReferenceValidationError(error.invalidParams.map(remapInvalidParam)),
+      context
+    );
+  }
+  if (remapInvalidParam && error instanceof V3SurveyStoredDocumentError) {
+    return mapV3SurveyPatchError(
+      new V3SurveyStoredDocumentError(error.invalidParams.map(remapInvalidParam)),
+      context
+    );
+  }
+  return mapV3SurveyPatchError(error, context);
+};
+
 /**
  * The one write path for every v3 survey-document mutation: PATCH, block edits and block reorder.
  *
@@ -1152,36 +1248,8 @@ async function runV3SurveyDocumentMutation({
 
     workspaceId = survey.workspaceId;
 
-    // Archived surveys are read-only. Editing (esp. flipping status back to inProgress) would let an
-    // archived survey collect responses while it is queued for permanent deletion. Require restore first.
-    // archivedAt is already loaded on `survey` (selectSurvey includes it), so no extra query — and reading
-    // it from the same fetch the auth check used avoids a restore-between-reads TOCTOU.
-    if (survey.archivedAt) {
-      log.warn({ statusCode: 422, workspaceId }, "Attempted to patch an archived survey");
-      return problemSurveyArchived(requestId, instance);
-    }
-
-    // Legacy question-based surveys have no v3 block list. Without this the block endpoints would
-    // reach the serializer, throw V3SurveyUnsupportedShapeError and answer 400 — attributing a
-    // property of the stored survey to the caller's request, and contradicting the 422
-    // `stored_survey_invalid` the contract documents. PATCH already reports it that way via prepare.
-    if (Array.isArray(survey.questions) && survey.questions.length > 0) {
-      log.warn({ statusCode: 422, workspaceId }, "Legacy question-based survey is not v3-editable");
-      return problemUnprocessableContent(
-        requestId,
-        "The stored survey does not satisfy the v3 survey document contract, so this request was not evaluated. Legacy question-based surveys are not supported by the v3 survey management API.",
-        {
-          code: "stored_survey_invalid",
-          instance,
-          invalid_params: [
-            {
-              name: "survey",
-              reason: "Legacy question-based surveys are not supported by the v3 survey management API",
-            },
-          ],
-        }
-      );
-    }
+    const storedSurveyRefusal = getStoredSurveyRefusal(survey, { log, workspaceId, requestId, instance });
+    if (storedSurveyRefusal) return storedSurveyRefusal;
 
     // Serialized lazily: PATCH must not pay for it, and a legacy question-based survey would throw
     // out of the serializer as a 400 here instead of the 422 the prepare step already gives it.
@@ -1232,12 +1300,7 @@ async function runV3SurveyDocumentMutation({
       // Already precondition-checked above: a reorder into the order the survey already holds must
       // still refuse a stale caller, or a 200 here reads as "your view is current" when it is not.
       const resource = getResource();
-      if (auditLog) {
-        auditLog.targetId = survey.id;
-        auditLog.organizationId = authResult.organizationId;
-        auditLog.oldObject = resource;
-        auditLog.newObject = resource;
-      }
+      recordMutationAudit(auditLog, survey.id, authResult.organizationId, resource, resource);
       log.info(
         { statusCode: 200, workspaceId, wrote: false, ...built.logFields },
         "Survey document unchanged"
@@ -1262,21 +1325,14 @@ async function runV3SurveyDocumentMutation({
     // request's context still describes the updated survey.
     const resource = serializeV3SurveyResource(updatedSurvey, visibility);
 
-    if (auditLog) {
-      auditLog.targetId = updatedSurvey.id;
-      auditLog.organizationId = authResult.organizationId;
-      auditLog.oldObject = oldResource;
-      auditLog.newObject = resource;
-    }
+    recordMutationAudit(auditLog, updatedSurvey.id, authResult.organizationId, oldResource, resource);
 
     log.info(
       {
         statusCode: 200,
         workspaceId,
         wrote: true,
-        // "matched": the caller supplied one and it held. "implicit": the block endpoints' own
-        // read-time token. "none": a PATCH with no `updatedAt`, i.e. last-write-wins.
-        precondition: precondition ? "matched" : effectivePrecondition ? "implicit" : "none",
+        precondition: describePrecondition(precondition, effectivePrecondition),
         ...built.logFields,
       },
       "Survey document updated"
@@ -1288,23 +1344,7 @@ async function runV3SurveyDocumentMutation({
       extensions: toV3WriteExtensions(report),
     });
   } catch (error) {
-    // A block op or reorder produced this document, so every `blocks.<i>` path is indexed against an
-    // array the caller never sent. Rewrite them into the caller's coordinates — the op that produced
-    // the block, or its stored index — before the error leaves the building. Both attributions carry
-    // such paths: a stored-survey problem sits in a block whose index the ops may have shifted.
-    if (remapInvalidParam && error instanceof V3SurveyReferenceValidationError) {
-      return mapV3SurveyPatchError(
-        new V3SurveyReferenceValidationError(error.invalidParams.map(remapInvalidParam)),
-        { log, requestId, instance, workspaceId }
-      );
-    }
-    if (remapInvalidParam && error instanceof V3SurveyStoredDocumentError) {
-      return mapV3SurveyPatchError(
-        new V3SurveyStoredDocumentError(error.invalidParams.map(remapInvalidParam)),
-        { log, requestId, instance, workspaceId }
-      );
-    }
-    return mapV3SurveyPatchError(error, { log, requestId, instance, workspaceId });
+    return mapDocumentMutationError(error, remapInvalidParam, { log, requestId, instance, workspaceId });
   }
 }
 

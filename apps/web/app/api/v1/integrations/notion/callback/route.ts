@@ -20,68 +20,81 @@ import { capturePostHogEvent } from "@/lib/posthog";
 import { getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
 import { canUserWriteWorkspaceIntegrations } from "@/lib/workspace/auth";
 
+/**
+ * The callback's verified context: the workspace its OAuth state names (which the user may write
+ * integrations to), the authorization code and the page to return to. Or the response that ends the
+ * callback: a bad state or code, no access, or the provider's error sent back to that page.
+ */
+const resolveOAuthCallback = async (
+  req: Request,
+  userId: string
+): Promise<{ response: Response } | { workspaceId: string; code: string | null; redirectUrl: URL }> => {
+  const url = req.url;
+  const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
+  const state = queryParams.get("state");
+  const code = queryParams.get("code");
+  const error = queryParams.get("error");
+
+  let oauthState;
+  try {
+    oauthState = await consumeIntegrationOAuthState({
+      provider: "notion",
+      userId: userId,
+      state,
+    });
+  } catch (err) {
+    if (err instanceof IntegrationOAuthStateError) {
+      return {
+        response: responses.badRequestResponse("Invalid OAuth state"),
+      };
+    }
+
+    throw err;
+  }
+
+  const workspaceId = oauthState.workspaceId;
+  if (!workspaceId) {
+    return {
+      response: responses.badRequestResponse("Invalid workspaceId"),
+    };
+  }
+
+  const canUserAccessWorkspace = await canUserWriteWorkspaceIntegrations(userId, workspaceId);
+  if (!canUserAccessWorkspace) {
+    return {
+      response: responses.unauthorizedResponse(),
+    };
+  }
+
+  const basePath = `/workspaces/${workspaceId}/settings/workspace`;
+  const redirectUrl = new URL(`${basePath}/integrations/notion`, WEBAPP_URL);
+  const safeError = getSafeOAuthCallbackError(error);
+
+  if (code && typeof code !== "string") {
+    return {
+      response: responses.badRequestResponse("`code` must be a string"),
+    };
+  }
+
+  if (!code && safeError) {
+    redirectUrl.searchParams.set("error", safeError);
+    return {
+      response: Response.redirect(redirectUrl),
+    };
+  }
+
+  return { workspaceId, code, redirectUrl };
+};
+
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
     if (!authentication || !("user" in authentication)) {
       return { response: responses.notAuthenticatedResponse() };
     }
 
-    const url = req.url;
-    const queryParams = new URLSearchParams(url.split("?")[1]); // Split the URL and get the query parameters
-    const state = queryParams.get("state");
-    const code = queryParams.get("code");
-    const error = queryParams.get("error");
-
-    let oauthState;
-    try {
-      oauthState = await consumeIntegrationOAuthState({
-        provider: "notion",
-        userId: authentication.user.id,
-        state,
-      });
-    } catch (err) {
-      if (err instanceof IntegrationOAuthStateError) {
-        return {
-          response: responses.badRequestResponse("Invalid OAuth state"),
-        };
-      }
-
-      throw err;
-    }
-
-    const workspaceId = oauthState.workspaceId;
-    if (!workspaceId) {
-      return {
-        response: responses.badRequestResponse("Invalid workspaceId"),
-      };
-    }
-
-    const canUserAccessWorkspace = await canUserWriteWorkspaceIntegrations(
-      authentication.user.id,
-      workspaceId
-    );
-    if (!canUserAccessWorkspace) {
-      return {
-        response: responses.unauthorizedResponse(),
-      };
-    }
-
-    const basePath = `/workspaces/${workspaceId}/settings/workspace`;
-    const redirectUrl = new URL(`${basePath}/integrations/notion`, WEBAPP_URL);
-    const safeError = getSafeOAuthCallbackError(error);
-
-    if (code && typeof code !== "string") {
-      return {
-        response: responses.badRequestResponse("`code` must be a string"),
-      };
-    }
-
-    if (!code && safeError) {
-      redirectUrl.searchParams.set("error", safeError);
-      return {
-        response: Response.redirect(redirectUrl),
-      };
-    }
+    const callback = await resolveOAuthCallback(req, authentication.user.id);
+    if ("response" in callback) return callback;
+    const { workspaceId, code, redirectUrl } = callback;
 
     const client_id = NOTION_OAUTH_CLIENT_ID;
     const client_secret = NOTION_OAUTH_CLIENT_SECRET;
