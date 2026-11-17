@@ -340,7 +340,12 @@ const whenReady = (handle: WorkerHandle): Promise<WorkerHandle> => {
       }
       discardWorker(handle);
       // Running out of heap mid-job is the response's cost, not a fault of the server.
-      if ((error as { code?: unknown }).code === "ERR_WORKER_OUT_OF_MEMORY" && pool.running?.dispatched) {
+      if (
+        typeof error !== "number" &&
+        "code" in error &&
+        error.code === "ERR_WORKER_OUT_OF_MEMORY" &&
+        pool.running?.dispatched
+      ) {
         reject(error);
         settleRunning({ outcome: "too_costly", reason: "memory" });
         return;

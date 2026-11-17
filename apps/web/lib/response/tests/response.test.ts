@@ -95,9 +95,7 @@ beforeEach(() => {
   prisma.response.findMany.mockResolvedValue([mockResponse]);
   prisma.response.delete.mockResolvedValue(mockResponse);
 
-  prisma.display.delete.mockResolvedValue({ ...mockDisplay, status: "seen" } as unknown as Awaited<
-    ReturnType<typeof prisma.display.delete>
-  >);
+  vi.mocked(prisma.display.delete, { partial: true }).mockResolvedValue(mockDisplay);
 
   prisma.response.count.mockResolvedValue(1);
 
@@ -107,15 +105,13 @@ beforeEach(() => {
   prisma.organization.findUnique.mockResolvedValue(
     mockOrganizationOutput as unknown as Awaited<ReturnType<typeof prisma.organization.findUnique>>
   );
-  prisma.organizationBilling.findUnique.mockResolvedValue(
-    mockOrganizationBillingRecord as unknown as Awaited<
-      ReturnType<typeof prisma.organizationBilling.findUnique>
-    >
+  vi.mocked(prisma.organizationBilling.findUnique, { partial: true }).mockResolvedValue(
+    mockOrganizationBillingRecord
   );
   prisma.workspace.findMany.mockResolvedValue([]);
-  prisma.workspace.findUnique.mockResolvedValue({ organizationId: mockOrganizationOutput.id } as Awaited<
-    ReturnType<typeof prisma.workspace.findUnique>
-  >);
+  vi.mocked(prisma.workspace.findUnique, { partial: true }).mockResolvedValue({
+    organizationId: mockOrganizationOutput.id,
+  });
   // @ts-expect-error -- the Prisma client is mocked, so its methods carry no mock typings
   prisma.response.aggregate.mockResolvedValue({ _count: { id: 1 } });
 });
