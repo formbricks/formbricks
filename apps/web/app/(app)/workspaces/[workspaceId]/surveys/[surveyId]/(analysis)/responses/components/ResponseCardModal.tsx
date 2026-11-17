@@ -1,6 +1,6 @@
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -48,8 +48,8 @@ export const ResponseCardModal = ({
   locale,
   outcomeActions,
 }: ResponseCardModalProps) => {
-  const [currentIndex, setCurrentIndex] = useState<number | null>(null);
-  const [isNavigating, setIsNavigating] = useState(false);
+  // The response a Next/Back click left from. Navigation is in flight until the selection moves off it.
+  const [navigatingFromId, setNavigatingFromId] = useState<string | null>(null);
 
   const idToIndexMap = useMemo(() => {
     const map = new Map<string, number>();
@@ -59,27 +59,19 @@ export const ResponseCardModal = ({
     return map;
   }, [responses]);
 
-  useEffect(() => {
-    if (selectedResponseId) {
-      setOpen(true);
-      const index = idToIndexMap.get(selectedResponseId) ?? -1;
-      setCurrentIndex(index);
-      setIsNavigating(false);
-    } else {
-      setOpen(false);
-    }
-  }, [selectedResponseId, idToIndexMap, setOpen]);
+  const currentIndex = selectedResponseId === null ? null : (idToIndexMap.get(selectedResponseId) ?? -1);
+  const isNavigating = navigatingFromId !== null && navigatingFromId === selectedResponseId;
 
   const handleNext = () => {
     if (currentIndex !== null && currentIndex < responses.length - 1) {
-      setIsNavigating(true);
+      setNavigatingFromId(selectedResponseId);
       setSelectedResponseId(responses[currentIndex + 1].id);
     }
   };
 
   const handleBack = () => {
     if (currentIndex !== null && currentIndex > 0) {
-      setIsNavigating(true);
+      setNavigatingFromId(selectedResponseId);
       setSelectedResponseId(responses[currentIndex - 1].id);
     }
   };
@@ -91,12 +83,10 @@ export const ResponseCardModal = ({
     }
   };
 
-  // If no response is selected or currentIndex is null or invalid, do not render the modal.
-  // `currentIndex` is only reset in the effect above, so on the render that follows a delete it can
-  // still point past the end of the shortened `responses` array — deleting the survey's only response
-  // leaves it at `0` while `responses` is empty. `responses[currentIndex]` is then `undefined` and
-  // `SingleResponseCard` throws reading `response.finished`, replacing the page with the error screen
-  // instead of the empty state (ENG-2130). Bounds-check rather than testing for `-1` alone.
+  // If no response is selected or the selected one is no longer in `responses` (it was just deleted),
+  // do not render the modal. `responses[currentIndex]` would be `undefined` and `SingleResponseCard`
+  // throws reading `response.finished`, replacing the page with the error screen instead of the empty
+  // state (ENG-2130).
   if (
     selectedResponseId === null ||
     currentIndex === null ||

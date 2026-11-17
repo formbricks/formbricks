@@ -22,7 +22,7 @@ interface LocalizedEditorProps {
   locale: string;
   elementId: string;
   isCard?: boolean;
-  autoFocus?: boolean;
+  focusOnMount?: boolean;
   isExternalUrlsAllowed?: boolean;
   suppressUpdates?: () => boolean;
 }
@@ -40,7 +40,7 @@ export function LocalizedEditor({
   isCard,
   isExternalUrlsAllowed,
   suppressUpdates,
-  autoFocus,
+  focusOnMount,
 }: Readonly<LocalizedEditorProps>) {
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
@@ -53,7 +53,7 @@ export function LocalizedEditor({
         disableLists
         excludedToolbarItems={["blockType"]}
         firstRender={firstRender}
-        autoFocus={autoFocus}
+        focusOnMount={focusOnMount}
         getText={() => {
           const text = value ? (value[selectedLanguageCode] ?? "") : "";
           return md.render(text);

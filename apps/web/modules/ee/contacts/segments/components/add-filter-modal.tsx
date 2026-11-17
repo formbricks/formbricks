@@ -2,7 +2,7 @@
 
 import { createId } from "@paralleldrive/cuid2";
 import { FingerprintIcon, MousePointerClickIcon, TagIcon, Users2Icon } from "lucide-react";
-import React, { type JSX, useMemo, useState } from "react";
+import React, { type JSX, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeDataType, TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import type {
@@ -17,6 +17,7 @@ import { getContactAttributeDataTypeIcon } from "@/modules/ee/contacts/utils";
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { TabBar } from "@/modules/ui/components/tab-bar";
+import { focusOnOpen } from "@/modules/ui/lib/focus-on-open";
 import AttributeTabContent from "./attribute-tab-content";
 import FilterButton from "./filter-button";
 
@@ -172,6 +173,7 @@ export function AddFilterModal({
 }: TAddFilterModalProps) {
   const [activeTabId, setActiveTabId] = useState("all");
   const [searchValue, setSearchValue] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const { t } = useTranslation();
   const tabs: {
     id: string;
@@ -444,7 +446,10 @@ export function AddFilterModal({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent width="narrow" disableCloseOnOutsideClick>
+      <DialogContent
+        width="narrow"
+        disableCloseOnOutsideClick
+        onOpenAutoFocus={(event) => focusOnOpen(event, searchInputRef.current)}>
         <DialogHeader>
           <DialogTitle>{t("common.add_filter")}</DialogTitle>
         </DialogHeader>
@@ -453,7 +458,7 @@ export function AddFilterModal({
           <div className="flex flex-col">
             <div className="flex w-auto flex-col">
               <Input
-                autoFocus
+                ref={searchInputRef}
                 onChange={(e) => {
                   setSearchValue(e.target.value);
                 }}

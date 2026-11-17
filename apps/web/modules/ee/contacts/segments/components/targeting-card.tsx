@@ -44,6 +44,28 @@ interface TargetingCardProps {
   readonly initialSegment?: TSegment;
 }
 
+/**
+ * The card's open state, adjusted during render from the first one: a segment with filters expands
+ * it, and a link survey, which cannot target, collapses it.
+ */
+const useTargetingCardOpen = (segment: TSegment | null, surveyType: TSurvey["type"]) => {
+  const [open, setOpen] = useState(false);
+
+  const [seenSegment, setSeenSegment] = useState<TSegment | null | undefined>(undefined);
+  if (segment !== seenSegment) {
+    setSeenSegment(segment);
+    if (segment && segment.filters.length > 0) setOpen(true);
+  }
+
+  const [seenSurveyType, setSeenSurveyType] = useState<TSurvey["type"] | null>(null);
+  if (surveyType !== seenSurveyType) {
+    setSeenSurveyType(surveyType);
+    if (surveyType === "link") setOpen(false);
+  }
+
+  return [open, setOpen] as const;
+};
+
 export function TargetingCard({
   localSurvey,
   setLocalSurvey,
@@ -55,7 +77,6 @@ export function TargetingCard({
   const router = useRouter();
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
-  const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
 
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
@@ -93,17 +114,7 @@ export function TargetingCard({
     }
   };
 
-  useEffect(() => {
-    if (segment && segment.filters.length > 0) {
-      setOpen(true);
-    }
-  }, [segment, segment?.filters.length]);
-
-  useEffect(() => {
-    if (localSurvey.type === "link") {
-      setOpen(false);
-    }
-  }, [localSurvey.type]);
+  const [open, setOpen] = useTargetingCardOpen(segment, localSurvey.type);
 
   const handleAddFilterInGroup = (filter: TBaseFilter) => {
     const updatedSegment = structuredClone(segment);
@@ -431,7 +442,7 @@ export function TargetingCard({
         </div>
 
         <div>
-          <Alert className="flex items-center rounded-none bg-slate-50" role="status">
+          <Alert className="flex items-center rounded-none bg-slate-50" alertRole="status">
             <AlertDescription className="ml-2">
               <span className="mr-1 text-slate-600">
                 <Trans

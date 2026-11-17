@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { type TLinkedEmbeddedField } from "@formbricks/types/embedded-data-resolver";
@@ -20,6 +20,7 @@ import {
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
+import { focusOnOpen } from "@/modules/ui/lib/focus-on-open";
 
 interface PromoteEmbeddedFieldDialogProps {
   /** The local field being lifted. Its `field.id` is the stored row promote flips. */
@@ -52,6 +53,7 @@ export const PromoteEmbeddedFieldDialog = ({
   // The key writes itself from the field's name, through the same `toSafeIdentifier` the library
   // dialog uses to decide what a legal key looks like.
   const [key, setKey] = useState(() => toSafeIdentifier(entry.field.name));
+  const keyInputRef = useRef<HTMLInputElement>(null);
   const [description, setDescription] = useState("");
   const [keyError, setKeyError] = useState<string | null>(null);
   const [isPromoting, setIsPromoting] = useState(false);
@@ -102,7 +104,7 @@ export const PromoteEmbeddedFieldDialog = ({
       onOpenChange={(next) => {
         if (!next) setOpen(false);
       }}>
-      <DialogContent width="narrow">
+      <DialogContent width="narrow" onOpenAutoFocus={(event) => focusOnOpen(event, keyInputRef.current)}>
         <DialogHeader>
           <DialogTitle>{t("workspace.embedded_data.add_to_library")}</DialogTitle>
           <DialogDescription>
@@ -116,7 +118,7 @@ export const PromoteEmbeddedFieldDialog = ({
               <Label htmlFor="promote-embedded-field-key">{t("common.key")}</Label>
               <Input
                 id="promote-embedded-field-key"
-                autoFocus
+                ref={keyInputRef}
                 value={key}
                 isInvalid={keyError !== null}
                 // `isInvalid` only draws a red border. Without these the refusal is visible and

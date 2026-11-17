@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { parseSurveyEndings, removeDraftFlagsFromBlocks } from "./survey-save-payload";
+import {
+  buildSurveySavePayload,
+  parseSurveyEndings,
+  removeDraftFlagsFromBlocks,
+} from "./survey-save-payload";
 
 describe("removeDraftFlagsFromBlocks", () => {
   test("drops isDraft from every element and keeps the rest", () => {
@@ -35,5 +39,32 @@ describe("parseSurveyEndings", () => {
     const result = parseSurveyEndings(endings);
 
     expect(result.map((ending) => ending.type)).toEqual(["endScreen", "redirectToUrl"]);
+  });
+});
+
+describe("buildSurveySavePayload", () => {
+  const survey = {
+    id: "s1",
+    name: "Survey",
+    questions: [{ id: "legacy" }],
+    blocks: [{ id: "b1", name: "Block 1", elements: [{ id: "e1", type: "openText", isDraft: true }] }],
+    endings: [{ id: "end1", type: "endScreen", headline: { default: "Thanks" } }],
+  } as unknown as TSurvey;
+
+  test("strips draft flags, empties the legacy questions and parses the endings", () => {
+    const payload = buildSurveySavePayload(survey);
+
+    expect(payload.id).toBe("s1");
+    expect(payload.questions).toEqual([]);
+    expect(payload.blocks[0].elements).toEqual([{ id: "e1", type: "openText" }]);
+    expect(payload.endings.map((ending) => ending.id)).toEqual(["end1"]);
+  });
+
+  test("leaves the editor's survey untouched, so a failed save keeps its draft flags", () => {
+    const before = structuredClone(survey);
+
+    buildSurveySavePayload(survey);
+
+    expect(survey).toEqual(before);
   });
 });

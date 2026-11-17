@@ -6,7 +6,6 @@ import React, {
   ForwardRefExoticComponent,
   Fragment,
   RefAttributes,
-  useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -138,6 +137,55 @@ export interface InputComboboxProps {
 }
 
 // Helper to flatten all options and their children
+type TComboboxValue = string | number | string[] | null;
+type TComboboxInputType = "dropdown" | "input" | null;
+
+/**
+ * What `value` shows as: a picked option (or several), free text when `withInput` allows it, or
+ * nothing. `null` for an empty array, which keeps the current selection.
+ */
+const resolveComboboxSelection = (
+  value: TComboboxValue | undefined,
+  validOptions: TComboboxOption[],
+  withInput: boolean
+): { localValue: TComboboxValue; inputType: TComboboxInputType } | null => {
+  if (value === null || value === undefined) return { localValue: null, inputType: null };
+  if (Array.isArray(value)) return value.length ? { localValue: value, inputType: "dropdown" } : null;
+  const opt = validOptions.find((o) => o.value === value);
+  if (opt) return { localValue: opt.value, inputType: "dropdown" };
+  if (withInput) return { localValue: value, inputType: "input" };
+  return { localValue: null, inputType: null };
+};
+
+/** The local value and input type, following `value`. Adjusted during render, from the first. */
+const useComboboxSelection = (
+  value: TComboboxValue | undefined,
+  validOptions: TComboboxOption[],
+  withInput: boolean
+) => {
+  const [inputType, setInputType] = useState<TComboboxInputType>(null);
+  const [localValue, setLocalValue] = useState<TComboboxValue>(null);
+  const [syncedFrom, setSyncedFrom] = useState<{
+    value: TComboboxValue | undefined;
+    validOptions: TComboboxOption[];
+    withInput: boolean;
+  } | null>(null);
+  if (
+    syncedFrom === null ||
+    syncedFrom.value !== value ||
+    syncedFrom.validOptions !== validOptions ||
+    syncedFrom.withInput !== withInput
+  ) {
+    setSyncedFrom({ value, validOptions, withInput });
+    const next = resolveComboboxSelection(value, validOptions, withInput);
+    if (next) {
+      setLocalValue(next.localValue);
+      setInputType(next.inputType);
+    }
+  }
+  return { inputType, setInputType, localValue, setLocalValue };
+};
+
 function flattenOptions(options?: TComboboxOption[]): TComboboxOption[] {
   if (!options) return [];
   return options.flatMap((option) => [option, ...(option.children ? flattenOptions(option.children) : [])]);
@@ -354,8 +402,6 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
   const resolvedSearchPlaceholder = searchPlaceholder ?? t("common.search");
   const [isClearing, setIsClearing] = useState(false);
   const [open, setOpen] = useState(false);
-  const [inputType, setInputType] = useState<"dropdown" | "input" | null>(null);
-  const [localValue, setLocalValue] = useState<string | number | string[] | null>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
@@ -374,29 +420,11 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
     return [];
   }, [options, groupedOptions]);
 
-  useEffect(() => {
-    if (value === null || value === undefined) {
-      setLocalValue(null);
-      setInputType(null);
-    } else if (Array.isArray(value)) {
-      if (value.length) {
-        setLocalValue(value);
-        setInputType("dropdown");
-      }
-    } else {
-      const opt = validOptions?.find((o) => o.value === value);
-      if (opt) {
-        setLocalValue(opt.value);
-        setInputType("dropdown");
-      } else if (withInput) {
-        setLocalValue(value);
-        setInputType("input");
-      } else {
-        setLocalValue(null);
-        setInputType(null);
-      }
-    }
-  }, [value, validOptions, withInput]);
+  const { inputType, setInputType, localValue, setLocalValue } = useComboboxSelection(
+    value,
+    validOptions,
+    withInput
+  );
 
   const handleOpenChange = (next: boolean) => {
     setOpen(next);
@@ -551,6 +579,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
         <DropdownMenuTrigger asChild>
           <div
             id={id}
+            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- the trigger of a searchable, multi-select dropdown, which a native <select> cannot be
             role="combobox"
             tabIndex={disabled ? -1 : 0}
             aria-label={ariaLabel}
@@ -625,6 +654,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                 <CommandInput
                   placeholder={resolvedSearchPlaceholder}
                   className="h-8 border-none placeholder-slate-300 outline-hidden"
+                  // eslint-disable-next-line jsx-a11y/no-autofocus -- Radix DropdownMenu exposes no onOpenAutoFocus; the menu's search field takes focus when the user opens it
                   autoFocus
                   ref={searchRef}
                   onValueChange={(search) => {
@@ -634,6 +664,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                 />
               </div>
             ) : (
+              // eslint-disable-next-line jsx-a11y/no-autofocus -- parks focus inside the opened menu when it has no search field, so the keyboard reaches the option list
               <button autoFocus className="sr-only" aria-hidden type="button" />
             )}
 

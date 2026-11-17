@@ -99,7 +99,7 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
       <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
         <div className="w-full max-w-xl rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
           <OAuthConsentLogo label={t("auth.oauth.formbricks_website")} />
-          <Alert variant="error" role="status">
+          <Alert variant="error" alertRole="status">
             <AlertTitle>{t("auth.oauth.invalid_oauth_request")}</AlertTitle>
             <AlertDescription>{t("auth.oauth.invalid_oauth_request_description")}</AlertDescription>
           </Alert>
@@ -160,14 +160,14 @@ const Page = async ({ searchParams }: Readonly<{ searchParams: Promise<TSearchPa
         </dl>
 
         {isLocalhostHost(redirectHost) && (
-          <Alert variant="warning" className="mt-6" role="status">
+          <Alert variant="warning" className="mt-6" alertRole="status">
             <AlertTitle>{t("auth.oauth.localhost_redirect_warning")}</AlertTitle>
             <AlertDescription>{t("auth.oauth.localhost_redirect_warning_description")}</AlertDescription>
           </Alert>
         )}
 
         {isViewer && (
-          <Alert variant={isViewerGrantEmpty ? "error" : "info"} className="mt-6" role="status">
+          <Alert variant={isViewerGrantEmpty ? "error" : "info"} className="mt-6" alertRole="status">
             <AlertTitle>{t("auth.oauth.dashboard_viewer_scope_title")}</AlertTitle>
             <AlertDescription>
               {isViewerGrantEmpty

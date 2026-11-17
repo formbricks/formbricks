@@ -267,7 +267,7 @@ Formbricks(
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.web_and_mobile_sdk")} />
       <div className="space-y-4">
-        <Alert variant="info" role="status" className="max-w-4xl rounded-xl">
+        <Alert variant="info" alertRole="status" className="max-w-4xl rounded-xl">
           <AlertTitle>{t("workspace.app-connection.invite_banner_title")}</AlertTitle>
           <AlertDescription>{t("workspace.app-connection.invite_banner_description")}</AlertDescription>
           <AlertButton asChild>
@@ -283,7 +283,7 @@ Formbricks(
             <div className="space-y-4">
               <WidgetStatusIndicator workspace={workspace} />
               {workspace.appSetupCompleted && (
-                <Alert variant="warning" role="status">
+                <Alert variant="warning" alertRole="status">
                   <AlertTitle>{t("workspace.app-connection.cache_update_delay_title")}</AlertTitle>
                   <AlertDescription>
                     {t("workspace.app-connection.cache_update_delay_description")}
@@ -306,7 +306,7 @@ Formbricks(
             )}
             <IdBadge id={WEBAPP_URL} label={t("workspace.app-connection.webapp_url")} />
             {workspace.legacyEnvironmentId && (
-              <Alert variant="info" size="small" role="status">
+              <Alert variant="info" size="small" alertRole="status">
                 <AlertDescription>
                   <p>
                     {t("workspace.app-connection.environment_id_legacy_alert")}{" "}
