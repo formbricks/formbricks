@@ -135,7 +135,7 @@ export const ToolbarPlugin = (
   const [hasTextSelection, setHasTextSelection] = useState(false);
 
   // save ref to setText to use it in event listeners safely
-  const setText = useRef<any>(props.setText);
+  const setText = useRef(props.setText);
 
   useEffect(() => {
     setText.current = props.setText;

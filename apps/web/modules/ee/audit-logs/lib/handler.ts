@@ -63,11 +63,11 @@ const buildAndLogAuditEvent = async ({
   timestamp,
 }: TBuildAuditEventInput) => {
   try {
-    let changes;
+    let changes: Record<string, unknown> | undefined;
 
     if (oldObject && newObject) {
-      changes = deepDiff(oldObject, newObject);
-      changes = redactPII(changes);
+      const diff = deepDiff(oldObject, newObject);
+      changes = diff && redactPII(diff);
     } else if (newObject) {
       changes = redactPII(newObject);
     } else if (oldObject) {
@@ -158,7 +158,7 @@ export const withAuditLogging = <
     const { auditLoggingCtx } = ctx;
     let result!: TResult;
     let status: TAuditStatus = "success";
-    let error: any = undefined;
+    let error: unknown = undefined;
 
     try {
       result = await handler(args);
@@ -189,11 +189,11 @@ export const withAuditLogging = <
         const userId: string = ctx?.user?.id ?? UNKNOWN_DATA;
         let organizationId =
           auditLoggingCtx?.organizationId || // NOSONAR // We want to use the organizationId from the auditLoggingCtx if it is present and not empty
-          (parsedInput as Record<string, any>)?.organizationId || // NOSONAR // We want to use the organizationId from the parsedInput if it is present and not empty
+          (parsedInput as { organizationId?: string } | undefined)?.organizationId || // NOSONAR // We want to use the organizationId from the parsedInput if it is present and not empty
           UNKNOWN_DATA;
 
         if (!organizationId) {
-          const workspaceId = (parsedInput as Record<string, any>)?.workspaceId;
+          const workspaceId = (parsedInput as { workspaceId?: unknown } | undefined)?.workspaceId;
           if (workspaceId && typeof workspaceId === "string") {
             try {
               organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);

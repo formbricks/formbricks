@@ -63,6 +63,21 @@ interface AddIntegrationModalProps {
   contactAttributeKeys: TContactAttributeKey[];
 }
 
+/*
+ * `getNotionDatabases` passes Notion's database objects through as they come, so they carry Notion's
+ * own `title` rich text and a property map, which `TIntegrationNotionDatabase` leaves undeclared.
+ */
+type TNotionDatabaseProperty = { id: string; name: string; type: string };
+
+// An untitled database has an empty `title`; it is listed and saved with an empty name.
+const getDatabaseTitle = (database: TIntegrationNotionDatabase): string =>
+  (database as { title?: { plain_text?: string }[] }).title?.[0]?.plain_text ?? "";
+
+const getDatabaseProperties = (
+  database: TIntegrationNotionDatabase | null | undefined
+): Record<string, TNotionDatabaseProperty> =>
+  (database?.properties ?? {}) as Record<string, TNotionDatabaseProperty>;
+
 export const AddIntegrationModal = ({
   workspaceId,
   surveys,
@@ -122,9 +137,9 @@ export const AddIntegrationModal = ({
   });
 
   const dbItems = useMemo(() => {
-    const dbProperties = (selectedDatabase as any)?.properties;
+    const dbProperties = getDatabaseProperties(selectedDatabase);
     return (
-      Object.keys(dbProperties || {}).map((fieldKey: string) => ({
+      Object.keys(dbProperties).map((fieldKey: string) => ({
         id: dbProperties[fieldKey].id,
         name: dbProperties[fieldKey].name,
         type: dbProperties[fieldKey].type,
@@ -203,7 +218,7 @@ export const AddIntegrationModal = ({
       if (selectedDB) {
         setSelectedDatabase({
           id: selectedDB.id,
-          name: (selectedDB as any).title?.[0]?.plain_text,
+          name: getDatabaseTitle(selectedDB),
           properties: selectedDB.properties,
         });
       }
@@ -352,7 +367,7 @@ export const AddIntegrationModal = ({
                     label={t("workspace.integrations.notion.select_a_database")}
                     items={databases.map((d) => ({
                       id: d.id,
-                      name: (d as any).title?.[0]?.plain_text,
+                      name: getDatabaseTitle(d),
                       properties: d.properties,
                     }))}
                     selectedItem={selectedDatabase}

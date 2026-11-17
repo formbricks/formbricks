@@ -34,9 +34,9 @@ export type ExtendedSchemas = {
 // This allows for more flexibility and type safety when working with the input schemas.
 export type ParsedSchemas<S extends ExtendedSchemas | undefined> = S extends object
   ? {
-      [K in keyof S as NonNullable<S[K]> extends z.ZodObject<any> ? K : never]: NonNullable<
+      [K in keyof S as NonNullable<S[K]> extends z.ZodObject<ZodRawShape> ? K : never]: NonNullable<
         S[K]
-      > extends z.ZodObject<any>
+      > extends z.ZodObject<ZodRawShape>
         ? z.infer<NonNullable<S[K]>>
         : never;
     }
@@ -54,7 +54,7 @@ export const apiWrapper = async <S extends ExtendedSchemas>({
 }: {
   request: Request;
   schemas?: S;
-  externalParams?: Promise<Record<string, any>>;
+  externalParams?: Promise<Record<string, unknown>>;
   rateLimit?: boolean;
   handler: HandlerFn<ParsedSchemas<S>>;
   auditLog?: TApiAuditLog;
