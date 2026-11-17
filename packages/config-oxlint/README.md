@@ -29,11 +29,12 @@ Local rules compose after the tier: `defineConfig(compose(library, { rules: {…
 
 Notes:
 
-- **Rules are explicit.** oxlint's default `correctness` category is off; `presets.mjs` holds the upstream
-  ESLint presets the repo used (`@eslint/js`, typescript-eslint, eslint-plugin-react, react-hooks,
-  jsx-a11y, eslint-config-next) as rule maps, so the rule set matches what ESLint enforced. Change a
-  severity in the tier that applies a preset, not in `presets.mjs`. Hardening beyond today's set is
-  tracked in ENG-7329.
+- **Rule sets.** `presets.mjs` holds the upstream ESLint presets the repo used (`@eslint/js`,
+  typescript-eslint, eslint-plugin-react, react-hooks, jsx-a11y, eslint-config-next) as rule maps.
+  Change a severity in the tier that applies a preset, not in `presets.mjs`. On top of them, `base.mjs`
+  runs oxlint's `correctness` and `suspicious` categories at `error` in every tier; a rule a tier lists
+  keeps the tier's setting. The category rules that clash with repo conventions or still have a backlog
+  are `off` in `base.mjs`, each with its count and reason (ENG-7329).
 - **JS plugins** run the ESLint plugins oxlint does not implement natively, through its ESLint-compatible
   plugin API: `eslint-plugin-turbo`, `eslint-plugin-react` (as `react-js`, for `prefer-read-only-props`,
   `prop-types` and `no-deprecated`), `eslint-plugin-sonarjs` and `eslint-plugin-unicorn` (as `unicorn-js`,
