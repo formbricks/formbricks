@@ -7,11 +7,13 @@ import { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { useAppendWorkflowStep } from "@/modules/ee/workflows/hooks/use-append-workflow-step";
+import { useStepClipboard } from "@/modules/ee/workflows/hooks/use-step-clipboard";
 import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
 import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import {
   type TWorkflowNodeData,
   canMutateCanvasAtom,
+  cutWorkflowStepIdsAtom,
   deleteWorkflowNodeAtom,
   workflowCanvasDirectionAtom,
 } from "@/modules/ee/workflows/state/editor";
@@ -22,6 +24,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/modules/ui/components/dropdown-menu";
+import { InsertStepAfterMenuItem } from "./insert-step-after-menu-item";
+import { StepClipboardMenuItems } from "./step-clipboard-menu-items";
 import { WorkflowAddStepMenu } from "./workflow-add-step-menu";
 import { HANDLE_CLASS_NAMES, WorkflowNodeCard } from "./workflow-node-card";
 
@@ -33,12 +37,15 @@ export const WorkflowCanvasNode = memo(
     const canMutate = useAtomValue(canMutateCanvasAtom);
     const isTrigger = data.category === "trigger";
     const isHorizontal = useAtomValue(workflowCanvasDirectionAtom) === "horizontal";
+    const cutStepIds = useAtomValue(cutWorkflowStepIdsAtom);
+    const { paste, canPasteAt } = useStepClipboard();
 
     return (
       <div className={cn("flex items-center", isHorizontal ? "flex-row" : "flex-col")}>
         <WorkflowNodeCard
           data={data}
           selected={selected}
+          isCut={cutStepIds.has(id)}
           direction={isHorizontal ? "horizontal" : "vertical"}
           menu={
             !isTrigger &&
@@ -56,6 +63,8 @@ export const WorkflowCanvasNode = memo(
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="motion-reduce:animate-none">
+                  <InsertStepAfterMenuItem nodeId={id} nodeType={data.nodeType} />
+                  <StepClipboardMenuItems nodeId={id} />
                   <DropdownMenuItem
                     onClick={(event) => {
                       event.stopPropagation();
@@ -84,6 +93,7 @@ export const WorkflowCanvasNode = memo(
               afterNodeType={data.nodeType}
               ariaLabel={t("workspace.workflows.add_step")}
               onAdd={(stepType) => appendStep(id, stepType)}
+              onPaste={canPasteAt({ sourceNodeId: id }) ? () => paste({ sourceNodeId: id }) : undefined}
             />
           </div>
         )}

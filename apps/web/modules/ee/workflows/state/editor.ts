@@ -19,6 +19,14 @@ import {
 } from "@/modules/ee/workflows/lib/canvas-geometry";
 import { settleSentSecretValues, withSecretIdsForCheck } from "@/modules/ee/workflows/lib/http-request-panel";
 import {
+  type TPasteTarget,
+  type TStepClipboard,
+  canPasteAt,
+  captureStepCopy,
+  getStepAndAfter,
+  pasteSteps,
+} from "@/modules/ee/workflows/lib/step-clipboard";
+import {
   type TAddableWorkflowStepType,
   createDefaultWorkflowStep,
   getBranchHandles,
@@ -1041,6 +1049,112 @@ export const insertWorkflowStepOnEdgeAtom = atom(null, (get, set, input: TInsert
     })
   );
 });
+
+// ---- Cut, copy and paste of steps (lib/step-clipboard.ts) ----
+
+const stepClipboardStateAtom = atom<TStepClipboard | null>(null);
+
+/** What is cut or copied, for this workflow only; another workflow's clipboard reads as empty. */
+export const workflowStepClipboardAtom = atom((get) => {
+  const clipboard = get(stepClipboardStateAtom);
+  return clipboard && clipboard.workflowId === get(workflowAtom)?.id ? clipboard : null;
+});
+
+/** The steps of a pending cut, drawn faded until they are pasted or put back. */
+export const cutWorkflowStepIdsAtom = atom((get) => {
+  const clipboard = get(workflowStepClipboardAtom);
+  return new Set(clipboard?.mode === "cut" ? clipboard.stepIds : []);
+});
+
+/** Cut a step and everything after it; a previous cut that wasn't pasted is put back. */
+export const cutWorkflowStepAtom = atom(null, (get, set, nodeId: string) => {
+  const definition = get(workflowEditorAtom).definition;
+  const workflowId = get(workflowAtom)?.id;
+  if (!definition || !workflowId || definition.trigger?.id === nodeId) return;
+  set(stepClipboardStateAtom, {
+    mode: "cut",
+    workflowId,
+    rootId: nodeId,
+    stepIds: getStepAndAfter(definition, nodeId),
+  });
+});
+
+/** Copy a step and everything after it; a pending cut is put back. */
+export const copyWorkflowStepAtom = atom(null, (get, set, nodeId: string) => {
+  const definition = get(workflowEditorAtom).definition;
+  const workflowId = get(workflowAtom)?.id;
+  if (!definition || !workflowId || definition.trigger?.id === nodeId) return;
+  set(stepClipboardStateAtom, {
+    mode: "copy",
+    workflowId,
+    rootId: nodeId,
+    ...captureStepCopy(definition, nodeId),
+  });
+});
+
+/** Puts a pending cut back: Escape, Undo. A copy stays on the clipboard. */
+export const cancelWorkflowStepCutAtom = atom(null, (get, set) => {
+  if (get(stepClipboardStateAtom)?.mode === "cut") set(stepClipboardStateAtom, null);
+});
+
+/** Whether a `+` offers "Paste here". */
+export const canPasteWorkflowStepsAtAtom = atom((get) => {
+  const clipboard = get(workflowStepClipboardAtom);
+  const definition = get(workflowEditorAtom).definition;
+  const canEdit = get(canEditWorkflowDefinitionAtom);
+  return (target: TPasteTarget) =>
+    canEdit && definition !== null && canPasteAt(definition, clipboard, target);
+});
+
+export type TPasteWorkflowStepsResult =
+  | { ok: true; stepCount: number; mode: TStepClipboard["mode"] }
+  | { ok: false; reason: "nothing" | "step_limit" };
+
+/**
+ * Pastes the clipboard at a `+` and opens its first step. A cut moves its steps and empties the
+ * clipboard; a copy adds fresh steps and stays, for another paste. Refused over the step limit.
+ */
+export const pasteWorkflowStepsAtom = atom(
+  null,
+  (
+    get,
+    set,
+    input: { target: TPasteTarget; copyLabel: (node: TWorkflowDefinition["nodes"][number]) => string }
+  ): TPasteWorkflowStepsResult => {
+    const clipboard = get(workflowStepClipboardAtom);
+    const editor = get(workflowEditorAtom);
+    if (!clipboard || !editor.definition || !get(canEditWorkflowDefinitionAtom)) {
+      return { ok: false, reason: "nothing" };
+    }
+    if (
+      clipboard.mode === "copy" &&
+      editor.definition.nodes.length + clipboard.nodes.length > WORKFLOW_LIMITS.maxSteps
+    ) {
+      return { ok: false, reason: "step_limit" };
+    }
+    const pinned = produce(editor.definition, (draft) => {
+      pinDisplayedPositions(draft, get(workflowFlowNodesAtom));
+    });
+    const result = pasteSteps({
+      definition: pinned,
+      clipboard,
+      target: input.target,
+      direction: get(workflowCanvasDirectionAtom),
+      copyLabel: input.copyLabel,
+    });
+    if (!result) return { ok: false, reason: "nothing" };
+    set(
+      workflowEditorAtom,
+      produce(editor, (draft) => {
+        draft.definition = result.definition;
+        draft.selectedNodeId = result.rootId;
+        draft.isNodeConfigModalOpen = true;
+      })
+    );
+    if (clipboard.mode === "cut") set(stepClipboardStateAtom, null);
+    return { ok: true, stepCount: result.stepCount, mode: clipboard.mode };
+  }
+);
 
 export const setWorkflowSnapToCanvasEnabledAtom = atom(null, (get, set, isSnapToCanvasEnabled: boolean) => {
   set(

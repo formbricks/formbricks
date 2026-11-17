@@ -70,6 +70,8 @@ interface WorkflowNodeCardProps {
   children?: ReactNode;
   /** Left to right, the incoming line arrives on the left and every card is one height. */
   direction?: TWorkflowCanvasDirection;
+  /** Part of a pending cut. */
+  isCut?: boolean;
 }
 
 // The card every step and the trigger share on the canvas: category chip, title, and the summary
@@ -80,6 +82,7 @@ export const WorkflowNodeCard = ({
   menu,
   children,
   direction = "vertical",
+  isCut = false,
 }: Readonly<WorkflowNodeCardProps>) => {
   const isHorizontal = direction === "horizontal";
   const Icon = NODE_ICONS[data.icon];
@@ -93,7 +96,9 @@ export const WorkflowNodeCard = ({
         // The hover shadow needs no pan-mode gate: the canvas disables pointer events on
         // nodes in pan mode, so hover styles can't fire there.
         "flex w-64 items-start gap-2.5 rounded-lg border border-slate-200 bg-white px-2.5 py-2.5 shadow-card-sm transition-shadow hover:shadow-card-md",
-        selected && "ring-2 ring-brand-dark ring-offset-2 ring-offset-slate-50"
+        selected && "ring-2 ring-brand-dark ring-offset-2 ring-offset-slate-50",
+        // Cut and not pasted yet: faded until it moves, or Escape or Undo puts it back.
+        isCut && "border-dashed opacity-50"
       )}
       style={isHorizontal ? { height: WORKFLOW_CANVAS_HORIZONTAL.cardHeight } : undefined}>
       <Handle

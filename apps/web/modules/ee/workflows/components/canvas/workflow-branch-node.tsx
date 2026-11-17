@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { useAppendWorkflowStep } from "@/modules/ee/workflows/hooks/use-append-workflow-step";
 import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
+import { useStepClipboard } from "@/modules/ee/workflows/hooks/use-step-clipboard";
 import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
 import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
 import {
@@ -22,6 +23,7 @@ import {
   type TWorkflowNodeData,
   canMutateCanvasAtom,
   countStepsOnBranches,
+  cutWorkflowStepIdsAtom,
   deleteWorkflowNodeAtom,
   workflowCanvasDirectionAtom,
   workflowDefinitionAtom,
@@ -36,6 +38,7 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { BranchEndMarker } from "./branch-end-marker";
 import { BranchLabel } from "./branch-label";
+import { StepClipboardMenuItems } from "./step-clipboard-menu-items";
 import { WorkflowAddStepMenu } from "./workflow-add-step-menu";
 import { HANDLE_CLASS_NAMES, WorkflowNodeCard } from "./workflow-node-card";
 
@@ -66,6 +69,8 @@ export const WorkflowBranchNode = memo(
     const { t } = useTranslation();
     const appendStep = useAppendWorkflowStep();
     const deleteNode = useSetAtom(deleteWorkflowNodeAtom);
+    const cutStepIds = useAtomValue(cutWorkflowStepIdsAtom);
+    const { paste, canPasteAt } = useStepClipboard();
     const store = useStore();
     const canMutate = useAtomValue(canMutateCanvasAtom);
     // While a run is open in the run drawer: the branch it took, filled; the other one greyed.
@@ -127,6 +132,7 @@ export const WorkflowBranchNode = memo(
         <WorkflowNodeCard
           data={data}
           selected={selected}
+          isCut={cutStepIds.has(id)}
           direction={isHorizontal ? "horizontal" : "vertical"}
           menu={
             canMutate && (
@@ -143,6 +149,7 @@ export const WorkflowBranchNode = memo(
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="motion-reduce:animate-none">
+                  <StepClipboardMenuItems nodeId={id} />
                   <DropdownMenuItem
                     onClick={(event) => {
                       event.stopPropagation();
@@ -235,6 +242,11 @@ export const WorkflowBranchNode = memo(
                               afterNodeType={data.nodeType}
                               ariaLabel={branch.addStepLabel}
                               onAdd={(stepType) => appendStep(id, stepType, branch.handle)}
+                              onPaste={
+                                canPasteAt({ sourceNodeId: id, branch: branch.handle })
+                                  ? () => paste({ sourceNodeId: id, branch: branch.handle })
+                                  : undefined
+                              }
                             />
                           </div>
                         ) : (
@@ -305,6 +317,11 @@ export const WorkflowBranchNode = memo(
                               afterNodeType={data.nodeType}
                               ariaLabel={branch.addStepLabel}
                               onAdd={(stepType) => appendStep(id, stepType, branch.handle)}
+                              onPaste={
+                                canPasteAt({ sourceNodeId: id, branch: branch.handle })
+                                  ? () => paste({ sourceNodeId: id, branch: branch.handle })
+                                  : undefined
+                              }
                             />
                           </div>
                         ) : (

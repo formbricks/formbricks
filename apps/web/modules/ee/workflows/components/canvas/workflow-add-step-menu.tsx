@@ -1,7 +1,15 @@
 "use client";
 
 import { useAtomValue } from "jotai";
-import { GitBranchIcon, GlobeIcon, type LucideIcon, MailIcon, PlusIcon, SplitIcon } from "lucide-react";
+import {
+  ClipboardPasteIcon,
+  GitBranchIcon,
+  GlobeIcon,
+  type LucideIcon,
+  MailIcon,
+  PlusIcon,
+  SplitIcon,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { WORKFLOW_LIMITS } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
@@ -28,6 +36,8 @@ interface WorkflowAddStepMenuProps {
   onAdd: (stepType: TAddableWorkflowStepType) => void;
   /** Told when the step picker opens or closes, e.g. to keep a hover-only `+` visible meanwhile. */
   onOpenChange?: (open: boolean) => void;
+  /** Set while something cut or copied can go here: the picker then offers "Paste here" first. */
+  onPaste?: () => void;
 }
 
 interface TStepOption {
@@ -38,15 +48,21 @@ interface TStepOption {
   description: string;
 }
 
-// The round `+` at the end of the workflow or of an If/else or Switch branch. It opens a step picker grouped as
-// Logic and Actions (ENG-7121), so the user consciously chooses each step. At the step limit the `+`
-// stays visible but disabled, with the reason on hover.
-export const WorkflowAddStepMenu = ({
+interface WorkflowStepPickerItemsProps {
+  afterNodeType: string;
+  onAdd: (stepType: TAddableWorkflowStepType) => void;
+  onPaste?: () => void;
+}
+
+/**
+ * The step picker's items: "Paste here" while something cut or copied can go there, then the steps
+ * grouped as Logic and Actions. Shared by the `+` buttons and a step's "Insert a step after" submenu.
+ */
+export const WorkflowStepPickerItems = ({
   afterNodeType,
-  ariaLabel,
   onAdd,
-  onOpenChange,
-}: Readonly<WorkflowAddStepMenuProps>) => {
+  onPaste,
+}: Readonly<WorkflowStepPickerItemsProps>) => {
   const { t } = useTranslation();
   const canAddStep = useAtomValue(canAddWorkflowStepAtom);
 
@@ -86,6 +102,7 @@ export const WorkflowAddStepMenu = ({
   const renderOption = (option: TStepOption) => (
     <DropdownMenuItem
       key={option.stepType}
+      disabled={!canAddStep}
       onClick={(event) => {
         event.stopPropagation();
         trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.actionAdded, {
@@ -108,20 +125,60 @@ export const WorkflowAddStepMenu = ({
     </DropdownMenuItem>
   );
 
+  return (
+    <>
+      {onPaste ? (
+        <>
+          <DropdownMenuItem
+            onClick={(event) => {
+              event.stopPropagation();
+              onPaste();
+            }}>
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+              <ClipboardPasteIcon className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
+            </span>
+            <span className="text-sm text-slate-700">{t("workspace.workflows.paste_here")}</span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+        </>
+      ) : null}
+      <DropdownMenuLabel>{t("workspace.workflows.logic")}</DropdownMenuLabel>
+      {logic.map(renderOption)}
+      <DropdownMenuSeparator />
+      <DropdownMenuLabel>{t("common.actions")}</DropdownMenuLabel>
+      {actions.map(renderOption)}
+    </>
+  );
+};
+
+// The round `+` at the end of the workflow or of an If/else or Switch branch. It opens a step picker grouped as
+// Logic and Actions (ENG-7121), so the user consciously chooses each step. At the step limit the `+`
+// stays visible but disabled, with the reason on hover.
+export const WorkflowAddStepMenu = ({
+  afterNodeType,
+  ariaLabel,
+  onAdd,
+  onOpenChange,
+  onPaste,
+}: Readonly<WorkflowAddStepMenuProps>) => {
+  const { t } = useTranslation();
+  const canAddStep = useAtomValue(canAddWorkflowStepAtom);
+
   const trigger = (
     <Button
       type="button"
       variant="outline"
       size="icon"
       aria-label={ariaLabel}
-      disabled={!canAddStep}
+      // A move adds no step, so a pending paste keeps the `+` usable at the step limit.
+      disabled={!canAddStep && !onPaste}
       className="size-6 rounded-full bg-white shadow-sm"
       onClick={(event) => event.stopPropagation()}>
       <PlusIcon />
     </Button>
   );
 
-  if (!canAddStep) {
+  if (!canAddStep && !onPaste) {
     return (
       // A disabled button gets no pointer events; the renderer's wrapping span carries the tooltip.
       <TooltipRenderer
@@ -136,11 +193,7 @@ export const WorkflowAddStepMenu = ({
     <DropdownMenu onOpenChange={onOpenChange}>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
       <DropdownMenuContent align="center" className="w-64 motion-reduce:animate-none">
-        <DropdownMenuLabel>{t("workspace.workflows.logic")}</DropdownMenuLabel>
-        {logic.map(renderOption)}
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel>{t("common.actions")}</DropdownMenuLabel>
-        {actions.map(renderOption)}
+        <WorkflowStepPickerItems afterNodeType={afterNodeType} onAdd={onAdd} onPaste={onPaste} />
       </DropdownMenuContent>
     </DropdownMenu>
   );

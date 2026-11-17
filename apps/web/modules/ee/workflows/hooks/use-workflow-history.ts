@@ -14,10 +14,12 @@ import {
 import { settleSentSecretValues } from "@/modules/ee/workflows/lib/http-request-panel";
 import {
   canEditWorkflowDefinitionAtom,
+  cancelWorkflowStepCutAtom,
   lastSecretSettleAtom,
   setWorkflowDefinitionAtom,
   workflowAtom,
   workflowDefinitionAtom,
+  workflowStepClipboardAtom,
 } from "@/modules/ee/workflows/state/editor";
 
 /**
@@ -81,7 +83,16 @@ export const useWorkflowHistory = () => {
     [canEdit, definition, history, setDefinition]
   );
 
-  const undo = useCallback(() => apply(undoStep), [apply]);
+  // Undo first puts back a cut that wasn't pasted, the last thing done; the next Undo undoes edits.
+  const clipboard = useAtomValue(workflowStepClipboardAtom);
+  const cancelCut = useSetAtom(cancelWorkflowStepCutAtom);
+  const undo = useCallback(() => {
+    if (clipboard?.mode === "cut") {
+      cancelCut();
+      return;
+    }
+    apply(undoStep);
+  }, [apply, cancelCut, clipboard]);
   const redo = useCallback(() => apply(redoStep), [apply]);
 
   useEffect(() => {
@@ -102,7 +113,7 @@ export const useWorkflowHistory = () => {
   return {
     undo,
     redo,
-    canUndo: canEdit && history.past.length > 0,
+    canUndo: canEdit && (history.past.length > 0 || clipboard?.mode === "cut"),
     canRedo: canEdit && history.future.length > 0,
   };
 };

@@ -11,7 +11,11 @@ import {
 import { useAtomValue } from "jotai";
 import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
 import { WORKFLOW_CANVAS_CONNECTOR } from "@/modules/ee/workflows/lib/canvas-geometry";
-import { type TWorkflowNodeData, workflowCanvasDirectionAtom } from "@/modules/ee/workflows/state/editor";
+import {
+  type TWorkflowNodeData,
+  cutWorkflowStepIdsAtom,
+  workflowCanvasDirectionAtom,
+} from "@/modules/ee/workflows/state/editor";
 import { BranchLabel } from "./branch-label";
 import { EdgeInsertButton } from "./edge-insert-button";
 
@@ -36,6 +40,7 @@ export const BranchEdge = ({
   // While a run is open in the run drawer: the branch it took, filled; the others greyed.
   const takenBranch = useEditorRunHighlight()?.takenBranchByStepId[source] ?? null;
   const isHorizontal = useAtomValue(workflowCanvasDirectionAtom) === "horizontal";
+  const isCut = useAtomValue(cutWorkflowStepIdsAtom).has(source);
 
   return (
     <>
@@ -46,6 +51,8 @@ export const BranchEdge = ({
         style={{
           stroke: WORKFLOW_CANVAS_CONNECTOR.color,
           strokeWidth: WORKFLOW_CANVAS_CONNECTOR.width,
+          // Inside a pending cut: faded with its steps.
+          ...(isCut ? { opacity: 0.4, strokeDasharray: "4 4" } : {}),
           ...style,
         }}
       />

@@ -21,6 +21,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { useWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
 import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
+import { useStepClipboardShortcuts } from "@/modules/ee/workflows/hooks/use-step-clipboard";
 import { useWorkflowWebhook } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import { resolveBoundTriggerSurvey } from "@/modules/ee/workflows/lib/bound-survey";
 import {
@@ -118,6 +119,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const toggleInspector = useSetAtom(toggleWorkflowInspectorAtom);
   const closeNodeConfig = useSetAtom(closeWorkflowNodeConfigModalAtom);
   const setHoveredEdgeId = useSetAtom(hoveredWorkflowEdgeIdAtom);
+  useStepClipboardShortcuts();
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
   const setFlowNodes = useSetAtom(workflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);

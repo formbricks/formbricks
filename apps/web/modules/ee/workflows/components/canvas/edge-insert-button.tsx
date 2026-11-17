@@ -6,6 +6,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { useInsertWorkflowStepOnEdge } from "@/modules/ee/workflows/hooks/use-append-workflow-step";
+import { useStepClipboard } from "@/modules/ee/workflows/hooks/use-step-clipboard";
 import { type TWorkflowNodeData, canMutateCanvasAtom } from "@/modules/ee/workflows/state/editor";
 import { WorkflowAddStepMenu } from "./workflow-add-step-menu";
 
@@ -30,6 +31,7 @@ export const EdgeInsertButton = ({ edgeId, source, x, y }: Readonly<EdgeInsertBu
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const sourceNode = useNodesData<Node<TWorkflowNodeData>>(source);
   const insertStep = useInsertWorkflowStepOnEdge();
+  const { paste, canPasteAt } = useStepClipboard();
 
   if (!canMutate) return null;
   const isVisible = isLineHovered || isHovered || isMenuOpen;
@@ -49,6 +51,7 @@ export const EdgeInsertButton = ({ edgeId, source, x, y }: Readonly<EdgeInsertBu
           ariaLabel={t("workspace.workflows.insert_step")}
           onOpenChange={setIsMenuOpen}
           onAdd={(stepType) => insertStep(edgeId, source, stepType)}
+          onPaste={canPasteAt({ edgeId }) ? () => paste({ edgeId }) : undefined}
         />
       </div>
     </EdgeLabelRenderer>

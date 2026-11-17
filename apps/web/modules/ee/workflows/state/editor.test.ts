@@ -13,9 +13,13 @@ import {
   canAddWorkflowStepAtom,
   canEditWorkflowDefinitionAtom,
   canMutateCanvasAtom,
+  cancelWorkflowStepCutAtom,
   clearWorkflowNodeFieldFocusAtom,
   closeWorkflowNodeConfigModalAtom,
+  copyWorkflowStepAtom,
   countStepsOnBranches,
+  cutWorkflowStepAtom,
+  cutWorkflowStepIdsAtom,
   deleteWorkflowNodeAtom,
   deriveTriggerEndingProblems,
   deriveWorkflowValidation,
@@ -32,6 +36,7 @@ import {
   isWorkflowTransitioningAtom,
   markWorkflowDraftSavedAtom,
   openWorkflowNodeConfigModalAtom,
+  pasteWorkflowStepsAtom,
   requestWorkflowNodeFieldFocusAtom,
   selectedWorkflowNodeIdAtom,
   setSelectedWorkflowNodeIdAtom,
@@ -54,6 +59,7 @@ import {
   workflowNameAtom,
   workflowNodeFieldFocusRequestAtom,
   workflowSaveErrorAtom,
+  workflowStepClipboardAtom,
   workflowValidationProblemsAtom,
   workflowValidityAtom,
 } from "./editor";
@@ -1247,5 +1253,72 @@ describe("deleting an If/else", () => {
   test("counts the steps on its branches for the confirmation", () => {
     expect(countStepsOnBranches(branchedDefinition(), "if-1")).toBe(3);
     expect(countStepsOnBranches(branchedDefinition(), "before")).toBe(0);
+  });
+});
+
+describe("step clipboard", () => {
+  const chain = () =>
+    ({
+      ...graphDefinition(),
+      nodes: [
+        { id: "n1", type: "action", ui: { position: { x: 100, y: 100 } } },
+        { id: "n2", type: "action", ui: { position: { x: 100, y: 300 } } },
+      ],
+      edges: [
+        { id: "e1", source: "trigger-1", target: "n1" },
+        { id: "e2", source: "n1", target: "n2" },
+      ],
+    }) as unknown as TWorkflowDefinition;
+
+  const loaded = () => {
+    const store = createStore();
+    store.set(hydrateWorkflowEditorAtom, {
+      workflow: { ...workflow, definition: chain() } as unknown as TWorkflowResource,
+      flowNodes: [],
+      isReadOnly: false,
+    });
+    return store;
+  };
+
+  test("cut fades the step and every step after it; Escape (cancel) puts them back", () => {
+    const store = loaded();
+    store.set(cutWorkflowStepAtom, "n1");
+    expect([...store.get(cutWorkflowStepIdsAtom)]).toEqual(["n1", "n2"]);
+    store.set(cancelWorkflowStepCutAtom);
+    expect(store.get(cutWorkflowStepIdsAtom).size).toBe(0);
+  });
+
+  test("the clipboard holds one thing: a new cut or a copy puts the previous cut back", () => {
+    const store = loaded();
+    store.set(cutWorkflowStepAtom, "n1");
+    store.set(cutWorkflowStepAtom, "n2");
+    expect([...store.get(cutWorkflowStepIdsAtom)]).toEqual(["n2"]);
+    store.set(copyWorkflowStepAtom, "n2");
+    expect(store.get(cutWorkflowStepIdsAtom).size).toBe(0);
+    expect(store.get(workflowStepClipboardAtom)?.mode).toBe("copy");
+  });
+
+  test("the trigger can't be cut or copied", () => {
+    const store = loaded();
+    store.set(cutWorkflowStepAtom, "trigger-1");
+    store.set(copyWorkflowStepAtom, "trigger-1");
+    expect(store.get(workflowStepClipboardAtom)).toBeNull();
+  });
+
+  test("pasting a cut moves it, opens it and empties the clipboard; a copy stays for another paste", () => {
+    const store = loaded();
+    store.set(cutWorkflowStepAtom, "n2");
+    const moved = store.set(pasteWorkflowStepsAtom, { target: { edgeId: "e1" }, copyLabel: () => "copy" });
+    expect(moved).toEqual({ ok: true, stepCount: 1, mode: "cut" });
+    const def = store.get(workflowDefinitionAtom)!;
+    expect(def.edges.some((edge) => edge.source === "trigger-1" && edge.target === "n2")).toBe(true);
+    expect(def.edges.some((edge) => edge.source === "n2" && edge.target === "n1")).toBe(true);
+    expect(store.get(selectedWorkflowNodeIdAtom)).toBe("n2");
+    expect(store.get(workflowStepClipboardAtom)).toBeNull();
+
+    store.set(copyWorkflowStepAtom, "n1");
+    store.set(pasteWorkflowStepsAtom, { target: { sourceNodeId: "n1" }, copyLabel: () => "copy" });
+    store.set(pasteWorkflowStepsAtom, { target: { sourceNodeId: "n1" }, copyLabel: () => "copy" });
+    expect(store.get(workflowDefinitionAtom)!.nodes).toHaveLength(4);
   });
 });
