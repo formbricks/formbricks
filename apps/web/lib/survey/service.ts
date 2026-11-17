@@ -1135,9 +1135,11 @@ export const updateSurveyInternal = async (
         // status predicate alone would still match. That P2025 is the guard's own refusal, not a
         // database failure — the outer catch would otherwise report a 500. It also covers the row being
         // deleted in the same window, which shares this refusal because none of the cases match the
-        // predicate. This is the one refusal that ranks after the segment writes above, which run
-        // outside this transaction: a save that loses the race keeps its intended targeting change,
-        // where under any other refusal the segment is untouched.
+        // predicate. Like `assertNoLinkedCreatives` above, this refusal comes after the segment writes,
+        // which run outside this transaction and stay committed when it fires. Those writes can update
+        // the segment's filters, link the survey to a segment, or disconnect and delete its private
+        // segment on a type change, so a save that loses the race still changes the targeting of a
+        // survey that is now published or archived.
         try {
           await tx.survey.update({
             where: skipValidation
