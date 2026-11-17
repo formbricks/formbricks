@@ -62,12 +62,13 @@ export const lockConsents = (
  *
  * The provider stamps `updatedAt` to the second, so rows written in the same second can't be ordered by
  * it. `isLatestWrite` then names the row the caller knows was just written; without one, the bound is
- * what every tied row allows, which can only ever be narrower than the user meant.
+ * what every tied row allows, which can only ever be narrower than the user meant. Authorized apps lists
+ * a client's cap by the same rule (`authorized-clients.ts`), so Edit never offers what Save refuses.
  */
-export const consentBound = (
-  consents: TConsentRow[],
-  isLatestWrite?: (consent: TConsentRow) => boolean
-): { scopes: string[]; newest: TConsentRow } | null => {
+export const consentBound = <TRow extends Pick<TConsentRow, "scopes" | "updatedAt">>(
+  consents: ReadonlyArray<TRow>,
+  isLatestWrite?: (consent: TRow) => boolean
+): { scopes: string[]; newest: TRow } | null => {
   if (consents.length === 0) return null;
   const newestAt = Math.max(...consents.map((consent) => consent.updatedAt.getTime()));
   const newest = consents.filter((consent) => consent.updatedAt.getTime() === newestAt);

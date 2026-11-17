@@ -16,6 +16,8 @@ import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { queueAuditEvent, queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
+import { listAuthorizedMcpClients } from "./authorized-clients";
+import { MAX_LISTED_AUTHORIZED_MCP_CLIENTS } from "./constants";
 import { getMcpGrant } from "./grant-store";
 import { MCP_PERMISSIONS } from "./permissions";
 
@@ -169,6 +171,54 @@ describe("Authorized apps' Edit", () => {
       cap: { surveys: "write", creatives: "write", surveyStyling: "write", responses: "read", tags: "read" },
     });
     expect(byClient[secondClientId]).toMatchObject({ permissions: { charts: "read", dashboards: "read" } });
+  });
+
+  // N7: past the list's cap, a client's consent is read again in full: every row tied at its newest, as
+  // a save reads them, so Edit offers the cap Save holds the grant to.
+  test("caps a client the list's cap cut short by what its tied consents allow, as Save does", async () => {
+    // Newer than the cut client's consents, so the capped read lists them first; older than its grant,
+    // which keeps the cut client in the list.
+    const recent = new Date("2025-01-01T00:00:00Z");
+    const listed = Array.from({ length: MAX_LISTED_AUTHORIZED_MCP_CLIENTS }, (_unused, index) => ({
+      clientId: `listed-${index.toString()}`,
+      redirectUris: ["http://127.0.0.1/callback"],
+    }));
+    await prisma.oauthClient.createMany({ data: [...listed, { clientId: "cut", redirectUris: [] }] });
+    await prisma.oauthConsent.createMany({
+      data: listed.map(({ clientId }) => ({
+        clientId,
+        userId: setup.userId,
+        scopes: ["openid"],
+        createdAt: recent,
+        updatedAt: recent,
+      })),
+    });
+    const tied = new Date("2024-06-01T00:00:00Z");
+    await prisma.oauthConsent.createMany({
+      data: [
+        // A pick of one tied row by id would take this one's Surveys: Write.
+        { id: "cut-consent-z", scopes: ["surveys:write", "responses:read"], updatedAt: tied },
+        { id: "cut-consent-a", scopes: ["responses:read"], updatedAt: tied },
+        {
+          id: "cut-consent-old",
+          scopes: ["surveys:write", "responses:write"],
+          updatedAt: new Date("2024-01-01T00:00:00Z"),
+        },
+      ].map((row) => ({ ...row, clientId: "cut", userId: setup.userId, createdAt: row.updatedAt })),
+    });
+    await prisma.mcpGrant.create({
+      data: { userId: setup.userId, clientId: "cut", permissions: { responses: "read" } },
+    });
+
+    const clients = await listAuthorizedMcpClients(setup.userId, {
+      isDashboardViewer: false,
+      accessOptions: { organizations: [], workspaces: [] },
+    });
+
+    expect(clients.find(({ clientId }) => clientId === "cut")?.cap).toEqual({
+      responses: "read",
+      tags: "read",
+    });
   });
 
   test("narrowing applies to the next call, with a token minted before the edit, and is audited", async () => {

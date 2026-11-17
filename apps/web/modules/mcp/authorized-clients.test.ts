@@ -12,7 +12,10 @@ import {
   writeMcpGrant,
 } from "./grant-store";
 
-vi.mock("@/modules/auth/lib/oauth-consent-rows", () => ({ readConsentedScopes: vi.fn() }));
+vi.mock("@/modules/auth/lib/oauth-consent-rows", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/auth/lib/oauth-consent-rows")>()),
+  readConsentedScopes: vi.fn(),
+}));
 vi.mock("./access-options", () => ({ readMcpGrantReadableWorkspaceIds: vi.fn() }));
 vi.mock("./grant-store", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./grant-store")>()),
@@ -96,9 +99,19 @@ describe("listAuthorizedMcpClients", () => {
 
   test("folds duplicate consents into one client, keeping the newest's scopes and the oldest's date", async () => {
     prisma.oauthConsent.findMany.mockResolvedValue([
-      consent({ id: "consent-new", scopes: ["surveys:write"], createdAt: at("2026-03-01T00:00:00Z") }),
+      consent({
+        id: "consent-new",
+        scopes: ["surveys:write"],
+        createdAt: at("2026-03-01T00:00:00Z"),
+        updatedAt: at("2026-03-02T00:00:00Z"),
+      }),
+      consent({
+        id: "consent-mid",
+        scopes: ["surveys:read"],
+        createdAt: at("2026-02-01T00:00:00Z"),
+        updatedAt: at("2026-02-02T00:00:00Z"),
+      }),
       consent({ id: "consent-old", scopes: ["surveys:read"], createdAt: at("2026-01-01T00:00:00Z") }),
-      consent({ id: "consent-mid", scopes: ["surveys:read"], createdAt: at("2026-02-01T00:00:00Z") }),
     ] as never);
 
     const [client, ...rest] = await list();
@@ -115,6 +128,21 @@ describe("listAuthorizedMcpClients", () => {
     expect(prisma.oauthConsent.findMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: { userId: USER_ID } })
     );
+  });
+
+  // Two rows written in the same second can't be ordered: Save holds the grant to what both allow
+  // (`consentBound`), so the cap Edit offers is the same, never Write that Save then refuses.
+  test("caps a client whose newest consents tie at what every tied row allows, as a save does", async () => {
+    prisma.oauthConsent.findMany.mockResolvedValue([
+      consent({ id: "consent-b", scopes: ["surveys:write", "responses:read"] }),
+      consent({ id: "consent-a", scopes: ["responses:read"] }),
+      consent({ id: "consent-old", scopes: ["surveys:write"], updatedAt: at("2026-01-01T00:00:00Z") }),
+    ] as never);
+
+    const [client] = await list();
+
+    // Not Surveys: Write, which only the row with the higher id allows.
+    expect(client.cap).toEqual({ responses: "read", tags: "read" });
   });
 
   test("reads the grants of the listed clients, and every other grant of the user, newest first", async () => {
@@ -274,8 +302,15 @@ describe("listAuthorizedMcpClients", () => {
       consent({ id: `consent-${index.toString()}`, clientId: `client-${index.toString()}` })
     );
     prisma.oauthConsent.findMany.mockResolvedValueOnce(listed as never);
-    // One row per client, the newest, chosen in the database: a client's duplicate consents cost one row.
-    prisma.$queryRaw.mockResolvedValue([{ clientId: "client-omitted", scopes: ["surveys:write"] }] as never);
+    // Every row tied at each client's newest, chosen in the database: duplicates of another second cost none.
+    prisma.$queryRaw.mockResolvedValue([
+      { clientId: "client-omitted", scopes: ["surveys:write"], updatedAt: at("2026-05-01T00:00:00Z") },
+      {
+        clientId: "client-omitted",
+        scopes: ["surveys:write", "responses:read"],
+        updatedAt: at("2026-05-01T00:00:00Z"),
+      },
+    ] as never);
     grants(
       [],
       [

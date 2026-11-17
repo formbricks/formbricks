@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewer-oauth-scopes";
-import { readConsentedScopes } from "@/modules/auth/lib/oauth-consent-rows";
+import { consentBound, readConsentedScopes } from "@/modules/auth/lib/oauth-consent-rows";
 import { readMcpGrantReadableWorkspaceIds } from "./access-options";
 import { MAX_LISTED_AUTHORIZED_MCP_CLIENTS } from "./constants";
 import {
@@ -80,28 +80,55 @@ const capScopes = (
   consentedScopes: string[]
 ): string[] => (client.skipConsent ? client.scopes : consentedScopes);
 
+type TConsentScopes = { scopes: string[]; updatedAt: Date };
+
+/** The scopes a client's consent rows allow, by the rule a save holds a grant to ({@link consentBound}). */
+const consentedScopesOf = (rows: ReadonlyArray<TConsentScopes>): string[] => consentBound(rows)?.scopes ?? [];
+
 /**
- * Past the cap, a grant read as unconsented may belong to a client whose consent the capped read left
- * out: its cap comes from that consent, not from none. Reads those consents' current scopes by client,
- * only then, one row per client chosen in the database; below the cap there is nothing left out, and
- * nothing is read. The read is bounded by the requested clients, never by every consent the user gave.
+ * Each client's consent rows tied at its newest `updatedAt`: every row {@link consentBound} decides on, so
+ * duplicate rows written in the same second are intersected here as a save intersects them. Bounded by
+ * the clients asked for; a client's tied rows are the few concurrent first approvals can insert.
  */
-const readOmittedConsentScopes = async (
+const readNewestConsents = async (
   userId: string,
-  listedConsents: number,
+  clientIds: ReadonlyArray<string>
+): Promise<ReadonlyMap<string, TConsentScopes[]>> => {
+  const byClient = new Map<string, TConsentScopes[]>();
+  if (clientIds.length === 0) return byClient;
+  const rows = await prisma.$queryRaw<({ clientId: string } & TConsentScopes)[]>`
+    SELECT c."clientId", c."scopes", c."updatedAt"
+    FROM "oauthConsent" c
+    WHERE c."userId" = ${userId} AND c."clientId" IN (${Prisma.join([...clientIds])})
+      AND c."updatedAt" = (
+        SELECT max(n."updatedAt") FROM "oauthConsent" n
+        WHERE n."userId" = c."userId" AND n."clientId" = c."clientId"
+      )`;
+  for (const { clientId, ...row } of rows) byClient.set(clientId, [...(byClient.get(clientId) ?? []), row]);
+  return byClient;
+};
+
+/**
+ * The clients whose consent rows the capped read may have cut short, read in full ({@link
+ * readNewestConsents}); none below the cap. Past it, the clients with a listed row stamped as the last
+ * listed one, whose rows tied with it can lie beyond the cap (rows are listed newest first, so a client's
+ * rows stamped later are all listed), and the clients of grants read as unconsented, whose consent the
+ * capped read left out: their cap comes from that consent, not from none. The read is bounded by those
+ * clients, never by every consent the user gave.
+ */
+const readCutConsents = (
+  userId: string,
+  listed: ReadonlyArray<{ clientId: string; updatedAt: Date }>,
   unconsentedGrants: ReadonlyArray<{ clientId: string }>
-): Promise<ReadonlyMap<string, string[]>> => {
-  const scopes = new Map<string, string[]>();
-  if (listedConsents < MAX_LISTED_AUTHORIZED_MCP_CLIENTS || unconsentedGrants.length === 0) return scopes;
-  const clientIds = unconsentedGrants.map(({ clientId }) => clientId);
-  // DISTINCT ON keeps the newest consent of each client, so a client with duplicate rows costs one row.
-  const consents = await prisma.$queryRaw<{ clientId: string; scopes: string[] }[]>`
-    SELECT DISTINCT ON ("clientId") "clientId", "scopes"
-    FROM "oauthConsent"
-    WHERE "userId" = ${userId} AND "clientId" IN (${Prisma.join(clientIds)})
-    ORDER BY "clientId", "updatedAt" DESC, "id" DESC`;
-  for (const consent of consents) scopes.set(consent.clientId, consent.scopes);
-  return scopes;
+): Promise<ReadonlyMap<string, TConsentScopes[]>> => {
+  const last = listed.at(-1);
+  if (listed.length < MAX_LISTED_AUTHORIZED_MCP_CLIENTS || !last) return readNewestConsents(userId, []);
+  const atBoundary = listed
+    .filter(({ updatedAt }) => updatedAt.getTime() === last.updatedAt.getTime())
+    .map(({ clientId }) => clientId);
+  return readNewestConsents(userId, [
+    ...new Set([...atBoundary, ...unconsentedGrants.map(({ clientId }) => clientId)]),
+  ]);
 };
 
 /**
@@ -110,9 +137,9 @@ const readOmittedConsentScopes = async (
  * `skipConsent` client, which never has a consent, capped by its registered scopes; or a client left with a
  * grant and no consent (switched off `skipConsent` after it was authorized), capped at nothing until the
  * user approves it again. Three reads up to the cap: the consents with their clients, then, side by
- * side, the grants of those clients and the user's other grants; past it, a fourth reads the consents of
- * those other grants' clients. Duplicate consent rows of one client
- * fold into one entry.
+ * side, the grants of those clients and the user's other grants; past it, a fourth reads the consents the
+ * cap cut short. Duplicate consent rows of one client fold into one entry, capped as a save caps it: by
+ * what every row tied at the newest allows.
  */
 export const listAuthorizedMcpClients = async (
   userId: string,
@@ -146,29 +173,32 @@ export const listAuthorizedMcpClients = async (
       take: MAX_LISTED_AUTHORIZED_MCP_CLIENTS,
     }),
   ]);
-  const omittedScopes = await readOmittedConsentScopes(userId, consents.length, unconsentedGrants);
+  const cutConsents = await readCutConsents(userId, consents, unconsentedGrants);
   const grantByClient = new Map(consentedGrants.map((grant) => [grant.clientId, grant]));
   const accessOf = (grant: TMcpGrantAccessRow) =>
     limitMcpGrantAccessToOptions(readMcpGrantAccessSelection(grant), accessOptions);
 
-  const clients = new Map<string, TAuthorizedMcpClient>();
+  const rowsByClient = new Map<string, typeof consents>();
   for (const consent of consents) {
-    const existing = clients.get(consent.clientId);
-    if (existing) {
-      // Rows come newest first, so the first one seen holds the consent's current scopes.
-      if (consent.createdAt < existing.connectedAt) existing.connectedAt = consent.createdAt;
-      continue;
-    }
-    const grant = grantByClient.get(consent.clientId);
-    clients.set(consent.clientId, {
-      clientId: consent.clientId,
-      clientName: consent.client.name,
-      clientUri: consent.client.uri,
-      connectedAt: consent.createdAt,
-      updatedAt: grant ? latest(consent.updatedAt, grant.updatedAt) : consent.updatedAt,
+    rowsByClient.set(consent.clientId, [...(rowsByClient.get(consent.clientId) ?? []), consent]);
+  }
+  const clients = new Map<string, TAuthorizedMcpClient>();
+  for (const [clientId, rows] of rowsByClient) {
+    // Rows come newest first: the first holds the client and the consent's last change.
+    const [newest] = rows;
+    const grant = grantByClient.get(clientId);
+    clients.set(clientId, {
+      clientId,
+      clientName: newest.client.name,
+      clientUri: newest.client.uri,
+      connectedAt: new Date(Math.min(...rows.map(({ createdAt }) => createdAt.getTime()))),
+      updatedAt: grant ? latest(newest.updatedAt, grant.updatedAt) : newest.updatedAt,
       permissions: grant ? parseMcpGrantPermissions(grant.permissions) : null,
       access: grant ? accessOf(grant) : null,
-      cap: capForScopes(capScopes(consent.client, consent.scopes), isDashboardViewer),
+      cap: capForScopes(
+        capScopes(newest.client, consentedScopesOf(cutConsents.get(clientId) ?? rows)),
+        isDashboardViewer
+      ),
       grantUpdatedAt: grant?.updatedAt ?? null,
     });
   }
@@ -181,7 +211,10 @@ export const listAuthorizedMcpClients = async (
       updatedAt: grant.updatedAt,
       permissions: parseMcpGrantPermissions(grant.permissions),
       access: accessOf(grant),
-      cap: capForScopes(capScopes(grant.client, omittedScopes.get(grant.clientId) ?? []), isDashboardViewer),
+      cap: capForScopes(
+        capScopes(grant.client, consentedScopesOf(cutConsents.get(grant.clientId) ?? [])),
+        isDashboardViewer
+      ),
       grantUpdatedAt: grant.updatedAt,
     });
   }
