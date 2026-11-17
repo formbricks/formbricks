@@ -658,10 +658,8 @@ describe("createV3SurveyResponse", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(authResult);
-    vi.mocked(createV3Survey).mockResolvedValue(survey as Awaited<ReturnType<typeof createV3Survey>>);
-    vi.mocked(serializeV3SurveyResource).mockReturnValue(
-      serializedSurvey as ReturnType<typeof serializeV3SurveyResource>
-    );
+    vi.mocked(createV3Survey, { partial: true }).mockResolvedValue(survey);
+    vi.mocked(serializeV3SurveyResource, { partial: true }).mockReturnValue(serializedSurvey);
   });
 
   test("creates a survey, serializes it, and enriches the audit log", async () => {

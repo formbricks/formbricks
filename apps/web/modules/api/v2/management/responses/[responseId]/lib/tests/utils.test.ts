@@ -1,6 +1,6 @@
 import { fileUploadQuestion, openTextQuestion, responseData, workspaceId } from "./__mocks__/utils.mock";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { Response } from "@formbricks/database/prisma";
+import { Response, Survey } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { okVoid } from "@formbricks/types/error-handlers";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
@@ -23,7 +23,7 @@ vi.mock("@/modules/storage/service", () => ({
 }));
 
 // The delete helper takes a survey shape ({ blocks, questions }); most cases here only use questions.
-const questionsSurvey = (questions: unknown[]) => ({ questions, blocks: [] });
+const questionsSurvey = (questions: Survey["questions"]) => ({ questions, blocks: [] });
 const surveyId = "kbr8tnr2q2vgztyrfnqlgfjt";
 
 describe("findAndDeleteUploadedFilesInResponse", () => {

@@ -12,7 +12,10 @@ Every `packages/*` workspace therefore exposes the standard `typecheck` / `test`
 scripts (plus `build` where there is a compile step). Lint is not per package: oxlint lints the whole
 repo in one run from the root (the `//#lint:code` Turbo task), checking each file against the nearest
 `oxlint.config.ts`, so a new workspace needs that file rather than a script. The task depends on the
-builds whose published types the type-aware rules read, and is not cached: the lint takes seconds. Deliberate exceptions:
+builds whose published types the type-aware rules read (at least every build `@formbricks/web#typecheck`
+depends on, which `scripts/lint-builds.test.ts` checks), and is not cached. The pre-commit hook builds
+nothing first: in a fresh clone it can fail on types it could not resolve, and then names the missing
+builds. Deliberate exceptions:
 `config-*` packages hold only config files (no scripts beyond `clean`); `api-v3-schemas`, `creatives`,
 `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`; `apps/storybook` has no
 unit tests by policy (its components are exercised by the feature journeys in `apps/web/playwright`).

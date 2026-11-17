@@ -415,14 +415,12 @@ describe("Contacts Lib", () => {
       vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 1 });
 
       // email and userId already exist as default keys; only "name" is new
-      vi.mocked(prisma.contactAttributeKey.findMany)
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
         .mockResolvedValueOnce([
           { key: "email", id: "key-1", dataType: "string" },
           { key: "userId", id: "key-2", dataType: "string" },
-        ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>)
-        .mockResolvedValueOnce([{ key: "name", id: "key-3", dataType: "string" }] as Awaited<
-          ReturnType<typeof prisma.contactAttributeKey.findMany>
-        >);
+        ])
+        .mockResolvedValueOnce([{ key: "name", id: "key-3", dataType: "string" }]);
 
       const mockCreatedContact = {
         id: "new-contact-1",
@@ -449,14 +447,12 @@ describe("Contacts Lib", () => {
       ]);
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
       // email and userId already exist as default keys; only "name" is new
-      vi.mocked(prisma.contactAttributeKey.findMany)
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
         .mockResolvedValueOnce([
           { key: "email", id: "key-1", dataType: "string" },
           { key: "userId", id: "key-2", dataType: "string" },
-        ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>)
-        .mockResolvedValueOnce([{ key: "name", id: "key-3", dataType: "string" }] as Awaited<
-          ReturnType<typeof prisma.contactAttributeKey.findMany>
-        >);
+        ])
+        .mockResolvedValueOnce([{ key: "name", id: "key-3", dataType: "string" }]);
       vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 1 });
 
       const result = await createContactsFromCSV(csvData, mockWorkspaceId, "skip", attributeMap);
@@ -478,14 +474,12 @@ describe("Contacts Lib", () => {
         existingContact,
       ]);
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.contactAttributeKey.findMany)
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
         .mockResolvedValueOnce([
           { key: "email", id: "key-1" },
           { key: "userId", id: "key-2" },
-        ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>)
-        .mockResolvedValueOnce([{ key: "name", id: "key-3" }] as Awaited<
-          ReturnType<typeof prisma.contactAttributeKey.findMany>
-        >);
+        ])
+        .mockResolvedValueOnce([{ key: "name", id: "key-3" }]);
       vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 1 });
       vi.mocked(prisma.contact.update, { partial: true, deep: true }).mockResolvedValue(existingContact);
 
@@ -508,14 +502,12 @@ describe("Contacts Lib", () => {
         existingContact,
       ]);
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.contactAttributeKey.findMany)
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
         .mockResolvedValueOnce([
           { key: "email", id: "key-1" },
           { key: "userId", id: "key-2" },
-        ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>)
-        .mockResolvedValueOnce([{ key: "name", id: "key-3" }] as Awaited<
-          ReturnType<typeof prisma.contactAttributeKey.findMany>
-        >);
+        ])
+        .mockResolvedValueOnce([{ key: "name", id: "key-3" }]);
       vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 1 });
       vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 2 });
       vi.mocked(prisma.contact.update, { partial: true, deep: true }).mockResolvedValue(existingContact);
@@ -530,11 +522,9 @@ describe("Contacts Lib", () => {
       const attributeMap = { userId: "userId", name: "name" };
 
       vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
-      vi.mocked(prisma.contactAttributeKey.findMany)
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
         .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([{ key: "userid", id: "key-1" }] as Awaited<
-          ReturnType<typeof prisma.contactAttributeKey.findMany>
-        >);
+        .mockResolvedValueOnce([{ key: "userid", id: "key-1" }]);
 
       await expect(
         createContactsFromCSV(
@@ -552,9 +542,9 @@ describe("Contacts Lib", () => {
 
       vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
-      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce([
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         { key: "email", id: "key-1", dataType: "string" },
-      ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>);
+      ]);
 
       await expect(
         createContactsFromCSV(
@@ -586,14 +576,12 @@ describe("Contacts Lib", () => {
       vi.mocked(prisma.contact.findMany).mockResolvedValueOnce([]);
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
       // email and userId already exist as default keys; only "name" is new
-      vi.mocked(prisma.contactAttributeKey.findMany)
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
         .mockResolvedValueOnce([
           { key: "email", id: "key-1", dataType: "string" },
           { key: "userId", id: "key-2", dataType: "string" },
-        ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>)
-        .mockResolvedValueOnce([{ key: "name", id: "key-3", dataType: "string" }] as Awaited<
-          ReturnType<typeof prisma.contactAttributeKey.findMany>
-        >);
+        ])
+        .mockResolvedValueOnce([{ key: "name", id: "key-3", dataType: "string" }]);
       vi.mocked(prisma.contactAttributeKey.createMany).mockResolvedValue({ count: 1 });
       vi.mocked(prisma.contact.create).mockResolvedValue({
         id: "new-1",
@@ -615,10 +603,10 @@ describe("Contacts Lib", () => {
 
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValue([]);
       // Email and UserId already exist (case-insensitive matching via lowercaseToActualKeyMap)
-      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValueOnce([
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         { key: "email", id: "key-1", dataType: "string" },
         { key: "UserId", id: "key-2", dataType: "string" },
-      ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>);
+      ]);
       vi.mocked(prisma.contact.create).mockResolvedValue({
         id: "new-1",
         workspaceId: mockWorkspaceId,
@@ -653,12 +641,12 @@ describe("Contacts Lib", () => {
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([conflictingUserId] as Awaited<
         ReturnType<typeof prisma.contactAttribute.findMany>
       >);
-      vi.mocked(prisma.contactAttributeKey.findMany)
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
         .mockResolvedValueOnce([
           { key: "email", id: "key-1" },
           { key: "userId", id: "key-2" },
-        ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>)
-        .mockResolvedValueOnce([] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>);
+        ])
+        .mockResolvedValueOnce([]);
 
       vi.mocked(prisma.contact.update, { partial: true, deep: true }).mockResolvedValue(existingContact);
 
@@ -691,12 +679,12 @@ describe("Contacts Lib", () => {
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([conflictingUserId] as Awaited<
         ReturnType<typeof prisma.contactAttribute.findMany>
       >);
-      vi.mocked(prisma.contactAttributeKey.findMany)
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
         .mockResolvedValueOnce([
           { key: "email", id: "key-1" },
           { key: "userId", id: "key-2" },
-        ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>)
-        .mockResolvedValueOnce([] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>);
+        ])
+        .mockResolvedValueOnce([]);
 
       vi.mocked(prisma.contactAttribute.deleteMany).mockResolvedValue({ count: 2 });
       vi.mocked(prisma.contact.update, { partial: true, deep: true }).mockResolvedValue(existingContact);
@@ -726,12 +714,12 @@ describe("Contacts Lib", () => {
         existingContact,
       ]);
       vi.mocked(prisma.contactAttribute.findMany).mockResolvedValueOnce([]);
-      vi.mocked(prisma.contactAttributeKey.findMany)
+      vi.mocked(prisma.contactAttributeKey.findMany, { partial: true, deep: true })
         .mockResolvedValueOnce([
           { key: "email", id: "key-1" },
           { key: "userId", id: "key-2" },
-        ] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>)
-        .mockResolvedValueOnce([] as Awaited<ReturnType<typeof prisma.contactAttributeKey.findMany>>);
+        ])
+        .mockResolvedValueOnce([]);
 
       vi.mocked(prisma.contact.update, { partial: true, deep: true }).mockResolvedValue(existingContact);
 
@@ -914,8 +902,8 @@ describe("Contacts Lib", () => {
         ok: true,
         data: { whereClause: { workspaceId: mockWorkspaceId } },
       } as unknown as Awaited<ReturnType<typeof segmentFilterToPrismaQuery>>);
-      vi.mocked(prisma.contact.findMany).mockResolvedValue(
-        mockPrismaContactData as unknown as Awaited<ReturnType<typeof prisma.contact.findMany>>
+      vi.mocked(prisma.contact.findMany, { partial: true, deep: true }).mockResolvedValue(
+        mockPrismaContactData
       );
       vi.mocked(getContactSurveyLink).mockResolvedValue({
         ok: false,
@@ -995,10 +983,10 @@ describe("Contacts Lib", () => {
         vi.mocked(prisma.contact.findMany).mockResolvedValue([
           { id: "contact-restricted-respondent", attributes: [] },
         ] as unknown as Awaited<ReturnType<typeof prisma.contact.findMany>>);
-        vi.mocked(getContactSurveyLink).mockResolvedValue({
+        vi.mocked(getContactSurveyLink, { partial: true }).mockResolvedValue({
           ok: true,
           data: "https://survey.com/c/t",
-        } as unknown as Awaited<ReturnType<typeof getContactSurveyLink>>);
+        });
       };
 
       /** The clause a member's hidden surveys are found by: restricted and owned by someone else. */
