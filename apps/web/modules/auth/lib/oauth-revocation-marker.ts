@@ -49,7 +49,8 @@ export const isIssuedBeforeRevocation = (issuedAt: number, revokedAt: number | n
 /** As long as a code issued before the revocation can live, and a little longer. */
 const REVOCATION_MARK_TTL_SECONDS = MCP_OAUTH_CODE_EXPIRES_IN_SECONDS + REVOCATION_MARK_SKEW_SECONDS;
 
-const markKey = (userId: string, clientId?: string): string =>
+/** The Redis key of the mark for the user's codes: one client's, or every client's without `clientId`. */
+export const oauthRevocationMarkKey = (userId: string, clientId?: string): string =>
   clientId ? `oauth-revoked:${userId}:${clientId}` : `oauth-revoked:${userId}`;
 
 /**
@@ -68,14 +69,18 @@ export const markOAuthRevocation = async ({
   userId: string;
   clientId?: string;
 }): Promise<void> => {
-  await redisSecondaryStorage.setMax(markKey(userId, clientId), Date.now(), REVOCATION_MARK_TTL_SECONDS);
+  await redisSecondaryStorage.setMax(
+    oauthRevocationMarkKey(userId, clientId),
+    Date.now(),
+    REVOCATION_MARK_TTL_SECONDS
+  );
 };
 
 /** When the latest revocation covering the user's codes for the client happened, in ms; `null` if none. */
 export const readOAuthRevocationTime = async (userId: string, clientId: string): Promise<number | null> => {
   const marks = await Promise.all([
-    redisSecondaryStorage.get(markKey(userId)),
-    redisSecondaryStorage.get(markKey(userId, clientId)),
+    redisSecondaryStorage.get(oauthRevocationMarkKey(userId)),
+    redisSecondaryStorage.get(oauthRevocationMarkKey(userId, clientId)),
   ]);
   const times = marks.map(Number).filter((time) => Number.isFinite(time) && time > 0);
   return times.length > 0 ? Math.max(...times) : null;
