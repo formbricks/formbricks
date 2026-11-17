@@ -2,7 +2,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { callMcpTool, serveJwksFromAuthHandler, succeeded, toolText } from "@/integration/mcp-client";
-import { authorize, consent, createUser, grant, registerClient, signIn } from "@/integration/oauth-flow";
+import { authorize, consent, createUser, grant, refresh, registerClient, signIn } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
@@ -256,6 +256,17 @@ describe("Allow on the consent screen", () => {
     );
     expect(tooMany.status).toBe(400);
     expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+  });
+
+  // A client that asked for no MCP scope could do nothing with a grant: none is stored, and its refresh,
+  // which checks a grant for an MCP token, checks its consent alone.
+  test("stores no grant for a client that asked for no MCP scope, and lets it refresh", async () => {
+    const tokens = await grant(setup.cookie, setup.clientId, "openid offline_access");
+
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
+    expect(await prisma.oauthConsent.count({ where: { userId: setup.userId } })).toBe(1);
+    const refreshed = await refresh(setup.clientId, tokens.refresh_token as string);
+    expect(refreshed.status, JSON.stringify(refreshed.body)).toBe(200);
   });
 
   test("Deny ignores the grant and writes nothing", async () => {

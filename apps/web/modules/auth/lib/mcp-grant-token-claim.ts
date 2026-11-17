@@ -4,7 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { loggableError } from "@/lib/utils/loggable-error";
-import { getUnconsentedMcpGrantPermissions } from "@/modules/mcp/grant";
+import { getUnconsentedMcpGrantPermissions, isMcpGrantEmpty } from "@/modules/mcp/grant";
 import {
   createMcpGrantIfMissing,
   lockUserForMcpGrantWrite,
@@ -76,17 +76,16 @@ const grantSkipConsentClient = async (userId: string, clientId: string, scopes: 
     const granted = (await isOnlyDashboardViewer(prisma, userId))
       ? trimScopesForDashboardViewer(scopes)
       : scopes;
+    // A client that asked for no MCP scope gets no grant: it couldn't use one, and its refresh needs none.
+    const permissions = getUnconsentedMcpGrantPermissions(granted);
+    if (isMcpGrantEmpty(permissions)) return;
     const created = await prisma.$transaction(async (tx) => {
       // The lock a revocation waits on, before the mark is read: a Revoke that wrote its mark first is
       // seen here, and one that starts after this commits deletes the grant below with the rest.
       await lockUserForMcpGrantWrite(tx, userId);
       const revokedAt = await readOAuthRevocationTime(userId, clientId);
       if (revokedAt !== null && exchanged.issuedAt <= revokedAt) return null;
-      return createMcpGrantIfMissing(tx, {
-        userId,
-        clientId,
-        permissions: getUnconsentedMcpGrantPermissions(granted),
-      });
+      return createMcpGrantIfMissing(tx, { userId, clientId, permissions });
     });
     if (!created) return;
     await queueMcpGrantAudit({ action: "created", actorUserId: userId, before: null, after: created });

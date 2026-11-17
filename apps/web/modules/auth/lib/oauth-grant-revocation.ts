@@ -692,8 +692,11 @@ const settleChangedConsent = async (
       if (change.chosenGrant && isMcpGrantEmpty(permissions)) {
         return refuseConsent(tx, { userId, clientId, change }, { status: "beyond_scopes" });
       }
-      if (grantClientId && access) await applyMcpGrantNarrowing(before, access);
-      const savedGrant = grantClientId
+      // A client that asked for no MCP scope (`openid offline_access`) gets no grant: it could do nothing
+      // with one, Authorized apps lists it with Revoke alone, and its refresh needs none.
+      const writesGrant = grantClientId !== null && !isMcpGrantEmpty(permissions);
+      if (writesGrant && access) await applyMcpGrantNarrowing(before, access);
+      const savedGrant = writesGrant
         ? await writeMcpGrant(tx, { userId, clientId, before, permissions, access })
         : null;
       return {
@@ -780,8 +783,12 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
     throw invalidGrant();
   }
   const { userId, clientId, scopes, authorizationCodeId, rotatedAt, sessionId } = refreshToken;
+  // A token without an MCP scope can't call `/api/mcp`, and its client was given no grant (an approval
+  // saves none for it): only its consent is checked.
+  const needsGrant = !isMcpGrantEmpty(getMcpGrantPermissionsForScopes(scopes));
   const refused = await prisma.$transaction(async (tx) => {
     if (refreshToken.client.skipConsent) {
+      if (!needsGrant) return null;
       // No consent to check: the grant is the connection's liveness check alone. Read `FOR SHARE` after
       // issuance, as for a consent: a Revoke still in flight is waited on and its delete seen, and one
       // that commits later revokes the token this refresh just inserted. Without the check, a refresh
@@ -791,7 +798,7 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
     }
     // The grant first, then the consent rows. `FOR SHARE`: refreshes don't wait on each other, and a
     // revoke or a save, which lock it `FOR UPDATE`, wait on this check or it on them.
-    if (!(await shareLockMcpGrant(tx, { userId, clientId }))) {
+    if (needsGrant && !(await shareLockMcpGrant(tx, { userId, clientId }))) {
       // Locked, then read again: an approval saves the grant while holding these rows, so a grant it
       // commits while this waits is seen here rather than its client ended.
       const consents = await lockConsents(tx, userId, { clientId }, "update");

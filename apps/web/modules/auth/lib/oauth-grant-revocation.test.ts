@@ -559,6 +559,23 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
     expect(mocks.calls).toEqual(["revoke refresh tokens", "revoke access tokens"]);
   });
 
+  // A client that asked for no MCP scope was given no grant: its refresh checks the consent alone.
+  test.each([
+    ["a consented client", false],
+    ["a skipConsent client", true],
+  ])("lets %s with no MCP scope refresh without a grant", async (_label, skipConsent) => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue({
+      ...storedRow(skipConsent),
+      scopes: ["openid", "offline_access"],
+    } as never);
+    consentWith(["openid", "offline_access"]);
+    mocks.grantRows = [];
+
+    await expect(requireOAuthConsentOnRefreshAfterHandler(refreshCtx())).resolves.toBeUndefined();
+    expect(mocks.sequence).not.toContain("share grant");
+    expect(mocks.calls).toEqual([]);
+  });
+
   test.each([
     ["a token without the provider's prefix", "raw-token"],
     ["a token that matches no stored row", "fbor_unknown"],
@@ -797,6 +814,17 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
       error: "invalid_request",
       code: MCP_GRANT_BEYOND_SCOPES_CODE,
     });
+    expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
+  });
+
+  // A client that asked for no MCP scope could do nothing with a grant: none is stored.
+  test("stores no grant for an approval whose scopes map to no MCP permission", async () => {
+    mocks.consents = [
+      consentRow("consent-1", ["openid", "offline_access"], new Date("2026-10-08T10:00:00Z")),
+    ];
+
+    await revokeTokensBeyondConsentAfterHandler(approve());
+
     expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
   });
 

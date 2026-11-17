@@ -162,6 +162,16 @@ describe("mcpGrantAccessTokenClaims", () => {
     expect(createMcpGrantIfMissing).toHaveBeenCalled();
   });
 
+  // A client that asked for no MCP scope could do nothing with a grant: none is created for it.
+  test("creates no grant for a skipConsent client that asked for no MCP scope", async () => {
+    prisma.mcpGrant.findUnique.mockResolvedValue(null);
+
+    await expect(claims({ scopes: ["openid", "offline_access"] })).resolves.toEqual({
+      [MCP_GRANT_TOKEN_CLAIM]: null,
+    });
+    expect(createMcpGrantIfMissing).not.toHaveBeenCalled();
+  });
+
   test("logs an unexpected failure as an error and still issues the token, naming no grant", async () => {
     vi.mocked(createMcpGrantIfMissing).mockRejectedValue(new Error("db down for user a@b.c"));
     prisma.mcpGrant.findUnique.mockResolvedValue(null);
