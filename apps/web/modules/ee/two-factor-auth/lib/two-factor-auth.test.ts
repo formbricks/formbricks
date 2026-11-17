@@ -74,10 +74,10 @@ describe("Two Factor Auth", () => {
   });
 
   test("setupTwoFactorAuth should reject when the user has no password (via verifyUserPassword)", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       identityProvider: "email",
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
     vi.mocked(verifyUserPassword).mockRejectedValue(
       new InvalidInputError("Password is not set for this user")
     );
@@ -88,11 +88,11 @@ describe("Two Factor Auth", () => {
   });
 
   test("setupTwoFactorAuth should throw InvalidInputError when user has third party login", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       password: "hashedPassword",
       identityProvider: "google",
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
 
     await expect(setupTwoFactorAuth("user123", "password123")).rejects.toThrow(
       new InvalidInputError("Third party login is already enabled")
@@ -103,11 +103,11 @@ describe("Two Factor Auth", () => {
   // running it against an already-enabled factor switched 2FA off on a password alone — while
   // disableTwoFactorAuth demands the password *and* a current code or backup code.
   test("setupTwoFactorAuth should refuse to re-enroll while two factor auth is already enabled", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       identityProvider: "email",
       twoFactorEnabled: true,
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
 
     await expect(setupTwoFactorAuth("user123", "password123")).rejects.toThrow(
       new InvalidInputError("Two factor authentication is already enabled")
@@ -117,11 +117,11 @@ describe("Two Factor Auth", () => {
   });
 
   test("setupTwoFactorAuth should throw InvalidInputError when password is incorrect", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       password: "hashedPassword",
       identityProvider: "email",
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
     vi.mocked(verifyUserPassword).mockResolvedValue(false);
 
     await expect(setupTwoFactorAuth("user123", "wrongPassword")).rejects.toThrow(
@@ -133,17 +133,13 @@ describe("Two Factor Auth", () => {
     const mockUser = {
       id: "user123",
       password: "hashedPassword",
-      identityProvider: "email",
+      identityProvider: "email" as const,
       email: "test@example.com",
     };
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(
-      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
-    );
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue(mockUser);
     vi.mocked(verifyUserPassword).mockResolvedValue(true);
     vi.mocked(symmetricEncrypt).mockImplementation((data) => `encrypted_${data}`);
-    vi.mocked(prisma.user.update).mockResolvedValue(
-      mockUser as Awaited<ReturnType<typeof prisma.user.update>>
-    );
+    vi.mocked(prisma.user.update, { partial: true }).mockResolvedValue(mockUser);
 
     const result = await setupTwoFactorAuth("user123", "correctPassword");
 
@@ -165,10 +161,10 @@ describe("Two Factor Auth", () => {
   });
 
   test("enableTwoFactorAuth should throw InvalidInputError when user has no password", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       identityProvider: "email",
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
     vi.mocked(getCredentialPasswordHash).mockResolvedValue(null);
 
     await expect(enableTwoFactorAuth("user123", "123456")).rejects.toThrow(
@@ -177,11 +173,11 @@ describe("Two Factor Auth", () => {
   });
 
   test("enableTwoFactorAuth should throw InvalidInputError when user has third party login", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       password: "hashedPassword",
       identityProvider: "google",
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
 
     await expect(enableTwoFactorAuth("user123", "123456")).rejects.toThrow(
       new InvalidInputError("Third party login is already enabled")
@@ -189,12 +185,12 @@ describe("Two Factor Auth", () => {
   });
 
   test("enableTwoFactorAuth should throw InvalidInputError when 2FA is already enabled", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       password: "hashedPassword",
       identityProvider: "email",
       twoFactorEnabled: true,
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
 
     await expect(enableTwoFactorAuth("user123", "123456")).rejects.toThrow(
       new InvalidInputError("Two factor authentication is already enabled")
@@ -202,13 +198,13 @@ describe("Two Factor Auth", () => {
   });
 
   test("enableTwoFactorAuth should throw InvalidInputError when 2FA setup is not completed", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       password: "hashedPassword",
       identityProvider: "email",
       twoFactorEnabled: false,
       twoFactorSecret: null,
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
 
     await expect(enableTwoFactorAuth("user123", "123456")).rejects.toThrow(
       new InvalidInputError("Two factor setup has not been completed")
@@ -216,13 +212,13 @@ describe("Two Factor Auth", () => {
   });
 
   test("enableTwoFactorAuth should throw InvalidInputError when secret is invalid", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       password: "hashedPassword",
       identityProvider: "email",
       twoFactorEnabled: false,
       twoFactorSecret: "encrypted_secret",
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
     vi.mocked(symmetricDecrypt).mockReturnValue("invalid_secret");
 
     await expect(enableTwoFactorAuth("user123", "123456")).rejects.toThrow(
@@ -231,13 +227,13 @@ describe("Two Factor Auth", () => {
   });
 
   test("enableTwoFactorAuth should throw InvalidInputError when code is invalid", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       password: "hashedPassword",
       identityProvider: "email",
       twoFactorEnabled: false,
       twoFactorSecret: "encrypted_secret",
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
     vi.mocked(symmetricDecrypt).mockReturnValue("12345678901234567890123456789012");
     vi.mocked(totpAuthenticatorCheck).mockReturnValue(false);
 
@@ -250,18 +246,14 @@ describe("Two Factor Auth", () => {
     const mockUser = {
       id: "user123",
       password: "hashedPassword",
-      identityProvider: "email",
+      identityProvider: "email" as const,
       twoFactorEnabled: false,
       twoFactorSecret: "encrypted_secret",
     };
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(
-      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
-    );
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue(mockUser);
     vi.mocked(symmetricDecrypt).mockReturnValue("12345678901234567890123456789012");
     vi.mocked(totpAuthenticatorCheck).mockReturnValue(true);
-    vi.mocked(prisma.user.update).mockResolvedValue(
-      mockUser as Awaited<ReturnType<typeof prisma.user.update>>
-    );
+    vi.mocked(prisma.user.update, { partial: true }).mockResolvedValue(mockUser);
 
     const result = await enableTwoFactorAuth("user123", "123456");
 
@@ -296,11 +288,11 @@ describe("Two Factor Auth", () => {
   });
 
   test("disableTwoFactorAuth should reject when the user has no password (via verifyUserPassword)", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       identityProvider: "email",
       twoFactorEnabled: true,
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
     vi.mocked(verifyUserPassword).mockRejectedValue(
       new InvalidInputError("Password is not set for this user")
     );
@@ -311,12 +303,12 @@ describe("Two Factor Auth", () => {
   });
 
   test("disableTwoFactorAuth should throw InvalidInputError when user has third party login", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       password: "hashedPassword",
       identityProvider: "google",
       twoFactorEnabled: true,
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
 
     await expect(disableTwoFactorAuth("user123", { password: "password123" })).rejects.toThrow(
       new InvalidInputError("Third party login is already enabled")
@@ -324,12 +316,12 @@ describe("Two Factor Auth", () => {
   });
 
   test("disableTwoFactorAuth should throw InvalidInputError when 2FA is not enabled", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       password: "hashedPassword",
       identityProvider: "email",
       twoFactorEnabled: false,
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
 
     await expect(disableTwoFactorAuth("user123", { password: "password123" })).rejects.toThrow(
       new InvalidInputError("Two factor authentication is not enabled")
@@ -337,12 +329,12 @@ describe("Two Factor Auth", () => {
   });
 
   test("disableTwoFactorAuth should throw InvalidInputError when password is incorrect", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       password: "hashedPassword",
       identityProvider: "email",
       twoFactorEnabled: true,
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
     vi.mocked(verifyUserPassword).mockResolvedValue(false);
 
     await expect(disableTwoFactorAuth("user123", { password: "wrongPassword" })).rejects.toThrow(
@@ -351,13 +343,13 @@ describe("Two Factor Auth", () => {
   });
 
   test("disableTwoFactorAuth should throw InvalidInputError when backup code is invalid", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       password: "hashedPassword",
       identityProvider: "email",
       twoFactorEnabled: true,
       backupCodes: "encrypted_backup_codes",
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
     vi.mocked(verifyUserPassword).mockResolvedValue(true);
     vi.mocked(symmetricDecrypt).mockReturnValue(JSON.stringify(["code1", "code2"]));
 
@@ -367,13 +359,13 @@ describe("Two Factor Auth", () => {
   });
 
   test("disableTwoFactorAuth should throw InvalidInputError when 2FA code is invalid", async () => {
-    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
       id: "user123",
       password: "hashedPassword",
       identityProvider: "email",
       twoFactorEnabled: true,
       twoFactorSecret: "encrypted_secret",
-    } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
+    });
     vi.mocked(verifyUserPassword).mockResolvedValue(true);
     vi.mocked(symmetricDecrypt).mockReturnValue("12345678901234567890123456789012");
     vi.mocked(totpAuthenticatorCheck).mockReturnValue(false);
@@ -387,18 +379,14 @@ describe("Two Factor Auth", () => {
     const mockUser = {
       id: "user123",
       password: "hashedPassword",
-      identityProvider: "email",
+      identityProvider: "email" as const,
       twoFactorEnabled: true,
       backupCodes: "encrypted_backup_codes",
     };
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(
-      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
-    );
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue(mockUser);
     vi.mocked(verifyUserPassword).mockResolvedValue(true);
     vi.mocked(symmetricDecrypt).mockReturnValue(JSON.stringify(["validcode", "code2"]));
-    vi.mocked(prisma.user.update).mockResolvedValue(
-      mockUser as Awaited<ReturnType<typeof prisma.user.update>>
-    );
+    vi.mocked(prisma.user.update, { partial: true }).mockResolvedValue(mockUser);
 
     const result = await disableTwoFactorAuth("user123", {
       password: "password123",
@@ -423,19 +411,15 @@ describe("Two Factor Auth", () => {
     const mockUser = {
       id: "user123",
       password: "hashedPassword",
-      identityProvider: "email",
+      identityProvider: "email" as const,
       twoFactorEnabled: true,
       twoFactorSecret: "encrypted_secret",
     };
-    vi.mocked(prisma.user.findUnique).mockResolvedValue(
-      mockUser as Awaited<ReturnType<typeof prisma.user.findUnique>>
-    );
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue(mockUser);
     vi.mocked(verifyUserPassword).mockResolvedValue(true);
     vi.mocked(symmetricDecrypt).mockReturnValue("12345678901234567890123456789012");
     vi.mocked(totpAuthenticatorCheck).mockReturnValue(true);
-    vi.mocked(prisma.user.update).mockResolvedValue(
-      mockUser as Awaited<ReturnType<typeof prisma.user.update>>
-    );
+    vi.mocked(prisma.user.update, { partial: true }).mockResolvedValue(mockUser);
 
     const result = await disableTwoFactorAuth("user123", { password: "password123", code: "123456" });
 

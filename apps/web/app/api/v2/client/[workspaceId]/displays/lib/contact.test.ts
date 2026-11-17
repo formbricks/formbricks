@@ -29,11 +29,11 @@ describe("doesContactExistInWorkspace", () => {
   });
 
   test("should return true if contact exists in the workspace", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue({
+    vi.mocked(prisma.contact.findFirst, { partial: true }).mockResolvedValue({
       id: contactId,
       createdAt: new Date(),
       updatedAt: new Date(),
-    } as Awaited<ReturnType<typeof prisma.contact.findFirst>>);
+    });
 
     const result = await doesContactExistInWorkspace(contactId, workspaceId);
 

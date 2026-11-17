@@ -26,11 +26,11 @@ afterEach(() => {
 
 beforeEach(() => {
   prisma.contact.findFirst.mockResolvedValue(mockContact);
-  prisma.survey.findUnique.mockResolvedValue({
+  vi.mocked(prisma.survey.findUnique, { partial: true }).mockResolvedValue({
     id: mockSurveyId,
     name: "Test Survey",
     status: "inProgress",
-  } as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
+  });
 });
 
 describe("Tests for createDisplay service", () => {

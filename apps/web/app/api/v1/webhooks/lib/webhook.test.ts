@@ -49,13 +49,13 @@ describe("createWebhook", () => {
       name: "Test Webhook",
       url: "https://example.com",
       source: "user" as WebhookSource,
-      triggers: ["responseCreated"],
+      triggers: ["responseCreated" as const],
       surveyIds: ["survey1", "survey2"],
       createdAt: new Date(),
       updatedAt: new Date(),
-    } as Awaited<ReturnType<typeof prisma.webhook.create>>;
+    };
 
-    vi.mocked(prisma.webhook.create).mockResolvedValueOnce(createdWebhook);
+    vi.mocked(prisma.webhook.create, { partial: true }).mockResolvedValueOnce(createdWebhook);
 
     const result = await createWebhook(webhookInput);
 

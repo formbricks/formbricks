@@ -316,9 +316,7 @@ describe("Follow-ups", () => {
         ],
       } as unknown as TSurvey);
 
-      vi.mocked(getResponse).mockResolvedValue(
-        modifiedResponse as unknown as Awaited<ReturnType<typeof getResponse>>
-      );
+      vi.mocked(getResponse, { partial: true }).mockResolvedValue(modifiedResponse);
 
       const result = await sendFollowUpsForResponse("response1");
 
@@ -336,7 +334,7 @@ describe("Follow-ups", () => {
 
     // The author can type any address, so one outside the organization is counted like a respondent's.
     test("counts a literal follow-up address outside the organization as external", async () => {
-      vi.mocked(getSurvey).mockResolvedValue({
+      vi.mocked(getSurvey, { partial: true }).mockResolvedValue({
         ...mockSurvey,
         followUps: [
           {
@@ -347,7 +345,7 @@ describe("Follow-ups", () => {
             },
           },
         ],
-      } as unknown as TSurvey);
+      });
 
       await sendFollowUpsForResponse("response1");
 
@@ -364,7 +362,7 @@ describe("Follow-ups", () => {
 
     // A survey created with an API key has no owner; its organization's owner is charged instead.
     test("charges the organization's owner for a survey without an owner", async () => {
-      vi.mocked(getSurvey).mockResolvedValue({ ...mockSurvey, ownerId: null } as unknown as TSurvey);
+      vi.mocked(getSurvey, { partial: true }).mockResolvedValue({ ...mockSurvey, ownerId: null });
 
       await sendFollowUpsForResponse("response1");
 

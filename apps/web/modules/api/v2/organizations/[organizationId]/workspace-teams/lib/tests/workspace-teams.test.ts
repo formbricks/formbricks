@@ -1,11 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { TypeOf } from "zod";
 import { prisma } from "@formbricks/database";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import {
   TGetWorkspaceTeamsFilter,
   TWorkspaceTeamInput,
-  ZWorkspaceZTeamUpdateSchema,
 } from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/types/workspace-teams";
 import {
   createWorkspaceTeam,
@@ -93,29 +91,24 @@ describe("WorkspaceTeams Lib", () => {
 
   describe("updateWorkspaceTeam", () => {
     test("updates a workspaceTeam successfully", async () => {
-      vi.mocked(prisma.workspaceTeam.update).mockResolvedValueOnce({
-        id: "pt01",
+      vi.mocked(prisma.workspaceTeam.update, { partial: true }).mockResolvedValueOnce({
         workspaceId: "p1",
         teamId: "t1",
-        permission: "READ",
-      } as unknown as Awaited<ReturnType<typeof prisma.workspaceTeam.update>>);
-      const result = await updateWorkspaceTeam("t1", "p1", { permission: "READ" } as unknown as TypeOf<
-        typeof ZWorkspaceZTeamUpdateSchema
-      >);
+        permission: "read",
+      });
+      const result = await updateWorkspaceTeam("t1", "p1", { permission: "read" });
       expect(result.ok).toBe(true);
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
         workspaceTeamGrants: [{ teamId: "t1", workspaceId: "p1" }],
       });
       if (result.ok) {
-        expect(result.data.permission).toBe("READ");
+        expect(result.data.permission).toBe("read");
       }
     });
 
     test("returns internal_server_error on error", async () => {
       vi.mocked(prisma.workspaceTeam.update).mockRejectedValueOnce(new Error("Update error"));
-      const result = await updateWorkspaceTeam("t1", "p1", { permission: "READ" } as unknown as TypeOf<
-        typeof ZWorkspaceZTeamUpdateSchema
-      >);
+      const result = await updateWorkspaceTeam("t1", "p1", { permission: "read" });
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.type).toBe("internal_server_error");
@@ -125,11 +118,11 @@ describe("WorkspaceTeams Lib", () => {
 
   describe("deleteWorkspaceTeam", () => {
     test("deletes a workspaceTeam successfully", async () => {
-      vi.mocked(prisma.workspaceTeam.delete).mockResolvedValueOnce({
+      vi.mocked(prisma.workspaceTeam.delete, { partial: true }).mockResolvedValueOnce({
         workspaceId: "p1",
         teamId: "t1",
-        permission: "READ",
-      } as unknown as Awaited<ReturnType<typeof prisma.workspaceTeam.delete>>);
+        permission: "read",
+      });
       const result = await deleteWorkspaceTeam("t1", "p1");
       expect(result.ok).toBe(true);
       expect(reconcileTeamWorkspaceRelationships).toHaveBeenCalledWith({
