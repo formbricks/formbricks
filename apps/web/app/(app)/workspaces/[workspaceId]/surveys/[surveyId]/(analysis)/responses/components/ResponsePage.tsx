@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -64,6 +65,7 @@ export const ResponsePage = ({
   const { selectedFilter, dateRange } = filterState;
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const router = useRouter();
   const computedFilters = useMemo(
     () => getFormattedFilters(survey, selectedFilter, dateRange),
 
@@ -131,6 +133,9 @@ export const ResponsePage = ({
   const updateResponseList = (responseIds: string[]) => {
     removeResponses(responseIds);
     void refetchMatchCount();
+    // The survey's total (`responseCount`, which gates example responses and the edit warning) is a
+    // server-rendered prop: refresh it, as the delete action's revalidation used to.
+    router.refresh();
   };
 
   const updateResponse = (responseId: string, updatedResponse: TResponseWithQuotas) => {

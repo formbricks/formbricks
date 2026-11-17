@@ -6,6 +6,7 @@ import { type ReactNode, useCallback, useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
+import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { Button } from "@/modules/ui/components/button";
 import { DecrementQuotasCheckbox } from "@/modules/ui/components/decrement-quotas-checkbox";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
@@ -60,35 +61,38 @@ export const SelectedRowSettings = <T,>({
 
   // Handle deletion
   const handleDelete = async () => {
+    const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
+    const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
+    // The rows already gone, so a failure part-way still takes them off the table.
+    const deleted: string[] = [];
     try {
       setIsDeleting(true);
-      const rowsToBeDeleted = table.getFilteredSelectedRowModel().rows.map((row) => row.id);
 
       const CHUNK_SIZE = 5;
       for (let i = 0; i < rowsToBeDeleted.length; i += CHUNK_SIZE) {
         const chunk = rowsToBeDeleted.slice(i, i + CHUNK_SIZE);
-        if (type === "response") {
-          await Promise.all(chunk.map((rowId) => deleteAction(rowId, { decrementQuotas })));
-        } else {
-          await Promise.all(chunk.map((rowId) => deleteAction(rowId)));
-        }
+        const results = await Promise.allSettled(
+          chunk.map((rowId) =>
+            type === "response" ? deleteAction(rowId, { decrementQuotas }) : deleteAction(rowId)
+          )
+        );
+        chunk.forEach((rowId, index) => {
+          if (results[index].status === "fulfilled") deleted.push(rowId);
+        });
+        const failure = results.find((result) => result.status === "rejected");
+        if (failure) throw failure.reason;
       }
 
-      // Update the row list UI
-      updateRowList(rowsToBeDeleted);
-      const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
+      updateRowList(deleted);
       toast.success(t("common.table_items_deleted_successfully", { type: capitalizedType }));
     } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
-        toast.error(
-          t("common.an_unknown_error_occurred_while_deleting_table_items", {
-            type: capitalizedType,
-          })
-        );
-      }
+      if (deleted.length > 0) updateRowList(deleted);
+      toast.error(
+        getV3ApiErrorMessage(
+          error,
+          t("common.an_unknown_error_occurred_while_deleting_table_items", { type: capitalizedType })
+        )
+      );
     } finally {
       setIsDeleting(false);
       setIsDeleteDialogOpen(false);

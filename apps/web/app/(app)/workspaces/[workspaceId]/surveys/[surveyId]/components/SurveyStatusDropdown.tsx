@@ -28,7 +28,10 @@ export const SurveyStatusDropdown = () => {
   const handleStatusChange = async (status: TSurvey["status"]) => {
     let saved: TSurvey;
     try {
-      saved = await saveSurvey({ ...survey, status });
+      // `isSecondPublish` is the save's answer, not part of the survey: kept out of the shared survey, so
+      // the next save from another tab does not send it back.
+      const { isSecondPublish: _isSecondPublish, ...savedSurvey } = await saveSurvey({ ...survey, status });
+      saved = savedSurvey;
     } catch (error) {
       toast.error(getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again")));
       return;

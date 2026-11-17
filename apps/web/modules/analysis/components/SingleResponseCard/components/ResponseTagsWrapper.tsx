@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -44,6 +45,7 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
   const [tagsState, setTagsState] = useState(tags);
   const [tagIdToHighlight, setTagIdToHighlight] = useState("");
   const [isLoadingTagOperation, setIsLoadingTagOperation] = useState(false);
+  const router = useRouter();
 
   const onDelete = async (tagId: string) => {
     setIsLoadingTagOperation(true);
@@ -82,8 +84,12 @@ export const ResponseTagsWrapper: React.FC<ResponseTagsWrapperProps> = ({
       } else {
         toast.error(t("workspace.surveys.responses.an_error_occurred_creating_the_tag"));
       }
+      setIsLoadingTagOperation(false);
       return;
     }
+    // The workspace's tag list is the page's server-rendered prop: refresh it, so every other response's
+    // picker offers the new tag instead of offering to create it again.
+    router.refresh();
 
     try {
       await addResponseTag(responseId, newTag.id);
