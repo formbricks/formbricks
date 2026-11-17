@@ -230,6 +230,66 @@ const buildSurveyInvalidParams = (check: TriggerSurveyCheck): WorkflowInvalidPar
   return invalidParams;
 };
 
+/** `testWorkflow`'s collected-problem form of a failed trigger-survey check (see `buildSurveyInvalidParams`). */
+const buildSurveyTestProblems = (check: TriggerSurveyCheck): TWorkflowTestProblem[] => {
+  const problems: TWorkflowTestProblem[] = [];
+  if (!check.surveyExists) {
+    problems.push({
+      code: "survey_not_found",
+      field: "definition.trigger.config.surveyId",
+      message: "The referenced survey does not exist in this workspace.",
+    });
+  }
+  if (check.surveyNotWorkspaceVisible) {
+    problems.push({
+      code: "survey_not_workspace_visible",
+      field: "definition.trigger.config.surveyId",
+      message: SURVEY_NOT_WORKSPACE_VISIBLE_REASON,
+    });
+  }
+  for (const endingCardId of check.missingEndingCardIds) {
+    problems.push({
+      code: "ending_card_not_found",
+      field: "definition.trigger.config.endingCardIds",
+      message: `Ending card ${endingCardId} does not exist on the survey.`,
+    });
+  }
+  return problems;
+};
+
+/**
+ * `testWorkflow`'s checks of an executable definition's trigger references and recipients, collected
+ * as problems rather than thrown. Reads the validated definition, never the raw persisted JSON.
+ */
+const collectTriggerProblems = async (
+  ctx: WorkflowApiContext,
+  workspaceId: string,
+  definition: TWorkflowExecutableDefinition
+): Promise<TWorkflowTestProblem[]> => {
+  const { surveyId, endingCardIds } = definition.trigger.config;
+  const surveyCheck = await ctx.verifyTriggerSurvey({ workspaceId, surveyId, endingCardIds });
+  const problems = buildSurveyTestProblems(surveyCheck);
+
+  // Recipient allowlist (ENG-2029): the same gate `enable` enforces, collected here as a
+  // problem instead of thrown. The dry run exists to surface exactly this before going live —
+  // without it a workflow addressing an external inbox tests green and then hard-fails enable.
+  const literalRecipients = collectLiteralRecipientEmails(definition);
+  if (literalRecipients.length > 0) {
+    const { disallowedEmails } = await ctx.verifyRecipientsAllowed({
+      workspaceId,
+      emails: literalRecipients,
+    });
+    for (const email of disallowedEmails) {
+      problems.push({
+        code: "recipient_not_allowed",
+        field: DISALLOWED_RECIPIENT_FIELD,
+        message: disallowedRecipientMessage(email),
+      });
+    }
+  }
+  return problems;
+};
+
 /**
  * Attach-time guard (ENG-3283): a workflow forwards its trigger survey's responses out of the app, so it
  * may only be bound to a survey the whole workspace can see. Checked when a binding is created — create,
@@ -653,51 +713,7 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       // `definition_not_executable` above, and dereferencing its unparsed config here would throw and
       // turn the dry-run into a 500 — the opposite of the collected-problems contract. Mirrors `enable`.
       if (executable.success) {
-        const { surveyId, endingCardIds } = executable.data.trigger.config;
-        const surveyCheck = await ctx.verifyTriggerSurvey({
-          workspaceId: loaded.workspaceId,
-          surveyId,
-          endingCardIds,
-        });
-        if (!surveyCheck.surveyExists) {
-          problems.push({
-            code: "survey_not_found",
-            field: "definition.trigger.config.surveyId",
-            message: "The referenced survey does not exist in this workspace.",
-          });
-        }
-        if (surveyCheck.surveyNotWorkspaceVisible) {
-          problems.push({
-            code: "survey_not_workspace_visible",
-            field: "definition.trigger.config.surveyId",
-            message: SURVEY_NOT_WORKSPACE_VISIBLE_REASON,
-          });
-        }
-        for (const endingCardId of surveyCheck.missingEndingCardIds) {
-          problems.push({
-            code: "ending_card_not_found",
-            field: "definition.trigger.config.endingCardIds",
-            message: `Ending card ${endingCardId} does not exist on the survey.`,
-          });
-        }
-
-        // Recipient allowlist (ENG-2029): the same gate `enable` enforces, collected here as a
-        // problem instead of thrown. The dry run exists to surface exactly this before going live —
-        // without it a workflow addressing an external inbox tests green and then hard-fails enable.
-        const literalRecipients = collectLiteralRecipientEmails(executable.data);
-        if (literalRecipients.length > 0) {
-          const { disallowedEmails } = await ctx.verifyRecipientsAllowed({
-            workspaceId: loaded.workspaceId,
-            emails: literalRecipients,
-          });
-          for (const email of disallowedEmails) {
-            problems.push({
-              code: "recipient_not_allowed",
-              field: DISALLOWED_RECIPIENT_FIELD,
-              message: disallowedRecipientMessage(email),
-            });
-          }
-        }
+        problems.push(...(await collectTriggerProblems(ctx, loaded.workspaceId, executable.data)));
       }
 
       const result = validateOutput(ZWorkflowTestResult, {
