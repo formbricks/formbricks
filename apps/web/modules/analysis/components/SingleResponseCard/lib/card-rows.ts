@@ -94,7 +94,8 @@ const getNotShownGroups = (elements: readonly TCardElement[], notShown: Readonly
  * In the survey runtime, any submitted page records a time for each of its questions, so a
  * respondent who reached one, even to skip it, leaves one behind. Any time other than the server's
  * `_total` counts, even under an id the survey no longer has (a question deleted since), so editing
- * the survey never turns a reached response into one that ended before it began.
+ * the survey never turns a reached response into one that ended before it began. A respondent who
+ * clicked the welcome card (`welcomeCard: "clicked"`) saw it, so their response does not count.
  */
 export const hasEndedBeforeFirstQuestion = ({
   elements,
@@ -108,6 +109,7 @@ export const hasEndedBeforeFirstQuestion = ({
   finished: boolean;
 }): boolean => {
   if (!finished || elements.length === 0) return false;
+  if (data.welcomeCard === "clicked") return false;
   if (Object.keys(ttc ?? {}).some((key) => key !== "_total")) return false;
   return elements.every((element) => !isValidValue(data[element.id]));
 };

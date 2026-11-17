@@ -120,6 +120,12 @@ describe("hasEndedBeforeFirstQuestion (ENG-7030)", () => {
     expect(hasEndedBeforeFirstQuestion({ elements, data: { q3: "c" }, ttc: {}, finished: true })).toBe(false);
   });
 
+  test("a respondent who clicked the welcome card saw it, even when every block was then hidden", () => {
+    expect(
+      hasEndedBeforeFirstQuestion({ elements, data: { welcomeCard: "clicked" }, ttc: {}, finished: true })
+    ).toBe(false);
+  });
+
   test("an unfinished response never counts as ended before the first question", () => {
     expect(hasEndedBeforeFirstQuestion({ elements, data: {}, ttc: {}, finished: false })).toBe(false);
   });
