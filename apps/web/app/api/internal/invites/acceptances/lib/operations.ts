@@ -141,12 +141,18 @@ const notifyAcceptance = async (invite: TInvite, user: TInviteUser): Promise<voi
   }
 
   try {
+    // Re-read: this runs after the response, behind the email, so the settings read before the acceptance
+    // may be stale, and writing them back would undo a change made in between.
+    const current = (await getUser(user.id)) ?? user;
     await updateUser(user.id, {
       notificationSettings: {
-        ...user.notificationSettings,
-        alert: user.notificationSettings.alert ?? {},
+        ...current.notificationSettings,
+        alert: current.notificationSettings.alert ?? {},
         unsubscribedOrganizationIds: Array.from(
-          new Set([...(user.notificationSettings?.unsubscribedOrganizationIds || []), invite.organizationId])
+          new Set([
+            ...(current.notificationSettings?.unsubscribedOrganizationIds || []),
+            invite.organizationId,
+          ])
         ),
       },
     });

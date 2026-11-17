@@ -245,6 +245,29 @@ describe("POST /api/internal/invites/acceptances — accepting", () => {
     });
   });
 
+  test("writes the settings as they stand after the response, not as read before the acceptance", async () => {
+    await accept();
+    mocks.getUser.mockResolvedValue({
+      ...user,
+      notificationSettings: { alert: { survey_1: true }, unsubscribedOrganizationIds: [] },
+    });
+    await runAfterCallbacks();
+
+    expect(mocks.updateUser).toHaveBeenCalledWith(USER_ID, {
+      notificationSettings: { alert: { survey_1: true }, unsubscribedOrganizationIds: [ORG_ID] },
+    });
+  });
+
+  test("audits the teams the transaction wrote, not the invite's list", async () => {
+    mocks.createTeamMembership.mockResolvedValue([]);
+
+    await accept();
+
+    expect(lastAudit()).toEqual(
+      expect.objectContaining({ newObject: expect.objectContaining({ teamIds: [] }) })
+    );
+  });
+
   test("still accepts when the email or the settings update fails: both are best-effort", async () => {
     mocks.sendInviteAcceptedEmail.mockRejectedValue(new Error("SMTP refused"));
     mocks.updateUser.mockRejectedValue(new Error("db hiccup"));
