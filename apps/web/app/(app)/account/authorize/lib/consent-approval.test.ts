@@ -18,7 +18,7 @@ describe("isIdentityOnlyConsent", () => {
 
 describe("getConsentApprovalBody", () => {
   test("sends the chosen grant, with its access", () => {
-    expect(getConsentApprovalBody({ cap: CAP, isDashboardViewer: false, grant: GRANT })).toEqual({
+    expect(getConsentApprovalBody({ identityOnly: false, grant: GRANT })).toEqual({
       accept: true,
       mcp_grant: { permissions: { surveys: "read" }, access: "all" },
     });
@@ -27,8 +27,7 @@ describe("getConsentApprovalBody", () => {
   test("sends a selection's ids, and the scopes to grant when narrower than the request", () => {
     expect(
       getConsentApprovalBody({
-        cap: { dashboards: "read" },
-        isDashboardViewer: true,
+        identityOnly: false,
         grantedScope: "openid dashboards:read",
         grant: {
           permissions: { dashboards: "read" },
@@ -44,15 +43,8 @@ describe("getConsentApprovalBody", () => {
 
   // The consent endpoint refuses a grant that gives nothing; without one it stores the consent alone.
   test("sends no grant for an identity-only request", () => {
-    expect(getConsentApprovalBody({ cap: {}, isDashboardViewer: false, grant: { permissions: {} } })).toEqual(
-      { accept: true }
-    );
-  });
-
-  test("sends a Dashboard viewer's empty grant, which the endpoint refuses, rather than none", () => {
-    expect(getConsentApprovalBody({ cap: {}, isDashboardViewer: true, grant: { permissions: {} } })).toEqual({
+    expect(getConsentApprovalBody({ identityOnly: true, grant: { permissions: {} } })).toEqual({
       accept: true,
-      mcp_grant: { permissions: {} },
     });
   });
 });

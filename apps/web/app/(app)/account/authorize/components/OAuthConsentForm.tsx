@@ -54,8 +54,7 @@ export const OAuthConsentForm = ({
         />
       )}
       <OAuthConsentActions
-        cap={cap}
-        isDashboardViewer={isDashboardViewer}
+        identityOnly={identityOnly}
         grantedScope={grantedScope}
         grant={{
           permissions: draft.permissions,

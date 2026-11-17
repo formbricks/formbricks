@@ -1,6 +1,9 @@
 import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { getConsentApprovalBody } from "@/app/(app)/account/authorize/lib/consent-approval";
+import {
+  getConsentApprovalBody,
+  isIdentityOnlyConsent,
+} from "@/app/(app)/account/authorize/lib/consent-approval";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { callMcpTool, serveJwksFromAuthHandler, succeeded, toolText } from "@/integration/mcp-client";
 import {
@@ -297,8 +300,7 @@ describe("Allow on the consent screen", () => {
       setup.cookie,
       target,
       getConsentApprovalBody({
-        cap,
-        isDashboardViewer: false,
+        identityOnly: isIdentityOnlyConsent({ cap, isDashboardViewer: false }),
         grant: { permissions, access: { access: "all" } },
       })
     );

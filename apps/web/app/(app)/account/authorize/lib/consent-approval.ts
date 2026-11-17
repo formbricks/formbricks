@@ -19,17 +19,21 @@ export const isIdentityOnlyConsent = ({ cap, isDashboardViewer }: TConsentReques
 /**
  * The body Allow posts to `/oauth2/consent`, beside the signed `oauth_query` the client plugin adds: the
  * scopes to grant when narrower than the request (a Dashboard viewer's), and the grant the user chose
- * (`mcp_grant`, read by the consent hooks in `mcp-grant-consent.ts`). An identity-only request sends no
- * grant: the consent endpoint refuses one that gives no permission.
+ * (`mcp_grant`, read by the consent hooks in `mcp-grant-consent.ts`). An identity-only request
+ * ({@link isIdentityOnlyConsent}) sends no grant: the consent endpoint refuses one that gives no permission.
  */
 export const getConsentApprovalBody = ({
+  identityOnly,
   grantedScope,
   grant,
-  ...request
-}: TConsentRequest & { grantedScope?: string; grant: TRequestedMcpGrant }): Record<string, unknown> => ({
+}: {
+  identityOnly: boolean;
+  grantedScope?: string;
+  grant: TRequestedMcpGrant;
+}): Record<string, unknown> => ({
   accept: true,
   ...(grantedScope ? { scope: grantedScope } : {}),
-  ...(isIdentityOnlyConsent(request)
+  ...(identityOnly
     ? {}
     : {
         mcp_grant: {

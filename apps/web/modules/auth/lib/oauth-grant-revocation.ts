@@ -133,13 +133,14 @@ const settleConsent = async (
 type TTokensBeyondConsent = { refreshTokensDeleted: number; accessTokensRevoked: number };
 
 /**
- * The grant a refused refresh belongs to, so the tokens minted for that request end too. Grants from
- * Better Auth 1.7 on carry an `authorizationCodeId` shared by every rotation. Older ones have none, so the
- * one refresh token minted for the request is found by what rotation stamps on it: its `createdAt` is
- * the presented token's `rotatedAt` (both stamped from one clock reading during rotation), in the same
- * session, within the presented token's scopes (a refresh can only narrow).
+ * The refresh token a refresh presented, as its row records it: what finds its chain of rotations, so the
+ * tokens minted for a refused request end too. Tokens from Better Auth 1.7 on carry an
+ * `authorizationCodeId` shared by every rotation. Older ones have none, so the one refresh token minted for
+ * the request is found by what rotation stamps on it: its `createdAt` is the presented token's `rotatedAt`
+ * (both stamped from one clock reading during rotation), in the same session, within the presented token's
+ * scopes (a refresh can only narrow).
  */
-type TRefusedGrant = {
+type TPresentedRefreshToken = {
   authorizationCodeId: string | null;
   rotatedAt: Date | null;
   sessionId: string | null;
@@ -151,7 +152,7 @@ type TRefusedGrant = {
  * grants they belong to (one approval's chain of rotations, shared `authorizationCodeId`). A grant ends
  * whole: a refresh may have asked for fewer scopes, leaving a child inside the consent whose ancestor
  * isn't, and that child must not outlive the token it was minted from. The narrowed approval's own grant
- * has a new id, so it is untouched. When a refused refresh's `grant` is given, that grant ends too.
+ * has a new id, so it is untouched. When a refused refresh's `presentedToken` is given, its chain ends too.
  * Prisma's list filters can't express "not a subset of", hence the raw `<@`.
  *
  * Refresh tokens are deleted rather than marked revoked, rotated ones included. The provider reads a
@@ -168,10 +169,15 @@ const endTokensBeyondScopes = async (
     userId,
     clientId,
     consentedScopes,
-    grant = { authorizationCodeId: null, rotatedAt: null, sessionId: null, scopes: [] },
-  }: { userId: string; clientId: string; consentedScopes: string[]; grant?: TRefusedGrant }
+    presentedToken = { authorizationCodeId: null, rotatedAt: null, sessionId: null, scopes: [] },
+  }: {
+    userId: string;
+    clientId: string;
+    consentedScopes: string[];
+    presentedToken?: TPresentedRefreshToken;
+  }
 ): Promise<TTokensBeyondConsent> => {
-  const { authorizationCodeId, rotatedAt, sessionId, scopes: presentedScopes } = grant;
+  const { authorizationCodeId, rotatedAt, sessionId, scopes: presentedScopes } = presentedToken;
   const beyond = await tx.$queryRaw<{ grantId: string }[]>`
     SELECT "authorizationCodeId" AS "grantId" FROM "oauthRefreshToken"
     WHERE "userId" = ${userId} AND "clientId" = ${clientId}
@@ -184,7 +190,7 @@ const endTokensBeyondScopes = async (
     ...beyond.map((row) => row.grantId),
     ...(authorizationCodeId ? [authorizationCodeId] : []),
   ];
-  // Without a refused grant, `rotatedAt` is null and `"createdAt" = NULL` never matches.
+  // Without a presented token, `rotatedAt` is null and `"createdAt" = NULL` never matches.
   const ending = await tx.$queryRaw<{ id: string }[]>`
     SELECT "id" FROM "oauthRefreshToken"
     WHERE "userId" = ${userId} AND "clientId" = ${clientId}
@@ -870,8 +876,8 @@ const checkConsentedRefresh = async (
     userId,
     clientId,
     needsGrant,
-    grant,
-  }: { userId: string; clientId: string; needsGrant: boolean; grant: TRefusedGrant }
+    presentedToken,
+  }: { userId: string; clientId: string; needsGrant: boolean; presentedToken: TPresentedRefreshToken }
 ): Promise<TRefreshRefusal | null> => {
   // `FOR SHARE`: refreshes don't wait on each other, and a revoke or a save, which lock it `FOR UPDATE`,
   // wait on this check or it on them.
@@ -883,7 +889,7 @@ const checkConsentedRefresh = async (
   if (!consentedScopes) {
     return { reason: "consent_revoked", ...(await revokeClientTokens(tx, userId, clientId)) };
   }
-  const { authorizationCodeId, scopes } = grant;
+  const { authorizationCodeId, scopes } = presentedToken;
   const covered =
     isCoveredBy(scopes, consentedScopes) &&
     !(
@@ -893,7 +899,7 @@ const checkConsentedRefresh = async (
   if (covered) return null;
   return {
     reason: "consent_narrowed",
-    ...(await endTokensBeyondScopes(tx, { userId, clientId, consentedScopes, grant })),
+    ...(await endTokensBeyondScopes(tx, { userId, clientId, consentedScopes, presentedToken })),
   };
 };
 
@@ -967,7 +973,7 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
             userId,
             clientId,
             needsGrant,
-            grant: { authorizationCodeId, rotatedAt, sessionId, scopes },
+            presentedToken: { authorizationCodeId, rotatedAt, sessionId, scopes },
           }),
     // It takes the user's row or the client's grant row, either of which a Revoke can hold while it waits
     // behind a reconciling pass: on the default budget the refresh would fail after rotating, and the

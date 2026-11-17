@@ -82,6 +82,17 @@ const capScopes = (
 
 type TConsentScopes = { scopes: string[]; updatedAt: Date };
 
+/** Groups rows by their client, keeping their order: one pass, each row appended in place. */
+const groupByClient = <TRow extends { clientId: string }>(rows: ReadonlyArray<TRow>): Map<string, TRow[]> => {
+  const byClient = new Map<string, TRow[]>();
+  for (const row of rows) {
+    const group = byClient.get(row.clientId);
+    if (group) group.push(row);
+    else byClient.set(row.clientId, [row]);
+  }
+  return byClient;
+};
+
 /** The scopes a client's consent rows allow, by the rule a save holds a grant to ({@link consentBound}). */
 const consentedScopesOf = (rows: ReadonlyArray<TConsentScopes>): string[] => consentBound(rows)?.scopes ?? [];
 
@@ -94,8 +105,6 @@ const readNewestConsents = async (
   userId: string,
   clientIds: ReadonlyArray<string>
 ): Promise<ReadonlyMap<string, TConsentScopes[]>> => {
-  const byClient = new Map<string, TConsentScopes[]>();
-  if (clientIds.length === 0) return byClient;
   const rows = await prisma.$queryRaw<({ clientId: string } & TConsentScopes)[]>`
     SELECT c."clientId", c."scopes", c."updatedAt"
     FROM "oauthConsent" c
@@ -104,8 +113,7 @@ const readNewestConsents = async (
         SELECT max(n."updatedAt") FROM "oauthConsent" n
         WHERE n."userId" = c."userId" AND n."clientId" = c."clientId"
       )`;
-  for (const { clientId, ...row } of rows) byClient.set(clientId, [...(byClient.get(clientId) ?? []), row]);
-  return byClient;
+  return groupByClient(rows);
 };
 
 /**
@@ -116,13 +124,13 @@ const readNewestConsents = async (
  * capped read left out: their cap comes from that consent, not from none. The read is bounded by those
  * clients, never by every consent the user gave.
  */
-const readCutConsents = (
+const readCutConsents = async (
   userId: string,
   listed: ReadonlyArray<{ clientId: string; updatedAt: Date }>,
   unconsentedGrants: ReadonlyArray<{ clientId: string }>
 ): Promise<ReadonlyMap<string, TConsentScopes[]>> => {
   const last = listed.at(-1);
-  if (listed.length < MAX_LISTED_AUTHORIZED_MCP_CLIENTS || !last) return readNewestConsents(userId, []);
+  if (listed.length < MAX_LISTED_AUTHORIZED_MCP_CLIENTS || !last) return new Map();
   const atBoundary = listed
     .filter(({ updatedAt }) => updatedAt.getTime() === last.updatedAt.getTime())
     .map(({ clientId }) => clientId);
@@ -130,6 +138,24 @@ const readCutConsents = (
     ...new Set([...atBoundary, ...unconsentedGrants.map(({ clientId }) => clientId)]),
   ]);
 };
+
+/**
+ * An entry's grant fields: its permissions, access and version, `null` without a grant, and when it last
+ * changed, the later of the consent's change and the grant's.
+ */
+const grantFields = (
+  grant: (TMcpGrantAccessRow & { permissions: unknown; updatedAt: Date }) | undefined,
+  consentUpdatedAt: Date,
+  accessOf: (grant: TMcpGrantAccessRow) => TMcpGrantAccessSelection
+): Pick<TAuthorizedMcpClient, "permissions" | "access" | "grantUpdatedAt" | "updatedAt"> =>
+  grant
+    ? {
+        permissions: parseMcpGrantPermissions(grant.permissions),
+        access: accessOf(grant),
+        grantUpdatedAt: grant.updatedAt,
+        updatedAt: latest(consentUpdatedAt, grant.updatedAt),
+      }
+    : { permissions: null, access: null, grantUpdatedAt: null, updatedAt: consentUpdatedAt };
 
 /**
  * The MCP clients the user authorized, most recently changed first: one per client with a consent, and one
@@ -178,28 +204,20 @@ export const listAuthorizedMcpClients = async (
   const accessOf = (grant: TMcpGrantAccessRow) =>
     limitMcpGrantAccessToOptions(readMcpGrantAccessSelection(grant), accessOptions);
 
-  const rowsByClient = new Map<string, typeof consents>();
-  for (const consent of consents) {
-    rowsByClient.set(consent.clientId, [...(rowsByClient.get(consent.clientId) ?? []), consent]);
-  }
   const clients = new Map<string, TAuthorizedMcpClient>();
-  for (const [clientId, rows] of rowsByClient) {
+  for (const [clientId, rows] of groupByClient(consents)) {
     // Rows come newest first: the first holds the client and the consent's last change.
     const [newest] = rows;
-    const grant = grantByClient.get(clientId);
     clients.set(clientId, {
       clientId,
       clientName: newest.client.name,
       clientUri: newest.client.uri,
       connectedAt: new Date(Math.min(...rows.map(({ createdAt }) => createdAt.getTime()))),
-      updatedAt: grant ? latest(newest.updatedAt, grant.updatedAt) : newest.updatedAt,
-      permissions: grant ? parseMcpGrantPermissions(grant.permissions) : null,
-      access: grant ? accessOf(grant) : null,
       cap: capForScopes(
         capScopes(newest.client, consentedScopesOf(cutConsents.get(clientId) ?? rows)),
         isDashboardViewer
       ),
-      grantUpdatedAt: grant?.updatedAt ?? null,
+      ...grantFields(grantByClient.get(clientId), newest.updatedAt, accessOf),
     });
   }
   for (const grant of unconsentedGrants) {
@@ -208,14 +226,11 @@ export const listAuthorizedMcpClients = async (
       clientName: grant.client.name,
       clientUri: grant.client.uri,
       connectedAt: grant.createdAt,
-      updatedAt: grant.updatedAt,
-      permissions: parseMcpGrantPermissions(grant.permissions),
-      access: accessOf(grant),
       cap: capForScopes(
         capScopes(grant.client, consentedScopesOf(cutConsents.get(grant.clientId) ?? [])),
         isDashboardViewer
       ),
-      grantUpdatedAt: grant.updatedAt,
+      ...grantFields(grant, grant.updatedAt, accessOf),
     });
   }
   return [...clients.values()]

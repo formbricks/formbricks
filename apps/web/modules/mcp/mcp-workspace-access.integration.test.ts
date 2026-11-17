@@ -820,8 +820,14 @@ describe("organization & workspace access on MCP calls", () => {
       const tabB = await authorize(setup.cookie, clientId, NARROW);
       let approvedB: Response | undefined;
       spicedbLookups.beforeNext = async () => {
-        // Past the second tab A's consent was stamped in, so tab B's write can't be taken for it.
-        await new Promise((resolve) => setTimeout(resolve, 1_100));
+        // Into the second after the one tab A's consent was stamped in (the provider stamps whole seconds),
+        // so tab B's write can't be taken for tab A's.
+        const { updatedAt } = await prisma.oauthConsent.findFirstOrThrow({
+          where: { userId: setup.userId, clientId },
+          select: { updatedAt: true },
+        });
+        const nextSecond = updatedAt.getTime() + 1_000;
+        await new Promise((resolve) => setTimeout(resolve, Math.max(0, nextSecond - Date.now())));
         approvedB = await consent(setup.cookie, tabB.target, {
           accept: true,
           mcp_grant: { permissions: { surveys: "read" }, access: "all" },

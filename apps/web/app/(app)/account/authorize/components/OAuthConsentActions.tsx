@@ -5,15 +5,14 @@ import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { authClient } from "@/modules/auth/lib/auth-client";
 import { getGrantErrorMessage } from "@/modules/auth/lib/mcp-grant-consent-errors";
-import type { TMcpGrantPermissions, TRequestedMcpGrant } from "@/modules/mcp/grant";
+import type { TRequestedMcpGrant } from "@/modules/mcp/grant";
 import { Button } from "@/modules/ui/components/button";
 import { getConsentApprovalBody } from "../lib/consent-approval";
 import { resolveConsentRedirectUrl } from "../lib/consent-redirect";
 
 interface OAuthConsentActionsProps {
-  /** What the client's scopes ask for: an identity-only request sends no grant. */
-  readonly cap: TMcpGrantPermissions;
-  readonly isDashboardViewer: boolean;
+  /** The request asks for identity alone, so Allow sends no grant (`isIdentityOnlyConsent`). */
+  readonly identityOnly: boolean;
   /** The scopes to grant when narrower than the request (a Dashboard viewer's); all of them otherwise. */
   readonly grantedScope?: string;
   /** The grant the user chose in the matrix, sent with Allow as the connection's grant. */
@@ -23,8 +22,7 @@ interface OAuthConsentActionsProps {
 }
 
 export const OAuthConsentActions = ({
-  cap,
-  isDashboardViewer,
+  identityOnly,
   grantedScope,
   grant,
   isAllowDisabled = false,
@@ -42,7 +40,7 @@ export const OAuthConsentActions = ({
       // `oauth_query` to the body.
       const response = await authClient.$fetch<unknown>("/oauth2/consent", {
         method: "POST",
-        body: accept ? getConsentApprovalBody({ cap, isDashboardViewer, grantedScope, grant }) : { accept },
+        body: accept ? getConsentApprovalBody({ identityOnly, grantedScope, grant }) : { accept },
       });
       if (response.error) {
         // A refused Allow says why: a pick the user can no longer select, a grant that couldn't be saved, or
