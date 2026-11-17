@@ -5,7 +5,7 @@ import { queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import type { ActionClientCtx } from "@/lib/utils/action-client/types/context";
 import { getClientIpFromHeaders } from "@/lib/utils/client-ip";
 import { getIsAuditLogsEnabled } from "@/modules/ee/license-check/lib/utils";
-import { TActor, TAuditAction, TAuditStatus, TAuditTarget } from "../types/audit-log";
+import { TActor, TAuditAction, TAuditStatus, TAuditTarget, ZAuditLogEventSchema } from "../types/audit-log";
 // Import original module to access its original exports for the mock factory
 import * as OriginalHandler from "./handler";
 
@@ -253,6 +253,22 @@ describe("queueAuditEvent", () => {
     expect(serviceLogAuditEventMockHandle).toHaveBeenCalledWith(
       expect.objectContaining({ ipAddress: "untrusted-client-ip", userAgent: "audit-test-agent" })
     );
+  });
+
+  // A v2 delete whose old record could not be read passes `oldObject: null`. The placeholder string it
+  // passed before became the event's `changes`, which the schema rejects, so the event was dropped.
+  test("queues a valid event for a delete whose old record could not be read", async () => {
+    await OriginalHandler.queueAuditEvent({
+      ...baseEventParams,
+      action: "deleted",
+      oldObject: null,
+      newObject: undefined,
+    });
+    await flushAfter();
+
+    const event = serviceLogAuditEventMockHandle.mock.calls[0][0];
+    expect(event).not.toHaveProperty("changes");
+    expect(ZAuditLogEventSchema.safeParse(event).success).toBe(true);
   });
 });
 
