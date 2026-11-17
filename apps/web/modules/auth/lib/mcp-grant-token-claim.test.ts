@@ -66,7 +66,7 @@ beforeEach(() => {
   vi.mocked(logger.error).mockClear();
   vi.mocked(logger.warn).mockClear();
   prisma.$transaction.mockImplementation((async (run: (tx: unknown) => unknown) => run(prisma)) as never);
-  prisma.mcpGrant.findUnique.mockResolvedValue({ id: "grant-1" } as never);
+  prisma.mcpGrant.findUnique.mockReset().mockResolvedValue({ id: "grant-1" } as never);
 });
 
 describe("mcpGrantAccessTokenClaims", () => {
@@ -140,16 +140,55 @@ describe("mcpGrantAccessTokenClaims", () => {
   });
 
   // Fail closed: without the hook's record of the code there is no issue time to check the mark against.
-  test("creates no grant when the exchange recorded no authorization code", async () => {
-    vi.mocked(readExchangedAuthorizationCode).mockResolvedValue(null);
-    prisma.mcpGrant.findUnique.mockResolvedValue(null);
+  test.each([
+    ["no authorization code", null],
+    ["another user's code", { userId: "user-2", clientId: "client-1", issuedAt: ISSUED_AT }],
+    ["another client's code", { userId: "user-1", clientId: "client-2", issuedAt: ISSUED_AT }],
+  ])("names and creates no grant when the exchange recorded %s", async (_case, recorded) => {
+    vi.mocked(readExchangedAuthorizationCode).mockResolvedValue(recorded);
 
-    await expect(claims()).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: null });
+    for (const client of [FIRST_PARTY, CONSENT_CLIENT]) {
+      await expect(claims({ client })).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: null });
+    }
     expect(createMcpGrantIfMissing).not.toHaveBeenCalled();
+    expect(prisma.mcpGrant.findUnique).not.toHaveBeenCalled();
     expect(logger.warn).toHaveBeenCalledWith(
       { userId: "user-1", clientId: "client-1" },
-      "No authorization code recorded for this exchange, so no grant was created for the skipConsent client"
+      "No authorization code recorded for this exchange, so its token names no grant"
     );
+  });
+
+  // A Revoke and a new approval can both land after the before-hook read the mark: the token from the
+  // revoked code must not name the new approval's grant, whichever kind of client exchanges it.
+  test.each([
+    ["a client that shows the consent screen", CONSENT_CLIENT],
+    ["a skipConsent client", FIRST_PARTY],
+  ])("names no grant for %s when a Revoke covers the code", async (_case, client) => {
+    vi.mocked(readOAuthRevocationTime).mockResolvedValue(ISSUED_AT);
+
+    await expect(claims({ client })).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: null });
+    expect(prisma.mcpGrant.findUnique).not.toHaveBeenCalled();
+  });
+
+  test("reads a code exchange's grant under the user's row, after the mark", async () => {
+    prisma.$transaction.mockClear();
+
+    await expect(claims({ client: CONSENT_CLIENT })).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: "grant-1" });
+    const [lock] = vi.mocked(lockUserForMcpGrantWrite).mock.invocationCallOrder;
+    const [mark] = vi.mocked(readOAuthRevocationTime).mock.invocationCallOrder;
+    const [lookup] = prisma.mcpGrant.findUnique.mock.invocationCallOrder;
+    expect(lock).toBeLessThan(mark);
+    expect(mark).toBeLessThan(lookup);
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
+  });
+
+  test("reads a refresh's grant without the code check", async () => {
+    vi.mocked(readOAuthRevocationTime).mockResolvedValue(ISSUED_AT);
+
+    await expect(claims({ grantType: "refresh_token" })).resolves.toEqual({
+      [MCP_GRANT_TOKEN_CLAIM]: "grant-1",
+    });
+    expect(readExchangedAuthorizationCode).not.toHaveBeenCalled();
   });
 
   // The provider spends the code after the before-hook read the mark: a Revoke that commits in between

@@ -89,15 +89,15 @@ export const readOAuthRevocationTime = async (userId: string, clientId: string):
 const TOKEN_PATH = "/oauth2/token";
 
 /** The authorization code this request is exchanging, as the token endpoint's before-hook read it. */
-type TExchangedCode = { userId: string; clientId: string; issuedAt: number };
+export type TExchangedCode = { userId: string; clientId: string; issuedAt: number };
 
 const exchangedCode = defineRequestState<TExchangedCode | null>(() => null);
 
 /**
  * The authorization code this request is exchanging, and when it was issued; `null` outside a code
  * exchange. Set by {@link refuseCodeIssuedBeforeRevocationBeforeHandler} for the grant claim
- * (`mcp-grant-token-claim.ts`), whose grant creation must re-check the revocation mark: the hook's read
- * happens before the provider spends the code, so a Revoke can land between the two.
+ * (`mcp-grant-token-claim.ts`), which must re-check the revocation mark before it names or creates a
+ * grant: the hook's read happens before the provider spends the code, so a Revoke can land between the two.
  */
 export const readExchangedAuthorizationCode = async (): Promise<TExchangedCode | null> =>
   (await hasRequestState()) ? exchangedCode.get() : null;
@@ -128,8 +128,8 @@ const readCodeOwner = (value: string): { userId: string; clientId: string } | nu
  * doesn't know, or can't read, is left to the provider to refuse.
  *
  * A code it accepts is recorded ({@link readExchangedAuthorizationCode}) so the grant claim re-checks the
- * mark when it creates a `skipConsent` client's grant: the provider spends the code after this read, and a
- * Revoke committed in the meantime must still leave the client without a grant.
+ * mark before it names a grant, and before it creates a `skipConsent` client's grant: the provider spends
+ * the code after this read, and a Revoke committed in the meantime must still leave the token without one.
  */
 export const refuseCodeIssuedBeforeRevocationBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
   if (ctx.path !== TOKEN_PATH) return;

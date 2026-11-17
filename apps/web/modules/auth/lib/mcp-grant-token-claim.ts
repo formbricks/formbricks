@@ -13,6 +13,7 @@ import {
 } from "@/modules/mcp/grant-store";
 import { trimScopesForDashboardViewer } from "./dashboard-viewer-oauth-scopes";
 import {
+  type TExchangedCode,
   isIssuedBeforeRevocation,
   readExchangedAuthorizationCode,
   readOAuthRevocationTime,
@@ -43,11 +44,13 @@ import {
  * creates one: the refresh check (`requireOAuthConsentOnRefreshAfterHandler`) ends a `skipConsent`
  * client without a grant, so a refresh that raced a Revoke can't bring it back.
  *
- * The creation is ordered against a Revoke like every other grant write ({@link grantSkipConsentClient}): it
- * takes the user's row `FOR KEY SHARE`, which a revocation holds `FOR UPDATE` while it deletes, and re-reads
- * the revocation mark once it has it. The token endpoint's before-hook read the mark before the provider
- * spent the code, so a Revoke that committed between the two would otherwise leave the client with a new
- * grant and its revoked access back (`oauth-revocation-marker.ts`).
+ * A code exchange names its grant, and creates one, under the same order every other grant write keeps
+ * against a Revoke ({@link readCodeExchangeGrantId}, {@link grantSkipConsentClient}): it takes the user's row
+ * `FOR KEY SHARE`, which a revocation holds `FOR UPDATE` while it deletes, and re-reads the revocation mark
+ * once it has it. The token endpoint's before-hook read the mark before the provider spent the code, so a
+ * Revoke that committed between the two, and an approval after it, would otherwise give a token from the
+ * revoked code the new approval's grant, or give the client a new grant and its revoked access back
+ * (`oauth-revocation-marker.ts`).
  */
 export const MCP_GRANT_TOKEN_CLAIM = "mcp_grant";
 
@@ -60,24 +63,27 @@ type TClaimInput = {
 };
 
 /**
+ * The authorization code this exchange spends, as the token endpoint's before-hook read it, when it is the
+ * user's code for this client; `null` otherwise, which the callers treat as covered by a revocation.
+ */
+const readExchangedCodeFor = async (userId: string, clientId: string): Promise<TExchangedCode | null> => {
+  const exchanged = await readExchangedAuthorizationCode();
+  return exchanged?.userId === userId && exchanged.clientId === clientId ? exchanged : null;
+};
+
+/**
  * Gives the user a grant to a `skipConsent` client if they have none, unless a revocation covers the code
  * being exchanged. Never throws: the code is already spent, and failing the exchange would leave the client
  * nothing to retry with. Without a grant the token carries no claim, its calls are refused, and its next
  * refresh ends its access, so it authorizes again.
- *
- * The exchange's own read of the mark (`readExchangedAuthorizationCode`) supplies the code's issue time;
- * without it, nothing is created, which is the same fail-closed answer if the hook ever stops recording it.
  */
-const grantSkipConsentClient = async (userId: string, clientId: string, scopes: string[]): Promise<void> => {
+const grantSkipConsentClient = async (
+  userId: string,
+  clientId: string,
+  scopes: string[],
+  exchanged: TExchangedCode
+): Promise<void> => {
   try {
-    const exchanged = await readExchangedAuthorizationCode();
-    if (!exchanged || exchanged.userId !== userId || exchanged.clientId !== clientId) {
-      logger.warn(
-        { userId, clientId },
-        "No authorization code recorded for this exchange, so no grant was created for the skipConsent client"
-      );
-      return;
-    }
     const granted = (await isOnlyDashboardViewer(prisma, userId))
       ? trimScopesForDashboardViewer(scopes)
       : scopes;
@@ -110,8 +116,37 @@ const grantSkipConsentClient = async (userId: string, clientId: string, scopes: 
 };
 
 /**
+ * The grant a token minted from an authorization code is issued under, or `null` when a revocation covers
+ * the code. Reads the mark and the grant under the user's row: a Revoke that marked after the before-hook's
+ * read is seen here, and one that starts later waits for this read and then deletes the grant it named.
+ * Otherwise a Revoke and a new approval landing between the two would hand the revoked code's token the
+ * new approval's grant.
+ */
+const readCodeExchangeGrantId = async (
+  userId: string,
+  clientId: string,
+  exchanged: TExchangedCode
+): Promise<string | null> =>
+  prisma.$transaction(
+    async (tx) => {
+      await lockUserForMcpGrantWrite(tx, userId);
+      const revokedAt = await readOAuthRevocationTime(userId, clientId);
+      if (isIssuedBeforeRevocation(exchanged.issuedAt, revokedAt)) return null;
+      const grant = await tx.mcpGrant.findUnique({
+        where: { userId_clientId: { userId, clientId } },
+        select: { id: true },
+      });
+      return grant?.id ?? null;
+    },
+    { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
+  );
+
+/**
  * The access-token claims for the grant the token is issued under: its id, or `null` while the user
  * has no grant to the client. Nothing without a user (a client credentials token, which no MCP call accepts).
+ *
+ * A code exchange without the before-hook's record of its code names no grant (fail closed): there is no
+ * issue time to check the revocation mark against.
  */
 export const mcpGrantAccessTokenClaims = async ({
   user,
@@ -120,12 +155,22 @@ export const mcpGrantAccessTokenClaims = async ({
   grantType,
 }: TClaimInput): Promise<Record<string, unknown>> => {
   if (!user) return {};
-  if (grantType === "authorization_code" && client.skipConsent === true) {
-    await grantSkipConsentClient(user.id, client.clientId, scopes);
+  const { clientId } = client;
+  if (grantType !== "authorization_code") {
+    const grant = await prisma.mcpGrant.findUnique({
+      where: { userId_clientId: { userId: user.id, clientId } },
+      select: { id: true },
+    });
+    return { [MCP_GRANT_TOKEN_CLAIM]: grant?.id ?? null };
   }
-  const grant = await prisma.mcpGrant.findUnique({
-    where: { userId_clientId: { userId: user.id, clientId: client.clientId } },
-    select: { id: true },
-  });
-  return { [MCP_GRANT_TOKEN_CLAIM]: grant?.id ?? null };
+  const exchanged = await readExchangedCodeFor(user.id, clientId);
+  if (!exchanged) {
+    logger.warn(
+      { userId: user.id, clientId },
+      "No authorization code recorded for this exchange, so its token names no grant"
+    );
+    return { [MCP_GRANT_TOKEN_CLAIM]: null };
+  }
+  if (client.skipConsent === true) await grantSkipConsentClient(user.id, clientId, scopes, exchanged);
+  return { [MCP_GRANT_TOKEN_CLAIM]: await readCodeExchangeGrantId(user.id, clientId, exchanged) };
 };

@@ -25,6 +25,7 @@ import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
 import { revokeAllUserOAuthGrants, revokeMcpClient } from "@/modules/auth/lib/mcp-grant-revocation";
 import { mcpGrantAccessTokenClaims } from "@/modules/auth/lib/mcp-grant-token-claim";
+import { markOAuthRevocation } from "@/modules/auth/lib/oauth-revocation-marker";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { revokeCredentials } from "@/modules/ee/data-retention/sweep/members-sweeper";
@@ -314,6 +315,47 @@ describe("a connection's grant", () => {
     await expect(revoked).resolves.not.toBeNull();
     expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
   }, 60_000);
+
+  // N3: the token endpoint's before-hook accepts a code, then a Revoke and a new approval land before the
+  // claim names the grant. The claim must not name the replacement grant for a code issued before the
+  // Revoke: it re-checks the mark, under the user's row a revocation holds, and names none.
+  test("a code issued before a Revoke never names the grant a later approval made", async () => {
+    await grant(setup.cookie, setup.clientId, EVERYTHING);
+    const pending = await authorize(setup.cookie, setup.clientId, EVERYTHING);
+    const code = pending.target.searchParams.get("code") as string;
+    expect(code, pending.target.toString()).toBeTruthy();
+
+    let exchanged: ReturnType<typeof exchangeCode> | undefined;
+    let replacementId = "";
+    await prisma.$transaction(
+      async (tx) => {
+        await tx.$queryRaw`SELECT 1 FROM "User" WHERE "id" = ${setup.userId} FOR UPDATE`;
+        exchanged = exchangeCode(setup.clientId, code, pending.verifier);
+        await waitForBlockOn(tx);
+        // What Revoke then a new approval leave behind: the mark, and a new grant for the client.
+        await markOAuthRevocation({ userId: setup.userId, clientId: setup.clientId });
+        await tx.mcpGrant.deleteMany({ where: { userId: setup.userId, clientId: setup.clientId } });
+        replacementId = (
+          await tx.mcpGrant.create({
+            data: {
+              userId: setup.userId,
+              clientId: setup.clientId,
+              access: "all",
+              permissions: { surveys: "read" },
+            },
+            select: { id: true },
+          })
+        ).id;
+      },
+      { timeout: 15_000 }
+    );
+
+    const response = await (exchanged as ReturnType<typeof exchangeCode>);
+    expect(response.status, JSON.stringify(response.body)).toBe(200);
+    const claim = decodeJwt(response.body.access_token as string).mcp_grant;
+    expect(claim).not.toBe(replacementId);
+    expect(claim).toBeNull();
+  });
 
   // The grant is keyed on the user and the client, so approving the client again after Revoke makes a new
   // one under the same key. A token from before the Revoke must stay refused: it was ended with the old one.
