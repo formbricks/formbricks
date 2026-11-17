@@ -176,10 +176,13 @@ export const readHandlers = (source: string): TRouteHandler[] => {
 
 const byText = (a: string, b: string) => a.localeCompare(b);
 
-/** Every `route.ts` under `app/api`. */
+/**
+ * Every `route.ts` served under `/api`, by the URL it answers on: a route group anywhere above it (say
+ * `app/(g)/api/internal/x`) serves the same path as `app/api/internal/x`, so the file prefix would miss it.
+ */
 export const listRouteFiles = (): TRouteFile[] =>
   listSourceFiles()
-    .filter((file) => file.startsWith("app/api/") && /\/route\.tsx?$/.test(file))
+    .filter((file) => /\/route\.tsx?$/.test(file) && toUrlPath(file).startsWith("/api/"))
     .map((file) => {
       const handlers = readHandlers(read(file));
       return {

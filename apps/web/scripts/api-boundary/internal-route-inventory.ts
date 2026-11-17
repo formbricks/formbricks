@@ -27,7 +27,7 @@ type TAudience = "dashboard" | "gateway";
 const GATEWAY_CALLBACK = /^\/api\/(envoy|traefik)-auth\//;
 
 const describeLocation = (route: TRouteFile): string => {
-  if (route.file.startsWith("app/api/internal/")) return "`/api/internal`";
+  if (route.path.startsWith("/api/internal/")) return "`/api/internal`";
   if (route.file.startsWith("app/api/(internal)/")) return "`(internal)` group";
   return "`/api/v3`, not in the public spec";
 };
@@ -40,7 +40,7 @@ export const listInventoriedRoutes = (): TRouteFile[] => {
   const publicPaths = readPublicBundlePaths();
   return listRouteFiles().filter(
     (route) =>
-      route.file.startsWith("app/api/internal/") ||
+      route.path.startsWith("/api/internal/") ||
       route.file.startsWith("app/api/(internal)/") ||
       (route.file.startsWith("app/api/v3/") && !publicPaths.has(normalizePathParams(route.path)))
   );
