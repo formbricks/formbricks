@@ -322,6 +322,19 @@ describe("POST /api/internal/invites/acceptances — refusals", () => {
     expectNothingChanged();
   });
 
+  test("answers 409 to a second acceptance of the same invite once the first has committed", async () => {
+    // The first acceptance spent the invite; the second deletes nothing, then finds the membership it made.
+    mocks.deleteInvites.mockResolvedValue({ count: 0 });
+    mocks.findCommittedMembership.mockResolvedValue({ userId: USER_ID });
+
+    const response = await accept();
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).details).toEqual({ reason: "already_member" });
+    expect(mocks.createMembership).not.toHaveBeenCalled();
+    expectNothingChanged();
+  });
+
   test("answers 500 and changes nothing when a write in the transaction fails", async () => {
     mocks.createTeamMembership.mockRejectedValue(new Error("db down"));
 

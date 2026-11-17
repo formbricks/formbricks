@@ -82,6 +82,26 @@ const isMemberOf = async (userId: string, organizationId: string): Promise<boole
     select: { userId: true },
   })) !== null;
 
+/**
+ * The answer to an acceptance whose transaction failed, or null for a failure to rethrow. The caller hears
+ * it is already a member whenever it is: an existing membership, a second acceptance of the same invite that
+ * finds it spent by the first, or another invite to the same organization that committed first (the insert
+ * then fails on the unique key as a generic database error). An invite spent or expired since it was read,
+ * by anyone else, answers as if it had been read that way.
+ */
+const refuseFailedAcceptance = async (
+  error: unknown,
+  userId: string,
+  organizationId: string,
+  requestId: string,
+  instance: string | undefined
+): Promise<Response | null> => {
+  if (error instanceof AlreadyMemberError) return alreadyMember(requestId, instance);
+  if (await isMemberOf(userId, organizationId)) return alreadyMember(requestId, instance);
+  if (error instanceof InviteNoLongerValidError) return problemForbidden(requestId, undefined, instance);
+  return null;
+};
+
 type TInviteUser = NonNullable<Awaited<ReturnType<typeof getUser>>>;
 
 /** What follows a committed acceptance. Each step is best-effort: the membership already exists. */
@@ -182,12 +202,8 @@ export async function acceptInviteOperation({
   try {
     membership = await acceptInviteInTransaction(invite, user.id);
   } catch (error) {
-    if (error instanceof AlreadyMemberError) return alreadyMember(requestId, instance);
-    // Spent or expired between the read above and the transaction: the same answers as if read that way.
-    if (error instanceof InviteNoLongerValidError) return problemForbidden(requestId, undefined, instance);
-    // A concurrent acceptance of another invite to the same organization committed the membership first:
-    // the insert then fails on the unique key, which reaches here as a generic database error.
-    if (await isMemberOf(user.id, invite.organizationId)) return alreadyMember(requestId, instance);
+    const refusal = await refuseFailedAcceptance(error, user.id, invite.organizationId, requestId, instance);
+    if (refusal) return refusal;
     throw error;
   }
 
