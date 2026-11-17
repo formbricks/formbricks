@@ -188,7 +188,11 @@ describe("a Dashboard viewer's MCP token", () => {
   test("is refused a chart read without its dashboard", async () => {
     const result = await call("get_chart_data", { chartId: ids.chart });
     expect(result.isError).toBe(true);
-    expect(JSON.stringify(result)).toMatch(/insufficient_scope|feedbackRecords:read/);
+    // The role caps it, so the refusal says so rather than asking for a reconnect that can't help.
+    expect(JSON.stringify(result)).toMatch(
+      /Dashboard viewer role can't give this MCP client Feedback records: Read/
+    );
+    expect(JSON.stringify(result)).not.toMatch(/reconnect the client and give it/);
   });
 
   test("is refused the dashboards of a workspace its team is not granted", async () => {

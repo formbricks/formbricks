@@ -354,10 +354,14 @@ describe("chart and dashboard MCP tools", () => {
     );
   });
 
-  test("get_chart_data refuses a viewer without a dashboardId (S1)", async () => {
+  test("get_chart_data refuses a viewer without a dashboardId (S1), naming the role, not a reconnect", async () => {
     const result = await call("get_chart_data", { chartId: CHART_ID }, ["dashboards:read"], true);
     expect(result.isError).toBe(true);
     expect(getV3ChartData).not.toHaveBeenCalled();
+    const detail = JSON.stringify(result.structuredContent);
+    expect(detail).toContain("Dashboard viewer role");
+    expect(detail).toContain("dashboardId");
+    expect(detail).not.toContain("reconnect the client and give it");
   });
 
   test("list_dashboards maps its filters and get_dashboard reads one, both under dashboards:read", async () => {

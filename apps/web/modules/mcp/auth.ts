@@ -765,6 +765,20 @@ export function createMcpScopeNotPermittedResponse(
 }
 
 /**
+ * The refusal of a tool to a Dashboard viewer's token, whose scopes the role trims to `dashboards:read`
+ * (ADR-0025). Unlike {@link createMcpScopeNotPermittedResponse}, it doesn't ask for a reconnect, which
+ * can't help, and carries no `WWW-Authenticate` challenge: the role caps it, as the consent screen and
+ * Edit say for the levels a viewer can't pick.
+ */
+export function createMcpRoleNotPermittedResponse(requestId: string, needs: string): Response {
+  return problemForbidden(
+    requestId,
+    `Not permitted: the user's Dashboard viewer role can't give this MCP client ${needs}, and reconnecting the client won't change that. A Dashboard viewer reads charts through a dashboard: pass its dashboardId.`,
+    "/api/mcp"
+  );
+}
+
+/**
  * The refusal for a tool the grant does not cover (ADR-0041). Unlike an insufficient scope, it carries no
  * `WWW-Authenticate` challenge: re-authorizing for more scopes would not help, the user has to change the
  * grant. `detail` names what the grant would have to give, so an agent can tell the user what to change.

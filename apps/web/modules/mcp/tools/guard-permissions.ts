@@ -15,10 +15,12 @@ import {
   type TMcpAuthInfo,
   type TMcpToolContext,
   createMcpNotPermittedResponse,
+  createMcpRoleNotPermittedResponse,
   createMcpScopeNotPermittedResponse,
   getMcpAuthentication,
   getMcpRequestId,
   getMcpToolAuthInfo,
+  isMcpDashboardViewerOnly,
 } from "../auth";
 import { mcpOutsideGrantResult, responseToMcpToolResult } from "../errors";
 import { describeMcpPermissionRequirement, mcpGrantAllows } from "../grant";
@@ -67,6 +69,13 @@ async function guardScopes(
   const refused = mode === "allOf" ? missing.length > 0 : missing.length === requirements.length;
   if (!refused) return null;
 
+  // A Dashboard viewer's scopes are the role's, not the client's: a reconnect can't widen them.
+  if (isMcpDashboardViewerOnly(authInfo)) {
+    return await responseToMcpToolResult(
+      createMcpRoleNotPermittedResponse(requestId, describeNeeds(missing, mode)),
+      requestId
+    );
+  }
   return await responseToMcpToolResult(
     createMcpScopeNotPermittedResponse(requestId, {
       needs: describeNeeds(missing, mode),
