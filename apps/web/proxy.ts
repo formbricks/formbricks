@@ -229,6 +229,7 @@ export const config = {
     // leaves `config` undefined — so `parseMiddlewareConfig` receives nothing and the matcher is
     // silently DROPPED, running Proxy on every static asset and voiding the exclusions above. A plain
     // template literal parses, but needs the same `\\.` escapes, so it does not satisfy the rule either.
+    // eslint-disable-next-line unicorn-js/prefer-string-raw -- String.raw breaks Next.js's static matcher extraction; see above
     "/((?!_next/(?:static|image)(?:/|$)|(?:favicon\\.ico|sitemap\\.xml|robots\\.txt)$|(?:js|css|images|fonts|icons|public|animated-bgs)(?:/|$)).*)", // NOSONAR(typescript:S7780) -- String.raw breaks Next.js's static matcher extraction; see above
   ],
 };

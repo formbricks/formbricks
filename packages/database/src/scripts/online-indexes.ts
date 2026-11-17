@@ -35,8 +35,10 @@ export const ONLINE_INDEXES: readonly OnlineIndex[] = [
 const quote = (identifier: string): string => `"${identifier.replaceAll('"', '""')}"`;
 
 /** Shadow databases have no live traffic and Prisma replays a migration as one transaction. */
-export const createOnlineIndexSql = (index: OnlineIndex, mode: "online" | "shadow"): string =>
-  `CREATE ${index.unique ? "UNIQUE " : ""}INDEX ${mode === "online" ? "CONCURRENTLY" : "IF NOT EXISTS"} ${quote(index.name)} ON ${quote(index.table)} (${index.columns.map(quote).join(", ")})${index.predicate ? ` WHERE ${quote(index.predicate)}` : ""}`;
+export const createOnlineIndexSql = (index: OnlineIndex, mode: "online" | "shadow"): string => {
+  const where = index.predicate ? ` WHERE ${quote(index.predicate)}` : "";
+  return `CREATE ${index.unique ? "UNIQUE " : ""}INDEX ${mode === "online" ? "CONCURRENTLY" : "IF NOT EXISTS"} ${quote(index.name)} ON ${quote(index.table)} (${index.columns.map(quote).join(", ")})${where}`;
+};
 
 const readIndex = async (client: Client, index: OnlineIndex) => {
   const { rows } = await client.query<{

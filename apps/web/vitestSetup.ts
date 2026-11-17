@@ -39,7 +39,7 @@ vi.mock("react-hot-toast", () => ({
 }));
 
 // mock react cache
-const testCache = <T extends Function>(func: T) => func;
+const testCache = <T>(func: T) => func;
 
 vi.mock("react", async () => {
   const react = await vi.importActual<typeof import("react")>("react");
@@ -189,7 +189,8 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-export const testInputValidation = async (service: Function, ...args: any[]): Promise<void> => {
+// Registers a test; nothing to await, and no caller awaits it.
+export const testInputValidation = (service: (...args: any[]) => unknown, ...args: any[]): void => {
   test("throws a ValidationError if the inputs are invalid", async () => {
     await expect(service(...args)).rejects.toThrow(ValidationError);
   }, 15000);

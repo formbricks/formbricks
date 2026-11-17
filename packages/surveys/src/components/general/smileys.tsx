@@ -1,6 +1,6 @@
-import type { FunctionComponent, JSX } from "preact";
+import type { FunctionComponent, HTMLAttributes } from "preact";
 
-export const TiredFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
+export const TiredFace: FunctionComponent<HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
       <g id="line">
@@ -61,7 +61,7 @@ export const TiredFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> 
   );
 };
 
-export const WearyFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
+export const WearyFace: FunctionComponent<HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
       <g id="line">
@@ -122,7 +122,7 @@ export const WearyFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> 
   );
 };
 
-export const PerseveringFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
+export const PerseveringFace: FunctionComponent<HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
       <g id="line">
@@ -192,7 +192,7 @@ export const PerseveringFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElem
   );
 };
 
-export const FrowningFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
+export const FrowningFace: FunctionComponent<HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
       <g id="line">
@@ -222,7 +222,7 @@ export const FrowningFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement
   );
 };
 
-export const ConfusedFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
+export const ConfusedFace: FunctionComponent<HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
       <g id="line">
@@ -251,7 +251,7 @@ export const ConfusedFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement
   );
 };
 
-export const NeutralFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
+export const NeutralFace: FunctionComponent<HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
       <g id="line">
@@ -284,7 +284,7 @@ export const NeutralFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>
   );
 };
 
-export const SlightlySmilingFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
+export const SlightlySmilingFace: FunctionComponent<HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
       <g id="line">
@@ -314,9 +314,7 @@ export const SlightlySmilingFace: FunctionComponent<JSX.HTMLAttributes<SVGCircle
   );
 };
 
-export const SmilingFaceWithSmilingEyes: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (
-  props
-) => {
+export const SmilingFaceWithSmilingEyes: FunctionComponent<HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
       <g id="line">
@@ -360,9 +358,7 @@ export const SmilingFaceWithSmilingEyes: FunctionComponent<JSX.HTMLAttributes<SV
   );
 };
 
-export const GrinningFaceWithSmilingEyes: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (
-  props
-) => {
+export const GrinningFaceWithSmilingEyes: FunctionComponent<HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
       <g id="line">
@@ -414,7 +410,7 @@ export const GrinningFaceWithSmilingEyes: FunctionComponent<JSX.HTMLAttributes<S
   );
 };
 
-export const GrinningSquintingFace: FunctionComponent<JSX.HTMLAttributes<SVGCircleElement>> = (props) => {
+export const GrinningSquintingFace: FunctionComponent<HTMLAttributes<SVGCircleElement>> = (props) => {
   return (
     <svg viewBox="0 0 72 72" xmlns="http://www.w3.org/2000/svg">
       <g id="line">

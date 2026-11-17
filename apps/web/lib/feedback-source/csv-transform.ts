@@ -12,6 +12,7 @@ const BOOLEAN_FIELDS = new Set<THubTargetField>(["value_boolean"]);
 const TIMESTAMP_FIELDS = new Set<THubTargetField>(["collected_at", "value_date"]);
 const JSON_FIELDS = new Set<THubTargetField>(["metadata"]);
 const ISO_DATE_OR_TIMESTAMP_REGEX =
+  // eslint-disable-next-line sonarjs/regex-complexity -- one ISO 8601 grammar; split up, it no longer reads as the format
   /^(\d{4})-(\d{2})-(\d{2})(?:T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,9})?)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d))?$/;
 
 const isValidIsoDateOrTimestamp = (value: string): boolean => {

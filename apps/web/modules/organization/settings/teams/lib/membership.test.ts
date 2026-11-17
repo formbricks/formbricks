@@ -35,7 +35,7 @@ vi.mock("@formbricks/database", () => ({
 }));
 vi.mock("@/lib/constants", () => ({ ITEMS_PER_PAGE: 2 }));
 vi.mock("@/lib/utils/validate", () => ({ validateInputs: vi.fn() }));
-vi.mock("react", () => ({ cache: (fn: Function) => fn }));
+vi.mock("react", () => ({ cache: <T>(fn: T) => fn }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn() } }));
 vi.mock("@/lib/authzed/organization-membership", () => ({
   reconcileOrganizationMembership: vi.fn(),

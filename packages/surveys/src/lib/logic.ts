@@ -121,6 +121,7 @@ export const performActions = (
         requiredQuestionIds.push(action.target);
         break;
       case "jumpToBlock":
+        // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty jump target means no jump
         if (!jumpTarget) {
           jumpTarget = action.target;
         }
@@ -536,6 +537,10 @@ const evaluateSingleCondition = (
   }
 };
 
+/** A variable's value, or the one-step operators' starting value when it has none yet. */
+const withDefaultValue = (value: number | string | undefined, dataType: string): number | string =>
+  value ?? (dataType === "number" ? 0 : "");
+
 const performCalculation = (
   survey: TJsWorkspaceStateSurvey,
   action: TActionCalculate,
@@ -561,10 +566,7 @@ const performCalculation = (
     });
   }
 
-  let currentValue = calculations[action.variableId];
-  if (currentValue === undefined) {
-    currentValue = dataType === "number" ? 0 : "";
-  }
+  let currentValue = withDefaultValue(calculations[action.variableId], dataType);
   let operandValue: string | number | undefined;
 
   // Determine the operand value based on the action.value type

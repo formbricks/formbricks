@@ -15,11 +15,9 @@ export function checkWorkflow(source) {
   }
 
   const errors = [];
-  const triggers = isMap(workflow.on)
-    ? Object.keys(workflow.on)
-    : Array.isArray(workflow.on)
-      ? workflow.on
-      : [workflow.on];
+  let triggers = [workflow.on];
+  if (isMap(workflow.on)) triggers = Object.keys(workflow.on);
+  else if (Array.isArray(workflow.on)) triggers = workflow.on;
   // Workflows that can only be called inherit the caller's permission ceiling.
   const onlyWorkflowCall = triggers.length === 1 && triggers[0] === "workflow_call";
   if (workflow.permissions !== undefined && !isMap(workflow.permissions)) {

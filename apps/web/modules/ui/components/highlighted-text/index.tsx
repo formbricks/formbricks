@@ -8,7 +8,8 @@ export const HighlightedText = ({ value, searchValue }: HighlightedTextProps) =>
     return <span>{value}</span>;
   }
 
-  const regex = new RegExp(`(${searchValue.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")})`, "gi");
+  const escapedSearch = searchValue.replace(/[-/\\^$*+?.()|[\]{}]/g, String.raw`\$&`);
+  const regex = new RegExp(`(${escapedSearch})`, "gi");
 
   const parts = value.split(regex);
 

@@ -61,9 +61,13 @@ async function resolveTrustedTemplate(body: TTrustedTemplateCreateBody): Promise
     return null;
   }
 
+  let createdFrom: "blank" | "xm-template" | "template" = "template";
+  if (body.source === "custom") createdFrom = "blank";
+  else if (body.source === "xm") createdFrom = "xm-template";
+
   return {
     template: replacePresetPlaceholders(template, workspace),
-    createdFrom: body.source === "custom" ? "blank" : body.source === "xm" ? "xm-template" : "template",
+    createdFrom,
   };
 }
 

@@ -30,7 +30,7 @@ export const extractId = (text: string): string | null => {
   }
 };
 
-const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const escapeRegExp = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
 // If there are multiple recall infos in a string extracts all recall question IDs from that string and construct an array out of it.
 // Deliberately lax — it matches an id with no `/fallback:…#` tail, so a half-typed or half-deleted
@@ -76,14 +76,14 @@ export const extractFallbackValue = (text: string): string => {
 // Extracts the complete recall information (ID and fallback) from a headline string.
 export const extractRecallInfo = (headline: string, id?: string): string | null => {
   const idPattern = id ? escapeRegExp(id) : "[A-Za-z0-9_-]+";
-  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:([^#]*)#`);
+  const pattern = new RegExp(String.raw`#recall:(${idPattern})\/fallback:([^#]*)#`);
   const match = headline.match(pattern);
   return match ? match[0] : null;
 };
 
 // Finds the recall information by a specific recall question ID within a text.
 export const findRecallInfoById = (text: string, id: string): string | null => {
-  const pattern = new RegExp(`#recall:${escapeRegExp(id)}\\/fallback:([^#]*)#`, "g");
+  const pattern = new RegExp(String.raw`#recall:${escapeRegExp(id)}\/fallback:([^#]*)#`, "g");
   const match = text.match(pattern);
   return match ? match[0] : null;
 };
