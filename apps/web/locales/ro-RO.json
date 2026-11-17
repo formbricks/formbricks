@@ -65,6 +65,8 @@
       "new_to_formbricks": "Nou în Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_second_factor_unavailable_description": "Adresa ta de e-mail este verificată, dar acest cont are activată autentificarea în doi pași, iar această instanță Formbricks are dezactivată conectarea cu e-mail și parolă, așa că al doilea factor nu poate fi introdus aici. Pentru a finaliza, conectează-te cu un furnizor de conectare unică (SSO) deja asociat acestui cont sau contactează un administrator.",
+      "oauth_second_factor_unavailable_title": "Autentificarea în doi pași nu poate fi finalizată aici",
       "please_verify_your_email_to_continue": "Te rugăm să îți verifici adresa de e-mail. Ți-am trimis un link de verificare.",
       "use_a_backup_code": "Folosiți un cod de rezervă"
     },

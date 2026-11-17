@@ -65,6 +65,8 @@
       "new_to_formbricks": "Novo no Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_second_factor_unavailable_description": "Seu endereço de e-mail foi verificado, mas esta conta tem autenticação de dois fatores e esta instância do Formbricks está com o login por e-mail e senha desativado, então não é possível informar o segundo fator aqui. Para concluir, entre com um provedor de login único (SSO) já vinculado a esta conta ou entre em contato com um administrador.",
+      "oauth_second_factor_unavailable_title": "Não é possível concluir o login de dois fatores aqui",
       "please_verify_your_email_to_continue": "Verifique seu endereço de e-mail. Enviamos um link de verificação para você.",
       "use_a_backup_code": "Usar um código de backup"
     },

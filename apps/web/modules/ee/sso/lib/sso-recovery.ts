@@ -2,6 +2,7 @@ import { prisma } from "@formbricks/database";
 import type { IdentityProvider, Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { Account } from "@formbricks/types/auth";
+import { SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE } from "@formbricks/types/errors";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createEmailToken, createSsoRelinkIntent, verifySsoRelinkIntent } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
@@ -259,9 +260,11 @@ const createSsoRecoveryCompletionUrl = (intentToken: string): string => {
   return completionUrl.toString();
 };
 
-export const getSsoRecoveryFailureRedirectUrl = (callbackUrl?: string): string => {
+const buildSsoRecoveryLoginUrl = (callbackUrl: string | undefined, error?: string): string => {
   const loginUrl = new URL("/auth/login", WEBAPP_URL);
-  loginUrl.searchParams.set("error", OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+  if (error) {
+    loginUrl.searchParams.set("error", error);
+  }
 
   const validatedCallbackUrl = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL);
   if (validatedCallbackUrl) {
@@ -270,6 +273,28 @@ export const getSsoRecoveryFailureRedirectUrl = (callbackUrl?: string): string =
 
   return loginUrl.toString();
 };
+
+export const getSsoRecoveryFailureRedirectUrl = (callbackUrl?: string): string =>
+  buildSsoRecoveryLoginUrl(callbackUrl, OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+
+/**
+ * Where the recovery link sends a user whose second factor it cannot check (ENG-7266): the login page,
+ * carrying the completion URL as `callbackUrl`. They sign in with password + TOTP (or a linked SSO
+ * provider), the login form follows the callback, and `completeSsoRecovery` links the new identity once
+ * the session user matches the intent.
+ */
+export const getSsoRecoverySecondFactorRedirectUrl = (callbackUrl?: string): string =>
+  buildSsoRecoveryLoginUrl(callbackUrl);
+
+/**
+ * The same redirect where the login page cannot produce the second factor: the instance has credential
+ * sign-in switched off (`EMAIL_AUTH_DISABLED=1`), so the form that would ask for password + TOTP is not
+ * rendered, and the identity that started recovery is unlinked by definition. A provider already linked
+ * to the account still gets the user through, which is why the copy names that before the administrator;
+ * landing there without a word is the silent loop this code exists to end (ENG-7266).
+ */
+export const getSsoRecoverySecondFactorUnavailableRedirectUrl = (callbackUrl?: string): string =>
+  buildSsoRecoveryLoginUrl(callbackUrl, SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE);
 
 export const startSsoRecovery = async ({
   existingUser,

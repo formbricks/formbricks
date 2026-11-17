@@ -65,6 +65,8 @@
       "new_to_formbricks": "Ny på Formbricks?",
       "oauth_account_not_linked_description": "This SSO provider is not linked to an existing Formbricks account. Please sign in with the method you used originally. If that was email and password, complete email verification first if you are prompted.",
       "oauth_account_not_linked_title": "This SSO sign-in could not be linked",
+      "oauth_second_factor_unavailable_description": "Din e-postadress är verifierad, men det här kontot har tvåfaktorsautentisering och inloggning med e-post och lösenord är avstängd i den här Formbricks-instansen, så den andra faktorn kan inte anges här. Logga in med en leverantör för enkel inloggning (SSO) som redan är kopplad till kontot för att slutföra inloggningen, eller kontakta en administratör.",
+      "oauth_second_factor_unavailable_title": "Inloggning med tvåfaktorsautentisering kan inte slutföras här",
       "please_verify_your_email_to_continue": "Verifiera din e-postadress. Vi har skickat en verifieringslänk till dig.",
       "use_a_backup_code": "Använd en reservkod"
     },
