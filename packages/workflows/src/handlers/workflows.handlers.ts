@@ -713,7 +713,9 @@ export const createWorkflowsHandlers = (service: WorkflowsService): WorkflowsHan
       // `definition_not_executable` above, and dereferencing its unparsed config here would throw and
       // turn the dry-run into a 500 — the opposite of the collected-problems contract. Mirrors `enable`.
       if (executable.success) {
-        problems.push(...(await collectTriggerProblems(ctx, loaded.workspaceId, executable.data)));
+        for (const problem of await collectTriggerProblems(ctx, loaded.workspaceId, executable.data)) {
+          problems.push(problem);
+        }
       }
 
       const result = validateOutput(ZWorkflowTestResult, {

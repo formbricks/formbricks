@@ -527,7 +527,9 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
 
       // It's a data migration, dynamically import and extract the scripts
       // Use .js extension when running from built code, .ts when running from source
-      migrations.push(...(await importDataMigrations(path.join(migrationPath, dataMigrationFileName))));
+      for (const migration of await importDataMigrations(path.join(migrationPath, dataMigrationFileName))) {
+        migrations.push(migration);
+      }
     } else {
       logger.warn(
         `Migration directory ${dirName} doesn't have migration.sql or ${dataMigrationFileName}. Skipping...`

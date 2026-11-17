@@ -213,6 +213,15 @@ const getResponseFileUrlOwner = ({
   return scope.surveyId === surveyId && scope.elementId === elementId ? "own" : "refused";
 };
 
+/** The strings an answer could hold a file URL in: each string of a list, or a bare string. */
+const getAnswerUrlCandidates = (answer: unknown): string[] => {
+  if (Array.isArray(answer)) {
+    return answer.filter((fileUrl): fileUrl is string => typeof fileUrl === "string");
+  }
+  if (typeof answer === "string") return [answer];
+  return [];
+};
+
 /**
  * Pulls the storage URLs one response of `surveyId` owns out of its answers, ready to hand to
  * `deleteResponseFileUrls`. Which URLs count is `getResponseFileUrlOwner`'s rule.
@@ -235,15 +244,6 @@ const getResponseFileUrlOwner = ({
  * `data` is deliberately `unknown`: callers hand this a raw `Prisma.JsonValue` column or an already
  * typed `TResponseData`, and the shape is checked here either way rather than cast at each call site.
  */
-/** The strings an answer could hold a file URL in: each string of a list, or a bare string. */
-const getAnswerUrlCandidates = (answer: unknown): string[] => {
-  if (Array.isArray(answer)) {
-    return answer.filter((fileUrl): fileUrl is string => typeof fileUrl === "string");
-  }
-  if (typeof answer === "string") return [answer];
-  return [];
-};
-
 export const collectResponseFileUrls = (
   data: unknown,
   elementIds: TSurveyUploadElementIds,
