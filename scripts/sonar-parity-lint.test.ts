@@ -2,10 +2,11 @@ import { spawnSync } from "node:child_process";
 import { existsSync, rmSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { lintFixtures } from "@formbricks/config-oxlint/testing";
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 
-// Fixtures live beside real sources so the packages' own ESLint configs (type-aware, jsx-a11y)
+// Fixtures live beside real sources so the packages' own oxlint configs (type-aware, jsx-a11y)
 // resolve them; they are written for the test and removed afterwards. `packages/types` keeps its
 // sources at the package root (its tsconfig includes "."), `packages/survey-ui` under `src/`.
 const typesFixture = "packages/types/sonar-parity-fixture.ts";
@@ -40,7 +41,7 @@ export const deep = () => () => () => () => () => 1;
 `;
 
 const staged = (...files: string[]) =>
-  spawnSync(process.execPath, ["scripts/lint-staged-eslint.mjs", ...files], { cwd: root, encoding: "utf8" });
+  spawnSync(process.execPath, ["scripts/lint-staged-oxlint.mjs", ...files], { cwd: root, encoding: "utf8" });
 
 describe("Sonar-parity lint rules", () => {
   beforeAll(() => {
@@ -49,7 +50,10 @@ describe("Sonar-parity lint rules", () => {
       `${root}${typesTestFixture}`,
       'import { expect, test } from "vitest";\ntest("x", () => { expect([1].length).toBe(1); });\n'
     );
-    writeFileSync(`${root}${uiFixture}`, 'export const Fixture = () => <canvas aria-hidden="true" />;\n');
+    writeFileSync(
+      `${root}${uiFixture}`,
+      'export const Fixture = () => <button type="button" aria-hidden="true" />;\n'
+    );
     writeFileSync(`${root}${cleanFixture}`, "export const clean = (n: number) => (n > 1 ? 1 : 0);\n");
   });
 
@@ -67,9 +71,9 @@ describe("Sonar-parity lint rules", () => {
       "sonarjs/no-nested-conditional",
       "sonarjs/no-nested-template-literals",
       "sonarjs/no-nested-functions",
-      "unicorn/prefer-string-raw",
-      "@typescript-eslint/prefer-optional-chain",
-      "@vitest/prefer-to-have-length",
+      "unicorn-js/prefer-string-raw",
+      "typescript/prefer-optional-chain",
+      "vitest/prefer-to-have-length",
       "jsx-a11y/no-aria-hidden-on-focusable",
     ]) {
       expect(output, rule).toContain(rule);
@@ -86,32 +90,25 @@ describe("Sonar-parity lint rules", () => {
       "sonarjs/no-nested-functions",
       "sonarjs/no-nested-conditional",
       "sonarjs/no-nested-template-literals",
-      "unicorn/prefer-string-raw",
-      "@typescript-eslint/prefer-optional-chain",
+      "unicorn-js/prefer-string-raw",
+      "typescript/prefer-optional-chain",
     ];
-    // The effective config of the fixture, rather than the output of a lint run: a run that fails
-    // before reporting would also contain none of the rule names.
-    const effectiveRules = (parity?: string) => {
-      const { ESLINT_SONAR_PARITY: _ignored, ...env } = process.env;
-      const result = spawnSync(
-        process.execPath,
-        [`${root}node_modules/eslint/bin/eslint.js`, "--print-config", "sonar-parity-fixture.ts"],
-        {
-          cwd: `${root}packages/types`,
-          encoding: "utf8",
-          env: parity ? { ...env, ESLINT_SONAR_PARITY: parity } : env,
-        }
+    // `oxlint --print-config` leaves JS-plugin rules out, so this lints the violations instead. The
+    // positive control below proves the same run reports them once the staged runner turns them on,
+    // so an empty result means "off", not "the run failed".
+    const reportedRules = (parity: string) =>
+      new Set(
+        lintFixtures(
+          `${root}packages/types`,
+          { "sonar-parity-fixture.ts": violations },
+          { env: { OXLINT_SONAR_PARITY: parity }, typeAware: true }
+        )["sonar-parity-fixture.ts"].map((diagnostic) => diagnostic.ruleId)
       );
-      expect(result.status, result.stderr).toBe(0);
-      return (JSON.parse(result.stdout) as { rules: Record<string, unknown[] | undefined> }).rules;
-    };
-    const severityOf = (rules: Record<string, unknown[] | undefined>, rule: string) => rules[rule]?.[0];
 
-    // Positive control: the same lookup sees the rules once the staged runner turns them on.
-    const staged = effectiveRules("error");
-    for (const rule of mirroredRules) expect(severityOf(staged, rule), `${rule} (staged)`).toBe(2);
+    const staged = reportedRules("error");
+    for (const rule of mirroredRules) expect(staged.has(rule), `${rule} (staged)`).toBe(true);
 
-    const wholeRepo = effectiveRules();
-    for (const rule of mirroredRules) expect(severityOf(wholeRepo, rule), rule).toBe(0);
+    const wholeRepo = reportedRules("off");
+    for (const rule of mirroredRules) expect(wholeRepo.has(rule), rule).toBe(false);
   }, 120_000);
 });

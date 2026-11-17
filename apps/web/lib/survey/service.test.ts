@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { createId } from "@paralleldrive/cuid2";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { testInputValidation } from "vitestSetup";
 import { ActionClass, Prisma, Survey } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClass } from "@formbricks/types/action-classes";
@@ -31,6 +30,7 @@ import {
 import { evaluateLogic } from "@/lib/surveyLogic/utils";
 import { getIsQuotasEnabled } from "@/modules/ee/license-check/lib/utils";
 import { handleTriggerUpdates } from "@/modules/survey/lib/trigger-updates";
+import { testInputValidation } from "@/vitestSetup";
 import {
   mockActionClass,
   mockId,

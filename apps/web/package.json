@@ -13,8 +13,6 @@
     "start": "next start",
     "typecheck": "pnpm typegen && cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit --project tsconfig.typecheck.json",
     "typegen": "dotenv -e ../../.env -- tsx scripts/typegen.ts",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix --rule \"react/prefer-read-only-props: off\"",
     "test": "dotenv -e ../../.env -- vitest run",
     "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
     "formbricks-file:schema": "vitest run --project unit modules/survey/formbricks-file/envelope.test.ts --update",
@@ -25,10 +23,10 @@
     "i18n:generate": "dotenv -e ../../.env -- npx lingo.dev@latest run && dotenv -e ../../.env -- npx lingo.dev@latest lockfile --force"
   },
   "dependencies": {
+    "@authzed/authzed-node": "1.6.1",
     "@aws-sdk/client-cloudwatch": "3.1007.0",
     "@aws-sdk/client-kms": "3.1007.0",
     "@aws-sdk/client-s3": "catalog:",
-    "@authzed/authzed-node": "1.6.1",
     "@better-auth/core": "1.7.7",
     "@better-auth/oauth-provider": "1.7.7",
     "@better-auth/utils": "0.4.2",
@@ -51,6 +49,7 @@
     "@formbricks/js": "5.0.0",
     "@formbricks/js-core": "workspace:*",
     "@formbricks/logger": "workspace:*",
+    "@formbricks/redis-config": "workspace:*",
     "@formbricks/storage": "workspace:*",
     "@formbricks/survey-ui": "workspace:*",
     "@formbricks/surveys": "workspace:*",
@@ -179,11 +178,10 @@
     "xlsx": "file:vendor/xlsx-0.20.3.tgz",
     "yaml": "2.9.0",
     "zod": "catalog:",
-    "zod-openapi": "catalog:",
-    "@formbricks/redis-config": "workspace:*"
+    "zod-openapi": "catalog:"
   },
   "devDependencies": {
-    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-oxlint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@playwright/test": "catalog:",
     "@storybook/react": "catalog:",
@@ -208,8 +206,8 @@
     "dotenv-cli": "catalog:",
     "fast-check": "4.10.2",
     "intl-messageformat": "10.7.18",
-    "playwright": "1.58.2",
     "jsdom": "catalog:",
+    "playwright": "1.58.2",
     "postcss": "catalog:",
     "resize-observer-polyfill": "1.5.1",
     "storybook": "catalog:",
