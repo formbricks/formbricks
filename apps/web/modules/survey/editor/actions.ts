@@ -43,6 +43,38 @@ type SurveyEditDiffContext = {
   workspaceId: string;
 };
 
+/**
+ * survey_language_enabled / survey_language_added: the first language added to a single-language
+ * survey enables multi-language, every other one is an addition. Each event carries the language
+ * count before it.
+ */
+const captureLanguageAddedEvents = (
+  oldSurvey: TSurvey,
+  newSurvey: TSurvey,
+  context: SurveyEditDiffContext,
+  baseProps: { organization_id: string; workspace_id: string; survey_id: string }
+): void => {
+  const groupContext = { organizationId: context.organizationId, workspaceId: context.workspaceId };
+  const oldLanguages = oldSurvey.languages ?? [];
+  const newLanguages = newSurvey.languages ?? [];
+  const oldLanguageCodes = new Set(oldLanguages.map((l) => l.language.code));
+  const addedLanguages = newLanguages.filter((l) => !oldLanguageCodes.has(l.language.code));
+  const wasMultiLangBefore = oldLanguages.length > 1;
+
+  addedLanguages.forEach((lang, index) => {
+    capturePostHogEvent(
+      context.userId,
+      !wasMultiLangBefore && index === 0 ? "survey_language_enabled" : "survey_language_added",
+      {
+        ...baseProps,
+        language_code: lang.language.code,
+        existing_language_count: oldLanguages.length + index,
+      },
+      groupContext
+    );
+  });
+};
+
 const captureSurveyEditDiffEvents = (
   oldSurvey: TSurvey | null,
   newSurvey: TSurvey,
@@ -103,53 +135,7 @@ const captureSurveyEditDiffEvents = (
   }
 
   // survey_language_enabled / survey_language_added
-  const oldLanguages = oldSurvey.languages ?? [];
-  const newLanguages = newSurvey.languages ?? [];
-  const oldLanguageCodes = new Set(oldLanguages.map((l) => l.language.code));
-  const addedLanguages = newLanguages.filter((l) => !oldLanguageCodes.has(l.language.code));
-
-  if (addedLanguages.length > 0) {
-    const wasMultiLangBefore = oldLanguages.length > 1;
-    let currentCount = oldLanguages.length;
-
-    if (!wasMultiLangBefore) {
-      const [first, ...rest] = addedLanguages;
-      capturePostHogEvent(
-        context.userId,
-        "survey_language_enabled",
-        { ...baseProps, language_code: first.language.code, existing_language_count: currentCount },
-        groupContext
-      );
-      currentCount++;
-      for (const lang of rest) {
-        capturePostHogEvent(
-          context.userId,
-          "survey_language_added",
-          {
-            ...baseProps,
-            language_code: lang.language.code,
-            existing_language_count: currentCount,
-          },
-          groupContext
-        );
-        currentCount++;
-      }
-    } else {
-      for (const lang of addedLanguages) {
-        capturePostHogEvent(
-          context.userId,
-          "survey_language_added",
-          {
-            ...baseProps,
-            language_code: lang.language.code,
-            existing_language_count: currentCount,
-          },
-          groupContext
-        );
-        currentCount++;
-      }
-    }
-  }
+  captureLanguageAddedEvents(oldSurvey, newSurvey, context, baseProps);
 
   // follow_up_added
   const oldFollowUpIds = new Set((oldSurvey.followUps ?? []).map((f) => f.id));
