@@ -40,65 +40,6 @@ interface Survey {
   }[];
 }
 
-/** The survey's language codes, the default one as "default"; just "default" without any. */
-const getLanguageCodes = (survey: Survey): string[] => {
-  const languagesCodes = survey.languages.length
-    ? survey.languages
-        .filter((lang) => lang.language.code !== null)
-        .map((language) => {
-          if (language.default) {
-            return "default";
-          }
-          return language.language.code ?? "default";
-        })
-    : ["default"];
-
-  if (languagesCodes.length === 0) {
-    languagesCodes.push("default");
-  }
-  return languagesCodes;
-};
-
-/** The same placeholder text in every language. */
-const placeholderFor = (languagesCodes: string[], text: string): Record<string, string> =>
-  languagesCodes.reduce(
-    (acc, code) => ({
-      ...acc,
-      [code]: text,
-    }),
-    {}
-  );
-
-/** Fills the placeholders of a contact info or address question that has none; true when it did. */
-const addMissingPlaceholders = (question: Question, languagesCodes: string[]): boolean => {
-  if (question.type === "contactInfo") {
-    if (question.firstName.placeholder) {
-      return false;
-    }
-    const { firstName, lastName, email, phone, company } = question;
-    firstName.placeholder = placeholderFor(languagesCodes, "First Name");
-    lastName.placeholder = placeholderFor(languagesCodes, "Last Name");
-    email.placeholder = placeholderFor(languagesCodes, "Email");
-    phone.placeholder = placeholderFor(languagesCodes, "Phone");
-    company.placeholder = placeholderFor(languagesCodes, "Company");
-    return true;
-  }
-  if (question.type === "address") {
-    if (question.addressLine1.placeholder) {
-      return false;
-    }
-    const { addressLine1, addressLine2, city, state, zip, country } = question;
-    addressLine1.placeholder = placeholderFor(languagesCodes, "Address Line 1");
-    addressLine2.placeholder = placeholderFor(languagesCodes, "Address Line 2");
-    city.placeholder = placeholderFor(languagesCodes, "City");
-    state.placeholder = placeholderFor(languagesCodes, "State");
-    zip.placeholder = placeholderFor(languagesCodes, "Zip");
-    country.placeholder = placeholderFor(languagesCodes, "Country");
-    return true;
-  }
-  return false;
-};
-
 export const addPlaceholderToContactAndAddressQuestion: MigrationScript = {
   type: "data",
   id: "ico21lgyp1o8x8h6fyvsdlwp",
@@ -132,10 +73,113 @@ export const addPlaceholderToContactAndAddressQuestion: MigrationScript = {
     for (const survey of surveys) {
       let shouldUpdate = false;
       const questionsCopy = [...survey.questions];
-      const languagesCodes = getLanguageCodes(survey);
+      const languagesCodes = survey.languages.length
+        ? survey.languages
+            .filter((lang) => lang.language.code !== null)
+            .map((language) => {
+              if (language.default) {
+                return "default";
+              }
+              return language.language.code ?? "default";
+            })
+        : ["default"];
+
+      if (languagesCodes.length === 0) {
+        languagesCodes.push("default");
+      }
 
       for (const question of questionsCopy) {
-        if (addMissingPlaceholders(question, languagesCodes)) shouldUpdate = true;
+        if (question.type === "contactInfo") {
+          if (question.firstName.placeholder) {
+            continue;
+          }
+          shouldUpdate = true;
+          const { firstName, lastName, email, phone, company } = question;
+          firstName.placeholder = languagesCodes.reduce(
+            (acc, code) => ({
+              ...acc,
+              [code]: "First Name",
+            }),
+            {}
+          );
+          lastName.placeholder = languagesCodes.reduce(
+            (acc, code) => ({
+              ...acc,
+              [code]: "Last Name",
+            }),
+            {}
+          );
+          email.placeholder = languagesCodes.reduce(
+            (acc, code) => ({
+              ...acc,
+              [code]: "Email",
+            }),
+            {}
+          );
+          phone.placeholder = languagesCodes.reduce(
+            (acc, code) => ({
+              ...acc,
+              [code]: "Phone",
+            }),
+            {}
+          );
+          company.placeholder = languagesCodes.reduce(
+            (acc, code) => ({
+              ...acc,
+              [code]: "Company",
+            }),
+            {}
+          );
+        }
+        if (question.type === "address") {
+          if (question.addressLine1.placeholder) {
+            continue;
+          }
+          shouldUpdate = true;
+          const { addressLine1, addressLine2, city, state, zip, country } = question;
+          addressLine1.placeholder = languagesCodes.reduce(
+            (acc, code) => ({
+              ...acc,
+              [code]: "Address Line 1",
+            }),
+            {}
+          );
+          addressLine2.placeholder = languagesCodes.reduce(
+            (acc, code) => ({
+              ...acc,
+              [code]: "Address Line 2",
+            }),
+            {}
+          );
+          city.placeholder = languagesCodes.reduce(
+            (acc, code) => ({
+              ...acc,
+              [code]: "City",
+            }),
+            {}
+          );
+          state.placeholder = languagesCodes.reduce(
+            (acc, code) => ({
+              ...acc,
+              [code]: "State",
+            }),
+            {}
+          );
+          zip.placeholder = languagesCodes.reduce(
+            (acc, code) => ({
+              ...acc,
+              [code]: "Zip",
+            }),
+            {}
+          );
+          country.placeholder = languagesCodes.reduce(
+            (acc, code) => ({
+              ...acc,
+              [code]: "Country",
+            }),
+            {}
+          );
+        }
       }
 
       if (shouldUpdate) {

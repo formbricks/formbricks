@@ -47,160 +47,6 @@ const getAccountKey = (provider: string, providerAccountId: string): string =>
 
 const getUserProviderKey = (userId: string, provider: string): string => `${userId}:${provider}`;
 
-/** The canonical accounts, by provider account and by user and provider, kept current as rows change. */
-interface TAccountIndex {
-  byKey: Map<string, TAccountRow>;
-  byUserProvider: Map<string, TAccountRow>;
-}
-
-const indexAccount = (
-  index: TAccountIndex,
-  accountKey: string,
-  userProviderKey: string,
-  account: TAccountRow
-) => {
-  index.byKey.set(accountKey, account);
-  index.byUserProvider.set(userProviderKey, account);
-};
-
-/** Renames one legacy `azure-ad` account to `azuread`, or drops it when the canonical one exists. */
-const normalizeLegacyAzureAccount = async (
-  tx: TMigrationTx,
-  legacyAccount: TAccountRow,
-  index: TAccountIndex,
-  stats: TSsoBackfillStats
-): Promise<void> => {
-  const accountKey = getAccountKey("azuread", legacyAccount.providerAccountId);
-  const canonicalAccount = index.byKey.get(accountKey);
-  const userProviderKey = getUserProviderKey(legacyAccount.userId, "azuread");
-  const existingUserProviderAccount = index.byUserProvider.get(userProviderKey);
-
-  if (canonicalAccount) {
-    if (canonicalAccount.userId !== legacyAccount.userId) {
-      stats.skippedConflict += 1;
-      console.warn(
-        [
-          "Skipping Azure account normalization due to ownership conflict.",
-          `provider=azuread`,
-          `legacyAccountId=${legacyAccount.id}`,
-          `legacyUserId=${legacyAccount.userId}`,
-          `canonicalAccountId=${canonicalAccount.id}`,
-          `canonicalUserId=${canonicalAccount.userId}`,
-        ].join(" ")
-      );
-      return;
-    }
-
-    await tx.$executeRaw`
-      DELETE FROM "Account"
-      WHERE "id" = ${legacyAccount.id}
-    `;
-    stats.normalizedLegacyAccounts += 1;
-    return;
-  }
-
-  if (existingUserProviderAccount) {
-    stats.skippedExisting += 1;
-    console.warn(
-      [
-        "Skipping Azure account normalization because a canonical account already exists.",
-        `provider=azuread`,
-        `legacyAccountId=${legacyAccount.id}`,
-        `legacyUserId=${legacyAccount.userId}`,
-        `canonicalAccountId=${existingUserProviderAccount.id}`,
-        `canonicalUserId=${existingUserProviderAccount.userId}`,
-      ].join(" ")
-    );
-    return;
-  }
-
-  await tx.$executeRaw`
-    UPDATE "Account"
-    SET "provider" = 'azuread',
-        "updated_at" = NOW()
-    WHERE "id" = ${legacyAccount.id}
-  `;
-  stats.normalizedLegacyAccounts += 1;
-  indexAccount(index, accountKey, userProviderKey, {
-    ...legacyAccount,
-    provider: "azuread",
-  });
-};
-
-const fetchLegacySsoUserBatch = async (
-  tx: TMigrationTx,
-  afterUserId: string | null
-): Promise<TLegacySsoUserRow[]> => {
-  if (afterUserId) {
-    return tx.$queryRaw<TLegacySsoUserRow[]>`
-      SELECT "id", "identityProvider", "identityProviderAccountId"
-      FROM "User"
-      WHERE "identityProvider" <> 'email'
-        AND "id" > ${afterUserId}
-      ORDER BY "id" ASC
-      LIMIT ${LEGACY_SSO_USER_BATCH_SIZE}
-    `;
-  }
-
-  return tx.$queryRaw<TLegacySsoUserRow[]>`
-    SELECT "id", "identityProvider", "identityProviderAccountId"
-    FROM "User"
-    WHERE "identityProvider" <> 'email'
-    ORDER BY "id" ASC
-    LIMIT ${LEGACY_SSO_USER_BATCH_SIZE}
-  `;
-};
-
-/** Creates the account a legacy SSO user's identity columns describe, unless one exists. */
-const backfillUserAccount = async (
-  tx: TMigrationTx,
-  user: TLegacySsoUserRow,
-  index: TAccountIndex,
-  stats: TSsoBackfillStats
-): Promise<void> => {
-  const provider = normalizeLegacySsoProvider(user.identityProvider);
-
-  if (!provider || !user.identityProviderAccountId) {
-    stats.skippedMissingId += 1;
-    return;
-  }
-
-  const accountKey = getAccountKey(provider, user.identityProviderAccountId);
-  const existingAccount = index.byKey.get(accountKey);
-  const userProviderKey = getUserProviderKey(user.id, provider);
-  const existingUserProviderAccount = index.byUserProvider.get(userProviderKey);
-
-  if (existingAccount) {
-    if (existingAccount.userId === user.id) {
-      stats.skippedExisting += 1;
-      return;
-    }
-
-    stats.skippedConflict += 1;
-    console.warn(`Skipping legacy SSO backfill due to ownership conflict for provider ${provider}.`);
-    return;
-  }
-
-  if (existingUserProviderAccount) {
-    stats.skippedExisting += 1;
-    console.warn("Skipping legacy SSO backfill because a canonical account already exists.");
-    return;
-  }
-
-  const insertedAccountId = createId();
-  await tx.$executeRaw`
-    INSERT INTO "Account" ("id", "created_at", "updated_at", "userId", "type", "provider", "providerAccountId")
-    VALUES (${insertedAccountId}, NOW(), NOW(), ${user.id}, 'oauth', ${provider}, ${user.identityProviderAccountId})
-  `;
-  stats.inserted += 1;
-  indexAccount(index, accountKey, userProviderKey, {
-    id: insertedAccountId,
-    userId: user.id,
-    provider,
-    providerAccountId: user.identityProviderAccountId,
-  });
-};
-
 export const backfillLegacySsoAccounts = async (tx: TMigrationTx): Promise<TSsoBackfillStats> => {
   const stats: TSsoBackfillStats = {
     scanned: 0,
@@ -221,27 +67,101 @@ export const backfillLegacySsoAccounts = async (tx: TMigrationTx): Promise<TSsoB
     FROM "Account"
     WHERE "provider" IN ('google', 'github', 'azuread', 'openid', 'saml')
   `;
-  const index: TAccountIndex = {
-    byKey: new Map(
-      canonicalAccounts.map((account) => [
-        getAccountKey(account.provider, account.providerAccountId),
-        account,
-      ])
-    ),
-    byUserProvider: new Map(
-      canonicalAccounts.map((account) => [getUserProviderKey(account.userId, account.provider), account])
-    ),
-  };
+  const canonicalAccountByKey = new Map(
+    canonicalAccounts.map((account) => [getAccountKey(account.provider, account.providerAccountId), account])
+  );
+  const canonicalAccountByUserProvider = new Map(
+    canonicalAccounts.map((account) => [getUserProviderKey(account.userId, account.provider), account])
+  );
 
   for (const legacyAccount of legacyAzureAccounts) {
-    await normalizeLegacyAzureAccount(tx, legacyAccount, index, stats);
+    const accountKey = getAccountKey("azuread", legacyAccount.providerAccountId);
+    const canonicalAccount = canonicalAccountByKey.get(accountKey);
+    const userProviderKey = getUserProviderKey(legacyAccount.userId, "azuread");
+    const existingUserProviderAccount = canonicalAccountByUserProvider.get(userProviderKey);
+
+    if (canonicalAccount) {
+      if (canonicalAccount.userId !== legacyAccount.userId) {
+        stats.skippedConflict += 1;
+        console.warn(
+          [
+            "Skipping Azure account normalization due to ownership conflict.",
+            `provider=azuread`,
+            `legacyAccountId=${legacyAccount.id}`,
+            `legacyUserId=${legacyAccount.userId}`,
+            `canonicalAccountId=${canonicalAccount.id}`,
+            `canonicalUserId=${canonicalAccount.userId}`,
+          ].join(" ")
+        );
+        continue;
+      }
+
+      await tx.$executeRaw`
+        DELETE FROM "Account"
+        WHERE "id" = ${legacyAccount.id}
+      `;
+      stats.normalizedLegacyAccounts += 1;
+      continue;
+    }
+
+    if (existingUserProviderAccount) {
+      stats.skippedExisting += 1;
+      console.warn(
+        [
+          "Skipping Azure account normalization because a canonical account already exists.",
+          `provider=azuread`,
+          `legacyAccountId=${legacyAccount.id}`,
+          `legacyUserId=${legacyAccount.userId}`,
+          `canonicalAccountId=${existingUserProviderAccount.id}`,
+          `canonicalUserId=${existingUserProviderAccount.userId}`,
+        ].join(" ")
+      );
+      continue;
+    }
+
+    await tx.$executeRaw`
+      UPDATE "Account"
+      SET "provider" = 'azuread',
+          "updated_at" = NOW()
+      WHERE "id" = ${legacyAccount.id}
+    `;
+    stats.normalizedLegacyAccounts += 1;
+    canonicalAccountByKey.set(accountKey, {
+      ...legacyAccount,
+      provider: "azuread",
+    });
+    canonicalAccountByUserProvider.set(userProviderKey, {
+      ...legacyAccount,
+      provider: "azuread",
+    });
   }
+
+  const fetchLegacySsoUserBatch = async (afterUserId: string | null): Promise<TLegacySsoUserRow[]> => {
+    if (afterUserId) {
+      return tx.$queryRaw<TLegacySsoUserRow[]>`
+        SELECT "id", "identityProvider", "identityProviderAccountId"
+        FROM "User"
+        WHERE "identityProvider" <> 'email'
+          AND "id" > ${afterUserId}
+        ORDER BY "id" ASC
+        LIMIT ${LEGACY_SSO_USER_BATCH_SIZE}
+      `;
+    }
+
+    return tx.$queryRaw<TLegacySsoUserRow[]>`
+      SELECT "id", "identityProvider", "identityProviderAccountId"
+      FROM "User"
+      WHERE "identityProvider" <> 'email'
+      ORDER BY "id" ASC
+      LIMIT ${LEGACY_SSO_USER_BATCH_SIZE}
+    `;
+  };
 
   let lastProcessedUserId: string | null = null;
   let hasMoreUsers = true;
 
   while (hasMoreUsers) {
-    const legacySsoUsers = await fetchLegacySsoUserBatch(tx, lastProcessedUserId);
+    const legacySsoUsers = await fetchLegacySsoUserBatch(lastProcessedUserId);
 
     if (legacySsoUsers.length === 0) {
       hasMoreUsers = false;
@@ -251,7 +171,53 @@ export const backfillLegacySsoAccounts = async (tx: TMigrationTx): Promise<TSsoB
     stats.scanned += legacySsoUsers.length;
 
     for (const user of legacySsoUsers) {
-      await backfillUserAccount(tx, user, index, stats);
+      const provider = normalizeLegacySsoProvider(user.identityProvider);
+
+      if (!provider || !user.identityProviderAccountId) {
+        stats.skippedMissingId += 1;
+        continue;
+      }
+
+      const accountKey = getAccountKey(provider, user.identityProviderAccountId);
+      const existingAccount = canonicalAccountByKey.get(accountKey);
+      const userProviderKey = getUserProviderKey(user.id, provider);
+      const existingUserProviderAccount = canonicalAccountByUserProvider.get(userProviderKey);
+
+      if (!existingAccount) {
+        if (existingUserProviderAccount) {
+          stats.skippedExisting += 1;
+          console.warn("Skipping legacy SSO backfill because a canonical account already exists.");
+          continue;
+        }
+
+        const insertedAccountId = createId();
+        await tx.$executeRaw`
+          INSERT INTO "Account" ("id", "created_at", "updated_at", "userId", "type", "provider", "providerAccountId")
+          VALUES (${insertedAccountId}, NOW(), NOW(), ${user.id}, 'oauth', ${provider}, ${user.identityProviderAccountId})
+        `;
+        stats.inserted += 1;
+        canonicalAccountByKey.set(accountKey, {
+          id: insertedAccountId,
+          userId: user.id,
+          provider,
+          providerAccountId: user.identityProviderAccountId,
+        });
+        canonicalAccountByUserProvider.set(userProviderKey, {
+          id: insertedAccountId,
+          userId: user.id,
+          provider,
+          providerAccountId: user.identityProviderAccountId,
+        });
+        continue;
+      }
+
+      if (existingAccount.userId === user.id) {
+        stats.skippedExisting += 1;
+        continue;
+      }
+
+      stats.skippedConflict += 1;
+      console.warn(`Skipping legacy SSO backfill due to ownership conflict for provider ${provider}.`);
     }
 
     lastProcessedUserId = legacySsoUsers[legacySsoUsers.length - 1].id;

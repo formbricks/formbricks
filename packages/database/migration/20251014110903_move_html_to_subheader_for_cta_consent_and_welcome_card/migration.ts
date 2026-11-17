@@ -50,36 +50,6 @@ const processWelcomeCard = (welcomeCard: WelcomeCard): boolean => {
   return false;
 };
 
-interface SurveyUpdate {
-  id: string;
-  questions?: SurveyQuestion[];
-  welcomeCard?: WelcomeCard;
-}
-
-/** Moves a survey's html fields to subheader in place; the columns to write, or undefined for none. */
-const migrateSurvey = (survey: SurveyRecord): SurveyUpdate | undefined => {
-  let questionsUpdated = false;
-  let welcomeCardUpdated = false;
-
-  // Process questions
-  for (const question of survey.questions) {
-    const wasUpdated = processCtaOrConsentQuestion(question);
-    if (wasUpdated) questionsUpdated = true;
-  }
-
-  // Process welcome card
-  if (survey.welcomeCard && typeof survey.welcomeCard === "object") {
-    welcomeCardUpdated = processWelcomeCard(survey.welcomeCard);
-  }
-
-  if (!questionsUpdated && !welcomeCardUpdated) return undefined;
-
-  const update: SurveyUpdate = { id: survey.id };
-  if (questionsUpdated) update.questions = survey.questions;
-  if (welcomeCardUpdated) update.welcomeCard = survey.welcomeCard;
-  return update;
-};
-
 export const moveHtmlToSubheaderForCtaAndConsent: MigrationScript = {
   type: "data",
   id: "htm2sub4ctacnsnt1014",
@@ -116,11 +86,31 @@ export const moveHtmlToSubheaderForCtaAndConsent: MigrationScript = {
     logger.info(`Found ${surveys.length.toString()} surveys to process`);
 
     // Process surveys and collect updates
-    const updates: SurveyUpdate[] = [];
+    const updates: { id: string; questions?: SurveyQuestion[]; welcomeCard?: WelcomeCard }[] = [];
 
     for (const survey of surveys) {
-      const update = migrateSurvey(survey);
-      if (update) updates.push(update);
+      let questionsUpdated = false;
+      let welcomeCardUpdated = false;
+
+      // Process questions
+      for (const question of survey.questions) {
+        const wasUpdated = processCtaOrConsentQuestion(question);
+        if (wasUpdated) questionsUpdated = true;
+      }
+
+      // Process welcome card
+      if (survey.welcomeCard && typeof survey.welcomeCard === "object") {
+        welcomeCardUpdated = processWelcomeCard(survey.welcomeCard);
+      }
+
+      if (questionsUpdated || welcomeCardUpdated) {
+        const update: { id: string; questions?: SurveyQuestion[]; welcomeCard?: WelcomeCard } = {
+          id: survey.id,
+        };
+        if (questionsUpdated) update.questions = survey.questions;
+        if (welcomeCardUpdated) update.welcomeCard = survey.welcomeCard;
+        updates.push(update);
+      }
     }
 
     if (updates.length === 0) {

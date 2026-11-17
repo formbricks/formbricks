@@ -63,6 +63,22 @@ export default defineConfig(
             "typescript/no-unnecessary-condition": "off",
           },
         },
+        {
+          files: [
+            "migration/20250103060634_add_placeholder_to_contact_and_address_question/migration.ts",
+            "migration/20251014110903_move_html_to_subheader_for_cta_consent_and_welcome_card/migration.ts",
+            "migration/20251118032116_migrate_questions_to_blocks/migration.ts",
+            "migration/20260204174943_migrate_storage_urls_to_relative/migration.ts",
+            "migration/20260205033241_added_attributes_data_types/migration.ts",
+            "migration/20260416110000_backfill_legacy_sso_accounts/migration.ts",
+            "migration/20260625104904_canonicalize_language_codes/migration.ts",
+            "migration/20260625104904_canonicalize_language_codes/utils.ts",
+          ],
+          rules: {
+            // Each has one function over the threshold of 15, written before the rule was enforced.
+            "sonarjs/cognitive-complexity": "off",
+          },
+        },
       ],
     }
   )

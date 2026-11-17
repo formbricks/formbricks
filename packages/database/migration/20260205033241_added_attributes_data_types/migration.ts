@@ -1,5 +1,5 @@
 import { logger } from "@formbricks/logger";
-import type { DataMigrationContext, MigrationScript } from "../../src/scripts/migration-runner";
+import type { MigrationScript } from "../../src/scripts/migration-runner";
 import type { KeyTypeAnalysis, MigrationStats } from "./types";
 
 // Regex patterns as constants for consistency
@@ -7,156 +7,6 @@ import type { KeyTypeAnalysis, MigrationStats } from "./types";
 const NUMBER_PATTERN = "^-?[0-9]+(\\.[0-9]+)?$";
 // ISO_DATE_PATTERN: YYYY-MM-DD or YYYY-MM-DDTHH:mm:ss.sssZ
 const ISO_DATE_PATTERN = "^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z?)?$";
-
-const KEY_BATCH_SIZE = 100;
-
-type MigrationTx = DataMigrationContext["tx"];
-
-/** Sorts the analyzed custom keys into number and date keys, counting each kind. */
-const categorizeKeys = (
-  keyTypeAnalysis: KeyTypeAnalysis[],
-  stats: MigrationStats
-): { numberKeys: string[]; dateKeys: string[] } => {
-  const numberKeys: string[] = [];
-  const dateKeys: string[] = [];
-
-  for (const analysis of keyTypeAnalysis) {
-    if (Number(analysis.non_empty_count) === 0) {
-      stats.skippedEmptyKeys++;
-    } else if (analysis.detected_type === "number") {
-      numberKeys.push(analysis.id);
-      stats.numberTypeKeys++;
-    } else if (analysis.detected_type === "date") {
-      dateKeys.push(analysis.id);
-      stats.dateTypeKeys++;
-    } else {
-      stats.stringTypeKeys++;
-    }
-  }
-
-  return { numberKeys, dateKeys };
-};
-
-/** STEP 3: Update dataType for number keys (in batches). */
-const markKeysAsNumber = async (tx: MigrationTx, numberKeys: string[]): Promise<void> => {
-  if (numberKeys.length > 0) {
-    logger.info(`Step 3: Updating ${numberKeys.length.toString()} keys to 'number' type...`);
-    for (let i = 0; i < numberKeys.length; i += KEY_BATCH_SIZE) {
-      const batch = numberKeys.slice(i, i + KEY_BATCH_SIZE);
-      logger.info(`Step 3: Updating batch ${Math.floor(i / KEY_BATCH_SIZE + 1).toString()}...`);
-
-      await tx.$executeRaw`
-        UPDATE "ContactAttributeKey"
-        SET "dataType" = 'number'::"ContactAttributeDataType"
-        WHERE id = ANY(${batch})
-      `;
-    }
-
-    logger.info("Step 3 complete: dataType updated for number keys");
-  } else {
-    logger.info("Step 3: No number keys to update, skipping");
-  }
-};
-
-/** STEP 4: Update dataType for date keys (in batches). */
-const markKeysAsDate = async (tx: MigrationTx, dateKeys: string[]): Promise<void> => {
-  if (dateKeys.length > 0) {
-    logger.info(`Step 4: Updating ${dateKeys.length.toString()} keys to 'date' type...`);
-
-    for (let i = 0; i < dateKeys.length; i += KEY_BATCH_SIZE) {
-      const batch = dateKeys.slice(i, i + KEY_BATCH_SIZE);
-      logger.info(`Step 4: Updating batch ${Math.floor(i / KEY_BATCH_SIZE + 1).toString()}...`);
-
-      await tx.$executeRaw`
-        UPDATE "ContactAttributeKey"
-        SET "dataType" = 'date'::"ContactAttributeDataType"
-        WHERE id = ANY(${batch})
-      `;
-    }
-
-    logger.info("Step 4 complete: dataType updated for date keys");
-  } else {
-    logger.info("Step 4: No date keys to update, skipping");
-  }
-};
-
-/** STEP 5a: Inline value backfill for number attributes. */
-const backfillNumberValues = async (
-  tx: MigrationTx,
-  numberKeys: string[],
-  stats: MigrationStats
-): Promise<void> => {
-  if (numberKeys.length > 0) {
-    logger.info(
-      `Step 5a: Backfilling valueNumber for ${stats.numberTypeKeys.toString()} number-type keys...`
-    );
-
-    const VALUE_BATCH_SIZE = 10;
-    for (let i = 0; i < numberKeys.length; i += VALUE_BATCH_SIZE) {
-      const batch = numberKeys.slice(i, i + VALUE_BATCH_SIZE);
-
-      const batchResult = await tx.$executeRawUnsafe(
-        `
-        UPDATE "ContactAttribute"
-        SET "valueNumber" = value::DOUBLE PRECISION
-        WHERE "attributeKeyId" = ANY($1)
-          AND "valueNumber" IS NULL
-          AND TRIM(value) != ''
-          AND value ~ $2
-        `,
-        batch,
-        NUMBER_PATTERN
-      );
-
-      stats.numberRowsBackfilled += batchResult;
-      logger.info(
-        `Number backfill progress: ${Math.min(i + VALUE_BATCH_SIZE, numberKeys.length).toString()}/${numberKeys.length.toString()} keys (${stats.numberRowsBackfilled.toString()} rows updated)`
-      );
-    }
-
-    logger.info(`Step 5a complete: ${stats.numberRowsBackfilled.toString()} number rows backfilled`);
-  } else {
-    logger.info("Step 5a: No number keys to backfill, skipping");
-  }
-};
-
-/** STEP 5b: Inline value backfill for date attributes. */
-const backfillDateValues = async (
-  tx: MigrationTx,
-  dateKeys: string[],
-  stats: MigrationStats
-): Promise<void> => {
-  if (dateKeys.length > 0) {
-    logger.info(`Step 5b: Backfilling valueDate for ${stats.dateTypeKeys.toString()} date-type keys...`);
-
-    const VALUE_BATCH_SIZE = 10;
-    for (let i = 0; i < dateKeys.length; i += VALUE_BATCH_SIZE) {
-      const batch = dateKeys.slice(i, i + VALUE_BATCH_SIZE);
-
-      const batchResult = await tx.$executeRawUnsafe(
-        `
-        UPDATE "ContactAttribute"
-        SET "valueDate" = pg_temp.safe_to_timestamp(value)
-        WHERE "attributeKeyId" = ANY($1)
-          AND "valueDate" IS NULL
-          AND TRIM(value) != ''
-          AND value ~ $2
-        `,
-        batch,
-        ISO_DATE_PATTERN
-      );
-
-      stats.dateRowsBackfilled += batchResult;
-      logger.info(
-        `Date backfill progress: ${Math.min(i + VALUE_BATCH_SIZE, dateKeys.length).toString()}/${dateKeys.length.toString()} keys (${stats.dateRowsBackfilled.toString()} rows updated)`
-      );
-    }
-
-    logger.info(`Step 5b complete: ${stats.dateRowsBackfilled.toString()} date rows backfilled`);
-  } else {
-    logger.info("Step 5b: No date keys to backfill, skipping");
-  }
-};
 
 export const addedAttributesDataTypes: MigrationScript = {
   type: "data",
@@ -251,7 +101,22 @@ export const addedAttributesDataTypes: MigrationScript = {
     );
 
     // Categorize keys by detected type
-    const { numberKeys, dateKeys } = categorizeKeys(keyTypeAnalysis, stats);
+    const numberKeys: string[] = [];
+    const dateKeys: string[] = [];
+
+    for (const analysis of keyTypeAnalysis) {
+      if (Number(analysis.non_empty_count) === 0) {
+        stats.skippedEmptyKeys++;
+      } else if (analysis.detected_type === "number") {
+        numberKeys.push(analysis.id);
+        stats.numberTypeKeys++;
+      } else if (analysis.detected_type === "date") {
+        dateKeys.push(analysis.id);
+        stats.dateTypeKeys++;
+      } else {
+        stats.stringTypeKeys++;
+      }
+    }
 
     stats.processedKeys = stats.numberTypeKeys + stats.dateTypeKeys + stats.stringTypeKeys;
 
@@ -262,12 +127,47 @@ export const addedAttributesDataTypes: MigrationScript = {
     // ============================================================
     // STEP 3: Update dataType for number keys (in batches)
     // ============================================================
-    await markKeysAsNumber(tx, numberKeys);
+    const KEY_BATCH_SIZE = 100;
+
+    if (numberKeys.length > 0) {
+      logger.info(`Step 3: Updating ${numberKeys.length.toString()} keys to 'number' type...`);
+      for (let i = 0; i < numberKeys.length; i += KEY_BATCH_SIZE) {
+        const batch = numberKeys.slice(i, i + KEY_BATCH_SIZE);
+        logger.info(`Step 3: Updating batch ${Math.floor(i / KEY_BATCH_SIZE + 1).toString()}...`);
+
+        await tx.$executeRaw`
+          UPDATE "ContactAttributeKey"
+          SET "dataType" = 'number'::"ContactAttributeDataType"
+          WHERE id = ANY(${batch})
+        `;
+      }
+
+      logger.info("Step 3 complete: dataType updated for number keys");
+    } else {
+      logger.info("Step 3: No number keys to update, skipping");
+    }
 
     // ============================================================
     // STEP 4: Update dataType for date keys (in batches)
     // ============================================================
-    await markKeysAsDate(tx, dateKeys);
+    if (dateKeys.length > 0) {
+      logger.info(`Step 4: Updating ${dateKeys.length.toString()} keys to 'date' type...`);
+
+      for (let i = 0; i < dateKeys.length; i += KEY_BATCH_SIZE) {
+        const batch = dateKeys.slice(i, i + KEY_BATCH_SIZE);
+        logger.info(`Step 4: Updating batch ${Math.floor(i / KEY_BATCH_SIZE + 1).toString()}...`);
+
+        await tx.$executeRaw`
+          UPDATE "ContactAttributeKey"
+          SET "dataType" = 'date'::"ContactAttributeDataType"
+          WHERE id = ANY(${batch})
+        `;
+      }
+
+      logger.info("Step 4 complete: dataType updated for date keys");
+    } else {
+      logger.info("Step 4: No date keys to update, skipping");
+    }
 
     // ============================================================
     // STEP 5: Conditional value backfill
@@ -313,12 +213,72 @@ export const addedAttributesDataTypes: MigrationScript = {
       // ============================================================
       // STEP 5a: Inline value backfill for number attributes
       // ============================================================
-      await backfillNumberValues(tx, numberKeys, stats);
+      if (numberKeys.length > 0) {
+        logger.info(
+          `Step 5a: Backfilling valueNumber for ${stats.numberTypeKeys.toString()} number-type keys...`
+        );
+
+        const VALUE_BATCH_SIZE = 10;
+        for (let i = 0; i < numberKeys.length; i += VALUE_BATCH_SIZE) {
+          const batch = numberKeys.slice(i, i + VALUE_BATCH_SIZE);
+
+          const batchResult = await tx.$executeRawUnsafe(
+            `
+            UPDATE "ContactAttribute"
+            SET "valueNumber" = value::DOUBLE PRECISION
+            WHERE "attributeKeyId" = ANY($1)
+              AND "valueNumber" IS NULL
+              AND TRIM(value) != ''
+              AND value ~ $2
+            `,
+            batch,
+            NUMBER_PATTERN
+          );
+
+          stats.numberRowsBackfilled += batchResult;
+          logger.info(
+            `Number backfill progress: ${Math.min(i + VALUE_BATCH_SIZE, numberKeys.length).toString()}/${numberKeys.length.toString()} keys (${stats.numberRowsBackfilled.toString()} rows updated)`
+          );
+        }
+
+        logger.info(`Step 5a complete: ${stats.numberRowsBackfilled.toString()} number rows backfilled`);
+      } else {
+        logger.info("Step 5a: No number keys to backfill, skipping");
+      }
 
       // ============================================================
       // STEP 5b: Inline value backfill for date attributes
       // ============================================================
-      await backfillDateValues(tx, dateKeys, stats);
+      if (dateKeys.length > 0) {
+        logger.info(`Step 5b: Backfilling valueDate for ${stats.dateTypeKeys.toString()} date-type keys...`);
+
+        const VALUE_BATCH_SIZE = 10;
+        for (let i = 0; i < dateKeys.length; i += VALUE_BATCH_SIZE) {
+          const batch = dateKeys.slice(i, i + VALUE_BATCH_SIZE);
+
+          const batchResult = await tx.$executeRawUnsafe(
+            `
+            UPDATE "ContactAttribute"
+            SET "valueDate" = pg_temp.safe_to_timestamp(value)
+            WHERE "attributeKeyId" = ANY($1)
+              AND "valueDate" IS NULL
+              AND TRIM(value) != ''
+              AND value ~ $2
+            `,
+            batch,
+            ISO_DATE_PATTERN
+          );
+
+          stats.dateRowsBackfilled += batchResult;
+          logger.info(
+            `Date backfill progress: ${Math.min(i + VALUE_BATCH_SIZE, dateKeys.length).toString()}/${dateKeys.length.toString()} keys (${stats.dateRowsBackfilled.toString()} rows updated)`
+          );
+        }
+
+        logger.info(`Step 5b complete: ${stats.dateRowsBackfilled.toString()} date rows backfilled`);
+      } else {
+        logger.info("Step 5b: No date keys to backfill, skipping");
+      }
     } else if (stats.totalAttributeRows >= BACKFILL_THRESHOLD) {
       stats.valueBackfillSkipped = true;
       logger.info(
