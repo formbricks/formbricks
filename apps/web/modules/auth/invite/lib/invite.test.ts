@@ -26,9 +26,7 @@ describe("invite", () => {
         organizationId: "org-id",
       };
 
-      vi.mocked(prisma.invite.delete).mockResolvedValue(
-        mockInvite as Awaited<ReturnType<typeof prisma.invite.delete>>
-      );
+      vi.mocked(prisma.invite.delete, { partial: true }).mockResolvedValue(mockInvite);
 
       const result = await deleteInvite("test-id");
 

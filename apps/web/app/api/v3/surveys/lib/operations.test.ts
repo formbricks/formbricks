@@ -313,9 +313,7 @@ describe("listV3Surveys", () => {
     });
     vi.mocked(getSurveyCount).mockResolvedValue(7);
     vi.mocked(getWorkspaceSurveyCount).mockResolvedValue(9);
-    vi.mocked(serializeV3SurveyListItem).mockReturnValue(
-      serializedSurvey as ReturnType<typeof serializeV3SurveyListItem>
-    );
+    vi.mocked(serializeV3SurveyListItem, { partial: true, deep: true }).mockReturnValue(serializedSurvey);
   });
 
   test("returns a serialized paginated survey list", async () => {
@@ -404,10 +402,10 @@ describe("listV3Surveys", () => {
   });
 
   test("returns bad request for invalid query parameters", async () => {
-    vi.mocked(parseV3SurveysListQuery).mockReturnValue({
+    vi.mocked(parseV3SurveysListQuery, { partial: true, deep: true }).mockReturnValue({
       ok: false,
       invalid_params: [{ name: "workspaceId", reason: "Required" }],
-    } as ReturnType<typeof parseV3SurveysListQuery>);
+    });
 
     const response = await listV3Surveys({
       searchParams: new URLSearchParams(),
@@ -486,10 +484,10 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
   });
 
   test("reads the page's documents in one query and keeps the page order", async () => {
-    vi.mocked(getSurveyListPage).mockResolvedValue({
+    vi.mocked(getSurveyListPage, { partial: true, deep: true }).mockResolvedValue({
       surveys: [{ id: "survey_b" }, { id: "survey_a" }],
       nextCursor: "cursor_next",
-    } as Awaited<ReturnType<typeof getSurveyListPage>>);
+    });
     vi.mocked(getSurveysWithCustomCssAndOwnerName, { partial: true, deep: true }).mockResolvedValue([
       { survey: { id: "survey_a", name: "A", questions: [] }, ownerName: null },
       { survey: { id: "survey_b", name: "B", questions: [] }, ownerName: null },
@@ -522,17 +520,17 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
 
   test("reads documents only for the rows the graph confirmed", async () => {
     visibilityOverride.context = enforcedMember;
-    vi.mocked(getSurveyListPage).mockResolvedValue({
+    vi.mocked(getSurveyListPage, { partial: true, deep: true }).mockResolvedValue({
       surveys: [
         { id: "survey_ok", ...settled },
         { id: "survey_leak", ...settled },
       ],
       nextCursor: null,
-    } as Awaited<ReturnType<typeof getSurveyListPage>>);
+    });
     vi.mocked(filterReadableSurveyIds).mockResolvedValue(new Set(["survey_ok"]));
-    vi.mocked(getSurveysWithCustomCssAndOwnerName).mockResolvedValue([
+    vi.mocked(getSurveysWithCustomCssAndOwnerName, { partial: true, deep: true }).mockResolvedValue([
       { survey: { id: "survey_ok", name: "OK" }, ownerName: null },
-    ] as Awaited<ReturnType<typeof getSurveysWithCustomCssAndOwnerName>>);
+    ]);
 
     const response = await list();
 
@@ -547,13 +545,13 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
   });
 
   test("drops a survey deleted between the page and the document read", async () => {
-    vi.mocked(getSurveyListPage).mockResolvedValue({
+    vi.mocked(getSurveyListPage, { partial: true, deep: true }).mockResolvedValue({
       surveys: [{ id: "survey_kept" }, { id: "survey_gone" }],
       nextCursor: null,
-    } as Awaited<ReturnType<typeof getSurveyListPage>>);
-    vi.mocked(getSurveysWithCustomCssAndOwnerName).mockResolvedValue([
+    });
+    vi.mocked(getSurveysWithCustomCssAndOwnerName, { partial: true, deep: true }).mockResolvedValue([
       { survey: { id: "survey_kept", name: "Kept" }, ownerName: null },
-    ] as Awaited<ReturnType<typeof getSurveysWithCustomCssAndOwnerName>>);
+    ]);
 
     const body = await readJson(await list());
 
@@ -562,14 +560,14 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
   });
 
   test("reports a legacy question-based survey in meta instead of failing the page", async () => {
-    vi.mocked(getSurveyListPage).mockResolvedValue({
+    vi.mocked(getSurveyListPage, { partial: true, deep: true }).mockResolvedValue({
       surveys: [{ id: "survey_legacy" }, { id: "survey_blocks" }],
       nextCursor: "cursor_next",
-    } as Awaited<ReturnType<typeof getSurveyListPage>>);
-    vi.mocked(getSurveysWithCustomCssAndOwnerName).mockResolvedValue([
+    });
+    vi.mocked(getSurveysWithCustomCssAndOwnerName, { partial: true, deep: true }).mockResolvedValue([
       { survey: { id: "survey_legacy", name: "Legacy" }, ownerName: null },
       { survey: { id: "survey_blocks", name: "Blocks" }, ownerName: null },
-    ] as Awaited<ReturnType<typeof getSurveysWithCustomCssAndOwnerName>>);
+    ]);
     vi.mocked(serializeV3SurveyFullListItem, { partial: true, deep: true }).mockImplementation(
       (row, document) => {
         if (row.id === "survey_legacy") throw new V3SurveyUnsupportedShapeError("legacy");
@@ -586,13 +584,13 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
   });
 
   test("does not swallow other serialization failures", async () => {
-    vi.mocked(getSurveyListPage).mockResolvedValue({
+    vi.mocked(getSurveyListPage, { partial: true, deep: true }).mockResolvedValue({
       surveys: [{ id: "survey_1" }],
       nextCursor: null,
-    } as Awaited<ReturnType<typeof getSurveyListPage>>);
-    vi.mocked(getSurveysWithCustomCssAndOwnerName).mockResolvedValue([
+    });
+    vi.mocked(getSurveysWithCustomCssAndOwnerName, { partial: true, deep: true }).mockResolvedValue([
       { survey: { id: "survey_1", name: "One" }, ownerName: null },
-    ] as Awaited<ReturnType<typeof getSurveysWithCustomCssAndOwnerName>>);
+    ]);
     vi.mocked(serializeV3SurveyFullListItem).mockImplementation(() => {
       throw new Error("boom");
     });
@@ -601,9 +599,10 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
   });
 
   test("an empty page answers an empty full page", async () => {
-    vi.mocked(getSurveyListPage).mockResolvedValue({ surveys: [], nextCursor: null } as Awaited<
-      ReturnType<typeof getSurveyListPage>
-    >);
+    vi.mocked(getSurveyListPage, { partial: true, deep: true }).mockResolvedValue({
+      surveys: [],
+      nextCursor: null,
+    });
     vi.mocked(getSurveysWithCustomCssAndOwnerName).mockResolvedValue([]);
 
     const body = await readJson(await list());
@@ -613,9 +612,10 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
   });
 
   test("draws a full page from its own rate limit as well", async () => {
-    vi.mocked(getSurveyListPage).mockResolvedValue({ surveys: [], nextCursor: null } as Awaited<
-      ReturnType<typeof getSurveyListPage>
-    >);
+    vi.mocked(getSurveyListPage, { partial: true, deep: true }).mockResolvedValue({
+      surveys: [],
+      nextCursor: null,
+    });
     vi.mocked(getSurveysWithCustomCssAndOwnerName).mockResolvedValue([]);
 
     expect((await list()).status).toBe(200);
@@ -631,10 +631,10 @@ describe("listV3Surveys view=full (ENG-6861)", () => {
 
   test("the summary view reads no documents and adds nothing to meta", async () => {
     mockListQuery({ view: "summary" });
-    vi.mocked(getSurveyListPage).mockResolvedValue({
+    vi.mocked(getSurveyListPage, { partial: true, deep: true }).mockResolvedValue({
       surveys: [{ id: "survey_1" }],
       nextCursor: null,
-    } as Awaited<ReturnType<typeof getSurveyListPage>>);
+    });
     vi.mocked(serializeV3SurveyListItem).mockImplementation(
       (row) => ({ id: row.id }) as ReturnType<typeof serializeV3SurveyListItem>
     );
@@ -953,15 +953,13 @@ describe("createV3SurveyResponse", () => {
 describe("getV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey,
       authResult,
       response: null,
       visibility: RESOURCE_VISIBILITY,
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
-    vi.mocked(serializeV3SurveyResource).mockReturnValue(
-      serializedSurvey as ReturnType<typeof serializeV3SurveyResource>
-    );
+    });
+    vi.mocked(serializeV3SurveyResource, { partial: true, deep: true }).mockReturnValue(serializedSurvey);
   });
 
   test("returns a serialized survey resource with language selection", async () => {
@@ -988,11 +986,11 @@ describe("getV3Survey", () => {
   });
 
   test("returns authorization responses from survey access", async () => {
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey: null,
       authResult: null,
       response: problemForbidden(requestId, "nope", instance),
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
+    });
 
     const response = await getV3Survey({
       surveyId: "survey_1",
@@ -1048,25 +1046,23 @@ describe("getV3Survey", () => {
 });
 
 describe("MCP confirmation on surveys with responses (ENG-6930)", () => {
-  const liveSurvey = { ...survey, status: "inProgress" };
+  const liveSurvey = { ...survey, status: "inProgress" as const };
   const base = { surveyId: "survey_1", authentication, requestId, instance };
 
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey: liveSurvey,
       authResult,
       response: null,
       visibility: RESOURCE_VISIBILITY,
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
-    vi.mocked(prisma.response.findFirst).mockResolvedValue({ id: "response_1" } as Awaited<
-      ReturnType<typeof prisma.response.findFirst>
-    >);
-    vi.mocked(patchV3Survey).mockResolvedValue(updatedSurvey as Awaited<ReturnType<typeof patchV3Survey>>);
-    vi.mocked(serializeV3SurveyResource).mockReturnValue(
-      serializedSurvey as ReturnType<typeof serializeV3SurveyResource>
-    );
-    vi.mocked(deleteSurvey).mockResolvedValue(liveSurvey as Awaited<ReturnType<typeof deleteSurvey>>);
+    });
+    vi.mocked(prisma.response.findFirst, { partial: true, deep: true }).mockResolvedValue({
+      id: "response_1",
+    });
+    vi.mocked(patchV3Survey, { partial: true, deep: true }).mockResolvedValue(updatedSurvey);
+    vi.mocked(serializeV3SurveyResource, { partial: true, deep: true }).mockReturnValue(serializedSurvey);
+    vi.mocked(deleteSurvey, { partial: true, deep: true }).mockResolvedValue(liveSurvey);
   });
 
   test("refuses a change to a live survey with responses until the call confirms, with the editor's caution", async () => {
@@ -1140,12 +1136,12 @@ describe("MCP confirmation on surveys with responses (ENG-6930)", () => {
   });
 
   test("needs nothing on a draft, which is not even checked for responses", async () => {
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey,
       authResult,
       response: null,
       visibility: RESOURCE_VISIBILITY,
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
+    });
 
     const response = await patchV3SurveyResponse({
       ...base,
@@ -1168,13 +1164,13 @@ describe("MCP confirmation on surveys with responses (ENG-6930)", () => {
 describe("deleteV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey,
       authResult,
       response: null,
       visibility: RESOURCE_VISIBILITY,
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
-    vi.mocked(deleteSurvey).mockResolvedValue(survey as Awaited<ReturnType<typeof deleteSurvey>>);
+    });
+    vi.mocked(deleteSurvey, { partial: true, deep: true }).mockResolvedValue(survey);
   });
 
   test("deletes an authorized survey and enriches the audit log", async () => {
@@ -1245,11 +1241,11 @@ describe("deleteV3Survey", () => {
   });
 
   test("returns authorization responses from survey access", async () => {
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey: null,
       authResult: null,
       response: problemForbidden(requestId, "nope", instance),
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
+    });
 
     const response = await deleteV3Survey({
       surveyId: "survey_1",
@@ -1293,13 +1289,13 @@ describe("patchV3SurveyResponse", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     // Not archived by default (survey fixture has no archivedAt) so the read-only guard lets patches through.
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey,
       authResult,
       response: null,
       visibility: RESOURCE_VISIBILITY,
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
-    vi.mocked(patchV3Survey).mockResolvedValue(updatedSurvey as Awaited<ReturnType<typeof patchV3Survey>>);
+    });
+    vi.mocked(patchV3Survey, { partial: true, deep: true }).mockResolvedValue(updatedSurvey);
     vi.mocked(serializeV3SurveyResource).mockImplementation((input) => {
       return input.name === "Updated Survey"
         ? (serializedUpdatedSurvey as ReturnType<typeof serializeV3SurveyResource>)
@@ -1394,11 +1390,11 @@ describe("patchV3SurveyResponse", () => {
   });
 
   test("returns authorization responses from survey access", async () => {
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey: null,
       authResult: null,
       response: problemForbidden(requestId, "nope", instance),
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
+    });
 
     const response = await patchV3SurveyResponse({
       surveyId: "survey_1",
@@ -1466,11 +1462,11 @@ describe("patchV3SurveyResponse", () => {
 
   test("rejects patches to an archived survey with 422 and does not patch", async () => {
     // archivedAt is read from the survey already loaded by getAuthorizedV3Survey — no extra query.
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey: { ...survey, archivedAt: new Date() },
       authResult,
       response: null,
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
+    });
 
     const response = await patchV3SurveyResponse({
       surveyId: "survey_1",
@@ -1557,17 +1553,17 @@ describe("patchV3SurveyResponse", () => {
 describe("archiveV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey,
       authResult,
       response: null,
       visibility: RESOURCE_VISIBILITY,
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
-    vi.mocked(archiveSurvey).mockResolvedValue({
+    });
+    vi.mocked(archiveSurvey, { partial: true, deep: true }).mockResolvedValue({
       id: "survey_1",
       status: "paused",
       archivedAt: new Date(),
-    } as Awaited<ReturnType<typeof archiveSurvey>>);
+    });
   });
 
   test("archives an authorized survey and enriches the audit log", async () => {
@@ -1594,11 +1590,11 @@ describe("archiveV3Survey", () => {
   });
 
   test("returns authorization responses from survey access", async () => {
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey: null,
       authResult: null,
       response: problemForbidden(requestId, "nope", instance),
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
+    });
 
     const response = await archiveV3Survey({ surveyId: "survey_1", authentication, requestId, instance });
 
@@ -1622,17 +1618,17 @@ describe("archiveV3Survey", () => {
 describe("restoreV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey,
       authResult,
       response: null,
       visibility: RESOURCE_VISIBILITY,
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
-    vi.mocked(restoreSurvey).mockResolvedValue({
+    });
+    vi.mocked(restoreSurvey, { partial: true, deep: true }).mockResolvedValue({
       id: "survey_1",
       status: "paused",
       archivedAt: null,
-    } as Awaited<ReturnType<typeof restoreSurvey>>);
+    });
   });
 
   test("restores an authorized survey and enriches the audit log", async () => {
@@ -1708,20 +1704,20 @@ describe("validateV3Survey", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(authResult);
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey,
       authResult,
       response: null,
       visibility: RESOURCE_VISIBILITY,
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
-    vi.mocked(prepareV3SurveyCreateInput).mockReturnValue({
+    });
+    vi.mocked(prepareV3SurveyCreateInput, { partial: true, deep: true }).mockReturnValue({
       ok: true,
       languageRequests: [{ code: "en-US", default: true, enabled: true }],
-    } as ReturnType<typeof prepareV3SurveyCreateInput>);
-    vi.mocked(prepareV3SurveyPatchInput).mockReturnValue({
+    });
+    vi.mocked(prepareV3SurveyPatchInput, { partial: true, deep: true }).mockReturnValue({
       ok: false,
       validation: { invalidParams: [{ name: "name", reason: "Required" }] },
-    } as ReturnType<typeof prepareV3SurveyPatchInput>);
+    });
   });
 
   test("reports an unknown library key as invalid, without preparing the payload (ENG-6930)", async () => {
@@ -1837,11 +1833,11 @@ describe("validateV3Survey", () => {
   });
 
   test("returns authorization responses while validating patch input", async () => {
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey: null,
       authResult: null,
       response: problemForbidden(requestId, "nope", instance),
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
+    });
 
     const response = await validateV3Survey({
       body: { operation: "patch", surveyId: validSurveyId, data: {} },
@@ -1895,13 +1891,13 @@ describe("editV3SurveyBlocksResponse", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey,
       authResult,
       response: null,
       visibility: RESOURCE_VISIBILITY,
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
-    vi.mocked(patchV3Survey).mockResolvedValue(updatedSurvey as Awaited<ReturnType<typeof patchV3Survey>>);
+    });
+    vi.mocked(patchV3Survey, { partial: true, deep: true }).mockResolvedValue(updatedSurvey);
     vi.mocked(serializeV3SurveyResource, { partial: true, deep: true }).mockImplementation((input) =>
       input.name === "Updated Survey" ? serializedUpdatedSurvey : serializedWithBlocks
     );
@@ -2097,11 +2093,11 @@ describe("editV3SurveyBlocksResponse", () => {
   test("reports a legacy question-based survey as a state error, not a 400", async () => {
     // Without the guard the serializer throws and this answers 400, blaming the caller for a
     // property of the stored survey — and contradicting the documented 422.
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey: { ...survey, questions: [{ id: "legacy" }] },
       authResult,
       response: null,
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
+    });
 
     const response = await call({ ops: [{ op: "remove", id: "blk_a" }] });
 
@@ -2112,11 +2108,11 @@ describe("editV3SurveyBlocksResponse", () => {
   });
 
   test("passes an authorization response straight through", async () => {
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey: null,
       authResult: null,
       response: new Response(null, { status: 403 }),
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
+    });
 
     const response = await call({ ops: [{ op: "remove", id: "blk_a" }] });
 
@@ -2125,11 +2121,11 @@ describe("editV3SurveyBlocksResponse", () => {
   });
 
   test("refuses an archived survey", async () => {
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey: { ...survey, archivedAt: new Date() },
       authResult,
       response: null,
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
+    });
 
     const response = await call({ ops: [{ op: "remove", id: "blk_a" }] });
 
@@ -2191,13 +2187,13 @@ describe("setV3SurveyBlockOrderResponse", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
+    vi.mocked(getAuthorizedV3Survey, { partial: true, deep: true }).mockResolvedValue({
       survey,
       authResult,
       response: null,
       visibility: RESOURCE_VISIBILITY,
-    } as Awaited<ReturnType<typeof getAuthorizedV3Survey>>);
-    vi.mocked(patchV3Survey).mockResolvedValue(updatedSurvey as Awaited<ReturnType<typeof patchV3Survey>>);
+    });
+    vi.mocked(patchV3Survey, { partial: true, deep: true }).mockResolvedValue(updatedSurvey);
     vi.mocked(serializeV3SurveyResource, { partial: true, deep: true }).mockImplementation((input) =>
       input.name === "Updated Survey" ? serializedUpdatedSurvey : serializedWithBlocks
     );
@@ -2351,9 +2347,10 @@ describe("listV3Surveys visibility (ENG-3282)", () => {
   test("scopes the page and both counts with the caller's context", async () => {
     visibilityOverride.context = enforcedMember;
     mockListQuery({ visibilityFilter: { visibility: ["restricted"] } });
-    vi.mocked(getSurveyListPage).mockResolvedValue({ surveys: [], nextCursor: null } as Awaited<
-      ReturnType<typeof getSurveyListPage>
-    >);
+    vi.mocked(getSurveyListPage, { partial: true, deep: true }).mockResolvedValue({
+      surveys: [],
+      nextCursor: null,
+    });
     vi.mocked(filterReadableSurveyIds).mockResolvedValue(new Set());
 
     await listV3Surveys({
@@ -2378,10 +2375,10 @@ describe("listV3Surveys visibility (ENG-3282)", () => {
 
   test("drops and counts a row the graph denies even though the SQL predicate admitted it", async () => {
     visibilityOverride.context = enforcedMember;
-    vi.mocked(getSurveyListPage).mockResolvedValue({
+    vi.mocked(getSurveyListPage, { partial: true, deep: true }).mockResolvedValue({
       surveys: [{ id: "survey_ok" }, { id: "survey_leak" }],
       nextCursor: null,
-    } as Awaited<ReturnType<typeof getSurveyListPage>>);
+    });
     vi.mocked(filterReadableSurveyIds).mockResolvedValue(new Set(["survey_ok"]));
 
     const response = await listV3Surveys({
@@ -2429,10 +2426,10 @@ describe("listV3Surveys visibility (ENG-3282)", () => {
   });
 
   test("skips the bulk check entirely while visibility is not enforced", async () => {
-    vi.mocked(getSurveyListPage).mockResolvedValue({
+    vi.mocked(getSurveyListPage, { partial: true, deep: true }).mockResolvedValue({
       surveys: [{ id: "survey_ok" }],
       nextCursor: null,
-    } as Awaited<ReturnType<typeof getSurveyListPage>>);
+    });
 
     await listV3Surveys({
       searchParams: new URLSearchParams({ workspaceId }),
