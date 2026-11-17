@@ -13,10 +13,11 @@ export const MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS = 30_000;
 
 /**
  * How long before its transaction times out a reconciling pass stops writing to SpiceDB. Each write
- * carries the pass's deadline as its gRPC deadline, so SpiceDB abandons one still under way by then; this
- * margin covers what a write can still commit after its deadline (the datastore commit already sent) and
- * the gap between the transaction's start and the pass's, so no write lands once the rollback has released
- * the row locks a narrowing waits on (`mcp-grant.ts`).
+ * carries the pass's deadline as its gRPC deadline, so SpiceDB abandons one still under way by then. A
+ * write that misses it may still commit just after (the datastore commit already sent), so the pass keeps
+ * its row locks through this margin before it fails (`mcp-grant.ts`). The margin is a heuristic bound on
+ * that commit, not a guarantee: a narrowing reconciles its grant again once it commits, which repairs a
+ * write that lands later still.
  */
 export const MCP_GRANT_PROJECTION_WRITE_MARGIN_MS = 5_000;
 

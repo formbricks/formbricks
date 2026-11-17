@@ -150,11 +150,14 @@ Tags and Audience at No access. A sign-in code issued before a Revoke is refused
 the mark as issued before it, because the issuing and the revoking pod each stamp by their own clock; the mark a
 revocation leaves only ever moves forward,
 so two revocations that finish out of order can't lower it. A refresh never creates a grant: the refresh check
-refuses a `skipConsent` client without one, as it refuses a consent without one. The exchange's grant
-creation is ordered against a Revoke like every other grant write: the claim takes the user's row
-`FOR KEY SHARE` and re-reads the mark with the code's issue time once it has it, because the provider
-spends the code after the before-hook's check — a Revoke that lands in between leaves the client
-without a grant rather than restoring it. Tools that more than one permission
+refuses a `skipConsent` client without one, as it refuses a consent without one. Every code exchange, for
+every client, names its grant (and a `skipConsent` client's creates it) ordered against a Revoke like every
+other grant write: the claim takes the user's row `FOR KEY SHARE` and re-reads the mark with the code's issue
+time once it has it, because the provider spends the code after the before-hook's check — a Revoke that
+lands in between, and an approval after it, leave the token naming no grant rather than the new one. The
+code is spent by then, so the claim never fails the exchange: it waits at most 2 s for the row
+(`lock_timeout`), and when it can't get the row or read the mark, the token names no grant, `/api/mcp`
+refuses it, and the client authorizes again. Tools that more than one permission
 legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, and a tool whose input decides what
 it reads passes `{ byInput }`; both keep the tool on the same registration path rather than a hand-rolled
 gate.
@@ -197,7 +200,11 @@ can do in between:
   recovery — commits first. The missing row already makes `/api/mcp` answer 401, so the relationships are
   removed after the commit, best-effort (`removeDeletedMcpGrants`, `finishRevokedMcpGrants`).
 - The outbox event the rows' triggers queued is the repair for every best-effort write. The reconciler
-  reads each grant `FOR SHARE` until its write is done, so it can't put back what a narrowing just removed.
+  reads each grant `FOR SHARE` and writes SpiceDB while it holds the row, each write with a gRPC deadline 5 s
+  short of its transaction's timeout (`MCP_GRANT_PROJECTION_WRITE_MARGIN_MS`); a write that misses it keeps the
+  row through those 5 s before the pass fails. So a reconcile can't put back what a narrowing just removed,
+  short of a SpiceDB commit slower than the margin, which the narrowing's own reconcile after its commit
+  repairs (ADR 0042).
 
 Every path that locks both a grant row and consent rows takes the grant first. Paths that only need the
 grant to hold still while they read the consent (the refresh check, restoring a consent after a failed

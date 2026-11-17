@@ -140,6 +140,60 @@ describe("reconcileMcpGrantRelationships", () => {
     now.mockRestore();
   });
 
+  // A write that missed its deadline may still commit just after it: the pass keeps its row locks through
+  // the margin before failing, so the commit lands, if at all, before a narrowing can take them.
+  test("keeps the locks through the margin after a write misses its deadline, then fails", async () => {
+    vi.useFakeTimers({ now: 1_000_000 });
+    try {
+      vi.mocked(prisma.mcpGrant.findMany).mockResolvedValue([
+        grantRow({ access: "workspaces", workspaces: ["ws-1"] }),
+      ] as never);
+      clientMocks.writeRelationships.mockImplementation(async () => {
+        vi.setSystemTime(1_000_000 + 25_000);
+        throw new AuthzedError({
+          attempts: 3,
+          code: AUTHZED_ERROR_CODES.TIMEOUT,
+          grpcStatus: 4,
+          operation: "write_relationships",
+          retryable: true,
+        });
+      });
+      let settled = false;
+      const reconciling = reconcileMcpGrantRelationships({ grantIds: [GRANT_ID] }).finally(() => {
+        settled = true;
+      });
+
+      await vi.advanceTimersByTimeAsync(4_000);
+      expect(settled).toBe(false);
+      await vi.advanceTimersByTimeAsync(1_000);
+      await expect(reconciling).resolves.toMatchObject({ status: "failed" });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  // A write refused outright (SpiceDB down) never reached SpiceDB: nothing to wait for.
+  test("fails at once when a write fails for any other reason", async () => {
+    vi.mocked(prisma.mcpGrant.findMany).mockResolvedValue([
+      grantRow({ access: "workspaces", workspaces: ["ws-1"] }),
+    ] as never);
+    clientMocks.writeRelationships.mockRejectedValue(
+      new AuthzedError({
+        attempts: 3,
+        code: AUTHZED_ERROR_CODES.UNAVAILABLE,
+        grpcStatus: 14,
+        operation: "write_relationships",
+        retryable: true,
+      })
+    );
+    const startedAt = Date.now();
+
+    await expect(reconcileMcpGrantRelationships({ grantIds: [GRANT_ID] })).resolves.toMatchObject({
+      status: "failed",
+    });
+    expect(Date.now() - startedAt).toBeLessThan(1_000);
+  });
+
   test("reports disabled and touches nothing when AuthZed is off", async () => {
     vi.mocked(isAuthzedEnabled).mockReturnValue(false);
 

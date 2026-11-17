@@ -1,4 +1,5 @@
 import "server-only";
+import { status } from "@grpc/grpc-js";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
@@ -12,12 +13,14 @@ import { getMcpGrantSelectedIds } from "@/modules/mcp/grant-access";
 import { type TAuthzedRelationship, type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
 import { isAuthzedEnabled } from "./config";
 import { AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES } from "./constants";
+import { AuthzedError } from "./errors";
 import {
   MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS,
   MCP_GRANT_PROJECTION_WRITE_MARGIN_MS,
 } from "./mcp-grant-timeouts";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
+  AuthzedProjectionFencedError,
   AuthzedProjectionUnstableError,
   type TAuthzedProjectionResult,
   runBestEffortProjection,
@@ -123,6 +126,13 @@ const observeGrants = async (
  * Writes the snapshot's relationships, every write fenced by `deadline`: the time by which the pass's row
  * locks are still certainly held (see {@link reconcileMcpGrantRelationships}). A batch not started by then
  * is not sent, and one under way carries the deadline to SpiceDB, which abandons it there.
+ *
+ * A write that misses its deadline may still commit just after it: SpiceDB can't abandon a datastore commit
+ * already sent. Rethrowing at once would roll the pass back and free the row locks while that commit is in
+ * flight, so a narrowing taking the lock next could have it land after its own delete. So the pass keeps
+ * its locks through the margin first ({@link holdLocksThroughMargin}), which costs a narrowing a few
+ * seconds only when a write missed its deadline. The margin is a heuristic bound on that commit; the
+ * narrowing's own reconcile once it commits (`projectMcpGrants`) repairs one that lands later still.
  */
 const writeSnapshot = async (
   grantIds: ReadonlyArray<string>,
@@ -145,18 +155,29 @@ const writeSnapshot = async (
 
   const client = getAuthzedClient();
   for (const batch of packRelationshipUpdateGroups(groups)) {
-    if (Date.now() >= deadline) throw new McpGrantProjectionFenceError();
-    await client.writeRelationships(batch, { deadline });
+    if (Date.now() >= deadline) throw new AuthzedProjectionFencedError();
+    try {
+      await client.writeRelationships(batch, { deadline });
+    } catch (error) {
+      if (isDeadlineExceeded(error)) await holdLocksThroughMargin(deadline);
+      throw error;
+    }
   }
 };
 
-/** A reconciling pass that ran out of the time its row locks are certainly held, before writing all. */
-class McpGrantProjectionFenceError extends Error {
-  constructor() {
-    super("The reconciling pass ran out of time while it held the grants' locks");
-    this.name = "McpGrantProjectionFenceError";
-  }
-}
+const isDeadlineExceeded = (error: unknown): boolean =>
+  error instanceof AuthzedError && error.grpcStatus === status.DEADLINE_EXCEEDED;
+
+/**
+ * Waits, still inside the pass's transaction, until just before it times out (`deadline` plus the margin),
+ * so a write that missed its deadline lands, if at all, while the row locks are held. The slack keeps the
+ * pass's own error, rather than an expired transaction, as what it fails with.
+ */
+const LOCK_RELEASE_SLACK_MS = 250;
+const holdLocksThroughMargin = async (deadline: number): Promise<void> => {
+  const wait = deadline + MCP_GRANT_PROJECTION_WRITE_MARGIN_MS - LOCK_RELEASE_SLACK_MS - Date.now();
+  if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
+};
 
 const snapshotsMatch = (left: TGrantSnapshot, right: TGrantSnapshot): boolean =>
   JSON.stringify(left) === JSON.stringify(right);
