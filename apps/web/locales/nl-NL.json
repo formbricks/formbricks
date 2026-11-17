@@ -5364,6 +5364,7 @@
         "device": "Apparaat",
         "duration_seconds": "Duur (seconden)",
         "email": "E-mail",
+        "ended_before_first_question": "Gestopt vóór de eerste vraag",
         "error_downloading_attachments": "Er is een fout opgetreden bij het voorbereiden van de download van bijlagen",
         "first_name": "Voornaam",
         "go_to_responses": "Ga naar reacties",

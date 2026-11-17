@@ -5364,6 +5364,7 @@
         "device": "Eszköz",
         "duration_seconds": "Időtartam (másodperc)",
         "email": "E-mail",
+        "ended_before_first_question": "Az első kérdés előtt befejeződött",
         "error_downloading_attachments": "Hiba történt a mellékletek letöltésének előkészítése során",
         "first_name": "Keresztnév",
         "go_to_responses": "Ugrás a válaszokhoz",

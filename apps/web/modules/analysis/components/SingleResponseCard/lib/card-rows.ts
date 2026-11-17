@@ -1,4 +1,4 @@
-import { type TResponseData } from "@formbricks/types/responses";
+import { type TResponseData, type TResponseTtc } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import { type TSurveyElement } from "@formbricks/types/surveys/elements";
 import { isValidValue } from "../util";
@@ -14,12 +14,14 @@ import { isValidValue } from "../util";
  * - `notShown`: the response's not-shown record lists the question, so the respondent never saw it.
  *   A run of them is listed once, like a skipped run. It is never counted as skipped, and it breaks
  *   a skipped run in two. A record wins over a stray answer, as in the summary and the Analysis export.
+ * - `notReached`: the response ended before the first question (see `hasEndedBeforeFirstQuestion`),
+ *   so the respondent passed nothing. Listed once, like a skipped run, in place of one.
  * - `none`: nothing at all (a CTA without an external button and no data).
  */
 export type TResponseCardRow =
   | { type: "answer" }
   | { type: "none" }
-  | { type: "skipped" | "aborted"; elementIds: string[] | undefined }
+  | { type: "skipped" | "aborted" | "notReached"; elementIds: string[] | undefined }
   | { type: "notShown"; elementIds: string[] | undefined };
 
 type TCardElement = Pick<TSurveyElement, "id" | "type"> & { buttonExternal?: boolean };
@@ -85,17 +87,45 @@ const getNotShownGroups = (elements: readonly TCardElement[], notShown: Readonly
   return result;
 };
 
+/**
+ * True when a finished response never reached its first question (ENG-7030): a screen-out by a rule
+ * before the first question, or a survey whose every block was passed over by show-if. Both finish
+ * as the survey loads, before the welcome card, and store no answer and an empty `ttc`.
+ * In the survey runtime, any submitted page records a time for each of its questions, so a
+ * respondent who reached one, even to skip it, leaves one behind. Any time other than the server's
+ * `_total` counts, even under an id the survey no longer has (a question deleted since), so editing
+ * the survey never turns a reached response into one that ended before it began.
+ */
+export const hasEndedBeforeFirstQuestion = ({
+  elements,
+  data,
+  ttc,
+  finished,
+}: {
+  elements: readonly Pick<TSurveyElement, "id">[];
+  data: TResponseData;
+  ttc: TResponseTtc | undefined;
+  finished: boolean;
+}): boolean => {
+  if (!finished || elements.length === 0) return false;
+  if (Object.keys(ttc ?? {}).some((key) => key !== "_total")) return false;
+  return elements.every((element) => !isValidValue(data[element.id]));
+};
+
 export const getResponseCardRows = ({
   elements,
   data,
   finished,
   notShownElementIds,
+  endedBeforeFirstQuestion = false,
 }: {
   elements: readonly TCardElement[];
   data: TResponseData;
   finished: boolean;
   /** From the response's not-shown record; empty when the record is unknown (read as today). */
   notShownElementIds: ReadonlySet<string>;
+  /** From `hasEndedBeforeFirstQuestion`: unanswered questions are `notReached`, not `skipped`. */
+  endedBeforeFirstQuestion?: boolean;
 }): TResponseCardRow[] => {
   let skippedGroups = getSkippedGroups(elements, data, finished, notShownElementIds);
   let notShownGroups = getNotShownGroups(elements, notShownElementIds);
@@ -118,6 +148,8 @@ export const getResponseCardRows = ({
     if (skipped) skippedGroups = skippedGroups.filter((group) => group !== skipped);
 
     if (isValidValue(data[element.id])) return { type: "answer" };
+
+    if (endedBeforeFirstQuestion) return { type: "notReached", elementIds: skipped };
 
     const lastGroup = skippedGroups.at(-1);
     const isSkipped = finished || (lastGroup !== undefined && !lastGroup.includes(element.id));
