@@ -11,6 +11,8 @@ import { loggableError } from "@/lib/utils/loggable-error";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { readMcpGrantReadableWorkspaceIds } from "@/modules/mcp/access-options";
 import {
+  type TMcpGrantAccessSelection,
+  type TMcpGrantPermissions,
   type TRequestedMcpGrant,
   capMcpGrantPermissions,
   getMcpGrantPermissionsForScopes,
@@ -666,40 +668,8 @@ const settleChangedConsent = async (
   const readableWorkspaceIds = await readMcpGrantReadableWorkspaceIds(userId, change.chosenGrant?.access);
   return prisma.$transaction(
     async (tx): Promise<TSettledConsent | null> => {
-      const grantClientId = change.savesGrant && "clientId" in change.target ? change.target.clientId : null;
-      let before: TStoredMcpGrant | null = null;
-      let access = change.chosenGrant?.access;
-      if (grantClientId) {
-        const client = await tx.oauthClient.findUnique({
-          where: { clientId: grantClientId },
-          select: { skipConsent: true },
-        });
-        if (!client || client.skipConsent) return null;
-        // The user's row before the grant: creating the grant row takes it `FOR KEY SHARE` (its foreign
-        // key), and a member removal or demotion holds it `FOR UPDATE` while it locks this user's grant and
-        // consent rows. Taken last, it would close a cycle with them; taken first, the approval waits for
-        // the removal and then finds the consent it ended gone.
-        await lockUserForMcpGrantWrite(tx, userId);
-        before = await lockMcpGrant(tx, { userId, clientId: grantClientId });
-        if (access) {
-          // Resolved now, applied to SpiceDB only after every check below that can still refuse: a
-          // refusal after the delete would leave SpiceDB narrower than the rows it commits.
-          const resolved = await resolveMcpGrantNarrowing(tx, {
-            userId,
-            before,
-            access,
-            readableWorkspaceIds,
-          });
-          if (resolved.status === "unavailable") {
-            return refuseConsent(
-              tx,
-              { userId, clientId: grantClientId, change },
-              { status: "selection_unavailable", field: resolved.field }
-            );
-          }
-          access = resolved.access;
-        }
-      }
+      const grant = await lockApprovalGrant(tx, { userId, change, readableWorkspaceIds });
+      if (!grant || "status" in grant) return grant;
 
       const consent = await settleConsent(tx, userId, change);
       if (!consent) return null;
@@ -714,29 +684,98 @@ const settleChangedConsent = async (
       if (change.chosenGrant && isMcpGrantEmpty(permissions)) {
         return refuseConsent(tx, { userId, clientId, change }, { status: "beyond_scopes" });
       }
-      // A client that asked for no MCP scope (`openid offline_access`) gets no grant: it could do nothing
-      // with one, Authorized apps lists it with Revoke alone, and its refresh needs none. One that had a
-      // grant loses it, as Revoke would end it: a grant left in place would keep MCP access and SpiceDB
-      // relationships that no consent backs, and Authorized apps would show and edit them.
-      const writesGrant = grantClientId !== null && !isMcpGrantEmpty(permissions);
-      const endedGrants =
-        grantClientId !== null && before !== null && !writesGrant
-          ? await deleteMcpGrants(tx, { userId, clientId: grantClientId })
-          : [];
-      if (writesGrant && access) await applyMcpGrantNarrowing(before, access);
-      const savedGrant = writesGrant
-        ? await writeMcpGrant(tx, { userId, clientId, before, permissions, access })
-        : null;
       return {
         status: "settled",
         clientId,
-        savedGrant,
-        endedGrants,
+        ...(await saveApprovalGrant(tx, { userId, clientId, grant, permissions })),
         ...(await endTokensBeyondScopes(tx, { userId, clientId, consentedScopes })),
       };
     },
     { timeout: MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS }
   );
+};
+
+/**
+ * The grant an approval saves, as {@link lockApprovalGrant} locked it: its client (`null` for a change
+ * that saves none, such as `update-consent`), the grant before the approval, and the access to save,
+ * resolved against what the user can select.
+ */
+type TApprovalGrant = {
+  clientId: string | null;
+  before: TStoredMcpGrant | null;
+  access: TMcpGrantAccessSelection | undefined;
+};
+
+/**
+ * The first step of {@link settleChangedConsent} for an approval that saves a grant: the user's row, then
+ * the grant's row `FOR UPDATE`, and the chosen access resolved. `null` for a `skipConsent` client (or one
+ * gone), which the hook leaves alone; a refusal, already put back from the snapshot, for a selection the
+ * user can't make. A change that saves no grant locks nothing here.
+ */
+const lockApprovalGrant = async (
+  tx: Prisma.TransactionClient,
+  {
+    userId,
+    change,
+    readableWorkspaceIds,
+  }: { userId: string; change: TConsentChange; readableWorkspaceIds: ReadonlySet<string> }
+): Promise<TApprovalGrant | TSettledConsent | null> => {
+  const clientId = change.savesGrant && "clientId" in change.target ? change.target.clientId : null;
+  if (!clientId) return { clientId: null, before: null, access: undefined };
+  const client = await tx.oauthClient.findUnique({ where: { clientId }, select: { skipConsent: true } });
+  if (!client || client.skipConsent) return null;
+  // The user's row before the grant: creating the grant row takes it `FOR KEY SHARE` (its foreign key),
+  // and a member removal or demotion holds it `FOR UPDATE` while it locks this user's grant and consent
+  // rows. Taken last, it would close a cycle with them; taken first, the approval waits for the removal
+  // and then finds the consent it ended gone.
+  await lockUserForMcpGrantWrite(tx, userId);
+  const before = await lockMcpGrant(tx, { userId, clientId });
+  const chosen = change.chosenGrant?.access;
+  if (!chosen) return { clientId, before, access: undefined };
+  // Resolved now, applied to SpiceDB only after every check that can still refuse: a refusal after the
+  // delete would leave SpiceDB narrower than the rows it commits.
+  const resolved = await resolveMcpGrantNarrowing(tx, {
+    userId,
+    before,
+    access: chosen,
+    readableWorkspaceIds,
+  });
+  if (resolved.status === "unavailable") {
+    return refuseConsent(
+      tx,
+      { userId, clientId, change },
+      { status: "selection_unavailable", field: resolved.field }
+    );
+  }
+  return { clientId, before, access: resolved.access };
+};
+
+/**
+ * The last grant step of {@link settleChangedConsent}, once nothing can refuse the approval: deletes from
+ * SpiceDB what a narrowing takes away, then writes the grant. A client that asked for no MCP scope
+ * (`openid offline_access`) gets no grant: it could do nothing with one, Authorized apps lists it with
+ * Revoke alone, and its refresh needs none. One that had a grant loses it, as Revoke would end it: a grant
+ * left in place would keep MCP access and SpiceDB relationships that no consent backs, and Authorized apps
+ * would show and edit them.
+ */
+const saveApprovalGrant = async (
+  tx: Prisma.TransactionClient,
+  {
+    userId,
+    clientId,
+    grant,
+    permissions,
+  }: { userId: string; clientId: string; grant: TApprovalGrant; permissions: TMcpGrantPermissions }
+): Promise<{ savedGrant: TSavedMcpGrant | null; endedGrants: TStoredMcpGrant[] }> => {
+  if (grant.clientId === null) return { savedGrant: null, endedGrants: [] };
+  const { before, access } = grant;
+  if (isMcpGrantEmpty(permissions)) {
+    const endedGrants = before ? await deleteMcpGrants(tx, { userId, clientId: grant.clientId }) : [];
+    return { savedGrant: null, endedGrants };
+  }
+  if (access) await applyMcpGrantNarrowing(before, access);
+  const savedGrant = await writeMcpGrant(tx, { userId, clientId, before, permissions, access });
+  return { savedGrant, endedGrants: [] };
 };
 
 /**
@@ -753,6 +792,110 @@ const hashPresentedRefreshToken = (presented: string): string | null => {
 
 const invalidGrant = (): APIError =>
   new APIError("BAD_REQUEST", { error: "invalid_grant", error_description: "invalid refresh token" });
+
+/** Why a refresh was refused, and what ending it ended: logged, never returned to the client. */
+type TRefreshRefusal = Readonly<
+  { reason: "client_revoked" | "grant_missing" | "consent_revoked" | "consent_narrowed" } & Partial<
+    Record<
+      "consentsDeleted" | "refreshTokensRevoked" | "refreshTokensDeleted" | "accessTokensRevoked",
+      number
+    >
+  >
+>;
+
+/**
+ * The refresh check of a `skipConsent` client, which has no consent to check: its grant alone, or, for a
+ * token without an MCP scope, which has no grant either, the revocation mark. `null` when the refresh
+ * stands; otherwise the client's tokens are revoked, the one just issued included.
+ */
+const checkSkipConsentRefresh = async (
+  tx: Prisma.TransactionClient,
+  {
+    userId,
+    clientId,
+    needsGrant,
+    createdAt,
+  }: { userId: string; clientId: string; needsGrant: boolean; createdAt: Date }
+): Promise<TRefreshRefusal | null> => {
+  if (!needsGrant) {
+    // No grant and no consent to read, so the user's row orders this refresh against a Revoke: Revoke
+    // marks first, then holds the row `FOR UPDATE` while it revokes the client's tokens. Waited on here
+    // (`FOR KEY SHARE`), a Revoke in flight has marked by the time the mark is read, and one that starts
+    // after this commits revokes the token this refresh inserted. A presented token the mark covers was
+    // revoked: the one this refresh issued goes too.
+    await lockUserForMcpGrantWrite(tx, userId);
+    const revokedAt = await readOAuthRevocationTime(userId, clientId);
+    if (!isIssuedBeforeRevocation(createdAt.getTime(), revokedAt)) return null;
+    return { reason: "client_revoked", ...(await revokeClientTokens(tx, userId, clientId)) };
+  }
+  // The grant is the connection's liveness check alone. Read `FOR SHARE` after issuance, as for a consent:
+  // a Revoke still in flight is waited on and its delete seen, and one that commits later revokes the
+  // token this refresh just inserted. Without the check, a refresh that rotated before a Revoke and
+  // inserted its token after it would keep a live token.
+  if (await shareLockMcpGrant(tx, { userId, clientId })) return null;
+  return { reason: "grant_missing", ...(await revokeClientTokens(tx, userId, clientId)) };
+};
+
+/**
+ * A consent left without the grant an MCP token needs, written by the previous release during a rolling
+ * upgrade: ended like a revoke, so the client goes back through the consent screen, where Allow writes
+ * the grant. `null` when the grant is there after all, or no consent is. Locks the consent rows, then
+ * reads the grant again: an approval saves the grant while holding these rows, so a grant it commits while
+ * this waits is seen here rather than its client ended.
+ */
+const endGrantlessConsent = async (
+  tx: Prisma.TransactionClient,
+  userId: string,
+  clientId: string
+): Promise<TRefreshRefusal | null> => {
+  const consents = await lockConsents(tx, userId, { clientId }, "update");
+  if (consents.length === 0 || (await hasMcpGrant(tx, { userId, clientId }))) return null;
+  // No grant to delete: there is none, and none can be written while these rows are held.
+  const deleted = await tx.oauthConsent.deleteMany({ where: { userId, clientId } });
+  return {
+    reason: "grant_missing",
+    consentsDeleted: deleted.count,
+    ...(await revokeClientTokens(tx, userId, clientId)),
+  };
+};
+
+/**
+ * The refresh check of a client with a consent: the grant an MCP token needs, then the consent, which
+ * must still cover the presented token and every other token of its grant. `null` when the refresh
+ * stands. The grant is locked first, then the consent rows, the order every path that locks both takes.
+ */
+const checkConsentedRefresh = async (
+  tx: Prisma.TransactionClient,
+  {
+    userId,
+    clientId,
+    needsGrant,
+    grant,
+  }: { userId: string; clientId: string; needsGrant: boolean; grant: TRefusedGrant }
+): Promise<TRefreshRefusal | null> => {
+  // `FOR SHARE`: refreshes don't wait on each other, and a revoke or a save, which lock it `FOR UPDATE`,
+  // wait on this check or it on them.
+  if (needsGrant && !(await shareLockMcpGrant(tx, { userId, clientId }))) {
+    const ended = await endGrantlessConsent(tx, userId, clientId);
+    if (ended) return ended;
+  }
+  const consentedScopes = await readConsentedScopes(tx, userId, clientId);
+  if (!consentedScopes) {
+    return { reason: "consent_revoked", ...(await revokeClientTokens(tx, userId, clientId)) };
+  }
+  const { authorizationCodeId, scopes } = grant;
+  const covered =
+    isCoveredBy(scopes, consentedScopes) &&
+    !(
+      authorizationCodeId &&
+      (await grantReachesBeyond(tx, { userId, clientId, grantId: authorizationCodeId, consentedScopes }))
+    );
+  if (covered) return null;
+  return {
+    reason: "consent_narrowed",
+    ...(await endTokensBeyondScopes(tx, { userId, clientId, consentedScopes, grant })),
+  };
+};
 
 /**
  * `hooks.after` for `POST /oauth2/token`. After a successful `refresh_token` grant, checks the grant
@@ -817,66 +960,15 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
   // saves none for it): only its consent is checked.
   const needsGrant = !isMcpGrantEmpty(getMcpGrantPermissionsForScopes(scopes));
   const refused = await prisma.$transaction(
-    async (tx) => {
-      if (refreshToken.client.skipConsent) {
-        if (!needsGrant) {
-          // No grant and no consent to read, so the user's row orders this refresh against a Revoke: Revoke
-          // marks first, then holds the row `FOR UPDATE` while it revokes the client's tokens. Waited on here
-          // (`FOR KEY SHARE`), a Revoke in flight has marked by the time the mark is read, and one that starts
-          // after this commits revokes the token this refresh inserted. A presented token the mark covers was
-          // revoked: the one this refresh issued goes too.
-          await lockUserForMcpGrantWrite(tx, userId);
-          const revokedAt = await readOAuthRevocationTime(userId, clientId);
-          if (!isIssuedBeforeRevocation(createdAt.getTime(), revokedAt)) return null;
-          return { reason: "client_revoked", ...(await revokeClientTokens(tx, userId, clientId)) };
-        }
-        // No consent to check: the grant is the connection's liveness check alone. Read `FOR SHARE` after
-        // issuance, as for a consent: a Revoke still in flight is waited on and its delete seen, and one
-        // that commits later revokes the token this refresh just inserted. Without the check, a refresh
-        // that rotated before a Revoke and inserted its token after it would keep a live token.
-        if (await shareLockMcpGrant(tx, { userId, clientId })) return null;
-        return { reason: "grant_missing", ...(await revokeClientTokens(tx, userId, clientId)) };
-      }
-      // The grant first, then the consent rows. `FOR SHARE`: refreshes don't wait on each other, and a
-      // revoke or a save, which lock it `FOR UPDATE`, wait on this check or it on them.
-      if (needsGrant && !(await shareLockMcpGrant(tx, { userId, clientId }))) {
-        // Locked, then read again: an approval saves the grant while holding these rows, so a grant it
-        // commits while this waits is seen here rather than its client ended.
-        const consents = await lockConsents(tx, userId, { clientId }, "update");
-        if (consents.length > 0 && !(await hasMcpGrant(tx, { userId, clientId }))) {
-          // No grant to delete: there is none, and none can be written while these rows are held.
-          const deleted = await tx.oauthConsent.deleteMany({ where: { userId, clientId } });
-          return {
-            reason: "grant_missing",
-            consentsDeleted: deleted.count,
-            ...(await revokeClientTokens(tx, userId, clientId)),
-          };
-        }
-      }
-      const consentedScopes = await readConsentedScopes(tx, userId, clientId);
-      if (!consentedScopes) {
-        return {
-          reason: "consent_revoked",
-          ...(await revokeClientTokens(tx, userId, clientId)),
-        };
-      }
-      const covered =
-        isCoveredBy(scopes, consentedScopes) &&
-        !(
-          authorizationCodeId &&
-          (await grantReachesBeyond(tx, { userId, clientId, grantId: authorizationCodeId, consentedScopes }))
-        );
-      if (covered) return null;
-      return {
-        reason: "consent_narrowed",
-        ...(await endTokensBeyondScopes(tx, {
-          userId,
-          clientId,
-          consentedScopes,
-          grant: { authorizationCodeId, rotatedAt, sessionId, scopes },
-        })),
-      };
-    },
+    (tx) =>
+      refreshToken.client.skipConsent
+        ? checkSkipConsentRefresh(tx, { userId, clientId, needsGrant, createdAt })
+        : checkConsentedRefresh(tx, {
+            userId,
+            clientId,
+            needsGrant,
+            grant: { authorizationCodeId, rotatedAt, sessionId, scopes },
+          }),
     // It takes the user's row or the client's grant row, either of which a Revoke can hold while it waits
     // behind a reconciling pass: on the default budget the refresh would fail after rotating, and the
     // client lose its token over another client's Revoke.
