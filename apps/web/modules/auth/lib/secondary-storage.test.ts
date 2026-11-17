@@ -94,13 +94,12 @@ describe("redisSecondaryStorage", () => {
     expect(options).toEqual({ keys: ["k"], arguments: ["90"] });
   });
 
-  test("setMax runs one atomic Lua eval that keeps the larger number and refreshes the TTL", async () => {
+  // What the script stores, and for how long, is `secondary-storage.integration.test.ts`, against Redis.
+  test("setMax runs one Lua eval on the key, with the value and the TTL as its arguments", async () => {
     mockClient.eval.mockResolvedValue(1);
     await redisSecondaryStorage.setMax("oauth-revoked:u", 1_700_000_000_123, 660);
     expect(mockClient.eval).toHaveBeenCalledTimes(1);
-    const [script, options] = mockClient.eval.mock.calls[0];
-    expect(script).toContain("stored < tonumber(ARGV[1])");
-    expect(script).toContain("EXPIRE");
+    const [, options] = mockClient.eval.mock.calls[0];
     expect(options).toEqual({ keys: ["oauth-revoked:u"], arguments: ["1700000000123", "660"] });
   });
 
