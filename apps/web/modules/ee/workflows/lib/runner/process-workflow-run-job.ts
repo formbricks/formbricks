@@ -189,6 +189,7 @@ const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
     effects: step.effects,
   });
   const finishedAt = new Date();
+  const failedForGood = retryable === false || (status === "failed" && step.executor.failsForGood === true);
 
   await prisma.workflowRunLog.update({
     where: { runId_stepId: { runId: step.runId, stepId: step.node.id } },
@@ -205,7 +206,7 @@ const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
     startedAt: finishedAt.toISOString(),
     finishedAt: finishedAt.toISOString(),
     ...(variables ? { variables } : {}),
-    ...(retryable === false ? { retryable } : {}),
+    ...(failedForGood ? { retryable: false as const } : {}),
   };
 };
 
@@ -215,8 +216,9 @@ const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
  *    caller bails.
  *  - existing row in a re-runnable state: flip it to `running` via a conditional `updateMany`;
  *    `count===0` means another worker already claimed it, so the caller bails (at-most-once).
- *    `failed`/`pending`/`skipped` never had their effect; a `running` step without effects (If/else)
- *    is safe to evaluate again.
+ *    `failed`/`pending`/`skipped` never had their effect (a `failed` row of a step that fails for
+ *    good never gets here, see `runStep`); a `running` step without effects (If/else) is safe to
+ *    evaluate again.
  * Returns `null` when the claim was lost.
  */
 const claimAndRunStep = async (
@@ -273,6 +275,8 @@ const STEP_BAIL = Symbol("workflow-step-bail");
 /**
  * Runs one step with a per-step claim guard:
  *  - `succeeded` row → resume (not run again; its output, an If/else's branch included, is reused).
+ *  - `failed` row of a step that fails for good (an HTTP request) → not run again; the run fails with
+ *    the recorded error.
  *  - `running` row of a step with effects → owned by a concurrent delivery / stalled attempt → BAIL.
  *  - otherwise → claim, then run. A lost claim also BAILs.
  */
@@ -293,6 +297,12 @@ const runStep = async (
   // whatever state the job left it in; the walk just goes on.
   if (existing && step.executor.handedOff?.(toJsonRecord(existing.output))) {
     return resumedStep(step.executor, resultFromLogRow(existing, existing.status));
+  }
+
+  // The job died between writing this row and ending the run. The call went out (or was refused) and
+  // spent its own retries, so sending it again could deliver it twice: end the run with its error.
+  if (existing?.status === "failed" && step.executor.failsForGood) {
+    return { ...resumedStep(step.executor, resultFromLogRow(existing, "failed")), retryable: false };
   }
 
   if (existing?.status === "running" && step.executor.hasEffects) {
@@ -359,8 +369,8 @@ type WalkOutcome =
  * Three outcomes:
  *  - `bail`: a step is owned by a concurrent delivery / stalled attempt → stop, do NOT finalize the run
  *    (the owner does). The per-step `WorkflowRunLog` rows remain the source of truth for the run's state.
- *  - `failure`: a step definitively failed this attempt → fail the whole run (row stays `failed`,
- *    which is retryable).
+ *  - `failure`: a step definitively failed this attempt → fail the whole run. The row stays `failed`;
+ *    a later attempt runs it again unless the failure is final (`retryable: false`).
  *  - success: the walk reached the end of its branch.
  */
 const walkRun = async (
@@ -530,7 +540,8 @@ const classifyRunError = (error: unknown): string => {
  * `queued → running` claim is a conditional `updateMany` so concurrent deliveries can't both process
  * it; and beneath that, each step is claimed BEFORE its send via a `(runId, stepId)`-unique
  * `WorkflowRunLog` row — a `succeeded` step resumes, a `running` (already-attempted) step is skipped
- * (never re-sent), and only a definitively `failed` step is re-sent (it never went out). On a non-final
+ * (never re-sent), and only a definitively `failed` email is re-sent (it never went out); a failed HTTP
+ * request is not, since it may have arrived, and ends the run on the attempt it failed. On a non-final
  * attempt any failure (incl. DB pool exhaustion) is rethrown so BullMQ retries; on the final attempt a
  * terminal `failed` is recorded and swallowed so the run never stays stuck `running`.
  */

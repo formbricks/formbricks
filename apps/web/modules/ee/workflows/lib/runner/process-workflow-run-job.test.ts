@@ -1370,6 +1370,64 @@ describe("HTTP request steps in a run (ENG-7179)", () => {
     expect(mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0].data.status).toBe("completed");
   });
 
+  test("a call that failed fails the run at once: the queue never sends it again", async () => {
+    runWith(httpDefinition("wait"));
+    effects.sendHttpRequest.mockResolvedValue({
+      response: null,
+      error: "The request timed out after 10 s",
+      attempts: 4,
+    });
+
+    // A non-final attempt: a retryable failure would rethrow so BullMQ runs the job, and the call, again.
+    await expect(handler(data, baseContext)).resolves.toBeUndefined();
+
+    expect(effects.sendHttpRequest).toHaveBeenCalledTimes(1);
+    expect(mockSendEmail).not.toHaveBeenCalled();
+    const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+    expect(failure.data.status).toBe("failed");
+    expect(failure.data.data.steps[0]).toMatchObject({
+      stepId: "call",
+      status: "failed",
+      error: "The request timed out after 10 s",
+    });
+  });
+
+  test("a resumed run never re-sends a call that already failed, and fails with its error", async () => {
+    // The job died after the step's row was written `failed` and before the run was ended.
+    const definition = httpDefinition("wait");
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      status: "running",
+      workflowVersion: { definition },
+      workflow: { definition, createdBy: "creator-1" },
+    });
+    mockWorkflowRunLogFindFirst.mockImplementation(({ where }: { where: { stepId: string } }) =>
+      Promise.resolve(
+        where.stepId === "call"
+          ? {
+              stepId: "call",
+              stepType: "http_request",
+              status: "failed",
+              input: {},
+              output: { mode: "wait", status: 503, attempts: 4 },
+              error: "The HTTP request was answered with status 503",
+              startedAt: new Date("2026-06-09T12:01:00.000Z"),
+              finishedAt: new Date("2026-06-09T12:01:40.000Z"),
+            }
+          : null
+      )
+    );
+
+    await expect(handler(data, baseContext)).resolves.toBeUndefined();
+
+    expect(effects.sendHttpRequest).not.toHaveBeenCalled();
+    expect(mockWorkflowRunLogUpdateMany).not.toHaveBeenCalled();
+    expect(mockSendEmail).not.toHaveBeenCalled();
+    const failure = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+    expect(failure.data.status).toBe("failed");
+    expect(failure.data.error).toBe("The HTTP request was answered with status 503");
+  });
+
   test.each(["running", "failed"])(
     "a resumed run never re-sends a Don't wait call its job owns (%s), and its outcome doesn't fail the run",
     async (status) => {

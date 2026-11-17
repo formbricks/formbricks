@@ -46,6 +46,12 @@ export interface WorkflowStepExecutor<T extends TWorkflowStepType> {
    * to run again, so a `running` row is simply re-evaluated.
    */
   hasEffects: boolean;
+  /**
+   * `true` when a failure of this step is final, because the step already retried what another try
+   * could fix (an HTTP request, ADR 0047). The run then fails at once instead of going back to the
+   * queue, and a `failed` row is never run again: the call may have reached its target.
+   */
+  failsForGood?: boolean;
   /** What the step was asked to do, recorded on its log row before it runs. Never secrets. */
   describeInput: (node: TWorkflowStepNodeOfType<T>) => Record<string, unknown>;
   execute: (execution: WorkflowStepExecution<T>) => Promise<WorkflowStepOutcome>;

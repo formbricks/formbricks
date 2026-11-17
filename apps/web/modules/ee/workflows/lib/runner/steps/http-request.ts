@@ -21,12 +21,14 @@ import type { WorkflowStepExecutor, WorkflowStepOutcome } from "./types";
  * has sent it. In a Test run (fake effects, ADR 0049) nothing is sent: "Wait and use it" gets the
  * step's last Test request response (`testSample: "used"`) or goes on with none (`"missing"`), and
  * "Don't wait" ends at once with the request it would have sent. A failed call fails the step, and
- * so the run, unless "Continue on error" is on. A stored secret value is attached only when the step's
+ * so the run, unless "Continue on error" is on; the queue never sends it again (`failsForGood`), since
+ * the retries are the step's own and a call that timed out may still have arrived. A stored secret value is attached only when the step's
  * URL is on the origin it was set for (ADR 0051); otherwise nothing is sent and the step fails naming
  * the header and that host, which "Continue on error" also lets the run go past.
  */
 export const httpRequestStepExecutor: WorkflowStepExecutor<"http_request"> = {
   hasEffects: true,
+  failsForGood: true,
   describeInput: (node) => ({
     method: node.config.method,
     url: node.config.url,
