@@ -738,6 +738,8 @@ export const coerceToEmbeddedDataType = (
   dataType: TEmbeddedDataType
 ): TResolvedEmbeddedValue | undefined => {
   if (value === null || value === undefined) return undefined;
+  // An unknown `dataType` coerces nothing, as the old switch's missing arm did.
+  if (!Object.prototype.hasOwnProperty.call(EMBEDDED_DATA_COERCERS, dataType)) return undefined;
   return EMBEDDED_DATA_COERCERS[dataType](value);
 };
 

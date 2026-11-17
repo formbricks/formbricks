@@ -530,6 +530,12 @@ const OPERATOR_EVALUATORS: Partial<
     Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.includes(leftValue),
 };
 
+/** The evaluator of a known operator; an unknown one (a prototype key included) has none, so it is false. */
+const getOperatorEvaluator = (operator: string): ((values: TConditionValues) => boolean) | undefined =>
+  Object.hasOwn(OPERATOR_EVALUATORS, operator)
+    ? OPERATOR_EVALUATORS[operator as TSingleCondition["operator"]]
+    : undefined;
+
 /**
  * Resolves a condition's operands for comparison, or `undefined` when it can never match: a matrix
  * row condition naming a row or column id the matrix doesn't have (P48), negated operators included.
@@ -615,7 +621,7 @@ const evaluateSingleCondition = (
       embeddedValues
     );
     if (!values) return false;
-    return OPERATOR_EVALUATORS[condition.operator]?.(values) ?? false;
+    return getOperatorEvaluator(condition.operator)?.(values) ?? false;
   } catch {
     return false;
   }

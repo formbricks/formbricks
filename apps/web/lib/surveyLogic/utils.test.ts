@@ -244,6 +244,26 @@ describe("surveyLogic", () => {
     });
   });
 
+  // An operator outside the enum was false under the old switch; a prototype key must not read as one.
+  test.each(["constructor", "toString", "hasOwnProperty"])(
+    "evaluateLogic: unknown operator %s is false",
+    (operator) => {
+      const group = {
+        id: "g",
+        connector: "and",
+        conditions: [
+          {
+            id: "c1",
+            leftOperand: { type: "hiddenField", value: "f1" },
+            operator,
+            rightOperand: { type: "static", value: "v1" },
+          },
+        ],
+      } as unknown as TConditionGroup;
+      expect(evaluateLogic(mockSurvey, { f1: "v1" }, {}, group, "en")).toBe(false);
+    }
+  );
+
   test("evaluateLogic handles AND/OR groups and single conditions", () => {
     const data: TResponseData = { f1: "v1", f2: "x" };
     const vars: TResponseVariables = {};

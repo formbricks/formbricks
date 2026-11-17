@@ -5,7 +5,7 @@ import { sonarParity } from "./sonar-parity.mjs";
  * Shared plumbing for every Formbricks oxlint config:
  * - Turborepo env-var checks
  * - the repo-wide `test` over `it` convention
- * - the Sonar-parity rules (cognitive complexity on the staged lines only, see sonar-parity.mjs)
+ * - the Sonar-parity rules, cognitive complexity included, as errors (see sonar-parity.mjs)
  * - common ignores and file globs
  *
  * This file intentionally carries no opinionated rule set: the exported tiers

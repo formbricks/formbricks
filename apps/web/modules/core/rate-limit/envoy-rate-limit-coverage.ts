@@ -79,6 +79,8 @@ export const isRouteRateLimitedByEnvoy = ({
     return false;
   }
 
+  if (!Object.hasOwn(ENVOY_RATE_LIMIT_RULES, authType)) return false;
+
   return ENVOY_RATE_LIMIT_RULES[authType].some(
     ({ methods, matches }) => methods.has(normalizedMethod) && matches(pathname)
   );

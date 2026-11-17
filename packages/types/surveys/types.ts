@@ -3305,6 +3305,10 @@ const ELEMENT_MULTI_SELECT_OPERATORS: TOperatorList = [
 ];
 const ELEMENT_SUBMITTED_OPERATORS: TOperatorList = ["isSubmitted", "isSkipped"];
 
+/** A table's own entry for `key`; a prototype key (`constructor`, `toString`) has none. */
+const ownEntry = <T>(table: Partial<Record<string, T>>, key: string): T | undefined =>
+  Object.prototype.hasOwnProperty.call(table, key) ? table[key] : undefined;
+
 /** The operators an open-text element allows, by input type. Other input types allow every operator. */
 const OPEN_TEXT_ELEMENT_OPERATORS: Partial<Record<string, TOperatorList>> = {
   email: ELEMENT_TEXT_OPERATORS,
@@ -3374,8 +3378,8 @@ const isInvalidOperatorsForElementType = (
 
   const allowedOperators =
     element.type === TSurveyElementTypeEnum.OpenText
-      ? OPEN_TEXT_ELEMENT_OPERATORS[element.inputType]
-      : ELEMENT_OPERATORS[element.type];
+      ? ownEntry(OPEN_TEXT_ELEMENT_OPERATORS, element.inputType)
+      : ownEntry(ELEMENT_OPERATORS, element.type);
 
   return allowedOperators !== undefined && !allowedOperators.includes(operator);
 };

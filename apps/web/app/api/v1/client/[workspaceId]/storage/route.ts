@@ -40,6 +40,10 @@ const UPLOAD_REFUSAL_MESSAGES: Partial<Record<string, string>> = {
   file_name_not_allowed: "File name is not allowed for this element",
 };
 
+/** The refusal message for a known reason; anything else (a prototype key included) has none. */
+const getUploadRefusalMessage = (reason: string): string | undefined =>
+  Object.hasOwn(UPLOAD_REFUSAL_MESSAGES, reason) ? UPLOAD_REFUSAL_MESSAGES[reason] : undefined;
+
 /**
  * Why the survey hands out no upload URL: another workspace, not collecting responses, or a PIN or
  * single-use link the caller does not hold. Null when it does.
@@ -195,7 +199,7 @@ export const POST = withV1ApiWrapper({
     if (!uploadPermission.ok) {
       return {
         response: responses.badRequestResponse(
-          UPLOAD_REFUSAL_MESSAGES[uploadPermission.reason] ??
+          getUploadRefusalMessage(uploadPermission.reason) ??
             "File extension is not allowed for this element",
           undefined
         ),
