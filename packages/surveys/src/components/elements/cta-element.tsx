@@ -43,7 +43,7 @@ export function CTAElement({
     // raw value reaching the other.
     if (element.buttonExternal && element.buttonUrl && onOpenExternalURL) {
       if (isSafeLinkUrl(element.buttonUrl)) {
-        onOpenExternalURL(element.buttonUrl);
+        void onOpenExternalURL(element.buttonUrl);
       } else {
         console.error("Refusing to open an unsafe CTA button URL");
       }

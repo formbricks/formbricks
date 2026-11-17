@@ -19,7 +19,7 @@ export const checkForYoutubeUrl = (url: string): boolean => {
     const hostname = youtubeUrl.hostname;
 
     return youtubeDomains.includes(hostname);
-  } catch (err) {
+  } catch {
     // invalid URL
     return false;
   }
@@ -35,7 +35,7 @@ export const checkForVimeoUrl = (url: string): boolean => {
     const hostname = vimeoUrl.hostname;
 
     return vimeoDomains.includes(hostname);
-  } catch (err) {
+  } catch {
     // invalid URL
     return false;
   }
@@ -51,7 +51,7 @@ export const checkForLoomUrl = (url: string): boolean => {
     const hostname = loomUrl.hostname;
 
     return loomDomains.includes(hostname);
-  } catch (err) {
+  } catch {
     // invalid URL
     return false;
   }

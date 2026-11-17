@@ -49,12 +49,12 @@ export const WhenToSendCard = ({
   openedByCreatives = NO_CREATIVES,
 }: Readonly<WhenToSendCardProps>) => {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
+  const [open, setOpen] = useState(localSurvey.type === "app");
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
   const [isEditActionModalOpen, setEditActionModalOpen] = useState(false);
   const [editingActionClass, setEditingActionClass] = useState<TActionClass | null>(null);
   const [actionClasses, setActionClasses] = useState<ActionClass[]>(propActionClasses);
-  const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
+  const [randomizerToggle, setRandomizerToggle] = useState(Boolean(localSurvey.displayPercentage));
 
   const { isMember } = getAccessFlags(membershipRole);
   const { hasReadAccess } = getTeamPermissionFlags(workspacePermission);

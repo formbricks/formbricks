@@ -1009,19 +1009,6 @@ describe("getQuestionSummary", () => {
         },
       ];
 
-      // Mock checkForI18n for this test case
-      vi.mock("./surveySummary", async (importOriginal) => {
-        const originalModule = await importOriginal();
-        return {
-          ...(originalModule as object),
-          checkForI18n: vi.fn().mockImplementation(() => {
-            // NOSONAR
-            // Convert Spanish labels to default language labels
-            return ["Item 2", "Item 1", "Item 3"];
-          }),
-        };
-      });
-
       const dropOff = [
         { elementId: "ranking-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
       ] as unknown as TSurveySummary["dropOff"];

@@ -91,7 +91,7 @@ export function LanguageSwitch({
       if (requestId !== latestLanguageRequest.current) return;
       const i18nLanguage = toI18nLanguage(calculatedLanguage);
       if (i18n.language !== i18nLanguage) {
-        i18n.changeLanguage(i18nLanguage);
+        void i18n.changeLanguage(i18nLanguage);
       }
     });
   };

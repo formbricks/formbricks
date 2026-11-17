@@ -193,7 +193,7 @@ async function main() {
   const directory = process.argv[3];
   const results = (existsSync(directory) ? readdirSync(directory, { recursive: true }) : [])
     .filter((name) => name.endsWith("/result.json") || name === "result.json")
-    .map((name) => JSON.parse(readFileSync(`${directory}/${name}`, "utf8")));
+    .map((name) => JSON.parse(readFileSync(`${directory}/${String(name)}`, "utf8")));
   for (const entry of inventory) {
     if (!results.some((result) => result.image === entry.image)) {
       results.push({

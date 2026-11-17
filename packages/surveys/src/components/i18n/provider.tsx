@@ -20,7 +20,7 @@ export const I18nProvider = ({ language, children }: { language: string; childre
   if (isFirstRender.current) {
     isFirstRender.current = false;
     if (hasLanguageLoaded(language) && i18n.language !== toI18nLanguage(language)) {
-      i18n.changeLanguage(toI18nLanguage(language));
+      void i18n.changeLanguage(toI18nLanguage(language));
       appliedLanguage.current = language;
     }
   }
@@ -36,7 +36,7 @@ export const I18nProvider = ({ language, children }: { language: string; childre
     let cancelled = false;
     void loadLanguage(language).then(() => {
       if (cancelled) return;
-      i18n.changeLanguage(toI18nLanguage(language));
+      void i18n.changeLanguage(toI18nLanguage(language));
       appliedLanguage.current = language;
       setIsReady(true);
     });
