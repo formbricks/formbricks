@@ -10,7 +10,7 @@ const isAnyRealmDate = (value: unknown): value is Date =>
 /** The same instant as a Date built by this page's `Date`, or `value` untouched when it is not a Date. */
 const toPageDate = <T>(value: T): T => {
   if (value instanceof Date || !isAnyRealmDate(value)) return value;
-  return new Date(value.getTime()) as T;
+  return new Date(value) as T;
 };
 
 type TDated = { createdAt: Date; updatedAt: Date };
