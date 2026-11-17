@@ -194,8 +194,9 @@ const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
   });
   const finishedAt = new Date();
 
-  if (step.executor.handedOff?.(output)) {
-    // The job may already have run and recorded the call's outcome: only a row still `running` is ours.
+  if (status === "running" && step.executor.handedOff?.(output)) {
+    // Handed to its own job, which may already have run and recorded the call's outcome: only a row
+    // still `running` is ours.
     await prisma.workflowRunLog.updateMany({
       where: { runId: step.runId, stepId: step.node.id, status: "running" },
       data: { status, output, error, finishedAt },
