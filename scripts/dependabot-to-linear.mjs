@@ -214,6 +214,7 @@ function buildIssue(alert) {
   const priority = PRIORITY_BY_SEVERITY[severity] ?? 3;
   const pkg = alert.dependency?.package?.name ?? "unknown package";
   const ecosystem = alert.dependency?.package?.ecosystem ?? "";
+  const ecosystemNote = ecosystem ? ` (${ecosystem})` : "";
   const advisory = alert.security_advisory ?? {};
   const vuln = alert.security_vulnerability ?? {};
   const summary = advisory.summary ?? "Security vulnerability";
@@ -228,7 +229,7 @@ function buildIssue(alert) {
   const description = [
     `**Dependabot alert [#${number}](${alert.html_url})**`,
     "",
-    `- **Package:** \`${pkg}\`${ecosystem ? ` (${ecosystem})` : ""}`,
+    `- **Package:** \`${pkg}\`${ecosystemNote}`,
     `- **Severity:** ${severity}`,
     ghsa ? `- **Advisory:** ${ghsa}` : null,
     cve ? `- **CVE:** ${cve}` : null,
