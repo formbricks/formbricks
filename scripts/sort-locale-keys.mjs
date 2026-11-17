@@ -15,15 +15,21 @@ import { fileURLToPath } from "node:url";
 
 const LOCALE_FILES = ["apps/web/locales/*.json", "packages/surveys/locales/*.json"];
 
+/** Whether a repo-relative path (with `/` separators) is a locale file this script keeps sorted. */
+export const isLocaleFile = (relativePath) =>
+  /^(apps\/web|packages\/surveys)\/locales\/[^/]+\.json$/.test(relativePath);
+
 const isObject = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 
-const isSorted = (keys) => keys.every((key, index) => index === 0 || keys[index - 1] <= key);
+// The key order an object has once sorted. JavaScript always lists integer-like keys ("2", "10") first, in
+// numeric order, whatever order they were inserted in, so that is the order a sorted file can have.
+const sortedKeyOrder = (keys) => Object.keys(Object.fromEntries([...keys].sort().map((key) => [key, 0])));
 
 /** Dotted paths of the objects whose keys are not sorted; `(root)` for the top level. */
 export const findUnsortedKeyPaths = (value, path = "") => {
   if (!isObject(value)) return [];
   const keys = Object.keys(value);
-  const own = isSorted(keys) ? [] : [path || "(root)"];
+  const own = sortedKeyOrder(keys).every((key, index) => key === keys[index]) ? [] : [path || "(root)"];
   return [...own, ...keys.flatMap((key) => findUnsortedKeyPaths(value[key], path ? `${path}.${key}` : key))];
 };
 

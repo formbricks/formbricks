@@ -8,7 +8,7 @@ icon: code
 ## Core Configuration
 
 ### oxfmt Config
-[oxfmt](https://oxc.rs/docs/guide/usage/formatter) formats the whole repo: TypeScript, JavaScript, JSON, Markdown, YAML, CSS and TOML. Its one config is `oxfmt.config.mts` at the repo root; there are no per-package format configs. `pnpm format` writes, and `pnpm format:check` is the CI gate. The full run takes about two seconds.
+[oxfmt](https://oxc.rs/docs/guide/usage/formatter) formats the whole repo: TypeScript, JavaScript, JSON, Markdown, YAML, CSS and TOML. Its one config is `oxfmt.config.mts` at the repo root; there are no per-package format configs. `pnpm format` writes, and `pnpm format:check` is the CI gate. The full run takes a few seconds.
 
 Key configurations:
 - 110 characters line width
@@ -151,7 +151,7 @@ Disable a rule on one line with `// oxlint-disable-next-line <rule> -- <reason>`
 - `bradlc.vscode-tailwindcss` - Tailwind CSS support
 
 ### Recommended Settings
-The repo's `.vscode/settings.json` already sets these:
+The repo's `.vscode/settings.json` sets the formatter and format on save. Add `editor.codeActionsOnSave` in your user settings if you also want oxlint's fixes applied on save:
 
 ```json
 {

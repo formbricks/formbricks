@@ -4,7 +4,7 @@ status: accepted
 
 # oxfmt formats the repo, pinned while it is pre-1.0
 
-oxfmt replaces Prettier and its plugins as the repo's only formatter (ENG-7328), even though it is still 0.x. It keeps one Oxc toolchain with oxlint, sorts imports and Tailwind classes itself, and formats the whole repo in about two seconds, which makes formatting cheap enough to run after every agent edit. A full reformat of the repo with it changed 55 files, every one without changing meaning. Because its minor releases still change output, oxfmt is pinned to an exact version and bumped by hand, with the reformat in the same PR; Dependabot leaves it alone.
+oxfmt replaces Prettier and its plugins as the repo's only formatter (ENG-7328), even though it is still 0.x. It keeps one Oxc toolchain with oxlint, sorts imports and Tailwind classes itself, and formats the whole repo in a few seconds, which makes formatting cheap enough to run after every agent edit. A full reformat of the repo with it changed 93 files, every one without changing meaning. Because its minor releases still change output, oxfmt is pinned to an exact version and bumped by hand, with the reformat in the same PR; Dependabot leaves it alone.
 
 ## Considered Options
 

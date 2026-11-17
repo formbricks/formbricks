@@ -15,6 +15,13 @@ import { defineConfig } from "oxfmt";
 // Class-merging helpers whose string arguments are Tailwind classes, sorted like `className`.
 const tailwindFunctions = ["cn", "clsx", "cva", "twMerge"];
 
+// Each Tailwind workspace and the stylesheet that defines its theme, relative to the workspace.
+const tailwindStylesheets = {
+  "apps/web": "modules/ui/globals.css",
+  "packages/survey-ui": "src/styles/globals.css",
+  "packages/surveys": "src/styles/global.css",
+};
+
 export default defineConfig({
   printWidth: 110,
   trailingComma: "es5",
@@ -54,32 +61,12 @@ export default defineConfig({
   sortTailwindcss: { functions: tailwindFunctions },
   // Each Tailwind workspace sorts against its own theme, so its custom utilities sort where Tailwind
   // puts them instead of first as unknown classes.
-  overrides: [
-    {
-      files: ["apps/web/**"],
-      options: {
-        sortTailwindcss: { stylesheet: "./apps/web/modules/ui/globals.css", functions: tailwindFunctions },
-      },
+  overrides: Object.entries(tailwindStylesheets).map(([workspace, stylesheet]) => ({
+    files: [`${workspace}/**`],
+    options: {
+      sortTailwindcss: { stylesheet: `./${workspace}/${stylesheet}`, functions: tailwindFunctions },
     },
-    {
-      files: ["packages/survey-ui/**"],
-      options: {
-        sortTailwindcss: {
-          stylesheet: "./packages/survey-ui/src/styles/globals.css",
-          functions: tailwindFunctions,
-        },
-      },
-    },
-    {
-      files: ["packages/surveys/**"],
-      options: {
-        sortTailwindcss: {
-          stylesheet: "./packages/surveys/src/styles/global.css",
-          functions: tailwindFunctions,
-        },
-      },
-    },
-  ],
+  })),
   // oxfmt also skips everything in .gitignore. These are tracked files it must not touch.
   ignorePatterns: [
     // Generated artifacts: the tool that writes them would immediately undo any formatting, which would

@@ -15,6 +15,10 @@ describe("findUnsortedKeyPaths", () => {
     expect(findUnsortedKeyPaths({ Zebra: "", apple: "" })).toEqual([]);
     expect(findUnsortedKeyPaths({ apple: "", Zebra: "" })).toEqual(["(root)"]);
   });
+
+  test("accepts an object sortKeysDeep wrote, even with integer-like keys JavaScript always puts first", () => {
+    expect(findUnsortedKeyPaths(sortKeysDeep({ b: "", 10: "", a: "", 2: "" }))).toEqual([]);
+  });
 });
 
 describe("sortKeysDeep", () => {
