@@ -649,7 +649,9 @@ describe("getQuestionSummary", () => {
 
     // Check that "None of the above" option is included in choices
     // @ts-expect-error -- the summary is a union; the fixture, not the type, fixes which member it is
-    const noneChoice = multiNoneSummary?.choices.find((c: { value: string }) => c.value === "None of the above");
+    const noneChoice = multiNoneSummary?.choices.find(
+      (c: { value: string }) => c.value === "None of the above"
+    );
     expect(noneChoice).toBeDefined();
     expect(noneChoice?.count).toBe(2);
     expect(noneChoice?.percentage).toBeCloseTo(66.67, 1);
