@@ -9,6 +9,7 @@ import {
 } from "@formbricks/types/segment";
 import { ATTRIBUTE_KEY_MAX_LENGTH } from "@/app/api/internal/contact-attribute-keys/schemas";
 import { FILTER_TEXT_MAX_LENGTH } from "@/app/api/internal/lib/limits";
+import { ZStoredText } from "@/app/api/internal/lib/stored-text";
 import { checkNumberRange, checkStringMax } from "@/app/api/internal/lib/value-bounds";
 
 /**
@@ -114,8 +115,8 @@ const checkSegmentFilters = (filters: TBaseFilters, ctx: z.RefinementCtx): void 
 export const ZSegmentCreateBody = z
   .object({
     workspaceId: ZId,
-    title: z.string().max(SEGMENT_TITLE_MAX_LENGTH),
-    description: z.string().max(SEGMENT_DESCRIPTION_MAX_LENGTH).optional(),
+    title: ZStoredText(SEGMENT_TITLE_MAX_LENGTH),
+    description: ZStoredText(SEGMENT_DESCRIPTION_MAX_LENGTH).optional(),
     isPrivate: ZSegmentCreateInput.shape.isPrivate,
     filters: ZSegmentCreateInput.shape.filters,
     surveyId: ZId.optional(),
@@ -126,15 +127,15 @@ export const ZSegmentCreateBody = z
 export type TSegmentCreateBody = z.infer<typeof ZSegmentCreateBody>;
 
 /**
- * `PATCH /api/internal/segments/{segmentId}` body: `ZSegmentUpdateInput`, strict and bounded. Its `isPrivate`
- * keeps the shared schema's default, so a body without it saves the segment as private, as the server
- * action did.
+ * `PATCH /api/internal/segments/{segmentId}` body: `ZSegmentUpdateInput`, strict and bounded. `isPrivate` has no
+ * default here, unlike the shared schema: a field the body leaves out stays as stored, so saving a shared
+ * segment's filters from the survey editor keeps it shared (the server action made it private).
  */
 export const ZSegmentUpdateBody = z
   .object({
-    title: z.string().max(SEGMENT_TITLE_MAX_LENGTH).optional(),
-    description: z.string().max(SEGMENT_DESCRIPTION_MAX_LENGTH).nullable().optional(),
-    isPrivate: ZSegmentUpdateInput.shape.isPrivate,
+    title: ZStoredText(SEGMENT_TITLE_MAX_LENGTH).optional(),
+    description: ZStoredText(SEGMENT_DESCRIPTION_MAX_LENGTH).nullable().optional(),
+    isPrivate: z.boolean().optional(),
     filters: ZSegmentUpdateInput.shape.filters,
     surveys: ZSegmentUpdateInput.shape.surveys,
   })

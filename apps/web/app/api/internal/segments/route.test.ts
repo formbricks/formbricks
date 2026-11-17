@@ -212,7 +212,7 @@ const filterSurveys = () =>
 const checkedActions = () => mocks.can.mock.calls.map(([, action, resource]) => [action, resource]);
 const operationLimits = () =>
   mocks.applyRateLimit.mock.calls
-    .filter(([config]) => config.namespace !== rateLimitConfigs.api.v3.namespace)
+    .filter(([config]) => config.namespace !== rateLimitConfigs.api.internal.namespace)
     .map(([config, identifier]) => [config.namespace, identifier]);
 /** Workspace checks pass; the survey-level one answers `surveyAllowed`. */
 const actAs = (surveyAllowed: boolean) =>
@@ -452,6 +452,8 @@ describe("POST /api/internal/segments", () => {
     ["no filters", createBody({ filters: [] })],
     ["filters that aren't a filter tree", createBody({ filters: [{ id: "x" }] })],
     ["a title past the cap", createBody({ title: "a".repeat(SEGMENT_TITLE_MAX_LENGTH + 1) })],
+    ["a title with a NUL character", createBody({ title: "seg\u0000ment" })],
+    ["a description with a NUL character", createBody({ description: "a\u0000b" })],
     [
       "a description past the cap",
       createBody({ description: "a".repeat(SEGMENT_DESCRIPTION_MAX_LENGTH + 1) }),
@@ -489,9 +491,9 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     );
   });
 
-  test("saves a segment sent without isPrivate as private, as the shared schema has it", async () => {
+  test("leaves isPrivate as stored when the body omits it, so saving a shared segment's filters keeps it shared", async () => {
     await update({ filters: FILTERS });
-    expect(mocks.updateSegment).toHaveBeenCalledWith(SEGMENT_ID, { filters: FILTERS, isPrivate: true });
+    expect(mocks.updateSegment).toHaveBeenCalledWith(SEGMENT_ID, { filters: FILTERS });
   });
 
   // ENG-1920: surveys are connected by id alone.
@@ -551,7 +553,7 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
       visibleWhere
     );
     expect(mocks.checkForRecursiveSegmentFilter).toHaveBeenCalledWith(stored, SEGMENT_ID);
-    expect(mocks.updateSegment).toHaveBeenCalledWith(SEGMENT_ID, { filters: stored, isPrivate: true });
+    expect(mocks.updateSegment).toHaveBeenCalledWith(SEGMENT_ID, { filters: stored });
   });
 
   test("holds the merged tree to the bounds, so restored ids can't push a filter past them", async () => {
@@ -656,6 +658,8 @@ describe("PATCH /api/internal/segments/{segmentId}", () => {
     ["more surveys than a segment may have", { surveys: Array(MAX_SEGMENT_SURVEYS + 1).fill(SURVEY_ID) }],
     ["a survey that isn't an id", { surveys: ["survey-1"] }],
     ["a title past the cap", { title: "a".repeat(SEGMENT_TITLE_MAX_LENGTH + 1) }],
+    ["a title with a NUL character", { title: "Re\u0000named" }],
+    ["a description with a NUL character", { description: "a\u0000b" }],
     ["an unknown key", { title: "Renamed", workspaceId: WORKSPACE_ID }],
   ])("answers 400 for %s", async (_label, body) => {
     expect((await update(body)).status).toBe(400);

@@ -88,7 +88,7 @@ const createLink = (body: unknown = { surveyId: SURVEY_ID }) =>
 const checkedActions = () => mocks.can.mock.calls.map(([, action, resource]) => [action, resource]);
 const operationLimits = () =>
   mocks.applyRateLimit.mock.calls
-    .filter(([config]) => config.namespace !== rateLimitConfigs.api.v3.namespace)
+    .filter(([config]) => config.namespace !== rateLimitConfigs.api.internal.namespace)
     .map(([config, identifier]) => [config.namespace, identifier]);
 
 beforeEach(() => {
@@ -250,6 +250,7 @@ describe("PUT /api/internal/contacts/{contactId}/attributes", () => {
     ["attributes that aren't a map", { attributes: ["email"] }],
     ["an object value", { attributes: { plan: { tier: "pro" } } }],
     ["a value past the cap", { attributes: { plan: "a".repeat(CONTACT_ATTRIBUTE_VALUE_MAX_LENGTH + 1) } }],
+    ["a value with a NUL character", { attributes: { plan: "pro\u0000" } }],
     ["a key past the cap", { attributes: { ["a".repeat(256)]: "pro" } }],
     [
       "more attributes than a request may carry",

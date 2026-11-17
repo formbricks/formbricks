@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
+import { ZStoredText } from "@/app/api/internal/lib/stored-text";
 import {
   RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE,
   isReservedFutureDefaultAttributeKey,
@@ -13,12 +14,6 @@ export const ATTRIBUTE_NAME_MAX_LENGTH = 255;
 
 /** Longest attribute description a write may set. */
 export const ATTRIBUTE_DESCRIPTION_MAX_LENGTH = 2000;
-
-const hasNoNul = (value: string) => !value.includes("\u0000");
-
-/** Free text bound for Postgres: capped, and without the NUL character Postgres can't store. */
-const ZAttributeText = (max: number) =>
-  z.string().max(max).refine(hasNoNul, { error: "Must not contain NUL characters" });
 
 /**
  * `POST /api/internal/contact-attribute-keys` body, with the server action's key rules: a safe identifier
@@ -37,8 +32,8 @@ export const ZCreateContactAttributeKeyBody = z
       .refine((val) => !isReservedFutureDefaultAttributeKey(val), {
         error: RESERVED_FUTURE_DEFAULT_ATTRIBUTE_KEY_VALIDATION_MESSAGE,
       }),
-    name: ZAttributeText(ATTRIBUTE_NAME_MAX_LENGTH).optional(),
-    description: ZAttributeText(ATTRIBUTE_DESCRIPTION_MAX_LENGTH).optional(),
+    name: ZStoredText(ATTRIBUTE_NAME_MAX_LENGTH).optional(),
+    description: ZStoredText(ATTRIBUTE_DESCRIPTION_MAX_LENGTH).optional(),
     dataType: ZContactAttributeDataType.optional(),
   })
   .strict();
@@ -48,8 +43,8 @@ export type TCreateContactAttributeKeyBody = z.infer<typeof ZCreateContactAttrib
 /** `PATCH /api/internal/contact-attribute-keys/{contactAttributeKeyId}` body: the label and description. */
 export const ZUpdateContactAttributeKeyBody = z
   .object({
-    name: ZAttributeText(ATTRIBUTE_NAME_MAX_LENGTH).optional(),
-    description: ZAttributeText(ATTRIBUTE_DESCRIPTION_MAX_LENGTH).optional(),
+    name: ZStoredText(ATTRIBUTE_NAME_MAX_LENGTH).optional(),
+    description: ZStoredText(ATTRIBUTE_DESCRIPTION_MAX_LENGTH).optional(),
   })
   .strict();
 
