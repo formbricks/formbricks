@@ -125,9 +125,9 @@ export default defineConfig(
         // deliberately left without a ratchet ticket.
         "react/incompatible-library": "warn",
 
-        // Kept as a warning (not off): exhaustive-deps is the main guard against stale closures, and
-        // it surfaces violations without blocking.
-        "react/exhaustive-deps": "warn",
+        // The main guard against stale closures. Upstream ships it at "warn"; it is at zero here, so
+        // it fails lint (ENG-7329). A deliberate omission carries an inline disable with its reason.
+        "react/exhaustive-deps": "error",
 
         /*
          * jsx-a11y's recommended set, which the `next` tier turns on at "error", on the same per-rule
@@ -144,14 +144,6 @@ export default defineConfig(
         // Added because Sonar (S6819) reported a `role="presentation"` only after push. Most are
         // `role="status"` that wants `<output>`.
         "jsx-a11y/prefer-tag-over-role": "warn",
-
-        // CODING_STANDARDS.md asks for `Readonly<>` props on every React component and Sonar enforces
-        // it as S6759, so until now a miss surfaced only after push. eslint-plugin-react (the
-        // `react-js` JS plugin) accepts both the `Readonly<Props>` wrapper and `readonly` members; its
-        // autofix would write the latter, so packages/config-oxlint/plugins/react-js.mjs drops it and
-        // fixes are made by hand with the wrapper. Promote to "error" once the count reaches zero
-        // (ENG-7329).
-        "react-js/prefer-read-only-props": "warn",
       },
       overrides: [
         {

@@ -120,9 +120,9 @@ reviews:
           or `toLocale*` calls, and never an implicit/`undefined` locale.
         - Don't ask for `useMemo`/`useCallback` unless there is a measured re-render problem.
         - Do scrutinise effects and closures. `apps/web/oxlint.config.ts` keeps
-          `react/set-state-in-effect`, `incompatible-library`, `immutability` and
-          `exhaustive-deps` at `warn`, and lint has no warning budget, so none of them can fail
-          CI. Flag state set from an
+          `react/set-state-in-effect`, `incompatible-library` and `immutability` at `warn`, and
+          lint has no warning budget, so none of them can fail CI. `exhaustive-deps` is an error,
+          but an inline disable silences it: check that its reason holds. Flag state set from an
           effect without a guard, missing or lying dependency arrays, stale closures over props
           or state, and effects that need cleanup and don't have it.
 

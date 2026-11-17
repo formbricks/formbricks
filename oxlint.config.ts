@@ -13,8 +13,8 @@ export default defineConfig({
   // own ESLint-era directives and are not linted.
   ignorePatterns: ["charts/**", "docker/**"],
   options: {
-    // Stale disable directives surface as warnings, so obsolete suppressions can't accumulate.
-    reportUnusedDisableDirectives: "warn",
+    // A stale disable directive fails lint, so obsolete suppressions can't accumulate.
+    reportUnusedDisableDirectives: "error",
   },
   // Type-aware rules (typescript-eslint's recommendedTypeChecked set, in the library, react and
   // react-hooks tiers) run through oxlint-tsgolint when oxlint gets `--type-aware`, which

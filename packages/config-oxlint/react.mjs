@@ -23,6 +23,8 @@ export const react = compose(
       // Accessibility rules (parity with the old @vercel/style-guide/react config).
       ...jsxA11yRecommended,
       ...reactHooksRecommended,
+      // Upstream ships it at "warn"; at zero violations it fails lint like the rest (ENG-7329).
+      "react/exhaustive-deps": "error",
     },
   },
   a11yParity(),

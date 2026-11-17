@@ -59,6 +59,16 @@ export function C() {
   }
 }
 `,
+  // Not a React Compiler rule, but promoted to "error" on the same terms (ENG-7329). Configured as
+  // `react/exhaustive-deps`, it reports under its eslint-plugin-react-hooks name.
+  "react-hooks/exhaustive-deps": `import { useEffect } from "react";
+export function C(${PROPS}) {
+  useEffect(() => {
+    console.log(a);
+  }, []);
+  return <div />;
+}
+`,
   "react/purity": `export function C() {
   return <div>{Date.now()}</div>;
 }
@@ -81,7 +91,7 @@ const tiers = [
   },
 ];
 
-const fileFor = (dir: string, rule: string) => `${dir}/${rule.replace("react/", "")}.tsx`;
+const fileFor = (dir: string, rule: string) => `${dir}/${rule.split("/").pop()}.tsx`;
 
 const results = new Map<string, Record<string, FixtureDiagnostic[]>>();
 
