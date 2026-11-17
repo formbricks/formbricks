@@ -655,9 +655,9 @@ describe("Tests for updateSurvey", () => {
     // that LIES about language.workspaceId (claiming this survey's workspace) is still rejected.
     test("rejects a language whose real (DB) workspace differs, even when the input claims otherwise", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
-      prisma.language.findMany.mockResolvedValueOnce([
+      vi.mocked(prisma.language.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         { id: "cllangforeign00000000001", workspaceId: "clforeignws0000000000001" },
-      ] as Awaited<ReturnType<typeof prisma.language.findMany>>);
+      ]);
 
       await expect(
         updateSurveyInternal(
@@ -691,9 +691,7 @@ describe("Tests for updateSurvey", () => {
 
     test("rejects a language id that does not exist (absent from the DB result)", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
-      prisma.language.findMany.mockResolvedValueOnce(
-        [] as Awaited<ReturnType<typeof prisma.language.findMany>>
-      );
+      vi.mocked(prisma.language.findMany, { partial: true, deep: true }).mockResolvedValueOnce([]);
 
       await expect(
         updateSurveyInternal(
@@ -727,12 +725,12 @@ describe("Tests for updateSurvey", () => {
       // ENG-1939/ENG-2115 guard restricts to draft-to-draft writes. The cross-workspace segment check
       // under test is unaffected by the status.
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" }); // getSurvey → current survey (own workspace)
-      prisma.segment.findUnique.mockResolvedValueOnce({
+      vi.mocked(prisma.segment.findUnique, { partial: true }).mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
-      } as Awaited<ReturnType<typeof prisma.segment.findUnique>>); // segment.id belongs to the survey's workspace (passes the segment guard)
-      prisma.survey.findMany.mockResolvedValueOnce([
+      }); // segment.id belongs to the survey's workspace (passes the segment guard)
+      vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         { id: "clvictimsurvey0000000001", workspaceId: "clforeignws0000000000001" },
-      ] as Awaited<ReturnType<typeof prisma.survey.findMany>>); // the connected survey is in ANOTHER workspace
+      ]); // the connected survey is in ANOTHER workspace
 
       await expect(
         updateSurveyInternal(
@@ -766,9 +764,9 @@ describe("Tests for updateSurvey", () => {
     // evaluation).
     test("rejects an over-bounds segment filter tree even when validation is skipped (draft save)", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
-      prisma.segment.findUnique.mockResolvedValueOnce({
+      vi.mocked(prisma.segment.findUnique, { partial: true }).mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
-      } as Awaited<ReturnType<typeof prisma.segment.findUnique>>); // segment belongs to the survey's workspace (passes the segment guard)
+      }); // segment belongs to the survey's workspace (passes the segment guard)
 
       // One node over the tree-wide cap. Junk-shaped on purpose: the bounds walk counts raw nodes
       // without requiring valid filter shapes, exactly what an unvalidated draft can carry.
@@ -808,13 +806,13 @@ describe("Tests for updateSurvey", () => {
     // within-bounds) filter tree still saves when validation is skipped.
     test("still saves a draft whose segment filters are within bounds but semantically invalid", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
-      prisma.segment.findUnique.mockResolvedValueOnce({
+      vi.mocked(prisma.segment.findUnique, { partial: true }).mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
-      } as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
-      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
-      prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as Awaited<
-        ReturnType<typeof prisma.survey.update>
-      >);
+      });
+      vi.mocked(prisma.survey.update, { partial: true }).mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        status: "draft",
+      });
 
       // Fails ZSegmentFilters (junk leaf shape, non-cuid id) but is far inside every tree bound.
       const halfBuiltFilters = [{ id: "f1", connector: null, resource: { root: { type: "attribute" } } }];
@@ -853,9 +851,9 @@ describe("Tests for updateSurvey", () => {
     // workspace lookup. An over-limit or junk draft must perform no survey queries at all.
     test("rejects an over-cap segment.surveys list on the draft path without any survey lookup", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
-      prisma.segment.findUnique.mockResolvedValueOnce({
+      vi.mocked(prisma.segment.findUnique, { partial: true }).mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
-      } as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
+      });
 
       // Every id is a valid cuid2 — only the cap can reject this list.
       const overCapSurveys = Array.from({ length: MAX_SEGMENT_SURVEYS + 1 }, () => createId());
@@ -890,9 +888,9 @@ describe("Tests for updateSurvey", () => {
 
     test("rejects a non-id junk string in segment.surveys on the draft path without any survey lookup", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
-      prisma.segment.findUnique.mockResolvedValueOnce({
+      vi.mocked(prisma.segment.findUnique, { partial: true }).mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
-      } as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
+      });
 
       await expect(
         updateSurveyInternal(
@@ -926,17 +924,17 @@ describe("Tests for updateSurvey", () => {
     // the ownership lookup and connects exactly as before.
     test("still runs the ownership lookup for a within-cap segment.surveys list on the draft path", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
-      prisma.segment.findUnique.mockResolvedValueOnce({
+      vi.mocked(prisma.segment.findUnique, { partial: true }).mockResolvedValueOnce({
         workspaceId: updateSurveyInput.workspaceId,
-      } as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
+      });
       const connectedSurveyId = createId();
-      prisma.survey.findMany.mockResolvedValueOnce([
+      vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         { id: connectedSurveyId, workspaceId: updateSurveyInput.workspaceId },
-      ] as Awaited<ReturnType<typeof prisma.survey.findMany>>);
-      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
-      prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as Awaited<
-        ReturnType<typeof prisma.survey.update>
-      >);
+      ]);
+      vi.mocked(prisma.survey.update, { partial: true }).mockResolvedValueOnce({
+        ...mockSurveyOutput,
+        status: "draft",
+      });
 
       await updateSurveyInternal(
         // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
@@ -976,11 +974,10 @@ describe("Tests for updateSurvey", () => {
     // Archived surveys are read-only on every write path that flows through updateSurveyInternal
     // (editor save, summary status dropdown, v1/v3 update) — not just the v3 API layer.
     test("rejects updating an archived survey and does not write", async () => {
-      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
-      prisma.survey.findUnique.mockResolvedValueOnce({
+      vi.mocked(prisma.survey.findUnique, { partial: true }).mockResolvedValueOnce({
         ...mockSurveyOutput,
         archivedAt: new Date(),
-      } as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
+      });
 
       await expect(updateSurveyInternal({ ...updateSurveyInput }, true)).rejects.toThrow(InvalidInputError);
 
@@ -1108,15 +1105,14 @@ describe("Tests for updateSurvey", () => {
         // Draft + skipValidation is the survey editor's own save path, and the one that can send a
         // payload whose blocks differ from what ends up stored. ENG-1939/ENG-2115 gate BOTH sides of
         // the transition, so the stored survey and the payload both have to be drafts.
-        // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
-        prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as Awaited<
-          ReturnType<typeof prisma.survey.findUnique>
-        >);
-        // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
-        prisma.survey.update.mockResolvedValueOnce({
+        vi.mocked(prisma.survey.findUnique, { partial: true }).mockResolvedValueOnce({
+          ...mockSurveyOutput,
+          status: "draft",
+        });
+        vi.mocked(prisma.survey.update, { partial: true }).mockResolvedValueOnce({
           ...mockSurveyOutput,
           blocks: persistedBlocks,
-        } as Awaited<ReturnType<typeof prisma.survey.update>>);
+        });
 
         await updateSurveyInternal(
           // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
@@ -1364,11 +1360,10 @@ describe("Tests for updateSurvey", () => {
 
   describe("reserved names for newly declared fields", () => {
     test("rejects a save that ADDS a hidden field named after a reserved field, and does not write", async () => {
-      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
-      prisma.survey.findUnique.mockResolvedValueOnce({
+      vi.mocked(prisma.survey.findUnique, { partial: true, deep: true }).mockResolvedValueOnce({
         ...mockSurveyOutput,
         hiddenFields: { enabled: true, fieldIds: [] },
-      } as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
+      });
 
       await expect(
         updateSurveyInternal(
@@ -1423,11 +1418,10 @@ describe("Tests for updateSurvey", () => {
     });
 
     test("GRANDFATHER: a grandfathered survey may still not ADD a second reserved name", async () => {
-      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
-      prisma.survey.findUnique.mockResolvedValueOnce({
+      vi.mocked(prisma.survey.findUnique, { partial: true, deep: true }).mockResolvedValueOnce({
         ...mockSurveyOutput,
         hiddenFields: { enabled: true, fieldIds: ["country"] },
-      } as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
+      });
 
       await expect(
         updateSurveyInternal(
@@ -2109,7 +2103,7 @@ describe("Tests for createSurvey", () => {
         type: "app",
       });
 
-      prisma.segment.create.mockResolvedValueOnce({
+      vi.mocked(prisma.segment.create, { partial: true }).mockResolvedValueOnce({
         id: "segment-123",
         workspaceId: mockWorkspaceId,
         title: mockSurveyOutput.id,
@@ -2117,7 +2111,7 @@ describe("Tests for createSurvey", () => {
         filters: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as unknown as TSegment);
+      });
 
       await createSurvey(
         mockWorkspaceId,
@@ -2135,9 +2129,9 @@ describe("Tests for createSurvey", () => {
     // ENG-6870: a new app survey's targeting may only read surveys its creator can see.
     test("refuses seeded targeting that names a survey hidden from the creator", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
-      prisma.survey.findFirst.mockResolvedValueOnce({ id: "clrestricted00000000000001" } as Awaited<
-        ReturnType<typeof prisma.survey.findFirst>
-      >);
+      vi.mocked(prisma.survey.findFirst, { partial: true }).mockResolvedValueOnce({
+        id: "clrestricted00000000000001",
+      });
       const filters = [
         {
           id: "clf01234567890123456789012",
@@ -2176,7 +2170,7 @@ describe("Tests for createSurvey", () => {
         ...mockSurveyOutput,
         type: "app",
       });
-      prisma.segment.create.mockResolvedValueOnce({
+      vi.mocked(prisma.segment.create, { partial: true }).mockResolvedValueOnce({
         id: "segment-123",
         workspaceId: mockWorkspaceId,
         title: mockSurveyOutput.id,
@@ -2184,7 +2178,7 @@ describe("Tests for createSurvey", () => {
         filters: [],
         createdAt: new Date(),
         updatedAt: new Date(),
-      } as unknown as TSegment);
+      });
 
       const filters = [
         {
@@ -2269,9 +2263,9 @@ describe("Tests for createSurvey", () => {
 
     test("creates survey languages from validated language inputs", async () => {
       vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
-      prisma.language.findMany.mockResolvedValueOnce([
+      vi.mocked(prisma.language.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         { id: "cllang12345678901234567890", workspaceId: mockWorkspaceId },
-      ] as Awaited<ReturnType<typeof prisma.language.findMany>>);
+      ]);
       prisma.survey.create.mockResolvedValueOnce({
         ...mockSurveyOutput,
       });
@@ -2449,9 +2443,9 @@ describe("Tests for createSurvey", () => {
 
     test("rejects survey languages from a different workspace", async () => {
       // The DB says this language belongs to another workspace, regardless of what the input claims.
-      prisma.language.findMany.mockResolvedValueOnce([
+      vi.mocked(prisma.language.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         { id: "cllang12345678901234567890", workspaceId: "clotherworkspace0000000000" },
-      ] as Awaited<ReturnType<typeof prisma.language.findMany>>);
+      ]);
 
       await expect(
         createSurvey(
@@ -3053,10 +3047,10 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
         filters: storedFilters,
         surveys: connected.map((id) => ({ id })),
       } as unknown as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
-    // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
-    prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as Awaited<
-      ReturnType<typeof prisma.survey.update>
-    >);
+    vi.mocked(prisma.survey.update, { partial: true }).mockResolvedValueOnce({
+      ...mockSurveyOutput,
+      status: "draft",
+    });
   };
 
   beforeEach(() => {
@@ -3067,9 +3061,7 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
 
   test("refuses a member adding a restricted survey to the targeting", async () => {
     storeSegment([]);
-    prisma.survey.findFirst.mockResolvedValueOnce({ id: restrictedId } as Awaited<
-      ReturnType<typeof prisma.survey.findFirst>
-    >);
+    vi.mocked(prisma.survey.findFirst, { partial: true }).mockResolvedValueOnce({ id: restrictedId });
 
     await expect(
       save(interaction([restrictedId]), { targetingActor: MEMBER_TARGETING_ACTOR })
@@ -3092,9 +3084,7 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
   // Pointing the survey at another segment, or connecting more surveys to it, targets with the whole tree.
   test("checks the whole tree when the save points the survey at a segment it does not own", async () => {
     storeSegment(interaction([restrictedId]), { ownSegment: false });
-    prisma.survey.findFirst.mockResolvedValueOnce({ id: restrictedId } as Awaited<
-      ReturnType<typeof prisma.survey.findFirst>
-    >);
+    vi.mocked(prisma.survey.findFirst, { partial: true }).mockResolvedValueOnce({ id: restrictedId });
 
     await expect(
       save(interaction([restrictedId]), { targetingActor: MEMBER_TARGETING_ACTOR })
@@ -3104,9 +3094,7 @@ describe("app survey targeting on save only reads surveys the saver can see (ENG
 
   test("checks the whole tree when the save connects another survey to the segment", async () => {
     storeSegment(interaction([restrictedId]));
-    prisma.survey.findFirst.mockResolvedValueOnce({ id: restrictedId } as Awaited<
-      ReturnType<typeof prisma.survey.findFirst>
-    >);
+    vi.mocked(prisma.survey.findFirst, { partial: true }).mockResolvedValueOnce({ id: restrictedId });
 
     await expect(
       save(interaction([restrictedId]), { targetingActor: MEMBER_TARGETING_ACTOR }, [
