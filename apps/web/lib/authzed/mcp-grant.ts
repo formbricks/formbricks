@@ -169,11 +169,13 @@ const isDeadlineExceeded = (error: unknown): boolean =>
   error instanceof AuthzedError && error.grpcStatus === status.DEADLINE_EXCEEDED;
 
 /**
- * Waits, still inside the pass's transaction, until just before it times out (`deadline` plus the margin),
- * so a write that missed its deadline lands, if at all, while the row locks are held. The slack keeps the
- * pass's own error, rather than an expired transaction, as what it fails with.
+ * Waits, still inside the pass's transaction, until a second before it times out (`deadline` plus the
+ * margin), so a write that missed its deadline lands, if at all, while the row locks are held. The second
+ * keeps the pass ending on its own error even with the event loop lagging. Should the transaction expire
+ * first anyway, the result is the same: Prisma rolls it back, the pass fails, the outbox retries it, and
+ * nothing it wrote to PostgreSQL (it writes nothing there) or SpiceDB is wider than a failed pass leaves.
  */
-const LOCK_RELEASE_SLACK_MS = 250;
+const LOCK_RELEASE_SLACK_MS = 1_000;
 const holdLocksThroughMargin = async (deadline: number): Promise<void> => {
   const wait = deadline + MCP_GRANT_PROJECTION_WRITE_MARGIN_MS - LOCK_RELEASE_SLACK_MS - Date.now();
   if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));

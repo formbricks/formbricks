@@ -74,8 +74,9 @@ const readExchangedCodeFor = async (userId: string, clientId: string): Promise<T
  * How long a code exchange waits for the user's row, which a Revoke or a member removal holds `FOR UPDATE`
  * while it ends grants (up to `MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS` behind a reconciling pass), and how
  * long its transaction may run. The provider has already spent the code, so the exchange can't be failed
- * and retried: one that can't get the row in time issues its token naming no grant instead (fail closed),
- * and the client authorizes again. Short, so a slow Revoke never stalls every exchange of the user.
+ * and retried: one that can't get the row in time issues its token naming no grant instead (fail closed;
+ * see {@link readCodeExchangeGrantId} for how the client recovers). Short, so a slow Revoke never stalls
+ * every exchange of the user.
  */
 const CODE_EXCHANGE_LOCK_TIMEOUT_MS = 2_000;
 const CODE_EXCHANGE_LOCK_TIMEOUT = `${CODE_EXCHANGE_LOCK_TIMEOUT_MS}ms`;
@@ -152,8 +153,10 @@ const grantSkipConsentClient = async (
  * code's token the new approval's grant.
  *
  * Never throws, as the provider has already spent the code: when the row isn't free within the lock
- * timeout, the transaction runs out, or the mark can't be read, the token names no grant. `/api/mcp`
- * refuses such a token, and the client authorizes again.
+ * timeout, the transaction runs out, or the mark can't be read, the token names no grant. `/api/mcp` refuses such a token until the client refreshes: a refresh names the grant
+ * the user holds, so a client whose grant stands recovers then, while a `skipConsent` client whose grant
+ * creation failed too has none, is refused at that refresh, and authorizes again.
+ * A token whose code a Revoke covers recovers nowhere: the refresh check ends its tokens.
  */
 const readCodeExchangeGrantId = async (
   userId: string,
@@ -167,7 +170,10 @@ const readCodeExchangeGrantId = async (
       return readGrantId(tx, userId, clientId);
     });
   } catch (error) {
-    logger.warn(
+    // A known Prisma error is the expected case (the user's row held past the lock timeout, the
+    // transaction run out) and is a warning; anything else, such as Redis failing, is a fault.
+    const expected = error instanceof Prisma.PrismaClientKnownRequestError;
+    logger[expected ? "warn" : "error"](
       { err: loggableError(error), userId, clientId },
       "Reading the grant of an MCP code exchange failed, so its token names no grant"
     );

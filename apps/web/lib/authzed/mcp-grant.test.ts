@@ -163,13 +163,26 @@ describe("reconcileMcpGrantRelationships", () => {
         settled = true;
       });
 
-      await vi.advanceTimersByTimeAsync(4_000);
+      // Held until a second before the transaction's timeout: 5 s of margin less 1 s of slack.
+      await vi.advanceTimersByTimeAsync(3_900);
       expect(settled).toBe(false);
-      await vi.advanceTimersByTimeAsync(1_000);
+      await vi.advanceTimersByTimeAsync(100);
       await expect(reconciling).resolves.toMatchObject({ status: "failed" });
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  // Should the transaction expire before the hold ends, Prisma rolls it back: the pass fails as any other
+  // failed pass does, and the outbox delivers the event again.
+  test("fails the pass when its transaction expires", async () => {
+    vi.mocked(prisma.$transaction).mockRejectedValue(
+      new Error("A commit cannot be executed on an expired transaction")
+    );
+
+    await expect(reconcileMcpGrantRelationships({ grantIds: [GRANT_ID] })).resolves.toMatchObject({
+      status: "failed",
+    });
   });
 
   // A write refused outright (SpiceDB down) never reached SpiceDB: nothing to wait for.

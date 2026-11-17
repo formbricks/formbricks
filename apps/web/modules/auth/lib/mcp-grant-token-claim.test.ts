@@ -195,9 +195,11 @@ describe("mcpGrantAccessTokenClaims", () => {
   });
 
   // The provider has already spent the code: the exchange can't fail and be retried, so it fails closed.
+  // A lock or transaction timeout is expected (a slow Revoke) and a warning; anything else is a fault.
   test.each([
     [
       "the user's row held past the lock timeout",
+      "warn",
       () => {
         vi.mocked(lockUserForMcpGrantWrite).mockRejectedValue(
           new Prisma.PrismaClientKnownRequestError("canceling statement due to lock timeout", {
@@ -209,28 +211,47 @@ describe("mcpGrantAccessTokenClaims", () => {
     ],
     [
       "the transaction running out",
+      "warn",
       () => {
-        prisma.$transaction.mockRejectedValue(new Error("Transaction already closed: timeout"));
+        prisma.$transaction.mockRejectedValue(
+          new Prisma.PrismaClientKnownRequestError("Transaction already closed: timeout", {
+            code: "P2028",
+            clientVersion: "test",
+          })
+        );
       },
     ],
     [
       "the revocation mark unreadable",
+      "error",
       () => {
-        vi.mocked(readOAuthRevocationTime).mockRejectedValue(new Error("Redis connection lost"));
+        vi.mocked(readOAuthRevocationTime).mockRejectedValue(new Error("Redis connection lost for a@b.c"));
       },
     ],
-  ])("names no grant, and still issues the token, with %s", async (_case, fail) => {
-    fail();
+  ] as const)(
+    "names no grant, and still issues the token, with %s (logged as %s)",
+    async (_case, level, fail) => {
+      fail();
 
-    for (const client of [CONSENT_CLIENT, FIRST_PARTY]) {
-      await expect(claims({ client })).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: null });
+      for (const client of [CONSENT_CLIENT, FIRST_PARTY]) {
+        await expect(claims({ client })).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: null });
+      }
+      expect(prisma.mcpGrant.findUnique).not.toHaveBeenCalled();
+      const other = level === "warn" ? "error" : "warn";
+      const message = "Reading the grant of an MCP code exchange failed, so its token names no grant";
+      expect(logger[level]).toHaveBeenCalledWith(
+        {
+          err: expect.objectContaining({ errName: expect.any(String) }),
+          userId: "user-1",
+          clientId: "client-1",
+        },
+        message
+      );
+      expect(vi.mocked(logger[other]).mock.calls.filter(([, logged]) => logged === message)).toEqual([]);
+      // Name and frames only: an error's message is never logged.
+      expect(JSON.stringify(vi.mocked(logger[level]).mock.calls)).not.toContain("a@b.c");
     }
-    expect(prisma.mcpGrant.findUnique).not.toHaveBeenCalled();
-    expect(logger.warn).toHaveBeenCalledWith(
-      expect.objectContaining({ userId: "user-1", clientId: "client-1" }),
-      "Reading the grant of an MCP code exchange failed, so its token names no grant"
-    );
-  });
+  );
 
   test("reads a refresh's grant without the code check", async () => {
     vi.mocked(readOAuthRevocationTime).mockResolvedValue(ISSUED_AT);

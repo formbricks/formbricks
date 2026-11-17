@@ -156,8 +156,10 @@ other grant write: the claim takes the user's row `FOR KEY SHARE` and re-reads t
 time once it has it, because the provider spends the code after the before-hook's check — a Revoke that
 lands in between, and an approval after it, leave the token naming no grant rather than the new one. The
 code is spent by then, so the claim never fails the exchange: it waits at most 2 s for the row
-(`lock_timeout`), and when it can't get the row or read the mark, the token names no grant, `/api/mcp`
-refuses it, and the client authorizes again. Tools that more than one permission
+(`lock_timeout`), and when it can't get the row or read the mark, the token names no grant and `/api/mcp`
+refuses it until the client refreshes. A refresh names the grant the user holds, so a client whose grant
+stands recovers then; a `skipConsent` client whose grant creation failed too has no grant, is refused at
+that refresh, and has to authorize again. Tools that more than one permission
 legitimately reaches pass `{ anyOf: [...] }` instead of a plain list, and a tool whose input decides what
 it reads passes `{ byInput }`; both keep the tool on the same registration path rather than a hand-rolled
 gate.
@@ -322,7 +324,7 @@ API key permissions are enforced through the same workspace access checks as the
 | `delete_response`                                                                                                                                                                                           | `manage`                                                                                                                                                                      |
 | `batch_delete_responses`                                                                                                                                                                                    | `manage`                                                                                                                                                                      |
 | `set_responses_outcome`                                                                                                                                                                                     | `write` or `manage`                                                                                                                                                           |
-| `list_tags`, `update_tag`, `merge_tags`                                                                                                                                                                     | not available: `/api/v3/tags` is session-only, so the tag tools refuse API keys and answer only OAuth callers                                                             |
+| `list_tags`, `update_tag`, `merge_tags`                                                                                                                                                                     | not available: `/api/v3/tags` is session-only, so the tag tools refuse API keys and answer only OAuth callers                                                                 |
 | `list_surveys`                                                                                                                                                                                              | `read`                                                                                                                                                                        |
 | `get_survey`                                                                                                                                                                                                | `read`                                                                                                                                                                        |
 | `create_survey`                                                                                                                                                                                             | `write` or `manage`                                                                                                                                                           |
