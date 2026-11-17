@@ -18,6 +18,7 @@ const flagged: Record<string, string> = {
   "eslint-env.ts": "/* eslint-env node */\nexport const a = 1;\n",
   "global.ts": "/* global myGlobal */\nexport const a = 1;\n",
   "globals.ts": "/* globals myGlobal */\nexport const a = 1;\n",
+  "no-space.ts": "/*eslint-env*/\nexport const a = 1;\n",
 };
 
 const allowed: Record<string, string> = {
