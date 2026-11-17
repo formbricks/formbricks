@@ -18,8 +18,8 @@ import {
   signIn,
 } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
+import { revokeMcpClient } from "@/modules/auth/lib/mcp-grant-revocation";
 import { mcpGrantAccessTokenClaims } from "@/modules/auth/lib/mcp-grant-token-claim";
-import { revokeMcpClient } from "@/modules/auth/lib/oauth-grant-revocation";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 // The data migration under test (auto-discovered by the migration runner at deploy).
 import { backfillSkipConsentMcpGrants } from "../../../../packages/database/migration/20261112150000_backfill_skip_consent_mcp_grants/migration";

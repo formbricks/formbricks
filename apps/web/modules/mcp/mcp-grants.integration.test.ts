@@ -21,8 +21,8 @@ import {
 } from "@/integration/oauth-flow";
 import { resetDb } from "@/integration/reset-db";
 import { auth } from "@/modules/auth/lib/auth";
+import { revokeAllUserOAuthGrants, revokeMcpClient } from "@/modules/auth/lib/mcp-grant-revocation";
 import { mcpGrantAccessTokenClaims } from "@/modules/auth/lib/mcp-grant-token-claim";
-import { revokeAllUserOAuthGrants, revokeMcpClient } from "@/modules/auth/lib/oauth-grant-revocation";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { revokeCredentials } from "@/modules/ee/data-retention/sweep/members-sweeper";

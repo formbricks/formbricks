@@ -41,11 +41,9 @@ import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-oauth-consent";
 import { requireValidMcpGrantOnConsentBeforeHandler } from "./mcp-grant-consent";
+import { revokeOAuthConsentBeforeHandler } from "./mcp-grant-revocation";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
-import {
-  revokeOAuthConsentBeforeHandler,
-  snapshotConsentBeforeApprovalHandler,
-} from "./oauth-grant-revocation";
+import { snapshotConsentBeforeApprovalHandler } from "./oauth-grant-revocation";
 import { refuseCodeIssuedBeforeRevocationBeforeHandler } from "./oauth-revocation-marker";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";

@@ -2,7 +2,7 @@ import "server-only";
 import { prisma } from "@formbricks/database";
 import type { Prisma } from "@formbricks/database/prisma";
 import { trimScopesForDashboardViewer } from "@/modules/auth/lib/dashboard-viewer-oauth-scopes";
-import { readConsentedScopes } from "@/modules/auth/lib/oauth-grant-revocation";
+import { readConsentedScopes } from "@/modules/auth/lib/oauth-consent-rows";
 import { readMcpGrantReadableWorkspaceIds } from "./access-options";
 import { MAX_LISTED_AUTHORIZED_MCP_CLIENTS } from "./constants";
 import {

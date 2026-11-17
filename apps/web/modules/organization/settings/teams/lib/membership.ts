@@ -14,7 +14,7 @@ import { hasOnlyDashboardViewerRoles } from "@/lib/membership/dashboard-viewer";
 import { lockUserActiveState } from "@/lib/user/reactivation";
 import { isTransactionConflictError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
-import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
+import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/mcp-grant-revocation";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
 import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-store";
 import { LastActiveOwnerError, runOwnerGuardedTransaction } from "./owner-guard";

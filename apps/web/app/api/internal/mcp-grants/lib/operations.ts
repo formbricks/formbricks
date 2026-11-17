@@ -18,7 +18,7 @@ import {
   MCP_GRANT_NOT_SAVED_DETAIL,
   MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
 } from "@/modules/auth/lib/mcp-grant-consent-errors";
-import { revokeMcpClient } from "@/modules/auth/lib/oauth-grant-revocation";
+import { revokeMcpClient } from "@/modules/auth/lib/mcp-grant-revocation";
 import { isDashboardViewerOnly } from "@/modules/ee/analysis/lib/dashboard-viewer-access";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { listMcpGrantAccessOptions } from "@/modules/mcp/access-options";

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
-import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
+import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/mcp-grant-revocation";
 import { revokeUserSessionsExcept } from "@/modules/auth/lib/session-revocation";
 import { queueAuditEventWithoutRequest } from "@/modules/ee/audit-logs/lib/handler";
 import { sendMemberRetentionNoticeEmail } from "@/modules/email";
@@ -28,7 +28,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), error: vi.fn() } }));
-vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({
+vi.mock("@/modules/auth/lib/mcp-grant-revocation", () => ({
   revokeAllUserOAuthGrants: vi.fn(),
   finishRevokedMcpGrants: vi.fn(),
 }));

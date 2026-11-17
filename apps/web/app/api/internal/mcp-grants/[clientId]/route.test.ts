@@ -19,7 +19,7 @@ vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
   isDashboardViewerOnly: mocks.isDashboardViewerOnly,
 }));
 vi.mock("@/modules/mcp/authorized-clients", () => ({ editMcpGrant: mocks.editMcpGrant }));
-vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({ revokeMcpClient: mocks.revokeMcpClient }));
+vi.mock("@/modules/auth/lib/mcp-grant-revocation", () => ({ revokeMcpClient: mocks.revokeMcpClient }));
 vi.mock("@/modules/mcp/grant-store", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/mcp/grant-store")>()),
   queueMcpGrantAudit: mocks.queueMcpGrantAudit,

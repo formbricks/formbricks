@@ -10,7 +10,7 @@ import { assertUserManagementAllowed } from "@/lib/membership/user-management";
 import { lockUserActiveState } from "@/lib/user/reactivation";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromInviteId } from "@/lib/utils/helper";
-import { finishRevokedMcpGrants } from "@/modules/auth/lib/oauth-grant-revocation";
+import { finishRevokedMcpGrants } from "@/modules/auth/lib/mcp-grant-revocation";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";

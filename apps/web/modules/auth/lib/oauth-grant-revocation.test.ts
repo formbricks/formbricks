@@ -13,11 +13,13 @@ import { resolveMcpGrantSelection } from "@/modules/mcp/access-options";
 import { MCP_GRANT_NOT_SAVED_CODE, MCP_GRANT_SELECTION_UNAVAILABLE_CODE } from "./mcp-grant-consent-errors";
 import {
   finishRevokedMcpGrants,
-  requireOAuthConsentOnRefreshAfterHandler,
   revokeAllUserOAuthGrants,
   revokeMcpClient,
   revokeOAuthConsentBeforeHandler,
   revokeOAuthConsentGrant,
+} from "./mcp-grant-revocation";
+import {
+  requireOAuthConsentOnRefreshAfterHandler,
   revokeTokensBeyondConsentAfterHandler,
   snapshotConsentBeforeApprovalHandler,
 } from "./oauth-grant-revocation";

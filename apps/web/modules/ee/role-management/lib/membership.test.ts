@@ -6,7 +6,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { TOrganizationRole } from "@formbricks/types/memberships";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
-import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
+import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/mcp-grant-revocation";
 import { updateMembership, updateMembershipInTransaction } from "./membership";
 
 vi.mock("@formbricks/database", () => ({
@@ -25,7 +25,7 @@ vi.mock("@formbricks/database", () => ({
 vi.mock("@/lib/authzed/organization-membership", () => ({
   reconcileOrganizationMembership: vi.fn(),
 }));
-vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({
+vi.mock("@/modules/auth/lib/mcp-grant-revocation", () => ({
   revokeAllUserOAuthGrants: vi.fn(),
   finishRevokedMcpGrants: vi.fn(),
 }));

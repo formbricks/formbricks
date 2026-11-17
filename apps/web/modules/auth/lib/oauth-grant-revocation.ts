@@ -16,19 +16,13 @@ import {
 } from "@/modules/mcp/grant";
 import {
   MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS,
-  MCP_GRANT_SYSTEM_ACTOR,
-  type TMcpGrantAuditRecord,
   type TStoredMcpGrant,
-  deleteMcpGrants,
   getMcpGrant,
   hasMcpGrant,
   lockMcpGrant,
   narrowMcpGrantAccess,
-  prepareMcpGrantAudits,
   projectMcpGrants,
   queueMcpGrantAudit,
-  queueMcpGrantAudits,
-  removeDeletedMcpGrants,
   shareLockMcpGrant,
   writeMcpGrant,
 } from "@/modules/mcp/grant-store";
@@ -38,8 +32,15 @@ import {
   MCP_GRANT_NOT_SAVED_DETAIL,
   MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
 } from "./mcp-grant-consent-errors";
+import { revokeClientTokens } from "./mcp-grant-revocation";
 import { MCP_OAUTH_REFRESH_TOKEN_PREFIX } from "./mcp-oauth-provider-options";
-import { markOAuthRevocation } from "./oauth-revocation-marker";
+import {
+  type TConsentRow,
+  type TConsentTarget,
+  consentBound,
+  lockConsents,
+  readConsentedScopes,
+} from "./oauth-consent-rows";
 
 /**
  * ENG-2499: revoking an app on Authorized Apps has to end the app's access, not just hide it.
@@ -80,216 +81,15 @@ import { markOAuthRevocation } from "./oauth-revocation-marker";
  * during a rolling upgrade) ends at the next refresh and the client goes back through the consent screen,
  * where Allow writes it. An Allow whose grant can't be saved puts the consent back as it was, so it
  * leaves no such consent behind.
- */
-
-/**
- * End every OAuth grant a user holds, in the caller's transaction: their consents go and their access and
- * refresh tokens are marked revoked. Used when the account changes hands (SSO recovery) or is switched
- * off (the data retention members policy).
  *
- * The REFRESH token is the one that matters and the one this actually stops: `handleRefreshTokenGrant`
- * reads `revoked`, so revoking it ends the 30-day persistence. Both token tables' `session` FK is
- * `onDelete: SetNull`, so revoking sessions alone would blank the liveness check rather than fail it.
- *
- * ACCESS tokens are a different story, and worth stating plainly rather than implying this covers them.
- * Our config sets `resources` and never sets `disableJwtPlugin`, so `isJwtAccessToken` is always true
- * and every access token is a self-contained JWT: `createJwtAccessToken` signs without persisting, so
- * there is normally no row here to update, and `/api/mcp` verifies bearers against JWKS
- * (`modules/mcp/auth.ts`) without reading this table at all. Upstream's own revoke endpoint says as
- * much — "JWT access tokens are self-contained and cannot be revoked server-side". The access-token
- * write is therefore defence for the opaque-token configuration only. The JWTs are ended by the grants
- * deleted below instead (ENG-7149): `/api/mcp` refuses a client without one on its next call.
- *
- * Consent goes too: `/authorize` skips the consent screen when a matching `oauthConsent` row exists, so
- * leaving it would let a still-cookie-cached session (see session-revocation.ts) silently mint a fresh
- * 30-day refresh token and undo the revocation. The user's MCP grants go with it (ENG-7149), which is what
- * refuses their clients' access tokens on the next call: no SpiceDB call is needed for that, so none is
- * made here. Each deleted grant is returned ready to audit: the caller passes them to
- * {@link finishRevokedMcpGrants} once its transaction commits, which removes their SpiceDB relationships
- * and queues the entries, so a rolled-back revocation records nothing.
+ * This module holds the hooks that follow a consent change. Ending a grant — Revoke, and every bulk end of
+ * a user's OAuth access — lives in `mcp-grant-revocation.ts`; both share the consent row locks in
+ * `oauth-consent-rows.ts`.
  */
-export const revokeAllUserOAuthGrants = async (
-  tx: Prisma.TransactionClient,
-  userId: string,
-  revokedAt: Date = new Date()
-): Promise<{
-  accessTokensRevoked: number;
-  refreshTokensRevoked: number;
-  consentsDeleted: number;
-  grantsDeleted: number;
-  /** One per deleted grant: pass to `finishRevokedMcpGrants` once the caller's transaction commits. */
-  grantAudits: TMcpGrantAuditRecord[];
-}> => {
-  // The user's pending sign-in codes live outside PostgreSQL: marked, so none issued before now is
-  // exchanged. Before the commit, so no code can be exchanged between it and the mark.
-  await markOAuthRevocation({ userId });
-  // Grants first, then consents, the order every path that locks both takes, so a concurrent save waits
-  // rather than deadlocks. Each kind is locked in id order before its delete. The tokens are revoked last:
-  // a refresh that passed its consent check before the consents were locked has inserted its token by
-  // the time the update below runs, so the update catches it.
-  const grants = await deleteMcpGrants(tx, { userId });
-  await tx.$queryRaw`SELECT "id" FROM "oauthConsent" WHERE "userId" = ${userId} ORDER BY "id" FOR UPDATE`;
-  const consentRows = await tx.oauthConsent.deleteMany({ where: { userId } });
-  // Read in the transaction, so the entries name the organizations as they stood when the grants ended.
-  const grantAudits = await prepareMcpGrantAudits(
-    tx,
-    grants.map((grant) => ({ action: "deleted" as const, before: grant, after: null }))
-  );
-  const accessRows = await tx.oauthAccessToken.updateMany({
-    where: { userId, revoked: null },
-    data: { revoked: revokedAt },
-  });
-  const refreshRows = await tx.oauthRefreshToken.updateMany({
-    where: { userId, revoked: null },
-    data: { revoked: revokedAt },
-  });
-  return {
-    accessTokensRevoked: accessRows.count,
-    refreshTokensRevoked: refreshRows.count,
-    consentsDeleted: consentRows.count,
-    grantsDeleted: grants.length,
-    grantAudits,
-  };
-};
-
-/**
- * What follows the commit of a transaction that ended grants ({@link revokeAllUserOAuthGrants}): removes
- * their SpiceDB relationships, best-effort, and audits them. They end as a consequence of something else
- * (a role lost, an account switched off or recovered), so the entries name who did that: `actorUserId`,
- * the user who removed the member or changed the role, or the system when no user did (the retention
- * sweep, SSO recovery). Call it once that transaction has committed: removing them before could leave a
- * grant whose delete rolls back reaching less than its rows say. Never throws.
- */
-export const finishRevokedMcpGrants = async (
-  records: ReadonlyArray<TMcpGrantAuditRecord>,
-  { actorUserId }: { actorUserId?: string } = {}
-): Promise<void> => {
-  await removeDeletedMcpGrants(records.flatMap(({ before }) => (before ? [before] : [])));
-  await queueMcpGrantAudits(
-    actorUserId ? { userId: actorUserId, userType: "user" } : MCP_GRANT_SYSTEM_ACTOR,
-    records
-  );
-};
 
 const CONSENT_PATH = "/oauth2/consent";
 const CONSENT_UPDATE_PATH = "/oauth2/update-consent";
-const CONSENT_DELETE_PATH = "/oauth2/delete-consent";
 const TOKEN_PATH = "/oauth2/token";
-
-type TRevokedGrant = { consentsDeleted: number; refreshTokensRevoked: number; accessTokensRevoked: number };
-
-/**
- * Ends the user's access for one MCP client (Revoke, on Authorized apps): its grant, its consent rows and
- * its tokens, in the caller's transaction. The grant is locked and deleted before the consent rows are
- * locked, the order every path that locks both takes.
- */
-const endClientAccess = async (
-  tx: Prisma.TransactionClient,
-  userId: string,
-  clientId: string
-): Promise<TRevokedGrant & { grants: TStoredMcpGrant[] }> => {
-  const grants = await deleteMcpGrants(tx, { userId, clientId });
-  await lockConsents(tx, userId, { clientId }, "update");
-  const consents = await tx.oauthConsent.deleteMany({ where: { userId, clientId } });
-  const tokens = await revokeClientTokens(tx, userId, clientId);
-  return { consentsDeleted: consents.count, grants, ...tokens };
-};
-
-const revokeClientTokens = async (
-  tx: Prisma.TransactionClient,
-  userId: string,
-  clientId: string
-): Promise<Omit<TRevokedGrant, "consentsDeleted">> => {
-  const revoked = new Date();
-  const refreshRows = await tx.oauthRefreshToken.updateMany({
-    where: { userId, clientId, revoked: null },
-    data: { revoked },
-  });
-  const accessRows = await tx.oauthAccessToken.updateMany({
-    where: { userId, clientId, revoked: null },
-    data: { revoked },
-  });
-  return { refreshTokensRevoked: refreshRows.count, accessTokensRevoked: accessRows.count };
-};
-
-type TConsentRow = {
-  id: string;
-  clientId: string;
-  scopes: string[];
-  updatedAt: Date;
-  skipConsent: boolean;
-};
-
-/**
- * Which client's consent to read: by client id, or, for `update-consent`, through the id of one of its
- * consent rows, which only resolves when that row is the user's.
- */
-type TConsentTarget = { clientId: string } | { consentId: string };
-
-/**
- * Locks the user's consent rows for the client, in `id` order, with the client's `skipConsent` flag. One
- * round trip for everything the hooks read before deciding. Every path that locks several rows (this
- * module's; upstream writes only one row at a time) takes them in that order, and after the client's
- * grant, so a refresh racing a revoke or a narrowing waits instead of deadlocking.
- */
-const lockConsents = (
-  tx: Prisma.TransactionClient,
-  userId: string,
-  target: TConsentTarget,
-  mode: "share" | "update"
-): Promise<TConsentRow[]> => {
-  const clientId =
-    "clientId" in target
-      ? Prisma.sql`${target.clientId}`
-      : Prisma.sql`(
-          SELECT "clientId" FROM "oauthConsent" WHERE "id" = ${target.consentId} AND "userId" = ${userId}
-        )`;
-  const lock = mode === "update" ? Prisma.sql`FOR UPDATE OF c` : Prisma.sql`FOR SHARE OF c`;
-  return tx.$queryRaw<TConsentRow[]>`
-    SELECT c."id", c."clientId", c."scopes", c."updatedAt", cl."skipConsent"
-    FROM "oauthConsent" c JOIN "oauthClient" cl ON cl."clientId" = c."clientId"
-    WHERE c."userId" = ${userId} AND c."clientId" = ${clientId}
-    ORDER BY c."id"
-    ${lock}`;
-};
-
-/**
- * The scopes a set of consent rows allows, and the row that decision rests on; `null` without a row.
- *
- * Normally one row: the provider finds the (user, client) consent and updates it. Two concurrent first
- * approvals can each insert one, though, and a later approval or `update-consent` then rewrites only one
- * of them. The bound is the most recently written row, the user's latest decision. Picked here rather
- * than by `ORDER BY`, which sorts before a waited-on row's new values come back.
- *
- * The provider stamps `updatedAt` to the second, so rows written in the same second can't be ordered by
- * it. `isLatestWrite` then names the row the caller knows was just written; without one, the bound is
- * what every tied row allows, which can only ever be narrower than the user meant.
- */
-const consentBound = (
-  consents: TConsentRow[],
-  isLatestWrite?: (consent: TConsentRow) => boolean
-): { scopes: string[]; newest: TConsentRow } | null => {
-  if (consents.length === 0) return null;
-  const newestAt = Math.max(...consents.map((consent) => consent.updatedAt.getTime()));
-  const newest = consents.filter((consent) => consent.updatedAt.getTime() === newestAt);
-  const written = isLatestWrite ? newest.find(isLatestWrite) : undefined;
-  if (written) return { scopes: written.scopes, newest: written };
-  const scopes = newest[0].scopes.filter((scope) =>
-    newest.every((consent) => consent.scopes.includes(scope))
-  );
-  return { scopes, newest: newest[0] };
-};
-
-/**
- * The scopes the user has consented to for the client, or `null` without a consent. Read `FOR SHARE`,
- * so a consent delete or narrowing that is still in flight is waited on rather than read around.
- */
-export const readConsentedScopes = async (
-  tx: Prisma.TransactionClient,
-  userId: string,
-  clientId: string
-): Promise<string[] | null> =>
-  consentBound(await lockConsents(tx, userId, { clientId }, "share"))?.scopes ?? null;
 
 /**
  * The consent hook's read: the client and its bound, folding duplicate rows into the one the bound rests
@@ -425,89 +225,6 @@ const grantReachesBeyond = async (
         AND "revoked" IS NULL AND NOT ("scopes" <@ ${consentedScopes}::text[])
     ) AS "beyond"`;
   return beyond;
-};
-
-/**
- * Revokes the user's MCP client (Authorized apps' Revoke, spec stories 29 and 38): deletes its grant and
- * its consent rows and revokes every token the client holds for the user, in one transaction. Returns
- * `null` when the user has neither a grant nor a consent for the client, so another user's client can't be
- * told apart from none. Works for a `skipConsent` client too, which holds a grant and no consent.
- *
- * Its current access token is a JWT that can't be revoked, but `/api/mcp` refuses a request whose user and
- * client have no grant, so the client's next call answers 401. Once the transaction has committed, the
- * grant's SpiceDB relationships are removed, best-effort: nothing depends on them any more.
- *
- * The consent rows are deleted BEFORE the tokens are revoked, and the order is load-bearing: the delete
- * takes the row locks that {@link requireOAuthConsentOnRefreshAfterHandler}'s `FOR SHARE` read waits on.
- * A refresh that rotates in the gap between the token update and the commit therefore can't read the
- * consent as still present.
- */
-export const revokeMcpClient = async ({
-  userId,
-  clientId,
-}: {
-  userId: string;
-  clientId: string;
-}): Promise<(TRevokedGrant & { grants: TStoredMcpGrant[] }) | null> => {
-  // Its pending sign-in codes live outside PostgreSQL: marked first, so none issued before now is exchanged.
-  await markOAuthRevocation({ userId, clientId });
-  const revoked = await prisma.$transaction((tx) => endClientAccess(tx, userId, clientId));
-  if (revoked.grants.length === 0 && revoked.consentsDeleted === 0) return null;
-  await removeDeletedMcpGrants(revoked.grants);
-  return revoked;
-};
-
-/**
- * {@link revokeMcpClient} for the client of one of the user's consent rows, which is how the provider's
- * `delete-consent` endpoint names it. Returns `null` when the consent doesn't exist or belongs to someone
- * else — one answer for both, so the id can't be probed.
- *
- * Scoped to the client rather than the single consent row: Authorized Apps lists and revokes apps, and a
- * leftover consent for the same client would let `/authorize` skip the consent screen.
- */
-export const revokeOAuthConsentGrant = async ({
-  userId,
-  consentId,
-}: {
-  userId: string;
-  consentId: string;
-}): Promise<(TRevokedGrant & { grants: TStoredMcpGrant[] }) | null> => {
-  const consent = await prisma.oauthConsent.findFirst({
-    where: { id: consentId, userId },
-    select: { clientId: true },
-  });
-  return consent ? revokeMcpClient({ userId, clientId: consent.clientId }) : null;
-};
-
-/**
- * `hooks.before` for `POST /oauth2/delete-consent`. Performs the whole revocation and short-circuits
- * the upstream endpoint, which would only delete the consent. Returns `undefined` for every other path.
- */
-export const revokeOAuthConsentBeforeHandler = async (
-  ctx: AuthHookContext
-): Promise<{ success: true } | undefined> => {
-  if (ctx.path !== CONSENT_DELETE_PATH) return undefined;
-
-  const session = await getSessionFromCtx(ctx);
-  if (!session) throw new APIError("UNAUTHORIZED");
-
-  const consentId = (ctx.body as { id?: unknown } | undefined)?.id;
-  if (typeof consentId !== "string" || consentId.length === 0) {
-    throw new APIError("NOT_FOUND", { error: "not_found", error_description: "missing id parameter" });
-  }
-
-  const revoked = await revokeOAuthConsentGrant({ userId: session.user.id, consentId });
-  if (!revoked) throw new APIError("NOT_FOUND", { error: "not_found", error_description: "no consent" });
-
-  const { grants, ...counts } = revoked;
-  for (const grant of grants) {
-    await queueMcpGrantAudit({ action: "deleted", actorUserId: session.user.id, before: grant, after: null });
-  }
-  logger.info(
-    { userId: session.user.id, consentId, ...counts, grantsDeleted: grants.length },
-    "OAuth consent revoked with its grant and tokens"
-  );
-  return { success: true };
 };
 
 /**

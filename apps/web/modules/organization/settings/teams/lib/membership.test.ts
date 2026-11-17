@@ -6,7 +6,7 @@ import { DatabaseError, UnknownError, ValidationError } from "@formbricks/types/
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { lockUserActiveState } from "@/lib/user/reactivation";
-import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
+import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/mcp-grant-revocation";
 import {
   deleteMembership,
   getMembersByOrganizationId,
@@ -43,7 +43,7 @@ vi.mock("@/lib/authzed/organization-membership", () => ({
 vi.mock("@/lib/authzed/team-workspace", () => ({
   reconcileTeamWorkspaceRelationships: vi.fn(),
 }));
-vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({
+vi.mock("@/modules/auth/lib/mcp-grant-revocation", () => ({
   revokeAllUserOAuthGrants: vi.fn(),
   finishRevokedMcpGrants: vi.fn(),
 }));

@@ -76,7 +76,7 @@ vi.mock("@/modules/ee/role-management/lib/membership", () => ({
   updateMembershipInTransaction: mocks.updateMembershipInTransaction,
 }));
 
-vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({
+vi.mock("@/modules/auth/lib/mcp-grant-revocation", () => ({
   finishRevokedMcpGrants: mocks.finishRevokedMcpGrants,
 }));
 

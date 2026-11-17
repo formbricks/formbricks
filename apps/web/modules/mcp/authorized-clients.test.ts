@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/__mocks__/database";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { readConsentedScopes } from "@/modules/auth/lib/oauth-grant-revocation";
+import { readConsentedScopes } from "@/modules/auth/lib/oauth-consent-rows";
 import { readMcpGrantReadableWorkspaceIds } from "./access-options";
 import { editMcpGrant, listAuthorizedMcpClients } from "./authorized-clients";
 import type { TMcpGrantAccessOptions } from "./grant-access";
@@ -12,7 +12,7 @@ import {
   writeMcpGrant,
 } from "./grant-store";
 
-vi.mock("@/modules/auth/lib/oauth-grant-revocation", () => ({ readConsentedScopes: vi.fn() }));
+vi.mock("@/modules/auth/lib/oauth-consent-rows", () => ({ readConsentedScopes: vi.fn() }));
 vi.mock("./access-options", () => ({ readMcpGrantReadableWorkspaceIds: vi.fn() }));
 vi.mock("./grant-store", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./grant-store")>()),
