@@ -70,6 +70,7 @@ describe("mcpOutsideGrantResult", () => {
     const hidden = mcpOutsideGrantResult("req_1");
     expect(hidden.isError).toBe(true);
     expect(hidden.structuredContent).toEqual({ error: NOT_FOUND });
-    expect(JSON.parse((hidden.content?.[0] as { text: string }).text)).toEqual({ error: NOT_FOUND });
+    const first = hidden.content?.[0] as { text: string } | undefined;
+    expect(JSON.parse(first?.text ?? "null")).toEqual({ error: NOT_FOUND });
   });
 });

@@ -285,11 +285,16 @@ describe("registerSurveyTools", () => {
       title: "Generate survey draft",
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     });
-    expect(
-      Object.keys(
-        (tools.get("generate_survey")?.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape
-      ).sort()
-    ).toEqual(["language", "prompt", "surveyLanguage", "type", "workspaceId"]);
+    const inputSchema = tools.get("generate_survey")?.config.inputSchema as
+      | z.ZodObject<z.ZodRawShape>
+      | undefined;
+    expect(Object.keys(inputSchema?.shape ?? {}).sort()).toEqual([
+      "language",
+      "prompt",
+      "surveyLanguage",
+      "type",
+      "workspaceId",
+    ]);
     expect(tools.get("generate_survey")?.config.outputSchema).toBeDefined();
   });
 
