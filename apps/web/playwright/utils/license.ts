@@ -30,9 +30,9 @@ export const hasCreativesLicense = async (
  * before it starts.
  *
  * The probe is listing the workspace's workflows through API v3 with the session of the workspace's
- * owner: every workflow route answers 403 when the organization lacks the `workflows` entitlement
- * (`buildWorkflowApiContext`), and 200 when it has it. The owner can read the workspace, so a 403 can
- * only mean the entitlement; anything else fails the journey.
+ * owner: every workflow route answers 403 "Workflows are not enabled for this organization" when the
+ * license lacks the `workflows` feature (`buildWorkflowApiContext`), and 200 when it has it. Anything
+ * else, another 403 included, fails the journey with the response body.
  */
 export const hasWorkflowsLicense = async (
   request: APIRequestContext,
@@ -40,7 +40,12 @@ export const hasWorkflowsLicense = async (
 ): Promise<boolean> => {
   const response = await request.get("/api/v3/workflows", { params: { workspaceId, limit: 1 } });
 
-  if (response.status() === 403) return false;
+  // Only the entitlement gate's 403 means "no Workflows" (`buildWorkflowApiContext`). Any other 403
+  // (workspace access) fails with its body, so a run says which check refused.
+  if (response.status() === 403) {
+    const problem = (await response.json().catch(() => null)) as { detail?: string } | null;
+    if (problem?.detail === "Workflows are not enabled for this organization") return false;
+  }
 
   expect(response.status(), `listing workflows to check the license: ${await response.text()}`).toBe(200);
   return true;

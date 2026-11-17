@@ -83,7 +83,10 @@ test.describe("Workflows", () => {
     // instead of failing every run. Once the CI license has the flag, this runs in full.
     const licensed = await test.step("the instance's license includes Workflows", () =>
       hasWorkflowsLicense(page.request, workspaceId));
-    test.skip(!licensed, "The instance's Enterprise license doesn't include Workflows.");
+    test.skip(
+      !licensed,
+      "The instance's Enterprise license doesn't include Workflows: GET /api/v3/workflows answered 403 \"Workflows are not enabled for this organization\"."
+    );
 
     const workflowId = await test.step("seed a Webhook workflow through API v3", async () => {
       const response = await page.request.post("/api/v3/workflows", {
