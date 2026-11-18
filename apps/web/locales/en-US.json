@@ -5366,6 +5366,7 @@
         "device": "Device",
         "duration_seconds": "Duration (seconds)",
         "email": "Email",
+        "ended_before_first_question": "Ended before the first question",
         "error_downloading_attachments": "An error occurred while preparing the attachments download",
         "first_name": "First Name",
         "go_to_responses": "Go to responses",

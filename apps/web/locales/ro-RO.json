@@ -5366,6 +5366,7 @@
         "device": "Dispozitiv",
         "duration_seconds": "Durată (secunde)",
         "email": "Email",
+        "ended_before_first_question": "Încheiat înainte de prima întrebare",
         "error_downloading_attachments": "A apărut o eroare la pregătirea descărcării atașamentelor",
         "first_name": "Prenume",
         "go_to_responses": "Mergi la răspunsuri",

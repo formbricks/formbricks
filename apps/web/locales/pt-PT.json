@@ -5366,6 +5366,7 @@
         "device": "Dispositivo",
         "duration_seconds": "Duração (segundos)",
         "email": "Email",
+        "ended_before_first_question": "Terminou antes da primeira pergunta",
         "error_downloading_attachments": "Ocorreu um erro ao preparar a transferência dos anexos",
         "first_name": "Primeiro Nome",
         "go_to_responses": "Ir para as respostas",

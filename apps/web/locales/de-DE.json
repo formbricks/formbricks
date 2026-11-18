@@ -5366,6 +5366,7 @@
         "device": "Gerät",
         "duration_seconds": "Dauer (Sekunden)",
         "email": "E-Mail",
+        "ended_before_first_question": "Vor der ersten Frage beendet",
         "error_downloading_attachments": "Beim Vorbereiten des Anhang-Downloads ist ein Fehler aufgetreten",
         "first_name": "Vorname",
         "go_to_responses": "Zu den Antworten",
