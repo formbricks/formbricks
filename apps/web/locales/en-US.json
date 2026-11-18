@@ -6157,6 +6157,7 @@
       "enable_success": "Workflow enabled.",
       "expand_inspector": "Expand inspector",
       "hide_test_runs": "Hide test runs",
+      "show_test_runs": "Show test runs",
       "http_request": "HTTP request",
       "http_request_add_header": "Add header",
       "http_request_add_query_parameter": "Add query parameter",

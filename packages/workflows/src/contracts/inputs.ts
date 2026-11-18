@@ -2,6 +2,7 @@ import { z } from "zod";
 import { ZWorkflowStatus } from "../types/common";
 import { ZWorkflowDefinitionInput } from "../types/document";
 import { ZWorkflowRunStatus } from "../types/runs";
+import { ZWorkflowTriggerType } from "../types/triggers/enum";
 import { zPostgresText } from "./postgres-text";
 
 /**
@@ -109,6 +110,11 @@ export const ZListWorkflowRunsInput = z
     workflowId: z.cuid2().optional().describe("Returns only runs of this workflow."),
     responseId: z.cuid2().optional().describe("Returns only runs triggered by this survey response."),
     statusIn: z.array(ZWorkflowRunStatus).min(1).optional().describe("Parsed form of filter[status][in]."),
+    triggerTypeIn: z
+      .array(ZWorkflowTriggerType)
+      .min(1)
+      .optional()
+      .describe("Parsed form of filter[triggerType][in]."),
     isDryRun: z
       .boolean()
       .optional()

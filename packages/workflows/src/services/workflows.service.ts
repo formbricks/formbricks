@@ -169,6 +169,7 @@ const buildRunListWhere = (
   ...(input.workflowId ? { workflowId: input.workflowId } : {}),
   ...(input.responseId ? { responseId: input.responseId } : {}),
   ...(input.statusIn ? { status: { in: input.statusIn } } : {}),
+  ...(input.triggerTypeIn ? { triggerType: { in: input.triggerTypeIn } } : {}),
   ...(input.isDryRun !== undefined ? { isDryRun: input.isDryRun } : {}),
   ...(cursor ? buildRunCursorWhere(cursor) : {}),
   ...buildRunSurveyExclusionWhere(input.excludeSurveyIds ?? []),

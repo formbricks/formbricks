@@ -15,6 +15,7 @@ import type {
   TWorkflowSortBy,
   TWorkflowStatus,
   TWorkflowTestRequestResult,
+  TWorkflowTriggerType,
   TWorkflowWebhookResource,
 } from "@formbricks/workflows";
 import { parseV3ApiError } from "@/modules/api/lib/v3-client";
@@ -241,6 +242,7 @@ export interface TWorkflowRunListFilters {
   workflowId?: string;
   responseId?: string;
   statusIn?: TWorkflowRunStatus[];
+  triggerTypeIn?: TWorkflowTriggerType[];
   isDryRun?: boolean;
 }
 
@@ -278,6 +280,10 @@ export function buildWorkflowRunListSearchParams({
 
   filters?.statusIn?.forEach((status) => {
     searchParams.append("filter[status][in]", status);
+  });
+
+  filters?.triggerTypeIn?.forEach((triggerType) => {
+    searchParams.append("filter[triggerType][in]", triggerType);
   });
 
   return searchParams;

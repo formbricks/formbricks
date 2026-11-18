@@ -6,7 +6,6 @@ import {
   parseWebhookPayload,
 } from "@formbricks/workflows";
 import { V3ApiError } from "@/modules/api/lib/v3-client";
-import type { TWorkflowRunListFilters } from "@/modules/ee/workflows/lib/api-client";
 import {
   type TTestPayloadSource,
   resolveTestPayload,
@@ -104,16 +103,4 @@ export const classifyTestRunError = (
   if (error.status === 413) return "payload_too_large";
   if (error.status === 400 && sentPayload) return "invalid_payload";
   return "other";
-};
-
-/**
- * The runs list's "Hide test runs" switch (on by default): real runs only, through the list's
- * `filter[isDryRun][eq]=false`, or every run.
- */
-export const withTestRunsHidden = (
-  filters: TWorkflowRunListFilters | undefined,
-  hideTestRuns: boolean
-): TWorkflowRunListFilters => {
-  const { isDryRun: _isDryRun, ...rest } = filters ?? {};
-  return hideTestRuns ? { ...rest, isDryRun: false } : rest;
 };

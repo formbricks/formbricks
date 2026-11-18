@@ -5,7 +5,6 @@ import {
   classifyTestRunError,
   getTestRunBlocker,
   getTestRunDrawerPayload,
-  withTestRunsHidden,
 } from "./test-run";
 
 describe("buildTestRunInput", () => {
@@ -81,18 +80,6 @@ describe("classifyTestRunError", () => {
   });
 });
 
-describe("withTestRunsHidden", () => {
-  test("hiding Test runs asks the list for real runs only, keeping the other filters", () => {
-    expect(withTestRunsHidden({ workflowId: "wf_1" }, true)).toEqual({ workflowId: "wf_1", isDryRun: false });
-  });
-
-  test("showing them drops the filter", () => {
-    expect(withTestRunsHidden({ workflowId: "wf_1", isDryRun: false }, false)).toEqual({
-      workflowId: "wf_1",
-    });
-    expect(withTestRunsHidden(undefined, false)).toEqual({});
-  });
-});
 
 describe("getTestRunDrawerPayload", () => {
   const sample = { channel: "call" };

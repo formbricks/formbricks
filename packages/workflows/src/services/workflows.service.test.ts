@@ -531,7 +531,7 @@ describe("listWorkflowRuns", () => {
     expect(args.include).toEqual({ workflow: { select: { name: true } } });
   });
 
-  test("applies workflowId, responseId, statusIn, and isDryRun filters", async () => {
+  test("applies workflowId, responseId, statusIn, triggerTypeIn, and isDryRun filters", async () => {
     runFindMany.mockResolvedValue([]);
 
     await service.listWorkflowRuns({
@@ -540,6 +540,7 @@ describe("listWorkflowRuns", () => {
       workflowId: "cm9zr4t2b000208l8h2m1aq3c",
       responseId: "cm9zr5resp0000000000000000",
       statusIn: ["failed", "completed"],
+      triggerTypeIn: ["webhook"],
       isDryRun: true,
     });
 
@@ -548,6 +549,7 @@ describe("listWorkflowRuns", () => {
       workflowId: "cm9zr4t2b000208l8h2m1aq3c",
       responseId: "cm9zr5resp0000000000000000",
       status: { in: ["failed", "completed"] },
+      triggerType: { in: ["webhook"] },
       isDryRun: true,
     });
   });

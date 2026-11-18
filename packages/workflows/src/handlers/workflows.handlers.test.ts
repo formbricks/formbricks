@@ -1853,6 +1853,24 @@ describe("listRuns", () => {
     );
   });
 
+  test("forwards a trigger filter, and refuses a trigger type that doesn't exist", async () => {
+    service.listWorkflowRuns.mockResolvedValue({ runs: [], nextCursor: null });
+
+    await handlers.listRuns({
+      req: runsRequest(`workspaceId=${workspaceId}&filter[triggerType][in]=webhook`),
+      ctx: makeCtx(),
+    });
+    expect(service.listWorkflowRuns).toHaveBeenCalledWith(
+      expect.objectContaining({ workspaceId, triggerTypeIn: ["webhook"] })
+    );
+
+    const res = await handlers.listRuns({
+      req: runsRequest(`workspaceId=${workspaceId}&filter[triggerType][in]=schedule`),
+      ctx: makeCtx(),
+    });
+    expect(res.status).toBe(400);
+  });
+
   test("returns an empty data array and null nextCursor for an empty page", async () => {
     service.listWorkflowRuns.mockResolvedValue({ runs: [], nextCursor: null });
 
