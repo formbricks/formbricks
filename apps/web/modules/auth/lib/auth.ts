@@ -39,6 +39,7 @@ import { lastActivePlugin, recordActivityOnSessionUpdate } from "./better-auth-l
 import { auditPasswordReset, betterAuthLogger, signInAuditPlugin } from "./better-auth-observability";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { signInBudgetBeforeHandler } from "./better-auth-sign-in-budget";
+import { trustDeviceBeforeHandler } from "./better-auth-trust-device-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-oauth-consent";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
@@ -440,6 +441,11 @@ export const auth = betterAuth({
       // ENG-3258: repair a NULL-issuer credential row before sign-in / reset-request looks it up. Last,
       // so only a request every gate above let through can write. See credential-issuer-heal.ts.
       await healCredentialAccountIssuerBeforeHandler(ctx);
+      // SEC-17 / ENG-3990: "trust this device" is off for real: refuse `trustDevice` on the 2FA verify
+      // paths and drop an already-issued `trust_device` cookie at sign-in. Path-disjoint from everything
+      // below (verify / sign-in vs consent). See better-auth-trust-device-gate.ts.
+      const trustDevice = await trustDeviceBeforeHandler(ctx);
+      if (trustDevice) return trustDevice;
       // ADR-0025 / ENG-6889: a Dashboard viewer grants at most dashboards:read, whatever was requested.
       // Path-disjoint from the revocation below (consent and update-consent vs delete-consent).
       const viewerConsent = await restrictDashboardViewerConsentBeforeHandler(ctx);
@@ -528,8 +534,8 @@ export const auth = betterAuth({
     // oauthProvider() resumed a pending MCP authorization with that session and minted an authorization
     // code for a password alone (ENG-3933).
     // TOTP + backup codes, matched to the current otplib setup (6 digits / 30s) and 10 encrypted
-    // backup codes. Trusted-device is left off (never passed client-side) so 2FA is required every
-    // login — strict parity. Cutover work (Phase 7): migrate secrets/backup codes out of
+    // backup codes. Trusted-device is off and enforced server-side (`hooks.before`, SEC-17): Better Auth
+    // has no option to disable it, so 2FA is required every login — strict parity. Cutover work (Phase 7): migrate secrets/backup codes out of
     // User.twoFactorSecret|backupCodes into the twoFactor table, and move the login-time TOTP/
     // backup challenge out of the credentials authorize into Better Auth's flow.
     twoFactor({
