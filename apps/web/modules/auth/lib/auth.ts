@@ -402,7 +402,7 @@ export const auth = betterAuth({
       requireValidMcpGrantOnConsentBeforeHandler(ctx);
       // ENG-7152: an Allow's consent rows as they are before the provider writes it, so an approval whose
       // grant can't be saved puts them back and changes nothing. Ahead of the viewer trim, which returns
-      // early. See oauth-grant-revocation.ts.
+      // early. See oauth-consent-change.ts.
       await snapshotConsentBeforeApprovalHandler(ctx);
       // ADR-0025 / ENG-6889: a Dashboard viewer grants at most dashboards:read, whatever was requested.
       // Path-disjoint from the revocation below (consent and update-consent vs delete-consent).
@@ -414,7 +414,7 @@ export const auth = betterAuth({
       await refuseCodeIssuedBeforeRevocationBeforeHandler(ctx);
       // ENG-2499: revoking an app deletes its consent AND revokes its tokens, in one transaction. Returns
       // a response only for /oauth2/delete-consent, short-circuiting the upstream delete, which would
-      // leave the tokens live. See oauth-grant-revocation.ts.
+      // leave the tokens live. See mcp-grant-revocation.ts.
       return await revokeOAuthConsentBeforeHandler(ctx);
     }),
     after: createAuthMiddleware(runAfterAuthHooks),
