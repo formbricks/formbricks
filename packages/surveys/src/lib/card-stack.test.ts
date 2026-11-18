@@ -47,6 +47,17 @@ describe("moveCardStack: the stacked cards as the survey moves", () => {
     });
   });
 
+  test("back to a block never visited keeps every earlier visited block, the last one behind", () => {
+    // Visited 0 and 2, now on 7; a jump back to 3 (never visited) keeps both.
+    const at7 = { prevBlockIdx: 2, currentBlockIdx: 7, nextBlockIdx: 8, visitedBlocks: [0, 2] };
+    expect(moveCardStack(at7, 3)).toEqual({
+      prevBlockIdx: 2,
+      currentBlockIdx: 3,
+      nextBlockIdx: 7,
+      visitedBlocks: [0, 2],
+    });
+  });
+
   test("the same block leaves the stack as it is, and keeps it, so nothing re-renders", () => {
     const stack = initialCardStack(3);
     const moved = moveCardStack(stack, 3);

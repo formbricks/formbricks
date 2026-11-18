@@ -384,6 +384,8 @@ test.describe("Signature element @slow", () => {
         expect(await readSignatureAnswer(seeded.surveyId, seeded.signatureId)).toMatch(
           SIGNATURE_URL_PATTERN(seeded.workspaceId, seeded.surveyId, seeded.signatureId)
         );
+        // And still two once the answer is saved: no upload arrived while the response was stored.
+        expect(uploads).toHaveLength(2);
       });
 
       expect(pageErrors).toEqual([]);

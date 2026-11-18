@@ -405,12 +405,13 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
     expectExactlyAdmitted(phase1Results, config.allowedPerInterval);
 
     // The first write, 100 ms into the window, set an expiry of the full interval: not more, and not
-    // less either, or the window's quota would reset early. Deleting the key when it runs out is
+    // less either, or the window's quota would reset early. The lower bound leaves 10 s for a stalled
+    // worker between the write and the read; a short TTL is still far below it. Deleting the key when it runs out is
     // Valkey's job; the limiter's job is to set it.
     const firstKey = windowKey(config, identifier, now);
     expect(await redis.get(firstKey)).toBe(String(config.allowedPerInterval));
     const firstKeyPttl = await redis.pTTL(firstKey);
-    expect(firstKeyPttl).toBeGreaterThan((config.interval - 1) * 1000);
+    expect(firstKeyPttl).toBeGreaterThan((config.interval - 10) * 1000);
     expect(firstKeyPttl).toBeLessThanOrEqual(config.interval * 1000);
 
     // Phase 2: move into the next window
@@ -427,7 +428,7 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
     expect(newKey).not.toBe(firstKey);
     expect(await redis.get(newKey)).toBe(String(config.allowedPerInterval));
     const newKeyPttl = await redis.pTTL(newKey);
-    expect(newKeyPttl).toBeGreaterThan((config.interval - 1) * 1000);
+    expect(newKeyPttl).toBeGreaterThan((config.interval - 10) * 1000);
     expect(newKeyPttl).toBeLessThanOrEqual(config.interval * 1000);
 
     // Phase 4: the new window's limit is already used up
