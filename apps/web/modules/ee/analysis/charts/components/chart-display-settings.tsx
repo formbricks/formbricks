@@ -55,40 +55,36 @@ function MatrixDisplaySettings({
   const cellValueLabelId = useId();
 
   return (
-    <>
-      <div className="flex min-w-0 items-center gap-3">
-        <Label id={cellValueLabelId} className="shrink-0 text-xs text-slate-500">
-          {t("workspace.analysis.charts.matrix_cell_value")}
-        </Label>
-        <div className="min-w-0">
-          <OptionsSwitch
-            labelDisplay="active"
-            aria-labelledby={cellValueLabelId}
-            options={[
-              {
-                value: "percent",
-                label: t("workspace.analysis.charts.matrix_cell_value_percent"),
-                icon: <PercentIcon className="size-4" />,
-              },
-              {
-                value: "count",
-                label: t("workspace.analysis.charts.matrix_cell_value_count"),
-                icon: <HashIcon className="size-4" />,
-              },
-              {
-                value: "both",
-                label: t("workspace.analysis.charts.matrix_cell_value_both"),
-                icon: <SigmaIcon className="size-4" />,
-              },
-            ]}
-            currentOption={cellValue}
-            handleOptionChange={(value) =>
-              onChange({ ...config, matrixCellValue: value as TMatrixCellValue })
-            }
-          />
-        </div>
+    <div className="flex min-w-0 items-center gap-3">
+      <Label id={cellValueLabelId} className="shrink-0 text-xs text-slate-500">
+        {t("workspace.analysis.charts.matrix_cell_value")}
+      </Label>
+      <div className="min-w-0">
+        <OptionsSwitch
+          labelDisplay="active"
+          aria-labelledby={cellValueLabelId}
+          options={[
+            {
+              value: "percent",
+              label: t("workspace.analysis.charts.matrix_cell_value_percent"),
+              icon: <PercentIcon className="size-4" />,
+            },
+            {
+              value: "count",
+              label: t("workspace.analysis.charts.matrix_cell_value_count"),
+              icon: <HashIcon className="size-4" />,
+            },
+            {
+              value: "both",
+              label: t("workspace.analysis.charts.matrix_cell_value_both"),
+              icon: <SigmaIcon className="size-4" />,
+            },
+          ]}
+          currentOption={cellValue}
+          handleOptionChange={(value) => onChange({ ...config, matrixCellValue: value as TMatrixCellValue })}
+        />
       </div>
-    </>
+    </div>
   );
 }
 
