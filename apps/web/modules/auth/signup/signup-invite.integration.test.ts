@@ -198,6 +198,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
           ...result.data,
           emailDisplayToken: getEmailFromEmailToken(result.data.emailDisplayToken),
         };
+        expect(data?.emailDisplayToken).toBe(INVITED_EMAIL);
         return { data, serverError: result?.serverError };
       };
 

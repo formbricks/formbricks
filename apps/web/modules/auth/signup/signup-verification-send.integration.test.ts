@@ -86,6 +86,7 @@ describe("verification email send failures during sign-up (real Postgres)", () =
         ...result.data,
         emailDisplayToken: getEmailFromEmailToken(result.data.emailDisplayToken),
       };
+      expect(data?.emailDisplayToken).toBe(EMAIL);
       responses.push({ data, serverError: result?.serverError });
     }
 

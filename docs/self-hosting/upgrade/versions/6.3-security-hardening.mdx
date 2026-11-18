@@ -28,3 +28,13 @@ the integration is saved.
   `Integration credentials no longer decrypt` with its id. The workspace's other integrations keep working.
   Reconnect each one that is affected. Notion tokens and other data encrypted with the key stop working too, so
   keep `ENCRYPTION_KEY` unchanged unless you plan to reconnect.
+- **A wrong key by mistake is recoverable.** Editing an affected integration's settings keeps the stored token as it
+  is, so putting the previous `ENCRYPTION_KEY` back restores the integration without reconnecting.
+
+## v1 management API list limits
+
+The v1 management list endpoints (surveys, responses, action classes, contacts, contact attributes, contact
+attribute keys and webhooks) return at most 250 items per request. A request with `limit` above 250 now gets
+`400 Bad Request` instead of a result, and a request without `limit` gets the endpoint's default page. To read more,
+page through with `limit` of 250 or less and `skip` (`offset` on surveys).
+
