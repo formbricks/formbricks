@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDownIcon, ChevronRightIcon, LockIcon } from "lucide-react";
-import type { KeyboardEvent, ReactNode } from "react";
+import { type KeyboardEvent, type ReactNode, useId } from "react";
 import { cn } from "@/lib/cn";
 import { FieldError } from "@/modules/ui/components/field-error";
 
@@ -180,6 +180,10 @@ export const FlowOutlineRow = ({
   ariaLabel,
   headerData,
 }: FlowOutlineRowProps) => {
+  // Stable even when the row has no `id`, so the toggle can always point at its message.
+  const generatedId = useId();
+  const errorId = id ? `${id}-error` : `${generatedId}-error`;
+
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (!onToggle || event.target !== event.currentTarget) return;
     if (event.key === "Enter" || event.key === " ") {
@@ -206,6 +210,7 @@ export const FlowOutlineRow = ({
           role={onToggle ? "button" : undefined}
           tabIndex={onToggle ? 0 : undefined}
           aria-expanded={onToggle ? isOpen : undefined}
+          aria-describedby={errorMessage ? errorId : undefined}
           aria-label={ariaLabel}
           {...headerData}
           onClick={onToggle}
@@ -246,9 +251,7 @@ export const FlowOutlineRow = ({
             </div>
           )}
         </div>
-        {errorMessage ? (
-          <FieldError id={id ? `${id}-error` : undefined} message={errorMessage} className="px-3" />
-        ) : null}
+        {errorMessage ? <FieldError id={errorId} message={errorMessage} className="px-3" /> : null}
         {body && <div className="px-3 pb-2">{body}</div>}
         {/* Rounded to the card's inner corner (its radius less its border) rather than clipped by the
             card: overflow-hidden would also cut the focus rings at the card's edges. */}

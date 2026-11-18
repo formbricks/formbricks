@@ -2,7 +2,7 @@ import { TFunction } from "i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStatus, ZSurvey } from "@formbricks/types/surveys/types";
-import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
+import { getElementsWithEmptyFallbackValue } from "@/lib/utils/recall";
 import { describeCodeIssueAtPath } from "./code-messages";
 import { isConditionalLogicMessage, toFlowTabMessage, withoutFlowPrefix } from "./flow-error-message";
 import { getLogicDestinationErrorMessage } from "./logic-destination-error";
@@ -426,7 +426,9 @@ const mapZodIssue = (issue: TDescribableIssue, survey: TSurvey, t: TFunction): T
   }
 
   if (root === "welcomeCard") {
-    return [mapCardIssue(issue, "start", path.slice(1), t("common.welcome_card"), t)];
+    // A missing headline is reported on the card itself (no child path); show it on the headline field.
+    const fieldPath = path.length === 1 && issue.code === "custom" ? ["headline"] : path.slice(1);
+    return [mapCardIssue(issue, "start", fieldPath, t("common.welcome_card"), t)];
   }
 
   if (root === "endings") {
@@ -528,12 +530,12 @@ export const getSurveyRuleIssues = (
   const settingsIssue = (field: string, message: string) =>
     withKey({ tab: "settings", targetId: null, level: "question", field, message, location: null });
 
-  const questionWithEmptyFallback = checkForEmptyFallBackValue(survey, selectedLanguageCode);
-  if (questionWithEmptyFallback) {
+  // Every question, not just the first: the list only shrinks, so one left out is never shown later.
+  for (const question of getElementsWithEmptyFallbackValue(survey, selectedLanguageCode)) {
     issues.push(
       withKey({
         tab: "elements",
-        targetId: questionWithEmptyFallback.id,
+        targetId: question.id,
         level: "question",
         field: "fallback",
         message: t("workspace.surveys.edit.fallback_missing"),

@@ -209,23 +209,21 @@ export const replaceRecallInfoWithUnderline = (label: string): string => {
 };
 
 // Checks for survey questions with a "recall" pattern but no fallback value.
-export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): TSurveyElement | null => {
+export const getElementsWithEmptyFallbackValue = (survey: TSurvey, language: string): TSurveyElement[] => {
   const doesTextHaveRecall = (text: string) => {
     const recalls = text.match(/#recall:[^ ]+/g);
     return recalls?.some((recall) => !extractFallbackValue(recall));
   };
 
-  const questions = getElementsFromBlocks(survey.blocks);
-  for (const question of questions) {
-    if (
+  return getElementsFromBlocks(survey.blocks).filter(
+    (question) =>
       doesTextHaveRecall(getLocalizedValue(question.headline, language)) ||
       (question.subheader && doesTextHaveRecall(getLocalizedValue(question.subheader, language)))
-    ) {
-      return question;
-    }
-  }
-  return null;
+  );
 };
+
+export const checkForEmptyFallBackValue = (survey: TSurvey, language: string): TSurveyElement | null =>
+  getElementsWithEmptyFallbackValue(survey, language)[0] ?? null;
 
 // Processes each question in a survey to ensure headlines are formatted correctly for recall and return the modified survey.
 export const replaceHeadlineRecall = <T extends TSurvey>(survey: T, language: string): T => {

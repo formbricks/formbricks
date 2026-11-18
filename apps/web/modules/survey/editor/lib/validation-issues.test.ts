@@ -1,7 +1,7 @@
 import { TFunction } from "i18next";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
+import { getElementsWithEmptyFallbackValue } from "@/lib/utils/recall";
 import {
   TEditorIssue,
   areIssueListsEqual,
@@ -20,7 +20,7 @@ import {
 
 vi.mock("@/lib/utils/recall", async (importOriginal) => ({
   ...(await importOriginal()),
-  checkForEmptyFallBackValue: vi.fn(),
+  getElementsWithEmptyFallbackValue: vi.fn(),
 }));
 
 // Echoes the key, with its options when there are any, so a test sees both what was said and about what.
@@ -640,7 +640,7 @@ describe("getSchemaIssues", () => {
 
 describe("getSurveyRuleIssues", () => {
   beforeEach(() => {
-    vi.mocked(checkForEmptyFallBackValue).mockReturnValue(null);
+    vi.mocked(getElementsWithEmptyFallbackValue).mockReturnValue([]);
   });
 
   const base = buildSurvey([block([openText({ default: "Name?", de: "Name?" })])]);
@@ -650,7 +650,7 @@ describe("getSurveyRuleIssues", () => {
   });
 
   test("points an empty recall fallback at its question", () => {
-    vi.mocked(checkForEmptyFallBackValue).mockReturnValue(openText({ default: "Q" }) as never);
+    vi.mocked(getElementsWithEmptyFallbackValue).mockReturnValue([openText({ default: "Q" }) as never]);
 
     expect(getSurveyRuleIssues({ survey: base, selectedLanguageCode: "en" }, t)).toEqual([
       expect.objectContaining({
@@ -659,6 +659,17 @@ describe("getSurveyRuleIssues", () => {
         message: "workspace.surveys.edit.fallback_missing",
       }),
     ]);
+  });
+
+  test("reports every question with an empty recall fallback, not just the first", () => {
+    vi.mocked(getElementsWithEmptyFallbackValue).mockReturnValue([
+      openText({ default: "A" }) as never,
+      { ...openText({ default: "B" }), id: "q2" } as never,
+    ]);
+
+    expect(
+      getSurveyRuleIssues({ survey: base, selectedLanguageCode: "en" }, t).map((issue) => issue.targetId)
+    ).toEqual(["q1", "q2"]);
   });
 
   test("refuses a response limit of 0 and one the survey has already reached", () => {
@@ -715,7 +726,7 @@ describe("getSurveyRuleIssues", () => {
 
 describe("collectEditorIssues", () => {
   beforeEach(() => {
-    vi.mocked(checkForEmptyFallBackValue).mockReturnValue(null);
+    vi.mocked(getElementsWithEmptyFallbackValue).mockReturnValue([]);
   });
 
   const appSurvey = buildSurvey([block([openText({ default: "Name?", de: "Name?" })])], {

@@ -467,7 +467,9 @@ export const SurveyEditor = ({
   // everything in the way, and the cards carry the same problems when the author goes to fix them.
   const openReview = (filter: TIssueTab | null = null) => {
     setReviewFilter(filter);
-    const targetStatus = issueReport?.targetStatus ?? getPublishTargetStatus(localSurvey);
+    // A draft-save report (CSS only) must not narrow Review to draft rules: Publish needs more.
+    const reported = issueReport?.targetStatus;
+    const targetStatus = reported && reported !== "draft" ? reported : getPublishTargetStatus(localSurvey);
     const found = collectFor(localSurvey, targetStatus);
     setIssueReport(found.length > 0 ? { issues: found, targetStatus } : null);
     setActiveView("review");
