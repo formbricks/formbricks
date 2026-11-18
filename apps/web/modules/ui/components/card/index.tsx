@@ -19,17 +19,17 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
   (
     {
       className,
-      label,
-      description,
-      connectText,
-      connectHref,
-      connectNewTab,
-      docsText,
-      docsHref,
-      docsNewTab,
-      connected,
-      statusText,
-      icon,
+      label: _label,
+      description: _description,
+      connectText: _connectText,
+      connectHref: _connectHref,
+      connectNewTab: _connectNewTab,
+      docsText: _docsText,
+      docsHref: _docsHref,
+      docsNewTab: _docsNewTab,
+      connected: _connected,
+      statusText: _statusText,
+      icon: _icon,
       ...props
     },
     ref

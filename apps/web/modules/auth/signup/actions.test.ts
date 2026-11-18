@@ -121,7 +121,7 @@ vi.mock("@/lib/constants", () => ({
 vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
-  withAuditLogging: vi.fn((_type: string, _object: string, fn: Function) => fn),
+  withAuditLogging: vi.fn(<T>(_type: string, _object: string, fn: T) => fn),
 }));
 
 vi.mock("@/lib/utils/action-client", () => ({

@@ -2,6 +2,7 @@ import { prisma } from "@formbricks/database";
 import type { IdentityProvider, Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { Account } from "@formbricks/types/auth";
+import { SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE } from "@formbricks/types/errors";
 import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { WEBAPP_URL } from "@/lib/constants";
@@ -368,9 +369,11 @@ const resolveRecoveryCallbackUrl = (callbackUrl: string): string => {
   return validatedCallbackUrl;
 };
 
-export const getSsoRecoveryFailureRedirectUrl = (callbackUrl?: string): string => {
+const buildSsoRecoveryLoginUrl = (callbackUrl: string | undefined, error?: string): string => {
   const loginUrl = new URL("/auth/login", WEBAPP_URL);
-  loginUrl.searchParams.set("error", OAUTH_ACCOUNT_NOT_LINKED_ERROR);
+  if (error) {
+    loginUrl.searchParams.set("error", error);
+  }
 
   const validatedCallbackUrl = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL);
   if (validatedCallbackUrl) {
@@ -379,21 +382,28 @@ export const getSsoRecoveryFailureRedirectUrl = (callbackUrl?: string): string =
 
   return loginUrl.toString();
 };
+
+export const getSsoRecoveryFailureRedirectUrl = (callbackUrl?: string): string =>
+  buildSsoRecoveryLoginUrl(callbackUrl, OAUTH_ACCOUNT_NOT_LINKED_ERROR);
 
 /**
- * The plain login page carrying `callbackUrl`, for a recovery link that must not create a session by
- * itself (ENG-7266): the user signs in with every factor, then lands on the completion URL.
+ * Where the recovery link sends a user whose second factor it cannot check (ENG-7266): the login page,
+ * carrying the completion URL as `callbackUrl`. They sign in with password + TOTP (or a linked SSO
+ * provider), the login form follows the callback, and `completeSsoRecovery` links the new identity once
+ * the session user matches the intent.
  */
-export const getSsoRecoverySignInRedirectUrl = (callbackUrl?: string): string => {
-  const loginUrl = new URL("/auth/login", WEBAPP_URL);
+export const getSsoRecoverySecondFactorRedirectUrl = (callbackUrl?: string): string =>
+  buildSsoRecoveryLoginUrl(callbackUrl);
 
-  const validatedCallbackUrl = getValidatedCallbackUrl(callbackUrl, WEBAPP_URL);
-  if (validatedCallbackUrl) {
-    loginUrl.searchParams.set("callbackUrl", validatedCallbackUrl);
-  }
-
-  return loginUrl.toString();
-};
+/**
+ * The same redirect where the login page cannot produce the second factor: the instance has credential
+ * sign-in switched off (`EMAIL_AUTH_DISABLED=1`), so the form that would ask for password + TOTP is not
+ * rendered, and the identity that started recovery is unlinked by definition. A provider already linked
+ * to the account still gets the user through, which is why the copy names that before the administrator;
+ * landing there without a word is the silent loop this code exists to end (ENG-7266).
+ */
+export const getSsoRecoverySecondFactorUnavailableRedirectUrl = (callbackUrl?: string): string =>
+  buildSsoRecoveryLoginUrl(callbackUrl, SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE);
 
 export const startSsoRecovery = async ({
   existingUser,
@@ -468,6 +478,58 @@ export const startSsoRecovery = async ({
       failureReason: error instanceof Error ? error.message : "unknown_error",
     });
     throw error;
+  }
+};
+
+/**
+ * Tells the account holder what recovery removed (ENG-2633), when it removed anything. Best-effort:
+ * a mailer failure is logged, never thrown.
+ */
+const notifyRemovedFactors = async (
+  user: Pick<TSsoLookupUser, "id" | "email" | "locale">,
+  reclaimed: TReclaimOutcome
+): Promise<void> => {
+  // The strip is correct for a squatter and a silent security downgrade for the owner — and on a
+  // default self-hosted install, where verification blocks nothing, the owner is the likelier of the
+  // two. Nothing here can distinguish them, so the answer is to say what happened rather than to
+  // weaken the guard.
+  //
+  // After commit and best-effort, for the same reason the session revocation in `completeSsoRecovery`
+  // is: the strip has already landed, and a mailer failure must not turn a completed recovery into a
+  // failed sign-in.
+  const twoFactorRemoved = Boolean(
+    reclaimed && (reclaimed.twoFactorRowsRemoved > 0 || reclaimed.legacyTwoFactorDisarmed)
+  );
+  const passwordRemoved = Boolean(
+    reclaimed && (reclaimed.credentialPasswordsCleared > 0 || reclaimed.legacyPasswordCleared)
+  );
+  // For a legitimate owner this is the line with a blast radius: integrations they built stop working,
+  // so the mail has to say so even when neither sign-in factor was set (ENG-2634).
+  const apiKeysRemoved = Boolean(reclaimed && reclaimed.apiKeysRevoked > 0);
+  if (passwordRemoved || twoFactorRemoved || apiKeysRemoved) {
+    try {
+      const sent = await sendSsoRecoveryFactorsRemovedEmail({
+        email: user.email,
+        locale: user.locale,
+        passwordRemoved,
+        twoFactorRemoved,
+        apiKeysRemoved,
+      });
+      // `sendEmail` returns false without throwing when SMTP is unconfigured, so the catch below never
+      // sees it. Silence there would mean a user's second factor was removed and nobody — not them, not
+      // the operator — was told, which is the whole failure this notification exists to prevent.
+      if (!sent) {
+        logger.error(
+          { userId: user.id, passwordRemoved, twoFactorRemoved, apiKeysRemoved },
+          "SSO recovery removed local sign-in factors but the notification email was not sent"
+        );
+      }
+    } catch (error) {
+      logger.error(
+        { error, userId: user.id },
+        "Failed to notify the user that SSO recovery removed their local sign-in factors"
+      );
+    }
   }
 };
 
@@ -659,47 +721,7 @@ export const completeSsoRecovery = async ({
     );
   }
 
-  // Tell the account holder what recovery removed (ENG-2633). The strip is correct for a squatter and a
-  // silent security downgrade for the owner — and on a default self-hosted install, where verification
-  // blocks nothing, the owner is the likelier of the two. Nothing here can distinguish them, so the
-  // answer is to say what happened rather than to weaken the guard.
-  //
-  // After commit and best-effort, for the same reason the session revocation above is: the strip has
-  // already landed, and a mailer failure must not turn a completed recovery into a failed sign-in.
-  const twoFactorRemoved = Boolean(
-    reclaimed && (reclaimed.twoFactorRowsRemoved > 0 || reclaimed.legacyTwoFactorDisarmed)
-  );
-  const passwordRemoved = Boolean(
-    reclaimed && (reclaimed.credentialPasswordsCleared > 0 || reclaimed.legacyPasswordCleared)
-  );
-  // For a legitimate owner this is the line with a blast radius: integrations they built stop working,
-  // so the mail has to say so even when neither sign-in factor was set (ENG-2634).
-  const apiKeysRemoved = Boolean(reclaimed && reclaimed.apiKeysRevoked > 0);
-  if (passwordRemoved || twoFactorRemoved || apiKeysRemoved) {
-    try {
-      const sent = await sendSsoRecoveryFactorsRemovedEmail({
-        email: user.email,
-        locale: user.locale,
-        passwordRemoved,
-        twoFactorRemoved,
-        apiKeysRemoved,
-      });
-      // `sendEmail` returns false without throwing when SMTP is unconfigured, so the catch below never
-      // sees it. Silence there would mean a user's second factor was removed and nobody — not them, not
-      // the operator — was told, which is the whole failure this notification exists to prevent.
-      if (!sent) {
-        logger.error(
-          { userId: user.id, passwordRemoved, twoFactorRemoved, apiKeysRemoved },
-          "SSO recovery removed local sign-in factors but the notification email was not sent"
-        );
-      }
-    } catch (error) {
-      logger.error(
-        { error, userId: user.id },
-        "Failed to notify the user that SSO recovery removed their local sign-in factors"
-      );
-    }
-  }
+  await notifyRemovedFactors(user, reclaimed);
 
   try {
     await finalizeSuccessfulSignIn({

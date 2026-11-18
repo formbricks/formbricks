@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ZResponseFilterCriteria } from "@formbricks/types/responses";
+import { type TResponseFilterCriteria, ZResponseFilterCriteria } from "@formbricks/types/responses";
 import { withV3ApiWrapper } from "@/app/api/v3/lib/api-wrapper";
 import {
   problemBadRequest,
@@ -51,6 +51,33 @@ const querySchema = z.object({
     .transform((value) => value === "true"),
 });
 
+/** The `filters` query parameter as a response filter, or the 400 that refuses it. */
+const parseFilterCriteria = (
+  filters: string | undefined,
+  requestId: string,
+  instance: string | undefined
+): TResponseFilterCriteria | undefined | Response => {
+  if (!filters) return undefined;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(filters);
+  } catch {
+    return problemBadRequest(requestId, "The `filters` parameter is not valid JSON.", {
+      instance,
+      invalid_params: [{ name: "filters", reason: "Expected a JSON-encoded response filter." }],
+    });
+  }
+
+  const validation = ZResponseFilterCriteria.safeParse(parsed);
+  if (!validation.success) {
+    return problemBadRequest(requestId, "The `filters` parameter is not a valid response filter.", {
+      instance,
+      invalid_params: [{ name: "filters", reason: validation.error.issues[0]?.message ?? "Invalid" }],
+    });
+  }
+  return validation.data;
+};
+
 export const GET = withV3ApiWrapper({
   auth: "session",
   action: "exported",
@@ -73,28 +100,9 @@ export const GET = withV3ApiWrapper({
 
     if (response) return response;
 
-    let filterCriteria;
-    if (filters) {
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(filters);
-      } catch {
-        return problemBadRequest(requestId, "The `filters` parameter is not valid JSON.", {
-          instance,
-          invalid_params: [{ name: "filters", reason: "Expected a JSON-encoded response filter." }],
-        });
-      }
-
-      const validation = ZResponseFilterCriteria.safeParse(parsed);
-      if (!validation.success) {
-        return problemBadRequest(requestId, "The `filters` parameter is not a valid response filter.", {
-          instance,
-          invalid_params: [{ name: "filters", reason: validation.error.issues[0]?.message ?? "Invalid" }],
-        });
-      }
-
-      filterCriteria = validation.data;
-    }
+    const parsedFilters = parseFilterCriteria(filters, requestId, instance);
+    if (parsedFilters instanceof Response) return parsedFilters;
+    const filterCriteria = parsedFilters;
 
     // One pass serves both branches: the pre-flight needs the counts, the download needs the entries,
     // and the collector never opens a storage stream so there is nothing to waste by holding them.

@@ -32,7 +32,7 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 // Import the module under test after mocking
-let cache: any;
+let cache: (typeof import("./index"))["cache"];
 
 describe("Cache Index", () => {
   beforeEach(async () => {
@@ -303,7 +303,7 @@ describe("Cache Index", () => {
       const redis = { ping: vi.fn().mockResolvedValue("PONG") };
       mockCacheService.runRedisOperation.mockImplementation((operation) => operation(redis));
 
-      const result = await cache.runRedisOperation((client: typeof redis) => client.ping());
+      const result = await cache.runRedisOperation((client) => client.ping());
 
       expect(result).toBe("PONG");
       expect(mockCacheService.runRedisOperation).toHaveBeenCalledOnce();

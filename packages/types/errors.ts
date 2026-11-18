@@ -14,6 +14,18 @@ export const INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE = "ERR_INVALID_PASSWORD_RES
  */
 export const SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE = "ERR_SSO_RECOVERY_LINK_EXPIRED";
 
+/**
+ * `?error=` code the SSO-recovery link lands on `/auth/login` with when the account's second factor
+ * cannot be produced there: a verified email with 2FA, on an instance that has credential sign-in
+ * switched off (`EMAIL_AUTH_DISABLED=1`).
+ *
+ * The recovery link proves mailbox access only and must not stand in for the factor (ENG-7266), so
+ * this configuration leaves the login page with nothing that can produce it: no credential form, and
+ * the identity that started recovery is unlinked by definition. A provider already linked to the
+ * account is the one way through, which the login copy names before pointing at an administrator.
+ */
+export const SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE = "sso_recovery_second_factor_unavailable";
+
 class ResourceNotFoundError extends Error {
   statusCode = 404;
   resourceId: string | null;

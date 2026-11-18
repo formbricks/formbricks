@@ -30,7 +30,8 @@ export function CalElement({
   currentElementId,
   errorMessage,
 }: Readonly<CalElementProps>) {
-  const [startTime, setStartTime] = useState(performance.now());
+  const [startTime, setStartTime] = useState(() => performance.now());
+  // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty URL counts as no media
   const isMediaAvailable = element.imageUrl || element.videoUrl;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, element.id === currentElementId);
 

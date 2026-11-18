@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { TOptionListKey } from "./show-if";
+import type { TElementOptionsNotShown, TOptionListKey } from "./show-if";
 
 /**
  * The not-shown record (ENG-6936, ADR 0029): what a respondent was **not shown**, decided by the
@@ -110,6 +110,23 @@ export const getNotShownElementIds = (
     for (const element of block.elements) {
       if (wholeBlock || listedElements.has(element.id)) notShown.add(element.id);
     }
+  }
+  return notShown;
+};
+
+/**
+ * The options, rows and columns the record says one element did not offer, keyed by option list the
+ * way show-if keys them (ENG-7332). `null` or `undefined` (unknown) returns `{}`, which reads as today.
+ */
+export const getElementOptionsNotShownFromRecord = (
+  record: TResponseNotShown | null | undefined,
+  elementId: string
+): TElementOptionsNotShown => {
+  const notShown: TElementOptionsNotShown = {};
+  if (!record) return notShown;
+  for (const listKey of OPTION_LIST_KEYS) {
+    const ids = record[OPTION_LIST_NAMES[listKey].recordKey]?.[elementId];
+    if (ids && ids.length > 0) notShown[listKey] = ids;
   }
   return notShown;
 };

@@ -8,15 +8,16 @@ function FilterButton({
   tabIndex = 0,
   className = "",
   ...props
-}: {
-  readonly icon: React.ReactNode;
-  readonly label: React.ReactNode;
-  readonly onClick: () => void;
-  readonly onKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
-  readonly tabIndex?: number;
-  readonly className?: string;
-  [key: string]: any;
-}) {
+}: Readonly<
+  Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "onClick" | "onKeyDown" | "tabIndex" | "className"> & {
+    icon: React.ReactNode;
+    label: React.ReactNode;
+    onClick: () => void;
+    onKeyDown?: (e: React.KeyboardEvent<HTMLButtonElement>) => void;
+    tabIndex?: number;
+    className?: string;
+  }
+>) {
   return (
     <button
       type="button"

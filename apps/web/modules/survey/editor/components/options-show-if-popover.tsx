@@ -232,6 +232,17 @@ function OptionsShowIfEditor({
     setEditingKey(null);
   };
 
+  const setHidden = (target: TOptionTarget, hidden: boolean) => {
+    setLocalSurvey((survey) => setOptionHidden(survey, target, hidden));
+  };
+
+  const changeConditions = (
+    target: TOptionTarget,
+    updater: (showIf: TConditionGroup) => TConditionGroup | undefined
+  ) => {
+    setLocalSurvey((survey) => updateShowIf(survey, target, updater));
+  };
+
   // Every option's condition has what its operator needs, so Done can save them all.
   const isDraftComplete = optionLists.every((listKey) =>
     getOptionList<TEditableOption>(element, listKey).every((item) => {
@@ -328,9 +339,7 @@ function OptionsShowIfEditor({
                         onAddCondition={
                           canAddShowIf(localSurvey, target) ? () => addCondition(target, key) : undefined
                         }
-                        onHiddenChange={(hidden) =>
-                          setLocalSurvey((survey) => setOptionHidden(survey, target, hidden))
-                        }
+                        onHiddenChange={(hidden) => setHidden(target, hidden)}
                         conditionsEditor={
                           item.showIf ? (
                             <div className="flex flex-col gap-2">
@@ -338,9 +347,7 @@ function OptionsShowIfEditor({
                                 conditions={item.showIf}
                                 scope={scope}
                                 getDefaultOperator={getDefaultOperator}
-                                onConditionsChange={(updater) =>
-                                  setLocalSurvey((survey) => updateShowIf(survey, target, updater))
-                                }
+                                onConditionsChange={(updater) => changeConditions(target, updater)}
                               />
                               <div>
                                 <Button

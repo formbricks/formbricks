@@ -29,9 +29,6 @@
   },
   "scripts": {
     "clean": "rimraf .turbo node_modules coverage dist",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "lint:report": "eslint . --format json --output-file ../../lint-results/logger.json",
     "typecheck": "tsc --noEmit",
     "build": "rimraf dist && vite build && tsc --project tsconfig.build.json",
     "test": "vitest run",
@@ -45,7 +42,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-oxlint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@vitest/coverage-v8": "catalog:",
     "rimraf": "catalog:",

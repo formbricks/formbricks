@@ -18,8 +18,9 @@ describe("getTeamsQuery", () => {
   });
 
   test("returns unchanged query if pickCommonFilter returns null/undefined", () => {
-    vi.mocked(pickCommonFilter).mockReturnValueOnce(null as any);
-    const params: any = { someParam: "test" };
+    vi.mocked(pickCommonFilter).mockReturnValueOnce(null as unknown as ReturnType<typeof pickCommonFilter>);
+    // A filter the query builder does not know.
+    const params = { someParam: "test" } as unknown as Parameters<typeof getTeamsQuery>[1];
     const result = getTeamsQuery(organizationId, params);
     expect(pickCommonFilter).toHaveBeenCalledWith(params);
     // Since pickCommonFilter returns undefined, query remains as base query.
@@ -28,12 +29,15 @@ describe("getTeamsQuery", () => {
 
   test("calls buildCommonFilterQuery and returns updated query when base filter exists", () => {
     const baseFilter = { key: "value" };
-    vi.mocked(pickCommonFilter).mockReturnValueOnce(baseFilter as any);
+    vi.mocked(pickCommonFilter).mockReturnValueOnce(
+      baseFilter as unknown as ReturnType<typeof pickCommonFilter>
+    );
     // Simulate buildCommonFilterQuery to merge base query with baseFilter
     const updatedQuery = { where: { organizationId, combined: true } } as Prisma.TeamFindManyArgs;
     vi.mocked(buildCommonFilterQuery).mockReturnValueOnce(updatedQuery);
 
-    const params: any = { someParam: "test" };
+    // A filter the query builder does not know.
+    const params = { someParam: "test" } as unknown as Parameters<typeof getTeamsQuery>[1];
     const result = getTeamsQuery(organizationId, params);
 
     expect(pickCommonFilter).toHaveBeenCalledWith(params);

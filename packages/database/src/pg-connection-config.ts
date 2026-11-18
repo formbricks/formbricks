@@ -33,9 +33,10 @@ export const getPgConnectionConfig = (
   const ssl = sslConfigFromSslAccept(params.get("sslaccept"));
   params.delete("sslaccept");
   const query = params.toString();
+  const queryString = query ? `?${query}` : "";
 
   return {
-    connectionString: `${parts[1]}${query ? `?${query}` : ""}${parts[3]}`,
+    connectionString: `${parts[1]}${queryString}${parts[3]}`,
     ...(ssl !== undefined && { ssl }),
   };
 };

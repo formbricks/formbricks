@@ -13,7 +13,7 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { $createHeadingNode, $isHeadingNode } from "@lexical/rich-text";
 import { $isAtNodeEnd, $setBlocksType } from "@lexical/selection";
 import { $getNearestNodeOfType, mergeRegister } from "@lexical/utils";
-import type { RangeSelection } from "lexical";
+import type { LexicalNode, RangeSelection } from "lexical";
 import {
   $createParagraphNode,
   $getRoot,
@@ -48,6 +48,15 @@ import { toEditorOutputHtml } from "../lib/exported-html";
 import type { TextEditorProps } from "./editor";
 
 const LowPriority = 1;
+
+/** The block type the toolbar shows for a selection: the list's tag, the heading's tag, or the node type. */
+const getSelectionBlockType = (anchorNode: LexicalNode, element: LexicalNode): string => {
+  if ($isListNode(element)) {
+    const parentList = $getNearestNodeOfType(anchorNode, ListNode);
+    return parentList ? parentList.getTag() : element.getTag();
+  }
+  return $isHeadingNode(element) ? element.getTag() : element.getType();
+};
 
 const supportedBlockTypes = new Set(["paragraph", "h1", "h2", "ul", "ol"]);
 
@@ -135,7 +144,7 @@ export const ToolbarPlugin = (
   const [hasTextSelection, setHasTextSelection] = useState(false);
 
   // save ref to setText to use it in event listeners safely
-  const setText = useRef<any>(props.setText);
+  const setText = useRef(props.setText);
 
   useEffect(() => {
     setText.current = props.setText;
@@ -222,14 +231,7 @@ export const ToolbarPlugin = (
       const elementKey = element.getKey();
       const elementDOM = editor.getElementByKey(elementKey);
       if (elementDOM !== null) {
-        if ($isListNode(element)) {
-          const parentList = $getNearestNodeOfType(anchorNode, ListNode);
-          const type = parentList ? parentList.getTag() : element.getTag();
-          setBlockType(type);
-        } else {
-          const type = $isHeadingNode(element) ? element.getTag() : element.getType();
-          setBlockType(type);
-        }
+        setBlockType(getSelectionBlockType(anchorNode, element));
       }
       setIsBold(selection.hasFormat("bold"));
       setIsItalic(selection.hasFormat("italic"));

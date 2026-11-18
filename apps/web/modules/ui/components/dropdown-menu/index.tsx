@@ -35,7 +35,7 @@ const DropdownMenuSubTrigger: React.ComponentType<
   Readonly<DropdownMenuPrimitive.DropdownMenuSubTriggerProps & DropdownMenuSubTriggerExtraProps>
 >(({ className, inset, chevronSide = "right", children, ...props }, ref) => (
   <DropdownMenuPrimitive.SubTrigger
-    ref={ref as any}
+    ref={ref}
     className={cn(
       "flex cursor-default items-center rounded-lg px-2 py-1.5 text-sm font-medium text-slate-600 outline-hidden select-none hover:text-slate-700 focus:bg-slate-100 data-[state=open]:bg-slate-100",
       inset && "pl-8",
@@ -50,16 +50,18 @@ const DropdownMenuSubTrigger: React.ComponentType<
 DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.SubTrigger.displayName;
 
 const DropdownMenuSubContent: React.ComponentType<DropdownMenuPrimitive.DropdownMenuSubContentProps> =
-  React.forwardRef(({ className, ...props }, ref) => (
-    <DropdownMenuPrimitive.SubContent
-      ref={ref as any}
-      className={cn(
-        "z-50 max-h-[min(20rem,var(--radix-dropdown-menu-content-available-height))] min-w-32 overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-600 shadow-xs animate-in slide-in-from-left-1 hover:text-slate-700",
-        className
-      )}
-      {...props}
-    />
-  ));
+  React.forwardRef<HTMLDivElement, DropdownMenuPrimitive.DropdownMenuSubContentProps>(
+    ({ className, ...props }, ref) => (
+      <DropdownMenuPrimitive.SubContent
+        ref={ref}
+        className={cn(
+          "z-50 max-h-[min(20rem,var(--radix-dropdown-menu-content-available-height))] min-w-32 overflow-x-hidden overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 font-medium text-slate-600 shadow-xs animate-in slide-in-from-left-1 hover:text-slate-700",
+          className
+        )}
+        {...props}
+      />
+    )
+  );
 DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayName;
 
 type DropdownMenuContentProps = {

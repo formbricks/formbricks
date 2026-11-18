@@ -10,6 +10,9 @@ import {
   updateFeedbackSourceWithMappingsAction,
 } from "./actions";
 
+/** An action as the mocked action client leaves it: the handler, called with its context. */
+type TActionHandler = (args: { ctx: unknown; parsedInput: unknown }) => Promise<unknown>;
+
 const mocks = vi.hoisted(() => {
   const action = vi.fn((handler) => handler);
   return {
@@ -132,7 +135,7 @@ describe("feedback source mutation safeguards", () => {
     ],
     ["delete", deleteFeedbackSourceAction, { feedbackSourceId, workspaceId }],
   ])("rate limits and audits %s", async (_name, action, parsedInput) => {
-    await (action as any)({ ctx, parsedInput });
+    await (action as unknown as TActionHandler)({ ctx, parsedInput });
 
     expect(mocks.applyRateLimit).toHaveBeenCalledWith(
       rateLimitConfigs.actions.feedbackSourceMutation,
@@ -146,7 +149,7 @@ describe("feedback source mutation safeguards", () => {
   });
 
   test("uses the tighter historical import rate limit and audits only summary counts", async () => {
-    await (importHistoricalResponsesAction as any)({
+    await (importHistoricalResponsesAction as unknown as TActionHandler)({
       ctx,
       parsedInput: { feedbackSourceId, workspaceId, surveyId: "survey-1" },
     });
@@ -183,7 +186,7 @@ describe("feedback source mutation safeguards", () => {
     mocks.assertNewlyAttachedSurveysWorkspaceVisible.mockRejectedValue(new Error("not workspace-visible"));
 
     await expect(
-      (importHistoricalResponsesAction as any)({
+      (importHistoricalResponsesAction as unknown as TActionHandler)({
         ctx,
         parsedInput: { feedbackSourceId, workspaceId, surveyId: "survey-1" },
       })

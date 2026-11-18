@@ -1,4 +1,4 @@
-export const Logo = (props: any) => {
+export const Logo = (props: React.SVGProps<SVGSVGElement>) => {
   return (
     <svg viewBox="0 0 697 150" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
       <path

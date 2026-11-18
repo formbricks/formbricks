@@ -99,7 +99,7 @@ vi.mock("@/lib/constants", async (importOriginal) => {
 });
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
-  withAuditLogging: vi.fn((_type: string, _object: string, fn: Function) => fn),
+  withAuditLogging: vi.fn(<T>(_type: string, _object: string, fn: T) => fn),
 }));
 
 vi.mock("@/lib/utils/action-client", () => ({
@@ -149,15 +149,15 @@ describe("resendVerificationEmailAction", () => {
 
   describe("Rate Limiting", () => {
     test("should apply rate limiting before processing verification email resend", async () => {
-      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(getUserByEmail, { partial: true, deep: true }).mockResolvedValue(mockUser);
 
       await resendVerificationEmailAction({
         ctx: mockCtx,
         parsedInput: validInput,
-      } as any);
+      } as unknown as Parameters<typeof resendVerificationEmailAction>[0]);
 
       expect(applyIPRateLimit).toHaveBeenCalledWith(rateLimitConfigs.auth.verifyEmail);
-      expect(applyIPRateLimit).toHaveBeenCalledBefore(getUserByEmail as any);
+      expect(applyIPRateLimit).toHaveBeenCalledBefore(vi.mocked(getUserByEmail));
     });
 
     test("should throw rate limit error when limit exceeded", async () => {
@@ -169,7 +169,7 @@ describe("resendVerificationEmailAction", () => {
         resendVerificationEmailAction({
           ctx: mockCtx,
           parsedInput: validInput,
-        } as any)
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
       ).rejects.toThrow("Maximum number of requests reached. Please try again later.");
 
       expect(getUserByEmail).not.toHaveBeenCalled();
@@ -177,12 +177,12 @@ describe("resendVerificationEmailAction", () => {
     });
 
     test("should use correct rate limit configuration", async () => {
-      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(getUserByEmail, { partial: true, deep: true }).mockResolvedValue(mockUser);
 
       await resendVerificationEmailAction({
         ctx: mockCtx,
         parsedInput: validInput,
-      } as any);
+      } as unknown as Parameters<typeof resendVerificationEmailAction>[0]);
 
       expect(applyIPRateLimit).toHaveBeenCalledWith({
         interval: 3600,
@@ -194,9 +194,11 @@ describe("resendVerificationEmailAction", () => {
     // Anyone can ask for an account's verification email, so it is counted per account too: strangers on
     // many IPs must not spend the recipient's whole cap and leave the user's own resend with none (ENG-3823).
     test("counts each resend against the account", async () => {
-      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(getUserByEmail, { partial: true, deep: true }).mockResolvedValue(mockUser);
 
-      await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as any);
+      await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as unknown as Parameters<
+        typeof resendVerificationEmailAction
+      >[0]);
 
       expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.auth.verifyEmailPerAccount, mockUser.id);
     });
@@ -205,11 +207,13 @@ describe("resendVerificationEmailAction", () => {
     // answer is the same quiet success, because an error here would tell anyone which addresses are
     // unverified accounts; the failure is logged instead (ENG-7092).
     test("sends nothing, and still answers success, when the per-account limit itself fails", async () => {
-      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValue(mockUser);
       vi.mocked(applyRateLimit).mockRejectedValue(new Error("Redis unavailable"));
 
       await expect(
-        resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as any)
+        resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as unknown as Parameters<
+          typeof resendVerificationEmailAction
+        >[0])
       ).resolves.toEqual({ success: true });
 
       expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
@@ -219,13 +223,15 @@ describe("resendVerificationEmailAction", () => {
     // A spent cap must look like a sent email: only unverified accounts reach it, so an error here would
     // tell anyone which addresses have one (ENG-3823).
     test("answers success once the account's resends are spent, so it reveals nothing", async () => {
-      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValue(mockUser);
       vi.mocked(applyRateLimit).mockRejectedValue(
         new TooManyRequestsError("Maximum number of requests reached")
       );
 
       await expect(
-        resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as any)
+        resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as unknown as Parameters<
+          typeof resendVerificationEmailAction
+        >[0])
       ).resolves.toEqual({ success: true });
 
       expect(auth.api.sendVerificationEmail).not.toHaveBeenCalled();
@@ -239,7 +245,7 @@ describe("resendVerificationEmailAction", () => {
         resendVerificationEmailAction({
           ctx: mockCtx,
           parsedInput: validInput,
-        } as any)
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
       ).resolves.toEqual({ success: true });
 
       expect(applyIPRateLimit).toHaveBeenCalledWith(rateLimitConfigs.auth.verifyEmail);
@@ -249,12 +255,12 @@ describe("resendVerificationEmailAction", () => {
   describe("Verification Email Resend Flow", () => {
     test("should send verification email when user exists and email is not verified", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(getUserByEmail, { partial: true, deep: true }).mockResolvedValue(mockUser);
 
       const result = await resendVerificationEmailAction({
         ctx: mockCtx,
         parsedInput: validInput,
-      } as any);
+      } as unknown as Parameters<typeof resendVerificationEmailAction>[0]);
 
       expect(applyIPRateLimit).toHaveBeenCalled();
       expect(getUserByEmail).toHaveBeenCalledWith(validInput.email);
@@ -268,7 +274,7 @@ describe("resendVerificationEmailAction", () => {
 
     test("should preserve a valid callback URL when resending the verification email", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(getUserByEmail, { partial: true, deep: true }).mockResolvedValue(mockUser);
 
       await resendVerificationEmailAction({
         ctx: mockCtx,
@@ -276,7 +282,7 @@ describe("resendVerificationEmailAction", () => {
           ...validInput,
           callbackUrl: "http://localhost:3000/invite?token=invite-token",
         },
-      } as any);
+      } as unknown as Parameters<typeof resendVerificationEmailAction>[0]);
 
       expect(auth.api.sendVerificationEmail).toHaveBeenCalledWith({
         body: { email: mockUser.email, callbackURL: "http://localhost:3000/invite?token=invite-token" },
@@ -286,7 +292,7 @@ describe("resendVerificationEmailAction", () => {
 
     test("should discard invalid callback URLs when resending the verification email", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(getUserByEmail, { partial: true, deep: true }).mockResolvedValue(mockUser);
 
       await resendVerificationEmailAction({
         ctx: mockCtx,
@@ -294,7 +300,7 @@ describe("resendVerificationEmailAction", () => {
           ...validInput,
           callbackUrl: "https://evil.example/phish",
         },
-      } as any);
+      } as unknown as Parameters<typeof resendVerificationEmailAction>[0]);
 
       expect(auth.api.sendVerificationEmail).toHaveBeenCalledWith({
         body: { email: mockUser.email, callbackURL: undefined },
@@ -304,12 +310,12 @@ describe("resendVerificationEmailAction", () => {
 
     test("should return success without sending email when user email is already verified", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(getUserByEmail).mockResolvedValue(mockVerifiedUser as any);
+      vi.mocked(getUserByEmail, { partial: true, deep: true }).mockResolvedValue(mockVerifiedUser);
 
       const result = await resendVerificationEmailAction({
         ctx: mockCtx,
         parsedInput: validInput,
-      } as any);
+      } as unknown as Parameters<typeof resendVerificationEmailAction>[0]);
 
       expect(applyIPRateLimit).toHaveBeenCalled();
       expect(getUserByEmail).toHaveBeenCalledWith(validInput.email);
@@ -345,7 +351,7 @@ describe("resendVerificationEmailAction", () => {
           ...validInput,
           callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=test-state",
         },
-      } as any);
+      } as unknown as Parameters<typeof resendVerificationEmailAction>[0]);
 
       // The link and the intent have to get ONE lifetime, or the survivor of the two ends recovery on
       // its own: a longer-lived link signs the user in and then reports failure. `777` is not a TTL
@@ -400,7 +406,7 @@ describe("resendVerificationEmailAction", () => {
       await resendVerificationEmailAction({
         ctx: mockCtx,
         parsedInput: { ...validInput, callbackUrl },
-      } as any);
+      } as unknown as Parameters<typeof resendVerificationEmailAction>[0]);
 
       expect(sendVerificationEmail).toHaveBeenCalledWith(
         expect.objectContaining({ purpose: "sso_recovery" })
@@ -438,7 +444,7 @@ describe("resendVerificationEmailAction", () => {
             ...validInput,
             callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=forged-state",
           },
-        } as any)
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
       ).rejects.toThrow(SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE);
 
       expect(sendVerificationEmail).not.toHaveBeenCalled();
@@ -446,7 +452,7 @@ describe("resendVerificationEmailAction", () => {
 
     test("should fall back to a normal verification email when the recovery intent belongs to a different email", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValue(mockUser);
       recoveryIntentMocks.readSsoRecoveryIntent.mockResolvedValue({
         callbackUrl: "http://localhost:3000",
         email: "other@example.com",
@@ -462,7 +468,7 @@ describe("resendVerificationEmailAction", () => {
           ...validInput,
           callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=test-state",
         },
-      } as any);
+      } as unknown as Parameters<typeof resendVerificationEmailAction>[0]);
 
       expect(auth.api.sendVerificationEmail).toHaveBeenCalledWith({
         body: {
@@ -534,7 +540,7 @@ describe("resendVerificationEmailAction", () => {
         resendVerificationEmailAction({
           ctx: mockCtx,
           parsedInput: validInput,
-        } as any)
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
       ).resolves.toEqual({ success: true });
 
       expect(applyIPRateLimit).toHaveBeenCalled();
@@ -548,7 +554,7 @@ describe("resendVerificationEmailAction", () => {
   describe("Audit Logging", () => {
     test("should set audit context userId when sending verification email", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValue(mockUser);
 
       const testCtx = {
         auditLoggingCtx: {
@@ -560,7 +566,7 @@ describe("resendVerificationEmailAction", () => {
       await resendVerificationEmailAction({
         ctx: testCtx,
         parsedInput: validInput,
-      } as any);
+      } as unknown as Parameters<typeof resendVerificationEmailAction>[0]);
 
       // The userId should be set in the audit context
       expect(testCtx.auditLoggingCtx.userId).toBe(mockUser.id);
@@ -572,7 +578,9 @@ describe("resendVerificationEmailAction", () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
       const testCtx = { auditLoggingCtx: { organizationId: "", userId: "", suppressEvent: false } };
 
-      await resendVerificationEmailAction({ ctx: testCtx, parsedInput: validInput } as any);
+      await resendVerificationEmailAction({ ctx: testCtx, parsedInput: validInput } as unknown as Parameters<
+        typeof resendVerificationEmailAction
+      >[0]);
 
       expect(testCtx.auditLoggingCtx.suppressEvent).toBe(true);
       expect(testCtx.auditLoggingCtx.userId).toBe("");
@@ -580,7 +588,7 @@ describe("resendVerificationEmailAction", () => {
 
     test("should not set audit context userId when email is already verified", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(getUserByEmail).mockResolvedValue(mockVerifiedUser as any);
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValue(mockVerifiedUser);
 
       const testCtx = {
         auditLoggingCtx: {
@@ -592,7 +600,7 @@ describe("resendVerificationEmailAction", () => {
       await resendVerificationEmailAction({
         ctx: testCtx,
         parsedInput: validInput,
-      } as any);
+      } as unknown as Parameters<typeof resendVerificationEmailAction>[0]);
 
       // The userId should not be set since no email was sent
       expect(testCtx.auditLoggingCtx.userId).toBe("");
@@ -608,7 +616,7 @@ describe("resendVerificationEmailAction", () => {
         resendVerificationEmailAction({
           ctx: mockCtx,
           parsedInput: validInput,
-        } as any)
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
       ).rejects.toThrow("Maximum number of requests reached. Please try again later.");
     });
 
@@ -620,7 +628,7 @@ describe("resendVerificationEmailAction", () => {
         resendVerificationEmailAction({
           ctx: mockCtx,
           parsedInput: validInput,
-        } as any)
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
       ).rejects.toThrow("Database error");
 
       expect(applyIPRateLimit).toHaveBeenCalled();
@@ -630,14 +638,14 @@ describe("resendVerificationEmailAction", () => {
     // become an unhandled rejection either: it is logged.
     test("should not surface email sending errors to the caller", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValue(mockUser);
       vi.mocked(auth.api.sendVerificationEmail).mockRejectedValue(new Error("Email service error"));
 
       await expect(
         resendVerificationEmailAction({
           ctx: mockCtx,
           parsedInput: validInput,
-        } as any)
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
       ).resolves.toEqual({ success: true });
 
       expect(applyIPRateLimit).toHaveBeenCalled();
@@ -658,7 +666,7 @@ describe("resendVerificationEmailAction", () => {
         resendVerificationEmailAction({
           ctx: mockCtx,
           parsedInput: invalidInput,
-        } as any)
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
       ).resolves.toEqual({ success: true });
     });
 
@@ -674,7 +682,7 @@ describe("resendVerificationEmailAction", () => {
         resendVerificationEmailAction({
           ctx: mockCtx,
           parsedInput: invalidInput,
-        } as any)
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
       ).resolves.toEqual({ success: true });
     });
   });
@@ -683,7 +691,9 @@ describe("resendVerificationEmailAction", () => {
     test("should always apply rate limiting regardless of user existence", async () => {
       vi.mocked(getUserByEmail).mockResolvedValue(null);
 
-      await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as any);
+      await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as unknown as Parameters<
+        typeof resendVerificationEmailAction
+      >[0]);
 
       expect(applyIPRateLimit).toHaveBeenCalled();
     });
@@ -695,17 +705,37 @@ describe("resendVerificationEmailAction", () => {
       const answers = [];
 
       vi.mocked(getUserByEmail).mockResolvedValueOnce(null);
-      answers.push(await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as any));
+      answers.push(
+        await resendVerificationEmailAction({
+          ctx: mockCtx,
+          parsedInput: validInput,
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
+      );
 
-      vi.mocked(getUserByEmail).mockResolvedValueOnce(mockVerifiedUser as any);
-      answers.push(await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as any));
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValueOnce(mockVerifiedUser);
+      answers.push(
+        await resendVerificationEmailAction({
+          ctx: mockCtx,
+          parsedInput: validInput,
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
+      );
 
-      vi.mocked(getUserByEmail).mockResolvedValueOnce(mockUser as any);
-      answers.push(await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as any));
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValueOnce(mockUser);
+      answers.push(
+        await resendVerificationEmailAction({
+          ctx: mockCtx,
+          parsedInput: validInput,
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
+      );
 
-      vi.mocked(getUserByEmail).mockResolvedValueOnce(mockUser as any);
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValueOnce(mockUser);
       vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("spent"));
-      answers.push(await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as any));
+      answers.push(
+        await resendVerificationEmailAction({
+          ctx: mockCtx,
+          parsedInput: validInput,
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
+      );
 
       expect(new Set(answers.map((a) => JSON.stringify(a)))).toEqual(new Set(['{"success":true}']));
     });
@@ -713,12 +743,12 @@ describe("resendVerificationEmailAction", () => {
     // The answer must not wait on the account's budget or the SMTP round trip, whatever the account is.
     test("answers before the per-account limit and the send have run", async () => {
       vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-      vi.mocked(getUserByEmail).mockResolvedValue(mockUser as any);
+      vi.mocked(getUserByEmail, { partial: true }).mockResolvedValue(mockUser);
 
       const result = await resendVerificationEmailActionHandler({
         ctx: mockCtx,
         parsedInput: validInput,
-      } as any);
+      } as unknown as Parameters<typeof resendVerificationEmailAction>[0]);
 
       expect(result).toEqual({ success: true });
       expect(afterTasks).toHaveLength(1);
@@ -739,7 +769,7 @@ describe("resendVerificationEmailAction", () => {
             ...validInput,
             callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=forged-state",
           },
-        } as any)
+        } as unknown as Parameters<typeof resendVerificationEmailAction>[0])
       ).rejects.toThrow(SSO_RECOVERY_LINK_EXPIRED_ERROR_CODE);
       expect(getUserByEmail).not.toHaveBeenCalled();
     });

@@ -5,34 +5,37 @@ import { setSessionCookie } from "better-auth/cookies";
 import { z } from "zod";
 import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
-import { WEBAPP_URL } from "@/lib/constants";
+import { EMAIL_AUTH_ENABLED, WEBAPP_URL } from "@/lib/constants";
 import { verifyToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import {
   getSsoRecoveryFailureRedirectUrl,
-  getSsoRecoverySignInRedirectUrl,
+  getSsoRecoverySecondFactorRedirectUrl,
+  getSsoRecoverySecondFactorUnavailableRedirectUrl,
 } from "@/modules/ee/sso/lib/sso-recovery";
 
 /**
  * SSO-recovery magic-link sign-in (ENG-1054, Phase 7) — the Better Auth replacement for the NextAuth
  * `"token"` CredentialsProvider's `sso_recovery` path. Verifies the `sso_recovery` JWT, establishes a
- * Better Auth session, then redirects to the recovery completion route (which verifies identity and
- * links the SSO account — already BA-compatible).
+ * Better Auth session (or, for a verified 2FA account, defers to the login page), then redirects to the
+ * recovery completion route (which verifies identity and links the SSO account — already BA-compatible).
  *
  * Deliberately recovery-SCOPED — not BA's general `magicLink` plugin, which would introduce a new
  * passwordless auth method (out of scope for the like-for-like migration). Live: the `[...all]` handler
  * is mounted and the recovery email points here. Also harness-testable via `auth.api.ssoRecoverySignIn`.
  *
- * The link proves the mailbox, not a second factor. For a verified account with 2FA it therefore mints
- * NO session and sends the user to the login page with the completion URL as `callbackUrl` (ENG-7266):
- * a password + TOTP sign-in lands on the completion route, which accepts it because the session user
- * matches the intent. An unverified account still gets the session — completion strips its local
- * factors anyway (ENG-2557), so there is no second factor left to protect.
- *
  * Failures (invalid/expired token, inactive user) are logged and redirected to the recovery failure
  * page; the security-critical outcome — the account link — is audited by `completeSsoRecovery`, and
- * abuse is bounded by the `/sso-recovery/*` rate limit (auth.ts). The token is replayable until its
- * 1-day expiry, matching the legacy `"token"` provider (not single-use).
+ * abuse is bounded by the `/sso-recovery/*` rate limit (auth.ts). The token is replayable until it
+ * expires (`VERIFICATION_LINK_TTL_SECONDS`), matching the legacy `"token"` provider (not single-use).
+ *
+ * The link proves mailbox access only, so it must not stand in for a second factor (ENG-7266). A user
+ * with a verified email and 2FA gets no session here: they are sent to the login page with the
+ * completion URL as `callbackUrl`, sign in with password + TOTP (or an SSO provider already linked),
+ * and recovery completes from there. Where the instance has credential sign-in off, that page cannot
+ * ask for the factor at all, so the redirect carries an error code naming the dead end instead. Unverified
+ * accounts keep the direct session: completing recovery strips their local factors anyway (ENG-2557),
+ * since the mailbox owner may not be who set them.
  */
 export const ssoRecoverySignInPlugin = {
   id: "sso-recovery",
@@ -55,7 +58,7 @@ export const ssoRecoverySignInPlugin = {
           if (purpose !== "sso_recovery") {
             throw new Error("Token is not an SSO recovery token");
           }
-          // isActive, emailVerified and twoFactorEnabled are Formbricks columns, not Better Auth fields.
+          // isActive is a Formbricks column, not a Better Auth field — check it directly.
           const dbUser = await prisma.user.findUnique({
             where: { id },
             select: { isActive: true, emailVerified: true, twoFactorEnabled: true },
@@ -64,8 +67,16 @@ export const ssoRecoverySignInPlugin = {
             throw new Error("User not found or inactive");
           }
           if (dbUser.emailVerified && dbUser.twoFactorEnabled) {
-            logger.info({ userId: id }, "SSO recovery link needs a normal sign-in: account has 2FA");
-            destination = getSsoRecoverySignInRedirectUrl(callbackUrl);
+            // The login page is only a way through when it can ask for the factor. With credential
+            // sign-in off it renders no form, and the identity that started recovery is unlinked by
+            // definition — so say so instead of looping the user through the provider again.
+            logger.info(
+              { userId: id, emailAuthEnabled: EMAIL_AUTH_ENABLED },
+              "SSO recovery sign-in deferred to login: account has 2FA"
+            );
+            destination = EMAIL_AUTH_ENABLED
+              ? getSsoRecoverySecondFactorRedirectUrl(callbackUrl)
+              : getSsoRecoverySecondFactorUnavailableRedirectUrl(callbackUrl);
           } else {
             const user = await ctx.context.internalAdapter.findUserById(id);
             if (!user) {

@@ -4,4 +4,4 @@ export interface InviteWithCreator extends Pick<Invite, "id" | "organizationId" 
   creator: Pick<User, "name" | "email" | "locale">;
 }
 
-export interface CreateMembershipInvite extends Pick<Invite, "organizationId" | "role" | "teamIds"> {}
+export type CreateMembershipInvite = Pick<Invite, "organizationId" | "role" | "teamIds">;

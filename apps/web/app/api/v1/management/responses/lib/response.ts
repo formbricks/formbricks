@@ -155,7 +155,7 @@ export const createResponse = async (
   const { finished, ttc: initialTtc } = responseInput;
 
   try {
-    const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
+    const ttc = initialTtc && finished ? calculateTtcTotal(initialTtc) : (initialTtc ?? {});
 
     // `displayId` is caller-supplied; this route only proved the survey belongs to the API key's workspace.
     // Uniform not-found for "does not exist" and "belongs elsewhere" (see `isDisplayOfSurvey`) — an

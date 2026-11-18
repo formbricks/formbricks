@@ -1,11 +1,7 @@
 {
-  "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
-  "eslint.workingDirectories": [
-    {
-      "mode": "auto"
-    }
-  ],
   "javascript.updateImportsOnFileMove.enabled": "always",
+  // oxlint (oxc.oxc-vscode) runs with the type-aware rules, as `pnpm lint:code` does.
+  "oxc.typeAware": true,
   "sonarlint.connectedMode.project": {
     "connectionId": "formbricks",
     "projectKey": "formbricks_formbricks"

@@ -103,3 +103,13 @@ export const elicitingOAuthContext = (authInfo: { extra: Record<string, unknown>
     envelope: { "io.modelcontextprotocol/clientCapabilities": { elicitation: { form: {} } } },
   },
 });
+
+/** What a registered tool handler returns, as the handler-level tool tests read it. */
+export type TToolResult = {
+  isError?: boolean;
+  content: { type: string; text: string }[];
+  structuredContent: Record<string, unknown>;
+};
+
+/** A registered tool handler, called directly with already-shaped input. */
+export type TToolHandler = (input: unknown, extra: unknown) => Promise<TToolResult>;

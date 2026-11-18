@@ -28,7 +28,8 @@ export const WebhookTable = ({
 }: Readonly<WebhookTableProps>) => {
   const [isWebhookDetailModalOpen, setWebhookDetailModalOpen] = useState(false);
   const { t } = useTranslation();
-  const [activeWebhook, setActiveWebhook] = useState<TWebhookListItem>({
+  // Lazy initializer: the placeholder's timestamps are read once, not on every render.
+  const [activeWebhook, setActiveWebhook] = useState<TWebhookListItem>(() => ({
     workspaceId,
     id: "",
     name: "",
@@ -39,7 +40,7 @@ export const WebhookTable = ({
     createdAt: new Date(),
     updatedAt: new Date(),
     hasSecret: false,
-  });
+  }));
 
   const handleOpenWebhookDetailModalClick = (e: React.MouseEvent, webhook: TWebhookListItem) => {
     e.preventDefault();

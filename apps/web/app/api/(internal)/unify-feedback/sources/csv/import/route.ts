@@ -78,6 +78,25 @@ const readUpload = async (request: Request) => {
   return { workspaceId, feedbackSourceId, file };
 };
 
+/**
+ * The signed-in user, or the authentication or authorization error the route maps to 401 or 403. The
+ * per-user rate limit runs as soon as the session is known, before any database read.
+ */
+const getSessionUser = async () => {
+  const session = await getSession();
+  if (!session?.user) {
+    throw new AuthenticationError("Not authenticated");
+  }
+
+  await applyRateLimit(rateLimitConfigs.api.internalFeedbackCsvImport, session.user.id);
+
+  const user = await getUser(session.user.id);
+  if (!user) {
+    throw new AuthorizationError("User not found");
+  }
+  return user;
+};
+
 const assertCanImport = async (userId: string, workspaceId: string, feedbackSourceId: string) => {
   await assertCan({ type: "user", id: userId }, "workspace.write", { type: "workspace", id: workspaceId });
 
@@ -133,17 +152,7 @@ export const POST = async (request: Request) => {
       return buildFileTooLargeResponse();
     }
 
-    const session = await getSession();
-    if (!session?.user) {
-      throw new AuthenticationError("Not authenticated");
-    }
-
-    await applyRateLimit(rateLimitConfigs.api.internalFeedbackCsvImport, session.user.id);
-
-    const user = await getUser(session.user.id);
-    if (!user) {
-      throw new AuthorizationError("User not found");
-    }
+    const user = await getSessionUser();
 
     const { workspaceId, feedbackSourceId, file } = await readUpload(request);
     await assertCanImport(user.id, workspaceId, feedbackSourceId);

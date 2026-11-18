@@ -881,6 +881,7 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
           const target = positions.get(elementId);
           if (!target || canUse(target)) continue;
 
+          // eslint-disable-next-line sonarjs/no-nested-functions -- a thunk on purpose, so a repeated violation builds no issue (see addViolation)
           addViolation(violations, `showIf|${scopeKey}|${elementId}`, () =>
             misorderedIssue(
               `${conditionPath}.${side}.value`,
@@ -935,6 +936,7 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
         const target = positions.get(condition.leftOperand.value);
         if (!target || target.blockIndex <= blockIndex) return;
 
+        // eslint-disable-next-line sonarjs/no-nested-functions -- a thunk on purpose, so a repeated violation builds no issue (see addViolation)
         addViolation(violations, `condition|${block.id}|${condition.leftOperand.value}`, () =>
           misorderedIssue(
             `${conditionPath}.leftOperand.value`,
@@ -950,6 +952,7 @@ function getV3SurveyPrecedenceViolations(input: TReferenceValidationInput): TPre
         const target = positions.get(action.target);
         if (!target || target.blockIndex > blockIndex) return;
 
+        // eslint-disable-next-line sonarjs/no-nested-functions -- a thunk on purpose, so a repeated violation builds no issue (see addViolation)
         addViolation(violations, `requireAnswer|${block.id}|${action.target}`, () =>
           misorderedIssue(
             `${logicPath}.actions.${actionIndex}.target`,

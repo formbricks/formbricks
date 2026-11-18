@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import { Input } from "@/modules/ui/components/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/ui/components/popover";
+import { focusOnOpen } from "@/modules/ui/lib/focus-on-open";
 import { isMailtoUrl, isValidEditorLinkUrl } from "../lib/link-url";
 
 const getSelectedNode = (selection: RangeSelection) => {
@@ -40,6 +41,7 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
   const { t } = useTranslation();
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react/set-state-in-effect -- opening reads the link from the Lexical selection, which lives outside React
       setError("");
       editor.getEditorState().read(() => {
         const selection = $getSelection();
@@ -87,7 +89,8 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
         className="w-auto border border-slate-300 bg-slate-50 p-3 text-xs shadow-lg"
         align="start"
         side="bottom"
-        sideOffset={4}>
+        sideOffset={4}
+        onOpenAutoFocus={(event) => focusOnOpen(event, inputRef.current)}>
         <form
           className="flex gap-2"
           onSubmit={(e) => {
@@ -105,7 +108,6 @@ const LinkEditorContent = ({ editor, open, setOpen }: LinkEditorProps) => {
             ref={inputRef}
             value={linkUrl}
             placeholder="https://example.com"
-            autoFocus
             onInput={(event) => {
               const value = event.currentTarget.value;
               setLinkUrl(value);

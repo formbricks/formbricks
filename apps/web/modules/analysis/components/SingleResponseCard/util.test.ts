@@ -1,5 +1,10 @@
 import { describe, expect, test } from "vitest";
-import { isSubmissionTimeMoreThan5Minutes, isValidValue, splitRecallHighlights } from "./util";
+import {
+  isEmptyResponseValue,
+  isSubmissionTimeMoreThan5Minutes,
+  isValidValue,
+  splitRecallHighlights,
+} from "./util";
 
 describe("isValidValue", () => {
   test("returns false for an empty string", () => {
@@ -97,5 +102,20 @@ describe("splitRecallHighlights", () => {
 
     expect(parts).toEqual([pathological]);
     expect(elapsedMs).toBeLessThan(500);
+  });
+});
+
+describe("isEmptyResponseValue", () => {
+  test("is true for an empty string, an empty list and an object without keys", () => {
+    expect(isEmptyResponseValue("")).toBe(true);
+    expect(isEmptyResponseValue([])).toBe(true);
+    expect(isEmptyResponseValue({})).toBe(true);
+  });
+
+  test("is false for any answer with content, including a blank string and zero", () => {
+    expect(isEmptyResponseValue(" ")).toBe(false);
+    expect(isEmptyResponseValue(0)).toBe(false);
+    expect(isEmptyResponseValue(["a"])).toBe(false);
+    expect(isEmptyResponseValue({ row: "column" })).toBe(false);
   });
 });

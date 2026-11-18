@@ -92,6 +92,7 @@ export const MultipleChoiceSummary = ({
             return (
               <Fragment key={result.value}>
                 <div
+                  // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- the choice row holds paragraphs and badges, which a <button> may not contain
                   role="button"
                   tabIndex={0}
                   className="group w-full cursor-pointer"

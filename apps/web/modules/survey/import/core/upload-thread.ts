@@ -175,12 +175,14 @@ export const openSurveyImportUpload = async (
         outcome();
       };
       const onReply = (reply: TUploadWorkerReply) =>
+        // eslint-disable-next-line sonarjs/no-nested-functions -- every outcome runs inside `settle`, after its shared cleanup
         settle(() => {
           if (reply.ok) return resolve(reply.value);
           close();
           reject("refusal" in reply ? fromSurveyImportRefusal(reply.refusal) : fromFailure(reply.failure));
         });
       const fail = (error: unknown) =>
+        // eslint-disable-next-line sonarjs/no-nested-functions -- every outcome runs inside `settle`, after its shared cleanup
         settle(() => {
           close();
           reject(error);

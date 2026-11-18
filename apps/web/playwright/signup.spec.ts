@@ -7,11 +7,22 @@ const { name, email, password } = mockUsers.signup[0];
 const mixedCaseEmail = email.replace("signup", "SignUp");
 const normalizedEmailPattern = new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
 
+// "Continue with Email" is server-rendered, so a click that lands before hydration does nothing and the
+// form never opens. Click again until the name field shows; once it does, the button is the disabled
+// submit, so it is never clicked a second time.
+const openEmailSignup = async (page: Page) => {
+  const nameField = page.getByTestId("signup-name");
+  await expect(async () => {
+    if (!(await nameField.isVisible())) await page.getByText("Continue with Email").click({ timeout: 2_000 });
+    await expect(nameField).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 30_000 });
+};
+
 test.describe("Email Signup Flow Test", async () => {
   test.describe.configure({ mode: "serial" });
   test.beforeEach(async ({ page }) => {
     await page.goto("/auth/signup");
-    await page.getByText("Continue with Email").click();
+    await openEmailSignup(page);
   });
 
   test("Valid User", async ({ page }) => {
@@ -100,7 +111,7 @@ test.describe("Signed-out screens on a phone", () => {
 
     await page.setViewportSize(MOBILE);
     await page.goto("/auth/signup");
-    await page.getByText("Continue with Email").click();
+    await openEmailSignup(page);
 
     await page.getByTestId("signup-name").fill(name);
     await page.getByTestId("signup-email").fill(mobileEmail);

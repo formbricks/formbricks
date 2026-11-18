@@ -15,7 +15,6 @@ import {
   checkApiKeyCreatorCanManageWorkspaceTeams,
   checkAuthenticationAndAccess,
 } from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/lib/utils";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   createWorkspaceTeam,
   deleteWorkspaceTeam,
@@ -217,7 +216,7 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
       }
 
       // Fetch old object for audit log
-      let oldWorkspaceTeamData: any = UNKNOWN_DATA;
+      let oldWorkspaceTeamData: Record<string, unknown> | null = null;
       try {
         const oldWorkspaceTeamResult = await getWorkspaceTeams(authentication.organizationId, {
           teamId,
@@ -310,7 +309,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
       }
 
       // Fetch old object for audit log
-      let oldWorkspaceTeamData: any = UNKNOWN_DATA;
+      let oldWorkspaceTeamData: Record<string, unknown> | null = null;
       try {
         const oldWorkspaceTeamResult = await getWorkspaceTeams(authentication.organizationId, {
           teamId,

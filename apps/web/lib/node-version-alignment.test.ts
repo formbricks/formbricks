@@ -9,7 +9,7 @@ import * as yaml from "yaml";
 // ENG-2878). `.nvmrc` is the single source of truth; the rest drifted from it once already:
 //
 //   package.json engines            — the range local installs are checked against.
-//   apps/web/Dockerfile             — the production runtime.
+//   apps/web/Dockerfile             — the production runtime (exact version, digest-pinned).
 //   .devcontainer/devcontainer.json — Codespaces / VS Code dev containers.
 //   .github/workflows/*.yml,
 //   .github/actions/*/action.yml    — every actions/setup-node step must read `.nvmrc` rather than
@@ -62,18 +62,26 @@ describe("Node.js version alignment", () => {
     expect(engines?.node).toBe(`>=${nodeMajor}.0.0 <${Number(nodeMajor) + 1}`);
   });
 
-  test("the production image runs the .nvmrc major", () => {
-    const baseImage = /^FROM\s+node:(\d+)[-@\s]/m.exec(read("apps", "web", "Dockerfile"))?.[1];
+  // The image takes the official Node binary from a digest-pinned node:<version>-<distro> base, so a Node
+  // security release is a new tag and digest there. Requiring the exact `.nvmrc` version keeps that edit and
+  // the dev/CI pin in one step.
+  test("the production image runs the exact .nvmrc version", () => {
+    const baseImage = /^FROM\s+node:(\d+\.\d+\.\d+)-[a-z0-9-]+@sha256:[0-9a-f]{64}\s/m.exec(
+      read("apps", "web", "Dockerfile")
+    )?.[1];
 
-    expect(baseImage).toBe(nodeMajor);
+    expect(baseImage).toBe(nvmrcVersion.replace(/^v/, ""));
   });
 
-  // The runtime is compiled from source at NODE_VERSION, so a Node security release is a manual edit of that
-  // pin and its checksum. Requiring the exact `.nvmrc` version keeps that edit and the dev/CI pin in one step.
-  test("the production image compiles the exact .nvmrc version", () => {
-    const compiled = /^ARG NODE_VERSION=(\S+)$/m.exec(read("apps", "web", "Dockerfile"))?.[1];
+  // The official image drops Node's LICENSE, so the Dockerfile fetches it for the same release. Its checksum
+  // fails the build when the URL moves without it; this catches the URL staying behind.
+  test("the image ships the LICENSE of the .nvmrc version", () => {
+    const licenseVersion =
+      /https:\/\/raw\.githubusercontent\.com\/nodejs\/node\/v(\d+\.\d+\.\d+)\/LICENSE/.exec(
+        read("apps", "web", "Dockerfile")
+      )?.[1];
 
-    expect(compiled).toBe(nvmrcVersion.replace(/^v/, ""));
+    expect(licenseVersion).toBe(nvmrcVersion.replace(/^v/, ""));
   });
 
   test("the devcontainer image runs the .nvmrc major", () => {

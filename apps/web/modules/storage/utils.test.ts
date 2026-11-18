@@ -122,9 +122,12 @@ describe("storage utils", () => {
       expect(r404.status).toBe(404);
 
       // InvalidInput -> 400
-      const r400 = getErrorResponseFromStorageError({ code: StorageErrorCode.InvalidInput }, {
-        reason: "bad",
-      } as any);
+      const r400 = getErrorResponseFromStorageError(
+        { code: StorageErrorCode.InvalidInput },
+        {
+          reason: "bad",
+        }
+      );
       expect(r400.status).toBe(400);
 
       // S3 related and Unknown -> 500
@@ -144,7 +147,9 @@ describe("storage utils", () => {
       expect(r500c.status).toBe(500);
 
       // Default branch (unknown string) -> 500
-      const r500d = getErrorResponseFromStorageError({ code: "something_else" as any });
+      const r500d = getErrorResponseFromStorageError({
+        code: "something_else" as Parameters<typeof getErrorResponseFromStorageError>[0]["code"],
+      });
       expect(r500d.status).toBe(500);
 
       spyNotFound.mockRestore();

@@ -125,7 +125,9 @@ describe("API Key Management", () => {
 
   describe("getApiKeysWithEnvironmentPermissions", () => {
     test("retrieves API keys successfully", async () => {
-      vi.mocked(prisma.apiKey.findMany).mockResolvedValueOnce([mockApiKeyWithEnvironments] as any);
+      vi.mocked(prisma.apiKey.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        mockApiKeyWithEnvironments,
+      ]);
 
       const result = await getApiKeysWithEnvironmentPermissions("clj28r6va000409j3ep7h8xzk");
 
@@ -178,7 +180,7 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({
         ...mockApiKey,
         lastUsedAt: recentDate,
-      } as any);
+      });
 
       const result = await getApiKeyWithPermissions("fbk_testSecret123");
 
@@ -204,8 +206,10 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({
         ...mockApiKey,
         lastUsedAt: null,
-      } as any);
-      vi.mocked(prisma.apiKey.update).mockReturnValueOnce(mockUpdatePromise as any);
+      });
+      vi.mocked(prisma.apiKey.update).mockReturnValueOnce(
+        mockUpdatePromise as unknown as ReturnType<typeof prisma.apiKey.update>
+      );
 
       const result = await getApiKeyWithPermissions("fbk_testSecret123");
 
@@ -235,8 +239,10 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({
         ...mockApiKey,
         lastUsedAt: oldDate,
-      } as any);
-      vi.mocked(prisma.apiKey.update).mockReturnValueOnce(mockUpdatePromise as any);
+      });
+      vi.mocked(prisma.apiKey.update).mockReturnValueOnce(
+        mockUpdatePromise as unknown as ReturnType<typeof prisma.apiKey.update>
+      );
 
       const result = await getApiKeyWithPermissions("fbk_testSecret123");
 
@@ -262,7 +268,7 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.findFirst).mockResolvedValueOnce({
         ...mockApiKey,
         lastUsedAt: recentDate,
-      } as any);
+      });
 
       const result = await getApiKeyWithPermissions("legacy-api-key");
 
@@ -286,8 +292,10 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.findFirst).mockResolvedValueOnce({
         ...mockApiKey,
         lastUsedAt: oldDate,
-      } as any);
-      vi.mocked(prisma.apiKey.update).mockReturnValueOnce(mockUpdatePromise as any);
+      });
+      vi.mocked(prisma.apiKey.update).mockReturnValueOnce(
+        mockUpdatePromise as unknown as ReturnType<typeof prisma.apiKey.update>
+      );
 
       const result = await getApiKeyWithPermissions("legacy-api-key");
 
@@ -323,10 +331,10 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({
         ...mockApiKey,
         lookupHash: "someOtherHash",
-      } as any);
+      });
       expect(await getApiKeyWithPermissions("fbk_testSecret123")).toBeNull();
 
-      vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({ ...mockApiKey, lookupHash: null } as any);
+      vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({ ...mockApiKey, lookupHash: null });
       expect(await getApiKeyWithPermissions("fbk_testSecret123")).toBeNull();
 
       expect(verifySecret).not.toHaveBeenCalled();
@@ -357,7 +365,7 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({
         ...mockApiKey,
         lastUsedAt: new Date(Date.now() - 1000 * 10),
-      } as any);
+      });
 
       await getApiKeyWithPermissions("fbk_testSecret123");
 
@@ -379,7 +387,7 @@ describe("API Key Management", () => {
       vi.mocked(prisma.apiKey.findFirst).mockResolvedValueOnce({
         ...mockApiKey,
         lastUsedAt: new Date(Date.now() - 1000 * 10),
-      } as any);
+      });
 
       await getApiKeyWithPermissions("legacy-api-key");
 

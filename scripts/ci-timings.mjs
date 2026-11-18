@@ -117,7 +117,8 @@ const reportAggregate = async (last, event, jobFilter) => {
     return;
   }
 
-  console.log(`Sampling ${runs.length} runs of pr.yml${event ? ` (event=${event})` : ""}\n`);
+  const eventNote = event ? ` (event=${event})` : "";
+  console.log(`Sampling ${runs.length} runs of pr.yml${eventNote}\n`);
 
   const rows = [];
   // Sequential on purpose: this is a diagnostic run by a human or an agent, and hammering
@@ -160,9 +161,8 @@ const reportAggregate = async (last, event, jobFilter) => {
     console.log(`\n  No successful runs in the sample — no timing stats. (${measured.length} listed above.)`);
   } else {
     const sorted = succeeded.map((r) => r.duration).sort((a, b) => a - b);
-    console.log(
-      `\n  n=${sorted.length} successful${excluded > 0 ? ` (${excluded} non-success excluded)` : ""}`
-    );
+    const excludedNote = excluded > 0 ? ` (${excluded} non-success excluded)` : "";
+    console.log(`\n  n=${sorted.length} successful${excludedNote}`);
     console.log(`  min  ${fmt(sorted[0])}`);
     console.log(`  p50  ${fmt(percentile(sorted, 50))}`);
     console.log(`  p95  ${fmt(percentile(sorted, 95))}`);

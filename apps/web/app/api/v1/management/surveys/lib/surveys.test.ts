@@ -25,7 +25,7 @@ vi.mock("react", async () => {
   const actual = await vi.importActual("react");
   return {
     ...actual,
-    cache: vi.fn((fn: Function) => fn), // Mock reactCache to just execute the function
+    cache: vi.fn(<T>(fn: T) => fn), // Mock reactCache to just execute the function
   };
 });
 
@@ -75,11 +75,14 @@ const mockSurveyTransformed3: TSurvey = {
 describe("getSurveys (Management API)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(transformPrismaSurvey).mockImplementation((survey) => ({
-      ...survey,
-      displayPercentage: null,
-      segment: null,
-    }));
+    vi.mocked(transformPrismaSurvey).mockImplementation(
+      (survey) =>
+        ({
+          ...survey,
+          displayPercentage: null,
+          segment: null,
+        }) as TSurvey
+    );
   });
 
   afterEach(() => {

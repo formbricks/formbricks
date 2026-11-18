@@ -12,6 +12,7 @@ const BOOLEAN_FIELDS = new Set<THubTargetField>(["value_boolean"]);
 const TIMESTAMP_FIELDS = new Set<THubTargetField>(["collected_at", "value_date"]);
 const JSON_FIELDS = new Set<THubTargetField>(["metadata"]);
 const ISO_DATE_OR_TIMESTAMP_REGEX =
+  // eslint-disable-next-line sonarjs/regex-complexity -- one ISO 8601 grammar; split up, it no longer reads as the format
   /^(\d{4})-(\d{2})-(\d{2})(?:T(?:[01]\d|2[0-3]):[0-5]\d(?::[0-5]\d(?:\.\d{1,9})?)?(?:Z|[+-](?:[01]\d|2[0-3]):[0-5]\d))?$/;
 
 const isValidIsoDateOrTimestamp = (value: string): boolean => {
@@ -81,6 +82,31 @@ const resolveFieldTypeForRow = (
 };
 
 /**
+ * The field a mapping writes: `response_value` is routed by the row's field type. Null when that
+ * routing fails, which drops the row.
+ */
+const getEffectiveTargetFieldId = (
+  mapping: TFeedbackSourceFieldMapping,
+  fieldType: Parameters<typeof routeResponseValueTarget>[0]
+): THubTargetField | null => {
+  if (mapping.targetFieldId !== "response_value") return mapping.targetFieldId;
+  try {
+    return routeResponseValueTarget(fieldType);
+  } catch {
+    return null;
+  }
+};
+
+/** A JSON field's value: parsed text, or the text wrapped as `{ raw }` when it is not JSON. */
+const parseJsonFieldValue = (value: NonNullable<ReturnType<typeof resolveValue>>) => {
+  try {
+    return typeof value === "string" ? JSON.parse(value) : value;
+  } catch {
+    return { raw: value };
+  }
+};
+
+/**
  * Transform a single CSV row into a FeedbackRecord using field mappings.
  *
  * Returns null if field_id, field_type, tenant_id, or submission_id are missing.
@@ -101,29 +127,15 @@ export const transformCsvRowToFeedbackRecord = (
   if (!fieldType) return null;
 
   for (const mapping of safeMappings) {
-    let effectiveTargetFieldId: THubTargetField;
-    if (mapping.targetFieldId === "response_value") {
-      try {
-        effectiveTargetFieldId = routeResponseValueTarget(fieldType);
-      } catch {
-        return null;
-      }
-    } else {
-      effectiveTargetFieldId = mapping.targetFieldId;
-    }
+    const effectiveTargetFieldId = getEffectiveTargetFieldId(mapping, fieldType);
+    if (effectiveTargetFieldId === null) return null;
 
     const value = resolveValue(row, mapping, effectiveTargetFieldId);
     if (value === undefined) continue;
 
-    if (JSON_FIELDS.has(effectiveTargetFieldId)) {
-      try {
-        record[effectiveTargetFieldId] = typeof value === "string" ? JSON.parse(value) : value;
-      } catch {
-        record[effectiveTargetFieldId] = { raw: value };
-      }
-    } else {
-      record[effectiveTargetFieldId] = value;
-    }
+    record[effectiveTargetFieldId] = JSON_FIELDS.has(effectiveTargetFieldId)
+      ? parseJsonFieldValue(value)
+      : value;
   }
 
   if (!record.source_type || !record.field_id || !record.field_type) {

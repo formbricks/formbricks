@@ -2,7 +2,7 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ImagePlusIcon, TrashIcon } from "lucide-react";
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
 import { IMAGE_FILE_EXTENSIONS } from "@formbricks/types/storage";
@@ -66,7 +66,8 @@ interface ElementFormInputProps {
   readonly locale: TUserLocale;
   readonly onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
   readonly isStorageConfigured: boolean;
-  readonly autoFocus?: boolean;
+  /** Focus the field's editor when it mounts; see `Editor`. */
+  readonly focusOnMount?: boolean;
   readonly firstRender?: boolean;
   readonly setFirstRender?: Dispatch<SetStateAction<boolean>>;
   readonly isExternalUrlsAllowed?: boolean;
@@ -95,7 +96,7 @@ export const ElementFormInput = ({
   locale,
   onKeyDown,
   isStorageConfigured = true,
-  autoFocus,
+  focusOnMount,
   firstRender: externalFirstRender,
   setFirstRender: externalSetFirstRender,
   isExternalUrlsAllowed,
@@ -122,11 +123,9 @@ export const ElementFormInput = ({
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
 
   const elementId = useMemo(() => {
-    return isWelcomeCard
-      ? "start"
-      : isEndingCard
-        ? localSurvey.endings[elementIdx - elements.length].id
-        : currentElement.id;
+    if (isWelcomeCard) return "start";
+    if (isEndingCard) return localSurvey.endings[elementIdx - elements.length].id;
+    return currentElement.id;
   }, [isWelcomeCard, isEndingCard, currentElement?.id, elementIdx, elements.length, localSurvey.endings]);
   const endingCard = localSurvey.endings.find((ending) => ending.id === elementId);
 
@@ -166,7 +165,11 @@ export const ElementFormInput = ({
       (currentElement &&
         (id.includes(".")
           ? // Handle nested properties
-            (currentElement[id.split(".")[0] as keyof TSurveyElement] as any)?.[id.split(".")[1]]
+            (
+              currentElement[id.split(".")[0] as keyof TSurveyElement] as
+                | Record<string, TI18nString>
+                | undefined
+            )?.[id.split(".")[1]]
           : // Original behavior
             (currentElement[id as keyof TSurveyElement] as TI18nString))) ||
       createI18nString("", surveyLanguageCodes)
@@ -193,10 +196,13 @@ export const ElementFormInput = ({
       (endingCard?.type === "endScreen" && Boolean(endingCard.imageUrl ?? endingCard.videoUrl))
   );
 
-  // Sync text state when elementText changes (e.g., on page reload or when value prop changes)
-  useEffect(() => {
+  // Sync text state when elementText changes (e.g., on page reload or when value prop changes).
+  // Adjusted during render.
+  const [syncedElementText, setSyncedElementText] = useState(elementText);
+  if (syncedElementText !== elementText) {
+    setSyncedElementText(elementText);
     setText(elementText);
-  }, [elementText]);
+  }
 
   const highlightContainerRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -316,7 +322,10 @@ export const ElementFormInput = ({
     } else return currentElement.videoUrl;
   };
 
-  const debouncedHandleUpdate = useMemo(() => debounce((value) => handleUpdate(value), 100), [handleUpdate]);
+  const debouncedHandleUpdate = useMemo(
+    () => debounce((value: string) => handleUpdate(value), 100),
+    [handleUpdate]
+  );
 
   const [animationParent] = useAutoAnimate();
   const [internalFirstRender, setInternalFirstRender] = useState(true);
@@ -514,14 +523,15 @@ export const ElementFormInput = ({
                 localSurvey={localSurvey}
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
-                updateElement={(isWelcomeCard || isEndingCard ? updateSurvey : updateElement)!}
+                updateElement={updateElement}
+                updateCard={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
                 firstRender={firstRender}
                 setFirstRender={setFirstRender}
                 locale={locale}
                 elementId={elementId}
                 isCard={isWelcomeCard || isEndingCard}
-                autoFocus={autoFocus}
+                focusOnMount={focusOnMount}
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
                 suppressUpdates={() => suppressEditorUpdatesRef.current}
               />

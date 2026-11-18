@@ -39,7 +39,7 @@ describe("String Utilities", () => {
 
     test("truncates string to specified length", () => {
       const longString = "a".repeat(300);
-      expect(sanitizeString(longString).length).toBe(255);
+      expect(sanitizeString(longString)).toHaveLength(255);
     });
 
     test("uses custom delimiter when provided", () => {

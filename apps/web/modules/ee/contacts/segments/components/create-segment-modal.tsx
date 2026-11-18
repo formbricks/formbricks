@@ -39,7 +39,9 @@ export function CreateSegmentModal({
 }: Readonly<TCreateSegmentModalProps>) {
   const { t } = useTranslation();
   const router = useRouter();
-  const initialSegmentState = {
+  // A function, not an object built during render: the timestamps are read once for the initial
+  // state and again on each reset, never on a re-render.
+  const createInitialSegmentState = (): TSegment => ({
     title: "",
     description: "",
     isPrivate: false,
@@ -49,14 +51,14 @@ export function CreateSegmentModal({
     surveys: [],
     createdAt: new Date(),
     updatedAt: new Date(),
-  };
+  });
 
   const [open, setOpen] = useState(false);
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
-  const [segment, setSegment] = useState<TSegment>(initialSegmentState);
+  const [segment, setSegment] = useState<TSegment>(createInitialSegmentState);
   const [isCreatingSegment, setIsCreatingSegment] = useState(false);
   const handleResetState = () => {
-    setSegment(initialSegmentState);
+    setSegment(createInitialSegmentState());
     setOpen(false);
   };
 

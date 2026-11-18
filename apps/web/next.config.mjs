@@ -109,7 +109,7 @@ const nextConfig = {
       "../../node_modules/otlp-logger/**/*",
       // lightningcss picks its native package at runtime (require of "lightningcss-<platform>"),
       // which the tracer cannot follow; only the package matching the build's platform/libc is
-      // installed (musl in the Alpine image), so the wildcard copies exactly that one.
+      // installed (glibc in the Debian image), so the wildcard copies exactly that one.
       "../../node_modules/lightningcss/**/*",
       "../../node_modules/lightningcss-*/**/*",
       "../../node_modules/detect-libc/**/*",
@@ -117,7 +117,7 @@ const nextConfig = {
   },
   turbopack: {},
   experimental: {
-    // With patches/next@16.4.1.patch applied, Next clones no request body for proxy.ts or for an external
+    // With patches/next@16.4.5.patch applied, Next clones no request body for proxy.ts or for an external
     // rewrite such as the PostHog /ingest proxy (ENG-3972), so this only bounds the body Next hands an
     // edge-runtime function, and this app has none. Kept as the fallback for a Next without the patch, which
     // would clone again and cut bodies off at this size, so the import routes keep their limits below it.
@@ -220,6 +220,17 @@ const nextConfig = {
       : [];
     const devLoopbackSourceList = devLoopbackSources.length > 0 ? ` ${devLoopbackSources.join(" ")}` : "";
 
+    // Upload extensions whose browser viewer needs `sandbox` off (see the `/storage` rules below). The
+    // media list must match the audio/video types in `mimeTypes` (packages/types/storage.ts), which
+    // lib/next-config-csp.test.ts checks. Header matching ignores case unless
+    // `experimental.caseSensitiveRoutes` is on; each letter matches either case so the rules hold both
+    // ways.
+    const anyCase = (extension) =>
+      extension.replace(/[a-z]/g, (letter) => `[${letter}${letter.toUpperCase()}]`);
+    const UPLOADED_MEDIA_EXTENSIONS = ["mp4", "mov", "avi", "mkv", "webm", "mp3"].map(anyCase).join("|");
+    const UPLOADED_PDF_EXTENSION = anyCase("pdf");
+    const UPLOADED_FILE_UNSANDBOXED_EXTENSIONS = `${UPLOADED_PDF_EXTENSION}|${UPLOADED_MEDIA_EXTENSIONS}`;
+
     // `worker-src` must stay explicit: without it browsers fall back to `script-src`, which has no
     // `blob:`, and blocks the `blob:` worker Sentry Session Replay compresses recordings in (ENG-3194).
     const cspBase = `default-src 'self'; script-src 'self' 'unsafe-inline'${scriptSrcUnsafeEval} https:; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https:; img-src 'self' blob: data:${devLoopbackSourceList} https:; font-src 'self' data: https:; connect-src 'self'${devLoopbackSourceList} https: wss:; frame-src 'self' https://app.cal.com https:; media-src 'self' https:; object-src 'self' data: https:; base-uri 'self'; form-action 'self'`;
@@ -247,6 +258,41 @@ const nextConfig = {
           {
             key: "Content-Security-Policy",
             value: `${cspBase}; frame-ancestors *`,
+          },
+        ],
+      },
+      {
+        // Uploaded files (ENG-7108). A stored file must never act as a page of the app: should one be
+        // rendered as a document anyway, `sandbox` gives it an opaque origin and no scripts. These rules
+        // have to come after the one above, because a route handler cannot set this header itself: the
+        // config's CSP replaces it. Two kinds are left out of `sandbox`, as it can stop the browser's own
+        // viewer for them; both are served with their real type and `nosniff`, so never parsed as HTML:
+        // audio/video (Chromium's media viewer runs script) and PDFs (`sandbox` without `allow-plugins`
+        // may block a plugin-based viewer such as Safari's). Both still get `default-src 'none'`, which
+        // blocks every script.
+        source: String.raw`/storage/:path((?!.*\.(?:${UPLOADED_FILE_UNSANDBOXED_EXTENSIONS})$).*)`,
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'none'; frame-ancestors 'self'; sandbox",
+          },
+        ],
+      },
+      {
+        source: String.raw`/storage/:path(.*\.(?:${UPLOADED_MEDIA_EXTENSIONS})$)`,
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'none'; media-src 'self'; frame-ancestors 'self'",
+          },
+        ],
+      },
+      {
+        source: String.raw`/storage/:path(.*\.(?:${UPLOADED_PDF_EXTENSION})$)`,
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'none'; object-src 'self'; frame-ancestors 'self'",
           },
         ],
       },
@@ -364,7 +410,7 @@ const nextConfig = {
       },
       // SVG files (icons, logos) - long cache since they're usually static
       {
-        source: "/(.*)\\.svg",
+        source: String.raw`/(.*)\.svg`,
         headers: [
           {
             key: "Cache-Control",
@@ -454,7 +500,7 @@ const nextConfig = {
       },
       // Web manifest and browser config files - medium cache
       {
-        source: "/(site\\.webmanifest|browserconfig\\.xml)",
+        source: String.raw`/(site\.webmanifest|browserconfig\.xml)`,
         headers: [
           {
             key: "Cache-Control",

@@ -59,6 +59,7 @@ const resolveRecallValue = (
     }
   }
 
+  // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value shows the fallback too
   return value?.toString() || fallback;
 };
 

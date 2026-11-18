@@ -201,7 +201,7 @@ describe("AI organization service", () => {
       organizationId: "org_1",
       schema,
       prompt: "Generate a survey",
-    } as any);
+    } as unknown as Parameters<typeof generateOrganizationAIObject<{ name: string }>>[0]);
 
     expect(result).toBe(generatedObject);
     expect(mocks.generateObject).toHaveBeenCalledWith(
@@ -226,7 +226,7 @@ describe("AI organization service", () => {
       aiTracing: { distinctId: "user_1", feature: "ai_chart_query", workspaceId: "ws_1" },
       schema: { type: "object" },
       prompt: "Generate a survey",
-    } as any);
+    } as unknown as Parameters<typeof generateOrganizationAIObject>[0]);
 
     const wrapModel = mocks.generateObject.mock.calls[0][2];
     expect(wrapModel).toBeInstanceOf(Function);
@@ -276,7 +276,7 @@ describe("AI organization service", () => {
         organizationId: "org_1",
         schema: { type: "object" },
         prompt: "Generate a survey",
-      } as any)
+      } as unknown as Parameters<typeof generateOrganizationAIObject>[0])
     ).rejects.toThrow(modelError);
     expect(mocks.loggerError).toHaveBeenCalledWith(
       {
@@ -307,7 +307,7 @@ describe("AI organization service", () => {
         organizationId: "org_1",
         schema: { type: "object" },
         prompt: "Translate this survey",
-      } as any)
+      } as unknown as Parameters<typeof generateOrganizationAIObject>[0])
     ).rejects.toBe(tokenLimitError);
     expect(mocks.loggerError).not.toHaveBeenCalled();
     expect(mocks.loggerWarn).toHaveBeenCalledWith(
@@ -409,7 +409,7 @@ describe("AI organization service", () => {
         organizationId: "org_1",
         schema: { type: "object" },
         prompt: "Generate a survey",
-      } as any)
+      } as unknown as Parameters<typeof generateOrganizationAIObject>[0])
     ).rejects.toMatchObject({ name: "TooManyRequestsError", message: "ai_quota_exceeded", retryAfter: 30 });
 
     expect(mocks.loggerError).toHaveBeenCalledWith(
@@ -432,7 +432,7 @@ describe("AI organization service", () => {
         organizationId: "org_1",
         schema: { type: "object" },
         prompt: "Generate a survey",
-      } as any)
+      } as unknown as Parameters<typeof generateOrganizationAIObject>[0])
     ).rejects.toBe(serverError);
   });
 

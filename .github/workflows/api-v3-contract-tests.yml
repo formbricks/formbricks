@@ -31,7 +31,7 @@ permissions:
 jobs:
   contract-tests:
     name: v3 OpenAPI contract tests
-    # The deployment-check browser uses Playwright 1.58.2, which does not support Ubuntu 26.04.
+    # The deployment-check browser uses Playwright 1.60.0, which is only verified on Ubuntu 24.04.
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     services:

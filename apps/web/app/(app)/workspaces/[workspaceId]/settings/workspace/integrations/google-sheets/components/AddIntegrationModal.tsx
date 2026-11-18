@@ -2,7 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -74,15 +74,6 @@ export const AddIntegrationModal = ({
   const queryClient = useQueryClient();
   const refetchIntegration = () =>
     queryClient.invalidateQueries({ queryKey: integrationKeys.byType(workspaceId, "googleSheets") });
-  const integrationData: TIntegrationGoogleSheetsConfigData = {
-    spreadsheetId: "",
-    spreadsheetName: "",
-    surveyId: "",
-    surveyName: "",
-    elementIds: [""],
-    elements: "",
-    createdAt: new Date(),
-  };
   const { handleSubmit } = useForm();
   // The mapping being edited keeps its survey selectable even if it has since been restricted.
   const attachedSurveyIds = selectedIntegration ? [selectedIntegration.surveyId] : [];
@@ -112,14 +103,27 @@ export const AddIntegrationModal = ({
     [selectedSurvey]
   );
 
-  useEffect(() => {
-    if (selectedSurvey && !selectedIntegration) {
-      const elementIds = surveyElements.map((element) => element.id);
-      setSelectedElements(elementIds);
+  // A new mapping starts with every question of the picked survey selected.
+  const handleSurveySelect = (survey: TSurvey) => {
+    setSelectedSurvey(survey);
+    if (!selectedIntegration) {
+      setSelectedElements(getElementsFromBlocks(survey.blocks).map((element) => element.id));
     }
-  }, [surveyElements, selectedIntegration, selectedSurvey]);
+  };
 
-  useEffect(() => {
+  const resetForm = () => {
+    setSpreadsheetUrl("");
+    setIsLinkingSheet(false);
+    setSelectedSurvey(null);
+    setIncludeHiddenFields(false);
+    setIncludeMetadata(false);
+  };
+
+  // Load the mapping being edited (or reset for a new one) whenever it, or the survey list, changes.
+  // Adjusted during render.
+  const [loadedFrom, setLoadedFrom] = useState({ selectedIntegration, surveys });
+  if (loadedFrom.selectedIntegration !== selectedIntegration || loadedFrom.surveys !== surveys) {
+    setLoadedFrom({ selectedIntegration, surveys });
     if (selectedIntegration) {
       setSpreadsheetUrl(constructGoogleSheetsUrl(selectedIntegration.spreadsheetId));
       setSelectedSurvey(
@@ -133,12 +137,10 @@ export const AddIntegrationModal = ({
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
       setIncludeCreatedAt(!!selectedIntegration.includeCreatedAt);
       setIncludeContactAttributes(!!selectedIntegration.includeContactAttributes);
-      return;
     } else {
-      setSpreadsheetUrl("");
+      resetForm();
     }
-    resetForm();
-  }, [selectedIntegration, surveys]);
+  }
 
   const showErrorMessageToast = (response: Awaited<ReturnType<typeof getSpreadsheetNameByIdAction>>) => {
     const errorMessage = getFormattedErrorMessage(response);
@@ -176,22 +178,24 @@ export const AddIntegrationModal = ({
         return;
       }
 
-      const spreadsheetName = spreadsheetNameResponse.data;
-      integrationData.spreadsheetId = spreadsheetId;
-      integrationData.spreadsheetName = spreadsheetName;
-      integrationData.surveyId = selectedSurvey.id;
-      integrationData.surveyName = selectedSurvey.name;
-      integrationData.elementIds = selectedElements;
-      integrationData.elements =
-        selectedElements.length === surveyElements.length
-          ? t("common.all_questions")
-          : t("common.selected_questions");
-      integrationData.createdAt = new Date();
-      integrationData.includeVariables = includeVariables;
-      integrationData.includeHiddenFields = includeHiddenFields;
-      integrationData.includeMetadata = includeMetadata;
-      integrationData.includeCreatedAt = includeCreatedAt;
-      integrationData.includeContactAttributes = includeContactAttributes;
+      const integrationData: TIntegrationGoogleSheetsConfigData = {
+        spreadsheetId,
+        spreadsheetName: spreadsheetNameResponse.data,
+        surveyId: selectedSurvey.id,
+        surveyName: selectedSurvey.name,
+        elementIds: selectedElements,
+        elements:
+          selectedElements.length === surveyElements.length
+            ? t("common.all_questions")
+            : t("common.selected_questions"),
+        // oxlint-disable-next-line react/purity -- runs on submit: handleSubmit(linkSheet) only wraps it during render
+        createdAt: new Date(),
+        includeVariables,
+        includeHiddenFields,
+        includeMetadata,
+        includeCreatedAt,
+        includeContactAttributes,
+      };
       if (selectedIntegration) {
         // update action
         googleSheetIntegrationData.config.data[selectedIntegration.index] = integrationData;
@@ -233,14 +237,6 @@ export const AddIntegrationModal = ({
   const setOpenWithStates = (isOpen: boolean) => {
     resetForm();
     setOpen(isOpen);
-  };
-
-  const resetForm = () => {
-    setSpreadsheetUrl("");
-    setIsLinkingSheet(false);
-    setSelectedSurvey(null);
-    setIncludeHiddenFields(false);
-    setIncludeMetadata(false);
   };
 
   const deleteLink = async () => {
@@ -304,7 +300,7 @@ export const AddIntegrationModal = ({
                     label={t("common.select_survey")}
                     items={surveys}
                     selectedItem={selectedSurvey}
-                    setSelectedItem={setSelectedSurvey}
+                    setSelectedItem={handleSurveySelect}
                     disabled={surveys.length === 0}
                     isItemDisabled={(survey: TSurvey) =>
                       isRestrictedSurveyPick(surveyVisibilityEnabled, survey, attachedSurveyIds)

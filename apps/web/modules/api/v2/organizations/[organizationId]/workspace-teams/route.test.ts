@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { TApiAuditLog } from "@/app/lib/api/with-api-logging";
 import type { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
-import { DELETE, POST, PUT } from "./route";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
+import { DELETE, GET, POST, PUT } from "./route";
 
 const {
   mockAuthenticatedApiClient,
@@ -159,5 +161,112 @@ describe.each(mutations)("$method /organizations/[organizationId]/workspace-team
     expect(mockCheckAuthenticationAndAccess).toHaveBeenCalled();
     expect(mutation.write).toHaveBeenCalled();
     expect(response.status).toBe(200);
+  });
+});
+
+type THandlerArgs = Parameters<Parameters<typeof authenticatedApiClient>[0]["handler"]>[0];
+
+// The audit-log tests below write a "read" permission, so they carry their own team row.
+const auditedTeam = { teamId, workspaceId, permission: "read" };
+const params = { params: Promise.resolve({ organizationId }) };
+const request = () => new Request(`http://localhost/api/v2/organizations/${organizationId}/workspace-teams`);
+
+let parsedInput: THandlerArgs["parsedInput"];
+let auditLog: TApiAuditLog;
+
+describe("/organizations/[organizationId]/workspace-teams", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    auditLog = {
+      action: "updated",
+      targetType: "auditedTeam",
+      userId: UNKNOWN_DATA,
+      targetId: UNKNOWN_DATA,
+      organizationId,
+      status: "failure",
+      userType: "api",
+      apiUrl: `http://localhost/api/v2/organizations/${organizationId}`,
+    };
+    mockHasOrganizationIdAndAccess.mockResolvedValue(true);
+    // The creator clears the user-management floor; the refusals are covered above.
+    mockGetApiKeyCreatorRole.mockResolvedValue("owner");
+    mockCanManageOrganizationUsers.mockReturnValue(true);
+    mockCheckAuthenticationAndAccess.mockResolvedValue({ ok: true, data: true });
+    mockAuthenticatedApiClient.mockImplementation(
+      async ({ handler }: Parameters<typeof authenticatedApiClient>[0]) =>
+        await handler({
+          request: request(),
+          auditLog,
+          authentication: {
+            type: "apiKey",
+            apiKeyId,
+            organizationId,
+            workspacePermissions: [],
+            organizationAccess: { accessControl: { read: true, write: true } },
+          },
+          parsedInput,
+        })
+    );
+    mockHandleApiError.mockImplementation((_request, error) => Response.json({ error }, { status: 400 }));
+    mockSuccessResponse.mockImplementation((body: unknown) => Response.json(body));
+  });
+
+  test("GET lists the organization's workspace teams with their legacy projectId", async () => {
+    parsedInput = {
+      query: { limit: 10, skip: 0, sortBy: "createdAt", order: "desc" },
+      params: { organizationId },
+    };
+    mockGetWorkspaceTeams.mockResolvedValue({
+      ok: true,
+      data: { data: [auditedTeam], meta: { total: 1 } },
+    });
+
+    const response = await GET(request(), params);
+
+    expect(mockHasOrganizationIdAndAccess).toHaveBeenCalledWith(organizationId, expect.anything(), "read");
+    expect(await response.json()).toEqual({
+      data: [{ ...auditedTeam, projectId: workspaceId }],
+      meta: { total: 1 },
+    });
+  });
+
+  test("POST creates a workspace team that does not exist yet", async () => {
+    parsedInput = { body: auditedTeam, params: { organizationId } };
+    mockGetWorkspaceTeams.mockResolvedValue({ ok: true, data: { data: [], meta: { total: 0 } } });
+    mockCreateWorkspaceTeam.mockResolvedValue({ ok: true, data: auditedTeam });
+
+    const response = await POST(request(), params);
+
+    expect(mockCreateWorkspaceTeam).toHaveBeenCalledWith(auditedTeam);
+    expect(auditLog).toMatchObject({ targetId: `${workspaceId}-${teamId}`, newObject: auditedTeam });
+    expect(await response.json()).toEqual({ data: { ...auditedTeam, projectId: workspaceId } });
+  });
+
+  test("PUT records the workspace team as it was before the update", async () => {
+    const before = { ...auditedTeam, permission: "readWrite" };
+    parsedInput = { body: auditedTeam, params: { organizationId } };
+    mockGetWorkspaceTeams.mockResolvedValue({ ok: true, data: { data: [before], meta: { total: 1 } } });
+    mockUpdateWorkspaceTeam.mockResolvedValue({ ok: true, data: auditedTeam });
+
+    await PUT(request(), params);
+
+    expect(mockUpdateWorkspaceTeam).toHaveBeenCalledWith(teamId, workspaceId, { permission: "read" });
+    expect(auditLog).toMatchObject({
+      targetId: `${workspaceId}-${teamId}`,
+      oldObject: before,
+      newObject: auditedTeam,
+    });
+  });
+
+  test("DELETE records the deleted workspace team, or null when it could not be read first", async () => {
+    parsedInput = { query: { teamId, workspaceId }, params: { organizationId } };
+    mockGetWorkspaceTeams.mockResolvedValue({ ok: true, data: { data: [], meta: { total: 0 } } });
+    mockDeleteWorkspaceTeam.mockResolvedValue({ ok: true, data: auditedTeam });
+
+    const response = await DELETE(request(), params);
+
+    expect(mockDeleteWorkspaceTeam).toHaveBeenCalledWith(teamId, workspaceId);
+    expect(auditLog).toMatchObject({ targetId: `${workspaceId}-${teamId}`, oldObject: null });
+    expect(await response.json()).toEqual({ data: { ...auditedTeam, projectId: workspaceId } });
   });
 });

@@ -71,7 +71,9 @@ const projectContent = (value: Record<string, unknown>) => {
  * @param obj - The object to redact.
  * @returns The object with the sensitive data redacted.
  */
-export const redactPII = (obj: any, seen: WeakSet<any> = new WeakSet()): any => {
+export function redactPII(obj: Record<string, unknown>): Record<string, unknown>;
+export function redactPII(obj: unknown, seen?: WeakSet<object>): unknown;
+export function redactPII(obj: unknown, seen: WeakSet<object> = new WeakSet()): unknown {
   if (obj instanceof Date) {
     return obj.toISOString();
   }
@@ -102,7 +104,7 @@ export const redactPII = (obj: any, seen: WeakSet<any> = new WeakSet()): any => 
     );
   }
   return obj;
-};
+}
 
 /**
  * Computes the difference between two objects and returns the new object with the changes.
@@ -110,7 +112,12 @@ export const redactPII = (obj: any, seen: WeakSet<any> = new WeakSet()): any => 
  * @param newObj - The new object.
  * @returns The difference between the two objects.
  */
-export const deepDiff = (oldObj: any, newObj: any): any => {
+export function deepDiff(
+  oldObj: Record<string, unknown>,
+  newObj: Record<string, unknown>
+): Record<string, unknown> | undefined;
+export function deepDiff(oldObj: unknown, newObj: unknown): unknown;
+export function deepDiff(oldObj: unknown, newObj: unknown): unknown {
   if (typeof oldObj !== "object" || typeof newObj !== "object" || oldObj === null || newObj === null) {
     if (JSON.stringify(oldObj) !== JSON.stringify(newObj)) {
       return newObj;
@@ -118,16 +125,18 @@ export const deepDiff = (oldObj: any, newObj: any): any => {
     return undefined;
   }
 
-  const diff: Record<string, any> = {};
-  const keys = new Set([...Object.keys(oldObj ?? {}), ...Object.keys(newObj ?? {})]);
+  const oldRecord = oldObj as Record<string, unknown>;
+  const newRecord = newObj as Record<string, unknown>;
+  const diff: Record<string, unknown> = {};
+  const keys = new Set([...Object.keys(oldRecord), ...Object.keys(newRecord)]);
   for (const key of keys) {
-    const valueDiff = deepDiff(oldObj?.[key], newObj?.[key]);
+    const valueDiff = deepDiff(oldRecord[key], newRecord[key]);
     if (valueDiff !== undefined) {
       diff[key] = valueDiff;
     }
   }
   return Object.keys(diff).length > 0 ? diff : undefined;
-};
+}
 
 /**
  * Sanitizes a URL for logging by redacting sensitive parameters.
