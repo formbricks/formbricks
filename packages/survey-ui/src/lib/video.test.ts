@@ -176,6 +176,12 @@ describe("convertToEmbedUrl", () => {
       expect(convertToEmbedUrl("not-a-url")).toBeUndefined();
       expect(convertToEmbedUrl("")).toBeUndefined();
     });
+
+    test("returns undefined when a supported URL has no video id", () => {
+      expect(convertToEmbedUrl("https://www.youtube.com/watch?v=")).toBeUndefined();
+      expect(convertToEmbedUrl("https://vimeo.com/novideoid")).toBeUndefined();
+      expect(convertToEmbedUrl("https://www.loom.com/share/")).toBeUndefined();
+    });
   });
 });
 
