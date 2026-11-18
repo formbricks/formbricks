@@ -31,8 +31,25 @@ import {
 export const useStepClipboard = () => {
   const { t } = useTranslation();
   const store = useStore();
-  const cut = useSetAtom(cutWorkflowStepAtom);
-  const copy = useSetAtom(copyWorkflowStepAtom);
+  const cutSteps = useSetAtom(cutWorkflowStepAtom);
+  const copySteps = useSetAtom(copyWorkflowStepAtom);
+
+  // Nothing on the canvas says where cut or copied steps go: the toast points at the `+` buttons,
+  // which offer "Paste here".
+  const cut = useCallback(
+    (nodeId: string) => {
+      const count = cutSteps(nodeId);
+      if (count > 0) toast.success(t("workspace.workflows.steps_cut_hint", { count }));
+    },
+    [cutSteps, t]
+  );
+  const copy = useCallback(
+    (nodeId: string) => {
+      const count = copySteps(nodeId);
+      if (count > 0) toast.success(t("workspace.workflows.steps_copied_hint", { count }));
+    },
+    [copySteps, t]
+  );
   const pasteSteps = useSetAtom(pasteWorkflowStepsAtom);
   const canPasteAt = useAtomValue(canPasteWorkflowStepsAtAtom);
 

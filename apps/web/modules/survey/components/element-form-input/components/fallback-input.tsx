@@ -17,6 +17,8 @@ interface FallbackInputProps {
   readonly open: boolean;
   readonly setOpen: (open: boolean) => void;
   readonly triggerButton?: ReactNode;
+  /** The recall item whose field takes focus on open (a clicked chip); else the newest one's. */
+  readonly focusItemId?: string;
 }
 
 export const FallbackInput = ({
@@ -27,6 +29,7 @@ export const FallbackInput = ({
   open,
   setOpen,
   triggerButton,
+  focusItemId,
 }: FallbackInputProps) => {
   const { t } = useTranslation();
   // The newest recall item's fallback, which is the one the user just inserted.
@@ -37,7 +40,14 @@ export const FallbackInput = ({
   };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    // Closing by clicking outside or Escape keeps what was typed: complete fallbacks are applied, as
+    // Save does, and an incomplete set stays in the fields for the next open.
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        if (!next && !containsEmptyFallback()) addFallback();
+        setOpen(next);
+      }}>
       <PopoverTrigger asChild>
         {open || !triggerButton ? <div className="z-10 h-0 w-full cursor-pointer" /> : triggerButton}
       </PopoverTrigger>
@@ -47,8 +57,12 @@ export const FallbackInput = ({
         align="start"
         side="bottom"
         sideOffset={4}
-        onInteractOutside={(e) => e.preventDefault()}
-        onOpenAutoFocus={(event) => focusOnOpen(event, lastInputRef.current)}>
+        onOpenAutoFocus={(event) =>
+          focusOnOpen(
+            event,
+            (focusItemId ? document.getElementById(`fallback-${focusItemId}`) : null) ?? lastInputRef.current
+          )
+        }>
         <p className="font-medium">{t("workspace.surveys.edit.add_fallback_placeholder")}</p>
 
         <div className="mt-2 space-y-3">

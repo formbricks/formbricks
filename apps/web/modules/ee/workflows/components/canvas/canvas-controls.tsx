@@ -8,6 +8,7 @@ import {
   type LucideIcon,
   MousePointerClickIcon,
   NetworkIcon,
+  ScanIcon,
   ZoomInIcon,
   ZoomOutIcon,
 } from "lucide-react";
@@ -30,6 +31,8 @@ interface CanvasControlsProps {
   /** Which way the canvas reads; the layout menu's tree icon turns to match. */
   direction: TWorkflowCanvasDirection;
   onAutoLayout: () => void;
+  /** Fits the whole flow into view. The canvas never does this on its own once it has opened. */
+  onFitView: () => void;
   onToggleDirection: () => void;
   onPanMode: () => void;
   onPointerMode: () => void;
@@ -53,6 +56,7 @@ export const CanvasControls = ({
   isPanMode,
   direction,
   onAutoLayout,
+  onFitView,
   onToggleDirection,
   onPanMode,
   onPointerMode,
@@ -75,6 +79,13 @@ export const CanvasControls = ({
       label: t("workspace.workflows.zoom_out"),
       variant: "outline",
       onClick: () => zoomOut(),
+    },
+    {
+      key: "fit-view",
+      Icon: ScanIcon,
+      label: t("workspace.workflows.fit_view"),
+      variant: "outline",
+      onClick: onFitView,
     },
     {
       key: "pan-mode",

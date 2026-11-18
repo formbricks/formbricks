@@ -1066,30 +1066,30 @@ export const cutWorkflowStepIdsAtom = atom((get) => {
   return new Set(clipboard?.mode === "cut" ? clipboard.stepIds : []);
 });
 
-/** Cut a step and everything after it; a previous cut that wasn't pasted is put back. */
-export const cutWorkflowStepAtom = atom(null, (get, set, nodeId: string) => {
+/**
+ * Cut a step and everything after it; a previous cut that wasn't pasted is put back. Returns how many
+ * steps are on the clipboard, 0 when nothing was cut.
+ */
+export const cutWorkflowStepAtom = atom(null, (get, set, nodeId: string): number => {
   const definition = get(workflowEditorAtom).definition;
   const workflowId = get(workflowAtom)?.id;
-  if (!definition || !workflowId || definition.trigger?.id === nodeId) return;
-  set(stepClipboardStateAtom, {
-    mode: "cut",
-    workflowId,
-    rootId: nodeId,
-    stepIds: getStepAndAfter(definition, nodeId),
-  });
+  if (!definition || !workflowId || definition.trigger?.id === nodeId) return 0;
+  const stepIds = getStepAndAfter(definition, nodeId);
+  set(stepClipboardStateAtom, { mode: "cut", workflowId, rootId: nodeId, stepIds });
+  return stepIds.length;
 });
 
-/** Copy a step and everything after it; a pending cut is put back. */
-export const copyWorkflowStepAtom = atom(null, (get, set, nodeId: string) => {
+/**
+ * Copy a step and everything after it; a pending cut is put back. Returns how many steps are on the
+ * clipboard, 0 when nothing was copied.
+ */
+export const copyWorkflowStepAtom = atom(null, (get, set, nodeId: string): number => {
   const definition = get(workflowEditorAtom).definition;
   const workflowId = get(workflowAtom)?.id;
-  if (!definition || !workflowId || definition.trigger?.id === nodeId) return;
-  set(stepClipboardStateAtom, {
-    mode: "copy",
-    workflowId,
-    rootId: nodeId,
-    ...captureStepCopy(definition, nodeId),
-  });
+  if (!definition || !workflowId || definition.trigger?.id === nodeId) return 0;
+  const captured = captureStepCopy(definition, nodeId);
+  set(stepClipboardStateAtom, { mode: "copy", workflowId, rootId: nodeId, ...captured });
+  return captured.nodes.length;
 });
 
 /** Puts a pending cut back: Escape, Undo. A copy stays on the clipboard. */

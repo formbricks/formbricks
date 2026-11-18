@@ -1,6 +1,6 @@
 "use client";
 
-import { CopyIcon, InboxIcon, LockIcon, PencilIcon } from "lucide-react";
+import { CopyIcon, InboxIcon, PencilIcon } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -496,9 +496,8 @@ const SetPayloadCard = ({
           }
         />
       </div>
-      <footer className="flex items-start gap-1.5 border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-        <LockIcon className="mt-px size-3.5 shrink-0" aria-hidden />
-        <span>{footer}</span>
+      <footer className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+        {footer}
       </footer>
     </section>
   );

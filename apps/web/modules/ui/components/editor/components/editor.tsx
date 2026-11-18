@@ -13,7 +13,7 @@ import { MarkdownShortcutPlugin } from "@lexical/react/LexicalMarkdownShortcutPl
 import { RichTextPlugin } from "@lexical/react/LexicalRichTextPlugin";
 import { HeadingNode, QuoteNode } from "@lexical/rich-text";
 import { TableCellNode, TableNode, TableRowNode } from "@lexical/table";
-import { type Dispatch, type SetStateAction, useEffect, useMemo, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { TSurvey, TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { FallbackInput } from "@/modules/survey/components/element-form-input/components/fallback-input";
@@ -28,6 +28,7 @@ import { EditorContentChecker } from "./editor-content-checker";
 import { LinkEditor } from "./link-editor";
 import { ListTabIndentationPlugin } from "./list-tab-indentation-plugin";
 import { RecallNode } from "./recall-node";
+import { ChipClickPlugin } from "./chip-click-plugin";
 import { RecallPlugin } from "./recall-plugin";
 import { type TEditorRecallSource, createSurveyRecallSource } from "./recall-source";
 import { TokenChipNode } from "./token-chip-node";
@@ -132,6 +133,12 @@ export const Editor = (props: TextEditorProps) => {
   const editable = props.editable ?? true;
   const editorContainerRef = useRef<HTMLDivElement>(null);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
+  // The recall chip that was clicked, so its field takes focus when the fallback popover opens.
+  const [fallbackFocusId, setFallbackFocusId] = useState<string | undefined>();
+  const openFallbackForChip = useCallback((recallId: string | undefined) => {
+    setFallbackFocusId(recallId);
+    setShowFallbackInput(true);
+  }, []);
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>([]);
   const [fallbacks, setFallbacks] = useState<{ [id: string]: string }>(props.fallbacks || {});
   const [addFallbackFunction, setAddFallbackFunction] = useState<(() => void) | null>(null);
@@ -213,6 +220,7 @@ export const Editor = (props: TextEditorProps) => {
               {props.tokenChips && props.tokenChips.length > 0 && (
                 <TokenChipPlugin chips={props.tokenChips} />
               )}
+              {recallSource && editable && <ChipClickPlugin onChipClick={openFallbackForChip} />}
               {recallSource && (
                 <RecallPlugin
                   recallSource={recallSource}
@@ -248,6 +256,7 @@ export const Editor = (props: TextEditorProps) => {
           addFallback={addFallbackFunction || props.addFallback || (() => {})}
           open={showFallbackInput}
           setOpen={setShowFallbackInput}
+          focusItemId={fallbackFocusId}
         />
       )}
     </>

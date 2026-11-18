@@ -56,6 +56,7 @@ import {
   isCanvasLockedAtom,
   isWorkflowInspectorCollapsedAtom,
   isWorkflowNodeConfigModalOpenAtom,
+  selectedWorkflowNodeIdAtom,
   isWorkflowReadOnlyAtom,
   isWorkflowSnapToCanvasEnabledAtom,
   openWorkflowNodeConfigModalAtom,
@@ -98,6 +99,8 @@ const WORKFLOW_CANVAS_MAX_ZOOM = 1.15;
 const INSPECTOR_RESIZE_SETTLE_MS = 170;
 // Near-instant pan: the refit should feel like part of the sidebar toggle, not a second animation.
 const INSPECTOR_REFIT_PAN_MS = INSPECTOR_RESIZE_SETTLE_MS / 4;
+// How close to the canvas edge a step's card may sit before opening it pans it into view.
+const REVEAL_MARGIN = 24;
 
 interface WorkflowCanvasProps {
   isEditable: boolean;
@@ -117,6 +120,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const direction = useAtomValue(workflowCanvasDirectionAtom);
   const isInspectorCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
   const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
+  const selectedNodeId = useAtomValue(selectedWorkflowNodeIdAtom);
   const toggleInspector = useSetAtom(toggleWorkflowInspectorAtom);
   const closeNodeConfig = useSetAtom(closeWorkflowNodeConfigModalAtom);
   const setHoveredEdgeId = useSetAtom(hoveredWorkflowEdgeIdAtom);
@@ -125,7 +129,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const setFlowNodes = useSetAtom(workflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const addTrigger = useSetAtom(addWorkflowTriggerAtom);
-  const { fitView } = useReactFlow();
+  const { fitView, getInternalNode, getViewport, setCenter } = useReactFlow();
   const isRunDrawerOpen = useAtomValue(editorRunDrawerAtom).isOpen;
   const canvasRef = useRef<HTMLDivElement>(null);
   // `isEditable` (canEditDefinition) is the API-side gate. The drag/pointer mode toggle is the
@@ -200,6 +204,10 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     );
   }, [definition, runHighlight]);
 
+  // The step whose panel is open. Its card is always the highlighted one, however the panel opened
+  // (a click, a new step, the URL), so the panel and the canvas never disagree.
+  const openNodeId = isNodeConfigOpen ? selectedNodeId : null;
+
   // Keep ReactFlow's nodes in sync with the projected definition while preserving the user's
   // current selection — recomputing from scratch would lose it on every definition edit.
   useEffect(() => {
@@ -208,10 +216,12 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
 
       return derivedFlowNodes.map((node) => ({
         ...node,
-        selected: currentNodesById.get(node.id)?.selected ?? node.selected,
+        selected: openNodeId
+          ? node.id === openNodeId
+          : (currentNodesById.get(node.id)?.selected ?? node.selected),
       }));
     });
-  }, [derivedFlowNodes, setFlowNodes]);
+  }, [derivedFlowNodes, openNodeId, setFlowNodes]);
 
   // Each If/else and Switch puts its fork's legs right above its branches' steps, from where the
   // canvas has them now, so a branch's line runs straight down even while its step is dragged.
@@ -265,26 +275,62 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     [fitView, isRunDrawerOpen]
   );
 
-  // Opening/closing the inspector resizes the canvas by the panel's width, which can push nodes behind the
-  // panel edge. Refit the VIEWPORT once the width transition settles — fitView only pans/zooms;
-  // node coordinates are untouched. Opening or closing the Test run drawer refits the same way.
+  // Brings a step into view at the user's zoom: only when part of its card is outside the canvas
+  // (behind the panel's edge, or a new step at the bottom), and only by panning.
+  const revealNode = useCallback(
+    (nodeId: string, duration: number) => {
+      const node = getInternalNode(nodeId);
+      const canvas = canvasRef.current?.getBoundingClientRect();
+      if (!node || !canvas) return;
+      const { x, y, zoom } = getViewport();
+      const width = node.measured.width ?? 0;
+      const height = node.measured.height ?? 0;
+      const { x: nodeX, y: nodeY } = node.internals.positionAbsolute;
+      const left = nodeX * zoom + x;
+      const top = nodeY * zoom + y;
+      const isInView =
+        left >= REVEAL_MARGIN &&
+        top >= REVEAL_MARGIN &&
+        left + width * zoom <= canvas.width - REVEAL_MARGIN &&
+        top + height * zoom <= canvas.height - REVEAL_MARGIN;
+      if (isInView) return;
+      void setCenter(nodeX + width / 2, nodeY + height / 2, { zoom, duration });
+    },
+    [getInternalNode, getViewport, setCenter]
+  );
+
+  // Opening a step (a click, a new step) or opening/closing the panel keeps the user's zoom and place
+  // (ENG review: every click re-fit the flow). Once the panel's width transition settles, the open
+  // step is panned into view if the panel or the canvas edge hides it.
   const isInspectorVisible = isNodeConfigOpen && !isInspectorCollapsed;
-  const previousLayoutRef = useRef({ isInspectorVisible, isRunDrawerOpen });
   useEffect(() => {
-    const previous = previousLayoutRef.current;
-    if (previous.isInspectorVisible === isInspectorVisible && previous.isRunDrawerOpen === isRunDrawerOpen) {
-      return;
-    }
-    previousLayoutRef.current = { isInspectorVisible, isRunDrawerOpen };
+    if (!openNodeId) return;
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Wait out the whole width transition: fitting mid-way measured a canvas still wider than it ends
-    // up, which cut off a wide flow once the inspector had finished opening.
+    const timeoutHandle = setTimeout(
+      () => revealNode(openNodeId, prefersReducedMotion ? 0 : INSPECTOR_REFIT_PAN_MS * 4),
+      INSPECTOR_RESIZE_SETTLE_MS
+    );
+    return () => clearTimeout(timeoutHandle);
+  }, [openNodeId, isInspectorVisible, revealNode]);
+
+  // Opening or closing the Test run drawer fits the flow into the part of the canvas it leaves
+  // visible, so the run's path can be read whole.
+  const previousRunDrawerOpenRef = useRef(isRunDrawerOpen);
+  useEffect(() => {
+    if (previousRunDrawerOpenRef.current === isRunDrawerOpen) return;
+    previousRunDrawerOpenRef.current = isRunDrawerOpen;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timeoutHandle = setTimeout(
       () => refitViewport(prefersReducedMotion ? 0 : INSPECTOR_REFIT_PAN_MS),
       INSPECTOR_RESIZE_SETTLE_MS
     );
     return () => clearTimeout(timeoutHandle);
-  }, [isInspectorVisible, isRunDrawerOpen, refitViewport]);
+  }, [isRunDrawerOpen, refitViewport]);
+
+  const handleFitView = useCallback(() => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    refitViewport(prefersReducedMotion ? 0 : 300);
+  }, [refitViewport]);
 
   const recenterAfterLayout = useCallback(() => {
     // Skip the animated recenter for users who ask for reduced motion (read at call time —
@@ -440,6 +486,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         isPanMode={isLocked}
         direction={direction}
         onAutoLayout={handleAutoLayout}
+        onFitView={handleFitView}
         onToggleDirection={handleToggleDirection}
         onPanMode={handlePanMode}
         onPointerMode={handlePointerMode}

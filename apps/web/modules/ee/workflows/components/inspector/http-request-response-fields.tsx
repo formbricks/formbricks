@@ -1,6 +1,6 @@
 "use client";
 
-import { LockIcon, PencilIcon } from "lucide-react";
+import { PencilIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -295,15 +295,12 @@ export const HttpResponseFieldsCard = ({
         </div>
       )}
       {expected ? (
-        <footer className="flex items-start gap-1.5 border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-          <LockIcon className="mt-px size-3.5 shrink-0" aria-hidden />
-          <span>
-            {editor.draft !== null && editor.parsed?.ok === true
-              ? t("workspace.workflows.webhook_payload_saving")
-              : t("workspace.workflows.webhook_expected_payload_owned", {
-                  time: relativeTime(expected.updatedAt),
-                })}
-          </span>
+        <footer className="border-t border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          {editor.draft !== null && editor.parsed?.ok === true
+            ? t("workspace.workflows.webhook_payload_saving")
+            : t("workspace.workflows.http_response_fields_owned", {
+                time: relativeTime(expected.updatedAt),
+              })}
         </footer>
       ) : null}
     </section>

@@ -15,6 +15,7 @@ import {
   isVariableEmailRecipient,
 } from "@formbricks/workflows";
 import { InspectorCard } from "@/modules/ee/workflows/components/inspector/inspector-card";
+import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspector/workflow-step-name-field";
 import { WorkflowEmailRecipientField } from "@/modules/ee/workflows/components/inspector/workflow-email-recipient-field";
 import { WorkflowEmailSurveyLinkSection } from "@/modules/ee/workflows/components/inspector/workflow-email-survey-link-section";
 import {
@@ -256,6 +257,7 @@ export const WorkflowEmailActionForm = ({
 
   return (
     <div className="flex flex-col gap-3">
+      <WorkflowStepNameField node={node} isEditable={isEditable} onChange={onChange} />
       {/* Who gets it and from whom, then what it says: one card per question. The rule for a payload
           recipient is the footer of the card it applies to. */}
       <InspectorCard

@@ -94,7 +94,9 @@ export const WorkflowEmailSurveyLinkSection = ({
           </Button>
         ) : null
       }>
-      <Select value={surveyLink?.surveyId} disabled={!isEditable} onValueChange={onPickSurvey}>
+      {/* "" rather than undefined: an undefined value turns the Select uncontrolled, so after Remove it
+          kept showing the survey and picking it again changed nothing. */}
+      <Select value={surveyLink?.surveyId ?? ""} disabled={!isEditable} onValueChange={onPickSurvey}>
         <SelectTrigger id="workflow-email-survey-link" className="bg-white">
           <SelectValue placeholder={t("workspace.workflows.email_survey_link_placeholder")} />
         </SelectTrigger>

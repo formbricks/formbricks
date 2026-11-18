@@ -5,7 +5,6 @@ import { useLexicalComposerContext } from "@lexical/react/LexicalComposerContext
 import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
-import { CLICK_COMMAND, COMMAND_PRIORITY_LOW } from "lexical";
 import { PencilIcon } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -13,6 +12,7 @@ import type { TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
 import { FallbackInput } from "@/modules/survey/components/element-form-input/components/fallback-input";
 import { $getOneLineText, $setOneLineText, registerOneLineEditor } from "../lib/one-line-editor";
+import { ChipClickPlugin } from "./chip-click-plugin";
 import { RecallNode } from "./recall-node";
 import { RecallPlugin } from "./recall-plugin";
 import type { TEditorRecallSource } from "./recall-source";
@@ -43,24 +43,6 @@ const SyncEditablePlugin = ({ editable }: Readonly<{ editable: boolean }>) => {
   useEffect(() => {
     if (editor.isEditable() !== editable) editor.setEditable(editable);
   }, [editor, editable]);
-  return null;
-};
-
-/** A click on a recall chip opens its fallback, the chip's only setting. */
-const ChipClickPlugin = ({ onChipClick }: Readonly<{ onChipClick: () => void }>) => {
-  const [editor] = useLexicalComposerContext();
-  useEffect(
-    () =>
-      editor.registerCommand(
-        CLICK_COMMAND,
-        (event) => {
-          if (event.target instanceof Element && event.target.closest(".recall-node")) onChipClick();
-          return false;
-        },
-        COMMAND_PRIORITY_LOW
-      ),
-    [editor, onChipClick]
-  );
   return null;
 };
 
@@ -120,7 +102,11 @@ export const RecallInput = ({
   const [addFallbackFunction, setAddFallbackFunction] = useState<(() => void) | null>(null);
   const [showFallbackInput, setShowFallbackInput] = useState(false);
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
-  const openFallbackInput = useCallback(() => setShowFallbackInput(true), []);
+  const [fallbackFocusId, setFallbackFocusId] = useState<string | undefined>();
+  const openFallbackInput = useCallback((recallId: string | undefined) => {
+    setFallbackFocusId(recallId);
+    setShowFallbackInput(true);
+  }, []);
 
   // Read once: LexicalComposer only uses its initial config at mount; `ValuePlugin` handles changes.
   const [initialConfig] = useState(() => ({
@@ -195,6 +181,7 @@ export const RecallInput = ({
             addFallback={addFallbackFunction ?? (() => {})}
             open={showFallbackInput}
             setOpen={setShowFallbackInput}
+            focusItemId={fallbackFocusId}
           />
         </div>
       )}

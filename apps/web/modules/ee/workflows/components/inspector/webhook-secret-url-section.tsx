@@ -108,11 +108,14 @@ export const WebhookSecretUrlSection = ({
       </div>
       {/* ph-no-capture keeps the URL out of PostHog session recordings. */}
       <div className="ph-no-capture px-3 pt-1.5 pb-2.5">
-        <input
+        {/* Wrapped, never cut off: the token is at the end of the URL, so a one-line field hid the
+            only part Show changes. */}
+        <textarea
           id={SECRET_URL_FIELD_ID}
           readOnly
+          rows={1}
           value={isRevealed ? url : maskWebhookSecretUrl(url)}
-          className="ph-no-capture w-full truncate rounded-md border-0 bg-slate-50 px-2 py-1.5 font-mono text-xs text-slate-700 focus:ring-2 focus:ring-slate-300 focus:outline-hidden"
+          className="ph-no-capture field-sizing-content block w-full resize-none rounded-md border-0 bg-slate-50 px-2 py-1.5 font-mono text-xs break-all text-slate-700 focus:ring-2 focus:ring-slate-300 focus:outline-hidden"
           onFocus={(event) => event.currentTarget.select()}
         />
       </div>
