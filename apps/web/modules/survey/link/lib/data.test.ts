@@ -58,6 +58,7 @@ describe("data", () => {
       workspaceId: "ws-1",
       createdBy: "user-1",
       status: "inProgress",
+      publishOn: null,
       welcomeCard: {
         enabled: true,
         timeToFinish: false,
@@ -163,11 +164,13 @@ describe("data", () => {
       );
       vi.mocked(transformPrismaSurvey).mockReturnValue(mockTransformedSurvey);
 
-      await getSurveyWithMetadata("survey-1");
+      const result = await getSurveyWithMetadata("survey-1");
 
       expect(vi.mocked(prisma.survey.findUnique).mock.calls[0][0].select).toEqual(
         expect.objectContaining({ publishOn: true })
       );
+      // A paused survey with no publish date must reach the renderer as `null`, not `undefined`.
+      expect(result.publishOn).toBeNull();
     });
 
     test("should throw ResourceNotFoundError when survey not found", async () => {
