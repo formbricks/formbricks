@@ -440,9 +440,10 @@ reviews:
           from the section. Name the specific file and line that is breaking, and ask the author to
           tick the box (restoring it if it was deleted).
 
-          FAIL if the checkbox, ticked or not, has no explanation under it: neither a filled-in `Why:`
-          line nor, for a ticked box, a breaking-changes table. A line still reading `Why: _one line
-          on why it is, or is not, breaking_` is the unedited placeholder and counts as none.
+          FAIL if the checkbox, ticked or not, has no explanation under it: no sentence saying why (the
+          template's `Why:` line, or plain prose in an older "## Breaking changes" section) and, for a
+          ticked box, no breaking-changes table either. A line still reading `Why: _one line on why it
+          is, or is not, breaking_` is the unedited placeholder and counts as none.
 
           FAIL if the checkbox is ticked but no change in the diff matches the list above.
 

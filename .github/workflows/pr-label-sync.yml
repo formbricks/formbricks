@@ -71,8 +71,8 @@ jobs:
               if (box) return box[1].toLowerCase() === "x";
               if (boxes.length > 0) {
                 core.warning(
-                  `Found ${boxes.length} checkbox(es) but none matching ${declaration} — the PR ` +
-                    "template and pr-label-sync.yml have drifted. Label left unchanged."
+                  `Found ${boxes.length} checkbox(es) in a section but none matching ${declaration} — ` +
+                    "the PR template and pr-label-sync.yml may have drifted."
                 );
               }
               return null; // no signal in this section
@@ -121,14 +121,16 @@ jobs:
               }
               // The first section that declares wins, so an answer under the new heading beats a
               // legacy box, and a legacy box still counts when the new section declares nothing.
-              const declared = sections
-                .map(([h, c]) => [h, rule.isActive(c)])
-                .find(([, a]) => a !== null);
-              if (declared === undefined) {
+              // Stop at that section, so an unused legacy section is never evaluated.
+              let active = null;
+              for (const [, content] of sections) {
+                active = rule.isActive(content);
+                if (active !== null) break;
+              }
+              if (active === null) {
                 core.info(`[${rule.label}] no checkbox under "## ${sections.map(([h]) => h).join('" or "## ')}"; leaving unchanged.`);
                 continue;
               }
-              const [, active] = declared;
               const has = current.has(rule.label);
               if (active && !has) {
                 await github.rest.issues.addLabels({
