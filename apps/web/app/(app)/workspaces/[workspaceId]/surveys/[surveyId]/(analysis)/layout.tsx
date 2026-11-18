@@ -16,11 +16,12 @@ export const generateMetadata = async (props: Props): Promise<Metadata> => {
   // The survey name and its response count are the survey owner's data: never put them in
   // the title unless the caller may actually read this survey through this workspace. The
   // page itself 404s in that case, but metadata resolves independently of it. This is a
-  // layout, so the fallback is also the title of the 404 rendered underneath it — a neutral
-  // word rather than an empty string, which makes the browser show the raw URL instead.
+  // layout, so the fallback is also the title of the 404 rendered underneath it — the same
+  // "Page not found" as every other 404, rather than an empty string, which makes the browser
+  // show the raw URL instead.
   // The guard covers the unauthenticated case too, so there is no session check here.
   if (!(await canReadSurveyInWorkspace(params.workspaceId, params.surveyId))) {
-    return { title: t("common.survey") };
+    return { title: t("common.page_not_found") };
   }
 
   const [survey, responseCount] = await Promise.all([
