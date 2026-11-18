@@ -730,7 +730,7 @@ describe("organization & workspace access on MCP calls", () => {
             expectedUpdatedAt: await grantVersion(setup),
           }),
         }),
-        { params: Promise.resolve({ clientId: setup.clientId }) } as never
+        { params: Promise.resolve({ clientId: setup.clientId }) }
       );
     } finally {
       spicedbWrites.failing = false;
@@ -1258,7 +1258,7 @@ describe("organization & workspace access on MCP calls", () => {
       session.userId = setup.userId;
       const response = await listGrants(new NextRequest("http://localhost:3000/api/internal/mcp-grants"), {
         params: Promise.resolve({}),
-      } as never);
+      });
       const { data } = (await response.json()) as {
         data: { clients: { clientId: string; access: TMcpGrantAccessSelection }[] };
       };

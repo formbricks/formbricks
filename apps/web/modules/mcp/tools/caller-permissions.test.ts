@@ -5,17 +5,16 @@ import { FULL_MCP_GRANT } from "./test-utils";
 
 const API_KEY_AUTH = { apiKeyId: "key_ro", organizationId: "org_1", workspacePermissions: [] };
 
-const authInfoWithScopes = (scopes: string[], authentication?: unknown): AuthInfo =>
-  ({
-    token: "tok",
-    clientId: "client",
-    scopes,
-    extra: {
-      requestId: "req",
-      grant: FULL_MCP_GRANT,
-      ...(authentication ? { formbricksAuthentication: authentication } : {}),
-    },
-  }) as unknown as AuthInfo;
+const authInfoWithScopes = (scopes: string[], authentication?: unknown): AuthInfo => ({
+  token: "tok",
+  clientId: "client",
+  scopes,
+  extra: {
+    requestId: "req",
+    grant: FULL_MCP_GRANT,
+    ...(authentication ? { formbricksAuthentication: authentication } : {}),
+  },
+});
 
 describe("mcpCallerHolds", () => {
   const RESPONSES_READ = { permission: "responses", level: "read" } as const;

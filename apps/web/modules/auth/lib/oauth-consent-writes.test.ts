@@ -32,9 +32,7 @@ const inner = {
   findOne: vi.fn(async () => row("consent-1")),
 };
 
-const adapter = recordOAuthConsentWrites(() => inner as unknown as DBAdapter<BetterAuthOptions>)(
-  {} as BetterAuthOptions
-);
+const adapter = recordOAuthConsentWrites(() => inner as unknown as DBAdapter<BetterAuthOptions>)({});
 
 beforeEach(() => {
   state.active = true;

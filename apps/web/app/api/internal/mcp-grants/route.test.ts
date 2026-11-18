@@ -37,7 +37,7 @@ const ACCESS_OPTIONS = {
 const list = () =>
   GET(new NextRequest("http://localhost/api/internal/mcp-grants", { headers: { "x-request-id": "req_1" } }), {
     params: Promise.resolve({}),
-  } as never);
+  });
 
 describe("GET /api/internal/mcp-grants", () => {
   beforeEach(() => {

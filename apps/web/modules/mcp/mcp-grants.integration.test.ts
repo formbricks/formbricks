@@ -422,14 +422,14 @@ describe("a connection's grant", () => {
       },
     });
 
-    const refused = await refresh(setup.clientId, before.refresh_token as string);
+    const refused = await refresh(setup.clientId, before.refresh_token);
     expect(refused.status, JSON.stringify(refused.body)).toBe(400);
     expect(refused.body).toMatchObject({ error: "invalid_grant" });
 
     // The new approval's own tokens, issued after the mark, keep refreshing.
     await waitPastRevocation();
     const after = await grant(setup.cookie, setup.clientId, EVERYTHING);
-    expect((await refresh(setup.clientId, after.refresh_token as string)).status).toBe(200);
+    expect((await refresh(setup.clientId, after.refresh_token)).status).toBe(200);
   });
 
   // Issue times count whole seconds and come from each pod's clock, so they can't tell an old token from a

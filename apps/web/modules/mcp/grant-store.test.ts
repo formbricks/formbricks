@@ -375,7 +375,7 @@ describe("writeMcpGrant", () => {
 describe("createMcpGrantIfMissing", () => {
   test("returns the grant it created, read in the caller's transaction", async () => {
     const tx = newTx();
-    tx.mcpGrant.createMany.mockResolvedValue({ count: 1 } as never);
+    tx.mcpGrant.createMany.mockResolvedValue({ count: 1 });
     tx.mcpGrant.findUniqueOrThrow.mockResolvedValue(row() as never);
 
     await expect(
@@ -389,7 +389,7 @@ describe("createMcpGrantIfMissing", () => {
 
   test("returns null and reads nothing when the connection already had a grant", async () => {
     const tx = newTx();
-    tx.mcpGrant.createMany.mockResolvedValue({ count: 0 } as never);
+    tx.mcpGrant.createMany.mockResolvedValue({ count: 0 });
 
     await expect(
       createMcpGrantIfMissing(tx, { userId: USER_ID, clientId: CLIENT_ID, permissions: {} })

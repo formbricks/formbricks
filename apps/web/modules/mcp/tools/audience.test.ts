@@ -71,7 +71,7 @@ const textOf = (result: TToolResult) => result.content?.map((block) => block.tex
 
 /** The search params an operation was called with, as `[name, value]` pairs in order. */
 const paramsOf = (operation: typeof listV3Contacts) => [
-  ...(vi.mocked(operation).mock.calls[0][0].searchParams as URLSearchParams).entries(),
+  ...vi.mocked(operation).mock.calls[0][0].searchParams.entries(),
 ];
 
 const TOOLS = {

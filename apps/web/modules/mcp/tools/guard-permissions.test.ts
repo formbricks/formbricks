@@ -59,7 +59,7 @@ function authInfoWithScopes(scopes: string[], requestId = "req_guard", authentic
       grant: FULL_MCP_GRANT,
       ...(authentication ? { formbricksAuthentication: authentication } : {}),
     },
-  } as unknown as AuthInfo;
+  };
 }
 
 const CONFIG = {
@@ -489,7 +489,7 @@ describe("registerMcpTool — the connection's grant", () => {
     const authInfo = {
       ...withGrant({ surveys: "read" }),
       scopes: [...EVERY_SCOPE, "charts:read", "feedbackRecords:read"],
-    } as AuthInfo;
+    };
 
     const result = await tools.get("read_chart")!.handler({}, { http: { authInfo } });
 
@@ -540,11 +540,11 @@ describe("registerMcpTool — the connection's grant", () => {
       },
       asHandler(handler)
     );
-    const split = { ...withGrant({ dashboards: "read" }), scopes: ["surveys:read"] } as AuthInfo;
+    const split = { ...withGrant({ dashboards: "read" }), scopes: ["surveys:read"] };
     const both = {
       ...withGrant({ surveys: "read", dashboards: "read" }),
       scopes: ["surveys:read"],
-    } as AuthInfo;
+    };
 
     const refused = await tools.get("discover")!.handler({}, { http: { authInfo: split } });
     await tools.get("discover")!.handler({}, { http: { authInfo: both } });

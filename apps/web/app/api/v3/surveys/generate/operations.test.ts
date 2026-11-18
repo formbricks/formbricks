@@ -39,7 +39,7 @@ beforeEach(() => {
   vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({
     workspaceId: WORKSPACE_ID,
     organizationId: "org_1",
-  } as Awaited<ReturnType<typeof requireV3WorkspaceAccess>>);
+  });
   vi.mocked(generateV3SurveyCreatePayloadFromPrompt).mockResolvedValue(result as never);
 });
 

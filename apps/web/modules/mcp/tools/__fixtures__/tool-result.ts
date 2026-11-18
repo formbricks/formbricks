@@ -2,7 +2,7 @@ import type { CallToolResult } from "@modelcontextprotocol/server";
 
 /** A successful tool result carrying `payload`, as `responseToMcpToolResult` builds one. For tests. */
 export const toolResult = (payload: unknown): CallToolResult => ({
-  structuredContent: payload as Record<string, unknown>,
+  structuredContent: payload,
   content: [{ type: "text", text: JSON.stringify(payload) }],
 });
 

@@ -102,7 +102,7 @@ const setUp = async (): Promise<TSetup> => {
 const listClients = async () => {
   const response = await GET(new NextRequest("http://localhost:3000/api/internal/mcp-grants"), {
     params: Promise.resolve({}),
-  } as never);
+  });
   return { status: response.status, body: await response.json() };
 };
 
@@ -124,7 +124,7 @@ const editGrant = async (clientId: string, permissions: Record<string, string>, 
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ permissions, expectedUpdatedAt }),
     }),
-    { params: Promise.resolve({ clientId }) } as never
+    { params: Promise.resolve({ clientId }) }
   );
   return { status: response.status, body: await response.json() };
 };

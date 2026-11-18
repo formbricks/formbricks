@@ -941,11 +941,11 @@ describe("withoutRespondentData", () => {
   });
 
   test("keeps logs it can't read as they are, and a queued run's missing logs", () => {
-    const result = withoutRespondentData(toolResult({ data: { logs: ["odd"], data: { a: 1 } } }) as never);
+    const result = withoutRespondentData(toolResult({ data: { logs: ["odd"], data: { a: 1 } } }));
     expect(result.structuredContent).toEqual({
       data: { logs: ["odd"], data: null, triggerPayload: null, error: null },
     });
-    const queued = withoutRespondentData(toolResult({ data: { triggerPayload: { a: 1 } } }) as never);
+    const queued = withoutRespondentData(toolResult({ data: { triggerPayload: { a: 1 } } }));
     expect(queued.structuredContent).toEqual({
       data: { triggerPayload: null, data: null, logs: undefined, error: null },
     });

@@ -71,7 +71,7 @@ const edit = (body: Record<string, unknown>, clientId = CLIENT_ID) =>
       headers: { "x-request-id": "req_1", "content-type": "application/json" },
       body: JSON.stringify({ expectedUpdatedAt: OPENED_AT, ...body }),
     }),
-    { params: Promise.resolve({ clientId }) } as never
+    { params: Promise.resolve({ clientId }) }
   );
 
 describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
@@ -333,7 +333,7 @@ const revoke = (clientId = CLIENT_ID) =>
       method: "DELETE",
       headers: { "x-request-id": "req_1" },
     }),
-    { params: Promise.resolve({ clientId }) } as never
+    { params: Promise.resolve({ clientId }) }
   );
 
 describe("DELETE /api/internal/mcp-grants/{clientId}", () => {

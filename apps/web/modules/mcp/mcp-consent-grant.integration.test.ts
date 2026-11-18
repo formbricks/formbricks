@@ -320,7 +320,7 @@ describe("Allow on the consent screen", () => {
 
     expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
     expect(await prisma.oauthConsent.count({ where: { userId: setup.userId } })).toBe(1);
-    const refreshed = await refresh(setup.clientId, tokens.refresh_token as string);
+    const refreshed = await refresh(setup.clientId, tokens.refresh_token);
     expect(refreshed.status, JSON.stringify(refreshed.body)).toBe(200);
   });
 

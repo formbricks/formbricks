@@ -211,7 +211,7 @@ describe("a skipConsent client", () => {
 
     const listed = await listGrants(new NextRequest("http://localhost:3000/api/internal/mcp-grants"), {
       params: Promise.resolve({}),
-    } as never);
+    });
     const { data } = (await listed.json()) as { data: { clients: { clientId: string; access: unknown }[] } };
     expect(data.clients).toEqual([
       expect.objectContaining({ clientId: setup.clientId, access: { access: "all" } }),
@@ -221,7 +221,7 @@ describe("a skipConsent client", () => {
       new NextRequest(`http://localhost:3000/api/internal/mcp-grants/${setup.clientId}`, {
         method: "DELETE",
       }),
-      { params: Promise.resolve({ clientId: setup.clientId }) } as never
+      { params: Promise.resolve({ clientId: setup.clientId }) }
     );
     expect(revoked.status).toBe(200);
 
