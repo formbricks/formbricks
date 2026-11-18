@@ -50,6 +50,15 @@ describe("redactPII", () => {
     const input = { email: "test@example.com", name: "John", foo: "bar" };
     expect(redactPII(input)).toEqual({ email: "********", name: "********", foo: "bar" });
   });
+  test("redacts API key hashes", () => {
+    const input = { id: "k1", hashedKey: "$2a$12$x", lookupHash: "abc123", label: "CI" };
+    expect(redactPII(input)).toEqual({
+      id: "k1",
+      hashedKey: "********",
+      lookupHash: "********",
+      label: "CI",
+    });
+  });
   test("redacts nested sensitive keys", () => {
     const input = { user: { password: "secret", profile: { address: "123 St" } } };
     expect(redactPII(input)).toEqual({ user: { password: "********", profile: { address: "********" } } });

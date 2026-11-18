@@ -2,7 +2,7 @@ import "server-only";
 import { randomBytes } from "node:crypto";
 import { cache as reactCache } from "react";
 import { prisma } from "@formbricks/database";
-import { ApiKey, ApiKeyPermission, Prisma } from "@formbricks/database/prisma";
+import { ApiKeyPermission, Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { TOrganizationAccess } from "@formbricks/types/api-key";
 import { ZId } from "@formbricks/types/common";
@@ -20,6 +20,24 @@ import {
   ZApiKeyCreateInput,
 } from "@/modules/organization/settings/api-keys/types/api-keys";
 
+/**
+ * The only shape of an API key that may leave the server (server-action results, page props, audit
+ * objects). `hashedKey` and `lookupHash` are deliberately absent: neither has a reason to reach a
+ * browser or the audit log (ENG-7312). Every read that returns a key to a caller uses this select.
+ */
+const apiKeyClientSelect = {
+  id: true,
+  label: true,
+  createdAt: true,
+  organizationAccess: true,
+  apiKeyWorkspaces: {
+    select: {
+      permission: true,
+      workspaceId: true,
+    },
+  },
+} satisfies Prisma.ApiKeySelect;
+
 export const getApiKeysWithEnvironmentPermissions = reactCache(
   async (organizationId: string): Promise<TApiKeyWithEnvironmentPermission[]> => {
     validateInputs([organizationId, ZId]);
@@ -29,18 +47,7 @@ export const getApiKeysWithEnvironmentPermissions = reactCache(
         where: {
           organizationId,
         },
-        select: {
-          id: true,
-          label: true,
-          createdAt: true,
-          organizationAccess: true,
-          apiKeyWorkspaces: {
-            select: {
-              permission: true,
-              workspaceId: true,
-            },
-          },
-        },
+        select: apiKeyClientSelect,
       });
       return apiKeys;
     } catch (error) {
@@ -130,7 +137,7 @@ export const getApiKeyWithPermissions = reactCache(
   }
 );
 
-export const deleteApiKey = async (id: string): Promise<ApiKey | null> => {
+export const deleteApiKey = async (id: string): Promise<TApiKeyWithEnvironmentPermission | null> => {
   validateInputs([id, ZId]);
 
   try {
@@ -138,6 +145,7 @@ export const deleteApiKey = async (id: string): Promise<ApiKey | null> => {
       where: {
         id: id,
       },
+      select: apiKeyClientSelect,
     });
 
     await runPostCommitProjection("api_key_delete_relationship_reconciliation", () =>
@@ -215,9 +223,7 @@ export const createApiKey = async (
             }
           : {}),
       },
-      include: {
-        apiKeyWorkspaces: true,
-      },
+      select: apiKeyClientSelect,
     });
 
     await runPostCommitProjection("api_key_create_relationship_reconciliation", () =>
@@ -234,7 +240,10 @@ export const createApiKey = async (
   }
 };
 
-export const updateApiKey = async (apiKeyId: string, data: TApiKeyUpdateInput): Promise<ApiKey | null> => {
+export const updateApiKey = async (
+  apiKeyId: string,
+  data: TApiKeyUpdateInput
+): Promise<TApiKeyWithEnvironmentPermission | null> => {
   try {
     const updatedApiKey = await prisma.apiKey.update({
       where: {
@@ -243,6 +252,7 @@ export const updateApiKey = async (apiKeyId: string, data: TApiKeyUpdateInput): 
       data: {
         label: data.label,
       },
+      select: apiKeyClientSelect,
     });
 
     return updatedApiKey;

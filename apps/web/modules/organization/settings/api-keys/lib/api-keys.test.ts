@@ -108,6 +108,16 @@ vi.mock("@/lib/crypto", () => ({
   ),
 }));
 
+// Spelled out on purpose: every API-key read that leaves the server must carry exactly these fields and
+// never `hashedKey` / `lookupHash` (ENG-7312).
+const expectedClientSelect = {
+  id: true,
+  label: true,
+  createdAt: true,
+  organizationAccess: true,
+  apiKeyWorkspaces: { select: { permission: true, workspaceId: true } },
+};
+
 describe("API Key Management", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -399,6 +409,7 @@ describe("API Key Management", () => {
         where: {
           id: mockApiKey.id,
         },
+        select: expectedClientSelect,
       });
       expect(runPostCommitProjection).toHaveBeenCalledWith(
         "api_key_delete_relationship_reconciliation",
@@ -474,9 +485,7 @@ describe("API Key Management", () => {
           lookupHash: "sha256LookupHashValue", // SHA-256 lookup hash
           createdBy: "user123",
         }),
-        include: {
-          apiKeyWorkspaces: true,
-        },
+        select: expectedClientSelect,
       });
       expect(runPostCommitProjection).toHaveBeenCalledWith(
         "api_key_create_relationship_reconciliation",
@@ -572,7 +581,11 @@ describe("API Key Management", () => {
       const result = await updateApiKey(mockApiKey.id, { label: "Updated API Key" });
 
       expect(result).toEqual(updatedApiKey);
-      expect(prisma.apiKey.update).toHaveBeenCalled();
+      expect(prisma.apiKey.update).toHaveBeenCalledWith({
+        where: { id: mockApiKey.id },
+        data: { label: "Updated API Key" },
+        select: expectedClientSelect,
+      });
       expect(reconcileApiKeyRelationships).not.toHaveBeenCalled();
     });
 

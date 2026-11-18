@@ -21,6 +21,7 @@ const SENSITIVE_KEYS = new Set([
   "address",
   "phone",
   "hashedkey",
+  "lookuphash",
   "apikey",
   "createdby",
   "lastusedat",

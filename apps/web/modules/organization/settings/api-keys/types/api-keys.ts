@@ -32,10 +32,6 @@ export const ZApiKeyUpdateInput = z.object({
 
 export type TApiKeyUpdateInput = z.infer<typeof ZApiKeyUpdateInput>;
 
-export interface TApiKey extends ApiKey {
-  apiKey?: string;
-}
-
 export const OrganizationWorkspace = z.object({
   id: z.string(),
   name: z.string(),
