@@ -11,8 +11,8 @@ import { getSurveySummary } from "./summary/lib/surveySummary";
 
 const ZGetResponsesAction = z.object({
   surveyId: ZId,
-  limit: z.number().optional(),
-  offset: z.number().optional(),
+  limit: z.int().min(1).max(100).optional(),
+  offset: z.int().nonnegative().optional(),
   filterCriteria: ZResponseFilterCriteria.optional(),
 });
 

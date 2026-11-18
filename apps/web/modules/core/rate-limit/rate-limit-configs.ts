@@ -191,6 +191,8 @@ export const rateLimitConfigs = {
       namespace: "action:two-factor-manage",
       failClosed: true,
     }, // 10 per hour per user
+    webhookTest: { interval: 60, allowedPerInterval: 10, namespace: "action:webhook-test" }, // 10 per minute per user — each call makes the server send a signed request to an external URL
+    heicConvert: { interval: 60, allowedPerInterval: 30, namespace: "action:heic-convert" }, // 30 per minute per user — CPU-bound decode of up to 2 MB, one call per selected HEIC file; its own budget so it never spends the upload route's
     licenseRecheck: { interval: 60, allowedPerInterval: 5, namespace: "action:license-recheck" }, // 5 per minute
     unsplash: { interval: 60, allowedPerInterval: 30, namespace: "action:unsplash" }, // 30 per minute per user — bounds one account exhausting the instance-wide UNSPLASH_ACCESS_KEY quota
     inviteMember: {
