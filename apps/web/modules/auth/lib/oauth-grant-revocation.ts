@@ -13,7 +13,11 @@ import {
   getMcpGrantPermissionsForScopes,
   isMcpGrantEmpty,
 } from "@/modules/mcp/grant";
-import { queueMcpGrantAudit, queueMcpGrantDeletionsAudit } from "@/modules/mcp/grant-audit";
+import {
+  type TMcpGrantAuditRecord,
+  prepareMcpGrantAudits,
+  queueMcpGrantAudits,
+} from "@/modules/mcp/grant-audit";
 import {
   MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS,
   type TStoredMcpGrant,
@@ -190,13 +194,12 @@ export const revokeTokensBeyondConsentAfterHandler = async (ctx: AuthHookContext
   if (ended.status !== "settled") return refuseConsentRequest(ended, change, ids);
 
   ids.clientId = ended.clientId;
-  const { savedGrant, endedGrants, refreshTokensDeleted, accessTokensRevoked } = ended;
-  if (savedGrant) await applySavedGrant(userId, savedGrant);
-  if (endedGrants.length > 0) {
-    // As Revoke does once its delete has committed: the relationships go, best-effort, and it is audited.
-    await removeDeletedMcpGrants(endedGrants);
-    await queueMcpGrantDeletionsAudit({ actorUserId: userId, grants: endedGrants });
-  }
+  const { savedGrant, endedGrants, grantAudits, refreshTokensDeleted, accessTokensRevoked } = ended;
+  // A saved grant is projected now, so it applies on the client's first call rather than when the outbox
+  // delivers (ENG-7153); an ended one's relationships go, best-effort, as Revoke's do after its commit.
+  if (savedGrant) await projectMcpGrants([savedGrant.after.id]);
+  if (endedGrants.length > 0) await removeDeletedMcpGrants(endedGrants);
+  await queueMcpGrantAudits({ userId, userType: "user" }, grantAudits);
   if (refreshTokensDeleted + accessTokensRevoked === 0) return;
   logger.info(
     { ...ids, refreshTokensDeleted, accessTokensRevoked },
@@ -258,21 +261,30 @@ export type TSettledConsent =
       savedGrant: TSavedMcpGrant | null;
       /** The grant an approval that asked for no MCP scope ended: removed and audited after the commit. */
       endedGrants: TStoredMcpGrant[];
+      /** The saved or ended grant's audit entries, prepared in the transaction: queued after the commit. */
+      grantAudits: TMcpGrantAuditRecord[];
     } & TTokensBeyondConsent);
 
 /**
- * Projects a grant Allow saved, so it applies on the client's first call rather than when the outbox
- * delivers (ENG-7153), and audits it.
+ * The audit entries of what an approval saved or ended, read in its transaction, so they name the
+ * organizations the grant reached as it changed, as Edit and Revoke do.
  */
-const applySavedGrant = async (userId: string, savedGrant: TSavedMcpGrant): Promise<void> => {
-  await projectMcpGrants([savedGrant.after.id]);
-  await queueMcpGrantAudit({
-    action: savedGrant.before ? "updated" : "created",
-    actorUserId: userId,
-    before: savedGrant.before,
-    after: savedGrant.after,
-  });
-};
+const prepareApprovalAudits = (
+  tx: Prisma.TransactionClient,
+  { savedGrant, endedGrants }: { savedGrant: TSavedMcpGrant | null; endedGrants: TStoredMcpGrant[] }
+): Promise<TMcpGrantAuditRecord[]> =>
+  prepareMcpGrantAudits(tx, [
+    ...(savedGrant
+      ? [
+          {
+            action: savedGrant.before ? ("updated" as const) : ("created" as const),
+            before: savedGrant.before,
+            after: savedGrant.after,
+          },
+        ]
+      : []),
+    ...endedGrants.map((before) => ({ action: "deleted" as const, before, after: null })),
+  ]);
 
 /**
  * The consent hook's transaction. The workspaces SpiceDB lets the user select are looked up first, before
@@ -319,12 +331,14 @@ const settleChangedConsent = async (
         return refuseConsent(tx, { userId, clientId, change }, { status: "beyond_scopes" });
       }
       await foldDuplicateConsents(tx, userId, consent);
+      const saved = ownsDecision
+        ? await saveApprovalGrant(tx, { userId, clientId, grant, permissions })
+        : { savedGrant: null, endedGrants: [] };
       return {
         status: "settled",
         clientId,
-        ...(ownsDecision
-          ? await saveApprovalGrant(tx, { userId, clientId, grant, permissions })
-          : { savedGrant: null, endedGrants: [] }),
+        ...saved,
+        grantAudits: await prepareApprovalAudits(tx, saved),
         ...(await endTokensBeyondScopes(tx, { userId, clientId, consentedScopes })),
       };
     },

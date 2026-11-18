@@ -197,33 +197,6 @@ export const queueMcpGrantAudit = async ({
   }
 };
 
-/**
- * Audits the grants one revocation deleted, by the signed-in user who made it, once it has committed: one
- * {@link prepareMcpGrantAudits} pass over all of them, so a Revoke that ended many grants costs its two
- * reads once rather than per grant. Never throws.
- */
-export const queueMcpGrantDeletionsAudit = async ({
-  actorUserId,
-  grants,
-}: {
-  actorUserId: string;
-  grants: ReadonlyArray<TStoredMcpGrant>;
-}): Promise<void> => {
-  if (grants.length === 0) return;
-  try {
-    const records = await prepareMcpGrantAudits(
-      prisma,
-      grants.map((before) => ({ action: "deleted" as const, before, after: null }))
-    );
-    await queueMcpGrantAudits({ userId: actorUserId, userType: "user" }, records);
-  } catch (error) {
-    logger.error(
-      { err: loggableError(error), grantIds: grants.map(({ id }) => id) },
-      "Failed to queue MCP grant audit events"
-    );
-  }
-};
-
 /** What Revoke ended for a client, as `revokeMcpClient` counts it. */
 export type TMcpClientRevocation = {
   consentsDeleted: number;

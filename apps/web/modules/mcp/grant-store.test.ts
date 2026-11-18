@@ -16,7 +16,6 @@ import {
   queueMcpClientRevocationAudit,
   queueMcpGrantAudit,
   queueMcpGrantAudits,
-  queueMcpGrantDeletionsAudit,
 } from "./grant-audit";
 import {
   type TStoredMcpGrant,
@@ -758,40 +757,3 @@ describe("queueMcpGrantAudit", () => {
 });
 
 // One pass over every grant a Revoke ended (R10): the lookups run once, not once per grant.
-describe("queueMcpGrantDeletionsAudit", () => {
-  beforeEach(() => {
-    vi.mocked(queueAuditEventBackground).mockReset().mockResolvedValue(undefined);
-  });
-
-  test("reads the organizations once for all the grants, and files one entry per grant and organization", async () => {
-    prisma.membership.findMany.mockResolvedValue([{ userId: USER_ID, organizationId: "org-1" }] as never);
-
-    await queueMcpGrantDeletionsAudit({
-      actorUserId: USER_ID,
-      grants: [stored({ access: "all" }), stored({ id: "grant-2", access: "all" })],
-    });
-
-    expect(prisma.membership.findMany).toHaveBeenCalledTimes(1);
-    expect(
-      vi.mocked(queueAuditEventBackground).mock.calls.map(([event]) => [event.targetId, event.action])
-    ).toEqual([
-      [GRANT_ID, "deleted"],
-      ["grant-2", "deleted"],
-    ]);
-  });
-
-  test("does nothing for no grants, and never throws when the read fails", async () => {
-    await queueMcpGrantDeletionsAudit({ actorUserId: USER_ID, grants: [] });
-    expect(prisma.membership.findMany).not.toHaveBeenCalled();
-
-    vi.mocked(logger.error).mockClear();
-    prisma.membership.findMany.mockRejectedValue(new Error("db down"));
-    await expect(
-      queueMcpGrantDeletionsAudit({ actorUserId: USER_ID, grants: [stored({ access: "all" })] })
-    ).resolves.toBeUndefined();
-    expect(logger.error).toHaveBeenCalledWith(
-      expect.objectContaining({ grantIds: [GRANT_ID] }),
-      "Failed to queue MCP grant audit events"
-    );
-  });
-});

@@ -54,6 +54,9 @@ const mocks = vi.hoisted(() => ({
   /** The grant rows a lock on `McpGrant` finds; `tx.mcpGrant.findMany` returns what a delete reads. */
   grantRows: [] as Record<string, unknown>[],
   tx: {
+    // Where a grant's audit entries are filed, read in the transaction (the user's organizations); none here.
+    membership: { findMany: async () => [] },
+    workspace: { findMany: async () => [] },
     oauthConsent: { findFirst: vi.fn(), deleteMany: vi.fn(), update: vi.fn() },
     oauthClient: { findUnique: vi.fn() },
     oauthRefreshToken: { updateMany: vi.fn() },
