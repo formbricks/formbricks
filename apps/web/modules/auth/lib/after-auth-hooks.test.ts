@@ -5,6 +5,7 @@ import {
 } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { runAfterAuthHooks } from "./after-auth-hooks";
 import { auditFailedAuthAfter } from "./better-auth-observability";
+import { settleSignInBudgetAfterHandler } from "./better-auth-sign-in-budget";
 import { twoFactorBackfillAfterHandler } from "./better-auth-two-factor-backfill";
 import { verificationAutoSignInAfterHandler } from "./better-auth-verification-autosignin";
 import {
@@ -17,6 +18,7 @@ vi.mock("@/modules/ee/sso/lib/better-auth-hooks", () => ({
   blockedSignupDomainRedirectAfterHandler: vi.fn(),
 }));
 vi.mock("./better-auth-observability", () => ({ auditFailedAuthAfter: vi.fn() }));
+vi.mock("./better-auth-sign-in-budget", () => ({ settleSignInBudgetAfterHandler: vi.fn() }));
 vi.mock("./better-auth-two-factor-backfill", () => ({ twoFactorBackfillAfterHandler: vi.fn() }));
 vi.mock("./better-auth-verification-autosignin", () => ({
   verificationAutoSignInAfterHandler: vi.fn(),
@@ -34,6 +36,9 @@ describe("runAfterAuthHooks", () => {
     });
     vi.mocked(auditFailedAuthAfter).mockImplementation(async () => {
       calls.push("audit");
+    });
+    vi.mocked(settleSignInBudgetAfterHandler).mockImplementation(async () => {
+      calls.push("sign-in-budget");
     });
     vi.mocked(twoFactorBackfillAfterHandler).mockImplementation(async () => {
       calls.push("two-factor-backfill");
@@ -67,6 +72,7 @@ describe("runAfterAuthHooks", () => {
     expect(calls).toEqual([
       "recovery",
       "audit",
+      "sign-in-budget",
       "two-factor-backfill",
       "verification-auto-sign-in",
       "oauth-refresh-consent",

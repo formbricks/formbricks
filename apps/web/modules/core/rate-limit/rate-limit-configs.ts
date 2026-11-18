@@ -7,7 +7,16 @@
 export const rateLimitConfigs = {
   // Authentication endpoints - stricter limits for security
   auth: {
-    login: { interval: 900, allowedPerInterval: 10, namespace: "auth:login" }, // 10 per 15 minutes
+    // Wrong passwords per account (SEC-18), keyed on the hashed address and charged only on a failure, so a
+    // correct sign-in never spends it. The per-IP limit is Better Auth's own `/sign-in/email` rule. 10 is far
+    // beyond a person's typos but ends a guess run spread over many IPs; the 15-minute window is also the
+    // longest a stranger who trips it can lock the owner out of password sign-in (SSO and reset stay open).
+    loginFailuresPerAccount: {
+      interval: 900,
+      allowedPerInterval: 10,
+      namespace: "auth:login:account",
+      failClosed: true,
+    }, // 10 failures per 15 minutes
     signup: { interval: 3600, allowedPerInterval: 30, namespace: "auth:signup", failClosed: true }, // 30 per hour
     forgotPassword: { interval: 3600, allowedPerInterval: 5, namespace: "auth:forgot", failClosed: true }, // 5 per hour
     // Mail a single account can receive from forgot-password (reset link or SSO hint), keyed by user id, so
@@ -148,12 +157,35 @@ export const rateLimitConfigs = {
       namespace: "action:send-link-survey-email",
       failClosed: true,
     }, // 10 per hour
+    // Wrong PINs per survey, whatever IP they come from (ENG-7095). A PIN is 4 characters, so the per-IP
+    // limit below lets a proxy pool exhaust it in minutes. Charged on a wrong guess only; a right one is
+    // refunded, so respondents never spend it. 20 per 15 minutes caps a guess run at 1,920 a day, about five
+    // days for all 10,000 values. The cost is that someone who knows the survey id can keep the PIN screen
+    // refusing everyone for the rest of a window by spending the budget: the PIN gate holds, availability of
+    // that one gate does not. The budget is shared by every respondent, so a large audience typing 20 wrong
+    // PINs in one window locks the right ones out too until it passes. The window is kept short for that reason.
+    validateSurveyPinFailuresPerSurvey: {
+      interval: 900,
+      allowedPerInterval: 20,
+      namespace: "action:validate-survey-pin:survey",
+      failClosed: true,
+    }, // 20 failures per 15 minutes per survey
     validateSurveyPin: {
       interval: 60,
       allowedPerInterval: 10,
       namespace: "action:validate-survey-pin",
       failClosed: true,
     }, // 10 per minute — prevents brute-force PIN guessing
+    // Setup, enable and disable of 2FA each check a password or a code, so without a limit a session holder
+    // had an unthrottled password oracle and unlimited TOTP guesses (SEC-18). One budget per user covers all
+    // three. A normal pass is two or three calls; 10 an hour leaves room for typos, and a 6-digit code at
+    // 10 guesses an hour is out of reach. Only the account's own session can spend it.
+    twoFactorManage: {
+      interval: 3600,
+      allowedPerInterval: 10,
+      namespace: "action:two-factor-manage",
+      failClosed: true,
+    }, // 10 per hour per user
     licenseRecheck: { interval: 60, allowedPerInterval: 5, namespace: "action:license-recheck" }, // 5 per minute
     unsplash: { interval: 60, allowedPerInterval: 30, namespace: "action:unsplash" }, // 30 per minute per user — bounds one account exhausting the instance-wide UNSPLASH_ACCESS_KEY quota
     inviteMember: {

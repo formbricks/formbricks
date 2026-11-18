@@ -38,6 +38,7 @@ import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
 import { lastActivePlugin, recordActivityOnSessionUpdate } from "./better-auth-last-active";
 import { auditPasswordReset, betterAuthLogger, signInAuditPlugin } from "./better-auth-observability";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
+import { signInBudgetBeforeHandler } from "./better-auth-sign-in-budget";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-oauth-consent";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
@@ -411,6 +412,9 @@ export const auth = betterAuth({
   // recovery rather than a credential failure, so skipping the audit is correct.
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      // SEC-18: refuse a password sign-in once the account's wrong-password budget is spent. First, so a
+      // locked account costs no work and no later gate sees the request. See better-auth-sign-in-budget.ts.
+      await signInBudgetBeforeHandler(ctx);
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
       // ENG-2105: reject password-reset requests at the native Better Auth layer when the operator
