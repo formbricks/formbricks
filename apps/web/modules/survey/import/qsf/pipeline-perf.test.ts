@@ -36,7 +36,8 @@ const seen = vi.hoisted(() => ({
   /** This process's CPU time at the last yield, and the most it spent between two yields. */
   cpuAtLastYield: 0,
   longestStretchMs: 0,
-  languageCodeLookups: 0,
+  /** Every raw code handed to the language-code normalizer. */
+  languageCodeInputs: [] as string[],
   longestPipedScan: 0,
   /** The last sanitized texts, which the plan and the assembly copy from. */
   texts: null as Parameters<typeof import("./fit-draft").fitQsfSurveyToCreateLimit>[1] | null,
@@ -67,7 +68,7 @@ vi.mock("./language-codes", async (importOriginal) => {
   return {
     ...original,
     normalizeQualtricsLanguageCode: (raw: string) => {
-      seen.languageCodeLookups += 1;
+      seen.languageCodeInputs.push(raw);
       return original.normalizeQualtricsLanguageCode(raw);
     },
   };
@@ -125,7 +126,7 @@ vi.mock("./assemble", async (importOriginal) => {
 beforeEach(() => {
   vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
   seen.yields = 0;
-  seen.languageCodeLookups = 0;
+  seen.languageCodeInputs = [];
   seen.longestPipedScan = 0;
   seen.texts = null;
   seen.stages = [];
@@ -178,8 +179,13 @@ const runLarge = (prepared: ReturnType<typeof prepareQsfImport>) =>
  * all spell German — `de`, `DE`, ` de`, `\tDe`, … — each with an empty translation of both lists. Case
  * and whitespace variants normalize to one language, so the language cap never fired on them, and
  * every key used to be checked against every choice and answer: ~9 s at 390,000 keys.
+ *
+ * The `Language` object comes back behind a Proxy that counts how the reader reaches it: `ownKeys`, one
+ * listing of its keys, and `get`, one read of a key's value. It has no `getOwnPropertyDescriptor`
+ * trap, so the enumerability check `Object.keys` makes on each key, and `Object.hasOwn`, are not
+ * counted: those are V8 listing the keys, not the reader reading them.
  */
-function buildLanguageVariantsQsf(variants: number): Record<string, unknown> {
+function buildLanguageVariantsQsf(variants: number) {
   const options = Object.fromEntries(
     Array.from({ length: 200 }, (_, i) => [String(i + 1), { Display: `Option ${i + 1}` }])
   );
@@ -192,7 +198,18 @@ function buildLanguageVariantsQsf(variants: number): Record<string, unknown> {
     for (let rest = index; rest > 0; rest = Math.floor(rest / 4)) prefix += space[rest % 4];
     for (const spelling of spellings) language[`${prefix}${spelling}`] = { Choices: {}, Answers: {} };
   }
-  return {
+  const reads = { ownKeys: 0, get: 0 };
+  const countedLanguage = new Proxy(language, {
+    ownKeys: (target) => {
+      reads.ownKeys += 1;
+      return Reflect.ownKeys(target);
+    },
+    get: (target, key, receiver) => {
+      reads.get += 1;
+      return Reflect.get(target, key, receiver);
+    },
+  });
+  const qsf = {
     SurveyEntry: { SurveyName: "Variants", SurveyLanguage: "EN" },
     SurveyElements: [
       {
@@ -204,13 +221,14 @@ function buildLanguageVariantsQsf(variants: number): Record<string, unknown> {
           Selector: "Likert",
           Choices: options,
           Answers: options,
-          Language: language,
+          Language: countedLanguage,
         },
       },
       { Element: "BL", Payload: [{ ID: "BL_1", BlockElements: [{ Type: "Question", QuestionID: "QID1" }] }] },
       { Element: "FL", Payload: { Flow: [{ Type: "Block", ID: "BL_1" }] } },
     ],
   };
+  return { qsf, reads, countedLanguage, firstKey: spellings[0] };
 }
 
 describe("event loop", () => {
@@ -318,46 +336,35 @@ describe("event loop", () => {
     expect(cpuMs(() => prepareQsfImport(qsf, "long-strings.qsf"))).toBeLessThanOrEqual(50);
   });
 
-  test("prepareQsfImport refuses a file of Language key variants at once, before reading any key", async () => {
-    const qsf = buildLanguageVariantsQsf(20_000);
-    let refused: unknown;
+  // Normalizing every key against 400 options took about half a second at 20,000 variants and about 9 s at
+  // 390,000. The work is counted rather than timed: the reader lists the keys once (V8's enumeration still
+  // grows with their number) and refuses the map on that count before reading any value, with the same
+  // counts at both sizes.
+  test.each([20_000, 390_000])(
+    "prepareQsfImport refuses %i Language key variants on their count, before reading any key",
+    async (variants) => {
+      const { qsf, reads, countedLanguage, firstKey } = buildLanguageVariantsQsf(variants);
+      let refused: unknown;
 
-    const used = cpuMs(() => {
       try {
         prepareQsfImport(qsf, "variants.qsf");
       } catch (error) {
         refused = error;
       }
-    });
 
-    // Structural: refused on the count of keys.
-    expect((refused as SurveyImportInputError).invalidParams[0].name).toBe(
-      "file.SurveyElements.0.Payload.Language"
-    );
-    // The survey's own default language is the one code looked up; no `Language` key is.
-    expect(seen.languageCodeLookups).toBe(1);
-    // A count of the keys, natively; reading them against 400 options took about half a second here.
-    expect(used).toBeLessThanOrEqual(50);
-  });
-
-  test("and holds it for well under a second at 390,000 variants, where it used to take about 9 s", async () => {
-    const qsf = buildLanguageVariantsQsf(390_000);
-    let refused: unknown;
-
-    const used = cpuMs(() => {
-      try {
-        prepareQsfImport(qsf, "variants.qsf");
-      } catch (error) {
-        refused = error;
-      }
-    });
-
-    expect(refused).toBeInstanceOf(SurveyImportInputError);
-    // The survey's own default language is the one code looked up; no `Language` key is.
-    expect(seen.languageCodeLookups).toBe(1);
-    // V8 enumerating 390,000 keys once (~80 ms here); the route's JSON.parse of that body takes longer.
-    expect(used).toBeLessThanOrEqual(400);
-  });
+      expect(refused).toBeInstanceOf(SurveyImportInputError);
+      expect((refused as SurveyImportInputError).invalidParams[0].name).toBe(
+        "file.SurveyElements.0.Payload.Language"
+      );
+      // No `Language` key reaches the normalizer (every variant is whitespace then some casing of "de").
+      // The keys are listed once and no value is read.
+      expect(seen.languageCodeInputs.filter((raw) => /^\s*de$/i.test(raw))).toEqual([]);
+      expect(reads).toEqual({ ownKeys: 1, get: 0 });
+      // The `get` count can move: a read through the same Proxy is counted, so the 0 above is the reader's.
+      expect(countedLanguage[firstKey]).toBeDefined();
+      expect(reads.get).toBe(1);
+    }
+  );
 
   test("prepareQsfImport holds it for at most ~50 ms on the largest file", async () => {
     const qsf = loadQsfFixture("large-150.qsf");

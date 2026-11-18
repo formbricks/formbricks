@@ -1,6 +1,7 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
+import { clickUntilVisible } from "./utils/click-until";
 import { activateSurvey, createSurveyFromScratch, fillRichTextEditor } from "./utils/helper";
 
 /**
@@ -42,12 +43,7 @@ const recallDropdown = (page: Page): Locator => page.locator("[data-recall-dropd
 const openQuestionCard = async (page: Page): Promise<void> => {
   const questionLabel = editorPanel(page).locator('label:has-text("Question*")');
 
-  await expect(async () => {
-    if (!(await questionLabel.isVisible().catch(() => false))) {
-      await editorPanel(page).getByRole("heading", { name: QUESTION_HEADLINE }).click();
-    }
-    await expect(questionLabel).toBeVisible({ timeout: 5000 });
-  }).toPass({ timeout: 30000 });
+  await clickUntilVisible(editorPanel(page).getByRole("heading", { name: QUESTION_HEADLINE }), questionLabel);
 };
 
 /**

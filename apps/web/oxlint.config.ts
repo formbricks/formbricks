@@ -143,6 +143,46 @@ export default defineConfig(
       },
       overrides: [
         {
+          /*
+           * The type-aware half of typescript-eslint's recommendedTypeChecked runs here at "error"
+           * (the `next` tier). The rules below still have a backlog, counted when they were turned on
+           * (ENG-7329); each is promoted when its count reaches zero.
+           */
+          files: ["**/*.{ts,tsx,mts,cts}"],
+          rules: {
+            // 1,807: mostly test mocks typed through vi.fn() without a signature.
+            "typescript/no-unsafe-assignment": "off",
+            // 1,446, nearly all in tests.
+            "typescript/no-unsafe-member-access": "off",
+            // 394.
+            "typescript/no-unsafe-return": "off",
+            // 373.
+            "typescript/no-unsafe-call": "off",
+            // 226.
+            "typescript/no-unsafe-argument": "off",
+            // 1,143, 1,071 of them async mocks in tests. Dropping `async` changes what a function
+            // returns, so each needs a look rather than an autofix.
+            "typescript/require-await": "off",
+            // 157: comparisons of a string-valued enum (element types, Prisma error codes) with its
+            // string literal, a pattern the codebase uses on purpose.
+            "typescript/no-unsafe-enum-comparison": "off",
+            // 243, 227 of them async JSX event handlers (`onClick={async () => …}`), React's convention.
+            // The other 16 pass an async callback to setImmediate/setInterval or a `() => void` prop;
+            // each needs its rejection handled before this is turned on.
+            "typescript/no-misused-promises": "off",
+            // 45, mostly `String(input)` on a fetch input in tests; a few React keys built from arrays.
+            "typescript/no-base-to-string": "off",
+            // 19, nearly all rejecting with an AbortSignal's `reason`, which is passed on as received.
+            "typescript/prefer-promise-reject-errors": "off",
+          },
+        },
+        {
+          // `expect(mock.fn).toHaveBeenCalled()` passes a method unbound by design. typescript-eslint
+          // points tests at the jest/vitest-aware variant, which oxlint does not implement.
+          files: ["**/*.test.{ts,tsx}", "**/__mocks__/**", "vitestSetup.ts", "**/test-utils.ts"],
+          rules: { "typescript/unbound-method": "off" },
+        },
+        {
           // Runs by hand through tsx against a disposable Redis, never as a Turbo task, so its env reads
           // are not build inputs. ESLint scoped this with an inline config comment, which oxlint does
           // not read.

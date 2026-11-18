@@ -161,7 +161,7 @@ const put = (headerName = "authorization", body: unknown = { value: NEW_VALUE },
       `http://localhost/api/internal/workflows/${WORKFLOW_ID}/steps/${stepId}/secret-headers/${headerName}`,
       { method: "PUT", body: JSON.stringify(body), headers: { "Content-Type": "application/json" } }
     ),
-    { params: Promise.resolve({ workflowId: WORKFLOW_ID, stepId, headerName }) } as never
+    { params: Promise.resolve({ workflowId: WORKFLOW_ID, stepId, headerName }) }
   );
 
 /** The stored values of this definition's secrets: the runner loads them exactly like this. */

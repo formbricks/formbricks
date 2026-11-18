@@ -262,7 +262,7 @@ const getStepGroups = (
   getEarlierWorkflowSteps(definition, nodeId).flatMap((step) => {
     const stepType = getWorkflowStepType(step);
     const provider = providers[stepType] as TWorkflowStepVariableProvider<TWorkflowStepType>;
-    const options = provider.getVariables(step as TWorkflowStepNodeOfType<TWorkflowStepType>, context);
+    const options = provider.getVariables(step, context);
     if (options.length === 0) return [];
     return [{ kind: "step" as const, stepId: step.id, stepType, stepLabel: step.label ?? null, options }];
   });
@@ -506,7 +506,7 @@ export const filterWorkflowVariableGroups = (
       ...option,
       index: option.isPickable ? pickableCount++ : null,
     }));
-    if (options.length > 0) listed.push({ ...group, options } as TWorkflowVariableListGroup);
+    if (options.length > 0) listed.push({ ...group, options });
   }
   return { groups: listed, pickableCount };
 };

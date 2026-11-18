@@ -29,24 +29,23 @@ vi.mock("./transaction", () => ({
  */
 const NOW = new Date("2030-01-10T00:00:00.000Z");
 
-const context = (overrides: Partial<TRetentionSweepContext> = {}): TRetentionSweepContext =>
-  ({
-    runId: "clrun",
-    now: NOW,
-    resumeAfter: null,
-    restartedWarning: null,
-    deadline: NOW.getTime() + 60_000,
-    policy: {
-      id: "clpol",
-      organizationId: "clorg",
-      entity: "surveys",
-      enabledAt: NOW,
-      warnDays: 7,
-      periodDays: 30,
-      conditions: [],
-    },
-    ...overrides,
-  }) as TRetentionSweepContext;
+const context = (overrides: Partial<TRetentionSweepContext> = {}): TRetentionSweepContext => ({
+  runId: "clrun",
+  now: NOW,
+  resumeAfter: null,
+  restartedWarning: null,
+  deadline: NOW.getTime() + 60_000,
+  policy: {
+    id: "clpol",
+    organizationId: "clorg",
+    entity: "surveys",
+    enabledAt: NOW,
+    warnDays: 7,
+    periodDays: 30,
+    conditions: [],
+  },
+  ...overrides,
+});
 
 type TTarget = { id: string; step: TRetentionStep | null };
 const target = (id: string, step: TRetentionStep | null): TTarget => ({ id, step });

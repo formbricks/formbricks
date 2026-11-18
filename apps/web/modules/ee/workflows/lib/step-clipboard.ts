@@ -1,5 +1,5 @@
 import { createId } from "@paralleldrive/cuid2";
-import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
+import type { TWorkflowDefinition } from "@formbricks/workflows";
 import {
   type TWorkflowCanvasDirection,
   getAppendedStepPosition,
@@ -88,7 +88,7 @@ const findOpenEnd = (
   let nodeId = rootId;
   for (let guard = 0; guard <= nodes.length; guard++) {
     const node = nodes.find((item) => item.id === nodeId);
-    const branch = node ? getBranchHandles(node as TWorkflowNode)?.[0] : undefined;
+    const branch = node ? getBranchHandles(node)?.[0] : undefined;
     const next = edges.find(
       (edge) => edge.source === nodeId && (branch === undefined || edge.sourceHandle === branch)
     );
@@ -219,7 +219,7 @@ const resolveAnchor = (
   const sourcePosition = positionOf(next, target.sourceNodeId);
   const legOffset =
     target.branch !== undefined && sourceNode
-      ? getBranchLegOffset(next, sourceNode as TWorkflowNode, target.branch, direction)
+      ? getBranchLegOffset(next, sourceNode, target.branch, direction)
       : null;
   return {
     source: target.sourceNodeId,

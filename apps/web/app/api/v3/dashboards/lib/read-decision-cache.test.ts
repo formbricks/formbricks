@@ -42,8 +42,8 @@ describe("withCachedDashboardDecision", () => {
   test("never caches a refusal", async () => {
     const decide = vi.fn(async () => new Response(null, { status: 403 }));
 
-    expect(((await withCachedDashboardDecision(parts, decide)) as Response).status).toBe(403);
-    expect(((await withCachedDashboardDecision(parts, decide)) as Response).status).toBe(403);
+    expect((await withCachedDashboardDecision<Response>(parts, decide)).status).toBe(403);
+    expect((await withCachedDashboardDecision<Response>(parts, decide)).status).toBe(403);
     expect(decide).toHaveBeenCalledTimes(2);
     expect(cache.set).not.toHaveBeenCalled();
   });

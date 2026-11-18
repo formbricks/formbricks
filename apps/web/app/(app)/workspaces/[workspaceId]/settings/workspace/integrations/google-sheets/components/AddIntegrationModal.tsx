@@ -372,7 +372,7 @@ export const AddIntegrationModal = ({
                 variant="destructive"
                 loading={isDeleting}
                 onClick={() => {
-                  deleteLink();
+                  void deleteLink();
                 }}>
                 {t("common.delete")}
               </Button>

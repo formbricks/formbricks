@@ -729,7 +729,7 @@ export type ResponseContactZodType = z.infer<typeof zResponseContact>;
 /**
  * A survey response in the detailed view, as returned by `GET /api/v3/responses/{responseId}` and by the write endpoints. Everything in `ResponseListItem`, plus the identity and provenance fields the list view omits.
  *
- * It also carries `data` — the answers as stored, returned unchanged, so a client can read a response, edit an answer and send it straight back. Embedded Data is not echoed in stored form: the read's `embeddedData[]` and a request's `embeddedData` map already address the same fields by the same names, so a second raw map would only republish the storage layout. That is the property v1/v2 had for free by being symmetric, and the one OpenAPI 3.1.1 argues for directly: its "Validating `readOnly` and `writeOnly`" section notes that making clients strip fields before a write is "burdensome for clients, particularly when the JSON data is complex or deeply nested".
+ * It also carries `data` — the answers as stored, returned unchanged, so a client can read a response, edit an answer and send it straight back. A stored value outside the `ResponseRawValue` shapes (a legacy format or a JSON `null`) is withheld from `data`, and `PATCH` keeps it when the key is left out. Embedded Data is not echoed in stored form: the read's `embeddedData[]` and a request's `embeddedData` map already address the same fields by the same names, so a second raw map would only republish the storage layout. That is the property v1/v2 had for free by being symmetric, and the one OpenAPI 3.1.1 argues for directly: its "Validating `readOnly` and `writeOnly`" section notes that making clients strip fields before a write is "burdensome for clients, particularly when the JSON data is complex or deeply nested".
  *
  * They are not the *same* view, and the differences are deliberate. A write accepts `ingested` and `computed` fields only: a `reserved` entry describes the submission environment, and being able to read one back is not a licence to author it. An unset field is **omitted** from the read while `null` on a write **clears** one, because a merge-shaped map has no other way to spell deletion. And a name the read returns twice under different `kind`s cannot be written at all — see `ResponseEmbeddedDataInput`, which refuses an ambiguous name rather than guessing.
  *
@@ -856,7 +856,7 @@ export type BatchSetResponsesOutcomeRequestZodType = z.infer<typeof zBatchSetRes
 /**
  * Partially updates a response. Strict at the top level: unknown keys return **400** rather than being ignored, and at least one patchable field must be present.
  *
- * `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
+ * `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. Keys the read withholds are kept rather than removed: hidden-field and system keys, and an answer whose stored value is outside the shapes `ResponseRawValue` publishes (a legacy format or a JSON `null`). Sending a new value for such an answer replaces it; leaving it out keeps it. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
  *
  * v3 replaces on purpose, where v1 and v2 merge: a merge makes it impossible to delete an answer, which a correction flow needs.
  *

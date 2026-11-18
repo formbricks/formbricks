@@ -92,7 +92,7 @@ describe("retention exemptions service (real Postgres)", () => {
 
       expect(results.filter((result) => result.status === "fulfilled")).toHaveLength(1);
       const [rejected] = results.filter((result) => result.status === "rejected");
-      expect((rejected as PromiseRejectedResult).reason).toBeInstanceOf(RetentionExemptionExistsError);
+      expect(rejected.reason).toBeInstanceOf(RetentionExemptionExistsError);
     });
   });
 

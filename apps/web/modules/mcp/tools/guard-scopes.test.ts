@@ -49,7 +49,7 @@ function authInfoWithScopes(scopes: string[], requestId = "req_guard", authentic
     clientId: "client",
     scopes,
     extra: { requestId, ...(authentication ? { formbricksAuthentication: authentication } : {}) },
-  } as unknown as AuthInfo;
+  };
 }
 
 const CONFIG = {

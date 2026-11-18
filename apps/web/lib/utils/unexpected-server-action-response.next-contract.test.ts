@@ -23,10 +23,7 @@ type TResolveFilename = (request: string, ...rest: unknown[]) => string;
 const moduleWithResolver = Module as unknown as { _resolveFilename: TResolveFilename };
 const originalResolveFilename = moduleWithResolver._resolveFilename;
 
-type TServerActionReducer = (
-  state: Record<string, unknown>,
-  action: Record<string, unknown>
-) => Promise<unknown> | unknown;
+type TServerActionReducer = (state: Record<string, unknown>, action: Record<string, unknown>) => unknown;
 let serverActionReducer: TServerActionReducer;
 
 beforeAll(() => {

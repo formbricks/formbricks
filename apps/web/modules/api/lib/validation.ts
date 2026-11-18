@@ -28,7 +28,7 @@ export const validateResponseData = (
   responseData: TResponseData | undefined | null,
   languageCode: string = "en",
   // The legacy questions `transformQuestionsToBlocks` takes, typed off it rather than the deprecated name.
-  questions?: Parameters<typeof transformQuestionsToBlocks>[0] | undefined | null,
+  questions?: Parameters<typeof transformQuestionsToBlocks>[0] | null,
   notShown?: TResponseNotShown | null
 ): TValidationErrorMap | null => {
   // Partial updates omit `data` entirely (e.g. `{ "finished": true }`), so there is nothing to

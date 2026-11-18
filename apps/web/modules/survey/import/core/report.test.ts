@@ -43,7 +43,7 @@ describe("buildSurveyImportReport", () => {
         languages: [],
         blocks: [],
         hiddenFields: { fieldIds: [] },
-      } as unknown as TSurveyImportDraft,
+      },
       issues: [{ code: "headline_fallback", severity: "warning", questionTag: "Q1", questionRef: "QID1" }],
     });
 

@@ -148,9 +148,7 @@ describe("tag lib", () => {
 
   describe("mergeTags", () => {
     test("merges tags with responses with both tags", async () => {
-      vi.mocked(prisma.tag.findUnique)
-        .mockResolvedValueOnce(baseTag as Awaited<ReturnType<typeof prisma.tag.findUnique>>)
-        .mockResolvedValueOnce(newTag as Awaited<ReturnType<typeof prisma.tag.findUnique>>);
+      vi.mocked(prisma.tag.findUnique).mockResolvedValueOnce(baseTag).mockResolvedValueOnce(newTag);
       vi.mocked(prisma.response.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
         { id: "resp1" },
       ]);

@@ -230,7 +230,7 @@ export const CreateFeedbackSourceModal = ({
 
   useEffect(() => {
     if (selectedSurveyId && currentStep === "mapping" && selectedType === "formbricks_survey") {
-      fetchResponseCount(selectedSurveyId);
+      void fetchResponseCount(selectedSurveyId);
     }
   }, [currentStep, fetchResponseCount, selectedSurveyId, selectedType]);
 

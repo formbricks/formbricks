@@ -88,7 +88,7 @@ describe("logAuditEvent", () => {
     });
 
     test("drops the event when apiUrl is a bare path", async () => {
-      await logAuditEvent({ ...validEvent, apiUrl: "/api/mcp" } as Parameters<typeof logAuditEvent>[0]);
+      await logAuditEvent({ ...validEvent, apiUrl: "/api/mcp" });
       expect(logger.audit).not.toHaveBeenCalled();
       expect(logger.error).toHaveBeenCalled();
     });

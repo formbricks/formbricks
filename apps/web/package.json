@@ -10,7 +10,7 @@
     "build:authzed-cli": "vite build --config vite.authzed-cli.config.mts",
     "build:env-validator": "vite build --config vite.env-validation.config.mts",
     "build:dev": "pnpm run build",
-    "start": "next start",
+    "start": "next start --keepAliveTimeout 70000",
     "typecheck": "pnpm typegen && cross-env NODE_OPTIONS=--max-old-space-size=8192 tsc --noEmit --project tsconfig.typecheck.json",
     "typegen": "dotenv -e ../../.env -- tsx scripts/typegen.ts",
     "test": "dotenv -e ../../.env -- vitest run",

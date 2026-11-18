@@ -17,7 +17,7 @@ import { generateElementAndFilterOptions, getFormattedFilters } from "@/app/lib/
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { useTableUrlState } from "@/modules/ui/components/table-toolbar/hooks/use-table-url-state";
 import { STRING_RULE_OPERATORS } from "@/modules/ui/components/table-toolbar/lib/operators";
-import type { TFilterProperty, TTableFilter } from "@/modules/ui/components/table-toolbar/lib/types";
+import type { TFilterProperty } from "@/modules/ui/components/table-toolbar/lib/types";
 import {
   applicableResponseFilters,
   buildResponseFilterModel,
@@ -174,7 +174,7 @@ export const useResponseTableFilters = (survey: TSurvey) => {
   return {
     properties,
     filters,
-    setFilters: setFilters as (next: TTableFilter[]) => void,
+    setFilters: setFilters,
     clearFilters,
     selectedFilter: state.selectedFilter,
     dateRange: state.dateRange,

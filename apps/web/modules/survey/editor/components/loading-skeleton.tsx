@@ -1,5 +1,9 @@
 export const LoadingSkeleton = () => (
-  <div className="flex h-full w-full flex-col items-center justify-between p-6">
+  <div
+    className="flex h-full w-full flex-col items-center justify-between p-6"
+    aria-busy="true"
+    // The E2E helpers wait for this to go before they read the editor (`waitForSurveyEditor`).
+    data-testid="survey-editor-loading">
     {/* Top Part - Loading Navbar */}
     <div className="flex h-[10vh] w-full animate-pulse rounded-lg bg-slate-200 font-medium text-slate-900"></div>
 

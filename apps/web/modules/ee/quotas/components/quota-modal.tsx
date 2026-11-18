@@ -464,7 +464,7 @@ export const QuotaModal = ({
               setOpen={setOpenConfirmationModal}
               onConfirm={() => {
                 setOpenConfirmationModal(false);
-                form.handleSubmit(submitQuota)();
+                void form.handleSubmit(submitQuota)();
               }}
               body={t("workspace.surveys.edit.quotas.confirm_quota_changes_body")}
               buttonText={t("common.save")}

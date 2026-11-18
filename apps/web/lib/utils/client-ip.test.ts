@@ -21,7 +21,7 @@ vi.mock("@formbricks/logger", () => ({
 const buildHeaders = (headerMap: Record<string, string> = {}): Headers => new Headers(headerMap);
 
 const mockHeaders = (headerMap: Record<string, string>) => {
-  vi.mocked(nextHeaders.headers).mockResolvedValue(buildHeaders(headerMap) as never);
+  vi.mocked(nextHeaders.headers).mockResolvedValue(buildHeaders(headerMap));
 };
 
 describe("resolveClientIp", () => {
@@ -173,7 +173,7 @@ describe("Better Auth IP configuration", () => {
       ipAddressHeaders: [FORMBRICKS_CLIENT_IP_HEADER],
       ipv6Subnet: 64,
     });
-    expect(getIP(requestHeaders, { advanced: { ipAddress: BETTER_AUTH_IP_ADDRESS_CONFIG } } as never)).toBe(
+    expect(getIP(requestHeaders, { advanced: { ipAddress: BETTER_AUTH_IP_ADDRESS_CONFIG } })).toBe(
       "2001:0db8:abcd:0012:0000:0000:0000:0000"
     );
   });

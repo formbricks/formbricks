@@ -1,5 +1,4 @@
 import {
-  type TWorkflowDefinition,
   type TWorkflowResource,
   type TWorkflowSampleList,
   type TWorkflowSampleListItem,
@@ -42,5 +41,5 @@ export const getStepResponseSamples = (
  * an error the author has no part in.
  */
 export const hasSavedWebhookTrigger = (workflow: Pick<TWorkflowResource, "definition"> | null): boolean =>
-  (workflow?.definition as TWorkflowDefinition | undefined)?.trigger?.triggerType ===
+  (workflow?.definition)?.trigger?.triggerType ===
   WORKFLOW_TRIGGERS.WEBHOOK;

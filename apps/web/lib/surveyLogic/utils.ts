@@ -210,7 +210,7 @@ export const updateCondition = (
     const item = group.conditions[i];
 
     if (item.id === resourceId && !("connector" in item)) {
-      group.conditions[i] = { ...item, ...condition } as TSingleCondition;
+      group.conditions[i] = { ...item, ...condition };
       return;
     }
 
@@ -400,7 +400,7 @@ const resolveConditionValues = (
     // key carries that raw string past the seam.
     (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
   ) {
-    rightValue = Number(rightValue as string);
+    rightValue = Number(rightValue);
   }
 
   // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.

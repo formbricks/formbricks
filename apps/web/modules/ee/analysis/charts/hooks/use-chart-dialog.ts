@@ -169,7 +169,7 @@ export function useChartDialog({
       }
     };
 
-    load();
+    void load();
     return () => {
       cancelled = true;
     };

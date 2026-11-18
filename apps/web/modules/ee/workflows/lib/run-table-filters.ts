@@ -20,7 +20,7 @@ import type { TWorkflowRunListFilters } from "./api-client";
 export const SHOW_TEST_RUNS_PROPERTY = "testRuns";
 
 const RUN_STATUSES = ZWorkflowRunStatus.options;
-const TRIGGER_TYPES = Object.values(WORKFLOW_TRIGGERS) as TWorkflowTriggerType[];
+const TRIGGER_TYPES: TWorkflowTriggerType[] = Object.values(WORKFLOW_TRIGGERS);
 
 /** The runs list has one order, newest first: the toolbar offers no sort. */
 export const RUN_SORT_VALUES = ["newest"] as const;

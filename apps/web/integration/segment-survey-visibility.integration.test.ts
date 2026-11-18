@@ -194,7 +194,7 @@ describe("segment survey visibility against real Postgres (ENG-6870)", () => {
       data: {
         title: "inner",
         workspaceId,
-        filters: tree(interaction("haveCompleted", "specific", [surveys.R])) as object[],
+        filters: tree(interaction("haveCompleted", "specific", [surveys.R])),
       },
     });
     const outer = tree({
@@ -217,7 +217,7 @@ describe("segment survey visibility against real Postgres (ENG-6870)", () => {
         title: "completed R",
         workspaceId,
         isPrivate: false,
-        filters: tree(interaction("haveCompleted", "specific", [surveys.R])) as object[],
+        filters: tree(interaction("haveCompleted", "specific", [surveys.R])),
       },
     });
 

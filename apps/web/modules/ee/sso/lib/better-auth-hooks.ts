@@ -430,9 +430,7 @@ export const ssoRecoveryAfterHandler = async (ctx: AuthHookContext): Promise<voi
   const recoveryPath = await startSsoRecovery({
     existingUser,
     provider,
-    account: { provider, providerAccountId: identity.providerAccountId, type: "oauth" } as Parameters<
-      typeof startSsoRecovery
-    >[0]["account"],
+    account: { provider, providerAccountId: identity.providerAccountId, type: "oauth" },
     callbackUrl,
   });
 

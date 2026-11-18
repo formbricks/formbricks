@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { emitWorkflowUsageSnapshots } from "./usage-snapshot";
 
+// eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
 const mocks = vi.hoisted(() => ({ constants: { POSTHOG_KEY: "phc_test" as string | undefined } }));
 
 vi.mock("server-only", () => ({}));

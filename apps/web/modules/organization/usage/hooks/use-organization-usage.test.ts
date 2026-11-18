@@ -75,7 +75,7 @@ describe("useOrganizationUsage", () => {
       ({ range }: { range: TUsageRangeQuery }) => useOrganizationUsage({ organizationId: ORG_ID, range }),
       {
         wrapper: createWrapper(createQueryClient()),
-        initialProps: { range: { preset: "this_year" } as TUsageRangeQuery },
+        initialProps: { range: { preset: "this_year" } },
       }
     );
     await waitFor(() => expect(result.current.data?.totals.responseCount).toBe(70));

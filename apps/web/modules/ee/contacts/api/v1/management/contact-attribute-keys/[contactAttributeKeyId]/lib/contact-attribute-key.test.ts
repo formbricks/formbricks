@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { ContactAttributeKey, Prisma } from "@formbricks/database/prisma";
-import { TContactAttributeKey, TContactAttributeKeyType } from "@formbricks/types/contact-attribute-key";
+import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TContactAttributeKeyUpdateInput } from "../types/contact-attribute-keys";
 import {
@@ -44,7 +44,7 @@ const mockContactAttributeKey: TContactAttributeKey = {
   name: mockName,
   key: mockKey,
   workspaceId: mockWorkspaceId,
-  type: "custom" as TContactAttributeKeyType,
+  type: "custom",
   description: "A test key",
   isUnique: false,
   dataType: "string",

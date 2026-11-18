@@ -11,6 +11,7 @@ import {
   useRef,
   useState,
   useSyncExternalStore,
+  useTransition,
 } from "react";
 import { useTranslation } from "react-i18next";
 import { ActionClass, Language, OrganizationRole } from "@formbricks/database/prisma-browser";
@@ -222,11 +223,14 @@ export const SurveyEditor = ({
   const visibilityGate = isVisibilityTurnedOff
     ? withoutVisibilityControls(surveyVisibilityGate)
     : surveyVisibilityGate;
-  const handleVisibilityChanged = useCallback(() => router.refresh(), [router]);
+  // The menu bar decides from `visibility` whether Activate asks "Who can view this survey?", so it must
+  // not act on the value from before a change: Activate is disabled until the refreshed route commits.
+  const [isVisibilityRefreshing, startVisibilityRefresh] = useTransition();
+  const handleVisibilityChanged = useCallback(() => startVisibilityRefresh(() => router.refresh()), [router]);
   // Stable: the Collaborate modal runs it from an effect.
   const handleVisibilityNotEnabled = useCallback(() => {
     setIsVisibilityTurnedOff(true);
-    router.refresh();
+    startVisibilityRefresh(() => router.refresh());
   }, [router]);
 
   // `isFollowUpsTabVisible` tracks the server `survey` prop, which a manual save refreshes
@@ -378,6 +382,7 @@ export const SurveyEditor = ({
         isStorageConfigured={isStorageConfigured}
         visibilityGate={visibilityGate}
         effectiveVisibility={visibility}
+        isVisibilityRefreshing={isVisibilityRefreshing}
         onVisibilityChanged={handleVisibilityChanged}
         onVisibilityNotEnabled={handleVisibilityNotEnabled}
         surveyAccess={surveyAccess}

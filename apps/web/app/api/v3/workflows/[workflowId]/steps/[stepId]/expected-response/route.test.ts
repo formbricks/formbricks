@@ -81,7 +81,7 @@ const put = (stepId: string, body: unknown) =>
       body: JSON.stringify(body),
       headers: { "Content-Type": "application/json" },
     }),
-    { params: Promise.resolve({ workflowId: WORKFLOW_ID, stepId }) } as never
+    { params: Promise.resolve({ workflowId: WORKFLOW_ID, stepId }) }
   );
 
 beforeEach(() => {

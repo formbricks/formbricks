@@ -63,8 +63,8 @@ export const resetCubeFake = (): void => {
 
 /** A `/load` answer shaped after the query, so the real client can parse and pivot it. */
 const buildLoadResponse = (query: CubeClient.Query, rows: TFakeCubeState["rows"]) => {
-  const measures = (query.measures ?? []) as string[];
-  const dimensions = (query.dimensions ?? []) as string[];
+  const measures = query.measures ?? [];
+  const dimensions = query.dimensions ?? [];
   const granular = (query.timeDimensions ?? []).filter((timeDimension) => timeDimension.granularity);
   const timeKeys = granular.map((timeDimension) => `${timeDimension.dimension}.${timeDimension.granularity}`);
 

@@ -67,14 +67,14 @@ const storedCss: TCustomCssStored = {
 const storedRow = { ...mockSurveyOutput, customCss: storedCss };
 
 const lastUpdateData = (): Record<string, unknown> =>
-  (vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data ?? {}) as Record<string, unknown>;
+  vi.mocked(prisma.survey.update).mock.calls.at(0)?.[0].data ?? {};
 
 beforeEach(() => {
   vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
   vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
-  vi.mocked(prisma.survey.findUniqueOrThrow).mockResolvedValue(storedRow as never);
-  vi.mocked(prisma.survey.findUnique).mockResolvedValue(storedRow as never);
-  vi.mocked(prisma.survey.update).mockResolvedValue(storedRow as never);
+  vi.mocked(prisma.survey.findUniqueOrThrow).mockResolvedValue(storedRow);
+  vi.mocked(prisma.survey.findUnique).mockResolvedValue(storedRow);
+  vi.mocked(prisma.survey.update).mockResolvedValue(storedRow);
   vi.mocked(getActionClasses).mockResolvedValue([mockActionClass] as TActionClass[]);
   vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue(mockOrganizationOutput);
   vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(true);
@@ -94,7 +94,7 @@ describe("updateSurveyInternal custom CSS", () => {
   test("the editor sending the stored CSS back is unchanged: no plan check, no processing, no write", async () => {
     vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
 
-    await updateSurvey({ ...updateSurveyInput, customCss: storedCss } as TSurvey);
+    await updateSurvey({ ...updateSurveyInput, customCss: storedCss });
 
     expect(getCustomCssPlanAllowed).not.toHaveBeenCalled();
     expect(processCustomCss).not.toHaveBeenCalled();
@@ -105,7 +105,7 @@ describe("updateSurveyInternal custom CSS", () => {
   test("a payload without customCss leaves the stored CSS untouched", async () => {
     const { customCss: _omit, ...withoutCss } = { ...updateSurveyInput, customCss: undefined };
 
-    await updateSurvey(withoutCss as TSurvey);
+    await updateSurvey(withoutCss);
 
     expect(lastUpdateData()).not.toHaveProperty("customCss");
   });
@@ -118,7 +118,7 @@ describe("updateSurveyInternal custom CSS", () => {
         dark: { source: ".b{}", compiled: "" },
         processorVersion: 999,
       },
-    } as TSurvey);
+    });
 
     expect(lastUpdateData()).not.toHaveProperty("customCss");
   });
@@ -131,7 +131,7 @@ describe("updateSurveyInternal custom CSS", () => {
         dark: storedCss.dark,
         processorVersion: 4,
       },
-    } as TSurvey);
+    });
 
     expect(getCustomCssPlanAllowed).toHaveBeenCalledWith(mockOrganizationOutput.id);
     expect(processCustomCss).toHaveBeenCalledWith({
@@ -153,7 +153,7 @@ describe("updateSurveyInternal custom CSS", () => {
       updateSurvey({
         ...updateSurveyInput,
         customCss: { light: { source: ".new{}", compiled: "" }, dark: null, processorVersion: 0 },
-      } as TSurvey)
+      })
     ).rejects.toBeInstanceOf(OperationNotAllowedError);
     expect(prisma.survey.update).not.toHaveBeenCalled();
   });
@@ -161,7 +161,7 @@ describe("updateSurveyInternal custom CSS", () => {
   test("a downgraded organization can still clear its CSS", async () => {
     vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
 
-    await updateSurvey({ ...updateSurveyInput, customCss: null } as TSurvey);
+    await updateSurvey({ ...updateSurveyInput, customCss: null });
 
     expect(lastUpdateData().customCss).toBe(Prisma.DbNull);
     expect(getCustomCssPlanAllowed).not.toHaveBeenCalled();
@@ -186,7 +186,7 @@ describe("updateSurveyInternal custom CSS", () => {
       updateSurvey({
         ...updateSurveyInput,
         customCss: { light: { source: ".a{", compiled: "" }, dark: null, processorVersion: 4 },
-      } as TSurvey)
+      })
     ).rejects.toBeInstanceOf(InvalidInputError);
     expect(prisma.survey.update).not.toHaveBeenCalled();
   });
@@ -202,7 +202,7 @@ describe("updateSurveyInternal custom CSS", () => {
     }) as never);
     vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(false);
 
-    await updateSurvey({ ...updateSurveyInput, customCss: null } as TSurvey);
+    await updateSurvey({ ...updateSurveyInput, customCss: null });
 
     expect(prisma.survey.findUnique).toHaveBeenCalledWith({
       where: { id: updateSurveyInput.id, workspaceId: mockSurveyOutput.workspaceId },
@@ -214,7 +214,7 @@ describe("updateSurveyInternal custom CSS", () => {
   test("a payload without customCss does not read the stored CSS at all", async () => {
     const { customCss: _omit, ...withoutCss } = { ...updateSurveyInput, customCss: undefined };
 
-    await updateSurvey(withoutCss as TSurvey);
+    await updateSurvey(withoutCss);
 
     expect(prisma.survey.findUnique).not.toHaveBeenCalledWith(
       expect.objectContaining({ select: { customCss: true } })
@@ -222,7 +222,7 @@ describe("updateSurveyInternal custom CSS", () => {
   });
 
   test("the saved survey handed back to the editor carries its CSS; getSurvey does not load it", async () => {
-    await updateSurvey({ ...updateSurveyInput, customCss: storedCss } as TSurvey);
+    await updateSurvey({ ...updateSurveyInput, customCss: storedCss });
     expect(vi.mocked(prisma.survey.findUniqueOrThrow).mock.calls.at(-1)?.[0].select).toMatchObject({
       customCss: true,
     });
@@ -238,7 +238,7 @@ describe("updateSurveyInternal custom CSS", () => {
         {
           ...updateSurveyInput,
           customCss: { light: { source: ".a{color:red}", compiled: "" }, dark: null, processorVersion: 4 },
-        } as TSurvey,
+        },
         false,
         { customCssPrincipal: "user_1" }
       );
@@ -281,8 +281,8 @@ describe("updateSurveyInternal custom CSS", () => {
 
 describe("createSurvey custom CSS", () => {
   beforeEach(() => {
-    vi.mocked(prisma.survey.create).mockResolvedValue(mockSurveyOutput as never);
-    vi.mocked(prisma.survey.findUniqueOrThrow).mockResolvedValue(mockSurveyOutput as never);
+    vi.mocked(prisma.survey.create).mockResolvedValue(mockSurveyOutput);
+    vi.mocked(prisma.survey.findUniqueOrThrow).mockResolvedValue(mockSurveyOutput);
   });
 
   test("strips customCss from a generic create payload", async () => {
