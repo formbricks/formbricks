@@ -285,19 +285,23 @@ const isOnEndingCard = (page: Page): Promise<boolean> =>
     .catch(() => false);
 
 /**
- * True once `node` and all its ancestors are fully opaque and no finite animation inside it is running.
- * Runs in the page (passed to `evaluate`), so it must stay self-contained.
+ * True once `node`, its ancestors and its direct children are fully opaque and no finite animation inside
+ * it is running. Runs in the page (passed to `evaluate`), so it must stay self-contained.
  *
  * The renderer fades cards in with `transition-opacity duration-500`; scanning mid-fade makes axe blend
  * the semi-transparent text into the background and report contrast failures that do not exist in the
  * settled UI. A just-selected date animates its text and background colours (`transition-all`) the same
  * way: measured mid-flight the pair fails AA although the settled one passes. Infinite animations
- * (spinners) never finish, so they are ignored.
+ * (spinners) never finish, so they are ignored. A stacked card starts its content wrapper (its child)
+ * at opacity 0 and only fades it in 300 ms later, from a timer: until then nothing is animating, so the
+ * children are checked too.
  */
 function isSettled(node: HTMLElement): boolean {
+  const isOpaque = (el: Element) => getComputedStyle(el).opacity === "1";
   for (let el: HTMLElement | null = node; el; el = el.parentElement) {
-    if (getComputedStyle(el).opacity !== "1") return false;
+    if (!isOpaque(el)) return false;
   }
+  if (!Array.from(node.children).every(isOpaque)) return false;
   return node
     .getAnimations({ subtree: true })
     .every(
