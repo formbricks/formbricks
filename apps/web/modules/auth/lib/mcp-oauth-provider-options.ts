@@ -90,9 +90,13 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
     refreshToken: MCP_OAUTH_REFRESH_TOKEN_PREFIX,
     clientSecret: "fbocs_",
   },
-  customAccessTokenClaims: ({ user }) => ({
-    ...(user?.email ? { email: user.email } : {}),
-    ...(user?.name ? { name: user.name } : {}),
+  // The access token is a JWT the client can read, so identity claims follow the OIDC scopes the user
+  // actually approved: a client granted only `surveys:read` learns neither email nor name (ENG-7314).
+  // The MCP server does not read either claim (`payloadToSession` tolerates their absence); id_token
+  // and userinfo release them by scope on their own.
+  customAccessTokenClaims: ({ user, scopes }) => ({
+    ...(scopes?.includes("email") && user?.email ? { email: user.email } : {}),
+    ...(scopes?.includes("profile") && user?.name ? { name: user.name } : {}),
   }),
   rateLimit: {
     register: { window: 60, max: 5 },

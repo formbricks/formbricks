@@ -1,5 +1,6 @@
 import "server-only";
 import { authBodyKindOf } from "./auth-request-bounds";
+import { findDcrSizeViolation } from "./mcp-dcr-size-limits";
 import {
   findDisallowedRedirectUri,
   getAllowedDcrRedirectUris,
@@ -93,6 +94,14 @@ export const prepareDcrRequest = async (request: Request): Promise<Request | Res
   }
 
   const raw = await request.text();
+  // Before the allowlist: cheapest check first, and a registration this large is refused whatever it names.
+  const oversize = findDcrSizeViolation(raw);
+  if (oversize) {
+    return Response.json(
+      { error: "invalid_client_metadata", error_description: oversize.description },
+      { status: 400 }
+    );
+  }
   const disallowed = findDisallowedRedirectUri(raw, getAllowedDcrRedirectUris());
   if (disallowed) {
     return Response.json(

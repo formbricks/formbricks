@@ -59,6 +59,7 @@ export const JOB_NAMES = {
   creativeStatsFlush: "creative-stats.flush",
   dataRetentionSweep: "data-retention.sweep",
   deletionCleanupDrain: "deletion-cleanup.drain",
+  oauthClientCleanup: "oauth-client.cleanup",
   testLog: "system.test-log",
   responsePipeline: "response-pipeline.process",
   surveyScheduling: "survey-scheduling.reconcile",

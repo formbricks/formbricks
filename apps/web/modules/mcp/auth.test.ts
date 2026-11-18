@@ -450,8 +450,49 @@ describe("authenticateMcpRequest", () => {
     });
     expect(applyRateLimit).toHaveBeenCalledWith(
       expect.objectContaining({ namespace: "api:v3" }),
-      "oauth:user_1:client_1"
+      "oauth:user_1"
     );
+  });
+
+  // ENG-7314: tokens no longer carry email/name unless those scopes were approved.
+  test("authenticates a token that carries no identity claims", async () => {
+    verifyBearerTokenMock.mockResolvedValue({
+      aud: MCP_AUDIENCE,
+      sub: "user_1",
+      exp: 2_000_000_000,
+      azp: "client_1",
+      scope: "surveys:read",
+    });
+
+    const result = await authenticateMcpRequest(
+      createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+    );
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(getMcpAuthentication(result.authInfo)).toMatchObject({
+        user: { id: "user_1", email: null, name: null },
+      });
+    }
+  });
+
+  // ENG-7314: registration is free, so a per-client bucket multiplied the budget by the client count.
+  test("charges one rate-limit bucket per user, whichever client the token belongs to", async () => {
+    for (const azp of ["client_a", "client_b"]) {
+      verifyBearerTokenMock.mockResolvedValue({
+        aud: MCP_AUDIENCE,
+        sub: "user_1",
+        exp: 2_000_000_000,
+        azp,
+        scope: "surveys:read",
+      });
+      await authenticateMcpRequest(
+        createRequest("http://localhost/api/mcp", { authorization: "Bearer oauth_access_token" })
+      );
+    }
+
+    const keys = vi.mocked(applyRateLimit).mock.calls.map(([, key]) => key);
+    expect(keys.slice(-2)).toEqual(["oauth:user_1", "oauth:user_1"]);
   });
 
   test("rejects OAuth bearer tokens for inactive users", async () => {
@@ -701,7 +742,7 @@ describe("authenticateMcpRequest", () => {
     }
     expect(applyRateLimit).toHaveBeenCalledWith(
       expect.objectContaining({ namespace: "api:v3" }),
-      "oauth:user_1:client_1"
+      "oauth:user_1"
     );
   });
 });
