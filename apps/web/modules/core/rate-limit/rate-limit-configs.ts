@@ -113,6 +113,11 @@ export const rateLimitConfigs = {
       allowedPerInterval: 10,
       namespace: "api:internal:retention-runs:export",
     }, // 10 per hour — each export streams an organisation's whole retention history (data retention)
+    internalFeedbackCsvImport: {
+      interval: 60,
+      allowedPerInterval: 10,
+      namespace: "api:internal:feedback-sources:csv-import",
+    }, // 10 per minute per user — each upload is parsed and written to the Hub in full (up to the file cap)
     client: { interval: 60, allowedPerInterval: 100, namespace: "api:client" }, // 100 per minute (Client API)
     clientEnvironment: {
       interval: 60,

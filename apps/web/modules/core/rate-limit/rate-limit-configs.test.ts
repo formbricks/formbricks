@@ -122,6 +122,7 @@ describe("rateLimitConfigs", () => {
         "internalChartGeneration",
         "internalDatasetPurge",
         "internalRetentionExport",
+        "internalFeedbackCsvImport",
         "client",
         "clientEnvironment",
         "clientCreativeEvents",

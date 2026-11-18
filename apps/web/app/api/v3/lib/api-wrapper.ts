@@ -30,12 +30,14 @@ import {
 import { buildV3AuditLog, queueV3AuditLog } from "./audit";
 import { mapV3ThrownError } from "./errors";
 import { BoundedInvalidParams } from "./invalid-params";
+import { getCrossOriginRefusal, isJsonContentType, isSafeMethod, mediaTypeOf } from "./origin-check";
 import {
   type InvalidParam,
   isInvalidParamCode,
   problemBadRequest,
   problemCapacityReached,
   problemConcurrencyLimitReached,
+  problemForbidden,
   problemPayloadTooLarge,
   problemTooManyRequests,
   problemUnauthorized,
@@ -450,10 +452,6 @@ async function preflightUndeclaredBody(
 
 const MULTIPART_FORM_DATA = "multipart/form-data";
 
-/** The media type of a `Content-Type` header, without its parameters (the multipart boundary). */
-const mediaTypeOf = (contentType: string | null): string =>
-  (contentType ?? "").split(";")[0].trim().toLowerCase();
-
 /**
  * The form step of `parseV3Input`, for a route that takes `multipart/form-data`: the media type first
  * (415), then the body read within the byte limit (413) and parsed (400), then the schema (400).
@@ -617,6 +615,41 @@ async function authenticateV3RequestOrRespond(
     authentication,
     response: null,
   };
+}
+
+/**
+ * The CSRF gate for a request that authenticated with the session cookie (ENG-3380): a state-changing
+ * call must come from the app itself, and a route that declares a JSON body must be sent as JSON, which a
+ * cross-site form cannot do without a preflight. API-key requests carry no cookie and are not checked.
+ */
+function refuseUnsafeSessionRequest(
+  req: NextRequest,
+  authentication: TV3Authentication,
+  schemas: TV3Schemas | undefined,
+  {
+    requestId,
+    instance,
+    log,
+  }: { requestId: string; instance: string; log: ReturnType<typeof logger.withContext> }
+): Response | null {
+  if (!authentication || !("user" in authentication)) {
+    return null;
+  }
+
+  const refusal = getCrossOriginRefusal(req);
+  if (refusal) {
+    log.warn({ statusCode: 403, refusal }, "V3 API cross-origin session request refused");
+    return problemForbidden(requestId, "Cross-origin request refused", instance);
+  }
+
+  if (!isSafeMethod(req.method) && schemas?.body && !isJsonContentType(req.headers.get("content-type"))) {
+    return problemUnsupportedMediaType(requestId, "The request body must be application/json", {
+      instance,
+      acceptPost: "application/json",
+    });
+  }
+
+  return null;
 }
 
 async function applyV3RateLimitOrRespond(params: {
@@ -815,6 +848,15 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
           "V3 API authentication failed"
         );
         return authResult.response;
+      }
+
+      const csrfRefusal = refuseUnsafeSessionRequest(req, authResult.authentication, schemas, {
+        requestId,
+        instance,
+        log,
+      });
+      if (csrfRefusal) {
+        return csrfRefusal;
       }
 
       const rateLimitResponse = await applyV3RateLimitOrRespond({
