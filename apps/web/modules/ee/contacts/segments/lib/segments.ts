@@ -262,6 +262,17 @@ const assertTitleIsNotSurveyId = async (workspaceId: string, title: string): Pro
 };
 
 /**
+ * A segment that stays private keeps its survey's id as title: the survey save finds it by that title, so
+ * a renamed one would be left behind and a new one created (ENG-6956). Turning it shared may rename it.
+ */
+const assertPrivateSegmentKeepsTitle = (data: TSegmentUpdateInput, current: TSegment): void => {
+  const staysPrivate = current.isPrivate && data.isPrivate !== false;
+  if (staysPrivate && data.title !== undefined && data.title !== current.title) {
+    throw new InvalidInputError("A private segment keeps the id of its survey as title");
+  }
+};
+
+/**
  * A rename, or a private segment turned shared while it keeps its survey's id as title, stores a title
  * the caller chose for a segment the survey save may later pick up by that title (ENG-6956).
  */
@@ -580,6 +591,7 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
       throw new ResourceNotFoundError("segment", segmentId);
     }
 
+    assertPrivateSegmentKeepsTitle(data, currentSegment);
     if (needsSurveyIdTitleCheck(data, currentSegment)) {
       await assertTitleIsNotSurveyId(currentSegment.workspaceId, data.title ?? currentSegment.title);
     }

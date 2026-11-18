@@ -815,6 +815,40 @@ describe("Segment Service Tests", () => {
       expect(prisma.segment.update).not.toHaveBeenCalled();
     });
 
+    test("should refuse renaming a segment that stays private (ENG-6956)", async () => {
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue({
+        ...mockSegmentPrisma,
+        title: surveyId,
+        isPrivate: true,
+      });
+
+      await expect(updateSegment(segmentId, { title: "Renamed" })).rejects.toThrow(
+        new InvalidInputError("A private segment keeps the id of its survey as title")
+      );
+      await expect(updateSegment(segmentId, { title: "Renamed", isPrivate: true })).rejects.toThrow(
+        InvalidInputError
+      );
+
+      expect(prisma.segment.update).not.toHaveBeenCalled();
+    });
+
+    test("should rename a private segment that turns shared (ENG-6956)", async () => {
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue({
+        ...mockSegmentPrisma,
+        title: surveyId,
+        isPrivate: true,
+      });
+      vi.mocked(prisma.survey.findFirst).mockResolvedValueOnce(null);
+
+      await updateSegment(segmentId, { title: "Loyal users", isPrivate: false });
+
+      expect(prisma.segment.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ title: "Loyal users", isPrivate: false }),
+        })
+      );
+    });
+
     test("should update segment with survey connections", async () => {
       vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegmentPrisma);
 

@@ -208,6 +208,19 @@ describe("shared segment titles (ENG-6956)", () => {
     expect((await segmentOf(victimSurveyId)).filters).toEqual(filters);
   });
 
+  test("a private segment keeps its survey's id as title until it turns shared", async () => {
+    const victim = await segmentOf(victimSurveyId);
+
+    await expect(updateSegment(victim.id, { title: "Renamed" })).rejects.toThrow(
+      new InvalidInputError("A private segment keeps the id of its survey as title")
+    );
+    expect((await segmentOf(victimSurveyId)).id).toBe(victim.id);
+
+    // Save as new segment in the survey editor turns the survey's private segment into a named shared one.
+    const shared = await updateSegment(victim.id, { title: "Loyal users", isPrivate: false });
+    expect(shared).toMatchObject({ id: victim.id, title: "Loyal users", isPrivate: false });
+  });
+
   test("a private segment cannot turn shared while it keeps its survey's id as title", async () => {
     const victim = await segmentOf(victimSurveyId);
 
