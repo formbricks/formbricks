@@ -67,11 +67,12 @@ Playwright summary counts it as `flaky` (it passed only on Playwright's own retr
 inside green runs, so read the summary even when the check passed.
 
 1. One rerun is how you find out. Once it shows a flake, rerun nothing more until steps 2–3 are done.
-2. Search Linear for the test name, closed issues included. Reuse an issue only when it records the same
-   failure: the failing assertion, or when nothing asserted (an action timeout, a hook or fixture that
-   throws) the error and the line it came from. A different failure is a different flake. An open issue
-   gets the new run ids, or for a local run the command and its output. A Done or Canceled one is
-   reopened with them: its fix did not hold.
+2. Search Linear, closed issues included, for the test name. When nothing asserted (an action timeout, a
+   hook or fixture that throws), also search for the error and the line it came from: a shared fixture
+   fails the same way in other tests. Reuse an issue only when it records the same failure: the failing
+   assertion, or that error and line. A different failure is a different flake. An open issue gets the
+   new run ids, or for a local run the command and its output. A Done or Canceled one is reopened with
+   them: its fix did not hold.
 3. Otherwise file one as `docs/agents/issue-tracker.md` describes (no project or milestone needed):
    priority High, label `bug`, plus `infrastructure` when the cause is CI or the test harness rather than
    the product. Give the failing test, that failure, and the runs it failed in (or the local command and
