@@ -302,6 +302,7 @@ describe("httpRequestStepExecutor", () => {
       status: "failed",
       error: "The HTTP request could not be handed to its sending job: Connection is closed.",
       output: { mode: "dont_wait", delivery: "failed", request: { method: "POST" } },
+      variables: {},
     });
     // Still a handed-off step: its failure shows on the step and never fails the run.
     expect(httpRequestStepExecutor.handedOff?.(outcome.output)).toBe(true);
