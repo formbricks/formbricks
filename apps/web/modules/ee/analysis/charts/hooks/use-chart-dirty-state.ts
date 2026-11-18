@@ -14,6 +14,8 @@ interface UseChartDirtyStateProps {
   chartName: string;
   chartData: AnalyticsResponse | null;
   chartConfig: TChartConfig;
+  /** The builder holds a query edit the preview never adopted, e.g. one the query rejected. */
+  hasUnadoptedQueryEdit: boolean;
 }
 
 /**
@@ -32,6 +34,7 @@ export function useChartDirtyState({
   chartName,
   chartData,
   chartConfig,
+  hasUnadoptedQueryEdit,
 }: Readonly<UseChartDirtyStateProps>) {
   const currentSnapshot = useMemo(
     () => ({
@@ -56,7 +59,10 @@ export function useChartDirtyState({
     }
   }, [open, isReady, baseline, currentSnapshot]);
 
-  const hasUnsavedChart = !isSaving && baseline !== null && !isDeepEqual(currentSnapshot, baseline);
+  // chartData only changes when a query succeeds, so an edit the query rejected is invisible to the
+  // snapshot and has to be reported by the builder.
+  const hasUnsavedChart =
+    !isSaving && baseline !== null && (hasUnadoptedQueryEdit || !isDeepEqual(currentSnapshot, baseline));
   useBeforeUnloadPrompt(() => open && hasUnsavedChart);
 
   const [isConfirmingDiscard, setIsConfirmingDiscard] = useState(false);

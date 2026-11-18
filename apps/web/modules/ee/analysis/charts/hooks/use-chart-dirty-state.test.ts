@@ -26,6 +26,7 @@ const render = (props: Partial<Parameters<typeof useChartDirtyState>[0]> = {}) =
       chartName: "NPS by source",
       chartData: savedChart,
       chartConfig: {} as TChartConfig,
+      hasUnadoptedQueryEdit: false,
       ...props,
       ...overrides,
     })
@@ -87,5 +88,21 @@ describe("useChartDirtyState", () => {
 
     expect(deferred).toHaveBeenCalledTimes(1);
     expect(result.current.isConfirmingDiscard).toBe(false);
+  });
+
+  test("a query edit the preview never adopted still asks before discarding", () => {
+    // ENG-7056: a 6th filter is rejected by the query, so chartData keeps the saved query and the
+    // snapshot alone saw nothing to lose.
+    const { result, rerender } = render();
+    expect(result.current.hasUnsavedChart).toBe(false);
+
+    rerender({ hasUnadoptedQueryEdit: true });
+    expect(result.current.hasUnsavedChart).toBe(true);
+
+    const close = vi.fn();
+    act(() => result.current.confirmDiscard(close));
+
+    expect(close).not.toHaveBeenCalled();
+    expect(result.current.isConfirmingDiscard).toBe(true);
   });
 });

@@ -34,6 +34,11 @@ export interface ChartQueryState {
   isLoading: boolean;
   error: string | null;
   isPending: boolean;
+  /**
+   * The form differs from the query the preview holds: an edit still waiting to run, running, or run
+   * and rejected. A rejected edit never reaches the preview, so this is the only place it shows.
+   */
+  hasUnadoptedEdit: boolean;
 }
 
 interface AdvancedChartBuilderProps {
@@ -96,9 +101,12 @@ const chartBuilderReducer = (state: ChartBuilderState, action: Action): ChartBui
   }
 };
 
-const toComparableQueryJson = (query: TChartQuery, chartType: TChartType): string =>
+const toComparableQueryJson = (query: TChartQuery | undefined, chartType: TChartType): string =>
   JSON.stringify(
-    prepareQueryForChartType(buildCubeQuery({ ...initialState, ...parseQueryToState(query) }), chartType)
+    prepareQueryForChartType(
+      buildCubeQuery({ ...initialState, ...(query ? parseQueryToState(query) : {}) }),
+      chartType
+    )
   );
 
 export function AdvancedChartBuilder({
@@ -127,9 +135,10 @@ export function AdvancedChartBuilder({
     chartTypeRef.current = chartType;
   }, [chartType]);
 
-  useEffect(() => {
-    onQueryStateChange?.({ isLoading, error, isPending: isConfigDirty || isLoading });
-  }, [isLoading, error, isConfigDirty, onQueryStateChange]);
+  // The query handed in is the one the preview shows; it is handed in again after every successful run.
+  const [adoptedQueryJson, setAdoptedQueryJson] = useState(() =>
+    toComparableQueryJson(initialQuery, chartType)
+  );
 
   const [dimensionsOpen, setDimensionsOpen] = useState(
     () => (parsedInitial?.selectedDimensions?.length ?? 0) > 0
@@ -158,6 +167,11 @@ export function AdvancedChartBuilder({
     [state, chartType]
   );
   const currentQueryJson = JSON.stringify(currentQuery);
+  const hasUnadoptedEdit = currentQueryJson !== adoptedQueryJson;
+
+  useEffect(() => {
+    onQueryStateChange?.({ isLoading, error, isPending: isConfigDirty || isLoading, hasUnadoptedEdit });
+  }, [isLoading, error, isConfigDirty, hasUnadoptedEdit, onQueryStateChange]);
 
   // The last query that was executed (or arrived pre-executed via initialQuery, e.g. from the
   // AI section or a saved chart). Auto-run only fires when the form drifts away from it.
@@ -176,9 +190,9 @@ export function AdvancedChartBuilder({
     if (appliedInitialQueryRef.current === initialQuery) return;
     appliedInitialQueryRef.current = initialQuery;
     const parsed = parseQueryToState(initialQuery);
-    lastRunQueryJsonRef.current = runInitialQueryRef.current
-      ? null
-      : JSON.stringify(prepareQueryForChartType(buildCubeQuery({ ...initialState, ...parsed }), chartType));
+    const initialQueryJson = toComparableQueryJson(initialQuery, chartType);
+    lastRunQueryJsonRef.current = runInitialQueryRef.current ? null : initialQueryJson;
+    setAdoptedQueryJson(initialQueryJson);
     dispatch({ type: ACTION.INIT_FROM_QUERY, payload: parsed });
     setDimensionsOpen((parsed.selectedDimensions?.length ?? 0) > 0);
     // chartType only feeds the baseline above; a later switch is caught by the guard and left to

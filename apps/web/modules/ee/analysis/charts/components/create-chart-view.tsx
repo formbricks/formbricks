@@ -94,20 +94,29 @@ export function CreateChartView({
     if (!open) adoptedChartRef.current = null;
   }, [open]);
 
+  const [queryState, setQueryState] = useState<ChartQueryState>({
+    isLoading: false,
+    error: null,
+    isPending: false,
+    hasUnadoptedEdit: false,
+  });
+
   const isReady = open && !isLoadingChart && (!isEditing || Boolean(chartData) || canSaveDetailsOnly);
   const { confirmDiscard, isConfirmingDiscard, setIsConfirmingDiscard, runPendingDiscard } =
-    useChartDirtyState({ open, isReady, isSaving, chartName, chartData, chartConfig });
+    useChartDirtyState({
+      open,
+      isReady,
+      isSaving,
+      chartName,
+      chartData,
+      chartConfig,
+      hasUnadoptedQueryEdit: queryState.hasUnadoptedEdit,
+    });
 
   const requestClose = () => confirmDiscard(handleClose);
   const handleDialogOpenChange = (isOpen: boolean) => {
     if (!isOpen) requestClose();
   };
-
-  const [queryState, setQueryState] = useState<ChartQueryState>({
-    isLoading: false,
-    error: null,
-    isPending: false,
-  });
 
   if (isLoadingChart && isEditing && !initialChart) {
     return <ChartDialogLoadingView open={open} onClose={handleClose} />;
