@@ -301,9 +301,8 @@ function validateExpressionValue(
 function getBooleanAssignIssue(
   action: Parameters<typeof isValidBooleanAssign>[0] & { variableId: string },
   name: string,
-  input: TReferenceValidationInput
+  typeContext: TExpressionTypeContext
 ): InvalidParam | undefined {
-  const typeContext = getTypeContext(input);
   if (typeContext.getComputedFieldType(action.variableId) !== "boolean") return undefined;
   const getFieldType = (storageKey: string, source: "computed" | "ingested") =>
     source === "computed"
@@ -322,10 +321,11 @@ function validateCalculateActionValue(
   action: Extract<TSurveyBlockLogicAction, { objective: "calculate" }>,
   actionPath: string,
   input: TReferenceValidationInput,
+  typeContext: TExpressionTypeContext,
   references: TReferenceLookup,
   issues: InvalidParam[]
 ): void {
-  const booleanIssue = getBooleanAssignIssue(action, `${actionPath}.value`, input);
+  const booleanIssue = getBooleanAssignIssue(action, `${actionPath}.value`, typeContext);
   if (booleanIssue) {
     const before = issues.length;
     if (action.value.type !== "static" && action.value.type !== "expression") {
@@ -476,6 +476,8 @@ function validateConditionGroup(
 
 export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInput): InvalidParam[] {
   const issues: InvalidParam[] = [];
+  // Built once: every calculate action reads its fields' types from it (ENG-6973).
+  const typeContext = getTypeContext(input);
   const blockIds = input.blocks.map((block) => block.id);
   const blockEntries = input.blocks.map((block, index) => ({
     id: block.id,
@@ -615,7 +617,7 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
             });
           }
 
-          validateCalculateActionValue(action, actionPath, input, references, issues);
+          validateCalculateActionValue(action, actionPath, input, typeContext, references, issues);
         }
 
         if (action.objective === "requireAnswer" && !references.elementIds.has(action.target)) {

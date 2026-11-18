@@ -77,7 +77,7 @@ With the **Expression** switch off, a date field is set to a date picked from th
 
 ## True/false
 
-A calculated field can be **true/false**, for example `qualified` to mark respondents who passed a screener. Choose **True/False** as its type in the Embedded Data card, and pick its default value, **True**, **False** or none.
+A calculated field can be **true/false**, for example `qualified` to mark respondents who passed a screener. Choose **True/false** as its type in the Embedded Data card, and pick its default value, **True**, **False** or none.
 
 A true/false field is set in one step only. Its row offers **Assign** alone, and the value is picked from a list: **True**, **False**, or another true/false field, calculated or passed in. There is no typed value, no question and no **Expression** switch: expressions don't give true or false yet.
 
@@ -157,6 +157,10 @@ During a rolling upgrade to 6.2, the pods still on the previous release don't kn
 * a condition on a calculated **date** field, even one set only by its default value: the previous release looks the field up in the older `variables` list, which doesn't list date fields
 * a Set value step that sets a calculated **true/false** field to True or False: the previous release accepts only text and numbers as a typed value
 
-A response that holds a calculated true/false value is stored as `true` or `false`, which the previous release doesn't accept either. A pod still on it refuses a response update that carries one, and its background jobs for such a response (webhooks, integrations, follow-up emails) fail. A condition the previous release evaluates on the server, such as a quota, reads a stored `false` as not set.
+The previous release also doesn't know calculated **true/false** fields at all:
+
+* Through the [Management API](/api-v3-reference/introduction), MCP or the Embedded Data library, it refuses to save a calculated true/false field, even one no step sets.
+* A response value for such a field is stored as `true` or `false`, which it doesn't accept. It refuses to create or update a response that carries one, and its background jobs for such a response (webhooks, integrations, follow-up emails) fail.
+* A condition it checks on the server, such as a quota, gets such a field wrong: it never matches **equals True**, and it reads a stored `false` as not set.
 
 Only surveys saved with one of these, and their responses, during the upgrade are affected, and only for its few minutes. Everything else 6.2 adds, such as show-if, Hidden options, copied options and rules before the first question, is ignored by the previous release and shown as before.

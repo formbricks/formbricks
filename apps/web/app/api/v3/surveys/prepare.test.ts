@@ -2115,6 +2115,19 @@ describe("Set value on a true/false field through v3 (ENG-6973)", () => {
     expect(preparation.ok ? [] : preparation.validation.invalidParams).toEqual([]);
   });
 
+  test("True or False carries only type and value: any other key is refused at its path", () => {
+    const preparation = createWithBooleanStep({
+      value: { type: "static", value: true, columnId: "c1", note: "x" },
+    });
+
+    expect(preparation.ok ? [] : preparation.validation.invalidParams.map((param) => param.name)).toEqual(
+      expect.arrayContaining([
+        "blocks.0.logic.0.actions.0.value.columnId",
+        "blocks.0.logic.0.actions.0.value.note",
+      ])
+    );
+  });
+
   test("create refuses text, another operator and an expression", () => {
     for (const action of [
       { value: { type: "static", value: "true" } },
