@@ -6,7 +6,10 @@ import { assertOrganizationAIConfigured, getOrganizationAIConfig } from "@/lib/a
 import { assertCan } from "@/lib/authorization";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { getOrganizationIdFromSurveyId, getOrganizationIdFromWorkspaceId } from "@/lib/utils/helper";
-import { ZAITranslationFields, translateFields } from "./translate-fields";
+import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
+import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
+import { translateFields } from "./translate-fields";
+import { ZTranslateSurveyFieldsInput, getAITranslationLanguageName } from "./translation-languages";
 
 const ZCheckAITranslationAvailableAction = z.object({
   surveyId: ZId,
@@ -38,15 +41,8 @@ export const checkAITranslationAvailableAction = authenticatedActionClient
     return { available: true };
   });
 
-const ZTranslateSurveyFieldsAction = z.object({
-  workspaceId: ZId,
-  fields: ZAITranslationFields,
-  sourceLanguage: z.string().min(1),
-  targetLanguage: z.string().min(1),
-});
-
 export const translateSurveyFieldsAction = authenticatedActionClient
-  .inputSchema(ZTranslateSurveyFieldsAction)
+  .inputSchema(ZTranslateSurveyFieldsInput)
   .action(async ({ ctx, parsedInput }) => {
     const organizationId = await getOrganizationIdFromWorkspaceId(parsedInput.workspaceId);
 
@@ -55,6 +51,8 @@ export const translateSurveyFieldsAction = authenticatedActionClient
       id: parsedInput.workspaceId,
     });
 
+    await applyRateLimit(rateLimitConfigs.actions.aiTranslation, ctx.user.id);
+
     await assertOrganizationAIConfigured(organizationId);
 
     const outcome = await translateFields({
@@ -62,8 +60,8 @@ export const translateSurveyFieldsAction = authenticatedActionClient
       workspaceId: parsedInput.workspaceId,
       userId: ctx.user.id,
       fields: parsedInput.fields,
-      sourceLanguage: parsedInput.sourceLanguage,
-      targetLanguage: parsedInput.targetLanguage,
+      sourceLanguage: getAITranslationLanguageName(parsedInput.sourceLanguage),
+      targetLanguage: getAITranslationLanguageName(parsedInput.targetLanguage),
     });
 
     return outcome;

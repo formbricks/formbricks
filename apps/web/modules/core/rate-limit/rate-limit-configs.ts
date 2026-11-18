@@ -211,6 +211,14 @@ export const rateLimitConfigs = {
       namespace: "action:create-organization",
       failClosed: true,
     }, // 5 per day
+    // One action is at most three model calls, and the editor runs up to AI_TRANSLATION_ACTIONS_PER_RUN (20) actions back to back for a
+    // full survey. 30 a minute leaves room for that and a second run, and stops a loop draining the
+    // provider quota every tenant shares (SEC-19).
+    aiTranslation: {
+      interval: 60,
+      allowedPerInterval: 30,
+      namespace: "action:ai-translation",
+    }, // 30 per minute per user — bounds LLM spend
     generateExampleResponses: {
       interval: 60,
       allowedPerInterval: 1,

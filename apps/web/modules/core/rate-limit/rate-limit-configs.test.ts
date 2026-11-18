@@ -187,6 +187,7 @@ describe("rateLimitConfigs", () => {
         "inviteMember",
         "inviteMemberPerUser",
         "createOrganization",
+        "aiTranslation",
         "generateExampleResponses",
         "integrationMutation",
         "feedbackSourceMutation",
