@@ -174,8 +174,9 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
 
   // Escape with the dropdown open closes only the dropdown. A Radix dialog around this component
   // listens for Escape on `document` in the capture phase, before the React handler above runs, so
-  // stopping propagation there is too late. Claiming the key one step earlier (window, capture) and
-  // preventing its default works because Radix skips dismissing on a default-prevented event.
+  // stopping propagation there is too late. Claiming the key one step earlier (on the window via
+  // `globalThis`, capture) and preventing its default works because Radix skips dismissing on a
+  // default-prevented event. With the dropdown hidden, Escape still reaches the dialog.
   React.useEffect(() => {
     if (!isDropdownVisible) return;
     const handleEscape = (event: KeyboardEvent) => {
