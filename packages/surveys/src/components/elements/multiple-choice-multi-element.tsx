@@ -32,7 +32,7 @@ export function MultipleChoiceMultiElement({
   dir = "auto",
   errorMessage,
 }: Readonly<MultipleChoiceMultiElementProps>) {
-  const [startTime, setStartTime] = useState(performance.now());
+  const [startTime, setStartTime] = useState(() => performance.now());
   const [otherValue, setOtherValue] = useState("");
   const isCurrent = element.id === currentElementId;
   const isRequired = element.required;

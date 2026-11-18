@@ -126,7 +126,7 @@ describe("action-builder", () => {
         name: "Invalid Action",
         type: "code",
         workspaceId: "ws1",
-      } as any;
+      } as Parameters<typeof buildNoCodeAction>[0];
 
       expect(() => buildNoCodeAction(data, "ws1", mockT)).toThrow("Invalid action type for noCode action");
     });
@@ -210,7 +210,7 @@ describe("action-builder", () => {
         name: "Invalid Action",
         type: "noCode",
         workspaceId: "ws1",
-      } as any;
+      } as Parameters<typeof buildCodeAction>[0];
 
       expect(() => buildCodeAction(data, "ws1", mockT)).toThrow("Invalid action type for code action");
     });

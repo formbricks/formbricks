@@ -62,7 +62,9 @@ describe("updateWorkspaceBranding", () => {
       logo: null,
     };
 
-    vi.mocked(prisma.workspace.update).mockResolvedValue(mockWorkspace as any);
+    vi.mocked(prisma.workspace.update).mockResolvedValue(
+      mockWorkspace as unknown as Awaited<ReturnType<typeof prisma.workspace.update>>
+    );
     vi.mocked(validateInputs).mockReturnValue([
       "test-workspace-id",
       { linkSurveyBranding: false, inAppSurveyBranding: false },

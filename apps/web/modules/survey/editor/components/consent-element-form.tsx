@@ -55,7 +55,7 @@ export const ConsentElementForm = ({
         id="headline"
         value={element.headline}
         label={t("workspace.surveys.edit.question") + "*"}
-        autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
+        focusOnMount={!element.headline?.default || element.headline.default.trim() === ""}
       />
 
       <div ref={parent}>
@@ -67,7 +67,7 @@ export const ConsentElementForm = ({
                 id="subheader"
                 value={element.subheader}
                 label={t("common.description")}
-                autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
+                focusOnMount={!element.subheader?.default || element.subheader.default.trim() === ""}
               />
             </div>
           </div>

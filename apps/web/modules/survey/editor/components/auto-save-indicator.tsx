@@ -35,9 +35,16 @@ export const AutoSaveIndicator = ({
   const { t } = useTranslation();
   const [showSaved, setShowSaved] = useState(false);
 
+  // Each new save (and one already on record at mount) flashes "Saved": shown from the render that
+  // sees it, hidden by the timer below.
+  const [flashedSave, setFlashedSave] = useState<typeof lastSaved | null>(null);
+  if (lastSaved !== flashedSave) {
+    setFlashedSave(lastSaved);
+    if (lastSaved) setShowSaved(true);
+  }
+
   useEffect(() => {
     if (lastSaved) {
-      setShowSaved(true);
       const timer = setTimeout(() => {
         setShowSaved(false);
       }, 3000);

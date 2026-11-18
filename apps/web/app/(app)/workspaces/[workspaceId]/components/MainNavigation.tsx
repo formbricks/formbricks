@@ -170,6 +170,7 @@ export const MainNavigation = ({
 
   useEffect(() => {
     const isCollapsedValueFromLocalStorage = localStorage.getItem("isMainNavCollapsed") === "true";
+    // eslint-disable-next-line react/set-state-in-effect -- localStorage exists only after hydration; the server renders the expanded default
     setIsCollapsed(isCollapsedValueFromLocalStorage);
   }, []);
 

@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import type { TApiAuditLog } from "@/app/lib/api/with-api-logging";
 import type { authenticatedApiClient } from "@/modules/api/v2/auth/authenticated-api-client";
+import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { DELETE, PUT } from "./route";
 
 const {
@@ -156,6 +158,55 @@ describe("PUT/DELETE /organizations/[organizationId]/teams/[teamId]", () => {
       expect(mockCanManageOrganizationUsers).toHaveBeenCalledWith("manager");
       expect(mockUpdateTeam).toHaveBeenCalledWith(organizationId, teamId, { name: "Renamed Team" });
       expect(response.status).toBe(200);
+    });
+  });
+
+  describe("audit log", () => {
+    let auditLog: TApiAuditLog;
+
+    beforeEach(() => {
+      auditLog = {
+        action: "deleted",
+        targetType: "team",
+        userId: UNKNOWN_DATA,
+        targetId: UNKNOWN_DATA,
+        organizationId,
+        status: "failure",
+        userType: "api",
+        apiUrl: `http://localhost/api/v2/organizations/org123/teams/${teamId}`,
+      };
+      mockGetApiKeyCreatorRole.mockResolvedValue("manager");
+      mockCanManageOrganizationUsers.mockReturnValue(true);
+      mockDeleteTeam.mockResolvedValue({ ok: true, data: team });
+      mockAuthenticatedApiClient.mockImplementationOnce(
+        async ({ handler }: Parameters<typeof authenticatedApiClient>[0]) =>
+          await handler({
+            request: buildRequest("DELETE"),
+            auditLog,
+            authentication: {
+              type: "apiKey",
+              apiKeyId,
+              organizationId,
+              workspacePermissions: [],
+              organizationAccess: { accessControl: { read: true, write: true } },
+            },
+            parsedInput: { params: { organizationId, teamId } },
+          })
+      );
+    });
+
+    test("DELETE records the team as it was before deletion", async () => {
+      await DELETE(buildRequest("DELETE"), { params: Promise.resolve({ organizationId, teamId }) });
+
+      expect(auditLog.oldObject).toEqual(team);
+    });
+
+    test("DELETE records null, not a placeholder string, when the team could not be read first", async () => {
+      mockGetTeam.mockResolvedValue({ ok: false, error: { type: "not_found", details: [] } });
+
+      await DELETE(buildRequest("DELETE"), { params: Promise.resolve({ organizationId, teamId }) });
+
+      expect(auditLog.oldObject).toBeNull();
     });
   });
 });

@@ -153,6 +153,50 @@ type TDisableTwoFactorAuthParams = {
   backupCode?: string;
 };
 
+/** Throws unless `backupCode` (dashes ignored) is one of the user's stored backup codes. */
+const assertBackupCodeMatches = (storedBackupCodes: string | null, backupCode: string): void => {
+  if (!ENCRYPTION_KEY) {
+    throw new Error("Encryption key not found");
+  }
+
+  if (!storedBackupCodes) {
+    throw new InvalidInputError("Missing backup codes");
+  }
+
+  const backupCodes = JSON.parse(symmetricDecrypt(storedBackupCodes, ENCRYPTION_KEY));
+
+  // check if user-supplied code matches one
+  const index = backupCodes.indexOf(backupCode.replaceAll("-", ""));
+  if (index === -1) {
+    throw new InvalidInputError("Incorrect backup code");
+  }
+};
+
+/** Throws unless `code` is a valid TOTP code for the user's stored secret. */
+const assertTotpCodeMatches = (twoFactorSecret: string | null, code: string | undefined): void => {
+  if (!code) {
+    throw new InvalidInputError("Two factor code required");
+  }
+
+  if (!twoFactorSecret) {
+    throw new InvalidInputError("Two factor setup has not been completed");
+  }
+
+  if (!ENCRYPTION_KEY) {
+    throw new Error("Encryption key not found");
+  }
+
+  const secret = symmetricDecrypt(twoFactorSecret, ENCRYPTION_KEY);
+  if (secret.length !== 32) {
+    throw new InvalidInputError("Invalid secret");
+  }
+
+  const isValidCode = totpAuthenticatorCheck(code, secret);
+  if (!isValidCode) {
+    throw new InvalidInputError("Invalid code");
+  }
+};
+
 export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactorAuthParams) => {
   const user = await prisma.user.findUnique({
     where: {
@@ -181,47 +225,12 @@ export const disableTwoFactorAuth = async (id: string, params: TDisableTwoFactor
 
   // if user has 2fa and using backup code
   if (user.twoFactorEnabled && backupCode) {
-    if (!ENCRYPTION_KEY) {
-      throw new Error("Encryption key not found");
-    }
-
-    if (!user.backupCodes) {
-      throw new InvalidInputError("Missing backup codes");
-    }
-
-    const backupCodes = JSON.parse(symmetricDecrypt(user.backupCodes, ENCRYPTION_KEY));
-
-    // check if user-supplied code matches one
-    const index = backupCodes.indexOf(backupCode.replaceAll("-", ""));
-    if (index === -1) {
-      throw new InvalidInputError("Incorrect backup code");
-    }
-
+    assertBackupCodeMatches(user.backupCodes, backupCode);
     // we delete all stored backup codes at the end, no need to do this here
 
     // if user has 2fa and NOT using backup code, try totp
   } else if (user.twoFactorEnabled) {
-    if (!code) {
-      throw new InvalidInputError("Two factor code required");
-    }
-
-    if (!user.twoFactorSecret) {
-      throw new InvalidInputError("Two factor setup has not been completed");
-    }
-
-    if (!ENCRYPTION_KEY) {
-      throw new Error("Encryption key not found");
-    }
-
-    const secret = symmetricDecrypt(user.twoFactorSecret, ENCRYPTION_KEY);
-    if (secret.length !== 32) {
-      throw new InvalidInputError("Invalid secret");
-    }
-
-    const isValidCode = totpAuthenticatorCheck(code, secret);
-    if (!isValidCode) {
-      throw new InvalidInputError("Invalid code");
-    }
+    assertTotpCodeMatches(user.twoFactorSecret, code);
   }
 
   // Clear both stores together: the legacy User columns and Better Auth's `TwoFactor` row (which login

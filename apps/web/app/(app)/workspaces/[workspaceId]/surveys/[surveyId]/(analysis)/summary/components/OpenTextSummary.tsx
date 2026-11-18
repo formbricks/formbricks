@@ -62,6 +62,7 @@ export const OpenTextSummary = ({
               {elementSummary.samples.slice(0, visibleResponses).map((response) => (
                 <TableRow
                   key={response.id}
+                  // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a clickable table row; a <button> cannot stand in for a <tr>
                   role="button"
                   tabIndex={0}
                   aria-label={t("workspace.surveys.summary.open_response_details")}

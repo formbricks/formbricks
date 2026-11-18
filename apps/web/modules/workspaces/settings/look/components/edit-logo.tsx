@@ -47,7 +47,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
         return;
       }
       setLogoUrl(uploadResult.url);
-    } catch (error) {
+    } catch {
       toast.error(t("workspace.look.logo_upload_failed"));
     } finally {
       setIsLoading(false);
@@ -94,7 +94,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
       }
-    } catch (error) {
+    } catch {
       toast.error(t("workspace.look.failed_to_update_logo"));
     } finally {
       setIsEditing(false);
@@ -127,7 +127,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
         const errorMessage = getFormattedErrorMessage(updateWorkspaceResponse);
         toast.error(errorMessage);
       }
-    } catch (error) {
+    } catch {
       toast.error(t("workspace.look.failed_to_remove_logo"));
     } finally {
       setIsEditing(false);
@@ -252,7 +252,7 @@ export const EditLogo = ({ workspace, workspaceId, isReadOnly, isStorageConfigur
         />
       </div>
       {isReadOnly && (
-        <Alert variant="warning" className="mt-4" role="status">
+        <Alert variant="warning" className="mt-4" alertRole="status">
           <AlertDescription>
             {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
           </AlertDescription>

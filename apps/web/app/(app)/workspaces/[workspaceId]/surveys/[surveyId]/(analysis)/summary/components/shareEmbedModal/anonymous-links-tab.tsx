@@ -181,7 +181,7 @@ export const AnonymousLinksTab = ({
         count,
       });
 
-      if (!!response?.data?.length) {
+      if (response?.data?.length) {
         const singleUseLinkParams = response.data;
         const surveyLinks = singleUseLinkParams.map(({ suId, suToken }) => {
           const url = new URL(surveyUrl);
@@ -211,7 +211,7 @@ export const AnonymousLinksTab = ({
       }
 
       toast.error(t("workspace.surveys.share.anonymous_links.generate_links_error"));
-    } catch (error) {
+    } catch {
       toast.error(t("workspace.surveys.share.anonymous_links.generate_links_error"));
     }
   };
@@ -274,7 +274,7 @@ export const AnonymousLinksTab = ({
               />
 
               <div className="w-full">
-                <Alert variant="info" size="default" role="status">
+                <Alert variant="info" size="default" alertRole="status">
                   <AlertTitle>
                     {t("workspace.surveys.share.anonymous_links.multi_use_powers_other_channels_title")}
                   </AlertTitle>

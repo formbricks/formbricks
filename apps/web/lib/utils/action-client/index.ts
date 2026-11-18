@@ -15,7 +15,9 @@ import { ActionClientCtx } from "./types/context";
 
 export const actionClient = createSafeActionClient({
   handleServerError(e, utils) {
-    const eventId = (utils.ctx as Record<string, any>)?.auditLoggingCtx?.eventId ?? undefined; // keep explicit fallback
+    const eventId =
+      (utils.ctx as { auditLoggingCtx?: { eventId?: string } } | undefined)?.auditLoggingCtx?.eventId ??
+      undefined; // keep explicit fallback
 
     if (isExpectedError(e)) {
       return e.message;

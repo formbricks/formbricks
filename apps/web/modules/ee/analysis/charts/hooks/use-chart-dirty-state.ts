@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { TChartConfig } from "@formbricks/types/analysis";
 import { isDeepEqual } from "@/lib/utils/object";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
@@ -46,15 +46,12 @@ export function useChartDirtyState({
   // State rather than a ref: this is read during render to decide whether closing needs to ask.
   const [baseline, setBaseline] = useState<typeof currentSnapshot | null>(null);
 
-  useEffect(() => {
-    if (!open) {
-      setBaseline(null);
-      return;
-    }
-    if (isReady && baseline === null) {
-      setBaseline(currentSnapshot);
-    }
-  }, [open, isReady, baseline, currentSnapshot]);
+  // Adjusted during render: closed drops the snapshot, and the first settled render while open takes it.
+  if (!open && baseline !== null) {
+    setBaseline(null);
+  } else if (open && isReady && baseline === null) {
+    setBaseline(currentSnapshot);
+  }
 
   const hasUnsavedChart = !isSaving && baseline !== null && !isDeepEqual(currentSnapshot, baseline);
   useBeforeUnloadPrompt(() => open && hasUnsavedChart);

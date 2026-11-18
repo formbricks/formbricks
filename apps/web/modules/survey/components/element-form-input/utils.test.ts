@@ -213,7 +213,7 @@ describe("utils", () => {
             type: "endScreen",
             headline: createI18nString("End Screen", surveyLanguageCodes),
             subheader: createI18nString("Thanks for your input", surveyLanguageCodes),
-          } as any,
+          },
         ],
         delay: 0,
         pin: null,
@@ -244,7 +244,7 @@ describe("utils", () => {
           {
             type: "redirectToUrl",
             url: "https://example.com",
-          } as any,
+          },
         ],
         delay: 0,
         pin: null,

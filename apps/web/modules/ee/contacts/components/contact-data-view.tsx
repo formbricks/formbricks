@@ -34,6 +34,26 @@ import { generateContactTableColumns } from "./contact-table-column";
 
 const BUILT_IN_ATTRIBUTE_KEYS = new Set(["userId", "email", "firstName", "lastName"]);
 
+const toContactTableRow = (
+  contact: Awaited<ReturnType<typeof listContacts>>["data"][number],
+  customAttributeKeys: TContactAttributeKey[]
+): TContactTableData => {
+  const values = new Map(contact.attributes.map((attribute) => [attribute.key, attribute.value]));
+  return {
+    id: contact.id,
+    userId: contact.userId ?? "",
+    email: contact.email ?? "",
+    firstName: contact.firstName ?? "",
+    lastName: contact.lastName ?? "",
+    attributes: customAttributeKeys.map((attributeKey) => ({
+      key: attributeKey.key,
+      name: attributeKey.name,
+      value: values.get(attributeKey.key) ?? "",
+      dataType: attributeKey.dataType,
+    })),
+  };
+};
+
 interface ContactDataViewProps {
   workspaceId: string;
   contactAttributeKeys: TContactAttributeKey[];
@@ -94,22 +114,7 @@ export const ContactDataView = ({
   const data: TContactTableData[] = useMemo(() => {
     if (listParams === null) return [];
     return (query.data?.pages ?? []).flatMap((page) =>
-      page.data.map((contact) => {
-        const values = new Map(contact.attributes.map((attribute) => [attribute.key, attribute.value]));
-        return {
-          id: contact.id,
-          userId: contact.userId ?? "",
-          email: contact.email ?? "",
-          firstName: contact.firstName ?? "",
-          lastName: contact.lastName ?? "",
-          attributes: customAttributeKeys.map((attributeKey) => ({
-            key: attributeKey.key,
-            name: attributeKey.name,
-            value: values.get(attributeKey.key) ?? "",
-            dataType: attributeKey.dataType,
-          })),
-        };
-      })
+      page.data.map((contact) => toContactTableRow(contact, customAttributeKeys))
     );
   }, [query.data, listParams, customAttributeKeys]);
   const matchCount = listParams === null ? 0 : (query.data?.pages[0]?.meta.totalCount ?? null);

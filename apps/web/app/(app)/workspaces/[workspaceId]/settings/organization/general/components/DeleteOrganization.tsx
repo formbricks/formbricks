@@ -44,7 +44,7 @@ export const DeleteOrganization = ({
         localStorage.removeItem(FORMBRICKS_ENVIRONMENT_ID_LS);
       }
       router.push("/");
-    } catch (err) {
+    } catch {
       toast.error(t("workspace.settings.general.error_deleting_organization_please_try_again"));
     }
 
@@ -72,7 +72,7 @@ export const DeleteOrganization = ({
         </div>
       )}
       {isDeleteDisabled && (
-        <Alert variant="warning" role="status">
+        <Alert variant="warning" alertRole="status">
           <AlertDescription>{deleteDisabledWarning}</AlertDescription>
         </Alert>
       )}

@@ -105,3 +105,33 @@ describe("collectSurveyResponseFileUrls with a Signature element", () => {
     expect(fileUrls).toEqual([flatUploadUrl]);
   });
 });
+
+describe("collectSurveyResponseFileUrls on a large page", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  // Forged answers can reach 10,000 URLs per response. Spreading a whole page into one push() call
+  // throws a RangeError past ~125k arguments, which would fail survey reset for good.
+  test("collects more than 125k URLs from one page", async () => {
+    const perResponse = 10_000;
+    const responseCount = 13;
+    vi.mocked(getSurvey).mockResolvedValue(surveyWith([{ id: "photo", type: "fileUpload" }]));
+    vi.mocked(prisma.response.findMany)
+      .mockReset()
+      .mockResolvedValueOnce(
+        Array.from({ length: responseCount }, (_, r) => ({
+          id: `r${String(r)}`,
+          createdAt: new Date(r),
+          data: {
+            photo: Array.from({ length: perResponse }, (_, i) =>
+              scoped("photo", `f${String(r)}-${String(i)}--fid--abc.png`)
+            ),
+          },
+        })) as never
+      )
+      .mockResolvedValue([] as never);
+
+    const { fileUrls } = await collectSurveyResponseFileUrls(SURVEY_ID);
+
+    expect(fileUrls).toHaveLength(perResponse * responseCount);
+  });
+});

@@ -79,6 +79,7 @@ export function ElementMedia({ imgUrl, videoUrl, altText, className }: Readonly<
             <iframe
               src={safeVideoUrl}
               title={t("common.question_video")}
+              // eslint-disable-next-line typescript/no-deprecated -- removes the iframe border on host pages whose CSS does not
               frameBorder="0"
               className={cn("rounded-custom aspect-video w-full", isLoading ? "opacity-0" : "")}
               onLoad={() => {

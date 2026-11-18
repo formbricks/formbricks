@@ -69,7 +69,9 @@ describe("testEndpoint", () => {
       close: vi.fn(async () => undefined),
       destroy: vi.fn(async () => undefined),
     } as never);
-    vi.mocked(getTranslate).mockResolvedValue(((key: string) => key) as any);
+    vi.mocked(getTranslate).mockResolvedValue(
+      ((key: string) => key) as Awaited<ReturnType<typeof getTranslate>>
+    );
     vi.mocked(isDiscordWebhook).mockReturnValue(false);
   });
 

@@ -17,6 +17,7 @@ import { TSurveyLanguage } from "@formbricks/types/surveys/types";
  * i18n.config).
  */
 export const getI18nLanguage = (languageCode: string, languages: TSurveyLanguage[]) => {
+  // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty code falls back to "en" too
   const defaultLanguageCode = languages.find((lng) => lng.default)?.language?.code || "en";
   if (languageCode === DEFAULT_SURVEY_LANGUAGE_KEY) return defaultLanguageCode;
 

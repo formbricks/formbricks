@@ -3,7 +3,7 @@ import {
   mockDisplay,
   mockDisplayInput,
   mockDisplayInputWithUserId,
-  mockDisplayWithPersonId,
+  mockDisplayWithContactId,
   mockSurveyId,
 } from "./__mocks__/data.mock";
 import { prisma } from "@/lib/__mocks__/database";
@@ -26,24 +26,24 @@ afterEach(() => {
 
 beforeEach(() => {
   prisma.contact.findFirst.mockResolvedValue(mockContact);
-  prisma.survey.findUnique.mockResolvedValue({
+  vi.mocked(prisma.survey.findUnique, { partial: true }).mockResolvedValue({
     id: mockSurveyId,
     name: "Test Survey",
     status: "inProgress",
-  } as any);
+  });
 });
 
 describe("Tests for createDisplay service", () => {
   describe("Happy Path", () => {
     test("Creates a new display when a userId exists", async () => {
-      prisma.display.create.mockResolvedValue(mockDisplayWithPersonId as any);
+      prisma.display.create.mockResolvedValue(mockDisplayWithContactId);
 
       const display = await createDisplay(mockDisplayInputWithUserId);
-      expect(display).toEqual(mockDisplayWithPersonId);
+      expect(display).toEqual(mockDisplayWithContactId);
     });
 
     test("Creates a new display when a userId does not exists", async () => {
-      prisma.display.create.mockResolvedValue(mockDisplay as any);
+      prisma.display.create.mockResolvedValue(mockDisplay);
 
       const display = await createDisplay(mockDisplayInput);
       expect(display).toEqual(mockDisplay);
@@ -77,7 +77,7 @@ describe("Tests for createDisplay service", () => {
 describe("Tests for delete display service", () => {
   describe("Happy Path", () => {
     test("Deletes a display", async () => {
-      prisma.display.delete.mockResolvedValue(mockDisplay as any);
+      prisma.display.delete.mockResolvedValue(mockDisplay);
 
       const display = await deleteDisplay(mockDisplay.id);
       expect(display).toEqual(mockDisplay);

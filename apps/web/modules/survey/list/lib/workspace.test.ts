@@ -38,7 +38,7 @@ vi.mock("react", async () => {
   const actualReact = await vi.importActual("react");
   return {
     ...actualReact,
-    cache: vi.fn((fnToMemoize: (...args: any[]) => any) => fnToMemoize),
+    cache: vi.fn(<T>(fnToMemoize: T) => fnToMemoize),
   };
 });
 
@@ -135,9 +135,9 @@ describe("Workspace module", () => {
       const mockWorkspace: TWorkspaceWithLanguages = {
         id: "workspace-id",
         languages: [{ language: { id: "lang-1", code: "en" } }],
-      } as any;
+      } as unknown as TWorkspaceWithLanguages;
 
-      vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce(mockWorkspace as any);
+      vi.mocked(prisma.workspace.findUnique, { partial: true }).mockResolvedValueOnce(mockWorkspace);
 
       const result = await getWorkspaceWithLanguages("workspace-id");
 

@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { FormProvider, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -80,6 +81,7 @@ export const SignupForm = ({
   isFormbricksCloud,
 }: Readonly<SignupFormProps>) => {
   const [showLogin, setShowLogin] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const searchParams = useSearchParams();
   const { t } = useTranslation();
   const inviteToken = searchParams?.get("inviteToken");
@@ -210,8 +212,8 @@ export const SignupForm = ({
         : buildVerificationRequestedPath({ token, callbackUrl });
 
       router.push(url);
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
     }
   };
 
@@ -236,7 +238,7 @@ export const SignupForm = ({
                             value={field.value}
                             name="name"
                             autoComplete="name"
-                            autoFocus
+                            ref={nameInputRef}
                             onBlur={field.onBlur}
                             onChange={(e) => field.onChange(e.target.value)}
                             placeholder="Full name"
@@ -370,7 +372,10 @@ export const SignupForm = ({
                 showLogin
                   ? undefined
                   : () => {
-                      setShowLogin(true);
+                      // The button the user pressed turns into the (disabled) submit, so focus moves on
+                      // to the first field it just revealed.
+                      flushSync(() => setShowLogin(true));
+                      nameInputRef.current?.focus();
                     }
               }
               disabled={showLogin && !form.formState.isValid}

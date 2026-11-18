@@ -26,6 +26,44 @@ const normalizeMethod = (method: string): string => method.toUpperCase();
 
 const matchesPrefixedPath = (pathname: string, prefix: string): boolean => pathname.startsWith(prefix);
 
+type TEnvoyRateLimitRule = {
+  /** Upper-case methods the policy covers. */
+  methods: ReadonlySet<string>;
+  matches: (pathname: string) => boolean;
+};
+
+const rule = (methods: string | ReadonlySet<string>, matches: (pathname: string) => boolean) => ({
+  methods: typeof methods === "string" ? new Set([methods]) : methods,
+  matches,
+});
+const exactPath = (path: string) => (pathname: string) => pathname === path;
+const prefixedPath = (prefix: string) => (pathname: string) => matchesPrefixedPath(pathname, prefix);
+const patternPath = (pattern: RegExp) => (pathname: string) => pattern.test(pathname);
+
+/** The policies per auth type; a session-authenticated request is not rate limited by Envoy. */
+const ENVOY_RATE_LIMIT_RULES: Record<TEnvoyRateLimitAuthType, TEnvoyRateLimitRule[]> = {
+  none: [
+    rule("POST", exactPath("/api/auth/callback/credentials")),
+    rule("POST", exactPath("/api/auth/callback/token")),
+    rule("POST", patternPath(V1_CLIENT_STORAGE_PATTERN)),
+    rule("GET", patternPath(V1_CLIENT_ENVIRONMENT_PATTERN)),
+    rule("POST", patternPath(V1_CLIENT_RESPONSES_PATTERN)),
+    rule("PUT", patternPath(V1_CLIENT_RESPONSE_PATTERN)),
+    rule("POST", patternPath(V1_CLIENT_DISPLAYS_PATTERN)),
+    rule("POST", patternPath(V1_CLIENT_USER_PATTERN)),
+    rule("POST", patternPath(V2_CLIENT_RESPONSES_PATTERN)),
+    rule("PUT", patternPath(V2_CLIENT_RESPONSE_PATTERN)),
+    rule("POST", patternPath(V2_CLIENT_DISPLAYS_PATTERN)),
+    rule("POST", patternPath(V2_CLIENT_STORAGE_PATTERN)),
+  ],
+  apiKey: [
+    rule(V1_GENERAL_METHODS, prefixedPath(V1_MANAGEMENT_PREFIX)),
+    rule(V1_GENERAL_METHODS, prefixedPath(V1_WEBHOOKS_PREFIX)),
+    rule("DELETE", patternPath(STORAGE_DELETE_PATTERN)),
+  ],
+  session: [],
+};
+
 /**
  * Mirrors the live Envoy rate-limit policy set.
  * Keep this matcher aligned with the Gateway policies when coverage changes.
@@ -41,77 +79,9 @@ export const isRouteRateLimitedByEnvoy = ({
     return false;
   }
 
-  if (authType === "none" && normalizedMethod === "POST" && pathname === "/api/auth/callback/credentials") {
-    return true;
-  }
+  if (!Object.hasOwn(ENVOY_RATE_LIMIT_RULES, authType)) return false;
 
-  if (authType === "none" && normalizedMethod === "POST" && pathname === "/api/auth/callback/token") {
-    return true;
-  }
-
-  if (
-    authType === "apiKey" &&
-    V1_GENERAL_METHODS.has(normalizedMethod) &&
-    matchesPrefixedPath(pathname, V1_MANAGEMENT_PREFIX)
-  ) {
-    return true;
-  }
-
-  if (
-    authType === "apiKey" &&
-    V1_GENERAL_METHODS.has(normalizedMethod) &&
-    matchesPrefixedPath(pathname, V1_WEBHOOKS_PREFIX)
-  ) {
-    return true;
-  }
-
-  if (authType === "apiKey" && normalizedMethod === "DELETE" && STORAGE_DELETE_PATTERN.test(pathname)) {
-    return true;
-  }
-
-  if (authType !== "none") {
-    return false;
-  }
-
-  if (normalizedMethod === "POST" && V1_CLIENT_STORAGE_PATTERN.test(pathname)) {
-    return true;
-  }
-
-  if (normalizedMethod === "GET" && V1_CLIENT_ENVIRONMENT_PATTERN.test(pathname)) {
-    return true;
-  }
-
-  if (normalizedMethod === "POST" && V1_CLIENT_RESPONSES_PATTERN.test(pathname)) {
-    return true;
-  }
-
-  if (normalizedMethod === "PUT" && V1_CLIENT_RESPONSE_PATTERN.test(pathname)) {
-    return true;
-  }
-
-  if (normalizedMethod === "POST" && V1_CLIENT_DISPLAYS_PATTERN.test(pathname)) {
-    return true;
-  }
-
-  if (normalizedMethod === "POST" && V1_CLIENT_USER_PATTERN.test(pathname)) {
-    return true;
-  }
-
-  if (normalizedMethod === "POST" && V2_CLIENT_RESPONSES_PATTERN.test(pathname)) {
-    return true;
-  }
-
-  if (normalizedMethod === "PUT" && V2_CLIENT_RESPONSE_PATTERN.test(pathname)) {
-    return true;
-  }
-
-  if (normalizedMethod === "POST" && V2_CLIENT_DISPLAYS_PATTERN.test(pathname)) {
-    return true;
-  }
-
-  if (normalizedMethod === "POST" && V2_CLIENT_STORAGE_PATTERN.test(pathname)) {
-    return true;
-  }
-
-  return false;
+  return ENVOY_RATE_LIMIT_RULES[authType].some(
+    ({ methods, matches }) => methods.has(normalizedMethod) && matches(pathname)
+  );
 };

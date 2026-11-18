@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { type Dispatch, type SetStateAction, useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import type { z } from "zod";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import formbricks from "@formbricks/js";
 import { TSegment } from "@formbricks/types/segment";
-import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
   getPublishedLockViolations,
   parsePublishedLockErrorMessage,
@@ -35,12 +35,10 @@ import {
   isCustomCssBlockingManualSave,
 } from "@/modules/survey/editor/lib/custom-css-autosave";
 import { toFlowTabMessage } from "@/modules/survey/editor/lib/flow-error-message";
+import { getInvalidSurveyTargets, isFlowTabIssue } from "@/modules/survey/editor/lib/invalid-survey-targets";
 import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
 import { withPageDates } from "@/modules/survey/editor/lib/survey-dates";
-import {
-  parseSurveyEndings,
-  removeDraftFlagsFromBlocks,
-} from "@/modules/survey/editor/lib/survey-save-payload";
+import { buildSurveySavePayload } from "@/modules/survey/editor/lib/survey-save-payload";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
@@ -135,7 +133,6 @@ export const SurveyMenuBar = ({
   const { t } = useTranslation();
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
-  const [isLinkSurvey, setIsLinkSurvey] = useState(true);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
@@ -176,15 +173,12 @@ export const SurveyMenuBar = ({
     setIsActivateDialogOpen(false);
   }, [onVisibilityNotEnabled]);
 
-  useEffect(() => {
-    if (audiencePrompt && activeId === "settings") {
-      setAudiencePrompt(false);
-    }
-  }, [activeId, audiencePrompt]);
+  // Opening the settings tab answers the audience prompt. Adjusted during render.
+  if (audiencePrompt && activeId === "settings") {
+    setAudiencePrompt(false);
+  }
 
-  useEffect(() => {
-    setIsLinkSurvey(localSurvey.type === "link");
-  }, [localSurvey.type]);
+  const isLinkSurvey = localSurvey.type === "link";
 
   // Keep refs updated for interval-based auto-save
   useEffect(() => {
@@ -356,82 +350,91 @@ export const SurveyMenuBar = ({
     return localSurvey.segment;
   };
 
+  /** A language-code issue names the languages and opens their tab; any other points at the Flow tab. */
+  const reportCustomIssue = (firstError: z.core.$ZodIssueCustom) => {
+    const params = firstError.params ?? ({} as { invalidLanguageCodes: string[] });
+    if (params.invalidLanguageCodes?.length) {
+      const invalidLanguageLabels = params.invalidLanguageCodes.map(
+        (invalidLanguage: string) => getLanguageLabel(invalidLanguage, locale) ?? invalidLanguage
+      );
+
+      const messageSplit = firstError.message.split("-fLang-")[0];
+
+      toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
+      setActiveId("language");
+    } else {
+      toast.error(toFlowTabMessage(firstError.message, t("workspace.surveys.edit.flow.tab")), {
+        className: "w-fit max-w-md!",
+      });
+    }
+  };
+
+  /** Tells the author what the first validation issue is, and opens the tab that holds it. */
+  const reportFirstIssue = (firstError: z.core.$ZodIssue) => {
+    // A show condition still missing its value: the schema's own message is technical English, so
+    // say where to look instead, and open the tab that holds the Survey Trigger card.
+    if (firstError.path[0] === "showConditions") {
+      toast.error(t("workspace.surveys.edit.show_conditions.invalid"));
+      setActiveId("settings");
+      return;
+    }
+
+    // The schema can only say "Block name is required"; it has no idea which block. Name it,
+    // so the message matches the card that just turned red.
+    if (firstError.path[0] === "blocks" && firstError.path[2] === "name") {
+      toast.error(
+        t("workspace.surveys.edit.block_name_required_for", {
+          blockNumber: (firstError.path[1] as number) + 1,
+        })
+      );
+      return;
+    }
+
+    const logicDestinationMessage = getLogicDestinationErrorMessage(firstError, localSurvey.blocks, t);
+    if (logicDestinationMessage) {
+      toast.error(logicDestinationMessage, { className: "w-fit max-w-md!" });
+      return;
+    }
+
+    const codeMessage = describeCodeIssueAtPath(
+      localSurvey,
+      firstError.path.filter((part): part is string | number => typeof part !== "symbol"),
+      t
+    );
+    if (codeMessage) {
+      toast.error(codeMessage, { className: "w-fit max-w-md!" });
+      setActiveId("elements");
+      return;
+    }
+
+    if (firstError.code === "custom") {
+      reportCustomIssue(firstError);
+      return;
+    }
+
+    // Anything else reaches here with a raw Zod default ("Invalid input", "Invalid input: expected
+    // string, received undefined") that names no field. The issue path does, so build the message from it.
+    const elementIssue = describeElementIssue(firstError, t, locale);
+
+    if (elementIssue) {
+      toast.error(elementIssue.message, { className: "w-fit max-w-md!" });
+      if (elementIssue.languageCode && elementIssue.languageCode !== "default") {
+        setActiveId("language");
+      }
+      return;
+    }
+
+    toast.error(toFlowTabMessage(firstError.message, t("workspace.surveys.edit.flow.tab")));
+  };
+
   const validateSurveyWithZod = (): boolean => {
     const localSurveyValidation = ZSurvey.safeParse(withPageDates(localSurvey));
     if (!localSurveyValidation.success) {
       const issues = localSurveyValidation.error.issues;
-      const newInvalidIds: string[] = [];
-      // DOM id of the first invalid card so we can scroll it into view. For logic
-      // errors this is the block (the red bar lives on the block card); for element
-      // errors it's the element card itself.
-      let firstInvalidScrollId: string | null = null;
-
-      for (const issue of issues) {
-        if (issue.path[0] === "blocks") {
-          const blockIdx = issue.path[1] as number;
-
-          if (issue.path[2] === "elements" && typeof issue.path[3] === "number") {
-            const elementIdx = issue.path[3];
-            const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
-            const element = block?.elements[elementIdx];
-
-            if (element && !newInvalidIds.includes(element.id)) {
-              newInvalidIds.push(element.id);
-            }
-            firstInvalidScrollId ??= element?.id ?? null;
-          } else if (issue.path[2] === "name") {
-            // Empty block name: flag the block itself so its card turns red. Block ids never
-            // collide with element or logic-rule ids, so this is unambiguous in invalidElements.
-            const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
-
-            if (block && !newInvalidIds.includes(block.id)) {
-              newInvalidIds.push(block.id);
-            }
-            firstInvalidScrollId ??= block?.id ?? null;
-          } else if (issue.path[2] === "logic" && typeof issue.path[3] === "number") {
-            // Conditional logic error: flag the offending rule so its row on the Flow tab
-            // (ENG-6929) surfaces it. Uses the logic rule id (a CUID, distinct from element ids),
-            // which is also the row's DOM id.
-            const logicIdx = issue.path[3];
-            const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
-            const logicItem = block?.logic?.[logicIdx];
-
-            if (logicItem && !newInvalidIds.includes(logicItem.id)) {
-              newInvalidIds.push(logicItem.id);
-            }
-            firstInvalidScrollId ??= logicItem?.id ?? null;
-          } else if (issue.path[2] === "logic") {
-            // Block-scope logic error (e.g. a cyclic jump) with no specific rule index: flag every
-            // rule in the block so each row on the Flow tab shows it.
-            const block: TSurveyBlock = localSurvey.blocks?.[blockIdx];
-            for (const logicItem of block?.logic ?? []) {
-              if (!newInvalidIds.includes(logicItem.id)) {
-                newInvalidIds.push(logicItem.id);
-              }
-            }
-            firstInvalidScrollId ??= block?.logic?.[0]?.id ?? null;
-          }
-        } else if (issue.path[0] === "startLogic" && typeof issue.path[1] === "number") {
-          // A rule before the first question (ENG-6932): flag its row on the Flow tab.
-          const startRule = localSurvey.startLogic?.[issue.path[1]];
-          if (startRule && !newInvalidIds.includes(startRule.id)) {
-            newInvalidIds.push(startRule.id);
-          }
-          firstInvalidScrollId ??= startRule?.id ?? null;
-        } else if (issue.path[0] === "welcomeCard") {
-          if (!newInvalidIds.includes("start")) {
-            newInvalidIds.push("start");
-          }
-          firstInvalidScrollId ??= "start";
-        } else if (issue.path[0] === "endings") {
-          const endingIdx = typeof issue.path[1] === "number" ? issue.path[1] : -1;
-          const endingId = localSurvey.endings[endingIdx]?.id;
-          if (endingId && !newInvalidIds.includes(endingId)) {
-            newInvalidIds.push(endingId);
-          }
-          firstInvalidScrollId ??= endingId ?? null;
-        }
-      }
+      const { invalidIds: newInvalidIds, firstInvalidScrollId } = getInvalidSurveyTargets(
+        localSurvey,
+        issues
+      );
 
       if (newInvalidIds.length > 0) {
         // This pass's flags first, in issue order: the Flow tab opens the first flagged rule, which
@@ -449,83 +452,11 @@ export const SurveyMenuBar = ({
       const firstError = issues[0];
 
       // Rules and fallbacks live on the Flow tab (ENG-6929): open it, so the flagged row is on screen.
-      if (
-        firstError.path[0] === "startLogic" ||
-        (firstError.path[0] === "blocks" &&
-          (firstError.path[2] === "logic" || firstError.path[2] === "logicFallback"))
-      ) {
+      if (isFlowTabIssue(firstError.path)) {
         setActiveId("flow");
       }
 
-      // A show condition still missing its value: the schema's own message is technical English, so
-      // say where to look instead, and open the tab that holds the Survey Trigger card.
-      if (firstError.path[0] === "showConditions") {
-        toast.error(t("workspace.surveys.edit.show_conditions.invalid"));
-        setActiveId("settings");
-        return false;
-      }
-
-      // The schema can only say "Block name is required"; it has no idea which block. Name it,
-      // so the message matches the card that just turned red.
-      if (firstError.path[0] === "blocks" && firstError.path[2] === "name") {
-        toast.error(
-          t("workspace.surveys.edit.block_name_required_for", {
-            blockNumber: (firstError.path[1] as number) + 1,
-          })
-        );
-        return false;
-      }
-
-      const logicDestinationMessage = getLogicDestinationErrorMessage(firstError, localSurvey.blocks, t);
-      if (logicDestinationMessage) {
-        toast.error(logicDestinationMessage, { className: "w-fit max-w-md!" });
-        return false;
-      }
-
-      const codeMessage = describeCodeIssueAtPath(
-        localSurvey,
-        firstError.path.filter((part): part is string | number => typeof part !== "symbol"),
-        t
-      );
-      if (codeMessage) {
-        toast.error(codeMessage, { className: "w-fit max-w-md!" });
-        setActiveId("elements");
-        return false;
-      }
-
-      if (firstError.code === "custom") {
-        const params = firstError.params ?? ({} as { invalidLanguageCodes: string[] });
-        if (params.invalidLanguageCodes && params.invalidLanguageCodes.length) {
-          const invalidLanguageLabels = params.invalidLanguageCodes.map(
-            (invalidLanguage: string) => getLanguageLabel(invalidLanguage, locale) ?? invalidLanguage
-          );
-
-          const messageSplit = firstError.message.split("-fLang-")[0];
-
-          toast.error(`${messageSplit} ${invalidLanguageLabels.join(", ")}`);
-          setActiveId("language");
-        } else {
-          toast.error(toFlowTabMessage(firstError.message, t("workspace.surveys.edit.flow.tab")), {
-            className: "w-fit max-w-md!",
-          });
-        }
-
-        return false;
-      }
-
-      // Anything else reaches here with a raw Zod default ("Invalid input", "Invalid input: expected
-      // string, received undefined") that names no field. The issue path does, so build the message from it.
-      const elementIssue = describeElementIssue(firstError, t, locale);
-
-      if (elementIssue) {
-        toast.error(elementIssue.message, { className: "w-fit max-w-md!" });
-        if (elementIssue.languageCode && elementIssue.languageCode !== "default") {
-          setActiveId("language");
-        }
-        return false;
-      }
-
-      toast.error(toFlowTabMessage(firstError.message, t("workspace.surveys.edit.flow.tab")));
+      reportFirstIssue(firstError);
       return false;
     }
 
@@ -732,20 +663,13 @@ export const SurveyMenuBar = ({
         return false;
       }
 
-      // Clean up blocks by removing isDraft from elements
-      if (localSurvey.blocks) {
-        localSurvey.blocks = removeDraftFlagsFromBlocks(localSurvey.blocks);
-      }
-
-      // Set questions to empty array for blocks-based surveys
-      localSurvey.questions = [];
-
-      localSurvey.endings = parseSurveyEndings(localSurvey.endings);
+      // A copy without draft flags or legacy questions; the editor's survey is not mutated.
+      const surveyToSave = buildSurveySavePayload(localSurvey);
 
       attempt = saveAttemptOrder.begin();
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
-      const updatedSurveyResponse = await updateSurveyAction(withPageDates({ ...localSurvey, segment }));
+      const updatedSurveyResponse = await updateSurveyAction(withPageDates({ ...surveyToSave, segment }));
 
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
@@ -1020,7 +944,7 @@ export const SurveyMenuBar = ({
         />
         {!isStorageConfigured && (
           <div>
-            <Alert variant="warning" size="small" role="status">
+            <Alert variant="warning" size="small" alertRole="status">
               <AlertTitle>{t("common.storage_not_configured")}</AlertTitle>
               <AlertButton className="flex items-center justify-center">
                 <a
@@ -1036,7 +960,7 @@ export const SurveyMenuBar = ({
         )}
         {responseCount > 0 && (
           <div>
-            <Alert variant="warning" size="small" role="status">
+            <Alert variant="warning" size="small" alertRole="status">
               <AlertTitle>{t("workspace.surveys.edit.caution_text")}</AlertTitle>
               <AlertButton onClick={() => setIsCautionDialogOpen(true)}>{t("common.learn_more")}</AlertButton>
             </Alert>

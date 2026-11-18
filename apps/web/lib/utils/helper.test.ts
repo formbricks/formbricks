@@ -280,7 +280,9 @@ describe("Helper Utilities", () => {
     });
 
     test("getOrganizationIdFromLanguageId throws error when language not found", async () => {
-      vi.mocked(services.getLanguage).mockResolvedValueOnce(undefined as unknown as any);
+      vi.mocked(services.getLanguage).mockResolvedValueOnce(
+        undefined as unknown as Awaited<ReturnType<typeof services.getLanguage>>
+      );
       await expect(getOrganizationIdFromLanguageId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
     });
 
@@ -435,7 +437,9 @@ describe("Helper Utilities", () => {
     });
 
     test("getWorkspaceIdFromLanguageId throws error when language not found", async () => {
-      vi.mocked(services.getLanguage).mockResolvedValueOnce(undefined as unknown as any);
+      vi.mocked(services.getLanguage).mockResolvedValueOnce(
+        undefined as unknown as Awaited<ReturnType<typeof services.getLanguage>>
+      );
       await expect(getWorkspaceIdFromLanguageId("nonexistent")).rejects.toThrow(ResourceNotFoundError);
     });
 

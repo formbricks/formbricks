@@ -23,7 +23,7 @@ describe("normalizeSurveyFilters", () => {
         visibility: ["workspace", "private", "restricted", "workspace"],
         owner: [],
         sortBy: "name",
-      } as any)
+      } as Parameters<typeof normalizeSurveyFilters>[0])
     ).toEqual({
       name: "Customer feedback",
       status: ["draft", "paused"],

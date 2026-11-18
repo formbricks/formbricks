@@ -58,7 +58,7 @@ describe("retrieveFeedbackRecordAction", () => {
     const result = await retrieveFeedbackRecordAction({
       ctx: { user: { id: "user-1" } },
       parsedInput: { recordId: "record-1", workspaceId: "workspace-1" },
-    } as any);
+    } as unknown as Parameters<typeof retrieveFeedbackRecordAction>[0]);
 
     expect(result).toMatchObject({
       record: { id: "record-1" },
@@ -81,7 +81,7 @@ describe("retrieveFeedbackRecordAction", () => {
     const result = await retrieveFeedbackRecordAction({
       ctx: { user: { id: "user-1" } },
       parsedInput: { recordId: "record-1", workspaceId: "workspace-1" },
-    } as any);
+    } as unknown as Parameters<typeof retrieveFeedbackRecordAction>[0]);
 
     expect(result).toMatchObject({ record: { id: "record-1" }, taxonomy: null });
   });
@@ -95,7 +95,7 @@ describe("retrieveFeedbackRecordAction", () => {
     const result = await retrieveFeedbackRecordAction({
       ctx: { user: { id: "user-1" } },
       parsedInput: { recordId: "record-1", workspaceId: "workspace-1" },
-    } as any);
+    } as unknown as Parameters<typeof retrieveFeedbackRecordAction>[0]);
 
     expect(result).toMatchObject({ record: { id: "record-1" }, taxonomy: null });
   });
@@ -107,7 +107,7 @@ describe("retrieveFeedbackRecordAction", () => {
       retrieveFeedbackRecordAction({
         ctx: { user: { id: "user-1" } },
         parsedInput: { recordId: "record-1", workspaceId: "workspace-1" },
-      } as any)
+      } as unknown as Parameters<typeof retrieveFeedbackRecordAction>[0])
     ).rejects.toThrow("denied");
     expect(mocks.retrieveFeedbackRecord).toHaveBeenCalledTimes(1);
   });
@@ -140,7 +140,7 @@ describe("deleteFeedbackRecordAction", () => {
     await deleteFeedbackRecordAction({
       ctx,
       parsedInput: { recordId: "record-1", workspaceId: "workspace-1" },
-    } as any);
+    } as unknown as Parameters<typeof deleteFeedbackRecordAction>[0]);
 
     expect(mocks.applyRateLimit).toHaveBeenCalledWith(
       rateLimitConfigs.actions.feedbackRecordDeletion,

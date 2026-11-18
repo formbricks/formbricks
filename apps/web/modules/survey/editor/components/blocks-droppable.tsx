@@ -14,7 +14,7 @@ interface BlocksDroppableProps {
   setLocalSurvey: Dispatch<SetStateAction<TSurvey>>;
   workspace: TWorkspaceWithoutCustomCss;
   moveElement: (elementIdx: number, up: boolean) => void;
-  updateElement: (elementIdx: number, updatedAttributes: any) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Record<string, unknown>) => void;
   updateBlockName: (blockIdx: number, name: string) => void;
   updateBlockButtonLabel: (
     blockIndex: number,
@@ -26,7 +26,7 @@ interface BlocksDroppableProps {
   activeElementId: string | null;
   setActiveElementId: (elementId: string | null) => void;
   invalidElements: string[] | null;
-  addElement: (element: any, index?: number) => void;
+  addElement: (element: TSurveyElement, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;

@@ -5,7 +5,7 @@ import { TOverlay, TPlacement } from "@formbricks/types/common";
 import { cn } from "@/lib/cn";
 import { getOverlayPreviewStyle } from "@/modules/ui/components/overlay-settings/lib/utils";
 import { PREVIEW_BOUNDARY_CLASS_NAME, previewBoundaryProps } from "../lib/containment";
-import { getPlacementStyle, isInsideSurveyRoot } from "../lib/utils";
+import { getPlacementStyle, getSlidingAnimationClass, isInsideSurveyRoot } from "../lib/utils";
 
 interface ModalProps {
   children: ReactNode;
@@ -20,6 +20,17 @@ interface ModalProps {
   background?: string;
 }
 
+/** Whether the preview modal shows: follows `isOpen` whenever it changes, adjusted during render. */
+const useShownWhileOpen = (isOpen: boolean) => {
+  const [show, setShow] = useState(true);
+  const [syncedIsOpen, setSyncedIsOpen] = useState<boolean | null>(null);
+  if (syncedIsOpen !== isOpen) {
+    setSyncedIsOpen(isOpen);
+    setShow(isOpen);
+  }
+  return [show, setShow] as const;
+};
+
 export const Modal = ({
   children,
   isOpen,
@@ -32,12 +43,13 @@ export const Modal = ({
   borderRadius,
   background,
 }: Readonly<ModalProps>) => {
-  const [show, setShow] = useState(true);
+  const [show, setShow] = useShownWhileOpen(isOpen);
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [windowWidth, setWindowWidth] = useState<number | null>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      // eslint-disable-next-line react/set-state-in-effect -- subscribes to window resize; the width exists only on the client
       setWindowWidth(window.innerWidth);
 
       const handleResize = () => setWindowWidth(window.innerWidth);
@@ -109,11 +121,7 @@ export const Modal = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [clickOutsideClose]);
-
-  useEffect(() => {
-    setShow(isOpen);
-  }, [isOpen]);
+  }, [clickOutsideClose, setShow]);
 
   useEffect(() => {
     if (modalRef.current) {
@@ -121,16 +129,7 @@ export const Modal = ({
     }
   }, [children]);
 
-  const slidingAnimationClass =
-    previewMode === "desktop"
-      ? show
-        ? "translate-x-0 opacity-100"
-        : "translate-x-32 opacity-0"
-      : previewMode === "mobile"
-        ? show
-          ? "bottom-0"
-          : "-bottom-full"
-        : "";
+  const slidingAnimationClass = getSlidingAnimationClass(previewMode, show);
 
   const customOverlayStyle = getOverlayPreviewStyle({ overlay, overlayColor, overlayOpacity });
 

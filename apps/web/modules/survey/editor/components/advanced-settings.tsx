@@ -11,7 +11,7 @@ interface AdvancedSettingsProps {
   readonly elementIdx: number;
   readonly localSurvey: TSurvey;
   readonly lock: TElementLock;
-  readonly updateElement: (elementIdx: number, updatedAttributes: any) => void;
+  readonly updateElement: (elementIdx: number, updatedAttributes: Record<string, unknown>) => void;
   readonly workspace?: TWorkspaceWithoutCustomCss;
   readonly isFormbricksCloud?: boolean;
   /** "Show question if…" and "Show options if…" (ENG-6949), first on the tab. */

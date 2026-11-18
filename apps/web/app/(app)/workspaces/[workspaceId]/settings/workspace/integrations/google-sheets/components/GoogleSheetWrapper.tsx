@@ -60,6 +60,7 @@ export const GoogleSheetWrapper = ({
   }, [workspaceId, isConnected]);
 
   useEffect(() => {
+    // eslint-disable-next-line react/set-state-in-effect -- validates on mount; validateConnection sets state only after its awaited action
     validateConnection();
   }, [validateConnection]);
 

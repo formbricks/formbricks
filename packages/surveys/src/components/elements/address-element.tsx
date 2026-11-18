@@ -30,7 +30,7 @@ export function AddressElement({
   dir = "auto",
   errorMessage,
 }: Readonly<AddressElementProps>) {
-  const [startTime, setStartTime] = useState(performance.now());
+  const [startTime, setStartTime] = useState(() => performance.now());
   const isCurrent = element.id === currentElementId;
   const isRequired = element.required;
   const { t } = useTranslation();

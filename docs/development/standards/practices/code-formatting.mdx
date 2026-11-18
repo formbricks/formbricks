@@ -129,7 +129,7 @@ Using Husky and lint-staged for automated checks:
 }
 ```
 
-The hook also lints the staged files with oxlint (`scripts/lint-staged-oxlint.mjs`): any lint error fails the commit, and so does a Sonar-parity finding inside the staged lines. `pnpm lint` and the "Run Linters" CI job lint the whole repo.
+The hook also lints the staged files with oxlint (`scripts/lint-staged-oxlint.mjs`): any lint error fails the commit, and so does a cognitive-complexity finding inside the staged lines (the one Sonar-parity rule existing code still violates, so the whole-repo lint leaves it out). `pnpm lint` and the "Run Linters" CI job lint the whole repo.
 
 ### oxlint Configuration
 [oxlint](https://oxc.rs/docs/guide/usage/linter) lints the whole repo in one run from the root: `pnpm lint:code` (about 15 seconds; add `--quiet` for errors only, or use `pnpm lint:fix` to apply autofixes). Every package and app that lints has its own `oxlint.config.ts`, which composes one of the tiers exported by `@formbricks/config-oxlint`; oxlint checks each file against the nearest config.

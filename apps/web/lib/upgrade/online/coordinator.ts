@@ -59,19 +59,21 @@ export type OnlineStatus = {
   cause?: OnlineFailure;
 };
 
+const summarizeStatus = (
+  state: OnlineState | null,
+  blocker: OnlineUpgradeBlocked | undefined
+): OnlineStatus["status"] => {
+  if (blocker) return "blocked";
+  if (state?.activatedAt && state.phase === "complete") return "complete";
+  if (state?.completedPhases.includes("prepare") && !state.forwardOnlyAt) return "prepared";
+  return state ? "in_progress" : "not_started";
+};
+
 export const summarizeOnlineState = (
   state: OnlineState | null,
   blocker?: OnlineUpgradeBlocked
 ): OnlineStatus => ({
-  status: blocker
-    ? "blocked"
-    : state?.activatedAt && state.phase === "complete"
-      ? "complete"
-      : state?.completedPhases.includes("prepare") && !state.forwardOnlyAt
-        ? "prepared"
-        : state
-          ? "in_progress"
-          : "not_started",
+  status: summarizeStatus(state, blocker),
   phase: state?.phase ?? "preflight",
   progress: { surveys: state?.surveyCount.toString() ?? "0", baselineComplete: !!state?.baselineCompletedAt },
   rollbackTo60Allowed: !state?.forwardOnlyAt,

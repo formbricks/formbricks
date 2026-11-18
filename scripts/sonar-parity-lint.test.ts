@@ -31,14 +31,25 @@ const complexFunction = `function complex(a: number[], b: boolean) {
   }
 }`;
 
-const violations = `${complexFunction}
+const violations = `import { z } from "zod";
+
+${complexFunction}
 
 export const nestedConditional = (n: number) => (n > 1 ? "a" : n > 0 ? "b" : "c");
 export const nestedTemplate = (s: string) => \`a \${\`b \${s}\`}\`;
 export const windowsPath = "C:\\\\temp\\\\file";
 export const optionalChain = (o?: { name?: string }) => o && o.name;
 export const deep = () => () => () => () => () => 1;
+export const isoTimestamp =
+  /^(\\d{4})-(\\d{2})-(\\d{2})(?:T(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d{1,9})?)?(?:Z|[+-](?:[01]\\d|2[0-3]):[0-5]\\d))?$/;
+export const nullish = (o?: { a: number }) => o || { a: 1 };
+// zod 4 deprecates \`.finite()\`, a no-op there.
+export const finiteNumber = z.number().finite();
 `;
+
+const testViolations =
+  'import { expect, test } from "vitest";\ntest("x", () => { expect([1].length).toBe(1); });\n';
+const focusableAriaHidden = 'export const Fixture = () => <button type="button" aria-hidden="true" />;\n';
 
 const staged = (...files: string[]) =>
   spawnSync(process.execPath, ["scripts/lint-staged-oxlint.mjs", ...files], { cwd: root, encoding: "utf8" });
@@ -46,14 +57,8 @@ const staged = (...files: string[]) =>
 describe("Sonar-parity lint rules", () => {
   beforeAll(() => {
     writeFileSync(`${root}${typesFixture}`, violations);
-    writeFileSync(
-      `${root}${typesTestFixture}`,
-      'import { expect, test } from "vitest";\ntest("x", () => { expect([1].length).toBe(1); });\n'
-    );
-    writeFileSync(
-      `${root}${uiFixture}`,
-      'export const Fixture = () => <button type="button" aria-hidden="true" />;\n'
-    );
+    writeFileSync(`${root}${typesTestFixture}`, testViolations);
+    writeFileSync(`${root}${uiFixture}`, focusableAriaHidden);
     writeFileSync(`${root}${cleanFixture}`, "export const clean = (n: number) => (n > 1 ? 1 : 0);\n");
   });
 
@@ -84,31 +89,48 @@ describe("Sonar-parity lint rules", () => {
     expect(staged(cleanFixture).status).toBe(0);
   }, 120_000);
 
-  test("the whole-repo lint leaves the backlog rules off", () => {
-    const mirroredRules = [
-      "sonarjs/cognitive-complexity",
-      "sonarjs/no-nested-functions",
-      "sonarjs/no-nested-conditional",
-      "sonarjs/no-nested-template-literals",
-      "unicorn-js/prefer-string-raw",
-      "typescript/prefer-optional-chain",
-    ];
-    // `oxlint --print-config` leaves JS-plugin rules out, so this lints the violations instead. The
-    // positive control below proves the same run reports them once the staged runner turns them on,
-    // so an empty result means "off", not "the run failed".
-    const reportedRules = (parity: string) =>
-      new Set(
-        lintFixtures(
-          `${root}packages/types`,
-          { "sonar-parity-fixture.ts": violations },
-          { env: { OXLINT_SONAR_PARITY: parity }, typeAware: true }
-        )["sonar-parity-fixture.ts"].map((diagnostic) => diagnostic.ruleId)
+  // `oxlint --print-config` leaves JS-plugin rules out, so these lint the violations instead.
+  const wholeRepoDiagnostics = (parity: string) =>
+    lintFixtures(
+      `${root}packages/types`,
+      { "sonar-parity-fixture.ts": violations, "sonar-parity-fixture.test.ts": testViolations },
+      { env: { OXLINT_SONAR_PARITY: parity }, typeAware: true }
+    );
+
+  // `sonarjs/cognitive-complexity` per tier and on test files: cognitive-complexity-lint.test.ts.
+  test.each([
+    "sonarjs/cognitive-complexity",
+    "sonarjs/regex-complexity",
+    "sonarjs/no-nested-functions",
+    "sonarjs/no-nested-conditional",
+    "sonarjs/no-nested-template-literals",
+    "unicorn-js/prefer-string-raw",
+    "typescript/prefer-optional-chain",
+    "typescript/prefer-nullish-coalescing",
+    "typescript/no-deprecated",
+  ])(
+    "the whole-repo lint reports %s as an error",
+    (rule) => {
+      const diagnostics = wholeRepoDiagnostics("off")["sonar-parity-fixture.ts"];
+      expect(diagnostics, JSON.stringify(diagnostics)).toContainEqual(
+        expect.objectContaining({ ruleId: rule, severity: "error" })
       );
+    },
+    120_000
+  );
 
-    const staged = reportedRules("error");
-    for (const rule of mirroredRules) expect(staged.has(rule), `${rule} (staged)`).toBe(true);
-
-    const wholeRepo = reportedRules("off");
-    for (const rule of mirroredRules) expect(wholeRepo.has(rule), rule).toBe(false);
+  test("the whole-repo lint reports vitest/prefer-to-have-length as an error", () => {
+    const diagnostics = wholeRepoDiagnostics("off")["sonar-parity-fixture.test.ts"];
+    expect(diagnostics, JSON.stringify(diagnostics)).toContainEqual(
+      expect.objectContaining({ ruleId: "vitest/prefer-to-have-length", severity: "error" })
+    );
   }, 120_000);
+
+  test("apps/web reports jsx-a11y/no-aria-hidden-on-focusable as an error", () => {
+    const file = "modules/sonar-parity/fixture.tsx";
+    const diagnostics = lintFixtures(`${root}apps/web`, { [file]: focusableAriaHidden })[file];
+    expect(diagnostics, JSON.stringify(diagnostics)).toContainEqual(
+      expect.objectContaining({ ruleId: "jsx-a11y/no-aria-hidden-on-focusable", severity: "error" })
+    );
+  }, 60_000);
 });
