@@ -870,6 +870,53 @@ export const PricingTable = ({
     toast.error(t("common.something_went_wrong_please_try_again"));
   };
 
+  /**
+   * Settles a plan change the server applied: confirms a pending payment, signals a churn, and reloads
+   * after an immediate change. True when that already ended the flow (refreshed or reloaded the page).
+   */
+  const applyPlanChange = async (
+    plan: TStandardPlan,
+    data: NonNullable<NonNullable<Awaited<ReturnType<typeof changeBillingPlanAction>>>["data"]>
+  ): Promise<boolean> => {
+    const settled = await settleUpgradeConfirmation(data);
+    if (!settled.applied) {
+      if (settled.message) {
+        toast.error(settled.message);
+      }
+      router.refresh();
+      return true;
+    }
+
+    const churnSignal = getHobbyDowngradeChurnSignal(plan, data.mode);
+    if (churnSignal === "track-now") {
+      // Fire an in-app code action so a churn survey can be triggered from the dashboard
+      // right after the org drops to the free plan. No reload follows this path, so the SDK
+      // has time to deliver it.
+      void trackSubscriptionCancelled((event) => formbricks.track(event));
+    }
+
+    if (data.mode === "immediate") {
+      // Force-sync until the converted plan lands, then hand the success toast across a full
+      // reload — router.refresh() alone doesn't reliably refetch the billing snapshot, so "current
+      // plan" would keep showing the trial until a manual refresh.
+      await waitForBillingPlanAction({ organizationId, targetPlan: plan });
+      if (globalThis.window !== undefined) {
+        globalThis.window.sessionStorage.setItem(BILLING_UPGRADE_RESULT_KEY, JSON.stringify({ plan }));
+        if (churnSignal === "defer-until-reload") {
+          // formbricks.track() only queues the action; a call here would be lost or interrupted
+          // by the reload below. Persist a one-shot marker instead and let FormbricksProvider
+          // fire the code action once the SDK is set up again after reload. Scoped to the
+          // originating user so a logout/login in the same tab before it's consumed can't
+          // attribute the cancellation to whoever is signed in when it fires.
+          markChurnSurveyPending(globalThis.window.sessionStorage, userId);
+        }
+        globalThis.window.location.reload();
+        return true;
+      }
+    }
+    return false;
+  };
+
   const handlePlanAction = async (plan: TStandardPlan, interval: TCloudBillingInterval) => {
     posthog.capture("billing_pricing_cta_clicked", {
       plan,
@@ -915,43 +962,8 @@ export const PricingTable = ({
         return;
       }
 
-      if (response?.data) {
-        const settled = await settleUpgradeConfirmation(response.data);
-        if (!settled.applied) {
-          if (settled.message) {
-            toast.error(settled.message);
-          }
-          router.refresh();
-          return;
-        }
-
-        const churnSignal = getHobbyDowngradeChurnSignal(plan, response.data.mode);
-        if (churnSignal === "track-now") {
-          // Fire an in-app code action so a churn survey can be triggered from the dashboard
-          // right after the org drops to the free plan. No reload follows this path, so the SDK
-          // has time to deliver it.
-          void trackSubscriptionCancelled((event) => formbricks.track(event));
-        }
-
-        if (response.data.mode === "immediate") {
-          // Force-sync until the converted plan lands, then hand the success toast across a full
-          // reload — router.refresh() alone doesn't reliably refetch the billing snapshot, so "current
-          // plan" would keep showing the trial until a manual refresh.
-          await waitForBillingPlanAction({ organizationId, targetPlan: plan });
-          if (globalThis.window !== undefined) {
-            globalThis.window.sessionStorage.setItem(BILLING_UPGRADE_RESULT_KEY, JSON.stringify({ plan }));
-            if (churnSignal === "defer-until-reload") {
-              // formbricks.track() only queues the action; a call here would be lost or interrupted
-              // by the reload below. Persist a one-shot marker instead and let FormbricksProvider
-              // fire the code action once the SDK is set up again after reload. Scoped to the
-              // originating user so a logout/login in the same tab before it's consumed can't
-              // attribute the cancellation to whoever is signed in when it fires.
-              markChurnSurveyPending(globalThis.window.sessionStorage, userId);
-            }
-            globalThis.window.location.reload();
-            return;
-          }
-        }
+      if (response?.data && (await applyPlanChange(plan, response.data))) {
+        return;
       }
 
       toast.success(getPlanChangeSuccessMessage(response?.data?.mode, t));

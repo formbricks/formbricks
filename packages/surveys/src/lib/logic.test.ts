@@ -223,6 +223,27 @@ describe("Survey Logic", () => {
       expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, conditions, "default")).toBe(true);
     });
 
+    // An operator outside the enum was false under the old switch; a prototype key must not read as one.
+    test.each(["constructor", "toString", "hasOwnProperty"])(
+      "an unknown operator %s is false",
+      (operator) => {
+        const conditions = {
+          id: "group1",
+          connector: "and",
+          conditions: [
+            {
+              id: "condition1",
+              operator,
+              leftOperand: { type: "element", value: "q1" },
+              rightOperand: { type: "static", value: "test answer" },
+            },
+          ],
+        } as unknown as TConditionGroup;
+
+        expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, conditions, "default")).toBe(false);
+      }
+    );
+
     test("evaluates a simple condition group with OR connector", () => {
       const conditions: TConditionGroup = {
         id: "group1",

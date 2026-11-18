@@ -48,8 +48,11 @@ interface EditorCardMenuProps {
   readonly deleteCard: (cardIdx: number) => void;
   readonly moveCard: (cardIdx: number, up: boolean) => void;
   readonly card: EditorCardMenuSurveyElement | TSurveyEndScreenCard | TSurveyRedirectUrlCard;
-  readonly updateCard: (cardIdx: number, updatedAttributes: any) => void;
-  readonly addCard: (element: any, index?: number) => void;
+  readonly updateCard: (cardIdx: number, updatedAttributes: Record<string, unknown>) => void;
+  /** Adds an element card at `index`; element cards only. */
+  readonly addElementCard?: (element: TSurveyElement, index?: number) => void;
+  /** Adds an ending card at `index`; ending cards only. */
+  readonly addEndingCard?: (index: number) => void;
   readonly addCardToBlock?: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
   readonly moveElementToBlock?: (elementId: string, targetBlockId: string) => void;
   readonly cardType: "element" | "ending";
@@ -71,7 +74,8 @@ export const EditorCardMenu = ({
   workspace,
   card,
   updateCard,
-  addCard,
+  addElementCard,
+  addEndingCard,
   addCardToBlock,
   moveElementToBlock,
   cardType,
@@ -140,12 +144,12 @@ export const EditorCardMenu = ({
       // Pass blockId and element index within the block
       addCardToBlock(newElement as TSurveyElement, blockId, elementIdx);
     } else {
-      addCard(newElement, cardIdx + 1);
+      addElementCard?.(newElement as TSurveyElement, cardIdx + 1);
     }
   };
 
   const addEndingCardBelow = () => {
-    addCard(cardIdx + 1);
+    addEndingCard?.(cardIdx + 1);
   };
 
   const onConfirm = () => {

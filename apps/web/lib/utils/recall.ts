@@ -327,38 +327,45 @@ const stringifyRecallValue = (value: TResponseDataValue): string => {
   return "";
 };
 
+/** A recalled answer for display: a stored date in its display format, a list joined by commas. */
+const formatRecalledAnswer = (
+  value: TResponseDataValue | undefined,
+  dateFormat: TSurveyDateFormatMap[string] | undefined,
+  locale: string
+): TResponseDataValue | undefined => {
+  // Apply formatting for special value types
+  if (typeof value === "string") {
+    const formattedDate = formatStoredDateForDisplay(value, dateFormat, locale);
+    if (formattedDate) return formattedDate;
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.filter(Boolean).join(", ");
+  }
+  return value;
+};
+
 /**
- * The value one recall tag reads: a variable first (a true/false field, ENG-6973, reads `true` /
- * `false`), then an answer, formatted for display. `undefined` when neither holds the id.
+ * The value a recall id names: a variable first (a true/false field, ENG-6973, reads `true` /
+ * `false`), then an answer formatted for display.
  */
 const getRecalledValue = (
   recallItemId: string,
-  sources: {
-    responseData?: TResponseData;
-    variables?: TResponseVariables;
-    questionIds: string[];
-    variableIds: string[];
-  },
+  responseData: TResponseData | undefined,
+  variables: TResponseVariables | undefined,
   locale: string,
-  dateFormats?: TSurveyDateFormatMap
+  dateFormats: TSurveyDateFormatMap | undefined
 ): TResponseDataValue | undefined => {
-  const { responseData, variables, questionIds, variableIds } = sources;
-
   // First check if it matches a variable
-  if (variables && variableIds.includes(recallItemId)) {
+  if (variables && Object.keys(variables).includes(recallItemId)) {
     const variableValue = variables[recallItemId];
     return typeof variableValue === "boolean" ? String(variableValue) : variableValue;
   }
   // Then check if it matches response data
-  if (!responseData || !questionIds.includes(recallItemId)) return undefined;
-
-  const value = responseData[recallItemId];
-  // Apply formatting for special value types
-  if (typeof value === "string") {
-    return formatStoredDateForDisplay(value, dateFormats?.[recallItemId], locale) || value;
+  if (responseData && Object.keys(responseData).includes(recallItemId)) {
+    return formatRecalledAnswer(responseData[recallItemId], dateFormats?.[recallItemId], locale);
   }
-  if (Array.isArray(value)) return value.filter((item) => item).join(", ");
-  return value;
+  return undefined;
 };
 
 /**
@@ -381,8 +388,6 @@ export const parseRecallInfo = (
   escapeValues: boolean = false
 ) => {
   let modifiedText = text;
-  const questionIds = responseData ? Object.keys(responseData) : [];
-  const variableIds = variables ? Object.keys(variables) : [];
 
   // Process all recall patterns regardless of whether we have matching data
   while (modifiedText.includes("#recall:")) {
@@ -397,12 +402,7 @@ export const parseRecallInfo = (
     }
 
     const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
-    let value = getRecalledValue(
-      recallItemId,
-      { responseData, variables, questionIds, variableIds },
-      locale,
-      dateFormats
-    );
+    let value = getRecalledValue(recallItemId, responseData, variables, locale, dateFormats);
 
     // If no value was found, use the fallback
     if (value === undefined || value === null || value === "") {

@@ -21,8 +21,12 @@ describe("getResponsesQuery", () => {
   });
 
   test("calls pickCommonFilter & buildCommonFilterQuery with correct arguments", () => {
-    vi.mocked(pickCommonFilter).mockReturnValueOnce({ someFilter: true } as any);
-    vi.mocked(buildCommonFilterQuery).mockReturnValueOnce({ where: { combined: true } as any });
+    vi.mocked(pickCommonFilter).mockReturnValueOnce({ someFilter: true } as unknown as ReturnType<
+      typeof pickCommonFilter
+    >);
+    vi.mocked(buildCommonFilterQuery).mockReturnValueOnce({
+      where: { combined: true } as Prisma.ResponseWhereInput,
+    });
 
     const result = getResponsesQuery(["env-id"], { surveyId: "test" } as TGetResponsesFilter);
     expect(pickCommonFilter).toHaveBeenCalledWith({ surveyId: "test" });

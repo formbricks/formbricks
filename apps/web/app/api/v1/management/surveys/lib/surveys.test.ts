@@ -75,11 +75,14 @@ const mockSurveyTransformed3: TSurvey = {
 describe("getSurveys (Management API)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(transformPrismaSurvey).mockImplementation((survey) => ({
-      ...survey,
-      displayPercentage: null,
-      segment: null,
-    }));
+    vi.mocked(transformPrismaSurvey).mockImplementation(
+      (survey) =>
+        ({
+          ...survey,
+          displayPercentage: null,
+          segment: null,
+        }) as TSurvey
+    );
   });
 
   afterEach(() => {

@@ -126,7 +126,7 @@ export const EditEndingCard = ({
       const filteredData = { ...data };
       const isForceUpdate = "_forceUpdate" in filteredData;
       if (isForceUpdate) {
-        delete (filteredData as any)._forceUpdate; // Remove the flag
+        delete filteredData._forceUpdate; // Remove the flag
       }
 
       if (!isForceUpdate && currentEnding?.type === "endScreen" && currentEnding.subheader === undefined) {
@@ -292,7 +292,7 @@ export const EditEndingCard = ({
                 moveCard={moveEndingCard}
                 card={endingCard}
                 updateCard={() => {}}
-                addCard={addEndingCard}
+                addEndingCard={addEndingCard}
                 cardType="ending"
               />
             </div>

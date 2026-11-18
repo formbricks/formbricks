@@ -97,7 +97,9 @@ describe("Sonar-parity lint rules", () => {
       { env: { OXLINT_SONAR_PARITY: parity }, typeAware: true }
     );
 
+  // `sonarjs/cognitive-complexity` per tier and on test files: cognitive-complexity-lint.test.ts.
   test.each([
+    "sonarjs/cognitive-complexity",
     "sonarjs/regex-complexity",
     "sonarjs/no-nested-functions",
     "sonarjs/no-nested-conditional",
@@ -131,14 +133,4 @@ describe("Sonar-parity lint rules", () => {
       expect.objectContaining({ ruleId: "jsx-a11y/no-aria-hidden-on-focusable", severity: "error" })
     );
   }, 60_000);
-
-  test("the whole-repo lint leaves cognitive complexity to the staged lines", () => {
-    // The positive control proves the same run reports it once the staged runner turns it on, so an
-    // empty result means "off", not "the run failed".
-    const reported = (parity: string) =>
-      wholeRepoDiagnostics(parity)["sonar-parity-fixture.ts"].map((diagnostic) => diagnostic.ruleId);
-
-    expect(reported("warn")).toContain("sonarjs/cognitive-complexity");
-    expect(reported("off")).not.toContain("sonarjs/cognitive-complexity");
-  }, 120_000);
 });

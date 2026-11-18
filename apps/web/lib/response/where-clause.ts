@@ -358,7 +358,7 @@ const buildEmbeddedDataFilterClauses = (
 const createFilterTags = (tags: TResponseFilterCriteria["tags"]) => {
   if (!tags) return [];
 
-  const filterTags: Record<string, any>[] = [];
+  const filterTags: (Prisma.ResponseWhereInput | Prisma.ResponseWhereInput[])[] = [];
 
   if (tags?.applied) {
     const appliedTags = tags.applied.map((name) => ({

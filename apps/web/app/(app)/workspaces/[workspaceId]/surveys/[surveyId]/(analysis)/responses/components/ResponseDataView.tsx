@@ -4,6 +4,7 @@ import React from "react";
 import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyQuota } from "@formbricks/types/quota";
 import {
+  TResponseData,
   TResponseDataValue,
   TResponseTableData,
   TResponseVariables,
@@ -59,8 +60,8 @@ const formatContactInfoData = (responseValue: TResponseDataValue): Record<string
   return formatArrayToRecord(responseValue, contactInfoKeys);
 };
 
-const extractResponseData = (response: TResponseWithQuotas, survey: TSurvey): Record<string, any> => {
-  const responseData: Record<string, any> = {};
+const extractResponseData = (response: TResponseWithQuotas, survey: TSurvey): TResponseData => {
+  const responseData: TResponseData = {};
 
   const elements = getElementsFromBlocks(survey.blocks);
 

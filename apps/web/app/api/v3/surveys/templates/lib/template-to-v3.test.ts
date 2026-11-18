@@ -1,9 +1,16 @@
 import type { TFunction } from "i18next";
 import { describe, expect, test, vi } from "vitest";
+import type { TTemplate } from "@formbricks/types/templates";
 import { prepareV3SurveyCreateInput } from "@/app/api/v3/surveys/prepare";
 import { CUSTOM_SURVEY_TEMPLATE_ID, customSurveyTemplate, templates } from "@/app/lib/templates";
 import { replacePresetPlaceholders } from "@/lib/utils/templates";
 import { buildV3SurveyCreatePayloadFromTemplate } from "./template-to-v3";
+
+/**
+ * A JSON document read as nested plain data, so a test can assert on its shape. Every key reads as
+ * present: a missing one fails the assertion that reads it rather than the type check.
+ */
+type TJsonTree = { [key: string]: TJsonTree };
 
 vi.mock("server-only", () => ({}));
 
@@ -193,11 +200,11 @@ describe("buildV3SurveyCreatePayloadFromTemplate", () => {
     "converts internal default i18n strings to %s public locale maps",
     (defaultLanguage) => {
       const payload = buildV3SurveyCreatePayloadFromTemplate({
-        template: fixtureTemplate as any,
+        template: fixtureTemplate as unknown as TTemplate,
         workspaceId,
         surveyType: "link",
         defaultLanguage,
-      }) as any;
+      }) as unknown as TJsonTree;
 
       expect(payload.welcomeCard.headline).toEqual({ [defaultLanguage]: "Welcome" });
       expect(payload.welcomeCard.buttonLabel).toEqual({ [defaultLanguage]: "Start" });
@@ -225,11 +232,11 @@ describe("buildV3SurveyCreatePayloadFromTemplate", () => {
 
   test("outputs only v3-supported root fields and preserves identifiers, logic, hidden fields, and variables", () => {
     const payload = buildV3SurveyCreatePayloadFromTemplate({
-      template: fixtureTemplate as any,
+      template: fixtureTemplate as unknown as TTemplate,
       workspaceId,
       surveyType: "app",
       defaultLanguage: "en-US",
-    }) as any;
+    });
 
     expect(Object.keys(payload).sort()).toEqual(
       [

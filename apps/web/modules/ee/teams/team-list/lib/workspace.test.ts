@@ -23,7 +23,7 @@ describe("getWorkspacesByOrganizationId", () => {
   });
 
   test("returns mapped workspaces for valid organization", async () => {
-    vi.mocked(prisma.workspace.findMany).mockResolvedValueOnce(mockWorkspaces as any);
+    vi.mocked(prisma.workspace.findMany, { partial: true, deep: true }).mockResolvedValueOnce(mockWorkspaces);
     const result = await getWorkspacesByOrganizationId("org1");
     expect(result).toEqual([
       { id: "p1", name: "Workspace 1" },
