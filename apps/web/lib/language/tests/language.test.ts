@@ -49,11 +49,13 @@ const fakeWorkspace = {
 } as unknown as TWorkspace;
 
 const testInputValidation = async (
-  service: (workspaceId: string, ...functionArgs: any[]) => Promise<any>,
-  ...args: [string, ...any[]]
+  service: (workspaceId: string, ...functionArgs: never[]) => Promise<unknown>,
+  ...args: [string, ...unknown[]]
 ): Promise<void> => {
   test("throws ValidationError on bad input", async () => {
-    await expect(service(...args)).rejects.toThrow(ValidationError);
+    // The point is to call the service with arguments its types reject.
+    const callWithAnyInput = service as (...input: unknown[]) => Promise<unknown>;
+    await expect(callWithAnyInput(...args)).rejects.toThrow(ValidationError);
   });
 };
 

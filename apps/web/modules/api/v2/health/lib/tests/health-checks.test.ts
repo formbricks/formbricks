@@ -94,7 +94,7 @@ describe("Health Checks", () => {
   describe("checkCacheHealth", () => {
     test("should return healthy when Redis is available", async () => {
       const mockCacheService = createMockCacheService(true);
-      vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
+      vi.mocked(getCacheService, { partial: true, deep: true }).mockResolvedValue(ok(mockCacheService));
 
       const result = await checkCacheHealth();
 
@@ -120,7 +120,7 @@ describe("Health Checks", () => {
 
     test("should return unhealthy when Redis is not available", async () => {
       const mockCacheService = createMockCacheService(false);
-      vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
+      vi.mocked(getCacheService, { partial: true, deep: true }).mockResolvedValue(ok(mockCacheService));
 
       const result = await checkCacheHealth();
 
@@ -135,7 +135,7 @@ describe("Health Checks", () => {
     test("should handle Redis availability check exceptions", async () => {
       const mockCacheService = createMockCacheService(true);
       mockCacheService.isRedisAvailable.mockRejectedValue(new Error("Redis ping failed"));
-      vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
+      vi.mocked(getCacheService, { partial: true, deep: true }).mockResolvedValue(ok(mockCacheService));
 
       const result = await checkCacheHealth();
 
@@ -165,7 +165,7 @@ describe("Health Checks", () => {
 
     test("should verify isRedisAvailable is called asynchronously", async () => {
       const mockCacheService = createMockCacheService(true);
-      vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
+      vi.mocked(getCacheService, { partial: true, deep: true }).mockResolvedValue(ok(mockCacheService));
 
       await checkCacheHealth();
 
@@ -182,7 +182,7 @@ describe("Health Checks", () => {
 
       // Mock successful cache check
       const mockCacheService = createMockCacheService(true);
-      vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
+      vi.mocked(getCacheService, { partial: true, deep: true }).mockResolvedValue(ok(mockCacheService));
 
       const result = await performHealthChecks();
 
@@ -219,7 +219,7 @@ describe("Health Checks", () => {
 
       // Mock successful cache check
       const mockCacheService = createMockCacheService(true);
-      vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
+      vi.mocked(getCacheService, { partial: true, deep: true }).mockResolvedValue(ok(mockCacheService));
 
       const result = await performHealthChecks();
 
@@ -254,11 +254,11 @@ describe("Health Checks", () => {
       const dbPromise = new Promise((resolve) => setTimeout(() => resolve([{ "?column?": 1 }]), 100));
       const redisPromise = new Promise((resolve) => setTimeout(() => resolve(true), 100));
 
-      vi.mocked(prisma.$queryRaw).mockReturnValue(dbPromise as any);
+      vi.mocked(prisma.$queryRaw, { partial: true, deep: true }).mockReturnValue(dbPromise);
 
       const mockCacheService = createMockCacheService(true);
-      mockCacheService.isRedisAvailable.mockReturnValue(redisPromise as any);
-      vi.mocked(getCacheService).mockResolvedValue(ok(mockCacheService as any));
+      mockCacheService.isRedisAvailable.mockReturnValue(redisPromise);
+      vi.mocked(getCacheService, { partial: true, deep: true }).mockResolvedValue(ok(mockCacheService));
 
       const startTime = Date.now();
       await performHealthChecks();

@@ -5,7 +5,7 @@ import { TSurvey } from "@formbricks/types/surveys/types";
 export const renderHyperlinkedContent = (data: string): JSX.Element[] => {
   // More specific URL pattern
   const urlPattern =
-    /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_\+.~#?&//=]*[-a-zA-Z0-9@%_\+~#//=])?)/g;
+    /(https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_+.~#?&//=]*[-a-zA-Z0-9@%_+~#//=])?)/g;
   const parts = data.split(urlPattern);
 
   const isValidUrl = (url: string): boolean => {

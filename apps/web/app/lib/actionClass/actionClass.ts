@@ -5,7 +5,7 @@ export const isValidCssSelector = (selector?: string) => {
   const element = document.createElement("div");
   try {
     element.querySelector(selector);
-  } catch (err) {
+  } catch {
     return false;
   }
   return true;

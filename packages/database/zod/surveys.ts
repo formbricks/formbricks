@@ -81,6 +81,7 @@ const ZSurveyBase = z.object({
   pin: z.string().nullable().describe("The pin of the survey"),
   createdBy: z.string().nullable().describe("The user who created the survey"),
   workspaceId: z.cuid2().describe("The workspace ID of the survey"),
+  // eslint-disable-next-line typescript/no-deprecated -- the v1 API's survey shape still carries `questions`
   questions: z.array(ZSurveyQuestion).describe("The questions of the survey"),
   blocks: ZSurveyBlocks.prefault([]).describe("The blocks of the survey"),
   endings: z.array(ZSurveyEnding).prefault([]).describe("The endings of the survey"),

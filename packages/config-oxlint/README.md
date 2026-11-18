@@ -4,15 +4,16 @@ Shared [oxlint](https://oxc.rs/docs/guide/usage/linter) config tiers for the For
 lints the whole repo in one run from the root (`pnpm lint:code`); each package/app that lints has a small
 `oxlint.config.ts` that composes exactly one tier, and oxlint checks every file against its nearest config.
 
-| Export          | Contents                                                                                                                         | Used by                                                                                                                                                    |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `./base`        | `compose()`, turbo env-var checks, the `test`-over-`it` convention, unused-vars `_`-prefix options, common ignores, Sonar parity | (composed by the tiers below)                                                                                                                              |
-| `./library`     | eslint recommended + typescript-eslint `recommendedTypeChecked` (type-aware) + `no-unnecessary-condition`, node globals          | ai, api-v3-schemas, cache, creatives, database, i18n-utils, jobs, js-core, logger, redis-config, storage, types, vite-plugins, workflows, deployment-check |
-| `./react`       | library baseline + react / react-hooks / jsx-a11y recommended, browser globals                                                   | survey-ui, storybook                                                                                                                                       |
-| `./react-hooks` | lite tier: react-hooks + jsx-a11y recommended, no full react/TS rule sets — move consumers to `./react` when ready               | email, surveys                                                                                                                                             |
-| `./next`        | `eslint-config-next`'s rules + the eslint/typescript-eslint recommended baselines at `warn`                                      | apps/web                                                                                                                                                   |
-| `./csp-safe`    | `formbricks/restricted-syntax` selectors for markup-parsing APIs in code that runs on customer pages                             | creatives, js-core, survey-ui, surveys                                                                                                                     |
-| `./testing`     | `lintFixtures()`: lints snippets at virtual paths through a workspace's real config, for config regression tests                 | `scripts/*-lint.test.ts`, `apps/web/lib/env-access.test.ts`                                                                                                |
+| Export                       | Contents                                                                                                                         | Used by                                                                                                                                                    |
+| ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `./base`                     | `compose()`, turbo env-var checks, the `test`-over-`it` convention, unused-vars `_`-prefix options, common ignores, Sonar parity | (composed by the tiers below)                                                                                                                              |
+| `./library`                  | eslint recommended + typescript-eslint `recommendedTypeChecked` (type-aware) + `no-unnecessary-condition`, node globals          | ai, api-v3-schemas, cache, creatives, database, i18n-utils, jobs, js-core, logger, redis-config, storage, types, vite-plugins, workflows, deployment-check |
+| `./library` `untypedLibrary` | the library tier without type information: eslint recommended + typescript-eslint `recommended`                                  | root `scripts/`, `.github/`, config-oxlint, config-prettier (`scripts/oxlint.config.ts`)                                                                   |
+| `./react`                    | library baseline + react / react-hooks / jsx-a11y recommended, browser globals                                                   | survey-ui, storybook                                                                                                                                       |
+| `./react-hooks`              | lite tier: react-hooks + jsx-a11y recommended, no full react/TS rule sets — move consumers to `./react` when ready               | email, surveys                                                                                                                                             |
+| `./next`                     | `eslint-config-next`'s rules + the eslint/typescript-eslint recommended baselines                                                | apps/web                                                                                                                                                   |
+| `./csp-safe`                 | `formbricks/restricted-syntax` selectors for markup-parsing APIs in code that runs on customer pages                             | creatives, js-core, survey-ui, surveys                                                                                                                     |
+| `./testing`                  | `lintFixtures()`: lints snippets at virtual paths through a workspace's real config, for config regression tests                 | `scripts/*-lint.test.ts`, `apps/web/lib/env-access.test.ts`                                                                                                |
 
 Usage in a package:
 
@@ -38,7 +39,10 @@ Notes:
   `prop-types` and `no-deprecated`), `eslint-plugin-sonarjs` and `eslint-plugin-unicorn` (as `unicorn-js`,
   Sonar parity only) and `eslint-plugin-storybook` (apps/storybook). `plugins/react-js.mjs` loads the three eslint-plugin-react rules and drops `prefer-read-only-props`'s autofix, which writes `readonly` members instead of the `Readonly<Props>` wrapper. `plugins/formbricks.mjs` is the
   repo's own: oxlint has no `no-restricted-syntax`, so `formbricks/restricted-syntax` takes the same
-  selector options. JS plugins are slower than native rules; `react-js` costs most of apps/web's run.
+  selector options, and `formbricks/no-inline-lint-config` (on in every tier) fails on ESLint's inline
+  config comments (`/* eslint <rule>: … */`, `/* eslint-env */`, `/* global */`, `/* exported */`), which
+  oxlint ignores.
+  JS plugins are slower than native rules; `react-js` costs most of apps/web's run.
 - **Type-aware rules** run through `oxlint-tsgolint` (TypeScript 7) when oxlint gets `--type-aware`, which
   `pnpm lint:code` and the pre-commit hook pass. Every linted `.ts`/`.tsx` file must belong to its
   package's tsconfig, and the tsconfig must be valid for TypeScript 7 (no `baseUrl`, no
@@ -51,12 +55,14 @@ Notes:
 - `sonar-parity.mjs` mirrors the SonarCloud rules that surfaced issues on PRs after local lint passed
   (`sonarjs/cognitive-complexity` at 15, `regex-complexity` at 20, `no-nested-functions`,
   `no-nested-conditional`, `no-nested-template-literals`, `prefer-string-raw`, `prefer-optional-chain`,
-  `no-deprecated`, `prefer-nullish-coalescing`, and `vitest/prefer-to-have-length` for tests). They are off
-  for `pnpm lint` and CI because existing code violates them; `scripts/lint-staged-oxlint.mjs` sets
-  `OXLINT_SONAR_PARITY=warn` for the pre-commit hook and fails the commit on one only inside the staged
-  lines (`SONAR_PARITY_RULE_IDS`), as Sonar judges a PR's new code. Every rule except the vitest one skips
-  test files, as Sonar does. `jsx-a11y/no-aria-hidden-on-focusable` (`a11yParity`) is an error in the react
-  tiers; apps/web follows the staged severity.
+  `no-deprecated`, `prefer-nullish-coalescing`, and `vitest/prefer-to-have-length` for tests). They are
+  all errors in `pnpm lint` and CI. An exception takes an inline disable with its reason, or, for an
+  applied data migration, a per-file override in `packages/database/oxlint.config.ts`. A rule added with a
+  backlog can start in `stagedLinesRules`: `scripts/lint-staged-oxlint.mjs` then fails the commit on it
+  only inside the staged lines (`STAGED_LINES_RULE_IDS`, empty today), as Sonar judges a PR's new code.
+  Every rule except the vitest one skips test files, as Sonar does. The type-aware ones
+  join only the tiers that lint with type information (not apps/web yet).
+  `jsx-a11y/no-aria-hidden-on-focusable` (`a11yParity`) is an error in every tier that loads jsx-a11y.
 - Stale disable directives are errors repo-wide (`reportUnusedDisableDirectives` in the root
   `oxlint.config.ts`). oxlint honours `eslint-disable` comments as well as its own `oxlint-disable`.
 - `jsx-a11y` runs at its recommended (error) severity in both the `react` and `react-hooks` tiers, so

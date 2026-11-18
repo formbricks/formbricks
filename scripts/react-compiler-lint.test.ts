@@ -133,6 +133,9 @@ describe("error-level React Compiler rules and exhaustive-deps report through ea
       expect(status, stderr).toBe(0);
       const { rules } = JSON.parse(stdout) as { rules: Record<string, unknown> };
       expect(rules["react/preserve-manual-memoization"]).toBe("deny");
-    }
+    },
+    // Each case spawns oxlint, which now loads the sonarjs plugin on every run (~2s alone, more when the
+    // other scripts/*-lint tests spawn alongside it): vitest's 5s default is too tight on CI.
+    30_000
   );
 });

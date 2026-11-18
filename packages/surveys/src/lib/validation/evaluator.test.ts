@@ -896,7 +896,7 @@ describe("validateElementResponse", () => {
       // Required check passes (at least 1 row), but validation rule fails (needs 2 rows)
       const result = validateElementResponse(element, { row1: "col1" }, "en");
       expect(result.valid).toBe(false);
-      expect(result.errors.length).toBe(1);
+      expect(result.errors).toHaveLength(1);
     });
 
     test("should apply validation rules when matrix is not required", () => {

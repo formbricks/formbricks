@@ -97,7 +97,7 @@ const callUpdateMembership = (role: string) =>
   updateMembershipAction({
     ctx: { user: { id: currentUserId, locale: "en-US" }, auditLoggingCtx: {} },
     parsedInput: { userId: targetUserId, organizationId, data: { role } },
-  } as any);
+  } as unknown as Parameters<typeof updateMembershipAction>[0]);
 
 describe("updateMembershipAction", () => {
   beforeEach(() => {
@@ -116,8 +116,8 @@ describe("updateMembershipAction", () => {
     mocks.runOwnerGuardedTransaction.mockImplementation(
       (_organizationId: string, _userId: string, change: (tx: unknown) => unknown) => change({ stand: "tx" })
     );
-    mocks.updateMembership.mockImplementation(async (userId: string, _orgId: string, data: any) =>
-      membership(userId, data.role)
+    mocks.updateMembership.mockImplementation(
+      async (userId: string, _orgId: string, data: { role: string }) => membership(userId, data.role)
     );
   });
 

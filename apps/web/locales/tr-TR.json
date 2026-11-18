@@ -5366,6 +5366,7 @@
         "device": "Cihaz",
         "duration_seconds": "Süre (saniye)",
         "email": "E-posta",
+        "ended_before_first_question": "İlk sorudan önce sona erdi",
         "error_downloading_attachments": "Ekleri indirmeye hazırlarken bir hata oluştu",
         "first_name": "Ad",
         "go_to_responses": "Yanıtlara git",

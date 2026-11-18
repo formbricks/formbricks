@@ -1,5 +1,6 @@
 import { logger } from "@formbricks/logger";
 import { ZUploadPrivateFileRequest } from "@formbricks/types/storage";
+import { type TSurvey } from "@formbricks/types/surveys/types";
 import { validateSingleUseResponseInput } from "@/app/api/client/[workspaceId]/responses/lib/single-use";
 import { parseAndValidateJsonBody } from "@/app/lib/api/parse-and-validate-json-body";
 import { responses } from "@/app/lib/api/response";
@@ -32,6 +33,93 @@ export const OPTIONS = async (): Promise<Response> => {
 // uploading private files requires no authentication
 // use this to let users upload files to a file upload element response for example
 
+/** Why an upload is refused, by the reason `validateSurveyAllowsUpload` gives. */
+const UPLOAD_REFUSAL_MESSAGES: Partial<Record<string, string>> = {
+  no_file_upload_element: "Survey does not allow file uploads",
+  file_upload_element_not_found: "Element does not allow file uploads",
+  file_name_not_allowed: "File name is not allowed for this element",
+};
+
+/** The refusal message for a known reason; anything else (a prototype key included) has none. */
+const getUploadRefusalMessage = (reason: string): string | undefined =>
+  Object.hasOwn(UPLOAD_REFUSAL_MESSAGES, reason) ? UPLOAD_REFUSAL_MESSAGES[reason] : undefined;
+
+/**
+ * Why the survey hands out no upload URL: another workspace, not collecting responses, or a PIN or
+ * single-use link the caller does not hold. Null when it does.
+ */
+const getUploadSurveyRefusal = (
+  survey: TSurvey,
+  workspaceId: string,
+  {
+    pinAuthToken,
+    singleUseId,
+    url,
+  }: { pinAuthToken?: string | null; singleUseId?: string | null; url?: string | null }
+): { response: Response } | null => {
+  if (survey.workspaceId !== workspaceId) {
+    return {
+      response: responses.badRequestResponse(
+        "Survey does not belong to the workspace",
+        { surveyId: survey.id, workspaceId },
+        true
+      ),
+    };
+  }
+
+  // A survey that is not collecting responses gets no upload URL (ENG-4044): the response API refuses
+  // its writes (ENG-872), so the file would be an orphan an anonymous caller could keep adding to the
+  // bucket. Same answer as the response API. `archivedAt` is checked too, so the gate does not rely on
+  // archiving having paused the survey. This runs before the workspace upload quota, so a refused
+  // request does not spend it.
+  if (survey.status !== "inProgress" || survey.archivedAt) {
+    return {
+      response: responses.forbiddenResponse("Survey is not accepting submissions", true, {
+        surveyId: survey.id,
+      }),
+    };
+  }
+
+  // Same gates the client response APIs apply: an upload URL is only useful to someone who could
+  // go on to submit, so a caller without the PIN token or a valid single-use link gets neither.
+  if (survey.pin && !verifyLinkSurveyPinToken(pinAuthToken, survey.id)) {
+    return {
+      response: responses.forbiddenResponse("Survey is protected by a PIN", true, { surveyId: survey.id }),
+    };
+  }
+
+  const singleUseValidation = validateSingleUseResponseInput(survey, workspaceId, {
+    singleUseId: singleUseId ?? undefined,
+    meta: { url: url ?? undefined },
+  });
+
+  if (singleUseValidation && "response" in singleUseValidation) {
+    return { response: singleUseValidation.response };
+  }
+
+  return null;
+};
+
+/** The largest file this element takes: the plan's limit, or the element's own when lower. */
+const getMaxFileUploadSize = async (organizationId: string, survey: TSurvey, elementId: string) => {
+  const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organizationId);
+  const generalMaxFileUploadSize = isBiggerFileUploadAllowed
+    ? MAX_FILE_UPLOAD_SIZES.big
+    : MAX_FILE_UPLOAD_SIZES.standard;
+  // An element's kind may cap its file below the general limit (a Signature is a ~35 KB PNG). The
+  // lower one goes into the presigned POST policy, so storage itself refuses a larger body.
+  const elementMaxFileSize = getSurveyUploadElementMaxFileSize({
+    elementId,
+    blocks: survey.blocks,
+    questions: survey.questions,
+  });
+  const maxFileUploadSize =
+    elementMaxFileSize === undefined
+      ? generalMaxFileUploadSize
+      : Math.min(elementMaxFileSize, generalMaxFileUploadSize);
+  return maxFileUploadSize;
+};
+
 export const POST = withV1ApiWrapper({
   handler: async ({ req, props }: THandlerParams<{ params: Promise<{ workspaceId: string }> }>) => {
     const params = await props.params;
@@ -55,14 +143,12 @@ export const POST = withV1ApiWrapper({
     });
 
     if ("response" in parsedInputResult) {
-      if (parsedInputResult.issue === "invalid_json") {
-        logger.error({ error: parsedInputResult.details, url: req.url }, "Error parsing JSON input");
-      } else {
-        logger.error(
-          { error: parsedInputResult.details, url: req.url },
-          "Fields are missing or incorrectly formatted"
-        );
-      }
+      logger.error(
+        { error: parsedInputResult.details, url: req.url },
+        parsedInputResult.issue === "invalid_json"
+          ? "Error parsing JSON input"
+          : "Fields are missing or incorrectly formatted"
+      );
 
       return {
         response: parsedInputResult.response,
@@ -89,45 +175,8 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    if (survey.workspaceId !== workspaceId) {
-      return {
-        response: responses.badRequestResponse(
-          "Survey does not belong to the workspace",
-          { surveyId, workspaceId },
-          true
-        ),
-      };
-    }
-
-    // A survey that is not collecting responses gets no upload URL (ENG-4044): the response API refuses
-    // its writes (ENG-872), so the file would be an orphan an anonymous caller could keep adding to the
-    // bucket. Same answer as the response API. `archivedAt` is checked too, so the gate does not rely on
-    // archiving having paused the survey. This runs before the workspace upload quota, so a refused
-    // request does not spend it.
-    if (survey.status !== "inProgress" || survey.archivedAt) {
-      return {
-        response: responses.forbiddenResponse("Survey is not accepting submissions", true, {
-          surveyId: survey.id,
-        }),
-      };
-    }
-
-    // Same gates the client response APIs apply: an upload URL is only useful to someone who could
-    // go on to submit, so a caller without the PIN token or a valid single-use link gets neither.
-    if (survey.pin && !verifyLinkSurveyPinToken(pinAuthToken, survey.id)) {
-      return {
-        response: responses.forbiddenResponse("Survey is protected by a PIN", true, { surveyId: survey.id }),
-      };
-    }
-
-    const singleUseValidation = validateSingleUseResponseInput(survey, workspaceId, {
-      singleUseId: singleUseId ?? undefined,
-      meta: { url: url ?? undefined },
-    });
-
-    if (singleUseValidation && "response" in singleUseValidation) {
-      return { response: singleUseValidation.response };
-    }
+    const surveyRefusal = getUploadSurveyRefusal(survey, workspaceId, { pinAuthToken, singleUseId, url });
+    if (surveyRefusal) return surveyRefusal;
 
     try {
       await applyRateLimit(rateLimitConfigs.storage.uploadPerWorkspace, workspaceId);
@@ -148,37 +197,16 @@ export const POST = withV1ApiWrapper({
     });
 
     if (!uploadPermission.ok) {
-      let responseString: string = "";
-      if (uploadPermission.reason === "no_file_upload_element") {
-        responseString = "Survey does not allow file uploads";
-      } else if (uploadPermission.reason === "file_upload_element_not_found") {
-        responseString = "Element does not allow file uploads";
-      } else if (uploadPermission.reason === "file_name_not_allowed") {
-        responseString = "File name is not allowed for this element";
-      } else {
-        responseString = "File extension is not allowed for this element";
-      }
-
       return {
-        response: responses.badRequestResponse(responseString, undefined),
+        response: responses.badRequestResponse(
+          getUploadRefusalMessage(uploadPermission.reason) ??
+            "File extension is not allowed for this element",
+          undefined
+        ),
       };
     }
 
-    const isBiggerFileUploadAllowed = await getBiggerUploadFileSizePermission(organization.id);
-    const generalMaxFileUploadSize = isBiggerFileUploadAllowed
-      ? MAX_FILE_UPLOAD_SIZES.big
-      : MAX_FILE_UPLOAD_SIZES.standard;
-    // An element's kind may cap its file below the general limit (a Signature is a ~35 KB PNG). The
-    // lower one goes into the presigned POST policy, so storage itself refuses a larger body.
-    const elementMaxFileSize = getSurveyUploadElementMaxFileSize({
-      elementId,
-      blocks: survey.blocks,
-      questions: survey.questions,
-    });
-    const maxFileUploadSize =
-      elementMaxFileSize === undefined
-        ? generalMaxFileUploadSize
-        : Math.min(elementMaxFileSize, generalMaxFileUploadSize);
+    const maxFileUploadSize = await getMaxFileUploadSize(organization.id, survey, elementId);
 
     const signedUrlResponse = await getSignedUrlForUpload(
       fileName,

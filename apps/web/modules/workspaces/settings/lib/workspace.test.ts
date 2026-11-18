@@ -130,7 +130,7 @@ describe("workspace lib", () => {
     vi.clearAllMocks();
     // createWorkspace runs its ownership check and both writes in one transaction. Hand the callback
     // the same prisma mock so assertions stay on `prisma.*` and a rollback surfaces as a throw.
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback: any) => callback(prisma));
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
     vi.mocked(requestEmailAuditErasureRequired).mockResolvedValue(undefined);
     vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValue([]);
   });
@@ -150,18 +150,16 @@ describe("workspace lib", () => {
       vi.mocked(prisma.$queryRaw).mockResolvedValueOnce([{ logo: url ? { url } : null, updatedAt }]);
     };
     const resolvesTo = (workspace: Partial<TWorkspace> & { logo?: { url: string } | null }) => {
-      vi.mocked(prisma.workspace.update).mockResolvedValueOnce({
+      vi.mocked(prisma.workspace.update, { partial: true }).mockResolvedValueOnce({
         ...baseWorkspace,
         ...workspace,
-      } as unknown as Awaited<ReturnType<typeof prisma.workspace.update>>);
+      });
     };
 
     // The organization's whitelabel decides whether an object under this workspace's prefix is
     // actually an organization asset; by default the org claims nothing.
     const orgClaims = (whitelabel: { logoUrl?: string | null; faviconUrl?: string | null } | null) => {
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue({ whitelabel } as unknown as Awaited<
-        ReturnType<typeof prisma.organization.findUnique>
-      >);
+      vi.mocked(prisma.organization.findUnique, { partial: true }).mockResolvedValue({ whitelabel });
     };
 
     beforeEach(() => {
@@ -470,7 +468,10 @@ describe("workspace lib", () => {
     });
 
     test("returns workspace data without Zod validation", async () => {
-      vi.mocked(prisma.workspace.update).mockResolvedValueOnce({ ...baseWorkspace, id: 123 } as any);
+      vi.mocked(prisma.workspace.update).mockResolvedValueOnce({
+        ...baseWorkspace,
+        id: 123,
+      } as unknown as Awaited<ReturnType<typeof prisma.workspace.update>>);
       const result = await updateWorkspace("p1", { name: "Workspace 1" });
       expect(result).toEqual({ ...baseWorkspace, id: 123 });
     });
@@ -488,8 +489,12 @@ describe("workspace lib", () => {
     test("creates workspace with team links and no FRD side-effects", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p2" };
       vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams("t1"));
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
-      vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(
+        createdWorkspace as Awaited<ReturnType<typeof prisma.workspace.create>>
+      );
+      vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce(
+        {} as Awaited<ReturnType<typeof prisma.workspaceTeam.createMany>>
+      );
 
       const result = await createWorkspace(
         "org1",
@@ -561,8 +566,12 @@ describe("workspace lib", () => {
     // ENG-1922: the rejection log must not fire when every team is in the caller's organization.
     test("does not log a cross-organization warning on the happy path", async () => {
       vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockOrgTeams("t1"));
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce({ ...baseWorkspace, id: "p3" } as any);
-      vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce({ ...baseWorkspace, id: "p3" } as Awaited<
+        ReturnType<typeof prisma.workspace.create>
+      >);
+      vi.mocked(prisma.workspaceTeam.createMany).mockResolvedValueOnce(
+        {} as Awaited<ReturnType<typeof prisma.workspaceTeam.createMany>>
+      );
 
       await createWorkspace("org1", { name: "Workspace 1", teamIds: ["t1"] }, NEW_ORGANIZATION);
 
@@ -599,22 +608,27 @@ describe("workspace lib", () => {
 
     test("seeds English as the default survey language when creating a workspace", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p-language" };
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(
+        createdWorkspace as Awaited<ReturnType<typeof prisma.workspace.create>>
+      );
 
       await createWorkspace("org1", { name: "Workspace language" }, NEW_ORGANIZATION);
 
       const createArgs = vi.mocked(prisma.workspace.create).mock.calls[0][0];
-      expect((createArgs.data as any).languages.create).toEqual([{ code: "en-US", alias: null }]);
+      expect(createArgs.data).toHaveProperty("languages.create", [{ code: "en-US", alias: null }]);
     });
 
     test("seeds the default contact attribute keys when creating a workspace", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p-defaults" };
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(
+        createdWorkspace as Awaited<ReturnType<typeof prisma.workspace.create>>
+      );
 
       await createWorkspace("org1", { name: "Workspace defaults" }, NEW_ORGANIZATION);
 
       const createArgs = vi.mocked(prisma.workspace.create).mock.calls[0][0];
-      const attributeCreate = (createArgs.data as any).contactAttributeKeys.create as Array<{
+      const attributeCreate = (createArgs.data as { contactAttributeKeys: { create: unknown } })
+        .contactAttributeKeys.create as Array<{
         key: string;
         type: string;
         isUnique?: boolean;
@@ -629,7 +643,9 @@ describe("workspace lib", () => {
 
     test("creates workspace without teams and does not auto-link any FRD", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p3" };
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(
+        createdWorkspace as Awaited<ReturnType<typeof prisma.workspace.create>>
+      );
 
       const result = await createWorkspace("org1", { name: "Workspace No Teams" }, NEW_ORGANIZATION);
 
@@ -640,7 +656,9 @@ describe("workspace lib", () => {
 
     test("does not upsert a Default Feedback Directory under any flow", async () => {
       const createdWorkspace = { ...baseWorkspace, id: "p4" };
-      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(createdWorkspace as any);
+      vi.mocked(prisma.workspace.create).mockResolvedValueOnce(
+        createdWorkspace as Awaited<ReturnType<typeof prisma.workspace.create>>
+      );
 
       await createWorkspace("org1", { name: "Second Workspace" }, NEW_ORGANIZATION);
 
@@ -764,7 +782,7 @@ describe("workspace lib", () => {
       };
       vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValueOnce([
         feedbackDirectoryAssignment,
-      ] as any);
+      ] as Awaited<ReturnType<typeof prisma.feedbackDirectoryWorkspace.findMany>>);
       vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(baseWorkspace);
 
       const result = await deleteWorkspace("p1");
@@ -789,7 +807,9 @@ describe("workspace lib", () => {
     // the workspace was migrated off its environment id survived the delete.
     test("passes the workspace's legacy environment prefix to storage cleanup", async () => {
       const migratedWorkspace = { ...baseWorkspace, legacyEnvironmentId: "env-1" };
-      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(migratedWorkspace as any);
+      vi.mocked(prisma.workspace.delete).mockResolvedValueOnce(
+        migratedWorkspace as Awaited<ReturnType<typeof prisma.workspace.delete>>
+      );
 
       await deleteWorkspace("p1");
 
@@ -813,7 +833,7 @@ describe("workspace lib", () => {
         code: "P2001",
         clientVersion: "5.0.0",
       });
-      vi.mocked(prisma.workspace.delete).mockRejectedValueOnce(err as any);
+      vi.mocked(prisma.workspace.delete).mockRejectedValueOnce(err);
       await expect(deleteWorkspace("p1")).rejects.toThrow(DatabaseError);
     });
 

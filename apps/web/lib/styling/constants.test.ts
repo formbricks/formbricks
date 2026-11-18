@@ -12,7 +12,7 @@ describe("getSuggestedColors", () => {
   });
 
   test("suggests text/surface pairs that clear WCAG AA for any brand color", () => {
-    const textPairs = (colors: Record<string, any>): [string, string][] => [
+    const textPairs = (colors: ReturnType<typeof getSuggestedColors>): [string, string][] => [
       [colors["elementHeadlineColor.light"], colors["cardBackgroundColor.light"]],
       [colors["elementDescriptionColor.light"], colors["cardBackgroundColor.light"]],
       [colors["elementUpperLabelColor.light"], colors["cardBackgroundColor.light"]],

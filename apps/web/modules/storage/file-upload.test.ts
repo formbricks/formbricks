@@ -13,8 +13,9 @@ global.atob = mockAtoB;
 const mockFileReader = {
   readAsDataURL: vi.fn(),
   result: "data:image/jpeg;base64,test",
-  onload: null as any,
-  onerror: null as any,
+  // Set by the code under test before the tests fire them.
+  onload: null as unknown as () => void,
+  onerror: null as unknown as () => void,
 };
 
 // Mock File object
@@ -33,7 +34,7 @@ describe("fileUpload", () => {
     // Mock FileReader
     global.FileReader = vi.fn(function FileReader() {
       return mockFileReader;
-    }) as any;
+    }) as unknown as typeof FileReader;
     global.atob = (base64) => Buffer.from(base64, "base64").toString("binary");
   });
 
@@ -42,7 +43,10 @@ describe("fileUpload", () => {
   });
 
   test("should return error when no file is provided", async () => {
-    const result = await fileUploadModule.handleFileUpload(null as any, "test-env");
+    const result = await fileUploadModule.handleFileUpload(
+      null as unknown as Parameters<typeof fileUploadModule.handleFileUpload>[0],
+      "test-env"
+    );
     expect(result.error).toBe(fileUploadModule.FileUploadError.NO_FILE);
     expect(result.url).toBe("");
   });
@@ -250,14 +254,14 @@ describe("fileUploadModule.toBase64", () => {
     const mockReadAsDataURL = vi.fn();
     const mockFileReaderInstance = {
       readAsDataURL: mockReadAsDataURL,
-      onload: null as ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null,
+      onload: null as FileReader["onload"],
       onerror: null,
       result: "data:text/plain;base64,aGVsbG8=",
     };
 
     globalThis.FileReader = vi.fn(function FileReader() {
       return mockFileReaderInstance as unknown as FileReader;
-    }) as any;
+    }) as unknown as typeof FileReader;
 
     const promise = fileUploadModule.toBase64(dummyFile);
 
@@ -278,13 +282,13 @@ describe("fileUploadModule.toBase64", () => {
     const mockFileReaderInstance = {
       readAsDataURL: mockReadAsDataURL,
       onload: null,
-      onerror: null as ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null,
+      onerror: null as FileReader["onload"],
       result: null,
     };
 
     globalThis.FileReader = vi.fn(function FileReader() {
       return mockFileReaderInstance as unknown as FileReader;
-    }) as any;
+    }) as unknown as typeof FileReader;
 
     const promise = fileUploadModule.toBase64(dummyFile);
 

@@ -332,7 +332,7 @@ describe("updateBlock", () => {
 
   test("should return error when trying to update id", () => {
     const survey = createMockSurvey([createMockBlock("block-1", "Block 1")]);
-    const result = updateBlock(survey, "block-1", { id: "new-id" } as any);
+    const result = updateBlock(survey, "block-1", { id: "new-id" } as Parameters<typeof updateBlock>[2]);
 
     expect(result.ok).toBe(false);
     if (!result.ok) {

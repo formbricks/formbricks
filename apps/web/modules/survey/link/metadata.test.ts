@@ -98,7 +98,7 @@ describe("link-survey metadata", () => {
       name: mockSurveyName,
       type: "link",
       status: "published",
-    } as any;
+    } as unknown as Awaited<ReturnType<typeof getSurveyWithMetadata>>;
 
     vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
 
@@ -145,7 +145,7 @@ describe("link-survey metadata", () => {
       name: mockSurveyName,
       type: "link",
       status: "published",
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof getSurveyWithMetadata>>);
     const context = await getWorkspaceContextForLinkSurvey("workspace-123");
     vi.mocked(getWorkspaceContextForLinkSurvey).mockResolvedValue({
       ...context,
@@ -163,7 +163,7 @@ describe("link-survey metadata", () => {
       name: mockSurveyName,
       type: "link",
       status: "published",
-    } as any;
+    } as unknown as Awaited<ReturnType<typeof getSurveyWithMetadata>>;
 
     vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
     vi.mocked(getBasicSurveyMetadata).mockResolvedValue({
@@ -171,7 +171,7 @@ describe("link-survey metadata", () => {
       ogTitle: mockOgTitle,
       description: mockDescription,
       survey: null,
-      ogImage: mockOgImageUrl as any,
+      ogImage: mockOgImageUrl as unknown as Awaited<ReturnType<typeof getBasicSurveyMetadata>>["ogImage"],
     });
 
     const result = await getMetadataForLinkSurvey({ surveyId: mockSurveyId });
@@ -188,7 +188,9 @@ describe("link-survey metadata", () => {
       status: "published",
     };
 
-    vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey as any);
+    vi.mocked(getSurveyWithMetadata).mockResolvedValue(
+      mockSurvey as Awaited<ReturnType<typeof getSurveyWithMetadata>>
+    );
 
     await getMetadataForLinkSurvey({ surveyId: mockSurveyId });
 
@@ -201,7 +203,7 @@ describe("link-survey metadata", () => {
       name: mockSurveyName,
       type: "link",
       status: "draft",
-    } as any;
+    } as Awaited<ReturnType<typeof getSurveyWithMetadata>>;
 
     vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
 
@@ -251,7 +253,7 @@ describe("link-survey metadata", () => {
       name: mockSurveyName,
       type: "link",
       status: "published",
-    } as any;
+    } as unknown as Awaited<ReturnType<typeof getSurveyWithMetadata>>;
 
     vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
     vi.mocked(getSurveyOpenGraphMetadata).mockReturnValue({
@@ -293,7 +295,7 @@ describe("link-survey metadata", () => {
       name: mockSurveyName,
       type: "link",
       status: "published",
-    } as any;
+    } as unknown as Awaited<ReturnType<typeof getSurveyWithMetadata>>;
 
     vi.mocked(getSurveyWithMetadata).mockResolvedValue(mockSurvey);
     vi.mocked(getSurveyOpenGraphMetadata).mockReturnValue({

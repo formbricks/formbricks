@@ -39,7 +39,7 @@ export const GET = withV1ApiWrapper({
     const offset = searchParams.get("skip") ? Number(searchParams.get("skip")) : undefined;
 
     try {
-      let allResponses: TResponse[] = [];
+      const allResponses: TResponse[] = [];
 
       if (surveyId) {
         const survey = await getSurvey(surveyId);
@@ -118,6 +118,26 @@ const validateSurvey = async (responseInput: TResponseInput, workspaceId: string
   return { survey };
 };
 
+/** The request body, or the 413 or 400 response that refuses it. */
+const parseResponseBody = async (
+  req: Request
+): Promise<{ jsonInput: Record<string, unknown> } | { response: Response }> => {
+  try {
+    return { jsonInput: await parseJsonBodyWithLimit<Record<string, unknown>>(req) };
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return {
+        response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
+      };
+    }
+
+    logger.error({ error, url: req.url }, "Error parsing JSON input");
+    return {
+      response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
+    };
+  }
+};
+
 export const POST = withV1ApiWrapper({
   handler: async ({ req, auditLog, authentication }) => {
     if (!authentication || !("apiKeyId" in authentication)) {
@@ -125,21 +145,9 @@ export const POST = withV1ApiWrapper({
     }
 
     try {
-      let jsonInput;
-      try {
-        jsonInput = await parseJsonBodyWithLimit<Record<string, unknown>>(req);
-      } catch (error) {
-        if (error instanceof RequestBodyTooLargeError) {
-          return {
-            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }),
-          };
-        }
-
-        logger.error({ error, url: req.url }, "Error parsing JSON input");
-        return {
-          response: responses.badRequestResponse("Malformed JSON input, please check your request body"),
-        };
-      }
+      const parsedBody = await parseResponseBody(req);
+      if ("response" in parsedBody) return parsedBody;
+      const { jsonInput } = parsedBody;
 
       // Accept workspaceId as alternative to environmentId — resolve to production environment
       const resolved = await resolveBodyIds(jsonInput, authentication, "POST");

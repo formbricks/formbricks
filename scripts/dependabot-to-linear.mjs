@@ -214,6 +214,7 @@ function buildIssue(alert) {
   const priority = PRIORITY_BY_SEVERITY[severity] ?? 3;
   const pkg = alert.dependency?.package?.name ?? "unknown package";
   const ecosystem = alert.dependency?.package?.ecosystem ?? "";
+  const ecosystemNote = ecosystem ? ` (${ecosystem})` : "";
   const advisory = alert.security_advisory ?? {};
   const vuln = alert.security_vulnerability ?? {};
   const summary = advisory.summary ?? "Security vulnerability";
@@ -228,7 +229,7 @@ function buildIssue(alert) {
   const description = [
     `**Dependabot alert [#${number}](${alert.html_url})**`,
     "",
-    `- **Package:** \`${pkg}\`${ecosystem ? ` (${ecosystem})` : ""}`,
+    `- **Package:** \`${pkg}\`${ecosystemNote}`,
     `- **Severity:** ${severity}`,
     ghsa ? `- **Advisory:** ${ghsa}` : null,
     cve ? `- **CVE:** ${cve}` : null,
@@ -243,6 +244,59 @@ function buildIssue(alert) {
   return { titlePrefix, title, description, priority };
 }
 
+const isClosedState = (state) => state.type === "completed" || state.type === "canceled";
+
+/**
+ * Create pass for one open alert: a new Linear issue (idempotent by title prefix). Every alert here is
+ * `state === "open"`, so a matching ticket that's already closed (completed/canceled) means the
+ * vulnerability is still live without an active ticket — reopen it to Triage rather than skipping.
+ * Active matches are left untouched so re-runs don't churn. Returns what it did, for the tally.
+ */
+async function syncOpenAlert(linearKey, issue) {
+  const existing = await findIssue(linearKey, issue.titlePrefix);
+  const isClosed = existing && isClosedState(existing.state);
+
+  if (existing && !isClosed) {
+    console.log(`skip   ${issue.titlePrefix} (already in Linear)`);
+    return "skipped";
+  }
+  if (DRY_RUN) {
+    if (isClosed) {
+      console.log(`would reopen ${issue.titlePrefix} (alert open; was "${existing.state.name}")`);
+      return "reopened";
+    }
+    console.log(`would create ${issue.title} [priority ${issue.priority}]`);
+    return "created";
+  }
+  if (isClosed) {
+    const result = await setIssueState(linearKey, existing.id, LINEAR_TRIAGE_STATE_ID);
+    console.log(`reopen ${result.identifier} (alert open; was "${existing.state.name}") ${result.url}`);
+    return "reopened";
+  }
+  const result = await createIssue(linearKey, issue);
+  console.log(`create ${result.identifier} ${result.url}`);
+  return "created";
+}
+
+/**
+ * Reconcile pass for one resolved alert: close the matching open Linear issue, so a fixed/dismissed
+ * alert doesn't leave a stale ticket behind. Issues already completed/canceled are skipped (no churn
+ * on re-runs). Returns "closed", or null when there was nothing to close.
+ */
+async function closeResolvedAlert(linearKey, alert, titlePrefix, doneState) {
+  const existing = await findIssue(linearKey, titlePrefix);
+  if (!existing) return null; // never synced, nothing to close
+  if (isClosedState(existing.state)) return null;
+  if (DRY_RUN) {
+    console.log(`would close ${titlePrefix} (alert ${alert.state}; was "${existing.state.name}")`);
+    return "closed";
+  }
+  doneState.id ??= await resolveDoneStateId(linearKey);
+  const result = await setIssueState(linearKey, existing.id, doneState.id);
+  console.log(`close  ${result.identifier} (alert ${alert.state}) ${result.url}`);
+  return "closed";
+}
+
 async function main() {
   const repo = requireEnv("GITHUB_REPOSITORY");
   const ghToken = requireEnv("DEPENDABOT_ALERTS_TOKEN");
@@ -254,79 +308,31 @@ async function main() {
   const resolvedAlerts = alerts.filter((a) => a.state !== "open");
   console.log(`Found ${openAlerts.length} open and ${resolvedAlerts.length} resolved alert(s).`);
 
-  let created = 0;
-  let reopened = 0;
-  let skipped = 0;
-  let closed = 0;
-  let failed = 0;
+  const counts = { created: 0, reopened: 0, skipped: 0, closed: 0, failed: 0 };
 
-  // Create pass: open alerts -> new Linear issues (idempotent by title prefix).
-  // Every alert here is `state === "open"`, so a matching ticket that's already
-  // closed (completed/canceled) means the vulnerability is still live without an
-  // active ticket — reopen it to Triage rather than skipping. Active matches are
-  // left untouched so re-runs don't churn.
   for (const alert of openAlerts) {
     const issue = buildIssue(alert);
     try {
-      const existing = await findIssue(linearKey, issue.titlePrefix);
-      const isClosed =
-        existing && (existing.state.type === "completed" || existing.state.type === "canceled");
-
-      if (existing && !isClosed) {
-        skipped += 1;
-        console.log(`skip   ${issue.titlePrefix} (already in Linear)`);
-        continue;
-      }
-      if (DRY_RUN) {
-        if (isClosed) {
-          reopened += 1;
-          console.log(`would reopen ${issue.titlePrefix} (alert open; was "${existing.state.name}")`);
-        } else {
-          created += 1;
-          console.log(`would create ${issue.title} [priority ${issue.priority}]`);
-        }
-        continue;
-      }
-      if (isClosed) {
-        const result = await setIssueState(linearKey, existing.id, LINEAR_TRIAGE_STATE_ID);
-        reopened += 1;
-        console.log(`reopen ${result.identifier} (alert open; was "${existing.state.name}") ${result.url}`);
-        continue;
-      }
-      const result = await createIssue(linearKey, issue);
-      created += 1;
-      console.log(`create ${result.identifier} ${result.url}`);
+      counts[await syncOpenAlert(linearKey, issue)] += 1;
     } catch (err) {
-      failed += 1;
+      counts.failed += 1;
       console.error(`error  ${issue.titlePrefix}: ${err.message}`);
     }
   }
 
-  // Reconcile pass: resolved alerts -> close the matching open Linear issue, so
-  // a fixed/dismissed alert doesn't leave a stale ticket behind. Skip issues
-  // already in a completed/canceled state (no churn on re-runs).
-  let doneStateId = null;
+  const doneState = { id: null };
   for (const alert of resolvedAlerts) {
     const titlePrefix = `[Dependabot #${alert.number}]`;
     try {
-      const existing = await findIssue(linearKey, titlePrefix);
-      if (!existing) continue; // never synced, nothing to close
-      if (existing.state.type === "completed" || existing.state.type === "canceled") continue;
-      if (DRY_RUN) {
-        closed += 1;
-        console.log(`would close ${titlePrefix} (alert ${alert.state}; was "${existing.state.name}")`);
-        continue;
-      }
-      doneStateId ??= await resolveDoneStateId(linearKey);
-      const result = await setIssueState(linearKey, existing.id, doneStateId);
-      closed += 1;
-      console.log(`close  ${result.identifier} (alert ${alert.state}) ${result.url}`);
+      const outcome = await closeResolvedAlert(linearKey, alert, titlePrefix, doneState);
+      if (outcome) counts[outcome] += 1;
     } catch (err) {
-      failed += 1;
+      counts.failed += 1;
       console.error(`error  ${titlePrefix}: ${err.message}`);
     }
   }
 
+  const { created, reopened, skipped, closed, failed } = counts;
   console.log(
     `Done. created=${created} reopened=${reopened} skipped=${skipped} closed=${closed} failed=${failed}${DRY_RUN ? " (dry run)" : ""}`
   );

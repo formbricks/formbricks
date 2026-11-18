@@ -321,6 +321,7 @@ const drawBanner = (
   const bar = doc.createElement("div");
   bar.className = CREATIVE_ROOT_CLASS.banner;
   bar.setAttribute("role", "region");
+  // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty name falls back too
   bar.setAttribute("aria-label", view.accessibleName || DEFAULT_BANNER_NAME);
 
   const content = doc.createElement("div");
@@ -332,6 +333,7 @@ const drawBanner = (
     content.append(button);
   }
   bar.append(content);
+  // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty label falls back too
   if (view.dismissible) bar.append(drawDismiss(doc, view.dismissLabel || DEFAULT_DISMISS_LABEL, onDismiss));
   return bar;
 };

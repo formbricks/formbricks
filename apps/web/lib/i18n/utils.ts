@@ -95,11 +95,11 @@ export const iso639Identifiers = iso639Languages.map((language) => language.code
 
 // Helper function to add language keys to a multi-language object (e.g. survey or question)
 // Iterates over the object recursively and adds empty strings for new language keys
-export const addMultiLanguageLabels = (object: unknown, languageSymbols: string[]): any => {
+export const addMultiLanguageLabels = <T>(object: T, languageSymbols: string[]): T => {
   // Helper function to add language keys to a multi-language object
   function addLanguageKeys(obj: { default: string; [key: string]: string }) {
     languageSymbols.forEach((lang) => {
-      if (!obj.hasOwnProperty(lang)) {
+      if (!Object.hasOwn(obj, lang)) {
         obj[lang] = ""; // Add empty string for new language keys
       }
     });
@@ -112,7 +112,7 @@ export const addMultiLanguageLabels = (object: unknown, languageSymbols: string[
     } else if (obj && typeof obj === "object") {
       const record = obj as Record<string, unknown>;
       for (const key in record) {
-        if (record.hasOwnProperty(key)) {
+        if (Object.hasOwn(record, key)) {
           if (key === "default" && typeof record[key] === "string") {
             addLanguageKeys(record as unknown as { default: string; [key: string]: string });
           } else {

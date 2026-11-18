@@ -12,4 +12,4 @@ export interface InviteWithCreator extends Pick<
   };
 }
 
-export interface CreateMembershipInvite extends Pick<Invite, "organizationId" | "role" | "teamIds"> {}
+export type CreateMembershipInvite = Pick<Invite, "organizationId" | "role" | "teamIds">;

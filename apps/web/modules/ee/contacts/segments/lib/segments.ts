@@ -764,11 +764,11 @@ export const evaluateSegment = async (
     return true;
   }
 
-  let resultPairs: ResultConnectorPair[] = [];
+  const resultPairs: ResultConnectorPair[] = [];
   const now = new Date();
 
   try {
-    for (let filterItem of filters) {
+    for (const filterItem of filters) {
       const { resource } = filterItem;
 
       let result: boolean;

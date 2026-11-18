@@ -13,10 +13,11 @@ import {
 import { ColorPicker } from "@/modules/ui/components/color-picker";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { useStylingAppearance } from "@/modules/ui/components/styling-appearance";
+import type { TStylingFieldPath, TStylingForm } from "@/modules/ui/components/styling-fields/types";
 
 interface ColorFieldProps {
-  form: any;
-  name: string;
+  form: TStylingForm;
+  name: TStylingFieldPath<string | null | undefined>;
   label: string;
   description?: string;
   containerClass?: string;
@@ -39,7 +40,8 @@ export const ColorField = ({
 }: Readonly<ColorFieldProps>) => {
   const { t } = useTranslation();
   const appearance = useStylingAppearance();
-  const fieldName = getAppearanceFieldName(name, appearance);
+  // The dark variant of a `.light` path, which the form declares beside it.
+  const fieldName = getAppearanceFieldName(name, appearance) as TStylingFieldPath<string | null | undefined>;
   const isDark = fieldName !== name;
   // The brand color has one value for both appearances; the Dark tab edits it and says so.
   const isShared = appearance === "dark" && isSharedColorField(name);

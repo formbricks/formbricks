@@ -29,11 +29,11 @@ const Nav: React.FC<NavProps> = ({ tabs, activeId, setActiveId, activeTabClassNa
           disabled={disabled}
           className={cn(
             "flex h-full items-center px-3 text-sm font-medium",
-            disabled
-              ? "cursor-not-allowed text-slate-400"
-              : tab.id === activeId
+            disabled && "cursor-not-allowed text-slate-400",
+            !disabled &&
+              (tab.id === activeId
                 ? `border-b-2 border-brand-dark font-semibold text-primary ${activeTabClassName}`
-                : "text-slate-500 hover:text-slate-700"
+                : "text-slate-500 hover:text-slate-700")
           )}
           aria-current={tab.id === activeId ? "page" : undefined}>
           {tab.icon && <div className="flex size-5 items-center">{tab.icon}</div>}

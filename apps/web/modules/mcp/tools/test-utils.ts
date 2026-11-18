@@ -85,3 +85,13 @@ export const callToolOverHttp = async ({
 /** The text of a tool result's content blocks, which is where a tool error's message lands. */
 export const errorText = (outcome: ToolCallOutcome) =>
   outcome.result?.content?.map((block) => block.text ?? "").join("") ?? "";
+
+/** What a registered tool handler returns, as the handler-level tool tests read it. */
+export type TToolResult = {
+  isError?: boolean;
+  content: { type: string; text: string }[];
+  structuredContent: Record<string, unknown>;
+};
+
+/** A registered tool handler, called directly with already-shaped input. */
+export type TToolHandler = (input: unknown, extra: unknown) => Promise<TToolResult>;

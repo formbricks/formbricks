@@ -27,7 +27,9 @@ describe("Organization", () => {
         { id: "org2", name: "Organization 2" },
       ];
 
-      vi.mocked(prisma.organization.findMany).mockResolvedValue(mockOrganizations as any);
+      vi.mocked(prisma.organization.findMany, { partial: true, deep: true }).mockResolvedValue(
+        mockOrganizations
+      );
 
       const result = await getOrganizationsByUserId("user1");
 
@@ -52,7 +54,9 @@ describe("Organization", () => {
     });
 
     test("should throw ResourceNotFoundError when organizations is null", async () => {
-      vi.mocked(prisma.organization.findMany).mockResolvedValue(null as any);
+      vi.mocked(prisma.organization.findMany).mockResolvedValue(
+        null as unknown as Awaited<ReturnType<typeof prisma.organization.findMany>>
+      );
 
       await expect(getOrganizationsByUserId("user1")).rejects.toThrow(
         new ResourceNotFoundError("Organizations by UserId", "user1")
@@ -82,7 +86,9 @@ describe("Organization", () => {
     });
 
     test("should validate userId input with invalid type", async () => {
-      await expect(getOrganizationsByUserId(123 as any)).rejects.toThrow();
+      await expect(
+        getOrganizationsByUserId(123 as unknown as Parameters<typeof getOrganizationsByUserId>[0])
+      ).rejects.toThrow();
     });
   });
 });

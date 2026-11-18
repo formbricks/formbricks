@@ -43,7 +43,7 @@ describe("convertToCsv", () => {
       () =>
         ({
           promise: () => Promise.reject(new Error("Test parse error")),
-        }) as any
+        }) as unknown as ReturnType<AsyncParser<object, object>["parse"]>
     );
 
     await expect(convertToCsv(fields, data)).rejects.toThrow("Failed to convert to CSV");
