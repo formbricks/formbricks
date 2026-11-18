@@ -7,8 +7,8 @@ import { type TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { getArrangementResetBlockId } from "@/lib/card-arrangement-reset";
+import { initialCardStack, moveCardStack } from "@/lib/card-stack";
 import { isEndSlotEmpty, isSlotRendered } from "@/lib/end-slot";
-import { getStackAfterBack } from "@/lib/stacked-cards-back";
 import { cn } from "@/lib/utils";
 import { StackedCard } from "./stacked-card";
 
@@ -72,30 +72,11 @@ export function StackedCardsContainer({
   // A finished survey without an ending card collapses instead of leaving a blank card (ENG-4069)
   const endSlotEmpty = isEndSlotEmpty(endSlotInput);
 
-  const [prevBlockIdx, setPrevBlockIdx] = useState(blockIdxTemp - 1);
-  const [currentBlockIdx, setCurrentBlockIdx] = useState(blockIdxTemp);
-  const [nextBlockIdx, setNextBlockIdx] = useState(blockIdxTemp + 1);
-  const [visitedBlocks, setVisitedBlocks] = useState<number[]>([]);
+  const [cardStack, setCardStack] = useState(() => initialCardStack(blockIdxTemp));
+  const { prevBlockIdx, currentBlockIdx, nextBlockIdx } = cardStack;
 
   useEffect(() => {
-    if (blockIdxTemp > currentBlockIdx) {
-      // Next button is clicked
-      setPrevBlockIdx(currentBlockIdx);
-      setCurrentBlockIdx(blockIdxTemp);
-      setNextBlockIdx(blockIdxTemp + 1);
-      setVisitedBlocks((prev) => {
-        return [...prev, currentBlockIdx];
-      });
-    } else if (blockIdxTemp < currentBlockIdx) {
-      // Back button is clicked
-      setNextBlockIdx(currentBlockIdx);
-      setCurrentBlockIdx(blockIdxTemp);
-
-      const afterBack = getStackAfterBack(visitedBlocks, blockIdxTemp);
-      setPrevBlockIdx(afterBack.prevBlockIdx);
-      setVisitedBlocks(afterBack.visitedBlocks);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only update when blockIdxTemp changes
+    setCardStack((stack) => moveCardStack(stack, blockIdxTemp));
   }, [blockIdxTemp]);
 
   const borderStyles = useMemo(() => {
