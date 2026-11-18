@@ -55,7 +55,7 @@ const mocks = vi.hoisted(() => ({
   grantRows: [] as Record<string, unknown>[],
   tx: {
     // Where a grant's audit entries are filed, read in the transaction (the user's organizations); none here.
-    membership: { findMany: async () => [] },
+    membership: { findMany: vi.fn(async () => [] as { userId: string; organizationId: string }[]) },
     workspace: { findMany: async () => [] },
     oauthConsent: { findFirst: vi.fn(), deleteMany: vi.fn(), update: vi.fn() },
     oauthClient: { findUnique: vi.fn() },
@@ -924,6 +924,52 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     await revokeTokensBeyondConsentAfterHandler(approve());
 
     expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
+  });
+
+  // Audited from what the approval's transaction read (the user's organizations as it saved), and queued
+  // only once it has committed, as Edit and Revoke are.
+  test("audits the grant an approval saves from its transaction's reads, after the commit", async () => {
+    mocks.tx.membership.findMany.mockResolvedValue([{ userId: "user-1", organizationId: "org-1" }]);
+    vi.mocked(prisma.$transaction).mockImplementationOnce((async (run: (tx: unknown) => unknown) => {
+      const result = await run(mocks.tx);
+      mocks.sequence.push("commit");
+      return result;
+    }) as never);
+    vi.mocked(queueAuditEventBackground).mockImplementation(async () => {
+      mocks.sequence.push("audit");
+    });
+
+    await revokeTokensBeyondConsentAfterHandler(approve());
+
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: expect.stringMatching(/^(created|updated)$/),
+        targetType: "mcpGrant",
+        targetId: "grant-1",
+        userId: "user-1",
+        organizationId: "org-1",
+      })
+    );
+    expect(mocks.sequence.slice(mocks.sequence.indexOf("commit"))).toEqual(["commit", "audit"]);
+  });
+
+  test("audits the grant an approval with no MCP scope ends, filed where it reached", async () => {
+    mocks.consents = [ownRow("consent-1", ["openid", "offline_access"], thisSecond())];
+    mocks.grantRows = [ORG_GRANT];
+    mocks.tx.mcpGrant.findMany.mockResolvedValue([ORG_GRANT]);
+
+    await revokeTokensBeyondConsentAfterHandler(
+      ctx("/oauth2/consent", { accept: true, oauth_query: oauthQuery, scope: "openid offline_access" })
+    );
+
+    expect(queueAuditEventBackground).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "deleted",
+        targetType: "mcpGrant",
+        targetId: "grant-1",
+        organizationId: "org-1",
+      })
+    );
   });
 
   // Dependencies are hints (spec story 16): a grant giving Charts without Feedback records is saved as

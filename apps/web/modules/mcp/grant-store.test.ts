@@ -755,5 +755,3 @@ describe("queueMcpGrantAudit", () => {
     );
   });
 });
-
-// One pass over every grant a Revoke ended (R10): the lookups run once, not once per grant.

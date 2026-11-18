@@ -260,7 +260,8 @@ export const deleteMcpGrantRelationshipsBeforeCommit = async (
   // and this event is then what puts the relationships back. Its delivery reconciles under the grant's row
   // `FOR SHARE`, which waits for this transaction to settle, so it applies whichever rows committed. It
   // takes a second pooled connection while the caller's transaction holds one: a narrowing is a rare user
-  // action, and one that can't get it fails within the save's timeout and changes nothing.
+  // action, and one that can't get it fails the save; at worst SpiceDB is then left narrower than the rows
+  // (a denial, never a grant) until the grant's next reconcile.
   await queueAuthzedOutboxEvents("mcp_grant", [before.id]);
   await deleteRelationships(lost);
 };
