@@ -283,6 +283,16 @@ describe("httpRequestStepExecutor", () => {
     });
   });
 
+  test("a Don't wait response never becomes Variables, even once its job recorded one", () => {
+    const sent = { mode: "dont_wait", delivery: "sent", status: 200, body: { plan: "pro" } };
+
+    expect(httpRequestStepExecutor.variablesFromOutput?.(sent)).toEqual({});
+    expect(httpRequestStepExecutor.variablesFromOutput?.({ ...sent, mode: "wait" })).toEqual({
+      status: 200,
+      body: { plan: "pro" },
+    });
+  });
+
   test("Don't wait fails the step at once, with the reason, when its job can't be queued", async () => {
     effects.enqueueHttpRequestDelivery.mockRejectedValue(new Error("Connection is closed."));
 

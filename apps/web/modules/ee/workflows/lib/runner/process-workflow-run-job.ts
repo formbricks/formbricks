@@ -204,7 +204,11 @@ const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
     if (written.count === 0) {
       // The job got there first: the run mirrors what its log row says, not this step's own result.
       const row: StepLogRow | null = await prisma.workflowRunLog.findFirst({
-        where: { runId: step.runId, stepId: step.node.id },
+        where: {
+          runId: step.runId,
+          stepId: step.node.id,
+          run: { workspaceId: step.environment.workspaceId },
+        },
         select: stepLogSelect,
       });
       if (row) return resumedStep(step.executor, resultFromLogRow(row, row.status));

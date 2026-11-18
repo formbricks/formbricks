@@ -133,9 +133,13 @@ export const httpRequestStepExecutor: WorkflowStepExecutor<"http_request"> = {
     }
     return { status: "succeeded", error: null, output, variables };
   },
-  variablesFromOutput: (output) => ({
-    ...(output.status === undefined ? {} : { status: output.status }),
-    ...(output.body === undefined ? {} : { body: output.body }),
-  }),
+  // A "Don't wait" response never reaches later steps, even when its job recorded one.
+  variablesFromOutput: (output) =>
+    output.mode === "dont_wait"
+      ? {}
+      : {
+          ...(output.status === undefined ? {} : { status: output.status }),
+          ...(output.body === undefined ? {} : { body: output.body }),
+        },
   handedOff: (output) => output.mode === "dont_wait",
 };
