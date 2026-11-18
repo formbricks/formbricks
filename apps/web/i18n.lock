@@ -70,7 +70,7 @@ checksums:
     auth/login/use_a_backup_code: 181e4ab6ba9e5b063b46925f1925eb2b
     auth/oauth/access/all: b818d4def14a915a46730e6326127e1e
     auth/oauth/access/all_hint: c1270b19103dca8170db5ca4bcc3e88e
-    auth/oauth/access/description: 3eee4a41fbc07bb86c188ada5fd0ee9e
+    auth/oauth/access/description: 3b87de42ea6b354ae075148b2139b8b7
     auth/oauth/access/mode_label: c2cd07e2a86a4a6d080d9d4af5b73213
     auth/oauth/access/no_options: 8bc823d3445feec86041498c4d632d2f
     auth/oauth/access/none_picked_hint: 389f45efbb8fb409616ed286bfc4d9f9
@@ -108,11 +108,11 @@ checksums:
     auth/oauth/deny_access: ba3ac7dc12f362da277df5c9ba21e752
     auth/oauth/edit_access_description: 06e7f2f6d531ed4dde85dfd4a35e8d89
     auth/oauth/edit_access_title: 8e85ad6941e47d37daed925244d483b8
-    auth/oauth/edit_empty_grant_hint: f90beaa6db1c552b91eecab92fb3f820
+    auth/oauth/edit_empty_grant_hint: 82c0ec8f0ffccd81c5bb4fcd6981fe05
     auth/oauth/formbricks_website: 95c2f69c6b6428e1aa6c26f4dd427e22
     auth/oauth/grant/access_level_for: f0e2c7d6e8259dbd79cb765aeceebd69
     auth/oauth/grant/always_granted: bddfa5068a8d61304aec2db81e814abd
-    auth/oauth/grant/capped_hint: 99ad19f29d4570ea40abb82b3f0dd91e
+    auth/oauth/grant/capped_hint: 54fe85d267f3b39d0f9c8d31f20d4a3f
     auth/oauth/grant/capped_hint_label: 1b3e3d4681a450350ce2bc0d0a0c35b7
     auth/oauth/grant/categories/audience: a4d9fab4214a641e2d358fbb28f010e0
     auth/oauth/grant/categories/dashboards: 4bc47e48559a6b688684dcb7ac4babc9
@@ -147,17 +147,17 @@ checksums:
     auth/oauth/grant/permissions/tags: 97813c8ae67d69575fd04e35a88aed0c
     auth/oauth/grant/permissions/workflow_runs: 05f81ce9a771ab3ee1aa541211dca0ee
     auth/oauth/grant/permissions/workflows: b0c9c8615a9ba7d9cb73e767290a7f72
-    auth/oauth/grant/permissions_description: 010ec2550e9c19183d111d0e9cd0d565
+    auth/oauth/grant/permissions_description: ab51d15897fbc9b1692d8877a29159c8
     auth/oauth/grant/permissions_title: 2160be68b1d6b6577e64634e9feba2ed
     auth/oauth/grant/presets: db7616c227f9759fe2e4a4cba59e8f9f
     auth/oauth/grant/read_only: 9109fd6e72125af271d41181f1f35dd2
     auth/oauth/grant/role_capped_hint: 0d7152127a852cb30dc99cddc0680d7e
     auth/oauth/grant/select_all: eedc7cdb02de467c15dc418a066a77f2
-    auth/oauth/grant_beyond_scopes: 822ae282ec84b610cfecb937e800658c
+    auth/oauth/grant_beyond_scopes: 57b9ae3c9484799154ffa87de09b0ab4
     auth/oauth/grant_changed_elsewhere: 8b8bc43f22b77b402054272d082ee7a8
     auth/oauth/grant_invalid: 2fd9375879b9a9e9087253c180646b6b
     auth/oauth/grant_revoke_failed: bc71ead38cabf501396d2a991f45c52d
-    auth/oauth/grant_update_failed: edb296bd480f3da98914209e3e607dbc
+    auth/oauth/grant_update_failed: fbbca4e364c56dbad0f255d926353871
     auth/oauth/grant_updated: 0756500936deba1b3930f43d95a076a2
     auth/oauth/invalid_oauth_request: 02936ced8cd4df963282fe5d413f6900
     auth/oauth/invalid_oauth_request_description: 39322e962c0c20c766ae82d0b8917ebb
