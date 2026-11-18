@@ -271,6 +271,42 @@ const throwSegmentTitleTaken = (error: unknown): void => {
   }
 };
 
+/**
+ * A survey's private targeting segment: created on its first save, updated on later ones (auto-save may
+ * already have made it). ENG-6956: keyed by the survey's id, chosen here (see ZSegmentCreateInput); the
+ * caller authorizes `survey.write` on `surveyId`, and `isPrivate` keeps the update off a shared segment
+ * that holds that title. Prisma runs this upsert as a read then a write, so two first saves can race;
+ * the one that loses finds the row on its second try. A second clash means a shared segment holds the title.
+ */
+const upsertPrivateSegment = async ({
+  workspaceId,
+  surveyId,
+  description,
+  filters,
+}: Pick<TSegmentCreateInput, "workspaceId" | "surveyId" | "description" | "filters">) => {
+  const upsert = () =>
+    prisma.segment.upsert({
+      where: { workspaceId_title: { workspaceId, title: surveyId }, isPrivate: true },
+      create: {
+        workspaceId,
+        title: surveyId,
+        description,
+        isPrivate: true,
+        filters,
+        surveys: { connect: { id: surveyId } },
+      },
+      update: { description, filters, surveys: { connect: { id: surveyId } } },
+      select: selectSegment,
+    });
+
+  try {
+    return await upsert();
+  } catch (error) {
+    if (!isUniqueConstraintError(error)) throw error;
+    return await upsert();
+  }
+};
+
 export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Promise<TSegment> => {
   validateInputs([segmentCreateInput, ZSegmentCreateInput]);
 
@@ -279,37 +315,8 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
   const surveyConnect = surveyId ? { surveys: { connect: { id: surveyId } } } : {};
 
   try {
-    // Private segments use upsert because auto-save may have already created a
-    // default (empty-filter) segment via connectOrCreate before the user publishes.
-    // Without upsert the second create hits the (workspaceId, title) unique constraint.
-    // ENG-6956: keyed by the survey's id, chosen here (see ZSegmentCreateInput). The caller authorizes
-    // `survey.write` on `surveyId`, and `isPrivate` keeps the update off a shared segment with that title.
     if (isPrivate) {
-      const segment = await prisma.segment.upsert({
-        where: {
-          workspaceId_title: {
-            workspaceId,
-            title: surveyId,
-          },
-          isPrivate: true,
-        },
-        create: {
-          workspaceId,
-          title: surveyId,
-          description,
-          isPrivate,
-          filters,
-          ...surveyConnect,
-        },
-        update: {
-          description,
-          filters,
-          ...surveyConnect,
-        },
-        select: selectSegment,
-      });
-
-      return transformPrismaSegment(segment);
+      return transformPrismaSegment(await upsertPrivateSegment(segmentCreateInput));
     }
 
     await assertTitleIsNotSurveyId(workspaceId, title);

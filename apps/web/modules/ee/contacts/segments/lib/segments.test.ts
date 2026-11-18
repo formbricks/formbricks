@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import {
+  DatabaseError,
   InvalidInputError,
   OperationNotAllowedError,
   ResourceNotFoundError,
@@ -435,6 +436,52 @@ describe("Segment Service Tests", () => {
       );
     });
 
+    test("should retry a private upsert once when a concurrent first save created the segment", async () => {
+      const clash = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: "P2002",
+        clientVersion: "test",
+      });
+      vi.mocked(prisma.segment.upsert)
+        .mockRejectedValueOnce(clash)
+        .mockResolvedValueOnce({ ...mockSegmentPrisma, isPrivate: true });
+
+      const segment = await createSegment({
+        ...mockSegmentCreateInput,
+        title: surveyId,
+        isPrivate: true,
+        surveyId,
+      });
+
+      expect(segment.id).toBe(segmentId);
+      expect(prisma.segment.upsert).toHaveBeenCalledTimes(2);
+    });
+
+    test("should refuse a private upsert whose title a shared segment holds (the clash persists)", async () => {
+      const clash = new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+        code: "P2002",
+        clientVersion: "test",
+      });
+      vi.mocked(prisma.segment.upsert).mockRejectedValueOnce(clash).mockRejectedValueOnce(clash);
+
+      await expect(
+        createSegment({ ...mockSegmentCreateInput, title: surveyId, isPrivate: true, surveyId })
+      ).rejects.toBeInstanceOf(InvalidInputError);
+      expect(prisma.segment.upsert).toHaveBeenCalledTimes(2);
+    });
+
+    test("should keep any other Prisma error a DatabaseError", async () => {
+      vi.mocked(prisma.segment.create).mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError("Foreign key constraint failed", {
+          code: "P2003",
+          clientVersion: "test",
+        })
+      );
+
+      await expect(createSegment({ ...mockSegmentCreateInput, surveyId })).rejects.toBeInstanceOf(
+        DatabaseError
+      );
+    });
+
     // ENG-6956: the ticket's overwrite needs a shared segment (or any title a caller picks) that is
     // really a survey's id. The private upsert is covered against real Postgres in
     // integration/segment-private-title.integration.test.ts.
@@ -796,9 +843,9 @@ describe("Segment Service Tests", () => {
         })
       );
 
-      await expect(updateSegment(segmentId, updateData)).rejects.toThrow(
-        new InvalidInputError("A segment with this title already exists")
-      );
+      const update = updateSegment(segmentId, updateData);
+      await expect(update).rejects.toBeInstanceOf(InvalidInputError);
+      await expect(update).rejects.toThrow("A segment with this title already exists");
     });
   });
 
