@@ -111,6 +111,29 @@ describe("createSegment private segments (ENG-6956)", () => {
     expect((await segmentOf(victimSurveyId)).filters).toEqual(VICTIM_FILTERS);
   });
 
+  test("a survey's save does not rewrite a private segment another survey also uses", async () => {
+    // Left by older bugs: the victim's targeting also sits on the segment titled with the attacker's id.
+    await prisma.segment.create({
+      data: {
+        title: attackerSurveyId,
+        isPrivate: true,
+        filters: VICTIM_FILTERS,
+        workspaceId,
+        surveys: { connect: [{ id: attackerSurveyId }, { id: victimSurveyId }] },
+      },
+    });
+
+    await expect(
+      createSegment(privateInput(attackerSurveyId, attackerSurveyId, "attacker@example.com"))
+    ).rejects.toThrow(new InvalidInputError("A segment with this title already exists"));
+
+    const shared = await segmentOf(attackerSurveyId);
+    expect(shared.filters).toEqual(VICTIM_FILTERS);
+    expect(shared.surveys.map((survey) => survey.id).sort()).toEqual(
+      [attackerSurveyId, victimSurveyId].sort()
+    );
+  });
+
   test("the upsert does not rewrite a shared segment that already holds the survey's title", async () => {
     // Created before the guard existed (or by hand): a shared segment titled with the attacker's survey id.
     const shared = await prisma.segment.create({
@@ -134,11 +157,12 @@ describe("createSegment private segments (ENG-6956)", () => {
 
 describe("shared segment titles (ENG-6956)", () => {
   test("a shared segment cannot be created with a survey's id as its title", async () => {
-    await expect(
-      createSegment(sharedInput(victimSurveyId, attackerSurveyId, "squat@example.com"))
-    ).rejects.toBeInstanceOf(InvalidInputError);
+    // The attacker's survey has no segment yet, so only the survey-id guard can refuse this title.
+    await expect(createSegment(sharedInput(attackerSurveyId, "", "squat@example.com"))).rejects.toThrow(
+      new InvalidInputError("A segment cannot be titled with the id of a survey")
+    );
 
-    expect((await segmentOf(victimSurveyId)).filters).toEqual(VICTIM_FILTERS);
+    expect(await prisma.segment.count({ where: { workspaceId, title: attackerSurveyId } })).toBe(0);
   });
 
   test("a shared segment can still be created with an ordinary title, from the segments page or a survey", async () => {
@@ -153,8 +177,9 @@ describe("shared segment titles (ENG-6956)", () => {
   test("a shared segment cannot be renamed to a survey's id, but can be renamed otherwise", async () => {
     const shared = await createSegment(sharedInput("Power users", "", "power@example.com"));
 
-    await expect(updateSegment(shared.id, { title: victimSurveyId })).rejects.toBeInstanceOf(
-      InvalidInputError
+    // The attacker's survey has no segment yet, so only the survey-id guard can refuse this title.
+    await expect(updateSegment(shared.id, { title: attackerSurveyId })).rejects.toThrow(
+      new InvalidInputError("A segment cannot be titled with the id of a survey")
     );
     expect((await prisma.segment.findUniqueOrThrow({ where: { id: shared.id } })).title).toBe("Power users");
 
@@ -165,11 +190,19 @@ describe("shared segment titles (ENG-6956)", () => {
   test("updating a private segment keeps its own title, which is its survey's id", async () => {
     const victim = await segmentOf(victimSurveyId);
 
-    const updated = await updateSegment(victim.id, {
-      title: victimSurveyId,
-      filters: attributeFilters("new@example.com"),
-    });
+    const filters = attributeFilters("new@example.com");
+    const updated = await updateSegment(victim.id, { title: victimSurveyId, filters });
 
     expect(updated.title).toBe(victimSurveyId);
+    expect((await segmentOf(victimSurveyId)).filters).toEqual(filters);
+  });
+
+  test("a private segment cannot turn shared while it keeps its survey's id as title", async () => {
+    const victim = await segmentOf(victimSurveyId);
+
+    await expect(updateSegment(victim.id, { isPrivate: false })).rejects.toThrow(
+      new InvalidInputError("A segment cannot be titled with the id of a survey")
+    );
+    expect((await segmentOf(victimSurveyId)).isPrivate).toBe(true);
   });
 });

@@ -402,6 +402,7 @@ describe("Segment Service Tests", () => {
             title: privateInputWithSurvey.title,
           },
           isPrivate: true,
+          surveys: { every: { id: surveyId } },
         },
         create: {
           workspaceId,
@@ -430,7 +431,11 @@ describe("Segment Service Tests", () => {
 
       expect(prisma.segment.upsert).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { workspaceId_title: { workspaceId, title: surveyId }, isPrivate: true },
+          where: {
+            workspaceId_title: { workspaceId, title: surveyId },
+            isPrivate: true,
+            surveys: { every: { id: surveyId } },
+          },
           create: expect.objectContaining({ title: surveyId }),
         })
       );
@@ -779,13 +784,35 @@ describe("Segment Service Tests", () => {
       expect(prisma.segment.update).not.toHaveBeenCalled();
     });
 
-    test("should not look up a survey when the title is not changing (a private segment keeps its survey's id)", async () => {
+    test("should not look up a survey when a shared segment keeps its title", async () => {
       vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegmentPrisma);
 
-      await updateSegment(segmentId, { title: mockSegmentPrisma.title });
+      const result = await updateSegment(segmentId, { title: mockSegmentPrisma.title });
 
+      expect(result).toEqual(updatedSegment);
       expect(prisma.survey.findFirst).not.toHaveBeenCalled();
-      expect(prisma.segment.update).toHaveBeenCalled();
+      expect(prisma.segment.update).toHaveBeenCalledWith(
+        expect.objectContaining({ data: expect.objectContaining({ title: mockSegmentPrisma.title }) })
+      );
+    });
+
+    test("should check the kept title when a private segment turns shared (ENG-6956)", async () => {
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue({
+        ...mockSegmentPrisma,
+        title: surveyId,
+        isPrivate: true,
+      });
+      vi.mocked(prisma.survey.findFirst, { partial: true, deep: true }).mockResolvedValueOnce({
+        id: surveyId,
+      });
+
+      await expect(updateSegment(segmentId, { isPrivate: false })).rejects.toBeInstanceOf(InvalidInputError);
+
+      expect(prisma.survey.findFirst).toHaveBeenCalledWith({
+        where: { id: surveyId, workspaceId },
+        select: { id: true },
+      });
+      expect(prisma.segment.update).not.toHaveBeenCalled();
     });
 
     test("should update segment with survey connections", async () => {

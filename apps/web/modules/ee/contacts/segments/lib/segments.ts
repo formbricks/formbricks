@@ -262,6 +262,16 @@ const assertTitleIsNotSurveyId = async (workspaceId: string, title: string): Pro
 };
 
 /**
+ * A rename, or a private segment turned shared while it keeps its survey's id as title, stores a title
+ * the caller chose for a segment the survey save may later pick up by that title (ENG-6956).
+ */
+const needsSurveyIdTitleCheck = (data: TSegmentUpdateInput, current: TSegment): boolean => {
+  const renamed = data.title !== undefined && data.title !== current.title;
+  const becomesShared = current.isPrivate && data.isPrivate === false;
+  return renamed || becomesShared;
+};
+
+/**
  * Titles are unique per workspace, so a create or rename onto a title another segment holds (a survey's
  * private segment included) is the caller's input error, not a database fault.
  */
@@ -274,9 +284,9 @@ const throwSegmentTitleTaken = (error: unknown): void => {
 /**
  * A survey's private targeting segment: created on its first save, updated on later ones (auto-save may
  * already have made it). ENG-6956: keyed by the survey's id, chosen here (see ZSegmentCreateInput); the
- * caller authorizes `survey.write` on `surveyId`, and `isPrivate` keeps the update off a shared segment
- * that holds that title. Prisma runs this upsert as a read then a write, so two first saves can race;
- * the one that loses finds the row on its second try. A second clash means a shared segment holds the title.
+ * caller authorizes `survey.write` on `surveyId`. The update reaches only a private segment no other
+ * survey uses. Prisma runs this upsert as a read then a write, so two first saves can race; the one that
+ * loses finds the row on its second try. A second clash means another segment holds the title.
  */
 const upsertPrivateSegment = async ({
   workspaceId,
@@ -286,7 +296,13 @@ const upsertPrivateSegment = async ({
 }: Pick<TSegmentCreateInput, "workspaceId" | "surveyId" | "description" | "filters">) => {
   const upsert = () =>
     prisma.segment.upsert({
-      where: { workspaceId_title: { workspaceId, title: surveyId }, isPrivate: true },
+      // A shared segment holding the title, or a private one other surveys also use (only possible
+      // through older bugs), is not this survey's to rewrite: the create clashes and the save is refused.
+      where: {
+        workspaceId_title: { workspaceId, title: surveyId },
+        isPrivate: true,
+        surveys: { every: { id: surveyId } },
+      },
       create: {
         workspaceId,
         title: surveyId,
@@ -564,8 +580,8 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
       throw new ResourceNotFoundError("segment", segmentId);
     }
 
-    if (data.title !== undefined && data.title !== currentSegment.title) {
-      await assertTitleIsNotSurveyId(currentSegment.workspaceId, data.title);
+    if (needsSurveyIdTitleCheck(data, currentSegment)) {
+      await assertTitleIsNotSurveyId(currentSegment.workspaceId, data.title ?? currentSegment.title);
     }
 
     const segment = await prisma.segment.update({

@@ -36,6 +36,12 @@ describe("ZSegmentCreateInput (ENG-6956)", () => {
     expect(
       ZSegmentCreateInput.safeParse({ ...withoutFlag, title: "otherSurveyId", surveyId: "surveyId" }).success
     ).toBe(false);
+    expect(
+      ZSegmentCreateInput.parse({ ...withoutFlag, title: "surveyId", surveyId: "surveyId" })
+    ).toMatchObject({
+      isPrivate: true,
+      title: "surveyId",
+    });
   });
 
   test("a private segment needs a survey: an empty id would equal an empty title", () => {
