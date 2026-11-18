@@ -440,9 +440,9 @@ export const updateUser = async (
           if (reactivating) await reactivateLockedUser(tx, existingUser.id);
           return user;
         },
-        // The user's row can be held by a Revoke or a bulk end of their MCP grants waiting behind a
-        // reconciling pass.
-        touchesAccountFields ? { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } : undefined
+        // Every path here updates the user's row, which a Revoke or a bulk end of their MCP grants can hold
+        // while it waits behind a reconciling pass.
+        { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
       );
     } else {
       // Update by id so the mutation is bound to the org-scoped lookup above. Email is

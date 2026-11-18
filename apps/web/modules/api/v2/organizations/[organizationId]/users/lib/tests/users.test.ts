@@ -581,7 +581,8 @@ describe("Users Lib", () => {
       expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
     });
 
-    test("leaves a role-only change on the app client's default transaction budget", async () => {
+    // A role-only change still updates the user's row, so it waits behind the same Revoke.
+    test("gives a role-only change Revoke's transaction timeout too", async () => {
       runInTransaction();
       vi.mocked(prisma.user.findFirst).mockResolvedValueOnce({ ...mockUser, teamUsers: [] } as never);
       targetMembership("owner");
@@ -593,7 +594,7 @@ describe("Users Lib", () => {
 
       await updateUser({ email: mockUser.email, role: "member" }, "org456");
 
-      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), undefined);
+      expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
     });
 
     test("decides under the user row's lock, counting only other organizations' memberships", async () => {
