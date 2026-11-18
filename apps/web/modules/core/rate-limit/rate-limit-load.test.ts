@@ -104,6 +104,30 @@ const windowKey = (config: TRateLimitConfig, identifier: string, now: number): s
   return `fb:rate_limit:${config.namespace}:${identifier}:${windowStart}`;
 };
 
+type TRedisClient = NonNullable<Awaited<ReturnType<typeof cache.getRedisClient>>>;
+
+/** Now on Valkey's clock, in milliseconds: the clock its key expiries use (`Date` is faked here). */
+const redisNowMs = async (redis: TRedisClient): Promise<number> => {
+  const [seconds, microseconds] = await redis.time();
+  return Number(seconds) * 1000 + Math.floor(Number(microseconds) / 1000);
+};
+
+/**
+ * A key written between `before` and `after` (Valkey's clock) must expire exactly one interval after
+ * its write: not sooner, or the window's quota resets early, and not later. `EXPIRE` takes whole
+ * seconds, so the bounds allow the write anywhere in that bracket.
+ */
+const expectFullIntervalExpiry = (
+  expiresAt: number,
+  config: TRateLimitConfig,
+  before: number,
+  after: number
+) => {
+  const intervalMs = config.interval * 1000;
+  expect(expiresAt).toBeGreaterThanOrEqual(before - 1000 + intervalMs);
+  expect(expiresAt).toBeLessThanOrEqual(after + 1000 + intervalMs);
+};
+
 /** Every result must be an answer from Redis, and exactly `limit` of them may be admitted. */
 const expectExactlyAdmitted = (results: TCheckResult[], limit: number) => {
   const allowed = results.filter((r) => r.ok && r.data.allowed).length;
@@ -398,38 +422,38 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
     const redis = await cache.getRedisClient();
     if (!redis) throw new Error("Expected a Redis client");
 
-    // Phase 1: hit the limit in the first window
+    // Phase 1: hit the limit in the first window, bracketed by Valkey's own clock
+    const beforePhase1 = await redisNowMs(redis);
     const phase1Results = await Promise.all(
       Array.from({ length: 5 }, () => checkRateLimit(config, identifier))
     );
+    const afterPhase1 = await redisNowMs(redis);
     expectExactlyAdmitted(phase1Results, config.allowedPerInterval);
 
     // The first write, 100 ms into the window, set an expiry of the full interval: not more, and not
-    // less either, or the window's quota would reset early. The lower bound leaves 10 s for a stalled
-    // worker between the write and the read; a short TTL is still far below it. Deleting the key when it runs out is
-    // Valkey's job; the limiter's job is to set it.
+    // less either, or the window's quota would reset early. Checked as an absolute expiry against the
+    // write's time on Valkey's clock, so a worker stall before the read can't fail a correct limiter.
+    // Deleting the key when it runs out is Valkey's job; the limiter's job is to set it.
     const firstKey = windowKey(config, identifier, now);
     expect(await redis.get(firstKey)).toBe(String(config.allowedPerInterval));
-    const firstKeyPttl = await redis.pTTL(firstKey);
-    expect(firstKeyPttl).toBeGreaterThan((config.interval - 10) * 1000);
-    expect(firstKeyPttl).toBeLessThanOrEqual(config.interval * 1000);
+    expectFullIntervalExpiry(await redis.pExpireTime(firstKey), config, beforePhase1, afterPhase1);
 
     // Phase 2: move into the next window
     const nextWindow = now + config.interval * 1000;
     vi.setSystemTime(nextWindow);
 
     // Phase 3: fresh limits in the new window, on a new key with its own expiry
+    const beforePhase3 = await redisNowMs(redis);
     const phase3Results = await Promise.all(
       Array.from({ length: 5 }, () => checkRateLimit(config, identifier))
     );
+    const afterPhase3 = await redisNowMs(redis);
     expectExactlyAdmitted(phase3Results, config.allowedPerInterval);
 
     const newKey = windowKey(config, identifier, nextWindow);
     expect(newKey).not.toBe(firstKey);
     expect(await redis.get(newKey)).toBe(String(config.allowedPerInterval));
-    const newKeyPttl = await redis.pTTL(newKey);
-    expect(newKeyPttl).toBeGreaterThan((config.interval - 10) * 1000);
-    expect(newKeyPttl).toBeLessThanOrEqual(config.interval * 1000);
+    expectFullIntervalExpiry(await redis.pExpireTime(newKey), config, beforePhase3, afterPhase3);
 
     // Phase 4: the new window's limit is already used up
     const phase4Results = await Promise.all(
