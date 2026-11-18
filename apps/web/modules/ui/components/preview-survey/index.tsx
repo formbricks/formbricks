@@ -147,12 +147,6 @@ export const PreviewSurvey = ({
   // Bumped to start the preview over with a new start key: when an app survey without endings
   // finishes (see `onFinished`), and on every Apply of the Test values (see `applyTestValues`).
   const [previewRun, setPreviewRun] = useState(0);
-  // "Restart with these values" always restarts (ENG-7029): values equal to the current ones leave the
-  // start key as it was, so the run is bumped too. Both updates land in one render: one remount.
-  const applyTestValues = (values: Record<string, string>) => {
-    setTestValues(values);
-    setPreviewRun((run) => run + 1);
-  };
   const previewStartKey = useMemo(
     () =>
       getPreviewStartKey(
@@ -344,6 +338,16 @@ export const PreviewSurvey = ({
       setHasFollowedQuestion(true);
     }
   }, [elementId, updateElementId]);
+
+  // "Restart with these values" always restarts (ENG-7029): values equal to the current ones leave the
+  // start key as it was, so the run is bumped too. Both updates land in one render: one remount. The
+  // restart opens like the live survey, so the question the author picked is no longer followed (a
+  // frame switch would bring it back); the last active question stays the baseline for the next pick.
+  const applyTestValues = (values: Record<string, string>) => {
+    setTestValues(values);
+    setPreviewRun((run) => run + 1);
+    followStateRef.current = { ...followStateRef.current, picked: false };
+  };
 
   const onFinished = () => {
     // close modal if there are no elements left, then start over: a remount runs the rules before the
