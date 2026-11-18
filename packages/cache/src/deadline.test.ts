@@ -24,6 +24,7 @@ describe("withRedisDeadline", () => {
     const onTimeout = vi.fn();
     const operation = new Promise<string>(() => {});
     const result = withRedisDeadline(operation, 500, onTimeout);
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const assertion = expect(result).rejects.toThrow("Redis operation timed out");
 
     await vi.advanceTimersByTimeAsync(500);
@@ -37,6 +38,7 @@ describe("withRedisDeadline", () => {
     const onTimeout = vi.fn();
     const operation = new Promise<string>(() => {});
     const result = withRedisDeadline(operation, 500, onTimeout, 1000);
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const assertion = expect(result).rejects.toThrow("Redis operation timed out");
 
     await vi.advanceTimersByTimeAsync(500);
@@ -58,6 +60,7 @@ describe("withRedisDeadline", () => {
       resolveOperation = resolve;
     });
     const result = withRedisDeadline(operation, 500, onTimeout, 1000);
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const assertion = expect(result).rejects.toThrow("Redis operation timed out");
 
     await vi.advanceTimersByTimeAsync(500);

@@ -53,6 +53,10 @@
       "types": "./dist/lib/parts.d.ts",
       "import": "./dist/lib/parts.js"
     },
+    "./video": {
+      "types": "./dist/lib/video.d.ts",
+      "import": "./dist/lib/video.js"
+    },
     "./youtube-id": {
       "types": "./dist/lib/youtube-id.d.ts",
       "import": "./dist/lib/youtube-id.js"

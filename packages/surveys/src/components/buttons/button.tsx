@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 export type ButtonProps = {
   variant: "primary" | "ghost";
-} & ButtonHTMLAttributes<HTMLButtonElement>;
+} & ButtonHTMLAttributes;
 
 const buttonBaseClasses =
   "focus:ring-focus mb-1 flex items-center leading-4 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-60";

@@ -139,7 +139,7 @@ export const addBlock = (
   survey: TSurvey,
   block: Omit<Partial<TSurveyBlock>, "id">,
   index?: number
-): Result<TSurvey, Error> => {
+): Result<TSurvey> => {
   const updatedSurvey = { ...survey };
   const blocks = [...(survey.blocks || [])];
 
@@ -177,7 +177,7 @@ export const updateBlock = (
   survey: TSurvey,
   blockId: string,
   updatedAttributes: Omit<Partial<TSurveyBlock>, "id">
-): Result<TSurvey, Error> => {
+): Result<TSurvey> => {
   // id is not allowed from the types but this will also prevent the error during runtime
   if ("id" in updatedAttributes) {
     return err(new Error("Block ID cannot be updated"));
@@ -207,7 +207,7 @@ export const updateBlock = (
  * @param blockId - The CUID of the block to delete
  * @returns Result with updated survey or Error
  */
-export const deleteBlock = (survey: TSurvey, blockId: string): Result<TSurvey, Error> => {
+export const deleteBlock = (survey: TSurvey, blockId: string): Result<TSurvey> => {
   // Prevent deleting the last block
   if (survey.blocks?.length === 1) {
     return err(new Error("Cannot delete the last block in the survey"));
@@ -233,7 +233,7 @@ export const deleteBlock = (survey: TSurvey, blockId: string): Result<TSurvey, E
  * @param blockId - The CUID of the block to duplicate
  * @returns Result with updated survey or Error
  */
-export const duplicateBlock = (survey: TSurvey, blockId: string): Result<TSurvey, Error> => {
+export const duplicateBlock = (survey: TSurvey, blockId: string): Result<TSurvey> => {
   const blocks = survey.blocks || [];
   const blockIndex = blocks.findIndex((b) => b.id === blockId);
 
@@ -277,11 +277,7 @@ export const duplicateBlock = (survey: TSurvey, blockId: string): Result<TSurvey
  * @param direction - Direction to move ("up" or "down")
  * @returns Result with updated survey (or unchanged if at boundary) or Error
  */
-export const moveBlock = (
-  survey: TSurvey,
-  blockId: string,
-  direction: "up" | "down"
-): Result<TSurvey, Error> => {
+export const moveBlock = (survey: TSurvey, blockId: string, direction: "up" | "down"): Result<TSurvey> => {
   const blocks = [...(survey.blocks || [])];
   const blockIndex = blocks.findIndex((b) => b.id === blockId);
 
@@ -327,7 +323,7 @@ export const addElementToBlock = (
   blockId: string,
   element: TSurveyElement,
   index?: number
-): Result<TSurvey, Error> => {
+): Result<TSurvey> => {
   const blocks = [...(survey.blocks || [])];
   const blockIndex = blocks.findIndex((b) => b.id === blockId);
 
@@ -373,7 +369,7 @@ export const updateElementInBlock = (
   blockId: string,
   elementId: string,
   updatedAttributes: Partial<TSurveyElement>
-): Result<TSurvey, Error> => {
+): Result<TSurvey> => {
   // Question IDs are read-only (ENG-3885): responses are stored under them, and links and the API use them.
   if (updatedAttributes.id !== undefined && updatedAttributes.id !== elementId) {
     return err(new Error("Element ID cannot be updated"));
@@ -416,7 +412,7 @@ export const deleteElementFromBlock = (
   survey: TSurvey,
   blockId: string,
   elementId: string
-): Result<TSurvey, Error> => {
+): Result<TSurvey> => {
   const blocks = [...(survey.blocks || [])];
   const blockIndex = blocks.findIndex((b) => b.id === blockId);
 
@@ -453,7 +449,7 @@ export const duplicateElementInBlock = (
   survey: TSurvey,
   blockId: string,
   elementId: string
-): Result<TSurvey, Error> => {
+): Result<TSurvey> => {
   const blocks = [...(survey.blocks || [])];
   const blockIndex = blocks.findIndex((b) => b.id === blockId);
 
@@ -496,7 +492,7 @@ export const moveElementInBlock = (
   blockId: string,
   elementId: string,
   direction: "up" | "down"
-): Result<TSurvey, Error> => {
+): Result<TSurvey> => {
   const blocks = [...(survey.blocks || [])];
   const blockIndex = blocks.findIndex((b) => b.id === blockId);
 
