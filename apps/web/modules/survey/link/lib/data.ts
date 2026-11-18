@@ -34,6 +34,8 @@ export const getSurveyWithMetadata = reactCache(async (surveyId: string): Promis
         createdBy: true,
         status: true,
         archivedAt: true,
+        // The renderer reads `publishOn !== null` to tell a scheduled survey from a paused one (ENG-3935).
+        publishOn: true,
 
         // Survey configuration
         welcomeCard: true,

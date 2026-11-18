@@ -152,6 +152,24 @@ describe("data", () => {
       );
     });
 
+    /**
+     * ENG-3935: the renderer tells a scheduled survey from a paused one by `publishOn !== null`. A select
+     * without the column leaves it `undefined`, which is not `null`, so every paused survey showed the
+     * "Survey scheduled" screen.
+     */
+    test("selects publishOn, which separates a scheduled survey from a paused one", async () => {
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(
+        mockSurveyData as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+      );
+      vi.mocked(transformPrismaSurvey).mockReturnValue(mockTransformedSurvey);
+
+      await getSurveyWithMetadata("survey-1");
+
+      expect(vi.mocked(prisma.survey.findUnique).mock.calls[0][0].select).toEqual(
+        expect.objectContaining({ publishOn: true })
+      );
+    });
+
     test("should throw ResourceNotFoundError when survey not found", async () => {
       const surveyId = "nonexistent-survey";
 
