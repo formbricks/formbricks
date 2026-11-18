@@ -43,6 +43,14 @@ export const getAuthIssuerUrl = (): string => {
 };
 
 /**
+ * The URL an SSO identity provider (or the SAML bridge) delivers the authorization code to: the callback
+ * path Better Auth's `genericOAuth` mounted in v5.2, pinned so self-hosters never re-register it (ENG-2343).
+ * Built off `getAuthIssuerUrl()`, so it follows `AUTH_URL` and the auth base path (ENG-606).
+ */
+export const getSsoCallbackUrl = (providerId: string): string =>
+  `${getAuthIssuerUrl()}/oauth2/callback/${providerId}`;
+
+/**
  * Returns the server-side endpoint used only to fetch Better Auth's signing keys.
  *
  * Token issuer validation, OAuth discovery, redirects, cookies, and audiences continue to use the public
@@ -86,8 +94,8 @@ export const getMcpOrigin = (): string => new URL(getMcpResourceUrl()).origin;
  * is precisely the case that works. Subpath deployments cannot complete a login at all today (ENG-606),
  * so it is still not a live gap.
  *
- * This matters beyond the audience now: `ssoLegacyRedirectUri` in better-auth-providers.ts builds the
- * pinned SSO callback URL from `getAuthIssuerUrl()` (ENG-2343). Because that URL is pinned explicitly,
+ * This matters beyond the audience now: `getSsoCallbackUrl` below (used by `ssoLegacyRedirectUri` in
+ * better-auth-providers.ts and the SAML connection) builds the pinned SSO callback URL from `getAuthIssuerUrl()` (ENG-2343). Because that URL is pinned explicitly,
  * Better Auth sends it on both the authorization and token legs regardless of its own `baseURL`, so a
  * divergence here cannot desynchronise the handshake — it would only mean the URL names a host the
  * operator did not intend, which is a configuration error rather than a protocol one.

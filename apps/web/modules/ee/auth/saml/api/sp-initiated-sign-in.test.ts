@@ -5,6 +5,7 @@ import { inflateRawSync } from "node:zlib";
 import { afterAll, beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { SAML_AUDIENCE, SAML_PATH, SAML_PRODUCT, SAML_TENANT, WEBAPP_URL } from "@/lib/constants";
 import jackson from "@/modules/ee/auth/saml/lib/jackson";
+import { preloadConnection } from "@/modules/ee/auth/saml/lib/preload-connection";
 import { SAML_MAIN_THREAD_PARSE_ALLOWANCE_MS } from "@/modules/ee/auth/saml/lib/saml-parse-budget";
 import {
   createSpKeyPair,
@@ -99,14 +100,14 @@ afterAll(async () => {
  * with a signed AuthnRequest (HTTP-Redirect binding: deflated, base64). When signing fails, jackson sends the browser
  * back to Better Auth with the reason instead, which is what ENG-4045 broke.
  */
-const startSignIn = async () => {
+const startSignIn = async (redirectUri = BETTER_AUTH_CALLBACK) => {
   const codeVerifier = base64url(randomBytes(32));
   const state = base64url(randomBytes(16));
   const authorizeUrl = new URL(`${WEBAPP_URL}/api/auth/saml/authorize`);
   for (const [key, value] of Object.entries({
     response_type: "code",
     client_id: "dummy",
-    redirect_uri: BETTER_AUTH_CALLBACK,
+    redirect_uri: redirectUri,
     state,
     code_challenge: base64url(createHash("sha256").update(codeVerifier).digest()),
     code_challenge_method: "S256",
@@ -199,6 +200,62 @@ describe("SP-initiated SAML sign-in (ENG-4045)", () => {
     },
     30_000
   );
+
+  // ENG-7315: the connection allows one redirect_uri, Better Auth's callback. Jackson compares only the origin unless
+  // told to match the path too, so before this any page on the Formbricks origin could receive the code.
+  test.each([
+    ["another page on the Formbricks origin", `${WEBAPP_URL}/some/other/page`],
+    ["the callback path with a suffix", `${BETTER_AUTH_CALLBACK}/extra`],
+    ["the callback of another provider", `${WEBAPP_URL}/api/auth/oauth2/callback/github`],
+  ])("refuses to deliver the code to %s", async (_name, redirectUri) => {
+    const authorizeUrl = new URL(`${WEBAPP_URL}/api/auth/saml/authorize`);
+    for (const [key, value] of Object.entries({
+      response_type: "code",
+      client_id: "dummy",
+      redirect_uri: redirectUri,
+      state: "state",
+      code_challenge: base64url(createHash("sha256").update("verifier").digest()),
+      code_challenge_method: "S256",
+      provider: "saml",
+      tenant: SAML_TENANT,
+      product: SAML_PRODUCT,
+    })) {
+      authorizeUrl.searchParams.set(key, value);
+    }
+
+    const response = await authorize(new NextRequest(authorizeUrl));
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get("location")).toBeNull();
+    expect(await response.text()).toContain("Redirect URL is not allowed.");
+  });
+
+  // A connection stored by a release that allowed the whole origin is overwritten on boot: same IdP, same client ID.
+  test("pins the redirect of a connection stored with the whole origin on the next preload", async () => {
+    const { connectionController } = (await jackson())!;
+    const [stored] = await connectionController.getConnections({
+      tenant: SAML_TENANT,
+      product: SAML_PRODUCT,
+    });
+    await connectionController.createSAMLConnection({
+      name: "SAML SSO",
+      defaultRedirectUrl: `${WEBAPP_URL}/auth/login`,
+      redirectUrl: [`${WEBAPP_URL}/*`],
+      tenant: SAML_TENANT,
+      product: SAML_PRODUCT,
+      rawMetadata: testIdp.metadata,
+    });
+
+    await preloadConnection(connectionController);
+
+    const connections = await connectionController.getConnections({
+      tenant: SAML_TENANT,
+      product: SAML_PRODUCT,
+    });
+    expect(connections).toHaveLength(1);
+    expect(connections[0].clientID).toBe(stored.clientID);
+    expect(connections[0].redirectUrl).toEqual([BETTER_AUTH_CALLBACK]);
+  });
 
   // ENG-4045 moves xml-crypto, which checks the IdP's signature, onto its own xmldom copy. Signing working is only half
   // of it: a signature that does not hold must still be refused, with no code handed to Better Auth.

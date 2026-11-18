@@ -12,6 +12,11 @@ vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "https://test-webapp-url.com",
 }));
 
+vi.mock("@/modules/auth/lib/oauth-urls", () => ({
+  getSsoCallbackUrl: (providerId: string) =>
+    `https://test-webapp-url.com/api/auth/oauth2/callback/${providerId}`,
+}));
+
 vi.mock("fs/promises", () => ({
   default: {
     readdir: vi.fn(),
@@ -88,7 +93,8 @@ describe("SAML Preload Connection", () => {
     expect(mockConnectionController.createSAMLConnection).toHaveBeenCalledWith({
       name: "SAML SSO",
       defaultRedirectUrl: `${WEBAPP_URL}/auth/login`,
-      redirectUrl: [`${WEBAPP_URL}/*`],
+      // Pinned to the one callback Better Auth uses, not the whole origin (ENG-7315).
+      redirectUrl: [`${WEBAPP_URL}/api/auth/oauth2/callback/saml`],
       tenant: SAML_TENANT,
       product: SAML_PRODUCT,
       encodedRawMetadata: mockEncodedMetadata,

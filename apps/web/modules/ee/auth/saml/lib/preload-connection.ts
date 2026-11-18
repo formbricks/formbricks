@@ -4,6 +4,7 @@ import fs from "fs/promises";
 import path from "path";
 import { logger } from "@formbricks/logger";
 import { SAML_PRODUCT, SAML_TENANT, SAML_XML_DIR, WEBAPP_URL } from "@/lib/constants";
+import { getSsoCallbackUrl } from "@/modules/auth/lib/oauth-urls";
 
 const getPreloadedConnectionFile = async () => {
   const preloadedConnections = await fs.readdir(path.join(SAML_XML_DIR));
@@ -30,7 +31,11 @@ const getConnectionPayload = (metadata: string): SAMLSSOConnectionWithEncodedMet
   return {
     name: "SAML SSO",
     defaultRedirectUrl: `${WEBAPP_URL}/auth/login`,
-    redirectUrl: [`${WEBAPP_URL}/*`],
+    // The one callback Better Auth's SAML provider uses, so the authorization code goes nowhere else (ENG-7315).
+    // Jackson only compares paths when `openid.redirectExactMatch` is on (see jackson.ts). Saving it again on
+    // boot overwrites a stored connection's former `${WEBAPP_URL}/*`: the client ID derives from the IdP's
+    // entity ID, which has not changed.
+    redirectUrl: [getSsoCallbackUrl("saml")],
     tenant: SAML_TENANT,
     product: SAML_PRODUCT,
     encodedRawMetadata,

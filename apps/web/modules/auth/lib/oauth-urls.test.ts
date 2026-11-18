@@ -81,6 +81,20 @@ describe("OAuth URL helpers", () => {
     expect(getAuthIssuerUrl()).toBe("https://admin.example.com/app/api/auth");
   });
 
+  // ENG-7315: the SAML connection allows exactly this URL, so it must be what Better Auth sends, whatever AUTH_URL is.
+  test.each([
+    ["https://admin.example.com", "https://admin.example.com/api/auth/oauth2/callback/saml"],
+    ["https://auth.example.com/custom", "https://auth.example.com/custom/api/auth/oauth2/callback/saml"],
+    ["https://admin.example.com/app/api/auth", "https://admin.example.com/app/api/auth/oauth2/callback/saml"],
+  ])("pins the SSO callback under the auth issuer for AUTH_URL %s", async (authUrl, expected) => {
+    envMock.WEBAPP_URL = "https://admin.example.com";
+    constantsMock.AUTH_URL = authUrl;
+
+    const { getSsoCallbackUrl } = await loadOAuthUrls();
+
+    expect(getSsoCallbackUrl("saml")).toBe(expected);
+  });
+
   // The MCP resource server allow-lists this exact string as the second permitted `aud` value, so
   // a drift here would reject every token carrying the openid-implied UserInfo audience. Pinned
   // against the issuer (not WEBAPP_URL) because that is the prefix the oauth-provider mounts under.
