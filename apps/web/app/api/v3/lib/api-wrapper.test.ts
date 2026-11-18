@@ -1059,15 +1059,11 @@ describe("request array budget (ENG-3384)", () => {
           }),
           duplex: "half",
         } as ConstructorParameters<typeof NextRequest>[1]);
-        let timer: ReturnType<typeof setTimeout> | undefined;
-        const hang = new Promise<never>((_, reject) => {
-          timer = setTimeout(() => reject(new Error("the wrapper never answered")), 2000);
-        });
 
-        const response = await Promise.race([
-          withV3ApiWrapper({ auth: "none", bodyLimitBytes: ROUTE_LIMIT, handler })(request, {} as never),
-          hang,
-        ]).finally(() => clearTimeout(timer));
+        const response = await withV3ApiWrapper({ auth: "none", bodyLimitBytes: ROUTE_LIMIT, handler })(
+          request,
+          {} as never
+        );
 
         expect(response.status).toBe(413);
         expect(handler).not.toHaveBeenCalled();
@@ -1076,7 +1072,8 @@ describe("request array budget (ENG-3384)", () => {
           detail: `Request body must not exceed ${ROUTE_LIMIT} bytes`,
         });
         await vi.waitFor(() => expect(sourceCancelled).toBe(true));
-      }
+      },
+      2000
     );
 
     test("hands an acceptable body to the handler unread", async () => {

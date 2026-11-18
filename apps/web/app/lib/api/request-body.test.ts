@@ -133,17 +133,11 @@ describe("readRequestBytesWithLimit", () => {
       }),
       duplex: "half",
     } as RequestInit & { duplex: "half" });
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const hang = new Promise<never>((_, reject) => {
-      timer = setTimeout(() => reject(new Error("the read never settled")), 2000);
-    });
 
-    const read = Promise.race([readRequestBytesWithLimit(original.clone(), 4096), hang]).finally(() =>
-      clearTimeout(timer)
+    await expect(readRequestBytesWithLimit(original.clone(), 4096)).rejects.toBeInstanceOf(
+      RequestBodyTooLargeError
     );
-
-    await expect(read).rejects.toBeInstanceOf(RequestBodyTooLargeError);
-  });
+  }, 2000);
 });
 
 describe("parseFormDataWithLimit", () => {

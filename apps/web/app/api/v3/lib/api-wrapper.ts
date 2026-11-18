@@ -12,6 +12,7 @@ import {
 import {
   DEFAULT_REQUEST_BODY_LIMIT_BYTES,
   RequestBodyTooLargeError,
+  discardRequestBody,
   parseFormDataWithLimit,
   readRequestBodyWithLimit,
 } from "@/app/lib/api/request-body";
@@ -449,10 +450,10 @@ async function preflightUndeclaredBody(
       ? read.failure
       : arrayBudgetFailure(read.data, context.requestId, context.instance);
   if (failure) {
-    // A read that stopped at the limit or ran to the end has already settled the clone's branch, and
-    // cancel() then rejects on its locked stream (swallowed here); Content-Length refuses it unread.
-    void clone.body?.cancel().catch(() => undefined);
-    void req.body.cancel().catch(() => undefined);
+    // The clone's branch matters when Content-Length refused it unread; otherwise its read already
+    // settled it.
+    discardRequestBody(clone.body);
+    discardRequestBody(req.body);
   }
   return failure;
 }

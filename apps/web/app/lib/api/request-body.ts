@@ -35,6 +35,19 @@ const assertBodySize = (actualBytes: number, limitBytes: number): void => {
 };
 
 /**
+ * Cancels a body that will not be read, without waiting for the cancel to settle. On one branch of a
+ * tee'd body (`request.clone()`), cancel() settles only once the other branch is cancelled too or the
+ * source ends, which a client that keeps the body open can put off indefinitely (ENG-6948).
+ *
+ * Two rejections are expected and dropped: a branch its reader still locks (one whose read ran to the
+ * end or stopped at the limit), and a source whose own cancel fails. The request is already refused,
+ * so neither has anyone to tell.
+ */
+export const discardRequestBody = (body: Pick<ReadableStream, "cancel"> | null | undefined): void => {
+  void body?.cancel().catch(() => undefined);
+};
+
+/**
  * Buffers the request body as raw bytes, refusing it once it passes `limitBytes`. The `Content-Length`
  * header is only a fast path for an honest client: the stream is counted as it arrives, so a body that
  * lies about its length or carries none (chunked) is cut off at the limit instead of read whole.
@@ -64,10 +77,7 @@ export const readRequestBytesWithLimit = async (
 
     receivedBytes += value.byteLength;
     if (receivedBytes > limitBytes) {
-      // Not awaited: on one branch of a tee'd body (`request.clone()`), cancel() settles only once the
-      // other branch is cancelled too or the source ends, so awaiting it hangs on a client that keeps
-      // the body open. The refusal does not depend on it (ENG-6948).
-      void reader.cancel().catch(() => undefined);
+      discardRequestBody(reader);
       throw new RequestBodyTooLargeError(limitBytes, receivedBytes);
     }
 
