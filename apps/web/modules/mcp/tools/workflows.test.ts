@@ -89,6 +89,26 @@ const readOnlyAuthInfo = {
   extra: { ...authInfo.extra, authMethod: "oauth", grant: FULL_MCP_GRANT },
 };
 const noScopeAuthInfo = { ...readOnlyAuthInfo, scopes: [] as string[] };
+/**
+ * A session user's OAuth token (the grant applies; an API key has none) holding `responses:read`: what
+ * Responses: Read decides on is then the grant alone.
+ */
+const sessionAuthInfo = {
+  ...readOnlyAuthInfo,
+  scopes: ["workflows:read", "responses:read"],
+  extra: {
+    ...readOnlyAuthInfo.extra,
+    formbricksAuthentication: {
+      user: { id: "user_1", email: "person@example.com", name: "Person" },
+      expires: "2026-07-01T00:00:00.000Z",
+    },
+  },
+};
+/** {@link sessionAuthInfo} under a grant at Workflow runs: Read and nothing of Responses. */
+const runsOnlyGrantAuthInfo = {
+  ...sessionAuthInfo,
+  extra: { ...sessionAuthInfo.extra, grant: { access: "all", permissions: { workflowRuns: "read" } } },
+};
 
 function createToolServer() {
   const tools = new Map<string, { config: Record<string, unknown>; handler: TToolHandler }>();
@@ -306,14 +326,9 @@ describe("registerWorkflowTools", () => {
         .get("get_workflow_run")!
         .handler({ runId: RUN_ID }, { http: { authInfo: callerAuthInfo } });
     };
-    // An upgraded client: `workflows:read` and a grant at Workflow runs: Read, nothing of Responses.
-    const workflowsOnly = {
-      ...readOnlyAuthInfo,
-      extra: { ...readOnlyAuthInfo.extra, grant: { access: "all", permissions: { workflowRuns: "read" } } },
-    };
-
     test("keeps the tool for a grant without Responses: Read, leaving those fields out", async () => {
-      const result = await callWith(workflowsOnly);
+      // The token holds responses:read: only the grant can leave them out.
+      const result = await callWith(runsOnlyGrantAuthInfo);
 
       expect(result.isError).toBeUndefined();
       expect(result.structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
@@ -327,7 +342,7 @@ describe("registerWorkflowTools", () => {
     });
 
     test("returns them whole when both the token and the grant give Responses: Read", async () => {
-      const result = await callWith({ ...readOnlyAuthInfo, scopes: ["workflows:read", "responses:read"] });
+      const result = await callWith(sessionAuthInfo);
 
       expect(result.structuredContent).toEqual({ data: run, requestId: "req_tool" });
     });
@@ -346,8 +361,9 @@ describe("registerWorkflowTools", () => {
 
       const result = await tools
         .get("get_workflow_run")!
-        .handler({ runId: RUN_ID }, { http: { authInfo: workflowsOnly } });
+        .handler({ runId: RUN_ID }, { http: { authInfo: runsOnlyGrantAuthInfo } });
 
+      expect(workflowsHandlers.getRun).toHaveBeenCalledTimes(1);
       expect(result.isError).toBe(true);
       expect(result.structuredContent).toMatchObject({ error: { status: 403 } });
     });
@@ -735,12 +751,8 @@ describe("list_workflow_runs without Responses: Read", () => {
 
   // A run's error text can quote what a failed step sent, as `get_workflow_run` leaves out.
   test("leaves each run's error out for a grant without Responses: Read", async () => {
-    const workflowsOnly = {
-      ...readOnlyAuthInfo,
-      extra: { ...readOnlyAuthInfo.extra, grant: { access: "all", permissions: { workflowRuns: "read" } } },
-    };
-
-    const result = await callWith(workflowsOnly);
+    // The token holds responses:read: only the grant can leave the errors out.
+    const result = await callWith(runsOnlyGrantAuthInfo);
 
     const redacted = runs.map((run) => ({ ...run, error: null }));
     expect((result.structuredContent as { data: unknown }).data).toEqual(redacted);
@@ -748,7 +760,7 @@ describe("list_workflow_runs without Responses: Read", () => {
   });
 
   test("returns each run's error when both the token and the grant give Responses: Read", async () => {
-    const result = await callWith({ ...readOnlyAuthInfo, scopes: ["workflows:read", "responses:read"] });
+    const result = await callWith(sessionAuthInfo);
 
     expect((result.structuredContent as { data: unknown }).data).toEqual(runs);
   });
@@ -777,16 +789,12 @@ describe("workflow lastRun without Responses: Read", () => {
     vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
   });
 
-  // An OAuth caller (a session user, so the grant applies; an API key has none) with `workflows:read`
-  // and a grant at Workflows and Workflow runs: Read, and nothing of Responses.
+  // A session user's token holding `responses:read`, under a grant at Workflows and Workflow runs: Read
+  // and nothing of Responses: the grant alone leaves the error out.
   const workflowsOnly = {
-    ...readOnlyAuthInfo,
+    ...sessionAuthInfo,
     extra: {
-      ...readOnlyAuthInfo.extra,
-      formbricksAuthentication: {
-        user: { id: "user_1", email: "person@example.com", name: "Person" },
-        expires: "2026-07-01T00:00:00.000Z",
-      },
+      ...sessionAuthInfo.extra,
       grant: { access: "all", permissions: { workflows: "read", workflowRuns: "read" } },
     },
   };

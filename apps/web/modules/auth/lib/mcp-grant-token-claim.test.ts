@@ -182,17 +182,8 @@ describe("mcpGrantAccessTokenClaims", () => {
     expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 5_000 });
   });
 
-  // The lock wait is bounded in the transaction itself, before the row is taken.
-  test("waits at most 2 s for the user's row, set before it locks the row", async () => {
-    await claims({ client: CONSENT_CLIENT });
-
-    const [setLockTimeout] = prisma.$queryRaw.mock.calls[0] as unknown[];
-    expect((setLockTimeout as TemplateStringsArray).join("?")).toContain("set_config('lock_timeout'");
-    expect(prisma.$queryRaw.mock.calls[0]).toContain("2000ms");
-    expect(prisma.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(
-      vi.mocked(lockUserForMcpGrantWrite).mock.invocationCallOrder[0]
-    );
-  });
+  // That the lock wait is bounded, and set before the row is taken, is the integration test's to show:
+  // `mcp-grants.integration.test.ts` holds the user's row past it on real Postgres.
 
   // The provider has already spent the code: the exchange can't fail and be retried, so it fails closed.
   // A lock or transaction timeout is expected (a slow Revoke) and a warning; anything else is a fault.
