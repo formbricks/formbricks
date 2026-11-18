@@ -839,14 +839,15 @@ describe("Segment Service Tests", () => {
         isPrivate: true,
       });
       vi.mocked(prisma.survey.findFirst).mockResolvedValueOnce(null);
+      vi.mocked(prisma.segment.update).mockResolvedValueOnce({
+        ...mockSegmentPrisma,
+        title: "Loyal users",
+        isPrivate: false,
+      });
 
-      await updateSegment(segmentId, { title: "Loyal users", isPrivate: false });
+      const result = await updateSegment(segmentId, { title: "Loyal users", isPrivate: false });
 
-      expect(prisma.segment.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ title: "Loyal users", isPrivate: false }),
-        })
-      );
+      expect(result).toMatchObject({ id: segmentId, title: "Loyal users", isPrivate: false });
     });
 
     test("should update segment with survey connections", async () => {
