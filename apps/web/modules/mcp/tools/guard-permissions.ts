@@ -223,7 +223,8 @@ const HIDDEN_STATUSES: ReadonlySet<unknown> = new Set([403, 404]);
  * a server fault) says nothing about the resource and passes through, even after a recorded denial. That second case is an id the operation refused before checking
  * anything, which is how v3 answers an id that doesn't exist: left alone, it would tell an id that
  * doesn't exist from one outside the grant. Everything answered after the grant was confirmed to reach
- * the resource (a refusal by the user's role, a plan refusal, a confirmation) passes through unchanged.
+ * the resource (a refusal by the user's role, a plan refusal, a confirmation) passes through unchanged,
+ * except a 404, which is about an id the reach recorded for this call needn't cover.
  */
 const isOutsideMcpGrant = (
   result: CallToolResult,
@@ -234,7 +235,10 @@ const isOutsideMcpGrant = (
   if (!result.isError || access === undefined || access === "all") return false;
   const status = (result.structuredContent as { error?: { status?: unknown } } | undefined)?.error?.status;
   if (!HIDDEN_STATUSES.has(status)) return false;
-  return reach.denied || !reach.confirmed;
+  // A 404 is always the one not found: a call can confirm the grant reaches one resource and then miss
+  // another, and an operation answers an id that doesn't exist before any check of it, so a 404 passed
+  // through there would tell that id from one outside the grant, which `can()` denies.
+  return status === 404 || reach.denied || !reach.confirmed;
 };
 
 const guardPermissions = async (

@@ -485,14 +485,17 @@ describe("registerMcpTool — the connection's grant", () => {
       ],
       asHandler(vi.fn())
     );
-    const authInfo = withGrant({ charts: "write" });
-    (authInfo.scopes as string[]).push("feedbackRecords:read");
+    // The token's scopes ask for both; the grant gives neither.
+    const authInfo = {
+      ...withGrant({ surveys: "read" }),
+      scopes: [...EVERY_SCOPE, "charts:read", "feedbackRecords:read"],
+    } as AuthInfo;
 
     const result = await tools.get("read_chart")!.handler({}, { http: { authInfo } });
 
-    expect((result.structuredContent as ScopeErrorContent).error.detail).toContain(
-      "does not give Feedback records: Read."
-    );
+    const { detail } = (result.structuredContent as ScopeErrorContent).error;
+    expect(detail).toContain("Charts: Read");
+    expect(detail).toContain("Feedback records: Read");
   });
 
   test("runs an any-of tool when the grant gives one listed permission, and names them all when none", async () => {
@@ -636,7 +639,7 @@ describe("registerMcpTool — what the grant doesn't reach (ADR-0042)", () => {
   });
 
   test("passes an answer about something the grant reaches through unchanged", async () => {
-    for (const result of [error(403, "forbidden"), error(404, "not_found"), error(428, "")]) {
+    for (const result of [error(403, "forbidden"), error(428, "")]) {
       expect(
         await register(async () => {
           recordMcpReachConfirmed();
@@ -644,6 +647,17 @@ describe("registerMcpTool — what the grant doesn't reach (ADR-0042)", () => {
         })()
       ).toBe(result);
     }
+  });
+
+  // A call that reached one resource and then missed another: the miss is an id that doesn't exist, or one
+  // outside the grant, and the two must read alike.
+  test("answers not found for a 404 even after the grant was confirmed to reach something", async () => {
+    const call = register(async () => {
+      recordMcpReachConfirmed();
+      return error(404, "not_found");
+    });
+
+    expect((await call()).structuredContent).toEqual(NOT_FOUND);
   });
 
   test("passes any other error through, and every answer under All access", async () => {
