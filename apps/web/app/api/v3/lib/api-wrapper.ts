@@ -10,6 +10,12 @@ import {
   releaseWhenBodySettles,
 } from "@/app/lib/api/concurrency-limiter";
 import {
+  getCrossOriginRefusal,
+  isJsonContentType,
+  isSafeMethod,
+  mediaTypeOf,
+} from "@/app/lib/api/origin-check";
+import {
   DEFAULT_REQUEST_BODY_LIMIT_BYTES,
   RequestBodyTooLargeError,
   parseFormDataWithLimit,
@@ -30,7 +36,6 @@ import {
 import { buildV3AuditLog, queueV3AuditLog } from "./audit";
 import { mapV3ThrownError } from "./errors";
 import { BoundedInvalidParams } from "./invalid-params";
-import { getCrossOriginRefusal, isJsonContentType, isSafeMethod, mediaTypeOf } from "./origin-check";
 import {
   type InvalidParam,
   isInvalidParamCode,

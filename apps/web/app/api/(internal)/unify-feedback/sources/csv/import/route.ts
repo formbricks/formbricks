@@ -7,8 +7,8 @@ import {
   ResourceNotFoundError,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
-import { getCrossOriginRefusal } from "@/app/api/v3/lib/origin-check";
 import { problemForbidden, problemTooManyRequests } from "@/app/api/v3/lib/response";
+import { getCrossOriginRefusal } from "@/app/lib/api/origin-check";
 import { RequestBodyTooLargeError, parseFormDataWithLimit } from "@/app/lib/api/request-body";
 import { assertCan } from "@/lib/authorization";
 import { assertFeedbackSourceDirectoryAccess } from "@/lib/feedback-source/access";

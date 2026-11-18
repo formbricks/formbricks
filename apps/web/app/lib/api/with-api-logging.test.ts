@@ -87,7 +87,8 @@ function createMockRequest({ method = "GET", url = "https://api.test/endpoint", 
     method,
     url,
     headers: {
-      get: (key: string) => headers.get(key),
+      // `Headers.get` answers null, not undefined, for a missing header.
+      get: (key: string) => headers.get(key) ?? null,
     },
     nextUrl: {
       pathname: parsedUrl.pathname,
@@ -114,6 +115,7 @@ describe("withV1ApiWrapper", () => {
       ENCRYPTION_KEY: "test-key",
       REDIS_URL: "redis://localhost:6379",
       ENVOY_RATE_LIMITING_ENABLED: true,
+      AUTH_TRUSTED_ORIGINS: ["https://app.test"],
     }));
 
     vi.clearAllMocks();
@@ -463,6 +465,7 @@ describe("withV1ApiWrapper", () => {
       ENCRYPTION_KEY: "test-key",
       REDIS_URL: "redis://localhost:6379",
       ENVOY_RATE_LIMITING_ENABLED: true,
+      AUTH_TRUSTED_ORIGINS: ["https://app.test"],
     }));
 
     const { queueAuditEvent: mockedQueueAuditEvent } =
@@ -499,6 +502,7 @@ describe("withV1ApiWrapper", () => {
       ENCRYPTION_KEY: "test-key",
       REDIS_URL: "redis://localhost:6379",
       ENVOY_RATE_LIMITING_ENABLED: true,
+      AUTH_TRUSTED_ORIGINS: ["https://app.test"],
     }));
 
     const { queueAuditEvent: mockedQueueAuditEvent } =
@@ -735,6 +739,111 @@ describe("withV1ApiWrapper", () => {
     expect(applyRateLimit).toHaveBeenCalledWith(customRateLimitConfig, "user-1");
   });
 
+  describe("cross-origin refusal", () => {
+    const STORAGE_URL = "https://api.test/api/v1/management/storage";
+
+    const setUpBothAuthRoute = async () => {
+      const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
+        await import("@/app/middleware/endpoint-validator");
+      const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
+      vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
+      vi.mocked(isManagementApiRoute).mockReturnValue({
+        isManagementApi: true,
+        authenticationMethod: AuthMethod.Both,
+      });
+      vi.mocked(isIntegrationRoute).mockReturnValue(false);
+      vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
+    };
+
+    const mockSession = async () => {
+      const { getSession } = await import("@/modules/auth/lib/session");
+      vi.mocked(getSession).mockResolvedValue({
+        user: { id: "user-1" },
+        expires: "2999-01-01T00:00:00.000Z",
+      });
+    };
+
+    test.each(["same-site", "cross-site"])(
+      "refuses a session-authenticated POST with Sec-Fetch-Site %s before the handler or rate limit",
+      async (site) => {
+        await setUpBothAuthRoute();
+        await mockSession();
+        const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
+        const handler = vi.fn();
+        const req = createMockRequest({
+          method: "POST",
+          url: STORAGE_URL,
+          headers: new Map([["sec-fetch-site", site]]),
+        });
+        const { withV1ApiWrapper } = await import("./with-api-logging");
+        const res = await withV1ApiWrapper({ handler })(req, undefined);
+
+        expect(res.status).toBe(403);
+        expect(handler).not.toHaveBeenCalled();
+        expect(applyRateLimit).not.toHaveBeenCalled();
+        expect(logger.warn).toHaveBeenCalledWith(
+          expect.objectContaining({ refusal: "sec_fetch_site", statusCode: 403 }),
+          "V1 API cross-origin session request refused"
+        );
+      }
+    );
+
+    test("refuses a session-authenticated POST from an untrusted Origin when Sec-Fetch-Site is absent", async () => {
+      await setUpBothAuthRoute();
+      await mockSession();
+      const handler = vi.fn();
+      const req = createMockRequest({
+        method: "POST",
+        url: STORAGE_URL,
+        headers: new Map([
+          ["origin", "https://evil.example.com"],
+          ["host", "api.test"],
+        ]),
+      });
+      const { withV1ApiWrapper } = await import("./with-api-logging");
+      const res = await withV1ApiWrapper({ handler })(req, undefined);
+
+      expect(res.status).toBe(403);
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    test("lets a same-origin session-authenticated POST through", async () => {
+      await setUpBothAuthRoute();
+      await mockSession();
+      const handler = vi.fn().mockResolvedValue({ response: responses.successResponse({ ok: true }) });
+      const req = createMockRequest({
+        method: "POST",
+        url: STORAGE_URL,
+        headers: new Map([["sec-fetch-site", "same-origin"]]),
+      });
+      const { withV1ApiWrapper } = await import("./with-api-logging");
+      const res = await withV1ApiWrapper({ handler })(req, undefined);
+
+      expect(res.status).toBe(200);
+      expect(handler).toHaveBeenCalled();
+    });
+
+    test("never checks an API-key caller, whatever the browser headers say", async () => {
+      await setUpBothAuthRoute();
+      const { authenticateRequest } = await import("@/app/api/v1/auth");
+      vi.mocked(authenticateRequest).mockResolvedValue(mockApiAuthentication);
+      const handler = vi.fn().mockResolvedValue({ response: responses.successResponse({ ok: true }) });
+      const req = createMockRequest({
+        method: "POST",
+        url: STORAGE_URL,
+        headers: new Map([
+          ["x-api-key", "fbk_test"],
+          ["sec-fetch-site", "cross-site"],
+        ]),
+      });
+      const { withV1ApiWrapper } = await import("./with-api-logging");
+      const res = await withV1ApiWrapper({ handler })(req, undefined);
+
+      expect(res.status).toBe(200);
+      expect(handler).toHaveBeenCalled();
+    });
+  });
+
   test("skips app rate limiting for Envoy-covered API-key management routes", async () => {
     const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =
@@ -771,6 +880,7 @@ describe("withV1ApiWrapper", () => {
       ENCRYPTION_KEY: "test-key",
       REDIS_URL: "redis://localhost:6379",
       ENVOY_RATE_LIMITING_ENABLED: false,
+      AUTH_TRUSTED_ORIGINS: ["https://app.test"],
     }));
     const { applyRateLimit } = await import("@/modules/core/rate-limit/helpers");
     const { isClientSideApiRoute, isManagementApiRoute, isIntegrationRoute } =

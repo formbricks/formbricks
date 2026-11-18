@@ -4,6 +4,7 @@ import type { Session, TAuthenticationApiKey } from "@formbricks/types/auth";
 import { authenticateRequest } from "@/app/api/v1/auth";
 import { reportApiError } from "@/app/lib/api/api-error-reporter";
 import { getRateLimitErrorResponse } from "@/app/lib/api/client-rate-limit";
+import { getCrossOriginRefusal } from "@/app/lib/api/origin-check";
 import { responses } from "@/app/lib/api/response";
 import {
   AuthenticationMethod,
@@ -337,6 +338,20 @@ export const withV1ApiWrapper = <TResult extends { response: Response; error?: u
         return res;
       }
       return responses.notAuthenticatedResponse();
+    }
+
+    // === Cross-origin refusal (session cookie only) ===
+    // `SameSite=Lax` still attaches the session cookie to a sibling subdomain's POST, and route handlers get
+    // no `Origin` check from Next.js. API-key callers send their credential on purpose and are never checked.
+    if (authentication && "user" in authentication) {
+      const refusal = getCrossOriginRefusal(req);
+      if (refusal) {
+        logger.warn(
+          { refusal, statusCode: 403, method: req.method, path: req.nextUrl.pathname },
+          "V1 API cross-origin session request refused"
+        );
+        return responses.forbiddenResponse("Cross-origin request refused");
+      }
     }
 
     // === Audit Log Enhancement ===

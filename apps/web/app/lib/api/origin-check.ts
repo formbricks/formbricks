@@ -5,7 +5,8 @@ import { AUTH_TRUSTED_ORIGINS } from "@/lib/constants";
  *
  * `SameSite=Lax` is judged by *site*, so a script on any sibling host under the same registrable domain
  * still gets the cookie attached to its POSTs, and `text/plain` or multipart bodies need no preflight.
- * Route handlers get no `Origin` check from Next.js (server actions do), so the wrapper brings one.
+ * Route handlers get no `Origin` check from Next.js (server actions do), so the API wrappers (`withV1ApiWrapper`,
+ * `withV3ApiWrapper`) and the session routes outside them bring one.
  * API-key and bearer callers are never checked: they send their credential on purpose, the browser
  * never attaches it on someone else's behalf.
  *
