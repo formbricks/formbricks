@@ -208,6 +208,7 @@ const MemoizedWidgetItem = memo(function WidgetItem({
   const [view, setView] = useState<TWidgetView>(DEFAULT_WIDGET_VIEW);
 
   useEffect(() => {
+    // eslint-disable-next-line react/set-state-in-effect -- localStorage exists only after hydration (see above)
     setView(readStoredWidgetView(widget.id));
   }, [widget.id]);
 

@@ -2,7 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon, PencilIcon, PlusIcon, Trash2Icon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { ActionClass, OrganizationRole } from "@formbricks/database/prisma-browser";
 import { TActionClass } from "@formbricks/types/action-classes";
@@ -38,6 +38,29 @@ interface WhenToSendCardProps {
 
 const NO_CREATIVES: readonly TSurveyLinkedCreative[] = [];
 
+/**
+ * The card's open state, adjusted during render: an app survey starts expanded, switching to a link
+ * survey collapses it, and a missing-trigger error appearing expands it — a collapsed card cannot show
+ * the user what to fix.
+ */
+const useWhenToSendCardOpen = (surveyType: TSurvey["type"], showError: boolean) => {
+  const [open, setOpen] = useState(surveyType === "app");
+
+  const [seenSurveyType, setSeenSurveyType] = useState(surveyType);
+  if (surveyType !== seenSurveyType) {
+    setSeenSurveyType(surveyType);
+    if (surveyType === "link") setOpen(false);
+  }
+
+  const [wasShowingError, setWasShowingError] = useState(false);
+  if (showError !== wasShowingError) {
+    setWasShowingError(showError);
+    if (showError) setOpen(true);
+  }
+
+  return [open, setOpen] as const;
+};
+
 export const WhenToSendCard = ({
   workspaceId,
   localSurvey,
@@ -49,7 +72,6 @@ export const WhenToSendCard = ({
   openedByCreatives = NO_CREATIVES,
 }: Readonly<WhenToSendCardProps>) => {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(localSurvey.type === "app" ? true : false);
   const [isAddActionModalOpen, setAddActionModalOpen] = useState(false);
   const [isEditActionModalOpen, setEditActionModalOpen] = useState(false);
   const [editingActionClass, setEditingActionClass] = useState<TActionClass | null>(null);
@@ -163,12 +185,6 @@ export const WhenToSendCard = ({
     setLocalSurvey(updatedSurvey);
   };
 
-  useEffect(() => {
-    if (localSurvey.type === "link") {
-      setOpen(false);
-    }
-  }, [localSurvey.type]);
-
   // Auto animate
 
   const containsEmptyTriggers = useMemo(() => {
@@ -182,12 +198,7 @@ export const WhenToSendCard = ({
   // moment the survey has one — nothing has to remember to reset a flag.
   const showError = hasError && containsEmptyTriggers;
 
-  // A collapsed card cannot show the user what to fix.
-  useEffect(() => {
-    if (showError) {
-      setOpen(true);
-    }
-  }, [showError]);
+  const [open, setOpen] = useWhenToSendCardOpen(localSurvey.type, showError);
 
   if (localSurvey.type === "link") {
     return null; // Hide card completely

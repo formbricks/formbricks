@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowDownUpIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TDisplay } from "@formbricks/types/displays";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
@@ -48,9 +48,12 @@ export const ActivityTimeline = ({
   const [responses, setResponses] = useState(initialResponses);
   const [isReversed, setIsReversed] = useState(false);
 
-  useEffect(() => {
+  // New responses from the server replace the local list. Adjusted during render.
+  const [syncedResponses, setSyncedResponses] = useState(initialResponses);
+  if (syncedResponses !== initialResponses) {
+    setSyncedResponses(initialResponses);
     setResponses(initialResponses);
-  }, [initialResponses]);
+  }
 
   const updateResponseList = (responseIds: string[]) => {
     setResponses((prev) => prev.filter((r) => !responseIds.includes(r.id)));

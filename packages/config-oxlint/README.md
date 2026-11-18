@@ -50,9 +50,9 @@ Notes:
   the type-aware rules switched off, and `*.config.*` / declaration files are ignored. apps/web runs them
   too; the ones with a backlog left are `off` in `apps/web/oxlint.config.ts`, each with its count
   (ENG-7329).
-- The React Compiler-era react-hooks rules are implemented natively by oxlint under `react/`. Those with a
-  remaining backlog sit in `reactCompilerRulesOptOut` (`base.mjs`) at `warn`, with the ratchet tickets
-  named inline; `apps/web/oxlint.config.ts` makes the same call separately for the `next` tier.
+- The React Compiler-era react-hooks rules are implemented natively by oxlint under `react/`, at the
+  preset's severity in the `react` and `react-hooks` tiers. `apps/web/oxlint.config.ts` sets them
+  separately for the `next` tier, where only `incompatible-library` stays at `warn`.
 - `sonar-parity.mjs` mirrors the SonarCloud rules that surfaced issues on PRs after local lint passed
   (`sonarjs/cognitive-complexity` at 15, `regex-complexity` at 20, `no-nested-functions`,
   `no-nested-conditional`, `no-nested-template-literals`, `prefer-string-raw`, `prefer-optional-chain`,

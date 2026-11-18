@@ -87,9 +87,12 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
     void getData();
   }, [surveyId]);
 
-  useEffect(() => {
+  // A new preview document starts at the minimum height until its iframe loads and is measured.
+  const [measuredDocument, setMeasuredDocument] = useState(emailPreviewDocument);
+  if (measuredDocument !== emailPreviewDocument) {
+    setMeasuredDocument(emailPreviewDocument);
     setPreviewFrameHeight(560);
-  }, [emailPreviewDocument]);
+  }
 
   const handlePreviewFrameLoad = (event: SyntheticEvent<HTMLIFrameElement>) => {
     const { contentDocument } = event.currentTarget;

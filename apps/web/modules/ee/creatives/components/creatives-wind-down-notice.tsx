@@ -12,7 +12,7 @@ export const CreativesWindDownNotice = () => {
   const { t } = useTranslation();
 
   return (
-    <Alert variant="warning" role="status">
+    <Alert variant="warning" alertRole="status">
       <AlertTitle>{t("workspace.creatives.wind_down_title")}</AlertTitle>
       <AlertDescription>{t("workspace.creatives.wind_down_description")}</AlertDescription>
     </Alert>

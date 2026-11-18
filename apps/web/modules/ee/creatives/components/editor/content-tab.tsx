@@ -97,6 +97,7 @@ const IconPicker = ({
     <div role="radiogroup" aria-labelledby={labelId} className="flex flex-wrap gap-1.5">
       <button
         type="button"
+        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a button styled as an option in a radiogroup; it has no native radio input to label
         role="radio"
         aria-checked={value === null}
         className={optionClass(value === null)}
@@ -109,6 +110,7 @@ const IconPicker = ({
           <button
             key={icon}
             type="button"
+            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a button styled as an option in a radiogroup; it has no native radio input to label
             role="radio"
             aria-checked={value === icon}
             aria-label={iconLabels[icon]}

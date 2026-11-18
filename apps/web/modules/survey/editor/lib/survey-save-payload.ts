@@ -18,3 +18,14 @@ export const parseSurveyEndings = (endings: TSurvey["endings"]): TSurvey["ending
       ? ZSurveyRedirectUrlCard.parse(ending)
       : ZSurveyEndScreenCard.parse(ending)
   );
+
+/**
+ * The survey as the save action sends it: no draft flags, no legacy questions (blocks replace them),
+ * endings parsed. A copy, so the editor's own survey keeps its draft flags if the save fails.
+ */
+export const buildSurveySavePayload = (survey: TSurvey): TSurvey => ({
+  ...survey,
+  blocks: survey.blocks ? removeDraftFlagsFromBlocks(survey.blocks) : survey.blocks,
+  questions: [],
+  endings: parseSurveyEndings(survey.endings),
+});
