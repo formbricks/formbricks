@@ -3,6 +3,7 @@ import {
   MCP_GRANT_BEYOND_SCOPES_CODE,
   MCP_GRANT_CHANGED_CODE,
   MCP_GRANT_SELECTION_UNAVAILABLE_CODE,
+  type TTranslate,
   getGrantErrorMessage,
 } from "@/modules/auth/lib/mcp-grant-consent-errors";
 import type { TMcpGrantAccessSelection, TMcpGrantPermissions } from "@/modules/mcp/grant";
@@ -14,8 +15,6 @@ import { getInitialMcpGrantPermissions } from "@/modules/mcp/grant-editor";
  * Authorized apps' Edit (ENG-7152), the logic behind its dialog: what it opens with and what a refused Save
  * does. Pure, so it is unit-tested here rather than through the component.
  */
-
-type TTranslate = (key: string, values?: Record<string, string>) => string;
 
 /** What Edit opens on, captured once when the dialog mounts. */
 export type TMcpGrantEditOpening = {

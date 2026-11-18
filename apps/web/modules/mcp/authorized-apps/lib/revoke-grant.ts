@@ -1,6 +1,4 @@
-import { getGrantErrorMessage } from "@/modules/auth/lib/mcp-grant-consent-errors";
-
-type TTranslate = (key: string, values?: Record<string, string>) => string;
+import { type TTranslate, getGrantErrorMessage } from "@/modules/auth/lib/mcp-grant-consent-errors";
 
 /**
  * What a failed Revoke shows: the refusal's code translated, as Edit's Save shows it, or a translated

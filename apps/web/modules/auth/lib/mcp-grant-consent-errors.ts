@@ -43,7 +43,8 @@ export const MCP_GRANT_INVALID_CODE = "mcp_grant_invalid";
 export const MCP_GRANT_INVALID_DETAIL =
   "The grant must give at least one permission at a level it offers, and pick at least one organization or workspace when its access selects them.";
 
-type TTranslate = (key: string, values?: Record<string, string>) => string;
+/** The `t` these messages are translated with. */
+export type TTranslate = (key: string, values?: Record<string, string>) => string;
 
 /**
  * The message each refusal code shows, so neither screen reads the server's English detail. Each entry takes
