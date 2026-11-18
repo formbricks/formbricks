@@ -9,6 +9,7 @@ import {
   type TWorkflowTriggerType,
   WORKFLOW_SWITCH_DEFAULT_BRANCH,
   flattenWorkflowConditions,
+  isConditionStepNode,
 } from "@formbricks/workflows";
 import { formatStepDuration } from "@/modules/ee/workflows/lib/run-display";
 
@@ -225,7 +226,7 @@ const findConditionsOf = (
   stepId: string
 ): Map<string, TWorkflowCondition> => {
   const node = definition?.nodes.find((n) => n.id === stepId);
-  if (node?.type !== "if_else" && node?.type !== "filter") return new Map();
+  if (!node || !isConditionStepNode(node)) return new Map();
   return new Map(flattenWorkflowConditions(node.config.condition).map((c) => [c.id, c]));
 };
 

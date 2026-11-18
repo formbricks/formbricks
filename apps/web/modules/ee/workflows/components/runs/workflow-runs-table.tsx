@@ -13,6 +13,7 @@ import { getWorkflowRunStatusBadge, getWorkflowTriggerTypeLabel } from "@/module
 import {
   DEFAULT_RUN_SORT,
   RUN_SORT_VALUES,
+  SHOW_TEST_RUNS_PROPERTY,
   getRunFilterProperties,
   isShowingTestRuns,
   setHideTestRuns,
@@ -38,7 +39,9 @@ interface WorkflowRunsTableProps {
 
 const TestBadge = ({ run }: Readonly<{ run: TWorkflowRunListItem }>) => {
   const { t } = useTranslation();
-  return run.isDryRun ? <Badge text={t("workspace.workflows.run_test_badge")} type="gray" size="tiny" /> : null;
+  return run.isDryRun ? (
+    <Badge text={t("workspace.workflows.run_test_badge")} type="gray" size="tiny" />
+  ) : null;
 };
 
 const formatTime = (value: string | null, locale: string, t: TFunction) =>
@@ -113,18 +116,6 @@ const getRunColumns = (
   ];
 };
 
-const getColumnLabels = (t: TFunction, isWorkspaceScope: boolean) => [
-  ...(isWorkspaceScope
-    ? [
-        { id: "workflow", label: t("common.workflow_name") },
-        { id: "trigger", label: t("common.trigger") },
-      ]
-    : []),
-  { id: "status", label: t("common.status") },
-  { id: "startedAt", label: t("common.started_at") },
-  { id: "finishedAt", label: t("common.finished_at") },
-];
-
 /**
  * A runs list on the shared table toolbar, as the Workflows list has it (ENG review of #10010): Status,
  * and across workflows Trigger, as filters; "Hide test runs" in the gear, on by default. A row opens the
@@ -143,7 +134,7 @@ export const WorkflowRunsTable = ({ workspaceId, workflowId }: Readonly<Workflow
     defaultSortBy: DEFAULT_RUN_SORT,
   });
   const listFilters = toRunListFilters(tableState.filters, workflowId ? { workflowId } : {});
-  const hasActiveFilters = tableState.filters.some((filter) => filter.property !== "testRuns");
+  const hasActiveFilters = tableState.filters.some((filter) => filter.property !== SHOW_TEST_RUNS_PROPERTY);
 
   const {
     runs,
@@ -154,6 +145,7 @@ export const WorkflowRunsTable = ({ workspaceId, workflowId }: Readonly<Workflow
     hasNextPage,
     isFetchingNextPage,
     fetchNextPage,
+    isFetchNextPageError,
   } = useWorkflowRuns({
     workspaceId,
     limit: RUNS_PER_PAGE,
@@ -163,15 +155,13 @@ export const WorkflowRunsTable = ({ workspaceId, workflowId }: Readonly<Workflow
   });
   const rows = listFilters === null ? NO_RUNS : runs;
 
-  const columnIds = getColumnLabels(t, isWorkspaceScope).map((column) => column.id);
+  const columns = useMemo(() => getRunColumns(t, locale, isWorkspaceScope), [t, locale, isWorkspaceScope]);
+  // The gear's column list, read off the columns themselves (every header here is its label).
+  const columnLabels = columns.map((column) => ({ id: column.id ?? "", label: String(column.header) }));
   const columnState = useTableColumnState({
     storagePrefix: `${workspaceId}-${isWorkspaceScope ? "workspace" : "workflow"}-runs`,
-    columnIds,
+    columnIds: columnLabels.map((column) => column.id),
   });
-  const columns = useMemo(
-    () => getRunColumns(t, locale, isWorkspaceScope),
-    [t, locale, isWorkspaceScope]
-  );
   const table = useReactTable({
     data: rows,
     columns,
@@ -210,12 +200,9 @@ export const WorkflowRunsTable = ({ workspaceId, workflowId }: Readonly<Workflow
             },
           ],
           columns: {
-            items: buildColumnSettings(
-              getColumnLabels(t, isWorkspaceScope),
-              columnState.columnOrder,
-              columnState.columnVisibility,
-              [isWorkspaceScope ? "workflow" : "status"]
-            ),
+            items: buildColumnSettings(columnLabels, columnState.columnOrder, columnState.columnVisibility, [
+              isWorkspaceScope ? "workflow" : "status",
+            ]),
             onVisibilityChange: (id, visible) =>
               columnState.setColumnVisibility((current) => ({ ...current, [id]: visible })),
             onMove: columnState.moveColumn,
@@ -249,6 +236,12 @@ export const WorkflowRunsTable = ({ workspaceId, workflowId }: Readonly<Workflow
           onLoadMore={() => void fetchNextPage()}
         />
       )}
+      {/* A failed load-more keeps the rows already loaded; say so, and Load more tries again. */}
+      {isFetchNextPageError ? (
+        <p className="text-center text-sm text-red-600">
+          {getV3ApiErrorMessage(error, t("common.something_went_wrong_please_try_again"))}
+        </p>
+      ) : null}
       <WorkflowRunDetailDrawer
         run={selectedRun}
         open={selectedRun !== null}

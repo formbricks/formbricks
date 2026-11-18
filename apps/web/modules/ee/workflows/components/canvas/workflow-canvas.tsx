@@ -10,7 +10,6 @@ import {
   ReactFlow,
   ReactFlowProvider,
   applyNodeChanges,
-  useReactFlow,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
@@ -20,15 +19,15 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { useWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
+import {
+  WORKFLOW_CANVAS_MAX_ZOOM,
+  useCanvasViewport,
+} from "@/modules/ee/workflows/hooks/use-canvas-viewport";
 import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
 import { useStepClipboardShortcuts } from "@/modules/ee/workflows/hooks/use-step-clipboard";
 import { useWorkflowWebhook } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import { resolveBoundTriggerSurvey } from "@/modules/ee/workflows/lib/bound-survey";
-import {
-  TEST_RUN_DRAWER_SELECTOR,
-  WORKFLOW_CANVAS_FIT_PADDING,
-  getCanvasFitPadding,
-} from "@/modules/ee/workflows/lib/canvas-fit";
+import { WORKFLOW_CANVAS_FIT_PADDING } from "@/modules/ee/workflows/lib/canvas-fit";
 import { getSurveyChoiceLabels } from "@/modules/ee/workflows/lib/choice-conditions";
 import {
   WORKFLOW_ADD_BUTTON_EDGE_TYPE,
@@ -56,10 +55,10 @@ import {
   isCanvasLockedAtom,
   isWorkflowInspectorCollapsedAtom,
   isWorkflowNodeConfigModalOpenAtom,
-  selectedWorkflowNodeIdAtom,
   isWorkflowReadOnlyAtom,
   isWorkflowSnapToCanvasEnabledAtom,
   openWorkflowNodeConfigModalAtom,
+  selectedWorkflowNodeIdAtom,
   setWorkflowDefinitionAtom,
   toggleWorkflowInspectorAtom,
   workflowAtom,
@@ -89,25 +88,9 @@ const EDGE_TYPES: EdgeTypes = {
   [WORKFLOW_BRANCH_EDGE_TYPE]: BranchEdge,
 };
 
-// The canvas is the page's main action — let fitView scale small flows past the former 0.85 cap,
-// which rendered a fresh two-node workflow noticeably small. 2x proved too big; 1.15 is three
-// zoom-out steps down from it (RF's zoomIn/zoomOut step is 1.2x, and 2 / 1.2^3 ≈ 1.157).
-const WORKFLOW_CANVAS_MAX_ZOOM = 1.15;
-
-// The inspector column animates its width over 150ms (see workflow-inspector-panel.tsx); refit
-// only after the canvas has its final size, with a small buffer.
-const INSPECTOR_RESIZE_SETTLE_MS = 170;
-// Near-instant pan: the refit should feel like part of the sidebar toggle, not a second animation.
-const INSPECTOR_REFIT_PAN_MS = INSPECTOR_RESIZE_SETTLE_MS / 4;
-// How close to the canvas edge a step's card may sit before opening it pans it into view.
-const REVEAL_MARGIN = 24;
-
 interface WorkflowCanvasProps {
   isEditable: boolean;
 }
-
-/** How long a re-arranged flow takes to reach React Flow and be measured, before the view refits. */
-const LAYOUT_REFIT_DELAY_MS = 120;
 
 const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) => {
   const { t } = useTranslation();
@@ -129,7 +112,6 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const setFlowNodes = useSetAtom(workflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const addTrigger = useSetAtom(addWorkflowTriggerAtom);
-  const { fitView, getInternalNode, getViewport, setCenter } = useReactFlow();
   const isRunDrawerOpen = useAtomValue(editorRunDrawerAtom).isOpen;
   const canvasRef = useRef<HTMLDivElement>(null);
   // `isEditable` (canEditDefinition) is the API-side gate. The drag/pointer mode toggle is the
@@ -210,16 +192,20 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
 
   // Keep ReactFlow's nodes in sync with the projected definition while preserving the user's
   // current selection — recomputing from scratch would lose it on every definition edit.
+  // Closing the panel clears the highlight once, so a card is never highlighted without its panel.
+  const wasPanelOpenRef = useRef(false);
   useEffect(() => {
+    const hasPanelClosed = wasPanelOpenRef.current && !openNodeId;
+    wasPanelOpenRef.current = openNodeId !== null;
     setFlowNodes((currentNodes) => {
       const currentNodesById = new Map(currentNodes.map((node) => [node.id, node]));
 
-      return derivedFlowNodes.map((node) => ({
-        ...node,
-        selected: openNodeId
-          ? node.id === openNodeId
-          : (currentNodesById.get(node.id)?.selected ?? node.selected),
-      }));
+      return derivedFlowNodes.map((node) => {
+        let selected = currentNodesById.get(node.id)?.selected ?? node.selected;
+        if (openNodeId) selected = node.id === openNodeId;
+        else if (hasPanelClosed) selected = false;
+        return { ...node, selected };
+      });
     });
   }, [derivedFlowNodes, openNodeId, setFlowNodes]);
 
@@ -253,93 +239,13 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     [canMutate, isSnapToCanvasEnabled, setDefinition]
   );
 
-  // Fit the flow into the part of the canvas that is not behind the Test run drawer, which slides
-  // in over the canvas's right side without resizing it. The drawer is measured at call time, so a
-  // narrow screen's full-width drawer counts too.
-  const refitViewport = useCallback(
-    (duration: number) => {
-      const canvas = canvasRef.current?.getBoundingClientRect();
-      let coverLeft: number | null = null;
-      if (isRunDrawerOpen) {
-        const drawerWidth =
-          document.querySelector<HTMLElement>(TEST_RUN_DRAWER_SELECTOR)?.offsetWidth ?? window.innerWidth;
-        coverLeft = window.innerWidth - drawerWidth;
-      }
-      const padding = canvas
-        ? getCanvasFitPadding({ canvasLeft: canvas.left, canvasRight: canvas.right, coverLeft })
-        : WORKFLOW_CANVAS_FIT_PADDING;
-      // Too little left visible to fit into: keep the current zoom and pan.
-      if (padding === null) return;
-      void fitView({ padding, maxZoom: WORKFLOW_CANVAS_MAX_ZOOM, minZoom: 0.4, duration });
-    },
-    [fitView, isRunDrawerOpen]
-  );
-
-  // Brings a step into view at the user's zoom: only when part of its card is outside the canvas
-  // (behind the panel's edge, or a new step at the bottom), and only by panning.
-  const revealNode = useCallback(
-    (nodeId: string, duration: number) => {
-      const node = getInternalNode(nodeId);
-      const canvas = canvasRef.current?.getBoundingClientRect();
-      if (!node || !canvas) return;
-      const { x, y, zoom } = getViewport();
-      const width = node.measured.width ?? 0;
-      const height = node.measured.height ?? 0;
-      const { x: nodeX, y: nodeY } = node.internals.positionAbsolute;
-      const left = nodeX * zoom + x;
-      const top = nodeY * zoom + y;
-      const isInView =
-        left >= REVEAL_MARGIN &&
-        top >= REVEAL_MARGIN &&
-        left + width * zoom <= canvas.width - REVEAL_MARGIN &&
-        top + height * zoom <= canvas.height - REVEAL_MARGIN;
-      if (isInView) return;
-      void setCenter(nodeX + width / 2, nodeY + height / 2, { zoom, duration });
-    },
-    [getInternalNode, getViewport, setCenter]
-  );
-
-  // Opening a step (a click, a new step) or opening/closing the panel keeps the user's zoom and place
-  // (ENG review: every click re-fit the flow). Once the panel's width transition settles, the open
-  // step is panned into view if the panel or the canvas edge hides it.
   const isInspectorVisible = isNodeConfigOpen && !isInspectorCollapsed;
-  useEffect(() => {
-    if (!openNodeId) return;
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timeoutHandle = setTimeout(
-      () => revealNode(openNodeId, prefersReducedMotion ? 0 : INSPECTOR_REFIT_PAN_MS * 4),
-      INSPECTOR_RESIZE_SETTLE_MS
-    );
-    return () => clearTimeout(timeoutHandle);
-  }, [openNodeId, isInspectorVisible, revealNode]);
-
-  // Opening or closing the Test run drawer fits the flow into the part of the canvas it leaves
-  // visible, so the run's path can be read whole.
-  const previousRunDrawerOpenRef = useRef(isRunDrawerOpen);
-  useEffect(() => {
-    if (previousRunDrawerOpenRef.current === isRunDrawerOpen) return;
-    previousRunDrawerOpenRef.current = isRunDrawerOpen;
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const timeoutHandle = setTimeout(
-      () => refitViewport(prefersReducedMotion ? 0 : INSPECTOR_REFIT_PAN_MS),
-      INSPECTOR_RESIZE_SETTLE_MS
-    );
-    return () => clearTimeout(timeoutHandle);
-  }, [isRunDrawerOpen, refitViewport]);
-
-  const handleFitView = useCallback(() => {
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    refitViewport(prefersReducedMotion ? 0 : 300);
-  }, [refitViewport]);
-
-  const recenterAfterLayout = useCallback(() => {
-    // Skip the animated recenter for users who ask for reduced motion (read at call time —
-    // no reactivity needed for a click handler).
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Wait for the new positions to reach React Flow (definition, then nodes, then their measured
-    // sizes) before it recenters the viewport; one frame is too early for a whole new orientation.
-    setTimeout(() => refitViewport(prefersReducedMotion ? 0 : 300), LAYOUT_REFIT_DELAY_MS);
-  }, [refitViewport]);
+  const { handleFitView, recenterAfterLayout, refitAfterLayout } = useCanvasViewport({
+    canvasRef,
+    isRunDrawerOpen,
+    openNodeId,
+    isInspectorVisible,
+  });
 
   const handleAutoLayout = useCallback(() => {
     if (!canMutate || !definition) return;
@@ -363,8 +269,8 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   useEffect(() => {
     if (!workflow?.id || !definition || refitForDirectionRef.current === workflow.id) return;
     refitForDirectionRef.current = workflow.id;
-    if (direction === "horizontal") setTimeout(() => refitViewport(0), LAYOUT_REFIT_DELAY_MS);
-  }, [workflow?.id, definition, direction, refitViewport]);
+    if (direction === "horizontal") refitAfterLayout();
+  }, [workflow?.id, definition, direction, refitAfterLayout]);
 
   // Switching the orientation re-arranges every step for it: positions laid out top to bottom
   // would read wrong left to right. Saved with the workflow and undone like Auto layout.

@@ -6,7 +6,7 @@ import { ContentEditable } from "@lexical/react/LexicalContentEditable";
 import { LexicalErrorBoundary } from "@lexical/react/LexicalErrorBoundary";
 import { PlainTextPlugin } from "@lexical/react/LexicalPlainTextPlugin";
 import { PencilIcon } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { TSurveyRecallItem } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
@@ -16,6 +16,7 @@ import { ChipClickPlugin } from "./chip-click-plugin";
 import { RecallNode } from "./recall-node";
 import { RecallPlugin } from "./recall-plugin";
 import type { TEditorRecallSource } from "./recall-source";
+import { useFallbackPopover } from "./use-fallback-popover";
 
 interface RecallInputProps {
   /** Stored text, recall tokens included. */
@@ -100,13 +101,10 @@ export const RecallInput = ({
   const [recallItems, setRecallItems] = useState<TSurveyRecallItem[]>([]);
   const [fallbacks, setFallbacks] = useState<{ [id: string]: string }>({});
   const [addFallbackFunction, setAddFallbackFunction] = useState<(() => void) | null>(null);
-  const [showFallbackInput, setShowFallbackInput] = useState(false);
+  const fallbackPopover = useFallbackPopover();
+  const showFallbackInput = fallbackPopover.isOpen;
+  const setShowFallbackInput = fallbackPopover.setOpen;
   const [showRecallItemSelect, setShowRecallItemSelect] = useState(false);
-  const [fallbackFocusId, setFallbackFocusId] = useState<string | undefined>();
-  const openFallbackInput = useCallback((recallId: string | undefined) => {
-    setFallbackFocusId(recallId);
-    setShowFallbackInput(true);
-  }, []);
 
   // Read once: LexicalComposer only uses its initial config at mount; `ValuePlugin` handles changes.
   const [initialConfig] = useState(() => ({
@@ -155,7 +153,7 @@ export const RecallInput = ({
           ) : null}
         </div>
         <OneLinePlugin />
-        {editable ? <ChipClickPlugin onChipClick={openFallbackInput} /> : null}
+        {editable ? <ChipClickPlugin onChipClick={fallbackPopover.openForChip} /> : null}
         <SyncEditablePlugin editable={editable} />
         <ValuePlugin value={value} onChange={onChange} />
         <div className="absolute top-full left-0 w-full">
@@ -181,7 +179,7 @@ export const RecallInput = ({
             addFallback={addFallbackFunction ?? (() => {})}
             open={showFallbackInput}
             setOpen={setShowFallbackInput}
-            focusItemId={fallbackFocusId}
+            focusItemId={fallbackPopover.focusItemId}
           />
         </div>
       )}

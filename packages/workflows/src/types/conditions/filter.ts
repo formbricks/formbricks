@@ -9,11 +9,22 @@ import { ZWorkflowConditionGroup } from "./base";
  */
 export const ZWorkflowFilterNode = ZWorkflowNodeBase.extend({
   type: z.literal("filter"),
-  config: z.object({
+  config: z.strictObject({
     condition: ZWorkflowConditionGroup,
   }),
-}).describe(
-  "Filter step: the run continues down its one edge when the condition group holds; otherwise the run ends there, completed."
-);
+})
+  .strict()
+  .describe(
+    "Filter step: the run continues down its one edge when the condition group holds; otherwise the run ends there, completed."
+  );
 
 export type TWorkflowFilterNode = z.infer<typeof ZWorkflowFilterNode>;
+
+/**
+ * The steps that take a condition group: an If/else and a Filter. Its conditions follow the same rules
+ * in both (limits, operator names, Variables, run detail).
+ */
+export const isConditionStepNode = <TNode extends { type: string }>(
+  node: TNode
+): node is Extract<TNode, { type: "if_else" | "filter" }> =>
+  node.type === "if_else" || node.type === "filter";

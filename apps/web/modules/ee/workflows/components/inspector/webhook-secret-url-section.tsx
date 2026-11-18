@@ -34,6 +34,9 @@ const SECRET_URL_FIELD_ID = "workflow-webhook-secret-url";
  * for the rarer actions (show, regenerate). The URL is a credential (ADR 0041), so the card keeps one
  * line about keeping it private; the rest lives in the docs linked from the panel header.
  */
+// About how many monospace characters fit on one row of the narrowest panel.
+const SECRET_URL_CHARS_PER_ROW = 44;
+
 export const WebhookSecretUrlSection = ({
   workflowId,
   url,
@@ -113,9 +116,11 @@ export const WebhookSecretUrlSection = ({
         <textarea
           id={SECRET_URL_FIELD_ID}
           readOnly
-          rows={1}
+          // `field-sizing: content` sizes it where supported; elsewhere (Firefox) rows does, roughly
+          // one row per line of monospace text at this width.
+          rows={Math.max(1, Math.ceil(url.length / SECRET_URL_CHARS_PER_ROW))}
           value={isRevealed ? url : maskWebhookSecretUrl(url)}
-          className="ph-no-capture field-sizing-content block w-full resize-none rounded-md border-0 bg-slate-50 px-2 py-1.5 font-mono text-xs break-all text-slate-700 focus:ring-2 focus:ring-slate-300 focus:outline-hidden"
+          className="ph-no-capture block field-sizing-content w-full resize-none rounded-md border-0 bg-slate-50 px-2 py-1.5 font-mono text-xs break-all text-slate-700 focus:ring-2 focus:ring-slate-300 focus:outline-hidden"
           onFocus={(event) => event.currentTarget.select()}
         />
       </div>

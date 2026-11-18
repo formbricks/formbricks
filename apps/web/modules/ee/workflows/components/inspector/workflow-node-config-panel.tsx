@@ -5,7 +5,7 @@ import { ExternalLinkIcon } from "lucide-react";
 import { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition, TWorkflowNode, TWorkflowResource } from "@formbricks/workflows";
-import { getWorkflowNodeConcreteType } from "@formbricks/workflows";
+import { getWorkflowNodeConcreteType, isConditionStepNode } from "@formbricks/workflows";
 import { WorkflowNodeChip } from "@/modules/ee/workflows/components/canvas/workflow-node-card";
 import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
 import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
@@ -125,9 +125,7 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
       }
       // The If/else and Filter panels write survey operator names; keep every other condition step on
       // the same set.
-      return nextNode.type === "if_else" || nextNode.type === "filter"
-        ? withSurveyOperatorNamesInDefinition(next)
-        : next;
+      return isConditionStepNode(nextNode) ? withSurveyOperatorNamesInDefinition(next) : next;
     });
   };
 

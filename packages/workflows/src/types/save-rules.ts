@@ -9,6 +9,7 @@ import {
   flattenWorkflowConditions,
   isWorkflowChoiceIds,
 } from "./conditions/base";
+import { isConditionStepNode } from "./conditions/filter";
 import {
   MAX_SWITCH_CASE_NAME_LENGTH,
   type TWorkflowSwitchNode,
@@ -166,12 +167,13 @@ export const validateWorkflowDefinitionSaveRules = (
 
   for (const [index, node] of definition.nodes.entries()) {
     const nodePath = ["nodes", index, "config"];
-    if (node.type === "if_else" || node.type === "filter") {
+    if (isConditionStepNode(node)) {
       const { condition } = node.config;
       if (flattenWorkflowConditions(condition).length > WORKFLOW_LIMITS.maxConditionsPerIfElse) {
+        const step = node.type === "filter" ? "A filter" : "An if_else";
         ctx.addIssue({
           code: "custom",
-          message: `An ${node.type} step can have at most ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions`,
+          message: `${step} step can have at most ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions`,
           path: [...nodePath, "condition"],
         });
       }

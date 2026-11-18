@@ -40,12 +40,13 @@ export const FallbackInput = ({
   };
 
   return (
-    // Closing by clicking outside or Escape keeps what was typed: complete fallbacks are applied, as
-    // Save does, and an incomplete set stays in the fields for the next open.
+    // Closing by clicking outside or Escape keeps what was typed: every field is applied to its
+    // Variable, an empty one too (it stays without a fallback, which the editor's own checks catch).
+    // Kept only in this popover's state, typing would be lost on the editor's next update.
     <Popover
       open={open}
       onOpenChange={(next) => {
-        if (!next && !containsEmptyFallback()) addFallback();
+        if (!next) addFallback();
         setOpen(next);
       }}>
       <PopoverTrigger asChild>

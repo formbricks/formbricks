@@ -7,6 +7,7 @@ import {
 } from "@formbricks/workflows";
 import { getWorkflowRunStatusBadge, getWorkflowTriggerTypeLabel } from "@/modules/ee/workflows/lib/display";
 import { resolveEnumFilter } from "@/modules/ui/components/table-toolbar/lib/enum-filters";
+import { isHiddenToggleOn, setHiddenToggle } from "@/modules/ui/components/table-toolbar/lib/hidden-toggle";
 import { ENUM_RULE_OPERATORS } from "@/modules/ui/components/table-toolbar/lib/operators";
 import type { TFilterProperty, TTableFilter } from "@/modules/ui/components/table-toolbar/lib/types";
 import type { TWorkflowRunListFilters } from "./api-client";
@@ -64,13 +65,11 @@ export const getRunFilterProperties = (t: TFunction, { withTrigger }: { withTrig
 };
 
 export const isShowingTestRuns = (filters: readonly TTableFilter[]) =>
-  filters.some((filter) => filter.property === SHOW_TEST_RUNS_PROPERTY && filter.values.includes("true"));
+  isHiddenToggleOn(filters, SHOW_TEST_RUNS_PROPERTY);
 
 /** Test runs are hidden by default: the gear's "Hide test runs" is on until switched off. */
-export const setHideTestRuns = (filters: readonly TTableFilter[], hide: boolean): TTableFilter[] => {
-  const rest = filters.filter((filter) => filter.property !== SHOW_TEST_RUNS_PROPERTY);
-  return hide ? rest : [...rest, { property: SHOW_TEST_RUNS_PROPERTY, operator: "in", values: ["true"] }];
-};
+export const setHideTestRuns = (filters: readonly TTableFilter[], hide: boolean): TTableFilter[] =>
+  setHiddenToggle(filters, SHOW_TEST_RUNS_PROPERTY, !hide);
 
 /**
  * The API filters for the toolbar's filters, or null when they exclude every status or trigger and

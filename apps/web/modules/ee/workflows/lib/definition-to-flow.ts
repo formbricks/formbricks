@@ -8,6 +8,7 @@ import {
   WORKFLOW_SWITCH_DEFAULT_BRANCH,
   getBlankSendEmailContentFields,
   getWorkflowNodeConcreteType,
+  isConditionStepNode,
   isResponseCompletedTrigger,
 } from "@formbricks/workflows";
 import {
@@ -171,8 +172,7 @@ const withStepVariableLabels = (
 ): TVariableLabels => {
   const paths = new Set<string>();
   for (const node of definition.nodes) {
-    if (node.type === "if_else" || node.type === "filter")
-      collectConditionPaths(node.config.condition, paths);
+    if (isConditionStepNode(node)) collectConditionPaths(node.config.condition, paths);
     if (node.type === "switch") paths.add(node.config.left.path);
   }
   const titles = new Map(
@@ -194,7 +194,7 @@ const getSummaryParts = (
   refs: TVariableRefs | undefined,
   choiceLabels: TChoiceLabels | undefined
 ): TFlowTextPart[] | null => {
-  if (node.type === "if_else" || node.type === "filter") {
+  if (isConditionStepNode(node)) {
     return describeIfElseConditionParts(node.config.condition, t, refs, choiceLabels);
   }
   if (node.type === "switch")
