@@ -18,7 +18,7 @@ export const ChipClickPlugin = ({
         CLICK_COMMAND,
         (event) => {
           const chip = event.target instanceof Element ? event.target.closest(".recall-node") : null;
-          if (chip) onChipClick(chip.getAttribute("data-recall-id") ?? undefined);
+          if (chip) onChipClick(chip instanceof HTMLElement ? chip.dataset.recallId : undefined);
           return false;
         },
         COMMAND_PRIORITY_LOW

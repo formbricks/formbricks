@@ -20,7 +20,7 @@ export const filterStepExecutor: WorkflowStepExecutor<"filter"> = {
   },
   decide: (output) => {
     if (typeof output.passed !== "boolean") {
-      throw new Error("filter step output has no result");
+      throw new TypeError("filter step output has no result");
     }
     return output.passed ? { next: "continue" } : { next: "end" };
   },
