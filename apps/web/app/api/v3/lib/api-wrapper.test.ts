@@ -1051,6 +1051,11 @@ describe("request array budget (ENG-3384)", () => {
       async ({ contentLength, sent }) => {
         const handler = vi.fn(async () => Response.json({ ok: true }));
         let sourceCancelled = false;
+        // The source's shutdown stays pending until the test ends, so a 413 that waited on it never comes.
+        let finishSourceShutdown = (): void => undefined;
+        const sourceShutdown = new Promise<void>((resolve) => {
+          finishSourceShutdown = resolve;
+        });
         const request = new NextRequest("http://localhost/api/v3/workflows", {
           method: "POST",
           headers: { "Content-Type": "application/json", ...contentLength },
@@ -1060,23 +1065,28 @@ describe("request array budget (ENG-3384)", () => {
             },
             cancel() {
               sourceCancelled = true;
+              return sourceShutdown;
             },
           }),
           duplex: "half",
         } as ConstructorParameters<typeof NextRequest>[1]);
 
-        const response = await withV3ApiWrapper({ auth: "none", bodyLimitBytes: ROUTE_LIMIT, handler })(
-          request,
-          {} as never
-        );
+        try {
+          const response = await withV3ApiWrapper({ auth: "none", bodyLimitBytes: ROUTE_LIMIT, handler })(
+            request,
+            {} as never
+          );
 
-        expect(response.status).toBe(413);
-        expect(handler).not.toHaveBeenCalled();
-        await expect(response.json()).resolves.toMatchObject({
-          code: "payload_too_large",
-          detail: `Request body must not exceed ${ROUTE_LIMIT} bytes`,
-        });
-        await vi.waitFor(() => expect(sourceCancelled).toBe(true));
+          expect(response.status).toBe(413);
+          expect(handler).not.toHaveBeenCalled();
+          await expect(response.json()).resolves.toMatchObject({
+            code: "payload_too_large",
+            detail: `Request body must not exceed ${ROUTE_LIMIT} bytes`,
+          });
+          await vi.waitFor(() => expect(sourceCancelled).toBe(true));
+        } finally {
+          finishSourceShutdown();
+        }
       },
       2000
     );
