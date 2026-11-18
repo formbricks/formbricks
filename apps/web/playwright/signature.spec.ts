@@ -372,6 +372,8 @@ test.describe("Signature element @slow", () => {
         await page.keyboard.press("Enter");
         await expect.poll(() => uploads.length, { timeout: UPLOAD_TIMEOUT }).toBe(2);
         await expect(page.getByText("Anything else?")).toBeVisible({ timeout: UPLOAD_TIMEOUT });
+        // Still two once the card has moved on: a duplicate upload of the typed signature would show here.
+        expect(uploads).toHaveLength(2);
 
         await expect
           .poll(() => readSignatureAnswer(seeded.surveyId, seeded.signatureId), {

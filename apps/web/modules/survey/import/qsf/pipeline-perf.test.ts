@@ -336,8 +336,9 @@ describe("event loop", () => {
   });
 
   // Normalizing every key against 400 options took about half a second at 20,000 variants and about 9 s at
-  // 390,000. The work is counted rather than timed: one listing of the keys, no key read, and the same
-  // counts at both sizes, so nothing the reader does grows with the number of keys.
+  // 390,000. The work is counted rather than timed: the reader lists the keys once (V8's enumeration still
+  // grows with their number) and refuses the map on that count before reading any value, with the same
+  // counts at both sizes.
   test.each([20_000, 390_000])(
     "prepareQsfImport refuses %i Language key variants on their count, before reading any key",
     async (variants) => {

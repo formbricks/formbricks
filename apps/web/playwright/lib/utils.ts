@@ -138,22 +138,13 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   await page.getByTestId("organization-access-accessControl-write").click();
   await page.getByRole("button", { name: "Add API Key" }).click();
 
-  // The new key is listed only once the server has stored it, so its copy icon is the signal.
-  const copyIcon = page.locator(".copyApiKeyIcon").first();
-  await expect(copyIcon).toBeVisible({ timeout: 30_000 });
-  // The new key is shown once, beside its copy icon. Assertions compare booleans, so a failure never
-  // prints the key.
-  const apiKey = (await page.getByTestId("api-key-value").first().innerText()).trim();
+  // The new key is listed, once, only after the server has stored it. It is read from the page rather
+  // than through the copy button: parallel workers can share one clipboard, so another test's copy could
+  // land in between. The assertion compares a boolean, so a failure never prints the key.
+  const shownKey = page.getByTestId("api-key-value").first();
+  await expect(shownKey).toBeVisible({ timeout: 30_000 });
+  const apiKey = (await shownKey.innerText()).trim();
   expect(apiKey.startsWith("fbk_"), "the new API key is shown").toBe(true);
-  await copyIcon.click();
-
-  // The copy writes the clipboard asynchronously; the key the specs use is the one the copy affordance
-  // delivers, so wait until the clipboard holds exactly the shown key.
-  await expect
-    .poll(async () => (await page.evaluate("navigator.clipboard.readText()")) === apiKey, {
-      message: "the clipboard holds the new API key",
-    })
-    .toBe(true);
 
   return { workspaceId, apiKey };
 }
