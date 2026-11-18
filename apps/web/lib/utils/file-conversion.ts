@@ -61,7 +61,6 @@ export const XLSX_TRUNCATION_MARKER = "...[truncated]";
 
 /**
  * Shortens a string that exceeds Excel's cell limit, ending it with a visible marker.
- * Run it after `sanitizeFormulaInjection` so the safety prefix is kept and counted.
  * The cut never splits a UTF-16 surrogate pair. Non-strings pass through unchanged.
  */
 export const truncateForXlsxCell = <T>(value: T): T => {
@@ -77,14 +76,17 @@ export const truncateForXlsxCell = <T>(value: T): T => {
   return `${value.slice(0, end)}${XLSX_TRUNCATION_MARKER}` as T;
 };
 
-const toXlsxCell = <T>(value: T): T => truncateForXlsxCell(sanitizeFormulaInjection(value));
+// Strings become typed text cells (`t: "s"`, number format `@`), which Excel never evaluates as
+// formulas. They get no `sanitizeFormulaInjection` prefix: SheetJS CE can't set Excel's quote-prefix
+// flag, so a leading `'` would show up as literal text (`-5 stars` → `'-5 stars`). Numbers stay numeric.
+const toXlsxCell = (value: string | number | undefined): xlsx.CellObject | number | undefined =>
+  typeof value === "string" ? { t: "s", v: truncateForXlsxCell(value), z: "@" } : value;
 
 export const convertToXlsxBuffer = (
   fields: string[],
   jsonData: Record<string, string | number>[]
 ): Buffer => {
-  // Build as array-of-arrays so original row keys are looked up before
-  // sanitization is applied to the rendered header/cell only.
+  // Build as array-of-arrays so cells are looked up by the original row keys.
   const headerRow = fields.map(toXlsxCell);
   const dataRows = jsonData.map((row) => fields.map((name) => toXlsxCell(row[name])));
 

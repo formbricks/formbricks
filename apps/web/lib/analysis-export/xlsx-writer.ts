@@ -10,7 +10,6 @@
  * The workbook is built whole in memory, by nature of the format; the caller caps its size.
  */
 import { ZipArchive } from "archiver";
-import { sanitizeFormulaInjection } from "../utils/file-conversion";
 
 export type TXlsxCell = string | number | null;
 
@@ -69,7 +68,9 @@ const cellXml = (reference: string, cell: TXlsxCell, style?: number): string => 
     return Number.isFinite(cell) ? `<c r="${reference}"${styleAttribute}><v>${cell}</v></c>` : "";
   }
   // XML parsers fold a CR into an LF anyway, so say LF: the same line break in every reader.
-  const text = escapeXml(cutCell(sanitizeFormulaInjection(cell.replace(/\r\n?/g, "\n"))));
+  // An inline string is never evaluated as a formula, so it gets no `sanitizeFormulaInjection`
+  // prefix: Excel would show the leading `'` as literal text.
+  const text = escapeXml(cutCell(cell.replace(/\r\n?/g, "\n")));
   return `<c r="${reference}"${styleAttribute} t="inlineStr"><is><t xml:space="preserve">${text}</t></is></c>`;
 };
 
