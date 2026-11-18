@@ -67,8 +67,9 @@ All QA for the change happens in this PR, before review; there is no separate re
   or the SDK in `packages/js-core`, `packages/survey-ui` or `packages/surveys`, read
   [BREAKING.md](BREAKING.md) before deciding: the tick alone writes the release-notes migration entry.
   The line under the box says in one sentence why it is, or is not, breaking.
-- **Door**: `two-way` when a revert undoes the change, `one-way` when it does not (a destructive
-  migration, data written in a new shape, a message sent).
+- **Door**: tick exactly one box. Two-way when a revert undoes the change; one-way when it does not (a
+  destructive migration, data written in a new shape, a message sent), and then say in the blast
+  radius what the revert leaves behind.
 - **Blast radius**: what nearby could break and what to re-check if it does, in a phrase.
 - **Migrations & env**: every new or changed env var, migration or cutover step, breaking or not,
   since a deployer acts on each.
@@ -104,7 +105,8 @@ Rewrite the body with every scope change or review fix, so it always describes t
 
 ## Done when
 
-- Every template heading is present with the checkbox text verbatim, and no template comment is left.
+- Every template heading is present with the checkbox text verbatim, exactly one door box is ticked,
+  and no template comment is left.
 - Every behaviour the diff changes has a Coverage row or an Open gaps entry.
 - A UI change has a before/after pair whose URLs load logged out; any other change says `No UI change`.
 - The body fits the budget, and every claim matches a check you ran on the head commit.

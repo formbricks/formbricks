@@ -38,6 +38,11 @@ Rerun: `<one command covering the table>`
 
 <one line: why it is, or is not, breaking>
 
-**Door:** <one-way | two-way> · **Blast radius:** <what nearby could break>
+**Door** (tick one)
+
+- [ ] Two-way door: a revert undoes it
+- [ ] One-way door: a revert does not undo it
+
+**Blast radius:** <what nearby could break>
 
 **Migrations & env:** none
