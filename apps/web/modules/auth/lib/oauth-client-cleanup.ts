@@ -10,7 +10,7 @@ const BATCH_SIZE = 500;
 /** Bounds one run (250k rows); a larger backlog drains over the following days. */
 const MAX_BATCHES = 500;
 
-type TOauthClientWhere = NonNullable<Parameters<typeof prisma.oauthClient.findMany>[0]>["where"];
+type TOauthClientWhere = NonNullable<NonNullable<Parameters<typeof prisma.oauthClient.findMany>[0]>["where"]>;
 
 /**
  * The registrations this job may delete: anonymous (`userId` null — a client registered by a signed-in

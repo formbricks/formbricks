@@ -29,7 +29,7 @@ const teamUsersInOrganization = (organizationId: string) =>
   ({
     where: { team: { organizationId } },
     include: { team: true },
-  }) satisfies Prisma.User$teamUsersArgs;
+  }) satisfies Prisma.TeamUserFindManyArgs;
 
 export const getUsers = async (
   organizationId: string,

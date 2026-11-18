@@ -60,7 +60,7 @@ describe("integration credentials", () => {
   });
 
   test("passes a config without a key through", () => {
-    const noKey = { data: [] };
+    const noKey: { key?: unknown; data: unknown[] } = { data: [] };
     expect(encryptIntegrationConfig("slack", noKey)).toBe(noKey);
     expect(decryptIntegrationConfig("slack", noKey)).toBe(noKey);
   });

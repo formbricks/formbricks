@@ -179,7 +179,7 @@ describe("/organizations/[organizationId]/workspace-teams", () => {
     vi.clearAllMocks();
     auditLog = {
       action: "updated",
-      targetType: "auditedTeam",
+      targetType: "workspaceTeam",
       userId: UNKNOWN_DATA,
       targetId: UNKNOWN_DATA,
       organizationId,

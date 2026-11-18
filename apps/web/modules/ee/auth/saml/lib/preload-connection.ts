@@ -1,5 +1,5 @@
 import { SAMLSSOConnectionWithEncodedMetadata, SAMLSSORecord } from "@boxyhq/saml-jackson";
-import { ConnectionAPIController } from "@boxyhq/saml-jackson/dist/controller/api";
+import type { IConnectionAPIController } from "@boxyhq/saml-jackson";
 import fs from "fs/promises";
 import path from "path";
 import { logger } from "@formbricks/logger";
@@ -42,7 +42,7 @@ const getConnectionPayload = (metadata: string): SAMLSSOConnectionWithEncodedMet
   };
 };
 
-export const preloadConnection = async (connectionController: ConnectionAPIController) => {
+export const preloadConnection = async (connectionController: IConnectionAPIController) => {
   try {
     const preloadedConnectionMetadata = await getPreloadedConnectionMetadata();
 

@@ -46,6 +46,7 @@ const setup = async (auth: ReturnType<typeof makeAuth>) => {
   });
   const headers = new Headers({ cookie: cookieHeader(signUp.headers) });
   const enabled = await auth.api.enableTwoFactor({ body: { password: PASSWORD }, headers });
+  if (!("totpURI" in enabled)) throw new Error("expected TOTP enrolment");
   const encoded = new URL(enabled.totpURI).searchParams.get("secret") as string;
   return new TextDecoder().decode(base32.decode(encoded));
 };

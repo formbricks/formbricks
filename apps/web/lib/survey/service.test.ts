@@ -947,7 +947,7 @@ describe("Tests for updateSurvey", () => {
             createdAt: new Date(),
             updatedAt: new Date(),
           },
-        });
+        } as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>);
 
         await save(attributeFilters);
 

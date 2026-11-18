@@ -116,12 +116,10 @@ describe.each([false, true])("read paths enforce stored visibility with graph re
   test("v1 and v2 management: an API key lists, counts and reaches workspace-visible surveys only", async () => {
     const where = await getApiKeyVisibleSurveyWhere();
 
-    expect(idsOf(await getV1Surveys([ids.workspace], undefined, undefined, where))).toEqual([
+    expect(idsOf(await getV1Surveys([ids.workspace], 100, 0, where))).toEqual([ids.visibleSurvey]);
+    expect(surveyIdsOf(await getResponsesByWorkspaceIds([ids.workspace], 100, 0, where))).toEqual([
       ids.visibleSurvey,
     ]);
-    expect(
-      surveyIdsOf(await getResponsesByWorkspaceIds([ids.workspace], undefined, undefined, where))
-    ).toEqual([ids.visibleSurvey]);
 
     const v2 = await getV2Responses([ids.workspace], { limit: 50, skip: 0 } as never, where);
     if (!v2.ok) throw new Error("v2 responses read failed");
