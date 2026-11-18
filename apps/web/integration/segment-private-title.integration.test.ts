@@ -1,8 +1,8 @@
 import { createId } from "@paralleldrive/cuid2";
 import { beforeEach, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
-import { DatabaseError, InvalidInputError, ValidationError } from "@formbricks/types/errors";
-import type { TBaseFilters } from "@formbricks/types/segment";
+import { InvalidInputError, ValidationError } from "@formbricks/types/errors";
+import type { TBaseFilters, TSegmentCreateInput } from "@formbricks/types/segment";
 import { resetDb } from "@/integration/reset-db";
 import { createSegment, updateSegment } from "@/modules/ee/contacts/segments/lib/segments";
 
@@ -30,11 +30,21 @@ let workspaceId: string;
 let victimSurveyId: string;
 let attackerSurveyId: string;
 
-const filtersOf = async (title: string) =>
-  (await prisma.segment.findUnique({ where: { workspaceId_title: { workspaceId, title } } }))?.filters;
+const privateInput = (title: string, surveyId: string, email: string): TSegmentCreateInput => ({
+  workspaceId,
+  title,
+  isPrivate: true,
+  surveyId,
+  filters: attributeFilters(email),
+});
+
+const sharedInput = (title: string, surveyId: string, email: string): TSegmentCreateInput => ({
+  ...privateInput(title, surveyId, email),
+  isPrivate: false,
+});
 
 const segmentOf = (title: string) =>
-  prisma.segment.findUnique({
+  prisma.segment.findUniqueOrThrow({
     where: { workspaceId_title: { workspaceId, title } },
     include: { surveys: { select: { id: true } } },
   });
@@ -73,46 +83,32 @@ beforeEach(async () => {
 describe("createSegment private segments (ENG-6956)", () => {
   test("a private segment titled with another survey's id is refused and the victim's segment is untouched", async () => {
     await expect(
-      createSegment({
-        workspaceId,
-        title: victimSurveyId,
-        isPrivate: true,
-        surveyId: attackerSurveyId,
-        filters: attributeFilters("attacker@example.com"),
-      })
+      createSegment(privateInput(victimSurveyId, attackerSurveyId, "attacker@example.com"))
     ).rejects.toBeInstanceOf(ValidationError);
 
-    expect(await filtersOf(victimSurveyId)).toEqual(VICTIM_FILTERS);
     const victim = await segmentOf(victimSurveyId);
-    expect(victim?.surveys.map((survey) => survey.id)).toEqual([victimSurveyId]);
+    expect(victim.filters).toEqual(VICTIM_FILTERS);
+    expect(victim.surveys.map((survey) => survey.id)).toEqual([victimSurveyId]);
     expect(
-      (await prisma.survey.findUnique({ where: { id: attackerSurveyId }, select: { segmentId: true } }))
-        ?.segmentId
+      (
+        await prisma.survey.findUniqueOrThrow({
+          where: { id: attackerSurveyId },
+          select: { segmentId: true },
+        })
+      ).segmentId
     ).toBeNull();
   });
 
   test("a survey still creates, then saves again, its own private segment", async () => {
-    const first = await createSegment({
-      workspaceId,
-      title: attackerSurveyId,
-      isPrivate: true,
-      surveyId: attackerSurveyId,
-      filters: attributeFilters("one@example.com"),
-    });
+    const first = await createSegment(privateInput(attackerSurveyId, attackerSurveyId, "one@example.com"));
     // Auto-save made the segment before publish, so the second write has to update it.
-    const second = await createSegment({
-      workspaceId,
-      title: attackerSurveyId,
-      isPrivate: true,
-      surveyId: attackerSurveyId,
-      filters: attributeFilters("two@example.com"),
-    });
+    const second = await createSegment(privateInput(attackerSurveyId, attackerSurveyId, "two@example.com"));
 
     expect(second.id).toBe(first.id);
-    expect(await filtersOf(attackerSurveyId)).toEqual([
+    expect((await segmentOf(attackerSurveyId)).filters).toEqual([
       expect.objectContaining({ resource: expect.objectContaining({ value: "two@example.com" }) }),
     ]);
-    expect(await filtersOf(victimSurveyId)).toEqual(VICTIM_FILTERS);
+    expect((await segmentOf(victimSurveyId)).filters).toEqual(VICTIM_FILTERS);
   });
 
   test("the upsert does not rewrite a shared segment that already holds the survey's title", async () => {
@@ -127,14 +123,8 @@ describe("createSegment private segments (ENG-6956)", () => {
     });
 
     await expect(
-      createSegment({
-        workspaceId,
-        title: attackerSurveyId,
-        isPrivate: true,
-        surveyId: attackerSurveyId,
-        filters: attributeFilters("overwrite@example.com"),
-      })
-    ).rejects.toBeInstanceOf(DatabaseError);
+      createSegment(privateInput(attackerSurveyId, attackerSurveyId, "overwrite@example.com"))
+    ).rejects.toThrow(new InvalidInputError("A segment with this title already exists"));
 
     const after = await prisma.segment.findUniqueOrThrow({ where: { id: shared.id } });
     expect(after.isPrivate).toBe(false);
@@ -145,53 +135,37 @@ describe("createSegment private segments (ENG-6956)", () => {
 describe("shared segment titles (ENG-6956)", () => {
   test("a shared segment cannot be created with a survey's id as its title", async () => {
     await expect(
-      createSegment({
-        workspaceId,
-        title: victimSurveyId,
-        isPrivate: false,
-        surveyId: attackerSurveyId,
-        filters: attributeFilters("squat@example.com"),
-      })
+      createSegment(sharedInput(victimSurveyId, attackerSurveyId, "squat@example.com"))
     ).rejects.toBeInstanceOf(InvalidInputError);
 
-    expect(await filtersOf(victimSurveyId)).toEqual(VICTIM_FILTERS);
+    expect((await segmentOf(victimSurveyId)).filters).toEqual(VICTIM_FILTERS);
   });
 
-  test("a shared segment can still be created with an ordinary title", async () => {
-    const segment = await createSegment({
-      workspaceId,
-      title: "Power users",
-      isPrivate: false,
-      surveyId: attackerSurveyId,
-      filters: attributeFilters("power@example.com"),
-    });
+  test("a shared segment can still be created with an ordinary title, from the segments page or a survey", async () => {
+    // The segments page sends no survey; Save as new segment in the survey editor sends its survey.
+    const fromSegmentsPage = await createSegment(sharedInput("Power users", "", "power@example.com"));
+    const fromSurvey = await createSegment(sharedInput("Loyal users", attackerSurveyId, "loyal@example.com"));
 
-    expect(segment.title).toBe("Power users");
-    expect(segment.isPrivate).toBe(false);
+    expect(fromSegmentsPage).toMatchObject({ title: "Power users", isPrivate: false, surveys: [] });
+    expect(fromSurvey).toMatchObject({ title: "Loyal users", isPrivate: false, surveys: [attackerSurveyId] });
   });
 
   test("a shared segment cannot be renamed to a survey's id, but can be renamed otherwise", async () => {
-    const shared = await createSegment({
-      workspaceId,
-      title: "Power users",
-      isPrivate: false,
-      surveyId: attackerSurveyId,
-      filters: attributeFilters("power@example.com"),
-    });
+    const shared = await createSegment(sharedInput("Power users", "", "power@example.com"));
 
     await expect(updateSegment(shared.id, { title: victimSurveyId })).rejects.toBeInstanceOf(
       InvalidInputError
     );
     expect((await prisma.segment.findUniqueOrThrow({ where: { id: shared.id } })).title).toBe("Power users");
 
-    const renamed = await updateSegment(shared.id, { title: "Loyal users" });
+    const renamed = await updateSegment(shared.id, { title: "Loyal users", isPrivate: false });
     expect(renamed.title).toBe("Loyal users");
   });
 
   test("updating a private segment keeps its own title, which is its survey's id", async () => {
     const victim = await segmentOf(victimSurveyId);
 
-    const updated = await updateSegment(victim!.id, {
+    const updated = await updateSegment(victim.id, {
       title: victimSurveyId,
       filters: attributeFilters("new@example.com"),
     });

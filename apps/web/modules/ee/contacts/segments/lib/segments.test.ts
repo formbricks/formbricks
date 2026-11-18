@@ -1,7 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import type { Prisma } from "@formbricks/database/prisma";
+import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import {
   InvalidInputError,
@@ -439,7 +439,9 @@ describe("Segment Service Tests", () => {
     // really a survey's id. The private upsert is covered against real Postgres in
     // integration/segment-private-title.integration.test.ts.
     test("should refuse a shared segment titled with the id of a survey in the workspace", async () => {
-      vi.mocked(prisma.survey.findFirst).mockResolvedValueOnce({ id: "other-survey-id" } as never);
+      vi.mocked(prisma.survey.findFirst, { partial: true, deep: true }).mockResolvedValueOnce({
+        id: "other-survey-id",
+      });
 
       await expect(
         createSegment({ ...mockSegmentCreateInput, title: "other-survey-id", surveyId })
@@ -703,7 +705,9 @@ describe("Segment Service Tests", () => {
 
     test("should refuse renaming a segment to the id of a survey in its workspace (ENG-6956)", async () => {
       vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegmentPrisma);
-      vi.mocked(prisma.survey.findFirst).mockResolvedValueOnce({ id: "other-survey-id" } as never);
+      vi.mocked(prisma.survey.findFirst, { partial: true, deep: true }).mockResolvedValueOnce({
+        id: "other-survey-id",
+      });
 
       await expect(updateSegment(segmentId, { title: "other-survey-id" })).rejects.toThrow(InvalidInputError);
 
@@ -781,6 +785,20 @@ describe("Segment Service Tests", () => {
         select: selectSegment,
       });
       expect(prisma.segment.update).toHaveBeenCalled();
+    });
+
+    test("should refuse renaming onto a title another segment holds (ENG-6956)", async () => {
+      vi.mocked(prisma.segment.findUnique).mockResolvedValue(mockSegmentPrisma);
+      vi.mocked(prisma.segment.update).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Unique constraint failed", {
+          code: "P2002",
+          clientVersion: "test",
+        })
+      );
+
+      await expect(updateSegment(segmentId, updateData)).rejects.toThrow(
+        new InvalidInputError("A segment with this title already exists")
+      );
     });
   });
 

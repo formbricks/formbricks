@@ -36,6 +36,7 @@ import {
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
 import { andVisibleSurveys } from "@/lib/survey/visibility/predicate";
+import { isUniqueConstraintError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import {
   SURVEY_WORKSPACE_LOOKUP_BATCH_SIZE,
@@ -260,6 +261,16 @@ const assertTitleIsNotSurveyId = async (workspaceId: string, title: string): Pro
   }
 };
 
+/**
+ * Titles are unique per workspace, so a create or rename onto a title another segment holds (a survey's
+ * private segment included) is the caller's input error, not a database fault.
+ */
+const throwSegmentTitleTaken = (error: unknown): void => {
+  if (isUniqueConstraintError(error)) {
+    throw new InvalidInputError("A segment with this title already exists");
+  }
+};
+
 export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Promise<TSegment> => {
   validateInputs([segmentCreateInput, ZSegmentCreateInput]);
 
@@ -271,10 +282,8 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
     // Private segments use upsert because auto-save may have already created a
     // default (empty-filter) segment via connectOrCreate before the user publishes.
     // Without upsert the second create hits the (workspaceId, title) unique constraint.
-    // ENG-6956: the key is the survey's id, chosen here rather than taken from the client's title (which
-    // ZSegmentCreateInput already requires to match). The caller authorizes `survey.write` on `surveyId`,
-    // so the update branch only reaches that survey's own segment; `isPrivate` keeps it off a shared
-    // segment that holds the title.
+    // ENG-6956: keyed by the survey's id, chosen here (see ZSegmentCreateInput). The caller authorizes
+    // `survey.write` on `surveyId`, and `isPrivate` keeps the update off a shared segment with that title.
     if (isPrivate) {
       const segment = await prisma.segment.upsert({
         where: {
@@ -319,6 +328,7 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
 
     return transformPrismaSegment(segment);
   } catch (error) {
+    throwSegmentTitleTaken(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
@@ -561,6 +571,7 @@ export const updateSegment = async (segmentId: string, data: TSegmentUpdateInput
 
     return transformPrismaSegment(segment);
   } catch (error) {
+    throwSegmentTitleTaken(error);
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       throw new DatabaseError(error.message);
     }
