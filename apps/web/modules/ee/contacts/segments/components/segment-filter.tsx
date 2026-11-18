@@ -295,8 +295,8 @@ function AttributeSegmentFilter({
       const defaultOperator = newAttributeDataType === "date" ? "isOlderThan" : "equals";
       const defaultValue = newAttributeDataType === "date" ? { amount: 1, unit: "days" as const } : "";
 
-      updateOperatorInFilter(updatedSegment.filters, filterId, defaultOperator as any);
-      updateFilterValue(updatedSegment.filters, filterId, defaultValue as any);
+      updateOperatorInFilter(updatedSegment.filters, filterId, defaultOperator);
+      updateFilterValue(updatedSegment.filters, filterId, defaultValue);
     }
 
     setSegment(updatedSegment);

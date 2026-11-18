@@ -133,7 +133,7 @@ describe("useSwitcherData", () => {
   });
 
   test("avoids duplicate fetches when load() is called in rapid succession", async () => {
-    let resolveLoader: (value: any) => void = () => {};
+    let resolveLoader: (value: unknown) => void = () => {};
     const loaderPromise = new Promise((resolve) => {
       resolveLoader = resolve;
     });

@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { ZId } from "@formbricks/types/common";
+import { ZId, ZStorageUrl } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
 import { getOrganization } from "@/lib/organization/service";
@@ -18,7 +18,7 @@ import { sendEmailCustomizationPreviewEmail } from "@/modules/email";
 
 const ZUpdateOrganizationEmailLogoUrlAction = z.object({
   organizationId: ZId,
-  logoUrl: z.string(),
+  logoUrl: ZStorageUrl,
 });
 
 export const updateOrganizationEmailLogoUrlAction = authenticatedActionClient

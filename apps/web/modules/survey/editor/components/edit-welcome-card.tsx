@@ -45,7 +45,7 @@ export const EditWelcomeCard = ({
   const workspaceId =
     path?.split("/environments/")[1]?.split("/")[0] ?? path?.split("/workspaces/")[1]?.split("/")[0];
 
-  let open = activeElementId == "start";
+  const open = activeElementId == "start";
 
   const setOpen = (e: boolean) => {
     if (e) {

@@ -36,7 +36,9 @@ const oauthStatePayload = {
 
 const mockRedisConsume = (value: unknown) => {
   const evalMock = vi.fn().mockResolvedValue(value === null ? null : JSON.stringify(value));
-  mockCache.getRedisClient.mockResolvedValue({ eval: evalMock } as any);
+  mockCache.getRedisClient.mockResolvedValue({ eval: evalMock } as unknown as Awaited<
+    ReturnType<typeof mockCache.getRedisClient>
+  >);
   return evalMock;
 };
 
@@ -229,7 +231,7 @@ describe("integration OAuth state", () => {
   test("rejects unexpected cached value types", async () => {
     mockCache.getRedisClient.mockResolvedValue({
       eval: vi.fn().mockResolvedValue(42),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof mockCache.getRedisClient>>);
 
     await expect(
       consumeIntegrationOAuthState({
@@ -245,7 +247,7 @@ describe("integration OAuth state", () => {
   test("fails closed when atomic cache consumption fails", async () => {
     mockCache.getRedisClient.mockResolvedValue({
       eval: vi.fn().mockRejectedValue(new Error("Redis failed")),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof mockCache.getRedisClient>>);
 
     await expect(
       consumeIntegrationOAuthState({

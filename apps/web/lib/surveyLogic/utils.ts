@@ -335,12 +335,97 @@ export const evaluateLogic = (
     evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
   );
 
-/** The survey element an operand names, when it names one that exists. */
-const findOperandElement = (
+/**
+ * One condition's operands, resolved for comparison. Only element and hiddenField operands get a
+ * field; a `variable` operand's declared type is read through `getComputedFieldDataType` instead,
+ * which tolerates a condition naming a field the survey no longer declares.
+ */
+interface TConditionValues {
+  condition: TSingleCondition;
+  leftValue: unknown;
+  rightValue: unknown;
+  leftField: TSurveyElement | string;
+  rightField: TSurveyElement | string;
+  /** How a date field operand orders against the other side, when one side is a date field. */
+  dateOrder: number | undefined;
+}
+
+/** The element an element operand names (or "" when it is gone), the id of a hidden field, else "". */
+const getOperandField = (
   elements: TSurveyElement[],
   operand: TSingleCondition["leftOperand"] | TSingleCondition["rightOperand"]
-): TSurveyElement | undefined =>
-  operand?.type === "element" ? elements.find((element) => element.id === operand.value) : undefined;
+): TSurveyElement | string => {
+  if (operand?.type === "element") return elements.find((q) => q.id === operand.value) ?? "";
+  if (operand?.type === "hiddenField") return operand.value;
+  return "";
+};
+
+/**
+ * Resolves a condition's operands for comparison, or `undefined` when it can never match: a matrix
+ * row condition naming a row or column id the matrix doesn't have (P48), negated operators included.
+ */
+const resolveConditionValues = (
+  localSurvey: TJsWorkspaceStateSurvey,
+  data: TResponseData,
+  variablesData: TResponseVariables,
+  condition: TSingleCondition,
+  selectedLanguage: string,
+  embeddedValues: TResponseData
+): TConditionValues | undefined => {
+  const leftValue = getLeftOperandValue(
+    localSurvey,
+    data,
+    variablesData,
+    condition.leftOperand,
+    selectedLanguage,
+    embeddedValues
+  );
+  let rightValue: unknown = condition.rightOperand
+    ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand, embeddedValues)
+    : undefined;
+
+  const elements = getElementsFromBlocks(localSurvey.blocks);
+  const computedFields = getComputedEmbeddedFields(localSurvey);
+  const leftField = getOperandField(elements, condition.leftOperand);
+  const rightField = getOperandField(elements, condition.rightOperand);
+
+  if (
+    condition.leftOperand.type === "variable" &&
+    getComputedFieldDataType(computedFields, condition.leftOperand.value) === "number" &&
+    // `reserved` alongside `hiddenField` as defence in depth. A *projected* reserved value does not
+    // need it: the catalog read seam runs `coerceToEmbeddedDataType`, so `durationSeconds` and the
+    // other number-typed entries arrive here as JS numbers and `Number()` is a no-op. What this
+    // guards is the one shape the map can still hold as a string — `mergeReservedValues` overlays
+    // `response.data` on the projection unconditionally, so a reserved key that is also a response
+    // key carries that raw string past the seam.
+    (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
+  ) {
+    rightValue = Number(rightValue as string);
+  }
+
+  // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
+  if (
+    condition.leftOperand.type === "element" &&
+    typeof leftField === "object" &&
+    leftField.type === TSurveyElementTypeEnum.Matrix &&
+    isMatrixRowCondition(condition.leftOperand.meta)
+  ) {
+    if (namesUnknownMatrixId(leftField, condition.leftOperand.meta, condition.rightOperand)) return undefined;
+    if (condition.rightOperand?.type === "static") {
+      rightValue = resolveMatrixColumnValue(leftField, condition.rightOperand);
+    }
+  }
+
+  // ENG-6935: a date field (computed or ingested) holding a timestamp equals a picked day when it
+  // falls on that day, as "is before" and "is after" read it; see `compareDateValues`.
+  const embeddedFields = getSurveyEmbeddedFields(localSurvey);
+  const onDateField =
+    isDateFieldOperand(condition.leftOperand, embeddedFields) ||
+    isDateFieldOperand(condition.rightOperand, embeddedFields);
+  const dateOrder = onDateField ? compareDateValues(leftValue, rightValue) : undefined;
+
+  return { condition, leftValue, rightValue, leftField, rightField, dateOrder };
+};
 
 const evaluateSingleCondition = (
   localSurvey: TJsWorkspaceStateSurvey,
@@ -351,71 +436,141 @@ const evaluateSingleCondition = (
   embeddedValues: TResponseData
 ): boolean => {
   try {
-    let leftValue = getLeftOperandValue(
+    const values = resolveConditionValues(
       localSurvey,
       data,
       variablesData,
-      condition.leftOperand,
+      condition,
       selectedLanguage,
       embeddedValues
     );
-
-    let rightValue = condition.rightOperand
-      ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand, embeddedValues)
-      : undefined;
-
-    const elements = getElementsFromBlocks(localSurvey.blocks);
-
-    const computedFields = getComputedEmbeddedFields(localSurvey);
-
-    // Only element operands carry an element type; a `variable` operand's declared type is read
-    // through `getComputedFieldDataType` instead, which tolerates a field the survey no longer declares.
-    const leftElement = findOperandElement(elements, condition.leftOperand);
-    const rightElement = findOperandElement(elements, condition.rightOperand);
-
-    if (
-      condition.leftOperand.type === "variable" &&
-      getComputedFieldDataType(computedFields, condition.leftOperand.value) === "number" &&
-      // `reserved` alongside `hiddenField` as defence in depth. A *projected* reserved value does not
-      // need it: the catalog read seam runs `coerceToEmbeddedDataType`, so `durationSeconds` and the
-      // other number-typed entries arrive here as JS numbers and `Number()` is a no-op. What this
-      // guards is the one shape the map can still hold as a string — `mergeReservedValues` overlays
-      // `response.data` on the projection unconditionally, so a reserved key that is also a response
-      // key carries that raw string past the seam.
-      (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
-    ) {
-      rightValue = Number(rightValue as string);
-    }
-
-    // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
-    if (
-      condition.leftOperand.type === "element" &&
-      leftElement?.type === TSurveyElementTypeEnum.Matrix &&
-      isMatrixRowCondition(condition.leftOperand.meta)
-    ) {
-      // A row or column id the matrix doesn't have never matches (P48), negated operators included.
-      if (namesUnknownMatrixId(leftElement, condition.leftOperand.meta, condition.rightOperand)) return false;
-      if (condition.rightOperand?.type === "static") {
-        rightValue = resolveMatrixColumnValue(leftElement, condition.rightOperand);
-      }
-    }
-
-    // ENG-6935: a date field (computed or ingested) holding a timestamp equals a picked day when it
-    // falls on that day, as "is before" and "is after" read it; see `compareDateValues`.
-    const embeddedFields = getSurveyEmbeddedFields(localSurvey);
-    const onDateField =
-      isDateFieldOperand(condition.leftOperand, embeddedFields) ||
-      isDateFieldOperand(condition.rightOperand, embeddedFields);
-    const dateOrder = onDateField ? compareDateValues(leftValue, rightValue) : undefined;
-
-    return compareConditionValues(condition.operator, leftValue, rightValue, {
-      leftElementType: leftElement?.type,
-      rightElementType: rightElement?.type,
-      dateOrder,
+    if (!values) return false;
+    // ADR 0046: the comparison survey logic and workflow conditions share.
+    return compareConditionValues(condition.operator, values.leftValue, values.rightValue, {
+      leftElementType: typeof values.leftField === "object" ? values.leftField.type : undefined,
+      rightElementType: typeof values.rightField === "object" ? values.rightField.type : undefined,
+      dateOrder: values.dateOrder,
     });
-  } catch (e) {
+  } catch {
     return false;
   }
+};
+
+type TElementOperand = Extract<TSingleCondition["leftOperand"], { type: "element" }>;
+type TChoiceElement = Extract<TSurveyElement, { type: "multipleChoiceSingle" | "multipleChoiceMulti" }>;
+type TMatrixElement = Extract<TSurveyElement, { type: "matrix" }>;
+
+/** An open text number answer as a number; blank or non-numeric answers read as unset. */
+const getNumberAnswerValue = (responseValue: TResponseData[string] | undefined) => {
+  if (responseValue === undefined) return undefined;
+  if (typeof responseValue === "string" && responseValue.trim() === "") return undefined;
+
+  const numberValue = typeof responseValue === "number" ? responseValue : Number(responseValue);
+  return isNaN(numberValue) ? undefined : numberValue;
+};
+
+/** A choice answer as option ids: a label without an option reads as "other" when it is on. */
+const getChoiceAnswerValue = (
+  currentElement: TChoiceElement,
+  responseValue: TResponseData[string] | undefined,
+  selectedLanguage: string
+) => {
+  const isOthersEnabled = currentElement.choices.at(-1)?.id === "other";
+
+  // ENG-6943: the label in the response's language first, then in any language of the survey.
+  if (typeof responseValue === "string") {
+    const choice = findByLocalizedLabel(currentElement.choices, responseValue, selectedLanguage);
+
+    if (!choice) {
+      if (isOthersEnabled) {
+        return "other";
+      }
+
+      return undefined;
+    }
+
+    return choice.id;
+  } else if (Array.isArray(responseValue)) {
+    const choices: string[] = [];
+    responseValue.forEach((value) => {
+      const foundChoice = findByLocalizedLabel(currentElement.choices, value, selectedLanguage);
+
+      if (foundChoice) {
+        choices.push(foundChoice.id);
+      } else if (isOthersEnabled) {
+        choices.push("other");
+      }
+    });
+    return Array.from(new Set(choices));
+  }
+
+  return responseValue;
+};
+
+/** A matrix row condition's answer: the position of the column picked in that row. */
+const getMatrixRowAnswerValue = (
+  currentElement: TMatrixElement,
+  meta: TElementOperand["meta"],
+  responseValue: Record<string, string>,
+  selectedLanguage: string
+) => {
+  // ENG-6934: the row id first, the position as the fallback; an unknown id is no row.
+  const rowIndex = resolveMatrixRowIndex(currentElement, meta);
+  if (rowIndex === undefined) return undefined;
+
+  const row = findMatrixRowKey(currentElement.rows[rowIndex].label, responseValue, selectedLanguage);
+
+  const rowValue = row === undefined ? undefined : responseValue[row];
+  if (rowValue === "") return "";
+
+  if (typeof rowValue === "string") {
+    const column = findByLocalizedLabel(currentElement.columns, rowValue, selectedLanguage);
+    if (!column) return undefined;
+    return currentElement.columns.indexOf(column).toString();
+  }
+  return undefined;
+};
+
+/** An element operand's answer, in the form conditions compare: numbers, option ids, column positions. */
+const getElementOperandValue = (
+  localSurvey: TJsWorkspaceStateSurvey,
+  data: TResponseData,
+  leftOperand: TElementOperand,
+  selectedLanguage: string
+) => {
+  const elements = getElementsFromBlocks(localSurvey.blocks);
+  const currentElement = elements.find((q) => q.id === leftOperand.value);
+  if (!currentElement) return undefined;
+
+  const responseValue = data[leftOperand.value];
+
+  if (currentElement.type === "openText" && currentElement.inputType === "number") {
+    return getNumberAnswerValue(responseValue);
+  }
+
+  if (currentElement.type === "multipleChoiceSingle" || currentElement.type === "multipleChoiceMulti") {
+    return getChoiceAnswerValue(currentElement, responseValue, selectedLanguage);
+  }
+
+  // T21 (ENG-6937): a ranking stores the ranked labels in the respondent's language; conditions name
+  // option ids, so "was ranked" maps each label back, as multi select does.
+  if (currentElement.type === "ranking" && Array.isArray(responseValue)) {
+    return responseValue.flatMap((value) => {
+      const choice = findByLocalizedLabel(currentElement.choices, value, selectedLanguage);
+      return choice ? [choice.id] : [];
+    });
+  }
+
+  if (
+    currentElement.type === "matrix" &&
+    typeof responseValue === "object" &&
+    !Array.isArray(responseValue) &&
+    isMatrixRowCondition(leftOperand.meta)
+  ) {
+    return getMatrixRowAnswerValue(currentElement, leftOperand.meta, responseValue, selectedLanguage);
+  }
+
+  return data[leftOperand.value];
 };
 
 const getLeftOperandValue = (
@@ -428,86 +583,7 @@ const getLeftOperandValue = (
 ) => {
   switch (leftOperand.type) {
     case "element":
-      const elements = getElementsFromBlocks(localSurvey.blocks);
-      const currentElement = elements.find((q) => q.id === leftOperand.value);
-      if (!currentElement) return undefined;
-
-      const responseValue = data[leftOperand.value];
-
-      if (currentElement.type === "openText" && currentElement.inputType === "number") {
-        if (responseValue === undefined) return undefined;
-        if (typeof responseValue === "string" && responseValue.trim() === "") return undefined;
-
-        const numberValue = typeof responseValue === "number" ? responseValue : Number(responseValue);
-        return isNaN(numberValue) ? undefined : numberValue;
-      }
-
-      if (currentElement.type === "multipleChoiceSingle" || currentElement.type === "multipleChoiceMulti") {
-        const isOthersEnabled = currentElement.choices.at(-1)?.id === "other";
-
-        // ENG-6943: the label in the response's language first, then in any language of the survey.
-        if (typeof responseValue === "string") {
-          const choice = findByLocalizedLabel(currentElement.choices, responseValue, selectedLanguage);
-
-          if (!choice) {
-            if (isOthersEnabled) {
-              return "other";
-            }
-
-            return undefined;
-          }
-
-          return choice.id;
-        } else if (Array.isArray(responseValue)) {
-          let choices: string[] = [];
-          responseValue.forEach((value) => {
-            const foundChoice = findByLocalizedLabel(currentElement.choices, value, selectedLanguage);
-
-            if (foundChoice) {
-              choices.push(foundChoice.id);
-            } else if (isOthersEnabled) {
-              choices.push("other");
-            }
-          });
-          if (choices) {
-            return Array.from(new Set(choices));
-          }
-        }
-      }
-
-      // T21 (ENG-6937): a ranking stores the ranked labels in the respondent's language; conditions name
-      // option ids, so "was ranked" maps each label back, as multi select does.
-      if (currentElement.type === "ranking" && Array.isArray(responseValue)) {
-        return responseValue.flatMap((value) => {
-          const choice = findByLocalizedLabel(currentElement.choices, value, selectedLanguage);
-          return choice ? [choice.id] : [];
-        });
-      }
-
-      if (
-        currentElement.type === "matrix" &&
-        typeof responseValue === "object" &&
-        !Array.isArray(responseValue)
-      ) {
-        if (isMatrixRowCondition(leftOperand.meta)) {
-          // ENG-6934: the row id first, the position as the fallback; an unknown id is no row.
-          const rowIndex = resolveMatrixRowIndex(currentElement, leftOperand.meta);
-          if (rowIndex === undefined) return undefined;
-          const row = findMatrixRowKey(currentElement.rows[rowIndex].label, responseValue, selectedLanguage);
-
-          const rowValue = row === undefined ? undefined : responseValue[row];
-          if (rowValue === "") return "";
-
-          if (typeof rowValue === "string") {
-            const column = findByLocalizedLabel(currentElement.columns, rowValue, selectedLanguage);
-            if (!column) return undefined;
-            return currentElement.columns.indexOf(column).toString();
-          }
-          return undefined;
-        }
-      }
-
-      return data[leftOperand.value];
+      return getElementOperandValue(localSurvey, data, leftOperand, selectedLanguage);
     case "variable":
       return getLogicVariableValue(getComputedEmbeddedFields(localSurvey), leftOperand.value, variablesData);
     case "hiddenField":
@@ -592,6 +668,69 @@ export const performActions = (
   return { jumpTarget, requiredElementIds, calculations };
 };
 
+/** The value a one-step calculation applies: a static value, a variable, or an answer. */
+const getCalculationOperand = (
+  action: TActionCalculate | TBlockActionCalculate,
+  data: TResponseData,
+  calculations: Record<string, number | string>,
+  dataType: string
+): string | number | undefined => {
+  let operandValue: string | number | undefined;
+
+  // Determine the operand value based on the action.value type
+  switch (action.value.type) {
+    case "static":
+      operandValue = action.value.value;
+      break;
+    case "variable": {
+      const value = calculations[action.value.value];
+      if (typeof value === "number" || typeof value === "string") {
+        operandValue = value;
+      }
+      break;
+    }
+    // Deliberately no `default` arm: a legacy `"question"` operand (admitted at the type level by
+    // ZDynamicLogicFieldValueDeprecated, normalized away at the API boundary) stays unresolved and
+    // the calculation returns undefined, exactly as before.
+    case "element":
+    case "hiddenField": {
+      const val = data[action.value.value];
+      if (typeof val === "number" || typeof val === "string") {
+        if (dataType === "number" && !Number.isNaN(Number(val))) {
+          operandValue = Number(val);
+        } else {
+          operandValue = val;
+        }
+      }
+      break;
+    }
+  }
+  return operandValue;
+};
+
+/** Applies a one-step operator; `undefined` for a division by zero. */
+const applyCalculationOperator = (
+  operator: (TActionCalculate | TBlockActionCalculate)["operator"],
+  currentValue: number | string,
+  operandValue: number | string
+): number | string | undefined => {
+  switch (operator) {
+    case "add":
+      return Number(currentValue) + Number(operandValue);
+    case "subtract":
+      return Number(currentValue) - Number(operandValue);
+    case "multiply":
+      return Number(currentValue) * Number(operandValue);
+    case "divide":
+      if (Number(operandValue) === 0) return undefined;
+      return Number(currentValue) / Number(operandValue);
+    case "assign":
+      return operandValue;
+    case "concat":
+      return String(currentValue) + String(operandValue);
+  }
+};
+
 const performCalculation = (
   survey: TJsWorkspaceStateSurvey,
   action: TActionCalculate | TBlockActionCalculate,
@@ -622,60 +761,9 @@ const performCalculation = (
   if (currentValue === undefined) {
     currentValue = dataType === "number" ? 0 : "";
   }
-  let operandValue: string | number | undefined;
 
-  // Determine the operand value based on the action.value type
-  switch (action.value.type) {
-    case "static":
-      operandValue = action.value.value;
-      break;
-    case "variable":
-      const value = calculations[action.value.value];
-      if (typeof value === "number" || typeof value === "string") {
-        operandValue = value;
-      }
-      break;
-    // Deliberately no `default` arm: a legacy `"question"` operand (admitted at the type level by
-    // ZDynamicLogicFieldValueDeprecated, normalized away at the API boundary) stays unresolved and
-    // the calculation returns undefined, exactly as before.
-    case "element":
-    case "hiddenField":
-      const val = data[action.value.value];
-      if (typeof val === "number" || typeof val === "string") {
-        if (dataType === "number" && !Number.isNaN(Number(val))) {
-          operandValue = Number(val);
-        } else {
-          operandValue = val;
-        }
-      }
-      break;
-  }
-
+  const operandValue = getCalculationOperand(action, data, calculations, dataType);
   if (operandValue === undefined || operandValue === null) return undefined;
 
-  let result: number | string;
-
-  switch (action.operator) {
-    case "add":
-      result = Number(currentValue) + Number(operandValue);
-      break;
-    case "subtract":
-      result = Number(currentValue) - Number(operandValue);
-      break;
-    case "multiply":
-      result = Number(currentValue) * Number(operandValue);
-      break;
-    case "divide":
-      if (Number(operandValue) === 0) return undefined;
-      result = Number(currentValue) / Number(operandValue);
-      break;
-    case "assign":
-      result = operandValue;
-      break;
-    case "concat":
-      result = String(currentValue) + String(operandValue);
-      break;
-  }
-
-  return result;
+  return applyCalculationOperator(action.operator, currentValue, operandValue);
 };

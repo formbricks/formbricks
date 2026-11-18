@@ -92,7 +92,7 @@ start_install() {
   [[ -n "${labels}" ]] || { printf '%s\n' "No Traefik labels were generated for the formbricks service." >&2; exit 1; }
 
   {
-    printf '%s\n' "services:" "  formbricks:" "    image: node:24-alpine" \
+    printf '%s\n' "services:" "  formbricks:" "    image: node:26-alpine" \
       '    command: ["node", "/app/stub.js"]' "    volumes:" "      - ./stub.js:/app/stub.js:ro" "    labels:"
     printf '%s\n' "${labels}"
     # Mounted where the installer mounts it; Traefik finds /traefik.yaml on its own, as in a real install.

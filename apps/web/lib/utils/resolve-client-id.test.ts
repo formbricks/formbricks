@@ -20,7 +20,7 @@ describe("resolveClientApiIds", () => {
   test("resolves a workspaceId to workspaceId", async () => {
     vi.mocked(prisma.workspace.findFirst).mockResolvedValue({
       id: "ws-456",
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.workspace.findFirst>>);
 
     const result = await resolveClientApiIds("ws-456");
 
@@ -34,7 +34,7 @@ describe("resolveClientApiIds", () => {
   });
 
   test("falls back to legacyEnvironmentId when primary lookup fails", async () => {
-    vi.mocked(prisma.workspace.findFirst).mockResolvedValue({ id: "ws-456" } as any);
+    vi.mocked(prisma.workspace.findFirst, { partial: true }).mockResolvedValue({ id: "ws-456" });
 
     const result = await resolveClientApiIds("env-old-123");
 
@@ -62,7 +62,7 @@ describe("findWorkspaceByIdOrLegacyEnvId", () => {
   });
 
   test("returns workspace when found by primary id", async () => {
-    vi.mocked(prisma.workspace.findFirst).mockResolvedValue({ id: "ws-123" } as any);
+    vi.mocked(prisma.workspace.findFirst, { partial: true }).mockResolvedValue({ id: "ws-123" });
 
     const result = await findWorkspaceByIdOrLegacyEnvId("ws-123");
 
@@ -71,7 +71,7 @@ describe("findWorkspaceByIdOrLegacyEnvId", () => {
   });
 
   test("returns workspace when found by legacyEnvironmentId", async () => {
-    vi.mocked(prisma.workspace.findFirst).mockResolvedValue({ id: "ws-123" } as any);
+    vi.mocked(prisma.workspace.findFirst, { partial: true }).mockResolvedValue({ id: "ws-123" });
 
     const result = await findWorkspaceByIdOrLegacyEnvId("env-old");
 

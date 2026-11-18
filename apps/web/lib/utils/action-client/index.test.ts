@@ -84,7 +84,7 @@ describe("isExpectedError (shared helper)", () => {
     { ErrorClass: UniqueConstraintError, args: ["Already exists"] },
     { ErrorClass: RequestBodyTooLargeError, args: [2 * 1024 * 1024] },
   ])("returns true for $ErrorClass.name", ({ ErrorClass, args }) => {
-    const error = new (ErrorClass as any)(...args);
+    const error = new (ErrorClass as new (...args: unknown[]) => Error)(...args);
     expect(isExpectedError(error)).toBe(true);
   });
 
@@ -263,7 +263,7 @@ describe("authenticatedActionClient", () => {
 
   test("throws AuthorizationError when user is not found", async () => {
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1" }, expires: "2999-01-01T00:00:00.000Z" });
-    vi.mocked(getUser).mockResolvedValue(null as any);
+    vi.mocked(getUser, { partial: true }).mockResolvedValue(null);
 
     const action = authenticatedActionClient.action(async () => "ok");
     const result = await action();
@@ -274,7 +274,7 @@ describe("authenticatedActionClient", () => {
 
   test("executes action successfully when session and user exist", async () => {
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1" }, expires: "2999-01-01T00:00:00.000Z" });
-    vi.mocked(getUser).mockResolvedValue({ id: "user-1", name: "Test" } as any);
+    vi.mocked(getUser, { partial: true }).mockResolvedValue({ id: "user-1", name: "Test" });
 
     const action = authenticatedActionClient.action(async () => "success");
     const result = await action();

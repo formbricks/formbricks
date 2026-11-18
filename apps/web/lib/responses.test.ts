@@ -53,16 +53,16 @@ describe("Response Processing", () => {
     });
 
     test("should return empty string for unsupported types", () => {
-      expect(processResponseData(undefined as any)).toBe("");
+      expect(processResponseData(undefined)).toBe("");
     });
 
     test("should filter out null values from array", () => {
-      const input = ["a", null, "c"] as any;
+      const input = ["a", null, "c"] as Parameters<typeof processResponseData>[0];
       expect(processResponseData(input)).toBe("a; c");
     });
 
     test("should filter out undefined values from array", () => {
-      const input = ["a", undefined, "c"] as any;
+      const input = ["a", undefined, "c"] as Parameters<typeof processResponseData>[0];
       expect(processResponseData(input)).toBe("a; c");
     });
   });
@@ -156,11 +156,16 @@ describe("Response Processing", () => {
     });
 
     test("should handle pictureSelection type with null input", () => {
-      expect(convertResponseValue(null as any, mockPictureSelectionQuestion)).toEqual([]);
+      expect(
+        convertResponseValue(
+          null as unknown as Parameters<typeof convertResponseValue>[0],
+          mockPictureSelectionQuestion
+        )
+      ).toEqual([]);
     });
 
     test("should handle pictureSelection type with undefined input", () => {
-      expect(convertResponseValue(undefined as any, mockPictureSelectionQuestion)).toEqual([]);
+      expect(convertResponseValue(undefined, mockPictureSelectionQuestion)).toEqual([]);
     });
 
     test("should handle default case with string input", () => {

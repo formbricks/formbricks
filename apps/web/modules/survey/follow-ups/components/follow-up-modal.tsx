@@ -80,6 +80,8 @@ interface AddFollowUpModalProps {
   readonly locale: TUserLocale;
 }
 
+const withoutId = (ids: string[], id: string) => ids.filter((otherId) => otherId !== id);
+
 export const FollowUpModal = ({
   localSurvey,
   open,
@@ -518,7 +520,7 @@ export const FollowUpModal = ({
                                             } else {
                                               form.setValue(
                                                 "endingIds",
-                                                (field.value ?? []).filter((id) => id !== ending.id)
+                                                withoutId(field.value ?? [], ending.id)
                                               );
                                             }
                                           }}

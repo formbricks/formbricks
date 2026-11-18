@@ -9,12 +9,12 @@ the first line stays in `AGENTS.md`, and task process lives under `docs/agents/`
 ## Tooling and Review Scope
 
 Apply the judgment calls below to the diff. Check the relevant tool output before repeating a finding:
-Prettier owns formatting and import order; ESLint owns its enabled rules; schema freshness checks own
-generated API drift. `packages/config-eslint/` and `apps/web/eslint.config.mjs` define lint severity and
-exceptions. A warning is still actionable when CI does not block it.
+Prettier owns formatting and import order; oxlint owns its enabled rules; schema freshness checks own
+generated API drift. `packages/config-oxlint/` and each workspace's `oxlint.config.ts` define lint severity
+and exceptions. A warning is still actionable when CI does not block it.
 
 Static `unstable_cache` imports from `next/cache` are lint errors, and so are React component props that
-are not read-only (`react/prefer-read-only-props`). `pnpm workflow:check` enforces explicit
+are not read-only (`react-js/prefer-read-only-props`). `pnpm workflow:check` enforces explicit
 permission maps (or caller inheritance for workflows triggered only by `workflow_call`) and runner
 hardening first for literal `ubuntu-*` runner labels, including version and architecture pins. Reviewers
 still judge whether requested token permissions are minimal and whether runner choices outside this
@@ -33,19 +33,29 @@ These remain review checks until their enforcement handles the repository's exis
   variables, and `SCREAMING_SNAKE_CASE` for constants.
 - Keep responsibilities focused; consolidate duplicated behavior when it has one reason to change.
 - Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
-- Prefer type inference and shared types from `@formbricks/types`; new `any`s are still findings where
-  ESLint reports them only as warnings.
+- Prefer type inference and shared types from `@formbricks/types`. `any` is a lint error everywhere
+  (`typescript/no-explicit-any`); in tests, type mocks with `vi.mocked(fn)` (`{ partial: true }` for a
+  partial fixture) rather than casting.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
+- A file stays under 5,000 tokens (about 20 KB of source). Past that, split it along its responsibilities
+  instead of growing it. A change that pushes a file over the limit splits it in the same PR. Generated
+  files, locale files and lockfiles are exempt, and an existing file already over the limit is not a
+  reason to refactor it unless the change touches it.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 - A control's enabled state comes from the permission the server action checks, passed down from the server,
   not recomputed on the client. A control that looks editable and then fails on save is a finding.
+- A change that replaces a tool keeps every behaviour the old setup carried (script flags, inline config
+  comments, per-package overrides) or lists what it drops under Open gaps.
 
 ## Existing Patterns
 
 - Before designing a piece, find the feature that already does something similar and build the new one the
   same way: module layout, API shape, UI components, tests.
 - Extend what nearly fits (a prop, an option, a parameter) rather than copying it. UI reuses the components of
-  similar-looking screens, guided by `.agents/formbricks-context/DESIGN.md` when it exists.
+  similar-looking screens, guided by `.agents/formbricks-context/DESIGN.md` when it exists, so the design stays
+  consistent.
+- Add a new component or design pattern only when no existing one can carry the interaction. Say why in the
+  plan and the PR.
 - A bad pattern is the exception: name what is wrong with it and fix it. When the change already touches that
   code, the refactor ships in the same PR as its own commit; otherwise it becomes a Linear ticket.
 - A fix names its siblings. Search for the same call, predicate or literal, then fix every copy in the same
@@ -305,7 +315,7 @@ Do not:
   afterwards, and every `<style>` without the host's nonce. Survey text is rich-text HTML full of `style`
   attributes, so markup is never parsed or injected raw: pass it through `stripInlineStyles` or
   `sanitizeSurveyHtml` from `@formbricks/survey-ui`, and write CSS with `textContent`. The `csp-safe`
-  ESLint rules in those four packages flag `DOMParser`, `innerHTML`, `dangerouslySetInnerHTML`,
+  lint rules in those four packages flag `DOMParser`, `innerHTML`, `dangerouslySetInnerHTML`,
   `setAttribute("style")` and `createElement("style")`; an exception is disabled on its line with the reason.
   Lint cannot see data, so `apps/web/playwright/survey-csp.spec.ts` renders the built bundle under the
   customer policy with styled text in every rich-text field. A new question type goes into the kitchen sink

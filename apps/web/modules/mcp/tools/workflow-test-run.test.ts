@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
 import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { startWorkflowTestRun } from "@/app/api/v3/workflows/lib/test-run";
+import type { TToolHandler } from "./test-utils";
 import { registerWorkflowTestRunTools } from "./workflow-test-run";
 
 vi.mock("@/app/api/v3/workflows/lib/test-run", () => ({ startWorkflowTestRun: vi.fn() }));
@@ -42,23 +43,22 @@ const readOnlyAuthInfo = {
 };
 
 const createToolServer = () => {
-  const tools = new Map<
-    string,
-    { config: Record<string, unknown>; handler: (input: any, extra: any) => any }
-  >();
+  const tools = new Map<string, { config: Record<string, unknown>; handler: TToolHandler }>();
   const server = {
-    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: any) => {
+    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: TToolHandler) => {
       tools.set(name, { config, handler });
     }),
   };
-  registerWorkflowTestRunTools(server as any);
+  registerWorkflowTestRunTools(server as unknown as Parameters<typeof registerWorkflowTestRunTools>[0]);
   return tools;
 };
 
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
-  vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+  vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as ReturnType<
+    typeof buildV3AuditLog
+  >);
   vi.mocked(startWorkflowTestRun).mockResolvedValue(
     Response.json({ code: "invalid_workflow_state" }, { status: 422 })
   );

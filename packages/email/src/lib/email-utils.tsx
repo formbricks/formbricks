@@ -8,9 +8,11 @@ const getOriginalFileNameFromUrl = (url: string): string => {
   try {
     const urlObj = new URL(url);
     const pathname = urlObj.pathname;
+    // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty last path segment falls back too
     const filename = pathname.split("/").pop() || "file";
     return decodeURIComponent(filename);
   } catch {
+    // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty last path segment falls back too
     return url.split("/").pop() || "file";
   }
 };

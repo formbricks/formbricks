@@ -156,7 +156,7 @@ export const getResponsesByContactId = reactCache(
         },
       });
 
-      let responses: TResponseWithQuotas[] = [];
+      const responses: TResponseWithQuotas[] = [];
 
       await Promise.all(
         responsePrisma.map(async (response) => {

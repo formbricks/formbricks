@@ -212,7 +212,7 @@ feature/
 
 ### Root Level Configuration
 
-* `.eslintrc.js` - ESLint configuration
+* `oxlint.config.ts` - oxlint options for the whole repo
 
 * `tsconfig.json` - TypeScript configuration
 
@@ -228,7 +228,7 @@ Each package maintains its own configuration files:
 
 * `tsconfig.json` - Package-specific TypeScript settings
 
-* `.eslintrc.js` - Package-specific linting rules
+* `oxlint.config.ts` - Package-specific linting rules (composes a `@formbricks/config-oxlint` tier)
 
 ## Version Control
 

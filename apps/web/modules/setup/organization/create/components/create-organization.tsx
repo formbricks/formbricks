@@ -50,7 +50,7 @@ export const CreateOrganization = ({ skipInviteStep }: Readonly<{ skipInviteStep
           skipInviteStep ? "/" : `/setup/organization/${createOrganizationResponse.data.id}/invite`
         );
       }
-    } catch (error) {
+    } catch {
       toast.error(t("common.something_went_wrong"));
       setIsSubmitting(false);
     }

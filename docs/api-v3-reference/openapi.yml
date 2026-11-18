@@ -13880,6 +13880,7 @@ components:
           type: string
           enum:
             - response.completed
+            - webhook
         surveyId:
           type:
             - string
@@ -13952,14 +13953,20 @@ components:
         status:
           $ref: '#/components/schemas/WorkflowStatus'
         triggerType:
-          type: string
+          type:
+            - string
+            - 'null'
           enum:
             - response.completed
-          description: Derived from `definition.trigger.triggerType`.
+            - webhook
+            - null
+          description: Derived from `definition.trigger.triggerType`. `null` while the draft has no trigger.
         surveyId:
-          type: string
+          type:
+            - string
+            - 'null'
           format: cuid2
-          description: Derived from `definition.trigger.config.surveyId`.
+          description: Derived from `definition.trigger.config.surveyId`. `null` for a Webhook trigger, or while the draft has no trigger.
         createdBy:
           type:
             - string

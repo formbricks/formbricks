@@ -39,7 +39,9 @@ export const StackedCard = ({
   const isHidden = offset < 0;
   const [delayedOffset, setDelayedOffset] = useState<number>(offset);
   const [contentOpacity, setContentOpacity] = useState<number>(0);
-  const currentCardHeight = offset === 0 ? "auto" : offset < 0 ? "initial" : cardHeight;
+  let currentCardHeight = cardHeight;
+  if (offset === 0) currentCardHeight = "auto";
+  else if (offset < 0) currentCardHeight = "initial";
 
   const getTopBottomStyles = () => {
     if (survey.type !== "link")
@@ -69,14 +71,16 @@ export const StackedCard = ({
 
     return (offset: number) => {
       switch (cardArrangement) {
-        case "casual":
-          return offset < 0
-            ? `translateX(33%)`
-            : `translateX(0) rotate(-${((hovered ? rotationCoefficient : rotationCoefficient - 0.5) * offset).toString()}deg)`;
-        case "straight":
-          return offset < 0
-            ? `translateY(25%)`
-            : `translateY(-${((hovered ? 12 : 10) * offset).toString()}px)`;
+        case "casual": {
+          if (offset < 0) return `translateX(33%)`;
+          const coefficient = hovered ? rotationCoefficient : rotationCoefficient - 0.5;
+          return `translateX(0) rotate(-${(coefficient * offset).toString()}deg)`;
+        }
+        case "straight": {
+          if (offset < 0) return `translateY(25%)`;
+          const step = hovered ? 12 : 10;
+          return `translateY(-${(step * offset).toString()}px)`;
+        }
         default:
           return `translateX(0)`;
       }

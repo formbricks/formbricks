@@ -34,7 +34,7 @@ if (SENTRY_DSN) {
     beforeSend(event, hint) {
       const error = hint.originalException as Error;
 
-      // @ts-expect-error
+      // @ts-expect-error -- Next.js adds `digest` to the errors it throws; `Error` does not declare it
       if (error?.digest === "NEXT_NOT_FOUND") {
         return null;
       }

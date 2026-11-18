@@ -57,29 +57,17 @@ export const validateMultipleChoiceSingle = (
   return invalid(TSurveyElementTypeEnum.MultipleChoiceSingle);
 };
 
-export const validateMultipleChoiceMulti = (
+/**
+ * The answers sorted into matched choice labels and free-text "other" values; null when one matches
+ * no choice without an "other" option, or more than one is free text.
+ */
+const sortMultiChoiceAnswers = (
+  answerChoices: string[],
   element: TSurveyMultipleChoiceElement,
-  answer: string,
-  language: string
-): TValidationResult => {
-  if (element.type !== TSurveyElementTypeEnum.MultipleChoiceMulti) {
-    return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti);
-  }
-
-  if (!element.choices || !Array.isArray(element.choices) || element.choices.length === 0) {
-    return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti);
-  }
-
-  const hasOther = element.choices.at(-1)?.id === "other";
-  const lastChoiceLabel = hasOther ? element.choices.at(-1)?.label?.[language] : undefined;
-
-  const answerChoices = parseCommaSeparated(answer);
-
-  if (answerChoices.length === 0) {
-    return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti);
-  }
-
-  // Process all answers and collect results
+  language: string,
+  hasOther: boolean,
+  lastChoiceLabel: string | undefined
+): { matched: string[]; others: string[] } | null => {
   const matched: string[] = [];
   const others: string[] = [];
   let freeTextOtherCount = 0;
@@ -104,14 +92,46 @@ export const validateMultipleChoiceMulti = (
     if (hasOther) {
       freeTextOtherCount++;
       if (freeTextOtherCount > 1) {
-        return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti); // Only one free-text "other" value allowed
+        return null; // Only one free-text "other" value allowed
       }
       others.push(ans);
     } else {
       // No "other" option and doesn't match any choice
-      return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti);
+      return null;
     }
   }
+
+  return { matched, others };
+};
+
+export const validateMultipleChoiceMulti = (
+  element: TSurveyMultipleChoiceElement,
+  answer: string,
+  language: string
+): TValidationResult => {
+  if (element.type !== TSurveyElementTypeEnum.MultipleChoiceMulti) {
+    return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti);
+  }
+
+  if (!element.choices || !Array.isArray(element.choices) || element.choices.length === 0) {
+    return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti);
+  }
+
+  const hasOther = element.choices.at(-1)?.id === "other";
+  const lastChoiceLabel = hasOther ? element.choices.at(-1)?.label?.[language] : undefined;
+
+  const answerChoices = parseCommaSeparated(answer);
+
+  if (answerChoices.length === 0) {
+    return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti);
+  }
+
+  // Process all answers and collect results
+  const sorted = sortMultiChoiceAnswers(answerChoices, element, language, hasOther, lastChoiceLabel);
+  if (!sorted) {
+    return invalid(TSurveyElementTypeEnum.MultipleChoiceMulti);
+  }
+  const { matched, others } = sorted;
 
   return {
     isValid: true,

@@ -21,7 +21,7 @@ export const verifyTurnstileToken = async (secretKey: string, token: string): Pr
 
     const data = await response.json();
     return data.success === true;
-  } catch (error) {
+  } catch {
     return false;
   } finally {
     clearTimeout(timeoutId);

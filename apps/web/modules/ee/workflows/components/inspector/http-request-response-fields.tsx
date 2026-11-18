@@ -77,13 +77,13 @@ const ResponseBody = ({
   view,
   editor,
   isEditable,
-}: {
+}: Readonly<{
   stepId: string;
   body: Record<string, unknown> | null;
   view: TPayloadView;
   editor: TResponseEditor | null;
   isEditable: boolean;
-}) => {
+}>) => {
   const { t } = useTranslation();
   const pasteErrorMessage = usePasteErrorMessage();
   if (view === "json") {
@@ -149,7 +149,7 @@ const TestResponseNotice = ({
   onReview,
   onEditFirst,
   onDone,
-}: {
+}: Readonly<{
   offeredTest: TOfferedTest;
   isFirst: boolean;
   editor: TResponseEditor;
@@ -158,7 +158,7 @@ const TestResponseNotice = ({
   onReview: () => void;
   onEditFirst: () => void;
   onDone: (dismissed: boolean) => void;
-}) => {
+}>) => {
   const { t } = useTranslation();
   const relativeTime = useRelativeTime();
   const time = relativeTime(offeredTest.at);
@@ -212,13 +212,13 @@ export const HttpResponseFieldsCard = ({
   expected,
   lastTest,
   isEditable,
-}: {
+}: Readonly<{
   readonly stepId: string;
   readonly workflowId: string;
   readonly expected: TWorkflowSampleListItem | null;
   readonly lastTest: TWorkflowSampleListItem | null;
   readonly isEditable: boolean;
-}) => {
+}>) => {
   const { t } = useTranslation();
   const relativeTime = useRelativeTime();
   const editor = useResponseEditor(workflowId, stepId);

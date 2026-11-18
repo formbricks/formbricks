@@ -41,12 +41,12 @@ describe("twoFactorBackfillAfterHandler", () => {
       secret: "ba-secret",
       backupCodes: "ba-codes",
     });
-    vi.mocked(prisma.user.findFirst).mockResolvedValue({
+    vi.mocked(prisma.user.findFirst, { partial: true }).mockResolvedValue({
       id: "user123",
       twoFactorEnabled: true,
       twoFactorSecret: "encrypted_secret",
       backupCodes: "encrypted_codes",
-    } as any);
+    });
     vi.mocked(prisma.twoFactor.findUnique).mockResolvedValue(null); // no BA row yet
   });
 
@@ -79,18 +79,18 @@ describe("twoFactorBackfillAfterHandler", () => {
   });
 
   test("no-op when the user already has a TwoFactor row", async () => {
-    vi.mocked(prisma.twoFactor.findUnique).mockResolvedValue({ id: "tf1" } as any);
+    vi.mocked(prisma.twoFactor.findUnique, { partial: true }).mockResolvedValue({ id: "tf1" });
     await twoFactorBackfillAfterHandler(ctx());
     expect(prisma.twoFactor.upsert).not.toHaveBeenCalled();
   });
 
   test("no-op for a non-2FA / SSO user (no legacy secret or flag off)", async () => {
-    vi.mocked(prisma.user.findFirst).mockResolvedValue({
+    vi.mocked(prisma.user.findFirst, { partial: true }).mockResolvedValue({
       id: "sso1",
       twoFactorEnabled: false,
       twoFactorSecret: null,
       backupCodes: null,
-    } as any);
+    });
     await twoFactorBackfillAfterHandler(ctx());
     expect(prisma.twoFactor.upsert).not.toHaveBeenCalled();
   });

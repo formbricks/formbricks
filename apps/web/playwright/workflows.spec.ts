@@ -79,14 +79,14 @@ test.describe("Workflows", () => {
     if (!workspaceId) throw new Error("Workspace not seeded for the test user");
     await user.login();
 
-    // CI's Enterprise license doesn't grant Workflows yet (decision 16), so the journey skips there
-    // instead of failing every run. Once the CI license has the flag, this runs in full.
+    // The journey needs the `workflows` license feature, which CI's Enterprise license grants. Without
+    // it the run fails here, naming the cause, rather than skipping or failing on a later step.
     const licensed = await test.step("the instance's license includes Workflows", () =>
       hasWorkflowsLicense(page.request, workspaceId));
-    test.skip(
-      !licensed,
+    expect(
+      licensed,
       "The instance's Enterprise license doesn't include Workflows: GET /api/v3/workflows answered 403 \"Workflows are not enabled for this organization\"."
-    );
+    ).toBe(true);
 
     const workflowId = await test.step("seed a Webhook workflow through API v3", async () => {
       const response = await page.request.post("/api/v3/workflows", {

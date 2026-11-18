@@ -15,7 +15,7 @@ readonly CUBE_PORT="${CUBE_PORT:-4000}"
 # Same Hub release and digest the Helm chart deploys (charts/formbricks/values.yaml, hub.image).
 readonly HUB_IMAGE="${HUB_IMAGE_REF:-ghcr.io/formbricks/hub:0.14.3@sha256:63b85da9a0eb4346dd9350cd2bc82e9fe00b195756ad9a4bd50195ba874d10bc}"
 # Same Cube release the bundled install and the Helm chart run (cube.image.tag), pinned to its index.
-readonly CUBE_IMAGE="${CUBE_IMAGE_REF:-ghcr.io/formbricks/cube:1.8.8-2@sha256:4f5e46d3af9ae3e48e51419b9e2da4597ef7966b30823b05af71f77c0aa65540}"
+readonly CUBE_IMAGE="${CUBE_IMAGE_REF:-ghcr.io/formbricks/cube:1.8.20-1@sha256:1b8b6f2a13cd4d94012cc930f6910e43f1e3ae2eea4d0d2f7a9139f919c1a671}"
 
 read_env() {
   local name="$1"

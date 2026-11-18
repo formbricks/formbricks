@@ -105,7 +105,9 @@ describe("data", () => {
     test("should fetch and transform survey data successfully", async () => {
       const surveyId = "survey-1";
 
-      vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurveyData as any);
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(
+        mockSurveyData as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+      );
       vi.mocked(transformPrismaSurvey).mockReturnValue(mockTransformedSurvey);
 
       const result = await getSurveyWithMetadata(surveyId);
@@ -138,7 +140,9 @@ describe("data", () => {
      */
     test("carries the Embedded Data join, which is the renderer's ingest allow-list", async () => {
       const surveyId = "survey-1";
-      vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurveyData as any);
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(
+        mockSurveyData as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+      );
       vi.mocked(transformPrismaSurvey).mockReturnValue(mockTransformedSurvey);
 
       await getSurveyWithMetadata(surveyId);
@@ -236,7 +240,9 @@ describe("data", () => {
         followUps: [],
       };
 
-      vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurveyData as any);
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(
+        mockSurveyData as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+      );
       vi.mocked(transformPrismaSurvey).mockReturnValue(mockFullSurvey);
 
       const result = await getSurveyMetadata(surveyId);
@@ -267,7 +273,9 @@ describe("data", () => {
       const surveyId = "survey-1";
       const singleUseId = "single-use-1";
 
-      vi.mocked(prisma.response.findFirst).mockResolvedValue(mockResponse as any);
+      vi.mocked(prisma.response.findFirst).mockResolvedValue(
+        mockResponse as Awaited<ReturnType<typeof prisma.response.findFirst>>
+      );
 
       const result = await getResponseBySingleUseId(surveyId, singleUseId)();
 
@@ -329,7 +337,9 @@ describe("data", () => {
       const surveyId = "survey-1";
       const contactId = "contact-1";
 
-      vi.mocked(prisma.response.findFirst).mockResolvedValue(mockResponse as any);
+      vi.mocked(prisma.response.findFirst).mockResolvedValue(
+        mockResponse as Awaited<ReturnType<typeof prisma.response.findFirst>>
+      );
 
       const result = await getExistingContactResponse(surveyId, contactId)();
 
@@ -397,7 +407,9 @@ describe("data", () => {
 
     test("should fetch organization billing successfully", async () => {
       const organizationId = "org-1";
-      vi.mocked(getOrganizationBillingWithReadThroughSync).mockResolvedValue(mockBilling as any);
+      vi.mocked(getOrganizationBillingWithReadThroughSync).mockResolvedValue(
+        mockBilling as Awaited<ReturnType<typeof getOrganizationBillingWithReadThroughSync>>
+      );
 
       const result = await getOrganizationBilling(organizationId);
 

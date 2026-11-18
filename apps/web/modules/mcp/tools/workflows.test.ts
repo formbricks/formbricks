@@ -9,7 +9,9 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
+import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflows/lib/context";
+import type { TToolHandler } from "./test-utils";
 import {
   buildListWorkflowRunsSearchParams,
   buildListWorkflowsSearchParams,
@@ -87,16 +89,13 @@ const readOnlyAuthInfo = {
 const noScopeAuthInfo = { ...readOnlyAuthInfo, scopes: [] as string[] };
 
 function createToolServer() {
-  const tools = new Map<
-    string,
-    { config: Record<string, unknown>; handler: (input: any, extra: any) => Promise<any> }
-  >();
+  const tools = new Map<string, { config: Record<string, unknown>; handler: TToolHandler }>();
   const server = {
-    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: any) => {
+    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: TToolHandler) => {
       tools.set(name, { config, handler });
     }),
   };
-  registerWorkflowTools(server as any);
+  registerWorkflowTools(server as unknown as Parameters<typeof registerWorkflowTools>[0]);
   return { server, tools };
 }
 
@@ -147,7 +146,9 @@ describe("buildListWorkflowRunsSearchParams", () => {
 describe("registerWorkflowTools", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as any);
+    vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as unknown as ReturnType<
+      typeof buildWorkflowApiContext
+    >);
     vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
   });
 
@@ -302,8 +303,8 @@ describe("registerWorkflowTools", () => {
 
   test("create_workflow sends a body request and queues a success audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.create).mockResolvedValue(
       createdResponse({ id: WORKFLOW_ID }, { requestId: "req_tool", location: "/wf" })
     );
@@ -323,8 +324,8 @@ describe("registerWorkflowTools", () => {
 
   test("enable_workflow delegates by id and queues an updated audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.enable).mockResolvedValue(
       successResponse({ id: WORKFLOW_ID, status: "enabled" }, { requestId: "req_tool" })
     );
@@ -342,8 +343,8 @@ describe("registerWorkflowTools", () => {
 
   test("delete_workflow queues a deleted audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.delete).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
 
     const result = await tools
@@ -357,8 +358,8 @@ describe("registerWorkflowTools", () => {
 
   test("a failed mutation marks the audit eventId and returns an error (no leak)", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.enable).mockResolvedValue(
       problemForbidden("req_forbidden", "You are not authorized to access this resource", "/api/mcp")
     );
@@ -376,8 +377,8 @@ describe("registerWorkflowTools", () => {
 
   test("a thrown mutation still queues the audit log and re-propagates the error", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     const boom = new Error("workflow operation exploded");
     vi.mocked(workflowsHandlers.create).mockRejectedValue(boom);
     const body = { workspaceId: WORKSPACE_ID, name: "WF", definition: { nodes: [], edges: [] } };
@@ -391,7 +392,7 @@ describe("registerWorkflowTools", () => {
   test("a null audit log is tolerated (still queues, no crash)", async () => {
     const { tools } = createToolServer();
     // buildV3AuditLog can return null (auditing disabled); the runner must not dereference it.
-    vi.mocked(buildV3AuditLog).mockReturnValue(null as any);
+    vi.mocked(buildV3AuditLog).mockReturnValue(null as unknown as ReturnType<typeof buildV3AuditLog>);
     vi.mocked(workflowsHandlers.enable).mockResolvedValue(
       successResponse({ id: WORKFLOW_ID, status: "enabled" }, { requestId: "req_tool" })
     );
@@ -409,8 +410,8 @@ describe("registerWorkflowTools", () => {
 
   test("patch_workflow sends a body request with params and queues an updated audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.patch).mockResolvedValue(
       successResponse({ id: WORKFLOW_ID, name: "Renamed" }, { requestId: "req_tool" })
     );
@@ -429,8 +430,8 @@ describe("registerWorkflowTools", () => {
 
   test("duplicate_workflow sends the optional name body and queues a created audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.duplicate).mockResolvedValue(
       createdResponse({ id: "wf2222222222222222222222ab" }, { requestId: "req_tool", location: "/wf" })
     );
@@ -448,8 +449,8 @@ describe("registerWorkflowTools", () => {
 
   test("archive_workflow delegates by id and queues an updated audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.archive).mockResolvedValue(
       successResponse({ id: WORKFLOW_ID, status: "archived" }, { requestId: "req_tool" })
     );
@@ -466,8 +467,8 @@ describe("registerWorkflowTools", () => {
 
   test("unarchive_workflow delegates by id and queues an updated audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.unarchive).mockResolvedValue(
       successResponse({ id: WORKFLOW_ID, status: "draft" }, { requestId: "req_tool" })
     );
@@ -535,7 +536,9 @@ describe("save-time rules on MCP writes", () => {
 describe("MCP scope enforcement (ENG-1967)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as any);
+    vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as unknown as ReturnType<
+      typeof buildWorkflowApiContext
+    >);
     vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
   });
 
@@ -583,7 +586,7 @@ describe("MCP scope enforcement (ENG-1967)", () => {
 
   test("write tools succeed once the token carries workflows:write", async () => {
     const { tools } = createToolServer();
-    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
     vi.mocked(workflowsHandlers.enable).mockResolvedValue(
       successResponse({ id: WORKFLOW_ID, status: "enabled" }, { requestId: "req_tool" })
     );

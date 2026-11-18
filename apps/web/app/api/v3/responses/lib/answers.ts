@@ -449,6 +449,90 @@ const serializeChoices = (
   };
 };
 
+/** The answers stored as one string: open text, consent, CTA, Cal, date and signature. */
+const serializeTextAnswer = (
+  element: Extract<TSurveyElement, { type: "openText" | "consent" | "cta" | "cal" | "date" | "signature" }>,
+  raw: unknown,
+  base: TSerializeBase
+): Serialized => {
+  if (typeof raw !== "string") return { reason: "valueShapeMismatch" };
+
+  switch (element.type) {
+    case "openText": {
+      // Always a string, `inputType: number` included — the contract says so and the renderer agrees.
+      return {
+        answer: {
+          ...base,
+          elementType: "openText",
+          valueText: raw,
+          ...(element.inputType ? { inputType: element.inputType } : {}),
+        },
+      };
+    }
+
+    case "consent": {
+      return { answer: { ...base, elementType: "consent", valueBoolean: raw === "accepted", rawValue: raw } };
+    }
+
+    case "cta": {
+      // Legacy rows also hold `"dismissed"`, which is a real skip and reads as `false`.
+      return { answer: { ...base, elementType: "cta", valueBoolean: raw === "clicked", rawValue: raw } };
+    }
+
+    case "cal": {
+      return { answer: { ...base, elementType: "cal", booked: raw === "booked", rawValue: raw } };
+    }
+
+    case "date": {
+      // Verbatim. Rows written by older clients carry the element's display format rather than an
+      // ISO day, and reformatting one without knowing which it is would move the date.
+      return { answer: { ...base, elementType: "date", valueDate: raw } };
+    }
+
+    case "signature": {
+      // One URL string, unlike `fileUpload`'s array (ADR 0023). Verbatim and relative, as stored.
+      return { answer: { ...base, elementType: "signature", imageUrl: raw } };
+    }
+
+    default:
+      return { reason: "valueShapeMismatch" };
+  }
+};
+
+/** The answers stored as one number: NPS (0-10), and rating, CSAT and CES (1 to their range). */
+const serializeNumberAnswer = (
+  element: Extract<TSurveyElement, { type: "nps" | "rating" | "csat" | "ces" }>,
+  raw: unknown,
+  base: TSerializeBase
+): Serialized => {
+  if (typeof raw !== "number") return { reason: "valueShapeMismatch" };
+
+  switch (element.type) {
+    case "nps": {
+      // Hardcoded because `ZSurveyNPSElement` declares neither `range` nor `scale`: NPS is 0-10 by
+      // definition. Falling back to the base element's `range` would be wrong — its union omits 0.
+      return { answer: { ...base, elementType: "nps", valueNumber: raw, range: { min: 0, max: 10 } } };
+    }
+
+    case "rating":
+    case "csat":
+    case "ces": {
+      return {
+        answer: {
+          ...base,
+          elementType: element.type,
+          valueNumber: raw,
+          range: { min: 1, max: element.range },
+          scale: element.scale,
+        },
+      };
+    }
+
+    default:
+      return { reason: "valueShapeMismatch" };
+  }
+};
+
 /**
  * One stored value to one answer, or a reason it could not be read.
  *
@@ -466,73 +550,23 @@ const serializeOne = (
   const mismatch = { reason: "valueShapeMismatch" as const };
 
   switch (element.type) {
-    case "openText": {
-      // Always a string, `inputType: number` included — the contract says so and the renderer agrees.
-      if (typeof raw !== "string") return mismatch;
-      return {
-        answer: {
-          ...base,
-          elementType: "openText",
-          valueText: raw,
-          ...(element.inputType ? { inputType: element.inputType } : {}),
-        },
-      };
-    }
+    case "openText":
+    case "consent":
+    case "cta":
+    case "cal":
+    case "date":
+    case "signature":
+      return serializeTextAnswer(element, raw, base);
 
-    case "nps": {
-      if (typeof raw !== "number") return mismatch;
-      // Hardcoded because `ZSurveyNPSElement` declares neither `range` nor `scale`: NPS is 0-10 by
-      // definition. Falling back to the base element's `range` would be wrong — its union omits 0.
-      return { answer: { ...base, elementType: "nps", valueNumber: raw, range: { min: 0, max: 10 } } };
-    }
-
+    case "nps":
     case "rating":
     case "csat":
-    case "ces": {
-      if (typeof raw !== "number") return mismatch;
-      return {
-        answer: {
-          ...base,
-          elementType: element.type,
-          valueNumber: raw,
-          range: { min: 1, max: element.range },
-          scale: element.scale,
-        },
-      };
-    }
-
-    case "consent": {
-      if (typeof raw !== "string") return mismatch;
-      return { answer: { ...base, elementType: "consent", valueBoolean: raw === "accepted", rawValue: raw } };
-    }
-
-    case "cta": {
-      // Legacy rows also hold `"dismissed"`, which is a real skip and reads as `false`.
-      if (typeof raw !== "string") return mismatch;
-      return { answer: { ...base, elementType: "cta", valueBoolean: raw === "clicked", rawValue: raw } };
-    }
-
-    case "cal": {
-      if (typeof raw !== "string") return mismatch;
-      return { answer: { ...base, elementType: "cal", booked: raw === "booked", rawValue: raw } };
-    }
-
-    case "date": {
-      // Verbatim. Rows written by older clients carry the element's display format rather than an
-      // ISO day, and reformatting one without knowing which it is would move the date.
-      if (typeof raw !== "string") return mismatch;
-      return { answer: { ...base, elementType: "date", valueDate: raw } };
-    }
+    case "ces":
+      return serializeNumberAnswer(element, raw, base);
 
     case "fileUpload": {
       if (!isStringArray(raw)) return mismatch;
       return { answer: { ...base, elementType: "fileUpload", fileUrls: raw, fileCount: raw.length } };
-    }
-
-    case "signature": {
-      // One URL string, unlike `fileUpload`'s array (ADR 0023). Verbatim and relative, as stored.
-      if (typeof raw !== "string") return mismatch;
-      return { answer: { ...base, elementType: "signature", imageUrl: raw } };
     }
 
     case "address":
@@ -579,6 +613,89 @@ export const isPublishableDataKey = (plan: TV3AnswerPlan, key: string): boolean 
   return !LINK_SURVEY_SYSTEM_PARAM_KEYS.has(key);
 };
 
+/** One stored `data` key as an answer, as an unresolved entry, or as nothing to publish. */
+const serializeStoredValue = (
+  plan: TV3AnswerPlan,
+  key: string,
+  raw: TResponseData[string] | null,
+  ttc: TResponseTtc | undefined
+): { answer: TV3ResponseAnswer } | { unresolved: TV3ResponseUnresolvedEntry } | undefined => {
+  // A hidden field's value lives in this same map, under the field's name. It is not an answer
+  // and it is not a deleted element — `embeddedData[]` reports it — so skipping it here is what
+  // keeps it from being published twice, the second time as a deletion that never happened.
+  // `buildAnswerPlan` has already removed any key an element claims, so a collision falls
+  // through to the answer path below rather than being skipped.
+  if (plan.ingestedStorageKeys.has(key)) return undefined;
+
+  // A JSON null is not a value the contract can carry: `rawValue` is a four-shape union with no
+  // null member, so reporting one would emit a payload the published schema rejects. It is also
+  // nothing a caller can act on — there are no bytes to recover.
+  if (raw === null) return undefined;
+
+  const element = plan.elementById.get(key);
+  if (!element) {
+    // Keys the runtime stamps into the answer map itself, checked only AFTER the element lookup:
+    // `verifiedEmail` is the respondent's verified address, written by the email gate, and
+    // `unresolved[]` publishes `rawValue` verbatim — so reporting it here would put a real email
+    // in both views of every gated response. The element lookup comes first deliberately: these
+    // are names a survey may not newly declare, but a legacy survey can hold an element called
+    // `start` or `source`, and suppressing a real answer would be the same loss in a new place.
+    if (LINK_SURVEY_SYSTEM_PARAM_KEYS.has(key)) return undefined;
+
+    // Narrowed, not cast — the third place stored bytes reach the wire. The `raw === null` skip
+    // above catches the shape that is easiest to picture; `["a", 1]` and `{ a: 5 }` are just as far
+    // outside the four-shape union and were being published verbatim. A live smoke caught these
+    // after the two better-known boundaries were already fixed.
+    const publishable = narrowToPublishableValue(raw);
+    if (publishable === undefined) return undefined;
+
+    return {
+      unresolved: {
+        key,
+        rawValue: publishable,
+        reason: "elementNotInSurvey",
+      },
+    };
+  }
+
+  const result = serializeOne(
+    element,
+    raw,
+    {
+      position: plan.positionById.get(key) ?? 1,
+      elementId: key,
+      elementLabel: plan.labelById.get(key) ?? key,
+      ...withDuration(ttc?.[key]),
+    },
+    plan.lookupKey,
+    plan.choiceIndexByElement.get(key) ?? EMPTY_CHOICE_INDEX
+  );
+
+  if ("reason" in result) {
+    // Narrowed, not cast — the fourth boundary, and the one that is easiest to miss because the
+    // element exists here. `serializeOne` answering `valueShapeMismatch` says precisely that the
+    // stored bytes do not fit the element; a `matrix` holding `{"Row A": 5}`, a `ranking` holding
+    // `[1, 2]` or an `openText` holding `true` all land here, and casting shipped them verbatim
+    // into a field the committed schema types as one of four shapes.
+    //
+    // Dropped rather than reported without a value: `rawValue` is required on the entry, and
+    // deliberately so — see `ZV3ResponseUnresolvedEntry`. Publishing a body the schema rejects is
+    // the worse of the two, and this matches what the `elementNotInSurvey` path above does.
+    const publishable = narrowToPublishableValue(raw);
+    if (publishable === undefined) return undefined;
+
+    return {
+      unresolved: {
+        key,
+        rawValue: publishable,
+        reason: result.reason,
+      },
+    };
+  }
+
+  return { answer: result.answer };
+};
+
 export const serializeAnswers = (
   plan: TV3AnswerPlan,
   data: TResponseData,
@@ -588,78 +705,10 @@ export const serializeAnswers = (
   const unresolved: TV3ResponseUnresolvedEntry[] = [];
 
   for (const [key, raw] of Object.entries(data)) {
-    // A hidden field's value lives in this same map, under the field's name. It is not an answer
-    // and it is not a deleted element — `embeddedData[]` reports it — so skipping it here is what
-    // keeps it from being published twice, the second time as a deletion that never happened.
-    // `buildAnswerPlan` has already removed any key an element claims, so a collision falls
-    // through to the answer path below rather than being skipped.
-    if (plan.ingestedStorageKeys.has(key)) continue;
-
-    // A JSON null is not a value the contract can carry: `rawValue` is a four-shape union with no
-    // null member, so reporting one would emit a payload the published schema rejects. It is also
-    // nothing a caller can act on — there are no bytes to recover.
-    if (raw === null) continue;
-
-    const element = plan.elementById.get(key);
-    if (!element) {
-      // Keys the runtime stamps into the answer map itself, checked only AFTER the element lookup:
-      // `verifiedEmail` is the respondent's verified address, written by the email gate, and
-      // `unresolved[]` publishes `rawValue` verbatim — so reporting it here would put a real email
-      // in both views of every gated response. The element lookup comes first deliberately: these
-      // are names a survey may not newly declare, but a legacy survey can hold an element called
-      // `start` or `source`, and suppressing a real answer would be the same loss in a new place.
-      if (LINK_SURVEY_SYSTEM_PARAM_KEYS.has(key)) continue;
-
-      // Narrowed, not cast — the third place stored bytes reach the wire. The `raw === null` skip
-      // above catches the shape that is easiest to picture; `["a", 1]` and `{ a: 5 }` are just as far
-      // outside the four-shape union and were being published verbatim. A live smoke caught these
-      // after the two better-known boundaries were already fixed.
-      const publishable = narrowToPublishableValue(raw);
-      if (publishable === undefined) continue;
-
-      unresolved.push({
-        key,
-        rawValue: publishable,
-        reason: "elementNotInSurvey",
-      });
-      continue;
-    }
-
-    const result = serializeOne(
-      element,
-      raw,
-      {
-        position: plan.positionById.get(key) ?? 1,
-        elementId: key,
-        elementLabel: plan.labelById.get(key) ?? key,
-        ...withDuration(ttc?.[key]),
-      },
-      plan.lookupKey,
-      plan.choiceIndexByElement.get(key) ?? EMPTY_CHOICE_INDEX
-    );
-
-    if ("reason" in result) {
-      // Narrowed, not cast — the fourth boundary, and the one that is easiest to miss because the
-      // element exists here. `serializeOne` answering `valueShapeMismatch` says precisely that the
-      // stored bytes do not fit the element; a `matrix` holding `{"Row A": 5}`, a `ranking` holding
-      // `[1, 2]` or an `openText` holding `true` all land here, and casting shipped them verbatim
-      // into a field the committed schema types as one of four shapes.
-      //
-      // Dropped rather than reported without a value: `rawValue` is required on the entry, and
-      // deliberately so — see `ZV3ResponseUnresolvedEntry`. Publishing a body the schema rejects is
-      // the worse of the two, and this matches what the `elementNotInSurvey` path above does.
-      const publishable = narrowToPublishableValue(raw);
-      if (publishable === undefined) continue;
-
-      unresolved.push({
-        key,
-        rawValue: publishable,
-        reason: result.reason,
-      });
-      continue;
-    }
-
-    answers.push(result.answer);
+    const entry = serializeStoredValue(plan, key, raw, ttc);
+    if (!entry) continue;
+    if ("answer" in entry) answers.push(entry.answer);
+    else unresolved.push(entry.unresolved);
   }
 
   answers.sort((a, b) => a.position - b.position);

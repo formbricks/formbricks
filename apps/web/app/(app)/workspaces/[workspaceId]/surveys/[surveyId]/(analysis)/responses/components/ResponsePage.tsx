@@ -81,7 +81,7 @@ export const ResponsePage = ({
   // analysis refresh handler and would collapse the infinite-scroll list back to page 1.
   // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the filter value, not its identity
   const filters = useMemo(() => computedFilters, [filtersKey]);
-  const { isReady } = filterState;
+  const { isReady, resolveFreshCriteria } = filterState;
 
   // The criteria the loaded list was fetched with. A refresh resolves relative dates afresh, so the
   // pages after it and the count must ask about the same window as its first page.
@@ -162,7 +162,7 @@ export const ResponsePage = ({
 
     try {
       // A refresh asks about now: a relative date window may have moved on since the filter was set.
-      const criteria = filterState.resolveFreshCriteria();
+      const criteria = resolveFreshCriteria();
       const getResponsesActionResponse = await getResponsesAction({
         surveyId,
         limit: responsesPerPage,
@@ -188,7 +188,7 @@ export const ResponsePage = ({
       setIsFetchingFirstPage(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `matchCountKey` is rebuilt from `filtersKey`
-  }, [filterState.resolveFreshCriteria, filtersKey, isReady, queryClient, responsesPerPage, surveyId, t]);
+  }, [resolveFreshCriteria, filtersKey, isReady, queryClient, responsesPerPage, surveyId, t]);
 
   useEffect(() => {
     return registerAnalysisRefreshHandler(refetchResponses);

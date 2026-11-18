@@ -349,6 +349,7 @@ export const APP_RELEASE_VERSION = (() => {
 
   // Try to read from package.json with proper error handling
   try {
+    // eslint-disable-next-line typescript/no-require-imports -- read lazily so a missing package.json falls into the catch below
     const pkg = require("../package.json");
     return pkg.version === "0.0.0" ? undefined : `${pkg.version}`;
   } catch {

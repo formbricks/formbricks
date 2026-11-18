@@ -41,7 +41,7 @@ vi.mock("react", async () => {
   const actual = await vi.importActual("react");
   return {
     ...actual,
-    cache: <T extends (...args: any[]) => any>(fn: T): T => fn,
+    cache: <T extends (...args: unknown[]) => unknown>(fn: T): T => fn,
   };
 });
 
@@ -271,7 +271,9 @@ describe("segments lib", () => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue([
         buildInteractionSegment("interaction-segment", "haveSeen"),
       ] as unknown as Prisma.Result<typeof prisma.segment, unknown, "findMany">);
-      vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "survey-restricted" }] as any);
+      vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockResolvedValue([
+        { id: "survey-restricted" },
+      ]);
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,

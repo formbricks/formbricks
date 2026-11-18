@@ -79,10 +79,13 @@ export const timedGenerate =
         request.abortSignal.removeEventListener("abort", onAbort);
         outcome();
       };
+      // eslint-disable-next-line sonarjs/no-nested-functions -- every outcome runs inside `settle`, after its shared cleanup
       const onAbort = () => settle(() => reject(request.abortSignal.reason));
       const answer = Number.isFinite(latency)
-        ? setTimeout(() => settle(() => resolve(recordedGenerate(plan)(request))), latency)
+        ? // eslint-disable-next-line sonarjs/no-nested-functions -- every outcome runs inside `settle`, after its shared cleanup
+          setTimeout(() => settle(() => resolve(recordedGenerate(plan)(request))), latency)
         : undefined;
+      // eslint-disable-next-line sonarjs/no-nested-functions -- every outcome runs inside `settle`, after its shared cleanup
       const timeout = setTimeout(() => settle(() => reject(timedOut())), request.timeout);
       request.abortSignal.addEventListener("abort", onAbort, { once: true });
     });

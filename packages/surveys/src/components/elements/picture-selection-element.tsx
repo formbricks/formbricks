@@ -93,6 +93,8 @@ export function PictureSelectionElement({
         imageUrl={element.imageUrl}
         imageAltText={getLocalizedValue(element.imageAltText, languageCode)}
         videoUrl={element.videoUrl}
+        getEnlargeImageLabel={(alt) => t("common.enlarge_image_of", { option: alt })}
+        closeLabel={t("common.close_enlarged_image")}
       />
     </form>
   );

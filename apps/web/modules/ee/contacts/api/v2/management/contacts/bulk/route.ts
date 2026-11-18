@@ -70,7 +70,7 @@ export const PUT = async (request: Request) =>
       }
 
       const emails = contacts.map(
-        (contact) => contact.attributes.find((attr) => attr.attributeKey.key === "email")?.value!
+        (contact) => contact.attributes.find((attr) => attr.attributeKey.key === "email")?.value as string
       );
 
       const upsertBulkContactsResult = await upsertBulkContacts(contacts, workspaceId, emails);

@@ -12,7 +12,7 @@ export interface RecallPayload {
   key?: NodeKey;
 }
 
-export interface SerializedRecallNode extends Spread<RecallPayload, { type: "recall"; version: 1 }> {}
+export type SerializedRecallNode = Spread<RecallPayload, { type: "recall"; version: 1 }>;
 
 const convertRecallElement = (domNode: Node): null | DOMConversionOutput => {
   const node = domNode as HTMLElement;

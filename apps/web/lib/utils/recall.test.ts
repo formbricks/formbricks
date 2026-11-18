@@ -24,7 +24,7 @@ import {
 
 // Mock dependencies
 vi.mock("@/lib/i18n/utils", () => ({
-  getLocalizedValue: (obj: any, lang: string) => {
+  getLocalizedValue: (obj: Record<string, string> | undefined, lang: string) => {
     if (typeof obj === "string") return obj;
     if (!obj) return "";
     return obj[lang] || obj["default"] || "";
@@ -228,7 +228,7 @@ describe("recall utility functions", () => {
         blocks: [{ id: "b1", elements: [{ id: "product", headline: { en: "Product Question" } }] }],
         hiddenFields: { fieldIds: [] },
         variables: [],
-      } as any;
+      } as unknown as Parameters<typeof recallToHeadline>[1];
 
       const result = recallToHeadline(headline, survey, false, "en");
       expect(result.en).toBe("How do you like @Product Question?");
@@ -241,7 +241,7 @@ describe("recall utility functions", () => {
         blocks: [{ id: "b1", elements: [{ id: "product", headline: { en: "Product Question" } }] }],
         hiddenFields: { fieldIds: [] },
         variables: [],
-      } as any;
+      } as unknown as Parameters<typeof recallToHeadline>[1];
 
       const result = recallToHeadline(headline, survey, true, "en");
       expect(result.en).toBe("Rate /Product Question\\");
@@ -288,7 +288,7 @@ describe("recall utility functions", () => {
         blocks: [{ id: "b1", elements: [{ id: "inner", headline: { en: "Inner with @outer" } }] }],
         hiddenFields: { fieldIds: [] },
         variables: [],
-      } as any;
+      } as unknown as Parameters<typeof recallToHeadline>[1];
 
       const result = recallToHeadline(headline, survey, false, "en");
       expect(result.en).toBe("This is @Inner with @outer");
@@ -330,7 +330,7 @@ describe("recall utility functions", () => {
             ],
           },
         ],
-      } as any;
+      } as unknown as Parameters<typeof checkForEmptyFallBackValue>[0];
 
       const result = checkForEmptyFallBackValue(survey, "en");
       expect(result).toBe(survey.blocks[0].elements[0]);
@@ -351,7 +351,7 @@ describe("recall utility functions", () => {
             ],
           },
         ],
-      } as any;
+      } as unknown as Parameters<typeof checkForEmptyFallBackValue>[0];
 
       const result = checkForEmptyFallBackValue(survey, "en");
       expect(result).toBe(survey.blocks[0].elements[0]);
@@ -371,7 +371,7 @@ describe("recall utility functions", () => {
             ],
           },
         ],
-      } as any;
+      } as unknown as Parameters<typeof checkForEmptyFallBackValue>[0];
 
       const result = checkForEmptyFallBackValue(survey, "en");
       expect(result).toBeNull();

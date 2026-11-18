@@ -4,6 +4,7 @@ import { buildV3AuditLog, queueV3AuditLog } from "@/app/api/v3/lib/audit";
 import { successResponse } from "@/app/api/v3/lib/response";
 import { setWorkflowExpectedResponse } from "@/app/api/v3/workflows/lib/expected-response";
 import { sendWorkflowTestRequest } from "@/app/api/v3/workflows/lib/test-request";
+import type { TToolHandler } from "./test-utils";
 import { registerWorkflowTestRequestTools } from "./workflow-test-request";
 
 vi.mock("@/app/api/v3/workflows/lib/test-request", () => ({ sendWorkflowTestRequest: vi.fn() }));
@@ -45,23 +46,24 @@ const readOnlyAuthInfo = {
 };
 
 const createToolServer = () => {
-  const tools = new Map<
-    string,
-    { config: Record<string, unknown>; handler: (input: any, extra: any) => any }
-  >();
+  const tools = new Map<string, { config: Record<string, unknown>; handler: TToolHandler }>();
   const server = {
-    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: any) => {
+    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: TToolHandler) => {
       tools.set(name, { config, handler });
     }),
   };
-  registerWorkflowTestRequestTools(server as any);
+  registerWorkflowTestRequestTools(
+    server as unknown as Parameters<typeof registerWorkflowTestRequestTools>[0]
+  );
   return tools;
 };
 
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
-  vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+  vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as ReturnType<
+    typeof buildV3AuditLog
+  >);
   vi.mocked(sendWorkflowTestRequest).mockResolvedValue(
     successResponse(
       { request: { method: "GET", url: "https://api.example.com", headers: [] }, response: null, error: "x" },

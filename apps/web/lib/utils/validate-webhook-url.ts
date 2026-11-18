@@ -121,6 +121,8 @@ export class WebhookDnsResolutionError extends InvalidInputError {
 
 export type ResolvedAddress = { ip: string; family: 4 | 6 };
 
+const withFamily = (ips: string[], family: 4 | 6): ResolvedAddress[] => ips.map((ip) => ({ ip, family }));
+
 const resolveHostnameToAddresses = (hostname: string): Promise<ResolvedAddress[]> => {
   return new Promise((resolve, reject) => {
     let settled = false;
@@ -137,10 +139,10 @@ const resolveHostnameToAddresses = (hostname: string): Promise<ResolvedAddress[]
     }, DNS_TIMEOUT_MS);
 
     dns.resolve(hostname, (errV4, ipv4Addresses) => {
-      const ipv4: ResolvedAddress[] = errV4 ? [] : ipv4Addresses.map((ip) => ({ ip, family: 4 as const }));
+      const ipv4: ResolvedAddress[] = errV4 ? [] : withFamily(ipv4Addresses, 4);
 
       dns.resolve6(hostname, (errV6, ipv6Addresses) => {
-        const ipv6: ResolvedAddress[] = errV6 ? [] : ipv6Addresses.map((ip) => ({ ip, family: 6 as const }));
+        const ipv6: ResolvedAddress[] = errV6 ? [] : withFamily(ipv6Addresses, 6);
         const all = [...ipv4, ...ipv6];
 
         if (all.length === 0) {

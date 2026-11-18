@@ -93,7 +93,7 @@ describe("sendTelemetryEvents", () => {
     // Setup default cache behavior
     vi.mocked(getCacheService).mockResolvedValue({
       ok: true,
-      data: mockCacheService as any,
+      data: mockCacheService as unknown as CacheService,
     });
     mockCacheService.tryLock.mockResolvedValue({ ok: true, data: true }); // Lock acquired
     mockCacheService.del.mockResolvedValue({ ok: true, data: undefined });
@@ -104,7 +104,7 @@ describe("sendTelemetryEvents", () => {
     vi.mocked(prisma.organization.findFirst).mockResolvedValue({
       id: "org-123",
       createdAt: new Date("2023-01-01"),
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.organization.findFirst>>);
 
     // Mock raw SQL query for counts (batched query)
     vi.mocked(prisma.$queryRaw).mockResolvedValue([
@@ -127,11 +127,15 @@ describe("sendTelemetryEvents", () => {
         workflowRunCountSinceLastUpdate: BigInt(40),
         workflowRunFailedCountSinceLastUpdate: BigInt(4),
       },
-    ] as any);
+    ] as Awaited<ReturnType<typeof prisma.$queryRaw>>);
 
     // Mock other queries
-    vi.mocked(prisma.integration.findMany).mockResolvedValue([{ type: IntegrationType.notion }] as any);
-    vi.mocked(prisma.account.findMany).mockResolvedValue([{ provider: "github" }] as any);
+    vi.mocked(prisma.integration.findMany).mockResolvedValue([{ type: IntegrationType.notion }] as Awaited<
+      ReturnType<typeof prisma.integration.findMany>
+    >);
+    vi.mocked(prisma.account.findMany, { partial: true, deep: true }).mockResolvedValue([
+      { provider: "github" },
+    ]);
 
     fetchMock.mockResolvedValue({ ok: true });
   });
@@ -300,7 +304,7 @@ describe("sendTelemetryEvents", () => {
     vi.mocked(getCacheService).mockResolvedValue({
       ok: false,
       error: new Error("Cache error"),
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof getCacheService>>);
 
     await sendTelemetryEvents();
 
@@ -383,7 +387,7 @@ describe("sendTelemetryEvents", () => {
     // Re-setup mocks after resetModules
     vi.mocked(getCacheService).mockResolvedValue({
       ok: true,
-      data: mockCacheService as any,
+      data: mockCacheService as unknown as CacheService,
     });
     mockCacheService.tryLock.mockResolvedValue({ ok: true, data: true }); // Lock acquired
     mockCacheService.del.mockResolvedValue({ ok: true, data: undefined });
@@ -409,7 +413,10 @@ describe("sendTelemetryEvents", () => {
 
     // A 1h cooldown applies instead of the full 24h, so the retry lands once an org exists.
     vi.clearAllMocks();
-    vi.mocked(getCacheService).mockResolvedValue({ ok: true, data: mockCacheService as any });
+    vi.mocked(getCacheService).mockResolvedValue({
+      ok: true,
+      data: mockCacheService as unknown as CacheService,
+    });
     vi.setSystemTime(new Date(Date.now() + 61 * 60 * 1000));
     mockCacheService.get.mockResolvedValue({ ok: true, data: String(oldTime) });
     mockCacheService.tryLock.mockResolvedValue({ ok: true, data: true });
@@ -418,7 +425,7 @@ describe("sendTelemetryEvents", () => {
     vi.mocked(prisma.organization.findFirst).mockResolvedValue({
       id: "org-123",
       createdAt: new Date("2023-01-01"),
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.organization.findFirst>>);
     vi.mocked(prisma.$queryRaw).mockResolvedValue([
       {
         organizationCount: BigInt(1),
@@ -439,9 +446,9 @@ describe("sendTelemetryEvents", () => {
         workflowRunCountSinceLastUpdate: BigInt(40),
         workflowRunFailedCountSinceLastUpdate: BigInt(4),
       },
-    ] as any);
-    vi.mocked(prisma.integration.findMany).mockResolvedValue([] as any);
-    vi.mocked(prisma.account.findMany).mockResolvedValue([] as any);
+    ] as Awaited<ReturnType<typeof prisma.$queryRaw>>);
+    vi.mocked(prisma.integration.findMany, { partial: true, deep: true }).mockResolvedValue([]);
+    vi.mocked(prisma.account.findMany, { partial: true, deep: true }).mockResolvedValue([]);
     fetchMock.mockResolvedValue({ ok: true });
 
     await freshSendTelemetryEvents();
@@ -510,7 +517,7 @@ describe("sendTelemetryEvents", () => {
     // Re-setup mocks after resetModules
     vi.mocked(getCacheService).mockResolvedValue({
       ok: true,
-      data: mockCacheService as any,
+      data: mockCacheService as unknown as CacheService,
     });
     mockCacheService.tryLock.mockResolvedValue({ ok: true, data: true });
     mockCacheService.del.mockResolvedValue({ ok: true, data: undefined });
@@ -520,7 +527,7 @@ describe("sendTelemetryEvents", () => {
     vi.mocked(prisma.organization.findFirst).mockResolvedValue({
       id: "org-123",
       createdAt: new Date("2023-01-01"),
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.organization.findFirst>>);
     vi.mocked(prisma.$queryRaw).mockResolvedValue([
       {
         organizationCount: BigInt(1),
@@ -541,9 +548,13 @@ describe("sendTelemetryEvents", () => {
         workflowRunCountSinceLastUpdate: BigInt(40),
         workflowRunFailedCountSinceLastUpdate: BigInt(4),
       },
-    ] as any);
-    vi.mocked(prisma.integration.findMany).mockResolvedValue([{ type: IntegrationType.notion }] as any);
-    vi.mocked(prisma.account.findMany).mockResolvedValue([{ provider: "github" }] as any);
+    ] as Awaited<ReturnType<typeof prisma.$queryRaw>>);
+    vi.mocked(prisma.integration.findMany).mockResolvedValue([{ type: IntegrationType.notion }] as Awaited<
+      ReturnType<typeof prisma.integration.findMany>
+    >);
+    vi.mocked(prisma.account.findMany, { partial: true, deep: true }).mockResolvedValue([
+      { provider: "github" },
+    ]);
     fetchMock.mockResolvedValue({ ok: true });
 
     await freshSendTelemetryEvents();
