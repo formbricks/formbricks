@@ -91,6 +91,19 @@ export const collapseEmptyGroupRows = (
   return slots.map((slot) => (Array.isArray(slot) ? mergeRows(slot, measureKeys) : slot));
 };
 
+/**
+ * Rows ready to draw for a grouped chart: empty groups hidden or kept per the setting, and every empty
+ * value of a group (null, "") folded into one row, counts summed and ratios re-weighted by their base.
+ * Bar, area, pie and matrix charts all go through here so a shown empty group reads the same in each.
+ */
+export const prepareGroupedRows = (
+  rows: TChartDataRow[],
+  groupKeys: readonly string[],
+  measureKeys: readonly string[],
+  showEmptyValues: boolean
+): TChartDataRow[] =>
+  collapseEmptyGroupRows(applyEmptyValueSetting(rows, groupKeys, showEmptyValues), groupKeys, measureKeys);
+
 // ── Natural order ─────────────────────────────────────────────────────────────
 
 /**

@@ -19,11 +19,10 @@ import { computeBigNumberValue } from "@/modules/ee/analysis/charts/lib/big-numb
 import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import { isChartResultEmpty } from "@/modules/ee/analysis/charts/lib/chart-emptiness";
 import {
-  applyEmptyValueSetting,
   canStackSeries,
-  collapseEmptyGroupRows,
   getChartGrouping,
   getStackedBarRadius,
+  prepareGroupedRows,
   stripSharedLabelPrefix,
 } from "@/modules/ee/analysis/charts/lib/chart-series";
 import {
@@ -594,11 +593,7 @@ function SeriesChartRenderer({
   // Empty groups go before anything is counted, so the response base matches the bars on screen.
   const { showEmptyValues } = resolveChartDisplay(config);
   const { dimensionKeys } = getChartGrouping(query);
-  const rows = collapseEmptyGroupRows(
-    applyEmptyValueSetting(data ?? [], dimensionKeys, showEmptyValues),
-    dimensionKeys,
-    query.measures ?? []
-  );
+  const rows = prepareGroupedRows(data ?? [], dimensionKeys, query.measures ?? [], showEmptyValues);
   const responseBase = resolveResponseBase(query, rows);
   const chart = (
     <SeriesChart

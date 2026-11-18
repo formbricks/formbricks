@@ -60,21 +60,29 @@ export function EmbeddedFieldRenameButton({
     save(draft);
   };
 
+  const handleOpenChange = (next: boolean) => {
+    if (next) {
+      setDraft(shownName);
+      setExpectedLabel(field.label ?? null);
+    }
+    setOpen(next);
+  };
+
   return (
-    <Popover
-      open={open}
-      onOpenChange={(next) => {
-        if (next) {
-          setDraft(shownName);
-          setExpectedLabel(field.label ?? null);
-        }
-        setOpen(next);
-      }}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <button
           type="button"
           aria-label={t("workspace.analysis.charts.rename_field", { field: shownName })}
           className="ring-offset-background focus:ring-ring ml-1 rounded-full outline-hidden focus:ring-2 focus:ring-offset-2"
+          // The chip list's command root cancels every Enter before it can click this trigger, so open on
+          // Enter here, as the chip's remove button handles Enter itself.
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              handleOpenChange(true);
+            }
+          }}
           // Keep the chip list's own input from taking focus, as its remove button does.
           onMouseDown={(event) => {
             event.preventDefault();

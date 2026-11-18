@@ -8,8 +8,8 @@ import { ChartEmptyState } from "@/modules/ee/analysis/charts/components/chart-e
 import { resolveChartDisplay } from "@/modules/ee/analysis/charts/lib/chart-display";
 import {
   EMPTY_GROUP_VALUE,
-  applyEmptyValueSetting,
   getNaturalValueOrder,
+  prepareGroupedRows,
 } from "@/modules/ee/analysis/charts/lib/chart-series";
 import { formatCellValue } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import {
@@ -151,7 +151,9 @@ export function MatrixChart({
     return natural ? [...natural] : undefined;
   };
   const { showEmptyValues } = resolveChartDisplay(config);
-  const rows = applyEmptyValueSetting(data, [rowKey, columnKey], showEmptyValues);
+  // Same folding as the bar and area charts, so a shown empty group's score is re-weighted, not one
+  // subgroup's value.
+  const rows = prepareGroupedRows(data, [rowKey, columnKey], query.measures ?? [], showEmptyValues);
 
   const pivot = buildMatrixPivot({
     data: rows,

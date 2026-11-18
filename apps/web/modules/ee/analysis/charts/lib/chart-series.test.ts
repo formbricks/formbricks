@@ -11,6 +11,7 @@ import {
   hasStackableSeries,
   orderGroupCombos,
   orderGroupValues,
+  prepareGroupedRows,
   sortCategoryRows,
   stripSharedLabelPrefix,
 } from "./chart-series";
@@ -318,6 +319,21 @@ describe("empty groups that merge", () => {
     expect(collapseEmptyGroupRows(shown, [SOURCE], [NPS])).toEqual([
       { [SOURCE]: EMPTY_GROUP_VALUE, [NPS]: 25, [NPS_COUNT]: 4 },
     ]);
+  });
+
+  test("a matrix cell (two groupings) folds a shown empty group's score by its base", () => {
+    const NPS_COUNT = "FeedbackRecords.npsCount";
+    const COLUMN = "FeedbackRecords.sentiment";
+    const rows = [
+      { [SOURCE]: null, [COLUMN]: "positive", [NPS]: 100, [NPS_COUNT]: 1 },
+      { [SOURCE]: "", [COLUMN]: "positive", [NPS]: -100, [NPS_COUNT]: 9 },
+      { [SOURCE]: "web", [COLUMN]: "positive", [NPS]: 50, [NPS_COUNT]: 2 },
+    ];
+    expect(prepareGroupedRows(rows, [SOURCE, COLUMN], [NPS], true)).toEqual([
+      { [SOURCE]: EMPTY_GROUP_VALUE, [COLUMN]: "positive", [NPS]: -80, [NPS_COUNT]: 10 },
+      { [SOURCE]: "web", [COLUMN]: "positive", [NPS]: 50, [NPS_COUNT]: 2 },
+    ]);
+    expect(prepareGroupedRows(rows, [SOURCE, COLUMN], [NPS], false)).toEqual([rows[2]]);
   });
 
   test("a ratio without a base cannot be recomputed and becomes a gap", () => {
