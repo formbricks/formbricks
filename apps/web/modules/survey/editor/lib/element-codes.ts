@@ -41,8 +41,7 @@ export const getOptionCodeLists = (
 ): { key: TOptionListKey; options: TCodedOption[] }[] =>
   (OPTION_LISTS_BY_TYPE[element.type] ?? []).map((key) => ({
     key,
-    options: ((element as unknown as Record<string, TCodedOption[] | undefined>)[key] ??
-      []) as TCodedOption[],
+    options: (element as unknown as Record<string, TCodedOption[] | undefined>)[key] ?? [],
   }));
 
 /** Whether the element has a question code at all: every answerable element, not CTA. */

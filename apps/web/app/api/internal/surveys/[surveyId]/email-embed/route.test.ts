@@ -33,7 +33,7 @@ const HTML = '<p>Survey</p><a href="https://f.test/s/1?preview=true">Start</a>';
 const read = () =>
   GET(new NextRequest(`http://localhost/api/internal/surveys/${SURVEY_ID}/email-embed`), {
     params: Promise.resolve({ surveyId: SURVEY_ID }),
-  } as never);
+  });
 
 beforeEach(() => {
   vi.clearAllMocks();

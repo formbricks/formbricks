@@ -40,7 +40,7 @@ const requestHeaders = new Headers({ "x-formbricks-client-ip": "203.0.113.7" });
 let setCookies: { name: string; value: string; options: unknown }[] = [];
 const mockNextRequestData = () => {
   setCookies = [];
-  vi.mocked(headers).mockResolvedValue(requestHeaders as never);
+  vi.mocked(headers).mockResolvedValue(requestHeaders);
   vi.mocked(cookies).mockResolvedValue({
     get: () => undefined,
     set: (name: string, value: string, options: unknown) => setCookies.push({ name, value, options }),
@@ -152,7 +152,7 @@ const signUp = (body: unknown = baseInput, extraHeaders: Record<string, string> 
       headers: { "Content-Type": "application/json", ...extraHeaders },
       body: typeof body === "string" ? body : JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 /** The invariant answer, whichever path the sign-up took. */
@@ -163,7 +163,7 @@ const auditEvents = () => vi.mocked(queueAuditEvent).mock.calls.map(([event]) =>
 
 const acceptInvite = () => {
   vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
-  vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "invite-1", email: "ada@example.com" } as never);
+  vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "invite-1", email: "ada@example.com" });
   vi.mocked(getInvite).mockResolvedValue(validInvite as never);
 };
 
@@ -176,7 +176,7 @@ beforeEach(() => {
   constantsOverrides.IS_TURNSTILE_CONFIGURED = false;
   constantsOverrides.TURNSTILE_SECRET_KEY = undefined;
   vi.mocked(getIsFreshInstance).mockResolvedValue(true);
-  vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
+  vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
   vi.mocked(isPasswordCompromisedError).mockReturnValue(false);
@@ -375,7 +375,7 @@ describe("POST /api/internal/signups — signup verification email callbackURL",
       vi.mocked(verifyInviteToken).mockReturnValue({
         inviteId: "invite-1",
         email: "someone-else@example.com",
-      } as never);
+      });
 
       const response = await signUp({ ...baseInput, inviteToken: "invite-jwt-123" });
 

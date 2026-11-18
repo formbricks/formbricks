@@ -40,11 +40,7 @@ const tag = {
 const base = { authentication: null, requestId: "req_1", instance: "/api/v3/tags" };
 
 const grantAccess = () =>
-  vi
-    .mocked(requireV3WorkspaceAccess)
-    .mockResolvedValue({ workspaceId, organizationId } as Awaited<
-      ReturnType<typeof requireV3WorkspaceAccess>
-    >);
+  vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({ workspaceId, organizationId });
 
 beforeEach(() => {
   vi.resetAllMocks();
@@ -83,9 +79,7 @@ describe("renameV3Tag", () => {
   test("renames a tag the caller may write to", async () => {
     vi.mocked(getTag).mockResolvedValue(tag);
     grantAccess();
-    vi.mocked(updateTagName).mockResolvedValue({ ok: true, data: { ...tag, name: "Renamed" } } as Awaited<
-      ReturnType<typeof updateTagName>
-    >);
+    vi.mocked(updateTagName).mockResolvedValue({ ok: true, data: { ...tag, name: "Renamed" } });
 
     const response = await renameV3Tag({ ...base, tagId, name: "Renamed" });
     const body = await response.json();
@@ -98,9 +92,7 @@ describe("renameV3Tag", () => {
   test("authorizes against the tag's own workspace, never a caller-supplied one", async () => {
     vi.mocked(getTag).mockResolvedValue(tag);
     grantAccess();
-    vi.mocked(updateTagName).mockResolvedValue({ ok: true, data: tag } as Awaited<
-      ReturnType<typeof updateTagName>
-    >);
+    vi.mocked(updateTagName).mockResolvedValue({ ok: true, data: tag });
 
     await renameV3Tag({ ...base, tagId, name: "Renamed" });
 
@@ -139,9 +131,7 @@ describe("renameV3Tag", () => {
   test("reports the tag's real response count, not a hardcoded zero", async () => {
     vi.mocked(getTag).mockResolvedValue(tag);
     grantAccess();
-    vi.mocked(updateTagName).mockResolvedValue({ ok: true, data: { ...tag, name: "Renamed" } } as Awaited<
-      ReturnType<typeof updateTagName>
-    >);
+    vi.mocked(updateTagName).mockResolvedValue({ ok: true, data: { ...tag, name: "Renamed" } });
     vi.mocked(getTagsOnResponsesCount).mockResolvedValue([{ tagId, count: 4 }]);
 
     const response = await renameV3Tag({ ...base, tagId, name: "Renamed" });
@@ -155,9 +145,7 @@ describe("renameV3Tag", () => {
   test("falls back to zero when the renamed tag is on no responses", async () => {
     vi.mocked(getTag).mockResolvedValue(tag);
     grantAccess();
-    vi.mocked(updateTagName).mockResolvedValue({ ok: true, data: tag } as Awaited<
-      ReturnType<typeof updateTagName>
-    >);
+    vi.mocked(updateTagName).mockResolvedValue({ ok: true, data: tag });
     vi.mocked(getTagsOnResponsesCount).mockResolvedValue([{ tagId: otherTagId, count: 9 }]);
 
     const body = await (await renameV3Tag({ ...base, tagId, name: "Renamed" })).json();
@@ -169,9 +157,7 @@ describe("renameV3Tag", () => {
     vi.mocked(getTag).mockResolvedValue(tag);
     grantAccess();
     const renamed = { ...tag, name: "Renamed" };
-    vi.mocked(updateTagName).mockResolvedValue({ ok: true, data: renamed } as Awaited<
-      ReturnType<typeof updateTagName>
-    >);
+    vi.mocked(updateTagName).mockResolvedValue({ ok: true, data: renamed });
     const auditLog = {} as Parameters<typeof renameV3Tag>[0]["auditLog"];
 
     await renameV3Tag({ ...base, tagId, name: "Renamed", auditLog });
@@ -184,7 +170,7 @@ describe("deleteV3Tag", () => {
   test("deletes and reports the removed id", async () => {
     vi.mocked(getTag).mockResolvedValue(tag);
     grantAccess();
-    vi.mocked(deleteTag).mockResolvedValue({ ok: true, data: tag } as Awaited<ReturnType<typeof deleteTag>>);
+    vi.mocked(deleteTag).mockResolvedValue({ ok: true, data: tag });
 
     const response = await deleteV3Tag({ ...base, tagId });
     const body = await response.json();
@@ -206,7 +192,7 @@ describe("deleteV3Tag", () => {
   test("records the removed tag for the audit log", async () => {
     vi.mocked(getTag).mockResolvedValue(tag);
     grantAccess();
-    vi.mocked(deleteTag).mockResolvedValue({ ok: true, data: tag } as Awaited<ReturnType<typeof deleteTag>>);
+    vi.mocked(deleteTag).mockResolvedValue({ ok: true, data: tag });
     const auditLog = {} as Parameters<typeof deleteV3Tag>[0]["auditLog"];
 
     await deleteV3Tag({ ...base, tagId, auditLog });
@@ -234,7 +220,7 @@ describe("mergeV3Tags", () => {
       id === tagId ? tag : { ...tag, id: otherTagId, name: "Churn" }
     );
     grantAccess();
-    vi.mocked(mergeTags).mockResolvedValue({ ok: true, data: tag } as Awaited<ReturnType<typeof mergeTags>>);
+    vi.mocked(mergeTags).mockResolvedValue({ ok: true, data: tag });
 
     const response = await mergeV3Tags({ ...base, tagId, newTagId: otherTagId });
     const body = await response.json();
@@ -294,9 +280,7 @@ describe("mergeV3Tags", () => {
     const target = { ...tag, id: otherTagId, name: "Churn" };
     vi.mocked(getTag).mockImplementation(async (id: string) => (id === tagId ? tag : target));
     grantAccess();
-    vi.mocked(mergeTags).mockResolvedValue({ ok: true, data: target } as Awaited<
-      ReturnType<typeof mergeTags>
-    >);
+    vi.mocked(mergeTags).mockResolvedValue({ ok: true, data: target });
     const auditLog = {} as Parameters<typeof mergeV3Tags>[0]["auditLog"];
 
     await mergeV3Tags({ ...base, tagId, newTagId: otherTagId, auditLog });

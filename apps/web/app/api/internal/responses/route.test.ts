@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError, ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { DELETE as DELETE_RESPONSE, GET } from "./[responseId]/route";
 import { DELETE as DELETE_TAG, PUT } from "./[responseId]/tags/[tagId]/route";
@@ -94,25 +94,21 @@ const tagPath = (responseId = RESPONSE_ID, tagId = TAG_ID) => `${responsePath(re
 const read = (id = RESPONSE_ID, query = "") =>
   GET(new NextRequest(`${responsePath(id)}${query}`), {
     params: Promise.resolve({ responseId: id }),
-  } as never);
+  });
 
-const remove = ({
-  id = RESPONSE_ID,
-  query = "",
-  headers = SAME_ORIGIN_HEADERS as Record<string, string>,
-} = {}) =>
+const remove = ({ id = RESPONSE_ID, query = "", headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
   DELETE_RESPONSE(new NextRequest(`${responsePath(id)}${query}`, { method: "DELETE", headers }), {
     params: Promise.resolve({ responseId: id }),
-  } as never);
+  });
 
 const tagRequest = (
   method: "PUT" | "DELETE",
-  { responseId = RESPONSE_ID, tagId = TAG_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}
+  { responseId = RESPONSE_ID, tagId = TAG_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}
 ) => {
   const handler = method === "PUT" ? PUT : DELETE_TAG;
   return handler(new NextRequest(tagPath(responseId, tagId), { method, headers }), {
     params: Promise.resolve({ responseId, tagId }),
-  } as never);
+  });
 };
 
 const checkedActions = () => mocks.can.mock.calls.map(([, action, resource]) => [action, resource]);

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_HEADERS, SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { LastActiveOwnerError } from "@/modules/organization/settings/teams/lib/owner-guard";
 import { PATCH } from "./route";
@@ -89,11 +89,7 @@ const url = (organizationId = ORG_ID, userId = TARGET_USER_ID) =>
 
 const patch = (
   body: unknown,
-  {
-    organizationId = ORG_ID,
-    userId = TARGET_USER_ID,
-    headers = SAME_ORIGIN_HEADERS as Record<string, string>,
-  } = {}
+  { organizationId = ORG_ID, userId = TARGET_USER_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}
 ) =>
   PATCH(
     new NextRequest(url(organizationId, userId), {
@@ -101,7 +97,7 @@ const patch = (
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    { params: Promise.resolve({ userId }) } as never
+    { params: Promise.resolve({ userId }) }
   );
 
 const setRole = (role: string) => patch({ role });
@@ -355,7 +351,7 @@ describe("PATCH /api/internal/members/{userId}", () => {
         headers: { "Content-Type": "application/json", ...SAME_ORIGIN_HEADERS },
         body: JSON.stringify({ role: "member" }),
       }),
-      { params: Promise.resolve({ userId: TARGET_USER_ID }) } as never
+      { params: Promise.resolve({ userId: TARGET_USER_ID }) }
     );
     expect(response.status).toBe(400);
   });

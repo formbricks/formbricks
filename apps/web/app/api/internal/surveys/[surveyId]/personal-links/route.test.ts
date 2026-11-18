@@ -55,7 +55,7 @@ const generate = (body: unknown = { segmentId: SEGMENT_ID, expirationDays: 7 }) 
       headers: { "Content-Type": "application/json", ...SAME_ORIGIN_HEADERS },
       body: JSON.stringify(body),
     }),
-    { params: Promise.resolve({ surveyId: SURVEY_ID }) } as never
+    { params: Promise.resolve({ surveyId: SURVEY_ID }) }
   );
 
 beforeEach(() => {

@@ -78,7 +78,7 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
       }
     };
 
-    loadScript();
+    void loadScript();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time script load guarded by hasLoadedRef; depending on loadSurveyScript/renderInline would re-trigger the load
   }, [props]);
 

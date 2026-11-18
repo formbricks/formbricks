@@ -19,7 +19,7 @@ export const completeNotificationSettings = (
   memberships: Membership[]
 ): TUserNotificationSettings => {
   const newNotificationSettings: TUserNotificationSettings = {
-    alert: {} as Record<string, boolean>,
+    alert: {},
     unsubscribedOrganizationIds: notificationSettings.unsubscribedOrganizationIds || [],
   };
   for (const membership of memberships) {

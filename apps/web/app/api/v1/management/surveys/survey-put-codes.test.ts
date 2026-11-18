@@ -50,7 +50,7 @@ vi.mock("@/lib/survey/visibility/creation", () => ({
 const workspaceId = "clxworkspace00000000000001";
 const apiKey = { apiKeyId: "key_1", workspacePermissions: [], organizationId: "org_1" };
 
-const storedSurvey = { ...updateSurveyInput, workspaceId } as TSurvey;
+const storedSurvey = { ...updateSurveyInput, workspaceId };
 
 const put = (body: Record<string, unknown>) =>
   (PUT as unknown as (args: object) => Promise<{ response: Response }>)({

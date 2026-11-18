@@ -126,7 +126,7 @@ describe("useResponseTableFilters", () => {
     const { result } = render();
     await waitFor(() => expect(result.current.isReady).toBe(true));
 
-    act(() =>
+    void act(() =>
       result.current.applyQuestionFilter({
         elementType: {
           id: "plan",

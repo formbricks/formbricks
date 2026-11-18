@@ -106,7 +106,7 @@ const formbricksSource = {
 const create = (body: unknown = formbricksSource, options?: TOptions) =>
   CREATE(send("POST", `${base}?workspaceId=${WORKSPACE_ID}`, body, options), {
     params: Promise.resolve({}),
-  } as never);
+  });
 const update = (body: unknown, id = SOURCE_ID) =>
   PATCH(send("PATCH", `${base}/${id}`, body), sourceProps(id));
 const remove = (id = SOURCE_ID, options?: TOptions) =>

@@ -48,7 +48,7 @@ const upstream = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 
 const search = (query: string, headers: Record<string, string> = SAME_ORIGIN_HEADERS) =>
-  SEARCH(new NextRequest(`http://localhost/api/internal/unsplash-photos?${query}`, { headers }), {} as never);
+  SEARCH(new NextRequest(`http://localhost/api/internal/unsplash-photos?${query}`, { headers }), {});
 const download = (body: unknown, headers: Record<string, string> = SAME_ORIGIN_HEADERS) =>
   DOWNLOAD(
     new NextRequest("http://localhost/api/internal/unsplash-photos/downloads", {
@@ -56,7 +56,7 @@ const download = (body: unknown, headers: Record<string, string> = SAME_ORIGIN_H
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 beforeEach(() => {

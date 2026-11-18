@@ -80,7 +80,7 @@ const datasetProps = (id = DATASET_ID) => ({ params: Promise.resolve({ datasetId
 const create = (body: unknown, organizationId = ORG_ID, options?: TOptions) =>
   POST(send("POST", `${base}?organizationId=${organizationId}`, body, options), {
     params: Promise.resolve({}),
-  } as never);
+  });
 const read = (id = DATASET_ID) => GET(send("GET", `${base}/${id}`), datasetProps(id));
 const update = (body: unknown, id = DATASET_ID) =>
   PATCH(send("PATCH", `${base}/${id}`, body), datasetProps(id));

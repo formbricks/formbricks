@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { DELETE, PATCH } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -52,21 +52,18 @@ const ORG_ACCESS = { accessControl: { read: false, write: false } };
 const url = (id = KEY_ID) => `http://localhost/api/internal/api-keys/${id}`;
 const props = (id = KEY_ID) => ({ params: Promise.resolve({ apiKeyId: id }) });
 
-const patch = (
-  body: unknown,
-  { id = KEY_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}
-) =>
+const patch = (body: unknown, { id = KEY_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
   PATCH(
     new NextRequest(url(id), {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    props(id) as never
+    props(id)
   );
 
-const remove = ({ id = KEY_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}) =>
-  DELETE(new NextRequest(url(id), { method: "DELETE", headers }), props(id) as never);
+const remove = ({ id = KEY_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
+  DELETE(new NextRequest(url(id), { method: "DELETE", headers }), props(id));
 
 beforeEach(() => {
   vi.clearAllMocks();

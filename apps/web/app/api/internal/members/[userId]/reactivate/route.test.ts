@@ -45,7 +45,7 @@ const reactivate = (userId = MEMBER_ID, query = `organizationId=${ORG_ID}`) =>
       method: "POST",
       headers: { ...SAME_ORIGIN_HEADERS, "x-request-id": "req_1" },
     }),
-    { params: Promise.resolve({ userId }) } as never
+    { params: Promise.resolve({ userId }) }
   );
 
 const snapshot = async (response: Response) => ({

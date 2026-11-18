@@ -15,9 +15,14 @@
     "//#lint:code": {
       "cache": false,
       "dependsOn": [
+        "@formbricks/ai#build",
+        "@formbricks/cache#build",
+        "@formbricks/database#build",
+        "@formbricks/jobs#build",
         "@formbricks/logger#build",
         "@formbricks/redis-config#build",
-        "@formbricks/database#build"
+        "@formbricks/storage#build",
+        "@formbricks/surveys#build"
       ]
     },
     "//#test:root": {

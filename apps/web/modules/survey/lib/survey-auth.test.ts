@@ -220,7 +220,7 @@ describe("survey visibility enforced (ENG-3282)", () => {
     mockGetWorkspaceAuth.mockResolvedValue({
       ...buildWorkspaceAuth(VICTIM_WORKSPACE_ID),
       session: buildSession(ATTACKER_USER_ID),
-    } as TWorkspaceAuth);
+    });
     mockSurveyLookup({ workspaceId: VICTIM_WORKSPACE_ID });
     mockCan.mockResolvedValue(false);
 
@@ -233,7 +233,7 @@ describe("survey visibility enforced (ENG-3282)", () => {
 
   test("getSurveyAuth returns the workspace auth when the survey is readable", async () => {
     const auth = { ...buildWorkspaceAuth(VICTIM_WORKSPACE_ID), session: buildSession(ATTACKER_USER_ID) };
-    mockGetWorkspaceAuth.mockResolvedValue(auth as TWorkspaceAuth);
+    mockGetWorkspaceAuth.mockResolvedValue(auth);
     mockSurveyLookup({ workspaceId: VICTIM_WORKSPACE_ID });
     mockCan.mockResolvedValue(true);
 

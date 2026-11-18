@@ -39,7 +39,7 @@ const put = (body: unknown = { enabled: true, isEncrypted: true }) =>
       headers: { "Content-Type": "application/json", ...SAME_ORIGIN_HEADERS },
       body: JSON.stringify(body),
     }),
-    { params: Promise.resolve({ surveyId: SURVEY_ID }) } as never
+    { params: Promise.resolve({ surveyId: SURVEY_ID }) }
   );
 
 const SAVED_AT = new Date("2026-11-12T10:00:00.000Z");

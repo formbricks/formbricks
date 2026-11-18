@@ -76,7 +76,7 @@ const getOptions = (query: string = `surveyId=${SURVEY_ID}`) =>
     new NextRequest(`http://localhost/api/internal/response-filter-options?${query}`, {
       headers: SAME_ORIGIN_HEADERS,
     }),
-    { params: Promise.resolve({}) } as never
+    { params: Promise.resolve({}) }
   );
 
 beforeEach(() => {

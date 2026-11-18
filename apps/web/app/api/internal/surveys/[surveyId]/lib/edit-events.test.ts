@@ -75,7 +75,7 @@ describe("captureSurveyEditDiffEvents", () => {
       { hiddenFields: { enabled: true, fieldIds: ["a"] }, variables: [], followUps: [] },
       {
         hiddenFields: { enabled: true, fieldIds: ["a", "b"] },
-        blocks: [{ ...block, logicFallback: "end" } as TSurvey["blocks"][number]],
+        blocks: [{ ...block, logicFallback: "end" }],
         variables: [{ id: "clvar1111111111111111111", name: "score", type: "number", value: 0 }],
         followUps: [
           ...stored.followUps,

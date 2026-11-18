@@ -56,6 +56,7 @@ interface ResponseTableProps {
 /** The gear's column names: each column's text label, which its rendered header does not give. */
 const getColumnLabels = (table: ReturnType<typeof useReactTable<TResponseTableData>>) =>
   table.getAllLeafColumns().flatMap((column) => {
+    // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
     const label = (column.columnDef.meta as { label?: string } | undefined)?.label;
     return label ? [{ id: column.id, label }] : [];
   });

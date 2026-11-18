@@ -92,7 +92,7 @@ const post = (
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 const lastAudit = () => mocks.queueAuditEvent.mock.calls.at(-1)?.[0];
 

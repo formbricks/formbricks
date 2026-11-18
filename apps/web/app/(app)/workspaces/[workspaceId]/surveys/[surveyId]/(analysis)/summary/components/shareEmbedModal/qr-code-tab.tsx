@@ -47,7 +47,7 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
     };
 
     if (surveyUrl) {
-      generateQRCode();
+      void generateQRCode();
     }
 
     return () => {
@@ -63,7 +63,7 @@ export const QRCodeTab = ({ surveyUrl }: QRCodeTabProps) => {
       setIsDownloading(true);
       const downloadInstance = new QRCodeStyling(getQRCodeOptions(500, 500));
       downloadInstance.update({ data: surveyUrl });
-      downloadInstance.download({ name: "survey-qr-code", extension: "png" });
+      void downloadInstance.download({ name: "survey-qr-code", extension: "png" });
       toast.success(t("workspace.surveys.summary.qr_code_download_with_start_soon"));
     } catch (error) {
       logger.error(error as Error, "Failed to download QR code");

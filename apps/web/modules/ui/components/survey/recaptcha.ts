@@ -82,7 +82,7 @@ export const executeRecaptcha = async (
 
     return val as string;
   } catch (error) {
-    console.error(`Error loading reCAPTCHA script: ${error}`);
+    console.error(`Error loading reCAPTCHA script: ${String(error)}`);
     return null;
   }
 };

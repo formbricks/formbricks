@@ -49,7 +49,7 @@ export const NotionWrapper = ({
   >(null);
 
   const handleNotionAuthorization = async () => {
-    authorize(workspaceId, webAppUrl).then((url: string) => {
+    void authorize(workspaceId, webAppUrl).then((url: string) => {
       if (url) {
         window.location.replace(url);
       }

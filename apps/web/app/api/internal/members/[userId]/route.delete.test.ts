@@ -53,7 +53,7 @@ const remove = (userId = TARGET_ID) =>
       method: "DELETE",
       headers: { ...(SAME_ORIGIN_HEADERS as Record<string, string>) },
     }),
-    { params: Promise.resolve({ userId }) } as never
+    { params: Promise.resolve({ userId }) }
   );
 
 const roles = ({ caller, target }: { caller: string | null; target: string | null }) =>
@@ -170,7 +170,7 @@ describe("DELETE /api/internal/members/{userId}", () => {
         method: "DELETE",
         headers: { ...(SAME_ORIGIN_HEADERS as Record<string, string>) },
       }),
-      { params: Promise.resolve({ userId: TARGET_ID }) } as never
+      { params: Promise.resolve({ userId: TARGET_ID }) }
     );
 
     expect(response.status).toBe(400);

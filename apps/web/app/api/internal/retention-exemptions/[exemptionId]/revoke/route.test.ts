@@ -53,7 +53,7 @@ const revoke = () =>
       method: "POST",
       headers: { ...SAME_ORIGIN_HEADERS, "x-request-id": "req_1" },
     }),
-    { params: Promise.resolve({ exemptionId: EXEMPTION_ID }) } as never
+    { params: Promise.resolve({ exemptionId: EXEMPTION_ID }) }
   );
 
 const snapshot = async (response: Response) => ({

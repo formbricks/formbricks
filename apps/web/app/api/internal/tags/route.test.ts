@@ -50,7 +50,7 @@ const create = (body: unknown, headers: Record<string, string> = SAME_ORIGIN_HEA
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 const checkedActions = () => mocks.assertCan.mock.calls.map(([, action, resource]) => [action, resource]);

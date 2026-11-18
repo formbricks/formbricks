@@ -219,7 +219,7 @@ export function TargetingCard({
         {isSegmentEditorOpen && !segment?.isPrivate ? (
           <Button
             onClick={() => {
-              handleSaveSegment({ filters: segment?.filters ?? [] });
+              void handleSaveSegment({ filters: segment?.filters ?? [] });
             }}
             size="sm"
             variant="secondary">

@@ -56,7 +56,7 @@ const leave = (query = `?organizationId=${ORG_ID}`) =>
       method: "DELETE",
       headers: { ...(SAME_ORIGIN_HEADERS as Record<string, string>) },
     }),
-    { params: Promise.resolve({}) } as never
+    { params: Promise.resolve({}) }
   );
 
 const memberAs = (role: string | null) =>

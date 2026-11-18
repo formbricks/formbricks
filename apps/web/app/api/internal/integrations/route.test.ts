@@ -116,7 +116,7 @@ const connection = (type = "googleSheets") =>
 const spreadsheet = (type = "googleSheets", id = "sheet-1") =>
   SPREADSHEET(send("GET", `${base}/${type}/spreadsheets/${id}${query}`), {
     params: Promise.resolve({ type, spreadsheetId: id }),
-  } as never);
+  });
 const channels = (type = "slack") =>
   CHANNELS(send("GET", `${base}/${type}/channels${query}`), typeProps(type));
 

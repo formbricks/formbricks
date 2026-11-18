@@ -250,7 +250,7 @@ export const ResponsePage = ({
         if (requestId === firstPageRequestRef.current) setIsFetchingFirstPage(false);
       }
     };
-    fetchFilteredResponses();
+    void fetchFilteredResponses();
     // page is intentionally omitted to avoid refetching after the initial page setup.
     // hasFilters is derived from selectedFilter/dateRange which are already deps.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- effect must run only when the filter value changes, not on page updates it sets internally

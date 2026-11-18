@@ -32,7 +32,7 @@ const testDelivery = (url: string) =>
       headers: { "Content-Type": "application/json", ...SAME_ORIGIN_HEADERS },
       body: JSON.stringify({ url }),
     }),
-    { params: Promise.resolve({}) } as never
+    { params: Promise.resolve({}) }
   );
 
 beforeEach(() => {

@@ -543,14 +543,14 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
       return formResult;
     }
 
-    parsedInput.formData = formResult.formData as TV3ParsedInput<S>["formData"];
+    parsedInput.formData = formResult.formData;
   } else if (schemas?.body) {
     const bodyResult = await parseV3Body(req, schemas.body, context);
     if (!bodyResult.ok) {
       return bodyResult;
     }
 
-    parsedInput.body = bodyResult.body as TV3ParsedInput<S>["body"];
+    parsedInput.body = bodyResult.body;
   } else {
     const preflightFailure = await preflightUndeclaredBody(req, context);
     if (preflightFailure) {
@@ -573,7 +573,7 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
       };
     }
 
-    parsedInput.query = queryResult.data as TV3ParsedInput<S>["query"];
+    parsedInput.query = queryResult.data;
   }
 
   if (schemas?.params) {
@@ -591,7 +591,7 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
       };
     }
 
-    parsedInput.params = paramsResult.data as TV3ParsedInput<S>["params"];
+    parsedInput.params = paramsResult.data;
   }
 
   return { ok: true, parsedInput };

@@ -95,14 +95,14 @@ const resend = (body: unknown = validInput, extraHeaders: Record<string, string>
       headers: { "Content-Type": "application/json", ...extraHeaders },
       body: typeof body === "string" ? body : JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 const auditEvents = () => vi.mocked(queueAuditEvent).mock.calls.map(([event]) => event);
 
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
+  vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   vi.mocked(queueAuditEvent).mockResolvedValue(undefined);
   vi.mocked(getUserByEmail).mockResolvedValue(mockUser as never);
   // Default: no stored intent, so a client-supplied recovery callback proves nothing on its own.
@@ -336,7 +336,7 @@ describe("POST /api/internal/verification-emails — resend flow", () => {
     test.each([["absent"], ["invalid"], ["other_user"]])(
       "does not mint a cookie when the browser's proof classifies as %s",
       async (classification) => {
-        signupIntentMocks.classifySignupIntent.mockReturnValue(classification as never);
+        signupIntentMocks.classifySignupIntent.mockReturnValue(classification);
 
         await resend();
 

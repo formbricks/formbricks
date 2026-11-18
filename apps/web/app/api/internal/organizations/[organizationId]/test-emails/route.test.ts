@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError, TooManyRequestsError } from "@formbricks/types/errors";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
 
@@ -45,13 +45,13 @@ const ORG_ID = "clorg11111111111111111111";
 const USER_ID = "cluser1111111111111111111";
 const LOGO_URL = "/storage/clwork1111111111111111111/public/logo.png";
 
-const send = ({ id = ORG_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}) =>
+const send = ({ id = ORG_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
   POST(
     new NextRequest(`http://localhost/api/internal/organizations/${id}/test-emails`, {
       method: "POST",
       headers,
     }),
-    { params: Promise.resolve({ organizationId: id }) } as never
+    { params: Promise.resolve({ organizationId: id }) }
   );
 
 const operationLimits = () =>

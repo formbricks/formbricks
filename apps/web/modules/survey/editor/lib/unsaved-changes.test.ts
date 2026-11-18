@@ -17,8 +17,7 @@ const baseSurvey = {
   updatedAt: new Date("2026-01-01T00:00:00.000Z"),
 } as unknown as TSurvey;
 
-const surveyWith = (overrides: Record<string, unknown>): TSurvey =>
-  ({ ...baseSurvey, ...overrides }) as unknown as TSurvey;
+const surveyWith = (overrides: Record<string, unknown>): TSurvey => ({ ...baseSurvey, ...overrides });
 
 /** As the Hidden Fields card builds one: no `id`, because the database assigns that on the write. */
 const ingestedRow = (storageKey: string) => ({

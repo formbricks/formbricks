@@ -7,7 +7,7 @@ export const ClientLogout = () => {
   const { signOut } = useSignOut();
 
   useEffect(() => {
-    signOut({
+    void signOut({
       redirect: false,
       callbackUrl: "/auth/login",
       clearWorkspaceId: true,

@@ -53,7 +53,7 @@ const reset = (body: unknown = BODY, headers: Record<string, string> = SAME_ORIG
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 const reasonOf = async (response: Response) => (await response.json()).details?.reason;

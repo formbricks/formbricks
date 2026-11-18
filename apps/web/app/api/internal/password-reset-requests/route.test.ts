@@ -64,7 +64,7 @@ const request = (
       headers: { "Content-Type": "application/json", ...headers },
       body: typeof body === "string" ? body : JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 /** Run what the route deferred past its response, as Next does once the response is sent. */

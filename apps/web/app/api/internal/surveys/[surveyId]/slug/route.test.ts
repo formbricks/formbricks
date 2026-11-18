@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError, ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { DELETE, PUT } from "./route";
 import { SURVEY_SLUG_MAX_LENGTH } from "./schemas";
@@ -44,21 +44,18 @@ const WORKSPACE_ID = "clwork1111111111111111111";
 const url = (id = SURVEY_ID) => `http://localhost/api/internal/surveys/${id}/slug`;
 const props = (id = SURVEY_ID) => ({ params: Promise.resolve({ surveyId: id }) });
 
-const put = (
-  body: unknown,
-  { id = SURVEY_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}
-) =>
+const put = (body: unknown, { id = SURVEY_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
   PUT(
     new NextRequest(url(id), {
       method: "PUT",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    props(id) as never
+    props(id)
   );
 
-const remove = ({ id = SURVEY_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}) =>
-  DELETE(new NextRequest(url(id), { method: "DELETE", headers }), props(id) as never);
+const remove = ({ id = SURVEY_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
+  DELETE(new NextRequest(url(id), { method: "DELETE", headers }), props(id));
 
 const operationLimits = () =>
   mocks.applyRateLimit.mock.calls

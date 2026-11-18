@@ -4513,7 +4513,7 @@ describe("Signature question type tests", () => {
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
-      [] as unknown as TSurveySummary["dropOff"]
+      []
     )) as TSurveyElementSummarySignature[];
 
     expect(summary).toHaveLength(1);

@@ -3,7 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useWorkspace } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
-import type { ChartQueryState } from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
+import {
+  type ChartQueryState,
+  IDLE_CHART_QUERY_STATE,
+} from "@/modules/ee/analysis/charts/components/advanced-chart-builder";
 import { ChartBuilderBody } from "@/modules/ee/analysis/charts/components/chart-builder-body";
 import { ChartDialogFooter } from "@/modules/ee/analysis/charts/components/chart-dialog-footer";
 import { ChartDialogLoadingView } from "@/modules/ee/analysis/charts/components/chart-dialog-loading-view";
@@ -94,20 +97,24 @@ export function CreateChartView({
     if (!open) adoptedChartRef.current = null;
   }, [open]);
 
+  const [queryState, setQueryState] = useState<ChartQueryState>(IDLE_CHART_QUERY_STATE);
+
   const isReady = open && !isLoadingChart && (!isEditing || Boolean(chartData) || canSaveDetailsOnly);
   const { confirmDiscard, isConfirmingDiscard, setIsConfirmingDiscard, runPendingDiscard } =
-    useChartDirtyState({ open, isReady, isSaving, chartName, chartData, chartConfig });
+    useChartDirtyState({
+      open,
+      isReady,
+      isSaving,
+      chartName,
+      chartData,
+      chartConfig,
+      hasUnadoptedQueryEdit: queryState.hasUnadoptedEdit,
+    });
 
   const requestClose = () => confirmDiscard(handleClose);
   const handleDialogOpenChange = (isOpen: boolean) => {
     if (!isOpen) requestClose();
   };
-
-  const [queryState, setQueryState] = useState<ChartQueryState>({
-    isLoading: false,
-    error: null,
-    isPending: false,
-  });
 
   if (isLoadingChart && isEditing && !initialChart) {
     return <ChartDialogLoadingView open={open} onClose={handleClose} />;

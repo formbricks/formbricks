@@ -98,7 +98,7 @@ export function waitForRetry(ms: number, signal: AbortSignal): Promise<void> {
       try {
         signal.throwIfAborted();
       } catch (reason) {
-        reject(reason as Error);
+        reject(reason);
       }
     };
     const timer = setTimeout(() => {

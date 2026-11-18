@@ -183,7 +183,7 @@ describe("useSurveys", () => {
           { status: 200, headers: { "Content-Type": "application/json" } }
         )
       )
-      .mockReturnValueOnce(nextResponsePromise as Promise<Response>);
+      .mockReturnValueOnce(nextResponsePromise);
 
     const queryClient = new QueryClient({
       defaultOptions: {

@@ -93,7 +93,7 @@ const post = (handler: typeof CREATE, path: string, body: unknown) =>
       headers: { "Content-Type": "application/json", ...(SAME_ORIGIN_HEADERS as Record<string, string>) },
       body: JSON.stringify(body),
     }),
-    { params: Promise.resolve({}) } as never
+    { params: Promise.resolve({}) }
   );
 
 const invitee = { email: "invitee@example.com", name: "Invitee", role: "member", teamIds: [] as string[] };

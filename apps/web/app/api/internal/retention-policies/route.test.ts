@@ -59,7 +59,7 @@ const DEFAULT_DOCUMENT = {
 };
 
 const get = (query = `organizationId=${ORG_ID}`) =>
-  GET(new NextRequest(`http://localhost/api/internal/retention-policies?${query}`), {} as never);
+  GET(new NextRequest(`http://localhost/api/internal/retention-policies?${query}`), {});
 
 const patch = (body: unknown, query = `organizationId=${ORG_ID}`) =>
   PATCH(
@@ -68,7 +68,7 @@ const patch = (body: unknown, query = `organizationId=${ORG_ID}`) =>
       headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 describe("GET /api/internal/retention-policies", () => {

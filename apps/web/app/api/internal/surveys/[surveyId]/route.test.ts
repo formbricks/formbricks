@@ -15,7 +15,7 @@ import {
   ValidationError,
 } from "@formbricks/types/errors";
 import type { TSurvey } from "@formbricks/types/surveys/types";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { SurveyLinkedCreativesError } from "@/modules/ee/creatives/lib/linked-creatives";
 import { PUT as PUT_DRAFT } from "./draft/route";
@@ -28,26 +28,33 @@ import {
 } from "./lib/limits";
 import { PUT } from "./route";
 
-const mocks = vi.hoisted(() => ({
-  constants: { POSTHOG_KEY: "phc_test" as string | undefined, IS_FORMBRICKS_SURVEYS_CONFIGURED: false },
-  can: vi.fn(),
-  getSession: vi.fn(),
-  applyRateLimit: vi.fn(),
-  queueAuditEvent: vi.fn(),
-  capturePostHogEvent: vi.fn(),
-  revalidatePath: vi.fn(),
-  getOrganizationIdFromSurveyId: vi.fn(),
-  getWorkspaceIdFromSurveyId: vi.fn(),
-  checkSpamProtectionPermission: vi.fn(),
-  getSurvey: vi.fn(),
-  getOrganizationBilling: vi.fn(),
-  getSurveyFollowUpsPermission: vi.fn(),
-  checkExternalUrlsPermission: vi.fn(),
-  updateSurvey: vi.fn(),
-  updateSurveyDraft: vi.fn(),
-  resolveSurveyActorContext: vi.fn(),
-  getSurveyCount: vi.fn(),
-}));
+const mocks = vi.hoisted(() => {
+  // Typed so a test can unset the key.
+  const constants: { POSTHOG_KEY: string | undefined; IS_FORMBRICKS_SURVEYS_CONFIGURED: boolean } = {
+    POSTHOG_KEY: "phc_test",
+    IS_FORMBRICKS_SURVEYS_CONFIGURED: false,
+  };
+  return {
+    constants,
+    can: vi.fn(),
+    getSession: vi.fn(),
+    applyRateLimit: vi.fn(),
+    queueAuditEvent: vi.fn(),
+    capturePostHogEvent: vi.fn(),
+    revalidatePath: vi.fn(),
+    getOrganizationIdFromSurveyId: vi.fn(),
+    getWorkspaceIdFromSurveyId: vi.fn(),
+    checkSpamProtectionPermission: vi.fn(),
+    getSurvey: vi.fn(),
+    getOrganizationBilling: vi.fn(),
+    getSurveyFollowUpsPermission: vi.fn(),
+    checkExternalUrlsPermission: vi.fn(),
+    updateSurvey: vi.fn(),
+    updateSurveyDraft: vi.fn(),
+    resolveSurveyActorContext: vi.fn(),
+    getSurveyCount: vi.fn(),
+  };
+});
 
 vi.mock("@/lib/constants", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/constants")>();
@@ -125,7 +132,7 @@ const send = (
   route: TRoute,
   url: string,
   body: unknown,
-  { id = SURVEY_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}
+  { id = SURVEY_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}
 ) =>
   route(
     new NextRequest(url.replace(SURVEY_ID, id), {
@@ -133,7 +140,7 @@ const send = (
       headers: { "Content-Type": "application/json", ...headers },
       body: typeof body === "string" ? body : JSON.stringify(body),
     }),
-    { params: Promise.resolve({ surveyId: id }) } as never
+    { params: Promise.resolve({ surveyId: id }) }
   );
 
 const save = (body: unknown, options?: Parameters<typeof send>[3]) => send(PUT, ROUTES[0][2], body, options);

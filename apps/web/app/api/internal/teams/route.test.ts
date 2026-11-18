@@ -98,10 +98,10 @@ const create = (
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
-const read = (id = TEAM_ID) => GET(new NextRequest(teamUrl(id), { method: "GET" }), props(id) as never);
+const read = (id = TEAM_ID) => GET(new NextRequest(teamUrl(id), { method: "GET" }), props(id));
 
 const update = (body: unknown, { id = TEAM_ID, headers = sameOrigin } = {}) =>
   PATCH(
@@ -110,11 +110,11 @@ const update = (body: unknown, { id = TEAM_ID, headers = sameOrigin } = {}) =>
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    props(id) as never
+    props(id)
   );
 
 const remove = ({ id = TEAM_ID, headers = sameOrigin } = {}) =>
-  DELETE(new NextRequest(teamUrl(id), { method: "DELETE", headers }), props(id) as never);
+  DELETE(new NextRequest(teamUrl(id), { method: "DELETE", headers }), props(id));
 
 /** Grant exactly these actions, on any resource. */
 const allow = (...actions: string[]) =>

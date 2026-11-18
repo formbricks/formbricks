@@ -92,7 +92,7 @@ const send = (method: "PATCH" | "POST", body: unknown, { id = WORKSPACE_ID, head
       headers: { "Content-Type": "application/json", ...(headers ?? SAME_ORIGIN_HEADERS) },
       body: JSON.stringify(body),
     }),
-    props(id) as never
+    props(id)
   );
 
 const patch = (body: unknown, options: TRequestOptions = {}) => send("PATCH", body, options);
@@ -433,7 +433,7 @@ describe("workspace write input limits", () => {
 });
 
 describe("GET /api/internal/workspaces/{workspaceId}", () => {
-  const get = (id = WORKSPACE_ID) => GET(new NextRequest(url(id)), props(id) as never);
+  const get = (id = WORKSPACE_ID) => GET(new NextRequest(url(id)), props(id));
   const { languages: _languages, ...editorWorkspace } = workspace({ legacyEnvironmentId: null });
 
   beforeEach(() => {

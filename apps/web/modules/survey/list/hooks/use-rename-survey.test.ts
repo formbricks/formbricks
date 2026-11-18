@@ -110,7 +110,7 @@ describe("useRenameSurvey", () => {
       resolveFetch = resolve;
     });
 
-    vi.mocked(global.fetch).mockReturnValue(fetchPromise as Promise<Response>);
+    vi.mocked(global.fetch).mockReturnValue(fetchPromise);
 
     const queryClient = createQueryClient();
     const queryKey = surveyKeys.list(queryKeyInput);

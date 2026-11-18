@@ -335,7 +335,7 @@ describe("deletion cleanup (real Postgres)", () => {
       vi.mocked(listFeedbackRecords).mockResolvedValue({
         data: null,
         error: { status: 503, message: "down", detail: "" },
-      } as never);
+      });
 
       await drainDeletionCleanups();
       const first = await prisma.deletionCleanup.findUniqueOrThrow({ where: { id: row.id } });

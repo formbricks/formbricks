@@ -449,7 +449,7 @@ describe("GET /api/internal/languages?workspaceId=", () => {
   const list = (workspaceId = WORKSPACE_ID) =>
     LIST(new NextRequest(`http://localhost/api/internal/languages?workspaceId=${workspaceId}`), {
       params: Promise.resolve({}),
-    } as never);
+    });
 
   beforeEach(() => {
     vi.clearAllMocks();

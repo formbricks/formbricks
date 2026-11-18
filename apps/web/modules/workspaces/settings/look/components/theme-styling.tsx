@@ -377,7 +377,7 @@ export const ThemeStyling = ({
             mainText={t("workspace.look.reset_styling_confirmation")}
             confirmBtnLabel={t("common.confirm")}
             onConfirm={() => {
-              onReset();
+              void onReset();
               setConfirmResetStylingModalOpen(false);
             }}
             onDecline={() => setConfirmResetStylingModalOpen(false)}

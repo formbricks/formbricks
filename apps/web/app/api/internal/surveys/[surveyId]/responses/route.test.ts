@@ -94,7 +94,7 @@ const post = (
       headers: { ...headers, "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
-    { params: Promise.resolve({ surveyId }) } as never
+    { params: Promise.resolve({ surveyId }) }
   );
 
 const queryResponses = (body: unknown, options?: Parameters<typeof post>[3]) =>

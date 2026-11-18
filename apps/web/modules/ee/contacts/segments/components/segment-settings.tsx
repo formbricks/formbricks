@@ -233,7 +233,7 @@ export function SegmentSettings({
                   disabled={isSaveDisabled}
                   loading={isUpdatingSegment}
                   onClick={() => {
-                    handleUpdateSegment();
+                    void handleUpdateSegment();
                   }}
                   type="submit">
                   {t("common.save_changes")}

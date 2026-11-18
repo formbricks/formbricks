@@ -95,7 +95,7 @@ const post = (
       headers: { "Content-Type": "application/json", ...headers },
       body: typeof body === "string" ? body : JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 const sendEmailWith = (link: TLink) => post(emailInput(link));
@@ -104,7 +104,7 @@ const sendEmail = () => sendEmailWith({ suId: "" });
 
 const singleUse = (isEncrypted = false) => ({ singleUse: { enabled: true, isEncrypted } });
 const answeredWith = (finished: boolean) =>
-  vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => ({ id: "r1", finished }) as never);
+  vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => ({ id: "r1", finished }));
 
 // Every way a survey can exist without respondents being able to take it from its public link.
 const notOpen = [
@@ -139,7 +139,7 @@ const expectSurveyGone = async (response: Response) => {
 
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
+  vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   vi.mocked(getOrganizationIdFromSurveyId).mockResolvedValue("org-1");
   vi.mocked(getSurveyOwnerId).mockResolvedValue("owner-1");
   vi.mocked(getOrganizationLogoUrl).mockResolvedValue(null);

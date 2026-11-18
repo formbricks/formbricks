@@ -1,12 +1,11 @@
 import { describe, expect, test } from "vitest";
-import type { TV3CreateSurveyRequestBody } from "@/app/api/v3/surveys/schemas";
 import {
   EMPTY_AI_DRAFT,
   mergeAiDraftSnapshot,
 } from "@/modules/survey/components/template-list/lib/ai-draft-reducer";
 import { payloadToDraftSnapshot } from "./payload-to-draft";
 
-const payload = (body: Record<string, unknown>) => body as unknown as TV3CreateSurveyRequestBody;
+const payload = (body: Record<string, unknown>) => body as unknown;
 
 /** Through the reducer the review list uses, so the test sees the rows a user would. */
 const rowsFor = (body: Record<string, unknown>) =>

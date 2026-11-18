@@ -51,7 +51,7 @@ const post = (form: FormData = uploadForm(), headers: Record<string, string> = {
       headers: { ...SAME_ORIGIN_HEADERS, ...headers },
       signal,
     }),
-    {} as never
+    {}
   );
 
 /** The bytes and Content-Type of `form`, to send them streamed with no Content-Length. */
@@ -76,8 +76,8 @@ const postStreamed = async (form: FormData) => {
         },
       }),
       duplex: "half",
-    } as ConstructorParameters<typeof NextRequest>[1]),
-    {} as never
+    }),
+    {}
   );
 };
 
@@ -148,7 +148,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
         headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
         body: JSON.stringify({ workspaceId, fileName: "onboarding.qsf", qsf: JSON.parse(qsfText) }),
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(415);
@@ -264,8 +264,8 @@ describe("POST /api/internal/surveys/import/stream", () => {
           },
         }),
         duplex: "half",
-      } as ConstructorParameters<typeof NextRequest>[1]),
-      {} as never
+      }),
+      {}
     );
     // Let the first request get as far as reading its body.
     await new Promise((resolve) => setTimeout(resolve, 20));

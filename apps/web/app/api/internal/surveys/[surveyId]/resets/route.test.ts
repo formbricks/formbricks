@@ -47,7 +47,7 @@ const reset = () =>
       method: "POST",
       headers: SAME_ORIGIN_HEADERS,
     }),
-    { params: Promise.resolve({ surveyId: SURVEY_ID }) } as never
+    { params: Promise.resolve({ surveyId: SURVEY_ID }) }
   );
 
 const checkedActions = () => mocks.can.mock.calls.map(([, action, resource]) => [action, resource]);

@@ -103,7 +103,7 @@ const createdWorkspace = {
 const BASE_URL = "http://localhost/api/internal/workspaces";
 
 const list = (query = `organizationId=${ORG_ID}`) =>
-  GET(new NextRequest(`${BASE_URL}?${query}`), { params: Promise.resolve({}) } as never);
+  GET(new NextRequest(`${BASE_URL}?${query}`), { params: Promise.resolve({}) });
 
 const create = (
   body: unknown = { name: "  New Workspace  " },
@@ -115,7 +115,7 @@ const create = (
       headers: { "Content-Type": "application/json", ...(headers ?? SAME_ORIGIN_HEADERS) },
       body: JSON.stringify(body),
     }),
-    { params: Promise.resolve({}) } as never
+    { params: Promise.resolve({}) }
   );
 
 /** Grant exactly these actions, on this organization only. */

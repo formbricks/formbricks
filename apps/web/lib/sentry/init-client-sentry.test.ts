@@ -22,7 +22,7 @@ describe("initClientSentryFromRuntimeConfig", () => {
   beforeEach(() => {
     vi.resetModules();
     vi.clearAllMocks();
-    vi.stubGlobal("window", {} as Window);
+    vi.stubGlobal("window", {});
     // An already-loaded page unless a test says otherwise.
     vi.stubGlobal("document", { readyState: "complete" });
   });

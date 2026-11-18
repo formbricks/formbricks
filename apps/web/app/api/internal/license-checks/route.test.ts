@@ -67,7 +67,7 @@ const recheck = () =>
       method: "POST",
       headers: SAME_ORIGIN_HEADERS,
     }),
-    { params: Promise.resolve({}) } as never
+    { params: Promise.resolve({}) }
   );
 
 beforeEach(() => {
@@ -155,7 +155,7 @@ describe("POST /api/internal/license-checks", () => {
         `http://localhost/api/internal/license-checks?workspaceId=${WORKSPACE_ID}&organizationId=${ORG_ID}`,
         { method: "POST", headers: SAME_ORIGIN_HEADERS }
       ),
-      { params: Promise.resolve({}) } as never
+      { params: Promise.resolve({}) }
     );
     expect(response.status).toBe(400);
     expect(mocks.fetchLicenseFresh).not.toHaveBeenCalled();

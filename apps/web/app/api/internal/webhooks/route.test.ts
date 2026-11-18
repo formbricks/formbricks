@@ -106,19 +106,19 @@ const request = (method: string, path: string, body?: unknown, headers = SAME_OR
 const create = (body: unknown, workspaceId = WORKSPACE_ID) =>
   CREATE(request("POST", `/api/internal/webhooks?workspaceId=${workspaceId}`, body), {
     params: Promise.resolve({}),
-  } as never);
+  });
 const update = (body: unknown, id = WEBHOOK_ID) =>
   PUT(request("PUT", `/api/internal/webhooks/${id}`, body), {
     params: Promise.resolve({ webhookId: id }),
-  } as never);
+  });
 const remove = (id = WEBHOOK_ID) =>
   DELETE(request("DELETE", `/api/internal/webhooks/${id}`), {
     params: Promise.resolve({ webhookId: id }),
-  } as never);
+  });
 const testDelivery = (body: unknown, workspaceId = WORKSPACE_ID) =>
   TEST_DELIVERY(request("POST", `/api/internal/webhooks/test-deliveries?workspaceId=${workspaceId}`, body), {
     params: Promise.resolve({}),
-  } as never);
+  });
 
 const stateMutationSpent = () =>
   mocks.applyRateLimit.mock.calls.some(([config]) => config === rateLimitConfigs.actions.stateMutation);
@@ -283,7 +283,7 @@ describe("POST /api/internal/webhooks", () => {
       request("POST", `/api/internal/webhooks?workspaceId=${WORKSPACE_ID}`, settings, {
         Origin: "https://evil.example",
       } as never),
-      { params: Promise.resolve({}) } as never
+      { params: Promise.resolve({}) }
     );
 
     expect(response.status).toBe(403);

@@ -442,7 +442,7 @@ describe("ssoDatabaseHooks.user.create.after", () => {
       // try/catch entirely and lands as an unhandled rejection.
       { label: "rejects asynchronously", impl: async () => Promise.reject(new Error("audit sink down")) },
     ])("a failing audit sink that $label does not break the sign-up", async ({ impl }) => {
-      vi.mocked(queueAuditEventBackground).mockImplementation(impl as never);
+      vi.mocked(queueAuditEventBackground).mockImplementation(impl);
 
       await expect(runAfter(false)).resolves.not.toThrow();
       expect(provisionSsoUserMemberships).toHaveBeenCalledTimes(1);

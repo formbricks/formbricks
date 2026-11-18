@@ -37,14 +37,14 @@ const bodyOf = (survey: Record<string, unknown> = { name: "Onboarding" }) => ({
   triggers: "file",
 });
 
-const put = (body: unknown, { surveyId = SURVEY_ID, headers = {} as Record<string, string> } = {}) =>
+const put = (body: unknown, { surveyId = SURVEY_ID, headers = {} } = {}) =>
   PUT(
     new NextRequest(URL_PATH, {
       method: "PUT",
       body: typeof body === "string" ? body : JSON.stringify(body),
       headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json", ...headers },
     }),
-    { params: Promise.resolve({ surveyId }) } as never
+    { params: Promise.resolve({ surveyId }) }
   );
 
 /** A body of exactly `bytes` bytes, padded inside the survey so it stays valid JSON. */

@@ -75,7 +75,7 @@ const post = (body: unknown = {}, headers: Record<string, string> = SAME_ORIGIN_
       body: JSON.stringify(body),
       headers: { "Content-Type": "application/json", ...headers },
     }),
-    { params: Promise.resolve({ surveyId: SURVEY_ID }) } as never
+    { params: Promise.resolve({ surveyId: SURVEY_ID }) }
   );
 
 describe("POST /api/surveys/{surveyId}/attachment-exports", () => {

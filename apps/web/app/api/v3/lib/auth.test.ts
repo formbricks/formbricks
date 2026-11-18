@@ -81,7 +81,7 @@ describe("requireSessionWorkspaceAccess", () => {
   test("returns 403 when workspace is not found (avoid leaking existence)", async () => {
     vi.mocked(getWorkspace).mockResolvedValueOnce(null);
     const result = await requireSessionWorkspaceAccess(
-      { user: { id: "user_1" }, expires: "" } as Parameters<typeof requireSessionWorkspaceAccess>[0],
+      { user: { id: "user_1" }, expires: "" },
       "ws_nonexistent",
       "read",
       requestId
@@ -101,7 +101,7 @@ describe("requireSessionWorkspaceAccess", () => {
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValueOnce("org_1");
     vi.mocked(assertCan).mockRejectedValueOnce(new AuthorizationError("Not authorized"));
     const result = await requireSessionWorkspaceAccess(
-      { user: { id: "user_1" }, expires: "" } as Parameters<typeof requireSessionWorkspaceAccess>[0],
+      { user: { id: "user_1" }, expires: "" },
       "proj_abc",
       "read",
       requestId
@@ -122,7 +122,7 @@ describe("requireSessionWorkspaceAccess", () => {
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValueOnce("org_1");
     vi.mocked(assertCan).mockResolvedValueOnce(undefined);
     const result = await requireSessionWorkspaceAccess(
-      { user: { id: "user_1" }, expires: "" } as Parameters<typeof requireSessionWorkspaceAccess>[0],
+      { user: { id: "user_1" }, expires: "" },
       "proj_abc",
       "readWrite",
       requestId
@@ -171,7 +171,7 @@ describe("requireV3WorkspaceAccess", () => {
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValueOnce("org_s");
     vi.mocked(assertCan).mockResolvedValueOnce(undefined);
     const r = await requireV3WorkspaceAccess(
-      { user: { id: "user_1" }, expires: "" } as Parameters<typeof requireV3WorkspaceAccess>[0],
+      { user: { id: "user_1" }, expires: "" },
       "proj_s",
       "read",
       requestId
@@ -187,12 +187,7 @@ describe("requireV3WorkspaceAccess", () => {
       ...keyBase,
       workspacePermissions: [wsPerm("proj_k", ApiKeyPermission.read)],
     };
-    const r = await requireV3WorkspaceAccess(
-      auth as Parameters<typeof requireV3WorkspaceAccess>[0],
-      "proj_k",
-      "read",
-      requestId
-    );
+    const r = await requireV3WorkspaceAccess(auth, "proj_k", "read", requestId);
     expect(r).toEqual({
       workspaceId: "proj_k",
       organizationId: "org_k",
@@ -205,12 +200,7 @@ describe("requireV3WorkspaceAccess", () => {
       ...keyBase,
       workspacePermissions: [wsPerm("proj_k", ApiKeyPermission.write)],
     };
-    const r = await requireV3WorkspaceAccess(
-      auth as Parameters<typeof requireV3WorkspaceAccess>[0],
-      "proj_k",
-      "read",
-      requestId
-    );
+    const r = await requireV3WorkspaceAccess(auth, "proj_k", "read", requestId);
     expect(r).toEqual({
       workspaceId: "proj_k",
       organizationId: "org_k",
@@ -223,12 +213,7 @@ describe("requireV3WorkspaceAccess", () => {
       ...keyBase,
       workspacePermissions: [wsPerm("proj_k", ApiKeyPermission.read)],
     };
-    const r = await requireV3WorkspaceAccess(
-      auth as Parameters<typeof requireV3WorkspaceAccess>[0],
-      "proj_k",
-      "readWrite",
-      requestId
-    );
+    const r = await requireV3WorkspaceAccess(auth, "proj_k", "readWrite", requestId);
     expect((r as Response).status).toBe(403);
   });
 
@@ -238,12 +223,7 @@ describe("requireV3WorkspaceAccess", () => {
       ...keyBase,
       workspacePermissions: [wsPerm("other_workspace")],
     };
-    const r = await requireV3WorkspaceAccess(
-      auth as Parameters<typeof requireV3WorkspaceAccess>[0],
-      "proj_k",
-      "read",
-      requestId
-    );
+    const r = await requireV3WorkspaceAccess(auth, "proj_k", "read", requestId);
     expect((r as Response).status).toBe(403);
   });
 
@@ -258,12 +238,7 @@ describe("requireV3WorkspaceAccess", () => {
         },
       ],
     };
-    const r = await requireV3WorkspaceAccess(
-      auth as Parameters<typeof requireV3WorkspaceAccess>[0],
-      "proj_k",
-      "read",
-      requestId
-    );
+    const r = await requireV3WorkspaceAccess(auth, "proj_k", "read", requestId);
     expect((r as Response).status).toBe(403);
   });
 
@@ -272,12 +247,7 @@ describe("requireV3WorkspaceAccess", () => {
       ...keyBase,
       workspacePermissions: [wsPerm("proj_k", ApiKeyPermission.manage)],
     };
-    const r = await requireV3WorkspaceAccess(
-      auth as Parameters<typeof requireV3WorkspaceAccess>[0],
-      "proj_k",
-      "manage",
-      requestId
-    );
+    const r = await requireV3WorkspaceAccess(auth, "proj_k", "manage", requestId);
     expect(r).toEqual({
       workspaceId: "proj_k",
       organizationId: "org_k",
@@ -290,12 +260,7 @@ describe("requireV3WorkspaceAccess", () => {
       ...keyBase,
       workspacePermissions: [wsPerm("proj_k", ApiKeyPermission.manage)],
     };
-    const r = await requireV3WorkspaceAccess(
-      auth as Parameters<typeof requireV3WorkspaceAccess>[0],
-      "ws_missing",
-      "read",
-      requestId
-    );
+    const r = await requireV3WorkspaceAccess(auth, "ws_missing", "read", requestId);
     expect((r as Response).status).toBe(403);
   });
 

@@ -44,7 +44,7 @@ const listDisplays = (query = "limit=15&offset=30") =>
     new NextRequest(`http://localhost/api/internal/surveys/${SURVEY_ID}/displays?${query}`, {
       headers: SAME_ORIGIN_HEADERS,
     }),
-    { params: Promise.resolve({ surveyId: SURVEY_ID }) } as never
+    { params: Promise.resolve({ surveyId: SURVEY_ID }) }
   );
 
 beforeEach(() => {

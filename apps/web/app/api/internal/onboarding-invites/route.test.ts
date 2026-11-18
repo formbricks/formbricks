@@ -67,7 +67,7 @@ const invite = (body: unknown = BODY, headers: Record<string, string> = SAME_ORI
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 beforeEach(() => {

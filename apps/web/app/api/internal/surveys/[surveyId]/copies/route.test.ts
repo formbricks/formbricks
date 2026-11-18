@@ -6,7 +6,7 @@ import {
   ResourceNotFoundError,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
 
@@ -64,7 +64,7 @@ const storedCopy = (overrides: Record<string, unknown> = {}) => ({
 
 const copy = (
   body: unknown = { targetWorkspaceId: TARGET_WORKSPACE_ID },
-  { headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}
+  { headers = SAME_ORIGIN_REQUEST_HEADERS } = {}
 ) =>
   POST(
     new NextRequest(`http://localhost/api/internal/surveys/${SURVEY_ID}/copies`, {
@@ -72,7 +72,7 @@ const copy = (
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    { params: Promise.resolve({ surveyId: SURVEY_ID }) } as never
+    { params: Promise.resolve({ surveyId: SURVEY_ID }) }
   );
 
 const checkedActions = () => mocks.can.mock.calls.map(([, action, resource]) => [action, resource]);

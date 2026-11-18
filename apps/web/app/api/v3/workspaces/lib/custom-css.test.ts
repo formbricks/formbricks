@@ -74,7 +74,7 @@ const readJson = async (response: Response) => response.json();
 beforeEach(() => {
   vi.resetAllMocks();
   vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(context);
-  vi.mocked(can).mockImplementation(grant as never);
+  vi.mocked(can).mockImplementation(grant);
   vi.mocked(getCustomCssPermission).mockResolvedValue(true);
   vi.mocked(getCustomCssHealth).mockResolvedValue({ status: "ok" });
   vi.mocked(getWorkspaceCustomCssRecord).mockResolvedValue({ customCss: stored("a{}"), previous: null });

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError, ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { POST } from "./route";
 
 const mocks = vi.hoisted(() => ({
@@ -43,13 +43,13 @@ const SURVEY_ID = "clsurvey11111111111111111";
 const WORKSPACE_ID = "clwork1111111111111111111";
 const actor = { type: "user", id: USER_ID };
 
-const send = ({ headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}) =>
+const send = ({ headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
   POST(
     new NextRequest(`http://localhost/api/internal/surveys/${SURVEY_ID}/preview-emails`, {
       method: "POST",
       headers,
     }),
-    { params: Promise.resolve({ surveyId: SURVEY_ID }) } as never
+    { params: Promise.resolve({ surveyId: SURVEY_ID }) }
   );
 
 beforeEach(() => {

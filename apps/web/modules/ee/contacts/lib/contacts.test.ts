@@ -212,7 +212,7 @@ describe("Contacts Lib", () => {
       vi.mocked(segmentFilterToPrismaQuery).mockResolvedValue({
         ok: false,
         error: "Filter error",
-      } as Awaited<ReturnType<typeof segmentFilterToPrismaQuery>>);
+      });
 
       const result = await getContactsInSegment(mockSegmentId);
 
@@ -614,12 +614,7 @@ describe("Contacts Lib", () => {
         attributes: [],
       } as unknown as Awaited<ReturnType<typeof prisma.contact.create>>);
 
-      const result = await createContactsFromCSV(
-        csvDataWithMixedCase as Parameters<typeof createContactsFromCSV>[0],
-        mockWorkspaceId,
-        "skip",
-        attributeMap
-      );
+      const result = await createContactsFromCSV(csvDataWithMixedCase, mockWorkspaceId, "skip", attributeMap);
 
       expect("contacts" in result).toBe(true);
     });
@@ -831,12 +826,8 @@ describe("Contacts Lib", () => {
       );
 
       vi.mocked(getContactSurveyLink)
-        .mockResolvedValueOnce({ ok: true, data: "https://survey.com/c/token1" } as Awaited<
-          ReturnType<typeof getContactSurveyLink>
-        >)
-        .mockResolvedValueOnce({ ok: true, data: "https://survey.com/c/token2" } as Awaited<
-          ReturnType<typeof getContactSurveyLink>
-        >);
+        .mockResolvedValueOnce({ ok: true, data: "https://survey.com/c/token1" })
+        .mockResolvedValueOnce({ ok: true, data: "https://survey.com/c/token2" });
 
       const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor);
 
@@ -870,7 +861,7 @@ describe("Contacts Lib", () => {
       vi.mocked(getContactSurveyLink).mockResolvedValue({
         ok: true,
         data: "https://survey.com/c/token1",
-      } as Awaited<ReturnType<typeof getContactSurveyLink>>);
+      });
 
       const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor, 7);
 
@@ -907,9 +898,7 @@ describe("Contacts Lib", () => {
         mockPrismaContactData
       );
       vi.mocked(getContactSurveyLink)
-        .mockResolvedValueOnce({ ok: true, data: "https://survey.com/c/token1" } as Awaited<
-          ReturnType<typeof getContactSurveyLink>
-        >)
+        .mockResolvedValueOnce({ ok: true, data: "https://survey.com/c/token1" })
         .mockResolvedValueOnce({ ok: false, error: "Failed to generate link" } as unknown as Awaited<
           ReturnType<typeof getContactSurveyLink>
         >);

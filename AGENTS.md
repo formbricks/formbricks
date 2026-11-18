@@ -9,8 +9,9 @@ Formbricks runs as a pnpm/turbo monorepo. `apps/web` is the Next.js product surf
 Use root `package.json` scripts for commands. Run tests and typechecking through the root Turbo tasks
 so their workspace dependencies rebuild first.
 
-Lint after every edit with `pnpm lint:code` (oxlint over the whole repo in seconds; `--quiet` for errors
-only). A bare `oxlint` skips the type-aware rules, which need its `--type-aware` flag.
+Lint after every edit with `pnpm turbo run lint:code`, which first builds the packages whose types the
+lint reads (`-- --quiet` for errors only). A bare `oxlint` skips the type-aware rules, which need its
+`--type-aware` flag.
 
 Read `docs/agents/monorepo-builds.md` before changing workspace packages, shared dependencies, build
 configuration, workspace CSS, adding tests outside a workspace, or running integration tests. Also read

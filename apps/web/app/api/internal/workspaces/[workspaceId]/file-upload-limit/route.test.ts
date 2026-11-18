@@ -41,7 +41,7 @@ const organization = (workspaces: number | null) => ({
 const get = (id = WORKSPACE_ID) =>
   GET(new NextRequest(`http://localhost/api/internal/workspaces/${id}/file-upload-limit`), {
     params: Promise.resolve({ workspaceId: id }),
-  } as never);
+  });
 
 beforeEach(() => {
   vi.clearAllMocks();

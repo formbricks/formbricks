@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { ORGANIZATION_NAME_MAX, ORGANIZATION_TIME_ZONE_MAX } from "../schemas";
 import { DELETE, PATCH } from "./route";
 
@@ -60,21 +60,18 @@ const organization = (overrides: Record<string, unknown> = {}) => ({
 const url = (id = ORG_ID) => `http://localhost/api/internal/organizations/${id}`;
 const props = (id = ORG_ID) => ({ params: Promise.resolve({ organizationId: id }) });
 
-const patch = (
-  body: unknown,
-  { id = ORG_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}
-) =>
+const patch = (body: unknown, { id = ORG_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
   PATCH(
     new NextRequest(url(id), {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    props(id) as never
+    props(id)
   );
 
-const remove = ({ id = ORG_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}) =>
-  DELETE(new NextRequest(url(id), { method: "DELETE", headers }), props(id) as never);
+const remove = ({ id = ORG_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
+  DELETE(new NextRequest(url(id), { method: "DELETE", headers }), props(id));
 
 /** Grant exactly these actions, on that organization only. */
 const allowOn = (organizationId: string, ...actions: string[]) =>

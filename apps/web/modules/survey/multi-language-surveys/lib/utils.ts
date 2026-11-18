@@ -159,7 +159,7 @@ export const removeAllTranslations = (survey: TSurvey): TSurvey => {
     stripTranslations(metadataClone.title);
     stripTranslations(metadataClone.description);
   }
-  return { ...clone, metadata: metadataClone, languages } as TSurvey;
+  return { ...clone, metadata: metadataClone, languages };
 };
 
 /**

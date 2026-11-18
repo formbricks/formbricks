@@ -125,7 +125,7 @@ export const MemberActions = ({
           id="shareInviteButton"
           disabled={!canActOnInvite}
           onClick={() => {
-            handleShareInvite();
+            void handleShareInvite();
           }}>
           <ShareIcon />
         </Button>
@@ -140,7 +140,7 @@ export const MemberActions = ({
           id="resendInviteButton"
           disabled={!canActOnInvite}
           onClick={() => {
-            handleResendInvite();
+            void handleResendInvite();
           }}>
           <SendHorizonalIcon />
         </Button>

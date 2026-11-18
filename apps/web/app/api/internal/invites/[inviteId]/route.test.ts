@@ -5,7 +5,7 @@ import {
   ResourceNotFoundError,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { PATCH } from "./route";
 
@@ -70,17 +70,14 @@ const INVITE_ID = "6a3c1a9e-2f4b-4c8d-9e1f-0a1b2c3d4e5f";
 const url = (id = INVITE_ID) => `http://localhost/api/internal/invites/${id}`;
 const props = (id = INVITE_ID) => ({ params: Promise.resolve({ inviteId: id }) });
 
-const patch = (
-  body: unknown,
-  { id = INVITE_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}
-) =>
+const patch = (body: unknown, { id = INVITE_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
   PATCH(
     new NextRequest(url(id), {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    props(id) as never
+    props(id)
   );
 
 const allow = (...actions: string[]) =>

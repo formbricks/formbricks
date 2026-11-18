@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { TooManyRequestsError } from "@formbricks/types/errors";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { WHITELABEL_IMAGE_URL_MAX_LENGTH } from "../lib/limits";
 import { DELETE, PUT } from "./route";
@@ -49,18 +49,18 @@ const LOGO_URL = "/storage/clwork1111111111111111111/public/logo.png";
 const url = (id = ORG_ID) => `http://localhost/api/internal/organizations/${id}/email-logo`;
 const props = (id = ORG_ID) => ({ params: Promise.resolve({ organizationId: id }) });
 
-const put = (body: unknown, { id = ORG_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}) =>
+const put = (body: unknown, { id = ORG_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
   PUT(
     new NextRequest(url(id), {
       method: "PUT",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    props(id) as never
+    props(id)
   );
 
-const remove = ({ id = ORG_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}) =>
-  DELETE(new NextRequest(url(id), { method: "DELETE", headers }), props(id) as never);
+const remove = ({ id = ORG_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
+  DELETE(new NextRequest(url(id), { method: "DELETE", headers }), props(id));
 
 const checkedActions = () => mocks.can.mock.calls.map(([, action, resource]) => [action, resource]);
 

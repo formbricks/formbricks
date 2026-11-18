@@ -206,7 +206,7 @@ export const AddIntegrationModal = ({
     if (isEditMode) {
       const { index: _index, ...rest } = defaultData;
       reset(rest);
-      fetchTable(defaultData.base);
+      void fetchTable(defaultData.base);
       setIncludeVariables(!!defaultData.includeVariables);
       setIncludeHiddenFields(!!defaultData.includeHiddenFields);
       setIncludeMetadata(!!defaultData.includeMetadata);

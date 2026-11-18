@@ -6,7 +6,6 @@ import {
   UnknownError,
 } from "@formbricks/types/errors";
 import type { TIntegrationInput } from "@formbricks/types/integration";
-import type { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import type { TWorkspaceRequestContext } from "@/app/api/internal/lib/types";
 import { formatZodIssues } from "@/app/api/v3/lib/api-wrapper";
 import { getV3SessionUserId, requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
@@ -189,7 +188,7 @@ export async function getGoogleSheetsConnectionOperation(
   const integration = await getIntegrationByType(context.workspaceId, "googleSheets");
   if (!integration) return answer("not_connected");
   try {
-    await validateGoogleSheetsConnection(integration as TIntegrationGoogleSheets);
+    await validateGoogleSheetsConnection(integration);
     return answer("connected");
   } catch (error) {
     if (error instanceof AuthenticationError && error.message === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT) {
@@ -216,7 +215,7 @@ export async function getSpreadsheetOperation({
   if (!integration) return conflict(context, "not_connected", "Google Sheets is not connected");
 
   try {
-    const name = await getSpreadsheetNameById(integration as TIntegrationGoogleSheets, spreadsheetId);
+    const name = await getSpreadsheetNameById(integration, spreadsheetId);
     return successResponse({ id: spreadsheetId, name }, { requestId: context.requestId });
   } catch (error) {
     if (error instanceof AuthenticationError && error.message === GOOGLE_SHEET_INTEGRATION_INVALID_GRANT) {

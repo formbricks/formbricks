@@ -19,7 +19,7 @@ vi.mock("@formbricks/logger", () => ({
 const latest = () =>
   GET(new NextRequest("http://localhost/api/internal/releases/latest"), {
     params: Promise.resolve({}),
-  } as never);
+  });
 
 beforeEach(() => {
   vi.clearAllMocks();

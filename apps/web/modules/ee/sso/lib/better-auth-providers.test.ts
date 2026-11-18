@@ -628,7 +628,7 @@ describe("better-auth SSO providers", () => {
           }))
         );
 
-        const profile = (await azure.getUserInfo({ accessToken: "t" } as never)) as Record<string, unknown>;
+        const profile = (await azure.getUserInfo({ accessToken: "t" })) as Record<string, unknown>;
 
         expect(profile).toMatchObject({ email_verified: false, xms_edov: false });
         // And the mapper turns them into a denial, which is the property that actually matters.
@@ -770,7 +770,7 @@ describe("Azure identity comes from Graph, not an unverified id_token (#9017 rev
       const result = await provider?.getUserInfo?.({
         accessToken: "access-token",
         idToken: forgedIdToken,
-      } as never);
+      });
 
       expect(result).toBeNull();
     }
@@ -787,7 +787,7 @@ describe("Azure identity comes from Graph, not an unverified id_token (#9017 rev
     const result = await provider?.getUserInfo?.({
       accessToken: "access-token",
       idToken: forgedIdToken,
-    } as never);
+    });
 
     expect(graph).toHaveBeenCalledWith(
       "https://graph.microsoft.com/oidc/userinfo",
@@ -806,7 +806,7 @@ describe("Azure identity comes from Graph, not an unverified id_token (#9017 rev
     );
 
     const provider = await initializedAzureProvider("common");
-    expect(await provider?.getUserInfo?.({ accessToken: "t", idToken: forgedIdToken } as never)).toBeNull();
+    expect(await provider?.getUserInfo?.({ accessToken: "t", idToken: forgedIdToken })).toBeNull();
   });
 
   // The concrete-tenant branch keeps discovery, where Better Auth verifies the id_token before any
@@ -872,7 +872,7 @@ describe("OIDC identity comes from Graph when pointed at Microsoft (#9023 review
     );
 
     const provider = await initializedProvider("openid", oidcAtMicrosoft);
-    expect(await provider?.getUserInfo?.({ accessToken: "t", idToken: forgedIdToken } as never)).toBeNull();
+    expect(await provider?.getUserInfo?.({ accessToken: "t", idToken: forgedIdToken })).toBeNull();
   });
 
   test("the identity is the Graph response, and Graph is actually called", async () => {
@@ -886,7 +886,7 @@ describe("OIDC identity comes from Graph when pointed at Microsoft (#9023 review
     const result = await provider?.getUserInfo?.({
       accessToken: "access-token",
       idToken: forgedIdToken,
-    } as never);
+    });
 
     expect(graph).toHaveBeenCalledWith("https://graph.microsoft.com/oidc/userinfo", expect.anything());
     // Assert the Graph identity positively first: on its own, `not.toContain` passes for a `null`

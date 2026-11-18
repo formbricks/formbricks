@@ -7,7 +7,7 @@ import {
   ResourceNotFoundError,
   TooManyRequestsError,
 } from "@formbricks/types/errors";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_HEADERS, SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { DELETE, PATCH } from "./[contactAttributeKeyId]/route";
 import { POST } from "./route";
@@ -103,26 +103,23 @@ const create = (body: unknown, headers: Record<string, string> = SAME_ORIGIN_HEA
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
-const update = (
-  body: unknown,
-  { id = KEY_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}
-) =>
+const update = (body: unknown, { id = KEY_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
   PATCH(
     new NextRequest(`${BASE}/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    { params: Promise.resolve({ contactAttributeKeyId: id }) } as never
+    { params: Promise.resolve({ contactAttributeKeyId: id }) }
   );
 
-const remove = ({ id = KEY_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}) =>
+const remove = ({ id = KEY_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
   DELETE(new NextRequest(`${BASE}/${id}`, { method: "DELETE", headers }), {
     params: Promise.resolve({ contactAttributeKeyId: id }),
-  } as never);
+  });
 
 const checkedActions = () => mocks.assertCan.mock.calls.map(([, action, resource]) => [action, resource]);
 

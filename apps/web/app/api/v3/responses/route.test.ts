@@ -35,7 +35,7 @@ const post = (body: unknown) =>
       headers: { ...SAME_ORIGIN_HEADERS, "content-type": "application/json" },
       body: JSON.stringify(body),
     }),
-    { params: Promise.resolve({}) } as never
+    { params: Promise.resolve({}) }
   );
 
 describe("POST /api/v3/responses", () => {

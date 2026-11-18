@@ -118,7 +118,7 @@ const summaryQuery = (body: unknown) =>
       headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json" },
       body: JSON.stringify(body),
     }),
-    { params: Promise.resolve({ surveyId: SURVEY_ID }) } as never
+    { params: Promise.resolve({ surveyId: SURVEY_ID }) }
   );
 
 beforeEach(() => {

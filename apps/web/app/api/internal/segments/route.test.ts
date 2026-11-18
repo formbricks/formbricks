@@ -190,7 +190,7 @@ const createBody = (overrides: Record<string, unknown> = {}) => ({
 });
 
 const create = (body: unknown, headers: Record<string, string> = SAME_ORIGIN_HEADERS) =>
-  POST(json("POST", `${BASE}/segments`, body, headers), {} as never);
+  POST(json("POST", `${BASE}/segments`, body, headers), {});
 const update = (body: unknown) =>
   PATCH(json("PATCH", `${BASE}/segments/${SEGMENT_ID}`, body), segmentProps());
 const remove = () => DELETE(json("DELETE", `${BASE}/segments/${SEGMENT_ID}`), segmentProps());
@@ -203,11 +203,11 @@ const reset = () =>
 const attributeValues = () =>
   getAttributeValues(new NextRequest(`${BASE}/contact-attribute-keys/${KEY_ID}/values`), {
     params: Promise.resolve({ contactAttributeKeyId: KEY_ID }),
-  } as never);
+  });
 const filterSurveys = () =>
   listFilterSurveys(new NextRequest(`${BASE}/workspaces/${WORKSPACE_ID}/segment-filter-surveys`), {
     params: Promise.resolve({ workspaceId: WORKSPACE_ID }),
-  } as never);
+  });
 
 const checkedActions = () => mocks.can.mock.calls.map(([, action, resource]) => [action, resource]);
 const operationLimits = () =>

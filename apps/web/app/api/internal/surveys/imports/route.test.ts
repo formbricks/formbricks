@@ -48,7 +48,7 @@ const post = (body: unknown, headers: Record<string, string> = {}) =>
         ...headers,
       },
     }),
-    {} as never
+    {}
   );
 
 /** A body of exactly `bytes` bytes, padded inside the survey so it stays valid JSON. */

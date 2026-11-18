@@ -255,7 +255,7 @@ export function CreateSegmentModal({
               disabled={isSaveDisabled}
               loading={isCreatingSegment}
               onClick={() => {
-                handleCreateSegment();
+                void handleCreateSegment();
               }}
               type="submit">
               {t("common.create_segment")}

@@ -98,7 +98,7 @@ const serialized = (id: string) => ({
 });
 
 const get = (query: string) =>
-  GET(new NextRequest(`http://localhost/api/internal/retention-exemptions?${query}`), {} as never);
+  GET(new NextRequest(`http://localhost/api/internal/retention-exemptions?${query}`), {});
 
 const post = (body: unknown) =>
   POST(
@@ -107,7 +107,7 @@ const post = (body: unknown) =>
       headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json", "x-request-id": "req_1" },
       body: JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 /** Status, headers and body, so two refusals can be compared byte for byte. */

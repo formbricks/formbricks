@@ -41,7 +41,7 @@ const post = async (body: unknown, headers: Record<string, string> = SAME_ORIGIN
       headers: { "Content-Type": "application/json", ...headers },
       body: typeof body === "string" ? body : JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
   return new Response(await response.text(), { status: response.status, headers: response.headers });
 };

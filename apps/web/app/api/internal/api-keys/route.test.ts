@@ -61,7 +61,7 @@ const storedKey = {
 };
 
 const listRequest = (query = `organizationId=${ORG_ID}`) =>
-  GET(new NextRequest(`http://localhost/api/internal/api-keys?${query}`), {} as never);
+  GET(new NextRequest(`http://localhost/api/internal/api-keys?${query}`), {});
 
 const createRequest = (body: unknown, headers: Record<string, string> = SAME_ORIGIN_HEADERS) =>
   POST(
@@ -70,7 +70,7 @@ const createRequest = (body: unknown, headers: Record<string, string> = SAME_ORI
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 const validBody = {

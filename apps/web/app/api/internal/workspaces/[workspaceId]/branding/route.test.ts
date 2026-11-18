@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError, ResourceNotFoundError, TooManyRequestsError } from "@formbricks/types/errors";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_HEADERS, SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { PATCH } from "./route";
 
@@ -58,17 +58,14 @@ const workspace = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const patch = (
-  body: unknown,
-  { id = WORKSPACE_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}
-) =>
+const patch = (body: unknown, { id = WORKSPACE_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
   PATCH(
     new NextRequest(`http://localhost/api/internal/workspaces/${id}/branding`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    { params: Promise.resolve({ workspaceId: id }) } as never
+    { params: Promise.resolve({ workspaceId: id }) }
   );
 
 const checkedActions = () => mocks.assertCan.mock.calls.map(([, action, resource]) => [action, resource]);
@@ -256,7 +253,7 @@ describe("PATCH /api/internal/workspaces/{workspaceId}/branding", () => {
         headers: { "Content-Type": "application/json", ...SAME_ORIGIN_HEADERS },
         body: JSON.stringify({ linkSurveyBranding: false }),
       }),
-      { params: Promise.resolve({ workspaceId: WORKSPACE_ID, extra: "x" }) } as never
+      { params: Promise.resolve({ workspaceId: WORKSPACE_ID, extra: "x" }) }
     );
     expect(response.status).toBe(400);
     expect(mocks.updateWorkspaceBranding).not.toHaveBeenCalled();

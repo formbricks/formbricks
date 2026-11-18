@@ -52,7 +52,7 @@ const run = (id: string, startedAt: string) => ({
 });
 
 const get = (query: string) =>
-  GET(new NextRequest(`http://localhost/api/internal/retention-runs?${query}`), {} as never);
+  GET(new NextRequest(`http://localhost/api/internal/retention-runs?${query}`), {});
 
 describe("GET /api/internal/retention-runs", () => {
   beforeEach(() => {

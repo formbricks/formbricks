@@ -44,7 +44,7 @@ const generate = (body: unknown) =>
       headers: { "Content-Type": "application/json", ...SAME_ORIGIN_HEADERS },
       body: JSON.stringify(body),
     }),
-    { params: Promise.resolve({ surveyId: SURVEY_ID }) } as never
+    { params: Promise.resolve({ surveyId: SURVEY_ID }) }
   );
 
 const checkedActions = () => mocks.can.mock.calls.map(([, action, resource]) => [action, resource]);

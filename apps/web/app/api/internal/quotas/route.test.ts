@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { InvalidInputError, ResourceNotFoundError } from "@formbricks/types/errors";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { QuotaNameTakenError } from "@/modules/ee/quotas/lib/errors";
 import { GET } from "./[quotaId]/response-count/route";
 import { DELETE, PUT } from "./[quotaId]/route";
@@ -93,7 +93,7 @@ const storedQuota = (overrides: Record<string, unknown> = {}) => ({
 const send = (
   method: "POST" | "PUT",
   body: unknown,
-  { id = QUOTA_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}
+  { id = QUOTA_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}
 ) => {
   const path = method === "POST" ? "" : `/${id}`;
   const request = new NextRequest(`http://localhost/api/internal/quotas${path}`, {
@@ -101,24 +101,22 @@ const send = (
     headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
   });
-  return method === "POST"
-    ? POST(request, {} as never)
-    : PUT(request, { params: Promise.resolve({ quotaId: id }) } as never);
+  return method === "POST" ? POST(request, {}) : PUT(request, { params: Promise.resolve({ quotaId: id }) });
 };
 
 const create = (body: unknown, options?: { headers?: Record<string, string> }) => send("POST", body, options);
 const update = (body: unknown, options?: { id?: string; headers?: Record<string, string> }) =>
   send("PUT", body, options);
 
-const remove = ({ id = QUOTA_ID, headers = SAME_ORIGIN_HEADERS as Record<string, string> } = {}) =>
+const remove = ({ id = QUOTA_ID, headers = SAME_ORIGIN_REQUEST_HEADERS } = {}) =>
   DELETE(new NextRequest(`http://localhost/api/internal/quotas/${id}`, { method: "DELETE", headers }), {
     params: Promise.resolve({ quotaId: id }),
-  } as never);
+  });
 
 const responseCount = ({ id = QUOTA_ID } = {}) =>
   GET(new NextRequest(`http://localhost/api/internal/quotas/${id}/response-count`), {
     params: Promise.resolve({ quotaId: id }),
-  } as never);
+  });
 
 const checkedActions = () => mocks.can.mock.calls.map(([, action, resource]) => [action, resource]);
 

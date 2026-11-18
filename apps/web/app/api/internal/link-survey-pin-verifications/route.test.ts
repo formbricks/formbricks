@@ -78,7 +78,7 @@ const post = (body: unknown, headers: Record<string, string> = SAME_ORIGIN_HEADE
       headers: { "Content-Type": "application/json", ...headers },
       body: JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 const validatePinWith = (pin: string, link: TLink = {}) => post({ surveyId, pin, ...link });
@@ -86,7 +86,7 @@ const validatePin = (pin = "1234") => validatePinWith(pin);
 
 const singleUse = (isEncrypted = false) => ({ singleUse: { enabled: true, isEncrypted } });
 const answeredWith = (finished: boolean) =>
-  vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => ({ id: "r1", finished }) as never);
+  vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => ({ id: "r1", finished }));
 
 const notOpen = [
   ["a draft survey", { status: "draft" }],
@@ -131,7 +131,7 @@ const dataOf = async (response: Response) => {
 
 beforeEach(() => {
   vi.resetAllMocks();
-  vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
+  vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
   vi.mocked(getWorkspaceContextForLinkSurvey).mockResolvedValue({
     customCss: null,
     workspace: { styling: { allowStyleOverwrite: true } },

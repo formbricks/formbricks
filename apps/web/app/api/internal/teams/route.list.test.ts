@@ -33,7 +33,7 @@ const USER_ID = "cluser1111111111111111111";
 const list = (query = `organizationId=${ORG_ID}`) =>
   GET(new NextRequest(`http://localhost/api/internal/teams?${query}`), {
     params: Promise.resolve({}),
-  } as never);
+  });
 
 beforeEach(() => {
   vi.clearAllMocks();

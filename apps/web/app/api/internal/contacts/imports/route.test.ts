@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ResourceNotFoundError, TooManyRequestsError, ValidationError } from "@formbricks/types/errors";
 import { V3_REQUEST_ARRAY_MAX_ITEMS } from "@/app/api/v3/lib/array-budget";
-import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
+import { SAME_ORIGIN_HEADERS, SAME_ORIGIN_REQUEST_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import {
   CSV_IMPORT_MAX_BODY_BYTES,
@@ -83,7 +83,10 @@ const body = (overrides: Partial<TBody> = {}): TBody => ({
 
 const post = (
   payload: unknown,
-  { url = URL, headers = SAME_ORIGIN_HEADERS }: { url?: string; headers?: Record<string, string> } = {}
+  {
+    url = URL,
+    headers = SAME_ORIGIN_REQUEST_HEADERS,
+  }: { url?: string; headers?: Record<string, string> } = {}
 ) =>
   POST(
     new NextRequest(url, {
@@ -91,7 +94,7 @@ const post = (
       headers: { "Content-Type": "application/json", ...headers },
       body: typeof payload === "string" ? payload : JSON.stringify(payload),
     }),
-    {} as never
+    {}
   );
 
 const problem = async (response: Response) =>
@@ -373,7 +376,7 @@ describe("POST /api/internal/contacts/imports: caps, at and just past each", () 
           padding: records(V3_REQUEST_ARRAY_MAX_ITEMS + 1),
         }),
       }),
-      { params: Promise.resolve({ contactId: "clcontact1111111111111111" }) } as never
+      { params: Promise.resolve({ contactId: "clcontact1111111111111111" }) }
     );
 
     expect(response.status).toBe(400);

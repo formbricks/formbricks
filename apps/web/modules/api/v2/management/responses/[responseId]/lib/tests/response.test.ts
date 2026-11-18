@@ -106,7 +106,7 @@ vi.mock("@formbricks/database", () => ({
 describe("Response Lib", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma as never));
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
     vi.mocked(requestEmailAuditErasureRequired).mockResolvedValue(undefined);
   });
 

@@ -72,7 +72,7 @@ const generate = () =>
       method: "POST",
       headers: SAME_ORIGIN_HEADERS,
     }),
-    { params: Promise.resolve({ surveyId: SURVEY_ID }) } as never
+    { params: Promise.resolve({ surveyId: SURVEY_ID }) }
   );
 
 const operationLimits = () =>
