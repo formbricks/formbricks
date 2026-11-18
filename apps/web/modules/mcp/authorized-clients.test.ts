@@ -9,6 +9,7 @@ import {
   lockMcpGrant,
   narrowMcpGrantAccess,
   projectMcpGrants,
+  repairMcpGrantsAfterFailedSave,
   writeMcpGrant,
 } from "./grant-store";
 
@@ -22,6 +23,7 @@ vi.mock("./grant-store", async (importOriginal) => ({
   lockMcpGrant: vi.fn(),
   narrowMcpGrantAccess: vi.fn(),
   projectMcpGrants: vi.fn(),
+  repairMcpGrantsAfterFailedSave: vi.fn(),
   writeMcpGrant: vi.fn(),
 }));
 
@@ -583,7 +585,7 @@ describe("editMcpGrant", () => {
     ).resolves.toEqual({ status: "beyond_scopes" });
   });
 
-  test("reconciles the grant and rethrows when the save fails after the narrowing", async () => {
+  test("repairs the grant durably and rethrows when the save fails after the narrowing", async () => {
     vi.mocked(narrowMcpGrantAccess).mockResolvedValue({ status: "ok", access: { access: "all" } });
     const failure = new Error("commit failed");
     vi.mocked(writeMcpGrant).mockRejectedValue(failure);
@@ -597,10 +599,10 @@ describe("editMcpGrant", () => {
         isDashboardViewer: false,
       })
     ).rejects.toBe(failure);
-    expect(projectMcpGrants).toHaveBeenCalledWith(["grant-1"]);
+    expect(repairMcpGrantsAfterFailedSave).toHaveBeenCalledWith(["grant-1"]);
   });
 
-  test("rethrows a failure before any grant was locked without reconciling", async () => {
+  test("rethrows a failure before any grant was locked without repairing", async () => {
     const failure = new Error("pool exhausted");
     vi.mocked(lockMcpGrant).mockRejectedValue(failure);
 
@@ -613,6 +615,7 @@ describe("editMcpGrant", () => {
         isDashboardViewer: false,
       })
     ).rejects.toBe(failure);
+    expect(repairMcpGrantsAfterFailedSave).not.toHaveBeenCalled();
     expect(projectMcpGrants).not.toHaveBeenCalled();
   });
 });

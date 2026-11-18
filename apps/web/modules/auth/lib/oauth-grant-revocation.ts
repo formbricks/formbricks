@@ -31,6 +31,7 @@ import {
   queueMcpGrantAudit,
   queueMcpGrantDeletionsAudit,
   removeDeletedMcpGrants,
+  repairMcpGrantsAfterFailedSave,
   resolveMcpGrantNarrowing,
   shareLockMcpGrant,
   writeMcpGrant,
@@ -438,14 +439,15 @@ const settleChangedConsentWithRetry = async (
 
 /**
  * After a failed approval: a narrowing may have deleted relationships in SpiceDB before its transaction
- * rolled back, leaving the grant reaching less than its rows say. Reconciles the grant from its committed
- * rows, best-effort. Never throws.
+ * rolled back, leaving the grant reaching less than its rows say. Repairs the grant from its committed
+ * rows: an outbox event that survives the rollback, then a reconcile now (`repairMcpGrantsAfterFailedSave`).
+ * Never throws.
  */
 const restoreMcpGrantRelationships = async (userId: string, change: TConsentChange): Promise<void> => {
   if (!change.chosenGrant?.access || !("clientId" in change.target)) return;
   try {
     const grant = await getMcpGrant(userId, change.target.clientId);
-    if (grant) await projectMcpGrants([grant.id]);
+    if (grant) await repairMcpGrantsAfterFailedSave([grant.id]);
   } catch (error) {
     logger.warn(
       { err: loggableError(error), userId },

@@ -377,6 +377,31 @@ export const projectMcpGrants = async (grantIds: ReadonlyArray<string>): Promise
   );
 };
 
+/**
+ * Repairs grants after a save that may have narrowed them in SpiceDB and then failed to commit: a consent
+ * approval or an Edit deletes what a narrowing removes before its transaction commits, so a rollback leaves
+ * SpiceDB narrower than the rows still say, and the outbox event those rows would have queued rolled back
+ * with it.
+ *
+ * Queues an outbox event per grant first, in a write of its own that commits whatever happens next: the
+ * durable repair, which the worker delivers until it succeeds. Then reconciles now, best-effort, so the
+ * client gets its access back without waiting for the worker. Never throws; the caller is already failing.
+ */
+export const repairMcpGrantsAfterFailedSave = async (grantIds: ReadonlyArray<string>): Promise<void> => {
+  if (grantIds.length === 0) return;
+  try {
+    await prisma.authzedProjectionOutbox.createMany({
+      data: grantIds.map((primaryId) => ({ targetType: "mcp_grant", primaryId, isRevocation: false })),
+    });
+  } catch (error) {
+    logger.error(
+      { err: loggableError(error), grants: grantIds.length },
+      "Queueing the repair of MCP grants after a failed save failed"
+    );
+  }
+  await projectMcpGrants(grantIds);
+};
+
 /** A stored grant's organization & workspace access with what it selects, apart from its other fields. */
 export const getMcpGrantAccessSelection = (grant: TStoredMcpGrant): TMcpGrantAccessSelection => {
   const { id: _id, userId: _userId, clientId: _clientId, permissions: _permissions, ...access } = grant;

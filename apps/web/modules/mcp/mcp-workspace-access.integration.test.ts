@@ -25,6 +25,7 @@ import {
 import { waitForBlockOn } from "@/integration/postgres-locks";
 import { resetDb } from "@/integration/reset-db";
 import { reconcileMcpGrantRelationships } from "@/lib/authzed/mcp-grant";
+import { drainAuthzedOutbox } from "@/lib/authzed/outbox-processor";
 import { auth } from "@/modules/auth/lib/auth";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "@/modules/auth/lib/oauth-urls";
 import { DEFAULT_CREATIVE_STYLING } from "@/modules/ee/creatives/lib/creative";
@@ -50,8 +51,14 @@ import { getMcpGrant, lockMcpGrant, narrowMcpGrantAccess, writeMcpGrant } from "
  * workspace, a deleted organization) still converge through the outbox.
  */
 
-/** Set to make every SpiceDB relationship write fail, as during an outage; reads keep working. */
-const spicedbWrites = vi.hoisted(() => ({ failing: false }));
+/**
+ * Set `failing` to make every SpiceDB relationship write fail, as during an outage; reads keep working.
+ * `afterNext` runs once, after the next write succeeds, to break the request that made it.
+ */
+const spicedbWrites = vi.hoisted(() => ({
+  failing: false,
+  afterNext: null as (() => Promise<void>) | null,
+}));
 /**
  * Set `failing` to make every SpiceDB lookup fail, as during an outage. `beforeNext` runs once, inside the
  * next lookup and before it answers, to interleave another request with the one looking up.
@@ -75,7 +82,10 @@ vi.mock("@/lib/authzed/client", async (importOriginal) => {
         ...client,
         writeRelationships: async (...args: Parameters<typeof client.writeRelationships>) => {
           if (spicedbWrites.failing) throw new Error("SpiceDB is down");
-          return client.writeRelationships(...args);
+          await client.writeRelationships(...args);
+          const afterNext = spicedbWrites.afterNext;
+          spicedbWrites.afterNext = null;
+          if (afterNext) await afterNext();
         },
         lookupResources: async (...args: Parameters<typeof client.lookupResources>) => {
           const beforeNext = spicedbLookups.beforeNext;
@@ -85,6 +95,24 @@ vi.mock("@/lib/authzed/client", async (importOriginal) => {
           return client.lookupResources(...args);
         },
       };
+    },
+  };
+});
+/**
+ * `beforeNext` runs once, inside the next Dashboard-viewer check. The consent endpoint makes that check in
+ * a before-hook, after the consent snapshot and before the provider writes the consent: a hook here lands
+ * another tab's approval between the two.
+ */
+const viewerChecks = vi.hoisted(() => ({ beforeNext: null as (() => Promise<void>) | null }));
+vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/ee/analysis/lib/dashboard-viewer-access")>();
+  return {
+    ...actual,
+    isDashboardViewerOnly: async (...args: Parameters<typeof actual.isDashboardViewerOnly>) => {
+      const beforeNext = viewerChecks.beforeNext;
+      viewerChecks.beforeNext = null;
+      if (beforeNext) await beforeNext();
+      return actual.isDashboardViewerOnly(...args);
     },
   };
 });
@@ -492,6 +520,54 @@ describe("organization & workspace access on MCP calls", () => {
     expect(succeeded(still), toolText(still)).toBe(true);
   });
 
+  // N7 (round 5): Edit deletes what a narrowing removes from SpiceDB before its transaction commits. If the
+  // transaction then fails, its rows still select the old access, and the outbox event they would queue
+  // rolled back with it. The repair must survive that, and not depend on the reconcile right after it,
+  // which fails here with SpiceDB down too.
+  test("an edit that fails after narrowing SpiceDB leaves a durable repair of the committed access", async () => {
+    const both = sorted(setup.inside.workspaceId, setup.outside.workspaceId);
+    await setAccess(setup, { access: "workspaces", workspaceIds: both });
+    await drainAuthzedOutbox();
+    spicedbWrites.afterNext = async () => {
+      // The narrowing's delete reached SpiceDB: end the transaction holding the grant row, and take SpiceDB
+      // down for the reconcile that follows the failure.
+      await prisma.$queryRaw`
+        SELECT pg_terminate_backend(l."pid") FROM pg_locks l JOIN pg_class c ON c."oid" = l."relation"
+        WHERE c."relname" = 'McpGrant' AND l."pid" <> pg_backend_pid()`;
+      spicedbWrites.failing = true;
+    };
+    try {
+      await expect(
+        editAsOpened({
+          userId: setup.userId,
+          clientId: setup.clientId,
+          grant: {
+            permissions: READ_ALL,
+            access: { access: "workspaces", workspaceIds: [setup.inside.workspaceId] },
+          },
+          isDashboardViewer: false,
+        })
+      ).rejects.toThrow();
+    } finally {
+      spicedbWrites.failing = false;
+      spicedbWrites.afterNext = null;
+    }
+    expect(await getMcpGrant(setup.userId, setup.clientId)).toMatchObject({ workspaceIds: both });
+    expectNotFound(
+      await callMcpTool({ accessToken: setup.accessToken }, "get_survey", {
+        surveyId: setup.outside.surveyId,
+      })
+    );
+
+    // The outbox alone, as the worker delivers it: no backfill, no other save.
+    await drainAuthzedOutbox();
+
+    const repaired = await callMcpTool({ accessToken: setup.accessToken }, "get_survey", {
+      surveyId: setup.outside.surveyId,
+    });
+    expect(succeeded(repaired), toolText(repaired)).toBe(true);
+  });
+
   test("an edit widening the access is saved when SpiceDB is down, and the outbox adds the reach", async () => {
     await setAccess(setup, { access: "workspaces", workspaceIds: [setup.inside.workspaceId] });
     spicedbWrites.failing = true;
@@ -857,6 +933,46 @@ describe("organization & workspace access on MCP calls", () => {
       expect([...consents[0].scopes].sort((a, b) => a.localeCompare(b))).toEqual(sortedScopes(NARROW));
       expect(await getMcpGrant(setup.userId, clientId)).toMatchObject({ access: "all" });
       expect((await authorize(setup.cookie, clientId, NARROW)).target.searchParams.get("code")).toBeTruthy();
+    });
+
+    // N4 (round 5): tab A reads the consent (the snapshot), tab B's re-approval then saves new scopes,
+    // and tab A writes over them and fails. Putting back what tab A replaced must give tab B's scopes,
+    // not what tab A read before tab B wrote.
+    test("a failed re-approval puts back the consent it overwrote, not the one it read earlier", async () => {
+      await grant(setup.cookie, setup.clientId, EVERYTHING);
+      const tabA = await authorize(setup.cookie, setup.clientId, EVERYTHING, { prompt: "consent" });
+      const tabB = await authorize(setup.cookie, setup.clientId, EVERYTHING, { prompt: "consent" });
+      let approvedB: Response | undefined;
+      viewerChecks.beforeNext = async () => {
+        approvedB = await consent(setup.cookie, tabB.target, {
+          accept: true,
+          scope: NARROW,
+          mcp_grant: { permissions: { surveys: "read" }, access: "all" },
+        });
+        spicedbLookups.failing = true;
+      };
+
+      let failedA: Response;
+      try {
+        failedA = await consent(setup.cookie, tabA.target, {
+          accept: true,
+          scope: "offline_access responses:read",
+          mcp_grant: {
+            permissions: { responses: "read" },
+            access: "workspaces",
+            workspaceIds: [setup.inside.workspaceId],
+          },
+        });
+      } finally {
+        spicedbLookups.failing = false;
+        viewerChecks.beforeNext = null;
+      }
+
+      expect(approvedB?.status).toBe(200);
+      expect(failedA.status).toBe(500);
+      const consents = await consentsOf(setup, setup.clientId);
+      expect(consents).toHaveLength(1);
+      expect([...consents[0].scopes].sort((a, b) => a.localeCompare(b))).toEqual(sortedScopes(NARROW));
     });
   });
 

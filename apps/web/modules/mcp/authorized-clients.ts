@@ -23,6 +23,7 @@ import {
   lockMcpGrant,
   narrowMcpGrantAccess,
   projectMcpGrants,
+  repairMcpGrantsAfterFailedSave,
   writeMcpGrant,
 } from "./grant-store";
 
@@ -342,9 +343,9 @@ export const editMcpGrant = async ({
     if (result.status === "saved") await projectMcpGrants([result.after.id]);
     return result;
   } catch (error) {
-    // A narrowing may have deleted relationships in SpiceDB before the transaction failed: reconcile the
-    // grant from its committed rows, so it doesn't stay narrower than they say.
-    if (grantId) await projectMcpGrants([grantId]);
+    // A narrowing may have deleted relationships in SpiceDB before the transaction failed: repair the grant
+    // from its committed rows, durably, so it doesn't stay narrower than they say.
+    if (grantId) await repairMcpGrantsAfterFailedSave([grantId]);
     throw error;
   }
 };

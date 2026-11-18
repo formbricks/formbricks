@@ -27,6 +27,7 @@ import {
   queueMcpGrantAudits,
   queueMcpGrantDeletionsAudit,
   removeDeletedMcpGrants,
+  repairMcpGrantsAfterFailedSave,
   resolveMcpGrantNarrowing,
   shareLockMcpGrant,
   writeMcpGrant,
@@ -483,6 +484,49 @@ describe("projectMcpGrants", () => {
 
     await expect(projectMcpGrants([GRANT_ID])).resolves.toBeUndefined();
     expect(reconcileMcpGrantRelationships).toHaveBeenCalledWith({ grantIds: [GRANT_ID] });
+  });
+});
+
+describe("repairMcpGrantsAfterFailedSave", () => {
+  beforeEach(() => {
+    vi.mocked(reconcileMcpGrantRelationships)
+      .mockReset()
+      .mockResolvedValue({ passes: 1, status: "projected" });
+    prisma.authzedProjectionOutbox.createMany.mockReset().mockResolvedValue({ count: 1 });
+    vi.mocked(logger.error).mockClear();
+  });
+
+  // The save's own outbox event rolled back with it: the repair is queued in a write of its own, first.
+  test("queues an outbox event per grant, then reconciles now", async () => {
+    await repairMcpGrantsAfterFailedSave([GRANT_ID]);
+
+    expect(prisma.authzedProjectionOutbox.createMany).toHaveBeenCalledWith({
+      data: [{ targetType: "mcp_grant", primaryId: GRANT_ID, isRevocation: false }],
+    });
+    expect(prisma.authzedProjectionOutbox.createMany.mock.invocationCallOrder[0]).toBeLessThan(
+      vi.mocked(reconcileMcpGrantRelationships).mock.invocationCallOrder[0]
+    );
+    expect(reconcileMcpGrantRelationships).toHaveBeenCalledWith({ grantIds: [GRANT_ID] });
+  });
+
+  test("still reconciles, and logs the fault, when queueing fails; never throws", async () => {
+    prisma.authzedProjectionOutbox.createMany.mockRejectedValue(new Error("db down for a@b.c"));
+
+    await expect(repairMcpGrantsAfterFailedSave([GRANT_ID])).resolves.toBeUndefined();
+
+    expect(reconcileMcpGrantRelationships).toHaveBeenCalledWith({ grantIds: [GRANT_ID] });
+    expect(logger.error).toHaveBeenCalledWith(
+      { err: expect.objectContaining({ errName: "Error" }), grants: 1 },
+      "Queueing the repair of MCP grants after a failed save failed"
+    );
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain("a@b.c");
+  });
+
+  test("does nothing for no grants", async () => {
+    await repairMcpGrantsAfterFailedSave([]);
+
+    expect(prisma.authzedProjectionOutbox.createMany).not.toHaveBeenCalled();
+    expect(reconcileMcpGrantRelationships).not.toHaveBeenCalled();
   });
 });
 
