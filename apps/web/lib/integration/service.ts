@@ -11,6 +11,7 @@ import {
   TIntegrationInput,
   ZIntegrationType,
 } from "@formbricks/types/integration";
+import { decryptIntegrationConfig, encryptIntegrationConfig } from "@/lib/integration/credentials";
 import { assertNewlyAttachedSurveysWorkspaceVisible } from "@/lib/survey/visibility/outbound";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -26,10 +27,12 @@ const getIntegrationSurveyIds = (config: unknown): string[] => {
 };
 
 const transformIntegration = (integration: TIntegration): TIntegration => {
+  // Every read of a stored integration passes through here, so callers always get usable tokens.
+  const config = decryptIntegrationConfig(integration.type, integration.config);
   return {
     ...integration,
     config: {
-      ...integration.config,
+      ...config,
       data: integration.config.data.map((data) => ({
         ...data,
         createdAt: new Date(data.createdAt),
@@ -57,6 +60,12 @@ export const createOrUpdateIntegration = async (
   );
 
   try {
+    // ENG-7311: tokens are encrypted before they reach the database. The returned row is the stored
+    // one (ciphertext), which is what the audit log should see; read it back through the getters.
+    const storedData = {
+      ...integrationData,
+      config: encryptIntegrationConfig(integrationData.type, integrationData.config),
+    } as TIntegrationInput;
     const integration = await prisma.integration.upsert({
       where: {
         type_workspaceId: {
@@ -65,11 +74,11 @@ export const createOrUpdateIntegration = async (
         },
       },
       update: {
-        ...integrationData,
+        ...storedData,
         workspace: { connect: { id: workspaceId } },
       },
       create: {
-        ...integrationData,
+        ...storedData,
         workspace: { connect: { id: workspaceId } },
       },
     });

@@ -3,7 +3,8 @@ import { prisma } from "@formbricks/database";
 import { IntegrationType, Prisma } from "@formbricks/database/prisma";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegrationInput } from "@formbricks/types/integration";
-import { ITEMS_PER_PAGE } from "../constants";
+import { ENCRYPTION_KEY, ITEMS_PER_PAGE } from "../constants";
+import { symmetricDecrypt, symmetricEncrypt } from "../crypto";
 import {
   createOrUpdateIntegration,
   deleteIntegration,
@@ -11,6 +12,12 @@ import {
   getIntegrationByType,
   getIntegrations,
 } from "./service";
+
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/constants")>()),
+  // A real key: the unit harness's placeholder is not a valid AES key length.
+  ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+}));
 
 // Survey visibility (ENG-3282) is not enforced here: the readiness marker is off, not read from a database.
 vi.mock("@/lib/authzed/scope-readiness", () => ({ isSurveyVisibilityReady: vi.fn(async () => false) }));
@@ -81,21 +88,20 @@ describe("Integration Service", () => {
 
       const result = await createOrUpdateIntegration(mockWorkspaceId, mockIntegrationData);
 
-      expect(prisma.integration.upsert).toHaveBeenCalledWith({
-        where: {
-          type_workspaceId: {
-            workspaceId: mockWorkspaceId,
-            type: mockIntegrationData.type,
-          },
-        },
-        update: {
-          ...mockIntegrationData,
-          workspace: { connect: { id: mockWorkspaceId } },
-        },
-        create: {
-          ...mockIntegrationData,
-          workspace: { connect: { id: mockWorkspaceId } },
-        },
+      // ENG-7311: the tokens reach the database encrypted; the rest of the config is untouched.
+      const call = vi.mocked(prisma.integration.upsert).mock.calls[0][0];
+      const stored = call.create.config as typeof mockIntegrationConfig;
+      expect(call.where).toEqual({
+        type_workspaceId: { workspaceId: mockWorkspaceId, type: mockIntegrationData.type },
+      });
+      expect(call.update.config).toEqual(stored);
+      expect(call.create.workspace).toEqual({ connect: { id: mockWorkspaceId } });
+      expect(stored.key.access_token).not.toBe("mock-access-token");
+      expect(symmetricDecrypt(stored.key.access_token, ENCRYPTION_KEY)).toBe("mock-access-token");
+      expect(symmetricDecrypt(stored.key.refresh_token, ENCRYPTION_KEY)).toBe("mock-refresh-token");
+      expect({ ...stored, key: { ...stored.key, access_token: "", refresh_token: "" } }).toEqual({
+        ...mockIntegrationConfig,
+        key: { ...mockIntegrationConfig.key, access_token: "", refresh_token: "" },
       });
 
       expect(result).toEqual(mockIntegration);
@@ -155,6 +161,42 @@ describe("Integration Service", () => {
       });
 
       expect(result).toEqual(mockIntegrations);
+    });
+
+    test("decrypts stored tokens and tolerates legacy plaintext rows (ENG-7311)", async () => {
+      const encryptedConfig = {
+        ...mockIntegrationConfig,
+        key: {
+          ...mockIntegrationConfig.key,
+          access_token: symmetricEncrypt("encrypted-access", ENCRYPTION_KEY),
+          refresh_token: symmetricEncrypt("encrypted-refresh", ENCRYPTION_KEY),
+        },
+      };
+      vi.mocked(prisma.integration.findMany).mockResolvedValue([
+        {
+          id: "enc",
+          workspaceId: mockWorkspaceId,
+          type: IntegrationType.googleSheets,
+          config: encryptedConfig,
+        },
+        {
+          id: "legacy",
+          workspaceId: mockWorkspaceId,
+          type: IntegrationType.googleSheets,
+          config: mockIntegrationConfig,
+        },
+      ] as never);
+
+      const [encrypted, legacy] = await getIntegrations(mockWorkspaceId);
+
+      expect(encrypted.config.key).toMatchObject({
+        access_token: "encrypted-access",
+        refresh_token: "encrypted-refresh",
+      });
+      expect(legacy.config.key).toMatchObject({
+        access_token: "mock-access-token",
+        refresh_token: "mock-refresh-token",
+      });
     });
 
     test("should throw DatabaseError when Prisma throws an error", async () => {

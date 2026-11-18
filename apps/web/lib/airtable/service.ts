@@ -107,10 +107,8 @@ export const getAirtableToken = async (workspaceId: string) => {
 
       if (!newToken) {
         logger.error(
-          {
-            workspaceId,
-            airtableIntegration,
-          },
+          // Not the integration itself: it carries the decrypted tokens (ENG-7311).
+          { workspaceId, integrationId: airtableIntegration?.id },
           "Failed to fetch new Airtable token"
         );
         throw new Error("Failed to fetch new Airtable token");
