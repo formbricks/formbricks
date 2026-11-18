@@ -52,7 +52,7 @@ describe("getSurveyArchivePurgeCutoff", () => {
 describe("purgeExpiredArchivedSurveys", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(queueAuditEventWithoutRequest).mockResolvedValue(undefined as never);
+    vi.mocked(queueAuditEventWithoutRequest).mockResolvedValue(undefined);
     history.archivedByPolicy.mockResolvedValue(new Set());
     history.runFor.mockResolvedValue("run_1");
     history.close.mockResolvedValue(undefined);
@@ -211,7 +211,7 @@ describe("purgeExpiredArchivedSurveys", () => {
       .mockResolvedValueOnce([makeSurvey("s1")] as never)
       .mockResolvedValueOnce([] as never);
     vi.mocked(deleteSurvey).mockResolvedValue({} as never);
-    vi.mocked(queueAuditEventWithoutRequest).mockRejectedValueOnce(new Error("audit down") as never);
+    vi.mocked(queueAuditEventWithoutRequest).mockRejectedValueOnce(new Error("audit down"));
 
     const purged = await purgeExpiredArchivedSurveys(new Date("2026-07-31T00:00:00.000Z"));
 

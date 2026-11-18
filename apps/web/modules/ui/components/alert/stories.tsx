@@ -70,9 +70,9 @@ const meta: Meta<StoryProps> = {
       },
       order: 1,
     },
-    role: {
+    alertRole: {
       control: "select",
-      options: ["alert", "status"],
+      options: ["alert", "status", "note", "none"],
       description:
         "ARIA role. Keep the default `alert` (assertive live region) for alerts that appear dynamically, e.g. after a failed request. Pass `status` for static banners that are already visible on first paint so screen readers don't announce them on mount.",
       table: {
@@ -120,7 +120,7 @@ type Story = StoryObj<StoryProps>;
 // Create a common render function to reduce duplication
 const renderAlert = (args: StoryProps) => {
   // Extract component props
-  const { variant = "default", size = "default", className = "", role } = args;
+  const { variant = "default", size = "default", className = "", alertRole } = args;
 
   // Extract story content options
   const {
@@ -132,7 +132,7 @@ const renderAlert = (args: StoryProps) => {
   } = args as StoryOptions;
 
   return (
-    <Alert variant={variant} size={size} className={className} role={role}>
+    <Alert variant={variant} size={size} className={className} alertRole={alertRole}>
       {showIcon && <LightbulbIcon />}
       <AlertTitle className={showIcon ? "pl-7" : ""}>{title}</AlertTitle>
       {description && <AlertDescription className={showIcon ? "pl-7" : ""}>{description}</AlertDescription>}
@@ -260,7 +260,7 @@ export const StaticBanner: Story = {
   render: renderAlert,
   args: {
     variant: "info",
-    role: "status",
+    alertRole: "status",
     title: "Did you know?",
     description: "You can automate follow-up emails based on survey responses.",
     showIcon: true,
@@ -271,7 +271,7 @@ export const StaticBanner: Story = {
     docs: {
       description: {
         story:
-          "Use `role='status'` for informational or promotional banners that are already visible when the page loads. The default `role='alert'` is an assertive live region and should be reserved for alerts that appear dynamically — static banners with `role='alert'` may be announced spuriously by screen readers on mount.",
+          "Use `alertRole='status'` for informational or promotional banners that are already visible when the page loads. The default `alertRole='alert'` is an assertive live region and should be reserved for alerts that appear dynamically — static banners with `role='alert'` may be announced spuriously by screen readers on mount.",
       },
     },
   },

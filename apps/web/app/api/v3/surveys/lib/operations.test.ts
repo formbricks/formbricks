@@ -203,6 +203,7 @@ const { RESOURCE_VISIBILITY, VISIBILITY_CONTEXT, visibilityOverride } = vi.hoist
     RESOURCE_VISIBILITY: { ...context, ownerName: null } as const,
     VISIBILITY_CONTEXT: context,
     // A test that needs enforcement on sets this and clears it again.
+    // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
     visibilityOverride: { context: null as unknown },
   };
 });
@@ -2508,6 +2509,7 @@ describe("custom CSS (ENG-3641)", () => {
 
   describe("validate operation customCss", () => {
     test("needs workspace read only, returns compiled CSS and warnings, and writes nothing", async () => {
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       const response = await validateV3Survey({
         body: customCssBody(),
         authentication,
@@ -2541,6 +2543,7 @@ describe("custom CSS (ENG-3641)", () => {
     test("a rejected CSS returns errors and invalid_params and no compiled output", async () => {
       vi.mocked(previewCustomCss).mockReturnValue({ ok: false, errors: [cssError] });
 
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       const response = await validateV3Survey({
         body: customCssBody({ scope: "workspace" }),
         authentication,
@@ -2561,6 +2564,7 @@ describe("custom CSS (ENG-3641)", () => {
     test("without workspace read access nothing is processed", async () => {
       vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(problemForbidden(requestId, "nope", instance));
 
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       const response = await validateV3Survey({
         body: customCssBody(),
         authentication,
@@ -2573,12 +2577,14 @@ describe("custom CSS (ENG-3641)", () => {
     });
 
     test("a named survey needs read access to it, including a private survey", async () => {
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       vi.mocked(getAuthorizedV3Survey).mockResolvedValue({
         survey: null,
         authResult: null,
         response: problemForbidden(requestId, "You are not authorized to access this resource", instance),
       } as never);
 
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       const response = await validateV3Survey({
         body: customCssBody({ surveyId: validSurveyId }),
         authentication,
@@ -2601,6 +2607,7 @@ describe("custom CSS (ENG-3641)", () => {
         visibility: RESOURCE_VISIBILITY,
       } as never);
 
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       const response = await validateV3Survey({
         body: customCssBody({ surveyId: validSurveyId }),
         authentication,
@@ -2616,6 +2623,7 @@ describe("custom CSS (ENG-3641)", () => {
       const cssKey = { apiKeyId: "key_css", organizationId: "org_1", workspacePermissions: [] } as never;
       vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("Slow down", 30));
 
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       const response = await validateV3Survey({
         body: customCssBody(),
         authentication: cssKey,
@@ -2631,6 +2639,7 @@ describe("custom CSS (ENG-3641)", () => {
     });
 
     test("a creative type compiles the CSS for that creative's root element, as it is delivered", async () => {
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       const response = await validateV3Survey({
         body: customCssBody({ creativeType: "banner" }),
         authentication,

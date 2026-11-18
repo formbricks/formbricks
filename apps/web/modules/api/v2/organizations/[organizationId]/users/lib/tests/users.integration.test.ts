@@ -3,7 +3,6 @@ import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { deleteMembership } from "@/modules/organization/settings/teams/lib/membership";
 import { lockOwnersAndCheckRemoval } from "@/modules/organization/settings/teams/lib/owner-guard";
-import type { TUserInput } from "../../types/users";
 import { createUser, updateUser } from "../users";
 
 /**
@@ -21,10 +20,10 @@ describe("createUser duplicate handling vs real Postgres (ENG-1801)", () => {
     const org = await prisma.organization.create({ data: { name: "ENG-1801 Org" } });
     const email = "eng1801-service@example.com";
 
-    const first = await createUser({ name: "First", email, role: "owner" } as TUserInput, org.id);
+    const first = await createUser({ name: "First", email, role: "owner" }, org.id);
     expect(first.ok).toBe(true);
 
-    const second = await createUser({ name: "Second", email, role: "member" } as TUserInput, org.id);
+    const second = await createUser({ name: "Second", email, role: "member" }, org.id);
     expect(second.ok).toBe(false);
     if (!second.ok) {
       expect(second.error.type).toBe("conflict");

@@ -26,7 +26,7 @@ export const withFilledCodes = (survey: TSurvey): TSurvey => ({
 /** A copy of an element with its question code dropped, so the next fill gives the copy its own. */
 const withoutQuestionCode = (element: TSurveyElement): TSurveyElement => {
   const { code: _code, ...rest } = element as TSurveyElement & { code?: string };
-  return rest as TSurveyElement;
+  return rest;
 };
 
 /**

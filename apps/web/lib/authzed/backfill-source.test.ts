@@ -40,7 +40,7 @@ const setEmptySource = (): void => {
   vi.mocked(prisma.membership.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.team.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.workspace.findMany).mockResolvedValue([] as never);
-  vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null as never);
+  vi.mocked(prisma.workspace.findUnique).mockResolvedValue(null);
   vi.mocked(prisma.apiKey.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValue([] as never);
   vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValue([] as never);
@@ -92,7 +92,7 @@ describe("organizationExists", () => {
     [1, true],
     [0, false],
   ])("reports %i matching rows as %s", async (count, expected) => {
-    vi.mocked(prisma.organization.count).mockResolvedValue(count as never);
+    vi.mocked(prisma.organization.count).mockResolvedValue(count);
 
     await expect(organizationExists(ORGANIZATION_ID)).resolves.toBe(expected);
   });

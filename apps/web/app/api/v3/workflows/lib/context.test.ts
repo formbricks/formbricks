@@ -429,7 +429,7 @@ describe("recordAudit (binds the audit sink to the request's audit log)", () => 
 
   test("keeps the API-key path's organization and does not re-resolve from the workspace", async () => {
     const auditLog = { ...baseAuditLog(), organizationId: "org_from_key" };
-    const ctx = buildWorkflowApiContext(apiKeyAuth as TV3Authentication, "req_1", "inst", auditLog);
+    const ctx = buildWorkflowApiContext(apiKeyAuth, "req_1", "inst", auditLog);
 
     await ctx.recordAudit?.({ targetId: "wf_1", workspaceId: "ws_1", newObject: { status: "draft" } });
 

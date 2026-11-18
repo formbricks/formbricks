@@ -363,7 +363,7 @@ describe("dashboard-bound reads: allowed on a granted workspace, refused elsewhe
           dashboardId: ids.dashboard,
           body: { name: "Renamed" },
           ...ctx(ids.manageViewer),
-        } as never)
+        })
       )
     ).toBe(403);
   });
@@ -481,21 +481,17 @@ describe("everything else refuses a viewer", () => {
         createV3Dashboard({
           body: { workspaceId: fixture.workspaceId, name: "New" },
           ...ctx(ids.viewer),
-        } as never),
+        }),
     ],
     [
       "PATCH /dashboards/{id}",
-      () =>
-        renameV3Dashboard({ dashboardId: ids.dashboard, body: { name: "X" }, ...ctx(ids.viewer) } as never),
+      () => renameV3Dashboard({ dashboardId: ids.dashboard, body: { name: "X" }, ...ctx(ids.viewer) }),
     ],
     [
       "POST /dashboards/{id}/duplicate",
-      () => duplicateV3Dashboard({ dashboardId: ids.dashboard, body: {}, ...ctx(ids.viewer) } as never),
+      () => duplicateV3Dashboard({ dashboardId: ids.dashboard, body: {}, ...ctx(ids.viewer) }),
     ],
-    [
-      "DELETE /dashboards/{id}",
-      () => deleteV3Dashboard({ dashboardId: ids.dashboard, ...ctx(ids.viewer) } as never),
-    ],
+    ["DELETE /dashboards/{id}", () => deleteV3Dashboard({ dashboardId: ids.dashboard, ...ctx(ids.viewer) })],
     [
       "GET /charts",
       () =>
@@ -585,7 +581,7 @@ describe("everything else refuses a viewer", () => {
           workspaceId: fixture.workspaceId,
           datasetId: fixture.datasetId,
           ...ctx(ids.viewer),
-        } as never),
+        }),
     ],
     [
       "GET /feedbackRecords/{id}",
@@ -595,7 +591,7 @@ describe("everything else refuses a viewer", () => {
           datasetId: fixture.datasetId,
           feedbackRecordId: "00000000-0000-4000-8000-000000000000",
           ...ctx(ids.viewer),
-        } as never),
+        }),
     ],
   ] as const)("%s answers 403", async (_operation, call) => {
     expect(await statusOf(await call())).toBe(403);

@@ -103,7 +103,7 @@ export const ShowConditionsBlock = ({
     onRemoveCondition: (id) => edit((root) => removeShowCondition(root, id)),
     onDuplicateCondition: (id) => edit((root) => duplicateShowCondition(root, id)),
     onCreateGroup: (id) => edit((root) => createShowConditionGroup(root, id)),
-    onUpdateCondition: (id, update) => updateCondition(id, update as TShowConditionUpdate),
+    onUpdateCondition: (id, update) => updateCondition(id, update),
     onToggleGroupConnector: (groupId) => edit((root) => toggleShowConditionConnector(root, groupId)),
   };
 

@@ -304,7 +304,7 @@ const createValueQueryRunner = (scope: {
       source: "v3.dashboards.filterValues",
       embeddedKeys: await embeddedKeysFor(datasetId, cubeQuery),
     });
-    return Array.isArray(rows) ? (rows as unknown[]) : [];
+    return Array.isArray(rows) ? rows : [];
   };
 };
 

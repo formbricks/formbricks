@@ -589,9 +589,7 @@ describe("Segment Service Tests", () => {
 
     beforeEach(() => {
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey as Awaited<ReturnType<typeof getSurvey>>);
-      vi.mocked(prisma.segment.findFirst).mockResolvedValue(
-        privateSegmentPrisma as Awaited<ReturnType<typeof prisma.segment.findFirst>>
-      );
+      vi.mocked(prisma.segment.findFirst).mockResolvedValue(privateSegmentPrisma);
       vi.mocked(prisma.survey.update, { partial: true, deep: true }).mockResolvedValue({});
       vi.mocked(prisma.segment.update, { partial: true, deep: true }).mockResolvedValue(
         resetPrivateSegmentPrisma

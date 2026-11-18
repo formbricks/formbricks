@@ -120,11 +120,11 @@ reviews:
           or `toLocale*` calls, and never an implicit/`undefined` locale.
         - Don't ask for `useMemo`/`useCallback` unless there is a measured re-render problem.
         - Do scrutinise effects and closures. `apps/web/oxlint.config.ts` keeps
-          `react/set-state-in-effect`, `incompatible-library` and `immutability` at `warn`, and
-          lint has no warning budget, so none of them can fail CI. `exhaustive-deps` is an error,
-          but an inline disable silences it: check that its reason holds. Flag state set from an
-          effect without a guard, missing or lying dependency arrays, stale closures over props
-          or state, and effects that need cleanup and don't have it.
+          `incompatible-library` at `warn`, and lint has no warning budget, so it cannot fail CI.
+          `exhaustive-deps`, `set-state-in-effect` and `immutability` are errors, but an inline
+          disable silences them: check that its reason holds. Flag state set from an effect
+          without a guard, missing or lying dependency arrays, stale closures over props or
+          state, and effects that need cleanup and don't have it.
 
     - path: "**/*.test.ts"
       instructions: |
@@ -392,8 +392,11 @@ reviews:
         chore, docs, refactor, perf, test, build, ci, style, or revert. The summary must describe
         what the change does, in lower case, without a trailing period. A Linear ticket reference
         such as `(ENG-<id>)` or `[ENG-<id>]` may be appended.
+    # Off, not lowered. The generic check re-runs on every description edit and returns a new
+    # reason each time, including points an earlier run accepted, so answering it never converges.
+    # The template is enforced by the custom checks below (Breaking changes, ticket line, Coverage).
     description:
-      mode: warning
+      mode: "off"
     issue_assessment:
       mode: warning
     # `pr-label-sync.yml` reads the checkbox in the Breaking changes section; these check whether

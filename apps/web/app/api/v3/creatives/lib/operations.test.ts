@@ -187,7 +187,7 @@ vi.mock("@/modules/ee/creatives/lib/repository", () => ({
         triggers: input.actionClassIds.map((actionClassId) => ({ actionClassId })),
         languages: toLanguages(input.languages),
         survey: null,
-      } as TCreativeRecord;
+      };
       store.set(record.id, record);
       return withRelations(record);
     }
@@ -277,7 +277,7 @@ const API_KEY: TV3Authentication = {
   organizationAccess: { accessControl: { read: true, write: true } },
   workspacePermissions: [],
 } as unknown as TV3Authentication;
-const SESSION: TV3Authentication = { user: { id: USER_ID }, expires: "2099-01-01" } as TV3Authentication;
+const SESSION: TV3Authentication = { user: { id: USER_ID }, expires: "2099-01-01" };
 
 const base = { authentication: API_KEY, requestId: "req_1", instance: "/api/v3/creatives" };
 

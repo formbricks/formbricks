@@ -60,7 +60,7 @@ const queueSsoRecoveryAuditEvent = ({
   /** `null` means the sweep threw — deliberately not conflated with "there were none". */
   sessionsRevoked?: number | null;
 }) => {
-  queueAuditEventBackground({
+  void queueAuditEventBackground({
     action,
     targetType: "user",
     userId,

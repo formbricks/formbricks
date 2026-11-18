@@ -37,7 +37,7 @@ const SurveyRetentionNoteContent = ({
   // Both wrap instead of the small alert's truncation, so exemption lines and the due date stay readable.
   return (
     <div className="mb-4 space-y-2">
-      <Alert variant="info" size="small" role="status">
+      <Alert variant="info" size="small" alertRole="status">
         <AlertDescription className="whitespace-normal">
           {[t("workspace.settings.data_retention.survey_note"), ...exemptLines].join(" ")}
         </AlertDescription>
@@ -48,7 +48,7 @@ const SurveyRetentionNoteContent = ({
         </AlertButton>
       </Alert>
       {warning ? (
-        <Alert variant="warning" size="small" role="status">
+        <Alert variant="warning" size="small" alertRole="status">
           <AlertDescription className="whitespace-normal">{warning}</AlertDescription>
         </Alert>
       ) : null}

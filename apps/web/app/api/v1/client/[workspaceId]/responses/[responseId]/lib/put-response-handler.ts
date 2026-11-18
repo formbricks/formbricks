@@ -4,7 +4,6 @@ import {
   ResponseAlreadyFinishedError,
 } from "@formbricks/types/errors";
 import { TClientResponseUpdateInput, TResponse } from "@formbricks/types/responses";
-import { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TResponseNotShown } from "@formbricks/types/surveys/not-shown";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { type ApiErrorResult, handleApiError } from "@/app/lib/api/handle-api-error";
@@ -166,7 +165,7 @@ const validateUpdateRequest = (
 
   const otherResponseInvalidQuestionId = validateOtherOptionLengthForMultipleChoice({
     responseData: responseUpdateInput.data,
-    surveyQuestions: survey.questions as unknown as TSurveyElement[],
+    surveyQuestions: survey.questions,
     responseLanguage: responseUpdateInput.language,
   });
 

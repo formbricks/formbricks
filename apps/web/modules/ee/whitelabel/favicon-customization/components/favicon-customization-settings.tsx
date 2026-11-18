@@ -227,12 +227,12 @@ export const FaviconCustomizationSettings = ({
             </Button>
           )}
 
-          <Alert variant="info" role="status">
+          <Alert variant="info" alertRole="status">
             <AlertDescription>{t("workspace.settings.domain.favicon_size_hint")}</AlertDescription>
           </Alert>
 
           {isReadOnly && (
-            <Alert variant="warning" role="status">
+            <Alert variant="warning" alertRole="status">
               <AlertDescription>
                 {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
               </AlertDescription>

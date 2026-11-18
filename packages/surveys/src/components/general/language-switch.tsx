@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
@@ -49,7 +49,7 @@ export function LanguageSwitch({
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   // Sequence number of the most recent language selection — see `handleI18nLanguage`.
-  const latestLanguageRequest = useRef(0);
+  const latestLanguageRequestRef = useRef(0);
   const defaultLanguageCode = surveyLanguages.find((surveyLanguage) => {
     return surveyLanguage.default;
   })?.language.code;
@@ -86,9 +86,9 @@ export function LanguageSwitch({
     // Only the newest selection may apply. Two languages served by different bundles are two separate
     // fetches, so picking a second before the first lands would otherwise let the slower request set the
     // chrome back to a language the respondent has already moved off.
-    const requestId = ++latestLanguageRequest.current;
+    const requestId = ++latestLanguageRequestRef.current;
     void loadLanguage(calculatedLanguage).then(() => {
-      if (requestId !== latestLanguageRequest.current) return;
+      if (requestId !== latestLanguageRequestRef.current) return;
       const i18nLanguage = toI18nLanguage(calculatedLanguage);
       if (i18n.language !== i18nLanguage) {
         i18n.changeLanguage(i18nLanguage);
@@ -133,7 +133,10 @@ export function LanguageSwitch({
   // would undo the Tab. A null relatedTarget (focus going to <body>, or Safari not focusing a
   // clicked button) is left to useClickOutside, or a pointer tap on an option would close the
   // popup before its click registers.
-  useEffect(() => {
+  //
+  // A layout effect, so the listeners are attached when the popup is: Preact runs `useEffect` only
+  // after the next frame, and an Escape pressed in between was dropped with the popup left open.
+  useLayoutEffect(() => {
     if (!showLanguageDropdown) return;
 
     const container = containerRef.current;

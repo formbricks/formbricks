@@ -117,6 +117,7 @@ export const MCP_HANDLER_OPTIONS = {
    * Server-level rather than per-tool because that is where the SDK puts it: one verifier covers
    * every tool that ever mints state, which is also what stops a future tool from forgetting.
    */
+  // eslint-disable-next-line typescript/unbound-method -- the SDK codec's methods are closures, and server.test.ts pins this to be the codec's own verifier
   requestState: { verify: mcpRequestStateCodec.verify },
 } as const;
 

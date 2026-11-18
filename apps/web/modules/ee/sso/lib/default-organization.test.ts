@@ -116,7 +116,7 @@ describe("ensureDefaultOrganization — creating the organization", () => {
 
   test("runs Stripe setup on Formbricks Cloud", async () => {
     constantsOverrides.IS_FORMBRICKS_CLOUD = true;
-    vi.mocked(ensureCloudStripeSetupForOrganization).mockResolvedValue(undefined as never);
+    vi.mocked(ensureCloudStripeSetupForOrganization).mockResolvedValue(undefined);
     await ensureDefaultOrganization("Ada");
     expect(ensureCloudStripeSetupForOrganization).toHaveBeenCalledWith("default-org");
   });

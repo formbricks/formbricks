@@ -3,7 +3,6 @@
  */
 import { describe, expect, test } from "vitest";
 import * as XLSX from "xlsx";
-import type { TSurvey } from "@formbricks/types/surveys/types";
 import { editExcelExport } from "@/modules/survey/excel-export/__fixtures__/edit-sheet";
 import { createIcuTranslate } from "@/modules/survey/excel-export/__fixtures__/translate";
 import { EXCEL_EXPORT_META_SHEET } from "@/modules/survey/excel-export/format";
@@ -13,8 +12,7 @@ import { EVERY_TEXT_SURVEY } from "@/modules/survey/lib/__fixtures__/every-text-
 import { getExcelExportArchiveKind, getExcelExportFileKind } from "./excel-export-file";
 
 const t = createIcuTranslate("en-US");
-const exported = () =>
-  writeExcelExport({ survey: EVERY_TEXT_SURVEY as unknown as TSurvey, t, locale: "en-US" });
+const exported = () => writeExcelExport({ survey: EVERY_TEXT_SURVEY, t, locale: "en-US" });
 const isExport = (bytes: Uint8Array) => getExcelExportArchiveKind(openZipArchive(bytes)) === "export";
 
 /** The export with its meta sheet's rows changed by `edit`, written the way another app might save it. */

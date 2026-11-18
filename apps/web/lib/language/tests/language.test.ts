@@ -79,7 +79,7 @@ describe("createLanguage", () => {
   });
 
   describe("sad path", () => {
-    testInputValidation(createLanguage, "bad-id", {});
+    void testInputValidation(createLanguage, "bad-id", {});
 
     test("throws ValidationError on a malformed/unparseable code", async () => {
       await expect(createLanguage(mockWorkspaceId, { code: "not a language", alias: null })).rejects.toThrow(
@@ -146,7 +146,7 @@ describe("updateLanguage", () => {
   });
 
   describe("sad path", () => {
-    testInputValidation(updateLanguage, "bad-id", mockLanguageId, {});
+    void testInputValidation(updateLanguage, "bad-id", mockLanguageId, {});
 
     test("throws DatabaseError on PrismaKnownRequestError", async () => {
       const err = new Prisma.PrismaClientKnownRequestError("dup", {
@@ -271,7 +271,7 @@ describe("deleteLanguage", () => {
   });
 
   describe("sad path", () => {
-    testInputValidation(deleteLanguage, "bad-id", mockWorkspaceId, {});
+    void testInputValidation(deleteLanguage, "bad-id", mockWorkspaceId, {});
 
     test("throws DatabaseError on PrismaKnownRequestError", async () => {
       const err = new Prisma.PrismaClientKnownRequestError("dup", {
@@ -297,7 +297,7 @@ describe("deleteLanguage", () => {
         ...fakeWorkspace,
         languages: [{ ...mockLanguage, id: mockLanguageId, code: "de-DE" }],
         config: { defaultSurveyLanguage: "de-DE" },
-      } as unknown as TWorkspace);
+      });
 
       await expect(deleteLanguage(mockLanguageId, mockWorkspaceId, {})).rejects.toThrow(
         OperationNotAllowedError
@@ -311,7 +311,7 @@ describe("deleteLanguage", () => {
         ...fakeWorkspace,
         languages: [{ ...mockLanguage, id: mockLanguageId, code: "de" }],
         config: { defaultSurveyLanguage: "de-DE" },
-      } as unknown as TWorkspace);
+      });
 
       await expect(deleteLanguage(mockLanguageId, mockWorkspaceId, {})).rejects.toThrow(
         OperationNotAllowedError
@@ -323,7 +323,7 @@ describe("deleteLanguage", () => {
         ...fakeWorkspace,
         languages: [{ ...mockLanguage, id: mockLanguageId, code: "fr-FR" }],
         config: { defaultSurveyLanguage: "de-DE" },
-      } as unknown as TWorkspace);
+      });
       vi.mocked(prisma.language.delete).mockResolvedValue(mockLanguage);
 
       await expect(deleteLanguage(mockLanguageId, mockWorkspaceId, {})).resolves.toEqual(mockLanguage);

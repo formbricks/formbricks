@@ -9,7 +9,7 @@ describe("AuthZed outbox CLI command", () => {
     [["drain", "--max-batches=1"], { action: "drain", maxBatches: 1 }],
     [["drain", "--max-batches=1000"], { action: "drain", maxBatches: 1000 }],
   ])("parses %j", (args, expected) => {
-    expect(parseAuthzedOutboxCliCommand(args as string[])).toEqual(expected);
+    expect(parseAuthzedOutboxCliCommand(args)).toEqual(expected);
   });
 
   test.each([

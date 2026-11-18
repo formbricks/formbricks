@@ -439,6 +439,7 @@ const compileField = (source: string, ctx: TFieldContext): string => {
     if (!visited) throw toSyntaxRejection(error, ctx.appearance);
     throw error;
   }
+  // eslint-disable-next-line typescript/only-throw-error -- rethrows what the processor rejected with, as caught
   if (failure) throw failure;
   return Buffer.from(code).toString("utf8").replaceAll(LESS_THAN_PLACEHOLDER, ESCAPED_LESS_THAN);
 };

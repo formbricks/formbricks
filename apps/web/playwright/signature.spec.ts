@@ -14,6 +14,7 @@ import { type TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type UsersFixture } from "./fixtures/users";
 import { test } from "./lib/fixtures";
+import { clickUntilVisible } from "./utils/click-until";
 
 /**
  * **Signature element, end to end (ENG-6810).**
@@ -279,17 +280,6 @@ const expectSignaturePng = async (page: Page, png: Buffer) => {
   expect(inkPixels, "the signature has ink").toBeGreaterThan(100);
 };
 
-/**
- * Clicks `trigger` until `target` shows. The owner pages hydrate after they paint, and a click that lands
- * first is dropped, so a single click followed by a visibility check can wait on a handler that never ran.
- */
-const clickUntilVisible = async (trigger: Locator, target: Locator): Promise<void> => {
-  await expect(async () => {
-    if (!(await target.isVisible())) await trigger.click();
-    await expect(target).toBeVisible({ timeout: 3000 });
-  }).toPass({ timeout: 30_000 });
-};
-
 const attachShot = async (page: Page, testInfo: TestInfo, name: string): Promise<void> => {
   const path = testInfo.outputPath(`${name}.png`);
   await page.screenshot({ path });
@@ -338,8 +328,10 @@ test.describe("Signature element @slow", () => {
         await drawWithTouch(cdp, pad);
         await expect(signatureStatus(card)).toHaveText("Signed");
         await page.getByRole("button", { name: "Next", exact: true }).click();
+        // Waits on the upload itself: the next card's text can already show in the card stacked behind
+        // this one, so seeing it is no proof that Next has run.
+        await expect.poll(() => uploads.length, { timeout: UPLOAD_TIMEOUT }).toBe(1);
         await expect(page.getByText("Anything else?")).toBeVisible({ timeout: UPLOAD_TIMEOUT });
-        expect(uploads).toHaveLength(1);
       });
 
       await test.step("the response already holds the relative private URL of the PNG", async () => {
@@ -378,7 +370,9 @@ test.describe("Signature element @slow", () => {
 
         await page.getByRole("button", { name: "Next", exact: true }).focus();
         await page.keyboard.press("Enter");
+        await expect.poll(() => uploads.length, { timeout: UPLOAD_TIMEOUT }).toBe(2);
         await expect(page.getByText("Anything else?")).toBeVisible({ timeout: UPLOAD_TIMEOUT });
+        // Still two once the card has moved on: a duplicate upload of the typed signature would show here.
         expect(uploads).toHaveLength(2);
 
         await expect
@@ -390,6 +384,8 @@ test.describe("Signature element @slow", () => {
         expect(await readSignatureAnswer(seeded.surveyId, seeded.signatureId)).toMatch(
           SIGNATURE_URL_PATTERN(seeded.workspaceId, seeded.surveyId, seeded.signatureId)
         );
+        // And still two once the answer is saved: no upload arrived while the response was stored.
+        expect(uploads).toHaveLength(2);
       });
 
       expect(pageErrors).toEqual([]);

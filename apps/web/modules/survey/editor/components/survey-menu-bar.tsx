@@ -37,10 +37,7 @@ import {
 import { toFlowTabMessage } from "@/modules/survey/editor/lib/flow-error-message";
 import { getInvalidSurveyTargets, isFlowTabIssue } from "@/modules/survey/editor/lib/invalid-survey-targets";
 import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
-import {
-  parseSurveyEndings,
-  removeDraftFlagsFromBlocks,
-} from "@/modules/survey/editor/lib/survey-save-payload";
+import { buildSurveySavePayload } from "@/modules/survey/editor/lib/survey-save-payload";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
@@ -89,6 +86,12 @@ interface SurveyMenuBarProps {
   visibilityGate: TSurveyVisibilityUiGate;
   /** The effective visibility, from the server; pending counts as restricted. */
   effectiveVisibility: TSurveyVisibility;
+  /**
+   * The refresh after a visibility change has not landed yet, so `effectiveVisibility` may still be the
+   * old value. Activate waits for it: acting on the old value skips the "Who can view this survey?"
+   * question for a survey just restricted, or asks it for one just made visible.
+   */
+  isVisibilityRefreshing: boolean;
   /** A change was stored (in effect or pending): the editor refreshes what it shows from the server. */
   onVisibilityChanged: () => void;
   onVisibilityNotEnabled: () => void;
@@ -124,6 +127,7 @@ export const SurveyMenuBar = ({
   isStorageConfigured = true,
   visibilityGate,
   effectiveVisibility,
+  isVisibilityRefreshing,
   onVisibilityChanged,
   onVisibilityNotEnabled,
   surveyAccess,
@@ -135,7 +139,6 @@ export const SurveyMenuBar = ({
   const { t } = useTranslation();
   const router = useRouter();
   const [audiencePrompt, setAudiencePrompt] = useState(true);
-  const [isLinkSurvey, setIsLinkSurvey] = useState(true);
   const [isConfirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [isSurveyPublishing, setIsSurveyPublishing] = useState(false);
   const [isSurveySaving, setIsSurveySaving] = useState(false);
@@ -176,15 +179,12 @@ export const SurveyMenuBar = ({
     setIsActivateDialogOpen(false);
   }, [onVisibilityNotEnabled]);
 
-  useEffect(() => {
-    if (audiencePrompt && activeId === "settings") {
-      setAudiencePrompt(false);
-    }
-  }, [activeId, audiencePrompt]);
+  // Opening the settings tab answers the audience prompt. Adjusted during render.
+  if (audiencePrompt && activeId === "settings") {
+    setAudiencePrompt(false);
+  }
 
-  useEffect(() => {
-    setIsLinkSurvey(localSurvey.type === "link");
-  }, [localSurvey.type]);
+  const isLinkSurvey = localSurvey.type === "link";
 
   // Keep refs updated for interval-based auto-save
   useEffect(() => {
@@ -669,20 +669,13 @@ export const SurveyMenuBar = ({
         return false;
       }
 
-      // Clean up blocks by removing isDraft from elements
-      if (localSurvey.blocks) {
-        localSurvey.blocks = removeDraftFlagsFromBlocks(localSurvey.blocks);
-      }
-
-      // Set questions to empty array for blocks-based surveys
-      localSurvey.questions = [];
-
-      localSurvey.endings = parseSurveyEndings(localSurvey.endings);
+      // A copy without draft flags or legacy questions; the editor's survey is not mutated.
+      const surveyToSave = buildSurveySavePayload(localSurvey);
 
       attempt = saveAttemptOrder.begin();
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
-      const updatedSurveyResponse = await updateSurveyAction({ ...localSurvey, segment });
+      const updatedSurveyResponse = await updateSurveyAction({ ...surveyToSave, segment });
 
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
@@ -965,7 +958,7 @@ export const SurveyMenuBar = ({
         />
         {!isStorageConfigured && (
           <div>
-            <Alert variant="warning" size="small" role="status">
+            <Alert variant="warning" size="small" alertRole="status">
               <AlertTitle>{t("common.storage_not_configured")}</AlertTitle>
               <AlertButton className="flex items-center justify-center">
                 <a
@@ -981,7 +974,7 @@ export const SurveyMenuBar = ({
         )}
         {responseCount > 0 && (
           <div>
-            <Alert variant="warning" size="small" role="status">
+            <Alert variant="warning" size="small" alertRole="status">
               <AlertTitle>{t("workspace.surveys.edit.caution_text")}</AlertTitle>
               <AlertButton onClick={() => setIsCautionDialogOpen(true)}>{t("common.learn_more")}</AlertButton>
             </Alert>
@@ -1024,7 +1017,7 @@ export const SurveyMenuBar = ({
         {localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
           <Button
             size="sm"
-            disabled={isSurveySaving}
+            disabled={isSurveySaving || isVisibilityRefreshing}
             loading={isSurveyPublishing}
             onClick={handleActivateClick}>
             {draftPrimaryLabel}

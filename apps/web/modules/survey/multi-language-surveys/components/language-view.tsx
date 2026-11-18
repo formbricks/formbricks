@@ -112,6 +112,7 @@ export const LanguageView = ({
   // Check AI availability once on mount
   useEffect(() => {
     let isCurrent = true;
+    // eslint-disable-next-line react/set-state-in-effect -- fetch effect: availability is unknown until the request it starts answers
     setIsAIAvailable(false);
 
     checkAITranslationAvailableAction({ surveyId: localSurvey.id })
@@ -132,12 +133,12 @@ export const LanguageView = ({
     };
   }, [localSurvey.id]);
 
-  // Sync multi-language state
-  useEffect(() => {
-    if (localSurvey.languages.length === 0) {
-      setIsMultiLanguageActivated(false);
-    }
-  }, [localSurvey.languages]);
+  // Sync multi-language state: languages emptied on the survey switch it off. Adjusted during render.
+  const [syncedSurveyLanguages, setSyncedSurveyLanguages] = useState(localSurvey.languages);
+  if (syncedSurveyLanguages !== localSurvey.languages) {
+    setSyncedSurveyLanguages(localSurvey.languages);
+    if (localSurvey.languages.length === 0) setIsMultiLanguageActivated(false);
+  }
 
   // Track incomplete translations
   useEffect(() => {
@@ -162,7 +163,7 @@ export const LanguageView = ({
   const updateSurveyTranslations = (survey: TSurvey, updatedLanguages: TSurveyLanguage[]) => {
     const translatedSurveyResult = addMultiLanguageLabels(survey, extractLanguageCodes(updatedLanguages));
     const updatedSurvey = { ...translatedSurveyResult, languages: updatedLanguages };
-    updateLocalSurvey(updatedSurvey as TSurvey);
+    updateLocalSurvey(updatedSurvey);
   };
 
   // Answers are stored as the option text, so a published survey keeps the translations it already has:

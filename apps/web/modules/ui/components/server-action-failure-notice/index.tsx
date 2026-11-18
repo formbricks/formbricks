@@ -90,7 +90,7 @@ export const ServerActionFailureNotice = ({
     // role="none": the live region around it announces it; role="alert" here would read it twice.
     <Alert
       data-server-action-failure-notice=""
-      role="none"
+      alertRole="none"
       variant="error"
       className="pointer-events-auto max-w-sm shadow-lg"
       onFocus={onFocusEnter}>

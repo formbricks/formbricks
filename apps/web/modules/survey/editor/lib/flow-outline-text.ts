@@ -4,12 +4,7 @@ import type { TI18nString } from "@formbricks/types/i18n";
 import type { TSurveyBlockLogic, TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TExpression } from "@formbricks/types/surveys/expressions";
-import type {
-  TConditionGroup,
-  TLeftOperand,
-  TRightOperand,
-  TSingleCondition,
-} from "@formbricks/types/surveys/logic";
+import type { TConditionGroup, TLeftOperand, TSingleCondition } from "@formbricks/types/surveys/logic";
 import {
   isMatrixRowCondition,
   resolveMatrixColumnValue,
@@ -132,10 +127,7 @@ const getOptionLabel = (item: TOptionItem | undefined): string | undefined =>
  * An operand: a question by code, a field by name (`@` for ingested ones in the plain text), a reserved
  * field by name; each a chip.
  */
-const describeOperandParts = (
-  operand: TLeftOperand | Exclude<TRightOperand, { type: "static" }>,
-  survey: TSurvey
-): TFlowTextPart[] => {
+const describeOperandParts = (operand: TLeftOperand, survey: TSurvey): TFlowTextPart[] => {
   switch (operand.type) {
     case "element": {
       const element = findElement(survey, operand.value);

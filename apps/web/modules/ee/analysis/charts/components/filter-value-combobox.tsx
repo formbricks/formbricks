@@ -95,12 +95,13 @@ export function FilterValueCombobox({
   });
 
   // Reset the transient search term whenever the popover closes.
-  useEffect(() => {
-    if (!open) setSearch("");
-  }, [open]);
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    if (!nextOpen) setSearch("");
+  };
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <button
           type="button"
@@ -109,7 +110,7 @@ export function FilterValueCombobox({
           aria-controls={open ? listboxId : undefined}
           onKeyDown={(event) => {
             if (event.key === "Tab") {
-              setOpen(false);
+              handleOpenChange(false);
             }
           }}
           className={cn(
@@ -181,7 +182,7 @@ export function FilterValueCombobox({
                         className="gap-2"
                         onSelect={() => {
                           onChange(item.value);
-                          setOpen(false);
+                          handleOpenChange(false);
                         }}>
                         {showFieldTypeIcons && (
                           <FieldTypeIcon

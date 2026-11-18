@@ -44,7 +44,7 @@ export const AzureButton = ({
 
   useEffect(() => {
     if (directRedirect) {
-      handleLogin();
+      void handleLogin();
     }
   }, [directRedirect, handleLogin]);
 

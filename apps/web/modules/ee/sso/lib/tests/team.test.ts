@@ -65,9 +65,7 @@ describe("Team Management", () => {
       test("creates the default team membership successfully", async () => {
         vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_DEFAULT_TEAM);
         vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(MOCK_ORGANIZATION_MEMBERSHIP);
-        vi.mocked(prisma.teamUser.upsert).mockResolvedValue(
-          MOCK_DEFAULT_TEAM_USER as Awaited<ReturnType<typeof prisma.teamUser.upsert>>
-        );
+        vi.mocked(prisma.teamUser.upsert).mockResolvedValue(MOCK_DEFAULT_TEAM_USER);
 
         await createDefaultTeamMembership(MOCK_IDS.userId);
 

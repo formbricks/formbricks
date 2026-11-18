@@ -22,11 +22,11 @@ export const TrialResponseWarningModal = ({
   responseCount,
 }: TrialResponseWarningModalProps) => {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+  // The server renders this only when the warning is due, so it opens on its first paint.
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     document.cookie = `trial_warning_shown_${threshold}=true; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
-    setOpen(true);
     posthog.capture("trial_response_warning_shown", { threshold, response_count: responseCount });
   }, [threshold, responseCount]);
 

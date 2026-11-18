@@ -304,11 +304,11 @@ describe("patchV3Survey", () => {
     // write, so the models that reconcile touches have to answer. Left as the real reconcile rather
     // than a module mock, so these tests keep proving it runs through the transaction's client.
     vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
-    vi.mocked(prisma.surveyEmbeddedData.deleteMany).mockResolvedValue({ count: 0 } as never);
+    vi.mocked(prisma.surveyEmbeddedData.deleteMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.surveyEmbeddedData.create).mockResolvedValue({} as never);
     vi.mocked(prisma.embeddedData.create).mockResolvedValue({ id: "ed_1" } as never);
-    vi.mocked(prisma.embeddedData.deleteMany).mockResolvedValue({ count: 0 } as never);
-    vi.mocked(prisma.embeddedData.updateMany).mockResolvedValue({ count: 0 } as never);
+    vi.mocked(prisma.embeddedData.deleteMany).mockResolvedValue({ count: 0 });
+    vi.mocked(prisma.embeddedData.updateMany).mockResolvedValue({ count: 0 });
     vi.mocked(normalizeSurveyScheduling).mockImplementation(({ closeOn, publishOn }) => ({
       closeOn,
       publishOn,
@@ -522,7 +522,7 @@ describe("patchV3Survey", () => {
       ] as never);
 
       await patchV3Survey(
-        { ...currentSurvey, hiddenFields: { enabled: true, fieldIds: ["utm_source"] } } as never,
+        { ...currentSurvey, hiddenFields: { enabled: true, fieldIds: ["utm_source"] } },
         { name: "Renamed" },
         { requestId: "req_qa", organizationId: "org_1" }
       );
@@ -714,7 +714,7 @@ describe("patchV3Survey", () => {
           enabled: true,
         },
       ],
-    } as TSurvey;
+    };
 
     await executeV3SurveyPatch({
       currentSurvey: currentSurveyWithGerman,
@@ -829,7 +829,7 @@ describe("patchV3Survey", () => {
 
     for (const startLogic of [[rule], []]) {
       await executeV3SurveyPatch({
-        currentSurvey: currentSurvey as TSurvey,
+        currentSurvey: currentSurvey,
         document: documentWith(startLogic),
         languageRequests: [{ code: "en-US", default: true, enabled: true }],
         requestId: "req_1",
@@ -843,7 +843,7 @@ describe("patchV3Survey", () => {
   test("rejects setting a non-draft status on an app survey with no triggers", async () => {
     await expect(
       executeV3SurveyPatch({
-        currentSurvey: { ...currentSurvey, type: "app", triggers: [] } as TSurvey,
+        currentSurvey: { ...currentSurvey, type: "app", triggers: [] },
         document: {
           name: currentSurvey.name,
           status: "inProgress",
@@ -873,7 +873,7 @@ describe("patchV3Survey", () => {
     } as never);
 
     await executeV3SurveyPatch({
-      currentSurvey: { ...currentSurvey, type: "app", triggers: [] } as TSurvey,
+      currentSurvey: { ...currentSurvey, type: "app", triggers: [] },
       document: {
         name: currentSurvey.name,
         status: "inProgress",
@@ -923,7 +923,7 @@ describe("patchV3Survey", () => {
     test("rejects a patch that ADDS a hidden field named after a reserved field, and does not write", async () => {
       await expect(
         executeV3SurveyPatch({
-          currentSurvey: currentSurvey as TSurvey,
+          currentSurvey: currentSurvey,
           document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["country"] } }),
           languageRequests: [{ code: "en-US", default: true, enabled: true }],
           requestId: "req_1",
@@ -937,7 +937,7 @@ describe("patchV3Survey", () => {
 
     test("reports the refused name as a forbidden_identifier invalid param", async () => {
       const error = await executeV3SurveyPatch({
-        currentSurvey: currentSurvey as TSurvey,
+        currentSurvey: currentSurvey,
         document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["country"] } }),
         languageRequests: [{ code: "en-US", default: true, enabled: true }],
         requestId: "req_1",
@@ -952,7 +952,7 @@ describe("patchV3Survey", () => {
     test("rejects a variable named after a reserved field", async () => {
       await expect(
         executeV3SurveyPatch({
-          currentSurvey: currentSurvey as TSurvey,
+          currentSurvey: currentSurvey,
           document: documentFor({
             variables: [{ id: "clvar123456789012345678901", name: "browser", type: "text", value: "" }],
           }),
@@ -989,7 +989,7 @@ describe("patchV3Survey", () => {
           currentSurvey: {
             ...currentSurvey,
             hiddenFields: { enabled: true, fieldIds: ["country"] },
-          } as TSurvey,
+          },
           document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["country", "url"] } }),
           languageRequests: [{ code: "en-US", default: true, enabled: true }],
           requestId: "req_1",
@@ -1001,7 +1001,7 @@ describe("patchV3Survey", () => {
 
     test("accepts adding an ordinary new hidden field name", async () => {
       await executeV3SurveyPatch({
-        currentSurvey: currentSurvey as TSurvey,
+        currentSurvey: currentSurvey,
         document: documentFor({ hiddenFields: { enabled: true, fieldIds: ["team_size"] } }),
         languageRequests: [{ code: "en-US", default: true, enabled: true }],
         requestId: "req_1",
@@ -1263,7 +1263,7 @@ describe("patchV3Survey", () => {
       ...currentSurvey,
       blocks: externalUrlBody.blocks,
       endings: externalUrlBody.endings,
-    } as TSurvey;
+    };
 
     await patchV3Survey(
       currentSurveyWithExternalUrls,
@@ -2118,7 +2118,7 @@ describe("patchV3Survey", () => {
 
     test("turns a P2025 into not-found when the survey is actually gone", async () => {
       rejectWithP2025();
-      vi.mocked(prisma.survey.findFirst).mockResolvedValue(null as never);
+      vi.mocked(prisma.survey.findFirst).mockResolvedValue(null);
 
       await expect(
         patchV3Survey(

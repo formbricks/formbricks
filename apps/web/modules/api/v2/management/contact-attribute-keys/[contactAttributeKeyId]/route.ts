@@ -212,7 +212,7 @@ export const DELETE = async (
       const deletedContactAttributeKey = await deleteContactAttributeKey(params.contactAttributeKeyId);
 
       if (!deletedContactAttributeKey.ok) {
-        return handleApiError(request, deletedContactAttributeKey.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
+        return handleApiError(request, deletedContactAttributeKey.error, auditLog); // NOSONAR // We need to assert or we get a type error
       }
 
       if (auditLog) {

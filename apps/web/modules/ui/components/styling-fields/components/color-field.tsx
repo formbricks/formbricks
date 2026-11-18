@@ -2,7 +2,6 @@
 
 import { useTranslation } from "react-i18next";
 import { BRAND_PRESERVED_COLOR_KEYS } from "@formbricks/types/dark-palette";
-import { type TBaseStyling } from "@formbricks/types/styling";
 import { STYLE_DEFAULTS } from "@/lib/styling/constants";
 import {
   getAppearanceFieldName,
@@ -45,7 +44,7 @@ export const ColorField = ({
   const isDark = fieldName !== name;
   // The brand color has one value for both appearances; the Dark tab edits it and says so.
   const isShared = appearance === "dark" && isSharedColorField(name);
-  const darkDisplayColor = isDark ? getDarkDisplayColor(form.watch() as TBaseStyling, name) : undefined;
+  const darkDisplayColor = isDark ? getDarkDisplayColor(form.watch(), name) : undefined;
   // Brand colors keep their light value in dark unless overridden (D12); everything else derives.
   const isBrandColor = (BRAND_PRESERVED_COLOR_KEYS as readonly string[]).includes(getColorKey(name) ?? "");
 
