@@ -1,5 +1,7 @@
 <!-- Write this body with the `pr` skill (.agents/skills/pr). Title: Conventional Commits. -->
 
+<!-- `Fixes` closes the ticket on merge; use `Ref` for partial work. No ticket: delete the line, say why. -->
+
 Fixes ENG-
 
 ## What & why

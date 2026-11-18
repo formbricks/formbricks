@@ -112,19 +112,23 @@ jobs:
             const current = new Set((pr.labels || []).map((l) => l.name));
 
             for (const rule of RULES) {
-              const found = rule.headings
+              const sections = rule.headings
                 .map((h) => [h, sectionContent(h)])
-                .find(([, c]) => c !== null);
-              if (found === undefined) {
+                .filter(([, c]) => c !== null);
+              if (sections.length === 0) {
                 core.info(`[${rule.label}] no "## ${rule.headings.join('" or "## ')}" section found; leaving unchanged.`);
                 continue;
               }
-              const [heading, content] = found;
-              const active = rule.isActive(content);
-              if (active === null) {
-                core.info(`[${rule.label}] no checkbox under "## ${heading}"; leaving unchanged.`);
+              // The first section that declares wins, so an answer under the new heading beats a
+              // legacy box, and a legacy box still counts when the new section declares nothing.
+              const declared = sections
+                .map(([h, c]) => [h, rule.isActive(c)])
+                .find(([, a]) => a !== null);
+              if (declared === undefined) {
+                core.info(`[${rule.label}] no checkbox under "## ${sections.map(([h]) => h).join('" or "## ')}"; leaving unchanged.`);
                 continue;
               }
+              const [, active] = declared;
               const has = current.has(rule.label);
               if (active && !has) {
                 await github.rest.issues.addLabels({
