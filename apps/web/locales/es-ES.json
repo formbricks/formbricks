@@ -145,6 +145,7 @@
       "product_updates_title": "Correos electrónicos mensuales con actualizaciones de producto",
       "security_updates_description": "Solo información relevante sobre seguridad, se aplica la política de privacidad.",
       "security_updates_title": "Actualizaciones de seguridad",
+      "signup_disabled": "El registro está cerrado en esta instancia. Para unirte, pide una invitación.",
       "terms_of_service": "Términos de servicio",
       "title": "Crea tu cuenta de Formbricks"
     },
