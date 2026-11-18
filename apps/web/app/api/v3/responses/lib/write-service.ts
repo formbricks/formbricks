@@ -31,6 +31,7 @@ import {
   outcomeScopeWhere,
   writeResponsesOutcomeInTx,
 } from "./outcome-write";
+import { narrowToPublishableValue } from "./resources";
 import { type TV3ResponseSurveyRow, v3ResponseReadSelect, v3ResponseSurveySelect } from "./service";
 
 /**
@@ -797,6 +798,11 @@ export async function setScopedResponsesOutcome(
  * answers 201 — so the response is created and **no webhook, integration, follow-up or Hub ingestion
  * ever runs**, with nothing in the reply to say so. Found by smoke-testing a real create; a unit test
  * now parses this function's output against `ZResponse` so it cannot drift back.
+ *
+ * `data` is the third such field: a legacy row can hold a JSON `null` or a number array, which
+ * `ZResponse` refuses and a `PATCH` keeps (the read withholds it, so leaving it out is not a
+ * deletion). The payload carries the answers the API publishes and leaves those out, as the read
+ * does; storage keeps them.
  */
 export function toV3PipelineResponse(row: TV3WriteReadbackRow): TResponse {
   return {
@@ -818,7 +824,12 @@ export function toV3PipelineResponse(row: TV3WriteReadbackRow): TResponse {
     contactAttributes: (row.contactAttributes ?? null) as TResponse["contactAttributes"],
     finished: row.finished,
     endingId: row.endingId,
-    data: (row.data ?? {}) as TResponse["data"],
+    data: Object.fromEntries(
+      Object.entries((row.data ?? {}) as Record<string, unknown>).flatMap(([key, value]) => {
+        const publishable = narrowToPublishableValue(value);
+        return publishable === undefined ? [] : [[key, publishable] as const];
+      })
+    ),
     variables: (row.variables ?? {}) as TResponse["variables"],
     ttc: (row.ttc ?? {}) as TResponse["ttc"],
     tags: row.tags.map(({ tag }) => tag),
