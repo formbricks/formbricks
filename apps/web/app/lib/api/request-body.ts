@@ -64,7 +64,10 @@ export const readRequestBytesWithLimit = async (
 
     receivedBytes += value.byteLength;
     if (receivedBytes > limitBytes) {
-      await reader.cancel().catch(() => undefined);
+      // Not awaited: on one branch of a tee'd body (`request.clone()`), cancel() settles only once the
+      // other branch is cancelled too or the source ends, so awaiting it hangs on a client that keeps
+      // the body open. The refusal does not depend on it (ENG-6948).
+      void reader.cancel().catch(() => undefined);
       throw new RequestBodyTooLargeError(limitBytes, receivedBytes);
     }
 

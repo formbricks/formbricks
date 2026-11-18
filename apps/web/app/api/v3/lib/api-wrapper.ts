@@ -427,7 +427,8 @@ async function parseV3Body(
  * handler that reads it — the workflows family delegates its bodies to `packages/workflows`, whose
  * reader buffers the whole body before it measures it and answers 400 rather than 413. The checks run
  * on a clone so the handler's own stream stays intact; a body that is not JSON is left to the handler,
- * which owns that error.
+ * which owns that error. A refused body is never handed on, so its branch of the clone is cancelled:
+ * that lets the source be cancelled too, freeing a connection whose client keeps the body open (ENG-6948).
  */
 async function preflightUndeclaredBody(
   req: NextRequest,
@@ -438,14 +439,18 @@ async function preflightUndeclaredBody(
   }
 
   const read = await readV3JsonBody(req.clone(), context);
-  if (read.kind === "refused") {
-    return read.failure;
-  }
   if (read.kind === "malformed") {
     return null;
   }
 
-  return arrayBudgetFailure(read.data, context.requestId, context.instance);
+  const failure =
+    read.kind === "refused"
+      ? read.failure
+      : arrayBudgetFailure(read.data, context.requestId, context.instance);
+  if (failure) {
+    void req.body.cancel().catch(() => undefined);
+  }
+  return failure;
 }
 
 const MULTIPART_FORM_DATA = "multipart/form-data";
