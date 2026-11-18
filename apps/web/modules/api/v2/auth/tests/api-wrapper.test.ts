@@ -1,5 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { z } from "zod";
+import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { err, ok } from "@formbricks/types/error-handlers";
 import { DEFAULT_REQUEST_BODY_LIMIT_BYTES } from "@/app/lib/api/request-body";
 import { apiWrapper } from "@/modules/api/v2/auth/api-wrapper";
@@ -41,8 +42,9 @@ const mockAuthentication = {
   ],
   apiKeyId: "hashed-api-key",
   organizationId: "org-id",
-  organizationAccess: {} as any,
-} as any;
+  organizationAccess: {},
+  // The pre-workspace permission shape, still accepted at runtime.
+} as unknown as TAuthenticationApiKey;
 
 describe("apiWrapper", () => {
   test("should handle request and return response", async () => {

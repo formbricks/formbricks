@@ -63,13 +63,24 @@ const rowMatchesSome = (
 };
 
 /** Evaluates the (interaction-only) Prisma where clause against an in-memory fixture contact. */
-const evalPrismaClause = (contact: FixtureContact, clause: Record<string, any>): boolean => {
+/** The slice of a Prisma where clause the interpreter below understands. */
+type TInteractionClause = {
+  AND?: TInteractionClause[];
+  OR?: TInteractionClause[];
+  NOT?: TInteractionClause;
+  displays?: { some?: SomeClause };
+  responses?: { some?: SomeClause };
+};
+
+const evalPrismaClause = (contact: FixtureContact, clause: TInteractionClause): boolean => {
   if (!clause || Object.keys(clause).length === 0) return true; // match-all
-  if (Array.isArray(clause.AND)) return clause.AND.every((c: any) => evalPrismaClause(contact, c));
-  if (Array.isArray(clause.OR)) return clause.OR.some((c: any) => evalPrismaClause(contact, c));
+  if (Array.isArray(clause.AND)) return clause.AND.every((c) => evalPrismaClause(contact, c));
+  if (Array.isArray(clause.OR)) return clause.OR.some((c) => evalPrismaClause(contact, c));
   if (clause.NOT) return !evalPrismaClause(contact, clause.NOT);
-  if (clause.displays?.some) return contact.displays.some((d) => rowMatchesSome(d, clause.displays.some));
-  if (clause.responses?.some) return contact.responses.some((r) => rowMatchesSome(r, clause.responses.some));
+  const displaysSome = clause.displays?.some;
+  if (displaysSome) return contact.displays.some((d) => rowMatchesSome(d, displaysSome));
+  const responsesSome = clause.responses?.some;
+  if (responsesSome) return contact.responses.some((r) => rowMatchesSome(r, responsesSome));
   throw new Error(`Unhandled clause in parity interpreter: ${JSON.stringify(clause)}`);
 };
 
@@ -78,7 +89,7 @@ const prismaMembership = async (contact: FixtureContact, filters: TBaseFilters):
   if (!result.ok) throw new Error("segmentFilterToPrismaQuery failed");
   // The outer clause is { AND: [{ workspaceId }, filtersClause] }; fixtures are in-workspace, so we
   // evaluate only the filters clause.
-  const filtersClause = result.data.whereClause.AND[1] as Record<string, any>;
+  const filtersClause = result.data.whereClause.AND[1] as Record<string, unknown>;
   return evalPrismaClause(contact, filtersClause);
 };
 

@@ -19,6 +19,16 @@ import { authenticateApiKeyFromHeaders } from "@/modules/api/lib/api-key-auth";
 import { applyIPRateLimit, applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { POST } from "./route";
 
+/** The fields of a JSON-RPC response these tests read. */
+type TMcpMessage = {
+  error?: unknown;
+  result: {
+    isError?: boolean;
+    tools: { name: string; inputSchema: { properties: Record<string, unknown> } }[];
+    structuredContent: Record<string, unknown> & { error?: unknown };
+  };
+};
+
 const { getJwksMock, verifyBearerTokenMock, userFindUniqueMock } = vi.hoisted(() => ({
   getJwksMock: vi.fn(),
   verifyBearerTokenMock: vi.fn(),
@@ -174,7 +184,7 @@ function createMcpRequest(
   });
 }
 
-async function readMcpResponse(response: Response): Promise<Record<string, any>> {
+async function readMcpResponse(response: Response): Promise<TMcpMessage> {
   const text = await response.text();
   const dataLine = text
     .split("\n")
@@ -534,7 +544,7 @@ describe("POST /api/mcp", () => {
     expect(response.status).toBe(200);
     expect(response.headers.get("X-Request-Id")).toBe("req_tools");
     const message = await readMcpResponse(response);
-    expect(message.result.tools.map((tool: { name: string }) => tool.name)).toEqual([
+    expect(message.result.tools.map((tool) => tool.name)).toEqual([
       "list_surveys",
       "get_survey",
       "create_survey",
@@ -618,8 +628,8 @@ describe("POST /api/mcp", () => {
       "list_segments",
       "list_action_classes",
     ]);
-    const tools = new Map(message.result.tools.map((tool: { name: string }) => [tool.name, tool]));
-    expect(Object.keys((tools.get("create_survey") as any).inputSchema.properties)).toEqual(
+    const tools = new Map(message.result.tools.map((tool) => [tool.name, tool]));
+    expect(Object.keys(tools.get("create_survey")?.inputSchema.properties ?? {})).toEqual(
       expect.arrayContaining([
         "workspaceId",
         "name",
@@ -635,33 +645,27 @@ describe("POST /api/mcp", () => {
         "variables",
       ])
     );
-    expect(Object.keys((tools.get("validate_survey") as any).inputSchema.properties)).toEqual(
+    expect(Object.keys(tools.get("validate_survey")?.inputSchema.properties ?? {})).toEqual(
       expect.arrayContaining(["operation", "surveyId", "data"])
     );
-    expect(Object.keys((tools.get("patch_survey") as any).inputSchema.properties)).toEqual(
+    expect(Object.keys(tools.get("patch_survey")?.inputSchema.properties ?? {})).toEqual(
       expect.arrayContaining(["surveyId", "data"])
     );
-    expect(message.result.tools.find((tool: { name: string }) => tool.name === "list_surveys")).toMatchObject(
-      {
-        annotations: {
-          readOnlyHint: true,
-          destructiveHint: false,
-          idempotentHint: true,
-        },
-      }
-    );
-    expect(message.result.tools.find((tool: { name: string }) => tool.name === "patch_survey")).toMatchObject(
-      {
-        annotations: {
-          readOnlyHint: false,
-          destructiveHint: true,
-          idempotentHint: false,
-        },
-      }
-    );
-    expect(
-      message.result.tools.find((tool: { name: string }) => tool.name === "delete_survey")
-    ).toMatchObject({
+    expect(message.result.tools.find((tool) => tool.name === "list_surveys")).toMatchObject({
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: true,
+      },
+    });
+    expect(message.result.tools.find((tool) => tool.name === "patch_survey")).toMatchObject({
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+      },
+    });
+    expect(message.result.tools.find((tool) => tool.name === "delete_survey")).toMatchObject({
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,

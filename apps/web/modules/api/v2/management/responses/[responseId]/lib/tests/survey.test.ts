@@ -18,7 +18,7 @@ describe("Survey Lib", () => {
 
   describe("getSurveyQuestions", () => {
     test("return survey questions when the survey is found", async () => {
-      vi.mocked(prisma.survey.findUnique).mockResolvedValue(survey as any);
+      vi.mocked(prisma.survey.findUnique, { partial: true }).mockResolvedValue(survey);
 
       const result = await getSurveyQuestions(survey.id);
       expect(prisma.survey.findUnique).toHaveBeenCalledWith({

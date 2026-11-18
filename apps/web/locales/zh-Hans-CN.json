@@ -5436,6 +5436,7 @@
         "device": "设备",
         "duration_seconds": "持续时间（秒）",
         "email": "邮件",
+        "ended_before_first_question": "在第一个问题之前就结束了",
         "error_downloading_attachments": "准备下载附件时出错",
         "first_name": "名字",
         "go_to_responses": "前往回复",

@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import { createHmac } from "node:crypto";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { type MockInstance, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import * as crypto from "@/lib/crypto";
 import {
@@ -28,10 +28,13 @@ const DIFFERENT_SECRET = "different-secret";
 const AUTH_SECRET_ERROR = "No auth secret set (BETTER_AUTH_SECRET or NEXTAUTH_SECRET)";
 const ENCRYPTION_KEY_ERROR = "ENCRYPTION_KEY is not set";
 
+/** The mocked constants module, whose secrets these tests unset and restore. */
+type TMutableConstants = { AUTH_SECRET?: string; ENCRYPTION_KEY?: string };
+
 // Helper function to test error cases for missing secrets/keys
-const testMissingSecretsError = async (
-  testFn: (...args: any[]) => any,
-  args: any[],
+const testMissingSecretsError = async <TArgs extends unknown[]>(
+  testFn: (...args: TArgs) => unknown,
+  args: TArgs,
   options: {
     testAuthSecret?: boolean;
     testEncryptionKey?: boolean;
@@ -42,8 +45,8 @@ const testMissingSecretsError = async (
 
   if (testAuthSecret) {
     const constants = await import("@/lib/constants");
-    const originalSecret = (constants as any).AUTH_SECRET;
-    (constants as any).AUTH_SECRET = undefined;
+    const originalSecret = (constants as TMutableConstants).AUTH_SECRET;
+    (constants as TMutableConstants).AUTH_SECRET = undefined;
 
     if (isAsync) {
       await expect(testFn(...args)).rejects.toThrow(AUTH_SECRET_ERROR);
@@ -52,13 +55,13 @@ const testMissingSecretsError = async (
     }
 
     // Restore
-    (constants as any).AUTH_SECRET = originalSecret;
+    (constants as TMutableConstants).AUTH_SECRET = originalSecret;
   }
 
   if (testEncryptionKey) {
     const constants = await import("@/lib/constants");
-    const originalKey = (constants as any).ENCRYPTION_KEY;
-    (constants as any).ENCRYPTION_KEY = undefined;
+    const originalKey = (constants as TMutableConstants).ENCRYPTION_KEY;
+    (constants as TMutableConstants).ENCRYPTION_KEY = undefined;
 
     if (isAsync) {
       await expect(testFn(...args)).rejects.toThrow(ENCRYPTION_KEY_ERROR);
@@ -67,7 +70,7 @@ const testMissingSecretsError = async (
     }
 
     // Restore
-    (constants as any).ENCRYPTION_KEY = originalKey;
+    (constants as TMutableConstants).ENCRYPTION_KEY = originalKey;
   }
 };
 
@@ -109,8 +112,8 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     accounts: [{ updatedAt: CREDENTIAL_UPDATED_AT }],
   };
 
-  let mockSymmetricEncrypt: any;
-  let mockSymmetricDecrypt: any;
+  let mockSymmetricEncrypt: MockInstance<typeof crypto.symmetricEncrypt>;
+  let mockSymmetricDecrypt: MockInstance<typeof crypto.symmetricDecrypt>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -124,7 +127,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       .spyOn(crypto, "symmetricDecrypt")
       .mockImplementation((encryptedText: string) => encryptedText.replace("encrypted_", ""));
 
-    (prisma.user.findUnique as any).mockResolvedValue(mockUser);
+    vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue(mockUser);
   });
 
   describe("createToken", () => {
@@ -141,11 +144,11 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(token).toBeDefined();
 
       // Verify the token contains the expected expiration
-      const decoded = jwt.decode(token) as any;
+      const decoded = jwt.decode(token) as jwt.JwtPayload;
       expect(decoded.exp).toBeDefined();
       expect(decoded.iat).toBeDefined();
       // Should expire in approximately 1 hour (3600 seconds)
-      expect(decoded.exp - decoded.iat).toBe(3600);
+      expect(Number(decoded.exp) - Number(decoded.iat)).toBe(3600);
     });
 
     test("should throw error if no auth secret is set", async () => {
@@ -205,7 +208,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     test("should include surveyId in payload", () => {
       const surveyId = "test-survey-id";
       const token = createTokenForLinkSurvey(surveyId, mockUser.email);
-      const decoded = jwt.decode(token) as any;
+      const decoded = jwt.decode(token) as jwt.JwtPayload;
       expect(decoded.surveyId).toBe(surveyId);
     });
 
@@ -234,11 +237,11 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(mockSymmetricEncrypt).toHaveBeenCalledWith(mockUser.id, TEST_ENCRYPTION_KEY);
       expect(mockSymmetricEncrypt).toHaveBeenCalledWith(mockUser.email, TEST_ENCRYPTION_KEY);
 
-      const decoded = jwt.decode(token) as any;
+      const decoded = jwt.decode(token) as jwt.JwtPayload;
       expect(decoded.exp).toBeDefined();
       expect(decoded.iat).toBeDefined();
       // Should expire in approximately 1 day (86400 seconds)
-      expect(decoded.exp - decoded.iat).toBe(86400);
+      expect(Number(decoded.exp) - Number(decoded.iat)).toBe(86400);
     });
 
     test("should throw error if no auth secret or ENCRYPTION_KEY is set", async () => {
@@ -248,7 +251,9 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
 
     test("should refuse to mint a token for a user without a credential account", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue({ ...mockUser, accounts: [] });
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({ ...mockUser, accounts: [] } as unknown as Awaited<
+        ReturnType<typeof prisma.user.findUnique>
+      >);
 
       await expect(createEmailChangeToken(mockUser.id, "new@example.com")).rejects.toThrow(
         "Email change token cannot be bound"
@@ -272,11 +277,11 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       const token = createInviteToken(inviteId, mockUser.email, customOptions);
       expect(token).toBeDefined();
 
-      const decoded = jwt.decode(token) as any;
+      const decoded = jwt.decode(token) as jwt.JwtPayload;
       expect(decoded.exp).toBeDefined();
       expect(decoded.iat).toBeDefined();
       // Should expire in approximately 24 hours (86400 seconds)
-      expect(decoded.exp - decoded.iat).toBe(86400);
+      expect(Number(decoded.exp) - Number(decoded.iat)).toBe(86400);
     });
 
     test("should throw error if no auth secret or ENCRYPTION_KEY is set", async () => {
@@ -375,14 +380,14 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
     test("should return null if no auth secret is set", async () => {
       const constants = await import("@/lib/constants");
-      const originalSecret = (constants as any).AUTH_SECRET;
-      (constants as any).AUTH_SECRET = undefined;
+      const originalSecret = (constants as TMutableConstants).AUTH_SECRET;
+      (constants as TMutableConstants).AUTH_SECRET = undefined;
 
       const result = verifyTokenForLinkSurvey("any-token", "test-survey-id");
       expect(result).toBeNull();
 
       // Restore
-      (constants as any).AUTH_SECRET = originalSecret;
+      (constants as TMutableConstants).AUTH_SECRET = originalSecret;
     });
 
     test("should return null if surveyId doesn't match", () => {
@@ -419,8 +424,8 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
     test("should fall back to original email if ENCRYPTION_KEY is not set", async () => {
       const constants = await import("@/lib/constants");
-      const originalKey = (constants as any).ENCRYPTION_KEY;
-      (constants as any).ENCRYPTION_KEY = undefined;
+      const originalKey = (constants as TMutableConstants).ENCRYPTION_KEY;
+      (constants as TMutableConstants).ENCRYPTION_KEY = undefined;
 
       // Create a token with unencrypted email (as it would be if ENCRYPTION_KEY was not set during creation)
       const token = jwt.sign(
@@ -435,7 +440,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       expect(result).toBe(mockUser.email);
 
       // Restore
-      (constants as any).ENCRYPTION_KEY = originalKey;
+      (constants as TMutableConstants).ENCRYPTION_KEY = originalKey;
     });
 
     test("should verify legacy survey tokens with surveyId-based secret", async () => {
@@ -488,7 +493,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
     });
 
     test("should throw error if user not found", async () => {
-      (prisma.user.findUnique as any).mockResolvedValue(null);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
       const token = createToken(mockUser.id);
       await expect(verifyToken(token)).rejects.toThrow("User not found");
     });
@@ -683,10 +688,10 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
         // Prisma bumps the credential row's updatedAt on the password write. Note this holds even if the
         // reset set the *same* password, which binding to the hash itself would have missed.
-        (prisma.user.findUnique as any).mockResolvedValue({
+        vi.mocked(prisma.user.findUnique).mockResolvedValue({
           ...mockUser,
           accounts: [{ updatedAt: CREDENTIAL_UPDATED_AT_AFTER_RESET }],
-        });
+        } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
         await expect(verifyEmailChangeToken(token)).rejects.toThrow("Email change token is no longer valid");
       });
@@ -701,7 +706,10 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         });
 
         // ...which is exactly what makes the same link inert on a second click.
-        (prisma.user.findUnique as any).mockResolvedValue({ ...mockUser, email: "new@example.com" });
+        vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValue({
+          ...mockUser,
+          email: "new@example.com",
+        });
 
         await expect(verifyEmailChangeToken(token)).rejects.toThrow("Email change token is no longer valid");
       });
@@ -709,7 +717,10 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       test("should reject a token once the credential account is gone", async () => {
         const token = await createEmailChangeToken(mockUser.id, "new@example.com");
 
-        (prisma.user.findUnique as any).mockResolvedValue({ ...mockUser, accounts: [] });
+        vi.mocked(prisma.user.findUnique).mockResolvedValue({
+          ...mockUser,
+          accounts: [],
+        } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
         await expect(verifyEmailChangeToken(token)).rejects.toThrow("Email change token cannot be bound");
       });
@@ -996,7 +1007,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         });
 
         // Mock findUnique to only return user for correct decrypted ID, not ciphertext
-        (prisma.user.findUnique as any).mockImplementation(({ where }: { where: { id: string } }) => {
+        vi.mocked(prisma.user.findUnique, { partial: true, deep: true }).mockImplementation(({ where }) => {
           if (where.id === mockUser.id) {
             return Promise.resolve(mockUser);
           }
@@ -1010,8 +1021,8 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
       test("should handle encryption key not set gracefully", async () => {
         const constants = await import("@/lib/constants");
-        const originalKey = (constants as any).ENCRYPTION_KEY;
-        (constants as any).ENCRYPTION_KEY = undefined;
+        const originalKey = (constants as TMutableConstants).ENCRYPTION_KEY;
+        (constants as TMutableConstants).ENCRYPTION_KEY = undefined;
 
         const token = jwt.sign(
           {
@@ -1025,7 +1036,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         expect(result).toBe("test@example.com");
 
         // Restore
-        (constants as any).ENCRYPTION_KEY = originalKey;
+        (constants as TMutableConstants).ENCRYPTION_KEY = originalKey;
       });
     });
 
@@ -1130,7 +1141,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
         const legacyToken = jwt.sign({ id: `encrypted_${mockUser.id}` }, TEST_AUTH_SECRET + mockUser.email);
 
         // Make database lookup fail
-        (prisma.user.findUnique as any).mockRejectedValueOnce(new Error("DB connection lost"));
+        vi.mocked(prisma.user.findUnique).mockRejectedValueOnce(new Error("DB connection lost"));
 
         await expect(verifyToken(legacyToken)).rejects.toThrow("DB connection lost");
       });
@@ -1138,7 +1149,7 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
 
     describe("Edge Cases and Error Handling", () => {
       test("should handle database connection errors gracefully", async () => {
-        (prisma.user.findUnique as any).mockRejectedValue(new Error("Database connection failed"));
+        vi.mocked(prisma.user.findUnique).mockRejectedValue(new Error("Database connection failed"));
 
         const token = createToken(mockUser.id);
         await expect(verifyToken(token)).rejects.toThrow("Database connection failed");
@@ -1191,14 +1202,14 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       test("should handle rapid token verification", async () => {
         const token = createToken(mockUser.id);
 
-        const verifications: Promise<any>[] = [];
+        const verifications: ReturnType<typeof verifyToken>[] = [];
         for (let i = 0; i < 100; i++) {
           verifications.push(verifyToken(token));
         }
 
         const results = await Promise.all(verifications);
         expect(results).toHaveLength(100);
-        expect(results.every((result: any) => result.id === mockUser.id)).toBe(true); // Returns decrypted user ID
+        expect(results.every((result) => result.id === mockUser.id)).toBe(true); // Returns decrypted user ID
       });
     });
 

@@ -137,7 +137,7 @@ export const ElementsView = ({
 
   const surveyLanguages = localSurvey.languages;
 
-  const updateElement = (elementIdx: number, updatedAttributes: any) => {
+  const updateElement = (elementIdx: number, updatedAttributes: Record<string, unknown>) => {
     // Get element ID from current elements array (for validation)
     const element = elements[elementIdx];
     if (!element) return;
@@ -158,8 +158,8 @@ export const ElementsView = ({
       let updatedSurvey = { ...prevSurvey };
 
       // Handle block-level attributes (logic, logicFallback, buttonLabel, backButtonLabel) separately
-      const blockLevelAttributes: any = {};
-      const elementLevelAttributes: any = {};
+      const blockLevelAttributes: Record<string, unknown> = {};
+      const elementLevelAttributes: Record<string, unknown> = {};
 
       Object.keys(updatedAttributes).forEach((key) => {
         if (
@@ -192,7 +192,7 @@ export const ElementsView = ({
         const cleanedAttributes = { ...elementLevelAttributes };
         attributesToCheck.forEach((attribute) => {
           if (Object.keys(cleanedAttributes).includes(attribute)) {
-            const currentLabel = cleanedAttributes[attribute];
+            const currentLabel = cleanedAttributes[attribute] as TI18nString | undefined;
             if (
               currentLabel &&
               Object.keys(currentLabel).length === 1 &&

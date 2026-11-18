@@ -22,6 +22,10 @@ type ScopeErrorContent = {
   error: { status: number; code: string; detail: string; requestId: string };
 };
 
+/** The stand-in server and a mocked handler, as `registerMcpTool` takes them. */
+const asServer = (server: unknown) => server as Parameters<typeof registerMcpTool>[0];
+const asHandler = (handler: unknown) => handler as Parameters<typeof registerMcpTool>[4];
+
 // A minimal stand-in for McpServer that captures what registerMcpTool registers.
 function createToolServer() {
   const tools = new Map<
@@ -29,9 +33,15 @@ function createToolServer() {
     { config: Record<string, unknown>; handler: (input: unknown, extra: unknown) => Promise<CallToolResult> }
   >();
   const server = {
-    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: any) => {
-      tools.set(name, { config, handler });
-    }),
+    registerTool: vi.fn(
+      (
+        name: string,
+        config: Record<string, unknown>,
+        handler: (input: unknown, extra: unknown) => Promise<CallToolResult>
+      ) => {
+        tools.set(name, { config, handler });
+      }
+    ),
   };
   return { server, tools };
 }
@@ -74,11 +84,11 @@ describe("registerMcpTool", () => {
     const { server, tools } = createToolServer();
 
     registerMcpTool(
-      server as any,
+      asServer(server),
       "do_thing",
       CONFIG,
       [{ permission: "surveys", level: "write" }],
-      vi.fn() as any
+      asHandler(vi.fn())
     );
 
     expect(server.registerTool).toHaveBeenCalledTimes(1);
@@ -91,14 +101,14 @@ describe("registerMcpTool", () => {
     const handlerResult = { structuredContent: { ok: true } } as unknown as CallToolResult;
     const handler = vi.fn().mockResolvedValue(handlerResult);
     registerMcpTool(
-      server as any,
+      asServer(server),
       "do_thing",
       CONFIG,
       [
         { permission: "surveys", level: "read" },
         { permission: "creatives", level: "write" },
       ],
-      handler as any
+      asHandler(handler)
     );
 
     const input = { a: 1 };
@@ -113,11 +123,11 @@ describe("registerMcpTool", () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn();
     registerMcpTool(
-      server as any,
+      asServer(server),
       "do_thing",
       CONFIG,
       [{ permission: "surveys", level: "write" }],
-      handler as any
+      asHandler(handler)
     );
 
     const result = await tools
@@ -142,14 +152,14 @@ describe("registerMcpTool", () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn();
     registerMcpTool(
-      server as any,
+      asServer(server),
       "read_chart",
       CONFIG,
       [
         { permission: "charts", level: "read" },
         { permission: "feedbackRecords", level: "read" },
       ],
-      handler as any
+      asHandler(handler)
     );
 
     const result = await tools
@@ -167,14 +177,14 @@ describe("registerMcpTool", () => {
   test("names a scope once when two declared permissions share a scope family", async () => {
     const { server, tools } = createToolServer();
     registerMcpTool(
-      server as any,
+      asServer(server),
       "do_thing",
       CONFIG,
       [
         { permission: "surveys", level: "read" },
         { permission: "surveyStyling", level: "read" },
       ],
-      vi.fn() as any
+      asHandler(vi.fn())
     );
 
     const result = await tools
@@ -190,7 +200,7 @@ describe("registerMcpTool", () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn().mockResolvedValue({ structuredContent: {} });
     registerMcpTool(
-      server as any,
+      asServer(server),
       "discover",
       CONFIG,
       {
@@ -199,7 +209,7 @@ describe("registerMcpTool", () => {
           { permission: "dashboards", level: "read" },
         ],
       },
-      handler as any
+      asHandler(handler)
     );
 
     await tools.get("discover")!.handler({}, { http: { authInfo: authInfoWithScopes(["dashboards:read"]) } });
@@ -218,7 +228,7 @@ describe("registerMcpTool", () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn().mockResolvedValue({ structuredContent: {} });
     registerMcpTool(
-      server as any,
+      asServer(server),
       "read_data",
       CONFIG,
       {
@@ -230,7 +240,7 @@ describe("registerMcpTool", () => {
                 { permission: "feedbackRecords", level: "read" },
               ],
       },
-      handler as any
+      asHandler(handler)
     );
     const ctx = { http: { authInfo: authInfoWithScopes(["dashboards:read"]) } };
 
@@ -245,11 +255,11 @@ describe("registerMcpTool", () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn();
     registerMcpTool(
-      server as any,
+      asServer(server),
       "read_data",
       CONFIG,
       { byInput: () => [] as unknown as [{ permission: "charts"; level: "read" }] },
-      handler as any
+      asHandler(handler)
     );
 
     const result = await tools
@@ -285,7 +295,7 @@ describe("registerMcpTool — refusing a tool without a valid permission", () =>
     const { server } = createToolServer();
 
     expect(() =>
-      registerMcpTool(server as any, "bad_tool", CONFIG, permissions as never, vi.fn() as any)
+      registerMcpTool(asServer(server), "bad_tool", CONFIG, permissions as never, asHandler(vi.fn()))
     ).toThrow(/bad_tool/);
     expect(server.registerTool).not.toHaveBeenCalled();
   });
@@ -305,11 +315,11 @@ describe("registerMcpTool — auditing refused mutations", () => {
   test("audits a refused mutation as a failed attempt by the actor, against the id it named", async () => {
     const { server, tools } = createToolServer();
     registerMcpTool(
-      server as any,
+      asServer(server),
       "delete_response",
       AUDITED,
       [{ permission: "responses", level: "write" }],
-      vi.fn() as any
+      asHandler(vi.fn())
     );
 
     const result = await tools
@@ -338,11 +348,11 @@ describe("registerMcpTool — auditing refused mutations", () => {
     const { server, tools } = createToolServer();
     const created = { ...CONFIG, audit: { action: "created", targetType: "workflow" } } as const;
     registerMcpTool(
-      server as any,
+      asServer(server),
       "duplicate_workflow",
       created,
       [{ permission: "workflows", level: "write" }],
-      vi.fn() as any
+      asHandler(vi.fn())
     );
 
     await tools
@@ -360,11 +370,11 @@ describe("registerMcpTool — auditing refused mutations", () => {
   test("audits nothing when the refused tool declares no audit — reads are not attempts", async () => {
     const { server, tools } = createToolServer();
     registerMcpTool(
-      server as any,
+      asServer(server),
       "list_responses",
       CONFIG,
       [{ permission: "responses", level: "read" }],
-      vi.fn() as any
+      asHandler(vi.fn())
     );
 
     await tools
@@ -379,11 +389,11 @@ describe("registerMcpTool — auditing refused mutations", () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn().mockResolvedValue({ structuredContent: {} });
     registerMcpTool(
-      server as any,
+      asServer(server),
       "delete_response",
       AUDITED,
       [{ permission: "responses", level: "write" }],
-      handler as any
+      asHandler(handler)
     );
 
     await tools
@@ -401,11 +411,11 @@ describe("registerMcpTool — auditing refused mutations", () => {
     const { server, tools } = createToolServer();
 
     registerMcpTool(
-      server as any,
+      asServer(server),
       "delete_response",
       AUDITED,
       [{ permission: "responses", level: "write" }],
-      vi.fn() as any
+      asHandler(vi.fn())
     );
 
     expect(tools.get("delete_response")?.config).toEqual(CONFIG);
@@ -439,11 +449,11 @@ describe("registerMcpTool — the connection's grant", () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn();
     registerMcpTool(
-      server as any,
+      asServer(server),
       "delete_survey",
       { ...CONFIG, audit: { action: "deleted", targetType: "survey", targetIdArg: "surveyId" } },
       [{ permission: "surveys", level: "write" }],
-      handler as any
+      asHandler(handler)
     );
 
     const result = await tools
@@ -466,14 +476,14 @@ describe("registerMcpTool — the connection's grant", () => {
   test("names every permission an all-of tool lacks", async () => {
     const { server, tools } = createToolServer();
     registerMcpTool(
-      server as any,
+      asServer(server),
       "read_chart",
       CONFIG,
       [
         { permission: "charts", level: "read" },
         { permission: "feedbackRecords", level: "read" },
       ],
-      vi.fn() as any
+      asHandler(vi.fn())
     );
     const authInfo = withGrant({ charts: "write" });
     (authInfo.scopes as string[]).push("feedbackRecords:read");
@@ -489,7 +499,7 @@ describe("registerMcpTool — the connection's grant", () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn().mockResolvedValue({ structuredContent: {} });
     registerMcpTool(
-      server as any,
+      asServer(server),
       "discover",
       CONFIG,
       {
@@ -498,7 +508,7 @@ describe("registerMcpTool — the connection's grant", () => {
           { permission: "dashboards", level: "read" },
         ],
       },
-      handler as any
+      asHandler(handler)
     );
 
     await tools.get("discover")!.handler({}, { http: { authInfo: withGrant({ dashboards: "read" }) } });
@@ -516,7 +526,7 @@ describe("registerMcpTool — the connection's grant", () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn().mockResolvedValue({ structuredContent: {} });
     registerMcpTool(
-      server as any,
+      asServer(server),
       "discover",
       CONFIG,
       {
@@ -525,7 +535,7 @@ describe("registerMcpTool — the connection's grant", () => {
           { permission: "dashboards", level: "read" },
         ],
       },
-      handler as any
+      asHandler(handler)
     );
     const split = { ...withGrant({ dashboards: "read" }), scopes: ["surveys:read"] } as AuthInfo;
     const both = {
@@ -546,11 +556,11 @@ describe("registerMcpTool — the connection's grant", () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn();
     registerMcpTool(
-      server as any,
+      asServer(server),
       "list",
       CONFIG,
       [{ permission: "surveys", level: "read" }],
-      handler as any
+      asHandler(handler)
     );
 
     const result = await tools.get("list")!.handler({}, { http: { authInfo: withGrant(null) } });
@@ -563,11 +573,11 @@ describe("registerMcpTool — the connection's grant", () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn().mockResolvedValue({ structuredContent: {} });
     registerMcpTool(
-      server as any,
+      asServer(server),
       "list",
       CONFIG,
       [{ permission: "surveys", level: "read" }],
-      handler as any
+      asHandler(handler)
     );
 
     await tools.get("list")!.handler({}, { http: { authInfo: withGrant(null, API_KEY_AUTH) } });
@@ -599,11 +609,11 @@ describe("registerMcpTool — what the grant doesn't reach (ADR-0042)", () => {
   ) => {
     const { server, tools } = createToolServer();
     registerMcpTool(
-      server as any,
+      asServer(server),
       "read_thing",
       CONFIG,
       [{ permission: "surveys", level: "read" }],
-      handler as any
+      asHandler(handler)
     );
     const authInfo = authInfoWithScopes(["surveys:read"]);
     (authInfo.extra as { grant: unknown }).grant = { ...FULL_MCP_GRANT, access };

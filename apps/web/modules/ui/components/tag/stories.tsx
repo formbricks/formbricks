@@ -48,7 +48,7 @@ export default meta;
 type Story = StoryObj<typeof Tag>;
 
 // Interactive wrapper for stories that need state management
-const InteractiveTag = (args: any) => {
+const InteractiveTag = (args: React.ComponentProps<typeof Tag>) => {
   const [isDeleted, setIsDeleted] = useState(false);
 
   const handleDelete = (tagId: string) => {

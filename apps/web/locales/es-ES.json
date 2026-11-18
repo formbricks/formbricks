@@ -5436,6 +5436,7 @@
         "device": "Dispositivo",
         "duration_seconds": "Duración (segundos)",
         "email": "Correo electrónico",
+        "ended_before_first_question": "Finalizó antes de la primera pregunta",
         "error_downloading_attachments": "Se ha producido un error al preparar la descarga de los archivos adjuntos",
         "first_name": "Nombre",
         "go_to_responses": "Ir a respuestas",

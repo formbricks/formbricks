@@ -98,3 +98,13 @@ export const FULL_MCP_GRANT: TMcpGrant = {
     Object.entries(MCP_PERMISSIONS).map(([permission, { levels }]) => [permission, levels.at(-1)])
   ) as TMcpGrantPermissions,
 };
+
+/** What a registered tool handler returns, as the handler-level tool tests read it. */
+export type TToolResult = {
+  isError?: boolean;
+  content: { type: string; text: string }[];
+  structuredContent: Record<string, unknown>;
+};
+
+/** A registered tool handler, called directly with already-shaped input. */
+export type TToolHandler = (input: unknown, extra: unknown) => Promise<TToolResult>;

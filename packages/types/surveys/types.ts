@@ -1165,29 +1165,97 @@ const withDerivedLegacyColumns = <T extends z.infer<typeof ZSurveyBase>>(survey:
   return { ...survey, variables: derived.variables, hiddenFields: derived.hiddenFields };
 };
 
-export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.RefinementCtx): void => {
-  const survey = withDerivedLegacyColumns(rawSurvey);
-  const { questions, blocks, languages, welcomeCard, endings, isBackButtonHidden } = survey;
+type TSurveyInput = z.infer<typeof ZSurveyBase>;
+type TElementOfType<T extends TSurveyElementTypeEnum> = Extract<TSurveyElement, { type: T }>;
+/** A contact-info or address sub-field, named for its issue messages. */
+interface TLabelledSubfield {
+  show: boolean;
+  placeholder: TI18nString;
+  label: string;
+}
 
-  // `ZSurveyBase` already ran this over the *incoming* `variables`, which the derivation above has
-  // just replaced — so on a rows-native payload nothing has checked what the survey will actually
-  // read back as. Two computed fields can derive one legacy name (a local `score` alongside a library
-  // field keyed `score`), and that survey would parse here and then fail its next save. `updateSurvey`
-  // refuses it before it writes; running the same schema here is what stops the editor's pre-flight
-  // and the server action's input schema disagreeing with the write path about the same payload.
-  if (survey.embeddedFields !== undefined) {
-    const derived = ZStoredSurveyVariables.safeParse(survey.variables);
-    if (!derived.success) {
-      for (const issue of derived.error.issues) {
-        ctx.addIssue({ code: "custom", message: issue.message, path: ["embeddedFields"] });
-      }
-    }
+/** What a refinement can add: a full issue, or the custom-issue shorthand the checks below build. */
+type TRefinementIssue = Exclude<Parameters<z.RefinementCtx["addIssue"]>[0], string>;
+
+const DEFAULT_LANGUAGE_CODE = "default";
+const CAL_HOSTNAME_REGEX = /^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-)){1,}$/i;
+
+/** Adds the issue a label validator returned, if it returned one. */
+const addIssueIfAny = (ctx: z.RefinementCtx, issue: TRefinementIssue | null | false): void => {
+  if (issue) ctx.addIssue(issue);
+};
+
+/** Whether an optional translated label has a non-blank default text. */
+const hasDefaultText = (label: TI18nString | null | undefined): label is TI18nString =>
+  typeof label?.[DEFAULT_LANGUAGE_CODE] !== "undefined" && label[DEFAULT_LANGUAGE_CODE].trim() !== "";
+
+/**
+ * The issue for a set of labels that repeat in some language, or null when none repeat. The languages
+ * are listed in `params` unless only the default language repeats; `describe` is the message without
+ * that suffix.
+ */
+const duplicateLabelsIssue = (
+  labels: TI18nString[],
+  languages: TSurveyLanguage[],
+  describe: string,
+  path: (string | number)[]
+): TRefinementIssue | null => {
+  const duplicateLanguageCodes = findLanguageCodesForDuplicateLabels(labels, languages);
+  if (duplicateLanguageCodes.length === 0) return null;
+
+  const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateLanguageCodes, languages);
+
+  const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
+
+  return {
+    code: "custom",
+    message: `${describe} ${isDefaultOnly ? "" : "for the following languages:"}`,
+    path,
+    params: isDefaultOnly ? undefined : { invalidLanguageCodes },
+  };
+};
+
+/**
+ * The issue for a button or redirect URL: required, and valid against `schema`. `label` starts each
+ * message ("Ending card 2", "Question 3").
+ */
+const urlFieldIssue = (
+  url: string | undefined,
+  schema: z.ZodType,
+  label: string,
+  emptyMessage: string,
+  path: (string | number)[]
+): TRefinementIssue | null => {
+  if (!url || url.trim() === "") {
+    return { code: "custom", message: `${label}: ${emptyMessage}`, path };
   }
+  const parsedUrl = schema.safeParse(url);
+  if (parsedUrl.success) return null;
+  return { code: "custom", message: `${label}: ${parsedUrl.error.issues[0].message}`, path };
+};
 
-  // Validate: must have questions OR blocks with elements, not both
-  const hasQuestions = questions.length > 0;
-  const hasBlocks = blocks.length > 0 && blocks.some((b) => b.elements.length > 0);
+// --- Embedded Data, model and codes ---
 
+/**
+ * `ZSurveyBase` already ran this over the *incoming* `variables`, which the derivation in
+ * `surveyRefinement` has just replaced — so on a rows-native payload nothing has checked what the
+ * survey will actually read back as. Two computed fields can derive one legacy name (a local `score`
+ * alongside a library field keyed `score`), and that survey would parse here and then fail its next
+ * save. `updateSurvey` refuses it before it writes; running the same schema here is what stops the
+ * editor's pre-flight and the server action's input schema disagreeing with the write path about the
+ * same payload.
+ */
+const validateDerivedVariables = (survey: TSurveyInput, ctx: z.RefinementCtx): void => {
+  if (survey.embeddedFields === undefined) return;
+  const derived = ZStoredSurveyVariables.safeParse(survey.variables);
+  if (derived.success) return;
+  for (const issue of derived.error.issues) {
+    ctx.addIssue({ code: "custom", message: issue.message, path: ["embeddedFields"] });
+  }
+};
+
+/** Validate: must have questions OR blocks with elements, not both. */
+const validateSurveyModel = (hasQuestions: boolean, hasBlocks: boolean, ctx: z.RefinementCtx): void => {
   if (!hasQuestions && !hasBlocks) {
     ctx.addIssue({
       code: "custom",
@@ -1203,65 +1271,601 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
       path: ["blocks"],
     });
   }
+};
 
-  // Question codes and answer codes (ENG-6778). Embedded Data names are read from the derived legacy
-  // columns, which hold both the hidden fields and the variables whichever carrier the payload used.
-  if (hasBlocks) {
-    // Typed as optional on purpose: the create-input schema reaches this refinement with both absent.
-    const declared: { hiddenFields?: { fieldIds?: string[] }; variables?: { name: string }[] } = survey;
-    const embeddedDataNames = [
-      ...(declared.hiddenFields?.fieldIds ?? []),
-      ...(declared.variables ?? []).map((variable) => variable.name),
-    ];
-    for (const issue of validateSurveyCodes({ blocks, embeddedDataNames })) {
-      ctx.addIssue({ code: "custom", message: issue.message, path: issue.path });
-    }
+/**
+ * Question codes and answer codes (ENG-6778). Embedded Data names are read from the derived legacy
+ * columns, which hold both the hidden fields and the variables whichever carrier the payload used.
+ */
+const validateSurveyCodeNames = (survey: TSurveyInput, ctx: z.RefinementCtx): void => {
+  // Typed as optional on purpose: the create-input schema reaches this refinement with both absent.
+  const declared: { hiddenFields?: { fieldIds?: string[] }; variables?: { name: string }[] } = survey;
+  const embeddedDataNames = [
+    ...(declared.hiddenFields?.fieldIds ?? []),
+    ...(declared.variables ?? []).map((variable) => variable.name),
+  ];
+  for (const issue of validateSurveyCodes({ blocks: survey.blocks, embeddedDataNames })) {
+    ctx.addIssue({ code: "custom", message: issue.message, path: issue.path });
+  }
+};
+
+// --- Welcome card ---
+
+const validateWelcomeCard = (survey: TSurveyInput, ctx: z.RefinementCtx): void => {
+  const { welcomeCard, languages } = survey;
+  if (!welcomeCard.enabled) return;
+
+  if (welcomeCard.headline) {
+    addIssueIfAny(
+      ctx,
+      validateCardFieldsForAllLanguages("cardHeadline", welcomeCard.headline, languages, "welcome")
+    );
   }
 
+  if (welcomeCard.subheader && welcomeCard.subheader.default.trim() !== "") {
+    addIssueIfAny(
+      ctx,
+      validateCardFieldsForAllLanguages("welcomeCardSubheader", welcomeCard.subheader, languages, "welcome")
+    );
+  }
+
+  if (welcomeCard.buttonLabel && welcomeCard.buttonLabel.default.trim() !== "") {
+    addIssueIfAny(
+      ctx,
+      validateCardFieldsForAllLanguages("buttonLabel", welcomeCard.buttonLabel, languages, "welcome")
+    );
+  }
+};
+
+// --- Blocks and their elements ---
+
+const contactInfoSubfields = ({
+  company,
+  email,
+  firstName,
+  lastName,
+  phone,
+}: TElementOfType<TSurveyElementTypeEnum.ContactInfo>) => [
+  { ...company, label: "Company" },
+  { ...email, label: "Email" },
+  { ...firstName, label: "First Name" },
+  { ...lastName, label: "Last Name" },
+  { ...phone, label: "Phone" },
+];
+
+const addressSubfields = ({
+  addressLine1,
+  addressLine2,
+  city,
+  state,
+  zip,
+  country,
+}: TElementOfType<TSurveyElementTypeEnum.Address>) => [
+  { ...addressLine1, label: "Address Line 1" },
+  { ...addressLine2, label: "Address Line 2" },
+  { ...city, label: "City" },
+  { ...state, label: "State" },
+  { ...zip, label: "Zip" },
+  { ...country, label: "Country" },
+];
+
+/** Where an element sits, for its issue paths and messages. */
+interface TElementLocation {
+  blockIndex: number;
+  elementIndex: number;
+  languages: TSurveyLanguage[];
+  ctx: z.RefinementCtx;
+}
+
+const elementPath = (loc: TElementLocation, ...rest: (string | number)[]): (string | number)[] => [
+  "blocks",
+  loc.blockIndex,
+  "elements",
+  loc.elementIndex,
+  ...rest,
+];
+
+const elementLabelIssue = (
+  loc: TElementLocation,
+  field: string,
+  label: TI18nString,
+  skipArticle?: boolean
+): z.core.$ZodRawIssue | null =>
+  validateElementLabels(field, label, loc.languages, loc.blockIndex, loc.elementIndex, skipArticle);
+
+/** Adds the label issue, if any, at `path` instead of the validator's own. */
+const addElementLabelIssueAt = (
+  loc: TElementLocation,
+  issue: z.core.$ZodRawIssue | null,
+  path: (string | number)[]
+): void => {
+  if (issue) loc.ctx.addIssue({ ...issue, path });
+};
+
+const validateElementTextLabels = (element: TSurveyElement, loc: TElementLocation): void => {
+  // Validate headline (required for all elements)
+  addIssueIfAny(loc.ctx, elementLabelIssue(loc, "headline", element.headline));
+
+  // Validate subheader if present
+  if (element.subheader && element.subheader[DEFAULT_LANGUAGE_CODE].trim() !== "") {
+    addIssueIfAny(loc.ctx, elementLabelIssue(loc, "subheader", element.subheader));
+  }
+
+  // Validate image alt text if present. An empty default is a decorative image and needs no translations.
+  if (element.imageAltText?.[DEFAULT_LANGUAGE_CODE].trim()) {
+    addIssueIfAny(loc.ctx, elementLabelIssue(loc, "imageAltText", element.imageAltText));
+  }
+
+  if (element.type === TSurveyElementTypeEnum.PictureSelection) {
+    element.choices.forEach((choice, choiceIndex) => {
+      if (!choice.imageAltText?.[DEFAULT_LANGUAGE_CODE]?.trim()) return;
+      addElementLabelIssueAt(
+        loc,
+        elementLabelIssue(
+          loc,
+          `Image alt text of choice ${String(choiceIndex + 1)}`,
+          choice.imageAltText,
+          true
+        ),
+        elementPath(loc, "choices", choiceIndex, "imageAltText")
+      );
+    });
+  }
+};
+
+const validateOpenTextElement = (
+  element: TElementOfType<TSurveyElementTypeEnum.OpenText>,
+  loc: TElementLocation
+): void => {
+  if (hasDefaultText(element.placeholder) && loc.languages.length > 1) {
+    addIssueIfAny(loc.ctx, elementLabelIssue(loc, "placeholder", element.placeholder));
+  }
+};
+
+const validateElementChoices = (
+  element: TElementOfType<
+    | TSurveyElementTypeEnum.MultipleChoiceSingle
+    | TSurveyElementTypeEnum.MultipleChoiceMulti
+    | TSurveyElementTypeEnum.Ranking
+  >,
+  loc: TElementLocation
+): void => {
+  element.choices.forEach((choice, choiceIndex) => {
+    addElementLabelIssueAt(
+      loc,
+      elementLabelIssue(loc, `Choice ${String(choiceIndex + 1)}`, choice.label, true),
+      elementPath(loc, "choices", choiceIndex)
+    );
+  });
+
+  addIssueIfAny(
+    loc.ctx,
+    duplicateLabelsIssue(
+      element.choices.map((choice) => choice.label),
+      loc.languages,
+      `Element ${String(loc.elementIndex + 1)} in block ${String(loc.blockIndex + 1)} has duplicate choice labels`,
+      elementPath(loc, "choices")
+    )
+  );
+};
+
+const validateCtaElement = (
+  element: TElementOfType<TSurveyElementTypeEnum.CTA>,
+  loc: TElementLocation
+): void => {
+  // Only validate buttonExternal fields when buttonExternal is true
+  if (!element.buttonExternal) return;
+
+  // Validate ctaButtonLabel when buttonExternal is enabled
+  addElementLabelIssueAt(
+    loc,
+    elementLabelIssue(loc, "ctaButtonLabel", element.ctaButtonLabel ?? {}),
+    elementPath(loc, "ctaButtonLabel")
+  );
+
+  // Validate buttonUrl when buttonExternal is enabled
+  addIssueIfAny(
+    loc.ctx,
+    urlFieldIssue(
+      element.buttonUrl,
+      getZSafeUrl,
+      `Element ${String(loc.elementIndex + 1)} in block ${String(loc.blockIndex + 1)}`,
+      "Button URL is required when external button is enabled",
+      elementPath(loc, "buttonUrl")
+    )
+  );
+};
+
+const validateMatrixElement = (
+  element: TElementOfType<TSurveyElementTypeEnum.Matrix>,
+  loc: TElementLocation
+): void => {
+  element.rows.forEach((row, rowIndex) => {
+    addElementLabelIssueAt(
+      loc,
+      elementLabelIssue(loc, `Row ${String(rowIndex + 1)}`, row.label, true),
+      elementPath(loc, "rows", rowIndex)
+    );
+  });
+
+  element.columns.forEach((column, columnIndex) => {
+    addElementLabelIssueAt(
+      loc,
+      elementLabelIssue(loc, `Column ${String(columnIndex + 1)}`, column.label, true),
+      elementPath(loc, "columns", columnIndex)
+    );
+  });
+
+  const where = `Question ${String(loc.elementIndex + 1)} in block ${String(loc.blockIndex + 1)}`;
+  addIssueIfAny(
+    loc.ctx,
+    duplicateLabelsIssue(
+      element.rows.map((row) => row.label),
+      loc.languages,
+      `${where} has duplicate row labels`,
+      elementPath(loc, "rows")
+    )
+  );
+
+  addIssueIfAny(
+    loc.ctx,
+    duplicateLabelsIssue(
+      element.columns.map((column) => column.label),
+      loc.languages,
+      `${where} has duplicate column labels`,
+      elementPath(loc, "columns")
+    )
+  );
+};
+
+/**
+ * At least one sub-field of a contact-info or address element shows, and each shown one is translated.
+ * `toPathKey` turns a sub-field's label into its issue path key.
+ */
+const validateElementSubfields = (
+  fields: TLabelledSubfield[],
+  elementName: string,
+  toPathKey: (label: string) => string,
+  loc: TElementLocation
+): void => {
+  if (fields.every((field) => !field.show)) {
+    loc.ctx.addIssue({
+      code: "custom",
+      message: `At least one field must be shown in the ${elementName} question ${String(loc.elementIndex + 1)} in block ${String(loc.blockIndex + 1)}`,
+      path: elementPath(loc),
+    });
+  }
+  fields.forEach((field) => {
+    if (!field.show) return;
+    addElementLabelIssueAt(
+      loc,
+      elementLabelIssue(loc, `Label for field ${field.label}`, field.placeholder, true),
+      elementPath(loc, toPathKey(field.label))
+    );
+  });
+};
+
+/** The checks only some element types have. */
+const validateElementByType = (element: TSurveyElement, loc: TElementLocation): void => {
+  const where = `Question ${String(loc.elementIndex + 1)} in block ${String(loc.blockIndex + 1)}`;
+  switch (element.type) {
+    case TSurveyElementTypeEnum.OpenText:
+      validateOpenTextElement(element, loc);
+      break;
+    case TSurveyElementTypeEnum.MultipleChoiceSingle:
+    case TSurveyElementTypeEnum.MultipleChoiceMulti:
+    case TSurveyElementTypeEnum.Ranking:
+      validateElementChoices(element, loc);
+      break;
+    case TSurveyElementTypeEnum.Consent:
+      addElementLabelIssueAt(
+        loc,
+        elementLabelIssue(loc, "consent.label", element.label),
+        elementPath(loc, "label")
+      );
+      break;
+    case TSurveyElementTypeEnum.CTA:
+      validateCtaElement(element, loc);
+      break;
+    case TSurveyElementTypeEnum.Matrix:
+      validateMatrixElement(element, loc);
+      break;
+    case TSurveyElementTypeEnum.FileUpload:
+      if (element.allowedFileExtensions?.length === 0) {
+        loc.ctx.addIssue({
+          code: "custom",
+          message: `${where} must have atleast one allowed file extension`,
+          path: elementPath(loc, "allowedFileExtensions"),
+        });
+      }
+      break;
+    case TSurveyElementTypeEnum.Cal:
+      if (element.calHost !== undefined && !CAL_HOSTNAME_REGEX.test(element.calHost)) {
+        loc.ctx.addIssue({
+          code: "custom",
+          message: `${where} must have a valid host name`,
+          path: elementPath(loc, "calHost"),
+        });
+      }
+      break;
+    case TSurveyElementTypeEnum.ContactInfo:
+      // Only the first space is dropped from the path key ("firstname", "lastname").
+      validateElementSubfields(
+        contactInfoSubfields(element),
+        "Contact Info",
+        (label) => label.toLowerCase().replace(" ", ""),
+        loc
+      );
+      break;
+    case TSurveyElementTypeEnum.Address:
+      validateElementSubfields(
+        addressSubfields(element),
+        "Address",
+        (label) => label.toLowerCase().replace(/ /g, ""),
+        loc
+      );
+      break;
+    default:
+      break;
+  }
+};
+
+/** Block IDs are unique (CUIDs should be unique by design, but validate anyway). */
+const validateUniqueBlockIds = (blocks: TSurveyBlock[], ctx: z.RefinementCtx): void => {
+  const blockIds = blocks.map((b) => b.id);
+  const uniqueBlockIds = new Set(blockIds);
+  if (uniqueBlockIds.size !== blockIds.length) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Block IDs must be unique",
+      path: ["blocks", blockIds.findIndex((id, index) => blockIds.indexOf(id) !== index), "id"],
+    });
+  }
+};
+
+/** Every element across all blocks by id, reporting an id used twice. */
+const indexBlockElements = (blocks: TSurveyBlock[], ctx: z.RefinementCtx): TElementPositions => {
+  const allElements = new Map<string, { block: number; element: number; data: TSurveyElement }>();
+  blocks.forEach((block, blockIdx) => {
+    block.elements.forEach((element, elemIdx) => {
+      if (allElements.has(element.id)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `Element ID "${element.id}" is used in multiple blocks. Element IDs must be unique across all blocks.`,
+          path: ["blocks", blockIdx, "elements", elemIdx, "id"],
+        });
+      }
+      allElements.set(element.id, { block: blockIdx, element: elemIdx, data: element });
+    });
+  });
+  return allElements;
+};
+
+const addIssues = (issues: z.core.$ZodIssue[], ctx: z.RefinementCtx): void => {
+  issues.forEach((issue) => {
+    ctx.addIssue(issue as z.core.$ZodRawIssue);
+  });
+};
+
+const validateBlocks = (survey: TSurveyInput, ctx: z.RefinementCtx): void => {
+  const { blocks, languages } = survey;
+  // 1. Validate block IDs are unique
+  validateUniqueBlockIds(blocks, ctx);
+
+  // 2. Build map of all elements across all blocks
+  const allElements = indexBlockElements(blocks, ctx);
+
+  // 4. Detailed validation for each block and its elements
+  blocks.forEach((block, blockIndex) => {
+    // Validate each element in the block
+    block.elements.forEach((element, elementIndex) => {
+      const loc: TElementLocation = { blockIndex, elementIndex, languages, ctx };
+      validateElementTextLabels(element, loc);
+      // Type-specific validation
+      validateElementByType(element, loc);
+    });
+
+    // Validate block logic (conditions, actions, fallback)
+    addIssues(validateBlockLogic(survey, blockIndex, block, allElements), ctx);
+
+    // Show-if on the block and its elements (ENG-6931)
+    addIssues(validateShowIf(survey, blockIndex, block, allElements), ctx);
+  });
+
+  // Copied options (ENG-6938): the source exists, comes earlier and has options of the same kind.
+  getCopiedOptionsIssues(blocks).forEach(({ path, message }) => {
+    ctx.addIssue({ code: "custom", message, path });
+  });
+
+  // Rules before the first question: jumps and Set value only, reading fields, never answers.
+  addIssues(validateStartLogic(survey), ctx);
+
+  // 5. Check for cyclic logic in blocks
+  findBlocksWithCyclicLogic(blocks).forEach((blockId) => {
+    const blockIndex = blocks.findIndex((b) => b.id === blockId);
+    if (blockIndex !== -1) {
+      ctx.addIssue({
+        code: "custom",
+        message: `Conditional Logic: Cyclic logic detected in block ${String(blockIndex + 1)} (${blocks[blockIndex].name}).`,
+        path: ["blocks", blockIndex, "logic"],
+      });
+    }
+  });
+};
+
+// --- Endings ---
+
+const validateEndScreenButton = (
+  ending: Extract<TSurveyInput["endings"][number], { type: "endScreen" }>,
+  index: number,
+  languages: TSurveyLanguage[],
+  ctx: z.RefinementCtx
+): void => {
+  if (ending.buttonLabel === undefined && ending.buttonLink === undefined) return;
+
+  if (ending.buttonLabel) {
+    addIssueIfAny(
+      ctx,
+      validateCardFieldsForAllLanguages("endingCardButtonLabel", ending.buttonLabel, languages, "end", index)
+    );
+  } else {
+    ctx.addIssue({
+      code: "custom",
+      message: `Ending card ${String(index + 1)}: Button label cannot be empty`,
+      path: ["endings", index, "buttonLabel"],
+    });
+  }
+
+  addIssueIfAny(
+    ctx,
+    urlFieldIssue(
+      ending.buttonLink,
+      ZEndingCardButtonLink,
+      `Ending card ${String(index + 1)}`,
+      "Button link cannot be empty",
+      ["endings", index, "buttonLink"]
+    )
+  );
+};
+
+/** Thank you card validations. */
+const validateEndScreen = (
+  ending: Extract<TSurveyInput["endings"][number], { type: "endScreen" }>,
+  index: number,
+  languages: TSurveyLanguage[],
+  ctx: z.RefinementCtx
+): void => {
+  addIssueIfAny(
+    ctx,
+    validateCardFieldsForAllLanguages("cardHeadline", ending.headline ?? {}, languages, "end", index)
+  );
+
+  if (ending.subheader) {
+    addIssueIfAny(
+      ctx,
+      validateCardFieldsForAllLanguages("subheader", ending.subheader, languages, "end", index)
+    );
+  }
+
+  if (ending.imageAltText?.default.trim()) {
+    addIssueIfAny(
+      ctx,
+      validateCardFieldsForAllLanguages("imageAltText", ending.imageAltText, languages, "end", index)
+    );
+  }
+
+  validateEndScreenButton(ending, index, languages, ctx);
+};
+
+const validateRedirectEnding = (
+  ending: Extract<TSurveyInput["endings"][number], { type: "redirectToUrl" }>,
+  index: number,
+  ctx: z.RefinementCtx
+): void => {
+  if (!ending.label || ending.label.trim() === "") {
+    ctx.addIssue({
+      code: "custom",
+      message: `Redirect Url label cannot be empty for ending Card ${String(index + 1)}.`,
+      path: ["endings", index, "label"],
+    });
+  }
+
+  // Validate redirect URL
+  addIssueIfAny(
+    ctx,
+    urlFieldIssue(
+      ending.url,
+      ZEndingCardUrl,
+      `Ending card ${String(index + 1)}`,
+      "Redirect URL cannot be empty",
+      ["endings", index, "url"]
+    )
+  );
+};
+
+const validateEndings = (survey: TSurveyInput, ctx: z.RefinementCtx): void => {
+  survey.endings.forEach((ending, index) => {
+    if (ending.type === "endScreen") validateEndScreen(ending, index, survey.languages, ctx);
+    if (ending.type === "redirectToUrl") validateRedirectEnding(ending, index, ctx);
+  });
+};
+
+// --- Follow-ups ---
+
+/** The survey's own fields a follow-up email may be sent to. */
+const followUpRecipientOptions = (survey: TSurveyInput): string[] => {
+  const questionsFromBlocks = survey.blocks.flatMap((block: TSurveyBlock) => block.elements);
+  return [
+    "verifiedEmail", // Allow verified email from email verification feature
+    ...questionsFromBlocks
+      .filter((q) => {
+        if (q.type === TSurveyElementTypeEnum.OpenText) {
+          return q.inputType === "email";
+        }
+
+        if (q.type === TSurveyElementTypeEnum.ContactInfo) {
+          return q.email.show;
+        }
+
+        return false;
+      })
+      .map((q) => q.id),
+    ...(survey.hiddenFields.fieldIds ?? []),
+  ];
+};
+
+const validateFollowUps = (survey: TSurveyInput, ctx: z.RefinementCtx): void => {
+  if (!survey.followUps.length) return;
+
+  const validOptions = followUpRecipientOptions(survey);
+
+  survey.followUps
+    .filter((followUp) => !followUp.deleted)
+    .forEach((followUp, index) => {
+      if (!followUp.action.properties.to) return;
+
+      // not from a valid option within the survey, but it could be a correct email from the team
+      // member emails or the user's email:
+      if (
+        !validOptions.includes(followUp.action.properties.to) &&
+        !z.email().safeParse(followUp.action.properties.to).success
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: `The action in follow up ${String(index + 1)} has an invalid email field`,
+          path: ["followUps"],
+        });
+      }
+
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- endingIds is always defined
+      if (followUp.trigger.type === "endings" && !followUp.trigger.properties?.endingIds?.length) {
+        ctx.addIssue({
+          code: "custom",
+          message: `The trigger in follow up ${String(index + 1)} has no ending selected`,
+          path: ["followUps"],
+        });
+      }
+    });
+};
+
+export const surveyRefinement = (rawSurvey: TSurveyInput, ctx: z.RefinementCtx): void => {
+  const survey = withDerivedLegacyColumns(rawSurvey);
+  const { questions, blocks, languages, isBackButtonHidden } = survey;
   let multiLangIssue: z.core.$ZodRawIssue | null;
 
-  // welcome card validations
-  if (welcomeCard.enabled) {
-    if (welcomeCard.headline) {
-      multiLangIssue = validateCardFieldsForAllLanguages(
-        "cardHeadline",
-        welcomeCard.headline,
-        languages,
-        "welcome"
-      );
+  validateDerivedVariables(survey, ctx);
 
-      if (multiLangIssue) {
-        ctx.addIssue(multiLangIssue);
-      }
-    }
+  const hasQuestions = questions.length > 0;
+  const hasBlocks = blocks.length > 0 && blocks.some((b) => b.elements.length > 0);
+  validateSurveyModel(hasQuestions, hasBlocks, ctx);
 
-    if (welcomeCard.subheader && welcomeCard.subheader.default.trim() !== "") {
-      multiLangIssue = validateCardFieldsForAllLanguages(
-        "welcomeCardSubheader",
-        welcomeCard.subheader,
-        languages,
-        "welcome"
-      );
-      if (multiLangIssue) {
-        ctx.addIssue(multiLangIssue);
-      }
-    }
+  if (hasBlocks) validateSurveyCodeNames(survey, ctx);
 
-    if (welcomeCard.buttonLabel && welcomeCard.buttonLabel.default.trim() !== "") {
-      multiLangIssue = validateCardFieldsForAllLanguages(
-        "buttonLabel",
-        welcomeCard.buttonLabel,
-        languages,
-        "welcome"
-      );
-      if (multiLangIssue) {
-        ctx.addIssue(multiLangIssue);
-      }
-    }
-  }
+  validateWelcomeCard(survey, ctx);
 
   // Custom default validation for each question
   if (hasQuestions) {
+    // eslint-disable-next-line sonarjs/cognitive-complexity -- the v1 questions-model validator is frozen: splitting it would re-mark its deprecated TSurveyQuestion* references as new code
     questions.forEach((question, questionIndex) => {
       multiLangIssue = validateQuestionLabels("headline", question.headline, languages, questionIndex);
       if (multiLangIssue) {
@@ -1471,8 +2075,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
 
       if (question.type === TSurveyQuestionTypeEnum.FileUpload) {
         // allowedFileExtensions must have atleast one element
-        // eslint-disable-next-line typescript/prefer-optional-chain -- left as is: any edit to this line trips the staged cognitive-complexity check on this refinement, which is refactored separately (ENG-7329)
-        if (question.allowedFileExtensions && question.allowedFileExtensions.length === 0) {
+        if (question.allowedFileExtensions?.length === 0) {
           ctx.addIssue({
             code: "custom",
             message: `Question ${String(questionIndex + 1)} must have atleast one allowed file extension`,
@@ -1583,613 +2186,16 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
     }
   }
 
-  // Blocks validation
-  if (hasBlocks) {
-    // 1. Validate block IDs are unique (CUIDs should be unique by design, but validate anyway)
-    const blockIds = blocks.map((b) => b.id);
-    const uniqueBlockIds = new Set(blockIds);
-    if (uniqueBlockIds.size !== blockIds.length) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Block IDs must be unique",
-        path: ["blocks", blockIds.findIndex((id, index) => blockIds.indexOf(id) !== index), "id"],
-      });
-    }
+  if (hasBlocks) validateBlocks(survey, ctx);
 
-    // 2. Build map of all elements across all blocks
-    const allElements = new Map<string, { block: number; element: number; data: TSurveyElement }>();
-    blocks.forEach((block, blockIdx) => {
-      block.elements.forEach((element, elemIdx) => {
-        if (allElements.has(element.id)) {
-          ctx.addIssue({
-            code: "custom",
-            message: `Element ID "${element.id}" is used in multiple blocks. Element IDs must be unique across all blocks.`,
-            path: ["blocks", blockIdx, "elements", elemIdx, "id"],
-          });
-        }
-        allElements.set(element.id, { block: blockIdx, element: elemIdx, data: element });
-      });
-    });
+  validateEndings(survey, ctx);
 
-    // 4. Detailed validation for each block and its elements
-    blocks.forEach((block, blockIndex) => {
-      const defaultLanguageCode = "default";
-      // Validate each element in the block
-      block.elements.forEach((element, elementIndex) => {
-        // Validate headline (required for all elements)
-        let elementMultiLangIssue = validateElementLabels(
-          "headline",
-          element.headline,
-          languages,
-          blockIndex,
-          elementIndex
-        );
-        if (elementMultiLangIssue) {
-          ctx.addIssue(elementMultiLangIssue);
-        }
-
-        // Validate subheader if present
-        if (element.subheader && element.subheader[defaultLanguageCode].trim() !== "") {
-          elementMultiLangIssue = validateElementLabels(
-            "subheader",
-            element.subheader,
-            languages,
-            blockIndex,
-            elementIndex
-          );
-          if (elementMultiLangIssue) {
-            ctx.addIssue(elementMultiLangIssue);
-          }
-        }
-
-        // Validate image alt text if present. An empty default is a decorative image and needs no translations.
-        if (element.imageAltText?.[defaultLanguageCode].trim()) {
-          elementMultiLangIssue = validateElementLabels(
-            "imageAltText",
-            element.imageAltText,
-            languages,
-            blockIndex,
-            elementIndex
-          );
-          if (elementMultiLangIssue) {
-            ctx.addIssue(elementMultiLangIssue);
-          }
-        }
-
-        if (element.type === TSurveyElementTypeEnum.PictureSelection) {
-          element.choices.forEach((choice, choiceIndex) => {
-            if (!choice.imageAltText?.[defaultLanguageCode]?.trim()) return;
-            const choiceAltIssue = validateElementLabels(
-              `Image alt text of choice ${String(choiceIndex + 1)}`,
-              choice.imageAltText,
-              languages,
-              blockIndex,
-              elementIndex,
-              true
-            );
-            if (choiceAltIssue) {
-              ctx.addIssue({
-                ...choiceAltIssue,
-                path: [
-                  "blocks",
-                  blockIndex,
-                  "elements",
-                  elementIndex,
-                  "choices",
-                  choiceIndex,
-                  "imageAltText",
-                ],
-              });
-            }
-          });
-        }
-
-        // Type-specific validation
-        if (element.type === TSurveyElementTypeEnum.OpenText) {
-          if (
-            element.placeholder &&
-            element.placeholder[defaultLanguageCode].trim() !== "" &&
-            languages.length > 1
-          ) {
-            elementMultiLangIssue = validateElementLabels(
-              "placeholder",
-              element.placeholder,
-              languages,
-              blockIndex,
-              elementIndex
-            );
-            if (elementMultiLangIssue) {
-              ctx.addIssue(elementMultiLangIssue);
-            }
-          }
-        }
-
-        if (
-          element.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-          element.type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
-          element.type === TSurveyElementTypeEnum.Ranking
-        ) {
-          element.choices.forEach((choice, choiceIndex) => {
-            elementMultiLangIssue = validateElementLabels(
-              `Choice ${String(choiceIndex + 1)}`,
-              choice.label,
-              languages,
-              blockIndex,
-              elementIndex,
-              true
-            );
-            if (elementMultiLangIssue) {
-              ctx.addIssue({
-                ...elementMultiLangIssue,
-                path: ["blocks", blockIndex, "elements", elementIndex, "choices", choiceIndex],
-              });
-            }
-          });
-
-          const duplicateChoicesLanguageCodes = findLanguageCodesForDuplicateLabels(
-            element.choices.map((choice) => choice.label),
-            languages
-          );
-
-          if (duplicateChoicesLanguageCodes.length > 0) {
-            const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateChoicesLanguageCodes, languages);
-
-            const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
-
-            ctx.addIssue({
-              code: "custom",
-              message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate choice labels ${isDefaultOnly ? "" : "for the following languages:"}`,
-              path: ["blocks", blockIndex, "elements", elementIndex, "choices"],
-              params: isDefaultOnly ? undefined : { invalidLanguageCodes },
-            });
-          }
-        }
-
-        if (element.type === TSurveyElementTypeEnum.Consent) {
-          elementMultiLangIssue = validateElementLabels(
-            "consent.label",
-            element.label,
-            languages,
-            blockIndex,
-            elementIndex
-          );
-
-          if (elementMultiLangIssue) {
-            ctx.addIssue({
-              ...elementMultiLangIssue,
-              path: ["blocks", blockIndex, "elements", elementIndex, "label"],
-            });
-          }
-        }
-
-        if (element.type === TSurveyElementTypeEnum.CTA) {
-          // Only validate buttonExternal fields when buttonExternal is true
-          if (element.buttonExternal) {
-            // Validate ctaButtonLabel when buttonExternal is enabled
-            elementMultiLangIssue = validateElementLabels(
-              "ctaButtonLabel",
-              element.ctaButtonLabel ?? {},
-              languages,
-              blockIndex,
-              elementIndex
-            );
-            if (elementMultiLangIssue) {
-              ctx.addIssue({
-                ...elementMultiLangIssue,
-                path: ["blocks", blockIndex, "elements", elementIndex, "ctaButtonLabel"],
-              });
-            }
-
-            // Validate buttonUrl when buttonExternal is enabled
-            if (!element.buttonUrl || element.buttonUrl.trim() === "") {
-              ctx.addIssue({
-                code: "custom",
-                message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}: Button URL is required when external button is enabled`,
-                path: ["blocks", blockIndex, "elements", elementIndex, "buttonUrl"],
-              });
-            } else {
-              const parsedButtonUrl = getZSafeUrl.safeParse(element.buttonUrl);
-              if (!parsedButtonUrl.success) {
-                const errorMessage = parsedButtonUrl.error.issues[0].message;
-                ctx.addIssue({
-                  code: "custom",
-                  message: `Element ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}: ${errorMessage}`,
-                  path: ["blocks", blockIndex, "elements", elementIndex, "buttonUrl"],
-                });
-              }
-            }
-          }
-        }
-
-        if (element.type === TSurveyElementTypeEnum.Matrix) {
-          element.rows.forEach((row, rowIndex) => {
-            elementMultiLangIssue = validateElementLabels(
-              `Row ${String(rowIndex + 1)}`,
-              row.label,
-              languages,
-              blockIndex,
-              elementIndex,
-              true
-            );
-            if (elementMultiLangIssue) {
-              ctx.addIssue({
-                ...elementMultiLangIssue,
-                path: ["blocks", blockIndex, "elements", elementIndex, "rows", rowIndex],
-              });
-            }
-          });
-
-          element.columns.forEach((column, columnIndex) => {
-            elementMultiLangIssue = validateElementLabels(
-              `Column ${String(columnIndex + 1)}`,
-              column.label,
-              languages,
-              blockIndex,
-              elementIndex,
-              true
-            );
-            if (elementMultiLangIssue) {
-              ctx.addIssue({
-                ...elementMultiLangIssue,
-                path: ["blocks", blockIndex, "elements", elementIndex, "columns", columnIndex],
-              });
-            }
-          });
-
-          const duplicateRowsLanguageCodes = findLanguageCodesForDuplicateLabels(
-            element.rows.map((row) => row.label),
-            languages
-          );
-          const duplicateColumnLanguageCodes = findLanguageCodesForDuplicateLabels(
-            element.columns.map((column) => column.label),
-            languages
-          );
-
-          if (duplicateRowsLanguageCodes.length > 0) {
-            const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateRowsLanguageCodes, languages);
-
-            const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
-
-            ctx.addIssue({
-              code: "custom",
-              message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate row labels ${isDefaultOnly ? "" : "for the following languages:"}`,
-              path: ["blocks", blockIndex, "elements", elementIndex, "rows"],
-              params: isDefaultOnly ? undefined : { invalidLanguageCodes },
-            });
-          }
-
-          if (duplicateColumnLanguageCodes.length > 0) {
-            const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateColumnLanguageCodes, languages);
-
-            const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
-
-            ctx.addIssue({
-              code: "custom",
-              message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} has duplicate column labels ${isDefaultOnly ? "" : "for the following languages:"}`,
-              path: ["blocks", blockIndex, "elements", elementIndex, "columns"],
-              params: isDefaultOnly ? undefined : { invalidLanguageCodes },
-            });
-          }
-        }
-
-        if (element.type === TSurveyElementTypeEnum.FileUpload) {
-          // eslint-disable-next-line typescript/prefer-optional-chain -- left as is: any edit to this line trips the staged cognitive-complexity check on this refinement, which is refactored separately (ENG-7329)
-          if (element.allowedFileExtensions && element.allowedFileExtensions.length === 0) {
-            ctx.addIssue({
-              code: "custom",
-              message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} must have atleast one allowed file extension`,
-              path: ["blocks", blockIndex, "elements", elementIndex, "allowedFileExtensions"],
-            });
-          }
-        }
-
-        if (element.type === TSurveyElementTypeEnum.Cal) {
-          if (element.calHost !== undefined) {
-            const hostnameRegex = /^(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-)){1,}$/i;
-            if (!hostnameRegex.test(element.calHost)) {
-              ctx.addIssue({
-                code: "custom",
-                message: `Question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)} must have a valid host name`,
-                path: ["blocks", blockIndex, "elements", elementIndex, "calHost"],
-              });
-            }
-          }
-        }
-
-        if (element.type === TSurveyElementTypeEnum.ContactInfo) {
-          const { company, email, firstName, lastName, phone } = element;
-          const fields = [
-            { ...company, label: "Company" },
-            { ...email, label: "Email" },
-            { ...firstName, label: "First Name" },
-            { ...lastName, label: "Last Name" },
-            { ...phone, label: "Phone" },
-          ];
-
-          if (fields.every((field) => !field.show)) {
-            ctx.addIssue({
-              code: "custom",
-              message: `At least one field must be shown in the Contact Info question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "elements", elementIndex],
-            });
-          }
-          fields.forEach((field) => {
-            const multiLangIssueInPlaceholder =
-              field.show &&
-              validateElementLabels(
-                `Label for field ${field.label}`,
-                field.placeholder,
-                languages,
-                blockIndex,
-                elementIndex,
-                true
-              );
-            if (multiLangIssueInPlaceholder) {
-              ctx.addIssue({
-                ...multiLangIssueInPlaceholder,
-                path: [
-                  "blocks",
-                  blockIndex,
-                  "elements",
-                  elementIndex,
-                  field.label.toLowerCase().replace(" ", ""),
-                ],
-              });
-            }
-          });
-        }
-
-        if (element.type === TSurveyElementTypeEnum.Address) {
-          const { addressLine1, addressLine2, city, state, zip, country } = element;
-          const fields = [
-            { ...addressLine1, label: "Address Line 1" },
-            { ...addressLine2, label: "Address Line 2" },
-            { ...city, label: "City" },
-            { ...state, label: "State" },
-            { ...zip, label: "Zip" },
-            { ...country, label: "Country" },
-          ];
-
-          if (fields.every((field) => !field.show)) {
-            ctx.addIssue({
-              code: "custom",
-              message: `At least one field must be shown in the Address question ${String(elementIndex + 1)} in block ${String(blockIndex + 1)}`,
-              path: ["blocks", blockIndex, "elements", elementIndex],
-            });
-          }
-          fields.forEach((field) => {
-            const multiLangIssueInPlaceholder =
-              field.show &&
-              validateElementLabels(
-                `Label for field ${field.label}`,
-                field.placeholder,
-                languages,
-                blockIndex,
-                elementIndex,
-                true
-              );
-            if (multiLangIssueInPlaceholder) {
-              ctx.addIssue({
-                ...multiLangIssueInPlaceholder,
-                path: [
-                  "blocks",
-                  blockIndex,
-                  "elements",
-                  elementIndex,
-                  field.label.toLowerCase().replace(/ /g, ""),
-                ],
-              });
-            }
-          });
-        }
-      });
-
-      // Validate block logic (conditions, actions, fallback)
-      const logicIssues = validateBlockLogic(survey, blockIndex, block, allElements);
-      logicIssues.forEach((issue) => {
-        ctx.addIssue(issue as z.core.$ZodRawIssue);
-      });
-
-      // Show-if on the block and its elements (ENG-6931)
-      validateShowIf(survey, blockIndex, block, allElements).forEach((issue) => {
-        ctx.addIssue(issue as z.core.$ZodRawIssue);
-      });
-    });
-
-    // Copied options (ENG-6938): the source exists, comes earlier and has options of the same kind.
-    getCopiedOptionsIssues(blocks).forEach(({ path, message }) => {
-      ctx.addIssue({ code: "custom", message, path });
-    });
-
-    // Rules before the first question: jumps and Set value only, reading fields, never answers.
-    validateStartLogic(survey).forEach((issue) => {
-      ctx.addIssue(issue as z.core.$ZodRawIssue);
-    });
-
-    // 5. Check for cyclic logic in blocks
-    const blocksWithCyclicLogic = findBlocksWithCyclicLogic(blocks);
-    if (blocksWithCyclicLogic.length > 0) {
-      blocksWithCyclicLogic.forEach((blockId) => {
-        const blockIndex = blocks.findIndex((b) => b.id === blockId);
-        if (blockIndex !== -1) {
-          ctx.addIssue({
-            code: "custom",
-            message: `Conditional Logic: Cyclic logic detected in block ${String(blockIndex + 1)} (${blocks[blockIndex].name}).`,
-            path: ["blocks", blockIndex, "logic"],
-          });
-        }
-      });
-    }
-  }
-
-  endings.forEach((ending, index) => {
-    // thank you card validations
-    if (ending.type === "endScreen") {
-      const multiLangIssueInHeadline = validateCardFieldsForAllLanguages(
-        "cardHeadline",
-        ending.headline ?? {},
-        languages,
-        "end",
-        index
-      );
-
-      if (multiLangIssueInHeadline) {
-        ctx.addIssue(multiLangIssueInHeadline);
-      }
-
-      if (ending.subheader) {
-        const multiLangIssueInSubheader = validateCardFieldsForAllLanguages(
-          "subheader",
-          ending.subheader,
-          languages,
-          "end",
-          index
-        );
-
-        if (multiLangIssueInSubheader) {
-          ctx.addIssue(multiLangIssueInSubheader);
-        }
-      }
-
-      if (ending.imageAltText?.default.trim()) {
-        const multiLangIssueInImageAltText = validateCardFieldsForAllLanguages(
-          "imageAltText",
-          ending.imageAltText,
-          languages,
-          "end",
-          index
-        );
-
-        if (multiLangIssueInImageAltText) {
-          ctx.addIssue(multiLangIssueInImageAltText);
-        }
-      }
-
-      if (ending.buttonLabel !== undefined || ending.buttonLink !== undefined) {
-        if (!ending.buttonLabel) {
-          ctx.addIssue({
-            code: "custom",
-            message: `Ending card ${String(index + 1)}: Button label cannot be empty`,
-            path: ["endings", index, "buttonLabel"],
-          });
-        } else {
-          const multiLangIssueInButtonLabel = validateCardFieldsForAllLanguages(
-            "endingCardButtonLabel",
-            ending.buttonLabel,
-            languages,
-            "end",
-            index
-          );
-          if (multiLangIssueInButtonLabel) {
-            ctx.addIssue(multiLangIssueInButtonLabel);
-          }
-        }
-
-        if (!ending.buttonLink || ending.buttonLink.trim() === "") {
-          ctx.addIssue({
-            code: "custom",
-            message: `Ending card ${String(index + 1)}: Button link cannot be empty`,
-            path: ["endings", index, "buttonLink"],
-          });
-        } else {
-          const parsedButtonLink = ZEndingCardButtonLink.safeParse(ending.buttonLink);
-          if (!parsedButtonLink.success) {
-            const errorMessage = parsedButtonLink.error.issues[0].message;
-            ctx.addIssue({
-              code: "custom",
-              message: `Ending card ${String(index + 1)}: ${errorMessage}`,
-              path: ["endings", index, "buttonLink"],
-            });
-          }
-        }
-      }
-    }
-    if (ending.type === "redirectToUrl") {
-      if (!ending.label || ending.label.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          message: `Redirect Url label cannot be empty for ending Card ${String(index + 1)}.`,
-          path: ["endings", index, "label"],
-        });
-      }
-
-      // Validate redirect URL
-      if (!ending.url || ending.url.trim() === "") {
-        ctx.addIssue({
-          code: "custom",
-          message: `Ending card ${String(index + 1)}: Redirect URL cannot be empty`,
-          path: ["endings", index, "url"],
-        });
-      } else {
-        const parsedUrl = ZEndingCardUrl.safeParse(ending.url);
-        if (!parsedUrl.success) {
-          const errorMessage = parsedUrl.error.issues[0].message;
-          ctx.addIssue({
-            code: "custom",
-            message: `Ending card ${String(index + 1)}: ${errorMessage}`,
-            path: ["endings", index, "url"],
-          });
-        }
-      }
-    }
-  });
-
-  if (survey.followUps.length) {
-    const questionsFromBlocks = survey.blocks.flatMap((block: TSurveyBlock) => block.elements);
-
-    survey.followUps
-      .filter((followUp) => !followUp.deleted)
-      .forEach((followUp, index) => {
-        if (followUp.action.properties.to) {
-          const validOptions = [
-            "verifiedEmail", // Allow verified email from email verification feature
-            ...questionsFromBlocks
-              .filter((q) => {
-                if (q.type === TSurveyElementTypeEnum.OpenText) {
-                  if (q.inputType === "email") {
-                    return true;
-                  }
-                }
-
-                if (q.type === TSurveyElementTypeEnum.ContactInfo) {
-                  return q.email.show;
-                }
-
-                return false;
-              })
-              .map((q) => q.id),
-            ...(survey.hiddenFields.fieldIds ?? []),
-          ];
-
-          if (validOptions.findIndex((option) => option === followUp.action.properties.to) === -1) {
-            // not from a valid option within the survey, but it could be a correct email from the team member emails or the user's email:
-            const parsedEmailTo = z.email().safeParse(followUp.action.properties.to);
-            if (!parsedEmailTo.success) {
-              ctx.addIssue({
-                code: "custom",
-                message: `The action in follow up ${String(index + 1)} has an invalid email field`,
-                path: ["followUps"],
-              });
-            }
-          }
-
-          if (followUp.trigger.type === "endings") {
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- endingIds is always defined
-            if (!followUp.trigger.properties?.endingIds?.length) {
-              ctx.addIssue({
-                code: "custom",
-                message: `The trigger in follow up ${String(index + 1)} has no ending selected`,
-                path: ["followUps"],
-              });
-            }
-          }
-        }
-      });
-  }
+  validateFollowUps(survey, ctx);
 };
 
 export const ZSurvey = ZSurveyBase.superRefine(surveyRefinement);
 
+/* eslint-disable sonarjs/cognitive-complexity -- the v1 questions-model validator is frozen: splitting it would re-mark its deprecated TSurveyQuestion* references as new code */
 const isInvalidOperatorsForQuestionType = (
   question: TSurveyQuestion,
   operator: TSurveyLogicConditionsOperator
@@ -2348,6 +2354,7 @@ const isInvalidOperatorsForQuestionType = (
 
   return isInvalidOperator;
 };
+/* eslint-enable sonarjs/cognitive-complexity */
 
 /**
  * Compile-time exhaustiveness guard for a left-operand chain. The parameter is `never`, so passing a
@@ -2439,6 +2446,7 @@ const validateConditions = (
 ): z.core.$ZodIssue[] => {
   const issues: z.core.$ZodIssue[] = [];
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- the v1 questions-model validator is frozen: splitting it would re-mark its deprecated TSurveyQuestion* references as new code
   const validateSingleCondition = (condition: TSingleConditionDeprecated): void => {
     const { leftOperand, operator, rightOperand } = condition;
 
@@ -3064,6 +3072,7 @@ const validateActions = (
   const nextQuestions = survey.questions.filter((_, idx) => idx >= questionIndex);
   const nextQuestionsIds = nextQuestions.map((q) => q.id);
 
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- the v1 questions-model validator is frozen: splitting it would re-mark its deprecated TSurveyQuestion* references as new code
   const actionIssues: (z.core.$ZodIssue | undefined)[] = actions.map((action) => {
     if (action.objective === "calculate") {
       const variable = survey.variables.find((v) => v.id === action.variableId);
@@ -3260,166 +3269,119 @@ const validateLogic = (
 
 // ================== BLOCK LOGIC VALIDATION ==================
 
+type TOperatorList = readonly TSurveyLogicConditionsOperator[];
+
+const ELEMENT_TEXT_OPERATORS: TOperatorList = [
+  "equals",
+  "doesNotEqual",
+  "contains",
+  "doesNotContain",
+  "startsWith",
+  "doesNotStartWith",
+  "endsWith",
+  "doesNotEndWith",
+  "isSubmitted",
+  "isSkipped",
+];
+const ELEMENT_NUMBER_OPERATORS: TOperatorList = [
+  "equals",
+  "doesNotEqual",
+  "isLessThan",
+  "isLessThanOrEqual",
+  "isGreaterThan",
+  "isGreaterThanOrEqual",
+  "isSubmitted",
+  "isSkipped",
+];
+const ELEMENT_MULTI_SELECT_OPERATORS: TOperatorList = [
+  "equals",
+  "doesNotEqual",
+  "includesAllOf",
+  "includesOneOf",
+  "doesNotIncludeAllOf",
+  "doesNotIncludeOneOf",
+  "isSubmitted",
+  "isSkipped",
+];
+const ELEMENT_SUBMITTED_OPERATORS: TOperatorList = ["isSubmitted", "isSkipped"];
+
+/** A table's own entry for `key`; a prototype key (`constructor`, `toString`) has none. */
+const ownEntry = <T>(table: Partial<Record<string, T>>, key: string): T | undefined =>
+  Object.prototype.hasOwnProperty.call(table, key) ? table[key] : undefined;
+
+/** The operators an open-text element allows, by input type. Other input types allow every operator. */
+const OPEN_TEXT_ELEMENT_OPERATORS: Partial<Record<string, TOperatorList>> = {
+  email: ELEMENT_TEXT_OPERATORS,
+  phone: ELEMENT_TEXT_OPERATORS,
+  text: ELEMENT_TEXT_OPERATORS,
+  url: ELEMENT_TEXT_OPERATORS,
+  number: ELEMENT_NUMBER_OPERATORS,
+};
+
+/** The operators each element type allows. A type not listed here allows every operator. */
+const ELEMENT_OPERATORS: Partial<Record<TSurveyElementTypeEnum, TOperatorList>> = {
+  [TSurveyElementTypeEnum.MultipleChoiceSingle]: [
+    "equals",
+    "doesNotEqual",
+    "equalsOneOf",
+    "isSubmitted",
+    "isSkipped",
+  ],
+  [TSurveyElementTypeEnum.MultipleChoiceMulti]: ELEMENT_MULTI_SELECT_OPERATORS,
+  [TSurveyElementTypeEnum.PictureSelection]: ELEMENT_MULTI_SELECT_OPERATORS,
+  // T21 (ENG-6937): both engines map a ranking's stored labels back to option ids, so "was ranked"
+  // conditions match. Equality is left out: a ranking is an order, not a set.
+  [TSurveyElementTypeEnum.Ranking]: [
+    "includesAllOf",
+    "includesOneOf",
+    "doesNotIncludeAllOf",
+    "doesNotIncludeOneOf",
+    "isSubmitted",
+    "isSkipped",
+  ],
+  [TSurveyElementTypeEnum.FileUpload]: ELEMENT_SUBMITTED_OPERATORS,
+  [TSurveyElementTypeEnum.Signature]: ELEMENT_SUBMITTED_OPERATORS,
+  [TSurveyElementTypeEnum.NPS]: ELEMENT_NUMBER_OPERATORS,
+  [TSurveyElementTypeEnum.Rating]: ELEMENT_NUMBER_OPERATORS,
+  [TSurveyElementTypeEnum.CSAT]: ELEMENT_NUMBER_OPERATORS,
+  [TSurveyElementTypeEnum.CES]: ELEMENT_NUMBER_OPERATORS,
+  [TSurveyElementTypeEnum.CTA]: ["isClicked", "isNotClicked"],
+  [TSurveyElementTypeEnum.Consent]: ["isAccepted", "isSkipped"],
+  [TSurveyElementTypeEnum.Cal]: ["isBooked", "isSkipped"],
+  [TSurveyElementTypeEnum.Date]: [
+    "equals",
+    "doesNotEqual",
+    "isBefore",
+    "isAfter",
+    "isSubmitted",
+    "isSkipped",
+  ],
+  [TSurveyElementTypeEnum.Matrix]: [
+    "isPartiallySubmitted",
+    "isCompletelySubmitted",
+    "isSkipped",
+    "isEmpty",
+    "isNotEmpty",
+    "isAnyOf",
+    "equals",
+    "doesNotEqual",
+  ],
+  [TSurveyElementTypeEnum.Address]: ELEMENT_SUBMITTED_OPERATORS,
+  [TSurveyElementTypeEnum.ContactInfo]: ELEMENT_SUBMITTED_OPERATORS,
+};
+
 const isInvalidOperatorsForElementType = (
   element: TSurveyElement,
   operator: TSurveyLogicConditionsOperator
 ): boolean => {
-  let isInvalidOperator = false;
-
-  const elementType = element.type;
-
   if (element.required && operator === "isSkipped") return true;
 
-  switch (elementType) {
-    case TSurveyElementTypeEnum.OpenText:
-      switch (element.inputType) {
-        case "email":
-        case "phone":
-        case "text":
-        case "url":
-          if (
-            ![
-              "equals",
-              "doesNotEqual",
-              "contains",
-              "doesNotContain",
-              "startsWith",
-              "doesNotStartWith",
-              "endsWith",
-              "doesNotEndWith",
-              "isSubmitted",
-              "isSkipped",
-            ].includes(operator)
-          ) {
-            isInvalidOperator = true;
-          }
-          break;
-        case "number":
-          if (
-            ![
-              "equals",
-              "doesNotEqual",
-              "isLessThan",
-              "isLessThanOrEqual",
-              "isGreaterThan",
-              "isGreaterThanOrEqual",
-              "isSubmitted",
-              "isSkipped",
-            ].includes(operator)
-          ) {
-            isInvalidOperator = true;
-          }
-          break;
-      }
-      break;
-    case TSurveyElementTypeEnum.MultipleChoiceSingle:
-      if (!["equals", "doesNotEqual", "equalsOneOf", "isSubmitted", "isSkipped"].includes(operator)) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.MultipleChoiceMulti:
-    case TSurveyElementTypeEnum.PictureSelection:
-      if (
-        ![
-          "equals",
-          "doesNotEqual",
-          "includesAllOf",
-          "includesOneOf",
-          "doesNotIncludeAllOf",
-          "doesNotIncludeOneOf",
-          "isSubmitted",
-          "isSkipped",
-        ].includes(operator)
-      ) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.Ranking:
-      // T21 (ENG-6937): both engines map a ranking's stored labels back to option ids, so "was ranked"
-      // conditions match. Equality is left out: a ranking is an order, not a set.
-      if (
-        ![
-          "includesAllOf",
-          "includesOneOf",
-          "doesNotIncludeAllOf",
-          "doesNotIncludeOneOf",
-          "isSubmitted",
-          "isSkipped",
-        ].includes(operator)
-      ) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.FileUpload:
-    case TSurveyElementTypeEnum.Signature:
-      if (!["isSubmitted", "isSkipped"].includes(operator)) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.NPS:
-    case TSurveyElementTypeEnum.Rating:
-    case TSurveyElementTypeEnum.CSAT:
-    case TSurveyElementTypeEnum.CES:
-      if (
-        ![
-          "equals",
-          "doesNotEqual",
-          "isLessThan",
-          "isLessThanOrEqual",
-          "isGreaterThan",
-          "isGreaterThanOrEqual",
-          "isSubmitted",
-          "isSkipped",
-        ].includes(operator)
-      ) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.CTA:
-      if (!["isClicked", "isNotClicked"].includes(operator)) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.Consent:
-      if (!["isAccepted", "isSkipped"].includes(operator)) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.Cal:
-      if (!["isBooked", "isSkipped"].includes(operator)) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.Date:
-      if (!["equals", "doesNotEqual", "isBefore", "isAfter", "isSubmitted", "isSkipped"].includes(operator)) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.Matrix:
-      if (
-        ![
-          "isPartiallySubmitted",
-          "isCompletelySubmitted",
-          "isSkipped",
-          "isEmpty",
-          "isNotEmpty",
-          "isAnyOf",
-          "equals",
-          "doesNotEqual",
-        ].includes(operator)
-      ) {
-        isInvalidOperator = true;
-      }
-      break;
-    case TSurveyElementTypeEnum.Address:
-    case TSurveyElementTypeEnum.ContactInfo:
-      if (!["isSubmitted", "isSkipped"].includes(operator)) {
-        isInvalidOperator = true;
-      }
-      break;
-  }
+  const allowedOperators =
+    element.type === TSurveyElementTypeEnum.OpenText
+      ? ownEntry(OPEN_TEXT_ELEMENT_OPERATORS, element.inputType)
+      : ownEntry(ELEMENT_OPERATORS, element.type);
 
-  return isInvalidOperator;
+  return allowedOperators !== undefined && !allowedOperators.includes(operator);
 };
 
 /**
@@ -3433,6 +3395,366 @@ interface TConditionScope {
   checkLaterBlock: boolean;
 }
 
+/** A condition group being validated: its survey, element positions and scope, and its issue sink. */
+interface TConditionCheck {
+  survey: TSurvey;
+  allElements: TElementPositions;
+  scope: TConditionScope;
+  /** Adds an issue at the group's path; `message` follows the "Conditional Logic: " prefix. */
+  report: (message: string) => void;
+}
+
+type TStaticRightOperand = Extract<NonNullable<TSingleCondition["rightOperand"]>, { type: "static" }>;
+
+/** Operators that take no right operand on an element condition. */
+const ELEMENT_OPERATORS_WITHOUT_RIGHT_OPERAND = [
+  "isSubmitted",
+  "isSkipped",
+  "isClicked",
+  "isNotClicked",
+  "isAccepted",
+  "isBooked",
+  "isPartiallySubmitted",
+  "isCompletelySubmitted",
+  "isEmpty",
+  "isNotEmpty",
+];
+
+const ELEMENT_ARRAY_CHOICE_OPERATORS = [
+  "includesAllOf",
+  "includesOneOf",
+  "doesNotIncludeAllOf",
+  "doesNotIncludeOneOf",
+];
+
+/** Reports a right-operand computed field that does not exist, or (with `expectedType`) is of another type. */
+const checkVariableOperand = (
+  check: TConditionCheck,
+  variableId: string,
+  expectedType?: "number" | "text"
+): void => {
+  const variable = findLogicComputedField(check.survey, variableId);
+  if (!variable) {
+    check.report(`Variable ID ${variableId} does not exist in ${check.scope.where}`);
+  } else if (expectedType && variable.type !== expectedType) {
+    check.report(`Variable type should be ${expectedType} in ${check.scope.where}`);
+  }
+};
+
+/** Reports a right-operand element that does not exist, or whose type is not in `validTypes`. */
+const checkElementOperand = (
+  check: TConditionCheck,
+  elementId: string,
+  validTypes: TSurveyElementTypeEnum[]
+): void => {
+  const elem = check.allElements.get(elementId);
+  if (!elem) {
+    check.report(`Element ID ${elementId} does not exist in ${check.scope.where}`);
+  } else if (!validTypes.includes(elem.data.type)) {
+    check.report(`Invalid element type "${elem.data.type}" for right operand in ${check.scope.where}`);
+  }
+};
+
+const validateOpenTextElementCondition = (
+  element: TElementOfType<TSurveyElementTypeEnum.OpenText>,
+  condition: TSingleCondition,
+  check: TConditionCheck
+): void => {
+  const { rightOperand } = condition;
+  const { where } = check.scope;
+  switch (rightOperand?.type) {
+    case "element": {
+      const validElementTypes: TSurveyElementTypeEnum[] = [TSurveyElementTypeEnum.OpenText];
+
+      if (element.inputType === "number") {
+        validElementTypes.push(...[TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS]);
+      }
+
+      if (["equals", "doesNotEqual"].includes(condition.operator) && element.inputType !== "number") {
+        validElementTypes.push(
+          ...[
+            TSurveyElementTypeEnum.Date,
+            TSurveyElementTypeEnum.MultipleChoiceSingle,
+            TSurveyElementTypeEnum.MultipleChoiceMulti,
+          ]
+        );
+      }
+      checkElementOperand(check, rightOperand.value, validElementTypes);
+      break;
+    }
+    case "variable":
+      checkVariableOperand(check, rightOperand.value);
+      break;
+    case "hiddenField":
+      if (!check.survey.hiddenFields.fieldIds?.find((id) => id === rightOperand.value)) {
+        check.report(`Hidden field ID ${rightOperand.value} does not exist in ${where}`);
+      }
+      break;
+    case "static":
+      if (rightOperand.value === "") {
+        check.report(`Static value is required in ${where}`);
+      }
+      break;
+    default:
+      break;
+  }
+};
+
+/**
+ * A static choice operand: one existing choice id for equality and, where `allowArrays`, an array of
+ * existing ones for the includes operators.
+ */
+const validateChoiceElementOperand = (
+  element: TElementOfType<
+    | TSurveyElementTypeEnum.MultipleChoiceSingle
+    | TSurveyElementTypeEnum.MultipleChoiceMulti
+    | TSurveyElementTypeEnum.PictureSelection
+    | TSurveyElementTypeEnum.Ranking
+  >,
+  elementPosition: { block: number; element: number },
+  rightOperand: TStaticRightOperand,
+  operator: string,
+  allowArrays: boolean,
+  check: TConditionCheck
+): void => {
+  const { where } = check.scope;
+  if (operator === "equals" || operator === "doesNotEqual") {
+    if (typeof rightOperand.value !== "string") {
+      check.report(`Right operand should be a string for "${operator}" in ${where}`);
+    } else if (!element.choices.find((c) => c.id === rightOperand.value)) {
+      // Validate that the choice ID exists in the element's choices
+      check.report(
+        `Choice "${rightOperand.value}" does not exist in element ${String(elementPosition.element + 1)} of block ${String(elementPosition.block + 1)}`
+      );
+    }
+    return;
+  }
+
+  if (!allowArrays || !ELEMENT_ARRAY_CHOICE_OPERATORS.includes(operator)) return;
+
+  if (!Array.isArray(rightOperand.value)) {
+    check.report(`Right operand should be an array for "${operator}" in ${where}`);
+    return;
+  }
+
+  rightOperand.value.forEach((value) => {
+    if (typeof value !== "string") {
+      check.report(`Each value in the right operand should be a string for "${operator}" in ${where}`);
+    }
+  });
+
+  // Validate that all choice IDs exist in the element's choices
+  const choiceIds = element.choices.map((c) => c.id);
+  if (rightOperand.value.some((value) => !choiceIds.includes(value))) {
+    check.report(`One or more choices selected in right operand do not exist in the element in ${where}`);
+  }
+};
+
+const validateRatingElementCondition = (
+  element: TElementOfType<TSurveyElementTypeEnum.NPS | TSurveyElementTypeEnum.Rating>,
+  condition: TSingleCondition,
+  check: TConditionCheck
+): void => {
+  const { rightOperand, operator } = condition;
+  const { where } = check.scope;
+  if (rightOperand?.type === "variable") {
+    checkVariableOperand(check, rightOperand.value, "number");
+    return;
+  }
+  if (rightOperand?.type !== "static") {
+    check.report(`Right operand should be a variable or a static value for "${operator}" in ${where}`);
+    return;
+  }
+
+  if (typeof rightOperand.value !== "number") {
+    check.report(`Right operand should be a number for "${operator}" in ${where}`);
+  } else if (element.type === TSurveyElementTypeEnum.NPS) {
+    if (rightOperand.value < 0 || rightOperand.value > 10) {
+      check.report(`NPS score should be between 0 and 10 for "${operator}" in ${where}`);
+    }
+  } else if (rightOperand.value < 1 || rightOperand.value > element.range) {
+    check.report(
+      `Rating value should be between 1 and ${String(element.range)} for "${operator}" in ${where}`
+    );
+  }
+};
+
+const validateDateElementCondition = (condition: TSingleCondition, check: TConditionCheck): void => {
+  const { rightOperand } = condition;
+  const { where } = check.scope;
+  switch (rightOperand?.type) {
+    case "element":
+      checkElementOperand(check, rightOperand.value, [
+        TSurveyElementTypeEnum.OpenText,
+        TSurveyElementTypeEnum.Date,
+      ]);
+      break;
+    case "variable":
+      checkVariableOperand(check, rightOperand.value, "text");
+      break;
+    case "hiddenField":
+      if (!check.survey.hiddenFields.fieldIds?.includes(rightOperand.value)) {
+        check.report(`Hidden field ID ${rightOperand.value} does not exist in ${where}`);
+      }
+      break;
+    case "static": {
+      const date = rightOperand.value as string;
+
+      if (!date) {
+        check.report(`Please select a date value in ${where}`);
+      } else if (isNaN(new Date(date).getTime())) {
+        check.report(`Invalid date format for right operand in ${where}`);
+      }
+      break;
+    }
+    default:
+      break;
+  }
+};
+
+const validateMatrixElementCondition = (
+  element: TElementOfType<TSurveyElementTypeEnum.Matrix>,
+  condition: TSingleCondition,
+  check: TConditionCheck
+): void => {
+  const { leftOperand, operator, rightOperand } = condition;
+  const { where } = check.scope;
+  const meta = leftOperand.type === "element" ? leftOperand.meta : undefined;
+  // ENG-6934: the id form alone is a row condition too; the write path fills the position.
+  if (!isMatrixRowCondition(meta)) {
+    if (rightOperand?.value !== undefined) {
+      check.report(`Right operand is not allowed in matrix element in ${where}`);
+    }
+    if (!["isPartiallySubmitted", "isCompletelySubmitted"].includes(operator)) {
+      check.report(`Operator "${operator}" is not allowed in matrix element in ${where}`);
+    }
+    return;
+  }
+
+  if (rightOperand === undefined) {
+    check.report(`Right operand is required in matrix element in ${where}`);
+    return;
+  }
+  if (rightOperand.type !== "static") {
+    check.report(`Right operand should be a static value in matrix element in ${where}`);
+  }
+  // With a row id, the id decides the row (and is checked on its own); the position is
+  // only the previous release's reading, rewritten from the id on every write.
+  const rowIndex = Number(meta?.row);
+  if (meta?.rowId === undefined && (rowIndex < 0 || rowIndex >= element.rows.length)) {
+    check.report(`Invalid row index in matrix element in ${where}`);
+  }
+};
+
+/** The right-operand checks that depend on the left element's type. */
+const validateElementRightOperand = (
+  elementInfo: { block: number; element: number; data: TSurveyElement },
+  condition: TSingleCondition,
+  check: TConditionCheck
+): void => {
+  const { operator, rightOperand } = condition;
+  const element = elementInfo.data;
+  switch (element.type) {
+    case TSurveyElementTypeEnum.OpenText:
+      validateOpenTextElementCondition(element, condition, check);
+      break;
+    case TSurveyElementTypeEnum.MultipleChoiceSingle:
+    case TSurveyElementTypeEnum.MultipleChoiceMulti:
+    case TSurveyElementTypeEnum.PictureSelection:
+    case TSurveyElementTypeEnum.Ranking:
+      if (rightOperand?.type === "static") {
+        validateChoiceElementOperand(
+          element,
+          elementInfo,
+          rightOperand,
+          operator,
+          element.type !== TSurveyElementTypeEnum.MultipleChoiceSingle,
+          check
+        );
+      } else {
+        check.report(`Right operand should be a static value for "${operator}" in ${check.scope.where}`);
+      }
+      break;
+    case TSurveyElementTypeEnum.NPS:
+    case TSurveyElementTypeEnum.Rating:
+      validateRatingElementCondition(element, condition, check);
+      break;
+    case TSurveyElementTypeEnum.Date:
+      validateDateElementCondition(condition, check);
+      break;
+    case TSurveyElementTypeEnum.Matrix:
+      validateMatrixElementCondition(element, condition, check);
+      break;
+    default:
+      break;
+  }
+};
+
+const validateElementCondition = (
+  elementId: string,
+  blockIndex: number,
+  condition: TSingleCondition,
+  check: TConditionCheck
+): void => {
+  const { operator, rightOperand } = condition;
+  const { scope } = check;
+  const elementInfo = check.allElements.get(elementId);
+
+  if (!elementInfo) {
+    check.report(`Element Id ${elementId} does not exist in ${scope.where}`);
+    return;
+  }
+  if (scope.checkLaterBlock && blockIndex < elementInfo.block) {
+    check.report(
+      `Block ${String(blockIndex + 1)} cannot refer to an element in block ${String(elementInfo.block + 1)} that appears later in the survey`
+    );
+    return;
+  }
+
+  const element = elementInfo.data;
+
+  // Validate operator based on element type
+  if (isInvalidOperatorsForElementType(element, operator)) {
+    check.report(`Invalid operator "${operator}" for element type "${element.type}" in ${scope.where}`);
+  }
+
+  // Validate CTA elements: CTAs without external buttons cannot be used in logic
+  if (element.type === TSurveyElementTypeEnum.CTA && !element.buttonExternal) {
+    check.report(
+      `CTA element "${elementId}" does not have an external button and cannot be used in logic conditions in ${scope.where}`
+    );
+    return;
+  }
+
+  // Validate right operand
+  if (ELEMENT_OPERATORS_WITHOUT_RIGHT_OPERAND.includes(operator)) {
+    if (rightOperand !== undefined) {
+      check.report(`Right operand should not be defined for operator "${operator}" in ${scope.where}`);
+    }
+    return;
+  }
+
+  validateElementRightOperand(elementInfo, condition, check);
+};
+
+const validateVariableCondition = (
+  variableId: string,
+  condition: TSingleCondition,
+  check: TConditionCheck
+): void => {
+  if (!findLogicComputedField(check.survey, variableId)) {
+    check.report(`Variable ID ${variableId} does not exist in ${check.scope.where}`);
+    return;
+  }
+
+  if (condition.rightOperand?.type === "variable") {
+    const rightVariableId = condition.rightOperand.value;
+    if (!findLogicComputedField(check.survey, rightVariableId)) {
+      check.report(`Variable ID ${rightVariableId} does not exist in ${check.scope.where}`);
+    }
+  }
+};
+
 /**
  * The operand and operator checks of one condition group — the element exists, the operator suits
  * its type, the right operand fits — shared by block logic and show-if.
@@ -3445,427 +3767,23 @@ const validateConditionGroupOperands = (
   scope: TConditionScope
 ): z.core.$ZodIssue[] => {
   const issues: z.core.$ZodIssue[] = [];
+  const check: TConditionCheck = {
+    survey,
+    allElements,
+    scope,
+    report: (message) => {
+      issues.push({ code: "custom", message: `Conditional Logic: ${message}`, path: scope.path });
+    },
+  };
 
   const validateSingleCondition = (condition: TSingleCondition): void => {
-    const { leftOperand, operator, rightOperand } = condition;
+    const { leftOperand } = condition;
 
     // Validate left operand
     if (leftOperand.type === "element") {
-      const elementId = leftOperand.value;
-      const elementInfo = allElements.get(elementId);
-
-      if (!elementInfo) {
-        issues.push({
-          code: "custom",
-          message: `Conditional Logic: Element Id ${elementId} does not exist in ${scope.where}`,
-          path: scope.path,
-        });
-        return;
-      } else if (scope.checkLaterBlock && blockIndex < elementInfo.block) {
-        issues.push({
-          code: "custom",
-          message: `Conditional Logic: Block ${String(blockIndex + 1)} cannot refer to an element in block ${String(elementInfo.block + 1)} that appears later in the survey`,
-          path: scope.path,
-        });
-        return;
-      }
-
-      const element = elementInfo.data;
-
-      // Validate operator based on element type
-      const isInvalidOperator = isInvalidOperatorsForElementType(element, operator);
-      if (isInvalidOperator) {
-        issues.push({
-          code: "custom",
-          message: `Conditional Logic: Invalid operator "${operator}" for element type "${element.type}" in ${scope.where}`,
-          path: scope.path,
-        });
-      }
-
-      // Validate CTA elements: CTAs without external buttons cannot be used in logic
-      if (element.type === TSurveyElementTypeEnum.CTA && !element.buttonExternal) {
-        issues.push({
-          code: "custom",
-          message: `Conditional Logic: CTA element "${elementId}" does not have an external button and cannot be used in logic conditions in ${scope.where}`,
-          path: scope.path,
-        });
-        return;
-      }
-
-      // Validate right operand
-      if (
-        [
-          "isSubmitted",
-          "isSkipped",
-          "isClicked",
-          "isNotClicked",
-          "isAccepted",
-          "isBooked",
-          "isPartiallySubmitted",
-          "isCompletelySubmitted",
-          "isEmpty",
-          "isNotEmpty",
-        ].includes(operator)
-      ) {
-        if (rightOperand !== undefined) {
-          issues.push({
-            code: "custom",
-            message: `Conditional Logic: Right operand should not be defined for operator "${operator}" in ${scope.where}`,
-            path: scope.path,
-          });
-        }
-        return;
-      }
-
-      if (element.type === TSurveyElementTypeEnum.OpenText) {
-        // Validate right operand
-        if (rightOperand?.type === "element") {
-          const elemId = rightOperand.value;
-          const elem = allElements.get(elemId);
-
-          if (!elem) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Element ID ${elemId} does not exist in ${scope.where}`,
-              path: scope.path,
-            });
-          } else {
-            const validElementTypes: TSurveyElementTypeEnum[] = [TSurveyElementTypeEnum.OpenText];
-
-            if (element.inputType === "number") {
-              validElementTypes.push(...[TSurveyElementTypeEnum.Rating, TSurveyElementTypeEnum.NPS]);
-            }
-
-            if (["equals", "doesNotEqual"].includes(condition.operator)) {
-              if (element.inputType !== "number") {
-                validElementTypes.push(
-                  ...[
-                    TSurveyElementTypeEnum.Date,
-                    TSurveyElementTypeEnum.MultipleChoiceSingle,
-                    TSurveyElementTypeEnum.MultipleChoiceMulti,
-                  ]
-                );
-              }
-            }
-
-            if (!validElementTypes.includes(elem.data.type)) {
-              issues.push({
-                code: "custom",
-                message: `Conditional Logic: Invalid element type "${elem.data.type}" for right operand in ${scope.where}`,
-                path: scope.path,
-              });
-            }
-          }
-        } else if (rightOperand?.type === "variable") {
-          const variableId = rightOperand.value;
-          const variable = findLogicComputedField(survey, variableId);
-
-          if (!variable) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Variable ID ${variableId} does not exist in ${scope.where}`,
-              path: scope.path,
-            });
-          }
-        } else if (rightOperand?.type === "hiddenField") {
-          const fieldId = rightOperand.value;
-          const field = survey.hiddenFields.fieldIds?.find((id) => id === fieldId);
-
-          if (!field) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in ${scope.where}`,
-              path: scope.path,
-            });
-          }
-        } else if (rightOperand?.type === "static") {
-          if (rightOperand.value === "") {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Static value is required in ${scope.where}`,
-              path: scope.path,
-            });
-          }
-        }
-      } else if (element.type === TSurveyElementTypeEnum.MultipleChoiceSingle) {
-        if (rightOperand?.type !== "static") {
-          issues.push({
-            code: "custom",
-            message: `Conditional Logic: Right operand should be a static value for "${operator}" in ${scope.where}`,
-            path: scope.path,
-          });
-        } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
-          if (typeof rightOperand.value !== "string") {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Right operand should be a string for "${operator}" in ${scope.where}`,
-              path: scope.path,
-            });
-          } else {
-            // Validate that the choice ID exists in the element's choices
-            const choiceMatch = element.choices.find((c) => c.id === rightOperand.value);
-            if (!choiceMatch) {
-              issues.push({
-                code: "custom",
-                message: `Conditional Logic: Choice "${rightOperand.value}" does not exist in element ${String(elementInfo.element + 1)} of block ${String(elementInfo.block + 1)}`,
-                path: scope.path,
-              });
-            }
-          }
-        }
-      } else if (
-        element.type === TSurveyElementTypeEnum.MultipleChoiceMulti ||
-        element.type === TSurveyElementTypeEnum.PictureSelection ||
-        element.type === TSurveyElementTypeEnum.Ranking
-      ) {
-        if (rightOperand?.type !== "static") {
-          issues.push({
-            code: "custom",
-            message: `Conditional Logic: Right operand should be a static value for "${operator}" in ${scope.where}`,
-            path: scope.path,
-          });
-        } else if (condition.operator === "equals" || condition.operator === "doesNotEqual") {
-          if (typeof rightOperand.value !== "string") {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Right operand should be a string for "${operator}" in ${scope.where}`,
-              path: scope.path,
-            });
-          } else {
-            // Validate that the choice ID exists in the element's choices
-            const choiceMatch = element.choices.find((c) => c.id === rightOperand.value);
-            if (!choiceMatch) {
-              issues.push({
-                code: "custom",
-                message: `Conditional Logic: Choice "${rightOperand.value}" does not exist in element ${String(elementInfo.element + 1)} of block ${String(elementInfo.block + 1)}`,
-                path: scope.path,
-              });
-            }
-          }
-        } else if (
-          ["includesAllOf", "includesOneOf", "doesNotIncludeAllOf", "doesNotIncludeOneOf"].includes(
-            condition.operator
-          )
-        ) {
-          if (!Array.isArray(rightOperand.value)) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Right operand should be an array for "${operator}" in ${scope.where}`,
-              path: scope.path,
-            });
-          } else {
-            rightOperand.value.forEach((value) => {
-              if (typeof value !== "string") {
-                issues.push({
-                  code: "custom",
-                  message: `Conditional Logic: Each value in the right operand should be a string for "${operator}" in ${scope.where}`,
-                  path: scope.path,
-                });
-              }
-            });
-
-            // Validate that all choice IDs exist in the element's choices
-            const choiceIds = element.choices.map((c) => c.id);
-            if (rightOperand.value.some((value) => !choiceIds.includes(value))) {
-              issues.push({
-                code: "custom",
-                message: `Conditional Logic: One or more choices selected in right operand do not exist in the element in ${scope.where}`,
-                path: scope.path,
-              });
-            }
-          }
-        }
-      } else if (
-        element.type === TSurveyElementTypeEnum.NPS ||
-        element.type === TSurveyElementTypeEnum.Rating
-      ) {
-        if (rightOperand?.type === "variable") {
-          const variableId = rightOperand.value;
-          const variable = findLogicComputedField(survey, variableId);
-
-          if (!variable) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Variable ID ${variableId} does not exist in ${scope.where}`,
-              path: scope.path,
-            });
-          } else if (variable.type !== "number") {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Variable type should be number in ${scope.where}`,
-              path: scope.path,
-            });
-          }
-        } else if (rightOperand?.type === "static") {
-          if (typeof rightOperand.value !== "number") {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Right operand should be a number for "${operator}" in ${scope.where}`,
-              path: scope.path,
-            });
-          } else if (element.type === TSurveyElementTypeEnum.NPS) {
-            if (rightOperand.value < 0 || rightOperand.value > 10) {
-              issues.push({
-                code: "custom",
-                message: `Conditional Logic: NPS score should be between 0 and 10 for "${operator}" in ${scope.where}`,
-                path: scope.path,
-              });
-            }
-          } else if (rightOperand.value < 1 || rightOperand.value > element.range) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Rating value should be between 1 and ${String(element.range)} for "${operator}" in ${scope.where}`,
-              path: scope.path,
-            });
-          }
-        } else {
-          issues.push({
-            code: "custom",
-            message: `Conditional Logic: Right operand should be a variable or a static value for "${operator}" in ${scope.where}`,
-            path: scope.path,
-          });
-        }
-      } else if (element.type === TSurveyElementTypeEnum.Date) {
-        if (rightOperand?.type === "element") {
-          const elemId = rightOperand.value;
-          const elem = allElements.get(elemId);
-
-          if (!elem) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Element ID ${elemId} does not exist in ${scope.where}`,
-              path: scope.path,
-            });
-          } else {
-            const validElementTypes: TSurveyElementTypeEnum[] = [
-              TSurveyElementTypeEnum.OpenText,
-              TSurveyElementTypeEnum.Date,
-            ];
-            if (!validElementTypes.includes(elem.data.type)) {
-              issues.push({
-                code: "custom",
-                message: `Conditional Logic: Invalid element type "${elem.data.type}" for right operand in ${scope.where}`,
-                path: scope.path,
-              });
-            }
-          }
-        } else if (rightOperand?.type === "variable") {
-          const variableId = rightOperand.value;
-          const variable = findLogicComputedField(survey, variableId);
-
-          if (!variable) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Variable ID ${variableId} does not exist in ${scope.where}`,
-              path: scope.path,
-            });
-          } else if (variable.type !== "text") {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Variable type should be text in ${scope.where}`,
-              path: scope.path,
-            });
-          }
-        } else if (rightOperand?.type === "hiddenField") {
-          const fieldId = rightOperand.value;
-          const doesFieldExists = survey.hiddenFields.fieldIds?.includes(fieldId);
-
-          if (!doesFieldExists) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Hidden field ID ${fieldId} does not exist in ${scope.where}`,
-              path: scope.path,
-            });
-          }
-        } else if (rightOperand?.type === "static") {
-          const date = rightOperand.value as string;
-
-          if (!date) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Please select a date value in ${scope.where}`,
-              path: scope.path,
-            });
-          } else if (isNaN(new Date(date).getTime())) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Invalid date format for right operand in ${scope.where}`,
-              path: scope.path,
-            });
-          }
-        }
-      } else if (element.type === TSurveyElementTypeEnum.Matrix) {
-        const row = leftOperand.meta?.row;
-        // ENG-6934: the id form alone is a row condition too; the write path fills the position.
-        if (!isMatrixRowCondition(leftOperand.meta)) {
-          if (rightOperand?.value !== undefined) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Right operand is not allowed in matrix element in ${scope.where}`,
-              path: scope.path,
-            });
-          }
-          if (!["isPartiallySubmitted", "isCompletelySubmitted"].includes(operator)) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Operator "${operator}" is not allowed in matrix element in ${scope.where}`,
-              path: scope.path,
-            });
-          }
-        } else {
-          if (rightOperand === undefined) {
-            issues.push({
-              code: "custom",
-              message: `Conditional Logic: Right operand is required in matrix element in ${scope.where}`,
-              path: scope.path,
-            });
-          }
-          if (rightOperand) {
-            if (rightOperand.type !== "static") {
-              issues.push({
-                code: "custom",
-                message: `Conditional Logic: Right operand should be a static value in matrix element in ${scope.where}`,
-                path: scope.path,
-              });
-            }
-            // With a row id, the id decides the row (and is checked on its own); the position is
-            // only the previous release's reading, rewritten from the id on every write.
-            const rowIndex = Number(row);
-            if (leftOperand.meta?.rowId === undefined && (rowIndex < 0 || rowIndex >= element.rows.length)) {
-              issues.push({
-                code: "custom",
-                message: `Conditional Logic: Invalid row index in matrix element in ${scope.where}`,
-                path: scope.path,
-              });
-            }
-          }
-        }
-      }
+      validateElementCondition(leftOperand.value, blockIndex, condition, check);
     } else if (leftOperand.type === "variable") {
-      const variableId = leftOperand.value;
-      const variable = findLogicComputedField(survey, variableId);
-
-      if (!variable) {
-        issues.push({
-          code: "custom",
-          message: `Conditional Logic: Variable ID ${variableId} does not exist in ${scope.where}`,
-          path: scope.path,
-        });
-        return;
-      }
-
-      if (rightOperand?.type === "variable") {
-        const rightVariableId = rightOperand.value;
-        const rightVariable = findLogicComputedField(survey, rightVariableId);
-
-        if (!rightVariable) {
-          issues.push({
-            code: "custom",
-            message: `Conditional Logic: Variable ID ${rightVariableId} does not exist in ${scope.where}`,
-            path: scope.path,
-          });
-        }
-      }
+      validateVariableCondition(leftOperand.value, condition, check);
     } else if (leftOperand.type === "reserved") {
       // A reserved operand names a `RESERVED_FIELD_CATALOG` entry, not anything stored on the survey,
       // so there is nothing to look up and nothing to report — and that is deliberate, not an

@@ -5436,6 +5436,7 @@
         "device": "裝置",
         "duration_seconds": "持續時間（秒）",
         "email": "電子郵件",
+        "ended_before_first_question": "在第一題之前就結束了",
         "error_downloading_attachments": "準備下載附件時發生錯誤",
         "first_name": "名字",
         "go_to_responses": "前往回覆",

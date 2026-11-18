@@ -110,6 +110,10 @@ const completeLegacyUserState = (legacyUser: TLegacyConfig["user"]): TUserState 
   };
 };
 
+// Splitting this into helpers (seven functions to get under 15) adds ~0.15 KB gz to the SDK every
+// customer page loads, more than the headroom left under its budget (src/bundle-size.test.ts).
+// The rule reports on the arrow's line, so a block disable rather than a next-line one.
+/* eslint-disable sonarjs/cognitive-complexity -- held back by the js-core gzip budget, see above */
 export const setup = async (
   configInput: TConfigInput | (TConfigInput & { userId: string; attributes: Record<string, string> })
 ): Promise<Result<void, MissingFieldError | NetworkError | MissingPersonError>> => {
@@ -439,6 +443,7 @@ export const setup = async (
 
   return okVoid();
 };
+/* eslint-enable sonarjs/cognitive-complexity */
 
 export const tearDown = (): void => {
   const logger = Logger.getInstance();

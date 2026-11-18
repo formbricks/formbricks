@@ -90,7 +90,7 @@ describe("deleteWebhook", () => {
 
   test("should throw an error when called with an invalid webhook ID format", async () => {
     const { validateInputs } = await import("@/lib/utils/validate");
-    (validateInputs as any).mockImplementation(() => {
+    vi.mocked(validateInputs).mockImplementation(() => {
       throw new ValidationError("Validation failed");
     });
 
@@ -181,7 +181,7 @@ describe("getWebhook", () => {
 
   test("should throw ValidationError when called with invalid webhook ID", async () => {
     const { validateInputs } = await import("@/lib/utils/validate");
-    (validateInputs as any).mockImplementation(() => {
+    vi.mocked(validateInputs).mockImplementation(() => {
       throw new ValidationError("Validation failed");
     });
 

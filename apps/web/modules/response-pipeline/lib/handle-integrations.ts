@@ -463,7 +463,7 @@ const buildNotionPayloadProperties = (
   data: TIntegrationPipelineData,
   surveyData: TPipelineIntegrationSurvey
 ) => {
-  const properties: any = {};
+  const properties: Record<string, object> = {};
   const normalizedResponses = { ...data.response.data };
 
   const surveyElements = getElementsFromBlocks(surveyData.blocks);

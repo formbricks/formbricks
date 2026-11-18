@@ -5436,6 +5436,7 @@
         "device": "Устройство",
         "duration_seconds": "Длительность (секунды)",
         "email": "Email",
+        "ended_before_first_question": "Завершён до первого вопроса",
         "error_downloading_attachments": "Произошла ошибка при подготовке загрузки вложений",
         "first_name": "Имя",
         "go_to_responses": "Перейти к ответам",

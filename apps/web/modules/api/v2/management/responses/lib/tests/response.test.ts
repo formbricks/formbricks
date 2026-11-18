@@ -297,8 +297,8 @@ describe("Response Lib", () => {
 
   describe("getResponses", () => {
     test("return responses with meta information", async () => {
-      (prisma.response.findMany as any).mockResolvedValue([response]);
-      (prisma.response.count as any).mockResolvedValue(1);
+      vi.mocked(prisma.response.findMany).mockResolvedValue([response]);
+      vi.mocked(prisma.response.count).mockResolvedValue(1);
 
       const result = await getResponses([workspaceId], responseFilter);
       expect(prisma.response.findMany).toHaveBeenCalled();
@@ -317,8 +317,8 @@ describe("Response Lib", () => {
     });
 
     test("return an internal_server_error error if prisma findMany fails", async () => {
-      (prisma.response.findMany as any).mockRejectedValue(new Error("Internal server error"));
-      (prisma.response.count as any).mockResolvedValue(0);
+      vi.mocked(prisma.response.findMany).mockRejectedValue(new Error("Internal server error"));
+      vi.mocked(prisma.response.count).mockResolvedValue(0);
 
       const result = await getResponses([workspaceId], responseFilter);
       expect(result.ok).toBe(false);
@@ -331,8 +331,8 @@ describe("Response Lib", () => {
     });
 
     test("return an internal_server_error error if prisma count fails", async () => {
-      (prisma.response.findMany as any).mockResolvedValue([response]);
-      (prisma.response.count as any).mockRejectedValue(new Error("Internal server error"));
+      vi.mocked(prisma.response.findMany).mockResolvedValue([response]);
+      vi.mocked(prisma.response.count).mockRejectedValue(new Error("Internal server error"));
 
       const result = await getResponses([workspaceId], responseFilter);
       expect(result.ok).toBe(false);

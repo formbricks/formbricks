@@ -17,10 +17,10 @@ function getValuePreview(value: unknown): string {
   }
 }
 
-export function validateInputs<T extends ValidationPair<any>[]>(
+export function validateInputs<T extends ValidationPair<unknown>[]>(
   ...pairs: T
 ): { [K in keyof T]: T[K] extends ValidationPair<infer U> ? U : never } {
-  const parsedData: any[] = [];
+  const parsedData: unknown[] = [];
 
   for (const [value, schema] of pairs) {
     const inputValidation = schema.safeParse(value);

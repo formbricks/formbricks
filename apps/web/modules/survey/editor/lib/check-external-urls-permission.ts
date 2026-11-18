@@ -5,6 +5,36 @@ import { getElementsFromBlocks } from "@/lib/survey/utils";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 import { getOrganizationBilling } from "@/modules/survey/lib/survey";
 
+/** Whether the new survey adds or changes an ending card's external button link. */
+const addsExternalEndingLink = (newSurvey: TSurvey, oldSurvey: TSurvey | null): boolean =>
+  newSurvey.endings.some((newEnding) => {
+    if (
+      newEnding.type !== "endScreen" ||
+      !newEnding.buttonLink ||
+      isDefaultEndingCardButtonLink(newEnding.buttonLink)
+    ) {
+      return false;
+    }
+    const oldEnding = oldSurvey?.endings.find((e) => e.id === newEnding.id);
+    return !oldEnding || oldEnding.type !== "endScreen" || oldEnding.buttonLink !== newEnding.buttonLink;
+  });
+
+/** Whether a CTA question adds or changes its external button URL. */
+const addsExternalCtaUrl = (
+  newQuestions: ReturnType<typeof getElementsFromBlocks>,
+  oldQuestions: ReturnType<typeof getElementsFromBlocks>
+): boolean =>
+  newQuestions.some((newQuestion) => {
+    if (newQuestion.type !== "cta" || !newQuestion.buttonExternal) return false;
+    const oldQuestion = oldQuestions.find((q) => q.id === newQuestion.id);
+    return (
+      !oldQuestion ||
+      oldQuestion.type !== "cta" ||
+      !oldQuestion.buttonExternal ||
+      oldQuestion.buttonUrl !== newQuestion.buttonUrl
+    );
+  });
+
 /**
  * Checks if external URLs can be added or modified for the given organization.
  * Grandfathers existing external URLs (allows keeping them even on free plan).
@@ -35,37 +65,16 @@ export const checkExternalUrlsPermission = async (
   }
 
   // Check ending cards for new/changed button links
-  for (const newEnding of newSurvey.endings) {
-    const oldEnding = oldSurvey?.endings.find((e) => e.id === newEnding.id);
-
-    if (
-      newEnding.type === "endScreen" &&
-      newEnding.buttonLink &&
-      !isDefaultEndingCardButtonLink(newEnding.buttonLink)
-    ) {
-      if (!oldEnding || oldEnding.type !== "endScreen" || oldEnding.buttonLink !== newEnding.buttonLink) {
-        throw new OperationNotAllowedError(
-          "External URLs are not enabled for this organization. Upgrade to use external button links."
-        );
-      }
-    }
+  if (addsExternalEndingLink(newSurvey, oldSurvey)) {
+    throw new OperationNotAllowedError(
+      "External URLs are not enabled for this organization. Upgrade to use external button links."
+    );
   }
 
   // Check CTA questions for new/changed external button URLs
-  for (const newQuestion of newQuestions) {
-    const oldQuestion = oldQuestions.find((q) => q.id === newQuestion.id);
-
-    if (newQuestion.type === "cta" && newQuestion.buttonExternal) {
-      if (
-        !oldQuestion ||
-        oldQuestion.type !== "cta" ||
-        !oldQuestion.buttonExternal ||
-        oldQuestion.buttonUrl !== newQuestion.buttonUrl
-      ) {
-        throw new OperationNotAllowedError(
-          "External URLs are not enabled for this organization. Upgrade to use external CTA buttons."
-        );
-      }
-    }
+  if (addsExternalCtaUrl(newQuestions, oldQuestions)) {
+    throw new OperationNotAllowedError(
+      "External URLs are not enabled for this organization. Upgrade to use external CTA buttons."
+    );
   }
 };

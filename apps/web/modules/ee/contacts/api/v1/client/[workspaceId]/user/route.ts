@@ -34,6 +34,85 @@ type TContactUserRequestBody = Record<string, unknown> & {
   userId?: unknown;
 };
 
+/** The parsed body, or the error response for a body that is too large or malformed. */
+const readUserRequestBody = async (
+  req: Request
+): Promise<{ jsonInput: TContactUserRequestBody } | { response: Response }> => {
+  try {
+    return { jsonInput: await parseJsonBodyWithLimit<TContactUserRequestBody>(req) };
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return {
+        response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }, true),
+      };
+    }
+
+    return {
+      response: responses.badRequestResponse(
+        "Malformed JSON input, please check your request body",
+        { error: error instanceof Error ? error.message : "Unknown error occurred" },
+        true
+      ),
+    };
+  }
+};
+
+/** Why the attributes are rejected (array, too many keys, malformed email), or null when they pass. */
+const getAttributesError = (attributes: Record<string, unknown> | undefined): string | null => {
+  if (Array.isArray(attributes)) {
+    return "attributes must be an object";
+  }
+
+  if (attributes && Object.keys(attributes).length > MAX_CONTACT_ATTRIBUTES_PER_REQUEST) {
+    return `A request may set at most ${MAX_CONTACT_ATTRIBUTES_PER_REQUEST} attributes`;
+  }
+
+  if (attributes && Object.hasOwn(attributes, "email")) {
+    const email = attributes.email;
+    if (typeof email !== "string" || !email.includes("@") || email.length < 3) {
+      return "Invalid email format";
+    }
+  }
+
+  return null;
+};
+
+/** The userId and attributes of the request body, or the error response that rejects it. */
+const parseUserRequestBody = async (
+  req: Request
+): Promise<{ userId: string; attributes: Record<string, unknown> | undefined } | { response: Response }> => {
+  const body = await readUserRequestBody(req);
+  if ("response" in body) {
+    return body;
+  }
+  const { jsonInput } = body;
+
+  // Basic input validation without Zod overhead
+  if (
+    !jsonInput ||
+    typeof jsonInput !== "object" ||
+    !jsonInput.userId ||
+    typeof jsonInput.userId !== "string"
+  ) {
+    return {
+      response: responses.badRequestResponse("userId is required and must be a string", undefined, true),
+    };
+  }
+
+  // Simple email validation if present (avoid Zod)
+  const attributes =
+    typeof jsonInput.attributes === "object" && jsonInput.attributes !== null
+      ? jsonInput.attributes
+      : undefined;
+
+  const attributesError = getAttributesError(attributes);
+  if (attributesError) {
+    return { response: responses.badRequestResponse(attributesError, undefined, true) };
+  }
+
+  return { userId: jsonInput.userId, attributes };
+};
+
 export const OPTIONS = async (): Promise<Response> => {
   return responses.successResponse(
     {},
@@ -83,69 +162,11 @@ export const POST = withV1ApiWrapper({
       }
       const { workspaceId } = resolved;
 
-      let jsonInput: TContactUserRequestBody;
-      try {
-        jsonInput = await parseJsonBodyWithLimit<TContactUserRequestBody>(req);
-      } catch (error) {
-        if (error instanceof RequestBodyTooLargeError) {
-          return {
-            response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }, true),
-          };
-        }
-
-        return {
-          response: responses.badRequestResponse(
-            "Malformed JSON input, please check your request body",
-            { error: error instanceof Error ? error.message : "Unknown error occurred" },
-            true
-          ),
-        };
+      const parsed = await parseUserRequestBody(req);
+      if ("response" in parsed) {
+        return parsed;
       }
-
-      // Basic input validation without Zod overhead
-      if (
-        !jsonInput ||
-        typeof jsonInput !== "object" ||
-        !jsonInput.userId ||
-        typeof jsonInput.userId !== "string"
-      ) {
-        return {
-          response: responses.badRequestResponse("userId is required and must be a string", undefined, true),
-        };
-      }
-
-      // Simple email validation if present (avoid Zod)
-      const attributes =
-        typeof jsonInput.attributes === "object" && jsonInput.attributes !== null
-          ? jsonInput.attributes
-          : undefined;
-
-      if (Array.isArray(attributes)) {
-        return {
-          response: responses.badRequestResponse("attributes must be an object", undefined, true),
-        };
-      }
-
-      if (attributes && Object.keys(attributes).length > MAX_CONTACT_ATTRIBUTES_PER_REQUEST) {
-        return {
-          response: responses.badRequestResponse(
-            `A request may set at most ${MAX_CONTACT_ATTRIBUTES_PER_REQUEST} attributes`,
-            undefined,
-            true
-          ),
-        };
-      }
-
-      if (attributes && Object.hasOwn(attributes, "email")) {
-        const email = attributes.email;
-        if (typeof email !== "string" || !email.includes("@") || email.length < 3) {
-          return {
-            response: responses.badRequestResponse("Invalid email format", undefined, true),
-          };
-        }
-      }
-
-      const userId = jsonInput.userId;
+      const { userId, attributes } = parsed;
 
       const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
       const isContactsEnabled = await getIsContactsEnabled(organizationId);
