@@ -8,8 +8,7 @@ import { RESERVED_FIELD_CATALOG, type TLinkedEmbeddedField } from "@formbricks/t
 import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbricks/types/responses";
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { calculateTtcTotal } from "@/lib/response/utils";
-import { type TV3AnswerPlan, isPublishableDataKey } from "./answers";
-import { narrowToPublishableValue } from "./resources";
+import { type TV3AnswerPlan, isPublishableDataKey, publishedDataValue } from "./answers";
 
 /**
  * UTF-8 byte length, matching how `applyIngestContract` measures a value. `String.length` counts
@@ -116,19 +115,19 @@ export type TV3AnswerDataPlan = TV3WritePlanIssues & { data: TResponseData };
  * Project the caller's `data` onto the stored answer map.
  *
  * **The write predicate is the read projection.** A key is accepted here exactly when the detail
- * view publishes it, because both ask `isPublishableDataKey`. That is the round-trip guarantee in
- * one line: every byte a caller can read back is a byte it can send again, and no byte it cannot
- * read can be written. Getting this wrong in either direction is a real failure — a narrower write
+ * view publishes it, because both ask `isPublishableDataKey`, and a stored entry is carried over
+ * exactly when the view withholds it, because both ask `publishedDataValue`. That is the round-trip
+ * guarantee: every byte a caller can read back is a byte it can send again, no byte it cannot read
+ * can be written, and no byte it cannot read is lost by leaving it out. Getting this wrong in either direction is a real failure — a narrower write
  * rejects what `GET` just handed out, a wider one lets a caller stamp `verifiedEmail` onto someone
  * else's response.
  *
  * `stored` is what makes "replaced wholesale" safe. The contract says an omitted key is removed, and
  * that is honoured for everything the caller can see; the keys it *cannot* see — a hidden field's
  * value, an email-gate `verifiedEmail` — are carried over from `stored` rather than dropped. So is
- * an answer under a publishable key whose stored value the read withholds because it is outside the
- * published shapes (`narrowToPublishableValue`, e.g. a legacy number array): the caller never saw
- * it, so its absence from the payload is not a deletion. Sending a new value for that key still
- * replaces it. Without the carry-over, the documented round trip (read the detail view, edit one
+ * an answer whose stored value the read withholds because it is outside the published shapes (a
+ * legacy number array, a JSON `null`): the caller never saw it, so its absence from the payload is
+ * not a deletion. Sending a new value for that key still replaces it. Without the carry-over, the documented round trip (read the detail view, edit one
  * answer, send it back) would silently destroy those values, and nothing in the payload would hint
  * that it had. Pass `undefined` on create, where there is nothing to carry over.
  */
@@ -144,7 +143,7 @@ export const planAnswerDataWrite = (
   const data = Object.create(null) as TResponseData;
 
   for (const [key, value] of Object.entries(stored ?? {})) {
-    if (!isPublishableDataKey(plan, key) || narrowToPublishableValue(value) === undefined) {
+    if (publishedDataValue(plan, key, value) === undefined) {
       data[key] = value;
     }
   }

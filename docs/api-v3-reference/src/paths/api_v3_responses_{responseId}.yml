@@ -27,7 +27,8 @@ get:
     values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but
     unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data`
     wholesale, so an omitted key is a deleted answer rather than an unchanged one. The exception is
-    an answer whose stored value is outside the published `ResponseRawValue` shapes (a legacy format):
+    an answer whose stored value is outside the published `ResponseRawValue` shapes (a legacy format
+    or a JSON `null`):
     `data` withholds it, and `PATCH` keeps it unless the request sends a new value for that key.
   tags:
     - V3 Responses
