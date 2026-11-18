@@ -1,7 +1,7 @@
 "use client";
 
 import { PencilIcon } from "lucide-react";
-import { type FormEvent, useState } from "react";
+import { type SubmitEvent, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { useRenameEmbeddedField } from "@/modules/ee/analysis/charts/hooks/use-rename-embedded-field";
@@ -55,7 +55,7 @@ export function EmbeddedFieldRenameButton({
       }
     );
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     save(draft);
   };
