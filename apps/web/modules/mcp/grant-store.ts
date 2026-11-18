@@ -7,6 +7,7 @@ import {
   reconcileMcpGrantRelationships,
   removeDeletedMcpGrantRelationships,
 } from "@/lib/authzed/mcp-grant";
+import { queueAuthzedOutboxEvents } from "@/lib/authzed/outbox-repository";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
@@ -390,9 +391,7 @@ export const projectMcpGrants = async (grantIds: ReadonlyArray<string>): Promise
 export const repairMcpGrantsAfterFailedSave = async (grantIds: ReadonlyArray<string>): Promise<void> => {
   if (grantIds.length === 0) return;
   try {
-    await prisma.authzedProjectionOutbox.createMany({
-      data: grantIds.map((primaryId) => ({ targetType: "mcp_grant", primaryId, isRevocation: false })),
-    });
+    await queueAuthzedOutboxEvents("mcp_grant", grantIds);
   } catch (error) {
     logger.error(
       { err: loggableError(error), grants: grantIds.length },

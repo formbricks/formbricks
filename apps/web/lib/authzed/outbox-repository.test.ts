@@ -9,6 +9,7 @@ import {
   markAuthzedOutboxEventsDelivered,
   markAuthzedOutboxEventsFailed,
   pruneAuthzedOutboxHistory,
+  queueAuthzedOutboxEvents,
   replayAuthzedOutboxDeadLetters,
 } from "./outbox-repository";
 
@@ -194,5 +195,28 @@ describe("AuthZed projection outbox repository", () => {
         permanentFailures: 0,
       },
     });
+  });
+});
+
+describe("queueAuthzedOutboxEvents", () => {
+  test("queues one event per id, not as a revocation", async () => {
+    vi.mocked(prisma.authzedProjectionOutbox.createMany).mockResolvedValue({ count: 2 });
+
+    await queueAuthzedOutboxEvents("mcp_grant", ["grant-1", "grant-2"]);
+
+    expect(prisma.authzedProjectionOutbox.createMany).toHaveBeenCalledWith({
+      data: [
+        { targetType: "mcp_grant", primaryId: "grant-1", isRevocation: false },
+        { targetType: "mcp_grant", primaryId: "grant-2", isRevocation: false },
+      ],
+    });
+  });
+
+  test("queues nothing for no ids", async () => {
+    vi.mocked(prisma.authzedProjectionOutbox.createMany).mockClear();
+
+    await queueAuthzedOutboxEvents("mcp_grant", []);
+
+    expect(prisma.authzedProjectionOutbox.createMany).not.toHaveBeenCalled();
   });
 });

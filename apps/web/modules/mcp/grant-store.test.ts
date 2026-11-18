@@ -8,6 +8,7 @@ import {
   reconcileMcpGrantRelationships,
   removeDeletedMcpGrantRelationships,
 } from "@/lib/authzed/mcp-grant";
+import { queueAuthzedOutboxEvents } from "@/lib/authzed/outbox-repository";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { resolveMcpGrantSelection } from "./access-options";
 import {
@@ -44,6 +45,7 @@ vi.mock("@/lib/authzed/mcp-grant", () => ({
 }));
 
 vi.mock("./access-options", () => ({ resolveMcpGrantSelection: vi.fn() }));
+vi.mock("@/lib/authzed/outbox-repository", () => ({ queueAuthzedOutboxEvents: vi.fn() }));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   queueAuditEventBackground: vi.fn(),
@@ -492,7 +494,7 @@ describe("repairMcpGrantsAfterFailedSave", () => {
     vi.mocked(reconcileMcpGrantRelationships)
       .mockReset()
       .mockResolvedValue({ passes: 1, status: "projected" });
-    prisma.authzedProjectionOutbox.createMany.mockReset().mockResolvedValue({ count: 1 });
+    vi.mocked(queueAuthzedOutboxEvents).mockReset().mockResolvedValue(undefined);
     vi.mocked(logger.error).mockClear();
   });
 
@@ -500,17 +502,15 @@ describe("repairMcpGrantsAfterFailedSave", () => {
   test("queues an outbox event per grant, then reconciles now", async () => {
     await repairMcpGrantsAfterFailedSave([GRANT_ID]);
 
-    expect(prisma.authzedProjectionOutbox.createMany).toHaveBeenCalledWith({
-      data: [{ targetType: "mcp_grant", primaryId: GRANT_ID, isRevocation: false }],
-    });
-    expect(prisma.authzedProjectionOutbox.createMany.mock.invocationCallOrder[0]).toBeLessThan(
+    expect(queueAuthzedOutboxEvents).toHaveBeenCalledWith("mcp_grant", [GRANT_ID]);
+    expect(vi.mocked(queueAuthzedOutboxEvents).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(reconcileMcpGrantRelationships).mock.invocationCallOrder[0]
     );
     expect(reconcileMcpGrantRelationships).toHaveBeenCalledWith({ grantIds: [GRANT_ID] });
   });
 
   test("still reconciles, and logs the fault, when queueing fails; never throws", async () => {
-    prisma.authzedProjectionOutbox.createMany.mockRejectedValue(new Error("db down for a@b.c"));
+    vi.mocked(queueAuthzedOutboxEvents).mockRejectedValue(new Error("db down for a@b.c"));
 
     await expect(repairMcpGrantsAfterFailedSave([GRANT_ID])).resolves.toBeUndefined();
 
@@ -525,7 +525,7 @@ describe("repairMcpGrantsAfterFailedSave", () => {
   test("does nothing for no grants", async () => {
     await repairMcpGrantsAfterFailedSave([]);
 
-    expect(prisma.authzedProjectionOutbox.createMany).not.toHaveBeenCalled();
+    expect(queueAuthzedOutboxEvents).not.toHaveBeenCalled();
     expect(reconcileMcpGrantRelationships).not.toHaveBeenCalled();
   });
 });

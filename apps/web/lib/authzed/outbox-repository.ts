@@ -6,6 +6,7 @@ import {
   AUTHZED_OUTBOX_TARGET_TYPES,
   type TAuthzedOutboxEvent,
   type TAuthzedOutboxStatus,
+  type TAuthzedOutboxTargetType,
 } from "./outbox-types";
 
 /**
@@ -357,4 +358,20 @@ export const pruneAuthzedOutboxHistory = async (): Promise<number> => {
   }
 
   return deleted;
+};
+
+/**
+ * Queues one event per id for `targetType`, outside any trigger: for a caller whose change rolled back with
+ * the event its rows would have queued, and whose projection still needs repairing (an MCP grant narrowed in
+ * SpiceDB before a save that then failed). Not a revocation: the repair reconciles toward the committed
+ * rows, whichever way that goes.
+ */
+export const queueAuthzedOutboxEvents = async (
+  targetType: TAuthzedOutboxTargetType,
+  primaryIds: ReadonlyArray<string>
+): Promise<void> => {
+  if (primaryIds.length === 0) return;
+  await prisma.authzedProjectionOutbox.createMany({
+    data: primaryIds.map((primaryId) => ({ targetType, primaryId, isRevocation: false })),
+  });
 };

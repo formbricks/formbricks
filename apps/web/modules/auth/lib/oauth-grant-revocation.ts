@@ -269,7 +269,7 @@ type TConsentChange = {
    * ({@link snapshotConsentBeforeApprovalHandler}), to put back if its grant can't be saved; `null` when no
    * snapshot names this user and client, and for `update-consent`.
    */
-  previousConsents: TConsentSnapshotRow[] | null;
+  previousConsents: TConsentPreimage[] | null;
   /**
    * The grant the user chose on the consent screen: the levels of its matrix (ENG-7150), saved capped by
    * the consent's scopes, and its organization & workspace access (ENG-7153). `null` saves what the
@@ -456,9 +456,6 @@ const restoreMcpGrantRelationships = async (userId: string, change: TConsentChan
   }
 };
 
-/** A consent row as the provider writes it on Allow: every column its write sets, to put back. */
-type TConsentSnapshotRow = TConsentPreimage;
-
 /**
  * The consent rows to put back if the approval fails: the request's snapshot, with each row this request
  * updated replaced by what the update itself replaced (read just before the write, `oauth-consent-writes.ts`)
@@ -467,9 +464,9 @@ type TConsentSnapshotRow = TConsentPreimage;
  * nor a recorded write: nothing names what to put back.
  */
 const overlayConsentPreimages = (
-  snapshotRows: ReadonlyArray<TConsentSnapshotRow> | null,
+  snapshotRows: ReadonlyArray<TConsentPreimage> | null,
   { replaced, createdIds }: Awaited<ReturnType<typeof readConsentPreimages>>
-): TConsentSnapshotRow[] | null => {
+): TConsentPreimage[] | null => {
   if (!snapshotRows && replaced.length === 0 && createdIds.size === 0) return null;
   const byId = new Map((snapshotRows ?? []).map((row) => [row.id, row]));
   for (const row of replaced) byId.set(row.id, row);
@@ -489,7 +486,7 @@ const CONSENT_SNAPSHOT_SELECT = {
 const consentSnapshot = defineRequestState<{
   userId: string;
   clientId: string;
-  rows: TConsentSnapshotRow[];
+  rows: TConsentPreimage[];
 } | null>(() => null);
 
 /**
@@ -538,7 +535,7 @@ const restoreConsents = async (
   tx: Prisma.TransactionClient,
   userId: string,
   clientId: string,
-  previous: ReadonlyArray<TConsentSnapshotRow>,
+  previous: ReadonlyArray<TConsentPreimage>,
   isOwnWrite: (consent: TConsentRow) => boolean
 ): Promise<void> => {
   const written = (await lockConsents(tx, userId, { clientId }, "update")).filter(isOwnWrite);
