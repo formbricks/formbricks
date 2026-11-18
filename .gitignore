@@ -19,6 +19,8 @@
 **/dist/
 
 # misc
+# PR screenshots: committed with `git add -f` and deleted in the next commit (.agents/skills/pr/SCREENSHOTS.md)
+.pr-assets/
 **/.DS_Store
 *.pem
 Zone.Identifier
@@ -98,6 +100,7 @@ authzed/*.perf.jsonl
 !.claude/skills/grilling
 !.claude/skills/implement
 !.claude/skills/implement-spec
+!.claude/skills/pr
 !.claude/skills/retro
 !.claude/skills/tdd
 !.claude/skills/release-notes
