@@ -37,9 +37,10 @@ export const GET = withV1ApiWrapper({
 
     const searchParams = req.nextUrl.searchParams;
     const surveyId = searchParams.get("surveyId");
-    const { limit, offset } = parseV1Pagination(searchParams, { defaultLimit: RESPONSES_PER_PAGE });
 
     try {
+      // Inside the try: an over-the-ceiling limit throws a ValidationError that handleApiError turns into a 400.
+      const { limit, offset } = parseV1Pagination(searchParams, { defaultLimit: RESPONSES_PER_PAGE });
       const allResponses: TResponse[] = [];
 
       if (surveyId) {

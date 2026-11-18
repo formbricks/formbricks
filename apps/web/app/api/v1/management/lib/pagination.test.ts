@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { ValidationError } from "@formbricks/types/errors";
 import { V1_MANAGEMENT_MAX_LIMIT, parseV1Pagination } from "./pagination";
 
 const parse = (query: string, options?: Parameters<typeof parseV1Pagination>[1]) =>
@@ -17,16 +18,17 @@ describe("parseV1Pagination", () => {
     expect(parse("limit=10&skip=30")).toEqual({ limit: 10, offset: 30 });
   });
 
-  test.each(["251", "100000", "1e9", "Infinity"])(
-    "never returns more than the ceiling for limit=%s",
+  test("accepts a limit exactly at the ceiling", () => {
+    expect(parse(`limit=${V1_MANAGEMENT_MAX_LIMIT}`).limit).toBe(V1_MANAGEMENT_MAX_LIMIT);
+  });
+
+  test.each(["251", "100000", "1e9", "Infinity", "251.5"])(
+    "refuses limit=%s above the ceiling with a ValidationError instead of clamping it",
     (raw) => {
-      expect(parse(`limit=${raw}`).limit).toBeLessThanOrEqual(V1_MANAGEMENT_MAX_LIMIT);
+      expect(() => parse(`limit=${raw}`)).toThrow(ValidationError);
+      expect(() => parse(`limit=${raw}`)).toThrow(`limit must not exceed ${V1_MANAGEMENT_MAX_LIMIT}`);
     }
   );
-
-  test("clamps limit above the ceiling to the ceiling", () => {
-    expect(parse("limit=100000").limit).toBe(V1_MANAGEMENT_MAX_LIMIT);
-  });
 
   test.each(["0", "-5", "abc", "NaN", ""])("falls back to the default for limit=%j", (raw) => {
     expect(parse(`limit=${raw}`, { defaultLimit: 25 }).limit).toBe(25);

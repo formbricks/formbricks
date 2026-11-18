@@ -58,8 +58,17 @@ describe.each([
     expect(loader).toHaveBeenCalledWith(["workspace-1"], V1_MANAGEMENT_MAX_LIMIT, 0);
   });
 
-  test("clamps an oversized limit and passes skip through", async () => {
-    await call(route, "?limit=1000000&skip=500");
+  test("passes an in-range limit and skip through", async () => {
+    await call(route, `?limit=${V1_MANAGEMENT_MAX_LIMIT}&skip=500`);
     expect(loader).toHaveBeenCalledWith(["workspace-1"], V1_MANAGEMENT_MAX_LIMIT, 500);
+  });
+
+  test("answers 400 for a limit above the ceiling instead of clamping it", async () => {
+    const result = (await call(route, "?limit=1000000&skip=500")) as { response: Response };
+    expect(result.response.status).toBe(400);
+    expect(await result.response.json()).toEqual(
+      expect.objectContaining({ message: `limit must not exceed ${V1_MANAGEMENT_MAX_LIMIT}` })
+    );
+    expect(loader).not.toHaveBeenCalled();
   });
 });

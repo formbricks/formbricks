@@ -1633,7 +1633,7 @@
             }
           },
           {
-            "description": "Number of items to return. Defaults to 250; values above 250 are capped at 250.",
+            "description": "Number of items to return. Defaults to 250; a value above 250 is refused with 400 Bad Request.",
             "in": "query",
             "name": "limit",
             "schema": {
@@ -2445,7 +2445,7 @@
             }
           },
           {
-            "description": "Number of items to return. Defaults to 250; values above 250 are capped at 250.",
+            "description": "Number of items to return. Defaults to 250; a value above 250 is refused with 400 Bad Request.",
             "in": "query",
             "name": "limit",
             "schema": {
@@ -2700,7 +2700,7 @@
             }
           },
           {
-            "description": "Number of items to return. Defaults to 250; values above 250 are capped at 250.",
+            "description": "Number of items to return. Defaults to 250; a value above 250 is refused with 400 Bad Request.",
             "in": "query",
             "name": "limit",
             "schema": {
@@ -2801,7 +2801,7 @@
             }
           },
           {
-            "description": "Number of items to return. Defaults to 250; values above 250 are capped at 250.",
+            "description": "Number of items to return. Defaults to 250; a value above 250 is refused with 400 Bad Request.",
             "in": "query",
             "name": "limit",
             "schema": {
@@ -3204,7 +3204,7 @@
             }
           },
           {
-            "description": "Number of items to return. Defaults to 25; values above 250 are capped at 250.",
+            "description": "Number of items to return. Defaults to 25; a value above 250 is refused with 400 Bad Request.",
             "in": "query",
             "name": "limit",
             "schema": {
@@ -4602,7 +4602,7 @@
             }
           },
           {
-            "description": "Number of items to return. Defaults to 250; values above 250 are capped at 250.",
+            "description": "Number of items to return. Defaults to 250; a value above 250 is refused with 400 Bad Request.",
             "in": "query",
             "name": "limit",
             "schema": {
@@ -6467,7 +6467,7 @@
             }
           },
           {
-            "description": "Number of items to return. Defaults to 250; values above 250 are capped at 250.",
+            "description": "Number of items to return. Defaults to 250; a value above 250 is refused with 400 Bad Request.",
             "in": "query",
             "name": "limit",
             "schema": {
