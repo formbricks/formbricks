@@ -14,6 +14,7 @@ import { useDatasetChartFields } from "@/modules/ee/analysis/charts/hooks/use-da
 import { prepareQueryForChartType } from "@/modules/ee/analysis/charts/lib/big-number";
 import {
   EMPTY_CHART_BUILDER_STATE,
+  toAdoptedQueryJson,
   toComparableQueryJson,
 } from "@/modules/ee/analysis/charts/lib/builder-query";
 import { namesDatasetField } from "@/modules/ee/analysis/charts/lib/catalog-embedded-fields";
@@ -131,9 +132,7 @@ export function AdvancedChartBuilder({
   }, [chartType]);
 
   // The query handed in is the one the preview shows; it is handed in again after every successful run.
-  const [adoptedQueryJson, setAdoptedQueryJson] = useState(() =>
-    toComparableQueryJson(initialQuery, chartType)
-  );
+  const [adoptedQueryJson, setAdoptedQueryJson] = useState(() => toAdoptedQueryJson(initialQuery, chartType));
 
   const [dimensionsOpen, setDimensionsOpen] = useState(
     () => (parsedInitial?.selectedDimensions?.length ?? 0) > 0
@@ -194,7 +193,7 @@ export function AdvancedChartBuilder({
     const parsed = parseQueryToState(initialQuery);
     const initialQueryJson = toComparableQueryJson(initialQuery, chartType);
     lastRunQueryJsonRef.current = runInitialQueryRef.current ? null : initialQueryJson;
-    setAdoptedQueryJson(initialQueryJson);
+    setAdoptedQueryJson(toAdoptedQueryJson(initialQuery, chartType));
     dispatch({ type: ACTION.INIT_FROM_QUERY, payload: parsed });
     setDimensionsOpen((parsed.selectedDimensions?.length ?? 0) > 0);
     // chartType only feeds the baseline above; a later switch is caught by the guard and left to

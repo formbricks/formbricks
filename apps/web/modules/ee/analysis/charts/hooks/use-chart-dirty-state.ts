@@ -62,7 +62,7 @@ export function useChartDirtyState({
   // chartData only changes when a query succeeds, so an edit the query rejected is invisible to the
   // snapshot and has to be reported by the builder.
   const hasUnsavedChart =
-    !isSaving && baseline !== null && (hasUnadoptedQueryEdit || !isDeepEqual(currentSnapshot, baseline));
+    !isSaving && (hasUnadoptedQueryEdit || (baseline !== null && !isDeepEqual(currentSnapshot, baseline)));
   useBeforeUnloadPrompt(() => open && hasUnsavedChart);
 
   const [isConfirmingDiscard, setIsConfirmingDiscard] = useState(false);

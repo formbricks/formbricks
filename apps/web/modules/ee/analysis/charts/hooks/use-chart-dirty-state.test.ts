@@ -105,4 +105,10 @@ describe("useChartDirtyState", () => {
     expect(close).not.toHaveBeenCalled();
     expect(result.current.isConfirmingDiscard).toBe(true);
   });
+
+  test("a query edit asks even before a baseline exists, e.g. when the saved chart's data failed to load", () => {
+    const { result } = render({ isReady: false, chartData: null, hasUnadoptedQueryEdit: true });
+
+    expect(result.current.hasUnsavedChart).toBe(true);
+  });
 });
