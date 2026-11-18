@@ -6,7 +6,7 @@
  * stability promise, with every other v3 convention applied.
  *
  * The body is `multipart/form-data` with the workspace and exactly one file part, for every file type
- * (CODING_STANDARDS.md "File Uploads and Downloads"). Anything else is a 415; wrong fields a 400. The
+ * (read through `@/app/lib/api/request-body`, as `formbricks/raw-upload-read` requires). Anything else is a 415; wrong fields a 400. The
  * body is capped at `SURVEY_IMPORT_MAX_BODY_BYTES` from `Content-Length` and again while it streams in,
  * so a chunked upload needs no `Content-Length` (no 411). The operation then tells the file's type from
  * its bytes and holds it to the rest of the upload's limits before its lane reads it.

@@ -1,3 +1,4 @@
+import formbricks from "@formbricks/config-eslint/formbricks-rules";
 import next, { nextCacheRestriction } from "@formbricks/config-eslint/next";
 
 /*
@@ -69,6 +70,88 @@ const PROCESS_ENV_EXEMPT_FILES = [
   "**/__mocks__/**",
 ];
 
+/*
+ * formbricks/* rules (ENG-7325): the mechanical half of what CODING_STANDARDS.md used to say in prose. Each
+ * rule's message carries its reason. Existing violations are frozen in `eslint-suppressions.json`, so only
+ * new code has to comply; see packages/config-eslint/formbricks-rules.mjs for the ratchet.
+ */
+// Tests, fixtures and tooling set up the states these rules forbid in served code.
+const FORMBRICKS_RULES_EXEMPT_FILES = [
+  "**/*.test.{ts,tsx}",
+  "**/__mocks__/**",
+  "**/__fixtures__/**",
+  "integration/**",
+  "scripts/**",
+  "*.config.{ts,mts,mjs}",
+];
+
+// Each model's one deletion path, which also removes its storage objects, Hub records and invites.
+const DELETION_SERVICES = {
+  survey: "modules/survey/lib/surveys.ts",
+  response: "lib/response/delete-responses.ts",
+  workspace: "modules/workspaces/settings/lib/workspace.ts",
+  organization: "lib/organization/service.ts",
+};
+
+// Role and permission comparisons belong to their gate functions. Survey status has no single gate
+// function yet, so it is not listed; add it here once one exists (ENG-7325).
+const GATES = [
+  {
+    operand: String.raw`^(role|\w+Role)$`,
+    values: ["owner", "manager", "member", "billing"],
+    gate: "getAccessFlags / getUserManagementAccess (@/lib/membership/utils)",
+  },
+  {
+    operand: String.raw`^(role|\w+Role)$`,
+    values: ["admin", "contributor"],
+    gate: "getTeamAccessFlags (@/modules/ee/teams/utils/teams)",
+  },
+  {
+    operand: String.raw`^(permission|permissionLevel|\w+Permission)$`,
+    values: ["read", "readWrite", "manage"],
+    gate: "getTeamPermissionFlags (@/modules/ee/teams/utils/teams)",
+  },
+];
+
+const formbricksRules = [
+  {
+    files: ["**/*.{ts,tsx,mts,mjs,js}"],
+    ignores: FORMBRICKS_RULES_EXEMPT_FILES,
+    plugins: { formbricks },
+    rules: {
+      "formbricks/loggable-error": "error",
+      "formbricks/gate-predicate": ["error", ...GATES],
+      "formbricks/deletion-service": ["error", DELETION_SERVICES],
+      "formbricks/spreadsheet-writer": "error",
+      "formbricks/raw-upload-read": "error",
+      "formbricks/content-disposition-helper": "error",
+    },
+  },
+  {
+    files: ["app/api/**/*.ts", "**/actions.ts", "modules/**/lib/**/*.ts", "lib/**/*.ts"],
+    ignores: FORMBRICKS_RULES_EXEMPT_FILES,
+    rules: { "formbricks/tenant-scoped-where": "error" },
+  },
+  {
+    files: [
+      "app/api/v3/**/*.ts",
+      "app/api/internal/**/*.ts",
+      "app/api/(internal)/**/*.ts",
+      "modules/mcp/**/*.ts",
+    ],
+    ignores: FORMBRICKS_RULES_EXEMPT_FILES,
+    rules: { "formbricks/strict-input-object": "error" },
+  },
+  // The one module each rule sends people to.
+  {
+    files: ["lib/membership/utils.ts", "modules/ee/teams/utils/teams.ts"],
+    rules: { "formbricks/gate-predicate": "off" },
+  },
+  { files: ["lib/utils/file-conversion.ts"], rules: { "formbricks/spreadsheet-writer": "off" } },
+  { files: ["app/lib/api/request-body.ts"], rules: { "formbricks/raw-upload-read": "off" } },
+  { files: ["lib/utils/content-disposition.ts"], rules: { "formbricks/content-disposition-helper": "off" } },
+];
+
 const config = [
   // carried over from the legacy .eslintignore / ignorePatterns
   {
@@ -134,8 +217,7 @@ const config = [
       // `<output>`.
       "jsx-a11y/prefer-tag-over-role": "warn",
 
-      // CODING_STANDARDS.md asks for `Readonly<>` props on every React component and Sonar enforces
-      // it as S6759, so until now a miss surfaced only after push. eslint-plugin-react (registered by
+      // Sonar asks for `Readonly<>` props on every React component (S6759), so until now a miss surfaced only after push. eslint-plugin-react (registered by
       // eslint-config-next) accepts both the `Readonly<Props>` wrapper and `readonly` members; its
       // autofix writes the latter, so `lint:fix` turns the rule off and fixes are made by hand with the
       // wrapper. 1795 violations across 386 files, no ratchet ticket yet; promote to "error" once the
@@ -171,6 +253,7 @@ const config = [
       ],
     },
   },
+  ...formbricksRules,
 ];
 
 export default config;

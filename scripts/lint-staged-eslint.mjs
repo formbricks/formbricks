@@ -10,6 +10,12 @@
  * Each touched package is linted from its own directory so ESLint 9 resolves
  * that package's flat config, and only the staged files are passed, so a commit
  * doesn't pay for pre-existing violations elsewhere in the package.
+ *
+ * Running from the package directory also picks up that package's
+ * `eslint-suppressions.json` (ENG-7325), the same baseline `pnpm lint` reads. A
+ * commit that fixes a suppressed violation is not blocked for leaving the
+ * baseline stale (`--pass-on-unpruned-suppressions`); `pnpm lint` in CI still
+ * fails on it, and `pnpm lint:prune-suppressions` updates the file.
  */
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
@@ -84,7 +90,7 @@ for (const [pkgDir, relFiles] of groupByPackage(process.argv.slice(2))) {
   if (!hasEslintConfig(pkgDir)) continue;
   const { status, error, stdout, stderr } = spawnSync(
     process.execPath,
-    [ESLINT_CLI, "--format", "json", ...relFiles],
+    [ESLINT_CLI, "--format", "json", "--pass-on-unpruned-suppressions", ...relFiles],
     {
       cwd: pkgDir,
       encoding: "utf8",

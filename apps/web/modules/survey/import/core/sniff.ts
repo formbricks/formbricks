@@ -191,7 +191,7 @@ const looksLikeJson = (text: string): boolean => {
 
 /**
  * Tell an uploaded file's type from its bytes, never from the name or the `Content-Type` the browser
- * sent (CODING_STANDARDS.md "File Uploads and Downloads"): the zip and Compound File signatures first,
+ * sent (the upload rule `formbricks/raw-upload-read` states): the zip and Compound File signatures first,
  * then, for text, the JSON shape; any other text is a CSV, decoded as `decodeText` tells.
  *
  * Throws `SurveyImportUnsupportedFileError` (415) for a kind of file the import does not read — a `.doc`

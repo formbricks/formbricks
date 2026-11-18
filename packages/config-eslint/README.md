@@ -2,13 +2,14 @@
 
 Shared [ESLint 9 flat config](https://eslint.org/docs/latest/use/configure/configuration-files) tiers for the Formbricks monorepo. Each package/app has a small `eslint.config.mjs` that imports exactly one tier:
 
-| Export          | Contents                                                                                                                                                                                            | Used by                                                                                         |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `./base`        | building blocks shared by every tier: turbo env-var checks, prettier compat (always last), the `@vitest` `test`-over-`it` convention, unused-vars `_`-prefix convention, common ignores, TS parsing | (composed by the tiers below)                                                                   |
-| `./library`     | eslint + typescript-eslint recommendedTypeChecked (type-aware) + `no-unnecessary-condition`, node globals — exported as a factory taking `tsconfigRootDir`                                          | ai, cache, database, i18n-utils, jobs, js-core, logger, storage, types, vite-plugins, workflows |
-| `./react`       | library baseline + react / react-hooks / jsx-a11y recommended, browser globals — exported as a factory taking `tsconfigRootDir`                                                                     | survey-ui, storybook                                                                            |
-| `./react-hooks` | lite tier mirroring the old `legacy-react`: react-hooks + jsx-a11y recommended, no full react/TS rule sets — move consumers to `./react` when ready                                                 | email, surveys                                                                                  |
-| `./next`        | `eslint-config-next` (flat) + the legacy-next rule parity overrides                                                                                                                                 | apps/web                                                                                        |
+| Export               | Contents                                                                                                                                                                                            | Used by                                                                                         |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `./base`             | building blocks shared by every tier: turbo env-var checks, prettier compat (always last), the `@vitest` `test`-over-`it` convention, unused-vars `_`-prefix convention, common ignores, TS parsing | (composed by the tiers below)                                                                   |
+| `./library`          | eslint + typescript-eslint recommendedTypeChecked (type-aware) + `no-unnecessary-condition`, node globals — exported as a factory taking `tsconfigRootDir`                                          | ai, cache, database, i18n-utils, jobs, js-core, logger, storage, types, vite-plugins, workflows |
+| `./react`            | library baseline + react / react-hooks / jsx-a11y recommended, browser globals — exported as a factory taking `tsconfigRootDir`                                                                     | survey-ui, storybook                                                                            |
+| `./react-hooks`      | lite tier mirroring the old `legacy-react`: react-hooks + jsx-a11y recommended, no full react/TS rule sets — move consumers to `./react` when ready                                                 | email, surveys                                                                                  |
+| `./next`             | `eslint-config-next` (flat) + the legacy-next rule parity overrides                                                                                                                                 | apps/web                                                                                        |
+| `./formbricks-rules` | the `formbricks/*` plugin: repo-specific rules replacing CODING_STANDARDS.md prose (ENG-7325); existing violations are frozen in each workspace's `eslint-suppressions.json`                        | apps/web                                                                                        |
 
 Usage in a package (`library` and `react` are factories so the type-aware rules resolve
 against the consuming package's own tsconfig via `projectService`):
@@ -21,6 +22,11 @@ export default library({ tsconfigRootDir: import.meta.dirname });
 ```
 
 Notes:
+
+- `formbricks/*` rules run at `error` against a bulk-suppression baseline (`apps/web/eslint-suppressions.json`): only new
+  code must comply. After fixing a suppressed violation, `pnpm lint` fails until `pnpm lint:prune-suppressions` updates
+  the baseline; the pre-commit hook passes `--pass-on-unpruned-suppressions` so it never blocks that fix. Rule tests:
+  `scripts/formbricks-eslint-rules.test.ts`; which files each rule reaches: `scripts/formbricks-eslint-wiring.test.ts`.
 
 - Type-aware linting requires every linted `.ts`/`.tsx` file to belong to the package's tsconfig
   (or the `projectService` default project). Plain `.js`/`.cjs`/`.mjs` files get the type-aware

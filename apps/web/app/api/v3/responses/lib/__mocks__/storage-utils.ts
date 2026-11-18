@@ -4,8 +4,8 @@ import { vi } from "vitest";
  * The `validateClientFileUploads` seam, shared by the operation tests that drive a write path.
  *
  * It lives here rather than inline in each test because the `vi.mock` call has to register before the
- * module under test is imported, and the import-sort rule puts `__mocks__` imports first — which is the
- * reason CODING_STANDARDS.md asks for mocks in this directory.
+ * module under test is imported, and the import-sort rule puts `__mocks__` imports first — which is why
+ * mocks live in this directory.
  *
  * Deliberately not shared with `service.test.ts`: that file keeps the module's real exports and stubs
  * only `getSurveyUploadElementIds`, with behaviour tied to its own fixtures, so folding it in here

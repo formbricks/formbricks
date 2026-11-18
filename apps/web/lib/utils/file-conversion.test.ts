@@ -1,4 +1,5 @@
 import { AsyncParser } from "@json2csv/node";
+import fc from "fast-check";
 import { describe, expect, test, vi } from "vitest";
 import * as xlsx from "xlsx";
 import { logger } from "@formbricks/logger";
@@ -172,5 +173,42 @@ describe("toCsvLine", () => {
 
   test("keeps a newline inside a quoted cell", () => {
     expect(toCsvLine(["line one\nline two"])).toBe('"line one\nline two"\r\n');
+  });
+});
+
+// A cell a spreadsheet would evaluate starts with one of these (OWASP CSV injection).
+const FORMULA_TRIGGERS = ["=", "+", "-", "@", "\t", "\r"];
+// Strings biased towards the triggers, so most runs exercise the dangerous prefix.
+const cellText = fc
+  .tuple(fc.constantFrom("", ...FORMULA_TRIGGERS), fc.string({ unit: "binary" }))
+  .map(([prefix, rest]) => prefix + rest);
+const startsWithTrigger = (value: string) => FORMULA_TRIGGERS.some((trigger) => value.startsWith(trigger));
+
+describe("formula injection (property)", () => {
+  test("no CSV cell toCsvLine writes starts with a formula trigger", () => {
+    fc.assert(
+      fc.property(cellText, (text) => {
+        const line = toCsvLine([text]);
+        // One quoted cell and CRLF: unquote it the way a spreadsheet reads it.
+        const cell = line.slice(1, -3).replaceAll('""', '"');
+        expect(startsWithTrigger(cell)).toBe(false);
+      })
+    );
+  });
+
+  test("no xlsx cell convertToXlsxBuffer writes is a formula or starts with a trigger", () => {
+    fc.assert(
+      fc.property(cellText, fc.array(cellText, { maxLength: 3 }), (header, values) => {
+        const rows = values.map((value) => ({ [header]: value }));
+        const book = xlsx.read(convertToXlsxBuffer([header], rows), { type: "buffer" });
+        const sheet = book.Sheets[book.SheetNames[0]];
+        for (const [address, cell] of Object.entries(sheet)) {
+          if (address.startsWith("!")) continue;
+          expect(cell.f).toBeUndefined();
+          if (typeof cell.v === "string") expect(startsWithTrigger(cell.v)).toBe(false);
+        }
+      }),
+      { numRuns: 50 }
+    );
   });
 });

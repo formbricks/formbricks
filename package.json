@@ -29,6 +29,7 @@
     "go": "pnpm db:up && pnpm dev:authzed && turbo run go --concurrency 20",
     "dev": "turbo run dev --parallel",
     "pre-commit": "lint-staged",
+    "lint:prune-suppressions": "pnpm -r --if-present lint:prune-suppressions",
     "start": "turbo run start --parallel",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

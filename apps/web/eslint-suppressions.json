@@ -1,0 +1,1727 @@
+{
+  "app/(app)/organizations/[organizationId]/settings/general/page.tsx": {
+    "formbricks/gate-predicate": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/components/organization-breadcrumb.tsx": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/components/workspace-breadcrumb.tsx": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/airtable/page.tsx": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/lib/surveys.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/components/shareEmbedModal/qr-code-tab.tsx": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/summary/lib/survey.ts": {
+    "formbricks/deletion-service": {
+      "count": 1
+    }
+  },
+  "app/api/(internal)/organizations/[organizationId]/usage/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/(internal)/surveys/[surveyId]/attachment-exports/[exportId]/download/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/(internal)/surveys/[surveyId]/attachment-exports/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/(internal)/surveys/[surveyId]/attachments/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 2
+    }
+  },
+  "app/api/(internal)/surveys/[surveyId]/export/lib/export-response.ts": {
+    "formbricks/content-disposition-helper": {
+      "count": 1
+    }
+  },
+  "app/api/(internal)/surveys/[surveyId]/export/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 2
+    }
+  },
+  "app/api/(internal)/workspaces/[workspaceId]/integrations/[type]/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/auth/sso/recovery/complete/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/client/[workspaceId]/responses/lib/mark-low-quality.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "app/api/google-sheet/callback/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/google-sheet/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/internal/retention-runs/export/lib/csv-stream.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "app/api/internal/retention-runs/export/lib/operations.ts": {
+    "formbricks/content-disposition-helper": {
+      "count": 1
+    }
+  },
+  "app/api/internal/surveys/[surveyId]/content/lib/schemas.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/internal/surveys/[surveyId]/export/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/internal/surveys/imports/lib/idempotency.ts": {
+    "formbricks/strict-input-object": {
+      "count": 2
+    }
+  },
+  "app/api/v1/client/[workspaceId]/displays/lib/display.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "app/api/v1/client/[workspaceId]/environment/lib/data.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "app/api/v1/client/[workspaceId]/environment/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v1/client/[workspaceId]/responses/lib/contact.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "app/api/v1/client/[workspaceId]/storage/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v1/integrations/airtable/callback/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v1/integrations/notion/callback/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v1/integrations/slack/callback/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v1/lib/utils.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 3
+    }
+  },
+  "app/api/v1/management/action-classes/[actionClassId]/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v1/management/action-classes/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v1/management/me/route.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "app/api/v1/management/responses/[responseId]/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v1/management/responses/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v1/management/storage/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "app/api/v1/management/surveys/[surveyId]/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v1/management/surveys/lib/surveys.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v1/management/surveys/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v1/webhooks/[webhookId]/lib/webhook.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "app/api/v1/webhooks/[webhookId]/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v2/client/[workspaceId]/creatives/events/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v2/client/[workspaceId]/displays/lib/display.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "app/api/v2/client/[workspaceId]/responses/lib/organization.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v2/client/[workspaceId]/responses/lib/recaptcha.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v3/charts/lib/duplicate-service.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "app/api/v3/charts/lib/service.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 3
+    }
+  },
+  "app/api/v3/contact-attribute-keys/lib/parse-v3-contact-attribute-keys-list-query.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/contacts/lib/parse-v3-contacts-list-query.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/creatives/lib/list-query.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/dashboards/lib/service.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 6
+    }
+  },
+  "app/api/v3/dashboards/lib/widget-service.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 3
+    }
+  },
+  "app/api/v3/feedbackRecords/lib/schemas.ts": {
+    "formbricks/strict-input-object": {
+      "count": 3
+    }
+  },
+  "app/api/v3/gateway/token/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/lib/bounded-parse.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/lib/dashboards-access.ts": {
+    "formbricks/gate-predicate": {
+      "count": 1
+    }
+  },
+  "app/api/v3/responses/lib/parse-v3-responses-list-query.ts": {
+    "formbricks/strict-input-object": {
+      "count": 2
+    }
+  },
+  "app/api/v3/responses/lib/service.ts": {
+    "formbricks/deletion-service": {
+      "count": 1
+    },
+    "formbricks/loggable-error": {
+      "count": 2
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "app/api/v3/responses/lib/validate-effects.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/api/v3/responses/lib/validate-operations.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/responses/lib/write-service.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "app/api/v3/segments/lib/parse-v3-segments-list-query.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/[surveyId]/archive/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/[surveyId]/blocks/order/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/[surveyId]/blocks/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/[surveyId]/restore/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/[surveyId]/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/[surveyId]/visibility/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/create.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/lib/operations.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/parse-v3-surveys-list-query.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/patch.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/schemas.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/targeting.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/templates/lib/template-create.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/visibility-context.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "app/api/v3/surveys/visibility/operations.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 4
+    }
+  },
+  "app/api/v3/workspaces/[workspaceId]/custom-css/route.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "app/lib/api/legacy-environment-id.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/lib/api/with-api-logging.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "app/lib/pipelines.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/plain/lib/customer.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/plain/lib/plain-sdk.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/setup/organization/create/actions.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "app/storage/[workspaceId]/[accessType]/[...filePath]/lib/audit-logs.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "app/storage/[workspaceId]/[accessType]/[...filePath]/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "instrumentation-jobs.ts": {
+    "formbricks/loggable-error": {
+      "count": 3
+    }
+  },
+  "instrumentation-node.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "instrumentation.ts": {
+    "formbricks/loggable-error": {
+      "count": 3
+    }
+  },
+  "lib/actionClass/service.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 3
+    }
+  },
+  "lib/airtable/service.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "lib/authorization/permission-action.ts": {
+    "formbricks/gate-predicate": {
+      "count": 4
+    }
+  },
+  "lib/authorization/resolvers.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 12
+    }
+  },
+  "lib/authzed/survey.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "lib/cache/index.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "lib/crypto.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "lib/display/service.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "lib/feedback-source/actions.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "lib/feedback-source/mapping-reconciliation.ts": {
+    "formbricks/loggable-error": {
+      "count": 3
+    }
+  },
+  "lib/feedback-source/pipeline-handler.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "lib/feedback-source/response-metadata.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "lib/feedback-source/service.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "lib/integration/service.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "lib/jwt.ts": {
+    "formbricks/loggable-error": {
+      "count": 6
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "lib/language/service.ts": {
+    "formbricks/loggable-error": {
+      "count": 5
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "lib/membership/service.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "lib/oauth/integration-state.ts": {
+    "formbricks/loggable-error": {
+      "count": 4
+    }
+  },
+  "lib/organization/service.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "lib/posthog/ai-tracing.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "lib/posthog/capture.ts": {
+    "formbricks/loggable-error": {
+      "count": 3
+    }
+  },
+  "lib/posthog/get-feature-flag.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "lib/posthog/mcp-tracing.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "lib/posthog/server.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "lib/response/not-shown-answers.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "lib/response/service.ts": {
+    "formbricks/deletion-service": {
+      "count": 1
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 6
+    }
+  },
+  "lib/survey/service.ts": {
+    "formbricks/loggable-error": {
+      "count": 7
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 20
+    }
+  },
+  "lib/tag/service.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "lib/telemetry/usage-update.ts": {
+    "formbricks/loggable-error": {
+      "count": 3
+    }
+  },
+  "lib/upgrade/online/projection.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "lib/user/reactivation.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "lib/user/service.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 3
+    }
+  },
+  "lib/utils/client-ip.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "lib/utils/file-conversion.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "lib/utils/services.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 14
+    }
+  },
+  "lib/utils/validate.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/account/components/DeleteAccountModal/index.tsx": {
+    "formbricks/loggable-error": {
+      "count": 3
+    }
+  },
+  "modules/account/lib/account-deletion-audit.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/account/lib/better-auth-account-deletion-request.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/account/lib/better-auth-account-deletion.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/api/v2/auth/api-wrapper.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/api/v2/lib/utils.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/api/v2/management/contact-attribute-keys/[contactAttributeKeyId]/lib/contact-attribute-key.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 3
+    }
+  },
+  "modules/api/v2/management/responses/[responseId]/lib/display.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/api/v2/management/responses/[responseId]/lib/response.ts": {
+    "formbricks/deletion-service": {
+      "count": 1
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 6
+    }
+  },
+  "modules/api/v2/management/responses/[responseId]/lib/survey.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/api/v2/management/responses/lib/response.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 4
+    }
+  },
+  "modules/api/v2/management/responses/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 4
+    }
+  },
+  "modules/api/v2/management/surveys/[surveyId]/contact-links/contacts/[contactId]/lib/surveys.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/contact.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/segment.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/lib/surveys.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/api/v2/management/surveys/[surveyId]/contact-links/segments/[segmentId]/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/api/v2/management/webhooks/[webhookId]/lib/webhook.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 4
+    }
+  },
+  "modules/api/v2/organizations/[organizationId]/users/lib/users.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 8
+    }
+  },
+  "modules/api/v2/organizations/[organizationId]/users/lib/utils.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/api/v2/organizations/[organizationId]/workspace-teams/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/api/v2/roles/lib/utils.ts": {
+    "formbricks/gate-predicate": {
+      "count": 1
+    }
+  },
+  "modules/auth/actions/sign-out.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/forgot-password/lib/password-reset-request.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/auth/forgot-password/lib/sso-sign-in-hint.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/forgot-password/reset/actions.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/hooks/use-sign-out.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/invite/lib/invite.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "modules/auth/invite/lib/team.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/auth/invite/page.tsx": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/auth/lib/auth.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/auth/lib/better-auth-active-user-gate.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/auth/lib/better-auth-email-verification.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/auth/lib/better-auth-hibp.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/lib/better-auth-two-factor-backfill.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/lib/better-auth-verification-autosignin.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/lib/brevo.ts": {
+    "formbricks/loggable-error": {
+      "count": 3
+    }
+  },
+  "modules/auth/lib/credential-issuer-heal.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/lib/oauth-grant-revocation.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/auth/lib/secondary-storage.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/lib/sign-in-tracking.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/auth/lib/user.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 3
+    }
+  },
+  "modules/auth/lib/utils.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/signup-without-verification-success/page.tsx": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/signup/actions.ts": {
+    "formbricks/loggable-error": {
+      "count": 4
+    }
+  },
+  "modules/auth/signup/lib/invite.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 3
+    }
+  },
+  "modules/auth/signup/lib/team.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/verification-requested/actions.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/verification-requested/page.tsx": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/auth/verify-email-change/components/email-change-sign-in.tsx": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/core/rate-limit/helpers.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/core/rate-limit/in-flight.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/custom-css/lib/delivery.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/custom-css/lib/service.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/deletion-cleanup/lib/drain.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "modules/deletion-cleanup/lib/hub-outcome.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/analysis/api/lib/cube-client.ts": {
+    "formbricks/loggable-error": {
+      "count": 6
+    }
+  },
+  "modules/ee/analysis/lib/ai-data-profile.server.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/audit-logs/lib/handler.ts": {
+    "formbricks/loggable-error": {
+      "count": 4
+    }
+  },
+  "modules/ee/audit-logs/lib/request-metadata.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/ee/audit-logs/lib/service.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/auth/saml/api/callback/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    },
+    "formbricks/raw-upload-read": {
+      "count": 1
+    }
+  },
+  "modules/ee/auth/saml/api/token/route.ts": {
+    "formbricks/raw-upload-read": {
+      "count": 1
+    }
+  },
+  "modules/ee/auth/saml/lib/jackson.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/auth/saml/lib/preload-connection.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/auth/saml/lib/saml-parse-budget.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/ee/billing/api/lib/stripe-webhook.ts": {
+    "formbricks/loggable-error": {
+      "count": 4
+    }
+  },
+  "modules/ee/billing/api/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/ee/billing/lib/metering.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/ee/billing/lib/organization-billing.ts": {
+    "formbricks/loggable-error": {
+      "count": 6
+    }
+  },
+  "modules/ee/billing/lib/stripe-billing-catalog.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/billing/lib/subscription-currency.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/contacts/api/v1/client/[workspaceId]/user/lib/segments.ts": {
+    "formbricks/loggable-error": {
+      "count": 4
+    }
+  },
+  "modules/ee/contacts/api/v1/client/[workspaceId]/user/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/lib/contact-attribute-key.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 3
+    }
+  },
+  "modules/ee/contacts/api/v1/management/contact-attribute-keys/[contactAttributeKeyId]/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/contacts/api/v1/management/contact-attribute-keys/route.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/contacts/api/v1/management/contacts/[contactId]/lib/contact.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "modules/ee/contacts/api/v2/management/contacts/bulk/lib/contact.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/contacts/lib/contact-attribute-keys.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 5
+    }
+  },
+  "modules/ee/contacts/lib/contact-auth.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/ee/contacts/lib/contacts.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 4
+    }
+  },
+  "modules/ee/contacts/segments/lib/filter/prisma-query.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/contacts/segments/lib/segments.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 9
+    }
+  },
+  "modules/ee/creatives/lib/custom-css.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/creatives/lib/repository.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/ee/data-retention/lib/exemptions-service.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "modules/ee/data-retention/lib/policies-service.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/ee/data-retention/sweep/members-sweeper.ts": {
+    "formbricks/gate-predicate": {
+      "count": 1
+    },
+    "formbricks/loggable-error": {
+      "count": 3
+    }
+  },
+  "modules/ee/data-retention/sweep/recipients.ts": {
+    "formbricks/gate-predicate": {
+      "count": 3
+    }
+  },
+  "modules/ee/data-retention/sweep/responses-sweeper.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/ee/data-retention/sweep/survey-notices.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/data-retention/sweep/surveys-sweeper.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/data-retention/sweep/sweep.ts": {
+    "formbricks/loggable-error": {
+      "count": 6
+    }
+  },
+  "modules/ee/data-retention/sweep/transaction.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/feedback-directory/lib/feedback-directory.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 5
+    }
+  },
+  "modules/ee/license-check/lib/license.ts": {
+    "formbricks/loggable-error": {
+      "count": 7
+    }
+  },
+  "modules/ee/mailing/lib/mailing-subscription.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/quotas/lib/evaluation-service.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/ee/quotas/lib/quotas.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 4
+    }
+  },
+  "modules/ee/quotas/lib/utils.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/role-management/actions.ts": {
+    "formbricks/gate-predicate": {
+      "count": 2
+    }
+  },
+  "modules/ee/role-management/lib/assignable-roles.ts": {
+    "formbricks/gate-predicate": {
+      "count": 5
+    }
+  },
+  "modules/ee/role-management/lib/membership.ts": {
+    "formbricks/gate-predicate": {
+      "count": 2
+    }
+  },
+  "modules/ee/role-management/lib/permission.ts": {
+    "formbricks/gate-predicate": {
+      "count": 3
+    }
+  },
+  "modules/ee/role-management/lib/role-edit-rules.ts": {
+    "formbricks/gate-predicate": {
+      "count": 3
+    }
+  },
+  "modules/ee/sso/lib/account-linking.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 5
+    }
+  },
+  "modules/ee/sso/lib/better-auth-hooks.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/ee/sso/lib/better-auth-recovery-signin.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/ee/sso/lib/default-organization.ts": {
+    "formbricks/loggable-error": {
+      "count": 3
+    }
+  },
+  "modules/ee/sso/lib/recovery-intent.ts": {
+    "formbricks/loggable-error": {
+      "count": 4
+    }
+  },
+  "modules/ee/sso/lib/sso-provisioning.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/ee/sso/lib/sso-recovery.ts": {
+    "formbricks/loggable-error": {
+      "count": 3
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "modules/ee/sso/lib/team.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 3
+    }
+  },
+  "modules/ee/teams/lib/roles.ts": {
+    "formbricks/gate-predicate": {
+      "count": 6
+    },
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/teams/team-list/components/team-settings/member-row.tsx": {
+    "formbricks/gate-predicate": {
+      "count": 2
+    }
+  },
+  "modules/ee/teams/team-list/components/team-settings/team-settings-modal.tsx": {
+    "formbricks/gate-predicate": {
+      "count": 2
+    }
+  },
+  "modules/ee/teams/team-list/components/teams-table.tsx": {
+    "formbricks/gate-predicate": {
+      "count": 1
+    }
+  },
+  "modules/ee/teams/team-list/lib/team.ts": {
+    "formbricks/gate-predicate": {
+      "count": 1
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 4
+    }
+  },
+  "modules/ee/teams/team-list/lib/workspace.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/two-factor-auth/lib/two-factor-auth.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 6
+    }
+  },
+  "modules/ee/workflows/lib/analytics/run-failure.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/workflows/lib/runner/enqueue-response-completed-runs.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/ee/workflows/lib/runner/mark-dispatched.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/workflows/lib/runner/process-workflow-run-job.ts": {
+    "formbricks/loggable-error": {
+      "count": 3
+    }
+  },
+  "modules/ee/workflows/lib/runner/reconcile-orphaned-runs.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/ee/workflows/lib/runner/reconcile-stuck-running-runs.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/email/index.tsx": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/email/lib/email-send-audit.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/embedded-data/lib/library.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/gateway-auth/lib/request.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/hub/service.ts": {
+    "formbricks/loggable-error": {
+      "count": 23
+    }
+  },
+  "modules/integrations/webhooks/lib/send-signed-webhook.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/integrations/webhooks/lib/webhook.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "modules/mcp/auth.ts": {
+    "formbricks/gate-predicate": {
+      "count": 1
+    }
+  },
+  "modules/mcp/server.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/mcp/tools/responses.ts": {
+    "formbricks/strict-input-object": {
+      "count": 1
+    }
+  },
+  "modules/organization/actions.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/organization/settings/api-keys/lib/api-key.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 3
+    }
+  },
+  "modules/organization/settings/teams/actions.ts": {
+    "formbricks/gate-predicate": {
+      "count": 10
+    },
+    "formbricks/loggable-error": {
+      "count": 2
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/organization/settings/teams/components/edit-memberships/members-info.tsx": {
+    "formbricks/gate-predicate": {
+      "count": 1
+    }
+  },
+  "modules/organization/settings/teams/components/edit-memberships/organization-actions.tsx": {
+    "formbricks/gate-predicate": {
+      "count": 1
+    }
+  },
+  "modules/organization/settings/teams/lib/bulk-invite-roles.ts": {
+    "formbricks/gate-predicate": {
+      "count": 1
+    }
+  },
+  "modules/organization/settings/teams/lib/invite.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 3
+    }
+  },
+  "modules/organization/settings/teams/lib/member-controls.ts": {
+    "formbricks/gate-predicate": {
+      "count": 3
+    }
+  },
+  "modules/organization/settings/teams/lib/membership.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/organization/settings/teams/lib/reactivate-member.ts": {
+    "formbricks/gate-predicate": {
+      "count": 1
+    }
+  },
+  "modules/organization/settings/teams/lib/utils.ts": {
+    "formbricks/gate-predicate": {
+      "count": 1
+    }
+  },
+  "modules/response-pipeline/lib/handle-integrations.ts": {
+    "formbricks/loggable-error": {
+      "count": 5
+    }
+  },
+  "modules/response-pipeline/lib/process-response-pipeline-job.ts": {
+    "formbricks/loggable-error": {
+      "count": 17
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 3
+    }
+  },
+  "modules/response-pipeline/lib/process-webhook-delivery-job.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/settings/hooks/use-switcher-data.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/settings/lib/navigation-data.ts": {
+    "formbricks/gate-predicate": {
+      "count": 2
+    }
+  },
+  "modules/settings/lib/organization-switch.ts": {
+    "formbricks/gate-predicate": {
+      "count": 1
+    }
+  },
+  "modules/setup/organization/[organizationId]/invite/actions.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/setup/organization/[organizationId]/invite/lib/invite.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/storage/attachment-export/export-attachments.ts": {
+    "formbricks/loggable-error": {
+      "count": 3
+    }
+  },
+  "modules/storage/lib/delete-response-files.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/storage/lib/replaced-signature-files.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/storage/lib/survey-response-files.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/storage/service.ts": {
+    "formbricks/loggable-error": {
+      "count": 6
+    }
+  },
+  "modules/survey/archive/lib/process-survey-archive-purge-job.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/survey/archive/lib/retention-purge-history.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "modules/survey/components/template-list/lib/user.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/survey/editor/components/copy-id-button.tsx": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/survey/editor/lib/user.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "modules/survey/editor/lib/workspace.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/survey/excel-export/write.ts": {
+    "formbricks/spreadsheet-writer": {
+      "count": 1
+    }
+  },
+  "modules/survey/follow-ups/lib/follow-ups.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/survey/lib/slug.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/survey/lib/survey-auth.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/survey/lib/survey.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/survey/lib/surveys.ts": {
+    "formbricks/loggable-error": {
+      "count": 5
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 5
+    }
+  },
+  "modules/survey/lib/workspace.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/survey/link/lib/data.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 2
+    }
+  },
+  "modules/survey/link/lib/pin-token.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/survey/link/lib/respondent-custom-css.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/survey/link/lib/servable-survey.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/survey/link/lib/single-use-link.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/survey/link/lib/workspace.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/survey/list/components/copy-survey-modal.tsx": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/survey/list/components/survey-dropdown-menu.tsx": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/survey/list/lib/survey-page.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/survey/list/lib/survey.ts": {
+    "formbricks/loggable-error": {
+      "count": 3
+    },
+    "formbricks/tenant-scoped-where": {
+      "count": 6
+    }
+  },
+  "modules/survey/list/lib/workspace.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/survey/scheduling/lib/survey-scheduling.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/survey/visibility/lib/gate.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 1
+    }
+  },
+  "modules/ui/components/id-badge/index.tsx": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/workspaces/lib/utils.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/workspaces/settings/(setup)/app-connection/lib/github.ts": {
+    "formbricks/loggable-error": {
+      "count": 3
+    }
+  },
+  "modules/workspaces/settings/general/actions.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/workspaces/settings/general/components/delete-workspace-render.tsx": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "modules/workspaces/settings/general/lib/delete-workspace.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/workspaces/settings/lib/tag.ts": {
+    "formbricks/tenant-scoped-where": {
+      "count": 5
+    }
+  },
+  "modules/workspaces/settings/lib/workspace.ts": {
+    "formbricks/loggable-error": {
+      "count": 2
+    }
+  },
+  "modules/workspaces/settings/look/lib/workspace.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  },
+  "proxy.ts": {
+    "formbricks/loggable-error": {
+      "count": 1
+    }
+  }
+}

@@ -15,6 +15,7 @@
     "typegen": "dotenv -e ../../.env -- tsx scripts/typegen.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix --rule \"react/prefer-read-only-props: off\"",
+    "lint:prune-suppressions": "eslint . --prune-suppressions",
     "test": "dotenv -e ../../.env -- vitest run",
     "test:coverage": "dotenv -e ../../.env -- vitest run --coverage",
     "formbricks-file:schema": "vitest run --project unit modules/survey/formbricks-file/envelope.test.ts --update",

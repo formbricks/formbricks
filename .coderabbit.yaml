@@ -128,7 +128,7 @@ reviews:
 
     - path: "**/*.test.ts"
       instructions: |
-        Judge tests by confidence, not coverage (CODING_STANDARDS.md "Testing Guidelines"):
+        Judge tests by confidence, not coverage:
         - Assert on inputs and outputs. Flag tests that lock implementation details, markup, or
           snapshots, and tests that cannot fail (no meaningful assertion, everything mocked).
         - Do not request extra tests purely to raise coverage, and do not request tests for `.tsx`.
@@ -139,7 +139,7 @@ reviews:
     - path: "apps/web/playwright/**/*.spec.ts"
       instructions: |
         This suite is the critical path of every PR and every test is paid on every PR forever, so
-        cost is a review dimension here rather than a nit (CODING_STANDARDS.md "Testing Guidelines"):
+        cost is a review dimension here rather than a nit (CODING_STANDARDS.md "Testing Guidelines" sets the level):
         - A new spec file is a finding unless it opens a feature area the suite does not cover yet
           (the spec filenames in `apps/web/playwright/` are the inventory — check before claiming an
           area is uncovered); the default is assertions or a `test.step` added to that feature's
@@ -191,7 +191,7 @@ reviews:
 
     - path: "{apps/web,packages}/**/*.{ts,tsx}"
       instructions: |
-        Performance is an explicit review dimension in this repo (CODING_STANDARDS.md "Performance in Review"):
+        Performance is an explicit review dimension in this repo:
         the patterns below reach `main` when nobody looks for them. Raise one where the diff
         introduces it:
         - N+1 work: a query, AI call or cross-service fetch issued inside a `for`/`map`/`Promise.all`
@@ -207,8 +207,8 @@ reviews:
           depend on each other, or many calls fired from a loop where one batch request would do.
         - Render amplification: one state change or parent update re-rendering a large subtree that
           does not depend on it (a context value rebuilt every render, unstable props into a big list).
-          Name the measured cost, not a missing `useMemo`; CODING_STANDARDS.md rules out memoization for its
-          own sake.
+          Name the measured cost, not a missing `useMemo`; memoization for its own sake is not a
+          finding.
         - Large lists rendered in full with no pagination or virtualization.
         Quantify the cost against the data ("one query per response, ~5k on a 5k-response survey").
         If you cannot, ask the author for numbers instead of speculating. Do not raise these on
@@ -327,7 +327,7 @@ reviews:
         can trip over is breaking once a release publishes it — renaming, removing or retyping an
         export, or requiring an argument that callers do not pass. A new optional export or
         optional parameter is additive and stays unticked.
-        The host page is hostile (CODING_STANDARDS.md "Survey Bundles"): flag global CSS (`*`,
+        The host page is hostile: flag global CSS (`*`,
         `:root`, `@property`), buttons without `type="button"`, code that needs `eval`, and reliance
         on host globals.
   abort_on_close: true

@@ -34,7 +34,7 @@ export const ZExpressionFunction = z.enum(EXPRESSION_FUNCTIONS, {
 });
 export type TExpressionFunction = z.infer<typeof ZExpressionFunction>;
 
-/** Input limits (CODING_STANDARDS "Input Limits", grill D6). */
+/** Input limits: every input dimension has a named cap (grill D6). */
 export const EXPRESSION_MAX_DEPTH = 12;
 const DEPTH_MESSAGE_TEXT = `Expression: nested deeper than ${String(EXPRESSION_MAX_DEPTH)} levels`;
 export const EXPRESSION_MAX_NODES = 200;

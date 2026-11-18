@@ -6,6 +6,7 @@
   "exports": {
     "./base": "./base.mjs",
     "./csp-safe": "./csp-safe.mjs",
+    "./formbricks-rules": "./formbricks-rules.mjs",
     "./library": "./library.mjs",
     "./next": "./next.mjs",
     "./react": "./react.mjs",
