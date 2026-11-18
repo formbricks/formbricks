@@ -2758,6 +2758,10 @@ describe("Tests for loadNewSegmentInSurvey", () => {
         segmentId: mockNewSegmentId,
       });
       const result = await loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId);
+      expect(prisma.segment.findFirst).toHaveBeenCalledWith({
+        where: { id: mockNewSegmentId, workspaceId: mockSurveyOutput.workspaceId },
+        select: { isPrivate: true },
+      });
       expect(prisma.survey.update).toHaveBeenCalledWith({
         where: { id: mockSurveyId, workspaceId: mockSurveyOutput.workspaceId },
         data: {

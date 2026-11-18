@@ -161,6 +161,28 @@ describe("a survey save changes only its own survey's targeting (ENG-6957)", () 
     expect(stored.filters).toEqual(EMAIL_FILTER);
   });
 
+  // The write requires the stored filters to equal the ones the save read: a second edit, read back
+  // with non-empty filters, must still land.
+  test("a second edit of the survey's own private segment lands", async () => {
+    const first = await loadSurvey(ids.W);
+    await updateSurvey(
+      { ...first, segment: { ...first.segment!, filters: EMAIL_FILTER } as never },
+      { targetingActor: member() }
+    );
+    const secondFilters = [
+      { ...EMAIL_FILTER[0], resource: { ...EMAIL_FILTER[0].resource, value: "other@example.com" } },
+    ];
+
+    const second = await loadSurvey(ids.W);
+    await updateSurvey(
+      { ...second, segment: { ...second.segment!, filters: secondFilters } as never },
+      { targetingActor: member() }
+    );
+
+    const stored = await prisma.segment.findUniqueOrThrow({ where: { id: ids.segmentW } });
+    expect(stored.filters).toEqual(secondFilters);
+  });
+
   test("a save that names its own survey still links it to another segment", async () => {
     const w = await loadSurvey(ids.W);
     const shared = await prisma.segment.findUniqueOrThrow({ where: { id: ids.shared } });
