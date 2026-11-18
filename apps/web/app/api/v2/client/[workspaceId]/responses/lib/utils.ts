@@ -8,6 +8,68 @@ import { enforceVerifiedEmailGate } from "@/modules/survey/link/lib/verify-email
 
 export { RECAPTCHA_VERIFICATION_ERROR_CODE } from "@/modules/api/lib/verify-response-recaptcha";
 
+/**
+ * A single-use link's response must carry the single use id its URL holds. On success the response
+ * input carries the canonical id.
+ */
+const checkSingleUseLink = (
+  survey: TSurvey,
+  singleUse: NonNullable<TSurvey["singleUse"]>,
+  workspaceId: string,
+  responseInput: TResponseInputV2
+): Response | null => {
+  if (!responseInput.singleUseId) {
+    return responses.badRequestResponse("Missing single use id", {
+      surveyId: survey.id,
+      workspaceId,
+    });
+  }
+
+  if (!responseInput.meta?.url) {
+    return responses.badRequestResponse("Missing or invalid URL in response metadata", {
+      surveyId: survey.id,
+      workspaceId,
+    });
+  }
+
+  let url;
+  try {
+    url = new URL(responseInput.meta.url);
+  } catch (error) {
+    return responses.badRequestResponse("Invalid URL in response metadata", {
+      surveyId: survey.id,
+      workspaceId,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    });
+  }
+  const suId = url.searchParams.get("suId");
+  const suToken = url.searchParams.get("suToken");
+  if (!suId) {
+    return responses.badRequestResponse("Missing single use id", {
+      surveyId: survey.id,
+      workspaceId,
+    });
+  }
+
+  const canonicalSingleUseId = resolveSingleUseIdForSurvey({
+    surveyId: survey.id,
+    isEncrypted: singleUse.isEncrypted,
+    suId,
+    suToken,
+    surface: "client_response_v2",
+  });
+
+  if (!canonicalSingleUseId || canonicalSingleUseId !== responseInput.singleUseId) {
+    return responses.badRequestResponse("Invalid single use id", {
+      surveyId: survey.id,
+      workspaceId,
+    });
+  }
+
+  responseInput.singleUseId = canonicalSingleUseId;
+  return null;
+};
+
 export const checkSurveyValidity = async (
   survey: TSurvey,
   workspaceId: string,
@@ -34,55 +96,8 @@ export const checkSurveyValidity = async (
   }
 
   if (survey.type === "link" && survey.singleUse?.enabled) {
-    if (!responseInput.singleUseId) {
-      return responses.badRequestResponse("Missing single use id", {
-        surveyId: survey.id,
-        workspaceId,
-      });
-    }
-
-    if (!responseInput.meta?.url) {
-      return responses.badRequestResponse("Missing or invalid URL in response metadata", {
-        surveyId: survey.id,
-        workspaceId,
-      });
-    }
-
-    let url;
-    try {
-      url = new URL(responseInput.meta.url);
-    } catch (error) {
-      return responses.badRequestResponse("Invalid URL in response metadata", {
-        surveyId: survey.id,
-        workspaceId,
-        error: error instanceof Error ? error.message : "Unknown error occurred",
-      });
-    }
-    const suId = url.searchParams.get("suId");
-    const suToken = url.searchParams.get("suToken");
-    if (!suId) {
-      return responses.badRequestResponse("Missing single use id", {
-        surveyId: survey.id,
-        workspaceId,
-      });
-    }
-
-    const canonicalSingleUseId = resolveSingleUseIdForSurvey({
-      surveyId: survey.id,
-      isEncrypted: survey.singleUse.isEncrypted,
-      suId,
-      suToken,
-      surface: "client_response_v2",
-    });
-
-    if (!canonicalSingleUseId || canonicalSingleUseId !== responseInput.singleUseId) {
-      return responses.badRequestResponse("Invalid single use id", {
-        surveyId: survey.id,
-        workspaceId,
-      });
-    }
-
-    responseInput.singleUseId = canonicalSingleUseId;
+    const singleUseError = checkSingleUseLink(survey, survey.singleUse, workspaceId, responseInput);
+    if (singleUseError) return singleUseError;
   }
 
   // Email verification, like the PIN above, must be enforced here and not only in the page renderer:

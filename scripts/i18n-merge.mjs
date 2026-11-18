@@ -35,22 +35,28 @@ const resolveLeaf = (base, ours, theirs) => {
   return { value: theirs, conflict: true };
 };
 
+const valueAt = (object, key) => (key in object ? object[key] : MISSING);
+
+// Merges two objects key by key (sorted), dropping keys the merge removes.
+const mergeObjects = (baseObject, ours, theirs, path, conflicts) => {
+  const merged = {};
+  const keys = new Set([...Object.keys(baseObject), ...Object.keys(ours), ...Object.keys(theirs)]);
+  for (const key of [...keys].sort()) {
+    const value = mergeNode(
+      valueAt(baseObject, key),
+      valueAt(ours, key),
+      valueAt(theirs, key),
+      path ? `${path}.${key}` : key,
+      conflicts
+    );
+    if (value !== MISSING) merged[key] = value;
+  }
+  return merged;
+};
+
 const mergeNode = (base, ours, theirs, path, conflicts) => {
   if (isObject(ours) && isObject(theirs) && (isObject(base) || base === MISSING)) {
-    const baseObject = isObject(base) ? base : {};
-    const merged = {};
-    const keys = new Set([...Object.keys(baseObject), ...Object.keys(ours), ...Object.keys(theirs)]);
-    for (const key of [...keys].sort()) {
-      const value = mergeNode(
-        key in baseObject ? baseObject[key] : MISSING,
-        key in ours ? ours[key] : MISSING,
-        key in theirs ? theirs[key] : MISSING,
-        path ? `${path}.${key}` : key,
-        conflicts
-      );
-      if (value !== MISSING) merged[key] = value;
-    }
-    return merged;
+    return mergeObjects(isObject(base) ? base : {}, ours, theirs, path, conflicts);
   }
   const { value, conflict } = resolveLeaf(base, ours, theirs);
   if (conflict) conflicts.push(path);
@@ -139,17 +145,8 @@ const mergeFile = (cwd, path, stages) => {
   return { text: merged, conflicts };
 };
 
-export const run = (cwd) => {
-  const unmerged = unmergedStages(cwd);
-  const mergeable = [...unmerged.keys()].filter(isMergeablePath).sort();
-  const others = [...unmerged.keys()].filter((path) => !isMergeablePath(path)).sort();
-
-  if (mergeable.length === 0) {
-    console.log("No unmerged locale files or i18n.lock to resolve.");
-    for (const path of others) console.log(`Still unmerged, resolve by hand: ${path}`);
-    return others.length === 0 ? 0 : 1;
-  }
-
+// Writes each mergeable file's merge, staging those without conflicts.
+const mergeFiles = (cwd, mergeable, unmerged) => {
   const skipped = [];
   const conflicted = [];
   for (const path of mergeable) {
@@ -167,16 +164,33 @@ export const run = (cwd) => {
       console.log(`Resolved   ${path}`);
     }
   }
+  return { skipped, conflicted };
+};
+
+const reportConflicts = (conflicted) => {
+  console.log("\nTrue conflicts: both sides changed the same key to different values.");
+  console.log("The file holds main's value and is not staged. Pick the value, then `git add` it.");
+  for (const { path, keys } of conflicted) {
+    console.log(`  ${path}`);
+    for (const key of keys) console.log(`    ${key}`);
+  }
+};
+
+export const run = (cwd) => {
+  const unmerged = unmergedStages(cwd);
+  const mergeable = [...unmerged.keys()].filter(isMergeablePath).sort();
+  const others = [...unmerged.keys()].filter((path) => !isMergeablePath(path)).sort();
+
+  if (mergeable.length === 0) {
+    console.log("No unmerged locale files or i18n.lock to resolve.");
+    for (const path of others) console.log(`Still unmerged, resolve by hand: ${path}`);
+    return others.length === 0 ? 0 : 1;
+  }
+
+  const { skipped, conflicted } = mergeFiles(cwd, mergeable, unmerged);
 
   for (const path of skipped) console.log(`Skipped    ${path} (deleted on one side; resolve by hand)`);
-  if (conflicted.length > 0) {
-    console.log("\nTrue conflicts: both sides changed the same key to different values.");
-    console.log("The file holds main's value and is not staged. Pick the value, then `git add` it.");
-    for (const { path, keys } of conflicted) {
-      console.log(`  ${path}`);
-      for (const key of keys) console.log(`    ${key}`);
-    }
-  }
+  if (conflicted.length > 0) reportConflicts(conflicted);
   for (const path of others) console.log(`Still unmerged, resolve by hand: ${path}`);
 
   if (conflicted.length > 0 || skipped.length > 0) return 1;

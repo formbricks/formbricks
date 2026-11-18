@@ -48,16 +48,18 @@ export const ZWorkflowDefinitionBase = z
   .describe("Persisted workflow graph definition.");
 export type TWorkflowDefinitionBase = z.infer<typeof ZWorkflowDefinitionBase>;
 
-const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
-  const ids = new Set<string>();
+/** Indexes the trigger and child nodes by id, reporting duplicate child ids. */
+const indexWorkflowNodes = (
+  definition: TWorkflowDefinitionBase,
+  ctx: z.RefinementCtx
+): Map<string, TWorkflowNode> => {
   const nodesById = new Map<string, TWorkflowNode>();
   if (definition.trigger) {
-    ids.add(definition.trigger.id);
     nodesById.set(definition.trigger.id, definition.trigger);
   }
 
   for (const node of definition.nodes) {
-    if (ids.has(node.id)) {
+    if (nodesById.has(node.id)) {
       ctx.addIssue({
         code: "custom",
         message: `Duplicate workflow node id: ${node.id}`,
@@ -66,9 +68,77 @@ const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.Refin
       continue;
     }
 
-    ids.add(node.id);
     nodesById.set(node.id, node);
   }
+  return nodesById;
+};
+
+const validateWorkflowEdge = (
+  edge: TWorkflowEdge,
+  index: number,
+  nodesById: Map<string, TWorkflowNode>,
+  ctx: z.RefinementCtx
+): void => {
+  if (!nodesById.has(edge.source)) {
+    ctx.addIssue({
+      code: "custom",
+      message: `Edge source does not reference a workflow node: ${edge.source}`,
+      path: ["edges", index, "source"],
+    });
+  }
+
+  if (!nodesById.has(edge.target)) {
+    ctx.addIssue({
+      code: "custom",
+      message: `Edge target does not reference a workflow node: ${edge.target}`,
+      path: ["edges", index, "target"],
+    });
+  }
+
+  const sourceNode = nodesById.get(edge.source);
+  if (!sourceNode) return;
+  const isIfElseBranch =
+    edge.sourceHandle === ZWorkflowIfElseBranch.enum.then ||
+    edge.sourceHandle === ZWorkflowIfElseBranch.enum.else;
+
+  if (sourceNode.type === "if_else" && !isIfElseBranch) {
+    ctx.addIssue({
+      code: "custom",
+      message: "if_else edges must use then or else sourceHandle",
+      path: ["edges", index, "sourceHandle"],
+    });
+  }
+
+  if (sourceNode.type !== "if_else" && isIfElseBranch) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Only if_else nodes can use then or else sourceHandle",
+      path: ["edges", index, "sourceHandle"],
+    });
+  }
+};
+
+const validateIfElseBranches = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
+  for (const node of definition.nodes) {
+    if (node.type !== "if_else") {
+      continue;
+    }
+
+    const outgoingEdges = definition.edges.filter((edge) => edge.source === node.id);
+    for (const branch of [ZWorkflowIfElseBranch.enum.then, ZWorkflowIfElseBranch.enum.else]) {
+      if (outgoingEdges.filter((edge) => edge.sourceHandle === branch).length !== 1) {
+        ctx.addIssue({
+          code: "custom",
+          message: `if_else node ${node.id} must have exactly one ${branch} edge`,
+          path: ["edges"],
+        });
+      }
+    }
+  }
+};
+
+const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.RefinementCtx): void => {
+  const nodesById = indexWorkflowNodes(definition, ctx);
 
   if (definition.entryNodeId !== (definition.trigger?.id ?? null)) {
     ctx.addIssue({
@@ -81,42 +151,7 @@ const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.Refin
   }
 
   for (const [index, edge] of definition.edges.entries()) {
-    if (!ids.has(edge.source)) {
-      ctx.addIssue({
-        code: "custom",
-        message: `Edge source does not reference a workflow node: ${edge.source}`,
-        path: ["edges", index, "source"],
-      });
-    }
-
-    if (!ids.has(edge.target)) {
-      ctx.addIssue({
-        code: "custom",
-        message: `Edge target does not reference a workflow node: ${edge.target}`,
-        path: ["edges", index, "target"],
-      });
-    }
-
-    const sourceNode = nodesById.get(edge.source);
-    const isIfElseBranch =
-      edge.sourceHandle === ZWorkflowIfElseBranch.enum.then ||
-      edge.sourceHandle === ZWorkflowIfElseBranch.enum.else;
-
-    if (sourceNode?.type === "if_else" && !isIfElseBranch) {
-      ctx.addIssue({
-        code: "custom",
-        message: "if_else edges must use then or else sourceHandle",
-        path: ["edges", index, "sourceHandle"],
-      });
-    }
-
-    if (sourceNode && sourceNode.type !== "if_else" && isIfElseBranch) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Only if_else nodes can use then or else sourceHandle",
-        path: ["edges", index, "sourceHandle"],
-      });
-    }
+    validateWorkflowEdge(edge, index, nodesById, ctx);
   }
 
   // At most one so trigger-only drafts (no nodes/edges yet) stay persistable;
@@ -132,31 +167,7 @@ const validateWorkflowGraph = (definition: TWorkflowDefinitionBase, ctx: z.Refin
     });
   }
 
-  for (const node of definition.nodes) {
-    if (node.type !== "if_else") {
-      continue;
-    }
-
-    const outgoingEdges = definition.edges.filter((edge) => edge.source === node.id);
-    const thenEdges = outgoingEdges.filter((edge) => edge.sourceHandle === ZWorkflowIfElseBranch.enum.then);
-    const elseEdges = outgoingEdges.filter((edge) => edge.sourceHandle === ZWorkflowIfElseBranch.enum.else);
-
-    if (thenEdges.length !== 1) {
-      ctx.addIssue({
-        code: "custom",
-        message: `if_else node ${node.id} must have exactly one then edge`,
-        path: ["edges"],
-      });
-    }
-
-    if (elseEdges.length !== 1) {
-      ctx.addIssue({
-        code: "custom",
-        message: `if_else node ${node.id} must have exactly one else edge`,
-        path: ["edges"],
-      });
-    }
-  }
+  validateIfElseBranches(definition, ctx);
 };
 
 export const ZWorkflowDefinition = ZWorkflowDefinitionBase.superRefine(validateWorkflowGraph).describe(

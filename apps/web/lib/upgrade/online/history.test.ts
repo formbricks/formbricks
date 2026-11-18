@@ -36,3 +36,23 @@ test("rejects partial, modified, missing and unknown histories before preparatio
     )
   ).toThrow("unknown_data_migration");
 });
+
+test("rejects an unfinished data migration and a missing source one, and retries a failed target one", () => {
+  const schema = [applied("released", "a")];
+  expect(() =>
+    verifyMigrationHistory(source, target, schema, [{ id: "released-data", status: "pending" }], false)
+  ).toThrow("partial_data_history");
+  // A source migration that failed is never retryable, even while preparing.
+  expect(() =>
+    verifyMigrationHistory(source, target, schema, [{ id: "released-data", status: "failed" }], true)
+  ).toThrow("partial_data_history");
+  expect(() =>
+    verifyMigrationHistory(source, target, schema, [...data, { id: "new-data", status: "failed" }], true)
+  ).not.toThrow();
+  expect(() =>
+    verifyMigrationHistory(source, target, schema, [...data, { id: "new-data", status: "failed" }], false)
+  ).toThrow("unknown_data_migration");
+  expect(() => verifyMigrationHistory(source, target, schema, [], false)).toThrow(
+    "incomplete_source_data_history"
+  );
+});
