@@ -420,6 +420,21 @@ describe("Segment Service Tests", () => {
       expect(prisma.segment.create).not.toHaveBeenCalled();
     });
 
+    // ENG-6956: the private key is chosen on the server, so even an input that slipped past the schema
+    // (validateInputs is mocked here) cannot point the upsert at another survey's segment.
+    test("should key a private segment by its survey id, not by the client's title", async () => {
+      vi.mocked(prisma.segment.upsert).mockResolvedValue({ ...mockSegmentPrisma, isPrivate: true });
+
+      await createSegment({ ...mockSegmentCreateInput, title: "other-survey-id", isPrivate: true, surveyId });
+
+      expect(prisma.segment.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { workspaceId_title: { workspaceId, title: surveyId }, isPrivate: true },
+          create: expect.objectContaining({ title: surveyId }),
+        })
+      );
+    });
+
     // ENG-6956: the ticket's overwrite needs a shared segment (or any title a caller picks) that is
     // really a survey's id. The private upsert is covered against real Postgres in
     // integration/segment-private-title.integration.test.ts.

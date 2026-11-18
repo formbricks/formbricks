@@ -271,20 +271,22 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
     // Private segments use upsert because auto-save may have already created a
     // default (empty-filter) segment via connectOrCreate before the user publishes.
     // Without upsert the second create hits the (workspaceId, title) unique constraint.
-    // ZSegmentCreateInput ties a private segment's title to its survey, so the update branch can only
-    // reach that survey's own segment; `isPrivate` keeps it off a shared segment that holds the title.
+    // ENG-6956: the key is the survey's id, chosen here rather than taken from the client's title (which
+    // ZSegmentCreateInput already requires to match). The caller authorizes `survey.write` on `surveyId`,
+    // so the update branch only reaches that survey's own segment; `isPrivate` keeps it off a shared
+    // segment that holds the title.
     if (isPrivate) {
       const segment = await prisma.segment.upsert({
         where: {
           workspaceId_title: {
             workspaceId,
-            title,
+            title: surveyId,
           },
           isPrivate: true,
         },
         create: {
           workspaceId,
-          title,
+          title: surveyId,
           description,
           isPrivate,
           filters,
