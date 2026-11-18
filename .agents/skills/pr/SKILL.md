@@ -96,7 +96,9 @@ Once the PR is ready for review (not a draft), enable auto-merge with the **squa
 (`enable_pr_auto_merge`, or `gh pr merge --auto --squash`). GitHub then merges it once the required
 checks and reviews pass. Squash is also what keeps `.pr-assets/` screenshots out of `main`: a merge
 commit would carry their blobs into `main`'s history, so a PR with screenshots merges by squash only.
-If GitHub refuses, say why in your report rather than merging by hand.
+Read the method back from the result: the MCP tool has armed `MERGE` when asked for `SQUASH`. Any
+method but squash, disable auto-merge again and report it. If GitHub refuses, say why in your report
+rather than merging by hand.
 
 Rewrite the body with every scope change or review fix, so it always describes the head commit.
 
@@ -106,7 +108,7 @@ Rewrite the body with every scope change or review fix, so it always describes t
 - Every behaviour the diff changes has a Coverage row or an Open gaps entry.
 - A UI change has a before/after pair whose URLs load logged out; any other change says `No UI change`.
 - The body fits the budget, and every claim matches a check you ran on the head commit.
-- A PR marked ready has squash auto-merge enabled, or your report says why GitHub refused it.
+- A PR marked ready has squash auto-merge enabled, or your report says why it is not.
 
 ## Guardrails
 
