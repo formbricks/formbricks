@@ -34,7 +34,7 @@ describe("Teams Lib", () => {
 
   describe("getTeam", () => {
     test("returns the team when found", async () => {
-      (prisma.team.findUnique as any).mockResolvedValueOnce(mockTeam);
+      vi.mocked(prisma.team.findUnique, { partial: true }).mockResolvedValueOnce(mockTeam);
       const result = await getTeam("org456", "team123");
       expect(result.ok).toBe(true);
       if (result.ok) {
@@ -46,7 +46,7 @@ describe("Teams Lib", () => {
     });
 
     test("returns a not_found error when team is missing", async () => {
-      (prisma.team.findUnique as any).mockResolvedValueOnce(null);
+      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce(null);
       const result = await getTeam("org456", "team123");
       expect(result.ok).toBe(false);
       if (!result.ok) {
@@ -58,18 +58,18 @@ describe("Teams Lib", () => {
     });
 
     test("returns an internal_server_error when prisma throws", async () => {
-      (prisma.team.findUnique as any).mockRejectedValueOnce(new Error("DB error"));
+      vi.mocked(prisma.team.findUnique).mockRejectedValueOnce(new Error("DB error"));
       const result = await getTeam("org456", "team123");
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect((result.error as any).type).toBe("internal_server_error");
+        expect(result.error).toHaveProperty("type", "internal_server_error");
       }
     });
   });
 
   describe("deleteTeam", () => {
     test("deletes the team", async () => {
-      (prisma.team.delete as any).mockResolvedValueOnce(mockTeam);
+      vi.mocked(prisma.team.delete, { partial: true }).mockResolvedValueOnce(mockTeam);
       const result = await deleteTeam("org456", "team123");
       expect(prisma.team.delete).toHaveBeenCalledWith({
         where: { id: "team123", organizationId: "org456" },
@@ -83,7 +83,7 @@ describe("Teams Lib", () => {
     });
 
     test("returns not_found error on known prisma error", async () => {
-      (prisma.team.delete as any).mockRejectedValueOnce(
+      vi.mocked(prisma.team.delete).mockRejectedValueOnce(
         new Prisma.PrismaClientKnownRequestError("Not found", {
           code: PrismaErrorType.RecordNotFound,
           clientVersion: "1.0.0",
@@ -101,11 +101,11 @@ describe("Teams Lib", () => {
     });
 
     test("returns internal_server_error on exception", async () => {
-      (prisma.team.delete as any).mockRejectedValueOnce(new Error("Delete failed"));
+      vi.mocked(prisma.team.delete).mockRejectedValueOnce(new Error("Delete failed"));
       const result = await deleteTeam("org456", "team123");
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect((result.error as any).type).toBe("internal_server_error");
+        expect(result.error.type).toBe("internal_server_error");
       }
     });
   });
@@ -115,7 +115,7 @@ describe("Teams Lib", () => {
     const updatedTeam = { ...mockTeam, ...updateInput };
 
     test("updates the team successfully", async () => {
-      (prisma.team.update as any).mockResolvedValueOnce(updatedTeam);
+      vi.mocked(prisma.team.update, { partial: true }).mockResolvedValueOnce(updatedTeam);
       const result = await updateTeam("org456", "team123", updateInput);
       expect(prisma.team.update).toHaveBeenCalledWith({
         where: { id: "team123", organizationId: "org456" },
@@ -130,7 +130,7 @@ describe("Teams Lib", () => {
     });
 
     test("returns not_found error when update fails due to missing team", async () => {
-      (prisma.team.update as any).mockRejectedValueOnce(
+      vi.mocked(prisma.team.update).mockRejectedValueOnce(
         new Prisma.PrismaClientKnownRequestError("Not found", {
           code: PrismaErrorType.RecordNotFound,
           clientVersion: "1.0.0",
@@ -148,11 +148,11 @@ describe("Teams Lib", () => {
     });
 
     test("returns internal_server_error on generic exception", async () => {
-      (prisma.team.update as any).mockRejectedValueOnce(new Error("Update failed"));
+      vi.mocked(prisma.team.update).mockRejectedValueOnce(new Error("Update failed"));
       const result = await updateTeam("org456", "team123", updateInput);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect((result.error as any).type).toBe("internal_server_error");
+        expect(result.error.type).toBe("internal_server_error");
       }
     });
   });

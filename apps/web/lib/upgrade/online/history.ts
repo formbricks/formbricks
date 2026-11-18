@@ -9,6 +9,40 @@ export type SchemaHistoryRow = {
 };
 export type DataHistoryRow = { id: string; status: string };
 
+/** The schema migrations applied, each checked against the allowed history. */
+const verifySchemaHistory = (allowed: ReleaseHistory, schema: SchemaHistoryRow[]): Set<string> => {
+  const applied = new Set<string>();
+  for (const row of schema) {
+    if (row.rolled_back_at) continue;
+    if (!row.finished_at) throw new OnlineUpgradeBlocked("partial_schema_history");
+    if (allowed.schema[row.migration_name] !== row.checksum)
+      throw new OnlineUpgradeBlocked("divergent_schema_history");
+    applied.add(row.migration_name);
+  }
+  return applied;
+};
+
+/** The data migrations applied, each checked against the allowed history. */
+const verifyDataHistory = (
+  source: ReleaseHistory,
+  allowed: ReleaseHistory,
+  data: DataHistoryRow[],
+  hasPreparationIntent: boolean
+): Set<string> => {
+  const dataApplied = new Set<string>();
+  for (const row of data) {
+    if (!allowed.data.includes(row.id)) throw new OnlineUpgradeBlocked("unknown_data_migration");
+    // A target-only data migration may have failed while the upgrade was being prepared.
+    const isRetryableTargetFailure =
+      hasPreparationIntent && !source.data.includes(row.id) && row.status === "failed";
+    if (row.status !== "applied" && !isRetryableTargetFailure) {
+      throw new OnlineUpgradeBlocked("partial_data_history");
+    }
+    if (row.status === "applied") dataApplied.add(row.id);
+  }
+  return dataApplied;
+};
+
 /** A checkpoint authorizes only this release's exact migrations, never an arbitrary prerelease. */
 export const verifyMigrationHistory = (
   source: ReleaseHistory,
@@ -18,27 +52,10 @@ export const verifyMigrationHistory = (
   hasPreparationIntent: boolean
 ): void => {
   const allowed = hasPreparationIntent ? target : source;
-  const applied = new Set<string>();
-  for (const row of schema) {
-    if (row.rolled_back_at) continue;
-    if (!row.finished_at) throw new OnlineUpgradeBlocked("partial_schema_history");
-    if (allowed.schema[row.migration_name] !== row.checksum)
-      throw new OnlineUpgradeBlocked("divergent_schema_history");
-    applied.add(row.migration_name);
-  }
+  const applied = verifySchemaHistory(allowed, schema);
   if (Object.keys(source.schema).some((name) => !applied.has(name)))
     throw new OnlineUpgradeBlocked("incomplete_source_history");
-  const dataApplied = new Set<string>();
-  for (const row of data) {
-    if (!allowed.data.includes(row.id)) throw new OnlineUpgradeBlocked("unknown_data_migration");
-    if (
-      row.status !== "applied" &&
-      !(hasPreparationIntent && !source.data.includes(row.id) && row.status === "failed")
-    ) {
-      throw new OnlineUpgradeBlocked("partial_data_history");
-    }
-    if (row.status === "applied") dataApplied.add(row.id);
-  }
+  const dataApplied = verifyDataHistory(source, allowed, data, hasPreparationIntent);
   if (source.data.some((name) => !dataApplied.has(name)))
     throw new OnlineUpgradeBlocked("incomplete_source_data_history");
 };

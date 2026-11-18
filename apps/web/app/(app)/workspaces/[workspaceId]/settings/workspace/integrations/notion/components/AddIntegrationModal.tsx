@@ -28,6 +28,10 @@ import {
   TMapping,
   createEmptyMapping,
 } from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/notion/components/MappingRow";
+import {
+  getDatabaseProperties,
+  getDatabaseTitle,
+} from "@/app/(app)/workspaces/[workspaceId]/settings/workspace/integrations/notion/lib/database";
 import NotionLogo from "@/images/notion.png";
 import { recallToHeadline } from "@/lib/utils/recall";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -114,9 +118,9 @@ export const AddIntegrationModal = ({
   });
 
   const dbItems = useMemo(() => {
-    const dbProperties = (selectedDatabase as any)?.properties;
+    const dbProperties = getDatabaseProperties(selectedDatabase);
     return (
-      Object.keys(dbProperties || {}).map((fieldKey: string) => ({
+      Object.keys(dbProperties).map((fieldKey: string) => ({
         id: dbProperties[fieldKey].id,
         name: dbProperties[fieldKey].name,
         type: dbProperties[fieldKey].type,
@@ -195,7 +199,7 @@ export const AddIntegrationModal = ({
       if (selectedDB) {
         setSelectedDatabase({
           id: selectedDB.id,
-          name: (selectedDB as any).title?.[0]?.plain_text,
+          name: getDatabaseTitle(selectedDB),
           properties: selectedDB.properties,
         });
       }
@@ -330,7 +334,7 @@ export const AddIntegrationModal = ({
                     label={t("workspace.integrations.notion.select_a_database")}
                     items={databases.map((d) => ({
                       id: d.id,
-                      name: (d as any).title?.[0]?.plain_text,
+                      name: getDatabaseTitle(d),
                       properties: d.properties,
                     }))}
                     selectedItem={selectedDatabase}

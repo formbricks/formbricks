@@ -231,6 +231,298 @@ const planCopiedEmbeddedFields = async (
   });
 };
 
+type TCopiedSurvey = NonNullable<Awaited<ReturnType<typeof getExistingSurvey>>>;
+type TTargetActionClass = Awaited<ReturnType<typeof findTargetActionClasses>>[number];
+
+/** A JSON column's copy: a deep clone of its value, or the given null when it has none. */
+const cloneJsonOr = <T, TNull>(value: T | null | undefined, fallback: TNull): T | TNull =>
+  value ? structuredClone(value) : fallback;
+
+/** Another workspace a survey is copied into, after checking the copier may carry its head scripts there. */
+const resolveOtherTargetWorkspace = async (
+  targetWorkspaceId: string,
+  userId: string,
+  customHeadScripts: TCopiedSurvey["customHeadScripts"]
+): Promise<TWorkspaceWithLanguages> => {
+  const [, targetWorkspace] = await Promise.all([
+    doesWorkspaceExist(targetWorkspaceId),
+    getWorkspaceWithLanguages(targetWorkspaceId),
+  ]);
+
+  if (!targetWorkspace) throw new ResourceNotFoundError("Workspace", targetWorkspaceId);
+
+  // The copy runs these scripts on the target workspace's link surveys, where no one with Manage
+  // access has approved them, so carrying them over takes Manage there — as writing them would.
+  await assertCanWriteCustomHeadScripts(
+    { type: "user", id: userId },
+    targetWorkspace.id,
+    { customHeadScripts },
+    null
+  );
+  return targetWorkspace;
+};
+
+const findTargetActionClasses = (workspaceId: string) =>
+  prisma.actionClass.findMany({
+    where: { workspaceId },
+    select: { name: true, type: true, key: true, noCodeConfig: true, id: true },
+  });
+
+/** The copy's languages, connected to (or created in) the target workspace's language list. */
+const buildCopiedLanguages = (existingSurvey: TCopiedSurvey, targetWorkspaceId: string) => {
+  const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
+  if (!hasLanguages) return undefined;
+  return {
+    create: existingSurvey.languages.map((surveyLanguage) => ({
+      language: {
+        connectOrCreate: {
+          where: {
+            workspaceId_code: { code: surveyLanguage.language.code, workspaceId: targetWorkspaceId },
+          },
+          create: {
+            code: surveyLanguage.language.code,
+            alias: surveyLanguage.language.alias,
+            workspaceId: targetWorkspaceId,
+          },
+        },
+      },
+      default: surveyLanguage.default,
+      enabled: surveyLanguage.enabled,
+    })),
+  };
+};
+
+/** An action class in the target workspace the trigger can reuse: the same code key, or the same no-code config. */
+const findReusableActionClass = (
+  trigger: TCopiedSurvey["triggers"][number],
+  existingActionClasses: TTargetActionClass[]
+): TTargetActionClass | undefined => {
+  //check if an action class with same config already exists
+  if (trigger.actionClass.type === "code") {
+    return existingActionClasses.find((ac) => ac.key === trigger.actionClass.key);
+  }
+  if (trigger.actionClass.type === "noCode") {
+    return existingActionClasses.find(
+      (ac) => JSON.stringify(ac.noCodeConfig) === JSON.stringify(trigger.actionClass.noCodeConfig)
+    );
+  }
+  return undefined;
+};
+
+/** A unique name by appending (copy), (copy 2), (copy 3), etc. */
+const getUniqueCopyName = (
+  name: string,
+  existingActionClassNames: Set<string>,
+  t: Awaited<ReturnType<typeof getTranslate>>
+): string => {
+  let copyNumber = 1;
+  let candidateName = `${name} ${t("common.duplicate_copy")}`;
+
+  while (existingActionClassNames.has(candidateName)) {
+    copyNumber++;
+    candidateName = `${name} ${t("common.duplicate_copy_number", { copyNumber })}`;
+  }
+  return candidateName;
+};
+
+/** The copy's trigger: an existing action class reused or connected, or one created in the target. */
+const copyTriggerInput = (
+  trigger: TCopiedSurvey["triggers"][number],
+  {
+    existingActionClasses,
+    isSameWorkspace,
+    targetWorkspaceId,
+    t,
+  }: {
+    existingActionClasses: TTargetActionClass[];
+    isSameWorkspace: boolean;
+    targetWorkspaceId: string;
+    t: Awaited<ReturnType<typeof getTranslate>>;
+  }
+): Prisma.SurveyTriggerCreateWithoutSurveyInput => {
+  const existingActionClass = findReusableActionClass(trigger, existingActionClasses);
+  if (existingActionClass) {
+    return {
+      actionClass: { connect: { id: existingActionClass.id } },
+    };
+  }
+
+  const existingActionClassNames = new Set(existingActionClasses.map((ac) => ac.name));
+
+  // Check if an action class with the same name but different type already exists
+  const hasNameConflict = !isSameWorkspace && existingActionClassNames.has(trigger.actionClass.name);
+
+  const modifiedName = hasNameConflict
+    ? getUniqueCopyName(trigger.actionClass.name, existingActionClassNames, t)
+    : trigger.actionClass.name;
+
+  const baseActionClassData = {
+    name: modifiedName,
+    workspace: { connect: { id: targetWorkspaceId } },
+    description: trigger.actionClass.description,
+    type: trigger.actionClass.type,
+  };
+
+  if (isSameWorkspace) {
+    return {
+      actionClass: { connect: { id: trigger.actionClass.id } },
+    };
+  }
+  if (trigger.actionClass.type === "code") {
+    return {
+      actionClass: {
+        connectOrCreate: {
+          where: {
+            key_workspaceId: {
+              key: trigger.actionClass.key!,
+              workspaceId: targetWorkspaceId,
+            },
+          },
+          create: {
+            ...baseActionClassData,
+            key: trigger.actionClass.key,
+          },
+        },
+      },
+    };
+  }
+
+  const noCodeConfig = trigger.actionClass.noCodeConfig
+    ? structuredClone(trigger.actionClass.noCodeConfig)
+    : undefined;
+  if (hasNameConflict) {
+    return {
+      actionClass: {
+        create: {
+          ...baseActionClassData,
+          noCodeConfig,
+        },
+      },
+    };
+  }
+  return {
+    actionClass: {
+      connectOrCreate: {
+        where: {
+          name_workspaceId: {
+            name: trigger.actionClass.name,
+            workspaceId: targetWorkspaceId,
+          },
+        },
+        create: {
+          ...baseActionClassData,
+          noCodeConfig,
+        },
+      },
+    },
+  };
+};
+
+const copyQuotaData = (existingQuotas: Awaited<ReturnType<typeof getQuotas>>) =>
+  existingQuotas.map((quota) => ({
+    name: quota.name,
+    logic: quota.logic,
+    limit: quota.limit,
+    action: quota.action,
+    endingCardId: quota.endingCardId,
+    countPartialSubmissions: quota.countPartialSubmissions,
+  }));
+
+/**
+ * The copy's segment: a private one is recreated for it; a public one is shared in the same workspace,
+ * and recreated in another (renamed when the target already has one by that title).
+ */
+const buildCopiedSegment = async (
+  segment: NonNullable<TCopiedSurvey["segment"]>,
+  surveyId: string,
+  isSameWorkspace: boolean,
+  targetWorkspaceId: string
+): Promise<Prisma.SurveyCreateInput["segment"]> => {
+  if (segment.isPrivate) {
+    return {
+      create: {
+        title: surveyId,
+        isPrivate: true,
+        filters: segment.filters,
+        workspace: { connect: { id: targetWorkspaceId } },
+      },
+    };
+  }
+  if (isSameWorkspace) {
+    return { connect: { id: segment.id } };
+  }
+  const existingSegmentInTargetEnvironment = await prisma.segment.findFirst({
+    where: {
+      title: segment.title,
+      isPrivate: false,
+      workspaceId: targetWorkspaceId,
+    },
+  });
+
+  return {
+    create: {
+      title: existingSegmentInTargetEnvironment ? `${segment.title}-${Date.now()}` : segment.title,
+      isPrivate: false,
+      filters: segment.filters,
+      workspace: { connect: { id: targetWorkspaceId } },
+    },
+  };
+};
+
+/** The source workspace, survey, quotas and organization a copy reads; each must exist. */
+const loadCopySource = async (workspaceId: string, surveyId: string) => {
+  const [existingWorkspaceCheck, existingWorkspace, existingSurvey, existingQuotas, organization] =
+    await Promise.all([
+      doesWorkspaceExist(workspaceId),
+      getWorkspaceWithLanguages(workspaceId),
+      getExistingSurvey(surveyId),
+      getQuotas(surveyId),
+      getOrganizationByWorkspaceId(workspaceId),
+    ]);
+
+  if (!existingWorkspaceCheck) throw new ResourceNotFoundError("Workspace", workspaceId);
+  if (!existingWorkspace) throw new ResourceNotFoundError("Workspace", workspaceId);
+  if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
+  if (!organization) throw new ResourceNotFoundError("Organization", workspaceId);
+  return { existingWorkspace, existingSurvey, existingQuotas, organization };
+};
+
+/** The copier must see every survey the copied segment's filters read, in the target workspace. */
+const assertCopiedSegmentVisible = async (
+  segment: NonNullable<TCopiedSurvey["segment"]>,
+  {
+    targetWorkspaceId,
+    userId,
+    organizationId,
+    isSameWorkspace,
+  }: { targetWorkspaceId: string; userId: string; organizationId: string; isSameWorkspace: boolean }
+): Promise<void> => {
+  await assertSegmentSurveyFiltersVisible(
+    segment.filters,
+    targetWorkspaceId,
+    await resolveSurveyActorContext({ type: "user", id: userId }, organizationId),
+    isSameWorkspace && !segment.isPrivate ? segment.id : undefined
+  );
+};
+
+const getTargetOrganizationId = async (targetWorkspaceId: string): Promise<string> => {
+  const targetOrganizationId = (await getOrganizationByWorkspaceId(targetWorkspaceId))?.id ?? null;
+  if (!targetOrganizationId) throw new ResourceNotFoundError("Organization", targetWorkspaceId);
+  return targetOrganizationId;
+};
+
+/** The error a failed copy surfaces: database errors and the survey limit mapped, anything else as is. */
+const toCopySurveyError = (error: unknown): unknown => {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    logger.error(error, "Error copying survey to other workspace");
+    return new DatabaseError(error.message);
+  }
+  if (error instanceof WorkspaceSurveyLimitError) {
+    return new OperationNotAllowedError("The target workspace has reached its survey limit");
+  }
+  return error;
+};
+
 export const copySurveyToOtherWorkspace = async (
   workspaceId: string,
   surveyId: string,
@@ -241,64 +533,32 @@ export const copySurveyToOtherWorkspace = async (
     const isSameWorkspace = workspaceId === targetWorkspaceId;
 
     // Fetch required resources
-    const [existingWorkspaceCheck, existingWorkspace, existingSurvey, existingQuotas, organization] =
-      await Promise.all([
-        doesWorkspaceExist(workspaceId),
-        getWorkspaceWithLanguages(workspaceId),
-        getExistingSurvey(surveyId),
-        getQuotas(surveyId),
-        getOrganizationByWorkspaceId(workspaceId),
-      ]);
-
-    if (!existingWorkspaceCheck) throw new ResourceNotFoundError("Workspace", workspaceId);
-    if (!existingWorkspace) throw new ResourceNotFoundError("Workspace", workspaceId);
-    if (!existingSurvey) throw new ResourceNotFoundError("Survey", surveyId);
-    if (!organization) throw new ResourceNotFoundError("Organization", workspaceId);
+    const { existingWorkspace, existingSurvey, existingQuotas, organization } = await loadCopySource(
+      workspaceId,
+      surveyId
+    );
 
     // ENG-6870: a copy keeps the source's targeting (it connects the public segment, or writes its filters
     // into a new one in the target), and the copier then reads the copy's responses, so the copier must
     // see every survey that targeting reads *in the workspace it lands in*. Checked against the target:
     // a stored filter can name an id that is foreign to the source but a hidden survey in the target.
     if (existingSurvey.segment) {
-      await assertSegmentSurveyFiltersVisible(
-        existingSurvey.segment.filters,
+      await assertCopiedSegmentVisible(existingSurvey.segment, {
         targetWorkspaceId,
-        await resolveSurveyActorContext({ type: "user", id: userId }, organization.id),
-        isSameWorkspace && !existingSurvey.segment.isPrivate ? existingSurvey.segment.id : undefined
-      );
+        userId,
+        organizationId: organization.id,
+        isSameWorkspace,
+      });
     }
 
     const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
-    let targetWorkspace: TWorkspaceWithLanguages | null = null;
-
-    if (isSameWorkspace) {
-      targetWorkspace = existingWorkspace;
-    } else {
-      [, targetWorkspace] = await Promise.all([
-        doesWorkspaceExist(targetWorkspaceId),
-        getWorkspaceWithLanguages(targetWorkspaceId),
-      ]);
-
-      if (!targetWorkspace) throw new ResourceNotFoundError("Workspace", targetWorkspaceId);
-
-      // The copy runs these scripts on the target workspace's link surveys, where no one with Manage
-      // access has approved them, so carrying them over takes Manage there — as writing them would.
-      await assertCanWriteCustomHeadScripts(
-        { type: "user", id: userId },
-        targetWorkspace.id,
-        { customHeadScripts: existingSurvey.customHeadScripts },
-        null
-      );
-    }
+    const targetWorkspace = isSameWorkspace
+      ? existingWorkspace
+      : await resolveOtherTargetWorkspace(targetWorkspaceId, userId, existingSurvey.customHeadScripts);
 
     // Fetch existing action classes in target workspace for name conflict checks
-    const existingActionClasses = !isSameWorkspace
-      ? await prisma.actionClass.findMany({
-          where: { workspaceId: targetWorkspace.id },
-          select: { name: true, type: true, key: true, noCodeConfig: true, id: true },
-        })
-      : [];
+    const existingActionClasses = isSameWorkspace ? [] : await findTargetActionClasses(targetWorkspace.id);
 
     // ENG-3282: a copy is a new survey on every count — the target workspace's cap applies, and it is
     // owned by the person copying it, with the visibility a fresh creation in the target organization
@@ -306,8 +566,7 @@ export const copySurveyToOtherWorkspace = async (
     await assertWorkspaceSurveyLimit(targetWorkspace.id);
     const targetOrganizationId = isSameWorkspace
       ? organization.id
-      : ((await getOrganizationByWorkspaceId(targetWorkspace.id))?.id ?? null);
-    if (!targetOrganizationId) throw new ResourceNotFoundError("Organization", targetWorkspace.id);
+      : await getTargetOrganizationId(targetWorkspace.id);
     const creationFacts = await resolveSurveyCreationFacts({
       actor: { type: "user", id: userId },
       organizationId: targetOrganizationId,
@@ -324,7 +583,6 @@ export const copySurveyToOtherWorkspace = async (
       destinationOrganizationId: targetOrganizationId,
       principal: userId,
     });
-    const hasLanguages = existingSurvey.languages && existingSurvey.languages.length > 0;
     const t = await getTranslate();
 
     // Zero rows is zero fields (ENG-2404): the migration that dropped the legacy columns gave every
@@ -347,131 +605,16 @@ export const copySurveyToOtherWorkspace = async (
         embeddedFields: copiedEmbeddedFields,
       }),
       endings: structuredClone(existingSurvey.endings),
-      languages: hasLanguages
-        ? {
-            create: existingSurvey.languages.map((surveyLanguage) => ({
-              language: {
-                connectOrCreate: {
-                  where: {
-                    workspaceId_code: { code: surveyLanguage.language.code, workspaceId: targetWorkspace.id },
-                  },
-                  create: {
-                    code: surveyLanguage.language.code,
-                    alias: surveyLanguage.language.alias,
-                    workspaceId: targetWorkspace.id,
-                  },
-                },
-              },
-              default: surveyLanguage.default,
-              enabled: surveyLanguage.enabled,
-            })),
-          }
-        : undefined,
+      languages: buildCopiedLanguages(existingSurvey, targetWorkspace.id),
       triggers: {
-        create: existingSurvey.triggers.map((trigger): Prisma.SurveyTriggerCreateWithoutSurveyInput => {
-          //check if an action class with same config already exists
-          if (trigger.actionClass.type === "code") {
-            const existingActionClass = existingActionClasses.find(
-              (ac) => ac.key === trigger.actionClass.key
-            );
-
-            if (existingActionClass) {
-              return {
-                actionClass: { connect: { id: existingActionClass.id } },
-              };
-            }
-          } else if (trigger.actionClass.type === "noCode") {
-            const existingActionClass = existingActionClasses.find(
-              (ac) => JSON.stringify(ac.noCodeConfig) === JSON.stringify(trigger.actionClass.noCodeConfig)
-            );
-
-            if (existingActionClass) {
-              return {
-                actionClass: { connect: { id: existingActionClass.id } },
-              };
-            }
-          }
-
-          const existingActionClassNames = new Set(existingActionClasses.map((ac) => ac.name));
-
-          // Check if an action class with the same name but different type already exists
-          const hasNameConflict = !isSameWorkspace && existingActionClassNames.has(trigger.actionClass.name);
-
-          let modifiedName = trigger.actionClass.name;
-          if (hasNameConflict) {
-            // Find a unique name by appending (copy), (copy 2), (copy 3), etc.
-            let copyNumber = 1;
-            let candidateName = `${trigger.actionClass.name} ${t("common.duplicate_copy")}`;
-
-            while (existingActionClassNames.has(candidateName)) {
-              copyNumber++;
-              candidateName = `${trigger.actionClass.name} ${t("common.duplicate_copy_number", { copyNumber })}`;
-            }
-
-            modifiedName = candidateName;
-          }
-
-          const baseActionClassData = {
-            name: modifiedName,
-            workspace: { connect: { id: targetWorkspace.id } },
-            description: trigger.actionClass.description,
-            type: trigger.actionClass.type,
-          };
-
-          if (isSameWorkspace) {
-            return {
-              actionClass: { connect: { id: trigger.actionClass.id } },
-            };
-          } else if (trigger.actionClass.type === "code") {
-            return {
-              actionClass: {
-                connectOrCreate: {
-                  where: {
-                    key_workspaceId: {
-                      key: trigger.actionClass.key!,
-                      workspaceId: targetWorkspace.id,
-                    },
-                  },
-                  create: {
-                    ...baseActionClassData,
-                    key: trigger.actionClass.key,
-                  },
-                },
-              },
-            };
-          } else {
-            if (hasNameConflict) {
-              return {
-                actionClass: {
-                  create: {
-                    ...baseActionClassData,
-                    noCodeConfig: trigger.actionClass.noCodeConfig
-                      ? structuredClone(trigger.actionClass.noCodeConfig)
-                      : undefined,
-                  },
-                },
-              };
-            }
-            return {
-              actionClass: {
-                connectOrCreate: {
-                  where: {
-                    name_workspaceId: {
-                      name: trigger.actionClass.name,
-                      workspaceId: targetWorkspace.id,
-                    },
-                  },
-                  create: {
-                    ...baseActionClassData,
-                    noCodeConfig: trigger.actionClass.noCodeConfig
-                      ? structuredClone(trigger.actionClass.noCodeConfig)
-                      : undefined,
-                  },
-                },
-              },
-            };
-          }
-        }),
+        create: existingSurvey.triggers.map((trigger) =>
+          copyTriggerInput(trigger, {
+            existingActionClasses,
+            isSameWorkspace,
+            targetWorkspaceId: targetWorkspace.id,
+            t,
+          })
+        ),
       },
       workspace: {
         connect: {
@@ -486,20 +629,14 @@ export const copySurveyToOtherWorkspace = async (
       owner: { connect: { id: userId } },
       visibility: creationFacts.visibility,
       ownershipInitialized: true,
-      surveyClosedMessage: existingSurvey.surveyClosedMessage
-        ? structuredClone(existingSurvey.surveyClosedMessage)
-        : Prisma.JsonNull,
-      singleUse: existingSurvey.singleUse ? structuredClone(existingSurvey.singleUse) : Prisma.JsonNull,
-      workspaceOverwrites: existingSurvey.workspaceOverwrites
-        ? structuredClone(existingSurvey.workspaceOverwrites)
-        : Prisma.JsonNull,
-      styling: existingSurvey.styling ? structuredClone(existingSurvey.styling) : Prisma.JsonNull,
+      surveyClosedMessage: cloneJsonOr(existingSurvey.surveyClosedMessage, Prisma.JsonNull),
+      singleUse: cloneJsonOr(existingSurvey.singleUse, Prisma.JsonNull),
+      workspaceOverwrites: cloneJsonOr(existingSurvey.workspaceOverwrites, Prisma.JsonNull),
+      styling: cloneJsonOr(existingSurvey.styling, Prisma.JsonNull),
       // Holds no ids, so it copies to another workspace as it is.
-      showConditions: existingSurvey.showConditions
-        ? structuredClone(existingSurvey.showConditions)
-        : Prisma.DbNull,
+      showConditions: cloneJsonOr(existingSurvey.showConditions, Prisma.DbNull),
       // Names this survey's own blocks, endings and fields, whose ids the copy keeps.
-      startLogic: existingSurvey.startLogic ? structuredClone(existingSurvey.startLogic) : Prisma.DbNull,
+      startLogic: cloneJsonOr(existingSurvey.startLogic, Prisma.DbNull),
       // "replace" means "run only this survey's scripts, not the workspace's". In another workspace
       // that would silently switch off the target's own head scripts (analytics, consent), so the
       // copy keeps its scripts but adds them to the target's instead.
@@ -517,54 +654,19 @@ export const copySurveyToOtherWorkspace = async (
       },
       quotas: {
         createMany: {
-          data:
-            isQuotasAllowed && existingQuotas.length > 0
-              ? existingQuotas.map((quota) => ({
-                  name: quota.name,
-                  logic: quota.logic,
-                  limit: quota.limit,
-                  action: quota.action,
-                  endingCardId: quota.endingCardId,
-                  countPartialSubmissions: quota.countPartialSubmissions,
-                }))
-              : [],
+          data: isQuotasAllowed ? copyQuotaData(existingQuotas) : [],
         },
       },
     };
 
     // Handle segment
     if (existingSurvey.segment) {
-      if (existingSurvey.segment.isPrivate) {
-        surveyData.segment = {
-          create: {
-            title: surveyData.id!,
-            isPrivate: true,
-            filters: existingSurvey.segment.filters,
-            workspace: { connect: { id: targetWorkspace!.id } },
-          },
-        };
-      } else if (isSameWorkspace) {
-        surveyData.segment = { connect: { id: existingSurvey.segment.id } };
-      } else {
-        const existingSegmentInTargetEnvironment = await prisma.segment.findFirst({
-          where: {
-            title: existingSurvey.segment.title,
-            isPrivate: false,
-            workspaceId: targetWorkspace.id,
-          },
-        });
-
-        surveyData.segment = {
-          create: {
-            title: existingSegmentInTargetEnvironment
-              ? `${existingSurvey.segment.title}-${Date.now()}`
-              : existingSurvey.segment.title,
-            isPrivate: false,
-            filters: existingSurvey.segment.filters,
-            workspace: { connect: { id: targetWorkspace!.id } },
-          },
-        };
-      }
+      surveyData.segment = await buildCopiedSegment(
+        existingSurvey.segment,
+        surveyData.id!,
+        isSameWorkspace,
+        targetWorkspace.id
+      );
     }
 
     if (surveyData.blocks) {
@@ -642,14 +744,7 @@ export const copySurveyToOtherWorkspace = async (
 
     return newSurvey;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
-      logger.error(error, "Error copying survey to other workspace");
-      throw new DatabaseError(error.message);
-    }
-    if (error instanceof WorkspaceSurveyLimitError) {
-      throw new OperationNotAllowedError("The target workspace has reached its survey limit");
-    }
-    throw error;
+    throw toCopySurveyError(error);
   }
 };
 

@@ -436,7 +436,7 @@ describe("updateTeamDetails", () => {
       updatedAt: new Date(),
       teamUsers: [],
       workspaceTeams: [],
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.team.findUnique>>);
     vi.mocked(prisma.membership.count).mockResolvedValueOnce(0);
     await expect(updateTeamDetails("t1", data)).rejects.toThrow(
       new TeamAssignmentOutsideOrganizationError("members")
@@ -458,7 +458,7 @@ describe("updateTeamDetails", () => {
       updatedAt: new Date(),
       teamUsers: [],
       workspaceTeams: [],
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.team.findUnique>>);
     vi.mocked(prisma.membership.count).mockResolvedValueOnce(1);
     vi.mocked(prisma.workspace.count).mockResolvedValueOnce(0);
     await expect(

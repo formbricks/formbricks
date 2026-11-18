@@ -39,8 +39,10 @@ describe("TagOnResponse Service", () => {
       },
     };
 
-    vi.mocked(getResponse).mockResolvedValue(mockResponse as any);
-    vi.mocked(prisma.tagsOnResponses.create).mockResolvedValue(mockTagOnResponse as any);
+    vi.mocked(getResponse).mockResolvedValue(mockResponse as Awaited<ReturnType<typeof getResponse>>);
+    vi.mocked(prisma.tagsOnResponses.create).mockResolvedValue(
+      mockTagOnResponse as unknown as Awaited<ReturnType<typeof prisma.tagsOnResponses.create>>
+    );
 
     const result = await addTagToRespone("response1", "tag1");
 
@@ -77,8 +79,10 @@ describe("TagOnResponse Service", () => {
       },
     };
 
-    vi.mocked(getResponse).mockResolvedValue(mockResponse as any);
-    vi.mocked(prisma.tagsOnResponses.delete).mockResolvedValue(mockDeletedTag as any);
+    vi.mocked(getResponse).mockResolvedValue(mockResponse as Awaited<ReturnType<typeof getResponse>>);
+    vi.mocked(prisma.tagsOnResponses.delete).mockResolvedValue(
+      mockDeletedTag as unknown as Awaited<ReturnType<typeof prisma.tagsOnResponses.delete>>
+    );
 
     const result = await deleteTagOnResponse("response1", "tag1");
 
@@ -110,7 +114,9 @@ describe("TagOnResponse Service", () => {
       { tagId: "tag2", _count: { _all: 3 } },
     ];
 
-    vi.mocked(prisma.tagsOnResponses.groupBy).mockResolvedValue(mockTagsCount as any);
+    vi.mocked(prisma.tagsOnResponses.groupBy).mockResolvedValue(
+      mockTagsCount as Awaited<ReturnType<typeof prisma.tagsOnResponses.groupBy>>
+    );
 
     const result = await getTagsOnResponsesCount("env1", {});
 
@@ -169,7 +175,9 @@ describe("TagOnResponse Service", () => {
     );
 
     vi.mocked(prisma.tagsOnResponses.create)
-      .mockResolvedValueOnce(mockTagOnResponse as any)
+      .mockResolvedValueOnce(
+        mockTagOnResponse as unknown as Awaited<ReturnType<typeof prisma.tagsOnResponses.create>>
+      )
       .mockRejectedValueOnce(prismaError);
 
     const first = await addTagToRespone("response1", "tag1");

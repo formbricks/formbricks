@@ -688,8 +688,9 @@ describe("Segment Utils", () => {
       workspaceId: "workspace1",
       surveys: ["survey1"],
       filters: [],
-      createdAt: dateString as any, // Cast to any to simulate string input
-      updatedAt: dateString as any, // Cast to any to simulate string input
+      // A string where a Date belongs, as JSON hands one back
+      createdAt: dateString as unknown as Date,
+      updatedAt: dateString as unknown as Date,
     };
 
     const formattedSegment = formatSegmentDateFields(segment);

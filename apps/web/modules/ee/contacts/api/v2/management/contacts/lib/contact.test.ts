@@ -206,7 +206,9 @@ describe("contact.ts", () => {
 
       vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue(existingAttributeKeys);
-      vi.mocked(prisma.contact.create).mockResolvedValue(null as any);
+      vi.mocked(prisma.contact.create).mockResolvedValue(
+        null as unknown as Awaited<ReturnType<typeof prisma.contact.create>>
+      );
 
       const result = await createContact(contactData);
 

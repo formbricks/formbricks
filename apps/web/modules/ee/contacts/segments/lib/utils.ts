@@ -245,29 +245,27 @@ export const moveResourceDown = (group: TBaseFilters, i: number) => {
   }
 };
 
+const moveResourceAt = (group: TBaseFilters, i: number, direction: "up" | "down") => {
+  if (direction === "up") {
+    moveResourceUp(group, i);
+  } else {
+    moveResourceDown(group, i);
+  }
+};
+
 export const moveResource = (group: TBaseFilters, resourceId: string, direction: "up" | "down") => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
 
     if (isResourceFilter(resource)) {
       if (resource.id === resourceId) {
-        if (direction === "up") {
-          moveResourceUp(group, i);
-          break;
-        } else {
-          moveResourceDown(group, i);
-          break;
-        }
+        moveResourceAt(group, i, direction);
+        break;
       }
     } else {
       if (group[i].id === resourceId) {
-        if (direction === "up") {
-          moveResourceUp(group, i);
-          break;
-        } else {
-          moveResourceDown(group, i);
-          break;
-        }
+        moveResourceAt(group, i, direction);
+        break;
       }
 
       moveResource(resource, resourceId, direction);
@@ -320,6 +318,18 @@ export const deleteEmptyGroups = (group: TBaseFilters) => {
   }
 };
 
+/** Appends `filter` to a group; the first filter of a group has no connector. */
+const pushFilterToGroup = (resource: TBaseFilters, filter: TBaseFilter) => {
+  if (resource.length === 0) {
+    resource.push({
+      ...filter,
+      connector: null,
+    });
+  } else {
+    resource.push(filter);
+  }
+};
+
 export const addFilterInGroup = (group: TBaseFilters, groupId: string, filter: TBaseFilter) => {
   for (let i = 0; i < group.length; i++) {
     const { resource } = group[i];
@@ -328,19 +338,7 @@ export const addFilterInGroup = (group: TBaseFilters, groupId: string, filter: T
       continue;
     } else {
       if (group[i].id === groupId) {
-        const { resource } = group[i];
-
-        if (!isResourceFilter(resource)) {
-          if (resource.length === 0) {
-            resource.push({
-              ...filter,
-              connector: null,
-            });
-          } else {
-            resource.push(filter);
-          }
-        }
-
+        pushFilterToGroup(resource, filter);
         break;
       } else {
         addFilterInGroup(resource, groupId, filter);

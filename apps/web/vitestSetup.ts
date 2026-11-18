@@ -186,9 +186,11 @@ afterEach(() => {
 });
 
 // Registers a test; nothing to await, and no caller awaits it.
-export const testInputValidation = (service: (...args: any[]) => unknown, ...args: any[]): void => {
+export const testInputValidation = (service: (...args: never[]) => unknown, ...args: unknown[]): void => {
   test("throws a ValidationError if the inputs are invalid", async () => {
-    await expect(service(...args)).rejects.toThrow(ValidationError);
+    // The point is to call the service with arguments its types reject.
+    const callWithAnyInput = service as (...input: unknown[]) => unknown;
+    await expect(callWithAnyInput(...args)).rejects.toThrow(ValidationError);
   }, 15000);
 };
 

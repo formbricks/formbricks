@@ -346,6 +346,87 @@ export const normalizeIngestedValue = (
   return { value: stringifyScalar(scalar), flag: "coercion_failed" };
 };
 
+/** The bag one `applyIngestContract` call fills, field by field. */
+interface TIngestAccumulator {
+  data: TResponseData;
+  flags: TIngestFlag[];
+  dropped: TIngestDrop[];
+  /** The incoming keys a declared field took, so the rest can be reported as unknown. */
+  consumedKeys: Set<string>;
+}
+
+/** What every field of one `applyIngestContract` call is matched against. */
+interface TIngestScope {
+  incoming: TApplyIngestContractInput["incoming"];
+  incomingKeys: string[];
+  ingestableKeys: string[];
+  elementIdSet: Set<string>;
+  enforceSizeLimit: boolean;
+}
+
+/** Applies the contract to one declared field: allow-list, `locked`, coercion and size limit. */
+const ingestDeclaredField = (
+  { field, link }: TLinkedEmbeddedField,
+  scope: TIngestScope,
+  acc: TIngestAccumulator
+): void => {
+  const { storageKey } = link;
+
+  // Rule 2, enforced here rather than trusted from the caller: `computed` fields are written by
+  // survey logic and `reserved` ones are read-only, so neither is addressable from outside. A
+  // caller that forgot to filter its field list therefore cannot widen what is settable.
+  if (field.source !== "ingested") return;
+
+  // A question answer owns this address, and an answer is never rewritten — so this field can
+  // never hold a value. Reported only when something actually arrived for it, so a survey stuck
+  // with a colliding name does not log a line per response for a value nobody sent.
+  if (scope.elementIdSet.has(storageKey)) {
+    const collidingKey = matchDeclaredFieldName(scope.incomingKeys, storageKey);
+    if (collidingKey !== undefined) {
+      // Consumed, so the collision is reported once rather than also as an unknown key.
+      acc.consumedKeys.add(collidingKey);
+      acc.dropped.push({ key: storageKey, reason: "element_id_collision" });
+    }
+    return;
+  }
+
+  // Resolved declared-side, against the incoming keys, so an exactly matching key always beats a
+  // case-insensitive one whatever order the bag arrived in — and so one param can fill two fields
+  // that differ only by case, which `@@unique([surveyId, storageKey])` allows and the shipped URL
+  // reader already does. Case tolerance is not optional: surveys relying on that drift are
+  // collecting data today.
+  const matchedKey = matchDeclaredFieldName(scope.ingestableKeys, storageKey);
+  // Rule 8: nothing arrived, so the key stays omitted rather than being written as a default.
+  if (matchedKey === undefined) return;
+  acc.consumedKeys.add(matchedKey);
+
+  // Both drops below report `storageKey` rather than the `matchedKey` they came in under, so a
+  // field declared `Plan` and sent as `plan` is greppable by the name the survey declares — see
+  // {@link TIngestDrop.key}.
+  if (field.locked) {
+    acc.dropped.push({ key: storageKey, reason: "locked_field" });
+    return;
+  }
+
+  const normalized = normalizeIngestedValue(scope.incoming[matchedKey], field.dataType);
+  if (normalized === undefined) {
+    acc.dropped.push({ key: storageKey, reason: "unsupported_value" });
+    return;
+  }
+
+  if (normalized.flag) acc.flags.push({ key: storageKey, reason: normalized.flag });
+
+  if (typeof normalized.value === "string") {
+    const truncated = truncateToMaxUtf8Bytes(normalized.value, MAX_INGESTED_VALUE_BYTES);
+    // Flagged whenever it *would* be cut, but only cut where it is stored — see `enforceSizeLimit`.
+    if (truncated !== normalized.value) acc.flags.push({ key: storageKey, reason: "truncated" });
+    acc.data[storageKey] = scope.enforceSizeLimit ? truncated : normalized.value;
+    return;
+  }
+
+  acc.data[storageKey] = normalized.value;
+};
+
 /**
  * Applies the whole contract to one incoming bag: allow-list → `locked` → coerce → size limit.
  *
@@ -396,68 +477,15 @@ export const applyIngestContract = ({
     else dropped.push({ key, reason: "unsupported_value" });
   }
 
-  const consumedKeys = new Set<string>();
+  const acc: TIngestAccumulator = { data, flags, dropped, consumedKeys: new Set<string>() };
+  const scope: TIngestScope = { incoming, incomingKeys, ingestableKeys, elementIdSet, enforceSizeLimit };
 
-  for (const { field, link } of ingestedFields) {
-    const { storageKey } = link;
-
-    // Rule 2, enforced here rather than trusted from the caller: `computed` fields are written by
-    // survey logic and `reserved` ones are read-only, so neither is addressable from outside. A
-    // caller that forgot to filter its field list therefore cannot widen what is settable.
-    if (field.source !== "ingested") continue;
-
-    // A question answer owns this address, and an answer is never rewritten — so this field can
-    // never hold a value. Reported only when something actually arrived for it, so a survey stuck
-    // with a colliding name does not log a line per response for a value nobody sent.
-    if (elementIdSet.has(storageKey)) {
-      const collidingKey = matchDeclaredFieldName(incomingKeys, storageKey);
-      if (collidingKey !== undefined) {
-        // Consumed, so the collision is reported once rather than also as an unknown key.
-        consumedKeys.add(collidingKey);
-        dropped.push({ key: storageKey, reason: "element_id_collision" });
-      }
-      continue;
-    }
-
-    // Resolved declared-side, against the incoming keys, so an exactly matching key always beats a
-    // case-insensitive one whatever order the bag arrived in — and so one param can fill two fields
-    // that differ only by case, which `@@unique([surveyId, storageKey])` allows and the shipped URL
-    // reader already does. Case tolerance is not optional: surveys relying on that drift are
-    // collecting data today.
-    const matchedKey = matchDeclaredFieldName(ingestableKeys, storageKey);
-    // Rule 8: nothing arrived, so the key stays omitted rather than being written as a default.
-    if (matchedKey === undefined) continue;
-    consumedKeys.add(matchedKey);
-
-    // Both drops below report `storageKey` rather than the `matchedKey` they came in under, so a
-    // field declared `Plan` and sent as `plan` is greppable by the name the survey declares — see
-    // {@link TIngestDrop.key}.
-    if (field.locked) {
-      dropped.push({ key: storageKey, reason: "locked_field" });
-      continue;
-    }
-
-    const normalized = normalizeIngestedValue(incoming[matchedKey], field.dataType);
-    if (normalized === undefined) {
-      dropped.push({ key: storageKey, reason: "unsupported_value" });
-      continue;
-    }
-
-    if (normalized.flag) flags.push({ key: storageKey, reason: normalized.flag });
-
-    if (typeof normalized.value === "string") {
-      const truncated = truncateToMaxUtf8Bytes(normalized.value, MAX_INGESTED_VALUE_BYTES);
-      // Flagged whenever it *would* be cut, but only cut where it is stored — see `enforceSizeLimit`.
-      if (truncated !== normalized.value) flags.push({ key: storageKey, reason: "truncated" });
-      data[storageKey] = enforceSizeLimit ? truncated : normalized.value;
-      continue;
-    }
-
-    data[storageKey] = normalized.value;
+  for (const ingestedField of ingestedFields) {
+    ingestDeclaredField(ingestedField, scope, acc);
   }
 
   for (const key of ingestableKeys) {
-    if (!consumedKeys.has(key)) dropped.push({ key, reason: "unknown_key" });
+    if (!acc.consumedKeys.has(key)) dropped.push({ key, reason: "unknown_key" });
   }
 
   return { data: { ...data }, flags, dropped };

@@ -34,7 +34,7 @@ vi.mock("@/lib/authzed/team-workspace", () => ({
 describe("Teams Lib", () => {
   describe("createTeam", () => {
     test("creates a team successfully and revalidates cache", async () => {
-      (prisma.team.create as any).mockResolvedValueOnce(mockTeam);
+      vi.mocked(prisma.team.create, { partial: true }).mockResolvedValueOnce(mockTeam);
 
       const teamInput = { name: "Test Team" };
       const organizationId = "org456";
@@ -51,7 +51,7 @@ describe("Teams Lib", () => {
     });
 
     test("returns internal error when prisma.team.create fails", async () => {
-      (prisma.team.create as any).mockRejectedValueOnce(new Error("Create error"));
+      vi.mocked(prisma.team.create).mockRejectedValueOnce(new Error("Create error"));
       const teamInput = { name: "Test Team" };
       const organizationId = "org456";
       const result = await createTeam(teamInput, organizationId);
@@ -67,7 +67,7 @@ describe("Teams Lib", () => {
     test("returns teams with meta on success", async () => {
       const teamsArray = [mockTeam];
       // Simulate prisma transaction return [teams, count]
-      (prisma.$transaction as any).mockResolvedValueOnce([teamsArray, teamsArray.length]);
+      vi.mocked(prisma.$transaction).mockResolvedValueOnce([teamsArray, teamsArray.length]);
 
       const organizationId = "org456";
       const result = await getTeams(organizationId, filter as TGetTeamsFilter);
@@ -82,7 +82,7 @@ describe("Teams Lib", () => {
     });
 
     test("returns internal_server_error when prisma transaction fails", async () => {
-      (prisma.$transaction as any).mockRejectedValueOnce(new Error("Transaction error"));
+      vi.mocked(prisma.$transaction).mockRejectedValueOnce(new Error("Transaction error"));
       const organizationId = "org456";
       const result = await getTeams(organizationId, filter as TGetTeamsFilter);
       expect(result.ok).toBe(false);

@@ -27,9 +27,15 @@ function createToolServer() {
     { config: Record<string, unknown>; handler: (input: unknown, extra: unknown) => Promise<CallToolResult> }
   >();
   const server = {
-    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: any) => {
-      tools.set(name, { config, handler });
-    }),
+    registerTool: vi.fn(
+      (
+        name: string,
+        config: Record<string, unknown>,
+        handler: (input: unknown, extra: unknown) => Promise<CallToolResult>
+      ) => {
+        tools.set(name, { config, handler });
+      }
+    ),
   };
   return { server, tools };
 }
@@ -67,7 +73,13 @@ describe("registerScopedTool", () => {
   test("registers the tool under its name with the config untouched", () => {
     const { server, tools } = createToolServer();
 
-    registerScopedTool(server as any, "do_thing", CONFIG, ["surveys:write"], vi.fn() as any);
+    registerScopedTool(
+      server as unknown as Parameters<typeof registerScopedTool>[0],
+      "do_thing",
+      CONFIG,
+      ["surveys:write"],
+      vi.fn()
+    );
 
     expect(server.registerTool).toHaveBeenCalledTimes(1);
     expect(server.registerTool.mock.calls[0][0]).toBe("do_thing");
@@ -78,7 +90,13 @@ describe("registerScopedTool", () => {
     const { server, tools } = createToolServer();
     const handlerResult = { structuredContent: { ok: true } } as unknown as CallToolResult;
     const handler = vi.fn().mockResolvedValue(handlerResult);
-    registerScopedTool(server as any, "do_thing", CONFIG, ["surveys:read", "surveys:write"], handler as any);
+    registerScopedTool(
+      server as unknown as Parameters<typeof registerScopedTool>[0],
+      "do_thing",
+      CONFIG,
+      ["surveys:read", "surveys:write"],
+      handler
+    );
 
     const input = { a: 1 };
     const ctx = { http: { authInfo: authInfoWithScopes(["surveys:read", "surveys:write"]) } };
@@ -91,7 +109,13 @@ describe("registerScopedTool", () => {
   test("blocks the handler with a 403 insufficient-scope result when a required scope is missing", async () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn();
-    registerScopedTool(server as any, "do_thing", CONFIG, ["surveys:write"], handler as any);
+    registerScopedTool(
+      server as unknown as Parameters<typeof registerScopedTool>[0],
+      "do_thing",
+      CONFIG,
+      ["surveys:write"],
+      handler
+    );
 
     const result = await tools
       .get("do_thing")!
@@ -112,7 +136,13 @@ describe("registerScopedTool", () => {
   test("denies when the token holds only some of several required scopes", async () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn();
-    registerScopedTool(server as any, "do_thing", CONFIG, ["surveys:read", "surveys:write"], handler as any);
+    registerScopedTool(
+      server as unknown as Parameters<typeof registerScopedTool>[0],
+      "do_thing",
+      CONFIG,
+      ["surveys:read", "surveys:write"],
+      handler
+    );
 
     const result = await tools
       .get("do_thing")!
@@ -140,7 +170,13 @@ describe("registerScopedTool — auditing refused mutations", () => {
 
   test("audits a refused mutation as a failed attempt by the actor, against the id it named", async () => {
     const { server, tools } = createToolServer();
-    registerScopedTool(server as any, "delete_response", AUDITED, ["responses:write"], vi.fn() as any);
+    registerScopedTool(
+      server as unknown as Parameters<typeof registerScopedTool>[0],
+      "delete_response",
+      AUDITED,
+      ["responses:write"],
+      vi.fn()
+    );
 
     const result = await tools
       .get("delete_response")!
@@ -167,7 +203,13 @@ describe("registerScopedTool — auditing refused mutations", () => {
   test("records no target for a refused creation, even when the input names an existing id", async () => {
     const { server, tools } = createToolServer();
     const created = { ...CONFIG, audit: { action: "created", targetType: "workflow" } } as const;
-    registerScopedTool(server as any, "duplicate_workflow", created, ["workflows:write"], vi.fn() as any);
+    registerScopedTool(
+      server as unknown as Parameters<typeof registerScopedTool>[0],
+      "duplicate_workflow",
+      created,
+      ["workflows:write"],
+      vi.fn()
+    );
 
     await tools
       .get("duplicate_workflow")!
@@ -183,7 +225,13 @@ describe("registerScopedTool — auditing refused mutations", () => {
 
   test("audits nothing when the refused tool declares no audit — reads are not attempts", async () => {
     const { server, tools } = createToolServer();
-    registerScopedTool(server as any, "list_responses", CONFIG, ["responses:read"], vi.fn() as any);
+    registerScopedTool(
+      server as unknown as Parameters<typeof registerScopedTool>[0],
+      "list_responses",
+      CONFIG,
+      ["responses:read"],
+      vi.fn()
+    );
 
     await tools
       .get("list_responses")!
@@ -196,7 +244,13 @@ describe("registerScopedTool — auditing refused mutations", () => {
   test("audits nothing when the scope check passes — the tool's own runner records the outcome", async () => {
     const { server, tools } = createToolServer();
     const handler = vi.fn().mockResolvedValue({ structuredContent: {} });
-    registerScopedTool(server as any, "delete_response", AUDITED, ["responses:write"], handler as any);
+    registerScopedTool(
+      server as unknown as Parameters<typeof registerScopedTool>[0],
+      "delete_response",
+      AUDITED,
+      ["responses:write"],
+      handler
+    );
 
     await tools
       .get("delete_response")!
@@ -212,7 +266,13 @@ describe("registerScopedTool — auditing refused mutations", () => {
   test("keeps `audit` out of the config it hands the SDK", () => {
     const { server, tools } = createToolServer();
 
-    registerScopedTool(server as any, "delete_response", AUDITED, ["responses:write"], vi.fn() as any);
+    registerScopedTool(
+      server as unknown as Parameters<typeof registerScopedTool>[0],
+      "delete_response",
+      AUDITED,
+      ["responses:write"],
+      vi.fn()
+    );
 
     expect(tools.get("delete_response")?.config).toEqual(CONFIG);
     expect(tools.get("delete_response")?.config).not.toHaveProperty("audit");

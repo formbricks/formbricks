@@ -243,4 +243,15 @@ describe("isRouteRateLimitedByEnvoy", () => {
       })
     ).toBe(false);
   });
+
+  // Only reachable with an auth type outside the union; it was false before the rule table.
+  test.each(["constructor", "toString"])("does not rate limit an unknown auth type %s", (authType) => {
+    expect(
+      isRouteRateLimitedByEnvoy({
+        pathname: "/api/v1/management/responses",
+        method: "GET",
+        authType: authType as never,
+      })
+    ).toBe(false);
+  });
 });

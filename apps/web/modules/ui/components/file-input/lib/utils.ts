@@ -11,6 +11,70 @@ const isFileSizeExceed = (fileSizeInMB: number, maxSizeInMB?: number) => {
   return false;
 };
 
+type TFileCheck = { file: File } | { rejected: "size" | "unsupported" };
+
+/** The file to upload (a HEIC converted to JPEG), or why it is rejected. */
+const checkFile = async (
+  file: File,
+  allowedFileExtensions: string[],
+  maxSizeInMB?: number
+): Promise<TFileCheck> => {
+  const extension = file.name.split(".").pop()?.toLowerCase();
+  const fileSizeInMB = file.size / 1000000;
+
+  if (!allowedFileExtensions.includes(extension as TAllowedFileExtension)) {
+    return { rejected: "unsupported" };
+  }
+
+  if (isFileSizeExceed(fileSizeInMB, maxSizeInMB)) {
+    return { rejected: "size" };
+  }
+
+  if (extension !== "heic") {
+    return { file };
+  }
+
+  let convertedFile: File;
+  try {
+    convertedFile = await convertHeicToJpeg(file);
+  } catch {
+    return { rejected: "unsupported" };
+  }
+
+  if (isFileSizeExceed(convertedFile.size / 1000000, maxSizeInMB)) {
+    return { rejected: "size" };
+  }
+
+  return { file: convertedFile };
+};
+
+/** The toast text for the rejected files, empty when none were rejected. */
+const getRejectionMessage = (
+  sizeExceedCount: number,
+  unsupportedCount: number,
+  maxSizeInMB?: number
+): string => {
+  let toastMessage = "";
+  if (sizeExceedCount > 0) {
+    if (sizeExceedCount === 1) {
+      toastMessage += `File exceeds ${maxSizeInMB} MB size limit.`;
+    } else {
+      toastMessage += `${sizeExceedCount} files exceed ${maxSizeInMB} MB size limit.`;
+    }
+  }
+  if (unsupportedCount > 0) {
+    if (toastMessage) {
+      toastMessage += " ";
+    }
+    if (unsupportedCount === 1) {
+      toastMessage += `Unsupported file type.`;
+    } else {
+      toastMessage += `${unsupportedCount} files have unsupported types.`;
+    }
+  }
+  return toastMessage;
+};
+
 export const getAllowedFiles = async (
   files: File[],
   allowedFileExtensions: string[],
@@ -25,58 +89,21 @@ export const getAllowedFiles = async (
       continue;
     }
 
-    const extension = file.name.split(".").pop()?.toLowerCase();
-    const fileSizeInMB = file.size / 1000000;
-
-    if (!allowedFileExtensions.includes(extension as TAllowedFileExtension)) {
-      unsupportedExtensionFiles.push(file.name);
-      continue;
-    }
-
-    if (isFileSizeExceed(fileSizeInMB, maxSizeInMB)) {
+    const result = await checkFile(file, allowedFileExtensions, maxSizeInMB);
+    if ("file" in result) {
+      convertedFiles.push(result.file);
+    } else if (result.rejected === "size") {
       sizeExceedFiles.push(file.name);
-      continue;
-    }
-
-    if (extension === "heic") {
-      let convertedFile: File;
-      try {
-        convertedFile = await convertHeicToJpeg(file);
-      } catch {
-        unsupportedExtensionFiles.push(file.name);
-        continue;
-      }
-
-      if (isFileSizeExceed(convertedFile.size / 1000000, maxSizeInMB)) {
-        sizeExceedFiles.push(file.name);
-        continue;
-      }
-
-      convertedFiles.push(convertedFile);
-      continue;
-    }
-
-    convertedFiles.push(file);
-  }
-
-  let toastMessage = "";
-  if (sizeExceedFiles.length > 0) {
-    if (sizeExceedFiles.length === 1) {
-      toastMessage += `File exceeds ${maxSizeInMB} MB size limit.`;
     } else {
-      toastMessage += `${sizeExceedFiles.length} files exceed ${maxSizeInMB} MB size limit.`;
+      unsupportedExtensionFiles.push(file.name);
     }
   }
-  if (unsupportedExtensionFiles.length > 0) {
-    if (toastMessage) {
-      toastMessage += " ";
-    }
-    if (unsupportedExtensionFiles.length === 1) {
-      toastMessage += `Unsupported file type.`;
-    } else {
-      toastMessage += `${unsupportedExtensionFiles.length} files have unsupported types.`;
-    }
-  }
+
+  const toastMessage = getRejectionMessage(
+    sizeExceedFiles.length,
+    unsupportedExtensionFiles.length,
+    maxSizeInMB
+  );
   if (toastMessage) {
     toast.error(toastMessage);
   }

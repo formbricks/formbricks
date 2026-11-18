@@ -65,7 +65,7 @@ const mockTx = () => {
       updateMany: vi.fn(),
     },
   };
-  vi.mocked(prisma.$transaction).mockImplementation(async (fn: any) => fn(tx));
+  vi.mocked(prisma.$transaction).mockImplementation(async (fn) => fn(tx as never));
   return tx;
 };
 
@@ -586,7 +586,7 @@ describe("reconcileFeedbackSourcesForSurvey", () => {
           { surveyId: OTHER_SURVEY_ID, elementId: "el-sibling", hubFieldType: "nps" },
         ],
       },
-    ] as any);
+    ] as Awaited<ReturnType<typeof getFeedbackSourcesToReconcile>>);
 
     await reconcileFeedbackSourcesForSurvey(SURVEY_ID, buildBlocks([{ id: "el-kept", type: "rating" }]));
 
@@ -682,7 +682,7 @@ describe("scheduleFeedbackSourceReconciliation", () => {
 
     const deleted = vi
       .mocked(tx.feedbackSourceFormbricksMapping.deleteMany)
-      .mock.calls.flatMap((call: any) => call[0]?.where?.elementId?.in ?? []);
+      .mock.calls.flatMap((call) => call[0]?.where?.elementId?.in ?? []);
     expect(deleted).not.toContain("el-new");
     expect(deleted).toEqual([]);
   });

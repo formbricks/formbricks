@@ -7,7 +7,7 @@ import { checkForYoutubePrivacyMode, getAllowedFiles } from "./utils";
 // Mock FileReader
 class MockFileReader {
   onload: (() => void) | null = null;
-  onerror: ((error: any) => void) | null = null;
+  onerror: ((error: unknown) => void) | null = null;
   result: string | null = null;
 
   readAsDataURL() {
@@ -22,7 +22,7 @@ class MockFileReader {
 }
 
 // Mock global FileReader
-global.FileReader = MockFileReader as any;
+global.FileReader = MockFileReader as unknown as typeof FileReader;
 
 // Mock dependencies
 vi.mock("react-hot-toast", () => ({
@@ -133,6 +133,29 @@ describe("File Input Utils", () => {
       expect(fetch).not.toHaveBeenCalled();
     });
 
+    test("counts several rejected files of each kind in one toast", async () => {
+      const files = [
+        new File(["x".repeat(200000)], "a.txt"),
+        new File(["x".repeat(200000)], "b.txt"),
+        new File(["test"], "c.doc"),
+        new File(["test"], "d.exe"),
+        new File(["test"], "ok.txt"),
+      ];
+
+      const result = await getAllowedFiles(files, ["txt"], 0.1);
+
+      expect(result.map((file) => file.name)).toEqual(["ok.txt"]);
+      expect(toast.error).toHaveBeenCalledWith(
+        "2 files exceed 0.1 MB size limit. 2 files have unsupported types."
+      );
+    });
+
+    test("shows no toast when every file is accepted", async () => {
+      await getAllowedFiles([new File(["test"], "ok.txt")], ["txt"], 5);
+
+      expect(toast.error).not.toHaveBeenCalled();
+    });
+
     test("returns empty array when no files are provided", async () => {
       const result = await getAllowedFiles([], ["jpg"] as TAllowedFileExtension[]);
       expect(result).toEqual([]);
@@ -196,8 +219,12 @@ describe("File Input Utils", () => {
     });
 
     test("should return false for non-string types", () => {
-      expect(checkForYoutubePrivacyMode(null as any)).toBe(false);
-      expect(checkForYoutubePrivacyMode(123 as any)).toBe(false);
+      expect(
+        checkForYoutubePrivacyMode(null as unknown as Parameters<typeof checkForYoutubePrivacyMode>[0])
+      ).toBe(false);
+      expect(
+        checkForYoutubePrivacyMode(123 as unknown as Parameters<typeof checkForYoutubePrivacyMode>[0])
+      ).toBe(false);
     });
   });
 });

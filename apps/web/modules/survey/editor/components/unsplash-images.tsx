@@ -147,7 +147,7 @@ export const ImageFromUnsplashSurveyBg = ({ handleBgChange }: ImageFromUnsplashS
       }
     };
 
-    const debouncedFetchData = debounce((q) => fetchData(q, page), 500);
+    const debouncedFetchData = debounce((q: string) => fetchData(q, page), 500);
 
     if (query.trim() !== "") {
       debouncedFetchData(query);

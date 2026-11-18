@@ -14,6 +14,46 @@ export type QueueHandoffDependencies = {
   wait?: () => Promise<void>;
 };
 
+/** Consumers were already retired: only the queue resume can be left to do. */
+const resumeAfterRetirement = async (
+  deps: QueueHandoffDependencies,
+  state: OnlineState,
+  now: () => Date
+): Promise<void> => {
+  // A controlled source restoration must not make a later retry terminate active legacy workers.
+  await deps.verifySourceConsumersAbsent();
+  // Resume itself is idempotent if the coordinator died before recording its postcondition.
+  if (!state.queueResumedAt) {
+    await deps.assertLock();
+    await deps.queue.resume();
+    await deps.save({ phase: "rollout", queueResumedAt: now() });
+  }
+};
+
+/** Waits, within the pause deadline, for the paused queue's active jobs to finish. */
+const drainActiveJobs = async (
+  deps: QueueHandoffDependencies,
+  state: OnlineState,
+  now: () => Date,
+  wait: () => Promise<void>
+): Promise<void> => {
+  await deps.save({ phase: "draining_jobs" });
+  while (true) {
+    await deps.assertLock();
+    if (!(await deps.queue.isPaused())) throw new OnlineUpgradeBlocked("queue_pause_lost");
+    if (!state.queuePauseDeadlineAt || now() >= state.queuePauseDeadlineAt) {
+      // No source termination is authorized yet. Abort the attempt and restore consumption.
+      await deps.queue.resume();
+      await deps.save({ phase: "job_drain_aborted", queueResumedAt: now() });
+      throw new OnlineUpgradeBlocked("job_drain_timeout", true);
+    }
+    if ((await deps.queue.active()) === 0) break;
+    await wait();
+  }
+  await deps.assertLock();
+  await deps.save({ phase: "retiring_consumers" });
+};
+
 /** Only entered after HTTP endpoint withdrawal and ingress drain have succeeded. */
 export const handoffJobs = async (deps: QueueHandoffDependencies): Promise<void> => {
   const now = deps.now ?? (() => new Date());
@@ -21,14 +61,7 @@ export const handoffJobs = async (deps: QueueHandoffDependencies): Promise<void>
   await deps.assertLock();
   let state = await deps.read();
   if (state.completedPhases.includes("consumers-retired")) {
-    // A controlled source restoration must not make a later retry terminate active legacy workers.
-    await deps.verifySourceConsumersAbsent();
-    // Resume itself is idempotent if the coordinator died before recording its postcondition.
-    if (!state.queueResumedAt) {
-      await deps.assertLock();
-      await deps.queue.resume();
-      await deps.save({ phase: "rollout", queueResumedAt: now() });
-    }
+    await resumeAfterRetirement(deps, state, now);
     return;
   }
   if (!state.queuePausedAt || state.queueResumedAt) {
@@ -55,21 +88,7 @@ export const handoffJobs = async (deps: QueueHandoffDependencies): Promise<void>
     await deps.queue.pause();
   }
   if (state.phase !== "retiring_consumers") {
-    await deps.save({ phase: "draining_jobs" });
-    while (true) {
-      await deps.assertLock();
-      if (!(await deps.queue.isPaused())) throw new OnlineUpgradeBlocked("queue_pause_lost");
-      if (!state.queuePauseDeadlineAt || now() >= state.queuePauseDeadlineAt) {
-        // No source termination is authorized yet. Abort the attempt and restore consumption.
-        await deps.queue.resume();
-        await deps.save({ phase: "job_drain_aborted", queueResumedAt: now() });
-        throw new OnlineUpgradeBlocked("job_drain_timeout", true);
-      }
-      if ((await deps.queue.active()) === 0) break;
-      await wait();
-    }
-    await deps.assertLock();
-    await deps.save({ phase: "retiring_consumers" });
+    await drainActiveJobs(deps, state, now, wait);
   }
   await deps.assertLock();
   if (!(await deps.queue.isPaused()) || (await deps.queue.active()) !== 0)

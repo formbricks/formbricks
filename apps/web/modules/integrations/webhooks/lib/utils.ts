@@ -55,3 +55,27 @@ export const getEndpointStatusClassName = (endpointAccessible: boolean | undefin
   if (endpointAccessible === false) return "border-red-200 bg-red-50";
   return "border-slate-200 bg-white";
 };
+
+export type TNewWebhookInputProblem = "missing_url" | "missing_trigger" | "missing_survey" | "discord_url";
+
+/**
+ * What keeps a new webhook from being saved, checked in the order the form reports it, or null when
+ * nothing does. Throws, like `isDiscordWebhook`, when `url` is not a URL.
+ */
+export const getNewWebhookInputProblem = ({
+  url,
+  triggerCount,
+  allSurveys,
+  surveyCount,
+}: {
+  url: string;
+  triggerCount: number;
+  allSurveys: boolean;
+  surveyCount: number;
+}): TNewWebhookInputProblem | null => {
+  if (!url) return "missing_url";
+  if (triggerCount === 0) return "missing_trigger";
+  if (!allSurveys && surveyCount === 0) return "missing_survey";
+  if (isDiscordWebhook(url)) return "discord_url";
+  return null;
+};

@@ -5,14 +5,15 @@ import { compose, jsPlugins } from "./compose.mjs";
  * and the CI lint job had passed. Sonar analyses a PR roughly fifteen minutes after the push, so
  * catching these at lint time saves a review round trip.
  *
- * Every rule here is an error in the whole-repo lint (`pnpm lint`, the CI lint job), except
- * `sonarjs/cognitive-complexity`, which existing code still violates (ENG-7329). That one runs only
- * in `scripts/lint-staged-oxlint.mjs`, the pre-commit hook's runner on the staged files: it sets
- * OXLINT_SONAR_PARITY=warn and fails the commit on a rule in `STAGED_LINES_RULE_IDS` only inside the
- * staged lines, as Sonar judges a PR's new code: a NEW violation fails the commit while old ones
- * stay untouched, even in the same file.
+ * Every rule here is an error in the whole-repo lint (`pnpm lint`, the CI lint job). An existing
+ * exception carries an inline disable with its reason, or (applied data migrations) a per-file
+ * override in its package (ENG-7329).
  *
- * To widen: once its backlog is fixed, move a staged-lines rule into `sonarRules` below.
+ * A newly mirrored rule whose backlog is not fixed yet goes into `stagedLinesRules` instead. It then
+ * runs only in `scripts/lint-staged-oxlint.mjs`, the pre-commit hook's runner on the staged files: it
+ * sets OXLINT_SONAR_PARITY=warn and fails the commit on a rule in `STAGED_LINES_RULE_IDS` only inside
+ * the staged lines, as Sonar judges a PR's new code: a NEW violation fails the commit while old ones
+ * stay untouched, even in the same file. Once its backlog is fixed, move it into `sonarRules`.
  */
 const DEFAULT_SEVERITY = "off";
 const SEVERITIES = new Set(["off", "warn", "error"]);
@@ -28,6 +29,8 @@ export const TEST_FILES = ["**/*.test.*", "**/*.spec.*", "**/__tests__/**", "**/
 const offFor = (rules) => Object.fromEntries(Object.keys(rules).map((id) => [id, "off"]));
 
 const sonarRules = {
+  // S3776. Sonar's default threshold; eslint-plugin-sonarjs@3 reproduces its exact scores.
+  "sonarjs/cognitive-complexity": ["error", 15],
   // S5843. Sonar's default threshold.
   "sonarjs/regex-complexity": ["error", { threshold: 20 }],
   // S2004. Sonar flags functions nested more than four levels deep.
@@ -41,11 +44,9 @@ const sonarRules = {
   "unicorn-js/prefer-string-raw": "error",
 };
 
-// Still has a backlog, so it holds only the staged lines to it (see above).
-const stagedLinesRules = (severity) => ({
-  // S3776. Sonar's default threshold; eslint-plugin-sonarjs@3 reproduces its exact scores.
-  "sonarjs/cognitive-complexity": [severity, 15],
-});
+// Rules that still have a backlog, held only to the staged lines (see above). None today.
+// eslint-disable-next-line no-unused-vars -- the severity each rule here takes, once there is one
+const stagedLinesRules = (severity) => ({});
 
 const testRules = { "vitest/prefer-to-have-length": "error" };
 

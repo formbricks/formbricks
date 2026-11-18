@@ -319,6 +319,39 @@ export const deleteTeam = async (teamId: string): Promise<boolean> => {
   }
 };
 
+/** Throws unless every user is a member of the organization and every workspace belongs to it. */
+const assertMembersAndWorkspacesInOrganization = async (
+  organizationId: string,
+  userIds: string[],
+  workspaceIds: string[]
+): Promise<void> => {
+  // Check that all users exist within the organization's membership.
+  if (userIds.length > 0) {
+    const orgUsersCount = await prisma.membership.count({
+      where: {
+        userId: { in: userIds },
+        organizationId,
+      },
+    });
+    if (orgUsersCount !== userIds.length) {
+      throw new TeamAssignmentOutsideOrganizationError("members");
+    }
+  }
+
+  // Check that all specified workspaces belong to the same organization.
+  if (workspaceIds.length > 0) {
+    const orgWorkspacesCount = await prisma.workspace.count({
+      where: {
+        id: { in: workspaceIds },
+        organizationId,
+      },
+    });
+    if (orgWorkspacesCount !== workspaceIds.length) {
+      throw new TeamAssignmentOutsideOrganizationError("workspaces");
+    }
+  }
+};
+
 export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormSchema): Promise<boolean> => {
   validateInputs([teamId, ZId], [data, ZTeamSettingsFormSchema]);
 
@@ -338,33 +371,11 @@ export const updateTeamDetails = async (teamId: string, data: TTeamSettingsFormS
       throw new ResourceNotFoundError("Team", teamId);
     }
 
-    // Check that all users exist within the organization's membership.
-    const userIds = members.map((m) => m.userId);
-    if (userIds.length > 0) {
-      const orgUsersCount = await prisma.membership.count({
-        where: {
-          userId: { in: userIds },
-          organizationId: team.organizationId,
-        },
-      });
-      if (orgUsersCount !== userIds.length) {
-        throw new TeamAssignmentOutsideOrganizationError("members");
-      }
-    }
-
-    // Check that all specified workspaces belong to the same organization.
-    const workspaceIds = workspaces.map((p) => p.workspaceId);
-    if (workspaceIds.length > 0) {
-      const orgWorkspacesCount = await prisma.workspace.count({
-        where: {
-          id: { in: workspaceIds },
-          organizationId: team.organizationId,
-        },
-      });
-      if (orgWorkspacesCount !== workspaceIds.length) {
-        throw new TeamAssignmentOutsideOrganizationError("workspaces");
-      }
-    }
+    await assertMembersAndWorkspacesInOrganization(
+      team.organizationId,
+      members.map((m) => m.userId),
+      workspaces.map((p) => p.workspaceId)
+    );
 
     // Arrays for tracking member changes
     const deletedMembers: string[] = [];

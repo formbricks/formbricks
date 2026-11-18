@@ -39,7 +39,7 @@ export const logAuthEvent = (
   status: TAuditStatus,
   userId: string,
   email?: string,
-  additionalData: Record<string, any> = {}
+  additionalData: Record<string, unknown> = {}
 ) => {
   const auditActorId = userId === UNKNOWN_DATA && email ? createAuditIdentifier(email, "email") : userId;
 
@@ -77,7 +77,7 @@ export const logAuthAttempt = (
   authMethod: string,
   userId: string = UNKNOWN_DATA,
   email?: string,
-  additionalData: Record<string, any> = {}
+  additionalData: Record<string, unknown> = {}
 ) => {
   logAuthEvent("authenticationAttempted", "failure", userId, email, {
     failureReason,
@@ -103,7 +103,7 @@ export const logAuthSuccess = (
   authMethod: string,
   userId: string,
   email: string,
-  additionalData: Record<string, any> = {}
+  additionalData: Record<string, unknown> = {}
 ) => {
   logAuthEvent(action, "success", userId, email, {
     provider,
@@ -128,7 +128,7 @@ export const logTwoFactorAttempt = (
   userId: string,
   email: string,
   failureReason?: string,
-  additionalData: Record<string, any> = {}
+  additionalData: Record<string, unknown> = {}
 ) => {
   const action = isSuccess ? "twoFactorVerified" : "twoFactorAttempted";
   const status = isSuccess ? "success" : "failure";
@@ -155,7 +155,7 @@ export const logEmailVerificationAttempt = (
   failureReason?: string,
   userId: string = UNKNOWN_DATA,
   email?: string,
-  additionalData: Record<string, any> = {}
+  additionalData: Record<string, unknown> = {}
 ) => {
   const action = isSuccess ? "emailVerified" : "emailVerificationAttempted";
   const status = isSuccess ? "success" : "failure";

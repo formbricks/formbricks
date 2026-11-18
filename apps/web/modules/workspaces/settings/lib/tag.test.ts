@@ -149,9 +149,11 @@ describe("tag lib", () => {
   describe("mergeTags", () => {
     test("merges tags with responses with both tags", async () => {
       vi.mocked(prisma.tag.findUnique)
-        .mockResolvedValueOnce(baseTag as any)
-        .mockResolvedValueOnce(newTag as any);
-      vi.mocked(prisma.response.findMany).mockResolvedValueOnce([{ id: "resp1" }] as any);
+        .mockResolvedValueOnce(baseTag as Awaited<ReturnType<typeof prisma.tag.findUnique>>)
+        .mockResolvedValueOnce(newTag as Awaited<ReturnType<typeof prisma.tag.findUnique>>);
+      vi.mocked(prisma.response.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        { id: "resp1" },
+      ]);
       vi.mocked(prisma.$transaction).mockResolvedValueOnce(undefined);
       const result = await mergeTags(baseTag.id, newTag.id);
       expect(result).toEqual(ok(newTag));
@@ -161,10 +163,10 @@ describe("tag lib", () => {
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
     test("merges tags with no responses with both tags", async () => {
-      vi.mocked(prisma.tag.findUnique)
-        .mockResolvedValueOnce(baseTag as any)
-        .mockResolvedValueOnce(newTag as any);
-      vi.mocked(prisma.response.findMany).mockResolvedValueOnce([] as any);
+      vi.mocked(prisma.tag.findUnique, { partial: true, deep: true })
+        .mockResolvedValueOnce(baseTag)
+        .mockResolvedValueOnce(newTag);
+      vi.mocked(prisma.response.findMany, { partial: true, deep: true }).mockResolvedValueOnce([]);
       vi.mocked(prisma.$transaction).mockResolvedValueOnce(undefined);
       const result = await mergeTags(baseTag.id, newTag.id);
       expect(result).toEqual(ok(newTag));
@@ -182,8 +184,8 @@ describe("tag lib", () => {
       }
     });
     test("throws if new tag not found", async () => {
-      vi.mocked(prisma.tag.findUnique)
-        .mockResolvedValueOnce(baseTag as any)
+      vi.mocked(prisma.tag.findUnique, { partial: true, deep: true })
+        .mockResolvedValueOnce(baseTag)
         .mockResolvedValueOnce(null);
       const result = await mergeTags(baseTag.id, newTag.id);
       expect(result.ok).toBe(false);

@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { type Mock, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
@@ -308,8 +308,8 @@ describe("Auth Utils", () => {
         expect(bucketStart2).toBe(bucketStart);
 
         // Both should generate the same cache key
-        const key1 = (createCacheKey.rateLimit.core as any)("auth", hashedIdentifier, bucketStart1);
-        const key2 = (createCacheKey.rateLimit.core as any)("auth", hashedIdentifier, bucketStart2);
+        const key1 = createCacheKey.rateLimit.core("auth", hashedIdentifier, bucketStart1);
+        const key2 = createCacheKey.rateLimit.core("auth", hashedIdentifier, bucketStart2);
         expect(key1).toBe(key2);
 
         const expectedKey = `rate_limit:auth:${hashedIdentifier}:${bucketStart}`;
@@ -340,8 +340,8 @@ describe("Auth Utils", () => {
     });
 
     describe("Redis Available - All Branch Coverage", () => {
-      let mockRedis: any;
-      let mockMulti: any;
+      let mockRedis: { multi: Mock; zRange: Mock; isReady: boolean };
+      let mockMulti: Record<string, Mock>;
 
       beforeEach(() => {
         // Clear mocks first
@@ -784,7 +784,7 @@ describe("Auth Utils", () => {
 
       logAuthAttempt("invalid_password", "credentials", "password_validation", "unknown", email);
 
-      const logCall = (queueAuditEventBackground as any).mock.calls[0][0];
+      const logCall = vi.mocked(queueAuditEventBackground).mock.calls[0][0];
       const logString = JSON.stringify(logCall);
 
       expect(logString).not.toContain("sensitive@company.com");
@@ -798,7 +798,7 @@ describe("Auth Utils", () => {
       logAuthAttempt("invalid_password", "credentials", "password_validation", "unknown", email);
       logAuthAttempt("user_not_found", "credentials", "user_lookup", "unknown", email);
 
-      const calls = (queueAuditEventBackground as any).mock.calls;
+      const calls = vi.mocked(queueAuditEventBackground).mock.calls;
       expect(calls[0][0].userId).toBe(calls[1][0].userId);
     });
   });

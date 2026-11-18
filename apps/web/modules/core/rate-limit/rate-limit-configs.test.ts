@@ -375,14 +375,14 @@ describe("rateLimitConfigs", () => {
         mockEval.mockResolvedValue([1, 1]);
         const allowedResult = await checkRateLimit(config, identifier);
         expect(allowedResult.ok).toBe(true);
-        expect((allowedResult as any).data.allowed).toBe(true);
+        expect(allowedResult).toHaveProperty("data.allowed", true);
 
         // Test exceeded limit
         mockEval.mockClear();
         mockEval.mockResolvedValue([config.allowedPerInterval + 1, 0]);
         const exceededResult = await checkRateLimit(config, identifier);
         expect(exceededResult.ok).toBe(true);
-        expect((exceededResult as any).data.allowed).toBe(false);
+        expect(exceededResult).toHaveProperty("data.allowed", false);
       }
     });
 

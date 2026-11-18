@@ -4,7 +4,7 @@ import { hasCloudEntitlementWithLicenseGuard } from "@/modules/billing/lib/featu
 import { getSurveyFollowUpsPermission } from "./utils";
 
 vi.mock("@/lib/constants", async () => {
-  const actual = (await vi.importActual("@/lib/constants")) as any;
+  const actual = await vi.importActual("@/lib/constants");
   return {
     ...actual,
     IS_FORMBRICKS_CLOUD: true,

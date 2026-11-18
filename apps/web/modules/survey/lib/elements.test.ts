@@ -17,7 +17,7 @@ import {
 const t = ((key: string) => key) as unknown as TFunction;
 
 const defaultsFor = (type: TSurveyElementTypeEnum) =>
-  getElementDefaults(type, {}, t) as Record<string, unknown>;
+  getElementDefaults(type, undefined, t) as Record<string, unknown>;
 
 const signature = () => getElementTypes(t).find((type) => type.id === TSurveyElementTypeEnum.Signature);
 
@@ -72,7 +72,9 @@ describe("Signature in the element catalog", () => {
     expect(getElementTypes).toHaveLength(1);
     expect(signature()).toBeDefined();
     // The preset builds from an empty workspace, which is all a free-plan context adds.
-    expect(getElementDefaults(TSurveyElementTypeEnum.Signature, {}, t)).toMatchObject({ required: true });
+    expect(getElementDefaults(TSurveyElementTypeEnum.Signature, undefined, t)).toMatchObject({
+      required: true,
+    });
   });
 
   test("does not change File upload's preset", () => {
