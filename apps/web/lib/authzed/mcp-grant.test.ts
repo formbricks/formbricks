@@ -12,6 +12,7 @@ import {
   reconcileMcpGrantRelationships,
   removeDeletedMcpGrantRelationships,
 } from "./mcp-grant";
+import { queueAuthzedOutboxEvents } from "./outbox-repository";
 import { readAllRelationships } from "./relationship-reads";
 
 const clientMocks = { writeRelationships: vi.fn() };
@@ -23,6 +24,7 @@ vi.mock("@formbricks/logger", () => ({
 vi.mock("./client", () => ({ getAuthzedClient: vi.fn() }));
 vi.mock("./config", () => ({ isAuthzedEnabled: vi.fn() }));
 vi.mock("./relationship-reads", () => ({ readAllRelationships: vi.fn() }));
+vi.mock("./outbox-repository", () => ({ queueAuthzedOutboxEvents: vi.fn() }));
 
 const GRANT_ID = "grant-a";
 
@@ -367,6 +369,31 @@ describe("deleteMcpGrantRelationshipsBeforeCommit", () => {
       clientMocks as unknown as ReturnType<typeof getAuthzedClient>
     );
     clientMocks.writeRelationships.mockResolvedValue(undefined);
+    vi.mocked(queueAuthzedOutboxEvents).mockResolvedValue(undefined);
+  });
+
+  test("queues the grant's repair before it deletes, so a process exit before the commit leaves one", async () => {
+    const steps: string[] = [];
+    vi.mocked(queueAuthzedOutboxEvents).mockImplementation(async (targetType, ids) => {
+      steps.push(`queued ${targetType} ${ids.join(",")}`);
+    });
+    clientMocks.writeRelationships.mockImplementation(async () => {
+      steps.push("deleted");
+    });
+
+    await deleteMcpGrantRelationshipsBeforeCommit(workspaces("ws-1"), { access: "all" });
+
+    expect(steps).toEqual([`queued mcp_grant ${GRANT_ID}`, "deleted"]);
+  });
+
+  test("deletes nothing when the repair can't be queued", async () => {
+    const outage = new Error("database unavailable");
+    vi.mocked(queueAuthzedOutboxEvents).mockRejectedValue(outage);
+
+    await expect(deleteMcpGrantRelationshipsBeforeCommit(workspaces("ws-1"), { access: "all" })).rejects.toBe(
+      outage
+    );
+    expect(clientMocks.writeRelationships).not.toHaveBeenCalled();
   });
 
   test("deletes only what the narrowing drops, and never touches anything", async () => {
@@ -405,6 +432,7 @@ describe("deleteMcpGrantRelationshipsBeforeCommit", () => {
     );
 
     expect(clientMocks.writeRelationships).not.toHaveBeenCalled();
+    expect(queueAuthzedOutboxEvents).not.toHaveBeenCalled();
   });
 
   test("does nothing with AuthZed off", async () => {

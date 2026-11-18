@@ -103,26 +103,42 @@ describe("reconciling an MCP grant against its row lock (real PostgreSQL and Spi
     const writeSent = new Promise<void>((resolve) => (sent = resolve));
     writes.holdNext = { sent, release: new Promise<void>((resolve) => (release = resolve)) };
     const reconcile = reconcileMcpGrantRelationships({ grantIds: [grantId] });
-    await writeSent;
+    // Reconciliation settling before its write is held fails the wait at once, instead of timing out.
+    await Promise.race([
+      writeSent,
+      reconcile.then(() => {
+        throw new Error("the reconciliation settled before its write was held");
+      }),
+    ]);
 
-    // A narrowing, as Edit runs it: the grant row `FOR UPDATE`, which waits for the pass's transaction
-    // to time out, then the removed workspace's relationship deleted before the commit.
-    await prisma.$transaction(
-      async (tx) => {
-        await tx.$queryRaw`SELECT "id" FROM "McpGrant" WHERE "id" = ${grantId} FOR UPDATE`;
-        await deleteMcpGrantRelationshipsBeforeCommit(
-          { id: grantId, access: "workspaces", workspaceIds: [kept, removed] },
-          { access: "workspaces", workspaceIds: [kept] }
-        );
-        await tx.mcpGrantWorkspace.deleteMany({ where: { grantId, workspaceId: removed } });
-      },
-      { timeout: 15_000 }
-    );
-    expect(await workspacesReached(grantId)).toEqual([kept]);
+    let released = false;
+    try {
+      // A narrowing, as Edit runs it: the grant row `FOR UPDATE`, which waits for the pass's transaction
+      // to time out, then the removed workspace's relationship deleted before the commit.
+      await prisma.$transaction(
+        async (tx) => {
+          await tx.$queryRaw`SELECT "id" FROM "McpGrant" WHERE "id" = ${grantId} FOR UPDATE`;
+          await deleteMcpGrantRelationshipsBeforeCommit(
+            { id: grantId, access: "workspaces", workspaceIds: [kept, removed] },
+            { access: "workspaces", workspaceIds: [kept] }
+          );
+          await tx.mcpGrantWorkspace.deleteMany({ where: { grantId, workspaceId: removed } });
+        },
+        { timeout: 15_000 }
+      );
+      expect(await workspacesReached(grantId)).toEqual([kept]);
 
-    // The pass's write reaches SpiceDB only now, after its lock and the narrowing.
-    release();
-    await expect(reconcile).resolves.toMatchObject({ status: "failed" });
+      // The pass's write reaches SpiceDB only now, after its lock and the narrowing.
+      release();
+      released = true;
+      await expect(reconcile).resolves.toMatchObject({ status: "failed" });
+    } finally {
+      // A failure above still lets the held write go and the pass settle, so nothing outlives the test.
+      if (!released) {
+        release();
+        await reconcile.catch(() => undefined);
+      }
+    }
 
     expect(await workspacesReached(grantId)).toEqual([kept]);
   });

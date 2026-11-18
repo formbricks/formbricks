@@ -18,6 +18,7 @@ import {
   MCP_GRANT_PROJECTION_TRANSACTION_TIMEOUT_MS,
   MCP_GRANT_PROJECTION_WRITE_MARGIN_MS,
 } from "./mcp-grant-timeouts";
+import { queueAuthzedOutboxEvents } from "./outbox-repository";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
   AuthzedProjectionFencedError,
@@ -241,8 +242,8 @@ export const reconcileMcpGrantRelationships = async (
  *
  * Nothing to do for a grant whose access is All access before (it holds no relationships), or with AuthZed
  * off. On the previous release's schema, which has no `mcp_grant` relation, nothing was ever projected.
- * Should the transaction then fail to commit, the grant reaches less than its rows say until it is next
- * reconciled: the safe direction.
+ * Should the transaction then fail to commit, the grant reaches less than its rows say until the repair
+ * queued before the delete is delivered: the safe direction, and a durable one even if the process exits.
  */
 export const deleteMcpGrantRelationshipsBeforeCommit = async (
   before: TProjectedMcpGrant,
@@ -250,9 +251,16 @@ export const deleteMcpGrantRelationshipsBeforeCommit = async (
 ): Promise<void> => {
   if (!isAuthzedEnabled()) return;
   const kept = new Set(expectedMcpGrantRelationships({ ...after, id: before.id }).map(relationshipKey));
-  await deleteRelationships(
-    expectedMcpGrantRelationships(before).filter((relationship) => !kept.has(relationshipKey(relationship)))
+  const lost = expectedMcpGrantRelationships(before).filter(
+    (relationship) => !kept.has(relationshipKey(relationship))
   );
+  if (lost.length === 0) return;
+  // The repair, queued before the delete in a write of its own that commits whatever the transaction does:
+  // a process that exits between the delete and the commit rolls back the change and its trigger's event,
+  // and this event is then what puts the relationships back. Its delivery reconciles under the grant's row
+  // `FOR SHARE`, which waits for this transaction to settle, so it applies whichever rows committed.
+  await queueAuthzedOutboxEvents("mcp_grant", [before.id]);
+  await deleteRelationships(lost);
 };
 
 const deleteRelationships = async (relationships: ReadonlyArray<TAuthzedRelationship>): Promise<void> => {
