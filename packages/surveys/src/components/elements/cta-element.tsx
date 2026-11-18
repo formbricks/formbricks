@@ -27,7 +27,7 @@ export function CTAElement({
   currentElementId,
   onOpenExternalURL,
 }: Readonly<CTAElementProps>) {
-  const [startTime, setStartTime] = useState(performance.now());
+  const [startTime, setStartTime] = useState(() => performance.now());
   const isCurrent = element.id === currentElementId;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);
 

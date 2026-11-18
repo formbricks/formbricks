@@ -94,7 +94,7 @@ export function DimensionsPanel({
         )}
         {suggestsOptionGrouping && (
           // Full size so it wraps: this one is several sentences, and truncated it says nothing.
-          <Alert variant="warning" role="status">
+          <Alert variant="warning" alertRole="status">
             <AlertDescription>{t("workspace.analysis.charts.prefer_option_grouping")}</AlertDescription>
           </Alert>
         )}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { formatLocalDay, parseLocalDay } from "@/lib/utils/datetime";
@@ -39,8 +39,10 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
 
   // Query-only navigation (back/forward, or restoring a persisted filter) keeps this component
   // mounted, so re-sync the local custom-range state whenever the incoming value changes to keep
-  // the UI aligned with the URL rather than showing stale bounds.
-  useEffect(() => {
+  // the UI aligned with the URL rather than showing stale bounds. Adjusted during render.
+  const [syncedValue, setSyncedValue] = useState(value);
+  if (value !== syncedValue) {
+    setSyncedValue(value);
     if (value?.type === "custom") {
       setIsCustomMode(true);
       setCustomStart(parseLocalDay(value.range[0]));
@@ -48,7 +50,7 @@ export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateF
     } else {
       setIsCustomMode(false);
     }
-  }, [value]);
+  }
 
   const selectValue = (() => {
     if (isCustomMode || value?.type === "custom") return CUSTOM_VALUE;

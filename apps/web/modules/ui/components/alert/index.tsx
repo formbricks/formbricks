@@ -65,20 +65,33 @@ const alertVariantIcons: Record<
   success: <CheckCircle2Icon className="size-4" />,
 };
 
+interface AlertRoleProps {
+  /**
+   * The alert's ARIA role. `alert` (the default) is an assertive live region and belongs on alerts
+   * that appear dynamically (e.g. validation or request errors). For banners already visible on first
+   * paint, pass `status` so screen readers don't spuriously announce them on mount. `note` marks
+   * static guidance, and `none` an alert that sits inside a live region of its own.
+   *
+   * A role rather than `<output>` (which `jsx-a11y/prefer-tag-over-role` prefers for `status`):
+   * `<output>` takes phrasing content only, and an alert holds a heading, a description block and
+   * buttons.
+   */
+  alertRole?: "alert" | "status" | "note" | "none";
+}
+
 const Alert = React.forwardRef<
   HTMLDivElement,
-  Readonly<React.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>>
->(({ className, variant, size, role = "alert", ...props }, ref) => {
+  Readonly<
+    Omit<React.HTMLAttributes<HTMLDivElement>, "role"> & VariantProps<typeof alertVariants> & AlertRoleProps
+  >
+>(({ className, variant, size, alertRole = "alert", ...props }, ref) => {
   const variantIcon = variant && variant !== "default" ? alertVariantIcons[variant] : null;
 
   const contextValue = useMemo(() => ({ variant, size }), [variant, size]);
 
   return (
     <AlertContext.Provider value={contextValue}>
-      {/* role="alert" is an assertive live region and belongs on alerts that appear dynamically
-          (e.g. validation or request errors). For banners already visible on first paint, pass
-          role="status" so screen readers don't spuriously announce them on mount. */}
-      <div ref={ref} role={role} className={cn(alertVariants({ variant, size }), className)} {...props}>
+      <div ref={ref} role={alertRole} className={cn(alertVariants({ variant, size }), className)} {...props}>
         {variantIcon}
         {props.children}
       </div>

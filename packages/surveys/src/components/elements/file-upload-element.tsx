@@ -36,7 +36,7 @@ export function FileUploadElement({
   currentElementId,
   errorMessage: centralizedErrorMessage,
 }: Readonly<FileUploadElementProps>) {
-  const [startTime, setStartTime] = useState(performance.now());
+  const [startTime, setStartTime] = useState(() => performance.now());
   const [fileErrorMessage, setFileErrorMessage] = useState<string | undefined>(undefined);
   const [isUploading, setIsUploading] = useState(false);
   const isCurrent = element.id === currentElementId;

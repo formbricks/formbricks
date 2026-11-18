@@ -46,7 +46,7 @@ export function StackedCardsContainer({
   const cardBorderColor = survey.styling?.overwriteThemeStyling
     ? survey.styling?.cardBorderColor?.light
     : styling.cardBorderColor?.light;
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const cardElementsRef = useRef<(HTMLDivElement | null)[]>([]);
   const resizeObserver = useRef<ResizeObserver | null>(null);
   const [cardHeight, setCardHeight] = useState("auto");
   const [cardWidth, setCardWidth] = useState<number>(0);
@@ -134,7 +134,7 @@ export function StackedCardsContainer({
     };
 
     const timer = setTimeout(() => {
-      const currentElement = cardRefs.current[blockIdxTemp];
+      const currentElement = cardElementsRef.current[blockIdxTemp];
       if (currentElement) {
         if (resizeObserver.current) {
           resizeObserver.current.disconnect();
@@ -153,7 +153,7 @@ export function StackedCardsContainer({
       clearTimeout(resizeTimeout);
     };
     // hasError: the end slot of a survey without an ending card only mounts once an error shows
-  }, [blockIdxTemp, cardArrangement, cardRefs, hasError]);
+  }, [blockIdxTemp, cardArrangement, cardElementsRef, hasError]);
 
   // Reset block progress when the card arrangement changes; never on mount (see the helper).
   const previousArrangementRef = useRef<TCardArrangementOptions | undefined>(undefined);
@@ -202,7 +202,7 @@ export function StackedCardsContainer({
             return (
               <StackedCard
                 key={dynamicBlockIndex}
-                cardRefs={cardRefs}
+                cardElementsRef={cardElementsRef}
                 dynamicQuestionIndex={dynamicBlockIndex}
                 offset={offset}
                 fullSizeCards={fullSizeCards}

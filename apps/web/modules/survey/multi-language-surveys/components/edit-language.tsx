@@ -2,7 +2,7 @@
 
 import { TFunction } from "i18next";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Language } from "@formbricks/database/prisma-browser";
@@ -105,13 +105,18 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     isButtonDisabled: false,
   });
 
-  useEffect(() => {
+  // Saved changes from the server replace the form's copy. Adjusted during render.
+  const [syncedLanguages, setSyncedLanguages] = useState(workspace.languages);
+  if (syncedLanguages !== workspace.languages) {
+    setSyncedLanguages(workspace.languages);
     setLanguages(workspace.languages);
-  }, [workspace.languages]);
+  }
 
-  useEffect(() => {
+  const [syncedDefaultLanguage, setSyncedDefaultLanguage] = useState(workspace.config.defaultSurveyLanguage);
+  if (syncedDefaultLanguage !== workspace.config.defaultSurveyLanguage) {
+    setSyncedDefaultLanguage(workspace.config.defaultSurveyLanguage);
     setDefaultLanguage(normalizeLanguageCode(workspace.config.defaultSurveyLanguage ?? "") ?? "");
-  }, [workspace.config.defaultSurveyLanguage]);
+  }
 
   /**
    * One option per language in the table, keyed by canonical tag so a legacy row (`de`) and its
@@ -366,7 +371,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
         t={t}
       />
       {isReadOnly && (
-        <Alert variant="warning" className="mt-4" role="status">
+        <Alert variant="warning" className="mt-4" alertRole="status">
           <AlertDescription>
             {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
           </AlertDescription>

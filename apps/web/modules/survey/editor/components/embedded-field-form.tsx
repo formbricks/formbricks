@@ -300,7 +300,6 @@ export const EmbeddedFieldForm = ({
                       // `data-testid`, not `id`: an explicit id wins over the one `FormControl`
                       // supplies, and `FormLabel htmlFor` then points at the description below.
                       data-testid="embedded-field-name"
-                      autoFocus
                       onChange={(event) => handleNameChange(event.currentTarget.value)}
                       isInvalid={Boolean(form.formState.errors.name)}
                     />
