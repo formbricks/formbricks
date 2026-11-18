@@ -11,7 +11,7 @@ import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspac
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { validateInputs } from "@/lib/utils/validate";
 import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/mcp-grant-revocation";
-import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-store";
+import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-audit";
 
 /**
  * How far a role change got, recorded as it goes, so a caller still knows when a later write fails: whether

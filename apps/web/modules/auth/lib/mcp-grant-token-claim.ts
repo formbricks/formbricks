@@ -5,11 +5,8 @@ import { logger } from "@formbricks/logger";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
 import { loggableError } from "@/lib/utils/loggable-error";
 import { getUnconsentedMcpGrantPermissions, isMcpGrantEmpty } from "@/modules/mcp/grant";
-import {
-  createMcpGrantIfMissing,
-  lockUserForMcpGrantWrite,
-  queueMcpGrantAudit,
-} from "@/modules/mcp/grant-store";
+import { queueMcpGrantAudit } from "@/modules/mcp/grant-audit";
+import { createMcpGrantIfMissing, lockUserForMcpGrantWrite } from "@/modules/mcp/grant-store";
 import { trimScopesForDashboardViewer } from "./dashboard-viewer-oauth-scopes";
 import {
   type TExchangedCode,

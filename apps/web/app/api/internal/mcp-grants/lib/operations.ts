@@ -38,7 +38,7 @@ import {
   queueMcpClientRevocationAudit,
   queueMcpGrantAudit,
   queueMcpGrantDeletionsAudit,
-} from "@/modules/mcp/grant-store";
+} from "@/modules/mcp/grant-audit";
 import { serializeAuthorizedMcpClient, serializeMcpGrant } from "./serializers";
 
 /**

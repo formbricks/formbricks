@@ -22,8 +22,8 @@ vi.mock("@/modules/ee/analysis/lib/dashboard-viewer-access", () => ({
 }));
 vi.mock("@/modules/mcp/authorized-clients", () => ({ editMcpGrant: mocks.editMcpGrant }));
 vi.mock("@/modules/auth/lib/mcp-grant-revocation", () => ({ revokeMcpClient: mocks.revokeMcpClient }));
-vi.mock("@/modules/mcp/grant-store", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/modules/mcp/grant-store")>()),
+vi.mock("@/modules/mcp/grant-audit", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/modules/mcp/grant-audit")>()),
   queueMcpGrantAudit: mocks.queueMcpGrantAudit,
   queueMcpGrantDeletionsAudit: mocks.queueMcpGrantDeletionsAudit,
   queueMcpClientRevocationAudit: mocks.queueMcpClientRevocationAudit,

@@ -12,6 +12,13 @@ import { queueAuthzedOutboxEvents } from "@/lib/authzed/outbox-repository";
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { resolveMcpGrantSelection } from "./access-options";
 import {
+  prepareMcpGrantAudits,
+  queueMcpClientRevocationAudit,
+  queueMcpGrantAudit,
+  queueMcpGrantAudits,
+  queueMcpGrantDeletionsAudit,
+} from "./grant-audit";
+import {
   type TStoredMcpGrant,
   applyMcpGrantNarrowing,
   createMcpGrantIfMissing,
@@ -21,12 +28,7 @@ import {
   lockUserForMcpGrantWrite,
   lockUserForMcpRevocation,
   narrowMcpGrantAccess,
-  prepareMcpGrantAudits,
   projectMcpGrants,
-  queueMcpClientRevocationAudit,
-  queueMcpGrantAudit,
-  queueMcpGrantAudits,
-  queueMcpGrantDeletionsAudit,
   removeDeletedMcpGrants,
   repairMcpGrantsAfterFailedSave,
   resolveMcpGrantNarrowing,

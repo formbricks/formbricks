@@ -22,12 +22,10 @@ import {
   revokeOAuthConsentBeforeHandler,
   revokeOAuthConsentGrant,
 } from "./mcp-grant-revocation";
+import { snapshotConsentBeforeApprovalHandler } from "./oauth-consent-change";
 import { readConsentPreimages } from "./oauth-consent-writes";
-import {
-  requireOAuthConsentOnRefreshAfterHandler,
-  revokeTokensBeyondConsentAfterHandler,
-  snapshotConsentBeforeApprovalHandler,
-} from "./oauth-grant-revocation";
+import { revokeTokensBeyondConsentAfterHandler } from "./oauth-grant-revocation";
+import { requireOAuthConsentOnRefreshAfterHandler } from "./oauth-refresh-check";
 import { markOAuthRevocation, readOAuthRevocationTime } from "./oauth-revocation-marker";
 
 /**

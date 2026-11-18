@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
+import { queueMcpGrantAudit } from "@/modules/mcp/grant-audit";
 import {
   type TStoredMcpGrant,
   createMcpGrantIfMissing,
   lockUserForMcpGrantWrite,
-  queueMcpGrantAudit,
 } from "@/modules/mcp/grant-store";
 import { MCP_GRANT_TOKEN_CLAIM, mcpGrantAccessTokenClaims } from "./mcp-grant-token-claim";
 import {
@@ -21,8 +21,8 @@ vi.mock("@/lib/membership/dashboard-viewer", () => ({ isOnlyDashboardViewer: vi.
 vi.mock("@/modules/mcp/grant-store", () => ({
   createMcpGrantIfMissing: vi.fn(),
   lockUserForMcpGrantWrite: vi.fn(),
-  queueMcpGrantAudit: vi.fn(),
 }));
+vi.mock("@/modules/mcp/grant-audit", () => ({ queueMcpGrantAudit: vi.fn() }));
 vi.mock("./oauth-revocation-marker", async (importOriginal) => {
   // The skew rule is the real one: the claim and the token endpoint decide by the same function.
   const { REVOCATION_CLOCK_SKEW_MS, isIssuedBeforeRevocation } =

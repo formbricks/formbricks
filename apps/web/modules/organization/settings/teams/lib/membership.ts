@@ -17,7 +17,7 @@ import { isTransactionConflictError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
 import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/mcp-grant-revocation";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
-import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-store";
+import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-audit";
 import { LastActiveOwnerError, runOwnerGuardedTransaction } from "./owner-guard";
 
 export const getMembershipByOrganizationId = reactCache(

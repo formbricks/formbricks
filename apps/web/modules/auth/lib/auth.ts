@@ -43,8 +43,8 @@ import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-
 import { requireValidMcpGrantOnConsentBeforeHandler } from "./mcp-grant-consent";
 import { revokeOAuthConsentBeforeHandler } from "./mcp-grant-revocation";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
+import { snapshotConsentBeforeApprovalHandler } from "./oauth-consent-change";
 import { recordOAuthConsentWrites } from "./oauth-consent-writes";
-import { snapshotConsentBeforeApprovalHandler } from "./oauth-grant-revocation";
 import { refuseCodeIssuedBeforeRevocationBeforeHandler } from "./oauth-revocation-marker";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";

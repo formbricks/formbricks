@@ -5,15 +5,17 @@ import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
 import {
-  MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS,
   MCP_GRANT_SYSTEM_ACTOR,
   type TMcpGrantAuditRecord,
-  type TStoredMcpGrant,
-  deleteMcpGrants,
-  lockUserForMcpRevocation,
   prepareMcpGrantAudits,
   queueMcpGrantAudits,
   queueMcpGrantDeletionsAudit,
+} from "@/modules/mcp/grant-audit";
+import {
+  MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS,
+  type TStoredMcpGrant,
+  deleteMcpGrants,
+  lockUserForMcpRevocation,
   removeDeletedMcpGrants,
 } from "@/modules/mcp/grant-store";
 import { lockConsents } from "./oauth-consent-rows";

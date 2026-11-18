@@ -19,7 +19,7 @@ import {
 import { queueAuditEventBackground } from "@/modules/ee/audit-logs/lib/handler";
 import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import { sendSsoRecoveryFactorsRemovedEmail, sendVerificationEmail } from "@/modules/email";
-import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-store";
+import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-audit";
 import {
   LINKED_SSO_LOOKUP_SELECT,
   TSsoAccountLinkInput,
