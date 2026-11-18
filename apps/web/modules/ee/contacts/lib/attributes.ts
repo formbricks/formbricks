@@ -11,6 +11,7 @@ import {
   getReservedFutureDefaultAttributeKeyIssue,
   isReservedFutureDefaultAttributeKey,
 } from "@/modules/ee/contacts/lib/attribute-key-policy";
+import { TAttributeUpdateMessage } from "@/modules/ee/contacts/lib/attribute-messages";
 import { prepareNewSDKAttributeForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import {
@@ -22,45 +23,6 @@ import {
   formatValidationError,
   validateAndParseAttributeValue,
 } from "@/modules/ee/contacts/lib/validate-attribute-type";
-
-/**
- * Structured message with code and params for i18n support.
- * Used for both UI-facing messages (translated) and API/SDK responses (formatted to English).
- */
-export interface TAttributeUpdateMessage {
-  code: string;
-  params: Record<string, string>;
-}
-
-/**
- * English templates for formatting structured messages to human-readable strings.
- * Used by SDK/API paths that return English responses.
- */
-const MESSAGE_TEMPLATES: Record<string, string> = {
-  email_or_userid_required: "Either email or userId is required. The existing values were preserved.",
-  attribute_type_validation_error: "{error} (attribute '{key}' has dataType: {dataType})",
-  email_already_exists: "The email already exists for this workspace and was not updated.",
-  userid_already_exists: "The userId already exists for this workspace and was not updated.",
-  invalid_attribute_keys:
-    "Skipped creating attribute(s) with invalid key(s): {keys}. Keys must only contain lowercase letters, numbers, and underscores, and must start with a letter.",
-  reserved_attribute_keys: "{issue}",
-  attribute_limit_exceeded:
-    "Could not create {count} new attribute(s) as it would exceed the maximum limit of {limit} attribute classes. Existing attributes were updated successfully.",
-  new_attribute_created: "Created new attribute '{key}' with type '{dataType}'",
-  invalid_language_ignored: "Ignored invalid language code '{language}'. The existing value was preserved.",
-};
-
-/**
- * Formats a structured message to a human-readable English string.
- * Used for API/SDK responses.
- */
-export const formatAttributeMessage = (msg: TAttributeUpdateMessage): string => {
-  let template = MESSAGE_TEMPLATES[msg.code] || msg.code;
-  for (const [key, value] of Object.entries(msg.params)) {
-    template = template.replaceAll(`{${key}}`, value);
-  }
-  return template;
-};
 
 /**
  * Total, locale-independent ordering of two strings by code unit.
@@ -364,48 +326,90 @@ const createNewAttributes = async ({
       },
     });
   } else {
-    // Prepare new attributes with SDK-specific type detection
-    const preparedNewAttributes = validNewAttributes.map(({ key, value }) => {
-      const { dataType, columns } = prepareNewSDKAttributeForStorage(value);
-      return { key, dataType, columns };
+    await createAttributeKeysAndValues({
+      contactId,
+      workspaceId,
+      newAttributes: validNewAttributes,
+      messages,
     });
+  }
+};
 
-    // Log new attribute creation with their types
-    for (const { key, dataType } of preparedNewAttributes) {
+/**
+ * Creates the new attribute keys and writes this contact's values onto them, converging when a
+ * concurrent identify call creates one of the same keys first (ENG-4018).
+ *
+ * `skipDuplicates` turns losing the race on `@@unique([key, workspaceId])` into a skipped row instead
+ * of a P2002 that 500s the call (and makes the JS SDK drop its queued attributes); the same pattern as
+ * the other key-create paths (`contacts.ts`, `formbricks-file/resolve.ts`). Keys created elsewhere are
+ * re-read and this contact's values type-checked against their dataType like any existing key.
+ * Same lock discipline as the upsert above (ENG-2252): keys inserted in a deterministic order — key
+ * is the identity the unique index locks on — plus a bounded deadlock retry.
+ */
+const createAttributeKeysAndValues = async ({
+  contactId,
+  workspaceId,
+  newAttributes,
+  messages,
+}: {
+  contactId: string;
+  workspaceId: string;
+  newAttributes: TNewAttributeWrite[];
+  messages: TAttributeUpdateMessage[];
+}): Promise<void> => {
+  // Prepare new attributes with SDK-specific type detection
+  const orderedNewAttributes = newAttributes
+    .map(({ key, value }) => ({ key, value, ...prepareNewSDKAttributeForStorage(value) }))
+    .sort((a, b) => compareCodeUnits(a.key, b.key));
+
+  const createdKeys = await retryOnDeadlock(
+    () =>
+      prisma.contactAttributeKey.createManyAndReturn({
+        data: orderedNewAttributes.map(({ key, dataType }) => ({
+          key,
+          name: formatSnakeCaseToTitleCase(key),
+          type: "custom" as const,
+          dataType,
+          workspaceId,
+        })),
+        select: { id: true, key: true },
+        skipDuplicates: true,
+      }),
+    { operation: "updateAttributes.newAttributeKeys", contactId, workspaceId }
+  );
+  const createdKeyIds = new Map(createdKeys.map(({ key, id }) => [key, id]));
+
+  const attributesToWrite: TExistingAttributeWrite[] = [];
+  const racedAttributes: TNewAttributeWrite[] = [];
+  for (const { key, value, dataType, columns } of orderedNewAttributes) {
+    const attributeKeyId = createdKeyIds.get(key);
+    if (attributeKeyId) {
+      attributesToWrite.push({ key, attributeKeyId, columns });
       logger.info({ workspaceId, attributeKey: key, dataType }, "Created new contact attribute");
       messages.push({ code: "new_attribute_created", params: { key, dataType } });
+    } else {
+      racedAttributes.push({ key, value });
     }
+  }
 
-    // Create new attributes since we're under the limit. Same discipline as the upsert
-    // transaction above (ENG-2252): a deterministic order — key is the identity the
-    // (key, workspaceId) unique index locks on — plus a bounded deadlock retry. A deadlock rolls
-    // the whole batch back, so re-running it is safe.
-    const orderedNewAttributes = [...preparedNewAttributes].sort((a, b) => compareCodeUnits(a.key, b.key));
-    await retryOnDeadlock(
-      () =>
-        prisma.$transaction(
-          orderedNewAttributes.map(({ key, dataType, columns }) =>
-            prisma.contactAttributeKey.create({
-              data: {
-                key,
-                name: formatSnakeCaseToTitleCase(key),
-                type: "custom",
-                dataType,
-                workspaceId,
-                attributes: {
-                  create: {
-                    contactId,
-                    value: columns.value,
-                    valueNumber: columns.valueNumber,
-                    valueDate: columns.valueDate,
-                  },
-                },
-              },
-            })
-          )
-        ),
-      { operation: "updateAttributes.newAttributeKeys", contactId, workspaceId }
+  if (racedAttributes.length > 0) {
+    logger.warn(
+      { contactId, workspaceId, racedKeyCount: racedAttributes.length },
+      "Concurrent call created new contact attribute keys first - writing onto them"
     );
+    const racedKeys = await prisma.contactAttributeKey.findMany({
+      where: { workspaceId, key: { in: racedAttributes.map(({ key }) => key) } },
+    });
+    const { existingAttributes } = splitAttributesByKey(
+      Object.fromEntries(racedAttributes.map(({ key, value }) => [key, value])),
+      new Map(racedKeys.map((attributeKey) => [attributeKey.key, attributeKey])),
+      messages
+    );
+    attributesToWrite.push(...existingAttributes);
+  }
+
+  if (attributesToWrite.length > 0) {
+    await upsertExistingAttributes(contactId, workspaceId, attributesToWrite);
   }
 };
 

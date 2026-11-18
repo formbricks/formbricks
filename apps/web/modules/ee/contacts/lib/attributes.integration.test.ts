@@ -313,3 +313,64 @@ describe("updateAttributes behind a long-held row lock (ENG-3285)", () => {
     expect(values.map((v) => v.value)).toEqual(["after-the-wait", "after-the-wait"]);
   }, 40_000);
 });
+
+/**
+ * ENG-4018: concurrent identify calls that each introduce the same brand-new attribute key raced on
+ * `@@unique([key, workspaceId])`. One created the key, the rest threw P2002, the route answered 500,
+ * and the JS SDK dropped the losing callers' attributes. The losers now write onto the winner's key.
+ */
+describe("updateAttributes when concurrent calls create the same new key (ENG-4018)", () => {
+  const CONCURRENT_CALLS = 10;
+
+  test("every call succeeds and the contact ends up with one key and a value from one of them", async () => {
+    const { workspaceId, contactId } = await seedContactWithAttributes(["userId"]);
+
+    const results = await Promise.allSettled(
+      Array.from({ length: CONCURRENT_CALLS }, (_, i) =>
+        updateAttributes(contactId, USER_ID, workspaceId, { userId: USER_ID, plan: `plan-${i}` })
+      )
+    );
+
+    const failures = results
+      .filter((result): result is PromiseRejectedResult => result.status === "rejected")
+      .map((failure) => String(failure.reason));
+    expect(failures).toEqual([]);
+
+    const planKeys = await prisma.contactAttributeKey.findMany({ where: { workspaceId, key: "plan" } });
+    expect(planKeys).toHaveLength(1);
+    const planValues = await prisma.contactAttribute.findMany({
+      where: { contactId, attributeKeyId: planKeys[0].id },
+      select: { value: true },
+    });
+    expect(planValues).toHaveLength(1);
+    expect(planValues[0].value).toMatch(/^plan-\d+$/);
+  }, 40_000);
+
+  test("different contacts introducing the same key each keep their own value", async () => {
+    const { workspaceId } = await seedContactWithAttributes(["userId"]);
+    const contacts = await Promise.all(
+      Array.from({ length: CONCURRENT_CALLS }, () => prisma.contact.create({ data: { workspaceId } }))
+    );
+
+    const results = await Promise.allSettled(
+      contacts.map((contact, i) =>
+        updateAttributes(contact.id, `user-${i}`, workspaceId, { plan: `plan-${i}` })
+      )
+    );
+
+    const failures = results
+      .filter((result): result is PromiseRejectedResult => result.status === "rejected")
+      .map((failure) => String(failure.reason));
+    expect(failures).toEqual([]);
+
+    const planKeys = await prisma.contactAttributeKey.findMany({ where: { workspaceId, key: "plan" } });
+    expect(planKeys).toHaveLength(1);
+    for (const [i, contact] of contacts.entries()) {
+      const value = await prisma.contactAttribute.findUnique({
+        where: { contactId_attributeKeyId: { contactId: contact.id, attributeKeyId: planKeys[0].id } },
+        select: { value: true },
+      });
+      expect(value?.value).toBe(`plan-${i}`);
+    }
+  }, 40_000);
+});
