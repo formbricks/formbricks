@@ -399,8 +399,9 @@ export const getEmbeddedKeysForQuery = async (
     logger.warn({ ...loggableError(error), datasetId: scope.datasetId }, "Embedded-key discovery failed");
     throw new EmbeddedKeysNotReadyError();
   }
+  // Recheck every member the query names: the refresh can also push an old top key out of the top keys.
   const refreshedMembers = new Set(refreshed.map(getEmbeddedMemberName));
-  const stillOutside = outside.filter((member) => !refreshedMembers.has(member));
+  const stillOutside = collectEmbeddedMemberNames(query).filter((member) => !refreshedMembers.has(member));
   const retried = pickTokenKeys(refreshed, stillOutside, resolution.members);
   if (retried) return retried;
   throw new RareEmbeddedKeysConflictError();

@@ -525,6 +525,20 @@ describe("a saved query's keys outside the top keys", () => {
       await expect(getEmbeddedKeysForQuery(scope, query)).rejects.toBeInstanceOf(EmbeddedKeysNotReadyError);
     });
 
+    test("keeps a named key the refresh pushes out of the top keys", async () => {
+      const full = Array.from({ length: MAX_EMBEDDED_KEYS }, (_, index) => `top_${index}`);
+      stored[KEYS_KEY] = { keys: full, refreshedAt: Date.now() - 60_000 };
+      // The newcomers reach the material shift, so the fresh ranking replaces the set and drops the last top key.
+      const newcomers = Array.from({ length: EMBEDDED_KEYS_MATERIAL_SHIFT }, (_, index) => `new_${index}`);
+      const pushedOut = full[MAX_EMBEDDED_KEYS - 1];
+      mockExecute.mockResolvedValue(rows(groupBy, filterOn, ...newcomers, ...full));
+      const naming = { ...query, dimensions: [member(groupBy), member(pushedOut)] };
+
+      const keys = await getEmbeddedKeysForQuery(scope, naming);
+
+      expect(keys).toEqual(expect.arrayContaining([groupBy, filterOn, pushedOut]));
+    });
+
     test("still refuses keys that stay rare once the catalog is fresh, without widening the token", async () => {
       const full = Array.from({ length: MAX_EMBEDDED_KEYS }, (_, index) => `top_${index}`);
       stored[KEYS_KEY] = { keys: full, refreshedAt: Date.now() - 60_000 };

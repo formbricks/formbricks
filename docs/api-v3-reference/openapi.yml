@@ -17518,7 +17518,7 @@ components:
           schema:
             $ref: '#/components/schemas/Problem'
     V3ChartEmbeddedFieldsRefused:
-      description: 'Conflict (`code: conflict`) — the chart''s embedded-data fields were refused before the query ran. Either it uses rarely used fields of more than one group, which cannot be combined in one chart (remove one of them), or it uses fields so new they are not available to charts yet (retry in a few minutes). `detail` says which, and names no field.'
+      description: 'Conflict (`code: conflict`) — the chart''s embedded-data fields were refused before the query ran. Either it uses rarely used fields of more than one group, which cannot be combined in one chart (remove one of them), or its fields are not available to charts yet, because they are new or the dataset''s field list could not be refreshed (retry in a few minutes). `detail` says which, and names no field.'
       headers:
         X-Request-Id:
           schema:
