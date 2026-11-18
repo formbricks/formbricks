@@ -269,15 +269,19 @@ export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn
   return (
     <div className="overflow-x-auto">
       <div
+        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a CSS grid with display: contents rows, which native table elements would lay out as a table
         role="table"
         aria-label={t("workspace.settings.billing.plan_selection_title")}
         className="grid min-w-[48rem] grid-cols-[minmax(0,1fr)_repeat(3,minmax(0,1fr))]">
         {/* Plan header row — badges, name, price, aligned CTA */}
+        {/* eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a CSS grid with display: contents rows, which native table elements would lay out as a table */}
         <div role="row" className="contents">
+          {/* eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a CSS grid with display: contents rows, which native table elements would lay out as a table */}
           <div role="columnheader" className={LABEL_CELL} />
           {columns.map((col) => (
             <div
               key={col.key}
+              // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a CSS grid with display: contents rows, which native table elements would lay out as a table
               role="columnheader"
               className={cn(
                 "flex flex-col pt-6",
@@ -321,13 +325,18 @@ export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn
         </div>
 
         {/* Best for (plan descriptions right below the CTAs, above the separator) */}
+        {/* eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a CSS grid with display: contents rows, which native table elements would lay out as a table */}
         <div role="row" className="contents">
-          <div role="rowheader" className={cn(LABEL_CELL, "pt-6 pb-6 text-sm font-medium text-slate-600")}>
+          <div
+            // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a CSS grid with display: contents rows, which native table elements would lay out as a table
+            role="rowheader"
+            className={cn(LABEL_CELL, "pt-6 pb-6 text-sm font-medium text-slate-600")}>
             {t("workspace.settings.billing.comparison_best_for")}
           </div>
           {columns.map((col) => (
             <div
               key={col.key}
+              // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a CSS grid with display: contents rows, which native table elements would lay out as a table
               role="cell"
               className={cn(
                 PLAN_CELL,
@@ -345,8 +354,13 @@ export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn
           const isSection = row.type === "section";
           const isLastRow = rowIndex === displayRows.length - 1;
           return (
-            <div key={`${row.type}-${row.label}-${rowIndex}`} role="row" className="contents">
+            <div
+              key={`${row.type}-${row.label}-${rowIndex}`}
+              // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a CSS grid with display: contents rows, which native table elements would lay out as a table
+              role="row"
+              className="contents">
               <div
+                // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a CSS grid with display: contents rows, which native table elements would lay out as a table
                 role="rowheader"
                 className={cn(
                   LABEL_CELL,
@@ -361,6 +375,7 @@ export const PlanComparisonTable = ({ columns }: Readonly<{ columns: TPlanColumn
               {columns.map((col, columnIndex) => (
                 <div
                   key={col.key}
+                  // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a CSS grid with display: contents rows, which native table elements would lay out as a table
                   role="cell"
                   className={cn(
                     PLAN_CELL,

@@ -1,7 +1,7 @@
 "use client";
 
 import { CopyIcon, InboxIcon, LockIcon, PencilIcon } from "lucide-react";
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowWebhookResource } from "@formbricks/workflows";
@@ -57,6 +57,7 @@ export const ViewSwitch = ({
   onChange: (next: TPayloadView) => void;
 }>) => {
   const { t } = useTranslation();
+  const name = useId();
   const options: { value: TPayloadView; label: string }[] = [
     { value: "variables", label: t("workspace.workflows.webhook_payload_view_variables") },
     { value: "json", label: t("workspace.workflows.webhook_payload_view_json") },
@@ -66,19 +67,24 @@ export const ViewSwitch = ({
       role="radiogroup"
       aria-label={t("workspace.workflows.webhook_payload_view")}
       className="flex shrink-0 rounded-md bg-slate-100 p-0.5">
+      {/* Native radios, as TabToggle has them: arrow keys move between the two views. */}
       {options.map((option) => (
-        <button
+        <label
           key={option.value}
-          type="button"
-          role="radio"
-          aria-checked={value === option.value}
-          onClick={() => onChange(option.value)}
           className={cn(
-            "rounded px-2 py-0.5 text-xs text-slate-600 transition-colors",
+            "cursor-pointer rounded px-2 py-0.5 text-xs text-slate-600 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-dark/50",
             value === option.value && "bg-white font-medium text-slate-900 shadow-xs"
           )}>
+          <input
+            type="radio"
+            name={name}
+            value={option.value}
+            checked={value === option.value}
+            onChange={() => onChange(option.value)}
+            className="sr-only"
+          />
           {option.label}
-        </button>
+        </label>
       ))}
     </div>
   );

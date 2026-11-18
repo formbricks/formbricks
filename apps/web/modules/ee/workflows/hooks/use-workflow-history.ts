@@ -58,6 +58,7 @@ export const useWorkflowHistory = () => {
     // plaintext values, so undoing never sends a secret again.
     if (lastSecretSettle?.result === definition) {
       const { sent } = lastSecretSettle;
+      // eslint-disable-next-line react/set-state-in-effect -- the history records definition changes the editor writes elsewhere (atoms), so it follows them here
       setHistory((current) => ({
         ...current,
         past: current.past.map((step) => settleSentSecretValues(step, sent)),

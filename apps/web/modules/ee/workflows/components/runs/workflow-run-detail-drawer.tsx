@@ -25,7 +25,7 @@ interface WorkflowRunDetailDrawerProps {
 export const TestRunNotice = () => {
   const { t } = useTranslation();
   return (
-    <Alert variant="info" size="small" role="status">
+    <Alert variant="info" size="small" alertRole="status">
       <div>{t("workspace.workflows.run_test_run_notice")}</div>
     </Alert>
   );

@@ -97,7 +97,11 @@ export const RenameSurveyModal = ({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          form.setFocus("name");
+        }}>
         {/* DialogHeader pins its icon to the first line; center it on the title + description block. */}
         <DialogHeader className="[&>svg]:top-1/2 [&>svg]:-translate-y-1/2">
           <PencilIcon />
@@ -117,7 +121,6 @@ export const RenameSurveyModal = ({
                     <FormControl>
                       <Input
                         {...field}
-                        autoFocus
                         data-testid="rename-survey-input"
                         placeholder={t("workspace.surveys.rename_survey_placeholder")}
                       />

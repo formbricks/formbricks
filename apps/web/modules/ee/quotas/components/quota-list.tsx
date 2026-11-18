@@ -35,6 +35,7 @@ export const QuotaList = ({ quotas, onEdit, deleteQuota, duplicateQuota }: Quota
               onEdit(quota);
             }
           }}
+          // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a <button> would nest the delete and duplicate buttons inside it (see above)
           role="button"
           tabIndex={0}>
           <div className="text-left">

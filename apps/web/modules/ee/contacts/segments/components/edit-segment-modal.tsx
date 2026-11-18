@@ -1,7 +1,7 @@
 "use client";
 
 import { UsersIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { TSegment, TSegmentWithSurveyRefs } from "@formbricks/types/segment";
@@ -100,11 +100,12 @@ export const EditSegmentModal = ({
     setActiveTab(index);
   };
 
-  useEffect(() => {
-    if (!open) {
-      setActiveTab(0);
-    }
-  }, [open]);
+  // Closing returns to the first tab for the next open. Adjusted during render.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (!open) setActiveTab(0);
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

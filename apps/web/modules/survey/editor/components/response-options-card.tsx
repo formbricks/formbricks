@@ -178,7 +178,11 @@ export const ResponseOptionsCard = ({
     });
   };
 
-  useEffect(() => {
+  // A closed message on the survey turns the toggle on and fills the fields. Adjusted during render.
+  const [syncedClosedMessage, setSyncedClosedMessage] =
+    useState<typeof localSurvey.surveyClosedMessage>(null);
+  if (localSurvey.surveyClosedMessage !== syncedClosedMessage) {
+    setSyncedClosedMessage(localSurvey.surveyClosedMessage);
     if (localSurvey.surveyClosedMessage) {
       setSurveyClosedMessage({
         heading: localSurvey.surveyClosedMessage.heading ?? surveyClosedMessage.heading,
@@ -186,7 +190,7 @@ export const ResponseOptionsCard = ({
       });
       setSurveyClosedMessageToggle(true);
     }
-  }, [localSurvey, surveyClosedMessage.heading, surveyClosedMessage.subheading]);
+  }
 
   useEffect(() => {
     if (!publishOn || !closeOn) {
@@ -435,7 +439,6 @@ export const ResponseOptionsCard = ({
                   components={{
                     autoCompleteInput: (
                       <Input
-                        autoFocus
                         type="number"
                         min={finishedResponseCount ? (finishedResponseCount + 1).toString() : "1"}
                         id="autoCompleteResponses"
@@ -488,7 +491,7 @@ export const ResponseOptionsCard = ({
                     <p className="mx-2 text-xs text-slate-500">Strict</p>
                   </div>
                 </div>
-                <Alert variant="warning" size="default" className="w-fill mt-2 text-sm" role="status">
+                <Alert variant="warning" size="default" className="w-fill mt-2 text-sm" alertRole="status">
                   <AlertTitle>{t("workspace.surveys.edit.spam_protection_note")}</AlertTitle>
                 </Alert>
               </div>
@@ -509,7 +512,6 @@ export const ResponseOptionsCard = ({
                   <div className="w-full cursor-pointer items-center bg-slate-50">
                     <Label htmlFor="headline">{t("workspace.surveys.edit.heading")}</Label>
                     <Input
-                      autoFocus
                       id="heading"
                       className="mt-2 mb-4 bg-white"
                       name="heading"
@@ -558,7 +560,6 @@ export const ResponseOptionsCard = ({
                     {t("workspace.surveys.edit.add_pin")}
                   </Label>
                   <Input
-                    autoFocus
                     id="pin"
                     isInvalid={Boolean(verifyProtectWithPinError)}
                     className="bg-white"

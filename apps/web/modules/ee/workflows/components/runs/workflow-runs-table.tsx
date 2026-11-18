@@ -98,6 +98,7 @@ export const WorkflowRunsTable = ({
               return (
                 <TableRow
                   key={run.id}
+                  // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a clickable table row; a <button> cannot stand in for a <tr>
                   role="button"
                   tabIndex={0}
                   onClick={() => openRun(run)}

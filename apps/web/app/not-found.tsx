@@ -1,5 +1,14 @@
+import { Metadata } from "next";
 import Link from "next/link";
+import { getTranslate } from "@/lingodotdev/server";
 import { Button } from "@/modules/ui/components/button";
+
+// Also the title when a page or its metadata calls `notFound()`, so the tab doesn't name a section
+// that isn't there.
+export const generateMetadata = async (): Promise<Metadata> => {
+  const t = await getTranslate();
+  return { title: t("common.page_not_found") };
+};
 
 const NotFound = () => {
   return (
