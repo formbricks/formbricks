@@ -13,7 +13,6 @@ import type { TUserLocale } from "@formbricks/types/user";
 import {
   AUTH_SECRET,
   AUTH_TRUSTED_ORIGINS,
-  AUTH_URL,
   EMAIL_AUTH_ENABLED,
   EMAIL_VERIFICATION_DISABLED,
   PASSWORD_RESET_DISABLED,
@@ -47,7 +46,7 @@ import {
   revokeOAuthConsentBeforeHandler,
   revokeOAuthGrantsAfterPasswordReset,
 } from "./oauth-grant-revocation";
-import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
+import { getAuthBaseUrl, getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
 
@@ -105,7 +104,7 @@ export const auth = betterAuth({
   // outage. Note a falsy value here does NOT stop BA falling through to its own hardcoded default
   // secret — `assertAuthRuntimeConfiguration` in lib/env.ts is what prevents that, by refusing to boot.
   secret: AUTH_SECRET,
-  baseURL: AUTH_URL,
+  baseURL: getAuthBaseUrl(),
   // `/update-user` is served over HTTP for nobody (ENG-3189). Better Auth mounts it beside our own
   // profile surface, and every field it can reach is one Formbricks does not let a client write there:
   //

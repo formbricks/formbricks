@@ -43,6 +43,16 @@ export const getAuthIssuerUrl = (): string => {
 };
 
 /**
+ * The `baseURL` handed to Better Auth: the configured auth URL verbatim, else the issuer derived from
+ * `WEBAPP_URL`. Left undefined only when neither is set — Better Auth then infers it from the request
+ * Host, which on a proxy that forwards arbitrary Host headers lets the caller pick the origin in the links
+ * it builds (ENG-7369). Not `getAuthIssuerUrl()` unconditionally: with nothing configured that would pin
+ * a guessed `http://localhost:3000`.
+ */
+export const getAuthBaseUrl = (): string | undefined =>
+  AUTH_URL ?? (env.WEBAPP_URL?.trim() ? getAuthIssuerUrl() : undefined);
+
+/**
  * The URL an SSO identity provider (or the SAML bridge) delivers the authorization code to: the callback
  * path Better Auth's `genericOAuth` mounted in v5.2, pinned so self-hosters never re-register it (ENG-2343).
  * Built off `getAuthIssuerUrl()`, so it follows `AUTH_URL` and the auth base path (ENG-606).

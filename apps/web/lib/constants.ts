@@ -155,11 +155,20 @@ export const AUTH_URL = firstConfigured(env.BETTER_AUTH_URL, env.NEXTAUTH_URL);
  * from one `$webappUrl`, and the one-click installer seds both to the same domain — so the common case is
  * one origin listed twice.
  *
+ * `WEBAPP_URL` is trusted too: it is the instance's own public origin, and on an instance that sets only
+ * it, Better Auth would otherwise add the request's Host to the allow-list itself (ENG-7369).
+ *
  * The explicit type predicate is load-bearing — `.filter(Boolean)` does not narrow
  * `(string | undefined)[]` to the `string[]` that `trustedOrigins` requires.
  */
 export const AUTH_TRUSTED_ORIGINS = [
-  ...new Set([env.BETTER_AUTH_URL, env.NEXTAUTH_URL].filter((url): url is string => Boolean(url?.trim()))),
+  ...new Set(
+    [env.BETTER_AUTH_URL, env.NEXTAUTH_URL, env.WEBAPP_URL]
+      .filter((url): url is string => Boolean(url?.trim()))
+      // Better Auth compares an http(s) entry with the request's bare origin, so a subpath or trailing
+      // slash would never match. Reduce to the origin, then de-duplicate.
+      .map((url) => new URL(url).origin)
+  ),
 ];
 
 export const ITEMS_PER_PAGE = 30;
