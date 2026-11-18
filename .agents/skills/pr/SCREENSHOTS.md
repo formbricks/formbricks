@@ -12,7 +12,8 @@ Coverage table and stop here.
 
 ## 2. Capture before, implement, capture after
 
-Prerequisites: the database (`pnpm db:up`) and the dev server on :3000.
+Prerequisites: the database (`pnpm db:up`), the dev server on :3000, and the repo's pinned Playwright
+browser (`pnpm exec playwright install chromium` if a run reports a missing executable).
 
 Write a throwaway spec under `apps/web/playwright/` with a `zz-` prefix and delete it afterwards. The
 fixture mints its own user, so never type credentials:
@@ -31,7 +32,7 @@ test("capture", async ({ page, users }) => {
   await user.login();
   await page.goto(`/workspaces/${user.workspaceId}/surveys`);
   await page.getByRole("button", { name: "Filter" }).click();
-  await page.getByRole("dialog").waitFor(); // wait for the thing, never waitForTimeout
+  await page.getByRole("dialog").waitFor(); // wait for the element, not a timer
   await page.screenshot({ path: `${OUT}/filters-${PHASE}.png` });
 });
 ```
@@ -47,8 +48,12 @@ Surfaces without a session: a link survey at `/s/<surveyId>`; `packages/survey-u
 Storybook on :6006; email templates via `apps/web/playwright/survey-email-preview.spec.ts`.
 
 **Already implemented?** `git stash` (without `-u`, so the capture spec survives), shoot the before,
-`git stash pop`. Anything under `packages/*` is imported built, so rebuild between the shots
-(`pnpm build --filter=@formbricks/surveys... --force`) and hard-refresh, or both shots show the same code.
+`git stash pop`. Anything under `packages/*` is imported built, so rebuild between the shots and hard-refresh, or both
+shots show the same code:
+
+```bash
+rm -rf packages/surveys/dist apps/web/public/js/surveys.* node_modules/.cache/turbo && pnpm build --filter=@formbricks/surveys... --force
+```
 
 **Motion** (scroll, animation, drag, a multi-step transition) needs a clip; read [CLIPS.md](CLIPS.md).
 
@@ -60,7 +65,9 @@ The pair differs in exactly one variable: the change.
   state. Shoot `light`, plus `dark` when the change touches a dark-mode pair.
 - Drive every state the change is about: focus (`keyboard.press("Tab")`), hover, an error, an open
   dialog. A state named in prose but absent from the image is not evidence.
-- Crop with the same explicit `clip` rectangle in both phases, never by eye.
+- Crop with the same explicit `clip` rectangle in both phases, never by eye. `clip` is CSS px, so it
+  doubles at 2x.
+- Locale stays `en-US`, which the fixture user already has.
 - When showing that content no longer overflows, also show that its container still scrolls.
 
 ## 4. Host on the PR branch
@@ -74,7 +81,7 @@ the branch is deleted; the squash merge carries only the net diff, so `main` nev
 mkdir -p .pr-assets && cp /tmp/shots/*.png .pr-assets/
 git add -f .pr-assets && git commit -q -m "chore: add PR screenshots" -- .pr-assets
 git rm -r -q .pr-assets && git commit -q -m "chore: remove PR screenshots" -- .pr-assets
-git push                                   # both commits together, after the code commits
+git push -u origin HEAD                    # both commits together, after the code commits
 SHA=$(git rev-parse HEAD~1)                # the commit that holds the images
 ```
 
@@ -100,7 +107,8 @@ it.
 
 ## Guardrails
 
-The repository is public: an image you push is published for good.
+The repository is public: an image you push is published for good. If nobody asked for media, ask
+before pushing it.
 
 - Shoot fixture users only (`user-<n>-<timestamp>@example.com`). No real account, customer data, API
   key, token, secret or Stripe object in the frame.

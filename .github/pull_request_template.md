@@ -36,6 +36,8 @@ Rerun: `<one command covering the table>`
 
 - [ ] This PR contains breaking changes
 
+<one line: why it is, or is not, breaking>
+
 **Door:** <one-way | two-way> · **Blast radius:** <what nearby could break>
 
 **Migrations & env:** none

@@ -1,6 +1,6 @@
 ---
 name: pr
-description: Write or update a formbricks/formbricks pull request body by filling `.github/pull_request_template.md` with a visual summary, before/after evidence and merge danger, including screenshots for UI changes. Use when opening, updating or readying a PR, and before the first edit of a change to a UI surface, when the before screenshot must be taken.
+description: Write the pull request body by filling `.github/pull_request_template.md`. Use when opening, updating or readying a PR, and before the first edit of a change to how a UI surface looks.
 ---
 
 # pr
@@ -41,7 +41,7 @@ visual cannot carry.
 
 **Where to look.** One to three links to the lines carrying the risk, each a permalink pinned to the head
 commit (`https://github.com/formbricks/formbricks/blob/<head-sha>/<path>#L10-L20`) plus ten words at
-most. A link to the PR's Files tab points at nothing.
+most. A link to the PR's Files tab points at nothing. Nothing risky? Say so in one line.
 
 **Evidence.**
 
@@ -66,6 +66,7 @@ All QA for the change happens in this PR, before review; there is no separate re
   working. When the diff touches a public API shape, an env var or config key, a migration, a webhook,
   or the SDK in `packages/js-core`, `packages/survey-ui` or `packages/surveys`, read
   [BREAKING.md](BREAKING.md) before deciding: the tick alone writes the release-notes migration entry.
+  The line under the box says in one sentence why it is, or is not, breaking.
 - **Door**: `two-way` when a revert undoes the change, `one-way` when it does not (a destructive
   migration, data written in a new shape, a message sent).
 - **Blast radius**: what nearby could break and what to re-check if it does, in a phrase.
@@ -92,8 +93,9 @@ Each sentence earns its place by helping the reviewer decide. Cut on sight:
 Pass the body from a file (`--body-file`, or the MCP tool's `body`), never through shell quoting.
 
 Once the PR is ready for review (not a draft), enable auto-merge with the **squash** method
-(`enable_pr_auto_merge`, or `gh pr merge --auto --squash`). GitHub then merges it as soon as the required
-checks pass and a reviewer approves; squash is also what keeps `.pr-assets/` screenshots out of `main`.
+(`enable_pr_auto_merge`, or `gh pr merge --auto --squash`). GitHub then merges it once the required
+checks and reviews pass. Squash is also what keeps `.pr-assets/` screenshots out of `main`: a merge
+commit would carry their blobs into `main`'s history, so a PR with screenshots merges by squash only.
 If GitHub refuses, say why in your report rather than merging by hand.
 
 Rewrite the body with every scope change or review fix, so it always describes the head commit.

@@ -32,7 +32,7 @@ test("capture clip", async ({ page, users }) => {
   await page.goto(`/workspaces/${user.workspaceId}/surveys`);
   await page.getByRole("button", { name: "Filter" }).click();
   await page.getByRole("dialog").waitFor();
-  await page.waitForTimeout(400); // deliberate: let the transition finish on camera
+  await page.waitForTimeout(400); // the one place a timer is right: the transition finishes on camera
   const video = page.video();
   await page.close(); // saveAs waits for the file
   await video?.saveAs("/tmp/shots/filters.webm");

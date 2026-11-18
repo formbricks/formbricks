@@ -82,7 +82,9 @@ jobs:
             // `isActive(content)` returns true/false to set the label, or null to leave it unchanged.
             const RULES = [
               {
-                // "Breaking changes" is the pre-2026-11 template's heading, kept for PRs opened before it.
+                // "Breaking changes" is the old template's heading: PRs opened before the switch, and
+                // backports filled from a release branch's template. Drop it once no maintained
+                // release branch carries the old template.
                 headings: ["Merge danger", "Breaking changes"],
                 label: "breaking-change",
                 // Prefix, not exact: an author who appends a clause ("… (see the table)") still gets a
@@ -109,11 +111,12 @@ jobs:
 
             for (const rule of RULES) {
               const heading = rule.headings.find((h) => sectionContent(h) !== null);
-              if (heading === undefined) {
+              const content = heading === undefined ? null : sectionContent(heading);
+              if (content === null) {
                 core.info(`[${rule.label}] no "## ${rule.headings.join('" or "## ')}" section found; leaving unchanged.`);
                 continue;
               }
-              const active = rule.isActive(sectionContent(heading));
+              const active = rule.isActive(content);
               if (active === null) {
                 core.info(`[${rule.label}] no checkbox under "## ${heading}"; leaving unchanged.`);
                 continue;

@@ -8,10 +8,7 @@ Use Conventional Commits (`fix:`, `chore:`, `feat:`), keep commits scoped, and r
 
 ## Pull requests
 
-Open, update or ready a PR with the `pr` skill (`.agents/skills/pr`). It fills
-`.github/pull_request_template.md`, runs the `code-review` skill first, and covers evidence, screenshots
-and the breaking-change decision. The template owns the body's shape; the skill owns how each section is
-filled.
+Writing the PR body is the `pr` skill's job (`.agents/skills/pr`); this file covers what surrounds it.
 
 ## Reviews
 
