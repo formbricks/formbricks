@@ -16,7 +16,7 @@ import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
  */
 const BYTE_LIMITED_PATHS = new Set(["/reset-password"]);
 
-export const passwordByteLimitBeforeHandler = async (ctx: AuthHookContext): Promise<void> => {
+export const passwordByteLimitBeforeHandler = (ctx: AuthHookContext): void => {
   if (!BYTE_LIMITED_PATHS.has(ctx.path)) return;
 
   const password = (ctx.body as { newPassword?: unknown } | undefined)?.newPassword;

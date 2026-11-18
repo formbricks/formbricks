@@ -23,7 +23,7 @@ const makeAuth = (withGate: boolean, db: Record<string, unknown[]> = emptyDb()) 
       ? {
           hooks: {
             before: createAuthMiddleware(async (ctx) => {
-              const patch = await trustDeviceBeforeHandler(ctx);
+              const patch = trustDeviceBeforeHandler(ctx);
               if (patch) return patch;
             }),
           },
@@ -148,27 +148,25 @@ describe("trustDeviceBeforeHandler", () => {
     }) as never;
 
   test("ignores unrelated paths and bodies", async () => {
-    expect(await trustDeviceBeforeHandler(ctx("/two-factor/verify-totp"))).toBeUndefined();
-    expect(await trustDeviceBeforeHandler(ctx("/get-session"))).toBeUndefined();
+    expect(trustDeviceBeforeHandler(ctx("/two-factor/verify-totp"))).toBeUndefined();
+    expect(trustDeviceBeforeHandler(ctx("/get-session"))).toBeUndefined();
     expect(
-      await trustDeviceBeforeHandler(ctx("/two-factor/verify-totp", { body: { trustDevice: false } }))
+      trustDeviceBeforeHandler(ctx("/two-factor/verify-totp", { body: { trustDevice: false } }))
     ).toBeUndefined();
   });
 
   test.each(["/two-factor/verify-totp", "/two-factor/verify-backup-code", "/two-factor/verify-otp"])(
     "rejects trustDevice on %s",
-    async (path) => {
-      await expect(
-        trustDeviceBeforeHandler(ctx(path, { body: { trustDevice: true } }))
-      ).rejects.toMatchObject({
-        statusCode: 400,
-      });
+    (path) => {
+      expect(() => trustDeviceBeforeHandler(ctx(path, { body: { trustDevice: true } }))).toThrow(
+        expect.objectContaining({ statusCode: 400 })
+      );
     }
   );
 
   test("strips only the prefixed trust cookie from a sign-in request", async () => {
     const headers = new Headers({ cookie: "a=1; __Secure-trust_device=tok!id; b=2" });
-    const patch = await trustDeviceBeforeHandler(ctx("/sign-in/email", { headers }));
+    const patch = trustDeviceBeforeHandler(ctx("/sign-in/email", { headers }));
     expect(patch?.context.headers.get("cookie")).toBe("a=1; b=2");
     expect(headers.get("cookie")).toContain("trust_device");
   });
@@ -176,19 +174,17 @@ describe("trustDeviceBeforeHandler", () => {
   test("strips duplicates, and a header holding only the trust cookie", async () => {
     const dup = new Headers({ cookie: "__Secure-trust_device=a; x=1; __Secure-trust_device=b" });
     expect(
-      (await trustDeviceBeforeHandler(ctx("/sign-in/email", { headers: dup })))?.context.headers.get("cookie")
+      trustDeviceBeforeHandler(ctx("/sign-in/email", { headers: dup }))?.context.headers.get("cookie")
     ).toBe("x=1");
     const only = new Headers({ cookie: "__Secure-trust_device=a" });
     expect(
-      (await trustDeviceBeforeHandler(ctx("/sign-in/email", { headers: only })))?.context.headers.get(
-        "cookie"
-      )
+      trustDeviceBeforeHandler(ctx("/sign-in/email", { headers: only }))?.context.headers.get("cookie")
     ).toBe("");
   });
 
   test("leaves a sign-in without the cookie untouched", async () => {
     const headers = new Headers({ cookie: "a=1" });
-    expect(await trustDeviceBeforeHandler(ctx("/sign-in/email", { headers }))).toBeUndefined();
-    expect(await trustDeviceBeforeHandler(ctx("/sign-in/email"))).toBeUndefined();
+    expect(trustDeviceBeforeHandler(ctx("/sign-in/email", { headers }))).toBeUndefined();
+    expect(trustDeviceBeforeHandler(ctx("/sign-in/email"))).toBeUndefined();
   });
 });

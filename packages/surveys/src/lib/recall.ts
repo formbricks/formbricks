@@ -37,7 +37,7 @@ const resolveRecallValue = (
   variables: TResponseVariables,
   languageCode: string
 ): string => {
-  const fallback = rawFallback.replace(/nbsp/g, " ").trim();
+  const fallback = rawFallback.replaceAll("nbsp", " ").trim();
   let value: string | null = null;
 
   // Fetching value from variables based on recallItemId

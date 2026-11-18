@@ -436,7 +436,7 @@ export const auth = betterAuth({
       await signupPolicyBeforeHandler(ctx);
       // bcrypt ignores everything past byte 72: refuse such a password on the native password-set path
       // (`/reset-password`) the way `ZUserPassword` does in the action. See better-auth-password-bytes.ts.
-      await passwordByteLimitBeforeHandler(ctx);
+      passwordByteLimitBeforeHandler(ctx);
       // Ahead of the breach check: it is cheaper, and a rejected password then costs no outbound HIBP call.
       // ENG-1587: reject known-breached passwords on set (signup / reset) BEFORE the endpoint runs, so
       // the reset token isn't consumed on a rejection. Fails open when api.pwnedpasswords.com is
@@ -448,7 +448,7 @@ export const auth = betterAuth({
       // SEC-17 / ENG-3990: "trust this device" is off for real: refuse `trustDevice` on the 2FA verify
       // paths and drop an already-issued `trust_device` cookie at sign-in. Path-disjoint from everything
       // below (verify / sign-in vs consent). See better-auth-trust-device-gate.ts.
-      const trustDevice = await trustDeviceBeforeHandler(ctx);
+      const trustDevice = trustDeviceBeforeHandler(ctx);
       if (trustDevice) return trustDevice;
       // ADR-0025 / ENG-6889: a Dashboard viewer grants at most dashboards:read, whatever was requested.
       // Path-disjoint from the revocation below (consent and update-consent vs delete-consent).

@@ -5,27 +5,27 @@ import { passwordByteLimitBeforeHandler } from "./better-auth-password-bytes";
 const ctxFor = (path: string, body: Record<string, unknown>) => ({ path, body }) as never;
 
 describe("passwordByteLimitBeforeHandler", () => {
-  test("rejects a 73-byte newPassword on /reset-password", async () => {
-    await expect(
+  test("rejects a 73-byte newPassword on /reset-password", () => {
+    expect(() =>
       passwordByteLimitBeforeHandler(ctxFor("/reset-password", { newPassword: "Aa1" + "x".repeat(70) }))
-    ).rejects.toBeInstanceOf(APIError);
+    ).toThrow(APIError);
   });
 
-  test("counts bytes: 38 characters of 73 bytes is rejected", async () => {
-    await expect(
+  test("counts bytes: 38 characters of 73 bytes is rejected", () => {
+    expect(() =>
       passwordByteLimitBeforeHandler(ctxFor("/reset-password", { newPassword: "Aa1" + "é".repeat(35) }))
-    ).rejects.toBeInstanceOf(APIError);
+    ).toThrow(APIError);
   });
 
-  test("accepts exactly 72 bytes", async () => {
-    await expect(
+  test("accepts exactly 72 bytes", () => {
+    expect(
       passwordByteLimitBeforeHandler(ctxFor("/reset-password", { newPassword: "Aa1" + "x".repeat(69) }))
-    ).resolves.toBeUndefined();
+    ).toBeUndefined();
   });
 
-  test("does not touch sign-in, where an existing long password must reach verification", async () => {
-    await expect(
+  test("does not touch sign-in, where an existing long password must reach verification", () => {
+    expect(
       passwordByteLimitBeforeHandler(ctxFor("/sign-in/email", { password: "Aa1" + "x".repeat(100) }))
-    ).resolves.toBeUndefined();
+    ).toBeUndefined();
   });
 });

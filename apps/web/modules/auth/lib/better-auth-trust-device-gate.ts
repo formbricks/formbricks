@@ -29,9 +29,9 @@ const withoutCookieNamed = (cookieHeader: string, name: string): string =>
  *
  * Returns the context patch Better Auth merges into the request, or `undefined` when nothing changed.
  */
-export const trustDeviceBeforeHandler = async (
+export const trustDeviceBeforeHandler = (
   ctx: AuthHookContext
-): Promise<{ context: { headers: Headers } } | undefined> => {
+): { context: { headers: Headers } } | undefined => {
   if (ctx.path.startsWith(VERIFY_PREFIX)) {
     if ((ctx.body as { trustDevice?: unknown } | undefined)?.trustDevice) {
       throw new APIError("BAD_REQUEST", { message: "trustDevice is not supported" });
