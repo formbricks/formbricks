@@ -164,6 +164,29 @@ export const getIntegrationByType = reactCache(
   }
 );
 
+/**
+ * The stored `config` exactly as persisted, credentials still encrypted. For the settings save path only: it
+ * copies the stored `key` back over the redacted one the client echoes, and must copy the ciphertext, not
+ * {@link transformIntegration}'s decrypted view. That view blanks a token that no longer decrypts to "", and
+ * writing "" back would erase the ciphertext for good, so fixing a wrong `ENCRYPTION_KEY` could not recover
+ * it. Ciphertext passes through `encryptIntegrationConfig` unchanged, so the save is lossless.
+ */
+export const getStoredIntegrationConfig = async (
+  workspaceId: string,
+  type: TIntegrationInput["type"]
+): Promise<{ config: TIntegration["config"] } | null> => {
+  validateInputs([workspaceId, ZId], [type, ZIntegrationType]);
+
+  try {
+    return await prisma.integration.findFirst({ where: { workspaceId, type }, select: { config: true } });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      throw new DatabaseError(error.message);
+    }
+    throw error;
+  }
+};
+
 export const deleteIntegration = async (integrationId: string): Promise<TIntegration> => {
   validateInputs([integrationId, ZString]);
 

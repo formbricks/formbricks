@@ -6,12 +6,15 @@ import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import { ENCRYPTION_KEY, ITEMS_PER_PAGE } from "../constants";
 import { symmetricDecrypt, symmetricEncrypt } from "../crypto";
+import { encryptIntegrationConfig } from "./credentials";
+import { withStoredIntegrationKey } from "./redact-credentials";
 import {
   createOrUpdateIntegration,
   deleteIntegration,
   getIntegration,
   getIntegrationByType,
   getIntegrations,
+  getStoredIntegrationConfig,
 } from "./service";
 
 vi.mock("@/lib/constants", async (importOriginal) => ({
@@ -332,6 +335,37 @@ describe("Integration Service", () => {
       vi.mocked(prisma.integration.findFirst).mockRejectedValue(prismaError);
 
       await expect(getIntegrationByType(mockWorkspaceId, mockType)).rejects.toThrow(DatabaseError);
+    });
+  });
+
+  describe("getStoredIntegrationConfig", () => {
+    const mockWorkspaceId = "clg123456789012345678901234";
+
+    test("a settings save keeps a token that no longer decrypts as its ciphertext", async () => {
+      const ciphertext = symmetricEncrypt("old", "f".repeat(64));
+      const storedConfig = {
+        ...mockIntegrationConfig,
+        key: { ...mockIntegrationConfig.key, access_token: ciphertext },
+      };
+      vi.mocked(prisma.integration.findFirst).mockResolvedValue({ config: storedConfig } as never);
+
+      const stored = await getStoredIntegrationConfig(mockWorkspaceId, IntegrationType.slack);
+
+      expect(prisma.integration.findFirst).toHaveBeenCalledWith({
+        where: { workspaceId: mockWorkspaceId, type: IntegrationType.slack },
+        select: { config: true },
+      });
+      // What the settings action does with it: the client echoes a redacted key, the stored one replaces it,
+      // and the save encrypts. The ciphertext must come out unchanged, not blanked.
+      const redacted = { type: "slack" as const, config: { ...storedConfig, key: { access_token: "" } } };
+      const saved = encryptIntegrationConfig("slack", withStoredIntegrationKey(redacted, stored).config);
+      expect(saved).toMatchObject({ key: { access_token: ciphertext } });
+    });
+
+    test("returns null when there is no integration of that type", async () => {
+      vi.mocked(prisma.integration.findFirst).mockResolvedValue(null);
+
+      expect(await getStoredIntegrationConfig(mockWorkspaceId, IntegrationType.slack)).toBeNull();
     });
   });
 
