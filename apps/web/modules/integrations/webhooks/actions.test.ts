@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthorizationError } from "@formbricks/types/errors";
 import { assertCan } from "@/lib/authorization";
-import { getWebhookSecretAction, testEndpointAction } from "./actions";
-import { testEndpoint } from "@/modules/integrations/webhooks/lib/webhook";
 import { generateWebhookSecret } from "@/lib/crypto";
+import { testEndpoint } from "@/modules/integrations/webhooks/lib/webhook";
+import { getWebhookSecretAction, testEndpointAction } from "./actions";
 
 const mocks = vi.hoisted(() => ({
   getWebhookWithSecret: vi.fn(),
@@ -94,7 +94,10 @@ describe("testEndpointAction", () => {
       ctx,
       parsedInput: { url: "https://stored.example.com/hook", webhookId: "webhook-1", workspaceId: "ws-1" },
     });
-    expect(mocks.applyRateLimit).toHaveBeenCalledWith(expect.objectContaining({ namespace: "action:webhook-test" }), "user-1");
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "action:webhook-test" }),
+      "user-1"
+    );
   });
 
   test("signs the stored URL with the stored secret and does not return the secret", async () => {
@@ -118,7 +121,11 @@ describe("testEndpointAction", () => {
   test("authorizes against the webhook's workspace, not the caller-supplied one", async () => {
     await runTest({
       ctx,
-      parsedInput: { url: "https://stored.example.com/hook", webhookId: "webhook-1", workspaceId: "ws-other" },
+      parsedInput: {
+        url: "https://stored.example.com/hook",
+        webhookId: "webhook-1",
+        workspaceId: "ws-other",
+      },
     });
     expect(assertCan).toHaveBeenCalledWith({ type: "user", id: "user-1" }, "workspace.write", {
       type: "workspace",
@@ -127,7 +134,10 @@ describe("testEndpointAction", () => {
   });
 
   test("returns the secret only for a new webhook", async () => {
-    const result = await runTest({ ctx, parsedInput: { url: "https://new.example.com", workspaceId: "ws-1" } });
+    const result = await runTest({
+      ctx,
+      parsedInput: { url: "https://new.example.com", workspaceId: "ws-1" },
+    });
     expect(testEndpoint).toHaveBeenCalledWith("https://new.example.com", "whsec_throwaway");
     expect(result).toEqual({ success: true, secret: "whsec_throwaway" });
   });

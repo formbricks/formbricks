@@ -63,7 +63,7 @@ describe("sanitizeSurveyHtml", () => {
       '<p class="fb-editor-paragraph" dir="rtl"><b><strong class="fb-editor-text-bold">bold</strong></b> <i><em class="fb-editor-text-italic">it</em></i> <u class="fb-editor-text-underline">u</u> <s>s</s> <mark>m</mark><br></p>' +
       '<ul class="fb-editor-list-ul"><li value="1" class="fb-editor-listitem">a</li><li class="fb-editor-nested-listitem"><ul><li value="1">n</li></ul></li></ul>' +
       '<ol start="3" class="fb-editor-list-ol"><li value="3">c</li></ol>' +
-      '<blockquote><pre><code>q</code></pre></blockquote>' +
+      "<blockquote><pre><code>q</code></pre></blockquote>" +
       '<p><a href="https://example.com/a?b=1&amp;c=2" class="fb-editor-link" target="_blank" rel="noopener noreferrer">link</a></p>';
 
     expect(sanitizeSurveyHtml(editorHtml)).toBe(editorHtml);

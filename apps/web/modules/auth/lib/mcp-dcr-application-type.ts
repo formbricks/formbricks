@@ -1,11 +1,11 @@
 import "server-only";
 import { authBodyKindOf } from "./auth-request-bounds";
-import { findDcrSizeViolation } from "./mcp-dcr-size-limits";
 import {
   findDisallowedRedirectUri,
   getAllowedDcrRedirectUris,
   isLoopbackRedirectUri,
 } from "./mcp-dcr-redirect-policy";
+import { findDcrSizeViolation } from "./mcp-dcr-size-limits";
 
 /**
  * Default `application_type` to `"native"` on Dynamic Client Registration when the client asked for
