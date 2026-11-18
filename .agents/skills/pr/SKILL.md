@@ -43,6 +43,20 @@ visual cannot carry.
 commit (`https://github.com/formbricks/formbricks/blob/<head-sha>/<path>#L10-L20`) plus ten words at
 most. A link to the PR's Files tab points at nothing. Nothing risky? Say so in one line.
 
+**Merge danger.**
+
+- Tick the breaking-changes box exactly when someone outside this repo has to change something to keep
+  working. When the diff touches a public API shape, an env var or config key, a migration, a webhook,
+  or the SDK in `packages/js-core`, `packages/survey-ui` or `packages/surveys`, read
+  [BREAKING.md](BREAKING.md) before deciding: the tick alone writes the release-notes migration entry.
+  The line under the box says in one sentence why it is, or is not, breaking.
+- **Door**: tick exactly one box. Two-way when a revert undoes the change; one-way when it does not (a
+  destructive migration, data written in a new shape, a message sent), and then say in the blast
+  radius what the revert leaves behind.
+- **Blast radius**: what nearby could break and what to re-check if it does, in a phrase.
+- **Migrations & env**: every new or changed env var, migration or cutover step, breaking or not,
+  since a deployer acts on each.
+
 **Evidence.**
 
 - `Rerun:` carries one command that reruns the table, so no row repeats it.
@@ -59,20 +73,6 @@ most. A link to the PR's Files tab points at nothing. Nothing risky? Say so in o
   names the run on `main` that shows it; without one it goes here.
 
 All QA for the change happens in this PR, before review; there is no separate release QA pass.
-
-**Merge danger.**
-
-- Tick the breaking-changes box exactly when someone outside this repo has to change something to keep
-  working. When the diff touches a public API shape, an env var or config key, a migration, a webhook,
-  or the SDK in `packages/js-core`, `packages/survey-ui` or `packages/surveys`, read
-  [BREAKING.md](BREAKING.md) before deciding: the tick alone writes the release-notes migration entry.
-  The line under the box says in one sentence why it is, or is not, breaking.
-- **Door**: tick exactly one box. Two-way when a revert undoes the change; one-way when it does not (a
-  destructive migration, data written in a new shape, a message sent), and then say in the blast
-  radius what the revert leaves behind.
-- **Blast radius**: what nearby could break and what to re-check if it does, in a phrase.
-- **Migrations & env**: every new or changed env var, migration or cutover step, breaking or not,
-  since a deployer acts on each.
 
 ### 3. Cut to one screen
 

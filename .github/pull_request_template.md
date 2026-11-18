@@ -16,6 +16,21 @@ Fixes ENG-
 
 -
 
+## Merge danger
+
+- [ ] This PR contains breaking changes
+
+<one line: why it is, or is not, breaking>
+
+**Door** (tick one)
+
+- [ ] Two-way door: a revert undoes it
+- [ ] One-way door: a revert does not undo it
+
+**Blast radius:** <what nearby could break>
+
+**Migrations & env:** none
+
 ## Evidence
 
 Rerun: `<one command covering the table>`
@@ -31,18 +46,3 @@ Rerun: `<one command covering the table>`
 **Open gaps**
 
 - none
-
-## Merge danger
-
-- [ ] This PR contains breaking changes
-
-<one line: why it is, or is not, breaking>
-
-**Door** (tick one)
-
-- [ ] Two-way door: a revert undoes it
-- [ ] One-way door: a revert does not undo it
-
-**Blast radius:** <what nearby could break>
-
-**Migrations & env:** none
