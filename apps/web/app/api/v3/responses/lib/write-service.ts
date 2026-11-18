@@ -801,8 +801,9 @@ export async function setScopedResponsesOutcome(
  *
  * `data` is the third such field: a legacy row can hold a JSON `null` or a number array, which
  * `ZResponse` refuses and a `PATCH` keeps (the read withholds it, so leaving it out is not a
- * deletion). The payload carries the answers the API publishes and leaves those out, as the read
- * does; storage keeps them.
+ * deletion). Only the value shape is filtered: an entry whose value is outside the published
+ * shapes is left out of the payload, and every other entry — hidden-field values included, as the
+ * pipeline has always carried them — passes through unchanged. Storage keeps the legacy value.
  */
 export function toV3PipelineResponse(row: TV3WriteReadbackRow): TResponse {
   return {
