@@ -78,7 +78,7 @@ describe("getDashboardFieldValueProperty", () => {
   });
 
   test("an empty search and no date range send neither", async () => {
-    vi.mocked(listDashboardFilterValues).mockResolvedValue({ values: [], hasMore: false } as never);
+    vi.mocked(listDashboardFilterValues).mockResolvedValue({ values: [], hasMore: false });
     await property([], null).loadOptions!("");
     expect(listDashboardFilterValues).toHaveBeenLastCalledWith(
       expect.objectContaining({ dateRange: undefined, search: undefined })
@@ -97,7 +97,7 @@ describe("the (No value) option", () => {
   });
 
   test("is left out when no record on the charts has a value, so the list reads as empty", async () => {
-    vi.mocked(listDashboardFilterValues).mockResolvedValue({ values: [], hasMore: false } as never);
+    vi.mocked(listDashboardFilterValues).mockResolvedValue({ values: [], hasMore: false });
     expect((await property().loadOptions!("")).options).toEqual([]);
   });
 });
@@ -123,7 +123,7 @@ describe("getDashboardFieldAvailableValues", () => {
     vi.mocked(listDashboardFilterValues).mockResolvedValue({
       values: [{ value: "positive" }],
       hasMore: false,
-    } as never);
+    });
     await expect(available().load()).resolves.toEqual({ values: ["positive", NO_VALUE_PICK] });
     expect(listDashboardFilterValues).toHaveBeenLastCalledWith(
       expect.objectContaining({ field: "FeedbackRecords.sentiment", filters: [OTHER] })
@@ -132,21 +132,21 @@ describe("getDashboardFieldAvailableValues", () => {
   });
 
   test("is empty with the field's own hint when no value occurs anywhere", async () => {
-    vi.mocked(listDashboardFilterValues).mockResolvedValue({ values: [], hasMore: false } as never);
+    vi.mocked(listDashboardFilterValues).mockResolvedValue({ values: [], hasMore: false });
     await expect(available().load()).resolves.toEqual({ values: [], emptyHint: undefined });
     expect(vi.mocked(listDashboardFilterValues).mock.lastCall?.[0]).toMatchObject({ filters: [] });
   });
 
   test("says the filters or dates leave none when values occur outside them", async () => {
     vi.mocked(listDashboardFilterValues)
-      .mockResolvedValueOnce({ values: [], hasMore: false } as never)
-      .mockResolvedValueOnce({ values: [{ value: "positive" }], hasMore: false } as never);
+      .mockResolvedValueOnce({ values: [], hasMore: false })
+      .mockResolvedValueOnce({ values: [{ value: "positive" }], hasMore: false });
     await expect(available().load()).resolves.toEqual({ values: [], emptyHint: "none here" });
   });
 
   test("asks only once when nothing narrows the list", async () => {
     vi.mocked(listDashboardFilterValues).mockClear();
-    vi.mocked(listDashboardFilterValues).mockResolvedValue({ values: [], hasMore: false } as never);
+    vi.mocked(listDashboardFilterValues).mockResolvedValue({ values: [], hasMore: false });
     const unnarrowed = getDashboardFieldAvailableValues({
       dashboardId: "d1",
       field: "FeedbackRecords.sentiment",

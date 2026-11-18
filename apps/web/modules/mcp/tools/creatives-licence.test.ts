@@ -107,7 +107,7 @@ const buildRecord = (): TCreativeRecord => {
     triggers: [],
     languages: [{ default: true, enabled: true, language: { code: "en-US" } }],
     survey: null,
-  } as unknown as TCreativeRecord;
+  };
 };
 
 type TToolResult = { isError?: boolean; structuredContent: Record<string, unknown> };

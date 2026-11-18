@@ -26,10 +26,10 @@ const { isValidCssSelector } = await import("@/app/lib/actionClass/actionClass")
 // Mock translation function
 const mockT = vi.fn((key: string, params?: Record<string, unknown>) => {
   if (key === "workspace.actions.action_with_name_already_exists") {
-    return `Action with name "${params?.name}" already exists`;
+    return `Action with name "${String(params?.name)}" already exists`;
   }
   if (key === "workspace.actions.action_with_key_already_exists") {
-    return `Action with key "${params?.key}" already exists`;
+    return `Action with key "${String(params?.key)}" already exists`;
   }
   if (key === "workspace.actions.invalid_css_selector") {
     return "Invalid CSS selector";
@@ -70,7 +70,7 @@ describe("action-utils", () => {
           workspaceId: "ws1",
           createdAt: new Date(),
           updatedAt: new Date(),
-        } as TActionClass,
+        },
         {
           id: "2",
           name: "NoCode Action",
@@ -85,7 +85,7 @@ describe("action-utils", () => {
           workspaceId: "ws1",
           createdAt: new Date(),
           updatedAt: new Date(),
-        } as TActionClass,
+        },
         {
           id: "3",
           name: "Code Action 2",
@@ -96,7 +96,7 @@ describe("action-utils", () => {
           workspaceId: "ws1",
           createdAt: new Date(),
           updatedAt: new Date(),
-        } as TActionClass,
+        },
       ];
 
       const { result } = renderHook(() => useActionClassKeys(actionClasses));
@@ -116,7 +116,7 @@ describe("action-utils", () => {
           workspaceId: "ws1",
           createdAt: new Date(),
           updatedAt: new Date(),
-        } as TActionClass,
+        },
         {
           id: "2",
           name: "Code Action 2",
@@ -127,7 +127,7 @@ describe("action-utils", () => {
           workspaceId: "ws1",
           createdAt: new Date(),
           updatedAt: new Date(),
-        } as TActionClass,
+        },
       ];
 
       const { result } = renderHook(() => useActionClassKeys(actionClasses));
@@ -151,7 +151,7 @@ describe("action-utils", () => {
           workspaceId: "ws1",
           createdAt: new Date(),
           updatedAt: new Date(),
-        } as TActionClass,
+        },
       ];
 
       const { result } = renderHook(() => useActionClassKeys(actionClasses));

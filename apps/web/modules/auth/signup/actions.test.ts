@@ -33,7 +33,7 @@ const requestHeaders = new Headers({ "x-formbricks-client-ip": "203.0.113.7" });
 let setCookies: { name: string; value: string }[] = [];
 const mockNextRequestData = () => {
   setCookies = [];
-  vi.mocked(headers).mockResolvedValue(requestHeaders as never);
+  vi.mocked(headers).mockResolvedValue(requestHeaders);
   vi.mocked(cookies).mockResolvedValue({
     get: () => undefined,
     set: (name: string, value: string) => setCookies.push({ name, value }),
@@ -161,7 +161,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
     constantsOverrides.SETUP_TOKEN = undefined;
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     vi.mocked(markInstanceSetupCompleted).mockResolvedValue(undefined);
-    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
     // Real Better Auth resolves with the user it wrote; the action compares that id against the
@@ -196,7 +196,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
   test("does not point the verification callback at /invite for invite signups (ENG-1527)", async () => {
     vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
-    vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "invite-1", email: "ada@example.com" } as never);
+    vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "invite-1", email: "ada@example.com" });
     vi.mocked(getInvite).mockResolvedValue({
       id: "invite-1",
       organizationId: "org-1",
@@ -227,7 +227,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
   // sign-up or leave the used invite behind.
   test("completes an invite sign-up and deletes the invite when the inviter's notice fails", async () => {
     vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
-    vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "invite-1", email: "ada@example.com" } as never);
+    vi.mocked(verifyInviteToken).mockReturnValue({ inviteId: "invite-1", email: "ada@example.com" });
     vi.mocked(getInvite).mockResolvedValue({
       id: "invite-1",
       organizationId: "org-1",
@@ -276,7 +276,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
       vi.mocked(verifyInviteToken).mockReturnValue({
         inviteId: "invite-1",
         email: "someone-else@example.com",
-      } as never);
+      });
 
       await expect(
         createUserAction({
@@ -470,7 +470,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
       vi.mocked(verifyInviteToken).mockReturnValue({
         inviteId: "invite-1",
         email: "ada@example.com",
-      } as never);
+      });
       vi.mocked(getInvite).mockResolvedValue({
         id: "invite-1",
         organizationId: "org-1",
@@ -530,7 +530,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
     constantsOverrides.SETUP_TOKEN = undefined;
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
-    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
+    vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
     // Real Better Auth resolves with the user it wrote; the action compares that id against the
@@ -555,7 +555,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
     vi.mocked(verifyInviteToken).mockReturnValue({
       inviteId: "invite-1",
       email: "spammer@gmail.com",
-    } as never);
+    });
     vi.mocked(getInvite).mockResolvedValue({
       id: "invite-1",
       organizationId: "org-1",

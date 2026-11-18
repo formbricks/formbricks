@@ -125,7 +125,7 @@ describe("deleteSurvey", () => {
 
   /** A transaction whose lock finds the survey (or not) and whose eligibility re-check says `eligible`. */
   const mockTransaction = ({
-    deleted = mockDeletedSurveyLink as object,
+    deleted = mockDeletedSurveyLink,
     locked = true,
     eligible = true,
   }: { deleted?: object; locked?: boolean; eligible?: boolean } = {}) => {

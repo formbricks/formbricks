@@ -46,7 +46,7 @@ export const logAuthEvent = (
   // capturing every attempt was noise, not signal. The security trail is the audit log below
   // (throttled by shouldLogAuthFailure + rate-limiting); genuine *internal* auth errors are still
   // captured via the Better Auth logger's error level (ENG-2037).
-  queueAuditEventBackground({
+  void queueAuditEventBackground({
     action,
     targetType: "user",
     userId: auditActorId,

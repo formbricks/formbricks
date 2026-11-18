@@ -44,7 +44,7 @@ const mocks = vi.hoisted(() => ({
   resendInvite: vi.fn(),
   sendInviteMemberEmail: vi.fn(),
   settleInviteRateLimit: vi.fn(),
-  userManagementMinimumRole: { value: "manager" as string },
+  userManagementMinimumRole: { value: "manager" },
 }));
 
 vi.mock("@formbricks/database", () => ({

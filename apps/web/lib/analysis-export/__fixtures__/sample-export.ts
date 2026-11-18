@@ -7,13 +7,7 @@
  */
 import { Readable } from "node:stream";
 import { type TAnalysisSurvey, createAnalysisRowBuilder } from "../row-builder";
-import type {
-  TAnalysisExport,
-  TAnalysisResponseFields,
-  TAnalysisRow,
-  TAnswerDisplay,
-  TUnmappedValue,
-} from "../types";
+import type { TAnalysisExport, TAnalysisResponseFields, TAnalysisRow, TAnswerDisplay } from "../types";
 import { createUnmappedCollector } from "../unmapped-collector";
 
 const i18n = (en: string, ar?: string) => (ar === undefined ? { default: en } : { default: en, ar });
@@ -170,7 +164,7 @@ export const buildSampleExport = (answers: TAnswerDisplay = "codes"): TAnalysisE
     },
     summary: () => {
       const { unmapped, dropped } = collector.result();
-      return { rowCount, unmapped: unmapped as TUnmappedValue[], unmappedDropped: dropped };
+      return { rowCount, unmapped: unmapped, unmappedDropped: dropped };
     },
   };
 };

@@ -7,10 +7,11 @@ const anchor = new Date("2024-09-15T17:01:00.000Z");
 // Test stub for i18next's TFunction — echoes the key plus its interpolation values so the tests
 // can match on key + payload without needing real translation files loaded.
 const t = ((key: string, options?: Record<string, unknown>) => {
-  if (key === "workspace.workflows.relative_today") return `Today, ${options?.time}`;
-  if (key === "workspace.workflows.relative_yesterday") return `Yesterday, ${options?.time}`;
-  if (key === "workspace.workflows.relative_days_ago") return `${options?.count} days ago, ${options?.time}`;
-  return `${options?.date}, ${options?.time}`;
+  if (key === "workspace.workflows.relative_today") return `Today, ${String(options?.time)}`;
+  if (key === "workspace.workflows.relative_yesterday") return `Yesterday, ${String(options?.time)}`;
+  if (key === "workspace.workflows.relative_days_ago")
+    return `${String(options?.count)} days ago, ${String(options?.time)}`;
+  return `${String(options?.date)}, ${String(options?.time)}`;
 }) as unknown as TFunction;
 
 describe("formatRelativeDate", () => {

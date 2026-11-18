@@ -394,6 +394,7 @@ describe("surveyLogic", () => {
   });
 
   test("evaluateLogic reads a Signature answer (one URL string) as signed, and empty or missing as not signed", () => {
+    // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
     const surveyWithSignature = {
       ...mockSurvey,
       blocks: [

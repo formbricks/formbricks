@@ -24,7 +24,6 @@ import {
   ZSegmentSurveyIds,
   getSegmentFilterTreeBoundsViolation,
 } from "@formbricks/types/segment";
-import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import {
   type TDeclaredFieldSource,
   describeDeclaredFieldNameErrors,
@@ -1462,7 +1461,7 @@ const validateSurveyCreateDataMedia = (
   if (Array.isArray(data.blocks) && data.blocks.length > 0) {
     return {
       ...data,
-      blocks: validateMediaAndPrepareBlocks(data.blocks as unknown as TSurveyBlock[]),
+      blocks: validateMediaAndPrepareBlocks(data.blocks),
     };
   }
 

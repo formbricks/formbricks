@@ -100,7 +100,7 @@ vi.mock("@/modules/ee/quotas/lib/quotas", () => ({
 vi.mock("@/lingodotdev/server", () => ({
   getTranslate: async () => (key: string, params?: Record<string, unknown>) => {
     if (key === "common.duplicate_copy") return "(copy)";
-    if (key === "common.duplicate_copy_number") return `(copy ${params?.copyNumber})`;
+    if (key === "common.duplicate_copy_number") return `(copy ${String(params?.copyNumber)})`;
     return key;
   },
 }));
@@ -1148,7 +1148,7 @@ describe("getWorkspaceSurveyCount", () => {
   });
 
   test("counts archived surveys too, so an all-archived workspace is not empty", async () => {
-    vi.mocked(prisma.survey.count).mockResolvedValue(3 as never);
+    vi.mocked(prisma.survey.count).mockResolvedValue(3);
 
     await expect(getWorkspaceSurveyCount(workspaceId, UNENFORCED_CONTEXT)).resolves.toBe(3);
     // No archivedAt narrowing: an archived survey still makes the workspace non-empty.
@@ -1156,7 +1156,7 @@ describe("getWorkspaceSurveyCount", () => {
   });
 
   test("returns 0 when the workspace has no surveys at all", async () => {
-    vi.mocked(prisma.survey.count).mockResolvedValue(0 as never);
+    vi.mocked(prisma.survey.count).mockResolvedValue(0);
 
     await expect(getWorkspaceSurveyCount(workspaceId, UNENFORCED_CONTEXT)).resolves.toBe(0);
   });

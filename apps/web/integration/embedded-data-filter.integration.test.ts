@@ -105,7 +105,7 @@ const filterCriteria = (
         },
       ],
     },
-    {} as never
+    {}
   );
 
 const findResponseIds = async (survey: TSurvey, filterValue: string, value: string): Promise<string[]> => {

@@ -1,7 +1,7 @@
 import type { TEmbeddedValueResponse } from "@formbricks/types/embedded-data-resolver";
 import type { TResponseData, TResponseTtc } from "@formbricks/types/responses";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
-import { buildAnswerPlan, isPublishableDataKey, serializeAnswers, sumV3DurationSeconds } from "./answers";
+import { buildAnswerPlan, publishedDataValue, serializeAnswers, sumV3DurationSeconds } from "./answers";
 import { buildEmbeddedDataPlan, serializeEmbeddedData } from "./embedded-data";
 import { resolveV3LabelContext } from "./label-resolution";
 import type {
@@ -11,7 +11,6 @@ import type {
   TV3ResponseTag,
   TV3ResponseUnresolvedEntry,
 } from "./resources";
-import { narrowToPublishableValue } from "./resources";
 import type { TV3ResponseRow, TV3ResponseSurveyRow } from "./service";
 
 /**
@@ -50,19 +49,18 @@ const planKey = (surveyId: string, lookupKey: string): string => `${surveyId} ${
  * / `meta` arrive as Prisma `JsonValue`. This narrows once, at the single point where the two types
  * meet, instead of casting at each of the resolver's call sites.
  */
-const asEmbeddedValueResponse = (row: TV3ResponseRow): TEmbeddedValueResponse =>
-  ({
-    id: row.id,
-    surveyId: row.surveyId,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-    finished: row.finished,
-    language: row.language,
-    data: row.data,
-    variables: row.variables,
-    ttc: row.ttc,
-    meta: row.meta,
-  }) as unknown as TEmbeddedValueResponse;
+const asEmbeddedValueResponse = (row: TV3ResponseRow): TEmbeddedValueResponse => ({
+  id: row.id,
+  surveyId: row.surveyId,
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+  finished: row.finished,
+  language: row.language,
+  data: row.data,
+  variables: row.variables,
+  ttc: row.ttc,
+  meta: row.meta,
+});
 
 /**
  * `contact.userId` is an attribute row, not a column, so it arrives as a filtered one-element list.
@@ -189,11 +187,10 @@ export const createV3ResponseSerializer = (): TV3ResponseSerializer => {
       // caller's to see"; it says nothing about the byte under it, and `Response.data` holds JSON
       // `null`s and other shapes outside the published union. `serializeAnswers` already skips those
       // — this is the one view that echoed them verbatim, producing a body the committed spec
-      // rejects.
+      // rejects. `PATCH` carries over every entry this withholds, through the same predicate.
       data: Object.fromEntries(
         Object.entries(stored).flatMap(([key, rawValue]) => {
-          if (!isPublishableDataKey(plan, key)) return [];
-          const publishable = narrowToPublishableValue(rawValue);
+          const publishable = publishedDataValue(plan, key, rawValue);
           return publishable === undefined ? [] : [[key, publishable] as const];
         })
       ),

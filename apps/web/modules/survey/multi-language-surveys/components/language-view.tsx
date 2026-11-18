@@ -163,7 +163,7 @@ export const LanguageView = ({
   const updateSurveyTranslations = (survey: TSurvey, updatedLanguages: TSurveyLanguage[]) => {
     const translatedSurveyResult = addMultiLanguageLabels(survey, extractLanguageCodes(updatedLanguages));
     const updatedSurvey = { ...translatedSurveyResult, languages: updatedLanguages };
-    updateLocalSurvey(updatedSurvey as TSurvey);
+    updateLocalSurvey(updatedSurvey);
   };
 
   // Answers are stored as the option text, so a published survey keeps the translations it already has:

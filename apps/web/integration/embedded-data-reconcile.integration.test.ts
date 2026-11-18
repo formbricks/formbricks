@@ -744,7 +744,7 @@ describe("updateSurvey accepts embeddedFields (real Postgres)", () => {
       hiddenFields: _hiddenFields,
       ...nameOnly
     } = survey;
-    await updateSurveyInternal({ ...nameOnly, name: "Renamed" } as TSurvey, true);
+    await updateSurveyInternal({ ...nameOnly, name: "Renamed" }, true);
 
     expect(await readFields(survey.id)).toEqual(before);
   });
@@ -839,7 +839,7 @@ describe("updateSurvey accepts embeddedFields (real Postgres)", () => {
           embeddedFields: getLegacyWriteEmbeddedFields(loaded.embeddedFields ?? [], merged),
         }),
         id: loaded.id,
-      } as TSurvey);
+      });
     };
 
     const seedWithDate = async () => {

@@ -75,7 +75,7 @@ describe("resetPasswordAction", () => {
   });
 
   test("applies the reset-password IP limit before calling Better Auth", async () => {
-    vi.mocked(auth.api.resetPassword).mockResolvedValue({ status: true } as never);
+    vi.mocked(auth.api.resetPassword).mockResolvedValue({ status: true });
 
     await resetPasswordAction({ parsedInput } as never);
 

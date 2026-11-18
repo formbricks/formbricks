@@ -55,9 +55,7 @@ const bodyOf = async (response: Response) => (await response.json()) as { data: 
 describe("listV3DashboardFilterFields", () => {
   beforeEach(() => {
     vi.mocked(getDashboardChartsRow).mockReset();
-    vi.mocked(authorizeDashboardRead)
-      .mockReset()
-      .mockResolvedValue(ACCESS as never);
+    vi.mocked(authorizeDashboardRead).mockReset().mockResolvedValue(ACCESS);
     vi.mocked(refuseUnlessDashboardDatasetReadable).mockReset().mockResolvedValue(null);
     vi.mocked(getNumericEmbeddedFields).mockReset().mockResolvedValue(new Set());
     vi.mocked(getV3AuthorizationActor)
@@ -140,7 +138,7 @@ describe("listV3DashboardFilterFields", () => {
 
   test("answers 401 without an actor, and maps a thrown error instead of throwing", async () => {
     vi.mocked(getDashboardChartsRow).mockResolvedValue(rowWith([DS_A]) as never);
-    vi.mocked(getV3AuthorizationActor).mockReturnValueOnce(null as never);
+    vi.mocked(getV3AuthorizationActor).mockReturnValueOnce(null);
     expect((await list()).status).toBe(401);
 
     vi.mocked(getDatasetChartFields).mockRejectedValueOnce(new Error("boom"));

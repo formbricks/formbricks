@@ -220,7 +220,7 @@ describe("Survey Editor Library Tests", () => {
     });
 
     test("returns an empty object when updatedTriggers is undefined", () => {
-      const result = handleTriggerUpdates(undefined as never, [], mockActionClasses);
+      const result = handleTriggerUpdates(undefined, [], mockActionClasses);
       expect(result).toEqual({});
     });
 
@@ -231,11 +231,7 @@ describe("Survey Editor Library Tests", () => {
         { actionClass: createActionClassObj("action2", "noCode") },
       ];
 
-      const result = handleTriggerUpdates(
-        updatedTriggers as never,
-        currentTriggers as never,
-        mockActionClasses
-      );
+      const result = handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses);
 
       expect(result).toEqual({
         create: [{ actionClassId: "action2" }],
@@ -249,11 +245,7 @@ describe("Survey Editor Library Tests", () => {
       ];
       const updatedTriggers = [{ actionClass: createActionClassObj("action1") }];
 
-      const result = handleTriggerUpdates(
-        updatedTriggers as never,
-        currentTriggers as never,
-        mockActionClasses
-      );
+      const result = handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses);
 
       expect(result).toEqual({
         deleteMany: {
@@ -274,11 +266,7 @@ describe("Survey Editor Library Tests", () => {
         { actionClass: createActionClassObj("action3", "noCode") },
       ];
 
-      const result = handleTriggerUpdates(
-        updatedTriggers as never,
-        currentTriggers as never,
-        mockActionClasses
-      );
+      const result = handleTriggerUpdates(updatedTriggers, currentTriggers, mockActionClasses);
 
       expect(result).toEqual({
         create: [{ actionClassId: "action3" }],

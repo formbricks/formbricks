@@ -172,7 +172,7 @@ describe("buildWebhookDeliveryBody dataByQuestionCode", () => {
     vi.mocked(resolveStorageUrlsInObject).mockImplementationOnce((value) => {
       const copy = JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
       if (typeof copy.file === "string") copy.file = `https://cdn.example.com/${copy.file}`;
-      return copy as never;
+      return copy;
     });
     return JSON.parse(buildWebhookDeliveryBody(input));
   };

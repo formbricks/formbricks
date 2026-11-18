@@ -100,7 +100,7 @@ describe("deleteMembership", () => {
         throw new Error("Expected an interactive transaction");
       }
 
-      return transaction(prisma as never);
+      return transaction(prisma);
     });
     vi.mocked(prisma.membership.delete).mockResolvedValue({ role: "member" } as never);
     vi.mocked(prisma.membership.findMany).mockResolvedValue([]);
@@ -144,7 +144,7 @@ describe("deleteMembership", () => {
       vi.mocked(prisma.membership.delete).mockResolvedValue({
         ...mockMembership,
         role: removedRole,
-      } as never);
+      });
       vi.mocked(prisma.membership.findMany).mockResolvedValue(
         remainingRoles.map((role) => ({ role })) as never
       );

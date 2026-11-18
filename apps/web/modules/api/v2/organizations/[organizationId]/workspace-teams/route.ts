@@ -39,7 +39,7 @@ export async function GET(request: Request, props: { params: Promise<{ organizat
     handler: async ({ parsedInput: { query, params }, authentication }) => {
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Read
         ))
@@ -50,7 +50,7 @@ export async function GET(request: Request, props: { params: Promise<{ organizat
         });
       }
 
-      const normalisedQuery = normaliseProjectIdToWorkspaceId(query!);
+      const normalisedQuery = normaliseProjectIdToWorkspaceId(query);
       const result = await getWorkspaceTeams(authentication.organizationId, normalisedQuery);
 
       if (!result.ok) {
@@ -75,7 +75,7 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
     },
     externalParams: props.params,
     handler: async ({ parsedInput: { body, params }, authentication, auditLog }) => {
-      const normalisedBody = normaliseProjectIdToWorkspaceId(body!);
+      const normalisedBody = normaliseProjectIdToWorkspaceId(body);
       const { teamId, workspaceId } = normalisedBody;
 
       if (!workspaceId) {
@@ -91,7 +91,7 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
 
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Write
         ))
@@ -172,7 +172,7 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
     },
     externalParams: props.params,
     handler: async ({ parsedInput: { body, params }, authentication, auditLog }) => {
-      const normalisedBody = normaliseProjectIdToWorkspaceId(body!);
+      const normalisedBody = normaliseProjectIdToWorkspaceId(body);
       const { teamId, workspaceId } = normalisedBody;
 
       if (!workspaceId) {
@@ -188,7 +188,7 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
 
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Write
         ))
@@ -265,7 +265,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
     },
     externalParams: props.params,
     handler: async ({ parsedInput: { query, params }, authentication, auditLog }) => {
-      const normalisedQuery = normaliseProjectIdToWorkspaceId(query!);
+      const normalisedQuery = normaliseProjectIdToWorkspaceId(query);
       const { teamId, workspaceId } = normalisedQuery;
 
       if (!workspaceId) {
@@ -281,7 +281,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
 
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Write
         ))

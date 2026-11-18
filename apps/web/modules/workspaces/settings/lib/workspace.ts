@@ -292,7 +292,7 @@ export const updateWorkspace = async (
     await deleteOrphanedWorkspaceLogoFile(workspaceId, updatedWorkspace.organizationId, previousLogoUrl);
   }
 
-  return updatedWorkspace as TWorkspace;
+  return updatedWorkspace;
 };
 
 /**

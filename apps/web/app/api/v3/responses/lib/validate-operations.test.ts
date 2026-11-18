@@ -243,6 +243,20 @@ describe("the verdict", () => {
     expect(data.effects).toBeUndefined();
   });
 
+  /** The same planner as `PATCH`: a withheld legacy answer the caller never saw is not judged. */
+  test("a patch is validated on the answers it sends, not on a withheld legacy one", async () => {
+    mockGetScoped.mockResolvedValueOnce(storedResponse({ data: { q1: "hi", q2: null } }));
+
+    const response = await validate({
+      operation: "patch",
+      responseId: RESPONSE_ID,
+      data: { data: { q1: "edited" } },
+    });
+
+    expect((await bodyOf(response)).valid).toBe(true);
+    expect(mockValidateResponseData.mock.calls[0][1]).toEqual({ q1: "edited" });
+  });
+
   test("a schema failure inside the document is reported, not raised", async () => {
     const response = await validate({
       operation: "create",

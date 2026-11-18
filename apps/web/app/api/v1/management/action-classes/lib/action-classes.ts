@@ -34,7 +34,7 @@ export const getActionClasses = reactCache(
         skip: offset,
       });
     } catch {
-      throw new DatabaseError(`Database error when fetching actions for workspace ${workspaceIds}`);
+      throw new DatabaseError(`Database error when fetching actions for workspace ${String(workspaceIds)}`);
     }
   }
 );

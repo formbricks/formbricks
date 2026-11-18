@@ -103,7 +103,7 @@ describe("Response Lib", () => {
     });
 
     test("reject a displayId that does not exist", async () => {
-      vi.mocked(prisma.display.findUnique).mockResolvedValue(null as never);
+      vi.mocked(prisma.display.findUnique).mockResolvedValue(null);
 
       const result = await createResponse(responseInput, resolvedContext);
 
@@ -120,7 +120,7 @@ describe("Response Lib", () => {
       } as never);
       const foreign = await createResponse(responseInput, resolvedContext);
 
-      vi.mocked(prisma.display.findUnique).mockResolvedValue(null as never);
+      vi.mocked(prisma.display.findUnique).mockResolvedValue(null);
       const missing = await createResponse(responseInput, resolvedContext);
 
       expect(foreign.ok).toBe(false);
@@ -165,7 +165,7 @@ describe("Response Lib", () => {
     // The reads happen before the transaction now, but their failures are still reported in the order
     // they always were: display, then contact, then organization.
     test("report a display failure ahead of contact and organization failures", async () => {
-      vi.mocked(prisma.display.findUnique).mockResolvedValue(null as never);
+      vi.mocked(prisma.display.findUnique).mockResolvedValue(null);
 
       const result = await createResponse(responseInput, {
         contact: contactLookupFailed,
@@ -260,8 +260,9 @@ describe("Response Lib", () => {
       const contact = { id: "contactid0000000000000000", attributes: { userId: "user-1" } };
       vi.mocked(loadQuotaEvaluationContext).mockResolvedValue(quotaContext);
       vi.mocked(evaluateResponseQuotas).mockResolvedValue({ shouldEndSurvey: false });
-      vi.mocked(prisma.$transaction).mockImplementation((async (cb: (tx: typeof prisma) => unknown) =>
-        cb(prisma)) as never);
+      vi.mocked(prisma.$transaction).mockImplementation(async (cb: (tx: typeof prisma) => unknown) =>
+        cb(prisma)
+      );
       vi.mocked(prisma.response.create).mockResolvedValue(response);
       vi.mocked(getContactByUserId).mockResolvedValue(ok(contact));
       vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(ok(organizationId));

@@ -239,7 +239,7 @@ export const AddWebhookModal = ({
                   className="ml-2 whitespace-nowrap"
                   disabled={testEndpointInput.trim() === ""}
                   onClick={() => {
-                    handleTestEndpoint(true);
+                    void handleTestEndpoint(true);
                   }}>
                   {t("workspace.integrations.webhooks.test_endpoint")}
                 </Button>

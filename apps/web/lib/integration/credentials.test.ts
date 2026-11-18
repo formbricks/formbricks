@@ -23,7 +23,7 @@ describe("integration credentials", () => {
       config({ access_token: "ya29.plain", refresh_token: "1//plain", scope: "s", expiry_date: 5 })
     );
 
-    const key = encrypted.key as Record<string, unknown>;
+    const key = encrypted.key;
     expect(isEncryptedCredential(key.access_token as string)).toBe(true);
     expect(symmetricDecrypt(key.access_token as string, ENCRYPTION_KEY)).toBe("ya29.plain");
     expect(symmetricDecrypt(key.refresh_token as string, ENCRYPTION_KEY)).toBe("1//plain");

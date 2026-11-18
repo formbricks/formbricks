@@ -1,33 +1,24 @@
-import { expect } from "@playwright/test";
+import { type Page, expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
+import { clickUntilExpanded } from "./utils/click-until";
 import { createSurveyFromScratch, publishSurvey } from "./utils/helper";
 
 test.describe("Survey Styling", async () => {
   // Shared Helpers
-  const openAccordion = async (page: any, name: string) => {
-    // Find the trigger by text, ensuring we get the visible one (important for nested or reusable components)
-    const accordionHeader = page
-      .locator("div,button")
-      .filter({ hasText: name })
-      .locator("visible=true")
-      .last();
-    // Check if open (aria-expanded or data-state)
-    const expanded = await accordionHeader.getAttribute("aria-expanded");
-    const state = await accordionHeader.getAttribute("data-state");
-    if (expanded === "false" || state === "closed" || (!expanded && !state)) {
-      await accordionHeader.click();
-      await page.waitForTimeout(500); // Animation
-    }
-  };
+  // Opens a styling section by its expanded state (clicked until it says it is open, see `clickUntil`).
+  const openAccordion = (page: Page, name: string) =>
+    clickUntilExpanded(
+      page.locator("[aria-expanded]").filter({ hasText: name }).locator("visible=true").last()
+    );
 
-  const setColor = async (page: any, label: string, hex: string) => {
+  const setColor = async (page: Page, label: string, hex: string) => {
     const labelEl = page.locator("label").filter({ hasText: label }).locator("visible=true").last();
     const container = labelEl.locator("..");
     await container.getByRole("textbox").fill(hex.replace("#", ""));
     await container.getByRole("textbox").blur();
   };
 
-  const setDimension = async (page: any, label: string, value: string) => {
+  const setDimension = async (page: Page, label: string, value: string) => {
     const labelEl = page.locator("label").filter({ hasText: label }).locator("visible=true").last();
     const container = labelEl.locator("..");
     // Try finding number input, fallback to simple fill if it's text

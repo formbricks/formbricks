@@ -71,7 +71,7 @@ export const MOCK_DEFAULT_TEAM_USER = {
  */
 export const MOCK_INVITE: CreateMembershipInvite = {
   organizationId: MOCK_IDS.organizationId,
-  role: "owner" as OrganizationRole,
+  role: "owner",
   teamIds: [MOCK_IDS.teamId],
 };
 

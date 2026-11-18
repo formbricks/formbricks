@@ -464,7 +464,7 @@ describe("POST /api/mcp", () => {
           },
         }),
         duplex: "half",
-      } as ConstructorParameters<typeof NextRequest>[1])
+      })
     );
 
     expect(response.status).toBe(413);

@@ -137,5 +137,5 @@ export const withInlinedEmbeddedFields = <T extends TSurveyWithEmbeddedDataLinks
     ...rest,
     embeddedFields,
     ...toLegacyEmbeddedFields(linkedToDesiredEmbeddedFields(embeddedFields)),
-  } as TInlinedSurvey<T>;
+  };
 };

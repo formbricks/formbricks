@@ -120,8 +120,8 @@ describe("gateSsoProvisioning — bypass branches", () => {
   test("a fresh instance with SETUP_TOKEN configured is not claimable through SSO", async () => {
     constantsOverrides.SETUP_TOKEN = "0123456789abcdef-setup-token";
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
-    vi.mocked(getFirstOrganization).mockResolvedValue(null as never);
-    vi.mocked(resolveInviteMatch).mockResolvedValue("missing" as never);
+    vi.mocked(getFirstOrganization).mockResolvedValue(null);
+    vi.mocked(resolveInviteMatch).mockResolvedValue("missing");
 
     const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" });
 

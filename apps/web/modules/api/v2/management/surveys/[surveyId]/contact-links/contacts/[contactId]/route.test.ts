@@ -38,9 +38,8 @@ const grant = (level: "read" | "write") =>
 describe("GET /management/surveys/{surveyId}/contact-links/contacts/{contactId}", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(authenticatedApiClient).mockImplementation(
-      async ({ handler }) =>
-        handler({ authentication, parsedInput: { params, query: {} }, request } as never) as never
+    vi.mocked(authenticatedApiClient).mockImplementation(async ({ handler }) =>
+      handler({ authentication, parsedInput: { params, query: {} }, request } as never)
     );
     vi.mocked(getWorkspaceId).mockResolvedValue({ ok: true, data: { workspaceId: "workspace-1" } } as never);
     vi.mocked(handleApiError).mockImplementation((_req, error) =>
