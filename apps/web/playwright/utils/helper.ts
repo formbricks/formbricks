@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Locator, Page } from "playwright";
 import { logger } from "@formbricks/logger";
+import { clickUntilVisible } from "@/playwright/utils/click-until";
 import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/utils/mock";
 
 const MOCK_STORAGE_UPLOAD_PATH = "/__playwright__/mock-storage-upload";
@@ -50,28 +51,6 @@ const DEFAULT_MOCK_STORAGE_FILE_FIXTURE: MockStorageFileFixture = {
     `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="#0f172a"/><circle cx="32" cy="32" r="18" fill="#22c55e"/></svg>`,
     "utf8"
   ),
-};
-
-/**
- * Clicks `trigger` until `target` shows. Server-rendered pages paint before they hydrate, and a click that
- * lands first is dropped, so a single click followed by a visibility check can wait on a handler that
- * never ran. Checking `target` first keeps it safe for a toggle. Each click is bounded: one that lands
- * while a dialog from the previous click is still opening would otherwise wait on its overlay forever.
- */
-export const clickUntilVisible = async (trigger: Locator, target: Locator): Promise<void> => {
-  await expect(async () => {
-    if (!(await target.isVisible())) await trigger.click({ timeout: 3000 });
-    await expect(target).toBeVisible({ timeout: 3000 });
-  }).toPass({ timeout: 30_000 });
-};
-
-/** `clickUntilVisible` for a click that navigates: retries until the page is at `url`. */
-export const clickUntilURL = async (trigger: Locator, url: RegExp): Promise<void> => {
-  const page = trigger.page();
-  await expect(async () => {
-    if (!url.test(page.url())) await trigger.click({ timeout: 3000 });
-    await expect(page).toHaveURL(url, { timeout: 3000 });
-  }).toPass({ timeout: 30_000 });
 };
 
 export const waitForSurveyCreateResponse = async (page: Page): Promise<string> => {
@@ -1049,12 +1028,7 @@ export const editorPanel = (page: Page): Locator => page.getByRole("main");
 export const openEmbeddedDataCard = async (page: Page): Promise<void> => {
   const content = editorPanel(page).getByTestId("embedded-data-card-content");
 
-  await expect(async () => {
-    if (!(await content.isVisible())) {
-      await editorPanel(page).getByTestId("embedded-data-card-trigger").click();
-    }
-    await expect(content).toBeVisible({ timeout: 5000 });
-  }).toPass({ timeout: 30000 });
+  await clickUntilVisible(editorPanel(page).getByTestId("embedded-data-card-trigger"), content);
 };
 
 /** One field's row in the card, addressed by the name it renders. */

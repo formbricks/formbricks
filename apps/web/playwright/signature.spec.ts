@@ -14,7 +14,7 @@ import { type TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type UsersFixture } from "./fixtures/users";
 import { test } from "./lib/fixtures";
-import { clickUntilVisible } from "./utils/helper";
+import { clickUntilVisible } from "./utils/click-until";
 
 /**
  * **Signature element, end to end (ENG-6810).**

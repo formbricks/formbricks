@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { type Page, expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
-import { clickUntilVisible } from "./utils/helper";
+import { clickUntilVisible } from "./utils/click-until";
 import { mockUsers } from "./utils/mock";
 
 const { name, email, password } = mockUsers.signup[0];

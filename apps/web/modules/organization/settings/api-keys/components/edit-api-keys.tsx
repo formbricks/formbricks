@@ -42,9 +42,12 @@ const ApiKeyDisplay = ({ apiKey }: Readonly<{ apiKey: string }>) => {
 
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="break-all whitespace-pre-line">{apiKey}</span>
-      {/* `copyApiKeyIcon` is load-bearing: `playwright/lib/utils.ts` waits for and clicks it to read a
-          freshly created key, which eight API specs depend on for their bearer token. */}
+      {/* `api-key-value` and `copyApiKeyIcon` are load-bearing: `playwright/lib/utils.ts` reads the
+          freshly created key from the first and copies it with the second, and eight API specs depend on
+          it for their bearer token. */}
+      <span className="break-all whitespace-pre-line" data-testid="api-key-value">
+        {apiKey}
+      </span>
       <div className="copyApiKeyIcon shrink-0">
         <FilesIcon
           className="size-4 cursor-pointer"

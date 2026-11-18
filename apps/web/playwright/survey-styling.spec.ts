@@ -1,18 +1,15 @@
 import { type Page, expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
+import { clickUntilExpanded } from "./utils/click-until";
 import { createSurveyFromScratch, publishSurvey } from "./utils/helper";
 
 test.describe("Survey Styling", async () => {
   // Shared Helpers
-  // Opens a styling section and waits until it says it is open. Retried, because a click that lands
-  // before the page hydrates is dropped; reading `aria-expanded` first keeps it from closing it again.
-  const openAccordion = async (page: Page, name: string) => {
-    const header = page.locator("[aria-expanded]").filter({ hasText: name }).locator("visible=true").last();
-    await expect(async () => {
-      if ((await header.getAttribute("aria-expanded")) !== "true") await header.click({ timeout: 3000 });
-      await expect(header).toHaveAttribute("aria-expanded", "true", { timeout: 3000 });
-    }).toPass({ timeout: 30_000 });
-  };
+  // Opens a styling section by its expanded state (clicked until it says it is open, see `clickUntil`).
+  const openAccordion = (page: Page, name: string) =>
+    clickUntilExpanded(
+      page.locator("[aria-expanded]").filter({ hasText: name }).locator("visible=true").last()
+    );
 
   const setColor = async (page: Page, label: string, hex: string) => {
     const labelEl = page.locator("label").filter({ hasText: label }).locator("visible=true").last();

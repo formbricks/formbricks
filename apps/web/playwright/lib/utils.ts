@@ -1,6 +1,6 @@
 import { Page, expect } from "@playwright/test";
 import { UsersFixture } from "../fixtures/users";
-import { clickUntilVisible } from "../utils/helper";
+import { clickUntilVisible } from "../utils/click-until";
 
 type WorkspaceSurveyLocation = {
   workspaceId: string;
@@ -141,16 +141,19 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   // The new key is listed only once the server has stored it, so its copy icon is the signal.
   const copyIcon = page.locator(".copyApiKeyIcon").first();
   await expect(copyIcon).toBeVisible({ timeout: 30_000 });
-  // The new key is shown once, in the span beside its copy icon.
-  const apiKey = (await copyIcon.locator("xpath=preceding-sibling::span").innerText()).trim();
-  expect(apiKey).toMatch(/^fbk_/);
+  // The new key is shown once, beside its copy icon. Assertions compare booleans, so a failure never
+  // prints the key.
+  const apiKey = (await page.getByTestId("api-key-value").first().innerText()).trim();
+  expect(apiKey.startsWith("fbk_"), "the new API key is shown").toBe(true);
   await copyIcon.click();
 
   // The copy writes the clipboard asynchronously; the key the specs use is the one the copy affordance
   // delivers, so wait until the clipboard holds exactly the shown key.
   await expect
-    .poll(async () => (await page.evaluate("navigator.clipboard.readText()")) as string)
-    .toBe(apiKey);
+    .poll(async () => (await page.evaluate("navigator.clipboard.readText()")) === apiKey, {
+      message: "the clipboard holds the new API key",
+    })
+    .toBe(true);
 
   return { workspaceId, apiKey };
 }

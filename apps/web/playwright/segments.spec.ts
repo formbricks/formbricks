@@ -1,6 +1,6 @@
 import { expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
-import { clickUntilVisible } from "./utils/helper";
+import { clickUntilVisible } from "./utils/click-until";
 
 // Exercises the interaction-based segment filter (ENG-1275): adding the "Survey interaction"
 // filter, configuring its scope/window, its empty-survey validation, and persisting the segment.

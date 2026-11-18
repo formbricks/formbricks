@@ -2,7 +2,7 @@ import { type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import type { UsersFixture } from "./fixtures/users";
 import { test } from "./lib/fixtures";
-import { clickUntilURL } from "./utils/helper";
+import { clickUntilURL } from "./utils/click-until";
 
 // ENG-1705 regression: /organizations/[organizationId]/settings/** and /account/settings/** are
 // workspace-agnostic routes — no workspaceId in the URL — so the top bar must not render the
