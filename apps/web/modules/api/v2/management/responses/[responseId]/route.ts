@@ -274,7 +274,7 @@ export const PUT = (request: Request, props: { params: Promise<{ responseId: str
       );
 
       if (!response.ok) {
-        return handleApiError(request, response.error as ApiErrorResponseV2, auditLog); // NOSONAR // We need to assert or we get a type error
+        return handleApiError(request, response.error, auditLog); // NOSONAR // We need to assert or we get a type error
       }
 
       // Fetch updated response with relations for pipeline

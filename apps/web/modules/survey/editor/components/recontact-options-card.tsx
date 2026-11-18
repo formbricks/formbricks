@@ -2,7 +2,7 @@
 
 import * as Collapsible from "@radix-ui/react-collapsible";
 import { CheckIcon } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { cn } from "@/lib/cn";
@@ -148,11 +148,12 @@ export const RecontactOptionsCard = ({
     setLocalSurvey(updatedSurvey);
   };
 
-  useEffect(() => {
-    if (localSurvey.type === "link") {
-      setOpen(false);
-    }
-  }, [localSurvey.type]);
+  // Switching to a link survey collapses the card. Adjusted during render.
+  const [seenSurveyType, setSeenSurveyType] = useState(localSurvey.type);
+  if (localSurvey.type !== seenSurveyType) {
+    setSeenSurveyType(localSurvey.type);
+    if (localSurvey.type === "link") setOpen(false);
+  }
 
   if (localSurvey.type === "link") {
     return null; // Hide card completely
@@ -193,7 +194,7 @@ export const RecontactOptionsCard = ({
         <hr className="py-1 text-slate-600" />
         {creativeOpenedMode && (
           <div className="px-3 pt-3">
-            <Alert variant="info" size="small" role="status">
+            <Alert variant="info" size="small" alertRole="status">
               <AlertDescription>{creativeNote[creativeOpenedMode]}</AlertDescription>
             </Alert>
           </div>

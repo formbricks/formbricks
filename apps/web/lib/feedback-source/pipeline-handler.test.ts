@@ -83,7 +83,7 @@ function createFeedbackSource(
     ],
     fieldMappings: [],
     ...overrides,
-  } as TFeedbackSourceWithMappings;
+  };
 }
 
 const oneFeedbackRecord = [

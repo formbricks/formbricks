@@ -12,7 +12,7 @@ import {
   SquareStack,
   UserIcon,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -234,19 +234,18 @@ export const ShareSurveyModal = ({
 
   const [activeId, setActiveId] = useState<ShareViaType | ShareSettingsType>(getDefaultActiveId());
 
-  useEffect(() => {
-    if (open) {
-      setShowView(modalView);
-    }
-  }, [open, modalView]);
+  // Opening the modal (or asking an open one for another view) shows the requested view. Adjusted
+  // during render, so the first frame after opening already shows it.
+  const requestedView = open ? modalView : null;
+  const [appliedRequestedView, setAppliedRequestedView] = useState(requestedView);
+  if (requestedView !== appliedRequestedView) {
+    setAppliedRequestedView(requestedView);
+    if (requestedView) setShowView(requestedView);
+  }
 
-  // Ensure active tab is not disabled - if it is, switch to default
-  useEffect(() => {
-    const activeTab = linkTabs.find((tab) => tab.id === activeId);
-    if (activeTab?.disabled) {
-      setActiveId(getDefaultActiveId());
-    }
-  }, [activeId, linkTabs, getDefaultActiveId]);
+  // Never show a disabled tab: fall back to the default while the chosen one is disabled.
+  const isActiveTabDisabled = linkTabs.find((tab) => tab.id === activeId)?.disabled ?? false;
+  const visibleActiveId = isActiveTabDisabled ? getDefaultActiveId() : activeId;
 
   const handleOpenChange = (open: boolean) => {
     setOpen(open);
@@ -283,7 +282,7 @@ export const ShareSurveyModal = ({
     }
 
     if (survey.type === "link") {
-      return <ShareView tabs={linkTabs} activeId={activeId} setActiveId={setActiveId} />;
+      return <ShareView tabs={linkTabs} activeId={visibleActiveId} setActiveId={setActiveId} />;
     }
 
     return (

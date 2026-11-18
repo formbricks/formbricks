@@ -53,16 +53,15 @@ const exportAs = (
     auditLog,
   });
 
-const auditLogStub = (): TV3AuditLog =>
-  ({
-    action: "exported",
-    targetType: "survey",
-    userId: "unknown",
-    targetId: "unknown",
-    organizationId: "unknown",
-    status: "failure",
-    userType: "user",
-  }) as TV3AuditLog;
+const auditLogStub = (): TV3AuditLog => ({
+  action: "exported",
+  targetType: "survey",
+  userId: "unknown",
+  targetId: "unknown",
+  organizationId: "unknown",
+  status: "failure",
+  userType: "user",
+});
 
 beforeAll(async () => {
   fixture = await seedDashboardsFixture();

@@ -96,7 +96,7 @@ export function EditMembershipRole({
   };
 
   const handleRoleChange = (role: TOrganizationRole) => {
-    handleMemberRoleUpdate(role);
+    void handleMemberRoleUpdate(role);
   };
 
   const getMembershipRoles = () =>

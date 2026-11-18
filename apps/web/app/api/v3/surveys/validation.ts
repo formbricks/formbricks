@@ -217,7 +217,7 @@ export type TV3SurveyPrecedencePolicy =
  * blocks that already loop is still new. Comparing flagged block ids gets both wrong.
  */
 function getCyclicFlowEdges(documentBlocks: TV3SurveyDocument["blocks"]): Map<string, number> {
-  const blocks = documentBlocks as TSurveyBlock[];
+  const blocks = documentBlocks;
   const keys = blocks.map((block, index) => block.id ?? `#${String(index)}`);
   const indexByKey = new Map(keys.map((key, index) => [key, index]));
 

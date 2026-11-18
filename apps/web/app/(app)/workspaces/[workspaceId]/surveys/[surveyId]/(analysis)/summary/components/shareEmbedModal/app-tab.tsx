@@ -151,7 +151,10 @@ export const AppTab = () => {
   return (
     <div className="flex flex-col justify-between gap-y-6 pb-4">
       <div className="flex flex-col gap-y-6">
-        <Alert variant={workspace.appSetupCompleted ? "success" : "warning"} size="default" role="status">
+        <Alert
+          variant={workspace.appSetupCompleted ? "success" : "warning"}
+          size="default"
+          alertRole="status">
           <AlertTitle>
             {workspace.appSetupCompleted
               ? t("workspace.surveys.summary.in_app.connection_title")

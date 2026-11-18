@@ -41,21 +41,20 @@ const instance = "/api/v3/charts/duplicate";
 const session = { user: { id: "user_1" } } as unknown as TV3Authentication;
 const access = { workspaceId, organizationId };
 
-const rowOf = (overrides: Partial<TChartResourceRow> = {}): TChartResourceRow =>
-  ({
-    id: sourceId,
-    workspaceId,
-    feedbackDirectoryId: datasetId,
-    name: "Weekly NPS",
-    type: "bar",
-    query: { measures: ["FeedbackRecords.npsScore"] },
-    config: {},
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-01-01T00:00:00.000Z"),
-    creator: null,
-    widgets: [],
-    ...overrides,
-  }) as TChartResourceRow;
+const rowOf = (overrides: Partial<TChartResourceRow> = {}): TChartResourceRow => ({
+  id: sourceId,
+  workspaceId,
+  feedbackDirectoryId: datasetId,
+  name: "Weekly NPS",
+  type: "bar",
+  query: { measures: ["FeedbackRecords.npsScore"] },
+  config: {},
+  createdAt: new Date("2026-01-01T00:00:00.000Z"),
+  updatedAt: new Date("2026-01-01T00:00:00.000Z"),
+  creator: null,
+  widgets: [],
+  ...overrides,
+});
 
 const nameTaken = () =>
   new Prisma.PrismaClientKnownRequestError("unique", { code: "P2002", clientVersion: "7" });
@@ -63,7 +62,7 @@ const nameTaken = () =>
 const duplicate = (body: Record<string, unknown> = {}, auditLog?: TV3AuditLog) =>
   duplicateV3Chart({
     chartId: sourceId,
-    body: body as never,
+    body: body,
     authentication: session,
     requestId,
     instance,

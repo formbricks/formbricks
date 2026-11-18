@@ -39,7 +39,7 @@ const post = (body: unknown, headers: Record<string, string> = {}) =>
       body: typeof body === "string" ? body : JSON.stringify(body),
       headers: { "Content-Type": "application/json", "Idempotency-Key": '"key-1"', ...headers },
     }),
-    {} as never
+    {}
   );
 
 /** A body of exactly `bytes` bytes, padded inside the survey so it stays valid JSON. */

@@ -316,7 +316,7 @@ services:
         condition: service_healthy
 
   spicedb-migrate:
-    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.57.0}
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.57.1}
     restart: "no"
     command: datastore migrate head
     environment:
@@ -327,7 +327,7 @@ services:
         condition: service_completed_successfully
 
   spicedb:
-    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.57.0}
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.57.1}
     restart: always
     command: serve
     mem_limit: 512m

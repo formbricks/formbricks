@@ -471,7 +471,7 @@ describe("resendVerificationEmailAction", () => {
     // proof for an arbitrary account by asking for a resend.
     describe("Sign-up intent cookie refresh (ENG-2562)", () => {
       beforeEach(() => {
-        vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
+        vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
         vi.mocked(getUserByEmail).mockResolvedValue(mockUser as never);
         cookieMocks.get.mockReturnValue({ value: "existing-intent-cookie" });
       });
@@ -496,7 +496,7 @@ describe("resendVerificationEmailAction", () => {
       test.each([["absent"], ["invalid"], ["other_user"]])(
         "does not mint a cookie when the browser's proof classifies as %s",
         async (classification) => {
-          signupIntentMocks.classifySignupIntent.mockReturnValue(classification as never);
+          signupIntentMocks.classifySignupIntent.mockReturnValue(classification);
 
           await resendVerificationEmailAction({ ctx: mockCtx, parsedInput: validInput } as never);
 

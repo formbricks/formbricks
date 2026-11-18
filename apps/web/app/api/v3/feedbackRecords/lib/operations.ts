@@ -30,7 +30,6 @@ import type {
   FeedbackRecordUpdateParams,
   SemanticSearchResultItem,
   SimilarRecordsParams,
-  SimilarRecordsResultItem,
 } from "@/modules/hub/types";
 import {
   type TResolvedFeedbackTenant,
@@ -284,7 +283,7 @@ function parseQueryInput<T>(
 /** Envelope for a page of scored matches: the rows, the page cursor, the threshold, and the dataset. */
 const similarityMatchesResponse = (
   page: {
-    data: (SemanticSearchResultItem | SimilarRecordsResultItem)[];
+    data: SemanticSearchResultItem[];
     limit: number;
     next_cursor?: string;
   },

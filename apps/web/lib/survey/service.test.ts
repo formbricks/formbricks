@@ -517,6 +517,7 @@ describe("Tests for updateSurvey", () => {
         elements: Record<string, unknown>[];
       }[];
       const [firstElement, ...otherElements] = firstBlock.elements;
+      // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
       prisma.survey.findUnique.mockResolvedValueOnce({
         ...mockSurveyOutput,
         blocks: [
@@ -917,6 +918,7 @@ describe("Tests for updateSurvey", () => {
 
       await expect(
         updateSurveyInternal(
+          // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
           {
             ...updateSurveyInput,
             status: "draft",
@@ -1079,6 +1081,7 @@ describe("Tests for updateSurvey", () => {
 
       await expect(
         updateSurveyInternal(
+          // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
           {
             ...updateSurveyInput,
             status: "draft",
@@ -1112,6 +1115,7 @@ describe("Tests for updateSurvey", () => {
 
       await expect(
         updateSurveyInternal(
+          // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
           {
             ...updateSurveyInput,
             status: "draft",
@@ -1280,10 +1284,7 @@ describe("Tests for updateSurvey", () => {
           blocks: persistedBlocks,
         });
 
-        await updateSurveyInternal(
-          { ...updateSurveyInput, status: "draft", blocks: [] } as Parameters<typeof updateSurveyInternal>[0],
-          true
-        );
+        await updateSurveyInternal({ ...updateSurveyInput, status: "draft", blocks: [] }, true);
 
         expect(scheduleFeedbackSourceReconciliation).toHaveBeenCalledWith(
           updateSurveyInput.id,
@@ -1518,6 +1519,7 @@ describe("Tests for updateSurvey", () => {
   test("a legacy write whose logic sets a variable the survey doesn't have is refused, and not written", async () => {
     prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
     const [firstBlock, ...otherBlocks] = updateSurveyInput.blocks;
+    // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
     const dangling = {
       ...updateSurveyInput,
       blocks: [
@@ -1983,6 +1985,7 @@ describe("Tests for createSurvey", () => {
 
       await createSurvey(
         mockWorkspaceId,
+        // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
         {
           ...mockCreateSurveyInput,
           questions: undefined,
@@ -3178,6 +3181,7 @@ describe("updateSurveyDraftAction", () => {
         prisma.survey.findUnique.mockResolvedValue({ ...mockSurveyOutput, status });
 
         await expect(
+          // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
           updateSurveyInternal({ ...updateSurveyInput, status: "draft" } as TSurvey, true)
         ).rejects.toThrow(OperationNotAllowedError);
         expect(prisma.survey.update).not.toHaveBeenCalled();
@@ -3192,6 +3196,7 @@ describe("updateSurveyDraftAction", () => {
       async (status) => {
         prisma.survey.findUnique.mockResolvedValue(mockDraftSurveyOutput);
 
+        // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
         await expect(updateSurveyInternal({ ...updateSurveyInput, status } as TSurvey, true)).rejects.toThrow(
           OperationNotAllowedError
         );

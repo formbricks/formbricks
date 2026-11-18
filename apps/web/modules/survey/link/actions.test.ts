@@ -141,7 +141,7 @@ beforeEach(() => {
 });
 
 const answeredWith = (finished: boolean) =>
-  vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => ({ id: "r1", finished }) as never);
+  vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => ({ id: "r1", finished }));
 
 describe("validateSurveyPinAction", () => {
   test.each(notOpen)("%s is not found and its definition is not returned", async (_label, state) => {

@@ -867,7 +867,7 @@ export const processResponsePipelineJob: JobHandler<TResponsePipelineJobData> = 
     const [organization, survey, webhooks] = await Promise.all([
       getOrganizationForPipeline(data.workspaceId),
       getSurveyForPipeline(data.surveyId),
-      getWebhooksForPipeline(data.workspaceId, data.event as PipelineTriggers, data.surveyId),
+      getWebhooksForPipeline(data.workspaceId, data.event, data.surveyId),
     ]);
 
     if (!survey) {

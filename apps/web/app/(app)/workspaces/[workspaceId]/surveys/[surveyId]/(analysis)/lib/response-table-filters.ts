@@ -310,11 +310,9 @@ const optionEntries = (option: ElementOptions["option"][number], context: TBuild
   if (!id) return [];
   const label = String(option.label ?? id);
   if (option.type === OptionsType.ELEMENTS) {
-    return option.elementType
-      ? elementEntries(id, label, option.elementType as TSurveyElementTypeEnum, context)
-      : [];
+    return option.elementType ? elementEntries(id, label, option.elementType, context) : [];
   }
-  return typedFieldEntries(id, label, option.type as OptionsType, context);
+  return typedFieldEntries(id, label, option.type, context);
 };
 
 /** The two values a shown / not shown rule takes; `is` is its only operator (ENG-6951). */

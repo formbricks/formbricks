@@ -56,7 +56,7 @@ export const RetentionHealthAlerts = ({
       {data.issues.map((issue) => {
         const { title, description } = describe(issue);
         return (
-          <Alert key={issue.code} variant="warning" role="status">
+          <Alert key={issue.code} variant="warning" alertRole="status">
             <AlertTitle>{title}</AlertTitle>
             <AlertDescription>{description}</AlertDescription>
           </Alert>

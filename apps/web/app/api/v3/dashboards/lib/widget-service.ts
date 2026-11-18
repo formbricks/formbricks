@@ -337,7 +337,7 @@ export const replaceDashboardRow = ({
         where: { id: dashboardId },
         data: {
           ...(name === undefined ? {} : { name }),
-          ...(filters === undefined ? {} : { filters: filters as Prisma.InputJsonValue }),
+          ...(filters === undefined ? {} : { filters: filters }),
           updatedAt: nextDashboardUpdatedAt(locked),
         },
         select: selectDashboardResource,

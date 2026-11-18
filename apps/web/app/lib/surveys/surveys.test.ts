@@ -25,8 +25,10 @@ import {
 const t = ((key: string) => key) as TFunction;
 
 /** A survey as readers receive it: EmbeddedData rows inlined from the legacy columns (ENG-2412). */
-const asRead = (survey: TSurvey): TSurvey =>
-  ({ ...survey, embeddedFields: embeddedFieldsFromLegacyInput(survey) }) as TSurvey;
+const asRead = (survey: TSurvey): TSurvey => ({
+  ...survey,
+  embeddedFields: embeddedFieldsFromLegacyInput(survey),
+});
 
 const genOptions = (
   survey: TSurvey,
@@ -1299,7 +1301,7 @@ describe("surveys", () => {
       // with the legacy-derived rows — and those are all string-typed, so the boolean branch under
       // test would never run.
       const { elementFilterOptions } = generateElementAndFilterOptions({
-        survey: typedSurvey as TSurvey,
+        survey: typedSurvey,
         environmentTags: undefined,
         attributes: {},
         reservedValues: {},

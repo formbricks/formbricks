@@ -70,7 +70,7 @@ const run = {
 };
 
 const get = (query: string) =>
-  GET(new NextRequest(`http://localhost/api/internal/retention-runs/export?${query}`), {} as never);
+  GET(new NextRequest(`http://localhost/api/internal/retention-runs/export?${query}`), {});
 
 describe("GET /api/internal/retention-runs/export", () => {
   beforeEach(() => {

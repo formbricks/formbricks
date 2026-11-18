@@ -1,7 +1,7 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { isSafeIdentifier } from "@formbricks/types/safe-identifier";
@@ -24,7 +24,6 @@ export const UploadContactsAttributes = ({
   const { t } = useTranslation();
   const [searchValue, setSearchValue] = useState("");
   const [open, setOpen] = useState(false);
-  const [isNewTag, setIsNewTag] = useState(false);
 
   // Initialize tags from contact attribute keys
   const [keys, setKeys] = useState(
@@ -42,52 +41,27 @@ export const UploadContactsAttributes = ({
     }, {});
   }, [keys]);
 
-  // State for the currently selected tag
-  const [currentKey, setCurrentKey] = useState<{ label: string; value: string } | null>(() => {
-    const mappedValue = attributeMap[csvColumn];
-    if (!mappedValue) return null;
-
-    // Find the matching tag to get its label
-    const matchingTag = keys.find((tag) => tag.value === mappedValue);
-    if (matchingTag) {
-      return matchingTag;
-    }
-
-    // If no matching tag found but we have a mapped value, create a tag for it
-    return {
-      label: attributeKeyMap[mappedValue] || mappedValue,
-      value: mappedValue,
-    };
-  });
-
-  // Update currentTag when attributeMap changes
-  useEffect(() => {
-    const mappedValue = attributeMap[csvColumn];
-    if (!mappedValue) {
-      setCurrentKey(null);
-      return;
-    }
-
-    // Find the matching tag to get its label
-    const matchingTag = keys.find((tag) => tag.value === mappedValue);
-    if (matchingTag) {
-      setCurrentKey(matchingTag);
-    } else {
-      // If no matching tag found, create one with the mapped value
-      setCurrentKey({
+  // The selected key follows the attribute map: the one this column maps to, or a key made from the
+  // mapped value when it matches none of the known ones.
+  const mappedValue = attributeMap[csvColumn];
+  const currentKey: { label: string; value: string } | null = mappedValue
+    ? (keys.find((tag) => tag.value === mappedValue) ?? {
         label: attributeKeyMap[mappedValue] || mappedValue,
         value: mappedValue,
-      });
-    }
-  }, [attributeMap, csvColumn, attributeKeyMap, keys]);
+      })
+    : null;
+
+  // Only a key that does not exist yet and is a valid safe identifier (can actually be created) is new.
+  const isNewTag =
+    currentKey !== null &&
+    contactAttributeKeys.findIndex((attrKey) => attrKey.id === currentKey.value) === -1 &&
+    !!mappedValue &&
+    isSafeIdentifier(mappedValue);
 
   const handleAddAttribute = (value: string) => {
     // Find the tag that matches the selected value
     const selectedTag = keys.find((tag) => tag.value === value);
     if (!selectedTag) return;
-
-    // Update the currentTag
-    setCurrentKey(selectedTag);
 
     // Update the attributeMap
     setAttributeMap((prev) => ({
@@ -106,9 +80,6 @@ export const UploadContactsAttributes = ({
     // Add the new tag to the tags list
     setKeys((prev) => [...prev, newTag]);
 
-    // Set the new tag as current
-    setCurrentKey(newTag);
-
     // Update the attribute map with the ID
     setAttributeMap((prev) => ({
       ...prev,
@@ -119,16 +90,6 @@ export const UploadContactsAttributes = ({
     setOpen(false);
     setSearchValue("");
   };
-
-  useEffect(() => {
-    if (currentKey) {
-      const _isNewTag = contactAttributeKeys.findIndex((attrKey) => attrKey.id === currentKey.value) === -1;
-      // Only mark as new tag if it's a valid safe identifier (can actually be created)
-      const mappedValue = attributeMap[csvColumn];
-      const isValidNewKey = _isNewTag && !!mappedValue && isSafeIdentifier(mappedValue);
-      setIsNewTag(isValidNewKey);
-    }
-  }, [contactAttributeKeys, currentKey, attributeMap, csvColumn]);
 
   return (
     <>

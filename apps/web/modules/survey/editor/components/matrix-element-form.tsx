@@ -186,7 +186,7 @@ export const MatrixElementForm = ({
         updateElement={updateElement}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
-        autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
+        focusOnMount={!element.headline?.default || element.headline.default.trim() === ""}
         isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       <div ref={parent}>
@@ -203,7 +203,7 @@ export const MatrixElementForm = ({
                 updateElement={updateElement}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
-                autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
+                focusOnMount={!element.subheader?.default || element.subheader.default.trim() === ""}
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>

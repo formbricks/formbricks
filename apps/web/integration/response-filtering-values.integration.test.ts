@@ -98,8 +98,7 @@ const readEveryResponse = async (survey: TSurvey) => {
       contactAttributes: true,
     },
   });
-  const rows = responses as unknown as (TEmbeddedValueResponse &
-    Parameters<typeof getResponseMeta>[0][number])[];
+  const rows = responses as unknown as TEmbeddedValueResponse[];
   return {
     contactAttributes: getResponseContactAttributes(rows),
     meta: getResponseMeta(rows),

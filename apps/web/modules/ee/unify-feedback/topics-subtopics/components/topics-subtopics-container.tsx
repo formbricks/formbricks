@@ -63,7 +63,7 @@ export const TopicsSubtopicsContainer = ({
 
   const directoryIds = useMemo(() => Object.keys(directoryMap), [directoryMap]);
   const [directoryId, setDirectoryId] = useState(directoryIds[0] ?? "");
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [chosenNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"view" | "edit">("view");
   const [nodeToRemove, setNodeToRemove] = useState<TaxonomyNode | null>(null);
   const [isRemoveConfirmOpen, setIsRemoveConfirmOpen] = useState(false);
@@ -102,17 +102,12 @@ export const TopicsSubtopicsContainer = ({
   const runQuery = useTaxonomyRun({ workspaceId, directoryId, runId: runningRunId });
 
   // Default-select the first top-level topic when a tree loads (or the previous selection vanished,
-  // e.g. after a regenerate produced fresh node ids).
-  useEffect(() => {
-    const root = activeTree?.root;
-    if (!root) {
-      return;
-    }
-    if (selectedNodeId && findNodeById(root, selectedNodeId)) {
-      return;
-    }
-    setSelectedNodeId(firstTopLevelNodeId(root));
-  }, [activeTree, selectedNodeId]);
+  // e.g. after a regenerate produced fresh node ids). Derived during render.
+  const activeRoot = activeTree?.root;
+  const selectedNodeId =
+    activeRoot && !(chosenNodeId && findNodeById(activeRoot, chosenNodeId))
+      ? firstTopLevelNodeId(activeRoot)
+      : chosenNodeId;
 
   const selectedNode = useMemo(
     () => findNodeById(activeTree?.root, selectedNodeId),

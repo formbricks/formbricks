@@ -113,7 +113,7 @@ describe("getEmbeddedDataWorkspaceId", () => {
   });
 
   test("answers null when no row has the id", async () => {
-    vi.mocked(prisma.embeddedData.findUnique).mockResolvedValue(null as never);
+    vi.mocked(prisma.embeddedData.findUnique).mockResolvedValue(null);
 
     await expect(getEmbeddedDataWorkspaceId(fieldId)).resolves.toBeNull();
   });
@@ -121,7 +121,7 @@ describe("getEmbeddedDataWorkspaceId", () => {
 
 describe("createSharedEmbeddedData", () => {
   test("stores a field with no owning survey", async () => {
-    vi.mocked(prisma.embeddedData.create).mockResolvedValue(sharedRow as never);
+    vi.mocked(prisma.embeddedData.create).mockResolvedValue(sharedRow);
 
     const field = await createSharedEmbeddedData(workspaceId, createInput);
 
@@ -191,8 +191,8 @@ describe("createSharedEmbeddedData", () => {
 
 describe("updateSharedEmbeddedData", () => {
   test("writes the editable columns", async () => {
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
-    vi.mocked(prisma.embeddedData.update).mockResolvedValue({ ...sharedRow, name: "Tier" } as never);
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow);
+    vi.mocked(prisma.embeddedData.update).mockResolvedValue({ ...sharedRow, name: "Tier" });
 
     const field = await updateSharedEmbeddedData(
       fieldId,
@@ -217,7 +217,7 @@ describe("updateSharedEmbeddedData", () => {
   });
 
   test("re-checks the merged row, so a patch cannot reach a state a create would refuse", async () => {
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow);
 
     // The stored field is a string; the patch retypes it to number and leaves a string default behind.
     await expect(
@@ -232,7 +232,7 @@ describe("updateSharedEmbeddedData", () => {
   });
 
   test("refuses a data-type change once a linked survey has a response, naming the surveys", async () => {
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow);
     vi.mocked(prisma.surveyEmbeddedData.findMany)
       .mockResolvedValueOnce([{ surveyId }] as never)
       .mockResolvedValueOnce([usageRow] as never);
@@ -259,7 +259,7 @@ describe("updateSharedEmbeddedData", () => {
   });
 
   test("allows the same data-type change once the caller has acknowledged the responses", async () => {
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow);
     vi.mocked(prisma.embeddedData.update).mockResolvedValue({ ...sharedRow, dataType: "number" } as never);
 
     const field = await updateSharedEmbeddedData(
@@ -275,7 +275,7 @@ describe("updateSharedEmbeddedData", () => {
   });
 
   test("allows a data-type change while no linked survey holds a response", async () => {
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow);
     vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([{ surveyId }] as never);
     vi.mocked(prisma.response.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.embeddedData.update).mockResolvedValue({ ...sharedRow, dataType: "number" } as never);
@@ -286,8 +286,8 @@ describe("updateSharedEmbeddedData", () => {
   });
 
   test("does not run the response guard when the patch re-declares the current data type", async () => {
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
-    vi.mocked(prisma.embeddedData.update).mockResolvedValue(sharedRow as never);
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow);
+    vi.mocked(prisma.embeddedData.update).mockResolvedValue(sharedRow);
 
     await updateSharedEmbeddedData(
       fieldId,
@@ -305,7 +305,7 @@ describe("updateSharedEmbeddedData", () => {
 
 describe("deleteSharedEmbeddedData", () => {
   test("removes a field nothing links", async () => {
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow);
 
     const field = await deleteSharedEmbeddedData(fieldId, workspaceId, resolveVisibleSurveyWhere);
 
@@ -317,7 +317,7 @@ describe("deleteSharedEmbeddedData", () => {
   });
 
   test("refuses while a survey links it, and says which", async () => {
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow);
     vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([usageRow] as never);
     vi.mocked(prisma.surveyEmbeddedData.count).mockResolvedValue(1);
 
@@ -335,7 +335,7 @@ describe("deleteSharedEmbeddedData", () => {
   });
 
   test("refuses while only surveys hidden from the caller link it, without naming them", async () => {
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow as never);
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(sharedRow);
     vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
     vi.mocked(prisma.surveyEmbeddedData.count).mockResolvedValue(2);
 
@@ -370,8 +370,8 @@ describe("getEmbeddedDataUsage", () => {
 
 describe("promoteEmbeddedDataToShared", () => {
   test("sets the key and clears the owning survey in one update, touching nothing else", async () => {
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(localRow as never);
-    vi.mocked(prisma.embeddedData.update).mockResolvedValue(sharedRow as never);
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(localRow);
+    vi.mocked(prisma.embeddedData.update).mockResolvedValue(sharedRow);
 
     const field = await promoteEmbeddedDataToShared(fieldId, workspaceId, { key: "plan_tier" });
 
@@ -387,7 +387,7 @@ describe("promoteEmbeddedDataToShared", () => {
   });
 
   test("answers a row promoted out from under it the same way it answers a missing one", async () => {
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(localRow as never);
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(localRow);
     vi.mocked(prisma.embeddedData.update).mockRejectedValue(
       Object.assign(new Error("Record to update not found"), { code: PrismaErrorType.RecordNotFound })
     );
@@ -407,7 +407,7 @@ describe("promoteEmbeddedDataToShared", () => {
   });
 
   test("refuses a reserved key before touching the row", async () => {
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(localRow as never);
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(localRow);
 
     await expect(promoteEmbeddedDataToShared(fieldId, workspaceId, { key: "lang" })).rejects.toThrow(
       "Key is reserved"
@@ -442,7 +442,7 @@ describe("promoteEmbeddedDataToShared", () => {
     });
 
     test("promotes it under any other name", async () => {
-      vi.mocked(prisma.embeddedData.update).mockResolvedValue(sharedRow as never);
+      vi.mocked(prisma.embeddedData.update).mockResolvedValue(sharedRow);
 
       await expect(promoteEmbeddedDataToShared(fieldId, workspaceId, { key: "plan_tier" })).resolves.toEqual(
         sharedRow
@@ -479,7 +479,7 @@ describe("promoteEmbeddedDataToShared", () => {
     );
 
     test("promotes it under a key nothing in the survey uses", async () => {
-      vi.mocked(prisma.embeddedData.update).mockResolvedValue(sharedRow as never);
+      vi.mocked(prisma.embeddedData.update).mockResolvedValue(sharedRow);
 
       await expect(promoteEmbeddedDataToShared(fieldId, workspaceId, { key: "score" })).resolves.toEqual(
         sharedRow
@@ -489,7 +489,7 @@ describe("promoteEmbeddedDataToShared", () => {
 
   test("answers a taken key with the id of the row already holding it", async () => {
     const existingSharedId = "clee1234567890123456789012";
-    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(localRow as never);
+    vi.mocked(prisma.embeddedData.findFirst).mockResolvedValue(localRow);
     vi.mocked(prisma.embeddedData.update).mockRejectedValue(uniqueViolation());
     vi.mocked(prisma.embeddedData.findUnique).mockResolvedValue({ id: existingSharedId } as never);
 

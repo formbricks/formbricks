@@ -141,7 +141,7 @@ export const EmbeddedDataCardRow = ({
             that component carries `truncate`, which forces each sentence onto one line and clips it
             — and these sentences are the whole point of the row. */}
         {warnings.length > 0 && (
-          <Alert variant="warning" size="small" role="status" data-testid="embedded-field-warning">
+          <Alert variant="warning" size="small" alertRole="status" data-testid="embedded-field-warning">
             <div className="flex flex-col gap-0.5">
               {warnings.map((warning) => (
                 <span key={warning}>{describeWarning(warning)}</span>

@@ -1,4 +1,4 @@
-import { base, compose, jsPlugins, reactCompilerRulesOptOut, reactSettings } from "./base.mjs";
+import { base, compose, jsPlugins, reactSettings } from "./base.mjs";
 import { typeCheckedBaseline } from "./library.mjs";
 import { jsxA11yRecommended, reactHooksRecommended, reactJsxRuntime, reactRecommended } from "./presets.mjs";
 import { a11yParity, sonarParityTyped } from "./sonar-parity.mjs";
@@ -28,7 +28,6 @@ export const react = compose(
     },
   },
   a11yParity(),
-  reactCompilerRulesOptOut,
   sonarParityTyped()
 );
 
