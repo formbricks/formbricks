@@ -324,6 +324,9 @@ describe("failInterruptedTestRuns", () => {
     for (const [args] of runUpdateMany.mock.calls) {
       expect(args.where.workspaceId).toBe(`ws_${args.where.id as string}`);
     }
+    for (const [args] of logUpdateMany.mock.calls) {
+      expect(args.where.run).toEqual({ workspaceId: `ws_${args.where.runId as string}` });
+    }
   });
 
   test("leaves a Test run younger than 10 minutes, a finished one, and every real run untouched", async () => {

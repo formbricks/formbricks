@@ -266,7 +266,7 @@ export const failInterruptedTestRuns = async ({
         if (result.count === 0) return 0;
         // A Test run's effects are fakes, so a step left `running` sent nothing.
         await tx.workflowRunLog.updateMany({
-          where: { runId: run.id, status: "running" },
+          where: { runId: run.id, run: { workspaceId: run.workspaceId }, status: "running" },
           data: { status: "skipped", error: INTERRUPTED_TEST_RUN_ERROR, finishedAt: now },
         });
         return result.count;
