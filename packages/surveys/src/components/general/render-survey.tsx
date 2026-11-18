@@ -12,24 +12,15 @@ export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { onClose, onLanguageChange } = props;
   const [activeLanguageCode, setActiveLanguageCode] = useState(props.languageCode);
-  const isRTL = isRTLLanguage(props.survey, props.languageCode);
-  const [dir, setDir] = useState<"ltr" | "rtl" | "auto">(isRTL ? "rtl" : "ltr");
 
-  // Direction is recalculated from the ACTIVE language, the same input the lang attribute below
-  // resolves from, so the two cannot disagree. Keying this on props.languageCode instead would miss
-  // every change that does not come from the host: a language switch, or a fallback when the active
-  // language is no longer configured. That combination is what produced conflicting attributes —
-  // lang="en-US" next to dir="rtl" — on a survey whose selected language had been removed.
-  //
-  // The survey is a real dependency, not noise: isRTLLanguage reads its language list, and for a
-  // survey with none configured it sniffs the direction from the content itself. The lang attribute
-  // below is resolved during render and so already tracks the survey — leaving it out here is what
-  // would let the two drift apart. Re-running on an unrelated survey edit is harmless; setDir with
-  // an unchanged value is a no-op.
-  useEffect(() => {
-    const isRTL = isRTLLanguage(props.survey, activeLanguageCode);
-    setDir(isRTL ? "rtl" : "ltr");
-  }, [activeLanguageCode, props.survey]);
+  // Direction is derived during render from the ACTIVE language and the survey, the same inputs the
+  // lang attribute below resolves from, so the two cannot disagree. Keying it on props.languageCode
+  // instead would miss every change that does not come from the host: a language switch, or a
+  // fallback when the active language is no longer configured. That combination is what produced
+  // conflicting attributes — lang="en-US" next to dir="rtl" — on a survey whose selected language
+  // had been removed. isRTLLanguage reads the survey's language list, and for a survey with none
+  // configured it sniffs the direction from the content itself.
+  const dir = isRTLLanguage(props.survey, activeLanguageCode) ? "rtl" : "ltr";
 
   // Survey declares its own language on the #fbjs root (WCAG 3.1.1). This is the only place that
   // covers embedded and app surveys: a link survey's host also sets <html lang>, but the JS widget
@@ -128,7 +119,9 @@ export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
           }
         }}
         dir={dir}
-        setDir={setDir}
+        // The language switch reports through onLanguageChange, which moves `dir` above; a host's
+        // own setDir is still not forwarded.
+        setDir={undefined}
       />
     </SurveyContainer>
   );

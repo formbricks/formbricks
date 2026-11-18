@@ -118,7 +118,12 @@ export const CreateWorkspaceModal = ({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent unconstrained={true}>
+      <DialogContent
+        unconstrained={true}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          form.setFocus("name");
+        }}>
         <DialogHeader>
           <DialogTitle>{t("common.create_workspace")}</DialogTitle>
           <DialogDescription>{t("common.workspace_creation_description")}</DialogDescription>
@@ -134,7 +139,7 @@ export const CreateWorkspaceModal = ({
                   <FormItem>
                     <FormLabel>{t("common.workspace_name")}</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder={t("common.workspace_name_placeholder")} autoFocus />
+                      <Input {...field} placeholder={t("common.workspace_name_placeholder")} />
                     </FormControl>
                     {error?.message && <FormError className="text-left">{error.message}</FormError>}
                   </FormItem>

@@ -137,6 +137,36 @@ export async function createRedisClientFromEnv(): Promise<Result<RedisClient, Ca
   }
 }
 
+/** Opens a fresh Redis client and wraps it in the shared cache service. */
+async function initializeCacheService(): Promise<Result<CacheService, CacheError>> {
+  const clientResult = await createRedisClientFromEnv();
+  if (!clientResult.ok) {
+    // Configuration failures have no client error event to open the circuit.
+    if (clientResult.error.code === ErrorCode.RedisConfigurationError) recordCacheFailure();
+    logger.error({ error: clientResult.error }, "Redis client creation failed");
+    return err({ code: clientResult.error.code });
+  }
+
+  const client = clientResult.data;
+  if (globalForCache.formbricksCacheClient !== client || !client.isReady) {
+    discardClient(client);
+    return err({ code: ErrorCode.RedisConnectionError });
+  }
+  logger.debug("Redis connection established");
+  const svc = new CacheService(client, () => discardClient(client));
+  singleton = svc;
+  globalForCache.formbricksCache = svc;
+  recordCacheSuccess();
+  logger.debug("Cache service created");
+  return ok(svc);
+}
+
+/** Whether a cache service's Redis connection is ready to take commands. */
+const isServiceReady = (svc: CacheService): boolean => {
+  const rc = svc.getRedisClient();
+  return Boolean(rc?.isReady && rc.isOpen);
+};
+
 /**
  * Returns existing instance immediately if available
  * Creates a cache service instance instead if not available
@@ -148,18 +178,12 @@ export async function getCacheService(): Promise<Result<CacheService, CacheError
   }
 
   // Return existing instance immediately
-  if (singleton) {
-    const rc = singleton.getRedisClient();
-    if (rc?.isReady && rc.isOpen) return ok(singleton);
-  }
+  if (singleton && isServiceReady(singleton)) return ok(singleton);
 
   // Return existing instance from globalForCache if available
-  if (globalForCache.formbricksCache) {
-    const rc = globalForCache.formbricksCache.getRedisClient();
-    if (rc?.isReady && rc.isOpen) {
-      singleton = globalForCache.formbricksCache;
-      return ok(globalForCache.formbricksCache);
-    }
+  if (globalForCache.formbricksCache && isServiceReady(globalForCache.formbricksCache)) {
+    singleton = globalForCache.formbricksCache;
+    return ok(globalForCache.formbricksCache);
   }
 
   // A formerly ready connection went away without an error event. Discard it
@@ -182,28 +206,7 @@ export async function getCacheService(): Promise<Result<CacheService, CacheError
     return err({ code: ErrorCode.RedisConnectionError });
   }
 
-  const initializing = (async (): Promise<Result<CacheService, CacheError>> => {
-    const clientResult = await createRedisClientFromEnv();
-    if (!clientResult.ok) {
-      // Configuration failures have no client error event to open the circuit.
-      if (clientResult.error.code === ErrorCode.RedisConfigurationError) recordCacheFailure();
-      logger.error({ error: clientResult.error }, "Redis client creation failed");
-      return err({ code: clientResult.error.code });
-    }
-
-    const client = clientResult.data;
-    if (globalForCache.formbricksCacheClient !== client || !client.isReady) {
-      discardClient(client);
-      return err({ code: ErrorCode.RedisConnectionError });
-    }
-    logger.debug("Redis connection established");
-    const svc = new CacheService(client, () => discardClient(client));
-    singleton = svc;
-    globalForCache.formbricksCache = svc;
-    recordCacheSuccess();
-    logger.debug("Cache service created");
-    return ok(svc);
-  })();
+  const initializing = initializeCacheService();
   globalForCache.formbricksCacheInitializing = initializing;
 
   const result = await initializing;

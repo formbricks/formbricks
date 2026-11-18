@@ -234,6 +234,152 @@ export const FileInput = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs only on tab (fileType) change to sync temp URLs; adding the url/temp deps would re-fire uploads and loop
   }, [fileType]);
 
+  const renderMultipleFiles = () => (
+    <div className="flex flex-wrap gap-2">
+      {selectedFiles.map((file, idx) => (
+        <div key={`${id}-${idx}`}>
+          {isImage(file.name) ? (
+            <div className="relative h-24 w-40 overflow-hidden rounded-lg">
+              <Image
+                src={file.url}
+                alt={file.name}
+                fill
+                sizes="100%"
+                style={{ objectFit: "cover" }}
+                quality={100}
+                className={!file.uploaded ? "opacity-50" : ""}
+                unoptimized={isExternalImageSrc(file.url)}
+              />
+              {file.uploaded ? (
+                <button
+                  type="button"
+                  disabled={Boolean(getRemoveLockReason?.(file.url))}
+                  title={getRemoveLockReason?.(file.url)}
+                  className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    void handleRemove(idx);
+                  }}>
+                  <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
+                </button>
+              ) : (
+                <LoadingSpinner />
+              )}
+              {file.uploaded && renderImageAction?.(file.url)}
+            </div>
+          ) : (
+            <div className="relative flex h-24 w-40 flex-col items-center justify-center rounded-lg border border-slate-300 px-2 py-3">
+              <FileIcon className="h-6 text-slate-500" />
+              <p className="mt-2 w-full truncate text-center text-sm text-slate-500" title={file.name}>
+                <span className="font-semibold">{file.name}</span>
+              </p>
+              {file.uploaded ? (
+                <button
+                  type="button"
+                  className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    void handleRemove(idx);
+                  }}>
+                  <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
+                </button>
+              ) : (
+                <LoadingSpinner />
+              )}
+            </div>
+          )}
+        </div>
+      ))}
+
+      <Uploader
+        id={id}
+        name="uploadMore"
+        handleDragOver={handleDragOver}
+        uploaderClassName="h-24 w-40"
+        handleDrop={handleUploadMoreDrop}
+        allowedFileExtensions={allowedFileExtensions}
+        multiple={multiple}
+        handleUpload={handleUploadMore}
+        uploadMore={true}
+        disabled={disabled}
+        isStorageConfigured={isStorageConfigured}
+      />
+    </div>
+  );
+
+  const renderSingleFile = () => (
+    <div className="h-52">
+      {isImage(selectedFiles[0].name) ? (
+        <div className="relative mx-auto h-full w-full overflow-hidden rounded-lg">
+          <Image
+            src={selectedFiles[0].url}
+            alt={selectedFiles[0].name}
+            fill
+            sizes="100%"
+            style={{ objectFit: imageFit }}
+            quality={100}
+            className={!selectedFiles[0].uploaded ? "opacity-50" : ""}
+            unoptimized={isExternalImageSrc(selectedFiles[0].url)}
+          />
+          {selectedFiles[0].uploaded ? (
+            <button
+              type="button"
+              className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+              onClick={(e) => {
+                e.preventDefault();
+                void handleRemove(0);
+              }}>
+              <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
+            </button>
+          ) : (
+            <LoadingSpinner />
+          )}
+          {selectedFiles[0].uploaded && renderImageAction?.(selectedFiles[0].url)}
+        </div>
+      ) : (
+        <div className="relative flex h-full w-full flex-col items-center justify-center border border-slate-300">
+          <FileIcon className="h-6 text-slate-500" />
+          <p className="mt-2 text-sm text-slate-500">
+            <span className="font-semibold">{selectedFiles[0].name}</span>
+          </p>
+          {selectedFiles[0].uploaded ? (
+            <button
+              type="button"
+              className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
+              onClick={(e) => {
+                e.preventDefault();
+                void handleRemove(0);
+              }}>
+              <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
+            </button>
+          ) : (
+            <LoadingSpinner />
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  const renderImagePicker = () => {
+    if (selectedFiles.length === 0) {
+      return (
+        <Uploader
+          id={id}
+          name="selected-file"
+          handleDragOver={handleDragOver}
+          handleDrop={handleDrop}
+          uploaderClassName="h-52 w-full"
+          allowedFileExtensions={allowedFileExtensions}
+          multiple={multiple}
+          handleUpload={handleUpload}
+          disabled={disabled}
+          isStorageConfigured={isStorageConfigured}
+        />
+      );
+    }
+    return multiple ? renderMultipleFiles() : renderSingleFile();
+  };
+
   return (
     <div className="w-full cursor-default">
       <div>
@@ -255,146 +401,7 @@ export const FileInput = ({
 
           {fileType === "image" && (
             <div className={cn(isVideoAllowed && "rounded-b-lg border-x border-b border-slate-200 p-4")}>
-              {selectedFiles.length > 0 && multiple && (
-                <div className="flex flex-wrap gap-2">
-                  {selectedFiles.map((file, idx) => (
-                    <div key={`${id}-${idx}`}>
-                      {isImage(file.name) ? (
-                        <div className="relative h-24 w-40 overflow-hidden rounded-lg">
-                          <Image
-                            src={file.url}
-                            alt={file.name}
-                            fill
-                            sizes="100%"
-                            style={{ objectFit: "cover" }}
-                            quality={100}
-                            className={!file.uploaded ? "opacity-50" : ""}
-                            unoptimized={isExternalImageSrc(file.url)}
-                          />
-                          {file.uploaded ? (
-                            <button
-                              type="button"
-                              disabled={Boolean(getRemoveLockReason?.(file.url))}
-                              title={getRemoveLockReason?.(file.url)}
-                              className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-50"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                void handleRemove(idx);
-                              }}>
-                              <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
-                            </button>
-                          ) : (
-                            <LoadingSpinner />
-                          )}
-                          {file.uploaded && renderImageAction?.(file.url)}
-                        </div>
-                      ) : (
-                        <div className="relative flex h-24 w-40 flex-col items-center justify-center rounded-lg border border-slate-300 px-2 py-3">
-                          <FileIcon className="h-6 text-slate-500" />
-                          <p
-                            className="mt-2 w-full truncate text-center text-sm text-slate-500"
-                            title={file.name}>
-                            <span className="font-semibold">{file.name}</span>
-                          </p>
-                          {file.uploaded ? (
-                            <button
-                              type="button"
-                              className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                void handleRemove(idx);
-                              }}>
-                              <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
-                            </button>
-                          ) : (
-                            <LoadingSpinner />
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-
-                  <Uploader
-                    id={id}
-                    name="uploadMore"
-                    handleDragOver={handleDragOver}
-                    uploaderClassName="h-24 w-40"
-                    handleDrop={handleUploadMoreDrop}
-                    allowedFileExtensions={allowedFileExtensions}
-                    multiple={multiple}
-                    handleUpload={handleUploadMore}
-                    uploadMore={true}
-                    disabled={disabled}
-                    isStorageConfigured={isStorageConfigured}
-                  />
-                </div>
-              )}
-              {selectedFiles.length > 0 && !multiple && (
-                <div className="h-52">
-                  {isImage(selectedFiles[0].name) ? (
-                    <div className="relative mx-auto h-full w-full overflow-hidden rounded-lg">
-                      <Image
-                        src={selectedFiles[0].url}
-                        alt={selectedFiles[0].name}
-                        fill
-                        sizes="100%"
-                        style={{ objectFit: imageFit }}
-                        quality={100}
-                        className={!selectedFiles[0].uploaded ? "opacity-50" : ""}
-                        unoptimized={isExternalImageSrc(selectedFiles[0].url)}
-                      />
-                      {selectedFiles[0].uploaded ? (
-                        <button
-                          type="button"
-                          className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            void handleRemove(0);
-                          }}>
-                          <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
-                        </button>
-                      ) : (
-                        <LoadingSpinner />
-                      )}
-                      {selectedFiles[0].uploaded && renderImageAction?.(selectedFiles[0].url)}
-                    </div>
-                  ) : (
-                    <div className="relative flex h-full w-full flex-col items-center justify-center border border-slate-300">
-                      <FileIcon className="h-6 text-slate-500" />
-                      <p className="mt-2 text-sm text-slate-500">
-                        <span className="font-semibold">{selectedFiles[0].name}</span>
-                      </p>
-                      {selectedFiles[0].uploaded ? (
-                        <button
-                          type="button"
-                          className="absolute top-2 right-2 flex cursor-pointer items-center justify-center rounded-md bg-slate-100 p-1 hover:bg-slate-200 hover:bg-white/90"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            void handleRemove(0);
-                          }}>
-                          <XIcon className="h-5 text-slate-700 hover:text-slate-900" />
-                        </button>
-                      ) : (
-                        <LoadingSpinner />
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-              {selectedFiles.length === 0 && (
-                <Uploader
-                  id={id}
-                  name="selected-file"
-                  handleDragOver={handleDragOver}
-                  handleDrop={handleDrop}
-                  uploaderClassName="h-52 w-full"
-                  allowedFileExtensions={allowedFileExtensions}
-                  multiple={multiple}
-                  handleUpload={handleUpload}
-                  disabled={disabled}
-                  isStorageConfigured={isStorageConfigured}
-                />
-              )}
+              {renderImagePicker()}
             </div>
           )}
         </div>

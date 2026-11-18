@@ -40,6 +40,19 @@ const afterCursor = (cursor: ResponseScanCursor) => ({
   OR: [{ createdAt: { gt: cursor.createdAt } }, { createdAt: cursor.createdAt, id: { gt: cursor.id } }],
 });
 
+/** The file URLs one page of responses owns; with `flatKeysOnly`, only the flat (pre-#8044) keys. */
+const collectPageFileUrls = (
+  responses: { data: unknown }[],
+  uploadElementIds: ReturnType<typeof getSurveyUploadElementIds>,
+  surveyId: string,
+  flatKeysOnly: boolean
+): string[] =>
+  responses.flatMap((response) =>
+    collectResponseFileUrls(response.data, uploadElementIds, surveyId).filter(
+      (fileUrl) => !flatKeysOnly || getStorageUrlSurveyId(fileUrl) === null
+    )
+  );
+
 /**
  * Collects the storage URLs a survey's responses own, so they can be deleted once the responses
  * themselves are gone.
@@ -56,6 +69,7 @@ const afterCursor = (cursor: ResponseScanCursor) => ({
  * since those can only match a current upload element, it skips the scan when there is none rather than
  * reading every response for nothing.
  */
+
 export const collectSurveyResponseFileUrls = async (
   surveyId: string,
   { flatKeysOnly = false }: { flatKeysOnly?: boolean } = {}
@@ -98,10 +112,10 @@ export const collectSurveyResponseFileUrls = async (
       break;
     }
 
-    for (const response of responses) {
-      for (const fileUrl of collectResponseFileUrls(response.data, uploadElementIds, surveyId)) {
-        if (!flatKeysOnly || getStorageUrlSurveyId(fileUrl) === null) fileUrls.push(fileUrl);
-      }
+    // One push per URL: spreading a whole page into one call throws past ~125k arguments, and forged
+    // answers can carry 10,000 URLs each.
+    for (const fileUrl of collectPageFileUrls(responses, uploadElementIds, surveyId, flatKeysOnly)) {
+      fileUrls.push(fileUrl);
     }
 
     // A short page means the last one. The `lastRow` check only guards the cursor from going undefined

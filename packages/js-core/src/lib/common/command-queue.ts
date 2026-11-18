@@ -76,36 +76,7 @@ export class CommandQueue {
     while (this.queue.length > 0) {
       const currentItem = this.queue.shift();
 
-      if (!currentItem) continue;
-
-      if (currentItem.checkSetup) {
-        const setupResult = checkSetup();
-        if (!setupResult.ok) {
-          console.warn(`🧱 Formbricks - Setup not complete.`);
-          continue;
-        }
-      }
-
-      if (currentItem.type === CommandType.GeneralAction) {
-        // first check if there are pending updates in the update queue
-        const updateQueue = UpdateQueue.getInstance();
-        if (!updateQueue.isEmpty()) {
-          console.log("🧱 Formbricks - Waiting for pending updates to complete before executing command");
-          await updateQueue.processUpdates();
-        }
-      }
-
-      const executeCommand = async (): Promise<Result<void, unknown>> => {
-        return (await currentItem.command.apply(null, currentItem.commandArgs)) as Result<void, unknown>;
-      };
-
-      const result = await wrapThrowsAsync(executeCommand)();
-
-      if (!result.ok) {
-        console.error("🧱 Formbricks - Global error: ", result.error);
-      } else if (!result.data.ok) {
-        console.error("🧱 Formbricks - Global error: ", result.data.error);
-      }
+      if (currentItem) await executeQueueItem(currentItem);
     }
 
     this.running = false;
@@ -116,3 +87,32 @@ export class CommandQueue {
     }
   }
 }
+
+/** Runs one queued command, logging (never throwing) its failure so the queue keeps draining. */
+const executeQueueItem = async (item: InternalQueueItem): Promise<void> => {
+  if (item.checkSetup && !checkSetup().ok) {
+    console.warn(`🧱 Formbricks - Setup not complete.`);
+    return;
+  }
+
+  if (item.type === CommandType.GeneralAction) {
+    // first check if there are pending updates in the update queue
+    const updateQueue = UpdateQueue.getInstance();
+    if (!updateQueue.isEmpty()) {
+      console.log("🧱 Formbricks - Waiting for pending updates to complete before executing command");
+      await updateQueue.processUpdates();
+    }
+  }
+
+  const executeCommand = async (): Promise<Result<void, unknown>> => {
+    return (await item.command.apply(null, item.commandArgs)) as Result<void, unknown>;
+  };
+
+  const result = await wrapThrowsAsync(executeCommand)();
+
+  if (!result.ok) {
+    console.error("🧱 Formbricks - Global error: ", result.error);
+  } else if (!result.data.ok) {
+    console.error("🧱 Formbricks - Global error: ", result.data.error);
+  }
+};

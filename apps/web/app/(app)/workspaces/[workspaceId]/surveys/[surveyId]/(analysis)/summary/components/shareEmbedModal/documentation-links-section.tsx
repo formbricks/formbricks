@@ -23,7 +23,7 @@ export const DocumentationLinksSection = ({ title, links }: DocumentationLinksSe
     <div className="flex w-full flex-col gap-y-3">
       <H4>{title}</H4>
       {links.map((link) => (
-        <Alert key={link.title} size="small" variant="default" role="status">
+        <Alert key={link.title} size="small" variant="default" alertRole="status">
           <ArrowUpRight className="size-4" />
           <AlertTitle>{link.title}</AlertTitle>
           <AlertButton>

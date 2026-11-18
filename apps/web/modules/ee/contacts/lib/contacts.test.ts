@@ -876,7 +876,7 @@ describe("Contacts Lib", () => {
         ok: true,
         data: { whereClause: { workspaceId: mockWorkspaceId } },
       } as unknown as Awaited<ReturnType<typeof segmentFilterToPrismaQuery>>);
-      vi.mocked(prisma.contact.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.contact.findMany, { partial: true }).mockResolvedValue([]);
 
       const result = await generatePersonalLinks(mockSurveyId, mockSegmentId, memberActor);
 

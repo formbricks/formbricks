@@ -340,6 +340,39 @@ describe("updateV3Response", () => {
     );
   });
 
+  /**
+   * A legacy value the read withheld (here a JSON `null` under a second element) is kept by the
+   * patch and left out of validation: the caller never saw it, so it can neither lose it by omission
+   * nor be refused over it while correcting a different answer.
+   */
+  test("a withheld legacy answer is kept and not validated when another answer is patched", async () => {
+    mockGetSurveyForWrite.mockResolvedValueOnce(
+      survey({
+        blocks: [
+          {
+            id: "blk",
+            name: "Block",
+            elements: [
+              { id: "q1", type: "openText", headline: { default: "Q1" } },
+              { id: "q2", type: "openText", headline: { default: "Q2" }, required: true },
+            ],
+          },
+        ],
+      })
+    );
+    mockGetScoped.mockResolvedValueOnce(row({ data: { q1: "old", q2: null } }));
+
+    const response = await updateV3Response({
+      ...params,
+      responseId: RESPONSE_ID,
+      body: { data: { q1: "edited" } },
+    });
+
+    expect(response.status).toBe(200);
+    expect(mockValidateResponseData.mock.calls[0][1]).toEqual({ q1: "edited" });
+    expect(mockUpdate.mock.calls[0][0].patch.data).toEqual({ q1: "edited", q2: null });
+  });
+
   test("the transition to finished does fire it", async () => {
     mockGetScoped.mockResolvedValueOnce(row({ finished: false }));
     mockReadback.mockResolvedValueOnce(row({ finished: true }));

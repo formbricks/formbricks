@@ -56,7 +56,7 @@ export const SignatureElementForm = ({
         updateElement={updateElement}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
-        autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
+        focusOnMount={!element.headline?.default || element.headline.default.trim() === ""}
         isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
@@ -74,7 +74,7 @@ export const SignatureElementForm = ({
                 updateElement={updateElement}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
-                autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
+                focusOnMount={!element.subheader?.default || element.subheader.default.trim() === ""}
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>
@@ -108,7 +108,7 @@ export const SignatureElementForm = ({
           customContainerClass="p-0"
         />
         {shouldWarnTypedSignatureOff(element) && (
-          <Alert variant="warning" role="status">
+          <Alert variant="warning" alertRole="status">
             <AlertTitle>{t("workspace.surveys.edit.typed_signature_off_warning_title")}</AlertTitle>
             <AlertDescription>
               {t("workspace.surveys.edit.typed_signature_off_warning_description")}

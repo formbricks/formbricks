@@ -48,7 +48,7 @@ export const AIUnavailableAlert = ({ title, reason, feature }: Readonly<AIUnavai
   };
 
   return (
-    <Alert variant="info" role="status">
+    <Alert variant="info" alertRole="status">
       <AlertTitle>{title}</AlertTitle>
       <AlertDescription>{getAIUnavailableMessage(reason, t)}</AlertDescription>
       {action && (

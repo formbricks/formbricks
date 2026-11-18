@@ -114,7 +114,7 @@ describe("Next.js server-action rejections, as the installed version raises them
       new Response("upstream connect error", { status: 503, headers: { "content-type": "text/plain" } })
     );
 
-    // Next.js 16.4.1 stamps no error code, so a body-as-message rejection cannot be told from any
+    // Next.js 16.4.5 stamps no error code, so a body-as-message rejection cannot be told from any
     // other Error.
     expect((rejection as Error).message).toBe("upstream connect error");
   });

@@ -4,7 +4,10 @@ import type {
   SemanticSearchResultItem,
 } from "@/modules/hub/types";
 
-/** The two similarity endpoints return the same row shape; either is acceptable here. */
+/**
+ * Semantic search and similar-records both return this row shape (`SimilarRecordsResultItem` is the same
+ * type), so the semantic-search item covers both endpoints.
+ */
 type FeedbackRecordMatchSource = SemanticSearchResultItem;
 
 /**

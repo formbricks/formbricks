@@ -32,7 +32,7 @@ export const TrialAlert = ({ trialDaysRemaining, size, className, children }: Re
   const variant = getTrialVariant(trialDaysRemaining);
 
   return (
-    <Alert variant={variant} size={size} className={cn("max-w-4xl", className)} role="status">
+    <Alert variant={variant} size={size} className={cn("max-w-4xl", className)} alertRole="status">
       <AlertTitle>{title}</AlertTitle>
       {children}
     </Alert>

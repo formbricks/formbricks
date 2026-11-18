@@ -40,7 +40,10 @@ Notes:
   `prop-types` and `no-deprecated`), `eslint-plugin-sonarjs` and `eslint-plugin-unicorn` (as `unicorn-js`,
   Sonar parity only) and `eslint-plugin-storybook` (apps/storybook). `plugins/react-js.mjs` loads the three eslint-plugin-react rules and drops `prefer-read-only-props`'s autofix, which writes `readonly` members instead of the `Readonly<Props>` wrapper. `plugins/formbricks.mjs` is the
   repo's own: oxlint has no `no-restricted-syntax`, so `formbricks/restricted-syntax` takes the same
-  selector options. JS plugins are slower than native rules; `react-js` costs most of apps/web's run.
+  selector options, and `formbricks/no-inline-lint-config` (on in every tier) fails on ESLint's inline
+  config comments (`/* eslint <rule>: … */`, `/* eslint-env */`, `/* global */`, `/* exported */`), which
+  oxlint ignores.
+  JS plugins are slower than native rules; `react-js` costs most of apps/web's run.
 - **Type-aware rules** run through `oxlint-tsgolint` (TypeScript 7) when oxlint gets `--type-aware`, which
   `pnpm lint:code` and the pre-commit hook pass. Every linted `.ts`/`.tsx` file must belong to its
   package's tsconfig, and the tsconfig must be valid for TypeScript 7 (no `baseUrl`, no
@@ -48,17 +51,18 @@ Notes:
   the type-aware rules switched off, and `*.config.*` / declaration files are ignored. apps/web runs them
   too; the ones with a backlog left are `off` in `apps/web/oxlint.config.ts`, each with its count
   (ENG-7329).
-- The React Compiler-era react-hooks rules are implemented natively by oxlint under `react/`. Those with a
-  remaining backlog sit in `reactCompilerRulesOptOut` (`base.mjs`) at `warn`, with the ratchet tickets
-  named inline; `apps/web/oxlint.config.ts` makes the same call separately for the `next` tier.
+- The React Compiler-era react-hooks rules are implemented natively by oxlint under `react/`, at the
+  preset's severity in the `react` and `react-hooks` tiers. `apps/web/oxlint.config.ts` sets them
+  separately for the `next` tier, where only `incompatible-library` stays at `warn`.
 - `sonar-parity.mjs` mirrors the SonarCloud rules that surfaced issues on PRs after local lint passed
   (`sonarjs/cognitive-complexity` at 15, `regex-complexity` at 20, `no-nested-functions`,
   `no-nested-conditional`, `no-nested-template-literals`, `prefer-string-raw`, `prefer-optional-chain`,
   `no-deprecated`, `prefer-nullish-coalescing`, and `vitest/prefer-to-have-length` for tests). They are
-  errors in `pnpm lint` and CI, except `cognitive-complexity`, which existing code still violates: it runs
-  only in `scripts/lint-staged-oxlint.mjs`, which sets `OXLINT_SONAR_PARITY=warn` for the pre-commit hook
-  and fails the commit on it only inside the staged lines (`STAGED_LINES_RULE_IDS`), as Sonar judges a
-  PR's new code. Every rule except the vitest one skips test files, as Sonar does. The type-aware ones
+  all errors in `pnpm lint` and CI. An exception takes an inline disable with its reason, or, for an
+  applied data migration, a per-file override in `packages/database/oxlint.config.ts`. A rule added with a
+  backlog can start in `stagedLinesRules`: `scripts/lint-staged-oxlint.mjs` then fails the commit on it
+  only inside the staged lines (`STAGED_LINES_RULE_IDS`, empty today), as Sonar judges a PR's new code.
+  Every rule except the vitest one skips test files, as Sonar does. The type-aware ones
   join only the tiers that compose `sonarParityTyped()` (not the `next` tier yet).
   `jsx-a11y/no-aria-hidden-on-focusable` (`a11yParity`) is an error in every tier that loads jsx-a11y.
 - Stale disable directives are errors repo-wide (`reportUnusedDisableDirectives` in the root

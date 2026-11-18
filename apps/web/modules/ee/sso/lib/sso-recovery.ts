@@ -481,6 +481,58 @@ export const startSsoRecovery = async ({
   }
 };
 
+/**
+ * Tells the account holder what recovery removed (ENG-2633), when it removed anything. Best-effort:
+ * a mailer failure is logged, never thrown.
+ */
+const notifyRemovedFactors = async (
+  user: Pick<TSsoLookupUser, "id" | "email" | "locale">,
+  reclaimed: TReclaimOutcome
+): Promise<void> => {
+  // The strip is correct for a squatter and a silent security downgrade for the owner — and on a
+  // default self-hosted install, where verification blocks nothing, the owner is the likelier of the
+  // two. Nothing here can distinguish them, so the answer is to say what happened rather than to
+  // weaken the guard.
+  //
+  // After commit and best-effort, for the same reason the session revocation in `completeSsoRecovery`
+  // is: the strip has already landed, and a mailer failure must not turn a completed recovery into a
+  // failed sign-in.
+  const twoFactorRemoved = Boolean(
+    reclaimed && (reclaimed.twoFactorRowsRemoved > 0 || reclaimed.legacyTwoFactorDisarmed)
+  );
+  const passwordRemoved = Boolean(
+    reclaimed && (reclaimed.credentialPasswordsCleared > 0 || reclaimed.legacyPasswordCleared)
+  );
+  // For a legitimate owner this is the line with a blast radius: integrations they built stop working,
+  // so the mail has to say so even when neither sign-in factor was set (ENG-2634).
+  const apiKeysRemoved = Boolean(reclaimed && reclaimed.apiKeysRevoked > 0);
+  if (passwordRemoved || twoFactorRemoved || apiKeysRemoved) {
+    try {
+      const sent = await sendSsoRecoveryFactorsRemovedEmail({
+        email: user.email,
+        locale: user.locale,
+        passwordRemoved,
+        twoFactorRemoved,
+        apiKeysRemoved,
+      });
+      // `sendEmail` returns false without throwing when SMTP is unconfigured, so the catch below never
+      // sees it. Silence there would mean a user's second factor was removed and nobody — not them, not
+      // the operator — was told, which is the whole failure this notification exists to prevent.
+      if (!sent) {
+        logger.error(
+          { userId: user.id, passwordRemoved, twoFactorRemoved, apiKeysRemoved },
+          "SSO recovery removed local sign-in factors but the notification email was not sent"
+        );
+      }
+    } catch (error) {
+      logger.error(
+        { error, userId: user.id },
+        "Failed to notify the user that SSO recovery removed their local sign-in factors"
+      );
+    }
+  }
+};
+
 export const completeSsoRecovery = async ({
   stateId,
   sessionUserId,
@@ -669,47 +721,7 @@ export const completeSsoRecovery = async ({
     );
   }
 
-  // Tell the account holder what recovery removed (ENG-2633). The strip is correct for a squatter and a
-  // silent security downgrade for the owner — and on a default self-hosted install, where verification
-  // blocks nothing, the owner is the likelier of the two. Nothing here can distinguish them, so the
-  // answer is to say what happened rather than to weaken the guard.
-  //
-  // After commit and best-effort, for the same reason the session revocation above is: the strip has
-  // already landed, and a mailer failure must not turn a completed recovery into a failed sign-in.
-  const twoFactorRemoved = Boolean(
-    reclaimed && (reclaimed.twoFactorRowsRemoved > 0 || reclaimed.legacyTwoFactorDisarmed)
-  );
-  const passwordRemoved = Boolean(
-    reclaimed && (reclaimed.credentialPasswordsCleared > 0 || reclaimed.legacyPasswordCleared)
-  );
-  // For a legitimate owner this is the line with a blast radius: integrations they built stop working,
-  // so the mail has to say so even when neither sign-in factor was set (ENG-2634).
-  const apiKeysRemoved = Boolean(reclaimed && reclaimed.apiKeysRevoked > 0);
-  if (passwordRemoved || twoFactorRemoved || apiKeysRemoved) {
-    try {
-      const sent = await sendSsoRecoveryFactorsRemovedEmail({
-        email: user.email,
-        locale: user.locale,
-        passwordRemoved,
-        twoFactorRemoved,
-        apiKeysRemoved,
-      });
-      // `sendEmail` returns false without throwing when SMTP is unconfigured, so the catch below never
-      // sees it. Silence there would mean a user's second factor was removed and nobody — not them, not
-      // the operator — was told, which is the whole failure this notification exists to prevent.
-      if (!sent) {
-        logger.error(
-          { userId: user.id, passwordRemoved, twoFactorRemoved, apiKeysRemoved },
-          "SSO recovery removed local sign-in factors but the notification email was not sent"
-        );
-      }
-    } catch (error) {
-      logger.error(
-        { error, userId: user.id },
-        "Failed to notify the user that SSO recovery removed their local sign-in factors"
-      );
-    }
-  }
+  await notifyRemovedFactors(user, reclaimed);
 
   try {
     await finalizeSuccessfulSignIn({

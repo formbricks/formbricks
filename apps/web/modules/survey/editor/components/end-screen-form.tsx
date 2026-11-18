@@ -71,7 +71,7 @@ export const EndScreenForm = ({
         updateSurvey={updateSurvey}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
-        autoFocus={!endingCard.headline?.default || endingCard.headline.default.trim() === ""}
+        focusOnMount={!endingCard.headline?.default || endingCard.headline.default.trim() === ""}
         isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
       <div>
@@ -88,7 +88,7 @@ export const EndScreenForm = ({
                 updateSurvey={updateSurvey}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
-                autoFocus={!endingCard.subheader?.default || endingCard.subheader.default.trim() === ""}
+                focusOnMount={!endingCard.subheader?.default || endingCard.subheader.default.trim() === ""}
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>

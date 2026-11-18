@@ -1,6 +1,6 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { ChevronDownIcon, type LucideIcon } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type Option = {
   label: string;
@@ -21,9 +21,12 @@ export const Dropdown = ({ options, defaultValue, onSelect, disabled = false }: 
     options.filter((option) => option.value === defaultValue)[0] || options[0]
   );
 
-  useEffect(() => {
+  // A new default (or option list) re-selects. Adjusted during render.
+  const [syncedFrom, setSyncedFrom] = useState({ defaultValue, options });
+  if (syncedFrom.defaultValue !== defaultValue || syncedFrom.options !== options) {
+    setSyncedFrom({ defaultValue, options });
     setSelectedOption(options.filter((option) => option.value === defaultValue)[0] || options[0]);
-  }, [defaultValue, options]);
+  }
 
   const handleSelect = (option: Option) => {
     setSelectedOption(option);

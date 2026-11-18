@@ -4,6 +4,13 @@ import { ElementError, getElementErrorAria } from "@/components/general/element-
 import { ElementHeader } from "@/components/general/element-header";
 import { getDateFnsLocale } from "@/lib/locale";
 
+// Parse YYYY-MM-DD format as local date (not UTC)
+const parseLocalDate = (value: string | undefined): Date | undefined => {
+  if (!value) return undefined;
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
 interface DateElementProps {
   /** Unique identifier for the element container */
   elementId: string;
@@ -63,30 +70,19 @@ function DateElement({
   const errorAria = getElementErrorAria(inputId, errorMessage);
 
   // Initialize date from value string, parsing as local time to avoid timezone issues
-  const [date, setDate] = React.useState<Date | undefined>(() => {
-    if (!value) return undefined;
-    // Parse YYYY-MM-DD format as local date (not UTC)
-    const [year, month, day] = value.split("-").map(Number);
-    return new Date(year, month - 1, day);
-  });
+  const [date, setDate] = React.useState<Date | undefined>(() => parseLocalDate(value));
 
-  // Sync date state when value prop changes
-  React.useEffect(() => {
-    if (value) {
-      // Parse YYYY-MM-DD format as local date (not UTC)
-      const [year, month, day] = value.split("-").map(Number);
-      const newDate = new Date(year, month - 1, day);
-      setDate((prevDate) => {
-        // Only update if the date actually changed to avoid unnecessary re-renders
-        if (newDate.getTime() !== prevDate?.getTime()) {
-          return newDate;
-        }
-        return prevDate;
-      });
-    } else {
-      setDate(undefined);
+  // Sync date state when the value prop changes, during render rather than in an effect, so the
+  // calendar never paints a frame with the previous date.
+  const [syncedValue, setSyncedValue] = React.useState(value);
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    const newDate = parseLocalDate(value);
+    // Only update if the date actually changed to avoid unnecessary re-renders
+    if (newDate?.getTime() !== date?.getTime()) {
+      setDate(newDate);
     }
-  }, [value]);
+  }
 
   // Convert Date to ISO string (YYYY-MM-DD) when date changes
   const handleDateSelect = (selectedDate: Date | undefined): void => {

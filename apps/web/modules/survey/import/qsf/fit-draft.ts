@@ -202,9 +202,8 @@ export function fitQsfSurveyToCreateLimit(
   }
   survey.languages = keptLanguages.map((language) => language.code);
 
-  const cutRefs = new Set<string>();
-  if (total > maxBytes) {
-    // Trailing questions, in flow order from the end, until what is left fits.
+  /** Trailing questions, in flow order from the end, until what is left fits. */
+  const cutTrailingQuestions = (cutRefs: Set<string>): void => {
     let running = fixed;
     for (const page of survey.pages) {
       let pageOpen = false;
@@ -227,6 +226,11 @@ export function fitQsfSurveyToCreateLimit(
         });
       }
     }
+  };
+
+  const cutRefs = new Set<string>();
+  if (total > maxBytes) {
+    cutTrailingQuestions(cutRefs);
     for (const ref of cutRefs) survey.questions.delete(ref);
     // A page left with no question goes too, with its rules: there is nothing to file them under.
     survey.pages = survey.pages

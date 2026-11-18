@@ -86,6 +86,19 @@ const ready = (pod: Pod) =>
   !pod.metadata.deletionTimestamp &&
   pod.status?.conditions?.some((c) => c.type === "Ready" && c.status === "True");
 
+/** The API path of each resource kind outside the core group. */
+const KIND_API_PATHS = new Map<string, string>([
+  ["deployments", "/apis/apps/v1"],
+  ["statefulsets", "/apis/apps/v1"],
+  ["replicasets", "/apis/apps/v1"],
+  ["jobs", "/apis/batch/v1"],
+  ["cronjobs", "/apis/batch/v1"],
+  ["horizontalpodautoscalers", "/apis/autoscaling/v2"],
+  ["endpointslices", "/apis/discovery.k8s.io/v1"],
+  ["roles", "/apis/rbac.authorization.k8s.io/v1"],
+  ["rolebindings", "/apis/rbac.authorization.k8s.io/v1"],
+]);
+
 export class KubernetesUpgrade {
   assertLock: () => Promise<void> = async () => {};
   constructor(
@@ -145,12 +158,7 @@ export class KubernetesUpgrade {
     });
   }
   path(kind: string, name = "") {
-    let api = "/api/v1";
-    if (["deployments", "statefulsets", "replicasets"].includes(kind)) api = "/apis/apps/v1";
-    else if (["jobs", "cronjobs"].includes(kind)) api = "/apis/batch/v1";
-    else if (kind === "horizontalpodautoscalers") api = "/apis/autoscaling/v2";
-    else if (kind === "endpointslices") api = "/apis/discovery.k8s.io/v1";
-    else if (["roles", "rolebindings"].includes(kind)) api = "/apis/rbac.authorization.k8s.io/v1";
+    const api = KIND_API_PATHS.get(kind) ?? "/api/v1";
     const namePath = name ? `/${encodeURIComponent(name)}` : "";
     return `${api}/namespaces/${this.config.namespace}/${kind}${namePath}`;
   }
@@ -230,8 +238,8 @@ export class KubernetesUpgrade {
     )
       throw new OnlineUpgradeBlocked("serving_surge_workers_required", true);
   }
-  async preflight(retirementStarted = false) {
-    await this.verifyDependencies();
+  /** Every workload targets this release and keeps two ready replicas (or a serving surge once retiring). */
+  private async verifyWorkloadCapacity(retirementStarted: boolean) {
     for (const expected of this.config.workloads) {
       if (expected.image !== this.config.targetImage)
         throw new OnlineUpgradeBlocked("workload_target_mismatch");
@@ -241,9 +249,9 @@ export class KubernetesUpgrade {
         await this.verifyServingSurge();
       }
     }
-    const pods = await this.pods();
-    await this.verifySourceInventory(pods);
-    await this.verifyBatchConsumers();
+  }
+  /** Every running application container is the target image or one of the supported source images. */
+  private verifySourceImages(pods: Pod[]) {
     for (const pod of pods) {
       if (["Succeeded", "Failed"].includes(pod.status?.phase ?? "")) continue;
       for (const container of pod.spec.containers.filter((c) => this.isApplicationImage(c.image))) {
@@ -254,6 +262,14 @@ export class KubernetesUpgrade {
           throw new OnlineUpgradeBlocked("unsupported_source_image");
       }
     }
+  }
+  async preflight(retirementStarted = false) {
+    await this.verifyDependencies();
+    await this.verifyWorkloadCapacity(retirementStarted);
+    const pods = await this.pods();
+    await this.verifySourceInventory(pods);
+    await this.verifyBatchConsumers();
+    this.verifySourceImages(pods);
     const gateways = await this.pods(this.config.ingress.selector);
     if (
       !gateways.length ||
@@ -293,8 +309,8 @@ export class KubernetesUpgrade {
       }
     }
   }
-  async verifyConsumers() {
-    await this.verifyBatchConsumers();
+  /** Every workload has rolled out the target image on all its replicas. */
+  private async verifyTargetWorkloads() {
     for (const expected of this.config.workloads) {
       if (expected.image !== this.config.targetImage)
         throw new OnlineUpgradeBlocked("workload_target_mismatch");
@@ -307,6 +323,10 @@ export class KubernetesUpgrade {
       )
         throw new OnlineUpgradeBlocked("target_workload_unhealthy", true);
     }
+  }
+  async verifyConsumers() {
+    await this.verifyBatchConsumers();
+    await this.verifyTargetWorkloads();
     await this.verifyDependencies();
     for (const pod of await this.pods()) {
       if (["Succeeded", "Failed"].includes(pod.status?.phase ?? "")) continue;

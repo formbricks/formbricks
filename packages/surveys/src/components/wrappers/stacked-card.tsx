@@ -8,7 +8,7 @@ import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 
 interface StackedCardProps {
-  cardRefs: MutableRef<(HTMLDivElement | null)[]>;
+  cardElementsRef: MutableRef<(HTMLDivElement | null)[]>;
   dynamicQuestionIndex: number;
   offset: number;
   fullSizeCards: boolean;
@@ -23,7 +23,7 @@ interface StackedCardProps {
 }
 
 export const StackedCard = ({
-  cardRefs,
+  cardElementsRef,
   dynamicQuestionIndex,
   offset,
   fullSizeCards,
@@ -111,7 +111,7 @@ export const StackedCard = ({
   return (
     <div
       ref={(el) => {
-        cardRefs.current[dynamicQuestionIndex] = el;
+        cardElementsRef.current[dynamicQuestionIndex] = el;
       }}
       id={`questionCard-${dynamicQuestionIndex}`}
       data-testid={`questionCard-${dynamicQuestionIndex}`}

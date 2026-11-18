@@ -41,6 +41,7 @@ export const useWorkflowNodeUrlSync = ({ isEnabled }: Readonly<{ isEnabled: bool
 
   useEffect(() => {
     if (!isEnabled || hasAppliedInitialNode || !definition) return;
+    // eslint-disable-next-line react/set-state-in-effect -- applies the URL's node once, with jotai writes that cannot run during render; see the note on the state above
     setHasAppliedInitialNode(true);
 
     const nodeId = searchParams.get(WORKFLOW_NODE_SEARCH_PARAM);

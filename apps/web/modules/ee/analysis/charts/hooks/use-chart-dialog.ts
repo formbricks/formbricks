@@ -228,6 +228,38 @@ export function useChartDialog({
     }
   };
 
+  /**
+   * Adds the saved chart to the dashboard the editor was opened from, if any. False when that failed:
+   * the error is shown and a chart created by this save is deleted again.
+   */
+  const addSavedChartToDashboard = async (
+    savedChartId: string | undefined,
+    newlyCreatedChartId: string | null
+  ): Promise<boolean> => {
+    if (!autoAddToDashboardId || !savedChartId) return true;
+    try {
+      await addDashboardWidget(autoAddToDashboardId, { chartId: savedChartId });
+    } catch (error) {
+      toast.error(
+        getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_add_chart_to_dashboard"))
+      );
+      if (newlyCreatedChartId) await cleanupOrphanChart(newlyCreatedChartId);
+      return false;
+    }
+
+    toast.success(t("workspace.analysis.charts.chart_added_to_dashboard"));
+    return true;
+  };
+
+  /** Navigates to the dashboard the editor was opened from, unless already on it. */
+  const openAutoAddDashboard = () => {
+    if (!autoAddToDashboardId) return;
+    const dashboardPath = `/workspaces/${workspaceId}/dashboards/${autoAddToDashboardId}`;
+    if (pathname !== dashboardPath) {
+      router.push(dashboardPath);
+    }
+  };
+
   const handleSaveChart = async () => {
     if (canSaveDetailsOnly && currentChartId) {
       await saveChartDetails(currentChartId);
@@ -268,27 +300,10 @@ export function useChartDialog({
         toast.success(t("workspace.analysis.charts.chart_saved_successfully"));
       }
 
-      if (autoAddToDashboardId && savedChartId) {
-        try {
-          await addDashboardWidget(autoAddToDashboardId, { chartId: savedChartId });
-        } catch (error) {
-          toast.error(
-            getChartApiErrorMessage(error, t("workspace.analysis.charts.failed_to_add_chart_to_dashboard"))
-          );
-          if (newlyCreatedChartId) await cleanupOrphanChart(newlyCreatedChartId);
-          return;
-        }
-
-        toast.success(t("workspace.analysis.charts.chart_added_to_dashboard"));
-      }
+      if (!(await addSavedChartToDashboard(savedChartId, newlyCreatedChartId))) return;
 
       closeDialog();
-      if (autoAddToDashboardId) {
-        const dashboardPath = `/workspaces/${workspaceId}/dashboards/${autoAddToDashboardId}`;
-        if (pathname !== dashboardPath) {
-          router.push(dashboardPath);
-        }
-      }
+      openAutoAddDashboard();
       void queryClient.invalidateQueries({ queryKey: chartKeys.all });
       void queryClient.invalidateQueries({ queryKey: dashboardKeys.all });
       onSuccess?.();

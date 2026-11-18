@@ -451,7 +451,7 @@ export const CreativeEditor = ({
           <div className="relative min-h-0 flex-1 space-y-4 overflow-y-auto bg-slate-50 p-5">
             {/* What the saved creative needs (`warnings[]`), whichever tab fixes it. */}
             {creative.warnings.length > 0 && (
-              <Alert variant="warning" size="small" role="status">
+              <Alert variant="warning" size="small" alertRole="status">
                 <AlertDescription>
                   <ul className="space-y-1">
                     {creative.warnings.map((warning) => (
@@ -462,7 +462,7 @@ export const CreativeEditor = ({
               </Alert>
             )}
             {(isArchived || isReadOnly) && (
-              <Alert variant="info" size="small" role="status">
+              <Alert variant="info" size="small" alertRole="status">
                 <AlertDescription>
                   {isArchived
                     ? t("workspace.creatives.editor.archived_read_only")

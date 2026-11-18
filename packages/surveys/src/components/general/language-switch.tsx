@@ -49,7 +49,7 @@ export function LanguageSwitch({
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   // Sequence number of the most recent language selection — see `handleI18nLanguage`.
-  const latestLanguageRequest = useRef(0);
+  const latestLanguageRequestRef = useRef(0);
   const defaultLanguageCode = surveyLanguages.find((surveyLanguage) => {
     return surveyLanguage.default;
   })?.language.code;
@@ -86,9 +86,9 @@ export function LanguageSwitch({
     // Only the newest selection may apply. Two languages served by different bundles are two separate
     // fetches, so picking a second before the first lands would otherwise let the slower request set the
     // chrome back to a language the respondent has already moved off.
-    const requestId = ++latestLanguageRequest.current;
+    const requestId = ++latestLanguageRequestRef.current;
     void loadLanguage(calculatedLanguage).then(() => {
-      if (requestId !== latestLanguageRequest.current) return;
+      if (requestId !== latestLanguageRequestRef.current) return;
       const i18nLanguage = toI18nLanguage(calculatedLanguage);
       if (i18n.language !== i18nLanguage) {
         void i18n.changeLanguage(i18nLanguage);

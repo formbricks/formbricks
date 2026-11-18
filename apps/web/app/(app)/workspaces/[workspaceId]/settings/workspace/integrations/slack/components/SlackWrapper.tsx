@@ -58,6 +58,7 @@ export const SlackWrapper = ({
   }, [workspaceId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react/set-state-in-effect -- fetches on mount; getSlackChannels sets state only after its awaited action
     void getSlackChannels();
   }, [getSlackChannels]);
 

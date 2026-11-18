@@ -316,7 +316,7 @@ describe("Follow-ups", () => {
         ],
       } as unknown as TSurvey);
 
-      vi.mocked(getResponse).mockResolvedValue(modifiedResponse);
+      vi.mocked(getResponse, { partial: true }).mockResolvedValue(modifiedResponse);
 
       const result = await sendFollowUpsForResponse("response1");
 
@@ -362,7 +362,7 @@ describe("Follow-ups", () => {
 
     // A survey created with an API key has no owner; its organization's owner is charged instead.
     test("charges the organization's owner for a survey without an owner", async () => {
-      vi.mocked(getSurvey).mockResolvedValue({ ...mockSurvey, ownerId: null });
+      vi.mocked(getSurvey, { partial: true }).mockResolvedValue({ ...mockSurvey, ownerId: null });
 
       await sendFollowUpsForResponse("response1");
 
