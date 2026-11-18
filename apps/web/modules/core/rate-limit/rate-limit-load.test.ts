@@ -40,9 +40,10 @@ const isRedisAvailable = await checkRedisAvailability();
  * window boundary falling mid-burst split a burst across two keys and broke the exact counts. Each test
  * therefore freezes `Date` (only `Date`: Redis I/O and timers stay real) 100 ms after the next real
  * window boundary, and moves to the next window by advancing the frozen clock instead of sleeping.
- * Being 100 ms into the window makes the script's first-write EXPIRE the full interval, so a key
- * outlives its test's burst in real time. Every identifier carries a random UUID, so no counter
- * survives from another run or leaks between tests.
+ * Being 100 ms into the window makes the script's first-write EXPIRE the full interval. Windows are a
+ * minute or longer, so no key can expire in real time mid-test even if the worker pauses: Valkey keeps
+ * its own clock. Every identifier carries a random UUID, so no counter survives from another run or
+ * leaks between tests.
  *
  * Failure Indicators:
  * - More requests allowed than the limit: race condition in the increment
@@ -54,21 +55,21 @@ const isRedisAvailable = await checkRedisAvailability();
 const TEST_CONFIGS = {
   // Very restrictive for race condition testing
   strict: {
-    interval: 5,
+    interval: 60,
     allowedPerInterval: 3,
     namespace: "test:strict",
   } as TRateLimitConfig,
 
   // Medium restrictive
   medium: {
-    interval: 10,
+    interval: 60,
     allowedPerInterval: 10,
     namespace: "test:medium",
   } as TRateLimitConfig,
 
   // High throughput
   high: {
-    interval: 5,
+    interval: 60,
     allowedPerInterval: 50,
     namespace: "test:high",
   } as TRateLimitConfig,
@@ -191,7 +192,7 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
 
   test("Settlement cannot decrement a newer fixed window", async () => {
     const config: TRateLimitConfig = {
-      interval: 1,
+      interval: 60,
       allowedPerInterval: 5,
       namespace: "test:reservation-window",
     };
@@ -217,8 +218,11 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
     }
     expect(secondResult.data.reservation.key).toBe(windowKey(config, identifier, nextWindow));
 
+    expect(await redis.get(firstResult.data.reservation.key)).toBe("2");
     await settleRateLimit(firstResult.data.reservation, 0);
 
+    // The release lands on the old window's key (fully released, so deleted), never on the new one.
+    expect(await redis.get(firstResult.data.reservation.key)).toBeNull();
     expect(await redis.get(secondResult.data.reservation.key)).toBe("1");
   });
 
@@ -283,7 +287,7 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
 
   test("Window boundary test: the next window starts with a fresh limit", async () => {
     const config = {
-      interval: 2,
+      interval: 60,
       allowedPerInterval: 5,
       namespace: "test:boundary",
     } as TRateLimitConfig;
@@ -385,7 +389,7 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
 
   test("TTL test: a window's key carries an expiry and the next window starts fresh", async () => {
     const config: TRateLimitConfig = {
-      interval: 3,
+      interval: 60,
       allowedPerInterval: 2,
       namespace: "test:ttl",
     };
@@ -400,12 +404,13 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
     );
     expectExactlyAdmitted(phase1Results, config.allowedPerInterval);
 
-    // The first write set an expiry of at most one interval. Deleting the key when it runs out is
+    // The first write, 100 ms into the window, set an expiry of the full interval: not more, and not
+    // less either, or the window's quota would reset early. Deleting the key when it runs out is
     // Valkey's job; the limiter's job is to set it.
     const firstKey = windowKey(config, identifier, now);
     expect(await redis.get(firstKey)).toBe(String(config.allowedPerInterval));
     const firstKeyPttl = await redis.pTTL(firstKey);
-    expect(firstKeyPttl).toBeGreaterThan(0);
+    expect(firstKeyPttl).toBeGreaterThan((config.interval - 1) * 1000);
     expect(firstKeyPttl).toBeLessThanOrEqual(config.interval * 1000);
 
     // Phase 2: move into the next window
@@ -422,7 +427,7 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
     expect(newKey).not.toBe(firstKey);
     expect(await redis.get(newKey)).toBe(String(config.allowedPerInterval));
     const newKeyPttl = await redis.pTTL(newKey);
-    expect(newKeyPttl).toBeGreaterThan(0);
+    expect(newKeyPttl).toBeGreaterThan((config.interval - 1) * 1000);
     expect(newKeyPttl).toBeLessThanOrEqual(config.interval * 1000);
 
     // Phase 4: the new window's limit is already used up
