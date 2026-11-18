@@ -25,14 +25,24 @@ const INVALID_IMAGE_HINT = `The URL must end in a supported image extension (${I
   ", "
 )}). For CDN or extension-less links, upload the image to Formbricks or use a direct image URL.`;
 
-export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurvey>(surveyPrisma: any): T => {
+/** The survey row as Prisma returns it, before {@link transformPrismaSurvey} reshapes it. */
+type TPrismaSurveyRead = Record<string, unknown> &
+  Parameters<typeof withInlinedEmbeddedFields>[0] & {
+    segment?: { surveys: { id: string }[] } | null;
+    styling?: Parameters<typeof sanitizeThemeStyling>[0] | null;
+  };
+
+export const transformPrismaSurvey = <T extends TSurvey | TJsWorkspaceStateSurvey>(
+  surveyPrisma: TPrismaSurveyRead
+): T => {
   let segment: TSegment | null = null;
 
   if (surveyPrisma.segment) {
+    // The row's segment as Prisma selected it; its relation to surveys is flattened to ids here.
     segment = {
       ...surveyPrisma.segment,
-      surveys: surveyPrisma.segment.surveys.map((survey: { id: string }) => survey.id),
-    };
+      surveys: surveyPrisma.segment.surveys.map((survey) => survey.id),
+    } as TSegment;
   }
 
   const transformedSurvey = {
@@ -212,7 +222,7 @@ export const stripIsDraftFromBlocks = (blocks: TSurveyBlock[]): TSurveyBlock[] =
   return blocks.map((block) => ({
     ...block,
     elements: block.elements.map((element) => {
-      const { isDraft, ...elementRest } = element;
+      const { isDraft: _isDraft, ...elementRest } = element;
       return elementRest;
     }),
   }));

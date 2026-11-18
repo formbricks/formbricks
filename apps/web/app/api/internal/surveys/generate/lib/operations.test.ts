@@ -82,6 +82,7 @@ const hangUntilAborted = () => {
       aborted.catch(() => undefined);
       return {
         partialObjectStream: {
+          // eslint-disable-next-line require-yield -- a stream that never yields, ended only by the abort
           async *[Symbol.asyncIterator]() {
             await aborted;
           },

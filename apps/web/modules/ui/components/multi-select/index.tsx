@@ -109,6 +109,13 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
     [disabled]
   );
 
+  const handleSelect = (option: TOption<T>) => {
+    if (disabled || option.disabled) return;
+    isUserInitiatedRef.current = true; // Mark as user-initiated
+    setSelected((prev) => [...prev, option]);
+    setInputValue("");
+  };
+
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       const input = inputRef.current;
@@ -293,12 +300,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                           e.preventDefault();
                           e.stopPropagation();
                         }}
-                        onSelect={() => {
-                          if (disabled || option.disabled) return;
-                          isUserInitiatedRef.current = true; // Mark as user-initiated
-                          setSelected((prev) => [...prev, option]);
-                          setInputValue("");
-                        }}
+                        onSelect={() => handleSelect(option)}
                         className={cn(
                           "items-start gap-2",
                           option.disabled ? "cursor-not-allowed" : "cursor-pointer"

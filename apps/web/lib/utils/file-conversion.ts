@@ -54,14 +54,39 @@ export const convertToCsv = async (fields: string[], jsonData: Record<string, st
   return csv;
 };
 
+// Excel rejects any cell holding more than 32,767 characters, and SheetJS throws
+// on write, which would fail the whole export. CSV has no such limit.
+export const XLSX_MAX_CELL_LENGTH = 32767;
+export const XLSX_TRUNCATION_MARKER = "...[truncated]";
+
+/**
+ * Shortens a string that exceeds Excel's cell limit, ending it with a visible marker.
+ * Run it after `sanitizeFormulaInjection` so the safety prefix is kept and counted.
+ * The cut never splits a UTF-16 surrogate pair. Non-strings pass through unchanged.
+ */
+export const truncateForXlsxCell = <T>(value: T): T => {
+  if (typeof value !== "string" || value.length <= XLSX_MAX_CELL_LENGTH) {
+    return value;
+  }
+  let end = XLSX_MAX_CELL_LENGTH - XLSX_TRUNCATION_MARKER.length;
+  const lastKept = value.charCodeAt(end - 1);
+  if (lastKept >= 0xd800 && lastKept <= 0xdbff) {
+    // The kept text would end on a lone high surrogate; drop it with its pair.
+    end -= 1;
+  }
+  return `${value.slice(0, end)}${XLSX_TRUNCATION_MARKER}` as T;
+};
+
+const toXlsxCell = <T>(value: T): T => truncateForXlsxCell(sanitizeFormulaInjection(value));
+
 export const convertToXlsxBuffer = (
   fields: string[],
   jsonData: Record<string, string | number>[]
 ): Buffer => {
   // Build as array-of-arrays so original row keys are looked up before
   // sanitization is applied to the rendered header/cell only.
-  const headerRow = fields.map(sanitizeFormulaInjection);
-  const dataRows = jsonData.map((row) => fields.map((name) => sanitizeFormulaInjection(row[name])));
+  const headerRow = fields.map(toXlsxCell);
+  const dataRows = jsonData.map((row) => fields.map((name) => toXlsxCell(row[name])));
 
   const wb = xlsx.utils.book_new();
   const ws = xlsx.utils.aoa_to_sheet([headerRow, ...dataRows]);

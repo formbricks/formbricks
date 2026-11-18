@@ -5,68 +5,39 @@ export const findBlocksWithCyclicLogic = (blocks: TSurveyBlock[]): string[] => {
   const recStack: Record<string, boolean> = {};
   const cyclicBlocks = new Set<string>();
 
+  const isBlock = (id: string): boolean => blocks.some((b) => b.id === id);
+
+  /** Marks `blockId` cyclic and leaves it, for a block whose jump, fallback or next block cycles. */
+  const markCyclic = (blockId: string): true => {
+    cyclicBlocks.add(blockId);
+    recStack[blockId] = false;
+    return true;
+  };
+
+  /** Whether following `destination` reaches a cycle: unvisited and cyclic, or still on the stack. */
+  const leadsToCycle = (destination: string): boolean =>
+    (!visited[destination] && checkForCyclicLogic(destination)) || Boolean(recStack[destination]);
+
+  /** The blocks a block can go to next: its jump targets, its fallback, then the following block. */
+  const destinationsOf = (blockId: string): string[] => {
+    const block = blocks.find((b) => b.id === blockId);
+    // Jump targets and a fallback that are not blocks are ending cards, and are skipped.
+    const jumpTargets = (block?.logic ?? [])
+      .flatMap((logic) => findJumpToBlockActions(logic.actions))
+      .map((jumpAction) => jumpAction.target)
+      .filter(isBlock);
+    const fallback = block?.logicFallback && isBlock(block.logicFallback) ? [block.logicFallback] : [];
+    // Default behavior: move to the next block if no jump actions or fallback logic is defined
+    const nextBlock = blocks[blocks.findIndex((b) => b.id === blockId) + 1] as TSurveyBlock | undefined;
+    return [...jumpTargets, ...fallback, ...(nextBlock ? [nextBlock.id] : [])];
+  };
+
   const checkForCyclicLogic = (blockId: string): boolean => {
     if (!visited[blockId]) {
       visited[blockId] = true;
       recStack[blockId] = true;
 
-      const block = blocks.find((b) => b.id === blockId);
-      if (block?.logic && block.logic.length > 0) {
-        for (const logic of block.logic) {
-          const jumpActions = findJumpToBlockActions(logic.actions);
-          for (const jumpAction of jumpActions) {
-            const destination = jumpAction.target;
-
-            // Skip if destination is not a valid block ID (it's an ending card)
-            if (!blocks.find((b) => b.id === destination)) {
-              continue;
-            }
-
-            if (!visited[destination] && checkForCyclicLogic(destination)) {
-              cyclicBlocks.add(blockId);
-              recStack[blockId] = false;
-              return true;
-            } else if (recStack[destination]) {
-              cyclicBlocks.add(blockId);
-              recStack[blockId] = false;
-              return true;
-            }
-          }
-        }
-      }
-
-      // Check fallback logic
-      if (block?.logicFallback) {
-        const fallbackBlockId = block.logicFallback;
-
-        // Skip if fallback is not a valid block (it's an ending card)
-        if (blocks.find((b) => b.id === fallbackBlockId)) {
-          if (!visited[fallbackBlockId] && checkForCyclicLogic(fallbackBlockId)) {
-            cyclicBlocks.add(blockId);
-            recStack[blockId] = false;
-            return true;
-          } else if (recStack[fallbackBlockId]) {
-            cyclicBlocks.add(blockId);
-            recStack[blockId] = false;
-            return true;
-          }
-        }
-      }
-
-      // Handle default behavior: move to the next block if no jump actions or fallback logic is defined
-      const nextBlockIndex = blocks.findIndex((b) => b.id === blockId) + 1;
-      const nextBlock = blocks[nextBlockIndex] as TSurveyBlock | undefined;
-      if (nextBlock) {
-        if (!visited[nextBlock.id] && checkForCyclicLogic(nextBlock.id)) {
-          cyclicBlocks.add(blockId);
-          recStack[blockId] = false;
-          return true;
-        } else if (recStack[nextBlock.id]) {
-          cyclicBlocks.add(blockId);
-          recStack[blockId] = false;
-          return true;
-        }
-      }
+      if (destinationsOf(blockId).some(leadsToCycle)) return markCyclic(blockId);
     }
 
     recStack[blockId] = false;

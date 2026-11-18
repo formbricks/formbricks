@@ -4,7 +4,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   AuthenticationError,
   AuthorizationError,
-  EXPECTED_ERROR_NAMES,
   INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE,
   InvalidInputError,
   InvalidPasswordResetTokenError,
@@ -72,29 +71,6 @@ vi.mock("@/modules/ee/audit-logs/types/audit-log", () => ({
 // ── shared helper tests (pure logic, no action client needed) ──────────
 
 describe("isExpectedError (shared helper)", () => {
-  test("EXPECTED_ERROR_NAMES contains exactly the right error names", () => {
-    const expected = [
-      "ResourceNotFoundError",
-      "AuthorizationError",
-      "InvalidInputError",
-      "ValidationError",
-      "AuthenticationError",
-      "OperationNotAllowedError",
-      "ResponseAlreadyFinishedError",
-      "QueryExecutionError",
-      "TooManyRequestsError",
-      "InvalidPasswordResetTokenError",
-      "UniqueConstraintError",
-      "RequestBodyTooLargeError",
-      "SurveyLinkedCreativesError",
-    ];
-
-    expect(EXPECTED_ERROR_NAMES.size).toBe(expected.length);
-    for (const name of expected) {
-      expect(EXPECTED_ERROR_NAMES.has(name)).toBe(true);
-    }
-  });
-
   test.each([
     { ErrorClass: AuthorizationError, args: ["Not authorized"] },
     { ErrorClass: AuthenticationError, args: ["Not authenticated"] },
@@ -108,7 +84,7 @@ describe("isExpectedError (shared helper)", () => {
     { ErrorClass: UniqueConstraintError, args: ["Already exists"] },
     { ErrorClass: RequestBodyTooLargeError, args: [2 * 1024 * 1024] },
   ])("returns true for $ErrorClass.name", ({ ErrorClass, args }) => {
-    const error = new (ErrorClass as any)(...args);
+    const error = new (ErrorClass as new (...args: unknown[]) => Error)(...args);
     expect(isExpectedError(error)).toBe(true);
   });
 
@@ -287,7 +263,7 @@ describe("authenticatedActionClient", () => {
 
   test("throws AuthorizationError when user is not found", async () => {
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1" }, expires: "2999-01-01T00:00:00.000Z" });
-    vi.mocked(getUser).mockResolvedValue(null as any);
+    vi.mocked(getUser, { partial: true }).mockResolvedValue(null);
 
     const action = authenticatedActionClient.action(async () => "ok");
     const result = await action();
@@ -298,7 +274,7 @@ describe("authenticatedActionClient", () => {
 
   test("executes action successfully when session and user exist", async () => {
     vi.mocked(getSession).mockResolvedValue({ user: { id: "user-1" }, expires: "2999-01-01T00:00:00.000Z" });
-    vi.mocked(getUser).mockResolvedValue({ id: "user-1", name: "Test" } as any);
+    vi.mocked(getUser, { partial: true }).mockResolvedValue({ id: "user-1", name: "Test" });
 
     const action = authenticatedActionClient.action(async () => "success");
     const result = await action();

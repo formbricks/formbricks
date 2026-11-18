@@ -355,6 +355,14 @@ describe("resolveEmbeddedValue", () => {
 });
 
 describe("coerceToEmbeddedDataType", () => {
+  // The old switch had no arm for a type outside the enum and returned undefined; it must not throw.
+  test.each(["unknown", "constructor", "toString"])(
+    "coerces nothing for an unknown dataType %s",
+    (dataType) => {
+      expect(coerceToEmbeddedDataType("42", dataType as never)).toBeUndefined();
+    }
+  );
+
   describe("string", () => {
     test.each([
       ["hello", "hello"],

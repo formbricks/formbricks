@@ -4,6 +4,7 @@ import { problemForbidden, successListResponse, successResponse } from "@/app/ap
 import { getV3WorkspaceCustomCss, patchV3WorkspaceCustomCss } from "@/app/api/v3/workspaces/lib/custom-css";
 import { listV3Workspaces } from "@/app/api/v3/workspaces/lib/operations";
 import { ZMcpPatchWorkspaceCustomCssInput } from "./schemas";
+import type { TToolHandler } from "./test-utils";
 import { ZMcpWorkspaceCustomCssOutput, registerWorkspaceTools } from "./workspaces";
 
 vi.mock("@/app/api/v3/workspaces/lib/operations", () => ({
@@ -42,16 +43,13 @@ const workflowReadAuthInfo = { ...readAuthInfo, scopes: ["workflows:read"] };
 const dashboardsReadAuthInfo = { ...readAuthInfo, scopes: ["dashboards:read"] };
 
 function createToolServer() {
-  const tools = new Map<
-    string,
-    { config: Record<string, unknown>; handler: (input: any, extra: any) => Promise<any> }
-  >();
+  const tools = new Map<string, { config: Record<string, unknown>; handler: TToolHandler }>();
   const server = {
-    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: any) => {
+    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: TToolHandler) => {
       tools.set(name, { config, handler });
     }),
   };
-  registerWorkspaceTools(server as any);
+  registerWorkspaceTools(server as unknown as Parameters<typeof registerWorkspaceTools>[0]);
   return { server, tools };
 }
 

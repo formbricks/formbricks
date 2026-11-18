@@ -16,8 +16,6 @@
   "scripts": {
     "dev": "email dev --port 3456",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "clean": "rimraf .turbo node_modules coverage dist"
@@ -31,7 +29,7 @@
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {
-    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-oxlint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@types/react": "catalog:",
     "@vitest/coverage-v8": "catalog:",

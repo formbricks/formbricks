@@ -10,7 +10,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 
-const mockPrismaUserFindUnique = vi.mocked(prisma.user.findUnique);
+const mockPrismaUserFindUnique = vi.mocked(prisma.user.findUnique, { partial: true });
 
 describe("User Library Tests", () => {
   beforeEach(() => {
@@ -21,9 +21,7 @@ describe("User Library Tests", () => {
     const email = "test@example.com";
 
     test("should return false if user exists", async () => {
-      mockPrismaUserFindUnique.mockResolvedValue({
-        id: "some-user-id",
-      } as any);
+      mockPrismaUserFindUnique.mockResolvedValue({ id: "some-user-id" });
 
       const result = await getIsEmailUnique(email);
       expect(result).toBe(false);

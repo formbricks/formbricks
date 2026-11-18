@@ -32,7 +32,7 @@ const SQL_OPERATORS: Record<string, string> = {
 };
 
 // Regex pattern for validating numeric strings in SQL
-const NUMBER_PATTERN_SQL = "^-?[0-9]+(\\.[0-9]+)?$";
+const NUMBER_PATTERN_SQL = String.raw`^-?[0-9]+(\.[0-9]+)?$`;
 
 // Type for the result of the segment filter to prisma query generation
 export type SegmentFilterQueryResult = {

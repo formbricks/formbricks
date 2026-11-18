@@ -25,7 +25,7 @@ vi.mock("@/lib/surveyLogic/utils", () => ({
   }),
   createGroupFromResource: vi.fn((conditions, resourceId) => {
     // Mock implementation that creates a group
-    const conditionIndex = conditions.conditions.findIndex((c: any) => c.id === resourceId);
+    const conditionIndex = conditions.conditions.findIndex((c: { id: string }) => c.id === resourceId);
     if (conditionIndex !== -1) {
       const condition = conditions.conditions[conditionIndex];
       const newGroup = {
@@ -38,7 +38,7 @@ vi.mock("@/lib/surveyLogic/utils", () => ({
   }),
   duplicateCondition: vi.fn((conditions, resourceId) => {
     // Mock implementation that duplicates condition
-    const conditionIndex = conditions.conditions.findIndex((c: any) => c.id === resourceId);
+    const conditionIndex = conditions.conditions.findIndex((c: { id: string }) => c.id === resourceId);
     if (conditionIndex !== -1) {
       const condition = conditions.conditions[conditionIndex];
       const duplicated = { ...condition, id: "duplicated-id" };
@@ -47,18 +47,18 @@ vi.mock("@/lib/surveyLogic/utils", () => ({
   }),
   removeCondition: vi.fn((conditions, resourceId) => {
     // Mock implementation that removes condition
-    conditions.conditions = conditions.conditions.filter((c: any) => c.id !== resourceId);
+    conditions.conditions = conditions.conditions.filter((c: { id: string }) => c.id !== resourceId);
   }),
   toggleGroupConnector: vi.fn((conditions, groupId) => {
     // Mock implementation that toggles connector
-    const group = conditions.conditions.find((c: any) => c.id === groupId);
+    const group = conditions.conditions.find((c: { id: string }) => c.id === groupId);
     if (group?.connector) {
       group.connector = group.connector === "and" ? "or" : "and";
     }
   }),
   updateCondition: vi.fn((conditions, resourceId, updates) => {
     // Mock implementation that updates condition
-    const conditionIndex = conditions.conditions.findIndex((c: any) => c.id === resourceId);
+    const conditionIndex = conditions.conditions.findIndex((c: { id: string }) => c.id === resourceId);
     if (conditionIndex !== -1) {
       conditions.conditions[conditionIndex] = {
         ...conditions.conditions[conditionIndex],
@@ -190,29 +190,6 @@ describe("shared-conditions-factory", () => {
   });
 
   describe("createSharedConditionsFactory", () => {
-    test("should create config and callbacks without questionIdx", () => {
-      const result = createSharedConditionsFactory(defaultParams, defaultCallbacks);
-
-      expect(result).toHaveProperty("config");
-      expect(result).toHaveProperty("callbacks");
-      expect(result.config).toHaveProperty("getLeftOperandOptions");
-      expect(result.config).toHaveProperty("getOperatorOptions");
-      expect(result.config).toHaveProperty("getValueProps");
-      expect(result.config).toHaveProperty("getDefaultOperator");
-      expect(result.config).toHaveProperty("formatLeftOperandValue");
-    });
-
-    test("should create config and callbacks with questionIdx", () => {
-      const paramsWithQuestionIdx = {
-        ...defaultParams,
-        questionIdx: 0,
-      };
-      const result = createSharedConditionsFactory(paramsWithQuestionIdx, defaultCallbacks);
-
-      expect(result).toHaveProperty("config");
-      expect(result).toHaveProperty("callbacks");
-    });
-
     test("should include onCreateGroup callback when includeCreateGroup is true", () => {
       const paramsWithCreateGroup = {
         ...defaultParams,

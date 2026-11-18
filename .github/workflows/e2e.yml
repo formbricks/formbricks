@@ -22,7 +22,7 @@ jobs:
     # Fork PRs ignore E2E_RUNNER. Playwright sizes its workers to the runner's CPUs. A label with no
     # runner behind it queues until the job timeout, so check it exists before setting it. Fork PRs stay on
     # GitHub's free runner: a third-party runner may not serve them, and they shouldn't spend paid
-    # minutes. Pin their OS too: Playwright 1.58.2 does not support Ubuntu 26.04.
+    # minutes. Pin their OS too: the pinned Playwright (1.60.0) is only verified on Ubuntu 24.04.
     # merge_group and same-repo PRs have no fork flag and take the default.
     runs-on: ${{ github.event.pull_request.head.repo.fork && 'ubuntu-24.04' || vars.E2E_RUNNER || 'blacksmith-8vcpu-ubuntu-2404' }}
     # Chosen so the step timeouts below always fire FIRST, because a step timeout names

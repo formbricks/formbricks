@@ -310,7 +310,7 @@ describe("Organization Service", () => {
 
       vi.mocked(prisma.organization.update).mockResolvedValue(mockOrganization);
       vi.mocked(prisma.$transaction).mockImplementation(
-        async (fn: any) =>
+        async (fn) =>
           await fn({
             organization: {
               update: prisma.organization.update,
@@ -319,7 +319,7 @@ describe("Organization Service", () => {
             organizationBilling: {
               upsert: prisma.organizationBilling.upsert,
             },
-          })
+          } as never)
       );
 
       const result = await updateOrganization("org1", { name: "Updated Org" });
@@ -355,7 +355,7 @@ describe("Organization Service", () => {
       });
 
       vi.mocked(prisma.$transaction).mockImplementation(
-        async (fn: any) =>
+        async (fn) =>
           await fn({
             organization: {
               update: vi.fn().mockRejectedValue(prismaError),
@@ -364,7 +364,7 @@ describe("Organization Service", () => {
             organizationBilling: {
               upsert: prisma.organizationBilling.upsert,
             },
-          })
+          } as never)
       );
 
       await expect(updateOrganization("org1", { name: "Updated Org" })).rejects.toThrow(
@@ -381,14 +381,14 @@ describe("Organization Service", () => {
           alert: { "existing-survey-id": true },
           unsubscribedOrganizationIds: [], // User is subscribed to all organizations
         },
-      } as any;
+      };
 
       const surveyId = "survey-123";
       const userId = "user-123";
       const organizationId = "org-123";
 
-      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockUser);
-      vi.mocked(updateUser).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValueOnce(mockUser);
+      vi.mocked(updateUser, { partial: true }).mockResolvedValueOnce({});
 
       await subscribeOrganizationMembersToSurveyResponses(surveyId, userId, organizationId);
 
@@ -414,13 +414,13 @@ describe("Organization Service", () => {
           alert: { "existing-survey-id": true },
           unsubscribedOrganizationIds: ["org-123"], // User has unsubscribed from this organization
         },
-      } as any;
+      };
 
       const surveyId = "survey-123";
       const userId = "user-123";
       const organizationId = "org-123";
 
-      vi.mocked(prisma.user.findUnique).mockResolvedValueOnce(mockUser);
+      vi.mocked(prisma.user.findUnique, { partial: true }).mockResolvedValueOnce(mockUser);
 
       await subscribeOrganizationMembersToSurveyResponses(surveyId, userId, organizationId);
 
@@ -447,7 +447,7 @@ describe("Organization Service", () => {
         teams: [],
         apiKeys: [{ id: "api-key-1" }],
         feedbackDirectories: [],
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof prisma.organization.delete>>);
 
       await deleteOrganization("org1");
 
@@ -475,7 +475,7 @@ describe("Organization Service", () => {
           { id: "frd_1", workspaces: [{ workspaceId: "workspace-1" }] },
           { id: "frd_2", workspaces: [] },
         ],
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof prisma.organization.delete>>);
 
       await deleteOrganization("org1");
 
@@ -511,7 +511,7 @@ describe("Organization Service", () => {
         teams: [],
         apiKeys: [],
         feedbackDirectories: [],
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof prisma.organization.delete>>);
 
       await deleteOrganization("org1");
 
@@ -536,7 +536,7 @@ describe("Organization Service", () => {
         teams: [],
         apiKeys: [],
         feedbackDirectories: [],
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof prisma.organization.delete>>);
 
       await deleteOrganization("org1");
 
@@ -559,7 +559,7 @@ describe("Organization Service", () => {
         teams: [],
         apiKeys: [],
         feedbackDirectories: [],
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof prisma.organization.delete>>);
 
       await expect(deleteOrganization("org1")).resolves.toBeUndefined();
 

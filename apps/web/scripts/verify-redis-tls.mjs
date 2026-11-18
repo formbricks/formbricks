@@ -1,4 +1,3 @@
-/* eslint turbo/no-undeclared-env-vars: ["error", { "allowList": ["OPENSSL_BIN", "REDIS_SERVER_BIN", "REDIS_TLS_TEST_URL", "NODE_TLS_REJECT_UNAUTHORIZED"] }] */
 import assert from "node:assert/strict";
 import { execFileSync, spawn } from "node:child_process";
 import { once } from "node:events";

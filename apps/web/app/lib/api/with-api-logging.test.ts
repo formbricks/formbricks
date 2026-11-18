@@ -204,7 +204,7 @@ describe("withV1ApiWrapper", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: "session-user-id" },
       expires: "2026-01-01",
-    } as any);
+    });
     vi.mocked(isClientSideApiRoute).mockReturnValue({ isClientSideApi: false, isRateLimited: true });
     vi.mocked(isManagementApiRoute).mockReturnValue({
       isManagementApi: true,

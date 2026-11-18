@@ -6,7 +6,7 @@ import { structuredClone } from "@/lib/pollyfills/structuredClone";
 
 export const replaceElementPresetPlaceholders = (
   element: TSurveyElement,
-  workspace: TWorkspace
+  workspace: Pick<TWorkspace, "name"> | undefined
 ): TSurveyElement => {
   if (!workspace) return element;
   const newElement = structuredClone(element);
@@ -30,7 +30,7 @@ export const replaceElementPresetPlaceholders = (
 };
 
 // replace all occurences of workspaceName with the actual workspace name in the current template
-export const replacePresetPlaceholders = (template: TTemplate, workspace: any) => {
+export const replacePresetPlaceholders = (template: TTemplate, workspace: Pick<TWorkspace, "name">) => {
   const preset = structuredClone(template.preset);
   preset.name = preset.name.replace("$[workspaceName]", workspace.name);
 

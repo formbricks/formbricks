@@ -17,13 +17,12 @@
   },
   "scripts": {
     "build": "vite build && tsc --project tsconfig.build.json",
-    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-oxlint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",

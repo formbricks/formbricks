@@ -3,7 +3,7 @@ import { prisma } from "@formbricks/database";
 import { getContactAttributeKeys } from "../contact-attribute-key";
 
 vi.mock("react", () => ({
-  cache: vi.fn((fn: Function) => fn),
+  cache: vi.fn(<T>(fn: T) => fn),
 }));
 
 // Mock dependencies

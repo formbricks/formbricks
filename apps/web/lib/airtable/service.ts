@@ -54,9 +54,9 @@ export const getTables = async (key: TIntegrationAirtableCredential, baseId: str
   return ZIntegrationAirtableTables.parse(res);
 };
 
-export const fetchAirtableAuthToken = async (formData: Record<string, any>) => {
+export const fetchAirtableAuthToken = async (formData: Record<string, string | undefined>) => {
   const formBody = Object.keys(formData)
-    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(formData[key])}`)
+    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(String(formData[key]))}`)
     .join("&");
 
   const tokenReq = await fetch("https://airtable.com/oauth2/v1/token", {

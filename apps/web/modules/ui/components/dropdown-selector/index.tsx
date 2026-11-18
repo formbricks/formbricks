@@ -9,20 +9,25 @@ import {
 } from "@/modules/ui/components/dropdown-menu";
 import { Label } from "@/modules/ui/components/label";
 
-interface DropdownSelectorProps {
+interface DropdownSelectorItem {
+  id: string;
+  name?: string | null;
+}
+
+interface DropdownSelectorProps<TItem extends DropdownSelectorItem> {
   label?: string;
-  items: Array<any>;
-  selectedItem: any;
-  setSelectedItem: React.Dispatch<React.SetStateAction<any>>;
+  items: TItem[];
+  selectedItem: TItem | null | undefined;
+  setSelectedItem: (item: TItem) => void;
   disabled: boolean;
   placeholder?: string;
   refetch?: () => void;
   /** Items this returns true for are shown disabled, with `disabledItemHint` beside them. */
-  isItemDisabled?: (item: any) => boolean;
+  isItemDisabled?: (item: TItem) => boolean;
   disabledItemHint?: ReactNode;
 }
 
-export const DropdownSelector = ({
+export const DropdownSelector = <TItem extends DropdownSelectorItem>({
   label,
   items,
   selectedItem,
@@ -31,7 +36,7 @@ export const DropdownSelector = ({
   placeholder,
   isItemDisabled,
   disabledItemHint,
-}: Readonly<DropdownSelectorProps>) => {
+}: Readonly<DropdownSelectorProps<TItem>>) => {
   return (
     <div className="col-span-1">
       {label && <Label htmlFor={label}>{label}</Label>}
@@ -59,7 +64,7 @@ export const DropdownSelector = ({
                 className="z-50 max-h-64 max-w-96 min-w-[220px] overflow-auto rounded-md bg-white text-sm text-slate-800 shadow-md"
                 align="start">
                 {items
-                  .sort((a, b) => a.name?.localeCompare(b.name))
+                  .sort((a, b) => a.name?.localeCompare(String(b.name)) ?? 0)
                   .map((item) => {
                     const isDisabled = isItemDisabled?.(item) ?? false;
                     return (

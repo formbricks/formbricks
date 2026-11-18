@@ -112,7 +112,7 @@ export const removeLanguageKeysFromSurvey = (survey: TSurvey, languageCode: stri
     } else if (obj && typeof obj === "object") {
       const record = obj as Record<string, unknown>;
       for (const key in record) {
-        if (record.hasOwnProperty(key)) {
+        if (Object.hasOwn(record, key)) {
           if (key === "default" && typeof record[key] === "string") {
             delete record[languageCode];
             return;

@@ -75,10 +75,10 @@ describe("promises utilities", () => {
     const fulfilled = results.filter(isFulfilled);
     const rejected = results.filter(isRejected);
 
-    expect(fulfilled.length).toBe(1);
+    expect(fulfilled).toHaveLength(1);
     expect(fulfilled[0].value).toBe("success");
 
-    expect(rejected.length).toBe(1);
+    expect(rejected).toHaveLength(1);
     expect(rejected[0].reason).toBe("failure");
   });
 });

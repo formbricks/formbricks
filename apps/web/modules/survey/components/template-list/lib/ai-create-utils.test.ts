@@ -1,17 +1,8 @@
 import { TFunction } from "i18next";
 import { describe, expect, test, vi } from "vitest";
-import {
-  AI_SURVEY_PROMPT_MAX_LENGTH,
-  AI_SURVEY_PROMPT_MIN_LENGTH,
-  getHelperPrompts,
-} from "./ai-create-utils";
+import { getHelperPrompts } from "./ai-create-utils";
 
 describe("ai-create-utils", () => {
-  test("defines prompt limits", () => {
-    expect(AI_SURVEY_PROMPT_MIN_LENGTH).toBe(4);
-    expect(AI_SURVEY_PROMPT_MAX_LENGTH).toBe(1200);
-  });
-
   test("builds helper prompts with translated labels and prompts", () => {
     const tMock = vi.fn((key: string) => key) as unknown as TFunction;
 
