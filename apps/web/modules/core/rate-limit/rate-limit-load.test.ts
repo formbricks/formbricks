@@ -52,12 +52,15 @@ const isRedisAvailable = await checkRedisAvailability();
  * - Window rollover failures: TTL or window calculation errors
  */
 
+// Every config passed to `expectExactlyAdmitted` fails closed: a Redis error then comes back as `err`,
+// which the helper rejects, instead of the fail-open `allowed: true` it would count as an admission.
 const TEST_CONFIGS = {
   // Very restrictive for race condition testing
   strict: {
     interval: 60,
     allowedPerInterval: 3,
     namespace: "test:strict",
+    failClosed: true,
   } as TRateLimitConfig,
 
   // Medium restrictive
@@ -65,6 +68,7 @@ const TEST_CONFIGS = {
     interval: 60,
     allowedPerInterval: 10,
     namespace: "test:medium",
+    failClosed: true,
   } as TRateLimitConfig,
 
   // High throughput
@@ -72,6 +76,7 @@ const TEST_CONFIGS = {
     interval: 60,
     allowedPerInterval: 50,
     namespace: "test:high",
+    failClosed: true,
   } as TRateLimitConfig,
 } as const;
 
@@ -128,7 +133,10 @@ const expectFullIntervalExpiry = (
   expect(expiresAt).toBeLessThanOrEqual(after + intervalMs);
 };
 
-/** Every result must be an answer from Redis, and exactly `limit` of them may be admitted. */
+/**
+ * Every result must be an answer from Redis, and exactly `limit` of them may be admitted. Only holds for
+ * a `failClosed` config: a fail-open one turns a Redis error into an admission.
+ */
 const expectExactlyAdmitted = (results: TCheckResult[], limit: number) => {
   const allowed = results.filter((r) => r.ok && r.data.allowed).length;
   const denied = results.filter((r) => r.ok && !r.data.allowed).length;
@@ -167,18 +175,23 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
     const redis = await cache.getRedisClient();
     if (!redis) throw new Error("Expected a Redis client");
 
+    const beforeFirst = await redisNowMs(redis);
     const firstResult = await checkRateLimit(config, identifier, 3);
+    const afterFirst = await redisNowMs(redis);
     expect(firstResult).toEqual({ ok: true, data: { allowed: true, retryAfter: undefined } });
     expect(await redis.get(key)).toBe("3");
 
-    const firstWriteTtl = await redis.ttl(key);
-    expect(firstWriteTtl).toBeGreaterThan(0);
-    expect(firstWriteTtl).toBeLessThanOrEqual(config.interval);
+    const firstExpiry = await redis.pExpireTime(key);
+    expectFullIntervalExpiry(firstExpiry, config, beforeFirst, afterFirst);
+
+    // Wait until Valkey's clock has moved past the first write, so an EXPIRE reset by the second
+    // admission would store a later expiry and fail the equality below.
+    await expect.poll(() => redisNowMs(redis)).toBeGreaterThan(afterFirst);
 
     const secondResult = await checkRateLimit(config, identifier, 2);
     expect(secondResult).toEqual({ ok: true, data: { allowed: true, retryAfter: undefined } });
     expect(await redis.get(key)).toBe("5");
-    expect(await redis.ttl(key)).toBeLessThanOrEqual(firstWriteTtl);
+    expect(await redis.pExpireTime(key)).toBe(firstExpiry);
 
     const rejectedResult = await checkRateLimit(config, identifier, 1);
     expect(rejectedResult.ok).toBe(true);
@@ -314,6 +327,7 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
       interval: 60,
       allowedPerInterval: 5,
       namespace: "test:boundary",
+      failClosed: true,
     } as TRateLimitConfig;
     const now = freezeClockAtWindowStart(config.interval);
     const identifier = uniqueIdentifier("boundary-test");
@@ -416,6 +430,7 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
       interval: 60,
       allowedPerInterval: 2,
       namespace: "test:ttl",
+      failClosed: true,
     };
     const now = freezeClockAtWindowStart(config.interval);
     const identifier = uniqueIdentifier("ttl-test-user");

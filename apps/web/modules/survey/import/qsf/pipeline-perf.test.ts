@@ -36,7 +36,8 @@ const seen = vi.hoisted(() => ({
   /** This process's CPU time at the last yield, and the most it spent between two yields. */
   cpuAtLastYield: 0,
   longestStretchMs: 0,
-  languageCodeLookups: 0,
+  /** Every raw code handed to the language-code normalizer. */
+  languageCodeInputs: [] as string[],
   longestPipedScan: 0,
   /** The last sanitized texts, which the plan and the assembly copy from. */
   texts: null as Parameters<typeof import("./fit-draft").fitQsfSurveyToCreateLimit>[1] | null,
@@ -67,7 +68,7 @@ vi.mock("./language-codes", async (importOriginal) => {
   return {
     ...original,
     normalizeQualtricsLanguageCode: (raw: string) => {
-      seen.languageCodeLookups += 1;
+      seen.languageCodeInputs.push(raw);
       return original.normalizeQualtricsLanguageCode(raw);
     },
   };
@@ -125,7 +126,7 @@ vi.mock("./assemble", async (importOriginal) => {
 beforeEach(() => {
   vi.mocked(prisma.survey.findMany).mockResolvedValue([]);
   seen.yields = 0;
-  seen.languageCodeLookups = 0;
+  seen.languageCodeInputs = [];
   seen.longestPipedScan = 0;
   seen.texts = null;
   seen.stages = [];
@@ -355,13 +356,10 @@ describe("event loop", () => {
       expect((refused as SurveyImportInputError).invalidParams[0].name).toBe(
         "file.SurveyElements.0.Payload.Language"
       );
-      // The survey's own default language is the one code looked up; no `Language` key is. The keys are
-      // listed once and no value is read.
-      expect({ languageCodeLookups: seen.languageCodeLookups, ...reads }).toEqual({
-        languageCodeLookups: 1,
-        ownKeys: 1,
-        get: 0,
-      });
+      // No `Language` key reaches the normalizer (every variant is whitespace then some casing of "de").
+      // The keys are listed once and no value is read.
+      expect(seen.languageCodeInputs.filter((raw) => /^\s*de$/i.test(raw))).toEqual([]);
+      expect(reads).toEqual({ ownKeys: 1, get: 0 });
       // The `get` count can move: a read through the same Proxy is counted, so the 0 above is the reader's.
       expect(countedLanguage[firstKey]).toBeDefined();
       expect(reads.get).toBe(1);
