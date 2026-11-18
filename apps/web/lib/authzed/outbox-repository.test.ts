@@ -12,6 +12,7 @@ import {
   queueAuthzedOutboxEvents,
   replayAuthzedOutboxDeadLetters,
 } from "./outbox-repository";
+import { AUTHZED_OUTBOX_TARGET_TYPES } from "./outbox-types";
 
 const row = (targetType: string) => ({
   attempts: 1,
@@ -183,7 +184,11 @@ describe("AuthZed projection outbox repository", () => {
     await expect(replayAuthzedOutboxDeadLetters()).resolves.toBe(4);
 
     expect(prisma.authzedProjectionOutbox.updateMany).toHaveBeenCalledWith({
-      where: { deadLetteredAt: { not: null }, processedAt: null },
+      where: {
+        deadLetteredAt: { not: null },
+        processedAt: null,
+        targetType: { in: [...AUTHZED_OUTBOX_TARGET_TYPES] },
+      },
       data: {
         attempts: 0,
         availableAt: expect.any(Date),

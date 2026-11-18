@@ -311,7 +311,9 @@ export const getAuthzedOutboxStatus = async (): Promise<TAuthzedOutboxStatus> =>
 
 export const replayAuthzedOutboxDeadLetters = async (): Promise<number> => {
   const result = await prisma.authzedProjectionOutbox.updateMany({
-    where: { deadLetteredAt: { not: null }, processedAt: null },
+    // Only the types this release delivers: an unknown one would be reset and counted yet never claimed,
+    // and lose the `lastErrorCode` an operator needs to diagnose it.
+    where: { deadLetteredAt: { not: null }, processedAt: null, targetType: { in: KNOWN_TARGET_TYPES } },
     data: {
       attempts: 0,
       availableAt: new Date(),
