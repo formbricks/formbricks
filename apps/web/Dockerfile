@@ -1,41 +1,36 @@
 # syntax=docker/dockerfile:1.20
 # The syntax line must stay first: `COPY --parents` below needs Dockerfile frontend 1.20.
 
-# Node major must stay in sync with .nvmrc (single source of truth for dev + CI + prod).
-FROM node:24-alpine3.24 AS base
-
-# Node's official binary embeds OpenSSL, so apk upgrades cannot patch its TLS implementation.
-# Keep Node 24's current Undici fixes while linking its runtime to Alpine's patched OpenSSL/zlib.
+# Node is the official release binary from nodejs.org, taken from the Docker Official Image and pinned by
+# digest; Dependabot moves the digests (.github/dependabot.yml). The tag must hold the exact .nvmrc version,
+# which node-version-alignment.test.ts enforces. glibc is a Tier 1 Node platform; Alpine's musl is not.
 #
-# --openssl-use-def-ca-store makes Node trust the OS CA bundle (Alpine's ca-certificates) instead of the
-# Mozilla list compiled into the binary. It is the build-time form of --use-openssl-ca, so unlike a
-# NODE_OPTIONS value it survives a deployment that sets its own NODE_OPTIONS. Without it a CA-package fix,
-# such as the compromised eMudhra intermediates (ENG-4065), never reaches Node.
-FROM alpine:3.24 AS node-runtime-builder
-ARG NODE_VERSION=24.22.3
-ARG NODE_SOURCE_SHA256=48ca3aa8a9b02133356922ef4fc80200e00598c80a4ef446f7c39a459222593d
-ARG NODE_BUILD_JOBS=4
-RUN apk add --no-cache curl g++ linux-headers make python3 xz \
-    "openssl-dev>=3.5.9-r0" "zlib-dev>=1.3.2-r1"
-WORKDIR /node-source
-RUN curl --proto '=https' --proto-redir '=https' --fail --location --retry 3 \
-      --output node.tar.xz "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}.tar.xz" \
-    && echo "${NODE_SOURCE_SHA256}  node.tar.xz" | sha256sum -c - \
-    && tar -xJf node.tar.xz --strip-components=1 \
-    && ./configure --shared-openssl --shared-zlib --openssl-use-def-ca-store --without-npm
-# Compile within the build layer; release binaries must not read shared writable compiler objects.
-RUN make -j${NODE_BUILD_JOBS} \
-    && install -m 755 out/Release/node /usr/local/bin/node
-RUN install -D -m 644 LICENSE /usr/local/share/doc/node/LICENSE
+# The binary embeds OpenSSL and Mozilla's root CA list, so TLS and CA fixes arrive as Node security
+# releases (a new .nvmrc version), not as OS package upgrades. Node trusts its bundled list, not the OS
+# store; that list also blocks the compromised eMudhra intermediates (ENG-4065), and NODE_EXTRA_CA_CERTS
+# adds private CAs on top.
+FROM node:26.13.1-trixie-slim@sha256:e6bedef217677b276c591795e169840edd9096dbf13f29df8ef8d1856b8820bc AS base
 
-# Node reads its trust store from these packages (see node-runtime-builder), so the CA pin is a security
-# control: 20261020-r0 is the first Alpine release that distrusts the compromised eMudhra root.
-FROM alpine:3.24 AS runtime-base
-RUN apk update && apk upgrade --no-cache \
-    && apk add --no-cache "ca-certificates>=20261020-r0" "ca-certificates-bundle>=20261020-r0" \
-      "libcrypto3>=3.5.9-r0" libgcc "libssl3>=3.5.9-r0" libstdc++ "zlib>=1.3.2-r1"
-COPY --from=node-runtime-builder /usr/local/bin/node /usr/local/bin/node
-COPY --from=node-runtime-builder /usr/local/share/doc/node/LICENSE /usr/local/share/doc/node/LICENSE
+# The runtime gets only the node binary: no npm, npx, corepack or yarn. libatomic1 is the one library the
+# binary links that Debian's slim image lacks. Prisma's schema engine, which runs the migrations, is a
+# native binary that links OpenSSL (libssl3t64) and verifies database TLS against the OS CA bundle
+# (ca-certificates); Node itself reads neither. apt-get upgrade picks up Debian security fixes released
+# after the pinned digest.
+#
+# Debian's bundle still ships emSign roots that Mozilla and Node have dropped or distrust (ENG-4065), so
+# they are deselected here; verify-runtime.mjs fails the build if one comes back.
+FROM debian:trixie-slim@sha256:a72b4433de1cf7d6bae0c4cee74d0547f58601a643b3375f070c51600d63b6b2 AS runtime-base
+RUN apt-get update \
+    && apt-get upgrade -y --no-install-recommends \
+    && apt-get install -y --no-install-recommends ca-certificates libatomic1 libssl3t64 \
+    && rm -rf /var/lib/apt/lists/* \
+    && sed -i -E 's#^(mozilla/emSign_.*\.crt)$#!\1#' /etc/ca-certificates.conf \
+    && update-ca-certificates --fresh > /dev/null
+COPY --from=base /usr/local/bin/node /usr/local/bin/node
+# The official image drops Node's license file, which redistributing the binary requires.
+ADD --checksum=sha256:8e603aa87c70d36e497004f0dec63111511cb61b7d65ace12e10ea791599286c \
+    https://raw.githubusercontent.com/nodejs/node/v26.13.1/LICENSE /usr/local/share/doc/node/LICENSE
+RUN chmod 644 /usr/local/share/doc/node/LICENSE
 COPY apps/web/scripts/docker/verify-runtime.mjs /tmp/verify-runtime.mjs
 RUN node /tmp/verify-runtime.mjs && rm /tmp/verify-runtime.mjs
 
@@ -137,8 +132,12 @@ RUN --mount=type=secret,id=database_url \
 FROM runtime-base AS runner
 
 # The application and migrations invoke Node directly; the runtime contains no npm/npx or build headers.
-RUN addgroup -S nextjs \
-    && adduser -S -u 1001 -G nextjs nextjs
+# UID 1001 and GID 101 match the earlier Alpine image, so existing upload volumes keep their ownership.
+# The home directory starts empty and owned by nextjs, as Alpine's adduser left it (no /etc/skel files).
+RUN groupadd --system --gid 101 nextjs \
+    && useradd --uid 1001 --gid nextjs --home-dir /home/nextjs --no-create-home \
+      --shell /usr/sbin/nologin nextjs \
+    && install -d -o nextjs -g nextjs -m 755 /home/nextjs
 
 WORKDIR /home/nextjs
 

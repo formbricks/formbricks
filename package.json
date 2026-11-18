@@ -29,7 +29,6 @@
     "go": "pnpm db:up && pnpm dev:authzed && turbo run go --concurrency 20",
     "dev": "turbo run dev --parallel",
     "pre-commit": "lint-staged",
-    "lint:prune-suppressions": "pnpm -r --if-present lint:prune-suppressions",
     "start": "turbo run start --parallel",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -38,7 +37,10 @@
     "adr:check": "node scripts/check-adr-numbers.mjs",
     "local-refs:check": "node scripts/check-local-refs.mjs",
     "workflow:check": "node scripts/check-workflows.mjs",
-    "lint": "turbo run lint && pnpm api:v3:lint && pnpm api:v3:check && pnpm api:v3:schemas:check && pnpm catalog:check && pnpm workflow:check && pnpm local-refs:check && pnpm adr:check",
+    "lint": "turbo run lint:code && pnpm api:v3:lint && pnpm api:v3:check && pnpm api:v3:schemas:check && pnpm catalog:check && pnpm workflow:check && pnpm local-refs:check && pnpm adr:check && pnpm lint:formbricks-baseline --check",
+    "lint:code": "NODE_OPTIONS=--disable-warning=MODULE_TYPELESS_PACKAGE_JSON oxlint --type-aware",
+    "lint:fix": "pnpm lint:code --fix",
+    "lint:formbricks-baseline": "node scripts/formbricks-rules-baseline.mjs",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test test:root --no-cache",
     "test:root": "vitest run --config vitest.root.config.mts",
@@ -66,15 +68,16 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.11.3",
-    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-oxlint": "workspace:*",
     "@playwright/test": "catalog:",
     "@redocly/cli": "1.34.17",
     "@trivago/prettier-plugin-sort-imports": "catalog:",
     "dotenv": "catalog:",
-    "eslint": "9.39.5",
     "husky": "9.1.7",
     "js-yaml": "catalog:",
     "lint-staged": "16.4.0",
+    "oxlint": "1.93.0",
+    "oxlint-tsgolint": "7.0.2007",
     "prettier": "catalog:",
     "prettier-plugin-sort-json": "catalog:",
     "prettier-plugin-tailwindcss": "catalog:",
@@ -85,7 +88,7 @@
     "vitest": "catalog:"
   },
   "engines": {
-    "node": ">=24.0.0 <25"
+    "node": ">=26.0.0 <27"
   },
   "packageManager": "pnpm@11.7.0"
 }

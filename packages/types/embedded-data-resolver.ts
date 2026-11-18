@@ -882,12 +882,9 @@ export const resolveEmbeddedValue = (
   const { field, link } = ref;
   if (field.source === "reserved") return undefined;
 
-  const storedValue =
-    field.source === "computed"
-      ? response.variables[link.storageKey]
-      : field.locked
-        ? undefined
-        : response.data[link.storageKey];
+  let storedValue: unknown;
+  if (field.source === "computed") storedValue = response.variables[link.storageKey];
+  else if (!field.locked) storedValue = response.data[link.storageKey];
 
   const coerced = coerceToEmbeddedDataType(storedValue, field.dataType);
   if (coerced !== undefined) return coerced;

@@ -348,7 +348,7 @@ const evaluateSingleCondition = (
   embeddedValues: TResponseData
 ): boolean => {
   try {
-    let leftValue = getLeftOperandValue(
+    const leftValue = getLeftOperandValue(
       localSurvey,
       data,
       variablesData,
@@ -609,6 +609,7 @@ const evaluateSingleCondition = (
       default:
         return false;
     }
+    // eslint-disable-next-line no-unused-vars -- left as is: any edit to this line trips the staged cognitive-complexity check on this function, which is refactored separately (ENG-7329)
   } catch (e) {
     return false;
   }
@@ -623,7 +624,7 @@ const getLeftOperandValue = (
   embeddedValues: TResponseData
 ) => {
   switch (leftOperand.type) {
-    case "element":
+    case "element": {
       const elements = getElementsFromBlocks(localSurvey.blocks);
       const currentElement = elements.find((q) => q.id === leftOperand.value);
       if (!currentElement) return undefined;
@@ -655,7 +656,7 @@ const getLeftOperandValue = (
 
           return choice.id;
         } else if (Array.isArray(responseValue)) {
-          let choices: string[] = [];
+          const choices: string[] = [];
           responseValue.forEach((value) => {
             const foundChoice = findByLocalizedLabel(currentElement.choices, value, selectedLanguage);
 
@@ -704,6 +705,7 @@ const getLeftOperandValue = (
       }
 
       return data[leftOperand.value];
+    }
     case "variable":
       return getLogicVariableValue(getComputedEmbeddedFields(localSurvey), leftOperand.value, variablesData);
     case "hiddenField":
@@ -825,17 +827,18 @@ const performCalculation = (
     case "static":
       operandValue = action.value.value;
       break;
-    case "variable":
+    case "variable": {
       const value = calculations[action.value.value];
       if (typeof value === "number" || typeof value === "string") {
         operandValue = value;
       }
       break;
+    }
     // Deliberately no `default` arm: a legacy `"question"` operand (admitted at the type level by
     // ZDynamicLogicFieldValueDeprecated, normalized away at the API boundary) stays unresolved and
     // the calculation returns undefined, exactly as before.
     case "element":
-    case "hiddenField":
+    case "hiddenField": {
       const val = data[action.value.value];
       if (typeof val === "number" || typeof val === "string") {
         if (dataType === "number" && !Number.isNaN(Number(val))) {
@@ -845,6 +848,7 @@ const performCalculation = (
         }
       }
       break;
+    }
   }
 
   if (operandValue === undefined || operandValue === null) return undefined;

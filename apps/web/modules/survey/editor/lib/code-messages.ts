@@ -26,9 +26,10 @@ export const describeCodeIssue = (
 ): string => {
   const code = issue.value;
   switch (issue.kind) {
+    // clashes_export_column: the export column this code would make is one the named question
+    // already has.
     case "duplicate_question_code":
     case "duplicate_answer_code":
-    // The export column this code would make is one the named question already has.
     case "clashes_export_column":
       return t("workspace.surveys.edit.code_error_used_by", { code, name: clashLabel ?? issue.clashesWith });
     case "clashes_embedded_data":

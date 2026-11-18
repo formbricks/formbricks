@@ -1264,6 +1264,7 @@ export function Survey({
       // queue has stamped the persisted responseId onto surveyState (ENG-1846).
       onFinished?.(surveyState?.responseId ?? undefined);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fires once per finish: the queue writes responseId onto surveyState in place, so it is read here rather than tracked, and depending on surveyState would report the finish again whenever the memo rebuilds it
   }, [isResponseSendingFinished, isSurveyFinished, onFinished]);
 
   /**

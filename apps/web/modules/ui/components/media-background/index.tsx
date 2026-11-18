@@ -53,8 +53,8 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
         // To not set for Default Images as they have relative URL & are not from Unsplash
         if (!background?.bg.startsWith("/")) {
           setAuthorDetailsForUnsplash({
-            authorName: new URL(background?.bg!).searchParams.get("authorName") || "",
-            authorURL: new URL(background?.bg!).searchParams.get("authorLink") || "",
+            authorName: new URL(background.bg).searchParams.get("authorName") || "",
+            authorURL: new URL(background.bg).searchParams.get("authorLink") || "",
           });
         } else {
           setAuthorDetailsForUnsplash({ authorName: "", authorURL: "" });

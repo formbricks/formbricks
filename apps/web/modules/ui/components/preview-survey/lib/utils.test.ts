@@ -30,7 +30,7 @@ describe("getPlacementStyle", () => {
   });
 
   test("returns default style for invalid placement", () => {
-    // @ts-ignore - Testing with invalid input
+    // @ts-expect-error -- testing with an invalid placement
     const style = getPlacementStyle("invalidPlacement");
     expect(style).toBe("bottom-3 sm:right-3");
   });

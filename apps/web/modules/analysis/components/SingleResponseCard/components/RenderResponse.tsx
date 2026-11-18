@@ -33,6 +33,21 @@ interface RenderResponseProps {
   readonly responseId?: string;
 }
 
+const handleArray = (data: string | number | string[]): string => {
+  if (Array.isArray(data)) {
+    return data.join(", ");
+  } else {
+    return String(data);
+  }
+};
+
+/** A value with no element-specific rendering: text with its links, a list joined, a number as is. */
+const renderPlainResponse = (responseData: string | number | string[]): React.ReactNode => {
+  if (typeof responseData === "string") return renderHyperlinkedContent(responseData);
+  if (Array.isArray(responseData)) return handleArray(responseData);
+  return responseData;
+};
+
 export const RenderResponse: React.FC<RenderResponseProps> = ({
   responseData,
   element,
@@ -52,13 +67,6 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
     return <p className="ph-no-capture my-1 font-normal text-slate-700">-</p>;
   }
 
-  const handleArray = (data: string | number | string[]): string => {
-    if (Array.isArray(data)) {
-      return data.join(", ");
-    } else {
-      return String(data);
-    }
-  };
   switch (element.type) {
     case TSurveyElementTypeEnum.Rating:
     case TSurveyElementTypeEnum.CSAT:
@@ -212,11 +220,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
               "ph-no-capture my-1 truncate font-normal text-slate-700",
               isExpanded ? "whitespace-pre-line" : "whitespace-nowrap"
             )}>
-            {typeof responseData === "string"
-              ? renderHyperlinkedContent(responseData)
-              : Array.isArray(responseData)
-                ? handleArray(responseData)
-                : responseData}
+            {renderPlainResponse(responseData)}
           </p>
         );
       }

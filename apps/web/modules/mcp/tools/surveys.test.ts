@@ -222,7 +222,7 @@ describe("registerSurveyTools", () => {
       },
     });
     expect(
-      Object.keys((tools.get("create_survey")?.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
+      Object.keys((tools.get("create_survey")!.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
     ).toEqual(
       expect.arrayContaining([
         "workspaceId",
@@ -250,7 +250,7 @@ describe("registerSurveyTools", () => {
       },
     });
     expect(
-      Object.keys((tools.get("validate_survey")?.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
+      Object.keys((tools.get("validate_survey")!.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
     ).toEqual(expect.arrayContaining(["operation", "surveyId", "data"]));
     expect(tools.get("patch_survey")?.config).toMatchObject({
       title: "Patch survey",

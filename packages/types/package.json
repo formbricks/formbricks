@@ -8,7 +8,6 @@
   },
   "sideEffects": false,
   "scripts": {
-    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
@@ -16,9 +15,9 @@
     "clean": "rimraf node_modules .turbo"
   },
   "dependencies": {
+    "node-html-parser": "7.1.0",
     "zod": "catalog:",
-    "zod-openapi": "catalog:",
-    "node-html-parser": "7.1.0"
+    "zod-openapi": "catalog:"
   },
   "devDependencies": {
     "@formbricks/config-typescript": "workspace:*",

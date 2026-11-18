@@ -14,7 +14,7 @@
 language: en-US
 # Max 250 characters — the schema enforces it.
 tone_instructions: |
-  Prettier and ESLint own formatting, import order and quote style; never comment on them.
+  Prettier and oxlint own formatting, import order and quote style; never comment on them.
   No docstring or JSDoc requests. One well-evidenced comment beats three speculative
   ones: if you cannot point at the line that breaks, say so or stay quiet.
 early_access: true
@@ -119,10 +119,10 @@ reviews:
         - Dates and times must use the shared formatting helpers, never ad-hoc `date-fns`, `Intl`,
           or `toLocale*` calls, and never an implicit/`undefined` locale.
         - Don't ask for `useMemo`/`useCallback` unless there is a measured re-render problem.
-        - Do scrutinise effects and closures. `apps/web/eslint.config.mjs` turns
-          `react-hooks/set-state-in-effect`, `incompatible-library`, `error-boundaries`,
-          `immutability` and `preserve-manual-memoization` off, and leaves `exhaustive-deps` at
-          `warn` with no `--max-warnings 0`, so none of them can fail CI. Flag state set from an
+        - Do scrutinise effects and closures. `apps/web/oxlint.config.ts` keeps
+          `react/set-state-in-effect`, `incompatible-library` and `immutability` at `warn`, and
+          lint has no warning budget, so none of them can fail CI. `exhaustive-deps` is an error,
+          but an inline disable silences it: check that its reason holds. Flag state set from an
           effect without a guard, missing or lying dependency arrays, stale closures over props
           or state, and effects that need cleanup and don't have it.
 

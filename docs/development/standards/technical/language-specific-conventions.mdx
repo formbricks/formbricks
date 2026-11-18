@@ -6,44 +6,13 @@ icon: code
 
 ## TypeScript
 
-Our codebase uses the `@vercel/style-guide` ESLint configurations for consistent code quality.
+Our codebase lints with oxlint, configured per package class by the tiers in `@formbricks/config-oxlint`:
 
-### ESLint Configuration
+1. **Library** (`@formbricks/config-oxlint/library`, for Node/TypeScript packages): eslint recommended and typescript-eslint `recommendedTypeChecked`, with type information.
+2. **React** (`@formbricks/config-oxlint/react`, for React component libraries): the library baseline plus react, react-hooks (React Compiler rules included) and jsx-a11y recommended.
+3. **Next.js** (`@formbricks/config-oxlint/next`, for `apps/web`): `eslint-config-next`'s rules with the eslint and typescript-eslint recommended baselines.
 
-We maintain three primary ESLint configurations for different package types:
-
-1. **Library Configuration** (for packages):
-
-```javascript
-extends: [
-"@vercel/style-guide/eslint/node",
-"@vercel/style-guide/eslint/typescript"
-]
-```
-
-2. **React Configuration** (for React applications):
-
-```javascript
-extends: [
-"@vercel/style-guide/eslint/node",
-"@vercel/style-guide/eslint/typescript",
-"@vercel/style-guide/eslint/browser",
-"@vercel/style-guide/eslint/react",
-"@vercel/style-guide/eslint/next"
-]
-```
-
-3. **Next.js Configuration** (for Next.js applications):
-
-```javascript
-extends: [
-"@vercel/style-guide/eslint/node",
-"@vercel/style-guide/eslint/typescript",
-"@vercel/style-guide/eslint/browser",
-"@vercel/style-guide/eslint/react",
-"@vercel/style-guide/eslint/next"
-]
-```
+See [Code Formatting](/development/standards/practices/code-formatting) for how a package composes its tier.
 
 ### Key Conventions
 

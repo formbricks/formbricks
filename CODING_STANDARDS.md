@@ -1,7 +1,8 @@
 # Coding Standards
 
 Read when planning a change and when reviewing a diff: the `code-review` skill's Standards pass applies this
-file. Mechanical rules live in ESLint, `pnpm lint` and CI, so check their output before repeating a finding.
+file. Mechanical rules live in oxlint (`packages/config-oxlint/`, each workspace's `oxlint.config.ts`), `pnpm lint`
+and CI, so check their output before repeating a finding.
 This file holds only the judgement calls no check can stand in for. Where an ADR in `docs/adr/` decides
 otherwise for its area, the ADR wins.
 
@@ -28,6 +29,9 @@ A gate on fewer paths than reach the data is a finding, and so is a second copy 
 
 A fix names its siblings. Search for the same call, predicate or literal, then fix every copy in the same PR
 or list the ones left under Open gaps. A defect found in one place has usually been copied.
+
+A change that replaces a tool keeps every behaviour the old setup carried (script flags, inline config
+comments, per-package overrides) or lists what it drops under Open gaps.
 
 ## Testing Guidelines
 

@@ -101,7 +101,7 @@ describe("Auth Utils", () => {
 
       expect(typeof newHashedPassword).toBe("string");
       expect(newHashedPassword).not.toBe(password);
-      expect(newHashedPassword.length).toBe(60);
+      expect(newHashedPassword).toHaveLength(60);
     }, 20000);
 
     test("should verify a correct password", async () => {
@@ -144,7 +144,7 @@ describe("Auth Utils", () => {
         const hashedComplex = await hashPassword(complexPassword);
 
         expect(typeof hashedComplex).toBe("string");
-        expect(hashedComplex.length).toBe(60);
+        expect(hashedComplex).toHaveLength(60);
         expect(await verifyPassword(complexPassword, hashedComplex)).toBe(true);
         expect(await verifyPassword("wrong", hashedComplex)).toBe(false);
       },
@@ -225,7 +225,7 @@ describe("Auth Utils", () => {
 
       expect(identifier).toMatch(/^email_/);
       expect(identifier).not.toContain("user+test");
-      expect(identifier.length).toBe(38); // "email_" + 32 chars
+      expect(identifier).toHaveLength(38); // "email_" + 32 chars
     });
 
     test("should create different hashes for different prefixes", () => {

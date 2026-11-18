@@ -690,6 +690,7 @@ export class ResponseQueue {
         response = await this.api.updateResponse({
           ...responseUpdate,
           responseId: this.surveyState.responseId,
+          // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value is sent as null
           pinAuthToken: this.surveyState.pinAuthToken || null,
         });
 
@@ -701,10 +702,14 @@ export class ResponseQueue {
         response = await this.api.createResponse({
           ...createPayload,
           surveyId: this.surveyState.surveyId,
+          // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value is sent as null
           contactId: this.surveyState.contactId || null,
+          // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value is sent as null
           userId: this.surveyState.userId || null,
+          // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value is sent as null
           singleUseId: this.surveyState.singleUseId || null,
           displayId: this.surveyState.displayId,
+          // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value is sent as null
           pinAuthToken: this.surveyState.pinAuthToken || null,
           recaptchaToken: this.responseRecaptchaToken ?? undefined,
         });
@@ -727,7 +732,7 @@ export class ResponseQueue {
           quotaFull: true,
           quotaId: response.data.quota.id,
           action: response.data.quota.action,
-          endingCardId: response.data.quota.endingCardId || "",
+          endingCardId: response.data.quota.endingCardId ?? "",
         });
       }
 

@@ -516,11 +516,12 @@ const openFirstQuestionCard = async (page: Page, surveyUrl: string): Promise<str
  * is exactly the wrapper that IS ours: headline, subheader, and the embed container. The test
  * asserts the container stayed iframe-free, so the scan cannot silently grade Cal.com's DOM.
  */
-const blockCalEmbedRequests = (page: Page): Promise<void> =>
-  page.route(
+const blockCalEmbedRequests = async (page: Page): Promise<void> => {
+  await page.route(
     (url) => url.hostname === CAL_EMBED_ORIGIN || url.hostname.endsWith(`.${CAL_EMBED_ORIGIN}`),
     (route) => route.abort()
   );
+};
 
 /**
  * Clicks the current card's advance button and waits for a stable next card, asserting that

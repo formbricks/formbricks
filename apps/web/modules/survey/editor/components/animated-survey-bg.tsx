@@ -60,7 +60,12 @@ export const AnimatedSurveyBg = ({ handleBgChange, background }: AnimatedSurveyB
   const togglePlayback = (index: number, type: "play" | "pause") => {
     const video = document.getElementById(`video-${index}`) as HTMLVideoElement;
     try {
-      type === "play" ? video.play() : video.pause();
+      if (type === "play") {
+        // play() rejects rather than throws (e.g. autoplay blocked), so the catch below never saw it.
+        video.play().catch((error: unknown) => console.error(error));
+      } else {
+        video.pause();
+      }
     } catch (error) {
       console.error(error);
     }

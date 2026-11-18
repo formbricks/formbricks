@@ -4,6 +4,7 @@ import {
   MAX_NOT_SHOWN_MAP_KEYS,
   OPTION_LIST_NAMES,
   ZResponseNotShownInput,
+  getElementOptionsNotShownFromRecord,
   getNotShownElementIds,
   getOptionListKeyOfNoun,
 } from "./not-shown";
@@ -81,5 +82,25 @@ describe("OPTION_LIST_NAMES: one name table for every option list", () => {
       expect(getOptionListKeyOfNoun(OPTION_LIST_NAMES[listKey].noun)).toBe(listKey);
     }
     expect(OPTION_LIST_NAMES.choices).toEqual({ recordKey: "options", noun: "option" });
+  });
+});
+
+describe("getElementOptionsNotShownFromRecord", () => {
+  test("reads one element's options, rows and columns, keyed by option list", () => {
+    const record = {
+      options: { q1: ["a"], q2: ["b"] },
+      rows: { matrix: ["r1"] },
+      columns: { matrix: ["c1"], other: ["c2"] },
+    };
+
+    expect(getElementOptionsNotShownFromRecord(record, "q1")).toEqual({ choices: ["a"] });
+    expect(getElementOptionsNotShownFromRecord(record, "matrix")).toEqual({ rows: ["r1"], columns: ["c1"] });
+  });
+
+  test("returns {} for an unknown record, an element it does not name, or an empty list", () => {
+    expect(getElementOptionsNotShownFromRecord(null, "q1")).toEqual({});
+    expect(getElementOptionsNotShownFromRecord(undefined, "q1")).toEqual({});
+    expect(getElementOptionsNotShownFromRecord({ options: { q2: ["b"] } }, "q1")).toEqual({});
+    expect(getElementOptionsNotShownFromRecord({ rows: { q1: [] } }, "q1")).toEqual({});
   });
 });
