@@ -12,6 +12,7 @@ import { z } from "zod";
 import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
   PASSWORD_COMPROMISED_ERROR_CODE,
+  SETUP_TOKEN_INVALID_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
 } from "@formbricks/types/errors";
 import { TUserLocale, ZUserName, ZUserPassword } from "@formbricks/types/user";
@@ -35,6 +36,7 @@ const ZSignupInput = z.object({
   name: ZUserName,
   email: z.email(),
   password: ZUserPassword,
+  setupToken: z.string().optional(),
 });
 
 type TSignupInput = z.infer<typeof ZSignupInput>;
@@ -57,6 +59,8 @@ interface SignupFormProps {
   isTurnstileConfigured: boolean;
   turnstileSiteKey?: string;
   isFormbricksCloud: boolean;
+  /** The instance requires `SETUP_TOKEN` to create the first administrator (ENG-7313). */
+  isSetupTokenRequired?: boolean;
 }
 
 export const SignupForm = ({
@@ -77,6 +81,7 @@ export const SignupForm = ({
   isTurnstileConfigured,
   turnstileSiteKey,
   isFormbricksCloud,
+  isSetupTokenRequired = false,
 }: Readonly<SignupFormProps>) => {
   const [showLogin, setShowLogin] = useState(false);
   const searchParams = useSearchParams();
@@ -122,6 +127,7 @@ export const SignupForm = ({
       name: "",
       email: emailFromSearchParams || "",
       password: "",
+      setupToken: "",
     },
     resolver: zodResolver(ZSignupInput),
   });
@@ -138,6 +144,9 @@ export const SignupForm = ({
         return;
       case PASSWORD_COMPROMISED_ERROR_CODE:
         form.setError("password", { type: "manual", message: t("auth.password_compromised") });
+        return;
+      case SETUP_TOKEN_INVALID_ERROR_CODE:
+        form.setError("setupToken", { type: "manual", message: t("setup.signup.setup_token_invalid") });
         return;
       case INVITE_TOKEN_INVALID_ERROR_CODE:
         // Reachable when the invite expires or is revoked between this page rendering and the form being
@@ -178,6 +187,7 @@ export const SignupForm = ({
         password: data.password,
         userLocale,
         inviteToken: inviteToken ?? "",
+        setupToken: isSetupTokenRequired ? data.setupToken : undefined,
         turnstileToken,
         subscribeToSecurityUpdates,
         subscribeToProductUpdates,
@@ -289,6 +299,30 @@ export const SignupForm = ({
                       </FormItem>
                     )}
                   />
+                  {isSetupTokenRequired && (
+                    <FormField
+                      control={form.control}
+                      name="setupToken"
+                      render={({ field }) => (
+                        <FormItem className="w-full text-left">
+                          <FormLabel>{t("setup.signup.setup_token")}</FormLabel>
+                          <FormControl>
+                            <PasswordInput
+                              data-testid="signup-setup-token"
+                              name="setupToken"
+                              value={field.value ?? ""}
+                              onBlur={field.onBlur}
+                              onChange={(e) => field.onChange(e.target.value)}
+                              autoComplete="off"
+                              required
+                              className="bg-white"
+                            />
+                          </FormControl>
+                          <FormError role="alert" />
+                        </FormItem>
+                      )}
+                    />
+                  )}
                 </div>
                 <PasswordChecks password={form.watch("password")} />
               </div>
@@ -363,7 +397,9 @@ export const SignupForm = ({
                       setShowLogin(true);
                     }
               }
-              disabled={showLogin && !form.formState.isValid}
+              disabled={
+                showLogin && (!form.formState.isValid || (isSetupTokenRequired && !form.watch("setupToken")))
+              }
               className="h-11 w-full justify-center sm:h-10"
               loading={showLogin && form.formState.isSubmitting}>
               {t("auth.continue_with_email")}

@@ -17,6 +17,8 @@ export const ZCreateUserAction = z
     email: ZUserEmail,
     password: ZUserPassword,
     inviteToken: z.string().optional(),
+    // The optional `SETUP_TOKEN` (ENG-7313); only read when the sign-up is the fresh-instance exception.
+    setupToken: z.string().max(512).optional(),
     userLocale: ZUserLocale.optional(),
     turnstileToken: z.string().optional(),
     subscribeToSecurityUpdates: z.boolean().optional(),

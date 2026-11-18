@@ -2,6 +2,7 @@ import { cookies, headers } from "next/headers";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
+  SETUP_TOKEN_INVALID_ERROR_CODE,
   SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
 } from "@formbricks/types/errors";
@@ -91,6 +92,7 @@ const constantsOverrides = vi.hoisted(() => ({
   IS_FORMBRICKS_CLOUD: false,
   SIGNUP_DOMAIN_CHECK_ON_INVITES: false,
   SIGNUP_ENABLED: true,
+  SETUP_TOKEN: undefined as string | undefined,
 }));
 
 vi.mock("@/lib/constants", () => ({
@@ -110,6 +112,9 @@ vi.mock("@/lib/constants", () => ({
   },
   get SIGNUP_ENABLED() {
     return constantsOverrides.SIGNUP_ENABLED;
+  },
+  get SETUP_TOKEN() {
+    return constantsOverrides.SETUP_TOKEN;
   },
 }));
 
@@ -150,6 +155,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
     constantsOverrides.IS_FORMBRICKS_CLOUD = false;
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
     constantsOverrides.SIGNUP_ENABLED = true;
+    constantsOverrides.SETUP_TOKEN = undefined;
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
@@ -388,6 +394,46 @@ describe("createUserAction — signup verification email callbackURL", () => {
       expect(auth.api.signUpEmail).toHaveBeenCalled();
     });
 
+    // ENG-7313: an operator who sets SETUP_TOKEN gets a fresh instance only the token holder can claim.
+    describe("with SETUP_TOKEN configured", () => {
+      const setupToken = "0123456789abcdef-setup-token";
+      beforeEach(() => {
+        constantsOverrides.SETUP_TOKEN = setupToken;
+        vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+      });
+
+      test.each([undefined, "", "wrong-token"])(
+        "refuses the first administrator when the token is %j and creates no user",
+        async (supplied) => {
+          await expect(
+            createUserAction({
+              ctx: newCtx(),
+              parsedInput: { ...baseInput, setupToken: supplied },
+            } as never)
+          ).rejects.toThrow(SETUP_TOKEN_INVALID_ERROR_CODE);
+          expect(auth.api.signUpEmail).not.toHaveBeenCalled();
+        }
+      );
+
+      test("admits the first administrator who presents the token", async () => {
+        const result = await createUserAction({
+          ctx: newCtx(),
+          parsedInput: { ...baseInput, setupToken },
+        } as never);
+
+        expect(result).toEqual({ success: true });
+        expect(auth.api.signUpEmail).toHaveBeenCalled();
+      });
+
+      test("does not leak the setup token requirement on an instance that is no longer fresh", async () => {
+        vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+
+        await expect(createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never)).rejects.toThrow(
+          SIGNUP_DISABLED_ERROR_CODE
+        );
+      });
+    });
+
     test("still allows a signup backed by a valid matching invite", async () => {
       vi.mocked(resolveInviteMatch).mockResolvedValue("valid");
       vi.mocked(verifyInviteToken).mockReturnValue({
@@ -449,6 +495,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
     mockNextRequestData();
     constantsOverrides.IS_FORMBRICKS_CLOUD = true;
     constantsOverrides.SIGNUP_ENABLED = true;
+    constantsOverrides.SETUP_TOKEN = undefined;
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);

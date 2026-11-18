@@ -7,6 +7,7 @@ import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
   InvalidInputError,
   PASSWORD_COMPROMISED_ERROR_CODE,
+  SETUP_TOKEN_INVALID_ERROR_CODE,
   SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
   UnknownError,
@@ -350,7 +351,8 @@ async function handlePostUserCreation(
  */
 async function assertSignupPolicyAllows(
   inviteToken: string | undefined,
-  inviteMatch: InviteMatch
+  inviteMatch: InviteMatch,
+  setupToken: string | undefined
 ): Promise<{ isBootstrapAdmin: boolean }> {
   // A supplied-but-unusable invite is rejected before the user row is created, so a bad token can't
   // leave an orphaned account behind (handleInviteAcceptance would otherwise throw after signup).
@@ -370,9 +372,14 @@ async function assertSignupPolicyAllows(
   // administrator during fresh-instance setup, who has no invite to present. That predicate is shared
   // with the Better Auth hooks (signup-policy.ts) — writing it out twice is what left Better Auth's
   // native /sign-up/email open after this action was fixed (ENG-2073 → ENG-2293).
-  const admission = await resolveUninvitedSignupAdmission();
+  const admission = await resolveUninvitedSignupAdmission(setupToken);
   if (admission === "denied") {
     throw new InvalidInputError(SIGNUP_DISABLED_ERROR_CODE);
+  }
+  // ENG-7313: the instance is fresh but `SETUP_TOKEN` is configured and was not presented correctly.
+  // Reveals only what /setup/intro already shows (the instance is unclaimed).
+  if (admission === "setup-token-invalid") {
+    throw new InvalidInputError(SETUP_TOKEN_INVALID_ERROR_CODE);
   }
 
   return { isBootstrapAdmin: admission === "fresh-instance" };
@@ -396,7 +403,11 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     const inviteToken = parsedInput.inviteToken?.trim() || undefined;
     const inviteMatch = await resolveInviteMatch(inviteToken, parsedInput.email);
 
-    const { isBootstrapAdmin } = await assertSignupPolicyAllows(inviteToken, inviteMatch);
+    const { isBootstrapAdmin } = await assertSignupPolicyAllows(
+      inviteToken,
+      inviteMatch,
+      parsedInput.setupToken
+    );
 
     // Formbricks Cloud only: reject personal/free/disposable email domains before any user is created.
     // Invited users are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is enabled.
