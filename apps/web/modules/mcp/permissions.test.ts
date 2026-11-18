@@ -126,6 +126,10 @@ describe("MCP_PERMISSION_DEPENDENCIES", () => {
   test("Charts needs Feedback records: Read", () => {
     expect(MCP_PERMISSION_DEPENDENCIES.charts).toEqual([{ permission: "feedbackRecords", level: "read" }]);
   });
+
+  test("Dashboards needs Charts: Read, which its reads and writes that return widgets declare", () => {
+    expect(MCP_PERMISSION_DEPENDENCIES.dashboards).toEqual([{ permission: "charts", level: "read" }]);
+  });
 });
 
 describe("getMcpPermissionScope", () => {

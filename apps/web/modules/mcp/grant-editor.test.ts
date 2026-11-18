@@ -316,9 +316,21 @@ describe("getMcpDependencyHints", () => {
   });
 
   test("shows nothing for a permission without dependencies", () => {
-    expect(getMcpDependencyHints("dashboards", { dashboards: "read" }, { isDashboardViewer: false })).toEqual(
-      []
-    );
+    expect(getMcpDependencyHints("surveys", { surveys: "read" }, { isDashboardViewer: false })).toEqual([]);
+  });
+
+  // `get_dashboard` and the dashboard and widget writes declare Charts: Read beside Dashboards.
+  test("names Charts: Read under Dashboards, marked while the grant leaves it out", () => {
+    expect(
+      getMcpDependencyHints("dashboards", { dashboards: "write" }, { isDashboardViewer: false })
+    ).toEqual([{ requirement: { permission: "charts", level: "read" }, isUnmet: true }]);
+    expect(
+      getMcpDependencyHints(
+        "dashboards",
+        { dashboards: "read", charts: "read" },
+        { isDashboardViewer: false }
+      )
+    ).toEqual([{ requirement: { permission: "charts", level: "read" }, isUnmet: false }]);
   });
 
   test("shows a Dashboard viewer no hint, since Feedback records is outside their matrix", () => {

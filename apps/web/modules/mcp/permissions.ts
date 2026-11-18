@@ -98,7 +98,8 @@ export type TMcpPermissionRequirement = {
 /**
  * What a permission needs beside itself to be any use: its tools also return another permission's data,
  * so they declare that permission too and are refused without it. Chart reads return feedback records,
- * so they need Charts and Feedback records: Read (spec, user story 27). The consent screen shows these
+ * so they need Charts and Feedback records: Read (spec, user story 27); dashboard reads and writes return
+ * their widgets' charts, so they need Charts: Read. The consent screen shows these
  * as hints; the tool declarations stay what enforces them.
  *
  * Workflow runs has none: `get_workflow_run` declares Workflow runs: Read alone, so a client upgraded
@@ -109,6 +110,8 @@ export const MCP_PERMISSION_DEPENDENCIES: Partial<
   Record<TMcpPermission, readonly TMcpPermissionRequirement[]>
 > = {
   charts: [{ permission: "feedbackRecords", level: "read" }],
+  // `get_dashboard` and the dashboard and widget writes return each widget's whole chart.
+  dashboards: [{ permission: "charts", level: "read" }],
   // `list_contacts` returns each contact's attribute values; `list_segments`, filters naming literal ones.
   contacts: [{ permission: "contactAttributes", level: "read" }],
   segments: [{ permission: "contactAttributes", level: "read" }],
