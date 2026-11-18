@@ -15,7 +15,7 @@ import { TUser } from "@formbricks/types/user";
 import { TWorkspace } from "@formbricks/types/workspace";
 import { selectSurvey } from "../service";
 
-const selectContact = {
+const _selectContact = {
   id: true,
   createdAt: true,
   updatedAt: true,
@@ -128,7 +128,7 @@ export const mockUser: TUser = {
 };
 
 export const mockPrismaPerson: Prisma.ContactGetPayload<{
-  include: typeof selectContact;
+  include: typeof _selectContact;
 }> = {
   id: mockId,
   attributes: [
@@ -371,7 +371,7 @@ export const updateSurveyInput: TSurvey = {
  * `hiddenFields` are derived from those (here: no) rows (ENG-2404).
  */
 const withInlinedEmbeddedFields = <T extends { embeddedDataLinks: unknown[] }>({
-  embeddedDataLinks,
+  embeddedDataLinks: _embeddedDataLinks,
   ...survey
 }: T) => ({
   ...survey,

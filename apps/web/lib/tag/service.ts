@@ -13,36 +13,28 @@ export const getTagsByWorkspaceId = reactCache(
   async (workspaceId: string, page?: number): Promise<TTag[]> => {
     validateInputs([workspaceId, ZId], [page, ZOptionalNumber]);
 
-    try {
-      const tags = await prisma.tag.findMany({
-        where: {
-          workspaceId,
-        },
-        take: page ? ITEMS_PER_PAGE : undefined,
-        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-      });
+    const tags = await prisma.tag.findMany({
+      where: {
+        workspaceId,
+      },
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+    });
 
-      return tags;
-    } catch (error) {
-      throw error;
-    }
+    return tags;
   }
 );
 
 export const getTag = reactCache(async (id: string): Promise<TTag | null> => {
   validateInputs([id, ZId]);
 
-  try {
-    const tag = await prisma.tag.findUnique({
-      where: {
-        id,
-      },
-    });
+  const tag = await prisma.tag.findUnique({
+    where: {
+      id,
+    },
+  });
 
-    return tag;
-  } catch (error) {
-    throw error;
-  }
+  return tag;
 });
 
 export const createTag = async (

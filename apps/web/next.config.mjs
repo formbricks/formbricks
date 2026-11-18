@@ -117,7 +117,7 @@ const nextConfig = {
   },
   turbopack: {},
   experimental: {
-    // With patches/next@16.4.1.patch applied, Next clones no request body for proxy.ts or for an external
+    // With patches/next@16.4.5.patch applied, Next clones no request body for proxy.ts or for an external
     // rewrite such as the PostHog /ingest proxy (ENG-3972), so this only bounds the body Next hands an
     // edge-runtime function, and this app has none. Kept as the fallback for a Next without the patch, which
     // would clone again and cut bodies off at this size, so the import routes keep their limits below it.
@@ -410,7 +410,7 @@ const nextConfig = {
       },
       // SVG files (icons, logos) - long cache since they're usually static
       {
-        source: "/(.*)\\.svg",
+        source: String.raw`/(.*)\.svg`,
         headers: [
           {
             key: "Cache-Control",
@@ -500,7 +500,7 @@ const nextConfig = {
       },
       // Web manifest and browser config files - medium cache
       {
-        source: "/(site\\.webmanifest|browserconfig\\.xml)",
+        source: String.raw`/(site\.webmanifest|browserconfig\.xml)`,
         headers: [
           {
             key: "Cache-Control",

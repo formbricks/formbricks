@@ -1,3 +1,5 @@
+/* eslint-disable typescript/no-deprecated -- this module defines the deprecated v1 question types and
+ * builds them, and the survey schema that still accepts them, from one another. */
 import { z } from "zod";
 import { ZActionClass, ZActionClassNoCodeConfig } from "../action-classes";
 import {
@@ -915,6 +917,14 @@ export const ZSurveyLanguage = z.object({
 
 export type TSurveyLanguage = z.infer<typeof ZSurveyLanguage>;
 
+/** Replaces "default" in `languageCodes` with the code of the survey's default language, if it has one. */
+const resolveDefaultLanguageCode = (languageCodes: string[], languages: TSurveyLanguage[]): string[] => {
+  const defaultLanguageCode = languages.find((lang) => lang.default)?.language.code ?? "default";
+  return languageCodes.map((languageCode) =>
+    languageCode === "default" ? defaultLanguageCode : languageCode
+  );
+};
+
 /**
  * @deprecated Kept for v1 API backward compatibility only.
  */
@@ -1341,11 +1351,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
         );
 
         if (duplicateChoicesLanguageCodes.length > 0) {
-          const invalidLanguageCodes = duplicateChoicesLanguageCodes.map((invalidLanguageCode) =>
-            invalidLanguageCode === "default"
-              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-              : invalidLanguageCode
-          );
+          const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateChoicesLanguageCodes, languages);
 
           const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
@@ -1437,11 +1443,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
         );
 
         if (duplicateRowsLanguageCodes.length > 0) {
-          const invalidLanguageCodes = duplicateRowsLanguageCodes.map((invalidLanguageCode) =>
-            invalidLanguageCode === "default"
-              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-              : invalidLanguageCode
-          );
+          const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateRowsLanguageCodes, languages);
 
           const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
@@ -1454,11 +1456,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
         }
 
         if (duplicateColumnLanguageCodes.length > 0) {
-          const invalidLanguageCodes = duplicateColumnLanguageCodes.map((invalidLanguageCode) =>
-            invalidLanguageCode === "default"
-              ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-              : invalidLanguageCode
-          );
+          const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateColumnLanguageCodes, languages);
 
           const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
@@ -1473,6 +1471,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
 
       if (question.type === TSurveyQuestionTypeEnum.FileUpload) {
         // allowedFileExtensions must have atleast one element
+        // eslint-disable-next-line typescript/prefer-optional-chain -- left as is: any edit to this line trips the staged cognitive-complexity check on this refinement, which is refactored separately (ENG-7329)
         if (question.allowedFileExtensions && question.allowedFileExtensions.length === 0) {
           ctx.addIssue({
             code: "custom",
@@ -1733,11 +1732,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
           );
 
           if (duplicateChoicesLanguageCodes.length > 0) {
-            const invalidLanguageCodes = duplicateChoicesLanguageCodes.map((invalidLanguageCode) =>
-              invalidLanguageCode === "default"
-                ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-                : invalidLanguageCode
-            );
+            const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateChoicesLanguageCodes, languages);
 
             const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
@@ -1851,11 +1846,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
           );
 
           if (duplicateRowsLanguageCodes.length > 0) {
-            const invalidLanguageCodes = duplicateRowsLanguageCodes.map((invalidLanguageCode) =>
-              invalidLanguageCode === "default"
-                ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-                : invalidLanguageCode
-            );
+            const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateRowsLanguageCodes, languages);
 
             const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
@@ -1868,11 +1859,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
           }
 
           if (duplicateColumnLanguageCodes.length > 0) {
-            const invalidLanguageCodes = duplicateColumnLanguageCodes.map((invalidLanguageCode) =>
-              invalidLanguageCode === "default"
-                ? (languages.find((lang) => lang.default)?.language.code ?? "default")
-                : invalidLanguageCode
-            );
+            const invalidLanguageCodes = resolveDefaultLanguageCode(duplicateColumnLanguageCodes, languages);
 
             const isDefaultOnly = invalidLanguageCodes.length === 1 && invalidLanguageCodes[0] === "default";
 
@@ -1886,6 +1873,7 @@ export const surveyRefinement = (rawSurvey: z.infer<typeof ZSurveyBase>, ctx: z.
         }
 
         if (element.type === TSurveyElementTypeEnum.FileUpload) {
+          // eslint-disable-next-line typescript/prefer-optional-chain -- left as is: any edit to this line trips the staged cognitive-complexity check on this refinement, which is refactored separately (ENG-7329)
           if (element.allowedFileExtensions && element.allowedFileExtensions.length === 0) {
             ctx.addIssue({
               code: "custom",

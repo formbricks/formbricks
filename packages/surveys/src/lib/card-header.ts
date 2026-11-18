@@ -12,8 +12,10 @@ export const getCardStartsWithMedia = (survey: TJsWorkspaceStateSurvey, blockId:
   if (blockId === "start") return !survey.welcomeCard.fileUrl && Boolean(survey.welcomeCard.videoUrl);
 
   const ending = survey.endings.find((candidate) => candidate.id === blockId);
+  // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty URL counts as no media
   if (ending) return ending.type === "endScreen" && Boolean(ending.imageUrl || ending.videoUrl);
 
   const firstElement = survey.blocks.find((block) => block.id === blockId)?.elements[0];
+  // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty URL counts as no media
   return Boolean(firstElement?.imageUrl || firstElement?.videoUrl);
 };

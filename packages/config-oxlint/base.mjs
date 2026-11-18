@@ -5,7 +5,7 @@ import { sonarParity } from "./sonar-parity.mjs";
  * Shared plumbing for every Formbricks oxlint config:
  * - Turborepo env-var checks
  * - the repo-wide `test` over `it` convention
- * - the Sonar-parity rules (off unless staged-file linting turns them on, see sonar-parity.mjs)
+ * - the Sonar-parity rules (cognitive complexity on the staged lines only, see sonar-parity.mjs)
  * - common ignores and file globs
  *
  * This file intentionally carries no opinionated rule set: the exported tiers
@@ -15,7 +15,7 @@ import { sonarParity } from "./sonar-parity.mjs";
  * nothing here replaces `eslint-config-prettier`.
  */
 
-export { compose, denyWarnings, downgradeToWarn, jsPlugins } from "./compose.mjs";
+export { compose, denyWarnings, jsPlugins } from "./compose.mjs";
 
 export const TYPESCRIPT_FILES = ["**/*.{ts,tsx,mts,cts}"];
 export const PLAIN_JS_FILES = ["**/*.{js,cjs,mjs}"];
@@ -56,10 +56,12 @@ export const base = compose(
   {
     categories: { correctness: "off" },
     plugins: ["vitest"],
-    jsPlugins: [jsPlugins.turbo],
+    jsPlugins: [jsPlugins.turbo, jsPlugins.formbricks],
     rules: {
       // eslint-config-turbo: every env var a task reads must be declared in turbo.json.
       "turbo/no-undeclared-env-vars": "error",
+      // oxlint ignores ESLint's inline config comments; configuration belongs in oxlint.config.ts.
+      "formbricks/no-inline-lint-config": "error",
       "vitest/consistent-test-it": ["error", { fn: "test", withinDescribe: "test" }],
     },
   },

@@ -60,7 +60,7 @@ const tabsTriggerVariants = cva(
   }
 );
 
-interface TabsProps extends React.ComponentProps<typeof TabsPrimitive.Root> {}
+type TabsProps = React.ComponentProps<typeof TabsPrimitive.Root>;
 
 function Tabs({ className, ...props }: TabsProps) {
   return <TabsPrimitive.Root data-slot="tabs" className={cn("flex flex-col gap-2", className)} {...props} />;

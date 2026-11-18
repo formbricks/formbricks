@@ -653,18 +653,18 @@ describe("surveyLogic", () => {
       operator: "equals",
       rightOperand: { type: "static", value: "b" },
     });
-    expect(group.conditions.length).toBe(2);
+    expect(group.conditions).toHaveLength(2);
     toggleGroupConnector(group, "notfound");
     expect(group.connector).toBe("and");
     const result = removeCondition(group, "notfound");
     expect(result).toBe(false);
-    expect(group.conditions.length).toBe(2);
+    expect(group.conditions).toHaveLength(2);
     duplicateCondition(group, "notfound");
-    expect(group.conditions.length).toBe(2);
+    expect(group.conditions).toHaveLength(2);
     createGroupFromResource(group, "notfound");
-    expect(group.conditions.length).toBe(2);
+    expect(group.conditions).toHaveLength(2);
     updateCondition(group, "notfound", { operator: "equals" });
-    expect(group.conditions.length).toBe(2);
+    expect(group.conditions).toHaveLength(2);
   });
 
   test("removeCondition returns false when condition not found in nested groups", () => {
