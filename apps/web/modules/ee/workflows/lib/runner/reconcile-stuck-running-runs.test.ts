@@ -15,12 +15,14 @@ const { runFindMany, runUpdateMany, logUpdateMany, logFindMany } = vi.hoisted(()
 }));
 const { warn, error } = vi.hoisted(() => ({ warn: vi.fn(), error: vi.fn() }));
 
-vi.mock("@formbricks/database", () => ({
-  prisma: {
+vi.mock("@formbricks/database", () => {
+  const prisma = {
     workflowRun: { findMany: runFindMany, updateMany: runUpdateMany },
     workflowRunLog: { updateMany: logUpdateMany, findMany: logFindMany },
-  },
-}));
+    $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(prisma),
+  };
+  return { prisma };
+});
 vi.mock("@formbricks/logger", () => ({ logger: { warn, error } }));
 
 const NOW = new Date("2026-07-01T12:00:00.000Z");
@@ -253,8 +255,20 @@ describe("failInterruptedTestRuns", () => {
       { id: "real_queued", isDryRun: false, status: "queued", createdAt: minutesAgo(120) },
       { id: "real_running", isDryRun: false, status: "running", createdAt: minutesAgo(120) },
     ];
-    runFindMany.mockImplementation(async ({ where }: { where: RunWhere }) =>
-      matching(where).map(({ id }) => ({ id }))
+    runFindMany.mockImplementation(
+      async ({
+        where,
+        orderBy,
+        take,
+      }: {
+        where: RunWhere;
+        orderBy?: { createdAt: "asc" };
+        take?: number;
+      }) => {
+        const hit = matching(where);
+        if (orderBy) hit.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+        return hit.slice(0, take).map(({ id }) => ({ id }));
+      }
     );
     runUpdateMany.mockImplementation(async ({ where, data }: { where: RunWhere; data: Partial<FakeRun> }) => {
       const hit = matching(where);
@@ -272,10 +286,10 @@ describe("failInterruptedTestRuns", () => {
     for (const id of ["test_queued", "test_running"]) {
       expect(statusOf(id)).toMatchObject({ status: "failed", error: "Test run was interrupted" });
     }
-    expect(logUpdateMany).toHaveBeenCalledWith({
-      where: { runId: { in: ["test_queued", "test_running"] }, status: "running" },
-      data: { status: "skipped", error: "Test run was interrupted", finishedAt: NOW },
-    });
+    const [{ where, data }] = logUpdateMany.mock.calls[0];
+    expect([...where.runId.in].sort()).toEqual(["test_queued", "test_running"]);
+    expect(where.status).toBe("running");
+    expect(data).toEqual({ status: "skipped", error: "Test run was interrupted", finishedAt: NOW });
     expect(result).toEqual({ scanned: 2, failed: 2 });
   });
 
@@ -292,9 +306,21 @@ describe("failInterruptedTestRuns", () => {
     await failInterruptedTestRuns({ now: NOW });
 
     expect(mockCaptureWorkflowRunFailed).not.toHaveBeenCalled();
-    const args = runFindMany.mock.calls[0][0];
-    expect(args.orderBy).toEqual({ createdAt: "asc" });
-    expect(args.take).toBe(250);
+  });
+
+  test("ends at most 250 runs per sweep, oldest first, and leaves the rest for the next one", async () => {
+    runs = Array.from({ length: 251 }, (_, index) => ({
+      id: `test_${index.toString()}`,
+      isDryRun: true,
+      status: "running",
+      createdAt: minutesAgo(300 - index),
+    }));
+
+    const result = await failInterruptedTestRuns({ now: NOW });
+
+    expect(result).toEqual({ scanned: 250, failed: 250 });
+    expect(statusOf("test_0")?.status).toBe("failed");
+    expect(statusOf("test_250")?.status).toBe("running");
   });
 
   test("does nothing when no Test run was interrupted", async () => {

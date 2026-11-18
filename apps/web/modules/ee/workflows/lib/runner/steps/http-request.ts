@@ -46,7 +46,7 @@ const handOffDontWaitRequest = async ({
     const reason = error instanceof Error ? error.message : String(error);
     return {
       status: "failed",
-      error: `The HTTP request could not be queued for sending: ${reason}`,
+      error: `The HTTP request could not be handed to its sending job: ${reason}`,
       output: { mode: "dont_wait", delivery: "failed", request: capRequestRecord(record) },
     };
   }

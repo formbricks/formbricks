@@ -194,9 +194,9 @@ const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
   });
   const finishedAt = new Date();
 
-  if (status === "running" && step.executor.handedOff?.(output)) {
-    // Handed to its own job, which may already have run and recorded the call's outcome: only a row
-    // still `running` is ours.
+  if (step.executor.handedOff?.(output) && output.delivery !== undefined) {
+    // Handed to its own job, which may already have run and recorded the call's outcome (even when the
+    // enqueue reported an error): only a row still `running` is ours. A Test run sets no `delivery`.
     await prisma.workflowRunLog.updateMany({
       where: { runId: step.runId, stepId: step.node.id, status: "running" },
       data: { status, output, error, finishedAt },

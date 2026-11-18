@@ -18,4 +18,4 @@ The editor's picker reads the survey's responses through an internal, session-on
 
 - The fake-effect switch sits at the effect boundary (email, HTTP); the walker and the conditions run for real, so a Test run shows the branch a real run would take.
 - The existing `/test` endpoint stays a setup check that runs nothing.
-- A Test run whose request is cut short is never queued to finish it, since a worker would run it with real effects. The cleanup sweep marks one still queued or running 10 minutes after it started as failed, "Test run was interrupted", and does not report it as a workflow failure (ENG-7354).
+- A Test run whose request is cut short is never queued to finish it, since a worker would run it with real effects. The cleanup sweep marks one still queued or running more than 10 minutes after it was created as failed, "Test run was interrupted", and does not report it as a workflow failure (ENG-7354).

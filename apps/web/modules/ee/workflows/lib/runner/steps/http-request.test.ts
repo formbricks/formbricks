@@ -264,16 +264,23 @@ describe("httpRequestStepExecutor", () => {
   });
 
   test("Don't wait stores the sending request on the step's row before its job is queued", async () => {
-    await run({ responseMode: "dont_wait" });
+    let finishSave = () => {};
+    saveOutput.mockImplementation(() => new Promise<void>((resolve) => (finishSave = resolve)));
 
+    const pending = run({ responseMode: "dont_wait" });
+    await vi.waitFor(() => expect(saveOutput).toHaveBeenCalled());
+    // The job reads the row, so it must not be queued until the save has finished.
+    await Promise.resolve();
+    expect(effects.enqueueHttpRequestDelivery).not.toHaveBeenCalled();
+    finishSave();
+    await pending;
+
+    expect(effects.enqueueHttpRequestDelivery).toHaveBeenCalledTimes(1);
     expect(saveOutput).toHaveBeenCalledWith({
       mode: "dont_wait",
       delivery: "sending",
       request: expect.objectContaining({ method: "POST", url: expect.stringContaining("api.example.com") }),
     });
-    expect(saveOutput.mock.invocationCallOrder[0]).toBeLessThan(
-      effects.enqueueHttpRequestDelivery.mock.invocationCallOrder[0]
-    );
   });
 
   test("Don't wait fails the step at once, with the reason, when its job can't be queued", async () => {
@@ -283,7 +290,7 @@ describe("httpRequestStepExecutor", () => {
 
     expect(outcome).toMatchObject({
       status: "failed",
-      error: "The HTTP request could not be queued for sending: Connection is closed.",
+      error: "The HTTP request could not be handed to its sending job: Connection is closed.",
       output: { mode: "dont_wait", delivery: "failed", request: { method: "POST" } },
     });
     // Still a handed-off step: its failure shows on the step and never fails the run.

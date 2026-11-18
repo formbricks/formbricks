@@ -249,14 +249,19 @@ export const failInterruptedTestRuns = async ({
   if (interrupted.length === 0) return { scanned: 0, failed: 0 };
 
   const runIds = interrupted.map((run) => run.id);
-  const failed = await prisma.workflowRun.updateMany({
-    where: { id: { in: runIds }, isDryRun: true, status: { in: [...UNFINISHED_STATUSES] } },
-    data: { status: "failed", error: INTERRUPTED_TEST_RUN_ERROR, lastErrorAt: now, finishedAt: now },
-  });
-  // A Test run's effects are fakes, so a step left `running` sent nothing.
-  await prisma.workflowRunLog.updateMany({
-    where: { runId: { in: runIds }, status: "running" },
-    data: { status: "skipped", error: INTERRUPTED_TEST_RUN_ERROR, finishedAt: now },
+  // One transaction, so a run is never left failed with a step still running: on an error both roll
+  // back and the next sweep retries the run.
+  const failed = await prisma.$transaction(async (tx) => {
+    const result = await tx.workflowRun.updateMany({
+      where: { id: { in: runIds }, isDryRun: true, status: { in: [...UNFINISHED_STATUSES] } },
+      data: { status: "failed", error: INTERRUPTED_TEST_RUN_ERROR, lastErrorAt: now, finishedAt: now },
+    });
+    // A Test run's effects are fakes, so a step left `running` sent nothing.
+    await tx.workflowRunLog.updateMany({
+      where: { runId: { in: runIds }, status: "running" },
+      data: { status: "skipped", error: INTERRUPTED_TEST_RUN_ERROR, finishedAt: now },
+    });
+    return result;
   });
 
   if (failed.count > 0)
