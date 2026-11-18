@@ -35,13 +35,14 @@ const assertBodySize = (actualBytes: number, limitBytes: number): void => {
 };
 
 /**
- * Cancels a body that will not be read, without waiting for the cancel to settle. On one branch of a
- * tee'd body (`request.clone()`), cancel() settles only once the other branch is cancelled too or the
- * source ends, which a client that keeps the body open can put off indefinitely (ENG-6948).
+ * Cancels a body that will not be read, through the stream or the reader that holds it, without waiting
+ * for the cancel to settle. On one branch of a tee'd body (`request.clone()`), cancel() settles only once
+ * the other branch is cancelled too or the source ends or errors, which a client that keeps the body open
+ * can put off indefinitely (ENG-6948).
  *
- * Two rejections are expected and dropped: a branch its reader still locks (one whose read ran to the
- * end or stopped at the limit), and a source whose own cancel fails. The request is already refused,
- * so neither has anyone to tell.
+ * Three rejections are expected and dropped: a stream its reader still locks (a read that ran to the end
+ * or stopped at the limit), a body whose client aborted (it rejects with that abort), and a source whose
+ * own cancel fails. The request is already refused, so none has anyone to tell.
  */
 export const discardRequestBody = (body: Pick<ReadableStream, "cancel"> | null | undefined): void => {
   void body?.cancel().catch(() => undefined);
