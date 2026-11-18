@@ -55,7 +55,7 @@ const COMPACT_DATE_TIME: Intl.DateTimeFormatOptions = {
   minute: "2-digit",
 };
 
-// One lookup takes at most the route's own cap, so a batch is exactly that.
+// Each lookup batch is as large as the route's cap allows.
 const CONTACT_RESOLVE_BATCH_SIZE = CONTACT_LOOKUP_USER_IDS_MAX;
 const RECORD_COLUMN_IDS = [
   "select",

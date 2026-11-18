@@ -12,8 +12,8 @@ export const ZFeedbackRecordWorkspaceQuery = z.object({ workspaceId: ZId }).stri
 export const CONTACT_LOOKUP_USER_IDS_MAX = 1000;
 
 /**
- * Up to 1000 records' `user_id`s to resolve to this workspace's contacts. The Hub stores a `user_id` of at
- * most 255 characters, so a longer one can't come from a record.
+ * Up to `CONTACT_LOOKUP_USER_IDS_MAX` records' `user_id`s to resolve to this workspace's contacts. The Hub
+ * stores a `user_id` of at most 255 characters, so a longer one can't come from a record.
  */
 export const ZFeedbackRecordContactLookupBody = z
   .object({ userIds: z.array(z.string().max(IDENTIFIER_MAX_LENGTH)).max(CONTACT_LOOKUP_USER_IDS_MAX) })
