@@ -56,10 +56,12 @@ export const base = compose(
   {
     categories: { correctness: "off" },
     plugins: ["vitest"],
-    jsPlugins: [jsPlugins.turbo],
+    jsPlugins: [jsPlugins.turbo, jsPlugins.formbricks],
     rules: {
       // eslint-config-turbo: every env var a task reads must be declared in turbo.json.
       "turbo/no-undeclared-env-vars": "error",
+      // oxlint ignores ESLint's inline config comments; configuration belongs in oxlint.config.ts.
+      "formbricks/no-inline-lint-config": "error",
       "vitest/consistent-test-it": ["error", { fn: "test", withinDescribe: "test" }],
     },
   },
