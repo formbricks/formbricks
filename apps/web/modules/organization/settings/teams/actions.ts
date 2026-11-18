@@ -13,6 +13,7 @@ import { INVITE_DISABLED, IS_FORMBRICKS_CLOUD } from "@/lib/constants";
 import { createInviteToken } from "@/lib/jwt";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { assertUserManagementAllowed } from "@/lib/membership/user-management";
+import { assertTeamAdminInviteAllowed } from "@/lib/membership/user-management-floor";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
@@ -300,6 +301,10 @@ const assertInviterMayInvite = async ({
     });
     return;
   }
+
+  // A team admin is decided by `team.manage`, not the role floor, but `disabled` switches user
+  // management off for everyone (ENG-7376).
+  assertTeamAdminInviteAllowed();
 
   const actor = { type: "user", id: userId } as const;
 
