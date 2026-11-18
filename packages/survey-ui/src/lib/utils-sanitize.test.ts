@@ -54,6 +54,36 @@ describe("sanitizeSurveyHtml", () => {
     expect(sanitizeSurveyHtml('<a href="tel:+123">t</a>')).toContain('href="tel:+123"');
   });
 
+  test.each([
+    ["the auto-linker's schemeless web address", "www.example.com/a?b=1"],
+    ["an in-page anchor", "#section-2"],
+    ["a root-relative path", "/privacy"],
+    ["a protocol-relative URL", "//example.com/terms"],
+    ["a relative page", "terms.html"],
+  ])("keeps %s", (_name, href) => {
+    expect(sanitizeSurveyHtml(`<a href="${href}">x</a>`)).toContain(`href="${href}"`);
+  });
+
+  // Every spelling of a script or data scheme that a browser would still run must lose its href.
+  test.each([
+    ["mixed case", "JaVaScRiPt:alert(1)"],
+    ["a leading space", " javascript:alert(1)"],
+    ["a tab inside the scheme", "java\tscript:alert(1)"],
+    ["a newline inside the scheme", "java\nscript:alert(1)"],
+    ["a leading control character", "\u0001javascript:alert(1)"],
+    ["an entity-encoded letter", "&#106;avascript:alert(1)"],
+    ["an entity-encoded colon", "javascript&colon;alert(1)"],
+    ["a hex-entity tab", "java&#x09;script:alert(1)"],
+    ["vbscript", "vbscript:msgbox(1)"],
+    ["a data URL", "data:text/html,<script>alert(1)</script>"],
+    ["an uppercase data URL", "DATA:text/html,x"],
+    ["another scheme", "ftp://example.com/file"],
+  ])("drops a href written with %s", (_name, href) => {
+    const sanitized = sanitizeSurveyHtml(`<a href="${href}">x</a>`);
+    expect(sanitized).not.toContain("href=");
+    expect(sanitized).toContain(">x</a>");
+  });
+
   // Everything the rich-text editor can write (headings, lists, bold/italic/underline, links, nested
   // lists, RTL) must come through untouched, or an author's formatting silently disappears.
   test("keeps the formatting the rich-text editor produces", () => {

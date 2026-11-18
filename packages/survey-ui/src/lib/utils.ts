@@ -97,6 +97,18 @@ const openLinksInNewTab = (node: Element): void => {
 };
 
 /**
+ * The link targets survey text may hold: `http(s):`, `mailto:` and `tel:`, plus a URL with no scheme at
+ * all. That last part is DOMPurify's own default rule for schemeless values, unchanged: the editor's
+ * auto-linker stores `www.example.com` as written, and imported or older content holds `#anchor`, `/path`
+ * and `page.html` links. A value counts as schemeless when it starts with a non-letter, or its leading run
+ * of scheme characters (`a-z + . -`) is not followed by `:`. So `javascript:`, `data:`, `vbscript:` and every
+ * other scheme are refused. DOMPurify removes whitespace and control characters (`ATTR_WHITESPACE`) before it
+ * tests the value, and the HTML parser has already decoded entities, so `java\tscript:`, ` javascript:` and
+ * `javascript&colon;` reach this test as `javascript:` and fail it. `/i` covers `JaVaScRiPt:`.
+ */
+const SURVEY_LINK_URI = /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.\-:]|$))/i;
+
+/**
  * What survey text may contain: the markup the rich-text editor writes (paragraphs, line breaks, lists,
  * headings, bold, italic, underline, strikethrough, highlight, quotes, code, links) and nothing else.
  * DOMPurify's default profile also keeps `<style>`, `<img>`, `<form>` and `<input>`, which let hostile
@@ -111,7 +123,7 @@ const SURVEY_HTML_SANITIZE_CONFIG = {
     ...["h1", "h2", "h3", "h4", "h5", "h6"],
   ],
   ALLOWED_ATTR: ["class", "dir", "href", "target", "rel", "start", "value"],
-  ALLOWED_URI_REGEXP: /^(?:https?|mailto|tel):/i,
+  ALLOWED_URI_REGEXP: SURVEY_LINK_URI,
   ADD_URI_SAFE_ATTR: ["target", "rel", "dir", "start"],
   ALLOW_DATA_ATTR: false,
   ALLOW_ARIA_ATTR: false,
