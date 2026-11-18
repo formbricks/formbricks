@@ -300,9 +300,11 @@ Do not:
   test stays as it is. A race in the test's own setup waits on a real signal: a response, a URL, an
   element's state, or `expect(...).toPass()` around an action that is safe to repeat. A timing assertion
   counts the work or uses a fake clock instead of measuring wall time, unless wall time is itself the
-  property under test (a timing side channel). Such a test is tagged `@timing`, so it runs alone in the
-  `chromium-timing` project, and asserts on the medians of many interleaved samples, never on one
-  measurement: the `@timing` test in `security.spec.ts` is the model. Hiding means a sleep, a longer
+  property under test (a timing side channel). Such a test is tagged `@timing`, so it runs after the
+  parallel suite in the `chromium-timing` project, and asserts on the medians of many interleaved
+  samples, never on one measurement: the `@timing` test in `security.spec.ts` is the model. That project
+  uses the suite's worker count, so `@timing` tests must not run beside each other: put a second one next
+  to the first under `test.describe.configure({ mode: "serial" })`. Hiding means a sleep, a longer
   timeout or looser threshold, more `retries` (in `playwright.config.ts` or `test.describe.configure`),
   or quarantine (`test.skip`, `test.fixme`).
 

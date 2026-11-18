@@ -68,12 +68,13 @@ inside green runs, so read the summary even when the check passed.
 
 1. One rerun is how you find out. Once it shows a flake, rerun nothing more until steps 2–3 are done.
 2. Search Linear for the test name, closed issues included, and reuse an issue only when it records the
-   same failing assertion; a different assertion is a different flake. An open issue gets the new
+   same failure: the failing assertion, or for a failure without one (a hook or fixture that throws) the
+   error and where it is thrown. A different failure is a different flake. An open issue gets the new
    evidence: the run ids, or for a local run the command and its output. A Done or Canceled one is
    reopened with it: its fix did not hold.
 3. Otherwise file one as `docs/agents/issue-tracker.md` describes (no project or milestone needed):
    priority High, label `bug`, plus `infrastructure` when the cause is CI or the test harness rather than
-   the product. Give the failing test and assertion, that evidence, and the runs you have seen it fail in
+   the product. Give the failing test and that failure, the evidence, and the runs you have seen it fail in
    ("first seen" if this is the first).
 4. Name the issue under the PR's Open gaps, whether or not the PR touches that test. Fix it next, in its
    own PR, unless the user redirects you. How to fix one is in `CODING_STANDARDS.md`, "Testing
