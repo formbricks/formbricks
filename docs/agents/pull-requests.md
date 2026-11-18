@@ -14,7 +14,8 @@ migration/env reporting. Update the description with every scope change or revie
 
 Complete QA on the change's PR before requesting review. The author accounts for each changed behavior
 and names unverified behavior under Open gaps; reviewers challenge that evidence. A failure called
-pre-existing, flaky or noise names the run on `main` that shows it; without one it goes under Open gaps. Release review checks
+pre-existing or noise names the run on `main` that shows it, and one called flaky names its Linear issue
+(see Flaky tests); without that evidence it goes under Open gaps. Release review checks
 interactions between changes rather than repeating each PR's QA.
 
 Before opening a PR, run the `code-review` skill against the merge-base. The review is done when every
@@ -57,6 +58,24 @@ Take failing test names from the `blacksmith-sh` bot's comment on the PR. Otherw
 few hundred. The E2E log is dominated by SpiceDB gRPC output (once a single 2.4 MB line), so filter a saved
 log with `grep -v grpc` before reading it. `release/*` branches keep their own workflow copy, where a red
 `PR Check Summary` can come from cancelled jobs of a superseded push; check the job conclusions first.
+
+## Flaky tests
+
+A flaky test is a bug, and every PR that runs into it pays for it, so it is filed at once and fixed next.
+A test is flaky when it fails and then passes on a rerun of the same commit, or when the E2E job log's
+Playwright summary counts it as `flaky` (it passed only on Playwright's own retry). The second kind hides
+inside green runs, so read the summary even when the check passed.
+
+1. One rerun is how you find out. Once it shows a flake, rerun nothing more until steps 2–3 are done.
+2. Search Linear for the test name, closed issues included. An open issue gets the new run ids. A Done or
+   Canceled one is reopened with them: its fix did not hold.
+3. Otherwise file one as `docs/agents/issue-tracker.md` describes (no project or milestone needed):
+   priority High, label `bug`, plus `infrastructure` when the cause is CI or the test harness rather than
+   the product. Give the failing test and assertion, the run ids, and the runs you have seen it fail in
+   ("first seen" if this is the first).
+4. Name the issue under the PR's Open gaps, whether or not the PR touches that test. Fix it next, in its
+   own PR, unless the user redirects you. How to fix one is in `CODING_STANDARDS.md`, "Testing
+   Guidelines".
 
 ## Agent attribution
 

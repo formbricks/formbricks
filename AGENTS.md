@@ -56,8 +56,8 @@ section before changing database access, its "Testing Guidelines" before adding 
 
 ## Commit & Pull Request Guidelines
 
-Read `docs/agents/pull-requests.md` before committing or opening, updating, or reviewing a PR: commit
-format, PR template rules, review intake, and independent review passes.
+Read `docs/agents/pull-requests.md` before committing or opening, updating, or reviewing a PR, and when a
+check fails or a test is flaky: commit format, PR template rules, review intake, independent review passes.
 
 ## Performance Testing & SigNoz MCP
 

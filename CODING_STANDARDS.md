@@ -296,6 +296,12 @@ Do not:
 - Do not create mega or flaky E2E tests; avoid timing hacks (`waitForTimeout`, `slowMo`) and unstable
   dependencies. `@slow` is triage metadata only: nothing in `playwright.config.ts` or CI reads it, so
   tagging a spec does not make its cost go away.
+- Do not fix a flaky test by hiding it; fix its cause. A race a user could hit gets a product fix and the
+  test stays as it is. A race in the test's own setup waits on a real signal: a response, a URL, an
+  element's state, or `expect(...).toPass()` around an action that is safe to repeat. A timing assertion
+  counts the work or uses a fake clock instead of measuring wall time. Hiding means a sleep, a longer
+  timeout or looser threshold, more `retries` (in `playwright.config.ts` or `test.describe.configure`),
+  or quarantine (`test.skip`, `test.fixme`).
 
 ## Survey Bundles
 
