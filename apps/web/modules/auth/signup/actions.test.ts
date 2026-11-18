@@ -6,7 +6,7 @@ import {
   SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
 } from "@formbricks/types/errors";
-import { getIsFreshInstance } from "@/lib/instance/service";
+import { getIsFreshInstance, markInstanceSetupCompleted } from "@/lib/instance/service";
 import { createEmailToken, verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent } from "@/lib/posthog";
@@ -118,7 +118,10 @@ vi.mock("@/lib/constants", () => ({
   },
 }));
 
-vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
+vi.mock("@/lib/instance/service", () => ({
+  getIsFreshInstance: vi.fn(),
+  markInstanceSetupCompleted: vi.fn(async () => undefined),
+}));
 
 vi.mock("@/modules/ee/audit-logs/lib/handler", () => ({
   withAuditLogging: vi.fn(<T>(_type: string, _object: string, fn: T) => fn),
@@ -157,6 +160,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
     constantsOverrides.SIGNUP_ENABLED = true;
     constantsOverrides.SETUP_TOKEN = undefined;
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+    vi.mocked(markInstanceSetupCompleted).mockResolvedValue(undefined);
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true } as never);
     vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
     vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
@@ -394,6 +398,33 @@ describe("createUserAction — signup verification email callbackURL", () => {
       expect(auth.api.signUpEmail).toHaveBeenCalled();
     });
 
+    // ENG-7313: written when the administrator is created, not when a page first asks.
+    test("records the instance as set up once the first administrator is created", async () => {
+      vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+
+      await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
+
+      expect(markInstanceSetupCompleted).toHaveBeenCalledTimes(1);
+    });
+
+    test("still signs the administrator up when recording the setup marker fails", async () => {
+      vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+      vi.mocked(markInstanceSetupCompleted).mockRejectedValue(new Error("db down"));
+
+      const result = await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
+
+      expect(result).toEqual({ success: true, emailDisplayToken: expect.any(String) });
+    });
+
+    test("does not record the setup marker when no account was created", async () => {
+      vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+      vi.mocked(getUserByEmail).mockResolvedValue({ ...createdUser, id: "someone-else" } as never);
+
+      await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
+
+      expect(markInstanceSetupCompleted).not.toHaveBeenCalled();
+    });
+
     // ENG-7313: an operator who sets SETUP_TOKEN gets a fresh instance only the token holder can claim.
     describe("with SETUP_TOKEN configured", () => {
       const setupToken = "0123456789abcdef-setup-token";
@@ -455,6 +486,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
       expect(result).toEqual({ success: true, emailDisplayToken: expect.any(String) });
       expect(createMembership).toHaveBeenCalled();
+      expect(markInstanceSetupCompleted).not.toHaveBeenCalled();
     });
   });
 

@@ -13,11 +13,7 @@ const rethrowAsDatabaseError = (error: unknown): never => {
   throw error;
 };
 
-/**
- * Record that the instance has been set up. Idempotent; the fixed primary key keeps it a singleton, and
- * nothing in the app ever deletes the row.
- */
-const markInstanceSetupCompleted = async (): Promise<void> => {
+const upsertInstanceSetupMarker = async (): Promise<void> => {
   await prisma.instanceSetup.upsert({
     where: { id: INSTANCE_SETUP_ID },
     create: { id: INSTANCE_SETUP_ID },
@@ -26,13 +22,27 @@ const markInstanceSetupCompleted = async (): Promise<void> => {
 };
 
 /**
+ * Record that the instance has been set up. Idempotent; the fixed primary key keeps it a singleton, and
+ * nothing in the app ever deletes the row. Called by the flows that create the bootstrap administrator
+ * (`createUserAction`, the SSO `user.create.after` hook) right after the row exists, so a first user who
+ * deletes their account before any page asks {@link getIsFreshInstance} cannot re-arm the setup.
+ */
+export const markInstanceSetupCompleted = async (): Promise<void> => {
+  try {
+    await upsertInstanceSetupMarker();
+  } catch (error) {
+    rethrowAsDatabaseError(error);
+  }
+};
+
+/**
  * Whether the instance has never been set up: no persisted "setup completed" marker AND no users.
  *
  * The user count alone made "fresh" re-arm whenever the last user deleted their account, which reopened
- * the unauthenticated administrator sign-up (ENG-7313). So the first time a user is seen, the marker is
- * written and the instance is never fresh again. The migration writes it up front for every database
- * that already holds a user or an organization. The marker is read first and, once it exists, answers
- * the question without counting users.
+ * the unauthenticated administrator sign-up (ENG-7313). The sign-up flows write the marker when they create
+ * the bootstrap administrator, and the migration writes it for every database that already held a user or
+ * an organization. As a backstop for a user created any other way, the first time this sees a user it
+ * writes the marker too. The marker is read first and, once it exists, answers without counting users.
  */
 export const getIsFreshInstance = reactCache(async (): Promise<boolean> => {
   try {
@@ -41,7 +51,7 @@ export const getIsFreshInstance = reactCache(async (): Promise<boolean> => {
     }
     if ((await prisma.user.count()) === 0) return true;
 
-    await markInstanceSetupCompleted();
+    await upsertInstanceSetupMarker();
     return false;
   } catch (error) {
     return rethrowAsDatabaseError(error);
@@ -60,15 +70,28 @@ export const getHasNoOrganizations = reactCache(async (): Promise<boolean> => {
 
 /**
  * Whether this user may create the instance's first organization (and become its owner) while the
- * organization count is zero without multi-org: the bootstrap administrator, or the only user the
- * instance has ever had. Anyone else who is merely signed in cannot claim it (ENG-7313).
+ * organization count is zero without multi-org. Exactly one user qualifies, so a user who is merely
+ * signed in cannot claim it (ENG-7313):
+ *
+ * - the bootstrap administrator, while that account exists;
+ * - otherwise the earliest-created user (ties broken by id). This covers instances whose administrator
+ *   signed up before the bootstrap marker existed (ENG-2247) or has since deleted their account. Without
+ *   it, such an instance with two or more users and no organization (for example after the only
+ *   organization was deleted) would have nobody able to create one.
  */
 export const getIsEligibleFirstOrganizationOwner = async (userId: string): Promise<boolean> => {
   try {
-    const user = await prisma.user.findUnique({ where: { id: userId }, select: { isBootstrapAdmin: true } });
-    if (!user) return false;
-    if (user.isBootstrapAdmin) return true;
-    return (await prisma.user.count()) === 1;
+    const bootstrapAdmin = await prisma.user.findFirst({
+      where: { isBootstrapAdmin: { not: null } },
+      select: { id: true },
+    });
+    if (bootstrapAdmin) return bootstrapAdmin.id === userId;
+
+    const earliestUser = await prisma.user.findFirst({
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+      select: { id: true },
+    });
+    return earliestUser?.id === userId;
   } catch (error) {
     return rethrowAsDatabaseError(error);
   }

@@ -8,6 +8,7 @@ import { logger } from "@formbricks/logger";
 import { SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE } from "@formbricks/types/errors";
 import { normalizeUserName } from "@formbricks/types/user";
 import { WEBAPP_URL } from "@/lib/constants";
+import { markInstanceSetupCompleted } from "@/lib/instance/service";
 import { identifyPostHogPerson } from "@/lib/posthog";
 import { findMatchingLocale } from "@/lib/utils/locale";
 import { getAttributionPropertiesFromCookies } from "@/modules/auth/lib/attribution";
@@ -302,6 +303,14 @@ export const ssoDatabaseHooks: NonNullable<BetterAuthOptions["databaseHooks"]> =
         if (!decision) return; // not a gated SSO sign-up
         const identityProvider = resolveSsoIdentityProvider(context);
         if (!identityProvider) return;
+
+        // ENG-7313: the instance is set up from the moment its administrator exists. Not fatal: the user is
+        // already committed, and getIsFreshInstance writes the marker too once it sees a user.
+        if (decision.isBootstrapAdmin) {
+          await markInstanceSetupCompleted().catch((error: unknown) =>
+            logger.error({ error, userId: user.id }, "Failed to record that the instance is set up")
+          );
+        }
 
         // Before the provisioning writes, so a failure in those cannot swallow the security signal.
         if (user.emailVerified === false) {
