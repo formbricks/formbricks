@@ -347,7 +347,11 @@ describe("Integration Service", () => {
         ...mockIntegrationConfig,
         key: { ...mockIntegrationConfig.key, access_token: ciphertext },
       };
-      vi.mocked(prisma.integration.findFirst).mockResolvedValue({ config: storedConfig } as never);
+      // `type` is on the row so a getter that decrypted the row (via transformIntegration) would blank the token.
+      vi.mocked(prisma.integration.findFirst).mockResolvedValue({
+        type: "slack",
+        config: storedConfig,
+      } as never);
 
       const stored = await getStoredIntegrationConfig(mockWorkspaceId, IntegrationType.slack);
 

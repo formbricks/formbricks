@@ -31,10 +31,14 @@ the integration is saved.
 - **A wrong key by mistake is recoverable.** Editing an affected integration's settings keeps the stored token as it
   is, so putting the previous `ENCRYPTION_KEY` back restores the integration without reconnecting.
 
-## v1 management API list limits
+## v1 API list limits
 
-The v1 management list endpoints (surveys, responses, action classes, contacts, contact attributes, contact
-attribute keys and webhooks) return at most 250 items per request. A request with `limit` above 250 now gets
-`400 Bad Request` instead of a result, and a request without `limit` gets the endpoint's default page. To read more,
-page through with `limit` of 250 or less and `skip` (`offset` on surveys).
+The v1 list endpoints that take a management API key (`/api/v1/management/` surveys, responses, action classes,
+contacts, contact attributes and contact attribute keys, plus `/api/v1/webhooks`) return at most 250 items per
+request:
 
+- A request with `limit` above 250 now gets `400 Bad Request` instead of a result.
+- A request without `limit` used to return every row. It now returns the first page: 25 responses on
+  `/api/v1/management/responses`, 250 items on the others. Nothing in the response says more rows exist.
+- To read everything, page with `limit` of 250 or less and `skip` (`offset` on surveys) until a page comes back
+  shorter than `limit`.
