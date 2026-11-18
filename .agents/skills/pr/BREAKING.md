@@ -32,8 +32,8 @@ unticked and say in one line why. The tick alone applies the `breaking-change` l
 release notes and the self-hoster migration guide, so a tick "to be safe" invents an upgrade step that
 does not exist; a reviewer who disagrees can still ask for it.
 
-Ticked: under `**Migrations & env:**`, add one table row per breaking change, written for an external
-integrator:
+Ticked: replace the `Why:` line under the checkbox with one table row per breaking change, written
+for an external integrator:
 
 ```markdown
 | Change | Before | After | Who's affected | Action required |

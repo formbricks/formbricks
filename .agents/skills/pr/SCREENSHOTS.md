@@ -12,8 +12,10 @@ Coverage table and stop here.
 
 ## 2. Capture before, implement, capture after
 
-Prerequisites: the database (`pnpm db:up`), the dev server on :3000, and the repo's pinned Playwright
-browser (`pnpm exec playwright install chromium` if a run reports a missing executable).
+Prerequisites: the database (`pnpm db:up`); the dev server on :3000, started as a background task so
+it does not block your turn; and the repo's pinned Playwright browser (`pnpm exec playwright install
+chromium` if a run reports a missing executable). The `dot` reporter garbles `console.log`, so write a
+measurement you need beside the shot to a file and read it afterwards.
 
 Write a throwaway spec under `apps/web/playwright/` with a `zz-` prefix and delete it afterwards. The
 fixture mints its own user, so never type credentials:
@@ -88,7 +90,8 @@ SHA=$(git rev-parse HEAD~1)                # the commit that holds the images
 Embed `https://raw.githubusercontent.com/<owner>/<repo>/$SHA/.pr-assets/<file>.png`, taking owner and repo
 from `git remote -v`. Check each URL answers 200 logged out (`curl -sI <url> | head -1`).
 
-The branch history must keep that commit: update the branch by merging `main` in, never by rebasing or
+`assets-pr-screenshots` is the previous host: frozen for the links in merged PRs, so nothing new goes
+there. The branch history must keep that commit: update the branch by merging `main` in, never by rebasing or
 force-pushing past it. New shots after a review fix are a new add/remove pair with new file names.
 
 ## 5. Place the pair
@@ -107,8 +110,8 @@ it.
 
 ## Guardrails
 
-The repository is public: an image you push is published for good. If nobody asked for media, ask
-before pushing it.
+The repository is public: an image you push is published for good. Check every frame against this
+list before the push:
 
 - Shoot fixture users only (`user-<n>-<timestamp>@example.com`). No real account, customer data, API
   key, token, secret or Stripe object in the frame.

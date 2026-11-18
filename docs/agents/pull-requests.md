@@ -1,6 +1,6 @@
 # Commit & Pull Request Guidelines
 
-Read before committing, or opening, updating, or reviewing a pull request.
+Read before committing or reviewing a pull request.
 
 ## Commits
 

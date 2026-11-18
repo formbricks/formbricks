@@ -56,8 +56,8 @@ section before changing database access, its "Testing Guidelines" before adding 
 
 ## Commit & Pull Request Guidelines
 
-Open, update or ready a PR with the `pr` skill. Changing how a UI surface looks? Read
-`.agents/skills/pr/SCREENSHOTS.md` before the first edit, while the before screenshot is still free.
+Open, update or ready a PR with the `pr` skill; for a change to how a UI surface looks, load it before
+the first edit, while the before screenshot is still free.
 
 Read `docs/agents/pull-requests.md` before committing or reviewing a PR: commit format, review intake,
 Sonar, and CI failure triage.

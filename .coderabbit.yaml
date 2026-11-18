@@ -436,9 +436,11 @@ reviews:
           confident the author is; genuine uncertainty about which bullet applies is what the
           inconclusive case below is for.
 
-          FAIL if the diff contains at least one of the above and the checkbox is unticked, or the
-          section is empty or still holds the unedited template comment. Name the specific file and
-          line that is breaking, and ask the author to tick the box.
+          FAIL if the diff contains at least one of the above and the checkbox is unticked. Name the
+          specific file and line that is breaking, and ask the author to tick the box.
+
+          FAIL if the line under the checkbox still reads `Why: _one line on why it is, or is not,
+          breaking_`, ticked or not: the declaration is unexplained.
 
           FAIL if the checkbox is ticked but no change in the diff matches the list above.
 

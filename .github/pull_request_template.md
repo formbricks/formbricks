@@ -4,9 +4,9 @@ Fixes ENG-
 
 ## What & why
 
-**Was:** <how it behaved before, one sentence>
+**Was:** _how it behaved before, one sentence_
 
-**Now:** <how it behaves after this PR, one sentence>
+**Now:** _how it behaves after this PR, one sentence_
 
 <!-- The smallest visual that makes the point: a diff sketch, a call or file tree, or mermaid. -->
 
@@ -20,20 +20,20 @@ Fixes ENG-
 
 - [ ] This PR contains breaking changes
 
-<one line: why it is, or is not, breaking>
+Why: _one line on why it is, or is not, breaking_
 
 **Door** (tick one)
 
 - [ ] Two-way door: a revert undoes it
 - [ ] One-way door: a revert does not undo it
 
-**Blast radius:** <what nearby could break>
+**Blast radius:** _what nearby could break_
 
 **Migrations & env:** none
 
 ## Evidence
 
-Rerun: `<one command covering the table>`
+Rerun: `one command covering the table`
 
 **Coverage**
 

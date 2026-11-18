@@ -78,13 +78,15 @@ jobs:
               return null; // no signal in this section
             };
 
-            // Label rules. Add an entry to sync a new label from a new "## <heading>" PR-body section.
+            // Label rules. Add an entry to sync a new label from a PR-body section; `headings` lists the
+            // "## <heading>" names it accepts, first match wins.
             // `isActive(content)` returns true/false to set the label, or null to leave it unchanged.
             const RULES = [
               {
-                // "Breaking changes" is the old template's heading: PRs opened before the switch, and
-                // backports filled from a release branch's template. Drop it once no maintained
-                // release branch carries the old template.
+                // "Breaking changes" is the old template's heading, still used by PRs opened before the
+                // switch and by backports (the pr skill names it so for release/*, whose own copy of
+                // this workflow reads only that heading). Drop it once every maintained release
+                // branch carries this version.
                 headings: ["Merge danger", "Breaking changes"],
                 label: "breaking-change",
                 // Prefix, not exact: an author who appends a clause ("… (see the table)") still gets a
@@ -110,12 +112,14 @@ jobs:
             const current = new Set((pr.labels || []).map((l) => l.name));
 
             for (const rule of RULES) {
-              const heading = rule.headings.find((h) => sectionContent(h) !== null);
-              const content = heading === undefined ? null : sectionContent(heading);
-              if (content === null) {
+              const found = rule.headings
+                .map((h) => [h, sectionContent(h)])
+                .find(([, c]) => c !== null);
+              if (found === undefined) {
                 core.info(`[${rule.label}] no "## ${rule.headings.join('" or "## ')}" section found; leaving unchanged.`);
                 continue;
               }
+              const [heading, content] = found;
               const active = rule.isActive(content);
               if (active === null) {
                 core.info(`[${rule.label}] no checkbox under "## ${heading}"; leaving unchanged.`);

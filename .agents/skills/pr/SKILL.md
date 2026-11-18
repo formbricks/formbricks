@@ -27,7 +27,8 @@ under Open gaps before the body is written.
 
 Copy `.github/pull_request_template.md` and fill it top to bottom. Keep every heading and the checkbox
 text verbatim: `pr-label-sync.yml` reads the checkbox under `## Merge danger`, and CodeRabbit's
-pre-merge checks read the sections by name. Delete each HTML comment once its section is filled.
+pre-merge checks read the sections by name. Replace every _italic_ placeholder and delete each HTML
+comment once its section is filled.
 
 **Ticket line.** `Fixes ENG-<id>`, or `Ref ENG-<id>` when the PR only partly addresses the ticket, so
 merging does not close it. A GitHub issue is `Fixes #<number>`; no ticket at all, delete the line and say
@@ -49,7 +50,8 @@ most. A link to the PR's Files tab points at nothing. Nothing risky? Say so in o
   working. When the diff touches a public API shape, an env var or config key, a migration, a webhook,
   or the SDK in `packages/js-core`, `packages/survey-ui` or `packages/surveys`, read
   [BREAKING.md](BREAKING.md) before deciding: the tick alone writes the release-notes migration entry.
-  The line under the box says in one sentence why it is, or is not, breaking.
+  Replace the `Why:` placeholder under the box with one sentence on why it is, or is not, breaking;
+  a ticked box gets the table from BREAKING.md there instead.
 - **Door**: tick exactly one box. Two-way when a revert undoes the change; one-way when it does not (a
   destructive migration, data written in a new shape, a message sent), and then say in the blast
   radius what the revert leaves behind.
@@ -81,7 +83,7 @@ Lists are three bullets of twenty words at most, one idea each, in short present
 Overflow folds rather than being dropped: long command logs and Coverage rows past the sixth go into
 `<details>`, while the Coverage table, Open gaps and the breaking-changes box stay visible.
 
-Each sentence earns its place by helping the reviewer decide. Cut on sight:
+Spend every sentence on the change, its danger or its evidence. These are the usual padding; cut them:
 
 - Blame archaeology: which commit introduced the bug, who touched what.
 - A defence of a choice nobody questioned, or of what you deliberately left out.
@@ -95,18 +97,22 @@ Pass the body from a file (`--body-file`, or the MCP tool's `body`), never throu
 
 Once the PR is ready for review (not a draft), enable auto-merge with the **squash** method
 (`enable_pr_auto_merge`, or `gh pr merge --auto --squash`). GitHub then merges it once the required
-checks and reviews pass. Squash is also what keeps `.pr-assets/` screenshots out of `main`: a merge
-commit would carry their blobs into `main`'s history, so a PR with screenshots merges by squash only.
+checks and reviews pass. Squash is the only method: it is also what keeps screenshots out of `main`
+([SCREENSHOTS.md](SCREENSHOTS.md), section 4).
 Read the method back from the result: the MCP tool has armed `MERGE` when asked for `SQUASH`. Any
 method but squash, disable auto-merge again and report it. If GitHub refuses, say why in your report
 rather than merging by hand.
 
 Rewrite the body with every scope change or review fix, so it always describes the head commit.
 
+**Backport to `release/*`.** That branch runs its own copy of `pr-label-sync.yml`, which reads the
+checkbox under `## Breaking changes`. Until the branch carries the new workflow, name the heading
+`## Breaking changes` instead of `## Merge danger` in a backport body.
+
 ## Done when
 
 - Every template heading is present with the checkbox text verbatim, exactly one door box is ticked,
-  and no template comment is left.
+  and no template comment or placeholder is left.
 - Every behaviour the diff changes has a Coverage row or an Open gaps entry.
 - A UI change has a before/after pair whose URLs load logged out; any other change says `No UI change`.
 - The body fits the budget, and every claim matches a check you ran on the head commit.

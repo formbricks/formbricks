@@ -55,6 +55,6 @@ needs; one visual is usual, two is rare.
 
 ## Credits
 
-Adapted from the `pr` skill in [mattpocock/skills](https://github.com/mattpocock/skills) (MIT,
-Copyright (c) 2026 Matt Pocock), whose visual menu comes from Dex Horthy's `show-me` skill in
+Adapted from the `pr` skill in [mattpocock/skills](https://github.com/mattpocock/skills), under the
+MIT license in [LICENSE.md](LICENSE.md). Its visual menu comes from Dex Horthy's `show-me` skill in
 [humanlayer/humanlayer](https://github.com/humanlayer/humanlayer).

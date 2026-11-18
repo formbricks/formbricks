@@ -298,7 +298,7 @@ scan, and the docs release notes page (`docs/platform/changelog.mdx`) copies it.
 - `**Upgrade impact: Action required** for WHO: WHAT.` followed by a link to the docs steps
   (the version page, or a focused page under `/self-hosting/upgrade/versions/`).
 
-Base it on the Breaking changes tables and `## Before upgrading` steps of the PRs in range. Never write
+Base it on the breaking-changes tables and `## Before upgrading` steps of the PRs in range. Never write
 "review required" or any other "not yet known" status: if you can't tell, ask the human before drafting.
 
 ### Compose
