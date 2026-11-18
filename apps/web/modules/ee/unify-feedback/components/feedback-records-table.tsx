@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import type { TFeedbackSourceFieldMapping } from "@formbricks/types/feedback-source";
 import { useOrganization } from "@/app/(app)/workspaces/[workspaceId]/context/workspace-context";
+import { CONTACT_LOOKUP_USER_IDS_MAX } from "@/app/api/internal/feedback-records/schemas";
 import { getReportingTimeZone } from "@/lib/date-ranges";
 import { formatDateForDisplay, formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
@@ -54,8 +55,8 @@ const COMPACT_DATE_TIME: Intl.DateTimeFormatOptions = {
   minute: "2-digit",
 };
 
-// Must not exceed the contact lookup's input cap (`userIds` is `.max(1000)`).
-const CONTACT_RESOLVE_BATCH_SIZE = 1000;
+// One lookup takes at most the route's own cap, so a batch is exactly that.
+const CONTACT_RESOLVE_BATCH_SIZE = CONTACT_LOOKUP_USER_IDS_MAX;
 const RECORD_COLUMN_IDS = [
   "select",
   "collectedAt",
