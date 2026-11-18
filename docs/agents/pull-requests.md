@@ -14,8 +14,8 @@ migration/env reporting. Update the description with every scope change or revie
 
 Complete QA on the change's PR before requesting review. The author accounts for each changed behavior
 and names unverified behavior under Open gaps; reviewers challenge that evidence. A failure called
-pre-existing or noise names the run on `main` that shows it, and one called flaky names its Linear issue
-(see Flaky tests); without that evidence it goes under Open gaps. Release review checks
+pre-existing or noise names the run on `main` that shows it; without that run it goes under Open gaps.
+One called flaky names its Linear issue under Open gaps (see Flaky tests). Release review checks
 interactions between changes rather than repeating each PR's QA.
 
 Before opening a PR, run the `code-review` skill against the merge-base. The review is done when every
@@ -67,15 +67,15 @@ Playwright summary counts it as `flaky` (it passed only on Playwright's own retr
 inside green runs, so read the summary even when the check passed.
 
 1. One rerun is how you find out. Once it shows a flake, rerun nothing more until steps 2–3 are done.
-2. Search Linear for the test name, closed issues included, and reuse an issue only when it records the
-   same failure: the failing assertion, or for a failure without one (a hook or fixture that throws) the
-   error and where it is thrown. A different failure is a different flake. An open issue gets the new
-   evidence: the run ids, or for a local run the command and its output. A Done or Canceled one is
-   reopened with it: its fix did not hold.
+2. Search Linear for the test name, closed issues included. Reuse an issue only when it records the same
+   failure: the failing assertion, or when nothing asserted (an action timeout, a hook or fixture that
+   throws) the error and the line it came from. A different failure is a different flake. An open issue
+   gets the new run ids, or for a local run the command and its output. A Done or Canceled one is
+   reopened with them: its fix did not hold.
 3. Otherwise file one as `docs/agents/issue-tracker.md` describes (no project or milestone needed):
    priority High, label `bug`, plus `infrastructure` when the cause is CI or the test harness rather than
-   the product. Give the failing test and that failure, the evidence, and the runs you have seen it fail in
-   ("first seen" if this is the first).
+   the product. Give the failing test, that failure, and the runs it failed in (or the local command and
+   output), marked "first seen" if this is the first.
 4. Name the issue under the PR's Open gaps, whether or not the PR touches that test. Fix it next, in its
    own PR, unless the user redirects you. How to fix one is in `CODING_STANDARDS.md`, "Testing
    Guidelines".

@@ -71,13 +71,14 @@ export default defineConfig({
        noise. Depending on "chromium" makes this project start only once that one has finished.
        Dependency projects ignore CLI file and grep filters, so `pnpm test:e2e security.spec.ts` or
        `--project=chromium-timing` runs the whole chromium project first; add `--no-deps` to run only
-       the timing test. */
+       the timing test. One worker, so two @timing tests never run beside each other either. */
     {
       name: "chromium-timing",
       use: { ...devices["Desktop Chrome"] },
       testMatch: "**/*.spec.ts",
       grep: /@timing/,
       dependencies: ["chromium"],
+      workers: 1,
     },
 
     // Resource hints and CSP enforcement differ by browser; run the SDK journey in Firefox too.
