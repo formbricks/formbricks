@@ -110,6 +110,31 @@ describe("planAnswerDataWrite — the write predicate is the read projection", (
     expect(data.verifiedEmail).toBe("a@b.test");
   });
 
+  /**
+   * `GET` publishes a key but withholds its value when the stored bytes are outside the published
+   * shapes (a legacy number array, a JSON `null`). A caller sending back what it read has no way to
+   * resend that value, so omitting it must not delete it.
+   */
+  test("a stored answer whose value the read withholds survives a wholesale data replace", () => {
+    const { data } = planAnswerDataWrite(
+      planFor(["q1", "legacy", "blank"]),
+      { q1: "new" },
+      { q1: "old", legacy: [1, 2] as unknown as string[], blank: null as unknown as string }
+    );
+
+    expect(data).toEqual({ q1: "new", legacy: [1, 2], blank: null });
+  });
+
+  test("a withheld answer is replaced when the caller sends a new value for it", () => {
+    const { data } = planAnswerDataWrite(
+      planFor(["q1", "legacy"]),
+      { q1: "new", legacy: ["a", "b"] },
+      { q1: "old", legacy: [1, 2] as unknown as string[] }
+    );
+
+    expect(data).toEqual({ q1: "new", legacy: ["a", "b"] });
+  });
+
   /** Replacement is still replacement for everything the caller *can* see. */
   test("an omitted answer is removed", () => {
     const { data } = planAnswerDataWrite(planFor(["q1", "q2"]), { q1: "kept" }, { q1: "old", q2: "dropped" });
