@@ -2,6 +2,7 @@
 
 import { Handle, Position } from "@xyflow/react";
 import {
+  FilterIcon,
   GitBranchIcon,
   GlobeIcon,
   type LucideIcon,
@@ -25,6 +26,7 @@ export const NODE_ICONS: Record<TWorkflowNodeIcon, LucideIcon> = {
   trigger: ZapIcon,
   webhook: WebhookIcon,
   ifElse: GitBranchIcon,
+  filter: FilterIcon,
   switch: SplitIcon,
   email: MailIcon,
   http: GlobeIcon,

@@ -145,6 +145,56 @@ describe("If/else operators", () => {
   });
 });
 
+describe("Filter step (ADR 0056)", () => {
+  const filterDefinition = (conditions: TConditionInput[]): TWorkflowDefinitionBase =>
+    ({
+      schemaVersion: 1,
+      trigger: {
+        id: "trigger",
+        type: "trigger",
+        triggerType: "response.completed",
+        config: { surveyId, endingCardIds: [] },
+      },
+      nodes: [
+        { id: "gate", type: "filter", config: { condition: { id: "g", connector: "and", conditions } } },
+        email("after"),
+      ],
+      edges: [
+        { id: "e1", source: "trigger", target: "gate" },
+        { id: "e2", source: "gate", target: "after" },
+      ],
+      entryNodeId: "trigger",
+    }) as TWorkflowDefinitionBase;
+
+  test("takes the If/else's conditions and has one way out", () => {
+    const definition = filterDefinition([{ id: "c1", left: { path: "response.q1" }, operator: "isSet" }]);
+    expect(ZWorkflowDefinitionInput.safeParse(definition).success).toBe(true);
+    expect(ZWorkflowExecutableDefinition.safeParse(definition).success).toBe(true);
+
+    const branched = {
+      ...definition,
+      edges: [...definition.edges.slice(0, 1), { ...definition.edges[1], sourceHandle: "then" }],
+    };
+    expect(ZWorkflowDefinition.safeParse(branched).success).toBe(false);
+  });
+
+  test("has the If/else's limits and Variable rules", () => {
+    const tooMany = Array.from({ length: WORKFLOW_LIMITS.maxConditionsPerIfElse + 1 }, (_, index) => ({
+      id: `c${index}`,
+      left: { path: "response.q1" },
+      operator: "isSet",
+    }));
+    expect(issues(ZWorkflowDefinitionInput.safeParse(filterDefinition(tooMany))).join()).toMatch(
+      /filter step can have at most/
+    );
+    expect(
+      ZWorkflowEnableDefinition.safeParse(
+        filterDefinition([{ id: "c1", left: { path: "contact.plan" }, operator: "isSet" }])
+      ).success
+    ).toBe(false);
+  });
+});
+
 describe("Variable paths in conditions", () => {
   test("refuses a path without one of the three prefixes on save", () => {
     const definition = branching([{ id: "c1", left: { path: "contact.plan" }, operator: "isSet" }]);

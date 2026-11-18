@@ -261,3 +261,50 @@ describe("walkWorkflowSteps with a Switch", () => {
     await expect(walk(routing, () => ({ next: "continue" }))).rejects.toThrow(/must choose a branch/);
   });
 });
+
+const filterNode = (id: string): TWorkflowExecutableDefinition["nodes"][number] => ({
+  id,
+  type: "filter",
+  config: {
+    condition: {
+      id: `${id}-group`,
+      connector: "and",
+      conditions: [{ id: "c", left: { path: "response.q1" }, operator: "isSet" }],
+    },
+  },
+});
+
+/** trigger → gate (Filter) → a → b */
+const filtered = definition(
+  [filterNode("gate"), sendEmailNode("a"), sendEmailNode("b")],
+  [
+    { id: "e1", source: "trigger", target: "gate" },
+    { id: "e2", source: "gate", target: "a" },
+    { id: "e3", source: "a", target: "b" },
+  ]
+);
+
+describe("walkWorkflowSteps with a Filter (ADR 0056)", () => {
+  test("a Filter that passes lets the run go on", async () => {
+    const { visited, result } = await walk(filtered, () => ({ next: "continue" }));
+
+    expect(visited).toEqual(["gate", "a", "b"]);
+    expect(result).toEqual({ stopped: false, notTaken: [] });
+  });
+
+  test("a Filter that doesn't pass ends the run, completed, and the steps after it are not taken", async () => {
+    const { visited, result } = await walk(filtered, (id) =>
+      id === "gate" ? { next: "end" } : { next: "continue" }
+    );
+
+    expect(visited).toEqual(["gate"]);
+    expect(result.stopped).toBe(false);
+    expect(result.notTaken.map((node) => node.id)).toEqual(["a", "b"]);
+  });
+
+  test("only a Filter can end the run", async () => {
+    await expect(
+      walk(filtered, (id) => (id === "a" ? { next: "end" } : { next: "continue" }))
+    ).rejects.toThrow(WorkflowWalkError);
+  });
+});

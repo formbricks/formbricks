@@ -10,6 +10,8 @@ import { getWorkflowTriggerTypeLabel } from "@/modules/ee/workflows/lib/display"
 import { describeWorkflowCondition } from "@/modules/ee/workflows/lib/if-else-summary";
 import type {
   TRunDetailBadge,
+  TRunDetailConditionResult,
+  TRunDetailFilterRow,
   TRunDetailHttpRequestRow,
   TRunDetailIfElseRow,
   TRunDetailRow,
@@ -57,6 +59,8 @@ const getStepTypeLabel = (stepType: string, t: TFunction): string => {
   switch (stepType) {
     case "if_else":
       return t("workspace.workflows.if_else");
+    case "filter":
+      return t("workspace.workflows.filter");
     case "switch":
       return t("workspace.workflows.switch");
     case "send_email":
@@ -120,14 +124,17 @@ const FieldLine = ({ label, value }: { readonly label: string; readonly value: R
   </div>
 );
 
-const IfElseBody = ({ row }: { readonly row: TRunDetailIfElseRow }) => {
+/** Each condition "(matched)" / "(not matched)" in words, no icons (mock screen 7), then the outcome. */
+const ConditionResults = ({
+  conditions,
+  outcome,
+}: Readonly<{ conditions: TRunDetailConditionResult[]; outcome: string | null }>) => {
   const { t } = useTranslation();
   // In the editor, picked choices (DC11) read by their label; elsewhere by id.
   const survey = useBoundTriggerSurvey();
   const choiceLabels = useMemo(() => getSurveyChoiceLabels(survey), [survey]);
-  if (row.conditions.length === 0 && !row.branch) return null;
-  // "(matched)" / "(not matched)" in words, no icons (mock screen 7).
-  const parts = row.conditions.map(({ id, matched, condition }, index) => {
+  if (conditions.length === 0 && !outcome) return null;
+  const parts = conditions.map(({ id, matched, condition }, index) => {
     const text =
       (condition ? describeWorkflowCondition(condition, t, undefined, choiceLabels) : null) ??
       t("workspace.workflows.run_condition_unknown", { number: index + 1 });
@@ -146,14 +153,33 @@ const IfElseBody = ({ row }: { readonly row: TRunDetailIfElseRow }) => {
           {part.text}
         </span>
       ))}
-      {row.branch ? (
+      {outcome ? (
         <>
           {" → "}
-          <b>{getBranchLabel(row.branch, t)}</b>
+          <b>{outcome}</b>
         </>
       ) : null}
     </p>
   );
+};
+
+const IfElseBody = ({ row }: { readonly row: TRunDetailIfElseRow }) => {
+  const { t } = useTranslation();
+  return (
+    <ConditionResults
+      conditions={row.conditions}
+      outcome={row.branch ? getBranchLabel(row.branch, t) : null}
+    />
+  );
+};
+
+/** A Filter's conditions, then whether the run went on or ended there (ADR 0056). */
+const FilterBody = ({ row }: { readonly row: TRunDetailFilterRow }) => {
+  const { t } = useTranslation();
+  let outcome: string | null = null;
+  if (row.passed === true) outcome = t("workspace.workflows.run_filter_passed");
+  if (row.passed === false) outcome = t("workspace.workflows.run_filter_ended");
+  return <ConditionResults conditions={row.conditions} outcome={outcome} />;
 };
 
 /** "Gold (not matched) · Silver (matched) → Silver": the cases tried, in words, then the case taken as a badge. */
@@ -279,6 +305,7 @@ const StepRow = ({ row }: { readonly row: TRunDetailStepRow }) => {
     <RowFrame position={row.position} title={title} duration={row.duration} badge={badge}>
       {row.error ? <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{row.error}</p> : null}
       {row.kind === "if_else" ? <IfElseBody row={row} /> : null}
+      {row.kind === "filter" ? <FilterBody row={row} /> : null}
       {row.kind === "switch" ? <SwitchBody row={row} /> : null}
       {row.kind === "send_email" ? <SendEmailBody row={row} /> : null}
       {row.kind === "http_request" ? <HttpRequestBody row={row} /> : null}

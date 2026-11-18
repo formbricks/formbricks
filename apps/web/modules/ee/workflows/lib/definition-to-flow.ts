@@ -171,7 +171,8 @@ const withStepVariableLabels = (
 ): TVariableLabels => {
   const paths = new Set<string>();
   for (const node of definition.nodes) {
-    if (node.type === "if_else") collectConditionPaths(node.config.condition, paths);
+    if (node.type === "if_else" || node.type === "filter")
+      collectConditionPaths(node.config.condition, paths);
     if (node.type === "switch") paths.add(node.config.left.path);
   }
   const titles = new Map(
@@ -186,14 +187,14 @@ const withStepVariableLabels = (
   return result;
 };
 
-/** The If/else and Switch summaries as sentences with chips; null for every other step. */
+/** The If/else, Filter and Switch summaries as sentences with chips; null for every other step. */
 const getSummaryParts = (
   node: TWorkflowNode,
   t: TFunction,
   refs: TVariableRefs | undefined,
   choiceLabels: TChoiceLabels | undefined
 ): TFlowTextPart[] | null => {
-  if (node.type === "if_else") {
+  if (node.type === "if_else" || node.type === "filter") {
     return describeIfElseConditionParts(node.config.condition, t, refs, choiceLabels);
   }
   if (node.type === "switch")

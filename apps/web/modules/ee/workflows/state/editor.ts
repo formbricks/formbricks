@@ -39,7 +39,7 @@ import type { TFlowTextPart } from "@/modules/survey/editor/lib/reference-chips"
 export { countStepsOnBranches } from "@/modules/ee/workflows/lib/workflow-steps";
 
 export type TWorkflowNodeCategory = "trigger" | "flow" | "action";
-export type TWorkflowNodeIcon = "trigger" | "webhook" | "ifElse" | "switch" | "email" | "http";
+export type TWorkflowNodeIcon = "trigger" | "webhook" | "ifElse" | "filter" | "switch" | "email" | "http";
 
 export type TWorkflowNodeIssue = {
   /**

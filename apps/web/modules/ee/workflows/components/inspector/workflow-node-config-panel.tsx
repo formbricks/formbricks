@@ -123,8 +123,11 @@ export const WorkflowNodeConfigPanel = ({ isEditable }: Readonly<WorkflowNodeCon
       if (nextNode.type === "switch") {
         return withSurveyOperatorNamesInDefinition(withSwitchBranchesPruned(next, nextNode));
       }
-      // The If/else panel writes survey operator names; keep every other If/else and Switch on the same set.
-      return nextNode.type === "if_else" ? withSurveyOperatorNamesInDefinition(next) : next;
+      // The If/else and Filter panels write survey operator names; keep every other condition step on
+      // the same set.
+      return nextNode.type === "if_else" || nextNode.type === "filter"
+        ? withSurveyOperatorNamesInDefinition(next)
+        : next;
     });
   };
 

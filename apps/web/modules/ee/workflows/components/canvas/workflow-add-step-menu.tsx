@@ -3,6 +3,7 @@
 import { useAtomValue } from "jotai";
 import {
   ClipboardPasteIcon,
+  FilterIcon,
   GitBranchIcon,
   GlobeIcon,
   type LucideIcon,
@@ -73,6 +74,13 @@ export const WorkflowStepPickerItems = ({
       icon: GitBranchIcon,
       label: t("workspace.workflows.if_else"),
       description: t("workspace.workflows.if_else_description"),
+    },
+    {
+      stepType: "filter",
+      category: "flow",
+      icon: FilterIcon,
+      label: t("workspace.workflows.filter"),
+      description: t("workspace.workflows.filter_description"),
     },
     {
       stepType: "switch",

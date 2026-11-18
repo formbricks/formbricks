@@ -166,12 +166,12 @@ export const validateWorkflowDefinitionSaveRules = (
 
   for (const [index, node] of definition.nodes.entries()) {
     const nodePath = ["nodes", index, "config"];
-    if (node.type === "if_else") {
+    if (node.type === "if_else" || node.type === "filter") {
       const { condition } = node.config;
       if (flattenWorkflowConditions(condition).length > WORKFLOW_LIMITS.maxConditionsPerIfElse) {
         ctx.addIssue({
           code: "custom",
-          message: `An if_else step can have at most ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions`,
+          message: `An ${node.type} step can have at most ${WORKFLOW_LIMITS.maxConditionsPerIfElse} conditions`,
           path: [...nodePath, "condition"],
         });
       }

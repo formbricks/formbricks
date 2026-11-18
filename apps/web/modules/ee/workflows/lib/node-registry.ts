@@ -9,7 +9,10 @@ import {
 } from "@formbricks/workflows";
 import { WorkflowEmailActionForm } from "@/modules/ee/workflows/components/inspector/workflow-email-action-form";
 import { WorkflowHttpRequestForm } from "@/modules/ee/workflows/components/inspector/workflow-http-request-form";
-import { WorkflowIfElseForm } from "@/modules/ee/workflows/components/inspector/workflow-if-else-form";
+import {
+  WorkflowFilterForm,
+  WorkflowIfElseForm,
+} from "@/modules/ee/workflows/components/inspector/workflow-if-else-form";
 import { WorkflowSwitchForm } from "@/modules/ee/workflows/components/inspector/workflow-switch-form";
 import { WorkflowTriggerForm } from "@/modules/ee/workflows/components/inspector/workflow-trigger-form";
 import { WorkflowWebhookTriggerForm } from "@/modules/ee/workflows/components/inspector/workflow-webhook-trigger-form";
@@ -22,6 +25,7 @@ export type TWorkflowNodeRegistryKind =
   | `trigger:${(typeof WORKFLOW_TRIGGERS)[keyof typeof WORKFLOW_TRIGGERS]}`
   | `action:${(typeof WORKFLOW_ACTIONS)[keyof typeof WORKFLOW_ACTIONS]}`
   | "if_else"
+  | "filter"
   | "switch";
 
 export interface TWorkflowNodeFormProps<TNode extends TWorkflowNode> {
@@ -93,6 +97,18 @@ const ifElseEntry: TWorkflowNodeRegistryEntry = {
   ConfigForm: eraseForm(WorkflowIfElseForm),
 };
 
+// A Filter reads as its condition, like an If/else: "plan is “Pro”".
+const filterEntry: TWorkflowNodeRegistryEntry = {
+  kind: "filter",
+  category: "flow",
+  icon: "filter",
+  title: (node, t) => node.label ?? t("workspace.workflows.filter"),
+  summary: (node, t, labels) =>
+    (node.type === "filter" ? describeIfElseCondition(node.config.condition, t, labels) : null) ??
+    t("workspace.workflows.filter_summary"),
+  ConfigForm: eraseForm(WorkflowFilterForm),
+};
+
 // "customer.tier · 2 cases + Default" (mock screen 10).
 const switchEntry: TWorkflowNodeRegistryEntry = {
   kind: "switch",
@@ -139,12 +155,13 @@ const REGISTRY: Record<TWorkflowNodeRegistryKind, TWorkflowNodeRegistryEntry> = 
   "action:send_email": sendEmailActionEntry,
   "action:http_request": httpRequestActionEntry,
   if_else: ifElseEntry,
+  filter: filterEntry,
   switch: switchEntry,
 };
 
 export const getNodeRegistryKind = (node: TWorkflowNode): TWorkflowNodeRegistryKind => {
   if (node.type === "trigger") return `trigger:${node.triggerType}`;
-  if (node.type === "if_else" || node.type === "switch") return node.type;
+  if (node.type === "if_else" || node.type === "filter" || node.type === "switch") return node.type;
   return `action:${node.actionType}`;
 };
 

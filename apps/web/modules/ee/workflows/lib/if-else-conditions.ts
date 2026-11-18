@@ -219,7 +219,7 @@ export const withSurveyOperatorNames = (group: TWorkflowConditionGroup): TWorkfl
   );
 
 const withSurveyOperatorNamesInNode = <N extends TWorkflowDefinition["nodes"][number]>(node: N): N => {
-  if (node.type === "if_else") {
+  if (node.type === "if_else" || node.type === "filter") {
     return { ...node, config: { ...node.config, condition: withSurveyOperatorNames(node.config.condition) } };
   }
   if (node.type === "switch") {

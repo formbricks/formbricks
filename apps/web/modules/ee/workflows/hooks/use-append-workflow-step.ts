@@ -40,7 +40,7 @@ const useBranchingStepDefaults = () => {
 
   return useCallback(
     (sourceNodeId: string, stepType: TAddableWorkflowStepType): TBranchingStepDefaults => {
-      if (stepType !== "if_else" && stepType !== "switch") return {};
+      if (stepType !== "if_else" && stepType !== "filter" && stepType !== "switch") return {};
       const definition = store.get(workflowDefinitionAtom);
       const workflowId = store.get(workflowAtom)?.id ?? "";
       const webhook = queryClient.getQueryData<TWorkflowWebhookResource>(workflowKeys.webhook(workflowId));

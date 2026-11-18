@@ -1,5 +1,6 @@
 import type { TWorkflowStepNode, TWorkflowStepType } from "@formbricks/workflows";
 import { getWorkflowStepType } from "@formbricks/workflows";
+import { filterStepExecutor } from "./filter";
 import { httpRequestStepExecutor } from "./http-request";
 import { ifElseStepExecutor } from "./if-else";
 import { sendEmailStepExecutor } from "./send-email";
@@ -14,6 +15,7 @@ export const WORKFLOW_STEP_EXECUTORS: { [T in TWorkflowStepType]: WorkflowStepEx
   send_email: sendEmailStepExecutor,
   http_request: httpRequestStepExecutor,
   if_else: ifElseStepExecutor,
+  filter: filterStepExecutor,
   switch: switchStepExecutor,
 };
 
