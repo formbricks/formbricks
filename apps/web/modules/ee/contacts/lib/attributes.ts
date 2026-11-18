@@ -116,70 +116,42 @@ const deleteAttributes = async (
   };
 };
 
-/**
- * Updates or creates contact attributes.
- *
- * @param contactId - The ID of the contact to update
- * @param userId - The user ID of the contact
- * @param workspaceId - The workspace ID
- * @param contactAttributesParam - The attributes to update/create
- * @param deleteRemovedAttributes - When true, deletes attributes that exist in DB but are not in the payload.
- * Use this for UI forms where all attributes are submitted. Default is false (merge behavior) for API calls.
- */
-export const updateAttributes = async (
-  contactId: string,
-  userId: string,
-  workspaceId: string,
-  contactAttributesParam: TContactAttributesInput,
-  deleteRemovedAttributes: boolean = false
-): Promise<{
-  success: boolean;
-  messages?: TAttributeUpdateMessage[];
-  errors?: TAttributeUpdateMessage[];
-  ignoreEmailAttribute?: boolean;
-  ignoreUserIdAttribute?: boolean;
-}> => {
-  validateInputs(
-    [contactId, ZId],
-    [userId, ZString],
-    [workspaceId, ZId],
-    [contactAttributesParam, ZContactAttributesInput]
-  );
+type TExistingAttributeWrite = {
+  key: string;
+  attributeKeyId: string;
+  columns: { value: string; valueNumber: number | null; valueDate: Date | null };
+};
+type TNewAttributeWrite = { key: string; value: string | number };
 
+/** `email` or `userId` as text, or null when the payload leaves it out. */
+const toOptionalString = (value: unknown): string | null =>
+  value === null || value === undefined ? null : String(value);
+
+/**
+ * The attributes to write once the identity rules ran: an email or userId another contact already
+ * holds is dropped, and the contact keeps at least one of the two.
+ */
+const resolveIdentityAttributes = ({
+  coercedAttributes,
+  contactAttributesParam,
+  emailValue,
+  userIdValue,
+  currentAttributes,
+  emailExists,
+  userIdExists,
+  messages,
+}: {
+  coercedAttributes: Record<string, string | number>;
+  contactAttributesParam: TContactAttributesInput;
+  emailValue: string | null;
+  userIdValue: string | null;
+  currentAttributes: Awaited<ReturnType<typeof getContactAttributes>>;
+  emailExists: boolean;
+  userIdExists: boolean;
+  messages: TAttributeUpdateMessage[];
+}) => {
   let ignoreEmailAttribute = false;
   let ignoreUserIdAttribute = false;
-  const messages: TAttributeUpdateMessage[] = [];
-  const errors: TAttributeUpdateMessage[] = [];
-
-  // Coerce boolean values to strings (SDK may send booleans for string attributes)
-  const coercedAttributes: Record<string, string | number> = {};
-  for (const [key, value] of Object.entries(contactAttributesParam)) {
-    coercedAttributes[key] = typeof value === "boolean" ? String(value) : value;
-  }
-
-  const emailValue =
-    contactAttributesParam.email === null || contactAttributesParam.email === undefined
-      ? null
-      : String(contactAttributesParam.email);
-  const userIdValue =
-    contactAttributesParam.userId === null || contactAttributesParam.userId === undefined
-      ? null
-      : String(contactAttributesParam.userId);
-
-  // Fetch current attributes, contact attribute keys, and email/userId checks in parallel
-  const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
-    await Promise.all([
-      getContactAttributes(contactId),
-      getContactAttributeKeys(workspaceId),
-      emailValue ? hasEmailAttribute(emailValue, workspaceId, contactId) : Promise.resolve(null),
-      userIdValue ? hasUserIdAttribute(userIdValue, workspaceId, contactId) : Promise.resolve(null),
-    ]);
-
-  // Process email and userId existence early
-  const emailExists = !!existingEmailAttribute;
-  const userIdExists = !!existingUserIdAttribute;
-
-  // Remove email and/or userId from attributes if they already exist on another contact
   let contactAttributes = { ...coercedAttributes };
 
   // Determine what the final email and userId values will be after this update
@@ -236,17 +208,15 @@ export const updateAttributes = async (
     ignoreUserIdAttribute = true;
   }
 
-  // Delete attributes that were removed (only when explicitly requested)
-  // This is used by UI forms where all attributes are submitted
-  // For API calls, we want merge behavior by default (only update passed attributes)
-  if (deleteRemovedAttributes) {
-    await deleteAttributes(contactId, currentAttributes, contactAttributesParam, contactAttributeKeys);
-  }
+  return { contactAttributes, ignoreEmailAttribute, ignoreUserIdAttribute };
+};
 
-  // Create lookup map for attribute keys
-  const contactAttributeKeyMap = new Map(contactAttributeKeys.map((ack) => [ack.key, ack]));
-
-  // Separate existing and new attributes, validating types for existing attributes
+/** The attributes whose key exists (type-checked), and the ones that will create a key. */
+const splitAttributesByKey = (
+  contactAttributes: Record<string, string | number>,
+  contactAttributeKeyMap: Map<string, Awaited<ReturnType<typeof getContactAttributeKeys>>[number]>,
+  messages: TAttributeUpdateMessage[]
+): { existingAttributes: TExistingAttributeWrite[]; newAttributes: TNewAttributeWrite[] } => {
   const existingAttributes: {
     key: string;
     attributeKeyId: string;
@@ -284,6 +254,245 @@ export const updateAttributes = async (
     }
   }
 
+  return { existingAttributes, newAttributes };
+};
+
+/**
+ * Update all existing attributes with typed column values, locked in a deterministic order (ENG-2252),
+ * with a bounded deadlock retry.
+ */
+const upsertExistingAttributes = async (
+  contactId: string,
+  workspaceId: string,
+  existingAttributes: TExistingAttributeWrite[]
+): Promise<void> => {
+  const orderedExistingAttributes = [...existingAttributes].sort((a, b) =>
+    compareCodeUnits(a.attributeKeyId, b.attributeKeyId)
+  );
+  await retryOnDeadlock(
+    () =>
+      prisma.$transaction(
+        orderedExistingAttributes.map(({ attributeKeyId, columns }) =>
+          prisma.contactAttribute.upsert({
+            where: {
+              contactId_attributeKeyId: {
+                contactId,
+                attributeKeyId,
+              },
+            },
+            update: {
+              value: columns.value,
+              valueNumber: columns.valueNumber,
+              valueDate: columns.valueDate,
+            },
+            create: {
+              contactId,
+              attributeKeyId,
+              value: columns.value,
+              valueNumber: columns.valueNumber,
+              valueDate: columns.valueDate,
+            },
+          })
+        )
+      ),
+    { operation: "updateAttributes.existingAttributes", contactId, workspaceId }
+  );
+};
+
+/** Creates the new attribute keys (with this contact's values) that are safe, unreserved and within the limit. */
+const createNewAttributes = async ({
+  contactId,
+  workspaceId,
+  newAttributes,
+  existingKeyCount,
+  messages,
+  errors,
+}: {
+  contactId: string;
+  workspaceId: string;
+  newAttributes: TNewAttributeWrite[];
+  existingKeyCount: number;
+  messages: TAttributeUpdateMessage[];
+  errors: TAttributeUpdateMessage[];
+}): Promise<void> => {
+  // Validate that new attribute keys are safe identifiers
+  const validNewAttributes: typeof newAttributes = [];
+  const invalidKeys: string[] = [];
+  const reservedKeys: string[] = [];
+
+  for (const attr of newAttributes) {
+    if (!isSafeIdentifier(attr.key)) {
+      invalidKeys.push(attr.key);
+    } else if (isReservedFutureDefaultAttributeKey(attr.key)) {
+      reservedKeys.push(attr.key);
+    } else {
+      validNewAttributes.push(attr);
+    }
+  }
+
+  // Add error message for invalid keys
+  if (invalidKeys.length > 0) {
+    errors.push({
+      code: "invalid_attribute_keys",
+      params: { keys: invalidKeys.join(", ") },
+    });
+    logger.warn({ workspaceId, invalidKeys }, "SDK tried to create attributes with invalid keys - skipping");
+  }
+
+  if (reservedKeys.length > 0) {
+    errors.push({
+      code: "reserved_attribute_keys",
+      params: { issue: getReservedFutureDefaultAttributeKeyIssue(reservedKeys) },
+    });
+    logger.warn(
+      { workspaceId, reservedKeys },
+      "SDK tried to create reserved future default attribute keys - skipping"
+    );
+  }
+
+  if (validNewAttributes.length === 0) return;
+
+  const totalAttributeClassesLength = existingKeyCount + validNewAttributes.length;
+
+  if (totalAttributeClassesLength > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
+    // Add warning to details about skipped attributes
+    messages.push({
+      code: "attribute_limit_exceeded",
+      params: {
+        count: validNewAttributes.length.toString(),
+        limit: MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT.toString(),
+      },
+    });
+  } else {
+    // Prepare new attributes with SDK-specific type detection
+    const preparedNewAttributes = validNewAttributes.map(({ key, value }) => {
+      const { dataType, columns } = prepareNewSDKAttributeForStorage(value);
+      return { key, dataType, columns };
+    });
+
+    // Log new attribute creation with their types
+    for (const { key, dataType } of preparedNewAttributes) {
+      logger.info({ workspaceId, attributeKey: key, dataType }, "Created new contact attribute");
+      messages.push({ code: "new_attribute_created", params: { key, dataType } });
+    }
+
+    // Create new attributes since we're under the limit. Same discipline as the upsert
+    // transaction above (ENG-2252): a deterministic order — key is the identity the
+    // (key, workspaceId) unique index locks on — plus a bounded deadlock retry. A deadlock rolls
+    // the whole batch back, so re-running it is safe.
+    const orderedNewAttributes = [...preparedNewAttributes].sort((a, b) => compareCodeUnits(a.key, b.key));
+    await retryOnDeadlock(
+      () =>
+        prisma.$transaction(
+          orderedNewAttributes.map(({ key, dataType, columns }) =>
+            prisma.contactAttributeKey.create({
+              data: {
+                key,
+                name: formatSnakeCaseToTitleCase(key),
+                type: "custom",
+                dataType,
+                workspaceId,
+                attributes: {
+                  create: {
+                    contactId,
+                    value: columns.value,
+                    valueNumber: columns.valueNumber,
+                    valueDate: columns.valueDate,
+                  },
+                },
+              },
+            })
+          )
+        ),
+      { operation: "updateAttributes.newAttributeKeys", contactId, workspaceId }
+    );
+  }
+};
+
+/**
+ * Updates or creates contact attributes.
+ *
+ * @param contactId - The ID of the contact to update
+ * @param userId - The user ID of the contact
+ * @param workspaceId - The workspace ID
+ * @param contactAttributesParam - The attributes to update/create
+ * @param deleteRemovedAttributes - When true, deletes attributes that exist in DB but are not in the payload.
+ * Use this for UI forms where all attributes are submitted. Default is false (merge behavior) for API calls.
+ */
+export const updateAttributes = async (
+  contactId: string,
+  userId: string,
+  workspaceId: string,
+  contactAttributesParam: TContactAttributesInput,
+  deleteRemovedAttributes: boolean = false
+): Promise<{
+  success: boolean;
+  messages?: TAttributeUpdateMessage[];
+  errors?: TAttributeUpdateMessage[];
+  ignoreEmailAttribute?: boolean;
+  ignoreUserIdAttribute?: boolean;
+}> => {
+  validateInputs(
+    [contactId, ZId],
+    [userId, ZString],
+    [workspaceId, ZId],
+    [contactAttributesParam, ZContactAttributesInput]
+  );
+
+  const messages: TAttributeUpdateMessage[] = [];
+  const errors: TAttributeUpdateMessage[] = [];
+
+  // Coerce boolean values to strings (SDK may send booleans for string attributes)
+  const coercedAttributes: Record<string, string | number> = {};
+  for (const [key, value] of Object.entries(contactAttributesParam)) {
+    coercedAttributes[key] = typeof value === "boolean" ? String(value) : value;
+  }
+
+  const emailValue = toOptionalString(contactAttributesParam.email);
+  const userIdValue = toOptionalString(contactAttributesParam.userId);
+
+  // Fetch current attributes, contact attribute keys, and email/userId checks in parallel
+  const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
+    await Promise.all([
+      getContactAttributes(contactId),
+      getContactAttributeKeys(workspaceId),
+      emailValue ? hasEmailAttribute(emailValue, workspaceId, contactId) : Promise.resolve(null),
+      userIdValue ? hasUserIdAttribute(userIdValue, workspaceId, contactId) : Promise.resolve(null),
+    ]);
+
+  // Process email and userId existence early
+  const emailExists = !!existingEmailAttribute;
+  const userIdExists = !!existingUserIdAttribute;
+
+  // Remove email and/or userId from attributes if they already exist on another contact
+  const { contactAttributes, ignoreEmailAttribute, ignoreUserIdAttribute } = resolveIdentityAttributes({
+    coercedAttributes,
+    contactAttributesParam,
+    emailValue,
+    userIdValue,
+    currentAttributes,
+    emailExists,
+    userIdExists,
+    messages,
+  });
+
+  // Delete attributes that were removed (only when explicitly requested)
+  // This is used by UI forms where all attributes are submitted
+  // For API calls, we want merge behavior by default (only update passed attributes)
+  if (deleteRemovedAttributes) {
+    await deleteAttributes(contactId, currentAttributes, contactAttributesParam, contactAttributeKeys);
+  }
+
+  // Create lookup map for attribute keys
+  const contactAttributeKeyMap = new Map(contactAttributeKeys.map((ack) => [ack.key, ack]));
+
+  // Separate existing and new attributes, validating types for existing attributes
+  const { existingAttributes, newAttributes } = splitAttributesByKey(
+    contactAttributes,
+    contactAttributeKeyMap,
+    messages
+  );
+
   if (emailExists) {
     messages.push({ code: "email_already_exists", params: {} });
   }
@@ -303,138 +512,19 @@ export const updateAttributes = async (
   // covers what ordering can't: collisions with other write paths touching the same rows. Both are
   // safe because a deadlock rolls the whole transaction back and the upserts are idempotent.
   if (existingAttributes.length > 0) {
-    const orderedExistingAttributes = [...existingAttributes].sort((a, b) =>
-      compareCodeUnits(a.attributeKeyId, b.attributeKeyId)
-    );
-    await retryOnDeadlock(
-      () =>
-        prisma.$transaction(
-          orderedExistingAttributes.map(({ attributeKeyId, columns }) =>
-            prisma.contactAttribute.upsert({
-              where: {
-                contactId_attributeKeyId: {
-                  contactId,
-                  attributeKeyId,
-                },
-              },
-              update: {
-                value: columns.value,
-                valueNumber: columns.valueNumber,
-                valueDate: columns.valueDate,
-              },
-              create: {
-                contactId,
-                attributeKeyId,
-                value: columns.value,
-                valueNumber: columns.valueNumber,
-                valueDate: columns.valueDate,
-              },
-            })
-          )
-        ),
-      { operation: "updateAttributes.existingAttributes", contactId, workspaceId }
-    );
+    await upsertExistingAttributes(contactId, workspaceId, existingAttributes);
   }
 
   // Then, try to create new attributes if any exist
   if (newAttributes.length > 0) {
-    // Validate that new attribute keys are safe identifiers
-    const validNewAttributes: typeof newAttributes = [];
-    const invalidKeys: string[] = [];
-    const reservedKeys: string[] = [];
-
-    for (const attr of newAttributes) {
-      if (!isSafeIdentifier(attr.key)) {
-        invalidKeys.push(attr.key);
-      } else if (isReservedFutureDefaultAttributeKey(attr.key)) {
-        reservedKeys.push(attr.key);
-      } else {
-        validNewAttributes.push(attr);
-      }
-    }
-
-    // Add error message for invalid keys
-    if (invalidKeys.length > 0) {
-      errors.push({
-        code: "invalid_attribute_keys",
-        params: { keys: invalidKeys.join(", ") },
-      });
-      logger.warn(
-        { workspaceId, invalidKeys },
-        "SDK tried to create attributes with invalid keys - skipping"
-      );
-    }
-
-    if (reservedKeys.length > 0) {
-      errors.push({
-        code: "reserved_attribute_keys",
-        params: { issue: getReservedFutureDefaultAttributeKeyIssue(reservedKeys) },
-      });
-      logger.warn(
-        { workspaceId, reservedKeys },
-        "SDK tried to create reserved future default attribute keys - skipping"
-      );
-    }
-
-    if (validNewAttributes.length > 0) {
-      const totalAttributeClassesLength = contactAttributeKeys.length + validNewAttributes.length;
-
-      if (totalAttributeClassesLength > MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT) {
-        // Add warning to details about skipped attributes
-        messages.push({
-          code: "attribute_limit_exceeded",
-          params: {
-            count: validNewAttributes.length.toString(),
-            limit: MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT.toString(),
-          },
-        });
-      } else {
-        // Prepare new attributes with SDK-specific type detection
-        const preparedNewAttributes = validNewAttributes.map(({ key, value }) => {
-          const { dataType, columns } = prepareNewSDKAttributeForStorage(value);
-          return { key, dataType, columns };
-        });
-
-        // Log new attribute creation with their types
-        for (const { key, dataType } of preparedNewAttributes) {
-          logger.info({ workspaceId, attributeKey: key, dataType }, "Created new contact attribute");
-          messages.push({ code: "new_attribute_created", params: { key, dataType } });
-        }
-
-        // Create new attributes since we're under the limit. Same discipline as the upsert
-        // transaction above (ENG-2252): a deterministic order — key is the identity the
-        // (key, workspaceId) unique index locks on — plus a bounded deadlock retry. A deadlock rolls
-        // the whole batch back, so re-running it is safe.
-        const orderedNewAttributes = [...preparedNewAttributes].sort((a, b) =>
-          compareCodeUnits(a.key, b.key)
-        );
-        await retryOnDeadlock(
-          () =>
-            prisma.$transaction(
-              orderedNewAttributes.map(({ key, dataType, columns }) =>
-                prisma.contactAttributeKey.create({
-                  data: {
-                    key,
-                    name: formatSnakeCaseToTitleCase(key),
-                    type: "custom",
-                    dataType,
-                    workspaceId,
-                    attributes: {
-                      create: {
-                        contactId,
-                        value: columns.value,
-                        valueNumber: columns.valueNumber,
-                        valueDate: columns.valueDate,
-                      },
-                    },
-                  },
-                })
-              )
-            ),
-          { operation: "updateAttributes.newAttributeKeys", contactId, workspaceId }
-        );
-      }
-    }
+    await createNewAttributes({
+      contactId,
+      workspaceId,
+      newAttributes,
+      existingKeyCount: contactAttributeKeys.length,
+      messages,
+      errors,
+    });
   }
 
   return {

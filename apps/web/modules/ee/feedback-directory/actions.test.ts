@@ -61,7 +61,11 @@ describe("feedback directory administration actions", () => {
     ["read", getFeedbackDirectoryDetailsAction, { directoryId }],
     ["update", updateFeedbackDirectoryAction, { directoryId, data: { name: "Renamed" } }],
   ])("routes %s through organization.manage", async (_name, action, parsedInput) => {
-    await (action as any)({ ctx, parsedInput });
+    // Each action is called with its own input; the table's union of them is not one signature.
+    await (action as unknown as (args: { ctx: typeof ctx; parsedInput: unknown }) => Promise<unknown>)({
+      ctx,
+      parsedInput,
+    });
 
     expect(assertCan).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "organization.manage", {
       type: "organization",

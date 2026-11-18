@@ -95,7 +95,7 @@ export const iso639Identifiers = iso639Languages.map((language) => language.code
 
 // Helper function to add language keys to a multi-language object (e.g. survey or question)
 // Iterates over the object recursively and adds empty strings for new language keys
-export const addMultiLanguageLabels = (object: unknown, languageSymbols: string[]): any => {
+export const addMultiLanguageLabels = <T>(object: T, languageSymbols: string[]): T => {
   // Helper function to add language keys to a multi-language object
   function addLanguageKeys(obj: { default: string; [key: string]: string }) {
     languageSymbols.forEach((lang) => {

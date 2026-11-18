@@ -60,9 +60,11 @@ describe("SAML Preload Connection", () => {
 
     vi.mocked(path.join).mockImplementation((...args) => args.join("/"));
 
-    vi.mocked(fs.readdir).mockResolvedValue(["metadata.xml", "other-file.txt"] as any);
+    vi.mocked(fs.readdir).mockResolvedValue(["metadata.xml", "other-file.txt"] as unknown as Awaited<
+      ReturnType<typeof fs.readdir>
+    >);
 
-    vi.mocked(fs.readFile).mockResolvedValue(mockMetadata as any);
+    vi.mocked(fs.readFile).mockResolvedValue(mockMetadata);
 
     mockConnectionController.getConnections.mockResolvedValue([mockExistingConnection]);
 
@@ -74,7 +76,7 @@ describe("SAML Preload Connection", () => {
   });
 
   test("preload connection from XML file", async () => {
-    await preloadConnection(mockConnectionController as any);
+    await preloadConnection(mockConnectionController as unknown as Parameters<typeof preloadConnection>[0]);
 
     expect(fs.readdir).toHaveBeenCalledWith(path.join(SAML_XML_DIR));
 
@@ -107,17 +109,19 @@ describe("SAML Preload Connection", () => {
       clientID: mockExistingConnection.clientID,
     });
 
-    await preloadConnection(mockConnectionController as any);
+    await preloadConnection(mockConnectionController as unknown as Parameters<typeof preloadConnection>[0]);
 
     expect(mockConnectionController.deleteConnections).not.toHaveBeenCalled();
   });
 
   test("handle case when no XML files are found", async () => {
-    vi.mocked(fs.readdir).mockResolvedValue(["other-file.txt"] as any);
+    vi.mocked(fs.readdir).mockResolvedValue(["other-file.txt"] as unknown as Awaited<
+      ReturnType<typeof fs.readdir>
+    >);
 
     const loggerSpy = vi.spyOn(logger, "error");
 
-    await preloadConnection(mockConnectionController as any);
+    await preloadConnection(mockConnectionController as unknown as Parameters<typeof preloadConnection>[0]);
 
     expect(loggerSpy).toHaveBeenCalledWith(expect.any(Error), "Error preloading connection");
 
@@ -130,7 +134,7 @@ describe("SAML Preload Connection", () => {
 
     const loggerSpy = vi.spyOn(logger, "error");
 
-    await preloadConnection(mockConnectionController as any);
+    await preloadConnection(mockConnectionController as unknown as Parameters<typeof preloadConnection>[0]);
 
     expect(loggerSpy).toHaveBeenCalledWith(expect.any(Error), "Error preloading connection");
   });

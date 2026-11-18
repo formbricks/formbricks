@@ -30,8 +30,8 @@ interface ShareViewProps {
     type: LinkTabsType;
     label: string;
     icon: React.ElementType;
-    componentType: React.ComponentType<any>;
-    componentProps: any;
+    // Rendered only while its tab is active.
+    content: React.ReactNode;
     title: string;
     description?: string;
     disabled?: boolean;
@@ -60,11 +60,9 @@ export const ShareView = ({ tabs, activeId, setActiveId }: ShareViewProps) => {
     const activeTab = tabs.find((tab) => tab.id === activeId);
     if (!activeTab) return null;
 
-    const { componentType: Component, componentProps } = activeTab;
-
     return (
       <TabContainer key={activeTab.id} title={activeTab.title} description={activeTab.description ?? ""}>
-        <Component {...componentProps} />
+        {activeTab.content}
       </TabContainer>
     );
   };

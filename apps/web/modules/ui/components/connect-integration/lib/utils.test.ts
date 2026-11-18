@@ -5,7 +5,10 @@ describe("getIntegrationDetails", () => {
   const mockT = (key: string) => key;
 
   test("returns correct details for googleSheets integration", () => {
-    const details = getIntegrationDetails("googleSheets", mockT as any);
+    const details = getIntegrationDetails(
+      "googleSheets",
+      mockT as Parameters<typeof getIntegrationDetails>[1]
+    );
 
     expect(details).toEqual({
       text: "workspace.integrations.google_sheets.google_sheets_integration_description",
@@ -16,7 +19,7 @@ describe("getIntegrationDetails", () => {
   });
 
   test("returns correct details for airtable integration", () => {
-    const details = getIntegrationDetails("airtable", mockT as any);
+    const details = getIntegrationDetails("airtable", mockT as Parameters<typeof getIntegrationDetails>[1]);
 
     expect(details).toEqual({
       text: "workspace.integrations.airtable.airtable_integration_description",
@@ -27,7 +30,7 @@ describe("getIntegrationDetails", () => {
   });
 
   test("returns correct details for notion integration", () => {
-    const details = getIntegrationDetails("notion", mockT as any);
+    const details = getIntegrationDetails("notion", mockT as Parameters<typeof getIntegrationDetails>[1]);
 
     expect(details).toEqual({
       text: "workspace.integrations.notion.notion_integration_description",
@@ -38,7 +41,7 @@ describe("getIntegrationDetails", () => {
   });
 
   test("returns correct details for slack integration", () => {
-    const details = getIntegrationDetails("slack", mockT as any);
+    const details = getIntegrationDetails("slack", mockT as Parameters<typeof getIntegrationDetails>[1]);
 
     expect(details).toEqual({
       text: "workspace.integrations.slack.slack_integration_description",

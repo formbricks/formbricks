@@ -115,7 +115,7 @@ describe("Metadata Utils", () => {
       } as unknown as TSurvey;
 
       vi.mocked(getSurvey).mockResolvedValue(mockSurvey);
-      vi.mocked(getWorkspaceById).mockResolvedValue({ name: "Test Workspace" } as any);
+      vi.mocked(getWorkspaceById, { partial: true }).mockResolvedValue({ name: "Test Workspace" });
 
       const result = await getBasicSurveyMetadata(mockSurveyId);
 
@@ -383,21 +383,21 @@ describe("Metadata Utils", () => {
       const workspaceStyling = { allowStyleOverwrite: true, brandColor: { light: "#ff0000" } };
       const surveyStyling = { overwriteThemeStyling: true, brandColor: { light: "#0000ff" } };
 
-      expect(getMetadataBrandColor(workspaceStyling, surveyStyling as any)).toBe("#0000ff");
+      expect(getMetadataBrandColor(workspaceStyling, surveyStyling)).toBe("#0000ff");
     });
 
     test("returns workspace brand color when survey does not override theme", () => {
       const workspaceStyling = { allowStyleOverwrite: true, brandColor: { light: "#ff0000" } };
       const surveyStyling = { overwriteThemeStyling: false, brandColor: { light: "#0000ff" } };
 
-      expect(getMetadataBrandColor(workspaceStyling, surveyStyling as any)).toBe("#ff0000");
+      expect(getMetadataBrandColor(workspaceStyling, surveyStyling)).toBe("#ff0000");
     });
 
     test("returns workspace brand color when workspace disallows style overwrite", () => {
       const workspaceStyling = { allowStyleOverwrite: false, brandColor: { light: "#ff0000" } };
       const surveyStyling = { overwriteThemeStyling: true, brandColor: { light: "#0000ff" } };
 
-      expect(getMetadataBrandColor(workspaceStyling, surveyStyling as any)).toBe("#ff0000");
+      expect(getMetadataBrandColor(workspaceStyling, surveyStyling)).toBe("#ff0000");
     });
 
     test("returns workspace brand color when survey styling is null", () => {
@@ -417,7 +417,7 @@ describe("Metadata Utils", () => {
       const result = getSurveyOpenGraphMetadata(surveyId, surveyName);
 
       expect(result).toEqual({
-        metadataBase: new URL(getPublicDomain() as any),
+        metadataBase: new URL(getPublicDomain()),
         openGraph: {
           title: surveyName,
           description: "Thanks a lot for your time 🙏",

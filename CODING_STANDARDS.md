@@ -33,9 +33,14 @@ These remain review checks until their enforcement handles the repository's exis
   variables, and `SCREAMING_SNAKE_CASE` for constants.
 - Keep responsibilities focused; consolidate duplicated behavior when it has one reason to change.
 - Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
-- Prefer type inference and shared types from `@formbricks/types`; new `any`s are still findings where
-  oxlint reports them only as warnings.
+- Prefer type inference and shared types from `@formbricks/types`. `any` is a lint error everywhere
+  (`typescript/no-explicit-any`); in tests, type mocks with `vi.mocked(fn)` (`{ partial: true }` for a
+  partial fixture) rather than casting.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
+- A file stays under 5,000 tokens (about 20 KB of source). Past that, split it along its responsibilities
+  instead of growing it. A change that pushes a file over the limit splits it in the same PR. Generated
+  files, locale files and lockfiles are exempt, and an existing file already over the limit is not a
+  reason to refactor it unless the change touches it.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 - A control's enabled state comes from the permission the server action checks, passed down from the server,
   not recomputed on the client. A control that looks editable and then fails on save is a finding.
@@ -47,7 +52,10 @@ These remain review checks until their enforcement handles the repository's exis
 - Before designing a piece, find the feature that already does something similar and build the new one the
   same way: module layout, API shape, UI components, tests.
 - Extend what nearly fits (a prop, an option, a parameter) rather than copying it. UI reuses the components of
-  similar-looking screens, guided by `.agents/formbricks-context/DESIGN.md` when it exists.
+  similar-looking screens, guided by `.agents/formbricks-context/DESIGN.md` when it exists, so the design stays
+  consistent.
+- Add a new component or design pattern only when no existing one can carry the interaction. Say why in the
+  plan and the PR.
 - A bad pattern is the exception: name what is wrong with it and fix it. When the change already touches that
   code, the refactor ships in the same PR as its own commit; otherwise it becomes a Linear ticket.
 - A fix names its siblings. Search for the same call, predicate or literal, then fix every copy in the same

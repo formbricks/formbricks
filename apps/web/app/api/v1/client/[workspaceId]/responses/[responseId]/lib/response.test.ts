@@ -41,7 +41,7 @@ describe("updateResponseWithQuotaEvaluation", () => {
         findUnique: vi.fn().mockResolvedValue({ notShown: null }),
       },
     };
-    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+    prisma.$transaction = vi.fn(async (cb) => cb(mockTx));
     mockLoadQuotaEvaluationContext.mockResolvedValue(mockQuotaContext);
     mockLockResponseForUpdate.mockResolvedValue({ finished: false });
   });

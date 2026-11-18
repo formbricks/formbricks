@@ -64,7 +64,7 @@ const mockResponsePrisma = {
   displayId,
   contact: null, // Prisma relation
   tags: [], // Prisma relation
-} as unknown as ResponsePrisma & { contact: any; tags: any[] }; // Adjust type as needed
+} as unknown as ResponsePrisma & { contact: unknown; tags: unknown[] }; // Adjust type as needed
 
 const mockResponse: TResponse = {
   id: responseId,
@@ -155,7 +155,7 @@ describe("Response Lib Tests", () => {
         create: vi.fn(),
       },
     };
-    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+    prisma.$transaction = vi.fn(async (cb) => cb(mockTx));
   });
 
   describe("getQuestionCodesBySurveyId", () => {

@@ -68,9 +68,9 @@ const SegmentDetail = ({
       });
 
       setIsLoading(false);
-    } catch (err: any) {
+    } catch (err) {
       setIsLoading(false);
-      toast.error(err.message);
+      toast.error(err instanceof Error ? err.message : String(err));
       setOpen(false);
     }
   };

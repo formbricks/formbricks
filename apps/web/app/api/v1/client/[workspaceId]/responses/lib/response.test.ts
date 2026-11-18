@@ -134,8 +134,8 @@ describe("createResponse", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(organizationId);
-    vi.mocked(getOrganization).mockResolvedValue(mockOrganization as any);
-    vi.mocked(prisma.response.create).mockResolvedValue(mockResponsePrisma as any);
+    vi.mocked(getOrganization, { partial: true, deep: true }).mockResolvedValue(mockOrganization);
+    vi.mocked(prisma.response.create, { partial: true, deep: true }).mockResolvedValue(mockResponsePrisma);
     vi.mocked(calculateTtcTotal).mockImplementation((ttc) => ttc);
   });
 
@@ -257,10 +257,10 @@ describe("createResponseWithQuotaEvaluation", () => {
         create: vi.fn(),
       },
     };
-    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+    prisma.$transaction = vi.fn(async (cb) => cb(mockTx));
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(organizationId);
-    vi.mocked(getOrganization).mockResolvedValue(mockOrganization as any);
-    vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma as any);
+    vi.mocked(getOrganization, { partial: true, deep: true }).mockResolvedValue(mockOrganization);
+    vi.mocked(mockTx.response.create, { partial: true, deep: true }).mockResolvedValue(mockResponsePrisma);
     vi.mocked(calculateTtcTotal).mockImplementation((ttc) => ttc);
   });
 

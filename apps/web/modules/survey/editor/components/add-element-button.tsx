@@ -5,6 +5,7 @@ import * as Collapsible from "@radix-ui/react-collapsible";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { cn } from "@/lib/cn";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { getElementDefaults, universalElementPresets } from "@/modules/survey/lib/element-presets";
@@ -17,7 +18,7 @@ import {
 } from "@/modules/survey/lib/elements";
 
 interface AddElementButtonProps {
-  readonly addElement: (element: any) => void;
+  readonly addElement: (element: TSurveyElement) => void;
   readonly workspace: TWorkspaceWithoutCustomCss;
   readonly isCxMode: boolean;
 }
@@ -29,12 +30,13 @@ export const AddElementButton = ({ addElement, workspace, isCxMode }: AddElement
   const categories = getElementCategories(t);
 
   const handleAddElement = (elementType: TElement) => {
+    // The defaults for `elementType.id` build an element of that type.
     addElement({
       ...universalElementPresets,
       ...getElementDefaults(elementType.id, workspace, t),
       id: createId(),
       type: elementType.id,
-    });
+    } as TSurveyElement);
     setOpen(false);
   };
 

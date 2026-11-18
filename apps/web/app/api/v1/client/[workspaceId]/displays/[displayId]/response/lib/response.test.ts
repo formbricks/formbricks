@@ -32,7 +32,7 @@ describe("getResponseIdByDisplayId", () => {
       response: {
         id: "response123456789012345678",
       },
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof prisma.display.findFirst>>);
 
     const result = await getResponseIdByDisplayId(workspaceId, displayId);
 
@@ -61,7 +61,7 @@ describe("getResponseIdByDisplayId", () => {
   test("returns null when the display exists but has no response", async () => {
     vi.mocked(prisma.display.findFirst).mockResolvedValue({
       response: null,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof prisma.display.findFirst>>);
 
     await expect(getResponseIdByDisplayId(workspaceId, displayId)).resolves.toEqual({
       responseId: null,

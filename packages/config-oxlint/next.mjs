@@ -35,8 +35,6 @@ export const next = compose(
     rules: {
       ...eslintRecommended,
       ...typescriptRecommended,
-      // ~1,550 left, most of them in tests and mocks. Promote once it reaches zero.
-      "typescript/no-explicit-any": "warn",
       // Same underscore convention as the other tiers; without the options, `_`-prefixed
       // intentionally-unused bindings would be flagged.
       "no-unused-vars": ["error", unusedVarsOptions],

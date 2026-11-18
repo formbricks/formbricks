@@ -6,15 +6,12 @@ import { FormControl, FormField, FormItem } from "@/modules/ui/components/form";
 import { OTPInput } from "@/modules/ui/components/otp-input";
 
 interface TwoFactorProps {
-  readonly form: UseFormReturn<
-    {
-      email: string;
-      password: string;
-      totpCode?: string | undefined;
-      backupCode?: string | undefined;
-    },
-    any
-  >;
+  readonly form: UseFormReturn<{
+    email: string;
+    password: string;
+    totpCode?: string | undefined;
+    backupCode?: string | undefined;
+  }>;
 }
 
 export const TwoFactor = ({ form }: TwoFactorProps) => {

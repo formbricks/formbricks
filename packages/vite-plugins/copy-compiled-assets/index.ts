@@ -46,6 +46,58 @@ const replaceDirectory = async (
   return files.length;
 };
 
+const isMissing = (error: unknown): boolean => (error as { code: string }).code === "ENOENT";
+
+/**
+ * Whether `distDir` exists. A missing directory throws, unless `skipDirectoryCheck` is set: then it
+ * returns false and the plugin skips the copy.
+ */
+const distDirExists = async (distDir: string, skipDirectoryCheck: boolean | undefined): Promise<boolean> => {
+  try {
+    await access(distDir);
+    return true;
+  } catch (error) {
+    if (!isMissing(error)) throw error;
+    console.error(`Error: Distribution directory ${distDir} does not exist`);
+    if (!skipDirectoryCheck) throw error;
+    console.log(`Skipping directory check as skipDirectoryCheck is enabled`);
+    return false;
+  }
+};
+
+/** Copies one dist entry if it is a regular file, returning whether it was copied. */
+const copyDistFile = async (srcFile: string, destFile: string, skipDirectoryCheck: boolean | undefined) => {
+  try {
+    // Check if the srcFile is a regular file before copying
+    const fileStat = await stat(srcFile);
+    if (!fileStat.isFile()) return false; // Skip directories, or other non-regular files
+
+    await copyFile(srcFile, destFile);
+    return true;
+  } catch (error) {
+    if (isMissing(error) && skipDirectoryCheck) {
+      console.log(`Skipping non-existent file: ${srcFile}`);
+      return false;
+    }
+    throw error;
+  }
+};
+
+/** Copies the files of `distDir` into `outputDir`, renaming `index` to the bundle's filename. */
+const copyDistFiles = async (
+  distDir: string,
+  outputDir: string,
+  options: CopyCompiledAssetsPluginOptions
+): Promise<number> => {
+  let copiedFiles = 0;
+  for (const file of await readdir(distDir)) {
+    const srcFile = path.resolve(distDir, file);
+    const destFile = path.resolve(outputDir, file.replace("index", options.filename));
+    if (await copyDistFile(srcFile, destFile, options.skipDirectoryCheck)) copiedFiles++;
+  }
+  return copiedFiles;
+};
+
 export function copyCompiledAssetsPlugin(options: CopyCompiledAssetsPluginOptions): Plugin {
   let config: ResolvedConfig;
 
@@ -67,47 +119,10 @@ export function copyCompiledAssetsPlugin(options: CopyCompiledAssetsPluginOption
         console.log(`Ensured directory exists: ${outputDir}`);
 
         // Check if the dist directory exists
-        try {
-          await access(distDir);
-        } catch (error) {
-          if ((error as { code: string }).code === "ENOENT") {
-            console.error(`Error: Distribution directory ${distDir} does not exist`);
-            if (!options.skipDirectoryCheck) {
-              throw error;
-            } else {
-              console.log(`Skipping directory check as skipDirectoryCheck is enabled`);
-              return; // Skip further processing
-            }
-          } else {
-            throw error;
-          }
-        }
+        if (!(await distDirExists(distDir, options.skipDirectoryCheck))) return; // Skip further processing
 
         // Copy files from distDir to outputDir
-        const filesToCopy = await readdir(distDir);
-        let copiedFiles = 0;
-
-        for (const file of filesToCopy) {
-          const srcFile = path.resolve(distDir, file);
-          const destFile = path.resolve(outputDir, file.replace("index", options.filename));
-
-          try {
-            // Check if the srcFile is a regular file before copying
-            const fileStat = await stat(srcFile);
-            if (!fileStat.isFile()) {
-              continue; // Skip directories, or other non-regular files
-            }
-
-            await copyFile(srcFile, destFile);
-            copiedFiles++;
-          } catch (error) {
-            if ((error as { code: string }).code === "ENOENT" && options.skipDirectoryCheck) {
-              console.log(`Skipping non-existent file: ${srcFile}`);
-              continue;
-            }
-            throw error;
-          }
-        }
+        const copiedFiles = await copyDistFiles(distDir, outputDir, options);
 
         console.log(`Copied ${String(copiedFiles)} files to ${outputDir} (${options.filename})`);
 

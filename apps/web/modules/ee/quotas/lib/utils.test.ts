@@ -185,7 +185,7 @@ describe("Quota Utils", () => {
         groupBy: vi.fn(),
       },
     };
-    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+    prisma.$transaction = vi.fn(async (cb) => cb(mockTx));
 
     vi.mocked(validateInputs).mockImplementation(() => {
       return [];
@@ -197,7 +197,7 @@ describe("Quota Utils", () => {
     vi.mocked(mockTx.responseQuotaLink.updateMany).mockResolvedValue({ count: 0 });
     vi.mocked(mockTx.responseQuotaLink.count).mockResolvedValue(0);
     vi.mocked(mockTx.responseQuotaLink.groupBy).mockResolvedValue([]);
-    vi.mocked(updateResponse).mockResolvedValue({} as any);
+    vi.mocked(updateResponse, { partial: true }).mockResolvedValue({});
     vi.mocked(logger.error).mockImplementation(() => {});
   });
 
@@ -390,9 +390,9 @@ describe("Quota Utils", () => {
 
     test("should return null when no quotas are full", async () => {
       // Mock groupBy to return counts below the limits
-      vi.mocked(mockTx.responseQuotaLink.groupBy).mockResolvedValueOnce([
-        { quotaId: mockQuotaId, _count: { responseId: 10 } } as any,
-        { quotaId: "quota456", _count: { responseId: 25 } } as any,
+      vi.mocked(mockTx.responseQuotaLink.groupBy, { partial: true }).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 10 } },
+        { quotaId: "quota456", _count: { responseId: 25 } },
       ]);
 
       const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, asTx(mockTx));
@@ -406,9 +406,9 @@ describe("Quota Utils", () => {
 
     test("should return first screened out quota when quota is full", async () => {
       // Mock groupBy to return count at/above limit for first quota
-      vi.mocked(mockTx.responseQuotaLink.groupBy).mockResolvedValueOnce([
-        { quotaId: mockQuotaId, _count: { responseId: 50 } } as any, // mockQuota at limit
-        { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
+      vi.mocked(mockTx.responseQuotaLink.groupBy, { partial: true }).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 50 } }, // mockQuota at limit
+        { quotaId: "quota456", _count: { responseId: 25 } }, // mockQuota2 below limit
       ]);
 
       const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, asTx(mockTx));
@@ -419,9 +419,9 @@ describe("Quota Utils", () => {
 
     test("should update response to finished when quota action is endSurvey", async () => {
       // Mock groupBy to return quota at limit
-      vi.mocked(mockTx.responseQuotaLink.groupBy).mockResolvedValueOnce([
-        { quotaId: mockQuotaId, _count: { responseId: 50 } } as any, // mockQuota at limit
-        { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
+      vi.mocked(mockTx.responseQuotaLink.groupBy, { partial: true }).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 50 } }, // mockQuota at limit
+        { quotaId: "quota456", _count: { responseId: 25 } }, // mockQuota2 below limit
       ]);
 
       const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, asTx(mockTx));
@@ -443,8 +443,8 @@ describe("Quota Utils", () => {
         failedQuotas: [],
       };
       // Mock groupBy to return quota at limit for mockQuota2 (which counts all)
-      vi.mocked(mockTx.responseQuotaLink.groupBy).mockResolvedValueOnce([
-        { quotaId: "quota456", _count: { responseId: 30 } } as any, // mockQuota2 at limit
+      vi.mocked(mockTx.responseQuotaLink.groupBy, { partial: true }).mockResolvedValueOnce([
+        { quotaId: "quota456", _count: { responseId: 30 } }, // mockQuota2 at limit
       ]);
 
       const result = await handleQuotas(
@@ -464,8 +464,8 @@ describe("Quota Utils", () => {
         passedQuotas: [mockQuota2],
         failedQuotas: [],
       };
-      vi.mocked(mockTx.responseQuotaLink.groupBy).mockResolvedValueOnce([
-        { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
+      vi.mocked(mockTx.responseQuotaLink.groupBy, { partial: true }).mockResolvedValueOnce([
+        { quotaId: "quota456", _count: { responseId: 25 } }, // mockQuota2 below limit
       ]);
 
       await handleQuotas(mockSurveyId, mockResponseId, resultWithPartialCount, true, asTx(mockTx));
@@ -493,8 +493,8 @@ describe("Quota Utils", () => {
         passedQuotas: [mockQuota],
         failedQuotas: [],
       };
-      vi.mocked(mockTx.responseQuotaLink.groupBy).mockResolvedValueOnce([
-        { quotaId: mockQuotaId, _count: { responseId: 45 } } as any, // mockQuota below limit
+      vi.mocked(mockTx.responseQuotaLink.groupBy, { partial: true }).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 45 } }, // mockQuota below limit
       ]);
 
       await handleQuotas(mockSurveyId, mockResponseId, resultWithFinishedOnly, true, asTx(mockTx));
@@ -525,9 +525,9 @@ describe("Quota Utils", () => {
         failedQuotas,
       };
 
-      vi.mocked(mockTx.responseQuotaLink.groupBy).mockResolvedValueOnce([
-        { quotaId: mockQuotaId, _count: { responseId: 50 } } as any, // mockQuota at limit
-        { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
+      vi.mocked(mockTx.responseQuotaLink.groupBy, { partial: true }).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 50 } }, // mockQuota at limit
+        { quotaId: "quota456", _count: { responseId: 25 } }, // mockQuota2 below limit
       ]);
 
       await handleQuotas(mockSurveyId, mockResponseId, testResult, true, asTx(mockTx));
@@ -544,9 +544,9 @@ describe("Quota Utils", () => {
         failedQuotas: [],
       };
 
-      vi.mocked(mockTx.responseQuotaLink.groupBy).mockResolvedValueOnce([
-        { quotaId: "quota456", _count: { responseId: 30 } } as any, // mockQuota2 at limit
-        { quotaId: mockQuotaId, _count: { responseId: 50 } } as any, // mockQuota at limit
+      vi.mocked(mockTx.responseQuotaLink.groupBy, { partial: true }).mockResolvedValueOnce([
+        { quotaId: "quota456", _count: { responseId: 30 } }, // mockQuota2 at limit
+        { quotaId: mockQuotaId, _count: { responseId: 50 } }, // mockQuota at limit
       ]);
 
       const result = await handleQuotas(mockSurveyId, mockResponseId, bothQuotasFull, true, asTx(mockTx));
@@ -593,9 +593,9 @@ describe("Quota Utils", () => {
     });
 
     test("should handle updateResponse errors gracefully", async () => {
-      vi.mocked(mockTx.responseQuotaLink.groupBy).mockResolvedValueOnce([
-        { quotaId: mockQuotaId, _count: { responseId: 50 } } as any, // mockQuota at limit
-        { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
+      vi.mocked(mockTx.responseQuotaLink.groupBy, { partial: true }).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 50 } }, // mockQuota at limit
+        { quotaId: "quota456", _count: { responseId: 25 } }, // mockQuota2 below limit
       ]);
       vi.mocked(updateResponse).mockRejectedValue(new Error("Update failed"));
 
@@ -625,9 +625,9 @@ describe("Quota Utils", () => {
     });
 
     test("should handle quota limit exactly equal to screened in count", async () => {
-      vi.mocked(mockTx.responseQuotaLink.groupBy).mockResolvedValueOnce([
-        { quotaId: mockQuotaId, _count: { responseId: 50 } } as any, // mockQuota exactly at limit
-        { quotaId: "quota456", _count: { responseId: 25 } } as any, // mockQuota2 below limit
+      vi.mocked(mockTx.responseQuotaLink.groupBy, { partial: true }).mockResolvedValueOnce([
+        { quotaId: mockQuotaId, _count: { responseId: 50 } }, // mockQuota exactly at limit
+        { quotaId: "quota456", _count: { responseId: 25 } }, // mockQuota2 below limit
       ]);
 
       const result = await handleQuotas(mockSurveyId, mockResponseId, mockResult, true, asTx(mockTx));

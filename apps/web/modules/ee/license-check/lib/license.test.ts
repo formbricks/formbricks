@@ -126,7 +126,7 @@ describe("License Core Logic", () => {
     vi.mocked(prisma.organization.findFirst).mockResolvedValue({
       id: "test-org-id",
       createdAt: new Date("2024-01-01"),
-    } as any);
+    } as Awaited<ReturnType<typeof prisma.organization.findFirst>>);
     vi.mocked(getInstanceId).mockResolvedValue("test-hashed-instance-id");
     vi.mocked(getInstanceInfo).mockResolvedValue({
       instanceId: "test-hashed-instance-id",
@@ -208,7 +208,7 @@ describe("License Core Logic", () => {
       fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: mockFetchedLicenseDetails }),
-      } as any);
+      });
 
       const license = await getEnterpriseLicense();
 
@@ -296,7 +296,7 @@ describe("License Core Logic", () => {
       fetch.mockResolvedValue({
         ok: true,
         json: async () => ({ data: mockFetchedLicenseDetails }),
-      } as any);
+      });
 
       await getEnterpriseLicense();
       const cacheReadsAfterFirstCall = mockCache.get.mock.calls.length;
@@ -314,7 +314,7 @@ describe("License Core Logic", () => {
       fetch.mockResolvedValue({
         ok: true,
         json: async () => ({ data: mockFetchedLicenseDetails }),
-      } as any);
+      });
 
       // The guard re-reads env.NODE_ENV on every call, so flipping it on the mock is enough.
       // Resetting the module registry instead would rebuild every mock this file shares.
@@ -353,7 +353,7 @@ describe("License Core Logic", () => {
         return { ok: true, data: null };
       });
 
-      fetch.mockResolvedValueOnce({ ok: false, status: 500 } as any);
+      fetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
       const license = await getEnterpriseLicense();
 
@@ -431,7 +431,7 @@ describe("License Core Logic", () => {
         return { ok: true, data: null };
       });
 
-      fetch.mockResolvedValueOnce({ ok: false, status: 500 } as any);
+      fetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
       const license = await getEnterpriseLicense();
 
@@ -632,7 +632,7 @@ describe("License Core Logic", () => {
       const fetch = global.fetch as Mock;
 
       mockCache.get.mockResolvedValue({ ok: true, data: null });
-      fetch.mockResolvedValueOnce({ ok: false, status: 400 } as any);
+      fetch.mockResolvedValueOnce({ ok: false, status: 400 });
 
       const license = await getEnterpriseLicense();
 
@@ -663,7 +663,7 @@ describe("License Core Logic", () => {
       const fetch = global.fetch as Mock;
 
       mockCache.get.mockResolvedValue({ ok: true, data: null });
-      fetch.mockResolvedValueOnce({ ok: false, status: 403 } as any);
+      fetch.mockResolvedValueOnce({ ok: false, status: 403 });
 
       const license = await getEnterpriseLicense();
 
@@ -724,7 +724,7 @@ describe("License Core Logic", () => {
       fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: mockLicense }),
-      } as any);
+      });
 
       const startTime = Date.now();
       const license = await getEnterpriseLicense();
@@ -854,7 +854,7 @@ describe("License Core Logic", () => {
       fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ data: mockLicense }),
-      } as any);
+      });
 
       const result = await fetchLicense();
 
@@ -886,7 +886,7 @@ describe("License Core Logic", () => {
       mockCache.tryLock.mockResolvedValue({ ok: true, data: true });
       mockCache.set.mockResolvedValue({ ok: true });
 
-      fetch.mockResolvedValueOnce({ ok: false, status: 500 } as any);
+      fetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
       const result = await fetchLicense();
 
@@ -950,7 +950,7 @@ describe("License Core Logic", () => {
       mockCache.get.mockResolvedValue({ ok: true, data: null });
       mockCache.set.mockResolvedValue({ ok: true });
 
-      fetch.mockResolvedValueOnce({ ok: false, status: 500 } as any);
+      fetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
       const result = await fetchLicense();
 
@@ -1122,7 +1122,7 @@ describe("License Core Logic", () => {
             },
           },
         }),
-      } as any);
+      });
 
       const { getEnterpriseLicense } = await import("./license");
       await getEnterpriseLicense();
@@ -1190,7 +1190,7 @@ describe("License Core Logic", () => {
             },
           },
         }),
-      } as any);
+      });
 
       const { hashString } = await import("@/lib/hash-string");
       const expectedHash = hashString(testLicenseKey);
@@ -1269,7 +1269,7 @@ describe("License Core Logic", () => {
         ok: false,
         status: mockStatus,
         json: async () => ({ error: "Internal Server Error" }),
-      } as any);
+      });
 
       await getEnterpriseLicense();
 
@@ -1293,7 +1293,7 @@ describe("License Core Logic", () => {
         ok: false,
         status: mockStatus,
         json: async () => ({ error: "Forbidden" }),
-      } as any);
+      });
 
       await getEnterpriseLicense();
 
@@ -1326,7 +1326,7 @@ describe("License Core Logic", () => {
         return { ok: true, data: null };
       });
 
-      fetch.mockResolvedValueOnce({ ok: false, status: 500 } as any);
+      fetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
       await getEnterpriseLicense();
 
@@ -1543,7 +1543,7 @@ describe("License Core Logic", () => {
             },
           },
         }),
-      } as any);
+      });
 
       const result = await fetchLicenseFresh();
 
@@ -1598,7 +1598,7 @@ describe("License Core Logic", () => {
             },
           },
         }),
-      } as any);
+      });
 
       // Re-import the module to apply the new mock
       const { fetchLicense } = await import("./license");
