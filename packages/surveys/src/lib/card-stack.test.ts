@@ -35,8 +35,22 @@ describe("moveCardStack: the stacked cards as the survey moves", () => {
     expect(stack.prevBlockIdx).toBe(-2);
   });
 
-  test("the same block leaves the stack as it is", () => {
+  test("a reset that jumps back several blocks leaves only earlier blocks behind", () => {
+    // Visit 0, 1 and 2, then change the card arrangement: the survey resets to block 0. Popping only the
+    // top (1) left 0 as both the card behind and the current card, two cards with the key 0.
+    const at2 = moveCardStack(moveCardStack(initialCardStack(0), 1), 2);
+    expect(moveCardStack(at2, 0)).toEqual({
+      prevBlockIdx: -1,
+      currentBlockIdx: 0,
+      nextBlockIdx: 2,
+      visitedBlocks: [],
+    });
+  });
+
+  test("the same block leaves the stack as it is, and keeps it, so nothing re-renders", () => {
     const stack = initialCardStack(3);
-    expect(moveCardStack(stack, 3)).toBe(stack);
+    const moved = moveCardStack(stack, 3);
+    expect(moved).toEqual({ prevBlockIdx: 2, currentBlockIdx: 3, nextBlockIdx: 4, visitedBlocks: [] });
+    expect(moved).toBe(stack);
   });
 });

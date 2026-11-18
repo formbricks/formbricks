@@ -19,8 +19,8 @@ export const initialCardStack = (blockIdx: number): TCardStack => ({
 
 /**
  * The stack once the survey moves to `blockIdx`. Forward, the current card goes behind and onto the
- * visited stack. Back, the visited stack loses its top and the card behind is the block visited before
- * it, or the slot before `blockIdx` when nothing is left, exactly as on the first render. (Clamping
+ * visited stack. Back, the visited stack keeps only the blocks before `blockIdx`, and the card behind is
+ * the last of them, or the slot before `blockIdx` when none is left, exactly as on the first render. (Clamping
  * that slot to 0 made it equal the current card, or the next one from the welcome card, so two cards
  * rendered with the same key.) The same index leaves the stack as it is.
  */
@@ -34,7 +34,12 @@ export const moveCardStack = (stack: TCardStack, blockIdx: number): TCardStack =
     };
   }
   if (blockIdx < stack.currentBlockIdx) {
-    const visitedBlocks = stack.visitedBlocks.slice(0, -1);
+    // Back usually returns to the top of the visited stack, but a reset (changing the card arrangement
+    // sends the survey to its first block) can jump back several blocks at once. Every block at or
+    // after the one returned to leaves the stack, so the card behind is always an earlier block.
+    const firstAtOrAfter = stack.visitedBlocks.findIndex((visited) => visited >= blockIdx);
+    const visitedBlocks =
+      firstAtOrAfter === -1 ? [...stack.visitedBlocks] : stack.visitedBlocks.slice(0, firstAtOrAfter);
     return {
       prevBlockIdx: visitedBlocks.at(-1) ?? blockIdx - 1,
       currentBlockIdx: blockIdx,
