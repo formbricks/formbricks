@@ -86,12 +86,12 @@ describe("getBillingUsageCycleWindow", () => {
         usageCycleAnchor: new Date("2026-11-23T10:00:00.000Z"),
         stripe: { subscriptionStatus: "active", trialStart: "2026-11-09T10:00:00.000Z" },
       },
-      new Date("2026-11-25T12:00:00.000Z")
+      new Date("2026-11-17T12:00:00.000Z")
     );
 
     expect(result).toEqual({
-      start: new Date("2026-11-23T10:00:00.000Z"),
-      end: new Date("2026-12-23T10:00:00.000Z"),
+      start: new Date("2026-10-23T10:00:00.000Z"),
+      end: new Date("2026-11-23T10:00:00.000Z"),
     });
   });
 
