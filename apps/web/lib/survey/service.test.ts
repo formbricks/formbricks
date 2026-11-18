@@ -1114,11 +1114,7 @@ describe("Tests for updateSurvey", () => {
           blocks: persistedBlocks,
         });
 
-        await updateSurveyInternal(
-          // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
-          { ...updateSurveyInput, status: "draft", blocks: [] } as Parameters<typeof updateSurveyInternal>[0],
-          true
-        );
+        await updateSurveyInternal({ ...updateSurveyInput, status: "draft", blocks: [] }, true);
 
         expect(scheduleFeedbackSourceReconciliation).toHaveBeenCalledWith(
           updateSurveyInput.id,

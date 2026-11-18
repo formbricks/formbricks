@@ -401,13 +401,810 @@ const computeNumericScaleStats = (
   return { choices, choiceCountMap, totalResponseCount, totalRating, dismissed, average };
 };
 
+const VALUES_LIMIT = 50;
+
+const summarizeOpenTextElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.OpenText }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const values: TSurveyElementSummaryOpenText["samples"] = [];
+  responses.forEach((response) => {
+    const answer = response.data[element.id];
+    if (answer && typeof answer === "string") {
+      values.push({
+        id: response.id,
+        updatedAt: response.updatedAt,
+        value: answer,
+        contact: response.contact,
+        contactAttributes: response.contactAttributes,
+      });
+    }
+  });
+
+  return {
+    type: element.type,
+    element: element,
+    responseCount: values.length,
+    samples: values.slice(0, VALUES_LIMIT),
+  };
+};
+
+const summarizeMultipleChoiceElement = (
+  survey: TSurvey,
+  element: Extract<
+    TSurveyElement,
+    { type: TSurveyElementTypeEnum.MultipleChoiceSingle | TSurveyElementTypeEnum.MultipleChoiceMulti }
+  >,
+  elements: TSurveyElement[],
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const values: TSurveyElementSummaryMultipleChoice["choices"] = [];
+
+  const otherOption = element.choices.find((choice) => choice.id === "other");
+  const noneOption = element.choices.find((choice) => choice.id === "none");
+
+  const elementChoices = element.choices
+    .filter((choice) => choice.id !== "other" && choice.id !== "none")
+    .map((choice) => getLocalizedValue(choice.label, "default"));
+
+  const choiceCountMap = elementChoices.reduce((acc: Record<string, number>, choice) => {
+    acc[choice] = 0;
+    return acc;
+  }, {});
+
+  // Track "none" count separately
+  const noneLabel = noneOption ? getLocalizedValue(noneOption.label, "default") : null;
+  let noneCount = 0;
+
+  const otherValues: TSurveyElementSummaryMultipleChoice["choices"][number]["others"] = [];
+  let totalSelectionCount = 0;
+  let totalResponseCount = 0;
+  const answered: TSurveySummaryResponse[] = [];
+  const choiceByLabel = new Map(
+    element.choices.map((choice) => [getLocalizedValue(choice.label, "default"), choice])
+  );
+  responses.forEach((response) => {
+    const responseLanguageCode = getLanguageCode(survey.languages, response.language);
+
+    const answer =
+      responseLanguageCode === "default"
+        ? response.data[element.id]
+        : checkForI18n(response.data, element.id, elements, responseLanguageCode);
+
+    let hasValidAnswer = false;
+    // The option a pick names: a choice by label, "none", else the "other" text (P51).
+    const pickNotShown = (value: string) => {
+      let optionId: string | undefined = "other";
+      if (elementChoices.includes(value)) optionId = choiceByLabel.get(value)?.id;
+      else if (noneLabel && value === noneLabel) optionId = "none";
+      return wasOptionNotShown(response, "options", element.id, optionId);
+    };
+
+    if (Array.isArray(answer) && element.type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
+      answer.forEach((value) => {
+        if (value && !pickNotShown(value)) {
+          totalSelectionCount++;
+          if (elementChoices.includes(value)) {
+            choiceCountMap[value]++;
+          } else if (noneLabel && value === noneLabel) {
+            noneCount++;
+          } else if (otherOption) {
+            otherValues.push({
+              value,
+              contact: response.contact,
+              contactAttributes: response.contactAttributes,
+            });
+          }
+          hasValidAnswer = true;
+        }
+      });
+    } else if (typeof answer === "string" && element.type === TSurveyElementTypeEnum.MultipleChoiceSingle) {
+      if (answer && !pickNotShown(answer)) {
+        totalSelectionCount++;
+        if (elementChoices.includes(answer)) {
+          choiceCountMap[answer]++;
+        } else if (noneLabel && answer === noneLabel) {
+          noneCount++;
+        } else if (otherOption) {
+          otherValues.push({
+            value: answer,
+            contact: response.contact,
+            contactAttributes: response.contactAttributes,
+          });
+        }
+        hasValidAnswer = true;
+      }
+    }
+
+    if (hasValidAnswer) {
+      totalResponseCount++;
+      answered.push(response);
+    }
+  });
+
+  // ENG-6937: each option's base is who answered less who wasn't shown it.
+  const notShownCounts = countOptionsNotShown(answered, "options", element.id);
+
+  Object.entries(choiceCountMap).forEach(([label, count]) => {
+    const choice = choiceByLabel.get(label);
+    values.push({
+      value: label,
+      count,
+      ...getOptionBase(count, totalResponseCount, choice && notShownCounts[choice.id], choice),
+    });
+  });
+
+  if (otherOption) {
+    values.push({
+      value: getLocalizedValue(otherOption.label, "default") || "Other",
+      count: otherValues.length,
+      ...getOptionBase(otherValues.length, totalResponseCount, notShownCounts.other, otherOption),
+      others: otherValues.slice(0, VALUES_LIMIT),
+    });
+  }
+
+  // Add "none" option at the end if it exists
+  if (noneOption && noneLabel) {
+    values.push({
+      value: noneLabel,
+      count: noneCount,
+      ...getOptionBase(noneCount, totalResponseCount, notShownCounts.none, noneOption),
+    });
+  }
+
+  return {
+    type: element.type,
+    element,
+    responseCount: totalResponseCount,
+    selectionCount: totalSelectionCount,
+    choices: values,
+  };
+};
+
+const summarizePictureSelectionElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.PictureSelection }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const values: TSurveyElementSummaryPictureSelection["choices"] = [];
+  const choiceCountMap: Record<string, number> = {};
+
+  element.choices.forEach((choice) => {
+    choiceCountMap[choice.id] = 0;
+  });
+  let totalResponseCount = 0;
+  let totalSelectionCount = 0;
+  const answered: TSurveySummaryResponse[] = [];
+
+  responses.forEach((response) => {
+    const answer = response.data[element.id];
+    if (Array.isArray(answer)) {
+      totalResponseCount++;
+      answered.push(response);
+      answer.forEach((value) => {
+        if (wasOptionNotShown(response, "options", element.id, value)) return;
+        totalSelectionCount++;
+        choiceCountMap[value]++;
+      });
+    }
+  });
+
+  const notShownCounts = countOptionsNotShown(answered, "options", element.id);
+  element.choices.forEach((choice) => {
+    values.push({
+      id: choice.id,
+      imageUrl: choice.imageUrl,
+      count: choiceCountMap[choice.id],
+      ...getOptionBase(choiceCountMap[choice.id], totalResponseCount, notShownCounts[choice.id], choice),
+    });
+  });
+
+  return {
+    type: element.type,
+    element,
+    responseCount: totalResponseCount,
+    selectionCount: totalSelectionCount,
+    choices: values,
+  };
+};
+
+const summarizeRatingElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Rating }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const stats = computeNumericScaleStats(element.id, element.range, responses);
+
+  return {
+    type: element.type,
+    element,
+    average: stats.average,
+    responseCount: stats.totalResponseCount,
+    choices: stats.choices,
+    dismissed: { count: stats.dismissed },
+  };
+};
+
+const summarizeNPSElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.NPS }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const data = {
+    promoters: 0,
+    passives: 0,
+    detractors: 0,
+    dismissed: 0,
+    total: 0,
+    score: 0,
+  };
+
+  // Track individual score counts (0-10)
+  const scoreCountMap: Record<number, number> = {};
+  for (let i = 0; i <= 10; i++) {
+    scoreCountMap[i] = 0;
+  }
+
+  responses.forEach((response) => {
+    const value = response.data[element.id];
+    if (typeof value === "number") {
+      data.total++;
+      scoreCountMap[value]++;
+      if (value >= 9) {
+        data.promoters++;
+      } else if (value >= 7) {
+        data.passives++;
+      } else {
+        data.detractors++;
+      }
+    } else if (response.ttc && response.ttc[element.id] > 0) {
+      data.total++;
+      data.dismissed++;
+    }
+  });
+
+  data.score =
+    data.total > 0 ? convertFloatTo2Decimal(((data.promoters - data.detractors) / data.total) * 100) : 0;
+
+  // Build choices array with individual score breakdown
+  const choices = Object.entries(scoreCountMap).map(([rating, count]) => ({
+    rating: Number.parseInt(rating),
+    count,
+    percentage: data.total > 0 ? convertFloatTo2Decimal((count / data.total) * 100) : 0,
+  }));
+
+  return {
+    type: element.type,
+    element,
+    responseCount: data.total,
+    total: data.total,
+    score: data.score,
+    promoters: {
+      count: data.promoters,
+      percentage: data.total > 0 ? convertFloatTo2Decimal((data.promoters / data.total) * 100) : 0,
+    },
+    passives: {
+      count: data.passives,
+      percentage: data.total > 0 ? convertFloatTo2Decimal((data.passives / data.total) * 100) : 0,
+    },
+    detractors: {
+      count: data.detractors,
+      percentage: data.total > 0 ? convertFloatTo2Decimal((data.detractors / data.total) * 100) : 0,
+    },
+    dismissed: {
+      count: data.dismissed,
+      percentage: data.total > 0 ? convertFloatTo2Decimal((data.dismissed / data.total) * 100) : 0,
+    },
+    choices,
+  };
+};
+
+const summarizeCSATElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.CSAT }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const stats = computeNumericScaleStats(element.id, element.range, responses);
+
+  // CSAT: top 2 ratings out of 5 are "satisfied"
+  const satisfiedCount = (stats.choiceCountMap[4] || 0) + (stats.choiceCountMap[5] || 0);
+  const satisfiedPercentage =
+    stats.totalResponseCount > 0
+      ? convertFloatTo2Decimal((satisfiedCount / stats.totalResponseCount) * 100)
+      : 0;
+
+  return {
+    type: element.type,
+    element,
+    average: stats.average,
+    responseCount: stats.totalResponseCount,
+    choices: stats.choices,
+    dismissed: { count: stats.dismissed },
+    csat: { satisfiedCount, satisfiedPercentage },
+  };
+};
+
+const summarizeCESElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.CES }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const stats = computeNumericScaleStats(element.id, element.range, responses);
+
+  return {
+    type: element.type,
+    element,
+    average: stats.average,
+    responseCount: stats.totalResponseCount,
+    choices: stats.choices,
+    dismissed: { count: stats.dismissed },
+  };
+};
+
+const summarizeCTAElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.CTA }>,
+  elements: TSurveyElement[],
+  responses: TSurveySummaryResponse[],
+  dropOff: TSurveySummary["dropOff"]
+): TSurveySummary["summary"][number] | undefined => {
+  // Only calculate summary for CTA elements with external buttons (CTR tracking is only meaningful for external links)
+  if (!element.buttonExternal) {
+    return undefined;
+  }
+
+  const data = {
+    clicked: 0,
+    dismissed: 0,
+  };
+
+  responses.forEach((response) => {
+    const value = response.data[element.id];
+    if (value === "clicked") {
+      data.clicked++;
+    } else if (value === "dismissed") {
+      data.dismissed++;
+    }
+  });
+
+  const totalResponses = data.clicked + data.dismissed;
+  const idx = elements.findIndex((q) => q.id === element.id);
+  const impressions = dropOff[idx].impressions;
+
+  return {
+    type: element.type,
+    element,
+    impressionCount: impressions,
+    clickCount: data.clicked,
+    skipCount: data.dismissed,
+    responseCount: totalResponses,
+    ctr: {
+      count: data.clicked,
+      percentage: impressions > 0 ? convertFloatTo2Decimal((data.clicked / impressions) * 100) : 0,
+    },
+  };
+};
+
+const summarizeConsentElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Consent }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const data = {
+    accepted: 0,
+    dismissed: 0,
+  };
+
+  responses.forEach((response) => {
+    const value = response.data[element.id];
+    if (value === "accepted") {
+      data.accepted++;
+    } else if (response.ttc && response.ttc[element.id] > 0) {
+      data.dismissed++;
+    }
+  });
+
+  const totalResponses = data.accepted + data.dismissed;
+
+  return {
+    type: element.type,
+    element,
+    responseCount: totalResponses,
+    accepted: {
+      count: data.accepted,
+      percentage: totalResponses > 0 ? convertFloatTo2Decimal((data.accepted / totalResponses) * 100) : 0,
+    },
+    dismissed: {
+      count: data.dismissed,
+      percentage: totalResponses > 0 ? convertFloatTo2Decimal((data.dismissed / totalResponses) * 100) : 0,
+    },
+  };
+};
+
+const summarizeDateElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Date }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const values: TSurveyElementSummaryDate["samples"] = [];
+  responses.forEach((response) => {
+    const answer = response.data[element.id];
+    if (answer && typeof answer === "string") {
+      values.push({
+        id: response.id,
+        updatedAt: response.updatedAt,
+        value: answer,
+        contact: response.contact,
+        contactAttributes: response.contactAttributes,
+      });
+    }
+  });
+
+  return {
+    type: element.type,
+    element,
+    responseCount: values.length,
+    samples: values.slice(0, VALUES_LIMIT),
+  };
+};
+
+const summarizeFileUploadElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.FileUpload }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const values: TSurveyElementSummaryFileUpload["files"] = [];
+  responses.forEach((response) => {
+    const answer = response.data[element.id];
+    if (Array.isArray(answer)) {
+      values.push({
+        id: response.id,
+        updatedAt: response.updatedAt,
+        value: answer,
+        contact: response.contact,
+        contactAttributes: response.contactAttributes,
+      });
+    }
+  });
+
+  return {
+    type: element.type,
+    element,
+    responseCount: values.length,
+    files: values.slice(0, VALUES_LIMIT),
+  };
+};
+
+const summarizeSignatureElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Signature }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  return {
+    type: element.type,
+    element,
+    ...summarizeSignatureAnswers(element.id, responses),
+  };
+};
+
+const summarizeCalElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Cal }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const data = {
+    booked: 0,
+    skipped: 0,
+  };
+
+  responses.forEach((response) => {
+    const value = response.data[element.id];
+    if (value === "booked") {
+      data.booked++;
+    } else if (response.ttc && response.ttc[element.id] > 0) {
+      data.skipped++;
+    }
+  });
+  const totalResponses = data.booked + data.skipped;
+
+  return {
+    type: element.type,
+    element,
+    responseCount: totalResponses,
+    booked: {
+      count: data.booked,
+      percentage: totalResponses > 0 ? convertFloatTo2Decimal((data.booked / totalResponses) * 100) : 0,
+    },
+    skipped: {
+      count: data.skipped,
+      percentage: totalResponses > 0 ? convertFloatTo2Decimal((data.skipped / totalResponses) * 100) : 0,
+    },
+  };
+};
+
+const summarizeMatrixElement = (
+  survey: TSurvey,
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Matrix }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const rows = element.rows.map((row) => getLocalizedValue(row.label, "default"));
+  const columns = element.columns.map((column) => getLocalizedValue(column.label, "default"));
+  let totalResponseCount = 0;
+
+  // Initialize count object
+  const countMap: Record<string, Record<string, number>> = rows.reduce(
+    (acc: Record<string, Record<string, number>>, row) => {
+      acc[row] = columns.reduce(
+        (colAcc: Record<string, number>, col) => {
+          colAcc[col] = 0;
+          return colAcc;
+        },
+        {} as Record<string, number>
+      );
+      return acc;
+    },
+    {} as Record<string, Record<string, number>>
+  );
+
+  const answered: TSurveySummaryResponse[] = [];
+  responses.forEach((response) => {
+    const selectedResponses = response.data[element.id] as Record<string, string>;
+    const responseLanguageCode = getLanguageCode(survey.languages, response.language);
+    if (selectedResponses) {
+      totalResponseCount++;
+      answered.push(response);
+      element.rows.forEach((row) => {
+        const localizedRow = getLocalizedValue(row.label, responseLanguageCode);
+        const colValue = element.columns.find((column) => {
+          return getLocalizedValue(column.label, responseLanguageCode) === selectedResponses[localizedRow];
+        });
+        const colValueInDefaultLanguage = getLocalizedValue(colValue?.label, "default");
+        if (
+          wasOptionNotShown(response, "rows", element.id, row.id) ||
+          wasOptionNotShown(response, "columns", element.id, colValue?.id)
+        ) {
+          return;
+        }
+        if (colValueInDefaultLanguage && columns.includes(colValueInDefaultLanguage)) {
+          countMap[getLocalizedValue(row.label, "default")][colValueInDefaultLanguage] += 1;
+        }
+      });
+    }
+  });
+
+  // ENG-6937: a row shown to fewer than everyone who answered says so.
+  const rowsNotShown = countOptionsNotShown(answered, "rows", element.id);
+  const matrixSummary = rows.map((row, rowIdx) => {
+    const elementRow = element.rows[rowIdx];
+    let totalResponsesForRow = 0;
+    columns.forEach((col) => {
+      totalResponsesForRow += countMap[row][col];
+    });
+
+    const columnPercentages = columns.map((col) => {
+      const count = countMap[row][col];
+      const percentage =
+        totalResponsesForRow > 0 ? ((count / totalResponsesForRow) * 100).toFixed(2) : "0.00";
+      return {
+        column: col,
+        percentage: Number(percentage),
+      };
+    });
+
+    const notShownCount = rowsNotShown[elementRow.id];
+    return {
+      rowLabel: row,
+      columnPercentages,
+      totalResponsesForRow,
+      ...(notShownCount ? { shownCount: totalResponseCount - notShownCount } : {}),
+      ...(elementRow.hidden ? { hidden: true as const } : {}),
+    };
+  });
+
+  return {
+    type: element.type,
+    element,
+    responseCount: totalResponseCount,
+    data: matrixSummary,
+  };
+};
+
+const summarizeAddressElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Address }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const values: TSurveyElementSummaryAddress["samples"] = [];
+  responses.forEach((response) => {
+    const answer = response.data[element.id];
+    if (Array.isArray(answer) && answer.length > 0) {
+      values.push({
+        id: response.id,
+        updatedAt: response.updatedAt,
+        value: answer,
+        contact: response.contact,
+        contactAttributes: response.contactAttributes,
+      });
+    }
+  });
+
+  return {
+    type: TSurveyElementTypeEnum.Address,
+    element,
+    responseCount: values.length,
+    samples: values.slice(0, VALUES_LIMIT),
+  };
+};
+
+const summarizeContactInfoElement = (
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.ContactInfo }>,
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const values: TSurveyElementSummaryContactInfo["samples"] = [];
+  responses.forEach((response) => {
+    const answer = response.data[element.id];
+    if (Array.isArray(answer) && answer.length > 0) {
+      values.push({
+        id: response.id,
+        updatedAt: response.updatedAt,
+        value: answer,
+        contact: response.contact,
+        contactAttributes: response.contactAttributes,
+      });
+    }
+  });
+
+  return {
+    type: TSurveyElementTypeEnum.ContactInfo,
+    element,
+    responseCount: values.length,
+    samples: values.slice(0, VALUES_LIMIT),
+  };
+};
+
+const summarizeRankingElement = (
+  survey: TSurvey,
+  element: Extract<TSurveyElement, { type: TSurveyElementTypeEnum.Ranking }>,
+  elements: TSurveyElement[],
+  responses: TSurveySummaryResponse[]
+): TSurveySummary["summary"][number] | undefined => {
+  const values: TSurveyElementSummaryRanking["choices"] = [];
+  const otherOption = element.choices.find((choice) => choice.id === "other");
+  const elementChoices = element.choices
+    .filter((choice) => choice.id !== "other")
+    .map((choice) => getLocalizedValue(choice.label, "default"));
+  let totalResponseCount = 0;
+  const choiceRankSums: Record<string, number> = {};
+  const choiceCountMap: Record<string, number> = {};
+  // A ranked "Other" stores the respondent's text in its slot, so any unmatched entry is it.
+  let otherRankSum = 0;
+  let otherCount = 0;
+  const otherValues: NonNullable<TSurveyElementSummaryRanking["choices"][number]["others"]> = [];
+  const answered: TSurveySummaryResponse[] = [];
+
+  elementChoices.forEach((choice: string) => {
+    choiceRankSums[choice] = 0;
+    choiceCountMap[choice] = 0;
+  });
+
+  responses.forEach((response) => {
+    const responseLanguageCode = getLanguageCode(survey.languages, response.language);
+
+    const answer =
+      responseLanguageCode === "default"
+        ? response.data[element.id]
+        : checkForI18n(response.data, element.id, elements, responseLanguageCode);
+
+    if (Array.isArray(answer)) {
+      totalResponseCount++;
+      answered.push(response);
+      answer.forEach((value, index) => {
+        const ranking = index + 1; // Calculate ranking based on index
+        const rankedChoiceId = elementChoices.includes(value)
+          ? element.choices.find((choice) => getLocalizedValue(choice.label, "default") === value)?.id
+          : "other";
+        if (wasOptionNotShown(response, "options", element.id, rankedChoiceId)) return;
+        if (elementChoices.includes(value)) {
+          choiceRankSums[value] += ranking;
+          choiceCountMap[value]++;
+        } else if (otherOption && typeof value === "string") {
+          otherRankSum += ranking;
+          otherCount++;
+          if (value.trim() !== "") {
+            otherValues.push({
+              value,
+              contact: response.contact,
+              contactAttributes: response.contactAttributes,
+            });
+          }
+        }
+      });
+    }
+  });
+
+  // ENG-6937: an option shown to fewer than everyone who ranked says so.
+  const notShownCounts = countOptionsNotShown(answered, "options", element.id);
+  const rankingChoices = element.choices.filter((choice) => choice.id !== "other");
+  const rankingBase = (choice: (typeof element.choices)[number] | undefined) => {
+    const notShownCount = choice ? notShownCounts[choice.id] : undefined;
+    return {
+      ...(notShownCount ? { shownCount: totalResponseCount - notShownCount } : {}),
+      ...(choice?.hidden ? { hidden: true as const } : {}),
+    };
+  };
+
+  elementChoices.forEach((choice: string, choiceIdx) => {
+    const count = choiceCountMap[choice];
+    const avgRanking = count > 0 ? choiceRankSums[choice] / count : 0;
+    values.push({
+      value: choice,
+      count,
+      avgRanking: convertFloatTo2Decimal(avgRanking),
+      ...rankingBase(rankingChoices[choiceIdx]),
+    });
+  });
+
+  if (otherOption) {
+    values.push({
+      value: getLocalizedValue(otherOption.label, "default") || "Other",
+      count: otherCount,
+      avgRanking: convertFloatTo2Decimal(otherCount > 0 ? otherRankSum / otherCount : 0),
+      others: otherValues.slice(0, VALUES_LIMIT),
+      ...rankingBase(otherOption),
+    });
+  }
+
+  return {
+    type: element.type,
+    element,
+    responseCount: totalResponseCount,
+    choices: values,
+  };
+};
+
+/** The summary of one element, or undefined for an element type the summary leaves out. */
+const summarizeElement = (
+  survey: TSurvey,
+  element: TSurveyElement,
+  elements: TSurveyElement[],
+  responses: TSurveySummaryResponse[],
+  dropOff: TSurveySummary["dropOff"]
+): TSurveySummary["summary"][number] | undefined => {
+  switch (element.type) {
+    case TSurveyElementTypeEnum.OpenText:
+      return summarizeOpenTextElement(element, responses);
+    case TSurveyElementTypeEnum.MultipleChoiceSingle:
+    case TSurveyElementTypeEnum.MultipleChoiceMulti:
+      return summarizeMultipleChoiceElement(survey, element, elements, responses);
+    case TSurveyElementTypeEnum.PictureSelection:
+      return summarizePictureSelectionElement(element, responses);
+    case TSurveyElementTypeEnum.Rating:
+      return summarizeRatingElement(element, responses);
+    case TSurveyElementTypeEnum.NPS:
+      return summarizeNPSElement(element, responses);
+    case TSurveyElementTypeEnum.CSAT:
+      return summarizeCSATElement(element, responses);
+    case TSurveyElementTypeEnum.CES:
+      return summarizeCESElement(element, responses);
+    case TSurveyElementTypeEnum.CTA:
+      return summarizeCTAElement(element, elements, responses, dropOff);
+    case TSurveyElementTypeEnum.Consent:
+      return summarizeConsentElement(element, responses);
+    case TSurveyElementTypeEnum.Date:
+      return summarizeDateElement(element, responses);
+    case TSurveyElementTypeEnum.FileUpload:
+      return summarizeFileUploadElement(element, responses);
+    case TSurveyElementTypeEnum.Signature:
+      return summarizeSignatureElement(element, responses);
+    case TSurveyElementTypeEnum.Cal:
+      return summarizeCalElement(element, responses);
+    case TSurveyElementTypeEnum.Matrix:
+      return summarizeMatrixElement(survey, element, responses);
+    case TSurveyElementTypeEnum.Address:
+      return summarizeAddressElement(element, responses);
+    case TSurveyElementTypeEnum.ContactInfo:
+      return summarizeContactInfoElement(element, responses);
+    case TSurveyElementTypeEnum.Ranking:
+      return summarizeRankingElement(survey, element, elements, responses);
+    default:
+      return undefined;
+  }
+};
+
 export const getElementSummary = async (
   survey: TSurvey,
   elements: TSurveyElement[],
   allResponses: TSurveySummaryResponse[],
   dropOff: TSurveySummary["dropOff"]
 ): Promise<TSurveySummary["summary"]> => {
-  const VALUES_LIMIT = 50;
   const summary: TSurveySummary["summary"] = [];
   const isNotShown = createNotShownLookup(survey);
 
@@ -416,728 +1213,8 @@ export const getElementSummary = async (
     // skipped or dismissed, and never in its percentages.
     const responses = allResponses.filter((response) => !isNotShown(response, element.id));
 
-    switch (element.type) {
-      case TSurveyElementTypeEnum.OpenText: {
-        let values: TSurveyElementSummaryOpenText["samples"] = [];
-        responses.forEach((response) => {
-          const answer = response.data[element.id];
-          if (answer && typeof answer === "string") {
-            values.push({
-              id: response.id,
-              updatedAt: response.updatedAt,
-              value: answer,
-              contact: response.contact,
-              contactAttributes: response.contactAttributes,
-            });
-          }
-        });
-
-        summary.push({
-          type: element.type,
-          element: element,
-          responseCount: values.length,
-          samples: values.slice(0, VALUES_LIMIT),
-        });
-
-        values = [];
-        break;
-      }
-      case TSurveyElementTypeEnum.MultipleChoiceSingle:
-      case TSurveyElementTypeEnum.MultipleChoiceMulti: {
-        let values: TSurveyElementSummaryMultipleChoice["choices"] = [];
-
-        const otherOption = element.choices.find((choice) => choice.id === "other");
-        const noneOption = element.choices.find((choice) => choice.id === "none");
-
-        const elementChoices = element.choices
-          .filter((choice) => choice.id !== "other" && choice.id !== "none")
-          .map((choice) => getLocalizedValue(choice.label, "default"));
-
-        const choiceCountMap = elementChoices.reduce((acc: Record<string, number>, choice) => {
-          acc[choice] = 0;
-          return acc;
-        }, {});
-
-        // Track "none" count separately
-        const noneLabel = noneOption ? getLocalizedValue(noneOption.label, "default") : null;
-        let noneCount = 0;
-
-        const otherValues: TSurveyElementSummaryMultipleChoice["choices"][number]["others"] = [];
-        let totalSelectionCount = 0;
-        let totalResponseCount = 0;
-        const answered: TSurveySummaryResponse[] = [];
-        const choiceByLabel = new Map(
-          element.choices.map((choice) => [getLocalizedValue(choice.label, "default"), choice])
-        );
-        responses.forEach((response) => {
-          const responseLanguageCode = getLanguageCode(survey.languages, response.language);
-
-          const answer =
-            responseLanguageCode === "default"
-              ? response.data[element.id]
-              : checkForI18n(response.data, element.id, elements, responseLanguageCode);
-
-          let hasValidAnswer = false;
-          // The option a pick names: a choice by label, "none", else the "other" text (P51).
-          const pickNotShown = (value: string) => {
-            let optionId: string | undefined = "other";
-            if (elementChoices.includes(value)) optionId = choiceByLabel.get(value)?.id;
-            else if (noneLabel && value === noneLabel) optionId = "none";
-            return wasOptionNotShown(response, "options", element.id, optionId);
-          };
-
-          if (Array.isArray(answer) && element.type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
-            answer.forEach((value) => {
-              if (value && !pickNotShown(value)) {
-                totalSelectionCount++;
-                if (elementChoices.includes(value)) {
-                  choiceCountMap[value]++;
-                } else if (noneLabel && value === noneLabel) {
-                  noneCount++;
-                } else if (otherOption) {
-                  otherValues.push({
-                    value,
-                    contact: response.contact,
-                    contactAttributes: response.contactAttributes,
-                  });
-                }
-                hasValidAnswer = true;
-              }
-            });
-          } else if (
-            typeof answer === "string" &&
-            element.type === TSurveyElementTypeEnum.MultipleChoiceSingle
-          ) {
-            if (answer && !pickNotShown(answer)) {
-              totalSelectionCount++;
-              if (elementChoices.includes(answer)) {
-                choiceCountMap[answer]++;
-              } else if (noneLabel && answer === noneLabel) {
-                noneCount++;
-              } else if (otherOption) {
-                otherValues.push({
-                  value: answer,
-                  contact: response.contact,
-                  contactAttributes: response.contactAttributes,
-                });
-              }
-              hasValidAnswer = true;
-            }
-          }
-
-          if (hasValidAnswer) {
-            totalResponseCount++;
-            answered.push(response);
-          }
-        });
-
-        // ENG-6937: each option's base is who answered less who wasn't shown it.
-        const notShownCounts = countOptionsNotShown(answered, "options", element.id);
-
-        Object.entries(choiceCountMap).forEach(([label, count]) => {
-          const choice = choiceByLabel.get(label);
-          values.push({
-            value: label,
-            count,
-            ...getOptionBase(count, totalResponseCount, choice && notShownCounts[choice.id], choice),
-          });
-        });
-
-        if (otherOption) {
-          values.push({
-            value: getLocalizedValue(otherOption.label, "default") || "Other",
-            count: otherValues.length,
-            ...getOptionBase(otherValues.length, totalResponseCount, notShownCounts.other, otherOption),
-            others: otherValues.slice(0, VALUES_LIMIT),
-          });
-        }
-
-        // Add "none" option at the end if it exists
-        if (noneOption && noneLabel) {
-          values.push({
-            value: noneLabel,
-            count: noneCount,
-            ...getOptionBase(noneCount, totalResponseCount, notShownCounts.none, noneOption),
-          });
-        }
-
-        summary.push({
-          type: element.type,
-          element,
-          responseCount: totalResponseCount,
-          selectionCount: totalSelectionCount,
-          choices: values,
-        });
-
-        values = [];
-        break;
-      }
-      case TSurveyElementTypeEnum.PictureSelection: {
-        let values: TSurveyElementSummaryPictureSelection["choices"] = [];
-        const choiceCountMap: Record<string, number> = {};
-
-        element.choices.forEach((choice) => {
-          choiceCountMap[choice.id] = 0;
-        });
-        let totalResponseCount = 0;
-        let totalSelectionCount = 0;
-        const answered: TSurveySummaryResponse[] = [];
-
-        responses.forEach((response) => {
-          const answer = response.data[element.id];
-          if (Array.isArray(answer)) {
-            totalResponseCount++;
-            answered.push(response);
-            answer.forEach((value) => {
-              if (wasOptionNotShown(response, "options", element.id, value)) return;
-              totalSelectionCount++;
-              choiceCountMap[value]++;
-            });
-          }
-        });
-
-        const notShownCounts = countOptionsNotShown(answered, "options", element.id);
-        element.choices.forEach((choice) => {
-          values.push({
-            id: choice.id,
-            imageUrl: choice.imageUrl,
-            count: choiceCountMap[choice.id],
-            ...getOptionBase(
-              choiceCountMap[choice.id],
-              totalResponseCount,
-              notShownCounts[choice.id],
-              choice
-            ),
-          });
-        });
-
-        summary.push({
-          type: element.type,
-          element,
-          responseCount: totalResponseCount,
-          selectionCount: totalSelectionCount,
-          choices: values,
-        });
-
-        values = [];
-        break;
-      }
-      case TSurveyElementTypeEnum.Rating: {
-        const stats = computeNumericScaleStats(element.id, element.range, responses);
-
-        summary.push({
-          type: element.type,
-          element,
-          average: stats.average,
-          responseCount: stats.totalResponseCount,
-          choices: stats.choices,
-          dismissed: { count: stats.dismissed },
-        });
-        break;
-      }
-      case TSurveyElementTypeEnum.NPS: {
-        const data = {
-          promoters: 0,
-          passives: 0,
-          detractors: 0,
-          dismissed: 0,
-          total: 0,
-          score: 0,
-        };
-
-        // Track individual score counts (0-10)
-        const scoreCountMap: Record<number, number> = {};
-        for (let i = 0; i <= 10; i++) {
-          scoreCountMap[i] = 0;
-        }
-
-        responses.forEach((response) => {
-          const value = response.data[element.id];
-          if (typeof value === "number") {
-            data.total++;
-            scoreCountMap[value]++;
-            if (value >= 9) {
-              data.promoters++;
-            } else if (value >= 7) {
-              data.passives++;
-            } else {
-              data.detractors++;
-            }
-          } else if (response.ttc && response.ttc[element.id] > 0) {
-            data.total++;
-            data.dismissed++;
-          }
-        });
-
-        data.score =
-          data.total > 0
-            ? convertFloatTo2Decimal(((data.promoters - data.detractors) / data.total) * 100)
-            : 0;
-
-        // Build choices array with individual score breakdown
-        const choices = Object.entries(scoreCountMap).map(([rating, count]) => ({
-          rating: Number.parseInt(rating),
-          count,
-          percentage: data.total > 0 ? convertFloatTo2Decimal((count / data.total) * 100) : 0,
-        }));
-
-        summary.push({
-          type: element.type,
-          element,
-          responseCount: data.total,
-          total: data.total,
-          score: data.score,
-          promoters: {
-            count: data.promoters,
-            percentage: data.total > 0 ? convertFloatTo2Decimal((data.promoters / data.total) * 100) : 0,
-          },
-          passives: {
-            count: data.passives,
-            percentage: data.total > 0 ? convertFloatTo2Decimal((data.passives / data.total) * 100) : 0,
-          },
-          detractors: {
-            count: data.detractors,
-            percentage: data.total > 0 ? convertFloatTo2Decimal((data.detractors / data.total) * 100) : 0,
-          },
-          dismissed: {
-            count: data.dismissed,
-            percentage: data.total > 0 ? convertFloatTo2Decimal((data.dismissed / data.total) * 100) : 0,
-          },
-          choices,
-        });
-        break;
-      }
-      case TSurveyElementTypeEnum.CSAT: {
-        const stats = computeNumericScaleStats(element.id, element.range, responses);
-
-        // CSAT: top 2 ratings out of 5 are "satisfied"
-        const satisfiedCount = (stats.choiceCountMap[4] || 0) + (stats.choiceCountMap[5] || 0);
-        const satisfiedPercentage =
-          stats.totalResponseCount > 0
-            ? convertFloatTo2Decimal((satisfiedCount / stats.totalResponseCount) * 100)
-            : 0;
-
-        summary.push({
-          type: element.type,
-          element,
-          average: stats.average,
-          responseCount: stats.totalResponseCount,
-          choices: stats.choices,
-          dismissed: { count: stats.dismissed },
-          csat: { satisfiedCount, satisfiedPercentage },
-        });
-        break;
-      }
-      case TSurveyElementTypeEnum.CES: {
-        const stats = computeNumericScaleStats(element.id, element.range, responses);
-
-        summary.push({
-          type: element.type,
-          element,
-          average: stats.average,
-          responseCount: stats.totalResponseCount,
-          choices: stats.choices,
-          dismissed: { count: stats.dismissed },
-        });
-        break;
-      }
-      case TSurveyElementTypeEnum.CTA: {
-        // Only calculate summary for CTA elements with external buttons (CTR tracking is only meaningful for external links)
-        if (!element.buttonExternal) {
-          break;
-        }
-
-        const data = {
-          clicked: 0,
-          dismissed: 0,
-        };
-
-        responses.forEach((response) => {
-          const value = response.data[element.id];
-          if (value === "clicked") {
-            data.clicked++;
-          } else if (value === "dismissed") {
-            data.dismissed++;
-          }
-        });
-
-        const totalResponses = data.clicked + data.dismissed;
-        const idx = elements.findIndex((q) => q.id === element.id);
-        const impressions = dropOff[idx].impressions;
-
-        summary.push({
-          type: element.type,
-          element,
-          impressionCount: impressions,
-          clickCount: data.clicked,
-          skipCount: data.dismissed,
-          responseCount: totalResponses,
-          ctr: {
-            count: data.clicked,
-            percentage: impressions > 0 ? convertFloatTo2Decimal((data.clicked / impressions) * 100) : 0,
-          },
-        });
-        break;
-      }
-      case TSurveyElementTypeEnum.Consent: {
-        const data = {
-          accepted: 0,
-          dismissed: 0,
-        };
-
-        responses.forEach((response) => {
-          const value = response.data[element.id];
-          if (value === "accepted") {
-            data.accepted++;
-          } else if (response.ttc && response.ttc[element.id] > 0) {
-            data.dismissed++;
-          }
-        });
-
-        const totalResponses = data.accepted + data.dismissed;
-
-        summary.push({
-          type: element.type,
-          element,
-          responseCount: totalResponses,
-          accepted: {
-            count: data.accepted,
-            percentage:
-              totalResponses > 0 ? convertFloatTo2Decimal((data.accepted / totalResponses) * 100) : 0,
-          },
-          dismissed: {
-            count: data.dismissed,
-            percentage:
-              totalResponses > 0 ? convertFloatTo2Decimal((data.dismissed / totalResponses) * 100) : 0,
-          },
-        });
-
-        break;
-      }
-      case TSurveyElementTypeEnum.Date: {
-        let values: TSurveyElementSummaryDate["samples"] = [];
-        responses.forEach((response) => {
-          const answer = response.data[element.id];
-          if (answer && typeof answer === "string") {
-            values.push({
-              id: response.id,
-              updatedAt: response.updatedAt,
-              value: answer,
-              contact: response.contact,
-              contactAttributes: response.contactAttributes,
-            });
-          }
-        });
-
-        summary.push({
-          type: element.type,
-          element,
-          responseCount: values.length,
-          samples: values.slice(0, VALUES_LIMIT),
-        });
-
-        values = [];
-        break;
-      }
-      case TSurveyElementTypeEnum.FileUpload: {
-        let values: TSurveyElementSummaryFileUpload["files"] = [];
-        responses.forEach((response) => {
-          const answer = response.data[element.id];
-          if (Array.isArray(answer)) {
-            values.push({
-              id: response.id,
-              updatedAt: response.updatedAt,
-              value: answer,
-              contact: response.contact,
-              contactAttributes: response.contactAttributes,
-            });
-          }
-        });
-
-        summary.push({
-          type: element.type,
-          element,
-          responseCount: values.length,
-          files: values.slice(0, VALUES_LIMIT),
-        });
-
-        values = [];
-        break;
-      }
-      case TSurveyElementTypeEnum.Signature: {
-        summary.push({
-          type: element.type,
-          element,
-          ...summarizeSignatureAnswers(element.id, responses),
-        });
-
-        break;
-      }
-      case TSurveyElementTypeEnum.Cal: {
-        const data = {
-          booked: 0,
-          skipped: 0,
-        };
-
-        responses.forEach((response) => {
-          const value = response.data[element.id];
-          if (value === "booked") {
-            data.booked++;
-          } else if (response.ttc && response.ttc[element.id] > 0) {
-            data.skipped++;
-          }
-        });
-        const totalResponses = data.booked + data.skipped;
-
-        summary.push({
-          type: element.type,
-          element,
-          responseCount: totalResponses,
-          booked: {
-            count: data.booked,
-            percentage: totalResponses > 0 ? convertFloatTo2Decimal((data.booked / totalResponses) * 100) : 0,
-          },
-          skipped: {
-            count: data.skipped,
-            percentage:
-              totalResponses > 0 ? convertFloatTo2Decimal((data.skipped / totalResponses) * 100) : 0,
-          },
-        });
-
-        break;
-      }
-      case TSurveyElementTypeEnum.Matrix: {
-        const rows = element.rows.map((row) => getLocalizedValue(row.label, "default"));
-        const columns = element.columns.map((column) => getLocalizedValue(column.label, "default"));
-        let totalResponseCount = 0;
-
-        // Initialize count object
-        const countMap: Record<string, Record<string, number>> = rows.reduce(
-          (acc: Record<string, Record<string, number>>, row) => {
-            acc[row] = columns.reduce(
-              (colAcc: Record<string, number>, col) => {
-                colAcc[col] = 0;
-                return colAcc;
-              },
-              {} as Record<string, number>
-            );
-            return acc;
-          },
-          {} as Record<string, Record<string, number>>
-        );
-
-        const answered: TSurveySummaryResponse[] = [];
-        responses.forEach((response) => {
-          const selectedResponses = response.data[element.id] as Record<string, string>;
-          const responseLanguageCode = getLanguageCode(survey.languages, response.language);
-          if (selectedResponses) {
-            totalResponseCount++;
-            answered.push(response);
-            element.rows.forEach((row) => {
-              const localizedRow = getLocalizedValue(row.label, responseLanguageCode);
-              const colValue = element.columns.find((column) => {
-                return (
-                  getLocalizedValue(column.label, responseLanguageCode) === selectedResponses[localizedRow]
-                );
-              });
-              const colValueInDefaultLanguage = getLocalizedValue(colValue?.label, "default");
-              if (
-                wasOptionNotShown(response, "rows", element.id, row.id) ||
-                wasOptionNotShown(response, "columns", element.id, colValue?.id)
-              ) {
-                return;
-              }
-              if (colValueInDefaultLanguage && columns.includes(colValueInDefaultLanguage)) {
-                countMap[getLocalizedValue(row.label, "default")][colValueInDefaultLanguage] += 1;
-              }
-            });
-          }
-        });
-
-        // ENG-6937: a row shown to fewer than everyone who answered says so.
-        const rowsNotShown = countOptionsNotShown(answered, "rows", element.id);
-        const matrixSummary = rows.map((row, rowIdx) => {
-          const elementRow = element.rows[rowIdx];
-          let totalResponsesForRow = 0;
-          columns.forEach((col) => {
-            totalResponsesForRow += countMap[row][col];
-          });
-
-          const columnPercentages = columns.map((col) => {
-            const count = countMap[row][col];
-            const percentage =
-              totalResponsesForRow > 0 ? ((count / totalResponsesForRow) * 100).toFixed(2) : "0.00";
-            return {
-              column: col,
-              percentage: Number(percentage),
-            };
-          });
-
-          const notShownCount = rowsNotShown[elementRow.id];
-          return {
-            rowLabel: row,
-            columnPercentages,
-            totalResponsesForRow,
-            ...(notShownCount ? { shownCount: totalResponseCount - notShownCount } : {}),
-            ...(elementRow.hidden ? { hidden: true as const } : {}),
-          };
-        });
-
-        summary.push({
-          type: element.type,
-          element,
-          responseCount: totalResponseCount,
-          data: matrixSummary,
-        });
-        break;
-      }
-      case TSurveyElementTypeEnum.Address: {
-        let values: TSurveyElementSummaryAddress["samples"] = [];
-        responses.forEach((response) => {
-          const answer = response.data[element.id];
-          if (Array.isArray(answer) && answer.length > 0) {
-            values.push({
-              id: response.id,
-              updatedAt: response.updatedAt,
-              value: answer,
-              contact: response.contact,
-              contactAttributes: response.contactAttributes,
-            });
-          }
-        });
-
-        summary.push({
-          type: TSurveyElementTypeEnum.Address,
-          element,
-          responseCount: values.length,
-          samples: values.slice(0, VALUES_LIMIT),
-        });
-
-        values = [];
-        break;
-      }
-      case TSurveyElementTypeEnum.ContactInfo: {
-        let values: TSurveyElementSummaryContactInfo["samples"] = [];
-        responses.forEach((response) => {
-          const answer = response.data[element.id];
-          if (Array.isArray(answer) && answer.length > 0) {
-            values.push({
-              id: response.id,
-              updatedAt: response.updatedAt,
-              value: answer,
-              contact: response.contact,
-              contactAttributes: response.contactAttributes,
-            });
-          }
-        });
-
-        summary.push({
-          type: TSurveyElementTypeEnum.ContactInfo,
-          element,
-          responseCount: values.length,
-          samples: values.slice(0, VALUES_LIMIT),
-        });
-
-        values = [];
-        break;
-      }
-      case TSurveyElementTypeEnum.Ranking: {
-        const values: TSurveyElementSummaryRanking["choices"] = [];
-        const otherOption = element.choices.find((choice) => choice.id === "other");
-        const elementChoices = element.choices
-          .filter((choice) => choice.id !== "other")
-          .map((choice) => getLocalizedValue(choice.label, "default"));
-        let totalResponseCount = 0;
-        const choiceRankSums: Record<string, number> = {};
-        const choiceCountMap: Record<string, number> = {};
-        // A ranked "Other" stores the respondent's text in its slot, so any unmatched entry is it.
-        let otherRankSum = 0;
-        let otherCount = 0;
-        const otherValues: NonNullable<TSurveyElementSummaryRanking["choices"][number]["others"]> = [];
-        const answered: TSurveySummaryResponse[] = [];
-
-        elementChoices.forEach((choice: string) => {
-          choiceRankSums[choice] = 0;
-          choiceCountMap[choice] = 0;
-        });
-
-        responses.forEach((response) => {
-          const responseLanguageCode = getLanguageCode(survey.languages, response.language);
-
-          const answer =
-            responseLanguageCode === "default"
-              ? response.data[element.id]
-              : checkForI18n(response.data, element.id, elements, responseLanguageCode);
-
-          if (Array.isArray(answer)) {
-            totalResponseCount++;
-            answered.push(response);
-            answer.forEach((value, index) => {
-              const ranking = index + 1; // Calculate ranking based on index
-              const rankedChoiceId = elementChoices.includes(value)
-                ? element.choices.find((choice) => getLocalizedValue(choice.label, "default") === value)?.id
-                : "other";
-              if (wasOptionNotShown(response, "options", element.id, rankedChoiceId)) return;
-              if (elementChoices.includes(value)) {
-                choiceRankSums[value] += ranking;
-                choiceCountMap[value]++;
-              } else if (otherOption && typeof value === "string") {
-                otherRankSum += ranking;
-                otherCount++;
-                if (value.trim() !== "") {
-                  otherValues.push({
-                    value,
-                    contact: response.contact,
-                    contactAttributes: response.contactAttributes,
-                  });
-                }
-              }
-            });
-          }
-        });
-
-        // ENG-6937: an option shown to fewer than everyone who ranked says so.
-        const notShownCounts = countOptionsNotShown(answered, "options", element.id);
-        const rankingChoices = element.choices.filter((choice) => choice.id !== "other");
-        const rankingBase = (choice: (typeof element.choices)[number] | undefined) => {
-          const notShownCount = choice ? notShownCounts[choice.id] : undefined;
-          return {
-            ...(notShownCount ? { shownCount: totalResponseCount - notShownCount } : {}),
-            ...(choice?.hidden ? { hidden: true as const } : {}),
-          };
-        };
-
-        elementChoices.forEach((choice: string, choiceIdx) => {
-          const count = choiceCountMap[choice];
-          const avgRanking = count > 0 ? choiceRankSums[choice] / count : 0;
-          values.push({
-            value: choice,
-            count,
-            avgRanking: convertFloatTo2Decimal(avgRanking),
-            ...rankingBase(rankingChoices[choiceIdx]),
-          });
-        });
-
-        if (otherOption) {
-          values.push({
-            value: getLocalizedValue(otherOption.label, "default") || "Other",
-            count: otherCount,
-            avgRanking: convertFloatTo2Decimal(otherCount > 0 ? otherRankSum / otherCount : 0),
-            others: otherValues.slice(0, VALUES_LIMIT),
-            ...rankingBase(otherOption),
-          });
-        }
-
-        summary.push({
-          type: element.type,
-          element,
-          responseCount: totalResponseCount,
-          choices: values,
-        });
-
-        break;
-      }
-    }
+    const elementSummary = summarizeElement(survey, element, elements, responses, dropOff);
+    if (elementSummary) summary.push(elementSummary);
   }
 
   // ENG-3233: the card is titled by the field's name and the samples are read by its storage key,

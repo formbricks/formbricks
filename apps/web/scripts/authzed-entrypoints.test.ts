@@ -81,14 +81,37 @@ describe("AuthZed script entrypoints", () => {
       script: "scripts/docker/authzed-cli.ts",
     },
     {
+      args: ["schema", "invalid"],
+      expected: INVALID_REQUEST_RESULT,
+      name: "packaged schema",
+      script: "scripts/docker/authzed-cli.ts",
+    },
+    {
+      args: ["backfill", "--unknown"],
+      expected: INVALID_REQUEST_RESULT,
+      name: "packaged backfill",
+      script: "scripts/docker/authzed-cli.ts",
+    },
+    {
+      args: ["unknown-command"],
+      expected: INVALID_REQUEST_RESULT,
+      name: "packaged unknown command",
+      script: "scripts/docker/authzed-cli.ts",
+    },
+    {
       args: ["--unknown"],
       expected: INVALID_REQUEST_RESULT,
       name: "development upgrade",
       script: "scripts/authzed-upgrade.ts",
     },
-  ])("$name rejects invalid arguments with one sanitized JSON result", ({ args, expected, script }) => {
-    expectSingleJsonFailure(runEntrypoint(script, args), expected);
-  });
+  ])(
+    "$name rejects invalid arguments with one sanitized JSON result",
+    ({ args, expected, script }) => {
+      expectSingleJsonFailure(runEntrypoint(script, args), expected);
+    },
+    // Each case spawns tsx, which takes seconds under a loaded runner.
+    30_000
+  );
 
   test.each([
     {

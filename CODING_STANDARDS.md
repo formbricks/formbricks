@@ -40,6 +40,8 @@ These remain review checks until their enforcement handles the repository's exis
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 - A control's enabled state comes from the permission the server action checks, passed down from the server,
   not recomputed on the client. A control that looks editable and then fails on save is a finding.
+- A change that replaces a tool keeps every behaviour the old setup carried (script flags, inline config
+  comments, per-package overrides) or lists what it drops under Open gaps.
 
 ## Existing Patterns
 
