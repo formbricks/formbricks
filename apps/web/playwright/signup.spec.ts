@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { type Page, expect } from "@playwright/test";
 import { test } from "./lib/fixtures";
+import { clickUntilVisible } from "./utils/click-until";
 import { mockUsers } from "./utils/mock";
 
 const { name, email, password } = mockUsers.signup[0];
@@ -10,13 +11,8 @@ const normalizedEmailPattern = new RegExp(email.replace(/[.*+?^${}()|[\]\\]/g, "
 // "Continue with Email" is server-rendered, so a click that lands before hydration does nothing and the
 // form never opens. Click again until the name field shows; once it does, the button is the disabled
 // submit, so it is never clicked a second time.
-const openEmailSignup = async (page: Page) => {
-  const nameField = page.getByTestId("signup-name");
-  await expect(async () => {
-    if (!(await nameField.isVisible())) await page.getByText("Continue with Email").click({ timeout: 2_000 });
-    await expect(nameField).toBeVisible({ timeout: 2_000 });
-  }).toPass({ timeout: 30_000 });
-};
+const openEmailSignup = (page: Page) =>
+  clickUntilVisible(page.getByText("Continue with Email"), page.getByTestId("signup-name"));
 
 test.describe("Email Signup Flow Test", async () => {
   test.describe.configure({ mode: "serial" });

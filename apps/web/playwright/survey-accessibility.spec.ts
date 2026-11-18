@@ -285,57 +285,48 @@ const isOnEndingCard = (page: Page): Promise<boolean> =>
     .catch(() => false);
 
 /**
- * Waits until the card and all its ancestors are fully opaque. The renderer fades
- * cards in with `transition-opacity duration-500`; scanning mid-fade makes axe blend
- * the semi-transparent text into the background and report contrast failures that do
- * not exist in the settled UI (observed as flaky `color-contrast` findings).
+ * True once `node`, its ancestors and its direct children are fully opaque and no finite animation inside
+ * it is running. Runs in the page (passed to `evaluate`), so it must stay self-contained.
+ *
+ * The renderer fades cards in with `transition-opacity duration-500`; scanning mid-fade makes axe blend
+ * the semi-transparent text into the background and report contrast failures that do not exist in the
+ * settled UI. A just-selected date animates its text and background colours (`transition-all`) the same
+ * way: measured mid-flight the pair fails AA although the settled one passes. Infinite animations
+ * (spinners) never finish, so they are ignored. A stacked card starts its content wrapper (its child)
+ * at opacity 0 and only fades it in 300 ms later, from a timer: until then nothing is animating, so the
+ * children are checked too.
  */
-const waitForSettled = async (page: Page, selector: string): Promise<void> => {
-  await page
-    .waitForFunction(
-      (sel) => {
-        let el: HTMLElement | null = document.querySelector(sel);
-        if (!el) return false;
-        while (el) {
-          if (getComputedStyle(el).opacity !== "1") return false;
-          el = el.parentElement;
-        }
-        return true;
-      },
-      selector,
-      { timeout: 5000 }
-    )
+function isSettled(node: HTMLElement): boolean {
+  const isOpaque = (el: Element) => getComputedStyle(el).opacity === "1";
+  for (let el: HTMLElement | null = node; el; el = el.parentElement) {
+    if (!isOpaque(el)) return false;
+  }
+  if (!Array.from(node.children).every(isOpaque)) return false;
+  return node
+    .getAnimations({ subtree: true })
+    .every(
+      (animation) =>
+        animation.playState !== "running" || animation.effect?.getComputedTiming().iterations === Infinity
+    );
+}
+
+/**
+ * Waits until `locator` is settled (see `isSettled`). A timeout is not an error here: the caller's
+ * assertions decide. Ending cards are addressed by role and heading because peeking cards carry
+ * identical markup, so a plain CSS selector could settle on the wrong one.
+ */
+const waitForLocatorSettled = async (locator: Locator): Promise<void> => {
+  await expect
+    .poll(() => locator.evaluate(isSettled, undefined, { timeout: 1000 }).catch(() => false), {
+      timeout: 5000,
+      intervals: [100],
+    })
+    .toBe(true)
     .catch(() => undefined);
 };
 
 const waitForCardSettled = (page: Page, cardId: string): Promise<void> =>
-  waitForSettled(page, `[id="${cardId}"]`);
-
-/**
- * Locator-based twin of `waitForSettled`, for elements that cannot be named by a stable CSS
- * selector. The ending card is matched by role + heading text because peeking cards carry
- * identical markup, so `document.querySelector` would settle on the wrong one.
- */
-const waitForLocatorSettled = async (locator: Locator): Promise<void> => {
-  await expect
-    .poll(
-      () =>
-        locator
-          .evaluate((node: HTMLElement) => {
-            let el: HTMLElement | null = node;
-            while (el) {
-              if (getComputedStyle(el).opacity !== "1") return false;
-              el = el.parentElement;
-            }
-            return true;
-          })
-          .catch(() => false),
-      { timeout: 5000, intervals: [100] }
-    )
-    .toBe(true)
-    // Mirrors waitForSettled: a timeout is not an error here, the caller's assertions decide.
-    .catch(() => undefined);
-};
+  waitForLocatorSettled(page.locator(`[id="${cardId}"]`).first());
 
 /**
  * After clicking advance, wait for a STABLE next state: either a different active card
