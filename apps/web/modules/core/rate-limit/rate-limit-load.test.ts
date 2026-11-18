@@ -122,11 +122,11 @@ describe.skipIf(!isRedisAvailable)("Rate Limiter Load Tests - Race Conditions", 
     const redis = await cache.getRedisClient();
     if (!redis) return;
 
-    for (const identifier of createdIdentifiers) {
-      const keys = await redis.keys(`fb:rate_limit:test:*:${identifier}:*`);
-      if (keys.length > 0) {
-        await redis.del(keys);
-      }
+    // One SCAN pass (never KEYS, which blocks the server), deleting only this run's identifiers.
+    const ours = [...createdIdentifiers].map((identifier) => `:${identifier}:`);
+    for await (const keys of redis.scanIterator({ MATCH: "fb:rate_limit:test:*", COUNT: 1000 })) {
+      const mine = keys.filter((key) => ours.some((part) => key.includes(part)));
+      if (mine.length > 0) await redis.del(mine);
     }
   });
 
