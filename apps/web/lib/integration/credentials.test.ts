@@ -65,8 +65,18 @@ describe("integration credentials", () => {
     expect(decryptIntegrationConfig("slack", noKey)).toBe(noKey);
   });
 
-  test("a wrong key surfaces as an error instead of a garbage token", () => {
+  test("a token encrypted with another key reads as no token, never as garbage, and is reported", () => {
     const foreign = symmetricEncrypt("x", "f".repeat(64));
-    expect(() => decryptIntegrationConfig("slack", config({ access_token: foreign }))).toThrow();
+    const ours = symmetricEncrypt("refresh", ENCRYPTION_KEY);
+    const onUndecryptable = vi.fn();
+
+    const decrypted = decryptIntegrationConfig(
+      "slack",
+      config({ access_token: foreign, refresh_token: ours, team: "T1" }),
+      onUndecryptable
+    );
+
+    expect(decrypted.key).toEqual({ access_token: "", refresh_token: "refresh", team: "T1" });
+    expect(onUndecryptable).toHaveBeenCalledTimes(1);
   });
 });

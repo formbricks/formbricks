@@ -14,3 +14,17 @@ Formbricks resolves the URL that sign-in links, OAuth redirects and the cross-si
 Before 6.3, an instance that set only `WEBAPP_URL` took that URL from each request's `Host` header, so a proxy that
 forwards any `Host` let the caller choose it. Nothing to do if you set `BETTER_AUTH_URL` or `NEXTAUTH_URL`. If you set
 neither, check that `WEBAPP_URL` is the public URL your users sign in on.
+
+## Integration tokens are encrypted at rest
+
+From 6.3, Formbricks encrypts the Slack, Google Sheets and Airtable access and refresh tokens with `ENCRYPTION_KEY`
+(Notion's were already encrypted). Tokens stored by an earlier version keep working and are encrypted the next time
+the integration is saved.
+
+- **Rolling back is one-way for these integrations.** A version before 6.3 can't read an encrypted token. If you
+  go back after 6.3 has saved one, reconnect Slack, Google Sheets and Airtable in each workspace that uses them.
+- **Changing `ENCRYPTION_KEY` disconnects them.** A token encrypted with the old key can't be read with the new
+  one. That integration stops sending responses and reads as having no token, and the log shows
+  `Integration credentials no longer decrypt` with its id. The workspace's other integrations keep working.
+  Reconnect each one that is affected. Notion tokens and other data encrypted with the key stop working too, so
+  keep `ENCRYPTION_KEY` unchanged unless you plan to reconnect.

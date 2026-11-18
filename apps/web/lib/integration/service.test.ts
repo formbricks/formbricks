@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { IntegrationType, Prisma } from "@formbricks/database/prisma";
+import { logger } from "@formbricks/logger";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegrationInput } from "@formbricks/types/integration";
 import { ENCRYPTION_KEY, ITEMS_PER_PAGE } from "../constants";
@@ -197,6 +198,41 @@ describe("Integration Service", () => {
         access_token: "mock-access-token",
         refresh_token: "mock-refresh-token",
       });
+    });
+
+    test("one row whose token no longer decrypts reads as disconnected without hiding the others", async () => {
+      const foreignKeyConfig = {
+        ...mockIntegrationConfig,
+        key: { ...mockIntegrationConfig.key, access_token: symmetricEncrypt("old", "f".repeat(64)) },
+      };
+      const healthyConfig = {
+        ...mockIntegrationConfig,
+        key: { ...mockIntegrationConfig.key, access_token: symmetricEncrypt("current", ENCRYPTION_KEY) },
+      };
+      vi.mocked(prisma.integration.findMany).mockResolvedValue([
+        { id: "broken", workspaceId: mockWorkspaceId, type: IntegrationType.slack, config: foreignKeyConfig },
+        {
+          id: "healthy",
+          workspaceId: mockWorkspaceId,
+          type: IntegrationType.googleSheets,
+          config: healthyConfig,
+        },
+      ] as never);
+
+      const warn = vi.spyOn(logger, "warn").mockImplementation(() => undefined);
+
+      const [broken, healthy] = await getIntegrations(mockWorkspaceId);
+
+      expect(broken.config.key).toMatchObject({ access_token: "" });
+      expect(healthy.config.key).toMatchObject({ access_token: "current" });
+      expect(warn).toHaveBeenCalledWith(
+        { integrationId: "broken", workspaceId: mockWorkspaceId, type: IntegrationType.slack },
+        expect.stringContaining("needs reconnecting")
+      );
+      expect(warn).not.toHaveBeenCalledWith(
+        expect.objectContaining({ integrationId: "healthy" }),
+        expect.anything()
+      );
     });
 
     test("should throw DatabaseError when Prisma throws an error", async () => {

@@ -27,8 +27,18 @@ const getIntegrationSurveyIds = (config: unknown): string[] => {
 };
 
 const transformIntegration = (integration: TIntegration): TIntegration => {
-  // Every read of a stored integration passes through here, so callers always get usable tokens.
-  const config = decryptIntegrationConfig(integration.type, integration.config);
+  // Every read of a stored integration passes through here, so callers always get usable tokens. A token that
+  // no longer decrypts reads as "" (reconnect) for this integration only; the others of the workspace still load.
+  let undecryptable = false;
+  const config = decryptIntegrationConfig(integration.type, integration.config, () => {
+    undecryptable = true;
+  });
+  if (undecryptable) {
+    logger.warn(
+      { integrationId: integration.id, workspaceId: integration.workspaceId, type: integration.type },
+      "Integration credentials no longer decrypt with ENCRYPTION_KEY; the integration needs reconnecting"
+    );
+  }
   return {
     ...integration,
     config: {

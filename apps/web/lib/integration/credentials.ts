@@ -45,8 +45,21 @@ const mapCredentialFields = (
 const encryptIfPlain = (value: string): string =>
   isEncryptedCredential(value) ? value : symmetricEncrypt(value, ENCRYPTION_KEY);
 
-const decryptIfEncrypted = (value: string): string =>
-  isEncryptedCredential(value) ? symmetricDecrypt(value, ENCRYPTION_KEY) : value;
+/**
+ * A credential that is our ciphertext but no longer decrypts (`ENCRYPTION_KEY` changed, row corrupted) comes
+ * back as "", the value the integrations already treat as "no token, reconnect", never as garbage. Throwing
+ * instead would fail every read of the workspace's integrations, hiding the healthy ones from the response
+ * pipeline and making the broken one impossible to reconnect (each OAuth callback reads the stored row first).
+ */
+const decryptIfEncrypted = (value: string, onUndecryptable: () => void): string => {
+  if (!isEncryptedCredential(value)) return value;
+  try {
+    return symmetricDecrypt(value, ENCRYPTION_KEY);
+  } catch {
+    onUndecryptable();
+    return "";
+  }
+};
 
 export const hasEncryptedCredentials = (type: string): boolean => ENCRYPTED_INTEGRATION_TYPES.has(type);
 
@@ -54,6 +67,16 @@ export const hasEncryptedCredentials = (type: string): boolean => ENCRYPTED_INTE
 export const encryptIntegrationConfig = <T extends TIntegrationConfigLike>(type: string, config: T): T =>
   hasEncryptedCredentials(type) ? (mapCredentialFields(config, encryptIfPlain) as T) : config;
 
-/** The `config` to use in memory: credentials decrypted, legacy plaintext passed through. */
-export const decryptIntegrationConfig = <T extends TIntegrationConfigLike>(type: string, config: T): T =>
-  hasEncryptedCredentials(type) ? (mapCredentialFields(config, decryptIfEncrypted) as T) : config;
+/**
+ * The `config` to use in memory: credentials decrypted, legacy plaintext passed through, and a credential
+ * that no longer decrypts blanked to "" (see {@link decryptIfEncrypted}). `onUndecryptable` is called once
+ * per blanked field so the caller can log which integration needs reconnecting.
+ */
+export const decryptIntegrationConfig = <T extends TIntegrationConfigLike>(
+  type: string,
+  config: T,
+  onUndecryptable: () => void = () => {}
+): T =>
+  hasEncryptedCredentials(type)
+    ? (mapCredentialFields(config, (value) => decryptIfEncrypted(value, onUndecryptable)) as T)
+    : config;
