@@ -2145,6 +2145,53 @@ describe("Set value on a true/false field through v3 (ENG-6973)", () => {
     ]);
   });
 
+  test("a patch refuses copying a computed true/false field into a number field", () => {
+    const qualified = "flowvarqualified00000001";
+    const survey = structuredClone(surveyFlowFixture) as TSurvey;
+    survey.embeddedFields = [
+      ...(survey.embeddedFields ?? []),
+      {
+        field: {
+          key: null,
+          name: "qualified",
+          source: "computed",
+          dataType: "boolean",
+          defaultValue: null,
+          locked: false,
+        },
+        link: { storageKey: qualified },
+      },
+    ];
+    const copyInto = (value: string) => {
+      survey.blocks[0].logic = [
+        {
+          id: "clboolrule1234567890123456",
+          conditions: { id: "clboolgroup123456789012345", connector: "and", conditions: [] },
+          actions: [
+            {
+              id: "clboolaction12345678901234",
+              objective: "calculate",
+              variableId: SURVEY_FLOW_FIXTURE_IDS.variables.score,
+              operator: "assign",
+              value: { type: "variable", value },
+            },
+          ],
+        },
+      ];
+      const preparation = prepareV3SurveyPatchInput(survey, { status: "inProgress" });
+      return preparation.ok ? [] : preparation.validation.invalidParams;
+    };
+
+    expect(copyInto(qualified)).toEqual([
+      expect.objectContaining({
+        name: "blocks.0.logic.0.actions.0.value",
+        reason: "Conditional Logic: A true/false field can only be copied to another true/false field",
+      }),
+    ]);
+    // A number field copied into a number field is unchanged.
+    expect(copyInto(SURVEY_FLOW_FIXTURE_IDS.variables.tenureDays)).toEqual([]);
+  });
+
   test("True or False carries only type and value: any other key is refused at its path", () => {
     const preparation = createWithBooleanStep({
       value: { type: "static", value: true, columnId: "c1", note: "x" },

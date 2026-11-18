@@ -348,7 +348,21 @@ function validateCalculateActionValue(
       issues
     );
   } else if (action.value.type !== "static") {
+    const before = issues.length;
     validateDynamicOperand(action.value, `${actionPath}.value`, references, issues);
+    if (
+      issues.length === before &&
+      action.value.type === "variable" &&
+      typeContext.getComputedFieldType(action.value.value) === "boolean" &&
+      isKnownNonBooleanTarget(action.variableId, typeContext)
+    ) {
+      // A true/false field copied into a field of another type: the save's refinement refuses the
+      // type mismatch, and PATCH skips that refinement.
+      issues.push({
+        name: `${actionPath}.value`,
+        reason: "Conditional Logic: A true/false field can only be copied to another true/false field",
+      });
+    }
   } else if (
     typeof action.value.value === "boolean" &&
     isKnownNonBooleanTarget(action.variableId, typeContext)
