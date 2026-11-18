@@ -312,6 +312,12 @@ function getBooleanAssignIssue(
   return { name, reason: `Conditional Logic: ${BOOLEAN_ASSIGN_MESSAGE}` };
 }
 
+/** Whether a calculate step writes a declared computed field of a type other than true/false. */
+function isKnownNonBooleanTarget(variableId: string, typeContext: TExpressionTypeContext): boolean {
+  const dataType = typeContext.getComputedFieldType(variableId);
+  return dataType !== undefined && dataType !== "boolean";
+}
+
 /**
  * The value of a calculate action: a Set value expression, a reference, or (ENG-6973) a true/false
  * field's one-step assign, the rule the save's refinement applies. A dangling reference is named as
@@ -343,6 +349,16 @@ function validateCalculateActionValue(
     );
   } else if (action.value.type !== "static") {
     validateDynamicOperand(action.value, `${actionPath}.value`, references, issues);
+  } else if (
+    typeof action.value.value === "boolean" &&
+    isKnownNonBooleanTarget(action.variableId, typeContext)
+  ) {
+    // True or False on a known field of another type: the save's refinement refuses it, and PATCH
+    // skips that refinement. An unknown target is left to the missing-reference check.
+    issues.push({
+      name: `${actionPath}.value`,
+      reason: "Conditional Logic: True or False can only be set on a true/false field",
+    });
   }
 }
 

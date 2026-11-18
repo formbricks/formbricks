@@ -2115,6 +2115,36 @@ describe("Set value on a true/false field through v3 (ENG-6973)", () => {
     expect(preparation.ok ? [] : preparation.validation.invalidParams).toEqual([]);
   });
 
+  // PATCH skips the save's refinement, so the reference validation refuses True or False on a
+  // field of another type itself.
+  test("a patch refuses True or False on a number field", () => {
+    const survey = structuredClone(surveyFlowFixture) as TSurvey;
+    survey.blocks[0].logic = [
+      {
+        id: "clboolrule1234567890123456",
+        conditions: { id: "clboolgroup123456789012345", connector: "and", conditions: [] },
+        actions: [
+          {
+            id: "clboolaction12345678901234",
+            objective: "calculate",
+            variableId: SURVEY_FLOW_FIXTURE_IDS.variables.score,
+            operator: "assign",
+            value: { type: "static", value: true },
+          },
+        ],
+      },
+    ];
+
+    const preparation = prepareV3SurveyPatchInput(survey, { status: "inProgress" });
+
+    expect(preparation.ok ? [] : preparation.validation.invalidParams).toEqual([
+      expect.objectContaining({
+        name: "blocks.0.logic.0.actions.0.value",
+        reason: "Conditional Logic: True or False can only be set on a true/false field",
+      }),
+    ]);
+  });
+
   test("True or False carries only type and value: any other key is refused at its path", () => {
     const preparation = createWithBooleanStep({
       value: { type: "static", value: true, columnId: "c1", note: "x" },
@@ -2131,7 +2161,7 @@ describe("Set value on a true/false field through v3 (ENG-6973)", () => {
   test("create refuses text, another operator and an expression", () => {
     for (const action of [
       { value: { type: "static", value: "true" } },
-      { operator: "concat", value: { type: "static", value: "x" } },
+      { operator: "concat", value: { type: "hiddenField", value: "is_pro" } },
       { value: { type: "expression", value: { type: "static", value: "x" } } },
     ]) {
       expect(reasons(createWithBooleanStep(action)).join("\n")).toContain(

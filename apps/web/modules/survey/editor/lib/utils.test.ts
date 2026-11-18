@@ -539,8 +539,8 @@ describe("a calculated true/false field (ENG-6973)", () => {
 
     expect(groupLabels(groups)).toEqual(["common.choices", "common.embedded_data"]);
     expect(groupNamed(groups, "common.choices")?.options).toEqual([
-      { label: "common.true", value: "true", meta: { type: "static" } },
-      { label: "common.false", value: "false", meta: { type: "static" } },
+      { label: "common.true", value: "static:true", meta: { type: "static" } },
+      { label: "common.false", value: "static:false", meta: { type: "static" } },
     ]);
     // Calculated and passed-in true/false fields, never itself, and no text field.
     expect(groupNamed(groups, "common.embedded_data")?.options.map((option) => option.value)).toEqual([

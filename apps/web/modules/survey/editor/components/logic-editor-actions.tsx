@@ -235,6 +235,8 @@ export function LogicEditorActions({
   // A true/false field has no formula (ENG-6973), so it always starts over in one step.
   const changeCalculatedField = (actionIdx: number, variableId: string) => {
     const action = actions[actionIdx];
+    // Picking the field the step already writes changes nothing, so its value stays.
+    if (action.objective === "calculate" && action.variableId === variableId) return;
     if (isComputedBooleanField(localSurvey, variableId)) {
       setDateFormulaMode(action.id, false);
       handleValuesChange(actionIdx, { ...createEmptySetValueAction(action.id, variableId) });
@@ -444,7 +446,14 @@ export function LogicEditorActions({
                               key={`value-${action.id}`}
                               // ENG-6973: a true/false field picks from the dropdown only, no free text.
                               withInput={!isBooleanAction(action)}
-                              clearable={true}
+                              // Clearing has no stored value to go back to on a true/false row.
+                              clearable={!isBooleanAction(action)}
+                              placeholder={
+                                isBooleanAction(action)
+                                  ? t("workspace.surveys.edit.flow.value_placeholder")
+                                  : undefined
+                              }
+                              aria-label={t("workspace.surveys.edit.flow.value_placeholder")}
                               value={getCalculateValueSelection(action)}
                               inputProps={{
                                 placeholder: t("workspace.surveys.edit.flow.value_placeholder"),

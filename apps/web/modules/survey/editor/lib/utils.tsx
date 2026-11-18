@@ -49,6 +49,10 @@ import {
   getReservedFieldLabel,
 } from "@/modules/embedded-data/lib/field-display";
 import { findElementLocation, getBlockDisplayName } from "@/modules/survey/editor/lib/blocks";
+import {
+  BOOLEAN_SET_VALUE_FALSE,
+  BOOLEAN_SET_VALUE_TRUE,
+} from "@/modules/survey/editor/lib/boolean-set-value";
 import { CALCULATE_SYMBOLS } from "@/modules/survey/editor/lib/operator-symbols";
 import {
   RULE_TYPES,
@@ -1194,8 +1198,8 @@ export const getActionValueOptions = (
   if (isComputedBooleanField(localSurvey, variableId)) {
     return toOperandGroups(t, {
       choices: [
-        { label: t("common.true"), value: "true", meta: { type: "static" } },
-        { label: t("common.false"), value: "false", meta: { type: "static" } },
+        { label: t("common.true"), value: BOOLEAN_SET_VALUE_TRUE, meta: { type: "static" } },
+        { label: t("common.false"), value: BOOLEAN_SET_VALUE_FALSE, meta: { type: "static" } },
       ],
       embeddedData: getEmbeddedFieldOptions(localSurvey, { exclude: variableId, dataType: "boolean" }),
     });

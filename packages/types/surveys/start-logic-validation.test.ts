@@ -296,7 +296,7 @@ describe("rules before the first question", () => {
     expect(issuesOf(withBoolean(assign({ type: "static", value: true })))).toEqual([]);
     expect(issuesOf(withBoolean(assign({ type: "hiddenField", value: IS_PRO })))).toEqual([]);
     expectIssues(issuesOf(withBoolean(assign({ type: "static", value: "true" }))), [[valuePath, message]]);
-    expectIssues(issuesOf(withBoolean(assign({ type: "static", value: "x" }, "concat"))), [
+    expectIssues(issuesOf(withBoolean(assign({ type: "hiddenField", value: IS_PRO }, "concat"))), [
       [valuePath, message],
     ]);
     expectIssues(issuesOf(withBoolean(assign({ type: "hiddenField", value: ids.hiddenFields.panelId }))), [

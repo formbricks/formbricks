@@ -963,7 +963,11 @@ export const getLogicVariableValue = (
     const coerced = coerceToEmbeddedDataType(variableValue, "boolean");
     return coerced === undefined ? "" : String(coerced);
   }
-  if (field.field.dataType === "number") return Number(variableValue) || 0;
+  // A stored boolean (a field changed from true/false to number) is not a number: `Number(true)` would
+  // read as `1`, while `"true"` reads as `0`.
+  if (field.field.dataType === "number") {
+    return typeof variableValue === "boolean" ? 0 : Number(variableValue) || 0;
+  }
   return typeof variableValue === "boolean" ? String(variableValue) : variableValue || "";
 };
 

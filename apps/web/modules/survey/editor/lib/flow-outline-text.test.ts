@@ -224,14 +224,29 @@ describe("describeAction", () => {
   });
 
   test("True or False set on a true/false field reads as the row shows it (ENG-6973)", () => {
+    const survey = structuredClone(surveyFlowFixture);
+    survey.embeddedFields = [
+      ...(survey.embeddedFields ?? []),
+      {
+        field: {
+          key: null,
+          name: "qualified",
+          source: "computed",
+          dataType: "boolean",
+          defaultValue: null,
+          locked: false,
+        },
+        link: { storageKey: "flowvarqualified00000001" },
+      },
+    ];
     const setTrue: TSurveyBlockLogicAction = {
       id: "a",
       objective: "calculate",
-      variableId: ids.variables.segment,
+      variableId: "flowvarqualified00000001",
       operator: "assign",
       value: { type: "static", value: true },
     };
-    expect(describeAction(setTrue, surveyFlowFixture, t).label).toBe("segment = true");
+    expect(describeAction(setTrue, survey, t).label).toBe("qualified = true");
   });
 
   test("a Set value with no field yet says a field is missing, not = “”", () => {

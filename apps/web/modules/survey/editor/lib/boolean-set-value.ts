@@ -8,12 +8,22 @@ export type TBooleanSetValue =
   | { type: "variable" | "hiddenField"; value: string };
 
 /**
- * The option a true/false Set value row's dropdown shows as picked: `"true"` / `"false"` for a static
- * value (the option values `getActionValueOptions` offers), the storage key for a field, and nothing
- * for what the row cannot show (an empty new step, or a value of another type).
+ * The dropdown's option values for True and False. A field key may itself be `true` or `false`, so the
+ * literals carry a `:`, which no field key can, and a picked field never shows as a literal.
+ */
+export const BOOLEAN_SET_VALUE_TRUE = "static:true";
+export const BOOLEAN_SET_VALUE_FALSE = "static:false";
+
+/**
+ * The option a true/false Set value row's dropdown shows as picked: the True / False option for a
+ * static value, the storage key for a field, and nothing for what the row cannot show (an empty new
+ * step, or a value of another type).
  */
 export const getBooleanSetValueSelection = (value: TCalculateValue): string => {
-  if (value.type === "static") return typeof value.value === "boolean" ? String(value.value) : "";
+  if (value.type === "static") {
+    if (typeof value.value !== "boolean") return "";
+    return value.value ? BOOLEAN_SET_VALUE_TRUE : BOOLEAN_SET_VALUE_FALSE;
+  }
   if (value.type === "variable" || value.type === "hiddenField") return value.value;
   return "";
 };
@@ -27,8 +37,8 @@ export const toBooleanSetValue = (
   optionType: string | undefined
 ): TBooleanSetValue | undefined => {
   if (optionType === "static") {
-    if (picked === "true") return { type: "static", value: true };
-    if (picked === "false") return { type: "static", value: false };
+    if (picked === BOOLEAN_SET_VALUE_TRUE) return { type: "static", value: true };
+    if (picked === BOOLEAN_SET_VALUE_FALSE) return { type: "static", value: false };
     return undefined;
   }
   if ((optionType === "variable" || optionType === "hiddenField") && typeof picked === "string") {

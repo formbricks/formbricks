@@ -1766,6 +1766,11 @@ describe("getLogicVariableValue", () => {
     expect(getLogicVariableValue(fields, "score", { score: "42" })).toBe(42);
   });
 
+  test("a number field reads a stored true/false as 0, never as 1 (ENG-6973)", () => {
+    expect(getLogicVariableValue(fields, "score", { score: true })).toBe(0);
+    expect(getLogicVariableValue(fields, "score", { score: false })).toBe(0);
+  });
+
   // The four cases below are the deltas `resolveEmbeddedValue` deliberately does not reproduce.
   // Swapping this helper onto it would change what already-stored responses evaluate to, and
   // responses are never migrated — so each one is asserted against the declared default it must NOT

@@ -156,7 +156,11 @@ describe("block rule actions", () => {
     });
 
     test("refuses any operator but assign", () => {
-      expectIssue(booleanSurvey("concat", { type: "static", value: "true" }), valuePath, BOOLEAN_MESSAGE);
+      expectIssue(
+        booleanSurvey("concat", { type: "hiddenField", value: IS_PRO }),
+        valuePath,
+        BOOLEAN_MESSAGE
+      );
     });
 
     test.each([
