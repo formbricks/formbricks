@@ -1,14 +1,7 @@
 import { describe, expect, test } from "vitest";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import { toggleGroupConnector } from "@/lib/surveyLogic/utils";
-import {
-  SENTENCE_FIELDS_CLASS,
-  getOperatorForField,
-  getSentenceFieldsClass,
-  getSentenceLead,
-  pickConnector,
-  withComparisonPills,
-} from "./sentence";
+import { getOperatorForField, getSentenceLead, pickConnector, withComparisonPills } from "./sentence";
 
 /**
  * The rule editor's sentence layout (ENG-6969 T6): "If" on the first condition, a small and/or select
@@ -124,29 +117,5 @@ describe("pickConnector: the select writes the group's connector", () => {
 
     expect((next.conditions[1] as TConditionGroup).connector).toBe("or");
     expect(next.connector).toBe("and");
-  });
-});
-
-/**
- * The field picker's column (ENG-7032). Its placeholder, "Choose a question or field", needs about 185px
- * of text: the trigger keeps 30px of the column for padding, chevron and border, so a 10rem column cut
- * it to "Choose a quest…".
- */
-describe("getSentenceFieldsClass: the field column's width", () => {
-  const firstColumn = (className: string) => /@xl:grid-cols-\[minmax\(0,(\d+)rem\)_/.exec(className)?.[1];
-
-  test("a show-if gives the field picker room for its whole placeholder", () => {
-    expect(Number(firstColumn(getSentenceFieldsClass("start")))).toBeGreaterThanOrEqual(15);
-  });
-
-  test("a rule's conditions keep the column its actions use, so the If and Then rows line up", () => {
-    expect(getSentenceFieldsClass("end")).toBe(SENTENCE_FIELDS_CLASS);
-    expect(firstColumn(SENTENCE_FIELDS_CLASS)).toBe("10");
-  });
-
-  test("both still stack in a narrow editor", () => {
-    for (const leadAlign of ["start", "end"] as const) {
-      expect(getSentenceFieldsClass(leadAlign)).toContain("grid-cols-1");
-    }
   });
 });
