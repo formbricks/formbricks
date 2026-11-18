@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { DATE_RANGE_PRESETS, type TDateRangePreset } from "@/lib/date-ranges";
+import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { formatLocalDay, parseLocalDay } from "@/lib/utils/datetime";
 import { getTranslatedDatePresetLabel } from "@/modules/ee/analysis/lib/schema-definition";
-import { Button } from "@/modules/ui/components/button";
 import { DateRangePicker } from "@/modules/ui/components/date-picker";
 import {
   Select,
@@ -14,33 +13,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
-import { TooltipRenderer } from "@/modules/ui/components/tooltip";
 import {
   ALL_TIME_VALUE,
   CUSTOM_VALUE,
   DEFAULT_VALUE,
   type TDashboardDateFilter,
-  isDashboardDefaultDateRange,
 } from "../lib/dashboard-date-filter";
 
 interface DashboardDateFilterProps {
-  /** The range this viewer picked (URL or remembered); `null` when the dashboard's default applies. */
   value: TDashboardDateFilter | null;
   onChange: (filter: TDashboardDateFilter | null) => void;
-  /** The dashboard's saved default rolling range, if any. */
-  defaultDateRange?: TDateRangePreset | null;
-  /** Save (`preset`) or clear (`null`) the default. Omitted for people who cannot edit the dashboard. */
-  onDefaultDateRangeChange?: (preset: TDateRangePreset | null) => void;
-  isSavingDefault?: boolean;
 }
 
-export const DashboardDateFilter = ({
-  value,
-  onChange,
-  defaultDateRange = null,
-  onDefaultDateRangeChange,
-  isSavingDefault = false,
-}: Readonly<DashboardDateFilterProps>) => {
+export const DashboardDateFilter = ({ value, onChange }: Readonly<DashboardDateFilterProps>) => {
   const { t, i18n } = useTranslation();
   const locale = i18n.resolvedLanguage ?? i18n.language ?? "en-US";
 
@@ -69,18 +54,8 @@ export const DashboardDateFilter = ({
     if (isCustomMode || value?.type === "custom") return CUSTOM_VALUE;
     if (value?.type === "all-time") return ALL_TIME_VALUE;
     if (value?.type === "preset") return value.value;
-    // Nothing picked: the dashboard's default applies, shown as the "Default" item.
-    return defaultDateRange ? DEFAULT_VALUE : "";
+    return "";
   })();
-
-  // An editor can make the rolling range they picked the dashboard's default, or remove the default while
-  // looking at it. Custom ranges and "all time" are not offered: a default keeps moving with today.
-  const canSaveAsDefault =
-    onDefaultDateRangeChange !== undefined &&
-    value?.type === "preset" &&
-    isDashboardDefaultDateRange(value.value) &&
-    value.value !== defaultDateRange;
-  const canRemoveDefault = onDefaultDateRangeChange !== undefined && defaultDateRange !== null && !value;
 
   // Custom range only produces a filter once both bounds are chosen; a half-picked range keeps the
   // previous view rather than navigating to an invalid query.
@@ -117,11 +92,7 @@ export const DashboardDateFilter = ({
         </SelectTrigger>
         <SelectContent className="max-h-[var(--radix-select-content-available-height)]">
           <SelectItem value={DEFAULT_VALUE}>
-            {defaultDateRange
-              ? t("workspace.analysis.dashboards.date_filter_dashboard_default", {
-                  range: getTranslatedDatePresetLabel(defaultDateRange, t),
-                })
-              : t("workspace.analysis.dashboards.date_filter_default")}
+            {t("workspace.analysis.dashboards.date_filter_default")}
           </SelectItem>
           <SelectItem value={ALL_TIME_VALUE}>
             {t("workspace.analysis.dashboards.date_filter_all_time")}
@@ -146,33 +117,6 @@ export const DashboardDateFilter = ({
             emitCustom(from, to);
           }}
         />
-      )}
-
-      {canSaveAsDefault && (
-        <TooltipRenderer tooltipContent={t("workspace.analysis.dashboards.set_default_date_range_tooltip")}>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            loading={isSavingDefault}
-            onClick={() => {
-              if (value?.type === "preset" && isDashboardDefaultDateRange(value.value)) {
-                onDefaultDateRangeChange?.(value.value);
-              }
-            }}>
-            {t("workspace.analysis.dashboards.set_default_date_range")}
-          </Button>
-        </TooltipRenderer>
-      )}
-      {canRemoveDefault && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          loading={isSavingDefault}
-          onClick={() => onDefaultDateRangeChange?.(null)}>
-          {t("workspace.analysis.dashboards.remove_default_date_range")}
-        </Button>
       )}
     </div>
   );

@@ -10,7 +10,6 @@ import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import "react-resizable/css/styles.css";
 import type { TAIUnavailableReason } from "@/lib/ai/service";
-import type { TDateRangePreset } from "@/lib/date-ranges";
 import { CreateChartDialog } from "@/modules/ee/analysis/charts/components/create-chart-dialog";
 import { resolveChartType } from "@/modules/ee/analysis/charts/lib/chart-utils";
 import { ListLoadError } from "@/modules/ee/analysis/components/list-load-error";
@@ -29,10 +28,7 @@ import {
   DATE_FILTER_PARAM,
   DATE_FILTER_TO_PARAM,
   type TDashboardDateFilter,
-  getUrlDateFilterKey,
   parseDashboardDateFilter,
-  parseStoredDefaultDateRange,
-  resolveEffectiveDateFilter,
   toChartDateRange,
   writeStoredDateFilter,
 } from "@/modules/ee/analysis/dashboards/lib/dashboard-date-filter";
@@ -75,7 +71,6 @@ import { GoBackButton } from "@/modules/ui/components/go-back-button";
 import { PageContentWrapper } from "@/modules/ui/components/page-content-wrapper";
 import { TableToolbar } from "@/modules/ui/components/table-toolbar";
 import { useDashboard } from "../hooks/use-dashboard";
-import { useDashboardDefaultDateRange } from "../hooks/use-dashboard-default-date-range";
 import { useDashboardToolbarFilters } from "../hooks/use-dashboard-toolbar-filters";
 import { useLockedDashboardFilters } from "../hooks/use-locked-dashboard-filters";
 import { draftOverLatest, toSavedWidgets, widgetsRemovedByOverwrite } from "../lib/stale-save";
@@ -311,20 +306,13 @@ function DashboardDetailView({
   const [editingChartId, setEditingChartId] = useState<string | null>(null);
 
   // A filter pinned in the URL (a shared link, back/forward) wins; otherwise the one this viewer last
-  // chose here, seeded from the cookie so the first fetch is already filtered; otherwise the dashboard's
-  // saved default rolling range; otherwise each chart's own range (`resolveEffectiveDateFilter`).
+  // chose here, seeded from the cookie so the first fetch is already filtered.
   const [chosenDateFilter, setChosenDateFilter] = useState(storedDateFilter);
   const urlDateFilter = useMemo(
     () => parseDashboardDateFilter(Object.fromEntries(searchParams.entries())),
     [searchParams]
   );
-  const defaultDateRange = parseStoredDefaultDateRange(dashboard.defaultDateRange);
-  const pickedDateFilter = urlDateFilter ?? chosenDateFilter;
-  const dateFilter = resolveEffectiveDateFilter({
-    urlFilter: urlDateFilter,
-    chosenFilter: chosenDateFilter,
-    defaultDateRange,
-  });
+  const dateFilter = urlDateFilter ?? chosenDateFilter;
   // Stable across renders for the same filter, so the memoized widgets do not re-render on every one.
   const dateRangeKey = JSON.stringify(toChartDateRange(dateFilter));
   const dateRange = useMemo(() => JSON.parse(dateRangeKey) as TChartDateRangeInput | null, [dateRangeKey]);
@@ -643,9 +631,7 @@ function DashboardDetailView({
 
   const applyDateFilterToUrl = useCallback(
     (filter: TDashboardDateFilter | null) => {
-      // The live query string, not the render's `searchParams`: this also runs after an async save, and a
-      // toolbar filter changed meanwhile must not be rolled back to what the URL held when the save began.
-      const params = new URLSearchParams(window.location.search);
+      const params = new URLSearchParams(searchParams.toString());
       params.delete(DATE_FILTER_PARAM);
       params.delete(DATE_FILTER_FROM_PARAM);
       params.delete(DATE_FILTER_TO_PARAM);
@@ -665,14 +651,11 @@ function DashboardDetailView({
       const queryString = params.toString();
       window.history.pushState(null, "", queryString ? `${pathname}?${queryString}` : pathname);
     },
-    [pathname]
+    [pathname, searchParams]
   );
 
-  // Bumped on every personal date pick, so an async step can tell whether one happened while it ran.
-  const dateChoiceGenerationRef = useRef(0);
   const handleDateFilterChange = useCallback(
     (filter: TDashboardDateFilter | null) => {
-      dateChoiceGenerationRef.current += 1;
       // Persist the choice (cookie) so it survives across sessions and seeds the next visit's first
       // fetch, then reflect it in the URL so the view can be shared.
       writeStoredDateFilter(dashboard.id, filter);
@@ -721,43 +704,6 @@ function DashboardDetailView({
     beginWrite: beginViewWrite,
     endWrite: endViewWrite,
   });
-
-  const defaultDateRangeWriter = useDashboardDefaultDateRange({
-    dashboard,
-    beginWrite: beginViewWrite,
-    endWrite: endViewWrite,
-  });
-  const { saveDefaultDateRange } = defaultDateRangeWriter;
-  // Once the range the editor picked is the default, they are looking at the default: drop their own pick
-  // (cookie and URL) so the selector shows "Default" and a later change to the default reaches them too.
-  //
-  // Only if nothing moved while the save ran: the view is still mounted on this dashboard, the URL's
-  // date is the one the save started from, and no personal date was picked in between. A date picked meanwhile (back/forward) is the newer choice and
-  // stays, and a viewer who already left is not pulled back here by the URL write.
-  const isMountedRef = useRef(true);
-  useEffect(() => {
-    isMountedRef.current = true;
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, []);
-  const handleDefaultDateRangeChange = useCallback(
-    async (preset: TDateRangePreset | null) => {
-      const startedAt = {
-        path: window.location.pathname,
-        date: getUrlDateFilterKey(window.location.search),
-        generation: dateChoiceGenerationRef.current,
-      };
-      const saved = await saveDefaultDateRange(preset);
-      const unchanged =
-        isMountedRef.current &&
-        window.location.pathname === startedAt.path &&
-        getUrlDateFilterKey(window.location.search) === startedAt.date &&
-        dateChoiceGenerationRef.current === startedAt.generation;
-      if (saved && preset && unchanged) handleDateFilterChange(null);
-    },
-    [handleDateFilterChange, saveDefaultDateRange]
-  );
 
   const isEmpty = widgets.length === 0;
 
@@ -835,15 +781,7 @@ function DashboardDetailView({
                   onClick={() => void lockedFilters.unlockAllFilters()}
                 />
               )}
-              <DashboardDateFilter
-                value={pickedDateFilter}
-                onChange={handleDateFilterChange}
-                defaultDateRange={defaultDateRange}
-                onDefaultDateRangeChange={
-                  isReadOnly ? undefined : (preset) => void handleDefaultDateRangeChange(preset)
-                }
-                isSavingDefault={defaultDateRangeWriter.isSaving}
-              />
+              <DashboardDateFilter value={dateFilter} onChange={handleDateFilterChange} />
             </>
           }
         />

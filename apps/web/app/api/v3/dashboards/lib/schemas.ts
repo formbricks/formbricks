@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { V3_NAME_MAX_LENGTH } from "@/app/api/v3/charts/lib/schemas";
 import { V3_LIST_DEFAULT_LIMIT, V3_LIST_MAX_LIMIT } from "@/app/api/v3/lib/cursor-pagination";
-import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { zPostgresText } from "@/lib/utils/postgres-text";
 import { findPickIssues, splitPickParams } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-picks";
 import { FILTER_RULE_ID } from "@/modules/ee/analysis/dashboards/lib/dashboard-filter-rules";
@@ -166,23 +165,15 @@ export const ZV3DashboardFilters = z
   .superRefine(refuseInvalidDashboardFilters);
 
 /**
- * A dashboard's default date range as a write sends it: a rolling preset the dashboard opens with when the
- * URL names none, or `null` to clear it so each chart keeps its own range.
- */
-export const ZV3DashboardDefaultDateRange = z.enum(DATE_RANGE_PRESETS).nullable();
-
-/**
- * `PUT /api/v3/dashboards/{dashboardId}`: the name, every widget's place and, optionally, the filters and
- * the default date range, in one write. A widget left out of `widgets` is removed — this is the app's save,
- * which sends the whole edited dashboard. Without `filters` or `defaultDateRange` the saved ones stay as
- * they are.
+ * `PUT /api/v3/dashboards/{dashboardId}`: the name, every widget's place and, optionally, the filters, in
+ * one write. A widget left out of `widgets` is removed — this is the app's save, which sends the whole
+ * edited dashboard. Without `filters` the saved ones stay as they are.
  */
 export const ZV3DashboardReplaceBody = z
   .object({
     name: ZV3DashboardName,
     expectedUpdatedAt: ZV3ExpectedDashboardUpdatedAt,
     filters: ZV3DashboardFilters.optional(),
-    defaultDateRange: ZV3DashboardDefaultDateRange.optional(),
     widgets: z
       .array(
         z

@@ -14842,7 +14842,6 @@ components:
         - name
         - creator
         - filters
-        - defaultDateRange
         - widgets
         - createdAt
         - updatedAt
@@ -14864,12 +14863,6 @@ components:
           maxItems: 10
           items:
             $ref: '#/components/schemas/DashboardFilter'
-        defaultDateRange:
-          type:
-            - string
-            - 'null'
-          description: 'The rolling date preset (one of the field catalog''s `datePresets`, never `all-time`) the dashboard opens with when no `dateRange` is chosen. `null`: each chart keeps its own saved range. It is not applied to `GET /api/v3/dashboards/{dashboardId}/charts/{chartId}/data` on its own; pass it as that read''s `dateRange` to see what a person opening the dashboard sees.'
-          example: last 30 days
         widgets:
           type: array
           description: In display order.
@@ -14885,7 +14878,7 @@ components:
       additionalProperties: false
     DashboardReplaceRequest:
       type: object
-      description: 'The whole edited dashboard: its name, every widget''s place and, optionally, its filters and default date range. A widget left out of `widgets` is removed (its chart is kept); without `filters` or `defaultDateRange` the saved ones are kept. `expectedUpdatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
+      description: 'The whole edited dashboard: its name, every widget''s place and, optionally, its filters. A widget left out of `widgets` is removed (its chart is kept); without `filters` the saved ones are kept. `expectedUpdatedAt` is the dashboard''s `updatedAt` from your read; if it changed since, nothing is saved.'
       required:
         - name
         - expectedUpdatedAt
@@ -14905,34 +14898,6 @@ components:
           description: Every dashboard filter, in top-bar order, replacing the saved ones. At most 10; each `field` must be a catalog dimension and `operator` one it allows (422 naming the filter otherwise), and each `id` may appear once.
           items:
             $ref: '#/components/schemas/DashboardFilter'
-        defaultDateRange:
-          type:
-            - string
-            - 'null'
-          enum:
-            - today
-            - yesterday
-            - last 24 hours
-            - last 7 days
-            - last 14 days
-            - last 30 days
-            - last 60 days
-            - last 90 days
-            - last 180 days
-            - last 4 weeks
-            - last 8 weeks
-            - last 12 weeks
-            - this month
-            - last month
-            - this quarter
-            - last quarter
-            - last 6 months
-            - last 12 months
-            - this year
-            - last year
-            - null
-          description: The rolling date preset the dashboard opens with (400 for anything else); `null` clears it, so each chart keeps its own range.
-          example: last 30 days
         widgets:
           type: array
           maxItems: 1000

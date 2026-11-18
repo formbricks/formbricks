@@ -130,35 +130,6 @@ describe("resolveDateRangePreset", () => {
     expect(resolveDateRangePreset("last 7 days", UTC, NOW)).toEqual([day(2026, 5, 15), day(2026, 5, 21)]);
   });
 
-  test("rolling day and week presets end today and span exactly that many calendar days", () => {
-    const cases: [string, number][] = [
-      ["last 14 days", 14],
-      ["last 60 days", 60],
-      ["last 180 days", 180],
-      ["last 4 weeks", 28],
-      ["last 8 weeks", 56],
-      ["last 12 weeks", 84],
-    ];
-    for (const [preset, days] of cases) {
-      expect(resolveDateRangePreset(preset, UTC, NOW)).toEqual([
-        new Date(2026, 4, 21 - (days - 1)),
-        day(2026, 5, 21),
-      ]);
-    }
-  });
-
-  test("'last 12 months' rolls back twelve calendar months from today, like 'last 6 months' rolls back six", () => {
-    expect(resolveDateRangePreset("last 12 months", UTC, NOW)).toEqual([day(2025, 5, 21), day(2026, 5, 21)]);
-    expect(resolveDateRangePreset("last 6 months", UTC, NOW)).toEqual([day(2025, 11, 21), day(2026, 5, 21)]);
-  });
-
-  test("the new rolling presets take 'today' from the reporting zone", () => {
-    expect(resolveDateRangePreset("last 4 weeks", BERLIN, LATE_EVENING)).toEqual([
-      day(2026, 4, 25),
-      day(2026, 5, 22),
-    ]);
-  });
-
   test("takes 'today' from the reporting zone, where the day may already have rolled over", () => {
     expect(resolveDateRangePreset("today", UTC, LATE_EVENING)).toEqual([day(2026, 5, 21), day(2026, 5, 21)]);
     expect(resolveDateRangePreset("today", BERLIN, LATE_EVENING)).toEqual([

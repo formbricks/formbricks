@@ -1,5 +1,6 @@
 "use client";
 
+import type { TFunction } from "i18next";
 import {
   AreaChartIcon,
   ChartBarIcon,
@@ -31,9 +32,9 @@ import {
 import { getChartGrouping, hasStackableSeries } from "@/modules/ee/analysis/charts/lib/chart-series";
 import { type TMatrixCellValue, resolveMatrixDisplay } from "@/modules/ee/analysis/charts/lib/matrix-pivot";
 import type { TChartType } from "@/modules/ee/analysis/types/analysis";
+import { ControlBar, type TControlBarItem } from "@/modules/ui/components/control-bar";
 import { Label } from "@/modules/ui/components/label";
 import { OptionsSwitch } from "@/modules/ui/components/options-switch";
-import { Switch } from "@/modules/ui/components/switch";
 
 interface ChartDisplaySettingsProps {
   chartType: TChartType | undefined;
@@ -44,31 +45,13 @@ interface ChartDisplaySettingsProps {
   query?: TChartQuery;
 }
 
-interface SettingToggleProps {
-  label: string;
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
-}
-
-function SettingToggle({ label, checked, onCheckedChange }: Readonly<SettingToggleProps>) {
-  const id = useId();
-  return (
-    <div className="flex items-center gap-2">
-      <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
-      <Label htmlFor={id} className="cursor-pointer text-xs text-slate-600">
-        {label}
-      </Label>
-    </div>
-  );
-}
-
-/** How a matrix reads: what a cell prints, whether it is tinted, totals, and which way round. */
+/** What a matrix cell prints; its on/off settings live in the shared control bar. */
 function MatrixDisplaySettings({
   config,
   onChange,
 }: Readonly<{ config: TChartConfig; onChange: (config: TChartConfig) => void }>) {
   const { t } = useTranslation();
-  const { cellValue, colorScale, showTotals, transpose } = resolveMatrixDisplay(config);
+  const { cellValue } = resolveMatrixDisplay(config);
   const cellValueLabelId = useId();
 
   return (
@@ -105,24 +88,38 @@ function MatrixDisplaySettings({
           />
         </div>
       </div>
-      <SettingToggle
-        label={t("workspace.analysis.charts.matrix_color_scale")}
-        checked={colorScale}
-        onCheckedChange={(checked) => onChange({ ...config, matrixColorScale: checked })}
-      />
-      <SettingToggle
-        label={t("workspace.analysis.charts.matrix_show_totals")}
-        checked={showTotals}
-        onCheckedChange={(checked) => onChange({ ...config, matrixShowTotals: checked })}
-      />
-      <SettingToggle
-        label={t("workspace.analysis.charts.matrix_transpose")}
-        checked={transpose}
-        onCheckedChange={(checked) => onChange({ ...config, matrixTranspose: checked })}
-      />
     </>
   );
 }
+
+/** The on/off settings a matrix adds to the control bar: tint, totals, and which way round. */
+const getMatrixToggleItems = (
+  config: TChartConfig,
+  onChange: (config: TChartConfig) => void,
+  t: TFunction
+): TControlBarItem[] => {
+  const { colorScale, showTotals, transpose } = resolveMatrixDisplay(config);
+  return [
+    {
+      value: "matrixColorScale",
+      label: t("workspace.analysis.charts.matrix_color_scale"),
+      checked: colorScale,
+      onCheckedChange: (checked) => onChange({ ...config, matrixColorScale: checked }),
+    },
+    {
+      value: "matrixShowTotals",
+      label: t("workspace.analysis.charts.matrix_show_totals"),
+      checked: showTotals,
+      onCheckedChange: (checked) => onChange({ ...config, matrixShowTotals: checked }),
+    },
+    {
+      value: "matrixTranspose",
+      label: t("workspace.analysis.charts.matrix_transpose"),
+      checked: transpose,
+      onCheckedChange: (checked) => onChange({ ...config, matrixTranspose: checked }),
+    },
+  ];
+};
 
 /**
  * Display settings saved with the chart, so they apply wherever it renders (preview, chart
@@ -154,6 +151,20 @@ export function ChartDisplaySettings({
   const barLayoutLabelId = useId();
   const pieDisplayLabelId = useId();
   const areaDisplayLabelId = useId();
+
+  const toggleItems: TControlBarItem[] = [
+    ...(showMatrixDisplay ? getMatrixToggleItems(config, onChange, t) : []),
+    ...(showEmptyValuesToggle
+      ? [
+          {
+            value: "showEmptyValues",
+            label: t("workspace.analysis.charts.show_empty_values"),
+            checked: showEmptyValues,
+            onCheckedChange: (checked: boolean) => onChange({ ...config, showEmptyValues: checked }),
+          },
+        ]
+      : []),
+  ];
 
   // For a chart type with no applicable setting the strip would be an empty band.
   if (
@@ -279,13 +290,7 @@ export function ChartDisplaySettings({
           </div>
         </div>
       )}
-      {showEmptyValuesToggle && (
-        <SettingToggle
-          label={t("workspace.analysis.charts.show_empty_values")}
-          checked={showEmptyValues}
-          onCheckedChange={(checked) => onChange({ ...config, showEmptyValues: checked })}
-        />
-      )}
+      <ControlBar items={toggleItems} />
     </div>
   );
 }

@@ -1737,19 +1737,16 @@ model EmbeddedFieldLabel {
 ///                     at most 10 (ADR-0026). Each viewer's picks live in their own browser, not here.
 /// @property createdBy - User who created the dashboard
 model Dashboard {
-  id               String            @id @default(cuid())
-  createdAt        DateTime          @default(now()) @map(name: "created_at")
-  updatedAt        DateTime          @updatedAt @map(name: "updated_at")
-  name             String
-  workspace        Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  workspaceId      String
-  creator          User?             @relation("dashboardCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
-  createdBy        String?
-  widgets          DashboardWidget[]
-  filters          Json              @default("[]")
-  /// The rolling date preset (e.g. "last 30 days") the dashboard opens with when the URL names none.
-  /// Null: each chart keeps its own range.
-  defaultDateRange String?
+  id          String            @id @default(cuid())
+  createdAt   DateTime          @default(now()) @map(name: "created_at")
+  updatedAt   DateTime          @updatedAt @map(name: "updated_at")
+  name        String
+  workspace   Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  workspaceId String
+  creator     User?             @relation("dashboardCreatedBy", fields: [createdBy], references: [id], onDelete: SetNull)
+  createdBy   String?
+  widgets     DashboardWidget[]
+  filters     Json              @default("[]")
 
   @@unique([workspaceId, name])
   @@index([workspaceId, createdAt])

@@ -55,13 +55,7 @@ export const ZV3DashboardFilter = z
 export type TV3DashboardFilter = z.infer<typeof ZV3DashboardFilter>;
 
 export const ZV3DashboardResource = z
-  .object({
-    ...dashboardBase,
-    filters: z.array(ZV3DashboardFilter),
-    /** The rolling date preset the dashboard opens with when the URL names none; `null`: each chart's own. */
-    defaultDateRange: z.string().nullable(),
-    widgets: z.array(ZV3DashboardWidget),
-  })
+  .object({ ...dashboardBase, filters: z.array(ZV3DashboardFilter), widgets: z.array(ZV3DashboardWidget) })
   .strict();
 export type TV3DashboardResource = z.infer<typeof ZV3DashboardResource>;
 

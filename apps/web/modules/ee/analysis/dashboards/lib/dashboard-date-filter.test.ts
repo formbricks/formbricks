@@ -9,11 +9,7 @@ import {
   type TDashboardDateFilter,
   applyDashboardDateFilter,
   deserializeStoredDateFilter,
-  getUrlDateFilterKey,
-  isDashboardDefaultDateRange,
   parseDashboardDateFilter,
-  parseStoredDefaultDateRange,
-  resolveEffectiveDateFilter,
   toChartDateRange,
   toDateRangeRule,
 } from "./dashboard-date-filter";
@@ -272,72 +268,5 @@ describe("toChartDateRange", () => {
       from: "2026-01-01",
       to: "2026-01-31",
     });
-  });
-});
-
-describe("dashboard default date range", () => {
-  test("is a rolling preset — never all time or a custom range", () => {
-    expect(isDashboardDefaultDateRange("last 30 days")).toBe(true);
-    expect(isDashboardDefaultDateRange("last 8 weeks")).toBe(true);
-    expect(isDashboardDefaultDateRange("last 12 months")).toBe(true);
-    expect(isDashboardDefaultDateRange(ALL_TIME_VALUE)).toBe(false);
-    expect(isDashboardDefaultDateRange(CUSTOM_VALUE)).toBe(false);
-    expect(isDashboardDefaultDateRange(["2026-01-01", "2026-01-31"])).toBe(false);
-    expect(isDashboardDefaultDateRange(null)).toBe(false);
-  });
-
-  test("a stored name that is no longer a preset reads as no default", () => {
-    expect(parseStoredDefaultDateRange("last 14 days")).toBe("last 14 days");
-    expect(parseStoredDefaultDateRange("last fortnight")).toBeNull();
-    expect(parseStoredDefaultDateRange(null)).toBeNull();
-    expect(parseStoredDefaultDateRange(undefined)).toBeNull();
-  });
-
-  test("the URL wins over everything, so ?dateRange=all time lifts a default", () => {
-    const urlFilter = parseDashboardDateFilter({ [DATE_FILTER_PARAM]: ALL_TIME_VALUE });
-    expect(
-      resolveEffectiveDateFilter({
-        urlFilter,
-        chosenFilter: { type: "preset", value: "last 7 days" },
-        defaultDateRange: "last 30 days",
-      })
-    ).toEqual({ type: "all-time" });
-  });
-
-  test("the viewer's own remembered pick wins over the dashboard default", () => {
-    expect(
-      resolveEffectiveDateFilter({
-        urlFilter: null,
-        chosenFilter: { type: "custom", range: ["2026-01-01", "2026-01-31"] },
-        defaultDateRange: "last 30 days",
-      })
-    ).toEqual({ type: "custom", range: ["2026-01-01", "2026-01-31"] });
-  });
-
-  test("with nothing picked the default applies, and without one each chart keeps its range", () => {
-    expect(
-      resolveEffectiveDateFilter({ urlFilter: null, chosenFilter: null, defaultDateRange: "last 4 weeks" })
-    ).toEqual({ type: "preset", value: "last 4 weeks" });
-    expect(
-      resolveEffectiveDateFilter({ urlFilter: null, chosenFilter: null, defaultDateRange: null })
-    ).toBeNull();
-    expect(
-      resolveEffectiveDateFilter({ urlFilter: null, chosenFilter: null, defaultDateRange: "bogus" })
-    ).toBeNull();
-  });
-
-  test("the new presets parse from the URL", () => {
-    for (const value of ["last 14 days", "last 60 days", "last 180 days", "last 4 weeks", "last 12 months"]) {
-      expect(parseDashboardDateFilter({ [DATE_FILTER_PARAM]: value })).toEqual({ type: "preset", value });
-    }
-  });
-});
-
-describe("getUrlDateFilterKey", () => {
-  test("changes only when the URL's date changes", () => {
-    const base = getUrlDateFilterKey("?dateRange=last+8+weeks&filters=abc");
-    expect(getUrlDateFilterKey("?filters=xyz&dateRange=last+8+weeks")).toBe(base);
-    expect(getUrlDateFilterKey("?dateRange=last+30+days")).not.toBe(base);
-    expect(getUrlDateFilterKey("")).toBe("||");
   });
 });

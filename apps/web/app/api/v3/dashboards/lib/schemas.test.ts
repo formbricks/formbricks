@@ -52,23 +52,6 @@ describe("ZV3DashboardReplaceBody", () => {
     expect(ZV3DashboardReplaceBody.safeParse(body(widgets(MAX_WIDGETS_PER_WRITE))).success).toBe(true);
     expect(ZV3DashboardReplaceBody.safeParse(body(widgets(MAX_WIDGETS_PER_WRITE + 1))).success).toBe(false);
   });
-
-  test("takes a rolling preset or null as the default date range, and nothing else", () => {
-    const base = body([]);
-    expect(ZV3DashboardReplaceBody.safeParse(base).success).toBe(true);
-    for (const defaultDateRange of ["last 30 days", "last 12 weeks", "last 12 months", null]) {
-      expect(ZV3DashboardReplaceBody.safeParse({ ...base, defaultDateRange }).success).toBe(true);
-    }
-    for (const defaultDateRange of [
-      "all-time",
-      "all time",
-      "custom",
-      "last 3 months",
-      ["2026-01-01", "2026-01-31"],
-    ]) {
-      expect(ZV3DashboardReplaceBody.safeParse({ ...base, defaultDateRange }).success).toBe(false);
-    }
-  });
 });
 
 describe("dashboard filter picks (C6, C15)", () => {
