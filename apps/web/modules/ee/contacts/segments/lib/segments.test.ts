@@ -469,6 +469,20 @@ describe("Segment Service Tests", () => {
       expect(prisma.segment.upsert).toHaveBeenCalledTimes(2);
     });
 
+    test("should not retry a private upsert on any other Prisma error", async () => {
+      vi.mocked(prisma.segment.upsert).mockRejectedValueOnce(
+        new Prisma.PrismaClientKnownRequestError("Foreign key constraint failed", {
+          code: "P2003",
+          clientVersion: "test",
+        })
+      );
+
+      await expect(
+        createSegment({ ...mockSegmentCreateInput, title: surveyId, isPrivate: true, surveyId })
+      ).rejects.toBeInstanceOf(DatabaseError);
+      expect(prisma.segment.upsert).toHaveBeenCalledTimes(1);
+    });
+
     test("should keep any other Prisma error a DatabaseError", async () => {
       vi.mocked(prisma.segment.create).mockRejectedValueOnce(
         new Prisma.PrismaClientKnownRequestError("Foreign key constraint failed", {
