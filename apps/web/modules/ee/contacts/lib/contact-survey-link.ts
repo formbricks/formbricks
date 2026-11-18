@@ -11,6 +11,14 @@ import {
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { getSurvey } from "@/modules/survey/lib/survey";
 
+/**
+ * Names the flow this token was minted for. The signing key (`ENCRYPTION_KEY`) is also the key other
+ * features sign with, so a signature alone does not say a token is a contact survey link.
+ * Links issued before the claim existed carry none and are still accepted (see
+ * `verifyContactSurveyToken`): never require it, or every link already emailed stops working.
+ */
+export const CONTACT_SURVEY_LINK_PURPOSE = "contact_survey_link";
+
 // Creates an encrypted personalized survey link for a contact
 export const getContactSurveyLink = async (
   contactId: string,
@@ -49,6 +57,7 @@ export const getContactSurveyLink = async (
   const payload = {
     contactId: encryptedContactId,
     surveyId: encryptedSurveyId,
+    purpose: CONTACT_SURVEY_LINK_PURPOSE,
   };
 
   // Set token options
@@ -78,6 +87,20 @@ export const getContactSurveyLink = async (
   return ok(`${surveyUrl}?${searchParams.toString()}`);
 };
 
+// `/c/<token>` is public, so a malformed, forged or expired token is routine input, not a fault: it is
+// logged as a warning. Anything else (a decrypt failure on a signed token) is ours and stays an error.
+class RejectedContactTokenError extends Error {}
+
+const logTokenVerificationFailure = (error: unknown): void => {
+  const failure = error instanceof Error ? error : new Error(String(error));
+  // JsonWebTokenError is the base of expired, not-yet-valid, bad-signature and malformed.
+  if (error instanceof jwt.JsonWebTokenError || error instanceof RejectedContactTokenError) {
+    logger.warn({ err: failure }, "Contact survey token rejected");
+    return;
+  }
+  logger.error(failure, "Error verifying contact survey token");
+};
+
 // Validates and decrypts a contact survey JWT token
 export const verifyContactSurveyToken = (
   token: string
@@ -91,13 +114,19 @@ export const verifyContactSurveyToken = (
 
   try {
     // Verify the token
-    const decoded = jwt.verify(token, ENCRYPTION_KEY) as {
+    const decoded = jwt.verify(token, ENCRYPTION_KEY, { algorithms: ["HS256"] }) as {
       contactId: string;
       surveyId: string;
+      purpose?: string;
     };
 
-    if (!decoded || !decoded.contactId || !decoded.surveyId) {
-      throw err("Invalid token format");
+    if (!decoded?.contactId || !decoded.surveyId) {
+      throw new RejectedContactTokenError("Invalid token format");
+    }
+
+    // Absent on links issued before the claim existed; present-but-different means another flow's token.
+    if (decoded.purpose !== undefined && decoded.purpose !== CONTACT_SURVEY_LINK_PURPOSE) {
+      throw new RejectedContactTokenError("Token was not issued as a contact survey link");
     }
 
     // Decrypt the contact and survey IDs
@@ -109,10 +138,7 @@ export const verifyContactSurveyToken = (
       surveyId,
     });
   } catch (error) {
-    logger.error(
-      error instanceof Error ? error : new Error(String(error)),
-      "Error verifying contact survey token"
-    );
+    logTokenVerificationFailure(error);
 
     // Check if the error is specifically a JWT expiration error
     if (error instanceof jwt.TokenExpiredError) {

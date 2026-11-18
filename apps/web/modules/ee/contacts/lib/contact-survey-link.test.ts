@@ -13,6 +13,7 @@ vi.mock("jsonwebtoken", () => ({
   default: {
     sign: vi.fn(),
     verify: vi.fn(),
+    JsonWebTokenError: class JsonWebTokenError extends Error {},
     TokenExpiredError: class TokenExpiredError extends Error {
       constructor(message: string) {
         super(message);
@@ -97,6 +98,7 @@ describe("Contact Survey Link", () => {
         {
           contactId: mockEncryptedContactId,
           surveyId: mockEncryptedSurveyId,
+          purpose: "contact_survey_link",
         },
         ENCRYPTION_KEY,
         { algorithm: "HS256" }
@@ -120,6 +122,7 @@ describe("Contact Survey Link", () => {
         {
           contactId: mockEncryptedContactId,
           surveyId: mockEncryptedSurveyId,
+          purpose: "contact_survey_link",
         },
         ENCRYPTION_KEY,
         { algorithm: "HS256", expiresIn: "7d" }
@@ -209,7 +212,7 @@ describe("Contact Survey Link", () => {
       const result = contactSurveyLink.verifyContactSurveyToken(mockToken);
 
       // Verify JWT verify was called
-      expect(jwt.verify).toHaveBeenCalledWith(mockToken, ENCRYPTION_KEY);
+      expect(jwt.verify).toHaveBeenCalledWith(mockToken, ENCRYPTION_KEY, { algorithms: ["HS256"] });
 
       // Check the decrypted result
       expect(result).toEqual({

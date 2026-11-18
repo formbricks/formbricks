@@ -109,7 +109,7 @@ export const VerificationRequestedPage = async ({
       );
     }
   } catch (error) {
-    logger.error(error, "Invalid token");
+    logger.warn({ err: error }, "Invalid token");
     return (
       <FormWrapper>
         <p className="text-center">{t("auth.verification-requested.invalid_token")}</p>
