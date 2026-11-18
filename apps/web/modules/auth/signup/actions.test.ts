@@ -6,7 +6,7 @@ import {
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
 } from "@formbricks/types/errors";
 import { getIsFreshInstance } from "@/lib/instance/service";
-import { verifyInviteToken } from "@/lib/jwt";
+import { createEmailToken, verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { getUserByEmail } from "@/lib/user/service";
@@ -58,7 +58,10 @@ vi.mock("@/modules/core/rate-limit/rate-limit-configs", () => ({
 vi.mock("@/modules/auth/lib/auth", () => ({ auth: { api: { signUpEmail: vi.fn() } } }));
 vi.mock("@/lib/user/service", () => ({ getUserByEmail: vi.fn() }));
 vi.mock("@/modules/auth/lib/user", () => ({ updateUser: vi.fn() }));
-vi.mock("@/lib/jwt", () => ({ verifyInviteToken: vi.fn() }));
+vi.mock("@/lib/jwt", () => ({
+  verifyInviteToken: vi.fn(),
+  createEmailToken: vi.fn((email: string) => `display-token:${email}`),
+}));
 vi.mock("@/modules/auth/signup/lib/invite", () => ({
   getInvite: vi.fn(),
   deleteInvite: vi.fn(),
@@ -142,6 +145,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(createEmailToken).mockImplementation((email: string) => `display-token:${email}`);
     mockNextRequestData();
     constantsOverrides.IS_FORMBRICKS_CLOUD = false;
     constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
@@ -175,7 +179,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
     const result = await createUserAction({ ctx, parsedInput: baseInput } as never);
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: true, emailDisplayToken: expect.any(String) });
     expect(ctx.auditLoggingCtx.suppressEvent).toBeUndefined();
     expect(ctx.auditLoggingCtx.userId).toBe(createdUser.id);
   });
@@ -228,7 +232,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
       parsedInput: { ...baseInput, inviteToken: "invite-jwt-123" },
     } as never);
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: true, emailDisplayToken: expect.any(String) });
     expect(createMembership).toHaveBeenCalled();
     expect(deleteInvite).toHaveBeenCalledWith("invite-1");
   });
@@ -246,7 +250,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
         parsedInput: { ...baseInput, inviteToken },
       } as never);
 
-      expect(result).toEqual({ success: true });
+      expect(result).toEqual({ success: true, emailDisplayToken: expect.any(String) });
       expect(auth.api.signUpEmail).toHaveBeenCalled();
       // No invite means no membership grant — the org-creation path handles it instead.
       expect(createMembership).not.toHaveBeenCalled();
@@ -293,7 +297,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
     const ctx = newCtx();
     const result = await createUserAction({ ctx, parsedInput: baseInput } as never);
 
-    expect(result).toEqual({ success: true }); // same response as a real signup
+    expect(result).toEqual({ success: true, emailDisplayToken: expect.any(String) }); // same response as a real signup
     expect(subscribeUserToMailingList).not.toHaveBeenCalled();
     expect(updateUser).not.toHaveBeenCalled(); // no locale write on someone else's account
     expect(capturePostHogEvent).not.toHaveBeenCalled();
@@ -321,6 +325,44 @@ describe("createUserAction — signup verification email callbackURL", () => {
     expect(readSignupIntent(intent?.value)).toEqual({ userId: createdUser.id, reason: "valid" });
   });
 
+  // ENG-7093: the "check your inbox" screen's display token comes back in the sign-up response itself,
+  // not from a second unauthenticated call that answers "is this address registered?". It has to be the
+  // same for a new and an already-registered address, or the response is the lookup again.
+  describe("display token (ENG-7093)", () => {
+    test("is minted from the submitted address, lower-cased, for a new account", async () => {
+      const result = await createUserAction({
+        ctx: newCtx(),
+        parsedInput: { ...baseInput, email: "Ada@Example.com" },
+      } as never);
+
+      expect(createEmailToken).toHaveBeenCalledWith("ada@example.com");
+      expect(result).toEqual({ success: true, emailDisplayToken: "display-token:ada@example.com" });
+    });
+
+    test("is identical for an already-registered address", async () => {
+      const fresh = await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
+
+      vi.mocked(auth.api.signUpEmail).mockResolvedValue({
+        user: { ...createdUser, id: "synthetic-generated-id" },
+      } as never);
+      vi.mocked(getUserByEmail).mockResolvedValue(createdUser as never);
+      const duplicate = await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
+
+      expect(duplicate).toEqual(fresh);
+    });
+
+    test("is minted before the account exists, so a signing failure cannot orphan a user", async () => {
+      vi.mocked(createEmailToken).mockImplementationOnce(() => {
+        throw new Error("ENCRYPTION_KEY is not set");
+      });
+
+      await expect(createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never)).rejects.toThrow(
+        "ENCRYPTION_KEY is not set"
+      );
+      expect(auth.api.signUpEmail).not.toHaveBeenCalled();
+    });
+  });
+
   // Regression: signup/page.tsx requires a valid invite once public sign-up is closed, but the action
   // itself enforced nothing — so anyone could POST it and create an account on a closed instance.
   describe("closed instance policy", () => {
@@ -342,7 +384,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
       const result = await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
 
-      expect(result).toEqual({ success: true });
+      expect(result).toEqual({ success: true, emailDisplayToken: expect.any(String) });
       expect(auth.api.signUpEmail).toHaveBeenCalled();
     });
 
@@ -365,7 +407,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
         parsedInput: { ...baseInput, inviteToken: "invite-jwt-123" },
       } as never);
 
-      expect(result).toEqual({ success: true });
+      expect(result).toEqual({ success: true, emailDisplayToken: expect.any(String) });
       expect(createMembership).toHaveBeenCalled();
     });
   });
@@ -378,7 +420,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
 
     const result = await createUserAction({ ctx: newCtx(), parsedInput: baseInput } as never);
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: true, emailDisplayToken: expect.any(String) });
     // already-existed short-circuits handlePostUserCreation + mailing-list subscription.
     expect(subscribeUserToMailingList).not.toHaveBeenCalled();
   });
@@ -448,7 +490,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
       parsedInput: { ...blockedInput, inviteToken: "invite-jwt-123" },
     } as never);
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: true, emailDisplayToken: expect.any(String) });
     expect(auth.api.signUpEmail).toHaveBeenCalled();
   });
 
@@ -488,7 +530,7 @@ describe("createUserAction — personal email domain block (Cloud)", () => {
       parsedInput: { name: "Person", email: "person@acme-corp.com", password: "Password123!" },
     } as never);
 
-    expect(result).toEqual({ success: true });
+    expect(result).toEqual({ success: true, emailDisplayToken: expect.any(String) });
     expect(auth.api.signUpEmail).toHaveBeenCalled();
   });
 });

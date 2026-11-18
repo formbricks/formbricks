@@ -72,4 +72,13 @@ describe("verifyEmailChangeAction", () => {
     expect(updateUser).not.toHaveBeenCalled();
     expect(updateBrevoCustomer).not.toHaveBeenCalled();
   });
+
+  // The action is unauthenticated: whoever holds the link must learn that it worked, not the account's
+  // record (id, email, locale, ...). The client only checks that something came back.
+  test("answers success without returning the user record", async () => {
+    const result = await verifyEmailChangeAction({ ctx: mockCtx, parsedInput } as never);
+
+    expect(result).toEqual({ success: true });
+    expect(updateUser).toHaveBeenCalledWith("user-123", { email: "new@example.com", emailVerified: true });
+  });
 });

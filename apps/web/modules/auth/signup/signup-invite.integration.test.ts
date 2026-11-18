@@ -103,7 +103,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
       inviteToken,
     });
 
-    expect(result?.data).toEqual({ success: true });
+    expect(result?.data).toEqual({ success: true, emailDisplayToken: expect.any(String) });
     expect(sendVerificationLinkEmail).toHaveBeenCalledTimes(1);
 
     const user = await prisma.user.findUnique({ where: { email: INVITED_EMAIL }, select: { id: true } });
@@ -136,7 +136,7 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
     // routed this case to login, which turned the invite flow into an account-existence lookup. The
     // verification-requested screen it lands on says "if there is an account associated with …" and
     // carries an unconditional log-in link, so this visitor still has a way out.
-    expect(result?.data).toEqual({ success: true });
+    expect(result?.data).toEqual({ success: true, emailDisplayToken: expect.any(String) });
     // No verification email is sent, because no account was created.
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
 
@@ -266,7 +266,7 @@ describe("plain sign-up (no invite) with an address that already exists", () => 
     // No invite, so nothing is disclosed: the response is byte-identical to a real new sign-up, and
     // the user lands on the generic "confirm your email" screen (whose copy carries a generic
     // "already have an account? log in" line). This is the enumeration-safety boundary.
-    expect(result?.data).toEqual({ success: true });
+    expect(result?.data).toEqual({ success: true, emailDisplayToken: expect.any(String) });
     expect(sendVerificationLinkEmail).not.toHaveBeenCalled();
     // On Formbricks Cloud getIsMultiOrgEnabled() is true, so before the fix this branch created an
     // organization + owner membership on someone else's account, once per request.
