@@ -79,6 +79,22 @@ const attributeKeys: TContactAttributeKey[] = [
   },
 ];
 
+/** A full attribute-key row, as `createManyAndReturn` and `findMany` return it. */
+const keyRow = (id: string, key: string): TContactAttributeKey => ({
+  ...attributeKeys[2],
+  id,
+  key,
+  name: key,
+});
+
+/** Interactive transactions run their callback against the mocked client, as Prisma's tx would. */
+const runTransactionCallbacks = () =>
+  vi
+    .mocked(prisma.$transaction)
+    .mockImplementation(async (arg: unknown) =>
+      typeof arg === "function" ? (arg as (tx: typeof prisma) => unknown)(prisma) : undefined
+    );
+
 describe("updateAttributes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -531,26 +547,22 @@ describe("updateAttributes", () => {
     test("creates new attribute keys in key order regardless of payload key order", async () => {
       vi.mocked(getContactAttributeKeys).mockResolvedValue([]);
       vi.mocked(getContactAttributes).mockResolvedValue({});
+      runTransactionCallbacks();
       vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([
-        { id: "key-alpha", key: "alpha" },
-        { id: "key-zeta", key: "zeta" },
-      ] as never);
+        keyRow("key-alpha", "alpha"),
+        keyRow("key-zeta", "zeta"),
+      ]);
 
       const result = await updateAttributes(contactId, userId, workspaceId, { zeta: "1", alpha: "2" });
 
       expect(result.success).toBe(true);
-      const createdKeys = vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mock.calls[0][0]?.data;
-      expect((createdKeys as { key: string }[]).map(({ key }) => key)).toEqual(["alpha", "zeta"]);
+      const { data } = vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mock.calls[0][0] ?? {};
+      expect([data].flat().map((row) => row?.key)).toEqual(["alpha", "zeta"]);
     });
   });
 
   describe("concurrent identify calls creating the same new key (ENG-4018)", () => {
-    const racedKey: TContactAttributeKey = {
-      ...attributeKeys[2],
-      id: "key-raced",
-      key: "plan",
-      name: "Plan",
-    };
+    const racedKey = keyRow("key-raced", "plan");
     const upsertedValues = () =>
       vi.mocked(prisma.contactAttribute.upsert).mock.calls.map(([args]) => ({
         attributeKeyId: args.where.contactId_attributeKeyId?.attributeKeyId,
@@ -560,6 +572,7 @@ describe("updateAttributes", () => {
     beforeEach(() => {
       vi.mocked(getContactAttributeKeys).mockResolvedValue([]);
       vi.mocked(getContactAttributes).mockResolvedValue({});
+      runTransactionCallbacks();
     });
 
     test("skips duplicate keys instead of failing with P2002", async () => {
@@ -590,8 +603,8 @@ describe("updateAttributes", () => {
 
     test("writes created and raced keys together and reports only the created ones", async () => {
       vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([
-        { id: "key-seats", key: "seats" },
-      ] as never);
+        keyRow("key-seats", "seats"),
+      ]);
       vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([racedKey]);
 
       const result = await updateAttributes(contactId, userId, workspaceId, { seats: "5", plan: "pro" });
@@ -628,13 +641,36 @@ describe("updateAttributes", () => {
 
     test("does not re-read keys when every key was created by this call", async () => {
       vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([
-        { id: "key-plan", key: "plan" },
-      ] as never);
+        keyRow("key-plan", "plan"),
+      ]);
 
       await updateAttributes(contactId, userId, workspaceId, { plan: "pro" });
 
       expect(prisma.contactAttributeKey.findMany).not.toHaveBeenCalled();
       expect(upsertedValues()).toEqual([{ attributeKeyId: "key-plan", value: "pro" }]);
+    });
+
+    test("runs the transaction again when a skipped key is gone by the re-read", async () => {
+      // First attempt: skipped, then not found (deleted in between). Second attempt: created.
+      vi.mocked(prisma.contactAttributeKey.createManyAndReturn)
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([keyRow("key-plan", "plan")]);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([]);
+
+      const result = await updateAttributes(contactId, userId, workspaceId, { plan: "pro" });
+
+      expect(result.success).toBe(true);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+      expect(upsertedValues()).toEqual([{ attributeKeyId: "key-plan", value: "pro" }]);
+    });
+
+    test("fails rather than drop a value when the skipped key keeps vanishing", async () => {
+      vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([]);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([]);
+
+      await expect(updateAttributes(contactId, userId, workspaceId, { plan: "pro" })).rejects.toThrow();
+      expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+      expect(prisma.contactAttribute.upsert).not.toHaveBeenCalled();
     });
   });
 });

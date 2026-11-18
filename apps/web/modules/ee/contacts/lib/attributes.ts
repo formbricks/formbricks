@@ -1,4 +1,5 @@
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributesInput, ZContactAttributesInput } from "@formbricks/types/contact-attribute";
@@ -234,31 +235,24 @@ const upsertExistingAttributes = async (
   await retryOnDeadlock(
     () =>
       prisma.$transaction(
-        orderedExistingAttributes.map(({ attributeKeyId, columns }) =>
-          prisma.contactAttribute.upsert({
-            where: {
-              contactId_attributeKeyId: {
-                contactId,
-                attributeKeyId,
-              },
-            },
-            update: {
-              value: columns.value,
-              valueNumber: columns.valueNumber,
-              valueDate: columns.valueDate,
-            },
-            create: {
-              contactId,
-              attributeKeyId,
-              value: columns.value,
-              valueNumber: columns.valueNumber,
-              valueDate: columns.valueDate,
-            },
-          })
-        )
+        orderedExistingAttributes.map((attribute) => upsertAttributeValue(prisma, contactId, attribute))
       ),
     { operation: "updateAttributes.existingAttributes", contactId, workspaceId }
   );
+};
+
+/** Writes one typed value onto an attribute key, on the given client. */
+const upsertAttributeValue = (
+  client: Pick<Prisma.TransactionClient, "contactAttribute">,
+  contactId: string,
+  { attributeKeyId, columns }: TExistingAttributeWrite
+) => {
+  const values = { value: columns.value, valueNumber: columns.valueNumber, valueDate: columns.valueDate };
+  return client.contactAttribute.upsert({
+    where: { contactId_attributeKeyId: { contactId, attributeKeyId } },
+    update: values,
+    create: { contactId, attributeKeyId, ...values },
+  });
 };
 
 /** Creates the new attribute keys (with this contact's values) that are safe, unreserved and within the limit. */
@@ -335,16 +329,17 @@ const createNewAttributes = async ({
   }
 };
 
+/** A raced key vanished before the re-read; retried once. */
+class RacedKeyVanishedError extends Error {}
+
+const NEW_KEYS_MAX_ATTEMPTS = 2;
+
 /**
- * Creates the new attribute keys and writes this contact's values onto them, converging when a
- * concurrent identify call creates one of the same keys first (ENG-4018).
- *
- * `skipDuplicates` turns losing the race on `@@unique([key, workspaceId])` into a skipped row instead
- * of a P2002 that 500s the call (and makes the JS SDK drop its queued attributes); the same pattern as
- * the other key-create paths (`contacts.ts`, `formbricks-file/resolve.ts`). Keys created elsewhere are
- * re-read and this contact's values type-checked against their dataType like any existing key.
- * Same lock discipline as the upsert above (ENG-2252): keys inserted in a deterministic order — key
- * is the identity the unique index locks on — plus a bounded deadlock retry.
+ * Creates the new keys with this contact's values, converging when a concurrent identify call
+ * creates one first (ENG-4018): `skipDuplicates` turns the lost `(key, workspaceId)` race into a
+ * skipped row instead of a 500 (as in `contacts.ts`, `formbricks-file/resolve.ts`), and skipped
+ * keys are re-read and type-checked like existing keys. Keys and values commit together, in a
+ * deterministic order (ENG-2252), with a bounded deadlock retry.
  */
 const createAttributeKeysAndValues = async ({
   contactId,
@@ -362,54 +357,67 @@ const createAttributeKeysAndValues = async ({
     .map(({ key, value }) => ({ key, value, ...prepareNewSDKAttributeForStorage(value) }))
     .sort((a, b) => compareCodeUnits(a.key, b.key));
 
-  const createdKeys = await retryOnDeadlock(
-    () =>
-      prisma.contactAttributeKey.createManyAndReturn({
-        data: orderedNewAttributes.map(({ key, dataType }) => ({
-          key,
-          name: formatSnakeCaseToTitleCase(key),
-          type: "custom" as const,
-          dataType,
-          workspaceId,
-        })),
-        select: { id: true, key: true },
-        skipDuplicates: true,
-      }),
-    { operation: "updateAttributes.newAttributeKeys", contactId, workspaceId }
-  );
-  const createdKeyIds = new Map(createdKeys.map(({ key, id }) => [key, id]));
-
-  const attributesToWrite: TExistingAttributeWrite[] = [];
-  const racedAttributes: TNewAttributeWrite[] = [];
-  for (const { key, value, dataType, columns } of orderedNewAttributes) {
-    const attributeKeyId = createdKeyIds.get(key);
-    if (attributeKeyId) {
-      attributesToWrite.push({ key, attributeKeyId, columns });
-      logger.info({ workspaceId, attributeKey: key, dataType }, "Created new contact attribute");
-      messages.push({ code: "new_attribute_created", params: { key, dataType } });
-    } else {
-      racedAttributes.push({ key, value });
-    }
-  }
-
-  if (racedAttributes.length > 0) {
-    logger.warn(
-      { contactId, workspaceId, racedKeyCount: racedAttributes.length },
-      "Concurrent call created new contact attribute keys first - writing onto them"
-    );
-    const racedKeys = await prisma.contactAttributeKey.findMany({
-      where: { workspaceId, key: { in: racedAttributes.map(({ key }) => key) } },
+  const writeKeysAndValues = async (tx: Prisma.TransactionClient) => {
+    const createdKeys = await tx.contactAttributeKey.createManyAndReturn({
+      data: orderedNewAttributes.map(({ key, dataType }) => ({
+        key,
+        name: formatSnakeCaseToTitleCase(key),
+        type: "custom" as const,
+        dataType,
+        workspaceId,
+      })),
+      select: { id: true, key: true },
+      skipDuplicates: true,
     });
-    const { existingAttributes } = splitAttributesByKey(
-      Object.fromEntries(racedAttributes.map(({ key, value }) => [key, value])),
-      new Map(racedKeys.map((attributeKey) => [attributeKey.key, attributeKey])),
-      messages
-    );
-    attributesToWrite.push(...existingAttributes);
-  }
+    const createdKeyIds = new Map(createdKeys.map(({ key, id }) => [key, id]));
 
-  if (attributesToWrite.length > 0) {
-    await upsertExistingAttributes(contactId, workspaceId, attributesToWrite);
+    const attributesToWrite: TExistingAttributeWrite[] = [];
+    const racedAttributes: TNewAttributeWrite[] = [];
+    for (const { key, value, columns } of orderedNewAttributes) {
+      const attributeKeyId = createdKeyIds.get(key);
+      if (attributeKeyId) attributesToWrite.push({ key, attributeKeyId, columns });
+      else racedAttributes.push({ key, value });
+    }
+
+    const typeMessages: TAttributeUpdateMessage[] = [];
+    if (racedAttributes.length > 0) {
+      const racedKeys = await tx.contactAttributeKey.findMany({
+        where: { workspaceId, key: { in: racedAttributes.map(({ key }) => key) } },
+      });
+      const { existingAttributes, newAttributes: vanishedAttributes } = splitAttributesByKey(
+        Object.fromEntries(racedAttributes.map(({ key, value }) => [key, value])),
+        new Map(racedKeys.map((attributeKey) => [attributeKey.key, attributeKey])),
+        typeMessages
+      );
+      if (vanishedAttributes.length > 0) throw new RacedKeyVanishedError();
+      attributesToWrite.push(...existingAttributes);
+    }
+
+    attributesToWrite.sort((a, b) => compareCodeUnits(a.attributeKeyId, b.attributeKeyId));
+    for (const attribute of attributesToWrite) {
+      await upsertAttributeValue(tx, contactId, attribute);
+    }
+    return { createdKeyIds, racedCount: racedAttributes.length, typeMessages };
+  };
+
+  for (let attempt = 1; ; attempt++) {
+    try {
+      const { createdKeyIds, racedCount, typeMessages } = await retryOnDeadlock(
+        () => prisma.$transaction(writeKeysAndValues),
+        { operation: "updateAttributes.newAttributeKeys", contactId, workspaceId }
+      );
+      for (const { key, dataType } of orderedNewAttributes.filter(({ key }) => createdKeyIds.has(key))) {
+        logger.info({ workspaceId, attributeKey: key, dataType }, "Created new contact attribute");
+        messages.push({ code: "new_attribute_created", params: { key, dataType } });
+      }
+      if (racedCount > 0) {
+        logger.warn({ contactId, workspaceId, racedCount }, "Wrote onto raced contact attribute keys");
+      }
+      messages.push(...typeMessages);
+      return;
+    } catch (error) {
+      if (!(error instanceof RacedKeyVanishedError) || attempt >= NEW_KEYS_MAX_ATTEMPTS) throw error;
+    }
   }
 };
 
