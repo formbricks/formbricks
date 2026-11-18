@@ -798,7 +798,6 @@ describe("workflow lastRun without Responses: Read", () => {
       grant: { access: "all", permissions: { workflows: "read", workflowRuns: "read" } },
     },
   };
-  const withResponses = { ...readOnlyAuthInfo, scopes: ["workflows:read", "responses:read"] };
 
   test("get_workflow sets lastRun.error to null for a grant without Responses: Read", async () => {
     const { tools } = createToolServer();
@@ -848,7 +847,7 @@ describe("workflow lastRun without Responses: Read", () => {
 
     const result = await tools
       .get("get_workflow")!
-      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo: withResponses } });
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo: sessionAuthInfo } });
 
     expect(result.structuredContent).toEqual({ data: workflow, requestId: "req_tool" });
   });

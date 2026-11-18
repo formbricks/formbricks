@@ -51,8 +51,9 @@ const claims = (overrides: Partial<Parameters<typeof mcpGrantAccessTokenClaims>[
     ...overrides,
   });
 
-/** When the token endpoint's before-hook read the code this exchange spends. */
-const ISSUED_AT = 1_000;
+/** When the token endpoint's before-hook read the code this exchange spends: a real epoch time, so the
+ * skew tests' marks stay the positive times `readOAuthRevocationTime` can return. */
+const ISSUED_AT = Date.parse("2026-11-18T12:00:00Z");
 
 beforeEach(() => {
   vi.mocked(isOnlyDashboardViewer).mockReset().mockResolvedValue(false);
@@ -90,6 +91,14 @@ describe("mcpGrantAccessTokenClaims", () => {
   });
 
   test("gives a skipConsent client's code exchange a grant, without Tags or Audience, and audits it", async () => {
+    // No grant until the exchange creates one: the claim names it only if it is read after the creation.
+    let stored: { id: string } | null = null;
+    prisma.mcpGrant.findUnique.mockImplementation((async () => stored) as never);
+    vi.mocked(createMcpGrantIfMissing).mockImplementation(async () => {
+      stored = { id: created.id };
+      return created;
+    });
+
     await expect(claims()).resolves.toEqual({ [MCP_GRANT_TOKEN_CLAIM]: "grant-1" });
 
     const [, { userId, clientId, permissions }] = vi.mocked(createMcpGrantIfMissing).mock.calls[0];
@@ -103,10 +112,6 @@ describe("mcpGrantAccessTokenClaims", () => {
       before: null,
       after: created,
     });
-    // Created before the token reads it, so the token names it.
-    expect(vi.mocked(createMcpGrantIfMissing).mock.invocationCallOrder[0]).toBeLessThan(
-      prisma.mcpGrant.findUnique.mock.invocationCallOrder[0]
-    );
   });
 
   test("trims a Dashboard viewer's scopes before granting", async () => {
