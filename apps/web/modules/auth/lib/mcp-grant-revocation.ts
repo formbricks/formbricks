@@ -9,7 +9,6 @@ import {
   type TMcpGrantAuditRecord,
   prepareMcpGrantAudits,
   queueMcpGrantAudits,
-  queueMcpGrantDeletionsAudit,
 } from "@/modules/mcp/grant-audit";
 import {
   MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS,
@@ -126,16 +125,24 @@ export const finishRevokedMcpGrants = async (
 
 type TRevokedGrant = { consentsDeleted: number; refreshTokensRevoked: number; accessTokensRevoked: number };
 
+/** What {@link revokeMcpClient} ended: the counts, the deleted grants, and their audit entries. */
+type TRevokedClient = TRevokedGrant & {
+  grants: TStoredMcpGrant[];
+  /** Prepared in the revoking transaction: pass to `queueMcpGrantAudits` once it has committed. */
+  grantAudits: TMcpGrantAuditRecord[];
+};
+
 /**
  * Ends the user's access for one MCP client (Revoke, on Authorized apps): its grant, its consent rows and
  * its tokens, in the caller's transaction. The grant is locked and deleted before the consent rows are
- * locked, the order every path that locks both takes.
+ * locked, the order every path that locks both takes. The audit entries are prepared here too, so they name
+ * the organizations the grant reached when it ended, not after a membership change that follows.
  */
 const endClientAccess = async (
   tx: Prisma.TransactionClient,
   userId: string,
   clientId: string
-): Promise<TRevokedGrant & { grants: TStoredMcpGrant[] }> => {
+): Promise<TRevokedClient> => {
   // Before the grant: the lock a code exchange's grant write takes `FOR KEY SHARE`, so one that marked
   // and then waits here is waited for, and one that wrote first is deleted below.
   await lockUserForMcpRevocation(tx, userId);
@@ -143,7 +150,11 @@ const endClientAccess = async (
   await lockConsents(tx, userId, { clientId }, "update");
   const consents = await tx.oauthConsent.deleteMany({ where: { userId, clientId } });
   const tokens = await revokeClientTokens(tx, userId, clientId);
-  return { consentsDeleted: consents.count, grants, ...tokens };
+  const grantAudits = await prepareMcpGrantAudits(
+    tx,
+    grants.map((grant) => ({ action: "deleted" as const, before: grant, after: null }))
+  );
+  return { consentsDeleted: consents.count, grants, grantAudits, ...tokens };
 };
 
 export const revokeClientTokens = async (
@@ -184,7 +195,7 @@ export const revokeMcpClient = async ({
 }: {
   userId: string;
   clientId: string;
-}): Promise<(TRevokedGrant & { grants: TStoredMcpGrant[] }) | null> => {
+}): Promise<TRevokedClient | null> => {
   // Its pending sign-in codes live outside PostgreSQL: marked first, so none issued before now is exchanged.
   await markOAuthRevocation({ userId, clientId });
   // Allows for a reconciling pass holding the grant row (MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS).
@@ -210,7 +221,7 @@ export const revokeOAuthConsentGrant = async ({
 }: {
   userId: string;
   consentId: string;
-}): Promise<(TRevokedGrant & { grants: TStoredMcpGrant[] }) | null> => {
+}): Promise<TRevokedClient | null> => {
   const consent = await prisma.oauthConsent.findFirst({
     where: { id: consentId, userId },
     select: { clientId: true },
@@ -238,8 +249,8 @@ export const revokeOAuthConsentBeforeHandler = async (
   const revoked = await revokeOAuthConsentGrant({ userId: session.user.id, consentId });
   if (!revoked) throw new APIError("NOT_FOUND", { error: "not_found", error_description: "no consent" });
 
-  const { grants, ...counts } = revoked;
-  await queueMcpGrantDeletionsAudit({ actorUserId: session.user.id, grants });
+  const { grants, grantAudits, ...counts } = revoked;
+  await queueMcpGrantAudits({ userId: session.user.id, userType: "user" }, grantAudits);
   logger.info(
     { userId: session.user.id, consentId, ...counts, grantsDeleted: grants.length },
     "OAuth consent revoked with its grant and tokens"

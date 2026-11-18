@@ -17,6 +17,7 @@ import {
   readMcpGrantAccessSelection,
 } from "./grant";
 import { type TMcpGrantAccessOptions, limitMcpGrantAccessToOptions } from "./grant-access";
+import { type TMcpGrantAuditRecord, prepareMcpGrantAudits } from "./grant-audit";
 import {
   MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS,
   type TStoredMcpGrant,
@@ -244,7 +245,13 @@ export type TEditMcpGrantResult =
   | { status: "changed"; currentUpdatedAt: Date }
   | { status: "beyond_scopes" }
   | { status: "selection_unavailable"; field: "organizationIds" | "workspaceIds" }
-  | { status: "saved"; before: TStoredMcpGrant; after: TStoredMcpGrant };
+  | {
+      status: "saved";
+      before: TStoredMcpGrant;
+      after: TStoredMcpGrant;
+      /** Prepared in the edit's transaction: queue them once it has committed. */
+      audits: TMcpGrantAuditRecord[];
+    };
 
 /**
  * The scopes that cap the user's grant to the client, read in the caller's transaction, or `null` when
@@ -336,7 +343,8 @@ export const editMcpGrant = async ({
           permissions: grant.permissions,
           access: saved,
         });
-        return { status: "saved", before, after: written.after };
+        const audits = await prepareMcpGrantAudits(tx, [{ action: "updated", before, after: written.after }]);
+        return { status: "saved", before, after: written.after, audits };
       },
       { timeout: MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS }
     );

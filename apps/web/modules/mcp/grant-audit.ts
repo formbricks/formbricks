@@ -254,22 +254,30 @@ export const queueMcpClientRevocationAudit = async ({
     });
     const filings = memberships.length > 0 ? memberships.map((m) => m.organizationId) : [UNKNOWN_DATA];
     for (const organizationId of filings) {
-      await queueAuditEventBackground({
-        action: "deleted",
-        targetType: "mcpGrant",
-        targetId: clientId,
-        userId: actorUserId,
-        userType: "user",
-        organizationId,
-        status: "success",
-        oldObject: { clientId, grant: null, ended },
-        newObject: null,
-      });
+      // Per organization, as `queueMcpGrantAudits` does: one failure doesn't drop the others' entries.
+      try {
+        await queueAuditEventBackground({
+          action: "deleted",
+          targetType: "mcpGrant",
+          targetId: clientId,
+          userId: actorUserId,
+          userType: "user",
+          organizationId,
+          status: "success",
+          oldObject: { clientId, grant: null, ended },
+          newObject: null,
+        });
+      } catch (error) {
+        logger.error(
+          { err: loggableError(error), clientId },
+          "Failed to queue MCP client revocation audit event"
+        );
+      }
     }
   } catch (error) {
     logger.error(
       { err: loggableError(error), clientId },
-      "Failed to queue MCP client revocation audit event"
+      "Failed to read the memberships for an MCP client revocation audit"
     );
   }
 };

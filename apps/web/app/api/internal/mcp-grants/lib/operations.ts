@@ -34,11 +34,7 @@ import {
   listAuthorizedMcpClients,
 } from "@/modules/mcp/authorized-clients";
 import { parseRequestedMcpGrant } from "@/modules/mcp/grant";
-import {
-  queueMcpClientRevocationAudit,
-  queueMcpGrantAudit,
-  queueMcpGrantDeletionsAudit,
-} from "@/modules/mcp/grant-audit";
+import { queueMcpClientRevocationAudit, queueMcpGrantAudits } from "@/modules/mcp/grant-audit";
 import { serializeAuthorizedMcpClient, serializeMcpGrant } from "./serializers";
 
 /**
@@ -149,12 +145,8 @@ export async function updateMcpGrantOperation({
       // both snapshots whole: the wrapper's single entry can name one organization and records a diff,
       // which hides what a narrowing removed. A refusal above keeps the wrapper's failure entry.
       skipV3AuditLog(auditLog);
-      await queueMcpGrantAudit({
-        action: "updated",
-        actorUserId: userId,
-        before: result.before,
-        after: result.after,
-      });
+      // Prepared in the edit's transaction, so they name the organizations the grant reached as it changed.
+      await queueMcpGrantAudits({ userId, userType: "user" }, result.audits);
       return successResponse(serializeMcpGrant(result.after), { requestId });
   }
 }
@@ -189,10 +181,11 @@ export async function revokeMcpGrantOperation({
   // that ended only a consent (one left without a grant) is audited with the client as its target and what
   // was ended, filed the same way. Either replaces the route's single entry, which can name neither.
   skipV3AuditLog(auditLog);
-  const { grants, ...ended } = revoked;
+  const { grants, grantAudits, ...ended } = revoked;
   if (grants.length === 0) {
     await queueMcpClientRevocationAudit({ actorUserId: userId, clientId, ended });
   }
-  await queueMcpGrantDeletionsAudit({ actorUserId: userId, grants });
+  // Prepared in the revoking transaction, so they name the organizations each grant reached as it ended.
+  await queueMcpGrantAudits({ userId, userType: "user" }, grantAudits);
   return successResponse({ clientId }, { requestId });
 }

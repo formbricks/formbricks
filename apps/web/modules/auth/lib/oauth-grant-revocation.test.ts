@@ -261,6 +261,15 @@ describe("revokeOAuthConsentGrant", () => {
       grants: [
         expect.objectContaining({ id: "grant-1", access: "organizations", organizationIds: ["org-1"] }),
       ],
+      // Prepared in the revoking transaction, from the organizations the grant reached as it ended.
+      grantAudits: [
+        expect.objectContaining({
+          action: "deleted",
+          before: expect.objectContaining({ id: "grant-1" }),
+          after: null,
+          organizationIds: ["org-1"],
+        }),
+      ],
     });
     expect(prisma.oauthConsent.findFirst).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: "consent-1", userId: "user-1" } })

@@ -4,6 +4,7 @@ import { readConsentedScopes } from "@/modules/auth/lib/oauth-consent-rows";
 import { readMcpGrantReadableWorkspaceIds } from "./access-options";
 import { editMcpGrant, listAuthorizedMcpClients } from "./authorized-clients";
 import type { TMcpGrantAccessOptions } from "./grant-access";
+import { prepareMcpGrantAudits } from "./grant-audit";
 import {
   type TStoredMcpGrant,
   lockMcpGrant,
@@ -18,6 +19,12 @@ vi.mock("@/modules/auth/lib/oauth-consent-rows", async (importOriginal) => ({
   readConsentedScopes: vi.fn(),
 }));
 vi.mock("./access-options", () => ({ readMcpGrantReadableWorkspaceIds: vi.fn() }));
+// Tested in `grant-store.test.ts`: here, the entries name what they were prepared from.
+vi.mock("./grant-audit", () => ({
+  prepareMcpGrantAudits: vi.fn(async (_tx: unknown, changes: unknown[]) =>
+    changes.map((change) => ({ ...(change as object), organizationIds: [] }))
+  ),
+}));
 vi.mock("./grant-store", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./grant-store")>()),
   lockMcpGrant: vi.fn(),
@@ -377,6 +384,7 @@ describe("listAuthorizedMcpClients", () => {
 describe("editMcpGrant", () => {
   const OPENED_AT = at("2026-06-01T10:00:00.123Z");
   const tx = { oauthClient: { findUnique: vi.fn() }, mcpGrant: { findUniqueOrThrow: vi.fn() } };
+  const steps: string[] = [];
 
   beforeEach(() => {
     vi.mocked(readConsentedScopes).mockReset().mockResolvedValue(["surveys:write"]);
@@ -389,8 +397,13 @@ describe("editMcpGrant", () => {
       .mockResolvedValue(new Set(["ws-1"]));
     tx.oauthClient.findUnique.mockReset().mockResolvedValue({ scopes: ["surveys:read"], skipConsent: false });
     tx.mcpGrant.findUniqueOrThrow.mockReset().mockResolvedValue({ updatedAt: OPENED_AT });
-    prisma.$transaction.mockImplementation((async (callback: (client: unknown) => unknown) =>
-      callback(tx)) as never);
+    // The callback, then the commit, as a step of its own: what runs after it ran after the commit.
+    steps.length = 0;
+    prisma.$transaction.mockImplementation((async (callback: (client: unknown) => unknown) => {
+      const result = await callback(tx);
+      steps.push("commit");
+      return result;
+    }) as never);
   });
 
   // Another tab or session saved the grant after Edit opened it: this save would undo that change unseen.
@@ -428,6 +441,9 @@ describe("editMcpGrant", () => {
       access: { access: "workspaces", workspaceIds: ["ws-1"] },
     });
     vi.mocked(writeMcpGrant).mockResolvedValue({ before, after });
+    vi.mocked(projectMcpGrants).mockImplementation(async () => {
+      steps.push("project");
+    });
 
     await expect(
       editMcpGrant({
@@ -440,7 +456,14 @@ describe("editMcpGrant", () => {
         },
         isDashboardViewer: false,
       })
-    ).resolves.toEqual({ status: "saved", before, after });
+    ).resolves.toEqual({
+      status: "saved",
+      before,
+      after,
+      audits: [{ action: "updated", before, after, organizationIds: [] }],
+    });
+    // Audited from what the transaction read, so the entries name the organizations as the edit left them.
+    expect(prepareMcpGrantAudits).toHaveBeenCalledWith(tx, [{ action: "updated", before, after }]);
     expect(lockMcpGrant).toHaveBeenCalledWith(tx, { userId: USER_ID, clientId: CLIENT_ID });
     expect(readConsentedScopes).toHaveBeenCalledWith(tx, USER_ID, CLIENT_ID);
     expect(narrowMcpGrantAccess).toHaveBeenCalledWith(tx, {
@@ -468,6 +491,8 @@ describe("editMcpGrant", () => {
     // The reconciler can hold the grant row for 30 s; the save allows for that, then 15 s of its own.
     expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 45_000 });
     expect(projectMcpGrants).toHaveBeenCalledWith(["grant-1"]);
+    // What the edit adds reaches SpiceDB only once its rows are committed.
+    expect(steps).toEqual(["commit", "project"]);
   });
 
   test("keeps the grant's access when the edit names none, without resolving anything", async () => {

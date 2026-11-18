@@ -10,8 +10,7 @@ const mocks = vi.hoisted(() => ({
   isDashboardViewerOnly: vi.fn(),
   editMcpGrant: vi.fn(),
   revokeMcpClient: vi.fn(),
-  queueMcpGrantAudit: vi.fn(),
-  queueMcpGrantDeletionsAudit: vi.fn(),
+  queueMcpGrantAudits: vi.fn(),
   queueMcpClientRevocationAudit: vi.fn(),
   queueAuditEvent: vi.fn(),
 }));
@@ -24,8 +23,7 @@ vi.mock("@/modules/mcp/authorized-clients", () => ({ editMcpGrant: mocks.editMcp
 vi.mock("@/modules/auth/lib/mcp-grant-revocation", () => ({ revokeMcpClient: mocks.revokeMcpClient }));
 vi.mock("@/modules/mcp/grant-audit", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/mcp/grant-audit")>()),
-  queueMcpGrantAudit: mocks.queueMcpGrantAudit,
-  queueMcpGrantDeletionsAudit: mocks.queueMcpGrantDeletionsAudit,
+  queueMcpGrantAudits: mocks.queueMcpGrantAudits,
   queueMcpClientRevocationAudit: mocks.queueMcpClientRevocationAudit,
 }));
 vi.mock("@/app/api/v1/auth", () => ({ authenticateRequest: vi.fn() }));
@@ -46,6 +44,10 @@ vi.mock("@formbricks/logger", () => ({
   logger: { withContext: vi.fn(() => ({ error: vi.fn(), warn: vi.fn(), info: vi.fn() })), error: vi.fn() },
 }));
 vi.mock("server-only", () => ({}));
+
+/** Audit entries as the grant store prepares them: opaque here, passed through to the queue. */
+const SAVED_AUDIT = { action: "updated", organizationIds: ["org_1"] };
+const ENDED_AUDIT = { action: "deleted", organizationIds: ["org_1"] };
 
 const USER_ID = "cluser1111111111111111111";
 const CLIENT_ID = "QhXbTnRZsWzKfLpAeVcMdYuJ";
@@ -82,6 +84,7 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
       status: "saved",
       before: stored({ surveys: "write", responses: "read" }),
       after: stored({ surveys: "read" }),
+      audits: [SAVED_AUDIT],
     });
   });
 
@@ -101,22 +104,21 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
       expectedUpdatedAt: new Date(OPENED_AT),
       isDashboardViewer: false,
     });
-    // The grant store writes the entries (one per organization the grant reaches, both snapshots
-    // whole); the wrapper's single diffed entry is skipped.
-    expect(mocks.queueMcpGrantAudit).toHaveBeenCalledWith({
-      action: "updated",
-      actorUserId: USER_ID,
-      before: stored({ surveys: "write", responses: "read" }),
-      after: stored({ surveys: "read" }),
-    });
+    // The entries the edit prepared in its transaction (one per organization the grant reaches, both
+    // snapshots whole), queued as the user; the wrapper's single diffed entry is skipped.
+    expect(mocks.queueMcpGrantAudits).toHaveBeenCalledWith({ userId: USER_ID, userType: "user" }, [
+      SAVED_AUDIT,
+    ]);
     expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
 
   test("saves organization & workspace access with the permissions, and audits the selection", async () => {
+    const audit = { ...SAVED_AUDIT, after: stored({ surveys: "read" }, ["ws_1"]) };
     mocks.editMcpGrant.mockResolvedValueOnce({
       status: "saved",
       before: stored({ surveys: "read" }),
       after: stored({ surveys: "read" }, ["ws_1"]),
+      audits: [audit],
     });
 
     const response = await edit({
@@ -134,9 +136,7 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
         grant: { permissions: { surveys: "read" }, access: { access: "workspaces", workspaceIds: ["ws_1"] } },
       })
     );
-    expect(mocks.queueMcpGrantAudit).toHaveBeenCalledWith(
-      expect.objectContaining({ after: stored({ surveys: "read" }, ["ws_1"]) })
-    );
+    expect(mocks.queueMcpGrantAudits).toHaveBeenCalledWith(expect.anything(), [audit]);
   });
 
   test("holds a Dashboard viewer's edit to what a viewer may give", async () => {
@@ -160,7 +160,7 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
       detail: "This MCP client's access changed elsewhere. Reload to see it.",
       details: { expectedUpdatedAt: OPENED_AT, currentUpdatedAt: savedSince.toISOString() },
     });
-    expect(mocks.queueMcpGrantAudit).not.toHaveBeenCalled();
+    expect(mocks.queueMcpGrantAudits).not.toHaveBeenCalled();
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ status: "failure" }));
   });
 
@@ -225,7 +225,7 @@ describe("PATCH /api/internal/mcp-grants/{clientId}", () => {
     const body = await response.json();
     expect(body.code).toBe(MCP_GRANT_NOT_SAVED_CODE);
     expect(body.detail).toBe("The access you chose couldn't be saved, so nothing changed. Try again.");
-    expect(mocks.queueMcpGrantAudit).not.toHaveBeenCalled();
+    expect(mocks.queueMcpGrantAudits).not.toHaveBeenCalled();
     expect(mocks.queueAuditEvent).toHaveBeenCalledWith(expect.objectContaining({ status: "failure" }));
   });
 
@@ -350,6 +350,7 @@ describe("DELETE /api/internal/mcp-grants/{clientId}", () => {
       refreshTokensRevoked: 1,
       accessTokensRevoked: 0,
       grants: [grant],
+      grantAudits: [ENDED_AUDIT],
     });
 
     const response = await revoke();
@@ -357,12 +358,10 @@ describe("DELETE /api/internal/mcp-grants/{clientId}", () => {
     expect(response.status).toBe(200);
     expect((await response.json()).data).toEqual({ clientId: CLIENT_ID });
     expect(mocks.revokeMcpClient).toHaveBeenCalledWith({ userId: USER_ID, clientId: CLIENT_ID });
-    // One pass over every grant the revoke ended, not one audit per grant.
-    expect(mocks.queueMcpGrantDeletionsAudit).toHaveBeenCalledWith({
-      actorUserId: USER_ID,
-      grants: [grant],
-    });
-    expect(mocks.queueMcpGrantAudit).not.toHaveBeenCalled();
+    // The entries the revoke prepared in its transaction, queued as the user.
+    expect(mocks.queueMcpGrantAudits).toHaveBeenCalledWith({ userId: USER_ID, userType: "user" }, [
+      ENDED_AUDIT,
+    ]);
     // The grant store files the entries; the wrapper's own entry is skipped.
     expect(mocks.queueAuditEvent).not.toHaveBeenCalled();
   });
@@ -376,13 +375,13 @@ describe("DELETE /api/internal/mcp-grants/{clientId}", () => {
       refreshTokensRevoked: 2,
       accessTokensRevoked: 0,
       grants: [],
+      grantAudits: [],
     });
 
     const response = await revoke();
 
     expect(response.status).toBe(200);
-    expect(mocks.queueMcpGrantAudit).not.toHaveBeenCalled();
-    expect(mocks.queueMcpGrantDeletionsAudit).toHaveBeenCalledWith({ actorUserId: USER_ID, grants: [] });
+    expect(mocks.queueMcpGrantAudits).toHaveBeenCalledWith(expect.anything(), []);
     expect(mocks.queueMcpClientRevocationAudit).toHaveBeenCalledWith({
       actorUserId: USER_ID,
       clientId: CLIENT_ID,
@@ -397,7 +396,7 @@ describe("DELETE /api/internal/mcp-grants/{clientId}", () => {
     const response = await revoke("someone-elses-client");
 
     expect(response.status).toBe(403);
-    expect(mocks.queueMcpGrantAudit).not.toHaveBeenCalled();
+    expect(mocks.queueMcpGrantAudits).not.toHaveBeenCalled();
   });
 
   test("returns 401 without a session and revokes nothing", async () => {

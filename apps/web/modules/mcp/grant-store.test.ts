@@ -613,6 +613,21 @@ describe("queueMcpClientRevocationAudit", () => {
     );
   });
 
+  test("keeps filing the other organizations' entries when one fails", async () => {
+    prisma.membership.findMany.mockResolvedValue([
+      { organizationId: "org-1" },
+      { organizationId: "org-2" },
+    ] as never);
+    vi.mocked(queueAuditEventBackground).mockRejectedValueOnce(new Error("queue down"));
+
+    await queueMcpClientRevocationAudit({ actorUserId: USER_ID, clientId: CLIENT_ID, ended: ENDED });
+
+    expect(vi.mocked(queueAuditEventBackground).mock.calls.map(([event]) => event.organizationId)).toEqual([
+      "org-1",
+      "org-2",
+    ]);
+  });
+
   test("files one entry without an organization for a user in none, and never throws", async () => {
     prisma.membership.findMany.mockResolvedValue([] as never);
     vi.mocked(queueAuditEventBackground).mockRejectedValueOnce(new Error("queue down"));
