@@ -10,8 +10,14 @@ import { readAllRelationships } from "./relationship-reads";
 /**
  * A reconciling pass holds its grants' rows `FOR SHARE` only until its transaction times out; its SpiceDB
  * writes are not part of that transaction. Against a real PostgreSQL and SpiceDB, with the pass's budget
- * shortened to seconds: a write still on its way when the lock is gone must not land after a narrowing
- * that took the lock next, or it restores the access the narrowing removed.
+ * shortened to seconds: a write the pass reaches the SpiceDB client with only after its lock is gone (held
+ * in the client wrapper, before the gRPC call) must not land after a narrowing that took the lock next, or
+ * it restores the access the narrowing removed. The write's own deadline refuses it.
+ *
+ * What this does not drive is a write SpiceDB already received when the deadline passes: SpiceDB abandons
+ * it at its gRPC deadline, the pass then keeps its locks through the margin (unit-tested in
+ * `mcp-grant.test.ts`), and a commit later still is repaired by the narrowing's own reconcile after it
+ * commits (ADR 0042).
  */
 
 vi.mock("@/lib/authzed/mcp-grant-timeouts", () => ({
@@ -21,7 +27,7 @@ vi.mock("@/lib/authzed/mcp-grant-timeouts", () => ({
   MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS: 15_000,
 }));
 
-/** Holds the next relationship write after it was sent and before it reaches SpiceDB. */
+/** Holds the next relationship write in the client wrapper, before its gRPC call is made. */
 const writes = vi.hoisted(() => ({
   holdNext: null as { sent: () => void; release: Promise<void> } | null,
 }));
@@ -85,7 +91,7 @@ beforeEach(async () => {
 });
 
 describe("reconciling an MCP grant against its row lock (real PostgreSQL and SpiceDB)", () => {
-  test("a write still in flight when the pass's lock is gone never restores what a narrowing removed", async () => {
+  test("a write reaching the client after the pass's lock is gone never restores what a narrowing removed", async () => {
     const { grantId, kept, removed } = await seedGrant();
     await expect(reconcileMcpGrantRelationships({ grantIds: [grantId] })).resolves.toMatchObject({
       status: "projected",
