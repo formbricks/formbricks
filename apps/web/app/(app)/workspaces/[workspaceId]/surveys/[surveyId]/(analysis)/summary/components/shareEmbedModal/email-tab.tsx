@@ -84,7 +84,7 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
       setEmailHtmlPreview(emailHtml?.data || "");
     };
 
-    getData();
+    void getData();
   }, [surveyId]);
 
   // A new preview document starts at the minimum height until its iframe loads and is measured.

@@ -204,7 +204,7 @@ describe("listV3ChartFieldValues", () => {
   const lookup = (field: string = LOOKUP_FIELD, query: Record<string, unknown> = {}) =>
     listV3ChartFieldValues({
       field,
-      query: { workspaceId, datasetId, ...query } as never,
+      query: { workspaceId, datasetId, ...query },
       authentication: session,
       requestId,
       instance,

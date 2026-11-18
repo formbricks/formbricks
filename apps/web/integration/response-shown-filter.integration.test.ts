@@ -125,7 +125,7 @@ beforeAll(async () => {
         surveyId: created.id,
         finished: false,
         data: (seed.data ?? {}) as Prisma.InputJsonValue,
-        ttc: (seed.ttc ?? {}) as Prisma.InputJsonValue,
+        ttc: seed.ttc ?? {},
         notShown: seed.notShown === null ? Prisma.DbNull : (seed.notShown as Prisma.InputJsonValue),
       },
       select: { id: true },

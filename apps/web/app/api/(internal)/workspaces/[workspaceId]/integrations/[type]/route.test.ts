@@ -44,7 +44,7 @@ const integration = {
 const get = (type = "googleSheets", workspaceId = WORKSPACE_ID) =>
   GET(new NextRequest(`http://localhost/api/workspaces/${workspaceId}/integrations/${type}`), {
     params: Promise.resolve({ workspaceId, type }),
-  } as never);
+  });
 
 describe("GET /api/workspaces/[workspaceId]/integrations/[type]", () => {
   beforeEach(() => {

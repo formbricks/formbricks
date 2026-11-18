@@ -179,7 +179,7 @@ export async function createV3Chart({
         datasetId: body.datasetId,
         name: body.name,
         type: body.type,
-        query: validated.query as TChartWrite["query"],
+        query: validated.query,
         config: body.config ?? {},
         createdBy: getSessionUserId(authentication),
       });

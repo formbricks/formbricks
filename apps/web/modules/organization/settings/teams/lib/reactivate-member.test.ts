@@ -22,8 +22,10 @@ const DB_NOW = new Date("2030-01-10T00:00:00.123Z");
 
 type TMembership = { organizationId: string; role: "owner" | "manager" | "member" | "billing" };
 const transaction = ({
+  // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
   user = { isActive: false } as { isActive: boolean } | null,
   memberships = [{ organizationId: ORG_ID, role: "member" }] as TMembership[],
+  // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
   actorRole = "owner" as TMembership["role"] | null,
 } = {}) => {
   const tx = {

@@ -73,6 +73,7 @@ describe("openRetentionRuns", () => {
   const database = ({
     locked = true,
     held = null as { id: string } | null,
+    // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
     policies = { surveys: [policyRow()] } as Record<string, unknown[]>,
     previous = null as ReturnType<typeof previousRun> | null,
   } = {}) => {

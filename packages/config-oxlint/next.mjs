@@ -1,10 +1,20 @@
-import { TYPESCRIPT_FILES, base, compose, jsPlugins, reactSettings, unusedVarsOptions } from "./base.mjs";
+import {
+  PLAIN_JS_FILES,
+  TYPESCRIPT_FILES,
+  base,
+  compose,
+  jsPlugins,
+  reactSettings,
+  unusedVarsOptions,
+} from "./base.mjs";
 import {
   eslintRecommended,
   jsxA11yRecommended,
   next as nextPreset,
+  typeAwareOff,
   typescriptFileOverrides,
   typescriptRecommended,
+  typescriptRecommendedTypeChecked,
 } from "./presets.mjs";
 import { a11yParity } from "./sonar-parity.mjs";
 
@@ -15,9 +25,17 @@ import { a11yParity } from "./sonar-parity.mjs";
  * The eslint/typescript-eslint recommended baselines run at their upstream "error" (ENG-2264,
  * ENG-7329). apps/web was never linted against them, so they started as warnings and were promoted as
  * each backlog reached zero; a rule that still has one is listed at "warn" below, with its count.
- * The type-aware rules (used by the library/react tiers) are not on here yet; turning them on is part
- * of ENG-7329.
+ * The type-aware half of `recommendedTypeChecked` runs at "error" on TypeScript files as in the
+ * library/react tiers; apps/web turns off the rules that still have a backlog, with their counts.
  */
+
+/**
+ * The type-aware half of typescript-eslint's `recommendedTypeChecked`: the rules it adds to
+ * `recommended`, which the baseline above already applies.
+ */
+export const typeAwareRecommended = Object.fromEntries(
+  Object.entries(typescriptRecommendedTypeChecked).filter(([rule]) => !(rule in typescriptRecommended))
+);
 
 export const nextCacheRestriction = {
   name: "next/cache",
@@ -55,7 +73,11 @@ export const next = compose(
         { elements: ["img", "object", "area", 'input[type="image"]'], img: ["Image"] },
       ],
     },
-    overrides: [{ files: TYPESCRIPT_FILES, rules: typescriptFileOverrides }],
+    overrides: [
+      { files: TYPESCRIPT_FILES, rules: { ...typescriptFileOverrides, ...typeAwareRecommended } },
+      // Plain JS files sit outside the tsconfig, so the type-aware rules are off for them.
+      { files: PLAIN_JS_FILES, rules: typeAwareOff },
+    ],
   },
   a11yParity()
 );

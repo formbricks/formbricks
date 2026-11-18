@@ -101,7 +101,7 @@ describe("Organization Service", () => {
   beforeEach(() => {
     vi.mocked(ensureCloudStripeSetupForOrganization).mockResolvedValue(undefined);
     vi.mocked(lookupAuthorizedOrganizationIds).mockResolvedValue(["org1"]);
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma as never));
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
     vi.mocked(requestEmailAuditErasureRequired).mockResolvedValue(undefined);
   });
 

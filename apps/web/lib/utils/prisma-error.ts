@@ -26,7 +26,7 @@ const CONFLICT_SQLSTATES = new Set(["40001", "40P01"]);
 /** The `cause` a pg driver adapter error carries: its mapped kind and the original SQLSTATE. */
 const driverAdapterCauseOf = (error: unknown): { kind?: unknown; originalCode?: unknown } | null => {
   if (!(error instanceof Error) || typeof error.cause !== "object" || error.cause === null) return null;
-  return error.cause as { kind?: unknown; originalCode?: unknown };
+  return error.cause;
 };
 
 /**

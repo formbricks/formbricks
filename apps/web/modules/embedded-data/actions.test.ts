@@ -117,9 +117,9 @@ type TTestAction = ((args: { ctx: TTestCtx; parsedInput: Record<string, unknown>
 };
 
 const run = (action: unknown, parsedInput: Record<string, unknown>, ctx: TTestCtx) =>
-  (action as unknown as TTestAction)({ ctx, parsedInput });
+  (action as TTestAction)({ ctx, parsedInput });
 
-const schemaOf = (action: unknown): z.ZodType => (action as unknown as TTestAction).__schema;
+const schemaOf = (action: unknown): z.ZodType => (action as TTestAction).__schema;
 
 let ctx: TTestCtx;
 

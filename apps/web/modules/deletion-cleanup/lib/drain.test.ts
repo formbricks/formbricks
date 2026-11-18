@@ -58,7 +58,7 @@ const row = (id: string, kind: TKind, overrides: Record<string, unknown> = {}) =
 const queue = (...rows: ReturnType<typeof row>[]) =>
   vi
     .mocked(prisma.$queryRaw)
-    .mockResolvedValueOnce(rows as never)
+    .mockResolvedValueOnce(rows)
     .mockResolvedValue([] as never);
 
 const leased = (id: string) => ({ id, nextAttemptAt: LEASE_UNTIL });
@@ -187,8 +187,8 @@ describe("drainDeletionCleanups", () => {
   test("keeps only the files storage failed to delete, for the retry", async () => {
     queue(row("c1", "storageFiles"), row("c2", "storageFiles", { fileKeys: ["k9"] }));
     vi.mocked(deleteResponseFileUrls)
-      .mockResolvedValueOnce({ failed: ["k2"] } as never)
-      .mockResolvedValueOnce({ failed: [] } as never);
+      .mockResolvedValueOnce({ failed: ["k2"] })
+      .mockResolvedValueOnce({ failed: [] });
 
     await expect(drainDeletionCleanups()).resolves.toEqual({ done: 1, again: 0, failed: 1 });
 

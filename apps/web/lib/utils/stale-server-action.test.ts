@@ -70,7 +70,7 @@ describe("reportStaleServerActionError", () => {
   const removeEventListener = vi.fn();
 
   beforeEach(() => {
-    vi.stubGlobal("window", { addEventListener, removeEventListener } as unknown as Window);
+    vi.stubGlobal("window", { addEventListener, removeEventListener });
   });
 
   afterEach(() => {
@@ -150,7 +150,7 @@ describe("the stale action response observer", () => {
     vi.fn(() => Promise.resolve({ headers: new Headers(headers) } as Response));
 
   beforeEach(() => {
-    vi.stubGlobal("window", { addEventListener, removeEventListener, fetch: vi.fn() } as unknown as Window);
+    vi.stubGlobal("window", { addEventListener, removeEventListener, fetch: vi.fn() });
   });
 
   afterEach(() => {
@@ -224,7 +224,7 @@ describe("registerStaleServerActionListener", () => {
   };
 
   beforeEach(() => {
-    vi.stubGlobal("window", { addEventListener, removeEventListener } as unknown as Window);
+    vi.stubGlobal("window", { addEventListener, removeEventListener });
   });
 
   afterEach(() => {

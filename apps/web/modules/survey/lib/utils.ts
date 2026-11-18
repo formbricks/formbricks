@@ -54,7 +54,7 @@ const buildStatusArchivedClauses = (filterCriteria?: TSurveyFilterCriteria): Pri
     if (hasStatusFilter) {
       // Selected active statuses OR any archived survey (Archived behaves like an extra status).
       return [
-        { OR: [{ status: { in: filterCriteria!.status }, archivedAt: null }, { archivedAt: { not: null } }] },
+        { OR: [{ status: { in: filterCriteria.status }, archivedAt: null }, { archivedAt: { not: null } }] },
       ];
     }
     // Only archived surveys.

@@ -60,7 +60,7 @@ export const AttributeValueInput = ({
       }
     };
 
-    fetchDistinctValues();
+    void fetchDistinctValues();
 
     return () => {
       isCancelled = true;

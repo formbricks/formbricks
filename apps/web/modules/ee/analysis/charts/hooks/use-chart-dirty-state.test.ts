@@ -3,7 +3,6 @@
  */
 import { act, renderHook } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
-import type { TChartConfig } from "@formbricks/types/analysis";
 import type { AnalyticsResponse } from "@/modules/ee/analysis/types/analysis";
 import { useChartDirtyState } from "./use-chart-dirty-state";
 
@@ -25,7 +24,7 @@ const render = (props: Partial<Parameters<typeof useChartDirtyState>[0]> = {}) =
       isSaving: false,
       chartName: "NPS by source",
       chartData: savedChart,
-      chartConfig: {} as TChartConfig,
+      chartConfig: {},
       hasUnadoptedQueryEdit: false,
       ...props,
       ...overrides,

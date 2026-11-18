@@ -704,7 +704,7 @@ describe("scheduleFeedbackSourceReconciliation", () => {
 
   test("skips a survey deleted between the save and the callback", async () => {
     await scheduleFeedbackSourceReconciliation(SURVEY_ID, WORKSPACE_ID, OLD_BLOCKS);
-    vi.mocked(prisma.survey.findUnique).mockResolvedValue(null as never);
+    vi.mocked(prisma.survey.findUnique).mockResolvedValue(null);
 
     await scheduled[0]();
 

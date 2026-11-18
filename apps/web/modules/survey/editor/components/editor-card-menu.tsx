@@ -108,7 +108,7 @@ export const EditorCardMenu = ({
 
     const elementDefaults = getElementDefaults(type, workspace, t);
 
-    const choiceSwitch = getChoiceTypeSwitchUpdate(card as EditorCardMenuSurveyElement, type);
+    const choiceSwitch = getChoiceTypeSwitchUpdate(card, type);
     if (choiceSwitch) {
       updateCard(cardIdx, choiceSwitch);
       return;
@@ -274,13 +274,13 @@ export const EditorCardMenu = ({
                           <DropdownMenuItem
                             key={elementType.id}
                             onClick={() => {
-                              setChangeToType(elementType.id as TSurveyElementTypeEnum);
+                              setChangeToType(elementType.id);
                               if ((card as EditorCardMenuSurveyElement).logic) {
                                 setLogicWarningModal(true);
                                 return;
                               }
 
-                              changeElementType(elementType.id as TSurveyElementTypeEnum);
+                              changeElementType(elementType.id);
                             }}
                             icon={<elementType.icon className="size-4" />}>
                             <span className="ml-2">{elementType.label}</span>
@@ -328,7 +328,7 @@ export const EditorCardMenu = ({
                           onClick={(e) => {
                             e.stopPropagation();
                             if (cardType === "element") {
-                              addElementCardBelow(elementType.id as TSurveyElementTypeEnum);
+                              addElementCardBelow(elementType.id);
                             }
                           }}>
                           <elementType.icon className="size-4" />

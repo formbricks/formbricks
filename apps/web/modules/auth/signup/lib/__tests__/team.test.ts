@@ -1,7 +1,7 @@
 import { MOCK_IDS, MOCK_INVITE, MOCK_TEAM_USER } from "./__mocks__/team-mocks";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
-import { OrganizationRole, Prisma } from "@formbricks/database/prisma";
+import { Prisma } from "@formbricks/database/prisma";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { CreateMembershipInvite } from "@/modules/auth/signup/types/invites";
 import { createTeamMembership, getTeamForOrganization } from "../team";
@@ -96,7 +96,7 @@ describe("Team Management", () => {
       test("creates a team membership with contributor role", async () => {
         const nonAdminInvite: CreateMembershipInvite = {
           ...MOCK_INVITE,
-          role: "member" as OrganizationRole,
+          role: "member",
         };
 
         vi.mocked(prisma.team.findUnique, { partial: true }).mockResolvedValue(mockTeamLookup);

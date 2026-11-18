@@ -49,19 +49,18 @@ const planKey = (surveyId: string, lookupKey: string): string => `${surveyId} ${
  * / `meta` arrive as Prisma `JsonValue`. This narrows once, at the single point where the two types
  * meet, instead of casting at each of the resolver's call sites.
  */
-const asEmbeddedValueResponse = (row: TV3ResponseRow): TEmbeddedValueResponse =>
-  ({
-    id: row.id,
-    surveyId: row.surveyId,
-    createdAt: row.createdAt,
-    updatedAt: row.updatedAt,
-    finished: row.finished,
-    language: row.language,
-    data: row.data,
-    variables: row.variables,
-    ttc: row.ttc,
-    meta: row.meta,
-  }) as unknown as TEmbeddedValueResponse;
+const asEmbeddedValueResponse = (row: TV3ResponseRow): TEmbeddedValueResponse => ({
+  id: row.id,
+  surveyId: row.surveyId,
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+  finished: row.finished,
+  language: row.language,
+  data: row.data,
+  variables: row.variables,
+  ttc: row.ttc,
+  meta: row.meta,
+});
 
 /**
  * `contact.userId` is an attribute row, not a column, so it arrives as a filtered one-element list.

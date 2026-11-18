@@ -11,7 +11,7 @@ lints the whole repo in one run from the root (`pnpm lint:code`); each package/a
 | `./library` `untypedLibrary` | the library tier without type information: eslint recommended + typescript-eslint `recommended`                                  | root `scripts/`, `.github/`, config-oxlint, config-prettier (`scripts/oxlint.config.ts`)                                                                   |
 | `./react`                    | library baseline + react / react-hooks / jsx-a11y recommended, browser globals                                                   | survey-ui, storybook                                                                                                                                       |
 | `./react-hooks`              | lite tier: react-hooks + jsx-a11y recommended, no full react/TS rule sets — move consumers to `./react` when ready               | email, surveys                                                                                                                                             |
-| `./next`                     | `eslint-config-next`'s rules + the eslint/typescript-eslint recommended baselines                                                | apps/web                                                                                                                                                   |
+| `./next`                     | `eslint-config-next`'s rules + eslint recommended + typescript-eslint `recommendedTypeChecked` (type-aware)                      | apps/web                                                                                                                                                   |
 | `./csp-safe`                 | `formbricks/restricted-syntax` selectors for markup-parsing APIs in code that runs on customer pages                             | creatives, js-core, survey-ui, surveys                                                                                                                     |
 | `./testing`                  | `lintFixtures()`: lints snippets at virtual paths through a workspace's real config, for config regression tests                 | `scripts/*-lint.test.ts`, `apps/web/lib/env-access.test.ts`                                                                                                |
 
@@ -47,8 +47,9 @@ Notes:
   `pnpm lint:code` and the pre-commit hook pass. Every linted `.ts`/`.tsx` file must belong to its
   package's tsconfig, and the tsconfig must be valid for TypeScript 7 (no `baseUrl`, no
   `moduleResolution: node10`, explicit `types` for ambient `@types/*`). Plain `.js`/`.cjs`/`.mjs` files get
-  the type-aware rules switched off, and `*.config.*` / declaration files are ignored. apps/web runs no
-  type-aware rules yet (ENG-7329).
+  the type-aware rules switched off, and `*.config.*` / declaration files are ignored. apps/web runs them
+  too; the ones with a backlog left are `off` in `apps/web/oxlint.config.ts`, each with its count
+  (ENG-7329).
 - The React Compiler-era react-hooks rules are implemented natively by oxlint under `react/`, at the
   preset's severity in the `react` and `react-hooks` tiers. `apps/web/oxlint.config.ts` sets them
   separately for the `next` tier, where only `incompatible-library` stays at `warn`.
@@ -61,7 +62,7 @@ Notes:
   backlog can start in `stagedLinesRules`: `scripts/lint-staged-oxlint.mjs` then fails the commit on it
   only inside the staged lines (`STAGED_LINES_RULE_IDS`, empty today), as Sonar judges a PR's new code.
   Every rule except the vitest one skips test files, as Sonar does. The type-aware ones
-  join only the tiers that lint with type information (not apps/web yet).
+  join only the tiers that compose `sonarParityTyped()` (not the `next` tier yet).
   `jsx-a11y/no-aria-hidden-on-focusable` (`a11yParity`) is an error in every tier that loads jsx-a11y.
 - Stale disable directives are errors repo-wide (`reportUnusedDisableDirectives` in the root
   `oxlint.config.ts`). oxlint honours `eslint-disable` comments as well as its own `oxlint-disable`.
