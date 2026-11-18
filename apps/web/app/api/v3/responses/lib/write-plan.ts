@@ -9,6 +9,7 @@ import type { TResponseData, TResponseDataValue, TResponseTtc } from "@formbrick
 import type { InvalidParam } from "@/app/api/v3/lib/response";
 import { calculateTtcTotal } from "@/lib/response/utils";
 import { type TV3AnswerPlan, isPublishableDataKey } from "./answers";
+import { narrowToPublishableValue } from "./resources";
 
 /**
  * UTF-8 byte length, matching how `applyIngestContract` measures a value. `String.length` counts
@@ -123,9 +124,12 @@ export type TV3AnswerDataPlan = TV3WritePlanIssues & { data: TResponseData };
  *
  * `stored` is what makes "replaced wholesale" safe. The contract says an omitted key is removed, and
  * that is honoured for everything the caller can see; the keys it *cannot* see — a hidden field's
- * value, an email-gate `verifiedEmail` — are carried over from `stored` rather than dropped. Without
- * that, the documented round trip (read the detail view, edit one answer, send it back) would
- * silently destroy every hidden-field value on the response, and nothing in the payload would hint
+ * value, an email-gate `verifiedEmail` — are carried over from `stored` rather than dropped. So is
+ * an answer under a publishable key whose stored value the read withholds because it is outside the
+ * published shapes (`narrowToPublishableValue`, e.g. a legacy number array): the caller never saw
+ * it, so its absence from the payload is not a deletion. Sending a new value for that key still
+ * replaces it. Without the carry-over, the documented round trip (read the detail view, edit one
+ * answer, send it back) would silently destroy those values, and nothing in the payload would hint
  * that it had. Pass `undefined` on create, where there is nothing to carry over.
  */
 export const planAnswerDataWrite = (
@@ -140,7 +144,7 @@ export const planAnswerDataWrite = (
   const data = Object.create(null) as TResponseData;
 
   for (const [key, value] of Object.entries(stored ?? {})) {
-    if (!isPublishableDataKey(plan, key)) {
+    if (!isPublishableDataKey(plan, key) || narrowToPublishableValue(value) === undefined) {
       data[key] = value;
     }
   }

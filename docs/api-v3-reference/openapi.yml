@@ -2856,7 +2856,7 @@ paths:
 
         **Round-tripping.** This read returns `data` in the stored, write-shaped form, so the simplest correction is to take it, change one entry and `PATCH` it back. Embedded Data round-trips through `embeddedData[]` instead: the `key` you read is the `key` a write accepts. `answers[]` is the typed view of the same information, offered alongside. Independently of that, a client working from a *list* row — which omits the maps — can still rebuild the write-shaped payload: `answers[]`, `embeddedData[]` and `unresolved[]` together carry every stored key and value **verbatim**, with no need to refetch the survey. Two rules make that guarantee hold, and both are contractual:
 
-        `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls`, `imageUrl` and composite slot values are always the stored bytes, never resolved or reformatted — the resolved forms live in the separate `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data` wholesale, so an omitted key is a deleted answer rather than an unchanged one.
+        `rawKey`, `rawValue`, `valueText`, `valueDate`, `fileUrls`, `imageUrl` and composite slot values are always the stored bytes, never resolved or reformatted — the resolved forms live in the separate `elementLabel`, `optionId`, `optionLabel`, `rowId` and `columnId` fields. And **empty-but-present values are returned, not omitted**: the `""` of an unchecked consent, the `""` of a selected but unfilled Other, a blank composite slot. That second rule matters because `PATCH` replaces `data` wholesale, so an omitted key is a deleted answer rather than an unchanged one. The exception is an answer whose stored value is outside the published `ResponseRawValue` shapes (a legacy format): `data` withholds it, and `PATCH` keeps it unless the request sends a new value for that key.
       tags:
         - V3 Responses
       parameters:
@@ -13226,7 +13226,7 @@ components:
       description: |
         Partially updates a response. Strict at the top level: unknown keys return **400** rather than being ignored, and at least one patchable field must be present.
 
-        `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
+        `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. Keys the read withholds are kept rather than removed: hidden-field and system keys, and an answer whose stored value is outside the shapes `ResponseRawValue` publishes (a legacy format). Sending a new value for such an answer replaces it. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
 
         v3 replaces on purpose, where v1 and v2 merge: a merge makes it impossible to delete an answer, which a correction flow needs.
 

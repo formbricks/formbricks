@@ -5,6 +5,9 @@ description: >
 
 
   `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored.
+  Keys the read withholds are kept rather than removed: hidden-field and system keys, and an answer
+  whose stored value is outside the shapes `ResponseRawValue` publishes (a legacy format). Sending a
+  new value for such an answer replaces it.
   `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the
   payload omits keeps its value rather than being cleared.
 

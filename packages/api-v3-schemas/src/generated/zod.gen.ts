@@ -855,7 +855,7 @@ export type BatchSetResponsesOutcomeRequestZodType = z.infer<typeof zBatchSetRes
 /**
  * Partially updates a response. Strict at the top level: unknown keys return **400** rather than being ignored, and at least one patchable field must be present.
  *
- * `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
+ * `data` is **replaced wholesale**, not deep-merged — send the complete answer map you want stored. Keys the read withholds are kept rather than removed: hidden-field and system keys, and an answer whose stored value is outside the shapes `ResponseRawValue` publishes (a legacy format). Sending a new value for such an answer replaces it. `embeddedData` is the exception and merges by name: it addresses individual fields, so a field the payload omits keeps its value rather than being cleared.
  *
  * v3 replaces on purpose, where v1 and v2 merge: a merge makes it impossible to delete an answer, which a correction flow needs.
  *
