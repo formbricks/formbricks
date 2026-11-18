@@ -111,6 +111,17 @@ describe("createSegment private segments (ENG-6956)", () => {
     expect((await segmentOf(victimSurveyId)).filters).toEqual(VICTIM_FILTERS);
   });
 
+  test("a survey's save takes over its own private segment when no survey is linked to it", async () => {
+    const orphan = await prisma.segment.create({
+      data: { title: attackerSurveyId, isPrivate: true, filters: [], workspaceId },
+    });
+
+    const saved = await createSegment(privateInput(attackerSurveyId, attackerSurveyId, "own@example.com"));
+
+    expect(saved.id).toBe(orphan.id);
+    expect(saved.surveys).toEqual([attackerSurveyId]);
+  });
+
   test("a survey's save does not rewrite a private segment another survey also uses", async () => {
     // Left by older bugs: the victim's targeting also sits on the segment titled with the attacker's id.
     await prisma.segment.create({
