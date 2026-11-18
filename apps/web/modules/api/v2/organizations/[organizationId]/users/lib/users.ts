@@ -20,6 +20,17 @@ import {
   runOwnerGuardedTransaction,
 } from "@/modules/organization/settings/teams/lib/owner-guard";
 
+/**
+ * A user's team memberships, limited to teams of this organization. A user can belong to several
+ * organizations, so an unfiltered `teamUsers` also returns (and, in `updateUser`, would modify) the
+ * teams of the others. Shared by every read here so no query forgets the scope.
+ */
+const teamUsersInOrganization = (organizationId: string) =>
+  ({
+    where: { team: { organizationId } },
+    include: { team: true },
+  }) satisfies Prisma.User$teamUsersArgs;
+
 export const getUsers = async (
   organizationId: string,
   params: TGetUsersFilter
@@ -31,11 +42,7 @@ export const getUsers = async (
       prisma.user.findMany({
         ...query,
         include: {
-          teamUsers: {
-            include: {
-              team: true,
-            },
-          },
+          teamUsers: teamUsersInOrganization(organizationId),
           memberships: {
             select: {
               role: true,
@@ -281,12 +288,7 @@ export const updateUser = async (
             organizationId: true,
           },
         },
-        teamUsers: {
-          where: { team: { organizationId } },
-          include: {
-            team: true,
-          },
-        },
+        teamUsers: teamUsersInOrganization(organizationId),
       },
     });
 

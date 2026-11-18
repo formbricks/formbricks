@@ -24,6 +24,7 @@ import { TSurvey, TSurveyCreateInput, TSurveyQuestionTypeEnum } from "@formbrick
 import { getActionClasses } from "@/lib/actionClass/service";
 import { selectSurveyEmbeddedDataLinks } from "@/lib/embedded-data/survey-fields";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -79,6 +80,11 @@ vi.mock("@/lib/organization/service", () => ({
   subscribeOrganizationMembersToSurveyResponses: vi.fn(),
 }));
 
+// Mock membership lookup: createSurvey checks `createdBy` belongs to the survey's organization.
+vi.mock("@/lib/membership/service", () => ({
+  getMembershipByUserIdOrganizationId: vi.fn(),
+}));
+
 // Mock actionClass service
 vi.mock("@/lib/actionClass/service", () => ({
   getActionClasses: vi.fn(),
@@ -97,6 +103,7 @@ vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
 }));
 
 beforeEach(() => {
+  vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue({ role: "owner" } as never);
   vi.mocked(getIsQuotasEnabled).mockResolvedValue(true);
   vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
   prisma.survey.count.mockResolvedValue(1);
@@ -1887,6 +1894,40 @@ describe("Tests for createSurvey", () => {
       expect(prisma.survey.create).toHaveBeenCalled();
       expect(result.name).toEqual(mockSurveyOutput.name);
       expect(subscribeOrganizationMembersToSurveyResponses).toHaveBeenCalled();
+    });
+
+    test("refuses a createdBy who is not a member of the survey's organization (ENG-7371)", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValueOnce(null);
+
+      await expect(
+        createSurvey(mockWorkspaceId, mockCreateSurveyInput, {
+          creationFacts: WORKSPACE_CREATION_FACTS,
+          targetingActor: OWNER_TARGETING_ACTOR,
+        })
+      ).rejects.toThrow(InvalidInputError);
+
+      expect(getMembershipByUserIdOrganizationId).toHaveBeenCalledWith(
+        mockUserId,
+        mockOrganizationOutput.id,
+        undefined
+      );
+      expect(prisma.survey.create).not.toHaveBeenCalled();
+      expect(subscribeOrganizationMembersToSurveyResponses).not.toHaveBeenCalled();
+    });
+
+    test("does not look up a membership when the survey has no createdBy", async () => {
+      vi.mocked(getOrganizationByWorkspaceId).mockResolvedValueOnce(mockOrganizationOutput);
+      prisma.survey.create.mockResolvedValueOnce({ ...mockSurveyOutput });
+
+      await createSurvey(
+        mockWorkspaceId,
+        { ...mockCreateSurveyInput, createdBy: undefined },
+        { creationFacts: WORKSPACE_CREATION_FACTS, targetingActor: OWNER_TARGETING_ACTOR }
+      );
+
+      expect(getMembershipByUserIdOrganizationId).not.toHaveBeenCalled();
+      expect(prisma.survey.create).toHaveBeenCalled();
     });
 
     test("fills the codes a created survey lacks (ENG-6782)", async () => {

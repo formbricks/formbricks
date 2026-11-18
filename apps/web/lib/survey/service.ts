@@ -52,6 +52,7 @@ import {
 } from "@/lib/embedded-data/reconcile";
 import { selectSurveyEmbeddedDataLinks, withInlinedEmbeddedFields } from "@/lib/embedded-data/survey-fields";
 import { scheduleFeedbackSourceReconciliation } from "@/lib/feedback-source/mapping-reconciliation";
+import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import {
   getOrganizationByWorkspaceId,
   subscribeOrganizationMembersToSurveyResponses,
@@ -1167,6 +1168,22 @@ export const updateSurveyDraft = async (updatedSurvey: TSurvey): Promise<TSurvey
   return updateSurveyInternal(updatedSurvey, true);
 };
 
+/**
+ * `createdBy` is attribution, but it is written as a relation to any user id and then gets the survey
+ * added to that user's notification settings. A caller could therefore attribute a survey to someone
+ * from another organization (leaking their name in the survey list), so it has to be a member of the
+ * organization the survey is created in.
+ */
+const assertSurveyCreatorIsOrganizationMember = async (
+  createdBy: string,
+  organizationId: string,
+  tx?: Prisma.TransactionClient
+): Promise<void> => {
+  if (!(await getMembershipByUserIdOrganizationId(createdBy, organizationId, tx))) {
+    throw new InvalidInputError("createdBy must be a member of this organization");
+  }
+};
+
 const attachSurveyCreatorToCreateData = (
   data: Omit<Prisma.SurveyCreateInput, "workspace">,
   createdBy?: string | null
@@ -1549,6 +1566,10 @@ export const createSurvey = async (
     const organization = await getOrganizationByWorkspaceId(parsedWorkspaceId);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
+    }
+
+    if (createdBy) {
+      await assertSurveyCreatorIsOrganizationMember(createdBy, organization.id, transaction?.tx);
     }
 
     // Create the survey and — for app surveys — its private targeting segment atomically. The survey,
