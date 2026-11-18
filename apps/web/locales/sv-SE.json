@@ -5370,6 +5370,7 @@
         "device": "Enhet",
         "duration_seconds": "Varaktighet (sekunder)",
         "email": "E-post",
+        "ended_before_first_question": "Avslutades före första frågan",
         "error_downloading_attachments": "Ett fel uppstod när nedladdningen av bilagor förbereddes",
         "first_name": "Förnamn",
         "go_to_responses": "Gå till svar",

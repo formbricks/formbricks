@@ -17,7 +17,7 @@ import { ResponseTagsWrapper } from "./components/ResponseTagsWrapper";
 import { SingleResponseCardBody } from "./components/SingleResponseCardBody";
 import { SingleResponseCardHeader } from "./components/SingleResponseCardHeader";
 import { deleteResponse, getResponseCard } from "./lib/api-client";
-import { getResponseCardRows } from "./lib/card-rows";
+import { getResponseCardRows, hasEndedBeforeFirstQuestion } from "./lib/card-rows";
 import { isSubmissionTimeMoreThan5Minutes } from "./util";
 
 export interface SingleResponseCardHeaderRenderProps {
@@ -60,17 +60,27 @@ export const SingleResponseCard = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // What each question shows: an answer, a skipped or aborted run, or Not shown (ENG-6936).
-  const rows = useMemo(
-    () =>
-      getResponseCardRows({
-        elements: getElementsFromBlocks(survey.blocks),
+  // What each question shows: an answer, a skipped or aborted run, or Not shown (ENG-6936). A
+  // response that ended before the first question never showed the welcome card either (ENG-7030).
+  const { rows, endedBeforeFirstQuestion } = useMemo(() => {
+    const elements = getElementsFromBlocks(survey.blocks);
+    const endedBeforeFirstQuestion = hasEndedBeforeFirstQuestion({
+      elements,
+      data: response.data,
+      ttc: response.ttc,
+      finished: response.finished,
+    });
+    return {
+      endedBeforeFirstQuestion,
+      rows: getResponseCardRows({
+        elements,
         data: response.data,
         finished: response.finished,
         notShownElementIds: getNotShownElementIds(response.notShown, survey.blocks),
+        endedBeforeFirstQuestion,
       }),
-    [response.finished, response.data, response.notShown, survey.blocks]
-  );
+    };
+  }, [response.finished, response.data, response.ttc, response.notShown, survey.blocks]);
 
   const handleDeleteResponse = async () => {
     setIsDeleting(true);
@@ -126,7 +136,13 @@ export const SingleResponseCard = ({
           />
         )}
 
-        <SingleResponseCardBody survey={survey} response={response} rows={rows} locale={locale} />
+        <SingleResponseCardBody
+          survey={survey}
+          response={response}
+          rows={rows}
+          endedBeforeFirstQuestion={endedBeforeFirstQuestion}
+          locale={locale}
+        />
 
         <ResponseTagsWrapper
           key={response.id}

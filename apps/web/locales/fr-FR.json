@@ -5370,6 +5370,7 @@
         "device": "Dispositif",
         "duration_seconds": "Durée (secondes)",
         "email": "Email",
+        "ended_before_first_question": "Terminé avant la première question",
         "error_downloading_attachments": "Une erreur s'est produite lors de la préparation du téléchargement des pièces jointes",
         "first_name": "Prénom",
         "go_to_responses": "Aller aux réponses",

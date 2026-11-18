@@ -30,6 +30,8 @@ interface SingleResponseCardBodyProps {
   response: TResponseWithQuotas;
   /** One per element of the survey, from `getResponseCardRows`. */
   rows: TResponseCardRow[];
+  /** From `hasEndedBeforeFirstQuestion`: the respondent never saw the welcome card (ENG-7030). */
+  endedBeforeFirstQuestion: boolean;
   locale: TUserLocale;
 }
 
@@ -37,6 +39,7 @@ export const SingleResponseCardBody = ({
   survey,
   response,
   rows,
+  endedBeforeFirstQuestion,
   locale,
 }: Readonly<SingleResponseCardBodyProps>) => {
   const elements = getElementsFromBlocks(survey.blocks);
@@ -72,7 +75,7 @@ export const SingleResponseCardBody = ({
 
   return (
     <div className="p-6">
-      {survey.welcomeCard.enabled && (
+      {survey.welcomeCard.enabled && !endedBeforeFirstQuestion && (
         <ElementSkip
           skippedElements={[]}
           elements={elements}
