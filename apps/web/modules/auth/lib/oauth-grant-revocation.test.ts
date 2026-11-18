@@ -22,6 +22,7 @@ import {
   revokeOAuthConsentBeforeHandler,
   revokeOAuthConsentGrant,
 } from "./mcp-grant-revocation";
+import { readConsentPreimages } from "./oauth-consent-writes";
 import {
   requireOAuthConsentOnRefreshAfterHandler,
   revokeTokensBeyondConsentAfterHandler,
@@ -93,6 +94,8 @@ vi.mock("@better-auth/core/context", () => ({
 vi.mock("./oauth-consent-writes", () => ({
   readOwnConsentWriteCheck: async () => (consent: { updatedAt: Date }) =>
     consent.updatedAt.getTime() >= Math.floor(Date.now() / 1000) * 1000 - 1000,
+  // What the provider's writes replaced: nothing unless a test says so, so the snapshot decides.
+  readConsentPreimages: vi.fn(async () => ({ replaced: [], createdIds: new Set<string>() })),
 }));
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -1402,6 +1405,50 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
           data: expect.objectContaining({ scopes: WIDE_SCOPES, updatedAt: PREVIOUS.updatedAt }),
         });
         expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
+      });
+
+      // Another tab saved between this request's snapshot and its write: what the write replaced is put
+      // back, not what the snapshot read.
+      test("puts back what the provider's write replaced, over what the snapshot read", async () => {
+        vi.mocked(resolveMcpGrantSelection).mockResolvedValue({
+          status: "unavailable",
+          field: "workspaceIds",
+        });
+        const replacedByWrite = { ...PREVIOUS, scopes: NARROW, updatedAt: new Date("2026-10-02T00:00:00Z") };
+        vi.mocked(readConsentPreimages).mockResolvedValueOnce({
+          replaced: [replacedByWrite],
+          createdIds: new Set(),
+        });
+
+        await approveWith([PREVIOUS], { access: "workspaces", workspaceIds: ["ws-foreign"] });
+
+        expect(mocks.tx.oauthConsent.update).toHaveBeenCalledWith({
+          where: { id: "consent-1" },
+          data: {
+            scopes: NARROW,
+            resources: [RESOURCE],
+            requestedUserInfoClaims: [],
+            updatedAt: replacedByWrite.updatedAt,
+          },
+        });
+      });
+
+      test("deletes a row the provider's write created, though the snapshot read it", async () => {
+        vi.mocked(resolveMcpGrantSelection).mockResolvedValue({
+          status: "unavailable",
+          field: "workspaceIds",
+        });
+        vi.mocked(readConsentPreimages).mockResolvedValueOnce({
+          replaced: [],
+          createdIds: new Set(["consent-1"]),
+        });
+
+        await approveWith([PREVIOUS], { access: "workspaces", workspaceIds: ["ws-foreign"] });
+
+        expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({
+          where: { userId: "user-1", clientId: "client-1", id: { in: ["consent-1"] } },
+        });
+        expect(mocks.tx.oauthConsent.update).not.toHaveBeenCalled();
       });
 
       test("restores the rows the snapshot holds, deletes those it doesn't, and recreates none", async () => {

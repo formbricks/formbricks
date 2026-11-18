@@ -1,7 +1,11 @@
 import type { BetterAuthOptions } from "@better-auth/core";
 import type { DBAdapter } from "@better-auth/core/db/adapter";
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { readOwnConsentWriteCheck, recordOAuthConsentWrites } from "./oauth-consent-writes";
+import {
+  readConsentPreimages,
+  readOwnConsentWriteCheck,
+  recordOAuthConsentWrites,
+} from "./oauth-consent-writes";
 
 const state = vi.hoisted(() => ({ active: true, values: new Map<object, unknown>() }));
 
@@ -76,6 +80,42 @@ describe("recordOAuthConsentWrites", () => {
     await adapter.update({ model: "oauthConsent", where: [{ field: "id", value: "gone" }], update: {} });
 
     expect((await readOwnConsentWriteCheck())(row("consent-1"))).toBe(false);
+  });
+
+  // What the update replaced, read just before it: another tab's approval saved since the request began.
+  test("records what an update replaced, read right before it, and no preimage for a create", async () => {
+    const before = {
+      ...row("consent-2", new Date("2026-11-17T09:59:00.000Z")),
+      scopes: ["openid", "surveys:read"],
+      resources: ["https://app/api/mcp"],
+      requestedUserInfoClaims: [],
+    };
+    inner.findOne.mockResolvedValueOnce(before);
+    inner.update.mockResolvedValueOnce(row("consent-2"));
+    const where = [{ field: "id", value: "consent-2" }];
+
+    await adapter.update({ model: "oauthConsent", where, update: {} });
+    await adapter.create({ model: "oauthConsent", data: {} });
+
+    expect(inner.findOne).toHaveBeenCalledWith({ model: "oauthConsent", where });
+    expect(inner.findOne.mock.invocationCallOrder[0]).toBeLessThan(inner.update.mock.invocationCallOrder[0]);
+    const { replaced, createdIds } = await readConsentPreimages();
+    expect(replaced).toEqual([
+      {
+        id: "consent-2",
+        scopes: ["openid", "surveys:read"],
+        resources: ["https://app/api/mcp"],
+        requestedUserInfoClaims: [],
+        updatedAt: before.updatedAt,
+      },
+    ]);
+    expect([...createdIds]).toEqual(["consent-1"]);
+  });
+
+  test("reads no preimage for another model's update", async () => {
+    await adapter.update({ model: "user", where: [{ field: "id", value: "u" }], update: {} });
+
+    expect(inner.findOne).not.toHaveBeenCalled();
   });
 
   test("records nothing, and names nothing, outside a request", async () => {

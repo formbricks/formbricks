@@ -52,7 +52,11 @@ import {
   lockConsents,
   readConsentedScopes,
 } from "./oauth-consent-rows";
-import { readOwnConsentWriteCheck } from "./oauth-consent-writes";
+import {
+  type TConsentPreimage,
+  readConsentPreimages,
+  readOwnConsentWriteCheck,
+} from "./oauth-consent-writes";
 import { isIssuedBeforeRevocation, readOAuthRevocationTime } from "./oauth-revocation-marker";
 
 /**
@@ -301,9 +305,10 @@ const consentChange = async (ctx: AuthHookContext, userId: string): Promise<TCon
     const bodyScope = (ctx.body as { scope?: unknown }).scope;
     const approved = (typeof bodyScope === "string" ? bodyScope : query.get("scope"))?.split(" ") ?? [];
     const snapshot = await consentSnapshot.get();
+    const snapshotRows = snapshot?.userId === userId && snapshot.clientId === clientId ? snapshot.rows : null;
     return {
       savesGrant: accepted,
-      previousConsents: snapshot?.userId === userId && snapshot.clientId === clientId ? snapshot.rows : null,
+      previousConsents: overlayConsentPreimages(snapshotRows, await readConsentPreimages()),
       chosenGrant: getApprovedMcpGrant(ctx),
       target: { clientId },
       isLatestWrite: (consent) => wrote(consent) && sameScopes(consent.scopes, approved),
@@ -450,12 +455,24 @@ const restoreMcpGrantRelationships = async (userId: string, change: TConsentChan
 };
 
 /** A consent row as the provider writes it on Allow: every column its write sets, to put back. */
-type TConsentSnapshotRow = {
-  id: string;
-  scopes: string[];
-  resources: string[];
-  requestedUserInfoClaims: string[];
-  updatedAt: Date;
+type TConsentSnapshotRow = TConsentPreimage;
+
+/**
+ * The consent rows to put back if the approval fails: the request's snapshot, with each row this request
+ * updated replaced by what the update itself replaced (read just before the write, `oauth-consent-writes.ts`)
+ * and each row it created dropped, so the restore deletes it. A tab's approval that saved between the
+ * snapshot and this request's write is then put back, not undone. `null` when there is neither a snapshot
+ * nor a recorded write: nothing names what to put back.
+ */
+const overlayConsentPreimages = (
+  snapshotRows: ReadonlyArray<TConsentSnapshotRow> | null,
+  { replaced, createdIds }: Awaited<ReturnType<typeof readConsentPreimages>>
+): TConsentSnapshotRow[] | null => {
+  if (!snapshotRows && replaced.length === 0 && createdIds.size === 0) return null;
+  const byId = new Map((snapshotRows ?? []).map((row) => [row.id, row]));
+  for (const row of replaced) byId.set(row.id, row);
+  for (const id of createdIds) byId.delete(id);
+  return [...byId.values()];
 };
 
 const CONSENT_SNAPSHOT_SELECT = {
