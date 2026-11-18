@@ -37,6 +37,7 @@ import {
   updateSurveyInput,
 } from "./__mock__/survey.mock";
 import {
+  SurveySegmentChangedError,
   createSurvey,
   getSurvey,
   getSurveyCount,
@@ -859,7 +860,7 @@ describe("Tests for updateSurvey", () => {
           { ...updateSurveyInput, status: "draft", type: "app", segment: OWN_PRIVATE_SEGMENT } as never,
           true
         )
-      ).rejects.toThrow(InvalidInputError);
+      ).rejects.toThrow(SurveySegmentChangedError);
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
@@ -981,7 +982,7 @@ describe("Tests for updateSurvey", () => {
           { ...updateSurveyInput, status: "draft", type: "link", segment: null } as never,
           true
         )
-      ).rejects.toThrow(InvalidInputError);
+      ).rejects.toThrow(SurveySegmentChangedError);
       expect(prisma.segment.deleteMany).not.toHaveBeenCalled();
       expect(prisma.survey.update).not.toHaveBeenCalled();
     });
@@ -2842,15 +2843,12 @@ describe("Tests for loadNewSegmentInSurvey", () => {
     testInputValidation(loadNewSegmentInSurvey, "123#", "123#");
 
     // ENG-6957: re-loading the survey's current segment writes nothing.
-    test("re-loading the survey's current segment changes nothing", async () => {
-      const current = {
-        ...mockSurveyOutput,
-        segment: { id: mockNewSegmentId, isPrivate: true, surveys: [] },
-      };
-      prisma.survey.findUnique.mockResolvedValueOnce(current as never);
+    test("re-loading the survey's current segment returns it and writes nothing", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
 
-      await loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId);
+      const result = await loadNewSegmentInSurvey(updateSurveyInput.id, OWN_PRIVATE_SEGMENT.id);
 
+      expect(result.segment?.id).toBe(OWN_PRIVATE_SEGMENT.id);
       expect(prisma.segment.findFirst).not.toHaveBeenCalled();
       expect(prisma.survey.update).not.toHaveBeenCalled();
       expect(prisma.segment.deleteMany).not.toHaveBeenCalled();

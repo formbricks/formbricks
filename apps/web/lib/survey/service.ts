@@ -1382,8 +1382,19 @@ const assertTargetingAddsNoHiddenSurvey = async (
 /** ENG-6957: a private segment belongs to its own survey, so no other survey may be linked to it. */
 const SHARED_SEGMENT_ONLY_MESSAGE = "A survey can only be linked to a shared segment";
 
-/** ENG-6957: a save refuses to act on a segment that changed since the survey was read. */
-const SEGMENT_CHANGED_MESSAGE = "The survey's segment changed while saving. Reload and try again.";
+/**
+ * ENG-6957: a save refuses to act on a segment that changed since the survey was read. A 409: the request
+ * is fine, the survey's state moved under it. Listed in `EXPECTED_ERROR_NAMES`, so server actions and the
+ * v1 API surface its message.
+ */
+export class SurveySegmentChangedError extends Error {
+  readonly statusCode = 409;
+
+  constructor() {
+    super("The survey's segment changed while saving. Reload and try again.");
+    this.name = "SurveySegmentChangedError";
+  }
+}
 
 /**
  * ENG-6957: whether `segment` is the survey's own private segment: the one it is targeted with, private,
@@ -1447,7 +1458,7 @@ const saveAppSurveySegment = async (
       throw new Error("Error updating survey");
     }
     if (written.count === 0) {
-      throw new InvalidInputError(SEGMENT_CHANGED_MESSAGE);
+      throw new SurveySegmentChangedError();
     }
     return;
   }
@@ -1491,7 +1502,7 @@ const unlinkSurveySegment = async (
     data: { segmentId: null },
   });
   if (unlinked.count === 0) {
-    throw new InvalidInputError(SEGMENT_CHANGED_MESSAGE);
+    throw new SurveySegmentChangedError();
   }
   if (survey.segment.isPrivate) {
     // `isPrivate` again: a segment made shared since the survey was read is kept.
