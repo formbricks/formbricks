@@ -874,15 +874,12 @@ const applySurveySegmentChanges = async ({
   skipValidation: boolean;
   options: TUpdateSurveyOptions;
 }): Promise<void> => {
-  const surveyId = currentSurvey.id;
-  if (segment) {
-    if (type === "app") {
-      await updateAppSurveySegment(segment, currentSurvey, skipValidation, options);
-    } else {
-      await unlinkSurveySegment(currentSurvey);
-    }
-  } else if (type === "app") {
-    await ensureAppSurveySegment(currentSurvey, surveyId);
+  if (type !== "app") {
+    await unlinkSurveySegment(currentSurvey);
+  } else if (segment) {
+    await updateAppSurveySegment(segment, currentSurvey, skipValidation, options);
+  } else {
+    await ensureAppSurveySegment(currentSurvey, currentSurvey.id);
   }
 };
 
@@ -1059,10 +1056,12 @@ export const updateSurveyInternal = async (
       await assertEmbeddedFieldsAreStorable(embeddedFields, currentSurvey.workspaceId);
     }
 
-    // ENG-1749 sibling: the segment block below updates/deletes by segment.id directly. Ensure the
-    // segment belongs to this survey's workspace so a caller cannot mutate or delete another
-    // tenant's segment by supplying its id. Mirrors the create path guard.
-    await assertSurveySegmentBelongsToWorkspace(currentSurvey.workspaceId, segment);
+    // ENG-1749 sibling: an app save acts on segment.id. Ensure the segment belongs to this survey's
+    // workspace so a caller cannot touch another tenant's segment by supplying its id. Mirrors the
+    // create path guard. Any other save ignores segment.id and unlinks the stored segment (ENG-6957).
+    if (updatedSurvey.type === "app") {
+      await assertSurveySegmentBelongsToWorkspace(currentSurvey.workspaceId, segment);
+    }
 
     // ENG-1749 sibling: the languages block below links languages by language.id. Ensure every
     // referenced language belongs to this survey's workspace so a caller cannot attach another
@@ -1383,6 +1382,9 @@ const assertTargetingAddsNoHiddenSurvey = async (
 /** ENG-6957: a private segment belongs to its own survey, so no other survey may be linked to it. */
 const SHARED_SEGMENT_ONLY_MESSAGE = "A survey can only be linked to a shared segment";
 
+/** ENG-6957: a save refuses to act on a segment that changed since the survey was read. */
+const SEGMENT_CHANGED_MESSAGE = "The survey's segment changed while saving. Reload and try again.";
+
 /**
  * ENG-6957: whether `segment` is the survey's own private segment: the one it is targeted with, private,
  * and used by no other survey. It is the only segment a survey save writes. A shared segment changes the
@@ -1435,6 +1437,8 @@ const saveAppSurveySegment = async (
           workspaceId: survey.workspaceId,
           isPrivate: true,
           surveys: { some: { id: survey.id }, every: { id: survey.id } },
+          // The filters the visibility check compared against: a segment changed since is left alone.
+          filters: { equals: survey.segment.filters as unknown as Prisma.InputJsonValue },
         },
         data: { filters: segment.filters },
       });
@@ -1443,7 +1447,7 @@ const saveAppSurveySegment = async (
       throw new Error("Error updating survey");
     }
     if (written.count === 0) {
-      throw new InvalidInputError("The survey's segment changed while saving. Reload and try again.");
+      throw new InvalidInputError(SEGMENT_CHANGED_MESSAGE);
     }
     return;
   }
@@ -1481,11 +1485,14 @@ const unlinkSurveySegment = async (
   survey: Pick<TSurvey, "id" | "workspaceId" | "segment">
 ): Promise<void> => {
   if (!survey.segment) return;
-  await prisma.survey.update({
-    where: { id: survey.id, workspaceId: survey.workspaceId },
-    data: { segment: { disconnect: true } },
-    select: { id: true },
+  // Only while the survey is still on the segment it was read with.
+  const unlinked = await prisma.survey.updateMany({
+    where: { id: survey.id, workspaceId: survey.workspaceId, segmentId: survey.segment.id },
+    data: { segmentId: null },
   });
+  if (unlinked.count === 0) {
+    throw new InvalidInputError(SEGMENT_CHANGED_MESSAGE);
+  }
   if (survey.segment.isPrivate) {
     // `isPrivate` again: a segment made shared since the survey was read is kept.
     await prisma.segment.deleteMany({
@@ -1870,10 +1877,14 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
 
     const currentSurveySegment = currentSurvey.segment;
 
-    const newSegment = await prisma.segment.findUnique({
-      where: {
-        id: newSegmentId,
-      },
+    // Re-loading the survey's current segment changes nothing (ENG-6957).
+    if (currentSurveySegment?.id === newSegmentId) {
+      return currentSurvey;
+    }
+
+    const newSegment = await prisma.segment.findFirst({
+      where: { id: newSegmentId, workspaceId: currentSurvey.workspaceId },
+      select: { isPrivate: true },
     });
 
     if (!newSegment) {
@@ -1882,35 +1893,30 @@ export const loadNewSegmentInSurvey = async (surveyId: string, newSegmentId: str
 
     // ENG-6957: a private segment belongs to its own survey. Linking another survey to it would let that
     // survey read its targeting, and would stop its own survey's saves from writing it.
-    if (newSegment.isPrivate && newSegment.id !== currentSurveySegment?.id) {
+    if (newSegment.isPrivate) {
       throw new InvalidInputError(SHARED_SEGMENT_ONLY_MESSAGE);
     }
 
     const prismaSurvey = await prisma.survey.update({
-      where: {
-        id: surveyId,
-      },
+      where: { id: surveyId, workspaceId: currentSurvey.workspaceId },
       select: selectSurvey,
       data: {
         segment: {
-          // `isPrivate: false` repeats the check in the write, unless the survey keeps its own segment.
-          connect:
-            newSegment.id === currentSurveySegment?.id
-              ? { id: newSegmentId }
-              : { id: newSegmentId, isPrivate: false, workspaceId: currentSurvey.workspaceId },
+          // `isPrivate` and `workspaceId` repeat the checks in the write.
+          connect: { id: newSegmentId, isPrivate: false, workspaceId: currentSurvey.workspaceId },
         },
       },
     });
 
-    if (
-      currentSurveySegment &&
-      currentSurveySegment.id !== newSegmentId &&
-      currentSurveySegment.isPrivate &&
-      currentSurveySegment.title === currentSurvey.id
-    ) {
+    if (currentSurveySegment?.isPrivate && currentSurveySegment.title === currentSurvey.id) {
       // Only once no survey uses it any more (ENG-6957).
       await prisma.segment.deleteMany({
-        where: { id: currentSurveySegment.id, isPrivate: true, surveys: { none: {} } },
+        where: {
+          id: currentSurveySegment.id,
+          workspaceId: currentSurvey.workspaceId,
+          isPrivate: true,
+          surveys: { none: {} },
+        },
       });
     }
 

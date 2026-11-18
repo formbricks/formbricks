@@ -655,6 +655,7 @@ describe("Tests for updateSurvey", () => {
       await expect(
         updateSurvey({
           ...updateSurveyInput,
+          type: "app",
           segment: {
             id: "clseg123456789012345678901",
             title: "Segment",
@@ -773,6 +774,7 @@ describe("Tests for updateSurvey", () => {
           workspaceId: updateSurveyInput.workspaceId,
           isPrivate: true,
           surveys: { some: { id: updateSurveyInput.id }, every: { id: updateSurveyInput.id } },
+          filters: { equals: [] },
         },
         data: { filters: [] },
       });
@@ -936,9 +938,7 @@ describe("Tests for updateSurvey", () => {
     // client sent, and keeps a private segment another survey still uses.
     test("leaving app targeting unlinks the stored segment and deletes it only when unused", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
-      prisma.segment.findUnique.mockResolvedValueOnce({
-        workspaceId: updateSurveyInput.workspaceId,
-      } as never);
+      prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 });
       prisma.survey.update.mockResolvedValue({ ...mockSurveyOutput, status: "draft" } as never);
 
       await updateSurveyInternal(
@@ -951,10 +951,15 @@ describe("Tests for updateSurvey", () => {
         true
       );
 
-      expect(prisma.survey.update).toHaveBeenCalledWith({
-        where: { id: updateSurveyInput.id, workspaceId: updateSurveyInput.workspaceId },
-        data: { segment: { disconnect: true } },
-        select: { id: true },
+      // The client's segment id is not even looked up: the stored segment decides.
+      expect(prisma.segment.findUnique).not.toHaveBeenCalled();
+      expect(prisma.survey.updateMany).toHaveBeenCalledWith({
+        where: {
+          id: updateSurveyInput.id,
+          workspaceId: updateSurveyInput.workspaceId,
+          segmentId: OWN_PRIVATE_SEGMENT.id,
+        },
+        data: { segmentId: null },
       });
       expect(prisma.segment.deleteMany).toHaveBeenCalledWith({
         where: {
@@ -965,6 +970,20 @@ describe("Tests for updateSurvey", () => {
         },
       });
       expect(prisma.segment.delete).not.toHaveBeenCalled();
+    });
+
+    test("leaving app targeting refuses when the survey moved to another segment since it was read", async () => {
+      prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
+      prisma.survey.updateMany.mockResolvedValueOnce({ count: 0 });
+
+      await expect(
+        updateSurveyInternal(
+          { ...updateSurveyInput, status: "draft", type: "link", segment: null } as never,
+          true
+        )
+      ).rejects.toThrow(InvalidInputError);
+      expect(prisma.segment.deleteMany).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
     });
 
     // ENG-2305: the draft save (skipValidation=true) deliberately skips full semantic validation,
@@ -1419,23 +1438,49 @@ describe("Tests for updateSurvey", () => {
     test("refuses a shared field with no row id before it writes anything", async () => {
       // `ZLinkedEmbeddedField` lets a shared entry omit `field.id`, and the reconcile refuses it —
       // but inside its transaction, which does not cover the segment writes above. Spending the
-      // refusal first is what keeps a rejected update from half-applying.
-      prisma.survey.findUnique.mockResolvedValueOnce(mockSurveyOutput);
+      // refusal first is what keeps a rejected update from half-applying. The save carries a segment
+      // edit the survey could write (its own private segment), so a segment write before the refusal
+      // would show up below.
+      prisma.survey.findUnique.mockResolvedValueOnce(draftSurveyWithOwnPrivateSegment());
+      vi.mocked(prisma.segment.findUnique, { partial: true }).mockResolvedValue({
+        workspaceId: updateSurveyInput.workspaceId,
+      });
+      const pendingFilters = [
+        {
+          id: "clf01234567890123456789099",
+          connector: null,
+          resource: {
+            id: "clf11234567890123456789099",
+            root: { type: "attribute", contactAttributeKey: "email" },
+            qualifier: { operator: "equals" },
+            value: "someone@example.com",
+          },
+        },
+      ];
 
       await expect(
-        updateWith([
+        updateSurveyInternal(
           {
-            field: {
-              key: "plan_tier",
-              name: "Plan tier",
-              source: "ingested" as const,
-              dataType: "string" as const,
-              defaultValue: null,
-              locked: false,
-            },
-            link: { storageKey: "plan_tier" },
-          },
-        ])
+            ...updateSurveyInput,
+            status: "draft",
+            type: "app",
+            segment: { ...OWN_PRIVATE_SEGMENT, filters: pendingFilters },
+            embeddedFields: [
+              {
+                field: {
+                  key: "plan_tier",
+                  name: "Plan tier",
+                  source: "ingested" as const,
+                  dataType: "string" as const,
+                  defaultValue: null,
+                  locked: false,
+                },
+                link: { storageKey: "plan_tier" },
+              },
+            ],
+          } as never,
+          true
+        )
       ).rejects.toThrow(InvalidInputError);
 
       expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -2697,7 +2742,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
         ...mockSurveyOutput,
       });
       // Mock segment exists
-      prisma.segment.findUnique.mockResolvedValueOnce({
+      vi.mocked(prisma.segment.findFirst, { partial: true }).mockResolvedValueOnce({
         id: mockNewSegmentId,
         workspaceId: mockWorkspaceId,
         filters: [],
@@ -2714,7 +2759,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
       });
       const result = await loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId);
       expect(prisma.survey.update).toHaveBeenCalledWith({
-        where: { id: mockSurveyId },
+        where: { id: mockSurveyId, workspaceId: mockSurveyOutput.workspaceId },
         data: {
           segment: {
             connect: {
@@ -2753,7 +2798,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
       } as Survey);
 
       // Mock the shared segment being loaded
-      prisma.segment.findUnique.mockResolvedValueOnce({
+      vi.mocked(prisma.segment.findFirst, { partial: true }).mockResolvedValueOnce({
         ...mockSegment,
         id: mockNewSegmentId,
         title: "Test Segment",
@@ -2778,7 +2823,12 @@ describe("Tests for loadNewSegmentInSurvey", () => {
 
       // ENG-6957: deleted only once no survey uses it any more.
       expect(prisma.segment.deleteMany).toHaveBeenCalledWith({
-        where: { id: mockCurrentSegmentId, isPrivate: true, surveys: { none: {} } },
+        where: {
+          id: mockCurrentSegmentId,
+          workspaceId: mockSurveyOutput.workspaceId,
+          isPrivate: true,
+          surveys: { none: {} },
+        },
       });
       expect(prisma.segment.delete).not.toHaveBeenCalled();
     });
@@ -2786,6 +2836,21 @@ describe("Tests for loadNewSegmentInSurvey", () => {
 
   describe("Sad Path", () => {
     testInputValidation(loadNewSegmentInSurvey, "123#", "123#");
+
+    // ENG-6957: re-loading the survey's current segment writes nothing.
+    test("re-loading the survey's current segment changes nothing", async () => {
+      const current = {
+        ...mockSurveyOutput,
+        segment: { id: mockNewSegmentId, isPrivate: true, surveys: [] },
+      };
+      prisma.survey.findUnique.mockResolvedValueOnce(current as never);
+
+      await loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId);
+
+      expect(prisma.segment.findFirst).not.toHaveBeenCalled();
+      expect(prisma.survey.update).not.toHaveBeenCalled();
+      expect(prisma.segment.deleteMany).not.toHaveBeenCalled();
+    });
 
     test("throws ResourceNotFoundError when survey not found", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce(null);
@@ -2798,7 +2863,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
     // ENG-6957: a private segment belongs to its own survey.
     test("refuses to load another survey's private segment", async () => {
       prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput });
-      prisma.segment.findUnique.mockResolvedValueOnce({
+      vi.mocked(prisma.segment.findFirst, { partial: true }).mockResolvedValueOnce({
         id: mockNewSegmentId,
         workspaceId: mockWorkspaceId,
         filters: [],
@@ -2821,7 +2886,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
       });
 
       // Segment not found
-      prisma.segment.findUnique.mockResolvedValueOnce(null);
+      vi.mocked(prisma.segment.findFirst, { partial: true }).mockResolvedValueOnce(null);
 
       await expect(loadNewSegmentInSurvey(mockSurveyId, mockNewSegmentId)).rejects.toThrow(
         ResourceNotFoundError
@@ -2835,7 +2900,7 @@ describe("Tests for loadNewSegmentInSurvey", () => {
       });
 
       //   // Mock segment exists
-      prisma.segment.findUnique.mockResolvedValueOnce({
+      vi.mocked(prisma.segment.findFirst, { partial: true }).mockResolvedValueOnce({
         id: mockNewSegmentId,
         workspaceId: mockWorkspaceId,
         filters: [],
