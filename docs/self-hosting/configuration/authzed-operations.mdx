@@ -406,7 +406,8 @@ formbricks-authzed outbox replay
 45-second critical thresholds (and for any dead letter), and `1` for an operational failure. `drain` processes
 revocations first and stops at the first batch that delivers nothing; a partially delivered batch is normal,
 because a failure is charged only to the events it is attributable to. `replay` resets unresolved dead letters
-so the normal idempotent reconcilers can retry them; investigate the cause before replaying. Dead-lettering
+of the target types this version delivers, so the normal idempotent reconcilers can retry them (one of a type it
+doesn't know stays as it is, with its error code, and shows under `unknownType` in `status`); investigate the cause before replaying. Dead-lettering
 requires ten solitary failures carrying a code an event can actually cause, so no SpiceDB outage — unreachable,
 rejected credential or internal error — produces one, and a dead letter always means PostgreSQL and SpiceDB
 genuinely disagree. The six-hour audit
@@ -631,8 +632,8 @@ The database migration adds the survey trigger while containers of the previous 
 delivering outbox events. Those do not know survey events yet and dead-letter them on the spot instead of
 retrying. A dead-lettered survey revocation makes every enforced authorization check fail closed until it is
 replayed, so do not wait for the scheduled audit. Run `replay` only after the rollout has finished, since an
-old container would dead-letter the event again. `replay` resets every unresolved dead letter, and `status`
-only counts them, so check what they are first:
+old container would dead-letter the event again. `replay` resets every unresolved dead letter of a type the new version delivers, and
+`status` only counts them, so check what they are first:
 
 ```sql
 SELECT "targetType", "lastErrorCode", COUNT(*) FROM "AuthzedProjectionOutbox"

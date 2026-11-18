@@ -107,8 +107,8 @@ Expect `status: ready`. Run `replay` only after the rollout has finished, and ne
 image: its `drain` dead-letters the replayed `mcp_grant` events again on the spot, yet prints
 `deadLettered: 0`, because it dead-letters an event of a type it doesn't know while claiming it, before it
 counts anything. Trust `upgrade check`
-or `outbox status` from the new image, not that count. `replay` resets every unresolved dead letter, which is
-why you check them first.
+or `outbox status` from the new image, not that count. `replay` resets every unresolved dead letter of a type
+the new version delivers, `mcp_grant` included, which is why you check them first.
 
 From this release on, a container leaves an outbox event of a type it doesn't know pending for a newer
 container instead of dead-lettering it, so the next new type can't cause this.
