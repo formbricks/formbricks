@@ -37,6 +37,7 @@ export const SSOOptions = ({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      // eslint-disable-next-line react/set-state-in-effect -- localStorage exists only after hydration; the server renders the default
       setLastLoggedInWith(localStorage.getItem(FORMBRICKS_LOGGED_IN_WITH_LS) || "");
     }
   }, []);

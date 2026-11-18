@@ -52,9 +52,15 @@ export const PrettyUrlTab = ({ publicDomain, isReadOnly = false }: PrettyUrlTabP
 
   const { handleSubmit, reset } = form;
 
-  // Sync isEditing state and form with survey.slug changes
-  useEffect(() => {
+  // Sync isEditing state with survey.slug changes, during render
+  const [syncedSlug, setSyncedSlug] = useState(survey.slug);
+  if (syncedSlug !== survey.slug) {
+    setSyncedSlug(survey.slug);
     setIsEditing(!survey.slug);
+  }
+
+  // ...and the form, which lives outside React state
+  useEffect(() => {
     reset({ slug: survey.slug || "" });
   }, [survey.slug, reset]);
 

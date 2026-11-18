@@ -60,7 +60,7 @@ export const CustomScriptsForm: React.FC<CustomScriptsFormProps> = ({ workspace,
     <>
       <FormProvider {...form}>
         <form className="flex w-full flex-col gap-y-4" onSubmit={form.handleSubmit(updateCustomScripts)}>
-          <Alert variant="warning" className="flex items-start gap-2" role="status">
+          <Alert variant="warning" className="flex items-start gap-2" alertRole="status">
             <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" />
             <AlertDescription>{t("workspace.general.custom_scripts_warning")}</AlertDescription>
           </Alert>
@@ -103,7 +103,7 @@ export const CustomScriptsForm: React.FC<CustomScriptsFormProps> = ({ workspace,
         </form>
       </FormProvider>
       {isReadOnly && (
-        <Alert variant="warning" className="mt-4" role="status">
+        <Alert variant="warning" className="mt-4" alertRole="status">
           <AlertDescription>
             {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
           </AlertDescription>

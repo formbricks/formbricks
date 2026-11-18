@@ -792,7 +792,7 @@ interface NoFeedbackDirectoryAlertProps {
 
 const NoFeedbackDirectoryAlert = ({ organizationId, t }: Readonly<NoFeedbackDirectoryAlertProps>) => {
   return (
-    <Alert variant="error" size="small" role="status">
+    <Alert variant="error" size="small" alertRole="status">
       <div>
         <p>{t("workspace.unify.no_feedback_directory_available")}</p>
         {organizationId && (

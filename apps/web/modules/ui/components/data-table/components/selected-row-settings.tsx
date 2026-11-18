@@ -2,7 +2,7 @@
 
 import { Table } from "@tanstack/react-table";
 import { ArrowDownToLineIcon, Trash2Icon } from "lucide-react";
-import { type ReactNode, useCallback, useEffect, useState } from "react";
+import { type ReactNode, useCallback, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TResponseWithQuotas } from "@formbricks/types/responses";
@@ -59,9 +59,12 @@ export const SelectedRowSettings = <T,>({
     [table]
   );
 
-  useEffect(() => {
+  // Adjusted during render when the selection gains or loses quotas.
+  const [syncedHasQuotas, setSyncedHasQuotas] = useState(hasQuotas);
+  if (syncedHasQuotas !== hasQuotas) {
+    setSyncedHasQuotas(hasQuotas);
     setDecrementQuotas(hasQuotas);
-  }, [hasQuotas]);
+  }
 
   // Handle deletion
   const handleDelete = async () => {

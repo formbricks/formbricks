@@ -120,7 +120,6 @@ export const FileUploadSettings = ({
               components={{
                 fileSizeInput: (
                   <Input
-                    autoFocus
                     type="number"
                     id="fileSizeLimit"
                     min={1}

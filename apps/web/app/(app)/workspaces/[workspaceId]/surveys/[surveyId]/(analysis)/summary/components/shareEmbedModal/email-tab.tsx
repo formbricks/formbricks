@@ -2,7 +2,7 @@
 
 import DOMPurify from "dompurify";
 import { CopyIcon, SendIcon } from "lucide-react";
-import { type SyntheticEvent, useEffect, useMemo, useState } from "react";
+import { type SyntheticEvent, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { copyToClipboard } from "@/lib/utils/clipboard";
@@ -82,9 +82,12 @@ export const EmailTab = ({ surveyId, email }: EmailTabProps) => {
     },
   ];
 
-  useEffect(() => {
+  // A new preview document starts at the minimum height until its iframe loads and is measured.
+  const [measuredDocument, setMeasuredDocument] = useState(emailPreviewDocument);
+  if (measuredDocument !== emailPreviewDocument) {
+    setMeasuredDocument(emailPreviewDocument);
     setPreviewFrameHeight(560);
-  }, [emailPreviewDocument]);
+  }
 
   const handlePreviewFrameLoad = (event: SyntheticEvent<HTMLIFrameElement>) => {
     const { contentDocument } = event.currentTarget;

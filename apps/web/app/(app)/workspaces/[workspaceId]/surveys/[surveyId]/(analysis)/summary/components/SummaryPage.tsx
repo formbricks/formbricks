@@ -156,6 +156,7 @@ export const SummaryPage = ({
     // A rule in the URL still waiting for the filter data: the summary would answer for every response.
     if (!filterState.isReady) {
       lastFetchedFiltersKeyRef.current = null;
+      // eslint-disable-next-line react/set-state-in-effect -- fetch effect: the loading flag and summary track the request it starts, deduped by lastFetchedFiltersKeyRef
       setIsLoading(true);
       return;
     }

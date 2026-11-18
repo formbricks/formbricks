@@ -188,7 +188,7 @@ export const ThemeStyling = ({
   if (isReadOnly) {
     return (
       <div className="flex flex-col gap-4">
-        <Alert variant="warning" role="status">
+        <Alert variant="warning" alertRole="status">
           <AlertDescription>
             {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
           </AlertDescription>

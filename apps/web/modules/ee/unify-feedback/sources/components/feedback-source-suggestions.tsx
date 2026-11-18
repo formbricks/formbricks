@@ -40,6 +40,7 @@ export function FeedbackSourceSuggestions({
     try {
       const parsed = JSON.parse(stored);
       if (Array.isArray(parsed)) {
+        // eslint-disable-next-line react/set-state-in-effect -- localStorage exists only after hydration (see above)
         setDismissedIds(parsed.filter((id): id is string => typeof id === "string"));
         return;
       }

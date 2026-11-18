@@ -212,7 +212,7 @@ export const EditPlacementForm = ({ workspace, isReadOnly }: EditPlacementProps)
         </form>
       </FormProvider>
       {isReadOnly && (
-        <Alert variant="warning" className="mt-4" role="status">
+        <Alert variant="warning" className="mt-4" alertRole="status">
           <AlertDescription>
             {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
           </AlertDescription>

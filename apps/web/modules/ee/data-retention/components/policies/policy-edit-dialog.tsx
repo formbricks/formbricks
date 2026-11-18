@@ -441,7 +441,7 @@ export const PolicyEditDialog = ({
                     {field.value && health.data?.smtpConfigured === false ? (
                       // Default size: the small one truncates to a line, cutting off the half that
                       // says the notice period still runs.
-                      <Alert variant="warning" role="status">
+                      <Alert variant="warning" alertRole="status">
                         <AlertDescription>
                           {t("workspace.settings.data_retention.smtp_not_configured_warning")}
                         </AlertDescription>

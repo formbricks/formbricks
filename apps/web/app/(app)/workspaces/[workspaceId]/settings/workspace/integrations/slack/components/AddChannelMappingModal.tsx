@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { CircleHelpIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -83,16 +83,25 @@ export const AddChannelMappingModal = ({
     [selectedSurvey]
   );
 
-  useEffect(() => {
-    if (selectedSurvey) {
-      const elementIds = surveyElements.map((element) => element.id);
-      if (!selectedIntegration) {
-        setSelectedElements(elementIds);
-      }
+  // A new mapping starts with every question of the picked survey selected.
+  const handleSurveySelect = (survey: TSurvey) => {
+    setSelectedSurvey(survey);
+    if (!selectedIntegration) {
+      setSelectedElements(getElementsFromBlocks(survey.blocks).map((element) => element.id));
     }
-  }, [surveyElements, selectedIntegration, selectedSurvey]);
+  };
 
-  useEffect(() => {
+  const resetForm = () => {
+    setIsLinkingChannel(false);
+    setSelectedChannel(null);
+    setSelectedSurvey(null);
+  };
+
+  // Load the mapping being edited (or reset for a new one) whenever it, or the survey list, changes.
+  // Adjusted during render.
+  const [loadedFrom, setLoadedFrom] = useState({ selectedIntegration, surveys });
+  if (loadedFrom.selectedIntegration !== selectedIntegration || loadedFrom.surveys !== surveys) {
+    setLoadedFrom({ selectedIntegration, surveys });
     if (selectedIntegration) {
       setSelectedChannel({
         id: selectedIntegration.channelId,
@@ -109,10 +118,10 @@ export const AddChannelMappingModal = ({
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
       setIncludeCreatedAt(!!selectedIntegration.includeCreatedAt);
       setIncludeContactAttributes(!!selectedIntegration.includeContactAttributes);
-      return;
+    } else {
+      resetForm();
     }
-    resetForm();
-  }, [selectedIntegration, surveys]);
+  }
 
   const linkChannel = async () => {
     try {
@@ -178,12 +187,6 @@ export const AddChannelMappingModal = ({
 
   const setOpenWithStates = (isOpen: boolean) => {
     setOpen(isOpen);
-  };
-
-  const resetForm = () => {
-    setIsLinkingChannel(false);
-    setSelectedChannel(null);
-    setSelectedSurvey(null);
   };
 
   const deleteLink = async () => {
@@ -270,7 +273,7 @@ export const AddChannelMappingModal = ({
                     label={t("common.select_survey")}
                     items={surveys}
                     selectedItem={selectedSurvey}
-                    setSelectedItem={setSelectedSurvey}
+                    setSelectedItem={handleSurveySelect}
                     disabled={surveys.length === 0}
                     isItemDisabled={(survey: TSurvey) =>
                       isRestrictedSurveyPick(surveyVisibilityEnabled, survey, attachedSurveyIds)

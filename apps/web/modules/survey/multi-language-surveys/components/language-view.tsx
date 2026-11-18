@@ -107,12 +107,12 @@ export const LanguageView = ({
     return [...codes];
   }, [workspaceLanguages, localSurvey.languages, defaultLanguage]);
 
-  // Sync multi-language state
-  useEffect(() => {
-    if (localSurvey.languages.length === 0) {
-      setIsMultiLanguageActivated(false);
-    }
-  }, [localSurvey.languages]);
+  // Sync multi-language state: languages emptied on the survey switch it off. Adjusted during render.
+  const [syncedSurveyLanguages, setSyncedSurveyLanguages] = useState(localSurvey.languages);
+  if (syncedSurveyLanguages !== localSurvey.languages) {
+    setSyncedSurveyLanguages(localSurvey.languages);
+    if (localSurvey.languages.length === 0) setIsMultiLanguageActivated(false);
+  }
 
   // Track incomplete translations
   useEffect(() => {

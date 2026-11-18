@@ -13,10 +13,11 @@ import { isStringMatch } from "@/lib/utils/strings";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { UploadContactsAttributes } from "@/modules/ee/contacts/components/upload-contacts-attribute";
 import { importContacts } from "@/modules/ee/contacts/lib/api-client";
+import { RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT } from "@/modules/ee/contacts/lib/attribute-key-policy";
 import {
-  RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
-  isReservedFutureDefaultAttributeKey,
-} from "@/modules/ee/contacts/lib/attribute-key-policy";
+  findUnmappableCsvColumns,
+  matchCsvColumnsToAttributeKeys,
+} from "@/modules/ee/contacts/lib/csv-attribute-mapping";
 import { parseContactsCSV } from "@/modules/ee/contacts/lib/parse-contacts-csv";
 import { contactQueryKeys } from "@/modules/ee/contacts/lib/query-keys";
 import {
@@ -256,80 +257,54 @@ export const UploadContactsCSVButton = ({
     void queryClient.invalidateQueries({ queryKey: contactQueryKeys.all });
   };
 
-  useEffect(() => {
-    const matches: Record<string, string> = {};
+  // A new CSV (or a new set of attribute keys) re-runs the column auto-match. Adjusted during render.
+  const [matchedInputs, setMatchedInputs] = useState({ csvColumns, contactAttributeKeys });
+  if (
+    matchedInputs.csvColumns !== csvColumns ||
+    matchedInputs.contactAttributeKeys !== contactAttributeKeys
+  ) {
+    setMatchedInputs({ csvColumns, contactAttributeKeys });
+    setAttributeMap(matchCsvColumnsToAttributeKeys(csvColumns, contactAttributeKeys));
+  }
 
-    for (const columnName of csvColumns) {
-      let matched = false;
-      for (const attributeKey of contactAttributeKeys) {
-        if (isStringMatch(columnName, attributeKey.name ?? attributeKey.key)) {
-          matches[columnName] = attributeKey.id;
-          matched = true;
-          break;
-        }
-      }
-
-      if (!matched) {
-        matches[columnName] = columnName;
-      }
-    }
-
-    setAttributeMap(matches);
-  }, [contactAttributeKeys, csvColumns]);
-
-  useEffect(() => {
-    if (!csvColumns.length || !csvResponse.length) {
-      return;
-    }
-
-    const invalidColumns: string[] = [];
-    const reservedColumns: string[] = [];
-
-    for (const columnName of csvColumns) {
-      const mappedAttribute = attributeMap[columnName];
-      if (!mappedAttribute) {
-        continue;
-      }
-
-      const mapsToExistingAttribute = contactAttributeKeys.some(
-        (attributeKey) => attributeKey.id === mappedAttribute
+  // Every mapping change re-validates the columns and replaces the shown error with the result.
+  // Adjusted during render.
+  const mappingInputs = { attributeMap, contactAttributeKeys, csvColumns, rowCount: csvResponse.length, t };
+  const [validatedInputs, setValidatedInputs] = useState(mappingInputs);
+  if (
+    (Object.keys(mappingInputs) as (keyof typeof mappingInputs)[]).some(
+      (key) => mappingInputs[key] !== validatedInputs[key]
+    )
+  ) {
+    setValidatedInputs(mappingInputs);
+    if (csvColumns.length && csvResponse.length) {
+      const { invalidColumns, reservedColumns } = findUnmappableCsvColumns(
+        csvColumns,
+        attributeMap,
+        contactAttributeKeys
       );
+      const errorMessages: string[] = [];
 
-      if (mapsToExistingAttribute) {
-        continue;
+      if (invalidColumns.length > 0) {
+        errorMessages.push(
+          t("workspace.contacts.invalid_csv_column_names", {
+            columns: invalidColumns.join(", "),
+          })
+        );
       }
 
-      if (!isSafeIdentifier(mappedAttribute)) {
-        invalidColumns.push(columnName);
-        continue;
+      if (reservedColumns.length > 0) {
+        errorMessages.push(
+          t("workspace.contacts.invalid_csv_reserved_column_names", {
+            columns: reservedColumns.join(", "),
+            reservedKeys: RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
+          })
+        );
       }
 
-      if (isReservedFutureDefaultAttributeKey(mappedAttribute)) {
-        reservedColumns.push(columnName);
-      }
+      setError(errorMessages.join("\n"));
     }
-
-    const errorMessages: string[] = [];
-
-    if (invalidColumns.length > 0) {
-      errorMessages.push(
-        t("workspace.contacts.invalid_csv_column_names", {
-          columns: invalidColumns.join(", "),
-        })
-      );
-    }
-
-    if (reservedColumns.length > 0) {
-      errorMessages.push(
-        t("workspace.contacts.invalid_csv_reserved_column_names", {
-          columns: reservedColumns.join(", "),
-          reservedKeys: RESERVED_FUTURE_DEFAULT_ATTRIBUTE_SAFE_IDENTIFIER_KEYS_TEXT,
-        })
-      );
-    }
-
-    setError(errorMessages.join("\n"));
-  }, [attributeMap, contactAttributeKeys, csvColumns, csvResponse.length, t]);
+  }
 
   useEffect(() => {
     if (error && errorContainerRef.current) {

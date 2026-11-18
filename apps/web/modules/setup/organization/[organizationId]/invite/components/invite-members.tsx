@@ -63,7 +63,7 @@ export const InviteMembers = ({ IS_SMTP_CONFIGURED, organizationId }: InviteMemb
   return (
     <FormProvider {...form}>
       {!IS_SMTP_CONFIGURED && (
-        <Alert variant="warning" role="status">
+        <Alert variant="warning" alertRole="status">
           <AlertTitle>{t("setup.invite.smtp_not_configured")}</AlertTitle>
           <AlertDescription>{t("setup.invite.smtp_not_configured_description")}</AlertDescription>
         </Alert>

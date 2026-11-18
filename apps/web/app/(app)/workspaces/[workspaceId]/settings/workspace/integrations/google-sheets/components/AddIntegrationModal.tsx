@@ -2,7 +2,7 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -95,14 +95,27 @@ export const AddIntegrationModal = ({
     [selectedSurvey]
   );
 
-  useEffect(() => {
-    if (selectedSurvey && !selectedIntegration) {
-      const elementIds = surveyElements.map((element) => element.id);
-      setSelectedElements(elementIds);
+  // A new mapping starts with every question of the picked survey selected.
+  const handleSurveySelect = (survey: TSurvey) => {
+    setSelectedSurvey(survey);
+    if (!selectedIntegration) {
+      setSelectedElements(getElementsFromBlocks(survey.blocks).map((element) => element.id));
     }
-  }, [surveyElements, selectedIntegration, selectedSurvey]);
+  };
 
-  useEffect(() => {
+  const resetForm = () => {
+    setSpreadsheetUrl("");
+    setIsLinkingSheet(false);
+    setSelectedSurvey(null);
+    setIncludeHiddenFields(false);
+    setIncludeMetadata(false);
+  };
+
+  // Load the mapping being edited (or reset for a new one) whenever it, or the survey list, changes.
+  // Adjusted during render.
+  const [loadedFrom, setLoadedFrom] = useState({ selectedIntegration, surveys });
+  if (loadedFrom.selectedIntegration !== selectedIntegration || loadedFrom.surveys !== surveys) {
+    setLoadedFrom({ selectedIntegration, surveys });
     if (selectedIntegration) {
       setSpreadsheetUrl(constructGoogleSheetsUrl(selectedIntegration.spreadsheetId));
       setSelectedSurvey(
@@ -116,12 +129,10 @@ export const AddIntegrationModal = ({
       setIncludeMetadata(!!selectedIntegration.includeMetadata);
       setIncludeCreatedAt(!!selectedIntegration.includeCreatedAt);
       setIncludeContactAttributes(!!selectedIntegration.includeContactAttributes);
-      return;
     } else {
-      setSpreadsheetUrl("");
+      resetForm();
     }
-    resetForm();
-  }, [selectedIntegration, surveys]);
+  }
 
   const showErrorMessageToast = (error: unknown) => {
     // Google knows no spreadsheet by the id the pasted URL carries: a typo, or one since deleted.
@@ -217,14 +228,6 @@ export const AddIntegrationModal = ({
     setOpen(isOpen);
   };
 
-  const resetForm = () => {
-    setSpreadsheetUrl("");
-    setIsLinkingSheet(false);
-    setSelectedSurvey(null);
-    setIncludeHiddenFields(false);
-    setIncludeMetadata(false);
-  };
-
   const deleteLink = async () => {
     const mappings = existingMappings.filter((_, index) => index !== selectedIntegration!.index);
     try {
@@ -279,7 +282,7 @@ export const AddIntegrationModal = ({
                     label={t("common.select_survey")}
                     items={surveys}
                     selectedItem={selectedSurvey}
-                    setSelectedItem={setSelectedSurvey}
+                    setSelectedItem={handleSurveySelect}
                     disabled={surveys.length === 0}
                     isItemDisabled={(survey: TSurvey) =>
                       isRestrictedSurveyPick(surveyVisibilityEnabled, survey, attachedSurveyIds)

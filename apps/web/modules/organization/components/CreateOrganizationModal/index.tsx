@@ -34,7 +34,7 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
   const { t } = useTranslation();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const { register, handleSubmit, watch } = useForm<FormValues>();
+  const { register, handleSubmit, watch, setFocus } = useForm<FormValues>();
   const organizationName = watch("name", "");
   const isOrganizationNameValid = organizationName.trim() !== "";
 
@@ -57,7 +57,12 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent disableCloseOnOutsideClick={true}>
+      <DialogContent
+        disableCloseOnOutsideClick={true}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          setFocus("name");
+        }}>
         <DialogHeader>
           <PlusCircleIcon />
           <DialogTitle>{t("workspace.settings.general.create_new_organization")}</DialogTitle>
@@ -71,7 +76,6 @@ export const CreateOrganizationModal = ({ open, setOpen }: CreateOrganizationMod
             <div className="grid w-full gap-y-2">
               <Label>{t("workspace.settings.general.organization_name")}</Label>
               <Input
-                autoFocus
                 placeholder={t("workspace.settings.general.organization_name_placeholder")}
                 {...register("name", { required: true })}
               />

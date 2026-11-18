@@ -37,6 +37,7 @@ export const SurveyLoadingAnimation = ({
   useEffect(() => {
     if (!isSurveyPackageLoaded) return;
 
+    // eslint-disable-next-line react/set-state-in-effect -- reads the load state of the survey's images, which exist only in the mounted DOM
     checkMediaLoaded();
 
     const mediaElements = document.querySelectorAll(`#${cardId} img, #${cardId} iframe`);
@@ -67,6 +68,11 @@ export const SurveyLoadingAnimation = ({
   }, [isSurveyPackageLoaded, checkMediaLoaded, cardId]);
 
   // Effect to handle the hiding of the animation once both media are loaded and the minimum time has passed
+  // Show the animation again whenever it is no longer ready to hide (adjusted during render).
+  if (!(isMediaLoaded && minTimePassed) && isHidden) {
+    setIsHidden(false);
+  }
+
   useEffect(() => {
     if (isMediaLoaded && minTimePassed) {
       const hideTimer = setTimeout(() => {
@@ -76,8 +82,6 @@ export const SurveyLoadingAnimation = ({
       return () => {
         clearTimeout(hideTimer);
       };
-    } else {
-      setIsHidden(false);
     }
   }, [isMediaLoaded, minTimePassed]);
 

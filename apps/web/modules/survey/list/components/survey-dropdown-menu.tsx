@@ -523,7 +523,7 @@ export const SurveyDropDownMenu = ({
             <div className="space-y-3 whitespace-normal">
               <p>{t("workspace.surveys.archive_survey_warning")}</p>
               {archiveLinkedCreatives.length > 0 && (
-                <Alert variant="warning" role="status">
+                <Alert variant="warning" alertRole="status">
                   <AlertTitle>{t("workspace.creatives.survey_side.archive_note_title")}</AlertTitle>
                   <AlertDescription>
                     {t("workspace.creatives.survey_side.archive_note", {

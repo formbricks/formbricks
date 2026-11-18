@@ -88,9 +88,11 @@ export const SurveyClientWrapper = ({
   // in-survey language switch (via onLanguageChange). The whole shell (i18n strings, logo
   // direction, page lang/dir) keys off this so it stays in sync, not just the document.
   const [currentLanguageCode, setCurrentLanguageCode] = useState(languageCode);
-  useEffect(() => {
+  const [serverLanguageCode, setServerLanguageCode] = useState(languageCode);
+  if (serverLanguageCode !== languageCode) {
+    setServerLanguageCode(languageCode);
     setCurrentLanguageCode(languageCode);
-  }, [languageCode]);
+  }
 
   useAppLocale(getWebAppLocale(currentLanguageCode, survey));
 
@@ -133,6 +135,7 @@ export const SurveyClientWrapper = ({
   // Enable autofocus only when not in iframe
   useEffect(() => {
     if (globalThis.self === globalThis.top) {
+      // eslint-disable-next-line react/set-state-in-effect -- window.top is only readable on the client; the server renders without autofocus
       setAutoFocus(true);
     }
   }, []);
@@ -292,6 +295,7 @@ export const SurveyClientWrapper = ({
           onPageChange={handlePageChange}
           isBrandingEnabled={workspace.linkSurveyBranding}
           shouldResetQuestionId={false}
+          // eslint-disable-next-line jsx-a11y/no-autofocus -- the @formbricks/surveys public prop, not the DOM attribute: the renderer focuses its first field imperatively, here only outside iframes
           autoFocus={autoFocus}
           prefillResponseData={prefillValue}
           skipPrefilled={skipPrefilled}

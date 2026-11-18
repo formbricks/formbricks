@@ -286,7 +286,7 @@ export const FeedbackDirectorySettingsModal = ({
                   containerClassName="focus-within:ring-0 focus-within:ring-offset-0"
                 />
                 {workspaceConflictState.showBlockedExplanation && (
-                  <Alert variant="info" className="items-start" role="status">
+                  <Alert variant="info" className="items-start" alertRole="status">
                     <div className="min-w-0 space-y-1">
                       <AlertTitle className="truncate">
                         {t("workspace.settings.feedback_directories.no_unassigned_workspaces_title")}

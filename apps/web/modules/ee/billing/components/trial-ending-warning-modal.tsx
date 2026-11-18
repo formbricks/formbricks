@@ -23,11 +23,11 @@ export const TrialEndingWarningModal = ({
   endsOnHobby,
 }: TrialEndingWarningModalProps) => {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+  // The server renders this only when the warning is due, so it opens on its first paint.
+  const [open, setOpen] = useState(true);
 
   useEffect(() => {
     document.cookie = `trial_ending_shown_${daysRemaining}=true; path=/; max-age=${COOKIE_MAX_AGE}; SameSite=Lax`;
-    setOpen(true);
     posthog.capture("trial_ending_warning_shown", { days_remaining: daysRemaining });
   }, [daysRemaining]);
 

@@ -154,14 +154,14 @@ export const CustomHtmlTab = ({ workspaceCustomScripts, isReadOnly }: Readonly<C
             {isSaving ? t("common.saving") : t("common.save")}
           </Button>
           {isReadOnly && (
-            <Alert variant="warning" role="status">
+            <Alert variant="warning" alertRole="status">
               <AlertDescription>
                 {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
               </AlertDescription>
             </Alert>
           )}
           {/* Security Warning */}
-          <Alert variant="warning" className="flex items-start gap-2" role="status">
+          <Alert variant="warning" className="flex items-start gap-2" alertRole="status">
             <AlertTriangleIcon className="mt-0.5 size-4 shrink-0" />
             <AlertDescription>{t("workspace.surveys.share.custom_html.security_warning")}</AlertDescription>
           </Alert>

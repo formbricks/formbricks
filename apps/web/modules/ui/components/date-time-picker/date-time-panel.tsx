@@ -54,6 +54,7 @@ export const DateTimePanel = ({
   return (
     <>
       <Calendar
+        // eslint-disable-next-line jsx-a11y/no-autofocus -- react-day-picker's prop: opening the picker moves focus to the selected day, as the date picker dialog pattern needs for keyboard use
         autoFocus
         mode="single"
         showOutsideDays={false}

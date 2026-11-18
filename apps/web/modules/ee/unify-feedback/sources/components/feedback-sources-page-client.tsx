@@ -370,7 +370,7 @@ export function FeedbackSourcesSection({
         restrictedSourceIds={restrictedSourceIds}
       />
       {directories.length > 0 && (
-        <Alert size="small" className="mt-4" role="status">
+        <Alert size="small" className="mt-4" alertRole="status">
           <AlertDescription>{feedbackDirectoryAccessText}</AlertDescription>
           {!isReadOnly && workspace?.organizationId && (
             <AlertButton asChild>
