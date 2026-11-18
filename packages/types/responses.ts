@@ -450,6 +450,13 @@ const ZQuotasFilterCriteriaScreenedOutNotInQuota = z.object({
 export const ZResponseOutcome = z.enum(["lowQuality"]);
 export type TResponseOutcome = z.infer<typeof ZResponseOutcome>;
 
+/**
+ * The statuses the Responses quick filter offers. Complete and Partial follow `finished`, Low quality
+ * follows `outcome`: a Low quality response is also Complete or Partial.
+ */
+export const ZResponseStatusFilter = z.enum(["complete", "partial", "lowQuality"]);
+export type TResponseStatusFilter = z.infer<typeof ZResponseStatusFilter>;
+
 /** A block, element, option, row or column id a shown / not shown filter names. */
 const ZResponseFilterShownId = z.string().min(1).max(MAX_NOT_SHOWN_ID_LENGTH);
 
@@ -537,6 +544,11 @@ const ZResponseFilterCriteriaFields = z.object({
    * one. Set by the export route, never by the Responses filter.
    */
   excludeLowQuality: z.boolean().optional(),
+  /**
+   * "Any of these statuses": the Responses quick filter ticks several and means either. One status is
+   * `finished` or `outcome`; like every field here, this is ANDed with the rest.
+   */
+  statuses: z.array(ZResponseStatusFilter).max(ZResponseStatusFilter.options.length).optional(),
   responseIds: z.array(ZId).optional(),
   createdAt: z
     .object({

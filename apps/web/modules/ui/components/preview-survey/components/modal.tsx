@@ -5,7 +5,7 @@ import { TOverlay, TPlacement } from "@formbricks/types/common";
 import { cn } from "@/lib/cn";
 import { getOverlayPreviewStyle } from "@/modules/ui/components/overlay-settings/lib/utils";
 import { PREVIEW_BOUNDARY_CLASS_NAME, previewBoundaryProps } from "../lib/containment";
-import { getPlacementStyle, isInsideSurveyRoot } from "../lib/utils";
+import { getPlacementStyle, getSlidingAnimationClass, isInsideSurveyRoot } from "../lib/utils";
 
 interface ModalProps {
   children: ReactNode;
@@ -121,16 +121,7 @@ export const Modal = ({
     }
   }, [children]);
 
-  const slidingAnimationClass =
-    previewMode === "desktop"
-      ? show
-        ? "translate-x-0 opacity-100"
-        : "translate-x-32 opacity-0"
-      : previewMode === "mobile"
-        ? show
-          ? "bottom-0"
-          : "-bottom-full"
-        : "";
+  const slidingAnimationClass = getSlidingAnimationClass(previewMode, show);
 
   const customOverlayStyle = getOverlayPreviewStyle({ overlay, overlayColor, overlayOpacity });
 

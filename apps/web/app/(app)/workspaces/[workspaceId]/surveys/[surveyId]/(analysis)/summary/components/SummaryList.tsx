@@ -85,197 +85,195 @@ export const SummaryList = ({
     );
   };
 
+  // The element summary cards, or what the page shows before there is anything to summarize.
+  const renderSummary = () => {
+    if (survey.type === "app" && responseCount === 0 && !workspace.appSetupCompleted) {
+      return <EmptyAppSurveys />;
+    }
+    if (summary.length === 0) return <SkeletonLoader type="summary" />;
+    if (responseCount === 0) {
+      return <EmptyState text={t("workspace.surveys.summary.no_responses_found")} />;
+    }
+    return summary.map((elementSummary) => {
+      switch (elementSummary.type) {
+        case TSurveyElementTypeEnum.OpenText: {
+          return (
+            <OpenTextSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              survey={survey}
+              locale={locale}
+              isReadOnly={isReadOnly}
+            />
+          );
+        }
+        case TSurveyElementTypeEnum.MultipleChoiceSingle:
+        case TSurveyElementTypeEnum.MultipleChoiceMulti: {
+          return (
+            <MultipleChoiceSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              surveyType={survey.type}
+              survey={survey}
+              setFilter={setFilter}
+            />
+          );
+        }
+        case TSurveyElementTypeEnum.NPS: {
+          return (
+            <NPSSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              survey={survey}
+              setFilter={setFilter}
+            />
+          );
+        }
+        case TSurveyElementTypeEnum.CTA: {
+          return (
+            <CTASummary key={elementSummary.element.id} elementSummary={elementSummary} survey={survey} />
+          );
+        }
+        case TSurveyElementTypeEnum.Rating: {
+          return (
+            <RatingSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              survey={survey}
+              setFilter={setFilter}
+            />
+          );
+        }
+        case TSurveyElementTypeEnum.CSAT: {
+          return (
+            <CSATSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              survey={survey}
+              setFilter={setFilter}
+            />
+          );
+        }
+        case TSurveyElementTypeEnum.CES: {
+          return (
+            <CESSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              survey={survey}
+              setFilter={setFilter}
+            />
+          );
+        }
+        case TSurveyElementTypeEnum.Consent: {
+          return (
+            <ConsentSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              survey={survey}
+              setFilter={setFilter}
+            />
+          );
+        }
+        case TSurveyElementTypeEnum.PictureSelection: {
+          return (
+            <PictureChoiceSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              survey={survey}
+              setFilter={setFilter}
+            />
+          );
+        }
+        case TSurveyElementTypeEnum.Date: {
+          return (
+            <DateElementSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              survey={survey}
+              locale={locale}
+            />
+          );
+        }
+        case TSurveyElementTypeEnum.FileUpload: {
+          return (
+            <FileUploadSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              survey={survey}
+              locale={locale}
+            />
+          );
+        }
+        case TSurveyElementTypeEnum.Signature: {
+          return (
+            <SignatureSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              survey={survey}
+              locale={locale}
+              isReadOnly={isReadOnly}
+            />
+          );
+        }
+        case TSurveyElementTypeEnum.Cal: {
+          return (
+            <CalSummary key={elementSummary.element.id} elementSummary={elementSummary} survey={survey} />
+          );
+        }
+        case TSurveyElementTypeEnum.Matrix: {
+          return (
+            <MatrixElementSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              survey={survey}
+              setFilter={setFilter}
+            />
+          );
+        }
+        case TSurveyElementTypeEnum.Address: {
+          return (
+            <AddressSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              survey={survey}
+              locale={locale}
+            />
+          );
+        }
+        case TSurveyElementTypeEnum.Ranking: {
+          return (
+            <RankingSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              surveyType={survey.type}
+              survey={survey}
+            />
+          );
+        }
+        case "hiddenField": {
+          return (
+            <HiddenFieldsSummary key={elementSummary.id} elementSummary={elementSummary} locale={locale} />
+          );
+        }
+        case TSurveyElementTypeEnum.ContactInfo: {
+          return (
+            <ContactInfoSummary
+              key={elementSummary.element.id}
+              elementSummary={elementSummary}
+              survey={survey}
+              locale={locale}
+            />
+          );
+        }
+        default:
+          return null;
+      }
+    });
+  };
+
   return (
     <NotShownCountsProvider value={getNotShownCounts(dropOff)}>
-      <div className="mt-4 space-y-8">
-        {survey.type === "app" && responseCount === 0 && !workspace.appSetupCompleted ? (
-          <EmptyAppSurveys />
-        ) : summary.length === 0 ? (
-          <SkeletonLoader type="summary" />
-        ) : responseCount === 0 ? (
-          <EmptyState text={t("workspace.surveys.summary.no_responses_found")} />
-        ) : (
-          summary.map((elementSummary) => {
-            if (elementSummary.type === TSurveyElementTypeEnum.OpenText) {
-              return (
-                <OpenTextSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  survey={survey}
-                  locale={locale}
-                  isReadOnly={isReadOnly}
-                />
-              );
-            }
-            if (
-              elementSummary.type === TSurveyElementTypeEnum.MultipleChoiceSingle ||
-              elementSummary.type === TSurveyElementTypeEnum.MultipleChoiceMulti
-            ) {
-              return (
-                <MultipleChoiceSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  surveyType={survey.type}
-                  survey={survey}
-                  setFilter={setFilter}
-                />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.NPS) {
-              return (
-                <NPSSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  survey={survey}
-                  setFilter={setFilter}
-                />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.CTA) {
-              return (
-                <CTASummary key={elementSummary.element.id} elementSummary={elementSummary} survey={survey} />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.Rating) {
-              return (
-                <RatingSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  survey={survey}
-                  setFilter={setFilter}
-                />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.CSAT) {
-              return (
-                <CSATSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  survey={survey}
-                  setFilter={setFilter}
-                />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.CES) {
-              return (
-                <CESSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  survey={survey}
-                  setFilter={setFilter}
-                />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.Consent) {
-              return (
-                <ConsentSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  survey={survey}
-                  setFilter={setFilter}
-                />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.PictureSelection) {
-              return (
-                <PictureChoiceSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  survey={survey}
-                  setFilter={setFilter}
-                />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.Date) {
-              return (
-                <DateElementSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  survey={survey}
-                  locale={locale}
-                />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.FileUpload) {
-              return (
-                <FileUploadSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  survey={survey}
-                  locale={locale}
-                />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.Signature) {
-              return (
-                <SignatureSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  survey={survey}
-                  locale={locale}
-                  isReadOnly={isReadOnly}
-                />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.Cal) {
-              return (
-                <CalSummary key={elementSummary.element.id} elementSummary={elementSummary} survey={survey} />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.Matrix) {
-              return (
-                <MatrixElementSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  survey={survey}
-                  setFilter={setFilter}
-                />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.Address) {
-              return (
-                <AddressSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  survey={survey}
-                  locale={locale}
-                />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.Ranking) {
-              return (
-                <RankingSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  surveyType={survey.type}
-                  survey={survey}
-                />
-              );
-            }
-            if (elementSummary.type === "hiddenField") {
-              return (
-                <HiddenFieldsSummary
-                  key={elementSummary.id}
-                  elementSummary={elementSummary}
-                  locale={locale}
-                />
-              );
-            }
-            if (elementSummary.type === TSurveyElementTypeEnum.ContactInfo) {
-              return (
-                <ContactInfoSummary
-                  key={elementSummary.element.id}
-                  elementSummary={elementSummary}
-                  survey={survey}
-                  locale={locale}
-                />
-              );
-            }
-
-            return null;
-          })
-        )}
-      </div>
+      <div className="mt-4 space-y-8">{renderSummary()}</div>
     </NotShownCountsProvider>
   );
 };

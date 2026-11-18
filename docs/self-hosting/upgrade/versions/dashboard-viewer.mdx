@@ -1,10 +1,10 @@
 ---
-title: "Unreleased: Dashboard viewer role"
+title: "6.2: Dashboard viewer role"
 description: "The 6.2 permission schema change for the Dashboard viewer role, and what API and MCP clients see."
 icon: "chart-line"
 ---
 
-**Applies to:** the upgrade to 6.2. This change is on `main` and not in any 6.1 patch.
+**Applies to:** the upgrade to 6.2. Part of the [6.2 upgrade guide](/self-hosting/upgrade/versions/6.2).
 **Upgrade impact: Action required** for every self-hosted installation: the permission schema changes.
 
 ## What changes
@@ -50,7 +50,7 @@ members don't depend on the new relation, so they work as before.
   Existing clients keep working.
 - **`GET /api/v3/charts/{chartId}/data`:** a date range replaces the range saved on the chart's `collectedAt`
   time dimension, as a dashboard's date range does. A range the author saved as a `collectedAt` filter rule
-  still narrows the result. This endpoint isn't in any 6.1 release.
+  still narrows the result. This endpoint is new in 6.2.
 - **Organization roles in API responses:** `GET /api/v2/organizations/{organizationId}/users` returns
   `dashboard_viewer` as a user's `role` once someone holds it. A client that validates roles against a fixed
   list must accept it. `GET /api/v2/roles` doesn't list it, and the v2 user create and update refuse to give it

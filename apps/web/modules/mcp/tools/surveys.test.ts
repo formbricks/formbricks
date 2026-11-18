@@ -13,7 +13,6 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
-import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import {
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
@@ -25,7 +24,7 @@ import {
   validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
-import { type ToolCallEra, callToolOverHttp, errorText } from "./test-utils";
+import { type TToolHandler, type ToolCallEra, callToolOverHttp, errorText } from "./test-utils";
 
 // Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
 // itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
@@ -121,16 +120,16 @@ function createToolServer() {
     string,
     {
       config: Record<string, unknown>;
-      handler: (input: any, extra: any) => Promise<any>;
+      handler: TToolHandler;
     }
   >();
   const server = {
-    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: any) => {
+    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: TToolHandler) => {
       tools.set(name, { config, handler });
     }),
   };
 
-  registerSurveyTools(server as any);
+  registerSurveyTools(server as unknown as Parameters<typeof registerSurveyTools>[0]);
   return { server, tools };
 }
 
@@ -222,7 +221,7 @@ describe("registerSurveyTools", () => {
       },
     });
     expect(
-      Object.keys((tools.get("create_survey")?.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
+      Object.keys((tools.get("create_survey")!.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
     ).toEqual(
       expect.arrayContaining([
         "workspaceId",
@@ -250,7 +249,7 @@ describe("registerSurveyTools", () => {
       },
     });
     expect(
-      Object.keys((tools.get("validate_survey")?.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
+      Object.keys((tools.get("validate_survey")!.config.inputSchema as z.ZodObject<z.ZodRawShape>).shape)
     ).toEqual(expect.arrayContaining(["operation", "surveyId", "data"]));
     expect(tools.get("patch_survey")?.config).toMatchObject({
       title: "Patch survey",
@@ -359,7 +358,7 @@ describe("registerSurveyTools", () => {
 
   test("create_survey queues a successful audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog = { status: "failure" };
+    const auditLog = { status: "failure" as const };
     const createBody = {
       workspaceId: "clxx1234567890123456789012",
       name: "New survey",
@@ -387,7 +386,7 @@ describe("registerSurveyTools", () => {
       hiddenFields: { enabled: false, fieldIds: [] },
       variables: [],
     };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(createV3SurveyResponseFromRawInput).mockResolvedValue(
       createdResponse({ id: "clxx1234567890123456789012" }, { requestId: "req_tool", location: "/survey" })
     );
@@ -531,7 +530,7 @@ describe("registerSurveyTools", () => {
 
     test("every tool that changes a survey takes `confirm` and hands it to the operation, not the body", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
 
       for (const [name, input, operation, expected] of cases) {
         vi.mocked(operation as typeof patchV3SurveyResponse).mockResolvedValue(
@@ -551,7 +550,7 @@ describe("registerSurveyTools", () => {
 
     test("relays the refusal as an error carrying the caution text", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
       vi.mocked(patchV3SurveyResponse).mockResolvedValue(
         problemConfirmationRequired(
           "req_tool",
@@ -573,14 +572,14 @@ describe("registerSurveyTools", () => {
 
   test("patch_survey queues a successful audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog = { status: "failure" };
+    const auditLog = { status: "failure" as const };
     const patchInput = {
       surveyId: "clxx1234567890123456789012",
       data: {
         name: "Updated survey",
       },
     };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(patchV3SurveyResponse).mockResolvedValue(
       successResponse({ id: "clxx1234567890123456789012", name: "Updated survey" }, { requestId: "req_tool" })
     );
@@ -609,8 +608,8 @@ describe("registerSurveyTools", () => {
 
   test("delete_survey queues a successful audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+    const auditLog = { status: "failure" as const };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(deleteV3Survey).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
 
     const result = await tools.get("delete_survey")!.handler(
@@ -637,8 +636,8 @@ describe("registerSurveyTools", () => {
 
   test("delete_survey preserves forbidden errors without leaking resource existence", async () => {
     const { tools } = createToolServer();
-    const auditLog = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+    const auditLog = { status: "failure" as const };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(deleteV3Survey).mockResolvedValue(
       problemForbidden("req_forbidden", "You are not authorized to access this resource", "/api/mcp")
     );
@@ -666,7 +665,7 @@ describe("registerSurveyTools", () => {
 
   test("delete_survey relays the 409 naming the creatives that still open the survey", async () => {
     const { tools } = createToolServer();
-    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
     const creatives = [{ id: "clcr1234567890123456789012", name: "Feedback tab" }];
     vi.mocked(deleteV3Survey).mockResolvedValue(
       problemSurveyHasLinkedCreatives("req_conflict", creatives, "/api/mcp")
@@ -839,8 +838,8 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
 
     test("edit_survey_blocks forwards the ops body and queues a successful audit log", async () => {
       const { tools } = createToolServer();
-      const auditLog = { status: "failure" };
-      vi.mocked(buildV3AuditLog).mockReturnValue(auditLog as any);
+      const auditLog = { status: "failure" as const };
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
       vi.mocked(editV3SurveyBlocksResponse).mockResolvedValue(
         successResponse(fullResource, { requestId: "req_tool" })
       );
@@ -879,7 +878,7 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
 
     test("reports the generated id of an inserted block, so the agent can reference it", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
       vi.mocked(editV3SurveyBlocksResponse).mockResolvedValue(
         successResponse(fullResource, { requestId: "req_tool" })
       );
@@ -891,7 +890,7 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
           { http: { authInfo } }
         );
 
-      expect((result.structuredContent as any).data.applied).toEqual([
+      expect(result.structuredContent.data).toHaveProperty("applied", [
         { op: "insert", id: "generated_block_id" },
       ]);
       // and the operation receives the same minted id, not a second one
@@ -902,7 +901,7 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
 
     test("edit_survey_blocks returns the full resource when asked for detail", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
       vi.mocked(editV3SurveyBlocksResponse).mockResolvedValue(
         successResponse(fullResource, { requestId: "req_tool" })
       );
@@ -919,7 +918,7 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
 
     test("a 409 reaches the agent with both timestamps intact", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
       vi.mocked(editV3SurveyBlocksResponse).mockResolvedValue(
         problemConflict("req_conflict", "stale", "/api/mcp", {
           details: {
@@ -945,7 +944,7 @@ describe("tool arguments are validated by the SDK (ENG-2256)", () => {
 
     test("set_survey_block_order forwards the order and echoes it back concisely", async () => {
       const { tools } = createToolServer();
-      vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+      vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
       vi.mocked(setV3SurveyBlockOrderResponse).mockResolvedValue(
         successResponse(fullResource, { requestId: "req_tool" })
       );

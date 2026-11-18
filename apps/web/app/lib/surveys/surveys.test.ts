@@ -5,6 +5,7 @@ import { afterEach, describe, expect, test } from "vitest";
 import { normalizeIngestedValue } from "@formbricks/types/embedded-data-ingest";
 import { embeddedFieldsFromLegacyInput } from "@formbricks/types/embedded-data-mapping";
 import { coerceToEmbeddedDataType } from "@formbricks/types/embedded-data-resolver";
+import type { TSurveyQuota } from "@formbricks/types/quota";
 import { type TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey, TSurveyLanguage } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
@@ -460,7 +461,7 @@ describe("surveys", () => {
 
       const quotas = [{ id: "quota1" }];
 
-      const result = genOptions(survey, { quotas: quotas as any });
+      const result = genOptions(survey, { quotas: quotas as TSurveyQuota[] });
 
       const quotaFilterOption = result.elementFilterOptions.find((o) => o.id === "quota1");
       expect(quotaFilterOption).toBeDefined();
@@ -485,7 +486,7 @@ describe("surveys", () => {
 
       const quotas = [{ id: "quota1" }, { id: "quota2" }];
 
-      const result = genOptions(survey, { quotas: quotas as any });
+      const result = genOptions(survey, { quotas: quotas as TSurveyQuota[] });
 
       const quota1 = result.elementFilterOptions.find((o) => o.id === "quota1");
       const quota2 = result.elementFilterOptions.find((o) => o.id === "quota2");
@@ -638,18 +639,22 @@ describe("surveys", () => {
 
     test("should return empty filters when no selections", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [],
       };
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
-      expect(Object.keys(result).length).toBe(0);
+      expect(Object.keys(result)).toHaveLength(0);
     });
 
     test("should filter by completed responses", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "complete",
+        responseStatuses: ["complete"],
         filter: [],
       };
 
@@ -660,11 +665,15 @@ describe("surveys", () => {
 
     test("should filter by the Low quality outcome without touching finished", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "lowQuality",
+        responseStatuses: ["lowQuality"],
         filter: [],
       };
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.outcome).toBe("lowQuality");
       expect(result.finished).toBeUndefined();
@@ -672,7 +681,7 @@ describe("surveys", () => {
 
     test("should filter by date range", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [],
       };
 
@@ -685,20 +694,24 @@ describe("surveys", () => {
 
     test("should filter by tags", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Tags", label: "Tag 1", id: "tag1" },
-            filterType: { filterComboBoxValue: "Applied" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Applied" },
           },
           {
             elementType: { type: "Tags", label: "Tag 2", id: "tag2" },
-            filterType: { filterComboBoxValue: "Not applied" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Not applied" },
           },
-        ] as any,
+        ] as SelectedFilterValue["filter"],
       };
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.tags?.applied).toContain("Tag 1");
       expect(result.tags?.notApplied).toContain("Tag 2");
@@ -706,7 +719,7 @@ describe("surveys", () => {
 
     test("should filter by open text questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -715,19 +728,23 @@ describe("surveys", () => {
               id: "openTextQ",
               elementType: TSurveyElementTypeEnum.OpenText,
             },
-            filterType: { filterComboBoxValue: "Filled out" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Filled out" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.openTextQ).toEqual({ op: "filledOut" });
     });
 
     test("should filter by address questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -736,19 +753,23 @@ describe("surveys", () => {
               id: "addressQ",
               elementType: TSurveyElementTypeEnum.Address,
             },
-            filterType: { filterComboBoxValue: "Skipped" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Skipped" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.addressQ).toEqual({ op: "skipped" });
     });
 
     test("should filter by contact info questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -757,19 +778,23 @@ describe("surveys", () => {
               id: "contactQ",
               elementType: TSurveyElementTypeEnum.ContactInfo,
             },
-            filterType: { filterComboBoxValue: "Filled out" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Filled out" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.contactQ).toEqual({ op: "filledOut" });
     });
 
     test("should filter by ranking questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -778,19 +803,23 @@ describe("surveys", () => {
               id: "rankingQ",
               elementType: TSurveyElementTypeEnum.Ranking,
             },
-            filterType: { filterComboBoxValue: "Filled out" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Filled out" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.rankingQ).toEqual({ op: "submitted" });
     });
 
     test("should filter by multiple choice single questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -802,16 +831,20 @@ describe("surveys", () => {
             filterType: { filterValue: "Includes either", filterComboBoxValue: ["Choice 1"] },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.mcSingleQ).toEqual({ op: "includesOne", value: ["Choice 1"] });
     });
 
     test("should filter by multiple choice multi questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -823,16 +856,20 @@ describe("surveys", () => {
             filterType: { filterValue: "Includes all", filterComboBoxValue: ["Choice 1", "Choice 2"] },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.mcMultiQ).toEqual({ op: "includesAll", value: ["Choice 1", "Choice 2"] });
     });
 
     test("should filter by NPS questions with different operations", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -844,16 +881,20 @@ describe("surveys", () => {
             filterType: { filterValue: "Is equal to", filterComboBoxValue: "7" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.npsQ).toEqual({ op: "equals", value: 7 });
     });
 
     test("should filter by rating questions with less than operation", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -865,16 +906,20 @@ describe("surveys", () => {
             filterType: { filterValue: "Is less than", filterComboBoxValue: "4" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.ratingQ).toEqual({ op: "lessThan", value: 4 });
     });
 
     test("should filter by CTA questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -883,19 +928,23 @@ describe("surveys", () => {
               id: "ctaQ",
               elementType: TSurveyElementTypeEnum.CTA,
             },
-            filterType: { filterComboBoxValue: "Clicked" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Clicked" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.ctaQ).toEqual({ op: "clicked" });
     });
 
     test("should filter by consent questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -904,19 +953,23 @@ describe("surveys", () => {
               id: "consentQ",
               elementType: TSurveyElementTypeEnum.Consent,
             },
-            filterType: { filterComboBoxValue: "Accepted" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Accepted" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.consentQ).toEqual({ op: "accepted" });
     });
 
     test("should filter by picture selection questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -928,16 +981,20 @@ describe("surveys", () => {
             filterType: { filterValue: "Includes either", filterComboBoxValue: ["Picture 1"] },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.pictureQ).toEqual({ op: "includesOne", value: ["p1"] });
     });
 
     test("should filter by matrix questions", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: {
@@ -949,9 +1006,13 @@ describe("surveys", () => {
             filterType: { filterValue: "Row 1", filterComboBoxValue: "Column 1" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.matrixQ).toEqual({ op: "matrix", value: { "Row 1": "Column 1" } });
     });
@@ -969,7 +1030,7 @@ describe("surveys", () => {
       const result = getFormattedFilters(
         survey,
         {
-          responseStatus: "all",
+          responseStatuses: [],
           filter: [row("Row 1", "Column 1"), row("Row 2", "Column 2")],
         } as SelectedFilterValue,
         {} as DateRange
@@ -983,64 +1044,80 @@ describe("surveys", () => {
 
     test("should filter by hidden fields", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Hidden Fields", label: "plan", id: "plan" },
             filterType: { filterValue: "Equals", filterComboBoxValue: "pro" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.plan).toEqual({ op: "equals", value: "pro" });
     });
 
     test("should filter by attributes", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Attributes", label: "role", id: "role" },
             filterType: { filterValue: "Not equals", filterComboBoxValue: "admin" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.contactAttributes?.role).toEqual({ op: "notEquals", value: "admin" });
     });
 
     test("should filter by other filters", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Other Filters", label: "Language", id: "language" },
             filterType: { filterValue: "Equals", filterComboBoxValue: "en" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.others?.Language).toEqual({ op: "equals", value: "en" });
     });
 
     test("reserved fields land in the reserved group, keyed by catalog name (ENG-1848)", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "Source", id: "source" },
             filterType: { filterValue: "Not equals", filterComboBoxValue: "web" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.reserved?.source).toEqual({ op: "notEquals", value: "web" });
       expect(result.meta).toBeUndefined();
@@ -1048,7 +1125,7 @@ describe("surveys", () => {
 
     test("number-typed reserved values are sent as numbers, presence ops carry no value", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "Screen Width", id: "screenWidth" },
@@ -1059,9 +1136,13 @@ describe("surveys", () => {
             filterType: { filterValue: "Is set", filterComboBoxValue: undefined },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.reserved?.screenWidth).toEqual({ op: "greaterThan", value: 1000 });
       expect(result.reserved?.utmSource).toEqual({ op: "isSet" });
@@ -1069,32 +1150,40 @@ describe("surveys", () => {
 
     test("fails closed: an unknown or shadowed reserved id emits nothing", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "Nope", id: "notInCatalog" },
             filterType: { filterValue: "Equals", filterComboBoxValue: "x" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.reserved).toBeUndefined();
     });
 
     test("variables land in the variables group keyed by storageKey, coerced to their dataType", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Variables", label: "score", id: "var_score" },
             filterType: { filterValue: "Is less than", filterComboBoxValue: "5" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.variables?.var_score).toEqual({ op: "lessThan", value: 5 });
     });
@@ -1129,7 +1218,7 @@ describe("surveys", () => {
 
     const boolFilter = (filterValue: string, filterComboBoxValue: string) => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: OptionsType.HIDDEN_FIELDS, label: "is_pro", id: "is_pro" },
@@ -1145,7 +1234,7 @@ describe("surveys", () => {
       const result = getFormattedFilters(
         typedSurvey,
         {
-          responseStatus: "all",
+          responseStatuses: [],
           filter: [
             {
               elementType: { type: "Hidden Fields", label: "is_pro", id: "is_pro" },
@@ -1160,8 +1249,8 @@ describe("surveys", () => {
               filterType: { filterValue: "Is less than", filterComboBoxValue: "abc" },
             },
           ],
-        } as any,
-        {} as any
+        } as Parameters<typeof getFormattedFilters>[1],
+        {} as Parameters<typeof getFormattedFilters>[2]
       );
 
       // Booleans are stored as the strings the ingest contract writes, so the filter value is one
@@ -1234,7 +1323,7 @@ describe("surveys", () => {
         getFormattedFilters(
           typedSurvey,
           {
-            responseStatus: "all",
+            responseStatuses: [],
             filter: [
               {
                 elementType: {
@@ -1262,23 +1351,27 @@ describe("surveys", () => {
 
     test("ingested presence maps onto the data group's submitted/skipped vocabulary", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Hidden Fields", label: "plan", id: "plan" },
             filterType: { filterValue: "Is not set", filterComboBoxValue: undefined },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.data?.plan).toEqual({ op: "skipped" });
     });
 
     test("should handle multiple filters together", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "complete",
+        responseStatuses: ["complete"],
         filter: [
           {
             elementType: {
@@ -1291,10 +1384,10 @@ describe("surveys", () => {
           },
           {
             elementType: { type: "Tags", label: "Tag 1", id: "tag1" },
-            filterType: { filterComboBoxValue: "Applied" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Applied" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
@@ -1305,15 +1398,15 @@ describe("surveys", () => {
     });
 
     test("should format URL meta filters with string operations", () => {
-      const selectedFilter = {
-        responseStatus: "all",
+      const selectedFilter: SelectedFilterValue = {
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "url", id: "url" },
             filterType: { filterValue: "Contains", filterComboBoxValue: "example.com" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
@@ -1333,15 +1426,15 @@ describe("surveys", () => {
       ];
 
       testCases.forEach(({ filterValue, expected }) => {
-        const selectedFilter = {
-          responseStatus: "all",
+        const selectedFilter: SelectedFilterValue = {
+          responseStatuses: [],
           filter: [
             {
               elementType: { type: "Meta", label: "url", id: "url" },
               filterType: { filterValue, filterComboBoxValue: expected.value },
             },
           ],
-        } as any;
+        } as SelectedFilterValue;
 
         const result = getFormattedFilters(survey, selectedFilter, dateRange);
         expect(result.reserved?.url).toEqual(expected);
@@ -1349,15 +1442,15 @@ describe("surveys", () => {
     });
 
     test("should handle URL meta filters with empty string values", () => {
-      const selectedFilter = {
-        responseStatus: "all",
+      const selectedFilter: SelectedFilterValue = {
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "url", id: "url" },
             filterType: { filterValue: "Contains", filterComboBoxValue: "" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
@@ -1365,15 +1458,15 @@ describe("surveys", () => {
     });
 
     test("should handle URL meta filters with whitespace-only values", () => {
-      const selectedFilter = {
-        responseStatus: "all",
+      const selectedFilter: SelectedFilterValue = {
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "url", id: "url" },
             filterType: { filterValue: "Contains", filterComboBoxValue: "   " },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
@@ -1382,15 +1475,15 @@ describe("surveys", () => {
     });
 
     test("should still handle existing meta filters with array values", () => {
-      const selectedFilter = {
-        responseStatus: "all",
+      const selectedFilter: SelectedFilterValue = {
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "source", id: "source" },
             filterType: { filterValue: "Equals", filterComboBoxValue: ["google"] },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
@@ -1398,8 +1491,8 @@ describe("surveys", () => {
     });
 
     test("should handle mixed URL and traditional meta filters", () => {
-      const selectedFilter = {
-        responseStatus: "all",
+      const selectedFilter: SelectedFilterValue = {
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Meta", label: "url", id: "url" },
@@ -1410,7 +1503,7 @@ describe("surveys", () => {
             filterType: { filterValue: "Equals", filterComboBoxValue: ["newsletter"] },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
       const result = getFormattedFilters(survey, selectedFilter, dateRange);
 
@@ -1420,68 +1513,84 @@ describe("surveys", () => {
 
     test("should filter by quota with screened in status", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Quotas", label: "Quota 1", id: "quota1" },
-            filterType: { filterComboBoxValue: "Screened in" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Screened in" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.quotas?.quota1).toEqual({ op: "screenedIn" });
     });
 
     test("should filter by quota with screened out status", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Quotas", label: "Quota 1", id: "quota1" },
-            filterType: { filterComboBoxValue: "Screened out (overquota)" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Screened out (overquota)" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.quotas?.quota1).toEqual({ op: "screenedOut" });
     });
 
     test("should filter by quota with not in quota status", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Quotas", label: "Quota 1", id: "quota1" },
-            filterType: { filterComboBoxValue: "Not in quota" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Not in quota" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.quotas?.quota1).toEqual({ op: "screenedOutNotInQuota" });
     });
 
     test("should filter by multiple quotas with different statuses", () => {
       const selectedFilter: SelectedFilterValue = {
-        responseStatus: "all",
+        responseStatuses: [],
         filter: [
           {
             elementType: { type: "Quotas", label: "Quota 1", id: "quota1" },
-            filterType: { filterComboBoxValue: "Screened in" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Screened in" },
           },
           {
             elementType: { type: "Quotas", label: "Quota 2", id: "quota2" },
-            filterType: { filterComboBoxValue: "Not in quota" },
+            filterType: { filterValue: undefined, filterComboBoxValue: "Not in quota" },
           },
         ],
-      } as any;
+      } as SelectedFilterValue;
 
-      const result = getFormattedFilters(survey, selectedFilter, {} as any);
+      const result = getFormattedFilters(
+        survey,
+        selectedFilter,
+        {} as Parameters<typeof getFormattedFilters>[2]
+      );
 
       expect(result.quotas?.quota1).toEqual({ op: "screenedIn" });
       expect(result.quotas?.quota2).toEqual({ op: "screenedOutNotInQuota" });

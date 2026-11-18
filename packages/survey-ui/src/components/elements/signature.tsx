@@ -3,6 +3,7 @@ import * as React from "react";
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
 import { Input } from "@/components/general/input";
+import { SIGNATURE_INK_COLOR } from "@/lib/signature/signature-draw";
 import { loadSignatureFont } from "@/lib/signature/signature-font";
 import {
   SIGNATURE_ASPECT_RATIO,
@@ -153,18 +154,18 @@ function PadOverlays({
       {showHint ? (
         <span
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-neutral-500">
+          className="text-input-placeholder opacity-input-placeholder pointer-events-none absolute inset-0 flex items-center justify-center text-sm">
           {mode === "type" ? text.typeYourName : text.signHere}
         </span>
       ) : null}
       {hasSavedOnly ? (
-        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-white p-4 text-center text-sm text-neutral-700">
+        <div className="bg-input-bg absolute inset-0 flex items-center justify-center gap-2 p-4 text-center text-sm [color:var(--fb-input-text-color,var(--fb-input-color))]">
           <Check aria-hidden="true" className="size-4 shrink-0" />
           <span>{text.saved}</span>
         </div>
       ) : null}
       {isUploading ? (
-        <div className="absolute inset-0 flex items-center justify-center bg-white/80 text-sm font-medium text-neutral-700 motion-safe:animate-pulse">
+        <div className="absolute inset-0 flex items-center justify-center [background-color:color-mix(in_srgb,var(--fb-input-bg-color)_80%,transparent)] text-sm font-medium [color:var(--fb-input-text-color,var(--fb-input-color))] motion-safe:animate-pulse">
           {text.uploading}
         </div>
       ) : null}
@@ -229,6 +230,8 @@ function Signature({
     if (!canvas) return;
     const pad = createSignaturePad({
       canvas,
+      // The canvas carries the input text colour in CSS; the ink is read from it on every paint.
+      getInkColor: () => getComputedStyle(canvas).color || SIGNATURE_INK_COLOR,
       onStrokesChange: (strokes) => {
         setIsStroking(false);
         onChangeRef.current({ ...valueRef.current, strokes });
@@ -394,8 +397,9 @@ function Signature({
             role={showModeToggle ? "tabpanel" : undefined}
             aria-labelledby={showModeToggle ? `${inputId}-tab-${mode}` : undefined}
             className="space-y-2">
-            {/* The pad is a fixed white page with near-black ink in every theme: it is what the exported
-                PNG looks like, so it must not follow the survey's colours or dark appearance. */}
+            {/* The pad follows the survey's theme and appearance like any other input: its background is the
+                input background and the ink is the input text colour. Only the exported PNG is a fixed white
+                page with near-black ink (see signature-export.ts). */}
             {/* The pad cancels pointerdown so a stroke never scrolls or selects, which also cancels the focus
                 move a press makes. Focusing the pad by hand drops the ring the card's mount focus left on the
                 Draw tab, so it does not linger while the respondent draws. */}
@@ -409,15 +413,21 @@ function Signature({
               onContextMenu={(event) => {
                 event.preventDefault();
               }}
-              className="rounded-input border-input-border relative w-full overflow-hidden border bg-white outline-none"
+              className="rounded-input border-input-border bg-input-bg relative w-full overflow-hidden border outline-none"
               style={{ aspectRatio: `${String(SIGNATURE_ASPECT_RATIO)} / 1` }}>
               {/* The canvas is a picture of the pad. It is hidden from assistive technology through this
                   wrapper, because the rule against aria-hidden on focusable elements counts a canvas as one. */}
               <div aria-hidden="true" className="absolute inset-0">
+                {/* The ink is painted in JS, so a theme change made in CSS alone (the appearance flipping
+                    to dark, new styling in the editor) would leave it in the old colour. The 1ms colour
+                    transition turns that change into a transitionend event, which repaints the ink. */}
                 <canvas
                   ref={canvasRef}
-                  className="block h-full w-full touch-none select-none"
+                  className="block h-full w-full touch-none [color:var(--fb-input-text-color,var(--fb-input-color))] select-none [transition:color_1ms]"
                   style={{ touchAction: "none", WebkitTouchCallout: "none" }}
+                  onTransitionEnd={(event) => {
+                    if (event.propertyName === "color") padRef.current?.redraw();
+                  }}
                 />
               </div>
               <PadOverlays

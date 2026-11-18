@@ -127,8 +127,8 @@ so "none" is a claim rather than a formality. -->
 ---
 
 <!-- Delete if no agent was involved. Read both values out of the tool, never from memory; a value the
-tool does not expose is `unknown`, never a guess. `docs/agents/pull-requests.md` says where each tool
-reports them. -->
+tool does not expose is `unknown`, never a guess, and one the harness forbids recording is `withheld`.
+`docs/agents/pull-requests.md` says where each tool reports them. -->
 
 > [!NOTE]
 > **AI model used** — `<model>`, reasoning effort `<level>`.

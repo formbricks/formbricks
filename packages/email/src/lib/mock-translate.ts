@@ -65,7 +65,7 @@ const translations: Record<TranslationKey, TranslationValue> = {
   "emails.forgot_password_email_change_password": "Change password",
   "emails.forgot_password_email_did_not_request": "If you didn't request this, please ignore this email.",
   "emails.forgot_password_email_heading": "Change password",
-  "emails.forgot_password_email_link_valid_for_24_hours": "The link is valid for {minutes} minutes.",
+  "emails.forgot_password_email_link_valid_for_minutes": "The link is valid for {minutes} minutes.",
   "emails.forgot_password_email_subject": "Reset your Formbricks password",
   "emails.forgot_password_email_text":
     "You have requested a link to change your password. You can do this by clicking the link below:",
@@ -181,7 +181,7 @@ const replacePlaceholders = (text: string, replacements?: Record<string, string>
 
   let result = text;
   Object.entries(replacements).forEach(([key, value]) => {
-    result = result.replace(new RegExp(`\\{${key}\\}`, "g"), value);
+    result = result.replace(new RegExp(String.raw`\{${key}\}`, "g"), value);
   });
 
   return result;

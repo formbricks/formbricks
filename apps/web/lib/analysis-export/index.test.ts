@@ -88,6 +88,28 @@ describe("buildAnalysisWhere", () => {
   test("a filter that selects Low quality leaves the dialog no Low quality choice", () => {
     expect(buildLowQualityScopeWhere(survey as never, { outcome: "lowQuality" })).toBeNull();
   });
+
+  test.each([
+    ["complete", "lowQuality"],
+    ["complete", "partial", "lowQuality"],
+  ] as const)(
+    "a filter that ticks Low quality among several statuses (%s) wins the same way (ENG-7078)",
+    (...statuses) => {
+      const where = buildAnalysisWhere(survey as never, { statuses: [...statuses] });
+      expect(JSON.stringify(where.included)).toContain('"outcome":"lowQuality"');
+      expect(JSON.stringify(where.included)).not.toContain('"outcome":null');
+      expect(where.lowQualityLeftOut).toBeNull();
+      expect(buildLowQualityScopeWhere(survey as never, { statuses: [...statuses] })).toBeNull();
+    }
+  );
+
+  test("statuses that leave Low quality unticked still leave it out", () => {
+    const where = buildAnalysisWhere(survey as never, { statuses: ["complete"] });
+    expect(where.included).toEqual({
+      AND: [expect.objectContaining({ surveyId: survey.id }), { outcome: null }],
+    });
+    expect(where.lowQualityLeftOut).not.toBeNull();
+  });
 });
 
 describe("buildAnalysisSelect", () => {

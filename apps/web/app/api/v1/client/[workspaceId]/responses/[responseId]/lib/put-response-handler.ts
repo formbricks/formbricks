@@ -5,6 +5,7 @@ import {
 } from "@formbricks/types/errors";
 import { TClientResponseUpdateInput, TResponse } from "@formbricks/types/responses";
 import { TSurveyElement } from "@formbricks/types/surveys/elements";
+import { TResponseNotShown } from "@formbricks/types/surveys/not-shown";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { type ApiErrorResult, handleApiError } from "@/app/lib/api/handle-api-error";
 import { responses } from "@/app/lib/api/response";
@@ -20,13 +21,14 @@ import { createQuotaFullObject } from "@/modules/ee/quotas/lib/helpers";
 import { validateClientFileUploads } from "@/modules/storage/utils";
 import { verifyLinkSurveyPinToken } from "@/modules/survey/link/lib/pin-token";
 import { VERIFIED_EMAIL_RESPONSE_KEY } from "@/modules/survey/link/lib/verify-email-gate";
-import { updateResponseWithQuotaEvaluation } from "./response";
+import { getStoredResponseNotShown, updateResponseWithQuotaEvaluation } from "./response";
 import { getValidatedResponseUpdateInput } from "./validated-response-update-input";
 
 type TRouteResult = ApiErrorResult;
 
 type TExistingResponseResult = { existingResponse: TResponse } | TRouteResult;
 type TSurveyResult = { survey: TSurvey } | TRouteResult;
+type TNotShownResult = { notShown: TResponseNotShown | null } | TRouteResult;
 type TUpdatedResponseResult =
   | { updatedResponse: Awaited<ReturnType<typeof updateResponseWithQuotaEvaluation>> }
   | TRouteResult;
@@ -60,7 +62,8 @@ const responseAlreadyFinished = (): TRouteResult => ({
 const validateResponse = (
   response: TResponse,
   survey: TSurvey,
-  responseUpdateInput: TClientResponseUpdateInput
+  responseUpdateInput: TClientResponseUpdateInput,
+  notShown: TResponseNotShown | null
 ) => {
   const mergedData = {
     ...response.data,
@@ -71,7 +74,8 @@ const validateResponse = (
     survey.blocks,
     mergedData,
     responseUpdateInput.language ?? response.language ?? "en",
-    survey.questions
+    survey.questions,
+    notShown
   );
 
   if (validationErrors) {
@@ -97,6 +101,22 @@ const getExistingResponse = async (responseId: string): Promise<TExistingRespons
   }
 };
 
+/**
+ * The not-shown record the update leaves on the response, for validation (ENG-7332). The survey sends
+ * its whole record with every update; an update without one keeps the stored record (ENG-6936).
+ */
+const getNotShownForValidation = async (
+  responseId: string,
+  responseUpdateInput: TClientResponseUpdateInput
+): Promise<TNotShownResult> => {
+  if (responseUpdateInput.notShown !== undefined) return { notShown: responseUpdateInput.notShown };
+  try {
+    return { notShown: await getStoredResponseNotShown(responseId) };
+  } catch (error) {
+    return handleDatabaseError(error, responseId);
+  }
+};
+
 const getSurveyForResponse = async (responseId: string, surveyId: string): Promise<TSurveyResult> => {
   try {
     const survey = await getSurvey(surveyId);
@@ -111,7 +131,8 @@ const validateUpdateRequest = (
   existingResponse: TResponse,
   survey: TSurvey,
   responseUpdateInput: TClientResponseUpdateInput,
-  workspaceId: string
+  workspaceId: string,
+  notShown: TResponseNotShown | null
 ): TRouteResult | undefined => {
   // Mirror the POST endpoint: a closed survey accepts no submissions, including finalizing a partial
   // response created while it was open (ENG-1654).
@@ -161,7 +182,7 @@ const validateUpdateRequest = (
     };
   }
 
-  return validateResponse(existingResponse, survey, responseUpdateInput);
+  return validateResponse(existingResponse, survey, responseUpdateInput, notShown);
 };
 
 const getUpdatedResponse = async (
@@ -255,7 +276,18 @@ export const putResponseHandler = async ({
     responseUpdateInput.data = ingestResult.data;
   }
 
-  const validationResult = validateUpdateRequest(existingResponse, survey, responseUpdateInput, workspaceId);
+  const notShownResult = await getNotShownForValidation(responseId, responseUpdateInput);
+  if ("response" in notShownResult) {
+    return notShownResult;
+  }
+
+  const validationResult = validateUpdateRequest(
+    existingResponse,
+    survey,
+    responseUpdateInput,
+    workspaceId,
+    notShownResult.notShown
+  );
   if (validationResult) {
     return validationResult;
   }

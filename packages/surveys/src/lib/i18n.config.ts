@@ -106,7 +106,7 @@ export const loadLanguage = async (code: string): Promise<void> => {
       if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
       i18n.addResourceBundle(bundle, "translation", await response.json());
     } catch {
-      // eslint-disable-next-line no-console -- the survey still renders; this is the only trace of why it is in English
+      // The survey still renders; this is the only trace of why it is in English.
       console.warn(`[formbricks] Could not load translations for "${bundle}". Falling back to English.`);
     } finally {
       pendingLoads.delete(bundle);

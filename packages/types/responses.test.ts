@@ -204,6 +204,20 @@ describe("ZResponseFilterCriteria.data", () => {
   });
 });
 
+describe("ZResponseFilterCriteria.statuses", () => {
+  const parse = (statuses: unknown) => ZResponseFilterCriteria.safeParse({ statuses });
+
+  test("takes no more statuses than the quick filter offers", () => {
+    expect(parse(["complete", "lowQuality"]).success).toBe(true);
+    expect(parse(["complete", "partial", "lowQuality"]).success).toBe(true);
+    expect(parse(["complete", "partial", "lowQuality", "complete"]).success).toBe(false);
+  });
+
+  test("rejects a status the quick filter does not offer", () => {
+    expect(parse(["complete", "archived"]).success).toBe(false);
+  });
+});
+
 describe("response input caps", () => {
   const keyed = <T>(count: number, value: (index: number) => T): Record<string, T> =>
     Object.fromEntries(Array.from({ length: count }, (_, index) => [`k${index}`, value(index)]));

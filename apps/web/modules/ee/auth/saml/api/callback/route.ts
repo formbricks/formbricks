@@ -221,8 +221,8 @@ const refuseBeforeParsing = async (req: Request, SAMLResponse: string): Promise<
 };
 
 /**
- * The refusal for a response the worker did not parse within its budget, or could not parse at all, before it began
- * decrypting an assertion (after that, see `refuseOpenedAssertion`).
+ * The refusal for a response the worker did not parse within its budget, could not parse at all, or found saml20
+ * cannot read, before it began decrypting an assertion (after that, see `refuseOpenedAssertion`).
  */
 const refuseUnparsed = (
   req: Request,
@@ -251,6 +251,19 @@ const refuseUnparsed = (
         req,
         "saml_unavailable",
         responses.serviceUnavailableResponse("The SAML response could not be processed; retry shortly", 1)
+      );
+    case "unreadable":
+      // jackson would throw on it with no status, which used to answer 500 and reach Sentry for every anonymous
+      // probe (ENG-7054). Cheap for anyone to send, so it is logged like the bounds refusals: throttled, by size only.
+      warnThrottled(
+        "unreadable",
+        failureContext(SAMLResponse, RelayState),
+        "Refused a SAML response that is not well-formed XML"
+      );
+      return refuse(
+        req,
+        "saml_response_rejected",
+        responses.badRequestResponse("SAMLResponse is not a well-formed XML document")
       );
     case "too_costly":
       logger.warn(

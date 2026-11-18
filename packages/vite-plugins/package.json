@@ -13,12 +13,11 @@
   "scripts": {
     "clean": "rimraf .turbo node_modules dist",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-oxlint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "postcss": "catalog:",
     "typescript": "catalog:",

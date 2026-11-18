@@ -296,7 +296,7 @@ const successResponse = ({
   cors = true,
   cache = "private, no-store",
 }: {
-  data: Object;
+  data: unknown;
   meta?: Record<string, unknown>;
   cors?: boolean;
   cache?: string;
@@ -324,7 +324,7 @@ export const createdResponse = ({
   cors = false,
   cache = "private, no-store",
 }: {
-  data: Object;
+  data: unknown;
   meta?: Record<string, unknown>;
   cors?: boolean;
   cache?: string;
@@ -352,7 +352,7 @@ export const multiStatusResponse = ({
   cors = false,
   cache = "private, no-store",
 }: {
-  data: Object;
+  data: unknown;
   meta?: Record<string, unknown>;
   cors?: boolean;
   cache?: string;

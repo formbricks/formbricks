@@ -28,7 +28,10 @@ vi.mock("@formbricks/database", () => ({
   prisma: { response: { count: mocks.count }, contactAttributeKey: { findMany: mocks.attributeKeys } },
 }));
 vi.mock("@/lib/response/service", () => ({ getResponseDownloadFile: mocks.getResponseDownloadFile }));
-vi.mock("@/lib/response/where-clause", () => ({ buildWhereClause: () => ({ finished: true }) }));
+vi.mock("@/lib/response/where-clause", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/response/where-clause")>()),
+  buildWhereClause: () => ({ finished: true }),
+}));
 vi.mock("@/lib/analysis-export", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/lib/analysis-export")>()),
   openAnalysisExport: mocks.openAnalysisExport,

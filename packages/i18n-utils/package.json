@@ -53,9 +53,6 @@
   "scripts": {
     "go": "vite build --watch --mode dev",
     "clean": "rimraf .turbo node_modules coverage dist",
-    "lint:report": "eslint . --format json --output-file ../../lint-results/i18n-utils.json",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
     "typecheck": "tsc --noEmit",
     "build": "rimraf dist && tsc --project tsconfig.build.json && vite build",
     "test": "vitest run",
@@ -68,7 +65,8 @@
     "object-hash": "3.0.0"
   },
   "devDependencies": {
-    "@formbricks/config-eslint": "workspace:*",
+    "@formatjs/icu-messageformat-parser": "2.11.4",
+    "@formbricks/config-oxlint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@types/node": "catalog:",
     "@types/object-hash": "3.0.6",

@@ -50,6 +50,8 @@ interface DatePickerProps {
   /** Links the trigger to a field's description or error, e.g. from a form. */
   "aria-describedby"?: string;
   "aria-invalid"?: boolean;
+  /** Marks the trigger as invalid, with the red border `Input` and `Textarea` draw, and `aria-invalid`. */
+  isInvalid?: boolean;
 }
 
 export const DatePicker = ({
@@ -70,6 +72,7 @@ export const DatePicker = ({
   clearButtonClassName,
   "aria-describedby": ariaDescribedBy,
   "aria-invalid": ariaInvalid,
+  isInvalid,
 }: Readonly<DatePickerProps>) => {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
@@ -86,8 +89,12 @@ export const DatePicker = ({
             variant="outline"
             disabled={disabled}
             aria-describedby={ariaDescribedBy}
-            aria-invalid={ariaInvalid || undefined}
-            className={cn("w-[280px] justify-start bg-white text-left font-normal", triggerClassName)}>
+            aria-invalid={isInvalid || ariaInvalid || undefined}
+            className={cn(
+              "w-[280px] justify-start bg-white text-left font-normal",
+              triggerClassName,
+              isInvalid && "border-red-500 focus:border-red-500"
+            )}>
             <CalendarIcon className="mr-2 size-4 shrink-0" />
             <span className={cn("truncate", !label && "text-slate-500")}>
               {label ?? placeholder ?? t("common.pick_a_date")}

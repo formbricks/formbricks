@@ -8,7 +8,7 @@ export const isInviteExpired = (invite: TInvite) => {
 };
 
 /**
- * Mirrors the server's `getOrganizationOwnerCount`, which every last-owner guard reads: it counts
+ * Mirrors the server's `countActiveOwners` (`owner-guard.ts`), which every last-owner guard reads: it counts
  * `Membership` rows, and only those whose user can still sign in. Two things are therefore not owners
  * for this purpose, and both used to be counted here:
  *

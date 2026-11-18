@@ -22,8 +22,8 @@ import { OutcomeQueryClientProvider } from "@/modules/analysis/response-outcome/
 import {
   type TOutcomeActions,
   type TOutcomeChanges,
+  dropRowsOutsideStatuses,
   patchOutcomes,
-  shouldDropAfterOutcome,
 } from "@/modules/analysis/response-outcome/lib/outcome";
 import { Button } from "@/modules/ui/components/button";
 
@@ -81,7 +81,7 @@ export const ResponsePage = ({
   // analysis refresh handler and would collapse the infinite-scroll list back to page 1.
   // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the filter value, not its identity
   const filters = useMemo(() => computedFilters, [filtersKey]);
-  const { isReady } = filterState;
+  const { isReady, resolveFreshCriteria } = filterState;
 
   // The criteria the loaded list was fetched with. A refresh resolves relative dates afresh, so the
   // pages after it and the count must ask about the same window as its first page.
@@ -92,7 +92,10 @@ export const ResponsePage = ({
 
   // Rows matching the filters, for the toolbar. Refetched with the list, so a delete or a refresh
   // keeps it honest.
-  const matchCountKey = ["surveys", surveyId, "response-count", filtersKey];
+  const matchCountKey = useMemo(
+    () => ["surveys", surveyId, "response-count", filtersKey],
+    [surveyId, filtersKey]
+  );
   const matchCountQuery = useQuery({
     queryKey: matchCountKey,
     queryFn: async () => (await getResponseCountAction({ surveyId, filterCriteria: filters }))?.data ?? null,
@@ -109,7 +112,8 @@ export const ResponsePage = ({
     const getResponsesActionResponse = await getResponsesAction({
       surveyId,
       limit: responsesPerPage,
-      offset: (newPage - 1) * responsesPerPage,
+      // The rows still listed, not `page * size`: a deleted or restored row has left the server's list too.
+      offset: responses.length,
       filterCriteria: listCriteriaRef.current,
     });
     newResponses = getResponsesActionResponse?.data || [];
@@ -135,18 +139,20 @@ export const ResponsePage = ({
     setResponses((prev) => patchOutcomes(prev, changes));
   }, []);
 
-  const responseStatus = selectedFilter.responseStatus;
+  const responseStatuses = selectedFilter.responseStatuses;
   const outcomeActions: TOutcomeActions = useMemo(
     () => ({
       applyOutcomes,
-      // A restored response no longer matches a Low quality filter, so it leaves the list.
+      // A response whose new outcome takes it out of the ticked statuses (a restored one, for Low quality) leaves
+      // the list, and the count follows. Like a refresh, it asks about the window the list was fetched with.
       onSaved: (ids, outcome) => {
-        if (shouldDropAfterOutcome(responseStatus, outcome)) {
-          setResponses((prev) => prev.filter((r) => !ids.includes(r.id)));
-        }
+        setResponses((prev) => dropRowsOutsideStatuses(prev, ids, outcome, responseStatuses));
+        void getResponseCountAction({ surveyId, filterCriteria: listCriteriaRef.current }).then((count) =>
+          queryClient.setQueryData(matchCountKey, count?.data ?? null)
+        );
       },
     }),
-    [applyOutcomes, responseStatus]
+    [applyOutcomes, responseStatuses, surveyId, queryClient, matchCountKey]
   );
 
   const refetchResponses = useCallback(async () => {
@@ -156,7 +162,7 @@ export const ResponsePage = ({
 
     try {
       // A refresh asks about now: a relative date window may have moved on since the filter was set.
-      const criteria = filterState.resolveFreshCriteria();
+      const criteria = resolveFreshCriteria();
       const getResponsesActionResponse = await getResponsesAction({
         surveyId,
         limit: responsesPerPage,
@@ -182,7 +188,7 @@ export const ResponsePage = ({
       setIsFetchingFirstPage(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- `matchCountKey` is rebuilt from `filtersKey`
-  }, [filterState.resolveFreshCriteria, filtersKey, isReady, queryClient, responsesPerPage, surveyId, t]);
+  }, [resolveFreshCriteria, filtersKey, isReady, queryClient, responsesPerPage, surveyId, t]);
 
   useEffect(() => {
     return registerAnalysisRefreshHandler(refetchResponses);
@@ -190,7 +196,7 @@ export const ResponsePage = ({
 
   // Only fetch if filters are applied (not on initial mount with no filters)
   const hasFilters =
-    selectedFilter?.responseStatus !== "all" ||
+    selectedFilter.responseStatuses.length > 0 ||
     (selectedFilter?.filter && selectedFilter.filter.length > 0) ||
     (dateRange.from && dateRange.to);
 

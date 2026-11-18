@@ -3,8 +3,8 @@
   "private": true,
   "description": "Runtime dependencies of ghcr.io/formbricks/cube. Not a pnpm workspace; see README.md.",
   "dependencies": {
-    "@cubejs-backend/postgres-driver": "1.8.17",
-    "@cubejs-backend/server": "1.8.17"
+    "@cubejs-backend/postgres-driver": "1.8.21",
+    "@cubejs-backend/server": "1.8.21"
   },
   "overrides": {
     "@azure/identity": {
@@ -14,7 +14,7 @@
       "uuid": "11.1.1"
     },
     "get-uri": {
-      "basic-ftp": "6.2.2"
+      "basic-ftp": "6.2.4"
     },
     "follow-redirects": "1.16.2",
     "joi": "17.13.9"

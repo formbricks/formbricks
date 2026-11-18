@@ -13,8 +13,11 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/modu
 
 interface ElementSkipProps {
   skippedElements: string[] | undefined;
-  /** `notShown`: the response's not-shown record lists these questions (ENG-6936). */
-  status: "welcomeCard" | "skipped" | "aborted" | "notShown";
+  /**
+   * `notShown`: the response's not-shown record lists these questions (ENG-6936).
+   * `notReached`: the response ended before the first question (ENG-7030).
+   */
+  status: "welcomeCard" | "skipped" | "aborted" | "notShown" | "notReached";
   elements: TSurveyElement[];
   isFirstElementAnswered?: boolean;
   /**
@@ -133,6 +136,28 @@ export const ElementSkip = ({
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
+                {renderHeadlines(skippedElements)}
+              </div>
+            </div>
+          )}
+          {status === "notReached" && (
+            <div className="flex">
+              <div
+                className="flex w-0.5 grow items-start justify-center"
+                style={{
+                  background:
+                    "repeating-linear-gradient(to bottom,  rgb(203 213 225),  rgb(203 213 225) 2px, transparent 2px, transparent 10px)",
+                }}>
+                <div className="flex">
+                  <XCircleIcon className="min-h-6 min-w-6 rounded-full bg-white text-slate-400" />
+                </div>
+              </div>
+              <div className="mb-2 ml-4 flex flex-col">
+                <p
+                  data-testid="response-card-not-reached"
+                  className="mb-2 w-fit rounded-lg bg-slate-100 px-2 font-medium text-slate-700">
+                  {t("workspace.surveys.responses.ended_before_first_question")}
+                </p>
                 {renderHeadlines(skippedElements)}
               </div>
             </div>

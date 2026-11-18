@@ -41,7 +41,11 @@ const readDocument = (upload: TDocumentUpload): TDocumentModel => {
 
 /** Read a document into the model and hold it to the AI ceiling, before any AI call. */
 export function prepareDocumentImport(upload: TDocumentUpload, fileName: string): TPreparedDocumentImport {
-  const model = readDocument(upload);
+  return prepareDocumentModel(readDocument(upload), fileName);
+}
+
+/** A document already read into the model, held to the AI ceiling, before any AI call. */
+export function prepareDocumentModel(model: TDocumentModel, fileName: string): TPreparedDocumentImport {
   if (model.sourceChars > SURVEY_IMPORT_AI_MAX_SOURCE_CHARS) {
     throw documentLimitExceeded(
       "source_size",

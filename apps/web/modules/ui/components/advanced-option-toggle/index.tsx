@@ -7,7 +7,7 @@ interface AdvancedOptionToggleProps {
   readonly onToggle: (checked: boolean) => void;
   readonly htmlId: string;
   readonly title: string;
-  readonly description: any;
+  readonly description: React.ReactNode;
   readonly children?: React.ReactNode;
   readonly childBorder?: boolean;
   readonly customContainerClass?: string;

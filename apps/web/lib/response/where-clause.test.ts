@@ -137,3 +137,28 @@ describe("buildWhereClause: outcome", () => {
     expect(conditions({})).toEqual([]);
   });
 });
+
+describe("buildWhereClause: statuses", () => {
+  const clauses = (filter: TResponseFilterCriteria) =>
+    buildWhereClause(survey, filter).AND as Prisma.ResponseWhereInput[];
+
+  test("several statuses match a response that is in any of them (ENG-7078)", () => {
+    expect(clauses({ statuses: ["complete", "lowQuality"] })).toEqual([
+      { OR: [{ finished: true }, { outcome: "lowQuality" }] },
+    ]);
+    expect(clauses({ statuses: ["partial", "lowQuality"] })).toEqual([
+      { OR: [{ finished: false }, { outcome: "lowQuality" }] },
+    ]);
+  });
+
+  test("no statuses add no condition", () => {
+    expect(clauses({ statuses: [] })).toEqual([]);
+  });
+
+  test("leaving Low quality out yields to statuses that tick it, and applies when they do not", () => {
+    expect(clauses({ statuses: ["complete", "lowQuality"], excludeLowQuality: true })).toEqual([
+      { OR: [{ finished: true }, { outcome: "lowQuality" }] },
+    ]);
+    expect(clauses({ statuses: ["complete"], excludeLowQuality: true })).toContainEqual({ outcome: null });
+  });
+});

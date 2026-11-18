@@ -205,7 +205,7 @@ describe("Segment Utils", () => {
     expect(groupWithNested[1].connector).toBe("or");
     expect(isResourceFilter(groupWithNested[1].resource)).toBe(false);
     const outerGroupResource = groupWithNested[1].resource as TBaseFilters;
-    expect(outerGroupResource.length).toBe(1);
+    expect(outerGroupResource).toHaveLength(1);
     expect(outerGroupResource[0].id).toBe("ng1");
     expect(outerGroupResource[0].connector).toBeNull();
     expect(outerGroupResource[0].resource).toEqual([nestedBaseFilter]);
@@ -236,7 +236,7 @@ describe("Segment Utils", () => {
     const baseFilter1_orig = createBaseFilter(filter1_orig, null, "bf1");
     const baseFilter2_orig = createBaseFilter(filter2_orig, "and", "bf2");
     const baseFilter3_orig = createBaseFilter(filter3_orig, "or", "bf3");
-    let group: TBaseFilters = [baseFilter1_orig, baseFilter2_orig, baseFilter3_orig];
+    const group: TBaseFilters = [baseFilter1_orig, baseFilter2_orig, baseFilter3_orig];
 
     // Test moving filters up/down
     moveResource(group, "f2", "up");
@@ -323,93 +323,93 @@ describe("Segment Utils", () => {
 
   test("deleteResource", () => {
     // Scenario 1: Delete middle filter
-    let filter1_s1 = createMockFilter("f1", "attribute");
-    let filter2_s1 = createMockFilter("f2", "person");
-    let filter3_s1 = createMockFilter("f3", "segment");
-    let baseFilter1_s1 = createBaseFilter(filter1_s1, null, "bf1");
-    let baseFilter2_s1 = createBaseFilter(filter2_s1, "and", "bf2");
-    let baseFilter3_s1 = createBaseFilter(filter3_s1, "or", "bf3");
-    let group_s1: TBaseFilters = [baseFilter1_s1, baseFilter2_s1, baseFilter3_s1];
+    const filter1_s1 = createMockFilter("f1", "attribute");
+    const filter2_s1 = createMockFilter("f2", "person");
+    const filter3_s1 = createMockFilter("f3", "segment");
+    const baseFilter1_s1 = createBaseFilter(filter1_s1, null, "bf1");
+    const baseFilter2_s1 = createBaseFilter(filter2_s1, "and", "bf2");
+    const baseFilter3_s1 = createBaseFilter(filter3_s1, "or", "bf3");
+    const group_s1: TBaseFilters = [baseFilter1_s1, baseFilter2_s1, baseFilter3_s1];
     deleteResource(group_s1, "f2");
-    expect(group_s1.length).toBe(2);
+    expect(group_s1).toHaveLength(2);
     expect(group_s1[0].id).toBe("bf1");
     expect(group_s1[0].connector).toBeNull();
     expect(group_s1[1].id).toBe("bf3");
     expect(group_s1[1].connector).toBe("or");
 
     // Scenario 2: Delete first filter
-    let filter1_s2 = createMockFilter("f1", "attribute");
-    let filter2_s2 = createMockFilter("f2", "person");
-    let filter3_s2 = createMockFilter("f3", "segment");
-    let baseFilter1_s2 = createBaseFilter(filter1_s2, null, "bf1");
-    let baseFilter2_s2 = createBaseFilter(filter2_s2, "and", "bf2");
-    let baseFilter3_s2 = createBaseFilter(filter3_s2, "or", "bf3");
-    let group_s2: TBaseFilters = [baseFilter1_s2, baseFilter2_s2, baseFilter3_s2];
+    const filter1_s2 = createMockFilter("f1", "attribute");
+    const filter2_s2 = createMockFilter("f2", "person");
+    const filter3_s2 = createMockFilter("f3", "segment");
+    const baseFilter1_s2 = createBaseFilter(filter1_s2, null, "bf1");
+    const baseFilter2_s2 = createBaseFilter(filter2_s2, "and", "bf2");
+    const baseFilter3_s2 = createBaseFilter(filter3_s2, "or", "bf3");
+    const group_s2: TBaseFilters = [baseFilter1_s2, baseFilter2_s2, baseFilter3_s2];
     deleteResource(group_s2, "f1");
-    expect(group_s2.length).toBe(2);
+    expect(group_s2).toHaveLength(2);
     expect(group_s2[0].id).toBe("bf2");
     expect(group_s2[0].connector).toBeNull(); // Connector becomes null
     expect(group_s2[1].id).toBe("bf3");
     expect(group_s2[1].connector).toBe("or");
 
     // Scenario 3: Delete last filter
-    let filter1_s3 = createMockFilter("f1", "attribute");
-    let filter2_s3 = createMockFilter("f2", "person");
-    let filter3_s3 = createMockFilter("f3", "segment");
-    let baseFilter1_s3 = createBaseFilter(filter1_s3, null, "bf1");
-    let baseFilter2_s3 = createBaseFilter(filter2_s3, "and", "bf2");
-    let baseFilter3_s3 = createBaseFilter(filter3_s3, "or", "bf3");
-    let group_s3: TBaseFilters = [baseFilter1_s3, baseFilter2_s3, baseFilter3_s3];
+    const filter1_s3 = createMockFilter("f1", "attribute");
+    const filter2_s3 = createMockFilter("f2", "person");
+    const filter3_s3 = createMockFilter("f3", "segment");
+    const baseFilter1_s3 = createBaseFilter(filter1_s3, null, "bf1");
+    const baseFilter2_s3 = createBaseFilter(filter2_s3, "and", "bf2");
+    const baseFilter3_s3 = createBaseFilter(filter3_s3, "or", "bf3");
+    const group_s3: TBaseFilters = [baseFilter1_s3, baseFilter2_s3, baseFilter3_s3];
     deleteResource(group_s3, "f3");
-    expect(group_s3.length).toBe(2);
+    expect(group_s3).toHaveLength(2);
     expect(group_s3[0].id).toBe("bf1");
     expect(group_s3[0].connector).toBeNull();
     expect(group_s3[1].id).toBe("bf2");
     expect(group_s3[1].connector).toBe("and"); // Should pass now
 
     // Scenario 4: Delete only filter
-    let filter1_s4 = createMockFilter("f1", "attribute");
-    let baseFilter1_s4 = createBaseFilter(filter1_s4, null, "bf1");
-    let group_s4: TBaseFilters = [baseFilter1_s4];
+    const filter1_s4 = createMockFilter("f1", "attribute");
+    const baseFilter1_s4 = createBaseFilter(filter1_s4, null, "bf1");
+    const group_s4: TBaseFilters = [baseFilter1_s4];
     deleteResource(group_s4, "f1");
     expect(group_s4).toEqual([]);
 
     // Scenario 5: Delete filter in nested group
-    let filter1_s5 = createMockFilter("f1", "attribute"); // Outer filter
-    let nestedFilter1_s5 = createMockFilter("nf1", "device");
-    let nestedFilter2_s5 = createMockFilter("nf2", "attribute");
-    let baseFilter1_s5 = createBaseFilter(filter1_s5, null, "bf1");
-    let nestedBaseFilter1_s5 = createBaseFilter(nestedFilter1_s5, null, "nbf1");
-    let nestedBaseFilter2_s5 = createBaseFilter(nestedFilter2_s5, "and", "nbf2");
-    let nestedGroup_s5 = createBaseFilter([nestedBaseFilter1_s5, nestedBaseFilter2_s5], "or", "ng1");
-    let groupWithNested_s5: TBaseFilters = [baseFilter1_s5, nestedGroup_s5];
+    const filter1_s5 = createMockFilter("f1", "attribute"); // Outer filter
+    const nestedFilter1_s5 = createMockFilter("nf1", "device");
+    const nestedFilter2_s5 = createMockFilter("nf2", "attribute");
+    const baseFilter1_s5 = createBaseFilter(filter1_s5, null, "bf1");
+    const nestedBaseFilter1_s5 = createBaseFilter(nestedFilter1_s5, null, "nbf1");
+    const nestedBaseFilter2_s5 = createBaseFilter(nestedFilter2_s5, "and", "nbf2");
+    const nestedGroup_s5 = createBaseFilter([nestedBaseFilter1_s5, nestedBaseFilter2_s5], "or", "ng1");
+    const groupWithNested_s5: TBaseFilters = [baseFilter1_s5, nestedGroup_s5];
 
     deleteResource(groupWithNested_s5, "nf1");
-    let innerGroup_s5 = groupWithNested_s5[1].resource as TBaseFilters;
-    expect(innerGroup_s5.length).toBe(1);
+    const innerGroup_s5 = groupWithNested_s5[1].resource as TBaseFilters;
+    expect(innerGroup_s5).toHaveLength(1);
     expect(innerGroup_s5[0].id).toBe("nbf2");
     expect(innerGroup_s5[0].connector).toBeNull(); // Connector becomes null
 
     // Scenario 6: Delete filter that makes group empty, then delete the empty group
     // Continue from Scenario 5 state
     deleteResource(groupWithNested_s5, "nf2");
-    expect(groupWithNested_s5.length).toBe(1);
+    expect(groupWithNested_s5).toHaveLength(1);
     expect(groupWithNested_s5[0].id).toBe("bf1"); // Empty group ng1 should be deleted
 
     // Scenario 7: Delete a group directly
-    let filter1_s7 = createMockFilter("f1", "attribute");
-    let filter3_s7 = createMockFilter("f3", "segment");
-    let nestedFilter1_s7 = createMockFilter("nf1", "device");
-    let nestedFilter2_s7 = createMockFilter("nf2", "attribute");
-    let baseFilter1_s7 = createBaseFilter(filter1_s7, null, "bf1");
-    let nestedBaseFilter1_s7 = createBaseFilter(nestedFilter1_s7, null, "nbf1");
-    let nestedBaseFilter2_s7 = createBaseFilter(nestedFilter2_s7, "and", "nbf2");
-    let nestedGroup_s7 = createBaseFilter([nestedBaseFilter1_s7, nestedBaseFilter2_s7], "or", "ng1");
-    let baseFilter3_s7 = createBaseFilter(filter3_s7, "or", "bf3");
+    const filter1_s7 = createMockFilter("f1", "attribute");
+    const filter3_s7 = createMockFilter("f3", "segment");
+    const nestedFilter1_s7 = createMockFilter("nf1", "device");
+    const nestedFilter2_s7 = createMockFilter("nf2", "attribute");
+    const baseFilter1_s7 = createBaseFilter(filter1_s7, null, "bf1");
+    const nestedBaseFilter1_s7 = createBaseFilter(nestedFilter1_s7, null, "nbf1");
+    const nestedBaseFilter2_s7 = createBaseFilter(nestedFilter2_s7, "and", "nbf2");
+    const nestedGroup_s7 = createBaseFilter([nestedBaseFilter1_s7, nestedBaseFilter2_s7], "or", "ng1");
+    const baseFilter3_s7 = createBaseFilter(filter3_s7, "or", "bf3");
     const groupToDelete_s7: TBaseFilters = [baseFilter1_s7, nestedGroup_s7, baseFilter3_s7];
 
     deleteResource(groupToDelete_s7, "ng1");
-    expect(groupToDelete_s7.length).toBe(2);
+    expect(groupToDelete_s7).toHaveLength(2);
     expect(groupToDelete_s7[0].id).toBe("bf1");
     expect(groupToDelete_s7[0].connector).toBeNull();
     expect(groupToDelete_s7[1].id).toBe("bf3");
@@ -688,8 +688,9 @@ describe("Segment Utils", () => {
       workspaceId: "workspace1",
       surveys: ["survey1"],
       filters: [],
-      createdAt: dateString as any, // Cast to any to simulate string input
-      updatedAt: dateString as any, // Cast to any to simulate string input
+      // A string where a Date belongs, as JSON hands one back
+      createdAt: dateString as unknown as Date,
+      updatedAt: dateString as unknown as Date,
     };
 
     const formattedSegment = formatSegmentDateFields(segment);

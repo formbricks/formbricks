@@ -18,17 +18,13 @@ jobs:
           - arch: amd64
             runner: blacksmith-16vcpu-ubuntu-2404
             machine: x86_64
-            node_build_jobs: 4
           - arch: arm64
             runner: blacksmith-32vcpu-ubuntu-2404-arm
             machine: aarch64
-            # Node's conservative four-worker default leaves this native builder idle.
-            node_build_jobs: 32
     runs-on: ${{ matrix.runner }}
-    # Cold builds compile Node from source; subsequent runs reuse that layer.
     timeout-minutes: 120
     env:
-      # Rebuild the application on every trial, while retaining dependency/Node layers.
+      # Rebuild the application on every trial, while retaining dependency layers.
       # Otherwise a rerun measures an unchanged-image cache hit rather than a new release.
       BUILD_IDENTITY: ${{ github.sha }}-blacksmith-trial-${{ github.run_id }}-${{ github.run_attempt }}
       IMAGE: formbricks-blacksmith-trial:${{ github.sha }}
@@ -44,7 +40,7 @@ jobs:
         run: test "$(uname -m)" = "$EXPECTED_MACHINE"
 
       - name: Set up persistent Docker builder
-        uses: useblacksmith/setup-docker-builder@19215110ab936351210feebdfa5b440b4493e184 # v2.2.0
+        uses: useblacksmith/setup-docker-builder@06dd9c83a5d541274d2e3ac67625560979275267 # v2.3.0
         with:
           cache-key: apps/web/Dockerfile-blacksmith-trial-${{ matrix.arch }}
           nofallback: true
@@ -64,7 +60,6 @@ jobs:
           load: true
           tags: ${{ env.IMAGE }}
           build-args: |
-            NODE_BUILD_JOBS=${{ matrix.node_build_jobs }}
             FORMBRICKS_DEPLOYMENT_ID=${{ env.BUILD_IDENTITY }}
             FORMBRICKS_BUILD_VARIANT=ghcr
           secrets: |

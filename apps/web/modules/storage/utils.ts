@@ -213,6 +213,15 @@ const getResponseFileUrlOwner = ({
   return scope.surveyId === surveyId && scope.elementId === elementId ? "own" : "refused";
 };
 
+/** The strings an answer could hold a file URL in: each string of a list, or a bare string. */
+const getAnswerUrlCandidates = (answer: unknown): string[] => {
+  if (Array.isArray(answer)) {
+    return answer.filter((fileUrl): fileUrl is string => typeof fileUrl === "string");
+  }
+  if (typeof answer === "string") return [answer];
+  return [];
+};
+
 /**
  * Pulls the storage URLs one response of `surveyId` owns out of its answers, ready to hand to
  * `deleteResponseFileUrls`. Which URLs count is `getResponseFileUrlOwner`'s rule.
@@ -251,20 +260,10 @@ export const collectResponseFileUrls = (
   const answers: [string, unknown][] = Object.entries(data);
 
   for (const [elementId, answer] of answers) {
-    let answerUrls: unknown[];
-    if (Array.isArray(answer)) {
-      answerUrls = answer;
-    } else if (typeof answer === "string") {
-      answerUrls = [answer];
-    } else {
-      continue;
-    }
-
+    const answerUrls = getAnswerUrlCandidates(answer);
     const isBareString = typeof answer === "string";
     const isFileUploadAnswer = !isBareString && elementIds.fileUpload.has(elementId);
     for (const fileUrl of answerUrls) {
-      if (typeof fileUrl !== "string") continue;
-
       const owner = getResponseFileUrlOwner({
         fileUrl,
         elementId,

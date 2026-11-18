@@ -209,7 +209,13 @@ describe("the detailed view", () => {
   test("is the list item plus those fields, and nothing else differs", () => {
     const serializer = createV3ResponseSerializer();
     const r = row();
-    const { contact, displayId, singleUseId, data, ...rest } = serializer.toResource(r, survey());
+    const {
+      contact: _contact,
+      displayId: _displayId,
+      singleUseId: _singleUseId,
+      data: _data,
+      ...rest
+    } = serializer.toResource(r, survey());
 
     expect(rest).toEqual(serializer.toListItem(r, survey()));
   });

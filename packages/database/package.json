@@ -65,8 +65,6 @@
     "check:migration-drift": "dotenv -e ../../.env -- tsx ./src/scripts/check-migration-drift.ts",
     "format": "prisma format --config ./prisma.config.ts",
     "generate": "node ./src/scripts/clean-generated-prisma.mjs && prisma generate --config ./prisma.config.ts",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
     "lint:migrations": "squawk --config ./.squawk.toml",
     "generate-data-migration": "tsx ./src/scripts/generate-data-migration.ts",
     "test": "vitest run",
@@ -90,7 +88,7 @@
     "zod-openapi": "catalog:"
   },
   "devDependencies": {
-    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-oxlint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/vite-plugins": "workspace:*",
     "@types/pg": "8.16.0",

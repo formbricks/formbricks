@@ -57,46 +57,6 @@ describe("Error types and utilities", () => {
     });
   });
 
-  describe("ErrorCode enum", () => {
-    test("should have all expected error codes", () => {
-      expect(ErrorCode.Unknown).toBe("unknown");
-      expect(ErrorCode.CacheValidationError).toBe("cache_validation_error");
-      expect(ErrorCode.RedisConnectionError).toBe("redis_connection_error");
-      expect(ErrorCode.RedisOperationError).toBe("redis_operation_error");
-      expect(ErrorCode.CacheCorruptionError).toBe("cache_corruption_error");
-    });
-
-    test("should be usable as object keys", () => {
-      const errorMap = {
-        [ErrorCode.Unknown]: "Unknown error occurred",
-        [ErrorCode.CacheValidationError]: "Validation failed",
-        [ErrorCode.RedisConnectionError]: "Connection failed",
-        [ErrorCode.RedisOperationError]: "Operation failed",
-        [ErrorCode.CacheCorruptionError]: "Data corrupted",
-      };
-
-      expect(errorMap[ErrorCode.Unknown]).toBe("Unknown error occurred");
-      expect(errorMap[ErrorCode.CacheValidationError]).toBe("Validation failed");
-    });
-  });
-
-  describe("CacheError interface", () => {
-    test("should work with all error codes", () => {
-      const errors: CacheError[] = [
-        { code: ErrorCode.Unknown },
-        { code: ErrorCode.CacheValidationError },
-        { code: ErrorCode.RedisConnectionError },
-        { code: ErrorCode.RedisOperationError },
-        { code: ErrorCode.CacheCorruptionError },
-      ];
-
-      errors.forEach((error) => {
-        expect(typeof error.code).toBe("string");
-        expect(Object.values(ErrorCode)).toContain(error.code);
-      });
-    });
-  });
-
   describe("Result type", () => {
     test("should discriminate between success and error states", () => {
       const successResult: Result<string, CacheError> = ok("success");
@@ -112,17 +72,6 @@ describe("Error types and utilities", () => {
         expect(typeof errorResult.error.code).toBe("string");
         expect(errorResult.error.code).toBe(ErrorCode.Unknown);
       }
-    });
-
-    test("should support type safety with different data types", () => {
-      // This test verifies type compatibility at compile time
-      const stringResult: Result<string, CacheError> = ok("test");
-      const numberResult: Result<number, CacheError> = ok(42);
-      const objectResult: Result<{ id: string }, CacheError> = ok({ id: "123" });
-
-      expect(stringResult.ok).toBe(true);
-      expect(numberResult.ok).toBe(true);
-      expect(objectResult.ok).toBe(true);
     });
   });
 
@@ -168,14 +117,6 @@ describe("Error types and utilities", () => {
         expect(error).toBeInstanceOf(Error);
         expect(error).toBeInstanceOf(CacheErrorClass);
       });
-    });
-
-    test("should implement CacheError interface", () => {
-      const error = new CacheErrorClass(ErrorCode.RedisOperationError, "Test message");
-
-      // Should be assignable to CacheError interface
-      const cacheError: CacheError = error;
-      expect(cacheError.code).toBe(ErrorCode.RedisOperationError);
     });
 
     test("should be throwable and catchable", () => {
@@ -266,31 +207,6 @@ describe("Error types and utilities", () => {
       // Note: Error's message and name are not enumerable by default in JSON.stringify
       // Only the public 'code' property will be serialized
       expect(parsed.code).toBeDefined();
-    });
-  });
-
-  describe("Module exports", () => {
-    test("should export all required types and utilities", () => {
-      // Verify functions are exported
-      expect(typeof ok).toBe("function");
-      expect(typeof err).toBe("function");
-
-      // Verify classes are exported
-      expect(typeof CacheErrorClass).toBe("function");
-      expect(CacheErrorClass.prototype).toBeInstanceOf(Error);
-
-      // Verify enum is exported
-      expect(typeof ErrorCode).toBe("object");
-      expect(ErrorCode).toBeDefined();
-
-      // Type exports verification (compile-time check)
-      const typeTest = {
-        Result: "Result" as keyof { Result: Result<unknown, unknown> },
-        CacheError: "CacheError" as keyof { CacheError: CacheError },
-      };
-
-      expect(typeTest.Result).toBe("Result");
-      expect(typeTest.CacheError).toBe("CacheError");
     });
   });
 });

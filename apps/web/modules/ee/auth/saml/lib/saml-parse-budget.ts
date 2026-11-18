@@ -100,6 +100,11 @@ export type SamlParseProbe =
       cause: SamlDecryptedRefusal | { reason: "time" | "memory" | "failed" };
     }
   /**
+   * saml20 could not parse it at all (not XML, empty, several roots, a parse error), which jackson throws on at its
+   * first step, with no status to answer it by (ENG-7054). It does not reach jackson, so it costs no allowance.
+   */
+  | { outcome: "unreadable" }
+  /**
    * The queue was full, or this process has spent its parse allowance for now, either before the job was queued or
    * by the time the worker answered; the response does not reach jackson.
    */
@@ -134,6 +139,8 @@ interface WorkerResult {
   id: number;
   /** How long the parse took, measured in the worker, so a busy main thread does not count against the response. */
   ms: number;
+  /** Whether saml20 could parse it (see `ParsedSamlResponse`). */
+  readable: boolean;
   claims: SamlResponseClaims;
   /** How its encrypted assertion fared, when it holds one jackson would decrypt. */
   decryption?: SamlDecryption;
@@ -237,6 +244,20 @@ const takeMessage = (message: WorkerResult | DecryptingNotice): boolean => {
   const result = message;
   if (result.ms > SAML_PARSE_TIME_BUDGET_MS) {
     settleRunning({ outcome: "too_costly", reason: "time" });
+    return true;
+  }
+  // jackson would throw on it before anything else and spend no more time on it, so it is answered before the
+  // allowance is checked and charges none. Only an explicit `false`: a worker left running by `next dev` from before
+  // the field existed leaves it out, and its answers go on to jackson as they did.
+  if (result.readable === false) {
+    // It names no issuer, so the worker never began decrypting it. Were it to have, an answer of our own could depend on
+    // the plaintext, so the job fails, as for an unannounced refusal below.
+    if (job.decrypting) {
+      logger.error("SAML parse worker found a response unreadable after it began decrypting");
+      settleRunning({ outcome: "failed" });
+      return true;
+    }
+    settleRunning({ outcome: "unreadable" });
     return true;
   }
   // An encrypted assertion that did not decrypt is not refused here. jackson decrypts with the same saml20 and the same

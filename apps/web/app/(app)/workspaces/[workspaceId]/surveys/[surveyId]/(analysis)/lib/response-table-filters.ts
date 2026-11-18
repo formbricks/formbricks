@@ -9,13 +9,13 @@ import {
   SquareFunctionIcon,
   UserIcon,
 } from "lucide-react";
+import { type TResponseStatusFilter, ZResponseStatusFilter } from "@formbricks/types/responses";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import type { TSurvey } from "@formbricks/types/surveys/types";
 import type {
   DateRange,
   FilterValue,
   SelectedFilterValue,
-  TResponseStatus,
 } from "@/app/(app)/workspaces/[workspaceId]/surveys/[surveyId]/(analysis)/components/response-filter-context";
 import {
   type ElementFilterOptions,
@@ -552,12 +552,16 @@ const languageFilterValue = (filter: TTableFilter): FilterValue | null => {
   return { elementType, filterType: { filterValue: label, filterComboBoxValue: filter.values[0] } };
 };
 
-const toResponseStatus = (filters: readonly TTableFilter[]): TResponseStatus => {
+/**
+ * The ticked statuses, in the order the filter lists them, so the order they were ticked in never changes
+ * the query. Complete and Partial together are every response and narrow nothing, unless Low quality is
+ * ticked too: the Analysis export reads that tick as a choice to keep Low quality responses.
+ */
+const toResponseStatuses = (filters: readonly TTableFilter[]): TResponseStatusFilter[] => {
   const status = filters.find((filter) => filter.property === STATUS_PROPERTY && filter.operator === "in");
-  const values = new Set(status?.values ?? []);
-  if (values.size !== 1) return "all";
-  if (values.has("complete")) return "complete";
-  return values.has("lowQuality") ? "lowQuality" : "partial";
+  const ticked = new Set(status?.values);
+  const narrowsNothing = ticked.has("complete") && ticked.has("partial") && !ticked.has("lowQuality");
+  return narrowsNothing ? [] : ZResponseStatusFilter.options.filter((option) => ticked.has(option));
 };
 
 const toDateRange = (filters: readonly TTableFilter[], timeZone: string, now: Date): DateRange => {
@@ -610,7 +614,7 @@ export const toResponseFilterState = (
     if (row) rows.push(row);
   }
   return {
-    selectedFilter: { filter: rows, responseStatus: toResponseStatus(filters) },
+    selectedFilter: { filter: rows, responseStatuses: toResponseStatuses(filters) },
     dateRange: toDateRange(filters, timeZone, now),
   };
 };

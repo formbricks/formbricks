@@ -167,6 +167,60 @@ export const FeedbackRecordFormDrawer = ({
     valueBooleanLabel = t("common.no");
   }
 
+  const renderAiEnrichment = () => (
+    <div className="space-y-1.5 rounded-md bg-slate-50 p-3">
+      <div className="flex items-center gap-2">
+        <SparklesIcon className="size-3.5 text-slate-500" aria-hidden="true" />
+        <span className="text-sm font-medium text-slate-700">{t("workspace.unify.ai_enrichment")}</span>
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm text-slate-500">{t("workspace.unify.sentiment")}</span>
+        {sentimentLabel ? (
+          <span className="text-sm text-slate-700">
+            {sentimentLabel}
+            {sentimentScoreLabel ? ` (${sentimentScoreLabel})` : ""}
+          </span>
+        ) : (
+          <span className="text-sm text-slate-400 italic">{t("workspace.unify.not_enriched")}</span>
+        )}
+      </div>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm text-slate-500">{t("workspace.unify.emotions")}</span>
+        {emotionsLabel ? (
+          <span className="text-sm text-slate-700">{emotionsLabel}</span>
+        ) : (
+          <span className="text-sm text-slate-400 italic">{t("workspace.unify.not_enriched")}</span>
+        )}
+      </div>
+    </div>
+  );
+
+  const getTaxonomyStatusLabel = () => {
+    if (taxonomyDisplay.status === "no_active_taxonomy") {
+      return t("workspace.unify.taxonomy_assignment_no_active");
+    }
+    if (taxonomyDisplay.status === "unclassified") {
+      return t("workspace.unify.taxonomy_assignment_unclassified");
+    }
+    return t("workspace.unify.taxonomy_assignment_unavailable");
+  };
+
+  const renderTaxonomyAssignment = () => (
+    <div className="space-y-1.5 rounded-md bg-slate-50 p-3">
+      <div className="flex items-center gap-2">
+        <SparklesIcon className="size-3.5 text-slate-500" aria-hidden="true" />
+        <span className="text-sm font-medium text-slate-700">
+          {t("workspace.unify.topics_and_subtopics")}
+        </span>
+      </div>
+      {taxonomyDisplay.path ? (
+        <p className="text-sm break-words text-slate-700">{taxonomyDisplay.path}</p>
+      ) : (
+        <p className="text-sm text-slate-500">{getTaxonomyStatusLabel()}</p>
+      )}
+    </div>
+  );
+
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
@@ -443,59 +497,9 @@ export const FeedbackRecordFormDrawer = ({
                   </div>
                 )}
 
-                {selectedValueField === "value_text" && (
-                  <div className="space-y-1.5 rounded-md bg-slate-50 p-3">
-                    <div className="flex items-center gap-2">
-                      <SparklesIcon className="size-3.5 text-slate-500" aria-hidden="true" />
-                      <span className="text-sm font-medium text-slate-700">
-                        {t("workspace.unify.ai_enrichment")}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm text-slate-500">{t("workspace.unify.sentiment")}</span>
-                      {sentimentLabel ? (
-                        <span className="text-sm text-slate-700">
-                          {sentimentLabel}
-                          {sentimentScoreLabel ? ` (${sentimentScoreLabel})` : ""}
-                        </span>
-                      ) : (
-                        <span className="text-sm text-slate-400 italic">
-                          {t("workspace.unify.not_enriched")}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm text-slate-500">{t("workspace.unify.emotions")}</span>
-                      {emotionsLabel ? (
-                        <span className="text-sm text-slate-700">{emotionsLabel}</span>
-                      ) : (
-                        <span className="text-sm text-slate-400 italic">
-                          {t("workspace.unify.not_enriched")}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
+                {selectedValueField === "value_text" && renderAiEnrichment()}
 
-                <div className="space-y-1.5 rounded-md bg-slate-50 p-3">
-                  <div className="flex items-center gap-2">
-                    <SparklesIcon className="size-3.5 text-slate-500" aria-hidden="true" />
-                    <span className="text-sm font-medium text-slate-700">
-                      {t("workspace.unify.topics_and_subtopics")}
-                    </span>
-                  </div>
-                  {taxonomyDisplay.path ? (
-                    <p className="text-sm break-words text-slate-700">{taxonomyDisplay.path}</p>
-                  ) : (
-                    <p className="text-sm text-slate-500">
-                      {taxonomyDisplay.status === "no_active_taxonomy"
-                        ? t("workspace.unify.taxonomy_assignment_no_active")
-                        : taxonomyDisplay.status === "unclassified"
-                          ? t("workspace.unify.taxonomy_assignment_unclassified")
-                          : t("workspace.unify.taxonomy_assignment_unavailable")}
-                    </p>
-                  )}
-                </div>
+                {renderTaxonomyAssignment()}
 
                 <div className="grid grid-cols-2 gap-3">
                   <FormField

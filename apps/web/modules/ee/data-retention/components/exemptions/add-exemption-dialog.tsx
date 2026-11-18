@@ -81,6 +81,7 @@ export const AddExemptionDialog = ({
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
     setWasOpen(open);
+    // oxlint-disable-next-line react/purity -- read once, on the render where the dialog opens (see above)
     if (open) setBounds(getExemptionUntilBounds(new Date(), timeZone));
   }
   const createExemption = useCreateRetentionExemption();
@@ -186,7 +187,7 @@ export const AddExemptionDialog = ({
                     <div>
                       <DatePicker
                         aria-describedby={error ? untilErrorId : undefined}
-                        aria-invalid={!!error}
+                        isInvalid={!!error}
                         value={field.value}
                         onChange={field.onChange}
                         locale={locale}

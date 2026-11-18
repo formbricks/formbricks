@@ -1,4 +1,10 @@
-import type { TSurveyImportIssue, TSurveyImportReport } from "@/modules/survey/import/types";
+import { AI_FILE_EXTENSIONS, FORMBRICKS_FILE_INPUT_EXTENSION } from "@/modules/survey/import/lib/import-file";
+import type {
+  TSurveyImportIssue,
+  TSurveyImportIssuePlace,
+  TSurveyImportReport,
+  TSurveyImportSheetRowSkipCause,
+} from "@/modules/survey/import/types";
 
 type TTranslate = (key: string, options?: Record<string, unknown>) => string;
 
@@ -107,6 +113,36 @@ const getSkippedQuestionMessage = (issue: TSurveyImportIssue, t: TTranslate): st
   }
 };
 
+const SKIPPED_ROW_MESSAGES: Record<TSurveyImportSheetRowSkipCause, (row: string, t: TTranslate) => string> = {
+  unknown_key: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_unknown_key", { row }),
+  duplicate_key: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_duplicate_key", { row }),
+  unknown_type: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_unknown_type", { row }),
+  unsupported_type: (row, t) =>
+    t("workspace.surveys.import.issues.sheet_row_skipped_unsupported_type", { row }),
+  id_invalid: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_id_invalid", { row }),
+  id_taken: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_id_taken", { row }),
+  no_question: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_no_question", { row }),
+  no_text: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_no_text", { row }),
+  field_not_in_question: (row, t) =>
+    t("workspace.surveys.import.issues.sheet_row_skipped_field_not_in_question", { row }),
+  field_taken: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_field_taken", { row }),
+  invalid_question: (row, t) =>
+    t("workspace.surveys.import.issues.sheet_row_skipped_invalid_question", { row }),
+  survey_full: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_survey_full", { row }),
+};
+
+/**
+ * Why a row of an imported Excel export was left out (ENG-6809), from the server's `params.cause`. Typed
+ * over every cause, so a new one fails the build until it has a line; one from a newer server reads as
+ * an unknown line.
+ */
+const getSkippedRowMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
+  const cause = param(issue, "cause");
+  return Object.hasOwn(SKIPPED_ROW_MESSAGES, cause)
+    ? SKIPPED_ROW_MESSAGES[cause as TSurveyImportSheetRowSkipCause](param(issue, "row"), t)
+    : t("workspace.surveys.import.issues.unknown");
+};
+
 /**
  * One report line per code, in the user's language. Literal `t()` calls per code, so the translation
  * scanner sees every key; typed over every code, so a new code fails the build until it has a line.
@@ -201,6 +237,39 @@ const ISSUE_MESSAGES: Record<
   },
   option_removed: (issue, t) =>
     t("workspace.surveys.import.issues.option_removed", { option: param(issue, "option") }),
+  texts_updated: (issue, t) => t("workspace.surveys.import.issues.texts_updated", { count: count(issue) }),
+  sheet_row_skipped: (issue, t) => getSkippedRowMessage(issue, t),
+  sheet_language_skipped: (issue, t) =>
+    param(issue, "cause") === "not_in_survey"
+      ? t("workspace.surveys.import.issues.sheet_language_skipped_not_in_survey", {
+          code: param(issue, "code"),
+        })
+      : t("workspace.surveys.import.issues.sheet_language_skipped_column_missing", {
+          code: param(issue, "code"),
+        }),
+  sheet_question_added: (issue, t) =>
+    t("workspace.surveys.import.issues.sheet_question_added", { row: param(issue, "row") }),
+  sheet_option_added: (issue, t) =>
+    t("workspace.surveys.import.issues.sheet_option_added", { row: param(issue, "row") }),
+  sheet_formatting_dropped: (issue, t) =>
+    t("workspace.surveys.import.issues.sheet_formatting_dropped", {
+      row: param(issue, "row"),
+      language: param(issue, "language"),
+    }),
+  sheet_text_not_imported: (issue, t) => {
+    const params = { row: param(issue, "row"), language: param(issue, "language") };
+    switch (param(issue, "cause")) {
+      case "too_many_recalls":
+        return t("workspace.surveys.import.issues.sheet_text_not_imported_recalls", {
+          ...params,
+          max: param(issue, "max"),
+        });
+      case "ambiguous_recalls":
+        return t("workspace.surveys.import.issues.sheet_text_not_imported_ambiguous_recalls", params);
+      default:
+        return t("workspace.surveys.import.issues.sheet_text_not_imported", params);
+    }
+  },
 };
 
 /**
@@ -213,25 +282,118 @@ export const getSurveyImportIssueMessage = (issue: TSurveyImportIssue, t: TTrans
     ? ISSUE_MESSAGES[issue.code](issue, t)
     : t("workspace.surveys.import.issues.unknown");
 
+/** Where a document's question starts: "Row 5", "Paragraph 12", "Table 1, row 2". */
+const getPlaceText = (place: TSurveyImportIssuePlace, t: TTranslate): string => {
+  switch (place.kind) {
+    case "row":
+      return t("workspace.surveys.import.report.place_row", { row: place.row });
+    case "paragraph":
+      return t("workspace.surveys.import.report.place_paragraph", { paragraph: place.paragraph });
+    case "table_row":
+      return t("workspace.surveys.import.report.place_table_row", { table: place.table, row: place.row });
+    default:
+      // A server newer than this client can send a kind it does not know.
+      return "";
+  }
+};
+
 /**
- * The line with what it is about, e.g. `Q12: Logic not imported: …`: the Qualtrics question, the end
+ * What a line is about. A document's question (it has a `place`) reads as the ID the file gives it,
+ * "Question 03", or, without one, as where it starts, "Row 5"; its text follows when the file has one
+ * (ENG-7070). Any other line keeps the file's own label (a Qualtrics export tag, `Q12`), the end
  * message, or for a page's rule when none of its questions was imported, the page's block.
  */
+const getSurveyImportIssueSubject = (issue: TSurveyImportIssue, t: TTranslate): string => {
+  const { place, questionTag, questionText } = issue;
+  let subject: string;
+  if (place) {
+    subject = questionTag
+      ? t("workspace.surveys.import.report.question_tag", { tag: questionTag })
+      : getPlaceText(place, t);
+  } else {
+    subject =
+      questionTag ??
+      (param(issue, "subject") === "ending"
+        ? t("workspace.surveys.import.report.ending")
+        : param(issue, "block"));
+  }
+  if (!questionText) return subject;
+  return subject
+    ? t("workspace.surveys.import.report.subject_with_text", { subject, text: questionText })
+    : t("workspace.surveys.import.report.subject_text", { text: questionText });
+};
+
+/** The line with what it is about, e.g. `Q12: Logic not imported: …` or `Row 5 · “How often…”: …`. */
 export const getSurveyImportIssueLine = (issue: TSurveyImportIssue, t: TTranslate): string => {
   const message = getSurveyImportIssueMessage(issue, t);
-  const subject =
-    issue.questionTag ??
-    (param(issue, "subject") === "ending"
-      ? t("workspace.surveys.import.report.ending")
-      : param(issue, "block"));
+  const subject = getSurveyImportIssueSubject(issue, t);
   return subject ? `${subject}: ${message}` : message;
 };
 
-/** Warnings first, then notes, keeping the server's order inside each. */
-export const sortSurveyImportIssues = (issues: readonly TSurveyImportIssue[]): TSurveyImportIssue[] => [
-  ...issues.filter((issue) => issue.severity === "warning"),
-  ...issues.filter((issue) => issue.severity !== "warning"),
-];
+/**
+ * The kinds the report's header counts by name (ENG-7070), in the order the lines are listed: the same
+ * things the review's facts row counts, so "3 logic rules to check" reads the same in both: logic and
+ * skipped questions are counted by their code, whatever their severity. Any other warning counts as
+ * `other`; any other note as `note`.
+ */
+const ISSUE_GROUPS = ["logic_to_check", "logic_not_imported", "question_skipped", "other", "note"] as const;
+type TIssueGroup = (typeof ISSUE_GROUPS)[number];
+
+const getIssueGroup = (issue: TSurveyImportIssue): TIssueGroup => {
+  switch (issue.code) {
+    case "logic_imported":
+      return "logic_to_check";
+    case "logic_not_imported":
+    case "question_skipped":
+      return issue.code;
+    default:
+      return issue.severity === "warning" ? "other" : "note";
+  }
+};
+
+/** Logic, skipped questions and other warnings, then notes, keeping the server's order inside each. */
+export const sortSurveyImportIssues = (issues: readonly TSurveyImportIssue[]): TSurveyImportIssue[] =>
+  ISSUE_GROUPS.flatMap((group) => issues.filter((issue) => getIssueGroup(issue) === group));
+
+/**
+ * The report's header: what the warnings are, then the notes, e.g. `3 logic rules to check`,
+ * `1 question skipped`, `2 notes`. Warnings of no named kind are "2 warnings" on their own and
+ * "2 other warnings" after a named kind. Empty when the report has no line.
+ */
+export const getSurveyImportIssueSummary = (
+  issues: readonly TSurveyImportIssue[],
+  t: TTranslate
+): string[] => {
+  const counts = Object.fromEntries(ISSUE_GROUPS.map((group) => [group, 0])) as Record<TIssueGroup, number>;
+  for (const issue of issues) counts[getIssueGroup(issue)] += 1;
+  const named = counts.logic_to_check + counts.logic_not_imported + counts.question_skipped;
+
+  const summary: string[] = [];
+  if (counts.logic_to_check > 0) {
+    summary.push(t("workspace.surveys.import.facts.logic_to_check", { count: counts.logic_to_check }));
+  }
+  if (counts.logic_not_imported > 0) {
+    summary.push(
+      t("workspace.surveys.import.facts.logic_not_imported", { count: counts.logic_not_imported })
+    );
+  }
+  if (counts.question_skipped > 0) {
+    summary.push(
+      t("workspace.surveys.import.report.summary_questions_skipped", { count: counts.question_skipped })
+    );
+  }
+  if (counts.other > 0) {
+    summary.push(
+      named > 0
+        ? t("workspace.surveys.import.report.summary_other_warnings", { count: counts.other })
+        : t("workspace.surveys.import.report.summary_warnings", { count: counts.other })
+    );
+  }
+  if (counts.note > 0) {
+    summary.push(t("workspace.surveys.import.report.summary_notes", { count: counts.note }));
+  }
+  return summary;
+};
 
 /** How many lines of the file the AI never read (`lines_unread`); 0 when it read them all. */
 export const getUnreadLineCount = (report: TSurveyImportReport): number =>
@@ -297,6 +459,19 @@ export const formatSurveyImportReport = (report: TSurveyImportReport, t: TTransl
   return `${lines.join("\n")}\n`;
 };
 
+/**
+ * Every ending an imported file can have, longest first so `.formbricks.json` goes before `.json`. Built
+ * from the extensions the drop zone accepts, so a new file type needs no second list (ENG-7071).
+ */
+const IMPORT_FILE_ENDINGS = [
+  `.formbricks${FORMBRICKS_FILE_INPUT_EXTENSION}`,
+  FORMBRICKS_FILE_INPUT_EXTENSION,
+  ...AI_FILE_EXTENSIONS,
+].toSorted((a, b) => b.length - a.length);
+
 /** `survey.qsf`, `survey.formbricks.json` or `survey.docx` → `survey-import-report.txt`. */
-export const getSurveyImportReportFileName = (fileName: string): string =>
-  `${fileName.replace(/(?:\.qsf|\.formbricks\.json|\.json|\.docx|\.xlsx|\.csv)$/i, "") || "survey"}-import-report.txt`;
+export const getSurveyImportReportFileName = (fileName: string): string => {
+  const lowerCased = fileName.toLowerCase();
+  const ending = IMPORT_FILE_ENDINGS.find((candidate) => lowerCased.endsWith(candidate)) ?? "";
+  return `${fileName.slice(0, fileName.length - ending.length) || "survey"}-import-report.txt`;
+};

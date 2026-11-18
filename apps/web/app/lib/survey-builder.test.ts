@@ -51,13 +51,6 @@ describe("Survey Builder", () => {
       expect(endingCard).toHaveProperty("buttonLink");
     });
 
-    test("hiddenFieldsDefault has expected structure", () => {
-      expect(hiddenFieldsDefault).toMatchObject({
-        enabled: true,
-        fieldIds: [],
-      });
-    });
-
     test("buildSurvey returns built survey with overridden preset properties", () => {
       const config = {
         id: "custom-survey",

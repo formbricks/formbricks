@@ -2,9 +2,10 @@ import { describe, expect, test } from "vitest";
 import {
   OUTCOME_BATCH_SIZE,
   chunkIds,
+  dropRowsOutsideStatuses,
+  matchesResponseStatuses,
   patchOutcomes,
   responseStatus,
-  shouldDropAfterOutcome,
   snapshotOutcomes,
 } from "./outcome";
 
@@ -51,12 +52,64 @@ describe("patchOutcomes", () => {
   });
 });
 
-describe("shouldDropAfterOutcome", () => {
-  test("a restored row leaves a Low quality filtered list; nothing else does", () => {
-    expect(shouldDropAfterOutcome("lowQuality", null)).toBe(true);
-    expect(shouldDropAfterOutcome("lowQuality", "lowQuality")).toBe(false);
-    expect(shouldDropAfterOutcome("all", null)).toBe(false);
-    expect(shouldDropAfterOutcome("complete", "lowQuality")).toBe(false);
+describe("matchesResponseStatuses", () => {
+  test("no ticked status means every row matches", () => {
+    expect(matchesResponseStatuses([], { finished: false, outcome: null })).toBe(true);
+  });
+
+  test("Complete follows finished, Partial follows not finished, Low quality follows the outcome", () => {
+    expect(matchesResponseStatuses(["complete"], { finished: true, outcome: "lowQuality" })).toBe(true);
+    expect(matchesResponseStatuses(["complete"], { finished: false, outcome: null })).toBe(false);
+    expect(matchesResponseStatuses(["partial"], { finished: false, outcome: "lowQuality" })).toBe(true);
+    expect(matchesResponseStatuses(["partial"], { finished: true, outcome: null })).toBe(false);
+    expect(matchesResponseStatuses(["lowQuality"], { finished: true, outcome: "lowQuality" })).toBe(true);
+    expect(matchesResponseStatuses(["lowQuality"], { finished: true, outcome: null })).toBe(false);
+  });
+
+  test("a restored row leaves the list unless its finished state keeps it in another ticked status (ENG-7078)", () => {
+    expect(matchesResponseStatuses(["complete", "lowQuality"], { finished: false, outcome: null })).toBe(
+      false
+    );
+    expect(matchesResponseStatuses(["complete", "lowQuality"], { finished: true, outcome: null })).toBe(true);
+    expect(matchesResponseStatuses(["partial", "lowQuality"], { finished: true, outcome: null })).toBe(false);
+    expect(matchesResponseStatuses(["partial", "lowQuality"], { finished: false, outcome: null })).toBe(true);
+  });
+
+  test("a row marked Low quality joins a list that ticks Low quality", () => {
+    expect(
+      matchesResponseStatuses(["complete", "lowQuality"], { finished: false, outcome: "lowQuality" })
+    ).toBe(true);
+  });
+});
+
+describe("dropRowsOutsideStatuses", () => {
+  const list = [
+    { id: "a", finished: true },
+    { id: "b", finished: false },
+    { id: "c", finished: false },
+  ];
+  const idsOf = (rowsLeft: typeof list) => rowsLeft.map((row) => row.id);
+
+  test("drops a saved row that matches none of the ticked statuses, and keeps the rest", () => {
+    expect(idsOf(dropRowsOutsideStatuses(list, ["b"], null, ["complete", "lowQuality"]))).toEqual(["a", "c"]);
+    expect(idsOf(dropRowsOutsideStatuses(list, ["a"], null, ["partial", "lowQuality"]))).toEqual(["b", "c"]);
+  });
+
+  test("keeps a saved row that its finished state or new outcome still puts in a ticked status", () => {
+    expect(idsOf(dropRowsOutsideStatuses(list, ["b"], null, ["partial", "lowQuality"]))).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+    expect(idsOf(dropRowsOutsideStatuses(list, ["b"], "lowQuality", ["complete", "lowQuality"]))).toEqual([
+      "a",
+      "b",
+      "c",
+    ]);
+  });
+
+  test("returns the same array when nothing is dropped, so React skips the render", () => {
+    expect(dropRowsOutsideStatuses(list, ["a"], null, ["complete"])).toBe(list);
   });
 });
 

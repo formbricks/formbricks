@@ -7,7 +7,7 @@ import { TResponseFilterCriteria, ZResponseFilterCriteria } from "@formbricks/ty
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { getSurveyUploadElementIds, resolveStorageUrlsInObject } from "@/modules/storage/utils";
 import { type TResponseCursor, whereAfterResponseCursor } from "../response/pagination";
-import { buildWhereClause } from "../response/where-clause";
+import { buildWhereClause, selectsLowQuality } from "../response/where-clause";
 import { getSurvey } from "../survey/service";
 import { validateInputs } from "../utils/validate";
 import { getContactAttributeKeys } from "./contact-attribute-keys";
@@ -46,7 +46,7 @@ export const buildAnalysisWhere = (
   includeLowQuality = false
 ): { included: Prisma.ResponseWhereInput; lowQualityLeftOut: Prisma.ResponseWhereInput | null } => {
   const base: Prisma.ResponseWhereInput = { surveyId: survey.id, ...buildWhereClause(survey, filter) };
-  if (filter?.outcome || includeLowQuality) return { included: base, lowQualityLeftOut: null };
+  if (selectsLowQuality(filter) || includeLowQuality) return { included: base, lowQualityLeftOut: null };
   return {
     included: { AND: [base, { outcome: null }] },
     lowQualityLeftOut: { AND: [base, { outcome: "lowQuality" }] },
@@ -55,14 +55,14 @@ export const buildAnalysisWhere = (
 
 /**
  * The Low quality responses the filter reaches, whether or not the export includes them: the dialog's "(N)".
- * `null` when the filter itself selects an outcome: the filter then decides alone (ADR 0022), so the dialog
+ * `null` when the filter itself selects Low quality: the filter then decides alone (ADR 0022), so the dialog
  * has no Low quality choice to offer and leaves nothing out.
  */
 export const buildLowQualityScopeWhere = (
   survey: TSurvey,
   filter?: TResponseFilterCriteria
 ): Prisma.ResponseWhereInput | null =>
-  filter?.outcome
+  selectsLowQuality(filter)
     ? null
     : { AND: [{ surveyId: survey.id, ...buildWhereClause(survey, filter) }, { outcome: "lowQuality" }] };
 

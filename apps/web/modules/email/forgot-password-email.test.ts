@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { renderForgotPasswordEmail } from "@formbricks/email";
 
 const t = (key: string, replacements?: Record<string, string>): string => {
-  if (key === "emails.forgot_password_email_link_valid_for_24_hours") {
+  if (key === "emails.forgot_password_email_link_valid_for_minutes") {
     return `The link is valid for ${replacements?.minutes} minutes.`;
   }
 

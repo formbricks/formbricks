@@ -18,7 +18,7 @@ const { mockEval, mockGet, mockRedisClient, mockCache } = vi.hoisted(() => {
   const _mockRedisClient = {
     evalSha: _mockEval,
     get: _mockGet,
-  } as any;
+  };
 
   const _mockCache = {
     getRedisClient: vi.fn().mockResolvedValue(_mockRedisClient),

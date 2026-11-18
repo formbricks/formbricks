@@ -29,7 +29,7 @@ const extractFallbackValue = (text: string): string => {
 // Extracts the complete recall information (ID and fallback) from a headline string.
 const extractRecallInfo = (headline: string, id?: string): string | null => {
   const idPattern = id ?? "[A-Za-z0-9_-]+";
-  const pattern = new RegExp(`#recall:(${idPattern})\\/fallback:([^#]*)#`);
+  const pattern = new RegExp(String.raw`#recall:(${idPattern})\/fallback:([^#]*)#`);
   const match = headline.match(pattern);
   return match ? match[0] : null;
 };
@@ -72,6 +72,7 @@ export const replaceRecallInfo = (
     }
 
     // Replace the recallInfo in the text with the obtained or fallback value
+    // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty value shows the fallback too
     modifiedText = modifiedText.replace(recallInfo, value?.toString() || fallback);
   }
 

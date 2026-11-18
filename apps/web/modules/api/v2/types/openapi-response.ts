@@ -14,6 +14,6 @@ export function responseWithMetaSchema<T extends z.ZodType>(contentSchema: T) {
 }
 
 // We use the partial method to make all properties optional so we don't show the response fields as required in the OpenAPI documentation
-export function makePartialSchema<T extends z.ZodObject<any>>(schema: T) {
+export function makePartialSchema<T extends z.ZodObject>(schema: T) {
   return schema.partial();
 }

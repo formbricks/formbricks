@@ -26,6 +26,7 @@ const createFakeCanvas = (size = { width: 300, height: 100 }) => {
     textBaseline: "alphabetic",
     setTransform: vi.fn((...a: number[]) => ctxCalls.push(`setTransform ${a.join(",")}`)),
     fillRect: vi.fn(() => ctxCalls.push("fillRect")),
+    clearRect: vi.fn(() => ctxCalls.push("clearRect")),
     beginPath: vi.fn(),
     moveTo: vi.fn(),
     lineTo: vi.fn(),
@@ -61,7 +62,13 @@ const createFakeCanvas = (size = { width: 300, height: 100 }) => {
   return { canvas: canvas as unknown as PadCanvas & typeof canvas, ctx, ctxCalls, listeners, fire, rect };
 };
 
-const setup = (overrides: { pixelRatio?: number; size?: { width: number; height: number } } = {}) => {
+const setup = (
+  overrides: {
+    pixelRatio?: number;
+    size?: { width: number; height: number };
+    getInkColor?: () => string;
+  } = {}
+) => {
   const fake = createFakeCanvas(overrides.size);
   const onStrokesChange = vi.fn<(strokes: SignatureStroke[]) => void>();
   const onStrokeStart = vi.fn<() => void>();
@@ -77,6 +84,7 @@ const setup = (overrides: { pixelRatio?: number; size?: { width: number; height:
       return stopObserving;
     },
     requestFrame: (callback) => callback(),
+    getInkColor: overrides.getInkColor,
   });
   return { ...fake, pad, onStrokesChange, onStrokeStart, resize: () => resizeCallback(), stopObserving };
 };
@@ -329,6 +337,28 @@ describe("createSignaturePad sizing", () => {
   test("paints nothing while the card is hidden and the pad has no size", () => {
     const fake = setup({ size: { width: 0, height: 0 } });
     expect(fake.ctx.fillRect).not.toHaveBeenCalled();
+    expect(fake.ctx.clearRect).not.toHaveBeenCalled();
+  });
+
+  test("leaves the pad transparent instead of painting a white page", () => {
+    const fake = setup();
+    expect(fake.ctx.clearRect).toHaveBeenCalled();
+    expect(fake.ctx.fillRect).not.toHaveBeenCalled();
+  });
+
+  test("draws in the theme's ink colour, read again on every repaint", () => {
+    let ink = "rgb(20, 42, 114)";
+    const fake = setup({ getInkColor: () => ink });
+    draw(fake, [
+      [10, 20],
+      [160, 70],
+    ]);
+    expect(fake.ctx.strokeStyle).toBe("rgb(20, 42, 114)");
+
+    // The appearance flips to dark: the next repaint picks up the new colour.
+    ink = "rgb(221, 226, 243)";
+    fake.pad.redraw();
+    expect(fake.ctx.strokeStyle).toBe("rgb(221, 226, 243)");
   });
 
   test("destroy removes the listeners and stops observing", () => {

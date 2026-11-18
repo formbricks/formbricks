@@ -239,7 +239,7 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
         );
       }
 
-      let oldUserData: any = UNKNOWN_DATA;
+      let oldUserData: Record<string, unknown> | null = null;
       try {
         const oldUserResult = await getUsers(authentication.organizationId, {
           email: body.email,
@@ -249,14 +249,14 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
           order: "desc",
         });
         if (oldUserResult.ok) {
-          oldUserData = oldUserResult.data.data[0];
+          oldUserData = oldUserResult.data.data[0] ?? null;
         }
       } catch (error) {
         logger.error(`Failed to fetch old user data for audit log: ${JSON.stringify(error)}`);
       }
 
       if (auditLog) {
-        auditLog.targetId = oldUserData !== UNKNOWN_DATA ? oldUserData?.id : UNKNOWN_DATA;
+        auditLog.targetId = typeof oldUserData?.id === "string" ? oldUserData.id : UNKNOWN_DATA;
       }
 
       const updateUserResult = await updateUser(body, authentication.organizationId);

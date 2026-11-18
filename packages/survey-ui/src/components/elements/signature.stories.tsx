@@ -27,7 +27,7 @@ const meta: Meta<StoryProps> = {
     docs: {
       description: {
         component:
-          "A signature pad. The respondent draws with a finger, stylus or mouse, or (when typed signatures are allowed) switches to Type and enters their name. The element is controlled: it takes a `value` of normalised strokes and a typed name and reports every change through `onChange`; the image itself is produced by `exportSignaturePng` when the survey is submitted. The pad is a fixed 3:1 white page with near-black ink in every theme, because it is what the exported PNG looks like.",
+          "A signature pad. The respondent draws with a finger, stylus or mouse, or (when typed signatures are allowed) switches to Type and enters their name. The element is controlled: it takes a `value` of normalised strokes and a typed name and reports every change through `onChange`; the image itself is produced by `exportSignaturePng` when the survey is submitted. The 3:1 pad follows the theme like any other input (input background, ink in the input text colour); the exported PNG is always near-black ink on white.",
       },
     },
   },

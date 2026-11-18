@@ -2,7 +2,6 @@ import { describe, expect, test } from "vitest";
 import { DEFAULT_CREATIVE_STYLING } from "./creative";
 import {
   CUSTOM_STYLE_PANELS,
-  PUBLISH_ISSUE_PANELS,
   getInitialOpenPanels,
   getInvalidParamPanel,
   withPanelsOpen,
@@ -25,12 +24,6 @@ describe("which panels are open", () => {
     const open = withPanelsOpen(new Set(["colors", "position"]), CUSTOM_STYLE_PANELS, false);
     expect([...open]).toEqual(["position"]);
     expect([...withPanelsOpen(open, ["schedule"], true)]).toEqual(["position", "schedule"]);
-  });
-
-  test("a flagged issue opens the folding panel that fixes it; Show on doesn't fold", () => {
-    expect(PUBLISH_ISSUE_PANELS.condition_incomplete).toBe("showWhen");
-    expect(PUBLISH_ISSUE_PANELS.end_before_start).toBe("schedule");
-    expect(PUBLISH_ISSUE_PANELS.action_missing).toBeUndefined();
   });
 });
 

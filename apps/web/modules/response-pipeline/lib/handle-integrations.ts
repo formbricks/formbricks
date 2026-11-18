@@ -55,7 +55,7 @@ type TPipelineIntegrationSurvey = Pick<
 const NOTION_PERSON_ATTRIBUTE_PREFIX = "person.";
 
 const convertMetaObjectToString = (metadata: TResponseMeta): string => {
-  let result: string[] = [];
+  const result: string[] = [];
   if (metadata.source) result.push(`Source: ${metadata.source}`);
   if (metadata.url) result.push(`URL: ${metadata.url}`);
   if (metadata.userAgent?.browser) result.push(`Browser: ${metadata.userAgent.browser}`);
@@ -463,7 +463,7 @@ const buildNotionPayloadProperties = (
   data: TIntegrationPipelineData,
   surveyData: TPipelineIntegrationSurvey
 ) => {
-  const properties: any = {};
+  const properties: Record<string, object> = {};
   const normalizedResponses = { ...data.response.data };
 
   const surveyElements = getElementsFromBlocks(surveyData.blocks);

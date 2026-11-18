@@ -1,4 +1,4 @@
-import { type SignatureContext2D, renderSignatureImage } from "./signature-draw";
+import { SIGNATURE_INK_COLOR, type SignatureContext2D, renderSignatureImage } from "./signature-draw";
 import {
   MIN_POINT_DISTANCE,
   type SignatureContent,
@@ -55,6 +55,11 @@ export interface SignaturePadOptions {
   observeResize?: (callback: () => void) => () => void;
   /** Schedules a repaint. Defaults to `requestAnimationFrame`. */
   requestFrame?: (callback: () => void) => unknown;
+  /**
+   * The ink colour, read on every paint so the pad follows the survey's theme and appearance. The pad
+   * itself is transparent: its background is the element's, in CSS. Defaults to the exported PNG's ink.
+   */
+  getInkColor?: () => string;
 }
 
 export interface SignaturePad {
@@ -62,7 +67,7 @@ export interface SignaturePad {
   setContent: (content: SignaturePadContent) => void;
   /** Whether pointers draw. Off in Type mode, while uploading and while disabled. */
   setDrawingEnabled: (enabled: boolean) => void;
-  /** Repaints now, e.g. after the typed-name font finished loading. */
+  /** Repaints now, e.g. after the typed-name font finished loading or the theme's ink colour changed. */
   redraw: () => void;
   destroy: () => void;
 }
@@ -125,6 +130,7 @@ export const createSignaturePad = ({
   getPixelRatio = defaultPixelRatio,
   observeResize = defaultObserveResize(canvas),
   requestFrame = defaultRequestFrame,
+  getInkColor = () => SIGNATURE_INK_COLOR,
 }: SignaturePadOptions): SignaturePad => {
   let strokes: SignatureStroke[] = [];
   let lastReported: readonly SignatureStroke[] | null = null;
@@ -155,7 +161,7 @@ export const createSignaturePad = ({
       const shown = active ? [...strokes, active.points] : strokes;
       content = shown.length > 0 ? { kind: "strokes", strokes: shown } : null;
     }
-    renderSignatureImage(ctx, content, rect.width, rect.height);
+    renderSignatureImage(ctx, content, rect.width, rect.height, { paper: null, ink: getInkColor() });
   };
 
   const schedulePaint = (): void => {

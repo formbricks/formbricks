@@ -1,9 +1,11 @@
 import { describe, expect, test } from "vitest";
 import type { TSurveyImportReport } from "@/modules/survey/import/types";
+import { getSurveyImportFileExtensions } from "./import-file";
 import {
   formatSurveyImportReport,
   getSurveyImportFacts,
   getSurveyImportIssueLine,
+  getSurveyImportIssueSummary,
   getSurveyImportReportFileName,
   getSwitchedOffLanguages,
   getUnreadLineCount,
@@ -25,6 +27,100 @@ const report = (issues: TSurveyImportReport["issues"]): TSurveyImportReport => (
     hiddenFields: 1,
   },
   issues,
+});
+
+// ENG-7070: a document's line names its question by where it is and what it says.
+describe("getSurveyImportIssueLine, for a document's question", () => {
+  const skipped = { code: "question_skipped", severity: "warning", params: { cause: "ai_skipped" } } as const;
+
+  test.each([
+    [{ kind: "row", row: 5 }, 'place_row {"row":5}'],
+    [{ kind: "paragraph", paragraph: 12 }, 'place_paragraph {"paragraph":12}'],
+    [{ kind: "table_row", table: 1, row: 2 }, 'place_table_row {"table":1,"row":2}'],
+  ] as const)("names %o", (place, expected) => {
+    expect(getSurveyImportIssueLine({ ...skipped, place }, t)).toBe(
+      `${expected}: question_skipped_ai_skipped`
+    );
+  });
+
+  test("quotes the question's text after the place", () => {
+    const line = getSurveyImportIssueLine(
+      { ...skipped, place: { kind: "row", row: 5 }, questionText: "How often do you visit?" },
+      t
+    );
+    expect(line).toBe(
+      'subject_with_text {"subject":"place_row {\\"row\\":5}","text":"How often do you visit?"}: question_skipped_ai_skipped'
+    );
+  });
+
+  test("names the ID the file gives the question rather than its place", () => {
+    const line = getSurveyImportIssueLine(
+      { code: "logic_imported", severity: "warning", place: { kind: "row", row: 9 }, questionTag: "03" },
+      t
+    );
+    expect(line).toBe('question_tag {"tag":"03"}: logic_imported_no_description');
+  });
+
+  test("keeps a Qualtrics tag as it is, and quotes a text with no other subject", () => {
+    expect(getSurveyImportIssueLine({ ...skipped, questionTag: "Q12" }, t)).toBe(
+      "Q12: question_skipped_ai_skipped"
+    );
+    expect(getSurveyImportIssueLine({ ...skipped, questionText: "Why?" }, t)).toBe(
+      'subject_text {"text":"Why?"}: question_skipped_ai_skipped'
+    );
+  });
+
+  test("leaves out a place of a kind this client does not know yet", () => {
+    const place = { kind: "slide", slide: 3 } as unknown as { kind: "row"; row: number };
+    expect(getSurveyImportIssueLine({ ...skipped, place }, t)).toBe("question_skipped_ai_skipped");
+  });
+});
+
+describe("getSurveyImportIssueSummary", () => {
+  const issue = (code: string, severity: "warning" | "info" = "warning") =>
+    ({ code, severity }) as TSurveyImportReport["issues"][number];
+
+  test("says what the warnings are, in the order the lines are listed, then the notes", () => {
+    const issues = [
+      issue("ending_added", "info"),
+      issue("question_skipped"),
+      issue("logic_imported"),
+      issue("text_not_split"),
+      issue("logic_not_imported"),
+      issue("logic_imported"),
+      issue("logic_imported"),
+    ];
+
+    expect(getSurveyImportIssueSummary(issues, t)).toEqual([
+      'logic_to_check {"count":3}',
+      'logic_not_imported {"count":1}',
+      'summary_questions_skipped {"count":1}',
+      'summary_other_warnings {"count":1}',
+      'summary_notes {"count":1}',
+    ]);
+    expect(sortSurveyImportIssues(issues).map((sorted) => sorted.code)).toEqual([
+      "logic_imported",
+      "logic_imported",
+      "logic_imported",
+      "logic_not_imported",
+      "question_skipped",
+      "text_not_split",
+      "ending_added",
+    ]);
+  });
+
+  test("counts warnings of no named kind as warnings when they are the only ones", () => {
+    expect(getSurveyImportIssueSummary([issue("text_not_split"), issue("image_dropped")], t)).toEqual([
+      'summary_warnings {"count":2}',
+    ]);
+  });
+
+  test("counts an imported rule sent as a note as a rule to check, like the facts row, and is empty for no line", () => {
+    expect(getSurveyImportIssueSummary([issue("logic_imported", "info")], t)).toEqual([
+      'logic_to_check {"count":1}',
+    ]);
+    expect(getSurveyImportIssueSummary([], t)).toEqual([]);
+  });
 });
 
 describe("getSurveyImportIssueLine", () => {
@@ -225,6 +321,29 @@ describe("getSurveyImportIssueLine", () => {
         t
       )
     ).toBe('Screening: logic_not_imported {"description":"Branch to the end"}');
+  });
+
+  test("says why a sheet's edit was left out: a text cut on export, or one recalling too many answers", () => {
+    const line = (cause: string) =>
+      getSurveyImportIssueLine(
+        { code: "sheet_text_not_imported", severity: "warning", params: { row: 7, language: "de", cause } },
+        t
+      );
+
+    expect(line("cut_on_export")).toBe('sheet_text_not_imported {"row":"7","language":"de"}');
+    expect(
+      getSurveyImportIssueLine(
+        {
+          code: "sheet_text_not_imported",
+          severity: "warning",
+          params: { row: 7, language: "de", cause: "too_many_recalls", max: 64 },
+        },
+        t
+      )
+    ).toBe('sheet_text_not_imported_recalls {"row":"7","language":"de","max":"64"}');
+    expect(line("ambiguous_recalls")).toBe(
+      'sheet_text_not_imported_ambiguous_recalls {"row":"7","language":"de"}'
+    );
   });
 
   test("still renders a line for a code this client does not know yet", () => {
@@ -469,7 +588,18 @@ describe("getSurveyImportReportFileName", () => {
     ["Visitor Survey.xlsx", "Visitor Survey-import-report.txt"],
     ["list.CSV", "list-import-report.txt"],
     ["Questionnaire v2.DOCX", "Questionnaire v2-import-report.txt"],
+    ["coffee.md", "coffee-import-report.txt"],
+    ["notes.v2.md", "notes.v2-import-report.txt"],
+    ["no-extension", "no-extension-import-report.txt"],
   ])("names %s's report %s", (fileName, expected) => {
     expect(getSurveyImportReportFileName(fileName)).toBe(expected);
   });
+
+  // ENG-7071: `.md` was accepted by the drop zone and missing from a second list here.
+  test.each(getSurveyImportFileExtensions(true))(
+    "strips %s, as every extension the drop zone accepts",
+    (extension) => {
+      expect(getSurveyImportReportFileName(`survey${extension}`)).toBe("survey-import-report.txt");
+    }
+  );
 });

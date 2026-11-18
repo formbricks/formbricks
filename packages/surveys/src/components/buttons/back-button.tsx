@@ -20,6 +20,7 @@ export function BackButton({ onClick, backButtonLabel, tabIndex = 0, disabled }:
       data-fb-part={FB_PART.buttonBack}
       disabled={disabled}
       onClick={onClick}>
+      {/* eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty label falls back too */}
       {backButtonLabel || t("common.back")}
     </Button>
   );
