@@ -9433,7 +9433,7 @@ components:
 
         **Set value** (`operator: "assign"` with `value: { "type": "expression", "value": <tree> }`) sets the field to the result of an expression tree (see `SurveyExpression`), on a `string`, `number` or `date` computed field (not `boolean`, below). Its behaviour differs on purpose: an empty input gives an empty result (`ifEmpty` sets a default), dividing by zero gives empty, and an empty result clears the field. A step that always runs is a rule whose `conditions` is an empty `and` group.
 
-        **A `boolean` computed field** takes no expression: it is set with `operator: "assign"` and a static `true` / `false`, or a `variable` / `hiddenField` reference to another `boolean` field. Any other operator or value is refused with **400**. A static `true` / `false` is accepted on a `boolean` field only.
+        **A `boolean` computed field** takes no expression: it is set with `operator: "assign"` and a static `true` / `false`, or a `variable` / `hiddenField` reference to another `boolean` field. Any other operator or value is refused with **422**. A static `true` / `false` is accepted on a `boolean` field only.
       required:
         - id
         - objective

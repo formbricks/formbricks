@@ -16,7 +16,7 @@ description: >
 
   **A `boolean` computed field** takes no expression: it is set with `operator: "assign"` and a static
   `true` / `false`, or a `variable` / `hiddenField` reference to another `boolean` field. Any other
-  operator or value is refused with **400**. A static `true` / `false` is accepted on a `boolean` field
+  operator or value is refused with **422**. A static `true` / `false` is accepted on a `boolean` field
   only.
 required:
   - id
