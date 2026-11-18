@@ -8,8 +8,8 @@ description: >
 
 
   **Set value** (`operator: "assign"` with `value: { "type": "expression", "value": <tree> }`) sets the
-  field to the result of an expression tree (see `SurveyExpression`), of any computed type including
-  `date`. Its behaviour differs on purpose: an empty input gives an empty result (`ifEmpty` sets a
+  field to the result of an expression tree (see `SurveyExpression`), on a `string`, `number` or `date`
+  computed field (not `boolean`, below). Its behaviour differs on purpose: an empty input gives an empty result (`ifEmpty` sets a
   default), dividing by zero gives empty, and an empty result clears the field. A step that always runs
   is a rule whose `conditions` is an empty `and` group.
 

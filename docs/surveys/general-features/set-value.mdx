@@ -160,7 +160,7 @@ During a rolling upgrade to 6.2, the pods still on the previous release don't kn
 The previous release also doesn't know calculated **true/false** fields at all:
 
 * Through the [Management API](/api-v3-reference/introduction), MCP or the Embedded Data library, it refuses to save a calculated true/false field, even one no step sets.
-* A response value for such a field is stored as `true` or `false`, which it doesn't accept. It refuses to create or update a response that carries one, and its background jobs for such a response (webhooks, integrations, follow-up emails) fail.
+* A response value for such a field is stored as `true` or `false`, which it doesn't accept. It refuses to create or update a response that carries one, and its background jobs for such a response (webhooks, integrations, follow-up emails) fail. The survey doesn't resend a refused update, so a response whose final update reaches such a pod stays unfinished. A background job that fails on every retry isn't run again after the upgrade, so its webhook, integration or follow-up email is never sent.
 * A condition it checks on the server, such as a quota, gets such a field wrong: it never matches **equals True**, and it reads a stored `false` as not set.
 
-Only surveys saved with one of these, and their responses, during the upgrade are affected, and only for its few minutes. Everything else 6.2 adds, such as show-if, Hidden options, copied options and rules before the first question, is ignored by the previous release and shown as before.
+Only surveys saved with one of these, and their responses, are affected, and only while previous-release pods are still serving, but what fails in that window (a refused update, a background job out of retries) isn't made up afterwards. Everything else 6.2 adds, such as show-if, Hidden options, copied options and rules before the first question, is ignored by the previous release and shown as before.
