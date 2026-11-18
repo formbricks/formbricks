@@ -410,6 +410,10 @@ const mapBlockIssue = (
   return path[2] === "logicFallback" ? mapRuleIssue(issue, survey, [], t) : null;
 };
 
+/** A missing welcome headline is reported on the card itself (no child path); show it on the headline field. */
+const getWelcomeFieldPath = (issue: TDescribableIssue, path: (string | number)[]) =>
+  path.length === 1 && issue.code === "custom" ? ["headline"] : path.slice(1);
+
 /** Turns one schema issue into editor issues. */
 const mapZodIssue = (issue: TDescribableIssue, survey: TSurvey, t: TFunction): TEditorIssue[] => {
   const path = getIssuePath(issue);
@@ -426,9 +430,7 @@ const mapZodIssue = (issue: TDescribableIssue, survey: TSurvey, t: TFunction): T
   }
 
   if (root === "welcomeCard") {
-    // A missing headline is reported on the card itself (no child path); show it on the headline field.
-    const fieldPath = path.length === 1 && issue.code === "custom" ? ["headline"] : path.slice(1);
-    return [mapCardIssue(issue, "start", fieldPath, t("common.welcome_card"), t)];
+    return [mapCardIssue(issue, "start", getWelcomeFieldPath(issue, path), t("common.welcome_card"), t)];
   }
 
   if (root === "endings") {
