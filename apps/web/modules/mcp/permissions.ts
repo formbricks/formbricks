@@ -100,7 +100,10 @@ export type TMcpPermissionRequirement = {
  * so they declare that permission too and are refused without it. Chart reads return feedback records,
  * so they need Charts and Feedback records: Read (spec, user story 27); dashboard reads and writes return
  * their widgets' charts, so they need Charts: Read. The consent screen shows these
- * as hints; the tool declarations stay what enforces them.
+ * as hints; the tool declarations stay what enforces them. A hint holds for every tool of its permission,
+ * so a need only some tools have stays out of it: `list_dashboard_filter_fields` and
+ * `list_dashboard_filter_values` also need Feedback records: Read for anyone but a Dashboard viewer, which
+ * those two tools declare, and their refusal names it.
  *
  * Workflow runs has none: `get_workflow_run` declares Workflow runs: Read alone, so a client upgraded
  * with `workflows:read` keeps it (spec story 40), and leaves out the run's respondent-derived fields for a
