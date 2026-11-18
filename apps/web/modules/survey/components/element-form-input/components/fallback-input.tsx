@@ -58,6 +58,9 @@ export const FallbackInput = ({
         align="start"
         side="bottom"
         sideOffset={4}
+        // Closes on a click outside or Escape, never on focus leaving: the recall picker that opens
+        // this popover hands focus back to the editor as it closes, which would close it at once.
+        onFocusOutside={(event) => event.preventDefault()}
         onOpenAutoFocus={(event) =>
           focusOnOpen(
             event,
