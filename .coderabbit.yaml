@@ -392,8 +392,11 @@ reviews:
         chore, docs, refactor, perf, test, build, ci, style, or revert. The summary must describe
         what the change does, in lower case, without a trailing period. A Linear ticket reference
         such as `(ENG-<id>)` or `[ENG-<id>]` may be appended.
+    # Off, not lowered. The generic check re-runs on every description edit and returns a new
+    # reason each time, including points an earlier run accepted, so answering it never converges.
+    # The template is enforced by the custom checks below (Breaking changes, ticket line, Coverage).
     description:
-      mode: warning
+      mode: "off"
     issue_assessment:
       mode: warning
     # `pr-label-sync.yml` reads the checkbox in the Breaking changes section; these check whether
