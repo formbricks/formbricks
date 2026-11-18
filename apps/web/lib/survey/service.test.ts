@@ -895,7 +895,7 @@ describe("Tests for updateSurvey", () => {
               createdAt: new Date(),
               updatedAt: new Date(),
             },
-          } as any,
+          } as TSurvey,
           true
         );
 
@@ -903,8 +903,8 @@ describe("Tests for updateSurvey", () => {
         prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
         prisma.segment.findUnique.mockResolvedValueOnce({
           workspaceId: updateSurveyInput.workspaceId,
-        } as any);
-        prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as any);
+        } as unknown as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
+        prisma.survey.update.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" } as never);
       });
 
       test("refuses new filters when the organization has no Contacts licence", async () => {
@@ -962,7 +962,7 @@ describe("Tests for updateSurvey", () => {
         prisma.survey.findUnique.mockResolvedValueOnce({ ...mockSurveyOutput, status: "draft" });
         prisma.segment.findUnique.mockResolvedValueOnce({
           workspaceId: updateSurveyInput.workspaceId,
-        } as any);
+        } as unknown as Awaited<ReturnType<typeof prisma.segment.findUnique>>);
         const malformed = [
           ...selfReferencingFilters,
           { id: "junk", resource: { root: { type: "attribute" } } },

@@ -118,7 +118,7 @@ describe("Users Lib", () => {
     });
 
     test("only includes teams of the requested organization (ENG-7371)", async () => {
-      (prisma.$transaction as any).mockResolvedValueOnce([[mockUser], 1]);
+      vi.mocked(prisma.$transaction).mockResolvedValueOnce([[mockUser], 1]);
       await getUsers("org456", { limit: 10, skip: 0 } as TGetUsersFilter);
       expect(prisma.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({

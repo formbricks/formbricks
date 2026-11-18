@@ -411,7 +411,7 @@ describe("assertDisplayOwnership", () => {
 
 describe("isDisplayOfSurvey", () => {
   test("is true for a display of the survey", async () => {
-    vi.mocked(prisma.display.findUnique).mockResolvedValue({ surveyId: mockSurveyId } as any);
+    vi.mocked(prisma.display.findUnique, { partial: true }).mockResolvedValue({ surveyId: mockSurveyId });
     await expect(isDisplayOfSurvey(mockDisplayId, mockSurveyId)).resolves.toBe(true);
     expect(prisma.display.findUnique).toHaveBeenCalledWith({
       where: { id: mockDisplayId },
@@ -424,13 +424,15 @@ describe("isDisplayOfSurvey", () => {
     ["belongs to another survey", { surveyId: "other-survey" }],
     ["does not exist", null],
   ])("is false for a display that %s", async (_label, row) => {
-    vi.mocked(prisma.display.findUnique).mockResolvedValue(row as any);
+    vi.mocked(prisma.display.findUnique, { partial: true }).mockResolvedValue(row);
     await expect(isDisplayOfSurvey(mockDisplayId, mockSurveyId)).resolves.toBe(false);
   });
 
   test("reads through the transaction client when given one", async () => {
     const tx = { display: { findUnique: vi.fn().mockResolvedValue({ surveyId: mockSurveyId }) } };
-    await expect(isDisplayOfSurvey(mockDisplayId, mockSurveyId, tx as any)).resolves.toBe(true);
+    await expect(
+      isDisplayOfSurvey(mockDisplayId, mockSurveyId, tx as unknown as Prisma.TransactionClient)
+    ).resolves.toBe(true);
     expect(tx.display.findUnique).toHaveBeenCalledTimes(1);
     expect(prisma.display.findUnique).not.toHaveBeenCalled();
   });
