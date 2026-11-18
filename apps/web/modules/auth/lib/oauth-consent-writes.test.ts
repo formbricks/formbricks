@@ -90,15 +90,17 @@ describe("recordOAuthConsentWrites", () => {
       resources: ["https://app/api/mcp"],
       requestedUserInfoClaims: [],
     };
-    inner.findOne.mockResolvedValueOnce(before);
-    inner.update.mockResolvedValueOnce(row("consent-2"));
-    const where = [{ field: "id", value: "consent-2" }];
+    // A stateful store: the update displaces `before`, and a read after it would see the new row.
+    let stored: Record<string, unknown> = before;
+    inner.findOne.mockImplementation(async () => stored as never);
+    inner.update.mockImplementationOnce(async () => {
+      stored = row("consent-2");
+      return stored as never;
+    });
 
-    await adapter.update({ model: "oauthConsent", where, update: {} });
+    await adapter.update({ model: "oauthConsent", where: [{ field: "id", value: "consent-2" }], update: {} });
     await adapter.create({ model: "oauthConsent", data: {} });
 
-    expect(inner.findOne).toHaveBeenCalledWith({ model: "oauthConsent", where });
-    expect(inner.findOne.mock.invocationCallOrder[0]).toBeLessThan(inner.update.mock.invocationCallOrder[0]);
     const { replaced, createdIds } = await readConsentPreimages();
     expect(replaced).toEqual([
       {

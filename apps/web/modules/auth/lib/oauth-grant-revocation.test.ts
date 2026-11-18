@@ -47,6 +47,8 @@ const mocks = vi.hoisted(() => ({
   sequence: [] as string[],
   /** The consent rows the locking read returns. */
   consents: [] as TMockConsent[],
+  /** The consent writes the adapter recorded for this request, as `id@updatedAt`. */
+  ownWrites: new Set<string>(),
   /** Whether the presented token's grant holds a token beyond the consent. */
   grantBeyond: false,
   /** The grant rows a lock on `McpGrant` finds; `tx.mcpGrant.findMany` returns what a delete reads. */
@@ -88,10 +90,10 @@ vi.mock("@better-auth/core/context", () => ({
   },
 }));
 // Which rows this request wrote, as the adapter recorded them (`oauth-consent-writes.ts`, tested on its own):
-// here, a row stamped in this second, the way the tests' rows stand for the provider's write.
+// by exact id and stamp, as a test names them with `ownRow`.
 vi.mock("./oauth-consent-writes", () => ({
-  readOwnConsentWriteCheck: async () => (consent: { updatedAt: Date }) =>
-    consent.updatedAt.getTime() >= Math.floor(Date.now() / 1000) * 1000 - 1000,
+  readOwnConsentWriteCheck: async () => (consent: { id: string; updatedAt: Date }) =>
+    mocks.ownWrites.has(`${consent.id}@${consent.updatedAt.getTime()}`),
   // What the provider's writes replaced: nothing unless a test says so, so the snapshot decides.
   readConsentPreimages: vi.fn(async () => ({ replaced: [], createdIds: new Set<string>() })),
 }));
@@ -173,6 +175,7 @@ beforeEach(() => {
     return { count: 0 };
   });
   mocks.consents = [];
+  mocks.ownWrites.clear();
   mocks.grantBeyond = false;
   mocks.grantRows = [];
   mocks.tx.oauthClient.findUnique.mockImplementation(async () => ({
@@ -242,6 +245,12 @@ const consentRow = (id: string, scopes: string[], updatedAt: Date, skipConsent =
   updatedAt,
   skipConsent,
 });
+/** A consent row this request wrote: the adapter recorded its write. */
+const ownRow = (...args: Parameters<typeof consentRow>): TMockConsent => {
+  const row = consentRow(...args);
+  mocks.ownWrites.add(`${row.id}@${row.updatedAt.getTime()}`);
+  return row;
+};
 
 /** Whether the hook went on to end tokens beyond the consent (the raw writes; which rows is SQL's job). */
 const endedTokensBeyondConsent = (): boolean => mocks.tx.$executeRaw.mock.calls.length > 0;
@@ -835,7 +844,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
   beforeEach(() => {
     mocks.getSessionFromCtx.mockResolvedValue({ user: { id: "user-1" } });
     mocks.getOAuthProviderState.mockResolvedValue({ query: oauthQuery });
-    mocks.consents = [consentRow("consent-1", NARROW, new Date("2026-10-08T10:00:00Z"))];
+    mocks.consents = [ownRow("consent-1", NARROW, new Date("2026-10-08T10:00:00Z"))];
   });
 
   test.each([
@@ -918,7 +927,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
   // chosen, and the chart tools answer "not permitted" naming what they need.
   test("saves a grant that leaves a permission's dependency out, as chosen", async () => {
     mocks.consents = [
-      consentRow("consent-1", ["dashboards:read", "feedbackRecords:read"], new Date("2026-10-08T10:00:00Z")),
+      ownRow("consent-1", ["dashboards:read", "feedbackRecords:read"], new Date("2026-10-08T10:00:00Z")),
     ];
 
     await revokeTokensBeyondConsentAfterHandler(
@@ -927,6 +936,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
         {
           accept: true,
           oauth_query: oauthQuery,
+          scope: "dashboards:read feedbackRecords:read",
           mcp_grant: { permissions: { charts: "read" } },
         },
         { redirect: true, url: "https://client/cb" }
@@ -954,12 +964,49 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     expect(mocks.tx.oauthConsent.update).not.toHaveBeenCalled();
   });
 
+  // Two tabs approve the same client: the later write owns the decision, and its own hook saves its grant.
+  test("saves no grant for an approval whose consent another tab's approval has since rewritten", async () => {
+    // Same scopes, same row: only the write the adapter recorded tells this request's approval apart.
+    mocks.consents = [consentRow("consent-1", NARROW, thisSecond())];
+    mocks.ownWrites.add(`consent-1@${thisSecond().getTime() - 1000}`);
+
+    await revokeTokensBeyondConsentAfterHandler(
+      ctx("/oauth2/consent", {
+        accept: true,
+        oauth_query: oauthQuery,
+        mcp_grant: { permissions: { surveys: "read" } },
+      })
+    );
+
+    expect(mocks.tx.mcpGrant.upsert).not.toHaveBeenCalled();
+    expect(endedTokensBeyondConsent()).toBe(true);
+  });
+
+  test("leaves duplicate consents unfolded when it refuses the approval", async () => {
+    mocks.consents = [
+      ownRow("consent-1", NARROW, thisSecond()),
+      consentRow("consent-old", ["surveys:read", "responses:read", "offline_access"], new Date(2_000)),
+    ];
+
+    await revokeTokensBeyondConsentAfterHandler(
+      ctx("/oauth2/consent", {
+        accept: true,
+        oauth_query: oauthQuery,
+        mcp_grant: { permissions: { workflows: "read" } },
+      })
+    ).catch(() => undefined);
+
+    expect(mocks.tx.oauthConsent.deleteMany).not.toHaveBeenCalledWith(
+      expect.objectContaining({ where: expect.objectContaining({ id: { not: "consent-1" } }) })
+    );
+  });
+
   test("on a same-second tie, keeps the row the approval just wrote", async () => {
     const sameSecond = thisSecond();
     // The approval asked for NARROW (the signed query's scope), so the NARROW row is the one it wrote.
     mocks.consents = [
       consentRow("consent-a", ["surveys:read", "responses:read", "offline_access"], sameSecond),
-      consentRow("consent-b", NARROW, sameSecond),
+      ownRow("consent-b", NARROW, sameSecond),
     ];
 
     await revokeTokensBeyondConsentAfterHandler(approve());
@@ -976,7 +1023,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
       query: new URLSearchParams({ client_id: "client-1", scope: WIDE.join(" ") }).toString(),
     });
     const sameSecond = thisSecond();
-    mocks.consents = [consentRow("consent-a", NARROW, sameSecond), consentRow("consent-b", WIDE, sameSecond)];
+    mocks.consents = [consentRow("consent-a", NARROW, sameSecond), ownRow("consent-b", WIDE, sameSecond)];
 
     await revokeTokensBeyondConsentAfterHandler(approve());
 
@@ -997,7 +1044,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     });
     mocks.consents = [
       consentRow("consent-a", ["surveys:read", "responses:read", "offline_access"], sameSecond),
-      consentRow("consent-b", NARROW, sameSecond),
+      ownRow("consent-b", NARROW, sameSecond),
     ];
 
     await revokeTokensBeyondConsentAfterHandler(
@@ -1082,7 +1129,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
     const sameSecond = thisSecond();
     mocks.consents = [
       consentRow("consent-a", NARROW, sameSecond),
-      consentRow("consent-b", ["surveys:read", "responses:read", "offline_access"], sameSecond),
+      ownRow("consent-b", ["surveys:read", "responses:read", "offline_access"], sameSecond),
     ];
 
     await revokeTokensBeyondConsentAfterHandler(
@@ -1336,7 +1383,7 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
 
       beforeEach(() => {
         // What the provider wrote before the after-hook ran: this approval's narrower scopes.
-        mocks.consents = [consentRow("consent-1", NARROW, thisSecond())];
+        mocks.consents = [ownRow("consent-1", NARROW, thisSecond())];
       });
 
       test("snapshots the session user's consent rows for the signed query's client", async () => {
@@ -1501,8 +1548,8 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
           field: "workspaceIds",
         });
         mocks.consents = [
-          consentRow("consent-1", NARROW, thisSecond()),
-          consentRow("consent-gone", NARROW, thisSecond()),
+          ownRow("consent-1", NARROW, thisSecond()),
+          ownRow("consent-gone", NARROW, thisSecond()),
         ];
 
         await approveWith([PREVIOUS, { ...PREVIOUS, id: "consent-deleted-since" }], { access: "all" });

@@ -41,7 +41,7 @@ import {
   restoreConsentAfterFailedApproval,
   restoreMcpGrantRelationships,
 } from "./oauth-consent-restore";
-import { consentBound, lockConsents } from "./oauth-consent-rows";
+import { type TConsentRow, consentBound, lockConsents } from "./oauth-consent-rows";
 import { type TTokensBeyondConsent, endTokensBeyondScopes } from "./oauth-consent-tokens";
 
 /**
@@ -93,29 +93,51 @@ import { type TTokensBeyondConsent, endTokensBeyondScopes } from "./oauth-consen
  */
 
 /**
- * The consent hook's read: the client and its bound, folding duplicate rows into the one the bound rests
- * on. The provider's `/authorize` looks a consent up with an unordered `findOne`, so a stale wider
- * duplicate would otherwise keep skipping the consent screen and minting wide codes after the user
- * narrowed the other row. `null` for a `skipConsent` client, whose tokens the provider issues without
- * consulting consent, or without a consent row.
+ * The consent hook's read: the client, its bound, and the row the bound rests on, with the client's consent
+ * rows locked. `null` for a `skipConsent` client, whose tokens the provider issues without consulting
+ * consent, or without a consent row. Changes nothing: a refusal must leave the rows as they were, so
+ * duplicates are folded ({@link foldDuplicateConsents}) only once nothing can refuse the approval.
  */
-const settleConsent = async (
+const readSettledConsent = async (
   tx: Prisma.TransactionClient,
   userId: string,
   change: TConsentChange
-): Promise<{ clientId: string; scopes: string[] } | null> => {
+): Promise<TSettledConsentRow | null> => {
   const consents = await lockConsents(tx, userId, change.target, "update");
   if (consents.length === 0 || consents[0].skipConsent) return null;
-  const { clientId } = consents[0];
   const bound = consentBound(consents, change.isLatestWrite);
   if (!bound) return null;
-  if (consents.length > 1) {
-    await tx.oauthConsent.deleteMany({ where: { userId, clientId, id: { not: bound.newest.id } } });
-    if (bound.scopes.length !== bound.newest.scopes.length) {
-      await tx.oauthConsent.update({ where: { id: bound.newest.id }, data: { scopes: bound.scopes } });
-    }
+  return {
+    clientId: consents[0].clientId,
+    scopes: bound.scopes,
+    newest: bound.newest,
+    hasDuplicates: consents.length > 1,
+  };
+};
+
+type TSettledConsentRow = {
+  clientId: string;
+  scopes: string[];
+  newest: TConsentRow;
+  hasDuplicates: boolean;
+};
+
+/**
+ * Folds the client's duplicate consent rows into the one the bound rests on. The provider's `/authorize`
+ * looks a consent up with an unordered `findOne`, so a stale wider duplicate would otherwise keep skipping
+ * the consent screen and minting wide codes after the user narrowed the other row. Run under the locks
+ * {@link readSettledConsent} took.
+ */
+const foldDuplicateConsents = async (
+  tx: Prisma.TransactionClient,
+  userId: string,
+  { clientId, scopes, newest, hasDuplicates }: TSettledConsentRow
+): Promise<void> => {
+  if (!hasDuplicates) return;
+  await tx.oauthConsent.deleteMany({ where: { userId, clientId, id: { not: newest.id } } });
+  if (scopes.length !== newest.scopes.length) {
+    await tx.oauthConsent.update({ where: { id: newest.id }, data: { scopes } });
   }
-  return { clientId, scopes: bound.scopes };
 };
 
 /**
@@ -279,9 +301,13 @@ const settleChangedConsent = async (
       const grant = await lockApprovalGrant(tx, { userId, change, readableWorkspaceIds });
       if (!grant || "status" in grant) return grant;
 
-      const consent = await settleConsent(tx, userId, change);
+      const consent = await readSettledConsent(tx, userId, change);
       if (!consent) return null;
       const { clientId, scopes: consentedScopes } = consent;
+      // An approval saves its grant only while the consent is its own write. Another tab's approval of the
+      // same client that wrote after it owns the decision, and its own hook saves that grant: this one's
+      // choice, even with the same scopes, would overwrite it.
+      const ownsDecision = grant.clientId !== null && change.isLatestWrite(consent.newest);
       const cap = getMcpGrantPermissionsForScopes(consentedScopes);
       const permissions = change.chosenGrant
         ? capMcpGrantPermissions(change.chosenGrant.permissions, cap)
@@ -289,13 +315,16 @@ const settleChangedConsent = async (
       // A chosen grant the scopes leave nothing of would connect a client that can do nothing (spec story
       // 17): refused, not stored. The consent screen's matrix never offers one; a request made by hand can,
       // since the request's own check (`requireValidMcpGrantOnConsentBeforeHandler`) runs before the cap.
-      if (change.chosenGrant && isMcpGrantEmpty(permissions)) {
+      if (ownsDecision && change.chosenGrant && isMcpGrantEmpty(permissions)) {
         return refuseConsent(tx, { userId, clientId, change }, { status: "beyond_scopes" });
       }
+      await foldDuplicateConsents(tx, userId, consent);
       return {
         status: "settled",
         clientId,
-        ...(await saveApprovalGrant(tx, { userId, clientId, grant, permissions })),
+        ...(ownsDecision
+          ? await saveApprovalGrant(tx, { userId, clientId, grant, permissions })
+          : { savedGrant: null, endedGrants: [] }),
         ...(await endTokensBeyondScopes(tx, { userId, clientId, consentedScopes })),
       };
     },
