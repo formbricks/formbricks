@@ -403,8 +403,8 @@ reviews:
       - name: Breaking changes match the diff
         mode: warning
         instructions: |
-          Compare the checkbox in the PR description's "## Breaking changes" section against the
-          actual diff. A ticked box (`- [x] This PR contains breaking changes`) is the author's
+          Compare the breaking-changes checkbox in the PR description's "## Merge danger" section
+          (or "## Breaking changes" on a PR opened before the template change) against the actual diff. A ticked box (`- [x] This PR contains breaking changes`) is the author's
           declaration that the PR has one; an unticked box declares that it has none. The prose or
           table under the checkbox is the explanation and does not change the declaration.
 
@@ -468,7 +468,8 @@ reviews:
       - name: Coverage accounts for the whole diff
         mode: warning
         instructions: |
-          Check the PR description's "## How this was tested" section. It holds all QA for the
+          Check the PR description's "## Evidence" section ("## How this was tested" on a PR opened
+          before the template change). It holds all QA for the
           change — there is no separate release QA pass — so it must account for every behaviour
           the diff changes.
 
@@ -489,10 +490,10 @@ reviews:
           - The diff changes rendered UI and the description attaches no screenshot or screencast.
           - The "Open gaps" subsection is absent. An explicit "none" passes.
 
-          Content inside a `<details>` fold counts as present. The template caps the description at
+          Content inside a `<details>` fold counts as present. The `pr` skill caps the description at
           350 words outside folds and folds the overflow rather than dropping it — long media,
           command logs, and Coverage rows past the sixth — while the Coverage table, Open gaps and
-          Breaking changes stay visible themselves. A collapsed fold is evidence, not a gap: do not
+          the breaking-changes checkbox stay visible themselves. A collapsed fold is evidence, not a gap: do not
           ask for a longer description, ask for the missing behaviour.
 
           PASS if every behaviour the diff changes is either covered by a row stating how it was
