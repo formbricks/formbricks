@@ -75,6 +75,29 @@ With the **Expression** switch off, a date field is set to a date picked from th
 
 `daysBetween()` counts calendar days in UTC, not 24-hour periods: from 23:59 to 00:01 the next day is one day.
 
+## True/false
+
+A calculated field can be **true/false**, for example `qualified` to mark respondents who passed a screener. Choose **True/False** as its type in the Embedded Data card, and pick its default value, **True**, **False** or none.
+
+A true/false field is set in one step only. Its row offers **Assign** alone, and the value is picked from a list: **True**, **False**, or another true/false field, calculated or passed in. There is no typed value, no question and no **Expression** switch: expressions don't give true or false yet.
+
+* A passed-in field is copied as true or false: `?is_pro=true` in the URL sets the calculated field to true.
+* When the field it copies has no value, the step leaves the calculated field as it was, as an empty value does for every other type.
+
+The value is stored as `true` or `false`. Use the field in a condition with **equals** **True** or **False**, filter responses by it, and find it in the response table and in exports as `true` or `false`.
+
+Through the API, a true/false field is set with `operator: "assign"` and a static `true` or `false`, or a `variable` or `hiddenField` value naming another true/false field. Any other operator, value or an expression is refused when you save:
+
+```json
+{
+  "id": "clact123456789012345678902",
+  "objective": "calculate",
+  "variableId": "<the field's storageKey>",
+  "operator": "assign",
+  "value": { "type": "static", "value": true }
+}
+```
+
 ## Checks when you save
 
 An expression is checked when you save or publish the survey. It is refused, with the exact place marked, when:
@@ -83,6 +106,7 @@ An expression is checked when you save or publish the survey. It is refused, wit
 * a function gets the wrong number of values, or a function doesn't exist
 * it names a question or field the survey doesn't have
 * its result doesn't fit the field: a number field takes a number, a text field text, a date field a date
+* it sets a true/false field, which takes only True, False or another true/false field, in one step
 * it nests deeper than 12 levels or has more than 200 parts
 
 ## Through the API
@@ -126,10 +150,13 @@ A step that always runs is a rule whose `conditions` is an empty `and` group. Th
 
 ## While upgrading a self-hosted instance
 
-During a rolling upgrade to 6.2, the pods still on the previous release don't know three things a survey saved in that window may hold, and reject the survey wherever they validate it until the upgrade ends:
+During a rolling upgrade to 6.2, the pods still on the previous release don't know four things a survey saved in that window may hold, and reject the survey wherever they validate it until the upgrade ends:
 
 * a Set value step with an expression (the `expression` value)
 * a **Mark response as Low quality** action
 * a condition on a calculated **date** field, even one set only by its default value: the previous release looks the field up in the older `variables` list, which doesn't list date fields
+* a Set value step that sets a calculated **true/false** field to True or False: the previous release accepts only text and numbers as a typed value
 
-Only surveys saved with one of these during the upgrade are affected, and only for its few minutes. Everything else 6.2 adds, such as show-if, Hidden options, copied options and rules before the first question, is ignored by the previous release and shown as before.
+A response that holds a calculated true/false value is stored as `true` or `false`, which the previous release doesn't accept either. A pod still on it refuses a response update that carries one, and its background jobs for such a response (webhooks, integrations, follow-up emails) fail. A condition the previous release evaluates on the server, such as a quota, reads a stored `false` as not set.
+
+Only surveys saved with one of these, and their responses, during the upgrade are affected, and only for its few minutes. Everything else 6.2 adds, such as show-if, Hidden options, copied options and rules before the first question, is ignored by the previous release and shown as before.

@@ -242,7 +242,9 @@ const SURVEY_LOGIC_DESCRIPTION = [
   "openText are numbers, other openText text, date a date, multipleChoiceSingle its answer code (text);",
   "other types can't be used. Empty in, empty out (use ifEmpty for defaults); ÷ 0 gives empty; an empty",
   "result clears the field. The result must match the field's dataType (number, string or date); text in",
-  "arithmetic is refused. At most 12 levels and 200 nodes. Example `score = round(q1 + q2 * 2)`:",
+  "arithmetic is refused. At most 12 levels and 200 nodes. A boolean (true/false) computed field takes no",
+  'expression: set it with `operator: "assign"` and `value: { type: "static", value: true|false }` or a',
+  "`variable` / `hiddenField` operand naming another boolean field. Example `score = round(q1 + q2 * 2)`:",
   `${JSON.stringify({
     type: "call",
     fn: "round",
@@ -348,8 +350,9 @@ const START_LOGIC_DESCRIPTION = [
 export const SURVEY_EMBEDDED_FIELDS_DESCRIPTION = [
   "Typed Embedded Data fields: `{ storageKey?, key?, name, source, dataType?, defaultValue?, locked? }`.",
   "`source` is `computed` (set by logic: `variable` operands and calculate actions name its storageKey, a cuid2",
-  "generated when omitted; dataType string, number or date — a date is set with a Set value expression and",
-  "is left out of the legacy `variables`) or `ingested` (arrives by URL parameter or SDK:",
+  "generated when omitted; dataType string, number, boolean or date — a date is set with a Set value",
+  "expression, a boolean (true/false) only with a one-step assign of true, false or another boolean field,",
+  "and both are left out of the legacy `variables`) or `ingested` (arrives by URL parameter or SDK:",
   "`hiddenField` operands name its storageKey, which defaults to its name; dataType string, number, boolean",
   "or date; only these can be `locked`). Link a workspace library field by sending `{ key }` alone: the",
   "server fills in its definition. This list is the survey's complete set and the legacy",

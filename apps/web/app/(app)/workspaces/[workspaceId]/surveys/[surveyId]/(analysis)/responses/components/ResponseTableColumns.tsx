@@ -472,16 +472,19 @@ export const generateResponseTableColumns = (
           </div>
         ),
         cell: ({ row }) => {
-          const variableResponse = row.original.variables[link.storageKey];
-          if (typeof variableResponse === "string" || typeof variableResponse === "number") {
-            // A date field set by now() keeps its time (P65); the stored value is the tooltip.
-            const shown = displayEmbeddedFieldValue(variableResponse, field.dataType, locale);
-            return (
-              <div className="text-slate-900" title={shown?.title}>
-                {shown?.text}
-              </div>
-            );
-          }
+          // A date field set by now() keeps its time (P65); the stored value is the tooltip. A
+          // true/false field (ENG-6973) reads true / false.
+          const shown = displayEmbeddedFieldValue(
+            row.original.variables[link.storageKey],
+            field.dataType,
+            locale
+          );
+          if (shown === null) return null;
+          return (
+            <div className="text-slate-900" title={shown.title}>
+              {shown.text}
+            </div>
+          );
         },
       };
     }

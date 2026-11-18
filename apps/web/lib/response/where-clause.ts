@@ -240,6 +240,30 @@ const buildReservedConditions = (
 };
 
 /** The `variables` group → conditions. Keys are computed-field storageKeys; anything else emits nothing. */
+/**
+ * "is True" / "is False" on a computed true/false field (ENG-6973). The engines store a real boolean,
+ * and the filter sends the spelling `"true"` / `"false"`, which a JSON `equals` would never match
+ * against it; a value written as the string (by an API caller) still matches too.
+ */
+const buildBooleanVariableCondition = (
+  path: string[],
+  val: TTypedFieldFilterCondition
+): Prisma.ResponseWhereInput | null => {
+  if ((val.op !== "equals" && val.op !== "notEquals") || (val.value !== "true" && val.value !== "false")) {
+    return null;
+  }
+  const spellings = [val.value === "true", val.value];
+  if (val.op === "equals") {
+    return { OR: spellings.map((equals) => mkJsonColumnFilter("variables", { path, equals })) };
+  }
+  return {
+    OR: [
+      { AND: spellings.map((not) => mkJsonColumnFilter("variables", { path, not })) },
+      mkJsonColumnFilter("variables", { path, equals: Prisma.DbNull }),
+    ],
+  };
+};
+
 const buildVariableConditions = (
   survey: TSurvey,
   variables: NonNullable<TResponseFilterCriteria["variables"]>
@@ -252,7 +276,11 @@ const buildVariableConditions = (
   Object.entries(variables).forEach(([storageKey, val]) => {
     const field = computedFieldsByKey.get(storageKey);
     if (!field) return;
-    const condition = buildJsonPathCondition("variables", [storageKey], val, field.field.dataType);
+    const { dataType } = field.field;
+    const isBooleanComparison = dataType === "boolean" && (val.op === "equals" || val.op === "notEquals");
+    const condition = isBooleanComparison
+      ? buildBooleanVariableCondition([storageKey], val)
+      : buildJsonPathCondition("variables", [storageKey], val, dataType);
     if (condition) conditions.push(condition);
   });
 

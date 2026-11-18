@@ -223,6 +223,17 @@ describe("describeAction", () => {
     expect(describeAction(withDate, surveyFlowFixture, t).label).toBe("signed_up_at = Nov 18, 2026");
   });
 
+  test("True or False set on a true/false field reads as the row shows it (ENG-6973)", () => {
+    const setTrue: TSurveyBlockLogicAction = {
+      id: "a",
+      objective: "calculate",
+      variableId: ids.variables.segment,
+      operator: "assign",
+      value: { type: "static", value: true },
+    };
+    expect(describeAction(setTrue, surveyFlowFixture, t).label).toBe("segment = true");
+  });
+
   test("a Set value with no field yet says a field is missing, not = “”", () => {
     const formula: TSurveyBlockLogicAction = {
       id: "a",

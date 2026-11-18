@@ -1714,11 +1714,14 @@ describe("embeddedFields schema rules (ENG-6930)", () => {
   const issuePaths = (result: ReturnType<typeof parseCreate>) =>
     result.success ? [] : result.error.issues.map((issue) => issue.path.join("."));
 
-  test("a computed field takes only the types the logic engine computes: text, number and (ENG-6935) date", () => {
+  test("a computed field takes the types the logic engine computes: text, number, (ENG-6935) date and (ENG-6973) true/false", () => {
     expect(parseCreate([{ name: "due", source: "computed", dataType: "date" }]).success).toBe(true);
-    expect(issuePaths(parseCreate([{ name: "flag", source: "computed", dataType: "boolean" }]))).toEqual([
-      "embeddedFields.0.dataType",
-    ]);
+    expect(
+      parseCreate([{ name: "flag", source: "computed", dataType: "boolean", defaultValue: false }]).success
+    ).toBe(true);
+    expect(
+      issuePaths(parseCreate([{ name: "flag", source: "computed", dataType: "boolean", defaultValue: "no" }]))
+    ).toEqual(["embeddedFields.0.defaultValue"]);
   });
 
   test("an ingested field may be a date, with an ISO default", () => {
@@ -2025,6 +2028,103 @@ describe("Set value expressions through v3 (ENG-6935)", () => {
         })
       )
     ).toEqual([`${valuePath}.args.1`]);
+  });
+});
+
+describe("Set value on a true/false field through v3 (ENG-6973)", () => {
+  const createWithBooleanStep = (action: Record<string, unknown>) =>
+    prepareV3SurveyCreateInput({
+      ...rawCreateBody,
+      embeddedFields: [
+        {
+          storageKey: "clqualified123456789012345",
+          name: "qualified",
+          source: "computed",
+          dataType: "boolean",
+          defaultValue: false,
+        },
+        { name: "is_pro", source: "ingested", dataType: "boolean" },
+      ],
+      blocks: [
+        {
+          ...rawCreateBody.blocks[0],
+          logic: [
+            {
+              id: "cllog123456789012345678901",
+              conditions: { id: "clgrp123456789012345678901", connector: "and", conditions: [] },
+              actions: [
+                {
+                  id: "clact123456789012345678901",
+                  objective: "calculate",
+                  variableId: "clqualified123456789012345",
+                  operator: "assign",
+                  ...action,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    });
+  const reasons = (preparation: ReturnType<typeof createWithBooleanStep>) =>
+    preparation.ok ? [] : preparation.validation.invalidParams.map((param) => param.reason);
+
+  test("create accepts True, False and another true/false field", () => {
+    expect(reasons(createWithBooleanStep({ value: { type: "static", value: true } }))).toEqual([]);
+    expect(reasons(createWithBooleanStep({ value: { type: "static", value: false } }))).toEqual([]);
+    expect(reasons(createWithBooleanStep({ value: { type: "hiddenField", value: "is_pro" } }))).toEqual([]);
+  });
+
+  // A patch without `embeddedFields` reads the stored computed true/false field, which the legacy
+  // `variables` cannot carry, as it reads a computed date.
+  test("publishing by status alone reads a stored computed true/false field as declared", () => {
+    const qualified = "flowvarqualified00000001";
+    const survey = structuredClone(surveyFlowFixture) as TSurvey;
+    survey.embeddedFields = [
+      ...(survey.embeddedFields ?? []),
+      {
+        field: {
+          key: null,
+          name: "qualified",
+          source: "computed",
+          dataType: "boolean",
+          defaultValue: null,
+          locked: false,
+        },
+        link: { storageKey: qualified },
+      },
+    ];
+    survey.blocks[0].logic = [
+      {
+        id: "clboolrule1234567890123456",
+        conditions: { id: "clboolgroup123456789012345", connector: "and", conditions: [] },
+        actions: [
+          {
+            id: "clboolaction12345678901234",
+            objective: "calculate",
+            variableId: qualified,
+            operator: "assign",
+            value: { type: "static", value: true },
+          },
+        ],
+      },
+    ];
+
+    const preparation = prepareV3SurveyPatchInput(survey, { status: "inProgress" });
+
+    expect(preparation.ok ? [] : preparation.validation.invalidParams).toEqual([]);
+  });
+
+  test("create refuses text, another operator and an expression", () => {
+    for (const action of [
+      { value: { type: "static", value: "true" } },
+      { operator: "concat", value: { type: "static", value: "x" } },
+      { value: { type: "expression", value: { type: "static", value: "x" } } },
+    ]) {
+      expect(reasons(createWithBooleanStep(action)).join("\n")).toContain(
+        "A true/false field is set to True"
+      );
+    }
   });
 });
 

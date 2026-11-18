@@ -1,6 +1,7 @@
 import type { TEmbeddedDataType } from "@formbricks/types/embedded-data";
 import { RESERVED_FIELD_CATALOG } from "@formbricks/types/embedded-data-resolver";
-import type { TSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import type { TSurveyBlockLogicAction, TSurveyBlocks } from "@formbricks/types/surveys/blocks";
+import { BOOLEAN_ASSIGN_MESSAGE, isValidBooleanAssign } from "@formbricks/types/surveys/boolean-assign";
 import { getCopiedOptionsIssues } from "@formbricks/types/surveys/copied-options";
 import {
   type TExpressionTypeContext,
@@ -293,6 +294,58 @@ function validateExpressionValue(
   }
 }
 
+/**
+ * A Set value on a computed true/false field that `isValidBooleanAssign` refuses (ENG-6973), as the
+ * issue a save would report; `undefined` for any other step.
+ */
+function getBooleanAssignIssue(
+  action: Parameters<typeof isValidBooleanAssign>[0] & { variableId: string },
+  name: string,
+  input: TReferenceValidationInput
+): InvalidParam | undefined {
+  const typeContext = getTypeContext(input);
+  if (typeContext.getComputedFieldType(action.variableId) !== "boolean") return undefined;
+  const getFieldType = (storageKey: string, source: "computed" | "ingested") =>
+    source === "computed"
+      ? typeContext.getComputedFieldType(storageKey)
+      : typeContext.getIngestedFieldType(storageKey);
+  if (isValidBooleanAssign(action, getFieldType)) return undefined;
+  return { name, reason: `Conditional Logic: ${BOOLEAN_ASSIGN_MESSAGE}` };
+}
+
+/**
+ * The value of a calculate action: a Set value expression, a reference, or (ENG-6973) a true/false
+ * field's one-step assign, the rule the save's refinement applies. A dangling reference is named as
+ * one rather than as a refused true/false value.
+ */
+function validateCalculateActionValue(
+  action: Extract<TSurveyBlockLogicAction, { objective: "calculate" }>,
+  actionPath: string,
+  input: TReferenceValidationInput,
+  references: TReferenceLookup,
+  issues: InvalidParam[]
+): void {
+  const booleanIssue = getBooleanAssignIssue(action, `${actionPath}.value`, input);
+  if (booleanIssue) {
+    const before = issues.length;
+    if (action.value.type !== "static" && action.value.type !== "expression") {
+      validateDynamicOperand(action.value, `${actionPath}.value`, references, issues);
+    }
+    if (issues.length === before) issues.push(booleanIssue);
+  } else if (action.value.type === "expression") {
+    validateExpressionValue(
+      action.value.value,
+      action.variableId,
+      `${actionPath}.value.value`,
+      input,
+      references,
+      issues
+    );
+  } else if (action.value.type !== "static") {
+    validateDynamicOperand(action.value, `${actionPath}.value`, references, issues);
+  }
+}
+
 /** The typed fields of one source, by storage key; a `dataType` left out is the default `string`. */
 function getTypedFields(
   embeddedFields: NonNullable<TReferenceValidationInput["embeddedFields"]>,
@@ -562,18 +615,7 @@ export function getV3SurveyReferenceInvalidParams(input: TReferenceValidationInp
             });
           }
 
-          if (action.value.type === "expression") {
-            validateExpressionValue(
-              action.value.value,
-              action.variableId,
-              `${actionPath}.value.value`,
-              input,
-              references,
-              issues
-            );
-          } else if (action.value.type !== "static") {
-            validateDynamicOperand(action.value, `${actionPath}.value`, references, issues);
-          }
+          validateCalculateActionValue(action, actionPath, input, references, issues);
         }
 
         if (action.objective === "requireAnswer" && !references.elementIds.has(action.target)) {

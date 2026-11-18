@@ -39,7 +39,7 @@ const expectIssue = (survey: TSurvey, path: PropertyKey[], message: string) => {
 const calculate = (
   variableId: string,
   operator: string,
-  value: { type: string; value: string | number }
+  value: { type: string; value: string | number | boolean | object }
 ): TSurveyBlockLogicAction =>
   ({
     id: "blockaction0000000000001",
@@ -115,6 +115,73 @@ describe("block rule actions", () => {
         withConceptActions([calculate(ids.variables.score, "add", { type: "element", value: "gone" })]),
         rulePath,
         "Invalid element type for number variable"
+      );
+    });
+  });
+
+  describe("Set value on a true/false field (ENG-6973)", () => {
+    const QUALIFIED = "flowvarqualified00000001";
+    const SOURCE_FLAG = "flowvarsourceflag0000001";
+    const IS_PRO = "is_pro";
+    const BOOLEAN_MESSAGE = "A true/false field is set to True, False or another true/false field";
+    const valuePath = [...rulePath, "actions", 0, "value"];
+
+    /** The fixture with a calculated true/false target, another one, and a passed-in one. */
+    const withBooleanFields = (survey: TSurvey) => {
+      const row = (storageKey: string, name: string, source: "computed" | "ingested") => ({
+        field: { key: null, name, source, dataType: "boolean" as const, defaultValue: null, locked: false },
+        link: { storageKey },
+      });
+      survey.embeddedFields = [
+        ...(survey.embeddedFields ?? []),
+        row(QUALIFIED, "qualified", "computed"),
+        row(SOURCE_FLAG, "source_flag", "computed"),
+        row(IS_PRO, "is_pro", "ingested"),
+      ];
+      survey.hiddenFields = {
+        ...survey.hiddenFields,
+        fieldIds: [...(survey.hiddenFields.fieldIds ?? []), IS_PRO],
+      };
+    };
+    const booleanSurvey = (operator: string, value: Parameters<typeof calculate>[2]) =>
+      withConceptActions([calculate(QUALIFIED, operator, value)], withBooleanFields);
+
+    test.each([
+      ["True", { type: "static", value: true }],
+      ["False", { type: "static", value: false }],
+      ["a calculated true/false field", { type: "variable", value: SOURCE_FLAG }],
+      ["a passed-in true/false field", { type: "hiddenField", value: IS_PRO }],
+    ])("accepts assigning %s", (_label, value) => {
+      expect(issuesOf(booleanSurvey("assign", value))).toEqual([]);
+    });
+
+    test("refuses any operator but assign", () => {
+      expectIssue(booleanSurvey("concat", { type: "static", value: "true" }), valuePath, BOOLEAN_MESSAGE);
+    });
+
+    test.each([
+      ["a text value", { type: "static", value: "true" }],
+      ["a number", { type: "static", value: 1 }],
+      ["a text field", { type: "variable", value: ids.variables.segment }],
+      ["a passed-in text field", { type: "hiddenField", value: ids.hiddenFields.panelId }],
+      ["a question", { type: "element", value: "services" }],
+    ])("refuses %s as the value", (_label, value) => {
+      expectIssue(booleanSurvey("assign", value), valuePath, BOOLEAN_MESSAGE);
+    });
+
+    test("refuses an expression", () => {
+      expectIssue(
+        booleanSurvey("assign", { type: "expression", value: { type: "static", value: "x" } }),
+        valuePath,
+        BOOLEAN_MESSAGE
+      );
+    });
+
+    test("refuses True or False on a field of another type", () => {
+      expectIssue(
+        withConceptActions([calculate(ids.variables.segment, "assign", { type: "static", value: true })]),
+        valuePath,
+        "True or False can only be set on a true/false field"
       );
     });
   });

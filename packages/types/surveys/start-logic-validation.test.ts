@@ -256,6 +256,54 @@ describe("rules before the first question", () => {
     ).toEqual([]);
   });
 
+  test("a true/false field (ENG-6973) is set to True, False or another true/false field, in one step", () => {
+    const QUALIFIED = "startvarqualified0000001";
+    const IS_PRO = "is_pro";
+    const booleanRow = (storageKey: string, source: "computed" | "ingested") => ({
+      field: {
+        key: null,
+        name: storageKey,
+        source,
+        dataType: "boolean" as const,
+        defaultValue: null,
+        locked: false,
+      },
+      link: { storageKey },
+    });
+    const assign = (value: unknown, operator = "assign") =>
+      ({
+        id: "startaction0000000000001",
+        objective: "calculate",
+        variableId: QUALIFIED,
+        operator,
+        value,
+      }) as TSurveyBlockLogicAction;
+    const withBoolean = (action: TSurveyBlockLogicAction): TSurvey => ({
+      ...withStartLogic([rule([action])]),
+      embeddedFields: [
+        ...(surveyFlowFixture.embeddedFields ?? []),
+        booleanRow(QUALIFIED, "computed"),
+        booleanRow(IS_PRO, "ingested"),
+      ],
+      hiddenFields: {
+        ...surveyFlowFixture.hiddenFields,
+        fieldIds: [...(surveyFlowFixture.hiddenFields.fieldIds ?? []), IS_PRO],
+      },
+    });
+    const valuePath = ["startLogic", 0, "actions", 0, "value"];
+    const message = "A true/false field is set to True, False or another true/false field";
+
+    expect(issuesOf(withBoolean(assign({ type: "static", value: true })))).toEqual([]);
+    expect(issuesOf(withBoolean(assign({ type: "hiddenField", value: IS_PRO })))).toEqual([]);
+    expectIssues(issuesOf(withBoolean(assign({ type: "static", value: "true" }))), [[valuePath, message]]);
+    expectIssues(issuesOf(withBoolean(assign({ type: "static", value: "x" }, "concat"))), [
+      [valuePath, message],
+    ]);
+    expectIssues(issuesOf(withBoolean(assign({ type: "hiddenField", value: ids.hiddenFields.panelId }))), [
+      [valuePath, message],
+    ]);
+  });
+
   test("a Set value formula (ENG-6935) may set a computed date and read fields, but not an answer", () => {
     const setValue = (id: string, variableId: string, value: unknown) =>
       ({

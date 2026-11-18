@@ -12,6 +12,12 @@ description: >
   `date`. Its behaviour differs on purpose: an empty input gives an empty result (`ifEmpty` sets a
   default), dividing by zero gives empty, and an empty result clears the field. A step that always runs
   is a rule whose `conditions` is an empty `and` group.
+
+
+  **A `boolean` computed field** takes no expression: it is set with `operator: "assign"` and a static
+  `true` / `false`, or a `variable` / `hiddenField` reference to another `boolean` field. Any other
+  operator or value is refused with **400**. A static `true` / `false` is accepted on a `boolean` field
+  only.
 required:
   - id
   - objective
@@ -44,4 +50,17 @@ properties:
     oneOf:
       - $ref: ./SurveyLogicOperand.yml
       - $ref: ./SurveyExpressionValue.yml
+      - type: object
+        description: True or false, for a `boolean` computed field.
+        required:
+          - type
+          - value
+        properties:
+          type:
+            type: string
+            enum:
+              - static
+          value:
+            type: boolean
+        additionalProperties: false
 additionalProperties: false

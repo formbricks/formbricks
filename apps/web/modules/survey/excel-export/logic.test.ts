@@ -456,6 +456,17 @@ describe("createLogicRenderer: actions and fallback", () => {
       "divide Total score by hidden field Plan",
     ],
     [
+      "True on a true/false field (ENG-6973)",
+      {
+        id: "a",
+        objective: "calculate",
+        variableId: VARIABLE_ID,
+        operator: "assign",
+        value: { type: "static", value: true },
+      },
+      "set Total score to True",
+    ],
+    [
       "a jump to an ending",
       { id: "a", objective: "jumpToBlock", target: THANKS_ENDING_ID },
       "jump to the ending “Thanks!”",

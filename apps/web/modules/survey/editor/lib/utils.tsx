@@ -599,8 +599,10 @@ export const getConditionOperatorOptions = (
 ): TComboboxOption[] => {
   if (condition.leftOperand.type === "variable") {
     // ENG-6935: a computed date compares by time, like an ingested date (`isBefore` / `isAfter`).
-    if (getOperandDataType(condition, localSurvey) === "date") {
-      return getLogicRules(t)["field.date"].options;
+    // ENG-6973: a computed true/false compares like a passed-in one (equals, is set).
+    const dataType = getOperandDataType(condition, localSurvey);
+    if (dataType === "date" || dataType === "boolean") {
+      return getLogicRules(t)[`field.${dataType}`].options;
     }
     const variables = getComputedFieldOptions(localSurvey);
     const variableType =
@@ -1054,6 +1056,14 @@ export const isComputedDateField = (localSurvey: TSurvey, storageKey: string): b
   getComputedEmbeddedFields(localSurvey).find(({ link }) => link.storageKey === storageKey)?.field
     .dataType === "date";
 
+/**
+ * Whether Set value writes a computed true/false field (ENG-6973): one step only, assigning True,
+ * False or another true/false field, with no Expression switch.
+ */
+export const isComputedBooleanField = (localSurvey: TSurvey, storageKey: string): boolean =>
+  getComputedEmbeddedFields(localSurvey).find(({ link }) => link.storageKey === storageKey)?.field
+    .dataType === "boolean";
+
 export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[] =>
   getComputedEmbeddedFields(localSurvey).map((embeddedField) => ({
     ...toEmbeddedFieldOption(embeddedField),
@@ -1065,7 +1075,7 @@ export const getActionVariableOptions = (localSurvey: TSurvey): TComboboxOption[
 
 export const getActionOperatorOptions = (
   t: TFunction,
-  variableType?: TSurveyVariable["type"] | "date"
+  variableType?: TSurveyVariable["type"] | "date" | "boolean"
 ): TComboboxOption[] => {
   if (variableType === "number") {
     return [
@@ -1095,8 +1105,9 @@ export const getActionOperatorOptions = (
         symbol: CALCULATE_SYMBOLS.assign,
       },
     ];
-  } else if (variableType === "date") {
-    // One step only assigns a date; anything computed from one is an expression.
+  } else if (variableType === "date" || variableType === "boolean") {
+    // One step only assigns a date; anything computed from one is an expression. A true/false field
+    // (ENG-6973) is only ever assigned.
     return [
       {
         label: t("workspace.surveys.edit.assign"),
@@ -1177,6 +1188,18 @@ export const getActionValueOptions = (
   );
 
   if (!selectedVariable) return [];
+
+  // ENG-6973: a true/false field takes True, False or another true/false field — calculated or passed
+  // in — and no question.
+  if (isComputedBooleanField(localSurvey, variableId)) {
+    return toOperandGroups(t, {
+      choices: [
+        { label: t("common.true"), value: "true", meta: { type: "static" } },
+        { label: t("common.false"), value: "false", meta: { type: "static" } },
+      ],
+      embeddedData: getEmbeddedFieldOptions(localSurvey, { exclude: variableId, dataType: "boolean" }),
+    });
+  }
 
   const isNumeric = selectedVariable.type === "number";
   // A date field takes a date question's answer or another date field (its fixed day is the picker's).

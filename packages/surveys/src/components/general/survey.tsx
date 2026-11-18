@@ -135,15 +135,15 @@ const getHoverColor = (styling: SurveyContainerProps["styling"]) =>
  *
  * Provably the variable's declared value for every field derived from the legacy shape:
  * ZSurveyVariable pins a number variable to a number and a text one to a string, and both are
- * pass-throughs here (see the seeding test in embedded-data-mapping.test.ts). Booleans and dates have
- * no slot in TResponseVariables and no computed field can carry one.
+ * pass-throughs here (see the seeding test in embedded-data-mapping.test.ts). A true/false field
+ * (ENG-6973) is seeded with its boolean default; a date's default is its ISO string.
  */
 const seedComputedVariables = (
   embeddedFields: TJsWorkspaceStateSurvey["embeddedFields"]
 ): TResponseVariables =>
   getComputedEmbeddedFields({ embeddedFields }).reduce<TResponseVariables>((acc, { field, link }) => {
     const seed = coerceToEmbeddedDataType(field.defaultValue, field.dataType);
-    if (typeof seed === "string" || typeof seed === "number") acc[link.storageKey] = seed;
+    if (seed !== undefined) acc[link.storageKey] = seed;
     return acc;
   }, {});
 

@@ -9432,6 +9432,8 @@ components:
         **One-step calculations** apply `operator` to the field's current value and `value` (a fixed value or a reference). An empty current value counts as `0` (number) or `""` (text).
 
         **Set value** (`operator: "assign"` with `value: { "type": "expression", "value": <tree> }`) sets the field to the result of an expression tree (see `SurveyExpression`), of any computed type including `date`. Its behaviour differs on purpose: an empty input gives an empty result (`ifEmpty` sets a default), dividing by zero gives empty, and an empty result clears the field. A step that always runs is a rule whose `conditions` is an empty `and` group.
+
+        **A `boolean` computed field** takes no expression: it is set with `operator: "assign"` and a static `true` / `false`, or a `variable` / `hiddenField` reference to another `boolean` field. Any other operator or value is refused with **400**. A static `true` / `false` is accepted on a `boolean` field only.
       required:
         - id
         - objective
@@ -9464,6 +9466,19 @@ components:
           oneOf:
             - $ref: '#/components/schemas/SurveyLogicOperand'
             - $ref: '#/components/schemas/SurveyExpressionValue'
+            - type: object
+              description: True or false, for a `boolean` computed field.
+              required:
+                - type
+                - value
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - static
+                value:
+                  type: boolean
+              additionalProperties: false
       additionalProperties: false
     SurveyRequireAnswerAction:
       type: object
@@ -9821,7 +9836,7 @@ components:
             - number
             - boolean
             - date
-          description: The type the value is read and coerced as. A computed field is `string`, `number` or `date`.
+          description: The type the value is read and coerced as. A computed field is `string`, `number`, `date` or `boolean`.
         defaultValue:
           type:
             - string
@@ -10878,7 +10893,7 @@ components:
 
         **A library field** is linked by its `key` alone: the server fills in the definition the workspace library holds, and replaces any definition sent with it, because the workspace owns it. Its `storageKey` defaults to the address the survey already links it at, else to a new cuid2 (computed) or the key (ingested). A `key` the workspace library does not have is refused with **400** at `embeddedFields.<i>.key`; a `source` that contradicts the library's at `.source`.
 
-        Rules a field has to meet: only ingested fields can be `locked`; a computed field is `string`, `number` or `date` (a computed date is stored as an ISO 8601 UTC string and is left out of the legacy `variables`); `defaultValue` matches `dataType`; storage keys are unique in the survey, and must also be valid legacy ids (a computed field's a cuid2; an ingested field's free of reserved names, as for `hiddenFields.fieldIds`). No text value may contain a NULL byte (`\u0000`).
+        Rules a field has to meet: only ingested fields can be `locked`; a computed field is `string`, `number`, `date` or `boolean` (a computed date is stored as an ISO 8601 UTC string, a computed boolean as `true` / `false`, and both are left out of the legacy `variables`); `defaultValue` matches `dataType`; storage keys are unique in the survey, and must also be valid legacy ids (a computed field's a cuid2; an ingested field's free of reserved names, as for `hiddenFields.fieldIds`). No text value may contain a NULL byte (`\u0000`).
       properties:
         storageKey:
           type: string
@@ -12555,7 +12570,7 @@ components:
             - number
             - boolean
             - date
-          description: 'Declared type of `value`, so a consumer need not infer it. `computed` entries are `string`, `number` or `date`: a computed date (set by a Set value formula such as `now()`) holds an ISO 8601 UTC string.'
+          description: 'Declared type of `value`, so a consumer need not infer it. `computed` entries are `string`, `number`, `date` or `boolean`: a computed date (set by a Set value formula such as `now()`) holds an ISO 8601 UTC string, a computed boolean `true` or `false`.'
         label:
           type: string
           description: Human-readable name for the key, in the resolved language where one exists.

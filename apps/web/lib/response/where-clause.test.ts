@@ -28,6 +28,7 @@ const survey = {
     embeddedField("plan", "computed", "string"),
     embeddedField("visits", "ingested", "number"),
     embeddedField("score", "computed", "number"),
+    embeddedField("qualified", "computed", "boolean"),
   ],
 } as unknown as TSurvey;
 
@@ -160,5 +161,40 @@ describe("buildWhereClause: statuses", () => {
       { OR: [{ finished: true }, { outcome: "lowQuality" }] },
     ]);
     expect(clauses({ statuses: ["complete"], excludeLowQuality: true })).toContainEqual({ outcome: null });
+  });
+});
+
+describe("buildWhereClause: a computed true/false field (ENG-6973)", () => {
+  test("is True matches the stored boolean, and the string an API caller may have written", () => {
+    expect(clausesFor({ variables: { qualified: { op: "equals", value: "true" } } })).toEqual([
+      {
+        OR: [
+          { variables: { path: ["qualified"], equals: true } },
+          { variables: { path: ["qualified"], equals: "true" } },
+        ],
+      },
+    ]);
+  });
+
+  test("is not False matches any other value, and an unset field", () => {
+    expect(clausesFor({ variables: { qualified: { op: "notEquals", value: "false" } } })).toEqual([
+      {
+        OR: [
+          {
+            AND: [
+              { variables: { path: ["qualified"], not: false } },
+              { variables: { path: ["qualified"], not: "false" } },
+            ],
+          },
+          { variables: { path: ["qualified"], equals: Prisma.DbNull } },
+        ],
+      },
+    ]);
+  });
+
+  test("is set stays a presence check", () => {
+    expect(clausesFor({ variables: { qualified: { op: "isSet" } } })).toEqual([
+      { variables: { path: ["qualified"], not: Prisma.DbNull } },
+    ]);
   });
 });

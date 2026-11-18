@@ -157,12 +157,6 @@ describe("createSharedEmbeddedData", () => {
     ).rejects.toThrow("Only ingested fields can be locked");
   });
 
-  test("refuses a computed field typed boolean, which the logic engine cannot calculate", async () => {
-    await expect(
-      createSharedEmbeddedData(workspaceId, { ...createInput, source: "computed", dataType: "boolean" })
-    ).rejects.toThrow("Computed fields support only string, number or date");
-  });
-
   test("refuses a reserved source, which is a code catalog rather than a row", async () => {
     await expect(
       createSharedEmbeddedData(workspaceId, { ...createInput, source: "reserved" })

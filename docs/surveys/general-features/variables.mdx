@@ -23,7 +23,7 @@ There are three types of variables you can add to your survey:
 ## How to Add Variables
 
 1. Open the survey in the editor, stay on the **Questions** tab and scroll to the bottom. You will find the **Embedded Data** card.
-2. Choose **Add field**, then **Create new field**. Set the source to **Calculated**, give it a name, choose its type — text, number or date — and set a default value. Add as many as you need.
+2. Choose **Add field**, then **Create new field**. Set the source to **Calculated**, give it a name, choose its type — text, number, date or true/false — and set a default value. Add as many as you need.
 
 A calculated field added here has one name, and it is both what recall and logic refer to it by and what the response table shows — so it has to read like a key: lowercase letters, numbers and underscores. Its storage address is generated for you and never typed.
 
@@ -45,7 +45,7 @@ Variables are different from hidden fields in the following ways:
 
 2. **Updating**: Hidden fields cannot be set again, but the value of variables can be updated while the user fills the survey.
 
-3. **Type**: a passed-in field can be text, number, true/false or a date; a calculated field is text, number or a date, the types survey logic can produce. A calculated date is set with an [expression](/surveys/general-features/set-value), such as `now()`.
+3. **Type**: a passed-in field can be text, number, true/false or a date; a calculated field is text, number, a date or true/false, the types survey logic can produce. A calculated date is set with an [expression](/surveys/general-features/set-value), such as `now()`; a calculated true/false field is set to True, False or another true/false field.
 
 ## How to use Variables
 

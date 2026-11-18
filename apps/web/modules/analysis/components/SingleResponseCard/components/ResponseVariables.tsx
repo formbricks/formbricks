@@ -19,13 +19,10 @@ export const ResponseVariables = ({ variables, variablesData }: Readonly<Respons
   return (
     <div className="mt-6 flex flex-col gap-6">
       {variables.map(({ field, link }) => {
-        if (
-          variablesData[link.storageKey] === undefined ||
-          !["string", "number"].includes(typeof variablesData[link.storageKey])
-        )
-          return null;
-        // A date field set by now() keeps its time (P65); the stored value is the tooltip.
+        // A date field set by now() keeps its time (P65); the stored value is the tooltip. A true/false
+        // field (ENG-6973) reads true / false.
         const shown = displayEmbeddedFieldValue(variablesData[link.storageKey], field.dataType, locale);
+        if (shown === null) return null;
         return (
           <div key={link.storageKey}>
             <div className="flex gap-x-2 text-sm text-slate-500">
@@ -47,8 +44,8 @@ export const ResponseVariables = ({ variables, variablesData }: Readonly<Respons
                 </TooltipProvider>
               </div>
             </div>
-            <p className="ph-no-capture mt-2 font-semibold text-slate-700" title={shown?.title}>
-              {shown?.text}
+            <p className="ph-no-capture mt-2 font-semibold text-slate-700" title={shown.title}>
+              {shown.text}
             </p>
           </div>
         );

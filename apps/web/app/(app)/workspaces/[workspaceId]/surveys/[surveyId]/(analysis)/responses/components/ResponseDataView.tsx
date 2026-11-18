@@ -3,7 +3,12 @@
 import React from "react";
 import { getComputedEmbeddedFields, getIngestedStorageKeys } from "@formbricks/types/embedded-data-resolver";
 import { TSurveyQuota } from "@formbricks/types/quota";
-import { TResponseDataValue, TResponseTableData, TResponseWithQuotas } from "@formbricks/types/responses";
+import {
+  TResponseDataValue,
+  TResponseTableData,
+  TResponseVariables,
+  TResponseWithQuotas,
+} from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { TTag } from "@formbricks/types/tags";
 import { TUser, TUserLocale } from "@formbricks/types/user";
@@ -99,12 +104,9 @@ const mapResponsesToTableData = (
     singleUseId: response.singleUseId,
     tags: response.tags,
     // The raw slot, uncoerced: a response predating a field has no key and the cell stays empty.
-    variables: getComputedEmbeddedFields(survey).reduce(
-      (acc, { link }) => {
-        return Object.assign(acc, { [link.storageKey]: response.variables[link.storageKey] });
-      },
-      {} as Record<string, string | number>
-    ),
+    variables: getComputedEmbeddedFields(survey).reduce((acc, { link }) => {
+      return Object.assign(acc, { [link.storageKey]: response.variables[link.storageKey] });
+    }, {} as TResponseVariables),
     verifiedEmail: typeof response.data["verifiedEmail"] === "string" ? response.data["verifiedEmail"] : "",
     language: response.language,
     person: response.contact,

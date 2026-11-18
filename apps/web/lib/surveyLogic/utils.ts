@@ -21,6 +21,7 @@ import {
   TSurveyBlockLogicAction,
   TSurveyBlockLogicActionObjective,
 } from "@formbricks/types/surveys/blocks";
+import { evaluateBooleanAssign } from "@formbricks/types/surveys/boolean-assign";
 import {
   compareDateValues,
   isDateAfter,
@@ -794,14 +795,18 @@ const performCalculation = (
   survey: TJsWorkspaceStateSurvey,
   action: TActionCalculate | TBlockActionCalculate,
   data: TResponseData,
-  calculations: Record<string, number | string>,
+  calculations: TResponseVariables,
   context: TPerformActionsContext
-): number | string | undefined => {
+): TResponseVariables[string] | undefined => {
   const computedField = findComputedEmbeddedField(getComputedEmbeddedFields(survey), action.variableId);
 
   if (!computedField) return undefined;
 
   const { dataType } = computedField.field;
+
+  // ENG-6973: a true/false field is assigned True, False or another true/false field, as a real
+  // boolean, by the same rule as the survey bundle.
+  if (dataType === "boolean") return evaluateBooleanAssign(action, data, calculations);
 
   // Set value (ENG-6935): the shared evaluator, as in the survey bundle, "empty in, empty out". An
   // empty result is written as "" so it clears the field; the one-step operators below keep "empty
@@ -816,23 +821,37 @@ const performCalculation = (
     });
   }
 
-  let currentValue = calculations[action.variableId];
-  if (currentValue === undefined) {
-    currentValue = dataType === "number" ? 0 : "";
-  }
-  let operandValue: string | number | undefined;
+  const currentValue = getOneStepCurrentValue(calculations[action.variableId], dataType);
+  const operandValue = getOneStepOperandValue(action, data, calculations, dataType);
+  if (operandValue === undefined || operandValue === null) return undefined;
 
+  return applyOneStepOperator(action.operator, currentValue, operandValue);
+};
+
+/** A field's value as a one-step operator starts from: `0` / `""` when unset, a boolean as its text. */
+const getOneStepCurrentValue = (
+  storedValue: TResponseVariables[string] | undefined,
+  dataType: string
+): string | number => {
+  if (storedValue === undefined) return dataType === "number" ? 0 : "";
+  return typeof storedValue === "boolean" ? String(storedValue) : storedValue;
+};
+
+/** The operand of a one-step calculation, or `undefined` when it has none to give. */
+const getOneStepOperandValue = (
+  action: TActionCalculate | TBlockActionCalculate,
+  data: TResponseData,
+  calculations: TResponseVariables,
+  dataType: string
+): string | number | undefined => {
   // Determine the operand value based on the action.value type
   switch (action.value.type) {
     case "static":
-      operandValue = action.value.value;
-      break;
+      // True and False belong to a true/false field, handled above.
+      return typeof action.value.value === "boolean" ? undefined : action.value.value;
     case "variable": {
       const value = calculations[action.value.value];
-      if (typeof value === "number" || typeof value === "string") {
-        operandValue = value;
-      }
-      break;
+      return typeof value === "number" || typeof value === "string" ? value : undefined;
     }
     // Deliberately no `default` arm: a legacy `"question"` operand (admitted at the type level by
     // ZDynamicLogicFieldValueDeprecated, normalized away at the API boundary) stays unresolved and
@@ -840,42 +859,33 @@ const performCalculation = (
     case "element":
     case "hiddenField": {
       const val = data[action.value.value];
-      if (typeof val === "number" || typeof val === "string") {
-        if (dataType === "number" && !Number.isNaN(Number(val))) {
-          operandValue = Number(val);
-        } else {
-          operandValue = val;
-        }
-      }
-      break;
+      if (typeof val !== "number" && typeof val !== "string") return undefined;
+      return dataType === "number" && !Number.isNaN(Number(val)) ? Number(val) : val;
     }
   }
+  return undefined;
+};
 
-  if (operandValue === undefined || operandValue === null) return undefined;
-
-  let result: number | string;
-
-  switch (action.operator) {
+/** A one-step operator applied to a field's current value; `undefined` when dividing by zero. */
+const applyOneStepOperator = (
+  operator: (TActionCalculate | TBlockActionCalculate)["operator"],
+  currentValue: string | number,
+  operandValue: string | number
+): string | number | undefined => {
+  switch (operator) {
     case "add":
-      result = Number(currentValue) + Number(operandValue);
-      break;
+      return Number(currentValue) + Number(operandValue);
     case "subtract":
-      result = Number(currentValue) - Number(operandValue);
-      break;
+      return Number(currentValue) - Number(operandValue);
     case "multiply":
-      result = Number(currentValue) * Number(operandValue);
-      break;
+      return Number(currentValue) * Number(operandValue);
     case "divide":
       if (Number(operandValue) === 0) return undefined;
-      result = Number(currentValue) / Number(operandValue);
-      break;
+      return Number(currentValue) / Number(operandValue);
     case "assign":
-      result = operandValue;
-      break;
+      return operandValue;
     case "concat":
-      result = String(currentValue) + String(operandValue);
-      break;
+      return String(currentValue) + String(operandValue);
   }
-
-  return result;
+  return undefined;
 };

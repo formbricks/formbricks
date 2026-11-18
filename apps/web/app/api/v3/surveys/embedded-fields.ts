@@ -68,7 +68,7 @@ const isBlank = (value: string) => value.trim().length === 0;
  * ingested one its name (a local field) or its key (a library field).
  *
  * `dataType` takes the whole enum, but a computed field accepts only what the logic engine computes
- * (`COMPUTED_EMBEDDED_DATA_TYPES`: text, number and, since ENG-6935, date).
+ * (`COMPUTED_EMBEDDED_DATA_TYPES`: text, number, date since ENG-6935, and true/false since ENG-6973).
  */
 export const ZV3SurveyEmbeddedField = z
   .object({
@@ -104,7 +104,7 @@ export const ZV3SurveyEmbeddedField = z
         "computed: set by logic (Set value). ingested: read from the URL or the SDK. Required for a local field."
       ),
     dataType: ZEmbeddedDataType.optional().describe(
-      "string (default), number, boolean or date. A computed field is string, number or date."
+      "string (default), number, boolean or date. A computed field may be any of them."
     ),
     defaultValue: ZEmbeddedDataDefaultValue.refine(
       (value) =>

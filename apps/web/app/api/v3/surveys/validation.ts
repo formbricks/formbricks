@@ -1,3 +1,4 @@
+import { isLegacySayableComputedType } from "@formbricks/types/embedded-data-mapping";
 import type { TSurveyBlock } from "@formbricks/types/surveys/blocks";
 import { type TCodeIssue, validateSurveyCodes } from "@formbricks/types/surveys/codes";
 import { validateStartLogic } from "@formbricks/types/surveys/start-logic-validation";
@@ -389,8 +390,9 @@ type TV3TypedEmbeddedField = NonNullable<TV3SurveyDocument["embeddedFields"]>[nu
 /**
  * The typed fields the reference check reads for a document without `embeddedFields` — a PATCH that
  * sent only `status`, `blocks` or the legacy keys. Its legacy `variables` cannot carry a computed date
- * (ENG-6935), so the stored survey's typed rows fill it in: the document's `variables` with their
- * types, the stored computed dates they leave out, and its hidden fields typed as stored.
+ * (ENG-6935) or true/false (ENG-6973), so the stored survey's typed rows fill it in: the document's
+ * `variables` with their types, the stored computed fields they leave out, and its hidden fields typed
+ * as stored.
  */
 function getDocumentTypedFields(
   document: TV3SurveyDocument,
@@ -418,7 +420,8 @@ function getDocumentTypedFields(
     ...storedEmbeddedFields.filter(
       (field) =>
         field.source === "computed" &&
-        field.dataType === "date" &&
+        field.dataType !== undefined &&
+        !isLegacySayableComputedType(field.dataType) &&
         field.storageKey !== undefined &&
         !variableIds.has(field.storageKey)
     ),

@@ -12,9 +12,17 @@ import {
   TActionTextVariableCalculateOperator,
 } from "@formbricks/types/surveys/logic";
 import { TSurvey } from "@formbricks/types/surveys/types";
-import { createEmptyFormulaAction, getUpdatedActionBody } from "@/lib/surveyLogic/utils";
+import {
+  createEmptyFormulaAction,
+  createEmptySetValueAction,
+  getUpdatedActionBody,
+} from "@/lib/surveyLogic/utils";
 import { CalculatedFieldPicker } from "@/modules/survey/editor/components/calculated-field-picker";
 import { SetValueFormula } from "@/modules/survey/editor/components/set-value-formula";
+import {
+  getBooleanSetValueSelection,
+  toBooleanSetValue,
+} from "@/modules/survey/editor/lib/boolean-set-value";
 import { formulaToOneStep, oneStepToFormula } from "@/modules/survey/editor/lib/expression-formula";
 import { isOneStepDateExpression } from "@/modules/survey/editor/lib/fixed-date-expression";
 import { getNextActionObjective, getObjectivesForAction } from "@/modules/survey/editor/lib/rule-list";
@@ -25,6 +33,7 @@ import {
   getActionTargetOptions,
   getActionValueOptions,
   getActionVariableOptions,
+  isComputedBooleanField,
   isComputedDateField,
 } from "@/modules/survey/editor/lib/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -83,13 +92,17 @@ export function LogicEditorActions({
    * type. ENG-2628: read off the survey's rows, which the Embedded Data card edits directly, so a
    * retype still reaches this widget on the next render.
    */
-  const getCalculateFieldType = (storageKey: string): "text" | "number" | "date" | undefined => {
+  const getCalculateFieldType = (storageKey: string): "text" | "number" | "date" | "boolean" | undefined => {
     const dataType = getComputedEmbeddedFields(localSurvey).find(({ link }) => link.storageKey === storageKey)
       ?.field.dataType;
     if (dataType === undefined) return undefined;
-    if (dataType === "date") return "date";
+    if (dataType === "date" || dataType === "boolean") return dataType;
     return dataType === "number" ? "number" : "text";
   };
+
+  /** ENG-6973: a true/false field's row is one step only — "=" and a True / False / field dropdown. */
+  const isBooleanAction = (action: TSurveyBlockLogicAction) =>
+    action.objective === "calculate" && isComputedBooleanField(localSurvey, action.variableId);
 
   // A date field's Set value is stored as an expression either way (P38), so the switch can't be read
   // off the stored type: the row is one step while the expression is one (a day, an answer, a field),
@@ -113,7 +126,10 @@ export function LogicEditorActions({
 
   /** A Set value action shown with the expression box (ENG-6935). */
   const isFormulaAction = (action: TSurveyBlockLogicAction) =>
-    action.objective === "calculate" && action.value.type === "expression" && !isDateOneStep(action);
+    action.objective === "calculate" &&
+    action.value.type === "expression" &&
+    !isDateOneStep(action) &&
+    !isBooleanAction(action);
 
   const handleActionsChange = (
     operation: "remove" | "addBelow" | "duplicate" | "update",
@@ -173,6 +189,8 @@ export function LogicEditorActions({
       return;
     }
     if (action.objective !== "calculate" || action.value.type === "expression") return;
+    // A true/false field has no formula (ENG-6973); its row shows no switch.
+    if (action.value.type === "static" && typeof action.value.value === "boolean") return;
     const formula = oneStepToFormula({
       variableId: action.variableId,
       operator: action.operator,
@@ -214,8 +232,14 @@ export function LogicEditorActions({
 
   // Picking the field a Set value step writes. A formula stays: a field of another type shows what no
   // longer fits. One step starts over, and a date field's one step is stored as an expression (P38).
+  // A true/false field has no formula (ENG-6973), so it always starts over in one step.
   const changeCalculatedField = (actionIdx: number, variableId: string) => {
     const action = actions[actionIdx];
+    if (isComputedBooleanField(localSurvey, variableId)) {
+      setDateFormulaMode(action.id, false);
+      handleValuesChange(actionIdx, { ...createEmptySetValueAction(action.id, variableId) });
+      return;
+    }
     if (isFormulaAction(action)) {
       setDateFormulaMode(action.id, true);
       handleValuesChange(actionIdx, { variableId });
@@ -227,6 +251,22 @@ export function LogicEditorActions({
       return;
     }
     handleValuesChange(actionIdx, { variableId, value: { type: "static", value: "" } });
+  };
+
+  /** What a one-step row's value box shows as picked or typed. */
+  const getCalculateValueSelection = (action: TSurveyBlockLogicAction): string | number => {
+    if (action.objective !== "calculate") return "";
+    if (isBooleanAction(action)) return getBooleanSetValueSelection(action.value);
+    // A date field's one step is the expression's leaf (P38).
+    if (action.value.type === "expression") return getOneStepDateValue(action.value.value);
+    const { value } = action.value;
+    return typeof value === "boolean" ? String(value) : value;
+  };
+
+  /** The HTML input type of a one-step row's free-text box; a true/false row has none. */
+  const getCalculateInputType = (storageKey: string): "text" | "number" | "date" => {
+    const fieldType = getCalculateFieldType(storageKey);
+    return fieldType === undefined || fieldType === "boolean" ? "text" : fieldType;
   };
 
   // Before the first question a rule may not require an answer (ENG-6932); a rule jumps once and
@@ -402,17 +442,13 @@ export function LogicEditorActions({
                             <InputCombobox
                               id={`action-${idx}-value`}
                               key={`value-${action.id}`}
-                              withInput={true}
+                              // ENG-6973: a true/false field picks from the dropdown only, no free text.
+                              withInput={!isBooleanAction(action)}
                               clearable={true}
-                              value={
-                                // A date field's one step is the expression's leaf (P38).
-                                action.value.type === "expression"
-                                  ? getOneStepDateValue(action.value.value)
-                                  : (action.value?.value ?? "")
-                              }
+                              value={getCalculateValueSelection(action)}
                               inputProps={{
                                 placeholder: t("workspace.surveys.edit.flow.value_placeholder"),
-                                type: getCalculateFieldType(action.variableId) ?? "text",
+                                type: getCalculateInputType(action.variableId),
                               }}
                               groupedOptions={getActionValueOptions(
                                 action.variableId,
@@ -427,6 +463,16 @@ export function LogicEditorActions({
                                   | "hiddenField"
                                   | "element";
 
+                                if (isBooleanAction(action)) {
+                                  const next = toBooleanSetValue(val, fieldType);
+                                  if (next) {
+                                    handleValuesChange(idx, {
+                                      operator: "assign",
+                                      value: next,
+                                    } as Partial<TSurveyBlockLogicAction>);
+                                  }
+                                  return;
+                                }
                                 if (!fromInput && fieldType === "static") return;
                                 if (isDateOneStep(action)) {
                                   // Stored as the expression's leaf (P38).
@@ -455,18 +501,21 @@ export function LogicEditorActions({
                       )}
                     </div>
 
-                    <div className="flex h-10 shrink-0 items-center gap-2">
-                      <Switch
-                        id={`action-${idx}-formula-toggle`}
-                        checked={isFormulaAction(action)}
-                        onCheckedChange={(on) => (on ? turnFormulaOn(idx) : turnFormulaOff(idx))}
-                      />
-                      <Label
-                        htmlFor={`action-${idx}-formula-toggle`}
-                        className="text-sm font-normal text-slate-600">
-                        {t("workspace.surveys.edit.flow.formula")}
-                      </Label>
-                    </div>
+                    {/* ENG-6973: a true/false field is set in one step only, so it has no switch. */}
+                    {!isBooleanAction(action) && (
+                      <div className="flex h-10 shrink-0 items-center gap-2">
+                        <Switch
+                          id={`action-${idx}-formula-toggle`}
+                          checked={isFormulaAction(action)}
+                          onCheckedChange={(on) => (on ? turnFormulaOn(idx) : turnFormulaOff(idx))}
+                        />
+                        <Label
+                          htmlFor={`action-${idx}-formula-toggle`}
+                          className="text-sm font-normal text-slate-600">
+                          {t("workspace.surveys.edit.flow.formula")}
+                        </Label>
+                      </div>
+                    )}
                   </div>
 
                   {isFormulaAction(action) && action.value.type === "expression" && (

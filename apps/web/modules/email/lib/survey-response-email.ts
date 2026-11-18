@@ -108,21 +108,20 @@ const buildVariables = (
   if (!attachResponseData || !includeVariables) return [];
 
   // ENG-1837: definitions from the EmbeddedData tables; the value read stays the raw response slot,
-  // so a response that never captured this field is filtered out rather than shown its default.
-  return getComputedEmbeddedFields(survey)
-    .filter(({ link }) => {
-      const variableResponse = response.variables[link.storageKey];
-      return (
-        (typeof variableResponse === "string" || typeof variableResponse === "number") &&
-        variableResponse !== undefined
-      );
-    })
-    .map(({ field, link }) => ({
-      id: link.storageKey,
-      name: field.name,
-      type: field.dataType === "number" ? ("number" as const) : ("text" as const),
-      value: response.variables[link.storageKey],
-    }));
+  // so a response that never captured this field is filtered out rather than shown its default. A
+  // true/false field (ENG-6973) reads `true` / `false`, as the exports write it.
+  return getComputedEmbeddedFields(survey).flatMap(({ field, link }) => {
+    const variableResponse = response.variables[link.storageKey];
+    if (variableResponse === undefined) return [];
+    return [
+      {
+        id: link.storageKey,
+        name: field.name,
+        type: field.dataType === "number" ? ("number" as const) : ("text" as const),
+        value: typeof variableResponse === "boolean" ? String(variableResponse) : variableResponse,
+      },
+    ];
+  });
 };
 
 const buildHiddenFields = (

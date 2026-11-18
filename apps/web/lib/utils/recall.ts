@@ -328,6 +328,40 @@ const stringifyRecallValue = (value: TResponseDataValue): string => {
 };
 
 /**
+ * The value one recall tag reads: a variable first (a true/false field, ENG-6973, reads `true` /
+ * `false`), then an answer, formatted for display. `undefined` when neither holds the id.
+ */
+const getRecalledValue = (
+  recallItemId: string,
+  sources: {
+    responseData?: TResponseData;
+    variables?: TResponseVariables;
+    questionIds: string[];
+    variableIds: string[];
+  },
+  locale: string,
+  dateFormats?: TSurveyDateFormatMap
+): TResponseDataValue | undefined => {
+  const { responseData, variables, questionIds, variableIds } = sources;
+
+  // First check if it matches a variable
+  if (variables && variableIds.includes(recallItemId)) {
+    const variableValue = variables[recallItemId];
+    return typeof variableValue === "boolean" ? String(variableValue) : variableValue;
+  }
+  // Then check if it matches response data
+  if (!responseData || !questionIds.includes(recallItemId)) return undefined;
+
+  const value = responseData[recallItemId];
+  // Apply formatting for special value types
+  if (typeof value === "string") {
+    return formatStoredDateForDisplay(value, dateFormats?.[recallItemId], locale) || value;
+  }
+  if (Array.isArray(value)) return value.filter((item) => item).join(", ");
+  return value;
+};
+
+/**
  * @param escapeValues HTML-escape each substituted value before splicing it in. Off by default because
  * most callers render the result through React, which escapes for them — escaping here too would show
  * literal `&amp;`. Turn it on when the result goes into raw HTML, e.g. the follow-up email body.
@@ -363,27 +397,12 @@ export const parseRecallInfo = (
     }
 
     const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
-    let value: TResponseDataValue | undefined;
-
-    // First check if it matches a variable
-    if (variables && variableIds.includes(recallItemId)) {
-      value = variables[recallItemId];
-    }
-    // Then check if it matches response data
-    else if (responseData && questionIds.includes(recallItemId)) {
-      value = responseData[recallItemId];
-
-      // Apply formatting for special value types
-      if (typeof value === "string") {
-        const formattedDate = formatStoredDateForDisplay(value, dateFormats?.[recallItemId], locale);
-
-        if (formattedDate) {
-          value = formattedDate;
-        }
-      } else if (Array.isArray(value)) {
-        value = value.filter((item) => item).join(", ");
-      }
-    }
+    let value = getRecalledValue(
+      recallItemId,
+      { responseData, variables, questionIds, variableIds },
+      locale,
+      dateFormats
+    );
 
     // If no value was found, use the fallback
     if (value === undefined || value === null || value === "") {

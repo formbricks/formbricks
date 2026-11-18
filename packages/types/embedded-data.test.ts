@@ -146,9 +146,10 @@ describe("ZEmbeddedData", () => {
       expect(ZEmbeddedData.safeParse(ingested).success).toBe(true);
     });
 
-    test("rejects a computed field typed as boolean", () => {
-      // The logic engine calculates strings, numbers and (ENG-6935) dates.
-      expect(failedPaths({ ...localField, dataType: "boolean", defaultValue: null })).toContain("dataType");
+    test("rejects a computed boolean field whose default is not a boolean (ENG-6973)", () => {
+      expect(failedPaths({ ...localField, dataType: "boolean", defaultValue: "true" })).toContain(
+        "defaultValue"
+      );
     });
 
     test.each([
@@ -156,6 +157,10 @@ describe("ZEmbeddedData", () => {
       ["number", 0],
       // ENG-6935: Set value computes dates (`now()`), stored as ISO 8601 UTC strings.
       ["date", null],
+      // ENG-6973: Set value assigns True, False or another true/false field.
+      ["boolean", null],
+      ["boolean", true],
+      ["boolean", false],
     ] as const)("accepts a computed field typed as %s", (dataType, value) => {
       expect(ZEmbeddedData.safeParse({ ...localField, dataType, defaultValue: value }).success).toBe(true);
     });

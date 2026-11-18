@@ -1732,6 +1732,23 @@ describe("getLogicVariableValue", () => {
   const textField = computedField("tier", "string", "gold");
   const fields = [numberField, textField];
 
+  test("reads a true/false field as the spelling conditions compare it with (ENG-6973)", () => {
+    const flag = {
+      field: {
+        ...computedField("qualified", "string", "").field,
+        dataType: "boolean" as const,
+        defaultValue: null,
+      },
+      link: { storageKey: "qualified" },
+    } satisfies TLinkedEmbeddedField;
+
+    expect(getLogicVariableValue([flag], "qualified", { qualified: true })).toBe("true");
+    // A stored false is a value, not "unset".
+    expect(getLogicVariableValue([flag], "qualified", { qualified: false })).toBe("false");
+    expect(getLogicVariableValue([flag], "qualified", { qualified: "FALSE" })).toBe("false");
+    expect(getLogicVariableValue([flag], "qualified", {})).toBe("");
+  });
+
   test("reads a stored value under the field's declared type", () => {
     expect(getLogicVariableValue(fields, "score", { score: 42 })).toBe(42);
     expect(getLogicVariableValue(fields, "tier", { tier: "silver" })).toBe("silver");

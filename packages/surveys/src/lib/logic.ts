@@ -8,6 +8,7 @@ import {
 import { type TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TResponseData, type TResponseVariables } from "@formbricks/types/responses";
 import { type TActionCalculate, type TSurveyBlockLogicAction } from "@formbricks/types/surveys/blocks";
+import { evaluateBooleanAssign } from "@formbricks/types/surveys/boolean-assign";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import {
   compareDateValues,
@@ -538,21 +539,29 @@ const evaluateSingleCondition = (
 };
 
 /** A variable's value, or the one-step operators' starting value when it has none yet. */
-const withDefaultValue = (value: number | string | undefined, dataType: string): number | string =>
-  value ?? (dataType === "number" ? 0 : "");
+const withDefaultValue = (
+  value: TResponseVariables[string] | undefined,
+  dataType: string
+): number | string => {
+  if (typeof value === "boolean") return String(value);
+  return value ?? (dataType === "number" ? 0 : "");
+};
 
 const performCalculation = (
   survey: TJsWorkspaceStateSurvey,
   action: TActionCalculate,
   data: TResponseData,
-  calculations: Record<string, number | string>,
+  calculations: TResponseVariables,
   context: TPerformActionsContext
-): number | string | undefined => {
+): TResponseVariables[string] | undefined => {
   const computedField = findComputedEmbeddedField(getComputedEmbeddedFields(survey), action.variableId);
 
   if (!computedField) return undefined;
 
   const { dataType } = computedField.field;
+
+  // ENG-6973: a true/false field is assigned True, False or another true/false field, as a real boolean.
+  if (dataType === "boolean") return evaluateBooleanAssign(action, data, calculations);
 
   // Set value (ENG-6935): the shared evaluator, "empty in, empty out". An empty result is written as
   // "" so it clears the field; the one-step operators below keep "empty counts as 0".
@@ -566,60 +575,63 @@ const performCalculation = (
     });
   }
 
-  let currentValue = withDefaultValue(calculations[action.variableId], dataType);
-  let operandValue: string | number | undefined;
+  const currentValue = withDefaultValue(calculations[action.variableId], dataType);
+  const operandValue = getOneStepOperandValue(action, data, calculations);
+  if (operandValue === undefined || operandValue === null) return undefined;
 
+  return applyOneStepOperator(action.operator, currentValue, operandValue);
+};
+
+/**
+ * The operand of a one-step calculation, or `undefined` when it has none to give. An answer or
+ * passed-in value is used as stored; the operators below convert it.
+ */
+const getOneStepOperandValue = (
+  action: TActionCalculate,
+  data: TResponseData,
+  calculations: TResponseVariables
+): string | number | undefined => {
   // Determine the operand value based on the action.value type
   switch (action.value.type) {
     case "static":
-      operandValue = action.value.value;
-      break;
-    case "variable":
+      // True and False belong to a true/false field, handled above.
+      return typeof action.value.value === "boolean" ? undefined : action.value.value;
+    case "variable": {
       const value = calculations[action.value.value];
-      if (typeof value === "number" || typeof value === "string") {
-        operandValue = value;
-      }
-      break;
+      return typeof value === "number" || typeof value === "string" ? value : undefined;
+    }
     // Deliberately no `default` arm: a legacy `"question"` operand (admitted at the type level by
     // ZDynamicLogicFieldValueDeprecated, normalized away at the API boundary) stays unresolved and
     // the calculation returns undefined, exactly as before.
     case "element":
-    case "hiddenField":
+    case "hiddenField": {
       const val = data[action.value.value];
-      if (typeof val === "number" || typeof val === "string") {
-        if (dataType === "number" && !Number.isNaN(Number(val))) {
-          operandValue = Number(val);
-        }
-        operandValue = val;
-      }
-      break;
+      return typeof val === "number" || typeof val === "string" ? val : undefined;
+    }
   }
+  return undefined;
+};
 
-  if (operandValue === undefined || operandValue === null) return undefined;
-
-  let result: number | string;
-
-  switch (action.operator) {
+/** A one-step operator applied to a field's current value; `undefined` when dividing by zero. */
+const applyOneStepOperator = (
+  operator: TActionCalculate["operator"],
+  currentValue: string | number,
+  operandValue: string | number
+): string | number | undefined => {
+  switch (operator) {
     case "add":
-      result = Number(currentValue) + Number(operandValue);
-      break;
+      return Number(currentValue) + Number(operandValue);
     case "subtract":
-      result = Number(currentValue) - Number(operandValue);
-      break;
+      return Number(currentValue) - Number(operandValue);
     case "multiply":
-      result = Number(currentValue) * Number(operandValue);
-      break;
+      return Number(currentValue) * Number(operandValue);
     case "divide":
       if (Number(operandValue) === 0) return undefined;
-      result = Number(currentValue) / Number(operandValue);
-      break;
+      return Number(currentValue) / Number(operandValue);
     case "assign":
-      result = operandValue;
-      break;
+      return operandValue;
     case "concat":
-      result = String(currentValue) + String(operandValue);
-      break;
+      return String(currentValue) + String(operandValue);
   }
-
-  return result;
+  return undefined;
 };

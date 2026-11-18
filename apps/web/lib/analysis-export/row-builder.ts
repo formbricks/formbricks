@@ -53,7 +53,7 @@ export type TAnalysisResponse = {
   language: string | null;
   outcome: string | null;
   data: TResponseData;
-  variables?: Record<string, string | number>;
+  variables?: Record<string, string | number | boolean>;
   meta?: Record<string, unknown>;
   ttc?: Record<string, number>;
   tags?: string[];
