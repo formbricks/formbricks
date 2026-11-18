@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
-import { createInviteToken } from "@/lib/jwt";
+import { createInviteToken, getEmailFromEmailToken } from "@/lib/jwt";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createUserAction } from "@/modules/auth/signup/actions";
 import { subscribeUserToMailingList } from "@/modules/ee/mailing/lib/mailing-subscription";
@@ -193,7 +193,12 @@ describe("ENG-2091: accepting an invite via sign-up", () => {
           password: PASSWORD,
           inviteToken,
         });
-        return { data: result?.data, serverError: result?.serverError };
+        // The display token is encrypted with a fresh IV on every call, so compare the address it carries.
+        const data = result?.data && {
+          ...result.data,
+          emailDisplayToken: getEmailFromEmailToken(result.data.emailDisplayToken),
+        };
+        return { data, serverError: result?.serverError };
       };
 
       expect(await signUp(true)).toEqual(await signUp(false));

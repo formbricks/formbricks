@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
+import { getEmailFromEmailToken } from "@/lib/jwt";
 import { createUserAction } from "@/modules/auth/signup/actions";
 import { sendVerificationLinkEmail } from "@/modules/email";
 
@@ -80,7 +81,12 @@ describe("verification email send failures during sign-up (real Postgres)", () =
       vi.clearAllMocks();
       arrange();
       const result = await signUp();
-      responses.push({ data: result?.data, serverError: result?.serverError });
+      // The display token is encrypted with a fresh IV on every call, so compare the address it carries.
+      const data = result?.data && {
+        ...result.data,
+        emailDisplayToken: getEmailFromEmailToken(result.data.emailDisplayToken),
+      };
+      responses.push({ data, serverError: result?.serverError });
     }
 
     for (const response of responses) {
