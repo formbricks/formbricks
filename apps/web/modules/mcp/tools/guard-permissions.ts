@@ -217,9 +217,10 @@ const HIDDEN_STATUSES: ReadonlySet<unknown> = new Set([403, 404]);
 
 /**
  * Whether a tool's error answer is about something its grant doesn't reach, and so becomes not found
- * (ADR-0042). Only under a grant that selects organizations or workspaces, and then when the call was
- * denied something on the grant's reach, or when it answered 403 or 404 without any check confirming the
- * grant reaches what it asked about. That second case is an id the operation refused before checking
+ * (ADR-0042). Only a 403 or 404, the refusals the grant can cause, and only under a grant that selects
+ * organizations or workspaces: when the call was denied something on the grant's reach, or when no check
+ * confirmed the grant reaches what it asked about. Any other error (a bad request, a conflict, a rate limit,
+ * a server fault) says nothing about the resource and passes through, even after a recorded denial. That second case is an id the operation refused before checking
  * anything, which is how v3 answers an id that doesn't exist: left alone, it would tell an id that
  * doesn't exist from one outside the grant. Everything answered after the grant was confirmed to reach
  * the resource (a refusal by the user's role, a plan refusal, a confirmation) passes through unchanged.
@@ -231,9 +232,9 @@ const isOutsideMcpGrant = (
 ): boolean => {
   const access = (authInfo as TMcpAuthInfo | undefined)?.extra?.grant?.access;
   if (!result.isError || access === undefined || access === "all") return false;
-  if (reach.denied) return true;
   const status = (result.structuredContent as { error?: { status?: unknown } } | undefined)?.error?.status;
-  return !reach.confirmed && HIDDEN_STATUSES.has(status);
+  if (!HIDDEN_STATUSES.has(status)) return false;
+  return reach.denied || !reach.confirmed;
 };
 
 const guardPermissions = async (

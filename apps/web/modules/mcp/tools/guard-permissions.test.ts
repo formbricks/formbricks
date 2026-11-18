@@ -658,6 +658,18 @@ describe("registerMcpTool — what the grant doesn't reach (ADR-0042)", () => {
     ).toBe(refused);
   });
 
+  // Only a refusal can hide what the grant doesn't reach. A bad request, a conflict, a rate limit or a
+  // server fault after a denial was recorded says nothing about the resource, and passes through.
+  test.each([400, 409, 429, 500, 503])("passes a %i through after a recorded denial", async (status) => {
+    const answer = error(status, "other");
+    expect(
+      await register(async () => {
+        recordMcpReachDenied();
+        return answer;
+      })()
+    ).toBe(answer);
+  });
+
   test("passes a success through even when something along the way was out of reach", async () => {
     const result = { structuredContent: { data: [] }, content: [] } as CallToolResult;
     expect(
