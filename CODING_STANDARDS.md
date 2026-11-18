@@ -299,7 +299,10 @@ Do not:
 - Do not fix a flaky test by hiding it; fix its cause. A race a user could hit gets a product fix and the
   test stays as it is. A race in the test's own setup waits on a real signal: a response, a URL, an
   element's state, or `expect(...).toPass()` around an action that is safe to repeat. A timing assertion
-  counts the work or uses a fake clock instead of measuring wall time. Hiding means a sleep, a longer
+  counts the work or uses a fake clock instead of measuring wall time, unless wall time is itself the
+  property under test (a timing side channel). Such a test is tagged `@timing`, so it runs alone in the
+  `chromium-timing` project, and asserts on the medians of many interleaved samples, never on one
+  measurement: the `@timing` test in `security.spec.ts` is the model. Hiding means a sleep, a longer
   timeout or looser threshold, more `retries` (in `playwright.config.ts` or `test.describe.configure`),
   or quarantine (`test.skip`, `test.fixme`).
 
