@@ -177,8 +177,9 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
   // stopping propagation there is too late. Claiming the key one step earlier (on the window via
   // `globalThis`, capture) and preventing its default works because Radix skips dismissing on a
   // default-prevented event. With the dropdown hidden, Escape still reaches the dialog.
+  const isDropdownRendered = isDropdownVisible && position !== null;
   React.useEffect(() => {
-    if (!isDropdownVisible) return;
+    if (!isDropdownRendered) return;
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key !== "Escape" || event.target !== inputRef.current) return;
       event.preventDefault();
@@ -186,7 +187,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
     };
     globalThis.addEventListener("keydown", handleEscape, true);
     return () => globalThis.removeEventListener("keydown", handleEscape, true);
-  }, [isDropdownVisible]);
+  }, [isDropdownRendered]);
 
   // Calculate position for dropdown when opening
   React.useEffect(() => {
