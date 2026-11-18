@@ -421,7 +421,7 @@ describe("createUserAction — signup verification email callbackURL", () => {
           parsedInput: { ...baseInput, setupToken },
         } as never);
 
-        expect(result).toEqual({ success: true });
+        expect(result).toEqual({ success: true, emailDisplayToken: expect.any(String) });
         expect(auth.api.signUpEmail).toHaveBeenCalled();
       });
 

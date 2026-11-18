@@ -183,6 +183,8 @@ describe("rateLimitConfigs", () => {
         "validateSurveyPinFailuresPerSurvey",
         "validateSurveyPin",
         "twoFactorManage",
+        "webhookTest",
+        "heicConvert",
         "licenseRecheck",
         "unsplash",
         "inviteMember",
