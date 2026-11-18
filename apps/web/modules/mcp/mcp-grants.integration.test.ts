@@ -403,6 +403,35 @@ describe("a connection's grant", () => {
     expect(succeeded(await listSurveys(after.access_token, setup))).toBe(true);
   });
 
+  // N3 (round 5): a refresh in flight while a Revoke and a new approval commit can rotate a token the
+  // Revoke's token update missed, then find the new grant and consent in place. What decides is the mark:
+  // a presented refresh token issued before it was revoked, whatever grant stands now.
+  test("a refresh presenting a token from before a Revoke is refused, though a new grant stands", async () => {
+    const before = await grant(setup.cookie, setup.clientId, EVERYTHING);
+    // What the Revoke and the new approval leave behind when the Revoke's token update missed this token:
+    // the mark, a replacement grant, and the consent the approval wrote.
+    await markOAuthRevocation({ userId: setup.userId, clientId: setup.clientId });
+    const replaced = await getMcpGrant(setup.userId, setup.clientId);
+    await prisma.mcpGrant.delete({ where: { id: replaced!.id } });
+    await prisma.mcpGrant.create({
+      data: {
+        userId: setup.userId,
+        clientId: setup.clientId,
+        access: "all",
+        permissions: replaced!.permissions,
+      },
+    });
+
+    const refused = await refresh(setup.clientId, before.refresh_token as string);
+    expect(refused.status, JSON.stringify(refused.body)).toBe(400);
+    expect(refused.body).toMatchObject({ error: "invalid_grant" });
+
+    // The new approval's own tokens, issued after the mark, keep refreshing.
+    await waitPastRevocation();
+    const after = await grant(setup.cookie, setup.clientId, EVERYTHING);
+    expect((await refresh(setup.clientId, after.refresh_token as string)).status).toBe(200);
+  });
+
   // Issue times count whole seconds and come from each pod's clock, so they can't tell an old token from a
   // new grant made in the same second, or on a pod whose clock runs behind. The grant a token was issued
   // under can: here the new grant is dated in the old token's own second.

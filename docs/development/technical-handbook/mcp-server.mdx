@@ -150,7 +150,9 @@ Tags and Audience at No access. A sign-in code issued before a Revoke is refused
 the mark as issued before it, because the issuing and the revoking pod each stamp by their own clock; the mark a
 revocation leaves only ever moves forward,
 so two revocations that finish out of order can't lower it. A refresh never creates a grant: the refresh check
-refuses a `skipConsent` client without one, as it refuses a consent without one. Every code exchange, for
+refuses a `skipConsent` client without one, as it refuses a consent without one, and refuses a presented
+refresh token the mark covers whatever grant stands now, under the user's row: a Revoke that missed a token
+rotated meanwhile, then a new approval, can't hand that token's successor the new grant. Every code exchange, for
 every client, names its grant (and a `skipConsent` client's creates it) ordered against a Revoke like every
 other grant write: the claim takes the user's row `FOR KEY SHARE` and re-reads the mark with the code's issue
 time once it has it, because the provider spends the code after the before-hook's check — a Revoke that

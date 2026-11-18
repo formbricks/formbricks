@@ -820,7 +820,9 @@ const invalidGrant = (): APIError =>
 
 /** Why a refresh was refused, and what ending it ended: logged, never returned to the client. */
 type TRefreshRefusal = Readonly<
-  { reason: "client_revoked" | "grant_missing" | "consent_revoked" | "consent_narrowed" } & Partial<
+  {
+    reason: "client_revoked" | "token_revoked" | "grant_missing" | "consent_revoked" | "consent_narrowed";
+  } & Partial<
     Record<
       "consentsDeleted" | "refreshTokensRevoked" | "refreshTokensDeleted" | "accessTokensRevoked",
       number
@@ -829,34 +831,68 @@ type TRefreshRefusal = Readonly<
 >;
 
 /**
- * The refresh check of a `skipConsent` client, which has no consent to check: its grant alone, or, for a
- * token without an MCP scope, which has no grant either, the revocation mark. `null` when the refresh
- * stands; otherwise the client's tokens are revoked, the one just issued included.
+ * Whether a Revoke covers the presented refresh token: it was issued no later than the client's revocation
+ * mark. Read under the user's row (`FOR KEY SHARE`), which a Revoke holds `FOR UPDATE` after it marks and
+ * while it ends the client's tokens and grant: a Revoke in flight has marked by the time the mark is read,
+ * and one that starts after this commits revokes the token this refresh inserted. The user's row comes
+ * first, before the grant and the consent rows, the order every path that locks them takes.
+ *
+ * The mark, not the rows, decides: a Revoke whose token update missed this token (it rotated meanwhile)
+ * and a new approval after it leave a grant and a consent that would pass every other check, and the token
+ * this refresh minted would name the new grant.
+ */
+const isPresentedTokenRevoked = async (
+  tx: Prisma.TransactionClient,
+  { userId, clientId, createdAt }: { userId: string; clientId: string; createdAt: Date }
+): Promise<boolean> => {
+  await lockUserForMcpGrantWrite(tx, userId);
+  return isIssuedBeforeRevocation(createdAt.getTime(), await readOAuthRevocationTime(userId, clientId));
+};
+
+/**
+ * A refresh presenting a token a Revoke covers ({@link isPresentedTokenRevoked}): ends that token's chain
+ * of rotations, the one just issued included, and every token beyond `scopes`. Leaves the client's other
+ * tokens, such as those of an approval made after the Revoke, alone.
+ */
+const endRevokedToken = async (
+  tx: Prisma.TransactionClient,
+  args: {
+    userId: string;
+    clientId: string;
+    consentedScopes: string[];
+    presentedToken: TPresentedRefreshToken;
+  }
+): Promise<TRefreshRefusal> => ({ reason: "token_revoked", ...(await endTokensBeyondScopes(tx, args)) });
+
+type TRefreshCheck = {
+  userId: string;
+  clientId: string;
+  needsGrant: boolean;
+  /** A Revoke covers the presented token ({@link isPresentedTokenRevoked}). */
+  revoked: boolean;
+  presentedToken: TPresentedRefreshToken;
+};
+
+/**
+ * The refresh check of a `skipConsent` client, which has no consent to check: the revocation mark, then
+ * its grant. A token without an MCP scope has no grant either, so the mark alone decides; a Revoke that
+ * covers it ends every token of the client, as before grants. Otherwise a token the mark covers ends its
+ * own chain, held to the scopes the client is registered with. `null` when the refresh stands.
  */
 const checkSkipConsentRefresh = async (
   tx: Prisma.TransactionClient,
-  {
-    userId,
-    clientId,
-    needsGrant,
-    createdAt,
-  }: { userId: string; clientId: string; needsGrant: boolean; createdAt: Date }
+  { registeredScopes, ...check }: TRefreshCheck & { registeredScopes: string[] }
 ): Promise<TRefreshRefusal | null> => {
+  const { userId, clientId, needsGrant, revoked, presentedToken } = check;
   if (!needsGrant) {
-    // No grant and no consent to read, so the user's row orders this refresh against a Revoke: Revoke
-    // marks first, then holds the row `FOR UPDATE` while it revokes the client's tokens. Waited on here
-    // (`FOR KEY SHARE`), a Revoke in flight has marked by the time the mark is read, and one that starts
-    // after this commits revokes the token this refresh inserted. A presented token the mark covers was
-    // revoked: the one this refresh issued goes too.
-    await lockUserForMcpGrantWrite(tx, userId);
-    const revokedAt = await readOAuthRevocationTime(userId, clientId);
-    if (!isIssuedBeforeRevocation(createdAt.getTime(), revokedAt)) return null;
-    return { reason: "client_revoked", ...(await revokeClientTokens(tx, userId, clientId)) };
+    return revoked ? { reason: "client_revoked", ...(await revokeClientTokens(tx, userId, clientId)) } : null;
+  }
+  if (revoked) {
+    return endRevokedToken(tx, { userId, clientId, consentedScopes: registeredScopes, presentedToken });
   }
   // The grant is the connection's liveness check alone. Read `FOR SHARE` after issuance, as for a consent:
   // a Revoke still in flight is waited on and its delete seen, and one that commits later revokes the
-  // token this refresh just inserted. Without the check, a refresh that rotated before a Revoke and
-  // inserted its token after it would keep a live token.
+  // token this refresh just inserted.
   if (await shareLockMcpGrant(tx, { userId, clientId })) return null;
   return { reason: "grant_missing", ...(await revokeClientTokens(tx, userId, clientId)) };
 };
@@ -891,12 +927,7 @@ const endGrantlessConsent = async (
  */
 const checkConsentedRefresh = async (
   tx: Prisma.TransactionClient,
-  {
-    userId,
-    clientId,
-    needsGrant,
-    presentedToken,
-  }: { userId: string; clientId: string; needsGrant: boolean; presentedToken: TPresentedRefreshToken }
+  { userId, clientId, needsGrant, revoked, presentedToken }: TRefreshCheck
 ): Promise<TRefreshRefusal | null> => {
   // `FOR SHARE`: refreshes don't wait on each other, and a revoke or a save, which lock it `FOR UPDATE`,
   // wait on this check or it on them.
@@ -908,6 +939,7 @@ const checkConsentedRefresh = async (
   if (!consentedScopes) {
     return { reason: "consent_revoked", ...(await revokeClientTokens(tx, userId, clientId)) };
   }
+  if (revoked) return endRevokedToken(tx, { userId, clientId, consentedScopes, presentedToken });
   const { authorizationCodeId, scopes } = presentedToken;
   const covered =
     isCoveredBy(scopes, consentedScopes) &&
@@ -937,6 +969,10 @@ const checkConsentedRefresh = async (
  *    issued included, even when the client asked for scopes the consent does cover), and answers
  *    `invalid_grant`. The client has to go back through `/authorize`, which only issues what the
  *    consent covers. Grants within the consent, such as the narrowed approval's own, keep working.
+ *  - A presented token a Revoke covers (its revocation mark, `isPresentedTokenRevoked`), whatever grant
+ *    and consent stand now: a Revoke whose token update missed a token rotated meanwhile, then a new
+ *    approval, leave both in place. Ends that token's chain and answers `invalid_grant`; the new
+ *    approval's own tokens, issued after the mark, keep working.
  *
  * It runs after issuance on purpose. A check before issuance could pass, then lose to a revoke that
  * commits before the new refresh token is inserted, leaving that token outside the revoke's update.
@@ -970,7 +1006,7 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
           rotatedAt: true,
           sessionId: true,
           createdAt: true,
-          client: { select: { skipConsent: true } },
+          client: { select: { skipConsent: true, scopes: true } },
         },
       })
     : null;
@@ -984,16 +1020,15 @@ export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookCont
   // A token without an MCP scope can't call `/api/mcp`, and its client was given no grant (an approval
   // saves none for it): only its consent is checked.
   const needsGrant = !isMcpGrantEmpty(getMcpGrantPermissionsForScopes(scopes));
+  const presentedToken = { authorizationCodeId, rotatedAt, sessionId, scopes };
   const refused = await prisma.$transaction(
-    (tx) =>
-      refreshToken.client.skipConsent
-        ? checkSkipConsentRefresh(tx, { userId, clientId, needsGrant, createdAt })
-        : checkConsentedRefresh(tx, {
-            userId,
-            clientId,
-            needsGrant,
-            presentedToken: { authorizationCodeId, rotatedAt, sessionId, scopes },
-          }),
+    async (tx) => {
+      const revoked = await isPresentedTokenRevoked(tx, { userId, clientId, createdAt });
+      const check = { userId, clientId, needsGrant, revoked, presentedToken };
+      return refreshToken.client.skipConsent
+        ? checkSkipConsentRefresh(tx, { ...check, registeredScopes: refreshToken.client.scopes })
+        : checkConsentedRefresh(tx, check);
+    },
     // It takes the user's row or the client's grant row, either of which a Revoke can hold while it waits
     // behind a reconciling pass: on the default budget the refresh would fail after rotating, and the
     // client lose its token over another client's Revoke.

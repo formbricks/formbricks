@@ -40,8 +40,9 @@ import {
  * every permission at its scope family's level, Tags and Audience at No access
  * (`getUnconsentedMcpGrantPermissions`). A Dashboard viewer's scopes are trimmed first, as the consent
  * screen does. A grant that exists, or that the user narrowed with Edit, is left alone. A refresh never
- * creates one: the refresh check (`requireOAuthConsentOnRefreshAfterHandler`) ends a `skipConsent`
- * client without a grant, so a refresh that raced a Revoke can't bring it back.
+ * creates one, and names whatever grant stands: the refresh check (`requireOAuthConsentOnRefreshAfterHandler`)
+ * runs after it, ends a `skipConsent` client without a grant, and refuses a presented token a Revoke's mark
+ * covers, so a refresh that raced a Revoke and a new approval never leaves with a token naming the new grant.
  *
  * A code exchange names its grant, and creates one, under the same order every other grant write keeps
  * against a Revoke ({@link readCodeExchangeGrantId}, {@link grantSkipConsentClient}): it takes the user's row

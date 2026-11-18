@@ -400,7 +400,7 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
     rotatedAt: new Date("2026-10-08T10:00:00Z"),
     sessionId: "session-1",
     createdAt: new Date("2026-10-08T10:00:00Z"),
-    client: { skipConsent },
+    client: { skipConsent, scopes: WIDE },
   });
   /** Consent rows newest first, each a second older than the one before. */
   const consentWith = (...scopes: string[][]) => {
@@ -421,7 +421,7 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
     consentWith(WIDE);
 
     await expect(requireOAuthConsentOnRefreshAfterHandler(refreshCtx())).resolves.toBeUndefined();
-    expect(mocks.sequence).toEqual(["share grant", "lock consents"]);
+    expect(mocks.sequence).toEqual(["share user", "share grant", "lock consents"]);
   });
 
   test.each([
@@ -561,7 +561,7 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
     vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow(true) as never);
 
     await expect(requireOAuthConsentOnRefreshAfterHandler(refreshCtx())).resolves.toBeUndefined();
-    expect(mocks.sequence).toEqual(["share grant"]);
+    expect(mocks.sequence).toEqual(["share user", "share grant"]);
     expect(mocks.calls).toEqual([]);
   });
 
@@ -576,7 +576,7 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
       "BAD_REQUEST",
       "invalid_grant"
     );
-    expect(mocks.sequence).toEqual(["share grant"]);
+    expect(mocks.sequence).toEqual(["share user", "share grant"]);
     expect(mocks.calls).toEqual(["revoke refresh tokens", "revoke access tokens"]);
   });
 
@@ -618,6 +618,43 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
     expect(prisma.$transaction).toHaveBeenLastCalledWith(expect.any(Function), { timeout: 35_000 });
   });
 
+  // A Revoke whose token update missed the presented token (it rotated meanwhile), then a new approval: the
+  // grant and consent pass, and only the mark tells the token was revoked. Its chain ends, not the client's
+  // other tokens, which may be the new approval's.
+  test.each([
+    ["a consented client", false],
+    ["a skipConsent client", true],
+  ])(
+    "refuses %s's refresh a Revoke covers, though a grant stands, and ends that token's chain",
+    async (_label, skipConsent) => {
+      vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow(skipConsent) as never);
+      consentWith(WIDE);
+      vi.mocked(readOAuthRevocationTime).mockResolvedValue(new Date("2026-10-08T10:00:01Z").getTime());
+
+      await expectApiError(
+        requireOAuthConsentOnRefreshAfterHandler(refreshCtx()),
+        "BAD_REQUEST",
+        "invalid_grant"
+      );
+      expect(mocks.sequence[0]).toBe("share user");
+      expect(endedTokensBeyondConsent()).toBe(true);
+      expect(mocks.calls).not.toContain("revoke refresh tokens");
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ reason: "token_revoked" }),
+        "OAuth refresh refused: its consent or grant no longer covers it"
+      );
+    }
+  );
+
+  test("lets a token issued after the last Revoke, beyond the clock skew, refresh", async () => {
+    vi.mocked(prisma.oauthRefreshToken.findUnique).mockResolvedValue(storedRow() as never);
+    consentWith(WIDE);
+    vi.mocked(readOAuthRevocationTime).mockResolvedValue(new Date("2026-10-08T09:59:54Z").getTime());
+
+    await expect(requireOAuthConsentOnRefreshAfterHandler(refreshCtx())).resolves.toBeUndefined();
+    expect(endedTokensBeyondConsent()).toBe(false);
+  });
+
   test.each([
     ["a token without the provider's prefix", "raw-token"],
     ["a token that matches no stored row", "fbor_unknown"],
@@ -644,7 +681,7 @@ describe("requireOAuthConsentOnRefreshAfterHandler", () => {
     );
     // Read again once the consent rows are locked, without a lock: no grant can appear while they're held.
     expect(mocks.tx.mcpGrant.findUnique).toHaveBeenCalledTimes(1);
-    expect(mocks.sequence).toEqual(["share grant", "lock consents"]);
+    expect(mocks.sequence).toEqual(["share user", "share grant", "lock consents"]);
     expect(mocks.calls).toEqual(["delete consent", "revoke refresh tokens", "revoke access tokens"]);
     expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({
       where: { userId: "user-1", clientId: "client-1" },
