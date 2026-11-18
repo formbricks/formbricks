@@ -261,13 +261,16 @@ const assertTitleIsNotSurveyId = async (workspaceId: string, title: string): Pro
   }
 };
 
+const isRename = (data: TSegmentUpdateInput, current: TSegment): boolean =>
+  data.title !== undefined && data.title !== current.title;
+
 /**
  * A segment that stays private keeps its survey's id as title: the survey save finds it by that title, so
  * a renamed one would be left behind and a new one created (ENG-6956). Turning it shared may rename it.
  */
 const assertPrivateSegmentKeepsTitle = (data: TSegmentUpdateInput, current: TSegment): void => {
   const staysPrivate = current.isPrivate && data.isPrivate !== false;
-  if (staysPrivate && data.title !== undefined && data.title !== current.title) {
+  if (staysPrivate && isRename(data, current)) {
     throw new InvalidInputError("A private segment keeps the id of its survey as title");
   }
 };
@@ -277,9 +280,8 @@ const assertPrivateSegmentKeepsTitle = (data: TSegmentUpdateInput, current: TSeg
  * the caller chose for a segment the survey save may later pick up by that title (ENG-6956).
  */
 const needsSurveyIdTitleCheck = (data: TSegmentUpdateInput, current: TSegment): boolean => {
-  const renamed = data.title !== undefined && data.title !== current.title;
   const becomesShared = current.isPrivate && data.isPrivate === false;
-  return renamed || becomesShared;
+  return isRename(data, current) || becomesShared;
 };
 
 /**

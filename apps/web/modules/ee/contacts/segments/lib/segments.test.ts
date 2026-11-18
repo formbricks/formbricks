@@ -826,7 +826,7 @@ describe("Segment Service Tests", () => {
         new InvalidInputError("A private segment keeps the id of its survey as title")
       );
       await expect(updateSegment(segmentId, { title: "Renamed", isPrivate: true })).rejects.toThrow(
-        InvalidInputError
+        new InvalidInputError("A private segment keeps the id of its survey as title")
       );
 
       expect(prisma.segment.update).not.toHaveBeenCalled();
