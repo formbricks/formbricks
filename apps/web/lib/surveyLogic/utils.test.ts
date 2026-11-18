@@ -409,14 +409,14 @@ describe("surveyLogic", () => {
   });
 
   test("evaluateLogic handles all operators and error cases", () => {
-    const baseCond = (operator: string, right: any = undefined) => ({
+    const baseCond = (operator: string, right: unknown = undefined) => ({
       id: "c",
       leftOperand: { type: "hiddenField", value: "f" },
       operator,
       ...(right !== undefined ? { rightOperand: { type: "static", value: right } } : {}),
     });
     const vars: TResponseVariables = {};
-    const group = (cond: any) => ({ id: "g", connector: "and" as const, conditions: [cond] });
+    const group = (cond: unknown) => ({ id: "g", connector: "and", conditions: [cond] }) as TConditionGroup;
     expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("equals", "foo")), "en")).toBe(true);
     expect(evaluateLogic(mockSurvey, { f: "foo" }, vars, group(baseCond("doesNotEqual", "bar")), "en")).toBe(
       true
@@ -1099,7 +1099,7 @@ describe("surveyLogic", () => {
     // Test with unknown value type in leftOperand
     const unknownTypeCondition: TSingleCondition = {
       id: "unknownCond",
-      leftOperand: { type: "unknown" as any, value: "x" },
+      leftOperand: { type: "unknown" as unknown as "hiddenField", value: "x" },
       operator: "equals",
       rightOperand: { type: "static", value: "x" },
     };
@@ -1331,7 +1331,7 @@ describe("surveyLogic", () => {
       id: "unknownCond",
       leftOperand: { type: "hiddenField", value: "f" },
       operator: "equals",
-      rightOperand: { type: "unknown" as any, value: "x" },
+      rightOperand: { type: "unknown" as unknown as "hiddenField", value: "x" },
     };
 
     expect(
@@ -1576,7 +1576,7 @@ describe("surveyLogic", () => {
           rightOperand: { type: "static", value: "v2" },
         },
       ],
-    } as any; // Intentionally missing connector
+    } as TConditionGroup; // Intentionally missing connector
 
     createGroupFromResource(group, "c1");
     expect(group.connector).toBe("and");

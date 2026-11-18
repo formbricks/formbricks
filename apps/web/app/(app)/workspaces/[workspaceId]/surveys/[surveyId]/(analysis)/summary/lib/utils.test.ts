@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import { describe, expect, test, vi } from "vitest";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -28,7 +29,9 @@ describe("Utils Tests", () => {
   });
 
   describe("constructToastMessage", () => {
-    const mockT = vi.fn((key, params) => `${key} ${JSON.stringify(params)}`) as any;
+    const mockT = vi.fn(
+      (key: string, params?: unknown) => `${key} ${JSON.stringify(params)}`
+    ) as unknown as TFunction;
     const mockSurvey = {
       id: "survey1",
       name: "Test Survey",

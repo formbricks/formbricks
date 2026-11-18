@@ -713,7 +713,7 @@ describe("handleIntegrations", () => {
 
       const [, properties] = vi.mocked(writeNotionData).mock.calls[0] as unknown as [
         string,
-        Record<string, any>,
+        Record<string, Record<string, unknown>>,
       ];
       expect(properties["Plan Col"]).toBeDefined();
       expect(properties["Plan Col"].rich_text).not.toBeNull();
@@ -746,7 +746,7 @@ describe("handleIntegrations", () => {
 
       const [, properties] = vi.mocked(writeNotionData).mock.calls[0] as unknown as [
         string,
-        Record<string, any>,
+        Record<string, Record<string, unknown>>,
       ];
       expect(properties["Plan Col"].rich_text).toBeNull();
     });
@@ -767,7 +767,7 @@ describe("handleIntegrations", () => {
 
       const [, properties] = vi.mocked(writeNotionData).mock.calls[0] as unknown as [
         string,
-        Record<string, any>,
+        Record<string, Record<string, unknown>>,
       ];
       expect(properties["Missing Col"].rich_text).toBeNull();
     });

@@ -53,7 +53,7 @@ describe("SAML Jackson Initialization", () => {
     vi.mocked(controllers).mockResolvedValue({
       oauthController: mockOAuthController,
       connectionAPIController: mockConnectionController,
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof controllers>>);
   });
 
   afterEach(() => {
@@ -205,8 +205,8 @@ describe("SAML Jackson Initialization", () => {
   });
 
   test("reuse existing controllers if already initialized", async () => {
-    global.oauthController = mockOAuthController as any;
-    global.connectionController = mockConnectionController as any;
+    global.oauthController = mockOAuthController as unknown as typeof global.oauthController;
+    global.connectionController = mockConnectionController as unknown as typeof global.connectionController;
     const decryptionKey = async () => "sp-private-key";
     global.samlDecryptionKey = decryptionKey;
     global.samlIdpVerification = { publicKey: "cert-a" };
@@ -231,8 +231,8 @@ describe("SAML Jackson Initialization", () => {
   test("initializes again when the controllers are kept but the decryption key is not", async () => {
     // A `next dev` reload keeps globals an older version of this module set, without the key's getter.
     vi.mocked(getIsSamlSsoEnabled).mockResolvedValue(true);
-    global.oauthController = mockOAuthController as any;
-    global.connectionController = mockConnectionController as any;
+    global.oauthController = mockOAuthController as unknown as typeof global.oauthController;
+    global.connectionController = mockConnectionController as unknown as typeof global.connectionController;
 
     const result = await init();
 

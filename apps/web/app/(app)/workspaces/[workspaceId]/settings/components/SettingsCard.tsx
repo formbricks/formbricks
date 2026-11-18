@@ -41,7 +41,7 @@ export const SettingsCard = ({
 }: {
   readonly title: string;
   readonly description: string;
-  readonly children: any;
+  readonly children: React.ReactNode;
   readonly soon?: boolean;
   readonly bodyVariant?: TSettingsCardBodyVariant;
   readonly beta?: boolean;

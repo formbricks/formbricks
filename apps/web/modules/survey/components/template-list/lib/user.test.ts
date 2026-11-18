@@ -37,7 +37,7 @@ describe("updateUser", () => {
   });
 
   test("successfully updates a user", async () => {
-    vi.mocked(prisma.user.update).mockResolvedValue(mockUser as any);
+    vi.mocked(prisma.user.update, { partial: true }).mockResolvedValue(mockUser);
 
     const updateData = { name: "Updated Name" };
     const result = await updateUser("user-123", updateData);

@@ -645,7 +645,7 @@ export const updateSurveyInternal = async (
 
   try {
     const surveyId = updatedSurvey.id;
-    let data: any = {};
+    let data: Prisma.SurveyUpdateInput = {};
 
     const currentSurvey = await getSurvey(surveyId);
 

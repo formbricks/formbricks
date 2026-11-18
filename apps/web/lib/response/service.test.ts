@@ -701,11 +701,11 @@ describe("deleteResponse", () => {
 describe("getResponseDownloadFile", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(prisma.response.findMany).mockResolvedValue([] as any);
+    vi.mocked(prisma.response.findMany, { partial: true }).mockResolvedValue([]);
   });
 
   test("forwards the organization display time zone to getResponsesJson", async () => {
-    vi.mocked(getOrganization).mockResolvedValue({ displayTimeZone: "Asia/Manila" } as any);
+    vi.mocked(getOrganization, { partial: true }).mockResolvedValue({ displayTimeZone: "Asia/Manila" });
 
     await getResponseDownloadFile("survey-123", "csv");
 
@@ -720,7 +720,7 @@ describe("getResponseDownloadFile", () => {
   });
 
   test("defaults to UTC when the organization has no display time zone", async () => {
-    vi.mocked(getOrganization).mockResolvedValue({ displayTimeZone: null } as any);
+    vi.mocked(getOrganization, { partial: true }).mockResolvedValue({ displayTimeZone: null });
 
     await getResponseDownloadFile("survey-123", "csv");
 

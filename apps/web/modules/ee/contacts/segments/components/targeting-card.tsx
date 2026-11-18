@@ -88,8 +88,8 @@ export function TargetingCard({
       if (clonedSegmentResponse?.data) {
         setSegment(clonedSegmentResponse.data);
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   };
 
@@ -146,8 +146,8 @@ export function TargetingCard({
 
       setIsSegmentEditorOpen(false);
       setSegmentEditorViewOnly(true);
-    } catch (err: any) {
-      toast.error(err.message ?? t("workspace.segments.error_saving_segment"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("workspace.segments.error_saving_segment"));
     }
   };
 

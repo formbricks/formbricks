@@ -6,11 +6,12 @@ const mockListFeedbackRecords = vi.fn();
 const mockGetFeedbackDirectoriesByWorkspaceId = vi.fn();
 
 vi.mock("@/modules/hub/service", () => ({
-  listFeedbackRecords: (...args: any[]) => mockListFeedbackRecords(...args),
+  listFeedbackRecords: (...args: unknown[]) => mockListFeedbackRecords(...args),
 }));
 
 vi.mock("@/modules/ee/feedback-directory/lib/feedback-directory", () => ({
-  getFeedbackDirectoriesByWorkspaceId: (...args: any[]) => mockGetFeedbackDirectoriesByWorkspaceId(...args),
+  getFeedbackDirectoriesByWorkspaceId: (...args: unknown[]) =>
+    mockGetFeedbackDirectoriesByWorkspaceId(...args),
 }));
 
 const mockWorkspaceId = "workspace-abc-123";

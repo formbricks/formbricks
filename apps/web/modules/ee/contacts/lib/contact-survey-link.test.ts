@@ -67,12 +67,12 @@ describe("Contact Survey Link", () => {
       return value;
     });
 
-    vi.mocked(jwt.sign).mockReturnValue(mockToken as any);
+    vi.mocked(jwt.sign).mockReturnValue(mockToken as unknown as ReturnType<typeof jwt.sign>);
 
     vi.mocked(jwt.verify).mockReturnValue({
       contactId: mockEncryptedContactId,
       surveyId: mockEncryptedSurveyId,
-    } as any);
+    } as unknown as ReturnType<typeof jwt.verify>);
 
     mockedGetSurvey.mockResolvedValue({
       id: mockSurveyId,
@@ -242,7 +242,7 @@ describe("Contact Survey Link", () => {
       vi.mocked(jwt.verify).mockReturnValue({
         // Missing surveyId
         contactId: mockEncryptedContactId,
-      } as any);
+      } as unknown as ReturnType<typeof jwt.verify>);
 
       // Suppress console.error for this test
       vi.spyOn(console, "error").mockImplementation(() => {});
