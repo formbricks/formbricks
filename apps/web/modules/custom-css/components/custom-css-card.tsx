@@ -179,28 +179,28 @@ export const CustomCssCard = ({
         {lockedContent ?? (
           <div className="flex flex-col gap-4 p-6 pt-2">
             {savedStatus === "withheld" && (
-              <Alert variant="warning" size="small" role="status">
+              <Alert variant="warning" size="small" alertRole="status">
                 <AlertDescription className="whitespace-normal">
                   {t("workspace.custom_css.withheld_warning")}
                 </AlertDescription>
               </Alert>
             )}
             {savedStatus === "stale" && (
-              <Alert variant="info" size="small" role="status">
+              <Alert variant="info" size="small" alertRole="status">
                 <AlertDescription className="whitespace-normal">
                   {t("workspace.custom_css.stale_info")}
                 </AlertDescription>
               </Alert>
             )}
             {hasHeadScriptStyles && (
-              <Alert variant="warning" size="small" role="status">
+              <Alert variant="warning" size="small" alertRole="status">
                 <AlertDescription className="whitespace-normal">
                   {t("workspace.custom_css.head_scripts_warning")}
                 </AlertDescription>
               </Alert>
             )}
             {appearance === "dark" && shouldShowDarkPreviewHint(draft) && (
-              <Alert variant="info" size="small" role="status">
+              <Alert variant="info" size="small" alertRole="status">
                 <AlertDescription className="whitespace-normal">
                   {t("workspace.custom_css.dark_preview_hint")}
                 </AlertDescription>

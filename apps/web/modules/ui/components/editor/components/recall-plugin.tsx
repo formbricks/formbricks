@@ -21,6 +21,33 @@ import { getFallbackValues, getRecallItemLabel, getRecallItems } from "@/lib/uti
 import { RecallItemSelect } from "@/modules/survey/components/element-form-input/components/recall-item-select";
 import { $createRecallNode, RecallNode } from "./recall-node";
 
+// Helper function to find all RecallNodes recursively
+const findAllRecallNodes = (node: LexicalNode): RecallNode[] => {
+  const recallNodes: RecallNode[] = [];
+
+  if (node instanceof RecallNode) {
+    recallNodes.push(node);
+  }
+
+  // Only get children if this is an ElementNode
+  if ($isElementNode(node)) {
+    try {
+      const children = node.getChildren();
+      for (const child of children) {
+        const childRecallNodes = findAllRecallNodes(child);
+        recallNodes.push(...childRecallNodes);
+      }
+    } catch (error) {
+      logger.error(
+        error instanceof Error ? error : new Error(String(error)),
+        "Error getting children from node"
+      );
+    }
+  }
+
+  return recallNodes;
+};
+
 interface RecallPluginProps {
   readonly localSurvey: TSurvey;
   readonly elementId: string;
@@ -128,33 +155,6 @@ export const RecallPlugin = ({
     }
   }, []);
 
-  // Helper function to find all RecallNodes recursively
-  const findAllRecallNodes = useCallback((node: LexicalNode): RecallNode[] => {
-    const recallNodes: RecallNode[] = [];
-
-    if (node instanceof RecallNode) {
-      recallNodes.push(node);
-    }
-
-    // Only get children if this is an ElementNode
-    if ($isElementNode(node)) {
-      try {
-        const children = node.getChildren();
-        for (const child of children) {
-          const childRecallNodes = findAllRecallNodes(child);
-          recallNodes.push(...childRecallNodes);
-        }
-      } catch (error) {
-        logger.error(
-          error instanceof Error ? error : new Error(String(error)),
-          "Error getting children from node"
-        );
-      }
-    }
-
-    return recallNodes;
-  }, []);
-
   // Convert raw recall text to RecallNodes
   const convertTextToRecallNodes = useCallback(() => {
     const root = $getRoot();
@@ -226,15 +226,7 @@ export const RecallPlugin = ({
         }
       });
     },
-    [
-      findAllRecallNodes,
-      localSurvey,
-      selectedLanguageCode,
-      setRecallItems,
-      setFallbacks,
-      editor,
-      convertTextToRecallNodes,
-    ]
+    [localSurvey, selectedLanguageCode, setRecallItems, setFallbacks, editor, convertTextToRecallNodes]
   );
 
   // Handle @ key press for recall trigger
@@ -290,13 +282,11 @@ export const RecallPlugin = ({
     }
   }, [setShowRecallItemSelect, showRecallItemSelect]);
 
-  // Clean up when dropdown closes
-  useEffect(() => {
-    if (!showRecallItemSelect && atSymbolPosition) {
-      // If dropdown was closed without selecting an item, clear the stored position
-      setAtSymbolPosition(null);
-    }
-  }, [showRecallItemSelect, atSymbolPosition]);
+  // Clean up when dropdown closes (during render)
+  if (!showRecallItemSelect && atSymbolPosition) {
+    // If dropdown was closed without selecting an item, clear the stored position
+    setAtSymbolPosition(null);
+  }
 
   // Initial conversion of existing recall text and state sync on plugin load
   useEffect(() => {
@@ -361,7 +351,7 @@ export const RecallPlugin = ({
         },
       }
     );
-  }, [editor, localSurvey, selectedLanguageCode, findAllRecallNodes]);
+  }, [editor, localSurvey, selectedLanguageCode]);
 
   useEffect(() => {
     const removeUpdateListener = editor.registerUpdateListener(handleEditorUpdate);
@@ -481,7 +471,7 @@ export const RecallPlugin = ({
     };
 
     editor.update(handleFallbackUpdate);
-  }, [editor, fallbacks, findAllRecallNodes]);
+  }, [editor, fallbacks]);
 
   // Expose addFallback function to parent
   useEffect(() => {

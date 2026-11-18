@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/ui/components/button";
 import {
@@ -13,6 +14,7 @@ import {
 } from "@/modules/ui/components/dialog";
 import { Input } from "@/modules/ui/components/input";
 import { Label } from "@/modules/ui/components/label";
+import { focusOnOpen } from "@/modules/ui/lib/focus-on-open";
 
 interface CreateDashboardDialogProps {
   open: boolean;
@@ -32,10 +34,11 @@ export const CreateDashboardDialog = ({
   isCreating,
 }: Readonly<CreateDashboardDialogProps>) => {
   const { t } = useTranslation();
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent width="narrow">
+      <DialogContent width="narrow" onOpenAutoFocus={(event) => focusOnOpen(event, nameInputRef.current)}>
         <DialogHeader>
           <DialogTitle>{t("workspace.analysis.dashboards.create_dashboard")}</DialogTitle>
           <DialogDescription>
@@ -56,10 +59,10 @@ export const CreateDashboardDialog = ({
               <Label htmlFor="dashboard-name">{t("workspace.analysis.dashboards.dashboard_name")}</Label>
               <Input
                 id="dashboard-name"
+                ref={nameInputRef}
                 placeholder={t("workspace.analysis.dashboards.dashboard_name_placeholder")}
                 value={dashboardName}
                 onChange={(e) => onDashboardNameChange(e.target.value)}
-                autoFocus
               />
             </div>
           </DialogBody>

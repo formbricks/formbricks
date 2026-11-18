@@ -49,9 +49,16 @@ export const WorkflowAutoSaveIndicator = () => {
   // "Saving…" branch and claimed a save was in flight that never was.
   const isBlocked = isDirty && !isNameValid;
 
+  // Each new save (and one already on record at mount) flashes "Saved": shown from the render that
+  // sees it, hidden by the timer below.
+  const [flashedSavedAt, setFlashedSavedAt] = useState<typeof lastSavedAt | null>(null);
+  if (lastSavedAt !== flashedSavedAt) {
+    setFlashedSavedAt(lastSavedAt);
+    if (lastSavedAt) setShowSaved(true);
+  }
+
   useEffect(() => {
     if (!lastSavedAt) return;
-    setShowSaved(true);
     const timer = setTimeout(() => setShowSaved(false), SAVED_FLASH_MS);
     return () => clearTimeout(timer);
   }, [lastSavedAt]);
@@ -100,8 +107,7 @@ export const WorkflowAutoSaveIndicator = () => {
           it should not interrupt someone mid-edit. The detail rides along as screen-reader-only
           text rather than an aria-label, so the announcement carries it too; the tooltip that
           shows it visually is hover-only. */}
-      <span
-        role="status"
+      <output
         aria-live="polite"
         className={cn(
           "inline-flex cursor-default items-center rounded-full border px-2.5 py-0.5 text-xs font-medium transition-colors duration-300",
@@ -109,7 +115,7 @@ export const WorkflowAutoSaveIndicator = () => {
         )}>
         {label}
         {hasTooltip ? <span className="sr-only">. {tooltipContent}</span> : null}
-      </span>
+      </output>
     </TooltipRenderer>
   );
 };

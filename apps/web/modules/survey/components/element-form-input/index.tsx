@@ -2,7 +2,7 @@
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { ImagePlusIcon, TrashIcon } from "lucide-react";
-import { type Dispatch, type SetStateAction, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type Dispatch, type SetStateAction, useCallback, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
 import { IMAGE_FILE_EXTENSIONS } from "@formbricks/types/storage";
@@ -71,7 +71,8 @@ interface ElementFormInputProps {
   readonly locale: TUserLocale;
   readonly onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
   readonly isStorageConfigured: boolean;
-  readonly autoFocus?: boolean;
+  /** Focus the field's editor when it mounts; see `Editor`. */
+  readonly focusOnMount?: boolean;
   readonly firstRender?: boolean;
   readonly setFirstRender?: Dispatch<SetStateAction<boolean>>;
   readonly isExternalUrlsAllowed?: boolean;
@@ -101,7 +102,7 @@ export const ElementFormInput = ({
   locale,
   onKeyDown,
   isStorageConfigured = true,
-  autoFocus,
+  focusOnMount,
   firstRender: externalFirstRender,
   setFirstRender: externalSetFirstRender,
   isExternalUrlsAllowed,
@@ -208,10 +209,13 @@ export const ElementFormInput = ({
       (endingCard?.type === "endScreen" && Boolean(endingCard.imageUrl ?? endingCard.videoUrl))
   );
 
-  // Sync text state when elementText changes (e.g., on page reload or when value prop changes)
-  useEffect(() => {
+  // Sync text state when elementText changes (e.g., on page reload or when value prop changes).
+  // Adjusted during render.
+  const [syncedElementText, setSyncedElementText] = useState(elementText);
+  if (syncedElementText !== elementText) {
+    setSyncedElementText(elementText);
     setText(elementText);
-  }, [elementText]);
+  }
 
   const highlightContainerRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -542,7 +546,7 @@ export const ElementFormInput = ({
                 locale={locale}
                 elementId={elementId}
                 isCard={isWelcomeCard || isEndingCard}
-                autoFocus={autoFocus}
+                focusOnMount={focusOnMount}
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
                 suppressUpdates={() => suppressEditorUpdatesRef.current}
               />

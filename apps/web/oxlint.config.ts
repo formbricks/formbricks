@@ -97,8 +97,7 @@ export default defineConfig(
         /*
          * React Compiler-era react-hooks rules (ENG-2366), implemented natively by oxlint under
          * `react/`. Each carries the strongest severity its remaining violation count allows, on the
-         * same per-rule ratchet as the typescript-eslint baseline (ENG-2264). Promoting the ones
-         * still at `warn` is tracked in ENG-7329.
+         * same per-rule ratchet as the typescript-eslint baseline (ENG-2264).
          *
          * Note the app does NOT run the React Compiler (there is no `reactCompiler` in
          * next.config.mjs and no babel plugin), which is what splits these two groups apart.
@@ -109,14 +108,12 @@ export default defineConfig(
         // deliberately not listed here — nothing to opt out of.
         "react/error-boundaries": "error",
         "react/preserve-manual-memoization": "error",
-        // Genuine defects rather than lint noise: direct mutation of `useState` values
-        // (ResponseFilter), assignment to a prop (survey-menu-bar) and mutation of a hook argument
-        // (elements-view). Fixing them is behaviour-sensitive work on the survey editor and response
-        // filters, so it is ticketed separately (ENG-3071). Promote to "error" once that lands.
-        "react/immutability": "warn",
-        // Far too broad to fix in one change, and each one needs a judgement call about whether the
-        // effect should derive state instead. Ratcheted under ENG-3072.
-        "react/set-state-in-effect": "warn",
+        // Mutating `useState` values, props or hook arguments (ENG-3071).
+        "react/immutability": "error",
+        // State an effect sets synchronously: derive it during render, initialise it, or set it in
+        // the event that caused it (ENG-3072). A subscription that syncs an external value
+        // carries an inline disable with its reason.
+        "react/set-state-in-effect": "error",
 
         // Compiler-conditional advisory: with no compiler in the build it reports what *would* be
         // skipped, not a defect. `warn` is also what upstream `flat.recommended` ships. The
@@ -130,20 +127,19 @@ export default defineConfig(
         "react/exhaustive-deps": "error",
 
         /*
-         * jsx-a11y's recommended set, which the `next` tier turns on at "error", on the same per-rule
-         * ratchet. Rules at zero stay at the tier's "error" and are deliberately not listed here. Four
-         * of them reach zero only through five inline disables, each on a site that already carries a
-         * NOSONAR for the same deliberate pattern (a `Trans` link whose text is injected, a
-         * stopPropagation wrapper, a focusable scroll region).
-         *
-         * The two below have no ratchet ticket yet; promote each to "error" once its count reaches
-         * zero (ENG-7329).
+         * jsx-a11y's recommended set, which the `next` tier turns on at "error". Four of its rules
+         * reach zero only through five inline disables, each on a site that already carries a NOSONAR
+         * for the same deliberate pattern (a `Trans` link whose text is injected, a stopPropagation
+         * wrapper, a focusable scroll region). `no-autofocus` is at the tier's "error" too: a dialog or
+         * popover that opens on a field focuses it through Radix's `onOpenAutoFocus`
+         * (`modules/ui/lib/focus-on-open.ts`); its inline disables are widgets whose focus follows the
+         * user's click (a date picker's day grid, a menu's search field, an inline editor).
          */
-        // Nearly all `autoFocus` on the first field of a dialog or form.
-        "jsx-a11y/no-autofocus": "warn",
-        // Added because Sonar (S6819) reported a `role="presentation"` only after push. Most are
-        // `role="status"` that wants `<output>`.
-        "jsx-a11y/prefer-tag-over-role": "warn",
+        // Not in the recommended set. Added because Sonar (S6819) reported a `role="presentation"`
+        // only after push. Where the native element cannot hold the content or layout (`<output>`
+        // takes phrasing content only, a clickable `<tr>` cannot be a `<button>`), an inline disable
+        // says so.
+        "jsx-a11y/prefer-tag-over-role": "error",
       },
       overrides: [
         {

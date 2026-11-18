@@ -1,7 +1,7 @@
 "use client";
 
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AnimatedSurveyBg } from "@/modules/survey/editor/components/animated-survey-bg";
 import { ColorSurveyBg } from "@/modules/survey/editor/components/color-survey-bg";
@@ -42,7 +42,18 @@ export const SurveyBgSelectorTab = ({
     { id: "image", label: t("workspace.surveys.edit.image") },
   ];
 
-  useEffect(() => {
+  // Each tab keeps only the background of the active type. Adjusted during render, from the first.
+  const [syncedFrom, setSyncedFrom] = useState<{
+    bg: typeof bg;
+    bgType: typeof bgType;
+    isUnsplashConfigured: typeof isUnsplashConfigured;
+  } | null>(null);
+  if (
+    syncedFrom?.bg !== bg ||
+    syncedFrom.bgType !== bgType ||
+    syncedFrom.isUnsplashConfigured !== isUnsplashConfigured
+  ) {
+    setSyncedFrom({ bg, bgType, isUnsplashConfigured });
     if (bgType === "color") {
       setColorBackground(bg);
       setAnimationBackground("");
@@ -66,7 +77,7 @@ export const SurveyBgSelectorTab = ({
       setColorBackground("");
       setAnimationBackground("");
     }
-  }, [bg, bgType, isUnsplashConfigured]);
+  }
 
   const renderContent = () => {
     switch (activeTab) {

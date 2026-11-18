@@ -30,7 +30,7 @@ export function PictureSelectionElement({
   dir = "auto",
   errorMessage,
 }: Readonly<PictureSelectionProps>) {
-  const [startTime, setStartTime] = useState(performance.now());
+  const [startTime, setStartTime] = useState(() => performance.now());
   const isCurrent = element.id === currentElementId;
   const isRequired = element.required;
   const { t } = useTranslation();
@@ -93,6 +93,8 @@ export function PictureSelectionElement({
         imageUrl={element.imageUrl}
         imageAltText={getLocalizedValue(element.imageAltText, languageCode)}
         videoUrl={element.videoUrl}
+        getEnlargeImageLabel={(alt) => t("common.enlarge_image_of", { option: alt })}
+        closeLabel={t("common.close_enlarged_image")}
       />
     </form>
   );
