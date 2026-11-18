@@ -87,6 +87,22 @@ export const revokeAllUserOAuthGrants = async (
   };
 };
 
+/**
+ * ENG-7364: a password reset is what a user does when they suspect the account was taken over, and
+ * `revokeSessionsOnPasswordReset` ends sessions only. An OAuth client someone registered and authorized
+ * while they had access would keep a 30-day refresh token, so the reset ends every grant too, as SSO
+ * recovery does. Best-effort like the rest of `onPasswordReset`: the password is already changed, so a
+ * failure is logged and never fails the reset. API keys are left alone on purpose, since revoking them
+ * breaks the user's integrations.
+ */
+export const revokeOAuthGrantsAfterPasswordReset = async (userId: string): Promise<void> => {
+  try {
+    await prisma.$transaction((tx) => revokeAllUserOAuthGrants(tx, userId));
+  } catch (error) {
+    logger.error({ error, userId }, "Failed to revoke OAuth grants after password reset");
+  }
+};
+
 const CONSENT_PATH = "/oauth2/consent";
 const CONSENT_UPDATE_PATH = "/oauth2/update-consent";
 const CONSENT_DELETE_PATH = "/oauth2/delete-consent";

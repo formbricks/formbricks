@@ -7,6 +7,7 @@ import {
   requireOAuthConsentOnRefreshAfterHandler,
   revokeOAuthConsentBeforeHandler,
   revokeOAuthConsentGrant,
+  revokeOAuthGrantsAfterPasswordReset,
   revokeTokensBeyondConsentAfterHandler,
 } from "./oauth-grant-revocation";
 
@@ -650,5 +651,38 @@ describe("revokeTokensBeyondConsentAfterHandler", () => {
 
     await revokeTokensBeyondConsentAfterHandler(approve());
     expect(endedTokensBeyondConsent()).toBe(false);
+  });
+});
+
+describe("revokeOAuthGrantsAfterPasswordReset (ENG-7364)", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.tx.oauthConsent.deleteMany.mockResolvedValue({ count: 1 });
+    mocks.tx.oauthRefreshToken.updateMany.mockResolvedValue({ count: 2 });
+    mocks.tx.oauthAccessToken.updateMany.mockResolvedValue({ count: 1 });
+  });
+
+  test("deletes the user's consents and revokes their refresh and access tokens, for that user only", async () => {
+    await revokeOAuthGrantsAfterPasswordReset("user-1");
+
+    expect(mocks.tx.oauthConsent.deleteMany).toHaveBeenCalledWith({ where: { userId: "user-1" } });
+    expect(mocks.tx.oauthRefreshToken.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { userId: "user-1", revoked: null } })
+    );
+    expect(mocks.tx.oauthAccessToken.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { userId: "user-1", revoked: null } })
+    );
+  });
+
+  test("logs a failure instead of failing the completed reset", async () => {
+    const boom = new Error("db down");
+    mocks.tx.oauthRefreshToken.updateMany.mockRejectedValue(boom);
+
+    await expect(revokeOAuthGrantsAfterPasswordReset("user-1")).resolves.toBeUndefined();
+
+    expect(logger.error).toHaveBeenCalledWith(
+      { error: boom, userId: "user-1" },
+      "Failed to revoke OAuth grants after password reset"
+    );
   });
 });

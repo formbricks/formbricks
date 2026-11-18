@@ -42,7 +42,10 @@ import { signInBudgetBeforeHandler } from "./better-auth-sign-in-budget";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-oauth-consent";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
-import { revokeOAuthConsentBeforeHandler } from "./oauth-grant-revocation";
+import {
+  revokeOAuthConsentBeforeHandler,
+  revokeOAuthGrantsAfterPasswordReset,
+} from "./oauth-grant-revocation";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
@@ -237,8 +240,10 @@ export const auth = betterAuth({
     },
     // After a successful reset, send the security notification (parity with the retired
     // completePasswordReset) and audit it. Better Auth already revoked sessions
-    // (revokeSessionsOnPasswordReset above). Both are best-effort — never fail the completed reset.
+    // (revokeSessionsOnPasswordReset above); the OAuth grants it leaves are revoked here (ENG-7364).
+    // All of it is best-effort — never fail the completed reset.
     onPasswordReset: async ({ user }) => {
+      await revokeOAuthGrantsAfterPasswordReset(user.id);
       try {
         const { sendPasswordResetNotifyEmail } = await import("@/modules/email");
         await sendPasswordResetNotifyEmail({ email: user.email, locale: await getUserLocale(user.id) });
