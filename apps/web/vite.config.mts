@@ -11,6 +11,9 @@ export default defineConfig({
     exclude: ["playwright/**", "node_modules/**", ".next/**", "**/*.integration.test.ts"],
     setupFiles: ["./vitestSetup.ts"],
     env: loadEnv("", process.cwd(), ""),
+    // Node 25+ defines its own global localStorage and sessionStorage (undefined without
+    // --localstorage-file), and they shadow jsdom's in the component tests. Tests get jsdom's storage.
+    execArgv: ["--no-webstorage"],
     // Environment selection (ENG-1680): Vitest 4 removed `environmentMatchGlobs`, so environments
     // are assigned via projects. *.test.ts run in node; *.test.tsx (component tests) run in jsdom
     // automatically - no `@vitest-environment` pragma needed.

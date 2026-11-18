@@ -5,7 +5,9 @@ export const ZDisplay = z.object({
   id: z.cuid2(),
   createdAt: z.date(),
   updatedAt: z.date(),
+  // eslint-disable-next-line typescript/no-deprecated -- these ids are Prisma cuid()s (CUID v1), so z.cuid2() would reject them
   contactId: z.cuid().nullable(),
+  // eslint-disable-next-line typescript/no-deprecated -- these ids are Prisma cuid()s (CUID v1), so z.cuid2() would reject them
   surveyId: z.cuid(),
 });
 

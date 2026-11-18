@@ -16,6 +16,34 @@ are on [GitHub Releases](https://github.com/formbricks/formbricks/releases), and
 
 <span id="release-unreleased" />
 
+<Update label="6.2.0" description="TBD: release date">
+<span id="release-6-2-0" />
+### Overview
+
+Formbricks 6.2 adds the Survey Flow Editor, with show-if conditions, calculated values and rules before the first question, and a Signature question. Surveys can be imported and exported as Formbricks, Word, Excel, CSV and Markdown files, every question and answer option gets a code for analysis exports, and reviewers can mark responses as Low quality. Dashboards get filters, a read-only Dashboard viewer role, and an API and MCP tools. Organizations can set data retention policies, website surveys can check show conditions and visit data, every list gets the same table toolbar, and attachment exports build in the background.
+
+Self-hosters: upgrade from the latest 6.1 patch with the [standard upgrade](/self-hosting/advanced/upgrade), in a maintenance window, and follow the [6.2 upgrade guide](/self-hosting/upgrade/versions/6.2).
+
+Formbricks 6.2 receives bug fixes and security fixes until **TBD: three months after the release date**.
+
+### ⚠️ Breaking changes
+
+**Upgrade impact: Action required.** 6.2 is a minor release, but some setups need to act:
+
+| Affected deployment | Check before upgrading |
+| --- | --- |
+| Every self-hosted deployment | Permission preparation in a maintenance window for the [Dashboard viewer role](/self-hosting/upgrade/versions/dashboard-viewer). Online upgrades from 6.1 are refused |
+| Docker Compose and one-click | Cube query timeout, PostgreSQL shared memory and the 6.2 Cube image: [Cube memory](/self-hosting/upgrade/versions/cube-memory) |
+| Bundled Valkey | Back up the Valkey volume before the image changes to 9.1.2: [Valkey 9](/self-hosting/upgrade/versions/valkey-9) |
+| Helm with the bundled PostgreSQL and Cube database settings in `cube.envFrom` or the app Secret | Move them to `cube.env`: [Helm and the bundled database](/self-hosting/upgrade/versions/helm-bundled-database) |
+| Your own S3 bucket or job consumer | `s3:AbortMultipartUpload` and four dedicated job queues: [attachment exports](/self-hosting/upgrade/versions/attachment-exports) |
+| Self-hosted audit logging | Needs an Enterprise licence that includes audit logs; without one, audit events stop after the upgrade |
+| API and MCP integrations | [Published-survey lock, MCP confirmation and other changes](/self-hosting/upgrade/versions/6.2#integration-changes-requiring-action) |
+
+[All changes on GitHub](https://github.com/formbricks/formbricks/releases/tag/6.2.0)
+
+</Update>
+
 <Update label="5.4.9" description="5 November 2026">
 <span id="release-5-4-9" />
 

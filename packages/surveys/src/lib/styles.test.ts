@@ -147,7 +147,7 @@ describe("addStylesToDom", () => {
     const secondStyleElement = document.getElementById("formbricks__css");
     const allStyleElements = document.querySelectorAll("#formbricks__css");
 
-    expect(allStyleElements.length).toBe(1);
+    expect(allStyleElements).toHaveLength(1);
     expect(secondStyleElement).toBe(firstStyleElement);
     expect(secondStyleElement?.innerHTML).toBe(initialInnerHTML);
   });
@@ -276,7 +276,7 @@ describe("addCustomThemeToDom", () => {
     const secondElement = document.getElementById("formbricks__css__custom");
     const allElements = document.querySelectorAll("#formbricks__css__custom");
 
-    expect(allElements.length).toBe(1);
+    expect(allElements).toHaveLength(1);
     expect(secondElement).toBe(firstElement);
   });
 

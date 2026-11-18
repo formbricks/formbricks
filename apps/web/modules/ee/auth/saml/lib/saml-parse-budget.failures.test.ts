@@ -50,7 +50,12 @@ class FakeWorker extends EventEmitter {
   }
   answer(ms = 5, decryption?: SamlDecryption) {
     const job = this.port.inbox.shift() as { id: number };
-    this.port.postMessage({ id: job.id, ms, claims: { issuer: ISSUER }, decryption });
+    this.port.postMessage({ id: job.id, ms, readable: true, claims: { issuer: ISSUER }, decryption });
+  }
+  /** Answers that saml20 could not parse the job's response, as the real worker does (ENG-7054). */
+  answerUnreadable(ms = 1) {
+    const job = this.port.inbox.shift() as { id: number };
+    this.port.postMessage({ id: job.id, ms, readable: false, claims: {} });
   }
 }
 
@@ -515,6 +520,71 @@ describe("probeSamlResponseParse failure paths", () => {
     await expect(third).resolves.toMatchObject({ outcome: "parsed" });
   });
 
+  // ENG-7054: jackson would throw on it at once and spend nothing more, so it is answered as such even once the
+  // allowance is spent, and charges none of it.
+  test("answers unreadable for a response saml20 cannot parse, without touching the allowance", async () => {
+    const budget = await load();
+    const { probeSamlResponseParse } = budget;
+    const spenders = [
+      probeSamlResponseParse("PHIvPg==", KEY, null),
+      probeSamlResponseParse("PHIvPg==", KEY, null),
+    ];
+    const junk = probeSamlResponseParse("bm90LXhtbA==", KEY, null);
+    await settle();
+    state.workers[0].ready();
+    mainPort(state.workers[0]).flush();
+    for (const ms of spendingTheAllowance(budget)) {
+      await settle();
+      state.workers[0].answer(ms);
+      mainPort(state.workers[0]).flush();
+    }
+    for (const probe of await Promise.all(spenders)) expect(probe.outcome).toBe("parsed");
+    const allowance = globalThis.samlParsePool!.allowanceMs;
+    expect(allowance).toBeLessThanOrEqual(0);
+
+    await settle();
+    state.workers[0].answerUnreadable();
+    mainPort(state.workers[0]).flush();
+
+    await expect(junk).resolves.toEqual({ outcome: "unreadable" });
+    expect(globalThis.samlParsePool!.allowanceMs).toBe(allowance);
+  });
+
+  test("lets jackson decide when a worker from before the field leaves `readable` out", async () => {
+    const { probeSamlResponseParse } = await load();
+    const probe = probeSamlResponseParse("PHIvPg==", KEY, null);
+    await settle();
+    state.workers[0].ready();
+    mainPort(state.workers[0]).flush();
+    await settle();
+    const job = state.workers[0].port.inbox.shift() as { id: number };
+
+    state.workers[0].port.postMessage({ id: job.id, ms: 5, claims: { issuer: ISSUER } });
+    mainPort(state.workers[0]).flush();
+
+    await expect(probe).resolves.toMatchObject({ outcome: "parsed", ms: 5 });
+  });
+
+  // Unreachable from the real worker (an unreadable response names no issuer, so nothing is decrypted), but were it to
+  // happen the pool must not answer on its own after decryption began (ENG-6646).
+  test("fails a job found unreadable after it began decrypting, rather than answering it", async () => {
+    const { probeSamlResponseParse } = await load();
+    const probe = probeSamlResponseParse("PHIvPg==", KEY, null);
+    await settle();
+    state.workers[0].ready();
+    mainPort(state.workers[0]).flush();
+    await settle();
+    state.workers[0].decrypting();
+    state.workers[0].answerUnreadable();
+    mainPort(state.workers[0]).flush();
+
+    await expect(probe).resolves.toEqual({
+      outcome: "refused_encrypted",
+      issuer: ISSUER,
+      cause: { reason: "failed" },
+    });
+  });
+
   test("ignores a stale answer for a job it no longer runs", async () => {
     const { probeSamlResponseParse } = await load();
     const probe = probeSamlResponseParse("PHIvPg==", KEY, null);
@@ -523,7 +593,7 @@ describe("probeSamlResponseParse failure paths", () => {
     mainPort(state.workers[0]).flush();
     await settle();
 
-    state.workers[0].port.postMessage({ id: 9_999, ms: 1, claims: {} });
+    state.workers[0].port.postMessage({ id: 9_999, ms: 1, readable: true, claims: {} });
     mainPort(state.workers[0]).flush();
     state.workers[0].answer(7);
     mainPort(state.workers[0]).flush();

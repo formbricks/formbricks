@@ -647,8 +647,6 @@ describe("v3 survey preparation", () => {
     });
 
     expect(preparation.ok).toBe(true);
-    if (!preparation.ok) {
-    }
   });
 
   test("round-trips a workspace language alias, and rejects a changed one as read-only", () => {
@@ -742,8 +740,6 @@ describe("v3 survey preparation", () => {
     const preparation = prepareV3SurveyPatchInput(withForwardRecall, { name: "Renamed" });
 
     expect(preparation.ok).toBe(true);
-    if (!preparation.ok) {
-    }
   });
 
   const forwardRecallPatch = {

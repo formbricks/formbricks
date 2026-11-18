@@ -45,6 +45,48 @@ const buildCsvImportErrorResponse = (
   details: { row?: number; max?: number } = {}
 ) => NextResponse.json({ error, ...details }, { status });
 
+/** The signed-in user, or the authentication or authorization error the route maps to 401 or 403. */
+const getSessionUser = async () => {
+  const session = await getSession();
+  if (!session?.user) {
+    throw new AuthenticationError("Not authenticated");
+  }
+
+  const user = await getUser(session.user.id);
+  if (!user) {
+    throw new AuthorizationError("User not found");
+  }
+  return user;
+};
+
+/** The error response for a failed import: the known refusals by status, anything else as a 500. */
+const toCsvImportErrorResponse = (error: unknown) => {
+  if (error instanceof CsvImportValidationError) {
+    return buildCsvImportErrorResponse(error.code, error.code === CSV_FILE_TOO_LARGE_ERROR_CODE ? 413 : 400, {
+      row: error.row,
+      max: error.max,
+    });
+  }
+
+  if (error instanceof AuthenticationError) {
+    return buildCsvImportErrorResponse(error.message, 401);
+  }
+
+  if (error instanceof AuthorizationError) {
+    return buildCsvImportErrorResponse(error.message, 403);
+  }
+
+  if (error instanceof InvalidInputError || error instanceof ResourceNotFoundError) {
+    return buildCsvImportErrorResponse(error.message, 400);
+  }
+
+  logger.error(
+    { errorName: error instanceof Error ? error.name : "unknown" },
+    "Failed to import CSV feedback source data"
+  );
+  return buildCsvImportErrorResponse(CSV_IMPORT_FAILED_ERROR_CODE, 500);
+};
+
 export const POST = async (request: Request) => {
   try {
     const contentLength = getContentLength(request.headers);
@@ -54,15 +96,7 @@ export const POST = async (request: Request) => {
       });
     }
 
-    const session = await getSession();
-    if (!session?.user) {
-      throw new AuthenticationError("Not authenticated");
-    }
-
-    const user = await getUser(session.user.id);
-    if (!user) {
-      throw new AuthorizationError("User not found");
-    }
+    const user = await getSessionUser();
 
     // Bounded while reading, not just by the header above: a chunked upload carries no Content-Length, and
     // the patched Next no longer cuts any body off for us (ENG-3972).
@@ -103,33 +137,6 @@ export const POST = async (request: Request) => {
 
     return NextResponse.json(result);
   } catch (error) {
-    if (error instanceof CsvImportValidationError) {
-      return buildCsvImportErrorResponse(
-        error.code,
-        error.code === CSV_FILE_TOO_LARGE_ERROR_CODE ? 413 : 400,
-        {
-          row: error.row,
-          max: error.max,
-        }
-      );
-    }
-
-    if (error instanceof AuthenticationError) {
-      return buildCsvImportErrorResponse(error.message, 401);
-    }
-
-    if (error instanceof AuthorizationError) {
-      return buildCsvImportErrorResponse(error.message, 403);
-    }
-
-    if (error instanceof InvalidInputError || error instanceof ResourceNotFoundError) {
-      return buildCsvImportErrorResponse(error.message, 400);
-    }
-
-    logger.error(
-      { errorName: error instanceof Error ? error.name : "unknown" },
-      "Failed to import CSV feedback source data"
-    );
-    return buildCsvImportErrorResponse(CSV_IMPORT_FAILED_ERROR_CODE, 500);
+    return toCsvImportErrorResponse(error);
   }
 };

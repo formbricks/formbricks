@@ -240,8 +240,8 @@ describe("getFeedbackSourcesToReconcile", () => {
         },
       })
     );
-    const [[args]] = vi.mocked(prisma.feedbackSource.findMany).mock.calls as any;
-    expect(args.where).not.toHaveProperty("status");
+    const [[args]] = vi.mocked(prisma.feedbackSource.findMany).mock.calls;
+    expect(args?.where).not.toHaveProperty("status");
     expect(result).toHaveLength(1);
   });
 });

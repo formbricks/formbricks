@@ -6,16 +6,14 @@ import { type Dispatch, type SetStateAction, useId, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSurveyBlock } from "@formbricks/types/surveys/blocks";
+import type { TSurveyElement } from "@formbricks/types/surveys/elements";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { addMultiLanguageLabels, extractLanguageCodes } from "@/lib/i18n/utils";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { addElementToBlock } from "@/modules/survey/editor/lib/blocks";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
-import {
-  getElementDefaults,
-  getGroupedElementTypes,
-  universalElementPresets,
-} from "@/modules/survey/lib/elements";
+import { getElementDefaults, universalElementPresets } from "@/modules/survey/lib/element-presets";
+import { getGroupedElementTypes } from "@/modules/survey/lib/elements";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -54,13 +52,14 @@ export const AddElementToBlockButton = ({
     const languageSymbols = extractLanguageCodes(localSurvey.languages);
 
     const elementDefaults = getElementDefaults(elementType, workspace, t);
+    // The defaults for `elementType` build an element of that type.
     const elementWithLabels = addMultiLanguageLabels(
       {
         ...universalElementPresets,
         ...elementDefaults,
         id: createId(),
         type: elementType,
-      },
+      } as TSurveyElement,
       languageSymbols
     );
 

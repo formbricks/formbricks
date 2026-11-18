@@ -161,7 +161,7 @@ export const validationRules = {
     let isValid = isHeadlineValid && isSubheaderValid;
     const defaultLanguageCode = "default";
     // Element specific fields (note: buttonLabel and backButtonLabel are now block-level, not element-level)
-    let fieldsToValidate = ["upperLabel", "lowerLabel", "imageAltText"];
+    const fieldsToValidate = ["upperLabel", "lowerLabel", "imageAltText"];
 
     for (const field of fieldsToValidate) {
       const fieldValue = (element as unknown as Record<string, Record<string, string> | undefined>)[field];

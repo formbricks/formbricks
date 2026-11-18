@@ -44,6 +44,25 @@ interface EditEndingCardProps {
   readonly isExternalUrlsAllowed: boolean;
 }
 
+/** Drops `endingId` from the follow-ups that a deleted ending card triggered. */
+const removeEndingFromFollowUps = (followUps: TSurvey["followUps"], endingId: string): TSurvey["followUps"] =>
+  followUps.map((f) => {
+    if (f.trigger.properties?.endingIds?.includes(endingId)) {
+      return {
+        ...f,
+        trigger: {
+          ...f.trigger,
+          properties: {
+            ...f.trigger.properties,
+            endingIds: f.trigger.properties.endingIds.filter((id) => id !== endingId),
+          },
+        },
+      };
+    }
+
+    return f;
+  });
+
 export const EditEndingCard = ({
   localSurvey,
   endingCardIndex,
@@ -85,7 +104,7 @@ export const EditEndingCard = ({
     id: endingCard.id,
   });
 
-  let open = activeElementId === endingCard.id;
+  const open = activeElementId === endingCard.id;
 
   const setOpen = (e: boolean) => {
     if (e) {
@@ -107,7 +126,7 @@ export const EditEndingCard = ({
       const filteredData = { ...data };
       const isForceUpdate = "_forceUpdate" in filteredData;
       if (isForceUpdate) {
-        delete (filteredData as any)._forceUpdate; // Remove the flag
+        delete filteredData._forceUpdate; // Remove the flag
       }
 
       if (!isForceUpdate && currentEnding?.type === "endScreen" && currentEnding.subheader === undefined) {
@@ -273,7 +292,7 @@ export const EditEndingCard = ({
                 moveCard={moveEndingCard}
                 card={endingCard}
                 updateCard={() => {}}
-                addCard={addEndingCard}
+                addEndingCard={addEndingCard}
                 cardType="ending"
               />
             </div>
@@ -325,22 +344,7 @@ export const EditEndingCard = ({
         onConfirm={() => {
           setLocalSurvey((prevSurvey) => {
             const updatedEndings = prevSurvey.endings.filter((_, index) => index !== endingCardIndex);
-            const surveyFollowUps = prevSurvey.followUps.map((f) => {
-              if (f.trigger.properties?.endingIds?.includes(endingCard.id)) {
-                return {
-                  ...f,
-                  trigger: {
-                    ...f.trigger,
-                    properties: {
-                      ...f.trigger.properties,
-                      endingIds: f.trigger.properties.endingIds.filter((id) => id !== endingCard.id),
-                    },
-                  },
-                };
-              }
-
-              return f;
-            });
+            const surveyFollowUps = removeEndingFromFollowUps(prevSurvey.followUps, endingCard.id);
 
             return { ...prevSurvey, endings: updatedEndings, followUps: surveyFollowUps };
           });

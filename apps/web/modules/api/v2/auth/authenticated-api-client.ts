@@ -18,7 +18,7 @@ export const authenticatedApiClient = async <S extends ExtendedSchemas>({
 }: {
   request: Request;
   schemas?: S;
-  externalParams?: Promise<Record<string, any>>;
+  externalParams?: Promise<Record<string, unknown>>;
   rateLimit?: boolean;
   handler: HandlerFn<ParsedSchemas<S>>;
   action?: TAuditAction;

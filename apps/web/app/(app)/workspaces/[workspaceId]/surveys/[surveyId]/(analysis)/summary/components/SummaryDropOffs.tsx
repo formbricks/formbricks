@@ -18,6 +18,7 @@ export const SummaryDropOffs = ({ dropOff, survey }: SummaryDropOffsProps) => {
   const { t } = useTranslation();
   const getIcon = (elementType: TSurveyElementTypeEnum) => {
     const Icon = getElementIcon(elementType, t);
+    if (!Icon) return null;
     return <Icon className="mt-[3px] size-5 shrink-0 text-slate-600" />;
   };
 

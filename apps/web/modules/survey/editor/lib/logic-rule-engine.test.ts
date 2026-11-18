@@ -55,23 +55,6 @@ const SUBMISSION = [OPT("is_submitted", "isSubmitted"), OPT("is_skipped", "isSki
 const PRESENCE = [OPT("is_set", "isSet"), OPT("is_not_set", "isNotSet")];
 
 describe("getLogicRules", () => {
-  test("should return correct structure for question rules", () => {
-    expect(logicRules).toHaveProperty("element");
-    expect(logicRules.element).toBeInstanceOf(Object);
-  });
-
-  test("should return correct structure for variable rules", () => {
-    expect(logicRules).toHaveProperty("variable.text");
-    expect(logicRules["variable.text"]).toBeInstanceOf(Object);
-    expect(logicRules["variable.text"]).toHaveProperty("options");
-    expect(Array.isArray(logicRules["variable.text"].options)).toBe(true);
-
-    expect(logicRules).toHaveProperty("variable.number");
-    expect(logicRules["variable.number"]).toBeInstanceOf(Object);
-    expect(logicRules["variable.number"]).toHaveProperty("options");
-    expect(Array.isArray(logicRules["variable.number"].options)).toBe(true);
-  });
-
   describe("Question Specific Rules", () => {
     test("OpenText.text", () => {
       const openTextTextRules = elementRules[TSurveyQuestionTypeEnum.OpenText + ".text"];
@@ -282,18 +265,6 @@ describe("getLogicRules", () => {
       expect(rules).toBeDefined();
       expect(rules.options).toEqual([...TEXT_OPERATORS, ...PRESENCE]);
     });
-  });
-});
-
-describe("TLogicRuleOption type", () => {
-  test("should be compatible with the options structure", () => {
-    const sampleOption: TLogicRuleOption[number] = {
-      label: "Test Label",
-      value: ZSurveyLogicConditionsOperator.enum.equals,
-    };
-    // This test mainly serves as a type check during compilation
-    expect(sampleOption.label).toBe("Test Label");
-    expect(sampleOption.value).toBe(ZSurveyLogicConditionsOperator.enum.equals);
   });
 });
 

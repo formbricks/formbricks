@@ -660,6 +660,51 @@ export interface TLinkedEmbeddedField {
  */
 const ZIsoDateOrDateTime = z.union([z.iso.date(), z.iso.datetime()]);
 
+/** A `Date` as an ISO string, or `undefined` for an invalid one. */
+const dateToIso = (value: Date): string | undefined =>
+  Number.isNaN(value.getTime()) ? undefined : value.toISOString();
+
+const coerceToString = (value: unknown): string | undefined => {
+  if (typeof value === "string") return value;
+  if (typeof value === "number") return Number.isFinite(value) ? String(value) : undefined;
+  if (typeof value === "boolean") return String(value);
+  if (value instanceof Date) return dateToIso(value);
+  return undefined;
+};
+
+const coerceToNumber = (value: unknown): number | undefined => {
+  if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
+  if (typeof value !== "string" || value.trim() === "") return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const coerceToBoolean = (value: unknown): boolean | undefined => {
+  if (typeof value === "boolean") return value;
+  if (typeof value !== "string") return undefined;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "true") return true;
+  if (normalized === "false") return false;
+  return undefined;
+};
+
+const coerceToDate = (value: unknown): string | undefined => {
+  if (value instanceof Date) return dateToIso(value);
+  if (typeof value === "string") return ZIsoDateOrDateTime.safeParse(value).success ? value : undefined;
+  return undefined;
+};
+
+/** The read-side coercion of each `dataType`, for {@link coerceToEmbeddedDataType}. */
+const EMBEDDED_DATA_COERCERS: Record<
+  TEmbeddedDataType,
+  (value: unknown) => TResolvedEmbeddedValue | undefined
+> = {
+  string: coerceToString,
+  number: coerceToNumber,
+  boolean: coerceToBoolean,
+  date: coerceToDate,
+};
+
 /**
  * Coerces a raw stored value to a field's `dataType`, returning `undefined` when the value cannot
  * honestly represent one. This is the single vocabulary of read-side coercion — every tier of
@@ -693,40 +738,9 @@ export const coerceToEmbeddedDataType = (
   dataType: TEmbeddedDataType
 ): TResolvedEmbeddedValue | undefined => {
   if (value === null || value === undefined) return undefined;
-
-  switch (dataType) {
-    case "string": {
-      if (typeof value === "string") return value;
-      if (typeof value === "number") return Number.isFinite(value) ? String(value) : undefined;
-      if (typeof value === "boolean") return String(value);
-      if (value instanceof Date) return Number.isNaN(value.getTime()) ? undefined : value.toISOString();
-      return undefined;
-    }
-    case "number": {
-      if (typeof value === "number") return Number.isFinite(value) ? value : undefined;
-      if (typeof value === "string") {
-        if (value.trim() === "") return undefined;
-        const parsed = Number(value);
-        return Number.isFinite(parsed) ? parsed : undefined;
-      }
-      return undefined;
-    }
-    case "boolean": {
-      if (typeof value === "boolean") return value;
-      if (typeof value === "string") {
-        const normalized = value.trim().toLowerCase();
-        if (normalized === "true") return true;
-        if (normalized === "false") return false;
-        return undefined;
-      }
-      return undefined;
-    }
-    case "date": {
-      if (value instanceof Date) return Number.isNaN(value.getTime()) ? undefined : value.toISOString();
-      if (typeof value === "string") return ZIsoDateOrDateTime.safeParse(value).success ? value : undefined;
-      return undefined;
-    }
-  }
+  // An unknown `dataType` coerces nothing, as the old switch's missing arm did.
+  if (!Object.prototype.hasOwnProperty.call(EMBEDDED_DATA_COERCERS, dataType)) return undefined;
+  return EMBEDDED_DATA_COERCERS[dataType](value);
 };
 
 /**
@@ -882,12 +896,9 @@ export const resolveEmbeddedValue = (
   const { field, link } = ref;
   if (field.source === "reserved") return undefined;
 
-  const storedValue =
-    field.source === "computed"
-      ? response.variables[link.storageKey]
-      : field.locked
-        ? undefined
-        : response.data[link.storageKey];
+  let storedValue: unknown;
+  if (field.source === "computed") storedValue = response.variables[link.storageKey];
+  else if (!field.locked) storedValue = response.data[link.storageKey];
 
   const coerced = coerceToEmbeddedDataType(storedValue, field.dataType);
   if (coerced !== undefined) return coerced;

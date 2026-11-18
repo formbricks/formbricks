@@ -3,7 +3,7 @@
 #
 # The base image tag must match the `@playwright/test` entry in the pnpm catalog: the browsers baked into
 # the image are only usable by that exact Playwright version.
-FROM mcr.microsoft.com/playwright:v1.58.2-noble AS deps
+FROM mcr.microsoft.com/playwright:v1.60.0-noble AS deps
 
 WORKDIR /app
 COPY pnpm-workspace.yaml /tmp/pnpm-workspace.yaml
@@ -34,7 +34,7 @@ COPY apps/deployment-check/playwright.config.ts apps/deployment-check/tsconfig.j
 COPY apps/deployment-check/checks checks
 COPY apps/deployment-check/src src
 
-FROM mcr.microsoft.com/playwright:v1.58.2-noble
+FROM mcr.microsoft.com/playwright:v1.60.0-noble
 
 WORKDIR /app
 COPY --from=deps /app/ /app/

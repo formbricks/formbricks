@@ -11,6 +11,44 @@ import {
 } from "@/modules/survey/lib/custom-head-scripts-permission";
 import { getExternalUrlsPermission } from "@/modules/survey/lib/permission";
 
+/** Whether the survey adds or changes an ending card's external button link. */
+const addsExternalEndingLink = (
+  surveyData: TSurveyCreateInputWithWorkspaceId,
+  oldSurvey: TSurvey | undefined
+): boolean =>
+  (surveyData.endings ?? []).some((newEnding) => {
+    if (
+      newEnding.type !== "endScreen" ||
+      !newEnding.buttonLink ||
+      isDefaultEndingCardButtonLink(newEnding.buttonLink)
+    ) {
+      return false;
+    }
+    const oldEnding = oldSurvey?.endings.find((e) => e.id === newEnding.id);
+    return !oldEnding || oldEnding.type !== "endScreen" || oldEnding.buttonLink !== newEnding.buttonLink;
+  });
+
+/** Whether the survey adds or changes a CTA element's external button URL. */
+const addsExternalCtaUrl = (
+  surveyData: TSurveyCreateInputWithWorkspaceId,
+  oldSurvey: TSurvey | undefined
+): boolean => {
+  if (!surveyData.blocks) return false;
+  const newElements = getElementsFromBlocks(surveyData.blocks);
+  const oldElements = oldSurvey?.blocks ? getElementsFromBlocks(oldSurvey.blocks) : [];
+
+  return newElements.some((newElement) => {
+    if (newElement.type !== "cta" || !newElement.buttonExternal) return false;
+    const oldElement = oldElements.find((e) => e.id === newElement.id);
+    return (
+      !oldElement ||
+      oldElement.type !== "cta" ||
+      !oldElement.buttonExternal ||
+      oldElement.buttonUrl !== newElement.buttonUrl
+    );
+  });
+};
+
 export const checkFeaturePermissions = async (
   surveyData: TSurveyCreateInputWithWorkspaceId,
   organization: TOrganization,
@@ -31,48 +69,20 @@ export const checkFeaturePermissions = async (
   }
 
   const isExternalUrlsAllowed = await getExternalUrlsPermission(organization.id);
-  if (!isExternalUrlsAllowed) {
-    // Check ending cards for new/changed button links
-    if (surveyData.endings) {
-      for (const newEnding of surveyData.endings) {
-        const oldEnding = oldSurvey?.endings.find((e) => e.id === newEnding.id);
+  if (isExternalUrlsAllowed) return null;
 
-        if (
-          newEnding.type === "endScreen" &&
-          newEnding.buttonLink &&
-          !isDefaultEndingCardButtonLink(newEnding.buttonLink)
-        ) {
-          if (!oldEnding || oldEnding.type !== "endScreen" || oldEnding.buttonLink !== newEnding.buttonLink) {
-            return responses.forbiddenResponse(
-              "External URLs are not enabled for this organization. Upgrade to use external button links."
-            );
-          }
-        }
-      }
-    }
+  // Check ending cards for new/changed button links
+  if (addsExternalEndingLink(surveyData, oldSurvey)) {
+    return responses.forbiddenResponse(
+      "External URLs are not enabled for this organization. Upgrade to use external button links."
+    );
+  }
 
-    // Check CTA elements for new/changed external button URLs
-    if (surveyData.blocks) {
-      const newElements = getElementsFromBlocks(surveyData.blocks);
-      const oldElements = oldSurvey?.blocks ? getElementsFromBlocks(oldSurvey.blocks) : [];
-
-      for (const newElement of newElements) {
-        const oldElement = oldElements.find((e) => e.id === newElement.id);
-
-        if (newElement.type === "cta" && newElement.buttonExternal) {
-          if (
-            !oldElement ||
-            oldElement.type !== "cta" ||
-            !oldElement.buttonExternal ||
-            oldElement.buttonUrl !== newElement.buttonUrl
-          ) {
-            return responses.forbiddenResponse(
-              "External URLs are not enabled for this organization. Upgrade to use external CTA buttons."
-            );
-          }
-        }
-      }
-    }
+  // Check CTA elements for new/changed external button URLs
+  if (addsExternalCtaUrl(surveyData, oldSurvey)) {
+    return responses.forbiddenResponse(
+      "External URLs are not enabled for this organization. Upgrade to use external CTA buttons."
+    );
   }
 
   return null;

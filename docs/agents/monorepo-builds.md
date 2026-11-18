@@ -8,8 +8,11 @@ after pulling or merging main into a checkout that runs a dev server.
 ## Turbo Task Matrix
 
 Turbo runs a task only in packages that define the matching script and **silently skips** the rest.
-Every `packages/*` workspace therefore exposes the standard `lint` / `typecheck` / `test` /
-`test:coverage` scripts (plus `build` where there is a compile step). Deliberate exceptions:
+Every `packages/*` workspace therefore exposes the standard `typecheck` / `test` / `test:coverage`
+scripts (plus `build` where there is a compile step). Lint is not per package: oxlint lints the whole
+repo in one run from the root (the `//#lint:code` Turbo task), checking each file against the nearest
+`oxlint.config.ts`, so a new workspace needs that file rather than a script. The task depends on the
+builds whose published types the type-aware rules read, and is not cached: the lint takes seconds. Deliberate exceptions:
 `config-*` packages hold only config files (no scripts beyond `clean`); `api-v3-schemas`, `creatives`,
 `email`, `types`, and `vite-plugins` are consumed from source, so they have no `build`; `apps/storybook` has no
 unit tests by policy (its components are exercised by the feature journeys in `apps/web/playwright`).
@@ -34,6 +37,10 @@ repeated in every block that declares the task, or a helper edit silently replay
 (ENG-1681, ENG-2925). A package's own `turbo.json` behaves differently: it inherits the shared config
 per field, so it only needs `dependsOn` when it is changing it. Guarded by
 `apps/web/lib/turbo-vite-plugins-edge.test.ts`.
+
+The root `turbo.json` is strict JSON, although Turbo accepts comments: the `apps/web/lib/turbo-*.test.ts`
+suites parse it with `JSON.parse` to guard its env, outputs and cache settings. After editing it, run
+`pnpm --filter @formbricks/web exec vitest run lib/turbo-`.
 
 ## Shared dependency versions (pnpm catalog)
 

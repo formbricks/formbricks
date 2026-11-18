@@ -116,6 +116,27 @@ describe("ResponseQueue across instances of one survey", () => {
   });
 });
 
+describe("ResponseQueue without offline persistence", () => {
+  // Two answers added in one turn each start a processQueue. Without persistence nothing is awaited
+  // before the request flag is set, so the second sees the first in flight and leaves the queue to it.
+  // Yielding before the flag let both send the queue head, and each shift() then dropped an unsent answer.
+  test("sends each of two answers added in the same tick exactly once, in order", async () => {
+    _syncLocks.clear();
+    const state = new SurveyState("s-tick", null, null, "display1", null);
+    state.updateResponseId("r1");
+    const queue = new ResponseQueue(getConfig({ surveyId: "s-tick" }), state);
+    vi.mocked(queue.api.updateResponse).mockResolvedValue(ok({}) as never);
+
+    queue.add({ data: { q1: "a" }, hiddenFields: {}, finished: false });
+    queue.add({ data: { q2: "b" }, hiddenFields: {}, finished: true });
+    for (let i = 0; i < 5; i++) await flushPromises();
+
+    const sent = vi.mocked(queue.api.updateResponse).mock.calls.map(([update]) => update.data);
+    expect(sent).toEqual([{ q1: "a" }, { q2: "b" }]);
+    expect(queue.queue).toHaveLength(0);
+  });
+});
+
 describe("ResponseQueue across displays of one survey", () => {
   // `displayMultiple` shows the same survey again on one page. An answer the first display never managed to
   // send (a failed final submit) must not be sent first by the second, whose own answers would then hit
@@ -168,15 +189,6 @@ describe("ResponseQueue", () => {
     expect(config.setSurveyState).toHaveBeenCalledWith(surveyState);
     expect(queue.queue[0]).toBe(responseUpdate);
     expect(queue.processQueue).toHaveBeenCalled();
-  });
-
-  test("processQueue does nothing if request in progress or queue empty", async () => {
-    queue["isRequestInProgress"] = true;
-    await queue.processQueue();
-    queue["isRequestInProgress"] = false;
-    queue.queue.length = 0;
-    await queue.processQueue();
-    expect(true).toBe(true); // just to ensure no errors
   });
 
   test("processQueue sends response and removes from queue on success", async () => {

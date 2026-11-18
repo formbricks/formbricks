@@ -22,7 +22,7 @@ export const getActionClass = reactCache(
       });
 
       return actionClass;
-    } catch (error) {
+    } catch {
       throw new DatabaseError(`Database error when fetching action`);
     }
   }

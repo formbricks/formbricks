@@ -62,7 +62,7 @@ interface BlockCardProps {
   block: TSurveyBlock;
   blockIdx: number;
   moveElement: (elementIdx: number, up: boolean) => void;
-  updateElement: (elementIdx: number, updatedAttributes: any) => void;
+  updateElement: (elementIdx: number, updatedAttributes: Record<string, unknown>) => void;
   updateBlockName: (blockIdx: number, name: string) => void;
   updateBlockButtonLabel: (
     blockIndex: number,
@@ -76,7 +76,7 @@ interface BlockCardProps {
   lastElement: boolean;
   lastElementIndex: number;
   invalidElements?: string[];
-  addElement: (element: any, index?: number) => void;
+  addElement: (element: TSurveyElement, index?: number) => void;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
@@ -521,7 +521,7 @@ const BlockCardComponent = ({
                                   }}
                                   workspace={workspace}
                                   updateCard={updateElement}
-                                  addCard={addElement}
+                                  addElementCard={addElement}
                                   addCardToBlock={addElementToBlock}
                                   moveElementToBlock={moveElementToBlock}
                                   cardType="element"

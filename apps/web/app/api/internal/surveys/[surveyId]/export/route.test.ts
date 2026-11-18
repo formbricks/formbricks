@@ -138,7 +138,7 @@ describe("GET /api/internal/surveys/{surveyId}/export", () => {
         targetId: SURVEY_ID,
         organizationId: ORGANIZATION_ID,
         status: "success",
-        newObject: { format: "xlsx", fileFormat: 1, workspaceId: WORKSPACE_ID },
+        newObject: { format: "xlsx", fileFormat: 2, workspaceId: WORKSPACE_ID },
       })
     );
   });

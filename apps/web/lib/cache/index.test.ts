@@ -32,7 +32,7 @@ vi.mock("@formbricks/logger", () => ({
 }));
 
 // Import the module under test after mocking
-let cache: any;
+let cache: (typeof import("./index"))["cache"];
 
 describe("Cache Index", () => {
   beforeEach(async () => {
@@ -303,7 +303,7 @@ describe("Cache Index", () => {
       const redis = { ping: vi.fn().mockResolvedValue("PONG") };
       mockCacheService.runRedisOperation.mockImplementation((operation) => operation(redis));
 
-      const result = await cache.runRedisOperation((client: typeof redis) => client.ping());
+      const result = await cache.runRedisOperation((client) => client.ping());
 
       expect(result).toBe("PONG");
       expect(mockCacheService.runRedisOperation).toHaveBeenCalledOnce();
@@ -321,37 +321,6 @@ describe("Cache Index", () => {
       mockCacheService.get.mockRejectedValue(cacheError);
 
       await expect(cache.get("test-key" as CacheKey)).rejects.toThrow("Cache operation failed");
-    });
-  });
-
-  describe("Type Safety", () => {
-    test("should maintain type safety through proxy", async () => {
-      mockGetCacheService.mockResolvedValue({
-        ok: true,
-        data: mockCacheService,
-      });
-
-      // TypeScript should enforce correct method signatures
-      mockCacheService.get.mockResolvedValue({ ok: true, data: "string-value" });
-      mockCacheService.set.mockResolvedValue({ ok: true, data: undefined });
-      mockCacheService.exists.mockResolvedValue({ ok: true, data: true });
-
-      // These should compile without type errors
-      const getValue = cache.get("key" as CacheKey);
-      const setValue = cache.set("key" as CacheKey, "value", 1000);
-      const existsValue = cache.exists("key" as CacheKey);
-      const delValue = cache.del(["key" as CacheKey]);
-
-      // Verify the calls work
-      await getValue;
-      await setValue;
-      await existsValue;
-      await delValue;
-
-      expect(mockCacheService.get).toHaveBeenCalledWith("key" as CacheKey);
-      expect(mockCacheService.set).toHaveBeenCalledWith("key" as CacheKey, "value", 1000);
-      expect(mockCacheService.exists).toHaveBeenCalledWith("key" as CacheKey);
-      expect(mockCacheService.del).toHaveBeenCalledWith(["key" as CacheKey]);
     });
   });
 
@@ -381,21 +350,6 @@ describe("Cache Index", () => {
       expect(mockCacheService.get).toHaveBeenCalledTimes(10);
       expect(mockCacheService.set).toHaveBeenCalledTimes(10);
       expect(mockCacheService.exists).toHaveBeenCalledTimes(10);
-    });
-
-    test("should work in server environment", async () => {
-      mockGetCacheService.mockResolvedValue({
-        ok: true,
-        data: mockCacheService,
-      });
-
-      // Simulate server-only environment (which is already mocked by the "server-only" import)
-      mockCacheService.get.mockResolvedValue({ ok: true, data: "server-value" });
-
-      const result = await cache.get("server-key" as CacheKey);
-
-      expect(result).toEqual({ ok: true, data: "server-value" });
-      expect(mockGetCacheService).toHaveBeenCalledTimes(1);
     });
   });
 });

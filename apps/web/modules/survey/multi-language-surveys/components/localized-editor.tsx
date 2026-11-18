@@ -3,7 +3,13 @@
 import { useMemo, useTransition } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { TI18nString } from "@formbricks/types/i18n";
-import type { TSurvey } from "@formbricks/types/surveys/types";
+import type { TSurveyElement } from "@formbricks/types/surveys/elements";
+import type {
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyRedirectUrlCard,
+  TSurveyWelcomeCard,
+} from "@formbricks/types/surveys/types";
 import { md } from "@/lib/markdownIt";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Editor } from "@/modules/ui/components/editor";
@@ -15,7 +21,12 @@ interface LocalizedEditorProps {
   isInvalid: boolean;
   /** Id of the inline error message, so the editor announces it. */
   errorId?: string;
-  updateElement: any;
+  /** Writes the field of an element; used unless `isCard`. */
+  updateElement?: (elementIdx: number, data: Partial<TSurveyElement>) => void;
+  /** Writes the field of the welcome or ending card; used when `isCard`. */
+  updateCard?: (
+    data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard> | Partial<TSurveyWelcomeCard>
+  ) => void;
   selectedLanguageCode?: string;
   setSelectedLanguageCode?: (languageCode: string) => void;
   elementIdx: number;
@@ -36,6 +47,7 @@ export function LocalizedEditor({
   isInvalid,
   errorId,
   updateElement,
+  updateCard,
   selectedLanguageCode = "default",
   elementIdx,
   firstRender,
@@ -98,7 +110,7 @@ export function LocalizedEditor({
                 ...value,
                 [selectedLanguageCode]: sanitizedContent,
               };
-              updateElement({ [id]: translatedContent });
+              updateCard?.({ [id]: translatedContent });
               return;
             }
 
@@ -111,7 +123,7 @@ export function LocalizedEditor({
                 ...value,
                 [selectedLanguageCode]: sanitizedContent,
               };
-              updateElement(elementIdx, { [id]: translatedContent });
+              updateElement?.(elementIdx, { [id]: translatedContent });
             }
           });
         }}

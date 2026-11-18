@@ -33,7 +33,9 @@ vi.mock("@/modules/survey/lib/permission", () => ({
 }));
 
 vi.mock("@/lib/survey/utils", () => ({
-  getElementsFromBlocks: vi.fn((blocks: any[]) => blocks.flatMap((block: any) => block.elements)),
+  getElementsFromBlocks: vi.fn((blocks: { elements: unknown[] }[]) =>
+    blocks.flatMap((block) => block.elements)
+  ),
 }));
 
 const mockOrganization: TOrganization = {
@@ -368,7 +370,10 @@ describe("checkFeaturePermissions", () => {
         },
       ],
     };
-    const result = await checkFeaturePermissions(surveyData as any, mockOrganization);
+    const result = await checkFeaturePermissions(
+      surveyData as Parameters<typeof checkFeaturePermissions>[0],
+      mockOrganization
+    );
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(403);
     expect(responses.forbiddenResponse).toHaveBeenCalledWith(
@@ -420,7 +425,11 @@ describe("checkFeaturePermissions", () => {
       ],
       endings: [],
     } as unknown as TSurvey;
-    const result = await checkFeaturePermissions(surveyData as any, mockOrganization, oldSurvey);
+    const result = await checkFeaturePermissions(
+      surveyData as Parameters<typeof checkFeaturePermissions>[0],
+      mockOrganization,
+      oldSurvey
+    );
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(403);
   });
@@ -469,7 +478,11 @@ describe("checkFeaturePermissions", () => {
       ],
       endings: [],
     } as unknown as TSurvey;
-    const result = await checkFeaturePermissions(surveyData as any, mockOrganization, oldSurvey);
+    const result = await checkFeaturePermissions(
+      surveyData as Parameters<typeof checkFeaturePermissions>[0],
+      mockOrganization,
+      oldSurvey
+    );
     expect(result).toBeNull();
   });
 
@@ -496,7 +509,10 @@ describe("checkFeaturePermissions", () => {
         },
       ],
     };
-    const result = await checkFeaturePermissions(surveyData as any, mockOrganization);
+    const result = await checkFeaturePermissions(
+      surveyData as Parameters<typeof checkFeaturePermissions>[0],
+      mockOrganization
+    );
     expect(result).toBeNull();
   });
 
@@ -544,7 +560,11 @@ describe("checkFeaturePermissions", () => {
       ],
       endings: [],
     } as unknown as TSurvey;
-    const result = await checkFeaturePermissions(surveyData as any, mockOrganization, oldSurvey);
+    const result = await checkFeaturePermissions(
+      surveyData as Parameters<typeof checkFeaturePermissions>[0],
+      mockOrganization,
+      oldSurvey
+    );
     expect(result).toBeInstanceOf(Response);
     expect(result?.status).toBe(403);
   });

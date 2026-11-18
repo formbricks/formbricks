@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { getSurveyImportRequestErrorCode } from "./import-errors";
 import {
   SURVEY_IMPORT_STREAM_ENDPOINT,
   SurveyImportRequestError,
@@ -82,6 +83,34 @@ describe("streamSurveyImportFile", () => {
 
     expect(error).toBeInstanceOf(SurveyImportRequestError);
     expect(error).toMatchObject({ status: 429, code: "concurrency_limit_reached", retryAfterSeconds: 15 });
+  });
+
+  // ENG-7063: the dialog names the line and column a JSON file breaks at, which come in `details`.
+  test("keeps a refusal's details, so a broken JSON file's line and column reach the dialog", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              status: 422,
+              detail: "The file is not valid JSON",
+              code: "unprocessable_content",
+              invalid_params: [
+                { name: "file", reason: "bad", code: "file_unreadable", identifier: "json_syntax" },
+              ],
+              details: { line: 15, column: 5 },
+            }),
+            { status: 422, headers: { "Content-Type": "application/problem+json" } }
+          )
+      )
+    );
+
+    const error = await collect().catch((thrown: unknown) => thrown);
+
+    expect(error).toBeInstanceOf(SurveyImportRequestError);
+    expect(error).toMatchObject({ status: 422, details: { line: 15, column: 5 } });
+    expect(getSurveyImportRequestErrorCode(error as SurveyImportRequestError)).toBe("json_invalid:15:5");
   });
 
   test("fails a stream that ends without done or error", async () => {

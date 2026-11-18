@@ -86,8 +86,8 @@ describe("getApiKeyCreatorRole", () => {
   });
 
   test("returns the creator's role in the organization", async () => {
-    vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({ createdBy: "user123" } as any);
-    vi.mocked(prisma.membership.findUnique).mockResolvedValueOnce({ role: "manager" } as any);
+    vi.mocked(prisma.apiKey.findUnique, { partial: true }).mockResolvedValueOnce({ createdBy: "user123" });
+    vi.mocked(prisma.membership.findUnique, { partial: true }).mockResolvedValueOnce({ role: "manager" });
 
     const result = await getApiKeyCreatorRole("apiKey123", "org123");
 
@@ -103,7 +103,7 @@ describe("getApiKeyCreatorRole", () => {
   });
 
   test("returns null when the api key does not exist", async () => {
-    vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce(null as any);
+    vi.mocked(prisma.apiKey.findUnique, { partial: true }).mockResolvedValueOnce(null);
 
     const result = await getApiKeyCreatorRole("apiKey123", "org123");
 
@@ -112,7 +112,7 @@ describe("getApiKeyCreatorRole", () => {
   });
 
   test("returns null when the api key has no creator (legacy key)", async () => {
-    vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({ createdBy: null } as any);
+    vi.mocked(prisma.apiKey.findUnique, { partial: true }).mockResolvedValueOnce({ createdBy: null });
 
     const result = await getApiKeyCreatorRole("apiKey123", "org123");
 
@@ -121,8 +121,8 @@ describe("getApiKeyCreatorRole", () => {
   });
 
   test("returns null when the creator is no longer a member of the organization", async () => {
-    vi.mocked(prisma.apiKey.findUnique).mockResolvedValueOnce({ createdBy: "user123" } as any);
-    vi.mocked(prisma.membership.findUnique).mockResolvedValueOnce(null as any);
+    vi.mocked(prisma.apiKey.findUnique, { partial: true }).mockResolvedValueOnce({ createdBy: "user123" });
+    vi.mocked(prisma.membership.findUnique, { partial: true }).mockResolvedValueOnce(null);
 
     const result = await getApiKeyCreatorRole("apiKey123", "org123");
 
@@ -136,7 +136,7 @@ describe("getMembershipRoleByEmail", () => {
   });
 
   test("returns the target user's role in the organization", async () => {
-    vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce({ role: "owner" } as any);
+    vi.mocked(prisma.membership.findFirst, { partial: true }).mockResolvedValueOnce({ role: "owner" });
 
     const result = await getMembershipRoleByEmail("owner@example.com", "org123");
 
@@ -148,7 +148,7 @@ describe("getMembershipRoleByEmail", () => {
   });
 
   test("returns null when the user has no membership in the organization", async () => {
-    vi.mocked(prisma.membership.findFirst).mockResolvedValueOnce(null as any);
+    vi.mocked(prisma.membership.findFirst, { partial: true }).mockResolvedValueOnce(null);
 
     const result = await getMembershipRoleByEmail("nobody@example.com", "org123");
 

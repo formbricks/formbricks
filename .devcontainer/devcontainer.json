@@ -4,7 +4,7 @@
       "moby": false
     }
   },
-  "image": "mcr.microsoft.com/devcontainers/javascript-node:5-24-trixie",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:5-26-trixie",
   "postAttachCommand": "pnpm go",
   "postCreateCommand": "bash .devcontainer/post-create.sh"
 }

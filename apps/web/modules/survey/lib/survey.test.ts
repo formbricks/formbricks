@@ -61,7 +61,9 @@ describe("Survey Library Tests", () => {
   describe("getSurvey", () => {
     test("should return survey when found", async () => {
       const mockSurvey = { id: "survey_123", name: "Test Survey" } as unknown as TSurvey;
-      vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce(mockSurvey as any); // Type assertion needed due to complex select
+      vi.mocked(prisma.survey.findUnique).mockResolvedValueOnce(
+        mockSurvey as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+      ); // Type assertion needed due to complex select
 
       const survey = await getSurvey("survey_123");
       expect(survey).toEqual(mockSurvey);

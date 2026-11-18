@@ -1,10 +1,10 @@
 ---
-title: "Unreleased: Helm connects Cube and the SpiceDB bootstrap to the bundled database"
+title: "6.2: Helm connects Cube and the SpiceDB bootstrap to the bundled database"
 description: "The Helm chart now sets Cube's database connection and the SpiceDB bootstrap role from the bundled PostgreSQL."
 icon: "database"
 ---
 
-**Applies to:** the next release after 6.1. This change is on `main` and not in any 6.1 patch.
+**Applies to:** the upgrade to 6.2. Part of the [6.2 upgrade guide](/self-hosting/upgrade/versions/6.2).
 **Upgrade impact: Action required** for Helm installations with the bundled PostgreSQL that gave Cube its own
 database settings through `cube.envFrom` or the app Secret. Docker Compose is unchanged.
 
@@ -20,8 +20,13 @@ installations that use the bundled PostgreSQL (`postgresql.enabled: true`):
 - **The SpiceDB bootstrap Job connects as the bundled user.** With every
   `authzed.bundledPostgresqlBootstrap.admin*` value empty, it connects as `postgresql.auth.username` on
   `postgresql.auth.database` with that user's password. The bundled `pgvector/pgvector` image has no `postgres`
-  role, so the previous default failed with `password authentication failed for user "postgres"`. Set any
-  `admin*` value to keep an explicit administrator; the values you leave empty keep the previous defaults.
+  role, so the previous default failed with `password authentication failed for user "postgres"`. To use
+  your own administrator, set `adminUsername`, `adminPasswordSecretName` and `adminPasswordKey` together;
+  `adminDatabase` is optional and defaults to `postgres`. A username without the Secret name, or a Secret
+  name without the key, fails when Helm renders the chart. Setting only `adminDatabase` or `adminPasswordKey`
+  keeps the previous `postgres` administrator from the bundled Secret, which needs
+  `postgresql.auth.enablePostgresUser: true` (the default). With it `false`, clear every `admin*` value to
+  connect as the bundled user.
 
 <Warning>
   This changes which database role Cube uses. Kubernetes gives a container's `env` precedence over its

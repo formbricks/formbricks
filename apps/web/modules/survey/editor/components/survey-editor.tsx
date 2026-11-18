@@ -603,7 +603,6 @@ export const SurveyEditor = ({
               setActiveElementId={setActiveElementId}
               workspace={localWorkspace}
               invalidElements={invalidElements}
-              selectedLanguageCode={selectedLanguageCode || "default"}
               isFormbricksCloud={isFormbricksCloud}
               isCxMode={isCxMode}
               locale={locale}

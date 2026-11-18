@@ -116,6 +116,14 @@ const getUnitLabel = (unit: TRetentionPeriodUnit, t: TFunction): string => {
   }
 };
 
+/** `conditions` with `condition` ticked or unticked. */
+const setCondition = (
+  conditions: readonly TRetentionSurveyCondition[],
+  condition: TRetentionSurveyCondition,
+  isTicked: boolean
+): TRetentionSurveyCondition[] =>
+  isTicked ? [...conditions, condition] : conditions.filter((value) => value !== condition);
+
 /** A number input's value as a number, or null while it is empty. */
 const toNumberOrNull = (value: string): number | null => (value.trim() === "" ? null : Number(value));
 
@@ -231,11 +239,7 @@ export const PolicyEditDialog = ({
                                 checked={checked}
                                 disabled={disabled}
                                 onCheckedChange={(next) =>
-                                  field.onChange(
-                                    next === true
-                                      ? [...field.value, condition]
-                                      : field.value.filter((value) => value !== condition)
-                                  )
+                                  field.onChange(setCondition(field.value, condition, next === true))
                                 }
                               />
                               <Label htmlFor={id} className="font-normal">
@@ -308,9 +312,9 @@ export const PolicyEditDialog = ({
                           <FormControl>
                             <Input
                               type="number"
-                              inputMode="numeric"
+                              inputMode="decimal"
                               min={1}
-                              step={1}
+                              step="any"
                               value={field.value ?? ""}
                               onChange={(event) => field.onChange(toNumberOrNull(event.target.value))}
                               onBlur={field.onBlur}
@@ -385,7 +389,7 @@ export const PolicyEditDialog = ({
                           </SelectItem>
                         ))}
                         <SelectItem value={CUSTOM}>
-                          {t("workspace.settings.data_retention.customise")}
+                          {t("workspace.settings.data_retention.custom")}
                         </SelectItem>
                       </SelectContent>
                     </Select>
@@ -404,10 +408,10 @@ export const PolicyEditDialog = ({
                       <FormControl>
                         <Input
                           type="number"
-                          inputMode="numeric"
+                          inputMode="decimal"
                           min={RETENTION_WARN_DAYS.min}
                           max={RETENTION_WARN_DAYS.max}
-                          step={1}
+                          step="any"
                           className="w-24"
                           value={field.value ?? ""}
                           onChange={(event) => field.onChange(toNumberOrNull(event.target.value))}

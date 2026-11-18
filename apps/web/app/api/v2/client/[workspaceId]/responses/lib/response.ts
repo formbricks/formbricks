@@ -81,7 +81,7 @@ export const createResponse = async (
   const { workspaceId, contactId, finished, ttc: initialTtc } = responseInput;
 
   try {
-    const ttc = initialTtc ? (finished ? calculateTtcTotal(initialTtc) : initialTtc) : {};
+    const ttc = initialTtc && finished ? calculateTtcTotal(initialTtc) : (initialTtc ?? {});
 
     if (responseInput.displayId) {
       await assertDisplayOwnership(

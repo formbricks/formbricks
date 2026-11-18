@@ -109,6 +109,7 @@ export function SignatureElement({
   }, [value]);
 
   // Centralised (required) errors come from the block; upload errors are this element's own.
+  // eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty message falls back too
   const errorMessage = centralizedErrorMessage || uploadErrorMessage;
 
   const handleChange = (next: SignatureValue) => {
@@ -140,6 +141,9 @@ export function SignatureElement({
         t: translate,
       } = callbacksRef.current;
 
+      const ensureTypedFont = () =>
+        currentFontUrl ? loadSignatureFont(currentFontUrl) : Promise.resolve(false);
+
       try {
         const result = await resolveSignatureAnswer({
           draft: frozen.draft,
@@ -148,10 +152,7 @@ export function SignatureElement({
           // left empty, answers straight away.
           exportPng: (signature) => {
             setIsUploading(true);
-            return exportSignaturePng(signature, {
-              ensureTypedFont: () =>
-                currentFontUrl ? loadSignatureFont(currentFontUrl) : Promise.resolve(false),
-            });
+            return exportSignaturePng(signature, { ensureTypedFont });
           },
           uploadPng: (dataUrl) =>
             upload(

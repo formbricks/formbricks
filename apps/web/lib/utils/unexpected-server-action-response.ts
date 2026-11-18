@@ -9,7 +9,7 @@
  * response been lost.
  *
  * The code is matched first because the message is not stable: Next.js passes the body through as the
- * message when the response is a 4xx/5xx `text/plain`. Next.js 16.4.1 ships without any error codes,
+ * message when the response is a 4xx/5xx `text/plain`. Next.js 16.4.5 ships without any error codes,
  * so the generic message Next.js uses for every other non-Flight response is matched too; a
  * `text/plain` 4xx/5xx body can only be recognised while the code is present.
  *

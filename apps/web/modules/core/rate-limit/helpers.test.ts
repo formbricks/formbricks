@@ -49,8 +49,8 @@ describe("helpers", () => {
       const mockIp = "192.168.1.1";
       const mockHashedIp = "abc123hashedip";
 
-      (getClientIpFromHeaders as any).mockResolvedValue(mockIp);
-      (hashString as any).mockReturnValue(mockHashedIp);
+      vi.mocked(getClientIpFromHeaders).mockResolvedValue(mockIp);
+      vi.mocked(hashString).mockReturnValue(mockHashedIp);
 
       const result = await getClientIdentifier();
 
@@ -64,7 +64,7 @@ describe("helpers", () => {
 
     test("should handle IP retrieval errors", async () => {
       const mockError = new Error("Failed to get IP");
-      (getClientIpFromHeaders as any).mockRejectedValue(mockError);
+      vi.mocked(getClientIpFromHeaders).mockRejectedValue(mockError);
 
       await expect(getClientIdentifier()).rejects.toThrow("Failed to get IP");
     });
@@ -73,8 +73,8 @@ describe("helpers", () => {
       const mockIp = "192.168.1.1";
       const originalError = new Error("Hashing failed");
 
-      (getClientIpFromHeaders as any).mockResolvedValue(mockIp);
-      (hashString as any).mockImplementation(() => {
+      vi.mocked(getClientIpFromHeaders).mockResolvedValue(mockIp);
+      vi.mocked(hashString).mockImplementation(() => {
         throw originalError;
       });
 
@@ -95,7 +95,7 @@ describe("helpers", () => {
     const mockIdentifier = "test-identifier";
 
     test("should allow request when rate limit check passes", async () => {
-      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+      vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: true }));
 
       await expect(applyRateLimit(mockConfig, mockIdentifier)).resolves.toEqual({ allowed: true });
 
@@ -103,7 +103,7 @@ describe("helpers", () => {
     });
 
     test("should throw error when rate limit is exceeded", async () => {
-      (checkRateLimit as any).mockResolvedValue(ok({ allowed: false }));
+      vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: false }));
 
       await expect(applyRateLimit(mockConfig, mockIdentifier)).rejects.toThrow(
         "Maximum number of requests reached. Please try again later."
@@ -113,7 +113,7 @@ describe("helpers", () => {
     });
 
     test("should throw error when rate limit check fails", async () => {
-      (checkRateLimit as any).mockResolvedValue(err("Redis connection failed"));
+      vi.mocked(checkRateLimit).mockResolvedValue(err("Redis connection failed"));
 
       await expect(applyRateLimit(mockConfig, mockIdentifier)).rejects.toThrow(
         "Maximum number of requests reached. Please try again later."
@@ -124,7 +124,7 @@ describe("helpers", () => {
 
     test("should throw error when rate limit check throws exception", async () => {
       const mockError = new Error("Unexpected error");
-      (checkRateLimit as any).mockRejectedValue(mockError);
+      vi.mocked(checkRateLimit).mockRejectedValue(mockError);
 
       await expect(applyRateLimit(mockConfig, mockIdentifier)).rejects.toThrow("Unexpected error");
 
@@ -138,7 +138,7 @@ describe("helpers", () => {
         namespace: "api:v1",
       };
 
-      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+      vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: true }));
 
       await expect(applyRateLimit(customConfig, "api-key-identifier")).resolves.toEqual({ allowed: true });
 
@@ -146,7 +146,7 @@ describe("helpers", () => {
     });
 
     test("should work with different identifiers", async () => {
-      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+      vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: true }));
 
       const identifiers = ["user-123", "ip-192.168.1.1", "auth-login-hashedip", "api-key-abc123"];
 
@@ -159,7 +159,7 @@ describe("helpers", () => {
     });
 
     test("should pass weighted usage to the rate limiter", async () => {
-      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+      vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: true }));
 
       await expect(applyRateLimit(mockConfig, mockIdentifier, 25)).resolves.toEqual({ allowed: true });
 
@@ -175,7 +175,7 @@ describe("helpers", () => {
     };
 
     test("should allow request when peek says capacity remains", async () => {
-      (peekRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+      vi.mocked(peekRateLimit).mockResolvedValue(ok({ allowed: true }));
 
       await expect(assertRateLimitAvailable(mockConfig, "test-identifier")).resolves.toEqual({
         allowed: true,
@@ -186,7 +186,7 @@ describe("helpers", () => {
     });
 
     test("should reject request when peek says limit is exhausted", async () => {
-      (peekRateLimit as any).mockResolvedValue(ok({ allowed: false, retryAfter: 60 }));
+      vi.mocked(peekRateLimit).mockResolvedValue(ok({ allowed: false, retryAfter: 60 }));
 
       await expect(assertRateLimitAvailable(mockConfig, "test-identifier")).rejects.toThrow(
         "Maximum number of requests reached. Please try again later."
@@ -245,9 +245,9 @@ describe("helpers", () => {
       };
 
       // Mock the IP getting functions
-      (getClientIpFromHeaders as any).mockResolvedValue("192.168.1.1");
-      (hashString as any).mockReturnValue("hashed-ip-123");
-      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+      vi.mocked(getClientIpFromHeaders).mockResolvedValue("192.168.1.1");
+      vi.mocked(hashString).mockReturnValue("hashed-ip-123");
+      vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: true }));
 
       await expect(applyIPRateLimit(mockConfig)).resolves.toEqual({ allowed: true });
 
@@ -263,7 +263,7 @@ describe("helpers", () => {
         namespace: "test:page",
       };
 
-      (getClientIpFromHeaders as any).mockRejectedValue(new Error("IP fetch failed"));
+      vi.mocked(getClientIpFromHeaders).mockRejectedValue(new Error("IP fetch failed"));
 
       await expect(applyIPRateLimit(mockConfig)).rejects.toThrow("IP fetch failed");
     });
@@ -275,9 +275,9 @@ describe("helpers", () => {
         namespace: "test:page",
       };
 
-      (getClientIpFromHeaders as any).mockResolvedValue("192.168.1.1");
-      (hashString as any).mockReturnValue("hashed-ip-123");
-      (checkRateLimit as any).mockResolvedValue(ok({ allowed: false }));
+      vi.mocked(getClientIpFromHeaders).mockResolvedValue("192.168.1.1");
+      vi.mocked(hashString).mockReturnValue("hashed-ip-123");
+      vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: false }));
 
       await expect(applyIPRateLimit(mockConfig)).rejects.toThrow(
         "Maximum number of requests reached. Please try again later."
@@ -286,9 +286,9 @@ describe("helpers", () => {
 
     test("skips the shared untrusted identity only when asked, without counting it", async () => {
       const mockConfig = { interval: 60, allowedPerInterval: 120, namespace: "auth:saml-callback" };
-      (getClientIpFromHeaders as any).mockResolvedValue("untrusted-client-ip");
-      (hashString as any).mockReturnValue("hashed-untrusted");
-      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+      vi.mocked(getClientIpFromHeaders).mockResolvedValue("untrusted-client-ip");
+      vi.mocked(hashString).mockReturnValue("hashed-untrusted");
+      vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: true }));
 
       await expect(applyIPRateLimit(mockConfig, { skipUntrustedClient: true })).resolves.toEqual({
         allowed: true,
@@ -303,9 +303,9 @@ describe("helpers", () => {
 
     test("still counts a trusted client when asked to skip untrusted ones", async () => {
       const mockConfig = { interval: 60, allowedPerInterval: 120, namespace: "auth:saml-callback" };
-      (getClientIpFromHeaders as any).mockResolvedValue("203.0.113.7");
-      (hashString as any).mockReturnValue("hashed-trusted");
-      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+      vi.mocked(getClientIpFromHeaders).mockResolvedValue("203.0.113.7");
+      vi.mocked(hashString).mockReturnValue("hashed-trusted");
+      vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: true }));
 
       await applyIPRateLimit(mockConfig, { skipUntrustedClient: true });
 
@@ -315,9 +315,9 @@ describe("helpers", () => {
 
   describe("applyClientRateLimit", () => {
     test("should apply compound environment/IP and environment aggregate rate limits", async () => {
-      (getClientIpFromHeaders as any).mockResolvedValue("192.168.1.1");
-      (hashString as any).mockReturnValue("hashed-ip-123");
-      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+      vi.mocked(getClientIpFromHeaders).mockResolvedValue("192.168.1.1");
+      vi.mocked(hashString).mockReturnValue("hashed-ip-123");
+      vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: true }));
 
       await expect(applyClientRateLimit("env_1")).resolves.toEqual({ allowed: true });
 
@@ -332,9 +332,9 @@ describe("helpers", () => {
         namespace: "storage:upload",
       };
 
-      (getClientIpFromHeaders as any).mockResolvedValue("192.168.1.1");
-      (hashString as any).mockReturnValue("hashed-ip-123");
-      (checkRateLimit as any).mockResolvedValue(ok({ allowed: true }));
+      vi.mocked(getClientIpFromHeaders).mockResolvedValue("192.168.1.1");
+      vi.mocked(hashString).mockReturnValue("hashed-ip-123");
+      vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: true }));
 
       await expect(applyClientRateLimit("env_1", customConfig)).resolves.toEqual({ allowed: true });
 
@@ -343,9 +343,9 @@ describe("helpers", () => {
     });
 
     test("should throw when the compound environment/IP rate limit is exceeded", async () => {
-      (getClientIpFromHeaders as any).mockResolvedValue("192.168.1.1");
-      (hashString as any).mockReturnValue("hashed-ip-123");
-      (checkRateLimit as any).mockResolvedValue(ok({ allowed: false }));
+      vi.mocked(getClientIpFromHeaders).mockResolvedValue("192.168.1.1");
+      vi.mocked(hashString).mockReturnValue("hashed-ip-123");
+      vi.mocked(checkRateLimit).mockResolvedValue(ok({ allowed: false }));
 
       await expect(applyClientRateLimit("env_1")).rejects.toThrow(
         "Maximum number of requests reached. Please try again later."
@@ -356,9 +356,9 @@ describe("helpers", () => {
     });
 
     test("should throw when the environment aggregate rate limit is exceeded", async () => {
-      (getClientIpFromHeaders as any).mockResolvedValue("192.168.1.1");
-      (hashString as any).mockReturnValue("hashed-ip-123");
-      (checkRateLimit as any)
+      vi.mocked(getClientIpFromHeaders).mockResolvedValue("192.168.1.1");
+      vi.mocked(hashString).mockReturnValue("hashed-ip-123");
+      vi.mocked(checkRateLimit)
         .mockResolvedValueOnce(ok({ allowed: true }))
         .mockResolvedValueOnce(ok({ allowed: false }));
 

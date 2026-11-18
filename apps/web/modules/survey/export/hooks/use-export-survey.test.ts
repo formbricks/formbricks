@@ -18,7 +18,7 @@ const SURVEY_ID = "clsurvey0000000000000001";
 
 function createWrapper() {
   const queryClient = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-  const Wrapper = ({ children }: { children: ReactNode }) =>
+  const Wrapper = ({ children }: Readonly<{ children: ReactNode }>) =>
     createElement(QueryClientProvider, { client: queryClient }, children);
   Wrapper.displayName = "UseExportSurveyTestWrapper";
   return Wrapper;

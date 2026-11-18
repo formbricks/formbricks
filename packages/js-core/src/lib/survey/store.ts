@@ -8,9 +8,7 @@ export class SurveyStore {
   private listeners = new Set<Listener>();
 
   static getInstance(): SurveyStore {
-    if (!SurveyStore.instance) {
-      SurveyStore.instance = new SurveyStore();
-    }
+    SurveyStore.instance ??= new SurveyStore();
     return SurveyStore.instance;
   }
 

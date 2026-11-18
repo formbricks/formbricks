@@ -7,6 +7,7 @@ import { cn } from "@/lib/cn";
 import {
   formatSurveyImportReport,
   getSurveyImportIssueLine,
+  getSurveyImportIssueSummary,
   getSurveyImportReportFileName,
   hasSurveyImportWarnings,
   sortSurveyImportIssues,
@@ -42,12 +43,7 @@ export const ImportReport = ({ report, className }: Readonly<ImportReportProps>)
   const [isOpen, setIsOpen] = useState(() => hasSurveyImportWarnings(report));
 
   const issues = sortSurveyImportIssues(report.issues);
-  const warningCount = issues.filter((issue) => issue.severity === "warning").length;
-  const noteCount = issues.length - warningCount;
-  const summary = [
-    warningCount > 0 ? t("workspace.surveys.import.report.summary_warnings", { count: warningCount }) : null,
-    noteCount > 0 ? t("workspace.surveys.import.report.summary_notes", { count: noteCount }) : null,
-  ].filter((part): part is string => part !== null);
+  const summary = getSurveyImportIssueSummary(issues, t);
 
   const toggle = () => setIsOpen((open) => !open);
 

@@ -81,21 +81,24 @@ function Calendar({
     return locale;
   }, [locale]);
 
+  // Read the clock once, not on every render: the dropdown range below is centred on this year.
+  const [currentYear] = React.useState(() => new Date().getFullYear());
+
   const resolvedStartMonth = React.useMemo(() => {
     if (startMonth) return startMonth;
     if (captionLayout === "dropdown") {
-      return new Date(new Date().getFullYear() - 100, 0);
+      return new Date(currentYear - 100, 0);
     }
     return undefined;
-  }, [startMonth, captionLayout]);
+  }, [startMonth, captionLayout, currentYear]);
 
   const resolvedEndMonth = React.useMemo(() => {
     if (endMonth) return endMonth;
     if (captionLayout === "dropdown") {
-      return new Date(new Date().getFullYear() + 100, 11);
+      return new Date(currentYear + 100, 11);
     }
     return undefined;
-  }, [endMonth, captionLayout]);
+  }, [endMonth, captionLayout, currentYear]);
 
   return (
     <DayPicker
@@ -157,7 +160,6 @@ function Calendar({
             : "rounded-md pl-2 pr-1 flex items-center gap-1 text-sm h-8 [&>svg]:text-muted-foreground [&>svg]:size-3.5",
           defaultClassNames.caption_label
         ),
-        table: "w-full border-collapse",
         weekdays: cn("flex", defaultClassNames.weekdays),
         weekday: cn(
           "text-muted-foreground rounded-md flex-1 font-normal text-[0.8rem] select-none text-[var(--fb-input-color)] opacity-70",

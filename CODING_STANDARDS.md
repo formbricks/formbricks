@@ -9,12 +9,12 @@ the first line stays in `AGENTS.md`, and task process lives under `docs/agents/`
 ## Tooling and Review Scope
 
 Apply the judgment calls below to the diff. Check the relevant tool output before repeating a finding:
-Prettier owns formatting and import order; ESLint owns its enabled rules; schema freshness checks own
-generated API drift. `packages/config-eslint/` and `apps/web/eslint.config.mjs` define lint severity and
-exceptions. A warning is still actionable when CI does not block it.
+Prettier owns formatting and import order; oxlint owns its enabled rules; schema freshness checks own
+generated API drift. `packages/config-oxlint/` and each workspace's `oxlint.config.ts` define lint severity
+and exceptions. A warning is still actionable when CI does not block it.
 
 Static `unstable_cache` imports from `next/cache` are lint errors, and so are React component props that
-are not read-only (`react/prefer-read-only-props`). `pnpm workflow:check` enforces explicit
+are not read-only (`react-js/prefer-read-only-props`). `pnpm workflow:check` enforces explicit
 permission maps (or caller inheritance for workflows triggered only by `workflow_call`) and runner
 hardening first for literal `ubuntu-*` runner labels, including version and architecture pins. Reviewers
 still judge whether requested token permissions are minimal and whether runner choices outside this
@@ -33,12 +33,15 @@ These remain review checks until their enforcement handles the repository's exis
   variables, and `SCREAMING_SNAKE_CASE` for constants.
 - Keep responsibilities focused; consolidate duplicated behavior when it has one reason to change.
 - Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
-- Prefer type inference and shared types from `@formbricks/types`; new `any`s are still findings where
-  ESLint reports them only as warnings.
+- Prefer type inference and shared types from `@formbricks/types`. `any` is a lint error everywhere
+  (`typescript/no-explicit-any`); in tests, type mocks with `vi.mocked(fn)` (`{ partial: true }` for a
+  partial fixture) rather than casting.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 - A control's enabled state comes from the permission the server action checks, passed down from the server,
   not recomputed on the client. A control that looks editable and then fails on save is a finding.
+- A change that replaces a tool keeps every behaviour the old setup carried (script flags, inline config
+  comments, per-package overrides) or lists what it drops under Open gaps.
 
 ## Existing Patterns
 
@@ -305,7 +308,7 @@ Do not:
   afterwards, and every `<style>` without the host's nonce. Survey text is rich-text HTML full of `style`
   attributes, so markup is never parsed or injected raw: pass it through `stripInlineStyles` or
   `sanitizeSurveyHtml` from `@formbricks/survey-ui`, and write CSS with `textContent`. The `csp-safe`
-  ESLint rules in those four packages flag `DOMParser`, `innerHTML`, `dangerouslySetInnerHTML`,
+  lint rules in those four packages flag `DOMParser`, `innerHTML`, `dangerouslySetInnerHTML`,
   `setAttribute("style")` and `createElement("style")`; an exception is disabled on its line with the reason.
   Lint cannot see data, so `apps/web/playwright/survey-csp.spec.ts` renders the built bundle under the
   customer policy with styled text in every rich-text field. A new question type goes into the kitchen sink

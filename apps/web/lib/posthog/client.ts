@@ -52,9 +52,9 @@ export const capturePostHogClientEventWhenReady = (
     return noop;
   }
 
-  let intervalId: ReturnType<typeof setInterval> | undefined;
+  // The timeout callback only runs after `intervalId` below is assigned.
   const timeoutId = setTimeout(() => clearInterval(intervalId), READY_POLL_TIMEOUT_MS);
-  intervalId = setInterval(() => {
+  const intervalId = setInterval(() => {
     if (!posthog.__loaded) return;
     clearTimeout(timeoutId);
     clearInterval(intervalId);

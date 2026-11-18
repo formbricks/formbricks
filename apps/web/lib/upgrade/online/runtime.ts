@@ -67,6 +67,80 @@ export const readOnlineStatus = async () => {
   }
 };
 
+/** The session-affine migration connection an online upgrade needs, on the public schema only. */
+const getMigrationDatabaseUrl = (platform: OnlinePlatform): string => {
+  if (!env.MIGRATE_DATABASE_URL || !platform.sessionAffinity || env.FORMBRICKS_UPGRADE_MODE !== "online")
+    throw new OnlineUpgradeBlocked("session_affine_migration_connection_required");
+  if (
+    new URL(env.MIGRATE_DATABASE_URL).searchParams.get("schema") &&
+    new URL(env.MIGRATE_DATABASE_URL).searchParams.get("schema") !== "public"
+  )
+    throw new OnlineUpgradeBlocked("nonpublic_schema_unsupported");
+  return env.MIGRATE_DATABASE_URL;
+};
+
+/** After preparation: withdraws HTTP traffic (once) and hands the job queue over to the target. */
+const handoffPreparedRelease = async (
+  platform: OnlinePlatform,
+  handoff: NonNullable<OnlinePlatform["handoff"]>,
+  assertLock: () => Promise<void>,
+  read: () => Promise<OnlineState | null>,
+  save: (patch: Partial<OnlineState>) => Promise<void>
+): Promise<void> => {
+  const checkpoint = await read();
+  if (!checkpoint?.queuePausedAt || checkpoint.queueResumedAt) {
+    await save({ phase: "handoff" });
+    await handoff(assertLock);
+  }
+  if (!env.REDIS_URL) throw new OnlineUpgradeBlocked("queue_connection_required");
+  const queue = await openJobsUpgradeQueue(env.REDIS_URL);
+  try {
+    await handoffJobs({
+      read: async () => {
+        const value = await read();
+        if (!value) throw new OnlineUpgradeBlocked("preparation_required");
+        return value;
+      },
+      save,
+      assertLock,
+      queue,
+      retireSourceConsumers: (assertDrained) => platform.retireSourceConsumers(assertDrained),
+      verifySourceConsumersAbsent: platform.verifySourceConsumersAbsent,
+      timeoutSeconds: platform.jobDrainTimeoutSeconds,
+    });
+  } finally {
+    await queue.close();
+  }
+};
+
+/**
+ * The checkpoint re-read after a failure. When it can't be read, the last state read stays but is
+ * marked unknown: never infer rollback safety from an unavailable checkpoint.
+ */
+const rereadCheckpoint = async (
+  readLatest: () => Promise<OnlineState | null>,
+  lastState: OnlineState | null
+): Promise<{ state: OnlineState | null; known: boolean }> => {
+  try {
+    return { state: await readLatest(), known: true };
+  } catch {
+    /* Never infer rollback safety from an unavailable checkpoint. */
+    return { state: lastState, known: false };
+  }
+};
+
+/** The status a failed command reports. */
+const summarizeFailedCommand = (
+  error: unknown,
+  latest: { state: OnlineState | null; known: boolean },
+  session: { signal: AbortSignal } | undefined
+) => {
+  const result = summarizeOnlineState(latest.state, toOnlineBlocker(error, "online_upgrade_failed", true));
+  // On connection loss, never advertise rollback based on a stale pre-finalization read.
+  if (!latest.known || !session || session.signal.aborted) result.rollbackTo60Allowed = false;
+  return result;
+};
+
 export const runOnlineCommand = async (
   command: "prepare" | "finalize" | "status",
   platform: OnlinePlatform,
@@ -78,14 +152,7 @@ export const runOnlineCommand = async (
   let stateKnown = false;
   let readLatest: (() => Promise<OnlineState | null>) | undefined;
   try {
-    if (!env.MIGRATE_DATABASE_URL || !platform.sessionAffinity || env.FORMBRICKS_UPGRADE_MODE !== "online")
-      throw new OnlineUpgradeBlocked("session_affine_migration_connection_required");
-    if (
-      new URL(env.MIGRATE_DATABASE_URL).searchParams.get("schema") &&
-      new URL(env.MIGRATE_DATABASE_URL).searchParams.get("schema") !== "public"
-    )
-      throw new OnlineUpgradeBlocked("nonpublic_schema_unsupported");
-    session = await openUpgradeSession(env.MIGRATE_DATABASE_URL);
+    session = await openUpgradeSession(getMigrationDatabaseUrl(platform));
     const lock = session;
     const read = async (): Promise<OnlineState | null> => {
       const table = await lock.client.query<{ exists: boolean }>(
@@ -214,49 +281,15 @@ export const runOnlineCommand = async (
       cleanup: platform.cleanup ? () => platform.cleanup!(lock.assertLock) : undefined,
     });
     if (command === "prepare" && platform.handoff && !(await read())?.activatedAt) {
-      const checkpoint = await read();
-      if (!checkpoint?.queuePausedAt || checkpoint.queueResumedAt) {
-        await save({ phase: "handoff" });
-        await platform.handoff(lock.assertLock);
-      }
-      if (!env.REDIS_URL) throw new OnlineUpgradeBlocked("queue_connection_required");
-      const queue = await openJobsUpgradeQueue(env.REDIS_URL);
-      try {
-        await handoffJobs({
-          read: async () => {
-            const value = await read();
-            if (!value) throw new OnlineUpgradeBlocked("preparation_required");
-            return value;
-          },
-          save,
-          assertLock: lock.assertLock,
-          queue,
-          retireSourceConsumers: (assertDrained) => platform.retireSourceConsumers(assertDrained),
-          verifySourceConsumersAbsent: platform.verifySourceConsumersAbsent,
-          timeoutSeconds: platform.jobDrainTimeoutSeconds,
-        });
-      } finally {
-        await queue.close();
-      }
+      await handoffPreparedRelease(platform, platform.handoff, lock.assertLock, read, save);
       return summarizeOnlineState(await read());
     }
     if (command === "finalize" && result.phase === "complete")
       await platform.releaseAccess?.(lock.assertLock);
     return result;
   } catch (error) {
-    if (readLatest) {
-      stateKnown = false;
-      try {
-        state = await readLatest();
-        stateKnown = true;
-      } catch {
-        /* Never infer rollback safety from an unavailable checkpoint. */
-      }
-    }
-    const result = summarizeOnlineState(state, toOnlineBlocker(error, "online_upgrade_failed", true));
-    // On connection loss, never advertise rollback based on a stale pre-finalization read.
-    if (!stateKnown || !session || session.signal.aborted) result.rollbackTo60Allowed = false;
-    return result;
+    const latest = readLatest ? await rereadCheckpoint(readLatest, state) : { state, known: stateKnown };
+    return summarizeFailedCommand(error, latest, session);
   } finally {
     closeAuthzedClient();
     await session?.close().catch(() => {});

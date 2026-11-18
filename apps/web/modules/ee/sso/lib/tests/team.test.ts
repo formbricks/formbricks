@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import type { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { validateInputs } from "@/lib/utils/validate";
@@ -64,7 +65,9 @@ describe("Team Management", () => {
       test("creates the default team membership successfully", async () => {
         vi.mocked(prisma.team.findUnique).mockResolvedValue(MOCK_DEFAULT_TEAM);
         vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(MOCK_ORGANIZATION_MEMBERSHIP);
-        vi.mocked(prisma.teamUser.upsert).mockResolvedValue(MOCK_DEFAULT_TEAM_USER as any);
+        vi.mocked(prisma.teamUser.upsert).mockResolvedValue(
+          MOCK_DEFAULT_TEAM_USER as Awaited<ReturnType<typeof prisma.teamUser.upsert>>
+        );
 
         await createDefaultTeamMembership(MOCK_IDS.userId);
 
@@ -105,7 +108,8 @@ describe("Team Management", () => {
           teamUser: {
             upsert: vi.fn().mockResolvedValue(MOCK_DEFAULT_TEAM_USER),
           },
-        } as any;
+          // Only the delegates the call uses.
+        } as unknown as Prisma.TransactionClient;
 
         vi.mocked(getMembershipByUserIdOrganizationId).mockResolvedValue(MOCK_ORGANIZATION_MEMBERSHIP);
 
@@ -157,7 +161,7 @@ describe("Team Management", () => {
     test("returns organization when team is found", async () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({
         organization: mockOrganization,
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof prisma.team.findUnique>>);
 
       const result = await getOrganizationByTeamId("team-1");
       expect(result).toEqual(mockOrganization);
@@ -185,7 +189,9 @@ describe("Team Management", () => {
 
     test("calls validateInputs with correct arguments", async () => {
       const mockTeamId = "team-xyz";
-      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({ organization: mockOrganization } as any);
+      vi.mocked(prisma.team.findUnique).mockResolvedValueOnce({
+        organization: mockOrganization,
+      } as unknown as Awaited<ReturnType<typeof prisma.team.findUnique>>);
 
       await getOrganizationByTeamId(mockTeamId);
       expect(validateInputs).toHaveBeenCalledWith([mockTeamId, expect.anything()]);

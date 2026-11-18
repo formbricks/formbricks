@@ -125,7 +125,9 @@ describe("getDisplayCountBySurveyId", () => {
 describe("getDisplaysByContactId", () => {
   describe("Happy Path", () => {
     test("returns displays for a contact ordered by createdAt desc", async () => {
-      vi.mocked(prisma.display.findMany).mockResolvedValue(mockDisplaysForContact as any);
+      vi.mocked(prisma.display.findMany, { partial: true, deep: true }).mockResolvedValue(
+        mockDisplaysForContact
+      );
 
       const result = await getDisplaysByContactId(mockContactId, mockWorkspaceId, {});
 
@@ -193,7 +195,9 @@ describe("getDisplaysByContactId", () => {
 describe("getDisplaysBySurveyIdWithContact", () => {
   describe("Happy Path", () => {
     test("returns displays with contact attributes transformed", async () => {
-      vi.mocked(prisma.display.findMany).mockResolvedValue(mockDisplaysWithContact as any);
+      vi.mocked(prisma.display.findMany, { partial: true, deep: true }).mockResolvedValue(
+        mockDisplaysWithContact
+      );
 
       const result = await getDisplaysBySurveyIdWithContact(mockSurveyId, 15, 0);
 
@@ -272,7 +276,7 @@ describe("getDisplaysBySurveyIdWithContact", () => {
           surveyId: mockSurveyId,
           contact: null,
         },
-      ] as any);
+      ] as unknown as Awaited<ReturnType<typeof prisma.display.findMany>>);
 
       const result = await getDisplaysBySurveyIdWithContact(mockSurveyId);
 
@@ -330,7 +334,7 @@ describe("getDisplayForResponseValidation", () => {
       ...mockDisplayRecord,
       contactId: mockContactId,
       response: { id: mockResponseId },
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof prisma.display.findUnique>>);
     const result = await getDisplayForResponseValidation(mockDisplayId);
     expect(result).toEqual({
       surveyId: mockSurveyId,
@@ -360,14 +364,14 @@ describe("assertDisplayOwnership", () => {
   });
 
   test("throws InvalidInputError when workspaceId does not match", async () => {
-    vi.mocked(prisma.display.findUnique).mockResolvedValue(mockDisplayRecord as any);
+    vi.mocked(prisma.display.findUnique, { partial: true, deep: true }).mockResolvedValue(mockDisplayRecord);
     await expect(
       assertDisplayOwnership(mockDisplayId, "wrong-workspace", mockSurveyId, null)
     ).rejects.toThrow(InvalidInputError);
   });
 
   test("throws InvalidInputError when surveyId does not match", async () => {
-    vi.mocked(prisma.display.findUnique).mockResolvedValue(mockDisplayRecord as any);
+    vi.mocked(prisma.display.findUnique, { partial: true, deep: true }).mockResolvedValue(mockDisplayRecord);
     await expect(
       assertDisplayOwnership(mockDisplayId, mockWorkspaceId, "wrong-survey", null)
     ).rejects.toThrow(InvalidInputError);
@@ -377,27 +381,27 @@ describe("assertDisplayOwnership", () => {
     vi.mocked(prisma.display.findUnique).mockResolvedValue({
       ...mockDisplayRecord,
       response: { id: mockResponseId },
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof prisma.display.findUnique>>);
     await expect(assertDisplayOwnership(mockDisplayId, mockWorkspaceId, mockSurveyId, null)).rejects.toThrow(
       InvalidInputError
     );
   });
 
   test("throws InvalidInputError when contactId does not match", async () => {
-    vi.mocked(prisma.display.findUnique).mockResolvedValue({
+    vi.mocked(prisma.display.findUnique, { partial: true, deep: true }).mockResolvedValue({
       ...mockDisplayRecord,
       contactId: "contact-a",
-    } as any);
+    });
     await expect(
       assertDisplayOwnership(mockDisplayId, mockWorkspaceId, mockSurveyId, "contact-b")
     ).rejects.toThrow(InvalidInputError);
   });
 
   test("resolves without error when all ownership checks pass", async () => {
-    vi.mocked(prisma.display.findUnique).mockResolvedValue({
+    vi.mocked(prisma.display.findUnique, { partial: true, deep: true }).mockResolvedValue({
       ...mockDisplayRecord,
       contactId: mockContactId,
-    } as any);
+    });
     await expect(
       assertDisplayOwnership(mockDisplayId, mockWorkspaceId, mockSurveyId, mockContactId)
     ).resolves.toBeUndefined();

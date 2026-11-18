@@ -94,13 +94,17 @@ const makeForeignKeyError = (constraintName: string): PrismaClientKnownRequestEr
 describe("FeedbackDirectory Service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValue(mockDirectoryDetailsDbRow as any);
+    vi.mocked(prisma.feedbackDirectory.findUnique, { partial: true, deep: true }).mockResolvedValue(
+      mockDirectoryDetailsDbRow
+    );
     vi.mocked(reconcileFeedbackDirectoryRelationships).mockResolvedValue({ passes: 1, status: "projected" });
   });
 
   describe("getFeedbackDirectories", () => {
     test("returns directories with workspace counts", async () => {
-      vi.mocked(prisma.feedbackDirectory.findMany).mockResolvedValueOnce([mockDirectoryDbRow] as any);
+      vi.mocked(prisma.feedbackDirectory.findMany, { partial: true, deep: true }).mockResolvedValueOnce([
+        mockDirectoryDbRow,
+      ]);
 
       const result = await getFeedbackDirectories(mockOrganizationId);
 
@@ -153,7 +157,9 @@ describe("FeedbackDirectory Service", () => {
 
   describe("getFeedbackDirectoryDetails", () => {
     test("returns directory details with workspace assignments", async () => {
-      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
+      vi.mocked(prisma.feedbackDirectory.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(
+        mockDirectoryDetailsDbRow
+      );
 
       const result = await getFeedbackDirectoryDetails(mockDirectoryId);
 
@@ -183,7 +189,9 @@ describe("FeedbackDirectory Service", () => {
           },
         ],
       };
-      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(dbRowWithConnectors as any);
+      vi.mocked(prisma.feedbackDirectory.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(
+        dbRowWithConnectors
+      );
 
       const result = await getFeedbackDirectoryDetails(mockDirectoryId);
 
@@ -230,7 +238,7 @@ describe("FeedbackDirectory Service", () => {
         organizationId: mockOrganizationId,
         isArchived: false,
         workspaces: [{ workspaceId: mockWorkspaceId1 }, { workspaceId: mockWorkspaceId2 }],
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof prisma.feedbackDirectory.findUnique>>);
 
       const result = await getFeedbackDirectoryAuthContext(mockDirectoryId);
 
@@ -283,7 +291,7 @@ describe("FeedbackDirectory Service", () => {
     test("creates a directory and returns its ID", async () => {
       vi.mocked(prisma.feedbackDirectory.create).mockResolvedValueOnce({
         id: mockDirectoryId,
-      } as any);
+      } as Awaited<ReturnType<typeof prisma.feedbackDirectory.create>>);
 
       const result = await createFeedbackDirectory(mockOrganizationId, "New Directory");
 
@@ -302,7 +310,7 @@ describe("FeedbackDirectory Service", () => {
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(2);
       vi.mocked(prisma.feedbackDirectory.create).mockResolvedValueOnce({
         id: mockDirectoryId,
-      } as any);
+      } as Awaited<ReturnType<typeof prisma.feedbackDirectory.create>>);
 
       const result = await createFeedbackDirectory(mockOrganizationId, "With Workspaces", [
         mockWorkspaceId1,
@@ -344,7 +352,7 @@ describe("FeedbackDirectory Service", () => {
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
       vi.mocked(prisma.feedbackDirectoryWorkspace.findFirst).mockResolvedValueOnce({
         workspaceId: mockWorkspaceId1,
-      } as any);
+      } as Awaited<ReturnType<typeof prisma.feedbackDirectoryWorkspace.findFirst>>);
 
       await expect(
         createFeedbackDirectory(mockOrganizationId, "Conflicting", [mockWorkspaceId1])
@@ -365,7 +373,7 @@ describe("FeedbackDirectory Service", () => {
       vi.mocked(prisma.feedbackDirectoryWorkspace.findFirst).mockResolvedValueOnce(null);
       vi.mocked(prisma.feedbackDirectory.create).mockResolvedValueOnce({
         id: mockDirectoryId,
-      } as any);
+      } as Awaited<ReturnType<typeof prisma.feedbackDirectory.create>>);
 
       const result = await createFeedbackDirectory(mockOrganizationId, "ArchivedOnly", [mockWorkspaceId1]);
 
@@ -413,7 +421,7 @@ describe("FeedbackDirectory Service", () => {
 
   describe("updateFeedbackDirectory", () => {
     test("updates directory name", async () => {
-      vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.feedbackDirectory.update, { partial: true, deep: true }).mockResolvedValueOnce({});
 
       const result = await updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
         name: "Updated Name",
@@ -428,7 +436,7 @@ describe("FeedbackDirectory Service", () => {
 
     test("archives directory when no feedbackSources linked", async () => {
       vi.mocked(prisma.feedbackSource.count).mockResolvedValueOnce(0);
-      vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.feedbackDirectory.update, { partial: true, deep: true }).mockResolvedValueOnce({});
 
       const result = await updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
         isArchived: true,
@@ -453,8 +461,10 @@ describe("FeedbackDirectory Service", () => {
     });
 
     test("unarchives directory", async () => {
-      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
-      vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.feedbackDirectory.findUnique, { partial: true }).mockResolvedValueOnce(
+        mockDirectoryDetailsDbRow
+      );
+      vi.mocked(prisma.feedbackDirectory.update, { partial: true, deep: true }).mockResolvedValueOnce({});
 
       const result = await updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
         isArchived: false,
@@ -489,10 +499,12 @@ describe("FeedbackDirectory Service", () => {
     });
 
     test("throws InvalidInputError when unarchiving would assign a workspace to two active directories", async () => {
-      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
+      vi.mocked(prisma.feedbackDirectory.findUnique, { partial: true }).mockResolvedValueOnce(
+        mockDirectoryDetailsDbRow
+      );
       vi.mocked(prisma.feedbackDirectoryWorkspace.findFirst).mockResolvedValueOnce({
         workspaceId: mockWorkspaceId1,
-      } as any);
+      } as Awaited<ReturnType<typeof prisma.feedbackDirectoryWorkspace.findFirst>>);
 
       await expect(
         updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
@@ -505,10 +517,12 @@ describe("FeedbackDirectory Service", () => {
 
     test("reconciles both previous and submitted assignments when removing a workspace", async () => {
       // getFeedbackDirectoryDetails call
-      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
+      vi.mocked(prisma.feedbackDirectory.findUnique, { partial: true }).mockResolvedValueOnce(
+        mockDirectoryDetailsDbRow
+      );
 
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
-      vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.feedbackDirectory.update, { partial: true, deep: true }).mockResolvedValueOnce({});
 
       // Keep workspace1, remove workspace2 (by not including it)
       const result = await updateFeedbackDirectory(mockDirectoryId, mockOrganizationId, {
@@ -532,7 +546,7 @@ describe("FeedbackDirectory Service", () => {
     });
 
     test("does not replace a successful source update when projection unexpectedly rejects", async () => {
-      vi.mocked(prisma.feedbackDirectory.update).mockResolvedValueOnce({} as any);
+      vi.mocked(prisma.feedbackDirectory.update, { partial: true, deep: true }).mockResolvedValueOnce({});
       vi.mocked(reconcileFeedbackDirectoryRelationships).mockRejectedValueOnce(new Error("spicedb down"));
 
       await expect(
@@ -541,7 +555,9 @@ describe("FeedbackDirectory Service", () => {
     });
 
     test("blocks removing a workspace that still has feedback sources", async () => {
-      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
+      vi.mocked(prisma.feedbackDirectory.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(
+        mockDirectoryDetailsDbRow
+      );
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
       // The removed workspace (workspace2) still owns feedback sources in this directory.
       vi.mocked(prisma.feedbackSource.count).mockResolvedValueOnce(2);
@@ -562,7 +578,9 @@ describe("FeedbackDirectory Service", () => {
     });
 
     test("maps a composite-FK violation (concurrent source create) to the blocked error", async () => {
-      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
+      vi.mocked(prisma.feedbackDirectory.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(
+        mockDirectoryDetailsDbRow
+      );
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
       vi.mocked(prisma.feedbackDirectory.update).mockRejectedValueOnce(
         makeForeignKeyError("FeedbackSource_feedbackDirectoryId_workspaceId_fkey")
@@ -576,7 +594,9 @@ describe("FeedbackDirectory Service", () => {
     });
 
     test("throws DatabaseError on an unrelated foreign-key violation", async () => {
-      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
+      vi.mocked(prisma.feedbackDirectory.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(
+        mockDirectoryDetailsDbRow
+      );
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(1);
       vi.mocked(prisma.feedbackDirectory.update).mockRejectedValueOnce(
         makeForeignKeyError("FeedbackDirectoryWorkspace_workspaceId_fkey")
@@ -603,7 +623,9 @@ describe("FeedbackDirectory Service", () => {
 
     test("throws InvalidInputError when workspaces belong to different org", async () => {
       // getFeedbackDirectoryDetails call
-      vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce(mockDirectoryDetailsDbRow as any);
+      vi.mocked(prisma.feedbackDirectory.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(
+        mockDirectoryDetailsDbRow
+      );
 
       // count returns 0 — none of the workspaces belong to this org
       vi.mocked(prisma.workspace.count).mockResolvedValueOnce(0);
@@ -644,7 +666,7 @@ describe("FeedbackDirectory Service", () => {
     test("returns directories assigned to workspace", async () => {
       vi.mocked(prisma.feedbackDirectoryWorkspace.findMany).mockResolvedValueOnce([
         { feedbackDirectory: { id: mockDirectoryId, name: "Test Directory" } },
-      ] as any);
+      ] as unknown as Awaited<ReturnType<typeof prisma.feedbackDirectoryWorkspace.findMany>>);
 
       const result = await getFeedbackDirectoriesByWorkspaceId(mockWorkspaceId1);
 
@@ -701,7 +723,7 @@ describe("FeedbackDirectory Service", () => {
           workspaceId: mockWorkspaceId2,
           feedbackDirectory: { id: "clj28r6va000409j3ep7h8xy3", name: "Directory C" },
         },
-      ] as any);
+      ] as unknown as Awaited<ReturnType<typeof prisma.feedbackDirectoryWorkspace.findMany>>);
 
       const result = await getWorkspaceFeedbackDirectoryAccess(mockOrganizationId);
 
@@ -767,7 +789,7 @@ describe("FeedbackDirectory Service", () => {
     test("returns organization ID for a valid directory", async () => {
       vi.mocked(prisma.feedbackDirectory.findUnique).mockResolvedValueOnce({
         organizationId: mockOrganizationId,
-      } as any);
+      } as Awaited<ReturnType<typeof prisma.feedbackDirectory.findUnique>>);
 
       const result = await getOrganizationIdFromDirectoryId(mockDirectoryId);
 

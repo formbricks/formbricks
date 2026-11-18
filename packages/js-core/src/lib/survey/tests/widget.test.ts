@@ -1129,7 +1129,7 @@ describe("widget-file", () => {
         const el = call[0] as Record<string, unknown> | undefined;
         return typeof el?.src === "string" && el.src.includes("surveys.umd.cjs");
       });
-      expect(scriptAppendCalls.length).toBe(0);
+      expect(scriptAppendCalls).toHaveLength(0);
 
       expect(getFormbricksSurveys().renderSurvey).toHaveBeenCalled();
 

@@ -55,7 +55,7 @@ export default defineConfig({
     emptyOutDir: true,
     outDir: "dist/authzed-cli",
     ssr: "scripts/docker/authzed-cli.ts",
-    target: "node24",
+    target: "node26",
     rollupOptions: {
       output: {
         chunkFileNames: "chunks/[name]-[hash].mjs",

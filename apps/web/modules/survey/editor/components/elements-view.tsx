@@ -11,7 +11,7 @@ import {
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { createId } from "@paralleldrive/cuid2";
-import React, { SetStateAction, useEffect, useMemo, useState } from "react";
+import React, { SetStateAction, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TI18nString } from "@formbricks/types/i18n";
@@ -23,7 +23,6 @@ import { TUserLocale } from "@formbricks/types/user";
 import { getDefaultEndingCard } from "@/app/lib/survey-builder";
 import { addMultiLanguageLabels, createI18nString, extractLanguageCodes } from "@/lib/i18n/utils";
 import { structuredClone } from "@/lib/pollyfills/structuredClone";
-import { checkForEmptyFallBackValue } from "@/lib/utils/recall";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import { AddElementButton } from "@/modules/survey/editor/components/add-element-button";
 import { AddEndingCardButton } from "@/modules/survey/editor/components/add-ending-card-button";
@@ -71,7 +70,6 @@ interface ElementsViewProps {
   setActiveElementId: (elementId: string | null) => void;
   workspace: TWorkspaceWithoutCustomCss;
   invalidElements: string[] | null;
-  selectedLanguageCode: string;
   isFormbricksCloud: boolean;
   isCxMode: boolean;
   locale: TUserLocale;
@@ -92,7 +90,6 @@ export const ElementsView = ({
   persistedSurvey,
   workspace,
   invalidElements,
-  selectedLanguageCode,
   isFormbricksCloud,
   isCxMode,
   locale,
@@ -127,7 +124,7 @@ export const ElementsView = ({
     }, {});
   }, [elements]);
 
-  const updateElement = (elementIdx: number, updatedAttributes: any) => {
+  const updateElement = (elementIdx: number, updatedAttributes: Record<string, unknown>) => {
     // Get element ID from current elements array (for validation)
     const element = elements[elementIdx];
     if (!element) return;
@@ -148,8 +145,8 @@ export const ElementsView = ({
       let updatedSurvey = { ...prevSurvey };
 
       // Handle block-level attributes (logic, logicFallback, buttonLabel, backButtonLabel) separately
-      const blockLevelAttributes: any = {};
-      const elementLevelAttributes: any = {};
+      const blockLevelAttributes: Record<string, unknown> = {};
+      const elementLevelAttributes: Record<string, unknown> = {};
 
       Object.keys(updatedAttributes).forEach((key) => {
         if (
@@ -182,7 +179,7 @@ export const ElementsView = ({
         const cleanedAttributes = { ...elementLevelAttributes };
         attributesToCheck.forEach((attribute) => {
           if (Object.keys(cleanedAttributes).includes(attribute)) {
-            const currentLabel = cleanedAttributes[attribute];
+            const currentLabel = cleanedAttributes[attribute] as TI18nString | undefined;
             if (
               currentLabel &&
               Object.keys(currentLabel).length === 1 &&
@@ -610,14 +607,6 @@ export const ElementsView = ({
 
     setLocalSurvey(result.data);
   };
-
-  useEffect(() => {
-    const elementWithEmptyFallback = checkForEmptyFallBackValue(localSurvey, selectedLanguageCode);
-    if (elementWithEmptyFallback && activeElementId !== elementWithEmptyFallback.id) {
-      setActiveElementId(elementWithEmptyFallback.id);
-      toast.error(t("workspace.surveys.edit.fallback_missing"));
-    }
-  }, [activeElementId, setActiveElementId, localSurvey, selectedLanguageCode, t]);
 
   const sensors = useSensors(useSensor(PointerSensor, POINTER_SENSOR_OPTIONS));
 
