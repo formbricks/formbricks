@@ -135,7 +135,7 @@
       "log_in": "Giriş yap",
       "password_requirements": "Şifre gereksinimleri",
       "password_validation_contain_at_least_1_number": "En az 1 rakam içermeli",
-      "password_validation_minimum_8_and_maximum_128_characters": "En az 8, en fazla 128 karakter",
+      "password_validation_minimum_8_characters_and_maximum_72_bytes": "En az 8 karakter ve en fazla 72 bayt",
       "password_validation_uppercase_and_lowercase": "Büyük ve küçük harf karışımı",
       "please_verify_captcha": "Lütfen reCAPTCHA doğrulamasını yapın",
       "privacy_policy": "Gizlilik Politikası",
@@ -925,6 +925,8 @@
     },
     "signup": {
       "create_administrator": "Yönetici Oluştur",
+      "setup_token": "Kurulum belirteci",
+      "setup_token_invalid": "Kurulum belirteci hatalı.",
       "this_user_has_all_the_power": "Bu kullanıcı tüm yetkilere sahiptir."
     }
   },

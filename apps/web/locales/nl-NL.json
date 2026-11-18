@@ -135,7 +135,7 @@
       "log_in": "Inloggen",
       "password_requirements": "Wachtwoordvereisten",
       "password_validation_contain_at_least_1_number": "Bevat minimaal 1 nummer",
-      "password_validation_minimum_8_and_maximum_128_characters": "Minimaal 8 en maximaal 128 tekens",
+      "password_validation_minimum_8_characters_and_maximum_72_bytes": "Minimaal 8 tekens & maximaal 72 bytes",
       "password_validation_uppercase_and_lowercase": "Mix van hoofdletters en kleine letters",
       "please_verify_captcha": "Controleer reCAPTCHA",
       "privacy_policy": "Privacybeleid",
@@ -925,6 +925,8 @@
     },
     "signup": {
       "create_administrator": "Beheerder aanmaken",
+      "setup_token": "Installatietoken",
+      "setup_token_invalid": "Het installatietoken is onjuist.",
       "this_user_has_all_the_power": "Deze gebruiker heeft alle macht."
     }
   },

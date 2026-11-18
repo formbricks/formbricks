@@ -135,7 +135,7 @@
       "log_in": "Conectează-te",
       "password_requirements": "Cerințe parolă",
       "password_validation_contain_at_least_1_number": "Conține cel puțin 1 număr",
-      "password_validation_minimum_8_and_maximum_128_characters": "Minim 8 & Maxim 128 caractere",
+      "password_validation_minimum_8_characters_and_maximum_72_bytes": "Minimum 8 caractere și maximum 72 de octeți",
       "password_validation_uppercase_and_lowercase": "Amestec de majuscule și minuscule",
       "please_verify_captcha": "Vă rugăm să verificați CAPTCHA",
       "privacy_policy": "Politica de confidențialitate",
@@ -925,6 +925,8 @@
     },
     "signup": {
       "create_administrator": "Creare Administrator",
+      "setup_token": "Token de configurare",
+      "setup_token_invalid": "Tokenul de configurare este incorect.",
       "this_user_has_all_the_power": "Acest utilizator are toată puterea."
     }
   },

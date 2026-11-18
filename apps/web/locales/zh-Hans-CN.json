@@ -135,7 +135,7 @@
       "log_in": "登录",
       "password_requirements": "密码要求",
       "password_validation_contain_at_least_1_number": "包含至少 1 个 数字",
-      "password_validation_minimum_8_and_maximum_128_characters": "至少 8 个 和 最多 128 个 字符",
+      "password_validation_minimum_8_characters_and_maximum_72_bytes": "至少 8 个字符，最多 72 字节",
       "password_validation_uppercase_and_lowercase": "大小写混合",
       "please_verify_captcha": "请 验证 reCAPTCHA",
       "privacy_policy": "隐私政策",
@@ -925,6 +925,8 @@
     },
     "signup": {
       "create_administrator": "创建 管理员",
+      "setup_token": "设置令牌",
+      "setup_token_invalid": "设置令牌不正确。",
       "this_user_has_all_the_power": "此 用户 拥有 所有 权力。"
     }
   },

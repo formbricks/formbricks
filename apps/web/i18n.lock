@@ -115,7 +115,7 @@ checksums:
     auth/signup/log_in: 9fb886eff8d1d67d8bb79f5c3f78edde
     auth/signup/password_requirements: 58d15c4e16b28c51b83977d0c2af17bc
     auth/signup/password_validation_contain_at_least_1_number: 58fb33a486aa4dadfc05e3242fc7ea0b
-    auth/signup/password_validation_minimum_8_and_maximum_128_characters: ec704690a454c7f01e59856c39206259
+    auth/signup/password_validation_minimum_8_characters_and_maximum_72_bytes: 4a97a8bfd5bf9048b3896657145f9b74
     auth/signup/password_validation_uppercase_and_lowercase: ae98b485024dbff1022f6048e22443cd
     auth/signup/please_verify_captcha: 12938ca7ca13e3f933737dd5436fa1c0
     auth/signup/privacy_policy: 7459744a63ef8af4e517a09024bd7c08
@@ -865,6 +865,8 @@ checksums:
     setup/organization/create/no_membership_found_description: ba067dacf419041c8bcdb51ee6b0125b
     setup/organization/create/title: b021d3fcb90cccd0c516ed144fb16d58
     setup/signup/create_administrator: e5b7e90150ebecf18a248f50a011bb7f
+    setup/signup/setup_token: 4caba14b8765e528884c1d9de67427de
+    setup/signup/setup_token_invalid: 9582398c0fe6ea31a816bdade8b0b016
     setup/signup/this_user_has_all_the_power: 1af3a7367d412d17f0f16c0e104b3520
     templates/address: 5a9a8bc26f90d84c90105690a2eb23a1
     templates/address_description: e45b92c5cfff59ae7381e8bfb43b173f

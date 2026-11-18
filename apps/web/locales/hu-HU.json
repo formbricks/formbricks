@@ -135,7 +135,7 @@
       "log_in": "Bejelentkezés",
       "password_requirements": "Jelszókövetelmények",
       "password_validation_contain_at_least_1_number": "Legalább 1 számot tartalmazzon",
-      "password_validation_minimum_8_and_maximum_128_characters": "Legalább 8 és legfeljebb 128 karakter",
+      "password_validation_minimum_8_characters_and_maximum_72_bytes": "Legalább 8 karakter és legfeljebb 72 bájt",
       "password_validation_uppercase_and_lowercase": "Nagybetűk és kisbetűk vegyesen",
       "please_verify_captcha": "Ellenőrizze a reCAPTCHA-t",
       "privacy_policy": "Adatvédelmi irányelvek",
@@ -925,6 +925,8 @@
     },
     "signup": {
       "create_administrator": "Adminisztrátor létrehozása",
+      "setup_token": "Beállítási token",
+      "setup_token_invalid": "A beállítási token helytelen.",
       "this_user_has_all_the_power": "Ez a felhasználó rendelkezik az összes jogosultsággal."
     }
   },

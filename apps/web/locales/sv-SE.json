@@ -135,7 +135,7 @@
       "log_in": "Logga in",
       "password_requirements": "Lösenordskrav",
       "password_validation_contain_at_least_1_number": "Innehålla minst 1 siffra",
-      "password_validation_minimum_8_and_maximum_128_characters": "Minst 8 och högst 128 tecken",
+      "password_validation_minimum_8_characters_and_maximum_72_bytes": "Minst 8 tecken och högst 72 byte",
       "password_validation_uppercase_and_lowercase": "Blandning av stora och små bokstäver",
       "please_verify_captcha": "Vänligen verifiera reCAPTCHA",
       "privacy_policy": "Integritetspolicy",
@@ -925,6 +925,8 @@
     },
     "signup": {
       "create_administrator": "Skapa administratör",
+      "setup_token": "Installationstoken",
+      "setup_token_invalid": "Installationstoken är felaktig.",
       "this_user_has_all_the_power": "Denna användare har all makt."
     }
   },

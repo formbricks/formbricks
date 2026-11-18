@@ -135,7 +135,7 @@
       "log_in": "Se connecter",
       "password_requirements": "Exigences du mot de passe",
       "password_validation_contain_at_least_1_number": "Contenir au moins 1 chiffre",
-      "password_validation_minimum_8_and_maximum_128_characters": "Minimum 8 et Maximum 128 caractères",
+      "password_validation_minimum_8_characters_and_maximum_72_bytes": "8 caractères minimum et 72 octets maximum",
       "password_validation_uppercase_and_lowercase": "Mélange de majuscules et de minuscules",
       "please_verify_captcha": "Veuillez vérifier reCAPTCHA",
       "privacy_policy": "Politique de confidentialité",
@@ -925,6 +925,8 @@
     },
     "signup": {
       "create_administrator": "Créer un administrateur",
+      "setup_token": "Jeton de configuration",
+      "setup_token_invalid": "Le jeton de configuration est incorrect.",
       "this_user_has_all_the_power": "Cet utilisateur a tout le pouvoir."
     }
   },

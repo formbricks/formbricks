@@ -36,6 +36,7 @@ import { runAfterEmailVerificationHooks } from "./better-auth-email-verification
 import { hibpBreachCheckBeforeHandler } from "./better-auth-hibp";
 import { lastActivePlugin, recordActivityOnSessionUpdate } from "./better-auth-last-active";
 import { auditPasswordReset, betterAuthLogger, signInAuditPlugin } from "./better-auth-observability";
+import { passwordByteLimitBeforeHandler } from "./better-auth-password-bytes";
 import { requirePasswordResetEnabledBeforeHandler } from "./better-auth-password-reset-gate";
 import { signInBudgetBeforeHandler } from "./better-auth-sign-in-budget";
 import { trustDeviceBeforeHandler } from "./better-auth-trust-device-gate";
@@ -205,7 +206,7 @@ export const auth = betterAuth({
     // account that still carried a password could sign in around the IdP — and around whatever the IdP
     // enforces, such as MFA, conditional access, or deprovisioning.
     enabled: EMAIL_AUTH_ENABLED,
-    // Matches ZUserPassword (min 8 / max 128); the upper+digit composition rule stays enforced
+    // Matches ZUserCurrentPassword (min 8 / max 128; ZUserPassword adds the 72-byte bcrypt limit); the upper+digit composition rule stays enforced
     // by ZUserPassword at the app layer (deferred policy modernization → design doc §10.6).
     minPasswordLength: 8,
     maxPasswordLength: 128,
@@ -433,6 +434,10 @@ export const auth = betterAuth({
       // Ordered ahead of the breach check so a sign-up on a closed instance costs no outbound HIBP call.
       // Path-disjoint from the reset gate above, so their relative order is not load-bearing.
       await signupPolicyBeforeHandler(ctx);
+      // bcrypt ignores everything past byte 72: refuse such a password on the native password-set path
+      // (`/reset-password`) the way `ZUserPassword` does in the action. See better-auth-password-bytes.ts.
+      await passwordByteLimitBeforeHandler(ctx);
+      // Ahead of the breach check: it is cheaper, and a rejected password then costs no outbound HIBP call.
       // ENG-1587: reject known-breached passwords on set (signup / reset) BEFORE the endpoint runs, so
       // the reset token isn't consumed on a rejection. Fails open when api.pwnedpasswords.com is
       // unreachable and honors PASSWORD_HIBP_CHECK_DISABLED. See better-auth-hibp.ts.
