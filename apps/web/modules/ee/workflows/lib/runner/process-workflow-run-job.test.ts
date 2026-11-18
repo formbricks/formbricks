@@ -1433,7 +1433,12 @@ describe("HTTP request steps in a run (ENG-7179)", () => {
         status: "succeeded",
         output: { mode: "dont_wait", delivery: "sent", status: 200 },
       });
-      expect(mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0].data.status).toBe("completed");
+      const completion = mockWorkflowRunUpdateMany.mock.calls.at(-1)?.[0];
+      expect(completion.data.status).toBe("completed");
+      // The run's copy of the step follows its log row, never the enqueue error.
+      const mirrored = completion.data.data.steps.find((s: { stepId: string }) => s.stepId === "call");
+      expect(mirrored).toMatchObject({ status: "succeeded" });
+      expect(mirrored).not.toHaveProperty("error");
     }
   );
 

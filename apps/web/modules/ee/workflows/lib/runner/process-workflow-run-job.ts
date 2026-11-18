@@ -197,10 +197,18 @@ const executeOwnedStep = async (step: StepRunInput): Promise<StepRunResult> => {
   if (step.executor.handedOff?.(output) && output.delivery !== undefined) {
     // Handed to its own job, which may already have run and recorded the call's outcome (even when the
     // enqueue reported an error): only a row still `running` is ours. A Test run sets no `delivery`.
-    await prisma.workflowRunLog.updateMany({
+    const written = await prisma.workflowRunLog.updateMany({
       where: { runId: step.runId, stepId: step.node.id, status: "running" },
       data: { status, output, error, finishedAt },
     });
+    if (written.count === 0) {
+      // The job got there first: the run mirrors what its log row says, not this step's own result.
+      const row: StepLogRow | null = await prisma.workflowRunLog.findFirst({
+        where: { runId: step.runId, stepId: step.node.id },
+        select: stepLogSelect,
+      });
+      if (row) return resumedStep(step.executor, resultFromLogRow(row, row.status));
+    }
   } else {
     await prisma.workflowRunLog.update({ where, data: { status, output, error, finishedAt } });
   }

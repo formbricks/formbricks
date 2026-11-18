@@ -14,15 +14,20 @@ const { runFindMany, runUpdateMany, logUpdateMany, logFindMany } = vi.hoisted(()
   logFindMany: vi.fn(),
 }));
 const { warn, error } = vi.hoisted(() => ({ warn: vi.fn(), error: vi.fn() }));
-
-vi.mock("@formbricks/database", () => {
-  const prisma = {
+const prismaMock = vi.hoisted(() => {
+  const prisma: {
+    workflowRun: { findMany: typeof runFindMany; updateMany: typeof runUpdateMany };
+    workflowRunLog: { updateMany: typeof logUpdateMany; findMany: typeof logFindMany };
+    $transaction: (fn: (tx: unknown) => Promise<unknown>) => Promise<unknown>;
+  } = {
     workflowRun: { findMany: runFindMany, updateMany: runUpdateMany },
     workflowRunLog: { updateMany: logUpdateMany, findMany: logFindMany },
-    $transaction: async (run: (tx: unknown) => Promise<unknown>) => run(prisma),
+    $transaction: async (fn) => fn(prisma),
   };
-  return { prisma };
+  return prisma;
 });
+
+vi.mock("@formbricks/database", () => ({ prisma: prismaMock }));
 vi.mock("@formbricks/logger", () => ({ logger: { warn, error } }));
 
 const NOW = new Date("2026-07-01T12:00:00.000Z");
@@ -223,37 +228,51 @@ describe("failInterruptedTestRuns", () => {
   const minutesAgo = (minutes: number) => new Date(NOW.getTime() - minutes * 60 * 1000);
   interface FakeRun {
     id: string;
+    workspaceId: string;
     isDryRun: boolean;
     status: string;
     createdAt: Date;
     error?: string;
   }
   let runs: FakeRun[];
+  const run = (id: string, isDryRun: boolean, status: string, createdAt: Date): FakeRun => ({
+    id,
+    workspaceId: `ws_${id}`,
+    isDryRun,
+    status,
+    createdAt,
+  });
 
   // The runs table as the sweep's filters see it, so the test checks which runs it ends, not its query.
   type RunWhere = {
-    id?: { in: string[] };
+    id?: string | { in: string[] };
+    workspaceId?: string;
     isDryRun?: boolean;
     status?: { in: string[] };
     createdAt?: { lt: Date };
   };
+  const idMatches = (where: RunWhere, id: string) =>
+    where.id === undefined || (typeof where.id === "string" ? where.id === id : where.id.in.includes(id));
   const matching = (where: RunWhere) =>
     runs.filter(
-      (run) =>
-        (where.id === undefined || where.id.in.includes(run.id)) &&
-        (where.isDryRun === undefined || run.isDryRun === where.isDryRun) &&
-        (where.status === undefined || where.status.in.includes(run.status)) &&
-        (where.createdAt === undefined || run.createdAt < where.createdAt.lt)
+      (row) =>
+        idMatches(where, row.id) &&
+        (where.workspaceId === undefined || row.workspaceId === where.workspaceId) &&
+        (where.isDryRun === undefined || row.isDryRun === where.isDryRun) &&
+        (where.status === undefined || where.status.in.includes(row.status)) &&
+        (where.createdAt === undefined || row.createdAt < where.createdAt.lt)
     );
+  const skippedStepRuns = () =>
+    logUpdateMany.mock.calls.map((call) => (call[0] as { where: { runId: string } }).where.runId).sort();
 
   beforeEach(() => {
     runs = [
-      { id: "test_queued", isDryRun: true, status: "queued", createdAt: minutesAgo(11) },
-      { id: "test_running", isDryRun: true, status: "running", createdAt: minutesAgo(30) },
-      { id: "test_young", isDryRun: true, status: "running", createdAt: minutesAgo(9) },
-      { id: "test_done", isDryRun: true, status: "completed", createdAt: minutesAgo(60) },
-      { id: "real_queued", isDryRun: false, status: "queued", createdAt: minutesAgo(120) },
-      { id: "real_running", isDryRun: false, status: "running", createdAt: minutesAgo(120) },
+      run("test_queued", true, "queued", minutesAgo(11)),
+      run("test_running", true, "running", minutesAgo(30)),
+      run("test_young", true, "running", minutesAgo(9)),
+      run("test_done", true, "completed", minutesAgo(60)),
+      run("real_queued", false, "queued", minutesAgo(120)),
+      run("real_running", false, "running", minutesAgo(120)),
     ];
     runFindMany.mockImplementation(
       async ({
@@ -262,23 +281,26 @@ describe("failInterruptedTestRuns", () => {
         take,
       }: {
         where: RunWhere;
-        orderBy?: { createdAt: "asc" };
+        orderBy?: { createdAt: "asc" | "desc" };
         take?: number;
       }) => {
         const hit = matching(where);
-        if (orderBy) hit.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-        return hit.slice(0, take).map(({ id }) => ({ id }));
+        if (orderBy) {
+          const direction = orderBy.createdAt === "asc" ? 1 : -1;
+          hit.sort((a, b) => direction * (a.createdAt.getTime() - b.createdAt.getTime()));
+        }
+        return hit.slice(0, take).map(({ id, workspaceId }) => ({ id, workspaceId }));
       }
     );
     runUpdateMany.mockImplementation(async ({ where, data }: { where: RunWhere; data: Partial<FakeRun> }) => {
       const hit = matching(where);
-      for (const run of hit) Object.assign(run, data);
+      for (const row of hit) Object.assign(row, data);
       return { count: hit.length };
     });
     logUpdateMany.mockResolvedValue({ count: 1 });
   });
 
-  const statusOf = (id: string) => runs.find((run) => run.id === id);
+  const statusOf = (id: string) => runs.find((row) => row.id === id);
 
   test("fails a Test run still queued or running after 10 minutes, in one sweep", async () => {
     const result = await failInterruptedTestRuns({ now: NOW });
@@ -286,11 +308,22 @@ describe("failInterruptedTestRuns", () => {
     for (const id of ["test_queued", "test_running"]) {
       expect(statusOf(id)).toMatchObject({ status: "failed", error: "Test run was interrupted" });
     }
-    const [{ where, data }] = logUpdateMany.mock.calls[0];
-    expect([...where.runId.in].sort()).toEqual(["test_queued", "test_running"]);
-    expect(where.status).toBe("running");
-    expect(data).toEqual({ status: "skipped", error: "Test run was interrupted", finishedAt: NOW });
+    expect(skippedStepRuns()).toEqual(["test_queued", "test_running"]);
+    expect(logUpdateMany.mock.calls[0][0].where.status).toBe("running");
+    expect(logUpdateMany.mock.calls[0][0].data).toEqual({
+      status: "skipped",
+      error: "Test run was interrupted",
+      finishedAt: NOW,
+    });
     expect(result).toEqual({ scanned: 2, failed: 2 });
+  });
+
+  test("writes each run only within the workspace it was found in", async () => {
+    await failInterruptedTestRuns({ now: NOW });
+
+    for (const [args] of runUpdateMany.mock.calls) {
+      expect(args.where.workspaceId).toBe(`ws_${args.where.id as string}`);
+    }
   });
 
   test("leaves a Test run younger than 10 minutes, a finished one, and every real run untouched", async () => {
@@ -302,29 +335,59 @@ describe("failInterruptedTestRuns", () => {
     expect(statusOf("real_running")?.status).toBe("running");
   });
 
-  test("is not reported as a workflow failure, and the scan is bounded, oldest first", async () => {
+  test("is not reported as a workflow failure", async () => {
     await failInterruptedTestRuns({ now: NOW });
 
     expect(mockCaptureWorkflowRunFailed).not.toHaveBeenCalled();
   });
 
   test("ends at most 250 runs per sweep, oldest first, and leaves the rest for the next one", async () => {
-    runs = Array.from({ length: 251 }, (_, index) => ({
-      id: `test_${index.toString()}`,
-      isDryRun: true,
-      status: "running",
-      createdAt: minutesAgo(300 - index),
-    }));
+    // Seeded newest first, so only a scan that asks for the oldest first ends the oldest run.
+    runs = Array.from({ length: 251 }, (_, index) =>
+      run(`test_${index.toString()}`, true, "running", minutesAgo(50 + index))
+    );
 
     const result = await failInterruptedTestRuns({ now: NOW });
 
     expect(result).toEqual({ scanned: 250, failed: 250 });
-    expect(statusOf("test_0")?.status).toBe("failed");
-    expect(statusOf("test_250")?.status).toBe("running");
+    expect(statusOf("test_250")?.status).toBe("failed");
+    expect(statusOf("test_0")?.status).toBe("running");
+  });
+
+  test("a run that can't be written rolls back alone and stays eligible; the others still end", async () => {
+    logUpdateMany.mockImplementation(async ({ where }: { where: { runId: string } }) => {
+      if (where.runId === "test_running") throw new Error("lock timeout");
+      return { count: 1 };
+    });
+    const transaction = prismaMock.$transaction;
+    const snapshot = new Map<string, FakeRun>();
+    prismaMock.$transaction = async (fn: (tx: unknown) => Promise<unknown>) => {
+      for (const row of runs) snapshot.set(row.id, { ...row });
+      try {
+        return await fn(prismaMock);
+      } catch (error) {
+        runs = runs.map((row) => snapshot.get(row.id) ?? row);
+        throw error;
+      }
+    };
+
+    try {
+      const result = await failInterruptedTestRuns({ now: NOW });
+
+      expect(statusOf("test_queued")?.status).toBe("failed");
+      expect(statusOf("test_running")?.status).toBe("running");
+      expect(result).toEqual({ scanned: 2, failed: 1 });
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({ workflowRunId: "test_running" }),
+        "Could not mark an interrupted Test run failed"
+      );
+    } finally {
+      prismaMock.$transaction = transaction;
+    }
   });
 
   test("does nothing when no Test run was interrupted", async () => {
-    runs = runs.filter((run) => !["test_queued", "test_running"].includes(run.id));
+    runs = runs.filter((row) => !["test_queued", "test_running"].includes(row.id));
 
     const result = await failInterruptedTestRuns({ now: NOW });
 

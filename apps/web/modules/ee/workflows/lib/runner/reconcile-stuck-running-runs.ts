@@ -244,27 +244,41 @@ export const failInterruptedTestRuns = async ({
     },
     orderBy: { createdAt: "asc" },
     take: WORKFLOW_RUN_RECONCILE_BATCH_SIZE,
-    select: { id: true },
+    select: { id: true, workspaceId: true },
   });
   if (interrupted.length === 0) return { scanned: 0, failed: 0 };
 
-  const runIds = interrupted.map((run) => run.id);
-  // One transaction, so a run is never left failed with a step still running: on an error both roll
-  // back and the next sweep retries the run.
-  const failed = await prisma.$transaction(async (tx) => {
-    const result = await tx.workflowRun.updateMany({
-      where: { id: { in: runIds }, isDryRun: true, status: { in: [...UNFINISHED_STATUSES] } },
-      data: { status: "failed", error: INTERRUPTED_TEST_RUN_ERROR, lastErrorAt: now, finishedAt: now },
-    });
-    // A Test run's effects are fakes, so a step left `running` sent nothing.
-    await tx.workflowRunLog.updateMany({
-      where: { runId: { in: runIds }, status: "running" },
-      data: { status: "skipped", error: INTERRUPTED_TEST_RUN_ERROR, finishedAt: now },
-    });
-    return result;
-  });
+  let failed = 0;
+  for (const run of interrupted) {
+    // One transaction per run, so a run is never left failed with a step still running, and a run that
+    // can't be written (a lock, a timeout) rolls back alone and stays eligible for the next sweep.
+    try {
+      failed += await prisma.$transaction(async (tx) => {
+        const result = await tx.workflowRun.updateMany({
+          where: {
+            id: run.id,
+            workspaceId: run.workspaceId,
+            isDryRun: true,
+            status: { in: [...UNFINISHED_STATUSES] },
+          },
+          data: { status: "failed", error: INTERRUPTED_TEST_RUN_ERROR, lastErrorAt: now, finishedAt: now },
+        });
+        if (result.count === 0) return 0;
+        // A Test run's effects are fakes, so a step left `running` sent nothing.
+        await tx.workflowRunLog.updateMany({
+          where: { runId: run.id, status: "running" },
+          data: { status: "skipped", error: INTERRUPTED_TEST_RUN_ERROR, finishedAt: now },
+        });
+        return result.count;
+      });
+    } catch (error) {
+      logger.error(
+        { ...logContext, err: error, workflowRunId: run.id, workspaceId: run.workspaceId },
+        "Could not mark an interrupted Test run failed"
+      );
+    }
+  }
 
-  if (failed.count > 0)
-    logger.warn({ ...logContext, failed: failed.count }, "Interrupted Test runs marked failed");
-  return { scanned: interrupted.length, failed: failed.count };
+  if (failed > 0) logger.warn({ ...logContext, failed }, "Interrupted Test runs marked failed");
+  return { scanned: interrupted.length, failed };
 };
