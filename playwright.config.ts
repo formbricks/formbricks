@@ -70,8 +70,8 @@ export default defineConfig({
        machine with the parallel suite: with 4 workers on the app's own vCPUs the measurement is
        noise. Depending on "chromium" makes this project start only once that one has finished.
        Dependency projects ignore CLI file and grep filters, so `pnpm test:e2e security.spec.ts` or
-       `--project=chromium-timing` runs the whole chromium project first; add `--no-deps` to run only
-       the timing test. One worker, so two @timing tests never run beside each other either. */
+       `--project=chromium-timing` runs the whole chromium project first. To run only the timing test,
+       use `--project=chromium-timing --no-deps`: `--no-deps` alone puts both projects in one phase. One worker, so two @timing tests never run beside each other either. */
     {
       name: "chromium-timing",
       use: { ...devices["Desktop Chrome"] },
