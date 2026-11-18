@@ -1,0 +1,16 @@
+---
+title: "6.3: Security hardening"
+description: "Security changes in 6.3 that change how an instance is configured, rolled back or operated."
+icon: "shield-halved"
+---
+
+**Applies to:** the upgrade to 6.3.
+
+## Auth base URL falls back to `WEBAPP_URL`
+
+Formbricks resolves the URL that sign-in links, OAuth redirects and the cross-site request check are built from as
+`BETTER_AUTH_URL`, then `NEXTAUTH_URL`, then (new in 6.3) `WEBAPP_URL`. `WEBAPP_URL` also joins the trusted origins.
+
+Before 6.3, an instance that set only `WEBAPP_URL` took that URL from each request's `Host` header, so a proxy that
+forwards any `Host` let the caller choose it. Nothing to do if you set `BETTER_AUTH_URL` or `NEXTAUTH_URL`. If you set
+neither, check that `WEBAPP_URL` is the public URL your users sign in on.
