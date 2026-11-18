@@ -2054,6 +2054,23 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
       ).toEqual({ [STORAGE_KEY]: "x" });
     });
 
+    test("a stored true/false on a number field counts as 0, not NaN", () => {
+      expect(
+        calculate(
+          buildSurvey([], computedRow("number", 0)),
+          {
+            id: "a1",
+            objective: "calculate",
+            variableId: STORAGE_KEY,
+            operator: "add",
+            value: { type: "static", value: 3 },
+          },
+          {},
+          { [STORAGE_KEY]: false }
+        )
+      ).toEqual({ [STORAGE_KEY]: 3 });
+    });
+
     test("a calculation on a field the survey does not declare is skipped", () => {
       expect(
         calculate(

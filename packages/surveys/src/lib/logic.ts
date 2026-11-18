@@ -590,12 +590,18 @@ const evaluateSingleCondition = (
   }
 };
 
-/** A variable's value, or the one-step operators' starting value when it has none yet. */
+/** A value the one-step operators read or write. */
+type TCalculationValue = number | string;
+
+/**
+ * A variable's value, or the one-step operators' starting value when it has none yet. A stored
+ * true/false is not a number, so a number field starts from 0 rather than `Number("true")` (NaN).
+ */
 const withDefaultValue = (
   value: TResponseVariables[string] | undefined,
   dataType: string
-): number | string => {
-  if (typeof value === "boolean") return String(value);
+): TCalculationValue => {
+  if (typeof value === "boolean") return dataType === "number" ? 0 : String(value);
   return value ?? (dataType === "number" ? 0 : "");
 };
 
@@ -605,8 +611,8 @@ const getCalculationOperand = (
   data: TResponseData,
   calculations: TResponseVariables,
   dataType: string
-): string | number | undefined => {
-  let operandValue: string | number | undefined;
+): TCalculationValue | undefined => {
+  let operandValue: TCalculationValue | undefined;
 
   // Determine the operand value based on the action.value type
   switch (action.value.type) {
@@ -642,9 +648,9 @@ const getCalculationOperand = (
 /** Applies a one-step operator; `undefined` for a division by zero. */
 const applyCalculationOperator = (
   operator: TActionCalculate["operator"],
-  currentValue: number | string,
-  operandValue: number | string
-): number | string | undefined => {
+  currentValue: TCalculationValue,
+  operandValue: TCalculationValue
+): TCalculationValue | undefined => {
   switch (operator) {
     case "add":
       return Number(currentValue) + Number(operandValue);
