@@ -253,7 +253,7 @@ describe("Survey Utils", () => {
     });
 
     test("should default to updatedAt for unknown sortBy value", () => {
-      const result = buildOrderByClause("invalidSortBy" as any);
+      const result = buildOrderByClause("invalidSortBy" as Parameters<typeof buildOrderByClause>[0]);
       expect(result).toEqual([{ updatedAt: "desc" }]);
     });
   });
@@ -291,7 +291,8 @@ describe("Survey Utils", () => {
     test("should handle surveys that are not TSurvey but TJsWorkspaceStateSurvey (no segment)", () => {
       const surveys = [
         { id: "js1", name: "JS Survey 1" }, // TJsWorkspaceStateSurvey like, no segment property
-      ] as any[]; // Using any[] to simulate mixed types or types without segment
+        // A workspace-state survey carries no segment
+      ] as Parameters<typeof anySurveyHasFilters>[0];
       expect(anySurveyHasFilters(surveys)).toBe(false);
     });
   });

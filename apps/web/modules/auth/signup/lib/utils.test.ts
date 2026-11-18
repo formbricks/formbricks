@@ -17,7 +17,7 @@ describe("verifyTurnstileToken", () => {
 
   test("should return true when verification is successful", async () => {
     const mockResponse = { success: true };
-    (global.fetch as any).mockResolvedValue({
+    vi.mocked(global.fetch, { partial: true }).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue(mockResponse),
     });
@@ -36,7 +36,7 @@ describe("verifyTurnstileToken", () => {
   });
 
   test("should return false when response is not ok", async () => {
-    (global.fetch as any).mockResolvedValue({
+    vi.mocked(global.fetch, { partial: true }).mockResolvedValue({
       ok: false,
       status: 400,
     });
@@ -46,7 +46,7 @@ describe("verifyTurnstileToken", () => {
   });
 
   test("should return false when verification fails", async () => {
-    (global.fetch as any).mockRejectedValue(new Error("Network error"));
+    vi.mocked(global.fetch).mockRejectedValue(new Error("Network error"));
 
     const result = await verifyTurnstileToken(secretKey, token);
     expect(result).toBe(false);
@@ -55,7 +55,7 @@ describe("verifyTurnstileToken", () => {
   test("should return false when request times out", async () => {
     const mockAbortError = new Error("The operation was aborted");
     mockAbortError.name = "AbortError";
-    (global.fetch as any).mockRejectedValue(mockAbortError);
+    vi.mocked(global.fetch).mockRejectedValue(mockAbortError);
 
     const result = await verifyTurnstileToken(secretKey, token);
     expect(result).toBe(false);

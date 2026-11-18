@@ -13,7 +13,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(structuredClone).mockImplementation((obj) => JSON.parse(JSON.stringify(obj)));
   // Mock getLocalizedValue to return the value from the object
-  vi.mocked(i18nUtils.getLocalizedValue).mockImplementation((obj: any, lang: string) => obj?.[lang] || "");
+  vi.mocked(i18nUtils.getLocalizedValue).mockImplementation((obj, lang: string) => obj?.[lang] || "");
 });
 
 describe("Template Utilities", () => {
@@ -24,7 +24,7 @@ describe("Template Utilities", () => {
         headline: { default: "Question about $[workspaceName]?" },
       } as unknown as TSurveyElement;
 
-      const result = replaceElementPresetPlaceholders(element, undefined as any);
+      const result = replaceElementPresetPlaceholders(element, undefined);
 
       expect(result).toEqual(element);
     });

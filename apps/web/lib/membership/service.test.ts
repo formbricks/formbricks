@@ -85,12 +85,12 @@ describe("Membership Service", () => {
         membership: {
           findUnique: vi.fn().mockResolvedValue(mockMembership),
         },
-      } as any;
+      } as unknown as Parameters<typeof getMembershipByUserIdOrganizationId>[2];
 
       const result = await getMembershipByUserIdOrganizationId(mockUserId, mockOrgId, tx);
 
       expect(result).toEqual(mockMembership);
-      expect(tx.membership.findUnique).toHaveBeenCalledWith({
+      expect(tx?.membership.findUnique).toHaveBeenCalledWith({
         where: {
           userId_organizationId: {
             userId: mockUserId,
@@ -120,7 +120,7 @@ describe("Membership Service", () => {
         role: "member",
       } as TMembership;
 
-      vi.mocked(prisma.membership.create).mockResolvedValue(mockCreatedMembership as any);
+      vi.mocked(prisma.membership.create).mockResolvedValue(mockCreatedMembership);
 
       const result = await createMembership(mockOrgId, mockUserId, mockMembershipData);
       expect(result).toEqual(mockCreatedMembership);
@@ -143,7 +143,7 @@ describe("Membership Service", () => {
         role: "member",
       } as TMembership;
 
-      vi.mocked(prisma.membership.findUnique).mockResolvedValue(existingMembership as any);
+      vi.mocked(prisma.membership.findUnique).mockResolvedValue(existingMembership);
 
       const result = await createMembership(mockOrgId, mockUserId, mockMembershipData);
       expect(result).toEqual(existingMembership);
@@ -165,8 +165,8 @@ describe("Membership Service", () => {
         role: "owner",
       } as TMembership;
 
-      vi.mocked(prisma.membership.findUnique).mockResolvedValue(existingMembership as any);
-      vi.mocked(prisma.membership.update).mockResolvedValue(updatedMembership as any);
+      vi.mocked(prisma.membership.findUnique).mockResolvedValue(existingMembership);
+      vi.mocked(prisma.membership.update).mockResolvedValue(updatedMembership);
 
       const result = await createMembership(mockOrgId, mockUserId, { ...mockMembershipData, role: "owner" });
       expect(result).toEqual(updatedMembership);
@@ -198,7 +198,8 @@ describe("Membership Service", () => {
           findUnique: vi.fn().mockResolvedValue(null),
           update: vi.fn(),
         },
-      } as any;
+        // Only the delegates the call uses.
+      } as unknown as Prisma.TransactionClient;
 
       await expect(
         createMembership(mockOrgId, mockUserId, mockMembershipData, {

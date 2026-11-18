@@ -230,7 +230,7 @@ export const ThemeStyling = ({
                 <StylingAppearanceProvider appearance={appearance}>
                   <div className="grid grid-cols-2 items-end gap-4">
                     <ColorField
-                      form={form}
+                      form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
                       name="brandColor.light"
                       label={t("workspace.surveys.edit.brand_color")}
                       description={t("workspace.surveys.edit.brand_color_description")}

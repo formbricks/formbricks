@@ -1,10 +1,10 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 
 type Option = {
   label: string;
-  icon?: any;
+  icon?: LucideIcon;
   value: string | number;
   disabled?: boolean;
 };
@@ -13,7 +13,7 @@ type DropdownProps = {
   readonly options: Option[];
   readonly disabled?: boolean;
   readonly defaultValue: string | number;
-  readonly onSelect: (option: Option) => any;
+  readonly onSelect: (option: Option) => void;
 };
 
 export const Dropdown = ({ options, defaultValue, onSelect, disabled = false }: DropdownProps) => {

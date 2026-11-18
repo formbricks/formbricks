@@ -1,4 +1,4 @@
-import { SurveysPage, metadata } from "@/modules/survey/list/page";
+import { SurveysPage } from "@/modules/survey/list/page";
 
-export { metadata };
+export { generateMetadata } from "@/modules/survey/list/page";
 export default SurveysPage;

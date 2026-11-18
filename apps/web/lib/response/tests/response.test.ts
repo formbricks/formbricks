@@ -95,15 +95,23 @@ beforeEach(() => {
   prisma.response.findMany.mockResolvedValue([mockResponse]);
   prisma.response.delete.mockResolvedValue(mockResponse);
 
-  prisma.display.delete.mockResolvedValue({ ...mockDisplay, status: "seen" } as unknown as any);
+  vi.mocked(prisma.display.delete, { partial: true }).mockResolvedValue(mockDisplay);
 
   prisma.response.count.mockResolvedValue(1);
 
-  prisma.organization.findFirst.mockResolvedValue(mockOrganizationOutput as unknown as any);
-  prisma.organization.findUnique.mockResolvedValue(mockOrganizationOutput as unknown as any);
-  prisma.organizationBilling.findUnique.mockResolvedValue(mockOrganizationBillingRecord as unknown as any);
+  prisma.organization.findFirst.mockResolvedValue(
+    mockOrganizationOutput as unknown as Awaited<ReturnType<typeof prisma.organization.findFirst>>
+  );
+  prisma.organization.findUnique.mockResolvedValue(
+    mockOrganizationOutput as unknown as Awaited<ReturnType<typeof prisma.organization.findUnique>>
+  );
+  vi.mocked(prisma.organizationBilling.findUnique, { partial: true }).mockResolvedValue(
+    mockOrganizationBillingRecord
+  );
   prisma.workspace.findMany.mockResolvedValue([]);
-  prisma.workspace.findUnique.mockResolvedValue({ organizationId: mockOrganizationOutput.id } as any);
+  vi.mocked(prisma.workspace.findUnique, { partial: true }).mockResolvedValue({
+    organizationId: mockOrganizationOutput.id,
+  });
   // @ts-expect-error -- the Prisma client is mocked, so its methods carry no mock typings
   prisma.response.aggregate.mockResolvedValue({ _count: { id: 1 } });
 });
@@ -194,7 +202,9 @@ describe("Tests for getResponseWithQuotas service", () => {
     });
 
     test("Returns an empty quotas array when no quotaLinks are screened in", async () => {
-      prisma.response.findUnique.mockResolvedValue({ ...mockResponse, quotaLinks: [] } as any);
+      prisma.response.findUnique.mockResolvedValue({ ...mockResponse, quotaLinks: [] } as Awaited<
+        ReturnType<typeof prisma.response.findUnique>
+      >);
 
       const result = await getResponseWithQuotas(mockResponse.id);
 
@@ -202,7 +212,9 @@ describe("Tests for getResponseWithQuotas service", () => {
     });
 
     test("Selects only screened-in quotaLinks", async () => {
-      prisma.response.findUnique.mockResolvedValue({ ...mockResponse, quotaLinks: [] } as any);
+      prisma.response.findUnique.mockResolvedValue({ ...mockResponse, quotaLinks: [] } as Awaited<
+        ReturnType<typeof prisma.response.findUnique>
+      >);
 
       await getResponseWithQuotas(mockResponse.id);
 
@@ -459,7 +471,7 @@ describe("Tests for deleteResponse service", () => {
         delete: vi.fn(),
       },
     };
-    (prisma.$transaction as unknown as ReturnType<typeof vi.fn>) = vi.fn(async (cb: any) => cb(mockTx));
+    (prisma.$transaction as unknown as ReturnType<typeof vi.fn>) = vi.fn(async (cb) => cb(mockTx));
   });
 
   describe("Happy Path", () => {

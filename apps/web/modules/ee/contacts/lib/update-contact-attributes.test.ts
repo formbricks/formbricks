@@ -82,7 +82,7 @@ describe("updateContactAttributes", () => {
       email: "john@example.com",
     };
 
-    vi.mocked(getContact).mockResolvedValue(mockContact as any);
+    vi.mocked(getContact, { partial: true }).mockResolvedValue(mockContact);
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockCurrentKeys);
     vi.mocked(updateAttributes).mockResolvedValue({
       success: true,
@@ -165,7 +165,7 @@ describe("updateContactAttributes", () => {
       newCustomField: "custom value",
     };
 
-    vi.mocked(getContact).mockResolvedValue(mockContact as any);
+    vi.mocked(getContact, { partial: true }).mockResolvedValue(mockContact);
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockCurrentKeys);
     vi.mocked(updateAttributes).mockResolvedValue({
       success: true,
@@ -225,7 +225,7 @@ describe("updateContactAttributes", () => {
       firstName: "John",
     };
 
-    vi.mocked(getContact).mockResolvedValue(mockContact as any);
+    vi.mocked(getContact, { partial: true }).mockResolvedValue(mockContact);
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockCurrentKeys);
     vi.mocked(updateAttributes).mockResolvedValue({
       success: true,
@@ -275,7 +275,7 @@ describe("updateContactAttributes", () => {
       email: "existing@example.com",
     };
 
-    vi.mocked(getContact).mockResolvedValue(mockContact as any);
+    vi.mocked(getContact, { partial: true }).mockResolvedValue(mockContact);
     vi.mocked(getContactAttributeKeys).mockResolvedValueOnce(mockCurrentKeys);
     vi.mocked(updateAttributes).mockResolvedValue({
       success: true,

@@ -1,10 +1,12 @@
 "use client";
 
 import { CalendarIcon, HashIcon, TagIcon, TrashIcon } from "lucide-react";
+import type { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { formatLocalDay, parseStoredDay } from "@/lib/utils/datetime";
 import { toUTCDateString } from "@/modules/ee/contacts/segments/lib/date-utils";
+import type { TEditContactAttributesForm } from "@/modules/ee/contacts/types/contact";
 import { Button } from "@/modules/ui/components/button";
 import { DatePicker } from "@/modules/ui/components/date-picker";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
@@ -26,7 +28,7 @@ type KeyOption = {
 interface AttributeFieldRowProps {
   readonly index: number;
   readonly fieldId: string;
-  readonly form: any;
+  readonly form: UseFormReturn<TEditContactAttributesForm>;
   readonly attributeKeys: TContactAttributeKey[];
   readonly watchedAttributes: { key: string; value: string }[];
   readonly allKeyOptions: KeyOption[];

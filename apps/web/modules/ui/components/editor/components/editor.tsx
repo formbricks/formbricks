@@ -76,7 +76,7 @@ export type TextEditorProps = {
 
 const editorConfig = {
   theme: exampleTheme,
-  onError(error: any) {
+  onError(error: Error) {
     throw error;
   },
   namespace: "",

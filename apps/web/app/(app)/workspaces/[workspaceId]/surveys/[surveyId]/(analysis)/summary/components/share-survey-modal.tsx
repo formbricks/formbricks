@@ -87,15 +87,16 @@ export const ShareSurveyModal = ({
         icon: Link2Icon,
         title: t("workspace.surveys.share.anonymous_links.nav_title"),
         description: t("workspace.surveys.share.anonymous_links.description"),
-        componentType: AnonymousLinksTab,
-        componentProps: {
-          survey,
-          publicDomain,
-          setSurveyUrl,
-          locale: user.locale,
-          surveyUrl,
-          isReadOnly,
-        },
+        content: (
+          <AnonymousLinksTab
+            survey={survey}
+            publicDomain={publicDomain}
+            setSurveyUrl={setSurveyUrl}
+            locale={user.locale}
+            surveyUrl={surveyUrl}
+            isReadOnly={isReadOnly}
+          />
+        ),
       },
       {
         id: ShareViaType.PERSONAL_LINKS,
@@ -104,14 +105,15 @@ export const ShareSurveyModal = ({
         icon: UserIcon,
         title: t("workspace.surveys.share.personal_links.nav_title"),
         description: t("workspace.surveys.share.personal_links.description"),
-        componentType: PersonalLinksTab,
-        componentProps: {
-          surveyId: survey.id,
-          segments,
-          isContactsEnabled,
-          isFormbricksCloud,
-          enterpriseLicenseRequestFormUrl,
-        },
+        content: (
+          <PersonalLinksTab
+            surveyId={survey.id}
+            segments={segments}
+            isContactsEnabled={isContactsEnabled}
+            isFormbricksCloud={isFormbricksCloud}
+            enterpriseLicenseRequestFormUrl={enterpriseLicenseRequestFormUrl}
+          />
+        ),
         disabled: survey.singleUse?.enabled,
       },
       {
@@ -121,8 +123,7 @@ export const ShareSurveyModal = ({
         icon: Code2Icon,
         title: t("workspace.surveys.share.embed_on_website.nav_title"),
         description: t("workspace.surveys.share.embed_on_website.description"),
-        componentType: WebsiteEmbedTab,
-        componentProps: { surveyUrl },
+        content: <WebsiteEmbedTab surveyUrl={surveyUrl} />,
         disabled: survey.singleUse?.enabled,
       },
       {
@@ -132,8 +133,7 @@ export const ShareSurveyModal = ({
         icon: MailIcon,
         title: t("workspace.surveys.share.send_email.nav_title"),
         description: t("workspace.surveys.share.send_email.description"),
-        componentType: EmailTab,
-        componentProps: { surveyId: survey.id, email },
+        content: <EmailTab surveyId={survey.id} email={email} />,
         disabled: survey.singleUse?.enabled,
       },
       {
@@ -143,8 +143,7 @@ export const ShareSurveyModal = ({
         icon: Share2Icon,
         title: t("workspace.surveys.share.social_media.title"),
         description: t("workspace.surveys.share.social_media.description"),
-        componentType: SocialMediaTab,
-        componentProps: { surveyUrl, surveyTitle: survey.name },
+        content: <SocialMediaTab surveyUrl={surveyUrl} surveyTitle={survey.name} />,
         disabled: survey.singleUse?.enabled,
       },
       {
@@ -154,8 +153,7 @@ export const ShareSurveyModal = ({
         icon: QrCodeIcon,
         title: t("workspace.surveys.summary.qr_code"),
         description: t("workspace.surveys.summary.qr_code_description"),
-        componentType: QRCodeTab,
-        componentProps: { surveyUrl },
+        content: <QRCodeTab surveyUrl={surveyUrl} />,
         disabled: survey.singleUse?.enabled,
       },
       {
@@ -165,8 +163,7 @@ export const ShareSurveyModal = ({
         icon: SquareStack,
         title: t("workspace.surveys.share.dynamic_popup.nav_title"),
         description: t("workspace.surveys.share.dynamic_popup.description"),
-        componentType: DynamicPopupTab,
-        componentProps: { surveyId: survey.id },
+        content: <DynamicPopupTab surveyId={survey.id} />,
       },
       {
         id: ShareSettingsType.LINK_SETTINGS,
@@ -175,8 +172,13 @@ export const ShareSurveyModal = ({
         icon: Settings,
         title: t("workspace.surveys.share.link_settings.title"),
         description: t("workspace.surveys.share.link_settings.description"),
-        componentType: LinkSettingsTab,
-        componentProps: { isReadOnly, locale: user.locale, isStorageConfigured },
+        content: (
+          <LinkSettingsTab
+            isReadOnly={isReadOnly}
+            locale={user.locale}
+            isStorageConfigured={isStorageConfigured}
+          />
+        ),
       },
       {
         id: ShareSettingsType.PRETTY_URL,
@@ -185,8 +187,7 @@ export const ShareSurveyModal = ({
         icon: Link2Icon,
         title: t("workspace.surveys.share.pretty_url.title"),
         description: t("workspace.surveys.share.pretty_url.description"),
-        componentType: PrettyUrlTab,
-        componentProps: { publicDomain, isReadOnly },
+        content: <PrettyUrlTab publicDomain={publicDomain} isReadOnly={isReadOnly} />,
       },
       {
         id: ShareSettingsType.CUSTOM_HTML,
@@ -195,9 +196,8 @@ export const ShareSurveyModal = ({
         icon: CodeIcon,
         title: t("workspace.surveys.share.custom_html.nav_title"),
         description: t("workspace.surveys.share.custom_html.description"),
-        componentType: CustomHtmlTab,
         // Survey head scripts take Manage access, not the Read & write that `isReadOnly` reflects.
-        componentProps: { workspaceCustomScripts, isReadOnly: !canManage },
+        content: <CustomHtmlTab workspaceCustomScripts={workspaceCustomScripts} isReadOnly={!canManage} />,
       },
     ];
 

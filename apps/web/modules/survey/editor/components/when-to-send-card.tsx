@@ -146,7 +146,7 @@ export const WhenToSendCard = ({
     setRandomizerToggle(!randomizerToggle);
   };
 
-  const handleInputSeconds = (e: any) => {
+  const handleInputSeconds = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = parseInt(e.target.value);
 
     if (value < 1 || Number.isNaN(value)) {
@@ -157,7 +157,7 @@ export const WhenToSendCard = ({
     setLocalSurvey(updatedSurvey);
   };
 
-  const handleTriggerDelay = (e: any) => {
+  const handleTriggerDelay = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = parseInt(e.target.value);
 
     if (value < 1 || Number.isNaN(value)) {

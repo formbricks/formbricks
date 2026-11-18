@@ -1,6 +1,7 @@
 import { createId } from "@paralleldrive/cuid2";
 import type { TFunction } from "i18next";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
+import type { TWorkspace } from "@formbricks/types/workspace";
 import { createI18nString } from "@/lib/i18n/utils";
 import { replaceElementPresetPlaceholders } from "@/lib/utils/templates";
 
@@ -177,5 +178,9 @@ export const universalElementPresets = {
 };
 
 /** A new element of `type`'s preset, with the workspace's name filled into its placeholders. */
-export const getElementDefaults = (type: string, workspace: any, t: TFunction) =>
+export const getElementDefaults = (
+  type: string,
+  workspace: Pick<TWorkspace, "name"> | undefined,
+  t: TFunction
+) =>
   replaceElementPresetPlaceholders(getElementPreset(type as TSurveyElementTypeEnum, t) as never, workspace);

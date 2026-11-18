@@ -72,7 +72,7 @@ describe("Response Utils", () => {
         { id: "no", label: { default: "No", de: "Nein" } },
         { id: "other", label: { default: "Other", de: "Andere" } },
       ],
-    } as any;
+    } as unknown as Parameters<typeof getChoiceIdByValue>[1];
 
     test("matches the default label", () => {
       expect(getChoiceIdByValue("No", element)).toBe("no");
@@ -89,12 +89,15 @@ describe("Response Utils", () => {
           { id: "first", label: { default: "Nein", de: "Erste" } },
           { id: "second", label: { default: "Second", de: "Nein" } },
         ],
-      };
+      } as Parameters<typeof getChoiceIdByValue>[1];
       expect(getChoiceIdByValue("Nein", clash, "de")).toBe("second");
     });
 
     test("falls back to the default label when the choice has no translation", () => {
-      const untranslated = { ...element, choices: [{ id: "c", label: { default: "Maybe" } }] };
+      const untranslated = {
+        ...element,
+        choices: [{ id: "c", label: { default: "Maybe" } }],
+      } as Parameters<typeof getChoiceIdByValue>[1];
       expect(getChoiceIdByValue("Maybe", untranslated, "de")).toBe("c");
     });
 
@@ -374,7 +377,7 @@ describe("Response Utils", () => {
       status: "inProgress",
     };
 
-    const ops: Array<[keyof TSurveyElementTypeEnum | string, any, any]> = [
+    const ops: Array<[string, NonNullable<TResponseFilterCriteria["data"]>[string], unknown]> = [
       ["submitted", { op: "submitted" }, { path: ["qText"], not: Prisma.DbNull }],
       ["filledOut", { op: "filledOut" }, { path: ["qText"], not: [] }],
       ["skipped", { op: "skipped" }, "OR"],
@@ -402,7 +405,9 @@ describe("Response Utils", () => {
         // for OR/NOT cases we just ensure the operator key exists
         if (expected === "OR" || expected === "NOT") {
           expect(JSON.stringify(result)).toMatch(
-            new RegExp(name === "skipped" ? `"OR":\\s*\\[` : `"not":"${filter.value}"`)
+            new RegExp(
+              name === "skipped" ? `"OR":\\s*\\[` : `"not":"${"value" in filter ? String(filter.value) : ""}"`
+            )
           );
         } else {
           expect(result.AND).toEqual([
@@ -2048,7 +2053,7 @@ describe("Response Utils", () => {
           contactAttributes: {},
           data: {},
           meta: {
-            url: null as any,
+            url: null,
             source: "newsletter",
           },
         },
@@ -2287,18 +2292,18 @@ describe("extractChoiceIdsFromResponse", () => {
 
     test("should handle null language parameter by defaulting to 'default'", () => {
       const responseValue = ["Option 1"];
-      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, null as any);
+      const result = extractChoiceIdsFromResponse(
+        responseValue,
+        multipleChoiceMultiQuestion,
+        null as unknown as Parameters<typeof extractChoiceIdsFromResponse>[2]
+      );
 
       expect(result).toEqual(["choice-1"]);
     });
 
     test("should handle undefined language parameter by defaulting to 'default'", () => {
       const responseValue = ["Option 1"];
-      const result = extractChoiceIdsFromResponse(
-        responseValue,
-        multipleChoiceMultiQuestion,
-        undefined as any
-      );
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, undefined);
 
       expect(result).toEqual(["choice-1"]);
     });
