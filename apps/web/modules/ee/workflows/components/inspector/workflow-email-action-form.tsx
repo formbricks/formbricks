@@ -15,13 +15,13 @@ import {
   isVariableEmailRecipient,
 } from "@formbricks/workflows";
 import { InspectorCard } from "@/modules/ee/workflows/components/inspector/inspector-card";
-import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspector/workflow-step-name-field";
 import { WorkflowEmailRecipientField } from "@/modules/ee/workflows/components/inspector/workflow-email-recipient-field";
 import { WorkflowEmailSurveyLinkSection } from "@/modules/ee/workflows/components/inspector/workflow-email-survey-link-section";
 import {
   WorkflowFieldError,
   WorkflowFieldLabel,
 } from "@/modules/ee/workflows/components/inspector/workflow-field";
+import { WorkflowStepNameField } from "@/modules/ee/workflows/components/inspector/workflow-step-name-field";
 import { useWorkflowVariablePicker } from "@/modules/ee/workflows/components/variable-picker/use-workflow-variable-picker";
 import { useWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
 import { useWorkflowNodeFieldFocus } from "@/modules/ee/workflows/hooks/use-workflow-node-field-focus";

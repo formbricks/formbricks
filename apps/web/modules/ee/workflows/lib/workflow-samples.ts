@@ -41,5 +41,4 @@ export const getStepResponseSamples = (
  * an error the author has no part in.
  */
 export const hasSavedWebhookTrigger = (workflow: Pick<TWorkflowResource, "definition"> | null): boolean =>
-  (workflow?.definition)?.trigger?.triggerType ===
-  WORKFLOW_TRIGGERS.WEBHOOK;
+  workflow?.definition?.trigger?.triggerType === WORKFLOW_TRIGGERS.WEBHOOK;

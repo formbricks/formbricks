@@ -106,7 +106,9 @@ test.describe("Workflows", () => {
       await page.getByRole("button", { name: "Write or paste the expected payload" }).click();
       const expectedPayload = page.getByRole("textbox", { name: "Response fields, JSON editor" });
       await expectedPayload.fill(JSON.stringify({ customer: { plan: "enterprise" } }));
-      await expect(page.getByText(/^Modified: /)).toBeVisible({ timeout: 15_000 });
+      await expect(page.getByText(/^Saved: .*New calls don’t change these fields\.$/)).toBeVisible({
+        timeout: 15_000,
+      });
 
       await page.getByRole("button", { name: "Test run" }).click();
 
@@ -152,9 +154,10 @@ test.describe("Workflows", () => {
       await page.getByRole("link", { name: "Runs" }).click();
       await page.waitForURL(`**/workflows/${workflowId}/runs`);
 
-      const runs = page.getByRole("table").getByRole("button");
+      // Test runs are hidden by default (the gear's Hide test runs). One workflow's runs share its
+      // trigger, so the list has no Trigger column.
+      const runs = page.getByTestId("workflow-runs-table").locator("tbody tr");
       await expect(runs).toHaveCount(1);
-      await expect(runs).toContainText("Webhook");
       await expect(runs).toContainText("Completed");
       await expect(runs).not.toContainText("Test");
 

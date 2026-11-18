@@ -80,7 +80,6 @@ describe("classifyTestRunError", () => {
   });
 });
 
-
 describe("getTestRunDrawerPayload", () => {
   const sample = { channel: "call" };
 
