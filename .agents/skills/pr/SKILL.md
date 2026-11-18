@@ -95,13 +95,10 @@ Spend every sentence on the change, its danger or its evidence. These are the us
 
 Pass the body from a file (`--body-file`, or the MCP tool's `body`), never through shell quoting.
 
-Once the PR is ready for review (not a draft), enable auto-merge with the **squash** method
-(`enable_pr_auto_merge`, or `gh pr merge --auto --squash`). GitHub then merges it once the required
-checks and reviews pass. Squash is the only method: it is also what keeps screenshots out of `main`
-([SCREENSHOTS.md](SCREENSHOTS.md), section 4).
-Read the method back from the result: the MCP tool has armed `MERGE` when asked for `SQUASH`. Any
-method but squash, disable auto-merge again and report it. If GitHub refuses, say why in your report
-rather than merging by hand.
+Once the PR is ready for review (not a draft), enable auto-merge (`enable_pr_auto_merge`, or
+`gh pr merge --auto`). `main` has a merge queue, so this queues the PR once the required checks and
+reviews pass, and the queue squashes it whatever method the tool reports. If GitHub refuses, say why in
+your report rather than merging by hand.
 
 Rewrite the body with every scope change or review fix, so it always describes the head commit.
 
@@ -116,7 +113,7 @@ checkbox under `## Breaking changes`. Until the branch carries the new workflow,
 - Every behaviour the diff changes has a Coverage row or an Open gaps entry.
 - A UI change has a before/after pair whose URLs load logged out; any other change says `No UI change`.
 - The body fits the budget, and every claim matches a check you ran on the head commit.
-- A PR marked ready has squash auto-merge enabled, or your report says why it is not.
+- A PR marked ready has auto-merge enabled, or your report says why it is not.
 
 ## Guardrails
 
