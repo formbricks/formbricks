@@ -45,6 +45,7 @@ const TypeCard = ({
   return (
     <button
       type="button"
+      // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a button styled as an option in a radiogroup; it has no native radio input to label
       role="radio"
       aria-checked={isSelected}
       onClick={onSelect}

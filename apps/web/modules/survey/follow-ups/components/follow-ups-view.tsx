@@ -66,7 +66,7 @@ export const FollowUpsView = ({
 
   return (
     <div className="mt-12 space-y-4 p-5">
-      <Alert variant="warning" role="status">
+      <Alert variant="warning" alertRole="status">
         <AlertTitle>{t("workspace.surveys.edit.follow_ups_deprecation_title")}</AlertTitle>
         <AlertDescription>
           {t("workspace.surveys.edit.follow_ups_deprecation_description", { date: sunsetDate })}
@@ -82,14 +82,14 @@ export const FollowUpsView = ({
           its follow-ups. The runtime already refuses to send them, so say so rather than leaving
           the list looking live. */}
       {!isSurveyFollowUpsAllowed && surveyFollowUps.length > 0 && (
-        <Alert variant="error" role="status">
+        <Alert variant="error" alertRole="status">
           <AlertTitle>{t("workspace.surveys.edit.follow_ups_inactive_title")}</AlertTitle>
           <AlertDescription>{t("workspace.surveys.edit.follow_ups_inactive_description")}</AlertDescription>
         </Alert>
       )}
 
       {isRestricted && (
-        <Alert variant="info" role="status">
+        <Alert variant="info" alertRole="status">
           <AlertTitle>{t("workspace.surveys.edit.follow_ups_restricted_title")}</AlertTitle>
           <AlertDescription>
             {t("workspace.surveys.edit.follow_ups_restricted_description", { workspace: workspaceName })}

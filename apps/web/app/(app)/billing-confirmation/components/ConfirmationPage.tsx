@@ -22,6 +22,7 @@ export const ConfirmationPage = () => {
   const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react/set-state-in-effect -- client-only: confetti and the window/sessionStorage reads below run after hydration
     setShowConfetti(true);
 
     if (globalThis.window === undefined) {

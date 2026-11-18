@@ -109,7 +109,7 @@ export const DeleteWorkspaceRender = ({
       )}
 
       {isDeleteDisabled && (
-        <Alert variant="warning" role="status">
+        <Alert variant="warning" alertRole="status">
           <AlertDescription>
             {!isOwnerOrManager
               ? t("workspace.general.only_owners_or_managers_can_delete_workspaces")

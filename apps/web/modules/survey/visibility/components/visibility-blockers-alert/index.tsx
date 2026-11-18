@@ -45,7 +45,7 @@ export const VisibilityBlockersAlert = ({
   if (blockerGroups.length === 0) return null;
 
   return (
-    <Alert variant="warning" size="default" role="status" className={className}>
+    <Alert variant="warning" size="default" alertRole="status" className={className}>
       <AlertTitle>{title ?? t("workspace.surveys.visibility.blocked_by_connections")}</AlertTitle>
       <AlertDescription>
         <ul className="list-disc space-y-0.5 pl-4">

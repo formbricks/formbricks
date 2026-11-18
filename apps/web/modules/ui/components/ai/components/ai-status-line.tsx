@@ -39,15 +39,20 @@ export const AiStatusLine = ({
   const [elapsedMs, setElapsedMs] = useState(0);
   const startedAtRef = useRef<number | null>(null);
 
+  // Starting or stopping resets the timer. Adjusted during render.
+  const [wasActive, setWasActive] = useState(isActive);
+  if (isActive !== wasActive) {
+    setWasActive(isActive);
+    setElapsedMs(0);
+  }
+
   useEffect(() => {
     if (!isActive) {
       startedAtRef.current = null;
-      setElapsedMs(0);
       return;
     }
 
     startedAtRef.current = Date.now();
-    setElapsedMs(0);
 
     const interval = setInterval(() => {
       const startedAt = startedAtRef.current;
@@ -71,12 +76,12 @@ export const AiStatusLine = ({
         an aria-atomic region wrapping a counter re-announces the whole line every second, which
         makes the component unusable with a screen reader.
 
-        `key` on the message makes React remount the span each time the phase changes, so the new
+        `key` on the message makes React remount the inner span each time the phase changes, so the new
         text fades in. Deliberately a fade on change rather than a continuous pulse: the icon is
         already breathing, and two elements pulsing opacity at once beat against each other — and
         text that never settles is harder to read, which is the opposite of the point.
       */}
-      <span role="status" aria-live="polite" aria-atomic="true">
+      <output aria-live="polite" aria-atomic="true">
         {/*
           Two spans, one animation each. Both on one element, the shimmer's `animation` shorthand —
           unlayered, so it outranks a Tailwind utility — would win outright and the phase fade would
@@ -85,7 +90,7 @@ export const AiStatusLine = ({
         <span key={message} className="inline-block animate-ai-phase-in">
           <span className="ai-shimmer-text">{message}</span>
         </span>
-      </span>
+      </output>
       {showTimer ? (
         <span aria-hidden="true" className="text-slate-400 tabular-nums">
           · {formatElapsed(elapsedMs)}

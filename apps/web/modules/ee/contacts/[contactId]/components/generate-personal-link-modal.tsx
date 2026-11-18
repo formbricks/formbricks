@@ -1,7 +1,7 @@
 "use client";
 
 import { CopyIcon, LinkIcon } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { copyToClipboard } from "@/lib/utils/clipboard";
@@ -47,12 +47,15 @@ export const GeneratePersonalLinkModal = ({
   const [isLoading, setIsLoading] = useState(false);
   const [generatedUrl, setGeneratedUrl] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
+  // Closing clears the selection and the generated link. Adjusted during render.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (!open) {
       setSelectedSurveyId(undefined);
       setGeneratedUrl("");
     }
-  }, [open]);
+  }
 
   const handleCopyUrl = useCallback(
     async (url: string) => {
