@@ -145,7 +145,7 @@
       "product_updates_title": "毎月の製品アップデートメール",
       "security_updates_description": "セキュリティ関連情報のみ、プライバシーポリシーが適用されます。",
       "security_updates_title": "セキュリティアップデート",
-      "signup_disabled": "このインスタンスでは新規登録を受け付けていません。参加するには、招待をリクエストしてください。",
+      "signup_disabled": "このインスタンスでは新規登録を受け付けていません。管理者に招待を依頼してください。",
       "terms_of_service": "利用規約",
       "title": "Formbricksアカウントを作成"
     },
