@@ -132,7 +132,9 @@ export const getWebhookSecretAction = authenticatedActionClient
       type: "workspace",
       id: workspaceId,
     });
-    await applyRateLimit(rateLimitConfigs.actions.stateMutation, workspaceId);
+    // Per user and its own budget: a reveal is a read, and keying it on the workspace let any writer spend the
+    // workspace's settings-write budget (and be spent by it).
+    await applyRateLimit(rateLimitConfigs.actions.webhookSecretReveal, ctx.user.id);
 
     const webhookResult = await getWebhookWithSecret(parsedInput.webhookId);
     if (!webhookResult.ok || webhookResult.data.secret === null) {

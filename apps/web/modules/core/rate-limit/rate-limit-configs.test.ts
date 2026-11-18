@@ -184,6 +184,7 @@ describe("rateLimitConfigs", () => {
         "validateSurveyPin",
         "twoFactorManage",
         "webhookTest",
+        "webhookSecretReveal",
         "heicConvert",
         "licenseRecheck",
         "unsplash",

@@ -59,6 +59,16 @@ describe("getWebhookSecretAction", () => {
     });
   });
 
+  test("spends the caller's own reveal budget, not the workspace's write budget", async () => {
+    await run(input);
+
+    expect(mocks.applyRateLimit).toHaveBeenCalledTimes(1);
+    expect(mocks.applyRateLimit).toHaveBeenCalledWith(
+      expect.objectContaining({ namespace: "action:webhook-secret-reveal" }),
+      "user-1"
+    );
+  });
+
   test("refuses a read-only caller before the secret is read", async () => {
     vi.mocked(assertCan).mockRejectedValueOnce(new AuthorizationError("Not authorized"));
 
