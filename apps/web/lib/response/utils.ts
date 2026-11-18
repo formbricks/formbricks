@@ -381,6 +381,10 @@ export const extractSurveyDetails = (survey: TSurvey, responses: TResponse[]) =>
 const newExportRow = (fixedColumns: Record<string, string | number>): Record<string, string | number> =>
   Object.assign(Object.create(null) as Record<string, string | number>, fixedColumns);
 
+/** The first of `keys` that `answers` holds a value under. */
+const findAnsweredKey = (keys: string[], answers: Record<string, string>) =>
+  keys.find((key) => key && answers[key] !== undefined);
+
 export const getResponsesJson = (
   survey: TSurvey,
   responses: TResponseWithQuotas[],
@@ -444,7 +448,7 @@ export const getResponsesJson = (
             const rowKeys = row
               ? [getLocalizedValue(row.label, responseLanguageCode), row.label.default]
               : [];
-            const rowKey = rowKeys.find((key) => key && rowAnswers[key] !== undefined);
+            const rowKey = findAnsweredKey(rowKeys, rowAnswers);
             jsonData[idx][headline] = rowKey ? rowAnswers[rowKey] : "";
           }
         });
@@ -507,113 +511,101 @@ export const getResponsesJson = (
 export const getResponseContactAttributes = (
   responses: Pick<TResponse, "contactAttributes" | "data" | "meta">[]
 ): TSurveyContactAttributes => {
-  try {
-    let attributes: TSurveyContactAttributes = {};
+  const attributes: TSurveyContactAttributes = {};
 
-    responses.forEach((response) => {
-      Object.keys(response.contactAttributes ?? {}).forEach((key) => {
-        if (response.contactAttributes && attributes[key]) {
-          attributes[key].push(response.contactAttributes[key].toString());
-        } else if (response.contactAttributes) {
-          attributes[key] = [response.contactAttributes[key].toString()];
-        }
-      });
+  responses.forEach((response) => {
+    Object.keys(response.contactAttributes ?? {}).forEach((key) => {
+      if (response.contactAttributes && attributes[key]) {
+        attributes[key].push(response.contactAttributes[key].toString());
+      } else if (response.contactAttributes) {
+        attributes[key] = [response.contactAttributes[key].toString()];
+      }
     });
+  });
 
-    Object.keys(attributes).forEach((key) => {
-      attributes[key] = Array.from(new Set(attributes[key]));
-    });
+  Object.keys(attributes).forEach((key) => {
+    attributes[key] = Array.from(new Set(attributes[key]));
+  });
 
-    return attributes;
-  } catch (error) {
-    throw error;
-  }
+  return attributes;
 };
 
 export const getResponseMeta = (
   responses: Pick<TResponse, "contactAttributes" | "data" | "meta">[]
 ): TSurveyMetaFieldFilter => {
-  try {
-    const meta: { [key: string]: Set<string> } = {};
+  const meta: { [key: string]: Set<string> } = {};
 
-    responses.forEach((response) => {
-      Object.entries(response.meta).forEach(([key, value]) => {
-        // Handling nested objects (like userAgent)
-        if (key === "url") {
-          if (!meta[key]) {
-            meta[key] = new Set();
-          }
-          return;
+  responses.forEach((response) => {
+    Object.entries(response.meta).forEach(([key, value]) => {
+      // Handling nested objects (like userAgent)
+      if (key === "url") {
+        if (!meta[key]) {
+          meta[key] = new Set();
         }
-        if (typeof value === "object" && value !== null) {
-          Object.entries(value).forEach(([nestedKey, nestedValue]) => {
-            if (typeof nestedValue === "string" && nestedValue) {
-              if (!meta[nestedKey]) {
-                meta[nestedKey] = new Set();
-              }
-              meta[nestedKey].add(nestedValue);
+        return;
+      }
+      if (typeof value === "object" && value !== null) {
+        Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+          if (typeof nestedValue === "string" && nestedValue) {
+            if (!meta[nestedKey]) {
+              meta[nestedKey] = new Set();
             }
-          });
-        } else if (typeof value === "string" && value) {
-          if (!meta[key]) {
-            meta[key] = new Set();
+            meta[nestedKey].add(nestedValue);
           }
-          meta[key].add(value);
+        });
+      } else if (typeof value === "string" && value) {
+        if (!meta[key]) {
+          meta[key] = new Set();
         }
-      });
+        meta[key].add(value);
+      }
     });
+  });
 
-    // Convert Set to Array
-    const result = Object.fromEntries(
-      Object.entries(meta).map(([key, valueSet]) => [key, Array.from(valueSet)])
-    );
+  // Convert Set to Array
+  const result = Object.fromEntries(
+    Object.entries(meta).map(([key, valueSet]) => [key, Array.from(valueSet)])
+  );
 
-    return result;
-  } catch (error) {
-    throw error;
-  }
+  return result;
 };
 
 export const getResponseHiddenFields = (
   survey: TSurvey,
   responses: Pick<TResponse, "contactAttributes" | "data" | "meta">[]
 ): TResponseHiddenFieldsFilter => {
-  try {
-    const hiddenFields: { [key: string]: Set<string> } = {};
+  const hiddenFields: { [key: string]: Set<string> } = {};
 
-    const surveyHiddenFields = getIngestedStorageKeys(survey);
-    const hasHiddenFields = surveyHiddenFields.length > 0;
+  const surveyHiddenFields = getIngestedStorageKeys(survey);
+  const hasHiddenFields = surveyHiddenFields.length > 0;
 
-    if (hasHiddenFields) {
-      // adding hidden fields to meta
+  if (hasHiddenFields) {
+    // adding hidden fields to meta
+    surveyHiddenFields.forEach((fieldId) => {
+      hiddenFields[fieldId] = new Set();
+    });
+
+    responses.forEach((response) => {
+      // Handling data fields(Hidden fields)
       surveyHiddenFields.forEach((fieldId) => {
-        hiddenFields[fieldId] = new Set();
+        // Same widening as the three analysis surfaces (ENG-3266): a `number` field stores a JSON
+        // number, so the old `typeof === "string"` gate offered no values at all for one, leaving
+        // it filterable in name only. `boolean` never reaches here — `surveys.ts` hardcodes its
+        // two options — but it costs nothing to read the same way.
+        const hiddenFieldValue = displayEmbeddedValue(response.data[fieldId]);
+        if (hiddenFieldValue) {
+          hiddenFields[fieldId].add(hiddenFieldValue);
+        }
       });
-
-      responses.forEach((response) => {
-        // Handling data fields(Hidden fields)
-        surveyHiddenFields.forEach((fieldId) => {
-          // Same widening as the three analysis surfaces (ENG-3266): a `number` field stores a JSON
-          // number, so the old `typeof === "string"` gate offered no values at all for one, leaving
-          // it filterable in name only. `boolean` never reaches here — `surveys.ts` hardcodes its
-          // two options — but it costs nothing to read the same way.
-          const hiddenFieldValue = displayEmbeddedValue(response.data[fieldId]);
-          if (hiddenFieldValue) {
-            hiddenFields[fieldId].add(hiddenFieldValue);
-          }
-        });
-      });
-    }
-
-    // Convert Set to Array
-    const result = Object.fromEntries(
-      Object.entries(hiddenFields).map(([key, valueSet]) => [key, Array.from(valueSet)])
-    );
-
-    return result;
-  } catch (error) {
-    throw error;
+    });
   }
+
+  // Convert Set to Array
+  const result = Object.fromEntries(
+    Object.entries(hiddenFields).map(([key, valueSet]) => [key, Array.from(valueSet)])
+  );
+
+  return result;
 };
 
 /**

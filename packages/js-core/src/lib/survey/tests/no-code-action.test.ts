@@ -76,11 +76,6 @@ vi.mock("@/lib/creatives/creatives", () => ({
 }));
 
 describe("createTrackNoCodeActionWithContext", () => {
-  test("should create a trackNoCodeAction with the correct context", () => {
-    const trackNoCodeActionWithContext = createTrackNoCodeActionWithContext("pageView");
-    expect(trackNoCodeActionWithContext).toBeDefined();
-  });
-
   test("should log error if trackNoCodeAction fails", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error");
     vi.mocked(trackNoCodeAction).mockResolvedValue({

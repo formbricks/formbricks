@@ -339,6 +339,270 @@ export const evaluateLogic = (
     evaluateSingleCondition(localSurvey, data, variablesData, condition, selectedLanguage, embeddedValues)
   );
 
+/**
+ * One condition's operands, resolved for comparison. Only element and hiddenField operands get a
+ * field; a `variable` operand's declared type is read through `getComputedFieldDataType` instead,
+ * which tolerates a condition naming a field the survey no longer declares.
+ */
+interface TConditionValues {
+  condition: TSingleCondition;
+  leftValue: unknown;
+  rightValue: unknown;
+  leftField: TSurveyElement | string;
+  rightField: TSurveyElement | string;
+  /** How a date field operand orders against the other side, when one side is a date field. */
+  dateOrder: number | undefined;
+}
+
+/** The element an element operand names (or "" when it is gone), the id of a hidden field, else "". */
+const getOperandField = (
+  elements: TSurveyElement[],
+  operand: TSingleCondition["leftOperand"] | TSingleCondition["rightOperand"]
+): TSurveyElement | string => {
+  if (operand?.type === "element") return elements.find((q) => q.id === operand.value) ?? "";
+  if (operand?.type === "hiddenField") return operand.value;
+  return "";
+};
+
+/** Whether the left operand is a date element and both sides are strings. */
+const isDateElementComparison = ({
+  condition,
+  leftField,
+  leftValue,
+  rightValue,
+}: TConditionValues): boolean =>
+  condition.leftOperand.type === "element" &&
+  (leftField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
+  typeof leftValue === "string" &&
+  typeof rightValue === "string";
+
+const isSameTime = (left: unknown, right: unknown): boolean =>
+  new Date(left as string).getTime() === new Date(right as string).getTime();
+
+/**
+ * When left value is of openText, hiddenField, variable and right value is of multichoice (or a
+ * date): whether the two are equal (`!== negate`), or `undefined` when the right element is neither.
+ */
+const compareWithRightElement = (
+  { condition, rightField, leftValue, rightValue }: TConditionValues,
+  negate: boolean
+): boolean | undefined => {
+  if (condition.rightOperand?.type !== "element") return undefined;
+  const rightType = (rightField as TSurveyElement).type;
+  if (rightType === TSurveyElementTypeEnum.MultipleChoiceMulti) {
+    if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
+      return rightValue.includes(leftValue) !== negate;
+    }
+    return false;
+  }
+  if (
+    rightType === TSurveyElementTypeEnum.Date &&
+    typeof leftValue === "string" &&
+    typeof rightValue === "string"
+  ) {
+    return isSameTime(leftValue, rightValue) !== negate;
+  }
+  return undefined;
+};
+
+const evaluateEquals = (values: TConditionValues): boolean => {
+  const { dateOrder, leftValue, rightValue } = values;
+  if (dateOrder !== undefined) return dateOrder === 0;
+  // when left value is of date element and right value is string
+  if (isDateElementComparison(values)) return isSameTime(leftValue, rightValue);
+
+  const rightElementResult = compareWithRightElement(values, false);
+  if (rightElementResult !== undefined) return rightElementResult;
+
+  return (
+    (Array.isArray(leftValue) &&
+      leftValue.length === 1 &&
+      typeof rightValue === "string" &&
+      leftValue.includes(rightValue)) ||
+    leftValue === rightValue
+  );
+};
+
+const evaluateDoesNotEqual = (values: TConditionValues): boolean => {
+  const { condition, dateOrder, leftField, leftValue, rightValue } = values;
+  if (dateOrder !== undefined) return dateOrder !== 0;
+  // when left value is of picture selection element and right value is its option
+  if (
+    condition.leftOperand.type === "element" &&
+    (leftField as TSurveyElement).type === TSurveyElementTypeEnum.PictureSelection &&
+    Array.isArray(leftValue) &&
+    leftValue.length > 0 &&
+    typeof rightValue === "string"
+  ) {
+    return !leftValue.includes(rightValue);
+  }
+
+  // when left value is of date element and right value is string
+  if (isDateElementComparison(values)) return !isSameTime(leftValue, rightValue);
+
+  const rightElementResult = compareWithRightElement(values, true);
+  if (rightElementResult !== undefined) return rightElementResult;
+
+  // decide inside the guard: OR-ing past it would fall through to `leftValue !== rightValue`,
+  // which is always true for an array vs. a string (a matching single selection included)
+  if (Array.isArray(leftValue) && leftValue.length === 1 && typeof rightValue === "string") {
+    return !leftValue.includes(rightValue);
+  }
+
+  return leftValue !== rightValue;
+};
+
+const evaluateIsSubmitted = ({ condition, leftField, leftValue }: TConditionValues): boolean => {
+  if (typeof leftValue === "string") {
+    if (
+      condition.leftOperand.type === "element" &&
+      (leftField as TSurveyElement).type === TSurveyElementTypeEnum.FileUpload &&
+      leftValue
+    ) {
+      return leftValue !== "skipped";
+    }
+    return leftValue !== "" && leftValue !== null;
+  } else if (Array.isArray(leftValue)) {
+    return leftValue.length > 0;
+  } else if (typeof leftValue === "number") {
+    return leftValue !== null;
+  }
+  return false;
+};
+
+const evaluateIsSkipped = ({ leftValue }: TConditionValues): boolean =>
+  (Array.isArray(leftValue) && leftValue.length === 0) ||
+  leftValue === "" ||
+  leftValue === null ||
+  leftValue === undefined ||
+  (typeof leftValue === "object" && Object.entries(leftValue).length === 0);
+
+/** Both sides are lists, and `test` holds of the right list against the left one. */
+const compareLists =
+  (test: (left: unknown[], right: unknown[]) => boolean) =>
+  ({ leftValue, rightValue }: TConditionValues): boolean =>
+    Array.isArray(leftValue) && Array.isArray(rightValue) && test(leftValue, rightValue);
+
+const isSet = ({ leftValue }: TConditionValues): boolean =>
+  leftValue !== undefined && leftValue !== null && leftValue !== "";
+
+/** How each operator compares a condition's resolved operands. An operator not listed is false. */
+const OPERATOR_EVALUATORS: Partial<
+  Record<TSingleCondition["operator"], (values: TConditionValues) => boolean>
+> = {
+  equals: evaluateEquals,
+  doesNotEqual: evaluateDoesNotEqual,
+  contains: ({ leftValue, rightValue }) => String(leftValue).includes(String(rightValue)),
+  doesNotContain: ({ leftValue, rightValue }) => !String(leftValue).includes(String(rightValue)),
+  startsWith: ({ leftValue, rightValue }) => String(leftValue).startsWith(String(rightValue)),
+  doesNotStartWith: ({ leftValue, rightValue }) => !String(leftValue).startsWith(String(rightValue)),
+  endsWith: ({ leftValue, rightValue }) => String(leftValue).endsWith(String(rightValue)),
+  doesNotEndWith: ({ leftValue, rightValue }) => !String(leftValue).endsWith(String(rightValue)),
+  isSubmitted: evaluateIsSubmitted,
+  isSkipped: evaluateIsSkipped,
+  isGreaterThan: ({ leftValue, rightValue }) => Number(leftValue) > Number(rightValue),
+  isLessThan: ({ leftValue, rightValue }) => Number(leftValue) < Number(rightValue),
+  isGreaterThanOrEqual: ({ leftValue, rightValue }) => Number(leftValue) >= Number(rightValue),
+  isLessThanOrEqual: ({ leftValue, rightValue }) => Number(leftValue) <= Number(rightValue),
+  equalsOneOf: ({ leftValue, rightValue }) =>
+    Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.includes(leftValue),
+  includesAllOf: compareLists((left, right) => right.every((v) => left.includes(v))),
+  includesOneOf: compareLists((left, right) => right.some((v) => left.includes(v))),
+  doesNotIncludeAllOf: compareLists((left, right) => !right.every((v) => left.includes(v))),
+  doesNotIncludeOneOf: compareLists((left, right) => !right.some((v) => left.includes(v))),
+  isAccepted: ({ leftValue }) => leftValue === "accepted",
+  isClicked: ({ leftValue }) => leftValue === "clicked",
+  isAfter: ({ leftValue, rightValue }) => isDateAfter(leftValue, rightValue),
+  isBefore: ({ leftValue, rightValue }) => isDateBefore(leftValue, rightValue),
+  isBooked: ({ leftValue }) => leftValue === "booked" || !!(leftValue && leftValue !== ""),
+  isPartiallySubmitted: ({ leftValue }) =>
+    typeof leftValue === "object" && Object.values(leftValue as object).includes(""),
+  isCompletelySubmitted: ({ leftValue }) => {
+    if (typeof leftValue !== "object") return false;
+    const values: unknown[] = Object.values(leftValue as object);
+    return values.length > 0 && !values.includes("");
+  },
+  isSet,
+  isNotEmpty: isSet,
+  isNotSet: ({ leftValue }) => leftValue === undefined || leftValue === null || leftValue === "",
+  isEmpty: ({ leftValue }) => leftValue === "",
+  isAnyOf: ({ leftValue, rightValue }) =>
+    Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.includes(leftValue),
+};
+
+/** The evaluator of a known operator; an unknown one (a prototype key included) has none, so it is false. */
+const getOperatorEvaluator = (operator: string): ((values: TConditionValues) => boolean) | undefined =>
+  Object.hasOwn(OPERATOR_EVALUATORS, operator)
+    ? OPERATOR_EVALUATORS[operator as TSingleCondition["operator"]]
+    : undefined;
+
+/**
+ * Resolves a condition's operands for comparison, or `undefined` when it can never match: a matrix
+ * row condition naming a row or column id the matrix doesn't have (P48), negated operators included.
+ */
+const resolveConditionValues = (
+  localSurvey: TJsWorkspaceStateSurvey,
+  data: TResponseData,
+  variablesData: TResponseVariables,
+  condition: TSingleCondition,
+  selectedLanguage: string,
+  embeddedValues: TResponseData
+): TConditionValues | undefined => {
+  const leftValue = getLeftOperandValue(
+    localSurvey,
+    data,
+    variablesData,
+    condition.leftOperand,
+    selectedLanguage,
+    embeddedValues
+  );
+  let rightValue: unknown = condition.rightOperand
+    ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand, embeddedValues)
+    : undefined;
+
+  const elements = getElementsFromBlocks(localSurvey.blocks);
+  const computedFields = getComputedEmbeddedFields(localSurvey);
+  const leftField = getOperandField(elements, condition.leftOperand);
+  const rightField = getOperandField(elements, condition.rightOperand);
+
+  if (
+    condition.leftOperand.type === "variable" &&
+    getComputedFieldDataType(computedFields, condition.leftOperand.value) === "number" &&
+    // `reserved` alongside `hiddenField` as defence in depth. A *projected* reserved value does not
+    // need it: the catalog read seam runs `coerceToEmbeddedDataType`, so `durationSeconds` and the
+    // other number-typed entries arrive here as JS numbers and `Number()` is a no-op. What this
+    // guards is the one shape the map can still hold as a string — `mergeReservedValues` overlays
+    // `response.data` on the projection unconditionally, so a reserved key that is also a response
+    // key carries that raw string past the seam.
+    (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
+  ) {
+    rightValue = Number(rightValue as string);
+  }
+
+  // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
+  if (
+    condition.leftOperand.type === "element" &&
+    typeof leftField === "object" &&
+    leftField.type === TSurveyElementTypeEnum.Matrix &&
+    isMatrixRowCondition(condition.leftOperand.meta)
+  ) {
+    if (namesUnknownMatrixId(leftField, condition.leftOperand.meta, condition.rightOperand)) return undefined;
+    if (condition.rightOperand?.type === "static") {
+      rightValue = resolveMatrixColumnValue(leftField, condition.rightOperand);
+    }
+  }
+
+  // ENG-6935: a date field (computed or ingested) holding a timestamp equals a picked day when it
+  // falls on that day, as "is before" and "is after" read it; see `compareDateValues`.
+  const embeddedFields = getSurveyEmbeddedFields(localSurvey);
+  const onDateField =
+    isDateFieldOperand(condition.leftOperand, embeddedFields) ||
+    isDateFieldOperand(condition.rightOperand, embeddedFields);
+  const dateOrder = onDateField ? compareDateValues(leftValue, rightValue) : undefined;
+
+  return { condition, leftValue, rightValue, leftField, rightField, dateOrder };
+};
+
 const evaluateSingleCondition = (
   localSurvey: TJsWorkspaceStateSurvey,
   data: TResponseData,
@@ -348,270 +612,136 @@ const evaluateSingleCondition = (
   embeddedValues: TResponseData
 ): boolean => {
   try {
-    let leftValue = getLeftOperandValue(
+    const values = resolveConditionValues(
       localSurvey,
       data,
       variablesData,
-      condition.leftOperand,
+      condition,
       selectedLanguage,
       embeddedValues
     );
-
-    let rightValue = condition.rightOperand
-      ? getRightOperandValue(localSurvey, data, variablesData, condition.rightOperand, embeddedValues)
-      : undefined;
-
-    const elements = getElementsFromBlocks(localSurvey.blocks);
-
-    const computedFields = getComputedEmbeddedFields(localSurvey);
-
-    // Only element and hiddenField operands are inspected below; a `variable` operand's declared
-    // type is read through `getComputedFieldDataType` instead, which tolerates a condition naming a
-    // field the survey no longer declares.
-    let leftField: TSurveyElement | string;
-
-    if (condition.leftOperand?.type === "element") {
-      leftField = elements.find((q) => q.id === condition.leftOperand?.value) ?? "";
-    } else if (condition.leftOperand?.type === "hiddenField") {
-      leftField = condition.leftOperand.value as string;
-    } else {
-      leftField = "";
-    }
-
-    let rightField: TSurveyElement | string;
-
-    if (condition.rightOperand?.type === "element") {
-      rightField = elements.find((q) => q.id === condition.rightOperand?.value) ?? "";
-    } else if (condition.rightOperand?.type === "hiddenField") {
-      rightField = condition.rightOperand.value as string;
-    } else {
-      rightField = "";
-    }
-
-    if (
-      condition.leftOperand.type === "variable" &&
-      getComputedFieldDataType(computedFields, condition.leftOperand.value) === "number" &&
-      // `reserved` alongside `hiddenField` as defence in depth. A *projected* reserved value does not
-      // need it: the catalog read seam runs `coerceToEmbeddedDataType`, so `durationSeconds` and the
-      // other number-typed entries arrive here as JS numbers and `Number()` is a no-op. What this
-      // guards is the one shape the map can still hold as a string — `mergeReservedValues` overlays
-      // `response.data` on the projection unconditionally, so a reserved key that is also a response
-      // key carries that raw string past the seam.
-      (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
-    ) {
-      rightValue = Number(rightValue as string);
-    }
-
-    // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.
-    if (
-      condition.leftOperand.type === "element" &&
-      typeof leftField === "object" &&
-      leftField.type === TSurveyElementTypeEnum.Matrix &&
-      isMatrixRowCondition(condition.leftOperand.meta)
-    ) {
-      // A row or column id the matrix doesn't have never matches (P48), negated operators included.
-      if (namesUnknownMatrixId(leftField, condition.leftOperand.meta, condition.rightOperand)) return false;
-      if (condition.rightOperand?.type === "static") {
-        rightValue = resolveMatrixColumnValue(leftField, condition.rightOperand);
-      }
-    }
-
-    // ENG-6935: a date field (computed or ingested) holding a timestamp equals a picked day when it
-    // falls on that day, as "is before" and "is after" read it; see `compareDateValues`.
-    const embeddedFields = getSurveyEmbeddedFields(localSurvey);
-    const onDateField =
-      isDateFieldOperand(condition.leftOperand, embeddedFields) ||
-      isDateFieldOperand(condition.rightOperand, embeddedFields);
-    const dateOrder = onDateField ? compareDateValues(leftValue, rightValue) : undefined;
-
-    switch (condition.operator) {
-      case "equals":
-        if (dateOrder !== undefined) return dateOrder === 0;
-        if (condition.leftOperand.type === "element") {
-          if (
-            (leftField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
-            typeof leftValue === "string" &&
-            typeof rightValue === "string"
-          ) {
-            // when left value is of date element and right value is string
-            return new Date(leftValue).getTime() === new Date(rightValue).getTime();
-          }
-        }
-
-        // when left value is of openText, hiddenField, variable and right value is of multichoice
-        if (condition.rightOperand?.type === "element") {
-          if ((rightField as TSurveyElement).type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
-            if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
-              return rightValue.includes(leftValue as string);
-            } else return false;
-          } else if (
-            (rightField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
-            typeof leftValue === "string" &&
-            typeof rightValue === "string"
-          ) {
-            return new Date(leftValue).getTime() === new Date(rightValue).getTime();
-          }
-        }
-
-        return (
-          (Array.isArray(leftValue) &&
-            leftValue.length === 1 &&
-            typeof rightValue === "string" &&
-            leftValue.includes(rightValue)) ||
-          leftValue === rightValue
-        );
-      case "doesNotEqual":
-        if (dateOrder !== undefined) return dateOrder !== 0;
-        // when left value is of picture selection element and right value is its option
-        if (
-          condition.leftOperand.type === "element" &&
-          (leftField as TSurveyElement).type === TSurveyElementTypeEnum.PictureSelection &&
-          Array.isArray(leftValue) &&
-          leftValue.length > 0 &&
-          typeof rightValue === "string"
-        ) {
-          return !leftValue.includes(rightValue);
-        }
-
-        // when left value is of date element and right value is string
-        if (
-          condition.leftOperand.type === "element" &&
-          (leftField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
-          typeof leftValue === "string" &&
-          typeof rightValue === "string"
-        ) {
-          return new Date(leftValue).getTime() !== new Date(rightValue).getTime();
-        }
-
-        // when left value is of openText, hiddenField, variable and right value is of multichoice
-        if (condition.rightOperand?.type === "element") {
-          if ((rightField as TSurveyElement).type === TSurveyElementTypeEnum.MultipleChoiceMulti) {
-            if (Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.length === 1) {
-              return !rightValue.includes(leftValue as string);
-            } else return false;
-          } else if (
-            (rightField as TSurveyElement).type === TSurveyElementTypeEnum.Date &&
-            typeof leftValue === "string" &&
-            typeof rightValue === "string"
-          ) {
-            return new Date(leftValue).getTime() !== new Date(rightValue).getTime();
-          }
-        }
-
-        // decide inside the guard: OR-ing past it would fall through to `leftValue !== rightValue`,
-        // which is always true for an array vs. a string (a matching single selection included)
-        if (Array.isArray(leftValue) && leftValue.length === 1 && typeof rightValue === "string") {
-          return !leftValue.includes(rightValue);
-        }
-
-        return leftValue !== rightValue;
-      case "contains":
-        return String(leftValue).includes(String(rightValue));
-      case "doesNotContain":
-        return !String(leftValue).includes(String(rightValue));
-      case "startsWith":
-        return String(leftValue).startsWith(String(rightValue));
-      case "doesNotStartWith":
-        return !String(leftValue).startsWith(String(rightValue));
-      case "endsWith":
-        return String(leftValue).endsWith(String(rightValue));
-      case "doesNotEndWith":
-        return !String(leftValue).endsWith(String(rightValue));
-      case "isSubmitted":
-        if (typeof leftValue === "string") {
-          if (
-            condition.leftOperand.type === "element" &&
-            (leftField as TSurveyElement).type === TSurveyElementTypeEnum.FileUpload &&
-            leftValue
-          ) {
-            return leftValue !== "skipped";
-          }
-          return leftValue !== "" && leftValue !== null;
-        } else if (Array.isArray(leftValue)) {
-          return leftValue.length > 0;
-        } else if (typeof leftValue === "number") {
-          return leftValue !== null;
-        }
-        return false;
-      case "isSkipped":
-        return (
-          (Array.isArray(leftValue) && leftValue.length === 0) ||
-          leftValue === "" ||
-          leftValue === null ||
-          leftValue === undefined ||
-          (typeof leftValue === "object" && Object.entries(leftValue).length === 0)
-        );
-      case "isGreaterThan":
-        return Number(leftValue) > Number(rightValue);
-      case "isLessThan":
-        return Number(leftValue) < Number(rightValue);
-      case "isGreaterThanOrEqual":
-        return Number(leftValue) >= Number(rightValue);
-      case "isLessThanOrEqual":
-        return Number(leftValue) <= Number(rightValue);
-      case "equalsOneOf":
-        return Array.isArray(rightValue) && typeof leftValue === "string" && rightValue.includes(leftValue);
-      case "includesAllOf":
-        return (
-          Array.isArray(leftValue) &&
-          Array.isArray(rightValue) &&
-          rightValue.every((v) => leftValue.includes(v))
-        );
-      case "includesOneOf":
-        return (
-          Array.isArray(leftValue) &&
-          Array.isArray(rightValue) &&
-          rightValue.some((v) => leftValue.includes(v))
-        );
-      case "doesNotIncludeAllOf":
-        return (
-          Array.isArray(leftValue) &&
-          Array.isArray(rightValue) &&
-          !rightValue.every((v) => leftValue.includes(v))
-        );
-      case "doesNotIncludeOneOf":
-        return (
-          Array.isArray(leftValue) &&
-          Array.isArray(rightValue) &&
-          !rightValue.some((v) => leftValue.includes(v))
-        );
-      case "isAccepted":
-        return leftValue === "accepted";
-      case "isClicked":
-        return leftValue === "clicked";
-      case "isAfter":
-        return isDateAfter(leftValue, rightValue);
-      case "isBefore":
-        return isDateBefore(leftValue, rightValue);
-      case "isBooked":
-        return leftValue === "booked" || !!(leftValue && leftValue !== "");
-      case "isPartiallySubmitted":
-        if (typeof leftValue === "object") {
-          return Object.values(leftValue).includes("");
-        } else return false;
-      case "isCompletelySubmitted":
-        if (typeof leftValue === "object") {
-          const values = Object.values(leftValue);
-          return values.length > 0 && !values.includes("");
-        } else return false;
-      case "isSet":
-      case "isNotEmpty":
-        return leftValue !== undefined && leftValue !== null && leftValue !== "";
-      case "isNotSet":
-        return leftValue === undefined || leftValue === null || leftValue === "";
-      case "isEmpty":
-        return leftValue === "";
-      case "isAnyOf":
-        if (Array.isArray(rightValue) && typeof leftValue === "string") {
-          return rightValue.includes(leftValue);
-        }
-        return false;
-      default:
-        return false;
-    }
-  } catch (e) {
+    if (!values) return false;
+    return getOperatorEvaluator(condition.operator)?.(values) ?? false;
+  } catch {
     return false;
   }
+};
+
+type TElementOperand = Extract<TSingleCondition["leftOperand"], { type: "element" }>;
+type TChoiceElement = Extract<TSurveyElement, { type: "multipleChoiceSingle" | "multipleChoiceMulti" }>;
+type TMatrixElement = Extract<TSurveyElement, { type: "matrix" }>;
+
+/** An open text number answer as a number; blank or non-numeric answers read as unset. */
+const getNumberAnswerValue = (responseValue: TResponseData[string] | undefined) => {
+  if (responseValue === undefined) return undefined;
+  if (typeof responseValue === "string" && responseValue.trim() === "") return undefined;
+
+  const numberValue = typeof responseValue === "number" ? responseValue : Number(responseValue);
+  return isNaN(numberValue) ? undefined : numberValue;
+};
+
+/** A choice answer as option ids: a label without an option reads as "other" when it is on. */
+const getChoiceAnswerValue = (
+  currentElement: TChoiceElement,
+  responseValue: TResponseData[string] | undefined,
+  selectedLanguage: string
+) => {
+  const isOthersEnabled = currentElement.choices.at(-1)?.id === "other";
+
+  // ENG-6943: the label in the response's language first, then in any language of the survey.
+  if (typeof responseValue === "string") {
+    const choice = findByLocalizedLabel(currentElement.choices, responseValue, selectedLanguage);
+
+    if (!choice) {
+      if (isOthersEnabled) {
+        return "other";
+      }
+
+      return undefined;
+    }
+
+    return choice.id;
+  } else if (Array.isArray(responseValue)) {
+    const choices: string[] = [];
+    responseValue.forEach((value) => {
+      const foundChoice = findByLocalizedLabel(currentElement.choices, value, selectedLanguage);
+
+      if (foundChoice) {
+        choices.push(foundChoice.id);
+      } else if (isOthersEnabled) {
+        choices.push("other");
+      }
+    });
+    return Array.from(new Set(choices));
+  }
+
+  return responseValue;
+};
+
+/** A matrix row condition's answer: the position of the column picked in that row. */
+const getMatrixRowAnswerValue = (
+  currentElement: TMatrixElement,
+  meta: TElementOperand["meta"],
+  responseValue: Record<string, string>,
+  selectedLanguage: string
+) => {
+  // ENG-6934: the row id first, the position as the fallback; an unknown id is no row.
+  const rowIndex = resolveMatrixRowIndex(currentElement, meta);
+  if (rowIndex === undefined) return undefined;
+
+  const row = findMatrixRowKey(currentElement.rows[rowIndex].label, responseValue, selectedLanguage);
+
+  const rowValue = row === undefined ? undefined : responseValue[row];
+  if (rowValue === "") return "";
+
+  if (typeof rowValue === "string") {
+    const column = findByLocalizedLabel(currentElement.columns, rowValue, selectedLanguage);
+    if (!column) return undefined;
+    return currentElement.columns.indexOf(column).toString();
+  }
+  return undefined;
+};
+
+/** An element operand's answer, in the form conditions compare: numbers, option ids, column positions. */
+const getElementOperandValue = (
+  localSurvey: TJsWorkspaceStateSurvey,
+  data: TResponseData,
+  leftOperand: TElementOperand,
+  selectedLanguage: string
+) => {
+  const elements = getElementsFromBlocks(localSurvey.blocks);
+  const currentElement = elements.find((q) => q.id === leftOperand.value);
+  if (!currentElement) return undefined;
+
+  const responseValue = data[leftOperand.value];
+
+  if (currentElement.type === "openText" && currentElement.inputType === "number") {
+    return getNumberAnswerValue(responseValue);
+  }
+
+  if (currentElement.type === "multipleChoiceSingle" || currentElement.type === "multipleChoiceMulti") {
+    return getChoiceAnswerValue(currentElement, responseValue, selectedLanguage);
+  }
+
+  // T21 (ENG-6937): a ranking stores the ranked labels in the respondent's language; conditions name
+  // option ids, so "was ranked" maps each label back, as multi select does.
+  if (currentElement.type === "ranking" && Array.isArray(responseValue)) {
+    return responseValue.flatMap((value) => {
+      const choice = findByLocalizedLabel(currentElement.choices, value, selectedLanguage);
+      return choice ? [choice.id] : [];
+    });
+  }
+
+  if (
+    currentElement.type === "matrix" &&
+    typeof responseValue === "object" &&
+    !Array.isArray(responseValue) &&
+    isMatrixRowCondition(leftOperand.meta)
+  ) {
+    return getMatrixRowAnswerValue(currentElement, leftOperand.meta, responseValue, selectedLanguage);
+  }
+
+  return data[leftOperand.value];
 };
 
 const getLeftOperandValue = (
@@ -624,86 +754,7 @@ const getLeftOperandValue = (
 ) => {
   switch (leftOperand.type) {
     case "element":
-      const elements = getElementsFromBlocks(localSurvey.blocks);
-      const currentElement = elements.find((q) => q.id === leftOperand.value);
-      if (!currentElement) return undefined;
-
-      const responseValue = data[leftOperand.value];
-
-      if (currentElement.type === "openText" && currentElement.inputType === "number") {
-        if (responseValue === undefined) return undefined;
-        if (typeof responseValue === "string" && responseValue.trim() === "") return undefined;
-
-        const numberValue = typeof responseValue === "number" ? responseValue : Number(responseValue);
-        return isNaN(numberValue) ? undefined : numberValue;
-      }
-
-      if (currentElement.type === "multipleChoiceSingle" || currentElement.type === "multipleChoiceMulti") {
-        const isOthersEnabled = currentElement.choices.at(-1)?.id === "other";
-
-        // ENG-6943: the label in the response's language first, then in any language of the survey.
-        if (typeof responseValue === "string") {
-          const choice = findByLocalizedLabel(currentElement.choices, responseValue, selectedLanguage);
-
-          if (!choice) {
-            if (isOthersEnabled) {
-              return "other";
-            }
-
-            return undefined;
-          }
-
-          return choice.id;
-        } else if (Array.isArray(responseValue)) {
-          let choices: string[] = [];
-          responseValue.forEach((value) => {
-            const foundChoice = findByLocalizedLabel(currentElement.choices, value, selectedLanguage);
-
-            if (foundChoice) {
-              choices.push(foundChoice.id);
-            } else if (isOthersEnabled) {
-              choices.push("other");
-            }
-          });
-          if (choices) {
-            return Array.from(new Set(choices));
-          }
-        }
-      }
-
-      // T21 (ENG-6937): a ranking stores the ranked labels in the respondent's language; conditions name
-      // option ids, so "was ranked" maps each label back, as multi select does.
-      if (currentElement.type === "ranking" && Array.isArray(responseValue)) {
-        return responseValue.flatMap((value) => {
-          const choice = findByLocalizedLabel(currentElement.choices, value, selectedLanguage);
-          return choice ? [choice.id] : [];
-        });
-      }
-
-      if (
-        currentElement.type === "matrix" &&
-        typeof responseValue === "object" &&
-        !Array.isArray(responseValue)
-      ) {
-        if (isMatrixRowCondition(leftOperand.meta)) {
-          // ENG-6934: the row id first, the position as the fallback; an unknown id is no row.
-          const rowIndex = resolveMatrixRowIndex(currentElement, leftOperand.meta);
-          if (rowIndex === undefined) return undefined;
-          const row = findMatrixRowKey(currentElement.rows[rowIndex].label, responseValue, selectedLanguage);
-
-          const rowValue = row === undefined ? undefined : responseValue[row];
-          if (rowValue === "") return "";
-
-          if (typeof rowValue === "string") {
-            const column = findByLocalizedLabel(currentElement.columns, rowValue, selectedLanguage);
-            if (!column) return undefined;
-            return currentElement.columns.indexOf(column).toString();
-          }
-          return undefined;
-        }
-      }
-
-      return data[leftOperand.value];
+      return getElementOperandValue(localSurvey, data, leftOperand, selectedLanguage);
     case "variable":
       return getLogicVariableValue(getComputedEmbeddedFields(localSurvey), leftOperand.value, variablesData);
     case "hiddenField":
@@ -788,6 +839,69 @@ export const performActions = (
   return { jumpTarget, requiredElementIds, calculations };
 };
 
+/** The value a one-step calculation applies: a static value, a variable, or an answer. */
+const getCalculationOperand = (
+  action: TActionCalculate | TBlockActionCalculate,
+  data: TResponseData,
+  calculations: Record<string, number | string>,
+  dataType: string
+): string | number | undefined => {
+  let operandValue: string | number | undefined;
+
+  // Determine the operand value based on the action.value type
+  switch (action.value.type) {
+    case "static":
+      operandValue = action.value.value;
+      break;
+    case "variable": {
+      const value = calculations[action.value.value];
+      if (typeof value === "number" || typeof value === "string") {
+        operandValue = value;
+      }
+      break;
+    }
+    // Deliberately no `default` arm: a legacy `"question"` operand (admitted at the type level by
+    // ZDynamicLogicFieldValueDeprecated, normalized away at the API boundary) stays unresolved and
+    // the calculation returns undefined, exactly as before.
+    case "element":
+    case "hiddenField": {
+      const val = data[action.value.value];
+      if (typeof val === "number" || typeof val === "string") {
+        if (dataType === "number" && !Number.isNaN(Number(val))) {
+          operandValue = Number(val);
+        } else {
+          operandValue = val;
+        }
+      }
+      break;
+    }
+  }
+  return operandValue;
+};
+
+/** Applies a one-step operator; `undefined` for a division by zero. */
+const applyCalculationOperator = (
+  operator: (TActionCalculate | TBlockActionCalculate)["operator"],
+  currentValue: number | string,
+  operandValue: number | string
+): number | string | undefined => {
+  switch (operator) {
+    case "add":
+      return Number(currentValue) + Number(operandValue);
+    case "subtract":
+      return Number(currentValue) - Number(operandValue);
+    case "multiply":
+      return Number(currentValue) * Number(operandValue);
+    case "divide":
+      if (Number(operandValue) === 0) return undefined;
+      return Number(currentValue) / Number(operandValue);
+    case "assign":
+      return operandValue;
+    case "concat":
+      return String(currentValue) + String(operandValue);
+  }
+};
+
 const performCalculation = (
   survey: TJsWorkspaceStateSurvey,
   action: TActionCalculate | TBlockActionCalculate,
@@ -818,60 +932,9 @@ const performCalculation = (
   if (currentValue === undefined) {
     currentValue = dataType === "number" ? 0 : "";
   }
-  let operandValue: string | number | undefined;
 
-  // Determine the operand value based on the action.value type
-  switch (action.value.type) {
-    case "static":
-      operandValue = action.value.value;
-      break;
-    case "variable":
-      const value = calculations[action.value.value];
-      if (typeof value === "number" || typeof value === "string") {
-        operandValue = value;
-      }
-      break;
-    // Deliberately no `default` arm: a legacy `"question"` operand (admitted at the type level by
-    // ZDynamicLogicFieldValueDeprecated, normalized away at the API boundary) stays unresolved and
-    // the calculation returns undefined, exactly as before.
-    case "element":
-    case "hiddenField":
-      const val = data[action.value.value];
-      if (typeof val === "number" || typeof val === "string") {
-        if (dataType === "number" && !Number.isNaN(Number(val))) {
-          operandValue = Number(val);
-        } else {
-          operandValue = val;
-        }
-      }
-      break;
-  }
-
+  const operandValue = getCalculationOperand(action, data, calculations, dataType);
   if (operandValue === undefined || operandValue === null) return undefined;
 
-  let result: number | string;
-
-  switch (action.operator) {
-    case "add":
-      result = Number(currentValue) + Number(operandValue);
-      break;
-    case "subtract":
-      result = Number(currentValue) - Number(operandValue);
-      break;
-    case "multiply":
-      result = Number(currentValue) * Number(operandValue);
-      break;
-    case "divide":
-      if (Number(operandValue) === 0) return undefined;
-      result = Number(currentValue) / Number(operandValue);
-      break;
-    case "assign":
-      result = operandValue;
-      break;
-    case "concat":
-      result = String(currentValue) + String(operandValue);
-      break;
-  }
-
-  return result;
+  return applyCalculationOperator(action.operator, currentValue, operandValue);
 };

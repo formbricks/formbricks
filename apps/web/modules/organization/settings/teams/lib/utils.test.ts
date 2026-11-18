@@ -52,7 +52,7 @@ describe("hasMoreThanOneActiveOwner", () => {
     );
   });
 
-  // The server's `getOrganizationOwnerCount` excludes deactivated users because they can never sign in
+  // The server's `countActiveOwners` (owner-guard.ts) excludes deactivated users because they can never sign in
   // again, so the sole active owner is still the last owner the guards protect.
   test("does not count a deactivated owner", () => {
     expect(hasMoreThanOneActiveOwner([member({}), member({ userId: "user-2", isActive: false })])).toBe(

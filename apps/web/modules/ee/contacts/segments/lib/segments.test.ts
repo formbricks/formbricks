@@ -32,6 +32,9 @@ import {
   updateSegment,
 } from "./segments";
 
+/** The ids a batched survey lookup asks for (`where: { id: { in } }`). */
+const idsIn = (args: unknown) => (args as { where: { id: { in: string[] } } }).where.id.in;
+
 // Mock dependencies
 vi.mock("@formbricks/database", () => ({
   prisma: {
@@ -191,7 +194,7 @@ describe("Segment Service Tests", () => {
       vi.mocked(prisma.survey.findMany).mockResolvedValue([
         { id: "survey1", workspaceId: "ws-a" },
         { id: "survey2", workspaceId: "ws-b" },
-      ] as any);
+      ] as Awaited<ReturnType<typeof prisma.survey.findMany>>);
 
       const result = await getSurveyWorkspaceIdMap(["survey1", "survey2"]);
 
@@ -208,7 +211,7 @@ describe("Segment Service Tests", () => {
     });
 
     test("returns an empty map when no surveys match", async () => {
-      vi.mocked(prisma.survey.findMany).mockResolvedValue([] as any);
+      vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockResolvedValue([]);
 
       const result = await getSurveyWorkspaceIdMap(["missing"]);
 
@@ -223,7 +226,9 @@ describe("Segment Service Tests", () => {
     });
 
     test("deduplicates ids before querying", async () => {
-      vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "survey1", workspaceId: "ws-a" }] as any);
+      vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockResolvedValue([
+        { id: "survey1", workspaceId: "ws-a" },
+      ]);
 
       const result = await getSurveyWorkspaceIdMap(["survey1", "survey1", "survey1"]);
 
@@ -237,15 +242,14 @@ describe("Segment Service Tests", () => {
 
     test("splits an oversized id list into bounded batches and merges the results", async () => {
       const surveyIds = Array.from({ length: 450 }, (_, index) => `survey_${index}`);
-      vi.mocked(prisma.survey.findMany).mockImplementation((async ({ where }: any) =>
-        where.id.in.map((id: string) => ({ id, workspaceId: "ws-a" }))) as any);
+      vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockImplementation(async (args) =>
+        idsIn(args).map((id: string) => ({ id, workspaceId: "ws-a" }))
+      );
 
       const result = await getSurveyWorkspaceIdMap(surveyIds);
 
       // 450 ids at a batch size of 200 -> 200 / 200 / 50, every id still present in the merged map.
-      const batchSizes = vi
-        .mocked(prisma.survey.findMany)
-        .mock.calls.map(([args]: any) => args.where.id.in.length);
+      const batchSizes = vi.mocked(prisma.survey.findMany).mock.calls.map(([args]) => idsIn(args).length);
       expect(batchSizes).toEqual([200, 200, 50]);
       expect(result.size).toBe(450);
       expect(result.get("survey_0")).toBe("ws-a");
@@ -255,7 +259,9 @@ describe("Segment Service Tests", () => {
 
   describe("getExistingWorkspaceSurveyIds", () => {
     test("returns only the referenced ids that belong to the workspace, scoped by workspaceId", async () => {
-      vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "survey_known" }] as any);
+      vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockResolvedValue([
+        { id: "survey_known" },
+      ]);
 
       const result = await getExistingWorkspaceSurveyIds(
         "ws_1",
@@ -271,7 +277,7 @@ describe("Segment Service Tests", () => {
     });
 
     test("narrows the lookup to the caller's visible surveys when given a clause (ENG-3282)", async () => {
-      vi.mocked(prisma.survey.findMany).mockResolvedValue([] as any);
+      vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockResolvedValue([]);
       const visible: Prisma.SurveyWhereInput = { OR: [{ visibility: "workspace" }, { ownerId: "user_1" }] };
 
       await getExistingWorkspaceSurveyIds("ws_1", ["survey_restricted"], visible);
@@ -290,7 +296,7 @@ describe("Segment Service Tests", () => {
     });
 
     test("deduplicates ids before querying", async () => {
-      vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "survey1" }] as any);
+      vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockResolvedValue([{ id: "survey1" }]);
 
       const result = await getExistingWorkspaceSurveyIds(
         "ws_1",
@@ -309,18 +315,19 @@ describe("Segment Service Tests", () => {
     test("splits an oversized id list into bounded batches and still returns only the found subset", async () => {
       const surveyIds = Array.from({ length: 450 }, (_, index) => `survey_${index}`);
       // survey_449 (last batch) is foreign/unknown — everything else belongs to the workspace.
-      vi.mocked(prisma.survey.findMany).mockImplementation((async ({ where }: any) =>
-        where.id.in.filter((id: string) => id !== "survey_449").map((id: string) => ({ id }))) as any);
+      vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockImplementation(async (args) =>
+        idsIn(args)
+          .filter((id: string) => id !== "survey_449")
+          .map((id: string) => ({ id }))
+      );
 
       const result = await getExistingWorkspaceSurveyIds("ws_1", surveyIds, ALL_SEGMENT_SURVEY_REFS);
 
       // 450 ids at a batch size of 200 -> 200 / 200 / 50, each query scoped to the workspace.
-      const batchSizes = vi
-        .mocked(prisma.survey.findMany)
-        .mock.calls.map(([args]: any) => args.where.id.in.length);
+      const batchSizes = vi.mocked(prisma.survey.findMany).mock.calls.map(([args]) => idsIn(args).length);
       expect(batchSizes).toEqual([200, 200, 50]);
       for (const [args] of vi.mocked(prisma.survey.findMany).mock.calls) {
-        expect((args as any).where.workspaceId).toBe("ws_1");
+        expect(args).toHaveProperty("where.workspaceId", "ws_1");
       }
       expect(result.size).toBe(449);
       expect(result.has("survey_0")).toBe(true);
@@ -510,7 +517,7 @@ describe("Segment Service Tests", () => {
     });
 
     test("should throw ValidationError if filters are invalid", async () => {
-      const invalidFilterSegment = { ...mockSegmentPrisma, filters: "invalid" as any };
+      const invalidFilterSegment = { ...mockSegmentPrisma, filters: "invalid" };
       vi.mocked(prisma.segment.findUnique).mockResolvedValue(invalidFilterSegment);
       await expect(cloneSegment(segmentId, surveyId)).rejects.toThrow(ValidationError);
     });
@@ -566,7 +573,7 @@ describe("Segment Service Tests", () => {
       id: privateSegmentId,
       title: surveyId,
       isPrivate: true,
-      filters: [] as any, // Simplified filters to avoid type issues
+      filters: [], // Simplified filters to avoid type issues
       surveys: [{ id: surveyId, name: "Test Survey", status: "inProgress" }],
     };
     const resetPrivateSegmentPrisma = { ...privateSegmentPrisma, filters: [] };
@@ -581,11 +588,17 @@ describe("Segment Service Tests", () => {
     };
 
     beforeEach(() => {
-      vi.mocked(getSurvey).mockResolvedValue(mockSurvey as any);
-      vi.mocked(prisma.segment.findFirst).mockResolvedValue(privateSegmentPrisma as any);
-      vi.mocked(prisma.survey.update).mockResolvedValue({} as any);
-      vi.mocked(prisma.segment.update).mockResolvedValue(resetPrivateSegmentPrisma as any);
-      vi.mocked(prisma.segment.create).mockResolvedValue(resetPrivateSegmentPrisma as any);
+      vi.mocked(getSurvey).mockResolvedValue(mockSurvey as Awaited<ReturnType<typeof getSurvey>>);
+      vi.mocked(prisma.segment.findFirst).mockResolvedValue(
+        privateSegmentPrisma as Awaited<ReturnType<typeof prisma.segment.findFirst>>
+      );
+      vi.mocked(prisma.survey.update, { partial: true, deep: true }).mockResolvedValue({});
+      vi.mocked(prisma.segment.update, { partial: true, deep: true }).mockResolvedValue(
+        resetPrivateSegmentPrisma
+      );
+      vi.mocked(prisma.segment.create, { partial: true, deep: true }).mockResolvedValue(
+        resetPrivateSegmentPrisma
+      );
     });
 
     test("should reset filters of existing private segment", async () => {
@@ -1053,12 +1066,12 @@ describe("Segment Service Tests", () => {
         surveys: [],
       };
 
-      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args: any) => {
+      vi.mocked(prisma.segment.findUnique, { partial: true, deep: true }).mockImplementation(async (args) => {
         if (args?.where?.id === otherSegmentId) {
           return structuredClone(otherSegmentPrisma);
         }
         return null;
-      }) as any);
+      });
 
       const filters = [
         {
@@ -1101,12 +1114,12 @@ describe("Segment Service Tests", () => {
         surveys: [],
       };
 
-      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args: any) => {
+      vi.mocked(prisma.segment.findUnique, { partial: true, deep: true }).mockImplementation(async (args) => {
         if (args?.where?.id === otherSegmentId) {
           return structuredClone(otherSegmentPrisma);
         }
         return null;
-      }) as any);
+      });
 
       const filters = [
         {
@@ -1132,13 +1145,13 @@ describe("Segment Service Tests", () => {
       const nonExistentSegmentId = "non-existent-segment";
 
       // Mock findUnique to return null, which causes getSegment to throw
-      vi.mocked(prisma.segment.findUnique).mockImplementation((async (args: any) => {
+      vi.mocked(prisma.segment.findUnique, { partial: true, deep: true }).mockImplementation(async (args) => {
         if (args?.where?.id === nonExistentSegmentId) {
           return null;
         }
         // Mock return for other potential calls if necessary, or keep returning null
         return null;
-      }) as any);
+      });
 
       const filters = [
         {

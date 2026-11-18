@@ -2,10 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, test } from "vitest";
 import { ZV3ChartField } from "@/app/api/v3/charts/lib/resources";
-import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { ANSWER_MEMBER } from "./answer-filter";
 import {
-  CHART_DATE_PRESETS,
   CHART_FIELD_CATALOG,
   FILTER_ONLY_FIELDS,
   createChartFieldLookup,
@@ -62,10 +60,6 @@ describe("field catalog (ENG-6584)", () => {
       valueLookup: true,
     });
     expect(getChartField("FeedbackRecords.valueText")).toMatchObject({ valueLookup: false });
-  });
-
-  test("offers the app's presets plus all-time as date ranges", () => {
-    expect(CHART_DATE_PRESETS).toEqual([...DATE_RANGE_PRESETS, "all-time"]);
   });
 
   test("lists the answer filter as a filter-only field with equals and notEquals (ENG-6894)", () => {

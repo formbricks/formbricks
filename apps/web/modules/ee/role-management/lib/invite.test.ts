@@ -47,7 +47,9 @@ describe("invite.ts", () => {
     });
 
     test("should throw ResourceNotFoundError when invite is null", async () => {
-      vi.mocked(prisma.invite.update).mockResolvedValue(null as any);
+      vi.mocked(prisma.invite.update).mockResolvedValue(
+        null as unknown as Awaited<ReturnType<typeof prisma.invite.update>>
+      );
 
       await expect(
         updateInvite("invite-123", { role: "member" }, { allowOwnerInvite: true })

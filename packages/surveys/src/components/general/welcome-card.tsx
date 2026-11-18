@@ -1,3 +1,4 @@
+import type { ComponentChildren } from "preact";
 import { useEffect } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { type TI18nString } from "@formbricks/types/i18n";
@@ -152,14 +153,19 @@ export function WelcomeCard({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only want to run this effect when isCurrent or isPreviewMode changes
   }, [isCurrent, isPreviewMode]);
 
+  let media: ComponentChildren = null;
+  if (fileUrl) {
+    media = (
+      <ElementMedia imgUrl={fileUrl} altText={t("common.company_logo")} className="mb-8 min-h-0 w-1/4" />
+    );
+  } else if (videoUrl) {
+    media = <ElementMedia videoUrl={videoUrl} altText={t("common.welcome_video")} />;
+  }
+
   return (
     <ScrollableContainer fullSizeCards={fullSizeCards} disableInternalScroll={isCardless}>
       <div>
-        {fileUrl ? (
-          <ElementMedia imgUrl={fileUrl} altText={t("common.company_logo")} className="mb-8 min-h-0 w-1/4" />
-        ) : videoUrl ? (
-          <ElementMedia videoUrl={videoUrl} altText={t("common.welcome_video")} />
-        ) : null}
+        {media}
 
         <Headline
           headline={replaceRecallInfo(

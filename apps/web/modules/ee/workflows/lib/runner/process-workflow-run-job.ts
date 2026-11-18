@@ -37,6 +37,7 @@ import {
 import { recordSurveyOutboundSkipped } from "@/modules/response-pipeline/lib/outbound-visibility-metrics";
 
 /** Strips CR/LF and other control chars from the subject — defense against SMTP header injection. */
+// eslint-disable-next-line no-control-regex -- matching control characters is the point: they are stripped
 const CONTROL_CHARS_PATTERN = /[\x00-\x1f\x7f\u2028\u2029]/g;
 const stripControlChars = (value: string): string => value.replace(CONTROL_CHARS_PATTERN, "");
 

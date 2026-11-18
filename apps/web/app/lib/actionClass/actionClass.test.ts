@@ -9,7 +9,7 @@ describe("isValidCssSelector", () => {
     };
     global.document = {
       createElement: vi.fn(() => mockElement),
-    } as any;
+    } as unknown as Document;
   });
 
   test("should return false for undefined selector", () => {
@@ -24,7 +24,7 @@ describe("isValidCssSelector", () => {
     const mockElement = {
       querySelector: vi.fn(),
     };
-    (document.createElement as any).mockReturnValue(mockElement);
+    vi.mocked(document.createElement, { partial: true }).mockReturnValue(mockElement);
     expect(isValidCssSelector(".class")).toBe(true);
     expect(isValidCssSelector("#id")).toBe(true);
     expect(isValidCssSelector("div")).toBe(true);
@@ -36,7 +36,7 @@ describe("isValidCssSelector", () => {
         throw new Error("Invalid selector");
       }),
     };
-    (document.createElement as any).mockReturnValue(mockElement);
+    vi.mocked(document.createElement, { partial: true }).mockReturnValue(mockElement);
     expect(isValidCssSelector("..invalid")).toBe(false);
     expect(isValidCssSelector("##invalid")).toBe(false);
   });

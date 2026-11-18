@@ -18,6 +18,7 @@ import { RankingResponse } from "@/modules/ui/components/ranking-response";
 import { RatingResponse } from "@/modules/ui/components/rating-response";
 import { ResponseBadges } from "@/modules/ui/components/response-badges";
 import { SignatureResponse } from "@/modules/ui/components/signature-response";
+import { isEmptyResponseValue } from "../util";
 
 interface RenderResponseProps {
   readonly responseData: TResponseDataValue;
@@ -33,6 +34,119 @@ interface RenderResponseProps {
   readonly responseId?: string;
 }
 
+type TElementOfType<T extends TSurveyElementTypeEnum> = Extract<TSurveyElement, { type: T }>;
+
+type TChoiceElement = TElementOfType<
+  | TSurveyElementTypeEnum.MultipleChoiceMulti
+  | TSurveyElementTypeEnum.MultipleChoiceSingle
+  | TSurveyElementTypeEnum.Ranking
+>;
+
+const handleArray = (data: string | number | string[]): string => {
+  if (Array.isArray(data)) {
+    return data.join(", ");
+  } else {
+    return String(data);
+  }
+};
+
+/** A Matrix answer: one line per answered row, in the response's language. */
+const renderMatrixResponse = (
+  element: TElementOfType<TSurveyElementTypeEnum.Matrix>,
+  responseData: TResponseDataValue,
+  survey: TSurvey,
+  language: string | null
+) => {
+  if (typeof responseData !== "object" || Array.isArray(responseData)) return null;
+  return (
+    <>
+      {element.rows.map((row) => {
+        const languagCode = getLanguageCode(survey.languages, language);
+        const rowValueInSelectedLanguage = getLocalizedValue(row.label, languagCode);
+        if (!responseData[rowValueInSelectedLanguage]) return null;
+        return (
+          <p key={rowValueInSelectedLanguage} className="ph-no-capture my-1 font-normal text-slate-700">
+            {rowValueInSelectedLanguage}:{processResponseData(responseData[rowValueInSelectedLanguage])}
+          </p>
+        );
+      })}
+    </>
+  );
+};
+
+/** A single-value answer (Cal, Consent, CTA) as one badge with the element's icon. */
+const renderIconBadgeResponse = (
+  responseData: TResponseDataValue,
+  icon: React.ReactNode,
+  isExpanded: boolean,
+  showId: boolean
+) => {
+  if (typeof responseData !== "string" && typeof responseData !== "number") return null;
+  return (
+    <ResponseBadges
+      items={[{ value: responseData.toString() }]}
+      isExpanded={isExpanded}
+      icon={icon}
+      showId={showId}
+    />
+  );
+};
+
+/** A choice or ranking answer as badges (a ranking keeps its order), with each choice's code. */
+const renderChoiceResponse = (
+  element: TChoiceElement,
+  responseData: TResponseDataValue,
+  languageCode: string,
+  isExpanded: boolean,
+  showId: boolean
+) => {
+  if (typeof responseData === "string" || typeof responseData === "number") {
+    const choiceId = getChoiceIdByValue(responseData.toString(), element, languageCode);
+    return (
+      <ResponseBadges
+        items={[{ value: responseData.toString(), id: getChoiceBadgeText(element, choiceId) }]}
+        isExpanded={isExpanded}
+        showId={showId}
+      />
+    );
+  }
+  if (!Array.isArray(responseData)) return null;
+  const itemsArray = responseData
+    .filter((choice) => choice !== "")
+    .map((choice) => {
+      const choiceId = getChoiceIdByValue(choice, element, languageCode);
+      return { value: choice, id: getChoiceBadgeText(element, choiceId) };
+    });
+  if (element.type === TSurveyElementTypeEnum.Ranking) {
+    return <RankingResponse value={itemsArray} isExpanded={isExpanded} showId={showId} />;
+  }
+  return <ResponseBadges items={itemsArray} isExpanded={isExpanded} showId={showId} />;
+};
+
+/** Any other answer as text: links made clickable, lists joined. */
+const renderTextResponse = (responseData: TResponseDataValue, isExpanded: boolean) => {
+  if (typeof responseData === "string") {
+    return renderTextParagraph(renderHyperlinkedContent(responseData), isExpanded);
+  }
+  if (Array.isArray(responseData)) {
+    return renderTextParagraph(handleArray(responseData), isExpanded);
+  }
+  if (typeof responseData === "number") {
+    return renderTextParagraph(responseData, isExpanded);
+  }
+  return null;
+};
+
+const renderTextParagraph = (content: React.ReactNode, isExpanded: boolean) => (
+  <p
+    className={cn(
+      "ph-no-capture my-1 truncate font-normal text-slate-700",
+      isExpanded ? "whitespace-pre-line" : "whitespace-nowrap"
+    )}>
+    {content}
+  </p>
+);
+
 export const RenderResponse: React.FC<RenderResponseProps> = ({
   responseData,
   element,
@@ -44,21 +158,10 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
   signatureVariant = "thumbnail",
   responseId,
 }) => {
-  if (
-    (typeof responseData === "string" && responseData === "") ||
-    (Array.isArray(responseData) && responseData.length === 0) ||
-    (typeof responseData === "object" && Object.keys(responseData).length === 0)
-  ) {
+  if (isEmptyResponseValue(responseData)) {
     return <p className="ph-no-capture my-1 font-normal text-slate-700">-</p>;
   }
 
-  const handleArray = (data: string | number | string[]): string => {
-    if (Array.isArray(data)) {
-      return data.join(", ");
-    } else {
-      return String(data);
-    }
-  };
   switch (element.type) {
     case TSurveyElementTypeEnum.Rating:
     case TSurveyElementTypeEnum.CSAT:
@@ -105,23 +208,7 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       }
       break;
     case TSurveyElementTypeEnum.Matrix:
-      if (typeof responseData === "object" && !Array.isArray(responseData)) {
-        return (
-          <>
-            {element.rows.map((row) => {
-              const languagCode = getLanguageCode(survey.languages, language);
-              const rowValueInSelectedLanguage = getLocalizedValue(row.label, languagCode);
-              if (!responseData[rowValueInSelectedLanguage]) return null;
-              return (
-                <p key={rowValueInSelectedLanguage} className="ph-no-capture my-1 font-normal text-slate-700">
-                  {rowValueInSelectedLanguage}:{processResponseData(responseData[rowValueInSelectedLanguage])}
-                </p>
-              );
-            })}
-          </>
-        );
-      }
-      break;
+      return renderMatrixResponse(element, responseData, survey, language);
     case TSurveyElementTypeEnum.Address:
     case TSurveyElementTypeEnum.ContactInfo:
       if (Array.isArray(responseData)) {
@@ -130,96 +217,39 @@ export const RenderResponse: React.FC<RenderResponseProps> = ({
       break;
 
     case TSurveyElementTypeEnum.Cal:
-      if (typeof responseData === "string" || typeof responseData === "number") {
-        return (
-          <ResponseBadges
-            items={[{ value: responseData.toString() }]}
-            isExpanded={isExpanded}
-            icon={<PhoneIcon className="size-4 text-slate-500" />}
-            showId={showId}
-          />
-        );
-      }
-      break;
+      return renderIconBadgeResponse(
+        responseData,
+        <PhoneIcon className="size-4 text-slate-500" />,
+        isExpanded,
+        showId
+      );
     case TSurveyElementTypeEnum.Consent:
-      if (typeof responseData === "string" || typeof responseData === "number") {
-        return (
-          <ResponseBadges
-            items={[{ value: responseData.toString() }]}
-            isExpanded={isExpanded}
-            icon={<CheckCheckIcon className="size-4 text-slate-500" />}
-            showId={showId}
-          />
-        );
-      }
-      break;
+      return renderIconBadgeResponse(
+        responseData,
+        <CheckCheckIcon className="size-4 text-slate-500" />,
+        isExpanded,
+        showId
+      );
     case TSurveyElementTypeEnum.CTA:
-      if (typeof responseData === "string" || typeof responseData === "number") {
-        return (
-          <ResponseBadges
-            items={[{ value: responseData.toString() }]}
-            isExpanded={isExpanded}
-            icon={<MousePointerClickIcon className="size-4 text-slate-500" />}
-            showId={showId}
-          />
-        );
-      }
-      break;
+      return renderIconBadgeResponse(
+        responseData,
+        <MousePointerClickIcon className="size-4 text-slate-500" />,
+        isExpanded,
+        showId
+      );
     case TSurveyElementTypeEnum.MultipleChoiceMulti:
     case TSurveyElementTypeEnum.MultipleChoiceSingle:
     case TSurveyElementTypeEnum.Ranking:
-      if (typeof responseData === "string" || typeof responseData === "number") {
-        const choiceId = getChoiceIdByValue(
-          responseData.toString(),
-          element,
-          getLanguageCode(survey.languages, language)
-        );
-        return (
-          <ResponseBadges
-            items={[{ value: responseData.toString(), id: getChoiceBadgeText(element, choiceId) }]}
-            isExpanded={isExpanded}
-            showId={showId}
-          />
-        );
-      } else if (Array.isArray(responseData)) {
-        const itemsArray = responseData
-          .filter((choice) => choice !== "")
-          .map((choice) => {
-            const choiceId = getChoiceIdByValue(choice, element, getLanguageCode(survey.languages, language));
-            return { value: choice, id: getChoiceBadgeText(element, choiceId) };
-          });
-        return (
-          <>
-            {element.type === TSurveyElementTypeEnum.Ranking ? (
-              <RankingResponse value={itemsArray} isExpanded={isExpanded} showId={showId} />
-            ) : (
-              <ResponseBadges items={itemsArray} isExpanded={isExpanded} showId={showId} />
-            )}
-          </>
-        );
-      }
-      break;
+      return renderChoiceResponse(
+        element,
+        responseData,
+        getLanguageCode(survey.languages, language),
+        isExpanded,
+        showId
+      );
 
     default:
-      if (
-        typeof responseData === "string" ||
-        typeof responseData === "number" ||
-        Array.isArray(responseData)
-      ) {
-        return (
-          <p
-            className={cn(
-              "ph-no-capture my-1 truncate font-normal text-slate-700",
-              isExpanded ? "whitespace-pre-line" : "whitespace-nowrap"
-            )}>
-            {typeof responseData === "string"
-              ? renderHyperlinkedContent(responseData)
-              : Array.isArray(responseData)
-                ? handleArray(responseData)
-                : responseData}
-          </p>
-        );
-      }
+      return renderTextResponse(responseData, isExpanded);
   }
 
   return null; // Return null if no case is matched

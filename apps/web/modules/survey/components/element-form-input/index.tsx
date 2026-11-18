@@ -122,11 +122,9 @@ export const ElementFormInput = ({
   const index = getIndex(id, isChoice || isMatrixLabelColumn || isMatrixLabelRow);
 
   const elementId = useMemo(() => {
-    return isWelcomeCard
-      ? "start"
-      : isEndingCard
-        ? localSurvey.endings[elementIdx - elements.length].id
-        : currentElement.id;
+    if (isWelcomeCard) return "start";
+    if (isEndingCard) return localSurvey.endings[elementIdx - elements.length].id;
+    return currentElement.id;
   }, [isWelcomeCard, isEndingCard, currentElement?.id, elementIdx, elements.length, localSurvey.endings]);
   const endingCard = localSurvey.endings.find((ending) => ending.id === elementId);
 
@@ -166,7 +164,11 @@ export const ElementFormInput = ({
       (currentElement &&
         (id.includes(".")
           ? // Handle nested properties
-            (currentElement[id.split(".")[0] as keyof TSurveyElement] as any)?.[id.split(".")[1]]
+            (
+              currentElement[id.split(".")[0] as keyof TSurveyElement] as
+                | Record<string, TI18nString>
+                | undefined
+            )?.[id.split(".")[1]]
           : // Original behavior
             (currentElement[id as keyof TSurveyElement] as TI18nString))) ||
       createI18nString("", surveyLanguageCodes)
@@ -316,7 +318,10 @@ export const ElementFormInput = ({
     } else return currentElement.videoUrl;
   };
 
-  const debouncedHandleUpdate = useMemo(() => debounce((value) => handleUpdate(value), 100), [handleUpdate]);
+  const debouncedHandleUpdate = useMemo(
+    () => debounce((value: string) => handleUpdate(value), 100),
+    [handleUpdate]
+  );
 
   const [animationParent] = useAutoAnimate();
   const [internalFirstRender, setInternalFirstRender] = useState(true);
@@ -514,7 +519,8 @@ export const ElementFormInput = ({
                 localSurvey={localSurvey}
                 elementIdx={elementIdx}
                 isInvalid={isInvalid}
-                updateElement={(isWelcomeCard || isEndingCard ? updateSurvey : updateElement)!}
+                updateElement={updateElement}
+                updateCard={updateSurvey}
                 selectedLanguageCode={selectedLanguageCode}
                 firstRender={firstRender}
                 setFirstRender={setFirstRender}

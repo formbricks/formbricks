@@ -49,7 +49,7 @@ export const OPTIONS = async (): Promise<Response> => {
 };
 
 const validateResponse = (
-  responseInputData: TResponseInput,
+  responseInputData: TClientResponseInput,
   survey: TSurvey,
   invalidCalElementId: string | undefined
 ) => {
@@ -69,7 +69,8 @@ const validateResponse = (
     survey.blocks,
     responseInputData.data,
     responseInputData.language ?? "en",
-    survey.questions
+    survey.questions,
+    responseInputData.notShown
   );
 
   if (validationErrors) {
@@ -83,28 +84,193 @@ const validateResponse = (
   }
 };
 
+/** The request body, or the 413 or 400 response that refuses it. */
+const parseClientResponseBody = async (
+  req: Request
+): Promise<{ responseInput: Record<string, unknown> } | { response: Response }> => {
+  try {
+    return { responseInput: await parseJsonBodyWithLimit<Record<string, unknown>>(req) };
+  } catch (error) {
+    if (error instanceof RequestBodyTooLargeError) {
+      return {
+        response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }, true),
+      };
+    }
+
+    return {
+      response: responses.badRequestResponse(
+        "Malformed JSON input, please check your request body",
+        { error: error instanceof Error ? error.message : "Unknown error occurred" },
+        true
+      ),
+    };
+  }
+};
+
+/** User identification is an enterprise feature (contacts). */
+const isUserIdentificationAllowed = async (workspaceId: string): Promise<boolean> => {
+  const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
+  return getIsContactsEnabled(organizationId);
+};
+
+/** Why the survey does not take this submission (another workspace, not running, PIN), or null. */
+const getSurveySubmissionRefusal = (
+  survey: TSurvey,
+  workspaceId: string,
+  pinAuthToken: string | null | undefined
+): { response: Response } | null => {
+  if (survey.workspaceId !== workspaceId) {
+    return {
+      response: responses.badRequestResponse(
+        "Survey is part of another workspace",
+        {
+          workspaceId,
+        },
+        true
+      ),
+    };
+  }
+
+  if (survey.status !== "inProgress") {
+    return {
+      response: responses.forbiddenResponse("Survey is not accepting submissions", true, {
+        surveyId: survey.id,
+      }),
+    };
+  }
+
+  if (survey.pin && !verifyLinkSurveyPinToken(pinAuthToken, survey.id)) {
+    return {
+      response: responses.forbiddenResponse("Survey is protected by a PIN", true, { surveyId: survey.id }),
+    };
+  }
+  return null;
+};
+
+/** The response's meta: the client's captured context plus what the server derives and checks. */
+const buildClientResponseMeta = async ({
+  responseInputData,
+  survey,
+  workspaceId,
+  req,
+  requestHeaders,
+}: {
+  responseInputData: ReturnType<(typeof ZClientResponseInput)["parse"]>;
+  survey: TSurvey;
+  workspaceId: string;
+  req: Request;
+  requestHeaders: Headers;
+}): Promise<TResponseInput["meta"]> => {
+  const userAgent = req.headers.get("user-agent") || undefined;
+  const agent = new UAParser(userAgent);
+
+  const country =
+    requestHeaders.get("CF-IPCountry") || requestHeaders.get("CloudFront-Viewer-Country") || undefined;
+
+  const meta: TResponseInput["meta"] = {
+    // The browser-runtime context the renderer snapshotted at display time (ENG-1841). This
+    // literal is a whitelist — anything not re-listed here never reaches the database — so the
+    // auto-captured keys have to be pulled in explicitly. Spread from the schema rather than
+    // retyped key by key, so the two cannot drift.
+    ...pickAutoCapturedResponseMeta(responseInputData?.meta),
+    source: responseInputData?.meta?.source,
+    url: responseInputData?.meta?.url,
+    userAgent: {
+      browser: agent.getBrowser().name,
+      device: agent.getDevice().type || "desktop",
+      os: agent.getOS().name,
+    },
+    country: country,
+    action: responseInputData?.meta?.action,
+    // Only the creative's id comes from the client; the server checks it and stamps the name.
+    ...(responseInputData.meta?.openedByCreativeId
+      ? await getOpenedByCreativeMeta({
+          creativeId: responseInputData.meta.openedByCreativeId,
+          workspaceId,
+          surveyId: survey.id,
+        })
+      : {}),
+  };
+
+  // Capture IP address if the survey has IP capture enabled
+  // Server-derived IP always overwrites any client-provided value
+  if (survey.isCaptureIpEnabled && !survey.isAnonymizeResponsesEnabled) {
+    const ipAddress = await getClientIpFromHeaders();
+    meta.ipAddress = ipAddress;
+  }
+
+  return meta;
+};
+
+/**
+ * A single-use link's submission must carry a valid single use id; on success the input carries
+ * the canonical one. The refusal, or null.
+ */
+const applySingleUseValidation = (
+  survey: TSurvey,
+  workspaceId: string,
+  responseInputData: ReturnType<(typeof ZClientResponseInput)["parse"]>
+): { response: Response } | null => {
+  const singleUseValidationResult = validateSingleUseResponseInput(survey, workspaceId, responseInputData);
+  if (!singleUseValidationResult) return null;
+  if ("response" in singleUseValidationResult) {
+    return { response: singleUseValidationResult.response };
+  }
+  responseInputData.singleUseId = singleUseValidationResult.singleUseId;
+  return null;
+};
+
+/** The finished response this submission repeats, if it can fold into one (ENG-1147). */
+const findFoldableDuplicate = async (
+  responseInputData: TClientResponseInput,
+  survey: TSurvey,
+  workspaceId: string
+) => {
+  const contact =
+    responseInputData.userId &&
+    canFoldSubmission({ surveyType: survey.type, finished: responseInputData.finished })
+      ? await getContactByUserId(workspaceId, responseInputData.userId)
+      : null;
+  return findRecentDuplicateResponse({
+    surveyId: survey.id,
+    surveyType: survey.type,
+    contactId: contact?.id,
+    data: responseInputData.data,
+    finished: responseInputData.finished,
+    hasCalBookings: responseInputData.calBookings !== undefined,
+  });
+};
+
+/** The pipeline events of a new response: created, and finished when it is. */
+const sendResponsePipelineEvents = async (
+  workspaceId: string,
+  responseData: Omit<TResponseWithQuotaFull, "quotaFull">,
+  finished: boolean
+): Promise<void> => {
+  await sendToPipeline({
+    event: "responseCreated",
+    workspaceId,
+    surveyId: responseData.surveyId,
+    response: responseData,
+  });
+
+  if (finished) {
+    await sendToPipeline({
+      event: "responseFinished",
+      workspaceId,
+      surveyId: responseData.surveyId,
+      response: responseData,
+    });
+  }
+};
+
 export const POST = withV1ApiWrapper({
   handler: async ({ req, props }: THandlerParams<{ params: Promise<{ workspaceId: string }> }>) => {
     const params = await props.params;
     const requestHeaders = await headers();
-    let responseInput;
-    try {
-      responseInput = await parseJsonBodyWithLimit<Record<string, unknown>>(req);
-    } catch (error) {
-      if (error instanceof RequestBodyTooLargeError) {
-        return {
-          response: responses.payloadTooLargeResponse("Payload Too Large", { error: error.message }, true),
-        };
-      }
-
-      return {
-        response: responses.badRequestResponse(
-          "Malformed JSON input, please check your request body",
-          { error: error instanceof Error ? error.message : "Unknown error occurred" },
-          true
-        ),
-      };
-    }
+    const parsedBody = await parseClientResponseBody(req);
+    if ("response" in parsedBody) return parsedBody;
+    const { responseInput } = parsedBody;
 
     // Resolve: accepts either an environmentId (old SDK) or a workspaceId (new SDK)
     const resolved = await resolveClientApiIds(params.workspaceId);
@@ -134,25 +300,15 @@ export const POST = withV1ApiWrapper({
       };
     }
 
-    const userAgent = req.headers.get("user-agent") || undefined;
-    const agent = new UAParser(userAgent);
-
-    const country =
-      requestHeaders.get("CF-IPCountry") || requestHeaders.get("CloudFront-Viewer-Country") || undefined;
-
     const responseInputData: TClientResponseInput = responseInputValidation.data;
 
-    if (responseInputData.userId) {
-      const organizationId = await getOrganizationIdFromWorkspaceId(workspaceId);
-      const isContactsEnabled = await getIsContactsEnabled(organizationId);
-      if (!isContactsEnabled) {
-        return {
-          response: responses.forbiddenResponse(
-            "User identification is only available for enterprise users.",
-            true
-          ),
-        };
-      }
+    if (responseInputData.userId && !(await isUserIdentificationAllowed(workspaceId))) {
+      return {
+        response: responses.forbiddenResponse(
+          "User identification is only available for enterprise users.",
+          true
+        ),
+      };
     }
 
     // get and check survey
@@ -162,31 +318,8 @@ export const POST = withV1ApiWrapper({
         response: responses.notFoundResponse("Survey", responseInputData.surveyId, true),
       };
     }
-    if (survey.workspaceId !== workspaceId) {
-      return {
-        response: responses.badRequestResponse(
-          "Survey is part of another workspace",
-          {
-            workspaceId,
-          },
-          true
-        ),
-      };
-    }
-
-    if (survey.status !== "inProgress") {
-      return {
-        response: responses.forbiddenResponse("Survey is not accepting submissions", true, {
-          surveyId: survey.id,
-        }),
-      };
-    }
-
-    if (survey.pin && !verifyLinkSurveyPinToken(responseInputData.pinAuthToken, survey.id)) {
-      return {
-        response: responses.forbiddenResponse("Survey is protected by a PIN", true, { surveyId: survey.id }),
-      };
-    }
+    const surveyRefusal = getSurveySubmissionRefusal(survey, workspaceId, responseInputData.pinAuthToken);
+    if (surveyRefusal) return surveyRefusal;
 
     // The Embedded Data ingest contract (ENG-1845), re-run server-side because this endpoint is
     // public and the renderer's filtering is never trusted. Ahead of validation and quota evaluation
@@ -220,13 +353,8 @@ export const POST = withV1ApiWrapper({
       return { response: recaptchaErrorResponse };
     }
 
-    const singleUseValidationResult = validateSingleUseResponseInput(survey, workspaceId, responseInputData);
-    if (singleUseValidationResult) {
-      if ("response" in singleUseValidationResult) {
-        return { response: singleUseValidationResult.response };
-      }
-      responseInputData.singleUseId = singleUseValidationResult.singleUseId;
-    }
+    const singleUseRefusal = applySingleUseValidation(survey, workspaceId, responseInputData);
+    if (singleUseRefusal) return singleUseRefusal;
 
     if (
       !validateClientFileUploads({
@@ -250,19 +378,7 @@ export const POST = withV1ApiWrapper({
     // A mail scanner's click-time check and the recipient's own click submit the same prefilled
     // answer seconds apart (ENG-1147). Hand the second one the first finished response's id, so no
     // second row is stored and no second pipeline run fires.
-    const contact =
-      responseInputData.userId &&
-      canFoldSubmission({ surveyType: survey.type, finished: responseInputData.finished })
-        ? await getContactByUserId(workspaceId, responseInputData.userId)
-        : null;
-    const duplicate = await findRecentDuplicateResponse({
-      surveyId: survey.id,
-      surveyType: survey.type,
-      contactId: contact?.id,
-      data: responseInputData.data,
-      finished: responseInputData.finished,
-      hasCalBookings: responseInputData.calBookings !== undefined,
-    });
+    const duplicate = await findFoldableDuplicate(responseInputData, survey, workspaceId);
     if (duplicate) {
       logger.info({ surveyId: survey.id, responseId: duplicate.id }, "Folded duplicate response submission");
       return {
@@ -272,37 +388,13 @@ export const POST = withV1ApiWrapper({
 
     let response: TResponseWithQuotaFull;
     try {
-      const meta: TResponseInput["meta"] = {
-        // The browser-runtime context the renderer snapshotted at display time (ENG-1841). This
-        // literal is a whitelist — anything not re-listed here never reaches the database — so the
-        // auto-captured keys have to be pulled in explicitly. Spread from the schema rather than
-        // retyped key by key, so the two cannot drift.
-        ...pickAutoCapturedResponseMeta(responseInputData?.meta),
-        source: responseInputData?.meta?.source,
-        url: responseInputData?.meta?.url,
-        userAgent: {
-          browser: agent.getBrowser().name,
-          device: agent.getDevice().type || "desktop",
-          os: agent.getOS().name,
-        },
-        country: country,
-        action: responseInputData?.meta?.action,
-        // Only the creative's id comes from the client; the server checks it and stamps the name.
-        ...(responseInputData.meta?.openedByCreativeId
-          ? await getOpenedByCreativeMeta({
-              creativeId: responseInputData.meta.openedByCreativeId,
-              workspaceId,
-              surveyId: survey.id,
-            })
-          : {}),
-      };
-
-      // Capture IP address if the survey has IP capture enabled
-      // Server-derived IP always overwrites any client-provided value
-      if (survey.isCaptureIpEnabled && !survey.isAnonymizeResponsesEnabled) {
-        const ipAddress = await getClientIpFromHeaders();
-        meta.ipAddress = ipAddress;
-      }
+      const meta = await buildClientResponseMeta({
+        responseInputData,
+        survey,
+        workspaceId,
+        req,
+        requestHeaders,
+      });
 
       const metaToStore = applyAnonymizePolicy(meta, survey.isAnonymizeResponsesEnabled);
 
@@ -319,21 +411,7 @@ export const POST = withV1ApiWrapper({
 
     const { quotaFull, ...responseData } = response;
 
-    await sendToPipeline({
-      event: "responseCreated",
-      workspaceId,
-      surveyId: responseData.surveyId,
-      response: responseData,
-    });
-
-    if (responseInputData.finished) {
-      await sendToPipeline({
-        event: "responseFinished",
-        workspaceId,
-        surveyId: responseData.surveyId,
-        response: responseData,
-      });
-    }
+    await sendResponsePipelineEvents(workspaceId, responseData, responseInputData.finished);
 
     const quotaObj = createQuotaFullObject(quotaFull);
 

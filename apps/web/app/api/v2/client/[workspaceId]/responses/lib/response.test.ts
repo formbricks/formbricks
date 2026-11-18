@@ -164,13 +164,13 @@ describe("createResponse V2", () => {
         create: vi.fn(),
       },
     };
-    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+    prisma.$transaction = vi.fn(async (cb) => cb(mockTx));
 
     vi.mocked(validateInputs).mockImplementation((() => {}) as typeof validateInputs);
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(organizationId);
-    vi.mocked(getOrganization).mockResolvedValue(mockOrganization as any);
+    vi.mocked(getOrganization, { partial: true, deep: true }).mockResolvedValue(mockOrganization);
     vi.mocked(getContact).mockResolvedValue(mockContact);
-    vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma as any);
+    vi.mocked(mockTx.response.create, { partial: true, deep: true }).mockResolvedValue(mockResponsePrisma);
     vi.mocked(calculateTtcTotal).mockImplementation((ttc) => ({
       ...ttc,
       _total: Object.values(ttc).reduce((a, b) => a + b, 0),
@@ -255,7 +255,9 @@ describe("createResponse V2", () => {
       tags: [{ tag: mockTag }],
     };
 
-    vi.mocked(mockTx.response.create).mockResolvedValue(prismaResponseWithTags as any);
+    vi.mocked(mockTx.response.create, { partial: true, deep: true }).mockResolvedValue(
+      prismaResponseWithTags
+    );
 
     const result = await createResponse(
       mockResponseInput,
@@ -379,11 +381,11 @@ describe("createResponseWithQuotaEvaluation V2", () => {
         create: vi.fn(),
       },
     };
-    prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+    prisma.$transaction = vi.fn(async (cb) => cb(mockTx));
     vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(organizationId);
-    vi.mocked(getOrganization).mockResolvedValue(mockOrganization as any);
+    vi.mocked(getOrganization, { partial: true, deep: true }).mockResolvedValue(mockOrganization);
     vi.mocked(getContact).mockResolvedValue(mockContact);
-    vi.mocked(mockTx.response.create).mockResolvedValue(mockResponsePrisma as any);
+    vi.mocked(mockTx.response.create, { partial: true, deep: true }).mockResolvedValue(mockResponsePrisma);
     vi.mocked(calculateTtcTotal).mockImplementation((ttc) => ({
       ...ttc,
       _total: Object.values(ttc).reduce((a, b) => a + b, 0),

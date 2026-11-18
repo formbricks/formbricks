@@ -2,6 +2,7 @@
 
 import { TrashIcon } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { TResponse } from "@formbricks/types/responses";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -53,36 +54,40 @@ export const SingleResponseCardHeader = ({
 
   const deleteSubmissionToolTip = <>{t("workspace.surveys.responses.this_response_is_in_progress")}</>;
 
+  const contactId = response.contact?.id;
+  let contactHeader: ReactNode;
+  if (!contactId) {
+    contactHeader = (
+      <div className="flex items-center">
+        <PersonAvatar personId="anonymous" />
+        <h3 className="ml-4 pb-1 font-semibold text-slate-600">{t("common.anonymous")}</h3>
+      </div>
+    );
+  } else if (user) {
+    contactHeader = (
+      <Link className="flex items-center gap-x-2" href={`${workspaceBasePath}/contacts/${contactId}`}>
+        <PersonAvatar personId={contactId} />
+        <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
+          {displayIdentifier}
+        </h3>
+      </Link>
+    );
+  } else {
+    contactHeader = (
+      <div className="flex items-center gap-x-2">
+        <PersonAvatar personId={contactId} />
+        <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">{displayIdentifier}</h3>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-2 border-b border-slate-200 px-6 pt-4 pb-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center justify-center gap-x-2">
           {pageType === "response" && (
             <>
-              {response.contact?.id ? (
-                user ? (
-                  <Link
-                    className="flex items-center gap-x-2"
-                    href={`${workspaceBasePath}/contacts/${response.contact.id}`}>
-                    <PersonAvatar personId={response.contact.id} />
-                    <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600 hover:underline">
-                      {displayIdentifier}
-                    </h3>
-                  </Link>
-                ) : (
-                  <div className="flex items-center gap-x-2">
-                    <PersonAvatar personId={response.contact.id} />
-                    <h3 className="ph-no-capture ml-4 pb-1 font-semibold text-slate-600">
-                      {displayIdentifier}
-                    </h3>
-                  </div>
-                )
-              ) : (
-                <div className="flex items-center">
-                  <PersonAvatar personId="anonymous" />
-                  <h3 className="ml-4 pb-1 font-semibold text-slate-600">{t("common.anonymous")}</h3>
-                </div>
-              )}
+              {contactHeader}
               {response.contact?.userId && <IdBadge id={response.contact.userId} />}
               <OutcomeBadge outcome={response.outcome} />
             </>

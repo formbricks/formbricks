@@ -1,10 +1,28 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE } from "@formbricks/types/errors";
 import { resetDb } from "@/integration/reset-db";
+import type * as ConstantsModule from "@/lib/constants";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createToken } from "@/lib/jwt";
 import { auth } from "@/modules/auth/lib/auth";
 import { syncSsoIdentityForUser } from "@/modules/ee/sso/lib/account-linking";
+
+const constants = vi.hoisted(() => ({ emailAuthEnabled: { value: true } }));
+
+/**
+ * ENG-7266. `EMAIL_AUTH_ENABLED` is a module-load const derived from the environment, and the redirect
+ * decision has to read it live, so this suite holds it in a box it can flip per test. Everything else
+ * stays real: `auth` itself reads several constants from the same module at import, and captures its
+ * own `emailAndPassword.enabled` there — so a flip here changes the redirect decision only, which is
+ * all these assertions read.
+ */
+vi.mock("@/lib/constants", async (importOriginal) => ({
+  ...(await importOriginal<typeof ConstantsModule>()),
+  get EMAIL_AUTH_ENABLED() {
+    return constants.emailAuthEnabled.value;
+  },
+}));
 
 /**
  * Integration coverage for the SSO-recovery magic-link sign-in (ENG-1054, Phase 7) against real
@@ -31,6 +49,82 @@ describe("SSO recovery sign-in (real Postgres)", () => {
     expect(res.headers.get("location")).toContain("/api/auth/sso/recovery/complete");
     // the session cookie must land on the redirect response (not just the DB row)
     expect(res.headers.getSetCookie().some((c) => c.includes("session_token"))).toBe(true);
+  });
+
+  /**
+   * ENG-7266. The link proves mailbox access only; for a verified 2FA account that must not replace the
+   * second factor. No session, no cookie, and the login page carries the completion URL so the user
+   * finishes recovery after password + TOTP.
+   */
+  test("a verified 2FA user gets no session and is sent to login with the completion URL", async () => {
+    const user = await prisma.user.create({
+      data: {
+        email: "twofactor@example.com",
+        name: "Two Factor",
+        emailVerified: true,
+        twoFactorEnabled: true,
+      },
+    });
+    const token = createToken(user.id, { purpose: "sso_recovery" });
+    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=test-state`;
+
+    const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
+
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
+    expect(res.headers.getSetCookie().some((c) => c.includes("session_token"))).toBe(false);
+    const location = new URL(res.headers.get("location") ?? "");
+    expect(location.pathname).toBe("/auth/login");
+    expect(location.searchParams.get("error")).toBeNull();
+    expect(location.searchParams.get("callbackUrl")).toBe(callbackUrl);
+  });
+
+  // Recovery strips an unverified account's local factors on completion (ENG-2557), so the factor set
+  // by a possible squatter is not one the mailbox owner can be asked for.
+  test("an unverified user with 2FA still gets the recovery session", async () => {
+    const user = await prisma.user.create({
+      data: {
+        email: "unverified-2fa@example.com",
+        name: "Unverified",
+        emailVerified: false,
+        twoFactorEnabled: true,
+      },
+    });
+    const token = createToken(user.id, { purpose: "sso_recovery" });
+
+    await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl: WEBAPP_URL }, asResponse: true });
+
+    expect(await prisma.session.count({ where: { userId: user.id } })).toBe(1);
+  });
+
+  /**
+   * ENG-7266 with `EMAIL_AUTH_DISABLED=1`. The login page renders no credential form there, so
+   * password + TOTP cannot run, and the identity that started recovery is unlinked by definition. The
+   * redirect has to name that dead end instead of sending the user around the loop again.
+   */
+  test("with credential sign-in off, the 2FA deferral carries the unavailable error code", async () => {
+    const user = await prisma.user.create({
+      data: {
+        email: "twofactor-sso-only@example.com",
+        name: "Two Factor Sso Only",
+        emailVerified: true,
+        twoFactorEnabled: true,
+      },
+    });
+    const token = createToken(user.id, { purpose: "sso_recovery" });
+    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=test-state`;
+
+    constants.emailAuthEnabled.value = false;
+    try {
+      const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
+
+      expect(await prisma.session.count({ where: { userId: user.id } })).toBe(0);
+      const location = new URL(res.headers.get("location") ?? "");
+      expect(location.pathname).toBe("/auth/login");
+      expect(location.searchParams.get("error")).toBe(SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE);
+      expect(location.searchParams.get("callbackUrl")).toBe(callbackUrl);
+    } finally {
+      constants.emailAuthEnabled.value = true;
+    }
   });
 
   test("a token with a non-recovery purpose creates no session", async () => {

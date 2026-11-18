@@ -93,7 +93,7 @@ describe("getAvailableRuleTypes", () => {
 
     expect(available).toContain("minSelections");
     expect(available).toContain("maxSelections");
-    expect(available.length).toBe(2);
+    expect(available).toHaveLength(2);
   });
 
   test("should return empty array for rating element (no validation rules)", () => {
@@ -143,7 +143,7 @@ describe("getAvailableRuleTypes", () => {
 
     expect(available).toContain("minRowsAnswered");
     expect(available).toContain("answerAllRows");
-    expect(available.length).toBe(2);
+    expect(available).toHaveLength(2);
   });
 
   test("should return ranking validation rules for ranking element", () => {
@@ -154,7 +154,7 @@ describe("getAvailableRuleTypes", () => {
 
     expect(available).toContain("minRanked");
     expect(available).toContain("rankAll");
-    expect(available.length).toBe(2);
+    expect(available).toHaveLength(2);
   });
 
   test("should return file validation rules for fileUpload element", () => {
@@ -175,7 +175,7 @@ describe("getAvailableRuleTypes", () => {
 
     expect(available).toContain("minSelections");
     expect(available).toContain("maxSelections");
-    expect(available.length).toBe(2);
+    expect(available).toHaveLength(2);
   });
 
   test("should return empty array for address element (no validation rules)", () => {

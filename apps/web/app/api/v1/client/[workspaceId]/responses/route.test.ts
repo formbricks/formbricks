@@ -229,6 +229,20 @@ describe("POST /api/v1/client/[workspaceId]/responses — Embedded Data ingest c
 
     expect(persisted().data).toEqual({ plan: "gold", verifiedEmail: "someone@example.com" });
   });
+
+  test("hands the not-shown record to validation, so rules skip what show-if kept back (ENG-7332)", async () => {
+    const notShown = { rows: { trip: ["visa"] } };
+
+    await postRawBody({}, { notShown });
+
+    expect(mocks.validateResponseData).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      notShown
+    );
+  });
 });
 
 describe("POST /api/v1/client/[workspaceId]/responses — duplicate submissions (ENG-1147)", () => {

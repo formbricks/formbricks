@@ -34,6 +34,25 @@ import {
 // Ensure this path is correct
 import { convertFloatTo2Decimal } from "./utils";
 
+type TSummaryEntry = TSurveySummary["summary"][number];
+type TSummaryResponse = Parameters<typeof getElementSummary>[2][number];
+
+/** Response rows holding values `TResponseData` does not allow, for tests of how the summary copes. */
+const malformedResponses = (responses: unknown[]) => responses as TSummaryResponse[];
+
+/** The summary entries whose `type` can be `TType` (a multiple-choice entry covers two types). */
+type TSummaryOf<TType, TEntry = TSummaryEntry> = TEntry extends { type: infer TEntryType }
+  ? TType extends TEntryType
+    ? TEntry
+    : never
+  : never;
+
+/** Checks the summary entry's type and narrows it to that type, so a test can read its fields. */
+const asSummaryOf = <TType extends TSummaryEntry["type"]>(entry: TSummaryEntry | undefined, type: TType) => {
+  expect(entry?.type).toBe(type);
+  return entry as TSummaryOf<TType>;
+};
+
 vi.mock("@/lib/display/service", () => ({
   getDisplayCountBySurveyId: vi.fn(),
 }));
@@ -116,7 +135,7 @@ const mockBaseSurvey: TSurvey = {
   recaptcha: { enabled: false, threshold: 0.5 },
 } as unknown as TSurvey;
 
-const mockResponses = [
+const mockResponses: TSummaryResponse[] = [
   {
     id: "res1",
     data: { q1: "Answer 1" },
@@ -147,7 +166,7 @@ const mockResponses = [
     ttc: {},
     finished: false,
   },
-] as any;
+];
 
 const mockQuotas = [
   {
@@ -240,7 +259,7 @@ describe("getSurveySummaryMeta", () => {
       questions: [],
     };
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "r1",
         data: { q1: "a", q2: "b", q3: "c" },
@@ -251,7 +270,7 @@ describe("getSurveySummaryMeta", () => {
         ttc: { q1: 5000, q2: 5000, q3: 4800, _total: 14800 },
         finished: true,
       },
-    ] as any;
+    ];
 
     const meta = getSurveySummaryMeta(surveyWithOneBlockThreeElements, responses, 1, mockQuotas);
     expect(meta.ttcAverage).toBe(5000);
@@ -296,7 +315,7 @@ describe("getSurveySummaryDropOff", () => {
   });
 
   test("calculates dropOff correctly with welcome card disabled", () => {
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "r1",
         data: { q1: "a" },
@@ -317,7 +336,7 @@ describe("getSurveySummaryDropOff", () => {
         ttc: { q1: 10, q2: 10 },
         finished: true,
       }, // Completed
-    ] as any;
+    ];
     const displayCount = 5; // 5 displays
     const dropOff = getSurveySummaryDropOff(
       surveyWithBlocks,
@@ -326,7 +345,7 @@ describe("getSurveySummaryDropOff", () => {
       displayCount
     );
 
-    expect(dropOff.length).toBe(2);
+    expect(dropOff).toHaveLength(2);
     // Q1: welcome card disabled so impressions = displayCount
     expect(dropOff[0].elementId).toBe("q1");
     expect(dropOff[0].impressions).toBe(displayCount);
@@ -348,7 +367,7 @@ describe("getSurveySummaryDropOff", () => {
       ...surveyWithBlocks,
       welcomeCard: { enabled: true, headline: { default: "Welcome" } } as unknown as TSurvey["welcomeCard"],
     };
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "r1",
         data: { q1: "a" },
@@ -359,7 +378,7 @@ describe("getSurveySummaryDropOff", () => {
         ttc: { q1: 10 }, // Only saw q1, never reached q2
         finished: false,
       },
-    ] as any;
+    ];
     const displayCount = 1;
     const dropOff = getSurveySummaryDropOff(
       surveyWithWelcome,
@@ -441,7 +460,7 @@ describe("getSurveySummaryDropOff", () => {
 
     // Response where user answered q1, q2, then logic jumped to q4 (skipping q3).
     // The ttc/data reflects exactly what elements were shown — no logic replay needed.
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "r1",
         data: { q1: "a", q2: "b", q4: "d" },
@@ -504,7 +523,7 @@ describe("getQuestionSummary", () => {
     // The rows are what the accessors read since ENG-2412; a real survey read carries both.
     embeddedFields: embeddedFieldsFromLegacyInput({ hiddenFields: { enabled: true, fieldIds: ["hidden1"] } }),
   };
-  const responses = [
+  const responses: TSummaryResponse[] = [
     {
       id: "r1",
       data: { q_open: "Open answer", q_multi_single: "Choice 1", hidden1: "Hidden val" },
@@ -533,10 +552,10 @@ describe("getQuestionSummary", () => {
       responses,
       mockDropOff
     );
-    const openTextSummary = summary.find((s: any) => s.element?.id === "q_open");
+    const openTextSummary = summary.find((s) => "element" in s && s.element.id === "q_open");
     expect(openTextSummary?.type).toBe(TSurveyElementTypeEnum.OpenText);
     expect(openTextSummary?.responseCount).toBe(1);
-    // @ts-expect-error
+    // @ts-expect-error -- the summary is a union; the fixture, not the type, fixes which member it is
     expect(openTextSummary?.samples[0].value).toBe("Open answer");
   });
 
@@ -547,14 +566,14 @@ describe("getQuestionSummary", () => {
       responses,
       mockDropOff
     );
-    const multiSingleSummary = summary.find((s: any) => s.element?.id === "q_multi_single");
+    const multiSingleSummary = summary.find((s) => "element" in s && s.element.id === "q_multi_single");
     expect(multiSingleSummary?.type).toBe(TSurveyElementTypeEnum.MultipleChoiceSingle);
     expect(multiSingleSummary?.responseCount).toBe(1);
-    // @ts-expect-error
+    // @ts-expect-error -- the summary is a union; the fixture, not the type, fixes which member it is
     expect(multiSingleSummary?.choices[0].value).toBe("Choice 1");
-    // @ts-expect-error
+    // @ts-expect-error -- the summary is a union; the fixture, not the type, fixes which member it is
     expect(multiSingleSummary?.choices[0].count).toBe(1);
-    // @ts-expect-error
+    // @ts-expect-error -- the summary is a union; the fixture, not the type, fixes which member it is
     expect(multiSingleSummary?.choices[0].percentage).toBe(100);
   });
 
@@ -624,13 +643,15 @@ describe("getQuestionSummary", () => {
       []
     );
 
-    const multiNoneSummary = summary.find((s: any) => s.element?.id === "q_multi_none");
+    const multiNoneSummary = summary.find((s) => "element" in s && s.element.id === "q_multi_none");
     expect(multiNoneSummary?.type).toBe(TSurveyElementTypeEnum.MultipleChoiceSingle);
     expect(multiNoneSummary?.responseCount).toBe(3);
 
     // Check that "None of the above" option is included in choices
-    // @ts-expect-error
-    const noneChoice = multiNoneSummary?.choices.find((c: any) => c.value === "None of the above");
+    // @ts-expect-error -- the summary is a union; the fixture, not the type, fixes which member it is
+    const noneChoice = multiNoneSummary?.choices.find(
+      (c: { value: string }) => c.value === "None of the above"
+    );
     expect(noneChoice).toBeDefined();
     expect(noneChoice?.count).toBe(2);
     expect(noneChoice?.percentage).toBeCloseTo(66.67, 1);
@@ -646,7 +667,7 @@ describe("getQuestionSummary", () => {
     const hiddenFieldSummary = summary.find((s) => s.type === "hiddenField" && s.id === "hidden1");
     expect(hiddenFieldSummary).toBeDefined();
     expect(hiddenFieldSummary?.responseCount).toBe(1);
-    // @ts-expect-error
+    // @ts-expect-error -- the summary is a union; the fixture, not the type, fixes which member it is
     expect(hiddenFieldSummary?.samples[0].value).toBe("Hidden val");
   });
 
@@ -722,7 +743,7 @@ describe("getQuestionSummary", () => {
         welcomeCard: { enabled: false },
       } as unknown as TSurvey;
 
-      const responses = [
+      const responses: TSummaryResponse[] = [
         {
           id: "response-1",
           data: { "ranking-q1": ["Item 1", "Item 2", "Item 3"] },
@@ -757,30 +778,30 @@ describe("getQuestionSummary", () => {
       );
 
       expect(summary).toHaveLength(1);
-      expect(summary[0].type).toBe(TSurveyElementTypeEnum.Ranking);
-      expect(summary[0].responseCount).toBe(2);
-      expect((summary[0] as any).choices).toHaveLength(3);
+      const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Ranking);
+      expect(entry.responseCount).toBe(2);
+      expect(entry.choices).toHaveLength(3);
 
       // Item 1 is in position 1 once and position 2 once, so avg ranking should be (1+2)/2 = 1.5
-      const item1 = (summary[0] as any).choices.find(
+      const item1 = entry.choices.find(
         (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 1"
       );
-      expect(item1.count).toBe(2);
-      expect(item1.avgRanking).toBe(1.5);
+      expect(item1?.count).toBe(2);
+      expect(item1?.avgRanking).toBe(1.5);
 
       // Item 2 is in position 1 once and position 2 once, so avg ranking should be (1+2)/2 = 1.5
-      const item2 = (summary[0] as any).choices.find(
+      const item2 = entry.choices.find(
         (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 2"
       );
-      expect(item2.count).toBe(2);
-      expect(item2.avgRanking).toBe(1.5);
+      expect(item2?.count).toBe(2);
+      expect(item2?.avgRanking).toBe(1.5);
 
       // Item 3 is in position 3 twice, so avg ranking should be 3
-      const item3 = (summary[0] as any).choices.find(
+      const item3 = entry.choices.find(
         (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 3"
       );
-      expect(item3.count).toBe(2);
-      expect(item3.avgRanking).toBe(3);
+      expect(item3?.count).toBe(2);
+      expect(item3?.avgRanking).toBe(3);
     });
 
     test("getQuestionSummary aggregates a ranked Other with its average rank and typed values", async () => {
@@ -815,7 +836,7 @@ describe("getQuestionSummary", () => {
         finished: true,
       });
 
-      const responses = [
+      const responses: TSummaryResponse[] = [
         buildResponse("response-1", ["Integrations", "Item 1", "Item 2"]),
         buildResponse("response-2", ["Item 2", "Item 1", "Self-hosting"]),
         buildResponse("response-3", ["Item 1", "Item 2"]),
@@ -884,7 +905,7 @@ describe("getQuestionSummary", () => {
         welcomeCard: { enabled: false },
       } as unknown as TSurvey;
 
-      const responses = [
+      const responses: TSummaryResponse[] = [
         {
           id: "response-1",
           data: { "ranking-q1": answer },
@@ -925,7 +946,7 @@ describe("getQuestionSummary", () => {
         welcomeCard: { enabled: false },
       } as unknown as TSurvey;
 
-      const responses = [
+      const responses: TSummaryResponse[] = [
         {
           id: "response-1",
           data: { "ranking-q1": ["Renamed item", "Item 1"] },
@@ -975,7 +996,7 @@ describe("getQuestionSummary", () => {
       } as unknown as TSurvey;
 
       // Spanish response with Spanish labels
-      const responses = [
+      const responses: TSummaryResponse[] = [
         {
           id: "response-1",
           data: { "ranking-q1": ["Elemento 2", "Elemento 1", "Elemento 3"] },
@@ -1013,29 +1034,29 @@ describe("getQuestionSummary", () => {
       );
 
       expect(summary).toHaveLength(1);
-      expect(summary[0].type).toBe(TSurveyElementTypeEnum.Ranking);
-      expect(summary[0].responseCount).toBe(1);
+      const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Ranking);
+      expect(entry.responseCount).toBe(1);
 
       // Item 1 is in position 2, so avg ranking should be 2
-      const item1 = (summary[0] as any).choices.find(
+      const item1 = entry.choices.find(
         (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 1"
       );
-      expect(item1.count).toBe(1);
-      expect(item1.avgRanking).toBe(2);
+      expect(item1?.count).toBe(1);
+      expect(item1?.avgRanking).toBe(2);
 
       // Item 2 is in position 1, so avg ranking should be 1
-      const item2 = (summary[0] as any).choices.find(
+      const item2 = entry.choices.find(
         (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 2"
       );
-      expect(item2.count).toBe(1);
-      expect(item2.avgRanking).toBe(1);
+      expect(item2?.count).toBe(1);
+      expect(item2?.avgRanking).toBe(1);
 
       // Item 3 is in position 3, so avg ranking should be 3
-      const item3 = (summary[0] as any).choices.find(
+      const item3 = entry.choices.find(
         (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 3"
       );
-      expect(item3.count).toBe(1);
-      expect(item3.avgRanking).toBe(3);
+      expect(item3?.count).toBe(1);
+      expect(item3?.avgRanking).toBe(3);
     });
 
     test("getQuestionSummary handles ranking question with no ranking data in responses", async () => {
@@ -1066,7 +1087,7 @@ describe("getQuestionSummary", () => {
       } as unknown as TSurvey;
 
       // Responses without any ranking data
-      const responses = [
+      const responses: TSummaryResponse[] = [
         {
           id: "response-1",
           data: {}, // No ranking data
@@ -1076,7 +1097,7 @@ describe("getQuestionSummary", () => {
           language: null,
           ttc: {},
           finished: true,
-        } as any,
+        },
         {
           id: "response-2",
           data: { "other-q": "some value" }, // No ranking data
@@ -1086,7 +1107,7 @@ describe("getQuestionSummary", () => {
           language: null,
           ttc: {},
           finished: true,
-        } as any,
+        },
       ];
 
       const dropOff = [
@@ -1101,12 +1122,12 @@ describe("getQuestionSummary", () => {
       );
 
       expect(summary).toHaveLength(1);
-      expect(summary[0].type).toBe(TSurveyElementTypeEnum.Ranking);
-      expect(summary[0].responseCount).toBe(0);
-      expect((summary[0] as any).choices).toHaveLength(3);
+      const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Ranking);
+      expect(entry.responseCount).toBe(0);
+      expect(entry.choices).toHaveLength(3);
 
       // All items should have count 0 and avgRanking 0
-      (summary[0] as any).choices.forEach(
+      entry.choices.forEach(
         (choice: { value?: string; count: number; avgRanking?: number; percentage?: number }) => {
           expect(choice.count).toBe(0);
           expect(choice.avgRanking).toBe(0);
@@ -1142,7 +1163,7 @@ describe("getQuestionSummary", () => {
       } as unknown as TSurvey;
 
       // Responses with invalid ranking data (not an array)
-      const responses = [
+      const responses: TSummaryResponse[] = [
         {
           id: "response-1",
           data: { "ranking-q1": "Item 1" }, // Not an array
@@ -1167,12 +1188,12 @@ describe("getQuestionSummary", () => {
       );
 
       expect(summary).toHaveLength(1);
-      expect(summary[0].type).toBe(TSurveyElementTypeEnum.Ranking);
-      expect(summary[0].responseCount).toBe(0); // No valid responses
-      expect((summary[0] as any).choices).toHaveLength(3);
+      const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Ranking);
+      expect(entry.responseCount).toBe(0); // No valid responses
+      expect(entry.choices).toHaveLength(3);
 
       // All items should have count 0 and avgRanking 0 since we had no valid ranking data
-      (summary[0] as any).choices.forEach(
+      entry.choices.forEach(
         (choice: { value?: string; count: number; avgRanking?: number; percentage?: number }) => {
           expect(choice.count).toBe(0);
           expect(choice.avgRanking).toBe(0);
@@ -1208,7 +1229,7 @@ describe("getQuestionSummary", () => {
       } as unknown as TSurvey;
 
       // Response with some values not in choices
-      const responses = [
+      const responses: TSummaryResponse[] = [
         {
           id: "response-1",
           data: { "ranking-q1": ["Item 1", "Unknown Item", "Item 3"] }, // "Unknown Item" is not in choices
@@ -1233,30 +1254,30 @@ describe("getQuestionSummary", () => {
       );
 
       expect(summary).toHaveLength(1);
-      expect(summary[0].type).toBe(TSurveyElementTypeEnum.Ranking);
-      expect(summary[0].responseCount).toBe(1);
-      expect((summary[0] as any).choices).toHaveLength(3);
+      const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Ranking);
+      expect(entry.responseCount).toBe(1);
+      expect(entry.choices).toHaveLength(3);
 
       // Item 1 is in position 1, so avg ranking should be 1
-      const item1 = (summary[0] as any).choices.find(
+      const item1 = entry.choices.find(
         (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 1"
       );
-      expect(item1.count).toBe(1);
-      expect(item1.avgRanking).toBe(1);
+      expect(item1?.count).toBe(1);
+      expect(item1?.avgRanking).toBe(1);
 
       // Item 2 was not ranked, so should have count 0 and avgRanking 0
-      const item2 = (summary[0] as any).choices.find(
+      const item2 = entry.choices.find(
         (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 2"
       );
-      expect(item2.count).toBe(0);
-      expect(item2.avgRanking).toBe(0);
+      expect(item2?.count).toBe(0);
+      expect(item2?.avgRanking).toBe(0);
 
       // Item 3 is in position 3, so avg ranking should be 3
-      const item3 = (summary[0] as any).choices.find(
+      const item3 = entry.choices.find(
         (c: { value: string; count: number; avgRanking: number }) => c.value === "Item 3"
       );
-      expect(item3.count).toBe(1);
-      expect(item3.avgRanking).toBe(3);
+      expect(item3?.count).toBe(1);
+      expect(item3?.avgRanking).toBe(3);
     });
   });
 });
@@ -1271,12 +1292,12 @@ describe("getSurveySummary", () => {
     // For getResponsesForSummary mock, we need to ensure it's correctly used by getSurveySummary
     // Since getSurveySummary calls getResponsesForSummary internally, we'll mock prisma.response.findMany
     // which is used by the actual implementation of getResponsesForSummary.
-    vi.mocked(prisma.response.findMany).mockResolvedValue(
-      mockResponses.map((r: Record<string, unknown>) => ({
+    vi.mocked(prisma.response.findMany, { partial: true, deep: true }).mockResolvedValue(
+      mockResponses.map((r) => ({
         ...r,
         contactId: null,
         personAttributes: {},
-      })) as any
+      }))
     );
     vi.mocked(getDisplayCountBySurveyId).mockResolvedValue(10);
 
@@ -1310,9 +1331,9 @@ describe("getSurveySummary", () => {
   test("handles filterCriteria", async () => {
     const filterCriteria: TResponseFilterCriteria = { finished: true };
     const finishedResponses = mockResponses
-      .filter((r: Record<string, unknown>) => r.finished)
-      .map((r: Record<string, unknown>) => ({ ...r, contactId: null, personAttributes: {} }));
-    vi.mocked(prisma.response.findMany).mockResolvedValue(finishedResponses as any);
+      .filter((r) => r.finished)
+      .map((r) => ({ ...r, contactId: null, personAttributes: {} }));
+    vi.mocked(prisma.response.findMany, { partial: true, deep: true }).mockResolvedValue(finishedResponses);
 
     await getSurveySummary(mockSurveyId, filterCriteria);
 
@@ -1347,12 +1368,12 @@ describe("getResponsesForSummary", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     vi.mocked(getSurvey).mockResolvedValue(mockBaseSurvey);
-    vi.mocked(prisma.response.findMany).mockResolvedValue(
-      mockResponses.map((r: Record<string, unknown>) => ({
+    vi.mocked(prisma.response.findMany, { partial: true, deep: true }).mockResolvedValue(
+      mockResponses.map((r) => ({
         ...r,
         contactId: null,
         personAttributes: {},
-      })) as any
+      }))
     );
     // React cache is already mocked globally - no need to mock it again
   });
@@ -1368,7 +1389,7 @@ describe("getResponsesForSummary", () => {
         where: { surveyId: mockSurveyId }, // buildWhereClause is mocked to return {}
       })
     );
-    expect(result.length).toBe(mockResponses.length); // Mock returns all, actual would be limited by prisma
+    expect(result).toHaveLength(mockResponses.length); // Mock returns all, actual would be limited by prisma
     expect(result[0].id).toBe(mockResponses[0].id);
     expect(result[0].contact).toBeNull(); // As per transformation logic
   });
@@ -1698,7 +1719,7 @@ describe("Address and ContactInfo question types", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses = malformedResponses([
       {
         id: "response-1",
         data: {
@@ -1714,7 +1735,7 @@ describe("Address and ContactInfo question types", () => {
         language: null,
         ttc: {},
         finished: true,
-      } as any,
+      },
       {
         id: "response-2",
         data: {
@@ -1730,8 +1751,8 @@ describe("Address and ContactInfo question types", () => {
         language: null,
         ttc: {},
         finished: true,
-      } as any,
-    ];
+      },
+    ]);
 
     const dropOff = [
       { elementId: "address-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
@@ -1740,11 +1761,11 @@ describe("Address and ContactInfo question types", () => {
     const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Address);
-    expect(summary[0].responseCount).toBe(2);
-    expect((summary[0] as any).samples).toHaveLength(2);
-    expect((summary[0] as any).samples[0].value).toEqual(responses[0].data["address-q1"]);
-    expect((summary[0] as any).samples[1].value).toEqual(responses[1].data["address-q1"]);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Address);
+    expect(entry.responseCount).toBe(2);
+    expect(entry.samples).toHaveLength(2);
+    expect(entry.samples[0].value).toEqual(responses[0].data["address-q1"]);
+    expect(entry.samples[1].value).toEqual(responses[1].data["address-q1"]);
   });
 
   test("getQuestionSummary correctly processes ContactInfo question with valid responses", async () => {
@@ -1770,7 +1791,7 @@ describe("Address and ContactInfo question types", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses = malformedResponses([
       {
         id: "response-1",
         data: {
@@ -1803,7 +1824,7 @@ describe("Address and ContactInfo question types", () => {
         ttc: {},
         finished: true,
       },
-    ] as any;
+    ]);
 
     const dropOff = [
       { elementId: "contact-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
@@ -1812,11 +1833,11 @@ describe("Address and ContactInfo question types", () => {
     const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.ContactInfo);
-    expect((summary[0] as any).responseCount).toBe(2);
-    expect((summary[0] as any).samples).toHaveLength(2);
-    expect((summary[0] as any).samples[0].value).toEqual(responses[0].data["contact-q1"]);
-    expect((summary[0] as any).samples[1].value).toEqual(responses[1].data["contact-q1"]);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.ContactInfo);
+    expect(entry.responseCount).toBe(2);
+    expect(entry.samples).toHaveLength(2);
+    expect(entry.samples[0].value).toEqual(responses[0].data["contact-q1"]);
+    expect(entry.samples[1].value).toEqual(responses[1].data["contact-q1"]);
   });
 
   test("getQuestionSummary handles empty array answers for Address type", async () => {
@@ -1842,7 +1863,7 @@ describe("Address and ContactInfo question types", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "address-q1": [] }, // Empty array
@@ -1862,9 +1883,9 @@ describe("Address and ContactInfo question types", () => {
     const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect((summary[0] as any).type).toBe(TSurveyElementTypeEnum.Address);
-    expect((summary[0] as any).responseCount).toBe(0); // Should be 0 as empty array doesn't count as response
-    expect((summary[0] as any).samples).toHaveLength(0);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Address);
+    expect(entry.responseCount).toBe(0); // Should be 0 as empty array doesn't count as response
+    expect(entry.samples).toHaveLength(0);
   });
 
   test("getQuestionSummary handles non-array answers for ContactInfo type", async () => {
@@ -1890,7 +1911,7 @@ describe("Address and ContactInfo question types", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "contact-q1": "Not an array" }, // String instead of array
@@ -1921,7 +1942,7 @@ describe("Address and ContactInfo question types", () => {
         ttc: {},
         finished: true,
       },
-    ] as any;
+    ];
 
     const dropOff = [
       { elementId: "contact-q1", impressions: 3, dropOffCount: 3, dropOffPercentage: 100 },
@@ -1930,9 +1951,9 @@ describe("Address and ContactInfo question types", () => {
     const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect((summary[0] as any).type).toBe(TSurveyElementTypeEnum.ContactInfo);
-    expect((summary[0] as any).responseCount).toBe(0); // Should be 0 as no valid responses
-    expect((summary[0] as any).samples).toHaveLength(0);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.ContactInfo);
+    expect(entry.responseCount).toBe(0); // Should be 0 as no valid responses
+    expect(entry.samples).toHaveLength(0);
   });
 
   test("getQuestionSummary handles mix of valid and invalid responses for Address type", async () => {
@@ -1959,7 +1980,7 @@ describe("Address and ContactInfo question types", () => {
     } as unknown as TSurvey;
 
     // One valid response, one invalid
-    const responses = [
+    const responses = malformedResponses([
       {
         id: "response-1",
         data: {
@@ -1985,7 +2006,7 @@ describe("Address and ContactInfo question types", () => {
         ttc: {},
         finished: true,
       },
-    ] as any;
+    ]);
 
     const dropOff = [
       { elementId: "address-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
@@ -1994,10 +2015,10 @@ describe("Address and ContactInfo question types", () => {
     const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect((summary[0] as any).type).toBe(TSurveyElementTypeEnum.Address);
-    expect((summary[0] as any).responseCount).toBe(1); // Should be 1 as only one valid response
-    expect((summary[0] as any).samples).toHaveLength(1);
-    expect((summary[0] as any).samples[0].value).toEqual(responses[0].data["address-q1"]);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Address);
+    expect(entry.responseCount).toBe(1); // Should be 1 as only one valid response
+    expect(entry.samples).toHaveLength(1);
+    expect(entry.samples[0].value).toEqual(responses[0].data["address-q1"]);
   });
 
   test("getQuestionSummary applies VALUES_LIMIT correctly for ContactInfo type", async () => {
@@ -2024,25 +2045,23 @@ describe("Address and ContactInfo question types", () => {
     } as unknown as TSurvey;
 
     // Create 100 responses (more than VALUES_LIMIT which is 50)
-    const responses = Array.from(
-      { length: 100 },
-      (_, i) =>
-        ({
-          id: `response-${i}`,
-          data: {
-            "contact-q1": [
-              { type: "firstName", value: `First${i}` },
-              { type: "lastName", value: `Last${i}` },
-              { type: "email", value: `user${i}@example.com` },
-            ],
-          },
-          updatedAt: new Date(),
-          contact: null,
-          contactAttributes: {},
-          language: null,
-          ttc: {},
-          finished: true,
-        }) as any
+    const responses = malformedResponses(
+      Array.from({ length: 100 }, (_, i) => ({
+        id: `response-${i}`,
+        data: {
+          "contact-q1": [
+            { type: "firstName", value: `First${i}` },
+            { type: "lastName", value: `Last${i}` },
+            { type: "email", value: `user${i}@example.com` },
+          ],
+        },
+        updatedAt: new Date(),
+        contact: null,
+        contactAttributes: {},
+        language: null,
+        ttc: {},
+        finished: true,
+      }))
     );
 
     const dropOff = [
@@ -2052,9 +2071,9 @@ describe("Address and ContactInfo question types", () => {
     const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect((summary[0] as any).type).toBe(TSurveyElementTypeEnum.ContactInfo);
-    expect((summary[0] as any).responseCount).toBe(100); // All responses are valid
-    expect((summary[0] as any).samples).toHaveLength(50); // Limited to VALUES_LIMIT (50)
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.ContactInfo);
+    expect(entry.responseCount).toBe(100); // All responses are valid
+    expect(entry.samples).toHaveLength(50); // Limited to VALUES_LIMIT (50)
   });
 });
 
@@ -2092,7 +2111,7 @@ describe("Matrix question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: {
@@ -2131,74 +2150,69 @@ describe("Matrix question type tests", () => {
       { elementId: "matrix-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Matrix);
-    expect(summary[0].responseCount).toBe(2);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Matrix);
+    expect(entry.responseCount).toBe(2);
 
     // Verify Speed row
-    const speedRow = summary[0].data.find(
+    const speedRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Speed"
     );
-    expect(speedRow.totalResponsesForRow).toBe(2);
-    expect(speedRow.columnPercentages).toHaveLength(4); // 4 columns
+    expect(speedRow?.totalResponsesForRow).toBe(2);
+    expect(speedRow?.columnPercentages).toHaveLength(4); // 4 columns
     expect(
-      speedRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
-        .percentage
+      speedRow?.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
+        ?.percentage
     ).toBe(50);
     expect(
-      speedRow.columnPercentages.find(
+      speedRow?.columnPercentages.find(
         (col: { column: string; percentage: number }) => col.column === "Average"
-      ).percentage
+      )?.percentage
     ).toBe(50);
 
     // Verify Quality row
-    const qualityRow = summary[0].data.find(
+    const qualityRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Quality"
     );
-    expect(qualityRow.totalResponsesForRow).toBe(2);
+    expect(qualityRow?.totalResponsesForRow).toBe(2);
     expect(
-      qualityRow.columnPercentages.find(
+      qualityRow?.columnPercentages.find(
         (col: { column: string; percentage: number }) => col.column === "Excellent"
-      ).percentage
+      )?.percentage
     ).toBe(50);
     expect(
-      qualityRow.columnPercentages.find(
+      qualityRow?.columnPercentages.find(
         (col: { column: string; percentage: number }) => col.column === "Good"
-      ).percentage
+      )?.percentage
     ).toBe(50);
 
     // Verify Price row
-    const priceRow = summary[0].data.find(
+    const priceRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Price"
     );
-    expect(priceRow.totalResponsesForRow).toBe(2);
+    expect(priceRow?.totalResponsesForRow).toBe(2);
     expect(
-      priceRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Poor")
-        .percentage
+      priceRow?.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Poor")
+        ?.percentage
     ).toBe(50);
     expect(
-      priceRow.columnPercentages.find(
+      priceRow?.columnPercentages.find(
         (col: { column: string; percentage: number }) => col.column === "Average"
-      ).percentage
+      )?.percentage
     ).toBe(50);
   });
 
@@ -2236,7 +2250,7 @@ describe("Matrix question type tests", () => {
     } as unknown as TSurvey;
 
     // Spanish response with Spanish labels
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: {
@@ -2275,62 +2289,57 @@ describe("Matrix question type tests", () => {
       return "";
     });
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     // Reset the mock after test
     vi.mocked(getLocalizedValue).mockImplementation(getLocalizedValueOriginal);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Matrix);
-    expect(summary[0].responseCount).toBe(1);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Matrix);
+    expect(entry.responseCount).toBe(1);
 
     // Verify Speed row with localized values mapped to default language
-    const speedRow = summary[0].data.find(
+    const speedRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Speed"
     );
-    expect(speedRow.totalResponsesForRow).toBe(1);
+    expect(speedRow?.totalResponsesForRow).toBe(1);
     expect(
-      speedRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
-        .percentage
+      speedRow?.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
+        ?.percentage
     ).toBe(100);
 
     // Verify Quality row
-    const qualityRow = summary[0].data.find(
+    const qualityRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Quality"
     );
-    expect(qualityRow.totalResponsesForRow).toBe(1);
+    expect(qualityRow?.totalResponsesForRow).toBe(1);
     expect(
-      qualityRow.columnPercentages.find(
+      qualityRow?.columnPercentages.find(
         (col: { column: string; percentage: number }) => col.column === "Excellent"
-      ).percentage
+      )?.percentage
     ).toBe(100);
 
     // Verify Price row
-    const priceRow = summary[0].data.find(
+    const priceRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Price"
     );
-    expect(priceRow.totalResponsesForRow).toBe(1);
+    expect(priceRow?.totalResponsesForRow).toBe(1);
     expect(
-      priceRow.columnPercentages.find(
+      priceRow?.columnPercentages.find(
         (col: { column: string; percentage: number }) => col.column === "Average"
-      ).percentage
+      )?.percentage
     ).toBe(100);
   });
 
@@ -2358,7 +2367,7 @@ describe("Matrix question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: {}, // No matrix data
@@ -2407,25 +2416,20 @@ describe("Matrix question type tests", () => {
         ttc: {},
         finished: true,
       },
-    ] as any;
+    ];
 
     const dropOff = [
       { elementId: "matrix-q1", impressions: 4, dropOffCount: 4, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Matrix);
-    expect(summary[0].responseCount).toBe(3); // Count is 3 because responses 2, 3, and 4 have the "matrix-q1" property
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Matrix);
+    expect(entry.responseCount).toBe(3); // Count is 3 because responses 2, 3, and 4 have the "matrix-q1" property
 
     // All rows should have zero responses for all columns
-    summary[0].data.forEach(
+    entry.data.forEach(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
@@ -2471,7 +2475,7 @@ describe("Matrix question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: {
@@ -2505,70 +2509,65 @@ describe("Matrix question type tests", () => {
         ttc: {},
         finished: true,
       },
-    ] as any;
+    ];
 
     const dropOff = [
       { elementId: "matrix-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Matrix);
-    expect(summary[0].responseCount).toBe(2);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Matrix);
+    expect(entry.responseCount).toBe(2);
 
     // Verify Speed row - both responses provided data
-    const speedRow = summary[0].data.find(
+    const speedRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Speed"
     );
-    expect(speedRow.totalResponsesForRow).toBe(2);
+    expect(speedRow?.totalResponsesForRow).toBe(2);
     expect(
-      speedRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
-        .percentage
+      speedRow?.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
+        ?.percentage
     ).toBe(50);
     expect(
-      speedRow.columnPercentages.find(
+      speedRow?.columnPercentages.find(
         (col: { column: string; percentage: number }) => col.column === "Average"
-      ).percentage
+      )?.percentage
     ).toBe(50);
 
     // Verify Quality row - only one response provided data
-    const qualityRow = summary[0].data.find(
+    const qualityRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Quality"
     );
-    expect(qualityRow.totalResponsesForRow).toBe(1);
+    expect(qualityRow?.totalResponsesForRow).toBe(1);
     expect(
-      qualityRow.columnPercentages.find(
+      qualityRow?.columnPercentages.find(
         (col: { column: string; percentage: number }) => col.column === "Good"
-      ).percentage
+      )?.percentage
     ).toBe(100);
 
     // Verify Price row - both responses provided data
-    const priceRow = summary[0].data.find(
+    const priceRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Price"
     );
-    expect(priceRow.totalResponsesForRow).toBe(2);
+    expect(priceRow?.totalResponsesForRow).toBe(2);
 
     // ExtraRow should not appear in the summary
     expect(
-      summary[0].data.find(
+      entry.data.find(
         (row: {
           rowLabel: string;
           totalResponsesForRow: number;
@@ -2603,7 +2602,7 @@ describe("Matrix question type tests", () => {
     } as unknown as TSurvey;
 
     // No responses with matrix data
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "other-question": "value" },
@@ -2614,27 +2613,22 @@ describe("Matrix question type tests", () => {
         ttc: {},
         finished: true,
       },
-    ] as any;
+    ];
 
     const dropOff = [
       { elementId: "matrix-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Matrix);
-    expect(summary[0].responseCount).toBe(0);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Matrix);
+    expect(entry.responseCount).toBe(0);
 
     // All rows should have proper structure but zero counts
-    expect(summary[0].data).toHaveLength(2); // 2 rows
+    expect(entry.data).toHaveLength(2); // 2 rows
 
-    summary[0].data.forEach(
+    entry.data.forEach(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
@@ -2680,7 +2674,7 @@ describe("Matrix question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: {
@@ -2703,57 +2697,52 @@ describe("Matrix question type tests", () => {
       { elementId: "matrix-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Matrix);
-    expect(summary[0].responseCount).toBe(1);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Matrix);
+    expect(entry.responseCount).toBe(1);
 
     // Speed row should have a valid response
-    const speedRow = summary[0].data.find(
+    const speedRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Speed"
     );
-    expect(speedRow.totalResponsesForRow).toBe(1);
+    expect(speedRow?.totalResponsesForRow).toBe(1);
     expect(
-      speedRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
-        .percentage
+      speedRow?.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
+        ?.percentage
     ).toBe(100);
 
     // Quality row should have no valid responses
-    const qualityRow = summary[0].data.find(
+    const qualityRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Quality"
     );
-    expect(qualityRow.totalResponsesForRow).toBe(0);
-    qualityRow.columnPercentages.forEach((col: { column: string; percentage: number }) => {
+    expect(qualityRow?.totalResponsesForRow).toBe(0);
+    qualityRow?.columnPercentages.forEach((col: { column: string; percentage: number }) => {
       expect(col.percentage).toBe(0);
     });
 
     // Price row should have a valid response
-    const priceRow = summary[0].data.find(
+    const priceRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Price"
     );
-    expect(priceRow.totalResponsesForRow).toBe(1);
+    expect(priceRow?.totalResponsesForRow).toBe(1);
     expect(
-      priceRow.columnPercentages.find(
+      priceRow?.columnPercentages.find(
         (col: { column: string; percentage: number }) => col.column === "Average"
-      ).percentage
+      )?.percentage
     ).toBe(100);
   });
 
@@ -2787,7 +2776,7 @@ describe("Matrix question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: {
@@ -2810,47 +2799,42 @@ describe("Matrix question type tests", () => {
       { elementId: "matrix-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Matrix);
-    expect(summary[0].responseCount).toBe(1);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Matrix);
+    expect(entry.responseCount).toBe(1);
 
     // There should only be rows for the defined question rows
-    expect(summary[0].data).toHaveLength(2); // 2 rows
+    expect(entry.data).toHaveLength(2); // 2 rows
 
     // Speed row should have a valid response
-    const speedRow = summary[0].data.find(
+    const speedRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Speed"
     );
-    expect(speedRow.totalResponsesForRow).toBe(1);
+    expect(speedRow?.totalResponsesForRow).toBe(1);
     expect(
-      speedRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
-        .percentage
+      speedRow?.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
+        ?.percentage
     ).toBe(100);
 
     // Quality row should have no responses
-    const qualityRow = summary[0].data.find(
+    const qualityRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Quality"
     );
-    expect(qualityRow.totalResponsesForRow).toBe(0);
+    expect(qualityRow?.totalResponsesForRow).toBe(0);
 
     // Invalid rows should not appear in the summary
     expect(
-      summary[0].data.find(
+      entry.data.find(
         (row: {
           rowLabel: string;
           totalResponsesForRow: number;
@@ -2859,7 +2843,7 @@ describe("Matrix question type tests", () => {
       )
     ).toBeUndefined();
     expect(
-      summary[0].data.find(
+      entry.data.find(
         (row: {
           rowLabel: string;
           totalResponsesForRow: number;
@@ -2902,7 +2886,7 @@ describe("Matrix question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: {
@@ -2931,7 +2915,7 @@ describe("Matrix question type tests", () => {
         ttc: {},
         finished: true,
       },
-    ] as any;
+    ];
 
     const dropOff = [
       { elementId: "matrix-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
@@ -2953,43 +2937,38 @@ describe("Matrix question type tests", () => {
       return "";
     });
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     // Reset mock
     vi.mocked(getLocalizedValue).mockImplementation(originalGetLocalizedValue);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Matrix);
-    expect(summary[0].responseCount).toBe(2);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Matrix);
+    expect(entry.responseCount).toBe(2);
 
     // Speed row should have both responses
-    const speedRow = summary[0].data.find(
+    const speedRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Speed"
     );
-    expect(speedRow.totalResponsesForRow).toBe(2);
+    expect(speedRow?.totalResponsesForRow).toBe(2);
     expect(
-      speedRow.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
-        .percentage
+      speedRow?.columnPercentages.find((col: { column: string; percentage: number }) => col.column === "Good")
+        ?.percentage
     ).toBe(100);
 
     // Quality row should have no responses
-    const qualityRow = summary[0].data.find(
+    const qualityRow = entry.data.find(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
         columnPercentages: { column: string; percentage: number }[];
       }) => row.rowLabel === "Quality"
     );
-    expect(qualityRow.totalResponsesForRow).toBe(0);
+    expect(qualityRow?.totalResponsesForRow).toBe(0);
   });
 
   test("getQuestionSummary handles Matrix question with null response data", async () => {
@@ -3016,7 +2995,7 @@ describe("Matrix question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses = malformedResponses([
       {
         id: "response-1",
         data: {
@@ -3029,25 +3008,20 @@ describe("Matrix question type tests", () => {
         ttc: {},
         finished: true,
       },
-    ] as any;
+    ]);
 
     const dropOff = [
       { elementId: "matrix-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Matrix);
-    expect(summary[0].responseCount).toBe(0); // Counts as response even with null data
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Matrix);
+    expect(entry.responseCount).toBe(0); // Counts as response even with null data
 
     // Both rows should have zero responses
-    summary[0].data.forEach(
+    entry.data.forEach(
       (row: {
         rowLabel: string;
         totalResponsesForRow: number;
@@ -3087,7 +3061,7 @@ describe("NPS question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "nps-q1": 10 }, // Promoter (9-10)
@@ -3134,37 +3108,32 @@ describe("NPS question type tests", () => {
       { elementId: "nps-q1", impressions: 4, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.NPS);
-    expect(summary[0].responseCount).toBe(4);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.NPS);
+    expect(entry.responseCount).toBe(4);
 
     // NPS score = (promoters - detractors) / total * 100
     // Promoters: 2, Detractors: 1, Total: 4
     // (2 - 1) / 4 * 100 = 25
-    expect(summary[0].score).toBe(25);
+    expect(entry.score).toBe(25);
 
     // Verify promoters
-    expect(summary[0].promoters.count).toBe(2);
-    expect(summary[0].promoters.percentage).toBe(50); // 2/4 * 100
+    expect(entry.promoters.count).toBe(2);
+    expect(entry.promoters.percentage).toBe(50); // 2/4 * 100
 
     // Verify passives
-    expect(summary[0].passives.count).toBe(1);
-    expect(summary[0].passives.percentage).toBe(25); // 1/4 * 100
+    expect(entry.passives.count).toBe(1);
+    expect(entry.passives.percentage).toBe(25); // 1/4 * 100
 
     // Verify detractors
-    expect(summary[0].detractors.count).toBe(1);
-    expect(summary[0].detractors.percentage).toBe(25); // 1/4 * 100
+    expect(entry.detractors.count).toBe(1);
+    expect(entry.detractors.percentage).toBe(25); // 1/4 * 100
 
     // Verify dismissed (none in this test)
-    expect(summary[0].dismissed.count).toBe(0);
-    expect(summary[0].dismissed.percentage).toBe(0);
+    expect(entry.dismissed.count).toBe(0);
+    expect(entry.dismissed.percentage).toBe(0);
   });
 
   test("getQuestionSummary handles NPS question with dismissed responses", async () => {
@@ -3191,7 +3160,7 @@ describe("NPS question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "nps-q1": 10 }, // Promoter
@@ -3222,35 +3191,30 @@ describe("NPS question type tests", () => {
         ttc: { "nps-q1": 2 },
         finished: true,
       },
-    ] as any;
+    ];
 
     const dropOff = [
       { elementId: "nps-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.NPS);
-    expect(summary[0].responseCount).toBe(3);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.NPS);
+    expect(entry.responseCount).toBe(3);
 
     // NPS score = (promoters - detractors) / total * 100
     // Promoters: 1, Detractors: 0, Total: 3
     // (1 - 0) / 3 * 100 = 33.33
-    expect(summary[0].score).toBe(33.33);
+    expect(entry.score).toBe(33.33);
 
     // Verify promoters
-    expect(summary[0].promoters.count).toBe(1);
-    expect(summary[0].promoters.percentage).toBe(33.33); // 1/3 * 100
+    expect(entry.promoters.count).toBe(1);
+    expect(entry.promoters.percentage).toBe(33.33); // 1/3 * 100
 
     // Verify dismissed
-    expect(summary[0].dismissed.count).toBe(2);
-    expect(summary[0].dismissed.percentage).toBe(66.67); // 2/3 * 100
+    expect(entry.dismissed.count).toBe(2);
+    expect(entry.dismissed.percentage).toBe(66.67); // 2/3 * 100
   });
 
   test("getQuestionSummary handles NPS question with no responses", async () => {
@@ -3278,7 +3242,7 @@ describe("NPS question type tests", () => {
     } as unknown as TSurvey;
 
     // No responses with NPS data
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "other-q": "value" }, // No NPS data
@@ -3295,29 +3259,24 @@ describe("NPS question type tests", () => {
       { elementId: "nps-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.NPS);
-    expect(summary[0].responseCount).toBe(0);
-    expect(summary[0].score).toBe(0);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.NPS);
+    expect(entry.responseCount).toBe(0);
+    expect(entry.score).toBe(0);
 
-    expect(summary[0].promoters.count).toBe(0);
-    expect(summary[0].promoters.percentage).toBe(0);
+    expect(entry.promoters.count).toBe(0);
+    expect(entry.promoters.percentage).toBe(0);
 
-    expect(summary[0].passives.count).toBe(0);
-    expect(summary[0].passives.percentage).toBe(0);
+    expect(entry.passives.count).toBe(0);
+    expect(entry.passives.percentage).toBe(0);
 
-    expect(summary[0].detractors.count).toBe(0);
-    expect(summary[0].detractors.percentage).toBe(0);
+    expect(entry.detractors.count).toBe(0);
+    expect(entry.detractors.percentage).toBe(0);
 
-    expect(summary[0].dismissed.count).toBe(0);
-    expect(summary[0].dismissed.percentage).toBe(0);
+    expect(entry.dismissed.count).toBe(0);
+    expect(entry.dismissed.percentage).toBe(0);
   });
 
   test("getQuestionSummary handles NPS question with invalid values", async () => {
@@ -3344,7 +3303,7 @@ describe("NPS question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses = malformedResponses([
       {
         id: "response-1",
         data: { "nps-q1": "invalid" }, // String instead of number
@@ -3375,29 +3334,24 @@ describe("NPS question type tests", () => {
         ttc: {},
         finished: true,
       },
-    ] as any;
+    ]);
 
     const dropOff = [
       { elementId: "nps-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.NPS);
-    expect(summary[0].responseCount).toBe(1); // Only one valid response
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.NPS);
+    expect(entry.responseCount).toBe(1); // Only one valid response
 
     // Only one valid response is a detractor
-    expect(summary[0].detractors.count).toBe(1);
-    expect(summary[0].detractors.percentage).toBe(100);
+    expect(entry.detractors.count).toBe(1);
+    expect(entry.detractors.percentage).toBe(100);
 
     // Score should be -100 since all valid responses are detractors
-    expect(summary[0].score).toBe(-100);
+    expect(entry.score).toBe(-100);
   });
 });
 
@@ -3428,7 +3382,7 @@ describe("Rating question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "rating-q1": 5 }, // Highest rating
@@ -3475,53 +3429,48 @@ describe("Rating question type tests", () => {
       { elementId: "rating-q1", impressions: 4, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Rating);
-    expect(summary[0].responseCount).toBe(4);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Rating);
+    expect(entry.responseCount).toBe(4);
 
     // Average rating = (5 + 4 + 3 + 5) / 4 = 4.25
-    expect(summary[0].average).toBe(4.25);
+    expect(entry.average).toBe(4.25);
 
     // Verify each rating option count and percentage
-    const rating5 = summary[0].choices.find(
+    const rating5 = entry.choices.find(
       (c: { rating: number; count: number; percentage: number }) => c.rating === 5
     );
-    expect(rating5.count).toBe(2);
-    expect(rating5.percentage).toBe(50); // 2/4 * 100
+    expect(rating5?.count).toBe(2);
+    expect(rating5?.percentage).toBe(50); // 2/4 * 100
 
-    const rating4 = summary[0].choices.find(
+    const rating4 = entry.choices.find(
       (c: { rating: number; count: number; percentage: number }) => c.rating === 4
     );
-    expect(rating4.count).toBe(1);
-    expect(rating4.percentage).toBe(25); // 1/4 * 100
+    expect(rating4?.count).toBe(1);
+    expect(rating4?.percentage).toBe(25); // 1/4 * 100
 
-    const rating3 = summary[0].choices.find(
+    const rating3 = entry.choices.find(
       (c: { rating: number; count: number; percentage: number }) => c.rating === 3
     );
-    expect(rating3.count).toBe(1);
-    expect(rating3.percentage).toBe(25); // 1/4 * 100
+    expect(rating3?.count).toBe(1);
+    expect(rating3?.percentage).toBe(25); // 1/4 * 100
 
-    const rating2 = summary[0].choices.find(
+    const rating2 = entry.choices.find(
       (c: { rating: number; count: number; percentage: number }) => c.rating === 2
     );
-    expect(rating2.count).toBe(0);
-    expect(rating2.percentage).toBe(0);
+    expect(rating2?.count).toBe(0);
+    expect(rating2?.percentage).toBe(0);
 
-    const rating1 = summary[0].choices.find(
+    const rating1 = entry.choices.find(
       (c: { rating: number; count: number; percentage: number }) => c.rating === 1
     );
-    expect(rating1.count).toBe(0);
-    expect(rating1.percentage).toBe(0);
+    expect(rating1?.count).toBe(0);
+    expect(rating1?.percentage).toBe(0);
 
     // Verify dismissed (none in this test)
-    expect(summary[0].dismissed.count).toBe(0);
+    expect(entry.dismissed.count).toBe(0);
   });
 
   test("getQuestionSummary handles Rating question with dismissed responses", async () => {
@@ -3550,7 +3499,7 @@ describe("Rating question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "rating-q1": 5 }, // Valid rating
@@ -3581,26 +3530,21 @@ describe("Rating question type tests", () => {
         ttc: { "rating-q1": 4 },
         finished: true,
       },
-    ] as any;
+    ];
 
     const dropOff = [
       { elementId: "rating-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Rating);
-    expect(summary[0].responseCount).toBe(1); // Only one valid rating
-    expect(summary[0].average).toBe(5); // Average of the one valid rating
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Rating);
+    expect(entry.responseCount).toBe(1); // Only one valid rating
+    expect(entry.average).toBe(5); // Average of the one valid rating
 
     // Verify dismissed count
-    expect(summary[0].dismissed.count).toBe(2);
+    expect(entry.dismissed.count).toBe(2);
   });
 
   test("getQuestionSummary handles Rating question with no responses", async () => {
@@ -3630,7 +3574,7 @@ describe("Rating question type tests", () => {
     } as unknown as TSurvey;
 
     // No responses with rating data
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "other-q": "value" }, // No rating data
@@ -3647,20 +3591,15 @@ describe("Rating question type tests", () => {
       { elementId: "rating-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Rating);
-    expect(summary[0].responseCount).toBe(0);
-    expect(summary[0].average).toBe(0);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Rating);
+    expect(entry.responseCount).toBe(0);
+    expect(entry.average).toBe(0);
 
     // Verify all ratings have 0 count and percentage
-    summary[0].choices.forEach(
+    entry.choices.forEach(
       (choice: { value?: string; count: number; avgRanking?: number; percentage?: number }) => {
         expect(choice.count).toBe(0);
         expect(choice.percentage).toBe(0);
@@ -3668,7 +3607,7 @@ describe("Rating question type tests", () => {
     );
 
     // Verify dismissed is 0
-    expect(summary[0].dismissed.count).toBe(0);
+    expect(entry.dismissed.count).toBe(0);
   });
 });
 
@@ -3700,7 +3639,7 @@ describe("PictureSelection question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "picture-q1": ["img1", "img3"] },
@@ -3727,36 +3666,31 @@ describe("PictureSelection question type tests", () => {
       { elementId: "picture-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.PictureSelection);
-    expect(summary[0].responseCount).toBe(2);
-    expect(summary[0].selectionCount).toBe(3); // Total selections: img1, img2, img3
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.PictureSelection);
+    expect(entry.responseCount).toBe(2);
+    expect(entry.selectionCount).toBe(3); // Total selections: img1, img2, img3
 
     // Check individual choice counts
-    const img1 = summary[0].choices.find(
+    const img1 = entry.choices.find(
       (c: { id: string; count: number; percentage: number }) => c.id === "img1"
     );
-    expect(img1.count).toBe(1);
-    expect(img1.percentage).toBe(50);
+    expect(img1?.count).toBe(1);
+    expect(img1?.percentage).toBe(50);
 
-    const img2 = summary[0].choices.find(
+    const img2 = entry.choices.find(
       (c: { id: string; count: number; percentage: number }) => c.id === "img2"
     );
-    expect(img2.count).toBe(1);
-    expect(img2.percentage).toBe(50);
+    expect(img2?.count).toBe(1);
+    expect(img2?.percentage).toBe(50);
 
-    const img3 = summary[0].choices.find(
+    const img3 = entry.choices.find(
       (c: { id: string; count: number; percentage: number }) => c.id === "img3"
     );
-    expect(img3.count).toBe(1);
-    expect(img3.percentage).toBe(50);
+    expect(img3?.count).toBe(1);
+    expect(img3?.percentage).toBe(50);
   });
 
   test("getQuestionSummary handles PictureSelection with no valid responses", async () => {
@@ -3785,7 +3719,7 @@ describe("PictureSelection question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "picture-q1": "not-an-array" }, // Invalid format
@@ -3806,26 +3740,21 @@ describe("PictureSelection question type tests", () => {
         ttc: {},
         finished: true,
       },
-    ] as any;
+    ];
 
     const dropOff = [
       { elementId: "picture-q1", impressions: 2, dropOffCount: 2, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.PictureSelection);
-    expect(summary[0].responseCount).toBe(0);
-    expect(summary[0].selectionCount).toBe(0);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.PictureSelection);
+    expect(entry.responseCount).toBe(0);
+    expect(entry.selectionCount).toBe(0);
 
     // All choices should have zero count
-    summary[0].choices.forEach(
+    entry.choices.forEach(
       (choice: { value?: string; count: number; avgRanking?: number; percentage?: number }) => {
         expect(choice.count).toBe(0);
         expect(choice.percentage).toBe(0);
@@ -3859,7 +3788,7 @@ describe("PictureSelection question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "picture-q1": ["invalid-id", "img1"] }, // One valid, one invalid ID
@@ -3876,35 +3805,30 @@ describe("PictureSelection question type tests", () => {
       { elementId: "picture-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.PictureSelection);
-    expect(summary[0].responseCount).toBe(1);
-    expect(summary[0].selectionCount).toBe(2); // Total selections including invalid one
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.PictureSelection);
+    expect(entry.responseCount).toBe(1);
+    expect(entry.selectionCount).toBe(2); // Total selections including invalid one
 
     // img1 should be counted
-    const img1 = summary[0].choices.find(
+    const img1 = entry.choices.find(
       (c: { id: string; count: number; percentage: number }) => c.id === "img1"
     );
-    expect(img1.count).toBe(1);
-    expect(img1.percentage).toBe(100);
+    expect(img1?.count).toBe(1);
+    expect(img1?.percentage).toBe(100);
 
     // img2 should not be counted
-    const img2 = summary[0].choices.find(
+    const img2 = entry.choices.find(
       (c: { id: string; count: number; percentage: number }) => c.id === "img2"
     );
-    expect(img2.count).toBe(0);
-    expect(img2.percentage).toBe(0);
+    expect(img2?.count).toBe(0);
+    expect(img2?.percentage).toBe(0);
 
     // Invalid ID should not appear in choices
     expect(
-      summary[0].choices.find((c: { id: string; count: number; percentage: number }) => c.id === "invalid-id")
+      entry.choices.find((c: { id: string; count: number; percentage: number }) => c.id === "invalid-id")
     ).toBeUndefined();
   });
 });
@@ -3935,7 +3859,7 @@ describe("CTA question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "cta-q1": "clicked" },
@@ -3977,23 +3901,18 @@ describe("CTA question type tests", () => {
       },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CTA);
-    expect(summary[0].responseCount).toBe(3);
-    expect(summary[0].impressionCount).toBe(5);
-    expect(summary[0].clickCount).toBe(2);
-    expect(summary[0].skipCount).toBe(1);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.CTA);
+    expect(entry.responseCount).toBe(3);
+    expect(entry.impressionCount).toBe(5);
+    expect(entry.clickCount).toBe(2);
+    expect(entry.skipCount).toBe(1);
 
     // CTR calculation: clicks / impressions * 100
-    expect(summary[0].ctr.count).toBe(2);
-    expect(summary[0].ctr.percentage).toBe(40); // (2/5)*100 = 40%
+    expect(entry.ctr.count).toBe(2);
+    expect(entry.ctr.percentage).toBe(40); // (2/5)*100 = 40%
   });
 
   test("getQuestionSummary handles CTA with no responses", async () => {
@@ -4021,7 +3940,7 @@ describe("CTA question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: {}, // No data
@@ -4043,22 +3962,17 @@ describe("CTA question type tests", () => {
       },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CTA);
-    expect(summary[0].responseCount).toBe(0);
-    expect(summary[0].impressionCount).toBe(3);
-    expect(summary[0].clickCount).toBe(0);
-    expect(summary[0].skipCount).toBe(0);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.CTA);
+    expect(entry.responseCount).toBe(0);
+    expect(entry.impressionCount).toBe(3);
+    expect(entry.clickCount).toBe(0);
+    expect(entry.skipCount).toBe(0);
 
-    expect(summary[0].ctr.count).toBe(0);
-    expect(summary[0].ctr.percentage).toBe(0);
+    expect(entry.ctr.count).toBe(0);
+    expect(entry.ctr.percentage).toBe(0);
   });
 
   test("getQuestionSummary skips CTA summary when buttonExternal is false", async () => {
@@ -4085,7 +3999,7 @@ describe("CTA question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "cta-q1": "clicked" },
@@ -4107,7 +4021,7 @@ describe("CTA question type tests", () => {
       },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
+    const summary: unknown = await getElementSummary(
       survey,
       getElementsFromBlocks(survey.blocks),
       responses,
@@ -4143,7 +4057,7 @@ describe("Consent question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "consent-q1": "accepted" },
@@ -4174,30 +4088,25 @@ describe("Consent question type tests", () => {
         ttc: {},
         finished: true,
       },
-    ] as any;
+    ];
 
     const dropOff = [
       { elementId: "consent-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Consent);
-    expect(summary[0].responseCount).toBe(3);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Consent);
+    expect(entry.responseCount).toBe(3);
 
     // 2 accepted / 3 total = 66.67%
-    expect(summary[0].accepted.count).toBe(2);
-    expect(summary[0].accepted.percentage).toBe(66.67);
+    expect(entry.accepted.count).toBe(2);
+    expect(entry.accepted.percentage).toBe(66.67);
 
     // 1 dismissed / 3 total = 33.33%
-    expect(summary[0].dismissed.count).toBe(1);
-    expect(summary[0].dismissed.percentage).toBe(33.33);
+    expect(entry.dismissed.count).toBe(1);
+    expect(entry.dismissed.percentage).toBe(33.33);
   });
 
   test("getQuestionSummary handles Consent with no responses", async () => {
@@ -4223,7 +4132,7 @@ describe("Consent question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "other-q": "value" }, // No consent data
@@ -4240,20 +4149,15 @@ describe("Consent question type tests", () => {
       { elementId: "consent-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Consent);
-    expect(summary[0].responseCount).toBe(0);
-    expect(summary[0].accepted.count).toBe(0);
-    expect(summary[0].accepted.percentage).toBe(0);
-    expect(summary[0].dismissed.count).toBe(0);
-    expect(summary[0].dismissed.percentage).toBe(0);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Consent);
+    expect(entry.responseCount).toBe(0);
+    expect(entry.accepted.count).toBe(0);
+    expect(entry.accepted.percentage).toBe(0);
+    expect(entry.dismissed.count).toBe(0);
+    expect(entry.dismissed.percentage).toBe(0);
   });
 
   test("getQuestionSummary handles Consent with invalid values", async () => {
@@ -4279,7 +4183,7 @@ describe("Consent question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "consent-q1": "invalid-value" }, // Invalid value
@@ -4296,18 +4200,13 @@ describe("Consent question type tests", () => {
       { elementId: "consent-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Consent);
-    expect(summary[0].responseCount).toBe(1); // Counted as response due to ttc
-    expect(summary[0].accepted.count).toBe(0); // Not accepted
-    expect(summary[0].dismissed.count).toBe(1); // Counted as dismissed
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Consent);
+    expect(entry.responseCount).toBe(1); // Counted as response due to ttc
+    expect(entry.accepted.count).toBe(0); // Not accepted
+    expect(entry.dismissed.count).toBe(1); // Counted as dismissed
   });
 });
 
@@ -4334,7 +4233,7 @@ describe("Date question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "date-q1": "2023-01-15" },
@@ -4361,24 +4260,19 @@ describe("Date question type tests", () => {
       { elementId: "date-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Date);
-    expect(summary[0].responseCount).toBe(2);
-    expect(summary[0].samples).toHaveLength(2);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Date);
+    expect(entry.responseCount).toBe(2);
+    expect(entry.samples).toHaveLength(2);
 
     // Check sample values
-    expect(summary[0].samples[0].value).toBe("2023-01-15");
-    expect(summary[0].samples[1].value).toBe("1990-05-20");
+    expect(entry.samples[0].value).toBe("2023-01-15");
+    expect(entry.samples[1].value).toBe("1990-05-20");
 
     // Check contact information is preserved
-    expect(summary[0].samples[1].contact).toEqual({ id: "contact-1", userId: "user-1" });
+    expect(entry.samples[1].contact).toEqual({ id: "contact-1", userId: "user-1" });
   });
 
   test("getQuestionSummary handles Date question with no responses", async () => {
@@ -4403,7 +4297,7 @@ describe("Date question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: {}, // No date data
@@ -4420,17 +4314,12 @@ describe("Date question type tests", () => {
       { elementId: "date-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Date);
-    expect(summary[0].responseCount).toBe(0);
-    expect(summary[0].samples).toHaveLength(0);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Date);
+    expect(entry.responseCount).toBe(0);
+    expect(entry.samples).toHaveLength(0);
   });
 
   test("getQuestionSummary applies VALUES_LIMIT correctly for Date question", async () => {
@@ -4471,17 +4360,12 @@ describe("Date question type tests", () => {
       { elementId: "date-q1", impressions: 100, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Date);
-    expect(summary[0].responseCount).toBe(100);
-    expect(summary[0].samples).toHaveLength(50); // Limited to VALUES_LIMIT (50)
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Date);
+    expect(entry.responseCount).toBe(100);
+    expect(entry.samples).toHaveLength(50); // Limited to VALUES_LIMIT (50)
   });
 });
 
@@ -4508,7 +4392,7 @@ describe("FileUpload question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: {
@@ -4539,24 +4423,16 @@ describe("FileUpload question type tests", () => {
       { elementId: "file-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.FileUpload);
-    expect(summary[0].responseCount).toBe(2);
-    expect(summary[0].files).toHaveLength(2);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.FileUpload);
+    expect(entry.responseCount).toBe(2);
+    expect(entry.files).toHaveLength(2);
 
     // Check file values
-    expect(summary[0].files[0].value).toEqual([
-      "https://example.com/file1.pdf",
-      "https://example.com/file2.jpg",
-    ]);
-    expect(summary[0].files[1].value).toEqual(["https://example.com/file3.docx"]);
+    expect(entry.files[0].value).toEqual(["https://example.com/file1.pdf", "https://example.com/file2.jpg"]);
+    expect(entry.files[1].value).toEqual(["https://example.com/file3.docx"]);
   });
 
   test("getQuestionSummary handles FileUpload question with no responses", async () => {
@@ -4581,7 +4457,7 @@ describe("FileUpload question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: {}, // No file data
@@ -4598,17 +4474,12 @@ describe("FileUpload question type tests", () => {
       { elementId: "file-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.FileUpload);
-    expect(summary[0].responseCount).toBe(0);
-    expect(summary[0].files).toHaveLength(0);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.FileUpload);
+    expect(entry.responseCount).toBe(0);
+    expect(entry.files).toHaveLength(0);
   });
 });
 
@@ -4636,7 +4507,7 @@ describe("Signature question type tests", () => {
       language: null,
       finished: true,
     };
-    const responses = [
+    const responses: TSummaryResponse[] = [
       { ...base, id: "r1", data: { "sig-q1": url }, ttc: {} },
       { ...base, id: "r2", data: { "sig-q1": "" }, ttc: {} },
       { ...base, id: "r3", data: {}, ttc: {} },
@@ -4685,7 +4556,7 @@ describe("Cal question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "cal-q1": "booked" },
@@ -4716,30 +4587,25 @@ describe("Cal question type tests", () => {
         ttc: {},
         finished: true,
       },
-    ] as any;
+    ];
 
     const dropOff = [
       { elementId: "cal-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Cal);
-    expect(summary[0].responseCount).toBe(3);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Cal);
+    expect(entry.responseCount).toBe(3);
 
     // 2 booked / 3 total = 66.67%
-    expect(summary[0].booked.count).toBe(2);
-    expect(summary[0].booked.percentage).toBe(66.67);
+    expect(entry.booked.count).toBe(2);
+    expect(entry.booked.percentage).toBe(66.67);
 
     // 1 skipped / 3 total = 33.33%
-    expect(summary[0].skipped.count).toBe(1);
-    expect(summary[0].skipped.percentage).toBe(33.33);
+    expect(entry.skipped.count).toBe(1);
+    expect(entry.skipped.percentage).toBe(33.33);
   });
 
   test("getQuestionSummary handles Cal with no responses", async () => {
@@ -4766,7 +4632,7 @@ describe("Cal question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "other-q": "value" }, // No Cal data
@@ -4783,20 +4649,15 @@ describe("Cal question type tests", () => {
       { elementId: "cal-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Cal);
-    expect(summary[0].responseCount).toBe(0);
-    expect(summary[0].booked.count).toBe(0);
-    expect(summary[0].booked.percentage).toBe(0);
-    expect(summary[0].skipped.count).toBe(0);
-    expect(summary[0].skipped.percentage).toBe(0);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Cal);
+    expect(entry.responseCount).toBe(0);
+    expect(entry.booked.count).toBe(0);
+    expect(entry.booked.percentage).toBe(0);
+    expect(entry.skipped.count).toBe(0);
+    expect(entry.skipped.percentage).toBe(0);
   });
 
   test("getQuestionSummary handles Cal with invalid values", async () => {
@@ -4823,7 +4684,7 @@ describe("Cal question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "cal-q1": "invalid-value" }, // Invalid value
@@ -4840,18 +4701,13 @@ describe("Cal question type tests", () => {
       { elementId: "cal-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.Cal);
-    expect(summary[0].responseCount).toBe(1); // Counted as response due to ttc
-    expect(summary[0].booked.count).toBe(0);
-    expect(summary[0].skipped.count).toBe(1); // Counted as skipped
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.Cal);
+    expect(entry.responseCount).toBe(1); // Counted as response due to ttc
+    expect(entry.booked.count).toBe(0);
+    expect(entry.skipped.count).toBe(1); // Counted as skipped
   });
 });
 
@@ -4876,7 +4732,7 @@ describe("CSAT question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "csat-q1": 5 },
@@ -4923,42 +4779,37 @@ describe("CSAT question type tests", () => {
       { elementId: "csat-q1", impressions: 4, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CSAT);
-    expect(summary[0].responseCount).toBe(4);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.CSAT);
+    expect(entry.responseCount).toBe(4);
 
     // Average = (5 + 4 + 2 + 1) / 4 = 3.0
-    expect(summary[0].average).toBe(3);
+    expect(entry.average).toBe(3);
 
     // CSAT: satisfied = ratings 4 + 5 = 2 out of 4
-    expect(summary[0].csat.satisfiedCount).toBe(2);
-    expect(summary[0].csat.satisfiedPercentage).toBe(50);
+    expect(entry.csat.satisfiedCount).toBe(2);
+    expect(entry.csat.satisfiedPercentage).toBe(50);
 
     // Verify choice distribution
-    const rating5 = summary[0].choices.find((c: any) => c.rating === 5);
-    expect(rating5.count).toBe(1);
-    expect(rating5.percentage).toBe(25);
+    const rating5 = entry.choices.find((c) => c.rating === 5);
+    expect(rating5?.count).toBe(1);
+    expect(rating5?.percentage).toBe(25);
 
-    const rating4 = summary[0].choices.find((c: any) => c.rating === 4);
-    expect(rating4.count).toBe(1);
-    expect(rating4.percentage).toBe(25);
+    const rating4 = entry.choices.find((c) => c.rating === 4);
+    expect(rating4?.count).toBe(1);
+    expect(rating4?.percentage).toBe(25);
 
-    const rating2 = summary[0].choices.find((c: any) => c.rating === 2);
-    expect(rating2.count).toBe(1);
-    expect(rating2.percentage).toBe(25);
+    const rating2 = entry.choices.find((c) => c.rating === 2);
+    expect(rating2?.count).toBe(1);
+    expect(rating2?.percentage).toBe(25);
 
-    const rating1 = summary[0].choices.find((c: any) => c.rating === 1);
-    expect(rating1.count).toBe(1);
-    expect(rating1.percentage).toBe(25);
+    const rating1 = entry.choices.find((c) => c.rating === 1);
+    expect(rating1?.count).toBe(1);
+    expect(rating1?.percentage).toBe(25);
 
-    expect(summary[0].dismissed.count).toBe(0);
+    expect(entry.dismissed.count).toBe(0);
   });
 
   test("getElementSummary handles CSAT question with dismissed responses", async () => {
@@ -4981,7 +4832,7 @@ describe("CSAT question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "csat-q1": 5 },
@@ -5012,26 +4863,21 @@ describe("CSAT question type tests", () => {
         ttc: { "csat-q1": 4 },
         finished: true,
       },
-    ] as any;
+    ];
 
     const dropOff = [
       { elementId: "csat-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CSAT);
-    expect(summary[0].responseCount).toBe(1);
-    expect(summary[0].average).toBe(5);
-    expect(summary[0].dismissed.count).toBe(2);
-    expect(summary[0].csat.satisfiedCount).toBe(1);
-    expect(summary[0].csat.satisfiedPercentage).toBe(100);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.CSAT);
+    expect(entry.responseCount).toBe(1);
+    expect(entry.average).toBe(5);
+    expect(entry.dismissed.count).toBe(2);
+    expect(entry.csat.satisfiedCount).toBe(1);
+    expect(entry.csat.satisfiedPercentage).toBe(100);
   });
 
   test("getElementSummary handles CSAT question with no valid responses", async () => {
@@ -5052,7 +4898,7 @@ describe("CSAT question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "other-q": "value" },
@@ -5069,20 +4915,15 @@ describe("CSAT question type tests", () => {
       { elementId: "csat-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CSAT);
-    expect(summary[0].responseCount).toBe(0);
-    expect(summary[0].average).toBe(0);
-    expect(summary[0].csat.satisfiedCount).toBe(0);
-    expect(summary[0].csat.satisfiedPercentage).toBe(0);
-    expect(summary[0].choices.every((c: any) => c.count === 0)).toBe(true);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.CSAT);
+    expect(entry.responseCount).toBe(0);
+    expect(entry.average).toBe(0);
+    expect(entry.csat.satisfiedCount).toBe(0);
+    expect(entry.csat.satisfiedPercentage).toBe(0);
+    expect(entry.choices.every((c) => c.count === 0)).toBe(true);
   });
 
   test("getElementSummary CSAT correctly identifies satisfied ratings (4 and 5 only)", async () => {
@@ -5104,7 +4945,7 @@ describe("CSAT question type tests", () => {
     } as unknown as TSurvey;
 
     // 3 satisfied (4,5,5), 2 not satisfied (1,3)
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "r1",
         data: { "csat-q1": 5 },
@@ -5161,16 +5002,12 @@ describe("CSAT question type tests", () => {
       { elementId: "csat-q1", impressions: 5, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.CSAT);
 
     // satisfied = ratings 4 and 5 = 3 out of 5
-    expect(summary[0].csat.satisfiedCount).toBe(3);
-    expect(summary[0].csat.satisfiedPercentage).toBe(60);
+    expect(entry.csat.satisfiedCount).toBe(3);
+    expect(entry.csat.satisfiedPercentage).toBe(60);
   });
 });
 
@@ -5195,7 +5032,7 @@ describe("CES question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "ces-q1": 5 },
@@ -5242,41 +5079,36 @@ describe("CES question type tests", () => {
       { elementId: "ces-q1", impressions: 4, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CES);
-    expect(summary[0].responseCount).toBe(4);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.CES);
+    expect(entry.responseCount).toBe(4);
 
     // CES = average = (5 + 4 + 2 + 3) / 4 = 3.5
-    expect(summary[0].average).toBe(3.5);
+    expect(entry.average).toBe(3.5);
 
     // Verify choice distribution
-    const rating5 = summary[0].choices.find((c: any) => c.rating === 5);
-    expect(rating5.count).toBe(1);
-    expect(rating5.percentage).toBe(25);
+    const rating5 = entry.choices.find((c) => c.rating === 5);
+    expect(rating5?.count).toBe(1);
+    expect(rating5?.percentage).toBe(25);
 
-    const rating4 = summary[0].choices.find((c: any) => c.rating === 4);
-    expect(rating4.count).toBe(1);
-    expect(rating4.percentage).toBe(25);
+    const rating4 = entry.choices.find((c) => c.rating === 4);
+    expect(rating4?.count).toBe(1);
+    expect(rating4?.percentage).toBe(25);
 
-    const rating3 = summary[0].choices.find((c: any) => c.rating === 3);
-    expect(rating3.count).toBe(1);
-    expect(rating3.percentage).toBe(25);
+    const rating3 = entry.choices.find((c) => c.rating === 3);
+    expect(rating3?.count).toBe(1);
+    expect(rating3?.percentage).toBe(25);
 
-    const rating2 = summary[0].choices.find((c: any) => c.rating === 2);
-    expect(rating2.count).toBe(1);
-    expect(rating2.percentage).toBe(25);
+    const rating2 = entry.choices.find((c) => c.rating === 2);
+    expect(rating2?.count).toBe(1);
+    expect(rating2?.percentage).toBe(25);
 
-    expect(summary[0].dismissed.count).toBe(0);
+    expect(entry.dismissed.count).toBe(0);
 
     // CES has no csat field
-    expect(summary[0].csat).toBeUndefined();
+    expect((entry as Record<string, unknown>).csat).toBeUndefined();
   });
 
   test("getElementSummary correctly processes CES question with range 7", async () => {
@@ -5299,7 +5131,7 @@ describe("CES question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "r1",
         data: { "ces-q1": 7 },
@@ -5336,22 +5168,17 @@ describe("CES question type tests", () => {
       { elementId: "ces-q1", impressions: 3, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CES);
-    expect(summary[0].responseCount).toBe(3);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.CES);
+    expect(entry.responseCount).toBe(3);
 
     // CES average = (7 + 6 + 1) / 3 = 4.67
-    expect(summary[0].average).toBe(4.67);
+    expect(entry.average).toBe(4.67);
 
     // Verify 7 choices exist (range 7)
-    expect(summary[0].choices).toHaveLength(7);
+    expect(entry.choices).toHaveLength(7);
   });
 
   test("getElementSummary handles CES question with dismissed responses", async () => {
@@ -5372,7 +5199,7 @@ describe("CES question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "ces-q1": 3 },
@@ -5393,24 +5220,19 @@ describe("CES question type tests", () => {
         ttc: { "ces-q1": 2 },
         finished: true,
       },
-    ] as any;
+    ];
 
     const dropOff = [
       { elementId: "ces-q1", impressions: 2, dropOffCount: 0, dropOffPercentage: 0 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CES);
-    expect(summary[0].responseCount).toBe(1);
-    expect(summary[0].average).toBe(3);
-    expect(summary[0].dismissed.count).toBe(1);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.CES);
+    expect(entry.responseCount).toBe(1);
+    expect(entry.average).toBe(3);
+    expect(entry.dismissed.count).toBe(1);
   });
 
   test("getElementSummary handles CES question with no valid responses", async () => {
@@ -5431,7 +5253,7 @@ describe("CES question type tests", () => {
       welcomeCard: { enabled: false },
     } as unknown as TSurvey;
 
-    const responses = [
+    const responses: TSummaryResponse[] = [
       {
         id: "response-1",
         data: { "other-q": "value" },
@@ -5448,18 +5270,13 @@ describe("CES question type tests", () => {
       { elementId: "ces-q1", impressions: 1, dropOffCount: 1, dropOffPercentage: 100 },
     ] as unknown as TSurveySummary["dropOff"];
 
-    const summary: any = await getElementSummary(
-      survey,
-      getElementsFromBlocks(survey.blocks),
-      responses,
-      dropOff
-    );
+    const summary = await getElementSummary(survey, getElementsFromBlocks(survey.blocks), responses, dropOff);
 
     expect(summary).toHaveLength(1);
-    expect(summary[0].type).toBe(TSurveyElementTypeEnum.CES);
-    expect(summary[0].responseCount).toBe(0);
-    expect(summary[0].average).toBe(0);
-    expect(summary[0].choices.every((c: any) => c.count === 0)).toBe(true);
+    const entry = asSummaryOf(summary[0], TSurveyElementTypeEnum.CES);
+    expect(entry.responseCount).toBe(0);
+    expect(entry.average).toBe(0);
+    expect(entry.choices.every((c) => c.count === 0)).toBe(true);
   });
 });
 
@@ -5483,7 +5300,7 @@ describe("not shown (ENG-6936)", () => {
       data: {},
       ttc: {},
       ...overrides,
-    } as any;
+    };
   };
 
   // Netflix only: the "Heavy users" block and the Apple TV+ follow-up were not shown.
@@ -5533,7 +5350,10 @@ describe("not shown (ENG-6936)", () => {
     const dropOff = getSurveySummaryDropOff(survey, elements, responses, 3);
 
     const summary = await getElementSummary(survey, elements, responses, dropOff);
-    const rating = summary.find((entry) => "element" in entry && entry.element.id === "sat_netflix") as any;
+    const rating = asSummaryOf(
+      summary.find((entry) => "element" in entry && entry.element.id === "sat_netflix"),
+      TSurveyElementTypeEnum.Rating
+    );
 
     expect(rating.dismissed.count).toBe(1);
     expect(rating.responseCount).toBe(1);
@@ -5571,7 +5391,10 @@ describe("option bases (ENG-6937)", () => {
   const elements = getElementsFromBlocks(survey.blocks);
 
   let sequence = 0;
-  const response = (data: Record<string, unknown>, notShown: Record<string, unknown> | null) => {
+  const response = (
+    data: TSummaryResponse["data"],
+    notShown: TSummaryResponse["notShown"]
+  ): TSummaryResponse => {
     sequence += 1;
     return {
       id: `option-base-${sequence}`,
@@ -5583,13 +5406,20 @@ describe("option bases (ENG-6937)", () => {
       data,
       ttc: {},
       notShown,
-    } as any;
+    };
   };
 
-  const summaryOf = async (responses: any[], elementId: string) => {
+  const summaryOf = async <TType extends TSummaryEntry["type"]>(
+    responses: TSummaryResponse[],
+    elementId: string,
+    type: TType
+  ) => {
     const dropOff = getSurveySummaryDropOff(survey, elements, responses, responses.length);
     const summary = await getElementSummary(survey, elements, responses, dropOff);
-    return summary.find((entry) => "element" in entry && entry.element.id === elementId) as any;
+    return asSummaryOf(
+      summary.find((entry) => "element" in entry && entry.element.id === elementId),
+      type
+    );
   };
 
   // "Apple TV+" in `fav` is offered only to who uses Apple TV+; "Netflix + Apple TV+" in `bundle` is Hidden.
@@ -5606,8 +5436,12 @@ describe("option bases (ENG-6937)", () => {
   const legacy = response({ fav: "Netflix", bundle: "Netflix + Apple TV+" }, null);
 
   test("an option's percentage is over the respondents shown it, with 'shown to N' next to it", async () => {
-    const fav = await summaryOf([netflixOnly, appleUser, disneyFan, legacy], "fav");
-    const choice = (label: string) => fav.choices.find((entry: any) => entry.value === label);
+    const fav = await summaryOf(
+      [netflixOnly, appleUser, disneyFan, legacy],
+      "fav",
+      TSurveyElementTypeEnum.MultipleChoiceSingle
+    );
+    const choice = (label: string) => fav.choices.find((entry) => entry.value === label);
 
     expect(fav.responseCount).toBe(4);
     expect(choice("Apple TV+")).toMatchObject({ count: 1, shownCount: 3, percentage: 33.33 });
@@ -5616,8 +5450,12 @@ describe("option bases (ENG-6937)", () => {
   });
 
   test("a Hidden option stays in results, marked Hidden, with the answers given before it was hidden", async () => {
-    const bundle = await summaryOf([netflixOnly, appleUser, legacy], "bundle");
-    const hidden = bundle.choices.find((entry: any) => entry.value === "Netflix + Apple TV+");
+    const bundle = await summaryOf(
+      [netflixOnly, appleUser, legacy],
+      "bundle",
+      TSurveyElementTypeEnum.MultipleChoiceSingle
+    );
+    const hidden = bundle.choices.find((entry) => entry.value === "Netflix + Apple TV+");
 
     expect(hidden).toEqual({
       value: "Netflix + Apple TV+",
@@ -5629,7 +5467,7 @@ describe("option bases (ENG-6937)", () => {
   });
 
   test("picture choices, ranking options and matrix rows report their base too", async () => {
-    const responses = [
+    const responses: TSummaryResponse[] = [
       response(
         { ad_pick: ["poster_a"], brand_rank: ["Netflix", "Disney+"], brand_grid: { Netflix: "Good" } },
         {
@@ -5647,46 +5485,48 @@ describe("option bases (ENG-6937)", () => {
       ),
     ];
 
-    const picture = await summaryOf(responses, "ad_pick");
-    expect(picture.choices.find((entry: any) => entry.id === "poster_b")).toMatchObject({
+    const picture = await summaryOf(responses, "ad_pick", TSurveyElementTypeEnum.PictureSelection);
+    expect(picture.choices.find((entry) => entry.id === "poster_b")).toMatchObject({
       count: 1,
       shownCount: 1,
       percentage: 100,
     });
 
-    const ranking = await summaryOf(responses, "brand_rank");
-    expect(ranking.choices.find((entry: any) => entry.value === "Prime Video")).toMatchObject({
+    const ranking = await summaryOf(responses, "brand_rank", TSurveyElementTypeEnum.Ranking);
+    expect(ranking.choices.find((entry) => entry.value === "Prime Video")).toMatchObject({
       count: 1,
       shownCount: 1,
     });
 
-    const matrix = await summaryOf(responses, "brand_grid");
-    expect(matrix.data.find((row: any) => row.rowLabel === "Disney+")).toMatchObject({
+    const matrix = await summaryOf(responses, "brand_grid", TSurveyElementTypeEnum.Matrix);
+    expect(matrix.data.find((row) => row.rowLabel === "Disney+")).toMatchObject({
       totalResponsesForRow: 1,
       shownCount: 1,
     });
-    expect(matrix.data.find((row: any) => row.rowLabel === "Netflix")).not.toHaveProperty("shownCount");
+    expect(matrix.data.find((row) => row.rowLabel === "Netflix")).not.toHaveProperty("shownCount");
   });
 
   test("a stored pick of an option the respondent wasn't shown is left out, as the export blanks it (P51)", async () => {
     // The record says Apple TV+ was not shown, yet the stored answer still names it.
     const stalePick = response({ fav: "Apple TV+" }, { options: { fav: ["apple"] } });
-    const fav = await summaryOf([stalePick, appleUser], "fav");
-    const apple = fav.choices.find((entry: any) => entry.value === "Apple TV+");
+    const fav = await summaryOf([stalePick, appleUser], "fav", TSurveyElementTypeEnum.MultipleChoiceSingle);
+    const apple = fav.choices.find((entry) => entry.value === "Apple TV+");
 
-    expect(apple.count).toBe(1);
-    expect(apple.percentage).toBeLessThanOrEqual(100);
+    expect(apple?.count).toBe(1);
+    expect(apple?.percentage).toBeLessThanOrEqual(100);
 
     const picture = await summaryOf(
       [response({ ad_pick: ["poster_b"] }, { options: { ad_pick: ["poster_b"] } })],
-      "ad_pick"
+      "ad_pick",
+      TSurveyElementTypeEnum.PictureSelection
     );
-    expect(picture.choices.find((entry: any) => entry.id === "poster_b").count).toBe(0);
+    expect(picture.choices.find((entry) => entry.id === "poster_b")?.count).toBe(0);
 
     const matrix = await summaryOf(
       [response({ brand_grid: { "Disney+": "Good" } }, { rows: { brand_grid: ["row_disney"] } })],
-      "brand_grid"
+      "brand_grid",
+      TSurveyElementTypeEnum.Matrix
     );
-    expect(matrix.data.find((row: any) => row.rowLabel === "Disney+").totalResponsesForRow).toBe(0);
+    expect(matrix.data.find((row) => row.rowLabel === "Disney+")?.totalResponsesForRow).toBe(0);
   });
 });

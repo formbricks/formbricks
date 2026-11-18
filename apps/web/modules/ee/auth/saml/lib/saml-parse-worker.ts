@@ -20,8 +20,9 @@ import { type SamlDecryptedRefusal, checkDecryptedSamlResponseBounds } from "./s
  * response, so that call's cost is timed as well (ENG-6648), then saml20's signature check with the connection's own
  * IdP certificates, so that step's cost is timed too (ENG-4108).
  *
- * It answers with the identifying fields only (the claimed issuer, the response ID and InResponseTo, cut to a length a
- * log line can carry) and how decryption went, with sizes for a refusal. Nothing else of the response leaves the
+ * It answers with whether saml20 could parse the response at all (ENG-7054), the identifying fields only (the claimed
+ * issuer, the response ID and InResponseTo, cut to a length a log line can carry) and how decryption went, with sizes
+ * for a refusal. Nothing else of the response leaves the
  * worker, the decrypted assertion included. Just before it decrypts, it says so, with the issuer as jackson reads it:
  * whatever happens to the job after that point may depend on the plaintext, so the pool must not answer it on its own
  * (ENG-6646, see `refused_encrypted` in `saml-parse-budget.ts`).
@@ -39,14 +40,17 @@ const parseXml = (xml: string) =>
  * jackson's first use of the response (saml20's `parseIssuer`): it parses the whole response and selects the `Issuer`
  * children of its root, on every callback, before any issuer, connection or RelayState check. The select's cost grows
  * with the square of the elements it matches, so the byte bounds cap its names (ENG-6648); calling it here puts
- * jackson's actual call inside the budget too, so a shape the bounds misread is still cut off. Returns `undefined` for
- * a response saml20 cannot parse, which jackson refuses on its own.
+ * jackson's actual call inside the budget too, so a shape the bounds misread is still cut off. A response saml20 cannot
+ * parse (not XML, empty, several roots, any parse error) is `readable: false`: jackson throws on it right there, with
+ * no status to answer it by (ENG-7054).
  */
-const issuerAsJackson = (xml: string): string | undefined => {
+const issuerAsJackson = (
+  xml: string
+): { readable: true; issuer: string | undefined } | { readable: false } => {
   try {
-    return parseIssuer(xml);
+    return { readable: true, issuer: parseIssuer(xml) };
   } catch {
-    return undefined;
+    return { readable: false };
   }
 };
 
@@ -75,6 +79,11 @@ export type SamlDecryption =
   | { decrypted: false };
 
 export interface ParsedSamlResponse {
+  /**
+   * Whether saml20 can parse the response at all, as jackson's first call on it does. jackson throws on one it cannot
+   * before any other check, with an error that carries no status, so the route refuses it without jackson (ENG-7054).
+   */
+  readable: boolean;
   claims: SamlResponseClaims;
   /** Only when the response holds an encrypted assertion jackson would decrypt. */
   decryption?: SamlDecryption;
@@ -150,15 +159,18 @@ export const parseSamlResponse = (
   onDecrypting: (issuer: string) => void = () => undefined
 ): ParsedSamlResponse => {
   // jackson's first call on the response, timed here before anything else as jackson does it (ENG-6648).
-  const issuer = issuerAsJackson(xml);
+  const read = issuerAsJackson(xml);
+  // jackson goes no further with it, so neither does the worker: no claims, no decryption, no signature check.
+  if (!read.readable) return { readable: false, claims: {} };
+  const { issuer } = read;
   let root: Element | null;
   try {
     root = parseXml(xml).documentElement;
   } catch {
-    // A fatal parse error is cheap, and jackson refuses the response on its own; the cost is what is measured.
-    return { claims: {} };
+    // Unreachable once saml20 has parsed it (it uses the same xmldom, more strictly); a fatal error is cheap anyway.
+    return { readable: true, claims: {} };
   }
-  if (!root) return { claims: {} };
+  if (!root) return { readable: true, claims: {} };
   const claims: SamlResponseClaims = {
     issuer: field(issuer),
     id: field(root.getAttribute("ID")),
@@ -168,16 +180,15 @@ export const parseSamlResponse = (
   // times what jackson spends, runs no signature check without one.
   if (!hasEncryptedAssertion(root)) {
     if (idpVerification && issuer) checkSignatureAsJackson(xml, undefined, idpVerification);
-    return { claims };
+    return { readable: true, claims };
   }
-  // jackson refuses a response with no issuer, or one saml20 cannot parse, before it decrypts anything, so the worker
-  // does not decrypt it either.
+  // jackson refuses a response with no issuer before it decrypts anything, so the worker does not decrypt it either.
   const key = issuer ? decryptionKey : null;
   if (key && issuer) onDecrypting(issuer);
   const { decryption, decryptedXml, checksSignature } = decryptAsJackson(xml, key);
   if (idpVerification && issuer && checksSignature)
     checkSignatureAsJackson(xml, decryptedXml, idpVerification);
-  return { claims, decryption };
+  return { readable: true, claims, decryption };
 };
 
 /**
@@ -231,10 +242,13 @@ const serve = (port: MessagePort) => {
       idpVerification: SamlIdpVerification | null;
     }) => {
       const started = performance.now();
-      const { claims, decryption } = parseSamlResponse(xml, decryptionKey, idpVerification, (issuer) =>
-        port.postMessage({ id, decrypting: true, issuer })
+      const { readable, claims, decryption } = parseSamlResponse(
+        xml,
+        decryptionKey,
+        idpVerification,
+        (issuer) => port.postMessage({ id, decrypting: true, issuer })
       );
-      port.postMessage({ id, ms: performance.now() - started, claims, decryption });
+      port.postMessage({ id, ms: performance.now() - started, readable, claims, decryption });
     }
   );
   for (let i = 0; i < 20; i++) parseSamlResponse(WARM_UP, null, WARM_UP_VERIFICATION);

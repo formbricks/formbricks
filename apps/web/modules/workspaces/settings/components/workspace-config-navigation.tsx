@@ -17,7 +17,7 @@ export const WorkspaceConfigNavigation = ({ activeId, loading }: WorkspaceConfig
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
 
-  let navigation = [
+  const navigation = [
     {
       id: "general",
       label: t("common.general"),

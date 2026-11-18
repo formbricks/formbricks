@@ -38,7 +38,9 @@ describe("getOrganizationIdFromWorkspaceId", () => {
   test("should return organization ID if found", async () => {
     const mockWorkspaceId = "ws_test123";
     const mockOrgId = "org_test456";
-    mockPrismaWorkspace.findUnique.mockResolvedValueOnce({ organizationId: mockOrgId } as any);
+    mockPrismaWorkspace.findUnique.mockResolvedValueOnce({ organizationId: mockOrgId } as Awaited<
+      ReturnType<typeof mockPrismaWorkspace.findUnique>
+    >);
 
     const result = await getOrganizationIdFromWorkspaceId(mockWorkspaceId);
 
@@ -91,7 +93,9 @@ describe("getOrganizationAIKeys", () => {
   };
 
   test("should return organization AI keys if found", async () => {
-    mockPrismaOrganization.findUnique.mockResolvedValueOnce(mockOrganizationData as any);
+    mockPrismaOrganization.findUnique.mockResolvedValueOnce(
+      mockOrganizationData as unknown as Awaited<ReturnType<typeof mockPrismaOrganization.findUnique>>
+    );
 
     const result = await getOrganizationAIKeys(mockOrgId);
 

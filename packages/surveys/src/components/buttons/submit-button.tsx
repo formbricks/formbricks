@@ -105,6 +105,7 @@ export function SubmitButton({
       tabIndex={tabIndex}
       onClick={onClick}
       disabled={disabled}>
+      {/* eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty label falls back too */}
       {buttonLabel || (isLastQuestion ? t("common.finish") : t("common.next"))}
     </Button>
   );

@@ -295,6 +295,7 @@ export const CreativeEditor = ({
     // A Save never takes it live by itself (`save-status.ts`); Publish is the author going live.
     const { body, keptPaused } = keepSaveFromGoingLive(creative, buildCreativePatch(form, creative, intent), {
       surveys: toSurveyStates([...knownSurveys.values()]),
+      // oxlint-disable-next-line react/purity -- submit() runs from click/confirm handlers, never during render
       now: new Date(),
     });
     // A relink that leaves a live app survey nothing opens asks first; the save is allowed anyway.
@@ -378,6 +379,7 @@ export const CreativeEditor = ({
               value={statusControl.value}
               options={statusControl.options}
               state={displayState}
+              // oxlint-disable-next-line react/purity -- the label reflects the clock as of this render, on purpose
               isWaitingForStart={isWaitingForStart(creative.schedule, new Date())}
               disabled={isBusy}
               onChange={statusChange.changeStatus}

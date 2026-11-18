@@ -18,6 +18,7 @@ const mocks = vi.hoisted(() => ({
   resolveClientApiIds: vi.fn(),
   sendToPipeline: vi.fn(),
   updateResponseWithQuotaEvaluation: vi.fn(),
+  getStoredResponseNotShown: vi.fn(),
   validateClientFileUploads: vi.fn(),
   validateOtherOptionLengthForMultipleChoice: vi.fn(),
   validateResponseData: vi.fn(),
@@ -55,6 +56,7 @@ vi.mock("@/modules/storage/utils", () => ({
 
 vi.mock("./response", () => ({
   updateResponseWithQuotaEvaluation: mocks.updateResponseWithQuotaEvaluation,
+  getStoredResponseNotShown: mocks.getStoredResponseNotShown,
 }));
 
 vi.mock("./validated-response-update-input", () => ({
@@ -455,6 +457,55 @@ describe("putResponseHandler", () => {
       },
     });
     expect(mocks.formatValidationErrorsForV1Api).toHaveBeenCalledWith([{ field: "q1", message: "Required" }]);
+  });
+
+  test("validates the merged data with the not-shown record the update sends, even an empty one (ENG-7332)", async () => {
+    for (const notShown of [{ rows: { trip: ["visa"] } }, {}]) {
+      mocks.validateResponseData.mockClear();
+      mocks.getValidatedResponseUpdateInput.mockResolvedValue({
+        responseUpdateInput: { ...getBaseResponseUpdateInput(), notShown },
+      });
+
+      await putResponseHandler(createHandlerParams());
+
+      expect(mocks.validateResponseData).toHaveBeenCalledWith(
+        getBaseSurvey().blocks,
+        expect.objectContaining({ q1: "updated-answer" }),
+        "en",
+        getBaseSurvey().questions,
+        notShown
+      );
+    }
+    expect(mocks.getStoredResponseNotShown).not.toHaveBeenCalled();
+  });
+
+  test("validates an update without a not-shown record against the stored one, which it keeps (ENG-7332)", async () => {
+    const stored = { rows: { trip: ["visa"] } };
+    mocks.getStoredResponseNotShown.mockResolvedValue(stored);
+    mocks.getValidatedResponseUpdateInput.mockResolvedValue({
+      responseUpdateInput: { finished: true },
+    });
+
+    await putResponseHandler(createHandlerParams());
+
+    expect(mocks.getStoredResponseNotShown).toHaveBeenCalledWith(responseId);
+    expect(mocks.validateResponseData).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      stored
+    );
+  });
+
+  test("answers 500 and updates nothing when the stored not-shown record cannot be read", async () => {
+    mocks.getStoredResponseNotShown.mockRejectedValue(new Error("connection lost"));
+    mocks.getValidatedResponseUpdateInput.mockResolvedValue({ responseUpdateInput: { finished: true } });
+
+    const result = await putResponseHandler(createHandlerParams());
+
+    expect(result.response.status).toBe(500);
+    expect(mocks.updateResponseWithQuotaEvaluation).not.toHaveBeenCalled();
   });
 
   test("returns not found when the response disappears during update", async () => {

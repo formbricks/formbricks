@@ -37,7 +37,7 @@ const FOREIGN_WORKSPACE = "ws-victim";
 describe("deleteResponseFileUrls", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockedDeleteFile.mockResolvedValue({ ok: true, data: undefined } as any);
+    mockedDeleteFile.mockResolvedValue({ ok: true, data: undefined });
   });
 
   test("deletes a file whose URL storage id belongs to the survey's workspace", async () => {
@@ -113,7 +113,9 @@ describe("deleteResponseFileUrls", () => {
   // logged — otherwise a leftover object looks like a clean success.
   test("logs when deleteFile returns a failure result", async () => {
     mockedResolve.mockResolvedValue({ id: OWN_WORKSPACE, organizationId: "org-1" });
-    mockedDeleteFile.mockResolvedValue({ ok: false, error: { code: "s3_client_error" } } as any);
+    mockedDeleteFile.mockResolvedValue({ ok: false, error: { code: "s3_client_error" } } as Awaited<
+      ReturnType<typeof mockedDeleteFile>
+    >);
 
     await deleteResponseFileUrls([`/storage/${OWN_WORKSPACE}/private/answer.png`], OWN_WORKSPACE);
 

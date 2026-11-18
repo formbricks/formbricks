@@ -132,7 +132,8 @@ const validateResponseSubmission = async (
     survey.blocks,
     responseInputData.data,
     responseInputData.language ?? "en",
-    survey.questions
+    survey.questions,
+    responseInputData.notShown
   );
 
   return validationErrors

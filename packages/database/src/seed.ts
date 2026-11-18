@@ -289,6 +289,130 @@ async function seedDemoWorkflows(workspaceId: string, surveyId: string): Promise
   await seedDemoWorkflowRuns(workspaceId, surveyId, specs);
 }
 
+/** When a seeded run was created, started and finished, counted back from `now`. */
+const getSeedRunTimes = (runSeed: WorkflowRunSeedSpec, now: number) => {
+  const createdAt = new Date(now - runSeed.minutesAgo * 60_000);
+  const startedAt = runSeed.started ? new Date(createdAt.getTime() + 2_000) : null;
+  const finishedAt =
+    runSeed.finished && startedAt ? new Date(startedAt.getTime() + (runSeed.durationMs ?? 500)) : null;
+  return { createdAt, startedAt, finishedAt };
+};
+
+/** A seeded run's send-email step: its input and output, and the run's steps (none without a log). */
+const getSeedRunSteps = (
+  spec: WorkflowSeedSpec,
+  runSeed: WorkflowRunSeedSpec,
+  runId: string,
+  startedAt: Date | null,
+  finishedAt: Date | null
+) => {
+  const stepInput = { to: spec.email.to, subject: spec.email.subject };
+  const stepOutput =
+    runSeed.log?.status === "succeeded"
+      ? { provider: "smtp", messageId: `seed-${runId}`, accepted: [spec.email.to] }
+      : {};
+
+  const steps: TWorkflowRunData["steps"] = runSeed.log
+    ? [
+        {
+          stepId: spec.actionId,
+          stepType: "send_email",
+          status: runSeed.log.status,
+          input: stepInput,
+          output: stepOutput,
+          ...(runSeed.log.error ? { error: runSeed.log.error } : {}),
+          ...(startedAt ? { startedAt: startedAt.toISOString() } : {}),
+          ...(finishedAt ? { finishedAt: finishedAt.toISOString() } : {}),
+        },
+      ]
+    : [];
+
+  return { stepInput, stepOutput, steps };
+};
+
+/** Upserts one seeded run and replaces its log. */
+const seedWorkflowRun = async ({
+  workspaceId,
+  surveyId,
+  spec,
+  runSeed,
+  responseId,
+  now,
+}: {
+  workspaceId: string;
+  surveyId: string;
+  spec: WorkflowSeedSpec;
+  runSeed: WorkflowRunSeedSpec;
+  responseId: string;
+  now: number;
+}): Promise<void> => {
+  const runId = `clseedwfrun${spec.runKey}${runSeed.suffix}`;
+  const logId = `clseedwfrunlog${spec.runKey}${runSeed.suffix}`;
+
+  const { createdAt, startedAt, finishedAt } = getSeedRunTimes(runSeed, now);
+
+  const triggerPayload: TWorkflowTriggerRunPayload = {
+    type: "response.completed",
+    workspaceId,
+    surveyId,
+    responseId,
+    triggeredAt: createdAt.toISOString(),
+  };
+
+  const { stepInput, stepOutput, steps } = getSeedRunSteps(spec, runSeed, runId, startedAt, finishedAt);
+
+  const data: TWorkflowRunData = { trigger: triggerPayload, steps };
+
+  const runFields = {
+    workflowId: spec.id,
+    workspaceId,
+    workflowVersionId: null,
+    responseId,
+    status: runSeed.status,
+    triggerType: "response.completed",
+    surveyId,
+    isDryRun: false,
+    idempotencyKey: null,
+    attempt: runSeed.attempt ?? 0,
+    nextAttemptAt: null,
+    lastErrorAt: runSeed.error ? finishedAt : null,
+    triggerPayload,
+    data,
+    error: runSeed.error ?? null,
+    createdAt,
+    updatedAt: finishedAt ?? startedAt ?? createdAt,
+    startedAt,
+    finishedAt,
+  };
+
+  await prisma.workflowRun.upsert({
+    where: { id: runId },
+    update: runFields,
+    create: { id: runId, ...runFields },
+  });
+
+  // Reset logs so re-seeding without a full wipe stays consistent with the run's current shape.
+  await prisma.workflowRunLog.deleteMany({ where: { runId } });
+
+  if (runSeed.log) {
+    await prisma.workflowRunLog.create({
+      data: {
+        id: logId,
+        runId,
+        sequence: 0,
+        stepId: spec.actionId,
+        stepType: "send_email",
+        status: runSeed.log.status,
+        input: stepInput,
+        output: stepOutput,
+        error: runSeed.log.error ?? null,
+        startedAt,
+        finishedAt,
+      },
+    });
+  }
+};
+
 /**
  * Seed historical runs (and their per-step logs) for the demo workflows so the runs list and the
  * run-detail drawer have data to show. Runs are linked to real seeded responses so the trigger
@@ -323,93 +447,7 @@ async function seedDemoWorkflowRuns(
       const responseId = responses[responseCursor % responses.length].id;
       responseCursor += 1;
 
-      const runId = `clseedwfrun${spec.runKey}${runSeed.suffix}`;
-      const logId = `clseedwfrunlog${spec.runKey}${runSeed.suffix}`;
-
-      const createdAt = new Date(now - runSeed.minutesAgo * 60_000);
-      const startedAt = runSeed.started ? new Date(createdAt.getTime() + 2_000) : null;
-      const finishedAt =
-        runSeed.finished && startedAt ? new Date(startedAt.getTime() + (runSeed.durationMs ?? 500)) : null;
-
-      const triggerPayload: TWorkflowTriggerRunPayload = {
-        type: "response.completed",
-        workspaceId,
-        surveyId,
-        responseId,
-        triggeredAt: createdAt.toISOString(),
-      };
-
-      const stepInput = { to: spec.email.to, subject: spec.email.subject };
-      const stepOutput =
-        runSeed.log?.status === "succeeded"
-          ? { provider: "smtp", messageId: `seed-${runId}`, accepted: [spec.email.to] }
-          : {};
-
-      const steps: TWorkflowRunData["steps"] = runSeed.log
-        ? [
-            {
-              stepId: spec.actionId,
-              stepType: "send_email",
-              status: runSeed.log.status,
-              input: stepInput,
-              output: stepOutput,
-              ...(runSeed.log.error ? { error: runSeed.log.error } : {}),
-              ...(startedAt ? { startedAt: startedAt.toISOString() } : {}),
-              ...(finishedAt ? { finishedAt: finishedAt.toISOString() } : {}),
-            },
-          ]
-        : [];
-
-      const data: TWorkflowRunData = { trigger: triggerPayload, steps };
-
-      const runFields = {
-        workflowId: spec.id,
-        workspaceId,
-        workflowVersionId: null,
-        responseId,
-        status: runSeed.status,
-        triggerType: "response.completed",
-        surveyId,
-        isDryRun: false,
-        idempotencyKey: null,
-        attempt: runSeed.attempt ?? 0,
-        nextAttemptAt: null,
-        lastErrorAt: runSeed.error ? finishedAt : null,
-        triggerPayload,
-        data,
-        error: runSeed.error ?? null,
-        createdAt,
-        updatedAt: finishedAt ?? startedAt ?? createdAt,
-        startedAt,
-        finishedAt,
-      };
-
-      await prisma.workflowRun.upsert({
-        where: { id: runId },
-        update: runFields,
-        create: { id: runId, ...runFields },
-      });
-
-      // Reset logs so re-seeding without a full wipe stays consistent with the run's current shape.
-      await prisma.workflowRunLog.deleteMany({ where: { runId } });
-
-      if (runSeed.log) {
-        await prisma.workflowRunLog.create({
-          data: {
-            id: logId,
-            runId,
-            sequence: 0,
-            stepId: spec.actionId,
-            stepType: "send_email",
-            status: runSeed.log.status,
-            input: stepInput,
-            output: stepOutput,
-            error: runSeed.log.error ?? null,
-            startedAt,
-            finishedAt,
-          },
-        });
-      }
+      await seedWorkflowRun({ workspaceId, surveyId, spec, runSeed, responseId, now });
     }
   }
 }

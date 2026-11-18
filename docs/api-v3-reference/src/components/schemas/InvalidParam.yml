@@ -25,6 +25,7 @@ properties:
       - document_limit_exceeded
       - duplicate_identifier
       - duplicate_locale
+      - excel_export_other_survey
       - file_limit_exceeded
       - file_type_unsupported
       - file_unreadable
@@ -86,6 +87,11 @@ properties:
 
       `document_limit_exceeded` comes from the survey import of a questionnaire (Word, Excel or CSV):
       the document is past one of the import's limits, which `identifier` names.
+
+
+      `excel_export_other_survey` comes from the survey import of a survey's Excel export (an
+      internal, session-only route sharing this shape): none of the sheet's rows is a text of the
+      survey it was exported from.
   identifier:
     type: string
     description: >-

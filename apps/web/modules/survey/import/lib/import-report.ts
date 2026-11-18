@@ -3,6 +3,7 @@ import type {
   TSurveyImportIssue,
   TSurveyImportIssuePlace,
   TSurveyImportReport,
+  TSurveyImportSheetRowSkipCause,
 } from "@/modules/survey/import/types";
 
 type TTranslate = (key: string, options?: Record<string, unknown>) => string;
@@ -112,6 +113,36 @@ const getSkippedQuestionMessage = (issue: TSurveyImportIssue, t: TTranslate): st
   }
 };
 
+const SKIPPED_ROW_MESSAGES: Record<TSurveyImportSheetRowSkipCause, (row: string, t: TTranslate) => string> = {
+  unknown_key: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_unknown_key", { row }),
+  duplicate_key: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_duplicate_key", { row }),
+  unknown_type: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_unknown_type", { row }),
+  unsupported_type: (row, t) =>
+    t("workspace.surveys.import.issues.sheet_row_skipped_unsupported_type", { row }),
+  id_invalid: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_id_invalid", { row }),
+  id_taken: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_id_taken", { row }),
+  no_question: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_no_question", { row }),
+  no_text: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_no_text", { row }),
+  field_not_in_question: (row, t) =>
+    t("workspace.surveys.import.issues.sheet_row_skipped_field_not_in_question", { row }),
+  field_taken: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_field_taken", { row }),
+  invalid_question: (row, t) =>
+    t("workspace.surveys.import.issues.sheet_row_skipped_invalid_question", { row }),
+  survey_full: (row, t) => t("workspace.surveys.import.issues.sheet_row_skipped_survey_full", { row }),
+};
+
+/**
+ * Why a row of an imported Excel export was left out (ENG-6809), from the server's `params.cause`. Typed
+ * over every cause, so a new one fails the build until it has a line; one from a newer server reads as
+ * an unknown line.
+ */
+const getSkippedRowMessage = (issue: TSurveyImportIssue, t: TTranslate): string => {
+  const cause = param(issue, "cause");
+  return Object.hasOwn(SKIPPED_ROW_MESSAGES, cause)
+    ? SKIPPED_ROW_MESSAGES[cause as TSurveyImportSheetRowSkipCause](param(issue, "row"), t)
+    : t("workspace.surveys.import.issues.unknown");
+};
+
 /**
  * One report line per code, in the user's language. Literal `t()` calls per code, so the translation
  * scanner sees every key; typed over every code, so a new code fails the build until it has a line.
@@ -206,6 +237,39 @@ const ISSUE_MESSAGES: Record<
   },
   option_removed: (issue, t) =>
     t("workspace.surveys.import.issues.option_removed", { option: param(issue, "option") }),
+  texts_updated: (issue, t) => t("workspace.surveys.import.issues.texts_updated", { count: count(issue) }),
+  sheet_row_skipped: (issue, t) => getSkippedRowMessage(issue, t),
+  sheet_language_skipped: (issue, t) =>
+    param(issue, "cause") === "not_in_survey"
+      ? t("workspace.surveys.import.issues.sheet_language_skipped_not_in_survey", {
+          code: param(issue, "code"),
+        })
+      : t("workspace.surveys.import.issues.sheet_language_skipped_column_missing", {
+          code: param(issue, "code"),
+        }),
+  sheet_question_added: (issue, t) =>
+    t("workspace.surveys.import.issues.sheet_question_added", { row: param(issue, "row") }),
+  sheet_option_added: (issue, t) =>
+    t("workspace.surveys.import.issues.sheet_option_added", { row: param(issue, "row") }),
+  sheet_formatting_dropped: (issue, t) =>
+    t("workspace.surveys.import.issues.sheet_formatting_dropped", {
+      row: param(issue, "row"),
+      language: param(issue, "language"),
+    }),
+  sheet_text_not_imported: (issue, t) => {
+    const params = { row: param(issue, "row"), language: param(issue, "language") };
+    switch (param(issue, "cause")) {
+      case "too_many_recalls":
+        return t("workspace.surveys.import.issues.sheet_text_not_imported_recalls", {
+          ...params,
+          max: param(issue, "max"),
+        });
+      case "ambiguous_recalls":
+        return t("workspace.surveys.import.issues.sheet_text_not_imported_ambiguous_recalls", params);
+      default:
+        return t("workspace.surveys.import.issues.sheet_text_not_imported", params);
+    }
+  },
 };
 
 /**

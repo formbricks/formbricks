@@ -48,7 +48,7 @@ export const AddVariablesDropdown: React.FC<IAddVariablesDropdown> = (props) => 
                   onClick={() => props.addVariable(`${variable}_variable`)}>
                   <div className="sm:grid sm:grid-cols-2">
                     <div className="mr-3 text-left md:col-span-1">
-                      {`{${`${variable}_variable`.toUpperCase().replace(/ /g, "_")}}`}
+                      {`{${variable.toUpperCase().replace(/ /g, "_")}_VARIABLE}`}
                     </div>
                     <div className="text-default hidden text-left sm:col-span-1 sm:flex">
                       {`${variable}_info`}

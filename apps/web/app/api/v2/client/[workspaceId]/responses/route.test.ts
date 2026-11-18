@@ -215,12 +215,27 @@ describe("POST /api/v2/client/[workspaceId]/responses — Embedded Data ingest c
       expect.anything(),
       { seats: 12 },
       expect.anything(),
-      expect.anything()
+      expect.anything(),
+      undefined
     );
     expect(mocks.checkSurveyValidity).toHaveBeenCalledWith(
       expect.anything(),
       workspaceId,
       expect.objectContaining({ data: { seats: 12 } })
+    );
+  });
+
+  test("hands the not-shown record to validation, so rules skip what show-if kept back (ENG-7332)", async () => {
+    const notShown = { rows: { trip: ["visa"] } };
+
+    await postRawBody({}, { notShown });
+
+    expect(mocks.validateResponseData).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      notShown
     );
   });
 });

@@ -1,6 +1,6 @@
 import { type NextRequest } from "next/server";
 import { logger } from "@formbricks/logger";
-import { ZDeleteFileRequest, ZDownloadFileRequest } from "@formbricks/types/storage";
+import { ZDeleteFileRequest, ZDownloadFileRequest, getMimeTypeForFileName } from "@formbricks/types/storage";
 import { responses } from "@/app/lib/api/response";
 import { transformErrorToDetails } from "@/app/lib/api/validator";
 import { authorizePrivateDownload } from "@/app/storage/[workspaceId]/[accessType]/[...filePath]/lib/auth";
@@ -74,12 +74,19 @@ export const GET = async (
     return errorResponse;
   }
 
-  const { body, contentType, contentLength } = streamResult.data;
+  const { body, contentLength } = streamResult.data;
+  const contentType = getMimeTypeForFileName(fileName) ?? "application/octet-stream";
 
   return new Response(body, {
     status: 200,
     headers: {
+      // The type comes from the extension, never from the stored object: objects uploaded before
+      // ENG-7108 may carry a client-chosen type such as `image/png;,text/html`, which browsers render
+      // as HTML on the app origin.
       "Content-Type": contentType,
+      // The sandboxing CSP for these paths lives in next.config.mjs, as the config's CSP replaces any
+      // a route handler sets.
+      "X-Content-Type-Options": "nosniff",
       ...(contentLength > 0 && { "Content-Length": String(contentLength) }),
       "Cache-Control":
         accessType === "private"
@@ -87,6 +94,59 @@ export const GET = async (
           : "public, max-age=31536000, immutable",
     },
   });
+};
+
+/** The rate limit a user's file deletion counts against; the 429 response when it is spent. */
+const applyDeleteRateLimit = async (userId: string): Promise<Response | null> => {
+  try {
+    await applyRateLimit(rateLimitConfigs.storage.delete, userId);
+    return null;
+  } catch (error) {
+    return responses.tooManyRequestsResponse(
+      error instanceof Error ? error.message : "Unknown error occurred"
+    );
+  }
+};
+
+/** Logs a failed deletion and answers it with the storage error's response. */
+const respondToFailedDelete = async (
+  deleteResult: Extract<Awaited<ReturnType<typeof deleteFile>>, { ok: false }>,
+  {
+    accessType,
+    userId,
+    workspaceId,
+    apiUrl,
+    fileName,
+  }: { accessType: string; userId: string | undefined; workspaceId: string; apiUrl: string; fileName: string }
+): Promise<Response> => {
+  if (!("error" in deleteResult)) {
+    logger.error({ deleteResult }, "Unknown delete failure result shape");
+
+    await logFileDeletion({
+      failureReason: "unknown_delete_failure",
+      accessType,
+      userId,
+      workspaceId,
+      apiUrl,
+    });
+
+    return responses.internalServerErrorResponse("Failed to delete file", true);
+  }
+
+  const { error } = deleteResult;
+
+  logger.error({ error }, "Error deleting file");
+
+  await logFileDeletion({
+    failureReason: error.code,
+    accessType,
+    userId,
+    workspaceId,
+    apiUrl,
+  });
+
+  const errorResponse = getErrorResponseFromStorageError(error, { fileName });
+  return errorResponse;
 };
 
 export const DELETE = async (
@@ -146,13 +206,8 @@ export const DELETE = async (
 
   // Rate limiting for apiKey DELETE is enforced by Envoy in v5 — see envoy-rate-limit-coverage.ts
   if (authResult.ok && authResult.data.authType !== "apiKey") {
-    try {
-      await applyRateLimit(rateLimitConfigs.storage.delete, authResult.data.userId);
-    } catch (error) {
-      return responses.tooManyRequestsResponse(
-        error instanceof Error ? error.message : "Unknown error occurred"
-      );
-    }
+    const rateLimited = await applyDeleteRateLimit(authResult.data.userId);
+    if (rateLimited) return rateLimited;
   }
 
   // `fileName` comes from the route param, which Next.js has already decoded once. Objects are stored
@@ -160,34 +215,13 @@ export const DELETE = async (
   const deleteResult = await deleteFile(resolved.workspaceId, accessType, fileName, idParam);
 
   if (!deleteResult.ok) {
-    if (!("error" in deleteResult)) {
-      logger.error({ deleteResult }, "Unknown delete failure result shape");
-
-      await logFileDeletion({
-        failureReason: "unknown_delete_failure",
-        accessType,
-        userId: session?.user?.id,
-        workspaceId: resolved.workspaceId,
-        apiUrl: request.url,
-      });
-
-      return responses.internalServerErrorResponse("Failed to delete file", true);
-    }
-
-    const { error } = deleteResult;
-
-    logger.error({ error }, "Error deleting file");
-
-    await logFileDeletion({
-      failureReason: error.code,
+    return respondToFailedDelete(deleteResult, {
       accessType,
       userId: session?.user?.id,
       workspaceId: resolved.workspaceId,
       apiUrl: request.url,
+      fileName,
     });
-
-    const errorResponse = getErrorResponseFromStorageError(error, { fileName });
-    return errorResponse;
   }
 
   await logFileDeletion({

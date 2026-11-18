@@ -118,7 +118,7 @@ change in the generated code. The fidelity and closedness tests are what catch a
 `ctx.gen.render()` with `dryRun`, which is not a documented API — check it on every bump. A TypeScript or Prettier
 catalog bump can also change the formatting and require a regenerate; `pnpm lint` reports it.
 
-The generator is a build-time dependency only. ESLint forbids importing it from `src/`, so no generator code can
+The generator is a build-time dependency only. Lint forbids importing it from `src/`, so no generator code can
 reach a served bundle, and a test fails if the generated module ever imports anything but `zod`. The
 `@formbricks/api-v3-schemas/testing` entry point reads the bundle from disk and is lint-banned outside tests in
 `apps/web`. The pipeline passes an explicit config file that does not exist, so hey-api's loader executes
@@ -126,6 +126,6 @@ nothing it finds in the working directory — a test plants a throwing `openapi-
 it that way. The loader still reads a `.openapi-tsrc` from the working directory — hey-api offers no way to turn that off, and
 the file's keys survive wherever the pipeline sets none — so the renderer refuses to run when one is present.
 
-The generator's packages require Node 22.18 or newer, which the repository's Node 24 pin (`engines`, `.nvmrc`, CI
+The generator's packages require Node 22.18 or newer, which the repository's Node 26 pin (`engines`, `.nvmrc`, CI
 and the Docker image) satisfies. Generator tooling must be under a permissive licence (MIT, Apache-2.0, BSD or ISC):
 the generated code is part of this AGPL repository, but the tool itself is never distributed.

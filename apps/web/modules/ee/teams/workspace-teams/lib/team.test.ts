@@ -33,8 +33,8 @@ describe("getTeamsByWorkspaceId", () => {
   });
 
   test("returns mapped teams for valid workspace", async () => {
-    vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce(mockWorkspace as any);
-    vi.mocked(prisma.team.findMany).mockResolvedValueOnce(mockTeams as any);
+    vi.mocked(prisma.workspace.findUnique, { partial: true }).mockResolvedValueOnce(mockWorkspace);
+    vi.mocked(prisma.team.findMany, { partial: true, deep: true }).mockResolvedValueOnce(mockTeams);
     const result = await getTeamsByWorkspaceId("p1");
     expect(result).toEqual([
       { id: "t1", name: "Team 1", permission: "readWrite", memberCount: 2 },
@@ -50,7 +50,9 @@ describe("getTeamsByWorkspaceId", () => {
   });
 
   test("throws DatabaseError on Prisma known error", async () => {
-    vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce(mockWorkspace as any);
+    vi.mocked(prisma.workspace.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(
+      mockWorkspace
+    );
     vi.mocked(prisma.team.findMany).mockRejectedValueOnce(
       new Prisma.PrismaClientKnownRequestError("fail", { code: "P2002", clientVersion: "1.0.0" })
     );
@@ -58,7 +60,9 @@ describe("getTeamsByWorkspaceId", () => {
   });
 
   test("throws unknown error on unexpected error", async () => {
-    vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce(mockWorkspace as any);
+    vi.mocked(prisma.workspace.findUnique, { partial: true, deep: true }).mockResolvedValueOnce(
+      mockWorkspace
+    );
     vi.mocked(prisma.team.findMany).mockRejectedValueOnce(new Error("unexpected"));
     await expect(getTeamsByWorkspaceId("p1")).rejects.toThrow("unexpected");
   });

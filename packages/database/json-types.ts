@@ -66,6 +66,7 @@ declare global {
     export type ResponseMeta = TResponseMeta;
     export type ResponseContactAttributes = TResponseContactAttributes;
     export type SurveyWelcomeCard = TSurveyWelcomeCard;
+    // eslint-disable-next-line typescript/no-deprecated -- the legacy `questions` JSON column still exists for the v1 API
     export type SurveyQuestions = TSurveyQuestions;
     export type SurveyBlocks = TSurveyBlock;
     export type SurveyEnding = TSurveyEnding;

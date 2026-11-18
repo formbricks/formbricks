@@ -119,6 +119,36 @@ describe("storage route", () => {
     );
   });
 
+  // Regression (ENG-7108): the stored Content-Type came from the uploader, and browsers read
+  // `image/png;,text/html` as HTML, so an uploaded ".png" ran script on the app origin.
+  describe("served Content-Type", () => {
+    test.each(["private", "public"])(
+      "GET serves a %s file by its extension, never by the type stored with it",
+      async (accessType) => {
+        mocks.getFileStreamForDownload.mockResolvedValue({
+          ok: true,
+          data: { body: new ReadableStream(), contentType: "image/png;,text/html", contentLength: 1 },
+        });
+
+        const response = await GET(request, params(["evil--fid--1.png"], accessType));
+
+        expect(response.status).toBe(200);
+        expect(response.headers.get("Content-Type")).toBe("image/png");
+        expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+      }
+    );
+
+    test.each([
+      ["report--fid--1.PDF", "application/pdf"],
+      ["notes--fid--1.txt", "text/plain"],
+      ["legacy--fid--1.svg", "application/octet-stream"],
+    ])("GET serves %s as %s", async (fileName, expected) => {
+      const response = await GET(request, params([fileName]));
+
+      expect(response.headers.get("Content-Type")).toBe(expected);
+    });
+  });
+
   describe("attachment export archives", () => {
     test.each([
       ["by path segments", ["surveys", "srv1", "exports", "exp1.zip"]],

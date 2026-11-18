@@ -39,7 +39,7 @@ describe("User Management", () => {
         user: {
           update: vi.mocked(prisma.user.update),
         },
-      } as any)
+      } as unknown as Parameters<typeof callback>[0])
     );
   });
 
@@ -173,7 +173,7 @@ describe("User Management", () => {
           user: {
             update: vi.fn().mockResolvedValue({ ...mockPrismaUser, lastLoginAt: new Date() }),
           },
-        } as any)
+        } as unknown as Parameters<typeof callback>[0])
       );
 
       const result = await updateUserLastLoginAt(mockUser.email);
@@ -189,7 +189,7 @@ describe("User Management", () => {
           user: {
             update: vi.fn().mockResolvedValue({ ...mockPrismaUser, lastLoginAt: new Date() }),
           },
-        } as any)
+        } as unknown as Parameters<typeof callback>[0])
       );
 
       await updateUserLastLoginAt(mockUser.email);
@@ -208,7 +208,7 @@ describe("User Management", () => {
           user: {
             update: vi.fn(),
           },
-        } as any)
+        } as unknown as Parameters<typeof callback>[0])
       );
 
       await expect(updateUserLastLoginAt(mockUser.email)).rejects.toThrow(ResourceNotFoundError);
@@ -242,7 +242,7 @@ describe("User Management", () => {
           callback({
             $queryRaw: vi.fn().mockResolvedValue([{ id: mockUser.id, lastLoginAt: previousLastLoginAt }]),
             user: { update: vi.fn().mockResolvedValue({ ...mockPrismaUser, lastLoginAt: new Date() }) },
-          } as any)
+          } as unknown as Parameters<typeof callback>[0])
         );
 
       const result = await updateUserLastLoginAt(mockUser.email);

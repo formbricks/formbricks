@@ -49,6 +49,102 @@ const runHealthCommand = async (
   process.exitCode = await runAuthzedHealthCli();
 };
 
+/** What every operator command runs with. */
+interface TCommandContext {
+  args: string[];
+  originalConsoleError: typeof console.error;
+  /** Marks that the command opened the database, so it is closed afterwards whatever happens. */
+  markDatabaseUsed: () => void;
+}
+
+const runSchemaCommand = async ({ args, originalConsoleError }: TCommandContext): Promise<void> => {
+  const { parseAuthzedSchemaCliCommand } = await import("../../lib/authzed/schema-cli-command");
+  const schemaCommand = parseAuthzedSchemaCliCommand(args);
+
+  if (!schemaCommand) {
+    console.error = originalConsoleError;
+    writeResult(INVALID_REQUEST_RESULT);
+    process.exitCode = 1;
+    return;
+  }
+
+  const { runAuthzedSchemaCli } = await import("../../lib/authzed/schema-cli");
+  console.error = originalConsoleError;
+  process.exitCode = await runAuthzedSchemaCli(schemaCommand);
+};
+
+const runBackfillCommand = async ({
+  args,
+  originalConsoleError,
+  markDatabaseUsed,
+}: TCommandContext): Promise<void> => {
+  const { parseAuthzedBackfillCommand } = await import("../../lib/authzed/backfill-cli-command");
+  const backfillCommand = parseAuthzedBackfillCommand(args);
+
+  if (!backfillCommand) {
+    console.error = originalConsoleError;
+    writeResult(INVALID_REQUEST_RESULT);
+    process.exitCode = 1;
+    return;
+  }
+
+  markDatabaseUsed();
+  const { runAuthzedBackfillCli } = await import("../../lib/authzed/backfill-cli");
+  console.error = originalConsoleError;
+  process.exitCode = await runAuthzedBackfillCli(backfillCommand);
+};
+
+const runOutboxCommand = async ({
+  args,
+  originalConsoleError,
+  markDatabaseUsed,
+}: TCommandContext): Promise<void> => {
+  const { parseAuthzedOutboxCliCommand } = await import("../../lib/authzed/outbox-cli-command");
+  const outboxCommand = parseAuthzedOutboxCliCommand(args);
+
+  if (!outboxCommand) {
+    console.error = originalConsoleError;
+    writeResult(INVALID_REQUEST_RESULT);
+    process.exitCode = 1;
+    return;
+  }
+
+  markDatabaseUsed();
+  const { runAuthzedOutboxCli } = await import("../../lib/authzed/outbox-cli");
+  console.error = originalConsoleError;
+  process.exitCode = await runAuthzedOutboxCli(outboxCommand);
+};
+
+const runUpgradeCommand = async ({
+  args,
+  originalConsoleError,
+  markDatabaseUsed,
+}: TCommandContext): Promise<void> => {
+  if (args[0] === "online") {
+    markDatabaseUsed();
+    const { runKubernetesOnlineCli } = await import("../../lib/upgrade/online/cli");
+    const result = await runKubernetesOnlineCli(args.slice(1), new URL("./", import.meta.url));
+    console.error = originalConsoleError;
+    writeResult(result);
+    process.exitCode = result.status === "blocked" ? 1 : 0;
+    return;
+  }
+  const { parseAuthzedUpgradeCliCommand } = await import("../../lib/authzed/upgrade-cli-command");
+  const upgradeCommand = parseAuthzedUpgradeCliCommand(args);
+
+  if (!upgradeCommand) {
+    console.error = originalConsoleError;
+    writeResult(INVALID_REQUEST_RESULT);
+    process.exitCode = 1;
+    return;
+  }
+
+  markDatabaseUsed();
+  const { runAuthzedUpgradeCli } = await import("../../lib/authzed/upgrade-cli");
+  console.error = originalConsoleError;
+  process.exitCode = await runAuthzedUpgradeCli(upgradeCommand);
+};
+
 const run = async (): Promise<void> => {
   const [command, ...args] = process.argv.slice(2);
   const originalConsoleError = console.error;
@@ -59,87 +155,31 @@ const run = async (): Promise<void> => {
     // is one sanitized JSON document, so suppress that duplicate output while loading runtime modules.
     console.error = () => {};
 
+    const context: TCommandContext = {
+      args,
+      originalConsoleError,
+      markDatabaseUsed: () => {
+        shouldCloseDatabase = true;
+      },
+    };
+
     switch (command) {
       case "health": {
         await runHealthCommand(args, originalConsoleError);
         return;
       }
-      case "schema": {
-        const { parseAuthzedSchemaCliCommand } = await import("../../lib/authzed/schema-cli-command");
-        const schemaCommand = parseAuthzedSchemaCliCommand(args);
-
-        if (!schemaCommand) {
-          console.error = originalConsoleError;
-          writeResult(INVALID_REQUEST_RESULT);
-          process.exitCode = 1;
-          return;
-        }
-
-        const { runAuthzedSchemaCli } = await import("../../lib/authzed/schema-cli");
-        console.error = originalConsoleError;
-        process.exitCode = await runAuthzedSchemaCli(schemaCommand);
+      case "schema":
+        await runSchemaCommand(context);
         return;
-      }
-      case "backfill": {
-        const { parseAuthzedBackfillCommand } = await import("../../lib/authzed/backfill-cli-command");
-        const backfillCommand = parseAuthzedBackfillCommand(args);
-
-        if (!backfillCommand) {
-          console.error = originalConsoleError;
-          writeResult(INVALID_REQUEST_RESULT);
-          process.exitCode = 1;
-          return;
-        }
-
-        shouldCloseDatabase = true;
-        const { runAuthzedBackfillCli } = await import("../../lib/authzed/backfill-cli");
-        console.error = originalConsoleError;
-        process.exitCode = await runAuthzedBackfillCli(backfillCommand);
+      case "backfill":
+        await runBackfillCommand(context);
         return;
-      }
-      case "outbox": {
-        const { parseAuthzedOutboxCliCommand } = await import("../../lib/authzed/outbox-cli-command");
-        const outboxCommand = parseAuthzedOutboxCliCommand(args);
-
-        if (!outboxCommand) {
-          console.error = originalConsoleError;
-          writeResult(INVALID_REQUEST_RESULT);
-          process.exitCode = 1;
-          return;
-        }
-
-        shouldCloseDatabase = true;
-        const { runAuthzedOutboxCli } = await import("../../lib/authzed/outbox-cli");
-        console.error = originalConsoleError;
-        process.exitCode = await runAuthzedOutboxCli(outboxCommand);
+      case "outbox":
+        await runOutboxCommand(context);
         return;
-      }
-      case "upgrade": {
-        if (args[0] === "online") {
-          shouldCloseDatabase = true;
-          const { runKubernetesOnlineCli } = await import("../../lib/upgrade/online/cli");
-          const result = await runKubernetesOnlineCli(args.slice(1), new URL("./", import.meta.url));
-          console.error = originalConsoleError;
-          writeResult(result);
-          process.exitCode = result.status === "blocked" ? 1 : 0;
-          return;
-        }
-        const { parseAuthzedUpgradeCliCommand } = await import("../../lib/authzed/upgrade-cli-command");
-        const upgradeCommand = parseAuthzedUpgradeCliCommand(args);
-
-        if (!upgradeCommand) {
-          console.error = originalConsoleError;
-          writeResult(INVALID_REQUEST_RESULT);
-          process.exitCode = 1;
-          return;
-        }
-
-        shouldCloseDatabase = true;
-        const { runAuthzedUpgradeCli } = await import("../../lib/authzed/upgrade-cli");
-        console.error = originalConsoleError;
-        process.exitCode = await runAuthzedUpgradeCli(upgradeCommand);
+      case "upgrade":
+        await runUpgradeCommand(context);
         return;
-      }
       default:
         console.error = originalConsoleError;
         writeResult(INVALID_REQUEST_RESULT);

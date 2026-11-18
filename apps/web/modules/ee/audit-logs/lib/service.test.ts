@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { type MockedFunction, beforeEach, describe, expect, test, vi } from "vitest";
 import { UNKNOWN_DATA } from "../types/audit-log";
 import { logAuditEvent } from "./service";
 
@@ -24,12 +24,16 @@ const validEvent = {
 };
 
 describe("logAuditEvent", () => {
-  let getIsAuditLogsEnabled: any;
-  let logger: any;
+  let getIsAuditLogsEnabled: MockedFunction<
+    (typeof import("@/modules/ee/license-check/lib/utils"))["getIsAuditLogsEnabled"]
+  >;
+  let logger: (typeof import("@formbricks/logger"))["logger"];
 
   beforeEach(async () => {
     vi.clearAllMocks();
-    getIsAuditLogsEnabled = (await import("@/modules/ee/license-check/lib/utils")).getIsAuditLogsEnabled;
+    getIsAuditLogsEnabled = vi.mocked(
+      (await import("@/modules/ee/license-check/lib/utils")).getIsAuditLogsEnabled
+    );
     logger = (await import("@formbricks/logger")).logger;
   });
 
@@ -54,7 +58,7 @@ describe("logAuditEvent", () => {
   test("throws and logs error for invalid event", async () => {
     getIsAuditLogsEnabled.mockResolvedValue(true);
     const invalidEvent = { ...validEvent, action: "invalid.action" };
-    await logAuditEvent(invalidEvent as any);
+    await logAuditEvent(invalidEvent as Parameters<typeof logAuditEvent>[0]);
     expect(logger.audit).not.toHaveBeenCalled();
     expect(logger.error).toHaveBeenCalled();
   });
@@ -68,7 +72,7 @@ describe("logAuditEvent", () => {
 
   test("does not throw if logger.audit throws", async () => {
     getIsAuditLogsEnabled.mockResolvedValue(true);
-    logger.audit.mockImplementation(() => {
+    vi.mocked(logger.audit).mockImplementation(() => {
       throw new Error("fail");
     });
     await logAuditEvent(validEvent);
@@ -84,7 +88,7 @@ describe("logAuditEvent", () => {
     });
 
     test("drops the event when apiUrl is a bare path", async () => {
-      await logAuditEvent({ ...validEvent, apiUrl: "/api/mcp" } as any);
+      await logAuditEvent({ ...validEvent, apiUrl: "/api/mcp" } as Parameters<typeof logAuditEvent>[0]);
       expect(logger.audit).not.toHaveBeenCalled();
       expect(logger.error).toHaveBeenCalled();
     });
@@ -110,13 +114,5 @@ describe("logAuditEvent", () => {
       expect(logger.audit).toHaveBeenCalled();
       expect(logger.error).not.toHaveBeenCalled();
     });
-  });
-});
-
-describe("logAuditEvent export", () => {
-  test("is a function and works as expected", async () => {
-    expect(typeof logAuditEvent).toBe("function");
-    // Just check it calls the underlying logic and does not throw
-    await expect(logAuditEvent(validEvent)).resolves.not.toThrow();
   });
 });

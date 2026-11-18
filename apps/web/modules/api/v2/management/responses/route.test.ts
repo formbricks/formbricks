@@ -101,7 +101,7 @@ describe("GET /management/responses", () => {
       },
     });
 
-    const response = await GET(buildRequest() as any);
+    const response = await GET(buildRequest() as Parameters<typeof GET>[0]);
     const body = await response.json();
 
     expect(mockGetAuthorizedApiKeyWorkspaceIds).toHaveBeenCalledWith(
@@ -124,7 +124,7 @@ describe("GET /management/responses", () => {
       error: { type: "internal_server_error", details: [{ field: "responses", issue: "boom" }] },
     });
 
-    const response = await GET(buildRequest() as any);
+    const response = await GET(buildRequest() as Parameters<typeof GET>[0]);
 
     expect(mockSuccessResponse).not.toHaveBeenCalled();
     expect(mockHandleApiError).toHaveBeenCalledWith(

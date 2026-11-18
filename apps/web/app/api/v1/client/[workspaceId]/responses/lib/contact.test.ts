@@ -19,7 +19,7 @@ vi.mock("react", async () => {
   const actual = await vi.importActual("react");
   return {
     ...actual,
-    cache: vi.fn((fn: Function) => fn), // Mock react's cache to just return the function
+    cache: vi.fn(<T>(fn: T) => fn), // Mock react's cache to just return the function
   };
 });
 
@@ -40,7 +40,7 @@ describe("Contact API Lib", () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContactData as any);
+      vi.mocked(prisma.contact.findUnique).mockResolvedValue(mockContactData);
 
       const contact = await getContact(mockContactId);
 
@@ -90,7 +90,7 @@ describe("Contact API Lib", () => {
           { attributeKey: { key: "email" }, value: "test@example.com" },
         ],
       };
-      vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+      vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData);
 
       const contact = await getContactByUserId(mockWorkspaceId, mockUserId);
 

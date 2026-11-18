@@ -6,7 +6,9 @@ vi.mock("server-only", () => ({}));
 
 const requestId = "req_1";
 const instance = "/api/mcp";
-const log = { warn: vi.fn(), error: vi.fn(), info: vi.fn() } as any;
+const log = { warn: vi.fn(), error: vi.fn(), info: vi.fn() } as unknown as Parameters<
+  typeof handleUnexpectedError
+>[1];
 
 /**
  * The unexpected-throw mapping, which no operation test reaches. The Hub → problem bounds moved with the

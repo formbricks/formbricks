@@ -130,7 +130,7 @@ const ImportFilePicker = ({
         helpText={
           canReadWithAI
             ? t("workspace.surveys.import.dropzone_help")
-            : t("workspace.surveys.import.dropzone_help_json_only")
+            : t("workspace.surveys.import.dropzone_help_without_ai")
         }
         loadingText={t("workspace.surveys.import.reading_file")}
       />
@@ -284,6 +284,7 @@ const ImportReviewPane = ({
               triggersChoice={importer.triggersChoice}
               onTriggersChoiceChange={importer.selectTriggersChoice}
               conflict={importer.conflict}
+              isSheet={importer.report?.source.kind === "excel_export"}
             />
           ) : undefined
         }
@@ -331,8 +332,13 @@ export const ImportSurveyForm = ({
 
   // preventScroll: in a short dialog the review body scrolls, and focusing the list would scroll the
   // file name out of view the moment the review opens.
+  //
+  // The list is Create with AI's, which follows the newest question while a draft streams in. An import
+  // lands whole, so that left the review showing the survey's end: it opens at the first question.
   useEffect(() => {
-    if (importer.status === "review") landFocusOnDraft(draftRef.current, { preventScroll: true });
+    if (importer.status !== "review") return;
+    draftRef.current?.scrollTo({ top: 0 });
+    landFocusOnDraft(draftRef.current, { preventScroll: true });
   }, [importer.status]);
 
   useEffect(() => {
@@ -343,8 +349,9 @@ export const ImportSurveyForm = ({
     onImportingChange?.(isImporting);
   }, [isImporting, onImportingChange]);
 
-  // Without Formbricks AI the dialog still imports Formbricks files (ENG-6850), so there is no alert in
-  // place of the drop zone: it offers .json only and leaves the AI note out. AI going off after the page
+  // Without Formbricks AI the dialog still imports Formbricks files (ENG-6850) and Excel exports
+  // (ENG-6809), so there is no alert in place of the drop zone: it offers .json and .xlsx and leaves the
+  // AI note out. AI going off after the page
   // loaded refuses the .qsf it was asked to read, with an error line like any other refusal.
   const canReadWithAI = isAIAvailable && !importer.aiUnavailableReason;
 

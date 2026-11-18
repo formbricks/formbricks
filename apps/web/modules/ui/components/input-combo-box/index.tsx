@@ -324,6 +324,30 @@ function SelectedChips({ options }: Readonly<{ options: TComboboxOption[] }>) {
   );
 }
 
+/** One entry of an option's submenu: a choice, or a heading over its own choices. */
+const renderSubmenuChild = (
+  child: TComboboxOption,
+  handleSelect: (option: TComboboxOption) => void,
+  isSelected: (option: TComboboxOption) => boolean
+) => (
+  <div className="flex flex-col" key={child.value}>
+    {child.children && child.children.length > 0 ? (
+      <p className="mb-2 px-2 text-sm font-medium text-slate-500">{child.label}</p>
+    ) : (
+      <DropdownMenuItem key={child.value} onSelect={() => handleSelect(child)}>
+        <SubmenuItemLabel label={child.label} selected={isSelected(child)} />
+      </DropdownMenuItem>
+    )}
+    {child.children?.map((subChild) => (
+      <DropdownMenuItem key={subChild.value} onSelect={() => handleSelect(subChild)}>
+        <SubmenuItemLabel label={subChild.label} selected={isSelected(subChild)} />
+      </DropdownMenuItem>
+    ))}
+
+    {child.children && child.children.length > 0 && <DropdownMenuSeparator />}
+  </div>
+);
+
 export const InputCombobox: React.FC<InputComboboxProps> = ({
   id = "temp",
   showSearch = true,
@@ -615,6 +639,13 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
               : "w-(--radix-dropdown-menu-trigger-width)",
             dropdownClassName
           )}
+          // Radix focuses the menu itself on open, and inside a dialog's focus trap that wins over
+          // the search's `autoFocus`. Hand that focus to the search, so typing right after opening
+          // filters the list.
+          onFocus={(event) => {
+            if (!showSearch || event.target !== event.currentTarget) return;
+            searchRef.current?.focus({ preventScroll: true });
+          }}
           data-testid="dropdown-menu-content">
           <Command
             className="flex h-full w-full flex-col overflow-hidden"
@@ -634,6 +665,7 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                 />
               </div>
             ) : (
+              // eslint-disable-next-line jsx-a11y/no-aria-hidden-on-focusable -- an invisible focus target, so focus lands in the popover when it has no search box
               <button autoFocus className="sr-only" aria-hidden type="button" />
             )}
 
@@ -702,31 +734,9 @@ export const InputCombobox: React.FC<InputComboboxProps> = ({
                             </DropdownMenuSubTrigger>
                             {/* Wide enough for "Editor (grid · …)" on one line; the chosen one is checked. */}
                             <DropdownMenuSubContent alignOffset={4} className="w-max max-w-80 min-w-48 p-1">
-                              {opt.children.map((child) => (
-                                <div className="flex flex-col" key={child.value}>
-                                  {child.children && child.children.length > 0 ? (
-                                    <p className="mb-2 px-2 text-sm font-medium text-slate-500">
-                                      {child.label}
-                                    </p>
-                                  ) : (
-                                    <DropdownMenuItem key={child.value} onSelect={() => handleSelect(child)}>
-                                      <SubmenuItemLabel label={child.label} selected={isSelected(child)} />
-                                    </DropdownMenuItem>
-                                  )}
-                                  {child.children?.map((subChild) => (
-                                    <DropdownMenuItem
-                                      key={subChild.value}
-                                      onSelect={() => handleSelect(subChild)}>
-                                      <SubmenuItemLabel
-                                        label={subChild.label}
-                                        selected={isSelected(subChild)}
-                                      />
-                                    </DropdownMenuItem>
-                                  ))}
-
-                                  {child.children && child.children.length > 0 && <DropdownMenuSeparator />}
-                                </div>
-                              ))}
+                              {opt.children.map((child) =>
+                                renderSubmenuChild(child, handleSelect, isSelected)
+                              )}
                             </DropdownMenuSubContent>
                           </DropdownMenuSub>
                         </CommandItem>
