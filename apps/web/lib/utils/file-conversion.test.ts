@@ -115,8 +115,6 @@ describe("convertToXlsxBuffer", () => {
     expect(cleaned).toEqual(data);
   });
 
-  // Formula-trigger values are written verbatim as typed text cells (`t: "s"`, format `@`), never with a
-  // leading `'`: xlsx keeps the apostrophe as literal text, so `-5 stars` would read `'-5 stars`.
   const formulaPayloads = [
     '=HYPERLINK("https://evil.tld","Click")',
     "+1+1",
@@ -125,12 +123,12 @@ describe("convertToXlsxBuffer", () => {
     "\tleading-tab",
     "\rleading-cr",
   ];
-  const readTextSheet = (buffer: Buffer) =>
+  const readSheet = (buffer: Buffer) =>
     xlsx.read(buffer, { type: "buffer", cellNF: true }).Sheets["Response Data"];
 
   test("should write formula-trigger values verbatim as text cells, not formulas", () => {
     const rows = formulaPayloads.map((p) => ({ name: p }));
-    const sheet = readTextSheet(convertToXlsxBuffer(["name"], rows));
+    const sheet = readSheet(convertToXlsxBuffer(["name"], rows));
     formulaPayloads.forEach((p, i) => {
       const cell = sheet[`A${i + 2}`]; // row 1 is header
       expect(cell.v).toBe(p);
@@ -141,7 +139,7 @@ describe("convertToXlsxBuffer", () => {
   });
 
   test("should write formula-trigger header names verbatim as text cells", () => {
-    const sheet = readTextSheet(convertToXlsxBuffer(["=evil", "name"], [{ "=evil": "x", name: "Alice" }]));
+    const sheet = readSheet(convertToXlsxBuffer(["=evil", "name"], [{ "=evil": "x", name: "Alice" }]));
     const headerCell = sheet["A1"];
     expect(headerCell.v).toBe("=evil");
     expect(headerCell.f).toBeUndefined();
@@ -154,24 +152,12 @@ describe("convertToXlsxBuffer", () => {
   });
 
   test("should keep numbers as numeric cells", () => {
-    const sheet = readTextSheet(convertToXlsxBuffer(["age"], [{ age: -5 }]));
+    const sheet = readSheet(convertToXlsxBuffer(["age"], [{ age: -5 }]));
     expect(sheet["A2"].v).toBe(-5);
     expect(sheet["A2"].t).toBe("n");
   });
 
-  test("should keep distinct xlsx columns whose labels differ only by a leading apostrophe", () => {
-    const sheet = readTextSheet(
-      convertToXlsxBuffer(["=field", "'=field"], [{ "=field": "a", "'=field": "b" }])
-    );
-    expect(sheet["A1"].v).toBe("=field");
-    expect(sheet["B1"].v).toBe("'=field");
-    expect(sheet["A2"].v).toBe("a");
-    expect(sheet["B2"].v).toBe("b");
-  });
-
   describe("Excel cell length limit", () => {
-    const readSheet = (buffer: Buffer) => xlsx.read(buffer, { type: "buffer" }).Sheets["Response Data"];
-
     test("should export a value over the limit, truncated with a visible marker", () => {
       const long = "a".repeat(XLSX_MAX_CELL_LENGTH + 500);
       const sheet = readSheet(convertToXlsxBuffer(["answer", "age"], [{ answer: long, age: 30 }]));

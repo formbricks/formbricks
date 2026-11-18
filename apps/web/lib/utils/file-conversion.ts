@@ -2,8 +2,9 @@ import { AsyncParser } from "@json2csv/node";
 import * as xlsx from "xlsx";
 import { logger } from "@formbricks/logger";
 
-// Defang spreadsheet formula injection. Cell values starting with
-// =, +, -, @, tab, or CR are evaluated as formulas by Excel/Sheets/Numbers.
+// Defang formula injection in CSV. A CSV cell starting with =, +, -, @, tab,
+// or CR is evaluated as a formula by Excel/Sheets/Numbers. CSV only: xlsx
+// writes typed text cells instead (see `toXlsxCell`).
 // Sanitize at the render boundary only — never rewrite row keys, since
 // distinct user-controlled labels could collide after prefixing (e.g.
 // "=field" and "'=field" both map to "'=field"), dropping cell data.
@@ -76,9 +77,8 @@ export const truncateForXlsxCell = <T>(value: T): T => {
   return `${value.slice(0, end)}${XLSX_TRUNCATION_MARKER}` as T;
 };
 
-// Strings become typed text cells (`t: "s"`, number format `@`), which Excel never evaluates as
-// formulas. They get no `sanitizeFormulaInjection` prefix: SheetJS CE can't set Excel's quote-prefix
-// flag, so a leading `'` would show up as literal text (`-5 stars` → `'-5 stars`). Numbers stay numeric.
+// Strings become typed text cells (`t: "s"`, format `@`), which Excel never evaluates, with no
+// `sanitizeFormulaInjection` prefix (CODING_STANDARDS.md, "File Uploads and Downloads"). Numbers stay numeric.
 const toXlsxCell = (value: string | number | undefined): xlsx.CellObject | number | undefined =>
   typeof value === "string" ? { t: "s", v: truncateForXlsxCell(value), z: "@" } : value;
 
