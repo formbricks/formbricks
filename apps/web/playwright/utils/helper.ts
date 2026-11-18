@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Locator, Page } from "playwright";
 import { logger } from "@formbricks/logger";
-import { clickUntilVisible } from "@/playwright/utils/click-until";
+import { clickUntil, clickUntilVisible } from "@/playwright/utils/click-until";
 import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/utils/mock";
 
 const MOCK_STORAGE_UPLOAD_PATH = "/__playwright__/mock-storage-upload";
@@ -575,11 +575,16 @@ export const addElement = async (page: Page, elementType: string, options: { exa
   await expect(option).toBeVisible();
   // The picker is a two-column grid that overflows on shorter viewports (e.g. "Matrix").
   await option.scrollIntoViewIfNeeded();
-  await option.click();
 
-  // The picker closes itself from `handleAddElement`, so a collapsed trigger is the signal that
-  // the element was committed to the survey and the new card is rendering.
-  await expect(trigger).toHaveAttribute("data-state", "closed");
+  // The picker closes itself from `handleAddElement`, so a collapsed trigger is the signal that the
+  // element was committed and the new card is rendering. A click that lands while the panel is still
+  // animating open can be lost, so it is retried until the trigger collapses; the panel closes in the
+  // same commit as the add, so a retry can never add the element twice.
+  await clickUntil(
+    option,
+    async () => (await trigger.getAttribute("data-state")) === "closed",
+    () => expect(trigger).toHaveAttribute("data-state", "closed")
+  );
 };
 
 /**

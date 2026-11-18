@@ -114,8 +114,8 @@ const redisNowMs = async (redis: TRedisClient): Promise<number> => {
 
 /**
  * A key written between `before` and `after` (Valkey's clock) must expire exactly one interval after
- * its write: not sooner, or the window's quota resets early, and not later. `EXPIRE` takes whole
- * seconds, so the bounds allow the write anywhere in that bracket.
+ * its write: not sooner, or the window's quota resets early, and not later. `EXPIRE` stores the write's
+ * own millisecond time plus the whole seconds, so no rounding slack is needed beyond the bracket.
  */
 const expectFullIntervalExpiry = (
   expiresAt: number,
@@ -124,8 +124,8 @@ const expectFullIntervalExpiry = (
   after: number
 ) => {
   const intervalMs = config.interval * 1000;
-  expect(expiresAt).toBeGreaterThanOrEqual(before - 1000 + intervalMs);
-  expect(expiresAt).toBeLessThanOrEqual(after + 1000 + intervalMs);
+  expect(expiresAt).toBeGreaterThanOrEqual(before + intervalMs);
+  expect(expiresAt).toBeLessThanOrEqual(after + intervalMs);
 };
 
 /** Every result must be an answer from Redis, and exactly `limit` of them may be admitted. */
