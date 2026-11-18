@@ -1037,13 +1037,18 @@ describe("request array budget (ENG-3384)", () => {
 
     // ENG-6948: the preflight reads a clone, and cancelling one branch of a tee'd body never settles
     // while the other branch is open and the source still is. A hang must fail here, not stall the suite.
+    // The header row sends too few bytes to cross the limit, so only the declared length can refuse it.
+    const ROUTE_LIMIT = 4096;
     test.each([
-      { limitSeenIn: "the bytes read", contentLength: {} },
-      { limitSeenIn: "the Content-Length header", contentLength: { "Content-Length": "4097" } },
+      { limitSeenIn: "the bytes read", contentLength: {}, sent: `{"a":"${"x".repeat(ROUTE_LIMIT)}` },
+      {
+        limitSeenIn: "the Content-Length header",
+        contentLength: { "Content-Length": String(ROUTE_LIMIT + 1) },
+        sent: `{"a":"`,
+      },
     ])(
       "answers 413 to an over-limit body whose source never closes, and releases the source ($limitSeenIn)",
-      async ({ contentLength }) => {
-        const ROUTE_LIMIT = 4096;
+      async ({ contentLength, sent }) => {
         const handler = vi.fn(async () => Response.json({ ok: true }));
         let sourceCancelled = false;
         const request = new NextRequest("http://localhost/api/v3/workflows", {
@@ -1051,7 +1056,7 @@ describe("request array budget (ENG-3384)", () => {
           headers: { "Content-Type": "application/json", ...contentLength },
           body: new ReadableStream<Uint8Array>({
             start(controller) {
-              controller.enqueue(new TextEncoder().encode(`{"a":"${"x".repeat(ROUTE_LIMIT)}`));
+              controller.enqueue(new TextEncoder().encode(sent));
             },
             cancel() {
               sourceCancelled = true;
