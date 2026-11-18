@@ -117,7 +117,6 @@ export const ElementsView = ({
 
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
-
   const updateElement = (elementIdx: number, updatedAttributes: Record<string, unknown>) => {
     // Get element ID from current elements array (for validation)
     const element = elements[elementIdx];
