@@ -89,7 +89,9 @@ describe("SSO recovery intent store (real Redis)", () => {
   test("consuming removes the key rather than merely expiring it", async () => {
     const stateId = await createSsoRecoveryIntent(intentInput);
 
-    await consumeSsoRecoveryIntent(stateId);
+    // Exactly one consume wins: the count real Redis returns, which a cancel racing a link relies on.
+    await expect(consumeSsoRecoveryIntent(stateId)).resolves.toBe(true);
+    await expect(consumeSsoRecoveryIntent(stateId)).resolves.toBe(false);
 
     await expect(redisClient().then((r) => r.exists(keyFor(stateId)))).resolves.toBe(0);
     await expect(readSsoRecoveryIntent(stateId)).resolves.toBeNull();

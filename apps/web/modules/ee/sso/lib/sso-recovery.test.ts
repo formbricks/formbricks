@@ -1012,11 +1012,8 @@ describe("sso-recovery", () => {
       await expect(outcome.catch((error: SsoRecoveryError) => error.failure)).resolves.toBe(
         "intent_unusable"
       );
-      expect(mocks.queueAuditEventBackground).not.toHaveBeenCalledWith(
-        expect.objectContaining({
-          newObject: expect.objectContaining({ failureReason: "cancelled_by_user" }),
-        })
-      );
+      // The guards passed, so they audited nothing; the lost race must not audit either.
+      expect(mocks.queueAuditEventBackground).not.toHaveBeenCalled();
     });
 
     test("only the browser that could link can cancel", async () => {

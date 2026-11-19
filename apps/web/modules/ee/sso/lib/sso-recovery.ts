@@ -802,7 +802,8 @@ export const cancelSsoRecovery = async (args: {
   const { intent, provider } = await authorizeSsoRecovery(args);
 
   // Nothing to record when another request (the Link button, a second Cancel) spent it first: the
-  // recovery was not cancelled by this call, and it may have been linked.
+  // recovery was not cancelled by this call, and it may have been linked. A Redis failure on the delete
+  // lands here too; the intent then lives until it expires, and the user is told it is unusable.
   if (!(await consumeSsoRecoveryIntent(args.stateId))) {
     throw new SsoRecoveryError("intent_unusable");
   }
