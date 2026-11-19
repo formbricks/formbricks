@@ -7,7 +7,8 @@ import {
   hasEmailAttribute,
   hasUserIdAttribute,
 } from "@/modules/ee/contacts/lib/contact-attributes";
-import { formatAttributeMessage, updateAttributes } from "./attributes";
+import { formatAttributeMessage } from "./attribute-messages";
+import { updateAttributes } from "./attributes";
 
 vi.mock("@/lib/constants", () => ({
   MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT: 2,
@@ -31,7 +32,7 @@ vi.mock("@formbricks/database", () => ({
   prisma: {
     $transaction: vi.fn(),
     contactAttribute: { upsert: vi.fn(), findMany: vi.fn(), deleteMany: vi.fn() },
-    contactAttributeKey: { create: vi.fn() },
+    contactAttributeKey: { createManyAndReturn: vi.fn(), findMany: vi.fn() },
   },
 }));
 
@@ -77,6 +78,22 @@ const attributeKeys: TContactAttributeKey[] = [
     workspaceId: workspaceId,
   },
 ];
+
+/** A full attribute-key row, as `createManyAndReturn` and `findMany` return it. */
+const keyRow = (id: string, key: string): TContactAttributeKey => ({
+  ...attributeKeys[2],
+  id,
+  key,
+  name: key,
+});
+
+/** Interactive transactions run their callback against the mocked client, as Prisma's tx would. */
+const runTransactionCallbacks = () =>
+  vi
+    .mocked(prisma.$transaction)
+    .mockImplementation(async (arg: unknown) =>
+      typeof arg === "function" ? (arg as (tx: typeof prisma) => unknown)(prisma) : undefined
+    );
 
 describe("updateAttributes", () => {
   beforeEach(() => {
@@ -242,7 +259,7 @@ describe("updateAttributes", () => {
           "Reserved attribute key(s): user_id. These keys are reserved for the v5.1 safe-identifier default attribute migration and cannot be created as custom attributes.",
       },
     });
-    expect(prisma.contactAttributeKey.create).not.toHaveBeenCalled();
+    expect(prisma.contactAttributeKey.createManyAndReturn).not.toHaveBeenCalled();
   });
 
   test("returns success with only email attribute", async () => {
@@ -530,15 +547,130 @@ describe("updateAttributes", () => {
     test("creates new attribute keys in key order regardless of payload key order", async () => {
       vi.mocked(getContactAttributeKeys).mockResolvedValue([]);
       vi.mocked(getContactAttributes).mockResolvedValue({});
-      vi.mocked(prisma.contactAttributeKey.create).mockResolvedValue(undefined as never);
+      runTransactionCallbacks();
+      vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([
+        keyRow("key-alpha", "alpha"),
+        keyRow("key-zeta", "zeta"),
+      ]);
 
       const result = await updateAttributes(contactId, userId, workspaceId, { zeta: "1", alpha: "2" });
 
       expect(result.success).toBe(true);
-      const createdKeys = vi
-        .mocked(prisma.contactAttributeKey.create)
-        .mock.calls.map(([args]) => args.data.key);
-      expect(createdKeys).toEqual(["alpha", "zeta"]);
+      const { data } = vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mock.calls[0][0] ?? {};
+      expect([data].flat().map((row) => row?.key)).toEqual(["alpha", "zeta"]);
+    });
+  });
+
+  describe("concurrent identify calls creating the same new key (ENG-4018)", () => {
+    const racedKey = keyRow("key-raced", "plan");
+    const upsertedValues = () =>
+      vi.mocked(prisma.contactAttribute.upsert).mock.calls.map(([args]) => ({
+        attributeKeyId: args.where.contactId_attributeKeyId?.attributeKeyId,
+        value: args.update.value,
+      }));
+
+    beforeEach(() => {
+      vi.mocked(getContactAttributeKeys).mockResolvedValue([]);
+      vi.mocked(getContactAttributes).mockResolvedValue({});
+      runTransactionCallbacks();
+    });
+
+    test("skips duplicate keys instead of failing with P2002", async () => {
+      vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([]);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([racedKey]);
+
+      await updateAttributes(contactId, userId, workspaceId, { plan: "pro" });
+
+      expect(prisma.contactAttributeKey.createManyAndReturn).toHaveBeenCalledWith(
+        expect.objectContaining({ skipDuplicates: true })
+      );
+    });
+
+    test("writes onto the key a concurrent call created, without claiming to have created it", async () => {
+      // The key already existed when this call inserted it, so nothing comes back as created.
+      vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([]);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([racedKey]);
+
+      const result = await updateAttributes(contactId, userId, workspaceId, { plan: "pro" });
+
+      expect(result.success).toBe(true);
+      expect(prisma.contactAttributeKey.findMany).toHaveBeenCalledWith({
+        where: { workspaceId, key: { in: ["plan"] } },
+      });
+      expect(upsertedValues()).toEqual([{ attributeKeyId: "key-raced", value: "pro" }]);
+      expect(result.messages?.some((m) => m.code === "new_attribute_created") ?? false).toBe(false);
+    });
+
+    test("writes created and raced keys together and reports only the created ones", async () => {
+      vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([
+        keyRow("key-seats", "seats"),
+      ]);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([racedKey]);
+
+      const result = await updateAttributes(contactId, userId, workspaceId, { seats: "5", plan: "pro" });
+
+      expect(result.success).toBe(true);
+      expect(upsertedValues()).toEqual(
+        expect.arrayContaining([
+          { attributeKeyId: "key-seats", value: "5" },
+          { attributeKeyId: "key-raced", value: "pro" },
+        ])
+      );
+      expect(result.messages?.filter((m) => m.code === "new_attribute_created")).toEqual([
+        { code: "new_attribute_created", params: { key: "seats", dataType: "string" } },
+      ]);
+    });
+
+    test("checks a value against the dataType the winning call chose", async () => {
+      vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([]);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([{ ...racedKey, dataType: "number" }]);
+
+      const result = await updateAttributes(contactId, userId, workspaceId, { plan: "not-a-number" });
+
+      expect(result.success).toBe(true);
+      expect(prisma.contactAttribute.upsert).not.toHaveBeenCalled();
+      expect(result.messages).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: "attribute_type_validation_error",
+            params: expect.objectContaining({ key: "plan", dataType: "number" }),
+          }),
+        ])
+      );
+    });
+
+    test("does not re-read keys when every key was created by this call", async () => {
+      vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([
+        keyRow("key-plan", "plan"),
+      ]);
+
+      await updateAttributes(contactId, userId, workspaceId, { plan: "pro" });
+
+      expect(prisma.contactAttributeKey.findMany).not.toHaveBeenCalled();
+      expect(upsertedValues()).toEqual([{ attributeKeyId: "key-plan", value: "pro" }]);
+    });
+
+    test("runs the transaction again when a skipped key is gone by the re-read", async () => {
+      // First attempt: skipped, then not found (deleted in between). Second attempt: created.
+      vi.mocked(prisma.contactAttributeKey.createManyAndReturn)
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([keyRow("key-plan", "plan")]);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([]);
+
+      const result = await updateAttributes(contactId, userId, workspaceId, { plan: "pro" });
+
+      expect(result.success).toBe(true);
+      expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+      expect(upsertedValues()).toEqual([{ attributeKeyId: "key-plan", value: "pro" }]);
+    });
+
+    test("fails rather than drop a value when the skipped key keeps vanishing", async () => {
+      vi.mocked(prisma.contactAttributeKey.createManyAndReturn).mockResolvedValue([]);
+      vi.mocked(prisma.contactAttributeKey.findMany).mockResolvedValue([]);
+
+      await expect(updateAttributes(contactId, userId, workspaceId, { plan: "pro" })).rejects.toThrow();
+      expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+      expect(prisma.contactAttribute.upsert).not.toHaveBeenCalled();
     });
   });
 });
