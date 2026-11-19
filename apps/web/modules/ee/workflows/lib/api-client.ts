@@ -440,7 +440,7 @@ export async function setWorkflowSample(
   return readDataResponse<TWorkflowSampleResource>(response);
 }
 
-/** Sets an HTTP request step's expected response (ADR 0054): the body its API answers with. */
+/** Sets an HTTP request step's expected response body (ADR 0054): the body its API answers with. */
 export async function setWorkflowExpectedResponse(
   workflowId: string,
   stepId: string,

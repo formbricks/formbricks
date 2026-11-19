@@ -33,7 +33,7 @@ const getObjectBody = (entry: TWorkflowSampleListItem | null): Record<string, un
   return isPlainObject(entry.sample.body) ? entry.sample.body : null;
 };
 
-/** The expected response's JSON editor state: saves a valid object a moment after typing stops. */
+/** The expected response body's JSON editor state: saves a valid object a moment after typing stops. */
 const useResponseEditor = (workflowId: string, stepId: string) => {
   const { t } = useTranslation();
   const mutation = useSetExpectedResponse(workflowId, stepId);
@@ -124,7 +124,7 @@ type TOfferedTest = { at: string; body: Record<string, unknown> };
 
 /**
  * A test response worth offering: a JSON object, not dismissed, and either the first answer while no
- * expected response is set, or a newer one than it with a different body.
+ * expected response body is set, or a newer one than it with a different body.
  */
 const getOfferedTest = (
   expected: TWorkflowSampleListItem | null,
@@ -202,7 +202,7 @@ const TestResponseNotice = ({
 };
 
 /**
- * An HTTP request step's expected response (ADR 0054): the body its API answers with, whose fields the
+ * An HTTP request step's expected response body (ADR 0054): the body its API answers with, whose fields the
  * later steps use as Variables. Editors own it, like the Webhook trigger's expected payload: they write
  * or paste it, or choose to use a Test request's response. A Test request never changes it.
  */
@@ -249,7 +249,7 @@ export const HttpResponseFieldsCard = ({
     />
   ) : null;
 
-  // What the card shows: the test response under review or offered, else the expected response.
+  // What the card shows: the test response under review or offered, else the expected response body.
   const shownBody =
     (isReviewing || (!expected && !isWriting)) && offeredTest ? offeredTest.body : expectedBody;
   const showsEditor = expected !== null || isWriting;

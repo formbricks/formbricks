@@ -7,7 +7,7 @@ import { ZWorkflowSampleVariables } from "./webhook";
 /**
  * Contracts for "Send test request" (ENG-7179, ENG-7168): one real call of an HTTP request step from
  * the editor, so the author sees the real response. Not a run: nothing is billed and no later step
- * runs. The response is kept as the step's last Test request response; the step's expected response
+ * runs. The response is kept as the step's last Test request response; the step's expected response body
  * (ADR 0054), which only editors set, is what "Wait and use it" Variables come from.
  */
 
@@ -72,7 +72,7 @@ export const ZWorkflowTestRequestResult = z
 export type TWorkflowTestRequestResult = z.infer<typeof ZWorkflowTestRequestResult>;
 
 /**
- * Sets an HTTP request step's expected response (ADR 0054): the body its API answers with, typed or
+ * Sets an HTTP request step's expected response body (ADR 0054): the body its API answers with, typed or
  * pasted in the editor, a Test request response the author chose to use, or written by an API or MCP
  * client. Test requests never set it.
  */
@@ -82,7 +82,7 @@ export const ZSetWorkflowExpectedResponseInput = z
       "The response body the step's API answers with: a JSON object of at most 100 KB, nested at most 10 levels."
     ),
   })
-  .describe("Sets an HTTP request step's expected response.");
+  .describe("Sets an HTTP request step's expected response body.");
 export type TSetWorkflowExpectedResponseInput = z.infer<typeof ZSetWorkflowExpectedResponseInput>;
 
 export const ZWorkflowExpectedResponseResource = z
@@ -95,5 +95,5 @@ export const ZWorkflowExpectedResponseResource = z
     variables: ZWorkflowSampleVariables,
     updatedAt: ZIsoDateTime,
   })
-  .describe("An HTTP request step's expected response and the Variables inferred from it.");
+  .describe("An HTTP request step's expected response body and the Variables inferred from it.");
 export type TWorkflowExpectedResponseResource = z.infer<typeof ZWorkflowExpectedResponseResource>;

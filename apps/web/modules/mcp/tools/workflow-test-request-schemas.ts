@@ -32,5 +32,5 @@ export const ZMcpSetExpectedResponseInput = ZSetWorkflowExpectedResponseInput.ex
   ...ZWorkflowTestRequestParams.shape,
 })
   .strict()
-  .describe("Set an HTTP request step's expected response: the body its API answers with.");
+  .describe("Set an HTTP request step's expected response body: the body its API answers with.");
 export type TMcpSetExpectedResponseInput = z.infer<typeof ZMcpSetExpectedResponseInput>;

@@ -10,7 +10,7 @@ post:
 
 
     When an answer came, it is kept as the step's last Test request response (up to 64 KB), which the
-    editor offers to use as the step's expected response; it never replaces it. Recorded in the audit
+    editor offers to use as the step's expected response body; it never replaces it. Recorded in the audit
     log as `testRequestSent` with the host and status.
 
 

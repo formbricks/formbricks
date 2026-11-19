@@ -1,8 +1,8 @@
 put:
   operationId: setWorkflowExpectedResponseV3
-  summary: Set an HTTP request step's expected response
+  summary: Set an HTTP request step's expected response body
   description: >
-    Sets the expected response of an HTTP request step — the JSON body its API
+    Sets the expected response body of an HTTP request step — the JSON body its API
     answers with — and returns it with the Variables inferred from it. Later
     steps use those Variables as `steps.<stepId>.body.*`, and a Test run's "Wait
     and use it" answers with this body (status 200). Send test request never
@@ -43,7 +43,7 @@ put:
                   status: open
   responses:
     "200":
-      description: The expected response and its Variables.
+      description: The expected response body and its Variables.
       headers:
         X-Request-Id:
           schema:

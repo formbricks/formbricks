@@ -72,7 +72,7 @@ export const useWorkflowSamples = ({
   });
 
 /**
- * Saves an HTTP request step's expected response (ADR 0054) into the samples the editor already holds,
+ * Saves an HTTP request step's expected response body (ADR 0054) into the samples the editor already holds,
  * so the step's Variables update at once.
  */
 export const useSetExpectedResponse = (workflowId: string, stepId: string) => {

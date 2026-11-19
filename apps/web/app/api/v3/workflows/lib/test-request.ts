@@ -48,7 +48,7 @@ const urlHost = (url: string): string | null => {
 
 /**
  * The Variables a Test request renders with: the given test payload, else the workflow's Sample
- * payload; the given step outputs, else each other HTTP request step's expected response.
+ * payload; the given step outputs, else each other HTTP request step's expected response body.
  * One query for all samples.
  */
 const loadTestContext = async (
@@ -195,7 +195,7 @@ export const sendWorkflowTestRequest = async ({
       ? summarizeWorkflowHttpResponse(outcome.response, collectSentSecretValues(built.call, built.record))
           .record
       : null;
-    // Kept as the step's last Test request response, never as its expected response, which only
+    // Kept as the step's last Test request response, never as its expected response body, which only
     // editors set (ADR 0054): the editor offers it, and the Variables stay put until one is chosen.
     if (response) {
       const source = getLastTestSampleSource(params.stepId);

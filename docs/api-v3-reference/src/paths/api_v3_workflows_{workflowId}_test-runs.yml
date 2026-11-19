@@ -5,7 +5,7 @@ post:
     Runs the workflow's current draft at once, inside the request, with the same runner as a real
     run but with fake effects: Send email records whom it would send to, and an HTTP request records
     what it would call (secret header values masked) and sends nothing. In "Wait and use it" mode an
-    HTTP request's output is that step's expected response, set by an editor; without one it is empty and
+    HTTP request's output is that step's expected response body, set by an editor; without one it is empty and
     flagged (`testSample: missing`), and the run goes on. If/else conditions are evaluated for real,
     so the answer shows the branch a real run would take.
 
