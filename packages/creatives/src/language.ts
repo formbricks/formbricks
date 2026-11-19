@@ -35,13 +35,31 @@ export const toLanguageBase = (code: string): string | undefined => {
   }
 };
 
+/**
+ * A tag's key without its extension and private-use subtags (`es-MX-u-nu-latn` -> `es-mx`), so it reads
+ * as its region does; `undefined` when there are none to drop or the tag is not well-formed.
+ */
+const toRegionalKey = (code: string): string | undefined => {
+  try {
+    const key = new Intl.Locale(code).baseName.toLowerCase();
+    return key === code ? undefined : key;
+  } catch {
+    return undefined;
+  }
+};
+
 /** One requested language against a precomputed list: a stored code, `"default"`, or `null`. */
 export const matchLanguage = (match: TLanguageMatch, requested: string): string | null => {
   const code = toLanguageKey(requested);
   // Looked up as own string values only: a code like `constructor` must not reach Object's prototype.
   const own = (map: Record<string, string>, key: string | undefined) =>
     key && Object.hasOwn(map, key) ? map[key] : null;
-  return code ? (own(match.keys, code) ?? own(match.bases, toLanguageBase(code))) : null;
+  if (!code) return null;
+  // The exact key first, then the same tag without extensions (ENG-3894: `es-MX-u-nu-latn` keeps `es-MX`'s
+  // `es-419`), then the base language.
+  return (
+    own(match.keys, code) ?? own(match.keys, toRegionalKey(code)) ?? own(match.bases, toLanguageBase(code))
+  );
 };
 
 /**
