@@ -8,6 +8,7 @@ import {
   DatabaseError,
   OperationNotAllowedError,
   ResourceNotFoundError,
+  UniqueConstraintError,
   ValidationError,
 } from "@formbricks/types/errors";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@formbricks/types/workspace";
 import { isWorkspaceDefaultSurveyLanguage } from "../i18n/default-survey-language";
 import { andVisibleSurveys } from "../survey/visibility/predicate";
+import { isUniqueConstraintError } from "../utils/prisma-error";
 import { validateInputs } from "../utils/validate";
 import { getWorkspace } from "../workspace/service";
 
@@ -91,6 +93,11 @@ export const createLanguage = async (
 
     return language;
   } catch (error) {
+    // The workspace already has this language: an equivalent code that canonicalizes onto it, or a
+    // second save racing the first. A conflict the caller can act on, not a server fault (ENG-3602).
+    if (isUniqueConstraintError(error)) {
+      throw new UniqueConstraintError("This workspace already has this language");
+    }
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       logger.error(error, "Error creating language");
       throw new DatabaseError(error.message);

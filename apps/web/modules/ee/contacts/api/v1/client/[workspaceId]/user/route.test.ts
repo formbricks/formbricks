@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { DatabaseError } from "@formbricks/types/errors";
 import { MAX_CONTACT_ATTRIBUTES_PER_REQUEST } from "@/lib/constants";
 import { POST } from "./route";
 
@@ -66,5 +67,26 @@ describe("POST /api/v1/client/[workspaceId]/user attribute cap", () => {
 
     expect(response.status).toBe(400);
     expect(mocks.updateUser).not.toHaveBeenCalled();
+  });
+});
+
+describe("POST /api/v1/client/[workspaceId]/user failures", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mocks.resolveClientApiIds.mockResolvedValue({ workspaceId: WORKSPACE_ID });
+    mocks.getOrganizationIdFromWorkspaceId.mockResolvedValue("org-1");
+    mocks.getIsContactsEnabled.mockResolvedValue(true);
+  });
+
+  // ENG-3725: a failed segment check reaches the route as a DatabaseError. It must answer 500 and hand the
+  // error to the wrapper (which reports it), not a 200 with an empty segment list.
+  test("answers 500 and passes the error on when the user state cannot be built", async () => {
+    const error = new DatabaseError("Transaction already closed");
+    mocks.updateUser.mockRejectedValue(error);
+
+    const result = await (identify({}) as Promise<{ response: Response; error?: unknown }>);
+
+    expect(result.response.status).toBe(500);
+    expect(result.error).toBe(error);
   });
 });

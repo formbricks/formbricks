@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { SENTIMENT_VALUE_ORDER } from "@/modules/ee/analysis/lib/schema-definition";
+import { HUB_SENTIMENT_VALUES } from "@formbricks/types/feedback-source";
 import {
   AXIS_LABEL_GAP,
   AXIS_LABEL_LINE_HEIGHT,
@@ -336,7 +336,7 @@ describe("chart-utils", () => {
     const sentimentDim = "FeedbackRecords.sentiment";
 
     test("maps every sentiment enum value to its semantic color", () => {
-      for (const value of SENTIMENT_VALUE_ORDER) {
+      for (const value of HUB_SENTIMENT_VALUES) {
         expect(getSemanticDimensionColor(sentimentDim, value)).toBe(CHART_SENTIMENT_COLORS[value]);
       }
     });
@@ -541,7 +541,7 @@ describe("chart-utils", () => {
     });
 
     test("CHART_SENTIMENT_COLORS covers every enum value with distinct colors", () => {
-      expect(Object.keys(CHART_SENTIMENT_COLORS).sort()).toEqual([...SENTIMENT_VALUE_ORDER].sort());
+      expect(Object.keys(CHART_SENTIMENT_COLORS).sort()).toEqual([...HUB_SENTIMENT_VALUES].sort());
       const colors = Object.values(CHART_SENTIMENT_COLORS);
       expect(new Set(colors).size).toBe(colors.length);
       // the semantic scale must not collide with the "not enriched" gray
