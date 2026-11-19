@@ -41,11 +41,35 @@ describe("resolvePrismaCliTls", () => {
     });
   });
 
-  test.each(["require", "prefer", "allow", "disable", "no-verify"])(
-    "leaves sslmode=%s without a root certificate unverified",
-    (sslmode) => {
-      const url = `${base}?sslmode=${sslmode}`;
-      expect(resolve(url)).toEqual({ databaseUrl: url, verifiesServerCertificate: false });
+  test.each([
+    ["require", "require"],
+    ["prefer", "prefer"],
+    ["disable", "disable"],
+    ["allow", "prefer"],
+    ["no-verify", "require"],
+  ])(
+    "leaves sslmode=%s without a root certificate unverified, as Prisma's sslmode=%s",
+    (sslmode, prismaMode) => {
+      expect(resolve(`${base}?sslmode=${sslmode}`)).toEqual({
+        databaseUrl: `${base}?sslmode=${prismaMode}`,
+        verifiesServerCertificate: false,
+      });
+    }
+  );
+
+  test.each([
+    ["require", {}, `${base}?sslmode=require`, false],
+    ["no-verify", {}, `${base}?sslmode=require`, false],
+    ["require", { sslaccept: "strict" }, `${base}?sslaccept=strict&sslmode=require`, true],
+    ["prefer", {}, `${base}?sslmode=prefer`, false],
+  ])(
+    "writes PGSSLMODE=%s into the URL, since Prisma reads only the URL",
+    (mode, extra, expected, verifies) => {
+      const query = new URLSearchParams(extra).toString();
+      expect(resolve(query ? `${base}?${query}` : base, { PGSSLMODE: mode })).toEqual({
+        databaseUrl: expected,
+        verifiesServerCertificate: verifies,
+      });
     }
   );
 

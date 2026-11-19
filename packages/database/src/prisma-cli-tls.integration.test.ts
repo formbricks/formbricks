@@ -223,12 +223,15 @@ describe.runIf(canRun)("Prisma CLI TLS verification", () => {
       expect(decliner.plaintextStartups()).toBeGreaterThan(0);
 
       const before = decliner.plaintextStartups();
-      for (const query of [
-        "sslmode=verify-full&sslaccept=strict",
-        "sslmode=verify-full",
-        "sslaccept=strict",
-      ]) {
-        const cli = await preparePrismaCliEnvironment(declinerUrl(query), {});
+      const cases: [string, NodeJS.ProcessEnv][] = [
+        ["sslmode=verify-full&sslaccept=strict", {}],
+        ["sslmode=verify-full", {}],
+        ["sslaccept=strict", {}],
+        ["sslaccept=strict", { PGSSLMODE: "require" }],
+        ["", { PGSSLMODE: "require" }],
+      ];
+      for (const [query, env] of cases) {
+        const cli = await preparePrismaCliEnvironment(declinerUrl(query), env);
         try {
           await run({ ...process.env, ...cli.env });
         } finally {

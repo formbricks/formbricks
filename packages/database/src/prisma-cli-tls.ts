@@ -97,6 +97,14 @@ const readTlsRequest = (params: URLSearchParams, env: NodeJS.ProcessEnv): TTlsRe
   return { sslAccept: lastParam(params, "sslaccept"), sslMode, sslRootCert };
 };
 
+/** The sslmode Prisma should get for a libpq or pg mode it does not verify with. */
+const toPrismaSslMode = (sslMode: string | undefined): string | undefined => {
+  if (sslMode === undefined) return undefined;
+  if (sslMode === "disable") return "disable";
+  if (sslMode === "allow" || sslMode === "prefer") return "prefer";
+  return REQUIRE; // require and no-verify: TLS without a certificate check.
+};
+
 const requestsVerification = ({ sslMode, sslRootCert }: TTlsRequest): boolean =>
   sslMode === VERIFY_CA ||
   sslMode === VERIFY_FULL ||
@@ -130,13 +138,17 @@ export const resolvePrismaCliTls = (
   const checksCertificate = sslAccept !== null && sslAccept !== ACCEPT_INVALID_CERTS;
 
   if (!requestsVerification(request)) {
-    // sslaccept alone (Prisma's own way to ask for a checked certificate) leaves Prisma at prefer, which
-    // falls back to plaintext; the app's pg connections require TLS for it, so the CLI must too.
-    if (!checksCertificate || request.sslMode !== undefined) {
+    // Prisma reads the sslmode in the URL only, and anything but disable/prefer/require as prefer, which
+    // falls back to plaintext. So write in the mode Prisma should use when it differs from the URL's: the
+    // one PGSSLMODE asked for, require for pg's no-verify, and require when sslaccept alone asks for a
+    // checked certificate (the app's pg connections require TLS for each of these).
+    const prismaMode =
+      checksCertificate && request.sslMode === undefined ? REQUIRE : toPrismaSslMode(request.sslMode);
+    if (prismaMode === undefined || prismaMode === lastParam(parts.params, "sslmode")) {
       return { databaseUrl, verifiesServerCertificate: checksCertificate };
     }
-    parts.params.set("sslmode", REQUIRE);
-    return { databaseUrl: joinConnectionUrl(parts), verifiesServerCertificate: true };
+    parts.params.set("sslmode", prismaMode);
+    return { databaseUrl: joinConnectionUrl(parts), verifiesServerCertificate: checksCertificate };
   }
 
   // Prisma reads verify-ca and verify-full as prefer, which falls back to plaintext when the server (or
