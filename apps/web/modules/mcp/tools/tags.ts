@@ -142,14 +142,24 @@ export function registerTagTools(server: McpServer): void {
     [{ permission: "tags", level: "write" }],
     // Removes tagId for good, so it confirms first like the delete tools (finding 07): a merge asked for by
     // text inside a tool result must not happen without the user agreeing.
-    async (input: TMcpMergeTagsInput, ctx) =>
-      runConfirmedDelete({
+    async (input: TMcpMergeTagsInput, ctx) => {
+      // An API key can never merge, so it gets the 403 now rather than a prompt it cannot use.
+      const { authentication, requestId } = toolContext(ctx);
+      if (authentication && "apiKeyId" in authentication) {
+        return await responseToMcpToolResult(
+          problemForbidden(requestId, API_KEY_REFUSAL, MCP_API_ROUTE),
+          requestId
+        );
+      }
+
+      return await runConfirmedDelete({
         tool: "merge_tags",
         resourceKey: `${input.tagId}->${input.newTagId}`,
         prompt: `Merge tag ${input.tagId} into ${input.newTagId}? Tag ${input.tagId} is removed and this cannot be undone.`,
         confirm: input.confirm,
         ctx,
         run: () => mergeTags(input, ctx),
-      })
+      });
+    }
   );
 }

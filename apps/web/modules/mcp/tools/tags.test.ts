@@ -223,6 +223,14 @@ describe("the tools reach the operations", () => {
     expect(mergeV3Tags).not.toHaveBeenCalled();
   });
 
+  test("merge_tags refuses an API key with a 403 before asking to confirm", async () => {
+    const result = await call("merge_tags", { tagId: TAG_ID, newTagId: OTHER_TAG_ID }, apiKeyAuthInfo);
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.structuredContent)).toContain("403");
+    expect(mergeV3Tags).not.toHaveBeenCalled();
+  });
+
   test("merge_tags moves the source tag onto the target", async () => {
     await call("merge_tags", { tagId: TAG_ID, newTagId: OTHER_TAG_ID, confirm: true });
 
