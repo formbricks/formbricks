@@ -32,6 +32,11 @@
   --color-primary: #0f172a;
   --color-primary-foreground: #fefefe;
 
+  /* Keyboard focus ring (`ring-ring`). Without it `ring-ring` generated nothing and rings fell back
+     to the text colour: white on a primary button, so its focus was invisible on a white page.
+     slate-500 is 4.76:1 on white, over the 3:1 WCAG 1.4.11 floor for non-text (slate-400 is not). */
+  --color-ring: var(--color-slate-500);
+
   --color-destructive: #ff6b6b;
   --color-destructive-foreground: #fff5f5;
 
