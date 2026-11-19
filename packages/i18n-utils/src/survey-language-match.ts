@@ -23,17 +23,8 @@ export interface TMatchableSurveyLanguage {
   };
 }
 
-/**
- * Drops a `;q=` weight (or any other parameter), surrounding whitespace, and extension or private-use
- * subtags (everything from the first single-letter subtag: `es-MX-u-nu-latn` -> `es-MX`). Extensions
- * never change the language, so a tag that carries them matches exactly as its plain form does; the
- * creatives page matcher (`toLanguageKey` in `@formbricks/creatives`) cuts the same way.
- */
-const cleanRequestedCode = (code: string): string => {
-  const cleaned = code.split(";")[0].trim();
-  const extensionStart = cleaned.search(/[-_][0-9a-z](?=[-_]|$)/i);
-  return extensionStart === -1 ? cleaned : cleaned.slice(0, extensionStart);
-};
+/** Drops a `;q=` weight (or any other parameter) and surrounding whitespace from a requested code. */
+const cleanRequestedCode = (code: string): string => code.split(";")[0].trim();
 
 /** `_` and `-` are the same separator for matching purposes, and casing never matters. */
 const toComparableCode = (code: string): string => code.trim().replaceAll("_", "-").toLowerCase();
@@ -98,17 +89,16 @@ const ES_419_REGIONS: ReadonlySet<string> = new Set([
   "VE",
 ]);
 
-/** The region of a Spanish tag (`es-MX` -> `MX`), or undefined for another language or no region. */
-const spanishRegionOf = (code: string): string | undefined => {
-  try {
-    const locale = new Intl.Locale(toHyphenatedCode(code));
-    return locale.language === "es" ? locale.region : undefined;
-  } catch (error) {
-    // `Intl.Locale` rejects a malformed tag with a RangeError; such a tag has no region.
-    if (error instanceof RangeError) return undefined;
-    throw error;
-  }
-};
+/** A plain Spanish regional tag (`es-MX`, `es_419`), and nothing more: no script, variant or extension. */
+const PLAIN_SPANISH_REGIONAL_TAG = /^es[-_]([a-z]{2}|\d{3})$/i;
+
+/**
+ * The region of a plain Spanish regional tag (`es-MX` -> `MX`), or undefined for anything else. A tag
+ * with more subtags (`es-MX-u-nu-latn`, `es-Latn-MX`) keeps the base default, so the creatives page,
+ * which only keys plain `es-<region>` tags (`getLatinAmericanSpanishRequests`), answers it the same way.
+ */
+const spanishRegionOf = (code: string): string | undefined =>
+  PLAIN_SPANISH_REGIONAL_TAG.exec(code.trim())?.[1].toUpperCase();
 
 /** Whether a stored code is Latin American Spanish (`es-419`, any spelling). */
 const isLatinAmericanSpanish = (code: string): boolean => spanishRegionOf(code) === "419";

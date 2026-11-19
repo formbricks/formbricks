@@ -20,15 +20,9 @@ export interface TVisitorLanguage {
 /** As many browser languages as the full matcher tries (`MAX_BROWSER_LANGUAGE_CANDIDATES`). */
 const MAX_BROWSER_LANGUAGES = 10;
 
-/**
- * A requested code as a `TLanguageMatch` key: no `;q=` weight, `-` separators, lowercase, and no extension
- * or private-use subtags (`es-MX-u-nu-latn` is `es-mx`), which the full matcher drops the same way.
- */
-export const toLanguageKey = (code: string): string => {
-  const key = code.split(";")[0].trim().replaceAll("_", "-").toLowerCase();
-  const extensionStart = key.search(/-[0-9a-z](?=-|$)/);
-  return extensionStart === -1 ? key : key.slice(0, extensionStart);
-};
+/** A requested code as a `TLanguageMatch` key: no `;q=` weight, `-` separators, lowercase. */
+export const toLanguageKey = (code: string): string =>
+  code.split(";")[0].trim().replaceAll("_", "-").toLowerCase();
 
 /** `language` or `language-script`, lowercase; Chinese takes its likely script (`zh-TW` is `zh-hant`). */
 export const toLanguageBase = (code: string): string | undefined => {

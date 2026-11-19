@@ -132,19 +132,12 @@ describe("matchSurveyLanguage — tiers", () => {
   });
 });
 
-describe("matchSurveyLanguage — extension and private-use subtags", () => {
-  test("a tag with extensions matches exactly as its plain form", () => {
+describe("matchSurveyLanguage — Latin American Spanish needs a plain regional tag", () => {
+  test("a tag with a script, variant or extension keeps the es-ES base default", () => {
     const spanish = withDefault(language("es-ES"), language("es-419"));
-    expect(matchSurveyLanguage(spanish, "es-MX-u-nu-latn")).toBe("es-419");
-    expect(matchSurveyLanguage(spanish, "es_AR_x_test")).toBe("es-419");
-    expect(matchSurveyLanguage(spanish, "es-ES-u-ca-gregory")).toBe("es-ES");
-    expect(matchSurveyLanguage(withDefault(language("de-AT")), "de-AT-x-foo")).toBe("de-AT");
-  });
-
-  test("an alias still wins for a tag with extensions, as it does for the plain tag", () => {
-    const aliased = withDefault(language("es-ES", { alias: "es-MX" }), language("es-419"));
-    expect(matchSurveyLanguage(aliased, "es-MX")).toBe("es-ES");
-    expect(matchSurveyLanguage(aliased, "es-MX-u-nu-latn")).toBe("es-ES");
+    expect(matchSurveyLanguage(spanish, "es-MX-u-nu-latn")).toBe("es-ES");
+    expect(matchSurveyLanguage(spanish, "es-MX-fonipa")).toBe("es-ES");
+    expect(matchSurveyLanguage(spanish, "es-AR-x-test")).toBe("es-ES");
   });
 });
 
