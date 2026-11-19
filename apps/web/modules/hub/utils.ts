@@ -35,7 +35,7 @@ export const NO_CONFIG_ERROR = {
  * `getErrorStatus` returns 0 for both. Match on the sentinel's message so a dead socket still reads as an
  * upstream fault (502) while a missing config reads as "not enabled here" (503).
  */
-export const isHubNotConfigured = (error: HubError): boolean =>
+export const isHubNotConfigured = (error: Partial<HubError>): boolean =>
   error.status === NO_CONFIG_ERROR.status && error.message === NO_CONFIG_ERROR.message;
 
 export const getErrorMessage = (err: unknown): string => {

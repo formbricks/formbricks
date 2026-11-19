@@ -72,7 +72,7 @@ export const buildAnswerPlan = (
   lookupKey: string,
   ingestedStorageKeys: Iterable<string> = []
 ): TV3AnswerPlan => {
-  const elements = blocks.flatMap((block) => block.elements);
+  const elements = blocks.flatMap((block) => block.elements ?? []);
 
   // Reused rather than reimplemented: `toElementLabel` localizes with the `default` fallback, strips
   // rich text and flattens recall tokens, and `labelOrKey` falls back to the element id when the

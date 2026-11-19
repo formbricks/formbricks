@@ -1232,6 +1232,21 @@ describe("listReadableFields", () => {
     ]);
   });
 
+  // A draft or migrated block can be stored without `elements` (ENG-2497).
+  test("a block with no elements array adds no question fields", () => {
+    const fields = listReadableFields({
+      blocks: [
+        { id: "clx0000000000000000000b0", name: "Legacy" } as unknown as TSurveyBlocks[number],
+        ...blocks,
+      ],
+      embeddedData: [],
+      reservedEntries: [],
+      contactAttributeKeys: [],
+    });
+
+    expect(fields.question.map((field) => field.key)).toEqual(["q1", "q2", "q3", "q4", "q5"]);
+  });
+
   test("one Embedded Data group carries every source and dataType in the definitions' order", () => {
     // ENG-1853: the pickers draw one group where they used to draw Variables and Hidden Fields, so
     // this list is the group. A row's source and type decide its icon and its operators at the call

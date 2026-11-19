@@ -42,14 +42,16 @@ export const getReferenceTone = (chip: Pick<TReferenceChip, "kind" | "missing">)
 interface ReferenceChipProps {
   readonly chip: TReferenceChip;
   readonly elementIcons: Record<TSurveyElementTypeEnum, JSX.Element>;
+  readonly className?: string;
 }
 
 /** One reference as a chip: a question with its type icon and code, a field by its name. */
-export const ReferenceChip = ({ chip, elementIcons }: ReferenceChipProps) => (
+export const ReferenceChip = ({ chip, elementIcons, className }: ReferenceChipProps) => (
   <span
     className={cn(
       "inline-flex max-w-full items-center gap-1 rounded-[5px] border px-1.5 align-[1px] text-xs leading-[18px] font-medium whitespace-nowrap",
-      REFERENCE_CHIP_TONE[getReferenceTone(chip)]
+      REFERENCE_CHIP_TONE[getReferenceTone(chip)],
+      className
     )}>
     {chip.kind === "question" && chip.elementType && !chip.missing && (
       <span className="shrink-0 [&>svg]:size-3" aria-hidden="true">
@@ -70,8 +72,8 @@ interface FlowTextPartsProps {
   readonly parts: TFlowTextPart[];
   readonly elementIcons: Record<TSurveyElementTypeEnum, JSX.Element>;
   /**
-   * Inside a flex row (a show-if chip): words and chips are centred on one line, the words cut off
-   * last. The row's `gap` stands in for the spaces around a chip, which flex drops.
+   * Inside a flex row (a show-if chip): words and chips are centred on one line. The row's `gap`
+   * stands in for the spaces around a chip, which flex drops.
    */
   readonly centered?: boolean;
 }
@@ -101,16 +103,30 @@ const mergeTextParts = (parts: TFlowTextPart[]): TFlowTextPart[] =>
     return [...merged, part];
   }, []);
 
+/**
+ * In a centred row that is too narrow, each piece gets a share of the width, words twice a chip's,
+ * and no more than it needs; what it needs less goes to the others (ENG-7027). Sized by their content,
+ * a chip never gave way: a long value's words got only what the chip left, and read `“…`. A row that
+ * fits reads unchanged.
+ */
+const CENTERED_TEXT_CLASS = "min-w-0 max-w-max grow-[2] basis-0 truncate";
+const CENTERED_CHIP_CLASS = "min-w-0 max-w-max grow basis-0";
+
 export const FlowTextParts = ({ parts: rawParts, elementIcons, centered = false }: FlowTextPartsProps) => {
   const parts = centered ? mergeTextParts(rawParts) : rawParts;
   const keys = getPartKeys(parts);
   return parts.map((part, idx) =>
     part.kind === "text" ? (
-      <span key={keys[idx]} className={centered ? "min-w-0 truncate" : undefined}>
+      <span key={keys[idx]} className={centered ? CENTERED_TEXT_CLASS : undefined}>
         {centered ? part.text.trim() : part.text}
       </span>
     ) : (
-      <ReferenceChip key={keys[idx]} chip={part.chip} elementIcons={elementIcons} />
+      <ReferenceChip
+        key={keys[idx]}
+        chip={part.chip}
+        elementIcons={elementIcons}
+        className={centered ? CENTERED_CHIP_CLASS : undefined}
+      />
     )
   );
 };

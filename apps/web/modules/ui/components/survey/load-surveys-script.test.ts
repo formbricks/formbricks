@@ -39,7 +39,9 @@ beforeEach(() => {
 
 describe("loadSurveysScript", () => {
   // A truncated bundle reports a SyntaxError on the window, as a browser does. Vitest's jsdom re-raises
-  // a window error as uncaught unless the test listens for it, so record them and assert on each.
+  // a window error as uncaught (the run exits 1 with every test passing) unless the test listens for
+  // it, so record them and assert on each. `window.addEventListener` reaches jsdom's own window:
+  // vitest binds the global's listener methods to it.
   let scriptErrors: string[] = [];
   const recordScriptError = (event: ErrorEvent) => {
     scriptErrors.push(`${event.error?.name}: ${event.message}`);

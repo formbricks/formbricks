@@ -98,15 +98,19 @@ const elementEntries = (element: TElement, survey: TSurvey, t: TFunction): TShow
  * reached from not reached.
  */
 export const getShownFilterTargets = (survey: TSurvey, t: TFunction): TShownFilterTargetEntry[] =>
-  survey.blocks.flatMap((block) => [
-    ...(blockCanBeNotShown(block)
-      ? [
-          {
-            propertyId: `shown.block.${block.id}`,
-            target: { target: "block", blockId: block.id } as const,
-            label: t("workspace.surveys.filter.shown_target_block", { name: block.name }),
-          },
-        ]
-      : []),
-    ...block.elements.flatMap((element) => elementEntries(element, survey, t)),
-  ]);
+  survey.blocks
+    // A stored block can lack `elements` (an unvalidated draft or migrated block, ENG-2497): it holds
+    // nothing a respondent could be shown, so it offers no target.
+    .filter((block) => block.elements)
+    .flatMap((block) => [
+      ...(blockCanBeNotShown(block)
+        ? [
+            {
+              propertyId: `shown.block.${block.id}`,
+              target: { target: "block", blockId: block.id } as const,
+              label: t("workspace.surveys.filter.shown_target_block", { name: block.name }),
+            },
+          ]
+        : []),
+      ...block.elements.flatMap((element) => elementEntries(element, survey, t)),
+    ]);
