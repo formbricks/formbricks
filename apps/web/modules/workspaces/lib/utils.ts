@@ -13,6 +13,7 @@ import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
 import { getAccessFlags } from "@/lib/membership/utils";
 import { getMonthlyOrganizationResponseCount, getOrganization } from "@/lib/organization/service";
 import { getUser } from "@/lib/user/service";
+import { needsMonthlyResponseCount } from "@/lib/utils/billing";
 import { validateInputs } from "@/lib/utils/validate";
 import { canUserNavigateWorkspace } from "@/lib/workspace/auth";
 import { getWorkspace } from "@/lib/workspace/service";
@@ -395,11 +396,8 @@ const resolveWorkspaceLayoutData = async (
   // or limits, and no Cloud response count, which the layout would otherwise ship to its browser.
   const isDashboardViewer = membership.role === "dashboard_viewer";
 
-  // The count only feeds the limit banner and the Hobby/trial prompts. A plan without a response limit
-  // shows none of them unless it is trialing, whose sidebar card still shows the running count.
-  const hasResponseLimit = organization.billing?.limits?.monthly?.responses != null;
-  const isTrialing = organization.billing?.stripe?.subscriptionStatus === "trialing";
-  const needsResponseCount = IS_FORMBRICKS_CLOUD && !isDashboardViewer && (hasResponseLimit || isTrialing);
+  const needsResponseCount =
+    IS_FORMBRICKS_CLOUD && !isDashboardViewer && needsMonthlyResponseCount(organization.billing);
 
   const [isAccessControlAllowed, workspacePermission, license, responseCount] = await Promise.all([
     getAccessControlPermission(organization.id),
