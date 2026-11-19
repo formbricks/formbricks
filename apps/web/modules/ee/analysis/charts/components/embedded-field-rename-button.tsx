@@ -105,7 +105,6 @@ export function EmbeddedFieldRenameButton({
               value={draft}
               maxLength={MAX_EMBEDDED_FIELD_LABEL_LENGTH}
               onChange={(event) => setDraft(event.target.value)}
-              autoFocus
             />
             <p className="text-xs text-slate-500">
               {t("workspace.analysis.charts.rename_field_description", { key: field.key })}

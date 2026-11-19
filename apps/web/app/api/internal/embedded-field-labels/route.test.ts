@@ -34,7 +34,7 @@ const put = (payload: unknown = body) =>
       body: JSON.stringify(payload),
       headers: { "Content-Type": "application/json" },
     }),
-    {} as never
+    {}
   );
 
 describe("PUT /api/internal/embedded-field-labels", () => {
