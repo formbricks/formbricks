@@ -93,6 +93,8 @@ export const WorkflowNodeCard = ({
 
   return (
     <div
+      // Measured when the card is dragged, to outline its old place (use-step-move).
+      data-step-card=""
       className={cn(
         // Issues don't tint the card border — the inline alert line below carries the
         // severity; a second color signal on the frame just adds noise.

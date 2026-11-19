@@ -7,7 +7,11 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { useInsertWorkflowStepOnEdge } from "@/modules/ee/workflows/hooks/use-append-workflow-step";
 import { useStepClipboard } from "@/modules/ee/workflows/hooks/use-step-clipboard";
-import { type TWorkflowNodeData, canMutateCanvasAtom } from "@/modules/ee/workflows/state/editor";
+import {
+  type TWorkflowNodeData,
+  canMutateCanvasAtom,
+  stepMoveDragAtom,
+} from "@/modules/ee/workflows/state/editor";
 import { WorkflowAddStepMenu } from "./workflow-add-step-menu";
 
 /** The line the pointer is over; the canvas sets it from ReactFlow's edge hover events. */
@@ -32,9 +36,11 @@ export const EdgeInsertButton = ({ edgeId, source, x, y }: Readonly<EdgeInsertBu
   const sourceNode = useNodesData<Node<TWorkflowNodeData>>(source);
   const insertStep = useInsertWorkflowStepOnEdge();
   const { paste, canPasteAt } = useStepClipboard();
+  // While a step card is dragged, every line's `+` shows where it can be dropped.
+  const isMoveDragging = useAtomValue(stepMoveDragAtom) !== null;
 
   if (!canMutate) return null;
-  const isVisible = isLineHovered || isHovered || isMenuOpen;
+  const isVisible = isLineHovered || isHovered || isMenuOpen || isMoveDragging;
 
   return (
     <EdgeLabelRenderer>
@@ -52,6 +58,7 @@ export const EdgeInsertButton = ({ edgeId, source, x, y }: Readonly<EdgeInsertBu
           onOpenChange={setIsMenuOpen}
           onAdd={(stepType) => insertStep(edgeId, source, stepType)}
           onPaste={canPasteAt({ edgeId }) ? () => paste({ edgeId }) : undefined}
+          moveTarget={{ edgeId }}
         />
       </div>
     </EdgeLabelRenderer>

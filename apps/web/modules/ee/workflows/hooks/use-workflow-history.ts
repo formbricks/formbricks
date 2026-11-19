@@ -20,6 +20,7 @@ import {
   workflowAtom,
   workflowDefinitionAtom,
   workflowStepClipboardAtom,
+  workflowUndoAtom,
 } from "@/modules/ee/workflows/state/editor";
 
 /**
@@ -95,6 +96,13 @@ export const useWorkflowHistory = () => {
     apply(undoStep);
   }, [apply, cancelCut, clipboard]);
   const redo = useCallback(() => apply(redoStep), [apply]);
+
+  // A toast's Undo (after moving a step) undoes through this history, so Redo can bring the edit back.
+  const setUndoForToasts = useSetAtom(workflowUndoAtom);
+  useEffect(() => {
+    setUndoForToasts({ undo });
+    return () => setUndoForToasts(null);
+  }, [undo, setUndoForToasts]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {

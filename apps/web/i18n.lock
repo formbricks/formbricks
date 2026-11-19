@@ -6114,6 +6114,11 @@ checksums:
     workspace/workflows/layout: 8ab849bdcd801c13e7e85474299e4ee8
     workspace/workflows/load_failed: 4e79a59e05cfc390294673e4aa111f02
     workspace/workflows/logic: c8e5ef649c6904d7327df3731d9de873
+    workspace/workflows/move_here: a64c34336d56f3d496c1d51bd2413bf8
+    workspace/workflows/move_step_to: b26d21e3dfbedac802e2c0d7f5b861b5
+    workspace/workflows/move_target_after: d9cb29b3dbf2eaf4e0882a6e2fbc6d58
+    workspace/workflows/move_target_before: 3a18541008089cbddebf790aae0d27e5
+    workspace/workflows/move_target_branch: 8d68272c85d656c9c6c371dae22ef646
     workspace/workflows/name_invalid: c1f750725318d5e385443519730729da
     workspace/workflows/name_required: a2866fa94293bc08be10ef65e0939423
     workspace/workflows/no_results_description: b358733531cc8290f8b311a8cc3bf05d
@@ -6200,6 +6205,9 @@ checksums:
     workspace/workflows/show_test_runs: 623e8054c45732cd2792831c37f34a26
     workspace/workflows/step_copy_label: 17f13949b7c11ef2be35e6e28bbc8f29
     workspace/workflows/step_limit_reached: 568b36b6dec75ff7641199bf9c60762b
+    workspace/workflows/step_move_breaks_variable: 90f58ce27f836add2a48efff20cdd50f
+    workspace/workflows/step_move_was_here: 20fa4af950aefc2f88a1899a5f035034
+    workspace/workflows/step_moved: fe0724c3fa4b3eb1949ad4095d4c71fb
     workspace/workflows/step_name: 9abf46b7f6960117f15a12290754cc06
     workspace/workflows/step_name_placeholder: 396fb9a0472daf401c392bdc3e248943
     workspace/workflows/steps_copied_hint: f8ca1130cb378e70233d1a9bc913deb7
