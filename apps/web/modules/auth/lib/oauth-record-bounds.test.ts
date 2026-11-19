@@ -113,6 +113,14 @@ describe("boundOAuthRecordsBeforeHandler: the signed oauth_query, on any path (E
     expect(error?.body).toMatchObject({ code: "VALIDATION_ERROR", message: "oauth_query must be a string" });
   });
 
+  test("refuses a raw query over the limit even when it would re-encode shorter", () => {
+    // `%61` re-encodes to `a`: 18,002 bytes as sent, 6,002 re-encoded. Honest signed queries are canonical.
+    const nonCanonical = `x=${"%61".repeat(6_000)}`;
+    expect(
+      refusal({ path: "/sign-in/social", method: "POST", body: { oauth_query: nonCanonical } })?.statusCode
+    ).toBe(413);
+  });
+
   test("counts it re-encoded, the form oauth-provider stores", () => {
     // A literal `"` comes back as `%22`: 6,002 raw bytes, over 18 KB stored.
     const quoted = `x=${'"'.repeat(6_000)}`;

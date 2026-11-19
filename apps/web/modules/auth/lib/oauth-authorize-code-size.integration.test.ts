@@ -73,7 +73,14 @@ const authorize = async (method: "GET" | "POST", extra: Record<string, string> =
         )
   );
   const body = await result.text();
-  return { status: result.status, codeIssued: body.includes("code="), storedBytes };
+  // An authorize refusal names its OAuth error, so a 400 from anything but the guard doesn't pass for one.
+  const error = (JSON.parse(body || "{}") as { error?: string }).error;
+  return {
+    status: result.status,
+    codeIssued: body.includes("code="),
+    storedBytes,
+    ...(error ? { error } : {}),
+  };
 };
 
 describe("authorization code record size (ENG-7396)", () => {
@@ -90,6 +97,7 @@ describe("authorization code record size (ENG-7396)", () => {
     async (method) => {
       expect(await authorize(method, { state: LARGE })).toEqual({
         status: 400,
+        error: "invalid_request",
         codeIssued: false,
         storedBytes: 0,
       });
@@ -103,6 +111,7 @@ describe("authorization code record size (ENG-7396)", () => {
       // 12 KB rather than 200 KB on GET, which Node itself refuses past its 16 KiB header limit.
       expect(await authorize(method, { x_padding: "x".repeat(12 * 1024) })).toEqual({
         status: 400,
+        error: "invalid_request",
         codeIssued: false,
         storedBytes: 0,
       });
@@ -120,6 +129,7 @@ describe("authorization code record size (ENG-7396)", () => {
     expect(atLimit).toMatchObject({ status: 200, codeIssued: true });
     expect(await authorize("POST", { state: "fixed-state", x_padding: `${pad}a` })).toEqual({
       status: 400,
+      error: "invalid_request",
       codeIssued: false,
       storedBytes: 0,
     });
@@ -137,13 +147,19 @@ describe("authorization code record size (ENG-7396)", () => {
     );
     expect(text).toBeLessThan(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES);
 
-    expect(await authorize("POST", extra)).toEqual({ status: 400, codeIssued: false, storedBytes: 0 });
+    expect(await authorize("POST", extra)).toEqual({
+      status: 400,
+      error: "invalid_request",
+      codeIssued: false,
+      storedBytes: 0,
+    });
   });
 
   test("a state of control characters is measured as stored", async () => {
     // 1,200 raw bytes; Redis would hold each \u0001 escaped twice, as 7 bytes.
     expect(await authorize("POST", { state: "\u0001".repeat(1_200) })).toEqual({
       status: 400,
+      error: "invalid_request",
       codeIssued: false,
       storedBytes: 0,
     });
