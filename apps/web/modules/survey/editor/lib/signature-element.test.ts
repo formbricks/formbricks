@@ -62,11 +62,11 @@ describe("Signature logic operators in the editor", () => {
       headline: { default: "Upload" },
       allowMultipleFiles: false,
     };
-    expect(labelled(getElementOperatorOptions({ ...fileUpload, required: false } as never, t))).toEqual([
+    expect(labelled(getElementOperatorOptions({ ...fileUpload, required: false }, t))).toEqual([
       ["workspace.surveys.edit.is_submitted", "isSubmitted"],
       ["workspace.surveys.edit.is_skipped", "isSkipped"],
     ]);
-    expect(labelled(getElementOperatorOptions({ ...fileUpload, required: true } as never, t))).toEqual([
+    expect(labelled(getElementOperatorOptions({ ...fileUpload, required: true }, t))).toEqual([
       ["workspace.surveys.edit.is_submitted", "isSubmitted"],
     ]);
   });

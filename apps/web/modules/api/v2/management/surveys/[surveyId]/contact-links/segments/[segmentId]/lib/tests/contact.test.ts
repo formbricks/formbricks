@@ -498,7 +498,7 @@ describe("getContactsInSegment", () => {
       ok: true,
       data: {
         ...mockSurvey,
-        status: "completed" as SurveyStatus,
+        status: "completed",
       },
     });
 

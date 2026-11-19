@@ -41,7 +41,7 @@ const post = (body: unknown, query = `?workspaceId=${WORKSPACE_ID}`) =>
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 describe("POST /api/v3/responses/batch-delete", () => {
@@ -103,7 +103,7 @@ describe("POST /api/v3/responses/batch-delete", () => {
         headers: { "content-type": "application/json", "x-api-key": "fbk_test" },
         body: JSON.stringify({ ids: [ID_A] }),
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(200);

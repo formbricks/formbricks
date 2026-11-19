@@ -194,7 +194,7 @@ export const IndividualInviteTab = ({
         )}
 
         {!isAccessControlAllowed && (
-          <Alert role="status">
+          <Alert alertRole="status">
             <AlertDescription className="flex">
               {t("workspace.settings.teams.upgrade_plan_notice_message")}
               <Link

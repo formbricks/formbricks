@@ -72,7 +72,7 @@ const sortKeys = (value) => {
   if (value && typeof value === "object") {
     return Object.fromEntries(
       Object.keys(value)
-        .sort(compareCodeUnits)
+        .toSorted(compareCodeUnits)
         .map((key) => [key, sortKeys(value[key])])
     );
   }

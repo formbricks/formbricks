@@ -105,7 +105,7 @@ describe("verifyRecaptchaToken", () => {
       return abortController;
     });
     vi.mocked(global.fetch).mockImplementation(() => new Promise(() => {}));
-    verifyRecaptchaToken("token", 0.5);
+    void verifyRecaptchaToken("token", 0.5);
     vi.advanceTimersByTime(5000);
     expect(abortCalled).toBe(true);
   });

@@ -81,7 +81,7 @@ describe("hydrateWorkflowEditorAtom", () => {
   test("description falls back to empty string when null", () => {
     const store = createStore();
     store.set(hydrateWorkflowEditorAtom, {
-      workflow: { ...workflow, description: null } as unknown as TWorkflowResource,
+      workflow: { ...workflow, description: null },
       flowNodes: [],
       isReadOnly: false,
     });
@@ -516,7 +516,7 @@ describe("deleteWorkflowNodeAtom bridge without sourceHandle", () => {
     const def = graphDefinition();
     // trigger-1 -> n1 (handle "true"), n1 -> n2 (no handle), add n2 -> n3.
     def.nodes.push({ id: "n3", type: "action", ui: { position: { x: 300, y: 400 } } } as never);
-    def.edges.push({ id: "e3", source: "n2", target: "n3" } as never);
+    def.edges.push({ id: "e3", source: "n2", target: "n3" });
     store.set(setWorkflowDefinitionAtom, def);
 
     store.set(deleteWorkflowNodeAtom, "n2");
@@ -717,7 +717,7 @@ describe("workflowValidityAtom", () => {
   const executableWorkflow = {
     ...workflow,
     definition: executableDefinition,
-  } as unknown as TWorkflowResource;
+  };
 
   test("is ready when the name is set, the definition is executable, and the survey resolves", () => {
     const store = createStore();
@@ -815,7 +815,7 @@ describe("workflowValidationProblemsAtom", () => {
 
   const hydrate = (store: ReturnType<typeof createStore>, definition: TWorkflowDefinition) => {
     store.set(hydrateWorkflowEditorAtom, {
-      workflow: { ...workflow, definition } as unknown as TWorkflowResource,
+      workflow: { ...workflow, definition },
       flowNodes: [],
       isReadOnly: false,
     });

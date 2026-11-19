@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 import * as XLSX from "xlsx";
-import type { TSurvey } from "@formbricks/types/surveys/types";
 import { SurveyImportInputError } from "@/modules/survey/import/core/errors";
 import { SURVEY_IMPORT_SHEET_MAX_CELL_CHARS } from "@/modules/survey/import/limits";
 import { EVERY_TEXT_SURVEY } from "@/modules/survey/lib/__fixtures__/every-text-survey";
@@ -13,8 +12,7 @@ import { ExcelExportNotRecognizedError } from "./read";
 import { writeExcelExport } from "./write";
 
 const t = createIcuTranslate("en-US");
-const exported = () =>
-  writeExcelExport({ survey: EVERY_TEXT_SURVEY as unknown as TSurvey, t, locale: "en-US" });
+const exported = () => writeExcelExport({ survey: EVERY_TEXT_SURVEY, t, locale: "en-US" });
 const read = readExportBytes;
 
 /** The workbook with its meta sheet's rows changed by `edit`. */

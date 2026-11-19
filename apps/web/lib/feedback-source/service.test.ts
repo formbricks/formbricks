@@ -190,7 +190,7 @@ describe("getFeedbackSourceWithMappingsById", () => {
   });
 
   test("returns null when not found", async () => {
-    vi.mocked(prisma.feedbackSource.findUnique).mockResolvedValue(null as never);
+    vi.mocked(prisma.feedbackSource.findUnique).mockResolvedValue(null);
 
     const result = await getFeedbackSourceWithMappingsById(FEEDBACK_SOURCE_ID, ENV_ID);
     expect(result).toBeNull();

@@ -35,7 +35,7 @@ export const CustomCssPlanNotice = ({ billingHref, hasSavedCss }: Readonly<Custo
   }
 
   return (
-    <Alert variant="warning" role="status">
+    <Alert variant="warning" alertRole="status">
       <AlertTitle>{t("workspace.custom_css.plan_required_title")}</AlertTitle>
       <AlertDescription>
         {t("workspace.custom_css.plan_required_description")}

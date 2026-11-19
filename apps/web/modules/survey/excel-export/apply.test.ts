@@ -17,7 +17,7 @@ import { writeExcelExport } from "./write";
 
 const t = createIcuTranslate("en-US");
 const germanT = createIcuTranslate("de-DE");
-const SURVEY = EVERY_TEXT_SURVEY as unknown as TSurvey;
+const SURVEY = EVERY_TEXT_SURVEY;
 
 // The texts sheet's columns: hidden key, Question ID, Type, English (default), German, Logic.
 const EN = 3;
@@ -163,7 +163,7 @@ describe("applyExcelExport: texts", () => {
   test("turns back every @Label of a text recalling 64 different answers", async () => {
     const { ids, after } = await importManyRecalls(64);
 
-    const stored = (after as Record<string, string>).default;
+    const stored = after.default;
     expect([...stored.matchAll(/#recall:(field\d+)\//g)].map(([, id]) => id)).toEqual(ids);
     expect(stored.endsWith(" edited")).toBe(true);
   });
@@ -195,7 +195,7 @@ describe("applyExcelExport: texts", () => {
       { survey }
     );
 
-    expect((elementOf(applied.survey, "consent").headline as Record<string, string>).default).toBe(
+    expect(elementOf(applied.survey, "consent").headline.default).toBe(
       "<p>Thank you #recall:open/fallback:friend#</p><p>agree?</p>"
     );
   });
@@ -217,7 +217,7 @@ describe("applyExcelExport: texts", () => {
       { survey }
     );
 
-    expect((elementOf(applied.survey, "consent").headline as Record<string, string>).default).toBe(stored);
+    expect(elementOf(applied.survey, "consent").headline.default).toBe(stored);
     expect(applied.issues).toContainEqual({
       code: "sheet_text_not_imported",
       severity: "warning",
@@ -240,7 +240,7 @@ describe("applyExcelExport: texts", () => {
       { survey }
     );
 
-    expect((elementOf(applied.survey, "consent").headline as Record<string, string>).default).toBe(
+    expect(elementOf(applied.survey, "consent").headline.default).toBe(
       "#recall:open/fallback:a# and #recall:open/fallback:a#!"
     );
   });
@@ -602,7 +602,7 @@ describe("applyExcelExport: added rows", () => {
     });
 
     const ranking = elementOf(applied.survey, "ranking");
-    expect((ranking.headline as Record<string, string>).de).toBe("Ordne neu");
+    expect(ranking.headline.de).toBe("Ordne neu");
     expect(ranking.choices).toHaveLength(25);
     expect(applied.issues[0]).toEqual({ code: "texts_updated", severity: "info", params: { count: 1 } });
     expect(applied.issues.filter((issue) => issue.code === "sheet_option_added")).toHaveLength(23);

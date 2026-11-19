@@ -6,8 +6,7 @@ import { FOOTER_MEDIA_BACKDROP, getFooterLinkStyle } from "./footer-link-color";
 const AA = 4.5;
 
 // Minimal styling stub carrying only the background field the helper reads.
-const withBackground = (background: TSurveyStyling["background"]): TSurveyStyling =>
-  ({ background }) as TSurveyStyling;
+const withBackground = (background: TSurveyStyling["background"]): TSurveyStyling => ({ background });
 
 describe("getFooterLinkStyle", () => {
   test("default light-blue background → subtle dark text, AA compliant, no backdrop", () => {

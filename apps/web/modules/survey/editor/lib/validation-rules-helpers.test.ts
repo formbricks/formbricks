@@ -292,8 +292,7 @@ describe("shouldResetInputTypeToText", () => {
 });
 
 describe("applyRuleDeletion", () => {
-  const rule = (id: string): TValidationRule =>
-    ({ id, type: "minLength", params: { min: 1 } }) as TValidationRule;
+  const rule = (id: string): TValidationRule => ({ id, type: "minLength", params: { min: 1 } });
 
   test("removes only the named rule", () => {
     const result = applyRuleDeletion(

@@ -86,7 +86,7 @@ describe("getDefaultLanguageCode", () => {
     const survey: TJsWorkspaceStateSurvey = {
       ...baseMockSurvey,
       languages: [mockSurveyLanguageEs, mockSurveyLanguageEn],
-    } as TJsWorkspaceStateSurvey;
+    };
     expect(getDefaultLanguageCode(survey)).toBe("en");
   });
 
@@ -94,7 +94,7 @@ describe("getDefaultLanguageCode", () => {
     const survey: TJsWorkspaceStateSurvey = {
       ...baseMockSurvey,
       languages: [{ ...mockSurveyLanguageEs, default: false }], // Ensure 'default' is explicitly false
-    } as TJsWorkspaceStateSurvey;
+    };
     expect(getDefaultLanguageCode(survey)).toBeUndefined();
   });
 
@@ -102,7 +102,7 @@ describe("getDefaultLanguageCode", () => {
     const survey: TJsWorkspaceStateSurvey = {
       ...baseMockSurvey,
       languages: [],
-    } as TJsWorkspaceStateSurvey;
+    };
     expect(getDefaultLanguageCode(survey)).toBeUndefined();
   });
 });
@@ -152,8 +152,10 @@ describe("getSurveyLanguageTag", () => {
     },
   });
 
-  const surveyWithLanguages = (languages: TSurveyLanguage[]): TJsWorkspaceStateSurvey =>
-    ({ ...baseMockSurvey, languages }) as TJsWorkspaceStateSurvey;
+  const surveyWithLanguages = (languages: TSurveyLanguage[]): TJsWorkspaceStateSurvey => ({
+    ...baseMockSurvey,
+    languages,
+  });
 
   const multiLanguageSurvey = surveyWithLanguages([
     languageWithCode("en-US", true),
@@ -592,7 +594,7 @@ describe("isRTLLanguage", () => {
           enabled: true,
         },
       ],
-    } as TJsWorkspaceStateSurvey;
+    };
     expect(isRTLLanguage(survey, "ar")).toBe(true);
     expect(isRTLLanguage(survey, "he")).toBe(true);
   });
@@ -614,7 +616,7 @@ describe("isRTLLanguage", () => {
           enabled: true,
         },
       ],
-    } as TJsWorkspaceStateSurvey;
+    };
     expect(isRTLLanguage(survey, "en")).toBe(false);
   });
 
@@ -637,7 +639,7 @@ describe("isRTLLanguage", () => {
           ],
         },
       ],
-    } as TJsWorkspaceStateSurvey;
+    };
     expect(isRTLLanguage(survey, "default")).toBe(true);
   });
 });

@@ -271,6 +271,7 @@ export const FormTargetField = ({
         {isEditingFixed ? (
           <div className="flex items-center gap-2">
             <Input
+              // eslint-disable-next-line jsx-a11y/no-autofocus -- the inline fixed-value editor mounts when the user clicks edit; focus follows that click
               autoFocus
               value={draftFixedValue}
               onChange={(e) => setDraftFixedValue(e.target.value)}

@@ -9,7 +9,7 @@ import { ClientLogo } from "@/modules/ui/components/client-logo";
 const CARDLESS_PREVIEW_LOGO_SLOT_ID = "formbricks-cardless-preview-logo-slot";
 
 interface CardlessPreviewLogoProps {
-  workspaceLogo: Workspace["logo"] | null;
+  workspaceLogo: Workspace["logo"];
   workspaceId: string;
   surveyLogo?: TLogo | null;
   mountKey?: string | number;

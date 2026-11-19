@@ -63,21 +63,20 @@ const apiKey = { apiKeyId: "key_1", workspacePermissions: [] } as unknown as TV3
 const access = { workspaceId: internalWorkspaceId, organizationId };
 const VALID_QUERY = { measures: ["FeedbackRecords.count"] };
 
-const rowOf = (overrides: Partial<TChartResourceRow> = {}): TChartResourceRow =>
-  ({
-    id: chartId,
-    workspaceId: internalWorkspaceId,
-    feedbackDirectoryId: datasetId,
-    name: "NPS by month",
-    type: "bar",
-    query: VALID_QUERY,
-    config: { showLegend: true },
-    createdAt: new Date("2026-01-01T00:00:00.000Z"),
-    updatedAt: new Date("2026-01-02T00:00:00.000Z"),
-    creator: { name: "Ada" },
-    widgets: [{ dashboard: { id: "cldb000000000000000000001", name: "Alpha" } }],
-    ...overrides,
-  }) as TChartResourceRow;
+const rowOf = (overrides: Partial<TChartResourceRow> = {}): TChartResourceRow => ({
+  id: chartId,
+  workspaceId: internalWorkspaceId,
+  feedbackDirectoryId: datasetId,
+  name: "NPS by month",
+  type: "bar",
+  query: VALID_QUERY,
+  config: { showLegend: true },
+  createdAt: new Date("2026-01-01T00:00:00.000Z"),
+  updatedAt: new Date("2026-01-02T00:00:00.000Z"),
+  creator: { name: "Ada" },
+  widgets: [{ dashboard: { id: "cldb000000000000000000001", name: "Alpha" } }],
+  ...overrides,
+});
 
 const prismaError = (code: string) =>
   new Prisma.PrismaClientKnownRequestError("prisma failure", { code, clientVersion: "7" });
@@ -105,7 +104,7 @@ beforeEach(() => {
 describe("listV3Charts", () => {
   const list = (query: Record<string, unknown> = {}, authentication: TV3Authentication = session) =>
     listV3Charts({
-      query: { workspaceId, limit: 2, ...query } as never,
+      query: { workspaceId, limit: 2, ...query },
       authentication,
       requestId,
       instance,
@@ -270,7 +269,7 @@ describe("createV3Chart", () => {
     auditLog?: TV3AuditLog
   ) =>
     createV3Chart({
-      body: { ...body, ...overrides } as never,
+      body: { ...body, ...overrides },
       authentication,
       requestId,
       instance,
@@ -416,7 +415,7 @@ describe("createV3Chart", () => {
 
 describe("updateV3Chart", () => {
   const update = (body: Record<string, unknown>, auditLog?: TV3AuditLog) =>
-    updateV3Chart({ chartId, body: body as never, authentication: session, requestId, instance, auditLog });
+    updateV3Chart({ chartId, body: body, authentication: session, requestId, instance, auditLog });
 
   beforeEach(() => {
     vi.mocked(updateChartRow).mockResolvedValue(rowOf({ name: "Renamed" }));

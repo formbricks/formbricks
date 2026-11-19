@@ -86,6 +86,7 @@ export const ResponseSurveyCard = ({
                       <span
                         className="inline-flex"
                         tabIndex={0}
+                        // eslint-disable-next-line jsx-a11y/prefer-tag-over-role -- a focusable stand-in that wraps the disabled delete button so its tooltip stays reachable
                         role="button"
                         aria-disabled="true"
                         aria-label={deleteResponseLabel}>

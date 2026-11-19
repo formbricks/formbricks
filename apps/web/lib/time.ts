@@ -76,9 +76,9 @@ export const convertDatesInObject = <T>(obj: T, keysToIgnore?: Set<string>): T =
     if (
       (key === "createdAt" || key === "updatedAt") &&
       typeof obj[key] === "string" &&
-      !isNaN(Date.parse(obj[key] as unknown as string))
+      !isNaN(Date.parse(obj[key]))
     ) {
-      newObj[key] = new Date(obj[key] as unknown as string);
+      newObj[key] = new Date(obj[key]);
     } else if (typeof obj[key] === "object" && obj[key] !== null) {
       newObj[key] = convertDatesInObject(obj[key], keysToIgnore);
     } else {

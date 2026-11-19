@@ -34,7 +34,7 @@ const post = (payload: unknown = body) =>
       body: JSON.stringify(payload),
       headers: { "Content-Type": "application/json" },
     }),
-    {} as never
+    {}
   );
 
 describe("POST /api/internal/charts/generate", () => {

@@ -287,9 +287,9 @@ describe("buildToolbarProperties", () => {
     vi.mocked(listDashboardFilterValues).mockResolvedValueOnce({
       values: [{ value: "positive" }],
       hasMore: false,
-    } as never);
+    });
     expect(await available?.load()).toEqual({ values: EMOTION_LABELS });
-    vi.mocked(listDashboardFilterValues).mockResolvedValueOnce({ values: [], hasMore: false } as never);
+    vi.mocked(listDashboardFilterValues).mockResolvedValueOnce({ values: [], hasMore: false });
     expect(await available?.load()).toEqual({ values: [] });
   });
 
@@ -351,7 +351,7 @@ describe("buildToolbarProperties", () => {
     vi.mocked(listDashboardFilterValues).mockResolvedValueOnce({
       values: [{ value: "late", label: "Late" }, { value: "raw" }],
       hasMore: false,
-    } as never);
+    });
     expect((await option?.loadOptions?.(""))?.options).toEqual([
       { value: NO_VALUE_PICK, label: "workspace.analysis.dashboards.filter_no_value" },
       { value: "late", label: "Late" },

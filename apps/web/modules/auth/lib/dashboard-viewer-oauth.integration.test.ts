@@ -1,21 +1,66 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { logger } from "@formbricks/logger";
 import {
   ORIGIN,
   authorize,
   createUser,
+  forgetRevocations,
   grant,
   handle,
   refresh,
   registerClient,
   signIn,
+  waitPastRevocation,
 } from "@/integration/oauth-flow";
+import { lockUserRow } from "@/integration/postgres-locks";
 import { resetDb } from "@/integration/reset-db";
 import { lockUserActiveState } from "@/lib/user/reactivation";
-import { updateMembership } from "@/modules/ee/role-management/lib/membership";
+import { updateMembership, updateMembershipInTransaction } from "@/modules/ee/role-management/lib/membership";
 import { deleteMembership } from "@/modules/organization/settings/teams/lib/membership";
 import { runOwnerGuardedTransaction } from "@/modules/organization/settings/teams/lib/owner-guard";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
+
+// The consent hook reads this before its transaction begins, after the provider has committed the consent.
+// A test can hold the approval there (`approvalGate`); every other test passes straight through.
+const approvalGate = vi.hoisted(() => ({ wait: null as null | (() => Promise<void>) }));
+vi.mock("@/modules/mcp/access-options", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/modules/mcp/access-options")>();
+  return {
+    ...actual,
+    readMcpGrantReadableWorkspaceIds: async (
+      ...args: Parameters<typeof actual.readMcpGrantReadableWorkspaceIds>
+    ) => {
+      await approvalGate.wait?.();
+      return actual.readMcpGrantReadableWorkspaceIds(...args);
+    },
+  };
+});
+
+// A member removal retries an attempt Postgres aborted over a deadlock; record every failed attempt, so a
+// deadlock that a retry hides still fails the race test below.
+const failedRemovalAttempts = vi.hoisted(() => [] as unknown[]);
+vi.mock("@/lib/utils/prisma-error", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/utils/prisma-error")>();
+  return {
+    ...actual,
+    retryOnTransactionConflict: <T>(
+      operation: () => Promise<T>,
+      ...options: Parameters<typeof actual.retryOnTransactionConflict>[1][]
+    ): Promise<T> =>
+      actual.retryOnTransactionConflict(
+        async () => {
+          try {
+            return await operation();
+          } catch (error) {
+            failedRemovalAttempts.push(error);
+            throw error;
+          }
+        },
+        ...options
+      ),
+  };
+});
 
 /**
  * ENG-6903 / ENG-6889 against the real Better Auth instance and Postgres: a user who is only a Dashboard
@@ -39,6 +84,19 @@ const userWithRole = async (role: "dashboard_viewer" | "member") => {
     data: { userId, organizationId: organization.id, role, accepted: true },
   });
   return { cookie, userId, organizationId: organization.id };
+};
+
+/** Resolves once `count` sessions of this database wait on a lock; fails if they never do. */
+const waitForLockWaiters = async (count: number): Promise<void> => {
+  const deadline = Date.now() + 8_000;
+  while (Date.now() < deadline) {
+    const [{ waiting }] = await prisma.$queryRaw<{ waiting: number }[]>`
+      SELECT count(*)::int AS "waiting" FROM pg_stat_activity
+      WHERE "datname" = current_database() AND "wait_event_type" = 'Lock'`;
+    if (waiting >= count) return;
+    await new Promise((resolve) => setTimeout(resolve, 25));
+  }
+  throw new Error(`${count} sessions never waited on a lock`);
 };
 
 const consentWith = (cookie: string, oauthQuery: string, scope?: string) =>
@@ -123,12 +181,13 @@ describe("a Dashboard viewer's OAuth grant", () => {
     const tokens = await grant(cookie, clientId, EVERYTHING);
     expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
-    await updateMembership(userId, organizationId, { role: "dashboard_viewer" });
+    await updateMembership(userId, organizationId, { role: "dashboard_viewer" }, userId);
 
     expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
     expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
 
     // Authorizing again goes through consent, which now offers only dashboards:read.
+    await waitPastRevocation();
     const again = await grant(cookie, clientId, EVERYTHING);
     expect(scopesOf(again.scope)).toEqual([...VIEWER_GRANT].sort());
   });
@@ -142,7 +201,7 @@ describe("a Dashboard viewer's OAuth grant", () => {
     const tokens = await grant(cookie, clientId, EVERYTHING);
     expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
-    await deleteMembership(userId, organizationId);
+    await deleteMembership(userId, organizationId, userId);
 
     expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
     expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
@@ -164,10 +223,15 @@ describe("a Dashboard viewer's OAuth grant", () => {
           accepted: true,
         })),
       });
+      // The previous round ended the grant; this round is a new sign-in after it, not a race with it.
+      await forgetRevocations(userId, clientId);
       const tokens = await grant(cookie, clientId, EVERYTHING);
       expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
-      await Promise.all([deleteMembership(userId, first.id), deleteMembership(userId, second.id)]);
+      await Promise.all([
+        deleteMembership(userId, first.id, userId),
+        deleteMembership(userId, second.id, userId),
+      ]);
 
       expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
       expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
@@ -193,14 +257,16 @@ describe("a Dashboard viewer's OAuth grant", () => {
           { userId: otherOwner.id, organizationId: demotedIn.id, role: "owner", accepted: true },
         ],
       });
+      // The previous round ended the grant; this round is a new sign-in after it, not a race with it.
+      await forgetRevocations(userId, clientId);
       const tokens = await grant(cookie, clientId, EVERYTHING);
       expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
       await Promise.all([
-        deleteMembership(userId, removedFrom.id),
+        deleteMembership(userId, removedFrom.id, userId),
         runOwnerGuardedTransaction(demotedIn.id, userId, async (tx) => {
           await lockUserActiveState(tx, userId);
-          return updateMembership(userId, demotedIn.id, { role: "dashboard_viewer" }, tx);
+          return updateMembershipInTransaction(tx, userId, demotedIn.id, { role: "dashboard_viewer" });
         }),
       ]);
 
@@ -216,7 +282,7 @@ describe("a Dashboard viewer's OAuth grant", () => {
     const demote = (organizationId: string) =>
       runOwnerGuardedTransaction(organizationId, userId, async (tx) => {
         await lockUserActiveState(tx, userId);
-        return updateMembership(userId, organizationId, { role: "dashboard_viewer" }, tx);
+        return updateMembershipInTransaction(tx, userId, organizationId, { role: "dashboard_viewer" });
       });
     for (let round = 0; round < 5; round++) {
       const organizations = await Promise.all(
@@ -231,6 +297,8 @@ describe("a Dashboard viewer's OAuth grant", () => {
           { userId: otherOwner.id, organizationId: id, role: "owner" as const, accepted: true },
         ]),
       });
+      // The previous round ended the grant; this round is a new sign-in after it, not a race with it.
+      await forgetRevocations(userId, clientId);
       const tokens = await grant(cookie, clientId, EVERYTHING);
       expect(scopesOf(tokens.scope)).toContain("surveys:read");
 
@@ -239,6 +307,77 @@ describe("a Dashboard viewer's OAuth grant", () => {
       expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
       expect((await refresh(clientId, tokens.refresh_token)).status).not.toBe(200);
     }
+  });
+
+  test("a first approval racing a removal that ends the grant finishes without a deadlock", async () => {
+    // The removal takes the owners, then the user's row `FOR UPDATE`, then the grant and consent rows. The
+    // approval's grant insert takes the user's row `FOR KEY SHARE` through its foreign key; unless the
+    // approval takes that lock before the consent rows, it holds the consent rows while the removal holds
+    // the user's row, and each waits on the other. The interleaving is forced: a blocker holds the user's
+    // row, the removal queues on it, then the approval runs as far as it can, then the blocker lets go.
+    const { cookie, userId, organizationId } = await userWithRole("member");
+    const viewerOrganization = await prisma.organization.create({ data: { name: "Viewer elsewhere" } });
+    await prisma.membership.create({
+      data: { userId, organizationId: viewerOrganization.id, role: "dashboard_viewer", accepted: true },
+    });
+    const { target } = await authorize(cookie, clientId, EVERYTHING);
+    const warn = vi.spyOn(logger, "warn");
+    failedRemovalAttempts.length = 0;
+
+    let reachedGate!: () => void;
+    const atGate = new Promise<void>((resolve) => (reachedGate = resolve));
+    let openGate!: () => void;
+    const gate = new Promise<void>((resolve) => (openGate = resolve));
+    approvalGate.wait = () => {
+      reachedGate();
+      return gate;
+    };
+    let releaseUser!: () => void;
+    const userReleased = new Promise<void>((resolve) => (releaseUser = resolve));
+    let userLocked!: () => void;
+    const userIsLocked = new Promise<void>((resolve) => (userLocked = resolve));
+
+    try {
+      // The provider has committed the consent; the hook's transaction hasn't begun.
+      const approval = consentWith(cookie, target.search.slice(1));
+      await atGate;
+
+      const blocker = prisma.$transaction(
+        async (tx) => {
+          await lockUserRow(tx, userId);
+          userLocked();
+          await userReleased;
+        },
+        { timeout: 30_000 }
+      );
+      await userIsLocked;
+
+      const removal = deleteMembership(userId, organizationId, userId);
+      await waitForLockWaiters(1);
+      openGate();
+      await waitForLockWaiters(2);
+      releaseUser();
+
+      const [approved, removed] = await Promise.allSettled([approval, removal, blocker]);
+      expect(removed.status, String((removed as PromiseRejectedResult).reason)).toBe("fulfilled");
+      expect(approved.status, String((approved as PromiseRejectedResult).reason)).toBe("fulfilled");
+      // Both sides retry an attempt Postgres aborted over a deadlock, so neither may have failed one.
+      expect(failedRemovalAttempts.map(String)).toEqual([]);
+      expect(warn).not.toHaveBeenCalledWith(
+        expect.anything(),
+        "OAuth consent changed but settling it failed; retrying"
+      );
+    } finally {
+      approvalGate.wait = null;
+      openGate();
+      releaseUser();
+      warn.mockRestore();
+    }
+
+    // The removal won: no consent, no grant, no membership; the approval found its consent gone.
+    expect(await prisma.oauthConsent.count({ where: { userId } })).toBe(0);
+    expect(await prisma.mcpGrant.count({ where: { userId } })).toBe(0);
+    expect(await prisma.membership.count({ where: { userId, organizationId } })).toBe(0);
   });
 
   test("a Member is unaffected", async () => {

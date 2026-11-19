@@ -24,7 +24,7 @@ export const createSetupCheckoutSession = async (
   if (!env.STRIPE_SECRET_KEY) throw new Error("Stripe is not enabled; STRIPE_SECRET_KEY is not set.");
 
   const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
-    apiVersion: STRIPE_API_VERSION as Stripe.LatestApiVersion,
+    apiVersion: STRIPE_API_VERSION,
   });
 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);

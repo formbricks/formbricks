@@ -12,5 +12,4 @@ export const getDatabaseTitle = (database: TIntegrationNotionDatabase): string =
 
 export const getDatabaseProperties = (
   database: TIntegrationNotionDatabase | null | undefined
-): Record<string, TNotionDatabaseProperty> =>
-  (database?.properties ?? {}) as Record<string, TNotionDatabaseProperty>;
+): Record<string, TNotionDatabaseProperty> => database?.properties ?? {};

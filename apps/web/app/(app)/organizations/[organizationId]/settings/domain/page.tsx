@@ -46,7 +46,7 @@ const Page = async (props: Readonly<{ params: Promise<{ organizationId: string }
 
       {!IS_STORAGE_CONFIGURED && (
         <div className="max-w-4xl">
-          <Alert variant="warning" role="status">
+          <Alert variant="warning" alertRole="status">
             <AlertDescription>{t("common.storage_not_configured")}</AlertDescription>
           </Alert>
         </div>

@@ -217,7 +217,7 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
 
   try {
     if (event.type === "payment_intent.requires_action") {
-      await handlePaymentIntentRequiresAction(event.data.object as Stripe.PaymentIntent, {
+      await handlePaymentIntentRequiresAction(event.data.object, {
         id: event.id,
         created: event.created,
       });
@@ -225,7 +225,7 @@ export const webhookHandler = async (requestBody: string, stripeSignature: strin
     }
 
     if (event.type === "payment_intent.canceled") {
-      await handlePaymentIntentCanceled(event.data.object as Stripe.PaymentIntent, {
+      await handlePaymentIntentCanceled(event.data.object, {
         id: event.id,
         created: event.created,
       });

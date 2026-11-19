@@ -53,7 +53,9 @@ description: >
 
 
   It also carries `data` — the answers as stored, returned unchanged, so a client can read a
-  response, edit an answer and send it straight back. Embedded Data is not echoed in stored form:
+  response, edit an answer and send it straight back. A stored value outside the `ResponseRawValue`
+  shapes (a legacy format or a JSON `null`) is withheld from `data`, and `PATCH` keeps it when the
+  key is left out. Embedded Data is not echoed in stored form:
   the read's `embeddedData[]` and a request's `embeddedData` map already address the same fields by
   the same names, so a second raw map would only republish the storage layout. That is the property
   v1/v2 had for free by being symmetric, and the one OpenAPI 3.1.1 argues for directly: its "Validating

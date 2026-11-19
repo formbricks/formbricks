@@ -2,11 +2,7 @@
 
 import { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
-import {
-  TMultipleChoiceOptionDisplayType,
-  TSurveyElement,
-  TSurveyElementTypeEnum,
-} from "@formbricks/types/surveys/elements";
+import { TSurveyElement, TSurveyElementTypeEnum } from "@formbricks/types/surveys/elements";
 import { type TWorkspaceWithoutCustomCss } from "@/modules/custom-css/lib/types";
 import {
   ColorCodingToggle,
@@ -122,9 +118,7 @@ export const ElementSettings = ({
                   { value: "dropdown", label: t("workspace.surveys.edit.dropdown") },
                 ]}
                 currentOption={element.displayType ?? "list"}
-                handleOptionChange={(value: string) =>
-                  updateElement(elementIdx, { displayType: value as TMultipleChoiceOptionDisplayType })
-                }
+                handleOptionChange={(value: string) => updateElement(elementIdx, { displayType: value })}
               />
             </div>
           </div>

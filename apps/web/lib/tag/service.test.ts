@@ -4,7 +4,7 @@ import { Prisma } from "@formbricks/database/prisma";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TTag } from "@formbricks/types/tags";
 import { TagError } from "../../modules/workspaces/settings/types/tag";
-import { createTag, getTag, getTagsByWorkspaceId } from "./service";
+import { createTag, getTag, getTagInWorkspace, getTagsByWorkspaceId } from "./service";
 
 vi.mock("server-only", () => ({}));
 
@@ -13,6 +13,7 @@ vi.mock("@formbricks/database", () => ({
     tag: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
     },
   },
@@ -103,6 +104,15 @@ describe("Tag Service", () => {
 
       const result = await getTag("nonexistent");
       expect(result).toBeNull();
+    });
+  });
+
+  describe("getTagInWorkspace", () => {
+    test("looks the tag up only inside the workspace, so another workspace's tag reads as none", async () => {
+      vi.mocked(prisma.tag.findFirst).mockResolvedValue(null);
+
+      expect(await getTagInWorkspace("tag1", "ws1")).toBeNull();
+      expect(prisma.tag.findFirst).toHaveBeenCalledWith({ where: { id: "tag1", workspaceId: "ws1" } });
     });
   });
 

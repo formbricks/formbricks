@@ -268,7 +268,7 @@ describe("survey service scheduling", () => {
         }),
       ] as never)
       .mockResolvedValueOnce([] as never);
-    prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 } as never);
+    prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 });
 
     const updatedSurvey = await updateSurveyInternal(
       {
@@ -339,7 +339,7 @@ describe("survey service scheduling", () => {
         }),
       ] as never)
       .mockResolvedValueOnce([] as never);
-    prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 } as never);
+    prisma.survey.updateMany.mockResolvedValueOnce({ count: 1 });
     prisma.survey.findUnique.mockResolvedValueOnce({
       ...mockSurveyOutput,
       publishOn: null,

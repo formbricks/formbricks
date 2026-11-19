@@ -36,6 +36,7 @@ export const SuccessMessage = () => {
     }
 
     if (publishSuccessParam) {
+      // eslint-disable-next-line react/set-state-in-effect -- one-shot celebration for a URL flag this effect consumes and strips from the URL below
       setConfetti(true);
       toast.success(
         isAppSurvey && !appSetupCompleted

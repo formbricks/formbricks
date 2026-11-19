@@ -27,14 +27,14 @@ const pinOn = { ...updateSurveyInput, pin: "1234" } as TSurvey;
 
 const stored = (overrides: Partial<typeof mockSurveyOutput> = {}) => {
   const row = { ...mockSurveyOutput, ...overrides };
-  vi.mocked(prisma.survey.findUnique).mockResolvedValue(row as never);
-  vi.mocked(prisma.survey.findUniqueOrThrow).mockResolvedValue(row as never);
+  vi.mocked(prisma.survey.findUnique).mockResolvedValue(row);
+  vi.mocked(prisma.survey.findUniqueOrThrow).mockResolvedValue(row);
 };
 
 beforeEach(() => {
   vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
   vi.mocked(prisma.surveyEmbeddedData.findMany).mockResolvedValue([]);
-  vi.mocked(prisma.survey.update).mockResolvedValue(mockSurveyOutput as never);
+  vi.mocked(prisma.survey.update).mockResolvedValue(mockSurveyOutput);
   vi.mocked(getActionClasses).mockResolvedValue([mockActionClass] as TActionClass[]);
   vi.mocked(lockSurveyVisibility).mockReset();
   stored();

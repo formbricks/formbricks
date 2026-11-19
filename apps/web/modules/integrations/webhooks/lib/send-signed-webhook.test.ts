@@ -112,7 +112,7 @@ describe("sendSignedWebhookRequest", () => {
     await sendSignedWebhookRequest({ url: URL, body: BODY, messageId: MESSAGE_ID, secret: null });
 
     expect(generateStandardWebhookSignature).not.toHaveBeenCalled();
-    const headers = (fetchMock.mock.calls[0][1] as RequestInit).headers as Record<string, string>;
+    const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>;
     expect(headers).not.toHaveProperty("webhook-signature");
     expect(headers["webhook-id"]).toBe(MESSAGE_ID);
   });
@@ -166,6 +166,7 @@ describe("sendSignedWebhookRequest", () => {
   test("aborts after the default timeout with a typed WebhookDeliveryTimeoutError", async () => {
     stubHangingFetch();
 
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const assertion = expect(
       sendSignedWebhookRequest({ url: URL, body: BODY, messageId: MESSAGE_ID })
     ).rejects.toBeInstanceOf(WebhookDeliveryTimeoutError);
@@ -183,6 +184,7 @@ describe("sendSignedWebhookRequest", () => {
       return abortError;
     });
 
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const assertion = expect(
       sendSignedWebhookRequest({ url: URL, body: BODY, messageId: MESSAGE_ID })
     ).rejects.toMatchObject({ name: "WebhookDeliveryTimeoutError", timeoutMs: 5000 });
@@ -200,11 +202,12 @@ describe("sendSignedWebhookRequest", () => {
       messageId: MESSAGE_ID,
       timeoutMs: 1000,
     });
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const assertion = expect(promise).rejects.toMatchObject({ timeoutMs: 1000 });
 
     await vi.advanceTimersByTimeAsync(1000);
     await assertion;
-    expect((fetchMock.mock.calls[0][1] as RequestInit).signal?.aborted).toBe(true);
+    expect(fetchMock.mock.calls[0][1].signal?.aborted).toBe(true);
   });
 
   test("logs dispatcher cleanup failures with the host only and still returns the outcome", async () => {
