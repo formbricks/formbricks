@@ -216,10 +216,13 @@ export interface WorkflowsService {
   /** The last payload a call to the Secret URL sent, with its time and IP. */
   getLastCall: (workflowId: string) => Promise<WorkflowSampleRow | null>;
   setTriggerSample: (params: WorkflowScopedParams, sample: TWorkflowSampleData) => Promise<WorkflowSampleRow>;
-  /** Saves a Test run as a queued dry run with no version; the adapter then runs it (ENG-7181). */
+  /**
+   * Saves a Test run as a queued dry run with no version, keeping the draft `definition` it executes;
+   * the adapter then runs it (ENG-7181).
+   */
   createTestRun: (
     params: WorkflowScopedParams,
-    triggerPayload: TWorkflowTriggerRunPayload
+    run: { triggerPayload: TWorkflowTriggerRunPayload; definition: TWorkflowExecutableDefinition }
   ) => Promise<{ id: string }>;
 }
 
@@ -427,7 +430,7 @@ export const createWorkflowsService = ({
       take: input.limit + 1,
       // List summaries never use these large JSON columns; skip them so PG doesn't read/ship
       // up to 100 big blobs per page. The detail `findUnique` still loads them.
-      omit: { triggerPayload: true, data: true },
+      omit: { triggerPayload: true, data: true, testRunDefinition: true },
       // Join the workflow's name so the workspace-wide runs table can label rows without an N+1.
       include: { workflow: { select: { name: true } } },
     });
@@ -475,10 +478,12 @@ export const createWorkflowsService = ({
     });
   },
 
-  async createTestRun({ workflowId, workspaceId }, triggerPayload) {
+  async createTestRun({ workflowId, workspaceId }, { triggerPayload, definition }) {
     // No version and never dispatched: the adapter runs it in the request. `isDryRun` keeps it out of
     // billing, usage counts and the run reconcilers. A response run records its survey and response as
-    // a real one does, so the runs list's survey visibility filter covers it too.
+    // a real one does, so the runs list's survey visibility filter covers it too. The draft it runs is
+    // kept on the row, as a version keeps a live run's, so the runner executes exactly this definition
+    // and the Runs tab can draw it after the draft changes.
     const responseColumns =
       triggerPayload.type === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED
         ? { surveyId: triggerPayload.surveyId, responseId: triggerPayload.responseId }
@@ -494,6 +499,7 @@ export const createWorkflowsService = ({
         isDryRun: true,
         attempt: 0,
         triggerPayload,
+        testRunDefinition: definition,
       },
       select: { id: true },
     });

@@ -28,6 +28,15 @@ export type TPublishedWorkflowVersion = {
   definition: TWorkflowDefinition;
 };
 
+/**
+ * The graph a run executed, for drawing it on the Runs tab: its version's for a live run, the draft a
+ * Test run saved for a Test run, or none (`unknown`) for a Test run saved before runs kept their draft.
+ */
+export type TWorkflowRunDefinition =
+  | { source: "version"; versionNumber: number; definition: TWorkflowDefinition }
+  | { source: "test_run"; definition: TWorkflowDefinition }
+  | { source: "unknown"; definition: null };
+
 const JSON_HEADERS = { "Content-Type": "application/json" };
 
 // Bound mutation calls so a stalled request can't leave the editor's save/transition spinner
@@ -413,6 +422,20 @@ export async function getPublishedWorkflowVersion(
     signal,
   });
   return readDataResponse<TPublishedWorkflowVersion | null>(response);
+}
+
+/** The definition a run executed: its version's, a Test run's saved draft, or none. */
+export async function getWorkflowRunDefinition(
+  workflowId: string,
+  runId: string,
+  signal?: AbortSignal
+): Promise<TWorkflowRunDefinition> {
+  const response = await fetch(`/api/internal/workflows/${workflowId}/runs/${runId}/definition`, {
+    method: "GET",
+    cache: "no-store",
+    signal,
+  });
+  return readDataResponse<TWorkflowRunDefinition>(response);
 }
 
 /** Replaces the Webhook Secret URL; the old one stops working at once. */

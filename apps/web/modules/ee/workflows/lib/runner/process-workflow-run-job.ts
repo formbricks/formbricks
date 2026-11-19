@@ -47,6 +47,7 @@ const workflowRunSelect = {
   triggerType: true,
   triggerPayload: true,
   isDryRun: true,
+  testRunDefinition: true,
   workflowVersion: { select: { definition: true } },
   // `createdBy` carries the per-user email limit: the respondent who triggers a run is anonymous.
   workflow: { select: { definition: true, createdBy: true } },
@@ -89,14 +90,17 @@ const getWorkflowRunLogContext = (
 
 /**
  * Resolve the run's executable definition: prefer the immutable `workflowVersion.definition`
- * snapshot, fall back to the workflow's live `definition`. The persisted JSON is untrusted, so it is
- * parsed through `ZWorkflowExecutableDefinition`; a non-executable definition fails the run.
+ * snapshot, then the draft a Test run saved when it was created (`testRunDefinition`), and fall back
+ * to the workflow's live `definition` (Test runs saved before the column existed). The persisted JSON
+ * is untrusted, so it is parsed through `ZWorkflowExecutableDefinition`; a non-executable definition
+ * fails the run.
  */
 const resolveExecutableDefinition = (run: {
   workflowVersion: { definition: unknown } | null;
+  testRunDefinition?: unknown;
   workflow: { definition: unknown };
 }): ReturnType<typeof ZWorkflowExecutableDefinition.parse> => {
-  const rawDefinition = run.workflowVersion?.definition ?? run.workflow.definition;
+  const rawDefinition = run.workflowVersion?.definition ?? run.testRunDefinition ?? run.workflow.definition;
   const parsed = ZWorkflowExecutableDefinition.safeParse(rawDefinition);
   if (!parsed.success) {
     throw new WorkflowRunNotExecutableError("Workflow run definition is not executable");
@@ -432,6 +436,7 @@ const executeClaimedRun = async (
   run: {
     id: string;
     workflowVersion: { definition: unknown } | null;
+    testRunDefinition?: unknown;
     workflow: { definition: unknown; createdBy: string | null };
   },
   data: TWorkflowRunJobData,

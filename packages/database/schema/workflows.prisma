@@ -103,6 +103,11 @@ model WorkflowRun {
   contentDeletedAt     DateTime?
   /// The retention period in days that applied when the content was cleared ("Details deleted after N days").
   contentRetentionDays Int?
+  /// The draft definition a Test run executed (ADR 0049), so its graph can be drawn after the draft
+  /// changes. Null for live runs (they point at `workflowVersionId`) and for Test runs saved before it
+  /// existed. Configuration like a version's definition, not run content: retention leaves it alone.
+  /// [WorkflowExecutableDefinition]
+  testRunDefinition    Json?
 
   @@unique([workflowId, idempotencyKey])
   @@index([workspaceId, createdAt])

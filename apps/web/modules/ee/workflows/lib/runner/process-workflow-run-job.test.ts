@@ -721,6 +721,20 @@ describe("processWorkflowRunJob", () => {
     expect(mockSendEmail).toHaveBeenCalledTimes(1);
   });
 
+  test("runs the draft a Test run saved, not the workflow's current definition", async () => {
+    mockWorkflowRunFindFirst.mockResolvedValue({
+      ...baseRun,
+      isDryRun: true,
+      workflowVersion: null,
+      testRunDefinition: executableDefinition,
+      // The draft changed after the Test run was saved; the saved one is what runs.
+      workflow: { definition: { not: "executable" }, createdBy: "creator-1" },
+    });
+
+    await expect(processWorkflowRunJob(data, baseContext)).resolves.toBeUndefined();
+    expect(mockSendEmail).toHaveBeenCalledTimes(1);
+  });
+
   test("resume: does NOT re-send a step that already has a succeeded log", async () => {
     // Retry of a run mid-flight: run already `running`, its only step already `succeeded`.
     mockWorkflowRunFindFirst.mockResolvedValue({ ...baseRun, status: "running" });

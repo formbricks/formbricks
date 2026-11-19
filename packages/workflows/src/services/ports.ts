@@ -285,7 +285,7 @@ export interface WorkflowRunDelegate {
     // The list emits only the slim `WorkflowRunRow` scalars, so omit the large JSON columns
     // (`triggerPayload`, `data`) to avoid reading/shipping up to 100 big blobs per page for nothing.
     // The detail `findUnique` keeps them. Optional so the port stays a faithful subset of Prisma's args.
-    omit?: { triggerPayload?: true; data?: true };
+    omit?: { triggerPayload?: true; data?: true; testRunDefinition?: true };
     // Join the workflow's name so the workspace-wide runs table can label each row without an
     // N+1 client lookup. Required because the return type guarantees `workflow.name` is present;
     // `omit` + `include` compose in Prisma (unlike `select` + `omit`).
@@ -309,6 +309,8 @@ export interface WorkflowRunDelegate {
       isDryRun: true;
       attempt: number;
       triggerPayload: TWorkflowTriggerRunPayload;
+      /** The draft the Test run executes, so its graph can be drawn after the draft changes. */
+      testRunDefinition: TWorkflowExecutableDefinition;
     };
     select: { id: true };
   }) => Promise<{ id: string }>;

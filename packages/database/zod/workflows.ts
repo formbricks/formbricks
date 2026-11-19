@@ -82,6 +82,9 @@ export const ZWorkflowRun = z.object({
     .positive()
     .nullable()
     .describe("The retention period, in days, that cleared the run's content"),
+  testRunDefinition: ZWorkflowExecutableDefinition.nullable().describe(
+    "The draft definition a Test run executed; null for live runs and older Test runs"
+  ),
 }) satisfies z.ZodType<WorkflowRun>;
 
 export const ZWorkflowRunLog = z.object({
