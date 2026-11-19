@@ -20,9 +20,15 @@ export interface TVisitorLanguage {
 /** As many browser languages as the full matcher tries (`MAX_BROWSER_LANGUAGE_CANDIDATES`). */
 const MAX_BROWSER_LANGUAGES = 10;
 
-/** A requested code as a `TLanguageMatch` key: no `;q=` weight, `-` separators, lowercase. */
-export const toLanguageKey = (code: string): string =>
-  code.split(";")[0].trim().replaceAll("_", "-").toLowerCase();
+/**
+ * A requested code as a `TLanguageMatch` key: no `;q=` weight, `-` separators, lowercase, and no extension
+ * or private-use subtags (`es-MX-u-nu-latn` is `es-mx`), which the full matcher drops the same way.
+ */
+export const toLanguageKey = (code: string): string => {
+  const key = code.split(";")[0].trim().replaceAll("_", "-").toLowerCase();
+  const extensionStart = key.search(/-[0-9a-z](?=-|$)/);
+  return extensionStart === -1 ? key : key.slice(0, extensionStart);
+};
 
 /** `language` or `language-script`, lowercase; Chinese takes its likely script (`zh-TW` is `zh-hant`). */
 export const toLanguageBase = (code: string): string | undefined => {
@@ -35,31 +41,13 @@ export const toLanguageBase = (code: string): string | undefined => {
   }
 };
 
-/**
- * A tag's key without its extension and private-use subtags (`es-MX-u-nu-latn` -> `es-mx`), so it reads
- * as its region does; `undefined` when there are none to drop or the tag is not well-formed.
- */
-const toRegionalKey = (code: string): string | undefined => {
-  try {
-    const key = new Intl.Locale(code).baseName.toLowerCase();
-    return key === code ? undefined : key;
-  } catch {
-    return undefined;
-  }
-};
-
 /** One requested language against a precomputed list: a stored code, `"default"`, or `null`. */
 export const matchLanguage = (match: TLanguageMatch, requested: string): string | null => {
   const code = toLanguageKey(requested);
   // Looked up as own string values only: a code like `constructor` must not reach Object's prototype.
   const own = (map: Record<string, string>, key: string | undefined) =>
     key && Object.hasOwn(map, key) ? map[key] : null;
-  if (!code) return null;
-  // The exact key first, then the same tag without extensions (ENG-3894: `es-MX-u-nu-latn` keeps `es-MX`'s
-  // `es-419`), then the base language.
-  return (
-    own(match.keys, code) ?? own(match.keys, toRegionalKey(code)) ?? own(match.bases, toLanguageBase(code))
-  );
+  return code ? (own(match.keys, code) ?? own(match.bases, toLanguageBase(code))) : null;
 };
 
 /**

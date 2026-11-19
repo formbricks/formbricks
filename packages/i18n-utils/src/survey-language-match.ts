@@ -23,8 +23,17 @@ export interface TMatchableSurveyLanguage {
   };
 }
 
-/** Drops a `;q=` weight (or any other parameter) and surrounding whitespace from a requested code. */
-const cleanRequestedCode = (code: string): string => code.split(";")[0].trim();
+/**
+ * Drops a `;q=` weight (or any other parameter), surrounding whitespace, and extension or private-use
+ * subtags (everything from the first single-letter subtag: `es-MX-u-nu-latn` -> `es-MX`). Extensions
+ * never change the language, so a tag that carries them matches exactly as its plain form does; the
+ * creatives page matcher (`toLanguageKey` in `@formbricks/creatives`) cuts the same way.
+ */
+const cleanRequestedCode = (code: string): string => {
+  const cleaned = code.split(";")[0].trim();
+  const extensionStart = cleaned.search(/[-_][0-9a-z](?=[-_]|$)/i);
+  return extensionStart === -1 ? cleaned : cleaned.slice(0, extensionStart);
+};
 
 /** `_` and `-` are the same separator for matching purposes, and casing never matters. */
 const toComparableCode = (code: string): string => code.trim().replaceAll("_", "-").toLowerCase();

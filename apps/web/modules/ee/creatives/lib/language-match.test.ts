@@ -39,6 +39,11 @@ const LISTS: Record<string, TMatchableSurveyLanguage[]> = {
     language("es-ES"),
     language("es-419"),
   ],
+  "an alias that is another Spanish region's tag": [
+    language("en-US", { isDefault: true }),
+    language("es-ES", { alias: "es-MX" }),
+    language("es-419"),
+  ],
   "a disabled language": [language("en-US", { isDefault: true }), language("fr-FR", { enabled: false })],
   "a default that is a regional variant": [language("es-MX", { isDefault: true }), language("en-GB")],
   "renamed and macro languages": [
