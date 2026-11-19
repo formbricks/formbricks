@@ -368,7 +368,7 @@ const ZMcpSurveyWriteConfirm = z
   .boolean()
   .optional()
   .describe(
-    "Set true only after the user agreed. Required to change or delete a survey that is not a draft and already has responses; without it nothing changes and the call returns the caution to show the user."
+    "Set true only after the user agreed. Required to change a survey that is not a draft and already has responses; without it nothing changes and the call returns the caution to show the user."
   );
 
 export const ZMcpCreateSurveyInput = z
