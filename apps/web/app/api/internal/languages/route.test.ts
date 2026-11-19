@@ -6,6 +6,7 @@ import {
   OperationNotAllowedError,
   ResourceNotFoundError,
   TooManyRequestsError,
+  UniqueConstraintError,
   ValidationError,
 } from "@formbricks/types/errors";
 import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
@@ -369,6 +370,17 @@ describe("surveys using a language", () => {
 });
 
 describe("refusals", () => {
+  test("a language the workspace already has is a 409 carrying the service's message", async () => {
+    mocks.language.createLanguage.mockRejectedValue(
+      new UniqueConstraintError("This workspace already has this language")
+    );
+    const response = await create({ code: "de", alias: null });
+
+    expect(response.status).toBe(409);
+    expect((await response.json()).detail).toBe("This workspace already has this language");
+    expect(lastAudit()).toMatchObject({ action: "created", status: "failure" });
+  });
+
   test("a code outside the catalog is a 400 carrying the service's message", async () => {
     mocks.language.createLanguage.mockRejectedValue(new ValidationError("Unsupported language code: 'xx'"));
     const response = await create({ code: "xx", alias: null });

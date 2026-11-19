@@ -1,6 +1,11 @@
 import "server-only";
 import { logger } from "@formbricks/logger";
-import { OperationNotAllowedError, ResourceNotFoundError, ValidationError } from "@formbricks/types/errors";
+import {
+  OperationNotAllowedError,
+  ResourceNotFoundError,
+  UniqueConstraintError,
+  ValidationError,
+} from "@formbricks/types/errors";
 import { requireWorkspaceActionAccess } from "@/app/api/internal/lib/workspace-access";
 import { getV3SessionUserId, requireSessionWorkspaceAccess } from "@/app/api/v3/lib/auth";
 import { mapV3ThrownError } from "@/app/api/v3/lib/errors";
@@ -120,7 +125,7 @@ const spendWriteBudget = (context: TRequestContext, workspaceId: string) =>
  * The language service's refusals, as answers. A code outside the catalog is the caller's input (400);
  * a language the workspace still needs — its default survey language, or one surveys or creatives use —
  * is a 409 whose message the settings page shows as it is (it names only surveys the caller may see,
- * ENG-3282). Everything else is mapped like any other v3 failure, so a row deleted mid-request is a 403.
+ * ENG-3282), and so is a language the workspace already has (ENG-3602). Everything else is mapped like any other v3 failure, so a row deleted mid-request is a 403.
  */
 function mapLanguageError(error: unknown, context: TRequestContext, operation: string): Response {
   if (error instanceof ValidationError) {
@@ -129,7 +134,7 @@ function mapLanguageError(error: unknown, context: TRequestContext, operation: s
       invalid_params: [{ name: "code", reason: error.message }],
     });
   }
-  if (error instanceof OperationNotAllowedError) {
+  if (error instanceof OperationNotAllowedError || error instanceof UniqueConstraintError) {
     return problemConflict(context.requestId, error.message, context.instance);
   }
   return mapV3ThrownError(error, {
