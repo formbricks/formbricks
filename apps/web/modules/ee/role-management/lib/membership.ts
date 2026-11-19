@@ -118,6 +118,26 @@ const writeMembershipRoleChange = async (
 };
 
 /**
+ * Projects a committed role change to SpiceDB: the user's organization role, and their team relationships
+ * in `teamIds`. Runs after the source commit, so it reads the new role; a failure is logged and left to
+ * the durable outbox, which projects the same change.
+ */
+export const projectMembershipRoleChange = async (
+  organizationId: string,
+  userId: string,
+  teamIds: string[]
+): Promise<void> => {
+  await runPostCommitProjection("organization_role_membership_update", () =>
+    reconcileOrganizationMembership(organizationId, userId)
+  );
+  await runPostCommitProjection("organization_role_team_membership_update", () =>
+    reconcileTeamWorkspaceRelationships({
+      teamMemberships: teamIds.map((teamId) => ({ teamId, userId })),
+    })
+  );
+};
+
+/**
  * Sets a member's role. `actorUserId` is the user making the change: the actor of the audit entries of any
  * MCP grant the change ends.
  */
@@ -137,33 +157,27 @@ export const updateMembership = async (
     // stays all the same: its ended grants are audited and removed from SpiceDB, and the role projected.
     await finishRevokedMcpGrants(progress.endedGrantAudits, { actorUserId });
     if (progress.membershipUpdated) {
-      await runPostCommitProjection("organization_role_membership_update", () =>
-        reconcileOrganizationMembership(organizationId, userId)
-      );
-      await runPostCommitProjection("organization_role_team_membership_update", () =>
-        reconcileTeamWorkspaceRelationships({
-          teamMemberships: progress.affectedTeamIds.map((teamId) => ({ teamId, userId })),
-        })
-      );
+      await projectMembershipRoleChange(organizationId, userId, progress.affectedTeamIds);
     }
   }
 };
 
 /**
  * Sets a member's role in the caller's transaction, and returns the audit records of the MCP grants it
- * ended. The caller passes them to `finishRevokedMcpGrants` once that transaction has committed, with the
- * user who made the change as the actor; a retried attempt's records are dropped with the attempt. The
- * change is projected to SpiceDB by the durable PostgreSQL outbox after the commit: reading through the
- * global client here could observe the pre-commit role and would publish stale relationships.
+ * ended and the user's teams in the organization. Once that transaction has committed, the caller passes
+ * the records to `finishRevokedMcpGrants`, with the user who made the change as the actor, and the teams to
+ * `projectMembershipRoleChange`; a retried attempt's results are dropped with the attempt. Nothing is
+ * projected from inside the transaction: reading through the global client there could observe the
+ * pre-commit role and would publish stale relationships.
  */
 export const updateMembershipInTransaction = async (
   tx: Prisma.TransactionClient,
   userId: string,
   organizationId: string,
   data: TMembershipUpdateInput
-): Promise<{ membership: TMembership; grantAudits: TMcpGrantAuditRecord[] }> => {
+): Promise<{ membership: TMembership; grantAudits: TMcpGrantAuditRecord[]; affectedTeamIds: string[] }> => {
   validateInputs([userId, ZString], [organizationId, ZString], [data, ZMembershipUpdateInput]);
   const progress = startRoleChangeProgress();
   const membership = await writeMembershipRoleChange(tx, userId, organizationId, data, progress);
-  return { membership, grantAudits: progress.endedGrantAudits };
+  return { membership, grantAudits: progress.endedGrantAudits, affectedTeamIds: progress.affectedTeamIds };
 };

@@ -198,7 +198,7 @@ describe("updateMembership", () => {
 
     await expect(
       updateMembershipInTransaction(prisma as never, "user1", "org1", { role: "dashboard_viewer" })
-    ).resolves.toEqual({ membership: { role: "dashboard_viewer" }, grantAudits });
+    ).resolves.toEqual({ membership: { role: "dashboard_viewer" }, grantAudits, affectedTeamIds: [] });
 
     expect(finishRevokedMcpGrants).not.toHaveBeenCalled();
   });
@@ -255,6 +255,7 @@ describe("updateMembership", () => {
     await expect(updateMembershipInTransaction(tx, "user1", "org1", { role: "member" })).resolves.toEqual({
       membership: mockMembership,
       grantAudits: [],
+      affectedTeamIds: ["team1"],
     });
 
     expect(tx.membership.update).toHaveBeenCalled();

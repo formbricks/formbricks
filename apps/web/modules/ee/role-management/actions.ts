@@ -16,7 +16,11 @@ import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
 import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { withAuditLogging } from "@/modules/ee/audit-logs/lib/handler";
 import { updateInvite } from "@/modules/ee/role-management/lib/invite";
-import { updateMembership, updateMembershipInTransaction } from "@/modules/ee/role-management/lib/membership";
+import {
+  projectMembershipRoleChange,
+  updateMembership,
+  updateMembershipInTransaction,
+} from "@/modules/ee/role-management/lib/membership";
 import {
   assertCanAssignRole,
   checkRoleManagementPermission,
@@ -78,6 +82,9 @@ export const updateInviteAction = authenticatedActionClient.inputSchema(ZUpdateI
  * Demotes an owner under the owners' lock, refusing to demote the last active one. `actorUserId` is the
  * user making the change: the actor of the audit entries of any MCP grant it ends, which are finished once
  * the transaction commits. Each attempt returns its own records, so a retried attempt's are dropped.
+ *
+ * The new role reaches SpiceDB right after the commit, as in every other role change: left to the outbox,
+ * the demoted user would keep the owner's permissions until it delivers (ENG-7282).
  */
 const demoteOwner = async (
   organizationId: string,
@@ -86,7 +93,7 @@ const demoteOwner = async (
   actorUserId: string
 ) => {
   try {
-    const { membership, grantAudits } = await runOwnerGuardedTransaction(
+    const { membership, grantAudits, affectedTeamIds } = await runOwnerGuardedTransaction(
       organizationId,
       userId,
       async (tx) => {
@@ -100,7 +107,11 @@ const demoteOwner = async (
       // A demotion to Dashboard viewer ends the user's MCP grants, which can wait on a reconciling pass.
       { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
     );
-    await finishRevokedMcpGrants(grantAudits, { actorUserId });
+    try {
+      await finishRevokedMcpGrants(grantAudits, { actorUserId });
+    } finally {
+      await projectMembershipRoleChange(organizationId, userId, affectedTeamIds);
+    }
     return membership;
   } catch (error) {
     if (error instanceof LastActiveOwnerError) {
