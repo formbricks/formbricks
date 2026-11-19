@@ -285,16 +285,12 @@ describe("handleFeedbackSourcePipeline", () => {
       }),
     ]);
     vi.mocked(transformResponseToFeedbackRecords, { partial: true, deep: true }).mockReturnValue(twoRecords);
-    const rateLimited = { status: 429, message: "Rate limited", detail: "Rate limited" };
-    // The first attempt lands one record; every retry of the other is rate limited again.
-    mockCreateFeedbackRecordsBatch
-      .mockResolvedValueOnce({
-        results: [
-          { data: { id: "hub-1" }, error: null },
-          { data: null, error: rateLimited },
-        ],
-      })
-      .mockResolvedValue({ results: [{ data: null, error: rateLimited }] });
+    mockCreateFeedbackRecordsBatch.mockResolvedValue({
+      results: [
+        { data: { id: "hub-1" }, error: null },
+        { data: null, error: { status: 429, message: "Rate limited", detail: "Rate limited" } },
+      ],
+    });
 
     await runPipeline();
 
@@ -329,7 +325,7 @@ describe("handleFeedbackSourcePipeline", () => {
       ["503", { status: 503, message: "503", detail: "503" }],
       ["504", { status: 504, message: "504", detail: "504" }],
       ["a connection reset", connectionReset],
-      ["a timeout", { status: 0, message: "The operation was aborted due to timeout", detail: "" }],
+      ["a timeout", { status: 0, message: "The operation timed out.", detail: "The operation timed out." }],
     ])("re-sends only the records that failed with %s, until they land", async (_label, error) => {
       vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValue([createFeedbackSource()]);
       vi.mocked(transformResponseToFeedbackRecords, { partial: true, deep: true }).mockReturnValue(
@@ -407,6 +403,7 @@ describe("handleFeedbackSourcePipeline", () => {
       );
       mockCreateFeedbackRecordsBatch
         .mockResolvedValueOnce({ results: [{ data: null, error: serverError }] })
+        .mockResolvedValueOnce({ results: [{ data: null, error: serverError }] })
         .mockResolvedValueOnce({ results: [{ data: { id: "hub-1" }, error: null }] });
 
       const run = handleFeedbackSourcePipeline(mockResponse, mockSurvey, "env-1");
@@ -417,12 +414,50 @@ describe("handleFeedbackSourcePipeline", () => {
       expect(mockCreateFeedbackRecordsBatch).toHaveBeenCalledTimes(1);
 
       await vi.advanceTimersByTimeAsync(1);
-      await run;
       expect(mockCreateFeedbackRecordsBatch).toHaveBeenCalledTimes(2);
+
+      await vi.advanceTimersByTimeAsync(3_999);
+      expect(mockCreateFeedbackRecordsBatch).toHaveBeenCalledTimes(2);
+
+      await vi.advanceTimersByTimeAsync(1);
+      await run;
+      expect(mockCreateFeedbackRecordsBatch).toHaveBeenCalledTimes(3);
+    });
+
+    test("a Hub that hangs until the attempt times out is not retried: the worker is not held for minutes", async () => {
+      vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValue([createFeedbackSource()]);
+      vi.mocked(transformResponseToFeedbackRecords, { partial: true, deep: true }).mockReturnValue(
+        oneFeedbackRecord
+      );
+      // The SDK's per-attempt timeout is 60 s; the attempt fails only once it has run out.
+      mockCreateFeedbackRecordsBatch.mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  results: [
+                    { data: null, error: { status: 0, message: "The operation timed out.", detail: "" } },
+                  ],
+                }),
+              60_000
+            )
+          )
+      );
+
+      await runPipeline();
+
+      expect(mockCreateFeedbackRecordsBatch).toHaveBeenCalledTimes(1);
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ failures: 1, attempts: 1 }),
+        expect.any(String)
+      );
     });
 
     test.each([
       ["a 400 validation error", { status: 400, message: "400 invalid", detail: "400 invalid" }],
+      // The SDK has already re-sent a 429 itself, honouring Retry-After.
+      ["a 429 the SDK already retried", { status: 429, message: "Rate limited", detail: "Rate limited" }],
       [
         "a tenant purge in progress",
         { status: 409, message: "409", detail: "", code: "tenant_write_conflict" },
