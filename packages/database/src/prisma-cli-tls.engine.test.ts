@@ -185,6 +185,21 @@ describe.runIf(canRun)("Prisma CLI TLS verification", () => {
     }
   }, 90_000);
 
+  test("the translated URL refuses a certificate that does not match the host", async () => {
+    // The certificate names localhost only, so 127.0.0.1 must fail even with the signing CA.
+    const cli = await preparePrismaCliEnvironment(
+      url(`sslmode=verify-ca&sslrootcert=${caFile}`).replace("@localhost:", "@127.0.0.1:")
+    );
+    try {
+      const result = await migrate(cli.env);
+
+      expect(result.attempted).toBeGreaterThan(0);
+      expect(result.completed).toBe(0);
+    } finally {
+      await cli.cleanup();
+    }
+  }, 90_000);
+
   test.each([
     ["verify-full with the signing CA", () => `sslmode=verify-full&sslrootcert=${caFile}`],
     [

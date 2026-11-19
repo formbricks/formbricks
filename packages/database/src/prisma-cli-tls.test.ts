@@ -48,6 +48,29 @@ describe("resolvePrismaCliTls", () => {
     }
   );
 
+  test("reads a repeated parameter's last value, as pg and Prisma do", () => {
+    expect(resolve(`${base}?sslmode=require&sslmode=verify-full`)).toEqual({
+      databaseUrl: strictUrl(),
+      verifiesServerCertificate: true,
+    });
+    expect(
+      resolve(`${base}?sslmode=verify-full&sslaccept=strict&sslaccept=accept_invalid_certs`)
+    ).toMatchObject({
+      verifiesServerCertificate: false,
+    });
+  });
+
+  test("rejects a root certificate path that is a directory", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "prisma-cli-tls-dir-"));
+    try {
+      expect(() => resolvePrismaCliTls(`${base}?sslmode=verify-full&sslrootcert=${dir}`, {})).toThrow(
+        PrismaCliTlsConfigError
+      );
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
   test("leaves a URL without TLS settings untouched", () => {
     expect(resolve(base)).toEqual({ databaseUrl: base, verifiesServerCertificate: false });
   });

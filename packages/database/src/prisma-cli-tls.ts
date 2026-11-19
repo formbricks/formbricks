@@ -1,5 +1,5 @@
 import { execFile } from "node:child_process";
-import { existsSync } from "node:fs";
+import { statSync } from "node:fs";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -55,6 +55,20 @@ export interface TPrismaCliTls {
   rootCertFile?: string;
 }
 
+// pg and Prisma both let a repeated query parameter's last value win, so read it the same way.
+const lastParam = (params: URLSearchParams, name: string): string | null => {
+  const values = params.getAll(name);
+  return values.length > 0 ? values[values.length - 1] : null;
+};
+
+const isFile = (filePath: string): boolean => {
+  try {
+    return statSync(filePath).isFile();
+  } catch {
+    return false;
+  }
+};
+
 const nonEmpty = (value: string | null | undefined): string | undefined =>
   value === null || value === undefined || value === "" ? undefined : value;
 
@@ -62,17 +76,17 @@ const nonEmpty = (value: string | null | undefined): string | undefined =>
 export const resolvePrismaCliTls = (
   databaseUrl: string,
   env: NodeJS.ProcessEnv = process.env,
-  fileExists: (filePath: string) => boolean = existsSync
+  fileExists: (filePath: string) => boolean = isFile
 ): TPrismaCliTls => {
   const parts = splitConnectionUrl(databaseUrl);
-  const sslAccept = parts.params.get("sslaccept");
+  const sslAccept = lastParam(parts.params, "sslaccept");
 
   if (sslAccept !== null) {
     return { databaseUrl, verifiesServerCertificate: sslAccept !== "accept_invalid_certs" };
   }
 
-  const sslMode = nonEmpty(parts.params.get("sslmode")) ?? nonEmpty(env.PGSSLMODE);
-  const sslRootCert = nonEmpty(parts.params.get("sslrootcert")) ?? nonEmpty(env.PGSSLROOTCERT);
+  const sslMode = nonEmpty(lastParam(parts.params, "sslmode")) ?? nonEmpty(env.PGSSLMODE);
+  const sslRootCert = nonEmpty(lastParam(parts.params, "sslrootcert")) ?? nonEmpty(env.PGSSLROOTCERT);
 
   if (sslMode !== undefined && !SSL_MODES.has(sslMode)) {
     throw new PrismaCliTlsConfigError(
@@ -104,7 +118,7 @@ export const resolvePrismaCliTls = (
     rootCertFile = path.resolve(sslRootCert);
     if (!fileExists(rootCertFile)) {
       throw new PrismaCliTlsConfigError(
-        `Root certificate file "${rootCertFile}" from sslrootcert does not exist; the database server cannot be verified.`
+        `Root certificate file "${rootCertFile}" from sslrootcert is not a readable file; the database server cannot be verified.`
       );
     }
   }
