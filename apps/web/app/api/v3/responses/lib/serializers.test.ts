@@ -329,6 +329,16 @@ describe("what the detail view's data map may carry", () => {
   });
 });
 
+// A draft or migrated block can be stored without `elements` (ENG-2497).
+describe("a survey with a block that has no elements array", () => {
+  test("serializes the other blocks' answers", () => {
+    const withEmptyBlock = survey();
+    (withEmptyBlock as unknown as { blocks: unknown[] }).blocks.unshift({ id: "legacy", name: "Legacy" });
+
+    expect(listItem(row(), withEmptyBlock).answers).toMatchObject([{ elementId: "q1", valueText: "good" }]);
+  });
+});
+
 describe("the per-survey plans are reused without leaking across languages", () => {
   /**
    * The reason the serializer is a factory. A page of 250 responses may span several surveys and
