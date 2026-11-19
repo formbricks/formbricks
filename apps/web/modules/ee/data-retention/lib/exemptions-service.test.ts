@@ -198,8 +198,8 @@ describe("exemption writes", () => {
 
   test("revokes only an exemption that is still active, and says whether it did", async () => {
     vi.mocked(prisma.retentionExemption.updateMany)
-      .mockResolvedValueOnce({ count: 1 } as never)
-      .mockResolvedValueOnce({ count: 0 } as never);
+      .mockResolvedValueOnce({ count: 1 })
+      .mockResolvedValueOnce({ count: 0 });
 
     await expect(revokeRetentionExemption({ id: "clexm", revokedById: USER_ID, now: NOW })).resolves.toBe(
       true

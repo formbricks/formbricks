@@ -327,6 +327,43 @@ const stringifyRecallValue = (value: TResponseDataValue): string => {
   return "";
 };
 
+/** A recalled answer for display: a stored date in its display format, a list joined by commas. */
+const formatRecalledAnswer = (
+  value: TResponseDataValue | undefined,
+  dateFormat: TSurveyDateFormatMap[string] | undefined,
+  locale: string
+): TResponseDataValue | undefined => {
+  // Apply formatting for special value types
+  if (typeof value === "string") {
+    const formattedDate = formatStoredDateForDisplay(value, dateFormat, locale);
+    if (formattedDate) return formattedDate;
+    return value;
+  }
+  if (Array.isArray(value)) {
+    return value.filter((item) => item).join(", ");
+  }
+  return value;
+};
+
+/** The value a recall id names: a variable first, then an answer formatted for display. */
+const getRecalledValue = (
+  recallItemId: string,
+  responseData: TResponseData | undefined,
+  variables: TResponseVariables | undefined,
+  locale: string,
+  dateFormats: TSurveyDateFormatMap | undefined
+): TResponseDataValue | undefined => {
+  // First check if it matches a variable
+  if (variables && Object.keys(variables).includes(recallItemId)) {
+    return variables[recallItemId];
+  }
+  // Then check if it matches response data
+  if (responseData && Object.keys(responseData).includes(recallItemId)) {
+    return formatRecalledAnswer(responseData[recallItemId], dateFormats?.[recallItemId], locale);
+  }
+  return undefined;
+};
+
 /**
  * @param escapeValues HTML-escape each substituted value before splicing it in. Off by default because
  * most callers render the result through React, which escapes for them — escaping here too would show
@@ -347,8 +384,6 @@ export const parseRecallInfo = (
   escapeValues: boolean = false
 ) => {
   let modifiedText = text;
-  const questionIds = responseData ? Object.keys(responseData) : [];
-  const variableIds = variables ? Object.keys(variables) : [];
 
   // Process all recall patterns regardless of whether we have matching data
   while (modifiedText.includes("#recall:")) {
@@ -363,27 +398,7 @@ export const parseRecallInfo = (
     }
 
     const fallback = extractFallbackValue(recallInfo).replaceAll("nbsp", " ");
-    let value: TResponseDataValue | undefined;
-
-    // First check if it matches a variable
-    if (variables && variableIds.includes(recallItemId)) {
-      value = variables[recallItemId];
-    }
-    // Then check if it matches response data
-    else if (responseData && questionIds.includes(recallItemId)) {
-      value = responseData[recallItemId];
-
-      // Apply formatting for special value types
-      if (typeof value === "string") {
-        const formattedDate = formatStoredDateForDisplay(value, dateFormats?.[recallItemId], locale);
-
-        if (formattedDate) {
-          value = formattedDate;
-        }
-      } else if (Array.isArray(value)) {
-        value = value.filter((item) => item).join(", ");
-      }
-    }
+    let value = getRecalledValue(recallItemId, responseData, variables, locale, dateFormats);
 
     // If no value was found, use the fallback
     if (value === undefined || value === null || value === "") {

@@ -33,9 +33,14 @@ These remain review checks until their enforcement handles the repository's exis
   variables, and `SCREAMING_SNAKE_CASE` for constants.
 - Keep responsibilities focused; consolidate duplicated behavior when it has one reason to change.
 - Follow React hooks rules, keep effects focused, and avoid unnecessary `useMemo`/`useCallback`.
-- Prefer type inference and shared types from `@formbricks/types`; new `any`s are still findings where
-  oxlint reports them only as warnings.
+- Prefer type inference and shared types from `@formbricks/types`. `any` is a lint error everywhere
+  (`typescript/no-explicit-any`); in tests, type mocks with `vi.mocked(fn)` (`{ partial: true }` for a
+  partial fixture) rather than casting.
 - Keep components focused, avoid deep nesting, and ensure basic accessibility.
+- A file stays under 5,000 tokens (about 20 KB of source). Past that, split it along its responsibilities
+  instead of growing it. A change that pushes a file over the limit splits it in the same PR. Generated
+  files, locale files and lockfiles are exempt, and an existing file already over the limit is not a
+  reason to refactor it unless the change touches it.
 - Context providers should guard against missing provider usage and use cleanup patterns that snapshot refs inside `useEffect` to avoid React hooks warnings
 - A control's enabled state comes from the permission the server action checks, passed down from the server,
   not recomputed on the client. A control that looks editable and then fails on save is a finding.
@@ -47,7 +52,10 @@ These remain review checks until their enforcement handles the repository's exis
 - Before designing a piece, find the feature that already does something similar and build the new one the
   same way: module layout, API shape, UI components, tests.
 - Extend what nearly fits (a prop, an option, a parameter) rather than copying it. UI reuses the components of
-  similar-looking screens, guided by `.agents/formbricks-context/DESIGN.md` when it exists.
+  similar-looking screens, guided by `.agents/formbricks-context/DESIGN.md` when it exists, so the design stays
+  consistent.
+- Add a new component or design pattern only when no existing one can carry the interaction. Say why in the
+  plan and the PR.
 - A bad pattern is the exception: name what is wrong with it and fix it. When the change already touches that
   code, the refactor ships in the same PR as its own commit; otherwise it becomes a Linear ticket.
 - A fix names its siblings. Search for the same call, predicate or literal, then fix every copy in the same
@@ -63,6 +71,9 @@ These remain review checks until their enforcement handles the repository's exis
   tool that writes) needs it: it gains its OpenAPI contract and stability promise, and the app moves to the
   public route rather than keeping an internal twin. A feature built for external callers from day one
   starts public, as dashboards did ([ADR-0002](docs/adr/0002-the-app-uses-the-public-dashboard-api.md)).
+- A public `/api/v3` operation ships with its MCP tool in the same PR, so agents can do what API keys can.
+  Exceptions are allowed, such as hard deletes, when the PR names them and says why. "Adding a tool" in
+  `docs/development/technical-handbook/mcp-server.mdx` covers the tool side.
 - The route framework is in `AGENTS.md` under "Architecture & Patterns" and "API v3".
 - Paths name resources, and each response uses the method and status code HTTP defines for the case. Writes
   that can race take the `updatedAt` compare-and-set (409 on mismatch); writes a retry could repeat are
@@ -281,7 +292,9 @@ Do not:
 - Do not write component or UI unit tests for `.tsx` files. **This is not an instruction to write an E2E
   test instead**: the absence of a component unit test creates no coverage obligation. If a component holds
   logic worth proving, lift that logic into a `.ts` module and unit-test it there; the rendering is
-  exercised incidentally by the feature journeys that already cross it.
+  exercised incidentally by the feature journeys that already cross it. When the lift serves a bug fix, make
+  it a commit of its own that keeps the behaviour unchanged, and fix in the next commit: `unit (red on main)`
+  then means red on the lift commit, and the Coverage row names it.
 - Do not E2E a component. A language selector, a breadcrumb, a sidebar's link list, an ARIA attribute on
   one widget, a keystroke inside one editor, a field's validation message, a search box filtering a list —
   none of these justify a browser, a login, and a seeded tenant.

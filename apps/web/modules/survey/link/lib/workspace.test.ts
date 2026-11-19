@@ -56,7 +56,7 @@ describe("getWorkspaceById", () => {
       name: "Test Workspace",
     };
 
-    vi.mocked(prisma.workspace.findUnique).mockResolvedValueOnce(mockWorkspace as any);
+    vi.mocked(prisma.workspace.findUnique, { partial: true }).mockResolvedValueOnce(mockWorkspace);
 
     const result = await getWorkspaceById(workspaceId);
 
@@ -139,7 +139,7 @@ describe("getWorkspaceContextForLinkSurvey", () => {
       },
     };
 
-    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockData as any);
+    vi.mocked(prisma.workspace.findUnique, { partial: true }).mockResolvedValue(mockData);
 
     const result = await getWorkspaceContextForLinkSurvey(mockWorkspaceId);
 
@@ -216,7 +216,7 @@ describe("getWorkspaceContextForLinkSurvey", () => {
       organization: null,
     };
 
-    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockData as any);
+    vi.mocked(prisma.workspace.findUnique, { partial: true }).mockResolvedValue(mockData);
 
     await expect(getWorkspaceContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow(ResourceNotFoundError);
     await expect(getWorkspaceContextForLinkSurvey(mockWorkspaceId)).rejects.toThrow("Organization");
@@ -271,7 +271,7 @@ describe("getWorkspaceContextForLinkSurvey", () => {
       },
     };
 
-    vi.mocked(prisma.workspace.findUnique).mockResolvedValue(mockData as any);
+    vi.mocked(prisma.workspace.findUnique, { partial: true }).mockResolvedValue(mockData);
 
     const result = await getWorkspaceContextForLinkSurvey(mockWorkspaceId);
 
@@ -321,7 +321,7 @@ describe("getWorkspaceContextForLinkSurvey", () => {
         billing: { stripeCustomerId: null, limits: {}, usageCycleAnchor: null, stripe: null },
         whitelabel: null,
       },
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof prisma.workspace.findUnique>>);
 
     const result = await getWorkspaceContextForLinkSurvey(mockWorkspaceId);
 

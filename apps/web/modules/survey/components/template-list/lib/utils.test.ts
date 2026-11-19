@@ -39,7 +39,7 @@ describe("Template utils", () => {
         ],
         endings: [],
         hiddenFields: { enabled: true, fieldIds: [] },
-      } as any,
+      },
     };
 
     const mockWorkspace = {

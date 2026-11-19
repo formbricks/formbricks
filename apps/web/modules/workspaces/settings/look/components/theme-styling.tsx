@@ -201,7 +201,7 @@ export const ThemeStyling = ({
   if (isReadOnly) {
     return (
       <div className="flex flex-col gap-4">
-        <Alert variant="warning" role="status">
+        <Alert variant="warning" alertRole="status">
           <AlertDescription>
             {t("common.only_owners_managers_and_manage_access_members_can_perform_this_action")}
           </AlertDescription>
@@ -230,7 +230,7 @@ export const ThemeStyling = ({
                 <StylingAppearanceProvider appearance={appearance}>
                   <div className="grid grid-cols-2 items-end gap-4">
                     <ColorField
-                      form={form}
+                      form={form as UseFormReturn<TWorkspaceStyling | TSurveyStyling>}
                       name="brandColor.light"
                       label={t("workspace.surveys.edit.brand_color")}
                       description={t("workspace.surveys.edit.brand_color_description")}
@@ -390,7 +390,7 @@ export const ThemeStyling = ({
             mainText={t("workspace.look.reset_styling_confirmation")}
             confirmBtnLabel={t("common.confirm")}
             onConfirm={() => {
-              onReset();
+              void onReset();
               setConfirmResetStylingModalOpen(false);
             }}
             onDecline={() => setConfirmResetStylingModalOpen(false)}

@@ -128,16 +128,9 @@ export const ElementsView = ({
 
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
-  const internalElementIdMap = useMemo(() => {
-    return elements.reduce<Record<string, string>>((acc, element) => {
-      acc[element.id] = createId();
-      return acc;
-    }, {});
-  }, [elements]);
-
   const surveyLanguages = localSurvey.languages;
 
-  const updateElement = (elementIdx: number, updatedAttributes: any) => {
+  const updateElement = (elementIdx: number, updatedAttributes: Record<string, unknown>) => {
     // Get element ID from current elements array (for validation)
     const element = elements[elementIdx];
     if (!element) return;
@@ -158,8 +151,8 @@ export const ElementsView = ({
       let updatedSurvey = { ...prevSurvey };
 
       // Handle block-level attributes (logic, logicFallback, buttonLabel, backButtonLabel) separately
-      const blockLevelAttributes: any = {};
-      const elementLevelAttributes: any = {};
+      const blockLevelAttributes: Record<string, unknown> = {};
+      const elementLevelAttributes: Record<string, unknown> = {};
 
       Object.keys(updatedAttributes).forEach((key) => {
         if (
@@ -192,7 +185,7 @@ export const ElementsView = ({
         const cleanedAttributes = { ...elementLevelAttributes };
         attributesToCheck.forEach((attribute) => {
           if (Object.keys(cleanedAttributes).includes(attribute)) {
-            const currentLabel = cleanedAttributes[attribute];
+            const currentLabel = cleanedAttributes[attribute] as TI18nString | undefined;
             if (
               currentLabel &&
               Object.keys(currentLabel).length === 1 &&
@@ -325,7 +318,6 @@ export const ElementsView = ({
 
     updatedSurvey = result.data;
     setLocalSurvey(updatedSurvey);
-    delete internalElementIdMap[elementId];
 
     handleActiveElementAfterDeletion(elementId, elementIdx, updatedSurvey, activeElementIdTemp);
 
@@ -372,7 +364,6 @@ export const ElementsView = ({
     }
 
     setActiveElementId(newElementId);
-    internalElementIdMap[newElementId] = createId();
 
     setLocalSurvey(result.data);
     toast.success(t("workspace.surveys.edit.question_duplicated"));
@@ -401,7 +392,6 @@ export const ElementsView = ({
     });
 
     setActiveElementId(element.id);
-    internalElementIdMap[element.id] = createId();
     scrollElementCardIntoView(element.id);
   };
 
@@ -427,7 +417,6 @@ export const ElementsView = ({
 
     setLocalSurvey(result.data);
     setActiveElementId(updatedElement.id);
-    internalElementIdMap[updatedElement.id] = createId();
     scrollElementCardIntoView(updatedElement.id);
   };
 
@@ -543,7 +532,6 @@ export const ElementsView = ({
       const duplicatedBlock = result.data.blocks[blockIndex + 1];
       if (duplicatedBlock?.elements[0]) {
         setActiveElementId(duplicatedBlock.elements[0].id);
-        internalElementIdMap[duplicatedBlock.elements[0].id] = createId();
       }
     }
 
@@ -761,7 +749,7 @@ export const ElementsView = ({
   return (
     <div className="mt-12 w-full px-5 py-4">
       {showLogicMovedNotice && onOpenFlow && (
-        <Alert variant="info" className="mb-5" role="note">
+        <Alert variant="info" className="mb-5" alertRole="note">
           <AlertTitle>{t("workspace.surveys.edit.flow.logic_moved_title")}</AlertTitle>
           <AlertDescription>{t("workspace.surveys.edit.flow.logic_moved_description")}</AlertDescription>
           <AlertButton onClick={onOpenFlow}>{t("workspace.surveys.edit.flow.open_flow")}</AlertButton>

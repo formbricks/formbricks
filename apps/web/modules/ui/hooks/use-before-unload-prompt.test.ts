@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { useBeforeUnloadPrompt } from "./use-before-unload-prompt";
 
 const fireBeforeUnload = (): BeforeUnloadEvent => {
-  const event = new Event("beforeunload", { cancelable: true }) as BeforeUnloadEvent;
+  const event = new Event("beforeunload", { cancelable: true });
   window.dispatchEvent(event);
   return event;
 };

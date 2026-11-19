@@ -32,7 +32,7 @@ describe("templates", () => {
         questions.map((_, index) => `q${index + 1}`)
       );
       for (const question of questions) {
-        for (const options of optionLists(question as unknown as Record<string, unknown>)) {
+        for (const options of optionLists(question)) {
           expect((options as { code?: string }[]).map((option) => option.code)).toEqual(
             (options as unknown[]).map((_, index) => String(index + 1))
           );

@@ -247,6 +247,88 @@ const areMailtoRecipientsValid = (recipients: string): boolean => {
   return decoded.split(",").every(isMailtoRecipientValid);
 };
 
+/** Simple IPv4 validation instead of complex regex: four dot-separated numbers from 0 to 255. */
+const isIpv4Address = (parts: string[]): boolean =>
+  parts.length === 4 &&
+  parts.every((part) => {
+    const num = parseInt(part, 10);
+    return !isNaN(num) && num >= 0 && num <= 255 && part === num.toString();
+  });
+
+/**
+ * A valid top-level domain (at least 2 characters after the last dot, for example: .com, .uk, .de,
+ * etc.). It must contain valid domain characters only. Supports punycode TLDs (IDNs), which can
+ * contain hyphens and numbers. The DNS label limit is 63 characters, but most TLDs are much shorter.
+ */
+const isValidTld = (tld: string): boolean =>
+  tld.length >= 2 &&
+  tld.length <= 63 &&
+  /^[a-zA-Z0-9-]+$/.test(tld) &&
+  !tld.startsWith("-") &&
+  !tld.endsWith("-");
+
+/** Whether a URL's hostname has a valid domain structure (or is localhost, IPv6 or IPv4). */
+const isValidUrlHostname = (hostname: string): boolean => {
+  // Check if it's localhost (allow for easy recall testing on self-hosted environments)
+  if (hostname === "localhost") return true;
+
+  // Check if it's an IPv6 address (simplified check for bracket notation)
+  if (hostname.startsWith("[") && hostname.endsWith("]")) {
+    const ipv6 = hostname.slice(1, -1);
+    // Basic IPv6 validation - common cases like ::1, ::, and basic hex:hex format
+    if (ipv6 === "::1" || ipv6 === "::" || /^[0-9a-fA-F:]+$/.test(ipv6)) return true;
+  }
+
+  // For regular domain names, require proper structure
+  if (!hostname.includes(".")) return false;
+
+  const parts = hostname.split(".");
+
+  if (isIpv4Address(parts)) return true;
+
+  if (!isValidTld(parts[parts.length - 1])) return false;
+
+  // Special case: if we have www.something, ensure "something" is not just a single part
+  // www.domain should be www.domain.tld (at least 3 parts total)
+  if (parts[0].toLowerCase() === "www" && parts.length < 3) return false;
+
+  // Check if all parts are valid (no empty parts between dots)
+  if (parts.some((part) => part.length === 0)) return false;
+
+  // Ensure we have at least a domain name + TLD (minimum 2 parts)
+  if (parts.length < 2) return false;
+
+  // Validate each part contains only valid domain characters
+  const domainRegex = /^[a-zA-Z0-9-]+$/;
+  return parts.every((part) => domainRegex.test(part) && !part.startsWith("-") && !part.endsWith("-"));
+};
+
+const validateMailtoUrl = (url: string, ctx: z.RefinementCtx): void => {
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "mailto:") {
+      ctx.addIssue({
+        code: "custom",
+        message: "Invalid mailto URL format",
+      });
+    }
+  } catch {
+    ctx.addIssue({
+      code: "custom",
+      message: "Invalid mailto URL format",
+    });
+  }
+};
+
+/** The hostname of `url`, or null when it does not parse. */
+const parseHostname = (url: string): string | null => {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return null;
+  }
+};
+
 export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
   if (url.includes(" ") || url.endsWith(" ") || url.startsWith(" ")) {
     ctx.addIssue({
@@ -273,126 +355,23 @@ export const safeUrlRefinement = (url: string, ctx: z.RefinementCtx): void => {
 
   // Skip further validation for mailto URLs as they have different structure
   if (url.startsWith("mailto:")) {
-    try {
-      const parsed = new URL(url);
-      if (parsed.protocol !== "mailto:") {
-        ctx.addIssue({
-          code: "custom",
-          message: "Invalid mailto URL format",
-        });
-        return;
-      }
-    } catch {
-      ctx.addIssue({
-        code: "custom",
-        message: "Invalid mailto URL format",
-      });
-    }
+    validateMailtoUrl(url, ctx);
     return;
   }
 
-  try {
-    const urlObj = new URL(url);
-    const hostname = urlObj.hostname;
+  const hostname = parseHostname(url);
 
-    // Check if recall information appears in the hostname (not allowed)
-    if (hostname.includes("#recall:")) {
-      ctx.addIssue({
-        code: "custom",
-        message: "Recall information must appear after the domain, not within it",
-      });
-      return;
-    }
+  // Check if recall information appears in the hostname (not allowed)
+  if (hostname?.includes("#recall:")) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Recall information must appear after the domain, not within it",
+    });
+    return;
+  }
 
-    // Validate domain structure
-    if (hostname) {
-      const addIssue = (): void => {
-        ctx.addIssue({
-          code: "custom",
-          message: "URL is not valid",
-        });
-      };
-
-      // Check if it's localhost (allow for easy recall testing on self-hosted environments)
-      if (hostname === "localhost") {
-        return; // localhost is valid
-      }
-
-      // Check if it's an IPv6 address (simplified check for bracket notation)
-      if (hostname.startsWith("[") && hostname.endsWith("]")) {
-        const ipv6 = hostname.slice(1, -1);
-        // Basic IPv6 validation - common cases like ::1, ::, and basic hex:hex format
-        if (ipv6 === "::1" || ipv6 === "::" || /^[0-9a-fA-F:]+$/.test(ipv6)) {
-          return; // IPv6 address is valid
-        }
-      }
-
-      // For regular domain names, require proper structure
-      if (!hostname.includes(".")) {
-        addIssue();
-        return;
-      }
-
-      const parts = hostname.split(".");
-
-      // Check if it's an IPv4 address
-      // Simple IPv4 validation instead of complex regex
-      if (
-        parts.length === 4 &&
-        parts.every((part) => {
-          const num = parseInt(part, 10);
-          return !isNaN(num) && num >= 0 && num <= 255 && part === num.toString();
-        })
-      ) {
-        return; // IPv4 address is valid
-      }
-
-      // Check if it has a valid top-level domain (at least 2 characters after the last dot, for example: .com, .uk, .de, etc.)
-      const tld = parts[parts.length - 1];
-
-      // TLD validation: must be at least 2 characters and contain valid domain characters
-      // Support punycode TLDs (IDNs) which can contain hyphens and numbers
-      // DNS label limit is 63 characters, but most TLDs are much shorter
-      if (
-        tld.length < 2 ||
-        tld.length > 63 ||
-        !/^[a-zA-Z0-9-]+$/.test(tld) ||
-        tld.startsWith("-") ||
-        tld.endsWith("-")
-      ) {
-        addIssue();
-        return;
-      }
-
-      // Special case: if we have www.something, ensure "something" is not just a single part
-      // www.domain should be www.domain.tld (at least 3 parts total)
-      if (parts[0].toLowerCase() === "www" && parts.length < 3) {
-        addIssue();
-        return;
-      }
-
-      // Check if all parts are valid (no empty parts between dots)
-      if (parts.some((part) => part.length === 0)) {
-        addIssue();
-        return;
-      }
-
-      // Ensure we have at least a domain name + TLD (minimum 2 parts)
-      if (parts.length < 2) {
-        addIssue();
-        return;
-      }
-
-      // Validate each part contains only valid domain characters
-      const domainRegex = /^[a-zA-Z0-9-]+$/;
-      for (const part of parts) {
-        if (!domainRegex.test(part) || part.startsWith("-") || part.endsWith("-")) {
-          addIssue();
-          return;
-        }
-      }
-    }
-  } catch {
+  // Validate domain structure
+  if (hostname === null || (hostname && !isValidUrlHostname(hostname))) {
     ctx.addIssue({
       code: "custom",
       message: "URL is not valid",

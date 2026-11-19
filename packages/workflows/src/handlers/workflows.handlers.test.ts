@@ -1324,7 +1324,7 @@ describe("recordAnalytics (analytics-sink port)", () => {
     expect(recordAnalytics.mock.calls[0][0].previousStatus).toBeUndefined();
   });
 
-  test("test reports whether the dry run passed", async () => {
+  test("the test operation reports whether the dry run passed", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
     verifyTriggerSurvey.mockResolvedValue({ surveyExists: false, missingEndingCardIds: [] });
 

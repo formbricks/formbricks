@@ -112,16 +112,15 @@ const dashboardRow = (overrides: Partial<TDashboardResourceRow> = {}): TDashboar
     ...overrides,
   }) as TDashboardResourceRow;
 
-const listRow = (id: string, createdAt: string, widgetCount = 0): TDashboardListRow =>
-  ({
-    id,
-    workspaceId: WORKSPACE_ID,
-    name: `Board ${id}`,
-    createdAt: new Date(createdAt),
-    updatedAt: new Date(createdAt),
-    creator: null,
-    _count: { widgets: widgetCount },
-  }) as TDashboardListRow;
+const listRow = (id: string, createdAt: string, widgetCount = 0): TDashboardListRow => ({
+  id,
+  workspaceId: WORKSPACE_ID,
+  name: `Board ${id}`,
+  createdAt: new Date(createdAt),
+  updatedAt: new Date(createdAt),
+  creator: null,
+  _count: { widgets: widgetCount },
+});
 
 const auditLog = () => ({}) as TV3AuditLog;
 

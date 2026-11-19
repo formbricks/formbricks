@@ -135,7 +135,7 @@ describe("reserveV3OperationRateLimit", () => {
   test("reserves nothing for a caller with no principal, and nothing for zero units", async () => {
     const anonymous = await reserveV3OperationRateLimit({
       ...slotContext,
-      authentication: null as never,
+      authentication: null,
       config: budget,
       requested: 3,
     });

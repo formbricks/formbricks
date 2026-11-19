@@ -14,6 +14,7 @@ import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { STAGED_LINES_RULE_IDS } from "../packages/config-oxlint/sonar-parity.mjs";
+import { missingBuildsHint, missingLintBuilds } from "./lint-builds.mjs";
 import { decodeSonarMessage, parseStagedLineRanges, touchesStagedCode } from "./staged-lines.mjs";
 
 // oxlint doesn't export its bin, but package.json is exported, so go through it to get an
@@ -76,31 +77,22 @@ const files = process.argv
   .map((file) => path.relative(process.cwd(), path.resolve(file)).split(path.sep).join("/"));
 
 /*
- * `--type-aware` makes oxlint-tsgolint build the TypeScript program of every file it lints, even where
- * no type-aware rule is on. apps/web (the `next` tier) has none, so its files lint without it: a
- * commit there then takes about a second instead of five. The other workspaces need it.
+ * Every tier runs type-aware rules, apps/web's `next` tier included, so oxlint always gets
+ * `--type-aware`: oxlint-tsgolint then builds the TypeScript program of each staged file's workspace.
  */
-const isTypeAwareFree = (file) => file.startsWith("apps/web/");
-
-function runOxlint(paths, { typeAware }) {
+function runOxlint(paths) {
   if (paths.length === 0) return { diagnostics: [], failed: false };
   const { status, error, stdout, stderr } = spawnSync(
     process.execPath,
-    [
-      OXLINT_CLI,
-      "--format",
-      "json",
-      "--no-error-on-unmatched-pattern",
-      ...(typeAware ? ["--type-aware"] : []),
-      ...paths,
-    ],
+    [OXLINT_CLI, "--format", "json", "--no-error-on-unmatched-pattern", "--type-aware", ...paths],
     {
       encoding: "utf8",
       maxBuffer: 64 * 1024 * 1024,
       env: {
         ...process.env,
-        // The staged-lines rules are off for the whole-repo lint until their backlog is fixed. Here they
-        // report as warnings, and the loop below fails the commit on one only inside the staged lines.
+        // The staged-lines rules (none today) are off for the whole-repo lint until their backlog is
+        // fixed. Here they report as warnings, and the loop below fails the commit on one only inside
+        // the staged lines.
         OXLINT_SONAR_PARITY: "warn",
         // oxlint.config.ts in a package without "type": "module" makes Node print a warning per run.
         NODE_OPTIONS: [process.env.NODE_OPTIONS, "--disable-warning=MODULE_TYPELESS_PACKAGE_JSON"]
@@ -120,13 +112,7 @@ function runOxlint(paths, { typeAware }) {
   }
 }
 
-const runs = [
-  runOxlint(files.filter(isTypeAwareFree), { typeAware: false }),
-  runOxlint(
-    files.filter((file) => !isTypeAwareFree(file)),
-    { typeAware: true }
-  ),
-];
+const runs = [runOxlint(files)];
 
 let failed = runs.some((run) => run.failed);
 const rangesByFile = new Map();
@@ -151,6 +137,15 @@ for (const diagnostic of runs.flatMap((run) => run.diagnostics)) {
       failed = true;
     }
   }
+}
+
+/*
+ * Unlike `pnpm lint`, the hook builds nothing first. In a fresh clone the packages the type-aware
+ * rules read types from have no dist/, which can fail a commit on code that is fine: say so.
+ */
+if (failed) {
+  const missing = missingLintBuilds(process.cwd());
+  if (missing.length > 0) console.log(missingBuildsHint(missing));
 }
 
 process.exit(failed ? 1 : 0);

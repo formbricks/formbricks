@@ -60,7 +60,7 @@ export const WorkspaceLookSettingsPage = async (props: {
     <PageContentWrapper>
       <PageHeader pageTitle={t("common.appearance")} />
       {!IS_STORAGE_CONFIGURED && (
-        <Alert variant="warning" role="status">
+        <Alert variant="warning" alertRole="status">
           <AlertDescription>{t("common.storage_not_configured")}</AlertDescription>
         </Alert>
       )}

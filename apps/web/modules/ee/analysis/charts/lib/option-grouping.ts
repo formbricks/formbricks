@@ -1,5 +1,5 @@
 import "server-only";
-import { type TChartQuery, type TCubeFilter, type TMemberFilter } from "@formbricks/types/analysis";
+import { type TChartQuery, type TCubeFilter } from "@formbricks/types/analysis";
 import { TSurveyElementTypeEnum } from "@formbricks/types/surveys/constants";
 import type { TSurveyElementChoice } from "@formbricks/types/surveys/elements";
 import { getTextContent } from "@formbricks/types/surveys/validation";
@@ -18,12 +18,8 @@ const FIELD_ID_DIMENSION = "FeedbackRecords.fieldId";
 /** Extract the first `equals` value for a member filter by member name, searching top-level filters only. */
 function extractMemberEqualsValue(filters: TCubeFilter[], member: string): string | undefined {
   for (const f of filters) {
-    if (
-      "member" in f &&
-      (f as TMemberFilter).member === member &&
-      (f as TMemberFilter).operator === "equals"
-    ) {
-      const values = (f as TMemberFilter).values;
+    if ("member" in f && f.member === member && f.operator === "equals") {
+      const values = f.values;
       if (Array.isArray(values) && values.length > 0) return values[0];
     }
   }

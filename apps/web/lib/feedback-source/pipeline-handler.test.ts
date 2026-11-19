@@ -83,7 +83,7 @@ function createFeedbackSource(
     ],
     fieldMappings: [],
     ...overrides,
-  } as TFeedbackSourceWithMappings;
+  };
 }
 
 const oneFeedbackRecord = [
@@ -139,7 +139,9 @@ describe("handleFeedbackSourcePipeline", () => {
 
   test("does not update feedbackSource when Hub returns no-config (HUB_API_KEY not set)", async () => {
     vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValue([createFeedbackSource()]);
-    vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
+    vi.mocked(transformResponseToFeedbackRecords, { partial: true, deep: true }).mockReturnValue(
+      oneFeedbackRecord
+    );
     mockCreateFeedbackRecordsBatch.mockResolvedValue({
       results: oneFeedbackRecord.map(() => ({ data: null, error: noConfigError })),
     });
@@ -152,7 +154,9 @@ describe("handleFeedbackSourcePipeline", () => {
 
   test("sends records to Hub and updates lastSyncAt on full success", async () => {
     vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValue([createFeedbackSource()]);
-    vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
+    vi.mocked(transformResponseToFeedbackRecords, { partial: true, deep: true }).mockReturnValue(
+      oneFeedbackRecord
+    );
     mockCreateFeedbackRecordsBatch.mockResolvedValue({
       results: [{ data: { id: "hub-1", ...oneFeedbackRecord[0] }, error: null }],
     });
@@ -167,7 +171,9 @@ describe("handleFeedbackSourcePipeline", () => {
 
   test("does not update feedbackSource when all Hub creates fail", async () => {
     vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValue([createFeedbackSource()]);
-    vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
+    vi.mocked(transformResponseToFeedbackRecords, { partial: true, deep: true }).mockReturnValue(
+      oneFeedbackRecord
+    );
     mockCreateFeedbackRecordsBatch.mockResolvedValue({
       results: [
         { data: null, error: { status: 500, message: "Hub unavailable", detail: "Hub unavailable" } },
@@ -185,7 +191,9 @@ describe("handleFeedbackSourcePipeline", () => {
   // reported one outage 2N+1 times. Anyone alerting on this path reads the warn.
   test("reports a Hub outage once at warn, with per-record detail at debug", async () => {
     vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValue([createFeedbackSource()]);
-    vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
+    vi.mocked(transformResponseToFeedbackRecords, { partial: true, deep: true }).mockReturnValue(
+      oneFeedbackRecord
+    );
     mockCreateFeedbackRecordsBatch.mockResolvedValue({
       results: [
         { data: null, error: { status: 500, message: "Hub unavailable", detail: "Hub unavailable" } },
@@ -218,7 +226,9 @@ describe("handleFeedbackSourcePipeline", () => {
    */
   test("a conflicting record is corrected in Hub, not counted as a failure", async () => {
     vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValue([createFeedbackSource()]);
-    vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(oneFeedbackRecord as any);
+    vi.mocked(transformResponseToFeedbackRecords, { partial: true, deep: true }).mockReturnValue(
+      oneFeedbackRecord
+    );
     mockCreateFeedbackRecordsBatch.mockResolvedValue({
       results: [{ data: null, error: { status: 409, message: "conflict", detail: "" } }],
     });
@@ -256,7 +266,7 @@ describe("handleFeedbackSourcePipeline", () => {
         ],
       }),
     ]);
-    vi.mocked(transformResponseToFeedbackRecords).mockReturnValue(twoRecords as any);
+    vi.mocked(transformResponseToFeedbackRecords, { partial: true, deep: true }).mockReturnValue(twoRecords);
     mockCreateFeedbackRecordsBatch.mockResolvedValue({
       results: [
         { data: { id: "hub-1" }, error: null },

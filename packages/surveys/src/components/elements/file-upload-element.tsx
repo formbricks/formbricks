@@ -36,7 +36,7 @@ export function FileUploadElement({
   currentElementId,
   errorMessage: centralizedErrorMessage,
 }: Readonly<FileUploadElementProps>) {
-  const [startTime, setStartTime] = useState(performance.now());
+  const [startTime, setStartTime] = useState(() => performance.now());
   const [fileErrorMessage, setFileErrorMessage] = useState<string | undefined>(undefined);
   const [isUploading, setIsUploading] = useState(false);
   const isCurrent = element.id === currentElementId;
@@ -79,7 +79,7 @@ export function FileUploadElement({
       try {
         fileName = decodeURIComponent(fileName);
       } catch (e) {
-        console.error(`Error decoding file name: ${e}`);
+        console.error(`Error decoding file name: ${String(e)}`);
       }
 
       // Clean up Formbricks storage pattern: name--fid--uuid.ext

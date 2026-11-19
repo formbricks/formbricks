@@ -5,7 +5,11 @@ import { processAuthzedOutboxBatch } from "@/lib/authzed/outbox-processor";
 import { getAuthzedOutboxStatus } from "@/lib/authzed/outbox-repository";
 import { readAllRelationships } from "@/lib/authzed/relationship-reads";
 import { reconcileSurveyRelationships } from "@/lib/authzed/survey";
-import { expectedSurveyRelationships, surveyRelationshipsMatch } from "@/lib/authzed/survey-relationships";
+import {
+  type TSurveyProjectionRow,
+  expectedSurveyRelationships,
+  surveyRelationshipsMatch,
+} from "@/lib/authzed/survey-relationships";
 import { ONLINE_UPGRADE_RELEASE } from "../compatibility";
 import { OnlineUpgradeBlocked } from "./coordinator";
 
@@ -49,6 +53,31 @@ export const backfillOnlineSurveys = async (assertLock: () => Promise<void>): Pr
   }
 };
 
+/**
+ * Checks one survey's relationships against its row. Drift on a survey that did not change since it
+ * was read is repaired first, then fails this pass: activation needs a new verification pass.
+ */
+const verifySurveyProjection = async (row: TSurveyProjectionRow): Promise<void> => {
+  const { relationships } = await readAllRelationships(getAuthzedClient(), {
+    resourceId: row.id,
+    resourceType: "survey",
+  });
+  if (surveyRelationshipsMatch(relationships, expectedSurveyRelationships(row))) return;
+
+  const current = await prisma.survey.findUnique({ where: { id: row.id }, select });
+  if (
+    current &&
+    current.visibilityVersion === row.visibilityVersion &&
+    current.ownerId === row.ownerId &&
+    current.visibility === row.visibility &&
+    current.workspaceId === row.workspaceId
+  ) {
+    // Repair first, but require a new verification pass before activation.
+    await reconcileSurveyRelationships([row.id]);
+    throw new OnlineUpgradeBlocked("stable_projection_drift", true);
+  }
+};
+
 /** A fresh full scan catches inserts behind the baseline cursor. Outbox delivery covers concurrent writes. */
 export const verifyOnlineProjection = async (assertLock: () => Promise<void>): Promise<void> => {
   const state = await prisma.onlineUpgradeState.findUniqueOrThrow({
@@ -67,24 +96,7 @@ export const verifyOnlineProjection = async (assertLock: () => Promise<void>): P
     if (!rows.length) break;
     for (const row of rows) {
       await assertLock();
-      const { relationships } = await readAllRelationships(getAuthzedClient(), {
-        resourceId: row.id,
-        resourceType: "survey",
-      });
-      if (!surveyRelationshipsMatch(relationships, expectedSurveyRelationships(row))) {
-        const current = await prisma.survey.findUnique({ where: { id: row.id }, select });
-        if (
-          current &&
-          current.visibilityVersion === row.visibilityVersion &&
-          current.ownerId === row.ownerId &&
-          current.visibility === row.visibility &&
-          current.workspaceId === row.workspaceId
-        ) {
-          // Repair first, but require a new verification pass before activation.
-          await reconcileSurveyRelationships([row.id]);
-          throw new OnlineUpgradeBlocked("stable_projection_drift", true);
-        }
-      }
+      await verifySurveyProjection(row);
     }
     cursor = rows.at(-1)!.id;
     await processAuthzedOutboxBatch();

@@ -1,11 +1,11 @@
 name: PR Label Sync
 
 # Keeps PR labels in sync with checkboxes in the PR body (see .github/pull_request_template.md).
-# Generic engine: to drive a new label from a new "## <heading>" section, add one entry to RULES
+# Generic engine: to drive a new label from a "## <heading>" section, add one entry to RULES
 # below — no other changes needed.
 #
 # Currently configured:
-#   - the checkbox in the "Breaking changes" section -> `breaking-change`
+#   - the checkbox in the "Merge danger" section -> `breaking-change`
 #     Release notes and the self-hoster migration guide are compiled from the PRs carrying it.
 #
 # Uses pull_request_target because adding a label needs a write-scoped token (incl. fork PRs). This is
@@ -71,18 +71,23 @@ jobs:
               if (box) return box[1].toLowerCase() === "x";
               if (boxes.length > 0) {
                 core.warning(
-                  `Found ${boxes.length} checkbox(es) but none matching ${declaration} — the PR ` +
-                    "template and pr-label-sync.yml have drifted. Label left unchanged."
+                  `Found ${boxes.length} checkbox(es) in a section but none matching ${declaration} — ` +
+                    "the PR template and pr-label-sync.yml may have drifted."
                 );
               }
               return null; // no signal in this section
             };
 
-            // Label rules. Add an entry to sync a new label from a new "## <heading>" PR-body section.
+            // Label rules. Add an entry to sync a new label from a PR-body section; `headings` lists the
+            // "## <heading>" names it accepts, first match wins.
             // `isActive(content)` returns true/false to set the label, or null to leave it unchanged.
             const RULES = [
               {
-                heading: "Breaking changes",
+                // "Breaking changes" is the old template's heading, still used by PRs opened before the
+                // switch and by backports (the pr skill names it so for release/*, whose own copy of
+                // this workflow reads only that heading). Drop it once every maintained release
+                // branch carries this version.
+                headings: ["Merge danger", "Breaking changes"],
                 label: "breaking-change",
                 // Prefix, not exact: an author who appends a clause ("… (see the table)") still gets a
                 // working label, while "I read the list above" still does not match.
@@ -107,14 +112,23 @@ jobs:
             const current = new Set((pr.labels || []).map((l) => l.name));
 
             for (const rule of RULES) {
-              const content = sectionContent(rule.heading);
-              if (content === null) {
-                core.info(`[${rule.label}] no "## ${rule.heading}" section found; leaving unchanged.`);
+              const sections = rule.headings
+                .map((h) => [h, sectionContent(h)])
+                .filter(([, c]) => c !== null);
+              if (sections.length === 0) {
+                core.info(`[${rule.label}] no "## ${rule.headings.join('" or "## ')}" section found; leaving unchanged.`);
                 continue;
               }
-              const active = rule.isActive(content);
+              // The first section that declares wins, so an answer under the new heading beats a
+              // legacy box, and a legacy box still counts when the new section declares nothing.
+              // Stop at that section, so an unused legacy section is never evaluated.
+              let active = null;
+              for (const [, content] of sections) {
+                active = rule.isActive(content);
+                if (active !== null) break;
+              }
               if (active === null) {
-                core.info(`[${rule.label}] no checkbox under "## ${rule.heading}"; leaving unchanged.`);
+                core.info(`[${rule.label}] no checkbox under "## ${sections.map(([h]) => h).join('" or "## ')}"; leaving unchanged.`);
                 continue;
               }
               const has = current.has(rule.label);

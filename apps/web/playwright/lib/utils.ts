@@ -1,5 +1,6 @@
-import { Page } from "@playwright/test";
+import { Page, expect } from "@playwright/test";
 import { UsersFixture } from "../fixtures/users";
+import { clickUntilVisible } from "../utils/click-until";
 
 type WorkspaceSurveyLocation = {
   workspaceId: string;
@@ -125,8 +126,11 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   });
 
   await page.getByRole("button", { name: "Add API Key" }).waitFor({ state: "visible", timeout: 15000 });
-  await page.getByRole("button", { name: "Add API Key" }).click();
-  await page.getByPlaceholder("e.g. GitHub, PostHog, Slack").fill("E2E Test API Key");
+  // The page was read at `domcontentloaded`, before it hydrates: a single click can land on the
+  // server-rendered button and open nothing.
+  const apiKeyLabel = page.getByPlaceholder("e.g. GitHub, PostHog, Slack");
+  await clickUntilVisible(page.getByRole("button", { name: "Add API Key" }), apiKeyLabel);
+  await apiKeyLabel.fill("E2E Test API Key");
   await page.getByTestId("add_permission__button__test").click();
   await page.locator("#workspace-permission-select-0").click();
   await page.getByRole("option", { name: "Manage", exact: true }).click();
@@ -134,19 +138,13 @@ export async function loginAndGetApiKey(page: Page, users: UsersFixture) {
   await page.getByTestId("organization-access-accessControl-write").click();
   await page.getByRole("button", { name: "Add API Key" }).click();
 
-  // Wait for the API key creation to complete and appear in the list
-  // Use longer timeouts for cloud environments with high concurrency and network latency
-  // Wait for network idle to ensure the API key is fully committed to the database
-  await page.waitForLoadState("networkidle", { timeout: 30000 });
-  await page.waitForSelector(".copyApiKeyIcon", { state: "visible", timeout: 30000 });
-
-  // Add a delay to ensure the API key is fully committed to the database
-  // This is especially important with high concurrency in cloud environments
-  await page.waitForTimeout(2000);
-
-  await page.locator(".copyApiKeyIcon").first().click();
-
-  const apiKey = (await page.evaluate("navigator.clipboard.readText()")) as string;
+  // The new key is listed, once, only after the server has stored it. It is read from the page rather
+  // than through the copy button: parallel workers can share one clipboard, so another test's copy could
+  // land in between. The assertion compares a boolean, so a failure never prints the key.
+  const shownKey = page.getByTestId("api-key-value").first();
+  await expect(shownKey).toBeVisible({ timeout: 30_000 });
+  const apiKey = (await shownKey.innerText()).trim();
+  expect(apiKey.startsWith("fbk_"), "the new API key is shown").toBe(true);
 
   return { workspaceId, apiKey };
 }

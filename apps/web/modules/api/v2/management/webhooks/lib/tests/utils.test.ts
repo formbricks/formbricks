@@ -22,15 +22,17 @@ describe("getWebhooksQuery", () => {
   });
 
   test("calls pickCommonFilter and buildCommonFilterQuery when baseFilter is present", () => {
-    vi.mocked(pickCommonFilter).mockReturnValue({ someFilter: "test" } as any);
+    vi.mocked(pickCommonFilter).mockReturnValue({ someFilter: "test" } as unknown as ReturnType<
+      typeof pickCommonFilter
+    >);
     getWebhooksQuery([workspaceId], { surveyIds: ["survey1"] } as TGetWebhooksFilter);
     expect(pickCommonFilter).toHaveBeenCalled();
     expect(buildCommonFilterQuery).toHaveBeenCalled();
   });
 
   test("buildCommonFilterQuery is not called if no baseFilter is picked", () => {
-    vi.mocked(pickCommonFilter).mockReturnValue(undefined as any);
-    getWebhooksQuery([workspaceId], {} as any);
+    vi.mocked(pickCommonFilter).mockReturnValue(undefined as unknown as ReturnType<typeof pickCommonFilter>);
+    getWebhooksQuery([workspaceId], {} as Parameters<typeof getWebhooksQuery>[1]);
     expect(buildCommonFilterQuery).not.toHaveBeenCalled();
   });
 });

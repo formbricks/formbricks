@@ -73,8 +73,8 @@ export const CreateNewActionTab = ({
       validatePermissions(isReadOnly, t);
       const updatedAction = buildActionObject(data, workspaceId, t);
       await createAndHandleAction(updatedAction);
-    } catch (e: any) {
-      toast.error(e.message);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : String(e));
     }
   };
 

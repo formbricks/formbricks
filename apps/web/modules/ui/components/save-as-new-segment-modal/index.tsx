@@ -118,8 +118,8 @@ export const SaveAsNewSegmentModal = ({
 
       await createSegment();
       return;
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
       setIsLoading(false);
     }
   };

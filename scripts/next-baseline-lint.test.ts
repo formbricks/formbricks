@@ -10,17 +10,14 @@ import {
 
 /*
  * apps/web ran the eslint/typescript-eslint recommended baselines as warnings while it worked off
- * their backlog (ENG-2264). Each is now at zero and an error, except `typescript/no-explicit-any`,
- * which still has one. A clean lint run cannot show a rule still fails, so the rules whose backlog
- * was fixed get one failing fixture each, linted through apps/web's real config, and the last tests
- * pin the severity of the whole baseline.
+ * their backlog (ENG-2264). Each is now at zero and an error. A clean lint run cannot show a rule
+ * still fails, so the rules whose backlog was fixed get one failing fixture each, linted through
+ * apps/web's real config (`typescript/no-explicit-any` in no-explicit-any-lint.test.ts), and the last
+ * test pins the severity of the whole baseline.
  */
 
 const root = fileURLToPath(new URL("..", import.meta.url));
 const webDir = `${root}apps/web`;
-
-// Still at "warn" in apps/web while its backlog lasts.
-const STILL_WARN = new Set(["typescript/no-explicit-any"]);
 
 const fixtures: Record<string, string> = {
   "prefer-const": "export function f() {\n  let a = 1;\n  return a;\n}\n",
@@ -89,7 +86,7 @@ describe("apps/web enforces the recommended baselines as errors", () => {
   test("every other baseline rule is configured at error", () => {
     const { rules, overrides } = printConfig();
     for (const rule of Object.keys({ ...eslintRecommended, ...typescriptRecommended })) {
-      expect(severityOf(rules[rule]), rule).toBe(STILL_WARN.has(rule) ? "warn" : "deny");
+      expect(severityOf(rules[rule]), rule).toBe("deny");
     }
     // The TypeScript-file overrides switch some core rules off and add a few, at the preset's severity.
     const tsOverride = overrides.find((override) => override.rules && "prefer-const" in override.rules);

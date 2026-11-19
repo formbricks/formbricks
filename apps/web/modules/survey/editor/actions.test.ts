@@ -160,7 +160,7 @@ describe.each([
   });
 
   test("names the session user as the principal custom CSS processing is charged to", async () => {
-    await run(action, { ...storedSurvey, name: "Renamed" } as TSurvey);
+    await run(action, { ...storedSurvey, name: "Renamed" });
 
     expect(write).toHaveBeenCalledWith(expect.objectContaining({ id: "survey_1" }), {
       customCssPrincipal: "user_1",
@@ -184,7 +184,7 @@ describe("route revalidation", () => {
   });
 
   test("a draft save does not revalidate the route", async () => {
-    await run(updateSurveyDraftAction, { ...storedSurvey, status: "draft" } as TSurvey);
+    await run(updateSurveyDraftAction, { ...storedSurvey, status: "draft" });
 
     expect(updateSurveyDraft).toHaveBeenCalled();
     expect(revalidatePath).not.toHaveBeenCalled();

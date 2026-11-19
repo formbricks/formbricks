@@ -30,7 +30,7 @@ export function ConsentElement({
   dir = "auto",
   errorMessage,
 }: Readonly<ConsentElementProps>) {
-  const [startTime, setStartTime] = useState(performance.now());
+  const [startTime, setStartTime] = useState(() => performance.now());
   const isCurrent = element.id === currentElementId;
   const isRequired = element.required;
   useTtc(element.id, ttc, setTtc, startTime, setStartTime, isCurrent);

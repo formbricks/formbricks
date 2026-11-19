@@ -108,61 +108,65 @@ function extractResponseValue(responseData: TResponseData, elementId: string): T
   return responseData[elementId];
 }
 
-const convertValueToHubFields = (
-  value: TResponseDataValue,
-  hubFieldType: THubFieldType
-): Partial<
+type THubValueFields = Partial<
   Pick<FeedbackRecordCreateParams, "value_text" | "value_number" | "value_boolean" | "value_date">
-> => {
+>;
+
+const toHubTextField = (value: NonNullable<TResponseDataValue>): THubValueFields => {
+  if (typeof value === "string") return { value_text: value };
+  if (Array.isArray(value)) return { value_text: value.join(", ") };
+  if (typeof value === "object") return { value_text: JSON.stringify(value) };
+  return { value_text: String(value) };
+};
+
+const toHubNumberField = (value: NonNullable<TResponseDataValue>): THubValueFields => {
+  if (typeof value === "number") return { value_number: value };
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value);
+    if (!Number.isNaN(parsed)) return { value_number: parsed };
+  }
+  return {};
+};
+
+const toHubBooleanField = (value: NonNullable<TResponseDataValue>): THubValueFields => {
+  if (typeof value === "boolean") return { value_boolean: value };
+  if (typeof value === "string") {
+    return { value_boolean: value.toLowerCase() === "true" || value === "1" };
+  }
+  return {};
+};
+
+const toHubDateField = (value: NonNullable<TResponseDataValue>): THubValueFields => {
+  if (typeof value === "string") {
+    const date = new Date(value);
+    if (!Number.isNaN(date.getTime())) return { value_date: date.toISOString() };
+  }
+  if (value instanceof Date) return { value_date: value.toISOString() };
+  return {};
+};
+
+const convertValueToHubFields = (value: TResponseDataValue, hubFieldType: THubFieldType): THubValueFields => {
   if (value === undefined || value === null) {
     return {};
   }
 
   switch (hubFieldType) {
-    case "text":
-      if (typeof value === "string") return { value_text: value };
-      if (Array.isArray(value)) return { value_text: value.join(", ") };
-      if (typeof value === "object") return { value_text: JSON.stringify(value) };
-      return { value_text: String(value) };
-
     case "number":
     case "rating":
     case "nps":
     case "csat":
     case "ces":
-      if (typeof value === "number") return { value_number: value };
-      if (typeof value === "string") {
-        const parsed = Number.parseFloat(value);
-        if (!Number.isNaN(parsed)) return { value_number: parsed };
-      }
-      return {};
+      return toHubNumberField(value);
 
     case "boolean":
-      if (typeof value === "boolean") return { value_boolean: value };
-      if (typeof value === "string") {
-        return { value_boolean: value.toLowerCase() === "true" || value === "1" };
-      }
-      return {};
+      return toHubBooleanField(value);
 
     case "date":
-      if (typeof value === "string") {
-        const date = new Date(value);
-        if (!Number.isNaN(date.getTime())) return { value_date: date.toISOString() };
-      }
-      if (value instanceof Date) return { value_date: value.toISOString() };
-      return {};
+      return toHubDateField(value);
 
-    case "categorical":
-      if (typeof value === "string") return { value_text: value };
-      if (Array.isArray(value)) return { value_text: value.join(", ") };
-      if (typeof value === "object") return { value_text: JSON.stringify(value) };
-      return { value_text: String(value) };
-
+    // "text", "categorical" and any other type store the value as text.
     default:
-      if (typeof value === "string") return { value_text: value };
-      if (Array.isArray(value)) return { value_text: value.join(", ") };
-      if (typeof value === "object") return { value_text: JSON.stringify(value) };
-      return { value_text: String(value) };
+      return toHubTextField(value);
   }
 };
 
@@ -228,11 +232,7 @@ const expandMatrixToRecords = (
 
     // Column labels are localized like the row labels — store the label as submitted and
     // attach the column id as stable cross-language identity (ENG-1673).
-    const matchedColumn = normalizeChoiceValue(
-      element.columns,
-      columnLabel as TResponseDataValue,
-      lookupLanguage
-    );
+    const matchedColumn = normalizeChoiceValue(element.columns, columnLabel, lookupLanguage);
     const valueFields = convertValueToHubFields(matchedColumn.value, mapping.hubFieldType);
 
     records.push({

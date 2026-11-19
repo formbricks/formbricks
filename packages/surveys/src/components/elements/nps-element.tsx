@@ -31,7 +31,7 @@ export function NPSElement({
   dir = "auto",
   errorMessage,
 }: Readonly<NPSElementProps>) {
-  const [startTime, setStartTime] = useState(performance.now());
+  const [startTime, setStartTime] = useState(() => performance.now());
   const isCurrent = element.id === currentElementId;
   const isRequired = element.required;
   const { t } = useTranslation();

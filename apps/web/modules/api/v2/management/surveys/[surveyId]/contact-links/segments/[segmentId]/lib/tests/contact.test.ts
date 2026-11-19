@@ -168,12 +168,12 @@ describe("getContactsInSegment", () => {
           ],
         },
       },
-    } as any);
+    });
 
     vi.mocked(getContactAttributeKeys).mockResolvedValue({
       ok: true,
       data: ["email", "name"],
-    } as any);
+    });
 
     vi.mocked(prisma.contact.count).mockResolvedValue(2);
     vi.mocked(prisma.contact.findMany).mockResolvedValue(
@@ -498,7 +498,7 @@ describe("getContactsInSegment", () => {
       ok: true,
       data: {
         ...mockSurvey,
-        status: "completed" as SurveyStatus,
+        status: "completed",
       },
     });
 

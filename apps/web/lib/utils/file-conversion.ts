@@ -2,8 +2,9 @@ import { AsyncParser } from "@json2csv/node";
 import * as xlsx from "xlsx";
 import { logger } from "@formbricks/logger";
 
-// Defang spreadsheet formula injection. Cell values starting with
-// =, +, -, @, tab, or CR are evaluated as formulas by Excel/Sheets/Numbers.
+// Defang formula injection in CSV. A CSV cell starting with =, +, -, @, tab,
+// or CR is evaluated as a formula by Excel/Sheets/Numbers. CSV only: xlsx
+// writes typed text cells instead (see `toXlsxCell`).
 // Sanitize at the render boundary only — never rewrite row keys, since
 // distinct user-controlled labels could collide after prefixing (e.g.
 // "=field" and "'=field" both map to "'=field"), dropping cell data.
@@ -61,7 +62,6 @@ export const XLSX_TRUNCATION_MARKER = "...[truncated]";
 
 /**
  * Shortens a string that exceeds Excel's cell limit, ending it with a visible marker.
- * Run it after `sanitizeFormulaInjection` so the safety prefix is kept and counted.
  * The cut never splits a UTF-16 surrogate pair. Non-strings pass through unchanged.
  */
 export const truncateForXlsxCell = <T>(value: T): T => {
@@ -77,14 +77,16 @@ export const truncateForXlsxCell = <T>(value: T): T => {
   return `${value.slice(0, end)}${XLSX_TRUNCATION_MARKER}` as T;
 };
 
-const toXlsxCell = <T>(value: T): T => truncateForXlsxCell(sanitizeFormulaInjection(value));
+// Strings become typed text cells (`t: "s"`, format `@`), which Excel never evaluates, with no
+// `sanitizeFormulaInjection` prefix (CODING_STANDARDS.md, "File Uploads and Downloads"). Numbers stay numeric.
+const toXlsxCell = (value: string | number | undefined): xlsx.CellObject | number | undefined =>
+  typeof value === "string" ? { t: "s", v: truncateForXlsxCell(value), z: "@" } : value;
 
 export const convertToXlsxBuffer = (
   fields: string[],
   jsonData: Record<string, string | number>[]
 ): Buffer => {
-  // Build as array-of-arrays so original row keys are looked up before
-  // sanitization is applied to the rendered header/cell only.
+  // Build as array-of-arrays so cells are looked up by the original row keys.
   const headerRow = fields.map(toXlsxCell);
   const dataRows = jsonData.map((row) => fields.map((name) => toXlsxCell(row[name])));
 

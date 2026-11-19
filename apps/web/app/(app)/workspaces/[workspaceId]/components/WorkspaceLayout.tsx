@@ -126,6 +126,8 @@ export const WorkspaceLayout = async ({ layoutData, cookieStore, children }: Wor
 
         {responseWarningThreshold && (
           <TrialResponseWarningModal
+            // Each threshold is its own warning: a new one remounts the modal so it opens again.
+            key={responseWarningThreshold}
             threshold={responseWarningThreshold}
             billingHref={billingHref}
             responseCount={responseCount}
@@ -134,6 +136,8 @@ export const WorkspaceLayout = async ({ layoutData, cookieStore, children }: Wor
 
         {trialEndingDaysRemaining && (
           <TrialEndingWarningModal
+            // Each day is its own warning: a new day remounts the modal so it opens again.
+            key={trialEndingDaysRemaining}
             daysRemaining={trialEndingDaysRemaining}
             billingHref={billingHref}
             endsOnHobby={organization.billing?.stripe?.trialEndsOnHobby === true}

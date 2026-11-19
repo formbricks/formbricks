@@ -50,8 +50,10 @@ describe("organization", () => {
         ],
       };
 
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as any);
-      vi.mocked(prisma.organization.update).mockResolvedValue(mockUpdatedOrganization as any);
+      vi.mocked(prisma.organization.findUnique, { partial: true }).mockResolvedValue(mockOrganization);
+      vi.mocked(prisma.organization.update).mockResolvedValue(
+        mockUpdatedOrganization as unknown as Awaited<ReturnType<typeof prisma.organization.update>>
+      );
 
       const result = await updateOrganizationEmailLogoUrl("clg123456789012345678901234", "new-logo.png");
 
@@ -96,7 +98,7 @@ describe("organization", () => {
         clientVersion: "5.0.0",
       });
 
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue({ whitelabel: {} } as any);
+      vi.mocked(prisma.organization.findUnique, { partial: true }).mockResolvedValue({ whitelabel: {} });
       vi.mocked(prisma.organization.update).mockRejectedValue(prismaError);
 
       await expect(
@@ -119,8 +121,8 @@ describe("organization", () => {
         ],
       };
 
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as any);
-      vi.mocked(prisma.organization.update).mockResolvedValue({} as any);
+      vi.mocked(prisma.organization.findUnique, { partial: true }).mockResolvedValue(mockOrganization);
+      vi.mocked(prisma.organization.update, { partial: true }).mockResolvedValue({});
 
       const result = await removeOrganizationEmailLogoUrl("clg123456789012345678901234");
 
@@ -177,7 +179,7 @@ describe("organization", () => {
       vi.mocked(prisma.organization.findUnique).mockResolvedValue({
         whitelabel: {},
         workspaces: [],
-      } as any);
+      } as unknown as Awaited<ReturnType<typeof prisma.organization.findUnique>>);
       vi.mocked(prisma.organization.update).mockRejectedValue(prismaError);
 
       await expect(removeOrganizationEmailLogoUrl("clg123456789012345678901234")).rejects.toThrow(
@@ -194,7 +196,7 @@ describe("organization", () => {
         },
       };
 
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as any);
+      vi.mocked(prisma.organization.findUnique, { partial: true }).mockResolvedValue(mockOrganization);
 
       const result = await getOrganizationLogoUrl("clg123456789012345678901234");
 
@@ -212,7 +214,7 @@ describe("organization", () => {
         whitelabel: {},
       };
 
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue(mockOrganization as any);
+      vi.mocked(prisma.organization.findUnique, { partial: true }).mockResolvedValue(mockOrganization);
 
       const result = await getOrganizationLogoUrl("clg123456789012345678901234");
 
@@ -266,8 +268,10 @@ describe("organization", () => {
       vi.mocked(prisma.organization.findUnique).mockResolvedValue({
         id: organizationId,
         whitelabel: {},
-      } as any);
-      vi.mocked(prisma.organization.update).mockResolvedValue({ workspaces: [] } as any);
+      } as Awaited<ReturnType<typeof prisma.organization.findUnique>>);
+      vi.mocked(prisma.organization.update).mockResolvedValue({ workspaces: [] } as unknown as Awaited<
+        ReturnType<typeof prisma.organization.update>
+      >);
     });
 
     afterEach(() => {

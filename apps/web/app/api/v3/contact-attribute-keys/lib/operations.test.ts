@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { DatabaseError } from "@formbricks/types/errors";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { problemForbidden } from "@/app/api/v3/lib/response";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getIsContactsEnabled } from "@/modules/ee/license-check/lib/utils";
 import { listV3ContactAttributeKeys } from "./operations";
@@ -97,7 +98,7 @@ describe("listV3ContactAttributeKeys", () => {
       ...attributeKey,
       id: "clbk1234567890123456789012",
       key: "role",
-    } as typeof attributeKey;
+    };
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue(accessGranted);
     vi.mocked(getContactAttributeKeys).mockResolvedValue([attributeKey, second]);
 
@@ -142,6 +143,14 @@ describe("listV3ContactAttributeKeys", () => {
     const response = await listV3ContactAttributeKeys(params);
 
     expect(response.status).toBe(403);
+    // Byte for byte the plain forbidden the REST API has always answered.
+    const plain = problemForbidden(
+      params.requestId,
+      "The contacts feature is not enabled for this organization.",
+      params.instance
+    );
+    expect([...response.headers]).toEqual([...plain.headers]);
+    expect(await response.text()).toBe(await plain.text());
     expect(getContactAttributeKeys).not.toHaveBeenCalled();
   });
 
@@ -156,8 +165,7 @@ describe("listV3ContactAttributeKeys", () => {
 });
 
 describe("listV3ContactAttributeKeys — search, filters, sort, totals", () => {
-  const makeKey = (overrides: Record<string, unknown>) =>
-    ({ ...attributeKey, ...overrides }) as unknown as typeof attributeKey;
+  const makeKey = (overrides: Record<string, unknown>) => ({ ...attributeKey, ...overrides });
 
   const keys = [
     makeKey({

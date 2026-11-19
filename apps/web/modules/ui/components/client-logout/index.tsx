@@ -7,7 +7,7 @@ export const ClientLogout = () => {
   const { signOut: signOutWithAudit } = useSignOut();
 
   useEffect(() => {
-    signOutWithAudit({
+    void signOutWithAudit({
       reason: "forced_logout",
       redirectUrl: "/auth/login",
       redirect: false,

@@ -193,16 +193,15 @@ const preview = async (file: unknown, authentication: TV3Authentication = owner(
   return done as TPreviewDone;
 };
 
-const auditLogStub = (): TV3AuditLog =>
-  ({
-    action: "updated",
-    targetType: "survey",
-    userId: fixture.users.owner,
-    targetId: "unknown",
-    organizationId: "unknown",
-    status: "failure",
-    userType: "user",
-  }) as TV3AuditLog;
+const auditLogStub = (): TV3AuditLog => ({
+  action: "updated",
+  targetType: "survey",
+  userId: fixture.users.owner,
+  targetId: "unknown",
+  organizationId: "unknown",
+  status: "failure",
+  userType: "user",
+});
 
 /** Commit a previewed Match as an Update, as the dialog does. */
 const update = (

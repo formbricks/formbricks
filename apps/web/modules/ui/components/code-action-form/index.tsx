@@ -1,13 +1,15 @@
 "use client";
 
 import { Terminal } from "lucide-react";
+import type { UseFormReturn } from "react-hook-form";
 import { useTranslation } from "react-i18next";
+import type { TActionClassInput } from "@formbricks/types/action-classes";
 import { Alert, AlertDescription, AlertTitle } from "@/modules/ui/components/alert";
 import { FormControl, FormError, FormField, FormItem, FormLabel } from "@/modules/ui/components/form";
 import { Input } from "@/modules/ui/components/input";
 
 interface CodeActionFormProps {
-  readonly form: any;
+  readonly form: UseFormReturn<TActionClassInput>;
   readonly isReadOnly: boolean;
 }
 
@@ -41,7 +43,7 @@ export const CodeActionForm = ({ form, isReadOnly }: CodeActionFormProps) => {
           )}
         />
       </div>
-      <Alert role="status">
+      <Alert alertRole="status">
         <Terminal className="size-4" />
         <AlertTitle>{t("workspace.actions.how_do_code_actions_work")}</AlertTitle>
         <AlertDescription>

@@ -81,7 +81,7 @@ export function readPublicBlocks(resource: { blocks: unknown }): TV3PublicBlock[
     return null;
   }
 
-  return resource.blocks.every(isPublicBlock) ? [...(resource.blocks as TV3PublicBlock[])] : null;
+  return resource.blocks.every(isPublicBlock) ? [...resource.blocks] : null;
 }
 
 function blockIdOf(block: Record<string, unknown>): string | null {

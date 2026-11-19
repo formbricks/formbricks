@@ -8,6 +8,7 @@ import {
   AUTHZED_OUTBOX_MAX_PERMANENT_FAILURES,
   AUTHZED_OUTBOX_MAX_RETRY_DELAY_MS,
   claimAuthzedOutboxEvents,
+  getAuthzedOutboxStatus,
   hasStaleAuthzedRevocation,
   hasUnclaimedAuthzedOutboxEvent,
   markAuthzedOutboxEventsDelivered,
@@ -28,6 +29,8 @@ const migration = readMigration("20260818120000_add_authzed_projection_outbox");
 // Re-declares both trigger functions with the survey case (ENG-3282). Replaying the outbox migration
 // alone would roll them back to the pre-survey classifier, so the convergence test replays both.
 const surveyMigration = readMigration("20261002120002_add_survey_projection_trigger");
+// ENG-7153: the three MCP grant triggers, on the functions above unchanged.
+const mcpGrantMigration = readMigration("20261112140000_add_mcp_grant_projection_trigger");
 
 /**
  * The durable outbox against a real PostgreSQL (ENG-2408).
@@ -75,6 +78,7 @@ describe("AuthZed projection outbox triggers", () => {
     for (let run = 0; run < 2; run++) {
       await prisma.$executeRawUnsafe(migration);
       await prisma.$executeRawUnsafe(surveyMigration);
+      await prisma.$executeRawUnsafe(mcpGrantMigration);
     }
 
     const [catalog] = await prisma.$queryRaw<Array<{ indexes: bigint; triggers: bigint }>>`
@@ -87,7 +91,7 @@ describe("AuthZed projection outbox triggers", () => {
            AND NOT tgisinternal) AS triggers
     `;
     expect(Number(catalog?.indexes)).toBe(3);
-    expect(Number(catalog?.triggers)).toBe(12);
+    expect(Number(catalog?.triggers)).toBe(16);
   });
 
   test("does not classify an accepted invite as a revocation", async () => {
@@ -246,6 +250,93 @@ describe("AuthZed projection outbox triggers", () => {
     expect(await outboxRows()).toEqual([
       { isRevocation: true, primaryId: organization.id, secondaryId: user.id, targetType: "membership" },
     ]);
+  });
+});
+
+describe("AuthZed projection outbox triggers: MCP grants (ENG-7153)", () => {
+  const grantEvents = async () => (await outboxRows()).filter((row) => row.targetType === "mcp_grant");
+
+  test("queues the grant on every selection change, and only a narrowing as a revocation", async () => {
+    const [user, organization] = await Promise.all([
+      seedUser("grant@integration.test"),
+      seedOrganization("G"),
+    ]);
+    const [inside, outside] = await Promise.all(
+      ["In", "Out"].map((name) =>
+        prisma.workspace.create({ data: { name, organizationId: organization.id } })
+      )
+    );
+    await prisma.oauthClient.create({ data: { clientId: "grant-client", redirectUris: [] } });
+    const grant = await prisma.mcpGrant.create({
+      data: { userId: user.id, clientId: "grant-client", access: "workspaces", permissions: {} },
+    });
+    await clearOutbox();
+
+    await prisma.mcpGrantWorkspace.create({ data: { grantId: grant.id, workspaceId: inside.id } });
+    expect(await grantEvents()).toEqual([
+      { isRevocation: false, primaryId: grant.id, secondaryId: null, targetType: "mcp_grant" },
+    ]);
+
+    await clearOutbox();
+    await prisma.mcpGrantWorkspace.create({ data: { grantId: grant.id, workspaceId: outside.id } });
+    await prisma.workspace.delete({ where: { id: outside.id } });
+    // The cascade from a deleted workspace queues the grant like any delete.
+    expect((await grantEvents()).at(0)).toEqual({
+      isRevocation: true,
+      primaryId: grant.id,
+      secondaryId: null,
+      targetType: "mcp_grant",
+    });
+
+    await clearOutbox();
+    await prisma.mcpGrant.update({ where: { id: grant.id }, data: { access: "all" } });
+    expect(await grantEvents()).toEqual([
+      { isRevocation: true, primaryId: grant.id, secondaryId: null, targetType: "mcp_grant" },
+    ]);
+
+    await clearOutbox();
+    await prisma.mcpGrant.update({ where: { id: grant.id }, data: { permissions: { surveys: "read" } } });
+    expect(await grantEvents()).toEqual([]);
+  });
+
+  test("queues nothing for a grant that has All access before and after, so deleting its user doesn't", async () => {
+    const user = await seedUser("all-access@integration.test");
+    await prisma.oauthClient.create({ data: { clientId: "all-access-client", redirectUris: [] } });
+    const grant = await prisma.mcpGrant.create({
+      data: { userId: user.id, clientId: "all-access-client", access: "all", permissions: {} },
+    });
+    await clearOutbox();
+
+    // A rewrite of `access` to the same value, and the cascade a deleted user or client brings.
+    await prisma.mcpGrant.update({ where: { id: grant.id }, data: { access: "all" } });
+    await prisma.user.delete({ where: { id: user.id } });
+    expect(await grantEvents()).toEqual([]);
+
+    // A grant that selects (No workspaces here: no selection rows) queues its delete, as it may hold
+    // relationships that must go.
+    const other = await seedUser("selecting@integration.test");
+    const selecting = await prisma.mcpGrant.create({
+      data: { userId: other.id, clientId: "all-access-client", access: "organizations", permissions: {} },
+    });
+    await clearOutbox();
+    await prisma.oauthClient.delete({ where: { clientId: "all-access-client" } });
+    expect(await grantEvents()).toEqual([
+      { isRevocation: true, primaryId: selecting.id, secondaryId: null, targetType: "mcp_grant" },
+    ]);
+  });
+
+  test("queues a change between All access and a selection, in either direction", async () => {
+    const user = await seedUser("switch@integration.test");
+    await prisma.oauthClient.create({ data: { clientId: "switch-client", redirectUris: [] } });
+    const grant = await prisma.mcpGrant.create({
+      data: { userId: user.id, clientId: "switch-client", access: "all", permissions: {} },
+    });
+    await clearOutbox();
+
+    await prisma.mcpGrant.update({ where: { id: grant.id }, data: { access: "workspaces" } });
+    await prisma.mcpGrant.update({ where: { id: grant.id }, data: { access: "organizations" } });
+    await prisma.mcpGrant.update({ where: { id: grant.id }, data: { access: "all" } });
+    expect((await grantEvents()).map(({ primaryId }) => primaryId)).toEqual([grant.id, grant.id, grant.id]);
   });
 });
 
@@ -452,6 +543,108 @@ const releaseState = async (id: string): Promise<TReleaseState> => {
   `;
   return row;
 };
+
+describe("AuthZed projection outbox claim", () => {
+  // self-hosting-config.md: a new outbox type must not dead-letter on old workers. A target type this
+  // release doesn't know is left exactly as it was, for a worker of the release that wrote it.
+  test("claims the types this release knows and leaves an unknown one untouched for a newer worker", async () => {
+    await prisma.authzedProjectionOutbox.createMany({
+      data: [
+        { id: "known", targetType: "membership", primaryId: "p1", isRevocation: true },
+        { id: "newer", targetType: "a_type_from_a_newer_release", primaryId: "p2", isRevocation: true },
+      ],
+    });
+
+    const claimed = await claimAuthzedOutboxEvents("lease");
+
+    expect(claimed.map(({ id }) => id)).toEqual(["known"]);
+    const newer = await prisma.authzedProjectionOutbox.findUniqueOrThrow({ where: { id: "newer" } });
+    expect(newer).toMatchObject({
+      attempts: 0,
+      leaseOwner: null,
+      leasedAt: null,
+      deadLetteredAt: null,
+      processedAt: null,
+      lastErrorCode: null,
+    });
+  });
+});
+
+/**
+ * A target type this release doesn't know: written by a newer release's trigger during a rolling upgrade
+ * or after a rollback, or hand-inserted. This release neither delivers it nor reads the relationships it
+ * projects, so it must not fail this release closed; it is surfaced instead.
+ */
+describe("AuthZed projection outbox: a target type this release doesn't know", () => {
+  const twoMinutesAgo = () => new Date(Date.now() - 120_000);
+
+  test("an overdue revocation of it doesn't arm the freshness guard, one of a known type does", async () => {
+    await prisma.authzedProjectionOutbox.create({
+      data: {
+        targetType: "a_type_from_a_newer_release",
+        primaryId: "p1",
+        isRevocation: true,
+        createdAt: twoMinutesAgo(),
+        availableAt: twoMinutesAgo(),
+      },
+    });
+    await expect(hasStaleAuthzedRevocation()).resolves.toBe(false);
+
+    await prisma.authzedProjectionOutbox.create({
+      data: {
+        targetType: "membership",
+        primaryId: "p2",
+        isRevocation: true,
+        createdAt: twoMinutesAgo(),
+        availableAt: twoMinutesAgo(),
+      },
+    });
+    await expect(hasStaleAuthzedRevocation()).resolves.toBe(true);
+  });
+
+  test("a dead-lettered revocation of it doesn't arm the guard either", async () => {
+    await prisma.authzedProjectionOutbox.create({
+      data: {
+        targetType: "a_type_from_a_newer_release",
+        primaryId: "p1",
+        isRevocation: true,
+        deadLetteredAt: new Date(),
+      },
+    });
+    await expect(hasStaleAuthzedRevocation()).resolves.toBe(false);
+  });
+
+  test("is counted on its own in the outbox status, never as pending, overdue or dead-lettered", async () => {
+    await prisma.authzedProjectionOutbox.createMany({
+      data: [
+        {
+          targetType: "a_type_from_a_newer_release",
+          primaryId: "p1",
+          isRevocation: true,
+          createdAt: twoMinutesAgo(),
+        },
+        { targetType: "corrupt type", primaryId: "p2", isRevocation: false },
+      ],
+    });
+
+    await expect(getAuthzedOutboxStatus()).resolves.toMatchObject({
+      unknownType: 2,
+      pending: 0,
+      deadLettered: 0,
+      overdueRevocations: 0,
+      revocationsPastCritical: 0,
+      revocationsPastWarning: 0,
+      oldestPendingAgeSeconds: null,
+    });
+  });
+
+  test("doesn't make the safety net think delivery stopped", async () => {
+    await prisma.authzedProjectionOutbox.create({
+      data: { targetType: "a_type_from_a_newer_release", primaryId: "p1", availableAt: twoMinutesAgo() },
+    });
+    await expect(hasUnclaimedAuthzedOutboxEvent(60_000)).resolves.toBe(false);
+  });
+});
 
 describe("AuthZed projection outbox failure release", () => {
   test("dead-letters only after enough failures attributable to one event", async () => {

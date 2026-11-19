@@ -69,7 +69,9 @@ describe("testEndpoint", () => {
       close: vi.fn(async () => undefined),
       destroy: vi.fn(async () => undefined),
     } as never);
-    vi.mocked(getTranslate).mockResolvedValue(((key: string) => key) as any);
+    vi.mocked(getTranslate).mockResolvedValue(
+      ((key: string) => key) as Awaited<ReturnType<typeof getTranslate>>
+    );
     vi.mocked(isDiscordWebhook).mockReturnValue(false);
   });
 
@@ -175,6 +177,7 @@ describe("testEndpoint", () => {
     );
 
     const requestPromise = testEndpoint("https://example.com/webhook");
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const assertion = expect(requestPromise).rejects.toThrow("Request timed out after 5 seconds");
 
     await vi.advanceTimersByTimeAsync(5000);

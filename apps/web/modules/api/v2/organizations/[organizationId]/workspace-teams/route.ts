@@ -12,7 +12,6 @@ import {
   normaliseProjectIdToWorkspaceId,
 } from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/lib/backwards-compat";
 import { checkAuthenticationAndAccess } from "@/modules/api/v2/organizations/[organizationId]/workspace-teams/lib/utils";
-import { UNKNOWN_DATA } from "@/modules/ee/audit-logs/types/audit-log";
 import {
   createWorkspaceTeam,
   deleteWorkspaceTeam,
@@ -37,7 +36,7 @@ export async function GET(request: Request, props: { params: Promise<{ organizat
     handler: async ({ parsedInput: { query, params }, authentication }) => {
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Read
         ))
@@ -48,7 +47,7 @@ export async function GET(request: Request, props: { params: Promise<{ organizat
         });
       }
 
-      const normalisedQuery = normaliseProjectIdToWorkspaceId(query!);
+      const normalisedQuery = normaliseProjectIdToWorkspaceId(query);
       const result = await getWorkspaceTeams(authentication.organizationId, normalisedQuery);
 
       if (!result.ok) {
@@ -73,7 +72,7 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
     },
     externalParams: props.params,
     handler: async ({ parsedInput: { body, params }, authentication, auditLog }) => {
-      const normalisedBody = normaliseProjectIdToWorkspaceId(body!);
+      const normalisedBody = normaliseProjectIdToWorkspaceId(body);
       const { teamId, workspaceId } = normalisedBody;
 
       if (!workspaceId) {
@@ -89,7 +88,7 @@ export async function POST(request: Request, props: { params: Promise<{ organiza
 
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Write
         ))
@@ -164,7 +163,7 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
     },
     externalParams: props.params,
     handler: async ({ parsedInput: { body, params }, authentication, auditLog }) => {
-      const normalisedBody = normaliseProjectIdToWorkspaceId(body!);
+      const normalisedBody = normaliseProjectIdToWorkspaceId(body);
       const { teamId, workspaceId } = normalisedBody;
 
       if (!workspaceId) {
@@ -180,7 +179,7 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
 
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Write
         ))
@@ -202,7 +201,7 @@ export async function PUT(request: Request, props: { params: Promise<{ organizat
       }
 
       // Fetch old object for audit log
-      let oldWorkspaceTeamData: any = UNKNOWN_DATA;
+      let oldWorkspaceTeamData: Record<string, unknown> | null = null;
       try {
         const oldWorkspaceTeamResult = await getWorkspaceTeams(authentication.organizationId, {
           teamId,
@@ -251,7 +250,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
     },
     externalParams: props.params,
     handler: async ({ parsedInput: { query, params }, authentication, auditLog }) => {
-      const normalisedQuery = normaliseProjectIdToWorkspaceId(query!);
+      const normalisedQuery = normaliseProjectIdToWorkspaceId(query);
       const { teamId, workspaceId } = normalisedQuery;
 
       if (!workspaceId) {
@@ -267,7 +266,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
 
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Write
         ))
@@ -289,7 +288,7 @@ export async function DELETE(request: Request, props: { params: Promise<{ organi
       }
 
       // Fetch old object for audit log
-      let oldWorkspaceTeamData: any = UNKNOWN_DATA;
+      let oldWorkspaceTeamData: Record<string, unknown> | null = null;
       try {
         const oldWorkspaceTeamResult = await getWorkspaceTeams(authentication.organizationId, {
           teamId,

@@ -50,7 +50,7 @@ const SURVEY = {
 const get = (surveyId = SURVEY_ID) =>
   GET(new NextRequest(`http://localhost/api/internal/survey-retention/${surveyId}`), {
     params: Promise.resolve({ surveyId }),
-  } as never);
+  });
 
 describe("GET /api/internal/survey-retention/{surveyId}", () => {
   beforeEach(() => {

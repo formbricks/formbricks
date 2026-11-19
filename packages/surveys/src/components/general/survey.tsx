@@ -11,7 +11,6 @@ import {
   getIngestedEmbeddedFields,
   getSurveyEmbeddedFields,
   listShadowingNames,
-  mergeReservedValues,
   projectClientReservedValues,
 } from "@formbricks/types/embedded-data-resolver";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
@@ -118,6 +117,62 @@ const restoreSurveyStateFromSnapshot = (
     variables: progress.currentVariables,
     displayId: snapshot.displayId ?? snapshot.responseAcc.displayId,
   };
+};
+
+type TSurveyProgress = NonNullable<Awaited<ReturnType<typeof getSurveyProgress>>>;
+
+/** Saved progress older than this (24 hours) is stale and discarded. */
+const PROGRESS_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Whether saved progress belongs to a session that is already over: on an ending card, or with its
+ * response finished. The "end" sentinel counts as an ending card here: a survey with no endings
+ * defined finishes on it, so restoring onto it would resume a session that is already over.
+ */
+const isFinishedProgress = (localSurvey: TJsWorkspaceStateSurvey, progress: TSurveyProgress): boolean =>
+  isFinishedBlockId(localSurvey, progress.blockId) ||
+  progress.surveyStateSnapshot?.responseAcc?.finished === true;
+
+/** Whether the saved blockId still exists in the current survey. */
+const progressBlockExists = (localSurvey: TJsWorkspaceStateSurvey, blockId: string): boolean =>
+  blockId === "start" ||
+  blockId === "end" ||
+  localSurvey.blocks.some((b) => b.id === blockId) ||
+  localSurvey.endings.some((e) => e.id === blockId);
+
+/**
+ * For a resumed display with no response id: finds the response the display already created, or
+ * lets the next write create one.
+ */
+const recoverResponseIdFromDisplay = async (
+  surveyState: SurveyState,
+  displayId: string | null | undefined,
+  apiClient: ApiClient | null,
+  persistSurveyStateSnapshot: (snapshotPatch: Partial<SerializedSurveyState>) => Promise<void>
+): Promise<void> => {
+  if (!displayId || !apiClient) {
+    surveyState.enableBootstrapResponseCreate();
+    return;
+  }
+
+  const responseLookup = await apiClient.getResponseIdByDisplayId(displayId);
+
+  if (responseLookup.ok && responseLookup.data.responseId) {
+    surveyState.updateResponseId(responseLookup.data.responseId);
+    await persistSurveyStateSnapshot({ responseId: responseLookup.data.responseId });
+  } else if (responseLookup.ok) {
+    surveyState.enableBootstrapResponseCreate();
+  } else if (responseLookup.error.status === 404) {
+    surveyState.updateDisplayId(null);
+    surveyState.enableBootstrapResponseCreate();
+    await persistSurveyStateSnapshot({ displayId: null });
+  } else {
+    console.error("Formbricks: Failed to recover responseId from displayId", {
+      displayId,
+      error: responseLookup.error,
+    });
+    surveyState.enableBootstrapResponseCreate();
+  }
 };
 
 interface VariableStackEntry {
@@ -618,7 +673,7 @@ export function Survey({
         await persistSurveyStateSnapshot({ displayId: display.data.id });
 
         if (onDisplayCreated) {
-          onDisplayCreated();
+          void onDisplayCreated();
         }
       } catch (err) {
         console.error("error creating display: ", err);
@@ -671,7 +726,7 @@ export function Survey({
     if (appUrl && workspaceId) {
       void createDisplay().finally(() => setIsDisplaySettled(true));
     } else {
-      onDisplay?.();
+      void onDisplay?.();
       setIsDisplaySettled(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, or once after restore for offline
@@ -740,6 +795,34 @@ export function Survey({
 
     let cancelled = false;
 
+    const resumeProgress = async (progress: TSurveyProgress, pendingCount: number) => {
+      // Resuming where the respondent was: the rules before the first question already let them in.
+      screenOutHandledRef.current = true;
+      setBlockId(progress.blockId);
+      setResponseData(progress.responseData);
+      setTtc(progress.ttc);
+      setCurrentVariables(progress.currentVariables);
+      setHistory(getRestorableHistory(localSurvey, progress.history));
+      setNotShownSteps(getRestorableNotShownSteps(localSurvey, progress.notShownSteps ?? []));
+      lowQualityFlagRef.current = resumeLowQualityFlag(progress.lowQualitySent);
+      setSelectedLanguage(progress.selectedLanguage);
+
+      // Restore survey state from snapshot
+      if (!surveyState || !progress.surveyStateSnapshot) return;
+      restoreSurveyStateFromSnapshot(surveyState, progress.surveyStateSnapshot, progress);
+
+      if (pendingCount === 0 && !progress.surveyStateSnapshot.responseId) {
+        await recoverResponseIdFromDisplay(
+          surveyState,
+          progress.surveyStateSnapshot.displayId,
+          apiClient,
+          persistSurveyStateSnapshot
+        );
+      }
+
+      responseQueue?.updateSurveyState(surveyState);
+    };
+
     const restore = async () => {
       const progress = await getSurveyProgress(survey.id);
 
@@ -749,8 +832,7 @@ export function Survey({
       }
 
       // Discard stale progress (older than 24 hours)
-      const MAX_AGE_MS = 24 * 60 * 60 * 1000;
-      if (Date.now() - progress.updatedAt > MAX_AGE_MS) {
+      if (Date.now() - progress.updatedAt > PROGRESS_MAX_AGE_MS) {
         await clearSurveyProgress(survey.id);
         setProgressRestored(true);
         return;
@@ -761,17 +843,10 @@ export function Survey({
 
       // If the survey is fully complete (no pending responses + finished), discard stale
       // progress and start fresh instead of restoring to the ending card.
-      if (pendingCount === 0) {
-        // The "end" sentinel counts as an ending card here: a survey with no endings defined
-        // finishes on it, so restoring onto it would resume a session that is already over.
-        const isEndingCard = isFinishedBlockId(localSurvey, progress.blockId);
-        const isResponseFinished = progress.surveyStateSnapshot?.responseAcc?.finished === true;
-
-        if (isEndingCard || isResponseFinished) {
-          await clearSurveyProgress(survey.id);
-          setProgressRestored(true);
-          return;
-        }
+      if (pendingCount === 0 && isFinishedProgress(localSurvey, progress)) {
+        await clearSurveyProgress(survey.id);
+        setProgressRestored(true);
+        return;
       }
 
       if (pendingCount > 0) {
@@ -795,57 +870,8 @@ export function Survey({
       }
 
       // Validate that the saved blockId still exists in the current survey
-      const blockExists =
-        progress.blockId === "start" ||
-        progress.blockId === "end" ||
-        localSurvey.blocks.some((b) => b.id === progress.blockId) ||
-        localSurvey.endings.some((e) => e.id === progress.blockId);
-
-      if (blockExists) {
-        // Resuming where the respondent was: the rules before the first question already let them in.
-        screenOutHandledRef.current = true;
-        setBlockId(progress.blockId);
-        setResponseData(progress.responseData);
-        setTtc(progress.ttc);
-        setCurrentVariables(progress.currentVariables);
-        setHistory(getRestorableHistory(localSurvey, progress.history));
-        setNotShownSteps(getRestorableNotShownSteps(localSurvey, progress.notShownSteps ?? []));
-        lowQualityFlagRef.current = resumeLowQualityFlag(progress.lowQualitySent);
-        setSelectedLanguage(progress.selectedLanguage);
-
-        // Restore survey state from snapshot
-        if (surveyState && progress.surveyStateSnapshot) {
-          restoreSurveyStateFromSnapshot(surveyState, progress.surveyStateSnapshot, progress);
-
-          if (pendingCount === 0 && !progress.surveyStateSnapshot.responseId) {
-            if (progress.surveyStateSnapshot.displayId && apiClient) {
-              const responseLookup = await apiClient.getResponseIdByDisplayId(
-                progress.surveyStateSnapshot.displayId
-              );
-
-              if (responseLookup.ok && responseLookup.data.responseId) {
-                surveyState.updateResponseId(responseLookup.data.responseId);
-                await persistSurveyStateSnapshot({ responseId: responseLookup.data.responseId });
-              } else if (responseLookup.ok) {
-                surveyState.enableBootstrapResponseCreate();
-              } else if (responseLookup.error.status === 404) {
-                surveyState.updateDisplayId(null);
-                surveyState.enableBootstrapResponseCreate();
-                await persistSurveyStateSnapshot({ displayId: null });
-              } else {
-                console.error("Formbricks: Failed to recover responseId from displayId", {
-                  displayId: progress.surveyStateSnapshot.displayId,
-                  error: responseLookup.error,
-                });
-                surveyState.enableBootstrapResponseCreate();
-              }
-            } else {
-              surveyState.enableBootstrapResponseCreate();
-            }
-          }
-
-          responseQueue?.updateSurveyState(surveyState);
-        }
+      if (progressBlockExists(localSurvey, progress.blockId)) {
+        await resumeProgress(progress, pendingCount);
       } else {
         // Block no longer exists (survey structure changed) — discard UI progress
         // but still restore survey state and sync pending responses below.
@@ -1110,7 +1136,7 @@ export function Survey({
    * itself (ENG-2538).
    *
    * Without this filter the projection below carried a reserved value for every name in the catalog,
-   * and {@link mergeReservedValues}'s spread was the only thing keeping a declared field ahead of
+   * and `mergeReservedValues`'s spread was the only thing keeping a declared field ahead of
    * it. A spread only wins for keys that exist, so a survey declaring an optional `url` rendered the
    * page's own address — an internal `/edit` URL in the editor's preview, the respondent's own link
    * in production — wherever the respondent had not supplied the field. That is the normal case for
@@ -1418,7 +1444,7 @@ export function Survey({
     // respondent sees nothing.
     if (markLowQuality) lowQualityFlagRef.current = raiseLowQualityFlag(lowQualityFlagRef.current);
 
-    onResponseCreateOrUpdate({
+    void onResponseCreateOrUpdate({
       data: submittedData,
       ttc: responsettc,
       finished,
@@ -1505,166 +1531,214 @@ export function Survey({
     }
   };
 
-  const getCardContent = (blockIdx: number, offset: number): JSX.Element | undefined => {
-    if (showError) {
-      switch (errorType) {
-        case TResponseErrorCodesEnum.ResponseSendingError:
-          return (
-            <>
-              {localSurvey.type !== "link" ? (
-                <div className="bg-survey-bg relative w-full">
-                  <div
-                    className={cn(
-                      "flex w-full items-center justify-end",
-                      SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME
-                    )}>
-                    <SurveyCloseButton
-                      onClose={onClose}
-                      hoverColor={getHoverColor(styling)}
-                      borderRadius={styling.roundness ?? 8}
-                    />
-                  </div>
-                </div>
-              ) : null}
-              <ResponseErrorComponent
-                responseData={responseQueue?.getUnsentData() ?? responseData}
-                questions={questions}
-                onRetry={retryResponse}
-                isRetrying={isRetrying}
-              />
-            </>
-          );
-        case TResponseErrorCodesEnum.RecaptchaError:
-        case TResponseErrorCodesEnum.InvalidDeviceError:
-        case TResponseErrorCodesEnum.ResponseAlreadyCompleted:
-        case TResponseErrorCodesEnum.ResponseSendingErrorPermanent:
-          return (
-            <>
-              {localSurvey.type !== "link" ? (
-                <div className="bg-survey-bg relative w-full">
-                  <div
-                    className={cn(
-                      "flex w-full items-center justify-end",
-                      SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME
-                    )}>
-                    <SurveyCloseButton
-                      onClose={onClose}
-                      hoverColor={getHoverColor(styling)}
-                      borderRadius={styling.roundness ?? 8}
-                    />
-                  </div>
-                </div>
-              ) : null}
-              <ErrorComponent errorType={errorType} />
-            </>
-          );
-      }
-    }
+  // The close button row an error card shows outside link surveys.
+  const renderErrorCloseRow = (): JSX.Element | null =>
+    localSurvey.type !== "link" ? (
+      <div className="bg-survey-bg relative w-full">
+        <div className={cn("flex w-full items-center justify-end", SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME)}>
+          <SurveyCloseButton
+            onClose={onClose}
+            hoverColor={getHoverColor(styling)}
+            borderRadius={styling.roundness ?? 8}
+          />
+        </div>
+      </div>
+    ) : null;
 
-    const content = () => {
-      if (blockIdx === -1) {
+  // The card a response error replaces the page with, or undefined for an error type with none.
+  const renderErrorCard = (): JSX.Element | undefined => {
+    switch (errorType) {
+      case TResponseErrorCodesEnum.ResponseSendingError:
         return (
-          <WelcomeCard
-            key="start"
-            headline={localSurvey.welcomeCard.headline}
-            subheader={localSurvey.welcomeCard.subheader}
-            fileUrl={localSurvey.welcomeCard.fileUrl}
-            videoUrl={localSurvey.welcomeCard.videoUrl}
-            buttonLabel={localSurvey.welcomeCard.buttonLabel}
-            onSubmit={onSubmit}
+          <>
+            {renderErrorCloseRow()}
+            <ResponseErrorComponent
+              responseData={responseQueue?.getUnsentData() ?? responseData}
+              questions={questions}
+              onRetry={retryResponse}
+              isRetrying={isRetrying}
+            />
+          </>
+        );
+      case TResponseErrorCodesEnum.RecaptchaError:
+      case TResponseErrorCodesEnum.InvalidDeviceError:
+      case TResponseErrorCodesEnum.ResponseAlreadyCompleted:
+      case TResponseErrorCodesEnum.ResponseSendingErrorPermanent:
+        return (
+          <>
+            {renderErrorCloseRow()}
+            <ErrorComponent errorType={errorType} />
+          </>
+        );
+    }
+    return undefined;
+  };
+
+  // The welcome card, the ending card or the block a card shows.
+  const renderCardBody = (blockIdx: number, offset: number) => {
+    if (blockIdx === -1) {
+      return (
+        <WelcomeCard
+          key="start"
+          headline={localSurvey.welcomeCard.headline}
+          subheader={localSurvey.welcomeCard.subheader}
+          fileUrl={localSurvey.welcomeCard.fileUrl}
+          videoUrl={localSurvey.welcomeCard.videoUrl}
+          buttonLabel={localSurvey.welcomeCard.buttonLabel}
+          onSubmit={onSubmit}
+          survey={localSurvey}
+          languageCode={selectedLanguage}
+          responseCount={responseCount}
+          autoFocusEnabled={autoFocusEnabled || hasUserNavigatedRef.current}
+          isCurrent={offset === 0}
+          responseData={recallValues}
+          variablesData={currentVariables}
+          isPreviewMode={isPreviewMode}
+          fullSizeCards={fullSizeCards}
+          isCardless={isCardless}
+        />
+      );
+    } else if (blockIdx >= localSurvey.blocks.length) {
+      const endingCard = localSurvey.endings.find((ending) => {
+        return ending.id === blockId;
+      });
+      if (endingCard) {
+        return (
+          <EndingCard
             survey={localSurvey}
-            languageCode={selectedLanguage}
-            responseCount={responseCount}
+            endingCard={endingCard}
+            isRedirectDisabled={isRedirectDisabled}
             autoFocusEnabled={autoFocusEnabled || hasUserNavigatedRef.current}
             isCurrent={offset === 0}
+            languageCode={selectedLanguage}
+            isResponseSendingFinished={isResponseSendingFinished}
             responseData={recallValues}
             variablesData={currentVariables}
+            onOpenExternalURL={onOpenExternalURL}
             isPreviewMode={isPreviewMode}
             fullSizeCards={fullSizeCards}
             isCardless={isCardless}
+            isOfflineWithPending={offlinePersistEnabled && !isOnline && isSurveyFinished}
           />
         );
-      } else if (blockIdx >= localSurvey.blocks.length) {
-        const endingCard = localSurvey.endings.find((ending) => {
-          return ending.id === blockId;
-        });
-        if (endingCard) {
-          return (
-            <EndingCard
-              survey={localSurvey}
-              endingCard={endingCard}
-              isRedirectDisabled={isRedirectDisabled}
-              autoFocusEnabled={autoFocusEnabled || hasUserNavigatedRef.current}
-              isCurrent={offset === 0}
-              languageCode={selectedLanguage}
-              isResponseSendingFinished={isResponseSendingFinished}
-              responseData={recallValues}
-              variablesData={currentVariables}
-              onOpenExternalURL={onOpenExternalURL}
-              isPreviewMode={isPreviewMode}
-              fullSizeCards={fullSizeCards}
-              isCardless={isCardless}
-              isOfflineWithPending={offlinePersistEnabled && !isOnline && isSurveyFinished}
-            />
-          );
-        }
-      } else {
-        const block = localSurvey.blocks[blockIdx];
-        // Re-evaluated on every render, so a question appears or hides as the answers above it change,
-        // and its options are filtered live (ENG-6937).
-        const pageVisibility = getPageVisibility({
-          survey: localSurvey,
-          blockId: block?.id ?? "",
-          responseData,
-          variables: currentVariables,
-          selectedLanguage,
-          reservedFieldValues: reservedValues,
-        });
-        const { visibleElementIds, optionsNotShown } = pageVisibility;
-        return (
-          Boolean(block) && (
-            <BlockConditional
-              surveyLanguages={localSurvey.languages}
-              key={block.id}
-              surveyId={localSurvey.id}
-              block={{
-                ...block,
-                elements: block.elements.map((element) =>
-                  withOptionsShown(
-                    parseRecallInformation(element, selectedLanguage, recallValues, currentVariables),
-                    optionsNotShown[element.id]
-                  )
-                ),
-              }}
-              value={getPageAnswers(responseData, pageVisibility)}
-              onChange={onChange}
-              onSubmit={onSubmit}
-              onBack={onBack}
-              ttc={ttc}
-              setTtc={setTtc}
-              onFileUpload={onFileUpload}
-              isFirstBlock={
-                block.id === localSurvey.blocks[0]?.id || (history.length === 0 && block.id === entryBlockId)
-              }
-              visibleElementIds={visibleElementIds}
-              skipPrefilled={skipPrefilled && !isNavigatingBackRef.current}
-              prefilledResponseData={offset === 0 ? prefillResponseData : undefined}
-              isLastBlock={block.id === localSurvey.blocks[localSurvey.blocks.length - 1].id}
-              languageCode={selectedLanguage}
-              autoFocusEnabled={autoFocusEnabled}
-              shouldFocusOnMount={offset === 0 && (autoFocusEnabled || hasUserNavigatedRef.current)}
-              isBackButtonHidden={localSurvey.isBackButtonHidden}
-              isAutoProgressingEnabled={localSurvey.isAutoProgressingEnabled}
-              onOpenExternalURL={onOpenExternalURL}
-              dir={dir}
-              fullSizeCards={fullSizeCards}
-              isCardless={isCardless}
-              signatureDrafts={signatureDrafts}
-            />
-          )
-        );
       }
-    };
+    } else {
+      const block = localSurvey.blocks[blockIdx];
+      // Re-evaluated on every render, so a question appears or hides as the answers above it change,
+      // and its options are filtered live (ENG-6937).
+      const pageVisibility = getPageVisibility({
+        survey: localSurvey,
+        blockId: block?.id ?? "",
+        responseData,
+        variables: currentVariables,
+        selectedLanguage,
+        reservedFieldValues: reservedValues,
+      });
+      const { visibleElementIds, optionsNotShown } = pageVisibility;
+      return (
+        Boolean(block) && (
+          <BlockConditional
+            surveyLanguages={localSurvey.languages}
+            key={block.id}
+            surveyId={localSurvey.id}
+            block={{
+              ...block,
+              elements: block.elements.map((element) =>
+                withOptionsShown(
+                  parseRecallInformation(element, selectedLanguage, recallValues, currentVariables),
+                  optionsNotShown[element.id]
+                )
+              ),
+            }}
+            value={getPageAnswers(responseData, pageVisibility)}
+            onChange={onChange}
+            onSubmit={onSubmit}
+            onBack={onBack}
+            ttc={ttc}
+            setTtc={setTtc}
+            onFileUpload={onFileUpload}
+            isFirstBlock={
+              block.id === localSurvey.blocks[0]?.id || (history.length === 0 && block.id === entryBlockId)
+            }
+            visibleElementIds={visibleElementIds}
+            skipPrefilled={skipPrefilled && !isNavigatingBackRef.current}
+            prefilledResponseData={offset === 0 ? prefillResponseData : undefined}
+            isLastBlock={block.id === localSurvey.blocks[localSurvey.blocks.length - 1].id}
+            languageCode={selectedLanguage}
+            autoFocusEnabled={autoFocusEnabled}
+            shouldFocusOnMount={offset === 0 && (autoFocusEnabled || hasUserNavigatedRef.current)}
+            isBackButtonHidden={localSurvey.isBackButtonHidden}
+            isAutoProgressingEnabled={localSurvey.isAutoProgressingEnabled}
+            onOpenExternalURL={onOpenExternalURL}
+            dir={dir}
+            fullSizeCards={fullSizeCards}
+            isCardless={isCardless}
+            signatureDrafts={signatureDrafts}
+          />
+        )
+      );
+    }
+  };
+
+  // The progress bar, language switch and close button above a card's content.
+  const renderCardTopBar = (
+    isLanguageSwitchVisible: boolean | null,
+    isCloseButtonVisible: boolean,
+    isCloseButtonBesideContent: boolean
+  ): JSX.Element | null => {
+    if (!((!isCardless && showProgressBar) || isLanguageSwitchVisible || isCloseButtonVisible)) return null;
+    return (
+      <div className="flex w-full flex-col items-end">
+        {!isCardless && showProgressBar ? <ProgressBar survey={localSurvey} blockId={blockId} /> : null}
+
+        {isCloseButtonVisible || isLanguageSwitchVisible ? (
+          <div
+            className={cn(
+              isCloseButtonBesideContent ? "absolute end-0 w-fit" : "relative w-full",
+              // Below the progress bar (h-2) when there is one.
+              isCloseButtonBesideContent && !isCardless && showProgressBar && "top-2",
+              isCloseButtonBesideContent && (isCardless || !showProgressBar) && "top-0"
+            )}>
+            <div
+              className={cn(
+                "flex w-full items-center justify-end",
+                isCloseButtonVisible ? SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME : "h-8"
+              )}>
+              {isLanguageSwitchVisible && (
+                <LanguageSwitch
+                  survey={localSurvey}
+                  surveyLanguages={localSurvey.languages}
+                  selectedLanguageCode={selectedLanguage}
+                  setSelectedLanguageCode={setSelectedLanguage}
+                  hoverColor={getHoverColor(styling)}
+                  borderRadius={styling.roundness ?? 8}
+                  setDir={setDir}
+                  dir={dir}
+                />
+              )}
+              {isLanguageSwitchVisible && isCloseButtonVisible && (
+                <div aria-hidden="true" className="z-1001 h-5 w-px bg-slate-200" />
+              )}
+
+              {isCloseButtonVisible && (
+                <SurveyCloseButton
+                  onClose={onClose}
+                  hoverColor={getHoverColor(styling)}
+                  borderRadius={styling.roundness ?? 8}
+                />
+              )}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    );
+  };
+
+  const getCardContent = (blockIdx: number, offset: number): JSX.Element | undefined => {
+    if (showError) {
+      const errorCard = renderErrorCard();
+      if (errorCard) return errorCard;
+    }
 
     const isLanguageSwitchVisible = getShowLanguageSwitch(offset);
     const isCloseButtonVisible = getShowSurveyCloseButton(offset);
@@ -1690,53 +1764,7 @@ export function Survey({
             offset === 0 || cardArrangement === "simple" || isCardless ? "opacity-100" : "opacity-0"
           )}>
           <div className={cn("relative")}>
-            {(!isCardless && showProgressBar) || isLanguageSwitchVisible || isCloseButtonVisible ? (
-              <div className="flex w-full flex-col items-end">
-                {!isCardless && showProgressBar ? (
-                  <ProgressBar survey={localSurvey} blockId={blockId} />
-                ) : null}
-
-                {isCloseButtonVisible || isLanguageSwitchVisible ? (
-                  <div
-                    className={cn(
-                      isCloseButtonBesideContent ? "absolute end-0 w-fit" : "relative w-full",
-                      // Below the progress bar (h-2) when there is one.
-                      isCloseButtonBesideContent && !isCardless && showProgressBar && "top-2",
-                      isCloseButtonBesideContent && (isCardless || !showProgressBar) && "top-0"
-                    )}>
-                    <div
-                      className={cn(
-                        "flex w-full items-center justify-end",
-                        isCloseButtonVisible ? SURVEY_CLOSE_BUTTON_ROW_CLASS_NAME : "h-8"
-                      )}>
-                      {isLanguageSwitchVisible && (
-                        <LanguageSwitch
-                          survey={localSurvey}
-                          surveyLanguages={localSurvey.languages}
-                          selectedLanguageCode={selectedLanguage}
-                          setSelectedLanguageCode={setSelectedLanguage}
-                          hoverColor={getHoverColor(styling)}
-                          borderRadius={styling.roundness ?? 8}
-                          setDir={setDir}
-                          dir={dir}
-                        />
-                      )}
-                      {isLanguageSwitchVisible && isCloseButtonVisible && (
-                        <div aria-hidden="true" className="z-1001 h-5 w-px bg-slate-200" />
-                      )}
-
-                      {isCloseButtonVisible && (
-                        <SurveyCloseButton
-                          onClose={onClose}
-                          hoverColor={getHoverColor(styling)}
-                          borderRadius={styling.roundness ?? 8}
-                        />
-                      )}
-                    </div>
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
+            {renderCardTopBar(isLanguageSwitchVisible, isCloseButtonVisible, isCloseButtonBesideContent)}
             <div
               ref={contentRef}
               className={cn(
@@ -1745,7 +1773,7 @@ export function Survey({
                 isCloseButtonBesideContent && SURVEY_CLOSE_BUTTON_HEADLINE_CLEARANCE_CLASS_NAME,
                 isCloseButtonBesideContent && SURVEY_CLOSE_BUTTON_SCROLL_FADE_CLASS_NAME
               )}>
-              {content()}
+              {renderCardBody(blockIdx, offset)}
             </div>
 
             <div

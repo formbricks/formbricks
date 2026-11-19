@@ -211,7 +211,7 @@ describe("a survey save writes only the survey's own columns (ENG-7127)", () => 
     const before = await snapshot();
     const survey = await loadSurvey(ids.draft);
 
-    await updateSurveyInternal({ ...survey, ...buildExtra(), name: "Saved" } as TSurvey, true);
+    await updateSurveyInternal({ ...survey, ...buildExtra(), name: "Saved" }, true);
 
     expect(await snapshot()).toEqual(before);
     expect((await loadSurvey(ids.draft)).name).toBe("Saved");
@@ -223,7 +223,7 @@ describe("a survey save writes only the survey's own columns (ENG-7127)", () => 
     const before = await snapshot();
     const survey = await loadSurvey(ids.draft);
 
-    await updateSurvey({ ...survey, ...buildExtra(), name: "Saved" } as TSurvey);
+    await updateSurvey({ ...survey, ...buildExtra(), name: "Saved" });
 
     expect(await snapshot()).toEqual(before);
     expect((await loadSurvey(ids.draft)).name).toBe("Saved");

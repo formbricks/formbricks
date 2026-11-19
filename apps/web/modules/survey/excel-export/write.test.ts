@@ -221,7 +221,7 @@ describe("writeExcelExport", () => {
   test("states what the survey is on a Survey sheet, one property per row, naming no one", () => {
     const workbook = readBack(
       writeExcelExport({
-        survey: { ...SURVEY, status: "inProgress" } as TSurvey,
+        survey: { ...SURVEY, status: "inProgress" },
         t,
         locale: "en-US",
         exportedAt: new Date("2026-11-06T09:05:59.999Z"),
@@ -244,7 +244,7 @@ describe("writeExcelExport", () => {
   });
 
   test("leaves the languages out of the Survey sheet for a survey without languages", () => {
-    const rows = rowsOf(export_({ ...SURVEY, languages: [] } as TSurvey).Sheets.Survey);
+    const rows = rowsOf(export_({ ...SURVEY, languages: [] }).Sheets.Survey);
 
     expect(rows.map(([property]) => property)).toEqual([
       "Property",
@@ -293,7 +293,7 @@ describe("writeExcelExport", () => {
     // A survey stores no order for its languages, so the database may return them in any.
     const [english, german] = SURVEY.languages;
     const language = (code: string) => ({ ...german, language: { ...german.language, code, alias: null } });
-    const shuffled = { ...SURVEY, languages: [language("ja"), german, language("fr"), english] } as TSurvey;
+    const shuffled = { ...SURVEY, languages: [language("ja"), german, language("fr"), english] };
 
     const [header] = rowsOf(export_(shuffled).Sheets.Questions);
 
@@ -310,7 +310,7 @@ describe("writeExcelExport", () => {
   });
 
   test("writes one Text column for a survey without languages", () => {
-    const [header, firstRow] = rowsOf(export_({ ...SURVEY, languages: [] } as TSurvey).Sheets.Questions);
+    const [header, firstRow] = rowsOf(export_({ ...SURVEY, languages: [] }).Sheets.Questions);
 
     expect(header).toEqual(["key", "Question ID", "Type", "Text", "Logic"]);
     expect(firstRow).toEqual(["welcomeCard.headline", "", "Welcome card: Headline", "Welcome", ""]);

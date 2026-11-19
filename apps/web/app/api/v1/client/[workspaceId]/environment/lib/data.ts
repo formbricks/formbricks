@@ -318,9 +318,9 @@ export const getWorkspaceStateData = async (workspaceId: string): Promise<Worksp
     // change any live survey's membership, and skips the heavy `/user` refetch otherwise.
     const surveysWithFilters = appSurveys.map((survey) => ({
       id: survey.id,
-      segmentFilters: (Array.isArray(survey.segment?.filters)
+      segmentFilters: Array.isArray(survey.segment?.filters)
         ? (survey.segment.filters as unknown as TBaseFilters)
-        : null) as TBaseFilters | null,
+        : null,
     }));
 
     // Nested `userIsIn` / `userIsNotIn` filters can hide an interaction filter inside a referenced

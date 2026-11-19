@@ -85,13 +85,13 @@ describe("generateInternalChart", () => {
       chartType: "bar",
       query: validQuery,
       name: "Responses by source",
-    } as Awaited<ReturnType<typeof generateAIChartQuery>>);
+    });
     vi.mocked(runChartQuery).mockResolvedValue({
       rows: [{ "FeedbackRecords.count": 4, "FeedbackRecords.sourceType": "survey" }],
       optionLabels: { a: "Option A" },
       fieldLabels: { "FeedbackRecords.count": "Responses" },
       effectiveQuery: validQuery,
-    } as Awaited<ReturnType<typeof runChartQuery>>);
+    });
 
     const response = await generate();
 
@@ -138,11 +138,11 @@ describe("generateInternalChart", () => {
       chartType: "bar",
       query: validQuery,
       name: "",
-    } as Awaited<ReturnType<typeof generateAIChartQuery>>);
+    });
     vi.mocked(runChartQuery).mockResolvedValue({
       rows: [],
       effectiveQuery: validQuery,
-    } as unknown as Awaited<ReturnType<typeof runChartQuery>>);
+    });
 
     const data = (await (await generate()).json()).data;
 
@@ -225,7 +225,7 @@ describe("generateInternalChart", () => {
       chartType: "bar",
       query: validQuery,
       name: "Responses by source",
-    } as Awaited<ReturnType<typeof generateAIChartQuery>>);
+    });
     vi.mocked(runChartQuery).mockRejectedValue(new Error("option grouping lookup failed"));
 
     const response = await generate();
@@ -285,7 +285,7 @@ describe("generateInternalChart", () => {
       chartType: "bar",
       query: validQuery,
       name: "x",
-    } as Awaited<ReturnType<typeof generateAIChartQuery>>);
+    });
     vi.mocked(runChartQuery).mockRejectedValue(new CubeQueryError(false));
 
     const response = await generate();
