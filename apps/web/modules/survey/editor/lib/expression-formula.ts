@@ -39,8 +39,16 @@ import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
  * - functions by name: `round(x, 1)`, `min(a, b)`, `ifEmpty(@q1, 0)`, `now()`, … (any case).
  */
 
-/** The most characters the formula box takes. Generous; it also bounds the parser's recursion. */
+/** The most characters a formula has. Generous; it also bounds the parser's recursion. */
 export const FORMULA_MAX_LENGTH = 5000;
+
+/**
+ * The most characters the formula box holds, well past FORMULA_MAX_LENGTH: a longer paste stays in the
+ * box and says it is too long, rather than being cut to the limit and failing on wherever the cut fell
+ * (ENG-7028). Text clipped here is still over FORMULA_MAX_LENGTH, so it says too long too; the cap only
+ * keeps the per-keystroke work fast: the chips read the whole text, the slot check the text before the caret.
+ */
+export const FORMULA_BOX_MAX_LENGTH = FORMULA_MAX_LENGTH * 4;
 
 export type TFormulaReferenceGroup = "question" | "field" | "reserved";
 
@@ -458,7 +466,8 @@ const readText: TTokenReader = (text, idx) => {
     end += 1;
   }
   if (end >= text.length) throw new FormulaError({ code: "unclosed_text", position: idx });
-  // No length check: FORMULA_MAX_LENGTH keeps any quoted text within EXPRESSION_MAX_STATIC_TEXT_LENGTH.
+  // No length check: parseFormula refuses text over FORMULA_MAX_LENGTH before tokenizing, which keeps any
+  // quoted text within EXPRESSION_MAX_STATIC_TEXT_LENGTH.
   return { token: { kind: "text", value, position: idx }, next: end + 1 };
 };
 
