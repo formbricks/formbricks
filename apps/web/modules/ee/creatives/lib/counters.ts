@@ -155,12 +155,28 @@ export const incrementCreativeCounters = async (
 export const claimCountedCreatives = async (day: string, limit: number): Promise<string[]> => {
   const redis = await getRedis();
   if (!redis) return [];
-  return (await cache.runRedisOperation((client) =>
+
+  // Drain untagged claims first during a rolling upgrade. A standalone Redis server can run the
+  // original two-key claim script; a cluster had no successful old-format multi-key writes.
+  const legacyKeys = [
+    createCacheKey.creativeStats.legacyPending(day),
+    createCacheKey.creativeStats.legacyFlushing(day),
+  ];
+  const legacyIds = await cache.runRedisOperation(async (client) => {
+    const [pending, flushing] = await Promise.all(legacyKeys.map((key) => client.sCard(key)));
+    if (pending + flushing === 0) return [];
+    return (await client.eval(CLAIM_SCRIPT, {
+      keys: legacyKeys,
+      arguments: [String(limit), String(CREATIVE_COUNTER_TTL_SECONDS)],
+    })) as string[];
+  });
+  const newIds = (await cache.runRedisOperation((client) =>
     client.eval(CLAIM_SCRIPT, {
       keys: [createCacheKey.creativeStats.pending(day), createCacheKey.creativeStats.flushing(day)],
-      arguments: [String(limit), String(CREATIVE_COUNTER_TTL_SECONDS)],
+      arguments: [String(Math.max(0, limit - legacyIds.length)), String(CREATIVE_COUNTER_TTL_SECONDS)],
     })
   )) as string[];
+  return [...new Set([...legacyIds, ...newIds])];
 };
 
 /** Marks claimed creatives as flushed. Events counted since were added to `pending` again. */
@@ -168,7 +184,10 @@ export const releaseCountedCreatives = async (day: string, creativeIds: readonly
   const redis = await getRedis();
   if (!redis || creativeIds.length === 0) return;
   await cache.runRedisOperation((client) =>
-    client.sRem(createCacheKey.creativeStats.flushing(day), [...creativeIds])
+    Promise.all([
+      client.sRem(createCacheKey.creativeStats.flushing(day), [...creativeIds]),
+      client.sRem(createCacheKey.creativeStats.legacyFlushing(day), [...creativeIds]),
+    ])
   );
 };
 
@@ -191,6 +210,20 @@ const readTotals = (hash: Record<string, string>): Map<string, { impressions: nu
 const isDeviceType = (value: string): value is TShowConditionDeviceType =>
   (SHOW_CONDITION_DEVICE_TYPES as readonly string[]).includes(value);
 
+const sumTotals = (
+  current: Record<string, string>,
+  legacy: Record<string, string>
+): Map<string, { impressions: number; clicks: number }> => {
+  const totals = readTotals(current);
+  for (const [name, count] of readTotals(legacy)) {
+    const total = totals.get(name) ?? { impressions: 0, clicks: 0 };
+    total.impressions += count.impressions;
+    total.clicks += count.clicks;
+    totals.set(name, total);
+  }
+  return totals;
+};
+
 /**
  * The running totals of `day` for each creative, as rollup rows. Throws when Redis isn't available: the
  * creatives are claimed, and reading them as empty would let the flush release totals it never wrote.
@@ -212,16 +245,20 @@ export const readCreativeCounters = async (
             client.hGetAll(createCacheKey.creativeStats.devices(day, creativeId)),
             client.hGetAll(createCacheKey.creativeStats.pages(day, creativeId)),
           ]);
-          return { creativeId, devices, pages };
+          const [legacyDevices, legacyPages] = await Promise.all([
+            client.hGetAll(createCacheKey.creativeStats.legacyDevices(day, creativeId)),
+            client.hGetAll(createCacheKey.creativeStats.legacyPages(day, creativeId)),
+          ]);
+          return { creativeId, devices, pages, legacyDevices, legacyPages };
         })
       )
     );
 
-    for (const { creativeId, devices, pages } of hashes) {
-      for (const [deviceType, total] of readTotals(devices)) {
+    for (const { creativeId, devices, pages, legacyDevices, legacyPages } of hashes) {
+      for (const [deviceType, total] of sumTotals(devices, legacyDevices)) {
         if (isDeviceType(deviceType)) deviceRows.push({ creativeId, date: day, deviceType, ...total });
       }
-      for (const [page, total] of readTotals(pages)) {
+      for (const [page, total] of sumTotals(pages, legacyPages)) {
         pageRows.push({ creativeId, date: day, page, ...total });
       }
     }
