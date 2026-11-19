@@ -150,6 +150,7 @@
       "product_updates_title": "E-mailuri lunare cu actualizări despre produs",
       "security_updates_description": "Doar informații relevante pentru securitate; se aplică Politica de confidențialitate.",
       "security_updates_title": "Actualizări de securitate",
+      "signup_disabled": "Înscrierea este închisă pe această instanță. Roagă un administrator să te invite.",
       "terms_of_service": "Termeni de utilizare a serviciului",
       "title": "Creați-vă contul Formbricks"
     },

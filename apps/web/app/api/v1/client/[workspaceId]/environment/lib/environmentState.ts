@@ -70,6 +70,7 @@ const loadDuringRedisOutage = async (
       }
       while (
         outageEntries.size >= MAX_OUTAGE_ENTRIES ||
+        // eslint-disable-next-line no-unmodified-loop-condition -- forgetOutageEntry lowers outageBytes, which the rule cannot see through the call
         (outageEntries.size > 0 && outageBytes + bytes > MAX_OUTAGE_BYTES)
       ) {
         const oldest = outageEntries.keys().next().value;

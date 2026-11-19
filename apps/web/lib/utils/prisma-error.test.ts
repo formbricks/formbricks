@@ -144,6 +144,7 @@ describe("retryOnTransactionConflict", () => {
     vi.useFakeTimers();
     const operation = vi.fn().mockRejectedValue(conflict);
 
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const assertion = expect(retryOnTransactionConflict(operation, { maxAttempts: 3 })).rejects.toBe(
       conflict
     );

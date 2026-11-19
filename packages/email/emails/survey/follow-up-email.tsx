@@ -83,5 +83,5 @@ export function FollowUpEmail({
 }
 
 export default function FollowUpEmailPreview(): React.JSX.Element {
-  return <FollowUpEmail {...(exampleData.followUpEmail as unknown as FollowUpEmailProps)} />;
+  return <FollowUpEmail {...exampleData.followUpEmail} />;
 }

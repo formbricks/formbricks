@@ -44,7 +44,7 @@ upgrade requires.
 - Key naming: use lowercase with dots for nesting (e.g., `common.welcome`).
 - Translations are in `apps/web/locales/`. `en-US.json` is the source of truth.
 - **Only ever add or edit strings in `en-US.json`.** Never hand-write, translate, or edit the other (non-English) locale files yourself — those are machine-generated from en-US by Lingo.dev.
-- After adding or changing an en-US string, run `pnpm i18n` (it needs `LINGO_API_KEY` in `.env`) and commit the generated locale files and the regenerated `apps/web/i18n.lock` and `packages/surveys/i18n.lock` with it. Nothing translates on commit: CI's `Translation Validation` workflow only runs `pnpm scan-translations`, so a PR that changes `en-US.json` alone stays red. Without a key (cloud sessions), commit `en-US.json` and say in the PR that `pnpm i18n` still has to run.
+- After adding or changing an en-US string, run `pnpm i18n` (it needs `LINGO_API_KEY`, from the environment or `.env`) and commit the generated locale files and the regenerated `apps/web/i18n.lock` and `packages/surveys/i18n.lock` with it. Nothing translates on commit: CI's `Translation Validation` workflow only runs `pnpm scan-translations`, so a PR that changes `en-US.json` alone stays red. To tell whether a key is available, run `pnpm i18n`: reading `.env` misleads, because the environment overrides it. Only when that fails for lack of a key, commit `en-US.json` and say in the PR that `pnpm i18n` still has to run.
 - On a merge conflict in `apps/web/locales/`, `packages/surveys/locales/` or their `i18n.lock`, run `pnpm i18n:merge`.
 
 ## Coding Standards
@@ -57,8 +57,11 @@ section before changing database access, its "Testing Guidelines" before adding 
 
 ## Commit & Pull Request Guidelines
 
-Read `docs/agents/pull-requests.md` before committing or opening, updating, or reviewing a PR: commit
-format, PR template rules, review intake, and independent review passes.
+Open, update or ready a PR with the `pr` skill; for a change to how a UI surface looks, load it before
+the first edit, while the before screenshot is still free.
+
+Read `docs/agents/pull-requests.md` before committing or reviewing a PR: commit format, review intake,
+Sonar, and CI failure triage.
 
 ## Performance Testing & SigNoz MCP
 

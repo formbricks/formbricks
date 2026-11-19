@@ -50,7 +50,7 @@ export const VideoSettings = ({
     }
   };
 
-  const handleAddVideo = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+  const handleAddVideo = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
     const embedUrl = convertToEmbedUrl(uploadedVideoUrl.trim());
     if (embedUrl) {
@@ -61,7 +61,7 @@ export const VideoSettings = ({
     }
   };
 
-  const handleRemoveVideo = (e: React.MouseEvent<HTMLElement, MouseEvent>) => {
+  const handleRemoveVideo = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
     setVideoUrlTemp("");
     setUploadedVideoUrl("");

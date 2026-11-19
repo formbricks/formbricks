@@ -8,8 +8,8 @@ import { Survey } from "./survey";
 
 export function RenderSurvey(props: Readonly<SurveyContainerProps>) {
   const [isOpen, setIsOpen] = useState(true);
-  const onFinishedTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const onFinishedTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { onClose, onLanguageChange } = props;
   const [activeLanguageCode, setActiveLanguageCode] = useState(props.languageCode);
 

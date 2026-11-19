@@ -1,6 +1,6 @@
 import type { JSX, Ref } from "preact";
 import { forwardRef } from "preact/compat";
-import { useEffect, useImperativeHandle, useRef, useState } from "preact/hooks";
+import { useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from "preact/hooks";
 import { ScrollToBottomButton } from "@/components/buttons/scroll-to-bottom-button";
 import { cn } from "@/lib/utils";
 
@@ -63,7 +63,9 @@ export const ScrollableContainer = forwardRef<ScrollableContainerHandle, Scrolla
       };
     }, []);
 
-    useEffect(() => {
+    // Measured before paint: `isAtBottom` starts false, so measuring after paint showed the
+    // "Scroll to bottom" button for a frame on every card that fits without scrolling.
+    useLayoutEffect(() => {
       checkScroll();
     }, [children]);
 

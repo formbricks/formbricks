@@ -209,7 +209,7 @@ const handleAirtableIntegration = async (
   data: TIntegrationPipelineData,
   survey: TPipelineIntegrationSurvey,
   displayTimeZone: string
-): Promise<Result<void, Error>> => {
+): Promise<Result<void>> => {
   try {
     if (integration.config.data.length > 0) {
       for (const element of integration.config.data) {
@@ -243,7 +243,7 @@ const handleGoogleSheetsIntegration = async (
   data: TIntegrationPipelineData,
   survey: TPipelineIntegrationSurvey,
   displayTimeZone: string
-): Promise<Result<void, Error>> => {
+): Promise<Result<void>> => {
   try {
     if (integration.config.data.length > 0) {
       for (const element of integration.config.data) {
@@ -282,7 +282,7 @@ const handleSlackIntegration = async (
   data: TIntegrationPipelineData,
   survey: TPipelineIntegrationSurvey,
   displayTimeZone: string
-): Promise<Result<void, Error>> => {
+): Promise<Result<void>> => {
   try {
     if (integration.config.data.length > 0) {
       for (const element of integration.config.data) {
@@ -435,7 +435,7 @@ const handleNotionIntegration = async (
   integration: TIntegrationNotion,
   data: TIntegrationPipelineData,
   surveyData: TPipelineIntegrationSurvey
-): Promise<Result<void, Error>> => {
+): Promise<Result<void>> => {
   try {
     if (integration.config.data.length > 0) {
       for (const element of integration.config.data) {

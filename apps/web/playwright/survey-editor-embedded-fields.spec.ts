@@ -1,6 +1,7 @@
 import { type Locator, type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
+import { clickUntilVisible } from "./utils/click-until";
 import {
   type EmbeddedFieldSource,
   addEmbeddedField,
@@ -93,12 +94,7 @@ const openQuestionCard = async (page: Page, heading = QUESTION_HEADLINE): Promis
   await showQuestionsTab(page);
   const questionLabel = editorPanel(page).locator('label:has-text("Question*")');
 
-  await expect(async () => {
-    if (!(await questionLabel.isVisible())) {
-      await editorPanel(page).getByRole("heading", { name: heading }).click();
-    }
-    await expect(questionLabel).toBeVisible({ timeout: 5000 });
-  }).toPass({ timeout: 30000 });
+  await clickUntilVisible(editorPanel(page).getByRole("heading", { name: heading }), questionLabel);
 };
 
 /**

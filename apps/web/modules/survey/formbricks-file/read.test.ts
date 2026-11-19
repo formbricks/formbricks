@@ -395,6 +395,7 @@ describe("readFormbricksFile", () => {
       ]);
     } finally {
       for (const [key, descriptor] of Object.entries(saved)) {
+        // eslint-disable-next-line no-extend-native -- puts back any prototype entry a failing read deleted, so one failure does not break later tests
         if (!Object.hasOwn(Object.prototype, key)) Object.defineProperty(Object.prototype, key, descriptor);
       }
     }

@@ -24,6 +24,7 @@ export const StylingSection = ({ title, open, setOpen, children }: StylingSectio
     <div ref={parent} className={`rounded-md border ${open ? "overflow-visible" : "overflow-hidden"}`}>
       <button
         type="button"
+        aria-expanded={open}
         onClick={() => setOpen(!open)}
         className="flex w-full items-center justify-between rounded-t-md bg-slate-50 p-3 text-sm font-medium text-slate-700 hover:bg-slate-100">
         {title}

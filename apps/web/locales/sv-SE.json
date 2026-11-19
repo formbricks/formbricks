@@ -150,6 +150,7 @@
       "product_updates_title": "Månatliga produktuppdateringar via e-post",
       "security_updates_description": "Endast säkerhetsrelaterad information. Integritetspolicyn gäller.",
       "security_updates_title": "Säkerhetsuppdateringar",
+      "signup_disabled": "Registreringen är stängd på den här instansen. Be en administratör att bjuda in dig.",
       "terms_of_service": "Användarvillkor",
       "title": "Skapa ditt Formbricks-konto"
     },

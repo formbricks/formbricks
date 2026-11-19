@@ -79,7 +79,7 @@ export function FileUploadElement({
       try {
         fileName = decodeURIComponent(fileName);
       } catch (e) {
-        console.error(`Error decoding file name: ${e}`);
+        console.error(`Error decoding file name: ${String(e)}`);
       }
 
       // Clean up Formbricks storage pattern: name--fid--uuid.ext

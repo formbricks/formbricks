@@ -130,6 +130,7 @@ checksums:
     auth/signup/product_updates_title: e59c8ec06ec05b253f766a73653fdc98
     auth/signup/security_updates_description: 4643df07f13cec619e7fd91c8f14d93b
     auth/signup/security_updates_title: de5127f5847cdd412906607e1402f48d
+    auth/signup/signup_disabled: deeb1e317d709112155c102595ad7c47
     auth/signup/terms_of_service: 5add91f519e39025708e54a7eb7a9fc5
     auth/signup/title: 96addc349f834eaa5d14c786d5478b1c
     auth/signup_without_verification_success/user_successfully_created: e7ee262de26fdbd500023d9fb1982cf9

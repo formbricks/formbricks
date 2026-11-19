@@ -85,6 +85,12 @@ interface SurveyMenuBarProps {
   visibilityGate: TSurveyVisibilityUiGate;
   /** The effective visibility, from the server; pending counts as restricted. */
   effectiveVisibility: TSurveyVisibility;
+  /**
+   * The refresh after a visibility change has not landed yet, so `effectiveVisibility` may still be the
+   * old value. Activate waits for it: acting on the old value skips the "Who can view this survey?"
+   * question for a survey just restricted, or asks it for one just made visible.
+   */
+  isVisibilityRefreshing: boolean;
   /** A change was stored (in effect or pending): the editor refreshes what it shows from the server. */
   onVisibilityChanged: () => void;
   onVisibilityNotEnabled: () => void;
@@ -127,6 +133,7 @@ export const SurveyMenuBar = ({
   isStorageConfigured = true,
   visibilityGate,
   effectiveVisibility,
+  isVisibilityRefreshing,
   onVisibilityChanged,
   onVisibilityNotEnabled,
   surveyAccess,
@@ -994,7 +1001,7 @@ export const SurveyMenuBar = ({
         {localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
           <Button
             size="sm"
-            disabled={isSurveySaving}
+            disabled={isSurveySaving || isVisibilityRefreshing}
             loading={isSurveyPublishing}
             onClick={handleActivateClick}>
             {draftPrimaryLabel}

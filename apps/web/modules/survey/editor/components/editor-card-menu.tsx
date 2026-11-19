@@ -136,7 +136,7 @@ export const EditorCardMenu = ({
       ...elementDefaults,
       type,
       id: createId(),
-      required: type === TSurveyElementTypeEnum.CTA ? false : true,
+      required: type !== TSurveyElementTypeEnum.CTA,
     };
 
     // Add element to block or as new block
