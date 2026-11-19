@@ -1,5 +1,5 @@
 import { EventEmitter } from "node:events";
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import {
   type AutocommitDataMigrationContext,
   type MigrationScript,
@@ -200,16 +200,61 @@ describe("runDataMigration with transactional: false", () => {
     expect(writtenStatuses()).toEqual(["pending", "applied"]);
   });
 
-  test("refuses to start while another process holds the migration's lock", async () => {
-    answerLockQueries(false);
-    queryRaw.mockResolvedValue([{ status: "pending" }]);
-    const run = vi.fn();
+  describe("while another process holds the migration's lock", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
 
-    await expect(runDataMigration(autocommitMigration(run))).rejects.toThrow("running in another process");
+    test("waits, then skips once that runner has finished the migration", async () => {
+      answerLockQueries(false);
+      queryRaw
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([{ status: "pending" }])
+        .mockResolvedValue([{ status: "applied" }]);
+      const run = vi.fn();
 
-    expect(run).not.toHaveBeenCalled();
-    expect(writtenStatuses()).toEqual([]);
-    expect(lockEnd).toHaveBeenCalledOnce();
+      const result = runDataMigration(autocommitMigration(run));
+      await vi.advanceTimersByTimeAsync(5_000);
+      await result;
+
+      expect(lockStatements("pg_try_advisory_lock")).toBe(2);
+      expect(run).not.toHaveBeenCalled();
+      expect(writtenStatuses()).toEqual([]);
+    });
+
+    test("waits, then takes over once the lock frees without the migration being finished", async () => {
+      answerLockQueries(true);
+      lockQuery.mockResolvedValueOnce({ rows: [{ pid: 7, locked: false }] });
+      queryRaw.mockResolvedValue([{ status: "pending" }]);
+      const run = vi
+        .fn<(context: AutocommitDataMigrationContext) => Promise<void>>()
+        .mockResolvedValue(undefined);
+
+      const result = runDataMigration(autocommitMigration(run));
+      await vi.advanceTimersByTimeAsync(5_000);
+      await result;
+
+      expect(run).toHaveBeenCalledOnce();
+      expect(writtenStatuses()).toEqual(["pending", "applied"]);
+    });
+
+    test("gives up after 30 minutes without running anything", async () => {
+      answerLockQueries(false);
+      queryRaw.mockResolvedValue([{ status: "pending" }]);
+      const run = vi.fn();
+
+      const assertion = expect(runDataMigration(autocommitMigration(run))).rejects.toThrow(
+        "still running in another process after 30 minutes"
+      );
+      await vi.advanceTimersByTimeAsync(30 * 60 * 1000 + 5_000);
+      await assertion;
+
+      expect(run).not.toHaveBeenCalled();
+      expect(writtenStatuses()).toEqual([]);
+    });
   });
 
   test("aborts run() and records nothing when the lock connection drops, since another runner may take over", async () => {

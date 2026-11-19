@@ -106,7 +106,9 @@ While `run()` works, the runner holds a Postgres advisory lock for that migratio
 The `DataMigration` row is committed as `pending` before `run()` starts, then set to `applied` or `failed`:
 
 - A runner that finds the migration `applied` skips it without touching the lock.
-- A second runner that finds the lock taken stops with "running in another process".
+- A second runner that finds the lock taken waits for it, checking every 5 seconds for up to 30 minutes (the
+  default path's limit). It skips the migration once the first runner finishes it, or takes over if the lock
+  frees without that.
 - If the process is killed mid-run (a pod restart, Docker's migration timeout), Postgres drops the lock with the
   connection. The next run finds the row `pending` with nobody holding the lock, and resumes it on its own.
 - If the lock connection drops while the process lives on, `signal` aborts and the runner records nothing,

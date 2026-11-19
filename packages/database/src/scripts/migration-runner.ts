@@ -332,15 +332,46 @@ const readDataMigrationStatus = async (
 // Keys the per-migration advisory locks; distinct from the online upgrade coordinator's namespace.
 const DATA_MIGRATION_LOCK_NAMESPACE = 16212026;
 
-const openDataMigrationLock = (migration: AutocommitDataMigrationScript): Promise<AdvisoryLockSession> => {
-  if (!migrationDatabaseUrl) throw new Error("A migration database URL is required");
+const LOCK_WAIT_INTERVAL_MS = 5_000;
 
-  return openAdvisoryLockSession(migrationDatabaseUrl, {
-    namespace: DATA_MIGRATION_LOCK_NAMESPACE,
-    id: createHash("sha256").update(migration.id).digest().readInt32BE(0),
-    heldElsewhereError: `Data migration ${migration.name} is running in another process.`,
-    lostError: `Data migration ${migration.name} lost its lock.`,
-  });
+// Returns null while another runner holds the lock.
+const tryDataMigrationLock = async (
+  migration: AutocommitDataMigrationScript
+): Promise<AdvisoryLockSession | null> => {
+  if (!migrationDatabaseUrl) throw new Error("A migration database URL is required");
+  const heldElsewhereError = `Data migration ${migration.name} is running in another process.`;
+
+  try {
+    return await openAdvisoryLockSession(migrationDatabaseUrl, {
+      namespace: DATA_MIGRATION_LOCK_NAMESPACE,
+      id: createHash("sha256").update(migration.id).digest().readInt32BE(0),
+      heldElsewhereError,
+      lostError: `Data migration ${migration.name} lost its lock.`,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.message === heldElsewhereError) return null;
+    throw error;
+  }
+};
+
+// Waits for a runner that holds the lock, the way the default path waits on that runner's row lock, and for
+// the same 30 minutes at most. Returns null once that runner has finished the migration.
+const waitForDataMigrationLock = async (
+  migration: AutocommitDataMigrationScript
+): Promise<AdvisoryLockSession | null> => {
+  const deadline = Date.now() + TRANSACTION_TIMEOUT;
+  for (;;) {
+    const lock = await tryDataMigrationLock(migration);
+    if (lock) return lock;
+    if ((await readDataMigrationStatus(prisma, migration.id)) === "applied") return null;
+    if (Date.now() >= deadline) {
+      throw new Error(
+        `Data migration ${migration.name} is still running in another process after 30 minutes.`
+      );
+    }
+    logger.info(`Data migration ${migration.name} is running in another process. Waiting...`);
+    await new Promise((resolve) => setTimeout(resolve, LOCK_WAIT_INTERVAL_MS));
+  }
 };
 
 // Called while holding the lock, so no other runner is working on the migration and any status can be taken
@@ -410,7 +441,12 @@ const runAutocommitDataMigration = async (migration: AutocommitDataMigrationScri
     return;
   }
 
-  const lock = await openDataMigrationLock(migration);
+  const lock = await waitForDataMigrationLock(migration);
+  if (!lock) {
+    logger.info(`Data migration ${migration.name} was completed by another runner. Skipping...`);
+    return;
+  }
+
   try {
     if (await claimAutocommitDataMigration(migration, lock)) {
       await executeAutocommitDataMigration(migration, lock);
