@@ -95,8 +95,9 @@ export const getTestValuesKey = (record: Record<string, string>): string =>
 /**
  * The preview's key: it starts over when the test values or the rules before the first question
  * change, so what the preview opens on is what the live survey would open on with those values.
- * `run` counts the restarts after a finish: each one remounts the survey, so the rules before the
- * first question and the first page's show-if run again, as for a new respondent.
+ * `run` counts the other restarts (a finish, an Apply of the Test values): each one remounts the
+ * survey, so the rules before the first question and the first page's show-if run again, as for a
+ * new respondent.
  */
 export const getPreviewStartKey = (
   record: Record<string, string>,

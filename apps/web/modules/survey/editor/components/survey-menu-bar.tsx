@@ -35,6 +35,7 @@ import {
 import { toFlowTabMessage } from "@/modules/survey/editor/lib/flow-error-message";
 import { getInvalidSurveyTargets, isFlowTabIssue } from "@/modules/survey/editor/lib/invalid-survey-targets";
 import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
+import { withPageDates } from "@/modules/survey/editor/lib/survey-dates";
 import { buildSurveySavePayload } from "@/modules/survey/editor/lib/survey-save-payload";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
@@ -448,7 +449,7 @@ export const SurveyMenuBar = ({
   };
 
   const validateSurveyWithZod = (): boolean => {
-    const localSurveyValidation = ZSurvey.safeParse(localSurvey);
+    const localSurveyValidation = ZSurvey.safeParse(withPageDates(localSurvey));
     if (!localSurveyValidation.success) {
       const issues = localSurveyValidation.error.issues;
       const { invalidIds: newInvalidIds, firstInvalidScrollId } = getInvalidSurveyTargets(
@@ -683,10 +684,9 @@ export const SurveyMenuBar = ({
       clearSurveyLocalStorage();
       // isSecondPublish is a transient save flag, not part of the survey — strip it so it
       // doesn't linger in editor state and get echoed back on the next update.
-      const { isSecondPublish: _isSecondPublish, ...updatedSurvey } = await saveSurvey({
-        ...surveyToSave,
-        segment,
-      });
+      const { isSecondPublish: _isSecondPublish, ...updatedSurvey } = await saveSurvey(
+        withPageDates({ ...surveyToSave, segment })
+      );
 
       setIsSurveySaving(false);
       setLocalSurvey(updatedSurvey);
@@ -761,11 +761,7 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      const publishResult = await saveSurvey({
-        ...localSurvey,
-        status,
-        segment,
-      });
+      const publishResult = await saveSurvey(withPageDates({ ...localSurvey, status, segment }));
 
       // Publishing stays "in progress" until the editor unmounts: the summary page can take a while to
       // render for a large survey, and resetting here re-enabled Activate mid-navigation, inviting a
@@ -816,11 +812,7 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      await saveSurvey({
-        ...localSurvey,
-        status,
-        segment,
-      });
+      await saveSurvey(withPageDates({ ...localSurvey, status, segment }));
 
       // Stays in progress until the editor unmounts, as in handleSurveyPublish.
       isSuccessfullySavedRef.current = true;
