@@ -1,4 +1,5 @@
 import { execFile } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,6 +7,7 @@ import { promisify } from "node:util";
 import { logger } from "@formbricks/logger";
 import { Prisma, PrismaClient } from "../prisma";
 import { createPrismaPgAdapter } from "../prisma-adapter";
+import { type AdvisoryLockSession, openAdvisoryLockSession } from "./advisory-lock-session";
 import { type MigrationRunPhase, shouldRunMigration } from "./migration-phases";
 import { ensureOnlineIndexes } from "./online-indexes";
 
@@ -18,12 +20,40 @@ export interface DataMigrationContext {
   tx: Omit<PrismaClient, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">;
 }
 
-export interface MigrationScript {
+// Context for a migration that opted out of the runner's transaction: only the autocommit client.
+export interface AutocommitDataMigrationContext {
+  prisma: PrismaClient;
+  // Aborts when the runner loses its lock, because another runner may then take the migration over.
+  // Check it between chunks and stop.
+  signal: AbortSignal;
+}
+
+interface MigrationScriptBase {
   id?: string;
   name: string;
+}
+
+// The default: `run` executes inside one runner transaction, together with the DataMigration bookkeeping.
+interface TransactionalMigrationScript extends MigrationScriptBase {
   run?: (context: DataMigrationContext) => Promise<void>;
+  transactional?: true;
   type: "data" | "schema";
 }
+
+// Opt-out for high-volume backfills that commit in chunks. The runner opens no transaction, so `run` is
+// not bound by the 30-minute limit and holds no locks between chunks. Instead it holds an advisory lock for
+// the migration, so a 'pending' row with no lock holder marks a run that died, and the next runner resumes
+// it. `run` must therefore be safe to re-run: nothing rolls back its writes, and a resumed run starts again
+// from the top.
+export interface AutocommitDataMigrationScript extends MigrationScriptBase {
+  // Required here: the id keys both the DataMigration row and the advisory lock.
+  id: string;
+  run: (context: AutocommitDataMigrationContext) => Promise<void>;
+  transactional: false;
+  type: "data";
+}
+
+export type MigrationScript = TransactionalMigrationScript | AutocommitDataMigrationScript;
 
 // MIGRATE_DATABASE_URL is scoped to this migration runner. prisma.config.ts
 // always reads DATABASE_URL so normal Prisma CLI commands (generate, format,
@@ -278,9 +308,118 @@ const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   logger.info(`All migrations completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
 };
 
-const runDataMigration = async (migration: MigrationScript): Promise<void> => {
-  let hasLock = false;
+const pendingMigrationError = (migration: MigrationScript): Error => {
+  logger.info(`Data migration ${migration.name} is pending.`);
+  logger.info("Either there is another migration which is currently running or this is an error.");
+  logger.info("If you are sure that there is no migration running, you need to manually resolve the issue.");
+
+  return new Error("Migration is pending. Please resolve the issue manually.");
+};
+
+type DataMigrationStatus = "pending" | "applied" | "failed";
+
+const readDataMigrationStatus = async (
+  client: Pick<PrismaClient, "$queryRaw">,
+  migrationId: string | undefined
+): Promise<DataMigrationStatus | undefined> => {
+  const rows: { status: DataMigrationStatus }[] | undefined = await client.$queryRaw`
+    SELECT status FROM "DataMigration"
+    WHERE id = ${migrationId}
+  `;
+  return rows?.[0]?.status;
+};
+
+// Keys the per-migration advisory locks; distinct from the online upgrade coordinator's namespace.
+const DATA_MIGRATION_LOCK_NAMESPACE = 16212026;
+
+const openDataMigrationLock = (migration: AutocommitDataMigrationScript): Promise<AdvisoryLockSession> => {
+  if (!migrationDatabaseUrl) throw new Error("A migration database URL is required");
+
+  return openAdvisoryLockSession(migrationDatabaseUrl, {
+    namespace: DATA_MIGRATION_LOCK_NAMESPACE,
+    id: createHash("sha256").update(migration.id).digest().readInt32BE(0),
+    heldElsewhereError: `Data migration ${migration.name} is running in another process.`,
+    lostError: `Data migration ${migration.name} lost its lock.`,
+  });
+};
+
+// Called while holding the lock, so no other runner is working on the migration and any status can be taken
+// over: a 'pending' row here belongs to a run that died. Returns false when there is nothing left to do.
+const claimAutocommitDataMigration = async (migration: AutocommitDataMigrationScript): Promise<boolean> => {
+  const status = await readDataMigrationStatus(prisma, migration.id);
+
+  if (status === "applied") {
+    logger.info(`Data migration ${migration.name} was completed by another runner. Skipping...`);
+    return false;
+  }
+
+  if (status === "pending") {
+    logger.warn(`Data migration ${migration.name} was interrupted before it finished. Resuming...`);
+  } else if (status === "failed") {
+    logger.info(`Data migration ${migration.name} failed previously. Retrying...`);
+  }
+
+  await prisma.$executeRaw`
+    INSERT INTO "DataMigration" (id, name, status) VALUES (${migration.id}, ${migration.name}, 'pending')
+    ON CONFLICT (id) DO UPDATE SET status = 'pending', finished_at = NULL
+  `;
+  return true;
+};
+
+const executeAutocommitDataMigration = async (
+  migration: AutocommitDataMigrationScript,
+  lock: AdvisoryLockSession
+): Promise<void> => {
+  try {
+    await migration.run({ prisma, signal: lock.signal });
+    // A runner that lost its lock may already have been replaced, so only the lock holder records the result.
+    await lock.assertLock();
+
+    await prisma.$executeRaw`
+      UPDATE "DataMigration"
+      SET status = 'applied', finished_at = ${new Date()}
+      WHERE id = ${migration.id}
+    `;
+    logger.info(`Data migration ${migration.name} completed successfully`);
+  } catch (error) {
+    logger.error(error, `Data migration ${migration.name} failed`);
+    if (!lock.signal.aborted) {
+      await prisma.$executeRaw`UPDATE "DataMigration" SET status = 'failed' WHERE id = ${migration.id}`;
+    }
+
+    throw error;
+  }
+};
+
+const runAutocommitDataMigration = async (migration: AutocommitDataMigrationScript): Promise<void> => {
+  // Checked before locking, so replicas that start together skip a finished migration instead of racing
+  // for its lock.
+  if ((await readDataMigrationStatus(prisma, migration.id)) === "applied") {
+    logger.info(`Data migration ${migration.name} already completed. Skipping...`);
+    return;
+  }
+
+  const lock = await openDataMigrationLock(migration);
+  try {
+    if (await claimAutocommitDataMigration(migration)) {
+      await executeAutocommitDataMigration(migration, lock);
+    }
+  } finally {
+    await lock.close().catch((error: unknown) => {
+      logger.warn(error, `Could not release the lock of data migration ${migration.name}`);
+    });
+  }
+};
+
+export const runDataMigration = async (migration: MigrationScript): Promise<void> => {
   logger.info(`Running data migration: ${migration.name}`);
+
+  if (migration.transactional === false) {
+    await runAutocommitDataMigration(migration);
+    return;
+  }
+
+  let hasLock = false;
 
   try {
     await prisma.$transaction(
@@ -294,28 +433,18 @@ const runDataMigration = async (migration: MigrationScript): Promise<void> => {
         // after the transaction has already rolled back.
 
         // Check if migration has already been run
-        const existingMigration: { status: "pending" | "applied" | "failed" }[] | undefined =
-          await tx.$queryRaw`
-            SELECT status FROM "DataMigration"
-            WHERE id = ${migration.id}
-          `;
+        const status = await readDataMigrationStatus(tx, migration.id);
 
-        if (existingMigration?.[0]?.status === "pending") {
-          logger.info(`Data migration ${migration.name} is pending.`);
-          logger.info("Either there is another migration which is currently running or this is an error.");
-          logger.info(
-            "If you are sure that there is no migration running, you need to manually resolve the issue."
-          );
-
-          throw new Error("Migration is pending. Please resolve the issue manually.");
+        if (status === "pending") {
+          throw pendingMigrationError(migration);
         }
 
-        if (existingMigration?.[0]?.status === "applied") {
+        if (status === "applied") {
           logger.info(`Data migration ${migration.name} already completed. Skipping...`);
           return;
         }
 
-        if (existingMigration?.[0]?.status === "failed") {
+        if (status === "failed") {
           logger.info(`Data migration ${migration.name} failed previously. Retrying...`);
         } else {
           // create a new data migration entry with pending status

@@ -77,6 +77,45 @@ affect zero rows on an empty table). **Never seed essential/default data from a
 data migration** — it would be silently skipped on fresh installs. Seed base
 data via the seed script (`src/seed.ts`, `pnpm db:seed`) instead.
 
+### High-volume backfills: `transactional: false`
+
+By default the runner runs a data migration's `run()` inside one transaction with a 30-minute limit, and
+holds every lock it takes until `run()` returns. For a backfill that walks a large table in committed chunks
+(`Response`, `ContactAttribute`), set `transactional: false` on the exported migration:
+
+```ts
+export const backfillSomething: MigrationScript = {
+  type: "data",
+  id: "…",
+  name: "…",
+  transactional: false,
+  run: async ({ prisma }) => {
+    // commit in chunks through the autocommit client
+  },
+};
+```
+
+The runner then opens no transaction and gives `run()` the autocommit `prisma` client and a `signal` (no
+`tx`). Such a migration must also set an `id`. Because nothing rolls back its writes, `run()` must be **safe
+to re-run from the top**: a failed or interrupted run starts again on the next deploy. Write it to skip work
+that is already done (for example `WHERE "directoryId" IS NULL`), so a retry carries on where the last run
+stopped. A chunk the killed process had already sent can still commit after the next run starts, so a chunk
+must also be safe to overlap with the next run's first one.
+
+While `run()` works, the runner holds a Postgres advisory lock for that migration on a connection of its own.
+The `DataMigration` row is committed as `pending` before `run()` starts, then set to `applied` or `failed`:
+
+- A runner that finds the migration `applied` skips it without touching the lock.
+- A second runner that finds the lock taken stops with "running in another process".
+- If the process is killed mid-run (a pod restart, Docker's migration timeout), Postgres drops the lock with the
+  connection. The next run finds the row `pending` with nobody holding the lock, and resumes it on its own.
+- If the lock connection drops while the process lives on, `signal` aborts and the runner records nothing,
+  because another runner may already have taken over. Check `signal.aborted` between chunks and stop.
+
+A session advisory lock needs the direct or session-pooled connection the runner already requires (see
+[Migration safety checks](#migration-safety-checks)). Keep the default for anything small; it rolls back
+cleanly.
+
 ### Directory Structure Example
 
 ```

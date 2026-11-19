@@ -1,69 +1,17 @@
 import { Client, type QueryResultRow } from "pg";
 import { getPgConnectionConfig } from "../pg-connection-config";
-
-const LOCK_NAMESPACE = 19062026;
-const LOCK_ID = 61;
+import { type AdvisoryLockSession, openAdvisoryLockSession } from "./advisory-lock-session";
 
 /** Owns one PostgreSQL session for the entire coordinator, independent of Prisma's pool. */
-export type UpgradeSession = {
-  client: Client;
-  assertLock: () => Promise<void>;
-  signal: AbortSignal;
-  close: () => Promise<void>;
-};
+export type UpgradeSession = AdvisoryLockSession;
 
-export const openUpgradeSession = async (connectionString: string): Promise<UpgradeSession> => {
-  const client = new Client({ ...getPgConnectionConfig(connectionString), connectionTimeoutMillis: 10_000 });
-  const controller = new AbortController();
-  const loseLock = () => controller.abort(new Error("upgrade_lock_lost"));
-  client.on("error", loseLock);
-  client.on("end", loseLock);
-  let pid: number;
-  try {
-    await client.connect();
-    const { rows } = await client.query<{ pid: number; locked: boolean }>(
-      "SELECT pg_backend_pid() AS pid, pg_try_advisory_lock($1, $2) AS locked",
-      [LOCK_NAMESPACE, LOCK_ID]
-    );
-    if (!rows[0]?.locked) throw new Error("upgrade_already_running");
-    pid = rows[0].pid;
-  } catch (error) {
-    await client.end().catch(() => {});
-    throw error;
-  }
-  const assertLock = async () => {
-    if (controller.signal.aborted) throw new Error("upgrade_lock_lost");
-    const result = await client.query<{ held: boolean }>(
-      `
-      SELECT pg_backend_pid() = $1 AND EXISTS (
-        SELECT 1 FROM pg_locks WHERE pid = $1 AND locktype = 'advisory'
-          AND classid = $2 AND objid = $3 AND objsubid = 2 AND granted
-      ) AS held`,
-      [pid, LOCK_NAMESPACE, LOCK_ID]
-    );
-    if (!result.rows[0]?.held) {
-      loseLock();
-      throw new Error("upgrade_lock_lost");
-    }
-  };
-  const heartbeat = setInterval(() => {
-    void assertLock().catch(loseLock);
-  }, 2_000);
-  heartbeat.unref();
-  return {
-    client,
-    assertLock,
-    signal: controller.signal,
-    close: async () => {
-      clearInterval(heartbeat);
-      try {
-        await client.query("SELECT pg_advisory_unlock($1, $2)", [LOCK_NAMESPACE, LOCK_ID]);
-      } finally {
-        await client.end();
-      }
-    },
-  };
-};
+export const openUpgradeSession = (connectionString: string): Promise<UpgradeSession> =>
+  openAdvisoryLockSession(connectionString, {
+    namespace: 19062026,
+    id: 61,
+    heldElsewhereError: "upgrade_already_running",
+    lostError: "upgrade_lock_lost",
+  });
 
 /** SQL and its Prisma history record commit together, so interruption cannot leave a partial migration. */
 export const applyOnlineSchemaMigrations = async (
