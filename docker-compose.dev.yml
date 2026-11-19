@@ -84,7 +84,7 @@ services:
         condition: service_healthy
 
   spicedb-migrate:
-    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.56.2}
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.57.1}
     restart: "no"
     command: datastore migrate head
     environment:
@@ -95,7 +95,7 @@ services:
         condition: service_completed_successfully
 
   spicedb:
-    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.56.2}
+    image: ${SPICEDB_IMAGE_REF:-authzed/spicedb:v1.57.1}
     restart: unless-stopped
     command: serve
     mem_limit: 512m
@@ -404,7 +404,7 @@ services:
   # Playground) runs its refresh keys on an embedded Cube Store, which ghcr.io/formbricks/cube leaves
   # out. cube.js refuses to start without CUBEJS_API_SECRET.
   cube:
-    image: cubejs/cube:v1.8.20
+    image: cubejs/cube:v1.8.25
     env_file:
       - path: apps/web/.env
         required: false

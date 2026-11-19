@@ -8,11 +8,16 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
+import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflows/lib/context";
+import { toolResult, toolResultText } from "./__fixtures__/tool-result";
+import { FULL_MCP_GRANT, type TToolHandler } from "./test-utils";
 import {
   buildListWorkflowRunsSearchParams,
   buildListWorkflowsSearchParams,
   registerWorkflowTools,
+  withoutRespondentData,
+  withoutRespondentDataInWorkflows,
 } from "./workflows";
 
 // The registered inputSchema is a Standard Schema; only these two members are read here.
@@ -81,21 +86,38 @@ const readOnlyAuthInfo = {
   token: "oauth:user_1:client_1",
   clientId: "client_1",
   scopes: ["workflows:read"],
-  extra: { ...authInfo.extra, authMethod: "oauth" },
+  extra: { ...authInfo.extra, authMethod: "oauth", grant: FULL_MCP_GRANT },
 };
 const noScopeAuthInfo = { ...readOnlyAuthInfo, scopes: [] as string[] };
+/**
+ * A session user's OAuth token (the grant applies; an API key has none) holding `responses:read`: what
+ * Responses: Read decides on is then the grant alone.
+ */
+const sessionAuthInfo = {
+  ...readOnlyAuthInfo,
+  scopes: ["workflows:read", "responses:read"],
+  extra: {
+    ...readOnlyAuthInfo.extra,
+    formbricksAuthentication: {
+      user: { id: "user_1", email: "person@example.com", name: "Person" },
+      expires: "2026-07-01T00:00:00.000Z",
+    },
+  },
+};
+/** {@link sessionAuthInfo} under a grant at Workflow runs: Read and nothing of Responses. */
+const runsOnlyGrantAuthInfo = {
+  ...sessionAuthInfo,
+  extra: { ...sessionAuthInfo.extra, grant: { access: "all", permissions: { workflowRuns: "read" } } },
+};
 
 function createToolServer() {
-  const tools = new Map<
-    string,
-    { config: Record<string, unknown>; handler: (input: any, extra: any) => Promise<any> }
-  >();
+  const tools = new Map<string, { config: Record<string, unknown>; handler: TToolHandler }>();
   const server = {
-    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: any) => {
+    registerTool: vi.fn((name: string, config: Record<string, unknown>, handler: TToolHandler) => {
       tools.set(name, { config, handler });
     }),
   };
-  registerWorkflowTools(server as any);
+  registerWorkflowTools(server as unknown as Parameters<typeof registerWorkflowTools>[0]);
   return { server, tools };
 }
 
@@ -146,7 +168,9 @@ describe("buildListWorkflowRunsSearchParams", () => {
 describe("registerWorkflowTools", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as any);
+    vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as unknown as ReturnType<
+      typeof buildWorkflowApiContext
+    >);
     vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
   });
 
@@ -226,8 +250,9 @@ describe("registerWorkflowTools", () => {
     const params = new URL(callArg.req.url).searchParams;
     expect(params.get("workspaceId")).toBe(WORKSPACE_ID);
     expect(params.get("workflowId")).toBe(WORKFLOW_ID);
+    // This token has no responses:read, so each run's error is left out.
     expect(result.structuredContent).toEqual({
-      data: [{ id: RUN_ID }],
+      data: [{ id: RUN_ID, error: null }],
       meta: { limit: 20, nextCursor: null },
       requestId: "req_tool",
     });
@@ -261,6 +286,86 @@ describe("registerWorkflowTools", () => {
     expect(workflowsHandlers.getRun).toHaveBeenCalledWith({
       ctx: { __ctx: true },
       params: { runId: RUN_ID },
+    });
+  });
+
+  describe("get_workflow_run respondent-derived fields", () => {
+    // A failure's text can quote what a step sent: an SMTP rejection names the respondent's address.
+    const run = {
+      id: RUN_ID,
+      status: "failed",
+      error: "550 mailbox a@b.c unavailable",
+      triggerPayload: { responseId: "resp_1", answers: { q1: "my email is a@b.c" } },
+      data: { q1: "my email is a@b.c" },
+      logs: [
+        { id: "log_1", stepId: "s1", status: "succeeded", input: { q1: "secret" }, output: { sent: true } },
+        {
+          id: "log_2",
+          stepId: "s2",
+          status: "failed",
+          input: { to: "a@b.c" },
+          output: null,
+          error: "550 mailbox a@b.c unavailable",
+        },
+      ],
+    };
+    const redacted = {
+      ...run,
+      error: null,
+      triggerPayload: null,
+      data: null,
+      logs: [
+        { id: "log_1", stepId: "s1", status: "succeeded", input: null, output: null, error: null },
+        { id: "log_2", stepId: "s2", status: "failed", input: null, output: null, error: null },
+      ],
+    };
+    const callWith = async (callerAuthInfo: unknown) => {
+      const { tools } = createToolServer();
+      vi.mocked(workflowsHandlers.getRun).mockResolvedValue(successResponse(run, { requestId: "req_tool" }));
+      return tools
+        .get("get_workflow_run")!
+        .handler({ runId: RUN_ID }, { http: { authInfo: callerAuthInfo } });
+    };
+    test("keeps the tool for a grant without Responses: Read, leaving those fields out", async () => {
+      // The token holds responses:read: only the grant can leave them out.
+      const result = await callWith(runsOnlyGrantAuthInfo);
+
+      expect(result.isError).toBeUndefined();
+      expect(result.structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
+      expect(JSON.parse(result.content[0].text)).toEqual({ data: redacted, requestId: "req_tool" });
+    });
+
+    test("leaves them out when the grant gives Responses: Read but the token lacks responses:read", async () => {
+      const result = await callWith(readOnlyAuthInfo);
+
+      expect(result.structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
+    });
+
+    test("returns them whole when both the token and the grant give Responses: Read", async () => {
+      const result = await callWith(sessionAuthInfo);
+
+      expect(result.structuredContent).toEqual({ data: run, requestId: "req_tool" });
+    });
+
+    test("returns them whole to an API key holding responses:read, which has no grant", async () => {
+      const result = await callWith({ ...authInfo, scopes: ["workflows:read", "responses:read"] });
+
+      expect(result.structuredContent).toEqual({ data: run, requestId: "req_tool" });
+    });
+
+    test("passes an error through untouched", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(workflowsHandlers.getRun).mockResolvedValue(
+        problemForbidden("req_tool", "You are not authorized to access this resource")
+      );
+
+      const result = await tools
+        .get("get_workflow_run")!
+        .handler({ runId: RUN_ID }, { http: { authInfo: runsOnlyGrantAuthInfo } });
+
+      expect(workflowsHandlers.getRun).toHaveBeenCalledTimes(1);
+      expect(result.isError).toBe(true);
+      expect(result.structuredContent).toMatchObject({ error: { status: 403 } });
     });
   });
 
@@ -298,8 +403,8 @@ describe("registerWorkflowTools", () => {
 
   test("create_workflow sends a body request and queues a success audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.create).mockResolvedValue(
       createdResponse({ id: WORKFLOW_ID }, { requestId: "req_tool", location: "/wf" })
     );
@@ -319,8 +424,8 @@ describe("registerWorkflowTools", () => {
 
   test("enable_workflow delegates by id and queues an updated audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.enable).mockResolvedValue(
       successResponse({ id: WORKFLOW_ID, status: "enabled" }, { requestId: "req_tool" })
     );
@@ -338,8 +443,8 @@ describe("registerWorkflowTools", () => {
 
   test("delete_workflow queues a deleted audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.delete).mockResolvedValue(noContentResponse({ requestId: "req_tool" }));
 
     const result = await tools
@@ -353,8 +458,8 @@ describe("registerWorkflowTools", () => {
 
   test("a failed mutation marks the audit eventId and returns an error (no leak)", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.enable).mockResolvedValue(
       problemForbidden("req_forbidden", "You are not authorized to access this resource", "/api/mcp")
     );
@@ -372,8 +477,8 @@ describe("registerWorkflowTools", () => {
 
   test("a thrown mutation still queues the audit log and re-propagates the error", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     const boom = new Error("workflow operation exploded");
     vi.mocked(workflowsHandlers.create).mockRejectedValue(boom);
     const body = { workspaceId: WORKSPACE_ID, name: "WF", definition: { nodes: [], edges: [] } };
@@ -387,7 +492,7 @@ describe("registerWorkflowTools", () => {
   test("a null audit log is tolerated (still queues, no crash)", async () => {
     const { tools } = createToolServer();
     // buildV3AuditLog can return null (auditing disabled); the runner must not dereference it.
-    vi.mocked(buildV3AuditLog).mockReturnValue(null as any);
+    vi.mocked(buildV3AuditLog).mockReturnValue(null as unknown as ReturnType<typeof buildV3AuditLog>);
     vi.mocked(workflowsHandlers.enable).mockResolvedValue(
       successResponse({ id: WORKFLOW_ID, status: "enabled" }, { requestId: "req_tool" })
     );
@@ -405,8 +510,8 @@ describe("registerWorkflowTools", () => {
 
   test("patch_workflow sends a body request with params and queues an updated audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.patch).mockResolvedValue(
       successResponse({ id: WORKFLOW_ID, name: "Renamed" }, { requestId: "req_tool" })
     );
@@ -425,8 +530,8 @@ describe("registerWorkflowTools", () => {
 
   test("duplicate_workflow sends the optional name body and queues a created audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.duplicate).mockResolvedValue(
       createdResponse({ id: "wf2222222222222222222222ab" }, { requestId: "req_tool", location: "/wf" })
     );
@@ -444,8 +549,8 @@ describe("registerWorkflowTools", () => {
 
   test("archive_workflow delegates by id and queues an updated audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.archive).mockResolvedValue(
       successResponse({ id: WORKFLOW_ID, status: "archived" }, { requestId: "req_tool" })
     );
@@ -462,8 +567,8 @@ describe("registerWorkflowTools", () => {
 
   test("unarchive_workflow delegates by id and queues an updated audit log", async () => {
     const { tools } = createToolServer();
-    const auditLog: any = { status: "failure" };
-    vi.mocked(buildV3AuditLog).mockReturnValue(auditLog);
+    const auditLog: Partial<TV3AuditLog> = { status: "failure" };
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue(auditLog);
     vi.mocked(workflowsHandlers.unarchive).mockResolvedValue(
       successResponse({ id: WORKFLOW_ID, status: "draft" }, { requestId: "req_tool" })
     );
@@ -482,7 +587,9 @@ describe("registerWorkflowTools", () => {
 describe("MCP scope enforcement (ENG-1967)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as any);
+    vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as unknown as ReturnType<
+      typeof buildWorkflowApiContext
+    >);
     vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
   });
 
@@ -491,7 +598,7 @@ describe("MCP scope enforcement (ENG-1967)", () => {
   const insufficientScope = (scope: string) => ({
     status: 403,
     code: "forbidden",
-    detail: `OAuth token does not include the required MCP scope: ${scope}`,
+    detail: expect.stringContaining(`its OAuth token lacks the scope ${scope}.`),
   });
 
   // Every mutating tool + a representative valid input for it.
@@ -530,7 +637,7 @@ describe("MCP scope enforcement (ENG-1967)", () => {
 
   test("write tools succeed once the token carries workflows:write", async () => {
     const { tools } = createToolServer();
-    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as any);
+    vi.mocked(buildV3AuditLog, { partial: true }).mockReturnValue({ status: "failure" });
     vi.mocked(workflowsHandlers.enable).mockResolvedValue(
       successResponse({ id: WORKFLOW_ID, status: "enabled" }, { requestId: "req_tool" })
     );
@@ -624,5 +731,223 @@ describe("create_workflow advertised input schema", () => {
     // validation failures — and so would have passed with strictness removed entirely.
     expect(schema.safeParse(VALID_CREATE_WORKFLOW_INPUT).success).toBe(true);
     expect(schema.safeParse({ ...VALID_CREATE_WORKFLOW_INPUT, bogus: 1 }).success).toBe(false);
+  });
+});
+
+describe("list_workflow_runs without Responses: Read", () => {
+  const runs = [
+    { id: "run_1", status: "failed", responseId: "resp_1", error: "550 mailbox a@b.c unavailable" },
+    { id: "run_2", status: "succeeded", responseId: "resp_2", error: null },
+  ];
+  const callWith = async (callerAuthInfo: unknown) => {
+    const { tools } = createToolServer();
+    vi.mocked(workflowsHandlers.listRuns).mockResolvedValue(
+      successListResponse(runs, { limit: 20, nextCursor: null }, { requestId: "req_tool" })
+    );
+    return tools
+      .get("list_workflow_runs")!
+      .handler({ workspaceId: WORKSPACE_ID, limit: 20 }, { http: { authInfo: callerAuthInfo } });
+  };
+
+  // A run's error text can quote what a failed step sent, as `get_workflow_run` leaves out.
+  test("leaves each run's error out for a grant without Responses: Read", async () => {
+    // The token holds responses:read: only the grant can leave the errors out.
+    const result = await callWith(runsOnlyGrantAuthInfo);
+
+    const redacted = runs.map((run) => ({ ...run, error: null }));
+    expect((result.structuredContent as { data: unknown }).data).toEqual(redacted);
+    expect(JSON.parse(result.content[0].text).data).toEqual(redacted);
+  });
+
+  test("returns each run's error when both the token and the grant give Responses: Read", async () => {
+    const result = await callWith(sessionAuthInfo);
+
+    expect((result.structuredContent as { data: unknown }).data).toEqual(runs);
+  });
+});
+
+/**
+ * A workflow embeds its latest run, whose error can quote what a failed step sent — the same leak
+ * `get_workflow_run` closes, reached through a tool that declares only Workflows.
+ */
+describe("workflow lastRun without Responses: Read", () => {
+  const workflow = {
+    id: WORKFLOW_ID,
+    name: "Notify",
+    status: "enabled",
+    lastRun: { id: RUN_ID, status: "failed", error: "550 mailbox a@b.c unavailable" },
+  };
+  const redacted = { ...workflow, lastRun: { ...workflow.lastRun, error: null } };
+  const other = { id: "wf9999999999999999999999ab", name: "Other", lastRun: null };
+
+  beforeEach(() => {
+    vi.resetAllMocks();
+    vi.mocked(buildWorkflowApiContext).mockReturnValue({ __ctx: true } as unknown as ReturnType<
+      typeof buildWorkflowApiContext
+    >);
+    vi.mocked(queueV3AuditLog).mockResolvedValue(undefined);
+    vi.mocked(buildV3AuditLog).mockReturnValue({ status: "failure" } as unknown as TV3AuditLog);
+  });
+
+  // A session user's token holding `responses:read`, under a grant at Workflows and Workflow runs: Read
+  // and nothing of Responses: the grant alone leaves the error out.
+  const workflowsOnly = {
+    ...sessionAuthInfo,
+    extra: {
+      ...sessionAuthInfo.extra,
+      grant: { access: "all", permissions: { workflows: "read", workflowRuns: "read" } },
+    },
+  };
+
+  test("get_workflow sets lastRun.error to null for a grant without Responses: Read", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(workflowsHandlers.get).mockResolvedValue(successResponse(workflow, { requestId: "req_tool" }));
+
+    const result = await tools
+      .get("get_workflow")!
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo: workflowsOnly } });
+
+    expect(result.structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
+    expect(JSON.parse(result.content[0].text)).toEqual({ data: redacted, requestId: "req_tool" });
+  });
+
+  test("list_workflows sets each lastRun.error to null, leaving a workflow without a run alone", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(workflowsHandlers.list).mockResolvedValue(
+      successListResponse([workflow, other], { limit: 20, nextCursor: null }, { requestId: "req_tool" })
+    );
+
+    const result = await tools
+      .get("list_workflows")!
+      .handler({ workspaceId: WORKSPACE_ID, limit: 20 }, { http: { authInfo: workflowsOnly } });
+
+    expect((result.structuredContent as { data: unknown }).data).toEqual([redacted, other]);
+    expect(JSON.parse(result.content[0].text).data).toEqual([redacted, other]);
+  });
+
+  test("a mutation's workflow keeps lastRun.error only for a caller with Responses: Read", async () => {
+    const { tools } = createToolServer();
+    const caller = (authInfo: unknown) =>
+      tools.get("enable_workflow")!.handler({ workflowId: WORKFLOW_ID }, { http: { authInfo } });
+    // A fresh Response per call: a body can only be read once.
+    vi.mocked(workflowsHandlers.enable).mockImplementation(async () =>
+      successResponse(workflow, { requestId: "req_tool" })
+    );
+
+    expect((await caller(authInfo)).structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
+    expect(
+      (await caller({ ...authInfo, scopes: ["workflows:read", "workflows:write", "responses:read"] }))
+        .structuredContent
+    ).toEqual({ data: workflow, requestId: "req_tool" });
+  });
+
+  test("returns the workflow whole when both the token and the grant give Responses: Read", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(workflowsHandlers.get).mockResolvedValue(successResponse(workflow, { requestId: "req_tool" }));
+
+    const result = await tools
+      .get("get_workflow")!
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo: sessionAuthInfo } });
+
+    expect(result.structuredContent).toEqual({ data: workflow, requestId: "req_tool" });
+  });
+
+  test("passes an error through untouched", async () => {
+    const { tools } = createToolServer();
+    vi.mocked(workflowsHandlers.get).mockResolvedValue(
+      problemForbidden("req_tool", "You are not authorized to access this resource")
+    );
+
+    const result = await tools
+      .get("get_workflow")!
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo: workflowsOnly } });
+
+    expect(result.isError).toBe(true);
+    expect(result.structuredContent).toMatchObject({ error: { status: 403 } });
+    // The operation's refusal, not the guard's: the grant reaches the tool.
+    expect(workflowsHandlers.get).toHaveBeenCalledTimes(1);
+  });
+
+  // The grant is what lets these tools run at all: without Workflows: Read they are refused before the
+  // handler, so the tests above exercise the redaction rather than a guard refusal.
+  test("refuses a grant without Workflows: Read before the handler", async () => {
+    const { tools } = createToolServer();
+    const noWorkflows = {
+      ...workflowsOnly,
+      extra: { ...workflowsOnly.extra, grant: { access: "all", permissions: { workflowRuns: "read" } } },
+    };
+
+    const result = await tools
+      .get("get_workflow")!
+      .handler({ workflowId: WORKFLOW_ID }, { http: { authInfo: noWorkflows } });
+
+    expect(result.isError).toBe(true);
+    expect(JSON.stringify(result.structuredContent)).toContain("Workflows: Read");
+    expect(workflowsHandlers.get).not.toHaveBeenCalled();
+  });
+});
+
+describe("withoutRespondentDataInWorkflows", () => {
+  test("leaves a result that carries no workflow as it is", () => {
+    const empty = toolResult({ requestId: "r" });
+    expect(withoutRespondentDataInWorkflows(empty as never)).toBe(empty);
+    const listed = toolResult({ data: [1, 2], requestId: "r" });
+    expect(withoutRespondentDataInWorkflows(listed as never)).toBe(listed);
+  });
+
+  test("redacts the single-workflow and list shapes, leaving other fields and shapes alone", () => {
+    const single = withoutRespondentDataInWorkflows(
+      toolResult({
+        data: { id: "w", name: "n", lastRun: { status: "failed", error: "550 a@b.c" } },
+        requestId: "r",
+      })
+    );
+    expect(single.structuredContent).toEqual({
+      data: { id: "w", name: "n", lastRun: { status: "failed", error: null } },
+      requestId: "r",
+    });
+    expect(toolResultText(single)).toEqual(single.structuredContent);
+
+    const list = withoutRespondentDataInWorkflows(
+      toolResult({
+        data: [
+          { id: "w", lastRun: { error: "x" } },
+          { id: "v", lastRun: null },
+        ],
+        requestId: "r",
+      })
+    );
+    expect(list.structuredContent).toEqual({
+      data: [
+        { id: "w", lastRun: { error: null } },
+        { id: "v", lastRun: null },
+      ],
+      requestId: "r",
+    });
+  });
+
+  test("passes an error result through untouched", () => {
+    const error = { isError: true, structuredContent: { data: { lastRun: { error: "x" } } }, content: [] };
+    expect(withoutRespondentDataInWorkflows(error as never)).toBe(error);
+  });
+});
+
+describe("withoutRespondentData", () => {
+  test("leaves a result without a run object as it is", () => {
+    const empty = toolResult({ requestId: "r" });
+    expect(withoutRespondentData(empty as never)).toBe(empty);
+    const listed = toolResult({ data: [1, 2], requestId: "r" });
+    expect(withoutRespondentData(listed as never)).toBe(listed);
+  });
+
+  test("keeps logs it can't read as they are, and a queued run's missing logs", () => {
+    const result = withoutRespondentData(toolResult({ data: { logs: ["odd"], data: { a: 1 } } }));
+    expect(result.structuredContent).toEqual({
+      data: { logs: ["odd"], data: null, triggerPayload: null, error: null },
+    });
+    const queued = withoutRespondentData(toolResult({ data: { triggerPayload: { a: 1 } } }));
+    expect(queued.structuredContent).toEqual({
+      data: { triggerPayload: null, data: null, logs: undefined, error: null },
+    });
   });
 });

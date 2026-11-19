@@ -106,7 +106,7 @@ vi.mock("@formbricks/database", () => ({
 describe("Response Lib", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma as never));
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma));
     vi.mocked(requestEmailAuditErasureRequired).mockResolvedValue(undefined);
   });
 
@@ -184,7 +184,7 @@ describe("Response Lib", () => {
         ],
       };
 
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(mockPrismaResponse as any);
+      vi.mocked(prisma.response.findUnique, { partial: true }).mockResolvedValue(mockPrismaResponse);
 
       const result = await getResponseForPipeline(responseId);
       expect(result.ok).toBe(true);
@@ -251,7 +251,9 @@ describe("Response Lib", () => {
         tags: [],
       };
 
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(mockPrismaResponseWithoutContact as any);
+      vi.mocked(prisma.response.findUnique, { partial: true }).mockResolvedValue(
+        mockPrismaResponseWithoutContact
+      );
 
       const result = await getResponseForPipeline(responseId);
       expect(result.ok).toBe(true);
@@ -309,7 +311,7 @@ describe("Response Lib", () => {
         tags: [],
       };
 
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(mockPrismaResponse as any);
+      vi.mocked(prisma.response.findUnique, { partial: true }).mockResolvedValue(mockPrismaResponse);
 
       const result = await getResponseForPipeline(responseId);
       expect(result.ok).toBe(true);
@@ -437,8 +439,10 @@ describe("Response Lib", () => {
     // response's own tenant before writing. Default these lookups to the happy path; reject tests
     // override them.
     beforeEach(() => {
-      vi.mocked(prisma.response.findUnique).mockResolvedValue(existingResponseRow as any);
-      vi.mocked(prisma.contact.findUnique).mockResolvedValue({ id: responseInput.contactId } as any);
+      vi.mocked(prisma.response.findUnique, { partial: true }).mockResolvedValue(existingResponseRow);
+      vi.mocked(prisma.contact.findUnique).mockResolvedValue({ id: responseInput.contactId } as Awaited<
+        ReturnType<typeof prisma.contact.findUnique>
+      >);
       vi.mocked(getDisplayForResponseValidation).mockResolvedValue(validDisplay);
     });
 
@@ -446,7 +450,7 @@ describe("Response Lib", () => {
       const storedRow = { ...existingResponseRow, data: { sig: "/storage/ws/private/old.png" } };
 
       test("queues the cleanup after the write, from the stored data to the written data", async () => {
-        vi.mocked(prisma.response.findUnique).mockResolvedValue(storedRow as any);
+        vi.mocked(prisma.response.findUnique, { partial: true }).mockResolvedValue(storedRow);
         vi.mocked(prisma.response.update).mockResolvedValue(response);
 
         await updateResponse(responseId, responseInput);
@@ -462,7 +466,7 @@ describe("Response Lib", () => {
       });
 
       test("queues nothing when the update fails", async () => {
-        vi.mocked(prisma.response.findUnique).mockResolvedValue(storedRow as any);
+        vi.mocked(prisma.response.findUnique, { partial: true }).mockResolvedValue(storedRow);
         vi.mocked(prisma.response.update).mockRejectedValue(new Error("write failed"));
 
         const result = await updateResponse(responseId, responseInput);
@@ -476,7 +480,11 @@ describe("Response Lib", () => {
         const { data: _data, ...withoutData } = responseInput;
         vi.mocked(prisma.response.findUnique).mockClear();
 
-        await updateResponse(responseId, { ...withoutData, contactId: null, displayId: null } as any);
+        await updateResponse(responseId, {
+          ...withoutData,
+          contactId: null,
+          displayId: null,
+        } as unknown as Parameters<typeof updateResponse>[1]);
 
         expect(prisma.response.findUnique).not.toHaveBeenCalled();
         expect(enqueueReplacedSignatureFileCleanup).not.toHaveBeenCalled();
@@ -716,7 +724,7 @@ describe("Response Lib", () => {
       vi.mocked(getDisplayForResponseValidation).mockResolvedValue(validDisplay);
       vi.mocked(loadQuotaEvaluationContext).mockResolvedValue(quotaContext);
 
-      prisma.$transaction = vi.fn(async (cb: any) => cb(mockTx));
+      prisma.$transaction = vi.fn(async (cb) => cb(mockTx));
     });
 
     test("reads the quota definitions before opening the transaction, not inside it (ENG-3285)", async () => {

@@ -7,6 +7,7 @@ import { type TCardArrangementOptions } from "@formbricks/types/styling";
 import { TSurveyStyling } from "@formbricks/types/surveys/types";
 import { type TWorkspaceStyling } from "@formbricks/types/workspace";
 import { getArrangementResetBlockId } from "@/lib/card-arrangement-reset";
+import { initialCardStack, moveCardStack } from "@/lib/card-stack";
 import { isEndSlotEmpty, isSlotRendered } from "@/lib/end-slot";
 import { cn } from "@/lib/utils";
 import { StackedCard } from "./stacked-card";
@@ -46,7 +47,7 @@ export function StackedCardsContainer({
   const cardBorderColor = survey.styling?.overwriteThemeStyling
     ? survey.styling?.cardBorderColor?.light
     : styling.cardBorderColor?.light;
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const cardElementsRef = useRef<(HTMLDivElement | null)[]>([]);
   const resizeObserver = useRef<ResizeObserver | null>(null);
   const [cardHeight, setCardHeight] = useState("auto");
   const [cardWidth, setCardWidth] = useState<number>(0);
@@ -71,33 +72,11 @@ export function StackedCardsContainer({
   // A finished survey without an ending card collapses instead of leaving a blank card (ENG-4069)
   const endSlotEmpty = isEndSlotEmpty(endSlotInput);
 
-  const [prevBlockIdx, setPrevBlockIdx] = useState(blockIdxTemp - 1);
-  const [currentBlockIdx, setCurrentBlockIdx] = useState(blockIdxTemp);
-  const [nextBlockIdx, setNextBlockIdx] = useState(blockIdxTemp + 1);
-  const [visitedBlocks, setVisitedBlocks] = useState<number[]>([]);
+  const [cardStack, setCardStack] = useState(() => initialCardStack(blockIdxTemp));
+  const { prevBlockIdx, currentBlockIdx, nextBlockIdx } = cardStack;
 
   useEffect(() => {
-    if (blockIdxTemp > currentBlockIdx) {
-      // Next button is clicked
-      setPrevBlockIdx(currentBlockIdx);
-      setCurrentBlockIdx(blockIdxTemp);
-      setNextBlockIdx(blockIdxTemp + 1);
-      setVisitedBlocks((prev) => {
-        return [...prev, currentBlockIdx];
-      });
-    } else if (blockIdxTemp < currentBlockIdx) {
-      // Back button is clicked
-      setNextBlockIdx(currentBlockIdx);
-      setCurrentBlockIdx(blockIdxTemp);
-
-      // Compute new visited stack and safe previous index
-      const newStack = visitedBlocks.length > 0 ? visitedBlocks.slice(0, -1) : [];
-      const safePrevIdx = newStack.length > 0 ? newStack[newStack.length - 1] : Math.max(0, blockIdxTemp - 1);
-
-      setPrevBlockIdx(safePrevIdx);
-      setVisitedBlocks(newStack);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only update when blockIdxTemp changes
+    setCardStack((stack) => moveCardStack(stack, blockIdxTemp));
   }, [blockIdxTemp]);
 
   const borderStyles = useMemo(() => {
@@ -134,7 +113,7 @@ export function StackedCardsContainer({
     };
 
     const timer = setTimeout(() => {
-      const currentElement = cardRefs.current[blockIdxTemp];
+      const currentElement = cardElementsRef.current[blockIdxTemp];
       if (currentElement) {
         if (resizeObserver.current) {
           resizeObserver.current.disconnect();
@@ -153,7 +132,7 @@ export function StackedCardsContainer({
       clearTimeout(resizeTimeout);
     };
     // hasError: the end slot of a survey without an ending card only mounts once an error shows
-  }, [blockIdxTemp, cardArrangement, cardRefs, hasError]);
+  }, [blockIdxTemp, cardArrangement, cardElementsRef, hasError]);
 
   // Reset block progress when the card arrangement changes; never on mount (see the helper).
   const previousArrangementRef = useRef<TCardArrangementOptions | undefined>(undefined);
@@ -202,7 +181,7 @@ export function StackedCardsContainer({
             return (
               <StackedCard
                 key={dynamicBlockIndex}
-                cardRefs={cardRefs}
+                cardElementsRef={cardElementsRef}
                 dynamicQuestionIndex={dynamicBlockIndex}
                 offset={offset}
                 fullSizeCards={fullSizeCards}

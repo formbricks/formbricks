@@ -18,7 +18,7 @@ export const RestrictedSurveyBanner = ({ ownerName, className }: Readonly<Restri
   const { t } = useTranslation();
 
   return (
-    <Alert variant="warning" size="small" role="status" className={className}>
+    <Alert variant="warning" size="small" alertRole="status" className={className}>
       <p className="grow">
         {ownerName
           ? t("workspace.surveys.visibility.banner_role_access", { author: ownerName })

@@ -2,7 +2,14 @@ import { AsyncParser } from "@json2csv/node";
 import { describe, expect, test, vi } from "vitest";
 import * as xlsx from "xlsx";
 import { logger } from "@formbricks/logger";
-import { convertToCsv, convertToXlsxBuffer, toCsvLine } from "./file-conversion";
+import {
+  XLSX_MAX_CELL_LENGTH,
+  XLSX_TRUNCATION_MARKER,
+  convertToCsv,
+  convertToXlsxBuffer,
+  toCsvLine,
+  truncateForXlsxCell,
+} from "./file-conversion";
 
 // Mock the logger to capture error calls
 vi.mock("@formbricks/logger", () => ({
@@ -25,12 +32,18 @@ describe("convertToCsv", () => {
     expect(lines[2]).toBe('"Bob",25');
   });
 
+  test("should keep text over the Excel cell limit in full", async () => {
+    const long = "a".repeat(XLSX_MAX_CELL_LENGTH + 500);
+    const csv = await convertToCsv(["answer"], [{ answer: long }]);
+    expect(csv.trim().split("\n")[1]).toBe(`"${long}"`);
+  });
+
   test("should log an error and throw when conversion fails", async () => {
     const parseSpy = vi.spyOn(AsyncParser.prototype, "parse").mockImplementation(
       () =>
         ({
           promise: () => Promise.reject(new Error("Test parse error")),
-        }) as any
+        }) as unknown as ReturnType<AsyncParser<object, object>["parse"]>
     );
 
     await expect(convertToCsv(fields, data)).rejects.toThrow("Failed to convert to CSV");
@@ -102,51 +115,105 @@ describe("convertToXlsxBuffer", () => {
     expect(cleaned).toEqual(data);
   });
 
-  test("should defang formula injection payloads in xlsx cells", () => {
-    const payloads = [
-      '=HYPERLINK("https://evil.tld","Click")',
-      "+1+1",
-      "-2+3",
-      "@SUM(A1:A2)",
-      "\tleading-tab",
-      "\rleading-cr",
-    ];
-    const rows = payloads.map((p) => ({ name: p }));
-    const buffer = convertToXlsxBuffer(["name"], rows);
-    const wb = xlsx.read(buffer, { type: "buffer" });
-    const sheet = wb.Sheets["Response Data"];
-    payloads.forEach((p, i) => {
+  const formulaPayloads = [
+    '=HYPERLINK("https://evil.tld","Click")',
+    "+1+1",
+    "-5 stars",
+    "@SUM(A1:A2)",
+    "\tleading-tab",
+    "\rleading-cr",
+  ];
+  const readSheet = (buffer: Buffer) =>
+    xlsx.read(buffer, { type: "buffer", cellNF: true }).Sheets["Response Data"];
+
+  test("should write formula-trigger values verbatim as text cells, not formulas", () => {
+    const rows = formulaPayloads.map((p) => ({ name: p }));
+    const sheet = readSheet(convertToXlsxBuffer(["name"], rows));
+    formulaPayloads.forEach((p, i) => {
       const cell = sheet[`A${i + 2}`]; // row 1 is header
-      // value stored as plain text, not as a formula (no `f` property)
+      expect(cell.v).toBe(p);
       expect(cell.f).toBeUndefined();
-      expect(cell.v).toBe(`'${p}`);
+      expect(cell.t).toBe("s");
+      expect(cell.z).toBe("@");
     });
   });
 
-  test("should defang formula injection in xlsx header names", () => {
-    const buffer = convertToXlsxBuffer(["=evil", "name"], [{ "=evil": "x", name: "Alice" }]);
-    const wb = xlsx.read(buffer, { type: "buffer" });
-    const sheet = wb.Sheets["Response Data"];
+  test("should write formula-trigger header names verbatim as text cells", () => {
+    const sheet = readSheet(convertToXlsxBuffer(["=evil", "name"], [{ "=evil": "x", name: "Alice" }]));
     const headerCell = sheet["A1"];
+    expect(headerCell.v).toBe("=evil");
     expect(headerCell.f).toBeUndefined();
-    expect(headerCell.v).toBe("'=evil");
-    // benign header untouched
+    expect(headerCell.t).toBe("s");
+    expect(headerCell.z).toBe("@");
     expect(sheet["B1"].v).toBe("name");
     // data row mapped via original key
     expect(sheet["A2"].v).toBe("x");
     expect(sheet["B2"].v).toBe("Alice");
   });
 
-  test("should preserve distinct xlsx columns whose labels collide after sanitization", () => {
-    // Original keys "=field" and "'=field" both render as "'=field"; ensure
-    // both cells survive instead of one overwriting the other.
-    const buffer = convertToXlsxBuffer(["=field", "'=field"], [{ "=field": "a", "'=field": "b" }]);
-    const wb = xlsx.read(buffer, { type: "buffer" });
-    const sheet = wb.Sheets["Response Data"];
-    expect(sheet["A1"].v).toBe("'=field");
-    expect(sheet["B1"].v).toBe("'=field");
-    expect(sheet["A2"].v).toBe("a");
-    expect(sheet["B2"].v).toBe("b");
+  test("should keep numbers as numeric cells", () => {
+    const sheet = readSheet(convertToXlsxBuffer(["age"], [{ age: -5 }]));
+    expect(sheet["A2"].v).toBe(-5);
+    expect(sheet["A2"].t).toBe("n");
+  });
+
+  describe("Excel cell length limit", () => {
+    test("should export a value over the limit, truncated with a visible marker", () => {
+      const long = "a".repeat(XLSX_MAX_CELL_LENGTH + 500);
+      const sheet = readSheet(convertToXlsxBuffer(["answer", "age"], [{ answer: long, age: 30 }]));
+      const value = sheet["A2"].v as string;
+      expect(value).toHaveLength(XLSX_MAX_CELL_LENGTH);
+      expect(value.endsWith(XLSX_TRUNCATION_MARKER)).toBe(true);
+      expect(value.startsWith("aaa")).toBe(true);
+      // other cells are untouched
+      expect(sheet["B2"].v).toBe(30);
+    });
+
+    test("should export a header over the limit, truncated with a visible marker", () => {
+      const longHeader = "Q".repeat(XLSX_MAX_CELL_LENGTH + 1);
+      const sheet = readSheet(convertToXlsxBuffer([longHeader], [{ [longHeader]: "answer" }]));
+      const header = sheet["A1"].v as string;
+      expect(header).toHaveLength(XLSX_MAX_CELL_LENGTH);
+      expect(header.endsWith(XLSX_TRUNCATION_MARKER)).toBe(true);
+      // the row is still looked up by the original, untruncated key
+      expect(sheet["A2"].v).toBe("answer");
+    });
+
+    test("should leave a value of exactly the limit unchanged", () => {
+      const exact = "b".repeat(XLSX_MAX_CELL_LENGTH);
+      const sheet = readSheet(convertToXlsxBuffer(["answer"], [{ answer: exact }]));
+      expect(sheet["A2"].v).toBe(exact);
+    });
+
+    test("should leave a formula-trigger value of exactly the limit unprefixed and untruncated", () => {
+      const payload = "=" + "c".repeat(XLSX_MAX_CELL_LENGTH - 1);
+      const sheet = readSheet(convertToXlsxBuffer(["answer"], [{ answer: payload }]));
+      expect(sheet["A2"].f).toBeUndefined();
+      expect(sheet["A2"].v).toBe(payload);
+    });
+  });
+});
+
+describe("truncateForXlsxCell", () => {
+  test("should not split a surrogate pair at the cut", () => {
+    const keep = XLSX_MAX_CELL_LENGTH - XLSX_TRUNCATION_MARKER.length;
+    // Place an emoji so its high surrogate is the last kept code unit.
+    const value = "d".repeat(keep - 1) + "😀" + "e".repeat(100);
+    const result = truncateForXlsxCell(value);
+    expect(result).toBe("d".repeat(keep - 1) + XLSX_TRUNCATION_MARKER);
+    expect(result.length).toBeLessThanOrEqual(XLSX_MAX_CELL_LENGTH);
+  });
+
+  test("should keep a surrogate pair that ends exactly at the cut", () => {
+    const keep = XLSX_MAX_CELL_LENGTH - XLSX_TRUNCATION_MARKER.length;
+    const value = "d".repeat(keep - 2) + "😀" + "e".repeat(100);
+    expect(truncateForXlsxCell(value)).toBe("d".repeat(keep - 2) + "😀" + XLSX_TRUNCATION_MARKER);
+  });
+
+  test("should pass numbers and short strings through unchanged", () => {
+    expect(truncateForXlsxCell(42)).toBe(42);
+    expect(truncateForXlsxCell("short")).toBe("short");
+    expect(truncateForXlsxCell(undefined)).toBeUndefined();
   });
 });
 

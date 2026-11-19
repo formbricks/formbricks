@@ -57,7 +57,7 @@ const fetchWithTimeout = async (
     return await fetch(url, {
       ...options,
       signal: abortController.signal,
-    } as RequestInit);
+    });
   } catch (error) {
     // undici rejects with the abort reason, but a caller-provided fetch may throw its own AbortError;
     // either way the timer firing is what happened.

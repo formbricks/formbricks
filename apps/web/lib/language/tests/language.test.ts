@@ -13,6 +13,7 @@ import {
   DatabaseError,
   OperationNotAllowedError,
   ResourceNotFoundError,
+  UniqueConstraintError,
   ValidationError,
 } from "@formbricks/types/errors";
 import { TWorkspace } from "@formbricks/types/workspace";
@@ -49,11 +50,13 @@ const fakeWorkspace = {
 } as unknown as TWorkspace;
 
 const testInputValidation = async (
-  service: (workspaceId: string, ...functionArgs: any[]) => Promise<any>,
-  ...args: [string, ...any[]]
+  service: (workspaceId: string, ...functionArgs: never[]) => Promise<unknown>,
+  ...args: [string, ...unknown[]]
 ): Promise<void> => {
   test("throws ValidationError on bad input", async () => {
-    await expect(service(...args)).rejects.toThrow(ValidationError);
+    // The point is to call the service with arguments its types reject.
+    const callWithAnyInput = service as (...input: unknown[]) => Promise<unknown>;
+    await expect(callWithAnyInput(...args)).rejects.toThrow(ValidationError);
   });
 };
 
@@ -77,7 +80,7 @@ describe("createLanguage", () => {
   });
 
   describe("sad path", () => {
-    testInputValidation(createLanguage, "bad-id", {});
+    void testInputValidation(createLanguage, "bad-id", {});
 
     test("throws ValidationError on a malformed/unparseable code", async () => {
       await expect(createLanguage(mockWorkspaceId, { code: "not a language", alias: null })).rejects.toThrow(
@@ -95,9 +98,22 @@ describe("createLanguage", () => {
       expect(prisma.language.create).not.toHaveBeenCalled();
     });
 
-    test("throws DatabaseError when PrismaKnownRequestError", async () => {
+    // ENG-3602: the database refusing a code the workspace already holds is a conflict the caller can act
+    // on, not a server error.
+    test("throws UniqueConstraintError when the workspace already has the language (P2002)", async () => {
       const err = new Prisma.PrismaClientKnownRequestError("dup", {
         code: "P2002",
+        clientVersion: "1",
+      });
+      vi.mocked(prisma.language.create).mockRejectedValue(err);
+      const created = createLanguage(mockWorkspaceId, mockLanguageInput);
+      await expect(created).rejects.toThrow(UniqueConstraintError);
+      await expect(created).rejects.toThrow("This workspace already has this language");
+    });
+
+    test("throws DatabaseError on any other PrismaKnownRequestError", async () => {
+      const err = new Prisma.PrismaClientKnownRequestError("fk", {
+        code: "P2003",
         clientVersion: "1",
       });
       vi.mocked(prisma.language.create).mockRejectedValue(err);
@@ -144,7 +160,7 @@ describe("updateLanguage", () => {
   });
 
   describe("sad path", () => {
-    testInputValidation(updateLanguage, "bad-id", mockLanguageId, {});
+    void testInputValidation(updateLanguage, "bad-id", mockLanguageId, {});
 
     test("throws DatabaseError on PrismaKnownRequestError", async () => {
       const err = new Prisma.PrismaClientKnownRequestError("dup", {
@@ -269,7 +285,7 @@ describe("deleteLanguage", () => {
   });
 
   describe("sad path", () => {
-    testInputValidation(deleteLanguage, "bad-id", mockWorkspaceId, {});
+    void testInputValidation(deleteLanguage, "bad-id", mockWorkspaceId, {});
 
     test("throws DatabaseError on PrismaKnownRequestError", async () => {
       const err = new Prisma.PrismaClientKnownRequestError("dup", {
@@ -295,7 +311,7 @@ describe("deleteLanguage", () => {
         ...fakeWorkspace,
         languages: [{ ...mockLanguage, id: mockLanguageId, code: "de-DE" }],
         config: { defaultSurveyLanguage: "de-DE" },
-      } as unknown as TWorkspace);
+      });
 
       await expect(deleteLanguage(mockLanguageId, mockWorkspaceId, {})).rejects.toThrow(
         OperationNotAllowedError
@@ -309,7 +325,7 @@ describe("deleteLanguage", () => {
         ...fakeWorkspace,
         languages: [{ ...mockLanguage, id: mockLanguageId, code: "de" }],
         config: { defaultSurveyLanguage: "de-DE" },
-      } as unknown as TWorkspace);
+      });
 
       await expect(deleteLanguage(mockLanguageId, mockWorkspaceId, {})).rejects.toThrow(
         OperationNotAllowedError
@@ -321,7 +337,7 @@ describe("deleteLanguage", () => {
         ...fakeWorkspace,
         languages: [{ ...mockLanguage, id: mockLanguageId, code: "fr-FR" }],
         config: { defaultSurveyLanguage: "de-DE" },
-      } as unknown as TWorkspace);
+      });
       vi.mocked(prisma.language.delete).mockResolvedValue(mockLanguage);
 
       await expect(deleteLanguage(mockLanguageId, mockWorkspaceId, {})).resolves.toEqual(mockLanguage);

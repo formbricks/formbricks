@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { TOptionListKey } from "./show-if";
+import type { TElementOptionsNotShown, TOptionListKey } from "./show-if";
 
 /**
  * The not-shown record (ENG-6936, ADR 0029): what a respondent was **not shown**, decided by the
@@ -85,7 +85,8 @@ const OPTION_LIST_KEYS = ["choices", "rows", "columns"] as const satisfies reado
 export const getOptionListKeyOfNoun = (noun: TOptionItemNoun): TOptionListKey | undefined =>
   OPTION_LIST_KEYS.find((listKey) => OPTION_LIST_NAMES[listKey].noun === noun);
 
-type TBlockLike = { id: string; elements: readonly { id: string }[] };
+/** `elements` is optional: a stored block can lack it (an unvalidated draft or migrated block, ENG-2497). */
+type TBlockLike = { id: string; elements?: readonly { id: string }[] };
 
 /**
  * The elements a record says the respondent was not shown: those it lists, plus every element of the
@@ -107,9 +108,26 @@ export const getNotShownElementIds = (
 
   for (const block of blocks) {
     const wholeBlock = listedBlocks.has(block.id);
-    for (const element of block.elements) {
+    for (const element of block.elements ?? []) {
       if (wholeBlock || listedElements.has(element.id)) notShown.add(element.id);
     }
+  }
+  return notShown;
+};
+
+/**
+ * The options, rows and columns the record says one element did not offer, keyed by option list the
+ * way show-if keys them (ENG-7332). `null` or `undefined` (unknown) returns `{}`, which reads as today.
+ */
+export const getElementOptionsNotShownFromRecord = (
+  record: TResponseNotShown | null | undefined,
+  elementId: string
+): TElementOptionsNotShown => {
+  const notShown: TElementOptionsNotShown = {};
+  if (!record) return notShown;
+  for (const listKey of OPTION_LIST_KEYS) {
+    const ids = record[OPTION_LIST_NAMES[listKey].recordKey]?.[elementId];
+    if (ids && ids.length > 0) notShown[listKey] = ids;
   }
   return notShown;
 };

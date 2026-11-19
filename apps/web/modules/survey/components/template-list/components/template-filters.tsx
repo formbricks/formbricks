@@ -25,6 +25,12 @@ export const TemplateFilters = ({
   };
 
   const allFilters = [getChannelMapping(t), getIndustryMapping(t), getRoleMapping(t)];
+  // The "all" choice of each filter in `allFilters`, in the same order.
+  const allFilterLabels = [
+    t("workspace.surveys.templates.all_channels"),
+    t("workspace.surveys.templates.all_industries"),
+    t("workspace.surveys.templates.all_roles"),
+  ];
 
   return (
     <div className="mb-6 gap-3">
@@ -34,25 +40,21 @@ export const TemplateFilters = ({
             <button
               type="button"
               onClick={() => handleFilterSelect(null, index)}
-              disabled={templateSearch && templateSearch.length > 0 ? true : false}
+              disabled={Boolean(templateSearch && templateSearch.length > 0)}
               className={cn(
                 selectedFilter[index] === null
                   ? "bg-slate-800 font-semibold text-white"
                   : "bg-white text-slate-700 hover:bg-slate-100 focus:scale-105 focus:bg-slate-100 focus:ring-0 focus:outline-hidden",
                 "rounded-sm border border-slate-800 px-2 py-1 text-xs transition-all duration-150"
               )}>
-              {index === 0
-                ? t("workspace.surveys.templates.all_channels")
-                : index === 1
-                  ? t("workspace.surveys.templates.all_industries")
-                  : t("workspace.surveys.templates.all_roles")}
+              {allFilterLabels[index]}
             </button>
             {filters.map((filter) => (
               <button
                 key={filter.value}
                 type="button"
                 onClick={() => handleFilterSelect(filter.value, index)}
-                disabled={templateSearch && templateSearch.length > 0 ? true : false}
+                disabled={Boolean(templateSearch && templateSearch.length > 0)}
                 className={cn(
                   selectedFilter[index] === filter.value
                     ? "bg-slate-800 font-semibold text-white"

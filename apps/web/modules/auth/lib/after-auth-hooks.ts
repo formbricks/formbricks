@@ -7,10 +7,8 @@ import {
 import { auditFailedAuthAfter } from "./better-auth-observability";
 import { twoFactorBackfillAfterHandler } from "./better-auth-two-factor-backfill";
 import { verificationAutoSignInAfterHandler } from "./better-auth-verification-autosignin";
-import {
-  requireOAuthConsentOnRefreshAfterHandler,
-  revokeTokensBeyondConsentAfterHandler,
-} from "./oauth-grant-revocation";
+import { revokeTokensBeyondConsentAfterHandler } from "./oauth-grant-revocation";
+import { requireOAuthConsentOnRefreshAfterHandler } from "./oauth-refresh-check";
 
 /**
  * Composed Better Auth `hooks.after` chain. Ordering rationale: `auditFailedAuthAfter` runs before

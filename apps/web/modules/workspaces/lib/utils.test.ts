@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { AuthenticationError, ResourceNotFoundError } from "@formbricks/types/errors";
-import type { TMembership, TOrganizationRole } from "@formbricks/types/memberships";
+import type { TOrganizationRole } from "@formbricks/types/memberships";
 import { can } from "@/lib/authorization";
 import { getBillingFallbackPath } from "@/lib/membership/navigation";
 import { getMembershipByUserIdOrganizationId } from "@/lib/membership/service";
@@ -68,7 +68,7 @@ const primeAuth = (role: TOrganizationRole) => {
   vi.mocked(getSession).mockResolvedValue({
     user: { id: userId },
     expires: new Date(0).toISOString(),
-  } as Awaited<ReturnType<typeof getSession>>);
+  });
   vi.mocked(getOrganization).mockResolvedValue({ id: organizationId } as Awaited<
     ReturnType<typeof getOrganization>
   >);
@@ -77,7 +77,7 @@ const primeAuth = (role: TOrganizationRole) => {
     organizationId,
     userId,
     accepted: true,
-  } as TMembership);
+  });
   vi.mocked(can).mockResolvedValue(true);
   vi.mocked(getWorkspacePermissionByUserId).mockResolvedValue(null);
   vi.mocked(getBillingFallbackPath).mockReturnValue(billingFallbackPath);
@@ -264,7 +264,7 @@ describe("layout navigation gates (ENG-1737)", () => {
     vi.mocked(getSession).mockResolvedValue({
       user: { id: layoutUserId },
       expires: new Date(0).toISOString(),
-    } as Awaited<ReturnType<typeof getSession>>);
+    });
     vi.mocked(getUser).mockResolvedValue({ id: layoutUserId } as Awaited<ReturnType<typeof getUser>>);
     vi.mocked(canUserNavigateWorkspace).mockResolvedValue(true);
     mocks.workspaceFindUnique.mockResolvedValue({ organization: organizationRelation });

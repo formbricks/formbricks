@@ -41,7 +41,7 @@ vi.mock("react", async () => {
   const actual = await vi.importActual("react");
   return {
     ...actual,
-    cache: <T extends (...args: any[]) => any>(fn: T): T => fn,
+    cache: <T extends (...args: unknown[]) => unknown>(fn: T): T => fn,
   };
 });
 
@@ -271,7 +271,9 @@ describe("segments lib", () => {
       vi.mocked(prisma.segment.findMany).mockResolvedValue([
         buildInteractionSegment("interaction-segment", "haveSeen"),
       ] as unknown as Prisma.Result<typeof prisma.segment, unknown, "findMany">);
-      vi.mocked(prisma.survey.findMany).mockResolvedValue([{ id: "survey-restricted" }] as any);
+      vi.mocked(prisma.survey.findMany, { partial: true, deep: true }).mockResolvedValue([
+        { id: "survey-restricted" },
+      ]);
 
       const result = await getPersonSegmentIds(
         mockWorkspaceId,
@@ -395,18 +397,53 @@ describe("segments lib", () => {
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     });
 
-    test("should return empty array on unexpected error", async () => {
-      vi.mocked(prisma.segment.findMany).mockRejectedValue(new Error("Unexpected"));
-
-      const result = await getPersonSegmentIds(
-        mockWorkspaceId,
-        mockContactId,
-        mockContactUserId,
-        mockDeviceType,
-        mockInteractionData
+    // ENG-3725: an empty membership would read as "this contact is in no segments" and silently stop every
+    // segment-targeted survey, so a failed membership check has to fail the request instead.
+    test("throws DatabaseError when the membership transaction times out", async () => {
+      vi.mocked(prisma.$transaction).mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Transaction already closed", {
+          code: "P2028",
+          clientVersion: "test",
+        })
       );
 
-      expect(result).toEqual([]);
+      await expect(
+        getPersonSegmentIds(
+          mockWorkspaceId,
+          mockContactId,
+          mockContactUserId,
+          mockDeviceType,
+          mockInteractionData
+        )
+      ).rejects.toThrow(DatabaseError);
+    });
+
+    test("rethrows a non-Prisma failure of the membership transaction", async () => {
+      vi.mocked(prisma.$transaction).mockRejectedValue(new Error("timeout exceeded when trying to connect"));
+
+      await expect(
+        getPersonSegmentIds(
+          mockWorkspaceId,
+          mockContactId,
+          mockContactUserId,
+          mockDeviceType,
+          mockInteractionData
+        )
+      ).rejects.toThrow("timeout exceeded when trying to connect");
+    });
+
+    test("rethrows when loading the workspace's segments fails", async () => {
+      vi.mocked(prisma.segment.findMany).mockRejectedValue(new Error("Unexpected"));
+
+      await expect(
+        getPersonSegmentIds(
+          mockWorkspaceId,
+          mockContactId,
+          mockContactUserId,
+          mockDeviceType,
+          mockInteractionData
+        )
+      ).rejects.toThrow("Unexpected");
     });
   });
 });

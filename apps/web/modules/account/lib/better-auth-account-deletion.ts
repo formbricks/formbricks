@@ -57,7 +57,7 @@ export const accountDeletionBeforeDelete: NonNullable<DeleteUserConfig["beforeDe
     await queueAccountDeletionAuditEvent({
       status: "failure",
       targetUserId: user.id,
-      oldUser: user as Record<string, unknown>,
+      oldUser: user,
     });
     throw new APIError("BAD_REQUEST", {
       message: ACCOUNT_DELETION_SOLE_OWNER_BLOCK_MESSAGE,
@@ -110,7 +110,7 @@ export const accountDeletionAfterDelete: NonNullable<DeleteUserConfig["afterDele
   }
 
   await queueAccountDeletionAuditEvent({
-    oldUser: user as Record<string, unknown>,
+    oldUser: user,
     status: "success",
     targetUserId: user.id,
   });

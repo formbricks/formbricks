@@ -127,7 +127,7 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }
         <hr className="py-1 text-slate-600" />
         <div className="space-y-3 p-3">
           {localSurvey.status === "inProgress" && (
-            <Alert variant="warning" className="mb-3" role="status">
+            <Alert variant="warning" className="mb-3" alertRole="status">
               <AlertTitle>{t("workspace.surveys.edit.change_survey_type")}</AlertTitle>
               <AlertDescription>
                 {t("workspace.surveys.edit.changing_survey_type_will_remove_existing_distribution_channels")}
@@ -140,18 +140,18 @@ export const HowToSendCard = ({ localSurvey, setLocalSurvey, appSetupCompleted }
             onValueChange={setSurveyType}
             className="flex flex-col gap-y-3">
             {options
-              .filter((option) => !Boolean(option.hide))
+              .filter((option) => !option.hide)
               .map((option) => (
                 <Label
                   key={option.id}
                   htmlFor={option.id}
                   className={cn(
                     "flex w-full items-center rounded-lg border bg-slate-50 p-4",
-                    option.comingSoon
-                      ? "border-slate-200 bg-slate-50/50"
-                      : option.id === localSurvey.type
+                    option.comingSoon && "border-slate-200 bg-slate-50/50",
+                    !option.comingSoon &&
+                      (option.id === localSurvey.type
                         ? "cursor-pointer border-brand-dark bg-slate-50"
-                        : "cursor-pointer bg-slate-50"
+                        : "cursor-pointer bg-slate-50")
                   )}
                   id={`howToSendCardOption-${option.id}`}>
                   <RadioGroupItem

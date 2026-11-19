@@ -373,7 +373,7 @@ const readPersistedSurveyBlocks = async (
     select: { blocks: true },
   });
 
-  return survey ? (survey.blocks as unknown as TSurveyBlock[]) : null;
+  return survey ? survey.blocks : null;
 };
 
 /**

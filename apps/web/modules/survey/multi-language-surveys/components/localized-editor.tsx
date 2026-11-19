@@ -3,7 +3,13 @@
 import { useMemo, useTransition } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import type { TI18nString } from "@formbricks/types/i18n";
-import type { TSurvey } from "@formbricks/types/surveys/types";
+import type { TSurveyElement } from "@formbricks/types/surveys/elements";
+import type {
+  TSurvey,
+  TSurveyEndScreenCard,
+  TSurveyRedirectUrlCard,
+  TSurveyWelcomeCard,
+} from "@formbricks/types/surveys/types";
 import { md } from "@/lib/markdownIt";
 import { getElementsFromBlocks } from "@/modules/survey/lib/client-utils";
 import { Editor } from "@/modules/ui/components/editor";
@@ -13,7 +19,12 @@ interface LocalizedEditorProps {
   value: TI18nString | undefined;
   localSurvey: TSurvey;
   isInvalid: boolean;
-  updateElement: any;
+  /** Writes the field of an element; used unless `isCard`. */
+  updateElement?: (elementIdx: number, data: Partial<TSurveyElement>) => void;
+  /** Writes the field of the welcome or ending card; used when `isCard`. */
+  updateCard?: (
+    data: Partial<TSurveyEndScreenCard> | Partial<TSurveyRedirectUrlCard> | Partial<TSurveyWelcomeCard>
+  ) => void;
   selectedLanguageCode?: string;
   setSelectedLanguageCode?: (languageCode: string) => void;
   elementIdx: number;
@@ -22,7 +33,7 @@ interface LocalizedEditorProps {
   locale: string;
   elementId: string;
   isCard?: boolean;
-  autoFocus?: boolean;
+  focusOnMount?: boolean;
   isExternalUrlsAllowed?: boolean;
   suppressUpdates?: () => boolean;
 }
@@ -32,6 +43,7 @@ export function LocalizedEditor({
   value,
   localSurvey,
   updateElement,
+  updateCard,
   selectedLanguageCode = "default",
   elementIdx,
   firstRender,
@@ -40,7 +52,7 @@ export function LocalizedEditor({
   isCard,
   isExternalUrlsAllowed,
   suppressUpdates,
-  autoFocus,
+  focusOnMount,
 }: Readonly<LocalizedEditorProps>) {
   const elements = useMemo(() => getElementsFromBlocks(localSurvey.blocks), [localSurvey.blocks]);
 
@@ -53,7 +65,7 @@ export function LocalizedEditor({
         disableLists
         excludedToolbarItems={["blockType"]}
         firstRender={firstRender}
-        autoFocus={autoFocus}
+        focusOnMount={focusOnMount}
         getText={() => {
           const text = value ? (value[selectedLanguageCode] ?? "") : "";
           return md.render(text);
@@ -92,7 +104,7 @@ export function LocalizedEditor({
                 ...value,
                 [selectedLanguageCode]: sanitizedContent,
               };
-              updateElement({ [id]: translatedContent });
+              updateCard?.({ [id]: translatedContent });
               return;
             }
 
@@ -105,7 +117,7 @@ export function LocalizedEditor({
                 ...value,
                 [selectedLanguageCode]: sanitizedContent,
               };
-              updateElement(elementIdx, { [id]: translatedContent });
+              updateElement?.(elementIdx, { [id]: translatedContent });
             }
           });
         }}

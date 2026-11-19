@@ -39,13 +39,13 @@ describe("verifyRecaptchaToken", () => {
   });
 
   test("returns false if fetch response is not ok", async () => {
-    (global.fetch as any).mockResolvedValue({ ok: false });
+    vi.mocked(global.fetch, { partial: true }).mockResolvedValue({ ok: false });
     const result = await verifyRecaptchaToken("token", 0.5);
     expect(result).toBe(false);
   });
 
   test("returns false if verification fails (data.success is false)", async () => {
-    (global.fetch as any).mockResolvedValue({
+    vi.mocked(global.fetch, { partial: true }).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({ success: false }),
     });
@@ -55,7 +55,7 @@ describe("verifyRecaptchaToken", () => {
   });
 
   test("returns false if score is below or equal to threshold", async () => {
-    (global.fetch as any).mockResolvedValue({
+    vi.mocked(global.fetch, { partial: true }).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({ success: true, score: 0.3 }),
     });
@@ -68,7 +68,7 @@ describe("verifyRecaptchaToken", () => {
   });
 
   test("returns true if verification is successful and score is above threshold", async () => {
-    (global.fetch as any).mockResolvedValue({
+    vi.mocked(global.fetch, { partial: true }).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({ success: true, score: 0.9 }),
     });
@@ -77,7 +77,7 @@ describe("verifyRecaptchaToken", () => {
   });
 
   test("returns true if verification is successful and score is undefined", async () => {
-    (global.fetch as any).mockResolvedValue({
+    vi.mocked(global.fetch, { partial: true }).mockResolvedValue({
       ok: true,
       json: vi.fn().mockResolvedValue({ success: true }),
     });
@@ -86,7 +86,7 @@ describe("verifyRecaptchaToken", () => {
   });
 
   test("returns false and logs error if fetch throws", async () => {
-    (global.fetch as any).mockRejectedValue(new Error("network error"));
+    vi.mocked(global.fetch).mockRejectedValue(new Error("network error"));
     const result = await verifyRecaptchaToken("token", 0.5);
     expect(result).toBe(false);
     expect(logger.error).toHaveBeenCalledWith(expect.any(Error), "Error verifying reCAPTCHA token");
@@ -102,10 +102,10 @@ describe("verifyRecaptchaToken", () => {
       signal: {},
     };
     vi.spyOn(global, "AbortController").mockImplementation(function AbortController() {
-      return abortController as any;
+      return abortController;
     });
-    (global.fetch as any).mockImplementation(() => new Promise(() => {}));
-    verifyRecaptchaToken("token", 0.5);
+    vi.mocked(global.fetch).mockImplementation(() => new Promise(() => {}));
+    void verifyRecaptchaToken("token", 0.5);
     vi.advanceTimersByTime(5000);
     expect(abortCalled).toBe(true);
   });

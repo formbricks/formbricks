@@ -25,7 +25,7 @@ export const FrdPicker = ({ directories, selectedDirectoryId, onChange }: FrdPic
 
   if (directories.length === 0) {
     return (
-      <Alert variant="error" size="small" role="status">
+      <Alert variant="error" size="small" alertRole="status">
         <div>
           <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
           {organizationId && (

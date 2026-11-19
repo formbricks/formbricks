@@ -107,13 +107,8 @@ const useDropdownCommitState = ({
   const [pendingDropdownValue, setPendingDropdownValue] = React.useState<string | undefined>(selectedValue);
   const [hasPendingDropdownChange, setHasPendingDropdownChange] = React.useState(false);
 
-  React.useEffect(() => {
-    if (!isDropdownOpen) {
-      setPendingDropdownValue(selectedValue);
-      setHasPendingDropdownChange(false);
-    }
-  }, [selectedValue, isDropdownOpen]);
-
+  // The pending value is only read while the dropdown is open, and opening resets it to the current
+  // selection, so nothing needs to sync it while closed.
   const handleDropdownOpenChange = (open: boolean): void => {
     setIsDropdownOpen(open);
     if (open) {

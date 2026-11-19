@@ -33,14 +33,13 @@
     "build:dev": "vite build --mode dev && cross-env BUILD_DEBUG_PANEL=true vite build --mode dev",
     "go": "cross-env BUILD_DEBUG_PANEL=true vite build --mode dev && vite build --watch --mode dev",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
     "clean": "rimraf .turbo node_modules dist coverage",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage"
   },
   "author": "Formbricks <hola@formbricks.com>",
   "devDependencies": {
-    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-oxlint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/creatives": "workspace:*",
     "@formbricks/types": "workspace:*",

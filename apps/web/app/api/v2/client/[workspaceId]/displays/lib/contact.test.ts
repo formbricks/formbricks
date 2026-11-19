@@ -16,7 +16,7 @@ vi.mock("react", async () => {
   const actual = await vi.importActual("react");
   return {
     ...actual,
-    cache: vi.fn((fn: Function) => fn), // Mock react's cache to just return the function
+    cache: vi.fn(<T>(fn: T) => fn), // Mock react's cache to just return the function
   };
 });
 
@@ -29,11 +29,11 @@ describe("doesContactExistInWorkspace", () => {
   });
 
   test("should return true if contact exists in the workspace", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue({
+    vi.mocked(prisma.contact.findFirst, { partial: true }).mockResolvedValue({
       id: contactId,
       createdAt: new Date(),
       updatedAt: new Date(),
-    } as any);
+    });
 
     const result = await doesContactExistInWorkspace(contactId, workspaceId);
 

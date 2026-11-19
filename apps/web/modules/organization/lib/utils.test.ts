@@ -34,7 +34,7 @@ vi.mock("@/lingodotdev/server", () => ({
 vi.mock("@/modules/auth/lib/session", () => ({
   getSession: vi.fn(),
 }));
-vi.mock("react", () => ({ cache: (fn: Function) => fn }));
+vi.mock("react", () => ({ cache: <T>(fn: T) => fn }));
 // ENG-2409: the tenancy gate now asks `can(organization.read)`. Mocked rather than left real so the
 // two arms of the throw can be driven independently — under the legacy evaluator they are the same
 // condition (`read` is granted to exactly the roles that have a membership row), so with the real

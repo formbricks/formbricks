@@ -22,8 +22,8 @@ import { PrismaClient } from "../prisma";
 import { createPrismaPgAdapter } from "../prisma-adapter";
 
 // Regex patterns matching those used in the migration for consistency
-const NUMBER_PATTERN = "^-?[0-9]+(\\.[0-9]+)?$";
-const ISO_DATE_PATTERN = "^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{3})?Z?)?$";
+const NUMBER_PATTERN = String.raw`^-?[0-9]+(\.[0-9]+)?$`;
+const ISO_DATE_PATTERN = String.raw`^[0-9]{4}-[0-9]{2}-[0-9]{2}(T[0-9]{2}:[0-9]{2}:[0-9]{2}(\.[0-9]{3})?Z?)?$`;
 
 // How many attribute keys to process in a single batch
 const KEY_BATCH_SIZE = 10;

@@ -10,7 +10,7 @@ describe("ApiClient", () => {
 
   beforeEach(() => {
     client = new ApiClient({ appUrl, workspaceId });
-    global.fetch = vi.fn();
+    globalThis.fetch = vi.fn();
   });
 
   afterEach(() => {
@@ -19,7 +19,7 @@ describe("ApiClient", () => {
 
   describe("createDisplay", () => {
     test("creates a display successfully (v2) and returns the result", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ ok: true, data: { id: "display123" } }),
       } as unknown as Response);
@@ -31,12 +31,12 @@ describe("ApiClient", () => {
       if (result.ok) {
         expect(result.data.id).toBe("display123");
       }
-      const requestPath = vi.mocked(global.fetch).mock.calls[0][0];
+      const requestPath = vi.mocked(globalThis.fetch).mock.calls[0][0];
       expect(requestPath).toContain("/api/v2/");
     });
 
     test("returns an error if fetch fails", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: false,
         status: 500,
         json: async () => ({ code: "internal_server_error" }),
@@ -51,7 +51,7 @@ describe("ApiClient", () => {
 
   describe("createResponse", () => {
     test("creates a response (v2) and returns success", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ ok: true, data: { id: "response123" } }),
       } as unknown as Response);
@@ -63,11 +63,11 @@ describe("ApiClient", () => {
       if (result.ok) {
         expect(result.data.id).toEqual("response123");
       }
-      expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain("/api/v2/");
+      expect(vi.mocked(globalThis.fetch).mock.calls[0][0]).toContain("/api/v2/");
     });
 
     test("creates a response (v1) if userId is present", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ ok: true, data: { id: "v1response" } }),
       } as unknown as Response);
@@ -79,11 +79,11 @@ describe("ApiClient", () => {
       if (result.ok) {
         expect(result.data.id).toEqual("v1response");
       }
-      expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain("/api/v1/");
+      expect(vi.mocked(globalThis.fetch).mock.calls[0][0]).toContain("/api/v1/");
     });
 
     test("handles create response fetch error", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: false,
         status: 400,
         json: async () => ({ code: "internal_server_error" }),
@@ -98,7 +98,7 @@ describe("ApiClient", () => {
 
   describe("getResponseIdByDisplayId", () => {
     test("gets a linked responseId for a display", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ ok: true, data: { responseId: "response123" } }),
       } as unknown as Response);
@@ -109,13 +109,13 @@ describe("ApiClient", () => {
       if (result.ok) {
         expect(result.data.responseId).toBe("response123");
       }
-      expect(vi.mocked(global.fetch).mock.calls[0][0]).toContain(
+      expect(vi.mocked(globalThis.fetch).mock.calls[0][0]).toContain(
         "/api/v1/client/ws-test/displays/display123/response"
       );
     });
 
     test("returns an error if the display lookup fails", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: false,
         status: 404,
         json: async () => ({ code: "not_found" }),
@@ -132,31 +132,31 @@ describe("ApiClient", () => {
 
   describe("updateResponse", () => {
     test("updates a response successfully", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ ok: true, data: {} }),
       } as unknown as Response);
       const result = await client.updateResponse({
         responseId: "resp123",
         finished: true,
-      } as any);
+      });
       expect(result.ok).toBe(true);
     });
 
     test("sends the Mark as low quality flag with the update (ENG-6933)", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ ok: true, data: {} }),
       } as unknown as Response);
 
       await client.updateResponse({ responseId: "resp123", finished: false, markLowQuality: true });
 
-      const [, init] = vi.mocked(global.fetch).mock.calls[0];
+      const [, init] = vi.mocked(globalThis.fetch).mock.calls[0];
       expect(JSON.parse(String(init?.body))).toMatchObject({ finished: false, markLowQuality: true });
     });
 
     test("sends the whole not-shown record with the update (ENG-6936)", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({ ok: true, data: {} }),
       } as unknown as Response);
@@ -164,19 +164,19 @@ describe("ApiClient", () => {
 
       await client.updateResponse({ responseId: "resp123", finished: false, data: {}, notShown });
 
-      const body = JSON.parse(String(vi.mocked(global.fetch).mock.calls[0][1]?.body));
+      const body = JSON.parse(String(vi.mocked(globalThis.fetch).mock.calls[0][1]?.body));
       expect(body.notShown).toEqual(notShown);
     });
 
     test("handles update error", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: false,
         status: 500,
         json: async () => ({ code: "forbidden" }),
       } as unknown as Response);
       const result = await client.updateResponse({
         responseId: "respError",
-      } as any);
+      });
       expect(result.ok).toBe(false);
       if (!result.ok) {
         expect(result.error.code).toBe("forbidden");
@@ -186,7 +186,7 @@ describe("ApiClient", () => {
 
   describe("uploadFile", () => {
     test("uploads file (S3) successfully with presigned fields", async () => {
-      vi.mocked(global.fetch)
+      vi.mocked(globalThis.fetch)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
@@ -209,7 +209,7 @@ describe("ApiClient", () => {
     });
 
     test("includes surveyId and elementId in the upload signing request", async () => {
-      vi.mocked(global.fetch)
+      vi.mocked(globalThis.fetch)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
@@ -237,7 +237,7 @@ describe("ApiClient", () => {
         }
       );
 
-      const requestInit = vi.mocked(global.fetch).mock.calls[0][1] as RequestInit;
+      const requestInit = vi.mocked(globalThis.fetch).mock.calls[0][1] as RequestInit;
       expect(JSON.parse(requestInit.body as string)).toEqual({
         fileName: "test.jpg",
         fileType: "image/jpeg",
@@ -248,7 +248,7 @@ describe("ApiClient", () => {
     });
 
     test("forwards the PIN token, single-use id and page url in the signing request", async () => {
-      vi.mocked(global.fetch)
+      vi.mocked(globalThis.fetch)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
@@ -274,7 +274,7 @@ describe("ApiClient", () => {
         }
       );
 
-      const requestInit = vi.mocked(global.fetch).mock.calls[0][1] as RequestInit;
+      const requestInit = vi.mocked(globalThis.fetch).mock.calls[0][1] as RequestInit;
       expect(JSON.parse(requestInit.body as string)).toMatchObject({
         pinAuthToken: "pin-token",
         singleUseId: "su-1",
@@ -289,7 +289,7 @@ describe("ApiClient", () => {
     });
 
     test("throws an error if fetch for signing fails", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: false,
         status: 400,
         json: async () => ({ details: { fileName: "Invalid file name" } }),
@@ -304,7 +304,7 @@ describe("ApiClient", () => {
     });
 
     test("throws StorageNotConfiguredError if signing fails because storage is not configured", async () => {
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: false,
         status: 500,
         json: async () => ({
@@ -324,7 +324,7 @@ describe("ApiClient", () => {
     });
 
     test("throws an error if actual upload fails", async () => {
-      vi.mocked(global.fetch)
+      vi.mocked(globalThis.fetch)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
@@ -352,7 +352,7 @@ describe("ApiClient", () => {
     });
 
     test("throws StorageUploadFailedError if actual upload request fails before response", async () => {
-      vi.mocked(global.fetch)
+      vi.mocked(globalThis.fetch)
         .mockResolvedValueOnce({
           ok: true,
           json: async () => ({
@@ -378,7 +378,7 @@ describe("ApiClient", () => {
 
     test('throws "Error uploading file" if base64 is invalid', async () => {
       // Mock the initial "signing" fetch to succeed
-      vi.mocked(global.fetch).mockResolvedValueOnce({
+      vi.mocked(globalThis.fetch).mockResolvedValueOnce({
         ok: true,
         json: async () => ({
           data: {

@@ -100,7 +100,7 @@ export const EditAlerts = ({
 
   const columns = getAlertColumns({
     t,
-    notificationSettings: user.notificationSettings!,
+    notificationSettings: user.notificationSettings,
     autoDisableNotificationType,
     autoDisableNotificationElementId,
   });
@@ -126,7 +126,7 @@ export const EditAlerts = ({
                 </p>
                 <NotificationSwitch
                   surveyOrWorkspaceOrOrganizationId={membership.organization.id}
-                  notificationSettings={user.notificationSettings!}
+                  notificationSettings={user.notificationSettings}
                   notificationType={"unsubscribedOrganizationIds"}
                   autoDisableNotificationType={autoDisableNotificationType}
                   autoDisableNotificationElementId={autoDisableNotificationElementId}

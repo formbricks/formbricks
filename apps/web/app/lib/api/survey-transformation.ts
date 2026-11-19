@@ -388,7 +388,7 @@ export const transformQuestionsToBlocksWithoutCodeFill = (
     const question = questionsCopy[i];
 
     const blockId = createId();
-    questionIdToBlockId.set(question.id as string, blockId);
+    questionIdToBlockId.set(question.id, blockId);
 
     const { logic, logicFallback, buttonLabel, backButtonLabel, ...baseElement } = question;
 

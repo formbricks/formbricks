@@ -29,6 +29,7 @@ const status = (oldestPendingAgeSeconds: number): TAuthzedOutboxStatus => ({
   pending: 1,
   revocationsPastCritical: 0,
   revocationsPastWarning: oldestPendingAgeSeconds >= 15 ? 1 : 0,
+  unknownType: 0,
 });
 
 describe("outbox status gauges", () => {

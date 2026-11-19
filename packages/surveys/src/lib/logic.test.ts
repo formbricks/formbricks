@@ -223,6 +223,27 @@ describe("Survey Logic", () => {
       expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, conditions, "default")).toBe(true);
     });
 
+    // An operator outside the enum was false under the old switch; a prototype key must not read as one.
+    test.each(["constructor", "toString", "hasOwnProperty"])(
+      "an unknown operator %s is false",
+      (operator) => {
+        const conditions = {
+          id: "group1",
+          connector: "and",
+          conditions: [
+            {
+              id: "condition1",
+              operator,
+              leftOperand: { type: "element", value: "q1" },
+              rightOperand: { type: "static", value: "test answer" },
+            },
+          ],
+        } as unknown as TConditionGroup;
+
+        expect(evaluateLogic(mockSurvey, mockData, mockVariablesData, conditions, "default")).toBe(false);
+      }
+    );
+
     test("evaluates a simple condition group with OR connector", () => {
       const conditions: TConditionGroup = {
         id: "group1",
@@ -1770,35 +1791,34 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
   const buildSurvey = (
     variables: TSurveyVariable[],
     embeddedFields?: TJsWorkspaceStateSurvey["embeddedFields"]
-  ): TJsWorkspaceStateSurvey =>
-    ({
-      id: "survey1",
-      name: "Survey 1",
-      questions: [],
-      blocks: [{ id: "block1", name: "Block 1", elements: [] }],
-      variables,
-      embeddedFields,
-      hiddenFields: { enabled: true, fieldIds: ["plan"] },
-      autoClose: null,
-      type: "link",
-      delay: 0,
-      displayLimit: 0,
-      displayOption: "displayMultiple",
-      displayPercentage: 0,
-      recaptcha: { enabled: false, threshold: 0.5 },
-      isBackButtonHidden: false,
-      isAutoProgressingEnabled: false,
-      segment: null,
-      welcomeCard: { enabled: false, showResponseCount: false, timeToFinish: false },
-      triggers: [],
-      styling: null,
-      status: "inProgress",
-      showLanguageSwitch: false,
-      languages: [],
-      endings: [],
-      workspaceOverwrites: null,
-      recontactDays: null,
-    }) as TJsWorkspaceStateSurvey;
+  ): TJsWorkspaceStateSurvey => ({
+    id: "survey1",
+    name: "Survey 1",
+    questions: [],
+    blocks: [{ id: "block1", name: "Block 1", elements: [] }],
+    variables,
+    embeddedFields,
+    hiddenFields: { enabled: true, fieldIds: ["plan"] },
+    autoClose: null,
+    type: "link",
+    delay: 0,
+    displayLimit: 0,
+    displayOption: "displayMultiple",
+    displayPercentage: 0,
+    recaptcha: { enabled: false, threshold: 0.5 },
+    isBackButtonHidden: false,
+    isAutoProgressingEnabled: false,
+    segment: null,
+    welcomeCard: { enabled: false, showResponseCount: false, timeToFinish: false },
+    triggers: [],
+    styling: null,
+    status: "inProgress",
+    showLanguageSwitch: false,
+    languages: [],
+    endings: [],
+    workspaceOverwrites: null,
+    recontactDays: null,
+  });
 
   const computedRow = (dataType: "number" | "string", defaultValue: number | string) => [
     {
@@ -2072,35 +2092,34 @@ describe("computed fields resolve through the inlined EmbeddedData rows", () => 
 });
 
 describe("reserved field operands (ENG-1840)", () => {
-  const buildSurvey = (): TJsWorkspaceStateSurvey =>
-    ({
-      id: "survey1",
-      name: "Survey 1",
-      questions: [],
-      blocks: [{ id: "block1", name: "Block 1", elements: [] }],
-      variables: [],
-      embeddedFields: [],
-      hiddenFields: { enabled: true, fieldIds: [] },
-      autoClose: null,
-      type: "link",
-      delay: 0,
-      displayLimit: 0,
-      displayOption: "displayMultiple",
-      displayPercentage: 0,
-      recaptcha: { enabled: false, threshold: 0.5 },
-      isBackButtonHidden: false,
-      isAutoProgressingEnabled: false,
-      segment: null,
-      welcomeCard: { enabled: false, showResponseCount: false, timeToFinish: false },
-      triggers: [],
-      styling: null,
-      status: "inProgress",
-      showLanguageSwitch: false,
-      languages: [],
-      endings: [],
-      workspaceOverwrites: null,
-      recontactDays: null,
-    }) as TJsWorkspaceStateSurvey;
+  const buildSurvey = (): TJsWorkspaceStateSurvey => ({
+    id: "survey1",
+    name: "Survey 1",
+    questions: [],
+    blocks: [{ id: "block1", name: "Block 1", elements: [] }],
+    variables: [],
+    embeddedFields: [],
+    hiddenFields: { enabled: true, fieldIds: [] },
+    autoClose: null,
+    type: "link",
+    delay: 0,
+    displayLimit: 0,
+    displayOption: "displayMultiple",
+    displayPercentage: 0,
+    recaptcha: { enabled: false, threshold: 0.5 },
+    isBackButtonHidden: false,
+    isAutoProgressingEnabled: false,
+    segment: null,
+    welcomeCard: { enabled: false, showResponseCount: false, timeToFinish: false },
+    triggers: [],
+    styling: null,
+    status: "inProgress",
+    showLanguageSwitch: false,
+    languages: [],
+    endings: [],
+    workspaceOverwrites: null,
+    recontactDays: null,
+  });
 
   const reservedCondition = (
     name: string,

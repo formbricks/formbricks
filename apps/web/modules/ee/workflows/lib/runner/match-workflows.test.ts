@@ -19,7 +19,7 @@ const makeCandidate = (
     nodes: [],
     edges: [],
     entryNodeId: "trigger",
-  } as TWorkflowExecutableDefinition,
+  },
 });
 
 describe("matchWorkflowsForResponse", () => {

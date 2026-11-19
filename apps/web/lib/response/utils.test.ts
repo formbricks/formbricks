@@ -72,7 +72,7 @@ describe("Response Utils", () => {
         { id: "no", label: { default: "No", de: "Nein" } },
         { id: "other", label: { default: "Other", de: "Andere" } },
       ],
-    } as any;
+    } as unknown as Parameters<typeof getChoiceIdByValue>[1];
 
     test("matches the default label", () => {
       expect(getChoiceIdByValue("No", element)).toBe("no");
@@ -89,12 +89,15 @@ describe("Response Utils", () => {
           { id: "first", label: { default: "Nein", de: "Erste" } },
           { id: "second", label: { default: "Second", de: "Nein" } },
         ],
-      };
+      } as Parameters<typeof getChoiceIdByValue>[1];
       expect(getChoiceIdByValue("Nein", clash, "de")).toBe("second");
     });
 
     test("falls back to the default label when the choice has no translation", () => {
-      const untranslated = { ...element, choices: [{ id: "c", label: { default: "Maybe" } }] };
+      const untranslated = {
+        ...element,
+        choices: [{ id: "c", label: { default: "Maybe" } }],
+      } as Parameters<typeof getChoiceIdByValue>[1];
       expect(getChoiceIdByValue("Maybe", untranslated, "de")).toBe("c");
     });
 
@@ -374,7 +377,7 @@ describe("Response Utils", () => {
       status: "inProgress",
     };
 
-    const ops: Array<[keyof TSurveyElementTypeEnum | string, any, any]> = [
+    const ops: Array<[string, NonNullable<TResponseFilterCriteria["data"]>[string], unknown]> = [
       ["submitted", { op: "submitted" }, { path: ["qText"], not: Prisma.DbNull }],
       ["filledOut", { op: "filledOut" }, { path: ["qText"], not: [] }],
       ["skipped", { op: "skipped" }, "OR"],
@@ -392,17 +395,18 @@ describe("Response Utils", () => {
     ];
 
     ops.forEach(([name, filter, expected]) => {
-      test(name as string, () => {
+      test(name, () => {
         const result = buildWhereClause(textSurvey as TSurvey, {
           data: {
-            [["submitted", "filledOut", "equals", "includesAll"].includes(name as string) ? "qText" : "qNum"]:
-              filter,
+            [["submitted", "filledOut", "equals", "includesAll"].includes(name) ? "qText" : "qNum"]: filter,
           },
         });
         // for OR/NOT cases we just ensure the operator key exists
         if (expected === "OR" || expected === "NOT") {
           expect(JSON.stringify(result)).toMatch(
-            new RegExp(name === "skipped" ? `"OR":\\s*\\[` : `"not":"${filter.value}"`)
+            new RegExp(
+              name === "skipped" ? `"OR":\\s*\\[` : `"not":"${"value" in filter ? String(filter.value) : ""}"`
+            )
           );
         } else {
           expect(result.AND).toEqual([
@@ -880,7 +884,7 @@ describe("Response Utils", () => {
       workspaceId: "e3",
       createdBy: "u3",
       status: "inProgress",
-    }) as TSurvey;
+    });
 
     test("reserved string field filters its meta path with the catalog name", () => {
       const result = buildWhereClause(reservedSurvey, {
@@ -963,7 +967,7 @@ describe("Response Utils", () => {
       const shadowingSurvey = asRead({
         ...reservedSurvey,
         hiddenFields: { enabled: true, fieldIds: ["url"] },
-      }) as TSurvey;
+      });
       const shadowed = buildWhereClause(shadowingSurvey, {
         reserved: { url: { op: "equals", value: "https://x.test" } },
       });
@@ -1152,7 +1156,7 @@ describe("Response Utils", () => {
       status: "inProgress",
       isAnonymizeResponsesEnabled: false,
       isCaptureIpEnabled: true,
-    }) as TSurvey;
+    });
 
     test("offers the table's display entries plus durationSeconds, never ids or startedAt", () => {
       const names = getReservedFilterEntries(baseSurvey).map((entry) => entry.name);
@@ -1168,7 +1172,7 @@ describe("Response Utils", () => {
       const shadowingSurvey = asRead({
         ...baseSurvey,
         hiddenFields: { enabled: true, fieldIds: ["url"] },
-      }) as TSurvey;
+      });
       const names = getReservedFilterEntries(shadowingSurvey).map((entry) => entry.name);
       expect(names).not.toContain("url");
       expect(names).toContain("pagePath");
@@ -1180,7 +1184,7 @@ describe("Response Utils", () => {
       const anonymized = getReservedFilterEntries({
         ...baseSurvey,
         isAnonymizeResponsesEnabled: true,
-      } as TSurvey).map((entry) => entry.name);
+      }).map((entry) => entry.name);
       for (const dropped of ["country", "browser", "os", "deviceType", "ipAddress"]) {
         expect(anonymized).not.toContain(dropped);
       }
@@ -1189,7 +1193,7 @@ describe("Response Utils", () => {
       const ipOff = getReservedFilterEntries({
         ...baseSurvey,
         isCaptureIpEnabled: false,
-      } as TSurvey).map((entry) => entry.name);
+      }).map((entry) => entry.name);
       expect(ipOff).not.toContain("ipAddress");
       expect(ipOff).toContain("country");
     });
@@ -1212,22 +1216,21 @@ describe("Response Utils", () => {
       workspaceId: "e5",
       createdBy: "u5",
       status: "inProgress",
-    }) as TSurvey;
+    });
 
-    const mkResponse = (over: Record<string, unknown>): TEmbeddedValueResponse =>
-      ({
-        id: "r1",
-        surveyId: "s5",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        finished: true,
-        language: null,
-        data: {},
-        variables: {},
-        ttc: {},
-        meta: {},
-        ...over,
-      }) as unknown as TEmbeddedValueResponse;
+    const mkResponse = (over: Record<string, unknown>): TEmbeddedValueResponse => ({
+      id: "r1",
+      surveyId: "s5",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      finished: true,
+      language: null,
+      data: {},
+      variables: {},
+      ttc: {},
+      meta: {},
+      ...over,
+    });
 
     test("reserved values: distinct strings by catalog name, projected (url query-stripped), numbers skipped", () => {
       const values = getResponseReservedFilterValues(valueSurvey, [
@@ -1377,7 +1380,7 @@ describe("Response Utils", () => {
         const shadowedSurvey = asRead({
           ...mockSurvey,
           hiddenFields: { enabled: true, fieldIds: ["url", "hidden1"] },
-        }) as TSurvey;
+        });
 
         const result = extractSurveyDetails(shadowedSurvey, mockResponses as TResponse[]);
 
@@ -1705,7 +1708,7 @@ describe("Response Utils", () => {
         ...mockSurvey,
         blocks: [],
         variables: [{ id: "v1", name: "__proto__", type: "text", value: "" }],
-      }) as TSurvey;
+      });
       const protoResponse = { ...mockResponses[0], variables: { v1: "kept" } } as TResponse;
 
       const result = getResponsesJson(protoSurvey, [protoResponse], [], [], false);
@@ -1784,7 +1787,7 @@ describe("Response Utils", () => {
       const surveyWithNumberField = asRead({
         ...mockSurvey,
         hiddenFields: { enabled: true, fieldIds: ["seats"] },
-      }) as TSurvey;
+      });
       const response = {
         ...mockResponses[0],
         data: { ...mockResponses[0].data, seats: 12 },
@@ -1840,7 +1843,7 @@ describe("Response Utils", () => {
       const surveyWithVariables = asRead({
         ...mockSurvey,
         variables: [{ id: "clx0000000000000000000v1", name: "score", type: "number", value: 5 }],
-      }) as TSurvey;
+      });
 
       const result = getResponsesJson(
         surveyWithVariables,
@@ -1858,7 +1861,7 @@ describe("Response Utils", () => {
       const surveyWithVariables = asRead({
         ...mockSurvey,
         variables: [{ id: "clx0000000000000000000v1", name: "score", type: "number", value: 5 }],
-      }) as TSurvey;
+      });
 
       const result = getResponsesJson(
         surveyWithVariables,
@@ -1931,9 +1934,7 @@ describe("Response Utils", () => {
           meta: {},
         },
       ];
-      const result = getResponseContactAttributes(
-        responses as Pick<TResponse, "contactAttributes" | "data" | "meta">[]
-      );
+      const result = getResponseContactAttributes(responses);
       expect(result.email).toContain("test1@example.com");
       expect(result.email).toContain("test2@example.com");
       expect(result.name).toContain("Test 1");
@@ -1966,7 +1967,7 @@ describe("Response Utils", () => {
           },
         },
       ];
-      const result = getResponseMeta(responses as Pick<TResponse, "contactAttributes" | "data" | "meta">[]);
+      const result = getResponseMeta(responses);
       expect(result.browser).toContain("Chrome");
       expect(result.browser).toContain("Firefox");
       expect(result.os).toContain("Windows");
@@ -1992,7 +1993,7 @@ describe("Response Utils", () => {
           },
         },
       ];
-      const result = getResponseMeta(responses as Pick<TResponse, "contactAttributes" | "data" | "meta">[]);
+      const result = getResponseMeta(responses);
       expect(result.url).toEqual([]);
       expect(result.source).toContain("direct");
       expect(result.source).toContain("google");
@@ -2019,7 +2020,7 @@ describe("Response Utils", () => {
           },
         },
       ];
-      const result = getResponseMeta(responses as Pick<TResponse, "contactAttributes" | "data" | "meta">[]);
+      const result = getResponseMeta(responses);
       expect(result.browser).toContain("Chrome");
       expect(result.browser).toContain("Safari");
       expect(result.device).toContain("desktop");
@@ -2048,7 +2049,7 @@ describe("Response Utils", () => {
           contactAttributes: {},
           data: {},
           meta: {
-            url: null as any,
+            url: null,
             source: "newsletter",
           },
         },
@@ -2094,10 +2095,7 @@ describe("Response Utils", () => {
           meta: {},
         },
       ];
-      const result = getResponseHiddenFields(
-        mockSurvey as TSurvey,
-        responses as Pick<TResponse, "contactAttributes" | "data" | "meta">[]
-      );
+      const result = getResponseHiddenFields(mockSurvey as TSurvey, responses);
       expect(result.hidden1).toContain("value1");
       expect(result.hidden1).toContain("value3");
       expect(result.hidden2).toContain("value2");
@@ -2120,10 +2118,7 @@ describe("Response Utils", () => {
         { contactAttributes: {}, data: { hidden1: 42, hidden2: "value2" }, meta: {} },
         { contactAttributes: {}, data: { hidden1: 0, hidden2: "value4" }, meta: {} },
       ];
-      const result = getResponseHiddenFields(
-        mockSurvey as TSurvey,
-        responses as unknown as Pick<TResponse, "contactAttributes" | "data" | "meta">[]
-      );
+      const result = getResponseHiddenFields(mockSurvey as TSurvey, responses);
       expect(result.hidden1).toContain("42");
       expect(result.hidden1).toContain("0");
     });
@@ -2287,18 +2282,18 @@ describe("extractChoiceIdsFromResponse", () => {
 
     test("should handle null language parameter by defaulting to 'default'", () => {
       const responseValue = ["Option 1"];
-      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, null as any);
+      const result = extractChoiceIdsFromResponse(
+        responseValue,
+        multipleChoiceMultiQuestion,
+        null as unknown as Parameters<typeof extractChoiceIdsFromResponse>[2]
+      );
 
       expect(result).toEqual(["choice-1"]);
     });
 
     test("should handle undefined language parameter by defaulting to 'default'", () => {
       const responseValue = ["Option 1"];
-      const result = extractChoiceIdsFromResponse(
-        responseValue,
-        multipleChoiceMultiQuestion,
-        undefined as any
-      );
+      const result = extractChoiceIdsFromResponse(responseValue, multipleChoiceMultiQuestion, undefined);
 
       expect(result).toEqual(["choice-1"]);
     });

@@ -42,8 +42,8 @@ catalog:
   # @preact/preset-vite for packages/surveys — caps at 7.x. Moving the repo to Vite 8
   # is its own migration, tracked separately; see ENG-1689's follow-ups.
   # Note: the workspace root declares `vite` alongside `vitest`. Without it, the root's vitest
-  # (and `@vitest/eslint-plugin`'s optional `vitest` peer, and packages/types' vitest) resolved
-  # their vite peer to the newest 8.x instead of this catalog's 7.3.5.
+  # (and packages/types' vitest) resolved their vite peer to the newest 8.x instead of this
+  # catalog's 7.3.5.
   vite: 7.3.7
   vitest: 4.1.12
   "@vitest/coverage-v8": 4.1.12
@@ -53,27 +53,23 @@ catalog:
   jsdom: 29.1.1
   postcss: 8.5.23
   rimraf: 6.1.3
-  tsx: 4.21.0
+  tsx: 4.23.15
   dotenv: 17.3.1
   dotenv-cli: 11.0.0
   cross-env: 10.1.0
   glob: 13.0.6
   # Read by scripts/check-catalog.mjs; also a packages/workflows dev dep.
   js-yaml: 4.3.2
-  "@playwright/test": 1.58.2
+  "@playwright/test": 1.60.0
   "@testing-library/react": 16.3.2
   # --- lint & format ---
   prettier: 3.8.3
   "@trivago/prettier-plugin-sort-imports": 6.0.2
   prettier-plugin-sort-json: 4.2.0
   prettier-plugin-tailwindcss: 0.7.4
-  "@eslint/js": 9.39.5
-  globals: 16.5.0
-  typescript-eslint: 8.63.0
-  eslint-plugin-react-hooks: 7.1.1
   # --- types ---
   "@types/js-yaml": 4.0.9
-  "@types/node": 25.4.0
+  "@types/node": 26.6.6
   "@types/react": 19.2.14
   "@types/react-dom": 19.2.3
   # --- storybook ---
@@ -140,17 +136,6 @@ overrides:
   # (CVE-2026-101916 / CVE-2026-101915), alongside the malformed-message crash fixes in 1.14.4.
   # load-bearing: @boxyhq/metrics resolves 1.14.3.
   "@grpc/grpc-js": 1.14.5
-  # CVE-2026-104872 / GHSA-qqmp-wf37-98f9: database instrumentation unconditionally exports db.user.
-  # Pin every affected instrumentation, including nested Sentry copies, to its first patched release.
-  # load-bearing: @opentelemetry/auto-instrumentations-node@0.75 and @sentry/node's instrumentation chain.
-  "@opentelemetry/instrumentation-cassandra-driver": 0.66.0
-  "@opentelemetry/instrumentation-knex": 0.65.0
-  "@opentelemetry/instrumentation-mongoose": 0.67.0
-  "@opentelemetry/instrumentation-mysql": 0.67.0
-  "@opentelemetry/instrumentation-mysql2": 0.67.0
-  "@opentelemetry/instrumentation-oracledb": 0.46.0
-  "@opentelemetry/instrumentation-pg": 0.73.0
-  "@opentelemetry/instrumentation-tedious": 0.40.0
   # Prisma dev tooling and @modelcontextprotocol/sdk chains.
   # ENG-1998 / GHSA-frvp-7c67-39w9: @hono/node-server <2.0.5 serve-static path traversal on Windows via
   # encoded backslash; patched in 2.0.5 (major bump, only peer is hono ^4; node >=20 is already required).
@@ -294,7 +279,9 @@ overrides:
   # load-bearing: socket.io-adapter resolves 8.17.1 and engine.io resolves 8.18.3.
   ws@8: 8.21.0
   # Dependabot security batch (transitive-only; direct deps vite/ua-parser-js bumped in package.json).
-  "@opentelemetry/core": 2.8.0 # ENG-1355 / GHSA-8988-4f7v-96qf (<2.8.0). load-bearing: the 0.208.0/0.211.0/0.212.0/0.217.0 exporter lines resolve 2.2.0–2.7.1.
+  # ENG-1355 / GHSA-8988-4f7v-96qf (<2.8.0). Raised to 2.11.0 with ENG-7229 because sdk-node 0.222.0 pins core
+  # 2.11.0 exactly; 2.8.0 would downgrade it. load-bearing: the 0.208.0/0.211.0/0.212.0 exporter lines resolve 2.2.0–2.7.1.
+  "@opentelemetry/core": 2.11.0
   esbuild: 0.28.1 # ENG-1327 / GHSA-g7r4-m6w7-qqqr (>=0.27.3 <0.28.1). load-bearing: vite@7/tsx/storybook resolve 0.27.7.
   # ENG-1947 / GHSA-23hp-3jrh-7fpw (CVE-2026-59873): node-tar <=7.5.18 has no hard
   # upper bound on total decompressed bytes / entry count, so a small gzip bomb can
@@ -354,8 +341,9 @@ overrides:
   # ENG-1992 / GHSA-45rx-2jwx-cxfr (CVE-2026-59892): @opentelemetry/propagator-jaeger <2.9.0 DoS via an
   # unhandled decodeURIComponent() error on a malformed header; patched in 2.9.0. Coerces the transitive
   # 1.26.0 line up to 2.9.0 (core is already pinned to 2.x above).
-  # load-bearing: @opentelemetry/sdk-node resolves 2.7.1 and @redocly/cli's sdk-trace-node pins 1.26.0.
-  "@opentelemetry/propagator-jaeger": 2.9.0
+  # Raised to 2.11.0 with ENG-7229: sdk-node 0.222.0 pins propagator-jaeger 2.11.0 exactly, so 2.9.0 would downgrade it.
+  # load-bearing: @redocly/cli's sdk-trace-node pins 1.26.0.
+  "@opentelemetry/propagator-jaeger": 2.11.0
   # GHSA-5qjj-4xww-7phc: valibot <=1.4.1 record() issue paths can make flatten() throw for
   # inherited Object property names (e.g. "constructor"). Pulled in transitively via prisma's dev-only
   # tooling (@prisma/dev); patched in 1.4.2.
@@ -503,7 +491,7 @@ overrides:
   brace-expansion@2: 2.1.7
   # load-bearing: @sentry/nextjs (runtime, apps/web `dependencies`, via @fastify/otel>@sentry/node) and
   # react-email (runtime, @formbricks/email `dependencies`) resolve the vulnerable 5.x line, alongside
-  # vite-plugin-dts, typescript-eslint and storybook (dev).
+  # vite-plugin-dts and storybook (dev).
   brace-expansion@5: 5.0.12
   # === Closed by ENG-2343 (kept as a record, like the section above) ===
   # GHSA-p2fr-6hmx-4528 (@better-auth/oauth-provider RFC 8707 resource-indicator confusion) was carried
@@ -567,7 +555,7 @@ patchedDependencies:
   # anonymous caller can pin 16 MB per connection on any path. proxy.ts never reads the body, so the patch
   # stops handing it one and the route reads the unread stream itself; a rewrite now streams the request to
   # its target. Re-check on every Next upgrade; drop it if Next makes the clone lazy or opt-out.
-  "next@16.4.1": patches/next@16.4.1.patch
+  "next@16.4.5": patches/next@16.4.5.patch
   # ENG-2780 / node-postgres#3543: pg-pool can retain a connection that finishes establishing after
   # connectionTimeoutMillis, leaking capacity and poisoning the pool. Remove this version-pinned patch
   # once node-postgres#3711 is released in pg-pool and the dependency is upgraded to that version.

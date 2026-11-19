@@ -8,11 +8,12 @@ import { TUserNotificationSettings } from "@formbricks/types/user";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { Switch } from "@/modules/ui/components/switch";
 import { updateNotificationSettingsAction } from "../actions";
+import { type TNotificationSwitchType, getNotificationSwitchId } from "../lib/notification-switch-id";
 
 interface NotificationSwitchProps {
   readonly surveyOrWorkspaceOrOrganizationId: string;
   readonly notificationSettings: TUserNotificationSettings;
-  readonly notificationType: "alert" | "unsubscribedOrganizationIds";
+  readonly notificationType: TNotificationSwitchType;
   readonly autoDisableNotificationType?: string;
   readonly autoDisableNotificationElementId?: string;
 }
@@ -35,7 +36,7 @@ export const NotificationSwitch = ({
   const handleSwitchChange = async () => {
     setIsLoading(true);
 
-    let updatedNotificationSettings = { ...notificationSettings };
+    const updatedNotificationSettings = { ...notificationSettings };
     if (notificationType === "unsubscribedOrganizationIds") {
       const unsubscribedOrganizationIds = updatedNotificationSettings.unsubscribedOrganizationIds ?? [];
       if (unsubscribedOrganizationIds.includes(surveyOrWorkspaceOrOrganizationId)) {
@@ -82,7 +83,7 @@ export const NotificationSwitch = ({
       switch (notificationType) {
         case "alert":
           if (notificationSettings[notificationType]?.[surveyOrWorkspaceOrOrganizationId] === true) {
-            handleSwitchChange();
+            void handleSwitchChange();
             toast.success(
               t(
                 "workspace.settings.notifications.you_will_not_receive_any_more_emails_for_responses_on_this_survey"
@@ -98,7 +99,7 @@ export const NotificationSwitch = ({
           if (
             !notificationSettings.unsubscribedOrganizationIds?.includes(surveyOrWorkspaceOrOrganizationId)
           ) {
-            handleSwitchChange();
+            void handleSwitchChange();
             toast.success(
               t(
                 "workspace.settings.notifications.you_will_not_be_auto_subscribed_to_this_organizations_surveys_anymore"
@@ -119,7 +120,7 @@ export const NotificationSwitch = ({
 
   return (
     <Switch
-      id="notification-switch"
+      id={getNotificationSwitchId(notificationType, surveyOrWorkspaceOrOrganizationId)}
       aria-label={`toggle notification settings for ${notificationType}`}
       checked={isChecked}
       disabled={isLoading}

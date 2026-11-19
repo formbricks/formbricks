@@ -53,6 +53,10 @@
       "types": "./dist/lib/parts.d.ts",
       "import": "./dist/lib/parts.js"
     },
+    "./video": {
+      "types": "./dist/lib/video.d.ts",
+      "import": "./dist/lib/video.js"
+    },
     "./youtube-id": {
       "types": "./dist/lib/youtube-id.d.ts",
       "import": "./dist/lib/youtube-id.js"
@@ -64,8 +68,6 @@
     "build:dev": "vite build --mode dev && node scripts/assert-scoped-css.mjs",
     "go": "vite build --watch --mode dev",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
     "preview": "vite preview",
     "prepack": "node scripts/assert-pnpm-publish.mjs",
     "prepublishOnly": "node scripts/assert-pnpm-publish.mjs",
@@ -95,7 +97,7 @@
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {
-    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-oxlint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@formbricks/vite-plugins": "workspace:*",
     "@storybook/react": "catalog:",
@@ -107,8 +109,8 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "@vitest/coverage-v8": "catalog:",
-    "preact": "catalog:",
     "jsdom": "catalog:",
+    "preact": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "rimraf": "catalog:",

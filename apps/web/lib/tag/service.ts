@@ -13,36 +13,37 @@ export const getTagsByWorkspaceId = reactCache(
   async (workspaceId: string, page?: number): Promise<TTag[]> => {
     validateInputs([workspaceId, ZId], [page, ZOptionalNumber]);
 
-    try {
-      const tags = await prisma.tag.findMany({
-        where: {
-          workspaceId,
-        },
-        take: page ? ITEMS_PER_PAGE : undefined,
-        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-      });
+    const tags = await prisma.tag.findMany({
+      where: {
+        workspaceId,
+      },
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+    });
 
-      return tags;
-    } catch (error) {
-      throw error;
-    }
+    return tags;
   }
 );
 
 export const getTag = reactCache(async (id: string): Promise<TTag | null> => {
   validateInputs([id, ZId]);
 
-  try {
-    const tag = await prisma.tag.findUnique({
-      where: {
-        id,
-      },
-    });
+  const tag = await prisma.tag.findUnique({
+    where: {
+      id,
+    },
+  });
 
-    return tag;
-  } catch (error) {
-    throw error;
-  }
+  return tag;
+});
+
+/**
+ * The tag `id` if it belongs to `workspaceId`, `null` otherwise: a tag in another workspace and an id that
+ * names no tag look the same, so a caller can't learn that a tag exists outside its workspace (ENG-2858).
+ */
+export const getTagInWorkspace = reactCache(async (id: string, workspaceId: string): Promise<TTag | null> => {
+  validateInputs([id, ZId], [workspaceId, ZId]);
+  return prisma.tag.findFirst({ where: { id, workspaceId } });
 });
 
 export const createTag = async (

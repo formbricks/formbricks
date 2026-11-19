@@ -12,6 +12,19 @@
   "globalEnv": ["MIGRATE_DATABASE_URL", "SHADOW_DATABASE_URL"],
   "globalPassThroughEnv": ["SEED_API_KEY"],
   "tasks": {
+    "//#lint:code": {
+      "cache": false,
+      "dependsOn": [
+        "@formbricks/ai#build",
+        "@formbricks/cache#build",
+        "@formbricks/database#build",
+        "@formbricks/jobs#build",
+        "@formbricks/logger#build",
+        "@formbricks/redis-config#build",
+        "@formbricks/storage#build",
+        "@formbricks/surveys#build"
+      ]
+    },
     "//#test:root": {
       "cache": false,
       "outputs": []
@@ -19,9 +32,6 @@
     "@formbricks/ai#build": {
       "dependsOn": ["@formbricks/logger#build"],
       "outputs": ["dist/**"]
-    },
-    "@formbricks/ai#lint": {
-      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/ai#test": {
       "cache": false,
@@ -42,9 +52,6 @@
       "cache": false,
       "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"],
       "persistent": true
-    },
-    "@formbricks/cache#lint": {
-      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/cache#test": {
       "cache": false,
@@ -77,9 +84,6 @@
       "env": ["DATABASE_URL"],
       "outputs": ["generated/prisma/**"]
     },
-    "@formbricks/database#lint": {
-      "dependsOn": ["@formbricks/logger#build", "@formbricks/database#build"]
-    },
     "@formbricks/database#test": {
       "cache": false,
       "dependsOn": ["@formbricks/i18n-utils#build"],
@@ -97,9 +101,6 @@
       "dependsOn": ["^build"],
       "outputs": ["dist/**"]
     },
-    "@formbricks/i18n-utils#lint": {
-      "dependsOn": ["^lint"]
-    },
     "@formbricks/i18n-utils#test": {
       "cache": false,
       "dependsOn": ["@formbricks/i18n-utils#build"]
@@ -107,9 +108,6 @@
     "@formbricks/jobs#build": {
       "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"],
       "outputs": ["dist/**"]
-    },
-    "@formbricks/jobs#lint": {
-      "dependsOn": ["@formbricks/logger#build", "@formbricks/redis-config#build"]
     },
     "@formbricks/jobs#test": {
       "cache": false,
@@ -151,9 +149,6 @@
       "cache": false,
       "dependsOn": ["@formbricks/storage#build"],
       "persistent": true
-    },
-    "@formbricks/storage#lint": {
-      "dependsOn": ["@formbricks/logger#build"]
     },
     "@formbricks/storage#test": {
       "cache": false,
@@ -280,9 +275,6 @@
     "@formbricks/workflows#build": {
       "outputs": ["dist/**"]
     },
-    "@formbricks/workflows#lint": {
-      "dependsOn": []
-    },
     "@formbricks/workflows#test": {
       "cache": false,
       "dependsOn": []
@@ -404,9 +396,7 @@
       "cache": false,
       "persistent": true
     },
-    "lint": {
-      "outputs": []
-    },
+
     "start": {
       "outputs": []
     },

@@ -11,6 +11,32 @@ import { TWorkspaceStyling } from "@formbricks/types/workspace";
 import { cn } from "@/lib/cn";
 import { isExternalImageSrc } from "@/lib/image-hosts";
 
+type TBackground = (TSurveyStyling | TWorkspaceStyling)["background"];
+
+// Unsplash credits travel in the image URL; default images have a relative URL and none.
+const getUnsplashAuthor = (background: TBackground) => {
+  if (background?.bgType !== "image" || !background.bg || background.bg.startsWith("/")) {
+    return { authorName: "", authorURL: "" };
+  }
+  const params = new URL(background.bg).searchParams;
+  return { authorName: params.get("authorName") || "", authorURL: params.get("authorLink") || "" };
+};
+
+/**
+ * Whether the background has loaded. Media (an animation, or an image with a URL) reports it once it
+ * has; colors and anything else count as loaded at once, adjusted during render.
+ */
+const useBackgroundLoaded = (background: TBackground) => {
+  const [backgroundLoaded, setBackgroundLoaded] = useState(false);
+  const isMediaBackground =
+    background?.bgType === "animation" ||
+    ((background?.bgType === "image" || background?.bgType === "upload") && !!background?.bg);
+  if (!isMediaBackground && !backgroundLoaded) {
+    setBackgroundLoaded(true);
+  }
+  return [backgroundLoaded, setBackgroundLoaded] as const;
+};
+
 interface MediaBackgroundProps {
   readonly children: React.ReactNode;
   readonly styling: TSurveyStyling | TWorkspaceStyling;
@@ -34,10 +60,9 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
 }) => {
   const { t } = useTranslation();
   const animatedBackgroundRef = useRef<HTMLVideoElement>(null);
-  const [backgroundLoaded, setBackgroundLoaded] = useState(false);
-  const [authorDetailsForUnsplash, setAuthorDetailsForUnsplash] = useState({ authorName: "", authorURL: "" });
-
   const background = styling.background;
+  const [backgroundLoaded, setBackgroundLoaded] = useBackgroundLoaded(background);
+  const authorDetailsForUnsplash = getUnsplashAuthor(background);
 
   useEffect(() => {
     if (background?.bgType === "animation" && animatedBackgroundRef.current) {
@@ -48,23 +73,8 @@ export const MediaBackground: React.FC<MediaBackgroundProps> = ({
 
       // Cleanup
       return () => video.removeEventListener("canplaythrough", onCanPlayThrough);
-    } else if ((background?.bgType === "image" || background?.bgType === "upload") && background?.bg) {
-      if (background?.bgType === "image") {
-        // To not set for Default Images as they have relative URL & are not from Unsplash
-        if (!background?.bg.startsWith("/")) {
-          setAuthorDetailsForUnsplash({
-            authorName: new URL(background?.bg!).searchParams.get("authorName") || "",
-            authorURL: new URL(background?.bg!).searchParams.get("authorLink") || "",
-          });
-        } else {
-          setAuthorDetailsForUnsplash({ authorName: "", authorURL: "" });
-        }
-      }
-    } else {
-      // For colors or any other types, set to loaded immediately
-      setBackgroundLoaded(true);
     }
-  }, [background?.bg, background?.bgType]);
+  }, [background?.bg, background?.bgType, setBackgroundLoaded]);
 
   useEffect(() => {
     if (backgroundLoaded && onBackgroundLoaded) {

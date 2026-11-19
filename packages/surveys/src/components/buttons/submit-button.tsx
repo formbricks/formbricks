@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { FB_PART } from "@formbricks/survey-ui/parts";
 import { Button } from "./button";
 
-interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface SubmitButtonProps extends ButtonHTMLAttributes {
   buttonLabel?: string;
   isLastQuestion: boolean;
   focus?: boolean;
@@ -105,6 +105,7 @@ export function SubmitButton({
       tabIndex={tabIndex}
       onClick={onClick}
       disabled={disabled}>
+      {/* eslint-disable-next-line typescript/prefer-nullish-coalescing -- an empty label falls back too */}
       {buttonLabel || (isLastQuestion ? t("common.finish") : t("common.next"))}
     </Button>
   );

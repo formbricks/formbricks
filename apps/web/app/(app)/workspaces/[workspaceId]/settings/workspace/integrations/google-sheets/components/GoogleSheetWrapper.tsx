@@ -60,11 +60,12 @@ export const GoogleSheetWrapper = ({
   }, [workspaceId, isConnected]);
 
   useEffect(() => {
-    validateConnection();
+    // eslint-disable-next-line react/set-state-in-effect -- validates on mount; validateConnection sets state only after its awaited action
+    void validateConnection();
   }, [validateConnection]);
 
   const handleGoogleAuthorization = async () => {
-    authorize(workspaceId, webAppUrl).then((url: string) => {
+    void authorize(workspaceId, webAppUrl).then((url: string) => {
       if (url) {
         window.location.replace(url);
       }

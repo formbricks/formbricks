@@ -38,7 +38,7 @@ export const AirtableWrapper = ({
   );
 
   const handleAirtableAuthorization = async () => {
-    authorize(workspaceId, webAppUrl).then((url: string) => {
+    void authorize(workspaceId, webAppUrl).then((url: string) => {
       if (url) {
         window.location.replace(url);
       }

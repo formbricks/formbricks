@@ -12,6 +12,7 @@ import {
 import {
   DEFAULT_REQUEST_BODY_LIMIT_BYTES,
   RequestBodyTooLargeError,
+  discardRequestBody,
   parseFormDataWithLimit,
   readRequestBodyWithLimit,
 } from "@/app/lib/api/request-body";
@@ -89,7 +90,7 @@ export type TWithV3ApiWrapperParams<S extends TV3Schemas | undefined, TProps = u
    * sent without a `Content-Length` header is cut off at the limit rather than buffered whole.
    *
    * Raise it only for a route that genuinely takes a file-sized body, and keep it below Next's
-   * `proxyClientMaxBodySize` (`next.config.mjs`). The patched Next (`patches/next@16.4.1.patch`) no longer
+   * `proxyClientMaxBodySize` (`next.config.mjs`). The patched Next (`patches/next@16.4.5.patch`) no longer
    * clones bodies for the proxy, but without the patch Next truncates a longer body before this reader sees
    * it, so the caller would get a 400 for malformed JSON instead of a 413.
    */
@@ -427,7 +428,8 @@ async function parseV3Body(
  * handler that reads it — the workflows family delegates its bodies to `packages/workflows`, whose
  * reader buffers the whole body before it measures it and answers 400 rather than 413. The checks run
  * on a clone so the handler's own stream stays intact; a body that is not JSON is left to the handler,
- * which owns that error.
+ * which owns that error. A refused body is never read again, so both branches of the clone are
+ * cancelled: the source is cancelled only once both are, and a client may keep the body open (ENG-6948).
  */
 async function preflightUndeclaredBody(
   req: NextRequest,
@@ -437,15 +439,23 @@ async function preflightUndeclaredBody(
     return null;
   }
 
-  const read = await readV3JsonBody(req.clone(), context);
-  if (read.kind === "refused") {
-    return read.failure;
-  }
+  const clone = req.clone();
+  const read = await readV3JsonBody(clone, context);
   if (read.kind === "malformed") {
     return null;
   }
 
-  return arrayBudgetFailure(read.data, context.requestId, context.instance);
+  const failure =
+    read.kind === "refused"
+      ? read.failure
+      : arrayBudgetFailure(read.data, context.requestId, context.instance);
+  if (failure) {
+    // The clone's branch matters when Content-Length refused it unread; otherwise its read already
+    // settled it.
+    discardRequestBody(clone.body);
+    discardRequestBody(req.body);
+  }
+  return failure;
 }
 
 const MULTIPART_FORM_DATA = "multipart/form-data";
@@ -522,14 +532,14 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
       return formResult;
     }
 
-    parsedInput.formData = formResult.formData as TV3ParsedInput<S>["formData"];
+    parsedInput.formData = formResult.formData;
   } else if (schemas?.body) {
     const bodyResult = await parseV3Body(req, schemas.body, context);
     if (!bodyResult.ok) {
       return bodyResult;
     }
 
-    parsedInput.body = bodyResult.body as TV3ParsedInput<S>["body"];
+    parsedInput.body = bodyResult.body;
   } else {
     const preflightFailure = await preflightUndeclaredBody(req, context);
     if (preflightFailure) {
@@ -552,7 +562,7 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
       };
     }
 
-    parsedInput.query = queryResult.data as TV3ParsedInput<S>["query"];
+    parsedInput.query = queryResult.data;
   }
 
   if (schemas?.params) {
@@ -570,7 +580,7 @@ async function parseV3Input<S extends TV3Schemas | undefined, TProps>(
       };
     }
 
-    parsedInput.params = paramsResult.data as TV3ParsedInput<S>["params"];
+    parsedInput.params = paramsResult.data;
   }
 
   return { ok: true, parsedInput };
@@ -862,8 +872,8 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       // to attribute — and an unauthenticated caller could fill the audit store one row per bad key; a
       // 429 is already logged by the limiter; a 400 is a malformed request, not an authorization event.
       // The rejection a reviewer wants — the 403 an authenticated caller gets for someone else's
-      // resource — is raised by the operation below and is audited as a failure. MCP's scope gate
-      // audits its own refusals in `registerScopedTool`.
+      // resource — is raised by the operation below and is audited as a failure. MCP's permission gate
+      // audits its own refusals in `registerMcpTool`.
       auditLog = buildV3AuditLog(authResult.authentication, action, targetType, req.url);
 
       const execute = () =>

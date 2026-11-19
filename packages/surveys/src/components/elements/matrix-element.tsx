@@ -31,7 +31,7 @@ export function MatrixElement({
   errorMessage,
   dir = "auto",
 }: Readonly<MatrixElementProps>) {
-  const [startTime, setStartTime] = useState(performance.now());
+  const [startTime, setStartTime] = useState(() => performance.now());
   const isCurrent = element.id === currentElementId;
   const isRequired = element.required;
   const { t } = useTranslation();

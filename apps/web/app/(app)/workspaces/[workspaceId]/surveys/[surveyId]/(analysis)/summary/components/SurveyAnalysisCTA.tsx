@@ -2,7 +2,7 @@
 
 import { BellRing, Eye, ListRestart, RefreshCcwIcon, SquarePenIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { TSegment } from "@formbricks/types/segment";
@@ -84,12 +84,13 @@ export const SurveyAnalysisCTA = ({
   // away answers the user is waiting on and cannot cheaply ask for again.
   useBeforeUnloadPrompt(() => isGeneratingExamples);
 
-  useEffect(() => {
-    setModalState((prev) => ({
-      ...prev,
-      start: searchParams.get("share") === "true",
-    }));
-  }, [searchParams]);
+  // `?share=true` opens the start view (the publish flow adds it). Synced during render when it flips.
+  const shareParam = searchParams.get("share") === "true";
+  const [syncedShareParam, setSyncedShareParam] = useState(shareParam);
+  if (shareParam !== syncedShareParam) {
+    setSyncedShareParam(shareParam);
+    setModalState((prev) => ({ ...prev, start: shareParam }));
+  }
 
   const handleShareModalToggle = (open: boolean) => {
     const params = new URLSearchParams(globalThis.location.search);
@@ -279,9 +280,11 @@ export const SurveyAnalysisCTA = ({
       icon: SquarePenIcon,
       tooltip: t("common.edit"),
       onClick: () => {
-        responseCount > 0
-          ? setIsCautionDialogOpen(true)
-          : router.push(`/workspaces/${workspace?.id}/surveys/${survey.id}/edit`);
+        if (responseCount > 0) {
+          setIsCautionDialogOpen(true);
+        } else {
+          router.push(`/workspaces/${workspace?.id}/surveys/${survey.id}/edit`);
+        }
       },
       // Archived surveys are read-only; editing is blocked server-side, so hide the entry point too.
       isVisible: !isReadOnly && !survey.archivedAt,

@@ -40,7 +40,7 @@ const findWorkspaceActionClasses = async (
         createdAt: "asc",
       },
     });
-  } catch (error) {
+  } catch {
     throw new DatabaseError(`Database error when fetching actions for workspace ${workspaceId}`);
   }
 };
@@ -74,7 +74,7 @@ export const getActionClassByWorkspaceIdAndName = reactCache(
       });
 
       return actionClass;
-    } catch (error) {
+    } catch {
       throw new DatabaseError(`Database error when fetching action`);
     }
   }
@@ -92,7 +92,7 @@ export const getActionClass = reactCache(async (actionClassId: string): Promise<
     });
 
     return actionClass;
-  } catch (error) {
+  } catch {
     throw new DatabaseError(`Database error when fetching action`);
   }
 });
@@ -130,11 +130,7 @@ export const createActionClass = async (actionClass: TActionClassInput): Promise
         workspace: { connect: { id: workspaceId } },
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig:
-          actionClassInput.type === "noCode"
-            ? actionClassInput.noCodeConfig === null
-              ? undefined
-              : actionClassInput.noCodeConfig
-            : undefined,
+          actionClassInput.type === "noCode" ? (actionClassInput.noCodeConfig ?? undefined) : undefined,
       },
       select: selectActionClass,
     });
@@ -144,7 +140,7 @@ export const createActionClass = async (actionClass: TActionClassInput): Promise
     if (isUniqueConstraintError(error)) {
       const targetField = getUniqueConstraintFields(error)[0];
       throw new UniqueConstraintError(
-        `Action with ${targetField} ${targetField ? (actionClass as Record<string, unknown>)[targetField] : ""} already exists`
+        `Action with ${targetField} ${String(targetField ? (actionClass as Record<string, unknown>)[targetField] : "")} already exists`
       );
     }
 
@@ -169,11 +165,7 @@ export const updateActionClass = async (
         ...actionClassInput,
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig:
-          actionClassInput.type === "noCode"
-            ? actionClassInput.noCodeConfig === null
-              ? undefined
-              : actionClassInput.noCodeConfig
-            : undefined,
+          actionClassInput.type === "noCode" ? (actionClassInput.noCodeConfig ?? undefined) : undefined,
       },
       select: {
         ...selectActionClass,
@@ -190,7 +182,7 @@ export const updateActionClass = async (
     if (isUniqueConstraintError(error)) {
       const targetField = getUniqueConstraintFields(error)[0];
       throw new UniqueConstraintError(
-        `Action with ${targetField} ${targetField ? (inputActionClass as Record<string, unknown>)[targetField] : ""} already exists`
+        `Action with ${targetField} ${String(targetField ? (inputActionClass as Record<string, unknown>)[targetField] : "")} already exists`
       );
     }
 

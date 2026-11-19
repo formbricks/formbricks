@@ -16,6 +16,7 @@ import {
 import {
   type TAuthzedApiKeyWorkspaceTarget,
   type TAuthzedFeedbackDirectoryAssignmentTarget,
+  type TAuthzedMcpGrantSelectionTarget,
   type TAuthzedMembershipTarget,
   type TAuthzedOrganizationSource,
   type TAuthzedSurveySource,
@@ -43,6 +44,7 @@ import {
 import { AUTHZED_ERROR_CODES, AuthzedError } from "./errors";
 import type { TFeedbackDirectoryProjectionTargets } from "./feedback-directory";
 import { getFeedbackDirectoryAssignmentObjectId } from "./feedback-directory-assignment-id";
+import type { TMcpGrantProjectionTargets } from "./mcp-grant";
 import type { TOrganizationMembershipProjectionTargets } from "./organization-membership";
 import type { TAuthzedProjectionResult } from "./projection";
 import { runChunked } from "./projection-chunks";
@@ -82,6 +84,7 @@ export type TAuthzedBackfillApply = Readonly<{
   reconcileFeedbackDirectories: (
     targets: TFeedbackDirectoryProjectionTargets
   ) => Promise<TAuthzedProjectionResult>;
+  reconcileMcpGrants: (targets: TMcpGrantProjectionTargets) => Promise<TAuthzedProjectionResult>;
   reconcileSurveys: (surveyIds: ReadonlyArray<string>) => Promise<TAuthzedProjectionResult>;
   reconcileTeamWorkspace: (targets: TTeamWorkspaceProjectionTargets) => Promise<TAuthzedProjectionResult>;
 }>;
@@ -270,6 +273,7 @@ type TReconcileTargets = Readonly<{
   feedbackDirectoryAssignmentObjectIds: ReadonlyArray<string>;
   feedbackDirectoryAssignments: ReadonlyArray<TAuthzedFeedbackDirectoryAssignmentTarget>;
   feedbackDirectoryIds: ReadonlyArray<string>;
+  mcpGrantIds: ReadonlyArray<string>;
   memberships: ReadonlyArray<TAuthzedMembershipTarget>;
   surveyIds: ReadonlyArray<string>;
   teamIds: ReadonlyArray<string>;
@@ -284,6 +288,7 @@ const NO_TARGETS: TReconcileTargets = {
   feedbackDirectoryAssignmentObjectIds: [],
   feedbackDirectoryAssignments: [],
   feedbackDirectoryIds: [],
+  mcpGrantIds: [],
   memberships: [],
   surveyIds: [],
   teamIds: [],
@@ -306,6 +311,7 @@ const toRepairTargets = (refs: ReadonlyArray<TAuthzedSourceRef>): TReconcileTarg
   const feedbackDirectoryAssignmentObjectIds: string[] = [];
   const feedbackDirectoryAssignments: TAuthzedFeedbackDirectoryAssignmentTarget[] = [];
   const feedbackDirectoryIds: string[] = [];
+  const mcpGrantIds: string[] = [];
   const memberships: TAuthzedMembershipTarget[] = [];
   const surveyIds: string[] = [];
   const teamIds: string[] = [];
@@ -334,6 +340,9 @@ const toRepairTargets = (refs: ReadonlyArray<TAuthzedSourceRef>): TReconcileTarg
           feedbackDirectoryAssignmentObjectIds.push(ref.assignmentId);
         }
         break;
+      case "mcpGrantSelection":
+        mcpGrantIds.push(ref.grantId);
+        break;
       case "membership":
         memberships.push({ organizationId: ref.organizationId, userId: ref.userId });
         break;
@@ -361,6 +370,7 @@ const toRepairTargets = (refs: ReadonlyArray<TAuthzedSourceRef>): TReconcileTarg
     feedbackDirectoryAssignmentObjectIds,
     feedbackDirectoryAssignments,
     feedbackDirectoryIds,
+    mcpGrantIds,
     memberships,
     surveyIds,
     teamIds,
@@ -369,6 +379,22 @@ const toRepairTargets = (refs: ReadonlyArray<TAuthzedSourceRef>): TReconcileTarg
     workspaceTeamGrants,
   };
 };
+
+const toMcpGrantSelectionRefs = (
+  selections: ReadonlyArray<TAuthzedMcpGrantSelectionTarget>
+): ReadonlyArray<TAuthzedSourceRef> =>
+  selections.map(
+    ({ grantId, resourceId, resourceType }): TAuthzedSourceRef => ({
+      grantId,
+      kind: "mcpGrantSelection",
+      resourceId,
+      resourceType,
+    })
+  );
+
+const toMcpGrantIds = (selections: ReadonlyArray<TAuthzedMcpGrantSelectionTarget>): ReadonlyArray<string> => [
+  ...new Set(selections.map(({ grantId }) => grantId)),
+];
 
 /**
  * The source records an organization holds, in the same vocabulary an observation produces.
@@ -431,6 +457,7 @@ const toSourceRefs = (source: TAuthzedOrganizationSource): ReadonlyArray<TAuthze
           : [];
       }
     ),
+    ...toMcpGrantSelectionRefs(source.mcpGrantSelections),
   ];
 };
 
@@ -443,6 +470,7 @@ const mergeTargets = (left: TReconcileTargets, right: TReconcileTargets): TRecon
   ],
   feedbackDirectoryAssignments: [...left.feedbackDirectoryAssignments, ...right.feedbackDirectoryAssignments],
   feedbackDirectoryIds: [...left.feedbackDirectoryIds, ...right.feedbackDirectoryIds],
+  mcpGrantIds: [...left.mcpGrantIds, ...right.mcpGrantIds],
   memberships: [...left.memberships, ...right.memberships],
   surveyIds: [...left.surveyIds, ...right.surveyIds],
   teamIds: [...left.teamIds, ...right.teamIds],
@@ -498,6 +526,7 @@ const reconcileTargets = async (
         ({ surveyIds }: Readonly<{ surveyIds: ReadonlyArray<string> }>) => apply.reconcileSurveys(surveyIds),
         { surveyIds: targets.surveyIds }
       ),
+    () => runChunked(apply.reconcileMcpGrants, { grantIds: [...new Set(targets.mcpGrantIds)] }),
   ];
 
   for (const step of steps) {
@@ -856,6 +885,7 @@ const processOrganization = async (ctx: TRunContext, organizationId: string): Pr
         feedbackDirectoryAssignmentObjectIds: [],
         feedbackDirectoryAssignments: source.feedbackDirectoryAssignments,
         feedbackDirectoryIds: source.feedbackDirectoryIds,
+        mcpGrantIds: toMcpGrantIds(source.mcpGrantSelections),
         memberships: source.memberships,
         surveyIds: [],
         teamIds: source.teamIds,
@@ -1015,6 +1045,7 @@ const toWorkspaceSourceRefs = (
       }
     ),
     ...source.surveyIds.map((surveyId): TAuthzedSourceRef => ({ kind: "survey", surveyId })),
+    ...toMcpGrantSelectionRefs(source.mcpGrantSelections),
     { kind: "workspace", workspaceId },
   ];
 };
@@ -1180,6 +1211,7 @@ const processWorkspace = async (ctx: TRunContext, workspaceId: string): Promise<
         feedbackDirectoryAssignmentObjectIds: [],
         feedbackDirectoryAssignments: source.feedbackDirectoryAssignments,
         feedbackDirectoryIds: [],
+        mcpGrantIds: toMcpGrantIds(source.mcpGrantSelections),
         memberships: [],
         surveyIds: source.surveyIds,
         teamIds: [],

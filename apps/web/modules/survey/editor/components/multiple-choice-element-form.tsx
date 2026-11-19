@@ -76,7 +76,7 @@ export const MultipleChoiceElementForm = ({
   const surveyLanguages = localSurvey.languages ?? [];
 
   const updateChoice = (choiceIdx: number, updatedAttributes: Partial<TSurveyElementChoice>) => {
-    let newChoices: any[] = [];
+    let newChoices: TSurveyElementChoice[] = [];
     if (element.choices) {
       newChoices = element.choices.map((choice, idx) => {
         if (idx !== choiceIdx) return choice;
@@ -229,7 +229,7 @@ export const MultipleChoiceElementForm = ({
         updateElement={updateElement}
         locale={locale}
         isStorageConfigured={isStorageConfigured}
-        autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
+        focusOnMount={!element.headline?.default || element.headline.default.trim() === ""}
         isExternalUrlsAllowed={isExternalUrlsAllowed}
       />
 
@@ -247,7 +247,7 @@ export const MultipleChoiceElementForm = ({
                 updateElement={updateElement}
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
-                autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
+                focusOnMount={!element.subheader?.default || element.subheader.default.trim() === ""}
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
               />
             </div>

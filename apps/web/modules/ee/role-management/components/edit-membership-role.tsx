@@ -87,7 +87,7 @@ export function EditMembershipRole({
           return;
         }
       }
-    } catch (error) {
+    } catch {
       toast.error(t("common.something_went_wrong_please_try_again"));
     }
 
@@ -96,7 +96,7 @@ export function EditMembershipRole({
   };
 
   const handleRoleChange = (role: TOrganizationRole) => {
-    handleMemberRoleUpdate(role);
+    void handleMemberRoleUpdate(role);
   };
 
   const getMembershipRoles = () =>

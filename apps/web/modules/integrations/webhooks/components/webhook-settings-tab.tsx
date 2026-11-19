@@ -14,7 +14,7 @@ import { copyToClipboard } from "@/lib/utils/clipboard";
 import { getFormattedErrorMessage } from "@/lib/utils/error-message";
 import { SurveySelect } from "@/modules/integrations/webhooks/components/survey-select";
 import { TriggerCheckboxGroup } from "@/modules/integrations/webhooks/components/trigger-checkbox-group";
-import { validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
+import { getEndpointAccessibleClassName, validWebHookURL } from "@/modules/integrations/webhooks/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 import { DeleteDialog } from "@/modules/ui/components/delete-dialog";
 import { Input } from "@/modules/ui/components/input";
@@ -143,8 +143,8 @@ export const WebhookSettingsTab = ({
 
     const updatedData: TWebhookInput = {
       name: data.name ?? "",
-      url: data.url as string,
-      source: webhook.source as TWebhookInput["source"],
+      url: data.url,
+      source: webhook.source,
       triggers: selectedTriggers,
       surveyIds: selectedSurveys,
     };
@@ -198,13 +198,7 @@ export const WebhookSettingsTab = ({
                 isReadOnly || webhook.source !== "user"
                   ? "cursor-not-allowed bg-slate-100 text-slate-500"
                   : null,
-                endpointAccessible === true
-                  ? "border-green-500 bg-green-50"
-                  : endpointAccessible === false
-                    ? "border-red-200 bg-red-50"
-                    : endpointAccessible === undefined
-                      ? "border-slate-200 bg-white"
-                      : null
+                getEndpointAccessibleClassName(endpointAccessible)
               )}
               placeholder={t("workspace.integrations.webhooks.webhook_url_placeholder")}
             />
@@ -215,7 +209,7 @@ export const WebhookSettingsTab = ({
                 loading={hittingEndpoint}
                 className="ml-2 whitespace-nowrap"
                 onClick={() => {
-                  handleTestEndpoint(true);
+                  void handleTestEndpoint(true);
                 }}>
                 {t("workspace.integrations.webhooks.test_endpoint")}
               </Button>

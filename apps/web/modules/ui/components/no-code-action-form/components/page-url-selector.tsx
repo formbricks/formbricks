@@ -204,7 +204,7 @@ const UrlInput = ({
   onConnectorChange,
 }: {
   readonly control: Control<TActionClassInput>;
-  readonly fields: FieldArrayWithId<TActionClassInput, "noCodeConfig.urlFilters", "id">[];
+  readonly fields: FieldArrayWithId<TActionClassInput, "noCodeConfig.urlFilters">[];
   readonly removeUrlRule: UseFieldArrayRemove;
   readonly disabled: boolean;
   readonly connector: "or" | "and";

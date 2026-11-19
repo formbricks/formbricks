@@ -97,7 +97,7 @@ describe("writeAttachmentArchive", () => {
   };
 
   test("reports what the archive holds", async () => {
-    mockedGetFileStream.mockResolvedValue(streamOf("photo-bytes") as never);
+    mockedGetFileStream.mockResolvedValue(streamOf("photo-bytes"));
 
     const { summary, size, bytes } = await writeAndDrain([
       okEntry(),
@@ -131,7 +131,7 @@ describe("streamAttachmentsAsZip", () => {
   });
 
   test("sets the streaming download headers", async () => {
-    mockedGetFileStream.mockResolvedValue(streamOf("x") as never);
+    mockedGetFileStream.mockResolvedValue(streamOf("x"));
 
     const response = streamAttachmentsAsZip({ entries: [okEntry()], survey, now: NOW });
 
@@ -151,7 +151,7 @@ describe("streamAttachmentsAsZip", () => {
   });
 
   test("writes each attachment at its zip path and appends a manifest", async () => {
-    mockedGetFileStream.mockResolvedValue(streamOf("photo-bytes") as never);
+    mockedGetFileStream.mockResolvedValue(streamOf("photo-bytes"));
 
     const archive = await readArchive(streamAttachmentsAsZip({ entries: [okEntry()], survey, now: NOW }));
 
@@ -164,7 +164,7 @@ describe("streamAttachmentsAsZip", () => {
   });
 
   test("asks storage for the decoded file name under the URL's storage id", async () => {
-    mockedGetFileStream.mockResolvedValue(streamOf("x") as never);
+    mockedGetFileStream.mockResolvedValue(streamOf("x"));
 
     await readArchive(
       streamAttachmentsAsZip({

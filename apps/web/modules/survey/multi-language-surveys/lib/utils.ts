@@ -112,7 +112,7 @@ export const removeLanguageKeysFromSurvey = (survey: TSurvey, languageCode: stri
     } else if (obj && typeof obj === "object") {
       const record = obj as Record<string, unknown>;
       for (const key in record) {
-        if (record.hasOwnProperty(key)) {
+        if (Object.hasOwn(record, key)) {
           if (key === "default" && typeof record[key] === "string") {
             delete record[languageCode];
             return;
@@ -159,7 +159,7 @@ export const removeAllTranslations = (survey: TSurvey): TSurvey => {
     stripTranslations(metadataClone.title);
     stripTranslations(metadataClone.description);
   }
-  return { ...clone, metadata: metadataClone, languages } as TSurvey;
+  return { ...clone, metadata: metadataClone, languages };
 };
 
 /**

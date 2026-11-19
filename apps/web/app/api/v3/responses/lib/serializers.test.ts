@@ -190,7 +190,7 @@ describe("the detailed view", () => {
   /** `userId` is a contact attribute row, not a column, so it arrives as a filtered list. */
   test("contact carries the userId attribute when the response has one", () => {
     const resource = createV3ResponseSerializer().toResource(
-      row({ contact: { id: "clct1", attributes: [{ value: "user-42" }] } as never }),
+      row({ contact: { id: "clct1", attributes: [{ value: "user-42" }] } }),
       survey()
     );
 
@@ -199,7 +199,7 @@ describe("the detailed view", () => {
 
   test("a contact with no userId attribute reports null rather than omitting it", () => {
     const resource = createV3ResponseSerializer().toResource(
-      row({ contact: { id: "clct1", attributes: [] } as never }),
+      row({ contact: { id: "clct1", attributes: [] } }),
       survey()
     );
 
@@ -209,7 +209,13 @@ describe("the detailed view", () => {
   test("is the list item plus those fields, and nothing else differs", () => {
     const serializer = createV3ResponseSerializer();
     const r = row();
-    const { contact, displayId, singleUseId, data, ...rest } = serializer.toResource(r, survey());
+    const {
+      contact: _contact,
+      displayId: _displayId,
+      singleUseId: _singleUseId,
+      data: _data,
+      ...rest
+    } = serializer.toResource(r, survey());
 
     expect(rest).toEqual(serializer.toListItem(r, survey()));
   });
@@ -320,6 +326,16 @@ describe("what the detail view's data map may carry", () => {
     const resource = createV3ResponseSerializer().toResource(row({ data: { q1: "the answer" } as never }), s);
 
     expect(resource.data).toEqual({ q1: "the answer" });
+  });
+});
+
+// A draft or migrated block can be stored without `elements` (ENG-2497).
+describe("a survey with a block that has no elements array", () => {
+  test("serializes the other blocks' answers", () => {
+    const withEmptyBlock = survey();
+    (withEmptyBlock as unknown as { blocks: unknown[] }).blocks.unshift({ id: "legacy", name: "Legacy" });
+
+    expect(listItem(row(), withEmptyBlock).answers).toMatchObject([{ elementId: "q1", valueText: "good" }]);
   });
 });
 

@@ -78,13 +78,13 @@ const mockSurvey = {
   id: surveyId,
   name: "Test Survey",
   workspaceId,
-  status: "inProgress",
-} as any;
+  status: "inProgress" as const,
+};
 
 describe("createDisplay", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(prisma.survey.findUnique).mockResolvedValue(mockSurvey);
+    vi.mocked(prisma.survey.findUnique, { partial: true }).mockResolvedValue(mockSurvey);
   });
 
   test("should create a display with contactId successfully", async () => {
@@ -201,11 +201,11 @@ describe("createDisplay", () => {
     expect(prisma.display.create).not.toHaveBeenCalled();
   });
 
-  test.each(["draft", "paused", "completed"])(
+  test.each(["draft", "paused", "completed"] as const)(
     "should throw InvalidInputError when survey status is %s",
     async (status) => {
       vi.mocked(doesContactExistInWorkspace).mockResolvedValue(true);
-      vi.mocked(prisma.survey.findUnique).mockResolvedValue({ ...mockSurvey, status } as any);
+      vi.mocked(prisma.survey.findUnique, { partial: true }).mockResolvedValue({ ...mockSurvey, status });
 
       await expect(createDisplay(displayInput)).rejects.toThrow(InvalidInputError);
       expect(prisma.display.create).not.toHaveBeenCalled();

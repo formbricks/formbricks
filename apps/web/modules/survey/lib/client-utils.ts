@@ -8,4 +8,4 @@ import { TSurveyElement } from "@formbricks/types/surveys/elements";
  * @returns An array of TSurveyElement (pure elements without block-level properties)
  */
 export const getElementsFromBlocks = (blocks: TSurveyBlock[] | undefined): TSurveyElement[] =>
-  blocks?.flatMap((block) => block.elements) ?? [];
+  blocks?.flatMap((block) => block.elements ?? []) ?? [];

@@ -109,6 +109,13 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
     [disabled]
   );
 
+  const handleSelect = (option: TOption<T>) => {
+    if (disabled || option.disabled) return;
+    isUserInitiatedRef.current = true; // Mark as user-initiated
+    setSelected((prev) => [...prev, option]);
+    setInputValue("");
+  };
+
   const handleKeyDown = React.useCallback(
     (e: React.KeyboardEvent<HTMLDivElement>) => {
       const input = inputRef.current;
@@ -162,6 +169,25 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
     }
     return groups;
   }, [selectableOptions]);
+
+  const isDropdownVisible = open && selectableOptions.length > 0 && !disabled;
+
+  // Escape with the dropdown open closes only the dropdown. A Radix dialog around this component
+  // listens for Escape on `document` in the capture phase, before the React handler above runs, so
+  // stopping propagation there is too late. Claiming the key one step earlier (on the window via
+  // `globalThis`, capture) and preventing its default works because Radix skips dismissing on a
+  // default-prevented event. With the dropdown hidden, Escape still reaches the dialog.
+  const isDropdownRendered = isDropdownVisible && position !== null;
+  React.useEffect(() => {
+    if (!isDropdownRendered) return;
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.target !== inputRef.current) return;
+      event.preventDefault();
+      inputRef.current?.blur();
+    };
+    globalThis.addEventListener("keydown", handleEscape, true);
+    return () => globalThis.removeEventListener("keydown", handleEscape, true);
+  }, [isDropdownRendered]);
 
   // Calculate position for dropdown when opening
   React.useEffect(() => {
@@ -254,9 +280,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
           />
         </div>
       </div>
-      {open &&
-        selectableOptions.length > 0 &&
-        !disabled &&
+      {isDropdownVisible &&
         position &&
         globalThis.window !== undefined &&
         portalContainer &&
@@ -293,12 +317,7 @@ export function MultiSelect<T extends string, K extends TOption<T>["value"][]>(
                           e.preventDefault();
                           e.stopPropagation();
                         }}
-                        onSelect={() => {
-                          if (disabled || option.disabled) return;
-                          isUserInitiatedRef.current = true; // Mark as user-initiated
-                          setSelected((prev) => [...prev, option]);
-                          setInputValue("");
-                        }}
+                        onSelect={() => handleSelect(option)}
                         className={cn(
                           "items-start gap-2",
                           option.disabled ? "cursor-not-allowed" : "cursor-pointer"

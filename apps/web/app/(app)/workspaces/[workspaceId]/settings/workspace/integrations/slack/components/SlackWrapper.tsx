@@ -58,11 +58,12 @@ export const SlackWrapper = ({
   }, [workspaceId]);
 
   useEffect(() => {
-    getSlackChannels();
+    // eslint-disable-next-line react/set-state-in-effect -- fetches on mount; getSlackChannels sets state only after its awaited action
+    void getSlackChannels();
   }, [getSlackChannels]);
 
   const handleSlackAuthorization = async () => {
-    authorize(workspaceId, webAppUrl).then((url: string) => {
+    void authorize(workspaceId, webAppUrl).then((url: string) => {
       if (url) {
         window.location.replace(url);
       }

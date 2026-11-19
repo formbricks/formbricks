@@ -44,6 +44,28 @@ interface TargetingCardProps {
   readonly initialSegment?: TSegment;
 }
 
+/**
+ * The card's open state, adjusted during render from the first one: a segment with filters expands
+ * it, and a link survey, which cannot target, collapses it.
+ */
+const useTargetingCardOpen = (segment: TSegment | null, surveyType: TSurvey["type"]) => {
+  const [open, setOpen] = useState(false);
+
+  const [seenSegment, setSeenSegment] = useState<TSegment | null | undefined>(undefined);
+  if (segment !== seenSegment) {
+    setSeenSegment(segment);
+    if (segment && segment.filters.length > 0) setOpen(true);
+  }
+
+  const [seenSurveyType, setSeenSurveyType] = useState<TSurvey["type"] | null>(null);
+  if (surveyType !== seenSurveyType) {
+    setSeenSurveyType(surveyType);
+    if (surveyType === "link") setOpen(false);
+  }
+
+  return [open, setOpen] as const;
+};
+
 export function TargetingCard({
   localSurvey,
   setLocalSurvey,
@@ -55,7 +77,6 @@ export function TargetingCard({
   const router = useRouter();
   const { workspace } = useWorkspace();
   const workspaceBasePath = `/workspaces/${workspace?.id}`;
-  const [open, setOpen] = useState(false);
   const [segment, setSegment] = useState<TSegment | null>(localSurvey.segment);
 
   const [addFilterModalOpen, setAddFilterModalOpen] = useState(false);
@@ -88,22 +109,12 @@ export function TargetingCard({
       if (clonedSegmentResponse?.data) {
         setSegment(clonedSegmentResponse.data);
       }
-    } catch (err: any) {
-      toast.error(err.message);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   };
 
-  useEffect(() => {
-    if (segment && segment.filters.length > 0) {
-      setOpen(true);
-    }
-  }, [segment, segment?.filters.length]);
-
-  useEffect(() => {
-    if (localSurvey.type === "link") {
-      setOpen(false);
-    }
-  }, [localSurvey.type]);
+  const [open, setOpen] = useTargetingCardOpen(segment, localSurvey.type);
 
   const handleAddFilterInGroup = (filter: TBaseFilter) => {
     const updatedSegment = structuredClone(segment);
@@ -146,8 +157,8 @@ export function TargetingCard({
 
       setIsSegmentEditorOpen(false);
       setSegmentEditorViewOnly(true);
-    } catch (err: any) {
-      toast.error(err.message ?? t("workspace.segments.error_saving_segment"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("workspace.segments.error_saving_segment"));
     }
   };
 
@@ -155,7 +166,7 @@ export function TargetingCard({
     try {
       const segmentResponse = await resetSegmentFiltersAction({ surveyId: localSurvey.id });
       return segmentResponse?.data;
-    } catch (err) {
+    } catch {
       toast.error(t("workspace.segments.error_resetting_filters"));
     }
   };
@@ -167,6 +178,166 @@ export function TargetingCard({
   if (!segment) {
     throw new Error(t("workspace.segments.invalid_segment"));
   }
+
+  const renderSegmentEditor = () => (
+    <div className="flex w-full flex-col gap-2">
+      <SegmentTitle
+        description={localSurvey.segment?.description}
+        isPrivate={segment?.isPrivate}
+        title={localSurvey.segment?.title}
+      />
+      {Boolean(segment?.filters.length) && (
+        <div className="w-full">
+          <SegmentEditor
+            contactAttributeKeys={contactAttributeKeys}
+            group={segment.filters}
+            key={segment.filters.toString()}
+            segment={segment}
+            segments={segments}
+            setSegment={setSegment}
+          />
+        </div>
+      )}
+
+      <div
+        className={cn(
+          "mt-3 flex items-center gap-2",
+          segment?.isPrivate && !segment.filters.length && "mt-0"
+        )}>
+        <Button
+          onClick={() => {
+            setAddFilterModalOpen(true);
+          }}
+          size="sm"
+          variant="secondary">
+          {t("common.add_filter")}
+        </Button>
+
+        {isSegmentEditorOpen && !segment?.isPrivate ? (
+          <Button
+            onClick={() => {
+              void handleSaveSegment({ filters: segment?.filters ?? [] });
+            }}
+            size="sm"
+            variant="secondary">
+            {t("common.save_changes")}
+          </Button>
+        ) : null}
+
+        {isSegmentEditorOpen && !segment?.isPrivate ? (
+          <Button
+            className="flex items-center gap-2"
+            onClick={() => {
+              setIsSegmentEditorOpen(false);
+              setSegmentEditorViewOnly(true);
+
+              if (initialSegment) {
+                setSegment(initialSegment);
+              }
+            }}
+            size="sm"
+            variant="ghost">
+            {t("common.cancel")}
+          </Button>
+        ) : null}
+      </div>
+
+      <AddFilterModal
+        contactAttributeKeys={contactAttributeKeys}
+        onAddFilter={(filter) => {
+          handleAddFilterInGroup(filter);
+        }}
+        open={addFilterModalOpen}
+        segments={segments}
+        setOpen={setAddFilterModalOpen}
+      />
+      {Boolean(segment) && (
+        <SaveAsNewSegmentModal
+          localSurvey={localSurvey}
+          onCreateSegment={handleSaveAsNewSegmentCreate}
+          onUpdateSegment={handleSaveAsNewSegmentUpdate}
+          open={saveAsNewSegmentModalOpen}
+          segment={segment}
+          setIsSegmentEditorOpen={setIsSegmentEditorOpen}
+          setOpen={setSaveAsNewSegmentModalOpen}
+          setSegment={setSegment}
+        />
+      )}
+    </div>
+  );
+
+  const renderSegmentSummary = () => (
+    <div className="flex flex-col gap-2 rounded-lg">
+      <SegmentTitle
+        description={localSurvey.segment?.description}
+        isPrivate={segment?.isPrivate}
+        title={localSurvey.segment?.title}
+      />
+
+      {segmentEditorViewOnly && segment ? (
+        <div className="opacity-60">
+          <SegmentEditor
+            contactAttributeKeys={contactAttributeKeys}
+            group={segment.filters}
+            key={segment.filters.toString()}
+            segment={segment}
+            segments={segments}
+            setSegment={setSegment}
+            viewOnly={segmentEditorViewOnly}
+          />
+        </div>
+      ) : null}
+
+      <div className="mt-3 flex items-center gap-3">
+        <Button
+          onClick={() => {
+            setSegmentEditorViewOnly(!segmentEditorViewOnly);
+          }}
+          size="sm"
+          variant="secondary">
+          {segmentEditorViewOnly
+            ? t("workspace.segments.hide_filters")
+            : t("workspace.segments.view_filters")}
+          {segmentEditorViewOnly ? (
+            <ChevronUpIcon className="ml-2 size-3" />
+          ) : (
+            <ChevronDownIcon className="ml-2 size-3" />
+          )}
+        </Button>
+
+        {isSegmentUsedInOtherSurveys ? (
+          <Button onClick={() => handleCloneSegment()} size="sm" variant="secondary">
+            {t("workspace.segments.clone_and_edit_segment")}
+          </Button>
+        ) : null}
+        {!isSegmentUsedInOtherSurveys && (
+          <Button
+            onClick={() => {
+              setIsSegmentEditorOpen(true);
+              setSegmentEditorViewOnly(false);
+            }}
+            size="sm"
+            variant={isSegmentUsedInOtherSurveys ? "ghost" : "secondary"}>
+            {t("workspace.segments.edit_segment")}
+            <PencilIcon className="ml-2 size-3" />
+          </Button>
+        )}
+      </div>
+      {isSegmentUsedInOtherSurveys ? (
+        <p className="mt-1 flex items-center text-xs text-slate-500">
+          <AlertCircle className="mr-1 inline size-3" />
+          <Trans
+            i18nKey="workspace.segments.segment_used_in_other_surveys_make_changes_here"
+            components={{
+              segmentsLink: (
+                <Link className="ml-1 underline" href={`${workspaceBasePath}/segments`} target="_blank" />
+              ),
+            }}
+          />
+        </p>
+      ) : null}
+    </div>
+  );
 
   return (
     <Collapsible.Root
@@ -209,167 +380,7 @@ export function TargetingCard({
               />
             )}
 
-            {isSegmentEditorOpen ? (
-              <div className="flex w-full flex-col gap-2">
-                <SegmentTitle
-                  description={localSurvey.segment?.description}
-                  isPrivate={segment?.isPrivate}
-                  title={localSurvey.segment?.title}
-                />
-                {Boolean(segment?.filters.length) && (
-                  <div className="w-full">
-                    <SegmentEditor
-                      contactAttributeKeys={contactAttributeKeys}
-                      group={segment.filters}
-                      key={segment.filters.toString()}
-                      segment={segment}
-                      segments={segments}
-                      setSegment={setSegment}
-                    />
-                  </div>
-                )}
-
-                <div
-                  className={cn(
-                    "mt-3 flex items-center gap-2",
-                    segment?.isPrivate && !segment.filters.length && "mt-0"
-                  )}>
-                  <Button
-                    onClick={() => {
-                      setAddFilterModalOpen(true);
-                    }}
-                    size="sm"
-                    variant="secondary">
-                    {t("common.add_filter")}
-                  </Button>
-
-                  {isSegmentEditorOpen && !segment?.isPrivate ? (
-                    <Button
-                      onClick={() => {
-                        handleSaveSegment({ filters: segment?.filters ?? [] });
-                      }}
-                      size="sm"
-                      variant="secondary">
-                      {t("common.save_changes")}
-                    </Button>
-                  ) : null}
-
-                  {isSegmentEditorOpen && !segment?.isPrivate ? (
-                    <Button
-                      className="flex items-center gap-2"
-                      onClick={() => {
-                        setIsSegmentEditorOpen(false);
-                        setSegmentEditorViewOnly(true);
-
-                        if (initialSegment) {
-                          setSegment(initialSegment);
-                        }
-                      }}
-                      size="sm"
-                      variant="ghost">
-                      {t("common.cancel")}
-                    </Button>
-                  ) : null}
-                </div>
-
-                <AddFilterModal
-                  contactAttributeKeys={contactAttributeKeys}
-                  onAddFilter={(filter) => {
-                    handleAddFilterInGroup(filter);
-                  }}
-                  open={addFilterModalOpen}
-                  segments={segments}
-                  setOpen={setAddFilterModalOpen}
-                />
-                {Boolean(segment) && (
-                  <SaveAsNewSegmentModal
-                    localSurvey={localSurvey}
-                    onCreateSegment={handleSaveAsNewSegmentCreate}
-                    onUpdateSegment={handleSaveAsNewSegmentUpdate}
-                    open={saveAsNewSegmentModalOpen}
-                    segment={segment}
-                    setIsSegmentEditorOpen={setIsSegmentEditorOpen}
-                    setOpen={setSaveAsNewSegmentModalOpen}
-                    setSegment={setSegment}
-                  />
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col gap-2 rounded-lg">
-                <SegmentTitle
-                  description={localSurvey.segment?.description}
-                  isPrivate={segment?.isPrivate}
-                  title={localSurvey.segment?.title}
-                />
-
-                {segmentEditorViewOnly && segment ? (
-                  <div className="opacity-60">
-                    <SegmentEditor
-                      contactAttributeKeys={contactAttributeKeys}
-                      group={segment.filters}
-                      key={segment.filters.toString()}
-                      segment={segment}
-                      segments={segments}
-                      setSegment={setSegment}
-                      viewOnly={segmentEditorViewOnly}
-                    />
-                  </div>
-                ) : null}
-
-                <div className="mt-3 flex items-center gap-3">
-                  <Button
-                    onClick={() => {
-                      setSegmentEditorViewOnly(!segmentEditorViewOnly);
-                    }}
-                    size="sm"
-                    variant="secondary">
-                    {segmentEditorViewOnly
-                      ? t("workspace.segments.hide_filters")
-                      : t("workspace.segments.view_filters")}
-                    {segmentEditorViewOnly ? (
-                      <ChevronUpIcon className="ml-2 size-3" />
-                    ) : (
-                      <ChevronDownIcon className="ml-2 size-3" />
-                    )}
-                  </Button>
-
-                  {isSegmentUsedInOtherSurveys ? (
-                    <Button onClick={() => handleCloneSegment()} size="sm" variant="secondary">
-                      {t("workspace.segments.clone_and_edit_segment")}
-                    </Button>
-                  ) : null}
-                  {!isSegmentUsedInOtherSurveys && (
-                    <Button
-                      onClick={() => {
-                        setIsSegmentEditorOpen(true);
-                        setSegmentEditorViewOnly(false);
-                      }}
-                      size="sm"
-                      variant={isSegmentUsedInOtherSurveys ? "ghost" : "secondary"}>
-                      {t("workspace.segments.edit_segment")}
-                      <PencilIcon className="ml-2 size-3" />
-                    </Button>
-                  )}
-                </div>
-                {isSegmentUsedInOtherSurveys ? (
-                  <p className="mt-1 flex items-center text-xs text-slate-500">
-                    <AlertCircle className="mr-1 inline size-3" />
-                    <Trans
-                      i18nKey="workspace.segments.segment_used_in_other_surveys_make_changes_here"
-                      components={{
-                        segmentsLink: (
-                          <Link
-                            className="ml-1 underline"
-                            href={`${workspaceBasePath}/segments`}
-                            target="_blank"
-                          />
-                        ),
-                      }}
-                    />
-                  </p>
-                ) : null}
-              </div>
-            )}
+            {isSegmentEditorOpen ? renderSegmentEditor() : renderSegmentSummary()}
           </div>
 
           <div className="flex gap-3">
@@ -431,7 +442,7 @@ export function TargetingCard({
         </div>
 
         <div>
-          <Alert className="flex items-center rounded-none bg-slate-50" role="status">
+          <Alert className="flex items-center rounded-none bg-slate-50" alertRole="status">
             <AlertDescription className="ml-2">
               <span className="mr-1 text-slate-600">
                 <Trans

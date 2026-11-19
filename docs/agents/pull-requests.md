@@ -1,6 +1,6 @@
 # Commit & Pull Request Guidelines
 
-Read before committing, or opening, updating, or reviewing a pull request.
+Read before committing or reviewing a pull request.
 
 ## Commits
 
@@ -8,14 +8,7 @@ Use Conventional Commits (`fix:`, `chore:`, `feat:`), keep commits scoped, and r
 
 ## Pull requests
 
-Read `.github/pull_request_template.md` and follow its inline guidance when opening or updating a PR.
-It owns the structure, word budget, ticket syntax, coverage evidence, breaking-change decision, and
-migration/env reporting. Update the description with every scope change or review fix.
-
-Complete QA on the change's PR before requesting review. The author accounts for each changed behavior
-and names unverified behavior under Open gaps; reviewers challenge that evidence. A failure called
-pre-existing, flaky or noise names the run on `main` that shows it; without one it goes under Open gaps. Release review checks
-interactions between changes rather than repeating each PR's QA.
+Writing the PR body is the `pr` skill's job (`.agents/skills/pr`); this file covers what surrounds it.
 
 ## Reviews
 
@@ -45,7 +38,7 @@ SonarCloud project `formbricks_formbricks`; its API is public, no token needed.
 - Is the analysis current: compare the PR's `commit.sha` from `https://sonarcloud.io/api/project_pull_requests/list?project=formbricks_formbricks` with the branch head. The issue list shows the last analysed commit until a newer analysis lands.
 - Analysis trails the push by about 15 minutes and runs only in the PR workflow. A PR with merge conflicts gets no `pull_request` runs (no merge result), so Sonar and CI stay on an older commit until the conflict is resolved.
 - A passing quality gate allows open issues; read the list.
-- The pre-commit lint mirrors Sonar's rules on the staged lines (`packages/config-eslint/sonar-parity.mjs`), so a new violation fails the commit instead of a later review.
+- `pnpm lint` mirrors Sonar's rules (`packages/config-oxlint/sonar-parity.mjs`), so a new violation fails lint instead of a later review. Cognitive complexity, which existing code still exceeds, is checked on the staged lines only, by the pre-commit hook.
 
 ## CI failure triage
 
@@ -54,7 +47,3 @@ Take failing test names from the `blacksmith-sh` bot's comment on the PR. Otherw
 few hundred. The E2E log is dominated by SpiceDB gRPC output (once a single 2.4 MB line), so filter a saved
 log with `grep -v grpc` before reading it. `release/*` branches keep their own workflow copy, where a red
 `PR Check Summary` can come from cancelled jobs of a superseded push; check the job conclusions first.
-
-## Agent attribution
-
-The agent note names the exact model id the vendor serves — `claude-opus-5`, `gpt-5.1-codex` — not the harness it runs in; Claude Code, Codex CLI and Cursor are harnesses, so name one in parentheses only when it adds something (`claude-opus-5 (Claude Code 2.1.237)`). The reasoning level is whatever knob that vendor exposes, in its own units: an effort level (`max`, `high`), a thinking budget (`32k tokens`), or `n/a`. Read both out of the tool, never from memory — Claude Code reports them in `/status` or as the session's `model` and `effort_level`, Codex CLI in `/model` or its startup line. A value you cannot look up is `unknown`, never a guess and never the harness name standing in for the model.

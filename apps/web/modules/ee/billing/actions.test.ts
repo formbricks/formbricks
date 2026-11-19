@@ -29,6 +29,8 @@ vi.mock("@/lib/utils/action-client", () => ({
     })),
   },
 }));
+// The mocked client hands back the bare handler, so each action below is called with `{ ctx, parsedInput }`,
+// which its public signature does not describe.
 
 vi.mock("@/lib/constants", () => ({
   WEBAPP_URL: "https://app.formbricks.com",
@@ -117,7 +119,7 @@ describe("billing actions", () => {
     const result = await startHobbyAction({
       ctx: { user: { id: "user_1" } },
       parsedInput: { organizationId: "org_1" },
-    } as any);
+    } as unknown as Parameters<typeof startHobbyAction>[0]);
 
     expect(mocks.assertCan).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "organization.manage", {
       type: "organization",
@@ -141,7 +143,7 @@ describe("billing actions", () => {
     const result = await startHobbyAction({
       ctx: { user: { id: "user_1" } },
       parsedInput: { organizationId: "org_1" },
-    } as any);
+    } as unknown as Parameters<typeof startHobbyAction>[0]);
 
     expect(mocks.ensureStripeCustomerForOrganization).not.toHaveBeenCalled();
     expect(mocks.reconcileCloudStripeSubscriptionsForOrganization).toHaveBeenCalledWith("org_1");
@@ -154,7 +156,7 @@ describe("billing actions", () => {
     const result = await startProTrialAction({
       ctx: { user: { id: "user_1" }, auditLoggingCtx },
       parsedInput: { organizationId: "org_1" },
-    } as any);
+    } as unknown as Parameters<typeof startProTrialAction>[0]);
 
     expect(mocks.applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.actions.stateMutation, "org_1");
     expect(mocks.getOrganization).toHaveBeenCalledWith("org_1");
@@ -175,7 +177,7 @@ describe("billing actions", () => {
     const result = await startProTrialAction({
       ctx: { user: { id: "user_1" }, auditLoggingCtx: {} },
       parsedInput: { organizationId: "org_1" },
-    } as any);
+    } as unknown as Parameters<typeof startProTrialAction>[0]);
 
     expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_1", 7);
     expect(result).toEqual({ success: true });
@@ -211,7 +213,7 @@ describe("billing actions", () => {
     const result = await startProTrialAction({
       ctx: { user: { id: "user_1" }, auditLoggingCtx: {} },
       parsedInput: { organizationId: "org_1" },
-    } as any);
+    } as unknown as Parameters<typeof startProTrialAction>[0]);
 
     expect(mocks.ensureStripeCustomerForOrganization).not.toHaveBeenCalled();
     expect(mocks.createProTrialSubscription).toHaveBeenCalledWith("org_1", "cus_existing", 14);
@@ -242,7 +244,7 @@ describe("billing actions", () => {
         targetPlan: "pro",
         targetInterval: "yearly",
       },
-    } as any);
+    } as unknown as Parameters<typeof createTrialPaymentCheckoutAction>[0]);
 
     expect(mocks.createSetupCheckoutSession).toHaveBeenCalledWith(
       "cus_1",
@@ -276,7 +278,7 @@ describe("billing actions", () => {
       parsedInput: {
         organizationId: "org_1",
       },
-    } as any);
+    } as unknown as Parameters<typeof createTrialPaymentCheckoutAction>[0]);
 
     expect(mocks.createSetupCheckoutSession).toHaveBeenCalledWith(
       "cus_1",

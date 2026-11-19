@@ -55,7 +55,9 @@ describe("getContactAuth", () => {
 
   test("returns the workspace authorization when the contact belongs to the workspace", async () => {
     mockGetWorkspaceAuth.mockResolvedValueOnce(buildWorkspaceAuth(VICTIM_WORKSPACE_ID));
-    mockPrismaContact.findUnique.mockResolvedValueOnce({ workspaceId: VICTIM_WORKSPACE_ID } as any);
+    mockPrismaContact.findUnique.mockResolvedValueOnce({ workspaceId: VICTIM_WORKSPACE_ID } as Awaited<
+      ReturnType<typeof mockPrismaContact.findUnique>
+    >);
 
     const auth = await getContactAuth(VICTIM_WORKSPACE_ID, CONTACT_ID);
 
@@ -72,7 +74,9 @@ describe("getContactAuth", () => {
     // The cross-tenant read: authorization for the attacker's own workspace succeeds, but the
     // contact in the URL belongs to someone else.
     mockGetWorkspaceAuth.mockResolvedValueOnce(buildWorkspaceAuth(ATTACKER_WORKSPACE_ID));
-    mockPrismaContact.findUnique.mockResolvedValueOnce({ workspaceId: VICTIM_WORKSPACE_ID } as any);
+    mockPrismaContact.findUnique.mockResolvedValueOnce({ workspaceId: VICTIM_WORKSPACE_ID } as Awaited<
+      ReturnType<typeof mockPrismaContact.findUnique>
+    >);
 
     await expect(getContactAuth(ATTACKER_WORKSPACE_ID, CONTACT_ID)).rejects.toThrow("NEXT_NOT_FOUND");
     expect(notFound).toHaveBeenCalled();
@@ -87,7 +91,9 @@ describe("getContactAuth", () => {
 
   test("propagates the workspace authorization failure instead of masking it as a 404", async () => {
     mockGetWorkspaceAuth.mockRejectedValueOnce(new Error("not authorized"));
-    mockPrismaContact.findUnique.mockResolvedValueOnce({ workspaceId: VICTIM_WORKSPACE_ID } as any);
+    mockPrismaContact.findUnique.mockResolvedValueOnce({ workspaceId: VICTIM_WORKSPACE_ID } as Awaited<
+      ReturnType<typeof mockPrismaContact.findUnique>
+    >);
 
     await expect(getContactAuth(VICTIM_WORKSPACE_ID, CONTACT_ID)).rejects.toThrow("not authorized");
   });

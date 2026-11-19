@@ -1,10 +1,15 @@
 import { useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
-import { isSafeMediaUrl } from "@formbricks/survey-ui";
+import {
+  checkForLoomUrl,
+  checkForVimeoUrl,
+  checkForYoutubeUrl,
+  convertToEmbedUrl,
+  isSafeMediaUrl,
+} from "@formbricks/survey-ui/video";
 import { ExpandIcon } from "@/components/icons/expand-icon";
 import { ImageDownIcon } from "@/components/icons/image-down-icon";
 import { cn } from "@/lib/utils";
-import { checkForLoomUrl, checkForVimeoUrl, checkForYoutubeUrl, convertToEmbedUrl } from "@/lib/video-upload";
 
 //Function to add extra params to videoUrls in order to reduce video controls
 const getVideoUrlWithParams = (videoUrl: string): string | undefined => {
@@ -79,6 +84,7 @@ export function ElementMedia({ imgUrl, videoUrl, altText, className }: Readonly<
             <iframe
               src={safeVideoUrl}
               title={t("common.question_video")}
+              // eslint-disable-next-line typescript/no-deprecated -- removes the iframe border on host pages whose CSS does not
               frameBorder="0"
               className={cn("rounded-custom aspect-video w-full", isLoading ? "opacity-0" : "")}
               onLoad={() => {

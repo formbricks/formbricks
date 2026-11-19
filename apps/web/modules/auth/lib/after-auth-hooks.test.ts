@@ -7,10 +7,8 @@ import { runAfterAuthHooks } from "./after-auth-hooks";
 import { auditFailedAuthAfter } from "./better-auth-observability";
 import { twoFactorBackfillAfterHandler } from "./better-auth-two-factor-backfill";
 import { verificationAutoSignInAfterHandler } from "./better-auth-verification-autosignin";
-import {
-  requireOAuthConsentOnRefreshAfterHandler,
-  revokeTokensBeyondConsentAfterHandler,
-} from "./oauth-grant-revocation";
+import { revokeTokensBeyondConsentAfterHandler } from "./oauth-grant-revocation";
+import { requireOAuthConsentOnRefreshAfterHandler } from "./oauth-refresh-check";
 
 vi.mock("@/modules/ee/sso/lib/better-auth-hooks", () => ({
   ssoRecoveryAfterHandler: vi.fn(),
@@ -21,10 +19,8 @@ vi.mock("./better-auth-two-factor-backfill", () => ({ twoFactorBackfillAfterHand
 vi.mock("./better-auth-verification-autosignin", () => ({
   verificationAutoSignInAfterHandler: vi.fn(),
 }));
-vi.mock("./oauth-grant-revocation", () => ({
-  requireOAuthConsentOnRefreshAfterHandler: vi.fn(),
-  revokeTokensBeyondConsentAfterHandler: vi.fn(),
-}));
+vi.mock("./oauth-grant-revocation", () => ({ revokeTokensBeyondConsentAfterHandler: vi.fn() }));
+vi.mock("./oauth-refresh-check", () => ({ requireOAuthConsentOnRefreshAfterHandler: vi.fn() }));
 
 describe("runAfterAuthHooks", () => {
   test("records the failed-auth audit before the personal-email redirect handler (which throws)", async () => {

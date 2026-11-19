@@ -171,13 +171,13 @@ describe("serializeV3SurveyResource", () => {
   test("exposes the language settings, mapping unset columns to null", () => {
     expect(
       serializeV3SurveyResource(
-        { ...baseSurvey, showLanguageSwitch: true, autoSelectLanguage: true } as TSurvey,
+        { ...baseSurvey, showLanguageSwitch: true, autoSelectLanguage: true },
         TEST_VISIBILITY
       )
     ).toMatchObject({ showLanguageSwitch: true, autoSelectLanguage: true });
     expect(
       serializeV3SurveyResource(
-        { ...baseSurvey, showLanguageSwitch: null, autoSelectLanguage: undefined } as TSurvey,
+        { ...baseSurvey, showLanguageSwitch: null, autoSelectLanguage: undefined },
         TEST_VISIBILITY
       )
     ).toMatchObject({ showLanguageSwitch: null, autoSelectLanguage: null });
@@ -215,7 +215,7 @@ describe("serializeV3SurveyResource", () => {
             link: { storageKey: "plan" },
           },
         ],
-      } as TSurvey,
+      },
       TEST_VISIBILITY
     );
 
@@ -863,7 +863,7 @@ describe("serializeV3SurveyFullListItem (ENG-6861)", () => {
   test("takes the owner's name from the document read, not the page", () => {
     const item = serializeV3SurveyFullListItem(
       listRecord,
-      { survey: { ...document, ownerId: "user_new" } as TSurvey, ownerName: "Linus" },
+      { survey: { ...document, ownerId: "user_new" }, ownerName: "Linus" },
       visibilityContext
     );
 
@@ -924,7 +924,7 @@ describe("option show-if and Hidden round-trip (ENG-6937)", () => {
           )
         )
       );
-    const stored = optionStates(surveyFlowFixture.blocks as never);
+    const stored = optionStates(surveyFlowFixture.blocks);
 
     expect(stored.some((item) => item.showIf)).toBe(true);
     expect(stored.some((item) => item.hidden)).toBe(true);

@@ -9,10 +9,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/ui/components/select";
+import type { TStylingFieldPath, TStylingForm } from "@/modules/ui/components/styling-fields/types";
 
 interface DimensionInputProps {
-  readonly form: any;
-  readonly name: string;
+  readonly form: TStylingForm;
+  readonly name: TStylingFieldPath<string | number | null | undefined>;
   readonly label: string;
   readonly placeholder?: string;
   readonly description?: string;

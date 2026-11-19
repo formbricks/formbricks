@@ -129,41 +129,42 @@ Using Husky and lint-staged for automated checks:
 }
 ```
 
-The hook formats staged files only — ESLint is not part of it. Lint violations are caught by `pnpm lint` and the "Run Linters" CI job.
+The hook also lints the staged files with oxlint (`scripts/lint-staged-oxlint.mjs`): any lint error fails the commit, and so does a cognitive-complexity finding inside the staged lines (the one Sonar-parity rule existing code still violates, so the whole-repo lint leaves it out). `pnpm lint` and the "Run Linters" CI job lint the whole repo.
 
-### ESLint Configuration
-ESLint runs on the flat config format. Every package and app has its own `eslint.config.mjs` that imports one of the composable tiers exported by `@formbricks/config-eslint`:
+### oxlint Configuration
+[oxlint](https://oxc.rs/docs/guide/usage/linter) lints the whole repo in one run from the root: `pnpm lint:code` (about 15 seconds; add `--quiet` for errors only, or use `pnpm lint:fix` to apply autofixes). Every package and app that lints has its own `oxlint.config.ts`, which composes one of the tiers exported by `@formbricks/config-oxlint`; oxlint checks each file against the nearest config.
 
 | Import | Use for |
 | --- | --- |
-| `@formbricks/config-eslint/library` | Node/TypeScript packages |
-| `@formbricks/config-eslint/react` | React packages (react, react-hooks, jsx-a11y) |
-| `@formbricks/config-eslint/react-hooks` | React packages that only need the hooks rules |
-| `@formbricks/config-eslint/next` | Next.js applications |
+| `@formbricks/config-oxlint/library` | Node/TypeScript packages (type-aware) |
+| `@formbricks/config-oxlint/react` | React packages (react, react-hooks, jsx-a11y; type-aware) |
+| `@formbricks/config-oxlint/react-hooks` | React packages that only need the hooks rules |
+| `@formbricks/config-oxlint/next` | Next.js applications |
 
-Every tier builds on `@formbricks/config-eslint/base`, which holds the shared turbo, prettier, vitest and unused-vars conventions. It exports named building blocks rather than a ready-made config, so packages import one of the tiers above instead of `base` directly.
+Every tier builds on `@formbricks/config-oxlint/base`, which holds the shared turbo, vitest and unused-vars conventions and the `compose()` helper that merges config fragments. A package with its own rules composes them after the tier:
 
-The `library` and `react` tiers are factories — call them with the package's `tsconfigRootDir` so the type-aware rules resolve against that package's own tsconfig. The `react-hooks` and `next` tiers are plain arrays a config re-exports or spreads with its own overrides:
+```typescript
+// packages/<pkg>/oxlint.config.ts
+import { defineConfig } from "oxlint";
+import library from "@formbricks/config-oxlint/library";
 
-```javascript
-// packages/<pkg>/eslint.config.mjs
-import library from "@formbricks/config-eslint/library";
-
-export default library({ tsconfigRootDir: import.meta.dirname });
+export default defineConfig(library);
 ```
 
-```javascript
-// apps/web/eslint.config.mjs
-import next from "@formbricks/config-eslint/next";
+```typescript
+// a workspace with its own rules
+import { defineConfig } from "oxlint";
+import { compose } from "@formbricks/config-oxlint/base";
+import library from "@formbricks/config-oxlint/library";
 
-export default [
-  { ignores: [".next/**", "public/**"] },
-  ...next,
-  { rules: { "react-hooks/exhaustive-deps": "warn" } },
-];
+export default defineConfig(
+  compose(library, {
+    overrides: [{ files: ["**/*.test.ts"], rules: { "typescript/unbound-method": "off" } }],
+  })
+);
 ```
 
-Use the extensionless subpaths above — they are the only ones the package exports.
+Disable a rule on one line with `// oxlint-disable-next-line <rule> -- <reason>`; oxlint also honours existing `eslint-disable` comments.
 
 ### Continuous Integration
 - Automated formatting checks in CI/CD pipeline
@@ -174,7 +175,7 @@ Use the extensionless subpaths above — they are the only ones the package expo
 
 ### Required Extensions
 - `esbenp.prettier-vscode` - Prettier formatting
-- `dbaeumer.vscode-eslint` - ESLint integration
+- `oxc.oxc-vscode` - oxlint integration
 - `bradlc.vscode-tailwindcss` - Tailwind CSS support
 
 ### Recommended Settings
@@ -183,8 +184,9 @@ Use the extensionless subpaths above — they are the only ones the package expo
   "editor.formatOnSave": true,
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true
+    "source.fixAll.oxc": "always"
   },
+  "oxc.typeAware": true,
   "typescript.tsdk": "node_modules/typescript/lib"
 }
 ```

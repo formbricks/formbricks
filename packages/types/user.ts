@@ -31,7 +31,7 @@ export const ZUserNotificationSettings = z.object({
 // Declared once so the validator (ZUserName) and the normalizer (normalizeUserName) can never diverge:
 // every string normalizeUserName produces is guaranteed to satisfy ZUserName. `-` stays last so it is
 // a literal, not a range.
-const USER_NAME_ALLOWED_CHARS = "\\p{L}\\p{M} ',.&()\\d-";
+const USER_NAME_ALLOWED_CHARS = String.raw`\p{L}\p{M} ',.&()\d-`;
 
 export const ZUserName = z
   .string()

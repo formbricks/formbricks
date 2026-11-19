@@ -12,7 +12,9 @@ interface EmailChangeSignInProps {
 
 export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<"success" | "error" | "loading">("loading");
+  const [validationStatus, setStatus] = useState<"success" | "error" | "loading">("loading");
+  // Without a token there is nothing to validate.
+  const status = token ? validationStatus : "error";
 
   useEffect(() => {
     const validateToken = async () => {
@@ -30,9 +32,7 @@ export const EmailChangeSignIn = ({ token }: EmailChangeSignInProps) => {
     };
 
     if (token) {
-      validateToken();
-    } else {
-      setStatus("error");
+      void validateToken();
     }
   }, [token]);
 

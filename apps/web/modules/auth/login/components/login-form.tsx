@@ -104,13 +104,23 @@ export const LoginForm = ({
           title: t("auth.login.oauth_misconfigured_title"),
           description: t("auth.login.oauth_misconfigured_description"),
         };
+      case "second_factor_unavailable":
+        return {
+          title: t("auth.login.oauth_second_factor_unavailable_title"),
+          description: t("auth.login.oauth_second_factor_unavailable_description"),
+        };
       case "generic":
         return {
           title: t("auth.login.oauth_generic_error_title"),
           description: t("auth.login.oauth_generic_error_description"),
         };
-      default:
+      case null:
         return null;
+      default: {
+        // A variant without a case would render no alert at all; make that a type error instead.
+        const unhandledVariant: never = oauthErrorVariant;
+        return unhandledVariant;
+      }
     }
   }, [oauthErrorVariant, t]);
 
@@ -193,6 +203,7 @@ export const LoginForm = ({
 
   useEffect(() => {
     if (typeof window !== "undefined") {
+      // eslint-disable-next-line react/set-state-in-effect -- localStorage exists only after hydration; the server renders the default
       setLastLoggedInWith(localStorage.getItem(FORMBRICKS_LOGGED_IN_WITH_LS) || "");
     }
   }, []);
@@ -231,7 +242,7 @@ export const LoginForm = ({
       <div className="text-center">
         <h1 className="mb-4 text-xl font-semibold text-balance text-slate-800">{formLabel}</h1>
         {emailJustVerified && (
-          <Alert variant="success" className="mb-4 text-left" role="status">
+          <Alert variant="success" className="mb-4 text-left" alertRole="status">
             <AlertTitle>{t("auth.login.email_verified_sign_in_title")}</AlertTitle>
             <AlertDescription>
               <p>{t("auth.login.email_verified_sign_in_description")}</p>
@@ -239,7 +250,7 @@ export const LoginForm = ({
           </Alert>
         )}
         {oauthErrorAlert && (
-          <Alert variant="error" className="mb-4 text-left" role="status">
+          <Alert variant="error" className="mb-4 text-left" alertRole="status">
             <AlertTitle>{oauthErrorAlert.title}</AlertTitle>
             <AlertDescription>
               <p>{oauthErrorAlert.description}</p>

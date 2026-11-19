@@ -66,7 +66,7 @@ describe("updateUser", () => {
 
   test("should create a new contact if not found", async () => {
     vi.mocked(prisma.contact.findFirst).mockResolvedValue(null);
-    vi.mocked(prisma.contact.create).mockResolvedValue(mockContactData as any);
+    vi.mocked(prisma.contact.create, { partial: true, deep: true }).mockResolvedValue(mockContactData);
 
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop");
 
@@ -118,7 +118,7 @@ describe("updateUser", () => {
   });
 
   test("should update existing contact attributes and canonicalize the language", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     const newAttributes = { email: "new@example.com", language: "en" };
 
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
@@ -134,7 +134,7 @@ describe("updateUser", () => {
   });
 
   test("should leave an already-canonical language untouched", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     const newAttributes = { email: "new@example.com", language: "de-DE" };
 
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
@@ -148,7 +148,7 @@ describe("updateUser", () => {
   });
 
   test("should drop an invalid (unresolvable) language but keep other attributes", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     const newAttributes = { email: "new@example.com", language: "123" };
 
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
@@ -165,9 +165,11 @@ describe("updateUser", () => {
   });
 
   test("keeps a non-canonical value that is a configured survey-language alias (setLanguage(alias))", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     // Workspace has a German language whose custom alias is the human word "deutsch".
-    vi.mocked(prisma.language.findMany).mockResolvedValue([{ code: "de-DE", alias: "deutsch" }] as any);
+    vi.mocked(prisma.language.findMany, { partial: true, deep: true }).mockResolvedValue([
+      { code: "de-DE", alias: "deutsch" },
+    ]);
     const newAttributes = { email: "new@example.com", language: "deutsch" };
 
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
@@ -183,12 +185,14 @@ describe("updateUser", () => {
   });
 
   test("matches a configured alias case-insensitively and stores the configured casing", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     // Configured alias is lowercase "deutsch"; the SDK sends "DEUTSCH". Matching is case-insensitive
     // everywhere, so it's kept — and normalized to the CONFIGURED casing ("deutsch"), not the caller's
     // ("DEUTSCH"), so the persisted/echoed value stays consistent with the workspace config (mirrors how
     // codes are canonicalized).
-    vi.mocked(prisma.language.findMany).mockResolvedValue([{ code: "de-DE", alias: "deutsch" }] as any);
+    vi.mocked(prisma.language.findMany, { partial: true, deep: true }).mockResolvedValue([
+      { code: "de-DE", alias: "deutsch" },
+    ]);
     const newAttributes = { email: "new@example.com", language: "DEUTSCH" };
 
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
@@ -202,7 +206,7 @@ describe("updateUser", () => {
   });
 
   test("surfaces a falsy-but-real invalid language (e.g. 0) instead of silently dropping it", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     const newAttributes = { email: "new@example.com", language: 0 };
 
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
@@ -215,7 +219,7 @@ describe("updateUser", () => {
   });
 
   test("silently drops a blank / whitespace-only language (no message)", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     const newAttributes = { email: "new@example.com", language: "   " };
 
     const result = await updateUser(mockWorkspaceId, mockUserId, "desktop", newAttributes);
@@ -228,7 +232,7 @@ describe("updateUser", () => {
   });
 
   test("should not update attributes if they are the same", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     const existingAttributes = { email: "test@example.com" }; // Same as in mockContactData
 
     await updateUser(mockWorkspaceId, mockUserId, "desktop", existingAttributes);
@@ -237,7 +241,7 @@ describe("updateUser", () => {
   });
 
   test("should return messages from updateAttributes if any", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     const newAttributes = { company: "Formbricks" };
     const updateMessages = [
       { code: "new_attribute_created", params: { key: "company", dataType: "string" } },
@@ -251,7 +255,7 @@ describe("updateUser", () => {
   });
 
   test("should use device type 'phone'", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     await updateUser(mockWorkspaceId, mockUserId, "phone");
     expect(getPersonSegmentIds).toHaveBeenCalledWith(mockWorkspaceId, mockContactId, mockUserId, "phone", {
       displays: [],
@@ -260,11 +264,21 @@ describe("updateUser", () => {
   });
 
   test("should use device type 'desktop'", async () => {
-    vi.mocked(prisma.contact.findFirst).mockResolvedValue(mockContactData as any);
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
     await updateUser(mockWorkspaceId, mockUserId, "desktop");
     expect(getPersonSegmentIds).toHaveBeenCalledWith(mockWorkspaceId, mockContactId, mockUserId, "desktop", {
       displays: [],
       responses: [],
     });
+  });
+
+  // ENG-3725: a failed segment check must fail the request, not report "no segments".
+  test("fails when the segment membership check fails", async () => {
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
+    vi.mocked(getPersonSegmentIds).mockRejectedValue(new Error("timeout exceeded when trying to connect"));
+
+    await expect(updateUser(mockWorkspaceId, mockUserId, "desktop")).rejects.toThrow(
+      "timeout exceeded when trying to connect"
+    );
   });
 });

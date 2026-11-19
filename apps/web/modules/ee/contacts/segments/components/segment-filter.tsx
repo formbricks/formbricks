@@ -9,7 +9,7 @@ import {
   Trash2,
   Users2Icon,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { z } from "zod";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
@@ -234,20 +234,18 @@ function AttributeSegmentFilter({
 
   const [valueError, setValueError] = useState("");
 
-  // when the operator changes, we need to check if the value is valid
-  useEffect(() => {
-    const { operator } = resource.qualifier;
-
-    if (ARITHMETIC_OPERATORS.includes(operator as TArithmeticOperator)) {
+  // when the operator or value changes, we need to check if the value is valid (during render)
+  const [validatedFilter, setValidatedFilter] = useState<{
+    qualifier: typeof resource.qualifier;
+    value: typeof resource.value;
+  } | null>(null);
+  if (validatedFilter?.qualifier !== resource.qualifier || validatedFilter.value !== resource.value) {
+    setValidatedFilter({ qualifier: resource.qualifier, value: resource.value });
+    if (ARITHMETIC_OPERATORS.includes(resource.qualifier.operator as TArithmeticOperator)) {
       const isNumber = z.coerce.number().safeParse(resource.value);
-
-      if (isNumber.success) {
-        setValueError("");
-      } else {
-        setValueError(t("workspace.segments.value_must_be_a_number"));
-      }
+      setValueError(isNumber.success ? "" : t("workspace.segments.value_must_be_a_number"));
     }
-  }, [resource.qualifier, resource.value, t]);
+  }
 
   const attributeKey = contactAttributeKeys.find((attrKey) => attrKey.key === contactAttributeKey);
   const attrKeyValue = attributeKey?.name ?? attributeKey?.key ?? "";
@@ -295,8 +293,8 @@ function AttributeSegmentFilter({
       const defaultOperator = newAttributeDataType === "date" ? "isOlderThan" : "equals";
       const defaultValue = newAttributeDataType === "date" ? { amount: 1, unit: "days" as const } : "";
 
-      updateOperatorInFilter(updatedSegment.filters, filterId, defaultOperator as any);
-      updateFilterValue(updatedSegment.filters, filterId, defaultValue as any);
+      updateOperatorInFilter(updatedSegment.filters, filterId, defaultOperator);
+      updateFilterValue(updatedSegment.filters, filterId, defaultValue);
     }
 
     setSegment(updatedSegment);
@@ -475,20 +473,18 @@ function PersonSegmentFilter({
   const operatorText = convertOperatorToText(resource.qualifier.operator, t);
   const [valueError, setValueError] = useState("");
 
-  // when the operator changes, we need to check if the value is valid
-  useEffect(() => {
-    const { operator } = resource.qualifier;
-
-    if (ARITHMETIC_OPERATORS.includes(operator as TArithmeticOperator)) {
+  // when the operator or value changes, we need to check if the value is valid (during render)
+  const [validatedFilter, setValidatedFilter] = useState<{
+    qualifier: typeof resource.qualifier;
+    value: typeof resource.value;
+  } | null>(null);
+  if (validatedFilter?.qualifier !== resource.qualifier || validatedFilter.value !== resource.value) {
+    setValidatedFilter({ qualifier: resource.qualifier, value: resource.value });
+    if (ARITHMETIC_OPERATORS.includes(resource.qualifier.operator as TArithmeticOperator)) {
       const isNumber = z.coerce.number().safeParse(resource.value);
-
-      if (isNumber.success) {
-        setValueError("");
-      } else {
-        setValueError(t("workspace.segments.value_must_be_a_number"));
-      }
+      setValueError(isNumber.success ? "" : t("workspace.segments.value_must_be_a_number"));
     }
-  }, [resource.qualifier, resource.value, t]);
+  }
 
   const operatorArr = PERSON_OPERATORS.map((operator) => {
     return {

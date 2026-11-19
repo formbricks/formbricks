@@ -36,8 +36,9 @@ export const InfoTooltipContent = ({
     align={align}
     collisionBoundary={collisionBoundary ?? undefined}
     collisionPadding={8}
-    // The arrow sits outside the box: the default overflow-hidden would clip it.
-    className="max-w-[300px] overflow-visible border-slate-900 bg-slate-900 px-2.5 py-1.5 text-xs leading-relaxed text-white">
+    // The arrow sits outside the box: the default overflow-hidden would clip it. A long unbroken value
+    // (a pasted URL or token) wraps inside the box instead of running past it.
+    className="max-w-[300px] overflow-visible border-slate-900 bg-slate-900 px-2.5 py-1.5 text-xs leading-relaxed [overflow-wrap:anywhere] text-white">
     {children}
     <TooltipPrimitive.Arrow className="fill-slate-900" width={10} height={5} />
   </TooltipContent>

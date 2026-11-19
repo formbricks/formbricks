@@ -30,6 +30,7 @@ const SOURCE = {
  * dashboard's widgets, `touched` how many dashboard rows the `updatedAt` bump hit.
  */
 const fakeTx = ({
+  // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
   source = SOURCE as typeof SOURCE | null,
   takenNames = [] as string[],
   locked = [{ updatedAt: LOCKED_AT }] as { updatedAt: Date }[],

@@ -26,12 +26,15 @@ export const POST = async (request: Request) => {
     }
 
     return NextResponse.json(result.message || { received: true }, { status: 200 });
-  } catch (error: any) {
+  } catch (error) {
     if (error instanceof RequestBodyTooLargeError) {
       return NextResponse.json({ message: "Payload Too Large" }, { status: 413 });
     }
 
-    logger.error(error, `Unhandled error in Stripe webhook POST handler: ${error.message}`);
+    logger.error(
+      error,
+      `Unhandled error in Stripe webhook POST handler: ${error instanceof Error ? error.message : String(error)}`
+    );
     return NextResponse.json({ message: "Internal server error" }, { status: 500 });
   }
 };

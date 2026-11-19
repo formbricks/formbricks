@@ -103,7 +103,7 @@ describe("Response Lib", () => {
     });
 
     test("reject a displayId that does not exist", async () => {
-      vi.mocked(prisma.display.findUnique).mockResolvedValue(null as never);
+      vi.mocked(prisma.display.findUnique).mockResolvedValue(null);
 
       const result = await createResponse(responseInput, resolvedContext);
 
@@ -120,7 +120,7 @@ describe("Response Lib", () => {
       } as never);
       const foreign = await createResponse(responseInput, resolvedContext);
 
-      vi.mocked(prisma.display.findUnique).mockResolvedValue(null as never);
+      vi.mocked(prisma.display.findUnique).mockResolvedValue(null);
       const missing = await createResponse(responseInput, resolvedContext);
 
       expect(foreign.ok).toBe(false);
@@ -165,7 +165,7 @@ describe("Response Lib", () => {
     // The reads happen before the transaction now, but their failures are still reported in the order
     // they always were: display, then contact, then organization.
     test("report a display failure ahead of contact and organization failures", async () => {
-      vi.mocked(prisma.display.findUnique).mockResolvedValue(null as never);
+      vi.mocked(prisma.display.findUnique).mockResolvedValue(null);
 
       const result = await createResponse(responseInput, {
         contact: contactLookupFailed,
@@ -260,8 +260,9 @@ describe("Response Lib", () => {
       const contact = { id: "contactid0000000000000000", attributes: { userId: "user-1" } };
       vi.mocked(loadQuotaEvaluationContext).mockResolvedValue(quotaContext);
       vi.mocked(evaluateResponseQuotas).mockResolvedValue({ shouldEndSurvey: false });
-      vi.mocked(prisma.$transaction).mockImplementation((async (cb: (tx: typeof prisma) => unknown) =>
-        cb(prisma)) as never);
+      vi.mocked(prisma.$transaction).mockImplementation(async (cb: (tx: typeof prisma) => unknown) =>
+        cb(prisma)
+      );
       vi.mocked(prisma.response.create).mockResolvedValue(response);
       vi.mocked(getContactByUserId).mockResolvedValue(ok(contact));
       vi.mocked(getOrganizationIdFromWorkspaceId).mockResolvedValue(ok(organizationId));
@@ -297,8 +298,8 @@ describe("Response Lib", () => {
 
   describe("getResponses", () => {
     test("return responses with meta information", async () => {
-      (prisma.response.findMany as any).mockResolvedValue([response]);
-      (prisma.response.count as any).mockResolvedValue(1);
+      vi.mocked(prisma.response.findMany).mockResolvedValue([response]);
+      vi.mocked(prisma.response.count).mockResolvedValue(1);
 
       const result = await getResponses([workspaceId], responseFilter);
       expect(prisma.response.findMany).toHaveBeenCalled();
@@ -317,8 +318,8 @@ describe("Response Lib", () => {
     });
 
     test("return an internal_server_error error if prisma findMany fails", async () => {
-      (prisma.response.findMany as any).mockRejectedValue(new Error("Internal server error"));
-      (prisma.response.count as any).mockResolvedValue(0);
+      vi.mocked(prisma.response.findMany).mockRejectedValue(new Error("Internal server error"));
+      vi.mocked(prisma.response.count).mockResolvedValue(0);
 
       const result = await getResponses([workspaceId], responseFilter);
       expect(result.ok).toBe(false);
@@ -331,8 +332,8 @@ describe("Response Lib", () => {
     });
 
     test("return an internal_server_error error if prisma count fails", async () => {
-      (prisma.response.findMany as any).mockResolvedValue([response]);
-      (prisma.response.count as any).mockRejectedValue(new Error("Internal server error"));
+      vi.mocked(prisma.response.findMany).mockResolvedValue([response]);
+      vi.mocked(prisma.response.count).mockRejectedValue(new Error("Internal server error"));
 
       const result = await getResponses([workspaceId], responseFilter);
       expect(result.ok).toBe(false);

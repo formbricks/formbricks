@@ -16,6 +16,7 @@ import {
   anySurveyHasFilters,
   checkForInvalidImagesInQuestions,
   checkForInvalidMediaInBlocks,
+  getElementsFromBlocks,
   transformPrismaSurvey,
   validateMediaAndPrepareBlocks,
 } from "./utils";
@@ -143,6 +144,7 @@ describe("anySurveyHasFilters", () => {
       {
         id: "survey1",
         name: "Survey 1",
+        // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
         segment: {
           id: "segment1",
           title: "Segment 1",
@@ -167,6 +169,7 @@ describe("anySurveyHasFilters", () => {
       {
         id: "survey2",
         name: "Survey 2",
+        // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
         segment: {
           id: "segment2",
           filters: [
@@ -776,5 +779,19 @@ describe("validateMediaAndPrepareBlocks", () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].elements[0]).not.toHaveProperty("isDraft");
+  });
+});
+
+describe("getElementsFromBlocks", () => {
+  // A draft saved through `updateSurveyDraftAction`, or a block written by the raw-SQL questions →
+  // blocks migration, can lack `elements`: neither path validates a block's shape (ENG-2497).
+  test("skips a block with no elements array instead of returning undefined entries", () => {
+    const element = { id: "q1", type: TSurveyElementTypeEnum.OpenText } as unknown as TSurveyElement;
+    const blocks = [
+      { id: "b1", name: "Block 1" },
+      { id: "b2", name: "Block 2", elements: [element] },
+    ] as unknown as TSurveyBlock[];
+
+    expect(getElementsFromBlocks(blocks)).toEqual([element]);
   });
 });
