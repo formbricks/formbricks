@@ -44,7 +44,6 @@ const mocks = vi.hoisted(() => ({
   resendInvite: vi.fn(),
   sendInviteMemberEmail: vi.fn(),
   settleInviteRateLimit: vi.fn(),
-  userManagementMinimumRole: { value: "manager" },
 }));
 
 vi.mock("@formbricks/database", () => ({
@@ -72,9 +71,6 @@ vi.mock("@/lib/authorization", () => ({
 vi.mock("@/lib/constants", () => ({
   INVITE_DISABLED: false,
   IS_FORMBRICKS_CLOUD: false,
-  get USER_MANAGEMENT_MINIMUM_ROLE() {
-    return mocks.userManagementMinimumRole.value;
-  },
 }));
 
 vi.mock("@/lib/jwt", () => ({
@@ -399,7 +395,6 @@ describe("user-management role floor", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mocks.userManagementMinimumRole.value = "manager";
     denyManageAccess();
     mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "manager" });
     mocks.getOrganizationIdFromInviteId.mockResolvedValue(organizationId);
@@ -483,47 +478,6 @@ describe("user-management role floor", () => {
       "organization.manage_access",
       expect.anything()
     );
-  });
-
-  test.each(["manager", "owner"])("still lets a team admin invite when the floor is %s", async (floor) => {
-    mocks.userManagementMinimumRole.value = floor;
-    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "member" });
-    mocks.getTeamsWhereUserIsAdmin.mockResolvedValue(["team-1"]);
-
-    await expect(
-      inviteUserAction({
-        ctx,
-        parsedInput: {
-          organizationId,
-          email: "a@example.com",
-          name: "A",
-          role: "member",
-          teamIds: ["team-1"],
-        },
-      } as never)
-    ).resolves.toBe(inviteId);
-  });
-
-  test("refuses a team admin's invite when user management is disabled", async () => {
-    mocks.userManagementMinimumRole.value = "disabled";
-    mocks.getMembershipByUserIdOrganizationId.mockResolvedValue({ role: "member" });
-    mocks.getTeamsWhereUserIsAdmin.mockResolvedValue(["team-1"]);
-    mocks.can.mockResolvedValue(true);
-
-    await expect(
-      inviteUserAction({
-        ctx,
-        parsedInput: {
-          organizationId,
-          email: "a@example.com",
-          name: "A",
-          role: "member",
-          teamIds: ["team-1"],
-        },
-      } as never)
-    ).rejects.toThrow(OperationNotAllowedError);
-
-    for (const write of writes()) expect(write).not.toHaveBeenCalled();
   });
 });
 

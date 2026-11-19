@@ -1,5 +1,4 @@
 import { canManageUsers } from "@/lib/membership/user-management";
-import { isUserManagementDisabled } from "@/lib/membership/user-management-floor";
 import { getTranslate } from "@/lingodotdev/server";
 import { getAccessControlPermission } from "@/modules/ee/license-check/lib/utils";
 import { getTeamsWhereUserIsAdmin } from "@/modules/ee/teams/lib/roles";
@@ -31,8 +30,7 @@ export const TeamsPage = async (props: Readonly<{ params: Promise<{ organization
 
   // Allow user management UI if they're owner/manager OR team admin (when access control is enabled)
   const hasUserManagementAccess =
-    hasStandardUserManagementAccess ||
-    (isAccessControlAllowed && isTeamAdminUser && !isUserManagementDisabled());
+    hasStandardUserManagementAccess || (isAccessControlAllowed && isTeamAdminUser);
 
   return (
     <PageContentWrapper>
