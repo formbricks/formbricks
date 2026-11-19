@@ -265,7 +265,7 @@ function FileUpload({
     e.preventDefault();
     e.stopPropagation();
     const files = getDroppedFileList(e);
-    if (onFileSelect && files.length > 0) {
+    if (onFileSelect && files && files.length > 0) {
       onFileSelect(files);
     }
   };
