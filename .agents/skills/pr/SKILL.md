@@ -72,8 +72,8 @@ most. A link to the PR's Files tab points at nothing. Nothing risky? Say so in o
   [SCREENSHOTS.md](SCREENSHOTS.md). Any other change writes `No UI change`.
 - **Open gaps** lists what you could not verify and why, three bullets at most. It is a claim the
   reviewer challenges, so `none` means you checked. A failure you call pre-existing or noise names the
-  run on `main` that shows it; without one it goes here. One you call flaky names its Linear issue here:
-  "Flaky tests" in `docs/agents/pull-requests.md`.
+  run on `main` that shows it; without one it goes here. One you call flaky names its Linear issue here
+  (see "Flaky tests" in `docs/agents/pull-requests.md`); several flaky issues share one bullet.
 
 All QA for the change happens in this PR, before review; there is no separate release QA pass.
 
