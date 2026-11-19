@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
+import {
+  isSurveysRendererReady,
+  loadSurveysScript,
+} from "@/modules/ui/components/survey/load-surveys-script";
 import { executeRecaptcha, loadRecaptchaScript } from "@/modules/ui/components/survey/recaptcha";
 import { getSurveysScriptUrl } from "@/modules/ui/components/survey/script-url";
 
@@ -38,18 +42,7 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
     isLoadingScript = true;
     try {
       const scriptUrl = getSurveysScriptUrl(props.appUrl, props.rendererVersion);
-      const response = await fetch(scriptUrl, IS_DEVELOPMENT_BUILD ? { cache: "no-store" } : {});
-
-      if (!response.ok) {
-        throw new Error("Failed to load the surveys package");
-      }
-
-      const scriptContent = await response.text();
-      const scriptElement = document.createElement("script");
-
-      scriptElement.textContent = scriptContent;
-
-      document.head.appendChild(scriptElement);
+      await loadSurveysScript(scriptUrl, IS_DEVELOPMENT_BUILD ? { cache: "no-store" } : {});
       setIsScriptLoaded(true);
       hasLoadedRef.current = true;
     } finally {
@@ -64,7 +57,7 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
     }
 
     const loadScript = async () => {
-      if (!window.formbricksSurveys) {
+      if (!isSurveysRendererReady()) {
         try {
           if (props.isSpamProtectionEnabled && props.recaptchaSiteKey) {
             await loadRecaptchaScript(props.recaptchaSiteKey);
