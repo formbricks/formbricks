@@ -112,6 +112,16 @@ describe("createTemplateKeyedRateLimitStorage (ENG-7399)", () => {
     ]);
   });
 
+  test.each([undefined, 0, Number.NaN])(
+    "falls back to a 10 s window when a rule's window is %s",
+    async (window) => {
+      const { storage, increment } = setup([1]);
+      const outcome = await storage.consume("203.0.113.7|/get-session", { window: window as number, max: 1 });
+      expect(increment).toHaveBeenCalledWith("203.0.113.7|/get-session|10", 10);
+      expect(outcome).toEqual({ allowed: true, retryAfter: null });
+    }
+  );
+
   test("allows up to max, then refuses with the window as retry-after", async () => {
     const { storage } = setup([5, 6]);
     expect(await storage.consume("203.0.113.7|/sign-in/email", { window: 60, max: 5 })).toEqual({

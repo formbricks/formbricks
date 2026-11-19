@@ -89,11 +89,16 @@ describe("rate-limit counters keyed per endpoint template (ENG-7399)", () => {
     expect(await countersOf(ip)).toEqual([`${ip}|/reset-password/:token|60`]);
     // A request Better Auth gives another rule counts apart, so it can't reset this counter's TTL.
     expect(
-      await storage.consume(createRateLimitKey(ip, "/reset-password/x"), { window: 10, max: 100 })
+      // `max: 1`: had it shared the 60 s counter (already at 7), this would be refused.
+      await storage.consume(createRateLimitKey(ip, "/reset-password/x"), { window: 10, max: 1 })
     ).toEqual({
       allowed: true,
       retryAfter: null,
     });
+    expect(await countersOf(ip)).toEqual([
+      `${ip}|/reset-password/:token|10`,
+      `${ip}|/reset-password/:token|60`,
+    ]);
     expect(createAuthPathTemplateMatcher(declaredPaths)("/reset-password/abc")).toBe(
       "/reset-password/:token"
     );

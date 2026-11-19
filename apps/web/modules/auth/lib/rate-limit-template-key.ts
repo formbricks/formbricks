@@ -3,6 +3,9 @@ import { createHash } from "node:crypto";
 
 type TRateLimitStorage = NonNullable<NonNullable<BetterAuthOptions["rateLimit"]>["customStorage"]>;
 
+// Better Auth's own fallback window, in seconds, when a rule sets none.
+const BETTER_AUTH_DEFAULT_WINDOW_SECONDS = 10;
+
 /** The template every path that names no endpoint is counted under, one bucket per client (ENG-7399). */
 export const UNMATCHED_AUTH_PATH_TEMPLATE = "/:unmatched";
 
@@ -98,10 +101,11 @@ export const createTemplateKeyedRateLimitStorage = ({
           ? `sha256:${createHash("sha256").update(key).digest("base64url")}`
           : `${key.slice(0, separator)}|${getTemplateOf()(key.slice(separator + 1))}`;
 
-      const count = await increment(`${counterKey}|${rule.window}`, rule.window);
-      return count <= rule.max
-        ? { allowed: true, retryAfter: null }
-        : { allowed: false, retryAfter: rule.window };
+      // Better Auth always passes a window today; a rule without one must not reach EXPIRE as "undefined",
+      // which would leave the counter with no TTL and lock the client out for good.
+      const window = rule.window > 0 ? rule.window : BETTER_AUTH_DEFAULT_WINDOW_SECONDS;
+      const count = await increment(`${counterKey}|${window}`, window);
+      return count <= rule.max ? { allowed: true, retryAfter: null } : { allowed: false, retryAfter: window };
     },
   };
 };
