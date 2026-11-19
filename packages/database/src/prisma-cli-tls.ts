@@ -71,6 +71,53 @@ const isFile = (filePath: string): boolean => {
 const nonEmpty = (value: string | null | undefined): string | undefined =>
   value === null || value === undefined || value === "" ? undefined : value;
 
+interface TTlsRequest {
+  sslAccept: string | null;
+  sslMode?: string;
+  sslRootCert?: string;
+}
+
+/** Reads the URL's (or the environment's) TLS settings and rejects ones the CLI cannot honour. */
+const readTlsRequest = (params: URLSearchParams, env: NodeJS.ProcessEnv): TTlsRequest => {
+  const sslMode = nonEmpty(lastParam(params, "sslmode")) ?? nonEmpty(env.PGSSLMODE);
+  const sslRootCert = nonEmpty(lastParam(params, "sslrootcert")) ?? nonEmpty(env.PGSSLROOTCERT);
+
+  if (sslMode !== undefined && !SSL_MODES.has(sslMode)) {
+    throw new PrismaCliTlsConfigError(
+      `Unsupported sslmode "${sslMode}" in the database URL; use one of ${[...SSL_MODES].join(", ")}.`
+    );
+  }
+  // libpq: sslrootcert=system defaults to verify-full and rejects any weaker sslmode.
+  if (sslRootCert === SYSTEM_ROOT_CERT && sslMode !== undefined && sslMode !== VERIFY_FULL) {
+    throw new PrismaCliTlsConfigError(
+      `sslrootcert=system requires sslmode=verify-full, but the database URL sets sslmode=${sslMode}.`
+    );
+  }
+
+  return { sslAccept: lastParam(params, "sslaccept"), sslMode, sslRootCert };
+};
+
+const requestsVerification = ({ sslMode, sslRootCert }: TTlsRequest): boolean =>
+  sslMode === VERIFY_CA ||
+  sslMode === VERIFY_FULL ||
+  sslRootCert === SYSTEM_ROOT_CERT ||
+  (sslMode === REQUIRE && sslRootCert !== undefined);
+
+const resolveRootCertFile = (
+  sslRootCert: string | undefined,
+  fileExists: (filePath: string) => boolean
+): string | undefined => {
+  if (sslRootCert === undefined || sslRootCert === SYSTEM_ROOT_CERT) return undefined;
+
+  const rootCertFile = path.resolve(sslRootCert);
+  if (!fileExists(rootCertFile)) {
+    throw new PrismaCliTlsConfigError(
+      `Root certificate file "${rootCertFile}" from sslrootcert is not a readable file; the database server cannot be verified.`
+    );
+  }
+  return rootCertFile;
+};
+
 /** Translates libpq TLS settings in `databaseUrl` into the parameters the Prisma CLI honours. */
 export const resolvePrismaCliTls = (
   databaseUrl: string,
@@ -78,36 +125,18 @@ export const resolvePrismaCliTls = (
   fileExists: (filePath: string) => boolean = isFile
 ): TPrismaCliTls => {
   const parts = splitConnectionUrl(databaseUrl);
-  const sslAccept = lastParam(parts.params, "sslaccept");
-  const sslMode = nonEmpty(lastParam(parts.params, "sslmode")) ?? nonEmpty(env.PGSSLMODE);
-  const sslRootCert = nonEmpty(lastParam(parts.params, "sslrootcert")) ?? nonEmpty(env.PGSSLROOTCERT);
+  const request = readTlsRequest(parts.params, env);
+  const { sslAccept } = request;
+  const checksCertificate = sslAccept !== null && sslAccept !== ACCEPT_INVALID_CERTS;
 
-  if (sslMode !== undefined && !SSL_MODES.has(sslMode)) {
-    throw new PrismaCliTlsConfigError(
-      `Unsupported sslmode "${sslMode}" in the database URL; use one of ${[...SSL_MODES].join(", ")}.`
-    );
-  }
-
-  const usesSystemRoots = sslRootCert === SYSTEM_ROOT_CERT;
-
-  // libpq: sslrootcert=system defaults to verify-full and rejects any weaker sslmode.
-  if (usesSystemRoots && sslMode !== undefined && sslMode !== VERIFY_FULL) {
-    throw new PrismaCliTlsConfigError(
-      `sslrootcert=system requires sslmode=verify-full, but the database URL sets sslmode=${sslMode}.`
-    );
-  }
-
-  const verifies =
-    sslMode === VERIFY_CA ||
-    sslMode === VERIFY_FULL ||
-    usesSystemRoots ||
-    (sslMode === REQUIRE && sslRootCert !== undefined);
-
-  if (!verifies) {
-    return {
-      databaseUrl,
-      verifiesServerCertificate: sslAccept !== null && sslAccept !== ACCEPT_INVALID_CERTS,
-    };
+  if (!requestsVerification(request)) {
+    // sslaccept alone (Prisma's own way to ask for a checked certificate) leaves Prisma at prefer, which
+    // falls back to plaintext; the app's pg connections require TLS for it, so the CLI must too.
+    if (!checksCertificate || request.sslMode !== undefined) {
+      return { databaseUrl, verifiesServerCertificate: checksCertificate };
+    }
+    parts.params.set("sslmode", REQUIRE);
+    return { databaseUrl: joinConnectionUrl(parts), verifiesServerCertificate: true };
   }
 
   // Prisma reads verify-ca and verify-full as prefer, which falls back to plaintext when the server (or
@@ -121,16 +150,7 @@ export const resolvePrismaCliTls = (
     return { databaseUrl: joinConnectionUrl(parts), verifiesServerCertificate: false };
   }
 
-  let rootCertFile: string | undefined;
-  if (sslRootCert !== undefined && !usesSystemRoots) {
-    rootCertFile = path.resolve(sslRootCert);
-    if (!fileExists(rootCertFile)) {
-      throw new PrismaCliTlsConfigError(
-        `Root certificate file "${rootCertFile}" from sslrootcert is not a readable file; the database server cannot be verified.`
-      );
-    }
-  }
-
+  const rootCertFile = resolveRootCertFile(request.sslRootCert, fileExists);
   // An explicit sslaccept other than accept_invalid_certs is strict to Prisma too, so keep the operator's.
   if (sslAccept === null) parts.params.set("sslaccept", "strict");
 
@@ -176,19 +196,24 @@ export const preparePrismaCliEnvironment = async (
   // check and the CLI reading it, and an empty directory that stops OpenSSL searching the OS one.
   const workDir = await fs.mkdtemp(path.join(os.tmpdir(), "formbricks-prisma-ca-"));
   const cleanup = () => fs.rm(workDir, { recursive: true, force: true });
+  const caCopy = path.join(workDir, "ca.pem");
+  const emptyCertDir = path.join(workDir, "certs");
   try {
-    const caCopy = path.join(workDir, "ca.pem");
-    const emptyCertDir = path.join(workDir, "certs");
     await fs.copyFile(tls.rootCertFile, caCopy);
-    await fs.mkdir(emptyCertDir);
-    env.SSL_CERT_FILE = caCopy;
-    env.SSL_CERT_DIR = emptyCertDir;
   } catch (err) {
     await cleanup();
     throw new PrismaCliTlsConfigError(
       `Root certificate file "${tls.rootCertFile}" from sslrootcert could not be read (${(err as NodeJS.ErrnoException).code ?? "error"}).`
     );
   }
+  try {
+    await fs.mkdir(emptyCertDir);
+  } catch (err) {
+    await cleanup();
+    throw err;
+  }
+  env.SSL_CERT_FILE = caCopy;
+  env.SSL_CERT_DIR = emptyCertDir;
 
   return { env, verifiesServerCertificate: true, cleanup };
 };

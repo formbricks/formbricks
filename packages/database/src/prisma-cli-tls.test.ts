@@ -72,6 +72,15 @@ describe("resolvePrismaCliTls", () => {
     }
   });
 
+  test("requires TLS when sslaccept asks for a checked certificate without an sslmode", () => {
+    expect(resolve(`${base}?sslaccept=strict`)).toEqual({
+      databaseUrl: `${base}?sslaccept=strict&sslmode=require`,
+      verifiesServerCertificate: true,
+    });
+    const optOut = `${base}?sslaccept=accept_invalid_certs`;
+    expect(resolve(optOut)).toEqual({ databaseUrl: optOut, verifiesServerCertificate: false });
+  });
+
   test("leaves a URL without TLS settings untouched", () => {
     expect(resolve(base)).toEqual({ databaseUrl: base, verifiesServerCertificate: false });
   });

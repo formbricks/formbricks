@@ -37,6 +37,10 @@ const getMigrationDatabaseUrl = (): string | undefined => {
 };
 
 const migrationDatabaseUrl = getMigrationDatabaseUrl();
+const requireMigrationDatabaseUrl = (): string => {
+  if (!migrationDatabaseUrl) throw new Error("DATABASE_URL or MIGRATE_DATABASE_URL is required");
+  return migrationDatabaseUrl;
+};
 const prisma = new PrismaClient({ adapter: createPrismaPgAdapter(migrationDatabaseUrl).adapter });
 const TRANSACTION_TIMEOUT = 30 * 60 * 1000; // 30 minutes
 
@@ -413,10 +417,9 @@ const runSchemaMigrationBatch = async (
     // subprocess without leaking into the parent's env. The URL's libpq TLS
     // settings are translated first: the CLI ignores verify-ca/verify-full.
     const prismaBin = await resolvePrismaBin();
-    if (!migrationDatabaseUrl) throw new Error("DATABASE_URL or MIGRATE_DATABASE_URL is required");
     await runPrismaCli(prismaBin, ["migrate", "deploy", "--config", PRISMA_CONFIG_PATH], {
       cwd: REPO_ROOT_DIR,
-      databaseUrl: migrationDatabaseUrl,
+      databaseUrl: requireMigrationDatabaseUrl(),
     });
     logger.info(`Successfully applied schema migration batch (${batch.length.toString()})`);
   } catch (err) {
@@ -544,8 +547,7 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
 
 export async function applyMigrations(phase: MigrationRunPhase = "maintenance"): Promise<void> {
   try {
-    if (!migrationDatabaseUrl) throw new Error("DATABASE_URL or MIGRATE_DATABASE_URL is required");
-    assertPrismaCliTlsSupported(migrationDatabaseUrl);
+    assertPrismaCliTlsSupported(requireMigrationDatabaseUrl());
     const allMigrations = await loadMigrations();
     logger.info(
       `Loaded ${allMigrations.length.toString()} migrations from ${MIGRATIONS_DIR} (source: ${

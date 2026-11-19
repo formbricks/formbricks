@@ -62,6 +62,28 @@ const startFakePostgres = async (key: string, cert: string): Promise<TFakeServer
   };
 };
 
+/** A server that declines TLS ('N'), as an attacker would, and counts clients that carry on in plaintext. */
+const startTlsDecliningServer = async () => {
+  let plaintextStartups = 0;
+  const server = net.createServer((socket) => {
+    socket.once("data", (data: Buffer) => {
+      if (!data.subarray(0, 8).equals(SSL_REQUEST)) return socket.destroy();
+      socket.write("N");
+      socket.once("data", () => {
+        plaintextStartups += 1;
+        socket.destroy();
+      });
+    });
+    socket.on("error", () => socket.destroy());
+  });
+  await new Promise<void>((resolve) => server.listen(0, resolve));
+  return {
+    port: (server.address() as net.AddressInfo).port,
+    plaintextStartups: () => plaintextStartups,
+    close: () => new Promise<void>((resolve) => server.close(() => resolve())),
+  };
+};
+
 describe.runIf(canRun)("Prisma CLI TLS verification", () => {
   let workDir: string;
   let caFile: string;
@@ -184,6 +206,40 @@ describe.runIf(canRun)("Prisma CLI TLS verification", () => {
       await cli.cleanup();
     }
   }, 90_000);
+
+  test("a raw verify-full URL continues in plaintext when TLS is declined; the translated one never does", async () => {
+    const decliner = await startTlsDecliningServer();
+    const declinerUrl = (query: string) =>
+      `postgresql://u:p@localhost:${decliner.port.toString()}/db?${query}`;
+    const run = (env: NodeJS.ProcessEnv) =>
+      execFileAsync(prismaBin, ["migrate", "deploy", "--config", "prisma.config.mjs"], {
+        cwd: workDir,
+        env,
+        timeout: 60_000,
+      }).catch(() => undefined);
+    try {
+      await run({ ...process.env, DATABASE_URL: declinerUrl("sslmode=verify-full&sslaccept=strict") });
+      // If this starts failing, Prisma no longer reads verify-full as prefer: revisit prisma-cli-tls.
+      expect(decliner.plaintextStartups()).toBeGreaterThan(0);
+
+      const before = decliner.plaintextStartups();
+      for (const query of [
+        "sslmode=verify-full&sslaccept=strict",
+        "sslmode=verify-full",
+        "sslaccept=strict",
+      ]) {
+        const cli = await preparePrismaCliEnvironment(declinerUrl(query), {});
+        try {
+          await run({ ...process.env, ...cli.env });
+        } finally {
+          await cli.cleanup();
+        }
+      }
+      expect(decliner.plaintextStartups()).toBe(before);
+    } finally {
+      await decliner.close();
+    }
+  }, 180_000);
 
   test("the translated URL refuses a certificate that does not match the host", async () => {
     // The certificate names localhost only, so 127.0.0.1 must fail even with the signing CA.
