@@ -10,4 +10,5 @@ A Webhook trigger accepts any POST to its Webhook Secret URL, as Slack and Disco
 ## Consequences
 
 - Authentication can be extended later without breaking existing callers: an optional bearer-token header for more controlled integrations, then HMAC signatures for sender verification and replay protection (ENG-7118). The Secret URL stays the default.
-- Because the token travels in the path, every layer that records request paths (application logs, error reporting, the edge proxy's access logs) must redact it.
+- Because the token travels in the path, every layer that records request paths must redact it: application logs, traces, error reporting, analytics, session recordings and the edge proxy's access logs.
+- One exception: load-balancer, WAF and CDN access logs cannot rewrite a path segment, so they keep the token. They are treated as restricted security archives that only infrastructure staff can read, and a URL that leaks from one is fixed with Regenerate. Turning those logs off would cost more security than the token exposure does (ENG-7178).
