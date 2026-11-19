@@ -10,7 +10,7 @@ import {
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { resolveV3ResponsesActorContext } from "@/app/api/v3/responses/lib/visibility";
 import { buildVisibleSurveyWhere } from "@/lib/survey/visibility/predicate";
-import { getTag, getTagsByWorkspaceId } from "@/lib/tag/service";
+import { getTag, getTagInWorkspace, getTagsByWorkspaceId } from "@/lib/tag/service";
 import { getTagsOnResponsesCount } from "@/lib/tagOnResponse/service";
 import { deleteTag, mergeTags, updateTagName } from "@/modules/workspaces/settings/lib/tag";
 import { serializeV3Tag } from "../serializers";
@@ -164,13 +164,11 @@ export async function mergeV3Tags(
   }
 
   // Both tags must live in the same workspace, or merging would move responses across a tenant
-  // boundary. The server action checked this too; it is the one rule that needs the second tag loaded.
-  const target = await getTag(newTagId);
+  // boundary. The target is looked up only inside the source's workspace, so one in another workspace
+  // gets the same answer as an id that names no tag, and can't be probed for (ENG-2858).
+  const target = await getTagInWorkspace(newTagId, authorized.tag.workspaceId);
   if (!target) {
     return problemForbidden(requestId, "You are not authorized to access this resource", instance);
-  }
-  if (target.workspaceId !== authorized.tag.workspaceId) {
-    return problemForbidden(requestId, "Tags must be in the same workspace", instance);
   }
 
   if (auditLog) {

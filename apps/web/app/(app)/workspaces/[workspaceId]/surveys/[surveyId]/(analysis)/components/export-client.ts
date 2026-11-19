@@ -79,7 +79,7 @@ export const requestExport = async ({
   for (;;) {
     const { done, value } = await reader.read();
     if (done) break;
-    chunks.push(value as Uint8Array<ArrayBuffer>);
+    chunks.push(value);
     received += value.byteLength;
     counter?.write(value);
     onProgress?.(received);

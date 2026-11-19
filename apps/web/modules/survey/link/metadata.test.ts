@@ -47,7 +47,7 @@ describe("link-survey metadata", () => {
   const mockDescription = "Please complete this survey.";
   const mockOgImageUrl = "https://example.com/custom-image.png";
   const answeredWith = (finished: boolean) =>
-    vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => ({ id: "r1", finished }) as never);
+    vi.mocked(getResponseBySingleUseId).mockReturnValue(async () => ({ id: "r1", finished }));
 
   beforeEach(() => {
     vi.resetAllMocks();
@@ -171,7 +171,7 @@ describe("link-survey metadata", () => {
       ogTitle: mockOgTitle,
       description: mockDescription,
       survey: null,
-      ogImage: mockOgImageUrl as unknown as Awaited<ReturnType<typeof getBasicSurveyMetadata>>["ogImage"],
+      ogImage: mockOgImageUrl,
     });
 
     const result = await getMetadataForLinkSurvey({ surveyId: mockSurveyId });

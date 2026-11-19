@@ -14,7 +14,7 @@ export const I18nProvider = ({ language, children }: { language: string; childre
   // re-render the switch triggers.
   const [languageAppliedOnMount] = useState<string | null>(() => {
     if (!hasLanguageLoaded(language) || i18n.language === toI18nLanguage(language)) return null;
-    i18n.changeLanguage(toI18nLanguage(language));
+    void i18n.changeLanguage(toI18nLanguage(language));
     return language;
   });
   // The language i18next has been pointed at on this provider's behalf. Null until that happens, and
@@ -33,7 +33,7 @@ export const I18nProvider = ({ language, children }: { language: string; childre
     let cancelled = false;
     void loadLanguage(language).then(() => {
       if (cancelled) return;
-      i18n.changeLanguage(toI18nLanguage(language));
+      void i18n.changeLanguage(toI18nLanguage(language));
       appliedLanguageRef.current = language;
       setIsReady(true);
     });

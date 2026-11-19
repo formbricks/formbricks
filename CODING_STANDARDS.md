@@ -71,6 +71,9 @@ These remain review checks until their enforcement handles the repository's exis
   tool that writes) needs it: it gains its OpenAPI contract and stability promise, and the app moves to the
   public route rather than keeping an internal twin. A feature built for external callers from day one
   starts public, as dashboards did ([ADR-0002](docs/adr/0002-the-app-uses-the-public-dashboard-api.md)).
+- A public `/api/v3` operation ships with its MCP tool in the same PR, so agents can do what API keys can.
+  Exceptions are allowed, such as hard deletes, when the PR names them and says why. "Adding a tool" in
+  `docs/development/technical-handbook/mcp-server.mdx` covers the tool side.
 - The route framework is in `AGENTS.md` under "Architecture & Patterns" and "API v3".
 - Paths name resources, and each response uses the method and status code HTTP defines for the case. Writes
   that can race take the `updatedAt` compare-and-set (409 on mismatch); writes a retry could repeat are
@@ -289,7 +292,9 @@ Do not:
 - Do not write component or UI unit tests for `.tsx` files. **This is not an instruction to write an E2E
   test instead**: the absence of a component unit test creates no coverage obligation. If a component holds
   logic worth proving, lift that logic into a `.ts` module and unit-test it there; the rendering is
-  exercised incidentally by the feature journeys that already cross it.
+  exercised incidentally by the feature journeys that already cross it. When the lift serves a bug fix, make
+  it a commit of its own that keeps the behaviour unchanged, and fix in the next commit: `unit (red on main)`
+  then means red on the lift commit, and the Coverage row names it.
 - Do not E2E a component. A language selector, a breadcrumb, a sidebar's link list, an ARIA attribute on
   one widget, a keystroke inside one editor, a field's validation message, a search box filtering a list —
   none of these justify a browser, a login, and a seeded tenant.

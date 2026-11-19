@@ -79,7 +79,7 @@ export const CreateWorkspaceModal = ({
         toast.error(errorMessage);
       }
     };
-    fetchModalData();
+    void fetchModalData();
   }, [open, organizationId]);
 
   const { isSubmitting } = form.formState;

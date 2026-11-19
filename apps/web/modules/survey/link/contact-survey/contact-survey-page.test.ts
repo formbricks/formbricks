@@ -55,14 +55,14 @@ describe("ContactSurveyPage single-use response handoff", () => {
     vi.mocked(getLinkSurveySingleUseAccess).mockReturnValue({
       allowed: true,
       singleUseId: "single-use-1",
-    } as never);
+    });
     vi.mocked(verifyContactSurveyToken).mockReturnValue({
       ok: true,
       data: { surveyId: "survey-1", contactId: "contact-1" },
     } as never);
     vi.mocked(getTranslate).mockResolvedValue(createInstance().getFixedT("en-US"));
     vi.mocked(getWorkspaceContextForLinkSurvey).mockResolvedValue({ workspace: {} } as never);
-    vi.mocked(findMatchingLocale).mockResolvedValue("en-US" as never);
+    vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
     vi.mocked(getAcceptedLanguages).mockResolvedValue([]);
   });
 
@@ -84,9 +84,10 @@ describe("ContactSurveyPage single-use response handoff", () => {
   });
 
   test("does not reject an unfinished contact response before checking the single-use response", async () => {
-    vi.mocked(getExistingContactResponse).mockReturnValue(
-      async () => ({ id: "response-1", finished: false }) as never
-    );
+    vi.mocked(getExistingContactResponse).mockReturnValue(async () => ({
+      id: "response-1",
+      finished: false,
+    }));
 
     await ContactSurveyPage({
       params: Promise.resolve({ jwt: "contact-token" }),
@@ -99,9 +100,7 @@ describe("ContactSurveyPage single-use response handoff", () => {
   });
 
   test("keeps the submitted response screen for a finished contact response", async () => {
-    vi.mocked(getExistingContactResponse).mockReturnValue(
-      async () => ({ id: "response-1", finished: true }) as never
-    );
+    vi.mocked(getExistingContactResponse).mockReturnValue(async () => ({ id: "response-1", finished: true }));
 
     const result = await ContactSurveyPage({
       params: Promise.resolve({ jwt: "contact-token" }),
@@ -113,10 +112,11 @@ describe("ContactSurveyPage single-use response handoff", () => {
   });
 
   test("resumes the contact's own unfinished response when the link is not single-use", async () => {
-    vi.mocked(getLinkSurveySingleUseAccess).mockReturnValue({ allowed: true } as never);
-    vi.mocked(getExistingContactResponse).mockReturnValue(
-      async () => ({ id: "contact-response-1", finished: false }) as never
-    );
+    vi.mocked(getLinkSurveySingleUseAccess).mockReturnValue({ allowed: true });
+    vi.mocked(getExistingContactResponse).mockReturnValue(async () => ({
+      id: "contact-response-1",
+      finished: false,
+    }));
 
     await ContactSurveyPage({
       params: Promise.resolve({ jwt: "contact-token" }),

@@ -32,7 +32,7 @@ describe("LinkSurveyPage single-use response handoff", () => {
     vi.mocked(getLinkSurveySingleUseAccess).mockReturnValue({
       allowed: true,
       singleUseId: "single-use-1",
-    } as never);
+    });
     vi.mocked(getResponseBySingleUseId).mockReturnValue(
       async () =>
         ({
@@ -43,7 +43,7 @@ describe("LinkSurveyPage single-use response handoff", () => {
         }) as never
     );
     vi.mocked(getWorkspaceContextForLinkSurvey).mockResolvedValue({ workspace: {} } as never);
-    vi.mocked(findMatchingLocale).mockResolvedValue("en-US" as never);
+    vi.mocked(findMatchingLocale).mockResolvedValue("en-US");
     vi.mocked(getAcceptedLanguages).mockResolvedValue([]);
   });
 

@@ -31,6 +31,7 @@ import {
   getSurveyToAutosave,
   isCustomCssBlockingManualSave,
 } from "@/modules/survey/editor/lib/custom-css-autosave";
+import { withPageDates } from "@/modules/survey/editor/lib/survey-dates";
 import { buildSurveySavePayload } from "@/modules/survey/editor/lib/survey-save-payload";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { TSurveyDraft } from "@/modules/survey/editor/types/survey";
@@ -83,6 +84,12 @@ interface SurveyMenuBarProps {
   visibilityGate: TSurveyVisibilityUiGate;
   /** The effective visibility, from the server; pending counts as restricted. */
   effectiveVisibility: TSurveyVisibility;
+  /**
+   * The refresh after a visibility change has not landed yet, so `effectiveVisibility` may still be the
+   * old value. Activate waits for it: acting on the old value skips the "Who can view this survey?"
+   * question for a survey just restricted, or asks it for one just made visible.
+   */
+  isVisibilityRefreshing: boolean;
   /** A change was stored (in effect or pending): the editor refreshes what it shows from the server. */
   onVisibilityChanged: () => void;
   onVisibilityNotEnabled: () => void;
@@ -119,6 +126,7 @@ export const SurveyMenuBar = ({
   isStorageConfigured = true,
   visibilityGate,
   effectiveVisibility,
+  isVisibilityRefreshing,
   onVisibilityChanged,
   onVisibilityNotEnabled,
   surveyAccess,
@@ -548,7 +556,7 @@ export const SurveyMenuBar = ({
       attempt = saveAttemptOrder.begin();
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
-      const updatedSurveyResponse = await updateSurveyAction({ ...surveyToSave, segment });
+      const updatedSurveyResponse = await updateSurveyAction(withPageDates({ ...surveyToSave, segment }));
 
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
@@ -615,11 +623,7 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      const publishResult = await updateSurveyAction({
-        ...localSurvey,
-        status,
-        segment,
-      });
+      const publishResult = await updateSurveyAction(withPageDates({ ...localSurvey, status, segment }));
 
       if (!publishResult?.data) {
         onSystemError(getFormattedErrorMessage(publishResult));
@@ -665,11 +669,7 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      const scheduleResult = await updateSurveyAction({
-        ...localSurvey,
-        status,
-        segment,
-      });
+      const scheduleResult = await updateSurveyAction(withPageDates({ ...localSurvey, status, segment }));
 
       if (!scheduleResult?.data) {
         onSystemError(getFormattedErrorMessage(scheduleResult));
@@ -856,7 +856,7 @@ export const SurveyMenuBar = ({
         {localSurvey.status === "draft" && (!audiencePrompt || isLinkSurvey) && (
           <Button
             size="sm"
-            disabled={isSurveySaving}
+            disabled={isSurveySaving || isVisibilityRefreshing}
             loading={isSurveyPublishing}
             onClick={handleActivateClick}>
             {draftPrimaryLabel}

@@ -26,6 +26,30 @@ const tuple = (
   },
 });
 
+describe("MCP grant selections (ENG-7153)", () => {
+  test.each(["organization", "workspace"] as const)(
+    "maps %s#mcp_grant@mcp_grant to the grant's selection row",
+    (resourceType) => {
+      expect(toSourceRef(tuple(resourceType, "res-1", "mcp_grant", "mcp_grant", "grant-1"))).toEqual({
+        grantId: "grant-1",
+        kind: "mcpGrantSelection",
+        resourceId: "res-1",
+        resourceType,
+      });
+    }
+  );
+
+  test("leaves a grant relation with another subject unrecognized", () => {
+    expect(toSourceRef(tuple("workspace", "ws-1", "mcp_grant", "user", "user-1"))).toBeNull();
+  });
+
+  test("reports a selection whose row changed as a mismatch, not as clean", () => {
+    const expected = [tuple("workspace", "ws-1", "mcp_grant", "mcp_grant", "grant-1")];
+    expect(findMismatchedPermissionRelations(expected, expected)).toEqual([]);
+    expect(summarizeObservation(expected).unmanaged).toEqual([]);
+  });
+});
+
 describe("toSourceRef", () => {
   test.each(["owner", "manager", "member", "billing"])(
     "maps organization#%s@user to the membership row",

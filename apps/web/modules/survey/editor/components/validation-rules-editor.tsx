@@ -89,7 +89,7 @@ export const ValidationRulesEditor = ({
         params: createRuleParams(defaultRuleType, defaultValue),
         // For address/contact info, set field to first available field if not set
         field: needsFieldSelector && fieldOptions.length > 0 ? fieldOptions[0].value : undefined,
-      } as TValidationRule;
+      };
       onUpdateValidation({ rules: [newRule], logic: validationLogic });
     }
   };
@@ -133,7 +133,7 @@ export const ValidationRulesEditor = ({
       type: newRuleType,
       params: createRuleParams(newRuleType, defaultValue),
       field: defaultField,
-    } as TValidationRule;
+    };
     const newRules = [...validationRules];
     newRules.splice(insertAfterIndex + 1, 0, newRule);
     onUpdateValidation({ rules: newRules, logic: validationLogic });
@@ -179,7 +179,7 @@ export const ValidationRulesEditor = ({
         ...rule,
         type: newType,
         params: createRuleParams(newType),
-      } as TValidationRule;
+      };
     });
     onUpdateValidation({ rules: updated, logic: validationLogic });
   };
@@ -206,7 +206,7 @@ export const ValidationRulesEditor = ({
           ...updatedRule,
           type: availableRulesForField[0],
           params: createRuleParams(availableRulesForField[0]),
-        } as TValidationRule;
+        };
       }
     }
 
@@ -227,7 +227,7 @@ export const ValidationRulesEditor = ({
       return {
         ...rule,
         params: createRuleParams(ruleType, parsedValue),
-      } as TValidationRule;
+      };
     });
     onUpdateValidation({ rules: updated, logic: validationLogic });
   };
@@ -237,7 +237,7 @@ export const ValidationRulesEditor = ({
   const handleRuleParamsChange = (ruleId: string, params: TValidationRule["params"]) => {
     const updated = validationRules.map((rule) => {
       if (rule.id !== ruleId) return rule;
-      return { ...rule, params } as TValidationRule;
+      return { ...rule, params };
     });
     onUpdateValidation({ rules: updated, logic: validationLogic });
   };
@@ -250,7 +250,7 @@ export const ValidationRulesEditor = ({
         params: {
           extensions,
         },
-      } as TValidationRule;
+      };
     });
     onUpdateValidation({ rules: updated, logic: validationLogic });
   };
@@ -297,7 +297,7 @@ export const ValidationRulesEditor = ({
         id: uuidv7(),
         type: defaultRuleType,
         params: createRuleParams(defaultRuleType, defaultValue),
-      } as TValidationRule;
+      };
       onUpdateValidation({ rules: [defaultRule], logic: validationLogic });
     } else if (filteredRules.length !== validationRules.length) {
       onUpdateValidation({ rules: filteredRules, logic: validationLogic });

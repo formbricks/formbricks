@@ -96,7 +96,7 @@ beforeEach(() => {
   vi.mocked(requireDashboardsAccess).mockResolvedValue({
     workspaceId: "clws000000000000000000009",
     organizationId: "clorg00000000000000000001",
-  } as never);
+  });
   vi.mocked(refuseUnlessFeedbackDatasetAccess).mockResolvedValue(null);
   vi.mocked(getDatasetFieldMatcher).mockResolvedValue(() => true);
 });

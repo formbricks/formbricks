@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { Locator, Page } from "playwright";
 import { logger } from "@formbricks/logger";
+import { clickUntil, clickUntilVisible } from "@/playwright/utils/click-until";
 import { CreateSurveyParams, CreateSurveyWithLogicParams } from "@/playwright/utils/mock";
 
 const MOCK_STORAGE_UPLOAD_PATH = "/__playwright__/mock-storage-upload";
@@ -80,6 +81,11 @@ export const waitForSurveyEditor = async (
   if (!editorUrlPattern.test(`${currentUrl.pathname}${currentUrl.search}`)) {
     await page.waitForURL(editorUrlPattern);
   }
+  // The route has a loading skeleton, so the URL changes as soon as the skeleton shows, before the
+  // editor's data has loaded. Wait for the skeleton to go, bounded by the test timeout (no action timeout
+  // is configured) rather than the 5 s assertion budget below: a cold editor under a full parallel suite
+  // can take longer than that.
+  await page.getByTestId("survey-editor-loading").waitFor({ state: "detached" });
 
   if (options.mode === "cx") {
     await expect(page).toHaveURL(
@@ -569,11 +575,16 @@ export const addElement = async (page: Page, elementType: string, options: { exa
   await expect(option).toBeVisible();
   // The picker is a two-column grid that overflows on shorter viewports (e.g. "Matrix").
   await option.scrollIntoViewIfNeeded();
-  await option.click();
 
-  // The picker closes itself from `handleAddElement`, so a collapsed trigger is the signal that
-  // the element was committed to the survey and the new card is rendering.
-  await expect(trigger).toHaveAttribute("data-state", "closed");
+  // The picker closes itself from `handleAddElement`, so a collapsed trigger is the signal that the
+  // element was committed and the new card is rendering. A click that lands while the panel is still
+  // animating open can be lost, so it is retried until the trigger collapses; the panel closes in the
+  // same commit as the add, so a retry can never add the element twice.
+  await clickUntil(
+    option,
+    async () => (await trigger.getAttribute("data-state")) === "closed",
+    () => expect(trigger).toHaveAttribute("data-state", "closed")
+  );
 };
 
 /**
@@ -1037,12 +1048,7 @@ export const editorPanel = (page: Page): Locator => page.getByRole("main");
 export const openEmbeddedDataCard = async (page: Page): Promise<void> => {
   const content = editorPanel(page).getByTestId("embedded-data-card-content");
 
-  await expect(async () => {
-    if (!(await content.isVisible())) {
-      await editorPanel(page).getByTestId("embedded-data-card-trigger").click();
-    }
-    await expect(content).toBeVisible({ timeout: 5000 });
-  }).toPass({ timeout: 30000 });
+  await clickUntilVisible(editorPanel(page).getByTestId("embedded-data-card-trigger"), content);
 };
 
 /** One field's row in the card, addressed by the name it renders. */

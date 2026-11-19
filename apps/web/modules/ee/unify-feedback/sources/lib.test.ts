@@ -159,22 +159,22 @@ describe("transformToUnifySurvey", () => {
 
   describe("mapSurveyStatus", () => {
     test("maps 'inProgress' to 'active'", () => {
-      const result = transformToUnifySurvey(createMockSurvey({ status: "inProgress" } as Partial<TSurvey>));
+      const result = transformToUnifySurvey(createMockSurvey({ status: "inProgress" }));
       expect(result.status).toBe("active");
     });
 
     test("maps 'paused' to 'paused'", () => {
-      const result = transformToUnifySurvey(createMockSurvey({ status: "paused" } as Partial<TSurvey>));
+      const result = transformToUnifySurvey(createMockSurvey({ status: "paused" }));
       expect(result.status).toBe("paused");
     });
 
     test("maps 'draft' to 'draft'", () => {
-      const result = transformToUnifySurvey(createMockSurvey({ status: "draft" } as Partial<TSurvey>));
+      const result = transformToUnifySurvey(createMockSurvey({ status: "draft" }));
       expect(result.status).toBe("draft");
     });
 
     test("maps 'completed' to 'completed'", () => {
-      const result = transformToUnifySurvey(createMockSurvey({ status: "completed" } as Partial<TSurvey>));
+      const result = transformToUnifySurvey(createMockSurvey({ status: "completed" }));
       expect(result.status).toBe("completed");
     });
 
@@ -214,7 +214,7 @@ describe("transformToUnifySurvey", () => {
   });
 
   test("handles empty blocks", () => {
-    const survey = createMockSurvey({ blocks: [] } as Partial<TSurvey>);
+    const survey = createMockSurvey({ blocks: [] });
     const result = transformToUnifySurvey(survey);
     expect(result.elements).toEqual([]);
   });

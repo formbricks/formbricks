@@ -74,7 +74,7 @@ import { useDashboard } from "../hooks/use-dashboard";
 import { useDashboardToolbarFilters } from "../hooks/use-dashboard-toolbar-filters";
 import { useLockedDashboardFilters } from "../hooks/use-locked-dashboard-filters";
 import { draftOverLatest, toSavedWidgets, widgetsRemovedByOverwrite } from "../lib/stale-save";
-import { findNextOpenSlot } from "../lib/widget-placement";
+import { GRID_COLUMNS, MAX_WIDGET_HEIGHT, findNextOpenSlot, getWidgetMinSize } from "../lib/widget-placement";
 
 const ROW_HEIGHT = 80;
 
@@ -100,10 +100,9 @@ const widgetsToLayout = (widgets: TDashboardWidget[]): LayoutItem[] => {
     y: widget.layout.y,
     w: widget.layout.w,
     h: widget.layout.h,
-    minW: 2,
-    minH: 3,
-    maxW: 12,
-    maxH: 8,
+    ...getWidgetMinSize(resolveChartType(widget.chart.type)),
+    maxW: GRID_COLUMNS,
+    maxH: MAX_WIDGET_HEIGHT,
   }));
 };
 

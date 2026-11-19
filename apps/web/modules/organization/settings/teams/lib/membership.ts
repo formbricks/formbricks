@@ -6,16 +6,18 @@ import { logger } from "@formbricks/logger";
 import { ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, UnknownError, ValidationError } from "@formbricks/types/errors";
 import { TMember, TMembership } from "@formbricks/types/memberships";
+import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { reconcileOrganizationMembership } from "@/lib/authzed/organization-membership";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
-import { isOnlyDashboardViewer } from "@/lib/membership/dashboard-viewer";
+import { hasOnlyDashboardViewerRoles } from "@/lib/membership/dashboard-viewer";
 import { lockUserActiveState } from "@/lib/user/reactivation";
 import { isTransactionConflictError } from "@/lib/utils/prisma-error";
 import { validateInputs } from "@/lib/utils/validate";
-import { revokeAllUserOAuthGrants } from "@/modules/auth/lib/oauth-grant-revocation";
+import { finishRevokedMcpGrants, revokeAllUserOAuthGrants } from "@/modules/auth/lib/mcp-grant-revocation";
 import { TOrganizationMember } from "@/modules/ee/teams/team-list/types/team";
+import type { TMcpGrantAuditRecord } from "@/modules/mcp/grant-audit";
 import { LastActiveOwnerError, runOwnerGuardedTransaction } from "./owner-guard";
 
 export const getMembershipByOrganizationId = reactCache(
@@ -66,9 +68,14 @@ export const getMembershipByOrganizationId = reactCache(
   }
 );
 
+/**
+ * Removes a member from the organization. `actorUserId` is the user who removes them (the member themselves
+ * when leaving): the actor of the audit entries of any MCP grant the removal ends.
+ */
 export const deleteMembership = async (
   userId: string,
-  organizationId: string
+  organizationId: string,
+  actorUserId: string
 ): Promise<
   {
     userId: string;
@@ -81,61 +88,83 @@ export const deleteMembership = async (
   try {
     // The last-owner guard is read under the owners' lock, in the same transaction as the delete, so two
     // owners removed at once cannot both see "another owner is left" and leave the organization with none.
-    const deletedTeamMemberships = await runOwnerGuardedTransaction(organizationId, userId, async (tx) => {
-      // The user's row, so that removals of the same user from different organizations run one after the
-      // other: each decides whether only Dashboard viewer memberships remain (below) from what the other
-      // committed, instead of both still counting the other's membership and neither revoking the grants.
-      // Taken after the owners' lock, the order every guarded path takes them in.
-      await lockUserActiveState(tx, userId);
+    // Each attempt returns the audit records of the grants it ended, so only the one that commits is audited.
+    const { teamMemberships: deletedTeamMemberships, revokedMcpGrantAudits } =
+      await runOwnerGuardedTransaction(
+        organizationId,
+        userId,
+        async (tx) => {
+          // The user's row, so that removals of the same user from different organizations run one after the
+          // other: each decides whether only Dashboard viewer memberships remain (below) from what the other
+          // committed, instead of both still counting the other's membership and neither revoking the grants.
+          // Taken after the owners' lock, the order every guarded path takes them in, and before the user's
+          // MCP grant and consent rows (`revokeAllUserOAuthGrants`), which a consent approval also takes after
+          // the user's row.
+          await lockUserActiveState(tx, userId);
+          let grantAudits: TMcpGrantAuditRecord[] = [];
 
-      const teamMemberships = await tx.teamUser.findMany({
-        where: {
-          userId,
-          team: {
-            organizationId,
-          },
+          const target = await tx.membership.findUnique({
+            where: { userId_organizationId: { organizationId, userId } },
+            select: { role: true },
+          });
+
+          // Someone left with only Dashboard viewer memberships keeps no OAuth grant from the wider role they
+          // are losing: consents go and refresh tokens are revoked, as when a role edit makes them a viewer
+          // (`updateMembership`), so the next consent offers only dashboards:read (ADR-0025). Decided and done
+          // before the membership goes, so each ended grant's audit entries are filed under this organization
+          // too: its grant reached it until now.
+          if (target && target.role !== "dashboard_viewer") {
+            const remaining = await tx.membership.findMany({
+              where: { userId, organizationId: { not: organizationId } },
+              select: { role: true },
+            });
+            if (hasOnlyDashboardViewerRoles(remaining)) {
+              ({ grantAudits } = await revokeAllUserOAuthGrants(tx, userId));
+            }
+          }
+
+          const teamMemberships = await tx.teamUser.findMany({
+            where: {
+              userId,
+              team: {
+                organizationId,
+              },
+            },
+          });
+
+          await tx.teamUser.deleteMany({
+            where: {
+              userId,
+              team: {
+                organizationId,
+              },
+            },
+          });
+          await tx.membership.delete({
+            where: {
+              userId_organizationId: {
+                organizationId,
+                userId,
+              },
+            },
+          });
+
+          // A pending invite is only as trustworthy as the member who sent it, so once the creator is out
+          // of the organization it must stop granting access. Expired rather than deleted: admins still see
+          // it in the invite list and can resend it on purpose.
+          const now = new Date();
+          await tx.invite.updateMany({
+            where: { organizationId, creatorId: userId, expiresAt: { gt: now } },
+            data: { expiresAt: now },
+          });
+
+          return { teamMemberships, revokedMcpGrantAudits: grantAudits };
         },
-      });
+        // It may end the user's MCP grants, which can wait on a reconciling pass holding a grant row.
+        { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
+      );
 
-      await tx.teamUser.deleteMany({
-        where: {
-          userId,
-          team: {
-            organizationId,
-          },
-        },
-      });
-      const removed = await tx.membership.delete({
-        where: {
-          userId_organizationId: {
-            organizationId,
-            userId,
-          },
-        },
-        select: { role: true },
-      });
-
-      // Someone left with only Dashboard viewer memberships keeps no OAuth grant from the wider role they
-      // just lost: consents go and refresh tokens are revoked, as when a role edit makes them a viewer
-      // (`updateMembership`), so the next consent offers only dashboards:read (ADR-0025).
-      if (removed.role !== "dashboard_viewer") {
-        if (await isOnlyDashboardViewer(tx, userId)) {
-          await revokeAllUserOAuthGrants(tx, userId);
-        }
-      }
-
-      // A pending invite is only as trustworthy as the member who sent it, so once the creator is out
-      // of the organization it must stop granting access. Expired rather than deleted: admins still see
-      // it in the invite list and can resend it on purpose.
-      const now = new Date();
-      await tx.invite.updateMany({
-        where: { organizationId, creatorId: userId, expiresAt: { gt: now } },
-        data: { expiresAt: now },
-      });
-
-      return teamMemberships;
-    });
-
+    await finishRevokedMcpGrants(revokedMcpGrantAudits, { actorUserId });
     await reconcileOrganizationMembership(organizationId, userId);
     await runPostCommitProjection("organization_membership_team_cleanup", () =>
       reconcileTeamWorkspaceRelationships({

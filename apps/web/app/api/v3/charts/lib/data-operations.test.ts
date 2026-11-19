@@ -379,7 +379,7 @@ describe("chart queries within budget", () => {
   describe("runV3ChartQuery with dashboard picks (C6)", () => {
     const run = (extraFilters: unknown[]) =>
       runV3ChartQuery({
-        access: access as never,
+        access: access,
         datasetId,
         type: "bar",
         query: BY_SOURCE,
@@ -431,13 +431,13 @@ describe("chart queries within budget", () => {
         }));
       const runOver = (saved: number, picks: number) =>
         runV3ChartQuery({
-          access: access as never,
+          access: access,
           datasetId,
           type: "bar",
           query: { ...BY_SOURCE, filters: conditions(saved) },
           dateRange: undefined,
           source: "v3.dashboards.chartData",
-          extraFilters: conditions(picks) as never,
+          extraFilters: conditions(picks),
           context,
         });
 
@@ -474,7 +474,7 @@ describe("chart queries within budget", () => {
       }) as TChartResourceRow;
 
     const read = (query: Record<string, string> = {}) =>
-      getV3ChartData({ chartId, query: query as never, ...context });
+      getV3ChartData({ chartId, query: query, ...context });
 
     const RANGED = {
       measures: ["FeedbackRecords.count"],

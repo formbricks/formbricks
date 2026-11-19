@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "preact/hooks";
+import { useLayoutEffect, useRef, useState } from "preact/hooks";
 import { useTranslation } from "react-i18next";
 import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { type TSurveyLanguage } from "@formbricks/types/surveys/types";
@@ -91,7 +91,7 @@ export function LanguageSwitch({
       if (requestId !== latestLanguageRequestRef.current) return;
       const i18nLanguage = toI18nLanguage(calculatedLanguage);
       if (i18n.language !== i18nLanguage) {
-        i18n.changeLanguage(i18nLanguage);
+        void i18n.changeLanguage(i18nLanguage);
       }
     });
   };
@@ -133,7 +133,10 @@ export function LanguageSwitch({
   // would undo the Tab. A null relatedTarget (focus going to <body>, or Safari not focusing a
   // clicked button) is left to useClickOutside, or a pointer tap on an option would close the
   // popup before its click registers.
-  useEffect(() => {
+  //
+  // A layout effect, so the listeners are attached when the popup is: Preact runs `useEffect` only
+  // after the next frame, and an Escape pressed in between was dropped with the popup left open.
+  useLayoutEffect(() => {
     if (!showLanguageDropdown) return;
 
     const container = containerRef.current;

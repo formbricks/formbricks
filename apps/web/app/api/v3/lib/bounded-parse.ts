@@ -215,7 +215,7 @@ function objectBranchScore(schema: z.ZodObject, value: Record<string, unknown>):
     // exactOptional literal refuses), so a branch the value fits is never ruled out.
     const fits = Object.hasOwn(value, key)
       ? (field as z.ZodType).validate(value[key])
-      : absenceAllowed(schema.shape as Record<string, z.ZodType>, key);
+      : absenceAllowed(schema.shape, key);
     if (!fits) {
       return null;
     }
@@ -475,7 +475,7 @@ function splitObject(
   // Own keys only: `shape.constructor` would otherwise be `Object`, not the catchall.
   walkEach(
     entries,
-    (key) => (Object.hasOwn(shape, key as string) ? shape[key as string] : (catchall as z.ZodType)),
+    (key) => (Object.hasOwn(shape, key) ? shape[key as string] : (catchall as z.ZodType)),
     path,
     sink,
     ctx

@@ -3,6 +3,7 @@ import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
 import { ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey, TSurveyEditorTabs, TSurveyStatus, ZSurvey } from "@formbricks/types/surveys/types";
 import { getElementsWithEmptyFallbackValue } from "@/lib/utils/recall";
+import { withPageDates } from "@/modules/survey/editor/lib/survey-dates";
 import { describeCodeIssueAtPath } from "./code-messages";
 import { isConditionalLogicMessage, toFlowTabMessage, withoutFlowPrefix } from "./flow-error-message";
 import { getLogicDestinationErrorMessage } from "./logic-destination-error";
@@ -476,7 +477,7 @@ const isRepeatedShowIf = (found: TEditorIssue, kept: TEditorIssue[]): boolean =>
 
 /** Everything the survey schema objects to, in the editor's words. */
 export const getSchemaIssues = (survey: TSurvey, t: TFunction, locale: string): TEditorIssue[] => {
-  const parsed = ZSurvey.safeParse(survey);
+  const parsed = ZSurvey.safeParse(withPageDates(survey));
   if (parsed.success) return [];
 
   const issues: TEditorIssue[] = [];

@@ -94,8 +94,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(applyRateLimit).mockReset();
   vi.mocked(getCustomCssPlanAllowed).mockResolvedValue(true);
-  vi.mocked(processCustomCss).mockImplementation((({ input }: { input: TCustomCssInput }) =>
-    processedOk(input)) as never);
+  vi.mocked(processCustomCss).mockImplementation(({ input }: { input: TCustomCssInput }) =>
+    processedOk(input)
+  );
   vi.mocked(cache.del).mockResolvedValue({ ok: true, data: undefined });
 });
 
@@ -414,10 +415,10 @@ describe("updateWorkspaceCustomCss", () => {
   test("processes the CSS before taking the row lock", async () => {
     givenStored(stored("old{}", null));
     const order: string[] = [];
-    vi.mocked(processCustomCss).mockImplementation((({ input }: { input: TCustomCssInput }) => {
+    vi.mocked(processCustomCss).mockImplementation(({ input }: { input: TCustomCssInput }) => {
       order.push("process");
       return processedOk(input);
-    }) as never);
+    });
     vi.mocked(prisma.$transaction).mockImplementation((async (fn: (client: typeof tx) => unknown) => {
       order.push("lock");
       return fn(tx);

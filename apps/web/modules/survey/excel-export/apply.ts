@@ -370,7 +370,7 @@ class ExcelExportApplication {
       const text = this.toStoredText(row.row, cell, isRichText, new Map());
       if (text) i18n[textKey] = text;
     }
-    return i18n.default ? (i18n as TI18nString) : null;
+    return i18n.default ? i18n : null;
   }
 
   /** A keyed row moves where new questions go, and which question a field row adds to. */
@@ -493,7 +493,7 @@ class ExcelExportApplication {
       ...this.context.newElement(type),
       ...(row.questionId ? { id: row.questionId } : {}),
       headline,
-    } as TSurveyElement;
+    };
     // Options come from the rows below, not from the editor's empty placeholders.
     if (CHOICE_TYPES.has(type)) Object.assign(element, { choices: [] });
     if (type === TSurveyElementTypeEnum.Matrix) Object.assign(element, { rows: [], columns: [] });

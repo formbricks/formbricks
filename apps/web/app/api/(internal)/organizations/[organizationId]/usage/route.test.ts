@@ -42,7 +42,7 @@ const USER_ID = "user_1";
 const get = (query: string, organizationId = ORG_ID) =>
   GET(new NextRequest(`http://localhost/api/organizations/${organizationId}/usage${query}`), {
     params: Promise.resolve({ organizationId }),
-  } as never);
+  });
 
 describe("GET /api/organizations/[organizationId]/usage", () => {
   beforeEach(() => {

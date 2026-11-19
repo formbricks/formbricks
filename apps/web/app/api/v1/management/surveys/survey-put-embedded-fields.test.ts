@@ -4,7 +4,6 @@ import {
   SURVEY_FLOW_FIXTURE_IDS,
   surveyFlowFixture,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
-import type { TSurvey } from "@formbricks/types/surveys/types";
 import { can } from "@/lib/authorization";
 import { getOrganizationByWorkspaceId } from "@/lib/organization/service";
 import { getSurvey, updateSurvey } from "@/lib/survey/service";
@@ -74,7 +73,7 @@ beforeEach(() => {
   vi.mocked(getExternalUrlsPermission).mockResolvedValue(true);
   vi.mocked(getSurvey).mockResolvedValue(surveyFlowFixture);
   vi.mocked(updateSurvey).mockReset();
-  vi.mocked(updateSurvey).mockImplementation(async (survey) => survey as TSurvey);
+  vi.mocked(updateSurvey).mockImplementation(async (survey) => survey);
   vi.mocked(getOrganizationByWorkspaceId).mockResolvedValue({ id: "org_1" } as never);
 });
 

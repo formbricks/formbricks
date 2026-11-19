@@ -11,7 +11,6 @@ import {
   getIngestedEmbeddedFields,
   getSurveyEmbeddedFields,
   listShadowingNames,
-  mergeReservedValues,
   projectClientReservedValues,
 } from "@formbricks/types/embedded-data-resolver";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
@@ -674,7 +673,7 @@ export function Survey({
         await persistSurveyStateSnapshot({ displayId: display.data.id });
 
         if (onDisplayCreated) {
-          onDisplayCreated();
+          void onDisplayCreated();
         }
       } catch (err) {
         console.error("error creating display: ", err);
@@ -727,7 +726,7 @@ export function Survey({
     if (appUrl && workspaceId) {
       void createDisplay().finally(() => setIsDisplaySettled(true));
     } else {
-      onDisplay?.();
+      void onDisplay?.();
       setIsDisplaySettled(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once, or once after restore for offline
@@ -1137,7 +1136,7 @@ export function Survey({
    * itself (ENG-2538).
    *
    * Without this filter the projection below carried a reserved value for every name in the catalog,
-   * and {@link mergeReservedValues}'s spread was the only thing keeping a declared field ahead of
+   * and `mergeReservedValues`'s spread was the only thing keeping a declared field ahead of
    * it. A spread only wins for keys that exist, so a survey declaring an optional `url` rendered the
    * page's own address — an internal `/edit` URL in the editor's preview, the respondent's own link
    * in production — wherever the respondent had not supplied the field. That is the normal case for
@@ -1445,7 +1444,7 @@ export function Survey({
     // respondent sees nothing.
     if (markLowQuality) lowQualityFlagRef.current = raiseLowQualityFlag(lowQualityFlagRef.current);
 
-    onResponseCreateOrUpdate({
+    void onResponseCreateOrUpdate({
       data: submittedData,
       ttc: responsettc,
       finished,

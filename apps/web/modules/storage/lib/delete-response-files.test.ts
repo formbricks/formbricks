@@ -225,9 +225,9 @@ describe("deleteResponseFileUrls", () => {
     mockedResolve.mockImplementation(async (id: string) =>
       id === OWN_WORKSPACE ? { id, organizationId: "org-1" } : { id, organizationId: "org-2" }
     );
-    mockedDeleteFile.mockImplementation((async () => {
+    mockedDeleteFile.mockImplementation(async () => {
       throw new Error("socket hang up");
-    }) as never);
+    });
     mockedDeleteFile.mockResolvedValueOnce({ ok: false, error: { code: "s3_client_error" } } as never);
 
     await deleteResponseFileUrls(

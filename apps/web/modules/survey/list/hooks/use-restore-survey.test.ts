@@ -78,7 +78,7 @@ describe("useRestoreSurvey", () => {
       resolveFetch = resolve;
     });
 
-    vi.mocked(global.fetch).mockReturnValue(fetchPromise as Promise<Response>);
+    vi.mocked(global.fetch).mockReturnValue(fetchPromise);
 
     const queryClient = new QueryClient({
       defaultOptions: { mutations: { retry: false }, queries: { retry: false } },

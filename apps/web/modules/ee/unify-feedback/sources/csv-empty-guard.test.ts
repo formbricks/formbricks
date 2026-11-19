@@ -14,8 +14,8 @@ import { createFeedbackCSVDataSchema } from "./types";
 const t = ((key: string) => key) as unknown as TFunction;
 
 // Mirror the component's parse options exactly (csv-feedback-source-ui.tsx:136).
-const parseCsv = (csv: string) =>
-  parse(csv, { columns: true, relax_column_count: true, skip_empty_lines: true }) as Record<string, string>[];
+const parseCsv = (csv: string): Record<string, string>[] =>
+  parse(csv, { columns: true, relax_column_count: true, skip_empty_lines: true });
 
 describe("createFeedbackCSVDataSchema — header-only CSV guard (ENG-1799)", () => {
   test.each([

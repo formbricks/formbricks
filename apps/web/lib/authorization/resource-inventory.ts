@@ -54,6 +54,10 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   Integration: "workspace_inherited_resource",
   Invite: "authentication_or_application",
   Language: "parent_derived_or_data_integrity",
+  // A user's grant to an MCP client and its organization & workspace selections (ENG-7149, ADR-0041).
+  McpGrant: "relationship_or_grant_source",
+  McpGrantOrganization: "relationship_or_grant_source",
+  McpGrantWorkspace: "relationship_or_grant_source",
   Membership: "relationship_or_grant_source",
   OnlineUpgradeState: "authentication_or_application",
   Organization: "direct_authorization_resource",
@@ -127,6 +131,7 @@ export const AUDIT_TARGET_AUTHORIZATION_RESOURCE_INVENTORY = {
   integration: "workspace_inherited_resource",
   invite: "authentication_or_application",
   language: "parent_derived_or_data_integrity",
+  mcpGrant: "relationship_or_grant_source",
   membership: "relationship_or_grant_source",
   organization: "direct_authorization_resource",
   quota: "parent_derived_or_data_integrity",

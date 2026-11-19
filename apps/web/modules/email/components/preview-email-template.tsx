@@ -23,7 +23,6 @@ import {
 import { isSafeLinkUrl } from "@formbricks/types/common";
 import {
   type TSurveyAddressElement,
-  type TSurveyCTAElement,
   type TSurveyContactInfoElement,
   TSurveyElementTypeEnum,
 } from "@formbricks/types/surveys/elements";
@@ -454,7 +453,7 @@ export async function PreviewEmailTemplate({
       );
     }
     case TSurveyElementTypeEnum.CTA: {
-      const ctaElement = firstQuestion as TSurveyCTAElement;
+      const ctaElement = firstQuestion;
       return (
         <PreviewQuestionCard headline={headline} styleTokens={styleTokens} subheader={subheader} t={t}>
           {/* `isSafeLinkUrl`: the button URL is an editable survey field, and drafts are persisted

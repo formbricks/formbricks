@@ -63,7 +63,7 @@ const apiKey = (overrides: Partial<TAuthenticationApiKey>): TGatewayAuthenticate
     organizationAccess: { accessControl: { read: false, write: false } },
     workspacePermissions: [],
     ...overrides,
-  } as TAuthenticationApiKey,
+  },
 });
 
 const authorize = async (

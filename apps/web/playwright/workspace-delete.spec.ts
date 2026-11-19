@@ -1,6 +1,17 @@
-import { expect } from "@playwright/test";
+import { type Page, expect } from "@playwright/test";
 import { prisma } from "@formbricks/database";
 import { test } from "./lib/fixtures";
+import { clickUntilVisible } from "./utils/click-until";
+
+/**
+ * Opens the delete-workspace dialog from the workspace's general settings. The page is read before it
+ * hydrates, so the click is retried until the dialog's confirmation field shows.
+ */
+const openDeleteWorkspaceDialog = (page: Page): Promise<void> =>
+  clickUntilVisible(
+    page.getByRole("button", { name: "Delete", exact: true }).first(),
+    page.locator("#deleteWorkspaceConfirmation")
+  );
 
 test("requires workspace name confirmation before deleting a workspace", async ({ page, users }) => {
   const timestamp = Date.now();
@@ -40,7 +51,7 @@ test("requires workspace name confirmation before deleting a workspace", async (
     waitUntil: "domcontentloaded",
   });
 
-  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await openDeleteWorkspaceDialog(page);
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByRole("button", { name: "Delete", exact: true })).toBeDisabled();
 
@@ -116,7 +127,7 @@ test("stays in the same organization when deleting a workspace as a member of mu
     waitUntil: "domcontentloaded",
   });
 
-  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await openDeleteWorkspaceDialog(page);
   const dialog = page.getByRole("dialog");
   await page.locator("#deleteWorkspaceConfirmation").fill(workspaceName);
   await dialog.getByRole("button", { name: "Delete", exact: true }).click();
@@ -171,7 +182,7 @@ test("still runs the onboarding redirect when the surviving workspace has no sur
     waitUntil: "domcontentloaded",
   });
 
-  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await openDeleteWorkspaceDialog(page);
   const dialog = page.getByRole("dialog");
   await page.locator("#deleteWorkspaceConfirmation").fill(workspaceName);
   await dialog.getByRole("button", { name: "Delete", exact: true }).click();
@@ -247,7 +258,7 @@ test("keeps the organization in account settings when the delete lands on the on
     waitUntil: "domcontentloaded",
   });
 
-  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await openDeleteWorkspaceDialog(page);
   const dialog = page.getByRole("dialog");
   await page.locator("#deleteWorkspaceConfirmation").fill(workspaceName);
   await dialog.getByRole("button", { name: "Delete", exact: true }).click();

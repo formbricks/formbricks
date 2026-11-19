@@ -69,7 +69,7 @@ describe("listV3ContactAttributeValues", () => {
     vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({
       workspaceId,
       organizationId: "clorg000000000000000000001",
-    } as Awaited<ReturnType<typeof requireV3WorkspaceAccess>>);
+    });
     vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
   });
 

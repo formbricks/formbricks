@@ -257,7 +257,7 @@ export const getCXElementTypes = (t: TFunction) =>
       TSurveyElementTypeEnum.CES,
       TSurveyElementTypeEnum.Consent,
       TSurveyElementTypeEnum.CTA,
-    ].includes(elementType.id as TSurveyElementTypeEnum);
+    ].includes(elementType.id);
   });
 
 export type TElementCategoryGroup = {

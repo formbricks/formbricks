@@ -370,19 +370,18 @@ describe("buildEmbeddedDataMetadata", () => {
   const responseWithData = (
     data: Record<string, string>,
     variables: Record<string, string> = {}
-  ): TEmbeddedValueResponse =>
-    ({
-      id: "response-1",
-      surveyId: "survey-1",
-      createdAt: new Date("2026-02-24T10:00:00.000Z"),
-      updatedAt: new Date("2026-02-24T10:00:00.000Z"),
-      finished: true,
-      language: "default",
-      data,
-      variables,
-      ttc: {},
-      meta: {},
-    }) as unknown as TEmbeddedValueResponse;
+  ): TEmbeddedValueResponse => ({
+    id: "response-1",
+    surveyId: "survey-1",
+    createdAt: new Date("2026-02-24T10:00:00.000Z"),
+    updatedAt: new Date("2026-02-24T10:00:00.000Z"),
+    finished: true,
+    language: "default",
+    data,
+    variables,
+    ttc: {},
+    meta: {},
+  });
 
   test("keeps the first of two fields of the same source sharing a name", () => {
     // Nothing stops a survey declaring the same name twice, and letting the later one win would

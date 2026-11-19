@@ -47,7 +47,7 @@ const leaveRequestScope = (): void => {
 const afterCallbacks = vi.hoisted(() => [] as Array<() => Promise<void> | void>);
 
 vi.mock("next/server", () => ({
-  after: vi.fn((task: Promise<unknown> | (() => unknown | Promise<unknown>)) =>
+  after: vi.fn((task: Promise<unknown> | (() => unknown)) =>
     afterCallbacks.push(async () => {
       if (typeof task === "function") {
         await task();

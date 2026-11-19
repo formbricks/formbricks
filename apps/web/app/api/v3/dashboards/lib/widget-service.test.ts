@@ -36,7 +36,7 @@ const LOCKED_AT = new Date("2026-06-01T12:00:00.000Z");
 type TSibling = { id: string; chartId: string; layout: unknown; order: number };
 
 const makeTx = ({
-  locked = LOCKED_AT as Date | null,
+  locked = LOCKED_AT,
   siblings = [] as TSibling[],
   touched = 1,
 }: { locked?: Date | null; siblings?: TSibling[]; touched?: number } = {}) => ({

@@ -20,7 +20,7 @@ beforeEach(() => {
 describe("applyV3CustomCssRateLimit", () => {
   test("charges a session or OAuth user by user id and an API key by key id, on the CSS budget", async () => {
     await applyV3CustomCssRateLimit({
-      authentication: { user: { id: "user_1" }, expires: "2099-01-01" } as never,
+      authentication: { user: { id: "user_1" }, expires: "2099-01-01" },
       requestId,
       instance,
     });
@@ -58,7 +58,7 @@ describe("applyV3CustomCssRateLimit", () => {
   test("lets the request through when the budget has room or there is no principal", async () => {
     expect(
       await applyV3CustomCssRateLimit({
-        authentication: { user: { id: "user_1" }, expires: "2099-01-01" } as never,
+        authentication: { user: { id: "user_1" }, expires: "2099-01-01" },
         requestId,
         instance,
       })

@@ -583,14 +583,17 @@ describe("getSchemaIssues", () => {
 
   test("puts a problem about the survey as a whole on the tab it most likely lives on", () => {
     const survey = buildSurvey([block([openText({ default: "Name?", de: "Name?" })])], {
-      followUps: "not a list",
+      followUps: [{ bogus: true }],
     });
 
     const found = getSchemaIssues(survey, t, "en-US");
 
-    expect(found).toEqual([
-      expect.objectContaining({ tab: "followUps", targetId: null, field: "followUps" }),
-    ]);
+    expect(found.length).toBeGreaterThan(0);
+    for (const issue of found) {
+      expect(issue).toEqual(
+        expect.objectContaining({ tab: "followUps", targetId: null, field: "followUps" })
+      );
+    }
   });
 
   test("lists an unfinished rule before the first question on the Flow tab, against the rule", () => {

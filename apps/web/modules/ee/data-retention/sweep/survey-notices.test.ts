@@ -41,23 +41,22 @@ vi.mock("./transaction", async (importOriginal) => ({
 const NOW = new Date("2030-01-10T01:00:00.000Z");
 const TX = { tx: true };
 
-const context = (entity: "surveys" | "responses"): TRetentionSweepContext =>
-  ({
-    runId: `run-${entity}`,
-    now: NOW,
-    deadline: NOW.getTime() + 60_000,
-    resumeAfter: null,
-    restartedWarning: null,
-    policy: {
-      id: `pol-${entity}`,
-      organizationId: "clorg",
-      entity,
-      enabledAt: NOW,
-      warnDays: 7,
-      periodDays: 30,
-      conditions: [],
-    },
-  }) as TRetentionSweepContext;
+const context = (entity: "surveys" | "responses"): TRetentionSweepContext => ({
+  runId: `run-${entity}`,
+  now: NOW,
+  deadline: NOW.getTime() + 60_000,
+  resumeAfter: null,
+  restartedWarning: null,
+  policy: {
+    id: `pol-${entity}`,
+    organizationId: "clorg",
+    entity,
+    enabledAt: NOW,
+    warnDays: 7,
+    periodDays: 30,
+    conditions: [],
+  },
+});
 
 const person = (userId: string, locale: TNoticeRecipient["locale"] = "en-US"): TNoticeRecipient => ({
   userId,

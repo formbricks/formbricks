@@ -53,7 +53,7 @@ describe("useDeleteWorkflow", () => {
     const fetchPromise = new Promise<Response>((resolve) => {
       resolveFetch = resolve;
     });
-    vi.mocked(global.fetch).mockReturnValue(fetchPromise as Promise<Response>);
+    vi.mocked(global.fetch).mockReturnValue(fetchPromise);
 
     const queryClient = newQueryClient();
     queryClient.setQueryData(queryKey, seedData());
