@@ -37,6 +37,7 @@ import {
 import { toFlowTabMessage } from "@/modules/survey/editor/lib/flow-error-message";
 import { getInvalidSurveyTargets, isFlowTabIssue } from "@/modules/survey/editor/lib/invalid-survey-targets";
 import { getLogicDestinationErrorMessage } from "@/modules/survey/editor/lib/logic-destination-error";
+import { withPageDates } from "@/modules/survey/editor/lib/survey-dates";
 import { buildSurveySavePayload } from "@/modules/survey/editor/lib/survey-save-payload";
 import { hasUnsavedSurveyChanges, isJustSavedBypassValid } from "@/modules/survey/editor/lib/unsaved-changes";
 import { scrollElementCardIntoView } from "@/modules/survey/editor/lib/utils";
@@ -434,7 +435,7 @@ export const SurveyMenuBar = ({
   };
 
   const validateSurveyWithZod = (): boolean => {
-    const localSurveyValidation = ZSurvey.safeParse(localSurvey);
+    const localSurveyValidation = ZSurvey.safeParse(withPageDates(localSurvey));
     if (!localSurveyValidation.success) {
       const issues = localSurveyValidation.error.issues;
       const { invalidIds: newInvalidIds, firstInvalidScrollId } = getInvalidSurveyTargets(
@@ -675,7 +676,7 @@ export const SurveyMenuBar = ({
       attempt = saveAttemptOrder.begin();
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
-      const updatedSurveyResponse = await updateSurveyAction({ ...surveyToSave, segment });
+      const updatedSurveyResponse = await updateSurveyAction(withPageDates({ ...surveyToSave, segment }));
 
       setIsSurveySaving(false);
       if (updatedSurveyResponse?.data) {
@@ -754,11 +755,7 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      const publishResult = await updateSurveyAction({
-        ...localSurvey,
-        status,
-        segment,
-      });
+      const publishResult = await updateSurveyAction(withPageDates({ ...localSurvey, status, segment }));
 
       if (!publishResult?.data) {
         const errorMessage = getFormattedErrorMessage(publishResult);
@@ -820,11 +817,7 @@ export const SurveyMenuBar = ({
       const segment = await handleSegmentUpdate();
       clearSurveyLocalStorage();
 
-      const scheduleResult = await updateSurveyAction({
-        ...localSurvey,
-        status,
-        segment,
-      });
+      const scheduleResult = await updateSurveyAction(withPageDates({ ...localSurvey, status, segment }));
 
       if (!scheduleResult?.data) {
         const errorMessage = getFormattedErrorMessage(scheduleResult);
