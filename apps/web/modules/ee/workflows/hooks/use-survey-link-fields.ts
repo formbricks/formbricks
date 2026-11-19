@@ -9,10 +9,12 @@ import {
 } from "@/modules/ee/workflows/lib/survey-link-fields";
 
 /**
- * The Embedded Data fields a Send email step's survey link can set, from the linked survey. Null
- * while loading or when the survey can't be read, so the panel falls back to typing the key.
+ * The Embedded Data fields a Send email step's survey link can set, from the linked survey. `fields`
+ * is null while loading or when the survey can't be read.
  */
-export const useSurveyLinkFields = (surveyId: string | undefined): TSurveyLinkField[] | null => {
+export const useSurveyLinkFields = (
+  surveyId: string | undefined
+): { fields: TSurveyLinkField[] | null; isLoading: boolean } => {
   const query = useQuery({
     queryKey: ["workflow-email", "survey-link-fields", surveyId],
     enabled: Boolean(surveyId),
@@ -25,5 +27,5 @@ export const useSurveyLinkFields = (surveyId: string | undefined): TSurveyLinkFi
       return getSurveyLinkSettableFields(body.data.embeddedFields ?? []);
     },
   });
-  return query.data ?? null;
+  return { fields: query.data ?? null, isLoading: query.isLoading };
 };
