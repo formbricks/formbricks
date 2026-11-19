@@ -107,11 +107,10 @@ const demoteOwner = async (
       // A demotion to Dashboard viewer ends the user's MCP grants, which can wait on a reconciling pass.
       { timeout: MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS }
     );
-    try {
-      await finishRevokedMcpGrants(grantAudits, { actorUserId });
-    } finally {
-      await projectMembershipRoleChange(organizationId, userId, affectedTeamIds);
-    }
+    // The role first: it is what the demoted user could still act on. The projection logs its own failures
+    // and never throws, so the grants are always finished after it.
+    await projectMembershipRoleChange(organizationId, userId, affectedTeamIds);
+    await finishRevokedMcpGrants(grantAudits, { actorUserId });
     return membership;
   } catch (error) {
     if (error instanceof LastActiveOwnerError) {

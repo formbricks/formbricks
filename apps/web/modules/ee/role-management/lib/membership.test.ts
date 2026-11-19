@@ -193,6 +193,17 @@ describe("updateMembership", () => {
     expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org1", "user1");
   });
 
+  test("projects the new role even when finishing the ended grants fails", async () => {
+    endGrantsOnDemotion();
+    vi.mocked(finishRevokedMcpGrants).mockRejectedValueOnce(new Error("audit down"));
+
+    await expect(updateMembership("user1", "org1", { role: "dashboard_viewer" }, "owner-1")).rejects.toThrow(
+      "audit down"
+    );
+
+    expect(reconcileOrganizationMembership).toHaveBeenCalledWith("org1", "user1");
+  });
+
   test("inside a caller's transaction, returns the ended grants for after the commit instead of finishing them", async () => {
     const grantAudits = endGrantsOnDemotion();
 

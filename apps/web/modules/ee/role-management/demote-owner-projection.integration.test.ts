@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import { resetDb } from "@/integration/reset-db";
+import { getAuthzedClient } from "@/lib/authzed/client";
 import { createApiKeyAction } from "@/modules/organization/settings/api-keys/actions";
 import { updateMembershipAction } from "./actions";
 
@@ -30,11 +31,20 @@ vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
   getIsDashboardViewerRoleEnabled: vi.fn(async () => true),
 }));
 
-const ids = { organization: "", owner: "", demoted: "", workspace: "" };
+const ids = { organization: "", owner: "", demoted: "", workspace: "", team: "" };
 
 const as = (userId: string) => {
   session.userId = userId;
 };
+
+/** The relations SpiceDB holds for the demoted user on a resource, read straight from the graph. */
+const relationsOf = async (resourceType: "organization" | "team", resourceId: string) =>
+  (
+    await getAuthzedClient().readRelationships({
+      filter: { resourceType, resourceId, subject: { objectType: "user", objectId: ids.demoted } },
+      limit: 10,
+    })
+  ).relationships.map(({ relation }) => relation);
 
 const mintApiKey = () =>
   createApiKeyAction({
@@ -63,6 +73,11 @@ beforeEach(async () => {
   ids.owner = await owner("owner");
   ids.demoted = await owner("demoted");
 
+  // An owner is a team admin in every team they are on.
+  const team = await prisma.team.create({ data: { name: "Field", organizationId: organization.id } });
+  ids.team = team.id;
+  await prisma.teamUser.create({ data: { teamId: team.id, userId: ids.demoted, role: "admin" } });
+
   await synchronizeAuthzedIntegrationFixture();
 }, 120_000);
 
@@ -89,13 +104,28 @@ describe("demoting an owner", () => {
     }
   );
 
+  test("an owner demoted to Dashboard viewer stops being a team admin in SpiceDB, before the outbox delivers", async () => {
+    as(ids.owner);
+    const demotion = await updateMembershipAction({
+      organizationId: ids.organization,
+      userId: ids.demoted,
+      data: { role: "dashboard_viewer" },
+    });
+    expect(demotion?.serverError).toBeUndefined();
+    expect(await prisma.authzedProjectionOutbox.count()).toBeGreaterThan(0);
+
+    expect(await relationsOf("organization", ids.organization)).toEqual(["dashboard_viewer"]);
+    expect(await relationsOf("team", ids.team)).toEqual(["contributor"]);
+  });
+
   test("the owner who stays can still mint an API key", async () => {
     as(ids.owner);
-    await updateMembershipAction({
+    const demotion = await updateMembershipAction({
       organizationId: ids.organization,
       userId: ids.demoted,
       data: { role: "member" },
-    } as never);
+    });
+    expect(demotion?.serverError).toBeUndefined();
 
     const result = await mintApiKey();
 

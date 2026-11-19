@@ -119,8 +119,8 @@ const writeMembershipRoleChange = async (
 
 /**
  * Projects a committed role change to SpiceDB: the user's organization role, and their team relationships
- * in `teamIds`. Runs after the source commit, so it reads the new role; a failure is logged and left to
- * the durable outbox, which projects the same change.
+ * in `teamIds`. Runs after the source commit, so it reads the new role. Never throws: a failure is logged
+ * and left to the durable outbox, which projects the same change.
  */
 export const projectMembershipRoleChange = async (
   organizationId: string,
@@ -154,11 +154,12 @@ export const updateMembership = async (
     return await writeMembershipRoleChange(prisma, userId, organizationId, data, progress);
   } finally {
     // Outside a transaction each write commits on its own, so what was written before a later write failed
-    // stays all the same: its ended grants are audited and removed from SpiceDB, and the role projected.
-    await finishRevokedMcpGrants(progress.endedGrantAudits, { actorUserId });
+    // stays all the same: the role is projected, then its ended grants are audited and removed from SpiceDB.
+    // The role first, so a failure finishing the grants can't leave the old role in SpiceDB.
     if (progress.membershipUpdated) {
       await projectMembershipRoleChange(organizationId, userId, progress.affectedTeamIds);
     }
+    await finishRevokedMcpGrants(progress.endedGrantAudits, { actorUserId });
   }
 };
 

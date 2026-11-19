@@ -166,12 +166,15 @@ describe("updateMembershipAction", () => {
     expect(mocks.projectMembershipRoleChange).toHaveBeenCalledWith(organizationId, targetUserId, ["team-1"]);
   });
 
-  test("still projects the demotion when auditing its ended grants fails", async () => {
+  test("projects the demotion before finishing the grants it ended, so a failure there can't skip it", async () => {
     const failure = new Error("audit down");
     mocks.finishRevokedMcpGrants.mockRejectedValue(failure);
 
     await expect(callUpdateMembership("member")).rejects.toBe(failure);
     expect(mocks.projectMembershipRoleChange).toHaveBeenCalledWith(organizationId, targetUserId, ["team-1"]);
+    expect(mocks.projectMembershipRoleChange.mock.invocationCallOrder[0]).toBeLessThan(
+      mocks.finishRevokedMcpGrants.mock.invocationCallOrder[0]
+    );
   });
 
   test("demotes an owner under the owners' lock when the organization has another owner", async () => {
