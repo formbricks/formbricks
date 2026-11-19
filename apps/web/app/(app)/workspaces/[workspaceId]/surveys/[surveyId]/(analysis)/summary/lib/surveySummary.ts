@@ -1155,13 +1155,12 @@ const summarizeElement = (
     case TSurveyElementTypeEnum.PictureSelection:
       return summarizePictureSelectionElement(element, responses);
     case TSurveyElementTypeEnum.Rating:
+    case TSurveyElementTypeEnum.CES:
       return summarizeNumericScaleElement(element, responses);
     case TSurveyElementTypeEnum.NPS:
       return summarizeNPSElement(element, responses);
     case TSurveyElementTypeEnum.CSAT:
       return summarizeCSATElement(element, responses);
-    case TSurveyElementTypeEnum.CES:
-      return summarizeNumericScaleElement(element, responses);
     case TSurveyElementTypeEnum.CTA:
       return summarizeCTAElement(element, elements, responses, dropOff);
     case TSurveyElementTypeEnum.Consent:

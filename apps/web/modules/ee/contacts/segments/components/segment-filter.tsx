@@ -47,6 +47,7 @@ import {
   updateOperatorInFilter,
   updatePersonIdentifierInFilter,
   updateSegmentIdInFilter,
+  withFilterOperator,
 } from "@/modules/ee/contacts/segments/lib/utils";
 import { getContactAttributeDataTypeIcon } from "@/modules/ee/contacts/utils";
 import { Button } from "@/modules/ui/components/button";
@@ -214,21 +215,6 @@ type TAttributeSegmentFilterProps = TBaseFilterProps & {
   resource: TSegmentAttributeFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
 };
-/** Stores a copy of the segment with one filter's operator changed. */
-const setFilterOperator = (
-  segment: TSegment,
-  setSegment: (segment: TSegment) => void,
-  filterId: string,
-  newOperator: Parameters<typeof updateOperatorInFilter>[2]
-) => {
-  const updatedSegment = structuredClone(segment);
-  if (updatedSegment.filters) {
-    updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
-  }
-
-  setSegment(updatedSegment);
-};
-
 function AttributeSegmentFilter({
   connector,
   resource,
@@ -423,7 +409,7 @@ function AttributeSegmentFilter({
       <Select
         disabled={viewOnly}
         onValueChange={(operator: TAttributeOperator) => {
-          setFilterOperator(segment, setSegment, resource.id, operator);
+          setSegment(withFilterOperator(segment, resource.id, operator));
         }}
         value={operatorText}>
         <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
@@ -574,7 +560,7 @@ function PersonSegmentFilter({
       <Select
         disabled={viewOnly}
         onValueChange={(operator: TAttributeOperator) => {
-          setFilterOperator(segment, setSegment, resource.id, operator);
+          setSegment(withFilterOperator(segment, resource.id, operator));
         }}
         value={operatorText}>
         <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
@@ -660,11 +646,11 @@ function SegmentSegmentFilter({
     if (!resource.qualifier.operator) return;
 
     if (resource.qualifier.operator === "userIsIn") {
-      setFilterOperator(segment, setSegment, resource.id, "userIsNotIn");
+      setSegment(withFilterOperator(segment, resource.id, "userIsNotIn"));
       return;
     }
 
-    setFilterOperator(segment, setSegment, resource.id, "userIsIn");
+    setSegment(withFilterOperator(segment, resource.id, "userIsIn"));
   };
 
   return (
@@ -780,7 +766,7 @@ function DeviceFilter({
       <Select
         disabled={viewOnly}
         onValueChange={(operator: TDeviceOperator) => {
-          setFilterOperator(segment, setSegment, resource.id, operator);
+          setSegment(withFilterOperator(segment, resource.id, operator));
         }}
         value={operatorText}>
         <SelectTrigger
