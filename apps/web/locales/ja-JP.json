@@ -6443,6 +6443,7 @@
       "send_email_unconfigured": "メールの送信先を設定してください。",
       "show_test_runs": "テスト実行を表示",
       "step_copy_label": "{label}(コピー)",
+      "step_deleted": "「{name}」を削除しました。",
       "step_limit_reached": "ワークフローのステップは最大{count}個までです。",
       "step_move_breaks_variable": "「{step}」は「{source}」の{variable}を使用していますが、「{source}」がこのステップより前に実行されなくなります。",
       "step_move_was_here": "元の位置",

@@ -6443,6 +6443,7 @@
       "send_email_unconfigured": "E-posta alıcısını yapılandır.",
       "show_test_runs": "Test çalıştırmalarını göster",
       "step_copy_label": "{label} (kopya)",
+      "step_deleted": "“{name}” silindi.",
       "step_limit_reached": "Bir iş akışında en fazla {count} adım olabilir.",
       "step_move_breaks_variable": "“{step}” adımı, “{source}” adımındaki {variable} değişkenini kullanıyor ancak bu adım artık ondan önce çalışmıyor.",
       "step_move_was_here": "Önceki konum",

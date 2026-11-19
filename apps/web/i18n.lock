@@ -6209,6 +6209,7 @@ checksums:
     workspace/workflows/send_email_unconfigured: 306f5a6768ec08c316c3234ce11f8b32
     workspace/workflows/show_test_runs: 623e8054c45732cd2792831c37f34a26
     workspace/workflows/step_copy_label: 17f13949b7c11ef2be35e6e28bbc8f29
+    workspace/workflows/step_deleted: 9c7e235f3abeafdf12596a659e637565
     workspace/workflows/step_limit_reached: 568b36b6dec75ff7641199bf9c60762b
     workspace/workflows/step_move_breaks_variable: 90f58ce27f836add2a48efff20cdd50f
     workspace/workflows/step_move_was_here: 20fa4af950aefc2f88a1899a5f035034

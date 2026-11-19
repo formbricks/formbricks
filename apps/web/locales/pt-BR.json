@@ -6443,6 +6443,7 @@
       "send_email_unconfigured": "Configure o destinatário do e-mail.",
       "show_test_runs": "Mostrar execuções de teste",
       "step_copy_label": "{label} (cópia)",
+      "step_deleted": "“{name}” foi excluído.",
       "step_limit_reached": "Um fluxo de trabalho pode ter no máximo {count} etapas.",
       "step_move_breaks_variable": "“{step}” usa {variable} de “{source}”, que não será mais executada antes dela.",
       "step_move_was_here": "Estava aqui",

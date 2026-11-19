@@ -6443,6 +6443,7 @@
       "send_email_unconfigured": "配置邮件收件人。",
       "show_test_runs": "显示测试运行",
       "step_copy_label": "{label}（副本）",
+      "step_deleted": "已删除“{name}”。",
       "step_limit_reached": "一个工作流最多只能有 {count} 个步骤。",
       "step_move_breaks_variable": "“{step}”使用了“{source}”中的 {variable},但“{source}”现在不会再在它之前运行。",
       "step_move_was_here": "原位置",

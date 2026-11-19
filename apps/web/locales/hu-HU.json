@@ -6443,6 +6443,7 @@
       "send_email_unconfigured": "Az e-mail címzettjének beállítása.",
       "show_test_runs": "Tesztfuttatások megjelenítése",
       "step_copy_label": "{label} (másolat)",
+      "step_deleted": "A(z) „{name}” törlésre került.",
       "step_limit_reached": "Egy munkafolyamat legfeljebb {count} lépésből állhat.",
       "step_move_breaks_variable": "A(z) „{step}” a(z) {variable} változót használja a(z) „{source}” lépésből, amely már nem fut le előtte.",
       "step_move_was_here": "Korábbi helye",

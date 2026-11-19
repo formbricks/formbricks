@@ -6443,6 +6443,7 @@
       "send_email_unconfigured": "Configure the email recipient.",
       "show_test_runs": "Show test runs",
       "step_copy_label": "{label} (copy)",
+      "step_deleted": "Deleted “{name}”.",
       "step_limit_reached": "A workflow can have at most {count} steps.",
       "step_move_breaks_variable": "“{step}” uses {variable} from “{source}”, which no longer runs before it.",
       "step_move_was_here": "Was here",

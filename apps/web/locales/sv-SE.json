@@ -6443,6 +6443,7 @@
       "send_email_unconfigured": "Konfigurera e-postmottagaren.",
       "show_test_runs": "Visa testkörningar",
       "step_copy_label": "{label} (kopia)",
+      "step_deleted": "”{name}” har tagits bort.",
       "step_limit_reached": "Ett arbetsflöde kan ha högst {count} steg.",
       "step_move_breaks_variable": "”{step}” använder {variable} från ”{source}”, som inte längre körs före det.",
       "step_move_was_here": "Fanns här",

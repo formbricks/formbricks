@@ -6443,6 +6443,7 @@
       "send_email_unconfigured": "Настрой получателя email.",
       "show_test_runs": "Показать тестовые запуски",
       "step_copy_label": "{label} (копия)",
+      "step_deleted": "Шаг «{name}» удалён.",
       "step_limit_reached": "В рабочем процессе может быть не более {count} шагов.",
       "step_move_breaks_variable": "Шаг «{step}» использует {variable} из шага «{source}», который больше не выполняется перед ним.",
       "step_move_was_here": "Было здесь",

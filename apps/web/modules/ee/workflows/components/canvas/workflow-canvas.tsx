@@ -107,12 +107,12 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const closeNodeConfig = useSetAtom(closeWorkflowNodeConfigModalAtom);
   const setHoveredEdgeId = useSetAtom(hoveredWorkflowEdgeIdAtom);
   useStepClipboardShortcuts();
-  useDeleteStepShortcut();
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
   const setFlowNodes = useSetAtom(workflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const addTrigger = useSetAtom(addWorkflowTriggerAtom);
   const canvasRef = useRef<HTMLDivElement>(null);
+  useDeleteStepShortcut(canvasRef);
   // `isEditable` (canEditDefinition) is the API-side gate. The drag/pointer mode toggle is the
   // user-driven gate layered on top: even when permissions allow editing, the canvas stays
   // non-mutable until the user switches to pointer mode.

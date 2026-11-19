@@ -4,8 +4,9 @@
 import { renderHook } from "@testing-library/react";
 import { Provider, createStore } from "jotai";
 import { type ReactNode, createElement } from "react";
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import type { TWorkflowResource } from "@formbricks/workflows";
+import { showUndoToast } from "@/modules/ee/workflows/components/canvas/undo-toast";
 import {
   hydrateWorkflowEditorAtom,
   stepDeleteRequestAtom,
@@ -14,6 +15,7 @@ import {
 import { useDeleteStepShortcut } from "./use-delete-step-shortcut";
 
 vi.mock("@/modules/ee/workflows/lib/analytics", () => ({ trackWorkflowEvent: vi.fn() }));
+vi.mock("@/modules/ee/workflows/components/canvas/undo-toast", () => ({ showUndoToast: vi.fn() }));
 
 // trigger → email-1 → branch (If/else) → Then: email-2
 const definition = {
@@ -40,6 +42,19 @@ const workflow = {
   definition,
 } as unknown as TWorkflowResource;
 
+// The canvas, and a card on it; and the step panel beside it.
+const setUpPage = () => {
+  const canvas = document.body.appendChild(document.createElement("div"));
+  const card = canvas.appendChild(document.createElement("div"));
+  card.tabIndex = 0;
+  const panel = document.body.appendChild(document.createElement("div"));
+  return { canvas, card, panel };
+};
+
+const pointerDown = (target: EventTarget) =>
+  target.dispatchEvent(new Event("pointerdown", { bubbles: true, cancelable: true }));
+
+/** Renders the shortcut with `selectedId` highlighted, after a click on a card (the canvas has focus). */
 const render = (selectedId: string, { isReadOnly = false } = {}) => {
   const store = createStore();
   store.set(hydrateWorkflowEditorAtom, {
@@ -49,20 +64,27 @@ const render = (selectedId: string, { isReadOnly = false } = {}) => {
     ),
     isReadOnly,
   });
+  const page = setUpPage();
   const wrapper = ({ children }: { children: ReactNode }) => createElement(Provider, { store }, children);
-  renderHook(() => useDeleteStepShortcut(), { wrapper });
-  return store;
+  renderHook(() => useDeleteStepShortcut({ current: page.canvas }), { wrapper });
+  pointerDown(page.card);
+  return { store, ...page };
 };
 
 const press = (key: string, target: EventTarget = document.body) =>
   target.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }));
+
+afterEach(() => {
+  document.body.innerHTML = "";
+  vi.mocked(showUndoToast).mockClear();
+});
 
 const stepIds = (store: ReturnType<typeof createStore>) =>
   store.get(workflowDefinitionAtom)?.nodes.map((node) => node.id);
 
 describe("useDeleteStepShortcut", () => {
   test("Backspace deletes the highlighted step from the workflow and joins its neighbours", () => {
-    const store = render("email-1");
+    const { store } = render("email-1");
     press("Backspace");
     expect(stepIds(store)).toEqual(["branch", "email-2"]);
     expect(store.get(workflowDefinitionAtom)?.edges).toContainEqual(
@@ -71,31 +93,56 @@ describe("useDeleteStepShortcut", () => {
   });
 
   test("Delete does the same", () => {
-    const store = render("email-2");
+    const { store } = render("email-2");
     press("Delete");
     expect(stepIds(store)).toEqual(["email-1", "branch"]);
   });
 
   test("an If/else asks its card to confirm first and deletes nothing yet", () => {
-    const store = render("branch");
+    const { store } = render("branch");
     press("Backspace");
     expect(stepIds(store)).toEqual(["email-1", "branch", "email-2"]);
     expect(store.get(stepDeleteRequestAtom)).toBe("branch");
   });
 
   test("leaves the trigger, a field being typed in, and a read-only workflow alone", () => {
-    const trigger = render("trigger-1");
+    const { store: trigger } = render("trigger-1");
     press("Backspace");
     expect(stepIds(trigger)).toHaveLength(3);
 
-    const typing = render("email-1");
+    const { store: typing } = render("email-1");
     const input = document.body.appendChild(document.createElement("input"));
     press("Backspace", input);
     expect(stepIds(typing)).toHaveLength(3);
     input.remove();
 
-    const readOnly = render("email-1", { isReadOnly: true });
+    const { store: readOnly } = render("email-1", { isReadOnly: true });
     press("Backspace");
     expect(stepIds(readOnly)).toHaveLength(3);
+  });
+
+  test("says what it deleted, with an Undo back to the workflow as it was", () => {
+    const { store } = render("email-1");
+    const before = store.get(workflowDefinitionAtom);
+    press("Backspace");
+    expect(showUndoToast).toHaveBeenCalledWith(
+      expect.objectContaining({ message: "workspace.workflows.step_deleted", previous: before })
+    );
+  });
+
+  test("does nothing after a click outside the canvas, such as in the step panel", () => {
+    const { store, panel } = render("email-1");
+    pointerDown(panel);
+    press("Backspace");
+    expect(stepIds(store)).toHaveLength(3);
+    expect(showUndoToast).not.toHaveBeenCalled();
+  });
+
+  test("works again once a card on the canvas is clicked or tabbed to", () => {
+    const { store, panel, card } = render("email-1");
+    pointerDown(panel);
+    card.focus();
+    press("Backspace");
+    expect(stepIds(store)).toEqual(["branch", "email-2"]);
   });
 });

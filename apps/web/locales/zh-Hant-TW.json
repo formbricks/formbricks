@@ -6443,6 +6443,7 @@
       "send_email_unconfigured": "設定電子郵件收件人。",
       "show_test_runs": "顯示測試執行",
       "step_copy_label": "{label}（副本）",
+      "step_deleted": "已刪除「{name}」。",
       "step_limit_reached": "一個工作流程最多只能有 {count} 個步驟。",
       "step_move_breaks_variable": "「{step}」使用了「{source}」的 {variable},但「{source}」現在不會在它之前執行。",
       "step_move_was_here": "原本的位置",

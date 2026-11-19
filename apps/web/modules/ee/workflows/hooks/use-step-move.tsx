@@ -5,6 +5,7 @@ import { useAtomValue, useSetAtom, useStore } from "jotai";
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { showUndoToast } from "@/modules/ee/workflows/components/canvas/undo-toast";
 import { snapWorkflowNodePosition, updateNodePosition } from "@/modules/ee/workflows/lib/definition-to-flow";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import type { TPasteTarget } from "@/modules/ee/workflows/lib/step-clipboard";
@@ -18,7 +19,6 @@ import {
   stepMoveDragAtom,
   workflowDefinitionAtom,
   workflowFlowNodesAtom,
-  workflowUndoAtom,
 } from "@/modules/ee/workflows/state/editor";
 
 /** How close (in screen pixels) the pointer must come to a `+` for a drop to land on it. */
@@ -41,25 +41,12 @@ export const useMoveStep = () => {
         const node = result.definition.nodes.find((item) => item.id === id);
         return node ? getNodeRegistryEntry(node).title(node, t) : id;
       };
-      toast.success(
-        (instance) => (
-          <div className="flex items-center gap-3">
-            <span>{t("workspace.workflows.step_moved", { name: titleOf(stepId) })}</span>
-            <button
-              type="button"
-              className="text-sm font-medium text-black underline hover:text-slate-700"
-              onClick={() => {
-                toast.dismiss(instance.id);
-                // Only while the move is still the last edit; after another one, Undo is the toolbar's.
-                const history = store.get(workflowUndoAtom);
-                if (history?.undoesTo(result.previous)) history.undo();
-              }}>
-              {t("workspace.workflows.undo")}
-            </button>
-          </div>
-        ),
-        { duration: 6000 }
-      );
+      showUndoToast({
+        message: t("workspace.workflows.step_moved", { name: titleOf(stepId) }),
+        undoLabel: t("workspace.workflows.undo"),
+        previous: result.previous,
+        store,
+      });
       const [broken] = result.brokenReferences;
       if (broken) {
         toast.error(
