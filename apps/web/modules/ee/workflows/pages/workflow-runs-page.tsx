@@ -154,6 +154,7 @@ export const WorkflowRunsPage = ({
         />
       )}
       <RunsCanvasSection
+        locale={locale}
         isLoading={isGraphLoading}
         definition={graph.definition}
         run={run}
@@ -206,7 +207,9 @@ const RunsCanvasSection = ({
   onSelectStep,
   leftPill,
   onExpandRight,
+  locale,
 }: Readonly<{
+  locale: string;
   isLoading: boolean;
   definition: TWorkflowDefinition | null;
   run: TWorkflowRunDetail | undefined;
@@ -243,6 +246,7 @@ const RunsCanvasSection = ({
       {leftPill}
       {onExpandRight ? (
         <RunsStepPill
+          locale={locale}
           definition={definition}
           run={run}
           rows={rows}

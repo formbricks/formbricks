@@ -9,7 +9,6 @@ import {
   WEBHOOK_PAYLOAD_MAX_BYTES,
 } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
-import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import {
   WorkflowPanelCollapseButton,
   WorkflowPanelPill,
@@ -18,7 +17,7 @@ import { useStoredTestPayload } from "@/modules/ee/workflows/hooks/use-stored-te
 import { useWorkflowWebhook } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import { getWorkflowApiErrorMessage } from "@/modules/ee/workflows/lib/api-error";
 import { getWorkflowRunStatusBadge } from "@/modules/ee/workflows/lib/display";
-import type { TRunsViewKind } from "@/modules/ee/workflows/lib/runs-view";
+import { type TRunsViewKind, formatRunTime } from "@/modules/ee/workflows/lib/runs-view";
 import { getTestRunDrawerPayload } from "@/modules/ee/workflows/lib/test-run";
 import type { TWorkflowTestRunFailure } from "@/modules/ee/workflows/state/test-run";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -54,13 +53,6 @@ const describeFailure = (failure: TWorkflowTestRunFailure, error: unknown, t: TF
   }
   const exhaustiveCheck: never = failure;
   return exhaustiveCheck;
-};
-
-const RUN_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
-  month: "short",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
 };
 
 /** The Webhook workflow's test input: the payload a Test run sends, kept in this browser. */
@@ -328,7 +320,7 @@ const RunListRow = ({
         ) : null}
       </span>
       <time className="text-xs text-slate-500" dateTime={run.createdAt}>
-        {formatDateTimeForDisplay(new Date(run.createdAt), locale, RUN_TIME_OPTIONS)}
+        {formatRunTime(run.createdAt, locale)}
       </time>
       {run.error ? (
         <span className="col-start-2 col-end-4 truncate text-xs text-red-600">{run.error}</span>

@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowLeftIcon, CopyPlusIcon, HistoryIcon, PencilIcon } from "lucide-react";
+import type { TFunction } from "i18next";
+import { ArrowLeftIcon, CopyPlusIcon, PencilIcon } from "lucide-react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
@@ -9,9 +10,9 @@ import {
   WorkflowPanelCollapseButton,
   WorkflowPanelPill,
 } from "@/modules/ee/workflows/components/workflow-side-panel";
-import { getWorkflowTriggerTypeLabel } from "@/modules/ee/workflows/lib/display";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import type { TRunDetailBadge, TRunDetailRow } from "@/modules/ee/workflows/lib/run-detail-rows";
+import { formatRunTime } from "@/modules/ee/workflows/lib/runs-view";
 import type { TWorkflowRunDetail } from "@/modules/ee/workflows/types";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -42,6 +43,15 @@ interface RunsStepPanelProps {
   canEditSteps: boolean;
 }
 
+/** "Test run · Nov 19, 2:42 PM" or "Run · Nov 19, 2:42 PM": the run, as its row in the list names it. */
+const getRunTitle = (run: TWorkflowRunDetail | undefined, locale: string, t: TFunction): string => {
+  if (!run) return t("workspace.workflows.runs_run");
+  const time = formatRunTime(run.createdAt, locale);
+  return run.isDryRun
+    ? t("workspace.workflows.runs_title_test_run", { time })
+    : t("workspace.workflows.runs_title_run", { time });
+};
+
 const findNode = (definition: TWorkflowDefinition | null, stepId: string | null) => {
   if (!definition || !stepId) return null;
   if (definition.trigger?.id === stepId) return definition.trigger;
@@ -70,7 +80,7 @@ export const RunsStepPanel = (props: Readonly<RunsStepPanelProps>) => {
   const entry = node ? getNodeRegistryEntry(node) : null;
   const stepTitle = node && entry ? entry.title(node, t) : null;
 
-  const runTitle = run ? getWorkflowTriggerTypeLabel(run.triggerType, t) : t("workspace.workflows.runs_run");
+  const runTitle = getRunTitle(run, props.locale, t);
   const title = stepTitle ?? runTitle;
 
   return (
@@ -87,7 +97,7 @@ export const RunsStepPanel = (props: Readonly<RunsStepPanelProps>) => {
             className="shrink-0 text-slate-600"
             onClick={() => props.onSelectStep(null)}>
             <ArrowLeftIcon />
-            {t("workspace.workflows.runs_run")}
+            {t("workspace.workflows.runs_all_steps")}
           </Button>
         ) : null}
         <WorkflowPanelCollapseButton side="right" onCollapse={() => props.onCollapsedChange(true)} />
@@ -218,8 +228,10 @@ export const RunsStepPill = ({
   run,
   rows,
   selectedStepId,
+  locale,
   onExpand,
 }: Readonly<{
+  locale: string;
   definition: TWorkflowDefinition | null;
   run: TWorkflowRunDetail | undefined;
   rows: TRunDetailRow[] | null;
@@ -248,12 +260,7 @@ export const RunsStepPill = ({
   return (
     <WorkflowPanelPill
       side="right"
-      icon={
-        <span className="flex size-7 items-center justify-center rounded-md bg-slate-100 text-slate-600">
-          <HistoryIcon className="size-4" aria-hidden="true" />
-        </span>
-      }
-      label={run ? getWorkflowTriggerTypeLabel(run.triggerType, t) : t("workspace.workflows.runs_run")}
+      label={getRunTitle(run, locale, t)}
       status={runStatus}
       onExpand={onExpand}
     />

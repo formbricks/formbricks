@@ -1,4 +1,5 @@
 import { type TWorkflowDefinition, isResponseCompletedTrigger } from "@formbricks/workflows";
+import { formatDateTimeForDisplay } from "@/lib/utils/datetime";
 import type { TWorkflowRunListFilters } from "@/modules/ee/workflows/lib/api-client";
 import type { TRunDetailBadge, TRunDetailRow } from "@/modules/ee/workflows/lib/run-detail-rows";
 
@@ -78,3 +79,14 @@ export const getTestInputKind = (
   if (!definition.trigger) return "none";
   return isResponseCompletedTrigger(definition.trigger) ? "response" : "webhook";
 };
+
+const RUN_TIME_OPTIONS: Intl.DateTimeFormatOptions = {
+  month: "short",
+  day: "numeric",
+  hour: "numeric",
+  minute: "2-digit",
+};
+
+/** When a run started, as the run list and the run's title show it ("Nov 19, 2:42 PM"). */
+export const formatRunTime = (createdAt: string, locale: string): string =>
+  formatDateTimeForDisplay(new Date(createdAt), locale, RUN_TIME_OPTIONS);
