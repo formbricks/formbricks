@@ -2,6 +2,7 @@ import { Upload, UploadIcon, X } from "lucide-react";
 import * as React from "react";
 import { ElementError, getElementErrorAria } from "@/components/general/element-error";
 import { ElementHeader } from "@/components/general/element-header";
+import { getDroppedFileList, setDropEffect } from "@/lib/drag-data";
 import { cn } from "@/lib/utils";
 
 /**
@@ -257,14 +258,15 @@ function FileUpload({
   const handleDragOver = (e: React.DragEvent<HTMLLabelElement>): void => {
     e.preventDefault();
     e.stopPropagation();
-    e.dataTransfer.dropEffect = "copy";
+    setDropEffect(e, "copy");
   };
 
   const handleDrop = (e: React.DragEvent<HTMLLabelElement>): void => {
     e.preventDefault();
     e.stopPropagation();
-    if (onFileSelect && e.dataTransfer.files.length > 0) {
-      onFileSelect(e.dataTransfer.files);
+    const files = getDroppedFileList(e);
+    if (onFileSelect && files.length > 0) {
+      onFileSelect(files);
     }
   };
 
