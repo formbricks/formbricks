@@ -431,6 +431,7 @@ describe("cross-origin writes to /api/internal/mcp-grants/{clientId}", () => {
     );
 
     expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("Cross-origin requests are not allowed.");
     expect(mocks.editMcpGrant).not.toHaveBeenCalled();
   });
 
@@ -444,6 +445,7 @@ describe("cross-origin writes to /api/internal/mcp-grants/{clientId}", () => {
     );
 
     expect(response.status).toBe(403);
+    expect((await response.json()).detail).toBe("Cross-origin requests are not allowed.");
     expect(mocks.revokeMcpClient).not.toHaveBeenCalled();
   });
 });
