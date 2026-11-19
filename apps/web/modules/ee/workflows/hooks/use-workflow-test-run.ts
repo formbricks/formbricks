@@ -1,14 +1,15 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAtom, useStore } from "jotai";
-import { useCallback, useState } from "react";
+import { useAtomValue, useSetAtom, useStore } from "jotai";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback } from "react";
 import { type TCreateWorkflowTestRunInput, WORKFLOW_TRIGGERS } from "@formbricks/workflows";
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
 import { MUTATION_TIMEOUT_MS, createWorkflowTestRun } from "@/modules/ee/workflows/lib/api-client";
 import { workflowRunKeys } from "@/modules/ee/workflows/lib/query";
+import { getWorkflowRunsPath } from "@/modules/ee/workflows/lib/runs-view";
 import {
-  type TTestRunFailure,
   buildTestRunInput,
   classifyTestRunError,
   getTestRunBlocker,
@@ -16,48 +17,63 @@ import {
 import { readStoredTestPayload } from "@/modules/ee/workflows/lib/webhook-trigger-panel";
 import {
   isWorkflowDirtyAtom,
+  isWorkflowNodeConfigModalOpenAtom,
   isWorkflowSavingAtom,
   isWorkflowTransitioningAtom,
+  selectedWorkflowNodeIdAtom,
   workflowAtom,
   workflowDefinitionAtom,
 } from "@/modules/ee/workflows/state/editor";
-import { editorRunDrawerAtom } from "@/modules/ee/workflows/state/run-drawer";
+import { EMPTY_TEST_RUN_STATE, editorTestRunAtom } from "@/modules/ee/workflows/state/test-run";
 
-/** Why a Test run did not start or failed: a refusal, or the draft could not be saved first. */
-export type TWorkflowTestRunFailure = TTestRunFailure | "unsaved";
+export type { TWorkflowTestRunFailure } from "@/modules/ee/workflows/state/test-run";
 
 /**
- * Test run from the editor header (ED6, ADR 0049): saves the draft if needed, then runs it and opens
- * the run drawer on the finished run. A Webhook workflow sends the test payload kept in this browser
- * (else the server uses the Sample payload). A Response completed workflow runs against a response
- * picked in the drawer: started without one, it opens the drawer on the picker and waits. The run
- * goes into the query cache, never into component state; the drawer atom only holds which run is shown.
+ * Test run (ED6, ADR 0049; review point 1): saves the draft if needed, runs it, and shows the result in
+ * the workflow's Runs view, which it opens when started from the Editor, keeping the step that was
+ * open. A Webhook workflow sends the test input kept in this browser (else the server uses the
+ * expected payload). A Response completed workflow runs against a response picked in the Runs view:
+ * started without one, it waits for the pick there. The run goes into the query cache; the shared
+ * `editorTestRunAtom` only says what is in flight, what failed and which run came back.
  */
 export const useWorkflowTestRun = ({
+  workspaceId,
   workflowId,
   isReadOnly,
 }: {
+  workspaceId: string;
   workflowId: string;
   isReadOnly: boolean;
 }) => {
   const store = useStore();
   const queryClient = useQueryClient();
-  const [drawer, setDrawer] = useAtom(editorRunDrawerAtom);
-  const [preflightFailure, setPreflightFailure] = useState<TWorkflowTestRunFailure | null>(null);
-  // A Response completed workflow, saved and waiting for a response to be picked in the drawer.
-  const [isPickingResponse, setIsPickingResponse] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const state = useAtomValue(editorTestRunAtom);
+  const setState = useSetAtom(editorTestRunAtom);
   const { save } = useWorkflowBuilder({ workflowId, isReadOnly, loadOnMount: false });
+  const runsPath = getWorkflowRunsPath(workspaceId, workflowId);
 
-  const mutation = useMutation({
+  // Callbacks on the mutation itself (not on `mutate`), so a run started in one tab still lands
+  // after the user switches to the other.
+  const { mutate } = useMutation({
     mutationFn: (input: TCreateWorkflowTestRunInput) => createWorkflowTestRun(workflowId, input),
     onSuccess: (run) => {
       queryClient.setQueryData(workflowRunKeys.detail(run.id), run);
       void queryClient.invalidateQueries({ queryKey: workflowRunKeys.lists() });
-      // A run that comes back after the drawer was closed stays closed; it is listed under Runs.
-      setDrawer((current) => (current.isOpen ? { isOpen: true, runId: run.id } : current));
+      setState({ ...EMPTY_TEST_RUN_STATE, runId: run.id });
+    },
+    onError: (error, input) => {
+      setState({
+        ...EMPTY_TEST_RUN_STATE,
+        failure: classifyTestRunError(error, {
+          sentPayload: input.payload !== undefined,
+          sentResponseId: input.responseId !== undefined,
+        }),
+        error,
+      });
     },
   });
-  const { mutate, reset } = mutation;
 
   // A save already in flight carries an older snapshot; let it land before deciding whether the
   // draft still needs one, so the Test run runs what is on screen.
@@ -79,16 +95,23 @@ export const useWorkflowTestRun = ({
     [store]
   );
 
-  /** From the header, no response: a Response completed workflow then waits in the picker. */
+  // From the Editor, the result is read in Runs, on the step that was open.
+  const openRunsView = useCallback(() => {
+    if (pathname === runsPath) return;
+    const openStepId = store.get(isWorkflowNodeConfigModalOpenAtom)
+      ? store.get(selectedWorkflowNodeIdAtom)
+      : null;
+    router.push(openStepId ? `${runsPath}?step=${encodeURIComponent(openStepId)}` : runsPath);
+  }, [pathname, runsPath, router, store]);
+
+  /** Without a response, a Response completed workflow waits for one to be picked in Runs. */
   const startTestRun = useCallback(
     async (responseId?: string) => {
       const workflow = store.get(workflowAtom);
-      if (!workflow || isReadOnly || mutation.isPending) return;
+      if (!workflow || isReadOnly || store.get(editorTestRunAtom).isRunning) return;
 
-      reset();
-      setPreflightFailure(null);
-      setIsPickingResponse(false);
-      setDrawer({ isOpen: true, runId: null });
+      setState({ ...EMPTY_TEST_RUN_STATE, isRunning: true });
+      openRunsView();
 
       const definition = store.get(workflowDefinitionAtom);
       const blocker = getTestRunBlocker({
@@ -96,54 +119,31 @@ export const useWorkflowTestRun = ({
         status: workflow.status,
       });
       if (blocker) {
-        setPreflightFailure(blocker);
+        setState({ ...EMPTY_TEST_RUN_STATE, failure: blocker });
         return;
       }
 
       await waitForSaveToSettle();
       if (store.get(isWorkflowDirtyAtom) && !(await save({ silent: true }))) {
-        setPreflightFailure("unsaved");
+        setState({ ...EMPTY_TEST_RUN_STATE, failure: "unsaved" });
         return;
       }
 
       if (definition?.trigger?.triggerType === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED) {
         if (responseId) mutate({ responseId });
-        else setIsPickingResponse(true);
+        else setState({ ...EMPTY_TEST_RUN_STATE, isPickingResponse: true });
         return;
       }
 
       const built = buildTestRunInput(readStoredTestPayload(workflowId));
       if (!built.ok) {
-        setPreflightFailure(built.reason);
+        setState({ ...EMPTY_TEST_RUN_STATE, failure: built.reason });
         return;
       }
       mutate(built.input);
     },
-    [store, isReadOnly, mutation.isPending, reset, setDrawer, waitForSaveToSettle, save, workflowId, mutate]
+    [store, isReadOnly, setState, openRunsView, waitForSaveToSettle, save, workflowId, mutate]
   );
 
-  const closeDrawer = useCallback(() => {
-    setIsPickingResponse(false);
-    setDrawer({ isOpen: false, runId: null });
-  }, [setDrawer]);
-
-  const failure: TWorkflowTestRunFailure | null =
-    preflightFailure ??
-    (mutation.error
-      ? classifyTestRunError(mutation.error, {
-          sentPayload: mutation.variables?.payload !== undefined,
-          sentResponseId: mutation.variables?.responseId !== undefined,
-        })
-      : null);
-
-  return {
-    startTestRun,
-    closeDrawer,
-    isDrawerOpen: drawer.isOpen,
-    runId: drawer.runId,
-    isRunning: mutation.isPending,
-    isPickingResponse,
-    failure,
-    error: mutation.error,
-  };
+  return { ...state, startTestRun };
 };

@@ -92,7 +92,14 @@ export type TWorkflowNodeData = {
    */
   legOffsets?: number[];
   issue: TWorkflowNodeIssue | null;
+  /**
+   * Only on the Runs view's read-only canvas: what the shown run did at this step ("Succeeded",
+   * "Not taken"…), drawn above the card (review point 1).
+   */
+  runBadge?: TWorkflowNodeRunBadge;
 };
+
+export type TWorkflowNodeRunBadge = { label: string; type: "success" | "error" | "warning" | "gray" };
 
 /**
  * A pending "take me to the field that's wrong" jump, raised by the validation problems dialog and

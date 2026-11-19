@@ -1,12 +1,8 @@
 "use client";
 
 import { useReactFlow } from "@xyflow/react";
-import { type RefObject, useCallback, useEffect, useRef } from "react";
-import {
-  TEST_RUN_DRAWER_SELECTOR,
-  WORKFLOW_CANVAS_FIT_PADDING,
-  getCanvasFitPadding,
-} from "@/modules/ee/workflows/lib/canvas-fit";
+import { type RefObject, useCallback, useEffect } from "react";
+import { WORKFLOW_CANVAS_FIT_PADDING, getCanvasFitPadding } from "@/modules/ee/workflows/lib/canvas-fit";
 
 // The canvas is the page's main action — let fitView scale small flows past the former 0.85 cap,
 // which rendered a fresh two-node workflow noticeably small. 2x proved too big; 1.15 is three
@@ -16,8 +12,6 @@ export const WORKFLOW_CANVAS_MAX_ZOOM = 1.15;
 // The inspector column animates its width over 150ms (see workflow-inspector-panel.tsx); move the
 // view only after the canvas has its final size, with a small buffer.
 const INSPECTOR_RESIZE_SETTLE_MS = 170;
-// Near-instant: the refit for the Test run drawer should feel like part of opening it.
-const DRAWER_REFIT_MS = INSPECTOR_RESIZE_SETTLE_MS / 4;
 // Panning a hidden step into view, and fitting on request (Fit to screen, Auto layout).
 const REVEAL_PAN_MS = 170;
 const FIT_MS = 300;
@@ -35,42 +29,32 @@ const motionMs = (ms: number): number =>
 /**
  * Where the canvas looks (ENG review of #10010): opening a step, or the panel, keeps the user's zoom
  * and only pans when the step's card would be hidden; the whole flow is fitted only on request (Fit
- * to screen, Auto layout, a new orientation) and when the Test run drawer opens or closes.
+ * to screen, Auto layout, a new orientation).
  */
 export const useCanvasViewport = ({
   canvasRef,
-  isRunDrawerOpen,
   openNodeId,
   isInspectorVisible,
 }: {
   canvasRef: RefObject<HTMLDivElement | null>;
-  isRunDrawerOpen: boolean;
   /** The step whose panel is open, null without one. */
   openNodeId: string | null;
   isInspectorVisible: boolean;
 }) => {
   const { fitView, getInternalNode, getViewport, setCenter } = useReactFlow();
 
-  // Fit the flow into the part of the canvas that is not behind the Test run drawer, which slides
-  // in over the canvas's right side without resizing it. The drawer is measured at call time, so a
-  // narrow screen's full-width drawer counts too.
+  // Fit the whole flow into the canvas.
   const refitViewport = useCallback(
     (duration: number) => {
       const canvas = canvasRef.current?.getBoundingClientRect();
-      let coverLeft: number | null = null;
-      if (isRunDrawerOpen) {
-        const drawerWidth =
-          document.querySelector<HTMLElement>(TEST_RUN_DRAWER_SELECTOR)?.offsetWidth ?? window.innerWidth;
-        coverLeft = window.innerWidth - drawerWidth;
-      }
       const padding = canvas
-        ? getCanvasFitPadding({ canvasLeft: canvas.left, canvasRight: canvas.right, coverLeft })
+        ? getCanvasFitPadding({ canvasLeft: canvas.left, canvasRight: canvas.right, coverLeft: null })
         : WORKFLOW_CANVAS_FIT_PADDING;
       // Too little left visible to fit into: keep the current zoom and pan.
       if (padding === null) return;
       void fitView({ padding, maxZoom: WORKFLOW_CANVAS_MAX_ZOOM, minZoom: 0.4, duration });
     },
-    [canvasRef, fitView, isRunDrawerOpen]
+    [canvasRef, fitView]
   );
 
   // Brings a step into view at the user's zoom: only when part of its card is outside the canvas
@@ -113,19 +97,6 @@ export const useCanvasViewport = ({
     const timeoutHandle = setTimeout(() => revealNode(openNodeId), INSPECTOR_RESIZE_SETTLE_MS);
     return () => clearTimeout(timeoutHandle);
   }, [openNodeId, isInspectorVisible, revealNode]);
-
-  // Opening or closing the Test run drawer fits the flow into the part of the canvas it leaves
-  // visible, so the run's path can be read whole.
-  const previousRunDrawerOpenRef = useRef(isRunDrawerOpen);
-  useEffect(() => {
-    if (previousRunDrawerOpenRef.current === isRunDrawerOpen) return;
-    previousRunDrawerOpenRef.current = isRunDrawerOpen;
-    const timeoutHandle = setTimeout(
-      () => refitViewport(motionMs(DRAWER_REFIT_MS)),
-      INSPECTOR_RESIZE_SETTLE_MS
-    );
-    return () => clearTimeout(timeoutHandle);
-  }, [isRunDrawerOpen, refitViewport]);
 
   const handleFitView = useCallback(() => refitViewport(motionMs(FIT_MS)), [refitViewport]);
 

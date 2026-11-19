@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { getWorkflow } from "@/modules/ee/workflows/lib/api-client";
 import { workflowKeys } from "@/modules/ee/workflows/lib/query";
+import { getWorkflowRunsPath } from "@/modules/ee/workflows/lib/runs-view";
 import { type TWorkflowRunListItem } from "@/modules/ee/workflows/types";
 import { Alert } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -66,9 +67,10 @@ export const WorkflowRunDetailDrawer = ({
           versionNumber={detail?.workflowVersionNumber ?? null}>
           {run ? (
             <Button asChild variant="link" className="mt-2 h-auto w-fit justify-start p-0 text-sm">
-              <Link href={`/workspaces/${run.workspaceId}/workflows/${run.workflowId}`}>
+              <Link
+                href={`${getWorkflowRunsPath(run.workspaceId, run.workflowId)}?run=${encodeURIComponent(run.id)}`}>
                 <SquareArrowOutUpRight />
-                {t("common.view_workflow")}
+                {t("workspace.workflows.runs_open_on_canvas")}
               </Link>
             </Button>
           ) : null}

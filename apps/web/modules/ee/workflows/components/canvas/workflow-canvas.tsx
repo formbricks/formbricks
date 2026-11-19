@@ -13,7 +13,6 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useAtomValue, useSetAtom } from "jotai";
-import { PanelLeftIcon, PanelRightOpenIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
@@ -60,14 +59,11 @@ import {
   openWorkflowNodeConfigModalAtom,
   selectedWorkflowNodeIdAtom,
   setWorkflowDefinitionAtom,
-  toggleWorkflowInspectorAtom,
   workflowAtom,
   workflowCanvasDirectionAtom,
   workflowDefinitionAtom,
   workflowFlowNodesAtom,
 } from "@/modules/ee/workflows/state/editor";
-import { editorRunDrawerAtom } from "@/modules/ee/workflows/state/run-drawer";
-import { Button } from "@/modules/ui/components/button";
 import { AddButtonEdge } from "./add-button-edge";
 import { BranchEdge } from "./branch-edge";
 import { CanvasControls } from "./canvas-controls";
@@ -104,7 +100,6 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const isInspectorCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
   const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
   const selectedNodeId = useAtomValue(selectedWorkflowNodeIdAtom);
-  const toggleInspector = useSetAtom(toggleWorkflowInspectorAtom);
   const closeNodeConfig = useSetAtom(closeWorkflowNodeConfigModalAtom);
   const setHoveredEdgeId = useSetAtom(hoveredWorkflowEdgeIdAtom);
   useStepClipboardShortcuts();
@@ -112,7 +107,6 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const setFlowNodes = useSetAtom(workflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
   const addTrigger = useSetAtom(addWorkflowTriggerAtom);
-  const isRunDrawerOpen = useAtomValue(editorRunDrawerAtom).isOpen;
   const canvasRef = useRef<HTMLDivElement>(null);
   // `isEditable` (canEditDefinition) is the API-side gate. The drag/pointer mode toggle is the
   // user-driven gate layered on top: even when permissions allow editing, the canvas stays
@@ -242,7 +236,6 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const isInspectorVisible = isNodeConfigOpen && !isInspectorCollapsed;
   const { handleFitView, recenterAfterLayout, refitAfterLayout } = useCanvasViewport({
     canvasRef,
-    isRunDrawerOpen,
     openNodeId,
     isInspectorVisible,
   });
@@ -315,25 +308,6 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         // scroll policy: it pans and zooms, so clipping is correct here.
         "relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white"
       )}>
-      {/* The inspector only ever shows a node's config now, so the collapse toggle is only
-          offered while one is open. */}
-      {isNodeConfigOpen ? (
-        <div className="absolute top-4 right-4 z-10">
-          <Button
-            variant="outline"
-            size="icon"
-            className="bg-white"
-            aria-label={
-              isInspectorCollapsed
-                ? t("workspace.workflows.expand_inspector")
-                : t("workspace.workflows.collapse_inspector")
-            }
-            aria-pressed={!isInspectorCollapsed}
-            onClick={toggleInspector}>
-            {isInspectorCollapsed ? <PanelRightOpenIcon /> : <PanelLeftIcon />}
-          </Button>
-        </div>
-      ) : null}
       <ReactFlow
         nodes={displayedFlowNodes}
         edges={flowEdges}

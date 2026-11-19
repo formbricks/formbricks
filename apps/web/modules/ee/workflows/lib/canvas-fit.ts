@@ -1,9 +1,4 @@
-// Where the canvas fits its flow when something overlays part of it (the Test run drawer slides in
-// over its right side, without resizing it).
-
-/** Marks the Test run drawer's panel, so the canvas can measure how much of it the drawer covers. */
-export const TEST_RUN_DRAWER_ATTRIBUTE = "data-workflow-test-run-drawer";
-export const TEST_RUN_DRAWER_SELECTOR = `[${TEST_RUN_DRAWER_ATTRIBUTE}]`;
+// Where the canvas fits its flow, and how much of it is left when something overlays its right side.
 
 /** React Flow's numeric padding: 0.25 leaves 10% of the canvas free on each side. */
 export const WORKFLOW_CANVAS_FIT_PADDING = 0.25;

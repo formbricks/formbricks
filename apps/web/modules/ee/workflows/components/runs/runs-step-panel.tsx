@@ -1,0 +1,211 @@
+"use client";
+
+import { ArrowLeftIcon, CopyPlusIcon, HistoryIcon, PencilIcon } from "lucide-react";
+import Link from "next/link";
+import { useTranslation } from "react-i18next";
+import type { TWorkflowDefinition } from "@formbricks/workflows";
+import { WorkflowNodeChip } from "@/modules/ee/workflows/components/canvas/workflow-node-card";
+import {
+  WorkflowPanelCollapseButton,
+  WorkflowPanelRail,
+} from "@/modules/ee/workflows/components/workflow-side-panel";
+import { getWorkflowTriggerTypeLabel } from "@/modules/ee/workflows/lib/display";
+import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
+import type { TRunDetailRow } from "@/modules/ee/workflows/lib/run-detail-rows";
+import type { TWorkflowRunDetail } from "@/modules/ee/workflows/types";
+import { Alert, AlertDescription } from "@/modules/ui/components/alert";
+import { Button } from "@/modules/ui/components/button";
+import { RunDetailRow } from "./run-detail-steps";
+import { RunStepsBody } from "./run-steps-body";
+import { RunSummarySection } from "./run-summary-section";
+import { TestRunNotice } from "./workflow-run-detail-drawer";
+
+interface RunsStepPanelProps {
+  workspaceId: string;
+  workflowId: string;
+  locale: string;
+  isCollapsed: boolean;
+  onCollapsedChange: (isCollapsed: boolean) => void;
+  /** The graph the run is drawn on, which names its steps. */
+  definition: TWorkflowDefinition | null;
+  /** The run was made before Test runs saved their draft, so it is drawn on today's draft. */
+  isDrawnOnCurrentDraft: boolean;
+  run: TWorkflowRunDetail | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  rows: TRunDetailRow[] | null;
+  selectedStepId: string | null;
+  onSelectStep: (stepId: string | null) => void;
+  /** Copies a Webhook run's payload into the test input; absent when the member can't test. */
+  onUseAsTestInput?: (payload: Record<string, unknown>) => void;
+  canEditSteps: boolean;
+}
+
+const findNode = (definition: TWorkflowDefinition | null, stepId: string | null) => {
+  if (!definition || !stepId) return null;
+  if (definition.trigger?.id === stepId) return definition.trigger;
+  return definition.nodes.find((node) => node.id === stepId) ?? null;
+};
+
+/** "Edit step" opens the step in the Editor; null for the trigger or a member who can't edit. */
+const getEditStepHref = (
+  { canEditSteps, definition, workspaceId, workflowId }: Readonly<RunsStepPanelProps>,
+  stepId: string
+): string | null =>
+  canEditSteps && stepId !== definition?.trigger?.id
+    ? `/workspaces/${workspaceId}/workflows/${workflowId}?node=${encodeURIComponent(stepId)}`
+    : null;
+
+/**
+ * The Runs view's right panel (review point 1): the selected step's part of the run, drawn as output
+ * (values and code, never the settings form), with what to do next: "Use as test input" on the
+ * Webhook step and "Edit step" back in the Editor. With no step selected, the run's summary and every
+ * step, each opening its card.
+ */
+export const RunsStepPanel = (props: Readonly<RunsStepPanelProps>) => {
+  const { t } = useTranslation();
+  const { definition, run, rows, selectedStepId } = props;
+  const node = findNode(definition, selectedStepId);
+  const entry = node ? getNodeRegistryEntry(node) : null;
+  const stepTitle = node && entry ? entry.title(node, t) : null;
+
+  const runTitle = run ? getWorkflowTriggerTypeLabel(run.triggerType, t) : t("workspace.workflows.runs_run");
+  const title = stepTitle ?? runTitle;
+
+  if (props.isCollapsed) {
+    return (
+      <WorkflowPanelRail side="right" label={title} onExpand={() => props.onCollapsedChange(false)}>
+        {entry ? (
+          <WorkflowNodeChip icon={entry.icon} category={entry.category} size="sm" />
+        ) : (
+          <HistoryIcon className="size-4 shrink-0 text-slate-500" aria-hidden="true" />
+        )}
+      </WorkflowPanelRail>
+    );
+  }
+
+  return (
+    <aside
+      data-testid="workflow-run-panel"
+      className="flex min-h-0 w-[380px] shrink-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white 2xl:w-[440px]">
+      <header className="flex shrink-0 items-center gap-2 border-b border-slate-200 py-2 pr-2 pl-4">
+        {entry ? <WorkflowNodeChip icon={entry.icon} category={entry.category} size="sm" /> : null}
+        <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-900">{title}</h2>
+        {node ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="shrink-0 text-slate-600"
+            onClick={() => props.onSelectStep(null)}>
+            <ArrowLeftIcon />
+            {t("workspace.workflows.runs_run")}
+          </Button>
+        ) : null}
+        <WorkflowPanelCollapseButton side="right" onCollapse={() => props.onCollapsedChange(true)} />
+      </header>
+      <div className="scroll-bar flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+        {!run && !props.isLoading && !props.isError ? (
+          <p className="text-sm text-slate-500">{t("workspace.workflows.runs_none_selected")}</p>
+        ) : null}
+        {props.isDrawnOnCurrentDraft ? (
+          <Alert variant="warning" size="small">
+            <AlertDescription>{t("workspace.workflows.runs_drawn_on_current_draft")}</AlertDescription>
+          </Alert>
+        ) : null}
+        {node ? (
+          <SelectedStepResult
+            stepId={node.id}
+            isTrigger={node.id === definition?.trigger?.id}
+            run={run}
+            rows={rows}
+            editStepHref={getEditStepHref(props, node.id)}
+            onUseAsTestInput={props.onUseAsTestInput}
+          />
+        ) : (
+          <RunOverview {...props} />
+        )}
+      </div>
+    </aside>
+  );
+};
+
+/** One step's part of the run, and what to do next. */
+const SelectedStepResult = ({
+  stepId,
+  isTrigger,
+  run,
+  rows,
+  editStepHref,
+  onUseAsTestInput,
+}: Readonly<{
+  stepId: string;
+  isTrigger: boolean;
+  run: TWorkflowRunDetail | undefined;
+  rows: TRunDetailRow[] | null;
+  /** Null when the member can't edit the step, or for the trigger. */
+  editStepHref: string | null;
+  onUseAsTestInput?: (payload: Record<string, unknown>) => void;
+}>) => {
+  const { t } = useTranslation();
+  if (!run || !rows) return null;
+  const row = rows.find((candidate) =>
+    isTrigger ? candidate.kind === "trigger" : candidate.stepId === stepId
+  );
+  if (!row) return <p className="text-sm text-slate-500">{t("workspace.workflows.runs_step_not_in_run")}</p>;
+  const triggerPayload = row.kind === "trigger" ? row.payload : null;
+
+  return (
+    <>
+      <ol>
+        <RunDetailRow
+          row={row}
+          responseId={run.responseId}
+          triggerAction={
+            triggerPayload && onUseAsTestInput ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-fit"
+                onClick={() => onUseAsTestInput(triggerPayload)}>
+                <CopyPlusIcon />
+                {t("workspace.workflows.runs_use_as_test_input")}
+              </Button>
+            ) : null
+          }
+        />
+      </ol>
+      {editStepHref ? (
+        <Button variant="secondary" size="sm" className="w-fit" asChild>
+          <Link href={editStepHref}>
+            <PencilIcon />
+            {t("workspace.workflows.runs_edit_step")}
+          </Link>
+        </Button>
+      ) : null}
+    </>
+  );
+};
+
+/** With no step selected: the run's summary, then every step, each opening its card. */
+const RunOverview = (props: Readonly<RunsStepPanelProps>) => {
+  const { run, definition } = props;
+  return (
+    <>
+      {run ? (
+        <>
+          <RunSummarySection run={run} locale={props.locale} />
+          {run.isDryRun ? <TestRunNotice /> : null}
+        </>
+      ) : null}
+      <RunStepsBody
+        isLoading={props.isLoading}
+        isError={props.isError}
+        error={props.error}
+        detail={run}
+        definition={definition}
+        onSelectStep={(stepId) => props.onSelectStep(stepId ?? definition?.trigger?.id ?? null)}
+      />
+    </>
+  );
+};

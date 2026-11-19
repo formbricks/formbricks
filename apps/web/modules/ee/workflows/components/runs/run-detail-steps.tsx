@@ -26,7 +26,11 @@ import { RunJsonCode } from "./run-json-code";
 
 type TBadgeType = "warning" | "success" | "error" | "gray";
 
-const getBadge = (badge: TRunDetailBadge, t: TFunction): { label: string; type: TBadgeType } => {
+/** A step's result as a badge, the same in run detail and on the Runs view's canvas. */
+export const getRunDetailBadge = (
+  badge: TRunDetailBadge,
+  t: TFunction
+): { label: string; type: TBadgeType } => {
   switch (badge) {
     case "succeeded":
       return { label: t("common.succeeded"), type: "success" };
@@ -90,6 +94,7 @@ const RowFrame = ({
   duration,
   badge,
   isMuted = false,
+  onSelect,
   children,
 }: {
   readonly position: number;
@@ -97,6 +102,8 @@ const RowFrame = ({
   readonly duration: string | null;
   readonly badge: { label: string; type: TBadgeType };
   readonly isMuted?: boolean;
+  /** Makes the title a button that opens this step (the Runs view's run summary). */
+  readonly onSelect?: () => void;
   readonly children?: React.ReactNode;
 }) => (
   <li className={cn("rounded-lg border border-slate-200 bg-white p-4", isMuted && "bg-slate-50")}>
@@ -104,10 +111,25 @@ const RowFrame = ({
       <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-700">
         {position}
       </span>
-      <span
-        className={cn("min-w-0 truncate text-sm font-medium", isMuted ? "text-slate-500" : "text-slate-800")}>
-        {title}
-      </span>
+      {onSelect ? (
+        <button
+          type="button"
+          onClick={onSelect}
+          className={cn(
+            "min-w-0 truncate text-left text-sm font-medium hover:underline",
+            isMuted ? "text-slate-500" : "text-slate-800"
+          )}>
+          {title}
+        </button>
+      ) : (
+        <span
+          className={cn(
+            "min-w-0 truncate text-sm font-medium",
+            isMuted ? "text-slate-500" : "text-slate-800"
+          )}>
+          {title}
+        </span>
+      )}
       <span className="shrink-0 text-xs text-slate-500">{duration ?? "—"}</span>
       <span className="ml-auto shrink-0">
         <Badge text={badge.label} type={badge.type} size="tiny" />
@@ -277,10 +299,10 @@ const HttpRequestBody = ({ row }: { readonly row: TRunDetailHttpRequestRow }) =>
   );
 };
 
-const StepRow = ({ row }: { readonly row: TRunDetailStepRow }) => {
+const StepRow = ({ row, onSelect }: { readonly row: TRunDetailStepRow; readonly onSelect?: () => void }) => {
   const { t } = useTranslation();
   const title = row.label ?? getStepTypeLabel(row.stepType, t);
-  const badge = getBadge(row.badge, t);
+  const badge = getRunDetailBadge(row.badge, t);
 
   if (row.kind === "not_taken") {
     let branchText: string | null = null;
@@ -295,14 +317,20 @@ const StepRow = ({ row }: { readonly row: TRunDetailStepRow }) => {
       });
     }
     return (
-      <RowFrame position={row.position} title={title} duration={null} badge={badge} isMuted>
+      <RowFrame
+        position={row.position}
+        title={title}
+        duration={null}
+        badge={badge}
+        isMuted
+        onSelect={onSelect}>
         {branchText ? <p className="text-xs text-slate-500">{branchText}</p> : null}
       </RowFrame>
     );
   }
 
   return (
-    <RowFrame position={row.position} title={title} duration={row.duration} badge={badge}>
+    <RowFrame position={row.position} title={title} duration={row.duration} badge={badge} onSelect={onSelect}>
       {row.error ? <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{row.error}</p> : null}
       {row.kind === "if_else" ? <IfElseBody row={row} /> : null}
       {row.kind === "filter" ? <FilterBody row={row} /> : null}
@@ -313,44 +341,56 @@ const StepRow = ({ row }: { readonly row: TRunDetailStepRow }) => {
   );
 };
 
+interface RunDetailRowProps {
+  row: TRunDetailRow;
+  /** Shown on the trigger row of a response-completed run, which has no payload. */
+  responseId: string | null;
+  /** Under the trigger's payload or response: what to do with it (the Runs view's "Use as test input"). */
+  triggerAction?: React.ReactNode;
+  /** Makes the row's title open that step (the Runs view's run summary). */
+  onSelect?: () => void;
+}
+
+/** One row of run detail: the trigger with what started the run, or a step with its result. */
+export const RunDetailRow = ({ row, responseId, triggerAction, onSelect }: Readonly<RunDetailRowProps>) => {
+  const { t } = useTranslation();
+  if (row.kind !== "trigger") return <StepRow row={row} onSelect={onSelect} />;
+  return (
+    <RowFrame
+      position={1}
+      title={getWorkflowTriggerTypeLabel(row.triggerType, t)}
+      duration={null}
+      badge={getRunDetailBadge("succeeded", t)}
+      onSelect={onSelect}>
+      {row.payload ? <RunJsonCode value={row.payload} /> : null}
+      {!row.payload && responseId ? (
+        <p className="text-xs text-slate-600">
+          {t("workspace.workflows.run_trigger_response", { responseId })}
+        </p>
+      ) : null}
+      {triggerAction}
+    </RowFrame>
+  );
+};
+
 interface RunDetailStepsProps {
   rows: TRunDetailRow[];
   /** Shown on the trigger row of a response-completed run, which has no payload. */
   responseId: string | null;
-  /**
-   * Replaces the Webhook step's read-only payload with the Test run drawer's editable test payload, or
-   * follows a Response completed step's response with the drawer's response picker. Real runs leave
-   * it out.
-   */
-  triggerPayloadEditor?: React.ReactNode;
+  /** Makes each row's title open its step; the trigger passes null. */
+  onSelectStep?: (stepId: string | null) => void;
 }
 
 /** Run detail's numbered list (mock screens 7–9): the trigger, then each step. */
-export const RunDetailSteps = ({ rows, responseId, triggerPayloadEditor }: Readonly<RunDetailStepsProps>) => {
-  const { t } = useTranslation();
-  return (
-    <ol className="flex flex-col gap-3">
-      {rows.map((row) =>
-        row.kind === "trigger" ? (
-          <RowFrame
-            key="trigger"
-            position={1}
-            title={getWorkflowTriggerTypeLabel(row.triggerType, t)}
-            duration={null}
-            badge={getBadge("succeeded", t)}>
-            {row.payload ? (triggerPayloadEditor ?? <RunJsonCode value={row.payload} />) : null}
-            {!row.payload && responseId ? (
-              <p className="text-xs text-slate-600">
-                {t("workspace.workflows.run_trigger_response", { responseId })}
-              </p>
-            ) : null}
-            {/* A Response completed Test run: the picker to run again with another response. */}
-            {!row.payload && responseId && triggerPayloadEditor ? triggerPayloadEditor : null}
-          </RowFrame>
-        ) : (
-          <StepRow key={row.stepId} row={row} />
-        )
-      )}
-    </ol>
-  );
-};
+export const RunDetailSteps = ({ rows, responseId, onSelectStep }: Readonly<RunDetailStepsProps>) => (
+  <ol className="flex flex-col gap-3">
+    {rows.map((row) => (
+      <RunDetailRow
+        key={row.stepId ?? "trigger"}
+        row={row}
+        responseId={responseId}
+        onSelect={onSelectStep ? () => onSelectStep(row.stepId) : undefined}
+      />
+    ))}
+  </ol>
+);

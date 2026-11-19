@@ -7,14 +7,14 @@ import {
   type TRunCanvasHighlight,
   getRunCanvasHighlight,
 } from "@/modules/ee/workflows/lib/run-canvas-highlight";
-import { editorHighlightedRunIdAtom } from "@/modules/ee/workflows/state/run-drawer";
+import { canvasRunIdAtom } from "@/modules/ee/workflows/state/test-run";
 
 /**
- * The path of the run open in the editor's run drawer, for the canvas to mark (mock screen 7): null
+ * The path of the run a canvas marks (the Runs view sets it): null
  * while no run is shown. Reads the run from the query cache the Test run seeded.
  */
 export const useEditorRunHighlight = (): TRunCanvasHighlight | null => {
-  const runId = useAtomValue(editorHighlightedRunIdAtom);
+  const runId = useAtomValue(canvasRunIdAtom);
   const { data: run } = useWorkflowRun({ runId, enabled: runId !== null });
   return useMemo(() => (runId ? getRunCanvasHighlight(run) : null), [runId, run]);
 };

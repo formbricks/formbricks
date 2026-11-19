@@ -6,8 +6,8 @@ import { hasWorkflowsLicense } from "./utils/license";
  * The Workflows journey (ENG-7183): the one place the editor, a Test run's fake effects, the Webhook
  * Secret URL, the run queue and the runs list meet. A Webhook workflow with an If/else is seeded
  * through API v3; in the editor a test payload takes the Then branch and the email "would send"; once
- * enabled, a real call to the Secret URL starts a run that takes the Else branch and shows under Runs,
- * where Test runs are hidden by default.
+ * enabled, a real call to the Secret URL starts a run that takes the Else branch and shows in the Runs
+ * view beside the Test run, where the Live filter keeps it alone.
  *
  * The real call takes the Else branch, which is empty, so the run sends no email: the journey needs no
  * mail server, and the Then branch's email is proven by the Test run.
@@ -112,14 +112,18 @@ test.describe("Workflows", () => {
 
       await page.getByRole("button", { name: "Test run" }).click();
 
-      const drawer = page.getByRole("dialog");
-      await expect(drawer.getByRole("heading", { name: `Run · ${WORKFLOW_NAME}` })).toContainText("Test");
-      await expect(drawer.getByRole("listitem").filter({ hasText: IF_ELSE_LABEL })).toContainText(
+      // The result opens in the Runs view (review point 1): the run on the canvas, its steps on the right.
+      await page.waitForURL(`**/workflows/${workflowId}/runs**`);
+      const runPanel = page.getByTestId("workflow-run-panel");
+      await expect(runPanel.getByText("Test run · listed under Runs", { exact: false })).toBeVisible();
+      await expect(runPanel.getByRole("listitem").filter({ hasText: IF_ELSE_LABEL })).toContainText(
         /customer\.plan is .enterprise. \(matched\) → Then/
       );
-      await expect(drawer.getByRole("listitem").filter({ hasText: EMAIL_LABEL })).toContainText("Would send");
-      await page.keyboard.press("Escape");
-      await expect(drawer).toBeHidden();
+      await expect(runPanel.getByRole("listitem").filter({ hasText: EMAIL_LABEL })).toContainText(
+        "Would send"
+      );
+      await page.getByRole("link", { name: "Editor" }).click();
+      await page.waitForURL(`**/workflows/${workflowId}`);
     });
 
     await test.step("enable the workflow", async () => {
@@ -150,23 +154,25 @@ test.describe("Workflows", () => {
         .toBe("completed");
     });
 
-    await test.step("Runs lists the real run and hides the Test run", async () => {
+    await test.step("Runs lists the real run beside the Test run, and Live filters it", async () => {
       await page.getByRole("link", { name: "Runs" }).click();
       await page.waitForURL(`**/workflows/${workflowId}/runs`);
 
-      // Test runs are hidden by default (the gear's Hide test runs). One workflow's runs share its
-      // trigger, so the list has no Trigger column.
-      const runs = page.getByTestId("workflow-runs-table").locator("tbody tr");
+      const runs = page.getByTestId("workflow-run-list").getByRole("listitem");
+      await expect(runs).toHaveCount(2);
+      await page.getByRole("group", { name: "Show runs" }).getByRole("button", { name: "Live" }).click();
       await expect(runs).toHaveCount(1);
       await expect(runs).toContainText("Completed");
       await expect(runs).not.toContainText("Test");
 
-      await runs.click();
-      const drawer = page.getByRole("dialog");
-      await expect(drawer.getByRole("listitem").filter({ hasText: IF_ELSE_LABEL })).toContainText(
+      // The newest listed run is the one shown.
+      const runPanel = page.getByTestId("workflow-run-panel");
+      await expect(runPanel.getByRole("listitem").filter({ hasText: IF_ELSE_LABEL })).toContainText(
         /customer\.plan is .enterprise. \(not matched\) → Else/
       );
-      await expect(drawer.getByRole("listitem").filter({ hasText: EMAIL_LABEL })).toContainText("Not taken");
+      await expect(runPanel.getByRole("listitem").filter({ hasText: EMAIL_LABEL })).toContainText(
+        "Not taken"
+      );
     });
   });
 });
