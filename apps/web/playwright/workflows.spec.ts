@@ -104,7 +104,7 @@ test.describe("Workflows", () => {
       // Test run sends (ADR 0052), and enabling needs one.
       await page.getByText("Starts when its Webhook Secret URL is called").click();
       await page.getByRole("button", { name: "Write or paste the expected payload" }).click();
-      const expectedPayload = page.getByRole("textbox", { name: "Response fields, JSON editor" });
+      const expectedPayload = page.getByRole("textbox", { name: "Expected payload, JSON editor" });
       await expectedPayload.fill(JSON.stringify({ customer: { plan: "enterprise" } }));
       await expect(page.getByText(/^Saved: .*New calls don’t change these fields\.$/)).toBeVisible({
         timeout: 15_000,

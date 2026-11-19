@@ -26,7 +26,7 @@ import {
  * `set_expected_response` (ADR 0054) writes the body an HTTP request step's API answers with, which
  * becomes the step's Variables and what a Test run answers with. It stores the agent's own JSON (bounded
  * like a Webhook payload) and calls nothing; a hostile body can only name Variables in this workflow,
- * which an editor sees in the step's Response fields card. It returns the body as written.
+ * which an editor sees in the step's Expected response card. It returns the body as written.
  */
 export function registerWorkflowTestRequestTools(server: McpServer): void {
   registerMcpTool(

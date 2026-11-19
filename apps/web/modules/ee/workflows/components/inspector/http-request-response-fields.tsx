@@ -124,7 +124,7 @@ type TOfferedTest = { at: string; body: Record<string, unknown> };
 
 /**
  * A test response worth offering: a JSON object, not dismissed, and either the first answer while no
- * response fields are set, or a newer one than them with a different body.
+ * expected response is set, or a newer one than it with a different body.
  */
 const getOfferedTest = (
   expected: TWorkflowSampleListItem | null,
@@ -202,7 +202,7 @@ const TestResponseNotice = ({
 };
 
 /**
- * An HTTP request step's response fields (ADR 0054): the body its API answers with, whose fields the
+ * An HTTP request step's expected response (ADR 0054): the body its API answers with, whose fields the
  * later steps use as Variables. Editors own it, like the Webhook trigger's expected payload: they write
  * or paste it, or choose to use a Test request's response. A Test request never changes it.
  */
@@ -249,7 +249,7 @@ export const HttpResponseFieldsCard = ({
     />
   ) : null;
 
-  // What the card shows: the test response under review or offered, else the response fields.
+  // What the card shows: the test response under review or offered, else the expected response.
   const shownBody =
     (isReviewing || (!expected && !isWriting)) && offeredTest ? offeredTest.body : expectedBody;
   const showsEditor = expected !== null || isWriting;

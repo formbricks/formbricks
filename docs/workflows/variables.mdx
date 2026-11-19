@@ -10,7 +10,7 @@ pick one.
 
 <Note>Workflows are part of the Formbricks [Enterprise Edition](/self-hosting/advanced/license).</Note>
 
-{/* SCREENSHOT PLACEHOLDER: variable-picker.webp. The @ picker open in an HTTP request body, listing Payload
+{/* SCREENSHOT PLACEHOLDER: variable-picker.webp. The @ picker open in an HTTP request body, listing Expected payload
 and step Variables with their types. Save to /images/platform/workflows/variable-picker.webp and replace this
 comment with a <Frame>. */}
 
@@ -18,7 +18,7 @@ comment with a <Frame>. */}
 
 | Source            | Path                       | Available when                                                                 |
 | ----------------- | -------------------------- | ------------------------------------------------------------------------------ |
-| **Payload**       | `payload.customer.email`   | The workflow has a [Webhook trigger](/workflows/webhook-trigger).               |
+| **Expected payload** | `payload.customer.email`   | The workflow has a [Webhook trigger](/workflows/webhook-trigger).               |
 | **Response**      | `response.<id>`            | The workflow has a **Response completed** trigger.                              |
 | **An earlier step** | `steps.<stepId>.status`, `steps.<stepId>.body.order.id` | The step is an [HTTP request](/workflows/http-request) that runs before this one on the same branch. |
 
