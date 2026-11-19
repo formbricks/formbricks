@@ -62,7 +62,8 @@ Changes on `main` that need an action when you upgrade are listed here until the
 - **The app image runs on Debian 13 and Node 26.** It used to run on Alpine 3.24 and Node 24.
   - If you build your own image `FROM ghcr.io/formbricks/formbricks`, replace `apk add` with `apt-get install`. The `nextjs` user keeps UID 1001 and GID 101.
   - Node now trusts its own bundled list of root certificates. Adding a CA to `/etc/ssl/certs` or pointing `SSL_CERT_FILE` at it no longer reaches the app. To trust a private CA (an internal SMTP server, S3 endpoint or AI gateway), mount it and set `NODE_EXTRA_CA_CERTS` to its path, as described in [SMTP](/self-hosting/configuration/smtp).
-  - If your PostgreSQL certificate comes from a private CA, set both `NODE_EXTRA_CA_CERTS` (for the app) and `SSL_CERT_FILE` (for the database migrations) to the mounted CA file. Before, `SSL_CERT_FILE` alone covered both.
+  - If your PostgreSQL certificate comes from a private CA, point `sslrootcert` in `DATABASE_URL` at the mounted CA file, as described in [Database TLS](/self-hosting/configuration/environment-variables#database-tls). The app and the migrations both read it.
+- **Migrations verify the database certificate.** With `sslmode=verify-full` or `verify-ca` in `DATABASE_URL` (or `MIGRATE_DATABASE_URL`), or `sslmode=require` with `sslrootcert`, the migrations used to connect without checking the server certificate. They now check it, including the host name, as the app's own connections already do. Before you upgrade, check that the CA is named by `sslrootcert` or is publicly trusted, and that the host in the URL matches the certificate. Otherwise the migrations stop with Prisma error `P1011`. See [Database TLS](/self-hosting/configuration/environment-variables#database-tls).
 - <span id="mcp-access-per-organization-and-workspace" />[Unreleased: MCP access per organization and workspace](/self-hosting/upgrade/versions/mcp-access)
 
 ## Older releases
