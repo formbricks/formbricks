@@ -1074,7 +1074,7 @@ describe("request array budget (ENG-3384)", () => {
         try {
           const response = await withV3ApiWrapper({ auth: "none", bodyLimitBytes: ROUTE_LIMIT, handler })(
             request,
-            {} as never
+            {}
           );
 
           expect(response.status).toBe(413);
