@@ -6121,6 +6121,9 @@ checksums:
     workspace/workflows/move_target_branch: 8d68272c85d656c9c6c371dae22ef646
     workspace/workflows/name_invalid: c1f750725318d5e385443519730729da
     workspace/workflows/name_required: a2866fa94293bc08be10ef65e0939423
+    workspace/workflows/new_workflow_trigger_responses: 76e23ae168436cb91dbef2390c1ab047
+    workspace/workflows/new_workflow_trigger_webhook: 14ac4b7f0d802f7082f901b008cdfe84
+    workspace/workflows/new_workflow_triggered_by: f701aff23b657180fb9e782b4632fad1
     workspace/workflows/no_results_description: b358733531cc8290f8b311a8cc3bf05d
     workspace/workflows/no_results_title: e3f2c57c4024d33a20f192d45284d709
     workspace/workflows/no_workflows_description: 8a8152d86459e52a07e1ab28bd347121

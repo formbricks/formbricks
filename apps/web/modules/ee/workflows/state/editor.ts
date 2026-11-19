@@ -8,7 +8,6 @@ import {
   type TWorkflowResource,
   type TWorkflowTriggerType,
   WORKFLOW_LIMITS,
-  WORKFLOW_TRIGGERS,
   ZWorkflowEnableDefinition,
   isResponseCompletedTrigger,
 } from "@formbricks/workflows";
@@ -17,6 +16,7 @@ import {
   getAppendedStepPosition,
   getCanvasDirection,
 } from "@/modules/ee/workflows/lib/canvas-geometry";
+import { createDefaultTrigger } from "@/modules/ee/workflows/lib/default-workflow";
 import { settleSentSecretValues, withSecretIdsForCheck } from "@/modules/ee/workflows/lib/http-request-panel";
 import {
   type TPasteTarget,
@@ -876,22 +876,9 @@ export const addWorkflowTriggerAtom = atom(null, (get, set, triggerType: TWorkfl
       const definition = draft.definition;
       if (!definition || definition.trigger) return;
 
-      const triggerId = createId();
-      // Matches WORKFLOW_CANVAS_START_POSITION in definition-to-flow (not imported to avoid a cycle).
-      const ui = { position: { x: 220, y: 80 } };
-      if (triggerType === WORKFLOW_TRIGGERS.RESPONSE_COMPLETED) {
-        definition.trigger = {
-          id: triggerId,
-          type: "trigger",
-          triggerType,
-          config: { surveyId: createId(), endingCardIds: [] },
-          ui,
-        };
-      } else if (triggerType === WORKFLOW_TRIGGERS.WEBHOOK) {
-        definition.trigger = { id: triggerId, type: "trigger", triggerType, config: {}, ui };
-      } else {
-        return;
-      }
+      const trigger = createDefaultTrigger(triggerType);
+      const triggerId = trigger.id;
+      definition.trigger = trigger;
       definition.entryNodeId = triggerId;
 
       draft.selectedNodeId = triggerId;
