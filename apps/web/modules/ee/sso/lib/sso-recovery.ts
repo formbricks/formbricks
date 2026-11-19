@@ -519,6 +519,7 @@ export const startSsoRecovery = async ({
       locale: existingUser.locale,
       callbackUrl: completionUrl,
       purpose: "sso_recovery",
+      ssoRecoveryStateId: stateId,
     });
 
     getSsoRecoveryLogger("sso_recovery_started").info(

@@ -96,7 +96,14 @@ const runOneRecoveryAttempt = async (
 /** Opens the link `startSsoRecovery` mails, as the mailbox owner's browser would (ENG-7310). */
 const openEmailedRecoveryLink = (userId: string, completionUrl: string): Promise<Response> =>
   auth.api.ssoRecoverySignIn({
-    query: { token: createToken(userId, { purpose: "sso_recovery" }), callbackUrl: completionUrl },
+    query: {
+      // Bound to the recovery it was mailed for, as `startSsoRecovery` mints it.
+      token: createToken(userId, {
+        purpose: "sso_recovery",
+        ssoRecoveryStateId: new URL(completionUrl).searchParams.get("state") ?? undefined,
+      }),
+      callbackUrl: completionUrl,
+    },
     asResponse: true,
   });
 

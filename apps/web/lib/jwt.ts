@@ -59,10 +59,18 @@ export type TVerifyTokenPayload = JwtPayload & {
   id: string;
   email: string;
   purpose: TVerificationTokenPurpose;
+  /** The SSO recovery an `sso_recovery` link was mailed for, when it was minted bound to one (ENG-7310). */
+  ssoRecoveryStateId?: string;
 };
 
 type TVerificationTokenOptions = SignOptions & {
   purpose?: TVerificationTokenPurpose;
+  /**
+   * Binds an `sso_recovery` link to the one recovery it is mailed for (ENG-7310). The state id also
+   * travels in the link's `callbackUrl`, but that parameter is unsigned; this claim is what the sign-in
+   * endpoint checks it against before handing out the recovery proof.
+   */
+  ssoRecoveryStateId?: string;
 };
 
 const DEFAULT_VERIFICATION_TOKEN_PURPOSE: TVerificationTokenPurpose = "email_verification";
@@ -83,9 +91,13 @@ export const createToken = (userId: string, options: TVerificationTokenOptions =
   }
 
   const encryptedUserId = symmetricEncrypt(userId, ENCRYPTION_KEY);
-  const { purpose = DEFAULT_VERIFICATION_TOKEN_PURPOSE, ...jwtOptions } = options;
+  const { purpose = DEFAULT_VERIFICATION_TOKEN_PURPOSE, ssoRecoveryStateId, ...jwtOptions } = options;
 
-  return jwt.sign({ id: encryptedUserId, purpose }, authSecret, jwtOptions);
+  return jwt.sign(
+    { id: encryptedUserId, purpose, ...(ssoRecoveryStateId ? { recoveryState: ssoRecoveryStateId } : {}) },
+    authSecret,
+    jwtOptions
+  );
 };
 
 export const createGatewayServiceToken = (
@@ -483,10 +495,15 @@ export const verifyToken = async (token: string): Promise<TVerifyTokenPayload> =
   // Get user email if we don't have it yet
   userData ??= await getUserEmailForLegacyVerification(token, payload.id);
 
+  const recoveryState: unknown = (payload as { recoveryState?: unknown }).recoveryState;
+
   return {
     id: userData.userId,
     email: userData.userEmail,
     purpose: getVerificationTokenPurpose(payload.purpose),
+    ...(typeof recoveryState === "string" && recoveryState.length > 0
+      ? { ssoRecoveryStateId: recoveryState }
+      : {}),
   };
 };
 

@@ -254,6 +254,7 @@ describe("sso-recovery", () => {
       locale: "en-US",
       callbackUrl: "http://localhost:3000/api/auth/sso/recovery/complete?state=state-id",
       purpose: "sso_recovery",
+      ssoRecoveryStateId: "state-id",
     });
     expect(buildVerificationRequestedPath).toHaveBeenCalledWith({
       token: "email-token",

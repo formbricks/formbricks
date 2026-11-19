@@ -47,7 +47,7 @@ describe("SSO recovery sign-in (real Postgres)", () => {
     ["the 2FA path", { emailVerified: true, twoFactorEnabled: true }],
   ])("sets a proof bound to this user and recovery on %s", async (_label, flags) => {
     const user = await prisma.user.create({ data: { email: "proof@example.com", name: "Proof", ...flags } });
-    const token = createToken(user.id, { purpose: "sso_recovery" });
+    const token = createToken(user.id, { purpose: "sso_recovery", ssoRecoveryStateId: "proof-state" });
     const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=proof-state`;
 
     const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
@@ -59,6 +59,26 @@ describe("SSO recovery sign-in (real Postgres)", () => {
       .find((c) => c.startsWith(`${SSO_RECOVERY_PROOF_COOKIE_NAME}=`));
     expect(setCookie).toMatch(/HttpOnly/i);
     expect(setCookie).toMatch(/SameSite=Lax/i);
+  });
+
+  /**
+   * The token is signed and the `callbackUrl` beside it is not, so the proof follows the state the token
+   * was mailed for. A link minted before the binding existed carries no state and earns no proof: the
+   * user gets the "open the emailed link" message and starts again.
+   */
+  test.each([
+    ["a token bound to another recovery", { ssoRecoveryStateId: "other-state" }],
+    ["a token bound to no recovery", {}],
+  ])("sets no proof for %s", async (_label, binding) => {
+    const user = await prisma.user.create({ data: { email: "unbound@example.com", name: "Unbound" } });
+    const token = createToken(user.id, { purpose: "sso_recovery", ...binding });
+    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=proof-state`;
+
+    const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
+
+    expect(proofCookieOf(res)).toBeNull();
+    // Only the proof is withheld; the link still signs the mailbox owner in as before.
+    expect(res.headers.get("location")).toBe(callbackUrl);
   });
 
   test("sets no proof when the callback is not a recovery completion", async () => {

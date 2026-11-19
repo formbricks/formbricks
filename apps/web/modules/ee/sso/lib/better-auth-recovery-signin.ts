@@ -63,7 +63,7 @@ export const ssoRecoverySignInPlugin = {
 
         let destination: string | null = null;
         try {
-          const { id, purpose } = await verifyToken(token);
+          const { id, purpose, ssoRecoveryStateId } = await verifyToken(token);
           if (purpose !== "sso_recovery") {
             throw new Error("Token is not an SSO recovery token");
           }
@@ -78,8 +78,12 @@ export const ssoRecoverySignInPlugin = {
           // The mailbox is proven here and nowhere else, so this is where the browser that will finish
           // recovery gets its proof (ENG-7310). Set before either branch: the 2FA one completes too,
           // in this same browser, after the login page.
+          //
+          // Only for the recovery this token was mailed for: the state is read from the unsigned
+          // `callbackUrl`, so it must match the one signed into the token. A token minted before that
+          // claim existed gets no proof, and the user is told to open the emailed link of a new attempt.
           const stateId = getSsoRecoveryStateIdFromCompletionUrl(callbackUrl, WEBAPP_URL);
-          if (stateId) {
+          if (stateId && stateId === ssoRecoveryStateId) {
             ctx.setCookie(
               SSO_RECOVERY_PROOF_COOKIE_NAME,
               createSsoRecoveryProof(id, stateId),
