@@ -39,7 +39,6 @@ export const SamlButton = ({ returnToUrl, lastUsed, source }: Readonly<SamlButto
     const started = await startSsoSignIn({
       provider: "saml",
       callbackURL: returnToUrlWithSource,
-      lastUsedLabel: "Saml",
       errorMessage: t("common.something_went_wrong"),
     });
     // On success the browser is leaving for the IdP, so the spinner stays; on failure the user retries.

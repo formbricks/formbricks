@@ -26,7 +26,6 @@ export const GoogleButton = ({
     await startSsoSignIn({
       provider: "google",
       callbackURL: returnToUrlWithSource,
-      lastUsedLabel: "Google",
       errorMessage: t("common.something_went_wrong"),
     });
   };

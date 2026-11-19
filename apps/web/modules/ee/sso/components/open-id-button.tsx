@@ -34,7 +34,6 @@ export const OpenIdButton = ({
     await startSsoSignIn({
       provider: "openid",
       callbackURL: returnToUrlWithSource,
-      lastUsedLabel: "OpenID",
       errorMessage: t("common.something_went_wrong"),
     });
   }, [returnToUrl, source, t]);

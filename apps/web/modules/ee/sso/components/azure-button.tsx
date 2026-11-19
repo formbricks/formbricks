@@ -33,7 +33,6 @@ export const AzureButton = ({
     await startSsoSignIn({
       provider: "azuread",
       callbackURL: returnToUrlWithSource,
-      lastUsedLabel: "Azure",
       errorMessage: t("common.something_went_wrong"),
     });
   }, [returnToUrl, source, t]);

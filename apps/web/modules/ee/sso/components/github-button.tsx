@@ -26,7 +26,6 @@ export const GithubButton = ({
     await startSsoSignIn({
       provider: "github",
       callbackURL: returnToUrlWithSource,
-      lastUsedLabel: "Github",
       errorMessage: t("common.something_went_wrong"),
     });
   };
