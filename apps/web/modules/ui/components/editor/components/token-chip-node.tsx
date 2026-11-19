@@ -2,6 +2,7 @@ import type { DOMExportOutput, LexicalNode, NodeKey, SerializedLexicalNode, Spre
 import { $applyNodeReplacement, DecoratorNode } from "lexical";
 import type { ReactNode } from "react";
 import type { TEditorTokenChip } from "../lib/token-chips";
+import { TokenChipView } from "./token-chip-view";
 
 export type SerializedTokenChipNode = Spread<{ chip: TEditorTokenChip }, SerializedLexicalNode>;
 
@@ -63,14 +64,7 @@ export class TokenChipNode extends DecoratorNode<ReactNode> {
   }
 
   decorate(): ReactNode {
-    return (
-      <span
-        className="inline-flex h-fit justify-center rounded-md bg-slate-100 px-1 text-sm whitespace-nowrap text-slate-700"
-        title={this.__chip.description}
-        data-token-chip={this.__chip.token}>
-        {this.__chip.label}
-      </span>
-    );
+    return <TokenChipView chip={this.__chip} />;
   }
 }
 
