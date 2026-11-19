@@ -17,6 +17,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { CollapsedStepPill } from "@/modules/ee/workflows/components/inspector/workflow-inspector-panel";
 import { useWorkflowEmailAuthoringContext } from "@/modules/ee/workflows/components/workflow-email-authoring-context";
 import {
   WORKFLOW_CANVAS_MAX_ZOOM,
@@ -372,6 +373,8 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
           a passive badge while valid, a button listing the problems while not. Suppressed while
           the add-trigger picker is up so a fresh draft isn't greeted with a problem count. */}
       {!isTriggerPickerVisible && <WorkflowValidationStatus />}
+      {/* The collapsed step panel stays as a pill at the canvas's top-right (review point 5). */}
+      {isNodeConfigOpen && isInspectorCollapsed ? <CollapsedStepPill /> : null}
     </div>
   );
 };

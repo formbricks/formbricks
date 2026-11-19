@@ -7,11 +7,11 @@ import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { WorkflowNodeChip } from "@/modules/ee/workflows/components/canvas/workflow-node-card";
 import {
   WorkflowPanelCollapseButton,
-  WorkflowPanelRail,
+  WorkflowPanelPill,
 } from "@/modules/ee/workflows/components/workflow-side-panel";
 import { getWorkflowTriggerTypeLabel } from "@/modules/ee/workflows/lib/display";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
-import type { TRunDetailRow } from "@/modules/ee/workflows/lib/run-detail-rows";
+import type { TRunDetailBadge, TRunDetailRow } from "@/modules/ee/workflows/lib/run-detail-rows";
 import type { TWorkflowRunDetail } from "@/modules/ee/workflows/types";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Button } from "@/modules/ui/components/button";
@@ -24,7 +24,7 @@ interface RunsStepPanelProps {
   workspaceId: string;
   workflowId: string;
   locale: string;
-  isCollapsed: boolean;
+  /** Collapsed, the panel is a pill on the run canvas (RunsStepPill). */
   onCollapsedChange: (isCollapsed: boolean) => void;
   /** The graph the run is drawn on, which names its steps. */
   definition: TWorkflowDefinition | null;
@@ -72,18 +72,6 @@ export const RunsStepPanel = (props: Readonly<RunsStepPanelProps>) => {
 
   const runTitle = run ? getWorkflowTriggerTypeLabel(run.triggerType, t) : t("workspace.workflows.runs_run");
   const title = stepTitle ?? runTitle;
-
-  if (props.isCollapsed) {
-    return (
-      <WorkflowPanelRail side="right" label={title} onExpand={() => props.onCollapsedChange(false)}>
-        {entry ? (
-          <WorkflowNodeChip icon={entry.icon} category={entry.category} size="sm" />
-        ) : (
-          <HistoryIcon className="size-4 shrink-0 text-slate-500" aria-hidden="true" />
-        )}
-      </WorkflowPanelRail>
-    );
-  }
 
   return (
     <aside
@@ -207,5 +195,65 @@ const RunOverview = (props: Readonly<RunsStepPanelProps>) => {
         onSelectStep={(stepId) => props.onSelectStep(stepId ?? definition?.trigger?.id ?? null)}
       />
     </>
+  );
+};
+
+const STEP_DOT: Partial<Record<TRunDetailBadge, "success" | "error" | "gray">> = {
+  succeeded: "success",
+  sent: "success",
+  would_send: "success",
+  would_call: "success",
+  failed: "error",
+  delivery_failed: "error",
+  not_taken: "gray",
+  skipped: "gray",
+};
+
+/**
+ * The collapsed right panel (review point 5): a pill at the run canvas's top-right with the selected
+ * step (or the run) and its result as a dot, and the expand button.
+ */
+export const RunsStepPill = ({
+  definition,
+  run,
+  rows,
+  selectedStepId,
+  onExpand,
+}: Readonly<{
+  definition: TWorkflowDefinition | null;
+  run: TWorkflowRunDetail | undefined;
+  rows: TRunDetailRow[] | null;
+  selectedStepId: string | null;
+  onExpand: () => void;
+}>) => {
+  const { t } = useTranslation();
+  const node = findNode(definition, selectedStepId);
+  const entry = node ? getNodeRegistryEntry(node) : null;
+  if (node && entry) {
+    const row = rows?.find((candidate) => candidate.kind !== "trigger" && candidate.stepId === node.id);
+    const stepDot = row && row.kind !== "trigger" ? STEP_DOT[row.badge] : undefined;
+    const status = node.id === definition?.trigger?.id ? "success" : stepDot;
+    return (
+      <WorkflowPanelPill
+        icon={<WorkflowNodeChip icon={entry.icon} category={entry.category} size="sm" />}
+        label={entry.title(node, t)}
+        status={status ?? "gray"}
+        onExpand={onExpand}
+      />
+    );
+  }
+  let runStatus: "success" | "error" | undefined;
+  if (run) runStatus = run.status === "failed" ? "error" : "success";
+  return (
+    <WorkflowPanelPill
+      icon={
+        <span className="flex size-7 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+          <HistoryIcon className="size-4" aria-hidden="true" />
+        </span>
+      }
+      label={run ? getWorkflowTriggerTypeLabel(run.triggerType, t) : t("workspace.workflows.runs_run")}
+      status={runStatus}
+      onExpand={onExpand}
+    />
   );
 };

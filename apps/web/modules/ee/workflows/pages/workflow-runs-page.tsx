@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { isResponseCompletedTrigger } from "@formbricks/workflows";
-import { RunsStepPanel } from "@/modules/ee/workflows/components/runs/runs-step-panel";
+import { RunsStepPanel, RunsStepPill } from "@/modules/ee/workflows/components/runs/runs-step-panel";
 import { RunsTestPanel } from "@/modules/ee/workflows/components/runs/runs-test-panel";
 import { WorkflowRunCanvas } from "@/modules/ee/workflows/components/runs/workflow-run-canvas";
 import { useStoredTestPayload } from "@/modules/ee/workflows/hooks/use-stored-test-payload";
@@ -158,30 +158,40 @@ export const WorkflowRunsPage = ({
             onSelectStep={selectStep}
           />
         ) : null}
+        {isRightCollapsed && !isGraphLoading ? (
+          <RunsStepPill
+            definition={graph.definition}
+            run={run}
+            rows={rows}
+            selectedStepId={selectedStepId}
+            onExpand={() => setRightCollapsed(false)}
+          />
+        ) : null}
         {!isGraphLoading && !graph.definition ? (
           <div className="flex h-full items-center justify-center p-6 text-center text-sm text-slate-500">
             {t("workspace.workflows.runs_none_yet")}
           </div>
         ) : null}
       </section>
-      <RunsStepPanel
-        workspaceId={workspaceId}
-        workflowId={workflowId}
-        locale={locale}
-        isCollapsed={isRightCollapsed}
-        onCollapsedChange={setRightCollapsed}
-        definition={graph.definition}
-        isDrawnOnCurrentDraft={graph.isCurrentDraft && run !== undefined}
-        run={run}
-        isLoading={runQuery.isLoading || runsQuery.isLoading}
-        isError={runQuery.isError}
-        error={runQuery.error}
-        rows={rows}
-        selectedStepId={selectedStepId}
-        onSelectStep={selectStep}
-        onUseAsTestInput={canTest && triggerKind === "webhook" ? useAsTestInput : undefined}
-        canEditSteps={builder.canEditDefinition}
-      />
+      {isRightCollapsed ? null : (
+        <RunsStepPanel
+          workspaceId={workspaceId}
+          workflowId={workflowId}
+          locale={locale}
+          onCollapsedChange={setRightCollapsed}
+          definition={graph.definition}
+          isDrawnOnCurrentDraft={graph.isCurrentDraft && run !== undefined}
+          run={run}
+          isLoading={runQuery.isLoading || runsQuery.isLoading}
+          isError={runQuery.isError}
+          error={runQuery.error}
+          rows={rows}
+          selectedStepId={selectedStepId}
+          onSelectStep={selectStep}
+          onUseAsTestInput={canTest && triggerKind === "webhook" ? useAsTestInput : undefined}
+          canEditSteps={builder.canEditDefinition}
+        />
+      )}
     </div>
   );
 };

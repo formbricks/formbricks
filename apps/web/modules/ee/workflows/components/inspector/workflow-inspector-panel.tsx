@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
 import { WorkflowNodeChip } from "@/modules/ee/workflows/components/canvas/workflow-node-card";
 import { WorkflowNodeConfigPanel } from "@/modules/ee/workflows/components/inspector/workflow-node-config-panel";
-import { WorkflowPanelRail } from "@/modules/ee/workflows/components/workflow-side-panel";
+import { WorkflowPanelPill } from "@/modules/ee/workflows/components/workflow-side-panel";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import {
   isWorkflowInspectorCollapsedAtom,
@@ -19,8 +19,11 @@ interface WorkflowInspectorPanelProps {
   isEditingNode: boolean;
 }
 
-/** The open step's icon and name, for the collapsed panel's rail. */
-const CollapsedStepRail = () => {
+/**
+ * The collapsed step panel's pill on the canvas (review point 5): the open step's icon and name, and
+ * the expand button. The canvas renders it, so it floats over the flow at the panel's corner.
+ */
+export const CollapsedStepPill = () => {
   const { t } = useTranslation();
   const definition = useAtomValue(workflowDefinitionAtom);
   const selectedNodeId = useAtomValue(selectedWorkflowNodeIdAtom);
@@ -30,29 +33,25 @@ const CollapsedStepRail = () => {
       ? definition.trigger
       : (definition?.nodes.find((candidate) => candidate.id === selectedNodeId) ?? null);
   const entry = node ? getNodeRegistryEntry(node) : null;
-  const title = node && entry ? entry.title(node, t) : "";
+  if (!node || !entry) return null;
 
   return (
-    <WorkflowPanelRail side="right" label={title} onExpand={expand}>
-      {entry ? (
-        <button type="button" onClick={expand} aria-label={title} title={title}>
-          <WorkflowNodeChip icon={entry.icon} category={entry.category} size="sm" />
-        </button>
-      ) : null}
-    </WorkflowPanelRail>
+    <WorkflowPanelPill
+      icon={<WorkflowNodeChip icon={entry.icon} category={entry.category} size="sm" />}
+      label={entry.title(node, t)}
+      onExpand={expand}
+    />
   );
 };
 
 // The inspector's only content is the selected node's config: workflow name lives in the
 // editable page title and lifecycle actions in the header dropdown, so with no node open the
-// column collapses away entirely. Collapsed while a step is open, it keeps a rail with that step
-// (review point 5), so the canvas never loses its point of reference.
+// column collapses away entirely. Collapsed while a step is open, the canvas shows a pill with that
+// step (CollapsedStepPill, review point 5), so it never loses its point of reference.
 export const WorkflowInspectorPanel = ({ isEditingNode }: Readonly<WorkflowInspectorPanelProps>) => {
   const isCollapsed = useAtomValue(isWorkflowInspectorCollapsedAtom);
   const isNodeConfigOpen = useAtomValue(isWorkflowNodeConfigModalOpenAtom);
   const isVisible = isNodeConfigOpen && !isCollapsed;
-
-  if (isNodeConfigOpen && isCollapsed) return <CollapsedStepRail />;
 
   return (
     // Stretches to the editor row's height (no `self-start`) so the panel inside can fill it and

@@ -68,3 +68,55 @@ export const WorkflowPanelRail = ({
     </div>
   );
 };
+
+/**
+ * What stays of the collapsed step panel (review point 5, as in Attio and the approved mockup): a pill
+ * floating at the canvas's top-right with the step's icon and name and the expand button, so the
+ * canvas gets its full width back and still says which step is open. `status` is an optional dot
+ * (the Runs view's step result).
+ */
+export const WorkflowPanelPill = ({
+  icon,
+  label,
+  status,
+  onExpand,
+}: Readonly<{
+  icon: ReactNode;
+  label: string;
+  status?: "success" | "error" | "gray";
+  onExpand: () => void;
+}>) => {
+  const { t } = useTranslation();
+  return (
+    <div className="absolute top-3 right-3 z-10 flex max-w-[300px] items-center gap-2 rounded-full border border-slate-200 bg-white py-1 pr-1 pl-1.5 shadow-md">
+      <button
+        type="button"
+        onClick={onExpand}
+        className="flex min-w-0 items-center gap-2 rounded-full text-left"
+        title={label}>
+        <span className="shrink-0">{icon}</span>
+        <span className="truncate text-sm font-semibold text-slate-900">{label}</span>
+      </button>
+      {status ? (
+        <span
+          aria-hidden="true"
+          className={cn(
+            "size-2 shrink-0 rounded-full",
+            status === "success" && "bg-emerald-500",
+            status === "error" && "bg-red-500",
+            status === "gray" && "bg-slate-300"
+          )}
+        />
+      ) : null}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="size-8 shrink-0 rounded-full text-slate-500"
+        aria-label={t("workspace.workflows.expand_panel")}
+        title={t("workspace.workflows.expand_panel")}
+        onClick={onExpand}>
+        <PanelRightOpenIcon />
+      </Button>
+    </div>
+  );
+};
