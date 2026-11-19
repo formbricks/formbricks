@@ -117,8 +117,11 @@ test.describe("Workflows", () => {
       await expect(runTest).toBeFocused();
       await runTest.click();
 
-      // The result shows in the Runs view: the run on the canvas, its steps on the right.
+      // The result shows in the Runs view, on the step whose panel was open (the trigger); "All steps"
+      // goes back to the run's summary and its steps.
       const runPanel = page.getByTestId("workflow-run-panel");
+      await expect(runPanel.getByRole("heading", { name: "Webhook trigger" })).toBeVisible();
+      await runPanel.getByRole("button", { name: "All steps" }).click();
       await expect(runPanel.getByText("Test run · listed under Runs", { exact: false })).toBeVisible();
       await expect(runPanel.getByRole("listitem").filter({ hasText: IF_ELSE_LABEL })).toContainText(
         /customer\.plan is .enterprise. \(matched\) → Then/
