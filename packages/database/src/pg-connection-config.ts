@@ -1,5 +1,6 @@
 import type { ClientConfig } from "pg";
 import { logger } from "@formbricks/logger";
+import { joinConnectionUrl, splitConnectionUrl } from "./connection-url";
 
 // Prisma's sslaccept enables TLS; native pg URL settings retain their usual precedence.
 const sslConfigFromSslAccept = (value: string | null): ClientConfig["ssl"] | undefined => {
@@ -24,19 +25,16 @@ export const getPgConnectionConfig = (
   databaseUrl: string
 ): { connectionString: string; ssl?: ClientConfig["ssl"] } => {
   // Only rewrite the query: pg also accepts socket and empty-host URLs.
-  const parts = databaseUrl.match(/^([^#?]*)\?([^#]*)(.*)$/s);
-  const params = new URLSearchParams(parts?.[2]);
-  if (!parts || !params.has("sslaccept")) {
+  const parts = splitConnectionUrl(databaseUrl);
+  if (!parts.params.has("sslaccept")) {
     return { connectionString: databaseUrl };
   }
 
-  const ssl = sslConfigFromSslAccept(params.get("sslaccept"));
-  params.delete("sslaccept");
-  const query = params.toString();
-  const queryString = query ? `?${query}` : "";
+  const ssl = sslConfigFromSslAccept(parts.params.get("sslaccept"));
+  parts.params.delete("sslaccept");
 
   return {
-    connectionString: `${parts[1]}${queryString}${parts[3]}`,
+    connectionString: joinConnectionUrl(parts),
     ...(ssl !== undefined && { ssl }),
   };
 };
