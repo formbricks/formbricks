@@ -865,6 +865,9 @@ export const deleteWorkflowNodeAtom = atom(null, (get, set, nodeId: string) => {
   );
 });
 
+/** An If/else or Switch whose deletion was asked for from the keyboard; its card asks to confirm. */
+export const stepDeleteRequestAtom = atom<string | null>(null);
+
 // Seed the trigger on an empty draft canvas (the "Add trigger" picker). A Response completed trigger
 // gets a placeholder surveyId that keeps the config schema-valid until the user binds a real survey;
 // a Webhook trigger has nothing to configure (its Secret URL is issued when the save lands). Opening

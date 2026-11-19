@@ -25,6 +25,7 @@ import {
   countStepsOnBranches,
   cutWorkflowStepIdsAtom,
   deleteWorkflowNodeAtom,
+  stepDeleteRequestAtom,
   stepIdsMovingAlongAtom,
   workflowCanvasDirectionAtom,
   workflowDefinitionAtom,
@@ -82,6 +83,15 @@ export const WorkflowBranchNode = memo(
     // Deleting an If/else or a Switch takes its branches with it (spec §2), so it asks first, saying how many
     // steps go too. Counted when the menu item is picked, not on every render of the card.
     const [deleteStepCount, setDeleteStepCount] = useState<number | null>(null);
+    // Backspace or Delete on this card (use-delete-step-shortcut) asks the same.
+    const deleteRequest = useAtomValue(stepDeleteRequestAtom);
+    const setDeleteRequest = useSetAtom(stepDeleteRequestAtom);
+    useEffect(() => {
+      if (deleteRequest !== id) return;
+      setDeleteRequest(null);
+      const definition = store.get(workflowDefinitionAtom);
+      setDeleteStepCount(definition ? countStepsOnBranches(definition, id) : 0);
+    }, [deleteRequest, id, setDeleteRequest, store]);
     const isHorizontal = useAtomValue(workflowCanvasDirectionAtom) === "horizontal";
     const legs = data.branches;
     const legOffsets =

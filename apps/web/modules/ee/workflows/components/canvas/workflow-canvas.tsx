@@ -23,6 +23,7 @@ import {
   WORKFLOW_CANVAS_MAX_ZOOM,
   useCanvasViewport,
 } from "@/modules/ee/workflows/hooks/use-canvas-viewport";
+import { useDeleteStepShortcut } from "@/modules/ee/workflows/hooks/use-delete-step-shortcut";
 import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
 import { useStepClipboardShortcuts } from "@/modules/ee/workflows/hooks/use-step-clipboard";
 import { useStepMoveDrag } from "@/modules/ee/workflows/hooks/use-step-move";
@@ -106,6 +107,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const closeNodeConfig = useSetAtom(closeWorkflowNodeConfigModalAtom);
   const setHoveredEdgeId = useSetAtom(hoveredWorkflowEdgeIdAtom);
   useStepClipboardShortcuts();
+  useDeleteStepShortcut();
   const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
   const setFlowNodes = useSetAtom(workflowFlowNodesAtom);
   const openNodeConfigModal = useSetAtom(openWorkflowNodeConfigModalAtom);
@@ -337,12 +339,10 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         }}
         defaultViewport={{ x: 0, y: 0, zoom: WORKFLOW_CANVAS_MAX_ZOOM }}
         nodesDraggable={canMutate}
-        // Disable the delete key entirely when mutation is gated. RF's deleteKeyCode defaults to
-        // "Backspace"; leaving it on lets a read-only member (or an editor on an enabled/archived
-        // workflow) visually drop a selected node — applyNodeChanges removes it from local flowNodes
-        // without ever touching the definition, so the change never persists and re-syncs on reload
-        // into an inconsistent canvas (orphaned edge). `null` disables the shortcut in RF 12.
-        deleteKeyCode={canMutate ? "Backspace" : null}
+        // React Flow's delete key only drops the card from local flowNodes, never from the definition,
+        // so the step came back on the next redraw. Backspace/Delete delete the step through the
+        // definition instead (useDeleteStepShortcut). `null` disables the shortcut in RF 12.
+        deleteKeyCode={null}
         nodesConnectable={false}
         snapGrid={WORKFLOW_CANVAS_SNAP_GRID}
         snapToGrid={isSnapToCanvasEnabled}
