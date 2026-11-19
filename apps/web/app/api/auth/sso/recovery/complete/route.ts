@@ -89,8 +89,11 @@ const readStateId = async (request: Request): Promise<string | null> => {
   try {
     const stateId = (await request.formData()).get("state");
     return typeof stateId === "string" && stateId.length > 0 ? stateId : null;
-  } catch {
-    return null;
+  } catch (error) {
+    // `formData()` rejects with a TypeError for a body that is not form data; that is a bad request,
+    // not a fault. Anything else is unexpected and propagates.
+    if (error instanceof TypeError) return null;
+    throw error;
   }
 };
 

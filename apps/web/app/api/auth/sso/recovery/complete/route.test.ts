@@ -114,6 +114,19 @@ describe("/api/auth/sso/recovery/complete", () => {
     }
   );
 
+  test("refuses a body that is not form data", async () => {
+    const response = await POST(
+      new Request(`${WEBAPP_URL}/api/auth/sso/recovery/complete`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "sec-fetch-site": "same-origin" },
+        body: JSON.stringify({ state: "state-id" }),
+      })
+    );
+
+    expect(completeSsoRecovery).not.toHaveBeenCalled();
+    expect(location(response)).toContain("error=OAuthAccountNotLinked");
+  });
+
   test("refuses a submission with no state", async () => {
     const response = await POST(
       new Request(`${WEBAPP_URL}/api/auth/sso/recovery/complete`, {

@@ -2,6 +2,7 @@ import { isValidElement } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getSession } from "@/modules/auth/lib/session";
+import { SSO_RECOVERY_PROOF_COOKIE_NAME } from "@/modules/ee/sso/lib/recovery-proof";
 import { SsoRecoveryError, getSsoRecoveryConfirmation } from "@/modules/ee/sso/lib/sso-recovery";
 import { SsoRecoveryConfirmPage } from "./page";
 
@@ -40,8 +41,6 @@ vi.mock("@/modules/ee/sso/lib/sso-recovery", async (importOriginal) => ({
   getSsoRecoveryConfirmation: vi.fn(),
 }));
 
-const PROOF_COOKIE = "formbricks.sso_recovery_proof";
-
 /** Every element in a not-yet-rendered tree, depth first. */
 const elementsOf = (node: ReactNode): ReactElement[] => {
   if (Array.isArray(node)) return node.flatMap(elementsOf);
@@ -61,7 +60,7 @@ describe("SsoRecoveryConfirmPage (ENG-7395)", () => {
   });
 
   test("asks before linking: a form that POSTs the state back to the completion route", async () => {
-    cookieValues.set(PROOF_COOKIE, "proof-value");
+    cookieValues.set(SSO_RECOVERY_PROOF_COOKIE_NAME, "proof-value");
     vi.mocked(getSsoRecoveryConfirmation).mockResolvedValue({ provider: "google" });
 
     const elements = elementsOf(await renderPage("state-id"));
