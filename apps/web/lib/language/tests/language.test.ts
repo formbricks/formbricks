@@ -98,15 +98,15 @@ describe("createLanguage", () => {
       expect(prisma.language.create).not.toHaveBeenCalled();
     });
 
-    // ENG-3602: a code the workspace already holds (here `de`, canonicalized onto an existing `de-DE`)
-    // is a conflict the caller can act on, not a server error.
+    // ENG-3602: the database refusing a code the workspace already holds is a conflict the caller can act
+    // on, not a server error.
     test("throws UniqueConstraintError when the workspace already has the language (P2002)", async () => {
       const err = new Prisma.PrismaClientKnownRequestError("dup", {
         code: "P2002",
         clientVersion: "1",
       });
       vi.mocked(prisma.language.create).mockRejectedValue(err);
-      const created = createLanguage(mockWorkspaceId, { code: "de", alias: null });
+      const created = createLanguage(mockWorkspaceId, mockLanguageInput);
       await expect(created).rejects.toThrow(UniqueConstraintError);
       await expect(created).rejects.toThrow("This workspace already has this language");
     });

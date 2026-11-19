@@ -28,7 +28,7 @@ export const getLanguagesValidationError = (
     return "workspace.languages.please_select_a_language";
   }
 
-  // Check for duplicates within the languageCodes and languageAliases
+  // The same language twice (by canonical code), or the same alias twice
   if (hasDuplicates(languageAliases) || hasDuplicates(canonicalCodes)) {
     return "workspace.languages.duplicate_language_or_language_id";
   }

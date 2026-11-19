@@ -2,7 +2,7 @@
 
 import { TFunction } from "i18next";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { Language } from "@formbricks/database/prisma-browser";
@@ -196,7 +196,23 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     setIsEditing(false);
   };
 
+  // One save at a time: a second click while the first is in flight would create the same new languages
+  // again, and the loser of that race fails on the workspace's unique language code (ENG-3602).
+  const isSavingRef = useRef(false);
+  const [isSaving, setIsSaving] = useState(false);
   const handleSaveChanges = async () => {
+    if (isSavingRef.current) return;
+    isSavingRef.current = true;
+    setIsSaving(true);
+    try {
+      await saveChanges();
+    } finally {
+      isSavingRef.current = false;
+      setIsSaving(false);
+    }
+  };
+
+  const saveChanges = async () => {
     const validationError = getLanguagesValidationError(languages);
     if (validationError) {
       toast.error(t(validationError), { duration: VALIDATION_TOAST_DURATION_MS[validationError] });
@@ -219,6 +235,8 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     const errorResult = results.find((result) => result?.serverError);
     if (errorResult) {
       toast.error(getFormattedErrorMessage(errorResult));
+      // The other rows of this save may have landed: re-read them so the form shows what was stored.
+      router.refresh();
       return;
     }
 
@@ -332,6 +350,7 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
         isEditing={isEditing}
         onCancel={handleCancelChanges}
         disabled={isReadOnly}
+        isSaving={isSaving}
         onEdit={() => {
           setIsEditing(true);
         }}
@@ -362,15 +381,16 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
 
 const EditSaveButtons: React.FC<{
   disabled: boolean;
+  isSaving: boolean;
   isEditing: boolean;
   onSave: () => void;
   onCancel: () => void;
   onEdit: () => void;
   t: TFunction;
-}> = ({ isEditing, onEdit, onSave, onCancel, disabled, t }) =>
+}> = ({ isEditing, onEdit, onSave, onCancel, disabled, isSaving, t }) =>
   isEditing ? (
     <div className="flex gap-4">
-      <Button onClick={onSave} size="sm" disabled={disabled}>
+      <Button onClick={onSave} size="sm" disabled={disabled || isSaving} loading={isSaving}>
         {t("common.save_changes")}
       </Button>
       <Button onClick={onCancel} size="sm" variant="ghost" disabled={disabled}>
