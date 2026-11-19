@@ -1,7 +1,7 @@
 "use client";
 
 import type { TFunction } from "i18next";
-import { useAtom, useAtomValue } from "jotai";
+import { useAtomValue, useSetAtom } from "jotai";
 import { FlaskConicalIcon, HistoryIcon, PlayIcon, XIcon } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -23,7 +23,8 @@ import { type TRunsViewKind, formatRunTime } from "@/modules/ee/workflows/lib/ru
 import { getTestRunDrawerPayload } from "@/modules/ee/workflows/lib/test-run";
 import {
   type TWorkflowTestRunFailure,
-  isTestFormOpenAtom,
+  closeTestFormAtom,
+  isTestFormShownAtom,
   testFormFocusRequestAtom,
 } from "@/modules/ee/workflows/state/test-run";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
@@ -115,16 +116,6 @@ interface RunsTestPanelProps {
 type TTestRunControls = RunsTestPanelProps["testRun"];
 
 /** A refusal about the test input itself: the input opens to fix it. */
-/**
- * Whether the "Test the draft" card shows: opened by hand (the panel's or the header's Test, "Use as
- * test input"), or held open while a run waits for a response to be picked or explains why it didn't
- * start.
- */
-const useIsTestFormShown = (testRun: TTestRunControls): readonly [boolean, (isOpen: boolean) => void] => {
-  const [isFormOpen, setFormOpen] = useAtom(isTestFormOpenAtom);
-  return [isFormOpen || testRun.isPickingResponse || testRun.failure !== null, setFormOpen] as const;
-};
-
 /**
  * "Test the draft": the test input (the payload, or the response to test with), "Reset" and "Run
  * test", and why a run didn't start. The header's Test focuses "Run test" when it opens the card.
@@ -282,29 +273,18 @@ const RunsListSection = (props: Readonly<RunsTestPanelProps>) => {
 };
 
 /**
- * The Runs view's left panel (review point 1), named like its tab. Its header holds "Test" (the same
- * name and icon as the page header's Test), which opens the "Test the draft" card above the runs;
- * the runs, live and Test, follow, to click through while the canvas stays. Collapsed, it is a pill
- * on the canvas (RunsListPill).
+ * The Runs view's left panel (review point 1), named like its tab: the "Test the draft" card, which
+ * the page header's Test shows or hides, above the runs, live and Test, to click through while the
+ * canvas stays. Collapsed, it is a pill on the canvas (RunsListPill).
  */
 export const RunsTestPanel = (props: Readonly<RunsTestPanelProps>) => {
   const { t } = useTranslation();
-  const [isFormShown, setFormOpen] = useIsTestFormShown(props.testRun);
+  const isFormShown = useAtomValue(isTestFormShownAtom);
+  const closeTestForm = useSetAtom(closeTestFormAtom);
   return (
     <aside className="flex min-h-0 w-[320px] shrink-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
       <header className="flex shrink-0 items-center gap-2 border-b border-slate-200 py-2 pr-2 pl-4">
         <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-900">{t("common.runs")}</h2>
-        {props.canTest ? (
-          <Button
-            variant="secondary"
-            size="sm"
-            aria-expanded={isFormShown}
-            aria-pressed={isFormShown}
-            onClick={() => setFormOpen(!isFormShown)}>
-            <FlaskConicalIcon />
-            {t("workspace.workflows.test")}
-          </Button>
-        ) : null}
         <WorkflowPanelCollapseButton side="left" onCollapse={() => props.onCollapsedChange(true)} />
       </header>
       <div className="scroll-bar flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
@@ -316,7 +296,7 @@ export const RunsTestPanel = (props: Readonly<RunsTestPanelProps>) => {
             responseTrigger={props.responseTrigger}
             hasSavedWebhookTrigger={props.hasSavedWebhookTrigger}
             testRun={props.testRun}
-            onClose={() => setFormOpen(false)}
+            onClose={closeTestForm}
           />
         ) : null}
         <RunsListSection {...props} />

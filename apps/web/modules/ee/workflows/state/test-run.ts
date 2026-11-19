@@ -57,3 +57,20 @@ export const openTestFormAtom = atom(null, (_get, set) => {
   set(isTestFormOpenAtom, true);
   set(testFormFocusRequestAtom, (request) => request + 1);
 });
+
+/**
+ * Whether the test form shows: opened by hand, or held open while a run waits for a response to be
+ * picked or explains why it didn't start.
+ */
+export const isTestFormShownAtom = atom((get) => {
+  const testRun = get(editorTestRunAtom);
+  return get(isTestFormOpenAtom) || testRun.isPickingResponse || testRun.failure !== null;
+});
+
+/** Closes the test form, with the pick it waited for and the failure it explained. */
+export const closeTestFormAtom = atom(null, (get, set) => {
+  set(isTestFormOpenAtom, false);
+  const testRun = get(editorTestRunAtom);
+  if (!testRun.isRunning)
+    set(editorTestRunAtom, { ...testRun, isPickingResponse: false, failure: null, error: null });
+});

@@ -15,6 +15,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/cn";
 import { getV3ApiErrorMessage } from "@/modules/api/lib/v3-client";
 import { usePublishedWorkflowVersion } from "@/modules/ee/workflows/hooks/use-published-workflow-version";
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
@@ -42,11 +43,18 @@ import {
 interface WorkflowHeaderCtaProps {
   workflowId: string;
   isReadOnly: boolean;
-  /** Opens the Runs view's test form, ready to run (review of the Runs view); absent: disabled. */
+  /** Shows or hides the Runs view's test form (from the Editor, opens Runs on it); absent: disabled. */
   onTest?: () => void;
+  /** The test form shows in the Runs view: the button reads as pressed. */
+  isTestActive?: boolean;
 }
 
-export const WorkflowHeaderCta = ({ workflowId, isReadOnly, onTest }: Readonly<WorkflowHeaderCtaProps>) => {
+export const WorkflowHeaderCta = ({
+  workflowId,
+  isReadOnly,
+  onTest,
+  isTestActive = false,
+}: Readonly<WorkflowHeaderCtaProps>) => {
   const { t } = useTranslation();
   const router = useRouter();
   const workflow = useAtomValue(workflowAtom);
@@ -124,9 +132,15 @@ export const WorkflowHeaderCta = ({ workflowId, isReadOnly, onTest }: Readonly<W
       {/* Lifecycle as a status dropdown (same shape as the surveys list "New survey" menu): the
           button reads the current state, the menu holds the transitions available from it. */}
       <>
-        {/* Secondary on purpose: the status menu stays the one primary control (ED8). Test opens the
-              Runs view's test form and runs nothing itself; read-only members may not test. */}
-        <Button variant="secondary" size="sm" disabled={!onTest || isReadOnly || isDeleting} onClick={onTest}>
+        {/* Secondary on purpose: the status menu stays the one primary control (ED8). Test shows or
+            hides the Runs view's test form and runs nothing itself; read-only members may not test. */}
+        <Button
+          variant="secondary"
+          size="sm"
+          className={cn(isTestActive && "bg-slate-200 hover:bg-slate-200")}
+          aria-pressed={isTestActive}
+          disabled={!onTest || isReadOnly || isDeleting}
+          onClick={onTest}>
           <FlaskConicalIcon />
           {t("workspace.workflows.test")}
         </Button>

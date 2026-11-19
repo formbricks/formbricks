@@ -63,7 +63,8 @@ export const WorkflowEditorHeader = ({
         <WorkflowHeaderCta
           workflowId={workflowId}
           isReadOnly={isReadOnly}
-          onTest={isReadOnly ? undefined : testRun.openTestForm}
+          onTest={isReadOnly ? undefined : testRun.toggleTestForm}
+          isTestActive={testRun.isTestFormActive}
         />
       }
     />

@@ -26,7 +26,9 @@ import {
 } from "@/modules/ee/workflows/state/editor";
 import {
   EMPTY_TEST_RUN_STATE,
+  closeTestFormAtom,
   editorTestRunAtom,
+  isTestFormShownAtom,
   openTestFormAtom,
 } from "@/modules/ee/workflows/state/test-run";
 
@@ -34,8 +36,8 @@ export type { TWorkflowTestRunFailure } from "@/modules/ee/workflows/state/test-
 
 /**
  * Test run (ED6, ADR 0049; review point 1): saves the draft if needed, runs it, and shows the result in
- * the workflow's Runs view. The header's Test only opens that view's test form (`openTestForm`),
- * keeping the step that was open; "Run test" there starts the run. A Webhook workflow sends the test input kept in this browser (else the server uses the
+ * the workflow's Runs view. The header's Test only shows or hides that view's test form
+ * (`toggleTestForm`), keeping the step that was open; "Run test" there starts the run. A Webhook workflow sends the test input kept in this browser (else the server uses the
  * expected payload). A Response completed workflow runs against a response picked in the Runs view:
  * started without one, it waits for the pick there. The run goes into the query cache; the shared
  * `editorTestRunAtom` only says what is in flight, what failed and which run came back.
@@ -149,11 +151,20 @@ export const useWorkflowTestRun = ({
     [store, isReadOnly, setState, openRunsView, waitForSaveToSettle, save, workflowId, mutate]
   );
 
-  /** The header's Test: opens the Runs view's test form, ready to run; it runs nothing itself. */
-  const openTestForm = useCallback(() => {
+  /**
+   * The header's Test, the only one: in Runs it shows or hides the test form; from the Editor it opens
+   * Runs with the form shown and "Run test" focused. It runs nothing itself.
+   */
+  const isOnRunsView = pathname === runsPath;
+  const isTestFormShown = useAtomValue(isTestFormShownAtom);
+  const toggleTestForm = useCallback(() => {
+    if (isOnRunsView && store.get(isTestFormShownAtom)) {
+      store.set(closeTestFormAtom);
+      return;
+    }
     store.set(openTestFormAtom);
     openRunsView();
-  }, [store, openRunsView]);
+  }, [isOnRunsView, store, openRunsView]);
 
-  return { ...state, startTestRun, openTestForm };
+  return { ...state, startTestRun, toggleTestForm, isTestFormActive: isOnRunsView && isTestFormShown };
 };
