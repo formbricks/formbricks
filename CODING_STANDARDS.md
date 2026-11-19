@@ -273,6 +273,9 @@ Do:
   the code they exercise (`utility.test.ts`), and mock at module boundaries with `vi.mock`, reusing a
   shared `__mocks__` module where one exists (`apps/web/lib/__mocks__/database.ts`) rather than
   redefining it inline.
+- A unit test that runs an injected `<script>` under jsdom follows
+  `apps/web/modules/ui/components/survey/load-surveys-script.test.ts`: the script runs on jsdom's own
+  window, not the test's `window`, and its errors fail the run unless the test listens for them.
 - For API v3 changes, check that the spec, generated schemas, and route refinements agree. Review
   contract coverage against real fixtures using `docs/api-v3-reference/contract-tests/README.md`;
   generation and adoption procedures live in
