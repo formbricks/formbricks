@@ -149,7 +149,7 @@ test("a restriction stored but not yet projected passes over a member the graph 
   for (const surveyId of [surveys.owned, surveys.byBob, surveys.byMia]) {
     projection.failNext = true;
     const response = await changeV3SurveyVisibility({
-      authentication: { expires: "2099-01-01", user: { id: ids.mia } } as never,
+      authentication: { expires: "2099-01-01", user: { id: ids.mia } },
       body: { visibility: "restricted" },
       instance: "/api/v3/surveys",
       requestId: "req",

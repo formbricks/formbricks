@@ -207,7 +207,7 @@ describe("streamSurveyImport: an Excel export of a survey the user may update", 
 
   test("of a survey changed since, is checked against the export time, so an Update asks before overwriting", async () => {
     const bytes = exportOf(SURVEY);
-    mocks.findUpdatableSurvey.mockResolvedValue(found({ ...SURVEY, updatedAt: EDITED_LATER } as TSurvey));
+    mocks.findUpdatableSurvey.mockResolvedValue(found({ ...SURVEY, updatedAt: EDITED_LATER }));
 
     await readEvents(await importFile(bytes));
 

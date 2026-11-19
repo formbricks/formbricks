@@ -69,7 +69,7 @@ export function AddMemberRole({
             defaultValue={isAccessControlAllowed ? "member" : "owner"}
             disabled={!isAccessControlAllowed}
             onValueChange={(v) => {
-              onChange(v as TOrganizationRole);
+              onChange(v);
             }}
             value={value}>
             <SelectTrigger>

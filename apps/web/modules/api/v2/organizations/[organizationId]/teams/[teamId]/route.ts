@@ -35,7 +35,7 @@ export const GET = async (
     handler: async ({ authentication, parsedInput: { params } }) => {
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Read
         ))
@@ -46,7 +46,7 @@ export const GET = async (
         });
       }
 
-      const team = await getTeam(params!.organizationId, params!.teamId);
+      const team = await getTeam(params.organizationId, params.teamId);
       if (!team.ok) {
         return handleApiError(request, team.error as ApiErrorResponseV2);
       }
@@ -145,7 +145,7 @@ export const PUT = (
 
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Write
         ))
@@ -182,7 +182,7 @@ export const PUT = (
         logger.error(`Failed to fetch old team data for audit log: ${JSON.stringify(error)}`);
       }
 
-      const team = await updateTeam(params!.organizationId, params!.teamId, body!);
+      const team = await updateTeam(params.organizationId, params.teamId, body);
 
       if (!team.ok) {
         return handleApiError(request, team.error, auditLog);

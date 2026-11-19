@@ -13,7 +13,7 @@ export function NoFeedbackDirectoryAlert({ organizationId }: Readonly<NoFeedback
   const { t } = useTranslation();
 
   return (
-    <Alert variant="error" size="small" role="status">
+    <Alert variant="error" size="small" alertRole="status">
       <div>
         <p>{t("workspace.analysis.charts.no_data_source_available")}</p>
         {organizationId && (

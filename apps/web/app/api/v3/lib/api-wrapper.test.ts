@@ -116,7 +116,7 @@ describe("withV3ApiWrapper", () => {
         method: "DELETE",
         headers: { "x-request-id": "req-audit" },
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(200);
@@ -166,7 +166,7 @@ describe("withV3ApiWrapper", () => {
           "x-api-key": "fbk_test",
         },
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(403);
@@ -207,7 +207,7 @@ describe("withV3ApiWrapper", () => {
       new NextRequest("http://localhost/api/v3/surveys?limit=10", {
         headers: { "x-request-id": "req-1" },
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(200);
@@ -244,7 +244,7 @@ describe("withV3ApiWrapper", () => {
       new NextRequest("http://localhost/api/v3/surveys", {
         headers: { "x-api-key": "fbk_test" },
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(200);
@@ -280,7 +280,7 @@ describe("withV3ApiWrapper", () => {
       new NextRequest("http://localhost/api/v3/surveys", {
         headers: { authorization: "Bearer fbk_test" },
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(200);
@@ -295,7 +295,7 @@ describe("withV3ApiWrapper", () => {
       handler,
     });
 
-    const response = await wrapped(new NextRequest("http://localhost/api/v3/surveys"), {} as never);
+    const response = await wrapped(new NextRequest("http://localhost/api/v3/surveys"), {});
 
     expect(response.status).toBe(401);
     expect(handler).not.toHaveBeenCalled();
@@ -321,7 +321,7 @@ describe("withV3ApiWrapper", () => {
       handler: vi.fn(async () => Response.json({ ok: true })),
     });
 
-    const response = await wrapped(new NextRequest("http://localhost/api/v3/surveys"), {} as never);
+    const response = await wrapped(new NextRequest("http://localhost/api/v3/surveys"), {});
 
     expect(response.status).toBe(401);
     expect(response.headers.get("WWW-Authenticate")).toBe('Bearer realm="formbricks"');
@@ -334,7 +334,7 @@ describe("withV3ApiWrapper", () => {
       handler: vi.fn(async () => Response.json({ ok: true })),
     });
 
-    const response = await wrapped(new NextRequest("http://localhost/api/v3/tags"), {} as never);
+    const response = await wrapped(new NextRequest("http://localhost/api/v3/tags"), {});
 
     expect(response.status).toBe(401);
     expect(response.headers.get("WWW-Authenticate")).toBeNull();
@@ -361,7 +361,7 @@ describe("withV3ApiWrapper", () => {
       new NextRequest("http://localhost/api/v3/surveys?limit=oops", {
         headers: { "x-request-id": "req-invalid" },
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(400);
@@ -426,7 +426,7 @@ describe("withV3ApiWrapper", () => {
         params: Promise.resolve({
           workspaceId: "ws_123",
         }),
-      } as never
+      }
     );
 
     expect(response.status).toBe(200);
@@ -454,7 +454,7 @@ describe("withV3ApiWrapper", () => {
           "Content-Type": "application/json",
         },
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(400);
@@ -501,7 +501,7 @@ describe("withV3ApiWrapper", () => {
           "x-request-id": "req-payload-too-large",
         },
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(413);
@@ -533,7 +533,7 @@ describe("withV3ApiWrapper", () => {
       params: Promise.resolve({
         workspaceId: "x",
       }),
-    } as never);
+    });
 
     expect(response.status).toBe(400);
     expect(handler).not.toHaveBeenCalled();
@@ -568,7 +568,7 @@ describe("withV3ApiWrapper", () => {
           "Content-Type": "application/json",
         },
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(400);
@@ -596,7 +596,7 @@ describe("withV3ApiWrapper", () => {
       handler: async () => Response.json({ ok: true }),
     });
 
-    const response = await wrapped(new NextRequest("http://localhost/api/v3/surveys"), {} as never);
+    const response = await wrapped(new NextRequest("http://localhost/api/v3/surveys"), {});
 
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("60");
@@ -631,7 +631,7 @@ describe("withV3ApiWrapper", () => {
           "Content-Type": "application/json",
         },
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(429);
@@ -657,7 +657,7 @@ describe("withV3ApiWrapper", () => {
       new NextRequest("http://localhost/api/v3/surveys", {
         headers: { "x-request-id": "req-boom" },
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(500);
@@ -686,7 +686,7 @@ describe("withV3ApiWrapper", () => {
       new NextRequest("http://localhost/api/v3/surveys", {
         headers: { "x-request-id": "req-missing" },
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(403);
@@ -714,7 +714,7 @@ describe("withV3ApiWrapper", () => {
         method: "POST",
         headers: { "x-request-id": "req-audit" },
       }),
-      {} as never
+      {}
     );
 
     expect(mockQueueAuditEvent).toHaveBeenCalledWith(
@@ -747,7 +747,7 @@ describe("5xx reporting", () => {
       handler: async () => Response.json({ title: "Internal Server Error" }, { status: 500 }),
     });
 
-    const response = await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+    const response = await route(new NextRequest("http://localhost/api/v3/things"), {});
 
     expect(reported()).toHaveLength(1);
     expect(reported()[0]).toMatchObject({ status: 500, apiVersion: "v3" });
@@ -767,7 +767,7 @@ describe("5xx reporting", () => {
       },
     });
 
-    const response = await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+    const response = await route(new NextRequest("http://localhost/api/v3/things"), {});
 
     expect(response.status).toBe(500);
     expect(reported()).toHaveLength(1);
@@ -790,7 +790,7 @@ describe("5xx reporting", () => {
       handler: async () => new Response(null, { status }),
     });
 
-    await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+    await route(new NextRequest("http://localhost/api/v3/things"), {});
 
     expect(reported()).toHaveLength(0);
   });
@@ -805,7 +805,7 @@ describe("5xx reporting", () => {
       handler: async () => Response.json({ title: "Bad Gateway" }, { status: 502 }),
     });
 
-    await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+    await route(new NextRequest("http://localhost/api/v3/things"), {});
 
     expect(reported()).toHaveLength(1);
     expect(reported()[0]).toMatchObject({ status: 502, apiVersion: "v3" });
@@ -822,7 +822,7 @@ describe("5xx reporting", () => {
       handler: async () => Response.json({ x: 1 }, { status: 502 }),
     });
 
-    const response = await route(new NextRequest("http://localhost/api/v3/things"), {} as never);
+    const response = await route(new NextRequest("http://localhost/api/v3/things"), {});
 
     expect(response.status).toBe(502);
     await expect(response.json()).resolves.toEqual({ x: 1 });
@@ -932,7 +932,7 @@ describe("request array budget (ENG-3384)", () => {
           blocks: [{ elements: Array.from({ length: V3_REQUEST_ARRAY_MAX_ITEMS + 1 }, () => 0) }],
         }),
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(400);
@@ -970,7 +970,7 @@ describe("request array budget (ENG-3384)", () => {
         headers: { "Content-Type": "application/json" },
         body: deep,
       }),
-      {} as never
+      {}
     );
     const parsedTheBody = parse.mock.calls.some(([text]) => text === deep);
     parse.mockRestore();
@@ -1002,7 +1002,7 @@ describe("request array budget (ENG-3384)", () => {
             definition: { nodes: Array.from({ length: V3_REQUEST_ARRAY_MAX_ITEMS + 1 }, () => 0) },
           }),
         }),
-        {} as never
+        {}
       );
 
       expect(response.status).toBe(400);
@@ -1027,8 +1027,8 @@ describe("request array budget (ENG-3384)", () => {
             },
           }),
           duplex: "half",
-        } as ConstructorParameters<typeof NextRequest>[1]),
-        {} as never
+        }),
+        {}
       );
 
       expect(response.status).toBe(413);
@@ -1100,7 +1100,7 @@ describe("request array budget (ENG-3384)", () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: "Nudge", definition: { nodes: [{ id: "n1" }] } }),
         }),
-        {} as never
+        {}
       );
 
       expect(response.status).toBe(200);
@@ -1115,7 +1115,7 @@ describe("request array budget (ENG-3384)", () => {
 
       const response = await withV3ApiWrapper({ auth: "none", handler })(
         new NextRequest("http://localhost/api/v3/workflows", { method: "POST", body: "not json" }),
-        {} as never
+        {}
       );
 
       expect(handler).toHaveBeenCalledTimes(1);
@@ -1142,7 +1142,7 @@ describe("per-route body limit (bodyLimitBytes)", () => {
         },
       }),
       duplex: "half",
-    } as ConstructorParameters<typeof NextRequest>[1]);
+    });
 
   const declaredBodyRoute = (handler: Parameters<typeof withV3ApiWrapper>[0]["handler"], limit?: number) =>
     withV3ApiWrapper({
@@ -1161,7 +1161,7 @@ describe("per-route body limit (bodyLimitBytes)", () => {
 
     const response = await declaredBodyRoute(handler)(
       streamedPost(jsonBodyOfSize(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1)),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(413);
@@ -1172,7 +1172,7 @@ describe("per-route body limit (bodyLimitBytes)", () => {
     const handler = vi.fn(async ({ parsedInput }) => Response.json({ length: parsedInput.body.a.length }));
     const body = jsonBodyOfSize(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1024);
 
-    const response = await declaredBodyRoute(handler, ROUTE_LIMIT)(streamedPost(body), {} as never);
+    const response = await declaredBodyRoute(handler, ROUTE_LIMIT)(streamedPost(body), {});
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ length: body.length - 8 });
@@ -1183,7 +1183,7 @@ describe("per-route body limit (bodyLimitBytes)", () => {
 
     const response = await declaredBodyRoute(handler, ROUTE_LIMIT)(
       streamedPost(jsonBodyOfSize(ROUTE_LIMIT + 1)),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(413);
@@ -1203,7 +1203,7 @@ describe("per-route body limit (bodyLimitBytes)", () => {
         body: "{}",
         headers: { "Content-Type": "application/json", "Content-Length": String(ROUTE_LIMIT + 1) },
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(413);
@@ -1217,8 +1217,8 @@ describe("per-route body limit (bodyLimitBytes)", () => {
     const body = jsonBodyOfSize(DEFAULT_REQUEST_BODY_LIMIT_BYTES + 1024);
     const route = withV3ApiWrapper({ auth: "none", bodyLimitBytes: ROUTE_LIMIT, handler });
 
-    const accepted = await route(streamedPost(body), {} as never);
-    const refused = await route(streamedPost(jsonBodyOfSize(ROUTE_LIMIT + 1)), {} as never);
+    const accepted = await route(streamedPost(body), {});
+    const refused = await route(streamedPost(jsonBodyOfSize(ROUTE_LIMIT + 1)), {});
 
     expect(accepted.status).toBe(200);
     await expect(accepted.json()).resolves.toEqual({ size: body.length });
@@ -1269,10 +1269,10 @@ describe("per-route concurrency limit", () => {
 
     // The body is read before admission, so a slot bounds the work and never a client's upload: a
     // malformed body is a 400 whatever the slots, and only a valid one meets the limit.
-    const malformed = await limitedRoute(limiter, handler)(postJson("not json"), {} as never);
+    const malformed = await limitedRoute(limiter, handler)(postJson("not json"), {});
     expect(malformed.status).toBe(400);
 
-    const response = await limitedRoute(limiter, handler)(postJson('{"a":"x"}'), {} as never);
+    const response = await limitedRoute(limiter, handler)(postJson('{"a":"x"}'), {});
 
     expect(response.status).toBe(503);
     expect(response.headers.get("Retry-After")).toBe("7");
@@ -1286,7 +1286,7 @@ describe("per-route concurrency limit", () => {
     const mine = limiter.tryAcquire("user_1");
     const handler = vi.fn(async () => Response.json({ ok: true }));
 
-    const response = await limitedRoute(limiter, handler)(postJson('{"a":"x"}'), {} as never);
+    const response = await limitedRoute(limiter, handler)(postJson('{"a":"x"}'), {});
 
     expect(response.status).toBe(429);
     expect(response.headers.get("Retry-After")).toBe("7");
@@ -1318,9 +1318,9 @@ describe("per-route concurrency limit", () => {
         body: '{"a":"x"}',
       });
 
-    expect((await route(post("?cheap=true"), {} as never)).status).toBe(200);
+    expect((await route(post("?cheap=true"), {})).status).toBe(200);
     expect(limiter.inFlight).toBe(1);
-    expect((await route(post(""), {} as never)).status).toBe(503);
+    expect((await route(post(""), {})).status).toBe(503);
     if (held.ok) held.release();
   });
 
@@ -1330,10 +1330,10 @@ describe("per-route concurrency limit", () => {
     const route = limitedRoute(limiter, async () => Response.json({ ok: true }));
 
     mockGetSession.mockResolvedValueOnce(null);
-    expect((await route(postJson('{"a":"x"}'), {} as never)).status).toBe(401);
+    expect((await route(postJson('{"a":"x"}'), {})).status).toBe(401);
 
     vi.mocked(applyRateLimit).mockRejectedValueOnce(new TooManyRequestsError("slow down", 60));
-    expect((await route(postJson('{"a":"x"}'), {} as never)).status).toBe(429);
+    expect((await route(postJson('{"a":"x"}'), {})).status).toBe(429);
 
     expect(limiter.inFlight).toBe(0);
   });
@@ -1348,7 +1348,7 @@ describe("per-route concurrency limit", () => {
 
     const response = await limitedRoute(limiter, async () => Response.json({ ok: true }))(
       postJson('{"a":"x"}'),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(429);
@@ -1360,9 +1360,9 @@ describe("per-route concurrency limit", () => {
     const limiter = new ConcurrencyLimiter(1);
     const route = limitedRoute(limiter, async () => Response.json({ ok: true }));
 
-    const ok = await route(postJson('{"a":"x"}'), {} as never);
+    const ok = await route(postJson('{"a":"x"}'), {});
     await ok.text();
-    const invalid = await route(postJson('{"b":1}'), {} as never);
+    const invalid = await route(postJson('{"b":1}'), {});
 
     expect(ok.status).toBe(200);
     expect(invalid.status).toBe(400);
@@ -1375,7 +1375,7 @@ describe("per-route concurrency limit", () => {
       throw new Error("boom");
     });
 
-    const response = await route(postJson('{"a":"x"}'), {} as never);
+    const response = await route(postJson('{"a":"x"}'), {});
 
     expect(response.status).toBe(500);
     expect(limiter.inFlight).toBe(0);
@@ -1397,8 +1397,8 @@ describe("per-route concurrency limit", () => {
         )
     );
 
-    const streaming = await route(postJson('{"a":"x"}'), {} as never);
-    const whileStreaming = await route(postJson('{"a":"x"}'), {} as never);
+    const streaming = await route(postJson('{"a":"x"}'), {});
+    const whileStreaming = await route(postJson('{"a":"x"}'), {});
     const read = streaming.text();
     finish?.();
     await read;
@@ -1414,7 +1414,7 @@ describe("per-route concurrency limit", () => {
       async () => new Response(new ReadableStream<Uint8Array>({ pull() {} }))
     );
 
-    const streaming = await route(postJson('{"a":"x"}'), {} as never);
+    const streaming = await route(postJson('{"a":"x"}'), {});
     expect(limiter.inFlight).toBe(1);
     await streaming.body?.cancel();
 
@@ -1438,7 +1438,7 @@ describe("per-route concurrency limit", () => {
         body: '{"a":"x"}',
         signal: client.signal,
       }),
-      {} as never
+      {}
     );
     expect(response.status).toBe(200);
     expect(limiter.inFlight).toBe(1);
@@ -1473,13 +1473,13 @@ describe("per-route concurrency limit", () => {
         body: '{"a":"x"}',
         signal: client.signal,
       }),
-      {} as never
+      {}
     );
     await started;
     client.abort();
 
     expect(limiter.inFlight).toBe(1);
-    expect((await route(postJson('{"a":"x"}'), {} as never)).status).toBe(503);
+    expect((await route(postJson('{"a":"x"}'), {})).status).toBe(503);
 
     finishHandler?.();
     await pending;
@@ -1498,7 +1498,7 @@ describe("per-route concurrency limit", () => {
       return locked;
     });
 
-    const response = await route(postJson('{"a":"x"}'), {} as never);
+    const response = await route(postJson('{"a":"x"}'), {});
 
     expect(response.status).toBe(500);
     expect(limiter.inFlight).toBe(0);
@@ -1516,7 +1516,7 @@ describe("per-route concurrency limit", () => {
         body: '{"a":"x"}',
         signal: client.signal,
       }),
-      {} as never
+      {}
     );
     await response.text();
     const other = limiter.tryAcquire("someone_else");
@@ -1567,7 +1567,7 @@ describe("multipart form bodies (schemas.formData)", () => {
         },
       }),
       duplex: "half",
-    } as ConstructorParameters<typeof NextRequest>[1]);
+    });
 
   const form = (fields: [string, string | File][]) => {
     const data = new FormData();
@@ -1597,10 +1597,7 @@ describe("multipart form bodies (schemas.formData)", () => {
     );
 
     // Streamed without a Content-Length: the route never asks for one (no 411).
-    const response = await uploadRoute(handler)(
-      streamedPost(bytes, { "Content-Type": contentType }),
-      {} as never
-    );
+    const response = await uploadRoute(handler)(streamedPost(bytes, { "Content-Type": contentType }), {});
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({
@@ -1623,7 +1620,7 @@ describe("multipart form bodies (schemas.formData)", () => {
         body: '{"workspaceId":"ws_1"}',
         headers: contentType ? { "Content-Type": contentType } : {},
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(415);
@@ -1665,10 +1662,7 @@ describe("multipart form bodies (schemas.formData)", () => {
     const handler = vi.fn(async () => Response.json({ ok: true }));
     const { bytes, contentType } = await encodeForm(form(fields));
 
-    const response = await uploadRoute(handler)(
-      streamedPost(bytes, { "Content-Type": contentType }),
-      {} as never
-    );
+    const response = await uploadRoute(handler)(streamedPost(bytes, { "Content-Type": contentType }), {});
 
     expect(response.status).toBe(400);
     expect(response.headers.get("Content-Type")).toBe("application/problem+json");
@@ -1685,7 +1679,7 @@ describe("multipart form bodies (schemas.formData)", () => {
       streamedPost(new TextEncoder().encode("--other\r\nnot a part\r\n"), {
         "Content-Type": "multipart/form-data; boundary=expected",
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(400);
@@ -1707,12 +1701,9 @@ describe("multipart form bodies (schemas.formData)", () => {
         body: "--x--",
         headers: { "Content-Type": contentType, "Content-Length": String(ROUTE_LIMIT + 1) },
       }),
-      {} as never
+      {}
     );
-    const streamed = await uploadRoute(handler)(
-      streamedPost(bytes, { "Content-Type": contentType }),
-      {} as never
-    );
+    const streamed = await uploadRoute(handler)(streamedPost(bytes, { "Content-Type": contentType }), {});
 
     for (const response of [declared, streamed]) {
       expect(response.status).toBe(413);

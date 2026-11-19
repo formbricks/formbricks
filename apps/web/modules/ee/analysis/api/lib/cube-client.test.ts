@@ -143,7 +143,7 @@ describe("executeTenantScopedQuery", () => {
     expect(result).toEqual([{ id: "1", count: 42 }]);
 
     const cubejs = await getCubeJsMock();
-    const token = cubejs.mock.calls[0][0] as string;
+    const token = cubejs.mock.calls[0][0];
     const payload = jwt.verify(token, "cube-secret", {
       audience: "formbricks-cube-test",
       issuer: "formbricks-web-test",

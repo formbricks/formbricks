@@ -52,10 +52,10 @@ const createMockFilter = (
     value: "someValue",
   };
   if (type === "attribute") {
-    return { ...base, root: { type, contactAttributeKey: "email" } } as TSegmentAttributeFilter;
+    return { ...base, root: { type, contactAttributeKey: "email" } };
   }
   if (type === "person") {
-    return { ...base, root: { type, personIdentifier: "userId" } } as TSegmentPersonFilter;
+    return { ...base, root: { type, personIdentifier: "userId" } };
   }
   if (type === "segment") {
     return {
@@ -63,10 +63,10 @@ const createMockFilter = (
       root: { type, segmentId: "seg1" },
       qualifier: { operator: "userIsIn" as const },
       value: "seg1",
-    } as TSegmentSegmentFilter;
+    };
   }
   if (type === "device") {
-    return { ...base, root: { type, deviceType: "desktop" }, value: "desktop" } as TSegmentDeviceFilter;
+    return { ...base, root: { type, deviceType: "desktop" }, value: "desktop" };
   }
   throw new Error("Invalid filter type");
 };
@@ -653,7 +653,7 @@ describe("Segment Utils", () => {
     };
     const nestedBaseFilter = createBaseFilter(nested, null, "nbf1");
     const nestedGroup = createBaseFilter([nestedBaseFilter], "or", "ng1");
-    const group = [baseFilter, nestedGroup] as unknown as TBaseFilters;
+    const group = [baseFilter, nestedGroup];
 
     updateSurveyInteractionValueInFilter(group, "si1", {
       surveyScope: "specific",

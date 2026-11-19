@@ -58,6 +58,7 @@ describe("data", () => {
       workspaceId: "ws-1",
       createdBy: "user-1",
       status: "inProgress",
+      publishOn: null,
       welcomeCard: {
         enabled: true,
         timeToFinish: false,
@@ -150,6 +151,26 @@ describe("data", () => {
       expect(vi.mocked(prisma.survey.findUnique).mock.calls[0][0].select).toEqual(
         expect.objectContaining({ embeddedDataLinks: selectPublicSurveyEmbeddedDataLinks })
       );
+    });
+
+    /**
+     * ENG-3935: the renderer tells a scheduled survey from a paused one by `publishOn !== null`. A select
+     * without the column leaves it `undefined`, which is not `null`, so every paused survey showed the
+     * "Survey scheduled" screen.
+     */
+    test("selects publishOn, which separates a scheduled survey from a paused one", async () => {
+      vi.mocked(prisma.survey.findUnique).mockResolvedValue(
+        mockSurveyData as unknown as Awaited<ReturnType<typeof prisma.survey.findUnique>>
+      );
+      vi.mocked(transformPrismaSurvey).mockReturnValue(mockTransformedSurvey);
+
+      const result = await getSurveyWithMetadata("survey-1");
+
+      expect(vi.mocked(prisma.survey.findUnique).mock.calls[0][0].select).toEqual(
+        expect.objectContaining({ publishOn: true })
+      );
+      // A paused survey with no publish date must reach the renderer as `null`, not `undefined`.
+      expect(result.publishOn).toBeNull();
     });
 
     test("should throw ResourceNotFoundError when survey not found", async () => {

@@ -148,8 +148,8 @@ const hubCalls = (): string[] =>
   (
     [
       ["list", listFeedbackRecords, () => ""],
-      ["delete", deleteFeedbackRecord, (args: unknown[]) => `:${args[0]}`],
-      ["update", updateFeedbackRecord, (args: unknown[]) => `:${args[0]}`],
+      ["delete", deleteFeedbackRecord, (args: unknown[]) => `:${String(args[0])}`],
+      ["update", updateFeedbackRecord, (args: unknown[]) => `:${String(args[0])}`],
       ["create", createFeedbackRecordsBatch, (args: unknown[]) => `:${(args[0] as unknown[]).length}`],
     ] as const
   )
@@ -178,13 +178,12 @@ describe("reconcileResponseOutcomes", () => {
     responses = new Map();
     listPages = [];
 
-    vi.mocked(listFeedbackRecords).mockImplementation((async () =>
-      hubOk({ data: listPages.shift() ?? [] })) as never);
+    vi.mocked(listFeedbackRecords).mockImplementation(async () => hubOk({ data: listPages.shift() ?? [] }));
     vi.mocked(deleteFeedbackRecord).mockResolvedValue(hubOk({ deleted: true }));
     vi.mocked(updateFeedbackRecord).mockResolvedValue(hubOk({ id: "existing" }));
-    vi.mocked(createFeedbackRecordsBatch).mockImplementation((async (inputs: unknown[]) => ({
+    vi.mocked(createFeedbackRecordsBatch).mockImplementation(async (inputs: unknown[]) => ({
       results: inputs.map(() => hubOk({ id: "created" })),
-    })) as never);
+    }));
     vi.mocked(getSurvey).mockImplementation(async () => survey() as never);
     vi.mocked(getFeedbackSourcesBySurveyId).mockImplementation(async () => [source()] as never);
     vi.mocked(prisma.response.findMany).mockImplementation((async (args: {
@@ -290,11 +289,10 @@ describe("reconcileResponseOutcomes", () => {
 
     test("a record that is still there (a cleanup that had not run) is corrected in place, in order: create, look up, update", async () => {
       addResponse("r1");
-      vi.mocked(createFeedbackRecordsBatch).mockImplementation((async (inputs: unknown[]) => ({
+      vi.mocked(createFeedbackRecordsBatch).mockImplementation(async (inputs: unknown[]) => ({
         results: inputs.map(() => hubError(409, "conflict")),
-      })) as never);
-      vi.mocked(listFeedbackRecords).mockImplementation((async () =>
-        hubOk({ data: [{ id: "existing" }] })) as never);
+      }));
+      vi.mocked(listFeedbackRecords).mockImplementation(async () => hubOk({ data: [{ id: "existing" }] }));
 
       const results = await run(outcomeRow("r1"));
 
@@ -308,9 +306,9 @@ describe("reconcileResponseOutcomes", () => {
 
     test("a create refused with tenant_write_conflict (a purge is running) is a retryable failure, not a duplicate and not an error", async () => {
       addResponse("r1");
-      vi.mocked(createFeedbackRecordsBatch).mockImplementation((async (inputs: unknown[]) => ({
+      vi.mocked(createFeedbackRecordsBatch).mockImplementation(async (inputs: unknown[]) => ({
         results: inputs.map(() => hubError(409, "tenant_write_conflict")),
-      })) as never);
+      }));
 
       const results = await run(outcomeRow("r1"));
 
@@ -378,10 +376,10 @@ describe("reconcileResponseOutcomes", () => {
       addResponse("r1", { outcome: "lowQuality" });
       listsNext([hubRecord("h1", "r1")]);
       // The first Hub delete is where the reviewer restores.
-      vi.mocked(deleteFeedbackRecord).mockImplementationOnce((async () => {
+      vi.mocked(deleteFeedbackRecord).mockImplementationOnce(async () => {
         setOutcome("r1", null);
         return hubOk({ deleted: true });
-      }) as never);
+      });
 
       const results = await run(outcomeRow("r1"));
 
@@ -392,10 +390,10 @@ describe("reconcileResponseOutcomes", () => {
 
     test("a mark that lands while the records are being rebuilt ends with them removed", async () => {
       addResponse("r1");
-      vi.mocked(createFeedbackRecordsBatch).mockImplementationOnce((async (inputs: unknown[]) => {
+      vi.mocked(createFeedbackRecordsBatch).mockImplementationOnce(async (inputs: unknown[]) => {
         setOutcome("r1", "lowQuality");
         return { results: inputs.map(() => hubOk({ id: "created" })) };
-      }) as never);
+      });
       listsNext([hubRecord("h1", "r1"), hubRecord("h2", "r1", "el-nps")]);
 
       await run(outcomeRow("r1"));
@@ -407,14 +405,14 @@ describe("reconcileResponseOutcomes", () => {
       addResponse("r1", { outcome: "lowQuality" });
       // The reviewer is faster than every pass: each Hub call flips the outcome.
       const flip = () => setOutcome("r1", responses.get("r1")?.outcome ? null : "lowQuality");
-      vi.mocked(listFeedbackRecords).mockImplementation((async () => {
+      vi.mocked(listFeedbackRecords).mockImplementation(async () => {
         flip();
         return hubOk({ data: [] });
-      }) as never);
-      vi.mocked(createFeedbackRecordsBatch).mockImplementation((async (inputs: unknown[]) => {
+      });
+      vi.mocked(createFeedbackRecordsBatch).mockImplementation(async (inputs: unknown[]) => {
         flip();
         return { results: inputs.map(() => hubOk({ id: "created" })) };
-      }) as never);
+      });
 
       const results = await run(outcomeRow("r1"));
 
@@ -451,9 +449,9 @@ describe("reconcileResponseOutcomes", () => {
 
     test("a restore's rebuild fails softly and a later run completes it", async () => {
       addResponse("r1");
-      vi.mocked(createFeedbackRecordsBatch).mockImplementationOnce((async (inputs: unknown[]) => ({
+      vi.mocked(createFeedbackRecordsBatch).mockImplementationOnce(async (inputs: unknown[]) => ({
         results: inputs.map(() => hubError(503)),
-      })) as never);
+      }));
 
       const down = await run(outcomeRow("r1"));
 
@@ -471,15 +469,14 @@ describe("reconcileResponseOutcomes", () => {
       for (const id of ids) addResponse(id, { outcome: "lowQuality" });
       // The Hub's side of 200 records, which the job pages through: 100, 100, then nothing.
       const held = ids.flatMap((id) => [hubRecord(`${id}-a`, id), hubRecord(`${id}-b`, id, "el-nps")]);
-      vi.mocked(listFeedbackRecords).mockImplementation((async () =>
-        hubOk({ data: held.slice(0, 100) })) as never);
-      vi.mocked(deleteFeedbackRecord).mockImplementation((async (id: string) => {
+      vi.mocked(listFeedbackRecords).mockImplementation(async () => hubOk({ data: held.slice(0, 100) }));
+      vi.mocked(deleteFeedbackRecord).mockImplementation(async (id: string) => {
         held.splice(
           held.findIndex((record) => record.id === id),
           1
         );
         return hubOk({ deleted: true });
-      }) as never);
+      });
 
       const results = await reconcileResponseOutcomes(
         ids.map((id) => outcomeRow(id)),

@@ -124,9 +124,31 @@ relationships: |-
   team:globex_team#organization@organization:globex
   team:globex_team#contributor@user:viola
   workspace:foreign#reader_team@team:globex_team#member
+  organization:acme#mcp_grant@mcp_grant:acme_org
+  workspace:other#mcp_grant@mcp_grant:other_only
 
 assertions:
   assertTrue:
+    # ------------------------------------------------------------------
+    # ENG-7153 / ADR-0042 — an MCP grant's organization & workspace access.
+    # mcp_grant:acme_org selects organization:acme (Only selected organizations),
+    # so it reaches every workspace of acme, later ones included, and every
+    # resource below them. mcp_grant:other_only selects workspace:other alone
+    # (Only selected workspaces). A grant with All access has no relationships
+    # and is never checked.
+    # ------------------------------------------------------------------
+    - organization:acme#mcp_reach@mcp_grant:acme_org
+    - workspace:main#mcp_reach@mcp_grant:acme_org
+    - workspace:other#mcp_reach@mcp_grant:acme_org
+    - survey:onboarding#mcp_reach@mcp_grant:acme_org
+    - response:r1#mcp_reach@mcp_grant:acme_org
+    - dashboard:insights#mcp_reach@mcp_grant:acme_org
+    - team:product#mcp_reach@mcp_grant:acme_org
+    - api_key:ci_reader#mcp_reach@mcp_grant:acme_org
+    - feedback_directory:customer_feedback#mcp_reach@mcp_grant:acme_org
+    - feedback_directory_assignment:fdwa_main#mcp_reach@mcp_grant:acme_org
+    - workspace:other#mcp_reach@mcp_grant:other_only
+    - survey:internal#mcp_reach@mcp_grant:other_only
     # Released 6.0 checks retain their workspace semantics during overlap.
     - survey:draft#read@user:uma
     - survey:draft#read@api_key:ci_reader
@@ -308,6 +330,20 @@ assertions:
     - survey:leaky#read_v2@user:gary
 
   assertFalse:
+    # ENG-7153 / ADR-0042: a grant reaches nothing outside what it selects. Another
+    # organization's workspace is out of an organization grant; a workspace grant
+    # reaches neither its sibling workspaces nor the organization itself, so no
+    # organization-level resource (team, API key, feedback dataset) either.
+    - workspace:foreign#mcp_reach@mcp_grant:acme_org
+    - organization:globex#mcp_reach@mcp_grant:acme_org
+    - organization:acme#mcp_reach@mcp_grant:other_only
+    - workspace:main#mcp_reach@mcp_grant:other_only
+    - survey:onboarding#mcp_reach@mcp_grant:other_only
+    - response:r1#mcp_reach@mcp_grant:other_only
+    - dashboard:insights#mcp_reach@mcp_grant:other_only
+    - team:product#mcp_reach@mcp_grant:other_only
+    - feedback_directory:customer_feedback#mcp_reach@mcp_grant:other_only
+    - feedback_directory_assignment:fdwa_main#mcp_reach@mcp_grant:other_only
     # Scenario 7 (ENG-3282) — nobody else reaches a private survey, and change_visibility is never
     # workspace write, team-level manage, or an API key.
     - survey:draft#read_v2@user:uma

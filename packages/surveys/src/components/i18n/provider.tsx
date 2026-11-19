@@ -4,31 +4,28 @@ import { I18nextProvider } from "react-i18next";
 import i18n, { hasLanguageLoaded, loadLanguage, toI18nLanguage } from "../../lib/i18n.config";
 
 export const I18nProvider = ({ language, children }: { language: string; children?: ComponentChildren }) => {
-  const isFirstRender = useRef(true);
+  // First render only, and only when the strings are already in memory: point i18next at the language
+  // synchronously so children paint in it rather than in whatever the module was last left in. The lazy
+  // initializer runs once per mount, which is the guard.
+  //
+  // Guarding on the first render is what keeps the language switch working. This would run on every
+  // render otherwise, and once the respondent picks a different language the prop no longer matches
+  // `i18n.language` — so an unguarded call here would snap their choice straight back on the very
+  // re-render the switch triggers.
+  const [languageAppliedOnMount] = useState<string | null>(() => {
+    if (!hasLanguageLoaded(language) || i18n.language === toI18nLanguage(language)) return null;
+    void i18n.changeLanguage(toI18nLanguage(language));
+    return language;
+  });
   // The language i18next has been pointed at on this provider's behalf. Null until that happens, and
   // deliberately not re-read from `i18n.language`: after mount the language switch owns that, and this
   // provider must not argue with it.
-  const appliedLanguage = useRef<string | null>(null);
-
-  // First render only, and only when the strings are already in memory: point i18next at the language
-  // synchronously so children paint in it rather than in whatever the module was last left in.
-  //
-  // Guarding on the first render is what keeps the language switch working. This runs on every render
-  // otherwise, and once the respondent picks a different language the prop no longer matches
-  // `i18n.language` — so an unguarded call here would snap their choice straight back on the very
-  // re-render the switch triggers.
-  if (isFirstRender.current) {
-    isFirstRender.current = false;
-    if (hasLanguageLoaded(language) && i18n.language !== toI18nLanguage(language)) {
-      i18n.changeLanguage(toI18nLanguage(language));
-      appliedLanguage.current = language;
-    }
-  }
+  const appliedLanguageRef = useRef<string | null>(languageAppliedOnMount);
 
   const [isReady, setIsReady] = useState(() => hasLanguageLoaded(language));
 
   useEffect(() => {
-    if (appliedLanguage.current === language) return;
+    if (appliedLanguageRef.current === language) return;
 
     // Only the first paint is held back (`isReady` starts false). A language change after mount keeps the
     // survey mounted in the current language until the new strings land: dropping to null here would
@@ -36,8 +33,8 @@ export const I18nProvider = ({ language, children }: { language: string; childre
     let cancelled = false;
     void loadLanguage(language).then(() => {
       if (cancelled) return;
-      i18n.changeLanguage(toI18nLanguage(language));
-      appliedLanguage.current = language;
+      void i18n.changeLanguage(toI18nLanguage(language));
+      appliedLanguageRef.current = language;
       setIsReady(true);
     });
 

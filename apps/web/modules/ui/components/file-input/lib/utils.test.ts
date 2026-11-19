@@ -92,7 +92,7 @@ describe("File Input Utils", () => {
     });
 
     test("rejects a HEIC file whose conversion fails as unsupported", async () => {
-      vi.mocked(convertHeicToJpegAction).mockResolvedValue({ data: undefined } as never);
+      vi.mocked(convertHeicToJpegAction).mockResolvedValue({ data: undefined });
 
       const result = await getAllowedFiles([new File(["test"], "test.heic")], ["heic"], 5);
 

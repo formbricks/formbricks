@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
+import { CHART_TYPE_IDS } from "@/modules/ee/analysis/types/analysis";
 import {
   findNextOpenSlot,
   findOverlappingWidget,
   getDefaultWidgetLayout,
+  getWidgetMinSize,
   parseWidgetLayouts,
 } from "./widget-placement";
 
@@ -116,5 +118,17 @@ describe("getDefaultWidgetLayout", () => {
     expect(getDefaultWidgetLayout("big_number")).toEqual({ x: 0, y: 0, w: 3, h: 2 });
     expect(getDefaultWidgetLayout("matrix")).toEqual({ x: 0, y: 0, w: 6, h: 5 });
     expect(getDefaultWidgetLayout("bar")).toEqual({ x: 0, y: 0, w: 4, h: 4 });
+  });
+});
+
+describe("getWidgetMinSize", () => {
+  // The grid refuses to resize a widget below its minimum, so a default under it is a size the user
+  // reaches once and can never get back to (ENG-2222).
+  test.each(CHART_TYPE_IDS)("a new %s widget can be resized back to the size it was created at", (type) => {
+    const created = getDefaultWidgetLayout(type);
+    const { minW, minH } = getWidgetMinSize(type);
+
+    expect(created.w).toBeGreaterThanOrEqual(minW);
+    expect(created.h).toBeGreaterThanOrEqual(minH);
   });
 });

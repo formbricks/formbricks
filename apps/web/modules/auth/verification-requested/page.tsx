@@ -58,7 +58,7 @@ export const VerificationRequestedPage = async ({
               {t("auth.verification-requested.please_confirm_your_email_address")}
             </h1>
             {mailerNotConfigured ? (
-              <Alert variant="warning" className="text-left" role="status">
+              <Alert variant="warning" className="text-left" alertRole="status">
                 <AlertTitle>{t("auth.verification-requested.email_not_configured_title")}</AlertTitle>
                 <AlertDescription>
                   <p>{t("auth.verification-requested.email_not_configured_description")}</p>

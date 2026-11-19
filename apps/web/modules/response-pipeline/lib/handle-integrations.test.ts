@@ -504,7 +504,7 @@ describe("handleIntegrations", () => {
 
     test("maps picture selection URLs without mutating the shared response payload", async () => {
       vi.mocked(writeNotionData).mockResolvedValue(undefined);
-      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
+      const pipelineInput = structuredClone<TIntegrationPipelineInput>(mockPipelineInput);
 
       await handleIntegrations([mockNotionIntegration], pipelineInput, mockSurvey);
 
@@ -540,7 +540,7 @@ describe("handleIntegrations", () => {
           },
         ],
       } as unknown as TSurvey;
-      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
+      const pipelineInput = structuredClone<TIntegrationPipelineInput>(mockPipelineInput);
       const relativeUrl = "/storage/env1/private/surveys/survey1/elements/sig1/signature--fid--abc.png";
       (pipelineInput.response.data as Record<string, unknown>).sig1 = relativeUrl;
       const notionIntegration = structuredClone(mockNotionIntegration);
@@ -561,7 +561,7 @@ describe("handleIntegrations", () => {
 
     test("coerces non-string Notion text values and avoids invalid multi-url payloads", async () => {
       vi.mocked(writeNotionData).mockResolvedValue(undefined);
-      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
+      const pipelineInput = structuredClone<TIntegrationPipelineInput>(mockPipelineInput);
       const pipelineResponseData = pipelineInput.response.data as Record<string, unknown>;
       pipelineResponseData[questionId1] = 42;
       pipelineResponseData.objectField = { foo: "bar" };
@@ -616,9 +616,9 @@ describe("handleIntegrations", () => {
 
     test("sanitizes mixed Notion multi-select values and preserves numeric precision", async () => {
       vi.mocked(writeNotionData).mockResolvedValue(undefined);
-      const pipelineInput = structuredClone(mockPipelineInput) as TIntegrationPipelineInput;
+      const pipelineInput = structuredClone<TIntegrationPipelineInput>(mockPipelineInput);
       const pipelineResponseData = pipelineInput.response.data as Record<string, unknown>;
-      pipelineResponseData[questionId2] = ["Choice 1", { name: "Choice, 3" }, 42] as unknown as string[];
+      pipelineResponseData[questionId2] = ["Choice 1", { name: "Choice, 3" }, 42] as unknown;
       pipelineResponseData.numericField = 3.5;
 
       const notionIntegration = structuredClone(mockNotionIntegration);
@@ -723,7 +723,7 @@ describe("handleIntegrations", () => {
       vi.mocked(airtableWriteData).mockResolvedValue(undefined);
       const integration: TIntegrationAirtable = structuredClone(mockAirtableIntegration);
       integration.config.data[0].includeContactAttributes = true;
-      const input = structuredClone(mockPipelineInput) as typeof mockPipelineInput;
+      const input = structuredClone(mockPipelineInput);
       (input.response as unknown as { contactAttributes: null }).contactAttributes = null;
 
       await handleIntegrations([integration], input, mockSurvey);
@@ -739,7 +739,7 @@ describe("handleIntegrations", () => {
         element: { id: "person.plan", name: "Person: Plan", type: TSurveyElementTypeEnum.OpenText },
         column: { id: "col_plan", name: "Plan Col", type: "rich_text" },
       });
-      const input = structuredClone(mockPipelineInput) as typeof mockPipelineInput;
+      const input = structuredClone(mockPipelineInput);
       (input.response as unknown as { contactAttributes: null }).contactAttributes = null;
 
       await handleIntegrations([integration], input, mockSurvey);

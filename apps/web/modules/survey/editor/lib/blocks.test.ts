@@ -992,7 +992,7 @@ describe("default codes (ENG-6782)", () => {
     ]);
     const result = updateElementInBlock(survey, "b1", "a", {
       choices: [choice("x", "1"), choice("y", "2"), choice("z")],
-    } as Partial<TSurveyElement>);
+    });
     if (!result.ok) throw result.error;
     const element = result.data.blocks[0].elements[0] as unknown as { choices: { code: string }[] };
     expect(element.choices.map((c) => c.code)).toEqual(["1", "2", "3"]);

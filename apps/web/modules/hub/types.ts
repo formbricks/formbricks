@@ -55,8 +55,8 @@ export type SimilarRecordsResultItem = HubSemanticSearchResultItem;
 // gave up for good (content filter, refusal, truncation) and will never complete on its own. Without
 // this, a permanently-failed record read as "still in progress" forever and the poll never stopped.
 // Note: `eligible - done - failed - failed_terminal` is not always 0 — a record whose enrichment was
-// enabled after it already existed was never enqueued at all, and neither done nor failed accounts for
-// it (ENG-2376 tracks auto-requeueing that residual; out of scope here).
+// enabled after it already existed was never enqueued at all, and neither done nor failed counts it.
+// ENG-2376 tracks auto-requeueing that residual; it is out of scope here.
 //
 // The SDK types both as always present, which is true of the Hub it was generated from but not of every
 // Hub this app talks to: Hubs older than hub#125 (0.8.5, for example) omit them. So they are re-declared optional — via `Omit`, because intersecting an optional member with the

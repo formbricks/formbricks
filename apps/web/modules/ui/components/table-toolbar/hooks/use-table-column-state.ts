@@ -30,6 +30,7 @@ export const useColumnSizing = (storageKey: string) => {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react/set-state-in-effect -- localStorage exists only after hydration; the server renders default widths
     setColumnSizing(readJson<ColumnSizingState>(storageKey) ?? {});
     setIsLoaded(true);
   }, [storageKey]);

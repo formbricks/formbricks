@@ -200,9 +200,19 @@ describe("POST /api/mcp", () => {
     vi.mocked(authenticateApiKeyFromHeaders).mockResolvedValue(apiKeyAuth);
     vi.mocked(applyRateLimit).mockResolvedValue({ allowed: true });
     vi.mocked(applyIPRateLimit).mockResolvedValue({ allowed: true });
-    userFindUniqueMock.mockResolvedValue({ isActive: true });
+    userFindUniqueMock.mockResolvedValue({
+      isActive: true,
+      mcpGrants: [
+        {
+          access: "all",
+          permissions: { surveys: "write", workflows: "write" },
+          createdAt: new Date("2026-11-01T00:00:00.000Z"),
+        },
+      ],
+    });
     getJwksMock.mockResolvedValue({ keys: [] });
     verifyBearerTokenMock.mockResolvedValue({
+      iat: Date.parse("2026-11-02T00:00:00.000Z") / 1000,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",
@@ -464,7 +474,7 @@ describe("POST /api/mcp", () => {
           },
         }),
         duplex: "half",
-      } as ConstructorParameters<typeof NextRequest>[1])
+      })
     );
 
     expect(response.status).toBe(413);
@@ -538,6 +548,7 @@ describe("POST /api/mcp", () => {
       "list_surveys",
       "get_survey",
       "create_survey",
+      "generate_survey",
       "validate_survey",
       "patch_survey",
       "edit_survey_blocks",
@@ -575,8 +586,12 @@ describe("POST /api/mcp", () => {
       "validate_response",
       "create_response",
       "update_response",
+      "set_responses_outcome",
       "delete_response",
       "batch_delete_responses",
+      "list_tags",
+      "update_tag",
+      "merge_tags",
       "list_creatives",
       "get_creative",
       "get_creative_stats",
@@ -607,6 +622,11 @@ describe("POST /api/mcp", () => {
       "update_dashboard_layout",
       "set_dashboard_filters",
       "duplicate_chart",
+      "list_contacts",
+      "list_contact_attribute_keys",
+      "list_contact_attribute_values",
+      "list_segments",
+      "list_action_classes",
     ]);
     const tools = new Map(message.result.tools.map((tool) => [tool.name, tool]));
     expect(Object.keys(tools.get("create_survey")?.inputSchema.properties ?? {})).toEqual(
@@ -811,6 +831,7 @@ describe("POST /api/mcp", () => {
 
   test("blocks write tools for read-only OAuth tokens", async () => {
     verifyBearerTokenMock.mockResolvedValueOnce({
+      iat: Date.parse("2026-11-02T00:00:00.000Z") / 1000,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",
@@ -848,7 +869,7 @@ describe("POST /api/mcp", () => {
       code: "forbidden",
       // Names the scope this specific call needed, not just that some scope was missing — that is
       // the only thing the client can act on.
-      detail: "OAuth token does not include the required MCP scope: surveys:write",
+      detail: expect.stringContaining("its OAuth token lacks the scope surveys:write."),
       requestId: "req_read_only",
     });
   });
@@ -857,6 +878,7 @@ describe("POST /api/mcp", () => {
     // A write-capable user whose OAuth token was only granted read scopes (surveys:read + workflows:read)
     // must not be able to reach a workflow mutation — the ENG-1967 token-scope boundary.
     verifyBearerTokenMock.mockResolvedValueOnce({
+      iat: Date.parse("2026-11-02T00:00:00.000Z") / 1000,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       email: "person@example.com",
@@ -896,7 +918,7 @@ describe("POST /api/mcp", () => {
       code: "forbidden",
       // The refusal names the scope the client must obtain, since a JSON-RPC tool result carries no
       // WWW-Authenticate header for it to read.
-      detail: "OAuth token does not include the required MCP scope: workflows:write",
+      detail: expect.stringContaining("its OAuth token lacks the scope workflows:write."),
       requestId: "req_wf_read_only",
     });
     // The scope gate fires BEFORE any mutation side effect — the workflow handler never runs — but the

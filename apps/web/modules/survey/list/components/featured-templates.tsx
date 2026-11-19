@@ -105,6 +105,7 @@ export const FeaturedTemplates = ({
 
   useEffect(() => {
     if (document.cookie.split("; ").includes(`${HIDDEN_COOKIE}=true`)) {
+      // eslint-disable-next-line react/set-state-in-effect -- document.cookie is only readable on the client; the server renders the templates
       setIsHidden(true);
     }
   }, []);

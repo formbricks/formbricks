@@ -63,7 +63,7 @@ export function DataViewer({
     if (key === "FeedbackRecords.fieldId" && fieldLabels && typeof value === "string") {
       return fieldLabels[value] ?? value;
     }
-    return (getTranslatedDimensionValueLabel(key, value, t) ?? formatCellValue(value)) as string;
+    return getTranslatedDimensionValueLabel(key, value, t) ?? formatCellValue(value);
   };
 
   return (

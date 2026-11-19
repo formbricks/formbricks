@@ -110,6 +110,6 @@ export const createDropOptionAnswers =
   (element, notShown, data) => {
     const value = data[element.id];
     if (value === undefined) return data;
-    const next = dropOptionsFromAnswer(element as TOptionElement, notShown, value, language);
+    const next = dropOptionsFromAnswer(element, notShown, value, language);
     return next === value ? data : { ...data, [element.id]: next };
   };

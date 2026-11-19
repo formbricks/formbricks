@@ -3,7 +3,6 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ResourceNotFoundError } from "@formbricks/types/errors";
-import { TIntegrationGoogleSheets } from "@formbricks/types/integration/google-sheet";
 import { assertCan } from "@/lib/authorization";
 import { getSpreadsheetNameById, validateGoogleSheetsConnection } from "@/lib/googleSheet/service";
 import { getIntegrationByType } from "@/lib/integration/service";
@@ -26,7 +25,7 @@ export const validateGoogleSheetsConnectionAction = authenticatedActionClient
       return { data: false };
     }
 
-    await validateGoogleSheetsConnection(integration as TIntegrationGoogleSheets);
+    await validateGoogleSheetsConnection(integration);
     return { data: true };
   });
 
@@ -57,5 +56,5 @@ export const getSpreadsheetNameByIdAction = authenticatedActionClient
       throw new ResourceNotFoundError("Google Sheets integration", null);
     }
 
-    return await getSpreadsheetNameById(integration as TIntegrationGoogleSheets, parsedInput.spreadsheetId);
+    return await getSpreadsheetNameById(integration, parsedInput.spreadsheetId);
   });

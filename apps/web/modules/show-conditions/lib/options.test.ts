@@ -25,7 +25,7 @@ const t = ((key: string) =>
       (node, part) => (node as Record<string, unknown> | undefined)?.[part],
       enUS
     )) as unknown as TFunction;
-const ALL_OPERANDS = Object.values(SHOW_CONDITION_OPERANDS).flat() as TShowConditionOperand[];
+const ALL_OPERANDS: TShowConditionOperand[] = Object.values(SHOW_CONDITION_OPERANDS).flat();
 const expectLabel = (label: unknown) => {
   expect(typeof label).toBe("string");
   expect(label).not.toBe("");
