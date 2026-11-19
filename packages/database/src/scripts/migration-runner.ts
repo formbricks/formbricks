@@ -345,7 +345,12 @@ const openDataMigrationLock = (migration: AutocommitDataMigrationScript): Promis
 
 // Called while holding the lock, so no other runner is working on the migration and any status can be taken
 // over: a 'pending' row here belongs to a run that died. Returns false when there is nothing left to do.
-const claimAutocommitDataMigration = async (migration: AutocommitDataMigrationScript): Promise<boolean> => {
+// Status writes go through the lock's own session: if that session is gone, so is the lock, and the write
+// fails instead of overwriting the status a replacement runner owns now.
+const claimAutocommitDataMigration = async (
+  migration: AutocommitDataMigrationScript,
+  lock: AdvisoryLockSession
+): Promise<boolean> => {
   const status = await readDataMigrationStatus(prisma, migration.id);
 
   if (status === "applied") {
@@ -359,10 +364,11 @@ const claimAutocommitDataMigration = async (migration: AutocommitDataMigrationSc
     logger.info(`Data migration ${migration.name} failed previously. Retrying...`);
   }
 
-  await prisma.$executeRaw`
-    INSERT INTO "DataMigration" (id, name, status) VALUES (${migration.id}, ${migration.name}, 'pending')
-    ON CONFLICT (id) DO UPDATE SET status = 'pending', finished_at = NULL
-  `;
+  await lock.client.query(
+    `INSERT INTO "DataMigration" (id, name, status) VALUES ($1, $2, 'pending')
+    ON CONFLICT (id) DO UPDATE SET status = 'pending', finished_at = NULL`,
+    [migration.id, migration.name]
+  );
   return true;
 };
 
@@ -375,16 +381,21 @@ const executeAutocommitDataMigration = async (
     // A runner that lost its lock may already have been replaced, so only the lock holder records the result.
     await lock.assertLock();
 
-    await prisma.$executeRaw`
-      UPDATE "DataMigration"
-      SET status = 'applied', finished_at = ${new Date()}
-      WHERE id = ${migration.id}
-    `;
+    // Prisma stores DateTime columns in UTC.
+    await lock.client.query(
+      `UPDATE "DataMigration" SET status = 'applied', finished_at = now() AT TIME ZONE 'UTC' WHERE id = $1`,
+      [migration.id]
+    );
     logger.info(`Data migration ${migration.name} completed successfully`);
   } catch (error) {
     logger.error(error, `Data migration ${migration.name} failed`);
     if (!lock.signal.aborted) {
-      await prisma.$executeRaw`UPDATE "DataMigration" SET status = 'failed' WHERE id = ${migration.id}`;
+      // A failure here means the lock is gone too; the row stays 'pending' and the next run resumes it.
+      await lock.client
+        .query(`UPDATE "DataMigration" SET status = 'failed' WHERE id = $1`, [migration.id])
+        .catch((writeError: unknown) => {
+          logger.warn(writeError, `Could not mark data migration ${migration.name} as failed`);
+        });
     }
 
     throw error;
@@ -401,7 +412,7 @@ const runAutocommitDataMigration = async (migration: AutocommitDataMigrationScri
 
   const lock = await openDataMigrationLock(migration);
   try {
-    if (await claimAutocommitDataMigration(migration)) {
+    if (await claimAutocommitDataMigration(migration, lock)) {
       await executeAutocommitDataMigration(migration, lock);
     }
   } finally {

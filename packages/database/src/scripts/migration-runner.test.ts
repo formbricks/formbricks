@@ -48,13 +48,13 @@ vi.mock("../prisma", () => ({
 
 const ID = "migration-id";
 
-// The status each bookkeeping statement writes: the INSERT's VALUES or an UPDATE's SET.
+// The status each bookkeeping statement on the lock's session writes: the INSERT's VALUES or an UPDATE's SET.
 const writtenStatuses = (): string[] =>
-  executeRaw.mock.calls.flatMap(([strings]) => {
-    const sql = strings.join("?").replaceAll(/\s+/g, " ");
+  lockQuery.mock.calls.flatMap(([sql]) => {
+    const statement = sql.replaceAll(/\s+/g, " ");
     return (
-      sql
-        .match(/VALUES \(\?, \?, '(\w+)'|SET status = '(\w+)'/)
+      statement
+        .match(/VALUES \(\$1, \$2, '(\w+)'|SET status = '(\w+)'/)
         ?.slice(1)
         .filter(Boolean) ?? []
     );
@@ -100,7 +100,9 @@ describe("runDataMigration with transactional: false", () => {
 
     expect(transaction).not.toHaveBeenCalled();
     expect(Object.keys(run.mock.calls[0][0]).sort()).toEqual(["prisma", "signal"]);
+    // Status writes go through the lock's session only, never Prisma's pool.
     expect(writtenStatuses()).toEqual(["pending", "applied"]);
+    expect(executeRaw).not.toHaveBeenCalled();
   });
 
   test("commits the pending marker before run() starts, so other runners can see it", async () => {
@@ -141,6 +143,17 @@ describe("runDataMigration with transactional: false", () => {
     expect(lockEnd).toHaveBeenCalledOnce();
   });
 
+  test("rethrows run()'s own error when marking the migration failed also fails", async () => {
+    const error = new Error("chunk failed");
+    lockQuery.mockImplementation((sql) => {
+      if (sql.includes("pg_try_advisory_lock")) return Promise.resolve({ rows: [{ pid: 7, locked: true }] });
+      if (sql.includes("'failed'")) return Promise.reject(new Error("connection terminated"));
+      return Promise.resolve({ rows: [] });
+    });
+
+    await expect(runDataMigration(autocommitMigration(() => Promise.reject(error)))).rejects.toBe(error);
+  });
+
   test("skips an applied migration without taking its lock, so replicas starting together don't race", async () => {
     queryRaw.mockResolvedValue([{ status: "applied" }]);
     const run = vi.fn();
@@ -148,7 +161,7 @@ describe("runDataMigration with transactional: false", () => {
     await runDataMigration(autocommitMigration(run));
 
     expect(run).not.toHaveBeenCalled();
-    expect(executeRaw).not.toHaveBeenCalled();
+    expect(writtenStatuses()).toEqual([]);
     expect(lockClients).toHaveLength(0);
   });
 
@@ -159,7 +172,7 @@ describe("runDataMigration with transactional: false", () => {
     await runDataMigration(autocommitMigration(run));
 
     expect(run).not.toHaveBeenCalled();
-    expect(executeRaw).not.toHaveBeenCalled();
+    expect(writtenStatuses()).toEqual([]);
     expect(lockEnd).toHaveBeenCalledOnce();
   });
 
@@ -195,7 +208,7 @@ describe("runDataMigration with transactional: false", () => {
     await expect(runDataMigration(autocommitMigration(run))).rejects.toThrow("running in another process");
 
     expect(run).not.toHaveBeenCalled();
-    expect(executeRaw).not.toHaveBeenCalled();
+    expect(writtenStatuses()).toEqual([]);
     expect(lockEnd).toHaveBeenCalledOnce();
   });
 
