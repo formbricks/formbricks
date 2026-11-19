@@ -4,13 +4,13 @@ import type { OrganizationRole } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { isRelationMissingFromSchema } from "@/lib/authorization/schema-drift";
 import { type TAuthzedClient, type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
+import { AUTHZED_PROJECTED_USER } from "./constants";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
   AuthzedProjectionUnstableError,
   type TAuthzedProjectionResult,
   runBestEffortProjection,
 } from "./projection";
-import { AUTHZED_PROJECTED_USER } from "./constants";
 import { packRelationshipUpdateGroups } from "./relationship-batches";
 import { ORGANIZATION_RELATIONS } from "./relationship-map";
 
