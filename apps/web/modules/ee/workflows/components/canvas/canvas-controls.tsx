@@ -117,6 +117,8 @@ export const CanvasControls = ({
               aria-label={label}
               aria-pressed={ariaPressed}
               disabled={disabled}
+              // Opaque, so the cards underneath never show through the buttons.
+              className={cn("shadow-sm", variant === "outline" && "bg-white hover:bg-slate-50")}
               onClick={onClick}>
               <Icon />
             </Button>
@@ -131,6 +133,7 @@ export const CanvasControls = ({
                 type="button"
                 variant="outline"
                 size="icon"
+                className="bg-white shadow-sm hover:bg-slate-50"
                 aria-label={t("workspace.workflows.layout")}
                 disabled={!canMutate}>
                 <NetworkIcon

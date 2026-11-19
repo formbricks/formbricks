@@ -59,7 +59,7 @@ describe("workflowDefinitionToFlowNodes / Edges", () => {
     expect(nodes).toHaveLength(2);
     expect(nodes[0]).toMatchObject({
       id: "trigger-1",
-      data: { category: "trigger", icon: "trigger", title: "workspace.workflows.response_completed" },
+      data: { category: "trigger", icon: "survey", title: "workspace.workflows.response_completed" },
     });
     expect(nodes[1]).toMatchObject({
       id: "action-1",

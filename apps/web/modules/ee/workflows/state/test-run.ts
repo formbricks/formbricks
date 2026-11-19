@@ -35,3 +35,25 @@ export const editorTestRunAtom = atom<TEditorTestRunState>(EMPTY_TEST_RUN_STATE)
  * Runs view's read-only canvas sets it in its own store.
  */
 export const canvasRunIdAtom = atom<string | null>(null);
+
+/**
+ * The Runs view's test form ("New test run": the test input and "Run test"), open or folded. In the
+ * editor store, so the header's Test button can open it from either tab.
+ */
+export const isTestFormOpenAtom = atom(false);
+
+/** Bumped to ask the Runs view to focus "Run test" once the form shows. */
+export const testFormFocusRequestAtom = atom(0);
+
+/** The Runs view's left panel (the test form and the run list), collapsed to its pill or not. */
+export const isRunsListCollapsedAtom = atom(false);
+
+/**
+ * Opens the test form, with the panel holding it, and asks for "Run test" to be focused: what the
+ * header's Test button does.
+ */
+export const openTestFormAtom = atom(null, (_get, set) => {
+  set(isRunsListCollapsedAtom, false);
+  set(isTestFormOpenAtom, true);
+  set(testFormFocusRequestAtom, (request) => request + 1);
+});

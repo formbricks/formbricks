@@ -1,6 +1,6 @@
 "use client";
 
-import { useStore } from "jotai";
+import { useAtom, useSetAtom, useStore } from "jotai";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
@@ -25,6 +25,7 @@ import {
 } from "@/modules/ee/workflows/lib/runs-view";
 import { hasSavedWebhookTrigger } from "@/modules/ee/workflows/lib/workflow-samples";
 import { workflowAtom } from "@/modules/ee/workflows/state/editor";
+import { isRunsListCollapsedAtom, isTestFormOpenAtom } from "@/modules/ee/workflows/state/test-run";
 import type { TWorkflowRunDetail } from "@/modules/ee/workflows/types";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { useTrackWorkflowSurface } from "../hooks/use-track-workflow-surface";
@@ -67,8 +68,8 @@ export const WorkflowRunsPage = ({
   const [, setStoredPayload] = useStoredTestPayload(workflowId);
 
   const [kind, setKind] = useState<TRunsViewKind>("all");
-  const [isLeftCollapsed, setLeftCollapsed] = useState(false);
-  const [isTestInputOpen, setTestInputOpen] = useState(false);
+  const [isLeftCollapsed, setLeftCollapsed] = useAtom(isRunsListCollapsedAtom);
+  const setTestFormOpen = useSetAtom(isTestFormOpenAtom);
   const [isRightCollapsed, setRightCollapsed] = useState(false);
 
   const runsQuery = useWorkflowRuns({
@@ -95,7 +96,7 @@ export const WorkflowRunsPage = ({
   const showRun = useCallback((runId: string) => setUrl({ run: runId }), [setUrl]);
   const selectStep = useCallback((stepId: string | null) => setUrl({ step: stepId }), [setUrl]);
 
-  // A Test run that just came back, from here or from the Editor's button, is the one to look at.
+  // A Test run that just came back from "Run test" is the one to look at.
   const lastTestRunIdRef = useRef(testRun.runId);
   useEffect(() => {
     if (!testRun.runId || testRun.runId === lastTestRunIdRef.current) return;
@@ -121,7 +122,7 @@ export const WorkflowRunsPage = ({
   const useAsTestInput = (payload: Record<string, unknown>) => {
     setStoredPayload(JSON.stringify(payload, null, 2));
     setLeftCollapsed(false);
-    setTestInputOpen(true);
+    setTestFormOpen(true);
     toast.success(t("workspace.workflows.runs_used_as_test_input"));
   };
 
@@ -135,8 +136,6 @@ export const WorkflowRunsPage = ({
           workflowId={workflowId}
           locale={locale}
           onCollapsedChange={setLeftCollapsed}
-          isTestInputOpen={isTestInputOpen}
-          onTestInputOpenChange={setTestInputOpen}
           triggerKind={triggerKind}
           responseTrigger={trigger && isResponseCompletedTrigger(trigger) ? trigger : null}
           hasSavedWebhookTrigger={hasSavedWebhookTrigger(builder.workflow)}

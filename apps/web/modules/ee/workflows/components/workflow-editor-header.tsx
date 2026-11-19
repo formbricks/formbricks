@@ -52,9 +52,8 @@ export const WorkflowEditorHeader = ({
   isReadOnly,
 }: Readonly<WorkflowEditorHeaderProps>) => {
   // The server layout can't pass a function, so the Test run is wired here, on the client: the
-  // header starts it, and its result opens in the Runs view (review point 1).
+  // header's Test opens the Runs view's test form, where "Run test" starts it (review point 1).
   const testRun = useWorkflowTestRun({ workspaceId, workflowId, isReadOnly });
-  const startTestRun = () => void testRun.startTestRun();
 
   return (
     <HeaderBar
@@ -64,8 +63,7 @@ export const WorkflowEditorHeader = ({
         <WorkflowHeaderCta
           workflowId={workflowId}
           isReadOnly={isReadOnly}
-          onTestRun={isReadOnly ? undefined : startTestRun}
-          isTestRunning={testRun.isRunning}
+          onTest={isReadOnly ? undefined : testRun.openTestForm}
         />
       }
     />

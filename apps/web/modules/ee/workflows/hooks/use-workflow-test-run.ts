@@ -24,14 +24,18 @@ import {
   workflowAtom,
   workflowDefinitionAtom,
 } from "@/modules/ee/workflows/state/editor";
-import { EMPTY_TEST_RUN_STATE, editorTestRunAtom } from "@/modules/ee/workflows/state/test-run";
+import {
+  EMPTY_TEST_RUN_STATE,
+  editorTestRunAtom,
+  openTestFormAtom,
+} from "@/modules/ee/workflows/state/test-run";
 
 export type { TWorkflowTestRunFailure } from "@/modules/ee/workflows/state/test-run";
 
 /**
  * Test run (ED6, ADR 0049; review point 1): saves the draft if needed, runs it, and shows the result in
- * the workflow's Runs view, which it opens when started from the Editor, keeping the step that was
- * open. A Webhook workflow sends the test input kept in this browser (else the server uses the
+ * the workflow's Runs view. The header's Test only opens that view's test form (`openTestForm`),
+ * keeping the step that was open; "Run test" there starts the run. A Webhook workflow sends the test input kept in this browser (else the server uses the
  * expected payload). A Response completed workflow runs against a response picked in the Runs view:
  * started without one, it waits for the pick there. The run goes into the query cache; the shared
  * `editorTestRunAtom` only says what is in flight, what failed and which run came back.
@@ -145,5 +149,11 @@ export const useWorkflowTestRun = ({
     [store, isReadOnly, setState, openRunsView, waitForSaveToSettle, save, workflowId, mutate]
   );
 
-  return { ...state, startTestRun };
+  /** The header's Test: opens the Runs view's test form, ready to run; it runs nothing itself. */
+  const openTestForm = useCallback(() => {
+    store.set(openTestFormAtom);
+    openRunsView();
+  }, [store, openRunsView]);
+
+  return { ...state, startTestRun, openTestForm };
 };

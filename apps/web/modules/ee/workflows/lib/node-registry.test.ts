@@ -57,7 +57,7 @@ describe("getNodeRegistryEntry", () => {
   test("trigger entry exposes title and summary", () => {
     const entry = getNodeRegistryEntry(triggerNode);
     expect(entry.category).toBe("trigger");
-    expect(entry.icon).toBe("trigger");
+    expect(entry.icon).toBe("survey");
     expect(entry.title(triggerNode, t)).toBe("workspace.workflows.response_completed");
     expect(entry.summary(triggerNode, t)).toBe("workspace.workflows.trigger_summary_all_endings");
   });

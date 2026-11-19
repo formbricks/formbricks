@@ -1,7 +1,9 @@
 "use client";
 
 import type { TFunction } from "i18next";
-import { ChevronDownIcon, HistoryIcon, PlayIcon } from "lucide-react";
+import { useAtom, useAtomValue } from "jotai";
+import { ChevronDownIcon, FlaskConicalIcon, HistoryIcon, PlayIcon } from "lucide-react";
+import { type ReactNode, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
   type TWorkflowResponseCompletedTriggerNode,
@@ -19,7 +21,11 @@ import { getWorkflowApiErrorMessage } from "@/modules/ee/workflows/lib/api-error
 import { getWorkflowRunStatusBadge } from "@/modules/ee/workflows/lib/display";
 import { type TRunsViewKind, formatRunTime } from "@/modules/ee/workflows/lib/runs-view";
 import { getTestRunDrawerPayload } from "@/modules/ee/workflows/lib/test-run";
-import type { TWorkflowTestRunFailure } from "@/modules/ee/workflows/state/test-run";
+import {
+  type TWorkflowTestRunFailure,
+  isTestFormOpenAtom,
+  testFormFocusRequestAtom,
+} from "@/modules/ee/workflows/state/test-run";
 import { Alert, AlertDescription } from "@/modules/ui/components/alert";
 import { Badge } from "@/modules/ui/components/badge";
 import { Button } from "@/modules/ui/components/button";
@@ -59,7 +65,8 @@ const describeFailure = (failure: TWorkflowTestRunFailure, error: unknown, t: TF
 const WebhookTestInput = ({
   workflowId,
   hasSavedTrigger,
-}: Readonly<{ workflowId: string; hasSavedTrigger: boolean }>) => {
+  runButton,
+}: Readonly<{ workflowId: string; hasSavedTrigger: boolean; runButton: ReactNode }>) => {
   const [storedPayload, setStoredPayload] = useStoredTestPayload(workflowId);
   const webhook = useWorkflowWebhook({ workflowId, enabled: hasSavedTrigger });
   const testPayload = getTestRunDrawerPayload({
@@ -73,6 +80,7 @@ const WebhookTestInput = ({
       canReset={testPayload.canReset}
       onChange={setStoredPayload}
       onReset={() => setStoredPayload(null)}
+      runButton={runButton}
     />
   );
 };
@@ -81,9 +89,6 @@ interface RunsTestPanelProps {
   workflowId: string;
   locale: string;
   onCollapsedChange: (isCollapsed: boolean) => void;
-  /** The test input (payload or response picker) shows under "Test draft" only when opened. */
-  isTestInputOpen: boolean;
-  onTestInputOpenChange: (isOpen: boolean) => void;
   /** Null while the draft loads; a Webhook workflow's test input otherwise. */
   triggerKind: "webhook" | "response" | "none" | null;
   responseTrigger: TWorkflowResponseCompletedTriggerNode | null;
@@ -117,9 +122,9 @@ const isTestInputFailure = (failure: TWorkflowTestRunFailure | null): boolean =>
   failure === "response_unavailable";
 
 /**
- * "Test draft" and, folded under it, the test input (the payload, or the response to test with). The
- * input stays closed until it's wanted: opened by hand, by "Use as test input", or by a run that needs
- * a response picked or refused the input.
+ * "New test run": a toggle that unfolds the test input (the payload, or the response to test with)
+ * and "Run test". Folded until it's wanted: opened by hand, by the header's Test (which also focuses
+ * "Run test"), by "Use as test input", or by a run that needs a response picked or refused the input.
  */
 const TestDraftSection = ({
   workflowId,
@@ -128,8 +133,6 @@ const TestDraftSection = ({
   responseTrigger,
   hasSavedWebhookTrigger,
   testRun,
-  isTestInputOpen,
-  onTestInputOpenChange,
 }: Readonly<{
   workflowId: string;
   locale: string;
@@ -137,10 +140,11 @@ const TestDraftSection = ({
   responseTrigger: TWorkflowResponseCompletedTriggerNode | null;
   hasSavedWebhookTrigger: boolean;
   testRun: TTestRunControls;
-  isTestInputOpen: boolean;
-  onTestInputOpenChange: (isOpen: boolean) => void;
 }>) => {
   const { t } = useTranslation();
+  const [isFormOpen, setFormOpen] = useAtom(isTestFormOpenAtom);
+  const focusRequest = useAtomValue(testFormFocusRequestAtom);
+  const runTestRef = useRef<HTMLButtonElement>(null);
   const { picker: responsePicker, selectedResponseId } = useTestRunResponsePicker({
     open: true,
     workflowId,
@@ -149,38 +153,57 @@ const TestDraftSection = ({
   });
   const isResponseTrigger = triggerKind === "response";
   const canStart = !testRun.isRunning && (!isResponseTrigger || selectedResponseId !== null);
-  const isOpen = isTestInputOpen || testRun.isPickingResponse || isTestInputFailure(testRun.failure);
+  const isOpen = isFormOpen || testRun.isPickingResponse || isTestInputFailure(testRun.failure);
+
+  // The header's Test asked for the form: once it shows, "Run test" takes the focus.
+  useEffect(() => {
+    if (focusRequest === 0) return;
+    const handle = requestAnimationFrame(() => runTestRef.current?.focus());
+    return () => cancelAnimationFrame(handle);
+  }, [focusRequest]);
+
+  const runTestButton = (
+    <Button
+      ref={runTestRef}
+      size="sm"
+      loading={testRun.isRunning}
+      disabled={!canStart}
+      onClick={() => void testRun.startTestRun(selectedResponseId ?? undefined)}>
+      <PlayIcon />
+      {t("workspace.workflows.runs_run_test")}
+    </Button>
+  );
 
   return (
     <section className="flex flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <Button
-          size="sm"
-          loading={testRun.isRunning}
-          disabled={!canStart}
-          onClick={() => void testRun.startTestRun(selectedResponseId ?? undefined)}>
-          <PlayIcon />
-          {t("workspace.workflows.runs_test_draft")}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-slate-600"
-          aria-expanded={isOpen}
-          onClick={() => onTestInputOpenChange(!isOpen)}>
-          {t("workspace.workflows.runs_test_input")}
-          <ChevronDownIcon className={cn("transition-transform", isOpen && "rotate-180")} />
-        </Button>
-      </div>
+      <Button
+        variant="secondary"
+        size="sm"
+        className="w-fit"
+        aria-expanded={isOpen}
+        onClick={() => setFormOpen(!isOpen)}>
+        <FlaskConicalIcon />
+        {t("workspace.workflows.runs_new_test_run")}
+        <ChevronDownIcon className={cn("transition-transform", isOpen && "rotate-180")} />
+      </Button>
       {isOpen ? (
-        <div className="flex flex-col gap-2 rounded-lg border border-slate-200 p-3">
+        <div className="flex flex-col gap-3 rounded-lg border border-slate-200 p-3">
           {triggerKind === "webhook" ? (
-            <WebhookTestInput workflowId={workflowId} hasSavedTrigger={hasSavedWebhookTrigger} />
+            <WebhookTestInput
+              workflowId={workflowId}
+              hasSavedTrigger={hasSavedWebhookTrigger}
+              runButton={runTestButton}
+            />
           ) : null}
           {isResponseTrigger && testRun.isPickingResponse ? (
             <p className="text-xs text-slate-600">{t("workspace.workflows.runs_pick_response")}</p>
           ) : null}
-          {isResponseTrigger ? responsePicker : null}
+          {isResponseTrigger ? (
+            <>
+              {responsePicker}
+              <div className="flex justify-end">{runTestButton}</div>
+            </>
+          ) : null}
         </div>
       ) : null}
       {testRun.failure ? (
@@ -256,8 +279,8 @@ const RunsListSection = (props: Readonly<RunsTestPanelProps>) => {
 };
 
 /**
- * The Runs view's left panel (review point 1), named like its tab: "Test draft" on top, with the test
- * input folded under it, then the workflow's runs, live and Test, to click through while the canvas
+ * The Runs view's left panel (review point 1), named like its tab: "New test run" on top, folding the
+ * test input and "Run test", then the workflow's runs, live and Test, to click through while the canvas
  * stays. Collapsed, it is a pill on the canvas (RunsListPill).
  */
 export const RunsTestPanel = (props: Readonly<RunsTestPanelProps>) => {
@@ -277,8 +300,6 @@ export const RunsTestPanel = (props: Readonly<RunsTestPanelProps>) => {
             responseTrigger={props.responseTrigger}
             hasSavedWebhookTrigger={props.hasSavedWebhookTrigger}
             testRun={props.testRun}
-            isTestInputOpen={props.isTestInputOpen}
-            onTestInputOpenChange={props.onTestInputOpenChange}
           />
         ) : null}
         <RunsListSection {...props} />

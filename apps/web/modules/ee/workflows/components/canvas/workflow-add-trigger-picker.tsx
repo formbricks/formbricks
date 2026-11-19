@@ -1,6 +1,6 @@
 "use client";
 
-import { type LucideIcon, PlusIcon, WebhookIcon, ZapIcon } from "lucide-react";
+import { type LucideIcon, MessageCircleIcon, PlusIcon, WebhookIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { type TWorkflowTriggerType, WORKFLOW_TRIGGERS } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
@@ -42,7 +42,7 @@ export const WorkflowAddTriggerPicker = ({ onSelect }: Readonly<WorkflowAddTrigg
     },
     {
       triggerType: WORKFLOW_TRIGGERS.RESPONSE_COMPLETED,
-      icon: ZapIcon,
+      icon: MessageCircleIcon,
       label: t("workspace.workflows.response_completed"),
       description: t("workspace.workflows.response_completed_description"),
     },

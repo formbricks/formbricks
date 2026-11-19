@@ -55,7 +55,8 @@ const eraseForm = <TNode extends TWorkflowNode>(
 const responseCompletedTriggerEntry: TWorkflowNodeRegistryEntry = {
   kind: `trigger:${WORKFLOW_TRIGGERS.RESPONSE_COMPLETED}`,
   category: "trigger",
-  icon: "trigger",
+  // The Surveys icon of the main navigation: this trigger is a survey response.
+  icon: "survey",
   title: (_node, t) => t("workspace.workflows.response_completed"),
   summary: (node, t) => {
     if (node.type !== "trigger" || !isResponseCompletedTrigger(node)) return "";

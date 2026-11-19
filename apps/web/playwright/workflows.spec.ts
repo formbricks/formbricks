@@ -110,10 +110,14 @@ test.describe("Workflows", () => {
         timeout: 15_000,
       });
 
-      await page.getByRole("button", { name: "Test run" }).click();
-
-      // The result opens in the Runs view (review point 1): the run on the canvas, its steps on the right.
+      // Test opens the Runs view's test form, ready to run; "Run test" starts it (review point 1).
+      await page.getByRole("button", { name: "Test", exact: true }).click();
       await page.waitForURL(`**/workflows/${workflowId}/runs**`);
+      const runTest = page.getByRole("button", { name: "Run test" });
+      await expect(runTest).toBeFocused();
+      await runTest.click();
+
+      // The result shows in the Runs view: the run on the canvas, its steps on the right.
       const runPanel = page.getByTestId("workflow-run-panel");
       await expect(runPanel.getByText("Test run · listed under Runs", { exact: false })).toBeVisible();
       await expect(runPanel.getByRole("listitem").filter({ hasText: IF_ELSE_LABEL })).toContainText(

@@ -7,10 +7,10 @@ import {
   GlobeIcon,
   type LucideIcon,
   MailIcon,
+  MessageCircleIcon,
   SplitIcon,
   TriangleAlertIcon,
   WebhookIcon,
-  ZapIcon,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
@@ -24,7 +24,7 @@ import { Badge } from "@/modules/ui/components/badge";
 import { TruncationTooltip } from "@/modules/ui/components/info-tooltip";
 
 export const NODE_ICONS: Record<TWorkflowNodeIcon, LucideIcon> = {
-  trigger: ZapIcon,
+  survey: MessageCircleIcon,
   webhook: WebhookIcon,
   ifElse: GitBranchIcon,
   filter: FilterIcon,
