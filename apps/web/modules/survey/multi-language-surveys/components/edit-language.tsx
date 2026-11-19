@@ -249,6 +249,9 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
     if (errorResult) {
       toast.error(getFormattedErrorMessage(errorResult));
       // The other rows of this save may have landed: re-read them so the form shows what was stored.
+      // The re-read brings back rows staged for removal too, so drop the staged removals with it: the
+      // next Save must not delete a row the form shows again.
+      setDeletedLanguageIds([]);
       router.refresh();
       return;
     }
