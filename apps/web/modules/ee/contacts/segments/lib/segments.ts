@@ -445,7 +445,7 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
         // if a private segment does not exist, create one
         const newPrivateSegment = await tx.segment.create({
           data: {
-            title: `${surveyId}`,
+            title: surveyId,
             isPrivate: true,
             filters: [],
             surveys: { connect: { id: surveyId } },

@@ -31,23 +31,17 @@ let ownWorkspaceId: string;
 let otherWorkspaceId: string;
 let surveyId: string;
 
-const createWorkspace = async (name: string) => {
+/** Creates an organization with one workspace and returns the workspace's id. */
+const createWorkspaceInNewOrganization = async (name: string) => {
   const organization = await prisma.organization.create({ data: { name: `${name} Org` } });
   return (await prisma.workspace.create({ data: { name, organizationId: organization.id } })).id;
 };
 
-/** A private segment in another workspace, titled with the survey's id. */
-const createOtherWorkspaceSegment = () =>
-  prisma.segment.create({
-    data: {
-      title: surveyId,
-      isPrivate: true,
-      filters: OTHER_FILTERS,
-      workspaceId: otherWorkspaceId,
-    },
-  });
+/** A private segment titled with the survey's id, as the survey's own targeting segment would be. */
+const createPrivateSegmentTitledWithSurveyId = (workspaceId: string, filters: TBaseFilters) =>
+  prisma.segment.create({ data: { title: surveyId, isPrivate: true, filters, workspaceId } });
 
-const surveySegment = async () =>
+const loadSurveySegment = async () =>
   (
     await prisma.survey.findUniqueOrThrow({
       where: { id: surveyId },
@@ -66,8 +60,8 @@ const expectOtherSegmentUntouched = async (otherSegmentId: string) => {
 
 beforeEach(async () => {
   await resetDb();
-  ownWorkspaceId = await createWorkspace("Own");
-  otherWorkspaceId = await createWorkspace("Other");
+  ownWorkspaceId = await createWorkspaceInNewOrganization("Own");
+  otherWorkspaceId = await createWorkspaceInNewOrganization("Other");
 
   // The app survey runs on a shared segment of its own workspace, which is the state the editor's
   // "Reset all filters" button is shown in. Loading that segment deleted the survey's private one.
@@ -95,7 +89,7 @@ beforeEach(async () => {
 
 describe("resetSegmentInSurvey (ENG-7389)", () => {
   test("never connects the survey to a same-titled private segment in another workspace", async () => {
-    const otherSegment = await createOtherWorkspaceSegment();
+    const otherSegment = await createPrivateSegmentTitledWithSurveyId(otherWorkspaceId, OTHER_FILTERS);
 
     const result = await resetSegmentInSurvey(surveyId);
 
@@ -104,7 +98,7 @@ describe("resetSegmentInSurvey (ENG-7389)", () => {
     expect(result.title).toBe(surveyId);
     expect(result.isPrivate).toBe(true);
     expect(result.filters).toEqual([]);
-    expect(await surveySegment()).toEqual({
+    expect(await loadSurveySegment()).toEqual({
       id: result.id,
       workspaceId: ownWorkspaceId,
       isPrivate: true,
@@ -117,21 +111,17 @@ describe("resetSegmentInSurvey (ENG-7389)", () => {
     // The other workspace's row is the older one, so an unscoped lookup usually returns it (Postgres doesn't
     // guarantee the order; the test above is the deterministic regression check). This one covers the
     // branch that reuses the survey's own private segment.
-    const otherSegment = await createOtherWorkspaceSegment();
-    const ownSegment = await prisma.segment.create({
-      data: {
-        title: surveyId,
-        isPrivate: true,
-        filters: attributeFilters("own@example.com"),
-        workspaceId: ownWorkspaceId,
-      },
-    });
+    const otherSegment = await createPrivateSegmentTitledWithSurveyId(otherWorkspaceId, OTHER_FILTERS);
+    const ownSegment = await createPrivateSegmentTitledWithSurveyId(
+      ownWorkspaceId,
+      attributeFilters("own@example.com")
+    );
 
     const result = await resetSegmentInSurvey(surveyId);
 
     expect(result.id).toBe(ownSegment.id);
     expect(result.filters).toEqual([]);
-    expect((await surveySegment())?.id).toBe(ownSegment.id);
+    expect((await loadSurveySegment())?.id).toBe(ownSegment.id);
     await expectOtherSegmentUntouched(otherSegment.id);
   });
 });
