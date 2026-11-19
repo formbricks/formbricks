@@ -363,6 +363,11 @@ export type TSsoRecoveryFailure = "intent_unusable" | "unproven" | "rejected";
  * state id is 256 bits so it cannot be guessed, but it does travel in a URL and therefore in access
  * logs and history, and nothing about holding one should reveal the record behind it.
  *
+ * One deliberate exception (ENG-7310): an `unproven` failure gets its own login error code, so the response
+ * does say that a recovery under this id is still live. The real owner needs that message, and it is
+ * all it says. The browser that started recovery knows that much already, and the id still opens nothing
+ * without the proof. The callback stays withheld.
+ *
  * The message stays `OAUTH_ACCOUNT_NOT_LINKED_ERROR`, unchanged from the plain `Error` this replaces.
  */
 export class SsoRecoveryError extends Error {

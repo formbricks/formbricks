@@ -27,8 +27,9 @@ vi.mock("@/modules/auth/lib/session-cookie", async (importOriginal) => ({
   ),
 }));
 
-// `SsoRecoveryError` and `getSsoRecoveryFailureRedirectUrl` stay real — the route branches on
-// `instanceof` and builds its redirect from the second, so stubbing either would test the stub.
+// `SsoRecoveryError` and the redirect helpers (`getSsoRecoveryFailureRedirectUrl`,
+// `getSsoRecoveryLinkNotOpenedRedirectUrl`) stay real — the route branches on `instanceof` and builds its
+// redirects from the helpers, so stubbing any of them would test the stub.
 vi.mock("@/modules/ee/sso/lib/sso-recovery", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/sso/lib/sso-recovery")>()),
   completeSsoRecovery: vi.fn(),
@@ -117,7 +118,11 @@ describe("GET /api/auth/sso/recovery/complete", () => {
    * URL into a sign-out link.
    */
   test("leaves the session alone when this browser never opened the emailed link", async () => {
-    vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError("unproven"));
+    // Carrying a callback on purpose: the route must drop it, or the redirect tells whoever holds a state
+    // id where the account holder was headed.
+    vi.mocked(completeSsoRecovery).mockRejectedValue(
+      new SsoRecoveryError("unproven", `${WEBAPP_URL}/environments/secret`)
+    );
 
     const response = await GET(
       request(
