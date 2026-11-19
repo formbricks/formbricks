@@ -7,7 +7,6 @@ import {
   haveSameNodePositions,
   reorganizeWorkflowDefinition,
   snapWorkflowNodePosition,
-  updateNodePosition,
   withBranchLegOffsets,
   workflowDefinitionToFlowEdges,
   workflowDefinitionToFlowNodes,
@@ -50,22 +49,6 @@ describe("snapWorkflowNodePosition", () => {
   test("snaps to the 20px grid", () => {
     expect(snapWorkflowNodePosition({ x: 7, y: 31 })).toEqual({ x: 0, y: 40 });
     expect(snapWorkflowNodePosition({ x: 31, y: 49 })).toEqual({ x: 40, y: 40 });
-  });
-});
-
-describe("updateNodePosition", () => {
-  test("updates trigger position when id matches", () => {
-    const def = buildDefinition();
-    const next = updateNodePosition(def, "trigger-1", { x: 100, y: 80 });
-    expect(next.trigger?.ui?.position).toEqual({ x: 100, y: 80 });
-    expect(next.nodes[0].ui?.position).toEqual({ x: 0, y: 0 });
-  });
-
-  test("updates child-node position when id matches", () => {
-    const def = buildDefinition();
-    const next = updateNodePosition(def, "action-1", { x: 220, y: 240 });
-    expect(next.trigger?.ui?.position).toEqual({ x: 0, y: 0 });
-    expect(next.nodes[0].ui?.position).toEqual({ x: 220, y: 240 });
   });
 });
 
@@ -510,8 +493,7 @@ describe("trigger-less draft definitions", () => {
     expect(workflowDefinitionToFlowEdges(emptyDefinition)).toEqual([]);
   });
 
-  test("updateNodePosition and reorganize are no-op safe", () => {
-    expect(updateNodePosition(emptyDefinition, "anything", { x: 1, y: 1 }).trigger).toBeNull();
+  test("reorganize is no-op safe", () => {
     expect(reorganizeWorkflowDefinition(emptyDefinition).trigger).toBeNull();
   });
 });

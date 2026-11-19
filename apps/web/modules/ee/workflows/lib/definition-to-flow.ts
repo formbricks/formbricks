@@ -244,6 +244,8 @@ export const workflowDefinitionToFlowNodes = (
       id: node.id,
       type: branchHandles ? WORKFLOW_BRANCH_NODE_TYPE : WORKFLOW_CANVAS_NODE_TYPE,
       position: node.ui?.position ?? fallbackPosition,
+      // Dragging a card moves its step to a `+`; the trigger always starts the workflow.
+      ...(node.type === "trigger" ? { draggable: false } : {}),
       data: {
         category: registryEntry.category,
         icon: registryEntry.icon,
@@ -314,29 +316,6 @@ export const snapWorkflowNodePosition = (position: { x: number; y: number }) => 
   x: Math.round(position.x / WORKFLOW_CANVAS_SNAP_GRID[0]) * WORKFLOW_CANVAS_SNAP_GRID[0],
   y: Math.round(position.y / WORKFLOW_CANVAS_SNAP_GRID[1]) * WORKFLOW_CANVAS_SNAP_GRID[1],
 });
-
-export const updateNodePosition = (
-  definition: TWorkflowDefinition,
-  nodeId: string,
-  position: { x: number; y: number }
-): TWorkflowDefinition => {
-  if (definition.trigger?.id === nodeId) {
-    return {
-      ...definition,
-      trigger: {
-        ...definition.trigger,
-        ui: { ...definition.trigger.ui, position },
-      },
-    };
-  }
-
-  return {
-    ...definition,
-    nodes: definition.nodes.map((node) =>
-      node.id === nodeId ? { ...node, ui: { ...node.ui, position } } : node
-    ),
-  };
-};
 
 // The children a step lays out below itself, left to right: an If/else's Then and Else branches, or
 // a Switch's cases and Default (null while a branch has no step); any other step's outgoing edges.

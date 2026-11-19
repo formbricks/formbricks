@@ -26,6 +26,7 @@ import {
   getStepAndAfter,
   pasteSteps,
 } from "@/modules/ee/workflows/lib/step-clipboard";
+import { type TMoveStepResult, moveStep } from "@/modules/ee/workflows/lib/step-move";
 import {
   type TAddableWorkflowStepType,
   createDefaultWorkflowStep,
@@ -1155,6 +1156,65 @@ export const pasteWorkflowStepsAtom = atom(
     return { ok: true, stepCount: result.stepCount, mode: clipboard.mode };
   }
 );
+
+// ---- Moving a step onto a `+` (lib/step-move.ts) ----
+
+/** A step card being dragged to another `+`; null while nothing is. */
+export type TStepMoveDrag = {
+  stepId: string;
+  /** The step and the steps it takes along, drawn faded while they move. */
+  movingStepIds: ReadonlySet<string>;
+  /** The `+` it can land on (getMoveTargetKey), lit while dragging. */
+  targetKeys: ReadonlySet<string>;
+  /** The `+` nearest the pointer, which reads "Move here"; a drop anywhere else changes nothing. */
+  hotTargetKey: string | null;
+  /** Where the card was, drawn as a dashed outline. */
+  origin: { x: number; y: number; width: number; height: number };
+};
+
+export const stepMoveDragAtom = atom<TStepMoveDrag | null>(null);
+
+const NO_STEPS: ReadonlySet<string> = new Set();
+
+/** The steps a dragged If/else, Switch or Filter takes along (not itself), faded like a pending cut. */
+export const stepIdsMovingAlongAtom = atom((get) => get(stepMoveDragAtom)?.movingStepIds ?? NO_STEPS);
+
+/**
+ * Moves a step to a `+` as one edit (one Undo) and opens it; the tree is laid out again. Returns the
+ * definitions before and after, for the toast's Undo, and the Variables the move put before the step
+ * they come from. Null when the step can't go there. A pending cut is put back first.
+ */
+export const moveWorkflowStepAtom = atom(
+  null,
+  (
+    get,
+    set,
+    input: { stepId: string; target: TPasteTarget }
+  ): (TMoveStepResult & { previous: TWorkflowDefinition }) | null => {
+    const editor = get(workflowEditorAtom);
+    if (!editor.definition || !get(canEditWorkflowDefinitionAtom)) return null;
+    const result = moveStep({
+      definition: editor.definition,
+      stepId: input.stepId,
+      target: input.target,
+      direction: get(workflowCanvasDirectionAtom),
+    });
+    if (!result) return null;
+    set(cancelWorkflowStepCutAtom);
+    set(
+      workflowEditorAtom,
+      produce(editor, (draft) => {
+        draft.definition = result.definition;
+        draft.selectedNodeId = input.stepId;
+        draft.isNodeConfigModalOpen = true;
+      })
+    );
+    return { ...result, previous: editor.definition };
+  }
+);
+
+/** The workflow history's Undo, registered by the history (it lives in the toolbar) for toasts to call. */
+export const workflowUndoAtom = atom<{ undo: () => void } | null>(null);
 
 export const setWorkflowSnapToCanvasEnabledAtom = atom(null, (get, set, isSnapToCanvasEnabled: boolean) => {
   set(

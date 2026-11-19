@@ -16,8 +16,15 @@ import { WORKFLOW_LIMITS } from "@formbricks/workflows";
 import { cn } from "@/lib/cn";
 import { trackWorkflowEvent } from "@/modules/ee/workflows/lib/analytics";
 import { WORKFLOW_CLIENT_EVENTS } from "@/modules/ee/workflows/lib/analytics-events";
+import type { TPasteTarget } from "@/modules/ee/workflows/lib/step-clipboard";
+import { getMoveTargetKey } from "@/modules/ee/workflows/lib/step-move";
 import type { TAddableWorkflowStepType } from "@/modules/ee/workflows/lib/workflow-steps";
-import { type TWorkflowNodeCategory, canAddWorkflowStepAtom } from "@/modules/ee/workflows/state/editor";
+import {
+  type TStepMoveDrag,
+  type TWorkflowNodeCategory,
+  canAddWorkflowStepAtom,
+  stepMoveDragAtom,
+} from "@/modules/ee/workflows/state/editor";
 import { Button } from "@/modules/ui/components/button";
 import {
   DropdownMenu,
@@ -39,6 +46,8 @@ interface WorkflowAddStepMenuProps {
   onOpenChange?: (open: boolean) => void;
   /** Set while something cut or copied can go here: the picker then offers "Paste here" first. */
   onPaste?: () => void;
+  /** Where this `+` puts a step, so a dragged step card can be dropped on it. */
+  moveTarget?: TPasteTarget;
 }
 
 interface TStepOption {
@@ -168,9 +177,13 @@ export const WorkflowAddStepMenu = ({
   onAdd,
   onOpenChange,
   onPaste,
+  moveTarget,
 }: Readonly<WorkflowAddStepMenuProps>) => {
   const { t } = useTranslation();
   const canAddStep = useAtomValue(canAddWorkflowStepAtom);
+  const moveDrag = useAtomValue(stepMoveDragAtom);
+
+  if (moveDrag) return <StepMoveDropTarget drag={moveDrag} target={moveTarget} />;
 
   const trigger = (
     <Button
@@ -204,5 +217,38 @@ export const WorkflowAddStepMenu = ({
         <WorkflowStepPickerItems afterNodeType={afterNodeType} onAdd={onAdd} onPaste={onPaste} />
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+};
+
+/**
+ * A `+` while a step card is dragged: lit where the step can go, the nearest one grown with "Move
+ * here", hidden elsewhere (keeping its room, so nothing shifts). Pointer only: the keyboard moves a step
+ * from its ⋮ menu ("Move to…").
+ */
+const StepMoveDropTarget = ({ drag, target }: Readonly<{ drag: TStepMoveDrag; target?: TPasteTarget }>) => {
+  const { t } = useTranslation();
+  const key = target ? getMoveTargetKey(target) : null;
+  if (!key || !drag.targetKeys.has(key)) return <span aria-hidden="true" className="block size-6" />;
+  const isHot = drag.hotTargetKey === key;
+  return (
+    <span
+      aria-hidden="true"
+      data-step-move-target={key}
+      className="relative flex size-6 items-center justify-center">
+      <span
+        className={cn(
+          "flex size-6 items-center justify-center rounded-full border-2 border-brand-dark transition-transform motion-reduce:transition-none",
+          isHot
+            ? "scale-125 bg-brand-dark text-white ring-4 ring-brand-dark/20"
+            : "bg-teal-50 text-brand-dark"
+        )}>
+        <PlusIcon className="size-3.5" strokeWidth={2.25} />
+      </span>
+      {isHot ? (
+        <span className="absolute left-full ml-3 rounded-full bg-brand-dark px-2 py-0.5 text-xs font-medium whitespace-nowrap text-white shadow-sm">
+          {t("workspace.workflows.move_here")}
+        </span>
+      ) : null}
+    </span>
   );
 };

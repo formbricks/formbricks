@@ -25,6 +25,7 @@ import {
 } from "@/modules/ee/workflows/hooks/use-canvas-viewport";
 import { useEditorRunHighlight } from "@/modules/ee/workflows/hooks/use-editor-run-highlight";
 import { useStepClipboardShortcuts } from "@/modules/ee/workflows/hooks/use-step-clipboard";
+import { useStepMoveDrag } from "@/modules/ee/workflows/hooks/use-step-move";
 import { useWorkflowWebhook } from "@/modules/ee/workflows/hooks/use-workflow-webhook";
 import { resolveBoundTriggerSurvey } from "@/modules/ee/workflows/lib/bound-survey";
 import { WORKFLOW_CANVAS_FIT_PADDING } from "@/modules/ee/workflows/lib/canvas-fit";
@@ -37,8 +38,6 @@ import {
   WORKFLOW_CANVAS_SNAP_GRID,
   haveSameNodePositions,
   reorganizeWorkflowDefinition,
-  snapWorkflowNodePosition,
-  updateNodePosition,
   withBranchLegOffsets,
   workflowDefinitionToFlowEdges,
   workflowDefinitionToFlowNodes,
@@ -72,6 +71,7 @@ import { AddButtonEdge } from "./add-button-edge";
 import { BranchEdge } from "./branch-edge";
 import { CanvasControls } from "./canvas-controls";
 import { hoveredWorkflowEdgeIdAtom } from "./edge-insert-button";
+import { StepMoveOrigin } from "./step-move-origin";
 import { WorkflowAddTriggerPicker } from "./workflow-add-trigger-picker";
 import { WorkflowBranchNode } from "./workflow-branch-node";
 import { WorkflowCanvasNode } from "./workflow-canvas-node";
@@ -227,17 +227,9 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
     [setFlowNodes]
   );
 
-  const handleNodeDragStop = useCallback(
-    (node: Node<TWorkflowNodeData>) => {
-      if (!canMutate) return;
-
-      const position = isSnapToCanvasEnabled ? snapWorkflowNodePosition(node.position) : node.position;
-      setDefinition((currentDefinition) =>
-        currentDefinition ? updateNodePosition(currentDefinition, node.id, position) : currentDefinition
-      );
-    },
-    [canMutate, isSnapToCanvasEnabled, setDefinition]
-  );
+  // Dragging a card moves its step to the `+` it is dropped on; anywhere else it goes back. The tree
+  // lays itself out, so there is no free positioning (use-step-move).
+  const stepMoveDrag = useStepMoveDrag(canvasRef);
 
   const isInspectorVisible = isNodeConfigOpen && !isInspectorCollapsed;
   const { handleFitView, recenterAfterLayout, refitAfterLayout } = useCanvasViewport({
@@ -340,7 +332,11 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         nodeTypes={NODE_TYPES}
         edgeTypes={EDGE_TYPES}
         onNodesChange={handleNodesChange}
-        onNodeDragStop={(_event, node) => handleNodeDragStop(node)}
+        onNodeDragStart={stepMoveDrag.onNodeDragStart}
+        onNodeDrag={stepMoveDrag.onNodeDrag}
+        onNodeDragStop={stepMoveDrag.onNodeDragStop}
+        // A click that wobbles a little still opens the step instead of starting a move.
+        nodeDragThreshold={4}
         onNodeClick={(_event, node) => {
           if (!isLocked) openNodeConfigModal(node.id);
         }}
@@ -376,6 +372,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
         nodesFocusable={!isLocked}>
         {/* Same dot grid the pre-ReactFlow mockup used: radial-gradient(#cbd5e1 1px) on an 18px grid. */}
         <Background variant={BackgroundVariant.Dots} gap={18} size={1.5} color="#cbd5e1" />
+        <StepMoveOrigin />
       </ReactFlow>
       {/* Empty drafts start with no nodes: the centered picker is how the trigger gets added.
           Gated on status-based editability (not the layout lock) — adding nodes is a content
