@@ -93,6 +93,8 @@ describe("deactivated users in the AuthZed backfill (real PostgreSQL and SpiceDB
 
   test("an applying backfill removes the relationships a deactivated member still holds", async () => {
     const { inactiveId, organizationId, teamId } = await seedOrganization();
+    // Everything else in the organization projected, so the audit below sees only the leftovers.
+    expect(await drainAuthzedOutbox()).toMatchObject({ deadLettered: 0, failed: 0, status: "drained" });
     // As SpiceDB looked before the user was deactivated.
     await getAuthzedClient().writeRelationships([
       {
