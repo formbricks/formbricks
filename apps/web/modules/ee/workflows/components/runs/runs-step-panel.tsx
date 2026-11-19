@@ -235,6 +235,7 @@ export const RunsStepPill = ({
     const status = node.id === definition?.trigger?.id ? "success" : stepDot;
     return (
       <WorkflowPanelPill
+        side="right"
         icon={<WorkflowNodeChip icon={entry.icon} category={entry.category} size="sm" />}
         label={entry.title(node, t)}
         status={status ?? "gray"}
@@ -246,6 +247,7 @@ export const RunsStepPill = ({
   if (run) runStatus = run.status === "failed" ? "error" : "success";
   return (
     <WorkflowPanelPill
+      side="right"
       icon={
         <span className="flex size-7 items-center justify-center rounded-md bg-slate-100 text-slate-600">
           <HistoryIcon className="size-4" aria-hidden="true" />

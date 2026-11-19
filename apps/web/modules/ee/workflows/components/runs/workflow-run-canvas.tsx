@@ -11,6 +11,7 @@ import {
   useNodesInitialized,
   useNodesState,
   useReactFlow,
+  useStore,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Provider as JotaiProvider, createStore } from "jotai";
@@ -126,14 +127,20 @@ const RunFlow = ({
     );
   }, [definition, highlight]);
 
-  // A new run, or a run drawn on another graph: show all of it, once its cards are measured (fitting
-  // before that sizes the view to cards of zero size).
+  // A new run, a run drawn on another graph, or a canvas resized by a side panel collapsing or
+  // opening: show all of it, once its cards are measured (fitting before that sizes the view to cards
+  // of zero size). A run is read, not edited, so following the canvas's size beats keeping a zoom.
   const runId = run?.id ?? null;
   const areNodesMeasured = useNodesInitialized();
+  const paneWidth = useStore((state) => state.width);
+  const paneHeight = useStore((state) => state.height);
   useEffect(() => {
     if (!areNodesMeasured) return;
-    void fitView({ padding: WORKFLOW_CANVAS_FIT_PADDING, maxZoom: WORKFLOW_CANVAS_MAX_ZOOM, minZoom: 0.4 });
-  }, [areNodesMeasured, runId, definition, fitView]);
+    const handle = setTimeout(() => {
+      void fitView({ padding: WORKFLOW_CANVAS_FIT_PADDING, maxZoom: WORKFLOW_CANVAS_MAX_ZOOM, minZoom: 0.4 });
+    }, 50);
+    return () => clearTimeout(handle);
+  }, [areNodesMeasured, runId, definition, paneWidth, paneHeight, fitView]);
 
   return (
     <ReactFlow

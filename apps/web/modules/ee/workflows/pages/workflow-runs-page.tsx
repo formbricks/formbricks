@@ -2,12 +2,12 @@
 
 import { useStore } from "jotai";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
-import { isResponseCompletedTrigger } from "@formbricks/workflows";
+import { type TWorkflowDefinition, isResponseCompletedTrigger } from "@formbricks/workflows";
 import { RunsStepPanel, RunsStepPill } from "@/modules/ee/workflows/components/runs/runs-step-panel";
-import { RunsTestPanel } from "@/modules/ee/workflows/components/runs/runs-test-panel";
+import { RunsListPill, RunsTestPanel } from "@/modules/ee/workflows/components/runs/runs-test-panel";
 import { WorkflowRunCanvas } from "@/modules/ee/workflows/components/runs/workflow-run-canvas";
 import { useStoredTestPayload } from "@/modules/ee/workflows/hooks/use-stored-test-payload";
 import { useWorkflowBuilder } from "@/modules/ee/workflows/hooks/use-workflow-builder";
@@ -15,7 +15,7 @@ import { useWorkflowRun } from "@/modules/ee/workflows/hooks/use-workflow-run";
 import { useWorkflowRunDefinition } from "@/modules/ee/workflows/hooks/use-workflow-run-definition";
 import { useWorkflowRuns } from "@/modules/ee/workflows/hooks/use-workflow-runs";
 import { useWorkflowTestRun } from "@/modules/ee/workflows/hooks/use-workflow-test-run";
-import { toRunDetailRows } from "@/modules/ee/workflows/lib/run-detail-rows";
+import { type TRunDetailRow, toRunDetailRows } from "@/modules/ee/workflows/lib/run-detail-rows";
 import {
   type TRunsViewKind,
   getTestInputKind,
@@ -25,6 +25,7 @@ import {
 } from "@/modules/ee/workflows/lib/runs-view";
 import { hasSavedWebhookTrigger } from "@/modules/ee/workflows/lib/workflow-samples";
 import { workflowAtom } from "@/modules/ee/workflows/state/editor";
+import type { TWorkflowRunDetail } from "@/modules/ee/workflows/types";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { useTrackWorkflowSurface } from "../hooks/use-track-workflow-surface";
 
@@ -67,6 +68,7 @@ export const WorkflowRunsPage = ({
 
   const [kind, setKind] = useState<TRunsViewKind>("all");
   const [isLeftCollapsed, setLeftCollapsed] = useState(false);
+  const [isTestInputOpen, setTestInputOpen] = useState(false);
   const [isRightCollapsed, setRightCollapsed] = useState(false);
 
   const runsQuery = useWorkflowRuns({
@@ -119,6 +121,7 @@ export const WorkflowRunsPage = ({
   const useAsTestInput = (payload: Record<string, unknown>) => {
     setStoredPayload(JSON.stringify(payload, null, 2));
     setLeftCollapsed(false);
+    setTestInputOpen(true);
     toast.success(t("workspace.workflows.runs_used_as_test_input"));
   };
 
@@ -127,52 +130,46 @@ export const WorkflowRunsPage = ({
 
   return (
     <div className="flex min-h-0 flex-1 gap-3">
-      <RunsTestPanel
-        workflowId={workflowId}
-        locale={locale}
-        isCollapsed={isLeftCollapsed}
-        onCollapsedChange={setLeftCollapsed}
-        triggerKind={triggerKind}
-        responseTrigger={trigger && isResponseCompletedTrigger(trigger) ? trigger : null}
-        hasSavedWebhookTrigger={hasSavedWebhookTrigger(builder.workflow)}
-        canTest={canTest}
-        testRun={testRun}
-        kind={kind}
-        onKindChange={setKind}
-        runs={runsQuery.runs}
-        isLoadingRuns={runsQuery.isLoading}
-        hasMoreRuns={runsQuery.hasNextPage}
-        isLoadingMoreRuns={runsQuery.isFetchingNextPage}
-        onLoadMoreRuns={() => void runsQuery.fetchNextPage()}
-        shownRunId={shownRunId}
-        onShowRun={showRun}
+      {isLeftCollapsed ? null : (
+        <RunsTestPanel
+          workflowId={workflowId}
+          locale={locale}
+          onCollapsedChange={setLeftCollapsed}
+          isTestInputOpen={isTestInputOpen}
+          onTestInputOpenChange={setTestInputOpen}
+          triggerKind={triggerKind}
+          responseTrigger={trigger && isResponseCompletedTrigger(trigger) ? trigger : null}
+          hasSavedWebhookTrigger={hasSavedWebhookTrigger(builder.workflow)}
+          canTest={canTest}
+          testRun={testRun}
+          kind={kind}
+          onKindChange={setKind}
+          runs={runsQuery.runs}
+          isLoadingRuns={runsQuery.isLoading}
+          hasMoreRuns={runsQuery.hasNextPage}
+          isLoadingMoreRuns={runsQuery.isFetchingNextPage}
+          onLoadMoreRuns={() => void runsQuery.fetchNextPage()}
+          shownRunId={shownRunId}
+          onShowRun={showRun}
+        />
+      )}
+      <RunsCanvasSection
+        isLoading={isGraphLoading}
+        definition={graph.definition}
+        run={run}
+        rows={rows}
+        selectedStepId={selectedStepId}
+        onSelectStep={selectStep}
+        leftPill={
+          isLeftCollapsed ? (
+            <RunsListPill
+              shownRun={runsQuery.runs.find((listed) => listed.id === shownRunId) ?? null}
+              onExpand={() => setLeftCollapsed(false)}
+            />
+          ) : null
+        }
+        onExpandRight={isRightCollapsed ? () => setRightCollapsed(false) : null}
       />
-      <section className="relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
-        {isGraphLoading ? <Skeleton className="m-4 h-[calc(100%-2rem)] rounded-lg" /> : null}
-        {!isGraphLoading && graph.definition ? (
-          <WorkflowRunCanvas
-            definition={graph.definition}
-            run={run ?? null}
-            rows={rows}
-            selectedStepId={selectedStepId}
-            onSelectStep={selectStep}
-          />
-        ) : null}
-        {isRightCollapsed && !isGraphLoading ? (
-          <RunsStepPill
-            definition={graph.definition}
-            run={run}
-            rows={rows}
-            selectedStepId={selectedStepId}
-            onExpand={() => setRightCollapsed(false)}
-          />
-        ) : null}
-        {!isGraphLoading && !graph.definition ? (
-          <div className="flex h-full items-center justify-center p-6 text-center text-sm text-slate-500">
-            {t("workspace.workflows.runs_none_yet")}
-          </div>
-        ) : null}
-      </section>
       {isRightCollapsed ? null : (
         <RunsStepPanel
           workspaceId={workspaceId}
@@ -193,5 +190,66 @@ export const WorkflowRunsPage = ({
         />
       )}
     </div>
+  );
+};
+
+/**
+ * The middle of the Runs view: the shown run on its canvas, with the collapsed panels' pills over it,
+ * a skeleton while it loads, or a note when there is no run yet.
+ */
+const RunsCanvasSection = ({
+  isLoading,
+  definition,
+  run,
+  rows,
+  selectedStepId,
+  onSelectStep,
+  leftPill,
+  onExpandRight,
+}: Readonly<{
+  isLoading: boolean;
+  definition: TWorkflowDefinition | null;
+  run: TWorkflowRunDetail | undefined;
+  rows: TRunDetailRow[] | null;
+  selectedStepId: string | null;
+  onSelectStep: (stepId: string | null) => void;
+  leftPill: ReactNode;
+  /** Set while the right panel is collapsed: its pill expands it. */
+  onExpandRight: (() => void) | null;
+}>) => {
+  const { t } = useTranslation();
+  if (isLoading) {
+    return (
+      <section className="relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
+        <Skeleton className="m-4 h-[calc(100%-2rem)] rounded-lg" />
+      </section>
+    );
+  }
+  return (
+    <section className="relative min-h-0 min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white">
+      {definition ? (
+        <WorkflowRunCanvas
+          definition={definition}
+          run={run ?? null}
+          rows={rows}
+          selectedStepId={selectedStepId}
+          onSelectStep={onSelectStep}
+        />
+      ) : (
+        <div className="flex h-full items-center justify-center p-6 text-center text-sm text-slate-500">
+          {t("workspace.workflows.runs_none_yet")}
+        </div>
+      )}
+      {leftPill}
+      {onExpandRight ? (
+        <RunsStepPill
+          definition={definition}
+          run={run}
+          rows={rows}
+          selectedStepId={selectedStepId}
+          onExpand={onExpandRight}
+        />
+      ) : null}
+    </section>
   );
 };

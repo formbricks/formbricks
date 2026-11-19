@@ -31,56 +31,19 @@ export const WorkflowPanelCollapseButton = ({
 };
 
 /**
- * What stays of a collapsed side panel (review point 5): a narrow rail like the collapsed main
- * navigation, so the panel keeps its place and says what it holds. The expand button is on top; the
- * rail's own content (a step's icon, run dots) follows, then the label written vertically.
- */
-export const WorkflowPanelRail = ({
-  side,
-  label,
-  onExpand,
-  children,
-}: Readonly<{ side: TPanelSide; label: string; onExpand: () => void; children?: ReactNode }>) => {
-  const { t } = useTranslation();
-  return (
-    <div
-      className={cn(
-        "flex min-h-0 w-[52px] shrink-0 flex-col items-center gap-3 overflow-hidden rounded-lg border border-slate-200 bg-white py-2"
-      )}>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-8 shrink-0 text-slate-500"
-        aria-label={t("workspace.workflows.expand_panel")}
-        title={t("workspace.workflows.expand_panel")}
-        onClick={onExpand}>
-        {side === "right" ? <PanelRightOpenIcon /> : <PanelLeftOpenIcon />}
-      </Button>
-      <div className="h-px w-6 shrink-0 bg-slate-200" aria-hidden="true" />
-      {children}
-      <button
-        type="button"
-        onClick={onExpand}
-        className="max-h-64 min-h-0 truncate text-xs font-medium text-slate-600 [writing-mode:vertical-rl] hover:text-slate-900"
-        style={{ transform: "rotate(180deg)" }}>
-        {label}
-      </button>
-    </div>
-  );
-};
-
-/**
- * What stays of the collapsed step panel (review point 5, as in Attio and the approved mockup): a pill
- * floating at the canvas's top-right with the step's icon and name and the expand button, so the
- * canvas gets its full width back and still says which step is open. `status` is an optional dot
- * (the Runs view's step result).
+ * What stays of a collapsed side panel (review point 5, as in Attio and the approved mockup): a pill
+ * floating in the canvas's corner on the panel's side, with the panel's icon and name (the open step,
+ * or "Runs"), an optional status dot (a run's or step's result) and the expand icon. The whole pill is
+ * one button, so a click anywhere on it brings the panel back.
  */
 export const WorkflowPanelPill = ({
+  side,
   icon,
   label,
   status,
   onExpand,
 }: Readonly<{
+  side: TPanelSide;
   icon: ReactNode;
   label: string;
   status?: "success" | "error" | "gray";
@@ -88,15 +51,17 @@ export const WorkflowPanelPill = ({
 }>) => {
   const { t } = useTranslation();
   return (
-    <div className="absolute top-3 right-3 z-10 flex max-w-[300px] items-center gap-2 rounded-full border border-slate-200 bg-white py-1 pr-1 pl-1.5 shadow-md">
-      <button
-        type="button"
-        onClick={onExpand}
-        className="flex min-w-0 items-center gap-2 rounded-full text-left"
-        title={label}>
-        <span className="shrink-0">{icon}</span>
-        <span className="truncate text-sm font-semibold text-slate-900">{label}</span>
-      </button>
+    <button
+      type="button"
+      onClick={onExpand}
+      aria-label={`${t("workspace.workflows.expand_panel")}: ${label}`}
+      title={t("workspace.workflows.expand_panel")}
+      className={cn(
+        "absolute top-3 z-10 flex max-w-[300px] items-center gap-2 rounded-full border border-slate-200 bg-white py-1 pl-1.5 text-left shadow-md transition-shadow hover:shadow-lg focus-visible:ring-2 focus-visible:ring-brand-dark focus-visible:outline-none",
+        side === "right" ? "right-3 pr-2" : "left-3 pr-2"
+      )}>
+      <span className="shrink-0">{icon}</span>
+      <span className="truncate text-sm font-semibold text-slate-900">{label}</span>
       {status ? (
         <span
           aria-hidden="true"
@@ -108,15 +73,13 @@ export const WorkflowPanelPill = ({
           )}
         />
       ) : null}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="size-8 shrink-0 rounded-full text-slate-500"
-        aria-label={t("workspace.workflows.expand_panel")}
-        title={t("workspace.workflows.expand_panel")}
-        onClick={onExpand}>
-        <PanelRightOpenIcon />
-      </Button>
-    </div>
+      <span className="flex size-6 shrink-0 items-center justify-center text-slate-500" aria-hidden="true">
+        {side === "right" ? (
+          <PanelRightOpenIcon className="size-4" />
+        ) : (
+          <PanelLeftOpenIcon className="size-4" />
+        )}
+      </span>
+    </button>
   );
 };

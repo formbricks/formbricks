@@ -37,6 +37,7 @@ export const CollapsedStepPill = () => {
 
   return (
     <WorkflowPanelPill
+      side="right"
       icon={<WorkflowNodeChip icon={entry.icon} category={entry.category} size="sm" />}
       label={entry.title(node, t)}
       onExpand={expand}
