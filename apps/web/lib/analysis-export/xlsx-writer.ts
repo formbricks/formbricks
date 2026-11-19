@@ -10,7 +10,6 @@
  * The workbook is built whole in memory, by nature of the format; the caller caps its size.
  */
 import { ZipArchive } from "archiver";
-import { sanitizeFormulaInjection } from "../utils/file-conversion";
 
 export type TXlsxCell = string | number | null;
 
@@ -60,17 +59,22 @@ const columnLetters = (index: number): string => {
   return letters;
 };
 
+// Styles in xl/styles.xml. Text cells carry Excel's Text format (`@`, numFmtId 49), so a value typed
+// over one in Excel stays text too.
 const HEADER_STYLE = 1;
+const TEXT_STYLE = 2;
 
 const cellXml = (reference: string, cell: TXlsxCell, style?: number): string => {
   if (cell === null) return "";
-  const styleAttribute = style ? ` s="${style}"` : "";
   if (typeof cell === "number") {
+    const styleAttribute = style ? ` s="${style}"` : "";
     return Number.isFinite(cell) ? `<c r="${reference}"${styleAttribute}><v>${cell}</v></c>` : "";
   }
   // XML parsers fold a CR into an LF anyway, so say LF: the same line break in every reader.
-  const text = escapeXml(cutCell(sanitizeFormulaInjection(cell.replace(/\r\n?/g, "\n"))));
-  return `<c r="${reference}"${styleAttribute} t="inlineStr"><is><t xml:space="preserve">${text}</t></is></c>`;
+  // No `sanitizeFormulaInjection` here: an inline string is never evaluated, and Excel would show
+  // the `'` as text (CODING_STANDARDS.md, "File Uploads and Downloads").
+  const text = escapeXml(cutCell(cell.replace(/\r\n?/g, "\n")));
+  return `<c r="${reference}" s="${style ?? TEXT_STYLE}" t="inlineStr"><is><t xml:space="preserve">${text}</t></is></c>`;
 };
 
 type TLimits = { rows: number; columns: number };
@@ -191,15 +195,16 @@ export const createXlsxWorkbook = ({ limits = XLSX_LIMITS }: { limits?: TLimits 
           `</Relationships>`,
         { name: "xl/_rels/workbook.xml.rels" }
       );
-      // Style 0 is plain, style 1 is a bold header. No fills with colour, no borders: bold is the
-      // only thing the formatting says, and a screen reader or a filter does not need it.
+      // Style 0 is plain (numbers), style 1 is a bold Text header, style 2 is Text. No fills with colour,
+      // no borders: bold is the only thing the formatting says, and a screen reader or a filter does not
+      // need it.
       archive.append(
         `${xmlHeader}<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">` +
           `<fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><name val="Calibri"/></font></fonts>` +
           `<fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>` +
           `<borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>` +
           `<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>` +
-          `<cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/></cellXfs>` +
+          `<cellXfs count="3"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="49" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1" applyNumberFormat="1"/><xf numFmtId="49" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/></cellXfs>` +
           `<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>` +
           `</styleSheet>`,
         { name: "xl/styles.xml" }
