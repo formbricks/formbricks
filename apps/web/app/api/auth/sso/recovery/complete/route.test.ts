@@ -128,7 +128,8 @@ describe("GET /api/auth/sso/recovery/complete", () => {
 
     expect(revokeSessionByToken).not.toHaveBeenCalled();
     expect(response.headers.getSetCookie().join("\n")).not.toContain("session_token=;");
-    expect(location(response)).toContain("error=OAuthAccountNotLinked");
+    // Its own code, so the login page says to open the emailed link (or ignore it), not "try again".
+    expect(location(response)).toContain("error=sso_recovery_link_not_opened");
     expect(location(response)).not.toContain("callbackUrl=");
   });
 

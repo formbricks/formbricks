@@ -2,7 +2,10 @@ import { prisma } from "@formbricks/database";
 import type { IdentityProvider, Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import type { Account } from "@formbricks/types/auth";
-import { SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE } from "@formbricks/types/errors";
+import {
+  SSO_RECOVERY_LINK_NOT_OPENED_ERROR_CODE,
+  SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE,
+} from "@formbricks/types/errors";
 import { reconcileApiKeyRelationships } from "@/lib/authzed/api-key";
 import { MCP_GRANT_REVOKE_TRANSACTION_TIMEOUT_MS } from "@/lib/authzed/mcp-grant-timeouts";
 import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
@@ -450,6 +453,14 @@ export const getSsoRecoverySecondFactorRedirectUrl = (callbackUrl?: string): str
  */
 export const getSsoRecoverySecondFactorUnavailableRedirectUrl = (callbackUrl?: string): string =>
   buildSsoRecoveryLoginUrl(callbackUrl, SSO_RECOVERY_SECOND_FACTOR_UNAVAILABLE_ERROR_CODE);
+
+/**
+ * Where a completion goes when this browser never opened the emailed link (ENG-7310). Never carries a
+ * callback: the caller has not proven anything, and the intent's callback would tell them where the
+ * account holder was headed.
+ */
+export const getSsoRecoveryLinkNotOpenedRedirectUrl = (): string =>
+  buildSsoRecoveryLoginUrl(undefined, SSO_RECOVERY_LINK_NOT_OPENED_ERROR_CODE);
 
 export const startSsoRecovery = async ({
   existingUser,

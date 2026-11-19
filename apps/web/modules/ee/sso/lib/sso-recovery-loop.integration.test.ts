@@ -87,7 +87,6 @@ const runOneRecoveryAttempt = async (
   return redirectedTo;
 };
 
-/** What the browser sends when the user clicks "log in" on the verification-requested page. */
 /**
  * Opens the link `startSsoRecovery` mails, as the mailbox owner's browser would, and returns the proof
  * cookie Better Auth set on the response (ENG-7310).
@@ -107,6 +106,7 @@ const openEmailedRecoveryLink = async (userId: string, completionUrl: string): P
   return proof!;
 };
 
+/** What the browser sends when the user clicks "log in" on the verification-requested page. */
 const loginRequestLineFor = (verificationRequestedUrl: string): string => {
   const callbackUrl = new URL(verificationRequestedUrl).searchParams.get("callbackUrl") ?? "";
   return `GET /auth/login?callbackUrl=${encodeURIComponent(callbackUrl)} HTTP/1.1`;

@@ -76,6 +76,8 @@
       "oauth_generic_error_title": "登录失败",
       "oauth_misconfigured_description": "你的身份提供商已为你登录,但此 Formbricks 实例缺少部分单点登录配置。重试无济于事——请联系管理员。",
       "oauth_misconfigured_title": "单点登录配置不完整",
+      "oauth_recovery_link_not_opened_description": "要将单点登录关联到你的账号，请在此浏览器中打开我们发送到你邮箱的链接。如果你刚才并没有尝试使用单点登录，请忽略该邮件，不要打开链接。",
+      "oauth_recovery_link_not_opened_title": "请打开我们发送到你邮箱的链接",
       "oauth_second_factor_unavailable_description": "你的邮箱地址已通过验证，但此账户启用了双重身份验证，而当前的 Formbricks 实例已关闭邮箱和密码登录，因此无法在此处输入第二重验证。请使用已关联到此账户的单点登录服务商完成登录，或联系管理员。",
       "oauth_second_factor_unavailable_title": "无法在此完成双重验证登录",
       "oauth_signup_not_allowed_description": "你的身份提供商已为你登录,但此 Formbricks 实例未设置为通过此方式创建新账户。请让管理员邀请你,然后重试。",

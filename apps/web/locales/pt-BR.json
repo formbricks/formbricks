@@ -76,6 +76,8 @@
       "oauth_generic_error_title": "Falha no login",
       "oauth_misconfigured_description": "Seu provedor de identidade fez seu login, mas esta instância do Formbricks está com parte da configuração de login único faltando. Tentar novamente não vai ajudar - por favor, entre em contato com um administrador.",
       "oauth_misconfigured_title": "O login único não está totalmente configurado",
+      "oauth_recovery_link_not_opened_description": "Para vincular o login único (SSO) à sua conta, abra neste navegador o link que enviamos por e-mail. Se você não tentou entrar agora com o login único, ignore esse e-mail e não abra o link.",
+      "oauth_recovery_link_not_opened_title": "Abra o link que enviamos por e-mail",
       "oauth_second_factor_unavailable_description": "Seu endereço de e-mail foi verificado, mas esta conta tem autenticação de dois fatores e esta instância do Formbricks está com o login por e-mail e senha desativado, então não é possível informar o segundo fator aqui. Para concluir, entre com um provedor de login único (SSO) já vinculado a esta conta ou entre em contato com um administrador.",
       "oauth_second_factor_unavailable_title": "Não é possível concluir o login de dois fatores aqui",
       "oauth_signup_not_allowed_description": "Seu provedor de identidade fez seu login, mas esta instância do Formbricks não está configurada para criar novas contas dessa forma. Peça a um administrador para convidar você e então tente novamente.",

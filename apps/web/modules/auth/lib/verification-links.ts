@@ -127,6 +127,21 @@ export const buildSignupWithoutVerificationSuccessPath = ({
   return `${successUrl.pathname}${successUrl.search}`;
 };
 
+/**
+ * The log-in link on the verification-requested page, carrying the callback so a visitor who already has
+ * an account lands back where they were going (ENG-2091).
+ *
+ * Except an SSO recovery completion (ENG-7310): only the browser that opens the emailed link can finish
+ * recovery, so logging in here and following that callback would only land on an error.
+ */
+export const buildVerificationRequestedLoginHref = (callbackUrl: string | null | undefined): string => {
+  if (!callbackUrl || normalizeRoutePathname(callbackUrl) === SSO_RECOVERY_COMPLETION_PATH) {
+    return "/auth/login";
+  }
+
+  return `/auth/login?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+};
+
 export const buildVerificationLinks = ({
   token,
   webAppUrl,

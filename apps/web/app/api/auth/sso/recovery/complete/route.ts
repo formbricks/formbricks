@@ -16,6 +16,7 @@ import {
   SsoRecoveryError,
   completeSsoRecovery,
   getSsoRecoveryFailureRedirectUrl,
+  getSsoRecoveryLinkNotOpenedRedirectUrl,
 } from "@/modules/ee/sso/lib/sso-recovery";
 
 const clearSessionCookies = (response: NextResponse) => {
@@ -96,12 +97,16 @@ const handler = async (request: Request) => {
     // open. Skipping the teardown is safe for the rest too, because it only revokes the token off this
     // caller's own cookie — the account link has already failed closed inside `completeSsoRecovery`,
     // which threw before writing anything. So leave the session alone and just redirect.
-    //
-    // A live intent reached by a browser that never opened the emailed link (`unproven`, ENG-7310) is
-    // the same: that session was not minted by the link. Tearing it down would also let anyone holding
-    // a state id sign the account holder out by sending their browser to this URL.
-    if (recoveryError?.failure === "intent_unusable" || recoveryError?.failure === "unproven") {
+    if (recoveryError?.failure === "intent_unusable") {
       return NextResponse.redirect(getSsoRecoveryFailureRedirectUrl());
+    }
+
+    // A live intent reached by a browser that never opened the emailed link (ENG-7310) is the same: that
+    // session was not minted by the link. Tearing it down would also let anyone holding a state id sign
+    // the account holder out by sending their browser to this URL. The login page then says to open the
+    // emailed link, and to ignore it when the reader did not start a sign-in.
+    if (recoveryError?.failure === "unproven") {
+      return NextResponse.redirect(getSsoRecoveryLinkNotOpenedRedirectUrl());
     }
 
     // Everything else — a guard that read an intent and turned it down, or an unexpected throw — keeps

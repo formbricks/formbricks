@@ -76,6 +76,8 @@
       "oauth_generic_error_title": "サインインに失敗しました",
       "oauth_misconfigured_description": "IDプロバイダーによるサインインは成功しましたが、このFormbricksインスタンスではシングルサインオンの設定が不完全です。再試行しても解決しません。管理者にお問い合わせください。",
       "oauth_misconfigured_title": "シングルサインオンが完全に設定されていません",
+      "oauth_recovery_link_not_opened_description": "シングルサインオンをアカウントに連携するには、メールでお送りしたリンクをこのブラウザで開いてください。シングルサインオンでのログインを試みた覚えがない場合は、そのメールを無視し、リンクを開かないでください。",
+      "oauth_recovery_link_not_opened_title": "メールで送信したリンクを開いてください",
       "oauth_second_factor_unavailable_description": "メールアドレスは確認済みですが、このアカウントでは2要素認証が有効になっており、この Formbricks インスタンスではメールアドレスとパスワードによるサインインがオフになっているため、ここでは第2要素を入力できません。サインインを完了するには、このアカウントに連携済みのシングルサインオン(SSO)プロバイダーを使用するか、管理者にお問い合わせください。",
       "oauth_second_factor_unavailable_title": "ここでは2要素認証によるサインインを完了できません",
       "oauth_signup_not_allowed_description": "IDプロバイダーによるサインインは成功しましたが、このFormbricksインスタンスではこの方法で新しいアカウントを作成できない設定になっています。管理者に招待を依頼してから、もう一度お試しください。",

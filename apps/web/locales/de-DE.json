@@ -76,6 +76,8 @@
       "oauth_generic_error_title": "Anmeldung fehlgeschlagen",
       "oauth_misconfigured_description": "Dein Identity Provider hat dich angemeldet, aber dieser Formbricks-Instanz fehlt ein Teil der Single Sign-On-Konfiguration. Ein erneuter Versuch wird nicht helfen – bitte wende dich an einen Administrator.",
       "oauth_misconfigured_title": "Single Sign-On ist nicht vollständig konfiguriert",
+      "oauth_recovery_link_not_opened_description": "Um Single Sign-on mit Deinem Konto zu verknüpfen, öffne den Link aus der E-Mail, die wir Dir geschickt haben, in diesem Browser. Falls Du gerade nicht versucht hast, Dich per Single Sign-on anzumelden, ignoriere die E-Mail und öffne den Link nicht.",
+      "oauth_recovery_link_not_opened_title": "Öffne den Link aus unserer E-Mail",
       "oauth_second_factor_unavailable_description": "Deine E-Mail-Adresse ist bestätigt, aber für dieses Konto ist die Zwei-Faktor-Authentifizierung aktiviert und bei dieser Formbricks-Instanz ist die Anmeldung per E-Mail und Passwort deaktiviert. Daher kann der zweite Faktor hier nicht eingegeben werden. Melde Dich zum Abschließen über einen Single-Sign-On-Anbieter an, der bereits mit diesem Konto verknüpft ist, oder wende Dich an einen Administrator.",
       "oauth_second_factor_unavailable_title": "Die Zwei-Faktor-Anmeldung kann hier nicht abgeschlossen werden",
       "oauth_signup_not_allowed_description": "Dein Identity Provider hat dich angemeldet, aber diese Formbricks-Instanz ist nicht so eingerichtet, dass neue Konten auf diesem Weg erstellt werden können. Bitte einen Administrator, dich einzuladen, und versuche es dann erneut.",

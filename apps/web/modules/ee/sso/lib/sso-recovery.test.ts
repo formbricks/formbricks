@@ -11,7 +11,7 @@ import { syncSsoIdentityForUser } from "./account-linking";
 import { createSsoRecoveryProof } from "./recovery-proof";
 import {
   SsoRecoveryError,
-  completeSsoRecovery as completeSsoRecoveryFromBrowser,
+  completeSsoRecovery,
   getSsoRecoveryFailureRedirectUrl,
   getSsoRecoverySecondFactorRedirectUrl,
   getSsoRecoverySecondFactorUnavailableRedirectUrl,
@@ -114,10 +114,10 @@ vi.mock("./account-linking", () => ({
 /**
  * Completion from the browser that opened the emailed link, i.e. carrying a valid proof cookie for the
  * intent's user (ENG-7310). Most cases below are about what happens past that gate, so they go through
- * here; the gate itself is tested against `completeSsoRecoveryFromBrowser` directly.
+ * here; the gate itself is tested against `completeSsoRecovery` directly.
  */
-const completeSsoRecovery = (args: Parameters<typeof completeSsoRecoveryFromBrowser>[0]) =>
-  completeSsoRecoveryFromBrowser({ recoveryProof: createSsoRecoveryProof("user_1", args.stateId), ...args });
+const completeWithValidProof = (args: Parameters<typeof completeSsoRecovery>[0]) =>
+  completeSsoRecovery({ recoveryProof: createSsoRecoveryProof("user_1", args.stateId), ...args });
 
 describe("sso-recovery", () => {
   let transactionCommitted = false;
@@ -316,7 +316,7 @@ describe("sso-recovery", () => {
       return { status: "projected" } as never;
     });
 
-    const callbackUrl = await completeSsoRecovery({
+    const callbackUrl = await completeWithValidProof({
       stateId: "test-state",
       sessionUserId: "user_1",
       sessionToken: "current-session-token",
@@ -438,7 +438,7 @@ describe("sso-recovery", () => {
       } as never);
 
     const completeRecovery = () =>
-      completeSsoRecovery({
+      completeWithValidProof({
         stateId: "test-state",
         sessionUserId: "user_1",
         sessionToken: "current-session-token",
@@ -624,7 +624,7 @@ describe("sso-recovery", () => {
       identityProviderAccountId: null,
     } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
-    await completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" });
+    await completeWithValidProof({ stateId: "test-state", sessionUserId: "user_1" });
 
     expect(mocks.consumeSsoRecoveryIntent).toHaveBeenCalledWith("test-state");
     // After the COMMIT, not merely somewhere in the function: Redis is outside the transaction, so
@@ -649,7 +649,7 @@ describe("sso-recovery", () => {
     } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(syncSsoIdentityForUser).mockRejectedValue(new Error("deadlock detected"));
 
-    await expect(completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })).rejects.toThrow(
+    await expect(completeWithValidProof({ stateId: "test-state", sessionUserId: "user_1" })).rejects.toThrow(
       "deadlock detected"
     );
 
@@ -659,7 +659,7 @@ describe("sso-recovery", () => {
   test("leaves the intent in place when the recovery is rejected", async () => {
     // A mail scanner reaching the completion URL has no session, so it lands on `missing_session`.
     // Consuming there would spend the record before the real user ever clicked their link.
-    await expect(completeSsoRecovery({ stateId: "test-state" })).rejects.toThrow("OAuthAccountNotLinked");
+    await expect(completeWithValidProof({ stateId: "test-state" })).rejects.toThrow("OAuthAccountNotLinked");
 
     expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
   });
@@ -687,7 +687,7 @@ describe("sso-recovery", () => {
     } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     // First completion: the account is unproven, so this is the one that strips and sweeps.
-    await completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" });
+    await completeWithValidProof({ stateId: "test-state", sessionUserId: "user_1" });
     expect(txUserUpdate).toHaveBeenCalled();
     expect(revokeUserSessionsExcept).toHaveBeenCalled();
 
@@ -706,7 +706,7 @@ describe("sso-recovery", () => {
     vi.mocked(revokeUserSessionsExcept).mockClear();
     vi.mocked(syncSsoIdentityForUser).mockClear();
 
-    await expect(completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })).resolves.toBe(
+    await expect(completeWithValidProof({ stateId: "test-state", sessionUserId: "user_1" })).resolves.toBe(
       "http://localhost:3000/environments/env_1"
     );
 
@@ -726,7 +726,7 @@ describe("sso-recovery", () => {
       identityProviderAccountId: null,
     } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
-    await completeSsoRecovery({
+    await completeWithValidProof({
       stateId: "test-state",
       sessionUserId: "user_1",
       sessionToken: "current-session-token",
@@ -769,7 +769,7 @@ describe("sso-recovery", () => {
       identityProviderAccountId: "provider-account-1",
     } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
-    await completeSsoRecovery({
+    await completeWithValidProof({
       stateId: "test-state",
       sessionUserId: "user_1",
       sessionToken: "current-session-token",
@@ -801,7 +801,7 @@ describe("sso-recovery", () => {
     } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
     vi.mocked(revokeUserSessionsExcept).mockRejectedValue(new Error("redis unavailable"));
 
-    const callbackUrl = await completeSsoRecovery({
+    const callbackUrl = await completeWithValidProof({
       stateId: "test-state",
       sessionUserId: "user_1",
       sessionToken: "current-session-token",
@@ -832,7 +832,7 @@ describe("sso-recovery", () => {
 
   describe("binding completion to the browser that opened the emailed link (ENG-7310)", () => {
     const expectUnprovenRejection = async (recoveryProof: string | undefined) => {
-      const outcome = completeSsoRecoveryFromBrowser({
+      const outcome = completeSsoRecovery({
         stateId: "test-state",
         recoveryProof,
         sessionUserId: "user_1",
@@ -876,9 +876,11 @@ describe("sso-recovery", () => {
       const completionUrl = vi.mocked(buildVerificationRequestedPath).mock.calls[0][0].callbackUrl!;
       const stateId = new URL(completionUrl).searchParams.get("state")!;
 
-      await expect(completeSsoRecoveryFromBrowser({ stateId, sessionUserId: "user_1" })).rejects.toThrow(
-        "OAuthAccountNotLinked"
-      );
+      const outcome = completeSsoRecovery({ stateId, sessionUserId: "user_1" });
+
+      await expect(outcome).rejects.toThrow("OAuthAccountNotLinked");
+      // `unproven`, not a later guard: the session matches the intent, so on main this linked.
+      await expect(outcome.catch((error: SsoRecoveryError) => error.failure)).resolves.toBe("unproven");
       expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
     });
 
@@ -899,7 +901,7 @@ describe("sso-recovery", () => {
     });
 
     test("checks the proof before the session, so a proofless browser is never told about the session", async () => {
-      const outcome = completeSsoRecoveryFromBrowser({ stateId: "test-state", sessionUserId: "user_2" });
+      const outcome = completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_2" });
 
       await expect(outcome.catch((error: SsoRecoveryError) => error.failure)).resolves.toBe("unproven");
     });
@@ -917,7 +919,7 @@ describe("sso-recovery", () => {
       } as never);
 
       await expect(
-        completeSsoRecoveryFromBrowser({
+        completeSsoRecovery({
           stateId: "test-state",
           recoveryProof: createSsoRecoveryProof("user_1", "test-state"),
           sessionUserId: "user_1",
@@ -929,7 +931,7 @@ describe("sso-recovery", () => {
 
   test("rejects recovery when the signed-in user does not match the intent owner", async () => {
     await expect(
-      completeSsoRecovery({
+      completeWithValidProof({
         stateId: "test-state",
         sessionUserId: "user_2",
       })
@@ -951,7 +953,7 @@ describe("sso-recovery", () => {
 
   test("rejects recovery when there is no signed-in session", async () => {
     await expect(
-      completeSsoRecovery({
+      completeWithValidProof({
         stateId: "test-state",
       })
     ).rejects.toThrow("OAuthAccountNotLinked");
@@ -980,7 +982,7 @@ describe("sso-recovery", () => {
     });
 
     await expect(
-      completeSsoRecovery({
+      completeWithValidProof({
         stateId: "test-state",
         sessionUserId: "user_1",
       })
@@ -1004,7 +1006,7 @@ describe("sso-recovery", () => {
     mocks.readSsoRecoveryIntent.mockResolvedValue(null);
 
     await expect(
-      completeSsoRecovery({
+      completeWithValidProof({
         stateId: "expired-state",
         sessionUserId: "user_1",
       })
@@ -1047,13 +1049,13 @@ describe("sso-recovery", () => {
     mocks.readSsoRecoveryIntent.mockResolvedValue(null);
 
     await expect(
-      failureKindOf(completeSsoRecovery({ stateId: "expired-state", sessionUserId: "user_1" }))
+      failureKindOf(completeWithValidProof({ stateId: "expired-state", sessionUserId: "user_1" }))
     ).resolves.toBe("intent_unusable");
   });
 
   test("reports a guard turning a live intent down as a rejection", async () => {
     // No session, so completion stops at `missing_session` with the record still readable.
-    await expect(failureKindOf(completeSsoRecovery({ stateId: "test-state" }))).resolves.toBe("rejected");
+    await expect(failureKindOf(completeWithValidProof({ stateId: "test-state" }))).resolves.toBe("rejected");
   });
 
   test("rejects recovery when the verified user no longer matches the intended email", async () => {
@@ -1072,7 +1074,7 @@ describe("sso-recovery", () => {
     } as unknown as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await expect(
-      completeSsoRecovery({
+      completeWithValidProof({
         stateId: "test-state",
         sessionUserId: "user_1",
       })
@@ -1108,7 +1110,7 @@ describe("sso-recovery", () => {
     vi.mocked(finalizeSuccessfulSignIn).mockRejectedValue(new Error("tracking unavailable"));
 
     await expect(
-      completeSsoRecovery({
+      completeWithValidProof({
         stateId: "test-state",
         sessionUserId: "user_1",
       })
@@ -1140,7 +1142,7 @@ describe("sso-recovery", () => {
     });
 
     await expect(
-      completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })
+      completeWithValidProof({ stateId: "test-state", sessionUserId: "user_1" })
     ).rejects.toMatchObject({ callbackUrl: undefined });
   });
 
@@ -1156,7 +1158,7 @@ describe("sso-recovery", () => {
     } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
     await expect(
-      completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })
+      completeWithValidProof({ stateId: "test-state", sessionUserId: "user_1" })
     ).rejects.toMatchObject({ callbackUrl: "http://localhost:3000/environments/env_1" });
   });
 
@@ -1192,7 +1194,7 @@ describe("sso-recovery", () => {
       identityProviderAccountId: null,
     } as Awaited<ReturnType<typeof prisma.user.findUnique>>);
 
-    await expect(completeSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" })).resolves.toBe(
+    await expect(completeWithValidProof({ stateId: "test-state", sessionUserId: "user_1" })).resolves.toBe(
       "http://localhost:3000"
     );
   });
