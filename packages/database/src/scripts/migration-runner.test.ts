@@ -1,5 +1,6 @@
 import { EventEmitter } from "node:events";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import {
   type AutocommitDataMigrationContext,
   type MigrationScript,
@@ -34,7 +35,10 @@ vi.mock("pg", () => ({
     }
   },
 }));
-vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
+vi.mock("@formbricks/logger", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@formbricks/logger")>()),
+  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+}));
 vi.mock("../prisma-adapter", () => ({ createPrismaPgAdapter: () => ({ adapter: {} }) }));
 vi.mock("./online-indexes", () => ({ ensureOnlineIndexes: vi.fn() }));
 vi.mock("../prisma", () => ({
@@ -141,6 +145,20 @@ describe("runDataMigration with transactional: false", () => {
 
     expect(writtenStatuses()).toEqual(["pending", "failed"]);
     expect(lockEnd).toHaveBeenCalledOnce();
+  });
+
+  test("logs a failed run by its name and frames, never its message", async () => {
+    const secret = "respondent@example.com";
+
+    await expect(
+      runDataMigration(autocommitMigration(() => Promise.reject(new Error(`duplicate ${secret}`))))
+    ).rejects.toThrow(secret);
+
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ errName: "Error" }),
+      expect.any(String)
+    );
+    expect(JSON.stringify(vi.mocked(logger.error).mock.calls)).not.toContain(secret);
   });
 
   test("rethrows run()'s own error when marking the migration failed also fails", async () => {

@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { logger } from "@formbricks/logger";
+import { loggableError, logger } from "@formbricks/logger";
 import { Prisma, PrismaClient } from "../prisma";
 import { createPrismaPgAdapter } from "../prisma-adapter";
 import { type AdvisoryLockSession, openAdvisoryLockSession } from "./advisory-lock-session";
@@ -419,13 +419,13 @@ const executeAutocommitDataMigration = async (
     );
     logger.info(`Data migration ${migration.name} completed successfully`);
   } catch (error) {
-    logger.error(error, `Data migration ${migration.name} failed`);
+    logger.error(loggableError(error), `Data migration ${migration.name} failed`);
     if (!lock.signal.aborted) {
       // A failure here means the lock is gone too; the row stays 'pending' and the next run resumes it.
       await lock.client
         .query(`UPDATE "DataMigration" SET status = 'failed' WHERE id = $1`, [migration.id])
         .catch((writeError: unknown) => {
-          logger.warn(writeError, `Could not mark data migration ${migration.name} as failed`);
+          logger.warn(loggableError(writeError), `Could not mark data migration ${migration.name} as failed`);
         });
     }
 
@@ -453,7 +453,7 @@ const runAutocommitDataMigration = async (migration: AutocommitDataMigrationScri
     }
   } finally {
     await lock.close().catch((error: unknown) => {
-      logger.warn(error, `Could not release the lock of data migration ${migration.name}`);
+      logger.warn(loggableError(error), `Could not release the lock of data migration ${migration.name}`);
     });
   }
 };
@@ -520,7 +520,7 @@ export const runDataMigration = async (migration: MigrationScript): Promise<void
     );
   } catch (error) {
     // Record migration failure
-    logger.error(error, `Data migration ${migration.name} failed`);
+    logger.error(loggableError(error), `Data migration ${migration.name} failed`);
 
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- hasLock is set inside the transaction callback; TS control-flow analysis cannot see assignments across the closure boundary
     if (hasLock) {

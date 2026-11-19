@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { Client } from "pg";
 import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
 import { getPgConnectionConfig } from "../pg-connection-config";
@@ -32,11 +33,19 @@ const deferred = () => {
   return { promise, resolve };
 };
 
-// The runner's per-migration lock namespace (migration-runner.ts).
-const terminateLockHolder = () =>
-  client.query(
-    "SELECT pg_terminate_backend(pid) FROM pg_locks WHERE locktype = 'advisory' AND classid = 16212026 AND granted"
+// Terminates only the session holding this test's lock: the runner's namespace (migration-runner.ts),
+// this migration's key and this database, so a shared cluster's other migrations are never touched.
+const terminateLockHolder = async () => {
+  const lockId = createHash("sha256").update(ID).digest().readUInt32BE(0);
+  const { rows } = await client.query<{ pid: number }>(
+    `SELECT pid FROM pg_locks
+    WHERE locktype = 'advisory' AND granted AND classid = 16212026 AND objid = $1
+      AND database = (SELECT oid FROM pg_database WHERE datname = current_database())`,
+    [lockId]
   );
+  expect(rows).toHaveLength(1);
+  await client.query("SELECT pg_terminate_backend($1)", [rows[0].pid]);
+};
 
 beforeAll(async () => {
   if (!connection) return;
