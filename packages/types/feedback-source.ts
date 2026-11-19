@@ -46,8 +46,8 @@ export type THubFieldType = z.infer<typeof ZHubFieldType>;
 
 // Hub enrichment vocabularies (from Hub OpenAPI spec), in the Hub's own order: sentiment runs from most
 // negative to most positive, with "mixed" last. The single source for the v3 feedback-record filter
-// schemas below and for the analysis module, whose label maps are typed `Record<…>` over these tuples,
-// so adding a label fails the build until every map is updated. The Hub caps its `sentiment` and
+// schemas below and for every label map in the app, which is typed `Record<THubSentiment | THubEmotion, …>`
+// so that adding a label fails the build until every map is updated. The Hub caps its `sentiment` and
 // `emotions` filters at these cardinalities rather than at the generic 100-value limit, since more
 // entries than there are labels can only be duplicates.
 export const HUB_SENTIMENT_VALUES = [

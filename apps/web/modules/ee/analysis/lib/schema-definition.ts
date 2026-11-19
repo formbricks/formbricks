@@ -3,7 +3,12 @@
  * Used by the advanced chart builder to provide field metadata and operators.
  */
 import type { TFunction } from "i18next";
-import { HUB_EMOTION_VALUES, HUB_SENTIMENT_VALUES } from "@formbricks/types/feedback-source";
+import {
+  HUB_EMOTION_VALUES,
+  HUB_SENTIMENT_VALUES,
+  type THubEmotion,
+  type THubSentiment,
+} from "@formbricks/types/feedback-source";
 import { type TDateRangePreset } from "@/lib/date-ranges";
 
 export interface FieldDefinition {
@@ -51,8 +56,8 @@ export interface MeasureDefinition {
  * measures, the translated value-label maps (typed against these tuples, so additions fail the build
  * until every map is updated), and the ordinal sentiment axis sort all derive from them.
  */
-export type TSentimentValue = (typeof HUB_SENTIMENT_VALUES)[number];
-export type TEmotionValue = (typeof HUB_EMOTION_VALUES)[number];
+export type TSentimentValue = THubSentiment;
+export type TEmotionValue = THubEmotion;
 
 const capitalize = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
 
