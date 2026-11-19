@@ -47,18 +47,45 @@ const STATE_WRITING_PATHS = new Set(["/sign-in/social", "/link-social"]);
 
 const AUTHORIZE_PATH = "/oauth2/authorize";
 
+type TBoundedContext = {
+  path: string;
+  method?: string;
+  body?: unknown;
+  query?: unknown;
+  authorizeSettings?: { isAuthorize?: boolean };
+};
+
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null;
 
-const refuse = (message: string, oauthError = false): never => {
-  // An OAuth client reads `error` / `error_description` (RFC 6749 §4.1.2.1); Better Auth's own client reads
-  // `code` / `message`.
-  throw new APIError("BAD_REQUEST", {
-    message,
-    code: "VALIDATION_ERROR",
-    ...(oauthError ? { error: "invalid_request", error_description: message } : {}),
+// `function` declarations, so a call narrows like any `never` (an arrow's inferred type does not).
+// `VALIDATION_ERROR` and `PAYLOAD_TOO_LARGE` are the codes Better Auth's client and our body-limit guard
+// already answer with (`auth-request-body-limit.ts`).
+function refuseInvalid(message: string): never {
+  throw new APIError("BAD_REQUEST", { message, code: "VALIDATION_ERROR" });
+}
+
+function refuseTooLarge(field: string, maxBytes: number): never {
+  throw new APIError("PAYLOAD_TOO_LARGE", {
+    message: `${field} must not exceed ${maxBytes} bytes`,
+    code: "PAYLOAD_TOO_LARGE",
   });
-};
+}
+
+/**
+ * An authorize request over its cap answers RFC 6749's `invalid_request` (§4.1.2.1), a 400, which is what an
+ * OAuth client reads, rather than CODING_STANDARDS' 413. It is not redirected to the client: the request is
+ * refused before its client or redirect URI is checked, so nothing would vouch for that target.
+ */
+function refuseAuthorizeTooLarge(): never {
+  const description = `Authorization request parameters must not exceed ${OAUTH_AUTHORIZE_PARAMS_MAX_BYTES} bytes`;
+  throw new APIError("BAD_REQUEST", {
+    error: "invalid_request",
+    error_description: description,
+    message: description,
+    code: "VALIDATION_ERROR",
+  });
+}
 
 /**
  * The bytes `value` takes in Redis. Better Auth stores a record as JSON whose value is itself a JSON string
@@ -69,23 +96,27 @@ const storedBytes = (value: string): number =>
   // The two layers of surrounding quotes, 6 bytes, are not the value's own.
   Buffer.byteLength(JSON.stringify(JSON.stringify(value)), "utf8") - 6;
 
-const refuseOver = (body: Record<string, unknown>, field: string, maxBytes: number): void => {
-  const value = body[field];
-  if (typeof value === "string" && storedBytes(value) > maxBytes) {
-    refuse(`${field} must not exceed ${maxBytes} bytes`);
-  }
-};
+/**
+ * Whether `value` takes more than `maxBytes` once escaped as {@link storedBytes} counts. Escaping only ever
+ * adds bytes, so a value already over the cap raw is refused without escaping a quarter-megabyte twice.
+ */
+const exceedsStored = (value: string, maxBytes: number): boolean =>
+  Buffer.byteLength(value, "utf8") > maxBytes || storedBytes(value) > maxBytes;
 
 /**
- * The bytes a request's parameters take in Redis, stored as a JSON object inside the record's JSON string
- * (two layers, as for {@link storedBytes}), so the quotes, colon and comma around every parameter count
- * too: many short keys cost more than their text.
+ * Whether a request's parameters take more than `maxBytes` in Redis, stored as a JSON object inside the
+ * record's JSON string (two layers, as for {@link storedBytes}), so the quotes, colon and comma around
+ * every parameter count too: many short keys cost more than their text. The second layer only grows the
+ * first, so it is computed only for a first layer that fits.
  */
-const paramBytes = (params: unknown): number => {
-  if (params === undefined || params === null) return 0;
-  if (!isRecord(params)) return storedBytes(String(params));
-  // The surrounding quotes of the outer layer, 2 bytes, are not the parameters' own.
-  return Buffer.byteLength(JSON.stringify(JSON.stringify(params)), "utf8") - 2;
+const paramsExceedStored = (params: unknown, maxBytes: number): boolean => {
+  if (params === undefined || params === null) return false;
+  // First layer: the object as JSON. Second: that JSON as a string, without its own 2 quotes.
+  const json = JSON.stringify(params);
+  return (
+    Buffer.byteLength(json, "utf8") > maxBytes ||
+    Buffer.byteLength(JSON.stringify(json), "utf8") - 2 > maxBytes
+  );
 };
 
 /**
@@ -99,12 +130,20 @@ const authorizeParams = (ctx: TBoundedContext): unknown => {
   return ctx.method === "POST" && settings.isAuthorize === true ? ctx.body : ctx.query;
 };
 
-type TBoundedContext = {
-  path: string;
-  method?: string;
-  body?: unknown;
-  query?: unknown;
-  authorizeSettings?: { isAuthorize?: boolean };
+/**
+ * The signed `oauth_query`, refused unless it is a string within {@link OAUTH_QUERY_MAX_BYTES}. It is measured
+ * re-encoded, the form oauth-provider stores (a literal `"` comes back as `%22`, three times longer). A raw
+ * query already over the cap is refused first: oauth-provider signs its queries canonically encoded, so an
+ * honest one is the same length either way. `auth-request-bounds.ts` caps its field count before parsing.
+ */
+const boundOAuthQuery = (oauthQuery: unknown): void => {
+  if (typeof oauthQuery !== "string") refuseInvalid("oauth_query must be a string");
+  if (
+    Buffer.byteLength(oauthQuery, "utf8") > OAUTH_QUERY_MAX_BYTES ||
+    Buffer.byteLength(new URLSearchParams(oauthQuery).toString(), "utf8") > OAUTH_QUERY_MAX_BYTES
+  ) {
+    refuseTooLarge("oauth_query", OAUTH_QUERY_MAX_BYTES);
+  }
 };
 
 /**
@@ -117,31 +156,29 @@ type TBoundedContext = {
  *   endpoint's schema, which refuses it before the record is written.
  * - `/oauth2/authorize` (the authorization-code record, ENG-7396): the parameters the endpoint reads are
  *   capped at {@link OAUTH_AUTHORIZE_PARAMS_MAX_BYTES}, for a direct call and a resumed one alike.
- * - A signed `oauth_query`, on any path: the sign-in, consent and continue routes all replay it into one of
- *   those records. It is capped at {@link OAUTH_QUERY_MAX_BYTES} once re-encoded, which is the form stored
- *   (a literal `"` comes back as `%22`, three times longer), and anything but a string is refused:
- *   oauth-provider's hook reads any truthy value with `new URLSearchParams`, which also takes key/value
- *   pairs or a record, and the signature still verifies, so the cap could otherwise be sidestepped.
+ * - A signed `oauth_query`, on any path: sign-in stores it in the state record, and sign-in, consent and
+ *   continue replay it into authorize. Anything but a string is refused: oauth-provider's hook reads any
+ *   truthy value with `new URLSearchParams`, which also takes key/value pairs or a record, and the signature
+ *   still verifies, so the cap could otherwise be sidestepped.
  */
-export const boundOAuthStateBeforeHandler = (ctx: TBoundedContext): void => {
+export const boundOAuthRecordsBeforeHandler = (ctx: TBoundedContext): void => {
   const body = isRecord(ctx.body) ? ctx.body : undefined;
 
-  if (body?.oauth_query !== undefined) {
-    if (typeof body.oauth_query !== "string") refuse("oauth_query must be a string");
-    const reEncoded = new URLSearchParams(body.oauth_query as string).toString();
-    if (Buffer.byteLength(reEncoded, "utf8") > OAUTH_QUERY_MAX_BYTES) {
-      refuse(`oauth_query must not exceed ${OAUTH_QUERY_MAX_BYTES} bytes`);
-    }
-  }
+  if (body && "oauth_query" in body) boundOAuthQuery(body.oauth_query);
 
-  if (ctx.path === AUTHORIZE_PATH && paramBytes(authorizeParams(ctx)) > OAUTH_AUTHORIZE_PARAMS_MAX_BYTES) {
-    refuse(
-      `Authorization request parameters must not exceed ${OAUTH_AUTHORIZE_PARAMS_MAX_BYTES} bytes`,
-      true
-    );
+  if (
+    ctx.path === AUTHORIZE_PATH &&
+    paramsExceedStored(authorizeParams(ctx), OAUTH_AUTHORIZE_PARAMS_MAX_BYTES)
+  ) {
+    refuseAuthorizeTooLarge();
   }
 
   if (!body || !STATE_WRITING_PATHS.has(ctx.path)) return;
-  if (body.additionalData !== undefined) refuse("additionalData is not supported");
-  for (const field of CALLBACK_URL_FIELDS) refuseOver(body, field, OAUTH_CALLBACK_URL_MAX_BYTES);
+  if (body.additionalData !== undefined) refuseInvalid("additionalData is not supported");
+  for (const field of CALLBACK_URL_FIELDS) {
+    const value = body[field];
+    if (typeof value === "string" && exceedsStored(value, OAUTH_CALLBACK_URL_MAX_BYTES)) {
+      refuseTooLarge(field, OAUTH_CALLBACK_URL_MAX_BYTES);
+    }
+  }
 };

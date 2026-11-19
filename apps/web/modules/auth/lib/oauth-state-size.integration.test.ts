@@ -3,7 +3,7 @@ import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { POST } from "@/app/api/auth/[...all]/route";
 import { REDIRECT_URI, registerClient } from "@/integration/oauth-flow";
 import { createRedisBytesWritten } from "@/integration/redis-bytes-written";
-import { OAUTH_CALLBACK_URL_MAX_BYTES, OAUTH_QUERY_MAX_BYTES } from "./oauth-state-bounds";
+import { OAUTH_CALLBACK_URL_MAX_BYTES, OAUTH_QUERY_MAX_BYTES } from "./oauth-record-bounds";
 import { getMcpResourceUrl } from "./oauth-urls";
 
 /**
@@ -103,7 +103,7 @@ describe("OAuth state record size (ENG-6885)", () => {
   test.each(["callbackURL", "errorCallbackURL", "newUserCallbackURL"])(
     "a %s over the limit is refused and nothing is stored",
     async (field) => {
-      expect(await signInSocial({ [field]: `/${LARGE}` })).toEqual({ status: 400, storedBytes: 0 });
+      expect(await signInSocial({ [field]: `/${LARGE}` })).toEqual({ status: 413, storedBytes: 0 });
     }
   );
 
@@ -154,13 +154,13 @@ describe("OAuth state record size (ENG-6885)", () => {
     );
     expect(Buffer.byteLength(oauthQuery)).toBeGreaterThan(OAUTH_QUERY_MAX_BYTES);
 
-    expect(await signInSocial({ oauth_query: oauthQuery })).toEqual({ status: 400, storedBytes: 0 });
+    expect(await signInSocial({ oauth_query: oauthQuery })).toEqual({ status: 413, storedBytes: 0 });
   });
 
   test("a callback URL is measured as stored, escaped quotes included", async () => {
     // 2,049 raw bytes; Redis would hold each `"` escaped twice, as 4 bytes.
     const quoted = `/${'"'.repeat(OAUTH_CALLBACK_URL_MAX_BYTES / 4)}`;
-    expect(await signInSocial({ callbackURL: quoted })).toEqual({ status: 400, storedBytes: 0 });
+    expect(await signInSocial({ callbackURL: quoted })).toEqual({ status: 413, storedBytes: 0 });
   });
 
   test("a signed query sent as JSON pairs is refused and nothing is stored", async () => {

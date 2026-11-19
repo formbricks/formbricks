@@ -5,7 +5,7 @@ import { GET, POST } from "@/app/api/auth/[...all]/route";
 import { REDIRECT_URI, consent, createUser, grant, registerClient, signIn } from "@/integration/oauth-flow";
 import { createRedisBytesWritten } from "@/integration/redis-bytes-written";
 import { resetDb } from "@/integration/reset-db";
-import { OAUTH_AUTHORIZE_PARAMS_MAX_BYTES } from "./oauth-state-bounds";
+import { OAUTH_AUTHORIZE_PARAMS_MAX_BYTES } from "./oauth-record-bounds";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
 
 /**
@@ -96,14 +96,18 @@ describe("authorization code record size (ENG-7396)", () => {
     }
   );
 
-  test("a padded extra parameter is refused and nothing is stored", async () => {
-    // The schema passes unknown keys through into the stored request, so capping known ones is not enough.
-    expect(await authorize("POST", { x_padding: LARGE })).toEqual({
-      status: 400,
-      codeIssued: false,
-      storedBytes: 0,
-    });
-  });
+  test.each(["GET", "POST"] as const)(
+    "a padded extra parameter on %s is refused and nothing is stored",
+    async (method) => {
+      // The schema passes unknown keys through into the stored request, so capping known ones is not enough.
+      // 12 KB rather than 200 KB on GET, which Node itself refuses past its 16 KiB header limit.
+      expect(await authorize(method, { x_padding: "x".repeat(12 * 1024) })).toEqual({
+        status: 400,
+        codeIssued: false,
+        storedBytes: 0,
+      });
+    }
+  );
 
   test("parameters exactly at the limit still issue a code, and one byte more is refused", async () => {
     // The guard counts the parameters as Redis holds them: a JSON object inside the record's JSON string.
