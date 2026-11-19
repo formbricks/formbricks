@@ -524,7 +524,7 @@ export const ZMcpPatchWorkspaceCustomCssInput = ZV3WorkspaceCustomCssPatchBody.e
 export const ZMcpDeleteSurveyInput = z
   .object({
     surveyId: z.cuid2().describe("Survey ID to delete."),
-    confirm: ZMcpSurveyWriteConfirm,
+    confirm: confirmArgument,
   })
   .strict();
 

@@ -5,6 +5,11 @@ import { listV3Tags, mergeV3Tags, renameV3Tag } from "@/app/api/v3/tags/lib/oper
 import { ZMcpTagListOutput } from "./tag-output-schemas";
 import { ZMcpMergeTagsInput, ZMcpUpdateTagInput } from "./tag-schemas";
 import { registerTagTools } from "./tags";
+import { elicitingOAuthContext } from "./test-utils";
+
+// vitestSetup stubs createHash, which the sealed confirmation state depends on.
+vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
+vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("crypto")>());
 
 vi.mock("@/app/api/v3/tags/lib/operations", () => ({
   listV3Tags: vi.fn(),
@@ -141,7 +146,7 @@ describe("the permission gate", () => {
     expect((await call("list_tags", { workspaceId: WORKSPACE_ID }, readOnly)).isError).toBeFalsy();
     for (const [name, input] of [
       ["update_tag", { tagId: TAG_ID, name: "x" }],
-      ["merge_tags", { tagId: TAG_ID, newTagId: OTHER_TAG_ID }],
+      ["merge_tags", { tagId: TAG_ID, newTagId: OTHER_TAG_ID, confirm: true }],
     ] as const) {
       expect((await call(name, input, readOnly)).isError, `${name} answered a read-only token`).toBe(true);
     }
@@ -168,7 +173,7 @@ describe("the permission gate", () => {
     for (const [name, input] of [
       ["list_tags", { workspaceId: WORKSPACE_ID }],
       ["update_tag", { tagId: TAG_ID, name: "x" }],
-      ["merge_tags", { tagId: TAG_ID, newTagId: OTHER_TAG_ID }],
+      ["merge_tags", { tagId: TAG_ID, newTagId: OTHER_TAG_ID, confirm: true }],
     ] as const) {
       const result = await call(name, input, apiKeyAuthInfo);
       expect(result.isError, `${name} answered an API key`).toBe(true);
@@ -200,8 +205,26 @@ describe("the tools reach the operations", () => {
     );
   });
 
+  // Finding 07: merging removes a tag for good, so a client that can show a prompt is asked first, and the
+  // model's own `confirm: true` does not skip it.
+  test("merge_tags asks a client that can show a prompt before merging, whatever the model passes", async () => {
+    const tool = createToolServer().get("merge_tags")!;
+    const authInfo = oauthAuthInfo(["responses:read", "responses:write"]) as {
+      extra: Record<string, unknown>;
+    };
+
+    for (const input of [
+      { tagId: TAG_ID, newTagId: OTHER_TAG_ID },
+      { tagId: TAG_ID, newTagId: OTHER_TAG_ID, confirm: true },
+    ]) {
+      const result = await tool.handler(input, elicitingOAuthContext(authInfo));
+      expect(result.resultType).toBe("input_required");
+    }
+    expect(mergeV3Tags).not.toHaveBeenCalled();
+  });
+
   test("merge_tags moves the source tag onto the target", async () => {
-    await call("merge_tags", { tagId: TAG_ID, newTagId: OTHER_TAG_ID });
+    await call("merge_tags", { tagId: TAG_ID, newTagId: OTHER_TAG_ID, confirm: true });
 
     expect(mergeV3Tags).toHaveBeenCalledWith(
       expect.objectContaining({ tagId: TAG_ID, newTagId: OTHER_TAG_ID, instance: "/api/mcp" })
