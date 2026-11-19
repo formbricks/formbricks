@@ -26,6 +26,7 @@ const run = (customer: Record<string, unknown>) => {
     // A Filter acts on nothing outside the run.
     environment: { surveyResponse: null } as WorkflowRunEnvironment,
     effects: {} as WorkflowRunEffects,
+    saveOutput: async () => {},
   });
 };
 
