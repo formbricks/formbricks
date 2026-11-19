@@ -727,9 +727,11 @@ export async function patchV3Survey(
       workspaceId: currentSurvey.workspaceId,
       blocks: preparation.document.blocks,
       endings: preparation.document.endings,
+      welcomeCard: preparation.document.welcomeCard,
       previous: {
         blocks: currentSurvey.blocks,
         endings: currentSurvey.endings,
+        welcomeCard: currentSurvey.welcomeCard,
       },
     },
     organizationId

@@ -529,6 +529,11 @@ describe("a Formbricks file imported into another organization", () => {
     const response = await commit({ workspaceId: target, payload, references: done.references });
 
     expect(response.status).toBe(201);
+    const created = await prisma.survey.findUniqueOrThrow({
+      where: { id: surveyIdOf(response) },
+      select: { blocks: true },
+    });
+    expect(JSON.stringify(created.blocks)).toContain('href=\\"https://example.com/more\\"');
   });
 
   test("matches the references a workspace already has, and numbers the next import of the same survey", async () => {

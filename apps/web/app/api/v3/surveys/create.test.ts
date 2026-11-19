@@ -439,6 +439,12 @@ describe("createV3Survey", () => {
         withElement({ subheader: { "en-US": "<p>Terms</p>", "de-DE": LINK } }),
       ],
       [
+        "an <a/href> that the renderer still shows as a link",
+        withElement({
+          headline: { "en-US": '<p><a/href="https://example.com">x</a></p>', "de-DE": "Bedingungen" },
+        }),
+      ],
+      [
         "a date element's html",
         withElement({ type: "date", format: "M-d-y", html: { "en-US": LINK, "de-DE": LINK } }),
       ],
