@@ -59,12 +59,65 @@ const preferCanonicalSibling = (
 };
 
 /**
+ * Spanish regions whose CLDR parent locale is `es-419` (Latin America and the Caribbean, plus the
+ * United States), and `419` itself. A browser in one of them reads `es-419` text before the `es-ES`
+ * base default (ENG-3894).
+ */
+export const LATIN_AMERICAN_SPANISH_REGIONS: ReadonlySet<string> = new Set([
+  "419",
+  "AR",
+  "BO",
+  "BR",
+  "BZ",
+  "CL",
+  "CO",
+  "CR",
+  "CU",
+  "DO",
+  "EC",
+  "GT",
+  "HN",
+  "MX",
+  "NI",
+  "PA",
+  "PE",
+  "PR",
+  "PY",
+  "SV",
+  "US",
+  "UY",
+  "VE",
+]);
+
+/** The region of a Spanish tag (`es-MX` -> `MX`), or undefined for another language or no region. */
+const spanishRegionOf = (code: string): string | undefined => {
+  try {
+    const locale = new Intl.Locale(toHyphenatedCode(code));
+    return locale.language === "es" ? locale.region : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+/** A Latin American Spanish request's `es-419` survey language, when the survey has one. */
+const findLatinAmericanSpanish = (
+  sameBase: readonly TMatchableSurveyLanguage[],
+  requestedCode: string
+): TMatchableSurveyLanguage | undefined => {
+  const requestedRegion = spanishRegionOf(requestedCode);
+  if (!requestedRegion || !LATIN_AMERICAN_SPANISH_REGIONS.has(requestedRegion)) return undefined;
+  return sameBase.find((surveyLanguage) => spanishRegionOf(surveyLanguage.language.code) === "419");
+};
+
+/**
  * Tier 4: a survey language that writes the same base language, script preserved. Works in both
  * directions — `ar` finds `ar-SA`, and `ar-SA` finds `ar-EG` — because both sides are reduced to their
  * language default tag (`ar-*` -> `ar-EG`, `zh-TW` -> `zh-Hant-TW`, never `zh-Hans-CN`).
  *
- * Tie-break among several same-base languages: the one whose stored code IS the base's canonical
- * default tag (`ar-MA` on an `ar-SA`/`ar-EG` survey picks `ar-EG`), else the first in survey order.
+ * Tie-break among several same-base languages: for a Latin American Spanish request, `es-419`
+ * (`es-MX` on an `es-ES`/`es-419` survey picks `es-419`); otherwise the one whose stored code IS the
+ * base's canonical default tag (`ar-MA` on an `ar-SA`/`ar-EG` survey picks `ar-EG`), else the first in
+ * survey order.
  */
 const findSameBaseLanguage = (
   candidates: readonly TMatchableSurveyLanguage[],
@@ -79,10 +132,12 @@ const findSameBaseLanguage = (
   );
 
   return (
+    findLatinAmericanSpanish(sameBase, requestedCode) ??
     sameBase.find(
       (surveyLanguage) =>
         normalizeLanguageCode(surveyLanguage.language.code)?.toLowerCase() === requestedBaseTag.toLowerCase()
-    ) ?? sameBase[0]
+    ) ??
+    sameBase[0]
   );
 };
 
@@ -94,7 +149,8 @@ const findSameBaseLanguage = (
  *   1. exact stored code, ignoring case and treating `_` as `-` (`DE_de` -> `de-DE`)
  *   2. exact alias, ignoring case
  *   3. canonical equivalence via `normalizeLanguageCode` (`pt` -> `pt-BR`, `zh-CN` -> `zh-Hans-CN`)
- *   4. same base language, script preserved (`en-GB` -> `en-US`, `zh-TW` -> `zh-Hant-TW`)
+ *   4. same base language, script preserved (`en-GB` -> `en-US`, `zh-TW` -> `zh-Hant-TW`), Latin
+ *      American Spanish preferring `es-419` (`es-MX` -> `es-419` over `es-ES`)
  *
  * Disabled languages never match. The default language always does: it is the language the survey
  * was authored in, so its `enabled` flag carries no meaning and has never gated it. A match on a legacy

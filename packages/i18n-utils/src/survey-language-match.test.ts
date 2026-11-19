@@ -30,6 +30,15 @@ describe("matchSurveyLanguage — worked examples", () => {
     ["en-GB", ["en-US"], "en-US"],
     ["zh-TW", ["zh-Hans-CN"], null],
     ["zh-TW", ["zh-Hans-CN", "zh-Hant-TW"], "zh-Hant-TW"],
+    // ENG-3894: Latin American Spanish prefers es-419 over the es-ES base default.
+    ["es-MX", ["es-ES", "es-419"], "es-419"],
+    ["es-AR", ["es-419", "es-ES"], "es-419"],
+    ["es_co", ["es-ES", "es-419"], "es-419"],
+    ["es-US", ["es-ES", "es-419"], "es-419"],
+    ["es-MX", ["es-ES"], "es-ES"],
+    ["es", ["es-419", "es-ES"], "es-ES"],
+    ["es-GQ", ["es-419", "es-ES"], "es-ES"],
+    ["es-ES", ["es-419"], "es-419"],
   ])("%s on a survey with %j resolves to %s", (requested, codes, expected) => {
     expect(matchSurveyLanguage(withDefault(...codes.map((code) => language(code))), requested)).toBe(
       expected

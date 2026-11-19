@@ -34,6 +34,11 @@ const LISTS: Record<string, TMatchableSurveyLanguage[]> = {
     language("ar-SA"),
     language("ar-EG"),
   ],
+  "Latin American and European Spanish": [
+    language("en-US", { isDefault: true }),
+    language("es-ES"),
+    language("es-419"),
+  ],
   "a disabled language": [language("en-US", { isDefault: true }), language("fr-FR", { enabled: false })],
   "a default that is a regional variant": [language("es-MX", { isDefault: true }), language("en-GB")],
   "renamed and macro languages": [
@@ -52,7 +57,7 @@ const REQUESTS = [
   "pt", "pt-BR", "pt-PT", "pt-AO", "pt-br",
   "zh", "zh-CN", "zh-SG", "zh-Hans", "zh-TW", "zh-HK", "zh-MO", "zh-Hant", "zh-Hant-TW", "zh-Hans-CN",
   "ar", "ar-MA", "ar-SA", "ar-EG", "ar-AE",
-  "es", "es-MX", "es-ES", "es-419",
+  "es", "es-MX", "es-ES", "es-419", "es-AR", "es_co", "es-US", "es-GQ",
   "fr-FR", "fr", "fr-CA",
   "iw", "he-IL", "he", "nb", "no", "nn", "sr", "sr-Latn", "sr-Cyrl-RS", "tl", "fil", "Filipino",
   "x", "1234", "constructor", "__proto__", "toString", "",
