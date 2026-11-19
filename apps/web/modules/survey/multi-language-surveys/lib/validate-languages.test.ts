@@ -20,6 +20,18 @@ describe("getLanguagesValidationError", () => {
     );
   });
 
+  // The server stores the canonical tag, so two codes that canonicalize alike collide on save (ENG-3602).
+  test.each([
+    ["de", "de-DE"],
+    ["pt", "pt-BR"],
+    ["en_us", "en-US"],
+    ["  DE  ", "de-DE"],
+  ])("refuses %j next to %j, which the server stores as the same language", (added, existing) => {
+    expect(getLanguagesValidationError(rows(existing, added))).toBe(
+      "workspace.languages.duplicate_language_or_language_id"
+    );
+  });
+
   test("refuses the same alias twice", () => {
     expect(
       getLanguagesValidationError([

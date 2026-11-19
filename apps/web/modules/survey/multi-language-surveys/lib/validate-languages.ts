@@ -1,3 +1,4 @@
+import { normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import { iso639Languages } from "@formbricks/i18n-utils/utils";
 
 /** The translation key of the first problem a languages edit has, as `EditLanguage` toasts it. */
@@ -17,6 +18,8 @@ export const getLanguagesValidationError = (
   languages: ReadonlyArray<{ code: string; alias: string | null }>
 ): TLanguagesValidationError | null => {
   const languageCodes = languages.map((language) => language.code.toLowerCase().trim());
+  // The server stores each code as its canonical tag, so `de` next to `de-DE` is the same language.
+  const canonicalCodes = languageCodes.map((code) => normalizeLanguageCode(code)?.toLowerCase() ?? code);
   const languageAliases = languages
     .filter((language) => language.alias)
     .map((language) => language.alias!.toLowerCase().trim());
@@ -26,7 +29,7 @@ export const getLanguagesValidationError = (
   }
 
   // Check for duplicates within the languageCodes and languageAliases
-  if (hasDuplicates(languageAliases) || hasDuplicates(languageCodes)) {
+  if (hasDuplicates(languageAliases) || hasDuplicates(canonicalCodes)) {
     return "workspace.languages.duplicate_language_or_language_id";
   }
 
