@@ -1,6 +1,10 @@
 import { APIError } from "better-auth/api";
 import { describe, expect, test } from "vitest";
-import { OAUTH_CALLBACK_URL_MAX_BYTES, boundOAuthStateBeforeHandler } from "./oauth-state-bounds";
+import {
+  OAUTH_CALLBACK_URL_MAX_BYTES,
+  OAUTH_QUERY_MAX_BYTES,
+  boundOAuthStateBeforeHandler,
+} from "./oauth-state-bounds";
 
 const atLimit = `/${"a".repeat(OAUTH_CALLBACK_URL_MAX_BYTES - 1)}`;
 const overLimit = `${atLimit}a`;
@@ -48,6 +52,18 @@ describe("boundOAuthStateBeforeHandler (ENG-6885)", () => {
       });
     }
   );
+
+  test("accepts a signed oauth_query at its limit and refuses one byte over", () => {
+    const query = "a".repeat(OAUTH_QUERY_MAX_BYTES);
+    expect(refusal("/sign-in/social", { provider: "google", oauth_query: query })).toBeUndefined();
+
+    const error = refusal("/sign-in/social", { provider: "google", oauth_query: `${query}a` });
+    expect(error?.statusCode).toBe(400);
+    expect(error?.body).toMatchObject({
+      code: "VALIDATION_ERROR",
+      message: `oauth_query must not exceed ${OAUTH_QUERY_MAX_BYTES} bytes`,
+    });
+  });
 
   test("counts UTF-8 bytes, not characters", () => {
     // 2,731 three-byte characters: under the limit in characters, over it in bytes.

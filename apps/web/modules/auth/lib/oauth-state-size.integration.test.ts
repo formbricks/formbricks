@@ -1,7 +1,10 @@
+import { randomUUID } from "node:crypto";
 import { createClient } from "redis";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { POST } from "@/app/api/auth/[...all]/route";
-import { OAUTH_CALLBACK_URL_MAX_BYTES } from "./oauth-state-bounds";
+import { REDIRECT_URI, registerClient } from "@/integration/oauth-flow";
+import { OAUTH_CALLBACK_URL_MAX_BYTES, OAUTH_QUERY_MAX_BYTES } from "./oauth-state-bounds";
+import { getMcpResourceUrl } from "./oauth-urls";
 
 /**
  * ENG-6885: starting an OAuth sign-in is anonymous, and Better Auth keeps the caller's `additionalData` and
@@ -53,6 +56,34 @@ const signInSocial = async (body: Record<string, unknown>) => {
   return { status: response.status, storedBytes: sizes.reduce((sum, size) => sum + size, 0) };
 };
 
+/**
+ * The signed `oauth_query` an anonymous MCP client gets back from `/oauth2/authorize`: the login page
+ * receives it and sends it on with the sign-in, and oauth-provider puts it in the state record as
+ * `serverContext`. Every parameter is the caller's own, and anyone can register a client (open DCR).
+ */
+const signedAuthorizeQuery = async (clientId: string, state: string): Promise<string> => {
+  const response = await POST(
+    new Request(`${BASE}/api/auth/oauth2/authorize`, {
+      method: "POST",
+      headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
+      body: new URLSearchParams({
+        response_type: "code",
+        client_id: clientId,
+        redirect_uri: REDIRECT_URI,
+        scope: "openid profile email offline_access",
+        code_challenge: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+        code_challenge_method: "S256",
+        resource: getMcpResourceUrl(),
+        state,
+      }),
+    })
+  );
+  const { url } = (await response.json()) as { url?: string };
+  const query = new URL(url ?? "", BASE).search.slice(1);
+  expect(query, `no signed query (status ${response.status})`).toContain("sig=");
+  return query;
+};
+
 describe("OAuth state record size (ENG-6885)", () => {
   test("an honest sign-in still starts and stores a small state", async () => {
     const { status, storedBytes } = await signInSocial({ callbackURL: "/environments/abc?source=signin" });
@@ -81,5 +112,23 @@ describe("OAuth state record size (ENG-6885)", () => {
     });
     expect(status).toBe(200);
     expect(storedBytes).toBeLessThan(3 * OAUTH_CALLBACK_URL_MAX_BYTES + 2 * 1024);
+  });
+
+  test("an MCP client's honest signed query still starts a sign-in", async () => {
+    const oauthQuery = await signedAuthorizeQuery(await registerClient("eng-6885 honest"), randomUUID());
+    expect(Buffer.byteLength(oauthQuery)).toBeLessThan(OAUTH_QUERY_MAX_BYTES);
+
+    const { status, storedBytes } = await signInSocial({ oauth_query: oauthQuery });
+    expect(status).toBe(200);
+    expect(storedBytes).toBeLessThan(OAUTH_QUERY_MAX_BYTES);
+  });
+
+  test("a signed query over the limit is refused and nothing is stored", async () => {
+    const oauthQuery = await signedAuthorizeQuery(
+      await registerClient("eng-6885 oversized"),
+      LARGE.slice(0, 200 * 1024)
+    );
+
+    expect(await signInSocial({ oauth_query: oauthQuery })).toEqual({ status: 400, storedBytes: 0 });
   });
 });
