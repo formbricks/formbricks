@@ -5,6 +5,7 @@ import type { TAuthzedRelationship } from "./client";
 import {
   AUTHZED_BACKFILL_ORGANIZATION_PAGE_SIZE,
   AUTHZED_BACKFILL_SURVEY_PAGE_SIZE,
+  AUTHZED_PROJECTED_USER,
   AUTHZED_TARGET_CHUNK_SIZE,
 } from "./constants";
 import { getFeedbackDirectoryAssignmentObjectId } from "./feedback-directory-assignment-id";
@@ -519,10 +520,8 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
     mcpGrantOrganizationSelections,
     mcpGrantWorkspaceSelections,
   ] = await Promise.all([
-    // Active users only, as the outbox projects them: a deactivated member holds no relationships, so
-    // an audit must not report theirs as missing nor an apply write them back (ENG-3899).
     prisma.membership.findMany({
-      where: { organizationId, user: { isActive: true } },
+      where: { organizationId, user: AUTHZED_PROJECTED_USER },
       select: { role: true, userId: true },
       orderBy: { userId: "asc" },
     }),
@@ -542,7 +541,7 @@ export const readOrganizationSource = async (organizationId: string): Promise<TA
       orderBy: { id: "asc" },
     }),
     prisma.teamUser.findMany({
-      where: { team: { organizationId }, user: { isActive: true } },
+      where: { team: { organizationId }, user: AUTHZED_PROJECTED_USER },
       select: { role: true, teamId: true, userId: true },
       orderBy: [{ teamId: "asc" }, { userId: "asc" }],
     }),
@@ -842,7 +841,7 @@ export const findMissingSourceRefs = async (
           where: {
             OR: membershipRefs.map(({ organizationId, userId }) => ({ organizationId, userId })),
             // A deactivated user's relationship has no source, so a pruning run removes it.
-            user: { isActive: true },
+            user: AUTHZED_PROJECTED_USER,
           },
           select: { organizationId: true, userId: true },
         }),
@@ -857,7 +856,7 @@ export const findMissingSourceRefs = async (
       : prisma.teamUser.findMany({
           where: {
             OR: teamMembershipRefs.map(({ teamId, userId }) => ({ teamId, userId })),
-            user: { isActive: true },
+            user: AUTHZED_PROJECTED_USER,
           },
           select: { teamId: true, userId: true },
         }),

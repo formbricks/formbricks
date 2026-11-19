@@ -7,6 +7,7 @@ import {
   type TAuthzedRelationshipUpdate,
   getAuthzedClient,
 } from "./client";
+import { AUTHZED_PROJECTED_USER } from "./constants";
 import { deleteOrganizationParentRelationships } from "./organization-parent";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
@@ -121,8 +122,7 @@ const readSnapshot = async (targets: TNormalizedTargets): Promise<TTeamWorkspace
       : prisma.teamUser.findMany({
           where: {
             OR: targets.teamMemberships.map(({ teamId, userId }) => ({ teamId, userId })),
-            // A deactivated user's team roles are deleted, never written (ENG-3899).
-            user: { isActive: true },
+            user: AUTHZED_PROJECTED_USER,
           },
           select: { role: true, teamId: true, userId: true },
           orderBy: [{ teamId: "asc" }, { userId: "asc" }],

@@ -85,9 +85,10 @@ describe("deactivated users in the AuthZed backfill (real PostgreSQL and SpiceDB
     expect(applied.counters.failed).toBe(0);
     expect(await userRelationships(inactiveId)).toEqual([]);
     // The active member in the same organization and team is still projected.
-    expect(await userRelationships(activeId)).toEqual(
-      [`organization:${organizationId}#owner`, `team:${teamId}#admin`].sort((a, b) => a.localeCompare(b))
-    );
+    expect(await userRelationships(activeId)).toEqual([
+      `organization:${organizationId}#owner`,
+      `team:${teamId}#admin`,
+    ]);
   });
 
   test("an applying backfill removes the relationships a deactivated member still holds", async () => {
@@ -112,9 +113,13 @@ describe("deactivated users in the AuthZed backfill (real PostgreSQL and SpiceDB
       },
     ]);
 
+    // An audit reports them as relationships with no source, which a pruning apply removes.
+    const audit = await backfill(organizationId, "dry_run");
+    expect(audit.counters).toMatchObject({ failed: 0, missing: 0, orphaned: 2 });
+
     const applied = await backfill(organizationId, "apply");
 
-    expect(applied.counters.failed).toBe(0);
+    expect(applied.counters).toMatchObject({ failed: 0, pruned: 2 });
     expect(await userRelationships(inactiveId)).toEqual([]);
   });
 

@@ -10,6 +10,7 @@ import {
   type TAuthzedProjectionResult,
   runBestEffortProjection,
 } from "./projection";
+import { AUTHZED_PROJECTED_USER } from "./constants";
 import { packRelationshipUpdateGroups } from "./relationship-batches";
 import { ORGANIZATION_RELATIONS } from "./relationship-map";
 
@@ -55,9 +56,8 @@ const readSnapshot = async (
   prisma.membership.findMany({
     where: {
       OR: targets.map(({ organizationId, userId }) => ({ organizationId, userId })),
-      // A deactivated user holds no relationships: the outbox removes them on deactivation, so their
-      // rows read as absent here and the targets are deleted rather than written back (ENG-3899).
-      user: { isActive: true },
+      // A deactivated user's row reads as absent, so its target is deleted rather than written back.
+      user: AUTHZED_PROJECTED_USER,
     },
     // The current contract does not gate organization membership on `accepted`. Project every active
     // user's row so the SpiceDB graph preserves that behavior exactly.
