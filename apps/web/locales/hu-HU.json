@@ -928,6 +928,8 @@
     },
     "signup": {
       "create_administrator": "Adminisztrátor létrehozása",
+      "setup_token": "Beállítási token",
+      "setup_token_invalid": "A beállítási token helytelen.",
       "this_user_has_all_the_power": "Ez a felhasználó rendelkezik az összes jogosultsággal."
     }
   },

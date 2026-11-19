@@ -928,6 +928,8 @@
     },
     "signup": {
       "create_administrator": "管理者を作成",
+      "setup_token": "セットアップトークン",
+      "setup_token_invalid": "セットアップトークンが正しくありません。",
       "this_user_has_all_the_power": "このユーザーはすべての権限を持っています。"
     }
   },

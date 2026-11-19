@@ -4,7 +4,7 @@ import { z } from "zod";
 import { logger } from "@formbricks/logger";
 import { OperationNotAllowedError } from "@formbricks/types/errors";
 import { IS_FORMBRICKS_CLOUD } from "@/lib/constants";
-import { getHasNoOrganizations } from "@/lib/instance/service";
+import { getHasNoOrganizations, getIsEligibleFirstOrganizationOwner } from "@/lib/instance/service";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization } from "@/lib/organization/service";
 import { capturePostHogEvent, getEmailDomain, groupIdentifyPostHog } from "@/lib/posthog";
@@ -31,6 +31,11 @@ export const createOrganizationAction = authenticatedActionClient
       const isMultiOrgEnabled = await getIsMultiOrgEnabled();
 
       if (!hasNoOrganizations && !isMultiOrgEnabled) {
+        throw new OperationNotAllowedError("This action can only be performed on a fresh instance.");
+      }
+
+      // ENG-7313: with no organization yet, being signed in is not enough to become the instance owner.
+      if (!isMultiOrgEnabled && !(await getIsEligibleFirstOrganizationOwner(ctx.user.id))) {
         throw new OperationNotAllowedError("This action can only be performed on a fresh instance.");
       }
 

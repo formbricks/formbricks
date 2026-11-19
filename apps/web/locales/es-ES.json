@@ -928,6 +928,8 @@
     },
     "signup": {
       "create_administrator": "Crear administrador",
+      "setup_token": "Token de configuración",
+      "setup_token_invalid": "El token de configuración es incorrecto.",
       "this_user_has_all_the_power": "Este usuario tiene todo el poder."
     }
   },

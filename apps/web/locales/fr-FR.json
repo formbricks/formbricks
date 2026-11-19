@@ -928,6 +928,8 @@
     },
     "signup": {
       "create_administrator": "Créer un administrateur",
+      "setup_token": "Jeton de configuration",
+      "setup_token_invalid": "Le jeton de configuration est incorrect.",
       "this_user_has_all_the_power": "Cet utilisateur a tout le pouvoir."
     }
   },

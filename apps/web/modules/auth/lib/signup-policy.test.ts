@@ -3,12 +3,23 @@ import { SIGNUP_DISABLED_ERROR_CODE } from "@formbricks/types/errors";
 import { getIsFreshInstance } from "@/lib/instance/service";
 import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
-import { isUninvitedSignupAllowed, signupPolicyBeforeHandler } from "./signup-policy";
+import {
+  isUninvitedSignupAllowed,
+  resolveUninvitedSignupAdmission,
+  signupPolicyBeforeHandler,
+} from "./signup-policy";
 
-const constantsOverrides = vi.hoisted(() => ({ SIGNUP_ENABLED: true }));
+const constantsOverrides = vi.hoisted(() => ({
+  SIGNUP_ENABLED: true,
+  SETUP_TOKEN: undefined as string | undefined,
+}));
 vi.mock("@/lib/constants", () => ({
+  ENCRYPTION_KEY: "0".repeat(64), // read at load by lib/crypto, which the setup-token check uses
   get SIGNUP_ENABLED() {
     return constantsOverrides.SIGNUP_ENABLED;
+  },
+  get SETUP_TOKEN() {
+    return constantsOverrides.SETUP_TOKEN;
   },
 }));
 vi.mock("@/lib/instance/service", () => ({ getIsFreshInstance: vi.fn() }));
@@ -28,6 +39,7 @@ const unmarkedSignup = { path: "/sign-up/email" } as never;
 beforeEach(() => {
   vi.clearAllMocks();
   constantsOverrides.SIGNUP_ENABLED = true;
+  constantsOverrides.SETUP_TOKEN = undefined;
   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(true);
   vi.mocked(getIsFreshInstance).mockResolvedValue(false);
   vi.mocked(isSignupDomainAllowed).mockReturnValue(false);
@@ -42,6 +54,42 @@ describe("isUninvitedSignupAllowed", () => {
     closeTheInstance();
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
     await expect(isUninvitedSignupAllowed()).resolves.toBe(true);
+  });
+
+  // ENG-7313: SETUP_TOKEN turns the fresh-instance exception into one only the token holder can use.
+  describe("resolveUninvitedSignupAdmission with SETUP_TOKEN configured", () => {
+    const token = "0123456789abcdef-setup-token";
+    beforeEach(() => {
+      closeTheInstance();
+      vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+      constantsOverrides.SETUP_TOKEN = token;
+    });
+
+    test("admits the fresh instance when the right token is presented", async () => {
+      await expect(resolveUninvitedSignupAdmission(token)).resolves.toBe("fresh-instance");
+    });
+
+    test.each([undefined, "", "nope", `${token}x`, token.slice(0, -1)])(
+      "reports setup-token-invalid for %j",
+      async (supplied) => {
+        await expect(resolveUninvitedSignupAdmission(supplied)).resolves.toBe("setup-token-invalid");
+      }
+    );
+
+    test("a caller with no token channel (the Better Auth hooks) is refused", async () => {
+      await expect(isUninvitedSignupAllowed()).resolves.toBe(false);
+    });
+
+    test("the token never matters once the instance is no longer fresh", async () => {
+      vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+      await expect(resolveUninvitedSignupAdmission(token)).resolves.toBe("denied");
+    });
+  });
+
+  test("admits the fresh instance without any token when none is configured", async () => {
+    closeTheInstance();
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+    await expect(resolveUninvitedSignupAdmission()).resolves.toBe("fresh-instance");
   });
 
   test("refuses on a closed, already-provisioned instance", async () => {

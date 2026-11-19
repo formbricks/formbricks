@@ -928,6 +928,8 @@
     },
     "signup": {
       "create_administrator": "创建 管理员",
+      "setup_token": "设置令牌",
+      "setup_token_invalid": "设置令牌不正确。",
       "this_user_has_all_the_power": "此 用户 拥有 所有 权力。"
     }
   },

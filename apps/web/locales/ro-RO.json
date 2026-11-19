@@ -928,6 +928,8 @@
     },
     "signup": {
       "create_administrator": "Creare Administrator",
+      "setup_token": "Token de configurare",
+      "setup_token_invalid": "Tokenul de configurare este incorect.",
       "this_user_has_all_the_power": "Acest utilizator are toată puterea."
     }
   },

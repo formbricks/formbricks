@@ -51,6 +51,8 @@ export const PRISMA_AUTHORIZATION_RESOURCE_INVENTORY = {
   FeedbackSource: "parent_derived_or_data_integrity",
   FeedbackSourceFieldMapping: "parent_derived_or_data_integrity",
   FeedbackSourceFormbricksMapping: "parent_derived_or_data_integrity",
+  // The instance-setup marker (ENG-7313): one system row, written by the first sign-up, read by nobody.
+  InstanceSetup: "authentication_or_application",
   Integration: "workspace_inherited_resource",
   Invite: "authentication_or_application",
   Language: "parent_derived_or_data_integrity",

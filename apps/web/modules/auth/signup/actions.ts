@@ -7,12 +7,14 @@ import {
   INVITE_TOKEN_INVALID_ERROR_CODE,
   InvalidInputError,
   PASSWORD_COMPROMISED_ERROR_CODE,
+  SETUP_TOKEN_INVALID_ERROR_CODE,
   SIGNUP_DISABLED_ERROR_CODE,
   SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE,
   UnknownError,
 } from "@formbricks/types/errors";
 import { ZUser, ZUserLocale } from "@formbricks/types/user";
 import { IS_FORMBRICKS_CLOUD, IS_TURNSTILE_CONFIGURED, TURNSTILE_SECRET_KEY } from "@/lib/constants";
+import { markInstanceSetupCompleted } from "@/lib/instance/service";
 import { createEmailToken, verifyInviteToken } from "@/lib/jwt";
 import { createMembership } from "@/lib/membership/service";
 import { createOrganization, getOrganization } from "@/lib/organization/service";
@@ -350,7 +352,8 @@ async function handlePostUserCreation(
  */
 async function assertSignupPolicyAllows(
   inviteToken: string | undefined,
-  inviteMatch: InviteMatch
+  inviteMatch: InviteMatch,
+  setupToken: string | undefined
 ): Promise<{ isBootstrapAdmin: boolean }> {
   // A supplied-but-unusable invite is rejected before the user row is created, so a bad token can't
   // leave an orphaned account behind (handleInviteAcceptance would otherwise throw after signup).
@@ -370,13 +373,32 @@ async function assertSignupPolicyAllows(
   // administrator during fresh-instance setup, who has no invite to present. That predicate is shared
   // with the Better Auth hooks (signup-policy.ts) — writing it out twice is what left Better Auth's
   // native /sign-up/email open after this action was fixed (ENG-2073 → ENG-2293).
-  const admission = await resolveUninvitedSignupAdmission();
+  const admission = await resolveUninvitedSignupAdmission(setupToken);
   if (admission === "denied") {
     throw new InvalidInputError(SIGNUP_DISABLED_ERROR_CODE);
+  }
+  // ENG-7313: the instance is fresh but `SETUP_TOKEN` is configured and was not presented correctly.
+  // Reveals only what /setup/intro already shows (the instance is unclaimed).
+  if (admission === "setup-token-invalid") {
+    throw new InvalidInputError(SETUP_TOKEN_INVALID_ERROR_CODE);
   }
 
   return { isBootstrapAdmin: admission === "fresh-instance" };
 }
+
+/**
+ * ENG-7313: the instance is set up from the moment its administrator exists, not from the first page that
+ * happens to ask; any other sign-up leaves the marker alone. Not fatal: the account is already created, and
+ * getIsFreshInstance writes the marker too once it sees a user.
+ */
+const recordInstanceSetupForBootstrapAdmin = async (isBootstrapAdmin: boolean, userId: string) => {
+  if (!isBootstrapAdmin) return;
+  try {
+    await markInstanceSetupCompleted();
+  } catch (error) {
+    logger.error({ error, userId }, "Failed to record that the instance is set up");
+  }
+};
 
 export const createUserAction = actionClient.inputSchema(ZCreateUserAction).action(
   withAuditLogging("created", "user", async ({ ctx, parsedInput }) => {
@@ -396,7 +418,11 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     const inviteToken = parsedInput.inviteToken?.trim() || undefined;
     const inviteMatch = await resolveInviteMatch(inviteToken, parsedInput.email);
 
-    const { isBootstrapAdmin } = await assertSignupPolicyAllows(inviteToken, inviteMatch);
+    const { isBootstrapAdmin } = await assertSignupPolicyAllows(
+      inviteToken,
+      inviteMatch,
+      parsedInput.setupToken
+    );
 
     // Formbricks Cloud only: reject personal/free/disposable email domains before any user is created.
     // Invited users are exempt unless SIGNUP_DOMAIN_CHECK_ON_INVITES is enabled.
@@ -425,6 +451,8 @@ export const createUserAction = actionClient.inputSchema(ZCreateUserAction).acti
     // so the caller has proven nothing about an account that already exists (ENG-2091).
     if (outcome.status === "created") {
       const { user } = outcome;
+
+      await recordInstanceSetupForBootstrapAdmin(isBootstrapAdmin, user.id);
 
       // ENG-2562: remember, in THIS browser, that it is the one that created this account, so the
       // verification click can be told apart from a stranger's and only this browser is auto-signed-in.

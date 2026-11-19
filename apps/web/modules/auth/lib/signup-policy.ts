@@ -3,6 +3,7 @@ import { APIError } from "better-auth/api";
 import { SIGNUP_DISABLED_ERROR_CODE } from "@formbricks/types/errors";
 import { SIGNUP_ENABLED } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
+import { isSetupTokenSatisfied } from "@/lib/instance/setup-token";
 import { isSignupDomainAllowed } from "@/modules/auth/lib/signup-request-context";
 import { getIsMultiOrgEnabled } from "@/modules/ee/license-check/lib/utils";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
@@ -33,20 +34,29 @@ import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
  * it skips the license lookup and spends exactly one `count`. Evaluating freshness first — as the
  * original fix did — instead made every unauthenticated raw sign-up attempt run `count(*)` on `User`.
  */
-export type TUninvitedSignupAdmission = "open" | "fresh-instance" | "denied";
+export type TUninvitedSignupAdmission = "open" | "fresh-instance" | "setup-token-invalid" | "denied";
 
 /**
  * WHY a reason and not a boolean (ENG-2247): the fresh-instance branch is the one the bootstrap marker
  * gates, and "allowed" alone cannot tell it apart from open sign-up. Marking on plain "allowed" would
  * write the marker for every Cloud sign-up and collide on the second account ever created.
  */
-export const resolveUninvitedSignupAdmission = async (): Promise<TUninvitedSignupAdmission> => {
+export const resolveUninvitedSignupAdmission = async (
+  setupToken?: string
+): Promise<TUninvitedSignupAdmission> => {
   if (SIGNUP_ENABLED && (await getIsMultiOrgEnabled())) return "open";
-  return (await getIsFreshInstance()) ? "fresh-instance" : "denied";
+  if (!(await getIsFreshInstance())) return "denied";
+  // ENG-7313: with `SETUP_TOKEN` configured the initial administrator must present it. Only the setup
+  // form carries one; every other caller (the Better Auth hooks) passes none and is refused.
+  return isSetupTokenSatisfied(setupToken) ? "fresh-instance" : "setup-token-invalid";
 };
 
+/** Whether the admission lets the sign-up proceed. The refusal reasons are all "no" to a bare caller. */
+export const isAdmitted = (admission: TUninvitedSignupAdmission): boolean =>
+  admission === "open" || admission === "fresh-instance";
+
 export const isUninvitedSignupAllowed = async (): Promise<boolean> =>
-  (await resolveUninvitedSignupAdmission()) !== "denied";
+  isAdmitted(await resolveUninvitedSignupAdmission());
 
 /**
  * Better Auth's native credential sign-up endpoint. Closed over HTTP since ENG-3988 (`disabledPaths`),
