@@ -1,6 +1,7 @@
 import { APIError } from "better-auth/api";
 import { describe, expect, test } from "vitest";
 import {
+  OAUTH_AUTHORIZE_PARAMS_MAX_BYTES,
   OAUTH_CALLBACK_URL_MAX_BYTES,
   OAUTH_QUERY_MAX_BYTES,
   boundOAuthStateBeforeHandler,
@@ -9,9 +10,9 @@ import {
 const atLimit = `/${"a".repeat(OAUTH_CALLBACK_URL_MAX_BYTES - 1)}`;
 const overLimit = `${atLimit}a`;
 
-const refusal = (path: string, body: unknown): APIError | undefined => {
+const refusal = (path: string, body: unknown, query?: unknown): APIError | undefined => {
   try {
-    boundOAuthStateBeforeHandler({ path, body });
+    boundOAuthStateBeforeHandler({ path, body, query });
     return undefined;
   } catch (error) {
     return error as APIError;
@@ -92,5 +93,55 @@ describe("boundOAuthStateBeforeHandler (ENG-6885)", () => {
 
   test("leaves a non-string callback URL to the endpoint's schema", () => {
     expect(refusal("/sign-in/social", { provider: "google", callbackURL: 42 })).toBeUndefined();
+  });
+});
+
+describe("boundOAuthStateBeforeHandler: signed oauth_query on any path (ENG-6885, ENG-7396)", () => {
+  test.each(["/oauth2/consent", "/oauth2/continue", "/sign-in/email"])("caps oauth_query on %s", (path) => {
+    const query = "a".repeat(OAUTH_QUERY_MAX_BYTES);
+    expect(refusal(path, { oauth_query: query })).toBeUndefined();
+    expect(refusal(path, { oauth_query: `${query}a` })?.statusCode).toBe(400);
+    expect(refusal(path, { oauth_query: [["sig", "x"]] })?.body).toMatchObject({
+      message: "oauth_query must be a string",
+    });
+  });
+});
+
+describe("boundOAuthStateBeforeHandler: /oauth2/authorize (ENG-7396)", () => {
+  const honest = {
+    response_type: "code",
+    client_id: "client",
+    redirect_uri: "http://127.0.0.1:33418/callback",
+    scope: "surveys:read offline_access",
+    state: "state",
+  };
+  // The name `x` is one byte.
+  const padded = (bytes: number) => ({ x: "a".repeat(bytes - 1) });
+
+  test("lets an honest request through, from the query or the body", () => {
+    expect(refusal("/oauth2/authorize", undefined, honest)).toBeUndefined();
+    expect(refusal("/oauth2/authorize", honest, {})).toBeUndefined();
+  });
+
+  test.each([
+    ["the query (GET)", undefined, padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES + 1)],
+    ["the body (POST)", padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES + 1), {}],
+    [
+      "query and body together",
+      padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES / 2 + 1),
+      padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES / 2),
+    ],
+  ])("refuses parameters over the limit in %s, as an OAuth error", (_, body, query) => {
+    const error = refusal("/oauth2/authorize", body, query);
+    expect(error?.statusCode).toBe(400);
+    expect(error?.body).toMatchObject({ code: "VALIDATION_ERROR", error: "invalid_request" });
+  });
+
+  test("accepts parameters exactly at the limit", () => {
+    expect(refusal("/oauth2/authorize", padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES), {})).toBeUndefined();
+  });
+
+  test("leaves other paths' parameters alone", () => {
+    expect(refusal("/oauth2/token", padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES + 1), {})).toBeUndefined();
   });
 });

@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
-import { createClient } from "redis";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { POST } from "@/app/api/auth/[...all]/route";
 import { REDIRECT_URI, registerClient } from "@/integration/oauth-flow";
+import { createRedisBytesWritten } from "@/integration/redis-bytes-written";
 import { OAUTH_CALLBACK_URL_MAX_BYTES, OAUTH_QUERY_MAX_BYTES } from "./oauth-state-bounds";
 import { getMcpResourceUrl } from "./oauth-urls";
 
@@ -31,29 +31,33 @@ vi.mock("@/modules/ee/license-check/lib/utils", async (importOriginal) => ({
 
 const BASE = "http://localhost:3000";
 const LARGE = "x".repeat(250 * 1024);
-const inspector = createClient({ url: process.env.REDIS_URL });
+const redis = createRedisBytesWritten();
 
 beforeAll(async () => {
-  await inspector.connect();
+  await redis.connect();
 });
 
 afterAll(async () => {
-  await inspector.quit();
+  await redis.quit();
 });
 
-/** The response, and the bytes of every Redis value the request wrote. */
+/** The response status, and the bytes of every Redis value the request wrote. */
 const signInSocial = async (body: Record<string, unknown>) => {
-  const before = new Set(await inspector.keys("*"));
-  const response = await POST(
-    new Request(`${BASE}/api/auth/sign-in/social`, {
-      method: "POST",
-      headers: { "content-type": "application/json", origin: BASE },
-      body: JSON.stringify({ provider: "saml", callbackURL: "/", errorCallbackURL: "/auth/login", ...body }),
-    })
+  const { result, storedBytes } = await redis.measure(() =>
+    POST(
+      new Request(`${BASE}/api/auth/sign-in/social`, {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: BASE },
+        body: JSON.stringify({
+          provider: "saml",
+          callbackURL: "/",
+          errorCallbackURL: "/auth/login",
+          ...body,
+        }),
+      })
+    )
   );
-  const created = (await inspector.keys("*")).filter((key) => !before.has(key));
-  const sizes = await Promise.all(created.map((key) => inspector.strLen(key)));
-  return { status: response.status, storedBytes: sizes.reduce((sum, size) => sum + size, 0) };
+  return { status: result.status, storedBytes };
 };
 
 /**
@@ -123,15 +127,28 @@ describe("OAuth state record size (ENG-6885)", () => {
     expect(storedBytes).toBeLessThan(OAUTH_QUERY_MAX_BYTES);
   });
 
-  test("a signed query over the limit is refused and nothing is stored", async () => {
-    const oauthQuery = await signedAuthorizeQuery(
-      await registerClient("eng-6885 oversized"),
-      LARGE.slice(0, 200 * 1024)
+  test("an anonymous caller can no longer get an oversized query signed", async () => {
+    // The 205 KB signed query this used to return was replayed into the state record as `serverContext`.
+    // `/oauth2/authorize` now refuses it at the source (ENG-7396); `oauth_query` keeps its own cap besides.
+    const response = await POST(
+      new Request(`${BASE}/api/auth/oauth2/authorize`, {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded", accept: "application/json" },
+        body: new URLSearchParams({
+          response_type: "code",
+          client_id: await registerClient("eng-6885 oversized"),
+          redirect_uri: REDIRECT_URI,
+          state: LARGE.slice(0, 200 * 1024),
+        }),
+      })
     );
+    expect(response.status).toBe(400);
+  });
 
-    expect(await signInSocial({ oauth_query: oauthQuery })).toEqual({ status: 400, storedBytes: 0 });
-    // The same signed query as JSON key/value pairs: oauth-provider reads it with `new URLSearchParams`,
-    // which takes pairs too, so the signature still verifies.
+  test("a signed query sent as JSON pairs is refused and nothing is stored", async () => {
+    // oauth-provider reads `oauth_query` with `new URLSearchParams`, which takes pairs too, so the signature
+    // still verifies; only a string is measured against the cap.
+    const oauthQuery = await signedAuthorizeQuery(await registerClient("eng-6885 pairs"), randomUUID());
     expect(await signInSocial({ oauth_query: [...new URLSearchParams(oauthQuery)] })).toEqual({
       status: 400,
       storedBytes: 0,

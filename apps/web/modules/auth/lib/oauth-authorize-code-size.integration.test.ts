@@ -1,0 +1,122 @@
+import { randomUUID } from "node:crypto";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { prisma } from "@formbricks/database";
+import { GET, POST } from "@/app/api/auth/[...all]/route";
+import { REDIRECT_URI, createUser, grant, registerClient, signIn } from "@/integration/oauth-flow";
+import { createRedisBytesWritten } from "@/integration/redis-bytes-written";
+import { resetDb } from "@/integration/reset-db";
+import { OAUTH_AUTHORIZE_PARAMS_MAX_BYTES } from "./oauth-state-bounds";
+import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
+
+/**
+ * ENG-7396: once a user has consented to a client, every `/oauth2/authorize` call issues a code at once,
+ * and oauth-provider stores the code with the whole authorize request in Redis for 10 minutes. Its schema
+ * caps no string and passes unknown keys through, so one call parked ~200 KB there. Driven through the real
+ * auth route and Redis, because the property is what oauth-provider writes.
+ */
+
+const BASE = "http://localhost:3000";
+const SCOPE = ["surveys:read", "responses:read", "offline_access"].join(" ");
+const LARGE = "x".repeat(200 * 1024);
+const redis = createRedisBytesWritten();
+
+let cookie = "";
+let clientId = "";
+
+beforeAll(async () => {
+  await redis.connect();
+  // A clean instance, so sign-up is open for the test user whichever file ran first; the MCP resource is
+  // instance-level and seeded the way oauth-grant-revocation.integration.test.ts does it.
+  await resetDb();
+  await prisma.oauthResource.createMany({
+    data: [{ identifier: getMcpResourceUrl(), name: "Formbricks MCP", allowedScopes: [...MCP_OAUTH_SCOPES] }],
+    skipDuplicates: true,
+  });
+  const email = `eng-7396-${randomUUID()}@example.com`;
+  await createUser(email, "Integration-Pass-7396!", "ENG-7396");
+  cookie = (await signIn(email, "Integration-Pass-7396!")).cookie;
+  clientId = await registerClient("eng-7396");
+  // The one consent; every authorize call after it gets a code without the consent screen.
+  await grant(cookie, clientId, SCOPE);
+});
+
+afterAll(async () => {
+  await redis.quit();
+});
+
+const authorizeParams = (extra: Record<string, string> = {}) =>
+  new URLSearchParams({
+    response_type: "code",
+    client_id: clientId,
+    redirect_uri: REDIRECT_URI,
+    scope: SCOPE,
+    code_challenge: "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM",
+    code_challenge_method: "S256",
+    resource: getMcpResourceUrl(),
+    state: randomUUID(),
+    ...extra,
+  });
+
+/** Status, whether a code was issued, and the bytes the call left in Redis. */
+const authorize = async (method: "GET" | "POST", extra: Record<string, string> = {}) => {
+  const params = authorizeParams(extra);
+  const headers = { accept: "application/json", cookie, origin: BASE };
+  const { result, storedBytes } = await redis.measure(() =>
+    method === "GET"
+      ? GET(new Request(`${BASE}/api/auth/oauth2/authorize?${params}`, { headers }))
+      : POST(
+          new Request(`${BASE}/api/auth/oauth2/authorize`, {
+            method: "POST",
+            headers: { ...headers, "content-type": "application/x-www-form-urlencoded" },
+            body: params,
+          })
+        )
+  );
+  const body = await result.text();
+  return { status: result.status, codeIssued: body.includes("code="), storedBytes };
+};
+
+describe("authorization code record size (ENG-7396)", () => {
+  test.each(["GET", "POST"] as const)("an honest %s authorize still issues a code", async (method) => {
+    const { status, codeIssued, storedBytes } = await authorize(method);
+    expect(status).toBe(200);
+    expect(codeIssued).toBe(true);
+    expect(storedBytes).toBeGreaterThan(0);
+    expect(storedBytes).toBeLessThan(2 * 1024);
+  });
+
+  test.each(["GET", "POST"] as const)(
+    "a padded state on %s is refused and nothing is stored",
+    async (method) => {
+      expect(await authorize(method, { state: LARGE })).toEqual({
+        status: 400,
+        codeIssued: false,
+        storedBytes: 0,
+      });
+    }
+  );
+
+  test("a padded extra parameter is refused and nothing is stored", async () => {
+    // The schema passes unknown keys through into the stored request, so capping known ones is not enough.
+    expect(await authorize("POST", { x_padding: LARGE })).toEqual({
+      status: 400,
+      codeIssued: false,
+      storedBytes: 0,
+    });
+  });
+
+  test("parameters exactly at the limit still issue a code, and one byte more is refused", async () => {
+    // The guard counts the UTF-8 bytes of parameter names and values.
+    const params = authorizeParams({ state: "fixed-state" });
+    const used = [...params].reduce((sum, [name, value]) => sum + Buffer.byteLength(name + value), 0);
+    const pad = "a".repeat(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES - used - "x_padding".length);
+
+    const atLimit = await authorize("POST", { state: "fixed-state", x_padding: pad });
+    expect(atLimit).toMatchObject({ status: 200, codeIssued: true });
+    expect(await authorize("POST", { state: "fixed-state", x_padding: `${pad}a` })).toEqual({
+      status: 400,
+      codeIssued: false,
+      storedBytes: 0,
+    });
+  });
+});
