@@ -271,4 +271,14 @@ describe("updateUser", () => {
       responses: [],
     });
   });
+
+  // ENG-3725: a failed segment check must fail the request, not report "no segments".
+  test("fails when the segment membership check fails", async () => {
+    vi.mocked(prisma.contact.findFirst, { partial: true, deep: true }).mockResolvedValue(mockContactData);
+    vi.mocked(getPersonSegmentIds).mockRejectedValue(new Error("timeout exceeded when trying to connect"));
+
+    await expect(updateUser(mockWorkspaceId, mockUserId, "desktop")).rejects.toThrow(
+      "timeout exceeded when trying to connect"
+    );
+  });
 });
