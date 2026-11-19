@@ -1,4 +1,5 @@
-import { loggableError, logger } from "@formbricks/logger";
+import { logger } from "@formbricks/logger";
+import { loggableError } from "@formbricks/logger/loggable-error";
 import { parseMigrationPhase } from "./migration-phases";
 import { applyMigrations } from "./migration-runner";
 

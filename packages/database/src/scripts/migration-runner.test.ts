@@ -1,8 +1,10 @@
 import { EventEmitter } from "node:events";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, expectTypeOf, test, vi } from "vitest";
 import { logger } from "@formbricks/logger";
 import {
   type AutocommitDataMigrationContext,
+  type AutocommitDataMigrationScript,
+  type DataMigrationContext,
   type MigrationScript,
   runDataMigration,
 } from "./migration-runner";
@@ -35,10 +37,7 @@ vi.mock("pg", () => ({
     }
   },
 }));
-vi.mock("@formbricks/logger", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@formbricks/logger")>()),
-  logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
-}));
+vi.mock("@formbricks/logger", () => ({ logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() } }));
 vi.mock("../prisma-adapter", () => ({ createPrismaPgAdapter: () => ({ adapter: {} }) }));
 vi.mock("./online-indexes", () => ({ ensureOnlineIndexes: vi.fn() }));
 vi.mock("../prisma", () => ({
@@ -77,7 +76,7 @@ const answerLockQueries = (locked: boolean) =>
 
 const autocommitMigration = (
   run: (context: AutocommitDataMigrationContext) => Promise<void>
-): MigrationScript => ({
+): AutocommitDataMigrationScript => ({
   type: "data",
   id: ID,
   name: "autocommit_migration",
@@ -264,11 +263,13 @@ describe("runDataMigration with transactional: false", () => {
       queryRaw.mockResolvedValue([{ status: "pending" }]);
       const run = vi.fn();
 
-      const assertion = expect(runDataMigration(autocommitMigration(run))).rejects.toThrow(
-        "still running in another process after 30 minutes"
-      );
+      // Caught up front, so the rejection is handled while the fake clock runs.
+      const outcome = runDataMigration(autocommitMigration(run)).catch((error: unknown) => error);
       await vi.advanceTimersByTimeAsync(30 * 60 * 1000 + 5_000);
-      await assertion;
+
+      const error = await outcome;
+      expect(error).toBeInstanceOf(Error);
+      expect((error as Error).message).toContain("still running in another process after 30 minutes");
 
       expect(run).not.toHaveBeenCalled();
       expect(writtenStatuses()).toEqual([]);
@@ -293,7 +294,7 @@ describe("runDataMigration with transactional: false", () => {
   });
 
   test("autocommit migrations are not typed to receive a transaction handle", () => {
-    const migration: MigrationScript = {
+    const migration: AutocommitDataMigrationScript = {
       type: "data",
       id: ID,
       name: "no_tx",
@@ -325,5 +326,9 @@ describe("runDataMigration by default", () => {
     expect(Object.keys(run.mock.calls[0][0]).sort()).toEqual(["prisma", "tx"]);
     expect(txExecuteRaw).toHaveBeenCalledTimes(2);
     expect(executeRaw).not.toHaveBeenCalled();
+  });
+
+  test("keeps one run() signature, so callers of an existing migration pass only prisma and tx", () => {
+    expectTypeOf<NonNullable<MigrationScript["run"]>>().parameter(0).toEqualTypeOf<DataMigrationContext>();
   });
 });

@@ -4,7 +4,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { loggableError, logger } from "@formbricks/logger";
+import { logger } from "@formbricks/logger";
+import { loggableError } from "@formbricks/logger/loggable-error";
 import { Prisma, PrismaClient } from "../prisma";
 import { createPrismaPgAdapter } from "../prisma-adapter";
 import { type AdvisoryLockSession, openAdvisoryLockSession } from "./advisory-lock-session";
@@ -34,7 +35,7 @@ interface MigrationScriptBase {
 }
 
 // The default: `run` executes inside one runner transaction, together with the DataMigration bookkeeping.
-interface TransactionalMigrationScript extends MigrationScriptBase {
+export interface MigrationScript extends MigrationScriptBase {
   run?: (context: DataMigrationContext) => Promise<void>;
   transactional?: true;
   type: "data" | "schema";
@@ -53,7 +54,9 @@ export interface AutocommitDataMigrationScript extends MigrationScriptBase {
   type: "data";
 }
 
-export type MigrationScript = TransactionalMigrationScript | AutocommitDataMigrationScript;
+// What the runner loads and runs. A separate type, so code that calls an existing migration's `run` keeps
+// the single `MigrationScript` signature.
+export type RunnableMigration = MigrationScript | AutocommitDataMigrationScript;
 
 // MIGRATE_DATABASE_URL is scoped to this migration runner. prisma.config.ts
 // always reads DATABASE_URL so normal Prisma CLI commands (generate, format,
@@ -192,7 +195,7 @@ const countRecordedDataMigrations = async (): Promise<number> => {
 // finished_at), so a later normal run sees them applied and skips. This is a
 // single atomic INSERT: it commits all rows or none, so an interrupted fast
 // path is safely resumed by the trigger in `runMigrations`.
-const baselineDataMigrations = async (dataMigrations: MigrationScript[]): Promise<void> => {
+const baselineDataMigrations = async (dataMigrations: RunnableMigration[]): Promise<void> => {
   if (dataMigrations.length === 0) {
     return;
   }
@@ -213,7 +216,7 @@ const baselineDataMigrations = async (dataMigrations: MigrationScript[]): Promis
   );
 };
 
-const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
+const runMigrations = async (migrations: RunnableMigration[]): Promise<void> => {
   logger.info(`Starting migrations: ${migrations.length.toString()} to run`);
   const startTime = Date.now();
 
@@ -282,7 +285,7 @@ const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   // migration — and once more at the end — which preserves ordering exactly:
   // consecutive schema migrations are, by definition, not separated by a data
   // migration, so batching them cannot reorder anything.
-  let schemaBatch: MigrationScript[] = [];
+  let schemaBatch: RunnableMigration[] = [];
 
   const flushSchemaBatch = async (): Promise<void> => {
     if (schemaBatch.length === 0) {
@@ -308,7 +311,7 @@ const runMigrations = async (migrations: MigrationScript[]): Promise<void> => {
   logger.info(`All migrations completed in ${((endTime - startTime) / 1000).toFixed(2)}s`);
 };
 
-const pendingMigrationError = (migration: MigrationScript): Error => {
+const pendingMigrationError = (migration: RunnableMigration): Error => {
   logger.info(`Data migration ${migration.name} is pending.`);
   logger.info("Either there is another migration which is currently running or this is an error.");
   logger.info("If you are sure that there is no migration running, you need to manually resolve the issue.");
@@ -458,7 +461,7 @@ const runAutocommitDataMigration = async (migration: AutocommitDataMigrationScri
   }
 };
 
-export const runDataMigration = async (migration: MigrationScript): Promise<void> => {
+export const runDataMigration = async (migration: RunnableMigration): Promise<void> => {
   logger.info(`Running data migration: ${migration.name}`);
 
   if (migration.transactional === false) {
@@ -542,7 +545,7 @@ export const runDataMigration = async (migration: MigrationScript): Promise<void
 // skips ones already recorded in `_prisma_migrations`, so one call per batch is
 // equivalent to (but far cheaper than) one call per migration.
 const runSchemaMigrationBatch = async (
-  batch: MigrationScript[],
+  batch: RunnableMigration[],
   appliedSchemaMigrations: Set<string>
 ): Promise<void> => {
   if (batch.length === 0) {
@@ -611,9 +614,9 @@ const recordMigrationName = (names: Set<string>, duplicates: string[], migration
 };
 
 /** The data migration scripts (`type: "data"`) a migration module exports. */
-const importDataMigrations = async (modulePath: string): Promise<MigrationScript[]> => {
-  const mod = (await import(modulePath)) as Record<string, MigrationScript | undefined>;
-  const migrations: MigrationScript[] = [];
+const importDataMigrations = async (modulePath: string): Promise<RunnableMigration[]> => {
+  const mod = (await import(modulePath)) as Record<string, RunnableMigration | undefined>;
+  const migrations: RunnableMigration[] = [];
 
   // Check each export in the module for a DataMigrationScript (type: "data")
   for (const key of Object.keys(mod)) {
@@ -645,8 +648,8 @@ const assertNoDuplicateMigrations = (
   );
 };
 
-const loadMigrations = async (): Promise<MigrationScript[]> => {
-  const migrations: MigrationScript[] = [];
+const loadMigrations = async (): Promise<RunnableMigration[]> => {
+  const migrations: RunnableMigration[] = [];
 
   const entries = await fs.readdir(MIGRATIONS_DIR, { withFileTypes: true });
 

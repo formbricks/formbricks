@@ -41,6 +41,8 @@ export default defineConfig(async (): Promise<ViteUserConfig> => {
     resolve: {
       alias: {
         "@": resolve(__dirname, "src"),
+        // Before the package alias: the first matching prefix wins.
+        "@formbricks/logger/loggable-error": resolve(__dirname, "../logger/src/loggable-error.ts"),
         "@formbricks/logger": resolve(__dirname, "../logger/src/index.ts"),
       },
     },

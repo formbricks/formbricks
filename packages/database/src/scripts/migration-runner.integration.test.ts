@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { Client } from "pg";
 import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
 import { getPgConnectionConfig } from "../pg-connection-config";
-import type { AutocommitDataMigrationContext, MigrationScript } from "./migration-runner";
+import type { AutocommitDataMigrationContext, AutocommitDataMigrationScript } from "./migration-runner";
 
 // Opt in only against a disposable database: this fixture creates its own schema and drops it afterward.
 const connection = process.env.ONLINE_UPGRADE_TEST_DATABASE_URL;
@@ -11,13 +11,15 @@ let schemaUrl: string;
 
 const ID = "autocommit_takeover";
 let client: Client;
-let runDataMigration: (migration: MigrationScript) => Promise<void>;
+let runDataMigration: (migration: AutocommitDataMigrationScript) => Promise<void>;
 
 const status = async (): Promise<string | undefined> =>
   (await client.query<{ status: string }>(`SELECT status FROM "DataMigration" WHERE id = $1`, [ID])).rows[0]
     ?.status;
 
-const migration = (run: (context: AutocommitDataMigrationContext) => Promise<void>): MigrationScript => ({
+const migration = (
+  run: (context: AutocommitDataMigrationContext) => Promise<void>
+): AutocommitDataMigrationScript => ({
   type: "data",
   id: ID,
   name: ID,

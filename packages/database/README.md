@@ -84,7 +84,7 @@ holds every lock it takes until `run()` returns. For a backfill that walks a lar
 (`Response`, `ContactAttribute`), set `transactional: false` on the exported migration:
 
 ```ts
-export const backfillSomething: MigrationScript = {
+export const backfillSomething: AutocommitDataMigrationScript = {
   type: "data",
   id: "…",
   name: "…",
