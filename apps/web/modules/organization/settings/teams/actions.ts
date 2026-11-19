@@ -175,7 +175,7 @@ export const deleteMembershipAction = authenticatedActionClient.inputSchema(ZDel
     ctx.auditLoggingCtx.organizationId = parsedInput.organizationId;
     ctx.auditLoggingCtx.membershipId = `${parsedInput.userId}-${parsedInput.organizationId}`;
     ctx.auditLoggingCtx.oldObject = membership;
-    return await deleteMembership(parsedInput.userId, parsedInput.organizationId);
+    return await deleteMembership(parsedInput.userId, parsedInput.organizationId, ctx.user.id);
   })
 );
 
@@ -601,6 +601,6 @@ export const leaveOrganizationAction = authenticatedActionClient.inputSchema(ZLe
     ctx.auditLoggingCtx.membershipId = `${ctx.user.id}-${parsedInput.organizationId}`;
     ctx.auditLoggingCtx.oldObject = membership;
 
-    return await deleteMembership(ctx.user.id, parsedInput.organizationId);
+    return await deleteMembership(ctx.user.id, parsedInput.organizationId, ctx.user.id);
   })
 );

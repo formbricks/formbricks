@@ -11,37 +11,36 @@ import {
 
 const t = ((key: string) => key) as unknown as TFunction;
 
-const buildDefinition = (overrides?: Partial<TWorkflowDefinition>): TWorkflowDefinition =>
-  ({
-    schemaVersion: 1,
-    entryNodeId: "trigger-1",
-    trigger: {
-      id: "trigger-1",
-      type: "trigger",
-      triggerType: "response.completed",
-      config: { surveyId: "u9aohwvk1n3e0gms8p2q6lwt", endingCardIds: [] },
+const buildDefinition = (overrides?: Partial<TWorkflowDefinition>): TWorkflowDefinition => ({
+  schemaVersion: 1,
+  entryNodeId: "trigger-1",
+  trigger: {
+    id: "trigger-1",
+    type: "trigger",
+    triggerType: "response.completed",
+    config: { surveyId: "u9aohwvk1n3e0gms8p2q6lwt", endingCardIds: [] },
+    ui: { position: { x: 0, y: 0 } },
+  },
+  nodes: [
+    {
+      id: "action-1",
+      type: "action",
+      actionType: "send_email",
+      label: "Send email",
+      config: {
+        to: "respondent@example.com",
+        from: "team@example.com",
+        replyTo: [],
+        subject: "Thanks",
+        body: "Body",
+        attachResponseData: false,
+      },
       ui: { position: { x: 0, y: 0 } },
     },
-    nodes: [
-      {
-        id: "action-1",
-        type: "action",
-        actionType: "send_email",
-        label: "Send email",
-        config: {
-          to: "respondent@example.com",
-          from: "team@example.com",
-          replyTo: [],
-          subject: "Thanks",
-          body: "Body",
-          attachResponseData: false,
-        },
-        ui: { position: { x: 0, y: 0 } },
-      },
-    ],
-    edges: [{ id: "edge-1", source: "trigger-1", target: "action-1" }],
-    ...overrides,
-  }) as TWorkflowDefinition;
+  ],
+  edges: [{ id: "edge-1", source: "trigger-1", target: "action-1" }],
+  ...overrides,
+});
 
 describe("snapWorkflowNodePosition", () => {
   test("snaps to the 20px grid", () => {

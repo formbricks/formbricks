@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { ActionClass } from "@formbricks/database/prisma-browser";
 import { TSurvey } from "@formbricks/types/surveys/types";
@@ -70,11 +70,12 @@ export const AddActionModal = ({
     setActiveTab(index);
   };
 
-  useEffect(() => {
-    if (!open) {
-      setActiveTab(0);
-    }
-  }, [open]);
+  // Closing returns to the first tab for the next open. Adjusted during render.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (!open) setActiveTab(0);
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

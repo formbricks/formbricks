@@ -145,11 +145,9 @@ jobs:
           - arch: amd64
             machine: x86_64
             runner: blacksmith-16vcpu-ubuntu-2404
-            node_build_jobs: 4
           - arch: arm64
             machine: aarch64
             runner: blacksmith-32vcpu-ubuntu-2404-arm
-            node_build_jobs: 32
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 120
     steps:
@@ -185,7 +183,6 @@ jobs:
           tags: ${{ env.CANDIDATE_REPOSITORY }}:${{ env.CANDIDATE_TAG }}-${{ matrix.arch }}
           labels: ${{ needs.prepare.outputs.labels }}
           build-args: |
-            NODE_BUILD_JOBS=${{ matrix.node_build_jobs }}
             FORMBRICKS_DEPLOYMENT_ID=${{ needs.prepare.outputs.identity }}
             FORMBRICKS_BUILD_VARIANT=${{ inputs.registry_type }}
           no-cache-filters: ${{ inputs.rebuild_application == true && 'installer,runner' || '' }}

@@ -61,9 +61,11 @@ describe("resetPasswordAction", () => {
   });
 
   test("resets the password through Better Auth on success", async () => {
-    vi.mocked(auth.api.resetPassword).mockResolvedValue({ status: true } as any);
+    vi.mocked(auth.api.resetPassword, { partial: true }).mockResolvedValue({ status: true });
 
-    const result = await resetPasswordAction({ parsedInput } as any);
+    const result = await resetPasswordAction({ parsedInput } as unknown as Parameters<
+      typeof resetPasswordAction
+    >[0]);
 
     expect(result).toEqual({ success: true });
     expect(auth.api.resetPassword).toHaveBeenCalledWith({
@@ -73,7 +75,7 @@ describe("resetPasswordAction", () => {
   });
 
   test("applies the reset-password IP limit before calling Better Auth", async () => {
-    vi.mocked(auth.api.resetPassword).mockResolvedValue({ status: true } as never);
+    vi.mocked(auth.api.resetPassword).mockResolvedValue({ status: true });
 
     await resetPasswordAction({ parsedInput } as never);
 
@@ -99,7 +101,9 @@ describe("resetPasswordAction", () => {
 
     // Invoke once and assert on the single promise — this action wraps a mutating auth call, so
     // re-invoking would double the side effect and weaken the test.
-    const result = resetPasswordAction({ parsedInput } as any);
+    const result = resetPasswordAction({ parsedInput } as unknown as Parameters<
+      typeof resetPasswordAction
+    >[0]);
     await expect(result).rejects.toBeInstanceOf(InvalidPasswordResetTokenError);
     await expect(result).rejects.toThrow(INVALID_PASSWORD_RESET_TOKEN_ERROR_CODE);
     expect(auth.api.resetPassword).toHaveBeenCalledTimes(1);
@@ -113,7 +117,9 @@ describe("resetPasswordAction", () => {
       new APIError("BAD_REQUEST", { message: "breached", code: PASSWORD_COMPROMISED_ERROR_CODE })
     );
 
-    const result = resetPasswordAction({ parsedInput } as any);
+    const result = resetPasswordAction({ parsedInput } as unknown as Parameters<
+      typeof resetPasswordAction
+    >[0]);
     await expect(result).rejects.toBeInstanceOf(InvalidInputError);
     await expect(result).rejects.toThrow(PASSWORD_COMPROMISED_ERROR_CODE);
     expect(auth.api.resetPassword).toHaveBeenCalledTimes(1);
@@ -137,13 +143,17 @@ describe("resetPasswordAction", () => {
   test("propagates an unexpected (non-APIError) error unchanged", async () => {
     vi.mocked(auth.api.resetPassword).mockRejectedValue(new Error("Database error"));
 
-    await expect(resetPasswordAction({ parsedInput } as any)).rejects.toThrow("Database error");
+    await expect(
+      resetPasswordAction({ parsedInput } as unknown as Parameters<typeof resetPasswordAction>[0])
+    ).rejects.toThrow("Database error");
   });
 
   test("rejects when password reset is disabled and never calls Better Auth", async () => {
     constantsState.passwordResetDisabled = true;
 
-    await expect(resetPasswordAction({ parsedInput } as any)).rejects.toThrow(OperationNotAllowedError);
+    await expect(
+      resetPasswordAction({ parsedInput } as unknown as Parameters<typeof resetPasswordAction>[0])
+    ).rejects.toThrow(OperationNotAllowedError);
     expect(applyIPRateLimit).not.toHaveBeenCalled();
     expect(auth.api.resetPassword).not.toHaveBeenCalled();
   });

@@ -105,74 +105,10 @@ export class UpdateQueue {
     const flushPromise = new Promise<void>((resolve, reject) => {
       const handler = async (): Promise<void> => {
         try {
-          let currentUpdates = { ...this.updates };
-          const config = Config.getInstance();
+          const currentUpdates = { ...this.updates };
 
           if (Object.keys(currentUpdates).length > 0) {
-            // Get userId from either updates or config
-            const effectiveUserId = currentUpdates.userId ?? config.get().user.data.userId;
-            const isLanguageInUpdates = currentUpdates.attributes?.language;
-
-            if (!effectiveUserId && isLanguageInUpdates) {
-              // no user id set but the updates contain a language
-              // we need to set this language in the local config:
-              config.update({
-                ...config.get(),
-                user: {
-                  ...config.get().user,
-                  data: {
-                    ...config.get().user.data,
-                    language: currentUpdates.attributes?.language as string | undefined,
-                  },
-                },
-              });
-
-              logger.debug("Updated language successfully");
-
-              const { language: _, ...remainingAttributes } = currentUpdates.attributes ?? {};
-
-              // remove language from attributes
-              currentUpdates = {
-                ...currentUpdates,
-                attributes: remainingAttributes,
-              };
-            }
-
-            if (Object.keys(currentUpdates.attributes ?? {}).length > 0 && !effectiveUserId) {
-              const errorMessage =
-                "Formbricks can't set attributes without a userId! Please set a userId first with the setUserId function";
-              logger.error(errorMessage);
-              this.clearUpdates();
-            }
-
-            // Only send updates if we have a userId (either from updates or local storage)
-            if (effectiveUserId) {
-              const previousUserId = config.get().user.data.userId;
-              const isNewUser = currentUpdates.userId && currentUpdates.userId !== previousUserId;
-              const hasAttributes = Object.keys(currentUpdates.attributes ?? {}).length > 0;
-
-              const result = await sendUpdates({
-                updates: {
-                  userId: effectiveUserId,
-                  attributes: currentUpdates.attributes ?? {},
-                },
-              });
-
-              if (result.ok) {
-                if (isNewUser) {
-                  logger.debug(`User successfully identified: ${effectiveUserId}`);
-                }
-                // Only log success message if there were no warnings (e.g., skipped attributes)
-                if (hasAttributes && !result.data.hasWarnings) {
-                  const attributeKeys = Object.keys(currentUpdates.attributes ?? {}).join(", ");
-                  logger.debug(`Attributes successfully set: ${attributeKeys}`);
-                }
-              } else {
-                logger.error(
-                  `Failed to send updates: ${result.error.responseMessage ?? result.error.message}`
-                );
-              }
-            }
+            await this.flushUpdates(currentUpdates, Config.getInstance(), logger);
           }
 
           this.clearUpdates();
@@ -193,4 +129,91 @@ export class UpdateQueue {
     this.pendingFlush = flushPromise;
     return flushPromise;
   }
+
+  private async flushUpdates(updates: Partial<TUpdates>, config: Config, logger: Logger): Promise<void> {
+    let currentUpdates = updates;
+
+    // Get userId from either updates or config
+    const effectiveUserId = currentUpdates.userId ?? config.get().user.data.userId;
+
+    if (!effectiveUserId && currentUpdates.attributes?.language) {
+      currentUpdates = storeLanguageLocally(currentUpdates, config, logger);
+    }
+
+    if (Object.keys(currentUpdates.attributes ?? {}).length > 0 && !effectiveUserId) {
+      const errorMessage =
+        "Formbricks can't set attributes without a userId! Please set a userId first with the setUserId function";
+      logger.error(errorMessage);
+      this.clearUpdates();
+    }
+
+    // Only send updates if we have a userId (either from updates or local storage)
+    if (effectiveUserId) {
+      await sendUserUpdates(currentUpdates, effectiveUserId, config, logger);
+    }
+  }
 }
+
+/**
+ * With no user id set, a language in the updates can only go to the local config. Stores it there and
+ * returns the updates without it.
+ */
+const storeLanguageLocally = (
+  updates: Partial<TUpdates>,
+  config: Config,
+  logger: Logger
+): Partial<TUpdates> => {
+  config.update({
+    ...config.get(),
+    user: {
+      ...config.get().user,
+      data: {
+        ...config.get().user.data,
+        language: updates.attributes?.language as string | undefined,
+      },
+    },
+  });
+
+  logger.debug("Updated language successfully");
+
+  const { language: _, ...remainingAttributes } = updates.attributes ?? {};
+
+  // remove language from attributes
+  return {
+    ...updates,
+    attributes: remainingAttributes,
+  };
+};
+
+/** Sends the updates for `userId` to the backend and logs the outcome. */
+const sendUserUpdates = async (
+  updates: Partial<TUpdates>,
+  userId: string,
+  config: Config,
+  logger: Logger
+): Promise<void> => {
+  const previousUserId = config.get().user.data.userId;
+  const isNewUser = updates.userId && updates.userId !== previousUserId;
+  const hasAttributes = Object.keys(updates.attributes ?? {}).length > 0;
+
+  const result = await sendUpdates({
+    updates: {
+      userId,
+      attributes: updates.attributes ?? {},
+    },
+  });
+
+  if (!result.ok) {
+    logger.error(`Failed to send updates: ${result.error.responseMessage ?? result.error.message}`);
+    return;
+  }
+
+  if (isNewUser) {
+    logger.debug(`User successfully identified: ${userId}`);
+  }
+  // Only log success message if there were no warnings (e.g., skipped attributes)
+  if (hasAttributes && !result.data.hasWarnings) {
+    const attributeKeys = Object.keys(updates.attributes ?? {}).join(", ");
+    logger.debug(`Attributes successfully set: ${attributeKeys}`);
+  }
+};

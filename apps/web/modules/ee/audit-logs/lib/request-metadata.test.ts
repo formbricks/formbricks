@@ -47,7 +47,7 @@ describe("getAuditRequestMetadata", () => {
       new Headers({
         [FORMBRICKS_CLIENT_IP_HEADER]: "203.0.113.7",
         "user-agent": "Browser/1",
-      }) as never
+      })
     );
     await expect(getAuditRequestMetadata()).resolves.toEqual({
       ipAddress: "203.0.113.7",

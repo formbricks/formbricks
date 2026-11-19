@@ -52,7 +52,7 @@ describe("decodeSonarMessage and touchesStagedCode", () => {
   const ranges: [number, number][] = [[12, 12]];
   const complexFunction = {
     line: 3,
-    messageId: "sonarRuntime",
+    ruleId: "sonarjs/cognitive-complexity",
     message: JSON.stringify({
       message: "Refactor this function to reduce its Cognitive Complexity from 17 to the 15 allowed.",
       secondaryLocations: [

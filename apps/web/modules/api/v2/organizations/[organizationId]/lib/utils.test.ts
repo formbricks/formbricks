@@ -16,7 +16,7 @@ describe("hasOrganizationIdAndAccess", () => {
     const spyError = vi.spyOn(logger, "error").mockImplementation(() => {});
     const authentication = {
       organizationAccess: { accessControl: { read: true } },
-    } as any;
+    } as unknown as Parameters<typeof hasOrganizationIdAndAccess>[1];
 
     const result = await hasOrganizationIdAndAccess("org1", authentication, "read" as OrganizationAccessType);
     expect(result).toBe(false);
@@ -30,7 +30,7 @@ describe("hasOrganizationIdAndAccess", () => {
     const authentication = {
       organizationId: "org2",
       organizationAccess: { accessControl: { read: true } },
-    } as any;
+    } as unknown as Parameters<typeof hasOrganizationIdAndAccess>[1];
 
     const result = await hasOrganizationIdAndAccess("org1", authentication, "read" as OrganizationAccessType);
     expect(result).toBe(false);
@@ -44,7 +44,7 @@ describe("hasOrganizationIdAndAccess", () => {
     const authentication = {
       organizationId: "org1",
       organizationAccess: { accessControl: {} },
-    } as any;
+    } as unknown as Parameters<typeof hasOrganizationIdAndAccess>[1];
 
     const result = await hasOrganizationIdAndAccess("org1", authentication, "read" as OrganizationAccessType);
     expect(result).toBe(false);
@@ -55,7 +55,7 @@ describe("hasOrganizationIdAndAccess", () => {
     const authentication = {
       organizationId: "org1",
       organizationAccess: { accessControl: { read: true } },
-    } as any;
+    } as unknown as Parameters<typeof hasOrganizationIdAndAccess>[1];
 
     const result = await hasOrganizationIdAndAccess("org1", authentication, "read" as OrganizationAccessType);
     expect(result).toBe(true);

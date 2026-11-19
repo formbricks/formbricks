@@ -79,3 +79,24 @@ export async function responseToMcpToolResult(
     true
   );
 }
+
+/**
+ * The answer to a tool call that was denied something because the request's grant doesn't reach it
+ * (ADR-0042): one not found, with nothing taken from the operation's own body, so an id outside the grant
+ * and an id that doesn't exist read alike and the client can't learn what else exists. The tool guard
+ * calls it only for an error answer of a call during which `can()` or a list lookup denied on the grant's
+ * reach (`runRecordingMcpReachDenials`); every other answer passes through unchanged.
+ */
+export const mcpOutsideGrantResult = (requestId: string): CallToolResult =>
+  toTextResult(
+    {
+      error: {
+        status: 404,
+        title: "Not Found",
+        code: "not_found",
+        detail: "Not found. It doesn't exist, or the user's grant to this MCP client doesn't reach it.",
+        requestId,
+      },
+    },
+    true
+  );

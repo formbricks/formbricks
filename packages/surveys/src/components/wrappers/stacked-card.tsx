@@ -1,5 +1,5 @@
 import { MutableRef } from "preact/hooks";
-import { useEffect, useMemo, useState } from "preact/hooks";
+import { useLayoutEffect, useMemo, useState } from "preact/hooks";
 import { JSX } from "preact/jsx-runtime";
 import React from "react";
 import { FB_PART } from "@formbricks/survey-ui/parts";
@@ -8,7 +8,7 @@ import { TJsWorkspaceStateSurvey } from "@formbricks/types/js";
 import { TCardArrangementOptions } from "@formbricks/types/styling";
 
 interface StackedCardProps {
-  cardRefs: MutableRef<(HTMLDivElement | null)[]>;
+  cardElementsRef: MutableRef<(HTMLDivElement | null)[]>;
   dynamicQuestionIndex: number;
   offset: number;
   fullSizeCards: boolean;
@@ -23,7 +23,7 @@ interface StackedCardProps {
 }
 
 export const StackedCard = ({
-  cardRefs,
+  cardElementsRef,
   dynamicQuestionIndex,
   offset,
   fullSizeCards,
@@ -39,7 +39,9 @@ export const StackedCard = ({
   const isHidden = offset < 0;
   const [delayedOffset, setDelayedOffset] = useState<number>(offset);
   const [contentOpacity, setContentOpacity] = useState<number>(0);
-  const currentCardHeight = offset === 0 ? "auto" : offset < 0 ? "initial" : cardHeight;
+  let currentCardHeight = cardHeight;
+  if (offset === 0) currentCardHeight = "auto";
+  else if (offset < 0) currentCardHeight = "initial";
 
   const getTopBottomStyles = () => {
     if (survey.type !== "link")
@@ -69,14 +71,16 @@ export const StackedCard = ({
 
     return (offset: number) => {
       switch (cardArrangement) {
-        case "casual":
-          return offset < 0
-            ? `translateX(33%)`
-            : `translateX(0) rotate(-${((hovered ? rotationCoefficient : rotationCoefficient - 0.5) * offset).toString()}deg)`;
-        case "straight":
-          return offset < 0
-            ? `translateY(25%)`
-            : `translateY(-${((hovered ? 12 : 10) * offset).toString()}px)`;
+        case "casual": {
+          if (offset < 0) return `translateX(33%)`;
+          const coefficient = hovered ? rotationCoefficient : rotationCoefficient - 0.5;
+          return `translateX(0) rotate(-${(coefficient * offset).toString()}deg)`;
+        }
+        case "straight": {
+          if (offset < 0) return `translateY(25%)`;
+          const step = hovered ? 12 : 10;
+          return `translateY(-${(step * offset).toString()}px)`;
+        }
         default:
           return `translateX(0)`;
       }
@@ -91,23 +95,34 @@ export const StackedCard = ({
         }
       : {};
 
-  useEffect(() => {
-    setTimeout(() => {
+  // Both timers are cancelled when the offset changes again: a Next followed quickly by a Back left the
+  // first move's swap pending, and it then put the old card's content back under the respondent.
+  // A layout effect, so the previous offset's timers are cleared in the same commit as the new offset:
+  // Preact runs a passive effect's cleanup only after the next frame, and a timer firing in between
+  // would show the stale offset's content on the card the respondent is on.
+  useLayoutEffect(() => {
+    const swapTimer = setTimeout(() => {
       setDelayedOffset(offset);
     }, 300);
 
+    let fadeInTimer: ReturnType<typeof setTimeout> | undefined;
     if (offset === 0) {
       setContentOpacity(0);
-      setTimeout(() => {
+      fadeInTimer = setTimeout(() => {
         setContentOpacity(1);
       }, 300);
     }
+
+    return () => {
+      clearTimeout(swapTimer);
+      clearTimeout(fadeInTimer);
+    };
   }, [offset]);
 
   return (
     <div
       ref={(el) => {
-        cardRefs.current[dynamicQuestionIndex] = el;
+        cardElementsRef.current[dynamicQuestionIndex] = el;
       }}
       id={`questionCard-${dynamicQuestionIndex}`}
       data-testid={`questionCard-${dynamicQuestionIndex}`}

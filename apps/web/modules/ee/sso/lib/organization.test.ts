@@ -12,7 +12,7 @@ vi.mock("@formbricks/database", () => ({
   },
 }));
 vi.mock("react", () => ({
-  cache: (fn: any) => fn,
+  cache: (fn: unknown) => fn,
 }));
 
 describe("getFirstOrganization", () => {

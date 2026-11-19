@@ -18,13 +18,15 @@ import {
 } from "@/modules/ee/contacts/segments/lib/helper";
 import { getSegment } from "@/modules/ee/contacts/segments/lib/segments";
 
-const mockSurveyFindMany = vi.fn();
+/** The batched lookup's arguments, as the code under test builds them. */
+type TSurveyBatchArgs = { where: { id: { in: string[] }; workspaceId?: string } };
+const mockSurveyFindMany = vi.fn<(args: TSurveyBatchArgs) => Promise<{ id: string }[]>>();
 const mockSurveyFindFirst = vi.fn();
 
 vi.mock("@formbricks/database", () => ({
   prisma: {
     survey: {
-      findMany: (...args: unknown[]) => mockSurveyFindMany(...args),
+      findMany: (args: TSurveyBatchArgs) => mockSurveyFindMany(args),
       findFirst: (...args: unknown[]) => mockSurveyFindFirst(...args),
     },
   },
@@ -155,7 +157,7 @@ describe("checkForRecursiveSegmentFilter", () => {
           ],
         },
       ],
-    } as any);
+    } as unknown as Awaited<ReturnType<typeof getSegment>>);
 
     // Act & Assert
     await expect(
@@ -215,13 +217,14 @@ describe("checkForRecursiveSegmentFilter", () => {
     ];
 
     // Mock getSegment to return appropriate segment data for each segment ID
-    vi.mocked(getSegment).mockImplementation(async (id) => {
+    vi.mocked(getSegment, { partial: true, deep: true }).mockImplementation(async (id) => {
       if (id === segmentIdB) {
-        return { id: segmentIdB, filters: filtersB } as any;
+        // The filters are only read for their segment references, so they are not full TBaseFilters.
+        return { id: segmentIdB, filters: filtersB } as unknown as Awaited<ReturnType<typeof getSegment>>;
       } else if (id === segmentIdC) {
-        return { id: segmentIdC, filters: filtersC } as any;
+        return { id: segmentIdC, filters: filtersC } as unknown as Awaited<ReturnType<typeof getSegment>>;
       }
-      return { id, filters: [] } as any;
+      return { id, filters: [] };
     });
 
     // Act & Assert
@@ -350,10 +353,7 @@ describe("assertSurveyInteractionSurveyIds", () => {
   });
 
   test("deduplicates ids collected across filters before querying", async () => {
-    const filters = [
-      ...buildSpecificFilter(["s1", "s2"]),
-      ...buildSpecificFilter(["s2", "s1"]),
-    ] as unknown as TBaseFilters;
+    const filters = [...buildSpecificFilter(["s1", "s2"]), ...buildSpecificFilter(["s2", "s1"])];
     mockSurveyFindMany.mockResolvedValue([{ id: "s1" }, { id: "s2" }]);
 
     await expect(assertSurveyInteractionSurveyIds(filters, "workspace-1")).resolves.toBeUndefined();
@@ -367,19 +367,17 @@ describe("assertSurveyInteractionSurveyIds", () => {
 
   test("splits an oversized id list into bounded sequential batches, all workspace-scoped", async () => {
     const surveyIds = Array.from({ length: 450 }, (_, index) => `s_${index}`);
-    mockSurveyFindMany.mockImplementation(async ({ where }: any) =>
-      where.id.in.map((id: string) => ({ id }))
-    );
+    mockSurveyFindMany.mockImplementation(async ({ where }) => where.id.in.map((id: string) => ({ id })));
 
     await expect(
       assertSurveyInteractionSurveyIds(buildSpecificFilter(surveyIds), "workspace-1")
     ).resolves.toBeUndefined();
 
     // 450 ids at a batch size of 200 -> 200 / 200 / 50, each query scoped to the workspace.
-    const batchSizes = mockSurveyFindMany.mock.calls.map(([args]: any) => args.where.id.in.length);
+    const batchSizes = mockSurveyFindMany.mock.calls.map(([args]) => args.where.id.in.length);
     expect(batchSizes).toEqual([200, 200, 50]);
     for (const [args] of mockSurveyFindMany.mock.calls) {
-      expect((args as any).where.workspaceId).toBe("workspace-1");
+      expect(args.where.workspaceId).toBe("workspace-1");
     }
   });
 
@@ -387,7 +385,7 @@ describe("assertSurveyInteractionSurveyIds", () => {
     const surveyIds = Array.from({ length: 450 }, (_, index) => `s_${index}`);
     // Two ids in the second batch are foreign/unknown; the earlier one must win, and the third
     // batch must never be queried.
-    mockSurveyFindMany.mockImplementation(async ({ where }: any) =>
+    mockSurveyFindMany.mockImplementation(async ({ where }) =>
       where.id.in.filter((id: string) => id !== "s_205" && id !== "s_210").map((id: string) => ({ id }))
     );
 
@@ -417,13 +415,11 @@ describe("assertSurveyInteractionSurveyIds", () => {
         },
       },
     })) as unknown as TBaseFilters;
-    mockSurveyFindMany.mockImplementation(async ({ where }: any) =>
-      where.id.in.map((id: string) => ({ id }))
-    );
+    mockSurveyFindMany.mockImplementation(async ({ where }) => where.id.in.map((id: string) => ({ id })));
 
     await expect(assertSurveyInteractionSurveyIds(filters, "workspace-1")).resolves.toBeUndefined();
 
-    const batchSizes = mockSurveyFindMany.mock.calls.map(([args]: any) => args.where.id.in.length);
+    const batchSizes = mockSurveyFindMany.mock.calls.map(([args]) => args.where.id.in.length);
     expect(batchSizes).toEqual([200, 200, 200, 200, 200]);
   });
 });

@@ -28,7 +28,7 @@ export const EditBranding = ({ type, isEnabled, workspaceId, isReadOnly }: EditB
     const newBrandingState = !isBrandingEnabled;
     setIsBrandingEnabled(newBrandingState);
 
-    let inputWorkspace: TWorkspaceUpdateBrandingInput = {
+    const inputWorkspace: TWorkspaceUpdateBrandingInput = {
       [type === "linkSurvey" ? "linkSurveyBranding" : "inAppSurveyBranding"]: newBrandingState,
     };
     const updateBrandingResponse = await updateWorkspaceBrandingAction({ workspaceId, data: inputWorkspace });

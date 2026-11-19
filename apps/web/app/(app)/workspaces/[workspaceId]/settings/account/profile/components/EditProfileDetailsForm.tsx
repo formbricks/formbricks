@@ -127,8 +127,8 @@ export const EditProfileDetailsForm = ({
         toast.success(t("workspace.settings.profile.profile_updated_successfully"));
         window.location.reload();
         form.reset(data);
-      } catch (error: any) {
-        toast.error(`${t("common.error")}: ${error.message}`);
+      } catch (error) {
+        toast.error(`${t("common.error")}: ${error instanceof Error ? error.message : String(error)}`);
       }
     }
   };

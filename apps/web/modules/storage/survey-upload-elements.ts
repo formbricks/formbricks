@@ -187,7 +187,7 @@ export const getSurveyUploadElementConfigs = ({
   const isUploadElement = (element: { type: string }) => getUploadElementKind(element.type) !== undefined;
 
   return [
-    ...(blocks ?? []).flatMap((block) => block.elements).filter(isUploadElement),
+    ...(blocks ?? []).flatMap((block) => block.elements ?? []).filter(isUploadElement),
     // The element and legacy question enums spell both types the same (`"fileUpload"`, `"signature"`),
     // so the element enum covers the legacy shape too.
     ...(questions ?? []).filter(isUploadElement),

@@ -95,7 +95,9 @@ describe("organization AI settings actions", () => {
       },
     };
 
-    const result = await updateOrganizationAISettingsAction({ ctx, parsedInput } as any);
+    const result = await updateOrganizationAISettingsAction({ ctx, parsedInput } as unknown as Parameters<
+      typeof updateOrganizationAISettingsAction
+    >[0]);
 
     expect(mocks.assertCan).toHaveBeenCalledWith({ type: "user", id: "user_1" }, "organization.manage", {
       type: "organization",
@@ -135,7 +137,7 @@ describe("organization AI settings actions", () => {
             isAISmartToolsEnabled: true,
           },
         },
-      } as any)
+      } as unknown as Parameters<typeof updateOrganizationAISettingsAction>[0])
     ).rejects.toThrow(AuthorizationError);
 
     expect(mocks.updateOrganization).not.toHaveBeenCalled();
@@ -194,7 +196,7 @@ describe("organization AI settings actions", () => {
             isAISmartToolsEnabled: true,
           },
         },
-      } as any)
+      } as unknown as Parameters<typeof updateOrganizationAISettingsAction>[0])
     ).rejects.toThrow(OperationNotAllowedError);
 
     expect(mocks.updateOrganization).not.toHaveBeenCalled();
@@ -212,7 +214,7 @@ describe("organization AI settings actions", () => {
           isAISmartToolsEnabled: true,
         },
       },
-    } as any);
+    } as unknown as Parameters<typeof updateOrganizationAISettingsAction>[0]);
 
     expect(mocks.updateOrganization).toHaveBeenCalledWith(organizationId, {
       isAISmartToolsEnabled: true,
@@ -237,7 +239,7 @@ describe("organization AI settings actions", () => {
           isAISmartToolsEnabled: false,
         },
       },
-    } as any);
+    } as unknown as Parameters<typeof updateOrganizationAISettingsAction>[0]);
 
     expect(mocks.updateOrganization).toHaveBeenCalledWith(organizationId, {
       isAISmartToolsEnabled: false,

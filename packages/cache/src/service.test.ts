@@ -50,6 +50,7 @@ describe("CacheService", () => {
       mockRedis.get.mockReturnValue(new Promise<string>(() => {}));
 
       const operation = cacheService.runRedisOperation((redis) => redis.get("test:key"));
+      // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
       const assertion = expect(operation).rejects.toThrow("Redis operation timed out");
       await vi.advanceTimersByTimeAsync(500);
       await assertion;

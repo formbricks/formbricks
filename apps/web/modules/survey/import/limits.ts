@@ -25,7 +25,7 @@ export const SURVEY_IMPORT_MAX_FILE_BYTES = 15 * 1024 * 1024;
  * around it.
  *
  * Must stay below Next's `proxyClientMaxBodySize` (16 MB, `next.config.mjs`). The patched Next
- * (`patches/next@16.4.1.patch`) no longer clones bodies for the proxy, but without the patch Next truncates
+ * (`patches/next@16.4.5.patch`) no longer clones bodies for the proxy, but without the patch Next truncates
  * a longer body before the route sees it instead of rejecting it, so an upload without a `Content-Length`
  * header would get a 400 for a malformed body rather than the route's 413. `limits.test.ts` holds the two
  * apart.

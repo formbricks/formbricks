@@ -296,7 +296,7 @@ const successResponse = ({
   cors = true,
   cache = "private, no-store",
 }: {
-  data: Object;
+  data: unknown;
   meta?: Record<string, unknown>;
   cors?: boolean;
   cache?: string;
@@ -310,7 +310,7 @@ const successResponse = ({
     {
       data,
       meta,
-    } as ApiSuccessResponse,
+    },
     {
       status: 200,
       headers,
@@ -324,7 +324,7 @@ export const createdResponse = ({
   cors = false,
   cache = "private, no-store",
 }: {
-  data: Object;
+  data: unknown;
   meta?: Record<string, unknown>;
   cors?: boolean;
   cache?: string;
@@ -338,7 +338,7 @@ export const createdResponse = ({
     {
       data,
       meta,
-    } as ApiSuccessResponse,
+    },
     {
       status: 201,
       headers,
@@ -352,7 +352,7 @@ export const multiStatusResponse = ({
   cors = false,
   cache = "private, no-store",
 }: {
-  data: Object;
+  data: unknown;
   meta?: Record<string, unknown>;
   cors?: boolean;
   cache?: string;
@@ -366,7 +366,7 @@ export const multiStatusResponse = ({
     {
       data,
       meta,
-    } as ApiSuccessResponse,
+    },
     {
       status: 207,
       headers,

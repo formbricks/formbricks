@@ -198,7 +198,6 @@ export const FlowOutlineRow = ({
         )}>
         {/* A div, not a <button>: the summary holds badges that are buttons themselves (ENG-3632),
             and a button inside a button is invalid HTML. Keyboard handling is added below. */}
-        {/* eslint-disable-next-line jsx-a11y/prefer-tag-over-role */}
         <div
           role={onToggle ? "button" : undefined}
           tabIndex={onToggle ? 0 : undefined}

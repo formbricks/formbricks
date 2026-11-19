@@ -18,7 +18,7 @@ describe("getApiKeyWithPermissions", () => {
     const mockApiKeyData = {
       id: "api-key-id",
       organizationId: "org-id",
-      organizationAccess: "all" as const,
+      organizationAccess: { accessControl: { read: true, write: true } },
       hashedKey: "hashed-key",
       createdAt: new Date(),
       createdBy: "user-id",
@@ -33,7 +33,7 @@ describe("getApiKeyWithPermissions", () => {
       ],
     };
 
-    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
+    vi.mocked(getApiKeyWithPermissions, { partial: true, deep: true }).mockResolvedValue(mockApiKeyData);
 
     const result = await getApiKeyWithPermissions("test-api-key");
 
@@ -59,7 +59,7 @@ describe("authenticateRequest", () => {
     const mockApiKeyData = {
       id: "api-key-id",
       organizationId: "org-id",
-      organizationAccess: "all" as const,
+      organizationAccess: { accessControl: { read: true, write: true } },
       createdAt: new Date(),
       createdBy: "user-id",
       lastUsedAt: null,
@@ -73,7 +73,7 @@ describe("authenticateRequest", () => {
       ],
     };
 
-    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
+    vi.mocked(getApiKeyWithPermissions, { partial: true, deep: true }).mockResolvedValue(mockApiKeyData);
     const result = await authenticateRequest(request);
 
     expect(result).toEqual({
@@ -87,7 +87,7 @@ describe("authenticateRequest", () => {
       ],
       apiKeyId: "api-key-id",
       organizationId: "org-id",
-      organizationAccess: "all",
+      organizationAccess: { accessControl: { read: true, write: true } },
     });
     expect(getApiKeyWithPermissions).toHaveBeenCalledWith("valid-api-key");
   });
@@ -117,7 +117,7 @@ describe("authenticateRequest", () => {
     const mockApiKeyData = {
       id: "api-key-id",
       organizationId: "org-id",
-      organizationAccess: "all" as const,
+      organizationAccess: { accessControl: { read: true, write: true } },
       createdAt: new Date(),
       createdBy: "user-id",
       lastUsedAt: null,
@@ -125,7 +125,7 @@ describe("authenticateRequest", () => {
       apiKeyWorkspaces: [],
     };
 
-    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
+    vi.mocked(getApiKeyWithPermissions, { partial: true, deep: true }).mockResolvedValue(mockApiKeyData);
 
     const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
     expect(result).toEqual({
@@ -133,7 +133,7 @@ describe("authenticateRequest", () => {
       workspacePermissions: [],
       apiKeyId: "api-key-id",
       organizationId: "org-id",
-      organizationAccess: "all",
+      organizationAccess: { accessControl: { read: true, write: true } },
     });
   });
 
@@ -142,16 +142,16 @@ describe("authenticateRequest", () => {
       headers: { authorization: "Bearer fbk_valid_bearer_key" },
     });
 
-    vi.mocked(getApiKeyWithPermissions).mockResolvedValue({
+    vi.mocked(getApiKeyWithPermissions, { partial: true, deep: true }).mockResolvedValue({
       id: "api-key-id",
       organizationId: "org-id",
-      organizationAccess: "all" as const,
+      organizationAccess: { accessControl: { read: true, write: true } },
       createdAt: new Date(),
       createdBy: "user-id",
       lastUsedAt: null,
       label: "Test API Key",
       apiKeyWorkspaces: [],
-    } as any);
+    });
 
     const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
 
@@ -160,7 +160,7 @@ describe("authenticateRequest", () => {
       workspacePermissions: [],
       apiKeyId: "api-key-id",
       organizationId: "org-id",
-      organizationAccess: "all",
+      organizationAccess: { accessControl: { read: true, write: true } },
     });
     expect(getApiKeyWithPermissions).toHaveBeenCalledWith("fbk_valid_bearer_key");
   });
@@ -173,7 +173,7 @@ describe("authenticateRequest", () => {
     const mockApiKeyData = {
       id: "api-key-id",
       organizationId: "org-id",
-      organizationAccess: "all" as const,
+      organizationAccess: { accessControl: { read: true, write: true } },
       createdAt: new Date(),
       createdBy: "user-id",
       lastUsedAt: null,
@@ -181,7 +181,7 @@ describe("authenticateRequest", () => {
       apiKeyWorkspaces: [],
     };
 
-    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
+    vi.mocked(getApiKeyWithPermissions, { partial: true, deep: true }).mockResolvedValue(mockApiKeyData);
 
     const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
     expect(result).toEqual({
@@ -189,7 +189,7 @@ describe("authenticateRequest", () => {
       workspacePermissions: [],
       apiKeyId: "api-key-id",
       organizationId: "org-id",
-      organizationAccess: "all",
+      organizationAccess: { accessControl: { read: true, write: true } },
     });
   });
 
@@ -214,7 +214,7 @@ describe("authenticateRequest", () => {
       apiKeyWorkspaces: [],
     };
 
-    vi.mocked(getApiKeyWithPermissions).mockResolvedValue(mockApiKeyData as any);
+    vi.mocked(getApiKeyWithPermissions, { partial: true, deep: true }).mockResolvedValue(mockApiKeyData);
 
     const result = await authenticateRequest(request, { allowOrganizationOnlyApiKey: true });
     expect(result).toEqual({

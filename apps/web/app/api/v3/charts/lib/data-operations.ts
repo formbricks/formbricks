@@ -95,7 +95,7 @@ export const emptyChartData = (query: TChartQuery): TV3ChartData => ({
   optionLabels: {},
   fieldLabels: {},
   memberLabels: {},
-  query: query as TV3ChartData["query"],
+  query: query,
 });
 
 /**
@@ -229,7 +229,7 @@ export async function runV3ChartQuery({
         optionLabels: run.optionLabels ?? {},
         fieldLabels: run.fieldLabels ?? {},
         memberLabels: getMemberLabels(run.effectiveQuery, dataset),
-        query: run.effectiveQuery as TV3ChartData["query"],
+        query: run.effectiveQuery,
       };
       return successResponse(respond(data), { requestId: context.requestId });
     } catch (error) {

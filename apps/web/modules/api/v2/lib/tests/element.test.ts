@@ -175,7 +175,7 @@ describe("validateOtherOptionLengthForMultipleChoice", () => {
 
   test("returns undefined if answer is not string or array", () => {
     const result = validateOtherOptionLengthForMultipleChoice({
-      responseData: { q1: 123 as any },
+      responseData: { q1: 123 },
       surveyQuestions,
     });
 

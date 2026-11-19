@@ -96,6 +96,21 @@ export const redisSecondaryStorage = {
     const value = await client.eval(GET_AND_DELETE_SCRIPT, { keys: [key], arguments: [] });
     return typeof value === "string" ? value : null;
   },
+  /**
+   * Writes `value` only when it is above the stored number, and refreshes the key's TTL either way: the
+   * stored number never goes down, so a write that lost a race cannot undo a later one (the revocation
+   * mark, `oauth-revocation-marker.ts`). A stored value that isn't a number is overwritten.
+   */
+  setMax: async (key: string, value: number, ttl: number): Promise<void> => {
+    const client = await getClient();
+    await client.eval(
+      `local stored = tonumber(redis.call('GET', KEYS[1]))
+if not stored or stored < tonumber(ARGV[1]) then redis.call('SET', KEYS[1], ARGV[1]) end
+redis.call('EXPIRE', KEYS[1], ARGV[2])
+return 1`,
+      { keys: [key], arguments: [String(value), String(ttl)] }
+    );
+  },
   // Atomic rate-limit counter across instances. INCR + EXPIRE-on-first-write run in a single Lua eval
   // so a crash between the two can't leave a TTL-less (never-expiring) counter that would wedge the
   // limit at max forever. Mirrors the atomic INCR/EXPIRE pattern in

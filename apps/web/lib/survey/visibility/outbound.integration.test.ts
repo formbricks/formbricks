@@ -51,7 +51,7 @@ const pipelineData = async (surveyId: string): Promise<TResponsePipelineJobData>
     },
     surveyId,
     workspaceId: ids.workspace,
-  } as TResponsePipelineJobData;
+  };
 };
 
 const context = {

@@ -1,9 +1,9 @@
 import type { TChartQuery } from "@formbricks/types/analysis";
+import { HUB_SENTIMENT_VALUES } from "@formbricks/types/feedback-source";
 import {
   EMOTIONS_DIMENSION_ID,
   EMOTION_MEASURE_ORDER,
   SENTIMENT_DIMENSION_ID,
-  SENTIMENT_VALUE_ORDER,
   VALUE_BAND_DIMENSION_ID,
   VALUE_BAND_VALUES,
   VALUE_ID_DIMENSION_ID,
@@ -116,7 +116,7 @@ export const getNaturalValueOrder = (
   dimensionId: string,
   optionLabels?: Record<string, string>
 ): readonly string[] | undefined => {
-  if (dimensionId === SENTIMENT_DIMENSION_ID) return SENTIMENT_VALUE_ORDER;
+  if (dimensionId === SENTIMENT_DIMENSION_ID) return HUB_SENTIMENT_VALUES;
   if (dimensionId === VALUE_BAND_DIMENSION_ID) return VALUE_BAND_VALUES;
   if (dimensionId === EMOTIONS_DIMENSION_ID) return EMOTION_MEASURE_ORDER;
   if (dimensionId === VALUE_ID_DIMENSION_ID && optionLabels) return Object.keys(optionLabels);

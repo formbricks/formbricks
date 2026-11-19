@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { HUB_EMOTION_VALUES } from "@formbricks/types/feedback-source";
 import { FilterDateInput } from "@/modules/ee/analysis/charts/components/filter-date-input";
 import { FilterValueCombobox } from "@/modules/ee/analysis/charts/components/filter-value-combobox";
 import {
@@ -36,7 +37,6 @@ import {
 } from "@/modules/ee/analysis/lib/question-filter";
 import {
   EMOTIONS_DIMENSION_ID,
-  EMOTION_VALUES,
   VALUE_BAND_DIMENSION_ID,
   VALUE_BAND_VALUES,
   getFilterOperatorsForType,
@@ -211,7 +211,7 @@ export function FiltersPanel({
     getValueProps: (condition) => {
       const field = condition.leftOperand.value;
       if (field === EMOTIONS_DIMENSION_ID) {
-        return { show: true, options: [fixedVocabularyGroup(EMOTIONS_DIMENSION_ID, EMOTION_VALUES)] };
+        return { show: true, options: [fixedVocabularyGroup(EMOTIONS_DIMENSION_ID, HUB_EMOTION_VALUES)] };
       }
       if (isFixedValueBandCondition(field, condition.operator)) {
         return { show: true, options: [fixedVocabularyGroup(VALUE_BAND_DIMENSION_ID, VALUE_BAND_VALUES)] };

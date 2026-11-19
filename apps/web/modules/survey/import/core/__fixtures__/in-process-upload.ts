@@ -50,6 +50,7 @@ export const openSurveyImportUploadInProcess = (
         read ??= Promise.resolve()
           .then(() => {
             signal?.throwIfAborted();
+            // eslint-disable-next-line sonarjs/no-nested-functions -- mirrors the reader thread's request, in process
             return acrossTheThread(() => readSurveyImportUpload(sniffed, fileName));
           })
           .finally(() => {

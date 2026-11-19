@@ -46,7 +46,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ organ
 
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Read
         ))
@@ -57,7 +57,7 @@ export const GET = async (request: NextRequest, props: { params: Promise<{ organ
         });
       }
 
-      const res = await getUsers(authentication.organizationId, query!);
+      const res = await getUsers(authentication.organizationId, query);
 
       if (!res.ok) {
         return handleApiError(request, res.error);
@@ -92,7 +92,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
 
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Write
         ))
@@ -122,7 +122,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
           auditLog
         );
       }
-      if (!(await mayAssignOrganizationRole(authentication.organizationId, assignerRole, body!.role))) {
+      if (!(await mayAssignOrganizationRole(authentication.organizationId, assignerRole, body.role))) {
         return handleApiError(
           request,
           {
@@ -133,7 +133,7 @@ export const POST = async (request: Request, props: { params: Promise<{ organiza
         );
       }
 
-      const createUserResult = await createUser(body!, authentication.organizationId);
+      const createUserResult = await createUser(body, authentication.organizationId);
       if (!createUserResult.ok) {
         return handleApiError(request, createUserResult.error, auditLog);
       }
@@ -174,7 +174,7 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
 
       if (
         !(await hasOrganizationIdAndAccess(
-          params!.organizationId,
+          params.organizationId,
           authentication,
           OrganizationAccessType.Write
         ))
@@ -239,7 +239,7 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
         );
       }
 
-      let oldUserData: any = UNKNOWN_DATA;
+      let oldUserData: Record<string, unknown> | null = null;
       try {
         const oldUserResult = await getUsers(authentication.organizationId, {
           email: body.email,
@@ -249,14 +249,14 @@ export const PATCH = async (request: Request, props: { params: Promise<{ organiz
           order: "desc",
         });
         if (oldUserResult.ok) {
-          oldUserData = oldUserResult.data.data[0];
+          oldUserData = oldUserResult.data.data[0] ?? null;
         }
       } catch (error) {
         logger.error(`Failed to fetch old user data for audit log: ${JSON.stringify(error)}`);
       }
 
       if (auditLog) {
-        auditLog.targetId = oldUserData !== UNKNOWN_DATA ? oldUserData?.id : UNKNOWN_DATA;
+        auditLog.targetId = typeof oldUserData?.id === "string" ? oldUserData.id : UNKNOWN_DATA;
       }
 
       const updateUserResult = await updateUser(body, authentication.organizationId);

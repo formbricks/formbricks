@@ -56,7 +56,7 @@ export const getTranslations = (languageCode: string): TFunction => {
 
   // Ensure the language is set (i18n.changeLanguage is synchronous when resources are already loaded)
   if (i18n.language !== resolvedCode) {
-    i18n.changeLanguage(resolvedCode);
+    void i18n.changeLanguage(resolvedCode);
   }
   return i18n.getFixedT(resolvedCode);
 };

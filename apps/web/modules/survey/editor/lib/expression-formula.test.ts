@@ -5,6 +5,7 @@ import {
   surveyFlowFixture,
 } from "@formbricks/types/surveys/test-fixtures/survey-flow-fixture";
 import {
+  FORMULA_BOX_MAX_LENGTH,
   FORMULA_CHIP_FUNCTIONS,
   FORMULA_FUNCTION_EXAMPLES,
   FORMULA_MAX_LENGTH,
@@ -108,7 +109,7 @@ describe("parseFormula: typed text into the tree AI writes", () => {
     expect(tree("concat(“a”, @fav)")).toEqual(call("concat", { type: "static", value: "a" }, answer("fav")));
   });
 
-  test("the longest text the box takes fits a stored step, so the box's length is the only limit", () => {
+  test("the longest text the parser takes fits a stored step, so the formula's length is the only limit", () => {
     const longest = `"${"x".repeat(FORMULA_MAX_LENGTH - 2)}"`;
     const value = (tree(longest) as { value: string }).value;
     expect(value.length).toBeLessThanOrEqual(EXPRESSION_MAX_STATIC_TEXT_LENGTH);
@@ -116,6 +117,19 @@ describe("parseFormula: typed text into the tree AI writes", () => {
       ok: false,
       error: { code: "too_long", position: FORMULA_MAX_LENGTH },
     });
+  });
+
+  test("a paste over the limit says it is too long, even where the box clips it (ENG-7028)", () => {
+    const paste = "1+".repeat(FORMULA_BOX_MAX_LENGTH) + "1";
+    const tooLong = { ok: false, error: { code: "too_long", position: FORMULA_MAX_LENGTH } };
+    // Cut at FORMULA_MAX_LENGTH, the paste ends in `+` and reads as "ends too early": the old bug.
+    expect(parse(paste.slice(0, FORMULA_MAX_LENGTH))).toMatchObject({
+      ok: false,
+      error: { code: "unexpected_end" },
+    });
+    // What the box holds of it is still over the limit, so it says too long.
+    expect(FORMULA_BOX_MAX_LENGTH).toBeGreaterThan(FORMULA_MAX_LENGTH);
+    expect(parse(paste.slice(0, FORMULA_BOX_MAX_LENGTH))).toEqual(tooLong);
   });
 });
 
@@ -235,6 +249,11 @@ describe("getFormulaToWriteOnBlur: a half-typed formula never keeps the last one
       value: "",
     });
     expect(getFormulaToWriteOnBlur("@nope + 1", references)).toEqual({ type: "static", value: "" });
+  });
+
+  test("a formula over the length limit writes the empty formula, never a parsed one", () => {
+    const tooLong = "1+".repeat(FORMULA_MAX_LENGTH / 2) + "1";
+    expect(getFormulaToWriteOnBlur(tooLong, references)).toEqual({ type: "static", value: "" });
   });
 
   test("a formula that parses, or an emptied box, was already written while typing", () => {

@@ -197,7 +197,7 @@ export const QuotaModal = ({
       return;
     }
 
-    let payload = {
+    const payload = {
       name: trimmedName || t("workspace.surveys.edit.quotas.new_quota"),
       limit: data.limit,
       logic: data.logic,
@@ -255,7 +255,13 @@ export const QuotaModal = ({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent>
+      <DialogContent
+        onOpenAutoFocus={(event) => {
+          // A new quota starts on its name; an edited one keeps Radix's default focus.
+          if (isEditing) return;
+          event.preventDefault();
+          form.setFocus("name");
+        }}>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <FormProvider {...form}>
             <DialogHeader>
@@ -289,7 +295,6 @@ export const QuotaModal = ({
                             : t("workspace.surveys.edit.quotas.new_quota")
                         }
                         className="bg-white"
-                        autoFocus={!isEditing}
                       />
                     </FormControl>
                     {errors.name?.message && <FormError>{errors.name.message}</FormError>}
@@ -459,7 +464,7 @@ export const QuotaModal = ({
               setOpen={setOpenConfirmationModal}
               onConfirm={() => {
                 setOpenConfirmationModal(false);
-                form.handleSubmit(submitQuota)();
+                void form.handleSubmit(submitQuota)();
               }}
               body={t("workspace.surveys.edit.quotas.confirm_quota_changes_body")}
               buttonText={t("common.save")}

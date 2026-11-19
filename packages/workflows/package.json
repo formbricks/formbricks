@@ -19,7 +19,6 @@
   "scripts": {
     "build": "vite build && publint",
     "clean": "rimraf .turbo node_modules coverage dist",
-    "lint": "eslint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
@@ -28,9 +27,10 @@
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@formbricks/config-eslint": "workspace:*",
+    "@formbricks/config-oxlint": "workspace:*",
     "@formbricks/config-typescript": "workspace:*",
     "@types/js-yaml": "catalog:",
+    "@types/node": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "js-yaml": "catalog:",
     "publint": "0.3.21",

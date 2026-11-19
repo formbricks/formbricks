@@ -43,7 +43,7 @@ const uploadForm = (
 
 /** A multipart POST as a browser sends it: the boundary in Content-Type, the length left to transport. */
 const post = (form: FormData = uploadForm(), headers: Record<string, string> = {}, signal?: AbortSignal) =>
-  POST(new NextRequest(URL_PATH, { method: "POST", body: form, headers, signal }), {} as never);
+  POST(new NextRequest(URL_PATH, { method: "POST", body: form, headers, signal }), {});
 
 /** The bytes and Content-Type of `form`, to send them streamed with no Content-Length. */
 const encodeForm = async (form: FormData) => {
@@ -67,8 +67,8 @@ const postStreamed = async (form: FormData) => {
         },
       }),
       duplex: "half",
-    } as ConstructorParameters<typeof NextRequest>[1]),
-    {} as never
+    }),
+    {}
   );
 };
 
@@ -139,7 +139,7 @@ describe("POST /api/internal/surveys/import/stream", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ workspaceId, fileName: "onboarding.qsf", qsf: JSON.parse(qsfText) }),
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(415);
@@ -255,8 +255,8 @@ describe("POST /api/internal/surveys/import/stream", () => {
           },
         }),
         duplex: "half",
-      } as ConstructorParameters<typeof NextRequest>[1]),
-      {} as never
+      }),
+      {}
     );
     // Let the first request get as far as reading its body.
     await new Promise((resolve) => setTimeout(resolve, 20));

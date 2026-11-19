@@ -1,11 +1,18 @@
 import "server-only";
 import type { oauthProvider } from "@better-auth/oauth-provider";
+import { mcpGrantAccessTokenClaims } from "./mcp-grant-token-claim";
 import { MCP_OAUTH_SCOPES, getMcpResourceUrl } from "./oauth-urls";
 
 type TOauthProviderOptions = Parameters<typeof oauthProvider>[0];
 
 /** Exported so the grant-revocation hooks can recognise the refresh tokens this provider issues. */
 export const MCP_OAUTH_REFRESH_TOKEN_PREFIX = "fbor_";
+
+/**
+ * How long an authorization code lives before it is exchanged, in seconds: the provider's default, set
+ * here so what depends on it (`oauth-revocation-marker.ts`) reads the value the provider uses.
+ */
+export const MCP_OAUTH_CODE_EXPIRES_IN_SECONDS = 600;
 
 /**
  * Options for the Better Auth oauthProvider plugin backing the MCP OAuth flow (ENG-1055).
@@ -90,6 +97,10 @@ export const getMcpOauthProviderOptions = (): TOauthProviderOptions => ({
     refreshToken: MCP_OAUTH_REFRESH_TOKEN_PREFIX,
     clientSecret: "fbocs_",
   },
+  codeExpiresIn: MCP_OAUTH_CODE_EXPIRES_IN_SECONDS,
+  // ADR-0041: every access token names the grant it is issued under, and a `skipConsent` client's code
+  // exchange gives the connection its grant. See mcp-grant-token-claim.ts.
+  extensions: [{ claims: { accessToken: mcpGrantAccessTokenClaims } }],
   customAccessTokenClaims: ({ user }) => ({
     ...(user?.email ? { email: user.email } : {}),
     ...(user?.name ? { name: user.name } : {}),

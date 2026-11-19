@@ -3,5 +3,5 @@ import { TGenericCondition, TGenericConditionGroup } from "@/modules/ui/componen
 export const isConditionGroup = (
   condition: TGenericCondition | TGenericConditionGroup
 ): condition is TGenericConditionGroup => {
-  return "conditions" in condition && Array.isArray((condition as TGenericConditionGroup).conditions);
+  return "conditions" in condition && Array.isArray(condition.conditions);
 };

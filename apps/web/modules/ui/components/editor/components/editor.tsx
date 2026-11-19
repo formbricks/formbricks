@@ -63,7 +63,8 @@ export type TextEditorProps = {
   readonly selectedLanguageCode?: string;
   readonly fallbacks?: { [id: string]: string };
   readonly addFallback?: () => void;
-  readonly autoFocus?: boolean;
+  /** Focus the editor when it mounts (Lexical's AutoFocusPlugin), e.g. the empty headline of a question the user just added. */
+  readonly focusOnMount?: boolean;
   readonly id?: string;
   readonly isExternalUrlsAllowed?: boolean;
   /**
@@ -75,7 +76,7 @@ export type TextEditorProps = {
 
 const editorConfig = {
   theme: exampleTheme,
-  onError(error: any) {
+  onError(error: Error) {
     throw error;
   },
   namespace: "",
@@ -183,7 +184,7 @@ export const Editor = (props: TextEditorProps) => {
               <ListTabIndentationPlugin />
               {props.isExternalUrlsAllowed && <LinkPlugin />}
               {props.isExternalUrlsAllowed && <AutoLinkPlugin />}
-              {props.autoFocus && <AutoFocusPlugin />}
+              {props.focusOnMount && <AutoFocusPlugin />}
               {props.localSurvey && props.elementId && props.selectedLanguageCode && (
                 <RecallPlugin
                   localSurvey={props.localSurvey}

@@ -48,9 +48,7 @@ const call = (entries: [string, string][] = []) =>
 describe("listV3Segments", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({ workspaceId, organizationId } as Awaited<
-      ReturnType<typeof requireV3WorkspaceAccess>
-    >);
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({ workspaceId, organizationId });
     vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
     vi.mocked(resolveV3VisibleSurveyWhere).mockResolvedValue(visibleSurveyWhere as never);
     vi.mocked(prisma.segment.count).mockResolvedValue(2);
@@ -96,7 +94,7 @@ describe("listV3Segments", () => {
     expect(args?.where).toEqual(where);
     expect(args?.orderBy).toEqual([{ updatedAt: "desc" }, { id: "desc" }]);
     expect(args?.take).toBe(2);
-    expect((args?.select as { surveys: { where: unknown } }).surveys.where).toBe(visibleSurveyWhere);
+    expect((args!.select as { surveys: { where: unknown } }).surveys.where).toBe(visibleSurveyWhere);
     expect(resolveV3VisibleSurveyWhere).toHaveBeenCalledWith(null, organizationId);
     expect(prisma.segment.count).toHaveBeenCalledWith({ where });
   });

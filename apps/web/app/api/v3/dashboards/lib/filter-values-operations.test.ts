@@ -135,7 +135,7 @@ beforeEach(() => {
   vi.mocked(authorizeDashboardRead).mockResolvedValue({
     workspaceId: "clws000000000000000000009",
     organizationId: "clorg00000000000000000001",
-  } as never);
+  });
   vi.mocked(refuseUnlessDashboardDatasetReadable).mockResolvedValue(null);
   vi.mocked(getDatasetFieldMatcher).mockResolvedValue(() => true);
   vi.mocked(cache.get).mockResolvedValue({ ok: true, data: null } as never);

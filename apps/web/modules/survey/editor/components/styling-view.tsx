@@ -133,7 +133,7 @@ export const StylingView = ({
   };
 
   const onResetThemeStyling = () => {
-    const { allowStyleOverwrite, ...baseStyling } = workspace.styling ?? {};
+    const { allowStyleOverwrite: _allowStyleOverwrite, ...baseStyling } = workspace.styling ?? {};
 
     setStyling({
       ...baseStyling,
@@ -175,7 +175,7 @@ export const StylingView = ({
 
   const defaultWorkspaceStyling = useMemo(() => {
     const { styling: workspaceStyling } = workspace;
-    const { allowStyleOverwrite, ...baseStyling } = workspaceStyling ?? {};
+    const { allowStyleOverwrite: _allowStyleOverwrite, ...baseStyling } = workspaceStyling ?? {};
 
     return baseStyling;
   }, [workspace]);

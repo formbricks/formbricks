@@ -9,13 +9,13 @@ Release QA or by users, not in review.
 
 A variable the web app reads goes in every one of these:
 
-| Where                                                       | What                                                                                                                                                                                      |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `apps/web/lib/env.ts`                                       | The server schema and the `runtimeEnv` map. Client components read `lib/env-client.ts`. A direct `process.env` read is a lint error; the exemptions live in `apps/web/eslint.config.mjs`. |
-| `apps/web/turbo.json`                                       | `build.env`, so a change invalidates the build cache (`turbo/no-undeclared-env-vars` reports a miss).                                                                                     |
-| `.env.example`                                              | A commented line with the default.                                                                                                                                                        |
-| `docker/docker-compose.yml`                                 | The `x-environment` block, commented when optional.                                                                                                                                       |
-| `docs/self-hosting/configuration/environment-variables.mdx` | The table row: meaning, required or optional, default.                                                                                                                                    |
+| Where                                                       | What                                                                                                                                                                                     |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web/lib/env.ts`                                       | The server schema and the `runtimeEnv` map. Client components read `lib/env-client.ts`. A direct `process.env` read is a lint error; the exemptions live in `apps/web/oxlint.config.ts`. |
+| `apps/web/turbo.json`                                       | `build.env`, so a change invalidates the build cache (`turbo/no-undeclared-env-vars` reports a miss).                                                                                    |
+| `.env.example`                                              | A commented line with the default.                                                                                                                                                       |
+| `docker/docker-compose.yml`                                 | The `x-environment` block, commented when optional.                                                                                                                                      |
+| `docs/self-hosting/configuration/environment-variables.mdx` | The table row: meaning, required or optional, default.                                                                                                                                   |
 
 `NEXT_PUBLIC_*` variables are inlined into the bundle at build time, so a prebuilt image cannot be
 configured with one. A setting self-hosters change at runtime is read on the server and passed down.
@@ -44,7 +44,9 @@ Helm, Hub pods can start after the migration Job is gone.
   `Survey.variables` and every 6.0 pod still serving failed its survey reads (formbricks/formbricks#9603).
 - Writes from the previous release stay valid. Better Auth 1.6 pods wrote a `NULL` issuer during the 1.7
   upgrade and locked password users out (formbricks/formbricks#9369). A new queue or outbox job type
-  must not dead-letter on old workers.
+  must not dead-letter on old workers. Since ENG-7153 an outbox worker skips a target type it doesn't
+  know and its freshness guard ignores it, so a new outbox type may only project relationships the
+  previous release doesn't read.
 - On the bundled shared database, Prisma migrations run before Hub's goose and River migrations
   (formbricks/formbricks#8104), and migration Jobs wait until PostgreSQL accepts connections.
 - A migration converges on a database built with `db:push`: guard `CREATE TYPE`, `ADD CONSTRAINT` and

@@ -48,8 +48,11 @@ interface EditorCardMenuProps {
   readonly deleteCard: (cardIdx: number) => void;
   readonly moveCard: (cardIdx: number, up: boolean) => void;
   readonly card: EditorCardMenuSurveyElement | TSurveyEndScreenCard | TSurveyRedirectUrlCard;
-  readonly updateCard: (cardIdx: number, updatedAttributes: any) => void;
-  readonly addCard: (element: any, index?: number) => void;
+  readonly updateCard: (cardIdx: number, updatedAttributes: Record<string, unknown>) => void;
+  /** Adds an element card at `index`; element cards only. */
+  readonly addElementCard?: (element: TSurveyElement, index?: number) => void;
+  /** Adds an ending card at `index`; ending cards only. */
+  readonly addEndingCard?: (index: number) => void;
   readonly addCardToBlock?: (element: TSurveyElement, blockId: string, afterElementIdx: number) => void;
   readonly moveElementToBlock?: (elementId: string, targetBlockId: string) => void;
   readonly cardType: "element" | "ending";
@@ -71,7 +74,8 @@ export const EditorCardMenu = ({
   workspace,
   card,
   updateCard,
-  addCard,
+  addElementCard,
+  addEndingCard,
   addCardToBlock,
   moveElementToBlock,
   cardType,
@@ -104,7 +108,7 @@ export const EditorCardMenu = ({
 
     const elementDefaults = getElementDefaults(type, workspace, t);
 
-    const choiceSwitch = getChoiceTypeSwitchUpdate(card as EditorCardMenuSurveyElement, type);
+    const choiceSwitch = getChoiceTypeSwitchUpdate(card, type);
     if (choiceSwitch) {
       updateCard(cardIdx, choiceSwitch);
       return;
@@ -132,7 +136,7 @@ export const EditorCardMenu = ({
       ...elementDefaults,
       type,
       id: createId(),
-      required: type === TSurveyElementTypeEnum.CTA ? false : true,
+      required: type !== TSurveyElementTypeEnum.CTA,
     };
 
     // Add element to block or as new block
@@ -140,12 +144,12 @@ export const EditorCardMenu = ({
       // Pass blockId and element index within the block
       addCardToBlock(newElement as TSurveyElement, blockId, elementIdx);
     } else {
-      addCard(newElement, cardIdx + 1);
+      addElementCard?.(newElement as TSurveyElement, cardIdx + 1);
     }
   };
 
   const addEndingCardBelow = () => {
-    addCard(cardIdx + 1);
+    addEndingCard?.(cardIdx + 1);
   };
 
   const onConfirm = () => {
@@ -270,13 +274,13 @@ export const EditorCardMenu = ({
                           <DropdownMenuItem
                             key={elementType.id}
                             onClick={() => {
-                              setChangeToType(elementType.id as TSurveyElementTypeEnum);
+                              setChangeToType(elementType.id);
                               if ((card as EditorCardMenuSurveyElement).logic) {
                                 setLogicWarningModal(true);
                                 return;
                               }
 
-                              changeElementType(elementType.id as TSurveyElementTypeEnum);
+                              changeElementType(elementType.id);
                             }}
                             icon={<elementType.icon className="size-4" />}>
                             <span className="ml-2">{elementType.label}</span>
@@ -324,7 +328,7 @@ export const EditorCardMenu = ({
                           onClick={(e) => {
                             e.stopPropagation();
                             if (cardType === "element") {
-                              addElementCardBelow(elementType.id as TSurveyElementTypeEnum);
+                              addElementCardBelow(elementType.id);
                             }
                           }}>
                           <elementType.icon className="size-4" />

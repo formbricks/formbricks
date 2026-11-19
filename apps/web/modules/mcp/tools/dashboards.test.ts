@@ -118,6 +118,12 @@ const createToolServer = () => {
   return tools;
 };
 
+/**
+ * Dashboard and widget writes answer with charts on their widgets, so they need Charts: Read
+ * (`dashboards:read`) as well, as `get_dashboard` does.
+ */
+const DASHBOARD_WRITE_SCOPES = ["dashboards:read", "dashboards:write"];
+
 const call = async (name: string, input: unknown, scopes: string[], dashboardViewerOnly = false) => {
   const tool = createToolServer().get(name);
   if (!tool) throw new Error(`${name} is not registered`);
@@ -187,8 +193,9 @@ describe("chart and dashboard MCP tools", () => {
     );
   });
 
-  test("get_chart reads one chart and is refused without dashboards:read", async () => {
-    await call("get_chart", { chartId: CHART_ID }, ["dashboards:read", "feedbackRecords:read"]);
+  // D2: a chart definition is Charts data, so Charts: Read (dashboards:read) is its one bar.
+  test("get_chart reads one chart on dashboards:read alone and is refused without it", async () => {
+    await call("get_chart", { chartId: CHART_ID }, ["dashboards:read"]);
     expect(getV3Chart).toHaveBeenCalledWith(expect.objectContaining({ chartId: CHART_ID }));
 
     vi.mocked(getV3Chart).mockClear();
@@ -197,13 +204,9 @@ describe("chart and dashboard MCP tools", () => {
     expect(getV3Chart).not.toHaveBeenCalled();
   });
 
-  // ADR-0025: a Dashboard viewer's token is trimmed to `dashboards:read`, and the chart operations 403 it.
-  // The scope gate refuses it first, as it does preview_chart, so the client sees why.
-  test.each([
-    ["list_chart_fields", { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID }],
-    ["list_charts", { workspaceId: WORKSPACE_ID }],
-    ["get_chart", { chartId: CHART_ID }],
-  ] as const)(
+  // ADR-0025: a Dashboard viewer's token is trimmed to `dashboards:read`. The field catalog needs
+  // feedbackRecords:read too, so the scope gate refuses it first, as it does preview_chart.
+  test.each([["list_chart_fields", { workspaceId: WORKSPACE_ID, datasetId: DATASET_ID }]] as const)(
     "%s needs feedbackRecords:read, so a viewer's dashboards:read token is refused",
     async (name, input) => {
       const result = await call(name, input, ["dashboards:read"], true);
@@ -215,6 +218,15 @@ describe("chart and dashboard MCP tools", () => {
       expect(getV3Chart).not.toHaveBeenCalled();
     }
   );
+
+  test("list_charts lists chart definitions on dashboards:read alone (D2)", async () => {
+    vi.mocked(listV3Charts).mockResolvedValue(
+      successListResponse([], { limit: 20, nextCursor: null }, { requestId: "req" })
+    );
+    const result = await call("list_charts", { workspaceId: WORKSPACE_ID }, ["dashboards:read"]);
+    expect(result.isError).toBeFalsy();
+    expect(listV3Charts).toHaveBeenCalledTimes(1);
+  });
 
   test("preview_chart needs feedbackRecords:read on top of dashboards:read, because it returns data", async () => {
     const input = {
@@ -342,10 +354,30 @@ describe("chart and dashboard MCP tools", () => {
     );
   });
 
-  test("get_chart_data refuses a viewer without a dashboardId (S1)", async () => {
+  test("get_chart_data refuses a viewer without a dashboardId (S1), naming the role, not a reconnect", async () => {
     const result = await call("get_chart_data", { chartId: CHART_ID }, ["dashboards:read"], true);
     expect(result.isError).toBe(true);
     expect(getV3ChartData).not.toHaveBeenCalled();
+    const detail = JSON.stringify(result.structuredContent);
+    expect(detail).toContain("Dashboard viewer role");
+    expect(detail).toContain("dashboardId");
+    expect(detail).not.toContain("reconnect the client and give it");
+  });
+
+  // The dashboardId hint is for the tools a viewer reads through a dashboard; any other refusal names the
+  // role alone, since nothing the client could pass would help.
+  test("refuses a viewer a tool outside a dashboard read naming the role, with no dashboardId hint", async () => {
+    const result = await call(
+      "create_dashboard",
+      { workspaceId: WORKSPACE_ID, name: "Mine" },
+      ["dashboards:read"],
+      true
+    );
+    expect(result.isError).toBe(true);
+    const detail = JSON.stringify(result.structuredContent);
+    expect(detail).toContain("Dashboard viewer role");
+    expect(detail).not.toContain("dashboardId");
+    expect(detail).not.toContain("reconnect the client and give it");
   });
 
   test("list_dashboards maps its filters and get_dashboard reads one, both under dashboards:read", async () => {
@@ -392,7 +424,7 @@ describe("chart and dashboard MCP tools", () => {
     expect(renameV3Dashboard).not.toHaveBeenCalled();
     expect(duplicateV3Dashboard).not.toHaveBeenCalled();
 
-    for (const [name, input] of writes) await call(name, input, ["dashboards:write"]);
+    for (const [name, input] of writes) await call(name, input, DASHBOARD_WRITE_SCOPES);
     expect(createV3Dashboard).toHaveBeenCalledWith(
       expect.objectContaining({ body: { workspaceId: WORKSPACE_ID, name: "Matchday" }, instance: "/api/mcp" })
     );
@@ -402,6 +434,37 @@ describe("chart and dashboard MCP tools", () => {
     expect(duplicateV3Dashboard).toHaveBeenCalledWith(
       expect.objectContaining({ dashboardId: DASHBOARD_ID, body: {} })
     );
+  });
+
+  // Their answers carry each widget's whole chart: Dashboards: Write alone must not read chart definitions
+  // that get_dashboard withholds without Charts: Read.
+  test("dashboard and widget writes that answer with charts are refused on dashboards:write alone", async () => {
+    const writes = [
+      ["update_dashboard", { dashboardId: DASHBOARD_ID, name: "Matchday 2" }],
+      ["duplicate_dashboard", { dashboardId: DASHBOARD_ID }],
+      ["add_chart_to_dashboard", { dashboardId: DASHBOARD_ID, chartId: CHART_ID }],
+      ["update_widget", { dashboardId: DASHBOARD_ID, widgetId: WIDGET_ID, chartId: CHART_ID }],
+      [
+        "update_dashboard_layout",
+        { dashboardId: DASHBOARD_ID, expectedUpdatedAt: "2026-01-01T00:00:00.000Z", widgets: [] },
+      ],
+      [
+        "set_dashboard_filters",
+        { dashboardId: DASHBOARD_ID, expectedUpdatedAt: "2026-01-01T00:00:00.000Z", filters: [] },
+      ],
+    ] as const;
+
+    for (const [name, input] of writes) {
+      const refused = await call(name, input, ["dashboards:write"]);
+      expect(refused.isError, name).toBe(true);
+      expect(JSON.stringify(refused), name).toContain("dashboards:read");
+    }
+    expect(renameV3Dashboard).not.toHaveBeenCalled();
+    expect(duplicateV3Dashboard).not.toHaveBeenCalled();
+    expect(addV3DashboardWidget).not.toHaveBeenCalled();
+    expect(updateV3DashboardWidget).not.toHaveBeenCalled();
+    expect(updateV3DashboardLayout).not.toHaveBeenCalled();
+    expect(setV3DashboardFilters).not.toHaveBeenCalled();
   });
 
   test("duplicate_dashboard warns the copy shares its charts, and no tool deletes anything", () => {
@@ -429,7 +492,7 @@ describe("chart and dashboard MCP tools", () => {
     expect(addV3DashboardWidget).not.toHaveBeenCalled();
 
     const results = [];
-    for (const [name, input] of writes) results.push(await call(name, input, ["dashboards:write"]));
+    for (const [name, input] of writes) results.push(await call(name, input, DASHBOARD_WRITE_SCOPES));
     expect(results.map((result) => result.isError)).toEqual([undefined, undefined, undefined]);
     expect(addV3DashboardWidget).toHaveBeenCalledWith(
       expect.objectContaining({ dashboardId: DASHBOARD_ID, body: { chartId: CHART_ID, layout } })
@@ -458,7 +521,7 @@ describe("chart and dashboard MCP tools", () => {
     expect((await call("update_dashboard_layout", input, ["dashboards:read"])).isError).toBe(true);
     expect(updateV3DashboardLayout).not.toHaveBeenCalled();
 
-    await call("update_dashboard_layout", input, ["dashboards:write"]);
+    await call("update_dashboard_layout", input, DASHBOARD_WRITE_SCOPES);
     expect(updateV3DashboardLayout).toHaveBeenCalledWith(
       expect.objectContaining({
         dashboardId: DASHBOARD_ID,
@@ -491,7 +554,7 @@ describe("chart and dashboard MCP tools", () => {
     expect((await call("set_dashboard_filters", input, ["dashboards:read"])).isError).toBe(true);
     expect(setV3DashboardFilters).not.toHaveBeenCalled();
 
-    await call("set_dashboard_filters", input, ["dashboards:write"]);
+    await call("set_dashboard_filters", input, DASHBOARD_WRITE_SCOPES);
     const { body } = vi.mocked(setV3DashboardFilters).mock.calls[0][0];
     expect(body.expectedUpdatedAt).toBe(input.expectedUpdatedAt);
     expect(body.filters[0]).toEqual(kept);
@@ -504,7 +567,7 @@ describe("chart and dashboard MCP tools", () => {
     await call(
       "set_dashboard_filters",
       { dashboardId: DASHBOARD_ID, expectedUpdatedAt: "2026-10-22T10:00:00.000Z", filters: [] },
-      ["dashboards:write"]
+      DASHBOARD_WRITE_SCOPES
     );
     expect(setV3DashboardFilters).toHaveBeenCalledWith(
       expect.objectContaining({ body: { expectedUpdatedAt: "2026-10-22T10:00:00.000Z", filters: [] } })
@@ -533,7 +596,7 @@ describe("chart and dashboard MCP tools", () => {
     const tools = createToolServer();
     const accepts = (name: string, input: unknown) =>
       (
-        tools.get(name)?.config.inputSchema as { safeParse: (value: unknown) => { success: boolean } }
+        tools.get(name)!.config.inputSchema as { safeParse: (value: unknown) => { success: boolean } }
       ).safeParse(input).success;
     const layout = { x: 0, y: 0, w: 6, h: 4 };
     const widgets = (ids: string[]) => ids.map((widgetId) => ({ widgetId, layout }));

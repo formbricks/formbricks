@@ -81,7 +81,7 @@ describe("resolveOptionGrouping", () => {
       filters: [],
     };
 
-    const result = await resolveOptionGrouping(query as never, "workspace-1", "dir-1");
+    const result = await resolveOptionGrouping(query, "workspace-1", "dir-1");
 
     expect(result.optionLabels).toBeUndefined();
     expect(result.rewrittenQuery).toBe(query);
@@ -334,7 +334,7 @@ describe("resolveOptionGrouping", () => {
         measures: ["FeedbackRecords.count"],
         dimensions: ["FeedbackRecords.valueText"],
         filters: [],
-      } as never,
+      },
       "workspace-1",
       "dir-1"
     );
@@ -544,7 +544,7 @@ describe("matrix label maps (ENG-3312)", () => {
 
   test("grouping by fieldId alone resolves row labels without an option map", async () => {
     const result = await resolveOptionGrouping(
-      { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.fieldId"], filters: [] } as never,
+      { measures: ["FeedbackRecords.count"], dimensions: ["FeedbackRecords.fieldId"], filters: [] },
       "workspace-1",
       "dir-1"
     );

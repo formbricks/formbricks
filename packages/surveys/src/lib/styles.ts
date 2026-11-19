@@ -42,7 +42,7 @@ export const getStyleNonce = (): string | undefined => {
 
 export const addStylesToDom = () => {
   if (document.getElementById("formbricks__css") === null) {
-    // eslint-disable-next-line no-restricted-syntax -- nonce is set below
+    // oxlint-disable-next-line formbricks/restricted-syntax -- nonce is set below
     const styleElement = document.createElement("style");
     styleElement.id = "formbricks__css";
 
@@ -209,19 +209,29 @@ export const getDarkThemeCss = (rawStyling: TWorkspaceStyling | TSurveyStyling):
   return `${css}}\n`;
 };
 
-export const addCustomThemeToDom = ({
-  styling: rawStyling,
-  pageFont = false,
-}: {
-  styling: TWorkspaceStyling | TSurveyStyling;
-  /** Page font (ENG-3864): the host passes it; it is never read from `styling`. */
-  pageFont?: boolean;
-}): void => {
-  // Every styling value below is written into stylesheet text, and stored styling can predate write-time
-  // validation: an unsafe value (one that could add declarations or rules) falls back as if it were
-  // unset, while valid values pass through unchanged (ENG-2950).
-  const styling = sanitizeThemeStyling(rawStyling);
+type TThemeStyling = TWorkspaceStyling | TSurveyStyling;
 
+/** Appends `--fb-<name>: <value>;` for a value that is not undefined or null. */
+type TAppendCssVariable = (variableName: string, value?: string | null) => void;
+
+/** A CSS length: a number, or a numeric string, in px; any other string as is. */
+const formatDimension = (value: string | number | null | undefined) => {
+  if (value === null || value === undefined) return undefined;
+  if (typeof value === "number") {
+    return `${value}px`;
+  }
+  if (typeof value === "string" && !Number.isNaN(Number(value))) {
+    return `${value}px`;
+  }
+  return value;
+};
+
+/** A font weight as text, or undefined when it is unset (undefined or null). */
+const formatFontWeight = (value: string | number | null | undefined) =>
+  value === undefined || value === null ? undefined : `${value}`;
+
+/** The style element the custom theme is written into, created (with the CSP nonce) the first time. */
+const getCustomStyleElement = (): HTMLStyleElement => {
   // Check if the style element already exists
   let styleElement = document.getElementById("formbricks__css__custom") as HTMLStyleElement | null;
 
@@ -231,87 +241,74 @@ export const addCustomThemeToDom = ({
     if (styleNonce && !styleElement.getAttribute("nonce")) {
       styleElement.setAttribute("nonce", styleNonce);
     }
-  } else {
-    // Create it and append to the head
-    // eslint-disable-next-line no-restricted-syntax -- nonce is set below
-    styleElement = document.createElement("style");
-    styleElement.id = "formbricks__css__custom";
-
-    // Apply nonce if available
-    if (styleNonce) {
-      styleElement.setAttribute("nonce", styleNonce);
-    }
-
-    document.head.appendChild(styleElement);
+    return styleElement;
   }
 
-  // Start the CSS string with #fbjs
-  let cssVariables = "#fbjs {\n";
+  // Create it and append to the head
+  // oxlint-disable-next-line formbricks/restricted-syntax -- nonce is set below
+  styleElement = document.createElement("style");
+  styleElement.id = "formbricks__css__custom";
 
-  // Helper function to append the variable if it's not undefined
-  const appendCssVariable = (variableName: string, value?: string | null) => {
-    if (value !== undefined && value !== null) {
-      cssVariables += `--fb-${variableName}: ${value};\n`;
-    }
-  };
-  // if roundness is defined, even if it's 0, set the border-radius
-  const roundness = styling.roundness ?? 8;
+  // Apply nonce if available
+  if (styleNonce) {
+    styleElement.setAttribute("nonce", styleNonce);
+  }
 
-  // Use the helper function to append CSS variables
-  appendCssVariable("brand-color", styling.brandColor?.light);
-  appendCssVariable("survey-brand-color", styling.brandColor?.light);
-  appendCssVariable("focus-color", styling.brandColor?.light);
+  document.head.appendChild(styleElement);
+  return styleElement;
+};
+
+/** Brand, text, input border and card colors, and the radii the roundness sets. */
+const appendBaseVariables = (
+  styling: TThemeStyling,
+  roundness: number | string,
+  append: TAppendCssVariable
+) => {
+  append("brand-color", styling.brandColor?.light);
+  append("survey-brand-color", styling.brandColor?.light);
+  append("focus-color", styling.brandColor?.light);
   if (styling.brandColor?.light) {
     // If the brand color is defined, set the text color based on the lightness of the brand color
-    appendCssVariable("brand-text-color", isLight(styling.brandColor.light) ? "black" : "white");
+    append("brand-text-color", isLight(styling.brandColor.light) ? "black" : "white");
   } else {
     // If the brand color is undefined, default to white
-    appendCssVariable("brand-text-color", "#ffffff");
+    append("brand-text-color", "#ffffff");
   }
 
-  appendCssVariable("heading-color", styling.elementHeadlineColor?.light);
-  appendCssVariable("element-headline-color", styling.elementHeadlineColor?.light);
-  appendCssVariable("element-description-color", styling.elementDescriptionColor?.light);
-  appendCssVariable("input-color", styling.inputTextColor?.light);
-  appendCssVariable("label-color", styling.elementUpperLabelColor?.light);
-  appendCssVariable("subheading-color", styling.elementDescriptionColor?.light);
+  append("heading-color", styling.elementHeadlineColor?.light);
+  append("element-headline-color", styling.elementHeadlineColor?.light);
+  append("element-description-color", styling.elementDescriptionColor?.light);
+  append("input-color", styling.inputTextColor?.light);
+  append("label-color", styling.elementUpperLabelColor?.light);
+  append("subheading-color", styling.elementDescriptionColor?.light);
 
   const placeholderBaseColor = styling.inputTextColor?.light;
   if (placeholderBaseColor) {
-    appendCssVariable("placeholder-color", mixColor(placeholderBaseColor, "#ffffff", 0.3));
-    appendCssVariable("input-placeholder-color", mixColor(placeholderBaseColor, "#ffffff", 0.3));
+    append("placeholder-color", mixColor(placeholderBaseColor, "#ffffff", 0.3));
+    append("input-placeholder-color", mixColor(placeholderBaseColor, "#ffffff", 0.3));
   }
 
-  appendCssVariable("border-color", styling.inputBorderColor?.light);
+  append("border-color", styling.inputBorderColor?.light);
 
   if (styling.inputBorderColor?.light) {
-    appendCssVariable("border-color-highlight", mixColor(styling.inputBorderColor.light, "#000000", 0.1));
-    appendCssVariable("input-border-color", styling.inputBorderColor?.light);
+    append("border-color-highlight", mixColor(styling.inputBorderColor.light, "#000000", 0.1));
+    append("input-border-color", styling.inputBorderColor?.light);
   }
 
-  // helper function to format dimensions
-  const formatDimension = (value: string | number | null | undefined) => {
-    if (value === null || value === undefined) return undefined;
-    if (typeof value === "number") {
-      return `${value}px`;
-    }
-    if (typeof value === "string" && !Number.isNaN(Number(value))) {
-      return `${value}px`;
-    }
-    return value;
-  };
+  append("survey-background-color", styling.cardBackgroundColor?.light);
+  append("survey-border-color", styling.cardBorderColor?.light);
+  append("border-radius", formatDimension(roundness));
+  append("input-border-radius", formatDimension(roundness));
+  append("option-border-radius", formatDimension(roundness));
+  append("button-border-radius", formatDimension(roundness));
+  append("input-background-color", styling.inputBgColor?.light);
+  append("input-bg-color", styling.inputBgColor?.light);
+  append("option-bg-color", styling.optionBgColor?.light);
+  append("input-color", styling.inputTextColor?.light);
+};
 
-  appendCssVariable("survey-background-color", styling.cardBackgroundColor?.light);
-  appendCssVariable("survey-border-color", styling.cardBorderColor?.light);
-  appendCssVariable("border-radius", formatDimension(roundness));
-  appendCssVariable("input-border-radius", formatDimension(roundness));
-  appendCssVariable("option-border-radius", formatDimension(roundness));
-  appendCssVariable("button-border-radius", formatDimension(roundness));
-  appendCssVariable("input-background-color", styling.inputBgColor?.light);
-  appendCssVariable("input-bg-color", styling.inputBgColor?.light);
-  appendCssVariable("option-bg-color", styling.optionBgColor?.light);
-  appendCssVariable("input-color", styling.inputTextColor?.light);
-
+/** Colors derived from the headline, input background and brand colors. */
+const appendDerivedColorVariables = (styling: TThemeStyling, append: TAppendCssVariable) => {
   if (styling.elementHeadlineColor?.light) {
     const isLightHeadlineColor = isLight(styling.elementHeadlineColor.light);
     const signatureColor = mixColor(
@@ -325,8 +322,8 @@ export const addCustomThemeToDom = ({
       0.3
     );
 
-    appendCssVariable("signature-text-color", signatureColor);
-    appendCssVariable("branding-text-color", brandingColor);
+    append("signature-text-color", signatureColor);
+    append("branding-text-color", brandingColor);
   }
 
   if (styling.inputBgColor?.light) {
@@ -335,12 +332,9 @@ export const addCustomThemeToDom = ({
       styling.inputBgColor.light === "#ffffff" ||
       styling.inputBgColor.light === "white"
     ) {
-      appendCssVariable("input-background-color-selected", "var(--slate-50)");
+      append("input-background-color-selected", "var(--slate-50)");
     } else {
-      appendCssVariable(
-        "input-background-color-selected",
-        mixColor(styling.inputBgColor.light, "#000000", 0.025)
-      );
+      append("input-background-color-selected", mixColor(styling.inputBgColor.light, "#000000", 0.025));
     }
   }
 
@@ -350,13 +344,330 @@ export const addCustomThemeToDom = ({
     const accentColor = mixColor(brandColor, "#ffffff", 0.8);
     const accentColorSelected = mixColor(brandColor, "#ffffff", 0.7);
 
-    appendCssVariable("accent-background-color", accentColor);
-    appendCssVariable("accent-background-color-selected", accentColorSelected);
+    append("accent-background-color", accentColor);
+    append("accent-background-color-selected", accentColorSelected);
 
     if (isLight(brandColor)) {
-      appendCssVariable("calendar-tile-color", mixColor(brandColor, "#000000", 0.7));
+      append("calendar-tile-color", mixColor(brandColor, "#000000", 0.7));
     }
   }
+};
+
+/** Buttons (Advanced). A size left unset writes nothing. */
+const appendButtonVariables = (
+  styling: TThemeStyling,
+  buttonBg: string | undefined,
+  buttonText: string | undefined,
+  append: TAppendCssVariable
+) => {
+  append("button-bg-color", buttonBg);
+  append("button-text-color", buttonText);
+  // The ghost "Back" button renders the brand (button bg) as text directly on the card surface,
+  // where a light brand fails contrast. Darken it toward readable while keeping the brand hue.
+  if (buttonBg) {
+    const backButtonSurface = styling.cardBackgroundColor?.light ?? "#ffffff";
+    append("back-button-color", ensureReadable(buttonBg, backButtonSurface));
+  }
+  append("button-border-radius", formatDimension(styling.buttonBorderRadius));
+  append("button-height", formatDimension(styling.buttonHeight));
+  append("button-font-size", formatDimension(styling.buttonFontSize));
+  append("button-font-weight", formatFontWeight(styling.buttonFontWeight));
+  append("button-padding-x", formatDimension(styling.buttonPaddingX));
+  append("button-padding-y", formatDimension(styling.buttonPaddingY));
+};
+
+/** Inputs and options (Advanced). A size left unset writes nothing. */
+const appendInputAndOptionVariables = (styling: TThemeStyling, append: TAppendCssVariable) => {
+  // Inputs (Advanced)
+  append("input-background-color", styling.inputBgColor?.light);
+  const inputTextColor = styling.inputTextColor?.light;
+  append("input-text-color", inputTextColor);
+  if (inputTextColor) {
+    append("input-placeholder-color", mixColor(inputTextColor, "#ffffff", 0.3));
+  }
+  append("input-border-radius", formatDimension(styling.inputBorderRadius));
+  append("input-height", formatDimension(styling.inputHeight));
+  append("input-font-size", formatDimension(styling.inputFontSize));
+  append("input-padding-x", formatDimension(styling.inputPaddingX));
+  append("input-padding-y", formatDimension(styling.inputPaddingY));
+  if (styling.inputPlaceholderOpacity !== undefined)
+    append("input-placeholder-opacity", `${styling.inputPlaceholderOpacity}`);
+  append("input-shadow", styling.inputShadow);
+
+  // Options (Advanced)
+  append("option-bg-color", styling.optionBgColor?.light);
+  append("option-label-color", styling.optionLabelColor?.light);
+  if (styling.optionBorderColor?.light) append("option-border-color", styling.optionBorderColor.light);
+  append("option-border-radius", formatDimension(styling.optionBorderRadius));
+  append("option-padding-x", formatDimension(styling.optionPaddingX));
+  append("option-padding-y", formatDimension(styling.optionPaddingY));
+  append("option-font-size", formatDimension(styling.optionFontSize));
+};
+
+/** Element headline, description and upper label (Advanced), and the progress bar. */
+const appendLabelAndProgressVariables = (
+  styling: TThemeStyling,
+  roundness: number | string,
+  append: TAppendCssVariable
+) => {
+  // Element Headline & Description (Advanced)
+  append("element-headline-font-size", formatDimension(styling.elementHeadlineFontSize));
+  append("element-headline-font-weight", formatFontWeight(styling.elementHeadlineFontWeight));
+  append("element-headline-color", styling.elementHeadlineColor?.light);
+
+  append("element-description-font-size", formatDimension(styling.elementDescriptionFontSize));
+  append("element-description-font-weight", formatFontWeight(styling.elementDescriptionFontWeight));
+  append("element-description-color", styling.elementDescriptionColor?.light);
+
+  append("element-upper-label-font-size", formatDimension(styling.elementUpperLabelFontSize ?? 12));
+  append("element-upper-label-color", styling.elementUpperLabelColor?.light);
+
+  if (styling.elementUpperLabelColor?.light) {
+    append("element-upper-label-opacity", "1");
+  }
+
+  append("element-upper-label-font-weight", `${styling.elementUpperLabelFontWeight ?? "normal"}`);
+
+  // Progress Bar (Advanced)
+  append("progress-track-height", formatDimension(styling.progressTrackHeight));
+
+  // Implicitly set the progress track border radius to the roundness of the card
+  append("progress-track-border-radius", formatDimension(roundness));
+
+  append("progress-track-bg-color", styling.progressTrackBgColor?.light);
+  append("progress-indicator-bg-color", styling.progressIndicatorBgColor?.light);
+};
+
+const isSet = (value: unknown): boolean => value !== undefined && value !== null;
+
+/** The declarations whose condition holds, in order. */
+const joinDeclarations = (entries: [boolean, string][]): string =>
+  entries
+    .filter(([applies]) => applies)
+    .map(([, declaration]) => declaration)
+    .join("");
+
+/** `selector { declarations }`, or nothing for empty declarations. */
+const cssRule = (selector: string, declarations: string): string =>
+  declarations.trim() ? `${selector} {\n${declarations}}\n` : "";
+
+// Formatted text inside the headline and description hooks inherits these from the hook element, as in
+// survey-ui's globals.css, so Custom CSS on the hook reaches it. Same specificity as the `.label-* *`
+// rule it follows, so it wins by order while the bold rule (`.label-headline strong`) still wins.
+const toInherited = (declarations: string) =>
+  declarations.replaceAll(/: var\([^)]*\) !important;/g, ": inherit !important;");
+
+/** Headline, description and upper label overrides. */
+const getLabelRules = (styling: TThemeStyling): string => {
+  // --- Headlines ---
+  const headlineDecls = joinDeclarations([
+    [
+      styling.elementHeadlineFontSize !== undefined,
+      "  font-size: var(--fb-element-headline-font-size) !important;\n",
+    ],
+    [
+      isSet(styling.elementHeadlineFontWeight),
+      "  font-weight: var(--fb-element-headline-font-weight) !important;\n",
+    ],
+    [Boolean(styling.elementHeadlineColor?.light), "  color: var(--fb-element-headline-color) !important;\n"],
+  ]);
+
+  // --- Descriptions ---
+  const descriptionDecls = joinDeclarations([
+    [
+      styling.elementDescriptionFontSize !== undefined,
+      "  font-size: var(--fb-element-description-font-size) !important;\n",
+    ],
+    [
+      isSet(styling.elementDescriptionFontWeight),
+      "  font-weight: var(--fb-element-description-font-weight) !important;\n",
+    ],
+    [
+      Boolean(styling.elementDescriptionColor?.light),
+      "  color: var(--fb-element-description-color) !important;\n",
+    ],
+  ]);
+
+  // --- Upper labels ---
+  const upperDecls = joinDeclarations([
+    [
+      styling.elementUpperLabelFontSize !== undefined,
+      "  font-size: var(--fb-element-upper-label-font-size) !important;\n",
+    ],
+    [
+      isSet(styling.elementUpperLabelFontWeight),
+      "  font-weight: var(--fb-element-upper-label-font-weight) !important;\n",
+    ],
+    [
+      Boolean(styling.elementUpperLabelColor?.light),
+      "  color: var(--fb-element-upper-label-color) !important;\n" +
+        "  opacity: var(--fb-element-upper-label-opacity, 1) !important;\n",
+    ],
+  ]);
+
+  return (
+    cssRule("#fbjs .label-headline,\n#fbjs .label-headline *", headlineDecls) +
+    cssRule('#fbjs [data-fb-part="headline"] *', toInherited(headlineDecls)) +
+    cssRule("#fbjs .label-description,\n#fbjs .label-description *", descriptionDecls) +
+    cssRule('#fbjs [data-fb-part="description"] *', toInherited(descriptionDecls)) +
+    cssRule("#fbjs .label-card,\n#fbjs .label-card *", upperDecls)
+  );
+};
+
+/** Button overrides. */
+const getButtonRules = (
+  styling: TThemeStyling,
+  buttonBg: string | undefined,
+  buttonText: string | undefined
+): string => {
+  const buttonDecls = joinDeclarations([
+    [Boolean(buttonBg), "  background-color: var(--fb-button-bg-color) !important;\n"],
+    [Boolean(buttonText), "  color: var(--fb-button-text-color) !important;\n"],
+    [
+      styling.buttonBorderRadius !== undefined,
+      "  border-radius: var(--fb-button-border-radius) !important;\n",
+    ],
+    [styling.buttonHeight !== undefined, "  height: var(--fb-button-height) !important;\n"],
+    [styling.buttonFontSize !== undefined, "  font-size: var(--fb-button-font-size) !important;\n"],
+    [isSet(styling.buttonFontWeight), "  font-weight: var(--fb-button-font-weight) !important;\n"],
+    [
+      styling.buttonPaddingX !== undefined,
+      "  padding-left: var(--fb-button-padding-x) !important;\n" +
+        "  padding-right: var(--fb-button-padding-x) !important;\n",
+    ],
+    [
+      styling.buttonPaddingY !== undefined,
+      "  padding-top: var(--fb-button-padding-y) !important;\n" +
+        "  padding-bottom: var(--fb-button-padding-y) !important;\n",
+    ],
+  ]);
+  return cssRule("#fbjs .button-custom,\n#fbjs button.button-custom", buttonDecls);
+};
+
+/** Option and input overrides. */
+const getOptionAndInputRules = (styling: TThemeStyling): string => {
+  const optionLabelDecls = joinDeclarations([
+    [Boolean(styling.optionLabelColor?.light), "  color: var(--fb-option-label-color) !important;\n"],
+    [styling.optionFontSize !== undefined, "  font-size: var(--fb-option-font-size) !important;\n"],
+  ]);
+  const inputTextDecls = joinDeclarations([
+    [Boolean(styling.inputTextColor?.light), "  color: var(--fb-input-text-color) !important;\n"],
+    [styling.inputFontSize !== undefined, "  font-size: var(--fb-input-font-size) !important;\n"],
+  ]);
+
+  return joinDeclarations([
+    // --- Options ---
+    [
+      styling.optionBorderRadius !== undefined,
+      cssRule("#fbjs .rounded-option", "  border-radius: var(--fb-option-border-radius) !important;\n"),
+    ],
+    [
+      Boolean(styling.optionBorderColor?.light),
+      cssRule("#fbjs .border-option-border", "  border-color: var(--fb-option-border-color) !important;\n"),
+    ],
+    [
+      Boolean(styling.optionBgColor?.light),
+      cssRule("#fbjs .bg-option-bg", "  background-color: var(--fb-option-bg-color) !important;\n"),
+    ],
+    [true, cssRule("#fbjs .text-option-label", optionLabelDecls)],
+    [
+      styling.optionPaddingX !== undefined,
+      cssRule(
+        "#fbjs .px-option-x",
+        "  padding-left: var(--fb-option-padding-x) !important;\n  padding-right: var(--fb-option-padding-x) !important;\n"
+      ),
+    ],
+    [
+      styling.optionPaddingY !== undefined,
+      cssRule(
+        "#fbjs .py-option-y",
+        "  padding-top: var(--fb-option-padding-y) !important;\n  padding-bottom: var(--fb-option-padding-y) !important;\n"
+      ),
+    ],
+    // --- Inputs ---
+    [
+      styling.inputBorderRadius !== undefined,
+      cssRule("#fbjs .rounded-input", "  border-radius: var(--fb-input-border-radius) !important;\n"),
+    ],
+    [
+      Boolean(styling.inputBgColor?.light),
+      cssRule("#fbjs .bg-input-bg", "  background-color: var(--fb-input-background-color) !important;\n"),
+    ],
+    [
+      Boolean(styling.inputBorderColor?.light),
+      cssRule("#fbjs .border-input-border", "  border-color: var(--fb-input-border-color) !important;\n"),
+    ],
+    [true, cssRule("#fbjs .text-input-text", inputTextDecls)],
+    [
+      styling.inputPaddingX !== undefined,
+      cssRule(
+        "#fbjs .px-input-x",
+        "  padding-left: var(--fb-input-padding-x) !important;\n  padding-right: var(--fb-input-padding-x) !important;\n"
+      ),
+    ],
+    [
+      styling.inputPaddingY !== undefined,
+      cssRule(
+        "#fbjs .py-input-y",
+        "  padding-top: var(--fb-input-padding-y) !important;\n  padding-bottom: var(--fb-input-padding-y) !important;\n"
+      ),
+    ],
+  ]);
+};
+
+/** Progress bar overrides. */
+const getProgressRules = (styling: TThemeStyling): string => {
+  let rules = "";
+  if (styling.progressTrackHeight !== undefined) {
+    rules += cssRule(
+      "html body #fbjs div.progress-track",
+      "  border-radius: var(--fb-progress-track-border-radius) var(--fb-progress-track-border-radius) 0 0 !important;\n" +
+        "  height: var(--fb-progress-track-height) !important;\n" +
+        "  min-height: var(--fb-progress-track-height) !important;\n" +
+        "  max-height: none !important;\n" +
+        "  overflow: hidden !important;\n"
+    );
+    rules += cssRule(
+      "html body #fbjs div.progress-indicator",
+      "  height: 100% !important;\n  border-radius: 0 !important;\n"
+    );
+  }
+
+  return (
+    rules +
+    cssRule("html body #fbjs .cardless-progress-bar div.progress-track", "  border-radius: 0 !important;\n")
+  );
+};
+
+export const addCustomThemeToDom = ({
+  styling: rawStyling,
+  pageFont = false,
+}: {
+  styling: TWorkspaceStyling | TSurveyStyling;
+  /** Page font (ENG-3864): the host passes it; it is never read from `styling`. */
+  pageFont?: boolean;
+}): void => {
+  // Every styling value below is written into stylesheet text, and stored styling can predate write-time
+  // validation: an unsafe value (one that could add declarations or rules) falls back as if it were
+  // unset, while valid values pass through unchanged (ENG-2950).
+  const styling = sanitizeThemeStyling(rawStyling);
+
+  const styleElement = getCustomStyleElement();
+
+  // Start the CSS string with #fbjs
+  let cssVariables = "#fbjs {\n";
+
+  // Helper function to append the variable if it's not undefined
+  const appendCssVariable: TAppendCssVariable = (variableName, value) => {
+    if (value !== undefined && value !== null) {
+      cssVariables += `--fb-${variableName}: ${value};\n`;
+    }
+  };
+  // if roundness is defined, even if it's 0, set the border-radius
+  const roundness = styling.roundness ?? 8;
+
+  appendBaseVariables(styling, roundness, appendCssVariable);
+  appendDerivedColorVariables(styling, appendCssVariable);
 
   // Buttons (Advanced)
   const buttonBg = styling.buttonBgColor?.light;
@@ -364,96 +675,9 @@ export const addCustomThemeToDom = ({
   if (buttonText === undefined && buttonBg) {
     buttonText = isLight(buttonBg) ? "#0f172a" : "#ffffff";
   }
-  appendCssVariable("button-bg-color", buttonBg);
-  appendCssVariable("button-text-color", buttonText);
-  // The ghost "Back" button renders the brand (button bg) as text directly on the card surface,
-  // where a light brand fails contrast. Darken it toward readable while keeping the brand hue.
-  if (buttonBg) {
-    const backButtonSurface = styling.cardBackgroundColor?.light ?? "#ffffff";
-    appendCssVariable("back-button-color", ensureReadable(buttonBg, backButtonSurface));
-  }
-  if (styling.buttonBorderRadius !== undefined)
-    appendCssVariable("button-border-radius", formatDimension(styling.buttonBorderRadius));
-  if (styling.buttonHeight !== undefined)
-    appendCssVariable("button-height", formatDimension(styling.buttonHeight));
-  if (styling.buttonFontSize !== undefined)
-    appendCssVariable("button-font-size", formatDimension(styling.buttonFontSize));
-  if (styling.buttonFontWeight !== undefined && styling.buttonFontWeight !== null)
-    appendCssVariable("button-font-weight", `${styling.buttonFontWeight}`);
-  if (styling.buttonPaddingX !== undefined)
-    appendCssVariable("button-padding-x", formatDimension(styling.buttonPaddingX));
-  if (styling.buttonPaddingY !== undefined)
-    appendCssVariable("button-padding-y", formatDimension(styling.buttonPaddingY));
-
-  // Inputs (Advanced)
-  appendCssVariable("input-background-color", styling.inputBgColor?.light);
-  const inputTextColor = styling.inputTextColor?.light;
-  appendCssVariable("input-text-color", inputTextColor);
-  if (inputTextColor) {
-    appendCssVariable("input-placeholder-color", mixColor(inputTextColor, "#ffffff", 0.3));
-  }
-  if (styling.inputBorderRadius !== undefined)
-    appendCssVariable("input-border-radius", formatDimension(styling.inputBorderRadius));
-  if (styling.inputHeight !== undefined)
-    appendCssVariable("input-height", formatDimension(styling.inputHeight));
-  if (styling.inputFontSize !== undefined)
-    appendCssVariable("input-font-size", formatDimension(styling.inputFontSize));
-  if (styling.inputPaddingX !== undefined)
-    appendCssVariable("input-padding-x", formatDimension(styling.inputPaddingX));
-  if (styling.inputPaddingY !== undefined)
-    appendCssVariable("input-padding-y", formatDimension(styling.inputPaddingY));
-  if (styling.inputPlaceholderOpacity !== undefined)
-    appendCssVariable("input-placeholder-opacity", `${styling.inputPlaceholderOpacity}`);
-  appendCssVariable("input-shadow", styling.inputShadow);
-
-  // Options (Advanced)
-  appendCssVariable("option-bg-color", styling.optionBgColor?.light);
-  appendCssVariable("option-label-color", styling.optionLabelColor?.light);
-  if (styling.optionBorderColor?.light)
-    appendCssVariable("option-border-color", styling.optionBorderColor.light);
-  if (styling.optionBorderRadius !== undefined)
-    appendCssVariable("option-border-radius", formatDimension(styling.optionBorderRadius));
-  if (styling.optionPaddingX !== undefined)
-    appendCssVariable("option-padding-x", formatDimension(styling.optionPaddingX));
-  if (styling.optionPaddingY !== undefined)
-    appendCssVariable("option-padding-y", formatDimension(styling.optionPaddingY));
-  if (styling.optionFontSize !== undefined)
-    appendCssVariable("option-font-size", formatDimension(styling.optionFontSize));
-
-  // Element Headline & Description (Advanced)
-  if (styling.elementHeadlineFontSize !== undefined)
-    appendCssVariable("element-headline-font-size", formatDimension(styling.elementHeadlineFontSize));
-  if (styling.elementHeadlineFontWeight !== undefined && styling.elementHeadlineFontWeight !== null)
-    appendCssVariable("element-headline-font-weight", `${styling.elementHeadlineFontWeight}`);
-  appendCssVariable("element-headline-color", styling.elementHeadlineColor?.light);
-
-  if (styling.elementDescriptionFontSize !== undefined)
-    appendCssVariable("element-description-font-size", formatDimension(styling.elementDescriptionFontSize));
-  if (styling.elementDescriptionFontWeight !== undefined && styling.elementDescriptionFontWeight !== null)
-    appendCssVariable("element-description-font-weight", `${styling.elementDescriptionFontWeight}`);
-  appendCssVariable("element-description-color", styling.elementDescriptionColor?.light);
-
-  appendCssVariable(
-    "element-upper-label-font-size",
-    formatDimension(styling.elementUpperLabelFontSize ?? 12)
-  );
-  appendCssVariable("element-upper-label-color", styling.elementUpperLabelColor?.light);
-
-  if (styling.elementUpperLabelColor?.light) {
-    appendCssVariable("element-upper-label-opacity", "1");
-  }
-
-  appendCssVariable("element-upper-label-font-weight", `${styling.elementUpperLabelFontWeight ?? "normal"}`);
-
-  // Progress Bar (Advanced)
-  if (styling.progressTrackHeight !== undefined)
-    appendCssVariable("progress-track-height", formatDimension(styling.progressTrackHeight));
-
-  // Implicitly set the progress track border radius to the roundness of the card
-  appendCssVariable("progress-track-border-radius", formatDimension(roundness));
-
-  appendCssVariable("progress-track-bg-color", styling.progressTrackBgColor?.light);
-  appendCssVariable("progress-indicator-bg-color", styling.progressIndicatorBgColor?.light);
+  appendButtonVariables(styling, buttonBg, buttonText, appendCssVariable);
+  appendInputAndOptionVariables(styling, appendCssVariable);
+  appendLabelAndProgressVariables(styling, roundness, appendCssVariable);
 
   // Close the #fbjs variable block
   cssVariables += "}\n";
@@ -466,142 +690,10 @@ export const addCustomThemeToDom = ({
   // and prevents the brand-color change from cascading into unrelated elements
   // (e.g. button bg, headline color) unless the user opted in.
   // ---------------------------------------------------------------------------
-
-  const addRule = (selector: string, declarations: string) => {
-    if (declarations.trim()) {
-      cssVariables += `${selector} {\n${declarations}}\n`;
-    }
-  };
-
-  // Formatted text inside the headline and description hooks inherits these from the hook element, as in
-  // survey-ui's globals.css, so Custom CSS on the hook reaches it. Same specificity as the `.label-* *`
-  // rule it follows, so it wins by order while the bold rule (`.label-headline strong`) still wins.
-  const toInherited = (declarations: string) =>
-    declarations.replaceAll(/: var\([^)]*\) !important;/g, ": inherit !important;");
-
-  // --- Headlines ---
-  let headlineDecls = "";
-  if (styling.elementHeadlineFontSize !== undefined)
-    headlineDecls += "  font-size: var(--fb-element-headline-font-size) !important;\n";
-  if (styling.elementHeadlineFontWeight !== undefined && styling.elementHeadlineFontWeight !== null)
-    headlineDecls += "  font-weight: var(--fb-element-headline-font-weight) !important;\n";
-  if (styling.elementHeadlineColor?.light)
-    headlineDecls += "  color: var(--fb-element-headline-color) !important;\n";
-  addRule("#fbjs .label-headline,\n#fbjs .label-headline *", headlineDecls);
-  addRule('#fbjs [data-fb-part="headline"] *', toInherited(headlineDecls));
-
-  // --- Descriptions ---
-  let descriptionDecls = "";
-  if (styling.elementDescriptionFontSize !== undefined)
-    descriptionDecls += "  font-size: var(--fb-element-description-font-size) !important;\n";
-  if (styling.elementDescriptionFontWeight !== undefined && styling.elementDescriptionFontWeight !== null)
-    descriptionDecls += "  font-weight: var(--fb-element-description-font-weight) !important;\n";
-  if (styling.elementDescriptionColor?.light)
-    descriptionDecls += "  color: var(--fb-element-description-color) !important;\n";
-  addRule("#fbjs .label-description,\n#fbjs .label-description *", descriptionDecls);
-  addRule('#fbjs [data-fb-part="description"] *', toInherited(descriptionDecls));
-
-  // --- Upper labels ---
-  let upperDecls = "";
-  if (styling.elementUpperLabelFontSize !== undefined)
-    upperDecls += "  font-size: var(--fb-element-upper-label-font-size) !important;\n";
-  if (styling.elementUpperLabelFontWeight !== undefined && styling.elementUpperLabelFontWeight !== null)
-    upperDecls += "  font-weight: var(--fb-element-upper-label-font-weight) !important;\n";
-  if (styling.elementUpperLabelColor?.light) {
-    upperDecls += "  color: var(--fb-element-upper-label-color) !important;\n";
-    upperDecls += "  opacity: var(--fb-element-upper-label-opacity, 1) !important;\n";
-  }
-  addRule("#fbjs .label-card,\n#fbjs .label-card *", upperDecls);
-
-  // --- Buttons ---
-  let buttonDecls = "";
-  if (buttonBg) buttonDecls += "  background-color: var(--fb-button-bg-color) !important;\n";
-  if (buttonText) buttonDecls += "  color: var(--fb-button-text-color) !important;\n";
-  if (styling.buttonBorderRadius !== undefined)
-    buttonDecls += "  border-radius: var(--fb-button-border-radius) !important;\n";
-  if (styling.buttonHeight !== undefined) buttonDecls += "  height: var(--fb-button-height) !important;\n";
-  if (styling.buttonFontSize !== undefined)
-    buttonDecls += "  font-size: var(--fb-button-font-size) !important;\n";
-  if (styling.buttonFontWeight !== undefined && styling.buttonFontWeight !== null)
-    buttonDecls += "  font-weight: var(--fb-button-font-weight) !important;\n";
-  if (styling.buttonPaddingX !== undefined) {
-    buttonDecls += "  padding-left: var(--fb-button-padding-x) !important;\n";
-    buttonDecls += "  padding-right: var(--fb-button-padding-x) !important;\n";
-  }
-  if (styling.buttonPaddingY !== undefined) {
-    buttonDecls += "  padding-top: var(--fb-button-padding-y) !important;\n";
-    buttonDecls += "  padding-bottom: var(--fb-button-padding-y) !important;\n";
-  }
-  addRule("#fbjs .button-custom,\n#fbjs button.button-custom", buttonDecls);
-
-  // --- Options ---
-  if (styling.optionBorderRadius !== undefined)
-    addRule("#fbjs .rounded-option", "  border-radius: var(--fb-option-border-radius) !important;\n");
-  if (styling.optionBorderColor?.light)
-    addRule("#fbjs .border-option-border", "  border-color: var(--fb-option-border-color) !important;\n");
-  if (styling.optionBgColor?.light)
-    addRule("#fbjs .bg-option-bg", "  background-color: var(--fb-option-bg-color) !important;\n");
-
-  let optionLabelDecls = "";
-  if (styling.optionLabelColor?.light)
-    optionLabelDecls += "  color: var(--fb-option-label-color) !important;\n";
-  if (styling.optionFontSize !== undefined)
-    optionLabelDecls += "  font-size: var(--fb-option-font-size) !important;\n";
-  addRule("#fbjs .text-option-label", optionLabelDecls);
-
-  if (styling.optionPaddingX !== undefined)
-    addRule(
-      "#fbjs .px-option-x",
-      "  padding-left: var(--fb-option-padding-x) !important;\n  padding-right: var(--fb-option-padding-x) !important;\n"
-    );
-  if (styling.optionPaddingY !== undefined)
-    addRule(
-      "#fbjs .py-option-y",
-      "  padding-top: var(--fb-option-padding-y) !important;\n  padding-bottom: var(--fb-option-padding-y) !important;\n"
-    );
-
-  // --- Inputs ---
-  if (styling.inputBorderRadius !== undefined)
-    addRule("#fbjs .rounded-input", "  border-radius: var(--fb-input-border-radius) !important;\n");
-  if (styling.inputBgColor?.light)
-    addRule("#fbjs .bg-input-bg", "  background-color: var(--fb-input-background-color) !important;\n");
-  if (styling.inputBorderColor?.light)
-    addRule("#fbjs .border-input-border", "  border-color: var(--fb-input-border-color) !important;\n");
-
-  let inputTextDecls = "";
-  if (styling.inputTextColor?.light) inputTextDecls += "  color: var(--fb-input-text-color) !important;\n";
-  if (styling.inputFontSize !== undefined)
-    inputTextDecls += "  font-size: var(--fb-input-font-size) !important;\n";
-  addRule("#fbjs .text-input-text", inputTextDecls);
-
-  if (styling.inputPaddingX !== undefined)
-    addRule(
-      "#fbjs .px-input-x",
-      "  padding-left: var(--fb-input-padding-x) !important;\n  padding-right: var(--fb-input-padding-x) !important;\n"
-    );
-  if (styling.inputPaddingY !== undefined)
-    addRule(
-      "#fbjs .py-input-y",
-      "  padding-top: var(--fb-input-padding-y) !important;\n  padding-bottom: var(--fb-input-padding-y) !important;\n"
-    );
-
-  // --- Progress bar ---
-  if (styling.progressTrackHeight !== undefined) {
-    addRule(
-      "html body #fbjs div.progress-track",
-      "  border-radius: var(--fb-progress-track-border-radius) var(--fb-progress-track-border-radius) 0 0 !important;\n" +
-        "  height: var(--fb-progress-track-height) !important;\n" +
-        "  min-height: var(--fb-progress-track-height) !important;\n" +
-        "  max-height: none !important;\n" +
-        "  overflow: hidden !important;\n"
-    );
-    addRule(
-      "html body #fbjs div.progress-indicator",
-      "  height: 100% !important;\n  border-radius: 0 !important;\n"
-    );
-  }
-
-  addRule("html body #fbjs .cardless-progress-bar div.progress-track", "  border-radius: 0 !important;\n");
+  cssVariables += getLabelRules(styling);
+  cssVariables += getButtonRules(styling, buttonBg, buttonText);
+  cssVariables += getOptionAndInputRules(styling);
+  cssVariables += getProgressRules(styling);
 
   cssVariables += getDarkThemeCss(styling);
 

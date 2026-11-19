@@ -3,6 +3,7 @@
  */
 import "@testing-library/jest-dom/vitest";
 import { renderHook } from "@testing-library/react";
+import type { TFunction } from "i18next";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { z } from "zod";
 import { TActionClass, TActionClassInput } from "@formbricks/types/action-classes";
@@ -23,12 +24,12 @@ vi.mock("@/app/lib/actionClass/actionClass", () => ({
 const { isValidCssSelector } = await import("@/app/lib/actionClass/actionClass");
 
 // Mock translation function
-const mockT = vi.fn((key: string, params?: any) => {
+const mockT = vi.fn((key: string, params?: Record<string, unknown>) => {
   if (key === "workspace.actions.action_with_name_already_exists") {
-    return `Action with name "${params?.name}" already exists`;
+    return `Action with name "${String(params?.name)}" already exists`;
   }
   if (key === "workspace.actions.action_with_key_already_exists") {
-    return `Action with key "${params?.key}" already exists`;
+    return `Action with key "${String(params?.key)}" already exists`;
   }
   if (key === "workspace.actions.invalid_css_selector") {
     return "Invalid CSS selector";
@@ -40,7 +41,7 @@ const mockT = vi.fn((key: string, params?: any) => {
     return "You are not authorized to perform this action";
   }
   return key;
-}) as any;
+}) as unknown as TFunction;
 
 // Helper to create mock context
 const createMockContext = () => {
@@ -48,7 +49,7 @@ const createMockContext = () => {
   return {
     addIssue: vi.fn((issue: z.ZodIssue) => issues.push(issue)),
     issues,
-  } as any;
+  } as unknown as z.RefinementCtx & { issues: z.ZodIssue[] };
 };
 
 describe("action-utils", () => {
@@ -69,7 +70,7 @@ describe("action-utils", () => {
           workspaceId: "ws1",
           createdAt: new Date(),
           updatedAt: new Date(),
-        } as TActionClass,
+        },
         {
           id: "2",
           name: "NoCode Action",
@@ -84,7 +85,7 @@ describe("action-utils", () => {
           workspaceId: "ws1",
           createdAt: new Date(),
           updatedAt: new Date(),
-        } as TActionClass,
+        },
         {
           id: "3",
           name: "Code Action 2",
@@ -95,7 +96,7 @@ describe("action-utils", () => {
           workspaceId: "ws1",
           createdAt: new Date(),
           updatedAt: new Date(),
-        } as TActionClass,
+        },
       ];
 
       const { result } = renderHook(() => useActionClassKeys(actionClasses));
@@ -115,7 +116,7 @@ describe("action-utils", () => {
           workspaceId: "ws1",
           createdAt: new Date(),
           updatedAt: new Date(),
-        } as TActionClass,
+        },
         {
           id: "2",
           name: "Code Action 2",
@@ -126,7 +127,7 @@ describe("action-utils", () => {
           workspaceId: "ws1",
           createdAt: new Date(),
           updatedAt: new Date(),
-        } as TActionClass,
+        },
       ];
 
       const { result } = renderHook(() => useActionClassKeys(actionClasses));
@@ -150,7 +151,7 @@ describe("action-utils", () => {
           workspaceId: "ws1",
           createdAt: new Date(),
           updatedAt: new Date(),
-        } as TActionClass,
+        },
       ];
 
       const { result } = renderHook(() => useActionClassKeys(actionClasses));

@@ -1,7 +1,7 @@
 "use client";
 
 import { createId } from "@paralleldrive/cuid2";
-import { type JSX, useEffect, useMemo, useState } from "react";
+import { type JSX, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import { getLanguageLabel } from "@formbricks/i18n-utils/utils";
@@ -83,12 +83,22 @@ export const BulkEditOptionsModal = ({
     return code ? getLanguageLabel(code, locale) : null;
   }, [localSurvey.languages, selectedLanguageCode, locale]);
 
-  useEffect(() => {
-    if (isOpen) {
-      setTextareaValue(regularChoices.map((c) => c.label[selectedLanguageCode] || "").join("\n"));
-      setValidationError(null);
-    }
-  }, [isOpen, regularChoices, selectedLanguageCode]);
+  // Opening (or new choices or language while open) seeds the textarea. Adjusted during render.
+  const [seededFrom, setSeededFrom] = useState<{
+    regularChoices: typeof regularChoices;
+    selectedLanguageCode: string;
+  } | null>(null);
+  if (!isOpen && seededFrom !== null) {
+    setSeededFrom(null);
+  } else if (
+    isOpen &&
+    (seededFrom?.regularChoices !== regularChoices ||
+      seededFrom.selectedLanguageCode !== selectedLanguageCode)
+  ) {
+    setSeededFrom({ regularChoices, selectedLanguageCode });
+    setTextareaValue(regularChoices.map((c) => c.label[selectedLanguageCode] || "").join("\n"));
+    setValidationError(null);
+  }
 
   const validateRemovedOptions = (newLabels: string[]): string | null => {
     const originalLabels = regularChoices.map((c) => c.label[selectedLanguageCode] || "");

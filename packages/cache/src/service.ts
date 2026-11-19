@@ -238,8 +238,8 @@ export class CacheService {
       // Use SET with NX (only set if not exists) and PX (expiration in milliseconds) for atomic lock acquisition
       const result = await this.withTimeout(
         this.redis.set(key, value, {
-          NX: true,
-          PX: ttlMs,
+          expiration: { type: "PX", value: ttlMs },
+          condition: "NX",
         })
       );
       // SET returns "OK" if lock was acquired, null if key already exists
@@ -314,8 +314,8 @@ export class CacheService {
     }
 
     const fresh = await fn();
-    // Guard against type-erased callers resolving undefined.
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- types exclude undefined; this guards against type-erasure bugs
+    // Guard against type-erased callers resolving undefined: the types exclude it, but a caller that
+    // erased them can still return it.
     if (fresh !== undefined) {
       const box: NullableCacheBox<T> = { [NULLABLE_BOX_MARKER]: true, value: fresh };
       await this.trySetCache(key, box, ttlMs);

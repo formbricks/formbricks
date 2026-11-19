@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { RESPONSES_API_URL, SURVEYS_API_URL } from "./api/constants";
 import { test } from "./lib/fixtures";
 import { loginAndGetApiKey } from "./lib/utils";
+import { clickUntilVisible } from "./utils/click-until";
 import { activateSurvey, createSurveyFromScratch } from "./utils/helper";
 
 /**
@@ -46,12 +47,7 @@ test.describe("Anonymize responses @slow", () => {
       // card starts expanded — clicking its header blindly would COLLAPSE it and unmount the
       // toggle. Open it only when the toggle is not on screen, the same idempotent
       // "click until the content is there" shape the other editor specs use.
-      await expect(async () => {
-        if (!(await anonymizeToggle.isVisible().catch(() => false))) {
-          await page.getByText("Response Options", { exact: true }).click();
-        }
-        await expect(anonymizeToggle).toBeVisible({ timeout: 5000 });
-      }).toPass({ timeout: 30000 });
+      await clickUntilVisible(page.getByText("Response Options", { exact: true }), anonymizeToggle);
 
       await expect(anonymizeToggle).not.toBeChecked(); // off by default
 

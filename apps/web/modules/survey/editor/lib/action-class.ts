@@ -17,11 +17,7 @@ export const createActionClass = async (
         workspace: { connect: { id: workspaceId } },
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig:
-          actionClassInput.type === "noCode"
-            ? actionClassInput.noCodeConfig === null
-              ? undefined
-              : actionClassInput.noCodeConfig
-            : undefined,
+          actionClassInput.type === "noCode" ? (actionClassInput.noCodeConfig ?? undefined) : undefined,
       },
     });
 
@@ -30,7 +26,7 @@ export const createActionClass = async (
     if (isUniqueConstraintError(error)) {
       const targetField = getUniqueConstraintFields(error)[0];
       throw new UniqueConstraintError(
-        `Action with ${targetField} ${targetField ? (actionClass as Record<string, unknown>)[targetField] : ""} already exists`
+        `Action with ${targetField} ${String(targetField ? (actionClass as Record<string, unknown>)[targetField] : "")} already exists`
       );
     }
 

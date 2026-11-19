@@ -156,14 +156,14 @@ export const getResponsesByContactId = reactCache(
         },
       });
 
-      let responses: TResponseWithQuotas[] = [];
+      const responses: TResponseWithQuotas[] = [];
 
       await Promise.all(
         responsePrisma.map(async (response) => {
           const responseContact: TResponseContact = {
             id: response.contact?.id as string,
             userId: response.contact?.attributes.find((attribute) => attribute.attributeKey.key === "userId")
-              ?.value as string,
+              ?.value,
           };
 
           responses.push({

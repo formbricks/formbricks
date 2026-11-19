@@ -15,20 +15,19 @@ const declared = (
     link: { storageKey: source === "computed" ? "clvr000000000000000000001" : name },
   }) as unknown as TLinkedEmbeddedField;
 
-const response = (over: Partial<TEmbeddedValueResponse> = {}): TEmbeddedValueResponse =>
-  ({
-    id: "clrs000000000000000000001",
-    surveyId: "clsv000000000000000000001",
-    createdAt: new Date("2026-09-01T10:00:00.000Z"),
-    updatedAt: new Date("2026-09-01T10:05:00.000Z"),
-    finished: true,
-    language: "en",
-    data: {},
-    variables: {},
-    ttc: {},
-    meta: {},
-    ...over,
-  }) as unknown as TEmbeddedValueResponse;
+const response = (over: Partial<TEmbeddedValueResponse> = {}): TEmbeddedValueResponse => ({
+  id: "clrs000000000000000000001",
+  surveyId: "clsv000000000000000000001",
+  createdAt: new Date("2026-09-01T10:00:00.000Z"),
+  updatedAt: new Date("2026-09-01T10:05:00.000Z"),
+  finished: true,
+  language: "en",
+  data: {},
+  variables: {},
+  ttc: {},
+  meta: {},
+  ...over,
+});
 
 const project = (fields: TLinkedEmbeddedField[], res: TEmbeddedValueResponse, elementIds: string[] = []) =>
   serializeEmbeddedData(buildEmbeddedDataPlan(fields, elementIds), res).embeddedData;
@@ -45,10 +44,7 @@ describe("what is projected at all", () => {
    * places that v3 never exposes it.
    */
   test("ipAddress is never projected, even when captured", () => {
-    const entries = project(
-      [],
-      response({ meta: { ipAddress: "203.0.113.9", url: "https://x.test/a" } as never })
-    );
+    const entries = project([], response({ meta: { ipAddress: "203.0.113.9", url: "https://x.test/a" } }));
 
     expect(byKey(entries, "ipAddress")).toEqual([]);
   });
@@ -60,14 +56,14 @@ describe("what is projected at all", () => {
   test.each(["responseId", "surveyId", "finished", "language", "durationSeconds", "startedAt", "finishedAt"])(
     "%s is not projected — it is a first-class field",
     (name) => {
-      const entries = project([], response({ ttc: { _total: 5000 } as never }));
+      const entries = project([], response({ ttc: { _total: 5000 } }));
 
       expect(byKey(entries, name)).toEqual([]);
     }
   );
 
   test("an ordinary captured field is projected", () => {
-    const entries = project([], response({ meta: { source: "link" } as never }));
+    const entries = project([], response({ meta: { source: "link" } }));
 
     expect(byKey(entries, "source")[0]).toMatchObject({ kind: "reserved", type: "string", value: "link" });
   });
@@ -100,7 +96,7 @@ describe("keys are names, not storage keys", () => {
   test("a variable is keyed by its name, never by its cuid", () => {
     const entries = project(
       [declared("score", "computed", "number")],
-      response({ variables: { clvr000000000000000000001: 7 } as never })
+      response({ variables: { clvr000000000000000000001: 7 } })
     );
 
     expect(byKey(entries, "score")[0]).toMatchObject({ kind: "computed", value: 7 });
@@ -117,7 +113,7 @@ describe("a declared name colliding with a catalog name", () => {
   test("both entries appear, disambiguated by kind", () => {
     const entries = project(
       [declared("country", "ingested", "string")],
-      response({ data: { country: "declared value" }, meta: { country: "PT" } as never })
+      response({ data: { country: "declared value" }, meta: { country: "PT" } })
     );
     const both = byKey(entries, "country");
 
@@ -161,7 +157,7 @@ describe("an element id claims the address", () => {
   test("a variable whose name matches an element is still projected", () => {
     const entries = project(
       [declared("score", "computed", "number")],
-      response({ variables: { clvr000000000000000000001: 7 } as never }),
+      response({ variables: { clvr000000000000000000001: 7 } }),
       ["score"]
     );
 
@@ -178,7 +174,7 @@ describe("the emitted type is the declared one", () => {
   test("a date-typed field is published as `date`, not `string`", () => {
     const entries = project(
       [declared("signed_on", "ingested", "date")],
-      response({ data: { signed_on: "2026-09-01" } as never })
+      response({ data: { signed_on: "2026-09-01" } })
     );
 
     expect(byKey(entries, "signed_on")[0]).toMatchObject({ type: "date", value: "2026-09-01" });
@@ -219,7 +215,7 @@ describe("a variable the survey no longer declares", () => {
   test("its stored value is reported rather than dropped", () => {
     const fields = [declared("score", "computed", "number")];
     const res = response({
-      variables: { clvr000000000000000000001: 7, clvr000000000000000000009: "orphan" } as never,
+      variables: { clvr000000000000000000001: 7, clvr000000000000000000009: "orphan" },
     });
 
     expect(unresolvedOf(fields, res)).toEqual([
@@ -229,7 +225,7 @@ describe("a variable the survey no longer declares", () => {
 
   test("a declared variable is not reported as orphaned", () => {
     const fields = [declared("score", "computed", "number")];
-    const res = response({ variables: { clvr000000000000000000001: 7 } as never });
+    const res = response({ variables: { clvr000000000000000000001: 7 } });
 
     expect(unresolvedOf(fields, res)).toEqual([]);
   });
@@ -242,7 +238,7 @@ describe("value fidelity", () => {
    * to stay honest.
    */
   test("a numeric captured value keeps its type", () => {
-    const entries = project([], response({ meta: { screenWidth: 1440 } as never }));
+    const entries = project([], response({ meta: { screenWidth: 1440 } }));
 
     expect(byKey(entries, "screenWidth")[0]).toMatchObject({ type: "number", value: 1440 });
   });
@@ -254,7 +250,7 @@ describe("value fidelity", () => {
   test.each(["url", "pageReferrer"])("%s comes back with its query stripped", (name) => {
     const entries = project(
       [],
-      response({ meta: { [name]: "https://app.test/s/abc?suToken=secret&utm_source=x" } as never })
+      response({ meta: { [name]: "https://app.test/s/abc?suToken=secret&utm_source=x" } })
     );
 
     const value = byKey(entries, name)[0]?.value as string;
@@ -263,7 +259,7 @@ describe("value fidelity", () => {
   });
 
   test("a keep-privacy field is returned verbatim", () => {
-    const entries = project([], response({ meta: { pagePath: "/pricing?plan=gold" } as never }));
+    const entries = project([], response({ meta: { pagePath: "/pricing?plan=gold" } }));
 
     expect(byKey(entries, "pagePath")[0]?.value).toBe("/pricing?plan=gold");
   });
@@ -280,7 +276,7 @@ describe("a value the resolver cannot read is reported, not dropped", () => {
     ["an object", { nested: "value" }],
   ])("%s under a declared hidden field surfaces in unresolved", (_label, stored) => {
     const fields = [declared("plan", "ingested", "string")];
-    const res = response({ data: { plan: stored } as never });
+    const res = response({ data: { plan: stored } });
 
     expect(byKey(project(fields, res), "plan")).toEqual([]);
     expect(unresolvedOf(fields, res)).toEqual([
@@ -315,7 +311,7 @@ describe("a value the resolver cannot read is reported, not dropped", () => {
   test("a locked field with a default resolves to it, reporting nothing", () => {
     const fields = [declared("plan", "ingested", "string", { locked: true, defaultValue: "free" })];
 
-    expect(unresolvedOf(fields, response({ data: { plan: ["ignored"] } as never }))).toEqual([]);
+    expect(unresolvedOf(fields, response({ data: { plan: ["ignored"] } }))).toEqual([]);
   });
 
   /**
@@ -327,7 +323,7 @@ describe("a value the resolver cannot read is reported, not dropped", () => {
     const stored = ["ignored"];
     const fields = [declared("plan", "ingested", "string", { locked: true, defaultValue: null })];
 
-    expect(unresolvedOf(fields, response({ data: { plan: stored } as never }))).toEqual([
+    expect(unresolvedOf(fields, response({ data: { plan: stored } }))).toEqual([
       { key: "plan", rawValue: stored, reason: "valueShapeMismatch" },
     ]);
   });

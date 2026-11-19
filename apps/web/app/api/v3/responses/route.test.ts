@@ -34,7 +34,7 @@ const post = (body: unknown) =>
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     }),
-    { params: Promise.resolve({}) } as never
+    { params: Promise.resolve({}) }
   );
 
 describe("POST /api/v3/responses", () => {

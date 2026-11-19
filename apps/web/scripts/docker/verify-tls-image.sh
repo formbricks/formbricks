@@ -5,7 +5,8 @@
 #   verify-tls-image.sh <image> --incident-hosts   needs network: the published eMudhra chains must be rejected
 #
 # The PKI is generated per run so no private key is committed. It mirrors the incident's shape:
-# a root the OS store trusts, an intermediate the server sends, and a leaf.
+# a root (offered to Node through SSL_CERT_FILE and NODE_EXTRA_CA_CERTS), an intermediate the server sends,
+# and a leaf.
 set -euo pipefail
 
 image="${1:?usage: verify-tls-image.sh <image> [--incident-hosts]}"

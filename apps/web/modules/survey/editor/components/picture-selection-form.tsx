@@ -165,7 +165,7 @@ export const PictureSelectionForm = ({
         locale={locale}
         isStorageConfigured={isStorageConfigured}
         isExternalUrlsAllowed={isExternalUrlsAllowed}
-        autoFocus={!element.headline?.default || element.headline.default.trim() === ""}
+        focusOnMount={!element.headline?.default || element.headline.default.trim() === ""}
       />
       <div ref={parent}>
         {element.subheader !== undefined && (
@@ -182,7 +182,7 @@ export const PictureSelectionForm = ({
                 locale={locale}
                 isStorageConfigured={isStorageConfigured}
                 isExternalUrlsAllowed={isExternalUrlsAllowed}
-                autoFocus={!element.subheader?.default || element.subheader.default.trim() === ""}
+                focusOnMount={!element.subheader?.default || element.subheader.default.trim() === ""}
               />
             </div>
           </div>

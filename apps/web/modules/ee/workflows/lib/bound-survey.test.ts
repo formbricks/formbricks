@@ -18,14 +18,13 @@ const definitionWithSurvey = (surveyId: string): TWorkflowDefinition =>
     edges: [],
   }) as unknown as TWorkflowDefinition;
 
-const contextWithSurvey = (surveyId: string | null): TWorkflowEmailAuthoringContext =>
-  ({
-    survey: surveyId ? ({ id: surveyId } as TSurvey) : null,
-    teamMemberDetails: [],
-    userEmail: "",
-    mailFrom: "noreply@example.com",
-    locale: "en-US",
-  }) as TWorkflowEmailAuthoringContext;
+const contextWithSurvey = (surveyId: string | null): TWorkflowEmailAuthoringContext => ({
+  survey: surveyId ? ({ id: surveyId } as TSurvey) : null,
+  teamMemberDetails: [],
+  userEmail: "",
+  mailFrom: "noreply@example.com",
+  locale: "en-US",
+});
 
 describe("resolveBoundTriggerSurvey", () => {
   test("returns the context survey when it matches the trigger surveyId", () => {

@@ -57,7 +57,7 @@ const ADVANCED_IDS = EXPORT_ADVANCED_OPTIONS.map((option) => option.id) as [
  */
 const reviveFilterDates = (filter: unknown): unknown => {
   if (typeof filter !== "object" || filter === null || !("createdAt" in filter)) return filter;
-  const { createdAt } = filter as { createdAt: unknown };
+  const { createdAt } = filter;
   if (typeof createdAt !== "object" || createdAt === null) return filter;
   const revive = (value: unknown) => (typeof value === "string" ? new Date(value) : value);
   const { min, max } = createdAt as { min?: unknown; max?: unknown };

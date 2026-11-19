@@ -160,7 +160,7 @@ jq -r 'select(.labels.nodes[].name=="breaking-change") | .number' bodies.ndjson 
 jq -r 'select((.body//"") | test("(?i)- \\[x\\][ \t]*This PR contains breaking changes")) | .number' bodies.ndjson | sort -un
 ```
 
-Each labeled PR carries a **Breaking changes** table in its body — that table is the source text,
+Each labeled PR carries a breaking-changes table in its body (under **Merge danger**; **Breaking changes** on older PRs) — that table is the source text,
 never written from scratch. But **do not paste the tables into the notes.** House style since 6.0
 is an *index*: one line per change, linking its PR, with the procedure left to the migration
 guide, which already carries it.
@@ -176,7 +176,7 @@ If there are none, state **"No breaking changes"** explicitly — Release QA's d
 requires it stated, not silently omitted.
 
 **Patches** get no index. Write `## Before upgrading` instead: one short step per labelled PR in
-range, taken from its Breaking changes table and worded for a self-hoster (what to set or do before
+range, taken from its breaking-changes table and worded for a self-hoster (what to set or do before
 switching the image). Leave the section out when no PR in range is labelled; a patch never says "No
 breaking changes", because the missing section already says it.
 
@@ -298,7 +298,7 @@ scan, and the docs release notes page (`docs/platform/changelog.mdx`) copies it.
 - `**Upgrade impact: Action required** for WHO: WHAT.` followed by a link to the docs steps
   (the version page, or a focused page under `/self-hosting/upgrade/versions/`).
 
-Base it on the Breaking changes tables and `## Before upgrading` steps of the PRs in range. Never write
+Base it on the breaking-changes tables and `## Before upgrading` steps of the PRs in range. Never write
 "review required" or any other "not yet known" status: if you can't tell, ask the human before drafting.
 
 ### Compose

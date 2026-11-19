@@ -114,7 +114,7 @@ export const WorkspaceCustomCssCard = ({
   let notice: ReactNode = null;
   if (mode === "read-only") {
     notice = (
-      <Alert variant="info" size="small" role="status">
+      <Alert variant="info" size="small" alertRole="status">
         <AlertDescription className="whitespace-normal">
           {t("workspace.custom_css.read_only_role")}
         </AlertDescription>

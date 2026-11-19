@@ -352,7 +352,7 @@ describe("Crypto Utils", () => {
 
         // Should decode to 32 bytes (256 bits)
         const decoded = Buffer.from(base64Part, "base64");
-        expect(decoded.length).toBe(32);
+        expect(decoded).toHaveLength(32);
       });
 
       test("should generate unique secrets each time", () => {
@@ -368,7 +368,7 @@ describe("Crypto Utils", () => {
         const bytes = getWebhookSecretBytes(secret);
 
         expect(Buffer.isBuffer(bytes)).toBe(true);
-        expect(bytes.length).toBe(32);
+        expect(bytes).toHaveLength(32);
       });
 
       test("should handle secret without whsec_ prefix", () => {

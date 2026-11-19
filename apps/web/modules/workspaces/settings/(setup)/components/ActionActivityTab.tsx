@@ -23,6 +23,7 @@ export const ActionActivityTab = ({ actionClass }: ActivityTabProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   useEffect(() => {
+    // eslint-disable-next-line react/set-state-in-effect -- fetch effect: the loading flag tracks the request it starts
     setLoading(true);
 
     const updateState = async () => {
@@ -40,7 +41,7 @@ export const ActionActivityTab = ({ actionClass }: ActivityTabProps) => {
       setLoading(false);
     };
 
-    updateState();
+    void updateState();
   }, [actionClass.id]);
 
   if (loading) return <LoadingSpinner />;

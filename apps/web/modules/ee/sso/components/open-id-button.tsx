@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { FORMBRICKS_LOGGED_IN_WITH_LS } from "@/lib/localStorage";
-import { authClient } from "@/modules/auth/lib/auth-client";
+import { startSsoSignIn } from "@/modules/ee/sso/lib/start-sso-sign-in";
 import { getSsoReturnToUrl } from "@/modules/ee/sso/lib/utils";
 import { Button } from "@/modules/ui/components/button";
 
@@ -26,26 +25,22 @@ export const OpenIdButton = ({
 }: Readonly<OpenIdButtonProps>) => {
   const { t } = useTranslation();
   const handleLogin = useCallback(async () => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem(FORMBRICKS_LOGGED_IN_WITH_LS, "OpenID");
-    }
     const returnToUrlWithSource = getSsoReturnToUrl(returnToUrl, source);
 
     // Better Auth 1.7 rebuilt genericOAuth onto the built-in social path (ENG-2343), so
     // signIn.oauth2({ providerId }) became signIn.social({ provider }). The callback URL is
     // NOT affected: better-auth-providers.ts pins `redirectURI` to /api/auth/oauth2/callback/openid,
     // the URL already registered at every customer IdP, and legacy-sso-callback.ts serves it.
-    await authClient.signIn.social({
+    await startSsoSignIn({
       provider: "openid",
       callbackURL: returnToUrlWithSource,
-      // OAuth failures redirect here so the login page's existing ?error= UX surfaces them (parity).
-      errorCallbackURL: "/auth/login",
+      errorMessage: t("common.something_went_wrong"),
     });
-  }, [returnToUrl, source]);
+  }, [returnToUrl, source, t]);
 
   useEffect(() => {
     if (directRedirect) {
-      handleLogin();
+      void handleLogin();
     }
   }, [directRedirect, handleLogin]);
 

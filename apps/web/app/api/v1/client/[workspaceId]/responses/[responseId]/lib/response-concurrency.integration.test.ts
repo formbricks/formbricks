@@ -94,7 +94,7 @@ const waitForBlockedWriter = async (holderPid: number) => {
 const raceAgainst = async <T>(
   holder: Awaited<ReturnType<typeof writeInOpenTransaction>>,
   update: () => Promise<T>
-): Promise<T | unknown> => {
+): Promise<unknown> => {
   // Settled into a value straight away, so a rejection is never unhandled while we wait.
   const outcome = update().then(
     (value) => value,

@@ -55,6 +55,22 @@ const CATALOG_REF = /^catalog:(.*)$/;
 // an exemption. Empty today, and that is the healthy state.
 const ALLOW_UNCATALOGED = new Set([]);
 
+/** Adds each directory under a `dir/*` glob's parent that holds a package.json. */
+function addStarGlobDirs(pattern, dirs) {
+  const prefix = pattern.slice(0, -2);
+  const parent = join(REPO_ROOT, prefix);
+  if (!existsSync(parent)) {
+    throw new Error(
+      `pnpm-workspace.yaml lists the workspace glob "${pattern}", but ${prefix}/ does not exist.`
+    );
+  }
+  for (const entry of readdirSync(parent, { withFileTypes: true })) {
+    if (entry.isDirectory() && existsSync(join(parent, entry.name, "package.json"))) {
+      dirs.add(join(prefix, entry.name));
+    }
+  }
+}
+
 /**
  * Expand pnpm-workspace.yaml's `packages` globs to directories that hold a package.json.
  *
@@ -69,18 +85,7 @@ function resolveWorkspaceDirs(globs) {
   const dirs = new Set();
   for (const pattern of globs) {
     if (pattern.endsWith("/*") && !/[!*?{}[\]]/.test(pattern.slice(0, -2))) {
-      const prefix = pattern.slice(0, -2);
-      const parent = join(REPO_ROOT, prefix);
-      if (!existsSync(parent)) {
-        throw new Error(
-          `pnpm-workspace.yaml lists the workspace glob "${pattern}", but ${prefix}/ does not exist.`
-        );
-      }
-      for (const entry of readdirSync(parent, { withFileTypes: true })) {
-        if (entry.isDirectory() && existsSync(join(parent, entry.name, "package.json"))) {
-          dirs.add(join(prefix, entry.name));
-        }
-      }
+      addStarGlobDirs(pattern, dirs);
     } else if (!/[!*?{}[\]]/.test(pattern) && existsSync(join(REPO_ROOT, pattern, "package.json"))) {
       dirs.add(pattern);
     } else {

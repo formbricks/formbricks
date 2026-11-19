@@ -1,6 +1,7 @@
 import type { TFunction } from "i18next";
 import type { TResponseDataValue } from "@formbricks/types/responses";
 import type { TSurveyElement } from "@formbricks/types/surveys/elements";
+import type { TResponseNotShown } from "@formbricks/types/surveys/not-shown";
 import type {
   TRelativeDateBound,
   TValidationRuleParams,
@@ -98,6 +99,12 @@ export interface TValidationOptions {
    * matcher.
    */
   matchPattern?: TPatternMatcher;
+  /**
+   * The response's not-shown record (ENG-6936). A server validating against the survey as stored
+   * passes it, so rules skip the options, rows and columns show-if kept from the respondent
+   * (ENG-7332). The survey itself validates elements already filtered and leaves it out.
+   */
+  notShown?: TResponseNotShown | null;
 }
 
 /** The browser engine: native, backtracking `RegExp`. Only for the respondent's own tab. */
@@ -132,7 +139,7 @@ const isEmpty = (value: TResponseDataValue): boolean => {
     value === null ||
     value === "" ||
     (Array.isArray(value) && value.length === 0) ||
-    (typeof value === "object" && !Array.isArray(value) && Object.keys(value as object).length === 0)
+    (typeof value === "object" && !Array.isArray(value) && Object.keys(value).length === 0)
   );
 };
 
@@ -643,7 +650,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
         if (typeof fileUrl !== "string") continue;
         // Extract filename from URL
         const urlPath = fileUrl.split("?")[0]; // Remove query params
-        const fileName = urlPath.split("/").pop() || "";
+        const fileName = urlPath.split("/").pop() ?? "";
         if (!fileName.includes(".")) {
           return { valid: false };
         }
@@ -689,7 +696,7 @@ export const validators: Record<TValidationRuleType, TValidator> = {
         if (typeof fileUrl !== "string") continue;
         // Extract filename from URL
         const urlPath = fileUrl.split("?")[0]; // Remove query params
-        const fileName = urlPath.split("/").pop() || "";
+        const fileName = urlPath.split("/").pop() ?? "";
         if (!fileName.includes(".")) {
           continue; // Files without extensions are allowed
         }
