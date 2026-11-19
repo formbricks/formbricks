@@ -145,6 +145,7 @@
       "product_updates_title": "每月产品更新邮件",
       "security_updates_description": "仅限安全相关信息，适用隐私政策。",
       "security_updates_title": "安全更新",
+      "signup_disabled": "此实例已关闭注册，请联系管理员邀请你加入。",
       "terms_of_service": "服务条款",
       "title": "创建你的 Formbricks 账户"
     },
