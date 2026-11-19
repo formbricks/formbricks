@@ -86,7 +86,7 @@ const signIn = (password: string): Promise<Response> =>
  * just-minted session and answers with a challenge instead, so any test that needs a real session cookie
  * from `signIn` must enrol 2FA only AFTER minting it (`enrollTwoFactor` below).
  */
-const seedUnprovenAccountWithPassword = async () => {
+const seedSquatterAccount = async () => {
   await auth.api.signUpEmail({
     body: { email: VICTIM_EMAIL, password: ATTACKER_PASSWORD, name: "Squatter" },
     asResponse: true,
@@ -152,7 +152,7 @@ beforeEach(async () => {
 
 describe("SSO recovery strips the live local auth factors (real Postgres + Redis)", () => {
   test("the squatter's password no longer authenticates after the address is proven", async () => {
-    const user = await seedUnprovenAccountWithPassword();
+    const user = await seedSquatterAccount();
 
     // Anti-vacuity: the password genuinely signs in before recovery. Without this the assertion below
     // can pass because the fixture silently failed — the exact failure mode that let this ship.
@@ -171,7 +171,7 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
   });
 
   test("the 2FA enrolment does not survive on an account that changed hands", async () => {
-    const user = await seedUnprovenAccountWithPassword();
+    const user = await seedSquatterAccount();
     await enrollTwoFactor(user.id);
 
     await runRecovery(user, await createRecoverySession(user.id));
@@ -189,7 +189,7 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
   });
 
   test("a session the squatter was holding stops resolving, in both session stores", async () => {
-    const user = await seedUnprovenAccountWithPassword();
+    const user = await seedSquatterAccount();
     const squatterCookie = sessionTokenCookie(await signIn(ATTACKER_PASSWORD));
     expect(await auth.api.getSession({ headers: { cookie: squatterCookie } })).not.toBeNull();
 
@@ -208,7 +208,7 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
    * from auth.ts's), the filter would match nothing and recovery would sign its own caller out.
    */
   test("the route's cookie-derived keep-token matches the stored session token", async () => {
-    const user = await seedUnprovenAccountWithPassword();
+    const user = await seedSquatterAccount();
     const cookie = sessionTokenCookie(await signIn(ATTACKER_PASSWORD));
 
     const keepToken = getSessionTokenFromCookieHeader(cookie);
@@ -222,7 +222,7 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
   });
 
   test("the recovering user's own session is spared, so the redirect stays signed in", async () => {
-    const user = await seedUnprovenAccountWithPassword();
+    const user = await seedSquatterAccount();
     await signIn(ATTACKER_PASSWORD); // a second session, to be swept
     const recoverySessionToken = await createRecoverySession(user.id);
 
@@ -247,7 +247,7 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
    * strip's docblock and in the PR's open gaps instead.
    */
   test("the refresh token and consent do not survive recovery", async () => {
-    const user = await seedUnprovenAccountWithPassword();
+    const user = await seedSquatterAccount();
     const client = await prisma.oauthClient.create({
       data: {
         clientId: "mcp-client-live-1",
@@ -293,7 +293,7 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
    * the one production uses.
    */
   test("an API key the squatter minted stops authenticating, and a colleague's key does not", async () => {
-    const user = await seedUnprovenAccountWithPassword();
+    const user = await seedSquatterAccount();
     const organization = await prisma.organization.create({ data: { name: "Squatted Org" } });
     const colleague = await prisma.user.create({
       data: { email: "colleague@example.com", name: "Colleague", emailVerified: true },
@@ -332,7 +332,7 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
    * the fix would trade a takeover for a lockout: no password, and no way to ask for one.
    */
   test("a recovered user can still get a password back", async () => {
-    const user = await seedUnprovenAccountWithPassword();
+    const user = await seedSquatterAccount();
     await enrollTwoFactor(user.id);
 
     await runRecovery(user, await createRecoverySession(user.id));
@@ -367,7 +367,7 @@ describe("SSO recovery strips the live local auth factors (real Postgres + Redis
   });
 
   test("an already-proven account keeps its password, sessions, 2FA and API keys", async () => {
-    const user = await seedUnprovenAccountWithPassword();
+    const user = await seedSquatterAccount();
     await prisma.user.update({ where: { id: user.id }, data: { emailVerified: true } });
     const organization = await prisma.organization.create({ data: { name: "Owner Org" } });
     const { id: ownerKeyId, actualKey: ownerKey } = await createApiKey(organization.id, user.id, {
