@@ -1,4 +1,3 @@
-import type { BetterAuthOptions } from "@better-auth/core";
 import type { DBAdapter } from "@better-auth/core/db/adapter";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
@@ -32,7 +31,7 @@ const inner = {
   findOne: vi.fn(async () => row("consent-1")),
 };
 
-const adapter = recordOAuthConsentWrites(() => inner as unknown as DBAdapter<BetterAuthOptions>)({});
+const adapter = recordOAuthConsentWrites(() => inner as unknown as DBAdapter)({});
 
 beforeEach(() => {
   state.active = true;

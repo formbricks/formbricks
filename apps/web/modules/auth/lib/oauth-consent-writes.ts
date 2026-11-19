@@ -64,8 +64,8 @@ const recordConsentWrite = async (row: unknown, before: unknown): Promise<void> 
  * request. Every other call, and every other model, passes through untouched.
  */
 export const recordOAuthConsentWrites =
-  (createAdapter: (options: BetterAuthOptions) => DBAdapter<BetterAuthOptions>) =>
-  (options: BetterAuthOptions): DBAdapter<BetterAuthOptions> => {
+  (createAdapter: (options: BetterAuthOptions) => DBAdapter) =>
+  (options: BetterAuthOptions): DBAdapter => {
     const adapter = createAdapter(options);
     return new Proxy(adapter, {
       get(target, property, receiver) {
