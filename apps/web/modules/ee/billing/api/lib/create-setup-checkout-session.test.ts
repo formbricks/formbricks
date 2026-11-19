@@ -1,14 +1,21 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
-import { createSetupCheckoutSession } from "./create-setup-checkout-session";
+import { createSetupCheckoutSession, getCardOnlyPaymentMethodParams } from "./create-setup-checkout-session";
 
 const mocks = vi.hoisted(() => ({
   subscriptionsRetrieve: vi.fn(),
   checkoutSessionsCreate: vi.fn(),
+  apiVersion: "2026-02-25.clover",
 }));
 
 vi.mock("@/lib/env", () => ({
   env: {
     STRIPE_SECRET_KEY: "sk_test_123",
+  },
+}));
+
+vi.mock("@/lib/constants", () => ({
+  get STRIPE_API_VERSION() {
+    return mocks.apiVersion;
   },
 }));
 
@@ -28,6 +35,7 @@ vi.mock("stripe", () => ({
 describe("createSetupCheckoutSession", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.apiVersion = "2026-02-25.clover";
     mocks.subscriptionsRetrieve.mockResolvedValue({ currency: "usd" });
     mocks.checkoutSessionsCreate.mockResolvedValue({ url: "https://checkout.stripe.test/setup" });
   });
@@ -98,5 +106,43 @@ describe("createSetupCheckoutSession", () => {
     await createSetupCheckoutSession("cus_1", "sub_1", "https://app.formbricks.com/billing", "org_1");
 
     expect(mocks.checkoutSessionsCreate.mock.calls[0][0]).not.toHaveProperty("payment_method_types");
+  });
+
+  // ENG-6866: Stripe 2026-09-30.endive removed `payment_method_types` from Checkout Session creation.
+  test("restricts an upgrade checkout to cards with allowed_payment_method_types on endive, even for EUR", async () => {
+    mocks.apiVersion = "2026-09-30.endive";
+    mocks.subscriptionsRetrieve.mockResolvedValue({ currency: "eur" });
+
+    await createSetupCheckoutSession("cus_1", "sub_1", "https://app.formbricks.com/billing", "org_1", {
+      targetPlan: "pro",
+      targetInterval: "monthly",
+    });
+
+    const params = mocks.checkoutSessionsCreate.mock.calls[0][0];
+    expect(params).toEqual(
+      expect.objectContaining({ currency: "eur", allowed_payment_method_types: ["card"] })
+    );
+    expect(params).not.toHaveProperty("payment_method_types");
+  });
+
+  test("leaves a no-upgrade checkout on the account's payment methods on endive", async () => {
+    mocks.apiVersion = "2026-09-30.endive";
+
+    await createSetupCheckoutSession("cus_1", "sub_1", "https://app.formbricks.com/billing", "org_1");
+
+    const params = mocks.checkoutSessionsCreate.mock.calls[0][0];
+    expect(params).not.toHaveProperty("payment_method_types");
+    expect(params).not.toHaveProperty("allowed_payment_method_types");
+  });
+});
+
+describe("getCardOnlyPaymentMethodParams", () => {
+  test.each([
+    ["2026-02-25.clover", { payment_method_types: ["card"] }],
+    ["2026-09-29.clover", { payment_method_types: ["card"] }],
+    ["2026-09-30.endive", { allowed_payment_method_types: ["card"] }],
+    ["2027-01-15.future", { allowed_payment_method_types: ["card"] }],
+  ])("uses the card-only parameter %s accepts", (apiVersion, expected) => {
+    expect(getCardOnlyPaymentMethodParams(apiVersion)).toEqual(expected);
   });
 });
