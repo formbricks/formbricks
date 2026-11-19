@@ -2,7 +2,7 @@
 
 import type { TFunction } from "i18next";
 import { useAtom, useAtomValue } from "jotai";
-import { ChevronDownIcon, FlaskConicalIcon, HistoryIcon, PlayIcon } from "lucide-react";
+import { FlaskConicalIcon, HistoryIcon, PlayIcon, XIcon } from "lucide-react";
 import { type ReactNode, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import {
@@ -115,24 +115,28 @@ interface RunsTestPanelProps {
 type TTestRunControls = RunsTestPanelProps["testRun"];
 
 /** A refusal about the test input itself: the input opens to fix it. */
-const isTestInputFailure = (failure: TWorkflowTestRunFailure | null): boolean =>
-  failure === "invalid_payload" ||
-  failure === "payload_too_large" ||
-  failure === "no_payload" ||
-  failure === "response_unavailable";
+/**
+ * Whether the "Test the draft" card shows: opened by hand (the panel's or the header's Test, "Use as
+ * test input"), or held open while a run waits for a response to be picked or explains why it didn't
+ * start.
+ */
+const useIsTestFormShown = (testRun: TTestRunControls): readonly [boolean, (isOpen: boolean) => void] => {
+  const [isFormOpen, setFormOpen] = useAtom(isTestFormOpenAtom);
+  return [isFormOpen || testRun.isPickingResponse || testRun.failure !== null, setFormOpen] as const;
+};
 
 /**
- * "New test run": a toggle that unfolds the test input (the payload, or the response to test with)
- * and "Run test". Folded until it's wanted: opened by hand, by the header's Test (which also focuses
- * "Run test"), by "Use as test input", or by a run that needs a response picked or refused the input.
+ * "Test the draft": the test input (the payload, or the response to test with), "Reset" and "Run
+ * test", and why a run didn't start. The header's Test focuses "Run test" when it opens the card.
  */
-const TestDraftSection = ({
+const TestDraftCard = ({
   workflowId,
   locale,
   triggerKind,
   responseTrigger,
   hasSavedWebhookTrigger,
   testRun,
+  onClose,
 }: Readonly<{
   workflowId: string;
   locale: string;
@@ -140,9 +144,9 @@ const TestDraftSection = ({
   responseTrigger: TWorkflowResponseCompletedTriggerNode | null;
   hasSavedWebhookTrigger: boolean;
   testRun: TTestRunControls;
+  onClose: () => void;
 }>) => {
   const { t } = useTranslation();
-  const [isFormOpen, setFormOpen] = useAtom(isTestFormOpenAtom);
   const focusRequest = useAtomValue(testFormFocusRequestAtom);
   const runTestRef = useRef<HTMLButtonElement>(null);
   const { picker: responsePicker, selectedResponseId } = useTestRunResponsePicker({
@@ -153,9 +157,8 @@ const TestDraftSection = ({
   });
   const isResponseTrigger = triggerKind === "response";
   const canStart = !testRun.isRunning && (!isResponseTrigger || selectedResponseId !== null);
-  const isOpen = isFormOpen || testRun.isPickingResponse || isTestInputFailure(testRun.failure);
 
-  // The header's Test asked for the form: once it shows, "Run test" takes the focus.
+  // The header's Test asked for the card: once it shows, "Run test" takes the focus.
   useEffect(() => {
     if (focusRequest === 0) return;
     const handle = requestAnimationFrame(() => runTestRef.current?.focus());
@@ -175,36 +178,38 @@ const TestDraftSection = ({
   );
 
   return (
-    <section className="flex flex-col gap-2">
-      <Button
-        variant="secondary"
-        size="sm"
-        className="w-fit"
-        aria-expanded={isOpen}
-        onClick={() => setFormOpen(!isOpen)}>
-        <FlaskConicalIcon />
-        {t("workspace.workflows.runs_new_test_run")}
-        <ChevronDownIcon className={cn("transition-transform", isOpen && "rotate-180")} />
-      </Button>
-      {isOpen ? (
-        <div className="flex flex-col gap-3 rounded-lg border border-slate-200 p-3">
-          {triggerKind === "webhook" ? (
-            <WebhookTestInput
-              workflowId={workflowId}
-              hasSavedTrigger={hasSavedWebhookTrigger}
-              runButton={runTestButton}
-            />
-          ) : null}
-          {isResponseTrigger && testRun.isPickingResponse ? (
-            <p className="text-xs text-slate-600">{t("workspace.workflows.runs_pick_response")}</p>
-          ) : null}
-          {isResponseTrigger ? (
-            <>
-              {responsePicker}
-              <div className="flex justify-end">{runTestButton}</div>
-            </>
-          ) : null}
-        </div>
+    <section
+      aria-label={t("workspace.workflows.runs_test_the_draft")}
+      className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <h3 className="flex items-center gap-1.5 text-sm font-medium text-slate-800">
+          <FlaskConicalIcon className="size-4 text-slate-500" aria-hidden="true" />
+          {t("workspace.workflows.runs_test_the_draft")}
+        </h3>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="-my-1 size-7 text-slate-500"
+          aria-label={t("common.close")}
+          onClick={onClose}>
+          <XIcon />
+        </Button>
+      </div>
+      {triggerKind === "webhook" ? (
+        <WebhookTestInput
+          workflowId={workflowId}
+          hasSavedTrigger={hasSavedWebhookTrigger}
+          runButton={runTestButton}
+        />
+      ) : null}
+      {isResponseTrigger && testRun.isPickingResponse ? (
+        <p className="text-xs text-slate-600">{t("workspace.workflows.runs_pick_response")}</p>
+      ) : null}
+      {isResponseTrigger ? (
+        <>
+          {responsePicker}
+          <div className="flex justify-end">{runTestButton}</div>
+        </>
       ) : null}
       {testRun.failure ? (
         <Alert variant="error" size="small">
@@ -215,34 +220,32 @@ const TestDraftSection = ({
   );
 };
 
-/** The workflow's runs, live and Test, newest first, with All / Live / Test. */
+/** The workflow's runs, newest first, filtered to all, live or Test runs. */
 const RunsListSection = (props: Readonly<RunsTestPanelProps>) => {
   const { t } = useTranslation();
   const kinds = [
     ["all", t("common.all")],
     ["live", t("workspace.workflows.runs_filter_live")],
-    ["test", t("workspace.workflows.run_test_badge")],
+    ["test", t("workspace.workflows.runs_filter_test_runs")],
   ] as const;
   return (
     <section className="flex min-h-0 flex-col gap-2">
-      <div className="flex items-center gap-2">
-        <fieldset className="m-0 flex rounded-md border-0 bg-slate-100 p-0.5">
-          <legend className="sr-only">{t("workspace.workflows.runs_filter")}</legend>
-          {kinds.map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              aria-pressed={props.kind === value}
-              onClick={() => props.onKindChange(value)}
-              className={cn(
-                "rounded px-2 py-0.5 text-xs text-slate-600",
-                props.kind === value && "bg-white font-medium text-slate-900 shadow-sm"
-              )}>
-              {label}
-            </button>
-          ))}
-        </fieldset>
-      </div>
+      <fieldset className="m-0 grid grid-cols-3 gap-0.5 rounded-md border-0 bg-slate-100 p-0.5">
+        <legend className="sr-only">{t("workspace.workflows.runs_filter")}</legend>
+        {kinds.map(([value, label]) => (
+          <button
+            key={value}
+            type="button"
+            aria-pressed={props.kind === value}
+            onClick={() => props.onKindChange(value)}
+            className={cn(
+              "rounded px-2 py-1 text-xs text-slate-600 hover:text-slate-900",
+              props.kind === value && "bg-white font-medium text-slate-900 shadow-sm"
+            )}>
+            {label}
+          </button>
+        ))}
+      </fieldset>
       {props.isLoadingRuns ? (
         <div className="flex flex-col gap-2">
           <Skeleton className="h-12 w-full rounded-md" />
@@ -279,27 +282,41 @@ const RunsListSection = (props: Readonly<RunsTestPanelProps>) => {
 };
 
 /**
- * The Runs view's left panel (review point 1), named like its tab: "New test run" on top, folding the
- * test input and "Run test", then the workflow's runs, live and Test, to click through while the canvas
- * stays. Collapsed, it is a pill on the canvas (RunsListPill).
+ * The Runs view's left panel (review point 1), named like its tab. Its header holds "Test" (the same
+ * name and icon as the page header's Test), which opens the "Test the draft" card above the runs;
+ * the runs, live and Test, follow, to click through while the canvas stays. Collapsed, it is a pill
+ * on the canvas (RunsListPill).
  */
 export const RunsTestPanel = (props: Readonly<RunsTestPanelProps>) => {
   const { t } = useTranslation();
+  const [isFormShown, setFormOpen] = useIsTestFormShown(props.testRun);
   return (
     <aside className="flex min-h-0 w-[320px] shrink-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white">
-      <header className="flex shrink-0 items-center justify-between gap-2 border-b border-slate-200 py-2 pr-2 pl-4">
-        <h2 className="truncate text-sm font-semibold text-slate-900">{t("common.runs")}</h2>
+      <header className="flex shrink-0 items-center gap-2 border-b border-slate-200 py-2 pr-2 pl-4">
+        <h2 className="min-w-0 flex-1 truncate text-sm font-semibold text-slate-900">{t("common.runs")}</h2>
+        {props.canTest ? (
+          <Button
+            variant="secondary"
+            size="sm"
+            aria-expanded={isFormShown}
+            aria-pressed={isFormShown}
+            onClick={() => setFormOpen(!isFormShown)}>
+            <FlaskConicalIcon />
+            {t("workspace.workflows.test")}
+          </Button>
+        ) : null}
         <WorkflowPanelCollapseButton side="left" onCollapse={() => props.onCollapsedChange(true)} />
       </header>
-      <div className="scroll-bar flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-3">
-        {props.canTest ? (
-          <TestDraftSection
+      <div className="scroll-bar flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
+        {props.canTest && isFormShown ? (
+          <TestDraftCard
             workflowId={props.workflowId}
             locale={props.locale}
             triggerKind={props.triggerKind}
             responseTrigger={props.responseTrigger}
             hasSavedWebhookTrigger={props.hasSavedWebhookTrigger}
             testRun={props.testRun}
+            onClose={() => setFormOpen(false)}
           />
         ) : null}
         <RunsListSection {...props} />

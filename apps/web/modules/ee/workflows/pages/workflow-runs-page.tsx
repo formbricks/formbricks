@@ -30,7 +30,7 @@ import type { TWorkflowRunDetail } from "@/modules/ee/workflows/types";
 import { Skeleton } from "@/modules/ui/components/skeleton";
 import { useTrackWorkflowSurface } from "../hooks/use-track-workflow-surface";
 
-const RUNS_PER_PAGE = 30;
+const RUNS_PER_PAGE = 20;
 
 interface WorkflowRunsPageProps {
   workspaceId: string;
