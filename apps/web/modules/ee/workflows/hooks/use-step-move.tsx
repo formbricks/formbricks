@@ -5,13 +5,16 @@ import { useAtomValue, useSetAtom, useStore } from "jotai";
 import { type RefObject, useCallback, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { useTranslation } from "react-i18next";
+import { snapWorkflowNodePosition, updateNodePosition } from "@/modules/ee/workflows/lib/definition-to-flow";
 import { getNodeRegistryEntry } from "@/modules/ee/workflows/lib/node-registry";
 import type { TPasteTarget } from "@/modules/ee/workflows/lib/step-clipboard";
 import { getMoveTargetKey, getMoveTargets, getMovingStepIds } from "@/modules/ee/workflows/lib/step-move";
 import {
   type TWorkflowNodeData,
   canMutateCanvasAtom,
+  isWorkflowSnapToCanvasEnabledAtom,
   moveWorkflowStepAtom,
+  setWorkflowDefinitionAtom,
   stepMoveDragAtom,
   workflowDefinitionAtom,
   workflowFlowNodesAtom,
@@ -38,7 +41,6 @@ export const useMoveStep = () => {
         const node = result.definition.nodes.find((item) => item.id === id);
         return node ? getNodeRegistryEntry(node).title(node, t) : id;
       };
-      const moved = result.definition;
       toast.success(
         (instance) => (
           <div className="flex items-center gap-3">
@@ -49,7 +51,8 @@ export const useMoveStep = () => {
               onClick={() => {
                 toast.dismiss(instance.id);
                 // Only while the move is still the last edit; after another one, Undo is the toolbar's.
-                if (store.get(workflowDefinitionAtom) === moved) store.get(workflowUndoAtom)?.undo();
+                const history = store.get(workflowUndoAtom);
+                if (history?.undoesTo(result.previous)) history.undo();
               }}>
               {t("workspace.workflows.undo")}
             </button>
@@ -94,16 +97,17 @@ const pointerOf = (event: { clientX: number; clientY: number }) => ({ x: event.c
 type TNodeDragHandler = OnNodeDrag<Node<TWorkflowNodeData>>;
 
 /**
- * Dragging a step card moves the step to the `+` it is dropped on. While dragging, every `+` it can go
- * to lights up and the nearest reads "Move here"; the card's old place shows as a dashed outline. A
- * drop anywhere else, on its old place, or Escape puts the card back and changes nothing. The trigger
- * doesn't drag (definition-to-flow), nor does anything while the canvas can't change.
+ * Dragging a step card onto a `+` moves the step there. While dragging, every `+` it can go to lights
+ * up and the nearest reads "Move here"; the card's old place shows as a dashed outline. A drop anywhere
+ * else places the card there (snapped to the grid when that is on), as dragging always did; Escape puts
+ * it back. The trigger only places, and nothing drags while the canvas can't change.
  */
 export const useStepMoveDrag = (canvasRef: RefObject<HTMLDivElement | null>) => {
   const store = useStore();
   const { screenToFlowPosition } = useReactFlow();
   const setDrag = useSetAtom(stepMoveDragAtom);
   const setFlowNodes = useSetAtom(workflowFlowNodesAtom);
+  const setDefinition = useSetAtom(setWorkflowDefinitionAtom);
   const isDragging = useAtomValue(stepMoveDragAtom) !== null;
   const move = useMoveStep();
   // Where the dragged card started, to put it back; and whether Escape already cancelled this drag.
@@ -112,18 +116,18 @@ export const useStepMoveDrag = (canvasRef: RefObject<HTMLDivElement | null>) => 
   );
   const pointerRef = useRef<{ x: number; y: number } | null>(null);
 
-  const putBack = useCallback(() => {
-    const drag = dragRef.current;
-    if (!drag) return;
-    setFlowNodes((nodes) =>
-      nodes.map((node) => (node.id === drag.stepId ? { ...node, position: drag.start } : node))
-    );
-  }, [setFlowNodes]);
+  const putBack = useCallback(
+    (drag: { stepId: string; start: { x: number; y: number } }) =>
+      setFlowNodes((nodes) =>
+        nodes.map((node) => (node.id === drag.stepId ? { ...node, position: drag.start } : node))
+      ),
+    [setFlowNodes]
+  );
 
   const onNodeDragStart: TNodeDragHandler = useCallback(
     (event, node) => {
       const definition = store.get(workflowDefinitionAtom);
-      const step = definition?.nodes.find((item) => item.id === node.id);
+      const step = [definition?.trigger, ...(definition?.nodes ?? [])].find((item) => item?.id === node.id);
       if (!definition || !step || !store.get(canMutateCanvasAtom)) return;
       // React Flow starts the drag a few pixels in: the saved position is where the card was.
       const start = step.ui?.position ?? node.position;
@@ -139,6 +143,7 @@ export const useStepMoveDrag = (canvasRef: RefObject<HTMLDivElement | null>) => 
       pointerRef.current = pointerOf(event);
       setDrag({
         stepId: node.id,
+        start,
         movingStepIds: new Set(getMovingStepIds(definition, node.id)),
         targetKeys: new Set(getMoveTargets(definition, node.id).map(getMoveTargetKey)),
         hotTargetKey: null,
@@ -166,28 +171,36 @@ export const useStepMoveDrag = (canvasRef: RefObject<HTMLDivElement | null>) => 
     [canvasRef, setDrag]
   );
 
-  const onNodeDragStop: TNodeDragHandler = useCallback(() => {
-    const drag = dragRef.current;
-    const hot = store.get(stepMoveDragAtom)?.hotTargetKey ?? null;
-    setDrag(null);
-    if (!drag) return;
-    const definition = store.get(workflowDefinitionAtom);
-    const target =
-      !drag.isCancelled && hot && definition
-        ? getMoveTargets(definition, drag.stepId).find((item) => getMoveTargetKey(item) === hot)
-        : undefined;
-    // A move lays the tree out again, which places every card; otherwise the card goes back.
-    if (!target || !move(drag.stepId, target)) putBack();
-    dragRef.current = null;
-  }, [move, putBack, setDrag, store]);
+  const onNodeDragStop: TNodeDragHandler = useCallback(
+    (_event, node) => {
+      const drag = dragRef.current;
+      const hot = store.get(stepMoveDragAtom)?.hotTargetKey ?? null;
+      setDrag(null);
+      dragRef.current = null;
+      if (!drag || drag.isCancelled) return;
+      const definition = store.get(workflowDefinitionAtom);
+      const target =
+        hot && definition
+          ? getMoveTargets(definition, drag.stepId).find((item) => getMoveTargetKey(item) === hot)
+          : undefined;
+      if (target && move(drag.stepId, target)) return;
+      // Not on a `+`: the card stays where it was dropped.
+      const position = store.get(isWorkflowSnapToCanvasEnabledAtom)
+        ? snapWorkflowNodePosition(node.position)
+        : node.position;
+      setDefinition((current) => (current ? updateNodePosition(current, node.id, position) : current));
+    },
+    [move, setDefinition, setDrag, store]
+  );
 
   // Escape cancels: the card goes back, and the drag ends as if the button were released.
   useEffect(() => {
     if (!isDragging) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || !dragRef.current) return;
+      const drag = dragRef.current;
+      if (event.key !== "Escape" || !drag) return;
       event.preventDefault();
-      dragRef.current.isCancelled = true;
+      drag.isCancelled = true;
       setDrag(null);
       const pointer = pointerRef.current;
       globalThis.dispatchEvent(
@@ -198,7 +211,8 @@ export const useStepMoveDrag = (canvasRef: RefObject<HTMLDivElement | null>) => 
           clientY: pointer?.y,
         })
       );
-      putBack();
+      // After the drag ends, which leaves the card where the pointer was.
+      putBack(drag);
     };
     globalThis.addEventListener("keydown", onKeyDown, true);
     return () => globalThis.removeEventListener("keydown", onKeyDown, true);

@@ -244,8 +244,6 @@ export const workflowDefinitionToFlowNodes = (
       id: node.id,
       type: branchHandles ? WORKFLOW_BRANCH_NODE_TYPE : WORKFLOW_CANVAS_NODE_TYPE,
       position: node.ui?.position ?? fallbackPosition,
-      // Dragging a card moves its step to a `+`; the trigger always starts the workflow.
-      ...(node.type === "trigger" ? { draggable: false } : {}),
       data: {
         category: registryEntry.category,
         icon: registryEntry.icon,
@@ -293,17 +291,21 @@ export const workflowDefinitionToFlowEdges = (definition: TWorkflowDefinition): 
 export const withBranchLegOffsets = <TNode extends Node<TWorkflowNodeData>>(
   nodes: TNode[],
   edges: ReadonlyArray<Pick<Edge, "source" | "target" | "sourceHandle">>,
-  direction: TWorkflowCanvasDirection = "vertical"
+  direction: TWorkflowCanvasDirection = "vertical",
+  /** A card being moved onto a `+`: the legs stay where it was, so the `+` on them hold still. */
+  frozen?: { id: string; position: { x: number; y: number } } | null
 ): TNode[] => {
   // Left to right, the legs spread down: offsets are along y.
   const axis = direction === "horizontal" ? "y" : "x";
-  const coordinateById = new Map(nodes.map((node) => [node.id, node.position[axis]]));
+  const coordinateOf = (node: TNode) =>
+    frozen && node.id === frozen.id ? frozen.position[axis] : node.position[axis];
+  const coordinateById = new Map(nodes.map((node) => [node.id, coordinateOf(node)]));
   return nodes.map((node) => {
     if (node.data.branches.length === 0) return node;
     const childOffsets = node.data.branches.map(({ handle }) => {
       const edge = edges.find((item) => item.source === node.id && item.sourceHandle === handle);
       const childCoordinate = edge ? coordinateById.get(edge.target) : undefined;
-      return childCoordinate === undefined ? null : childCoordinate - node.position[axis];
+      return childCoordinate === undefined ? null : childCoordinate - coordinateOf(node);
     });
     return {
       ...node,
@@ -316,6 +318,29 @@ export const snapWorkflowNodePosition = (position: { x: number; y: number }) => 
   x: Math.round(position.x / WORKFLOW_CANVAS_SNAP_GRID[0]) * WORKFLOW_CANVAS_SNAP_GRID[0],
   y: Math.round(position.y / WORKFLOW_CANVAS_SNAP_GRID[1]) * WORKFLOW_CANVAS_SNAP_GRID[1],
 });
+
+export const updateNodePosition = (
+  definition: TWorkflowDefinition,
+  nodeId: string,
+  position: { x: number; y: number }
+): TWorkflowDefinition => {
+  if (definition.trigger?.id === nodeId) {
+    return {
+      ...definition,
+      trigger: {
+        ...definition.trigger,
+        ui: { ...definition.trigger.ui, position },
+      },
+    };
+  }
+
+  return {
+    ...definition,
+    nodes: definition.nodes.map((node) =>
+      node.id === nodeId ? { ...node, ui: { ...node.ui, position } } : node
+    ),
+  };
+};
 
 // The children a step lays out below itself, left to right: an If/else's Then and Else branches, or
 // a Switch's cases and Default (null while a branch has no step); any other step's outgoing edges.

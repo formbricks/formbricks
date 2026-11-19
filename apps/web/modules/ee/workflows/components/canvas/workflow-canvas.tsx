@@ -59,6 +59,7 @@ import {
   openWorkflowNodeConfigModalAtom,
   selectedWorkflowNodeIdAtom,
   setWorkflowDefinitionAtom,
+  stepMoveDragAtom,
   workflowAtom,
   workflowCanvasDirectionAtom,
   workflowDefinitionAtom,
@@ -94,6 +95,7 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   const workflow = useAtomValue(workflowAtom);
   const definition = useAtomValue(workflowDefinitionAtom);
   const flowNodes = useAtomValue(workflowFlowNodesAtom);
+  const stepMoveDragState = useAtomValue(stepMoveDragAtom);
   const isSnapToCanvasEnabled = useAtomValue(isWorkflowSnapToCanvasEnabledAtom);
   const isLocked = useAtomValue(isCanvasLockedAtom);
   const setLocked = useSetAtom(isCanvasLockedAtom);
@@ -205,25 +207,27 @@ const WorkflowCanvasContent = ({ isEditable }: Readonly<WorkflowCanvasProps>) =>
   }, [derivedFlowNodes, openNodeId, setFlowNodes]);
 
   // Each If/else and Switch puts its fork's legs right above its branches' steps, from where the
-  // canvas has them now, so a branch's line runs straight down even while its step is dragged.
+  // canvas has them now. While a card is dragged its legs stay put, so the `+` on them hold still.
   const definitionEdges = definition?.edges;
+  const draggedStepId = stepMoveDragState?.stepId;
+  const draggedFrom = stepMoveDragState?.start;
   const displayedFlowNodes = useMemo(() => {
-    const nodes = withBranchLegOffsets(flowNodes, definitionEdges ?? [], direction);
+    const frozen = draggedStepId && draggedFrom ? { id: draggedStepId, position: draggedFrom } : null;
+    const nodes = withBranchLegOffsets(flowNodes, definitionEdges ?? [], direction, frozen);
     if (!runHighlight) return nodes;
     return nodes.map((node) =>
       runHighlight.notTakenStepIds.has(node.id)
         ? { ...node, className: cn(node.className, "opacity-40") }
         : node
     );
-  }, [flowNodes, definitionEdges, runHighlight, direction]);
+  }, [flowNodes, definitionEdges, runHighlight, direction, draggedStepId, draggedFrom]);
 
   const handleNodesChange: OnNodesChange<Node<TWorkflowNodeData>> = useCallback(
     (changes) => setFlowNodes((currentNodes) => applyNodeChanges(changes, currentNodes)),
     [setFlowNodes]
   );
 
-  // Dragging a card moves its step to the `+` it is dropped on; anywhere else it goes back. The tree
-  // lays itself out, so there is no free positioning (use-step-move).
+  // Dragging a card onto a `+` moves its step there; anywhere else it stays where dropped (use-step-move).
   const stepMoveDrag = useStepMoveDrag(canvasRef);
 
   const isInspectorVisible = isNodeConfigOpen && !isInspectorCollapsed;

@@ -1,7 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import type { TWorkflowDefinition, TWorkflowNode } from "@formbricks/workflows";
 import type { TWorkflowCanvasDirection } from "@/modules/ee/workflows/lib/canvas-geometry";
-import { reorganizeWorkflowDefinition } from "@/modules/ee/workflows/lib/definition-to-flow";
 import {
   type TPasteTarget,
   type TStepClipboard,
@@ -15,8 +14,10 @@ import { getBranchHandles } from "@/modules/ee/workflows/lib/workflow-steps";
 
 /**
  * Moving a step to another `+`: by dragging its card onto the `+`, or from its ⋮ menu ("Move to…").
- * It is the same edit as Cut, then "Paste here" on that `+`, made in one go, after which the tree is laid
- * out again as Auto layout does.
+ * It is the same edit as Cut, then "Paste here" on that `+`, made in one go, and places the steps as that
+ * does: the step lands where a new step at that `+` would, the steps it takes along keep their shape
+ * around it, and on a line the steps after the `+` shift along to make room. Every other step stays
+ * where the user put it, so a hand-made arrangement survives a move (Auto layout tidies up after).
  *
  * - A plain step (Send email, HTTP request) moves alone: the step after it carries on from the step
  *   before it.
@@ -124,7 +125,7 @@ export type TMoveStepResult = {
 };
 
 /**
- * The definition with `stepId` moved to `target` and the tree laid out again, or null when the step
+ * The definition with `stepId` moved to `target`, or null when the step
  * can't go there (its own place, inside what moves, the trigger, an unknown `+`).
  */
 export const moveStep = ({
@@ -156,7 +157,7 @@ export const moveStep = ({
 
   const brokenBefore = new Set(findBrokenStepReferences(definition).map(referenceKey));
   return {
-    definition: reorganizeWorkflowDefinition(pasted.definition, direction),
+    definition: pasted.definition,
     stepCount: pasted.stepCount,
     brokenReferences: findBrokenStepReferences(pasted.definition).filter(
       (reference) => !brokenBefore.has(referenceKey(reference))

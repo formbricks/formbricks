@@ -7,6 +7,7 @@ import {
   haveSameNodePositions,
   reorganizeWorkflowDefinition,
   snapWorkflowNodePosition,
+  updateNodePosition,
   withBranchLegOffsets,
   workflowDefinitionToFlowEdges,
   workflowDefinitionToFlowNodes,
@@ -49,6 +50,22 @@ describe("snapWorkflowNodePosition", () => {
   test("snaps to the 20px grid", () => {
     expect(snapWorkflowNodePosition({ x: 7, y: 31 })).toEqual({ x: 0, y: 40 });
     expect(snapWorkflowNodePosition({ x: 31, y: 49 })).toEqual({ x: 40, y: 40 });
+  });
+});
+
+describe("updateNodePosition", () => {
+  test("updates trigger position when id matches", () => {
+    const def = buildDefinition();
+    const next = updateNodePosition(def, "trigger-1", { x: 100, y: 80 });
+    expect(next.trigger?.ui?.position).toEqual({ x: 100, y: 80 });
+    expect(next.nodes[0].ui?.position).toEqual({ x: 0, y: 0 });
+  });
+
+  test("updates child-node position when id matches", () => {
+    const def = buildDefinition();
+    const next = updateNodePosition(def, "action-1", { x: 220, y: 240 });
+    expect(next.trigger?.ui?.position).toEqual({ x: 0, y: 0 });
+    expect(next.nodes[0].ui?.position).toEqual({ x: 220, y: 240 });
   });
 });
 
@@ -381,6 +398,18 @@ describe("withBranchLegOffsets", () => {
     expect(legsById(withBranchLegOffsets(dragged, definition.edges))["if-1"]).toEqual([-520, 180]);
   });
 
+  test("holds a fork's legs still while a branch's step is being moved onto a `+`", () => {
+    const { definition, nodes } = nestedFlow();
+    const emailA = nodes.find((node) => node.id === "email-a")!;
+    const dragged = nodes.map((node) =>
+      node.id === "email-a" ? { ...node, position: { x: 600, y: 460 } } : node
+    );
+    const frozen = { id: "email-a", position: emailA.position };
+    expect(legsById(withBranchLegOffsets(dragged, definition.edges, "vertical", frozen))["if-1"]).toEqual([
+      -360, 180,
+    ]);
+  });
+
   test("gives an empty branch its own leg beside the other one", () => {
     const definition = branchDefinition();
     const nodes = workflowDefinitionToFlowNodes(definition, t).map((node) =>
@@ -493,7 +522,8 @@ describe("trigger-less draft definitions", () => {
     expect(workflowDefinitionToFlowEdges(emptyDefinition)).toEqual([]);
   });
 
-  test("reorganize is no-op safe", () => {
+  test("updateNodePosition and reorganize are no-op safe", () => {
+    expect(updateNodePosition(emptyDefinition, "anything", { x: 1, y: 1 }).trigger).toBeNull();
     expect(reorganizeWorkflowDefinition(emptyDefinition).trigger).toBeNull();
   });
 });
