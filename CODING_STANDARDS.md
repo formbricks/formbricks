@@ -292,7 +292,9 @@ Do not:
 - Do not write component or UI unit tests for `.tsx` files. **This is not an instruction to write an E2E
   test instead**: the absence of a component unit test creates no coverage obligation. If a component holds
   logic worth proving, lift that logic into a `.ts` module and unit-test it there; the rendering is
-  exercised incidentally by the feature journeys that already cross it.
+  exercised incidentally by the feature journeys that already cross it. When the lift serves a bug fix, make
+  it a commit of its own that keeps the behaviour unchanged, and fix in the next commit: `unit (red on main)`
+  then means red on the lift commit, and the Coverage row names it.
 - Do not E2E a component. A language selector, a breadcrumb, a sidebar's link list, an ARIA attribute on
   one widget, a keystroke inside one editor, a field's validation message, a search box filtering a list —
   none of these justify a browser, a login, and a seeded tenant.

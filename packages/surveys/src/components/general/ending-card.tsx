@@ -103,7 +103,7 @@ export function EndingCard({
         // written without schema validation, so a stored link can carry an unsafe scheme.
         if (url && isSafeLinkUrl(url)) {
           if (onOpenExternalURL) {
-            onOpenExternalURL(url);
+            void onOpenExternalURL(url);
           } else {
             window.top?.location.replace(url);
           }

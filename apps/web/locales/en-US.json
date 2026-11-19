@@ -215,6 +215,7 @@
       "product_updates_title": "Monthly product update emails",
       "security_updates_description": "Security relevant information only, Privacy Policy applies.",
       "security_updates_title": "Security updates",
+      "signup_disabled": "Sign-up is closed on this instance. Ask an administrator to invite you.",
       "terms_of_service": "Terms of Service",
       "title": "Create your Formbricks account"
     },

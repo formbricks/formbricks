@@ -166,6 +166,7 @@ describe("sendSignedWebhookRequest", () => {
   test("aborts after the default timeout with a typed WebhookDeliveryTimeoutError", async () => {
     stubHangingFetch();
 
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const assertion = expect(
       sendSignedWebhookRequest({ url: URL, body: BODY, messageId: MESSAGE_ID })
     ).rejects.toBeInstanceOf(WebhookDeliveryTimeoutError);
@@ -183,6 +184,7 @@ describe("sendSignedWebhookRequest", () => {
       return abortError;
     });
 
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const assertion = expect(
       sendSignedWebhookRequest({ url: URL, body: BODY, messageId: MESSAGE_ID })
     ).rejects.toMatchObject({ name: "WebhookDeliveryTimeoutError", timeoutMs: 5000 });
@@ -200,6 +202,7 @@ describe("sendSignedWebhookRequest", () => {
       messageId: MESSAGE_ID,
       timeoutMs: 1000,
     });
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const assertion = expect(promise).rejects.toMatchObject({ timeoutMs: 1000 });
 
     await vi.advanceTimersByTimeAsync(1000);

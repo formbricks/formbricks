@@ -14,7 +14,8 @@ const build = async (
   return workbook.toBuffer();
 };
 
-const readBack = (buffer: Buffer) => xlsx.read(buffer, { type: "buffer", cellText: false, raw: true });
+const readBack = (buffer: Buffer) =>
+  xlsx.read(buffer, { type: "buffer", cellText: false, raw: true, cellNF: true });
 
 describe("createXlsxWorkbook", () => {
   test("a sheet reads back with its name, header and rows", async () => {
@@ -67,12 +68,16 @@ describe("createXlsxWorkbook", () => {
     expect(readBack(buffer).Sheets.S.A2.v).toBe("  padded");
   });
 
-  test("a text that starts like a formula is written defanged as text, and numbers are untouched", async () => {
-    const buffer = await build([{ name: "S", header: ["=h"], rows: [["=SUM(A1)", -3]] }]);
+  test("a text that starts like a formula is written verbatim as a Text-format cell, not a formula", async () => {
+    const buffer = await build([{ name: "S", header: ["=h"], rows: [["=SUM(A1)", "-5 stars", -3]] }]);
     const sheet = readBack(buffer).Sheets.S;
-    expect(sheet.A1.v).toBe("'=h");
-    expect(sheet.A2).toMatchObject({ t: "s", v: "'=SUM(A1)" });
-    expect(sheet.B2).toMatchObject({ t: "n", v: -3 });
+    expect(sheet.A1).toMatchObject({ t: "s", v: "=h", z: "@" });
+    expect(sheet.A1.f).toBeUndefined();
+    expect(sheet.A2).toMatchObject({ t: "s", v: "=SUM(A1)", z: "@" });
+    expect(sheet.A2.f).toBeUndefined();
+    expect(sheet.B2).toMatchObject({ t: "s", v: "-5 stars", z: "@" });
+    expect(sheet.C2).toMatchObject({ t: "n", v: -3 });
+    expect(sheet.C2.z).not.toBe("@");
   });
 
   test("the header row is frozen, filtered, has no merged cells, and no colour carries meaning", async () => {

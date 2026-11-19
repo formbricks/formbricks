@@ -13,4 +13,5 @@ z.config({ jitless: true });
 
 initClientSentryFromRuntimeConfig();
 
+// eslint-disable-next-line import/namespace -- exported by @sentry/nextjs's client build, which this browser entry resolves; the rule reads the server one
 export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
