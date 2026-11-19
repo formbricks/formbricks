@@ -264,9 +264,6 @@ export const INVITE_TOKEN_INVALID_ERROR_CODE = "invite_token_invalid";
  */
 export const SIGNUP_DISABLED_ERROR_CODE = "signup_disabled";
 
-/** Fresh-instance setup requires `SETUP_TOKEN`, and the token supplied was missing or wrong (ENG-7313). */
-export const SETUP_TOKEN_INVALID_ERROR_CODE = "setup_token_invalid";
-
 export interface ApiErrorResponse {
   code:
     | "not_found"

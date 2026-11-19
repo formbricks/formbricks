@@ -928,8 +928,6 @@
     },
     "signup": {
       "create_administrator": "建立管理員",
-      "setup_token": "設定權杖",
-      "setup_token_invalid": "設定權杖不正確。",
       "this_user_has_all_the_power": "此使用者擁有所有權限。"
     }
   },

@@ -928,8 +928,6 @@
     },
     "signup": {
       "create_administrator": "Beheerder aanmaken",
-      "setup_token": "Installatietoken",
-      "setup_token_invalid": "Het installatietoken is onjuist.",
       "this_user_has_all_the_power": "Deze gebruiker heeft alle macht."
     }
   },

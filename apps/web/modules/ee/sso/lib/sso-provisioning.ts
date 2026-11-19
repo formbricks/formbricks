@@ -10,7 +10,6 @@ import { runPostCommitProjection } from "@/lib/authzed/projection-boundary";
 import { reconcileTeamWorkspaceRelationships } from "@/lib/authzed/team-workspace";
 import { DEFAULT_ORGANIZATION_ID, DEFAULT_TEAM_ID, SKIP_INVITE_FOR_SSO, WEBAPP_URL } from "@/lib/constants";
 import { getIsFreshInstance } from "@/lib/instance/service";
-import { isSetupTokenConfigured } from "@/lib/instance/setup-token";
 import { createMembership } from "@/lib/membership/service";
 import { capturePostHogEvent, identifyPostHogPerson } from "@/lib/posthog";
 import { createBrevoCustomer } from "@/modules/auth/lib/brevo";
@@ -100,14 +99,6 @@ const admitsAsBootstrapAdmin = (isFirstUser: boolean, isMultiOrgEnabled: boolean
   isFirstUser && !isMultiOrgEnabled;
 
 /**
- * Whether this SSO sign-up is the fresh instance's first user. ENG-7313: SSO has no form to carry the
- * setup token, so with `SETUP_TOKEN` configured the SSO route cannot be the way in on a fresh instance;
- * the administrator completes setup with the token first.
- */
-const getIsSsoFirstUser = async (): Promise<boolean> =>
-  !isSetupTokenConfigured() && (await getIsFreshInstance());
-
-/**
  * Gate for SSO just-in-time user provisioning — the orphan-safe, WRITE-FREE decision logic for the
  * Better Auth SSO sign-up flow (introduced by the NextAuth→Better Auth migration, ENG-1054).
  *
@@ -165,7 +156,7 @@ export const gateSsoProvisioning = async ({
   }
 
   const isMultiOrgEnabled = await getIsMultiOrgEnabled();
-  const isFirstUser = await getIsSsoFirstUser();
+  const isFirstUser = await getIsFreshInstance();
 
   // Fresh instance or multi-org: create the user with no org auto-assignment (handled by onboarding
   // / explicit invites elsewhere).

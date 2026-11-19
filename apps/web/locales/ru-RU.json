@@ -928,8 +928,6 @@
     },
     "signup": {
       "create_administrator": "Создать администратора",
-      "setup_token": "Токен настройки",
-      "setup_token_invalid": "Токен настройки неверный.",
       "this_user_has_all_the_power": "У этого пользователя есть все права."
     }
   },

@@ -1427,17 +1427,6 @@ model User {
   isBootstrapAdmin BootstrapAdminMarker? @unique
 }
 
-/// Singleton row recording that the instance's initial setup has happened (ENG-7313).
-///
-/// "Fresh instance" used to be derived from `user.count() === 0`, which re-arms the unauthenticated
-/// administrator sign-up whenever the last user deletes their account. Once this row exists the
-/// instance is never fresh again, whatever the user count. The fixed `id` is what keeps it a
-/// singleton: a second insert collides on the primary key.
-model InstanceSetup {
-  id          String   @id @default("instance")
-  completedAt DateTime @default(now())
-}
-
 /// Defines a segment of contacts based on attributes.
 /// Used for targeting surveys to specific user groups.
 ///

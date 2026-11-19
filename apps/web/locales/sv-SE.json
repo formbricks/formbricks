@@ -928,8 +928,6 @@
     },
     "signup": {
       "create_administrator": "Skapa administratör",
-      "setup_token": "Installationstoken",
-      "setup_token_invalid": "Installationstoken är felaktig.",
       "this_user_has_all_the_power": "Denna användare har all makt."
     }
   },

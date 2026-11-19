@@ -53,7 +53,6 @@ const constantsOverrides = vi.hoisted(() => ({
   DEFAULT_ORGANIZATION_ID: undefined as string | undefined,
   IS_FORMBRICKS_CLOUD: false as boolean,
   SIGNUP_DOMAIN_CHECK_ON_INVITES: false as boolean,
-  SETUP_TOKEN: undefined as string | undefined,
 }));
 vi.mock("@/lib/constants", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/constants")>();
@@ -74,9 +73,6 @@ vi.mock("@/lib/constants", async (importOriginal) => {
     get SIGNUP_DOMAIN_CHECK_ON_INVITES() {
       return constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES;
     },
-    get SETUP_TOKEN() {
-      return constantsOverrides.SETUP_TOKEN;
-    },
   };
 });
 
@@ -89,7 +85,6 @@ beforeEach(() => {
   constantsOverrides.DEFAULT_ORGANIZATION_ID = undefined;
   constantsOverrides.IS_FORMBRICKS_CLOUD = false;
   constantsOverrides.SIGNUP_DOMAIN_CHECK_ON_INVITES = false;
-  constantsOverrides.SETUP_TOKEN = undefined;
   // Defaults: established single-org instance, access allowed, orgs resolvable.
   vi.mocked(getIsFreshInstance).mockResolvedValue(false);
   vi.mocked(getIsMultiOrgEnabled).mockResolvedValue(false);
@@ -113,19 +108,6 @@ describe("gateSsoProvisioning — bypass branches", () => {
       assignToDefaultTeam: false,
       signupSource: "direct",
     });
-  });
-
-  // ENG-7313: SSO has no form to carry the setup token, so with one configured the SSO route is not a
-  // way to claim a fresh instance. It falls through to the established-instance gates and is rejected.
-  test("a fresh instance with SETUP_TOKEN configured is not claimable through SSO", async () => {
-    constantsOverrides.SETUP_TOKEN = "0123456789abcdef-setup-token";
-    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
-    vi.mocked(getFirstOrganization).mockResolvedValue(null);
-    vi.mocked(resolveInviteMatch).mockResolvedValue("missing");
-
-    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" });
-
-    expect(decision.action).toBe("reject");
   });
 
   // ENG-2247: multi-org admits everyone through this branch, so freshness is incidental and the marker

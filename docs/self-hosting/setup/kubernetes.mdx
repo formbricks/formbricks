@@ -273,14 +273,6 @@ Since 4.0, each release publishes a chart with the same version number as the ap
 For the complete values surface, refer to the chart README in the repository:
 [charts/formbricks/README.md](https://github.com/formbricks/formbricks/tree/main/charts/formbricks).
 
-## Protect first-administrator setup (optional)
-
-Until the first administrator exists, anyone who can reach the instance can create that account. If the
-instance is reachable from the internet before you finish setup, set `SETUP_TOKEN` (at least 16 characters)
-through `deployment.env`. The setup form then asks for it. See the
-[environment variables reference](/self-hosting/configuration/environment-variables). It is optional: leaving
-it unset keeps the default open setup.
-
 ## Verify the installation
 
 Run the [deployment check](/self-hosting/setup/deployment-check) in a dedicated workspace before collecting real responses.
