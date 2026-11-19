@@ -1331,7 +1331,8 @@ describe("getSurveySummary", () => {
     const summary = await getSurveySummary(mockSurveyId);
 
     expect(summary.dropOff.map((entry) => entry.elementId)).toEqual(["q1"]);
-    expect(summary.summary.map((entry) => entry.element.id)).toEqual(["q1"]);
+    expect(summary.summary).toHaveLength(1);
+    expect(summary.summary[0]).toMatchObject({ element: { id: "q1" } });
   });
 
   test("throws ResourceNotFoundError if survey not found", async () => {
