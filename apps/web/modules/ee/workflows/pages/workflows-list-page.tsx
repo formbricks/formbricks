@@ -69,7 +69,7 @@ const getWorkflowColumns = ({
         <WorkflowTriggerTypeIcon triggerType={row.original.triggerType} />
         <Link
           href={`/workspaces/${workspaceId}/workflows/${row.original.id}`}
-          className="focus-visible:ring-ring min-w-0 truncate font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:outline-hidden">
+          className="min-w-0 truncate font-medium text-slate-900 hover:underline focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden">
           {row.original.name}
         </Link>
       </div>

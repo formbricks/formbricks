@@ -89,7 +89,7 @@ export const WorkflowValidationProblemsDialog = ({
                     <button
                       type="button"
                       aria-label={t("workspace.workflows.validation_problem_fix_label", { problem: message })}
-                      className="focus-visible:ring-ring flex w-full items-start gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-left transition-colors hover:border-slate-300 hover:bg-slate-100 focus-visible:ring-1 focus-visible:outline-hidden"
+                      className="flex w-full items-start gap-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-left transition-colors hover:border-slate-300 hover:bg-slate-100 focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-hidden"
                       onClick={() => {
                         trackWorkflowEvent(WORKFLOW_CLIENT_EVENTS.validationProblemFixClicked, {
                           problem_code: problem.code,
