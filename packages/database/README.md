@@ -123,13 +123,20 @@ around the whole migration step:
 
 | Deployment                                                                                        | Limit on the migration step         |
 | ------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| Docker Compose (`formbricks-migrate`) and the app container's startup migration (`next-start.sh`) | 5 minutes                           |
-| Helm online upgrade (`apps/web/lib/upgrade/online/runtime.ts`)                                    | 30 minutes                          |
+| Docker Compose (`formbricks-migrate`) and the app container's startup migration (`next-start.sh`) | 300 seconds                         |
+| Helm online upgrade (`apps/web/lib/upgrade/online/runtime.ts`; only 6.0.x → 6.1 today)            | 30 minutes                          |
 | Helm maintenance upgrade (migration Job)                                                          | none; the Job retries up to 3 times |
 
-A run cut off by one of these resumes on the next deploy, but that deploy has failed first. So a migration that
-opts out must fit within these limits on the instances it targets, or the release that adds it must raise them.
-Check this, including Cloud's upgrade mode, before adding one.
+A run cut off by one of these resumes on the next deploy, but that deploy has failed first. On Docker the update
+stops until someone runs `docker compose up` again, and the Hub waits for the migration until then.
+
+Database size and hardware vary, so no instance can be assumed small enough. **Before the first migration that
+opts out ships**, its release must do one of these:
+
+- time it against Docker's 300-second limit on a large dataset and on modest hardware, and show it fits, or
+- change the Docker migration workflow in the same release (the limit or the retry), so a longer run completes.
+
+Check Cloud's deployment path the same way.
 
 ### Directory Structure Example
 
