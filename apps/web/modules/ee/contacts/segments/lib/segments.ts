@@ -412,10 +412,12 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
 
   try {
     return await prisma.$transaction(async (tx) => {
-      // for this survey, does a private segment already exist
+      // for this survey, does a private segment already exist. Titles are unique per workspace only, so
+      // another workspace can hold a private segment titled with this survey's id (ENG-7389).
       const segment = await tx.segment.findFirst({
         where: {
-          title: `${surveyId}`,
+          workspaceId: survey.workspaceId,
+          title: surveyId,
           isPrivate: true,
         },
         select: selectSegment,
