@@ -25,67 +25,67 @@ const attributeFilters = (value: string): TBaseFilters => [
   },
 ];
 
-const ATTACKER_FILTERS = attributeFilters("attacker@example.com");
+const OTHER_FILTERS = attributeFilters("other@example.com");
 
-let victimWorkspaceId: string;
-let attackerWorkspaceId: string;
-let victimSurveyId: string;
+let ownWorkspaceId: string;
+let otherWorkspaceId: string;
+let surveyId: string;
 
 const createWorkspace = async (name: string) => {
   const organization = await prisma.organization.create({ data: { name: `${name} Org` } });
   return (await prisma.workspace.create({ data: { name, organizationId: organization.id } })).id;
 };
 
-/** The attacker's private segment, titled with the victim's survey id, in the attacker's own workspace. */
-const createAttackerSegment = () =>
+/** A private segment in another workspace, titled with the survey's id. */
+const createOtherWorkspaceSegment = () =>
   prisma.segment.create({
     data: {
-      title: victimSurveyId,
+      title: surveyId,
       isPrivate: true,
-      filters: ATTACKER_FILTERS,
-      workspaceId: attackerWorkspaceId,
+      filters: OTHER_FILTERS,
+      workspaceId: otherWorkspaceId,
     },
   });
 
 const surveySegment = async () =>
   (
     await prisma.survey.findUniqueOrThrow({
-      where: { id: victimSurveyId },
+      where: { id: surveyId },
       select: { segment: { select: { id: true, workspaceId: true, isPrivate: true, filters: true } } },
     })
   ).segment;
 
-const expectAttackerSegmentUntouched = async (attackerSegmentId: string) => {
-  const attackerSegment = await prisma.segment.findUniqueOrThrow({
-    where: { id: attackerSegmentId },
+const expectOtherSegmentUntouched = async (otherSegmentId: string) => {
+  const otherSegment = await prisma.segment.findUniqueOrThrow({
+    where: { id: otherSegmentId },
     include: { surveys: { select: { id: true } } },
   });
-  expect(attackerSegment.filters).toEqual(ATTACKER_FILTERS);
-  expect(attackerSegment.surveys).toEqual([]);
+  expect(otherSegment.filters).toEqual(OTHER_FILTERS);
+  expect(otherSegment.surveys).toEqual([]);
 };
 
 beforeEach(async () => {
   await resetDb();
-  victimWorkspaceId = await createWorkspace("Victim");
-  attackerWorkspaceId = await createWorkspace("Attacker");
+  ownWorkspaceId = await createWorkspace("Own");
+  otherWorkspaceId = await createWorkspace("Other");
 
-  // The victim's app survey runs on a shared segment of its own workspace, which is the state the editor's
+  // The app survey runs on a shared segment of its own workspace, which is the state the editor's
   // "Reset all filters" button is shown in. Loading that segment deleted the survey's private one.
   const sharedSegment = await prisma.segment.create({
     data: {
-      title: "Victim shared segment",
+      title: "Shared segment",
       isPrivate: false,
       filters: attributeFilters("customer@example.com"),
-      workspaceId: victimWorkspaceId,
+      workspaceId: ownWorkspaceId,
     },
   });
-  victimSurveyId = (
+  surveyId = (
     await prisma.survey.create({
       data: {
-        name: "Victim survey",
+        name: "App survey",
         type: "app",
         status: "inProgress",
-        workspaceId: victimWorkspaceId,
+        workspaceId: ownWorkspaceId,
         segmentId: sharedSegment.id,
       },
       select: { id: true },
@@ -95,43 +95,43 @@ beforeEach(async () => {
 
 describe("resetSegmentInSurvey (ENG-7389)", () => {
   test("never connects the survey to a same-titled private segment in another workspace", async () => {
-    const attackerSegment = await createAttackerSegment();
+    const otherSegment = await createOtherWorkspaceSegment();
 
-    const result = await resetSegmentInSurvey(victimSurveyId);
+    const result = await resetSegmentInSurvey(surveyId);
 
-    expect(result.id).not.toBe(attackerSegment.id);
-    expect(result.workspaceId).toBe(victimWorkspaceId);
-    expect(result.title).toBe(victimSurveyId);
+    expect(result.id).not.toBe(otherSegment.id);
+    expect(result.workspaceId).toBe(ownWorkspaceId);
+    expect(result.title).toBe(surveyId);
     expect(result.isPrivate).toBe(true);
     expect(result.filters).toEqual([]);
     expect(await surveySegment()).toEqual({
       id: result.id,
-      workspaceId: victimWorkspaceId,
+      workspaceId: ownWorkspaceId,
       isPrivate: true,
       filters: [],
     });
-    await expectAttackerSegmentUntouched(attackerSegment.id);
+    await expectOtherSegmentUntouched(otherSegment.id);
   });
 
   test("picks the survey's own private segment when another workspace holds one with the same title", async () => {
-    // The attacker's row is the older one, so an unscoped lookup usually returns it (Postgres doesn't
+    // The other workspace's row is the older one, so an unscoped lookup usually returns it (Postgres doesn't
     // guarantee the order; the test above is the deterministic regression check). This one covers the
     // branch that reuses the survey's own private segment.
-    const attackerSegment = await createAttackerSegment();
+    const otherSegment = await createOtherWorkspaceSegment();
     const ownSegment = await prisma.segment.create({
       data: {
-        title: victimSurveyId,
+        title: surveyId,
         isPrivate: true,
-        filters: attributeFilters("victim@example.com"),
-        workspaceId: victimWorkspaceId,
+        filters: attributeFilters("own@example.com"),
+        workspaceId: ownWorkspaceId,
       },
     });
 
-    const result = await resetSegmentInSurvey(victimSurveyId);
+    const result = await resetSegmentInSurvey(surveyId);
 
     expect(result.id).toBe(ownSegment.id);
     expect(result.filters).toEqual([]);
     expect((await surveySegment())?.id).toBe(ownSegment.id);
-    await expectAttackerSegmentUntouched(attackerSegment.id);
+    await expectOtherSegmentUntouched(otherSegment.id);
   });
 });
