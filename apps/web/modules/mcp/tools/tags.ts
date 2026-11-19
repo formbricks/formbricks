@@ -4,6 +4,7 @@ import type { TV3Authentication } from "@/app/api/v3/lib/types";
 import { listV3Tags, mergeV3Tags, renameV3Tag } from "@/app/api/v3/tags/lib/operations";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { responseToMcpToolResult } from "../errors";
+import { runConfirmedDelete } from "./delete-confirmation";
 import { registerMcpTool } from "./guard-permissions";
 import { runMcpMutation } from "./run-mcp-mutation";
 import { ZMcpTagListOutput, ZMcpTagMergeOutput, ZMcpTagOutput } from "./tag-output-schemas";
@@ -46,6 +47,28 @@ const asUser = (
   authentication && "apiKeyId" in authentication
     ? Promise.resolve(problemForbidden(requestId, API_KEY_REFUSAL, MCP_API_ROUTE))
     : operation();
+
+/** Runs the merge once the user agreed; `merge_tags` reaches it only through `runConfirmedDelete`. */
+const mergeTags = (input: TMcpMergeTagsInput, ctx: Parameters<typeof runMcpMutation>[0]) =>
+  runMcpMutation(
+    ctx,
+    {
+      action: "merged",
+      resource: "tag",
+      logContext: { tagId: input.tagId, newTagId: input.newTagId },
+    },
+    ({ authentication, requestId, auditLog }) =>
+      asUser(authentication, requestId, () =>
+        mergeV3Tags({
+          tagId: input.tagId,
+          newTagId: input.newTagId,
+          authentication,
+          requestId,
+          instance: MCP_API_ROUTE,
+          auditLog,
+        })
+      )
+  );
 
 export function registerTagTools(server: McpServer): void {
   registerMcpTool(
@@ -108,7 +131,8 @@ export function registerTagTools(server: McpServer): void {
       title: "Merge tags",
       description: [
         "Move every response tagged tagId onto newTagId, then remove tagId. Both tags must be in the same",
-        "workspace. Use it to fold a duplicate or misspelled tag into the right one; it cannot be undone.",
+        "workspace. Use it to fold a duplicate or misspelled tag into the right one; it cannot be undone, so the user",
+        "is asked to confirm first.",
       ].join(" "),
       inputSchema: ZMcpMergeTagsInput,
       outputSchema: ZMcpTagMergeOutput,
@@ -116,25 +140,16 @@ export function registerTagTools(server: McpServer): void {
       annotations: DESTRUCTIVE_WRITE_ANNOTATIONS,
     },
     [{ permission: "tags", level: "write" }],
+    // Removes tagId for good, so it confirms first like the delete tools (finding 07): a merge asked for by
+    // text inside a tool result must not happen without the user agreeing.
     async (input: TMcpMergeTagsInput, ctx) =>
-      runMcpMutation(
+      runConfirmedDelete({
+        tool: "merge_tags",
+        resourceKey: `${input.tagId}->${input.newTagId}`,
+        prompt: `Merge tag ${input.tagId} into ${input.newTagId}? Tag ${input.tagId} is removed and this cannot be undone.`,
+        confirm: input.confirm,
         ctx,
-        {
-          action: "merged",
-          resource: "tag",
-          logContext: { tagId: input.tagId, newTagId: input.newTagId },
-        },
-        ({ authentication, requestId, auditLog }) =>
-          asUser(authentication, requestId, () =>
-            mergeV3Tags({
-              tagId: input.tagId,
-              newTagId: input.newTagId,
-              authentication,
-              requestId,
-              instance: MCP_API_ROUTE,
-              auditLog,
-            })
-          )
-      )
+        run: () => mergeTags(input, ctx),
+      })
   );
 }

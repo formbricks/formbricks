@@ -16,7 +16,7 @@ type TOauthClientWhere = NonNullable<NonNullable<Parameters<typeof prisma.oauthC
  * The registrations this job may delete: anonymous (`userId` null — a client registered by a signed-in
  * user belongs to them), past the retention window, with no consent and no live token. A consent is what
  * a user's grant hangs off, and a token that is unexpired and unrevoked is a working connection, so
- * either keeps the client, as does a `skipConsent` client. Deleting a client cascades to its tokens, consents and resource links, which is
+ * either keeps the client, as does a `skipConsent` client. Deleting a client cascades to its tokens, consents, MCP grants and resource links, which is
  * why those are excluded rather than relied on.
  */
 const staleAnonymousClientWhere = (now: Date): TOauthClientWhere => ({
@@ -26,6 +26,8 @@ const staleAnonymousClientWhere = (now: Date): TOauthClientWhere => ({
   OR: [{ skipConsent: null }, { skipConsent: false }],
   createdAt: { lt: new Date(now.getTime() - ANONYMOUS_OAUTH_CLIENT_RETENTION_MS) },
   consents: { none: {} },
+  // An MCP grant cascades with its client, and dropping it here would skip its SpiceDB cleanup and audit.
+  mcpGrants: { none: {} },
   accessTokens: { none: { revoked: null, expiresAt: { gt: now } } },
   refreshTokens: { none: { revoked: null, expiresAt: { gt: now } } },
 });

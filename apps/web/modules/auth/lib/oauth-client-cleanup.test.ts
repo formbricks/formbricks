@@ -32,6 +32,7 @@ describe("deleteStaleAnonymousOauthClients (ENG-7314)", () => {
         OR: [{ skipConsent: null }, { skipConsent: false }],
         createdAt: { lt: new Date(NOW.getTime() - ANONYMOUS_OAUTH_CLIENT_RETENTION_MS) },
         consents: { none: {} },
+        mcpGrants: { none: {} },
         accessTokens: { none: { revoked: null, expiresAt: { gt: NOW } } },
         refreshTokens: { none: { revoked: null, expiresAt: { gt: NOW } } },
       },
@@ -56,6 +57,7 @@ describe("deleteStaleAnonymousOauthClients (ENG-7314)", () => {
       OR: [{ skipConsent: null }, { skipConsent: false }],
       createdAt: { lt: new Date(NOW.getTime() - ANONYMOUS_OAUTH_CLIENT_RETENTION_MS) },
       consents: { none: {} },
+      mcpGrants: { none: {} },
       accessTokens: { none: { revoked: null, expiresAt: { gt: NOW } } },
       refreshTokens: { none: { revoked: null, expiresAt: { gt: NOW } } },
     });
