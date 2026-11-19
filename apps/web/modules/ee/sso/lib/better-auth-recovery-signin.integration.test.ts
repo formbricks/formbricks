@@ -83,7 +83,8 @@ describe("SSO recovery sign-in (real Postgres)", () => {
 
   test("sets no proof when the callback is not a recovery completion", async () => {
     const user = await prisma.user.create({ data: { email: "noproof@example.com", name: "No Proof" } });
-    const token = createToken(user.id, { purpose: "sso_recovery" });
+    // Bound to the state in the callback, so only the path check can withhold the proof.
+    const token = createToken(user.id, { purpose: "sso_recovery", ssoRecoveryStateId: "proof-state" });
 
     const res = await auth.api.ssoRecoverySignIn({
       query: { token, callbackUrl: `${WEBAPP_URL}/environments/env_1?state=proof-state` },
@@ -95,7 +96,8 @@ describe("SSO recovery sign-in (real Postgres)", () => {
 
   test("sets no proof for a token that is not an SSO recovery token", async () => {
     const user = await prisma.user.create({ data: { email: "wrongpurpose@example.com", name: "Wrong" } });
-    const token = createToken(user.id);
+    // Bound to the state in the callback, so only the purpose check can withhold the proof.
+    const token = createToken(user.id, { ssoRecoveryStateId: "proof-state" });
     const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=proof-state`;
 
     const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });

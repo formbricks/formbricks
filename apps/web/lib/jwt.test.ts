@@ -507,6 +507,19 @@ describe("JWT Functions - Comprehensive Security Tests", () => {
       });
     });
 
+    test.each([
+      ["a number", 42],
+      ["an empty string", ""],
+    ])("ignores a recovery state claim that is %s", async (_label, recoveryState) => {
+      // A genuinely minted payload, re-signed with the malformed claim added.
+      const { iat: _iat, ...minted } = jwt.decode(createToken(mockUser.id, { purpose: "sso_recovery" })) as {
+        iat: number;
+      };
+      const token = jwt.sign({ ...minted, recoveryState }, TEST_AUTH_SECRET);
+
+      expect(await verifyToken(token)).not.toHaveProperty("ssoRecoveryStateId");
+    });
+
     test("reports no recovery state when the token carries none", async () => {
       const verified = await verifyToken(createToken(mockUser.id, { purpose: "sso_recovery" }));
 

@@ -81,7 +81,7 @@ export const ssoRecoverySignInPlugin = {
           //
           // Only for the recovery this token was mailed for: the state is read from the unsigned
           // `callbackUrl`, so it must match the one signed into the token. A token minted before that
-          // claim existed gets no proof, and the user is told to open the emailed link of a new attempt.
+          // claim existed gets no proof; its holder can only start recovery again for a new link.
           const stateId = getSsoRecoveryStateIdFromCompletionUrl(callbackUrl, WEBAPP_URL);
           if (stateId && stateId === ssoRecoveryStateId) {
             ctx.setCookie(
