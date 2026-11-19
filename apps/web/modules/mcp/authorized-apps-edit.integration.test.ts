@@ -3,6 +3,7 @@ import { beforeAll, beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { PATCH } from "@/app/api/internal/mcp-grants/[clientId]/route";
 import { GET } from "@/app/api/internal/mcp-grants/route";
+import { SAME_ORIGIN_HEADERS } from "@/app/api/v3/lib/test-utils";
 import { synchronizeAuthzedIntegrationFixture } from "@/integration/authzed";
 import {
   type TMcpToolCallOutcome,
@@ -121,7 +122,7 @@ const editGrant = async (clientId: string, permissions: Record<string, string>, 
   const response = await PATCH(
     new NextRequest(`http://localhost:3000/api/internal/mcp-grants/${clientId}`, {
       method: "PATCH",
-      headers: { "content-type": "application/json" },
+      headers: { ...SAME_ORIGIN_HEADERS, "content-type": "application/json" },
       body: JSON.stringify({ permissions, expectedUpdatedAt }),
     }),
     { params: Promise.resolve({ clientId }) }
