@@ -344,8 +344,8 @@ Configure the proxy in front of Formbricks to:
   per organization, not per IP, so this setting doesn't change them.
 - **Keep the token out of access logs.** The token in the path is a credential. Formbricks redacts it from its own
   logs and error reports, but your proxy, load balancer or CDN may log full request paths. Redact the last path
-  segment of `/api/v3/workflows/*/webhook/*`, or don't log those paths. The Envoy proxy in the Helm chart already
-  logs those requests without their path.
+  segment of `/api/v3/workflows/*/webhook/*`, or don't log those paths. With the Helm chart, Secret URL calls reach
+  Formbricks through your Ingress controller, not the chart's Envoy proxy, so set this up on the Ingress controller.
 - **Accept request bodies of at least 100 KB,** the largest payload a Secret URL accepts.
 
 For example, with nginx:
@@ -371,6 +371,9 @@ server {
   }
 }
 ```
+
+nginx's error log has a fixed format: when nginx can't reach Formbricks or refuses a request, it writes the full
+request line, token included. Keep the error log where only administrators can read it.
 
 {/* prettier-ignore-end */}
 
