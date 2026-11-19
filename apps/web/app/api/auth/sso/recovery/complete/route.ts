@@ -74,15 +74,16 @@ const getHandler = async (request: Request) => {
 };
 
 /**
- * Only a deliberate, same-origin form submission acts (ENG-7395).
+ * Only a user-activated, same-origin form submission acts (ENG-7395).
  *
  * Session and proof cookies are SameSite=Lax, so a cross-site POST arrives without them and is refused
- * anyway; `Sec-Fetch-Site` says so outright. Same-origin is not enough on its own, though: a script on
- * this origin (a self-hosted link survey's custom head script, say) could `fetch()` the POST without the
- * account holder ever seeing the page. So when the browser sends Fetch Metadata at all, the request must
- * also be a top-level navigation the user activated: `Sec-Fetch-Mode: navigate`, `Sec-Fetch-Dest:
- * document`, `Sec-Fetch-User: ?1`. A `fetch()` sends `cors`/`empty` and a scripted `form.submit()` sends
- * no `Sec-Fetch-User`. A browser without Fetch Metadata still has the Lax refusal.
+ * anyway; `Sec-Fetch-Site` says so outright. When the browser sends Fetch Metadata at all, the request
+ * must also be a top-level navigation with user activation: `Sec-Fetch-Mode: navigate`, `Sec-Fetch-Dest:
+ * document`, `Sec-Fetch-User: ?1`. That stops a background `fetch()` (`cors`/`empty`) and a scripted
+ * `form.submit()` with no click behind it (no `Sec-Fetch-User`). It does not stop a malicious script on
+ * this origin from riding a real click the user makes on its own page; a script there already acts with
+ * the user's full rights, so this check only takes away the zero-click path. A browser without Fetch
+ * Metadata still has the Lax refusal.
  */
 const isDeliberateSubmission = (request: Request): boolean => {
   const fetchSite = request.headers.get("sec-fetch-site");

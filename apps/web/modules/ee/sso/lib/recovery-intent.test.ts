@@ -73,6 +73,8 @@ describe("SSO recovery intent", () => {
         store.set(key, { ...entry, ttlMs: seconds * 1000 });
         return 1;
       }),
+      // Real DEL semantics: the number of keys removed, 0 when it was already gone.
+      del: vi.fn(async (key: string) => (store.delete(key) ? 1 : 0)),
     } as never);
     mockCache.runRedisOperation.mockImplementation(async (operation) => {
       const redis = await mockCache.getRedisClient();
@@ -192,11 +194,18 @@ describe("SSO recovery intent", () => {
       await expect(readSsoRecoveryIntent(stateId)).resolves.toBeNull();
     });
 
+    test("says whether this call removed it, so a race has exactly one winner", async () => {
+      const stateId = await createSsoRecoveryIntent(intentInput);
+
+      await expect(consumeSsoRecoveryIntent(stateId)).resolves.toBe(true);
+      await expect(consumeSsoRecoveryIntent(stateId)).resolves.toBe(false);
+    });
+
     test("never throws when the delete fails — the account link has already committed", async () => {
       const stateId = await createSsoRecoveryIntent(intentInput);
-      mockCache.del.mockResolvedValue({ ok: false, error: { code: "RedisConnectionError" } });
+      mockCache.runRedisOperation.mockRejectedValue(new Error("Redis unavailable"));
 
-      await expect(consumeSsoRecoveryIntent(stateId)).resolves.toBeUndefined();
+      await expect(consumeSsoRecoveryIntent(stateId)).resolves.toBe(false);
     });
   });
 

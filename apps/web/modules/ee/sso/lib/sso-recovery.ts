@@ -801,7 +801,11 @@ export const cancelSsoRecovery = async (args: {
 }): Promise<void> => {
   const { intent, provider } = await authorizeSsoRecovery(args);
 
-  await consumeSsoRecoveryIntent(args.stateId);
+  // Nothing to record when another request (the Link button, a second Cancel) spent it first: the
+  // recovery was not cancelled by this call, and it may have been linked.
+  if (!(await consumeSsoRecoveryIntent(args.stateId))) {
+    throw new SsoRecoveryError("intent_unusable");
+  }
 
   getSsoRecoveryLogger("sso_recovery_failed").info(
     { userId: intent.userId, provider },

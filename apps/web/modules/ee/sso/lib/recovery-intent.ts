@@ -179,21 +179,29 @@ export const readSsoRecoveryIntent = async (
 };
 
 /**
- * Single-use, applied at the only moment it is safe to: after the account link has committed.
+ * Single-use, applied at the only moment it is safe to: after the account link has committed, or when
+ * the account holder cancels.
  *
- * Best-effort, never throws. The link already happened, so failing here must not turn a completed
- * recovery into an error — the record expires on its own.
+ * Answers whether THIS call removed the record. A raw `DEL` rather than `cache.del`, for its count: a
+ * cancel racing a completion must not record a cancellation for a recovery the other request already
+ * linked and spent. `false` covers "already gone" and "Redis failed" alike.
+ *
+ * Best-effort, never throws. After a link the account is already linked, so failing here must not turn a
+ * completed recovery into an error; the record expires on its own.
  */
-export const consumeSsoRecoveryIntent = async (stateId: string): Promise<void> => {
+export const consumeSsoRecoveryIntent = async (stateId: string): Promise<boolean> => {
   if (!STATE_ID_REGEX.test(stateId)) {
-    return;
+    return false;
   }
 
   const stateIdHash = hashStateId(stateId);
-  const result = await cache.del([getIntentCacheKey(stateIdHash)]);
 
-  if (!result.ok) {
-    logger.error({ error: result.error, stateIdHash }, "Failed to consume the SSO recovery intent");
+  try {
+    const removed = await cache.runRedisOperation((client) => client.del(getIntentCacheKey(stateIdHash)));
+    return removed > 0;
+  } catch (error) {
+    logger.error({ error, stateIdHash }, "Failed to consume the SSO recovery intent");
+    return false;
   }
 };
 

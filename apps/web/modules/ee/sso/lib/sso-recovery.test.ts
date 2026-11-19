@@ -208,6 +208,7 @@ describe("sso-recovery", () => {
     );
     mocks.consumeSsoRecoveryIntent.mockImplementation(async () => {
       consumedAfterCommit = transactionCommitted;
+      return true;
     });
     vi.mocked(buildVerificationRequestedPath).mockReturnValue(
       "/auth/verification-requested?token=email-token&purpose=sso_recovery"
@@ -993,6 +994,26 @@ describe("sso-recovery", () => {
         expect.objectContaining({
           action: "sso_recovery_failed",
           userId: "user_1",
+          newObject: expect.objectContaining({ failureReason: "cancelled_by_user" }),
+        })
+      );
+    });
+
+    test("a cancel that loses the race to a link records no cancellation", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(verifiedUser as never);
+      mocks.consumeSsoRecoveryIntent.mockResolvedValue(false);
+
+      const outcome = cancelSsoRecovery({
+        stateId: "test-state",
+        recoveryProof: createSsoRecoveryProof("user_1", "test-state"),
+        sessionUserId: "user_1",
+      });
+
+      await expect(outcome.catch((error: SsoRecoveryError) => error.failure)).resolves.toBe(
+        "intent_unusable"
+      );
+      expect(mocks.queueAuditEventBackground).not.toHaveBeenCalledWith(
+        expect.objectContaining({
           newObject: expect.objectContaining({ failureReason: "cancelled_by_user" }),
         })
       );

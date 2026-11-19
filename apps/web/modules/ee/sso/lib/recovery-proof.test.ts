@@ -116,8 +116,14 @@ describe("SSO_RECOVERY_PROOF_COOKIE_NAME", () => {
         await import("./recovery-proof");
 
       expect(SSO_RECOVERY_PROOF_COOKIE_NAME).toBe("__Host-formbricks.sso_recovery_proof");
-      expect(SSO_RECOVERY_PROOF_COOKIE_OPTIONS).toMatchObject({ secure: true, path: "/" });
-      expect(SSO_RECOVERY_PROOF_COOKIE_OPTIONS).not.toHaveProperty("domain");
+      // Exactly these attributes: a `domain` (or any other) added later would break the prefix's rule.
+      expect(SSO_RECOVERY_PROOF_COOKIE_OPTIONS).toEqual({
+        httpOnly: true,
+        secure: true,
+        path: "/",
+        sameSite: "lax",
+        maxAge: 60 * 15,
+      });
     } finally {
       vi.doUnmock("@/modules/auth/lib/auth-cookies");
       vi.resetModules();
