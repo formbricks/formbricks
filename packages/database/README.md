@@ -118,6 +118,19 @@ A session advisory lock needs the direct or session-pooled connection the runner
 [Migration safety checks](#migration-safety-checks)). Keep the default for anything small; it rolls back
 cleanly.
 
+**Deployment time limits still apply.** Opting out removes the runner's 30-minute transaction, not the limits
+around the whole migration step:
+
+| Deployment                                                                                        | Limit on the migration step         |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------- |
+| Docker Compose (`formbricks-migrate`) and the app container's startup migration (`next-start.sh`) | 5 minutes                           |
+| Helm online upgrade (`apps/web/lib/upgrade/online/runtime.ts`)                                    | 30 minutes                          |
+| Helm maintenance upgrade (migration Job)                                                          | none; the Job retries up to 3 times |
+
+A run cut off by one of these resumes on the next deploy, but that deploy has failed first. So a migration that
+opts out must fit within these limits on the instances it targets, or the release that adds it must raise them.
+Check this, including Cloud's upgrade mode, before adding one.
+
 ### Directory Structure Example
 
 ```
