@@ -31,6 +31,5 @@ export const joinConnectionUrl = ({ base, params, fragment }: TConnectionUrlPart
 
 /** A repeated query parameter's last value, which is the one pg and Prisma both use. */
 export const lastParam = (params: URLSearchParams, name: string): string | null => {
-  const values = params.getAll(name);
-  return values.length > 0 ? values[values.length - 1] : null;
+  return params.getAll(name).pop() ?? null;
 };
