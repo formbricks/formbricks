@@ -107,6 +107,10 @@ const admitsAsBootstrapAdmin = (isFirstUser: boolean, isMultiOrgEnabled: boolean
 const getIsSsoFirstUser = async (): Promise<boolean> =>
   !isSetupTokenConfigured() && (await getIsFreshInstance());
 
+/** A fresh instance that only the setup form, carrying `SETUP_TOKEN`, may claim (ENG-7313). */
+const isFreshInstanceReservedForSetupToken = async (): Promise<boolean> =>
+  isSetupTokenConfigured() && (await getIsFreshInstance());
+
 /**
  * Gate for SSO just-in-time user provisioning — the orphan-safe, WRITE-FREE decision logic for the
  * Better Auth SSO sign-up flow (introduced by the NextAuth→Better Auth migration, ENG-1054).
@@ -123,13 +127,14 @@ const getIsSsoFirstUser = async (): Promise<boolean> =>
  * is the default team's org (skip-invite) or the first org; access control without a callback URL is
  * refused.
  */
-export const gateSsoProvisioning = async ({
-  email,
-  callbackUrl,
-}: {
-  email: string;
-  callbackUrl: string;
-}): Promise<TSsoProvisioningDecision> => {
+/**
+ * The refusals that come before any organization is resolved: the Cloud email-domain block and, with
+ * `SETUP_TOKEN` set, a fresh instance that only the setup form may claim.
+ */
+const getSsoPreflightRejection = async (
+  email: string,
+  callbackUrl: string
+): Promise<TSsoProvisioningDecision | null> => {
   // Formbricks Cloud only: block SSO sign-ups from personal/free/disposable email domains, before any
   // org resolution. Placed above the multi-org / fresh-instance bypass below (Cloud is multi-org, so
   // the bypass would otherwise let these through). Invited users — a valid token whose email matches —
@@ -142,6 +147,27 @@ export const gateSsoProvisioning = async ({
   if (isDomainBlocked) {
     return { action: "reject", reason: SIGNUP_EMAIL_DOMAIN_BLOCKED_ERROR_CODE };
   }
+
+  // ENG-7313: with SETUP_TOKEN set, a fresh instance is claimed only through the setup form, which carries
+  // the token. Checked before DEFAULT_ORGANIZATION_ID, whose branch would otherwise create that
+  // organization and make any account at the IdP its owner. Same answer as SSO on a fresh instance
+  // without a default organization: there is no organization to join yet.
+  if (await isFreshInstanceReservedForSetupToken()) {
+    return { action: "reject", reason: "no_organization_found" };
+  }
+
+  return null;
+};
+
+export const gateSsoProvisioning = async ({
+  email,
+  callbackUrl,
+}: {
+  email: string;
+  callbackUrl: string;
+}): Promise<TSsoProvisioningDecision> => {
+  const rejection = await getSsoPreflightRejection(email, callbackUrl);
+  if (rejection) return rejection;
 
   const signupSource = callbackUrl.includes("token=") ? "invite" : "direct";
 

@@ -117,6 +117,26 @@ describe("gateSsoProvisioning — bypass branches", () => {
 
   // ENG-7313: SSO has no form to carry the setup token, so with one configured the SSO route is not a
   // way to claim a fresh instance. It falls through to the established-instance gates and is rejected.
+  test("SETUP_TOKEN also blocks the DEFAULT_ORGANIZATION_ID route on a fresh instance", async () => {
+    constantsOverrides.SETUP_TOKEN = "0123456789abcdef-setup-token";
+    constantsOverrides.DEFAULT_ORGANIZATION_ID = "org-default";
+    vi.mocked(getIsFreshInstance).mockResolvedValue(true);
+
+    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" });
+
+    expect(decision).toEqual({ action: "reject", reason: "no_organization_found" });
+  });
+
+  test("DEFAULT_ORGANIZATION_ID still provisions once the instance is set up, with SETUP_TOKEN set", async () => {
+    constantsOverrides.SETUP_TOKEN = "0123456789abcdef-setup-token";
+    constantsOverrides.DEFAULT_ORGANIZATION_ID = "org-default";
+    vi.mocked(getIsFreshInstance).mockResolvedValue(false);
+
+    const decision = await gateSsoProvisioning({ email: "a@b.com", callbackUrl: "" });
+
+    expect(decision).toMatchObject({ action: "provision", organizationId: "org-default" });
+  });
+
   test("a fresh instance with SETUP_TOKEN configured is not claimable through SSO", async () => {
     constantsOverrides.SETUP_TOKEN = "0123456789abcdef-setup-token";
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
