@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { logger } from "@formbricks/logger";
 import { Prisma, PrismaClient } from "../prisma";
 import { createPrismaPgAdapter } from "../prisma-adapter";
-import { resolvePrismaCliTls, runPrismaCli } from "../prisma-cli-tls";
+import { assertPrismaCliTlsSupported, runPrismaCli } from "../prisma-cli-tls";
 import { type MigrationRunPhase, shouldRunMigration } from "./migration-phases";
 import { ensureOnlineIndexes } from "./online-indexes";
 
@@ -413,6 +413,7 @@ const runSchemaMigrationBatch = async (
     // subprocess without leaking into the parent's env. The URL's libpq TLS
     // settings are translated first: the CLI ignores verify-ca/verify-full.
     const prismaBin = await resolvePrismaBin();
+    if (!migrationDatabaseUrl) throw new Error("DATABASE_URL or MIGRATE_DATABASE_URL is required");
     await runPrismaCli(prismaBin, ["migrate", "deploy", "--config", PRISMA_CONFIG_PATH], {
       cwd: REPO_ROOT_DIR,
       databaseUrl: migrationDatabaseUrl,
@@ -543,9 +544,8 @@ const loadMigrations = async (): Promise<MigrationScript[]> => {
 
 export async function applyMigrations(phase: MigrationRunPhase = "maintenance"): Promise<void> {
   try {
-    // Reject TLS settings the Prisma CLI cannot honour before any migration runs, not at the first
-    // schema batch after earlier data migrations.
-    if (migrationDatabaseUrl) resolvePrismaCliTls(migrationDatabaseUrl);
+    if (!migrationDatabaseUrl) throw new Error("DATABASE_URL or MIGRATE_DATABASE_URL is required");
+    assertPrismaCliTlsSupported(migrationDatabaseUrl);
     const allMigrations = await loadMigrations();
     logger.info(
       `Loaded ${allMigrations.length.toString()} migrations from ${MIGRATIONS_DIR} (source: ${

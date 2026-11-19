@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { joinConnectionUrl, splitConnectionUrl } from "./connection-url";
+import { joinConnectionUrl, lastParam, splitConnectionUrl } from "./connection-url";
 
 describe("connection URL query rewriting", () => {
   test.each([
@@ -32,5 +32,12 @@ describe("connection URL query rewriting", () => {
     parts.params.delete("sslaccept");
 
     expect(joinConnectionUrl(parts)).toBe("postgresql://u:p@db/app");
+  });
+
+  test("lastParam returns a repeated parameter's last value, or null", () => {
+    const { params } = splitConnectionUrl("postgresql://db/app?sslmode=require&sslmode=verify-full");
+
+    expect(lastParam(params, "sslmode")).toBe("verify-full");
+    expect(lastParam(params, "sslaccept")).toBeNull();
   });
 });

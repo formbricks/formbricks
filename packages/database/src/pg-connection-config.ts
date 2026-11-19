@@ -1,6 +1,6 @@
 import type { ClientConfig } from "pg";
 import { logger } from "@formbricks/logger";
-import { joinConnectionUrl, splitConnectionUrl } from "./connection-url";
+import { joinConnectionUrl, lastParam, splitConnectionUrl } from "./connection-url";
 
 // Prisma's sslaccept enables TLS; native pg URL settings retain their usual precedence.
 const sslConfigFromSslAccept = (value: string | null): ClientConfig["ssl"] | undefined => {
@@ -30,7 +30,7 @@ export const getPgConnectionConfig = (
     return { connectionString: databaseUrl };
   }
 
-  const ssl = sslConfigFromSslAccept(parts.params.get("sslaccept"));
+  const ssl = sslConfigFromSslAccept(lastParam(parts.params, "sslaccept"));
   parts.params.delete("sslaccept");
 
   return {

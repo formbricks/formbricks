@@ -6,6 +6,7 @@ import { logger } from "@formbricks/logger";
 import {
   PrismaCliTlsConfigError,
   TLS_VERIFICATION_FAILED_HINT,
+  assertPrismaCliTlsSupported,
   preparePrismaCliEnvironment,
   resolvePrismaCliTls,
   runPrismaCli,
@@ -75,11 +76,28 @@ describe("resolvePrismaCliTls", () => {
     expect(resolve(base)).toEqual({ databaseUrl: base, verifiesServerCertificate: false });
   });
 
+  test("keeps an explicit sslaccept=strict but still requires TLS and pins the CA", () => {
+    expect(resolve(`${base}?sslmode=verify-full&sslaccept=strict&sslrootcert=${caFile}`)).toEqual({
+      databaseUrl: `${base}?sslmode=require&sslaccept=strict`,
+      verifiesServerCertificate: true,
+      rootCertFile: caFile,
+    });
+  });
+
+  test("honours sslaccept=accept_invalid_certs as an opt-out but never falls back to plaintext", () => {
+    expect(
+      resolve(`${base}?sslmode=verify-full&sslrootcert=/missing.pem&sslaccept=accept_invalid_certs`)
+    ).toEqual({
+      databaseUrl: `${base}?sslmode=require&sslaccept=accept_invalid_certs`,
+      verifiesServerCertificate: false,
+    });
+  });
+
   test.each([
     ["accept_invalid_certs", false],
     ["strict", true],
-  ])("respects an explicit sslaccept=%s", (sslaccept, verifies) => {
-    const url = `${base}?sslmode=verify-full&sslrootcert=/missing.pem&sslaccept=${sslaccept}`;
+  ])("leaves a non-verifying URL with sslaccept=%s untouched", (sslaccept, verifies) => {
+    const url = `${base}?sslmode=prefer&sslaccept=${sslaccept}`;
     expect(resolve(url)).toEqual({ databaseUrl: url, verifiesServerCertificate: verifies });
   });
 
@@ -133,6 +151,17 @@ describe("resolvePrismaCliTls", () => {
     expect(() => resolve(`${base}?sslmode=${sslmode}&sslrootcert=system`)).toThrow(PrismaCliTlsConfigError);
   });
 
+  test("validates the sslmode even when sslaccept is set", () => {
+    expect(() => resolve(`${base}?sslmode=bogus&sslaccept=strict`)).toThrow(PrismaCliTlsConfigError);
+  });
+
+  test("assertPrismaCliTlsSupported throws only for settings the CLI cannot honour", () => {
+    expect(() => assertPrismaCliTlsSupported(`${base}?sslmode=verify-full`, {})).not.toThrow();
+    expect(() =>
+      assertPrismaCliTlsSupported(`${base}?sslmode=verify-full&sslrootcert=/nope.pem`, {})
+    ).toThrow(PrismaCliTlsConfigError);
+  });
+
   test("rejects an sslmode Prisma would silently downgrade, without echoing the URL", () => {
     const call = () => resolve(`${base}?sslmode=VERIFY-FULL`);
     expect(call).toThrow(PrismaCliTlsConfigError);
@@ -141,7 +170,7 @@ describe("resolvePrismaCliTls", () => {
 });
 
 describe("preparePrismaCliEnvironment", () => {
-  test("pins the CLI to the root certificate with an empty certificate directory", async () => {
+  test("pins the CLI to a private copy of the root certificate and an empty certificate directory", async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), "prisma-cli-tls-test-"));
     const ca = path.join(dir, "ca.pem");
     await fs.writeFile(ca, "pem");
@@ -150,15 +179,35 @@ describe("preparePrismaCliEnvironment", () => {
       const prepared = await preparePrismaCliEnvironment(`${base}?sslmode=verify-full&sslrootcert=${ca}`, {
         KEEP: "1",
       });
-      const certDir = prepared.env.SSL_CERT_DIR!;
+      const { SSL_CERT_FILE: certFile, SSL_CERT_DIR: certDir } = prepared.env;
 
       expect(prepared.verifiesServerCertificate).toBe(true);
-      expect(prepared.env).toMatchObject({ KEEP: "1", DATABASE_URL: strictUrl(), SSL_CERT_FILE: ca });
-      expect(await fs.readdir(certDir)).toEqual([]);
+      expect(prepared.env).toMatchObject({ KEEP: "1", DATABASE_URL: strictUrl() });
+      expect(certFile).not.toBe(ca);
+      // The pinned copy survives the original being removed before the CLI reads it.
+      await fs.rm(ca);
+      expect(await fs.readFile(certFile!, "utf8")).toBe("pem");
+      expect(await fs.readdir(certDir!)).toEqual([]);
 
       await prepared.cleanup();
       await prepared.cleanup();
-      await expect(fs.access(certDir)).rejects.toThrow();
+      await expect(fs.access(path.dirname(certFile!))).rejects.toThrow();
+    } finally {
+      await fs.rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  // root reads any file, so the permission cannot make it unreadable there.
+  test.skipIf(process.getuid?.() === 0)("fails closed when the root certificate cannot be read", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "prisma-cli-tls-test-"));
+    const ca = path.join(dir, "ca.pem");
+    await fs.writeFile(ca, "pem");
+    await fs.chmod(ca, 0o000);
+
+    try {
+      await expect(
+        preparePrismaCliEnvironment(`${base}?sslmode=verify-full&sslrootcert=${ca}`, {})
+      ).rejects.toThrow(PrismaCliTlsConfigError);
     } finally {
       await fs.rm(dir, { recursive: true, force: true });
     }
@@ -212,8 +261,8 @@ describe("runPrismaCli", () => {
 
     const [databaseUrl, certFile, certDir] = await recordedEnv();
     expect(databaseUrl).toBe(strictUrl());
-    expect(certFile).toBe(ca);
-    expect(certDir).toMatch(/formbricks-prisma-ca-/);
+    expect(certFile).toMatch(/formbricks-prisma-ca-.*ca\.pem$/);
+    expect(certDir).toMatch(/formbricks-prisma-ca-.*certs$/);
     await expect(fs.access(certDir)).rejects.toThrow();
   });
 
@@ -236,11 +285,5 @@ describe("runPrismaCli", () => {
 
     await expect(runPrismaCli(bin, [], { cwd: dir, databaseUrl, baseEnv: {} })).rejects.toThrow();
     expect(error).not.toHaveBeenCalled();
-  });
-
-  test("refuses to start without a database URL", async () => {
-    await expect(runPrismaCli("prisma", [], { cwd: dir, databaseUrl: undefined })).rejects.toThrow(
-      "DATABASE_URL or MIGRATE_DATABASE_URL is required"
-    );
   });
 });

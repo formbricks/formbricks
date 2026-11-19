@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
 import { logger } from "@formbricks/logger";
-import { joinConnectionUrl, splitConnectionUrl } from "./connection-url";
+import { joinConnectionUrl, lastParam, splitConnectionUrl } from "./connection-url";
 
 // The Prisma CLI's schema engine, which runs `prisma migrate deploy`, does not speak libpq's TLS settings:
 // it reads only sslmode=disable|prefer|require, turns any other sslmode (verify-ca, verify-full) into
@@ -20,23 +20,28 @@ import { joinConnectionUrl, splitConnectionUrl } from "./connection-url";
 //   silently skipping the check.
 // - The root certificate reaches OpenSSL as SSL_CERT_FILE, which loads the whole bundle, with
 //   SSL_CERT_DIR pointed at an empty directory so the OS store is not trusted next to it. Without one,
-//   the CLI trusts the OS store, as the app's pg connections do.
+//   the CLI trusts the OS store. Plain sslmode=require stays unverified, as in libpq, although the app's pg 8
+//   connections verify it.
 // - PGSSLMODE and PGSSLROOTCERT apply when the URL does not set the parameter, as in libpq and pg.
-// - An explicit sslaccept is the operator's own Prisma setting and is left alone. A migration-only
-//   MIGRATE_DATABASE_URL with sslaccept=accept_invalid_certs is the escape hatch that keeps the app's
-//   connections verified.
+// - An explicit sslaccept is the operator's own Prisma setting and is kept, but a verifying sslmode still
+//   becomes require so the connection cannot fall back to plaintext. A migration-only MIGRATE_DATABASE_URL
+//   with sslaccept=accept_invalid_certs is the escape hatch that keeps the app's connections verified.
 
+const REQUIRE = "require";
+const VERIFY_CA = "verify-ca";
+const VERIFY_FULL = "verify-full";
 const SSL_MODES = new Set([
   "disable",
   "allow",
   "prefer",
-  "require",
-  "verify-ca",
-  "verify-full",
+  REQUIRE,
+  VERIFY_CA,
+  VERIFY_FULL,
   // node-postgres' own alias for an unverified connection, which the app's runtime connections accept.
   "no-verify",
 ]);
 const SYSTEM_ROOT_CERT = "system";
+const ACCEPT_INVALID_CERTS = "accept_invalid_certs";
 
 /** A DATABASE_URL TLS setting the Prisma CLI cannot be made to honour. Its message never holds the URL. */
 export class PrismaCliTlsConfigError extends Error {
@@ -54,12 +59,6 @@ export interface TPrismaCliTls {
   /** Absolute path of the only CA bundle the CLI may trust; undefined means the OS store. */
   rootCertFile?: string;
 }
-
-// pg and Prisma both let a repeated query parameter's last value win, so read it the same way.
-const lastParam = (params: URLSearchParams, name: string): string | null => {
-  const values = params.getAll(name);
-  return values.length > 0 ? values[values.length - 1] : null;
-};
 
 const isFile = (filePath: string): boolean => {
   try {
@@ -80,37 +79,46 @@ export const resolvePrismaCliTls = (
 ): TPrismaCliTls => {
   const parts = splitConnectionUrl(databaseUrl);
   const sslAccept = lastParam(parts.params, "sslaccept");
-
-  if (sslAccept !== null) {
-    return { databaseUrl, verifiesServerCertificate: sslAccept !== "accept_invalid_certs" };
-  }
-
   const sslMode = nonEmpty(lastParam(parts.params, "sslmode")) ?? nonEmpty(env.PGSSLMODE);
   const sslRootCert = nonEmpty(lastParam(parts.params, "sslrootcert")) ?? nonEmpty(env.PGSSLROOTCERT);
 
   if (sslMode !== undefined && !SSL_MODES.has(sslMode)) {
     throw new PrismaCliTlsConfigError(
-      `Unsupported sslmode "${sslMode}" in the database URL; use disable, prefer, require, verify-ca or verify-full.`
+      `Unsupported sslmode "${sslMode}" in the database URL; use one of ${[...SSL_MODES].join(", ")}.`
     );
   }
 
   const usesSystemRoots = sslRootCert === SYSTEM_ROOT_CERT;
 
   // libpq: sslrootcert=system defaults to verify-full and rejects any weaker sslmode.
-  if (usesSystemRoots && sslMode !== undefined && sslMode !== "verify-full") {
+  if (usesSystemRoots && sslMode !== undefined && sslMode !== VERIFY_FULL) {
     throw new PrismaCliTlsConfigError(
       `sslrootcert=system requires sslmode=verify-full, but the database URL sets sslmode=${sslMode}.`
     );
   }
 
   const verifies =
-    sslMode === "verify-ca" ||
-    sslMode === "verify-full" ||
+    sslMode === VERIFY_CA ||
+    sslMode === VERIFY_FULL ||
     usesSystemRoots ||
-    (sslMode === "require" && sslRootCert !== undefined);
+    (sslMode === REQUIRE && sslRootCert !== undefined);
 
   if (!verifies) {
-    return { databaseUrl, verifiesServerCertificate: false };
+    return {
+      databaseUrl,
+      verifiesServerCertificate: sslAccept !== null && sslAccept !== ACCEPT_INVALID_CERTS,
+    };
+  }
+
+  // Prisma reads verify-ca and verify-full as prefer, which falls back to plaintext when the server (or
+  // an attacker) declines TLS. Every verifying request therefore becomes sslmode=require, even when the
+  // operator set sslaccept and so chose how the certificate is checked.
+  parts.params.set("sslmode", REQUIRE);
+  // Prisma ignores sslrootcert; the certificate reaches it through SSL_CERT_FILE instead.
+  parts.params.delete("sslrootcert");
+
+  if (sslAccept === ACCEPT_INVALID_CERTS) {
+    return { databaseUrl: joinConnectionUrl(parts), verifiesServerCertificate: false };
   }
 
   let rootCertFile: string | undefined;
@@ -123,16 +131,25 @@ export const resolvePrismaCliTls = (
     }
   }
 
-  parts.params.set("sslmode", "require");
-  parts.params.set("sslaccept", "strict");
-  // Prisma ignores sslrootcert; the certificate reaches it through SSL_CERT_FILE instead.
-  parts.params.delete("sslrootcert");
+  // An explicit sslaccept other than accept_invalid_certs is strict to Prisma too, so keep the operator's.
+  if (sslAccept === null) parts.params.set("sslaccept", "strict");
 
   return {
     databaseUrl: joinConnectionUrl(parts),
     verifiesServerCertificate: true,
     ...(rootCertFile !== undefined && { rootCertFile }),
   };
+};
+
+/**
+ * Throws PrismaCliTlsConfigError when `databaseUrl` asks for TLS the Prisma CLI cannot be made to honour, so a
+ * run can stop before any migration instead of at its first schema batch.
+ */
+export const assertPrismaCliTlsSupported = (
+  databaseUrl: string,
+  env: NodeJS.ProcessEnv = process.env
+): void => {
+  resolvePrismaCliTls(databaseUrl, env);
 };
 
 export interface TPrismaCliEnvironment {
@@ -154,17 +171,26 @@ export const preparePrismaCliEnvironment = async (
     return { env, verifiesServerCertificate: tls.verifiesServerCertificate, cleanup: async () => {} };
   }
 
-  // OpenSSL also searches SSL_CERT_DIR, and the CLI falls back to the OS directory when the variable
-  // names a path that does not exist, so it must be a real, empty directory.
-  const emptyCertDir = await fs.mkdtemp(path.join(os.tmpdir(), "formbricks-prisma-ca-"));
-  env.SSL_CERT_FILE = tls.rootCertFile;
-  env.SSL_CERT_DIR = emptyCertDir;
+  // The CLI falls back to the OS store when SSL_CERT_FILE or SSL_CERT_DIR names a path that does not exist,
+  // so both point into a private directory this run owns: a copy of the CA, which cannot vanish between this
+  // check and the CLI reading it, and an empty directory that stops OpenSSL searching the OS one.
+  const workDir = await fs.mkdtemp(path.join(os.tmpdir(), "formbricks-prisma-ca-"));
+  const cleanup = () => fs.rm(workDir, { recursive: true, force: true });
+  try {
+    const caCopy = path.join(workDir, "ca.pem");
+    const emptyCertDir = path.join(workDir, "certs");
+    await fs.copyFile(tls.rootCertFile, caCopy);
+    await fs.mkdir(emptyCertDir);
+    env.SSL_CERT_FILE = caCopy;
+    env.SSL_CERT_DIR = emptyCertDir;
+  } catch (err) {
+    await cleanup();
+    throw new PrismaCliTlsConfigError(
+      `Root certificate file "${tls.rootCertFile}" from sslrootcert could not be read (${(err as NodeJS.ErrnoException).code ?? "error"}).`
+    );
+  }
 
-  return {
-    env,
-    verifiesServerCertificate: true,
-    cleanup: () => fs.rm(emptyCertDir, { recursive: true, force: true }),
-  };
+  return { env, verifiesServerCertificate: true, cleanup };
 };
 
 const execFileAsync = promisify(execFile);
@@ -194,12 +220,8 @@ export const runPrismaCli = async (
     cwd,
     databaseUrl,
     baseEnv = process.env,
-  }: { cwd: string; databaseUrl?: string; baseEnv?: NodeJS.ProcessEnv }
+  }: { cwd: string; databaseUrl: string; baseEnv?: NodeJS.ProcessEnv }
 ): Promise<void> => {
-  if (!databaseUrl) {
-    throw new Error("DATABASE_URL or MIGRATE_DATABASE_URL is required to run the Prisma CLI.");
-  }
-
   const cli = await preparePrismaCliEnvironment(databaseUrl, baseEnv);
   try {
     await execFileAsync(prismaBin, args, { cwd, env: cli.env });
