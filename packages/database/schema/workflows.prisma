@@ -39,7 +39,7 @@ model Workflow {
   secrets     WorkflowSecret[]
   samples     WorkflowSample[]
 
-  /// Webhook Secret URL token (ADR 0041, 0048): SHA-256 hash to check calls, and an encrypted copy so
+  /// Webhook Secret URL token (ADRs 0048, 0057): SHA-256 hash to check calls, and an encrypted copy so
   /// the editor can show the URL again. Never part of the definition, its versions or its copies.
   webhookTokenHash      String?
   webhookTokenEncrypted String?

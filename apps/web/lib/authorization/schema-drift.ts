@@ -1,18 +1,28 @@
 import { AUTHZED_ERROR_CODES, AuthzedError } from "@/lib/authzed/errors";
+import { MCP_GRANT_RELATION, MCP_REACH_PERMISSION } from "@/lib/authzed/relationship-map";
 
 /**
  * Permissions this release adds to the AuthZed schema. Until the release's schema is applied, SpiceDB
  * still holds the previous one (6.1), which does not define them, and answers a check of one with
  * FAILED_PRECONDITION. Only a Dashboard viewer is ever asked `dashboard_read` (ADR-0025), and it must be
  * refused with a plain denial then, not a 5xx: owners and members are asked `read` and are unaffected.
+ * Likewise `mcp_reach` (ADR-0042), asked only on an MCP call whose grant selects organizations or
+ * workspaces: denied until the schema is applied, so such a grant reaches nothing rather than everything.
  */
-const PERMISSIONS_ADDED_BY_THIS_RELEASE: ReadonlySet<string> = new Set(["dashboard_read"]);
+const PERMISSIONS_ADDED_BY_THIS_RELEASE: ReadonlySet<string> = new Set([
+  "dashboard_read",
+  MCP_REACH_PERMISSION,
+]);
 
 /**
  * Relations this release adds to the AuthZed schema. On the previous one (6.1) SpiceDB rejects a write
- * that names one — and, since `WriteRelationships` is atomic, the whole batch with it.
+ * that names one — and, since `WriteRelationships` is atomic, the whole batch with it. `mcp_grant` is
+ * also the name of the definition its subject lives in, so a read naming it is refused the same way.
  */
-const RELATIONS_ADDED_BY_THIS_RELEASE: ReadonlySet<string> = new Set(["dashboard_viewer"]);
+const RELATIONS_ADDED_BY_THIS_RELEASE: ReadonlySet<string> = new Set([
+  "dashboard_viewer",
+  MCP_GRANT_RELATION,
+]);
 
 /** SpiceDB's own words for a schema element it does not have, read from the error's cause. */
 const namesMissingSchemaElement = (error: AuthzedError, name: string): boolean => {

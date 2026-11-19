@@ -63,7 +63,7 @@ const nextConfig = {
   basePath: process.env.BASE_PATH || undefined,
   output: "standalone",
   poweredByHeader: false,
-  // The Webhook Secret URL token is a credential (ADR 0041); keep `next dev`'s request log from
+  // The Webhook Secret URL token is a credential (ADR 0057); keep `next dev`'s request log from
   // printing it. Production never logs incoming requests.
   logging: {
     incomingRequests: { ignore: [/\/api\/v3\/workflows\/[^/]+\/webhook\/[^/]+$/] },

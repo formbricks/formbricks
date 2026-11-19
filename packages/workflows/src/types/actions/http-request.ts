@@ -5,7 +5,7 @@ import { WORKFLOW_LIMITS } from "../limits";
 import { WORKFLOW_ACTIONS } from "./enum";
 
 /**
- * HTTP request action (ENG-7168, ADRs 0042, 0043 and 0053). The URL's origin is fixed: Variables go in
+ * HTTP request action (ENG-7168, ADRs 0043, 0053 and 0058). The URL's origin is fixed: Variables go in
  * the URL path (each value one encoded segment), query parameter values, header values and the JSON
  * body, so a payload can change what is sent and which resource on the host it goes to, never the
  * host. Headers are plain (`{name, value}`) or secret: a secret's value lives encrypted in a

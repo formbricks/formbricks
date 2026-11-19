@@ -3,7 +3,7 @@ import type { TWorkflowRunContext } from "./context";
 import { WorkflowTemplateError, findWorkflowRecallTokens, renderWorkflowText } from "./insert";
 
 /**
- * Variables in an HTTP request URL go in the path only (ADR 0053, narrowing ADR 0042). The origin
+ * Variables in an HTTP request URL go in the path only (ADR 0053, narrowing ADR 0058). The origin
  * (scheme, host and port) is plain text, so a payload can change which resource is called on the
  * host, never which host is called. Each inserted value is one path segment: it is encoded like a URI
  * component, so `/`, `?`, `#`, `%` and `\` can't add segments, a query or a fragment, and a value that

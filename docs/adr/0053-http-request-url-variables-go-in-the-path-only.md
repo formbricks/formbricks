@@ -1,6 +1,6 @@
 # An HTTP request's URL takes Variables in its path only
 
-This narrows ADR 0042 from "no Variables in the URL" to "no Variables in the origin". An HTTP request step's URL may insert Variables after the first `/` that follows the host and before any `?` or `#`, so `https://api.example.com/customers/@payload.customer.id/orders` works. The scheme, host and port stay plain text: saving (schema, API v3, MCP) refuses a Variable before the path, in the query or fragment, and a `#recall:` token that is not a Variable, and the editor's `@` picker does not open there.
+This narrows ADR 0058 from "no Variables in the URL" to "no Variables in the origin". An HTTP request step's URL may insert Variables after the first `/` that follows the host and before any `?` or `#`, so `https://api.example.com/customers/@payload.customer.id/orders` works. The scheme, host and port stay plain text: saving (schema, API v3, MCP) refuses a Variable before the path, in the query or fragment, and a `#recall:` token that is not a Variable, and the editor's `@` picker does not open there.
 
 When a step is sent, each inserted value becomes exactly one path segment:
 
@@ -11,11 +11,11 @@ When a step is sent, each inserted value becomes exactly one path segment:
 
 Runs, "Don't wait" deliveries, Test runs and Send test request build the call in one place (`buildWorkflowHttpCall`), so the same rules apply to each, and run detail and Test request results show the URL that was sent.
 
-ADR 0042 kept the whole URL fixed because a Webhook payload is attacker-controlled, and a Variable in the URL could choose the host that receives the step's secret headers and data. That risk lives in the origin. The path only chooses a resource on a host the author typed, which the query parameter rows could already do; refusing it blocked every REST API that takes an id in its path (`/customers/123`), the most common shape of an update call.
+ADR 0058 kept the whole URL fixed because a Webhook payload is attacker-controlled, and a Variable in the URL could choose the host that receives the step's secret headers and data. That risk lives in the origin. The path only chooses a resource on a host the author typed, which the query parameter rows could already do; refusing it blocked every REST API that takes an id in its path (`/customers/123`), the most common shape of an update call.
 
 ## Considered Options
 
-- **Keep the URL fixed (ADR 0042)**: no new attack surface, but authors had no way to call `PATCH /customers/{id}`, and the workaround (an endpoint that takes the id as a query parameter) rarely exists.
+- **Keep the URL fixed (ADR 0058)**: no new attack surface, but authors had no way to call `PATCH /customers/{id}`, and the workaround (an endpoint that takes the id as a query parameter) rarely exists.
 - **Variables anywhere after the host, inserted as written**: simplest, but a value like `../admin`, `a/b?x=1` or `%2e%2e` would move along the path, add a query, or reach an endpoint the author never meant to call.
 - **Whole segments only (a Variable must fill a segment by itself)**: slightly easier to explain, but rules out common shapes like `/files/@id.json` and adds nothing once every value is encoded and `.`/`..`/empty are refused.
 - **Strip unsafe characters instead of encoding them**: a changed id silently calls a different resource. Encoding keeps the value intact, and the target answers 404 when it does not exist.

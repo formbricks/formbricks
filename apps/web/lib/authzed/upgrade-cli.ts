@@ -94,7 +94,8 @@ const isOutboxClean = (status: TAuthzedOutboxStatus): boolean =>
   status.overdueRevocations === 0 &&
   status.pending === 0 &&
   status.revocationsPastCritical === 0 &&
-  status.revocationsPastWarning === 0;
+  status.revocationsPastWarning === 0 &&
+  status.unknownType === 0;
 
 const getCheckStatus = (audit: TAuthzedUpgradeAudit): "blocked" | "failed" | "ready" => {
   if (audit.status === "reconciled") {

@@ -1321,7 +1321,7 @@ describe("survey link checks on enable and test (ENG-7180)", () => {
     expect(warnings[0]?.message).toContain("call_id");
   });
 
-  test("test reports a missing link survey as a problem and undeclared keys as warnings", async () => {
+  test("the test check reports a missing link survey as a problem and undeclared keys as warnings", async () => {
     service.getWorkflowById.mockResolvedValue(withSurveyLink);
     verifySurveyLinkSurveys.mockResolvedValue([
       { surveyId: linkSurveyId, status: "not_found", acceptedEmbeddedDataKeys: [] },
@@ -1661,7 +1661,7 @@ describe("recordAnalytics (analytics-sink port)", () => {
     expect(recordAnalytics.mock.calls[0][0].previousStatus).toBeUndefined();
   });
 
-  test("test reports whether the dry run passed", async () => {
+  test("the test operation reports whether the dry run passed", async () => {
     service.getWorkflowById.mockResolvedValue(makeRow({ status: "draft" }));
     verifyTriggerSurvey.mockResolvedValue({ surveyExists: false, missingEndingCardIds: [] });
 

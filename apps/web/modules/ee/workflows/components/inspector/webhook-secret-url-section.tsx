@@ -31,7 +31,7 @@ const SECRET_URL_FIELD_ID = "workflow-webhook-secret-url";
 
 /**
  * The Webhook Secret URL as one compact card (redesign prototype): the masked URL, Copy, and a menu
- * for the rarer actions (show, regenerate). The URL is a credential (ADR 0041), so the card keeps one
+ * for the rarer actions (show, regenerate). The URL is a credential (ADR 0057), so the card keeps one
  * line about keeping it private; the rest lives in the docs linked from the panel header.
  */
 // About how many monospace characters fit on one row of the narrowest panel.

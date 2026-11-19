@@ -3,7 +3,7 @@ import { ZWorkflowExpectedResponseResource, ZWorkflowTestRequestResult } from "@
 import { setWorkflowExpectedResponse } from "@/app/api/v3/workflows/lib/expected-response";
 import { sendWorkflowTestRequest } from "@/app/api/v3/workflows/lib/test-request";
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
-import { registerScopedTool } from "./guard-scopes";
+import { registerMcpTool } from "./guard-permissions";
 import { mcpToolOutput } from "./output-schemas";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
@@ -29,7 +29,7 @@ import {
  * which an editor sees in the step's Response fields card. It returns the body as written.
  */
 export function registerWorkflowTestRequestTools(server: McpServer): void {
-  registerScopedTool(
+  registerMcpTool(
     server,
     "send_test_request",
     {
@@ -53,7 +53,7 @@ export function registerWorkflowTestRequestTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async ({ workflowId, stepId, ...input }: TMcpSendTestRequestInput, mcpCtx) =>
       runMcpMutation(
         mcpCtx,
@@ -70,7 +70,7 @@ export function registerWorkflowTestRequestTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "set_expected_response",
     {
@@ -82,7 +82,7 @@ export function registerWorkflowTestRequestTools(server: McpServer): void {
       audit: { action: "updated", targetType: "workflow", targetIdArg: "workflowId" },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: false },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async ({ workflowId, stepId, body }: TMcpSetExpectedResponseInput, mcpCtx) =>
       runMcpMutation(
         mcpCtx,

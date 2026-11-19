@@ -1,7 +1,11 @@
 import { z } from "zod";
 import { ZId } from "@formbricks/types/common";
 import { ZV3ResponseListItem, ZV3ResponseResource } from "@/app/api/v3/responses/lib/resources";
-import { RESPONSE_IDS_UNIQUE_MESSAGE, hasUniqueItems } from "@/app/api/v3/responses/lib/schemas";
+import {
+  RESPONSE_IDS_UNIQUE_MESSAGE,
+  ZV3BatchSetResponsesOutcomeBody,
+  hasUniqueItems,
+} from "@/app/api/v3/responses/lib/schemas";
 import { mcpToolOutput } from "./output-schemas";
 
 /**
@@ -132,6 +136,21 @@ export const ZMcpBatchDeleteResponsesInput = z
 export type TMcpBatchDeleteResponsesInput = z.infer<typeof ZMcpBatchDeleteResponsesInput>;
 
 /**
+ * The `batch-outcome` body plus its required `workspaceId` query parameter. Extends the v3 body, so the
+ * 100-id cap and the uniqueness rule are the route's own.
+ */
+export const ZMcpSetResponsesOutcomeInput = ZV3BatchSetResponsesOutcomeBody.extend({
+  workspaceId: ZId.describe("Workspace the responses belong to. Ids outside it are ignored."),
+  ids: ZV3BatchSetResponsesOutcomeBody.shape.ids.describe(
+    "Responses to mark, at most 100 and each id at most once. Updated in one transaction: all or none."
+  ),
+  outcome: ZV3BatchSetResponsesOutcomeBody.shape.outcome.describe(
+    '"lowQuality" marks the responses Low quality; null restores them. Required: leaving it out is an error.'
+  ),
+}).strict();
+export type TMcpSetResponsesOutcomeInput = z.infer<typeof ZMcpSetResponsesOutcomeInput>;
+
+/**
  * `data` is `unknown` on every write tool, and the operation parses it.
  *
  * Restating the create and patch bodies here would put a second copy of the v3 contract in front of
@@ -201,6 +220,7 @@ export const ZMcpResponseCountOutput = mcpToolOutput(
 );
 export const ZMcpResponseDeleteOutput = mcpToolOutput(z.unknown());
 export const ZMcpResponseBatchDeleteOutput = mcpToolOutput(z.object({ deleted: z.number().int() }).loose());
+export const ZMcpResponseBatchOutcomeOutput = mcpToolOutput(z.object({ updated: z.number().int() }).loose());
 export const ZMcpResponseValidationOutput = mcpToolOutput(
   z
     .object({

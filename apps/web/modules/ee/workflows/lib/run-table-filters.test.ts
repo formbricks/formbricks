@@ -22,7 +22,7 @@ describe("runs table filters", () => {
     ]);
   });
 
-  test("test runs are hidden until the gear switches Hide test runs off", () => {
+  test("hides test runs until the gear switches Hide test runs off", () => {
     expect(toRunListFilters([], { workflowId: "wf_1" })).toEqual({ workflowId: "wf_1", isDryRun: false });
 
     const shown = setHideTestRuns([], false);

@@ -11,7 +11,7 @@ export const WEBHOOK_TOKEN_MASK = "•••••••••••••••
 
 /**
  * The Webhook Secret URL with its token hidden: everything after `/webhook/` is the credential (ADR
- * 0041), so only that part is masked and the author still sees which workflow the URL belongs to.
+ * 0057), so only that part is masked and the author still sees which workflow the URL belongs to.
  */
 export const maskWebhookSecretUrl = (url: string): string => {
   const marker = "/webhook/";

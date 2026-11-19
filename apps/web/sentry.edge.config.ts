@@ -25,7 +25,7 @@ if (SENTRY_DSN) {
     sendDefaultPii: false,
     sendClientReports: false,
 
-    // A Webhook Secret URL's token is a credential (ADR 0041); Proxy sees the request path too.
+    // A Webhook Secret URL's token is a credential (ADR 0057); Proxy sees the request path too.
     beforeSend: (event) => scrubWebhookTokens(event),
     beforeSendTransaction: (event) => scrubWebhookTokens(event),
   });

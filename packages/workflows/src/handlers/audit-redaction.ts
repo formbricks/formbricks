@@ -43,7 +43,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
  * `http_request` headers in an audit snapshot (ENG-7168): a secret header keeps only its name and
  * whether it is set — whatever shape reached here, its value and stored id never do — and a plain
  * header's value becomes a marker, since an author may keep a credential in a header they unlocked.
- * The URL, method and names stay readable: "changing the URL is recorded in the audit log" (ADR 0042).
+ * The URL, method and names stay readable: "changing the URL is recorded in the audit log" (ADR 0058).
  */
 const redactHttpRequestConfig = (config: Record<string, unknown>, key?: string): Record<string, unknown> => {
   if (!Array.isArray(config.headers)) return config;

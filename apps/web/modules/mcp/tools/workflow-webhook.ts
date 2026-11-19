@@ -3,17 +3,17 @@ import { buildWorkflowApiContext, workflowsHandlers } from "@/app/api/v3/workflo
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
-import { registerScopedTool } from "./guard-scopes";
+import { registerMcpTool } from "./guard-permissions";
 import { runMcpMutation } from "./run-mcp-mutation";
 import { type TMcpWorkflowIdInput, ZMcpWorkflowIdInput } from "./workflow-schemas";
 import { type TMcpSetSamplePayloadInput, ZMcpSetSamplePayloadInput } from "./workflow-webhook-schemas";
 
 /**
  * Webhook trigger tools (ENG-7177), thin adapters over the v3 webhook operations. The Webhook Secret URL
- * is a credential (ADR 0041), so even reading it needs `workflows:write`, and the descriptions say so.
+ * is a credential (ADR 0057), so even reading it needs `workflows:write`, and the descriptions say so.
  */
 export function registerWorkflowWebhookTools(server: McpServer): void {
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_webhook_url",
     {
@@ -26,7 +26,7 @@ export function registerWorkflowWebhookTools(server: McpServer): void {
       inputSchema: ZMcpWorkflowIdInput,
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpWorkflowIdInput, mcpCtx) => {
       const authInfo = getMcpToolAuthInfo(mcpCtx);
       const requestId = getMcpRequestId(authInfo);
@@ -36,7 +36,7 @@ export function registerWorkflowWebhookTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "regenerate_webhook_url",
     {
@@ -47,7 +47,7 @@ export function registerWorkflowWebhookTools(server: McpServer): void {
       audit: { action: "webhookUrlRegenerated", targetType: "workflow", targetIdArg: "workflowId" },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: false, openWorldHint: true },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpWorkflowIdInput, mcpCtx) =>
       runMcpMutation(
         mcpCtx,
@@ -60,7 +60,7 @@ export function registerWorkflowWebhookTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "set_sample_payload",
     {
@@ -71,7 +71,7 @@ export function registerWorkflowWebhookTools(server: McpServer): void {
       audit: { action: "updated", targetType: "workflow", targetIdArg: "workflowId" },
       annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpSetSamplePayloadInput, mcpCtx) =>
       runMcpMutation(
         mcpCtx,

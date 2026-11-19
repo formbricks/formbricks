@@ -11,6 +11,9 @@ import { getAuthIssuerUrl, getMcpResourceUrl, getOAuthUserInfoUrl } from "./oaut
 
 // Env-dependent URL getters pinned; scope constants stay real — the whole point of this suite
 // is to exercise the actual advertised-scope → DCR → authorize chain (ENG-1055).
+// The grant claim reads PostgreSQL, which this in-memory provider has none of; mcp-grant-token-claim.test.ts
+// covers it.
+vi.mock("./mcp-grant-token-claim", () => ({ mcpGrantAccessTokenClaims: vi.fn(async () => ({})) }));
 vi.mock("@/lib/env", () => ({
   env: {
     WEBAPP_URL: "http://localhost:3000",

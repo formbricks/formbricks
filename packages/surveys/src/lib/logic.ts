@@ -361,7 +361,7 @@ const resolveConditionValues = (
     // reachable from the editor.
     (condition.rightOperand?.type === "hiddenField" || condition.rightOperand?.type === "reserved")
   ) {
-    rightValue = Number(rightValue as string);
+    rightValue = Number(rightValue);
   }
 
   // ENG-6934: a matrix row condition compares column positions; its column id(s) decide them.

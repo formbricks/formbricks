@@ -156,7 +156,7 @@ export async function getWorkflow(workflowId: string, signal?: AbortSignal): Pro
 
 /**
  * The workflow's Webhook Secret URL, last call and Sample payload (with the Variables it offers).
- * Write access only: the URL is a credential (ADR 0041).
+ * Write access only: the URL is a credential (ADR 0057).
  */
 export async function getWorkflowWebhook(
   workflowId: string,

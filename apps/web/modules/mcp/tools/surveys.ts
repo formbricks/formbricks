@@ -1,4 +1,5 @@
 import type { McpServer } from "@modelcontextprotocol/server";
+import { generateV3Survey } from "@/app/api/v3/surveys/generate/operations";
 import {
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
@@ -13,12 +14,13 @@ import {
 import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
-import { registerScopedTool } from "./guard-scopes";
+import { registerMcpTool } from "./guard-permissions";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCreateSurveyInput,
   type TMcpDeleteSurveyInput,
   type TMcpEditSurveyBlocksInput,
+  type TMcpGenerateSurveyInput,
   type TMcpGetSurveyInput,
   type TMcpListSurveysInput,
   type TMcpPatchSurveyInput,
@@ -27,12 +29,15 @@ import {
   ZMcpCreateSurveyInput,
   ZMcpDeleteSurveyInput,
   ZMcpEditSurveyBlocksInput,
+  ZMcpGenerateSurveyInput,
   ZMcpGetSurveyInput,
   ZMcpListSurveysInput,
   ZMcpPatchSurveyInput,
   ZMcpSetSurveyBlockOrderInput,
   ZMcpValidateSurveyInput,
 } from "./schemas";
+import { ZMcpGeneratedSurveyOutput } from "./survey-output-schemas";
+import { surveyResultForCaller } from "./survey-targeting";
 
 export function buildListSurveysSearchParams(input: TMcpListSurveysInput): URLSearchParams {
   const searchParams = new URLSearchParams();
@@ -102,7 +107,7 @@ async function conciseSurveyResponse(
 }
 
 export function registerSurveyTools(server: McpServer): void {
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_surveys",
     {
@@ -116,7 +121,7 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:read"],
+    [{ permission: "surveys", level: "read" }],
     async (input: TMcpListSurveysInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
@@ -127,17 +132,17 @@ export function registerSurveyTools(server: McpServer): void {
         instance: MCP_API_ROUTE,
       });
 
-      return await responseToMcpToolResult(response, requestId);
+      return surveyResultForCaller(authInfo, await responseToMcpToolResult(response, requestId));
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_survey",
     {
       title: "Get survey",
       description:
-        "Get one Formbricks survey using the v3 Surveys API contract, including its custom CSS source (`customCss`).",
+        "Get one Formbricks survey using the v3 Surveys API contract, including its custom CSS source (`customCss`). An app survey's `targeting` (segment filters, which name contact attribute values) is left out unless the user's grant gives Segments and Contact attributes: Read.",
       inputSchema: ZMcpGetSurveyInput,
       annotations: {
         readOnlyHint: true,
@@ -146,7 +151,7 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:read"],
+    [{ permission: "surveys", level: "read" }],
     async (input: TMcpGetSurveyInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
@@ -158,11 +163,11 @@ export function registerSurveyTools(server: McpServer): void {
         instance: MCP_API_ROUTE,
       });
 
-      return await responseToMcpToolResult(response, requestId);
+      return surveyResultForCaller(authInfo, await responseToMcpToolResult(response, requestId));
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "create_survey",
     {
@@ -178,23 +183,63 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "surveys", level: "write" }],
     async (input: TMcpCreateSurveyInput, ctx) =>
-      runMcpMutation(
-        ctx,
-        { action: "created", resource: "survey", logContext: { workspaceId: input.workspaceId } },
-        ({ authentication, requestId, auditLog }) =>
-          createV3SurveyResponseFromRawInput({
-            body: input,
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-          })
+      surveyResultForCaller(
+        getMcpToolAuthInfo(ctx),
+        await runMcpMutation(
+          ctx,
+          { action: "created", resource: "survey", logContext: { workspaceId: input.workspaceId } },
+          ({ authentication, requestId, auditLog }) =>
+            createV3SurveyResponseFromRawInput({
+              body: input,
+              authentication,
+              requestId,
+              instance: MCP_API_ROUTE,
+              auditLog,
+            })
+        )
       )
   );
 
-  registerScopedTool(
+  // Persists nothing, but declares Surveys: Write like the REST route (`readWrite` on the workspace):
+  // each call runs a model on the organization's AI budget, which a read-only connection must not spend.
+  // The operation charges the same 10/min budget the route does and checks the AI toggle and entitlement.
+  registerMcpTool(
+    server,
+    "generate_survey",
+    {
+      title: "Generate survey draft",
+      description: [
+        "Draft a survey from a plain-language prompt with the workspace organization's AI. Saves nothing:",
+        "review the returned `payload`, then pass it to create_survey to save it. `validation` says whether",
+        "create_survey would accept it as is. Limited to 10 calls a minute; needs AI enabled for the organization.",
+      ].join(" "),
+      inputSchema: ZMcpGenerateSurveyInput,
+      outputSchema: ZMcpGeneratedSurveyOutput,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
+    },
+    [{ permission: "surveys", level: "write" }],
+    async (input: TMcpGenerateSurveyInput, ctx) => {
+      const authInfo = getMcpToolAuthInfo(ctx);
+      const requestId = getMcpRequestId(authInfo);
+      const response = await generateV3Survey({
+        body: input,
+        authentication: getMcpAuthentication(authInfo),
+        requestId,
+        instance: MCP_API_ROUTE,
+      });
+
+      return await responseToMcpToolResult(response, requestId);
+    }
+  );
+
+  registerMcpTool(
     server,
     "validate_survey",
     {
@@ -209,7 +254,7 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:read"],
+    [{ permission: "surveys", level: "read" }],
     async (input: TMcpValidateSurveyInput, ctx) => {
       const authInfo = getMcpToolAuthInfo(ctx);
       const requestId = getMcpRequestId(authInfo);
@@ -227,7 +272,7 @@ export function registerSurveyTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "patch_survey",
     {
@@ -249,25 +294,28 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "surveys", level: "write" }],
     async (input: TMcpPatchSurveyInput, ctx) =>
-      runMcpMutation(
-        ctx,
-        { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
-        ({ authentication, requestId, auditLog }) =>
-          patchV3SurveyResponse({
-            surveyId: input.surveyId,
-            body: input.data,
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-            writeConfirmation: { confirmed: input.confirm === true },
-          })
+      surveyResultForCaller(
+        getMcpToolAuthInfo(ctx),
+        await runMcpMutation(
+          ctx,
+          { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
+          ({ authentication, requestId, auditLog }) =>
+            patchV3SurveyResponse({
+              surveyId: input.surveyId,
+              body: input.data,
+              authentication,
+              requestId,
+              instance: MCP_API_ROUTE,
+              auditLog,
+              writeConfirmation: { confirmed: input.confirm === true },
+            })
+        )
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "edit_survey_blocks",
     {
@@ -291,38 +339,41 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "surveys", level: "write" }],
     async (input: TMcpEditSurveyBlocksInput, ctx) =>
-      runMcpMutation(
-        ctx,
-        { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
-        async ({ authentication, requestId, auditLog }) => {
-          const { surveyId, response_format: responseFormat, confirm, ...body } = input;
-          // Mint insert ids here rather than letting the operation do it alone, so `applied` can
-          // report the id of a block the caller did not name — otherwise an agent inserts a block
-          // and has no way to reference it without re-reading the survey. The helper is idempotent,
-          // so the operation running it again is a no-op.
-          const ops = withGeneratedInsertIds(body.ops);
-          const response = await editV3SurveyBlocksResponse({
-            surveyId,
-            body: { ...body, ops },
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-            writeConfirmation: { confirmed: confirm === true },
-          });
+      surveyResultForCaller(
+        getMcpToolAuthInfo(ctx),
+        await runMcpMutation(
+          ctx,
+          { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
+          async ({ authentication, requestId, auditLog }) => {
+            const { surveyId, response_format: responseFormat, confirm, ...body } = input;
+            // Mint insert ids here rather than letting the operation do it alone, so `applied` can
+            // report the id of a block the caller did not name — otherwise an agent inserts a block
+            // and has no way to reference it without re-reading the survey. The helper is idempotent,
+            // so the operation running it again is a no-op.
+            const ops = withGeneratedInsertIds(body.ops);
+            const response = await editV3SurveyBlocksResponse({
+              surveyId,
+              body: { ...body, ops },
+              authentication,
+              requestId,
+              instance: MCP_API_ROUTE,
+              auditLog,
+              writeConfirmation: { confirmed: confirm === true },
+            });
 
-          return responseFormat === "detailed"
-            ? response
-            : conciseSurveyResponse(response, {
-                applied: ops.map((op) => ({ op: op.op, id: op.op === "insert" ? op.block.id : op.id })),
-              });
-        }
+            return responseFormat === "detailed"
+              ? response
+              : conciseSurveyResponse(response, {
+                  applied: ops.map((op) => ({ op: op.op, id: op.op === "insert" ? op.block.id : op.id })),
+                });
+          }
+        )
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "set_survey_block_order",
     {
@@ -346,31 +397,34 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "surveys", level: "write" }],
     async (input: TMcpSetSurveyBlockOrderInput, ctx) =>
-      runMcpMutation(
-        ctx,
-        { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
-        async ({ authentication, requestId, auditLog }) => {
-          const { surveyId, response_format: responseFormat, confirm, ...body } = input;
-          const response = await setV3SurveyBlockOrderResponse({
-            surveyId,
-            body,
-            authentication,
-            requestId,
-            instance: MCP_API_ROUTE,
-            auditLog,
-            writeConfirmation: { confirmed: confirm === true },
-          });
+      surveyResultForCaller(
+        getMcpToolAuthInfo(ctx),
+        await runMcpMutation(
+          ctx,
+          { action: "updated", resource: "survey", logContext: { surveyId: input.surveyId } },
+          async ({ authentication, requestId, auditLog }) => {
+            const { surveyId, response_format: responseFormat, confirm, ...body } = input;
+            const response = await setV3SurveyBlockOrderResponse({
+              surveyId,
+              body,
+              authentication,
+              requestId,
+              instance: MCP_API_ROUTE,
+              auditLog,
+              writeConfirmation: { confirmed: confirm === true },
+            });
 
-          return responseFormat === "detailed"
-            ? response
-            : conciseSurveyResponse(response, { order: body.order });
-        }
+            return responseFormat === "detailed"
+              ? response
+              : conciseSurveyResponse(response, { order: body.order });
+          }
+        )
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "delete_survey",
     {
@@ -386,7 +440,7 @@ export function registerSurveyTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "surveys", level: "write" }],
     async (input: TMcpDeleteSurveyInput, ctx) =>
       runMcpMutation(
         ctx,

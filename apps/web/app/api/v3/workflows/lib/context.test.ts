@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import type { TAuthenticationApiKey } from "@formbricks/types/auth";
 import { requireV3WorkspaceAccess } from "@/app/api/v3/lib/auth";
+import { problemForbidden } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog, TV3Authentication } from "@/app/api/v3/lib/types";
 import { capturePostHogEvent } from "@/lib/posthog";
 import { resolveSurveyActorContext } from "@/lib/survey/visibility/actor-context";
@@ -109,8 +110,24 @@ describe("buildWorkflowApiContext", () => {
     const body = await response.json();
     expect(body).toMatchObject({
       status: 403,
+      code: "forbidden",
       detail: "Workflows are not enabled for this organization",
     });
+  });
+
+  test("the entitlement refusal is byte for byte the plain forbidden the REST API has always answered", async () => {
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({ workspaceId: "ws_1", organizationId: "org_1" });
+    vi.mocked(getIsWorkflowsEnabled).mockResolvedValue(false);
+
+    const result = (await buildWorkflowApiContext(apiKeyAuth, "req_1", "inst").authorize(
+      "ws_1",
+      "read"
+    )) as Response;
+    const plain = problemForbidden("req_1", "Workflows are not enabled for this organization", "inst");
+
+    expect(result.status).toBe(plain.status);
+    expect([...result.headers]).toEqual([...plain.headers]);
+    expect(await result.text()).toBe(await plain.text());
   });
 
   test("authorize short-circuits on a workspace-access failure without checking the entitlement", async () => {

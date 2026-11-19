@@ -21,6 +21,14 @@ describe("lintBuildPackages", () => {
 
     expect(lintBuildPackages(root)).toEqual(expect.arrayContaining(webBuilds));
   });
+
+  // `--fix` acts on what the type-aware rules report, so it needs the same builds first: without them it
+  // would "fix" assertions that only look unnecessary because the imported types did not resolve.
+  test("`pnpm lint:fix` runs through the Turbo task that builds them", () => {
+    const pkg = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8"));
+
+    expect(pkg.scripts["lint:fix"]).toBe("turbo run lint:code -- --fix");
+  });
 });
 
 describe("missingLintBuilds", () => {
