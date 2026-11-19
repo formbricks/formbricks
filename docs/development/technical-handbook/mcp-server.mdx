@@ -913,8 +913,9 @@ the read scope (`audience`, ENG-7151: 20261112130000 and 20261112130001).
 - **Errors that say what to do next.** Relay the v3 problem document unchanged: `invalid_params` names the
   field, a `409` carries `currentUpdatedAt`. Reject unknown keys instead of dropping them.
 - **Honest annotations.** `destructiveHint: true` whenever the previous value is unrecoverable from the
-  result, including whole-subtree replaces. For an irreversible delete, consider confirming first the way
-  `delete_response` does (elicitation, with a `confirm` argument for clients that cannot answer prompts).
+  result, including whole-subtree replaces. An irreversible delete confirms first: wrap the handler in
+  `runConfirmedDelete` (`modules/mcp/tools/delete-confirmation.ts`), which asks the user through
+  elicitation and accepts the `confirm` argument only from clients that cannot show a prompt.
 
 ## Available Tools
 
