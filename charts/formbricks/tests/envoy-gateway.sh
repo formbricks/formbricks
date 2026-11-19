@@ -35,6 +35,13 @@ if grep -q '^kind: ValidatingAdmissionPolicy' "${render_dir}/bundled.yaml"; then
 fi
 grep -q 'image: docker.io/envoyproxy/gateway:v1.8.4' "${render_dir}/bundled.yaml"
 grep -q '^kind: EnvoyProxy$' "${render_dir}/bundled.yaml"
+# Webhook Secret URL paths are logged without the path (ADR 0057); everything else keeps the default log.
+grep -q "\"!request.path.contains('/webhook/')\"" "${render_dir}/bundled.yaml"
+grep -A6 "\"request.path.contains('/webhook/')\"" "${render_dir}/bundled.yaml" | grep -q 'path: "\[redacted\]"'
+if grep -q 'X-ENVOY-ORIGINAL-PATH\|%REQ(:PATH)%' "${render_dir}/bundled.yaml"; then
+  echo "The redacted access log must not write the request path" >&2
+  exit 1
+fi
 grep -q '^kind: SecurityPolicy$' "${render_dir}/bundled.yaml"
 grep -q 'statusOnError: 503' "${render_dir}/bundled.yaml"
 

@@ -4,8 +4,8 @@ import { ZIsoDateTime } from "./common";
 
 /**
  * Contract for reading a workflow's samples (ADR 0048, ADR 0054): the Webhook trigger's expected
- * payload (`trigger`), each HTTP request step's expected response (the step id), and each step's last
- * Test request response (`<step id>:last_test`). The editor reads a step's expected response for its
+ * payload (`trigger`), each HTTP request step's expected response body (the step id), and each step's last
+ * Test request response (`<step id>:last_test`). The editor reads a step's expected response body for its
  * Variables, and offers its last Test request response to use instead.
  */
 
@@ -15,7 +15,7 @@ export const ZWorkflowSampleListItem = z
       .string()
       .min(1)
       .describe(
-        "`trigger` for the Webhook trigger's expected payload, an HTTP request step's id for its expected response, or `<step id>:last_test` for its last Test request response."
+        "`trigger` for the Webhook trigger's expected payload, an HTTP request step's id for its expected response body, or `<step id>:last_test` for its last Test request response."
       ),
     sample: ZWorkflowSampleData.describe(
       "The sample: a payload for `trigger`; for a step, a response ({status, contentType, body, bodyTruncated?})."

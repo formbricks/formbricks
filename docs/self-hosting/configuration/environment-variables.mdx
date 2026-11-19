@@ -344,8 +344,36 @@ Configure the proxy in front of Formbricks to:
   per organization, not per IP, so this setting doesn't change them.
 - **Keep the token out of access logs.** The token in the path is a credential. Formbricks redacts it from its own
   logs and error reports, but your proxy, load balancer or CDN may log full request paths. Redact the last path
-  segment of `/api/v3/workflows/*/webhook/*`, or don't log those paths.
+  segment of `/api/v3/workflows/*/webhook/*`, or don't log those paths. With the Helm chart, Secret URL calls reach
+  Formbricks through your Ingress controller, not the chart's Envoy proxy, so set this up on the Ingress controller.
 - **Accept request bodies of at least 100 KB,** the largest payload a Secret URL accepts.
+
+For example, with nginx:
+
+```nginx
+# In the http block: log a Secret URL's path with its token replaced.
+map $request_uri $redacted_request_uri {
+  "~^(?<webhook_path>/api/v3/workflows/[^/]+/webhook/)[^/?]+(?<webhook_rest>.*)$" "${webhook_path}[redacted]${webhook_rest}";
+  default $request_uri;
+}
+log_format redacted '$remote_addr - $remote_user [$time_local] '
+                    '"$request_method $redacted_request_uri $server_protocol" $status $body_bytes_sent '
+                    '"$http_referer" "$http_user_agent"';
+
+server {
+  # …
+  access_log /var/log/nginx/access.log redacted;
+
+  location / {
+    proxy_pass http://formbricks:3000;
+    proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  }
+}
+```
+
+nginx's error log has a fixed format: when nginx can't reach Formbricks or refuses a request, it writes the full
+request line, token included. Keep the error log where only administrators can read it.
 
 {/* prettier-ignore-end */}
 

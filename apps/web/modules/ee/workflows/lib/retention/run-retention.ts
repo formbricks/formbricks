@@ -151,7 +151,7 @@ const deleteStaleSampleBatch = async (
   batchSize: number
 ): Promise<BatchResult> => {
   const cutoff = new Date(now.getTime() - retentionDays * DAY_MS);
-  // The expected payload and each HTTP request step's expected response are configuration, set by
+  // The expected payload and each HTTP request step's expected response body are configuration, set by
   // editors, so they stay as long as the workflow does (ADR 0052, ADR 0054). Last calls and last Test
   // request responses are call data and expire.
   const callData = {

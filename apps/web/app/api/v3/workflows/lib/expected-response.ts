@@ -39,20 +39,20 @@ const toStepVariables = (stepId: string, detected: TWorkflowSampleVariables): TW
 const refuseBody = (reason: string): never => {
   if (reason === "too_large") {
     throw new WorkflowPayloadTooLargeError(
-      `The expected response is over the ${WEBHOOK_PAYLOAD_MAX_BYTES / 1024} KB limit.`
+      `The expected response body is over the ${WEBHOOK_PAYLOAD_MAX_BYTES / 1024} KB limit.`
     );
   }
   if (reason === "null_byte") {
-    throw new WorkflowInvalidInputError("The expected response must not contain NULL bytes.");
+    throw new WorkflowInvalidInputError("The expected response body must not contain NULL bytes.");
   }
   throw new WorkflowInvalidInputError(
-    `The expected response must be a JSON object nested at most ${WEBHOOK_PAYLOAD_MAX_DEPTH} levels.`
+    `The expected response body must be a JSON object nested at most ${WEBHOOK_PAYLOAD_MAX_DEPTH} levels.`
   );
 };
 
 /**
  * `PUT /api/v3/workflows/{workflowId}/steps/{stepId}/expected-response` and the `set_expected_response`
- * MCP tool (ADR 0054): sets an HTTP request step's expected response, the body its API answers with,
+ * MCP tool (ADR 0054): sets an HTTP request step's expected response body, the body its API answers with,
  * whose fields are the step's Variables and what a Test run's "Wait and use it" answers with. Stored as
  * the step's sample in a Test request response's shape (status 200, JSON), so every reader takes it
  * unchanged. The step must be an HTTP request in the draft; the body follows the expected payload's

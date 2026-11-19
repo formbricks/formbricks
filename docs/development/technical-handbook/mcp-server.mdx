@@ -1657,7 +1657,7 @@ hostile text in a payload cannot cross a workspace or user boundary.
 - `send_test_request` — `{ "workflowId", "stepId", "config"?, "variables"? }`. Makes one real call of an
   HTTP request step (saved settings, or the draft `config`) and returns the request, with secret header
   values masked, and the response. Not a run. Keeps the response as the step's last test response, which
-  never changes the step's expected response (ADR 0054). Shares the
+  never changes the step's expected response body (ADR 0054). Shares the
   30-per-minute budget of `POST /api/v3/workflows/{workflowId}/steps/{stepId}/test-request` and is
   audited as `testRequestSent` (host and status).
 
@@ -1677,13 +1677,13 @@ with it: the call is refused and Enable fails until someone who has the value en
 
 Injection assessment for `set_expected_response`: the body is the caller's own JSON, stored for one
 workflow the caller can already write. Hostile text in it can only name Variables in that workflow, which
-an editor sees in the step's Expected response card; it reaches no other workspace or user, and the tool
+an editor sees in the step's Expected response body card; it reaches no other workspace or user, and the tool
 calls nothing outside Formbricks.
 
 - `run_test` — `{ "workflowId", "payload"? }`. Runs a Webhook workflow's current draft once, at once,
   with fake effects (ADR 0049): If/else conditions are evaluated for real, emails record whom they would
   go to, HTTP requests record what they would call and, in "Wait and use it", answer with the step's
-  expected response. Nothing is sent or called. Returns the finished run (`isDryRun: true`, no
+  expected response body. Nothing is sent or called. Returns the finished run (`isDryRun: true`, no
   version) with run detail per step: the branch taken, each condition matched or not, and the steps not
   taken. Uses the workflow's expected payload when `payload` is absent. Shares the 30-per-minute budget of
   `POST /api/v3/workflows/{workflowId}/test-runs` and is audited as `testRunStarted` (run id only).

@@ -1,6 +1,6 @@
 /**
  * PUT /api/v3/workflows/{workflowId}/steps/{stepId}/expected-response — sets an HTTP request step's
- * expected response (ADR 0054): the body its API answers with, whose fields are the step's Variables.
+ * expected response body (ADR 0054): the body its API answers with, whose fields are the step's Variables.
  * Only editors and API/MCP clients set it; a Test request never does. Write access. Audited as `updated`
  * on the workflow with the step id, never the body. The editor and the `set_expected_response` MCP tool
  * use the same operation.

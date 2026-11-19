@@ -20,7 +20,7 @@ export const executeWorkflowTestRun = async ({
   workflowId: string;
   workspaceId: string;
 }): Promise<void> => {
-  // Each HTTP request step's expected response, for "Wait and use it" (ENG-7179, ADR 0054). One query;
+  // Each HTTP request step's expected response body, for "Wait and use it" (ENG-7179, ADR 0054). One query;
   // last Test request responses are left out, since only editors decide what a step answers with.
   const samples = await prisma.workflowSample.findMany({
     where: { workflowId, workspaceId, source: { notIn: [...WORKFLOW_TRIGGER_SAMPLE_SOURCES] } },

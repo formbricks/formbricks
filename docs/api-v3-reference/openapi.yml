@@ -4308,7 +4308,7 @@ paths:
       description: |
         Makes one real call of an HTTP request step, from its saved or draft settings, so the author sees the real response. It is not a run: no later step runs and nothing is billed. The call goes through the same address checks as a run (HTTPS, no private addresses, no redirects followed), times out after 10 s and is not retried. A target that answers with an error status still returns **200**: the request itself succeeded.
 
-        When an answer came, it is kept as the step's last Test request response (up to 64 KB), which the editor offers to use as the step's expected response; it never replaces it. Recorded in the audit log as `testRequestSent` with the host and status.
+        When an answer came, it is kept as the step's last Test request response (up to 64 KB), which the editor offers to use as the step's expected response body; it never replaces it. Recorded in the audit log as `testRequestSent` with the host and status.
 
         Requires **write** access and is limited to 30 calls per minute per user or API key (**429**). A step that is not an HTTP request answers **404**; an archived workflow **422** `invalid_workflow_state`; settings that can't be sent (no URL, a secret header with no value, a body that is not JSON, or a URL on another origin than a stored secret header value was set for) **400**. A stored secret value is only sent to the origin it was set for (its `boundOrigin`); a value typed in the draft `config` is used for this call only and goes to the draft URL.
       tags:
@@ -4381,9 +4381,9 @@ paths:
   /api/v3/workflows/{workflowId}/steps/{stepId}/expected-response:
     put:
       operationId: setWorkflowExpectedResponseV3
-      summary: Set an HTTP request step's expected response
+      summary: Set an HTTP request step's expected response body
       description: |
-        Sets the expected response of an HTTP request step — the JSON body its API answers with — and returns it with the Variables inferred from it. Later steps use those Variables as `steps.<stepId>.body.*`, and a Test run's "Wait and use it" answers with this body (status 200). Send test request never changes it: its answer is kept apart, and the editor offers it to use. The body must be a JSON object of at most 100 KB nested at most 10 levels: a larger one answers **413** `payload_too_large`, a deeper one or a non-object **400**.
+        Sets the expected response body of an HTTP request step — the JSON body its API answers with — and returns it with the Variables inferred from it. Later steps use those Variables as `steps.<stepId>.body.*`, and a Test run's "Wait and use it" answers with this body (status 200). Send test request never changes it: its answer is kept apart, and the editor offers it to use. The body must be a JSON object of at most 100 KB nested at most 10 levels: a larger one answers **413** `payload_too_large`, a deeper one or a non-object **400**.
 
         Requires **write** access. A step that isn't an HTTP request in the workflow's definition answers **404**; an archived workflow **422** `invalid_workflow_state`. Recorded in the audit log as an update of the workflow, with the step id and never the body.
       tags:
@@ -4413,7 +4413,7 @@ paths:
                       status: open
       responses:
         '200':
-          description: The expected response and its Variables.
+          description: The expected response body and its Variables.
           headers:
             X-Request-Id:
               schema:
@@ -4475,7 +4475,7 @@ paths:
       operationId: createWorkflowTestRunV3
       summary: Start a Test run of a workflow's draft
       description: |
-        Runs the workflow's current draft at once, inside the request, with the same runner as a real run but with fake effects: Send email records whom it would send to, and an HTTP request records what it would call (secret header values masked) and sends nothing. In "Wait and use it" mode an HTTP request's output is that step's expected response, set by an editor; without one it is empty and flagged (`testSample: missing`), and the run goes on. If/else conditions are evaluated for real, so the answer shows the branch a real run would take.
+        Runs the workflow's current draft at once, inside the request, with the same runner as a real run but with fake effects: Send email records whom it would send to, and an HTTP request records what it would call (secret header values masked) and sends nothing. In "Wait and use it" mode an HTTP request's output is that step's expected response body, set by an editor; without one it is empty and flagged (`testSample: missing`), and the run goes on. If/else conditions are evaluated for real, so the answer shows the branch a real run would take.
 
         The run is saved with `isDryRun: true` and no version, appears in the runs list (hide it with `filter[isDryRun][eq]=false`), and is never billed or counted as usage. A failed step fails the run, not the call: the answer is still **201** with the run's `status` and step detail. Recorded in the audit log as `testRunStarted` with the run id. `POST .../test`, the setup check that runs nothing, is unchanged.
 
@@ -15670,7 +15670,7 @@ components:
       additionalProperties: false
     WorkflowTestRequestResult:
       type: object
-      description: The outcome of one Test request. When an answer came, it is also kept as the step's last Test request response (status, content type and up to 64 KB of body), which the editor offers to use as the step's expected response, whose fields are that step's Variables.
+      description: The outcome of one Test request. When an answer came, it is also kept as the step's last Test request response (status, content type and up to 64 KB of body), which the editor offers to use as the step's expected response body, whose fields are that step's Variables.
       required:
         - request
         - response
@@ -15737,7 +15737,7 @@ components:
           description: Why the call got no answer, or null.
     SetWorkflowExpectedResponseRequest:
       type: object
-      description: 'Sets an HTTP request step''s expected response: the body its API answers with, typed or pasted, or a Test request response chosen to use.'
+      description: 'Sets an HTTP request step''s expected response body: the body its API answers with, typed or pasted, or a Test request response chosen to use.'
       required:
         - body
       properties:
@@ -15749,7 +15749,7 @@ components:
     WorkflowExpectedResponseResource:
       type: object
       description: |
-        An HTTP request step's expected response — the body its API answers with — and the Variables inferred from it, which later steps use as `steps.<stepId>.body.*`. Only editors and API or MCP clients set it; a Test request never changes it.
+        An HTTP request step's expected response body — the body its API answers with — and the Variables inferred from it, which later steps use as `steps.<stepId>.body.*`. Only editors and API or MCP clients set it; a Test request never changes it.
       required:
         - workflowId
         - stepId
