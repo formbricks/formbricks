@@ -48,10 +48,18 @@ import { recordOAuthConsentWrites } from "./oauth-consent-writes";
 import { boundOAuthRecordsBeforeHandler } from "./oauth-record-bounds";
 import { refuseCodeIssuedBeforeRevocationBeforeHandler } from "./oauth-revocation-marker";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
+import { createTemplateKeyedRateLimitStorage } from "./rate-limit-template-key";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
 
 const DAY_IN_SECONDS = 60 * 60 * 24;
+
+// The paths Better Auth declares, for the rate limiter's template keys (ENG-7399). Filled in right after
+// `betterAuth()` returns, below: reading `auth.api` inside its own options would make TypeScript infer
+// `auth` from itself and lose its type. No request can reach the limiter before the module has loaded.
+let declaredAuthPaths: unknown[] = [];
+// Better Auth's own fallback when neither the rule nor `rateLimit.window` sets one; we set no global window.
+const BETTER_AUTH_DEFAULT_RATE_LIMIT_WINDOW_SECONDS = 10;
 
 /**
  * Lifetime of the signed OAuth `state` cookie, matched to the state it binds to this browser (ENG-3314).
@@ -431,8 +439,15 @@ export const auth = betterAuth({
     // (the same app-level toggle the legacy limiter used); the integration harness sets it to skip limits.
     enabled: !RATE_LIMITING_DISABLED,
     // Redis-backed so counters are shared across instances (the in-memory default is per-instance
-    // and resets on deploy — unsuitable for multi-instance prod).
-    storage: "secondary-storage",
+    // and resets on deploy — unsuitable for multi-instance prod). Better Auth's own `secondary-storage`
+    // counting, keyed per endpoint template instead of per raw path (ENG-7399): otherwise every distinct
+    // junk path or reset token is a fresh counter, so the limit never trips and each request parks a key
+    // the size of its URL. The endpoint registry is read on the first request (see `declaredAuthPaths`).
+    customStorage: createTemplateKeyedRateLimitStorage({
+      declaredPaths: () => declaredAuthPaths,
+      increment: redisSecondaryStorage.increment,
+      defaultWindowSeconds: BETTER_AUTH_DEFAULT_RATE_LIMIT_WINDOW_SECONDS,
+    }),
     customRules: {
       "/sign-in/email": { window: 60, max: 5 },
       "/reset-password": { window: 60, max: 5 },
@@ -531,3 +546,6 @@ export const auth = betterAuth({
     nextCookies(),
   ],
 });
+
+// `endpoint?.path`: a nullish registry entry must not throw at module load and take down every auth request.
+declaredAuthPaths = Object.values(auth.api).map((endpoint) => endpoint?.path);
