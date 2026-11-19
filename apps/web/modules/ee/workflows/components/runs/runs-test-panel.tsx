@@ -86,6 +86,9 @@ const WebhookTestInput = ({
   );
 };
 
+// `focusVisible` (Chrome, Edge, Firefox, Safari 18.4+) isn't in every DOM typing yet.
+const SHOW_FOCUS_RING: FocusOptions & { focusVisible?: boolean } = { focusVisible: true };
+
 interface RunsTestPanelProps {
   workflowId: string;
   locale: string;
@@ -153,7 +156,7 @@ const TestDraftCard = ({
   // ring. A focus moved by script after a mouse click isn't `:focus-visible` unless asked for.
   useEffect(() => {
     if (focusRequest === 0) return;
-    const handle = requestAnimationFrame(() => runTestRef.current?.focus({ focusVisible: true }));
+    const handle = requestAnimationFrame(() => runTestRef.current?.focus(SHOW_FOCUS_RING));
     return () => cancelAnimationFrame(handle);
   }, [focusRequest]);
 
