@@ -1,4 +1,10 @@
 import type { TFunction } from "i18next";
+import {
+  HUB_EMOTION_VALUES,
+  HUB_SENTIMENT_VALUES,
+  type THubEmotion,
+  type THubSentiment,
+} from "@formbricks/types/feedback-source";
 import { DATE_RANGE_PRESETS } from "@/lib/date-ranges";
 import { resolveDateFilterBounds } from "@/modules/ui/components/table-toolbar/lib/date-filter";
 import { resolveEnumFilter } from "@/modules/ui/components/table-toolbar/lib/enum-filters";
@@ -22,15 +28,6 @@ export const FIELD_TYPES = [
   "boolean",
   "date",
 ] as const;
-export const SENTIMENTS = [
-  "very_negative",
-  "negative",
-  "neutral",
-  "positive",
-  "very_positive",
-  "mixed",
-] as const;
-export const EMOTIONS = ["joy", "anger", "sadness", "fear", "surprise", "disgust"] as const;
 const SOURCE_TYPES = ["formbricks", "csv", ...SOURCE_TYPE_PRESET_OPTIONS] as const;
 
 export const RECORD_SORT_VALUES = ["-collectedAt", "collectedAt", "-importedAt", "importedAt"] as const;
@@ -44,38 +41,29 @@ export const getRecordSortOptions = (t: TFunction): TSortOption[] => [
   { value: "importedAt", label: t("workspace.unify.sort_oldest_imported") },
 ];
 
-const getSentimentLabel = (value: (typeof SENTIMENTS)[number], t: TFunction): string => {
-  switch (value) {
-    case "very_negative":
-      return t("workspace.unify.taxonomy_sentiment_very_negative");
-    case "negative":
-      return t("workspace.unify.taxonomy_sentiment_negative");
-    case "neutral":
-      return t("workspace.unify.taxonomy_sentiment_neutral");
-    case "positive":
-      return t("workspace.unify.taxonomy_sentiment_positive");
-    case "very_positive":
-      return t("workspace.unify.taxonomy_sentiment_very_positive");
-    default:
-      return t("workspace.unify.taxonomy_sentiment_mixed");
-  }
+// Typed over the Hub vocabularies, so a label added there fails the build until it is labelled here.
+const getSentimentLabel = (value: THubSentiment, t: TFunction): string => {
+  const labels: Record<THubSentiment, string> = {
+    very_negative: t("workspace.unify.taxonomy_sentiment_very_negative"),
+    negative: t("workspace.unify.taxonomy_sentiment_negative"),
+    neutral: t("workspace.unify.taxonomy_sentiment_neutral"),
+    positive: t("workspace.unify.taxonomy_sentiment_positive"),
+    very_positive: t("workspace.unify.taxonomy_sentiment_very_positive"),
+    mixed: t("workspace.unify.taxonomy_sentiment_mixed"),
+  };
+  return labels[value];
 };
 
-const getEmotionLabel = (value: (typeof EMOTIONS)[number], t: TFunction): string => {
-  switch (value) {
-    case "joy":
-      return t("workspace.analysis.charts.emotion_value_joy");
-    case "anger":
-      return t("workspace.analysis.charts.emotion_value_anger");
-    case "sadness":
-      return t("workspace.analysis.charts.emotion_value_sadness");
-    case "fear":
-      return t("workspace.analysis.charts.emotion_value_fear");
-    case "surprise":
-      return t("workspace.analysis.charts.emotion_value_surprise");
-    default:
-      return t("workspace.analysis.charts.emotion_value_disgust");
-  }
+const getEmotionLabel = (value: THubEmotion, t: TFunction): string => {
+  const labels: Record<THubEmotion, string> = {
+    joy: t("workspace.analysis.charts.emotion_value_joy"),
+    anger: t("workspace.analysis.charts.emotion_value_anger"),
+    sadness: t("workspace.analysis.charts.emotion_value_sadness"),
+    fear: t("workspace.analysis.charts.emotion_value_fear"),
+    surprise: t("workspace.analysis.charts.emotion_value_surprise"),
+    disgust: t("workspace.analysis.charts.emotion_value_disgust"),
+  };
+  return labels[value];
 };
 
 /**
@@ -132,7 +120,7 @@ export const getRecordFilterProperties = (
       valueType: "enum",
       quick: true,
       ruleOperators: ["equals", "notEquals"],
-      options: SENTIMENTS.map((value) => ({ value, label: getSentimentLabel(value, t) })),
+      options: HUB_SENTIMENT_VALUES.map((value) => ({ value, label: getSentimentLabel(value, t) })),
     },
     {
       id: "emotion",
@@ -140,7 +128,7 @@ export const getRecordFilterProperties = (
       valueType: "enum",
       quick: true,
       ruleOperators: ["equals"],
-      options: EMOTIONS.map((value) => ({ value, label: getEmotionLabel(value, t) })),
+      options: HUB_EMOTION_VALUES.map((value) => ({ value, label: getEmotionLabel(value, t) })),
     },
     {
       id: "valueNumber",
@@ -303,7 +291,7 @@ const applyListFilters = (query: THubRecordQuery, filters: readonly TTableFilter
     ["user_id", collectEquals(filters, "userId")],
     ["emotions", collectAnyOf(filters, "emotion")],
     ["field_type", resolveEnumFilter(filters, "fieldType", FIELD_TYPES)],
-    ["sentiment", resolveEnumFilter(filters, "sentiment", SENTIMENTS)],
+    ["sentiment", resolveEnumFilter(filters, "sentiment", HUB_SENTIMENT_VALUES)],
   ];
   for (const [key, values] of lists) {
     if (values === null) continue;

@@ -12,6 +12,7 @@ import {
 import {
   DEFAULT_REQUEST_BODY_LIMIT_BYTES,
   RequestBodyTooLargeError,
+  discardRequestBody,
   parseFormDataWithLimit,
   readRequestBodyWithLimit,
 } from "@/app/lib/api/request-body";
@@ -448,7 +449,8 @@ async function parseV3Body(
  * handler that reads it — the workflows family delegates its bodies to `packages/workflows`, whose
  * reader buffers the whole body before it measures it and answers 400 rather than 413. The checks run
  * on a clone so the handler's own stream stays intact; a body that is not JSON is left to the handler,
- * which owns that error.
+ * which owns that error. A refused body is never read again, so both branches of the clone are
+ * cancelled: the source is cancelled only once both are, and a client may keep the body open (ENG-6948).
  */
 async function preflightUndeclaredBody(
   req: NextRequest,
@@ -458,15 +460,20 @@ async function preflightUndeclaredBody(
     return null;
   }
 
-  const read = await readV3JsonBody(req.clone(), context);
-  if (read.kind === "refused") {
-    return read.failure;
-  }
+  const clone = req.clone();
+  const read = await readV3JsonBody(clone, context);
   if (read.kind === "malformed") {
     return null;
   }
 
-  return arrayBudgetFailure(read.data, context);
+  const failure = read.kind === "refused" ? read.failure : arrayBudgetFailure(read.data, context);
+  if (failure) {
+    // The clone's branch matters when Content-Length refused it unread; otherwise its read already
+    // settled it.
+    discardRequestBody(clone.body);
+    discardRequestBody(req.body);
+  }
+  return failure;
 }
 
 const MULTIPART_FORM_DATA = "multipart/form-data";

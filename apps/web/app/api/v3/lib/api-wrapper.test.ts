@@ -1174,6 +1174,63 @@ describe("request array budget (ENG-3384)", () => {
       expect(handler).not.toHaveBeenCalled();
     });
 
+    // ENG-6948: the preflight reads a clone, and cancelling one branch of a tee'd body never settles
+    // while the other branch is open and the source still is. A hang must fail here, not stall the suite.
+    // The header row sends too few bytes to cross the limit, so only the declared length can refuse it.
+    const ROUTE_LIMIT = 4096;
+    test.each([
+      { limitSeenIn: "the bytes read", contentLength: {}, sent: `{"a":"${"x".repeat(ROUTE_LIMIT)}` },
+      {
+        limitSeenIn: "the Content-Length header",
+        contentLength: { "Content-Length": String(ROUTE_LIMIT + 1) },
+        sent: `{"a":"`,
+      },
+    ])(
+      "answers 413 to an over-limit body whose source never closes, and releases the source ($limitSeenIn)",
+      async ({ contentLength, sent }) => {
+        const handler = vi.fn(async () => Response.json({ ok: true }));
+        let sourceCancelled = false;
+        // The source's shutdown stays pending until the test ends, so a 413 that waited on it never comes.
+        let finishSourceShutdown = (): void => undefined;
+        const sourceShutdown = new Promise<void>((resolve) => {
+          finishSourceShutdown = resolve;
+        });
+        const request = new NextRequest("http://localhost/api/v3/workflows", {
+          method: "POST",
+          // The browser's same-origin header, so the refusal under test is the body limit, not the origin check.
+          headers: { ...SAME_ORIGIN_HEADERS, "Content-Type": "application/json", ...contentLength },
+          body: new ReadableStream<Uint8Array>({
+            start(controller) {
+              controller.enqueue(new TextEncoder().encode(sent));
+            },
+            cancel() {
+              sourceCancelled = true;
+              return sourceShutdown;
+            },
+          }),
+          duplex: "half",
+        } as ConstructorParameters<typeof NextRequest>[1]);
+
+        try {
+          const response = await withV3ApiWrapper({ auth: "none", bodyLimitBytes: ROUTE_LIMIT, handler })(
+            request,
+            {}
+          );
+
+          expect(response.status).toBe(413);
+          expect(handler).not.toHaveBeenCalled();
+          await expect(response.json()).resolves.toMatchObject({
+            code: "payload_too_large",
+            detail: `Request body must not exceed ${ROUTE_LIMIT} bytes`,
+          });
+          await vi.waitFor(() => expect(sourceCancelled).toBe(true));
+        } finally {
+          finishSourceShutdown();
+        }
+      },
+      2000
+    );
+
     test("hands an acceptable body to the handler unread", async () => {
       const handler = vi.fn(async ({ req }: { req: NextRequest }) => Response.json(await req.json()));
 
