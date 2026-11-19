@@ -407,9 +407,58 @@ describe("layout navigation gates (ENG-1737)", () => {
       }
     });
 
+    const mockOrganizationBilling = (billing: Record<string, unknown>) =>
+      mocks.workspaceFindUnique.mockResolvedValue({
+        id: layoutWorkspaceId,
+        organizationId: layoutOrganizationId,
+        organization: {
+          ...organizationRelation,
+          billing: { stripeCustomerId: null, usageCycleAnchor: null, stripe: null, ...billing },
+          memberships: [{ userId: layoutUserId, role: "member" }],
+        },
+      });
+
     test("keeps billing and the Cloud response count for everyone else", async () => {
       mocks.isFormbricksCloud = true;
       try {
+        mockOrganizationBilling({
+          limits: { workspaces: 3, monthly: { responses: 250, workflowRuns: null } },
+        });
+        vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(42);
+
+        const data = await getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId);
+
+        expect(data.responseCount).toBe(42);
+      } finally {
+        mocks.isFormbricksCloud = false;
+      }
+    });
+
+    // The count scans the whole cycle's responses; on a plan with no response limit nothing reads it (ENG-3789).
+    test("skips the Cloud response count when the plan has no response limit", async () => {
+      mocks.isFormbricksCloud = true;
+      try {
+        mockOrganizationBilling({
+          limits: { workspaces: null, monthly: { responses: null, workflowRuns: null } },
+        });
+        vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(42);
+
+        const data = await getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId);
+
+        expect(data.responseCount).toBe(0);
+        expect(getMonthlyOrganizationResponseCount).not.toHaveBeenCalled();
+      } finally {
+        mocks.isFormbricksCloud = false;
+      }
+    });
+
+    test("still counts for a trialing organization without a response limit, whose trial card shows it", async () => {
+      mocks.isFormbricksCloud = true;
+      try {
+        mockOrganizationBilling({
+          limits: { workspaces: null, monthly: { responses: null, workflowRuns: null } },
+          stripe: { subscriptionStatus: "trialing" },
+        });
         vi.mocked(getMonthlyOrganizationResponseCount).mockResolvedValue(42);
 
         const data = await getWorkspaceLayoutData(layoutWorkspaceId, layoutUserId);

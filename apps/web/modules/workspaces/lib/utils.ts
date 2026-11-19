@@ -391,20 +391,22 @@ const resolveWorkspaceLayoutData = async (
     return notFound();
   }
 
-  const [isAccessControlAllowed, workspacePermission, license] = await Promise.all([
-    getAccessControlPermission(organization.id),
-    getWorkspacePermissionByUserId(userId, workspace.id),
-    getEnterpriseLicense(),
-  ]);
-
   // A Dashboard viewer sees dashboards and nothing of the organization's plan: no Stripe ids, usage cycle
   // or limits, and no Cloud response count, which the layout would otherwise ship to its browser.
   const isDashboardViewer = membership.role === "dashboard_viewer";
 
-  let responseCount = 0;
-  if (IS_FORMBRICKS_CLOUD && !isDashboardViewer) {
-    responseCount = await getMonthlyOrganizationResponseCount(organization.id);
-  }
+  // The count only feeds the limit banner and the Hobby/trial prompts. A plan without a response limit
+  // shows none of them unless it is trialing, whose sidebar card still shows the running count.
+  const hasResponseLimit = organization.billing?.limits?.monthly?.responses != null;
+  const isTrialing = organization.billing?.stripe?.subscriptionStatus === "trialing";
+  const needsResponseCount = IS_FORMBRICKS_CLOUD && !isDashboardViewer && (hasResponseLimit || isTrialing);
+
+  const [isAccessControlAllowed, workspacePermission, license, responseCount] = await Promise.all([
+    getAccessControlPermission(organization.id),
+    getWorkspacePermissionByUserId(userId, workspace.id),
+    getEnterpriseLicense(),
+    needsResponseCount ? getMonthlyOrganizationResponseCount(organization.id) : 0,
+  ]);
 
   return {
     session,
