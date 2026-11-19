@@ -51,20 +51,42 @@ interface ControlDescriptor {
   onClick: () => void;
 }
 
-export const CanvasControls = ({
-  canMutate,
-  isPanMode,
-  direction,
-  onAutoLayout,
-  onFitView,
-  onToggleDirection,
-  onPanMode,
-  onPointerMode,
-}: Readonly<CanvasControlsProps>) => {
+/** One control: an icon button with its label as tooltip and accessible name. */
+const ControlButton = ({
+  Icon,
+  label,
+  variant,
+  ariaPressed,
+  disabled,
+  onClick,
+}: Readonly<ControlDescriptor>) => (
+  <TooltipRenderer tooltipContent={label}>
+    <Button
+      type="button"
+      variant={variant}
+      size="icon"
+      aria-label={label}
+      aria-pressed={ariaPressed}
+      disabled={disabled}
+      // Opaque, so the cards underneath never show through the buttons.
+      className={cn("shadow-sm", variant === "outline" && "bg-white hover:bg-slate-50")}
+      onClick={onClick}>
+      <Icon />
+    </Button>
+  </TooltipRenderer>
+);
+
+/** The row of canvas controls, centred at the canvas's bottom edge (editor and Runs view alike). */
+export const CanvasControlsBar = ({ children }: Readonly<{ children: React.ReactNode }>) => (
+  <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center">
+    <div className="pointer-events-auto flex items-center gap-2">{children}</div>
+  </div>
+);
+
+/** Zoom in, zoom out and fit the whole flow: the controls every canvas has, read-only ones too. */
+export const CanvasZoomControls = ({ onFitView }: Readonly<{ onFitView: () => void }>) => {
   const { t } = useTranslation();
   const { zoomIn, zoomOut } = useReactFlow();
-  const isHorizontal = direction === "horizontal";
-
   const controls: ControlDescriptor[] = [
     {
       key: "zoom-in",
@@ -87,6 +109,30 @@ export const CanvasControls = ({
       variant: "outline",
       onClick: onFitView,
     },
+  ];
+  return (
+    <>
+      {controls.map(({ key, ...control }) => (
+        <ControlButton key={key} {...control} />
+      ))}
+    </>
+  );
+};
+
+export const CanvasControls = ({
+  canMutate,
+  isPanMode,
+  direction,
+  onAutoLayout,
+  onFitView,
+  onToggleDirection,
+  onPanMode,
+  onPointerMode,
+}: Readonly<CanvasControlsProps>) => {
+  const { t } = useTranslation();
+  const isHorizontal = direction === "horizontal";
+
+  const modeControls: ControlDescriptor[] = [
     {
       key: "pan-mode",
       Icon: HandIcon,
@@ -106,59 +152,45 @@ export const CanvasControls = ({
   ];
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-4 z-10 flex justify-center">
-      <div className="pointer-events-auto flex items-center gap-2">
-        {controls.map(({ key, Icon, label, variant, ariaPressed, disabled, onClick }) => (
-          <TooltipRenderer key={key} tooltipContent={label}>
+    <CanvasControlsBar>
+      <CanvasZoomControls onFitView={onFitView} />
+      {modeControls.map(({ key, ...control }) => (
+        <ControlButton key={key} {...control} />
+      ))}
+      {/* Layout: re-arrange the steps, or switch which way the canvas reads. The tree icon turns
+            with the orientation. */}
+      <DropdownMenu>
+        <TooltipRenderer tooltipContent={t("workspace.workflows.layout")} triggerClass="flex">
+          <DropdownMenuTrigger asChild disabled={!canMutate}>
             <Button
               type="button"
-              variant={variant}
+              variant="outline"
               size="icon"
-              aria-label={label}
-              aria-pressed={ariaPressed}
-              disabled={disabled}
-              // Opaque, so the cards underneath never show through the buttons.
-              className={cn("shadow-sm", variant === "outline" && "bg-white hover:bg-slate-50")}
-              onClick={onClick}>
-              <Icon />
+              className="bg-white shadow-sm hover:bg-slate-50"
+              aria-label={t("workspace.workflows.layout")}
+              disabled={!canMutate}>
+              <NetworkIcon
+                className={cn(
+                  "transition-transform duration-200 motion-reduce:transition-none",
+                  isHorizontal && "-rotate-90"
+                )}
+              />
             </Button>
-          </TooltipRenderer>
-        ))}
-        {/* Layout: re-arrange the steps, or switch which way the canvas reads. The tree icon turns
-            with the orientation. */}
-        <DropdownMenu>
-          <TooltipRenderer tooltipContent={t("workspace.workflows.layout")} triggerClass="flex">
-            <DropdownMenuTrigger asChild disabled={!canMutate}>
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                className="bg-white shadow-sm hover:bg-slate-50"
-                aria-label={t("workspace.workflows.layout")}
-                disabled={!canMutate}>
-                <NetworkIcon
-                  className={cn(
-                    "transition-transform duration-200 motion-reduce:transition-none",
-                    isHorizontal && "-rotate-90"
-                  )}
-                />
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipRenderer>
-          <DropdownMenuContent side="top" align="center" className="motion-reduce:animate-none">
-            <DropdownMenuItem onClick={onAutoLayout}>
-              <NetworkIcon className={cn("size-4", isHorizontal && "-rotate-90")} />
-              {t("workspace.workflows.auto_layout")}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onToggleDirection}>
-              {isHorizontal ? <ArrowDownIcon className="size-4" /> : <ArrowRightIcon className="size-4" />}
-              {isHorizontal
-                ? t("workspace.workflows.canvas_direction_to_vertical")
-                : t("workspace.workflows.canvas_direction_to_horizontal")}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </div>
+          </DropdownMenuTrigger>
+        </TooltipRenderer>
+        <DropdownMenuContent side="top" align="center" className="motion-reduce:animate-none">
+          <DropdownMenuItem onClick={onAutoLayout}>
+            <NetworkIcon className={cn("size-4", isHorizontal && "-rotate-90")} />
+            {t("workspace.workflows.auto_layout")}
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={onToggleDirection}>
+            {isHorizontal ? <ArrowDownIcon className="size-4" /> : <ArrowRightIcon className="size-4" />}
+            {isHorizontal
+              ? t("workspace.workflows.canvas_direction_to_vertical")
+              : t("workspace.workflows.canvas_direction_to_horizontal")}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </CanvasControlsBar>
   );
 };

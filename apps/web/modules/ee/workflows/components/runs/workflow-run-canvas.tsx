@@ -3,7 +3,6 @@
 import {
   Background,
   BackgroundVariant,
-  Controls,
   type EdgeTypes,
   type NodeTypes,
   ReactFlow,
@@ -20,6 +19,10 @@ import { useTranslation } from "react-i18next";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
 import { AddButtonEdge } from "@/modules/ee/workflows/components/canvas/add-button-edge";
 import { BranchEdge } from "@/modules/ee/workflows/components/canvas/branch-edge";
+import {
+  CanvasControlsBar,
+  CanvasZoomControls,
+} from "@/modules/ee/workflows/components/canvas/canvas-controls";
 import { WorkflowBranchNode } from "@/modules/ee/workflows/components/canvas/workflow-branch-node";
 import { WorkflowCanvasNode } from "@/modules/ee/workflows/components/canvas/workflow-canvas-node";
 import "@/modules/ee/workflows/components/canvas/workflow-canvas.css";
@@ -164,7 +167,18 @@ const RunFlow = ({
       maxZoom={WORKFLOW_CANVAS_MAX_ZOOM}
       proOptions={{ hideAttribution: true }}>
       <Background variant={BackgroundVariant.Dots} gap={18} size={1.5} color="#cbd5e1" />
-      <Controls showInteractive={false} position="bottom-left" />
+      <CanvasControlsBar>
+        <CanvasZoomControls
+          onFitView={() =>
+            void fitView({
+              padding: WORKFLOW_CANVAS_FIT_PADDING,
+              maxZoom: WORKFLOW_CANVAS_MAX_ZOOM,
+              minZoom: 0.4,
+              duration: 300,
+            })
+          }
+        />
+      </CanvasControlsBar>
     </ReactFlow>
   );
 };
