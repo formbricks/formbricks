@@ -2,13 +2,16 @@ import Link from "next/link";
 import { getTranslate } from "@/lingodotdev/server";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
 import { ResetPasswordForm } from "@/modules/auth/forgot-password/reset/components/reset-password-form";
-import { getResetPasswordToken } from "@/modules/auth/forgot-password/reset/lib/reset-link";
+import {
+  type TResetPasswordSearchParams,
+  getResetPasswordToken,
+} from "@/modules/auth/forgot-password/reset/lib/reset-link";
 import { Button } from "@/modules/ui/components/button";
 
 export const ResetPasswordPage = async ({
   searchParams,
 }: {
-  readonly searchParams: Promise<{ token?: string | string[]; error?: string | string[] }>;
+  readonly searchParams: Promise<TResetPasswordSearchParams>;
 }) => {
   const token = getResetPasswordToken(await searchParams);
 
