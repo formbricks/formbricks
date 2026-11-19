@@ -274,6 +274,35 @@ const assignSsoUserToOrganization = async ({
 };
 
 /**
+ * The role of the newest unexpired invite for `email` in the organization, or null when there is none.
+ *
+ * An SSO sign-up from an invite link lands on the invite page right after provisioning. That page
+ * keeps an existing member's role (ENG-7097), so the membership created here has to carry the
+ * invite's role already; the page then adds the invite's teams and deletes the invite.
+ */
+const getPendingInviteRole = async (
+  email: string,
+  organizationId: string
+): Promise<TOrganizationRole | null> => {
+  try {
+    const invite = await prisma.invite.findFirst({
+      where: {
+        email: { equals: email, mode: "insensitive" },
+        organizationId,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: "desc" },
+      select: { role: true },
+    });
+    return invite?.role ?? null;
+  } catch (error) {
+    // Like the membership writes, a lookup failure must not break an otherwise successful sign-in.
+    logger.error(error, "SSO provisioning: failed to look up a pending invite");
+    return null;
+  }
+};
+
+/**
  * Provisioning WRITES for a newly created SSO user — mirrors the legacy NextAuth SSO provisioning
  * writes. Called from
  * `databaseHooks.user.create.after` (post-commit), so it CANNOT share Better Auth's user/account
@@ -317,7 +346,7 @@ export const provisionSsoUserMemberships = async ({
     await assignSsoUserToOrganization({
       userId,
       organizationId: assignment.organizationId,
-      role: assignment.role,
+      role: (await getPendingInviteRole(email, assignment.organizationId)) ?? assignment.role,
       assignToDefaultTeam,
     });
   }

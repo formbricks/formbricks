@@ -21,6 +21,7 @@ vi.mock("@formbricks/database", () => ({
     $transaction: vi.fn(async (cb: (tx: unknown) => unknown) =>
       cb({ user: { findUnique: vi.fn().mockResolvedValue({ notificationSettings: {} }) } })
     ),
+    invite: { findFirst: vi.fn() },
   },
 }));
 vi.mock("@formbricks/logger", () => ({ logger: { error: vi.fn(), warn: vi.fn(), debug: vi.fn() } }));
@@ -94,6 +95,7 @@ beforeEach(() => {
   vi.mocked(ensureDefaultOrganization).mockResolvedValue({ organizationId: "default-org", role: "manager" });
   // clearAllMocks keeps implementations, so reset the one tests override with rejections.
   vi.mocked(createMembership).mockReset();
+  vi.mocked(prisma.invite.findFirst).mockResolvedValue(null);
 });
 
 describe("gateSsoProvisioning — bypass branches", () => {
@@ -375,6 +377,43 @@ describe("provisionSsoUserMemberships", () => {
       invite_organization_id: "org-1",
     });
     expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  // ENG-7097: the invite page no longer changes an existing member's role, so an SSO sign-up from an
+  // invite link has to get the invite's role here.
+  test("gives the new member the role of their pending invite in that org", async () => {
+    vi.mocked(prisma.invite.findFirst).mockResolvedValue({ role: "manager" } as never);
+    await provisionSsoUserMemberships({ ...baseArgs, signupSource: "invite" });
+    expect(prisma.invite.findFirst).toHaveBeenCalledWith({
+      where: {
+        email: { equals: "new@example.com", mode: "insensitive" },
+        organizationId: "org-1",
+        expiresAt: { gt: expect.any(Date) },
+      },
+      orderBy: { createdAt: "desc" },
+      select: { role: true },
+    });
+    expect(createMembership).toHaveBeenCalledWith(
+      "org-1",
+      "u1",
+      { role: "manager", accepted: true },
+      expect.anything()
+    );
+  });
+
+  test("keeps the default role and still signs in when the invite lookup fails", async () => {
+    vi.mocked(prisma.invite.findFirst).mockRejectedValue(new Error("db down"));
+    await provisionSsoUserMemberships(baseArgs);
+    expect(createMembership).toHaveBeenCalledWith(
+      "org-1",
+      "u1",
+      { role: "member", accepted: true },
+      expect.anything()
+    );
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.any(Error),
+      "SSO provisioning: failed to look up a pending invite"
+    );
   });
 
   describe("useDefaultOrganization (ENG-2089)", () => {
