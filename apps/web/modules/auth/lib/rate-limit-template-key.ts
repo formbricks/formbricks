@@ -1,13 +1,14 @@
 import type { BetterAuthOptions } from "better-auth";
+import { createHash } from "node:crypto";
 
 type TRateLimitStorage = NonNullable<NonNullable<BetterAuthOptions["rateLimit"]>["customStorage"]>;
 
 /** The template every path that names no endpoint is counted under, one bucket per client (ENG-7399). */
 export const UNMATCHED_AUTH_PATH_TEMPLATE = "/:unmatched";
 
-// Empty segments are dropped, as the router matches `//sign-in//email` to `/sign-in/email`: counting such a
-// request apart from the endpoint it reaches would hand it a second budget.
-const segmentsOf = (path: string): string[] => path.split("/").filter((segment) => segment !== "");
+// Segments after the leading `/`, empty ones kept: better-call answers 404 to any path with `//`, so such a
+// path names no endpoint and must not share one's counter (Better Auth would give it another rule).
+const segmentsOf = (path: string): string[] => path.split("/").slice(1);
 
 /**
  * Maps a Better Auth request path (the part after `/api/auth`) to the endpoint template it names, from the
@@ -28,18 +29,21 @@ export const createAuthPathTemplateMatcher = (
     if (typeof declared !== "string" || !declared.startsWith("/")) continue;
     const segments = segmentsOf(declared);
     if (segments.some((segment) => segment.startsWith(":"))) patterns.push({ template: declared, segments });
-    else literal.set(segments.join("/"), declared);
+    else literal.set(declared, declared);
   }
 
   return (path: string): string => {
-    const segments = segmentsOf(path);
-    const exact = literal.get(segments.join("/"));
+    const exact = literal.get(path);
     if (exact) return exact;
 
+    const segments = segmentsOf(path);
     const pattern = patterns.find(
       (candidate) =>
         candidate.segments.length === segments.length &&
-        candidate.segments.every((segment, index) => segment.startsWith(":") || segment === segments[index])
+        candidate.segments.every((segment, index) =>
+          // A parameter matches one non-empty segment, as in the router.
+          segment.startsWith(":") ? segments[index] !== "" : segment === segments[index]
+        )
     );
     return pattern ? pattern.template : UNMATCHED_AUTH_PATH_TEMPLATE;
   };
@@ -56,33 +60,48 @@ export const createAuthPathTemplateMatcher = (
  * key on the route rather than the URL, gives each client one small counter per endpoint and one for
  * everything unmatched. The rule (window, max) is still chosen by Better Auth from the request's path.
  *
+ * The window is part of the key: the counter's TTL is set when it is created, so a request Better Auth gives
+ * a shorter window must not land on, and so expire, the counter of a longer one.
+ *
  * The count itself is Better Auth's own `secondary-storage` consume, unchanged: one atomic increment that
  * sets the TTL to the window, allowed while the count is within `max`. A Redis failure propagates as it did.
  */
 export const createTemplateKeyedRateLimitStorage = ({
   declaredPaths,
   increment,
-  defaultWindowSeconds,
 }: {
-  /** Called once, on the first request: Better Auth's endpoints exist only once `betterAuth()` returns. */
+  /**
+   * Called once, on the limiter's first request. Better Auth runs the limiter in its HTTP router only, so
+   * that is always after `betterAuth()` has returned and its endpoint registry exists.
+   */
   declaredPaths: () => Iterable<unknown>;
   increment: (key: string, ttlSeconds: number) => Promise<number>;
-  defaultWindowSeconds: number;
 }): TRateLimitStorage => {
   let templateOf: ((path: string) => string) | undefined;
+  const getTemplateOf = (): ((path: string) => string) => {
+    if (templateOf) return templateOf;
+    const paths = [...declaredPaths()];
+    const matcher = createAuthPathTemplateMatcher(paths);
+    // An empty registry would send every request to the unmatched bucket; don't keep that, read it again.
+    if (paths.length > 0) templateOf = matcher;
+    return matcher;
+  };
 
   return {
     consume: async (key, rule) => {
-      templateOf ??= createAuthPathTemplateMatcher(declaredPaths());
       // `createRateLimitKey` writes `${ip}|${path}`. An IP (or the `no-trusted-ip` fallback) has no `|`, so
-      // the first one ends it; a `|` in the path cannot move the client part.
+      // the first one ends it; a `|` in the path cannot move the client part. A key in any other shape (a
+      // Better Auth upgrade) is hashed rather than stored as is, so it can never be caller-sized.
       const separator = key.indexOf("|");
-      const client = separator === -1 ? key : key.slice(0, separator);
-      const path = separator === -1 ? "" : key.slice(separator + 1);
+      const counterKey =
+        separator === -1
+          ? `sha256:${createHash("sha256").update(key).digest("base64url")}`
+          : `${key.slice(0, separator)}|${getTemplateOf()(key.slice(separator + 1))}`;
 
-      const window = rule.window ?? defaultWindowSeconds;
-      const count = await increment(`${client}|${templateOf(path)}`, window);
-      return count <= rule.max ? { allowed: true, retryAfter: null } : { allowed: false, retryAfter: window };
+      const count = await increment(`${counterKey}|${rule.window}`, rule.window);
+      return count <= rule.max
+        ? { allowed: true, retryAfter: null }
+        : { allowed: false, retryAfter: rule.window };
     },
   };
 };

@@ -7,6 +7,7 @@ import {
 
 const DECLARED = [
   "/sign-in/email",
+  "/delete-user",
   "/get-session",
   "/reset-password",
   "/reset-password/:token",
@@ -44,12 +45,15 @@ describe("createAuthPathTemplateMatcher (ENG-7399)", () => {
     "/",
     "",
   ])("sends %s, which names no endpoint, to the one unmatched bucket", (path) => {
-    expect(templateOf(path.slice(0, 80))).toBe(UNMATCHED_AUTH_PATH_TEMPLATE);
+    expect(templateOf(path)).toBe(UNMATCHED_AUTH_PATH_TEMPLATE);
   });
 
-  test("treats empty segments as the router does, so extra slashes share the real endpoint's bucket", () => {
-    expect(templateOf("//sign-in//email")).toBe("/sign-in/email");
-    expect(templateOf("/reset-password//abc")).toBe("/reset-password/:token");
+  test("sends a path with an empty segment to the unmatched bucket, as the router 404s it", () => {
+    // Counting `//delete-user` under `/delete-user` would let it share that endpoint's counter while Better
+    // Auth applies it a different rule, and so a different TTL.
+    expect(templateOf("//sign-in//email")).toBe(UNMATCHED_AUTH_PATH_TEMPLATE);
+    expect(templateOf("/reset-password//abc")).toBe(UNMATCHED_AUTH_PATH_TEMPLATE);
+    expect(templateOf("/callback//")).toBe(UNMATCHED_AUTH_PATH_TEMPLATE);
   });
 
   test("never emits a request's own path, whatever it is", () => {
@@ -69,7 +73,6 @@ describe("createTemplateKeyedRateLimitStorage (ENG-7399)", () => {
     const storage = createTemplateKeyedRateLimitStorage({
       declaredPaths: () => DECLARED,
       increment,
-      defaultWindowSeconds: 10,
     });
     return { storage, increment };
   };
@@ -83,25 +86,30 @@ describe("createTemplateKeyedRateLimitStorage (ENG-7399)", () => {
     await storage.consume("no-trusted-ip|/get-session", { window: 10, max: 100 });
 
     expect(increment.mock.calls.map(([key]) => key)).toEqual([
-      "203.0.113.7|/reset-password/:token",
-      "203.0.113.7|/reset-password/:token",
-      `203.0.113.7|${UNMATCHED_AUTH_PATH_TEMPLATE}`,
-      "2001:db8::|/callback/:id",
-      "no-trusted-ip|/get-session",
+      "203.0.113.7|/reset-password/:token|60",
+      "203.0.113.7|/reset-password/:token|60",
+      `203.0.113.7|${UNMATCHED_AUTH_PATH_TEMPLATE}|10`,
+      "2001:db8::|/callback/:id|10",
+      "no-trusted-ip|/get-session|10",
     ]);
   });
 
   test("splits at the first `|`, so one in the path cannot forge the client part", async () => {
     const { storage, increment } = setup();
     await storage.consume("203.0.113.7|/x|198.51.100.1", { window: 10, max: 100 });
-    expect(increment).toHaveBeenCalledWith(`203.0.113.7|${UNMATCHED_AUTH_PATH_TEMPLATE}`, 10);
+    expect(increment).toHaveBeenCalledWith(`203.0.113.7|${UNMATCHED_AUTH_PATH_TEMPLATE}|10`, 10);
   });
 
-  test("passes the rule's window as the TTL, and falls back to the default window", async () => {
+  test("passes the rule's window as the TTL, and keeps a counter per window", async () => {
+    // A request that Better Auth gives another rule can't reset the TTL of an endpoint's counter: it counts
+    // apart, under its own window.
     const { storage, increment } = setup();
-    await storage.consume("203.0.113.7|/get-session", { window: 60, max: 5 });
-    await storage.consume("203.0.113.7|/get-session", { window: undefined as unknown as number, max: 5 });
-    expect(increment.mock.calls.map(([, ttl]) => ttl)).toEqual([60, 10]);
+    await storage.consume("203.0.113.7|/delete-user", { window: 3600, max: 5 });
+    await storage.consume("203.0.113.7|/delete-user", { window: 10, max: 100 });
+    expect(increment.mock.calls).toEqual([
+      ["203.0.113.7|/delete-user|3600", 3600],
+      ["203.0.113.7|/delete-user|10", 10],
+    ]);
   });
 
   test("allows up to max, then refuses with the window as retry-after", async () => {
@@ -116,12 +124,35 @@ describe("createTemplateKeyedRateLimitStorage (ENG-7399)", () => {
     });
   });
 
+  test("hashes a key not in Better Auth's `${ip}|${path}` shape, so it can never be caller-sized", async () => {
+    const { storage, increment } = setup();
+    await storage.consume(`no-separator-${"j".repeat(12_000)}`, { window: 10, max: 100 });
+    const [key] = increment.mock.calls[0];
+    // (vitestSetup fakes `createHash`, so the digest itself isn't checked here: only that none of the
+    // caller's key survives and the length is fixed.)
+    expect(key.startsWith("sha256:")).toBe(true);
+    expect(key).not.toContain("jjj");
+    expect(key.length).toBeLessThan(80);
+  });
+
+  test("reads the registry again while it is empty, rather than keeping an unmatched-only matcher", async () => {
+    let registry: unknown[] = [];
+    const increment = vi.fn(async (_key: string, _ttl: number) => 1);
+    const storage = createTemplateKeyedRateLimitStorage({ declaredPaths: () => registry, increment });
+    await storage.consume("203.0.113.7|/get-session", { window: 10, max: 100 });
+    registry = DECLARED;
+    await storage.consume("203.0.113.7|/get-session", { window: 10, max: 100 });
+    expect(increment.mock.calls.map(([key]) => key)).toEqual([
+      `203.0.113.7|${UNMATCHED_AUTH_PATH_TEMPLATE}|10`,
+      "203.0.113.7|/get-session|10",
+    ]);
+  });
+
   test("reads the endpoint registry once, on first use", async () => {
     const declaredPaths = vi.fn(() => DECLARED);
     const storage = createTemplateKeyedRateLimitStorage({
       declaredPaths,
       increment: vi.fn(async () => 1),
-      defaultWindowSeconds: 10,
     });
     expect(declaredPaths).not.toHaveBeenCalled();
     await storage.consume("203.0.113.7|/get-session", { window: 10, max: 100 });
@@ -135,7 +166,6 @@ describe("createTemplateKeyedRateLimitStorage (ENG-7399)", () => {
       increment: vi.fn(async () => {
         throw new Error("Socket closed unexpectedly");
       }),
-      defaultWindowSeconds: 10,
     });
     await expect(storage.consume("203.0.113.7|/get-session", { window: 10, max: 100 })).rejects.toThrow(
       "Socket closed unexpectedly"
