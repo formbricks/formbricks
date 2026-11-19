@@ -48,8 +48,12 @@ const refuseOver = (body: Record<string, unknown>, field: string, maxBytes: numb
  * `additionalData` is refused outright: Better Auth spreads it into the state record unbounded, and
  * Formbricks never sends it. Each callback URL is capped at {@link OAUTH_CALLBACK_URL_MAX_BYTES}, and the
  * signed `oauth_query` at {@link OAUTH_QUERY_MAX_BYTES}. The check runs before the endpoint and before
- * oauth-provider's own hook, so a refused request writes nothing. Values of the wrong type are left to the
- * endpoint's own schema or that hook's signature check, which refuse them before anything is stored.
+ * oauth-provider's own hook, so a refused request writes nothing.
+ *
+ * A callback URL of the wrong type is left to the endpoint's schema, which refuses it before the state is
+ * written. `oauth_query` has no such schema here: oauth-provider's hook reads any truthy value with
+ * `new URLSearchParams`, which also takes key/value pairs or a record, and the signature still verifies.
+ * So anything but a string is refused, or the byte cap could be sidestepped.
  */
 export const boundOAuthStateBeforeHandler = (ctx: { path: string; body?: unknown }): void => {
   if (!STATE_WRITING_PATHS.has(ctx.path)) return;
@@ -59,5 +63,9 @@ export const boundOAuthStateBeforeHandler = (ctx: { path: string; body?: unknown
   if (body.additionalData !== undefined) refuse("additionalData is not supported");
 
   for (const field of CALLBACK_URL_FIELDS) refuseOver(body, field, OAUTH_CALLBACK_URL_MAX_BYTES);
+
+  if (body.oauth_query !== undefined && typeof body.oauth_query !== "string") {
+    refuse("oauth_query must be a string");
+  }
   refuseOver(body, "oauth_query", OAUTH_QUERY_MAX_BYTES);
 };

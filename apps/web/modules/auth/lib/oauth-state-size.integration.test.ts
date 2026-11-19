@@ -130,5 +130,11 @@ describe("OAuth state record size (ENG-6885)", () => {
     );
 
     expect(await signInSocial({ oauth_query: oauthQuery })).toEqual({ status: 400, storedBytes: 0 });
+    // The same signed query as JSON key/value pairs: oauth-provider reads it with `new URLSearchParams`,
+    // which takes pairs too, so the signature still verifies.
+    expect(await signInSocial({ oauth_query: [...new URLSearchParams(oauthQuery)] })).toEqual({
+      status: 400,
+      storedBytes: 0,
+    });
   });
 });

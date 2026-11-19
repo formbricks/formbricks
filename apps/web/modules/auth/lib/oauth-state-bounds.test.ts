@@ -80,6 +80,16 @@ describe("boundOAuthStateBeforeHandler (ENG-6885)", () => {
     expect(refusal("/sign-in/social", body)).toBeUndefined();
   });
 
+  test.each([
+    ["pairs", [["client_id", "x"]]],
+    ["an object", { client_id: "x" }],
+    ["a number", 42],
+  ])("refuses an oauth_query given as %s", (_, oauthQuery) => {
+    const error = refusal("/sign-in/social", { provider: "google", oauth_query: oauthQuery });
+    expect(error?.statusCode).toBe(400);
+    expect(error?.body).toMatchObject({ code: "VALIDATION_ERROR", message: "oauth_query must be a string" });
+  });
+
   test("leaves a non-string callback URL to the endpoint's schema", () => {
     expect(refusal("/sign-in/social", { provider: "google", callbackURL: 42 })).toBeUndefined();
   });
