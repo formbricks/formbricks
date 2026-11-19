@@ -1162,11 +1162,13 @@ export const pasteWorkflowStepsAtom = atom(
 /** A step card being dragged to another `+`; null while nothing is. */
 export type TStepMoveDrag = {
   stepId: string;
+  /** The card's position when the drag started; the fork legs stay drawn from it while dragging. */
+  start: { x: number; y: number };
   /** The step and the steps it takes along, drawn faded while they move. */
   movingStepIds: ReadonlySet<string>;
   /** The `+` it can land on (getMoveTargetKey), lit while dragging. */
   targetKeys: ReadonlySet<string>;
-  /** The `+` nearest the pointer, which reads "Move here"; a drop anywhere else changes nothing. */
+  /** The `+` nearest the pointer, which reads "Move here"; a drop anywhere else just places the card. */
   hotTargetKey: string | null;
   /** Where the card was, drawn as a dashed outline. */
   origin: { x: number; y: number; width: number; height: number };
@@ -1180,7 +1182,7 @@ const NO_STEPS: ReadonlySet<string> = new Set();
 export const stepIdsMovingAlongAtom = atom((get) => get(stepMoveDragAtom)?.movingStepIds ?? NO_STEPS);
 
 /**
- * Moves a step to a `+` as one edit (one Undo) and opens it; the tree is laid out again. Returns the
+ * Moves a step to a `+` as one edit (one Undo) and opens it; the other steps stay where they are. Returns the
  * definitions before and after, for the toast's Undo, and the Variables the move put before the step
  * they come from. Null when the step can't go there. A pending cut is put back first.
  */
@@ -1214,7 +1216,11 @@ export const moveWorkflowStepAtom = atom(
 );
 
 /** The workflow history's Undo, registered by the history (it lives in the toolbar) for toasts to call. */
-export const workflowUndoAtom = atom<{ undo: () => void } | null>(null);
+export const workflowUndoAtom = atom<{
+  undo: () => void;
+  /** Whether the next Undo puts back `earlier` (edits right after it, such as a panel opening, count with it). */
+  undoesTo: (earlier: TWorkflowDefinition) => boolean;
+} | null>(null);
 
 export const setWorkflowSnapToCanvasEnabledAtom = atom(null, (get, set, isSnapToCanvasEnabled: boolean) => {
   set(

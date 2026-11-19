@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 import type { TWorkflowDefinition } from "@formbricks/workflows";
-import { reorganizeWorkflowDefinition } from "./definition-to-flow";
 import { getMoveTargetKey, getMoveTargets, getMovingStepIds, moveStep } from "./step-move";
 
 type TNode = TWorkflowDefinition["nodes"][number];
@@ -78,6 +77,9 @@ const hasEdge = (def: TWorkflowDefinition, source: string, target: string, sourc
       edge.source === source && edge.target === target && (edge.sourceHandle ?? undefined) === sourceHandle
   );
 
+const positionOf = (def: TWorkflowDefinition, id: string) =>
+  [def.trigger, ...def.nodes].find((node) => node?.id === id)!.ui!.position!;
+
 describe("getMovingStepIds", () => {
   test("a plain step moves alone", () => {
     expect(getMovingStepIds(definition(), "a1")).toEqual(["a1"]);
@@ -140,9 +142,23 @@ describe("moveStep", () => {
     expect(def.edges.some((edge) => edge.source === "branch" && edge.sourceHandle === "else")).toBe(false);
   });
 
-  test("lays the tree out again, as Auto layout does", () => {
-    const def = move(definition(), "a2", { sourceNodeId: "b1" })!.definition;
-    expect(def).toEqual(reorganizeWorkflowDefinition(def, "vertical"));
+  test("leaves every other step where the user put it", () => {
+    const before = definition();
+    const def = move(before, "a1", { sourceNodeId: "b1" })!.definition;
+    for (const id of ["trigger", "crm", "branch", "a2", "b1"]) {
+      expect(positionOf(def, id)).toEqual(positionOf(before, id));
+    }
+    expect(positionOf(def, "a1").y).toBeGreaterThan(positionOf(def, "b1").y);
+  });
+
+  test("on a line, the steps after the `+` shift along to make room", () => {
+    const before = definition();
+    const def = move(before, "b1", { edgeId: "e4" })!.definition;
+    for (const id of ["trigger", "crm", "branch", "a1"]) {
+      expect(positionOf(def, id)).toEqual(positionOf(before, id));
+    }
+    expect(positionOf(def, "b1").y).toBeGreaterThan(positionOf(def, "a1").y);
+    expect(positionOf(def, "a2").y).toBeGreaterThan(positionOf(def, "b1").y);
   });
 
   test("an If/else moves with its branches; the step it lands before follows its first branch", () => {

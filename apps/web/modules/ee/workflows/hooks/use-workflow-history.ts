@@ -99,10 +99,14 @@ export const useWorkflowHistory = () => {
 
   // A toast's Undo (after moving a step) undoes through this history, so Redo can bring the edit back.
   const setUndoForToasts = useSetAtom(workflowUndoAtom);
+  const undoesTo = useCallback(
+    (earlier: TWorkflowDefinition) => clipboard?.mode !== "cut" && history.past.at(-1) === earlier,
+    [clipboard, history]
+  );
   useEffect(() => {
-    setUndoForToasts({ undo });
+    setUndoForToasts({ undo, undoesTo });
     return () => setUndoForToasts(null);
-  }, [undo, setUndoForToasts]);
+  }, [undo, undoesTo, setUndoForToasts]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
