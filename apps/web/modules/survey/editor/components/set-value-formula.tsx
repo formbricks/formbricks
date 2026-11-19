@@ -20,6 +20,7 @@ import {
   getReferenceTone,
 } from "@/modules/survey/editor/components/reference-chip";
 import {
+  FORMULA_BOX_MAX_LENGTH,
   FORMULA_CHIP_FUNCTIONS,
   FORMULA_FUNCTION_EXAMPLES,
   FORMULA_MAX_LENGTH,
@@ -473,7 +474,7 @@ export function SetValueFormula({
             id={id}
             ref={textareaRef}
             value={text}
-            maxLength={FORMULA_MAX_LENGTH}
+            maxLength={FORMULA_BOX_MAX_LENGTH}
             rows={2}
             spellCheck={false}
             className="relative min-h-10 bg-transparent font-mono"
