@@ -114,7 +114,9 @@ describe("resetSegmentInSurvey (ENG-7389)", () => {
   });
 
   test("picks the survey's own private segment when another workspace holds one with the same title", async () => {
-    // The attacker's row is the older one, so an unscoped lookup tends to return it first.
+    // The attacker's row is the older one, so an unscoped lookup usually returns it (Postgres doesn't
+    // guarantee the order; the test above is the deterministic regression check). This one covers the
+    // branch that reuses the survey's own private segment.
     const attackerSegment = await createAttackerSegment();
     const ownSegment = await prisma.segment.create({
       data: {
