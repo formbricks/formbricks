@@ -228,7 +228,7 @@
     "sso_recovery_confirm": {
       "cancel": "取消",
       "confirm": "关联 {provider}",
-      "description": "完成后,你就可以使用 {provider} 登录此 Formbricks 账户了。",
+      "description": "完成后，您就可以使用{provider}登录 Formbricks 账户 {email}了。",
       "title": "要将 {provider} 关联到你的账户吗?",
       "warning": "只有在你本人想要使用 {provider} 登录 Formbricks 时才可继续。如果不是,请取消:可能有其他人正试图进入你的账户。"
     },

@@ -228,7 +228,7 @@
     "sso_recovery_confirm": {
       "cancel": "キャンセル",
       "confirm": "{provider}を連携",
-      "description": "この操作の後は、{provider}でこのFormbricksアカウントにサインインできるようになります。",
+      "description": "この後、{provider}でFormbricksアカウント({email})にサインインできるようになります。",
       "title": "{provider}をアカウントに連携しますか?",
       "warning": "ご自身で{provider}を使ってFormbricksにサインインしようとした場合のみ、続行してください。心当たりがない場合は、キャンセルしてください。他の誰かがあなたのアカウントにアクセスしようとしている可能性があります。"
     },

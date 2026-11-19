@@ -32,10 +32,14 @@ import {
 const PROOF_DOMAIN = "formbricks.sso_recovery_proof.v1";
 
 /**
- * Mirrors Better Auth's `cookiePrefix: "formbricks"` and its `__Secure-` prefix under secure cookies,
- * like the sign-up intent cookie does. Better Auth mints no `sso_recovery_proof` cookie of its own.
+ * `__Host-` on HTTPS, not the `__Secure-` Better Auth uses for its own cookies: `__Host-` also forbids a
+ * `Domain` attribute, so a sibling subdomain cannot plant one that shadows the real proof. It requires
+ * `Secure` and `Path=/`, which the options below give. Better Auth mints no `sso_recovery_proof` cookie.
+ *
+ * One name for every recovery: opening a second recovery link within the window replaces the first
+ * proof in that browser, so the first then needs its own link opened again.
  */
-export const SSO_RECOVERY_PROOF_COOKIE_NAME = `${USE_SECURE_COOKIES ? "__Secure-" : ""}formbricks.sso_recovery_proof`;
+export const SSO_RECOVERY_PROOF_COOKIE_NAME = `${USE_SECURE_COOKIES ? "__Host-" : ""}formbricks.sso_recovery_proof`;
 
 export const SSO_RECOVERY_PROOF_COOKIE_OPTIONS = {
   httpOnly: true,

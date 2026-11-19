@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { getSession } from "@/modules/auth/lib/session";
 import { revokeSessionByToken } from "@/modules/auth/lib/session-revocation";
 import { SSO_RECOVERY_PROOF_COOKIE_NAME } from "@/modules/ee/sso/lib/recovery-proof";
-import { SsoRecoveryError, completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
+import { SsoRecoveryError, cancelSsoRecovery, completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 import { GET, POST } from "./route";
 
 /**
@@ -33,6 +34,7 @@ vi.mock("@/modules/auth/lib/session-cookie", async (importOriginal) => ({
 vi.mock("@/modules/ee/sso/lib/sso-recovery", async (importOriginal) => ({
   ...(await importOriginal<typeof import("@/modules/ee/sso/lib/sso-recovery")>()),
   completeSsoRecovery: vi.fn(),
+  cancelSsoRecovery: vi.fn(),
 }));
 
 const request = (url: string, cookie?: string) =>
@@ -40,17 +42,33 @@ const request = (url: string, cookie?: string) =>
 
 const location = (response: Response) => response.headers.get("location");
 
-/** The confirmation page's form submission: same-origin, form-encoded, state in the body. */
-const submit = (stateId: string, cookie?: string, headers: Record<string, string> = {}) =>
+/** The Fetch Metadata a browser sends when the user clicks a same-origin form's submit button. */
+const CLICKED_FORM = {
+  "sec-fetch-site": "same-origin",
+  "sec-fetch-mode": "navigate",
+  "sec-fetch-dest": "document",
+  "sec-fetch-user": "?1",
+};
+
+/** The confirmation page's form submission: a clicked same-origin form, state (and action) in the body. */
+const submit = (
+  stateId: string,
+  cookie?: string,
+  headers: Record<string, string> = {},
+  fields: Record<string, string> = {}
+) =>
   new Request(`${WEBAPP_URL}/api/auth/sso/recovery/complete`, {
     method: "POST",
-    headers: {
-      "content-type": "application/x-www-form-urlencoded",
-      "sec-fetch-site": "same-origin",
-      ...(cookie ? { cookie } : {}),
-      ...headers,
-    },
-    body: new URLSearchParams({ state: stateId }).toString(),
+    // An empty string drops that header, so a case can model a browser that does not send it.
+    headers: Object.fromEntries(
+      Object.entries({
+        "content-type": "application/x-www-form-urlencoded",
+        ...CLICKED_FORM,
+        ...(cookie ? { cookie } : {}),
+        ...headers,
+      }).filter(([, value]) => value !== "")
+    ),
+    body: new URLSearchParams({ state: stateId, ...fields }).toString(),
   });
 
 describe("/api/auth/sso/recovery/complete", () => {
@@ -114,11 +132,75 @@ describe("/api/auth/sso/recovery/complete", () => {
     }
   );
 
+  /**
+   * A same-origin script (a self-hosted link survey's custom head script) must not be able to submit on
+   * the account holder's behalf. `fetch()` sends `cors`/`empty`; a scripted `form.submit()` navigates
+   * but carries no user activation, so no `Sec-Fetch-User`.
+   */
+  test.each([
+    ["a same-origin fetch()", { "sec-fetch-mode": "cors", "sec-fetch-dest": "empty", "sec-fetch-user": "" }],
+    ["a scripted form.submit()", { "sec-fetch-user": "" }],
+    ["a submission into a frame", { "sec-fetch-dest": "iframe" }],
+    ["a request that is not a navigation", { "sec-fetch-mode": "cors" }],
+  ])("refuses %s", async (_label, headers) => {
+    const response = await POST(submit("state-id", "formbricks.session_token=token-abc.signature", headers));
+
+    expect(completeSsoRecovery).not.toHaveBeenCalled();
+    expect(cancelSsoRecovery).not.toHaveBeenCalled();
+    expect(revokeSessionByToken).not.toHaveBeenCalled();
+    expect(location(response)).toContain("error=OAuthAccountNotLinked");
+  });
+
+  test("still accepts a browser that sends no Fetch Metadata at all, leaving SameSite=Lax as the guard", async () => {
+    vi.mocked(completeSsoRecovery).mockResolvedValue(WEBAPP_URL);
+    const noFetchMetadata = Object.fromEntries(Object.keys(CLICKED_FORM).map((name) => [name, ""]));
+
+    await POST(submit("state-id", undefined, noFetchMetadata));
+
+    expect(completeSsoRecovery).toHaveBeenCalled();
+  });
+
+  describe("cancel", () => {
+    test("spends the recovery and the proof, links nothing, and sends the user home", async () => {
+      const response = await POST(
+        submit(
+          "state-id",
+          `formbricks.session_token=token-abc.signature; ${SSO_RECOVERY_PROOF_COOKIE_NAME}=proof-value`,
+          {},
+          { action: "cancel" }
+        )
+      );
+
+      expect(cancelSsoRecovery).toHaveBeenCalledWith({
+        stateId: "state-id",
+        recoveryProof: "proof-value",
+        sessionUserId: "user_1",
+      });
+      expect(completeSsoRecovery).not.toHaveBeenCalled();
+      expect(response.status).toBe(303);
+      expect(location(response)).toBe(`${WEBAPP_URL}/`);
+      expect(response.headers.getSetCookie().join("\n")).toMatch(
+        new RegExp(`${SSO_RECOVERY_PROOF_COOKIE_NAME}=;.*Max-Age=0`)
+      );
+    });
+
+    test("a refused cancel is handled like a refused link", async () => {
+      vi.mocked(cancelSsoRecovery).mockRejectedValue(new SsoRecoveryError("unproven"));
+
+      const response = await POST(
+        submit("state-id", "formbricks.session_token=token-abc.signature", {}, { action: "cancel" })
+      );
+
+      expect(revokeSessionByToken).not.toHaveBeenCalled();
+      expect(location(response)).toContain("error=sso_recovery_link_not_opened");
+    });
+  });
+
   test("refuses a body that is not form data", async () => {
     const response = await POST(
       new Request(`${WEBAPP_URL}/api/auth/sso/recovery/complete`, {
         method: "POST",
-        headers: { "content-type": "application/json", "sec-fetch-site": "same-origin" },
+        headers: { "content-type": "application/json", ...CLICKED_FORM },
         body: JSON.stringify({ state: "state-id" }),
       })
     );
@@ -131,7 +213,7 @@ describe("/api/auth/sso/recovery/complete", () => {
     const response = await POST(
       new Request(`${WEBAPP_URL}/api/auth/sso/recovery/complete`, {
         method: "POST",
-        headers: { "content-type": "application/x-www-form-urlencoded", "sec-fetch-site": "same-origin" },
+        headers: { "content-type": "application/x-www-form-urlencoded", ...CLICKED_FORM },
         body: "",
       })
     );
@@ -276,6 +358,8 @@ describe("/api/auth/sso/recovery/complete", () => {
 
     expect(location(response)).toContain("error=OAuthAccountNotLinked");
     expect(location(response)).not.toContain("callbackUrl=");
+    // Not one of ours, so nothing upstream logged it.
+    expect(logger.error).toHaveBeenCalledWith(expect.any(Error), "Unexpected error completing SSO recovery");
   });
 
   test("clears the session cookies and revokes the session it was given on a rejected recovery", async () => {

@@ -228,7 +228,7 @@
     "sso_recovery_confirm": {
       "cancel": "İptal",
       "confirm": "{provider} hesabını bağla",
-      "description": "Bunun ardından bu Formbricks hesabına {provider} ile giriş yapabilirsin.",
+      "description": "Bundan sonra {email} Formbricks hesabına {provider} ile giriş yapabilirsin.",
       "title": "{provider} hesabı hesabına bağlansın mı?",
       "warning": "Yalnızca Formbricks'e {provider} ile giriş yapmayı bizzat sen istediysen devam et. İstemediysen iptal et: başka biri hesabına girmeye çalışıyor olabilir."
     },

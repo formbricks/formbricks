@@ -228,7 +228,7 @@
     "sso_recovery_confirm": {
       "cancel": "Отмена",
       "confirm": "Привязать {provider}",
-      "description": "После этого ты сможешь входить в этот аккаунт Formbricks через {provider}.",
+      "description": "После этого ты сможешь войти в аккаунт Formbricks {email} через {provider}.",
       "title": "Привязать {provider} к твоему аккаунту?",
       "warning": "Продолжай, только если ты сам(а) хотел(а) войти в Formbricks через {provider}. Если нет, отмени действие: возможно, кто-то другой пытается получить доступ к твоему аккаунту."
     },

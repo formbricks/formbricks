@@ -470,7 +470,9 @@ export const getSsoRecoveryLinkNotOpenedRedirectUrl = (): string =>
 
 /**
  * Where a refused recovery sends the browser, for the confirmation page and the completion route alike.
- * The route adds the ENG-2557 session teardown for a `rejected` failure on top; the page never tears down.
+ * The route adds the ENG-2557 session teardown for a `rejected` failure on top. The page cannot: it is a
+ * server component and cannot clear cookies, so a refusal there leaves the session the emailed link
+ * created. That session belongs to whoever proved the mailbox, so it is not one that should not exist.
  */
 export const getSsoRecoveryRefusalRedirectUrl = (error: unknown): string => {
   const recoveryError = error instanceof SsoRecoveryError ? error : null;
@@ -779,9 +781,41 @@ export const getSsoRecoveryConfirmation = async (args: {
   stateId: string;
   recoveryProof?: string;
   sessionUserId?: string;
-}): Promise<{ provider: TSsoIdentityProvider }> => {
-  const { provider } = await authorizeSsoRecovery(args);
-  return { provider };
+}): Promise<{ provider: TSsoIdentityProvider; email: string }> => {
+  const { provider, user } = await authorizeSsoRecovery(args);
+  // The account's own address, so the reader can tell whose account they are about to change. A browser
+  // signed in to someone else's account (planted by that someone's own recovery link) shows their
+  // address here, not the reader's.
+  return { provider, email: user.email };
+};
+
+/**
+ * The account holder declined on the confirmation page (ENG-7395). Spends the intent so the link can no
+ * longer complete anything, from this browser or any other, and records why. Runs the same guards as a
+ * completion, so only the browser that could have linked can cancel.
+ */
+export const cancelSsoRecovery = async (args: {
+  stateId: string;
+  recoveryProof?: string;
+  sessionUserId?: string;
+}): Promise<void> => {
+  const { intent, provider } = await authorizeSsoRecovery(args);
+
+  await consumeSsoRecoveryIntent(args.stateId);
+
+  getSsoRecoveryLogger("sso_recovery_failed").info(
+    { userId: intent.userId, provider },
+    "SSO recovery cancelled by the account holder"
+  );
+  queueSsoRecoveryAuditEvent({
+    action: "sso_recovery_failed",
+    status: "failure",
+    userId: intent.userId,
+    email: intent.email,
+    provider,
+    callbackUrl: intent.callbackUrl,
+    failureReason: "cancelled_by_user",
+  });
 };
 
 /**

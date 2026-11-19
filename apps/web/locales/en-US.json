@@ -228,7 +228,7 @@
     "sso_recovery_confirm": {
       "cancel": "Cancel",
       "confirm": "Link {provider}",
-      "description": "After this, you can sign in to this Formbricks account with {provider}.",
+      "description": "After this, you can sign in to the Formbricks account {email} with {provider}.",
       "title": "Link {provider} to your account?",
       "warning": "Only continue if you yourself asked to sign in to Formbricks with {provider}. If you did not, cancel: someone else may be trying to get into your account."
     },

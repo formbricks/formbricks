@@ -99,3 +99,28 @@ describe("getSsoRecoveryStateIdFromCompletionUrl", () => {
     expect(getSsoRecoveryStateIdFromCompletionUrl(callbackUrl, WEBAPP_URL)).toBeNull();
   });
 });
+
+describe("SSO_RECOVERY_PROOF_COOKIE_NAME", () => {
+  /**
+   * `__Host-` on HTTPS, so a sibling subdomain cannot plant a cookie under this name: the prefix forbids
+   * a `Domain` attribute, and requires `Secure` and `Path=/`, which the options must then carry.
+   */
+  test("takes the __Host- prefix when cookies are secure, with the attributes it requires", async () => {
+    vi.resetModules();
+    vi.doMock("@/modules/auth/lib/auth-cookies", async (importOriginal) => ({
+      ...(await importOriginal<typeof import("@/modules/auth/lib/auth-cookies")>()),
+      USE_SECURE_COOKIES: true,
+    }));
+    try {
+      const { SSO_RECOVERY_PROOF_COOKIE_NAME, SSO_RECOVERY_PROOF_COOKIE_OPTIONS } =
+        await import("./recovery-proof");
+
+      expect(SSO_RECOVERY_PROOF_COOKIE_NAME).toBe("__Host-formbricks.sso_recovery_proof");
+      expect(SSO_RECOVERY_PROOF_COOKIE_OPTIONS).toMatchObject({ secure: true, path: "/" });
+      expect(SSO_RECOVERY_PROOF_COOKIE_OPTIONS).not.toHaveProperty("domain");
+    } finally {
+      vi.doUnmock("@/modules/auth/lib/auth-cookies");
+      vi.resetModules();
+    }
+  });
+});

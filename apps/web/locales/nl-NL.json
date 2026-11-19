@@ -228,7 +228,7 @@
     "sso_recovery_confirm": {
       "cancel": "Annuleren",
       "confirm": "{provider} koppelen",
-      "description": "Hierna kun je met {provider} inloggen op dit Formbricks-account.",
+      "description": "Hierna kun je met {provider} inloggen op het Formbricks-account {email}.",
       "title": "{provider} koppelen aan je account?",
       "warning": "Ga alleen verder als je zelf hebt gevraagd om met {provider} in te loggen bij Formbricks. Zo niet, annuleer dan: iemand anders probeert mogelijk toegang te krijgen tot je account."
     },

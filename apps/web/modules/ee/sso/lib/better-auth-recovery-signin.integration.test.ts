@@ -6,9 +6,9 @@ import type * as ConstantsModule from "@/lib/constants";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createToken } from "@/lib/jwt";
 import { auth } from "@/modules/auth/lib/auth";
-import { getCookieValueFromHeader } from "@/modules/auth/lib/session-cookie";
 import { syncSsoIdentityForUser } from "@/modules/ee/sso/lib/account-linking";
 import { SSO_RECOVERY_PROOF_COOKIE_NAME, isValidSsoRecoveryProof } from "@/modules/ee/sso/lib/recovery-proof";
+import { proofCookieOf } from "@/modules/ee/sso/lib/tests/recovery-cookies";
 
 const constants = vi.hoisted(() => ({ emailAuthEnabled: { value: true } }));
 
@@ -35,16 +35,6 @@ vi.mock("@/lib/constants", async (importOriginal) => ({
 beforeEach(async () => {
   await resetDb();
 });
-
-/** The recovery proof cookie a sign-in response set (ENG-7310), or null. */
-const proofCookieOf = (response: Response): string | null =>
-  getCookieValueFromHeader(
-    response.headers
-      .getSetCookie()
-      .map((setCookie) => setCookie.split(";")[0])
-      .join("; "),
-    SSO_RECOVERY_PROOF_COOKIE_NAME
-  );
 
 describe("SSO recovery sign-in (real Postgres)", () => {
   /**

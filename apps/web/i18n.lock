@@ -196,7 +196,7 @@ checksums:
     auth/signup_without_verification_success/user_successfully_created_info: 0502de5e7ef8594cc65cf890f13f9fcc
     auth/sso_recovery_confirm/cancel: 2e2a849c2223911717de8caa2c71bade
     auth/sso_recovery_confirm/confirm: 9f17fccdbc20f0f0f78e841a382c0613
-    auth/sso_recovery_confirm/description: 610c205b2caabb690586d8cdf8908359
+    auth/sso_recovery_confirm/description: 0ca673fae6e03fb91a164d4cb4befa1f
     auth/sso_recovery_confirm/title: 707b20825d7f13686eaf96186fe867eb
     auth/sso_recovery_confirm/warning: 676d09bd588bc417eb9fcfff22ff2f77
     auth/verification-requested/email_not_configured_description: bea45846d6b8bd77c7118bf9cde12021

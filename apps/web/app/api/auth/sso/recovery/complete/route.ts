@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { logger } from "@formbricks/logger";
+import { WEBAPP_URL } from "@/lib/constants";
 import { withAuthRequestBodyLimit } from "@/modules/auth/lib/auth-request-body-limit";
 import { getSession } from "@/modules/auth/lib/session";
 import {
@@ -14,10 +15,11 @@ import {
 } from "@/modules/ee/sso/lib/recovery-proof";
 import {
   SsoRecoveryError,
+  cancelSsoRecovery,
   completeSsoRecovery,
   getSsoRecoveryConfirmUrl,
   getSsoRecoveryFailureRedirectUrl,
-  getSsoRecoveryLinkNotOpenedRedirectUrl,
+  getSsoRecoveryRefusalRedirectUrl,
 } from "@/modules/ee/sso/lib/sso-recovery";
 
 const clearSessionCookies = (response: NextResponse) => {
@@ -32,12 +34,8 @@ const clearSessionCookies = (response: NextResponse) => {
   }
 };
 
-const buildFailedRecoveryResponse = async (
-  request: Request,
-  callbackUrl: string | undefined,
-  status: number
-) => {
-  const response = NextResponse.redirect(getSsoRecoveryFailureRedirectUrl(callbackUrl), status);
+const buildFailedRecoveryResponse = async (request: Request, error: unknown, status: number) => {
+  const response = NextResponse.redirect(getSsoRecoveryRefusalRedirectUrl(error), status);
   clearSessionCookies(response);
 
   const sessionToken = getSessionTokenFromCookieHeader(request.headers.get("cookie"));
@@ -76,19 +74,37 @@ const getHandler = async (request: Request) => {
 };
 
 /**
- * Only a same-origin submission links. Session and proof cookies are SameSite=Lax, so a cross-site POST
- * arrives without them and is refused anyway; checking `Sec-Fetch-Site` says so outright rather than
- * leaning on cookie attributes alone. Browsers that send no such header still have the Lax refusal.
+ * Only a deliberate, same-origin form submission acts (ENG-7395).
+ *
+ * Session and proof cookies are SameSite=Lax, so a cross-site POST arrives without them and is refused
+ * anyway; `Sec-Fetch-Site` says so outright. Same-origin is not enough on its own, though: a script on
+ * this origin (a self-hosted link survey's custom head script, say) could `fetch()` the POST without the
+ * account holder ever seeing the page. So when the browser sends Fetch Metadata at all, the request must
+ * also be a top-level navigation the user activated: `Sec-Fetch-Mode: navigate`, `Sec-Fetch-Dest:
+ * document`, `Sec-Fetch-User: ?1`. A `fetch()` sends `cors`/`empty` and a scripted `form.submit()` sends
+ * no `Sec-Fetch-User`. A browser without Fetch Metadata still has the Lax refusal.
  */
-const isCrossSiteSubmission = (request: Request): boolean => {
+const isDeliberateSubmission = (request: Request): boolean => {
   const fetchSite = request.headers.get("sec-fetch-site");
-  return fetchSite !== null && fetchSite !== "same-origin";
+  if (fetchSite === null) return true;
+
+  return (
+    fetchSite === "same-origin" &&
+    request.headers.get("sec-fetch-mode") === "navigate" &&
+    request.headers.get("sec-fetch-dest") === "document" &&
+    request.headers.get("sec-fetch-user") === "?1"
+  );
 };
 
-const readStateId = async (request: Request): Promise<string | null> => {
+type TSubmission = { stateId: string; action: "link" | "cancel" };
+
+const readSubmission = async (request: Request): Promise<TSubmission | null> => {
   try {
-    const stateId = (await request.formData()).get("state");
-    return typeof stateId === "string" && stateId.length > 0 ? stateId : null;
+    const form = await request.formData();
+    const stateId = form.get("state");
+    if (typeof stateId !== "string" || stateId.length === 0) return null;
+
+    return { stateId, action: form.get("action") === "cancel" ? "cancel" : "link" };
   } catch (error) {
     // `formData()` rejects with a TypeError for a body that is not form data; that is a bad request,
     // not a fault. Anything else is unexpected and propagates.
@@ -97,26 +113,78 @@ const readStateId = async (request: Request): Promise<string | null> => {
   }
 };
 
+/** The proof has done its job (the recovery was linked or cancelled), so nothing reads it again. */
+const clearProofCookie = (response: NextResponse) => {
+  response.cookies.set({
+    name: SSO_RECOVERY_PROOF_COOKIE_NAME,
+    value: "",
+    ...SSO_RECOVERY_PROOF_COOKIE_OPTIONS,
+    maxAge: 0,
+  });
+};
+
+/**
+ * The response to a refused link or cancel. Redirects go through `getSsoRecoveryRefusalRedirectUrl`,
+ * which the confirmation page uses too, so both send a refusal to the same place.
+ *
+ * `intent_unusable` and `unproven` leave the session alone. The first covers five situations the store
+ * cannot tell apart (expired, already consumed, never issued, Redis unreadable, malformed), and the
+ * ordinary ones must not be punished: the emailed link is replayable for its window, so a second open
+ * that finds the intent consumed would otherwise sign the user out right after linking succeeded. The
+ * second is a browser that never opened the emailed link, so its session was not minted by the link,
+ * and tearing it down would let anyone holding a state id sign the account holder out. Skipping the
+ * teardown is safe because it only revokes the token off the caller's own cookie; the link itself
+ * already failed closed before any write.
+ *
+ * Everything else, a guard that read an intent and turned it down or an unexpected throw, keeps the
+ * ENG-2557 teardown.
+ */
+const buildRefusalResponse = async (request: Request, error: unknown) => {
+  if (!(error instanceof SsoRecoveryError)) {
+    logger.error(error, "Unexpected error completing SSO recovery");
+  }
+
+  const failure = error instanceof SsoRecoveryError ? error.failure : null;
+  if (failure === "intent_unusable" || failure === "unproven") {
+    return NextResponse.redirect(getSsoRecoveryRefusalRedirectUrl(error), 303);
+  }
+
+  return await buildFailedRecoveryResponse(request, error, 303);
+};
+
 const postHandler = async (request: Request) => {
-  if (isCrossSiteSubmission(request)) {
+  if (!isDeliberateSubmission(request)) {
     return NextResponse.redirect(getSsoRecoveryFailureRedirectUrl(), 303);
   }
 
-  const stateId = await readStateId(request);
+  const submission = await readSubmission(request);
 
-  if (!stateId) {
+  if (!submission) {
     return NextResponse.redirect(getSsoRecoveryFailureRedirectUrl(), 303);
   }
 
   const cookieHeader = request.headers.get("cookie");
+  const recoveryProof =
+    (cookieHeader && getCookieValueFromHeader(cookieHeader, SSO_RECOVERY_PROOF_COOKIE_NAME)) || undefined;
 
   try {
     const session = await getSession();
+
+    if (submission.action === "cancel") {
+      await cancelSsoRecovery({
+        stateId: submission.stateId,
+        recoveryProof,
+        sessionUserId: session?.user.id,
+      });
+      const response = NextResponse.redirect(WEBAPP_URL, 303);
+      clearProofCookie(response);
+      return response;
+    }
+
     const callbackUrl = await completeSsoRecovery({
-      stateId,
+      stateId: submission.stateId,
       // Set when this browser opened the emailed link (ENG-7310).
-      recoveryProof:
-        (cookieHeader && getCookieValueFromHeader(cookieHeader, SSO_RECOVERY_PROOF_COOKIE_NAME)) || undefined,
+      recoveryProof,
       sessionUserId: session?.user.id,
       // Spared by the post-commit session sweep, so the redirect below still lands signed in.
       sessionToken: getSessionTokenFromCookieHeader(cookieHeader) ?? undefined,
@@ -124,43 +192,10 @@ const postHandler = async (request: Request) => {
 
     // 303, not the default 307: a 307 would replay this POST against the callback.
     const response = NextResponse.redirect(callbackUrl, 303);
-    // The proof has done its job and the intent is spent; nothing reads the cookie again.
-    response.cookies.set({
-      name: SSO_RECOVERY_PROOF_COOKIE_NAME,
-      value: "",
-      ...SSO_RECOVERY_PROOF_COOKIE_OPTIONS,
-      maxAge: 0,
-    });
+    clearProofCookie(response);
     return response;
   } catch (error) {
-    const recoveryError = error instanceof SsoRecoveryError ? error : null;
-
-    // No usable intent came back, and that is not evidence of a session that should not exist. Five
-    // situations land here and the store cannot tell them apart (see `SsoRecoveryError.failure`):
-    // expired, already consumed, never issued, Redis unreadable, or a record that failed validation.
-    //
-    // Tearing the session down would punish the ordinary ones. A link replayable for its whole window
-    // by design gets opened twice; the sign-in endpoint establishes the session, and this route would
-    // then revoke it and report that the linking failed, after it had already succeeded on the first
-    // open. Skipping the teardown is safe for the rest too, because it only revokes the token off this
-    // caller's own cookie — the account link has already failed closed inside `completeSsoRecovery`,
-    // which threw before writing anything. So leave the session alone and just redirect.
-    if (recoveryError?.failure === "intent_unusable") {
-      return NextResponse.redirect(getSsoRecoveryFailureRedirectUrl(), 303);
-    }
-
-    // A live intent reached by a browser that never opened the emailed link (ENG-7310) is the same: that
-    // session was not minted by the link. Tearing it down would also let anyone holding a state id sign
-    // the account holder out by sending their browser here. The login page then says to open the
-    // emailed link, and to ignore it when the reader did not start a sign-in.
-    if (recoveryError?.failure === "unproven") {
-      return NextResponse.redirect(getSsoRecoveryLinkNotOpenedRedirectUrl(), 303);
-    }
-
-    // Everything else — a guard that read an intent and turned it down, or an unexpected throw — keeps
-    // the ENG-2557 teardown. The failure redirect wants the callback the user was originally headed
-    // for, which rides on the error rather than costing a second Redis read.
-    return await buildFailedRecoveryResponse(request, recoveryError?.callbackUrl, 303);
+    return await buildRefusalResponse(request, error);
   }
 };
 

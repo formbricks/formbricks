@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
-import Link from "next/link";
 import { redirect } from "next/navigation";
+import { logger } from "@formbricks/logger";
 import { WEBAPP_URL } from "@/lib/constants";
 import { getTranslate } from "@/lingodotdev/server";
 import { FormWrapper } from "@/modules/auth/components/form-wrapper";
@@ -9,6 +9,7 @@ import { SSO_RECOVERY_COMPLETION_PATH } from "@/modules/auth/lib/verification-li
 import { getSsoProviderDisplayName } from "@/modules/ee/sso/lib/provider-display-name";
 import { SSO_RECOVERY_PROOF_COOKIE_NAME } from "@/modules/ee/sso/lib/recovery-proof";
 import {
+  SsoRecoveryError,
   getSsoRecoveryConfirmation,
   getSsoRecoveryFailureRedirectUrl,
   getSsoRecoveryRefusalRedirectUrl,
@@ -36,15 +37,22 @@ export const SsoRecoveryConfirmPage = async ({
   const [session, cookieStore, t] = await Promise.all([getSession(), cookies(), getTranslate()]);
 
   let providerName: string;
+  let email: string;
   try {
-    const { provider } = await getSsoRecoveryConfirmation({
+    const confirmation = await getSsoRecoveryConfirmation({
       stateId,
       recoveryProof: cookieStore.get(SSO_RECOVERY_PROOF_COOKIE_NAME)?.value,
       sessionUserId: session?.user.id,
     });
-    providerName = getSsoProviderDisplayName(provider);
+    providerName = getSsoProviderDisplayName(confirmation.provider);
+    email = confirmation.email;
   } catch (error) {
-    // No session teardown here, unlike the completion route: the page writes nothing.
+    // The guards log and audit their own refusals; anything else is a fault worth a log line.
+    if (!(error instanceof SsoRecoveryError)) {
+      logger.error(error, "Unexpected error showing the SSO recovery confirmation");
+    }
+    // No session teardown here, unlike the completion route: a server component cannot clear cookies,
+    // and the page writes nothing.
     redirect(getSsoRecoveryRefusalRedirectUrl(error));
   }
 
@@ -56,7 +64,7 @@ export const SsoRecoveryConfirmPage = async ({
         {t("auth.sso_recovery_confirm.title", { provider: providerName })}
       </h1>
       <p className="mb-2 text-center text-sm text-slate-700">
-        {t("auth.sso_recovery_confirm.description", { provider: providerName })}
+        {t("auth.sso_recovery_confirm.description", { provider: providerName, email })}
       </p>
       <p className="mb-6 text-center text-sm font-medium text-slate-900">
         {t("auth.sso_recovery_confirm.warning", { provider: providerName })}
@@ -66,8 +74,15 @@ export const SsoRecoveryConfirmPage = async ({
         <Button type="submit" className="h-11 w-full justify-center sm:h-9">
           {t("auth.sso_recovery_confirm.confirm", { provider: providerName })}
         </Button>
-        <Button variant="secondary" className="h-11 w-full justify-center sm:h-9" asChild>
-          <Link href="/">{t("auth.sso_recovery_confirm.cancel")}</Link>
+        {/* A POST too, not a link: cancelling spends the intent and the proof, so the emailed link can no
+            longer complete anything. Leaving the page instead keeps both alive until they expire. */}
+        <Button
+          type="submit"
+          name="action"
+          value="cancel"
+          variant="secondary"
+          className="h-11 w-full justify-center sm:h-9">
+          {t("auth.sso_recovery_confirm.cancel")}
         </Button>
       </form>
     </FormWrapper>

@@ -228,7 +228,7 @@
     "sso_recovery_confirm": {
       "cancel": "Avbryt",
       "confirm": "Länka {provider}",
-      "description": "Efter det kan du logga in på det här Formbricks-kontot med {provider}.",
+      "description": "Efter detta kan du logga in på Formbricks-kontot {email} med {provider}.",
       "title": "Vill du länka {provider} till ditt konto?",
       "warning": "Fortsätt bara om du själv har begärt att logga in på Formbricks med {provider}. Om du inte har gjort det, avbryt: någon annan kan försöka ta sig in på ditt konto."
     },

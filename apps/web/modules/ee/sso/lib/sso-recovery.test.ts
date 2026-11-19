@@ -11,6 +11,7 @@ import { syncSsoIdentityForUser } from "./account-linking";
 import { createSsoRecoveryProof } from "./recovery-proof";
 import {
   SsoRecoveryError,
+  cancelSsoRecovery,
   completeSsoRecovery,
   getSsoRecoveryConfirmUrl,
   getSsoRecoveryConfirmation,
@@ -953,7 +954,7 @@ describe("sso-recovery", () => {
           recoveryProof: createSsoRecoveryProof("user_1", "test-state"),
           sessionUserId: "user_1",
         })
-      ).resolves.toEqual({ provider: "google" });
+      ).resolves.toEqual({ provider: "google", email: "john.doe@example.com" });
 
       // A page view must not link, strip, consume or finalize anything.
       expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -975,6 +976,35 @@ describe("sso-recovery", () => {
         expect(prisma.$transaction).not.toHaveBeenCalled();
       }
     );
+
+    test("a cancel spends the intent, links nothing, and records why", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(verifiedUser as never);
+
+      await cancelSsoRecovery({
+        stateId: "test-state",
+        recoveryProof: createSsoRecoveryProof("user_1", "test-state"),
+        sessionUserId: "user_1",
+      });
+
+      expect(mocks.consumeSsoRecoveryIntent).toHaveBeenCalledWith("test-state");
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+      expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: "sso_recovery_failed",
+          userId: "user_1",
+          newObject: expect.objectContaining({ failureReason: "cancelled_by_user" }),
+        })
+      );
+    });
+
+    test("only the browser that could link can cancel", async () => {
+      const outcome = cancelSsoRecovery({ stateId: "test-state", sessionUserId: "user_1" });
+
+      await expect(outcome.catch((error: SsoRecoveryError) => error.failure)).resolves.toBe("unproven");
+      // Someone holding just the state id cannot burn the account holder's recovery.
+      expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
+    });
 
     test("points at the confirmation page for a state", () => {
       expect(getSsoRecoveryConfirmUrl("abc")).toBe("http://localhost:3000/sso-recovery/confirm?state=abc");

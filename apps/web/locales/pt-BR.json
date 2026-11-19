@@ -228,7 +228,7 @@
     "sso_recovery_confirm": {
       "cancel": "Cancelar",
       "confirm": "Vincular {provider}",
-      "description": "Depois disso, você poderá entrar nesta conta do Formbricks com {provider}.",
+      "description": "Depois disso, você poderá entrar na conta do Formbricks {email} com {provider}.",
       "title": "Vincular {provider} à sua conta?",
       "warning": "Só continue se foi você mesmo quem pediu para entrar no Formbricks com {provider}. Se não foi, cancele: outra pessoa pode estar tentando acessar sua conta."
     },

@@ -228,7 +228,7 @@
     "sso_recovery_confirm": {
       "cancel": "Abbrechen",
       "confirm": "{provider} verknüpfen",
-      "description": "Danach kannst Du Dich mit {provider} bei diesem Formbricks-Konto anmelden.",
+      "description": "Danach kannst Du Dich mit {provider} beim Formbricks-Konto {email} anmelden.",
       "title": "{provider} mit Deinem Konto verknüpfen?",
       "warning": "Fahre nur fort, wenn Du selbst darum gebeten hast, Dich mit {provider} bei Formbricks anzumelden. Falls nicht, brich den Vorgang ab: Möglicherweise versucht jemand anderes, Zugriff auf Dein Konto zu bekommen."
     },

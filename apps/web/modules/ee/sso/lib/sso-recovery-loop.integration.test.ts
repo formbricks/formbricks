@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
+import { GET as completionGet, POST as completionPost } from "@/app/api/auth/sso/recovery/complete/route";
 import { resetDb } from "@/integration/reset-db";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createToken } from "@/lib/jwt";
 import { auth } from "@/modules/auth/lib/auth";
-import { getCookieValueFromHeader } from "@/modules/auth/lib/session-cookie";
+import { getSession } from "@/modules/auth/lib/session";
 import { ssoRecoveryAfterHandler } from "@/modules/ee/sso/lib/better-auth-hooks";
 import { SSO_RECOVERY_PROOF_COOKIE_NAME } from "@/modules/ee/sso/lib/recovery-proof";
 import { completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 import { captureSsoIdentity, runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-context";
+import { cookieHeaderFrom, proofCookieOf } from "@/modules/ee/sso/lib/tests/recovery-cookies";
 
 /**
  * ENG-2783 end to end, through the hook the IdP callback actually runs, against real Postgres and real
@@ -27,7 +29,11 @@ import { captureSsoIdentity, runWithSsoRequestContext } from "@/modules/ee/sso/l
  * ~2.7 (hex-encoded ciphertext, then base64url) and the third produced a bare 414.
  */
 
-const mocks = vi.hoisted(() => ({ getOAuthState: vi.fn() }));
+const mocks = vi.hoisted(() => ({ getOAuthState: vi.fn(), cookieHeader: { value: "" } }));
+
+// The route reads its session through `next/headers`, which only a Next request can supply. The test
+// resolves it through Better Auth itself from the cookie its browser is sending, so it stays real.
+vi.mock("@/modules/auth/lib/session", () => ({ getSession: vi.fn() }));
 
 // The one stub. `APIError` and `createAuthMiddleware` from the same module stay real.
 vi.mock("better-auth/api", async (importOriginal) => ({
@@ -87,24 +93,12 @@ const runOneRecoveryAttempt = async (
   return redirectedTo;
 };
 
-/**
- * Opens the link `startSsoRecovery` mails, as the mailbox owner's browser would, and returns the proof
- * cookie Better Auth set on the response (ENG-7310).
- */
-const openEmailedRecoveryLink = async (userId: string, completionUrl: string): Promise<string> => {
-  const token = createToken(userId, { purpose: "sso_recovery" });
-  const response = await auth.api.ssoRecoverySignIn({
-    query: { token, callbackUrl: completionUrl },
+/** Opens the link `startSsoRecovery` mails, as the mailbox owner's browser would (ENG-7310). */
+const openEmailedRecoveryLink = (userId: string, completionUrl: string): Promise<Response> =>
+  auth.api.ssoRecoverySignIn({
+    query: { token: createToken(userId, { purpose: "sso_recovery" }), callbackUrl: completionUrl },
     asResponse: true,
   });
-  const cookieHeader = response.headers
-    .getSetCookie()
-    .map((setCookie) => setCookie.split(";")[0])
-    .join("; ");
-  const proof = getCookieValueFromHeader(cookieHeader, SSO_RECOVERY_PROOF_COOKIE_NAME);
-  expect(proof).toBeTruthy();
-  return proof!;
-};
 
 /** What the browser sends when the user clicks "log in" on the verification-requested page. */
 const loginRequestLineFor = (verificationRequestedUrl: string): string => {
@@ -213,7 +207,8 @@ describe("SSO recovery retry loop (real Postgres + Redis, real Better Auth hook)
     expect(await prisma.account.count({ where: { userId: user.id, provider: "google" } })).toBe(0);
 
     // The emailed link, opened through the real Better Auth endpoint, mints the proof.
-    const recoveryProof = await openEmailedRecoveryLink(user.id, completionUrl);
+    const recoveryProof = proofCookieOf(await openEmailedRecoveryLink(user.id, completionUrl)) ?? undefined;
+    expect(recoveryProof).toBeTruthy();
     const landedOn = await completeSsoRecovery({ stateId, recoveryProof, sessionUserId: user.id });
 
     expect(landedOn).toBe(destination);
@@ -226,5 +221,69 @@ describe("SSO recovery retry loop (real Postgres + Redis, real Better Auth hook)
     await expect(completeSsoRecovery({ stateId, recoveryProof, sessionUserId: user.id })).rejects.toThrow(
       "OAuthAccountNotLinked"
     );
+  });
+
+  /**
+   * ENG-7310 and ENG-7395 through the real pieces end to end: the hook starts recovery, the emailed link
+   * goes through Better Auth's endpoint, and the route reads what that endpoint set. A cookie the
+   * endpoint names one way and the route reads another fails here, which no mocked layer can show.
+   */
+  test("the emailed link, the GET and the confirmed POST link the identity through the real route", async () => {
+    const user = await seedUser();
+    const destination = `${WEBAPP_URL}/organizations/org_loop/workspaces/ws_loop/surveys`;
+    const verificationRequestedUrl = await runOneRecoveryAttempt(destination, "google-sub-route");
+    const completionUrl = new URL(verificationRequestedUrl).searchParams.get("callbackUrl")!;
+    const stateId = new URL(completionUrl).searchParams.get("state")!;
+    vi.mocked(getSession).mockImplementation(async () => {
+      const result = await auth.api.getSession({
+        headers: new Headers({ cookie: mocks.cookieHeader.value }),
+      });
+      return (result ? { user: result.user, session: result.session } : null) as never;
+    });
+
+    // The mailbox owner's browser opens the link: a session and a proof come back, then the completion URL.
+    const signIn = await openEmailedRecoveryLink(user.id, completionUrl);
+    expect(signIn.headers.get("location")).toBe(completionUrl);
+    const browserCookies = cookieHeaderFrom(signIn);
+    expect(browserCookies).toContain(`${SSO_RECOVERY_PROOF_COOKIE_NAME}=`);
+
+    // The GET it lands on links nothing; it only forwards to the confirmation page.
+    const get = await completionGet(new Request(completionUrl, { headers: { cookie: browserCookies } }));
+    expect(get.headers.get("location")).toBe(`${WEBAPP_URL}/sso-recovery/confirm?state=${stateId}`);
+    expect(await prisma.account.count({ where: { userId: user.id, provider: "google" } })).toBe(0);
+
+    const post = (cookie: string) => {
+      mocks.cookieHeader.value = cookie;
+      return completionPost(
+        new Request(`${WEBAPP_URL}/api/auth/sso/recovery/complete`, {
+          method: "POST",
+          headers: {
+            cookie,
+            "content-type": "application/x-www-form-urlencoded",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-mode": "navigate",
+            "sec-fetch-dest": "document",
+            "sec-fetch-user": "?1",
+          },
+          body: new URLSearchParams({ state: stateId }).toString(),
+        })
+      );
+    };
+
+    // The same session without the proof (the ENG-7310 attack) is refused, and the intent survives.
+    const sessionOnly = browserCookies
+      .split("; ")
+      .filter((pair) => !pair.startsWith(`${SSO_RECOVERY_PROOF_COOKIE_NAME}=`))
+      .join("; ");
+    const refused = await post(sessionOnly);
+    expect(refused.headers.get("location")).toContain("error=sso_recovery_link_not_opened");
+    expect(await prisma.account.count({ where: { userId: user.id, provider: "google" } })).toBe(0);
+
+    // The confirmed POST from the browser that opened the link links it.
+    const confirmed = await post(browserCookies);
+    expect(confirmed.status).toBe(303);
+    expect(confirmed.headers.get("location")).toBe(destination);
+    const account = await prisma.account.findFirst({ where: { userId: user.id, provider: "google" } });
+    expect(account?.providerAccountId).toBe("google-sub-route");
   });
 });

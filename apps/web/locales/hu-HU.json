@@ -228,7 +228,7 @@
     "sso_recovery_confirm": {
       "cancel": "Mégse",
       "confirm": "{provider} összekapcsolása",
-      "description": "Ezt követően Ön a(z) {provider} használatával be tud jelentkezni ebbe a Formbricks-fiókba.",
+      "description": "Ezt követően be tud jelentkezni a(z) {email} e-mail-címhez tartozó Formbricks-fiókjába a(z) {provider} segítségével.",
       "title": "Összekapcsolja a(z) {provider} szolgáltatást a fiókjával?",
       "warning": "Kizárólag abban az esetben folytassa, ha Ön személyesen kezdeményezte a Formbricks-be történő bejelentkezést a(z) {provider} használatával. Amennyiben nem Ön kezdeményezte, kérjük, szakítsa meg a folyamatot: előfordulhat, hogy valaki más próbál hozzáférni az Ön fiókjához."
     },

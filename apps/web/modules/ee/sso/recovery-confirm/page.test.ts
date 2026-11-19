@@ -1,6 +1,7 @@
 import { isValidElement } from "react";
 import type { ReactElement, ReactNode } from "react";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { logger } from "@formbricks/logger";
 import { getSession } from "@/modules/auth/lib/session";
 import { SSO_RECOVERY_PROOF_COOKIE_NAME } from "@/modules/ee/sso/lib/recovery-proof";
 import { SsoRecoveryError, getSsoRecoveryConfirmation } from "@/modules/ee/sso/lib/sso-recovery";
@@ -33,6 +34,14 @@ vi.mock("@/lingodotdev/server", () => ({
 }));
 
 vi.mock("@/modules/auth/lib/session", () => ({ getSession: vi.fn() }));
+vi.mock("@formbricks/logger", () => ({
+  logger: {
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    withContext: vi.fn(() => ({ error: vi.fn(), info: vi.fn() })),
+  },
+}));
 
 // The guards and the redirect mapping are tested in sso-recovery.test.ts; this file pins what the page
 // does with their answer. The mapping stays real so a refusal lands where the route would send it.
@@ -61,7 +70,10 @@ describe("SsoRecoveryConfirmPage (ENG-7395)", () => {
 
   test("asks before linking: a form that POSTs the state back to the completion route", async () => {
     cookieValues.set(SSO_RECOVERY_PROOF_COOKIE_NAME, "proof-value");
-    vi.mocked(getSsoRecoveryConfirmation).mockResolvedValue({ provider: "google" });
+    vi.mocked(getSsoRecoveryConfirmation).mockResolvedValue({
+      provider: "google",
+      email: "owner@example.com",
+    });
 
     const elements = elementsOf(await renderPage("state-id"));
 
@@ -85,6 +97,16 @@ describe("SsoRecoveryConfirmPage (ENG-7395)", () => {
       .filter((children): children is string => typeof children === "string");
     expect(text).toContain('auth.sso_recovery_confirm.title {"provider":"Google"}');
     expect(text).toContain('auth.sso_recovery_confirm.warning {"provider":"Google"}');
+    // The account it would change, so a browser signed in to someone else's account shows theirs.
+    expect(text).toContain(
+      'auth.sso_recovery_confirm.description {"provider":"Google","email":"owner@example.com"}'
+    );
+    // Cancel posts too, so it can spend the recovery rather than just navigate away.
+    const buttons = elements.filter((element) => (element.props as { type?: string }).type === "submit");
+    expect(buttons.map((element) => (element.props as { name?: string; value?: string }).value)).toEqual([
+      undefined,
+      "cancel",
+    ]);
   });
 
   test("shows nothing to a browser that never opened the emailed link", async () => {
@@ -92,6 +114,16 @@ describe("SsoRecoveryConfirmPage (ENG-7395)", () => {
 
     await expect(renderPage("state-id")).rejects.toThrow(
       "NEXT_REDIRECT http://localhost:3000/auth/login?error=sso_recovery_link_not_opened"
+    );
+  });
+
+  test("logs a failure that is not a guard's refusal", async () => {
+    vi.mocked(getSsoRecoveryConfirmation).mockRejectedValue(new Error("redis exploded"));
+
+    await expect(renderPage("state-id")).rejects.toThrow("error=OAuthAccountNotLinked");
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.any(Error),
+      "Unexpected error showing the SSO recovery confirmation"
     );
   });
 
