@@ -135,12 +135,15 @@ export const SignupForm = ({
     const placement = getSignupErrorPlacement(errorMessage, t);
     // The setup-token field is on the page only when the instance asked for it as the page rendered;
     // if that changed since, an error under a missing field would show nothing.
-    const fieldShown = "field" in placement && (placement.field !== "setupToken" || isSetupTokenRequired);
-    if ("field" in placement && fieldShown) {
-      form.setError(placement.field, { type: "manual", message: placement.message });
+    if (!("field" in placement)) {
+      toast.error(placement.toast);
       return;
     }
-    toast.error("field" in placement ? placement.message : placement.toast);
+    if (placement.field === "setupToken" && !isSetupTokenRequired) {
+      toast.error(placement.message);
+      return;
+    }
+    form.setError(placement.field, { type: "manual", message: placement.message });
   };
 
   const handleSubmit = async (data: TSignupInput) => {

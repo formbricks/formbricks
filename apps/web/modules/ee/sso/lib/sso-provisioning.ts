@@ -112,22 +112,6 @@ const isFreshInstanceReservedForSetupToken = async (): Promise<boolean> =>
   isSetupTokenConfigured() && (await getIsFreshInstance());
 
 /**
- * Gate for SSO just-in-time user provisioning — the orphan-safe, WRITE-FREE decision logic for the
- * Better Auth SSO sign-up flow (introduced by the NextAuth→Better Auth migration, ENG-1054).
- *
- * MUST be called from `databaseHooks.user.create.before`, which Better Auth runs INSIDE the
- * user+account transaction: a `"reject"` there → throw an APIError → the row rolls back, so no orphan
- * user is created (design doc §13; the post-commit `user.create.after` could not reject safely). The
- * `"provision"` decision (resolved org + flags) is carried to the after-hook, which performs the
- * membership writes.
- *
- * Invariants (covered by sso-provisioning.test.ts): `DEFAULT_ORGANIZATION_ID` wins over everything
- * below it; fresh-instance & multi-org bypass all gates; single-org + `SKIP_INVITE_FOR_SSO` requires
- * `DEFAULT_TEAM_ID`; otherwise a valid invite token matching the email is required; the assignment org
- * is the default team's org (skip-invite) or the first org; access control without a callback URL is
- * refused.
- */
-/**
  * The refusals that come before any organization is resolved: the Cloud email-domain block and, with
  * `SETUP_TOKEN` set, a fresh instance that only the setup form may claim.
  */
@@ -159,6 +143,22 @@ const getSsoPreflightRejection = async (
   return null;
 };
 
+/**
+ * Gate for SSO just-in-time user provisioning — the orphan-safe, WRITE-FREE decision logic for the
+ * Better Auth SSO sign-up flow (introduced by the NextAuth→Better Auth migration, ENG-1054).
+ *
+ * MUST be called from `databaseHooks.user.create.before`, which Better Auth runs INSIDE the
+ * user+account transaction: a `"reject"` there → throw an APIError → the row rolls back, so no orphan
+ * user is created (design doc §13; the post-commit `user.create.after` could not reject safely). The
+ * `"provision"` decision (resolved org + flags) is carried to the after-hook, which performs the
+ * membership writes.
+ *
+ * Invariants (covered by sso-provisioning.test.ts): with `SETUP_TOKEN` set, a fresh instance is refused
+ * first; `DEFAULT_ORGANIZATION_ID` wins over everything below it; fresh-instance & multi-org bypass all gates; single-org + `SKIP_INVITE_FOR_SSO` requires
+ * `DEFAULT_TEAM_ID`; otherwise a valid invite token matching the email is required; the assignment org
+ * is the default team's org (skip-invite) or the first org; access control without a callback URL is
+ * refused.
+ */
 export const gateSsoProvisioning = async ({
   email,
   callbackUrl,

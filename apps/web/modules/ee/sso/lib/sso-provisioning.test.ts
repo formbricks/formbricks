@@ -115,8 +115,8 @@ describe("gateSsoProvisioning — bypass branches", () => {
     });
   });
 
-  // ENG-7313: SSO has no form to carry the setup token, so with one configured the SSO route is not a
-  // way to claim a fresh instance. It falls through to the established-instance gates and is rejected.
+  // ENG-7313: the DEFAULT_ORGANIZATION_ID route would create that organization with the first IdP account
+  // as owner, so on a fresh instance with SETUP_TOKEN set it is refused like every other SSO claim.
   test("SETUP_TOKEN also blocks the DEFAULT_ORGANIZATION_ID route on a fresh instance", async () => {
     constantsOverrides.SETUP_TOKEN = "0123456789abcdef-setup-token";
     constantsOverrides.DEFAULT_ORGANIZATION_ID = "org-default";
@@ -137,6 +137,8 @@ describe("gateSsoProvisioning — bypass branches", () => {
     expect(decision).toMatchObject({ action: "provision", organizationId: "org-default" });
   });
 
+  // ENG-7313: SSO has no form to carry the setup token, so with one configured the SSO route is not a
+  // way to claim a fresh instance. It falls through to the established-instance gates and is rejected.
   test("a fresh instance with SETUP_TOKEN configured is not claimable through SSO", async () => {
     constantsOverrides.SETUP_TOKEN = "0123456789abcdef-setup-token";
     vi.mocked(getIsFreshInstance).mockResolvedValue(true);
