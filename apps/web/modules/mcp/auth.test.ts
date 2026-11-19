@@ -492,6 +492,7 @@ describe("authenticateMcpRequest", () => {
   // ENG-7314: tokens no longer carry email/name unless those scopes were approved.
   test("authenticates a token that carries no identity claims", async () => {
     verifyBearerTokenMock.mockResolvedValue({
+      iat: TOKEN_IAT,
       aud: MCP_AUDIENCE,
       sub: "user_1",
       exp: 2_000_000_000,
@@ -515,6 +516,7 @@ describe("authenticateMcpRequest", () => {
   test("charges one rate-limit bucket per user, whichever client the token belongs to", async () => {
     for (const azp of ["client_a", "client_b"]) {
       verifyBearerTokenMock.mockResolvedValue({
+        iat: TOKEN_IAT,
         aud: MCP_AUDIENCE,
         sub: "user_1",
         exp: 2_000_000_000,
