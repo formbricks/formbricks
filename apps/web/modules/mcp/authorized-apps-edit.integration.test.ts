@@ -116,6 +116,9 @@ const openedVersion = async (clientId: string): Promise<string> => {
   return (grant?.updatedAt ?? new Date(0)).toISOString();
 };
 
+/** The origin check's refusal, which a 403 from the grant's own checks must not be. */
+const CROSS_ORIGIN_DETAIL = "Cross-origin requests are not allowed.";
+
 /** Edit's Save, sent with the version Edit opened: the grant as saved now, unless `opened` is given. */
 const editGrant = async (clientId: string, permissions: Record<string, string>, opened?: string) => {
   const expectedUpdatedAt = opened ?? (await openedVersion(clientId));
@@ -322,6 +325,8 @@ describe("Authorized apps' Edit", () => {
 
     expect(listed.body.data.clients).toEqual([]);
     expect(edited.status).toBe(403);
+    // Refused by the grant's ownership, not by the origin check every session write passes first.
+    expect(edited.body.detail).not.toBe(CROSS_ORIGIN_DETAIL);
     expect(await getMcpGrant(setup.userId, setup.clientId)).toEqual(before);
   });
 
@@ -335,7 +340,9 @@ describe("Authorized apps' Edit", () => {
       headers: new Headers({ cookie: setup.cookie }),
     });
 
-    expect((await editGrant(setup.clientId, { surveys: "read" })).status).toBe(403);
+    const edited = await editGrant(setup.clientId, { surveys: "read" });
+    expect(edited.status).toBe(403);
+    expect(edited.body.detail).not.toBe(CROSS_ORIGIN_DETAIL);
     expect(await getMcpGrant(setup.userId, setup.clientId)).toBeNull();
     expect((await listClients()).body.data.clients).toEqual([]);
   });
