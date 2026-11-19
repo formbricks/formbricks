@@ -46,6 +46,7 @@ import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
 import { snapshotConsentBeforeApprovalHandler } from "./oauth-consent-change";
 import { recordOAuthConsentWrites } from "./oauth-consent-writes";
 import { refuseCodeIssuedBeforeRevocationBeforeHandler } from "./oauth-revocation-marker";
+import { boundOAuthStateBeforeHandler } from "./oauth-state-bounds";
 import { getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
@@ -377,6 +378,9 @@ export const auth = betterAuth({
   // recovery rather than a credential failure, so skipping the audit is correct.
   hooks: {
     before: createAuthMiddleware(async (ctx) => {
+      // ENG-6885: bound what an anonymous OAuth sign-in parks in Redis (its state record) before anything
+      // else runs. See oauth-state-bounds.ts.
+      boundOAuthStateBeforeHandler(ctx);
       await ssoLicenseGateBeforeHandler(ctx);
       await requireDeletionConfirmationBeforeHandler(ctx);
       // ENG-2105: reject password-reset requests at the native Better Auth layer when the operator
