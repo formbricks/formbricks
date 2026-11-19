@@ -320,6 +320,7 @@ describe("handleFeedbackSourcePipeline", () => {
     const connectionReset = { status: 0, message: "fetch failed", detail: "fetch failed" };
 
     test.each([
+      ["408", { status: 408, message: "408", detail: "408" }],
       ["500", { status: 500, message: "500", detail: "500" }],
       ["502", serverError],
       ["503", { status: 503, message: "503", detail: "503" }],
@@ -451,6 +452,30 @@ describe("handleFeedbackSourcePipeline", () => {
       expect(logger.warn).toHaveBeenCalledWith(
         expect.objectContaining({ failures: 1, attempts: 1 }),
         expect.any(String)
+      );
+    });
+
+    test("a backoff timer that fires after the budget is spent starts no further request", async () => {
+      vi.mocked(getFeedbackSourcesBySurveyId).mockResolvedValue([createFeedbackSource()]);
+      vi.mocked(transformResponseToFeedbackRecords, { partial: true, deep: true }).mockReturnValue(
+        oneFeedbackRecord
+      );
+      // The first attempt fails at 13.5 s, inside the budget, so a 1 s backoff is allowed to start.
+      mockCreateFeedbackRecordsBatch.mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve({ results: [{ data: null, error: serverError }] }), 13_500)
+          )
+      );
+      // A stalled event loop: by the time the backoff timer fires, the wall clock has passed 15 s.
+      setTimeout(() => vi.setSystemTime(Date.now() + 5_000), 14_000);
+
+      await runPipeline();
+
+      expect(mockCreateFeedbackRecordsBatch).toHaveBeenCalledTimes(1);
+      expect(logger.warn).toHaveBeenCalledWith(
+        expect.objectContaining({ failures: 1, attempts: 1 }),
+        expect.stringContaining("1/1 FeedbackRecords failed to send")
       );
     });
 

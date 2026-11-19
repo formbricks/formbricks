@@ -99,6 +99,12 @@ const reconcileWithRetry = async (
 
     if (retryable.length > 0) {
       await sleep(delay);
+
+      // Timers can fire late on a busy event loop; never start a request once the budget is spent.
+      if (Date.now() - startedAt > RETRY_BUDGET_MS) {
+        result.failures.push(...retryable);
+        break;
+      }
     }
 
     pending = retryable.map(({ index }) => ({ record: records[index], index }));
