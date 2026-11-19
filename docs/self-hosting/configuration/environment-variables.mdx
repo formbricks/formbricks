@@ -159,12 +159,12 @@ DATABASE_URL=postgresql://formbricks:<password>@db.example.com:5432/formbricks?s
   Bundles with several certificates work. Mount the file read-only into the containers that run the app and the
   migrations. Without `sslrootcert`, the certificate must chain to a publicly trusted CA, or to a CA you add with
   `NODE_EXTRA_CA_CERTS` for the app and `SSL_CERT_FILE` for the migrations.
-- Migrations treat `sslmode=verify-ca` like `verify-full`: the host name must match too. They treat
+- Migrations treat `sslmode=verify-ca` like `verify-full`, as the app's connections do: the host name must match too. They treat
   `sslmode=require` with `sslrootcert` the same way.
 
 If the migrations stop with Prisma error `P1011`, they could not verify the server. Fix the CA file or the host
 name. As a last resort, set `MIGRATE_DATABASE_URL` to the same URL with `sslaccept=accept_invalid_certs`: schema
-migrations then skip the check, and the app's connections keep verifying the server.
+migrations still require TLS but skip the certificate check, and the app's connections keep verifying the server.
 
 #### In-app surveys inside Formbricks
 
