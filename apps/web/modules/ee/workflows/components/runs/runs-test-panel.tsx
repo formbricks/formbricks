@@ -149,10 +149,11 @@ const TestDraftCard = ({
   const isResponseTrigger = triggerKind === "response";
   const canStart = !testRun.isRunning && (!isResponseTrigger || selectedResponseId !== null);
 
-  // The header's Test asked for the card: once it shows, "Run test" takes the focus.
+  // The header's Test asked for the card: once it shows, "Run test" takes the focus, with its focus
+  // ring. A focus moved by script after a mouse click isn't `:focus-visible` unless asked for.
   useEffect(() => {
     if (focusRequest === 0) return;
-    const handle = requestAnimationFrame(() => runTestRef.current?.focus());
+    const handle = requestAnimationFrame(() => runTestRef.current?.focus({ focusVisible: true }));
     return () => cancelAnimationFrame(handle);
   }, [focusRequest]);
 
