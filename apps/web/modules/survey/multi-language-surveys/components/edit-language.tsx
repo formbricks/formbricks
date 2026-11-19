@@ -190,6 +190,8 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
 
   const handleCancelChanges = async () => {
     setLanguages(workspace.languages);
+    // A save that failed part-way may have stored some rows; re-read so Cancel shows what was stored.
+    router.refresh();
     setDefaultLanguage(normalizeLanguageCode(workspace.config.defaultSurveyLanguage ?? "") ?? "");
     setDeletedLanguageIds([]);
     setIsEditing(false);
@@ -227,24 +229,25 @@ export function EditLanguage({ workspace, locale, isReadOnly }: EditLanguageProp
           : updateLanguage(lang.id, { alias: lang.alias })
       )
     );
+    // The rows that landed keep their stored ids, so a save after a later step fails (a refused row,
+    // the default language, a deletion) updates them instead of creating them a second time; refused rows
+    // stay as typed for the user to correct. Matched by code, which validation keeps unique, so a row
+    // edited while the save ran still matches.
+    const createdIds = new Map<string, string>();
+    languages.forEach((lang, index) => {
+      const result = writeResults[index];
+      if (lang.id === "new" && result.status === "fulfilled") createdIds.set(lang.code, result.value.id);
+    });
+    if (createdIds.size > 0) {
+      setLanguages((current) =>
+        current.map((lang) => {
+          const id = lang.id === "new" ? createdIds.get(lang.code) : undefined;
+          return id ? { ...lang, id } : lang;
+        })
+      );
+    }
     const failedWrite = getFirstFailure(writeResults);
     if (failedWrite) {
-      // The rows that did land keep their stored ids, so saving again updates them instead of creating
-      // them a second time; the refused rows stay as typed for the user to correct.
-      // Matched by code, which validation keeps unique, so a row edited while the save ran still matches.
-      const createdIds = new Map<string, string>();
-      languages.forEach((lang, index) => {
-        const result = writeResults[index];
-        if (lang.id === "new" && result.status === "fulfilled") createdIds.set(lang.code, result.value.id);
-      });
-      if (createdIds.size > 0) {
-        setLanguages((current) =>
-          current.map((lang) => {
-            const id = lang.id === "new" ? createdIds.get(lang.code) : undefined;
-            return id ? { ...lang, id } : lang;
-          })
-        );
-      }
       toast.error(
         getV3ApiErrorMessage(failedWrite.reason, t("common.something_went_wrong_please_try_again"))
       );
