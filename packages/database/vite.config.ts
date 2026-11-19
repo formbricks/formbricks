@@ -97,6 +97,8 @@ export default defineConfig(async (): Promise<ViteUserConfig> => {
         include: [
           "src/index.ts",
           "src/scripts/upgrade-session.ts",
+          // upgrade-session's published types re-export its session type from here.
+          "src/scripts/advisory-lock-session.ts",
           "src/client.ts",
           "src/json-types.ts",
           "src/prisma.ts",
