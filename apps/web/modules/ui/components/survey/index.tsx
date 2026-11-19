@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
 import {
+  SurveysRendererNotInstalledError,
   isSurveysRendererReady,
   loadSurveysScript,
 } from "@/modules/ui/components/survey/load-surveys-script";
@@ -35,6 +36,7 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
     [containerId, props, getRecaptchaToken]
   );
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [rendererError, setRendererError] = useState<SurveysRendererNotInstalledError | null>(null);
   const hasLoadedRef = useRef(false);
 
   const loadRendererAndMarkLoaded: () => Promise<void> = async () => {
@@ -65,6 +67,11 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
           await loadRendererAndMarkLoaded();
         } catch (error) {
           console.error("Failed to load the surveys package: ", error);
+          // No renderer after every attempt: hand it to the nearest error boundary (the link survey's
+          // "try again" screen) rather than leave an empty container. A failed request stays logged only.
+          if (error instanceof SurveysRendererNotInstalledError) {
+            setRendererError(error);
+          }
         }
       } else {
         renderInline();
@@ -80,6 +87,10 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
       renderInline();
     }
   }, [isScriptLoaded, renderInline]);
+
+  if (rendererError) {
+    throw rendererError;
+  }
 
   return <div id={containerId} className="h-full w-full" />;
 };

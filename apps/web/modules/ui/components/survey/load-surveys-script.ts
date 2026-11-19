@@ -4,6 +4,14 @@
  */
 const MAX_LOAD_ATTEMPTS = 2;
 
+/** The bundle downloaded but never installed `renderSurvey`, on every attempt. */
+export class SurveysRendererNotInstalledError extends Error {
+  constructor() {
+    super("The surveys package did not install its renderer");
+    this.name = "SurveysRendererNotInstalledError";
+  }
+}
+
 /**
  * Whether the survey renderer is installed on the page. Probes for the function the loader needs,
  * not for the global: the UMD wrapper publishes `window.formbricksSurveys = {}` before its factory
@@ -45,5 +53,5 @@ export const loadSurveysScript = async (scriptUrl: string, init: RequestInit = {
     scriptElement.remove();
   }
 
-  throw new Error("The surveys package did not install its renderer");
+  throw new SurveysRendererNotInstalledError();
 };

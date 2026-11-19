@@ -2,7 +2,11 @@
  * @vitest-environment jsdom
  */
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { isSurveysRendererReady, loadSurveysScript } from "./load-surveys-script";
+import {
+  SurveysRendererNotInstalledError,
+  isSurveysRendererReady,
+  loadSurveysScript,
+} from "./load-surveys-script";
 
 const SCRIPT_URL = "https://app.example.com/js/surveys.umd.cjs?v=6.2.0";
 
@@ -34,7 +38,21 @@ beforeEach(() => {
 });
 
 describe("loadSurveysScript", () => {
+  // A truncated bundle reports a SyntaxError on the window, as a browser does. Vitest's jsdom re-raises
+  // a window error as uncaught unless the test listens for it, so record them and assert on each.
+  let scriptErrors: string[] = [];
+  const recordScriptError = (event: ErrorEvent) => {
+    scriptErrors.push(`${event.error?.name}: ${event.message}`);
+  };
+  const PARSE_ERROR = expect.stringMatching(/^SyntaxError: /);
+
+  beforeEach(() => {
+    scriptErrors = [];
+    window.addEventListener("error", recordScriptError);
+  });
+
   afterEach(() => {
+    window.removeEventListener("error", recordScriptError);
     vi.unstubAllGlobals();
   });
 
@@ -45,6 +63,7 @@ describe("loadSurveysScript", () => {
 
     expect(isSurveysRendererReady()).toBe(true);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(scriptErrors).toEqual([]);
   });
 
   test("re-fetches past the cache when the first body fails to parse, and resolves on the whole one", async () => {
@@ -56,18 +75,18 @@ describe("loadSurveysScript", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock).toHaveBeenLastCalledWith(SCRIPT_URL, { cache: "reload" });
     expect(injectedScripts()).toBe(1);
+    expect(scriptErrors).toEqual([PARSE_ERROR]);
   });
 
   test("rejects, and leaves no script behind, when every attempt fails to parse", async () => {
     const fetchMock = respondWith(TRUNCATED_BUNDLE, TRUNCATED_BUNDLE);
 
-    await expect(loadSurveysScript(SCRIPT_URL)).rejects.toThrow(
-      "The surveys package did not install its renderer"
-    );
+    await expect(loadSurveysScript(SCRIPT_URL)).rejects.toThrow(SurveysRendererNotInstalledError);
 
     expect(isSurveysRendererReady()).toBe(false);
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(injectedScripts()).toBe(0);
+    expect(scriptErrors).toEqual([PARSE_ERROR, PARSE_ERROR]);
   });
 
   test("keeps the caller's cache mode on the retry", async () => {
@@ -76,6 +95,7 @@ describe("loadSurveysScript", () => {
     await loadSurveysScript(SCRIPT_URL, { cache: "no-store" });
 
     expect(fetchMock).toHaveBeenLastCalledWith(SCRIPT_URL, { cache: "no-store" });
+    expect(scriptErrors).toEqual([PARSE_ERROR]);
   });
 
   test("rejects without injecting anything when the response is not ok", async () => {
