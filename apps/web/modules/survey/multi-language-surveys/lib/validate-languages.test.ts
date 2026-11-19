@@ -9,15 +9,11 @@ describe("getLanguagesValidationError", () => {
   });
 
   test("asks for a language when a row has none", () => {
-    expect(getLanguagesValidationError(rows("de-DE", ""))).toBe(
-      "missing_language"
-    );
+    expect(getLanguagesValidationError(rows("de-DE", ""))).toBe("missing_language");
   });
 
   test("refuses the same code twice", () => {
-    expect(getLanguagesValidationError(rows("de-DE", "de-de"))).toBe(
-      "duplicate_language_or_alias"
-    );
+    expect(getLanguagesValidationError(rows("de-DE", "de-de"))).toBe("duplicate_language_or_alias");
   });
 
   // The server stores the canonical tag, so two codes that canonicalize alike collide on save (ENG-3602).
@@ -27,9 +23,7 @@ describe("getLanguagesValidationError", () => {
     ["en_us", "en-US"],
     ["  DE  ", "de-DE"],
   ])("refuses %j next to %j, which the server stores as the same language", (added, existing) => {
-    expect(getLanguagesValidationError(rows(existing, added))).toBe(
-      "duplicate_language_or_alias"
-    );
+    expect(getLanguagesValidationError(rows(existing, added))).toBe("duplicate_language_or_alias");
   });
 
   test("refuses the same alias twice", () => {
