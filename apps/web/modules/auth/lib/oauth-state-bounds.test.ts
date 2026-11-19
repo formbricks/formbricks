@@ -139,8 +139,8 @@ describe("boundOAuthStateBeforeHandler: /oauth2/authorize (ENG-7396)", () => {
     scope: "surveys:read offline_access",
     state: "state",
   };
-  // The name `x` is one byte.
-  const padded = (bytes: number) => ({ x: "a".repeat(bytes - 1) });
+  // `{"x":""}` is 12 bytes as stored: 8, plus a backslash before each of its 4 quotes.
+  const padded = (bytes: number) => ({ x: "a".repeat(bytes - 12) });
   const over = padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES + 1);
 
   test("lets an honest request through, from the query or the body", () => {
@@ -172,6 +172,14 @@ describe("boundOAuthStateBeforeHandler: /oauth2/authorize (ENG-7396)", () => {
     expect(authorizeRefusal({ method: "GET", query: { state: "\u0001".repeat(1_200) } })?.statusCode).toBe(
       400
     );
+  });
+
+  test("counts the JSON around every parameter, so many short keys cost more than their text", () => {
+    // 700 keys of 3–4 bytes with empty values: about 2.6 KB of text, about 9.4 KB stored.
+    const manyKeys = Object.fromEntries(
+      Array.from({ length: 700 }, (_, i) => [`k${String(i).padStart(2, "0")}`, ""])
+    );
+    expect(authorizeRefusal({ method: "POST", body: manyKeys })?.statusCode).toBe(400);
   });
 
   test("counts only what the endpoint reads", () => {

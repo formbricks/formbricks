@@ -106,10 +106,11 @@ describe("authorization code record size (ENG-7396)", () => {
   });
 
   test("parameters exactly at the limit still issue a code, and one byte more is refused", async () => {
-    // The guard counts the UTF-8 bytes of parameter names and values.
-    const params = authorizeParams({ state: "fixed-state" });
-    const used = [...params].reduce((sum, [name, value]) => sum + Buffer.byteLength(name + value), 0);
-    const pad = "a".repeat(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES - used - "x_padding".length);
+    // The guard counts the parameters as Redis holds them: a JSON object inside the record's JSON string.
+    const stored = (extra: Record<string, string>) =>
+      Buffer.byteLength(JSON.stringify(JSON.stringify(Object.fromEntries(authorizeParams(extra))))) - 2;
+    const base = stored({ state: "fixed-state", x_padding: "" });
+    const pad = "a".repeat(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES - base);
 
     const atLimit = await authorize("POST", { state: "fixed-state", x_padding: pad });
     expect(atLimit).toMatchObject({ status: 200, codeIssued: true });
@@ -118,6 +119,21 @@ describe("authorization code record size (ENG-7396)", () => {
       codeIssued: false,
       storedBytes: 0,
     });
+  });
+
+  test("many short parameters are measured with the JSON around each", async () => {
+    // 90 extra keys whose names and values total under the cap: only the quotes, colons and commas Redis
+    // would hold around each one take the request over it.
+    const extra = Object.fromEntries(
+      Array.from({ length: 90 }, (_, i) => [`k${String(i).padStart(2, "0")}`, "v".repeat(78)])
+    );
+    const text = [...authorizeParams(extra)].reduce(
+      (sum, [name, value]) => sum + Buffer.byteLength(name + value),
+      0
+    );
+    expect(text).toBeLessThan(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES);
+
+    expect(await authorize("POST", extra)).toEqual({ status: 400, codeIssued: false, storedBytes: 0 });
   });
 
   test("a state of control characters is measured as stored", async () => {

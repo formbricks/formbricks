@@ -27,8 +27,8 @@ export const OAUTH_CALLBACK_URL_MAX_BYTES = 8 * 1024;
 export const OAUTH_QUERY_MAX_BYTES = 16 * 1024;
 
 /**
- * Largest `/oauth2/authorize` request: the bytes its parameter names and values take as stored (see
- * `storedBytes`) (ENG-7396).
+ * Largest `/oauth2/authorize` request: the bytes its parameters take as stored, as a JSON object inside
+ * the record's JSON string (ENG-7396).
  *
  * Once a user has consented to a client, every authorize call issues a code, and oauth-provider stores
  * the code with the whole request in Redis for 10 minutes. Its schema caps no string and passes unknown
@@ -76,16 +76,16 @@ const refuseOver = (body: Record<string, unknown>, field: string, maxBytes: numb
   }
 };
 
-/** {@link storedBytes} of a request's parameter names and values; a non-string value counts as its JSON. */
+/**
+ * The bytes a request's parameters take in Redis, stored as a JSON object inside the record's JSON string
+ * (two layers, as for {@link storedBytes}), so the quotes, colon and comma around every parameter count
+ * too: many short keys cost more than their text.
+ */
 const paramBytes = (params: unknown): number => {
   if (params === undefined || params === null) return 0;
   if (!isRecord(params)) return storedBytes(String(params));
-  let bytes = 0;
-  for (const [name, value] of Object.entries(params)) {
-    const text = typeof value === "string" ? value : (JSON.stringify(value) ?? "");
-    bytes += storedBytes(name) + storedBytes(text);
-  }
-  return bytes;
+  // The surrounding quotes of the outer layer, 2 bytes, are not the parameters' own.
+  return Buffer.byteLength(JSON.stringify(JSON.stringify(params)), "utf8") - 2;
 };
 
 /**
