@@ -1,12 +1,52 @@
 import "server-only";
-import { getOAuthProviderState } from "@better-auth/oauth-provider";
-import { APIError, getSessionFromCtx, isAPIError } from "better-auth/api";
-import { createHash } from "node:crypto";
+import { APIError, getSessionFromCtx } from "better-auth/api";
 import { prisma } from "@formbricks/database";
 import { Prisma } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
+import { loggableError } from "@/lib/utils/loggable-error";
 import type { AuthHookContext } from "@/modules/ee/sso/lib/better-auth-hooks";
-import { MCP_OAUTH_REFRESH_TOKEN_PREFIX } from "./mcp-oauth-provider-options";
+import { readMcpGrantReadableWorkspaceIds } from "@/modules/mcp/access-options";
+import {
+  type TMcpGrantAccessSelection,
+  type TMcpGrantPermissions,
+  capMcpGrantPermissions,
+  getMcpGrantPermissionsForScopes,
+  isMcpGrantEmpty,
+} from "@/modules/mcp/grant";
+import {
+  type TMcpGrantAuditRecord,
+  prepareMcpGrantAudits,
+  queueMcpGrantAudits,
+} from "@/modules/mcp/grant-audit";
+import {
+  MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS,
+  type TStoredMcpGrant,
+  applyMcpGrantNarrowing,
+  deleteMcpGrants,
+  lockMcpGrant,
+  lockUserForMcpGrantWrite,
+  projectMcpGrants,
+  removeDeletedMcpGrants,
+  resolveMcpGrantNarrowing,
+  writeMcpGrant,
+} from "@/modules/mcp/grant-store";
+import { MCP_GRANT_NOT_SAVED_CODE, MCP_GRANT_NOT_SAVED_DETAIL } from "./mcp-grant-consent-errors";
+import {
+  CONSENT_PATH,
+  CONSENT_UPDATE_PATH,
+  type TConsentChange,
+  consentChange,
+  isAcceptedApproval,
+} from "./oauth-consent-change";
+import {
+  type TConsentRefusal,
+  refuseConsent,
+  refuseConsentRequest,
+  restoreConsentAfterFailedApproval,
+  restoreMcpGrantRelationships,
+} from "./oauth-consent-restore";
+import { type TConsentRow, consentBound, lockConsents } from "./oauth-consent-rows";
+import { type TTokensBeyondConsent, endTokensBeyondScopes } from "./oauth-consent-tokens";
 
 /**
  * ENG-2499: revoking an app on Authorized Apps has to end the app's access, not just hide it.
@@ -34,425 +74,86 @@ import { MCP_OAUTH_REFRESH_TOKEN_PREFIX } from "./mcp-oauth-provider-options";
  *    of its grant, and ends the tokens beyond it, for the same race and for grants narrowed before this
  *    fix.
  *
- * Access tokens are self-contained JWTs verified against JWKS (`modules/mcp/auth.ts`), so one minted
- * before the revoke stays valid until it expires (`accessTokenExpiresIn`, 15 minutes). That residual
- * is the same one `sso-recovery.ts` accepts; the `oauthAccessToken` write below only matters for opaque
- * tokens. An authorization code issued under the wider consent and redeemed after the narrowing has
- * the same residual, started up to its 10-minute code lifetime later: its access token lives out its 15
- * minutes, and its refresh token is refused on first use.
- */
-
-/**
- * End every OAuth grant a user holds, in the caller's transaction: their consents go and their access and
- * refresh tokens are marked revoked. Used when the account changes hands (SSO recovery) or is switched
- * off (the data retention members policy).
+ * Access tokens are self-contained JWTs verified against JWKS (`modules/mcp/auth.ts`), never looked up.
+ * ENG-7149 closes the revoke residual that left: every MCP client a user authorized has a grant
+ * (`McpGrant`, ADR-0041), revoking deletes it with the consent, and `/api/mcp` refuses a request whose
+ * client has no grant, so a revoked client is refused on its next call. A narrowed consent still leaves a JWT minted before
+ * it its old scopes for up to `accessTokenExpiresIn` (15 minutes); the grant, which Edit narrows instead
+ * of the consent, has no such residual. The `oauthAccessToken` writes below only matter for opaque
+ * tokens.
  *
- * The REFRESH token is the one that matters and the one this actually stops: `handleRefreshTokenGrant`
- * reads `revoked`, so revoking it ends the 30-day persistence. Both token tables' `session` FK is
- * `onDelete: SetNull`, so revoking sessions alone would blank the liveness check rather than fail it.
+ * ENG-7149: the grant is created by the consent hook on Allow, and the refresh check treats a client
+ * without one like a revoked one, so a consent left without a grant (written by the previous release
+ * during a rolling upgrade) ends at the next refresh and the client goes back through the consent screen,
+ * where Allow writes it. An Allow whose grant can't be saved puts the consent back as it was, so it
+ * leaves no such consent behind.
  *
- * ACCESS tokens are a different story, and worth stating plainly rather than implying this covers them.
- * Our config sets `resources` and never sets `disableJwtPlugin`, so `isJwtAccessToken` is always true
- * and every access token is a self-contained JWT: `createJwtAccessToken` signs without persisting, so
- * there is normally no row here to update, and `/api/mcp` verifies bearers against JWKS
- * (`modules/mcp/auth.ts`) without reading this table at all. Upstream's own revoke endpoint says as
- * much — "JWT access tokens are self-contained and cannot be revoked server-side". The access-token
- * write is therefore defence for the opaque-token configuration only; the residual is that a JWT stays
- * valid for up to `accessTokenExpiresIn` (15 min).
- *
- * Consent goes too: `/authorize` skips the consent screen when a matching `oauthConsent` row exists, so
- * leaving it would let a still-cookie-cached session (see session-revocation.ts) silently mint a fresh
- * 30-day refresh token and undo the revocation.
+ * This module holds the consent hook that follows an approval or `update-consent`: it settles the consent,
+ * saves the grant, and ends the tokens beyond the consent. What the request changed is read in
+ * `oauth-consent-change.ts`, a failed approval is put back by `oauth-consent-restore.ts`, the tokens are
+ * ended by `oauth-consent-tokens.ts`, and the refresh check lives in `oauth-refresh-check.ts`. Ending a
+ * grant — Revoke, and every bulk end of a user's OAuth access — lives in `mcp-grant-revocation.ts`; all
+ * share the consent row locks in `oauth-consent-rows.ts`.
  */
-export const revokeAllUserOAuthGrants = async (
-  tx: Prisma.TransactionClient,
-  userId: string,
-  revokedAt: Date = new Date()
-): Promise<{ accessTokensRevoked: number; refreshTokensRevoked: number; consentsDeleted: number }> => {
-  // Consents first, as `revokeOAuthConsentBeforeHandler` does: a refresh in flight that lands between
-  // the two then fails its consent check instead of minting a token after the revocation.
-  const consentRows = await tx.oauthConsent.deleteMany({ where: { userId } });
-  const accessRows = await tx.oauthAccessToken.updateMany({
-    where: { userId, revoked: null },
-    data: { revoked: revokedAt },
-  });
-  const refreshRows = await tx.oauthRefreshToken.updateMany({
-    where: { userId, revoked: null },
-    data: { revoked: revokedAt },
-  });
-  return {
-    accessTokensRevoked: accessRows.count,
-    refreshTokensRevoked: refreshRows.count,
-    consentsDeleted: consentRows.count,
-  };
-};
 
 /**
- * ENG-7364: a password reset is what a user does when they suspect the account was taken over, and
- * `revokeSessionsOnPasswordReset` ends sessions only. An OAuth client someone registered and authorized
- * while they had access would keep a 30-day refresh token, so the reset ends every grant too, as SSO
- * recovery does. Best-effort like the rest of `onPasswordReset`: the password is already changed, so a
- * failure is logged and never fails the reset. API keys are left alone on purpose, since revoking them
- * breaks the user's integrations.
+ * The consent hook's read: the client, its bound, and the row the bound rests on, with the client's consent
+ * rows locked. `null` for a `skipConsent` client, whose tokens the provider issues without consulting
+ * consent, or without a consent row. Changes nothing: a refusal must leave the rows as they were, so
+ * duplicates are folded ({@link foldDuplicateConsents}) only once nothing can refuse the approval.
  */
-export const revokeOAuthGrantsAfterPasswordReset = async (userId: string): Promise<void> => {
-  try {
-    await prisma.$transaction((tx) => revokeAllUserOAuthGrants(tx, userId));
-  } catch (error) {
-    logger.error({ error, userId }, "Failed to revoke OAuth grants after password reset");
-  }
-};
-
-const CONSENT_PATH = "/oauth2/consent";
-const CONSENT_UPDATE_PATH = "/oauth2/update-consent";
-const CONSENT_DELETE_PATH = "/oauth2/delete-consent";
-const TOKEN_PATH = "/oauth2/token";
-
-type TRevokedGrant = { consentsDeleted: number; refreshTokensRevoked: number; accessTokensRevoked: number };
-
-const revokeClientTokens = async (
-  tx: Prisma.TransactionClient,
-  userId: string,
-  clientId: string
-): Promise<Omit<TRevokedGrant, "consentsDeleted">> => {
-  const revoked = new Date();
-  const refreshRows = await tx.oauthRefreshToken.updateMany({
-    where: { userId, clientId, revoked: null },
-    data: { revoked },
-  });
-  const accessRows = await tx.oauthAccessToken.updateMany({
-    where: { userId, clientId, revoked: null },
-    data: { revoked },
-  });
-  return { refreshTokensRevoked: refreshRows.count, accessTokensRevoked: accessRows.count };
-};
-
-type TConsentRow = {
-  id: string;
-  clientId: string;
-  scopes: string[];
-  updatedAt: Date;
-  skipConsent: boolean;
-};
-
-/**
- * Which client's consent to read: by client id, or, for `update-consent`, through the id of one of its
- * consent rows, which only resolves when that row is the user's.
- */
-type TConsentTarget = { clientId: string } | { consentId: string };
-
-/**
- * Locks the user's consent rows for the client, in `id` order, with the client's `skipConsent` flag. One
- * round trip for everything the hooks read before deciding. Every path that locks several rows (this
- * module's three; upstream writes only one row at a time) takes them in that order, so a refresh racing
- * a revoke or a narrowing waits instead of deadlocking.
- */
-const lockConsents = (
-  tx: Prisma.TransactionClient,
-  userId: string,
-  target: TConsentTarget,
-  mode: "share" | "update"
-): Promise<TConsentRow[]> => {
-  const clientId =
-    "clientId" in target
-      ? Prisma.sql`${target.clientId}`
-      : Prisma.sql`(
-          SELECT "clientId" FROM "oauthConsent" WHERE "id" = ${target.consentId} AND "userId" = ${userId}
-        )`;
-  const lock = mode === "update" ? Prisma.sql`FOR UPDATE OF c` : Prisma.sql`FOR SHARE OF c`;
-  return tx.$queryRaw<TConsentRow[]>`
-    SELECT c."id", c."clientId", c."scopes", c."updatedAt", cl."skipConsent"
-    FROM "oauthConsent" c JOIN "oauthClient" cl ON cl."clientId" = c."clientId"
-    WHERE c."userId" = ${userId} AND c."clientId" = ${clientId}
-    ORDER BY c."id"
-    ${lock}`;
-};
-
-/**
- * The scopes a set of consent rows allows, and the row that decision rests on; `null` without a row.
- *
- * Normally one row: the provider finds the (user, client) consent and updates it. Two concurrent first
- * approvals can each insert one, though, and a later approval or `update-consent` then rewrites only one
- * of them. The bound is the most recently written row, the user's latest decision. Picked here rather
- * than by `ORDER BY`, which sorts before a waited-on row's new values come back.
- *
- * The provider stamps `updatedAt` to the second, so rows written in the same second can't be ordered by
- * it. `isLatestWrite` then names the row the caller knows was just written; without one, the bound is
- * what every tied row allows, which can only ever be narrower than the user meant.
- */
-const consentBound = (
-  consents: TConsentRow[],
-  isLatestWrite?: (consent: TConsentRow) => boolean
-): { scopes: string[]; newest: TConsentRow } | null => {
-  if (consents.length === 0) return null;
-  const newestAt = Math.max(...consents.map((consent) => consent.updatedAt.getTime()));
-  const newest = consents.filter((consent) => consent.updatedAt.getTime() === newestAt);
-  const written = isLatestWrite ? newest.find(isLatestWrite) : undefined;
-  if (written) return { scopes: written.scopes, newest: written };
-  const scopes = newest[0].scopes.filter((scope) =>
-    newest.every((consent) => consent.scopes.includes(scope))
-  );
-  return { scopes, newest: newest[0] };
-};
-
-/**
- * The scopes the user has consented to for the client, or `null` without a consent. Read `FOR SHARE`,
- * so a consent delete or narrowing that is still in flight is waited on rather than read around.
- */
-const readConsentedScopes = async (
-  tx: Prisma.TransactionClient,
-  userId: string,
-  clientId: string
-): Promise<string[] | null> =>
-  consentBound(await lockConsents(tx, userId, { clientId }, "share"))?.scopes ?? null;
-
-/**
- * The consent hook's read: the client and its bound, folding duplicate rows into the one the bound rests
- * on. The provider's `/authorize` looks a consent up with an unordered `findOne`, so a stale wider
- * duplicate would otherwise keep skipping the consent screen and minting wide codes after the user
- * narrowed the other row. `null` for a `skipConsent` client, whose tokens the provider issues without
- * consulting consent, or without a consent row.
- */
-const settleConsent = async (
+const readSettledConsent = async (
   tx: Prisma.TransactionClient,
   userId: string,
   change: TConsentChange
-): Promise<{ clientId: string; scopes: string[] } | null> => {
+): Promise<TSettledConsentRow | null> => {
   const consents = await lockConsents(tx, userId, change.target, "update");
   if (consents.length === 0 || consents[0].skipConsent) return null;
-  const { clientId } = consents[0];
   const bound = consentBound(consents, change.isLatestWrite);
   if (!bound) return null;
-  if (consents.length > 1) {
-    await tx.oauthConsent.deleteMany({ where: { userId, clientId, id: { not: bound.newest.id } } });
-    if (bound.scopes.length !== bound.newest.scopes.length) {
-      await tx.oauthConsent.update({ where: { id: bound.newest.id }, data: { scopes: bound.scopes } });
-    }
-  }
-  return { clientId, scopes: bound.scopes };
+  return {
+    clientId: consents[0].clientId,
+    scopes: bound.scopes,
+    newest: bound.newest,
+    hasDuplicates: consents.length > 1,
+  };
 };
 
-type TTokensBeyondConsent = { refreshTokensDeleted: number; accessTokensRevoked: number };
-
-/**
- * The grant a refused refresh belongs to, so the tokens minted for that request end too. Grants from
- * Better Auth 1.7 on carry an `authorizationCodeId` shared by every rotation. Older ones have none, so the
- * one refresh token minted for the request is found by what rotation stamps on it: its `createdAt` is
- * the presented token's `rotatedAt` (both stamped from one clock reading during rotation), in the same
- * session, within the presented token's scopes (a refresh can only narrow).
- */
-type TRefusedGrant = {
-  authorizationCodeId: string | null;
-  rotatedAt: Date | null;
-  sessionId: string | null;
+type TSettledConsentRow = {
+  clientId: string;
   scopes: string[];
+  newest: TConsentRow;
+  hasDuplicates: boolean;
 };
 
 /**
- * Ends the client's tokens for the user that reach past `consentedScopes`, and every other token of the
- * grants they belong to (one approval's chain of rotations, shared `authorizationCodeId`). A grant ends
- * whole: a refresh may have asked for fewer scopes, leaving a child inside the consent whose ancestor
- * isn't, and that child must not outlive the token it was minted from. The narrowed approval's own grant
- * has a new id, so it is untouched. When a refused refresh's `grant` is given, that grant ends too.
- * Prisma's list filters can't express "not a subset of", hence the raw `<@`.
- *
- * Refresh tokens are deleted rather than marked revoked, rotated ones included. The provider reads a
- * revoked refresh token presented again as a stolen one and deletes every refresh token the client holds
- * for the user, so a client still holding a token from before the narrowing would take the narrowed
- * grant down with it. A deleted token is answered `invalid_grant` and nothing else. Access tokens have
- * no such reuse check, and are revoked like the rest of this module's, including those minted from a
- * refresh token about to be deleted. Those are then unlinked from it, so the `refreshId` cascade leaves
- * them behind as revoked rows, as ENG-2499's revoke does, instead of removing them.
+ * Folds the client's duplicate consent rows into the one the bound rests on. The provider's `/authorize`
+ * looks a consent up with an unordered `findOne`, so a stale wider duplicate would otherwise keep skipping
+ * the consent screen and minting wide codes after the user narrowed the other row. Run under the locks
+ * {@link readSettledConsent} took.
  */
-const endTokensBeyondScopes = async (
+const foldDuplicateConsents = async (
   tx: Prisma.TransactionClient,
-  {
-    userId,
-    clientId,
-    consentedScopes,
-    grant = { authorizationCodeId: null, rotatedAt: null, sessionId: null, scopes: [] },
-  }: { userId: string; clientId: string; consentedScopes: string[]; grant?: TRefusedGrant }
-): Promise<TTokensBeyondConsent> => {
-  const { authorizationCodeId, rotatedAt, sessionId, scopes: presentedScopes } = grant;
-  const beyond = await tx.$queryRaw<{ grantId: string }[]>`
-    SELECT "authorizationCodeId" AS "grantId" FROM "oauthRefreshToken"
-    WHERE "userId" = ${userId} AND "clientId" = ${clientId}
-      AND "authorizationCodeId" IS NOT NULL AND NOT ("scopes" <@ ${consentedScopes}::text[])
-    UNION
-    SELECT "authorizationCodeId" FROM "oauthAccessToken"
-    WHERE "userId" = ${userId} AND "clientId" = ${clientId}
-      AND "authorizationCodeId" IS NOT NULL AND NOT ("scopes" <@ ${consentedScopes}::text[])`;
-  const grantIds = [
-    ...beyond.map((row) => row.grantId),
-    ...(authorizationCodeId ? [authorizationCodeId] : []),
-  ];
-  // Without a refused grant, `rotatedAt` is null and `"createdAt" = NULL` never matches.
-  const ending = await tx.$queryRaw<{ id: string }[]>`
-    SELECT "id" FROM "oauthRefreshToken"
-    WHERE "userId" = ${userId} AND "clientId" = ${clientId}
-      AND (NOT ("scopes" <@ ${consentedScopes}::text[])
-        OR "authorizationCodeId" = ANY(${grantIds}::text[])
-        OR (${authorizationCodeId}::text IS NULL AND "authorizationCodeId" IS NULL
-          AND "createdAt" = ${rotatedAt} AND "sessionId" IS NOT DISTINCT FROM ${sessionId}
-          AND "scopes" <@ ${presentedScopes}::text[]))
-    ORDER BY "id"
-    FOR UPDATE`;
-  const refreshIds = ending.map((row) => row.id);
-  const accessTokensRevoked = await tx.$executeRaw`
-    UPDATE "oauthAccessToken" SET "revoked" = ${new Date()}
-    WHERE "userId" = ${userId} AND "clientId" = ${clientId} AND "revoked" IS NULL
-      AND (NOT ("scopes" <@ ${consentedScopes}::text[])
-        OR "authorizationCodeId" = ANY(${grantIds}::text[])
-        OR "refreshId" = ANY(${refreshIds}::text[]))`;
-  await tx.$executeRaw`
-    UPDATE "oauthAccessToken" SET "refreshId" = NULL
-    WHERE "userId" = ${userId} AND "clientId" = ${clientId} AND "refreshId" = ANY(${refreshIds}::text[])`;
-  const refreshTokensDeleted = await tx.$executeRaw`
-    DELETE FROM "oauthRefreshToken" WHERE "id" = ANY(${refreshIds}::text[])`;
-  return { refreshTokensDeleted, accessTokensRevoked };
-};
-
-const isCoveredBy = (scopes: string[], consentedScopes: string[]): boolean =>
-  scopes.every((scope) => consentedScopes.includes(scope));
-
-/**
- * Whether any token of a grant, rotated ones included, reaches past the consent. A grant ends whole
- * (see {@link endTokensBeyondScopes}), so a token inside the consent still goes when a sibling or
- * ancestor doesn't fit: one narrowed before this fix, which no consent hook ever reconciled.
- */
-const grantReachesBeyond = async (
-  tx: Prisma.TransactionClient,
-  {
-    userId,
-    clientId,
-    grantId,
-    consentedScopes,
-  }: { userId: string; clientId: string; grantId: string; consentedScopes: string[] }
-): Promise<boolean> => {
-  const [{ beyond }] = await tx.$queryRaw<{ beyond: boolean }[]>`
-    SELECT EXISTS (
-      SELECT 1 FROM "oauthRefreshToken"
-      WHERE "userId" = ${userId} AND "clientId" = ${clientId} AND "authorizationCodeId" = ${grantId}
-        AND NOT ("scopes" <@ ${consentedScopes}::text[])
-      UNION ALL
-      SELECT 1 FROM "oauthAccessToken"
-      WHERE "userId" = ${userId} AND "clientId" = ${clientId} AND "authorizationCodeId" = ${grantId}
-        AND "revoked" IS NULL AND NOT ("scopes" <@ ${consentedScopes}::text[])
-    ) AS "beyond"`;
-  return beyond;
-};
-
-/**
- * Deletes the user's consent for the consent's client and revokes every token that client holds for
- * them. Returns `null` when the consent doesn't exist or belongs to someone else — one answer for both,
- * so the id can't be probed.
- *
- * Scoped to the client rather than the single consent row: Authorized Apps lists and revokes apps, and a
- * leftover consent for the same client would let `/authorize` skip the consent screen.
- *
- * The consent rows are deleted BEFORE the tokens are revoked, and the order is load-bearing: the delete
- * takes the row locks that {@link requireOAuthConsentOnRefreshAfterHandler}'s `FOR SHARE` read waits on.
- * A refresh that rotates in the gap between the token update and the commit therefore can't read the
- * consent as still present.
- */
-export const revokeOAuthConsentGrant = async ({
-  userId,
-  consentId,
-}: {
-  userId: string;
-  consentId: string;
-}): Promise<TRevokedGrant | null> =>
-  prisma.$transaction(async (tx) => {
-    const consent = await tx.oauthConsent.findFirst({
-      where: { id: consentId, userId },
-      select: { clientId: true },
-    });
-    if (!consent) return null;
-
-    // Locked in id order first, as every other path here does, so a racing refresh waits rather than
-    // deadlocking against a delete that would take the rows in scan order.
-    await lockConsents(tx, userId, { clientId: consent.clientId }, "update");
-    const consents = await tx.oauthConsent.deleteMany({ where: { userId, clientId: consent.clientId } });
-    const tokens = await revokeClientTokens(tx, userId, consent.clientId);
-    return { consentsDeleted: consents.count, ...tokens };
-  });
-
-/**
- * `hooks.before` for `POST /oauth2/delete-consent`. Performs the whole revocation and short-circuits
- * the upstream endpoint, which would only delete the consent. Returns `undefined` for every other path.
- */
-export const revokeOAuthConsentBeforeHandler = async (
-  ctx: AuthHookContext
-): Promise<{ success: true } | undefined> => {
-  if (ctx.path !== CONSENT_DELETE_PATH) return undefined;
-
-  const session = await getSessionFromCtx(ctx);
-  if (!session) throw new APIError("UNAUTHORIZED");
-
-  const consentId = (ctx.body as { id?: unknown } | undefined)?.id;
-  if (typeof consentId !== "string" || consentId.length === 0) {
-    throw new APIError("NOT_FOUND", { error: "not_found", error_description: "missing id parameter" });
+  userId: string,
+  { clientId, scopes, newest, hasDuplicates }: TSettledConsentRow
+): Promise<void> => {
+  if (!hasDuplicates) return;
+  await tx.oauthConsent.deleteMany({ where: { userId, clientId, id: { not: newest.id } } });
+  if (scopes.length !== newest.scopes.length) {
+    await tx.oauthConsent.update({ where: { id: newest.id }, data: { scopes } });
   }
-
-  const revoked = await revokeOAuthConsentGrant({ userId: session.user.id, consentId });
-  if (!revoked) throw new APIError("NOT_FOUND", { error: "not_found", error_description: "no consent" });
-
-  logger.info({ userId: session.user.id, consentId, ...revoked }, "OAuth consent revoked with its tokens");
-  return { success: true };
-};
-
-/**
- * What a consent request changed, read from the request alone; `null` for any other request. For
- * `/oauth2/consent`, the client comes from the provider's own request state, the verified authorization
- * query the endpoint itself read the client from. `isLatestWrite` names the row the request wrote, for
- * {@link consentBound}'s same-second tie.
- */
-type TConsentChange = { target: TConsentTarget; isLatestWrite: (consent: TConsentRow) => boolean };
-
-const isApproval = (ctx: AuthHookContext): boolean =>
-  ctx.path === CONSENT_PATH && (ctx.body as { accept?: unknown } | undefined)?.accept === true;
-
-const isAcceptedApproval = (ctx: AuthHookContext): boolean =>
-  isApproval(ctx) && !isAPIError((ctx.context as { returned?: unknown }).returned);
-
-const sameScopes = (a: string[], b: string[]): boolean =>
-  a.length === b.length && a.every((scope) => b.includes(scope));
-
-const consentChange = async (ctx: AuthHookContext): Promise<TConsentChange | null> => {
-  // A row is this request's write only if the provider accepted the request and the row was stamped in
-  // this request's second (the provider stamps to the second, just before this hook runs). Some
-  // accepted paths write nothing, such as a `prompt=login` bounce, so acceptance alone isn't enough: a
-  // tie left over from earlier must fall back to what every tied row allows.
-  const accepted = !isAPIError((ctx.context as { returned?: unknown }).returned);
-  const thisSecond = Math.floor(Date.now() / 1000) * 1000 - 1000;
-  const wrote = (consent: TConsentRow) => accepted && consent.updatedAt.getTime() >= thisSecond;
-  if (isApproval(ctx)) {
-    const query = new URLSearchParams((await getOAuthProviderState())?.query ?? "");
-    const clientId = query.get("client_id");
-    if (!clientId) return null;
-    // The provider stores the scopes the user accepted, or every scope the request asked for.
-    const bodyScope = (ctx.body as { scope?: unknown }).scope;
-    const approved = (typeof bodyScope === "string" ? bodyScope : query.get("scope"))?.split(" ") ?? [];
-    return {
-      target: { clientId },
-      isLatestWrite: (consent) => wrote(consent) && sameScopes(consent.scopes, approved),
-    };
-  }
-  if (ctx.path === CONSENT_UPDATE_PATH) {
-    const consentId = (ctx.body as { id?: unknown } | undefined)?.id;
-    if (typeof consentId !== "string") return null;
-    return {
-      target: { consentId },
-      isLatestWrite: (consent) => wrote(consent) && consent.id === consentId,
-    };
-  }
-  return null;
 };
 
 /**
  * `hooks.after` for `POST /oauth2/consent` and `POST /oauth2/update-consent`. Once the provider has
- * written the consent, ends the client's tokens for the user that reach past it, so a narrowed approval
- * takes effect now rather than at each token's next refresh.
+ * written the consent, saves the grant an approval gives, and ends the client's tokens for the user that
+ * reach past the consent, so a narrowed approval takes effect now rather than at each token's next refresh.
+ *
+ * The grant an approval saves (ENG-7149/7150/7153): the levels the user chose in the consent screen's
+ * matrix, capped by the consent's scopes, or the levels the scopes give when the approval chose none; and
+ * the organization & workspace access the user chose, by the rule Edit applies
+ * (`resolveMcpGrantSelection`), or, when it chose none, the access an existing grant has (All access for
+ * a new one). Audited as created or updated.
  *
  * It reconciles against the stored consent rather than the request, so it runs whatever the provider
  * answered (an approval can be written before the redirect that follows it fails) and is a no-op for an
@@ -460,156 +161,270 @@ const consentChange = async (ctx: AuthHookContext): Promise<TConsentChange | nul
  * provider issues without consulting consent, nor without a consent row, which is a revoke that
  * ENG-2499's handlers own.
  *
- * A failure here is logged, not thrown: the approval is already committed, and failing the request
- * would only cost the client its code. The refresh check still refuses every token beyond the consent.
+ * An approval whose grant can't be saved fails, and changes nothing: one that picks an organization or
+ * workspace the user can't select answers 422, and one whose narrowing can't be applied to SpiceDB (or
+ * whose transaction fails twice) answers 500. The consent screen shows the error, the grant stays as it
+ * was, as Edit does, and so does the consent the provider already wrote ({@link restoreConsents}); the
+ * client gets no code. A failure of `update-consent`, which saves no grant, is logged instead: the consent
+ * is already written, and the refresh check still refuses every token beyond it.
  */
 export const revokeTokensBeyondConsentAfterHandler = async (ctx: AuthHookContext): Promise<void> => {
   if (ctx.path !== CONSENT_PATH && ctx.path !== CONSENT_UPDATE_PATH) return;
 
-  const ids: { userId?: string; clientId?: string } = {};
-  try {
-    const session = await getSessionFromCtx(ctx);
-    if (!session) return;
-    const userId = session.user.id;
-    ids.userId = userId;
+  const session = await getSessionFromCtx(ctx);
+  if (!session) return;
+  const userId = session.user.id;
+  const ids: { userId: string; clientId?: string } = { userId };
 
-    const change = await consentChange(ctx);
-    if (!change) {
-      // An approval the provider accepted always names its client. Silence here would mean the
-      // provider's request state stopped reaching this hook, and narrowing waited for the next refresh.
-      if (isAcceptedApproval(ctx)) {
-        logger.warn(
-          ids,
-          "OAuth consent approved but its client couldn't be read; the refresh check still applies"
-        );
-      }
-      return;
+  const change = await consentChange(ctx, userId);
+  if (!change) {
+    // An approval the provider accepted always names its client. Silence here would mean the provider's
+    // request state stopped reaching this hook, and narrowing waited for the next refresh.
+    if (isAcceptedApproval(ctx)) {
+      logger.warn(
+        ids,
+        "OAuth consent approved but its client couldn't be read; the refresh check still applies"
+      );
     }
+    return;
+  }
 
-    // One retry, for a transient failure (a transaction timeout, a dropped connection): opaque access
-    // tokens beyond the consent have no check of their own until the grant's next refresh. The first
-    // failure is still logged, so a recurring one doesn't hide behind a retry that succeeds.
-    const settle = () => endTokensBeyondChangedConsent(userId, change);
-    const ended = await settle().catch((err: unknown) => {
-      logger.warn({ err, ...ids }, "OAuth consent changed but ending the tokens beyond it failed; retrying");
+  const ended = await settleChangedConsentWithRetry(userId, change, ids);
+  if (!ended) return;
+  if (ended.status !== "settled") return refuseConsentRequest(ended, change, ids);
+
+  ids.clientId = ended.clientId;
+  const { savedGrant, endedGrants, grantAudits, refreshTokensDeleted, accessTokensRevoked } = ended;
+  // A saved grant is projected now, so it applies on the client's first call rather than when the outbox
+  // delivers (ENG-7153); an ended one's relationships go, best-effort, as Revoke's do after its commit.
+  if (savedGrant) await projectMcpGrants([savedGrant.after.id]);
+  if (endedGrants.length > 0) await removeDeletedMcpGrants(endedGrants);
+  await queueMcpGrantAudits({ userId, userType: "user" }, grantAudits);
+  if (refreshTokensDeleted + accessTokensRevoked === 0) return;
+  logger.info(
+    { ...ids, refreshTokensDeleted, accessTokensRevoked },
+    "OAuth consent narrowed; tokens beyond it ended"
+  );
+};
+
+/**
+ * Runs {@link settleChangedConsent}, once more after a failure: a transient one (a transaction timeout, a
+ * dropped connection, a SpiceDB blip) shouldn't cost the user their approval, and opaque access tokens
+ * beyond the consent have no check of their own until the grant's next refresh. The first failure is
+ * still logged, so a recurring one doesn't hide behind a retry that succeeds. A second failure fails an
+ * approval (see the handler) and is logged for `update-consent`.
+ */
+const settleChangedConsentWithRetry = async (
+  userId: string,
+  change: TConsentChange,
+  ids: { userId: string; clientId?: string }
+): Promise<TSettledConsent | null> => {
+  const settle = () => settleChangedConsent(userId, change);
+  try {
+    return await settle().catch(async (error: unknown) => {
+      logger.warn(
+        { err: loggableError(error), ...ids },
+        "OAuth consent changed but settling it failed; retrying"
+      );
+      await restoreMcpGrantRelationships(userId, change);
       return settle();
     });
-    if (!ended) return;
-    ids.clientId = ended.clientId;
-    if (ended.refreshTokensDeleted + ended.accessTokensRevoked === 0) return;
-
-    logger.info({ ...ids, ...ended }, "OAuth consent narrowed; tokens beyond it ended");
-  } catch (err) {
+  } catch (error) {
+    await restoreMcpGrantRelationships(userId, change);
+    if (!change.savesGrant) {
+      logger.error(
+        { err: loggableError(error), ...ids },
+        "OAuth consent changed but ending the tokens beyond it failed; the refresh check still applies"
+      );
+      return null;
+    }
     logger.error(
-      { err, ...ids },
-      "OAuth consent changed but ending the tokens beyond it failed; the refresh check still applies"
+      { err: loggableError(error), ...ids },
+      "OAuth consent approved but its grant couldn't be saved"
+    );
+    await restoreConsentAfterFailedApproval(userId, change, ids);
+    throw new APIError("INTERNAL_SERVER_ERROR", {
+      error: "server_error",
+      error_description: MCP_GRANT_NOT_SAVED_DETAIL,
+      code: MCP_GRANT_NOT_SAVED_CODE,
+    });
+  }
+};
+
+type TSavedMcpGrant = { before: TStoredMcpGrant | null; after: TStoredMcpGrant };
+
+export type TSettledConsent =
+  | TConsentRefusal
+  | ({
+      status: "settled";
+      clientId: string;
+      savedGrant: TSavedMcpGrant | null;
+      /** The grant an approval that asked for no MCP scope ended: removed and audited after the commit. */
+      endedGrants: TStoredMcpGrant[];
+      /** The saved or ended grant's audit entries, prepared in the transaction: queued after the commit. */
+      grantAudits: TMcpGrantAuditRecord[];
+    } & TTokensBeyondConsent);
+
+/**
+ * The audit entries of what an approval saved or ended, read in its transaction, so they name the
+ * organizations the grant reached as it changed, as Edit and Revoke do.
+ */
+const prepareApprovalAudits = (
+  tx: Prisma.TransactionClient,
+  { savedGrant, endedGrants }: { savedGrant: TSavedMcpGrant | null; endedGrants: TStoredMcpGrant[] }
+): Promise<TMcpGrantAuditRecord[]> =>
+  prepareMcpGrantAudits(tx, [
+    ...(savedGrant
+      ? [
+          {
+            action: savedGrant.before ? ("updated" as const) : ("created" as const),
+            before: savedGrant.before,
+            after: savedGrant.after,
+          },
+        ]
+      : []),
+    ...endedGrants.map((before) => ({ action: "deleted" as const, before, after: null })),
+  ]);
+
+/**
+ * The consent hook's transaction. The workspaces SpiceDB lets the user select are looked up first, before
+ * the transaction takes any lock. For an approval, the grant comes first: its row is locked `FOR UPDATE`
+ * and the chosen access resolved; a selection the user can't make puts the consent back from the snapshot
+ * in this transaction and changes nothing else. Then the consent rows are settled and the cap checked, and
+ * only once nothing can refuse the approval is what a narrowing takes away deleted from SpiceDB, the last
+ * step before the grant is written (or ended, for an approval that asked for no MCP scope) while the
+ * consent rows are locked: a revoke or a refresh check racing the approval sees both or neither. The
+ * tokens beyond the consent are ended last. `null` when there is nothing to settle: a `skipConsent`
+ * client, or no consent row.
+ *
+ * The trade-off of deleting after the checks: the SpiceDB call runs while the consent rows are held, so
+ * a path that locks them without the grant row (`update-consent`, the refresh check of a token with no MCP
+ * scope) can wait on its retries: the 15 seconds `MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS` allows for them.
+ * Every other path takes the grant row first, which this transaction holds from the start anyway. Deleting
+ * before the checks instead could commit a refusal over relationships already removed.
+ */
+const settleChangedConsent = async (
+  userId: string,
+  change: TConsentChange
+): Promise<TSettledConsent | null> => {
+  const readableWorkspaceIds = await readMcpGrantReadableWorkspaceIds(userId, change.chosenGrant?.access);
+  return prisma.$transaction(
+    async (tx): Promise<TSettledConsent | null> => {
+      const grant = await lockApprovalGrant(tx, { userId, change, readableWorkspaceIds });
+      if (!grant || "status" in grant) return grant;
+
+      const consent = await readSettledConsent(tx, userId, change);
+      if (!consent) return null;
+      const { clientId, scopes: consentedScopes } = consent;
+      // An approval saves its grant only while the consent is its own write. Another tab's approval of the
+      // same client that wrote after it owns the decision, and its own hook saves that grant: this one's
+      // choice, even with the same scopes, would overwrite it.
+      const ownsDecision = grant.clientId !== null && change.isLatestWrite(consent.newest);
+      const cap = getMcpGrantPermissionsForScopes(consentedScopes);
+      const permissions = change.chosenGrant
+        ? capMcpGrantPermissions(change.chosenGrant.permissions, cap)
+        : cap;
+      // A chosen grant the scopes leave nothing of would connect a client that can do nothing (spec story
+      // 17): refused, not stored. The consent screen's matrix never offers one; a request made by hand can,
+      // since the request's own check (`requireValidMcpGrantOnConsentBeforeHandler`) runs before the cap.
+      if (ownsDecision && change.chosenGrant && isMcpGrantEmpty(permissions)) {
+        return refuseConsent(tx, { userId, clientId, change }, { status: "beyond_scopes" });
+      }
+      await foldDuplicateConsents(tx, userId, consent);
+      const saved = ownsDecision
+        ? await saveApprovalGrant(tx, { userId, clientId, grant, permissions })
+        : { savedGrant: null, endedGrants: [] };
+      return {
+        status: "settled",
+        clientId,
+        ...saved,
+        grantAudits: await prepareApprovalAudits(tx, saved),
+        ...(await endTokensBeyondScopes(tx, { userId, clientId, consentedScopes })),
+      };
+    },
+    { timeout: MCP_GRANT_SAVE_TRANSACTION_TIMEOUT_MS }
+  );
+};
+
+/**
+ * The grant an approval saves, as {@link lockApprovalGrant} locked it: its client (`null` for a change
+ * that saves none, such as `update-consent`), the grant before the approval, and the access to save,
+ * resolved against what the user can select.
+ */
+type TApprovalGrant = {
+  clientId: string | null;
+  before: TStoredMcpGrant | null;
+  access: TMcpGrantAccessSelection | undefined;
+};
+
+/**
+ * The first step of {@link settleChangedConsent} for an approval that saves a grant: the user's row, then
+ * the grant's row `FOR UPDATE`, and the chosen access resolved. `null` for a `skipConsent` client (or one
+ * gone), which the hook leaves alone; a refusal, already put back from the snapshot, for a selection the
+ * user can't make. A change that saves no grant locks nothing here.
+ */
+const lockApprovalGrant = async (
+  tx: Prisma.TransactionClient,
+  {
+    userId,
+    change,
+    readableWorkspaceIds,
+  }: { userId: string; change: TConsentChange; readableWorkspaceIds: ReadonlySet<string> }
+): Promise<TApprovalGrant | TSettledConsent | null> => {
+  const clientId = change.savesGrant && "clientId" in change.target ? change.target.clientId : null;
+  if (!clientId) return { clientId: null, before: null, access: undefined };
+  const client = await tx.oauthClient.findUnique({ where: { clientId }, select: { skipConsent: true } });
+  if (!client || client.skipConsent) return null;
+  // The user's row before the grant: creating the grant row takes it `FOR KEY SHARE` (its foreign key),
+  // and a member removal or demotion holds it `FOR UPDATE` while it locks this user's grant and consent
+  // rows. Taken last, it would close a cycle with them; taken first, the approval waits for the removal
+  // and then finds the consent it ended gone.
+  await lockUserForMcpGrantWrite(tx, userId);
+  const before = await lockMcpGrant(tx, { userId, clientId });
+  const chosen = change.chosenGrant?.access;
+  if (!chosen) return { clientId, before, access: undefined };
+  // Resolved now, applied to SpiceDB only after every check that can still refuse: a refusal after the
+  // delete would leave SpiceDB narrower than the rows it commits.
+  const resolved = await resolveMcpGrantNarrowing(tx, {
+    userId,
+    before,
+    access: chosen,
+    readableWorkspaceIds,
+  });
+  if (resolved.status === "unavailable") {
+    return refuseConsent(
+      tx,
+      { userId, clientId, change },
+      { status: "selection_unavailable", field: resolved.field }
     );
   }
+  return { clientId, before, access: resolved.access };
 };
 
-/** The consent hook's transaction: settle the consent rows, then end the tokens beyond them. */
-const endTokensBeyondChangedConsent = (userId: string, change: TConsentChange) =>
-  prisma.$transaction(async (tx) => {
-    const consent = await settleConsent(tx, userId, change);
-    if (!consent) return null;
-    const { clientId, scopes: consentedScopes } = consent;
-    return { clientId, ...(await endTokensBeyondScopes(tx, { userId, clientId, consentedScopes })) };
-  });
-
 /**
- * Better Auth stores refresh tokens as the unpadded base64url SHA-256 of the value after the prefix
- * (`storeTokens: "hashed"`, the provider's `defaultHasher`). Not exported upstream, so it is restated;
- * `oauth-grant-revocation.integration.test.ts` fails if a provider upgrade changes the format.
+ * The last grant step of {@link settleChangedConsent}, once nothing can refuse the approval: deletes from
+ * SpiceDB what a narrowing takes away, then writes the grant. A client that asked for no MCP scope
+ * (`openid offline_access`) gets no grant: it could do nothing with one, Authorized apps lists it with
+ * Revoke alone, and its refresh needs none. One that had a grant loses it, as Revoke would end it: a grant
+ * left in place would keep MCP access and SpiceDB relationships that no consent backs, and Authorized apps
+ * would show and edit them.
  */
-const hashPresentedRefreshToken = (presented: string): string | null => {
-  if (!presented.startsWith(MCP_OAUTH_REFRESH_TOKEN_PREFIX)) return null;
-  return createHash("sha256")
-    .update(presented.slice(MCP_OAUTH_REFRESH_TOKEN_PREFIX.length))
-    .digest("base64url");
-};
-
-const invalidGrant = (): APIError =>
-  new APIError("BAD_REQUEST", { error: "invalid_grant", error_description: "invalid refresh token" });
-
-/**
- * `hooks.after` for `POST /oauth2/token`. After a successful `refresh_token` grant, checks the grant
- * still has consent, and that the consent still covers every scope of the presented refresh token.
- *
- *  - No consent (ENG-2499): revokes every token the client holds for the user (the one just issued
- *    included) and replaces the response with `invalid_grant`, so the new tokens never leave.
- *  - A consent narrowed below the token, or below any other token of its grant (ENG-3529): ends the
- *    client's tokens that reach past the consent and the presented token's whole grant (the one just
- *    issued included, even when the client asked for scopes the consent does cover), and answers
- *    `invalid_grant`. The client has to go back through `/authorize`, which only issues what the
- *    consent covers. Grants within the consent, such as the narrowed approval's own, keep working.
- *
- * It runs after issuance on purpose. A check before issuance could pass, then lose to a revoke that
- * commits before the new refresh token is inserted, leaving that token outside the revoke's update.
- * After issuance, the new token already exists, and the consent is read `FOR SHARE`: either the read
- * waits on an in-flight revoke's delete (or narrowing's update) and sees its result, or it ran before
- * it. In the second case the revoke's own token update comes later and catches the new token.
- *
- * Exempt: clients registered with `skipConsent`, which the provider authorizes without ever writing a
- * consent row. Fails closed if the presented token can't be matched to a row, which after upstream
- * accepted it only happens if the storage format has drifted.
- */
-export const requireOAuthConsentOnRefreshAfterHandler = async (ctx: AuthHookContext): Promise<void> => {
-  if (ctx.path !== TOKEN_PATH) return;
-  const body = ctx.body as { grant_type?: unknown; refresh_token?: unknown } | undefined;
-  if (body?.grant_type !== "refresh_token" || typeof body.refresh_token !== "string") return;
-  if (isAPIError((ctx.context as { returned?: unknown }).returned)) return;
-
-  const storedToken = hashPresentedRefreshToken(body.refresh_token);
-  const refreshToken = storedToken
-    ? await prisma.oauthRefreshToken.findUnique({
-        where: { token: storedToken },
-        select: {
-          userId: true,
-          clientId: true,
-          scopes: true,
-          authorizationCodeId: true,
-          rotatedAt: true,
-          sessionId: true,
-          client: { select: { skipConsent: true } },
-        },
-      })
-    : null;
-  if (!refreshToken) {
-    // Either a narrowing or revoke ended the token while this refresh was in flight, or the provider's
-    // storage format has drifted (the integration suite catches the latter). Fail closed either way.
-    logger.warn("OAuth refresh token no longer stored: ended concurrently, or the storage format drifted");
-    throw invalidGrant();
+const saveApprovalGrant = async (
+  tx: Prisma.TransactionClient,
+  {
+    userId,
+    clientId,
+    grant,
+    permissions,
+  }: { userId: string; clientId: string; grant: TApprovalGrant; permissions: TMcpGrantPermissions }
+): Promise<{ savedGrant: TSavedMcpGrant | null; endedGrants: TStoredMcpGrant[] }> => {
+  if (grant.clientId === null) return { savedGrant: null, endedGrants: [] };
+  const { before, access } = grant;
+  if (isMcpGrantEmpty(permissions)) {
+    const endedGrants = before ? await deleteMcpGrants(tx, { userId, clientId: grant.clientId }) : [];
+    return { savedGrant: null, endedGrants };
   }
-  if (refreshToken.client.skipConsent) return;
-
-  const { userId, clientId, scopes, authorizationCodeId, rotatedAt, sessionId } = refreshToken;
-  const refused = await prisma.$transaction(async (tx) => {
-    const consentedScopes = await readConsentedScopes(tx, userId, clientId);
-    if (!consentedScopes) {
-      return {
-        reason: "consent_revoked",
-        ...(await revokeClientTokens(tx, userId, clientId)),
-      };
-    }
-    const covered =
-      isCoveredBy(scopes, consentedScopes) &&
-      !(
-        authorizationCodeId &&
-        (await grantReachesBeyond(tx, { userId, clientId, grantId: authorizationCodeId, consentedScopes }))
-      );
-    if (covered) return null;
-    return {
-      reason: "consent_narrowed",
-      ...(await endTokensBeyondScopes(tx, {
-        userId,
-        clientId,
-        consentedScopes,
-        grant: { authorizationCodeId, rotatedAt, sessionId, scopes },
-      })),
-    };
-  });
-  if (!refused) return;
-
-  logger.warn({ userId, clientId, ...refused }, "OAuth refresh refused: its consent no longer covers it");
-  throw invalidGrant();
+  if (access) await applyMcpGrantNarrowing(before, access);
+  const savedGrant = await writeMcpGrant(tx, { userId, clientId, before, permissions, access });
+  return { savedGrant, endedGrants: [] };
 };

@@ -13,6 +13,7 @@ import {
   successListResponse,
   successResponse,
 } from "@/app/api/v3/lib/response";
+import { generateV3Survey } from "@/app/api/v3/surveys/generate/operations";
 import {
   createV3SurveyResponseFromRawInput,
   deleteV3Survey,
@@ -24,7 +25,13 @@ import {
   validateV3SurveyFromRawInput,
 } from "@/app/api/v3/surveys/lib/operations";
 import { buildListSurveysSearchParams, registerSurveyTools } from "./surveys";
-import { type TToolHandler, type ToolCallEra, callToolOverHttp, errorText } from "./test-utils";
+import {
+  FULL_MCP_GRANT,
+  type TToolHandler,
+  type ToolCallEra,
+  callToolOverHttp,
+  errorText,
+} from "./test-utils";
 
 // Asserted as a shape, not by calling getMcpResourceUrl() here: comparing production's value with
 // itself would still pass if it regressed to the bare path "/api/mcp" — the ENG-2173 bug. The
@@ -51,6 +58,8 @@ vi.mock("@/app/api/v3/surveys/lib/operations", () => ({
     ),
   validateV3SurveyFromRawInput: vi.fn(),
 }));
+
+vi.mock("@/app/api/v3/surveys/generate/operations", () => ({ generateV3Survey: vi.fn() }));
 
 vi.mock("@/app/api/v3/lib/audit", () => ({
   buildV3AuditLog: vi.fn(),
@@ -107,6 +116,7 @@ const readOnlyOAuthAuthInfo = {
     },
     requestId: "req_tool",
     authMethod: "oauth",
+    grant: FULL_MCP_GRANT,
   },
 };
 
@@ -177,7 +187,7 @@ describe("registerSurveyTools", () => {
   test("registers survey tools with planning annotations", () => {
     const { server, tools } = createToolServer();
 
-    expect(server.registerTool).toHaveBeenCalledTimes(8);
+    expect(server.registerTool).toHaveBeenCalledTimes(9);
     expect(tools.get("list_surveys")?.config).toMatchObject({
       title: "List surveys",
       annotations: {
@@ -269,6 +279,58 @@ describe("registerSurveyTools", () => {
     });
   });
 
+  /**
+   * Generation persists nothing, so it is read-only to a client, but it is never idempotent: each call
+   * is a fresh model run that spends from the caller's AI budget.
+   */
+  test("generate_survey is a non-idempotent read that takes the v3 generate body", () => {
+    const { tools } = createToolServer();
+
+    expect(tools.get("generate_survey")?.config).toMatchObject({
+      title: "Generate survey draft",
+      annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
+    });
+    const inputSchema = tools.get("generate_survey")?.config.inputSchema as
+      | z.ZodObject<z.ZodRawShape>
+      | undefined;
+    expect(Object.keys(inputSchema?.shape ?? {}).sort()).toEqual([
+      "language",
+      "prompt",
+      "surveyLanguage",
+      "type",
+      "workspaceId",
+    ]);
+    expect(tools.get("generate_survey")?.config.outputSchema).toBeDefined();
+  });
+
+  test("generate_survey calls the shared generate operation and returns the draft", async () => {
+    const { tools } = createToolServer();
+    const draft = {
+      language: "en-US",
+      payload: { workspaceId: "clxx1234567890123456789012", name: "Onboarding" },
+      validation: { valid: true, invalid_params: [], languages: [] },
+    };
+    vi.mocked(generateV3Survey).mockResolvedValue(successResponse(draft, { requestId: "req_tool" }));
+    const input = {
+      workspaceId: "clxx1234567890123456789012",
+      prompt: "Ask new users what slowed them down during onboarding",
+      type: "link",
+    };
+
+    const result = await tools.get("generate_survey")!.handler(input, {
+      http: { authInfo: writeOnlyOAuthAuthInfo },
+    });
+
+    expect(generateV3Survey).toHaveBeenCalledWith({
+      body: input,
+      authentication: writeOnlyOAuthAuthInfo.extra.formbricksAuthentication,
+      requestId: "req_tool",
+      instance: "/api/mcp",
+    });
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toEqual({ data: draft, requestId: "req_tool" });
+  });
+
   test("list_surveys calls the shared v3 list operation and returns structured content", async () => {
     const { tools } = createToolServer();
     vi.mocked(listV3Surveys).mockResolvedValue(
@@ -326,6 +388,93 @@ describe("registerSurveyTools", () => {
       code: "bad_request",
       requestId: "req_bad",
       invalid_params: [{ name: "limit", reason: "Too big" }],
+    });
+  });
+
+  // Targeting filters carry literal contact attribute values, which list_segments gates on Segments and
+  // Contact attributes: Read. A survey tool leaves them out for a caller without both, over MCP only.
+  describe("an app survey's targeting", () => {
+    const survey = {
+      id: "clxx1234567890123456789012",
+      type: "app",
+      targeting: { filters: [{ attributeKey: "email", value: "ceo@example.com" }] },
+    };
+    const withoutTargeting = { id: survey.id, type: "app" };
+    const oauthWith = (scopes: string[], permissions: Record<string, string>) => ({
+      ...readOnlyOAuthAuthInfo,
+      scopes,
+      extra: { ...readOnlyOAuthAuthInfo.extra, grant: { access: "all", permissions } },
+    });
+    const getWith = async (callerAuthInfo: unknown) => {
+      const { tools } = createToolServer();
+      vi.mocked(getV3Survey).mockResolvedValue(successResponse(survey, { requestId: "req_tool" }));
+      return tools
+        .get("get_survey")!
+        .handler({ surveyId: survey.id }, { http: { authInfo: callerAuthInfo } });
+    };
+
+    test.each([
+      ["Surveys: Read alone", oauthWith(["surveys:read", "audience:read"], { surveys: "read" })],
+      [
+        "Segments but not Contact attributes",
+        oauthWith(["surveys:read", "audience:read"], { surveys: "read", segments: "read" }),
+      ],
+      [
+        "a grant with both, on a token without audience:read",
+        oauthWith(["surveys:read"], FULL_MCP_GRANT.permissions),
+      ],
+      ["an API key without audience:read", authInfo],
+    ])("is left out for %s, in the text too", async (_case, callerAuthInfo) => {
+      const result = await getWith(callerAuthInfo);
+
+      expect(result.structuredContent).toEqual({ data: withoutTargeting, requestId: "req_tool" });
+      expect(JSON.parse(result.content[0].text)).toEqual({ data: withoutTargeting, requestId: "req_tool" });
+    });
+
+    test.each([
+      [
+        "Segments and Contact attributes: Read",
+        oauthWith(["surveys:read", "audience:read"], {
+          surveys: "read",
+          segments: "read",
+          contactAttributes: "read",
+        }),
+      ],
+      ["an API key with audience:read", { ...authInfo, scopes: ["surveys:read", "audience:read"] }],
+    ])("is returned for %s", async (_case, callerAuthInfo) => {
+      const result = await getWith(callerAuthInfo);
+
+      expect(result.structuredContent).toEqual({ data: survey, requestId: "req_tool" });
+    });
+
+    test("is left out of every listed survey", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(listV3Surveys).mockResolvedValue(
+        successListResponse(
+          [survey, { id: "link", type: "link" }],
+          { limit: 20, nextCursor: null },
+          {
+            requestId: "req_tool",
+          }
+        )
+      );
+
+      const result = await tools
+        .get("list_surveys")!
+        .handler({ workspaceId: "clws1234567890123456789012" }, { http: { authInfo } });
+
+      expect(result.structuredContent.data).toEqual([withoutTargeting, { id: "link", type: "link" }]);
+    });
+
+    test("is left out of a patched survey", async () => {
+      const { tools } = createToolServer();
+      vi.mocked(patchV3SurveyResponse).mockResolvedValue(successResponse(survey, { requestId: "req_tool" }));
+
+      const result = await tools
+        .get("patch_survey")!
+        .handler({ surveyId: survey.id, data: { name: "Renamed" } }, { http: { authInfo } });
+
+      expect(result.structuredContent.data).toEqual(withoutTargeting);
     });
   });
 
@@ -692,6 +841,8 @@ describe("registerSurveyTools", () => {
       ["delete_survey", { surveyId }, deleteV3Survey],
       ["edit_survey_blocks", { surveyId, ops: [{ op: "remove", id: "blk_a" }] }, editV3SurveyBlocksResponse],
       ["set_survey_block_order", { surveyId, order: ["blk_a"] }, setV3SurveyBlockOrderResponse],
+      // Writes nothing, but spends AI budget on the caller's behalf: Surveys: Write, like the REST route.
+      ["generate_survey", { workspaceId: surveyId, prompt: "A survey about onboarding" }, generateV3Survey],
     ];
 
     for (const [name, input, operation] of cases) {
@@ -702,7 +853,7 @@ describe("registerSurveyTools", () => {
       expect(result.structuredContent.error, name).toMatchObject({
         status: 403,
         code: "forbidden",
-        detail: "OAuth token does not include the required MCP scope: surveys:write",
+        detail: expect.stringContaining("its OAuth token lacks the scope surveys:write."),
         requestId: "req_tool",
       });
     }
@@ -751,7 +902,7 @@ describe("registerSurveyTools", () => {
     expect(result.structuredContent.error).toMatchObject({
       status: 403,
       code: "forbidden",
-      detail: "OAuth token does not include the required MCP scope: surveys:read",
+      detail: expect.stringContaining("its OAuth token lacks the scope surveys:read."),
       requestId: "req_tool",
     });
   });

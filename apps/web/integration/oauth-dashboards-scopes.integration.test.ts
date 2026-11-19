@@ -5,6 +5,8 @@ import { MCP_OAUTH_SCOPES } from "@/modules/auth/lib/oauth-urls";
 // The data migrations under test (auto-discovered by the migration runner at deploy).
 import { grantDashboardsScopes } from "../../../packages/database/migration/20261022120000_grant_dashboards_scopes/migration";
 import { grantDashboardsScopesToClients } from "../../../packages/database/migration/20261022120001_grant_dashboards_scopes_to_clients/migration";
+// Later scope families ship their own repair, so the chain runs as an upgraded instance runs it (ENG-7151).
+import { grantAudienceScope } from "../../../packages/database/migration/20261112130000_grant_audience_scope/migration";
 
 /**
  * ENG-6581 against real Postgres: the two repairs that let upgraded instances grant `dashboards:*`.
@@ -76,6 +78,7 @@ describe("ENG-6581 dashboards scope grant on the MCP resource", () => {
     await seedResource(MCP_IDENTIFIER, PRE_ENG6581_SCOPES);
 
     await runResourceGrant();
+    await grantAudienceScope.run!({ prisma, tx: prisma as never });
 
     const allowed = new Set(await resourceScopesOf(MCP_IDENTIFIER));
     expect(MCP_OAUTH_SCOPES.filter((scope) => !allowed.has(scope))).toEqual([]);

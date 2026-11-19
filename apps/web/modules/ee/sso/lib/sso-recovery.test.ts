@@ -58,6 +58,8 @@ vi.mock("./recovery-intent", () => ({
   consumeSsoRecoveryIntent: mocks.consumeSsoRecoveryIntent,
 }));
 
+// Ending the user's OAuth grants marks their pending sign-in codes in Redis, which the unit run has none of.
+vi.mock("@/modules/auth/lib/oauth-revocation-marker", () => ({ markOAuthRevocation: vi.fn() }));
 vi.mock("@/modules/auth/lib/session-revocation", () => ({
   revokeUserSessionsExcept: vi.fn(),
 }));
@@ -126,6 +128,8 @@ describe("sso-recovery", () => {
   // Both new stores belong in the stub: post-ENG-1054 the password lives on `Account` and the 2FA secret
   // in `TwoFactor`, so a strip that only touched `user` is exactly the bug ENG-2557 fixed.
   const tx = {
+    // The consent rows are locked in id order before they are deleted.
+    $queryRaw: async () => [],
     user: {
       update: txUserUpdate,
       updateMany: txUserUpdateMany,
@@ -144,6 +148,11 @@ describe("sso-recovery", () => {
     },
     oauthConsent: {
       deleteMany: txOauthConsentDeleteMany,
+    },
+    // The squatter's MCP grants go with its consents (ENG-7149); it held none here.
+    mcpGrant: {
+      findMany: vi.fn(async () => []),
+      deleteMany: vi.fn(async () => ({ count: 0 })),
     },
     apiKey: {
       findMany: txApiKeyFindMany,
@@ -303,6 +312,8 @@ describe("sso-recovery", () => {
       sessionToken: "current-session-token",
     });
 
+    // The reclaim may end the user's MCP grants, whose rows a reconciling pass can hold for 30 s.
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
     // Exact-match on purpose: the legacy nulls are load-bearing, not leftovers. `better-auth-two-factor-backfill`
     // re-materialises a `TwoFactor` row from `twoFactorEnabled && twoFactorSecret` on the next credential
     // sign-in, so dropping them from this payload would let the stripped factor come back.

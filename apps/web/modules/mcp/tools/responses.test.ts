@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { ApiKeyPermission } from "@formbricks/database/prisma";
-import { noContentResponse, successResponse } from "@/app/api/v3/lib/response";
+import { noContentResponse, successListResponse, successResponse } from "@/app/api/v3/lib/response";
 import {
   batchDeleteV3Responses,
+  batchSetV3ResponsesOutcome,
   countV3ResponsesOperation,
   createV3ResponseFromRawInput,
   deleteV3Response,
@@ -24,6 +25,7 @@ import {
   buildCountResponsesSearchParams,
   buildListResponsesSearchParams,
   registerResponseTools,
+  withoutContactUserId,
 } from "./responses";
 
 /**
@@ -39,6 +41,7 @@ vi.mock("crypto", async (importOriginal) => await importOriginal<typeof import("
 
 vi.mock("@/app/api/v3/responses/lib/operations", () => ({
   batchDeleteV3Responses: vi.fn(),
+  batchSetV3ResponsesOutcome: vi.fn(),
   countV3ResponsesOperation: vi.fn(),
   createV3ResponseFromRawInput: vi.fn(),
   deleteV3Response: vi.fn(),
@@ -131,6 +134,9 @@ beforeEach(() => {
   vi.mocked(batchDeleteV3Responses).mockResolvedValue(
     successResponse({ data: { deleted: 2 } }, { requestId: "req" })
   );
+  vi.mocked(batchSetV3ResponsesOutcome).mockResolvedValue(
+    successResponse({ updated: 2 }, { requestId: "req" })
+  );
 });
 
 /**
@@ -147,6 +153,7 @@ describe("the registered surface", () => {
         "delete_response",
         "get_response",
         "list_responses",
+        "set_responses_outcome",
         "update_response",
         "validate_response",
       ].sort()
@@ -182,8 +189,8 @@ describe("the registered surface", () => {
 });
 
 /**
- * The gate is structural — `registerScopedTool` runs it before the handler — so these prove the
- * scope each tool declares rather than that a gate exists at all.
+ * The gate is structural — `registerMcpTool` runs it before the handler — so these prove the
+ * scope each tool's permissions map to rather than that a gate exists at all.
  */
 describe("the scope gate", () => {
   const withScopes = (scopes: string[]) =>
@@ -215,6 +222,7 @@ describe("the scope gate", () => {
       "validate_response",
       "delete_response",
       "batch_delete_responses",
+      "set_responses_outcome",
     ]) {
       const result = await call(name, { responseId: RESPONSE_ID, confirm: true }, readOnly);
       expect(result.isError, `${name} answered a read-only token`).toBe(true);
@@ -225,6 +233,7 @@ describe("the scope gate", () => {
     expect(validateV3ResponseFromRawInput).not.toHaveBeenCalled();
     expect(deleteV3Response).not.toHaveBeenCalled();
     expect(batchDeleteV3Responses).not.toHaveBeenCalled();
+    expect(batchSetV3ResponsesOutcome).not.toHaveBeenCalled();
   });
 });
 
@@ -564,6 +573,154 @@ describe("the confirmation state is sealed", () => {
   });
 });
 
+/**
+ * A response's contact id and its tags are Responses data (D1). Only the contact's `userId`, a contact
+ * attribute, needs Contacts and Contact attributes at Read, and comes back null without them.
+ */
+describe("a response's contact userId without Contacts and Contact attributes", () => {
+  const tags = [{ id: "cltg000000000000000000001", name: "vip" }];
+  const contact = { id: "clct000000000000000000001", userId: "ext-user-42" };
+  const resource = {
+    id: RESPONSE_ID,
+    surveyId: "clsv000000000000000000001",
+    data: { q1: "an answer" },
+    contact,
+    tags,
+  };
+  const listItem = {
+    id: RESPONSE_ID,
+    surveyId: "clsv000000000000000000001",
+    data: { q1: "an answer" },
+    tags,
+  };
+
+  /** An OAuth caller, which unlike an API key has a grant to withhold a permission with. */
+  const oauthAuthInfo = (scopes: string[], permissions: Record<string, string>) => ({
+    token: "oauth:user_1:client_1",
+    clientId: "client_1",
+    scopes,
+    extra: {
+      formbricksAuthentication: {
+        user: { id: "user_1", email: "person@example.com", name: "Person" },
+        expires: "2026-07-01T00:00:00.000Z",
+      },
+      requestId: "req_tool",
+      authMethod: "oauth",
+      grant: { access: "all", permissions },
+    },
+  });
+
+  // An upgraded client's grant: Responses only, Tags and Audience at No access (story 41).
+  const responsesOnly = oauthAuthInfo(["responses:read"], { responses: "read" });
+  const responsesWrite = oauthAuthInfo(["responses:read", "responses:write"], { responses: "write" });
+  const contactsOnly = oauthAuthInfo(["responses:read", "audience:read"], {
+    responses: "read",
+    contacts: "read",
+  });
+  const withAudience = oauthAuthInfo(["responses:read", "audience:read"], {
+    responses: "read",
+    contacts: "read",
+    contactAttributes: "read",
+  });
+
+  const callerContext = (authInfo: unknown) =>
+    ({ http: { authInfo }, mcpReq: { method: "tools/call" } }) as never;
+
+  const getAs = async (authInfo: unknown) => {
+    vi.mocked(getV3Response).mockResolvedValue(successResponse(resource, { requestId: "req_tool" }));
+    const result = await call("get_response", { responseId: RESPONSE_ID }, callerContext(authInfo));
+    return (result.structuredContent as { data: unknown }).data;
+  };
+
+  test("get_response keeps the contact id and the tags, and nulls only the userId", async () => {
+    expect(await getAs(responsesOnly)).toEqual({ ...resource, contact: { ...contact, userId: null } });
+  });
+
+  test("Contacts: Read alone is not enough for the userId: it is a contact attribute", async () => {
+    expect(await getAs(contactsOnly)).toEqual({ ...resource, contact: { ...contact, userId: null } });
+  });
+
+  test("Contacts and Contact attributes at Read get the response untouched", async () => {
+    expect(await getAs(withAudience)).toEqual(resource);
+  });
+
+  test("list_responses keeps each item's tags under Responses: Read alone", async () => {
+    vi.mocked(listV3Responses).mockResolvedValue(
+      successListResponse([listItem], { limit: 20, nextCursor: null }, { requestId: "req_tool" })
+    );
+    const result = await call(
+      "list_responses",
+      { workspaceId: WORKSPACE_ID, limit: 20 },
+      callerContext(responsesOnly)
+    );
+    expect((result.structuredContent as { data: unknown[] }).data).toEqual([listItem]);
+  });
+
+  // An upgraded client wrote tags before grants (story 40): Responses: Write still does.
+  test("create_response and update_response set tags under Responses: Write, and redact only the userId", async () => {
+    vi.mocked(createV3ResponseFromRawInput).mockImplementation(async () =>
+      successResponse(resource, { requestId: "req_tool" })
+    );
+    vi.mocked(updateV3ResponseFromRawInput).mockImplementation(async () =>
+      successResponse(resource, { requestId: "req_tool" })
+    );
+    const redacted = { ...resource, contact: { ...contact, userId: null } };
+
+    const created = await call(
+      "create_response",
+      { data: { surveyId: "clsv000000000000000000001", tags: [tags[0].id] } },
+      callerContext(responsesWrite)
+    );
+    expect(created.isError).toBeFalsy();
+    expect(created.structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
+
+    const updated = await call(
+      "update_response",
+      { responseId: RESPONSE_ID, data: { tags: [] } },
+      callerContext(responsesWrite)
+    );
+    expect(updated.isError).toBeFalsy();
+    expect(updated.structuredContent).toEqual({ data: redacted, requestId: "req_tool" });
+    expect(updateV3ResponseFromRawInput).toHaveBeenCalledTimes(1);
+  });
+
+  // The dry run reports ids only: the contact's id and the tags it would apply, never a userId or an
+  // attribute, so it needs no redaction under D1.
+  test("validate_response passes the effects through, which name no userId", async () => {
+    const effects = {
+      language: null,
+      contactId: contact.id,
+      displayId: null,
+      firesPipeline: true,
+      countsTowardMeteredResponses: false,
+      quotas: [],
+    };
+    vi.mocked(validateV3ResponseFromRawInput).mockResolvedValue(
+      successResponse(
+        { valid: true, operation: "create", invalid_params: [], effects },
+        { requestId: "req_tool" }
+      )
+    );
+    const result = await call(
+      "validate_response",
+      { operation: "create", data: { surveyId: "clsv000000000000000000001", contactId: contact.id } },
+      callerContext(responsesWrite)
+    );
+    expect(JSON.stringify(result)).not.toContain("userId");
+    expect((result.structuredContent as { data: { effects: unknown } }).data.effects).toEqual(effects);
+  });
+});
+
+describe("withoutContactUserId", () => {
+  test("leaves a response without a contact, or with a null userId, as the same object", () => {
+    const anonymous = { id: "r", contact: null };
+    expect(withoutContactUserId(anonymous)).toBe(anonymous);
+    const unknownUser = { id: "r", contact: { id: "c", userId: null } };
+    expect(withoutContactUserId(unknownUser)).toBe(unknownUser);
+    expect(withoutContactUserId("not a response")).toBe("not a response");
+  });
+});
+
 describe("the tools reach the operations", () => {
   test("reads pass the derived request id and the MCP instance through", async () => {
     await call("get_response", { responseId: RESPONSE_ID });
@@ -594,6 +751,29 @@ describe("the tools reach the operations", () => {
 
     expect(validateV3ResponseFromRawInput).toHaveBeenCalledWith(
       expect.objectContaining({ body: { operation: "create", data: { surveyId: "s" } } })
+    );
+  });
+
+  /** Marking Low quality is reversible (`outcome: null` restores), so it asks nothing and deletes nothing. */
+  test("the outcome tool hands the operation the workspace, the ids and the outcome", async () => {
+    const ids = [RESPONSE_ID, "clrs000000000000000000002"];
+
+    const result = await call("set_responses_outcome", {
+      workspaceId: WORKSPACE_ID,
+      ids,
+      outcome: "lowQuality",
+    });
+
+    expect(result.isError).toBeFalsy();
+    expect(result.structuredContent).toMatchObject({ data: { updated: 2 } });
+    expect(batchSetV3ResponsesOutcome).toHaveBeenCalledWith(
+      expect.objectContaining({
+        workspaceId: WORKSPACE_ID,
+        ids,
+        outcome: "lowQuality",
+        requestId: "req_tool",
+        instance: "/api/mcp",
+      })
     );
   });
 });

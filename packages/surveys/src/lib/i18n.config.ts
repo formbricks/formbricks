@@ -25,7 +25,7 @@ export const resolveFallbackBundles = (code: string): string[] => {
     : [DEFAULT_SURVEY_LANGUAGE_CODE];
 };
 
-i18n
+void i18n
   .use(ICU)
   .use(initReactI18next)
   .init({

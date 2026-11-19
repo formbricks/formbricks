@@ -144,7 +144,8 @@ export const PreviewSurvey = ({
   );
   // The strip's Clear (ENG-6969 T13 ②): no values means a new start key, so the preview restarts.
   const clearTestValues = () => setTestValues({});
-  // Bumped when an app survey without endings finishes, to start it over (see `onFinished`).
+  // Bumped to start the preview over with a new start key: when an app survey without endings
+  // finishes (see `onFinished`), and on every Apply of the Test values (see `applyTestValues`).
   const [previewRun, setPreviewRun] = useState(0);
   const previewStartKey = useMemo(
     () =>
@@ -338,6 +339,16 @@ export const PreviewSurvey = ({
     }
   }, [elementId, updateElementId]);
 
+  // "Restart with these values" always restarts (ENG-7029): values equal to the current ones leave the
+  // start key as it was, so the run is bumped too. Both updates land in one render: one remount. The
+  // restart opens like the live survey, so the question the author picked is no longer followed (a
+  // frame switch would bring it back); the last active question stays the baseline for the next pick.
+  const applyTestValues = (values: Record<string, string>) => {
+    setTestValues(values);
+    setPreviewRun((run) => run + 1);
+    followStateRef.current = { ...followStateRef.current, picked: false };
+  };
+
   const onFinished = () => {
     // close modal if there are no elements left, then start over: a remount runs the rules before the
     // first question and the first page's show-if again, as the live survey does for a new respondent.
@@ -508,7 +519,7 @@ export const PreviewSurvey = ({
       fields={testValueFields}
       values={testValues}
       activeCount={testValueEntries.length}
-      onApply={setTestValues}
+      onApply={applyTestValues}
       openRequest={testValuesOpenRequest}
     />
   );

@@ -131,7 +131,8 @@ type TSurveySummaryResponseRow = TSurveySummaryResponse & { createdAt: Date };
 
 const getElementIdToBlockIdMap = (survey: TSurvey): Record<string, string> => {
   return survey.blocks.reduce<Record<string, string>>((acc, block) => {
-    block.elements.forEach((element) => {
+    // A stored block can lack `elements` (an unvalidated draft or migrated block, ENG-2497).
+    (block.elements ?? []).forEach((element) => {
       acc[element.id] = block.id;
     });
     return acc;
@@ -143,7 +144,7 @@ const getBlockTimesForResponse = (
   survey: TSurvey
 ): Record<string, number> => {
   return survey.blocks.reduce<Record<string, number>>((acc, block) => {
-    const maxElementTtc = block.elements.reduce((maxTtc, element) => {
+    const maxElementTtc = (block.elements ?? []).reduce((maxTtc, element) => {
       const elementTtc = response.ttc?.[element.id] ?? 0;
       return Math.max(maxTtc, elementTtc);
     }, 0);

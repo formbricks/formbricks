@@ -3,13 +3,14 @@ import { defineConfig } from "oxlint";
 /*
  * Root oxlint config. `pnpm lint` runs oxlint once from the repo root; every workspace that lints
  * has its own `oxlint.config.ts`, which composes one tier from `@formbricks/config-oxlint`, and
- * oxlint uses the nearest config for each file. This file only carries the options oxlint reads from
- * the root config, and it enables no rules for the files it covers itself (the root config files).
+ * oxlint uses the nearest config for each file. This file carries the options oxlint reads from the
+ * root config; the files it covers itself (the root config files, `docs/`) get only oxlint's
+ * `correctness` and `suspicious` categories, which every tier also runs (`base.mjs`).
  * The root `scripts/`, `.github/` and the `config-*` packages have their own config
  * (`scripts/oxlint.config.ts`).
  */
 export default defineConfig({
-  categories: { correctness: "off" },
+  categories: { correctness: "error", suspicious: "error" },
   // Deployment collateral, not repo code: the Cube schema copies in charts/ and docker/ carry their
   // own ESLint-era directives and are not linted.
   ignorePatterns: ["charts/**", "docker/**"],

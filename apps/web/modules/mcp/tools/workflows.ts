@@ -5,7 +5,8 @@ import { MCP_API_ROUTE } from "@/modules/mcp/constants";
 import { type TMcpToolContext, getMcpAuthentication, getMcpRequestId, getMcpToolAuthInfo } from "../auth";
 import { responseToMcpToolResult } from "../errors";
 import { runConfirmedDelete } from "./delete-confirmation";
-import { registerScopedTool } from "./guard-scopes";
+import { registerMcpTool } from "./guard-permissions";
+import { isRecord, redactToolResultData, redactUnlessCallerHolds } from "./redacted-result";
 import { runMcpMutation } from "./run-mcp-mutation";
 import {
   type TMcpCreateWorkflowInput,
@@ -127,18 +128,76 @@ async function runWorkflowMutation(
 ): Promise<CallToolResult> {
   // The shared runner owns the audit lifecycle; workflows only differ in building their API context
   // (which threads the same auditLog through) before delegating to the caller's operation.
-  return runMcpMutation(mcpCtx, { action, resource: "workflow" }, ({ authentication, requestId, auditLog }) =>
-    run(buildWorkflowApiContext(authentication, requestId, MCP_API_ROUTE, auditLog ?? undefined))
+  const result = await runMcpMutation(
+    mcpCtx,
+    { action, resource: "workflow" },
+    ({ authentication, requestId, auditLog }) =>
+      run(buildWorkflowApiContext(authentication, requestId, MCP_API_ROUTE, auditLog ?? undefined))
   );
+  return redactUnlessCallerHolds(getMcpToolAuthInfo(mcpCtx), RESPONSES_READ, result, withoutLastRunError);
 }
 
+const RESPONSES_READ = [{ permission: "responses", level: "read" }] as const;
+
+/**
+ * A `get_workflow_run` result without what is derived from respondents' answers: the trigger payload,
+ * the run's data, and each step's input and output, set to `null`. The run's and each step's error text
+ * go too: a failed step's error can quote what it sent, such as an SMTP rejection naming the respondent's
+ * address. For a caller without Responses: Read, whom the run's other fields (status, timing, step
+ * order) don't tell anything a response says; a failed run still shows as failed. An error result passes
+ * through.
+ */
+const withoutRunRespondentData = (run: unknown): unknown =>
+  isRecord(run)
+    ? {
+        ...run,
+        error: null,
+        triggerPayload: null,
+        data: null,
+        logs: Array.isArray(run.logs)
+          ? run.logs.map((log: unknown) =>
+              isRecord(log) ? { ...log, input: null, output: null, error: null } : log
+            )
+          : run.logs,
+      }
+    : run;
+
+export const withoutRespondentData = (result: CallToolResult): CallToolResult =>
+  redactToolResultData(result, withoutRunRespondentData);
+
+/**
+ * A `list_workflow_runs` result without each run's error text, which can quote what a failed step sent
+ * (see {@link withoutRespondentData}), for a caller without Responses: Read. A run row carries no other
+ * respondent-derived field. An error result passes through.
+ */
+const withoutRunError = (run: unknown): unknown => (isRecord(run) ? { ...run, error: null } : run);
+
+export const withoutRespondentDataInRunList = (result: CallToolResult): CallToolResult =>
+  redactToolResultData(result, withoutRunError);
+
+/** A workflow with its embedded `lastRun.error` set to `null`, when it carries a run; anything else as is. */
+const withoutLastRunError = (workflow: unknown): unknown => {
+  if (!isRecord(workflow) || !isRecord(workflow.lastRun)) return workflow;
+  return { ...workflow, lastRun: { ...workflow.lastRun, error: null } };
+};
+
+/**
+ * A workflow result (`list_workflows`, `get_workflow`, or a mutation's) without each workflow's
+ * `lastRun.error`, which can quote what a failed step sent (see {@link withoutRespondentData}), for a
+ * caller without Responses: Read. A workflow carries no other respondent-derived field. An error result
+ * passes through.
+ */
+export const withoutRespondentDataInWorkflows = (result: CallToolResult): CallToolResult =>
+  redactToolResultData(result, withoutLastRunError);
+
 export function registerWorkflowTools(server: McpServer): void {
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_workflows",
     {
       title: "List workflows",
-      description: "List workflows in a Formbricks workspace using the v3 Workflows API contract.",
+      description:
+        "List workflows in a Formbricks workspace using the v3 Workflows API contract. Without Responses: Read in the user's grant, each workflow's lastRun.error is null: it can quote respondents' answers.",
       inputSchema: ZMcpListWorkflowsInput,
       annotations: {
         readOnlyHint: true,
@@ -147,7 +206,7 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:read"],
+    [{ permission: "workflows", level: "read" }],
     async (input: TMcpListWorkflowsInput, mcpCtx) => {
       const authInfo = getMcpToolAuthInfo(mcpCtx);
       const requestId = getMcpRequestId(authInfo);
@@ -156,17 +215,19 @@ export function registerWorkflowTools(server: McpServer): void {
         req: buildWorkflowsListRequest(buildListWorkflowsSearchParams(input)),
         ctx,
       });
+      const result = await responseToMcpToolResult(response, requestId);
 
-      return await responseToMcpToolResult(response, requestId);
+      return redactUnlessCallerHolds(authInfo, RESPONSES_READ, result, withoutLastRunError);
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_workflow",
     {
       title: "Get workflow",
-      description: "Get one Formbricks workflow using the v3 Workflows API contract.",
+      description:
+        "Get one Formbricks workflow using the v3 Workflows API contract. Without Responses: Read in the user's grant, lastRun.error is null: it can quote respondents' answers.",
       inputSchema: ZMcpGetWorkflowInput,
       annotations: {
         readOnlyHint: true,
@@ -175,24 +236,25 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:read"],
+    [{ permission: "workflows", level: "read" }],
     async (input: TMcpGetWorkflowInput, mcpCtx) => {
       const authInfo = getMcpToolAuthInfo(mcpCtx);
       const requestId = getMcpRequestId(authInfo);
       const ctx = buildWorkflowApiContext(getMcpAuthentication(authInfo), requestId, MCP_API_ROUTE);
       const response = await workflowsHandlers.get({ ctx, params: { workflowId: input.workflowId } });
+      const result = await responseToMcpToolResult(response, requestId);
 
-      return await responseToMcpToolResult(response, requestId);
+      return redactUnlessCallerHolds(authInfo, RESPONSES_READ, result, withoutLastRunError);
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_workflow_runs",
     {
       title: "List workflow runs",
       description:
-        "List workflow runs for a Formbricks workspace (newest first) using the v3 Workflows API contract.",
+        "List workflow runs for a Formbricks workspace (newest first) using the v3 Workflows API contract. Without Responses: Read in the user's grant, each run's error is null: it can quote respondents' answers.",
       inputSchema: ZMcpListWorkflowRunsInput,
       annotations: {
         readOnlyHint: true,
@@ -201,7 +263,7 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:read"],
+    [{ permission: "workflowRuns", level: "read" }],
     async (input: TMcpListWorkflowRunsInput, mcpCtx) => {
       const authInfo = getMcpToolAuthInfo(mcpCtx);
       const requestId = getMcpRequestId(authInfo);
@@ -210,18 +272,19 @@ export function registerWorkflowTools(server: McpServer): void {
         req: buildWorkflowsListRequest(buildListWorkflowRunsSearchParams(input)),
         ctx,
       });
+      const result = await responseToMcpToolResult(response, requestId);
 
-      return await responseToMcpToolResult(response, requestId);
+      return redactUnlessCallerHolds(authInfo, RESPONSES_READ, result, withoutRunError);
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_workflow_run",
     {
       title: "Get workflow run",
       description:
-        "Get one Formbricks workflow run with its ordered step logs using the v3 Workflows API contract.",
+        "Get one Formbricks workflow run with its ordered step logs using the v3 Workflows API contract. Without Responses: Read in the user's grant, triggerPayload, data, error and each log's input, output and error are null: they carry respondents' answers.",
       inputSchema: ZMcpGetWorkflowRunInput,
       annotations: {
         readOnlyHint: true,
@@ -230,18 +293,21 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:read"],
+    // Workflow runs: Read alone, so a client upgraded with `workflows:read` keeps the tool (spec story
+    // 40). The fields that carry respondents' answers are left out without Responses: Read.
+    [{ permission: "workflowRuns", level: "read" }],
     async (input: TMcpGetWorkflowRunInput, mcpCtx) => {
       const authInfo = getMcpToolAuthInfo(mcpCtx);
       const requestId = getMcpRequestId(authInfo);
       const ctx = buildWorkflowApiContext(getMcpAuthentication(authInfo), requestId, MCP_API_ROUTE);
       const response = await workflowsHandlers.getRun({ ctx, params: { runId: input.runId } });
+      const result = await responseToMcpToolResult(response, requestId);
 
-      return await responseToMcpToolResult(response, requestId);
+      return redactUnlessCallerHolds(authInfo, RESPONSES_READ, result, withoutRunRespondentData);
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "test_workflow",
     {
@@ -262,7 +328,7 @@ export function registerWorkflowTools(server: McpServer): void {
       },
       inputSchema: ZMcpTestWorkflowInput,
     },
-    ["workflows:read"],
+    [{ permission: "workflows", level: "read" }],
     async (input: TMcpTestWorkflowInput, mcpCtx) => {
       const authInfo = getMcpToolAuthInfo(mcpCtx);
       const requestId = getMcpRequestId(authInfo);
@@ -276,7 +342,7 @@ export function registerWorkflowTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "create_workflow",
     {
@@ -291,14 +357,14 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpCreateWorkflowInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "created", (ctx) =>
         workflowsHandlers.create({ req: buildWorkflowsBodyRequest(input), ctx })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "patch_workflow",
     {
@@ -316,7 +382,7 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpPatchWorkflowInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.patch({
@@ -327,7 +393,7 @@ export function registerWorkflowTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "duplicate_workflow",
     {
@@ -343,7 +409,7 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpDuplicateWorkflowInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "created", (ctx) =>
         workflowsHandlers.duplicate({
@@ -354,7 +420,7 @@ export function registerWorkflowTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "delete_workflow",
     {
@@ -370,7 +436,7 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpDeleteWorkflowInput, mcpCtx) =>
       runConfirmedDelete({
         tool: "delete_workflow",
@@ -385,7 +451,7 @@ export function registerWorkflowTools(server: McpServer): void {
       })
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "enable_workflow",
     {
@@ -405,14 +471,14 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpWorkflowIdInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.enable({ ctx, params: { workflowId: input.workflowId } })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "disable_workflow",
     {
@@ -428,14 +494,14 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpWorkflowIdInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.disable({ ctx, params: { workflowId: input.workflowId } })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "archive_workflow",
     {
@@ -451,14 +517,14 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpWorkflowIdInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.archive({ ctx, params: { workflowId: input.workflowId } })
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "unarchive_workflow",
     {
@@ -473,7 +539,7 @@ export function registerWorkflowTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["workflows:write"],
+    [{ permission: "workflows", level: "write" }],
     async (input: TMcpWorkflowIdInput, mcpCtx) =>
       runWorkflowMutation(mcpCtx, "updated", (ctx) =>
         workflowsHandlers.unarchive({ ctx, params: { workflowId: input.workflowId } })

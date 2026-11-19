@@ -33,6 +33,15 @@ describe("getNotShownElementIds", () => {
     );
     expect([...ids]).toEqual(["fav"]);
   });
+
+  // A draft or migrated block can be stored without `elements` (ENG-2497).
+  test("skips a block with no elements array", () => {
+    const ids = getNotShownElementIds({ blocks: ["legacy"], elements: ["fav"] }, [
+      { id: "legacy" },
+      ...blocks,
+    ]);
+    expect([...ids]).toEqual(["fav"]);
+  });
 });
 
 describe("ZResponseNotShownInput", () => {

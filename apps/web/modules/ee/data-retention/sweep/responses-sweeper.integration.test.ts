@@ -730,6 +730,7 @@ describe("responses sweeper (real Postgres)", () => {
         // The flag ended with that transaction: a person's delete on the very same connection voids it.
         // The pool hands out its connections in turn, so try until that one comes back.
         let sameConnection = false;
+        // eslint-disable-next-line no-unmodified-loop-condition -- the transaction callback sets it
         for (let attempt = 0; attempt < 50 && !sameConnection; attempt += 1) {
           await prisma.$transaction(async (tx) => {
             if ((await backendPid(tx)) !== flaggedPid) return;

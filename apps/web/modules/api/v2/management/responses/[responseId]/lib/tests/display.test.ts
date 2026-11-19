@@ -18,7 +18,7 @@ describe("Display Lib", () => {
     vi.clearAllMocks();
   });
 
-  test("delete the display successfully ", async () => {
+  test("delete the display successfully", async () => {
     vi.mocked(prisma.display.delete).mockResolvedValue(mockDisplay);
 
     const result = await deleteDisplay(mockDisplay.id);

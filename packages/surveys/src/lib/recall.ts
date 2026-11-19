@@ -21,13 +21,7 @@ const escapeHtml = (value: string): string => value.replaceAll(/[&<>"']/g, (char
  */
 export type TRecallOutput = "rich" | "text";
 
-/**
- * Recalled values come from respondents and from the URL (hidden fields), so they must never become
- * markup. In a rich-text template, which is decided on the template BEFORE substitution, values are
- * HTML-escaped. A plain-text template stays plain so entities are not shown literally; if a value would
- * nevertheless make the result parse as HTML, the escaped result is wrapped in a paragraph so it
- * renders as the text that was typed, through the sanitiser, instead of as attacker markup.
- */
+/** A recall token: `#recall:<id>/fallback:<text>#`. */
 const RECALL_TOKEN = /#recall:([A-Za-z0-9_-]+)\/fallback:([^#]*)#/g;
 
 const resolveRecallValue = (
@@ -42,7 +36,7 @@ const resolveRecallValue = (
 
   // Fetching value from variables based on recallItemId
   if (variables[recallItemId] !== undefined) {
-    value = String(variables[recallItemId]) ?? fallback;
+    value = String(variables[recallItemId]);
   }
 
   // Fetching value from responseData or attributes based on recallItemId

@@ -1,4 +1,6 @@
 import { type AuthInfo, McpServer, createMcpHandler } from "@modelcontextprotocol/server";
+import type { TMcpGrant, TMcpGrantPermissions } from "../grant";
+import { MCP_PERMISSIONS } from "../permissions";
 
 /** The slice of a `tools/call` JSON-RPC response the tool tests assert on. */
 export type ToolCallOutcome = {
@@ -87,15 +89,27 @@ export const errorText = (outcome: ToolCallOutcome) =>
   outcome.result?.content?.map((block) => block.text ?? "").join("") ?? "";
 
 /**
+ * A grant giving every permission at the highest level it offers, for tool tests about something other
+ * than the grant: with it, an OAuth caller is gated on its scopes alone, as before grants (ENG-7149).
+ */
+export const FULL_MCP_GRANT: TMcpGrant = {
+  access: "all",
+  permissions: Object.fromEntries(
+    Object.entries(MCP_PERMISSIONS).map(([permission, { levels }]) => [permission, levels.at(-1)])
+  ) as TMcpGrantPermissions,
+};
+
+/**
  * A `tools/call` context for a person's OAuth token on a client that declared the `elicitation`
  * capability: the case where the user can be asked, so the model's own `confirm: true` must not count.
+ * Carries `FULL_MCP_GRANT`, so the grant gate lets the call through to the confirmation step.
  */
 export const elicitingOAuthContext = (authInfo: { extra: Record<string, unknown> }) => ({
   http: {
     authInfo: {
       ...authInfo,
       token: "oauth:user_1:client_1",
-      extra: { ...authInfo.extra, authMethod: "oauth" },
+      extra: { ...authInfo.extra, authMethod: "oauth", grant: FULL_MCP_GRANT },
     },
   },
   mcpReq: {

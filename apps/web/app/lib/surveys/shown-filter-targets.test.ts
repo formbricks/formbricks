@@ -77,4 +77,14 @@ describe("getShownFilterTargets", () => {
       "shown.question.q",
     ]);
   });
+
+  // A draft or migrated block can be stored without `elements` (ENG-2497): it holds nothing to show.
+  test("offers nothing for a block with no elements array, and keeps the other blocks' targets", () => {
+    const survey = {
+      ...surveyFlowFixture,
+      blocks: [{ id: "legacy", name: "Legacy block" }, ...surveyFlowFixture.blocks],
+    } as unknown as typeof surveyFlowFixture;
+
+    expect(getShownFilterTargets(survey, t).map((entry) => entry.propertyId)).toEqual(ids());
+  });
 });
