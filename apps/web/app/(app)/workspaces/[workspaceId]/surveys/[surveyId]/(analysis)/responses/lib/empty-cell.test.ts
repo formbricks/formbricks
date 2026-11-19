@@ -28,7 +28,7 @@ describe("isEmptyCellContent", () => {
 
   test("is not empty when anything visible renders", () => {
     expect(isEmptyCellContent("Anonymous")).toBe(false);
-    expect(isEmptyCellContent(0 as unknown as string)).toBe(false);
+    expect(isEmptyCellContent(0)).toBe(false);
     expect(isEmptyCellContent(createElement("p", null, "Weekly"))).toBe(false);
     expect(isEmptyCellContent(createElement("ul", { items: [{ value: "vip" }] }))).toBe(false);
     expect(isEmptyCellContent(createElement("img", { src: "x" }))).toBe(false);

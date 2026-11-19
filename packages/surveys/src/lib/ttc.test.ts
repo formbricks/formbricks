@@ -49,7 +49,7 @@ describe("useTtc", () => {
 
     initialProps = {
       questionId: "q1",
-      ttc: {} as TResponseTtc,
+      ttc: {},
       setTtc: mockSetTtc,
       startTime: 0,
       setStartTime: mockSetStartTime,
@@ -135,7 +135,7 @@ describe("useTtc", () => {
       configurable: true,
       value: "hidden",
     });
-    act(() => {
+    void act(() => {
       document.dispatchEvent(new Event("visibilitychange"));
     });
 
@@ -159,7 +159,7 @@ describe("useTtc", () => {
       configurable: true,
       value: "visible",
     });
-    act(() => {
+    void act(() => {
       document.dispatchEvent(new Event("visibilitychange"));
     });
 
@@ -182,7 +182,7 @@ describe("useTtc", () => {
       configurable: true,
       value: "hidden",
     });
-    act(() => {
+    void act(() => {
       document.dispatchEvent(new Event("visibilitychange"));
     });
     expect(mockSetTtc).not.toHaveBeenCalled();
@@ -191,7 +191,7 @@ describe("useTtc", () => {
       configurable: true,
       value: "visible",
     });
-    act(() => {
+    void act(() => {
       document.dispatchEvent(new Event("visibilitychange"));
     });
     expect(mockSetStartTime).not.toHaveBeenCalled(); // It was not called initially either

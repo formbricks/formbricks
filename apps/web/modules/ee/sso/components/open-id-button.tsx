@@ -45,7 +45,7 @@ export const OpenIdButton = ({
 
   useEffect(() => {
     if (directRedirect) {
-      handleLogin();
+      void handleLogin();
     }
   }, [directRedirect, handleLogin]);
 

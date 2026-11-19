@@ -89,7 +89,7 @@ const startRecoveryReturningCompletionUrl = async (callbackUrl: string): Promise
   await startSsoRecovery({
     existingUser,
     provider: "google",
-    account: { type: "oauth", provider: "google", providerAccountId: "provider-account-1" } as never,
+    account: { type: "oauth", provider: "google", providerAccountId: "provider-account-1" },
     callbackUrl,
   });
 

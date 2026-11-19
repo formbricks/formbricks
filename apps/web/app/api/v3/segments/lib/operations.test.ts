@@ -48,9 +48,7 @@ const call = (entries: [string, string][] = []) =>
 describe("listV3Segments", () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({ workspaceId, organizationId } as Awaited<
-      ReturnType<typeof requireV3WorkspaceAccess>
-    >);
+    vi.mocked(requireV3WorkspaceAccess).mockResolvedValue({ workspaceId, organizationId });
     vi.mocked(getIsContactsEnabled).mockResolvedValue(true);
     vi.mocked(resolveV3VisibleSurveyWhere).mockResolvedValue(visibleSurveyWhere as never);
     vi.mocked(prisma.segment.count).mockResolvedValue(2);

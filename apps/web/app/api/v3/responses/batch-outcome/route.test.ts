@@ -43,7 +43,7 @@ const post = (body: unknown, query = `?workspaceId=${WORKSPACE_ID}`) =>
       headers: { "content-type": "application/json" },
       body: JSON.stringify(body),
     }),
-    {} as never
+    {}
   );
 
 describe("POST /api/v3/responses/batch-outcome", () => {
@@ -120,7 +120,7 @@ describe("POST /api/v3/responses/batch-outcome", () => {
         headers: { "content-type": "application/json", "x-api-key": "fbk_test" },
         body: JSON.stringify({ ids: [ID_A], outcome: "lowQuality" }),
       }),
-      {} as never
+      {}
     );
 
     expect(response.status).toBe(200);

@@ -52,7 +52,7 @@ const workspaceId = "clxworkspace00000000000001";
 const apiKey = { apiKeyId: "key_1", workspacePermissions: [], organizationId: "org_1" };
 const script = "<script>analytics()</script>";
 
-const storedSurvey = { ...updateSurveyInput, workspaceId } as TSurvey;
+const storedSurvey = { ...updateSurveyInput, workspaceId };
 
 // A key with `write` on the workspace: `workspace.write` passes, `workspace.manage` does not.
 const actAsWriteKey = () =>

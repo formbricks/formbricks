@@ -58,27 +58,27 @@ const createSurvey = (overrides: Partial<TSurvey>): TSurvey =>
     ...overrides,
   }) as TSurvey;
 
-const createSegment = (overrides: Partial<TSegment>): TSegment =>
-  ({
-    id: "segment_1",
-    title: "Segment 1",
-    description: null,
-    isPrivate: false,
-    workspaceId: "workspace_1",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    surveys: [],
-    filters: [],
-    ...overrides,
-  }) as TSegment;
+const createSegment = (overrides: Partial<TSegment>): TSegment => ({
+  id: "segment_1",
+  title: "Segment 1",
+  description: null,
+  isPrivate: false,
+  workspaceId: "workspace_1",
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  surveys: [],
+  filters: [],
+  ...overrides,
+});
 
-const createSegmentWithSurveyNames = (overrides: Partial<TSegmentWithSurveyRefs>): TSegmentWithSurveyRefs =>
-  ({
-    ...createSegment(overrides),
-    activeSurveys: [],
-    inactiveSurveys: [],
-    ...overrides,
-  }) as TSegmentWithSurveyRefs;
+const createSegmentWithSurveyNames = (
+  overrides: Partial<TSegmentWithSurveyRefs>
+): TSegmentWithSurveyRefs => ({
+  ...createSegment(overrides),
+  activeSurveys: [],
+  inactiveSurveys: [],
+  ...overrides,
+});
 
 describe("segment activity utils", () => {
   test("doesSegmentReferenceSegment returns true for nested segment filters", () => {

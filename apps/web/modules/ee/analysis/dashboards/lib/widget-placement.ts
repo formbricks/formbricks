@@ -18,6 +18,16 @@ export const getDefaultWidgetLayout = (chartType: TChartType): TWidgetLayout => 
   return { x: 0, y: 0, w: 4, h: 4 };
 };
 
+/**
+ * The smallest a chart's widget may be resized to, in grid columns and rows. Never above the
+ * chart type's default size, or a new widget starts at a size it can never be resized back to.
+ * A big number needs no plot area, so it may be shorter than the plotted charts.
+ */
+export const getWidgetMinSize = (chartType: TChartType): { minW: number; minH: number } => ({
+  minW: 2,
+  minH: chartType === "big_number" ? 2 : 3,
+});
+
 const overlaps = (a: TWidgetLayout, b: TWidgetLayout): boolean =>
   a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 

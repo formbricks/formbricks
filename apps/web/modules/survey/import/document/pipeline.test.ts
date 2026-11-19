@@ -185,7 +185,7 @@ describe("runDocumentImport, on files shaped like the ones it was built for", ()
       ).length;
       expect(report.summary.questions).toBe(questionCount);
       const cells = [...prepared.model.cells.values()].map((text) => text.replaceAll(/\s+/gu, " ").trim());
-      const texts = draftTexts(payload as TSurveyImportDraft);
+      const texts = draftTexts(payload);
       expect(texts.length).toBeGreaterThan(questionCount);
       expect(texts.filter((text) => !cells.some((cell) => cell.includes(text)))).toEqual([]);
       expect(report.issues.map((issue) => issue.code)).not.toContain("text_not_split");
@@ -214,7 +214,7 @@ describe("runDocumentImport, on files shaped like the ones it was built for", ()
   test("Sample_Survey_2's types become the Formbricks types the list names, the ones it cannot hold reported", async () => {
     const { payload, report } = await runFixture("sample-survey-2.csv");
 
-    expect(elementsOf(payload as TSurveyImportDraft).map((element) => [element.id, element.type])).toEqual([
+    expect(elementsOf(payload).map((element) => [element.id, element.type])).toEqual([
       ["01", "openText"],
       ["02", "multipleChoiceSingle"],
       ["03", "multipleChoiceSingle"],
@@ -275,7 +275,7 @@ describe("runDocumentImport: the AI's plan", () => {
     expect(prompts).toHaveLength(2);
     expect(linesInPrompt(prompts[1])).toEqual(["R2"]);
     expect(prompts[1]).toContain("R2: its kind is not allowed");
-    expect(elementsOf(payload as TSurveyImportDraft)).toHaveLength(1);
+    expect(elementsOf(payload)).toHaveLength(1);
     expect(report.issues).toContainEqual(
       expect.objectContaining({
         code: "question_skipped",
@@ -638,7 +638,7 @@ describe("runDocumentImport: the final gate", () => {
 
     const { payload, report } = await run(prepared(), generate());
 
-    expect(elementsOf(payload as TSurveyImportDraft).map((element) => element.id)).toEqual(["Q1", "Q2"]);
+    expect(elementsOf(payload).map((element) => element.id)).toEqual(["Q1", "Q2"]);
     expect(report.issues).toContainEqual(
       expect.objectContaining({
         code: "question_skipped",
@@ -707,7 +707,7 @@ describe("runDocumentImport: the final gate", () => {
 
     const { payload, report } = await run({ fileName: "big.csv", model }, recordedDocumentGenerate(huge));
 
-    expect(elementsOf(payload as TSurveyImportDraft).map((element) => element.id)).toEqual(["Q1"]);
+    expect(elementsOf(payload).map((element) => element.id)).toEqual(["Q1"]);
     expect(report.issues).toContainEqual(expect.objectContaining({ questionTag: "Q2", severity: "warning" }));
     // The gate ran once on the assembled draft and once more on the cut one.
     expect(mocks.checkImportDraft).toHaveBeenCalledTimes(2);
@@ -840,9 +840,7 @@ describe("runDocumentImport: Prompt_Injection", () => {
       recordedDocumentGenerate(plan)
     );
 
-    expect(contentOf(withInjection.payload as TSurveyImportDraft)).toEqual(
-      contentOf(clean.payload as TSurveyImportDraft)
-    );
+    expect(contentOf(withInjection.payload)).toEqual(contentOf(clean.payload));
     expect(withInjection.report.issues).toEqual(clean.report.issues);
     expect(withInjection.payload.name).toBe("Event Feedback Survey (imported)");
     // The injected text reaches the model only inside the data block; nothing outside it quotes the file.
@@ -906,7 +904,7 @@ describe("runDocumentImport: Prompt_Injection", () => {
     );
 
     const cellTexts = [...prepared.model.cells.values()].join("\n");
-    for (const element of elementsOf(payload as TSurveyImportDraft)) {
+    for (const element of elementsOf(payload)) {
       const texts = [
         ...Object.values(element.headline as Record<string, string>),
         ...((element.choices ?? []) as { label: Record<string, string> }[]).flatMap((choice) =>

@@ -76,7 +76,7 @@ export const WhenToSendCard = ({
   const [isEditActionModalOpen, setEditActionModalOpen] = useState(false);
   const [editingActionClass, setEditingActionClass] = useState<TActionClass | null>(null);
   const [actionClasses, setActionClasses] = useState<ActionClass[]>(propActionClasses);
-  const [randomizerToggle, setRandomizerToggle] = useState(localSurvey.displayPercentage ? true : false);
+  const [randomizerToggle, setRandomizerToggle] = useState(Boolean(localSurvey.displayPercentage));
 
   const { isMember } = getAccessFlags(membershipRole);
   const { hasReadAccess } = getTeamPermissionFlags(workspacePermission);

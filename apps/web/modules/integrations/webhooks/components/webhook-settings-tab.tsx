@@ -143,8 +143,8 @@ export const WebhookSettingsTab = ({
 
     const updatedData: TWebhookInput = {
       name: data.name ?? "",
-      url: data.url as string,
-      source: webhook.source as TWebhookInput["source"],
+      url: data.url,
+      source: webhook.source,
       triggers: selectedTriggers,
       surveyIds: selectedSurveys,
     };
@@ -209,7 +209,7 @@ export const WebhookSettingsTab = ({
                 loading={hittingEndpoint}
                 className="ml-2 whitespace-nowrap"
                 onClick={() => {
-                  handleTestEndpoint(true);
+                  void handleTestEndpoint(true);
                 }}>
                 {t("workspace.integrations.webhooks.test_endpoint")}
               </Button>

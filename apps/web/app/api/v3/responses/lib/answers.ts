@@ -613,6 +613,16 @@ export const isPublishableDataKey = (plan: TV3AnswerPlan, key: string): boolean 
   return !LINK_SURVEY_SYSTEM_PARAM_KEYS.has(key);
 };
 
+/**
+ * The value the detail view's `data` map publishes for one stored entry, or `undefined` when it
+ * withholds the entry: the key is not the caller's ({@link isPublishableDataKey}), or the value is
+ * outside the published shapes (`narrowToPublishableValue`, e.g. a legacy number array or a JSON
+ * `null`). The read projects through it and `PATCH` carries over every entry it withholds, so the
+ * two sides of the round trip cannot disagree about what the caller saw.
+ */
+export const publishedDataValue = (plan: TV3AnswerPlan, key: string, raw: unknown) =>
+  isPublishableDataKey(plan, key) ? narrowToPublishableValue(raw) : undefined;
+
 /** One stored `data` key as an answer, as an unresolved entry, or as nothing to publish. */
 const serializeStoredValue = (
   plan: TV3AnswerPlan,

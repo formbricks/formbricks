@@ -404,9 +404,7 @@ export const FeedbackRecordFormDrawer = ({
                         <FormControl>
                           <Select
                             value={field.value}
-                            onValueChange={(value) =>
-                              field.onChange(value as TFeedbackRecordFormValues["field_type"])
-                            }
+                            onValueChange={(value) => field.onChange(value)}
                             disabled>
                             <SelectTrigger>
                               <SelectValue />

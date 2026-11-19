@@ -1,4 +1,3 @@
-import { type StaticImageData } from "next/image";
 import { describe, expect, test } from "vitest";
 import { OPTIMIZABLE_IMAGE_HOSTS, isExternalImageSrc } from "./image-hosts";
 
@@ -16,7 +15,7 @@ describe("isExternalImageSrc", () => {
     expect(isExternalImageSrc(undefined)).toBe(false);
     expect(isExternalImageSrc(null)).toBe(false);
     expect(isExternalImageSrc("")).toBe(false);
-    expect(isExternalImageSrc({ src: "/x.png", height: 1, width: 1 } as StaticImageData)).toBe(false);
+    expect(isExternalImageSrc({ src: "/x.png", height: 1, width: 1 })).toBe(false);
   });
 
   test("treats absolute URLs on allowlisted provider hosts as optimizable", () => {

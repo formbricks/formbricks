@@ -11,7 +11,7 @@ import { cn } from "@/lib/cn";
 import { isExternalImageSrc } from "@/lib/image-hosts";
 
 interface ClientLogoProps {
-  workspaceLogo: Workspace["logo"] | null;
+  workspaceLogo: Workspace["logo"];
   workspaceId: string;
   surveyLogo?: TLogo | null;
   previewSurvey?: boolean;

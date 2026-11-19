@@ -195,7 +195,7 @@ describe("countSurveysResponsesCreatedAtOrBefore", () => {
   test("runs on the client it is given, with the default cap", async () => {
     const client = { $queryRaw: vi.fn().mockResolvedValue([]) };
 
-    await countSurveysResponsesCreatedAtOrBefore(["s1"], cutoff, undefined, client as never);
+    await countSurveysResponsesCreatedAtOrBefore(["s1"], cutoff, undefined, client);
 
     expect(prisma.$queryRaw).not.toHaveBeenCalled();
     expect(statement(client.$queryRaw.mock.calls[0]).values[1]).toBe(SURVEY_RETENTION_DUE_COUNT_CAP);

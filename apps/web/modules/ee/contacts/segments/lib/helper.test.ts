@@ -353,10 +353,7 @@ describe("assertSurveyInteractionSurveyIds", () => {
   });
 
   test("deduplicates ids collected across filters before querying", async () => {
-    const filters = [
-      ...buildSpecificFilter(["s1", "s2"]),
-      ...buildSpecificFilter(["s2", "s1"]),
-    ] as unknown as TBaseFilters;
+    const filters = [...buildSpecificFilter(["s1", "s2"]), ...buildSpecificFilter(["s2", "s1"])];
     mockSurveyFindMany.mockResolvedValue([{ id: "s1" }, { id: "s2" }]);
 
     await expect(assertSurveyInteractionSurveyIds(filters, "workspace-1")).resolves.toBeUndefined();

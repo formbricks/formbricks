@@ -41,7 +41,7 @@ export const ActionActivityTab = ({ actionClass }: ActivityTabProps) => {
       setLoading(false);
     };
 
-    updateState();
+    void updateState();
   }, [actionClass.id]);
 
   if (loading) return <LoadingSpinner />;

@@ -23,16 +23,15 @@ const { logger } = await import("@formbricks/logger");
 const TENANT_ID = "clxxxxxxxxxxxxxxxx004";
 const OTHER_TENANT_ID = "clxxxxxxxxxxxxxxxx999";
 
-const record = (overrides: Partial<FeedbackRecordCreateParams> = {}): FeedbackRecordCreateParams =>
-  ({
-    tenant_id: TENANT_ID,
-    submission_id: "response-1",
-    source_type: "formbricks",
-    field_id: "q1",
-    field_type: "text",
-    value_text: "red",
-    ...overrides,
-  }) as FeedbackRecordCreateParams;
+const record = (overrides: Partial<FeedbackRecordCreateParams> = {}): FeedbackRecordCreateParams => ({
+  tenant_id: TENANT_ID,
+  submission_id: "response-1",
+  source_type: "formbricks",
+  field_id: "q1",
+  field_type: "text",
+  value_text: "red",
+  ...overrides,
+});
 
 const conflict = () => ({ data: null, error: { status: 409, message: "conflict", detail: "" } });
 const created = () => ({ data: { id: "new-record" }, error: null });

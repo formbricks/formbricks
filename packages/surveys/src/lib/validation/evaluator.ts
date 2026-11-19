@@ -30,7 +30,7 @@ const isEmpty = (value: TResponseDataValue): boolean => {
     value === null ||
     value === "" ||
     (Array.isArray(value) && value.length === 0) ||
-    (typeof value === "object" && !Array.isArray(value) && Object.keys(value as object).length === 0)
+    (typeof value === "object" && !Array.isArray(value) && Object.keys(value).length === 0)
   );
 };
 
@@ -42,7 +42,7 @@ const createRequiredError = (t: TFunction): TValidationError => {
     ruleId: "required",
     ruleType: "minLength", // Structural field only - required is not a validation rule
     message: t("errors.please_fill_out_this_field"),
-  } as TValidationError;
+  };
 };
 
 /**
@@ -53,7 +53,7 @@ const createInvalidOptionError = (t: TFunction): TValidationError => {
     ruleId: "invalidOption",
     ruleType: "minLength", // Structural field only - choice membership is not a configurable rule
     message: t("errors.invalid_format"),
-  } as TValidationError;
+  };
 };
 
 /**
@@ -361,19 +361,19 @@ const addImplicitOpenTextRules = (element: TSurveyElement, rules: TValidationRul
       id: "__implicit_email__",
       type: "email",
       params: {},
-    } as TValidationRule);
+    });
   } else if (inputType === "url" && !hasRule("url")) {
     rules.push({
       id: "__implicit_url__",
       type: "url",
       params: {},
-    } as TValidationRule);
+    });
   } else if (inputType === "phone" && !hasRule("phone")) {
     rules.push({
       id: "__implicit_phone__",
       type: "phone",
       params: {},
-    } as TValidationRule);
+    });
   }
 
   return rules;
@@ -400,7 +400,7 @@ const addImplicitContactInfoRules = (
       type: "email",
       field: "email",
       params: {},
-    } as TValidationRule);
+    });
   }
 
   if (contactInfoElement.phone?.show && !hasFieldRule("phone", "phone")) {
@@ -409,7 +409,7 @@ const addImplicitContactInfoRules = (
       type: "phone",
       field: "phone",
       params: {},
-    } as TValidationRule);
+    });
   }
 
   return rules;

@@ -29,7 +29,7 @@ const ORG_ID = "clorg11111111111111111111";
 const USER_ID = "cluser1111111111111111111";
 
 const get = (query = `organizationId=${ORG_ID}`) =>
-  GET(new NextRequest(`http://localhost/api/internal/retention-health?${query}`), {} as never);
+  GET(new NextRequest(`http://localhost/api/internal/retention-health?${query}`), {});
 
 describe("GET /api/internal/retention-health", () => {
   beforeEach(() => {

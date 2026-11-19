@@ -51,7 +51,7 @@ describe("accountDeletionBeforeDelete", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 0 } as never);
+    vi.mocked(prisma.invite.deleteMany).mockResolvedValue({ count: 0 });
     vi.mocked(deleteOrganization).mockResolvedValue(true as never);
     vi.mocked(requestEmailAuditErasureBeforeUserDeletion).mockResolvedValue(undefined);
   });
@@ -122,8 +122,8 @@ describe("accountDeletionAfterDelete", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
-    vi.mocked(deleteBrevoCustomerByEmail).mockResolvedValue(undefined as never);
-    vi.mocked(queueAccountDeletionAuditEvent).mockResolvedValue(undefined as never);
+    vi.mocked(deleteBrevoCustomerByEmail).mockResolvedValue(undefined);
+    vi.mocked(queueAccountDeletionAuditEvent).mockResolvedValue(undefined);
     vi.mocked(sendAccountDeletedEmail).mockResolvedValue(true);
   });
 

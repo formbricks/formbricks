@@ -49,7 +49,7 @@ describe("acquireInFlightSlot", () => {
     expect(await acquireInFlightSlot(config, "key_1")).toEqual({ allowed: true });
     constants.RATE_LIMITING_DISABLED = false;
 
-    vi.mocked(cache.getRedisClient).mockResolvedValueOnce(null as never);
+    vi.mocked(cache.getRedisClient).mockResolvedValueOnce(null);
     expect(await acquireInFlightSlot(config, "key_1")).toEqual({ allowed: true });
 
     redis.evalSha.mockRejectedValueOnce(new Error("connection reset"));

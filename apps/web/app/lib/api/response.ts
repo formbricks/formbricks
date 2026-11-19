@@ -51,7 +51,7 @@ const goneResponse = (
       code: "gone",
       message,
       details: details || {},
-    } as ApiErrorResponse,
+    },
     {
       status: 410,
       headers,
@@ -75,7 +75,7 @@ const badRequestResponse = (
       code: "bad_request",
       message,
       details: details || {},
-    } as ApiErrorResponse,
+    },
     {
       status: 400,
       headers,
@@ -125,7 +125,7 @@ const methodNotAllowedResponse = (
       details: {
         allowed_methods: allowedMethods,
       },
-    } as ApiErrorResponse,
+    },
     {
       status: 405,
       headers,
@@ -152,7 +152,7 @@ const notFoundResponse = (
         resource_id: resourceId,
         resource_type: resourceType,
       },
-    } as ApiErrorResponse,
+    },
     {
       status: 404,
       headers,
@@ -173,7 +173,7 @@ const notAuthenticatedResponse = (cors: boolean = false, cache: string = "privat
       details: {
         "x-Api-Key": "Header not provided or API Key invalid",
       },
-    } as ApiErrorResponse,
+    },
     {
       status: 401,
       headers,
@@ -192,7 +192,7 @@ const unauthorizedResponse = (cors: boolean = false, cache: string = "private, n
       code: "unauthorized",
       message: "You are not authorized to access this resource",
       details: {},
-    } as ApiErrorResponse,
+    },
     {
       status: 401,
       headers,
@@ -216,7 +216,7 @@ const forbiddenResponse = (
       code: "forbidden",
       message,
       details,
-    } as ApiErrorResponse,
+    },
     {
       status: 403,
       headers,
@@ -233,7 +233,7 @@ const successResponse = (data: unknown, cors: boolean = false, cache: string = "
   return Response.json(
     {
       data,
-    } as ApiSuccessResponse<typeof data>,
+    },
     {
       status: 200,
       headers,
@@ -267,7 +267,7 @@ const internalServerErrorResponse = (
       code: "internal_server_error",
       message,
       details,
-    } as ApiErrorResponse,
+    },
     {
       status: 500,
       headers,
@@ -291,7 +291,7 @@ const conflictResponse = (
       code: "conflict",
       message,
       details: details || {},
-    } as ApiErrorResponse,
+    },
     {
       status: 409,
       headers,
@@ -306,7 +306,7 @@ const workspaceSurveyLimitResponse = (limit: number, count: number, cache: strin
       code: "workspace_survey_limit_reached",
       message: "This workspace has reached its survey limit",
       details: { count, limit },
-    } as ApiErrorResponse,
+    },
     { status: 422, headers: { "Cache-Control": cache } }
   );
 
@@ -325,7 +325,7 @@ const tooManyRequestsResponse = (
       code: "too_many_requests",
       message,
       details: {},
-    } as ApiErrorResponse,
+    },
     {
       status: 429,
       headers,
@@ -340,7 +340,7 @@ const serviceUnavailableResponse = (message: string, retryAfterSeconds?: number)
       code: "service_unavailable",
       message,
       details: {},
-    } as ApiErrorResponse,
+    },
     {
       status: 503,
       headers: {

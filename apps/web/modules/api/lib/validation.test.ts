@@ -36,7 +36,7 @@ describe("validateResponseData", () => {
     mockGetElementsFromBlocks.mockReturnValue([{ id: "q1" }]);
     mockValidateBlockResponses.mockReturnValue({});
 
-    validateResponseData([{ id: "b1" }] as unknown as TSurveyBlock[], { q1: "x" }, "en");
+    validateResponseData([{ id: "b1" }], { q1: "x" }, "en");
 
     const { matchPattern } = mockValidateBlockResponses.mock.calls[0][3];
     // The backtracking engine would not return on this input within any test timeout.
@@ -48,7 +48,7 @@ describe("validateResponseData", () => {
     mockValidateBlockResponses.mockReturnValue({});
     const notShown = { rows: { q1: ["visa"] } };
 
-    validateResponseData([{ id: "b1" }] as unknown as TSurveyBlock[], { q1: {} }, "en", undefined, notShown);
+    validateResponseData([{ id: "b1" }], { q1: {} }, "en", undefined, notShown);
 
     expect(mockValidateBlockResponses.mock.calls[0][3].notShown).toBe(notShown);
   });

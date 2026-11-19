@@ -143,6 +143,7 @@ describe("anySurveyHasFilters", () => {
       {
         id: "survey1",
         name: "Survey 1",
+        // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
         segment: {
           id: "segment1",
           title: "Segment 1",
@@ -167,6 +168,7 @@ describe("anySurveyHasFilters", () => {
       {
         id: "survey2",
         name: "Survey 2",
+        // eslint-disable-next-line typescript/no-unnecessary-type-assertion -- tsc 5.9, which typechecks apps/web, still needs it
         segment: {
           id: "segment2",
           filters: [

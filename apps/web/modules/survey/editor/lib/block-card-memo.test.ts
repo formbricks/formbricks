@@ -71,19 +71,18 @@ describe("areBlockCardPropsEqual", () => {
   ]);
 
   describe("question codes", () => {
-    const coded = (b: string, id: string, code: string) =>
-      block(b, [{ ...element(id, id), code } as ReturnType<typeof element>]);
+    const coded = (b: string, id: string, code: string) => block(b, [{ ...element(id, id), code }]);
 
     test("re-renders an idle block whose question code now clashes with another block's", () => {
       const before = makeSurvey([coded("a", "qa1", "q1"), coded("b", "qb1", "q2")]);
-      const after = { ...before, blocks: [coded("a", "qa1", "q2"), before.blocks[1]] } as TSurvey;
+      const after = { ...before, blocks: [coded("a", "qa1", "q2"), before.blocks[1]] };
 
       expect(areBlockCardPropsEqual(propsFor(before, "b"), propsFor(after, "b"))).toBe(false);
     });
 
     test("skips an idle block when another block's code changes to something unrelated", () => {
       const before = makeSurvey([coded("a", "qa1", "q1"), coded("b", "qb1", "q2")]);
-      const after = { ...before, blocks: [coded("a", "qa1", "q3"), before.blocks[1]] } as TSurvey;
+      const after = { ...before, blocks: [coded("a", "qa1", "q3"), before.blocks[1]] };
 
       expect(areBlockCardPropsEqual(propsFor(before, "b"), propsFor(after, "b"))).toBe(true);
     });

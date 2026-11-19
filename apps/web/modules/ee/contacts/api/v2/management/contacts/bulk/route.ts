@@ -16,6 +16,7 @@ export const PUT = async (request: Request) =>
     },
     bodyTransform: async (body, auth) => {
       const resolved = await resolveBodyIdsV2(body, auth, "PUT");
+      // eslint-disable-next-line typescript/only-throw-error -- the API wrapper turns a thrown error response into its reply
       if (!resolved.ok) throw resolved.error;
       return { ...body, ...resolved.data };
     },

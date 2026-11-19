@@ -23,12 +23,10 @@ const normalizeDomains = (domains: readonly string[]) => domains.map((domain) =>
  * domain itself and any subdomain of it are blocked. Kept separate from the exact-match set so only
  * these ~400 entries widen to subdomains — `user@sub.gmail.com` stays allowed.
  */
-const wildcardBlockedEmailDomains = new Set<string>(
-  normalizeDomains(wildcardDisposableEmailDomains as string[])
-);
+const wildcardBlockedEmailDomains = new Set<string>(normalizeDomains(wildcardDisposableEmailDomains));
 
 const blockedEmailDomains = new Set<string>([
-  ...normalizeDomains([...PERSONAL_EMAIL_DOMAINS, ...(disposableEmailDomains as string[])]),
+  ...normalizeDomains([...PERSONAL_EMAIL_DOMAINS, ...disposableEmailDomains]),
   ...wildcardBlockedEmailDomains,
 ]);
 

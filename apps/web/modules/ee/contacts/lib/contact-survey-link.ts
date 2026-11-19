@@ -97,6 +97,7 @@ export const verifyContactSurveyToken = (
     };
 
     if (!decoded || !decoded.contactId || !decoded.surveyId) {
+      // eslint-disable-next-line typescript/only-throw-error -- the catch below returns the thrown Result as is
       throw err("Invalid token format");
     }
 

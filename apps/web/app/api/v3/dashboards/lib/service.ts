@@ -192,7 +192,7 @@ export const duplicateDashboardRow = ({
         workspaceId: source.workspaceId,
         createdBy,
         // The copy keeps the filter bar: its filters say how the shared charts are meant to be sliced.
-        filters: (source.filters ?? []) as Prisma.InputJsonValue,
+        filters: source.filters ?? [],
         widgets: {
           create: source.widgets.map((widget, order) => ({
             chartId: widget.chartId,

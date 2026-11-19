@@ -14,13 +14,12 @@ vi.mock("@/modules/survey/lib/permission", () => ({
   getExternalUrlsPermission: vi.fn(),
 }));
 
-const endScreen = (buttonLink?: string): TSurveyEnding =>
-  ({
-    id: "clen1234567890123456789012",
-    type: "endScreen",
-    headline: { default: "Thanks" },
-    ...(buttonLink ? { buttonLabel: { default: "Open" }, buttonLink } : {}),
-  }) as TSurveyEnding;
+const endScreen = (buttonLink?: string): TSurveyEnding => ({
+  id: "clen1234567890123456789012",
+  type: "endScreen",
+  headline: { default: "Thanks" },
+  ...(buttonLink ? { buttonLabel: { default: "Open" }, buttonLink } : {}),
+});
 
 describe("assertV3SurveyWritePermissions", () => {
   beforeEach(() => {

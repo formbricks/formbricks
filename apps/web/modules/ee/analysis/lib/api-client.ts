@@ -55,8 +55,8 @@ export const toAppChart = (resource: TV3ChartResource): TAppChart => ({
   id: resource.id,
   name: resource.name,
   type: resource.type,
-  query: resource.query as TAppChart["query"],
-  config: resource.config as TAppChart["config"],
+  query: resource.query,
+  config: resource.config,
   feedbackDirectoryId: resource.datasetId,
   createdAt: new Date(resource.createdAt),
   updatedAt: new Date(resource.updatedAt),
@@ -134,7 +134,7 @@ const toAppChartData = (data: TV3ChartData): TAppChartData => ({
   optionLabels: presentOrUndefined(data.optionLabels),
   fieldLabels: presentOrUndefined(data.fieldLabels),
   memberLabels: presentOrUndefined(data.memberLabels),
-  query: data.query as TChartQuery,
+  query: data.query,
 });
 
 /** A date range to read a chart for: a preset, `all-time`, or two ISO calendar dates. */

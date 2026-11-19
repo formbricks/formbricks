@@ -85,7 +85,7 @@ describe("validateElementResponse", () => {
         ["an empty string", ""],
         ["undefined", undefined],
       ])("should block a required Signature left as %s with the required error", (_label, value) => {
-        const result = validateElementResponse(signatureElement(true), value as never, "en");
+        const result = validateElementResponse(signatureElement(true), value, "en");
 
         expect(result.valid).toBe(false);
         expect(result.errors).toHaveLength(1);

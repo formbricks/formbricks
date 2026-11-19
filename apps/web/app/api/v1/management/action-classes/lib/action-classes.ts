@@ -33,6 +33,6 @@ export const getActionClasses = reactCache(async (workspaceIds: string[]): Promi
       },
     });
   } catch {
-    throw new DatabaseError(`Database error when fetching actions for workspace ${workspaceIds}`);
+    throw new DatabaseError(`Database error when fetching actions for workspace ${String(workspaceIds)}`);
   }
 });

@@ -71,7 +71,7 @@ const buildExport = () => {
   ];
   const { elements, metaDataFields } = extractSurveyDetails(readSurvey, responses);
   const resolved = responses.map((r) => ({ ...r, data: resolveStorageUrlsInObject(r.data) }));
-  const rows = getResponsesJson(readSurvey, resolved as never, elements, []);
+  const rows = getResponsesJson(readSurvey, resolved, elements, []);
   const headers = [
     "No.",
     "Response ID",
