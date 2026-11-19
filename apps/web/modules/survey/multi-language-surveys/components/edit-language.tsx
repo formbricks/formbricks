@@ -405,7 +405,7 @@ const EditSaveButtons: React.FC<{
       <Button onClick={onSave} size="sm" disabled={disabled || isSaving} loading={isSaving}>
         {t("common.save_changes")}
       </Button>
-      <Button onClick={onCancel} size="sm" variant="ghost" disabled={disabled}>
+      <Button onClick={onCancel} size="sm" variant="ghost" disabled={disabled || isSaving}>
         {t("common.cancel")}
       </Button>
     </div>
