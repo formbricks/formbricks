@@ -1,5 +1,7 @@
+import type { TFunction } from "i18next";
 import { describe, expect, test } from "vitest";
-import { appendHubQuery, toHubRecordQuery } from "./table-filters";
+import { HUB_EMOTION_VALUES, HUB_SENTIMENT_VALUES } from "@formbricks/types/feedback-source";
+import { appendHubQuery, getRecordFilterProperties, toHubRecordQuery } from "./table-filters";
 
 const now = new Date("2026-10-26T10:00:00Z");
 
@@ -173,5 +175,23 @@ describe("toHubRecordQuery — emotions are multi-label", () => {
         now
       )?.emotions
     ).toEqual(["anger"]);
+  });
+});
+
+describe("getRecordFilterProperties — Hub vocabularies", () => {
+  const t = ((key: string) => key) as TFunction;
+  const optionsOf = (id: string) =>
+    getRecordFilterProperties(t, { sourceNames: [] }).find((property) => property.id === id)?.options;
+
+  test("offers every Hub sentiment, each under its own label", () => {
+    const options = optionsOf("sentiment");
+    expect(options?.map((option) => option.value)).toEqual([...HUB_SENTIMENT_VALUES]);
+    expect(new Set(options?.map((option) => option.label)).size).toBe(HUB_SENTIMENT_VALUES.length);
+  });
+
+  test("offers every Hub emotion, each under its own label", () => {
+    const options = optionsOf("emotion");
+    expect(options?.map((option) => option.value)).toEqual([...HUB_EMOTION_VALUES]);
+    expect(new Set(options?.map((option) => option.label)).size).toBe(HUB_EMOTION_VALUES.length);
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import type { TChartQuery } from "@formbricks/types/analysis";
-import { EMOTION_VALUES } from "@/modules/ee/analysis/lib/schema-definition";
+import { HUB_EMOTION_VALUES } from "@formbricks/types/feedback-source";
 import { type TMemoryRecord, recordMatches } from "./cube-memory-test-utils";
 import {
   MAX_DASHBOARD_FILTER_PICKS_CHARS,
@@ -377,8 +377,8 @@ describe("emotions: contains any of / none of", () => {
   });
 
   test("no emotion is part of another, so matching one as a substring never matches another", () => {
-    for (const label of EMOTION_VALUES) {
-      expect(EMOTION_VALUES.filter((other) => other.includes(label))).toEqual([label]);
+    for (const label of HUB_EMOTION_VALUES) {
+      expect(HUB_EMOTION_VALUES.filter((other) => other.includes(label))).toEqual([label]);
     }
   });
 });
