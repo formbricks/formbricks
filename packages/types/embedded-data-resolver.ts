@@ -1278,7 +1278,9 @@ export const listReadableFields = (input: TListReadableFieldsInput): TReadableFi
   const languageCode = input.languageCode ?? "default";
 
   const question = input.blocks
-    .flatMap((block) => block.elements)
+    // A stored block can lack `elements` (an unvalidated draft or migrated block): it adds no fields.
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- stored blocks are not re-validated, ENG-2497
+    .flatMap((block) => block.elements ?? [])
     .map((element) => ({
       key: element.id,
       label: labelOrKey(toElementLabel(element.headline, languageCode), element.id),
