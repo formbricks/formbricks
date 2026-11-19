@@ -97,6 +97,16 @@ describe("survey upload elements", () => {
         []
       );
     });
+
+    // Response deletion reads the survey's upload elements to find the files to delete (ENG-2497).
+    test("skips a block with no elements array", () => {
+      const blocks = [
+        { id: "block1", name: "Block 1" },
+        { id: "block2", name: "Block 2", elements: [{ id: "sig1", type: "signature" }] },
+      ] as unknown as TSurveyBlock[];
+
+      expect(getSurveyUploadElementConfigs({ blocks }).map((element) => element.id)).toEqual(["sig1"]);
+    });
   });
 
   describe("getUploadElementAllowedExtensions", () => {

@@ -254,10 +254,11 @@ export const validateMediaAndPrepareBlocks = (blocks: TSurveyBlock[]): TSurveyBl
  * Useful for server-side processing where we need to iterate over all questions
  * Note: This is duplicated from the client-side survey utils since this file is server-only
  * @param blocks - Array of survey blocks
- * @returns Flat array of all elements across all blocks
+ * @returns Flat array of all elements across all blocks. A block stored without `elements` (a draft
+ * or migrated block, which nothing validates) contributes none, rather than an `undefined` entry.
  */
 export const getElementsFromBlocks = (blocks: TSurveyBlock[]): TSurveyElement[] => {
-  return blocks.flatMap((block) => block.elements);
+  return blocks.flatMap((block) => block.elements ?? []);
 };
 
 /**

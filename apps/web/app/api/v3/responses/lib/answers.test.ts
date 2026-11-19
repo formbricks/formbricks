@@ -710,3 +710,19 @@ describe("what an orphaned key may publish as rawValue", () => {
     expect(orphan(raw)).toEqual([{ key: "orphan", rawValue: raw, reason: "elementNotInSurvey" }]);
   });
 });
+
+describe("a block with no elements array (ENG-2497)", () => {
+  test("is skipped, and the other blocks' elements keep their positions", () => {
+    const plan = buildAnswerPlan(
+      [
+        { id: "empty", name: "Legacy block" },
+        { id: "blk", name: "Block", elements: [element({ id: "q1", type: "openText" })] },
+      ] as never,
+      "default"
+    );
+
+    expect(serializeAnswers(plan, { q1: "answered" }, undefined).answers).toMatchObject([
+      { elementId: "q1", position: 1, valueText: "answered" },
+    ]);
+  });
+});
