@@ -178,6 +178,7 @@ describe("testEndpoint", () => {
     );
 
     const requestPromise = testEndpoint("https://example.com/webhook");
+    // eslint-disable-next-line vitest/valid-expect -- awaited below, once the fake timers have fired the rejection
     const assertion = expect(requestPromise).rejects.toThrow("Request timed out after 5 seconds");
 
     await vi.advanceTimersByTimeAsync(5000);

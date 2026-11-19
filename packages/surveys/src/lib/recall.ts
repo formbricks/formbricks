@@ -42,7 +42,7 @@ const resolveRecallValue = (
 
   // Fetching value from variables based on recallItemId
   if (variables[recallItemId] !== undefined) {
-    value = String(variables[recallItemId]) ?? fallback;
+    value = String(variables[recallItemId]);
   }
 
   // Fetching value from responseData or attributes based on recallItemId

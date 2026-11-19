@@ -59,11 +59,11 @@ describe("buildAnalysisWorkbook", () => {
     expect(rows[3][9]).toBe("UNMAPPED:Western Provnce");
   });
 
-  test("the Excel file keeps line breaks, quotes and Arabic; a formula-like text is defanged", async () => {
+  test("the Excel file keeps line breaks, quotes, Arabic and a formula-like text as given", async () => {
     const rows = table(await open("codes"), "Response Data");
     expect(rows[1][11]).toBe('He said "hello"\nsecond line, with a comma');
     expect(rows[2][11]).toBe(LONG_ARABIC_TEXT);
-    expect(rows[3][11]).toBe("'=SUM(A1:A9)");
+    expect(rows[3][11]).toBe("=SUM(A1:A9)");
   });
 
   test("the Labels sheet of Text and code reads `column; Question text` and holds the answer text", async () => {

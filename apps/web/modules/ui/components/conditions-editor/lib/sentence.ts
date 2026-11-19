@@ -36,6 +36,17 @@ export const getSentenceRowClass = (leadAlign: TSentenceLeadAlign): string =>
 export const SENTENCE_FIELDS_CLASS =
   "grid min-w-0 grid-cols-1 gap-2 @xl:grid-cols-[minmax(0,10rem)_minmax(0,1fr)_minmax(0,1fr)]";
 
+/**
+ * A show-if's fields (`start`): it has no Then row to line up with, so its first column is wide enough
+ * for the field picker's placeholder, "Choose a question or field", to read whole. At 10rem it was cut
+ * to "Choose a quest…" (ENG-7032).
+ */
+const SENTENCE_FIELDS_START_CLASS =
+  "grid min-w-0 grid-cols-1 gap-2 @xl:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_minmax(0,1fr)]";
+
+export const getSentenceFieldsClass = (leadAlign: TSentenceLeadAlign): string =>
+  leadAlign === "start" ? SENTENCE_FIELDS_START_CLASS : SENTENCE_FIELDS_CLASS;
+
 /** The label column: "If", "and", "Then", or the and/or select, right-aligned on the first line. */
 export const SENTENCE_LEAD_CLASS = "flex h-10 items-center justify-end text-sm font-medium text-slate-700";
 

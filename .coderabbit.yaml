@@ -247,8 +247,8 @@ reviews:
         integrations: shipped clients read it without updating. A released shape is breaking when it
         is renamed, removed or retyped, when a field that was optional becomes required, or when a
         default or an existing case's status code changes — it must be intentional, and the PR's
-        "Breaking changes" table must document it. A new optional field or endpoint is additive and
-        stays unticked. Prefer adding to v3 over changing v1.
+        breaking-changes table must document it, under "Merge danger" or, on a backport or older
+        PR, "Breaking changes". A new optional field or endpoint is additive and stays unticked. Prefer adding to v3 over changing v1.
 
     - path: "apps/web/{app/api/v2,modules/api/v2}/**"
       instructions: |
@@ -406,8 +406,8 @@ reviews:
       - name: Breaking changes match the diff
         mode: warning
         instructions: |
-          Compare the checkbox in the PR description's "## Breaking changes" section against the
-          actual diff. A ticked box (`- [x] This PR contains breaking changes`) is the author's
+          Compare the breaking-changes checkbox in the PR description's "## Merge danger" section
+          ("## Breaking changes" on older PRs) against the actual diff. A ticked box (`- [x] This PR contains breaking changes`) is the author's
           declaration that the PR has one; an unticked box declares that it has none. The prose or
           table under the checkbox is the explanation and does not change the declaration.
 
@@ -439,9 +439,14 @@ reviews:
           confident the author is; genuine uncertainty about which bullet applies is what the
           inconclusive case below is for.
 
-          FAIL if the diff contains at least one of the above and the checkbox is unticked, or the
-          section is empty or still holds the unedited template comment. Name the specific file and
-          line that is breaking, and ask the author to tick the box.
+          FAIL if the diff contains at least one of the above and the checkbox is unticked or missing
+          from the section. Name the specific file and line that is breaking, and ask the author to
+          tick the box (restoring it if it was deleted).
+
+          FAIL if the checkbox, ticked or not, has no explanation under it: no sentence saying why (the
+          template's `Why:` line, or plain prose in an older "## Breaking changes" section) and, for a
+          ticked box, no breaking-changes table either. A line still reading `Why: _one line on why it
+          is, or is not, breaking_` is the unedited placeholder and counts as none.
 
           FAIL if the checkbox is ticked but no change in the diff matches the list above.
 
@@ -471,7 +476,8 @@ reviews:
       - name: Coverage accounts for the whole diff
         mode: warning
         instructions: |
-          Check the PR description's "## How this was tested" section. It holds all QA for the
+          Check the PR description's "## Evidence" section ("## How this was tested" on a PR opened
+          before the template change). It holds all QA for the
           change — there is no separate release QA pass — so it must account for every behaviour
           the diff changes.
 
@@ -492,10 +498,10 @@ reviews:
           - The diff changes rendered UI and the description attaches no screenshot or screencast.
           - The "Open gaps" subsection is absent. An explicit "none" passes.
 
-          Content inside a `<details>` fold counts as present. The template caps the description at
+          Content inside a `<details>` fold counts as present. The `pr` skill caps the description at
           350 words outside folds and folds the overflow rather than dropping it — long media,
           command logs, and Coverage rows past the sixth — while the Coverage table, Open gaps and
-          Breaking changes stay visible themselves. A collapsed fold is evidence, not a gap: do not
+          the breaking-changes checkbox stay visible themselves. A collapsed fold is evidence, not a gap: do not
           ask for a longer description, ask for the missing behaviour.
 
           PASS if every behaviour the diff changes is either covered by a row stating how it was

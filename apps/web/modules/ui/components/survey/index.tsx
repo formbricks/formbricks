@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SurveyContainerProps } from "@formbricks/types/formbricks-surveys";
 import { IS_DEVELOPMENT_BUILD } from "@/lib/env-client";
+import {
+  SurveysRendererNotInstalledError,
+  isSurveysRendererReady,
+  loadSurveysScript,
+} from "@/modules/ui/components/survey/load-surveys-script";
 import { executeRecaptcha, loadRecaptchaScript } from "@/modules/ui/components/survey/recaptcha";
 import { getSurveysScriptUrl } from "@/modules/ui/components/survey/script-url";
 
@@ -31,25 +36,15 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
     [containerId, props, getRecaptchaToken]
   );
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [rendererError, setRendererError] = useState<SurveysRendererNotInstalledError | null>(null);
   const hasLoadedRef = useRef(false);
 
-  const loadSurveyScript: () => Promise<void> = async () => {
+  const loadRendererAndMarkLoaded: () => Promise<void> = async () => {
     // Set loading flag immediately to prevent concurrent loads
     isLoadingScript = true;
     try {
       const scriptUrl = getSurveysScriptUrl(props.appUrl, props.rendererVersion);
-      const response = await fetch(scriptUrl, IS_DEVELOPMENT_BUILD ? { cache: "no-store" } : {});
-
-      if (!response.ok) {
-        throw new Error("Failed to load the surveys package");
-      }
-
-      const scriptContent = await response.text();
-      const scriptElement = document.createElement("script");
-
-      scriptElement.textContent = scriptContent;
-
-      document.head.appendChild(scriptElement);
+      await loadSurveysScript(scriptUrl, IS_DEVELOPMENT_BUILD ? { cache: "no-store" } : {});
       setIsScriptLoaded(true);
       hasLoadedRef.current = true;
     } finally {
@@ -64,14 +59,19 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
     }
 
     const loadScript = async () => {
-      if (!window.formbricksSurveys) {
+      if (!isSurveysRendererReady()) {
         try {
           if (props.isSpamProtectionEnabled && props.recaptchaSiteKey) {
             await loadRecaptchaScript(props.recaptchaSiteKey);
           }
-          await loadSurveyScript();
+          await loadRendererAndMarkLoaded();
         } catch (error) {
           console.error("Failed to load the surveys package: ", error);
+          // No renderer after every attempt: hand it to the nearest error boundary (the link survey's
+          // "try again" screen) rather than leave an empty container. A failed request stays logged only.
+          if (error instanceof SurveysRendererNotInstalledError) {
+            setRendererError(error);
+          }
         }
       } else {
         renderInline();
@@ -79,7 +79,7 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
     };
 
     void loadScript();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time script load guarded by hasLoadedRef; depending on loadSurveyScript/renderInline would re-trigger the load
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- one-time script load guarded by hasLoadedRef; depending on loadRendererAndMarkLoaded/renderInline would re-trigger the load
   }, [props]);
 
   useEffect(() => {
@@ -87,6 +87,10 @@ export const SurveyInline = (props: TSurveyInlineProps) => {
       renderInline();
     }
   }, [isScriptLoaded, renderInline]);
+
+  if (rendererError) {
+    throw rendererError;
+  }
 
   return <div id={containerId} className="h-full w-full" />;
 };

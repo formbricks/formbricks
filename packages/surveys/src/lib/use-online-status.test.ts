@@ -21,7 +21,7 @@ describe("useOnlineStatus", () => {
     const { result } = renderHook(() => useOnlineStatus());
     expect(result.current).toBe(true);
 
-    act(() => {
+    void act(() => {
       window.dispatchEvent(new Event("offline"));
     });
     expect(result.current).toBe(false);
@@ -32,7 +32,7 @@ describe("useOnlineStatus", () => {
     const { result } = renderHook(() => useOnlineStatus());
     expect(result.current).toBe(false);
 
-    act(() => {
+    void act(() => {
       window.dispatchEvent(new Event("online"));
     });
     expect(result.current).toBe(true);

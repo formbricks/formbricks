@@ -34,7 +34,7 @@ import {
   ZMcpPatchCreativeInput,
 } from "./creative-schemas";
 import { runConfirmedDelete } from "./delete-confirmation";
-import { registerScopedTool } from "./guard-scopes";
+import { registerMcpTool } from "./guard-permissions";
 import { runMcpMutation } from "./run-mcp-mutation";
 
 /**
@@ -106,7 +106,7 @@ const LAST_OPENER_NOTE =
   "If this was the last creative that opens a live app survey with no actions of its own, that survey then shows nowhere until a creative or an action opens it again.";
 
 export function registerCreativeTools(server: McpServer): void {
-  registerScopedTool(
+  registerMcpTool(
     server,
     "list_creatives",
     {
@@ -117,7 +117,7 @@ export function registerCreativeTools(server: McpServer): void {
       outputSchema: ZMcpCreativeListOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["surveys:read"],
+    [{ permission: "creatives", level: "read" }],
     async (input: TMcpListCreativesInput, ctx) => {
       const context = toolContext(ctx);
       const response = await listV3Creatives({
@@ -129,7 +129,7 @@ export function registerCreativeTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_creative",
     {
@@ -140,7 +140,7 @@ export function registerCreativeTools(server: McpServer): void {
       outputSchema: ZMcpCreativeOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["surveys:read"],
+    [{ permission: "creatives", level: "read" }],
     async (input: TMcpCreativeIdInput, ctx) => {
       const context = toolContext(ctx);
       const response = await getV3Creative({ creativeId: input.creativeId, ...context });
@@ -149,7 +149,7 @@ export function registerCreativeTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "get_creative_stats",
     {
@@ -160,7 +160,7 @@ export function registerCreativeTools(server: McpServer): void {
       outputSchema: ZMcpCreativeStatsOutput,
       annotations: READ_ANNOTATIONS,
     },
-    ["surveys:read"],
+    [{ permission: "creatives", level: "read" }],
     async (input: TMcpGetCreativeStatsInput, ctx) => {
       const context = toolContext(ctx);
       const response = await getV3CreativeStats({
@@ -173,7 +173,7 @@ export function registerCreativeTools(server: McpServer): void {
     }
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "create_creative",
     {
@@ -190,7 +190,7 @@ export function registerCreativeTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "creatives", level: "write" }],
     async (input: TMcpCreateCreativeInput, ctx) =>
       runMcpMutation(
         ctx,
@@ -200,7 +200,7 @@ export function registerCreativeTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "patch_creative",
     {
@@ -222,7 +222,7 @@ export function registerCreativeTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "creatives", level: "write" }],
     async (input: TMcpPatchCreativeInput, ctx) =>
       runMcpMutation(
         ctx,
@@ -239,7 +239,7 @@ export function registerCreativeTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "delete_creative",
     {
@@ -255,7 +255,7 @@ export function registerCreativeTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "creatives", level: "write" }],
     async (input: TMcpDeleteCreativeInput, ctx) =>
       runConfirmedDelete({
         tool: "delete_creative",
@@ -279,7 +279,7 @@ export function registerCreativeTools(server: McpServer): void {
       })
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "duplicate_creative",
     {
@@ -296,7 +296,7 @@ export function registerCreativeTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "creatives", level: "write" }],
     async (input: TMcpCreativeIdInput, ctx) =>
       runMcpMutation(
         ctx,
@@ -312,7 +312,7 @@ export function registerCreativeTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "archive_creative",
     {
@@ -330,7 +330,7 @@ export function registerCreativeTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "creatives", level: "write" }],
     async (input: TMcpCreativeIdInput, ctx) =>
       runMcpMutation(
         ctx,
@@ -346,7 +346,7 @@ export function registerCreativeTools(server: McpServer): void {
       )
   );
 
-  registerScopedTool(
+  registerMcpTool(
     server,
     "restore_creative",
     {
@@ -363,7 +363,7 @@ export function registerCreativeTools(server: McpServer): void {
         openWorldHint: true,
       },
     },
-    ["surveys:write"],
+    [{ permission: "creatives", level: "write" }],
     async (input: TMcpCreativeIdInput, ctx) =>
       runMcpMutation(
         ctx,

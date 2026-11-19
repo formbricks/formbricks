@@ -1,7 +1,14 @@
 "use client";
 
 import { EyeIcon, TrashIcon } from "lucide-react";
-import { type Dispatch, type ReactNode, type RefObject, type SetStateAction, useState } from "react";
+import {
+  type Dispatch,
+  type ReactNode,
+  type RefObject,
+  type SetStateAction,
+  useContext,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import type { TConditionGroup } from "@formbricks/types/surveys/logic";
 import type { TSurvey } from "@formbricks/types/surveys/types";
@@ -9,6 +16,7 @@ import { FlowTextParts, useElementIcons } from "@/modules/survey/editor/componen
 import {
   SHOW_IF_CELL_CLASS,
   ShowIfConditionsEditor,
+  ShowIfPopoverBoundary,
   ShowIfPopoverFrame,
   useShowIfAnchor,
   useShowIfScope,
@@ -27,6 +35,7 @@ import {
   updateShowIf,
 } from "@/modules/survey/editor/lib/show-if-editing";
 import { Button } from "@/modules/ui/components/button";
+import { TruncationTooltip } from "@/modules/ui/components/info-tooltip";
 import { Popover, PopoverAnchor, PopoverTrigger } from "@/modules/ui/components/popover";
 
 interface ShowIfPopoverProps {
@@ -72,6 +81,7 @@ export function ShowIfPopover({
   const { t, i18n } = useTranslation();
   const elementIcons = useElementIcons();
   const { triggerRef, anchorRef, hasAnchor } = useShowIfAnchor();
+  const boundary = useContext(ShowIfPopoverBoundary);
   const showIf = getShowIf(localSurvey, target);
   if (!showIf && !newTrigger) return null;
 
@@ -104,9 +114,13 @@ export function ShowIfPopover({
             // The block header's chip sits inside the row's toggle: don't collapse the block.
             onClick={(event) => event.stopPropagation()}>
             <EyeIcon className="size-3 shrink-0" aria-hidden="true" />
-            <span className="flex min-w-0 items-center gap-1">
+            {/* A chip cut short reads in full on hover, like a rule row (ENG-7027). */}
+            <TruncationTooltip
+              content={toPlainText(chipParts)}
+              collisionBoundary={boundary}
+              className="flex min-w-0 items-center gap-1">
               <FlowTextParts parts={chipParts} elementIcons={elementIcons} centered />
-            </span>
+            </TruncationTooltip>
           </button>
         ) : (
           newTrigger

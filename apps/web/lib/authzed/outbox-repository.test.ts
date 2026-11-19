@@ -9,8 +9,10 @@ import {
   markAuthzedOutboxEventsDelivered,
   markAuthzedOutboxEventsFailed,
   pruneAuthzedOutboxHistory,
+  queueAuthzedOutboxEvents,
   replayAuthzedOutboxDeadLetters,
 } from "./outbox-repository";
+import { AUTHZED_OUTBOX_TARGET_TYPES } from "./outbox-types";
 
 const row = (targetType: string) => ({
   attempts: 1,
@@ -35,24 +37,13 @@ describe("AuthZed projection outbox repository", () => {
   beforeEach(() => vi.clearAllMocks());
   afterEach(() => vi.useRealTimers());
 
-  test("dead-letters an unknown target instead of leaving it leased forever", async () => {
-    vi.mocked(prisma.$queryRaw).mockResolvedValue([row("membership"), row("future_unknown_target")]);
+  // That an unknown type is left untouched for a newer worker is checked on real Postgres in
+  // `outbox-trigger.integration.test.ts` ("claims the types this release knows …").
+  test("returns the claimed events, and dead-letters nothing itself", async () => {
+    vi.mocked(prisma.$queryRaw).mockResolvedValue([row("membership")]);
 
     await expect(claimAuthzedOutboxEvents("lease-owner")).resolves.toEqual([row("membership")]);
-    expect(prisma.authzedProjectionOutbox.updateMany).toHaveBeenCalledWith({
-      where: {
-        id: { in: ["future_unknown_target-event"] },
-        leaseOwner: "lease-owner",
-        processedAt: null,
-      },
-      data: {
-        deadLetteredAt: expect.any(Date),
-        lastErrorCode: "authzed_projection_invalid_event",
-        leaseExpiresAt: null,
-        leasedAt: null,
-        leaseOwner: null,
-      },
-    });
+    expect(prisma.authzedProjectionOutbox.updateMany).not.toHaveBeenCalled();
   });
 
   test("marks only events owned by the active lease as delivered", async () => {
@@ -147,6 +138,7 @@ describe("AuthZed projection outbox repository", () => {
         pending: 11n,
         revocations_past_critical: 3n,
         revocations_past_warning: 5n,
+        unknown_type: 4n,
       },
     ]);
 
@@ -157,6 +149,7 @@ describe("AuthZed projection outbox repository", () => {
       pending: 11,
       revocationsPastCritical: 3,
       revocationsPastWarning: 5,
+      unknownType: 4,
     });
   });
 
@@ -191,7 +184,11 @@ describe("AuthZed projection outbox repository", () => {
     await expect(replayAuthzedOutboxDeadLetters()).resolves.toBe(4);
 
     expect(prisma.authzedProjectionOutbox.updateMany).toHaveBeenCalledWith({
-      where: { deadLetteredAt: { not: null }, processedAt: null },
+      where: {
+        deadLetteredAt: { not: null },
+        processedAt: null,
+        targetType: { in: [...AUTHZED_OUTBOX_TARGET_TYPES] },
+      },
       data: {
         attempts: 0,
         availableAt: expect.any(Date),
@@ -203,5 +200,28 @@ describe("AuthZed projection outbox repository", () => {
         permanentFailures: 0,
       },
     });
+  });
+});
+
+describe("queueAuthzedOutboxEvents", () => {
+  test("queues one event per id, not as a revocation", async () => {
+    vi.mocked(prisma.authzedProjectionOutbox.createMany).mockResolvedValue({ count: 2 });
+
+    await queueAuthzedOutboxEvents("mcp_grant", ["grant-1", "grant-2"]);
+
+    expect(prisma.authzedProjectionOutbox.createMany).toHaveBeenCalledWith({
+      data: [
+        { targetType: "mcp_grant", primaryId: "grant-1", isRevocation: false },
+        { targetType: "mcp_grant", primaryId: "grant-2", isRevocation: false },
+      ],
+    });
+  });
+
+  test("queues nothing for no ids", async () => {
+    vi.mocked(prisma.authzedProjectionOutbox.createMany).mockClear();
+
+    await queueAuthzedOutboxEvents("mcp_grant", []);
+
+    expect(prisma.authzedProjectionOutbox.createMany).not.toHaveBeenCalled();
   });
 });

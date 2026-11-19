@@ -8,6 +8,7 @@ export const AUTHZED_MAX_RECONCILIATION_PASSES = 3;
 
 type TAuthzedProjectionErrorCode =
   | TAuthzedErrorCode
+  | "authzed_projection_fenced"
   | "authzed_projection_invalid_source"
   | "authzed_projection_unstable";
 
@@ -27,6 +28,16 @@ export class AuthzedProjectionUnstableError extends Error {
   readonly retryable = false;
 }
 
+/**
+ * A projection that ran out of the time its source rows are certainly locked before it wrote everything
+ * (`mcp-grant.ts`). Retryable: the outbox delivers the event again, and the next pass starts a new budget.
+ */
+export class AuthzedProjectionFencedError extends Error {
+  readonly attempts = 1;
+  readonly code = "authzed_projection_fenced";
+  readonly retryable = true;
+}
+
 export class AuthzedProjectionInvalidSourceError extends Error {
   readonly attempts = 1;
   readonly code = "authzed_projection_invalid_source";
@@ -43,6 +54,7 @@ const getProjectionError = (
 }> => {
   if (
     error instanceof AuthzedProjectionUnstableError ||
+    error instanceof AuthzedProjectionFencedError ||
     error instanceof AuthzedProjectionInvalidSourceError
   ) {
     return error;

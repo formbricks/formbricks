@@ -141,9 +141,32 @@ oauth_resource = "https://app.formbricks.com/api/mcp"
 ## Manage and revoke access
 
 Every client you authorize appears under **Settings → Account → Authorized Apps**
-(`/account/settings/authorized-apps`), showing the client name, granted scopes, and when it was
-approved. Click **Revoke** to immediately cut off a client's access; it will need to be re-authorized
-to connect again.
+(`/account/settings/authorized-apps`), showing the client name, its organization & workspace access
+(**All access**, **2 organizations**, **3 workspaces**, or **No workspaces** when everything it was
+limited to is gone), its access level per category (such as **Surveys · Write** or **Responses · Read**;
+**Custom** when the permissions in a category differ), and when it was connected and last changed. Only
+organizations and workspaces you can still select count: one you lost access to, or an organization where
+you are now only a billing member, isn't shown, and the next save removes it. A client connected twice, for
+example from two machines, is listed twice, and each is edited and revoked on its own. A first-party client that connects without a
+consent screen is listed too.
+
+Click **Edit** to change what a client may do. It opens the same editor as the consent screen, filled in
+with the client's current grant: choose **All access**, **Only selected organizations** or **Only selected
+workspaces** (see [Organization & workspace access](/platform/mcp/overview#organization-workspace-access)),
+and set each permission to **No access**, **Read** or **Write**, or
+use **Read-only**, **Select all** or **Deselect all**. Levels above what the client asked for when you
+connected it can't be chosen; to give more, reconnect it so it asks again. **Save changes** applies from
+the client's next tool call, with the token it already holds, so there is no need to reconnect. Save stays
+disabled while every permission is at No access, or while a selection has nothing picked: to end a client's
+access, use Revoke. If a change that takes access away can't be applied right away, Save (and Allow on the
+consent screen) fails with an error and nothing changes; try again.
+
+Click **Revoke** to cut off a client's access: revoking deletes its grant, so its next call is
+refused, even with an access token it still holds. It will need to be re-authorized to connect again.
+Connecting, editing and revoking are all recorded in the audit log, with the whole grant before and after, under
+each organization the grant reaches (every organization you belong to, for All access), so an owner of those
+organizations finds them among their organization's entries. A grant that ends because your role or account
+changed is recorded too, by the system.
 
 Approving a client again with fewer scopes replaces what it was granted. Every earlier grant that
 included a dropped scope stops refreshing, all of its tokens together, even ones the client had
@@ -155,7 +178,9 @@ that 15 minutes up to 10 minutes after it.
 
 Tokens are short-lived by design: an access token lasts **15 minutes** and the client refreshes it
 silently in the background for up to **30 days** (the refresh window). After that — or after you
-revoke — the client re-runs the sign-in and consent flow. Approving the write scopes
+revoke — the client re-runs the sign-in and consent flow. A client whose grant is missing (for example
+one approved on an older server during an upgrade) is refused the same way and asks you to approve it
+again. Approving the write scopes
 (`surveys:write`, `workflows:write`, `feedbackRecords:write`, `responses:write`, `dashboards:write`) is
 re-confirmed periodically for safety.
 
@@ -182,7 +207,7 @@ re-confirmed periodically for safety.
     The client requested a scope it isn't registered for. Reconnect from scratch so it re-registers
     with the scopes the server advertises (`surveys:read`, `surveys:write`, `workflows:read`,
     `workflows:write`, `feedbackRecords:read`, `feedbackRecords:write`, `responses:read`,
-    `responses:write`, `dashboards:read`, `dashboards:write`, `offline_access`).
+    `responses:write`, `dashboards:read`, `dashboards:write`, `audience:read`, `offline_access`).
   </Accordion>
   <Accordion title="Stuck in a consent loop / keeps asking you to sign in">
     Usually a cookie or stale-session issue. Make sure you're signed in to Formbricks in the same
@@ -197,6 +222,12 @@ re-confirmed periodically for safety.
     it. `test_workflow` also needs `write`/`manage` even though it's a read-scoped dry-run, because it
     evaluates the live workflow definition. A `:write` tool likewise 403s if your token was only granted
     the matching `:read` scope; reconnect and approve write access.
+  </Accordion>
+  <Accordion title="A tool call is refused with “Not permitted”">
+    The client's grant doesn't give the permission at the level the tool needs; the error names both,
+    such as `Surveys: Write`. Raise it with **Edit** under **Authorized Apps**. When the error also says
+    the client's OAuth token lacks a scope, the client didn't ask for that access when it connected:
+    reconnect the client and approve the matching scope.
   </Accordion>
   <Accordion title="Self-hosted: the browser can't complete sign-in / redirects fail">
     OAuth discovery and redirects are built from your configured base URL. Serve Formbricks from a

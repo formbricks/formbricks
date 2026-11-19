@@ -1009,19 +1009,6 @@ describe("getQuestionSummary", () => {
         },
       ];
 
-      // Mock checkForI18n for this test case
-      vi.mock("./surveySummary", async (importOriginal) => {
-        const originalModule = await importOriginal();
-        return {
-          ...(originalModule as object),
-          checkForI18n: vi.fn().mockImplementation(() => {
-            // NOSONAR
-            // Convert Spanish labels to default language labels
-            return ["Item 2", "Item 1", "Item 3"];
-          }),
-        };
-      });
-
       const dropOff = [
         { elementId: "ranking-q1", impressions: 1, dropOffCount: 0, dropOffPercentage: 0 },
       ] as unknown as TSurveySummary["dropOff"];
@@ -1321,6 +1308,31 @@ describe("getSurveySummary", () => {
     expect(getSurvey).toHaveBeenCalledWith(mockSurveyId);
     expect(prisma.response.findMany).toHaveBeenCalled(); // Check if getResponsesForSummary was effectively called
     expect(getDisplayCountBySurveyId).toHaveBeenCalled();
+  });
+
+  // A draft or migrated block can be stored without `elements` (ENG-2497).
+  test("summarizes a survey that has a block with no elements array", async () => {
+    const openText = {
+      id: "q1",
+      type: TSurveyElementTypeEnum.OpenText,
+      headline: { default: "Tell us more" },
+      required: false,
+      inputType: "text",
+      charLimit: { enabled: false },
+    } as unknown as TSurveyElement;
+    vi.mocked(getSurvey).mockResolvedValue({
+      ...mockBaseSurvey,
+      blocks: [
+        { id: "legacy", name: "Legacy block" },
+        { id: "blk", name: "Block", elements: [openText] },
+      ] as unknown as TSurvey["blocks"],
+    });
+
+    const summary = await getSurveySummary(mockSurveyId);
+
+    expect(summary.dropOff.map((entry) => entry.elementId)).toEqual(["q1"]);
+    expect(summary.summary).toHaveLength(1);
+    expect(summary.summary[0]).toMatchObject({ element: { id: "q1" } });
   });
 
   test("throws ResourceNotFoundError if survey not found", async () => {

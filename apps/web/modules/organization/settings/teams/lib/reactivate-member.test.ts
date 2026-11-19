@@ -60,6 +60,8 @@ describe("reactivateOrganizationMember", () => {
     const lock = statement(tx.$queryRaw.mock.calls[0]);
     expect(lock.text).toContain('FROM "User" WHERE "id" = ? FOR UPDATE');
     expect(lock.values).toEqual(["clmember"]);
+    // The user's row can be held by a Revoke waiting behind a reconciling pass: the Revoke timeout.
+    expect(prisma.$transaction).toHaveBeenCalledWith(expect.any(Function), { timeout: 35_000 });
     expect(tx.user.update).toHaveBeenCalledWith({
       where: { id: "clmember" },
       data: { isActive: true, reactivatedAt: DB_NOW },

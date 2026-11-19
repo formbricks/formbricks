@@ -42,11 +42,12 @@ import { signInBudgetBeforeHandler } from "./better-auth-sign-in-budget";
 import { trustDeviceBeforeHandler } from "./better-auth-trust-device-gate";
 import { healCredentialAccountIssuerBeforeHandler } from "./credential-issuer-heal";
 import { restrictDashboardViewerConsentBeforeHandler } from "./dashboard-viewer-oauth-consent";
+import { requireValidMcpGrantOnConsentBeforeHandler } from "./mcp-grant-consent";
+import { revokeOAuthConsentBeforeHandler, revokeOAuthGrantsAfterPasswordReset } from "./mcp-grant-revocation";
 import { getMcpOauthProviderOptions } from "./mcp-oauth-provider-options";
-import {
-  revokeOAuthConsentBeforeHandler,
-  revokeOAuthGrantsAfterPasswordReset,
-} from "./oauth-grant-revocation";
+import { snapshotConsentBeforeApprovalHandler } from "./oauth-consent-change";
+import { recordOAuthConsentWrites } from "./oauth-consent-writes";
+import { refuseCodeIssuedBeforeRevocationBeforeHandler } from "./oauth-revocation-marker";
 import { getAuthBaseUrl, getAuthIssuerUrl, getMcpResourceUrl } from "./oauth-urls";
 import { redisSecondaryStorage } from "./secondary-storage";
 import { signupPolicyBeforeHandler } from "./signup-policy";
@@ -188,7 +189,9 @@ export const auth = betterAuth({
   trustedOrigins: AUTH_TRUSTED_ORIGINS,
   telemetry: { enabled: false },
 
-  database: prismaAdapter(prisma, { provider: "postgresql" }),
+  // Consent writes are recorded per request, so the consent hooks can tell their own write from another
+  // request's (`oauth-consent-writes.ts`).
+  database: recordOAuthConsentWrites(prismaAdapter(prisma, { provider: "postgresql" })),
 
   // Sessions, verification records, and rate-limit counters in Redis (existing infra), shared
   // across instances. Sessions also persist to the DB via session.storeSessionInDatabase below.
@@ -450,13 +453,24 @@ export const auth = betterAuth({
       // below (verify / sign-in vs consent). See better-auth-trust-device-gate.ts.
       const trustDevice = trustDeviceBeforeHandler(ctx);
       if (trustDevice) return trustDevice;
+      // ENG-7150: an approval carrying the consent screen's grant must carry a valid one, refused before
+      // the provider writes the consent. See mcp-grant-consent.ts.
+      requireValidMcpGrantOnConsentBeforeHandler(ctx);
+      // ENG-7152: an Allow's consent rows as they are before the provider writes it, so an approval whose
+      // grant can't be saved puts them back and changes nothing. Ahead of the viewer trim, which returns
+      // early. See oauth-consent-change.ts.
+      await snapshotConsentBeforeApprovalHandler(ctx);
       // ADR-0025 / ENG-6889: a Dashboard viewer grants at most dashboards:read, whatever was requested.
       // Path-disjoint from the revocation below (consent and update-consent vs delete-consent).
       const viewerConsent = await restrictDashboardViewerConsentBeforeHandler(ctx);
       if (viewerConsent) return viewerConsent;
+      // A sign-in code issued before a revocation of its user and client is refused at the exchange, which
+      // would otherwise issue tokens again, and a new grant to a `skipConsent` client. See
+      // oauth-revocation-marker.ts.
+      await refuseCodeIssuedBeforeRevocationBeforeHandler(ctx);
       // ENG-2499: revoking an app deletes its consent AND revokes its tokens, in one transaction. Returns
       // a response only for /oauth2/delete-consent, short-circuiting the upstream delete, which would
-      // leave the tokens live. See oauth-grant-revocation.ts.
+      // leave the tokens live. See mcp-grant-revocation.ts.
       return await revokeOAuthConsentBeforeHandler(ctx);
     }),
     after: createAuthMiddleware(runAfterAuthHooks),

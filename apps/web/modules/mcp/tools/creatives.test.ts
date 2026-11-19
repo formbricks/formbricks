@@ -23,7 +23,13 @@ import {
 } from "@/app/api/v3/lib/response";
 import type { TV3AuditLog } from "@/app/api/v3/lib/types";
 import { buildListCreativesSearchParams, registerCreativeTools } from "./creatives";
-import { type ToolCallEra, callToolOverHttp, elicitingOAuthContext, errorText } from "./test-utils";
+import {
+  FULL_MCP_GRANT,
+  type ToolCallEra,
+  callToolOverHttp,
+  elicitingOAuthContext,
+  errorText,
+} from "./test-utils";
 
 // vitestSetup stubs createHash, which the sealed confirmation state depends on.
 vi.mock("node:crypto", async (importOriginal) => await importOriginal<typeof import("node:crypto")>());
@@ -102,6 +108,7 @@ const readOnlyOAuthAuthInfo = {
     },
     requestId: "req_tool",
     authMethod: "oauth",
+    grant: FULL_MCP_GRANT,
   },
 };
 
@@ -273,7 +280,7 @@ describe("registerCreativeTools", () => {
       expect(result.structuredContent.error).toMatchObject({
         status: 403,
         code: "forbidden",
-        detail: "OAuth token does not include the required MCP scope: surveys:read",
+        detail: expect.stringContaining("its OAuth token lacks the scope surveys:read."),
         requestId: "req_tool",
       });
     });

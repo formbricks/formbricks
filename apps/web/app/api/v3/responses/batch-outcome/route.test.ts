@@ -1,12 +1,11 @@
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { applyRateLimit } from "@/modules/core/rate-limit/helpers";
-import { rateLimitConfigs } from "@/modules/core/rate-limit/rate-limit-configs";
 import { POST } from "./route";
 
 /**
  * The route file is configuration, and every line of it is a decision the operation tests cannot see,
- * because they call past the wrapper: the auth mode, the audit action, the rate-limit bucket, and the
+ * because they call past the wrapper: the auth mode, the audit action, leaving the rate limit to the operation, and the
  * request schema. `outcome` being required is the contract's 400 and is enforced here or nowhere.
  */
 const { mockBatchSetOutcome, mockAuthenticateRequest, mockGetSession, mockQueueAuditEvent } = vi.hoisted(
@@ -79,13 +78,14 @@ describe("POST /api/v3/responses/batch-outcome", () => {
   });
 
   /**
-   * The state-mutation limit, not the shared v3 default: one request can fan out to a hundred pipeline
-   * events, so the bucket is its own.
+   * The operation charges the state-mutation bucket itself (see its tests), so the MCP tool spends from
+   * it too. The wrapper must not charge a second bucket on top, or one REST call would cost twice.
    */
-  test("is rate limited with the v3 state-mutation bucket", async () => {
+  test("leaves rate limiting to the operation", async () => {
     await post({ ids: [ID_A], outcome: "lowQuality" });
 
-    expect(applyRateLimit).toHaveBeenCalledWith(rateLimitConfigs.api.v3StateMutation, expect.anything());
+    expect(mockBatchSetOutcome).toHaveBeenCalled();
+    expect(applyRateLimit).not.toHaveBeenCalled();
   });
 
   test("rejects a batch with no workspaceId", async () => {

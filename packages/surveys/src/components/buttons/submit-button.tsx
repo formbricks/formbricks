@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { FB_PART } from "@formbricks/survey-ui/parts";
 import { Button } from "./button";
 
-interface SubmitButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface SubmitButtonProps extends ButtonHTMLAttributes {
   buttonLabel?: string;
   isLastQuestion: boolean;
   focus?: boolean;
