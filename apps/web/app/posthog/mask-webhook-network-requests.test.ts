@@ -41,6 +41,17 @@ describe("maskWebhookNetworkRequests", () => {
     expect(JSON.stringify(masked)).not.toContain(TOKEN);
   });
 
+  test("keeps PostHog's default body scrubbing on other requests", () => {
+    const masked = maskWebhookNetworkRequests({
+      ...request("https://app.example.com/api/auth/sign-in/email"),
+      requestBody: JSON.stringify({ email: "a@example.com", password: "hunter2" }),
+      responseBody: JSON.stringify({ card: "4111 1111 1111 1111" }),
+    });
+
+    expect(masked.requestBody).toBe("[SessionRecording] Request body redacted as might contain: password");
+    expect(masked.responseBody).toBe("[SessionRecording] Response body redacted");
+  });
+
   test("leaves other requests as they are", () => {
     const original = request(`${WORKFLOW_URL}/runs`);
 
