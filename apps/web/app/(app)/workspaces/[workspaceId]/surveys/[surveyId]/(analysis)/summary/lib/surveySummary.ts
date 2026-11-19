@@ -614,17 +614,18 @@ const summarizeNumericScaleElement = (
   responses: TSurveySummaryResponse[]
 ): TSurveySummary["summary"][number] | undefined => {
   const stats = computeNumericScaleStats(element.id, element.range, responses);
-
-  return {
-    type: element.type,
-    element,
+  const metrics = {
     average: stats.average,
     responseCount: stats.totalResponseCount,
     choices: stats.choices,
     dismissed: { count: stats.dismissed },
-    // TypeScript cannot pair `type` with `element` across the two-member union; each pair matches its
-    // own summary shape.
-  } as TSurveySummary["summary"][number];
+  };
+
+  // Narrowed per type, so the compiler checks each `type` and `element` pair against its own summary.
+  if (element.type === TSurveyElementTypeEnum.CES) {
+    return { type: element.type, element, ...metrics };
+  }
+  return { type: element.type, element, ...metrics };
 };
 
 const summarizeNPSElement = (
