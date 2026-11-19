@@ -459,6 +459,42 @@ describe("handleIntegrations", () => {
       expect(responses[0]).toContain(relativeUrl);
     });
 
+    // ENG-4050: an unanswered first CTA still owns column A as an empty cell, so every later answer
+    // stays under its own header instead of shifting left.
+    test("maps an unanswered first CTA to an empty first cell, keeping later columns aligned", async () => {
+      vi.mocked(googleSheetWriteData).mockResolvedValue(undefined);
+      const ctaFirstSurvey = {
+        ...mockSurvey,
+        blocks: [
+          {
+            id: "block0",
+            name: "Block 0",
+            elements: [
+              {
+                id: "cta1",
+                type: TSurveyElementTypeEnum.CTA,
+                headline: { default: "Welcome" },
+                required: false,
+                buttonExternal: false,
+              },
+            ],
+          },
+          ...mockSurvey.blocks,
+        ],
+      } as unknown as TSurvey;
+      const integration = structuredClone(mockGoogleSheetsIntegration);
+      integration.config.data[0].elementIds = ["cta1", questionId1];
+
+      await handleIntegrations([integration], mockPipelineInput, ctaFirstSurvey);
+      await handleIntegrations([integration], mockPipelineInput, ctaFirstSurvey);
+
+      expect(googleSheetWriteData).toHaveBeenCalledTimes(2);
+      for (const [, , responses, elements] of vi.mocked(googleSheetWriteData).mock.calls) {
+        expect(elements).toEqual(["Welcome", "Question 1 {{recall:q2}}"]);
+        expect(responses).toEqual(["", "Answer 1"]);
+      }
+    });
+
     test("should not call googleSheetWriteData if surveyId does not match", async () => {
       const differentSurveyInput = { ...mockPipelineInput, surveyId: "otherSurvey" };
       await handleIntegrations([mockGoogleSheetsIntegration], differentSurveyInput, mockSurvey);
