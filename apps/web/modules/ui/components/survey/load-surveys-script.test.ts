@@ -104,6 +104,7 @@ describe("loadSurveysScript", () => {
     await expect(loadSurveysScript(SCRIPT_URL)).rejects.toThrow("Failed to load the surveys package");
 
     expect(injectedScripts()).toBe(0);
+    expect(scriptErrors).toEqual([]);
   });
 });
 
