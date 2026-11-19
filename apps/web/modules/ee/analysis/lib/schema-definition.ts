@@ -3,6 +3,7 @@
  * Used by the advanced chart builder to provide field metadata and operators.
  */
 import type { TFunction } from "i18next";
+import { HUB_EMOTION_VALUES, HUB_SENTIMENT_VALUES } from "@formbricks/types/feedback-source";
 import { type TDateRangePreset } from "@/lib/date-ranges";
 
 export interface FieldDefinition {
@@ -45,29 +46,13 @@ export interface MeasureDefinition {
 }
 
 /**
- * Hub enrichment enum vocabularies (migrations 014/015). Single source for the
- * enum dimension values: the generated emotion-count measures, the translated
- * value-label maps (typed against these tuples, so additions fail the build until
- * every map is updated), and the ordinal sentiment axis sort all derive from them.
- *
- * NOTE: `ZHubSentiment` / `ZHubEmotion` in `@formbricks/types/feedback-source` carry the same two
- * vocabularies for the feedback-record filter schemas. These stay as `as const` tuples because the
- * build-time exhaustiveness guard above depends on the literal tuple type; keep both in sync until
- * ENG-2373 hoists them to one source.
+ * Hub enrichment enum vocabularies (migrations 014/015), from `@formbricks/types/feedback-source`,
+ * which also builds the v3 feedback-record filter schemas from them. The generated emotion-count
+ * measures, the translated value-label maps (typed against these tuples, so additions fail the build
+ * until every map is updated), and the ordinal sentiment axis sort all derive from them.
  */
-export const SENTIMENT_VALUE_ORDER = [
-  "very_negative",
-  "negative",
-  "neutral",
-  "positive",
-  "very_positive",
-  "mixed",
-] as const;
-
-export const EMOTION_VALUES = ["joy", "anger", "sadness", "fear", "surprise", "disgust"] as const;
-
-export type TSentimentValue = (typeof SENTIMENT_VALUE_ORDER)[number];
-export type TEmotionValue = (typeof EMOTION_VALUES)[number];
+export type TSentimentValue = (typeof HUB_SENTIMENT_VALUES)[number];
+export type TEmotionValue = (typeof HUB_EMOTION_VALUES)[number];
 
 const capitalize = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
 
@@ -92,7 +77,7 @@ const EMOTION_COUNT_MEASURES: MeasureDefinition[] = EMOTION_MEASURE_ORDER.map((e
 }));
 
 // Display order for sentiment as measures/series (chart bars, legend, picker): most positive →
-// most negative, with "mixed" last. Distinct from SENTIMENT_VALUE_ORDER, which is the low→high
+// most negative, with "mixed" last. Distinct from HUB_SENTIMENT_VALUES, which is the low→high
 // ordinal order used to sort the sentiment *dimension* axis.
 export const SENTIMENT_MEASURE_ORDER = [
   "very_positive",
@@ -608,16 +593,16 @@ export const VALUE_TEXT_DIMENSION_ID = "FeedbackRecords.valueText";
 export const VALUE_ID_DIMENSION_ID = "FeedbackRecords.valueId";
 
 export const isSentimentValue = (value: string): value is TSentimentValue =>
-  (SENTIMENT_VALUE_ORDER as readonly string[]).includes(value);
+  (HUB_SENTIMENT_VALUES as readonly string[]).includes(value);
 
 /** Map a sentiment count measure id (e.g. "FeedbackRecords.veryPositiveCount") back to its enum
  * value. Charts use this to give the sentiment count series the same semantic colors as the
  * sentiment dimension buckets. Returns undefined for every other measure. */
 export const getSentimentValueForMeasureId = (measureId: string): TSentimentValue | undefined =>
-  SENTIMENT_VALUE_ORDER.find((value) => measureId === `FeedbackRecords.${toCountMeasureId(value)}Count`);
+  HUB_SENTIMENT_VALUES.find((value) => measureId === `FeedbackRecords.${toCountMeasureId(value)}Count`);
 
 const isEmotionValue = (value: string): value is TEmotionValue =>
-  (EMOTION_VALUES as readonly string[]).includes(value);
+  (HUB_EMOTION_VALUES as readonly string[]).includes(value);
 
 /** Sentiment/emotions are populated by AI enrichment, so their values are empty until a record is
  * enriched. Charts special-case that empty bucket (a "Not enriched" label + neutral gray). */
@@ -641,7 +626,7 @@ export const isUnspecifiedLanguageDimensionValue = (dimensionId: string, value: 
   dimensionId === LANGUAGE_DIMENSION_ID && isEmptyDimensionValue(value);
 
 // The label maps are typed against the enum tuples, so extending
-// SENTIMENT_VALUE_ORDER / EMOTION_VALUES without adding the matching label is a
+// HUB_SENTIMENT_VALUES / HUB_EMOTION_VALUES without adding the matching label is a
 // compile error. Keys stay literal t() calls so the i18n scanner can detect them.
 const getTranslatedSentimentValueLabel = (value: string, t: TFunction): string | undefined => {
   const labels: Record<TSentimentValue, string> = {
@@ -715,7 +700,7 @@ export function getTranslatedDimensionValueLabel(
 
 // Sentiment count measure ids in the sentiment *scale* order (very_negative → very_positive,
 // mixed last) — the order the sentiment dimension axis uses.
-const SENTIMENT_COUNT_MEASURE_IDS_BY_SCALE: string[] = SENTIMENT_VALUE_ORDER.map(
+const SENTIMENT_COUNT_MEASURE_IDS_BY_SCALE: string[] = HUB_SENTIMENT_VALUES.map(
   (value) => `FeedbackRecords.${toCountMeasureId(value)}Count`
 );
 
@@ -775,8 +760,7 @@ export function sortRowsByEnumDimension<T extends Record<string, unknown>>(
   rows: T[],
   dimensionId: string
 ): T[] {
-  if (dimensionId === SENTIMENT_DIMENSION_ID)
-    return sortRowsByOrder(rows, dimensionId, SENTIMENT_VALUE_ORDER);
+  if (dimensionId === SENTIMENT_DIMENSION_ID) return sortRowsByOrder(rows, dimensionId, HUB_SENTIMENT_VALUES);
   if (dimensionId === VALUE_BAND_DIMENSION_ID) return sortRowsByOrder(rows, dimensionId, VALUE_BAND_VALUES);
   return rows;
 }
