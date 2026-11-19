@@ -1,8 +1,8 @@
 import { type TLanguageMatch, toLanguageBase, toLanguageKey } from "@formbricks/creatives";
 import { LANGUAGE_CANONICAL_MAP, normalizeLanguageCode } from "@formbricks/i18n-utils/canonical";
 import {
-  LATIN_AMERICAN_SPANISH_REGIONS,
   type TMatchableSurveyLanguage,
+  getLatinAmericanSpanishRequests,
   matchSurveyLanguage,
 } from "@formbricks/i18n-utils/survey-language-match";
 
@@ -28,15 +28,11 @@ export const buildLanguageMatch = (languages: readonly TMatchableSurveyLanguage[
   const candidates = languages.filter((language) => language.default || language.enabled);
   const canonicalCodes = new Set(candidates.map(({ language }) => normalizeLanguageCode(language.code)));
   // Codes and aliases first, so they win over a canonical spelling that maps elsewhere, as in the matcher.
-  // An `es-419` language takes Latin American Spanish from the `es` base answer (ENG-3894), so each of
-  // those regions needs a key of its own.
-  const hasLatinAmericanSpanish = candidates.some(
-    ({ language }) => toLanguageKey(language.code) === "es-419"
-  );
   const requests = [
     ...candidates.flatMap(({ language }) => [language.code, language.alias ?? ""]),
     ...Object.keys(LANGUAGE_CANONICAL_MAP).filter((code) => canonicalCodes.has(LANGUAGE_CANONICAL_MAP[code])),
-    ...(hasLatinAmericanSpanish ? [...LATIN_AMERICAN_SPANISH_REGIONS].map((region) => `es-${region}`) : []),
+    // An `es-419` language takes Latin American Spanish from the `es` base answer (ENG-3894).
+    ...getLatinAmericanSpanishRequests(candidates),
   ];
   for (const request of requests) {
     const key = toLanguageKey(request);

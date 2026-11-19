@@ -3,6 +3,7 @@ import {
   DEFAULT_SURVEY_LANGUAGE_KEY,
   MAX_BROWSER_LANGUAGE_CANDIDATES,
   type TMatchableSurveyLanguage,
+  getLatinAmericanSpanishRequests,
   matchSurveyLanguage,
   resolveSurveyLanguage,
 } from "./survey-language-match";
@@ -128,6 +129,17 @@ describe("matchSurveyLanguage — tiers", () => {
     expect(matchSurveyLanguage(languages, "!!")).toBeNull();
     expect(matchSurveyLanguage(languages, "xx")).toBeNull();
     expect(matchSurveyLanguage([], "de")).toBeNull();
+  });
+});
+
+describe("getLatinAmericanSpanishRequests", () => {
+  test("lists the Latin American Spanish tags only for a survey with an enabled es-419", () => {
+    expect(getLatinAmericanSpanishRequests(withDefault(language("es_419")))).toEqual(
+      expect.arrayContaining(["es-MX", "es-AR", "es-US", "es-419"])
+    );
+    expect(getLatinAmericanSpanishRequests(withDefault(language("es-419")))).not.toContain("es-ES");
+    expect(getLatinAmericanSpanishRequests(withDefault(language("es-419", { enabled: false })))).toEqual([]);
+    expect(getLatinAmericanSpanishRequests(withDefault(language("es-ES"), language("es-MX")))).toEqual([]);
   });
 });
 

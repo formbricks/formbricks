@@ -59,11 +59,11 @@ const preferCanonicalSibling = (
 };
 
 /**
- * Spanish regions whose CLDR parent locale is `es-419` (Latin America and the Caribbean, plus the
- * United States), and `419` itself. A browser in one of them reads `es-419` text before the `es-ES`
- * base default (ENG-3894).
+ * The regions that read Latin American Spanish (`es-419`) rather than the `es-ES` base default
+ * (ENG-3894): Latin America and the Caribbean plus the United States, as CLDR parents them under
+ * `es-419`, and the `419` region code itself.
  */
-export const LATIN_AMERICAN_SPANISH_REGIONS: ReadonlySet<string> = new Set([
+const ES_419_REGIONS: ReadonlySet<string> = new Set([
   "419",
   "AR",
   "BO",
@@ -94,10 +94,29 @@ const spanishRegionOf = (code: string): string | undefined => {
   try {
     const locale = new Intl.Locale(toHyphenatedCode(code));
     return locale.language === "es" ? locale.region : undefined;
-  } catch {
-    return undefined;
+  } catch (error) {
+    // `Intl.Locale` rejects a malformed tag with a RangeError; such a tag has no region.
+    if (error instanceof RangeError) return undefined;
+    throw error;
   }
 };
+
+/** Whether a stored code is Latin American Spanish (`es-419`, any spelling). */
+const isLatinAmericanSpanish = (code: string): boolean => spanishRegionOf(code) === "419";
+
+/**
+ * The Latin American Spanish tags (`es-MX`, `es-AR`, …) the matcher sends to a survey's `es-419`
+ * language rather than to its base default, or none when the survey has no enabled `es-419`. Lets a
+ * precomputed matcher (creatives) key them without restating the rule.
+ */
+export const getLatinAmericanSpanishRequests = (languages: readonly TMatchableSurveyLanguage[]): string[] =>
+  languages.some(
+    (surveyLanguage) =>
+      (surveyLanguage.enabled || surveyLanguage.default) &&
+      isLatinAmericanSpanish(surveyLanguage.language.code)
+  )
+    ? [...ES_419_REGIONS].map((region) => `es-${region}`)
+    : [];
 
 /** A Latin American Spanish request's `es-419` survey language, when the survey has one. */
 const findLatinAmericanSpanish = (
@@ -105,8 +124,8 @@ const findLatinAmericanSpanish = (
   requestedCode: string
 ): TMatchableSurveyLanguage | undefined => {
   const requestedRegion = spanishRegionOf(requestedCode);
-  if (!requestedRegion || !LATIN_AMERICAN_SPANISH_REGIONS.has(requestedRegion)) return undefined;
-  return sameBase.find((surveyLanguage) => spanishRegionOf(surveyLanguage.language.code) === "419");
+  if (!requestedRegion || !ES_419_REGIONS.has(requestedRegion)) return undefined;
+  return sameBase.find((surveyLanguage) => isLatinAmericanSpanish(surveyLanguage.language.code));
 };
 
 /**
