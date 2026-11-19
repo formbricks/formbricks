@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { prisma } from "@formbricks/database";
 import { resetDb } from "@/integration/reset-db";
 import { WEBAPP_URL } from "@/lib/constants";
+import { createToken } from "@/lib/jwt";
+import { auth } from "@/modules/auth/lib/auth";
+import { getCookieValueFromHeader } from "@/modules/auth/lib/session-cookie";
 import { ssoRecoveryAfterHandler } from "@/modules/ee/sso/lib/better-auth-hooks";
+import { SSO_RECOVERY_PROOF_COOKIE_NAME } from "@/modules/ee/sso/lib/recovery-proof";
 import { completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 import { captureSsoIdentity, runWithSsoRequestContext } from "@/modules/ee/sso/lib/sso-request-context";
 
@@ -84,6 +88,25 @@ const runOneRecoveryAttempt = async (
 };
 
 /** What the browser sends when the user clicks "log in" on the verification-requested page. */
+/**
+ * Opens the link `startSsoRecovery` mails, as the mailbox owner's browser would, and returns the proof
+ * cookie Better Auth set on the response (ENG-7310).
+ */
+const openEmailedRecoveryLink = async (userId: string, completionUrl: string): Promise<string> => {
+  const token = createToken(userId, { purpose: "sso_recovery" });
+  const response = await auth.api.ssoRecoverySignIn({
+    query: { token, callbackUrl: completionUrl },
+    asResponse: true,
+  });
+  const cookieHeader = response.headers
+    .getSetCookie()
+    .map((setCookie) => setCookie.split(";")[0])
+    .join("; ");
+  const proof = getCookieValueFromHeader(cookieHeader, SSO_RECOVERY_PROOF_COOKIE_NAME);
+  expect(proof).toBeTruthy();
+  return proof!;
+};
+
 const loginRequestLineFor = (verificationRequestedUrl: string): string => {
   const callbackUrl = new URL(verificationRequestedUrl).searchParams.get("callbackUrl") ?? "";
   return `GET /auth/login?callbackUrl=${encodeURIComponent(callbackUrl)} HTTP/1.1`;
@@ -180,7 +203,18 @@ describe("SSO recovery retry loop (real Postgres + Redis, real Better Auth hook)
     const completionUrl = new URL(verificationRequestedUrl).searchParams.get("callbackUrl")!;
     const stateId = new URL(completionUrl).searchParams.get("state")!;
 
-    const landedOn = await completeSsoRecovery({ stateId, sessionUserId: user.id });
+    // The browser that STARTED recovery holds the completion URL, but only the one that opens the
+    // emailed link holds a proof, so the URL alone completes nothing, even in the user's own signed-in
+    // browser (ENG-7310). The intent survives for the real link.
+    await expect(completeSsoRecovery({ stateId, sessionUserId: user.id })).rejects.toThrow(
+      "OAuthAccountNotLinked"
+    );
+    await expect(readSsoRecoveryIntent(stateId)).resolves.not.toBeNull();
+    expect(await prisma.account.count({ where: { userId: user.id, provider: "google" } })).toBe(0);
+
+    // The emailed link, opened through the real Better Auth endpoint, mints the proof.
+    const recoveryProof = await openEmailedRecoveryLink(user.id, completionUrl);
+    const landedOn = await completeSsoRecovery({ stateId, recoveryProof, sessionUserId: user.id });
 
     expect(landedOn).toBe(destination);
     await expect(readSsoRecoveryIntent(stateId)).resolves.toBeNull();
@@ -189,7 +223,7 @@ describe("SSO recovery retry loop (real Postgres + Redis, real Better Auth hook)
     expect(account?.providerAccountId).toBe("google-sub-complete");
 
     // Replaying the spent state must not relink.
-    await expect(completeSsoRecovery({ stateId, sessionUserId: user.id })).rejects.toThrow(
+    await expect(completeSsoRecovery({ stateId, recoveryProof, sessionUserId: user.id })).rejects.toThrow(
       "OAuthAccountNotLinked"
     );
   });

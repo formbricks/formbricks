@@ -8,9 +8,10 @@ import { finalizeSuccessfulSignIn } from "@/modules/auth/lib/sign-in-tracking";
 import { buildVerificationRequestedPath } from "@/modules/auth/lib/verification-links";
 import { sendSsoRecoveryFactorsRemovedEmail, sendVerificationEmail } from "@/modules/email";
 import { syncSsoIdentityForUser } from "./account-linking";
+import { createSsoRecoveryProof } from "./recovery-proof";
 import {
   SsoRecoveryError,
-  completeSsoRecovery,
+  completeSsoRecovery as completeSsoRecoveryFromBrowser,
   getSsoRecoveryFailureRedirectUrl,
   getSsoRecoverySecondFactorRedirectUrl,
   getSsoRecoverySecondFactorUnavailableRedirectUrl,
@@ -39,6 +40,7 @@ vi.mock("@/lib/constants", async (importOriginal) => {
   return {
     ...actual,
     WEBAPP_URL: "http://localhost:3000",
+    AUTH_SECRET: "test-auth-secret",
   };
 });
 
@@ -108,6 +110,14 @@ vi.mock("./account-linking", () => ({
   },
   syncSsoIdentityForUser: vi.fn(),
 }));
+
+/**
+ * Completion from the browser that opened the emailed link, i.e. carrying a valid proof cookie for the
+ * intent's user (ENG-7310). Most cases below are about what happens past that gate, so they go through
+ * here; the gate itself is tested against `completeSsoRecoveryFromBrowser` directly.
+ */
+const completeSsoRecovery = (args: Parameters<typeof completeSsoRecoveryFromBrowser>[0]) =>
+  completeSsoRecoveryFromBrowser({ recoveryProof: createSsoRecoveryProof("user_1", args.stateId), ...args });
 
 describe("sso-recovery", () => {
   let transactionCommitted = false;
@@ -818,6 +828,103 @@ describe("sso-recovery", () => {
         newObject: expect.not.objectContaining({ sessionsRevoked: expect.anything() }),
       })
     );
+  });
+
+  describe("binding completion to the browser that opened the emailed link (ENG-7310)", () => {
+    const expectUnprovenRejection = async (recoveryProof: string | undefined) => {
+      const outcome = completeSsoRecoveryFromBrowser({
+        stateId: "test-state",
+        recoveryProof,
+        sessionUserId: "user_1",
+      });
+
+      await expect(outcome).rejects.toThrow("OAuthAccountNotLinked");
+      await expect(outcome.catch((error: SsoRecoveryError) => error.failure)).resolves.toBe("unproven");
+      // Fails before any write, and before the session is even looked at.
+      expect(prisma.user.findUnique).not.toHaveBeenCalled();
+      expect(prisma.$transaction).not.toHaveBeenCalled();
+      expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+      expect(mocks.consumeSsoRecoveryIntent).not.toHaveBeenCalled();
+      expect(mocks.queueAuditEventBackground).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: "sso_recovery_failed",
+          userId: "user_1",
+          newObject: expect.objectContaining({ failureReason: "missing_recovery_proof" }),
+        })
+      );
+    };
+
+    test("a signed-in account holder's browser cannot complete a recovery it did not open the link for", async () => {
+      // The attacker's browser starts recovery with an identity claiming the victim's address, and is
+      // handed the completion URL. Everything it needs is what the victim's browser then sends.
+      vi.mocked(sendVerificationEmail).mockResolvedValue(true);
+      await startSsoRecovery({
+        existingUser: {
+          id: "user_1",
+          email: "john.doe@example.com",
+          locale: "en-US",
+          emailVerified: true,
+          isActive: true,
+          identityProvider: "email",
+          identityProviderAccountId: null,
+          twoFactorEnabled: true,
+        },
+        provider: "openid",
+        account: { type: "oauth", provider: "openid", providerAccountId: "attacker-sub" },
+        callbackUrl: "http://localhost:3000/",
+      });
+      const completionUrl = vi.mocked(buildVerificationRequestedPath).mock.calls[0][0].callbackUrl!;
+      const stateId = new URL(completionUrl).searchParams.get("state")!;
+
+      await expect(completeSsoRecoveryFromBrowser({ stateId, sessionUserId: "user_1" })).rejects.toThrow(
+        "OAuthAccountNotLinked"
+      );
+      expect(syncSsoIdentityForUser).not.toHaveBeenCalled();
+    });
+
+    test("rejects a completion with no proof", async () => {
+      await expectUnprovenRejection(undefined);
+    });
+
+    test("rejects a proof minted for another recovery", async () => {
+      await expectUnprovenRejection(createSsoRecoveryProof("user_1", "another-state"));
+    });
+
+    test("rejects a proof minted for another user's link", async () => {
+      await expectUnprovenRejection(createSsoRecoveryProof("user_2", "test-state"));
+    });
+
+    test("rejects a malformed proof", async () => {
+      await expectUnprovenRejection(`${createSsoRecoveryProof("user_1", "test-state")}x`);
+    });
+
+    test("checks the proof before the session, so a proofless browser is never told about the session", async () => {
+      const outcome = completeSsoRecoveryFromBrowser({ stateId: "test-state", sessionUserId: "user_2" });
+
+      await expect(outcome.catch((error: SsoRecoveryError) => error.failure)).resolves.toBe("unproven");
+    });
+
+    test("completes once the proof matches the intent's user and state", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        id: "user_1",
+        email: "john.doe@example.com",
+        locale: "en-US",
+        emailVerified: true,
+        isActive: true,
+        identityProvider: "email",
+        identityProviderAccountId: null,
+        twoFactorEnabled: false,
+      } as never);
+
+      await expect(
+        completeSsoRecoveryFromBrowser({
+          stateId: "test-state",
+          recoveryProof: createSsoRecoveryProof("user_1", "test-state"),
+          sessionUserId: "user_1",
+        })
+      ).resolves.toBe("http://localhost:3000/environments/env_1");
+      expect(syncSsoIdentityForUser).toHaveBeenCalled();
+    });
   });
 
   test("rejects recovery when the signed-in user does not match the intent owner", async () => {

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { getSession } from "@/modules/auth/lib/session";
 import { revokeSessionByToken } from "@/modules/auth/lib/session-revocation";
+import { SSO_RECOVERY_PROOF_COOKIE_NAME } from "@/modules/ee/sso/lib/recovery-proof";
 import { SsoRecoveryError, completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 import { GET } from "./route";
 
@@ -67,6 +68,68 @@ describe("GET /api/auth/sso/recovery/complete", () => {
 
     // The exact value, not just "some token": forwarding the wrong one would still be defined.
     expect(vi.mocked(completeSsoRecovery).mock.calls[0][0].sessionToken).toBe("token-abc");
+  });
+
+  test("hands the recovery proof cookie through to the completion (ENG-7310)", async () => {
+    vi.mocked(completeSsoRecovery).mockResolvedValue(WEBAPP_URL);
+
+    await GET(
+      request(
+        `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`,
+        `formbricks.session_token=token-abc.signature; ${SSO_RECOVERY_PROOF_COOKIE_NAME}=proof-value`
+      )
+    );
+
+    expect(vi.mocked(completeSsoRecovery).mock.calls[0][0].recoveryProof).toBe("proof-value");
+  });
+
+  test("passes no proof when the browser holds none", async () => {
+    vi.mocked(completeSsoRecovery).mockResolvedValue(WEBAPP_URL);
+
+    await GET(
+      request(
+        `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`,
+        "formbricks.session_token=token-abc.signature"
+      )
+    );
+
+    expect(vi.mocked(completeSsoRecovery).mock.calls[0][0].recoveryProof).toBeUndefined();
+  });
+
+  test("clears the spent proof cookie once recovery completes", async () => {
+    vi.mocked(completeSsoRecovery).mockResolvedValue(WEBAPP_URL);
+
+    const response = await GET(
+      request(
+        `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`,
+        `${SSO_RECOVERY_PROOF_COOKIE_NAME}=p`
+      )
+    );
+
+    expect(response.headers.getSetCookie().join("\n")).toMatch(
+      new RegExp(`${SSO_RECOVERY_PROOF_COOKIE_NAME}=;.*Max-Age=0`)
+    );
+  });
+
+  /**
+   * A browser that never opened the emailed link (ENG-7310). Its session was not minted by the link, and
+   * anyone holding a state id can send the account holder's browser here, so revoking it would turn the
+   * URL into a sign-out link.
+   */
+  test("leaves the session alone when this browser never opened the emailed link", async () => {
+    vi.mocked(completeSsoRecovery).mockRejectedValue(new SsoRecoveryError("unproven"));
+
+    const response = await GET(
+      request(
+        `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=state-id`,
+        "formbricks.session_token=token-abc.signature"
+      )
+    );
+
+    expect(revokeSessionByToken).not.toHaveBeenCalled();
+    expect(response.headers.getSetCookie().join("\n")).not.toContain("session_token=;");
+    expect(location(response)).toContain("error=OAuthAccountNotLinked");
+    expect(location(response)).not.toContain("callbackUrl=");
   });
 
   test("redirects to the failure page when no state is present", async () => {

@@ -29,6 +29,7 @@ import {
 import { OAUTH_ACCOUNT_NOT_LINKED_ERROR, isSsoRecoveryInternalCallbackUrl } from "./constants";
 import { normalizeSsoProvider } from "./provider-normalization";
 import { consumeSsoRecoveryIntent, createSsoRecoveryIntent, readSsoRecoveryIntent } from "./recovery-intent";
+import { isValidSsoRecoveryProof } from "./recovery-proof";
 
 const getSsoRecoveryLogger = (
   event: "sso_recovery_started" | "sso_recovery_completed" | "sso_recovery_failed"
@@ -337,6 +338,14 @@ const createSsoRecoveryCompletionUrl = (stateId: string): string => {
 };
 
 /**
+ * `unproven` is a live intent reached by a browser that never opened the emailed link (ENG-7310). It
+ * says nothing against the caller's session: the session was not minted by the link, since opening the
+ * link is what sets the proof. So, like `intent_unusable`, it skips the teardown. Tearing down here
+ * would also let anyone holding a state id sign a victim out by sending them to the URL.
+ */
+export type TSsoRecoveryFailure = "intent_unusable" | "unproven" | "rejected";
+
+/**
  * A failed recovery, sometimes carrying the callback the caller should bounce back to.
  *
  * The completion route builds its failure redirect from that callback, and it used to recover one by
@@ -355,8 +364,9 @@ const createSsoRecoveryCompletionUrl = (stateId: string): string => {
  */
 export class SsoRecoveryError extends Error {
   /**
-   * `intent_unusable` means no intent came back to act on. `rejected` means one WAS read and a guard
-   * turned it down.
+   * `intent_unusable` means no intent came back to act on. `unproven` means one was read but this
+   * browser never opened the emailed link (see {@link TSsoRecoveryFailure}). `rejected` means one WAS
+   * read and a later guard turned it down.
    *
    * Named for the absence rather than for a cause, because `readSsoRecoveryIntent` cannot report a
    * cause: it answers `null` for **five** situations and its own doc says so — the record expired, a
@@ -378,10 +388,10 @@ export class SsoRecoveryError extends Error {
    * link legitimately minted and re-opening the still-valid link just works, where a teardown would
    * log them out mid-flow to protect nothing.
    */
-  readonly failure: "intent_unusable" | "rejected";
+  readonly failure: TSsoRecoveryFailure;
   readonly callbackUrl?: string;
 
-  constructor(failure: "intent_unusable" | "rejected", callbackUrl?: string) {
+  constructor(failure: TSsoRecoveryFailure, callbackUrl?: string) {
     super(OAUTH_ACCOUNT_NOT_LINKED_ERROR);
     this.name = "SsoRecoveryError";
     this.failure = failure;
@@ -571,10 +581,13 @@ const notifyRemovedFactors = async (
 
 export const completeSsoRecovery = async ({
   stateId,
+  recoveryProof,
   sessionUserId,
   sessionToken,
 }: {
   stateId: string;
+  /** The proof cookie set when this browser opened the emailed link (`recovery-proof.ts`). */
+  recoveryProof?: string;
   sessionUserId?: string;
   /**
    * The recovering user's own session token, so the post-commit revocation can spare it. Everything else
@@ -622,6 +635,30 @@ export const completeSsoRecovery = async ({
       failureReason: "invalid_provider",
     });
     throw new SsoRecoveryError("rejected");
+  }
+
+  // Before any session check (ENG-7310). The completion URL also reaches the browser that STARTED
+  // recovery, and that may be an attacker whose IdP identity claims this address. A session for the
+  // intent's user proves nothing either: any page can navigate the user's own signed-in browser here.
+  // Only the browser that opened the link mailed to the account carries this proof.
+  if (!isValidSsoRecoveryProof(recoveryProof, intent.userId, stateId)) {
+    getSsoRecoveryLogger("sso_recovery_failed").error(
+      {
+        userId: intent.userId,
+        provider,
+      },
+      "SSO recovery failed because this browser did not open the recovery link"
+    );
+    queueSsoRecoveryAuditEvent({
+      action: "sso_recovery_failed",
+      status: "failure",
+      userId: intent.userId,
+      email: intent.email,
+      provider,
+      callbackUrl: intent.callbackUrl,
+      failureReason: "missing_recovery_proof",
+    });
+    throw new SsoRecoveryError("unproven");
   }
 
   if (!sessionUserId) {

@@ -9,6 +9,12 @@ import { EMAIL_AUTH_ENABLED, WEBAPP_URL } from "@/lib/constants";
 import { verifyToken } from "@/lib/jwt";
 import { getValidatedCallbackUrl } from "@/lib/utils/url";
 import {
+  SSO_RECOVERY_PROOF_COOKIE_NAME,
+  SSO_RECOVERY_PROOF_COOKIE_OPTIONS,
+  createSsoRecoveryProof,
+  getSsoRecoveryStateIdFromCompletionUrl,
+} from "@/modules/ee/sso/lib/recovery-proof";
+import {
   getSsoRecoveryFailureRedirectUrl,
   getSsoRecoverySecondFactorRedirectUrl,
   getSsoRecoverySecondFactorUnavailableRedirectUrl,
@@ -23,6 +29,9 @@ import {
  * Deliberately recovery-SCOPED — not BA's general `magicLink` plugin, which would introduce a new
  * passwordless auth method (out of scope for the like-for-like migration). Live: the `[...all]` handler
  * is mounted and the recovery email points here. Also harness-testable via `auth.api.ssoRecoverySignIn`.
+ *
+ * Opening the link also sets the recovery proof cookie (`recovery-proof.ts`, ENG-7310). Completion
+ * requires it, so only the browser that opened the mailed link can finish the recovery.
  *
  * Failures (invalid/expired token, inactive user) are logged and redirected to the recovery failure
  * page; the security-critical outcome — the account link — is audited by `completeSsoRecovery`, and
@@ -66,6 +75,18 @@ export const ssoRecoverySignInPlugin = {
           if (!dbUser || dbUser.isActive === false) {
             throw new Error("User not found or inactive");
           }
+          // The mailbox is proven here and nowhere else, so this is where the browser that will finish
+          // recovery gets its proof (ENG-7310). Set before either branch: the 2FA one completes too,
+          // in this same browser, after the login page.
+          const stateId = getSsoRecoveryStateIdFromCompletionUrl(callbackUrl, WEBAPP_URL);
+          if (stateId) {
+            ctx.setCookie(
+              SSO_RECOVERY_PROOF_COOKIE_NAME,
+              createSsoRecoveryProof(id, stateId),
+              SSO_RECOVERY_PROOF_COOKIE_OPTIONS
+            );
+          }
+
           if (dbUser.emailVerified && dbUser.twoFactorEnabled) {
             // The login page is only a way through when it can ask for the factor. With credential
             // sign-in off it renders no form, and the identity that started recovery is unlinked by

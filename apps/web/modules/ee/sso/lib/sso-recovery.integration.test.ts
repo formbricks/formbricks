@@ -6,6 +6,7 @@ import { symmetricEncrypt } from "@/lib/crypto";
 import { auth } from "@/modules/auth/lib/auth";
 import { getSessionTokenFromCookieHeader } from "@/modules/auth/lib/session-cookie";
 import { createSsoRecoveryIntent } from "@/modules/ee/sso/lib/recovery-intent";
+import { createSsoRecoveryProof } from "@/modules/ee/sso/lib/recovery-proof";
 import { completeSsoRecovery } from "@/modules/ee/sso/lib/sso-recovery";
 import { sendPasswordResetLinkEmail } from "@/modules/email";
 import {
@@ -124,20 +125,25 @@ const createRecoverySession = async (userId: string): Promise<string> => {
   return session.token;
 };
 
-const runRecovery = async (user: { id: string; email: string }, sessionToken: string) =>
-  completeSsoRecovery({
-    // Through the real store against the real Redis, not a hand-built token: the intent lives there now
-    // (ENG-2783), so anything else would exercise a shape production never produces.
-    stateId: await createSsoRecoveryIntent({
-      userId: user.id,
-      email: user.email,
-      provider: "google",
-      providerAccountId: "google-sub-recovery-1",
-      callbackUrl: WEBAPP_URL,
-    }),
+const runRecovery = async (user: { id: string; email: string }, sessionToken: string) => {
+  // Through the real store against the real Redis, not a hand-built token: the intent lives there now
+  // (ENG-2783), so anything else would exercise a shape production never produces.
+  const stateId = await createSsoRecoveryIntent({
+    userId: user.id,
+    email: user.email,
+    provider: "google",
+    providerAccountId: "google-sub-recovery-1",
+    callbackUrl: WEBAPP_URL,
+  });
+
+  return completeSsoRecovery({
+    stateId,
+    // From the browser that opened the emailed link (ENG-7310).
+    recoveryProof: createSsoRecoveryProof(user.id, stateId),
     sessionUserId: user.id,
     sessionToken,
   });
+};
 
 beforeEach(async () => {
   await resetDb();

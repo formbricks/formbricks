@@ -4,9 +4,14 @@ import { withAuthRequestBodyLimit } from "@/modules/auth/lib/auth-request-body-l
 import { getSession } from "@/modules/auth/lib/session";
 import {
   BETTER_AUTH_SESSION_COOKIE_NAMES,
+  getCookieValueFromHeader,
   getSessionTokenFromCookieHeader,
 } from "@/modules/auth/lib/session-cookie";
 import { revokeSessionByToken } from "@/modules/auth/lib/session-revocation";
+import {
+  SSO_RECOVERY_PROOF_COOKIE_NAME,
+  SSO_RECOVERY_PROOF_COOKIE_OPTIONS,
+} from "@/modules/ee/sso/lib/recovery-proof";
 import {
   SsoRecoveryError,
   completeSsoRecovery,
@@ -55,16 +60,29 @@ const handler = async (request: Request) => {
     return NextResponse.redirect(getSsoRecoveryFailureRedirectUrl());
   }
 
+  const cookieHeader = request.headers.get("cookie");
+
   try {
     const session = await getSession();
     const callbackUrl = await completeSsoRecovery({
       stateId,
+      // Set when this browser opened the emailed link (ENG-7310).
+      recoveryProof:
+        (cookieHeader && getCookieValueFromHeader(cookieHeader, SSO_RECOVERY_PROOF_COOKIE_NAME)) || undefined,
       sessionUserId: session?.user.id,
       // Spared by the post-commit session sweep, so the redirect below still lands signed in.
-      sessionToken: getSessionTokenFromCookieHeader(request.headers.get("cookie")) ?? undefined,
+      sessionToken: getSessionTokenFromCookieHeader(cookieHeader) ?? undefined,
     });
 
-    return NextResponse.redirect(callbackUrl);
+    const response = NextResponse.redirect(callbackUrl);
+    // The proof has done its job and the intent is spent; nothing reads the cookie again.
+    response.cookies.set({
+      name: SSO_RECOVERY_PROOF_COOKIE_NAME,
+      value: "",
+      ...SSO_RECOVERY_PROOF_COOKIE_OPTIONS,
+      maxAge: 0,
+    });
+    return response;
   } catch (error) {
     const recoveryError = error instanceof SsoRecoveryError ? error : null;
 
@@ -78,7 +96,11 @@ const handler = async (request: Request) => {
     // open. Skipping the teardown is safe for the rest too, because it only revokes the token off this
     // caller's own cookie — the account link has already failed closed inside `completeSsoRecovery`,
     // which threw before writing anything. So leave the session alone and just redirect.
-    if (recoveryError?.failure === "intent_unusable") {
+    //
+    // A live intent reached by a browser that never opened the emailed link (`unproven`, ENG-7310) is
+    // the same: that session was not minted by the link. Tearing it down would also let anyone holding
+    // a state id sign the account holder out by sending their browser to this URL.
+    if (recoveryError?.failure === "intent_unusable" || recoveryError?.failure === "unproven") {
       return NextResponse.redirect(getSsoRecoveryFailureRedirectUrl());
     }
 

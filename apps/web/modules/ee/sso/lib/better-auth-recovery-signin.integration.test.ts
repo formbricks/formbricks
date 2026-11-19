@@ -6,7 +6,9 @@ import type * as ConstantsModule from "@/lib/constants";
 import { WEBAPP_URL } from "@/lib/constants";
 import { createToken } from "@/lib/jwt";
 import { auth } from "@/modules/auth/lib/auth";
+import { getCookieValueFromHeader } from "@/modules/auth/lib/session-cookie";
 import { syncSsoIdentityForUser } from "@/modules/ee/sso/lib/account-linking";
+import { SSO_RECOVERY_PROOF_COOKIE_NAME, isValidSsoRecoveryProof } from "@/modules/ee/sso/lib/recovery-proof";
 
 const constants = vi.hoisted(() => ({ emailAuthEnabled: { value: true } }));
 
@@ -34,7 +36,63 @@ beforeEach(async () => {
   await resetDb();
 });
 
+/** The recovery proof cookie a sign-in response set (ENG-7310), or null. */
+const proofCookieOf = (response: Response): string | null =>
+  getCookieValueFromHeader(
+    response.headers
+      .getSetCookie()
+      .map((setCookie) => setCookie.split(";")[0])
+      .join("; "),
+    SSO_RECOVERY_PROOF_COOKIE_NAME
+  );
+
 describe("SSO recovery sign-in (real Postgres)", () => {
+  /**
+   * ENG-7310. Opening the emailed link is the only step that proves the mailbox, so it is where the
+   * browser gets the proof the completion route demands. Both branches complete in this browser: the
+   * session one directly, the 2FA one after the login page.
+   */
+  test.each([
+    ["the session path", { emailVerified: true, twoFactorEnabled: false }],
+    ["the 2FA path", { emailVerified: true, twoFactorEnabled: true }],
+  ])("sets a proof bound to this user and recovery on %s", async (_label, flags) => {
+    const user = await prisma.user.create({ data: { email: "proof@example.com", name: "Proof", ...flags } });
+    const token = createToken(user.id, { purpose: "sso_recovery" });
+    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=proof-state`;
+
+    const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
+
+    const proof = proofCookieOf(res);
+    expect(isValidSsoRecoveryProof(proof, user.id, "proof-state")).toBe(true);
+    const setCookie = res.headers
+      .getSetCookie()
+      .find((c) => c.startsWith(`${SSO_RECOVERY_PROOF_COOKIE_NAME}=`));
+    expect(setCookie).toMatch(/HttpOnly/i);
+    expect(setCookie).toMatch(/SameSite=Lax/i);
+  });
+
+  test("sets no proof when the callback is not a recovery completion", async () => {
+    const user = await prisma.user.create({ data: { email: "noproof@example.com", name: "No Proof" } });
+    const token = createToken(user.id, { purpose: "sso_recovery" });
+
+    const res = await auth.api.ssoRecoverySignIn({
+      query: { token, callbackUrl: `${WEBAPP_URL}/environments/env_1?state=proof-state` },
+      asResponse: true,
+    });
+
+    expect(proofCookieOf(res)).toBeNull();
+  });
+
+  test("sets no proof for a token that is not an SSO recovery token", async () => {
+    const user = await prisma.user.create({ data: { email: "wrongpurpose@example.com", name: "Wrong" } });
+    const token = createToken(user.id);
+    const callbackUrl = `${WEBAPP_URL}/api/auth/sso/recovery/complete?state=proof-state`;
+
+    const res = await auth.api.ssoRecoverySignIn({ query: { token, callbackUrl }, asResponse: true });
+
+    expect(proofCookieOf(res)).toBeNull();
+  });
+
   test("a valid sso_recovery token establishes a session and redirects to the callback", async () => {
     const user = await prisma.user.create({
       data: { email: "recover@example.com", name: "Recover", emailVerified: true },
