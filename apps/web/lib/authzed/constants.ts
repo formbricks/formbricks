@@ -8,6 +8,14 @@ export const AUTHZED_MAX_RELATIONSHIP_UPDATES = 1_000;
 export const AUTHZED_MAX_PARALLEL_RELATIONSHIP_DELETES = 10;
 
 /**
+ * The users whose Membership and TeamUser rows are projected: active ones only. The outbox removes a
+ * user's organization and team relationships when they are deactivated (`reconcileUsers`), so every
+ * read that sources those relationships — the reconcilers, and the backfill that audits and applies
+ * through them — filters on this too, or it would report them as missing and write them back (ENG-3899).
+ */
+export const AUTHZED_PROJECTED_USER = { isActive: true } as const;
+
+/**
  * Deadline for administrative calls: bulk reads and wide deletes.
  *
  * The request-path deadline is sized for a single cheap call. A server-streaming read or an unbounded

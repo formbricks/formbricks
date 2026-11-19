@@ -4,6 +4,7 @@ import type { OrganizationRole } from "@formbricks/database/prisma";
 import { logger } from "@formbricks/logger";
 import { isRelationMissingFromSchema } from "@/lib/authorization/schema-drift";
 import { type TAuthzedClient, type TAuthzedRelationshipUpdate, getAuthzedClient } from "./client";
+import { AUTHZED_PROJECTED_USER } from "./constants";
 import {
   AUTHZED_MAX_RECONCILIATION_PASSES,
   AuthzedProjectionUnstableError,
@@ -55,9 +56,11 @@ const readSnapshot = async (
   prisma.membership.findMany({
     where: {
       OR: targets.map(({ organizationId, userId }) => ({ organizationId, userId })),
+      // A deactivated user's row reads as absent, so its target is deleted rather than written back.
+      user: AUTHZED_PROJECTED_USER,
     },
-    // The current contract does not gate organization membership on `accepted`. Project every row so
-    // the SpiceDB graph preserves that behavior exactly.
+    // The current contract does not gate organization membership on `accepted`. Project every active
+    // user's row so the SpiceDB graph preserves that behavior exactly.
     select: { organizationId: true, role: true, userId: true },
     orderBy: [{ organizationId: "asc" }, { userId: "asc" }],
   });
