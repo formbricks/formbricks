@@ -1,5 +1,5 @@
 import { Client } from "pg";
-import { afterAll, beforeAll, beforeEach, expect, test } from "vitest";
+import { afterAll, beforeAll, beforeEach, expect, test, vi } from "vitest";
 import { getPgConnectionConfig } from "../pg-connection-config";
 import type { AutocommitDataMigrationContext, MigrationScript } from "./migration-runner";
 
@@ -103,12 +103,21 @@ test.skipIf(!connection)(
     );
     await aStarted.promise;
 
+    const { logger } = await import("@formbricks/logger");
+    const info = vi.spyOn(logger, "info");
     let bRan = false;
     const runnerB = runDataMigration(
       migration(() => {
         bRan = true;
         return Promise.resolve();
       })
+    );
+    // Release A only once B has found the lock taken, so B really goes through the wait.
+    await vi.waitFor(
+      () => {
+        expect(info).toHaveBeenCalledWith(expect.stringContaining("is running in another process. Waiting"));
+      },
+      { timeout: 10_000 }
     );
     releaseA.resolve();
     await runnerA;
