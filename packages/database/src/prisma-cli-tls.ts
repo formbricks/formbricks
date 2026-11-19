@@ -97,13 +97,12 @@ const readTlsRequest = (params: URLSearchParams, env: NodeJS.ProcessEnv): TTlsRe
   return { sslAccept: lastParam(params, "sslaccept"), sslMode, sslRootCert };
 };
 
-/** The sslmode Prisma should get for a libpq or pg mode it does not verify with. */
-const toPrismaSslMode = (sslMode: string | undefined): string | undefined => {
-  if (sslMode === undefined) return undefined;
-  if (sslMode === "disable") return "disable";
-  if (sslMode === "allow" || sslMode === "prefer") return "prefer";
-  return REQUIRE; // require and no-verify: TLS without a certificate check.
-};
+/**
+ * The sslmode Prisma should get when the URL asks for no certificate check: disable stays plaintext, and
+ * every other mode requires TLS. node-postgres 8, which the app's own connections use, requires TLS for
+ * allow, prefer, require and no-verify alike, and Prisma's prefer would let a man-in-the-middle decline it.
+ */
+const toPrismaSslMode = (sslMode: string): string => (sslMode === "disable" ? "disable" : REQUIRE);
 
 const requestsVerification = ({ sslMode, sslRootCert }: TTlsRequest): boolean =>
   sslMode === VERIFY_CA ||
@@ -138,17 +137,20 @@ export const resolvePrismaCliTls = (
   const checksCertificate = sslAccept !== null && sslAccept !== ACCEPT_INVALID_CERTS;
 
   if (!requestsVerification(request)) {
-    // Prisma reads the sslmode in the URL only, and anything but disable/prefer/require as prefer, which
-    // falls back to plaintext. So write in the mode Prisma should use when it differs from the URL's: the
-    // one PGSSLMODE asked for, require for pg's no-verify, and require when sslaccept alone asks for a
-    // checked certificate (the app's pg connections require TLS for each of these).
-    const prismaMode =
-      checksCertificate && request.sslMode === undefined ? REQUIRE : toPrismaSslMode(request.sslMode);
-    if (prismaMode === undefined || prismaMode === lastParam(parts.params, "sslmode")) {
-      return { databaseUrl, verifiesServerCertificate: checksCertificate };
+    // Prisma reads only the URL's sslmode, so write in the one it should use when that differs. An
+    // sslaccept in the URL means TLS (as in the app's pg connections) unless the URL itself disables it.
+    const urlMode = lastParam(parts.params, "sslmode");
+    const wantedMode = urlMode ?? (sslAccept === null ? request.sslMode : REQUIRE);
+    if (wantedMode === undefined) {
+      return { databaseUrl, verifiesServerCertificate: false };
+    }
+    const prismaMode = toPrismaSslMode(wantedMode);
+    const verifies = checksCertificate && prismaMode === REQUIRE;
+    if (prismaMode === urlMode) {
+      return { databaseUrl, verifiesServerCertificate: verifies };
     }
     parts.params.set("sslmode", prismaMode);
-    return { databaseUrl: joinConnectionUrl(parts), verifiesServerCertificate: checksCertificate };
+    return { databaseUrl: joinConnectionUrl(parts), verifiesServerCertificate: verifies };
   }
 
   // Prisma reads verify-ca and verify-full as prefer, which falls back to plaintext when the server (or

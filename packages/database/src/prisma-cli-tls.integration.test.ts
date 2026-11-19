@@ -229,6 +229,8 @@ describe.runIf(canRun)("Prisma CLI TLS verification", () => {
         ["sslaccept=strict", {}],
         ["sslaccept=strict", { PGSSLMODE: "require" }],
         ["", { PGSSLMODE: "require" }],
+        ["sslmode=prefer", {}],
+        ["sslaccept=strict", { PGSSLMODE: "disable" }],
       ];
       for (const [query, env] of cases) {
         const cli = await preparePrismaCliEnvironment(declinerUrl(query), env);

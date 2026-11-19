@@ -43,12 +43,12 @@ describe("resolvePrismaCliTls", () => {
 
   test.each([
     ["require", "require"],
-    ["prefer", "prefer"],
+    ["prefer", "require"],
     ["disable", "disable"],
-    ["allow", "prefer"],
+    ["allow", "require"],
     ["no-verify", "require"],
   ])(
-    "leaves sslmode=%s without a root certificate unverified, as Prisma's sslmode=%s",
+    "leaves sslmode=%s without a root certificate unverified, as Prisma's sslmode=%s (TLS whenever pg requires it)",
     (sslmode, prismaMode) => {
       expect(resolve(`${base}?sslmode=${sslmode}`)).toEqual({
         databaseUrl: `${base}?sslmode=${prismaMode}`,
@@ -61,7 +61,9 @@ describe("resolvePrismaCliTls", () => {
     ["require", {}, `${base}?sslmode=require`, false],
     ["no-verify", {}, `${base}?sslmode=require`, false],
     ["require", { sslaccept: "strict" }, `${base}?sslaccept=strict&sslmode=require`, true],
-    ["prefer", {}, `${base}?sslmode=prefer`, false],
+    ["prefer", {}, `${base}?sslmode=require`, false],
+    ["disable", {}, `${base}?sslmode=disable`, false],
+    ["disable", { sslaccept: "strict" }, `${base}?sslaccept=strict&sslmode=require`, true],
   ])(
     "writes PGSSLMODE=%s into the URL, since Prisma reads only the URL",
     (mode, extra, expected, verifies) => {
@@ -101,8 +103,10 @@ describe("resolvePrismaCliTls", () => {
       databaseUrl: `${base}?sslaccept=strict&sslmode=require`,
       verifiesServerCertificate: true,
     });
-    const optOut = `${base}?sslaccept=accept_invalid_certs`;
-    expect(resolve(optOut)).toEqual({ databaseUrl: optOut, verifiesServerCertificate: false });
+    expect(resolve(`${base}?sslaccept=accept_invalid_certs`)).toEqual({
+      databaseUrl: `${base}?sslaccept=accept_invalid_certs&sslmode=require`,
+      verifiesServerCertificate: false,
+    });
   });
 
   test("leaves a URL without TLS settings untouched", () => {
@@ -129,9 +133,16 @@ describe("resolvePrismaCliTls", () => {
   test.each([
     ["accept_invalid_certs", false],
     ["strict", true],
-  ])("leaves a non-verifying URL with sslaccept=%s untouched", (sslaccept, verifies) => {
-    const url = `${base}?sslmode=prefer&sslaccept=${sslaccept}`;
-    expect(resolve(url)).toEqual({ databaseUrl: url, verifiesServerCertificate: verifies });
+  ])("requires TLS for sslmode=prefer with sslaccept=%s", (sslaccept, verifies) => {
+    expect(resolve(`${base}?sslmode=prefer&sslaccept=${sslaccept}`)).toEqual({
+      databaseUrl: `${base}?sslmode=require&sslaccept=${sslaccept}`,
+      verifiesServerCertificate: verifies,
+    });
+  });
+
+  test("keeps sslmode=disable in the URL, which wins over sslaccept in the app's pg too", () => {
+    const url = `${base}?sslmode=disable&sslaccept=strict`;
+    expect(resolve(url)).toEqual({ databaseUrl: url, verifiesServerCertificate: false });
   });
 
   test("keeps credentials, other parameters, socket hosts and the fragment", () => {
