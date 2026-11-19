@@ -55,7 +55,8 @@ describe("boundOAuthStateBeforeHandler (ENG-6885)", () => {
   );
 
   test("accepts a signed oauth_query at its limit and refuses one byte over", () => {
-    const query = "a".repeat(OAUTH_QUERY_MAX_BYTES);
+    // `x=` plus padding re-encodes to itself, so its length is the stored length.
+    const query = `x=${"a".repeat(OAUTH_QUERY_MAX_BYTES - 2)}`;
     expect(refusal("/sign-in/social", { provider: "google", oauth_query: query })).toBeUndefined();
 
     const error = refusal("/sign-in/social", { provider: "google", oauth_query: `${query}a` });
@@ -98,7 +99,7 @@ describe("boundOAuthStateBeforeHandler (ENG-6885)", () => {
 
 describe("boundOAuthStateBeforeHandler: signed oauth_query on any path (ENG-6885, ENG-7396)", () => {
   test.each(["/oauth2/consent", "/oauth2/continue", "/sign-in/email"])("caps oauth_query on %s", (path) => {
-    const query = "a".repeat(OAUTH_QUERY_MAX_BYTES);
+    const query = `x=${"a".repeat(OAUTH_QUERY_MAX_BYTES - 2)}`;
     expect(refusal(path, { oauth_query: query })).toBeUndefined();
     expect(refusal(path, { oauth_query: `${query}a` })?.statusCode).toBe(400);
     expect(refusal(path, { oauth_query: [["sig", "x"]] })?.body).toMatchObject({
@@ -107,7 +108,30 @@ describe("boundOAuthStateBeforeHandler: signed oauth_query on any path (ENG-6885
   });
 });
 
+describe("boundOAuthStateBeforeHandler: size as stored (ENG-6885, ENG-7396)", () => {
+  test("counts a callback URL's quotes as the escaped bytes Redis holds", () => {
+    // 2,049 raw bytes, 8,193 stored: each `"` is escaped twice, to 4 bytes.
+    const quoted = `/${'"'.repeat(OAUTH_CALLBACK_URL_MAX_BYTES / 4)}`;
+    expect(refusal("/sign-in/social", { provider: "google", callbackURL: quoted })?.statusCode).toBe(400);
+  });
+
+  test("counts oauth_query re-encoded, the form oauth-provider stores", () => {
+    // A literal `"` comes back as `%22`: 6,002 raw bytes, over 18 KB stored.
+    const quoted = `x=${'"'.repeat(6_000)}`;
+    expect(refusal("/oauth2/consent", { oauth_query: quoted })?.statusCode).toBe(400);
+  });
+});
+
 describe("boundOAuthStateBeforeHandler: /oauth2/authorize (ENG-7396)", () => {
+  type TCtx = Parameters<typeof boundOAuthStateBeforeHandler>[0];
+  const authorizeRefusal = (ctx: Omit<TCtx, "path">): APIError | undefined => {
+    try {
+      boundOAuthStateBeforeHandler({ path: "/oauth2/authorize", ...ctx });
+      return undefined;
+    } catch (error) {
+      return error as APIError;
+    }
+  };
   const honest = {
     response_type: "code",
     client_id: "client",
@@ -117,31 +141,51 @@ describe("boundOAuthStateBeforeHandler: /oauth2/authorize (ENG-7396)", () => {
   };
   // The name `x` is one byte.
   const padded = (bytes: number) => ({ x: "a".repeat(bytes - 1) });
+  const over = padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES + 1);
 
   test("lets an honest request through, from the query or the body", () => {
-    expect(refusal("/oauth2/authorize", undefined, honest)).toBeUndefined();
-    expect(refusal("/oauth2/authorize", honest, {})).toBeUndefined();
+    expect(authorizeRefusal({ method: "GET", query: honest })).toBeUndefined();
+    expect(authorizeRefusal({ method: "POST", body: honest, query: {} })).toBeUndefined();
   });
 
   test.each([
-    ["the query (GET)", undefined, padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES + 1)],
-    ["the body (POST)", padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES + 1), {}],
+    ["the query of a GET", { method: "GET", query: over }],
+    ["the body of a POST", { method: "POST", body: over, query: {} }],
     [
-      "query and body together",
-      padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES / 2 + 1),
-      padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES / 2),
+      "the replayed query of a resumed authorize",
+      { method: "POST", authorizeSettings: {}, query: over, body: {} },
     ],
-  ])("refuses parameters over the limit in %s, as an OAuth error", (_, body, query) => {
-    const error = refusal("/oauth2/authorize", body, query);
+  ])("refuses parameters over the limit in %s, as an OAuth error", (_, ctx) => {
+    const error = authorizeRefusal(ctx);
     expect(error?.statusCode).toBe(400);
     expect(error?.body).toMatchObject({ code: "VALIDATION_ERROR", error: "invalid_request" });
   });
 
   test("accepts parameters exactly at the limit", () => {
-    expect(refusal("/oauth2/authorize", padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES), {})).toBeUndefined();
+    expect(
+      authorizeRefusal({ method: "POST", body: padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES) })
+    ).toBeUndefined();
+  });
+
+  test("counts control characters as the escaped bytes Redis holds", () => {
+    // 1,200 raw bytes, 8,400 stored: `\u0001` is escaped twice, to 7 bytes.
+    expect(authorizeRefusal({ method: "GET", query: { state: "\u0001".repeat(1_200) } })?.statusCode).toBe(
+      400
+    );
+  });
+
+  test("counts only what the endpoint reads", () => {
+    // A resumed authorize reads the replayed query; the body is the calling route's (consent, sign-in),
+    // carrying the signed `oauth_query`, and is not stored.
+    expect(
+      authorizeRefusal({ method: "POST", authorizeSettings: {}, query: honest, body: over })
+    ).toBeUndefined();
+    // An HTTP POST reads its body; a GET its query.
+    expect(authorizeRefusal({ method: "POST", body: honest, query: over })).toBeUndefined();
+    expect(authorizeRefusal({ method: "GET", query: honest, body: over })).toBeUndefined();
   });
 
   test("leaves other paths' parameters alone", () => {
-    expect(refusal("/oauth2/token", padded(OAUTH_AUTHORIZE_PARAMS_MAX_BYTES + 1), {})).toBeUndefined();
+    expect(refusal("/oauth2/token", over, {})).toBeUndefined();
   });
 });

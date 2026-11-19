@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { prisma } from "@formbricks/database";
 import { GET, POST } from "@/app/api/auth/[...all]/route";
-import { REDIRECT_URI, createUser, grant, registerClient, signIn } from "@/integration/oauth-flow";
+import { REDIRECT_URI, consent, createUser, grant, registerClient, signIn } from "@/integration/oauth-flow";
 import { createRedisBytesWritten } from "@/integration/redis-bytes-written";
 import { resetDb } from "@/integration/reset-db";
 import { OAUTH_AUTHORIZE_PARAMS_MAX_BYTES } from "./oauth-state-bounds";
@@ -118,5 +118,41 @@ describe("authorization code record size (ENG-7396)", () => {
       codeIssued: false,
       storedBytes: 0,
     });
+  });
+
+  test("a state of control characters is measured as stored", async () => {
+    // 1,200 raw bytes; Redis would hold each \u0001 escaped twice, as 7 bytes.
+    expect(await authorize("POST", { state: "\u0001".repeat(1_200) })).toEqual({
+      status: 400,
+      codeIssued: false,
+      storedBytes: 0,
+    });
+  });
+
+  test("a near-limit request still completes through consent", async () => {
+    // The consent step replays the signed request into authorize, with the signed query in its own body.
+    // Only the replayed request is stored, so only it counts.
+    const freshClient = await registerClient("eng-7396 consent");
+    const params = authorizeParams({ client_id: freshClient, state: "s".repeat(6_000) });
+    const started = await POST(
+      new Request(`${BASE}/api/auth/oauth2/authorize`, {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          cookie,
+          origin: BASE,
+          "content-type": "application/x-www-form-urlencoded",
+        },
+        body: params,
+      })
+    );
+    const { url } = (await started.json()) as { url?: string };
+    const consentPage = new URL(url ?? "", BASE);
+    expect(consentPage.pathname, `status ${started.status}`).toBe("/account/authorize");
+
+    const approved = await consent(cookie, consentPage, { accept: true });
+    const { url: redirect } = (await approved.json()) as { url?: string };
+    expect(approved.status).toBe(200);
+    expect(new URL(redirect ?? "", BASE).searchParams.get("code")).toBeTruthy();
   });
 });

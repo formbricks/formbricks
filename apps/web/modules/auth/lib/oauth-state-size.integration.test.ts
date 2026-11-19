@@ -127,9 +127,9 @@ describe("OAuth state record size (ENG-6885)", () => {
     expect(storedBytes).toBeLessThan(OAUTH_QUERY_MAX_BYTES);
   });
 
-  test("an anonymous caller can no longer get an oversized query signed", async () => {
+  test("an anonymous caller can no longer get a 200 KB query signed", async () => {
     // The 205 KB signed query this used to return was replayed into the state record as `serverContext`.
-    // `/oauth2/authorize` now refuses it at the source (ENG-7396); `oauth_query` keeps its own cap besides.
+    // `/oauth2/authorize` now refuses it at the source (ENG-7396).
     const response = await POST(
       new Request(`${BASE}/api/auth/oauth2/authorize`, {
         method: "POST",
@@ -143,6 +143,24 @@ describe("OAuth state record size (ENG-6885)", () => {
       })
     );
     expect(response.status).toBe(400);
+  });
+
+  test("a signed query over the limit is refused and nothing is stored", async () => {
+    // Authorize still signs a query over the `oauth_query` cap: 7,000 `:` fit its own cap, and each signs
+    // as `%3A`. Only the `oauth_query` cap keeps it out of the state record.
+    const oauthQuery = await signedAuthorizeQuery(
+      await registerClient("eng-6885 encoded"),
+      ":".repeat(7_000)
+    );
+    expect(Buffer.byteLength(oauthQuery)).toBeGreaterThan(OAUTH_QUERY_MAX_BYTES);
+
+    expect(await signInSocial({ oauth_query: oauthQuery })).toEqual({ status: 400, storedBytes: 0 });
+  });
+
+  test("a callback URL is measured as stored, escaped quotes included", async () => {
+    // 2,049 raw bytes; Redis would hold each `"` escaped twice, as 4 bytes.
+    const quoted = `/${'"'.repeat(OAUTH_CALLBACK_URL_MAX_BYTES / 4)}`;
+    expect(await signInSocial({ callbackURL: quoted })).toEqual({ status: 400, storedBytes: 0 });
   });
 
   test("a signed query sent as JSON pairs is refused and nothing is stored", async () => {
