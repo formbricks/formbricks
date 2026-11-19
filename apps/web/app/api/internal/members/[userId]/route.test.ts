@@ -156,6 +156,14 @@ describe("PATCH /api/internal/members/{userId}", () => {
     });
 
     test("demotes an owner under the owners' lock, then the user's row, in one transaction", async () => {
+      mocks.runOwnerGuardedTransaction.mockImplementation(
+        async (_orgId: string, _userId: string | null, callback: (tx: unknown) => unknown) => {
+          const result = await callback(TX);
+          // Still inside the transaction: the ended grants wait for the commit.
+          expect(mocks.finishRevokedMcpGrants).not.toHaveBeenCalled();
+          return result;
+        }
+      );
       const response = await setRole("member");
 
       expect(response.status).toBe(200);
@@ -186,9 +194,33 @@ describe("PATCH /api/internal/members/{userId}", () => {
       expect(mocks.finishRevokedMcpGrants).toHaveBeenCalledWith(GRANT_AUDITS, {
         actorUserId: CURRENT_USER_ID,
       });
-      expect(mocks.runOwnerGuardedTransaction.mock.invocationCallOrder[0]).toBeLessThan(
-        mocks.finishRevokedMcpGrants.mock.invocationCallOrder[0]
+    });
+
+    test("audits only the grants of the attempt that committed when the guard retries the demotion", async () => {
+      const firstAttempt = [{ grantId: "grant-first-attempt" }];
+      const committedAttempt = [{ grantId: "grant-committed" }];
+      mocks.updateMembershipInTransaction
+        .mockResolvedValueOnce({
+          membership: membership(TARGET_USER_ID, "member"),
+          grantAudits: firstAttempt,
+        })
+        .mockResolvedValueOnce({
+          membership: membership(TARGET_USER_ID, "member"),
+          grantAudits: committedAttempt,
+        });
+      // The guard aborts the first attempt (a serialization conflict) and runs the change again.
+      mocks.runOwnerGuardedTransaction.mockImplementation(
+        async (_orgId: string, _userId: string | null, callback: (tx: unknown) => unknown) => {
+          await callback(TX);
+          return callback(TX);
+        }
       );
+
+      expect((await setRole("member")).status).toBe(200);
+      expect(mocks.finishRevokedMcpGrants).toHaveBeenCalledTimes(1);
+      expect(mocks.finishRevokedMcpGrants).toHaveBeenCalledWith(committedAttempt, {
+        actorUserId: CURRENT_USER_ID,
+      });
     });
 
     test("changes a non-owner's role without counting owners", async () => {

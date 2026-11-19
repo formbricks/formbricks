@@ -407,3 +407,43 @@ describe("DELETE /api/internal/mcp-grants/{clientId}", () => {
     expect(mocks.revokeMcpClient).not.toHaveBeenCalled();
   });
 });
+
+describe("cross-origin writes to /api/internal/mcp-grants/{clientId}", () => {
+  // The session cookie rides along on a cross-site request, so the origin check is what keeps another site
+  // from editing or revoking the user's MCP access.
+  const CROSS_SITE = { "sec-fetch-site": "cross-site", origin: "https://evil.example" };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // A signed-in user, so the refusal is the origin check's and not a missing session.
+    mocks.getSession.mockResolvedValue({ user: { id: USER_ID } });
+    mocks.queueAuditEvent.mockResolvedValue(undefined);
+  });
+
+  test("refuses a cross-site edit with 403 and saves nothing", async () => {
+    const response = await PATCH(
+      new NextRequest(`http://localhost/api/internal/mcp-grants/${CLIENT_ID}`, {
+        method: "PATCH",
+        headers: { ...CROSS_SITE, "content-type": "application/json" },
+        body: JSON.stringify({ expectedUpdatedAt: OPENED_AT, permissions: { surveys: "read" } }),
+      }),
+      { params: Promise.resolve({ clientId: CLIENT_ID }) }
+    );
+
+    expect(response.status).toBe(403);
+    expect(mocks.editMcpGrant).not.toHaveBeenCalled();
+  });
+
+  test("refuses a cross-site revoke with 403 and revokes nothing", async () => {
+    const response = await DELETE(
+      new NextRequest(`http://localhost/api/internal/mcp-grants/${CLIENT_ID}`, {
+        method: "DELETE",
+        headers: CROSS_SITE,
+      }),
+      { params: Promise.resolve({ clientId: CLIENT_ID }) }
+    );
+
+    expect(response.status).toBe(403);
+    expect(mocks.revokeMcpClient).not.toHaveBeenCalled();
+  });
+});
