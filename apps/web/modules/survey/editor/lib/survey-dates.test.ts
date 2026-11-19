@@ -133,7 +133,7 @@ describe("withPageDates", () => {
     const actionClass = { ...mockSurveyWithLogic.triggers[0]?.actionClass, createdAt, updatedAt };
     const survey = editorWorkingCopy({
       ...freshDraft(),
-      triggers: [{ actionClass } as TSurvey["triggers"][number]],
+      triggers: [{ actionClass }],
       segment,
       languages: [{ language, default: true, enabled: true }],
       followUps: [followUp],
