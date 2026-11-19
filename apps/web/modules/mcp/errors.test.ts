@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { problemConflict, problemUnprocessableContent, successResponse } from "@/app/api/v3/lib/response";
-import { responseToMcpToolResult } from "./errors";
+import { mcpOutsideGrantResult, responseToMcpToolResult } from "./errors";
 
 describe("responseToMcpToolResult", () => {
   test("returns structured success content with the resolved requestId", async () => {
@@ -55,5 +55,22 @@ describe("responseToMcpToolResult", () => {
 
     expect(result.isError).toBe(true);
     expect(result.structuredContent).toMatchObject({ error: { requestId: "fallback_id", status: 500 } });
+  });
+});
+
+describe("mcpOutsideGrantResult", () => {
+  test("is one not found that names nothing beyond the request id", () => {
+    const NOT_FOUND = {
+      status: 404,
+      title: "Not Found",
+      code: "not_found",
+      detail: "Not found. It doesn't exist, or the user's grant to this MCP client doesn't reach it.",
+      requestId: "req_1",
+    };
+    const hidden = mcpOutsideGrantResult("req_1");
+    expect(hidden.isError).toBe(true);
+    expect(hidden.structuredContent).toEqual({ error: NOT_FOUND });
+    const first = hidden.content?.[0] as { text: string } | undefined;
+    expect(JSON.parse(first?.text ?? "null")).toEqual({ error: NOT_FOUND });
   });
 });

@@ -44,7 +44,9 @@ Helm, Hub pods can start after the migration Job is gone.
   `Survey.variables` and every 6.0 pod still serving failed its survey reads (formbricks/formbricks#9603).
 - Writes from the previous release stay valid. Better Auth 1.6 pods wrote a `NULL` issuer during the 1.7
   upgrade and locked password users out (formbricks/formbricks#9369). A new queue or outbox job type
-  must not dead-letter on old workers.
+  must not dead-letter on old workers. Since ENG-7153 an outbox worker skips a target type it doesn't
+  know and its freshness guard ignores it, so a new outbox type may only project relationships the
+  previous release doesn't read.
 - On the bundled shared database, Prisma migrations run before Hub's goose and River migrations
   (formbricks/formbricks#8104), and migration Jobs wait until PostgreSQL accepts connections.
 - A migration converges on a database built with `db:push`: guard `CREATE TYPE`, `ADD CONSTRAINT` and

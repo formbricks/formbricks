@@ -26,7 +26,9 @@ const getHealthStatus = (status: TAuthzedOutboxStatus): "critical" | "warning" |
     return "critical";
   }
 
-  if (status.revocationsPastWarning > 0) {
+  // A row no worker of this release delivers: a newer release's (fine during its rollout) or a corrupt
+  // one, which stays until someone deletes it. Never fails authorization closed, so a warning.
+  if (status.revocationsPastWarning > 0 || status.unknownType > 0) {
     return "warning";
   }
 

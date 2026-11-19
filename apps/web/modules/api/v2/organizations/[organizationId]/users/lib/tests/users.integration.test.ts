@@ -434,7 +434,7 @@ describe("updateUser deactivating an organization's owners vs real Postgres (ENG
 
       const [patched, removed] = await Promise.allSettled([
         updateUser({ email: emails[0], isActive: false }, org.id),
-        deleteMembership(users[1].id, org.id),
+        deleteMembership(users[1].id, org.id, users[0].id),
       ]);
 
       expect(await activeOwners(org.id)).toBe(1);

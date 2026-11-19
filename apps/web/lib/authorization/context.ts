@@ -44,22 +44,45 @@ export type TAuthorizationSurface =
   | "mcp"
   | "feedback_gateway";
 
+/**
+ * The MCP grant an `mcp` request is held to when it limits organization & workspace access (ENG-7153,
+ * ADR-0042): every `can()` for its user also needs `mcp_reach` of the grant on the same node. Absent for
+ * All access, API keys and every other surface, which `can()` then decides exactly as before.
+ */
+export type TAuthorizationMcpGrant = Readonly<{
+  id: string;
+  userId: string;
+}>;
+
 type TAuthorizationContext = {
   checksIssued: number;
   surface: TAuthorizationSurface;
+  mcpGrant?: TAuthorizationMcpGrant;
 };
 
 type TPageSurfaceSlot = { context: TAuthorizationContext | null };
 
+/**
+ * What an MCP tool call learned about its grant's reach (`mcp_reach`): whether a check was denied on it,
+ * and whether one confirmed it reaches the resource checked.
+ */
+export type TMcpReachOutcome = { denied: boolean; confirmed: boolean };
+
 const globalForAuthorization = globalThis as unknown as {
   formbricksAuthorizationContext: AsyncLocalStorage<TAuthorizationContext> | undefined;
   formbricksAuthorizationPageSurfaceSlot: (() => TPageSurfaceSlot) | undefined;
+  formbricksMcpReachOutcomes: AsyncLocalStorage<TMcpReachOutcome> | undefined;
 };
 
 const authorizationContext =
   globalForAuthorization.formbricksAuthorizationContext ?? new AsyncLocalStorage<TAuthorizationContext>();
 
 globalForAuthorization.formbricksAuthorizationContext = authorizationContext;
+
+const mcpReachOutcomes =
+  globalForAuthorization.formbricksMcpReachOutcomes ?? new AsyncLocalStorage<TMcpReachOutcome>();
+
+globalForAuthorization.formbricksMcpReachOutcomes = mcpReachOutcomes;
 
 /**
  * One slot per React request scope. In an RSC render that is the whole render pass, so a layout and
@@ -87,9 +110,13 @@ globalForAuthorization.formbricksAuthorizationPageSurfaceSlot = getPageSurfaceSl
  */
 const hasReactRequestScope = (slot: TPageSurfaceSlot): boolean => slot === getPageSurfaceSlot();
 
-const createSurfaceContext = (surface: TAuthorizationSurface): TAuthorizationContext => ({
+const createSurfaceContext = (
+  surface: TAuthorizationSurface,
+  mcpGrant?: TAuthorizationMcpGrant
+): TAuthorizationContext => ({
   checksIssued: 0,
   surface,
+  ...(mcpGrant ? { mcpGrant } : {}),
 });
 
 /**
@@ -123,9 +150,15 @@ const getActiveContext = (): TAuthorizationContext | null =>
 
 export const withAuthorizationSurface = async <T>(
   surface: TAuthorizationSurface,
-  callback: () => T | Promise<T>
+  callback: () => T | Promise<T>,
+  options: Readonly<{ mcpGrant?: TAuthorizationMcpGrant }> = {}
 ): Promise<T> => {
   if (authorizationContext.getStore()) {
+    // A grant narrows; it is never dropped by nesting. Only an outermost `mcp` boundary sets one, so a
+    // nested call that names one would be a wiring error: fail closed rather than run without it.
+    if (options.mcpGrant && authorizationContext.getStore()?.mcpGrant?.id !== options.mcpGrant.id) {
+      throw new Error("An MCP grant must be set on the outermost authorization surface");
+    }
     return callback();
   }
 
@@ -151,7 +184,7 @@ export const withAuthorizationSurface = async <T>(
     // before ENG-2444. Narrower, but correct for a caller with no request scope.
   }
 
-  const context = createSurfaceContext(surface);
+  const context = createSurfaceContext(surface, options.mcpGrant);
 
   return authorizationContext.run(context, async () => {
     scheduleChecksPerRequestObservation(context);
@@ -173,6 +206,60 @@ export const recordAuthorizationCheckIssued = (): void => {
 /** The number of central authorization operations in the current surface, or `null` outside one. */
 export const getIssuedAuthorizationCheckCount = (): number | null => getActiveContext()?.checksIssued ?? null;
 
+/**
+ * The MCP grant `actor` is held to in the current request, or `null`. Only the grant's own user is held
+ * to it: a check made for anyone else in the same request (a recipient, an invitee) is that person's, and
+ * the grant says nothing about it. Read from the `AsyncLocalStorage` boundary only, which is where the
+ * `mcp` surface lives; the `page` slot never carries one.
+ */
+export const getMcpGrantForActor = (
+  actor: Readonly<{ type: string; id: string }>
+): TAuthorizationMcpGrant | null => {
+  const grant = authorizationContext.getStore()?.mcpGrant;
+  return grant && actor.type === "user" && actor.id === grant.userId ? grant : null;
+};
+
 /** The current bounded request surface, or `unscoped` for scripts and non-request authorization calls. */
 export const getAuthorizationSurface = (): TAuthorizationSurface | "unscoped" =>
   getActiveContext()?.surface ?? "unscoped";
+
+/**
+ * Runs one MCP tool call and reports what it learned about the grant's reach (ADR-0042): `denied` when a
+ * `can()` failed its `mcp_reach` check (or had nothing to check, an id that doesn't exist) or a list
+ * lookup dropped an id the user holds; `confirmed` when a `can()` found the grant reaches the resource.
+ * The MCP layer turns an error answer into "not found" from these, so an id outside the grant reads like
+ * one that doesn't exist, while an answer given about something the grant reaches (a plan refusal, a
+ * confirmation, a refusal by the user's own role) reaches the agent unchanged.
+ *
+ * Per tool call, not per request: a legacy JSON-RPC batch runs several calls in one request, and one
+ * call's outcome must not rewrite another's answer. Kept apart from the authorization surface, which
+ * counts the whole request's checks.
+ */
+export const runRecordingMcpReach = async <T>(
+  callback: () => Promise<T>
+): Promise<{ result: T; reach: TMcpReachOutcome }> => {
+  const reach: TMcpReachOutcome = { denied: false, confirmed: false };
+  const result = await mcpReachOutcomes.run(reach, callback);
+  return { result, reach };
+};
+
+/**
+ * Runs `callback` without recording what it learns about the grant's reach. For a check that only probes
+ * a capability to shape the answer (whether the user administers the organization, say), not one that
+ * decides whether the caller may have the resource it asked for: a grant limited to workspaces never
+ * reaches the organization node, and that must not turn the call's answer into not found.
+ */
+export const ignoringMcpReachDenials = <T>(callback: () => Promise<T>): Promise<T> =>
+  mcpReachOutcomes.run({ denied: false, confirmed: false }, callback);
+
+/** Records that the current MCP tool call was denied something its grant doesn't reach. No-op outside one. */
+export const recordMcpReachDenied = (): void => {
+  const reach = mcpReachOutcomes.getStore();
+  if (reach) reach.denied = true;
+};
+
+/** Records that a check of the current MCP tool call found its grant reaches the resource. */
+export const recordMcpReachConfirmed = (): void => {
+  const reach = mcpReachOutcomes.getStore();
+  if (reach) reach.confirmed = true;
+};

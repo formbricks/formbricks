@@ -862,8 +862,8 @@ export const withV3ApiWrapper = <S extends TV3Schemas | undefined, TProps = unkn
       // to attribute — and an unauthenticated caller could fill the audit store one row per bad key; a
       // 429 is already logged by the limiter; a 400 is a malformed request, not an authorization event.
       // The rejection a reviewer wants — the 403 an authenticated caller gets for someone else's
-      // resource — is raised by the operation below and is audited as a failure. MCP's scope gate
-      // audits its own refusals in `registerScopedTool`.
+      // resource — is raised by the operation below and is audited as a failure. MCP's permission gate
+      // audits its own refusals in `registerMcpTool`.
       auditLog = buildV3AuditLog(authResult.authentication, action, targetType, req.url);
 
       const execute = () =>
