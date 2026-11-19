@@ -58,6 +58,11 @@ describe("block rule condition operands", () => {
       `Conditional Logic: Invalid operator "isBefore" for element type "multipleChoiceSingle" ${where}`,
     ],
     [
+      "an operator a number open text does not support",
+      { leftOperand: element("hours"), operator: "contains", rightOperand: fixed("x") },
+      `Conditional Logic: Invalid operator "contains" for element type "openText" ${where}`,
+    ],
+    [
       "a CTA without an external button",
       { leftOperand: element("learn_more"), operator: "isClicked" },
       `Conditional Logic: CTA element "learn_more" does not have an external button and cannot be used in logic conditions ${where}`,

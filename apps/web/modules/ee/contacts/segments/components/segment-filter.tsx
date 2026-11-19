@@ -30,7 +30,6 @@ import {
   type TSegmentDeviceFilter,
   type TSegmentFilter,
   type TSegmentFilterValue,
-  type TSegmentOperator,
   type TSegmentPersonFilter,
   type TSegmentSegmentFilter,
   type TSegmentSurveyInteractionFilter,
@@ -215,6 +214,21 @@ type TAttributeSegmentFilterProps = TBaseFilterProps & {
   resource: TSegmentAttributeFilter;
   updateValueInLocalSurvey: (filterId: string, newValue: TSegmentFilterValue) => void;
 };
+/** Stores a copy of the segment with one filter's operator changed. */
+const setFilterOperator = (
+  segment: TSegment,
+  setSegment: (segment: TSegment) => void,
+  filterId: string,
+  newOperator: Parameters<typeof updateOperatorInFilter>[2]
+) => {
+  const updatedSegment = structuredClone(segment);
+  if (updatedSegment.filters) {
+    updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
+  }
+
+  setSegment(updatedSegment);
+};
+
 function AttributeSegmentFilter({
   connector,
   resource,
@@ -272,15 +286,6 @@ function AttributeSegmentFilter({
       name: convertOperatorToText(operator, t),
     };
   });
-
-  const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
-    const updatedSegment = structuredClone(segment);
-    if (updatedSegment.filters) {
-      updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
-    }
-
-    setSegment(updatedSegment);
-  };
 
   const updateAttributeClassNameInLocalSurvey = (filterId: string, newAttributeClassName: string) => {
     const updatedSegment = structuredClone(segment);
@@ -418,7 +423,7 @@ function AttributeSegmentFilter({
       <Select
         disabled={viewOnly}
         onValueChange={(operator: TAttributeOperator) => {
-          updateOperatorInLocalSurvey(resource.id, operator);
+          setFilterOperator(segment, setSegment, resource.id, operator);
         }}
         value={operatorText}>
         <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
@@ -492,15 +497,6 @@ function PersonSegmentFilter({
       name: convertOperatorToText(operator, t),
     };
   });
-
-  const updateOperatorInLocalSurvey = (filterId: string, newOperator: TAttributeOperator) => {
-    const updatedSegment = structuredClone(segment);
-    if (updatedSegment.filters) {
-      updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
-    }
-
-    setSegment(updatedSegment);
-  };
 
   const updatePersonIdentifierInLocalSurvey = (filterId: string, newPersonIdentifier: string) => {
     const updatedSegment = structuredClone(segment);
@@ -578,7 +574,7 @@ function PersonSegmentFilter({
       <Select
         disabled={viewOnly}
         onValueChange={(operator: TAttributeOperator) => {
-          updateOperatorInLocalSurvey(resource.id, operator);
+          setFilterOperator(segment, setSegment, resource.id, operator);
         }}
         value={operatorText}>
         <SelectTrigger className="flex w-auto items-center justify-center bg-white text-center" hideArrow>
@@ -651,15 +647,6 @@ function SegmentSegmentFilter({
 
   const currentSegment = segments.find((segment) => segment.id === segmentId);
 
-  const updateOperatorInSegment = (filterId: string, newOperator: TSegmentOperator) => {
-    const updatedSegment = structuredClone(segment);
-    if (updatedSegment.filters) {
-      updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
-    }
-
-    setSegment(updatedSegment);
-  };
-
   const updateSegmentIdInSegment = (filterId: string, newSegmentId: string) => {
     const updatedSegment = structuredClone(segment);
     if (updatedSegment.filters) {
@@ -673,11 +660,11 @@ function SegmentSegmentFilter({
     if (!resource.qualifier.operator) return;
 
     if (resource.qualifier.operator === "userIsIn") {
-      updateOperatorInSegment(resource.id, "userIsNotIn");
+      setFilterOperator(segment, setSegment, resource.id, "userIsNotIn");
       return;
     }
 
-    updateOperatorInSegment(resource.id, "userIsIn");
+    setFilterOperator(segment, setSegment, resource.id, "userIsIn");
   };
 
   return (
@@ -765,15 +752,6 @@ function DeviceFilter({
     name: convertOperatorToText(operator, t),
   }));
 
-  const updateOperatorInSegment = (filterId: string, newOperator: TDeviceOperator) => {
-    const updatedSegment = structuredClone(segment);
-    if (updatedSegment.filters) {
-      updateOperatorInFilter(updatedSegment.filters, filterId, newOperator);
-    }
-
-    setSegment(updatedSegment);
-  };
-
   const updateValueInSegment = (filterId: string, newValue: "phone" | "desktop") => {
     const updatedSegment = structuredClone(segment);
     if (updatedSegment.filters) {
@@ -802,7 +780,7 @@ function DeviceFilter({
       <Select
         disabled={viewOnly}
         onValueChange={(operator: TDeviceOperator) => {
-          updateOperatorInSegment(resource.id, operator);
+          setFilterOperator(segment, setSegment, resource.id, operator);
         }}
         value={operatorText}>
         <SelectTrigger
